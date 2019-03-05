@@ -2352,7 +2352,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
         if (SSL_USE_SIGALGS(s))
-            OSSL_TRACE1(SSL, "USING TLSv1.2 HASH %s\n",
+            OSSL_TRACE1(TLS, "USING TLSv1.2 HASH %s\n",
                         md == NULL ? "n/a" : EVP_MD_name(md));
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)

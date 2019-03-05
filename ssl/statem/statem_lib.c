@@ -396,7 +396,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 
     if (SSL_USE_SIGALGS(s))
-        OSSL_TRACE1(SSL, "USING TLSv1.2 HASH %s\n",
+        OSSL_TRACE1(TLS, "USING TLSv1.2 HASH %s\n",
                     md == NULL ? "n/a" : EVP_MD_name(md));
 
     /* Check for broken implementations of GOST ciphersuites */
@@ -438,7 +438,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    OSSL_TRACE1(SSL, "Using client verify alg %s\n",
+    OSSL_TRACE1(TLS, "Using client verify alg %s\n",
                 md == NULL ? "n/a" : EVP_MD_name(md));
 
     if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0) {

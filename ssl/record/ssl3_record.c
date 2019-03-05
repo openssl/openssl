@@ -564,10 +564,10 @@ int ssl3_get_record(SSL *s)
                  SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         return -1;
     }
-    OSSL_TRACE_BEGIN(SSL) {
+    OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "dec %lu\n", (unsigned long)rr[0].length);
         BIO_dump_indent(trc_out, rr[0].data, rr[0].length, 4);
-    } OSSL_TRACE_END(SSL);
+    } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) &&
@@ -1357,12 +1357,12 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
 
     EVP_MD_CTX_free(hmac);
 
-    OSSL_TRACE_BEGIN(SSL) {
+    OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "seq:\n");
         BIO_dump_indent(trc_out, seq, 8, 4);
         BIO_printf(trc_out, "rec:\n");
         BIO_dump_indent(trc_out, rec->data, rec->length, 4);
-    } OSSL_TRACE_END(SSL);
+    } OSSL_TRACE_END(TLS);
 
     if (!SSL_IS_DTLS(ssl)) {
         for (i = 7; i >= 0; i--) {
@@ -1371,10 +1371,10 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
                 break;
         }
     }
-    OSSL_TRACE_BEGIN(SSL) {
+    OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "md:\n");
         BIO_dump_indent(trc_out, md, md_size, 4);
-    } OSSL_TRACE_END(SSL);
+    } OSSL_TRACE_END(TLS);
     return 1;
 }
 
@@ -1665,10 +1665,10 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         return 0;
     }
-    OSSL_TRACE_BEGIN(SSL) {
+    OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "dec %ld\n", rr->length);
         BIO_dump_indent(trc_out, rr->data, rr->length, 4);
-    } OSSL_TRACE_END(SSL);
+    } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) && !SSL_READ_ETM(s) &&
