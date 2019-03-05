@@ -1,4 +1,4 @@
-package platform::AIX;
+package platform::AIX;\\\\\\\\\
 
 use strict;
 use warnings;
