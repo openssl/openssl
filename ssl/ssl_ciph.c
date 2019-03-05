@@ -782,7 +782,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     const SSL_CIPHER *cp;
     int reverse = 0;
 
-    OSSL_TRACE_BEGIN(SSL_CIPHER){
+    OSSL_TRACE_BEGIN(TLS_CIPHER){
         BIO_printf(trc_out,
                    "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
                    rule, alg_mkey, alg_auth, alg_enc, alg_mac, min_tls,
@@ -906,7 +906,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     *head_p = head;
     *tail_p = tail;
 
-    OSSL_TRACE_END(SSL_CIPHER);
+    OSSL_TRACE_END(TLS_CIPHER);
 }
 
 static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
@@ -1608,7 +1608,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
         }
     }
 
-    OSSL_TRACE_BEGIN(SSL_CIPHER) {
+    OSSL_TRACE_BEGIN(TLS_CIPHER) {
         BIO_printf(trc_out, "cipher selection:\n");
     }
     /*
@@ -1620,7 +1620,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
             if (!sk_SSL_CIPHER_push(cipherstack, curr->cipher)) {
                 OPENSSL_free(co_list);
                 sk_SSL_CIPHER_free(cipherstack);
-                OSSL_TRACE_CANCEL(SSL_CIPHER);
+                OSSL_TRACE_CANCEL(TLS_CIPHER);
                 return NULL;
             }
             if (trc_out != NULL)
@@ -1628,7 +1628,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
         }
     }
     OPENSSL_free(co_list);      /* Not needed any longer */
-    OSSL_TRACE_END(SSL_CIPHER);
+    OSSL_TRACE_END(TLS_CIPHER);
 
     if (!update_cipher_list_by_id(cipher_list_by_id, cipherstack)) {
         sk_SSL_CIPHER_free(cipherstack);

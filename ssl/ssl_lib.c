@@ -3330,7 +3330,7 @@ void ssl_set_masks(SSL *s)
     mask_k = 0;
     mask_a = 0;
 
-    OSSL_TRACE4(SSL_CIPHER, "dh_tmp=%d rsa_enc=%d rsa_sign=%d dsa_sign=%d\n",
+    OSSL_TRACE4(TLS_CIPHER, "dh_tmp=%d rsa_enc=%d rsa_sign=%d dsa_sign=%d\n",
                dh_tmp, rsa_enc, rsa_sign, dsa_sign);
 
 #ifndef OPENSSL_NO_GOST

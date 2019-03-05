@@ -1836,7 +1836,7 @@ static int tls_early_post_process_client_hello(SSL *s)
         j = 0;
         id = s->session->cipher->id;
 
-        OSSL_TRACE_BEGIN(SSL_CIPHER) {
+        OSSL_TRACE_BEGIN(TLS_CIPHER) {
             BIO_printf(trc_out, "client sent %d ciphers\n",
                        sk_SSL_CIPHER_num(ciphers));
         }
@@ -1858,10 +1858,10 @@ static int tls_early_post_process_client_hello(SSL *s)
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                      SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
                      SSL_R_REQUIRED_CIPHER_MISSING);
-            OSSL_TRACE_CANCEL(SSL_CIPHER);
+            OSSL_TRACE_CANCEL(TLS_CIPHER);
             goto err;
         }
-        OSSL_TRACE_END(SSL_CIPHER);
+        OSSL_TRACE_END(TLS_CIPHER);
     }
 
     for (loop = 0; loop < clienthello->compressions_len; loop++) {
