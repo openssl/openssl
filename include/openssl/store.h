@@ -191,7 +191,7 @@ void OSSL_STORE_SEARCH_free(OSSL_STORE_SEARCH *search);
 
 /* Search term accessors */
 int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion);
-X509_NAME *OSSL_STORE_SEARCH_get0_name(OSSL_STORE_SEARCH *criterion);
+X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion);
 const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
                                                   *criterion);
 const unsigned char *OSSL_STORE_SEARCH_get0_bytes(const OSSL_STORE_SEARCH
@@ -204,7 +204,7 @@ const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion);
  * to the loading channel.  This MUST happen before the first OSSL_STORE_load().
  */
 int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type);
-int OSSL_STORE_find(OSSL_STORE_CTX *ctx, OSSL_STORE_SEARCH *search);
+int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search);
 
 
 /*-
@@ -236,7 +236,7 @@ typedef int (*OSSL_STORE_expect_fn)(OSSL_STORE_LOADER_CTX *ctx, int expected);
 int OSSL_STORE_LOADER_set_expect(OSSL_STORE_LOADER *loader,
                                  OSSL_STORE_expect_fn expect_function);
 typedef int (*OSSL_STORE_find_fn)(OSSL_STORE_LOADER_CTX *ctx,
-                                  OSSL_STORE_SEARCH *criteria);
+                                  const OSSL_STORE_SEARCH *criteria);
 int OSSL_STORE_LOADER_set_find(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_find_fn find_function);
 typedef OSSL_STORE_INFO *(*OSSL_STORE_load_fn)(OSSL_STORE_LOADER_CTX *ctx,
