@@ -15,6 +15,7 @@
 #include "internal/o_dir.h"
 #include <openssl/bio.h>
 #include <openssl/pem.h>
+#include <openssl/store.h>
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -779,6 +780,79 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     if (d)
         OPENSSL_DIR_end(&d);
 
+    return ret;
+}
+
+/**
+ * Add a container of certs to a stack.
+ * \param stack the stack to add to.
+ * \param file the file to add from. All certs in this file that are not
+ * already in the stack will be added.
+ * \return 1 for success, 0 for failure. Note that in the case of failure some
+ * certs may have been added to \c stack.
+ */
+
+static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
+                              const char *uri, int depth)
+{
+    int ok = 1;
+    OSSL_STORE_CTX *ctx = NULL;
+    X509 *x = NULL;
+    X509_NAME *xn = NULL;
+
+    if ((ctx = OSSL_STORE_open(uri, NULL, NULL, NULL, NULL)) == NULL)
+        goto err;
+
+    while (!OSSL_STORE_eof(ctx) && !OSSL_STORE_error(ctx)) {
+        OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
+        int infotype = info == 0 ? 0 : OSSL_STORE_INFO_get_type(info);
+
+        if (info == NULL)
+            continue;
+
+        if (infotype == OSSL_STORE_INFO_NAME) {
+            /*
+             * This is an entry in the "directory" represented by the current
+             * uri.  if |depth| allows, dive into it.
+             */
+            if (depth == 0)
+                ok = add_uris_recursive(stack, uri, depth - 1);
+        } else if (infotype == OSSL_STORE_INFO_CERT) {
+            if ((x = OSSL_STORE_INFO_get0_CERT(info)) == NULL
+                || (xn = X509_get_subject_name(x)) == NULL
+                || (xn = X509_NAME_dup(xn)) == NULL)
+                goto err;
+            if (sk_X509_NAME_find(stack, xn) >= 0) {
+                /* Duplicate. */
+                X509_NAME_free(xn);
+            } else if (!sk_X509_NAME_push(stack, xn)) {
+                X509_NAME_free(xn);
+                goto err;
+            }
+        }
+
+        OSSL_STORE_INFO_free(info);
+    }
+
+    ERR_clear_error();
+    goto done;
+
+ err:
+    ok = 0;
+ done:
+    OSSL_STORE_close(ctx);
+
+    return ok;
+}
+
+int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+                                         const char *store)
+{
+    int (*oldcmp) (const X509_NAME *const *a, const X509_NAME *const *b)
+        = sk_X509_NAME_set_cmp_func(stack, xname_sk_cmp);
+    int ret = add_uris_recursive(stack, store, 1);
+
+    (void)sk_X509_NAME_set_cmp_func(stack, oldcmp);
     return ret;
 }
 

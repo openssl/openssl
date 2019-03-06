@@ -598,6 +598,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_CONF_TYPE_FILE              0x2
 # define SSL_CONF_TYPE_DIR               0x3
 # define SSL_CONF_TYPE_NONE              0x4
+# define SSL_CONF_TYPE_STORE             0x5
 
 /* Maximum length of the application-controlled segment of a a TLSv1.3 cookie */
 # define SSL_COOKIE_LENGTH                       4096
@@ -1626,6 +1627,8 @@ __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                                const char *file);
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *dir);
+int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
+                                       const char *uri);
 
 # if !OPENSSL_API_1_1_0
 #  define SSL_load_error_strings() \
@@ -2013,8 +2016,13 @@ __owur int SSL_client_version(const SSL *s);
 __owur int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
 __owur int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx);
 __owur int SSL_CTX_set_default_verify_file(SSL_CTX *ctx);
-__owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                                         const char *CApath);
+__owur int SSL_CTX_set_default_verify_store(SSL_CTX *ctx);
+__owur int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile);
+__owur int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath);
+__owur int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore);
+DEPRECATEDIN_3(__owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx,
+                                                        const char *CAfile,
+                                                        const char *CApath))
 # define SSL_get0_session SSL_get_session/* just peek at pointer */
 __owur SSL_SESSION *SSL_get_session(const SSL *ssl);
 __owur SSL_SESSION *SSL_get1_session(SSL *ssl); /* obtain a reference count */

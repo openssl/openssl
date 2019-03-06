@@ -2122,7 +2122,7 @@ X509_EXTENSION_create_by_NID            2168	3_0_0	EXIST::FUNCTION:
 i2d_RSAPrivateKey                       2169	3_0_0	EXIST::FUNCTION:RSA
 d2i_CERTIFICATEPOLICIES                 2170	3_0_0	EXIST::FUNCTION:
 CMAC_CTX_get0_cipher_ctx                2171	3_0_0	EXIST::FUNCTION:CMAC
-X509_STORE_load_locations               2172	3_0_0	EXIST::FUNCTION:
+X509_STORE_load_locations               2172	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 OBJ_find_sigid_algs                     2173	3_0_0	EXIST::FUNCTION:
 TS_RESP_CTX_set_accuracy                2174	3_0_0	EXIST::FUNCTION:TS
 NETSCAPE_SPKI_get_pubkey                2175	3_0_0	EXIST::FUNCTION:
@@ -4853,3 +4853,7 @@ EVP_SIGNATURE_number                    4969	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_CTX_snprint_PKIStatus          4970	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_HDR_get0_transactionID         4971	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_HDR_get0_recipNonce            4972	3_0_0	EXIST::FUNCTION:CMP
+X509_LOOKUP_store                       4973	3_0_0	EXIST::FUNCTION:
+X509_STORE_load_file                    4974	3_0_0	EXIST::FUNCTION:
+X509_STORE_load_path                    4975	3_0_0	EXIST::FUNCTION:
+X509_STORE_load_store                   4976	3_0_0	EXIST::FUNCTION:
