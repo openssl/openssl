@@ -147,7 +147,7 @@ int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
     return 1;
 }
 
-int OSSL_STORE_find(OSSL_STORE_CTX *ctx, OSSL_STORE_SEARCH *search)
+int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
 {
     if (ctx->loading) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FIND,
@@ -569,7 +569,7 @@ int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion)
     return criterion->search_type;
 }
 
-X509_NAME *OSSL_STORE_SEARCH_get0_name(OSSL_STORE_SEARCH *criterion)
+X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion)
 {
     return criterion->name;
 }
