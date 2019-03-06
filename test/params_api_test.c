@@ -171,10 +171,11 @@ static int test_param_bignum(int n)
     size_t bnsize;
     BIGNUM *b = NULL, *c = NULL;
     OSSL_PARAM param = OSSL_PARAM_DEFN("bn", OSSL_PARAM_UNSIGNED_INTEGER,
-                                       NULL, len, NULL);
+                                       NULL, 0, NULL);
     int ret = 0;
 
     param.buffer = bnbuf;
+    param.buffer_size = len;
     param.return_size = &bnsize;
 
     copy_be_to_native(buf, raw_values[n].value, len);
