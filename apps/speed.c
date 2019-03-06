@@ -518,7 +518,7 @@ enum {
     R_EC_BRP512R1,
     R_EC_BRP512T1,
     R_EC_X25519,
-    R_EC_X448,
+    R_EC_X448
 };
 
 #ifndef OPENSSL_NO_EC
