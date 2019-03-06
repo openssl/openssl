@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
+OSSL_PARAM_locate, OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE,
+OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -15,6 +16,8 @@ OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
  OSSL_PARAM_SIZED_TYPE(key, address, return_size)
  OSSL_PARAM_SIZED_BN(key, address, size, return_size)
  OSSL_PARAM_END
+
+ OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *array, const char *key);
 
  int OSSL_PARAM_get_TYPE(const OSSL_PARAM *p, const char *key, TYPE *val);
  int OSSL_PARAM_set_TYPE(const OSSL_PARAM *p, const char *key, TYPE val);
@@ -92,26 +95,30 @@ The size used by the parameter value, in bytes, is written to B<return_size>.
 OSSL_PARAM_END provides an end of parameter list marker.
 This should terminate all OSSL_PARAM arrays.
 
-OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter
-array B<p> using the B<key>.
+OSSL_PARAM_locate() is a function that searches an B<array> of parameters for
+the one matching the B<key> name.
+
+OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter B<p>.
 The value is copied to the address B<val>.
 Type coercion takes place as discussed in NOTES section.
 
 OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the paramter
-array B<p> using the B<key>.
+B<p>.
 Type coercion takes place as discussed in NOTES section.
 
-OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter B<key> in the
-array pointed to by B<p>.
+OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter pointed to by B<p>.
 The BIGNUM referenced by B<val> is updated and is allocated if B<*val> is
 B<NULL>.
 
-OSSL_PARAM_set_BN() stores the BIGNUM B<val> into the paramater array B<p> at
-the position indicated by B<key>.
+OSSL_PARAM_set_BN() stores the BIGNUM B<val> into the paramater B<p>.
 
 =head1 RETURN VALUES
 
-All of these functions return B<1> on success and B<0> on failure.
+OSSL_PARAM_locate() returns a pointer to the matching OSSL_PARAM object.
+It returns B<NULL> on error or when no object matching B<key> exists in
+the B<array>.
+
+All other functions return B<1> on success and B<0> on failure.
 
 =head1 NOTES
 

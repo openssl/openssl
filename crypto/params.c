@@ -15,7 +15,7 @@
     if (p->return_size != NULL) \
         *p->return_size = (sz)
 
-static const OSSL_PARAM *param_locate(const OSSL_PARAM *p, const char *key)
+const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
 {
     if (p != NULL && key != NULL)
         for (; p->key != NULL; p++)
@@ -42,10 +42,10 @@ static const OSSL_PARAM *param_locate(const OSSL_PARAM *p, const char *key)
         break
 
 #define PARAM_INT(name, type, pre) \
-    int OSSL_PARAM_get_##name(const OSSL_PARAM *p, const char *key, type *val) \
+    int OSSL_PARAM_get_##name(const OSSL_PARAM *p, type *val) \
     { \
         if (val == NULL \
-            || (p = param_locate(p, key)) == NULL \
+            || p == NULL \
             || (p->data_type != OSSL_PARAM_INTEGER \
                 && p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)) \
             return 0; \
@@ -55,17 +55,17 @@ static const OSSL_PARAM *param_locate(const OSSL_PARAM *p, const char *key)
         } \
         return 0; \
     } \
-    int OSSL_PARAM_set_##name(const OSSL_PARAM *p, const char *key, type val) \
+    int OSSL_PARAM_set_##name(const OSSL_PARAM *p, type val) \
     { \
-        if ((p = param_locate(p, key)) == NULL \
-            || (p->data_type != OSSL_PARAM_INTEGER \
-                && p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)) \
+        if (p == NULL) \
             return 0; \
         SET_RETURN_SIZE(p, 0); \
-        switch (p->buffer_size) { \
-        PARAM_INT_SET(pre ## 32_t, type); \
-        PARAM_INT_SET(pre ## 64_t, type); \
-        } \
+        if (p->data_type == OSSL_PARAM_INTEGER \
+            || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) \
+            switch (p->buffer_size) { \
+            PARAM_INT_SET(pre ## 32_t, type); \
+            PARAM_INT_SET(pre ## 64_t, type); \
+            } \
         return 0; \
     }
 
@@ -79,17 +79,15 @@ PARAM_INT(int64, int64_t, int)
 PARAM_INT(uint64, uint64_t, uint)
 PARAM_INT(size_t, size_t, uint)
 
-int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
+int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
 {
     BIGNUM *b;
-    size_t size;
 
-    if (val == NULL || (p = param_locate(p, key)) == NULL)
+    if (val == NULL || p == NULL)
         return 0;
 
     if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
-        size = p->return_size != NULL ? *p->return_size : p->buffer_size;
-        b = BN_native2bn(p->buffer, (int)size, *val);
+        b = BN_native2bn(p->buffer, (int)p->buffer_size, *val);
         if (b != NULL) {
             *val = b;
             return 1;
@@ -98,13 +96,14 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
     return 0;
 }
 
-int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
+int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const BIGNUM *val)
 {
     const size_t bytes = (size_t)BN_num_bytes(val);
 
-    if (val != NULL
-        && (p = param_locate(p, key)) != NULL
-        && p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+    if (p == NULL)
+        return 0;
+
+    if (val != NULL && p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
         SET_RETURN_SIZE(p, bytes);
         return p->buffer_size >= bytes
                && BN_bn2nativepad(val, p->buffer, bytes) >= 0;
@@ -113,14 +112,14 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
     return 0;
 }
 
-int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val)
+int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
 {
 #define CASE(type) \
     case sizeof(type): \
         *val = (double)(*(type *)p->buffer); \
         return 1
 
-    if (val == NULL || (p = param_locate(p, key)) == NULL)
+    if (val == NULL || p == NULL)
         return 0;
 
     switch (p->data_type) {
@@ -145,7 +144,7 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val)
 #undef CASE
 }
 
-int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
+int OSSL_PARAM_set_double(const OSSL_PARAM *p, double val)
 {
 #define CASE(type) \
     case sizeof(type): \
@@ -153,9 +152,10 @@ int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
         SET_RETURN_SIZE(p, sizeof(type)); \
         return 1
 
-    if ((p = param_locate(p, key)) == NULL)
-        goto fail;
+    if (p == NULL)
+        return 0;
 
+    SET_RETURN_SIZE(p, sizeof(double));
     switch (p->data_type) {
     case OSSL_PARAM_REAL:
         switch (p->buffer_size) {
@@ -175,8 +175,6 @@ int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
         }
         break;
     }
-    SET_RETURN_SIZE(p, 0);
-fail:
     return 0;
 #undef CASE
 }

@@ -68,10 +68,10 @@ static int test_param_type_extra(const OSSL_PARAM *param, unsigned char *cmp,
     const int bit32 = param->buffer_size == sizeof(int32_t);
     const int sizet = bit32 && sizeof(size_t) > sizeof(int32_t);
 
-    if ((bit32 && !TEST_true(OSSL_PARAM_get_int32(param, "a", &i32)))
-        || !TEST_true(OSSL_PARAM_get_int64(param, "a", &i64))
-        || (sizet && !TEST_true(OSSL_PARAM_get_size_t(param, "a", &s)))
-        || !TEST_true(OSSL_PARAM_get_double(param, "a", &d)))
+    if ((bit32 && !TEST_true(OSSL_PARAM_get_int32(param, &i32)))
+        || !TEST_true(OSSL_PARAM_get_int64(param, &i64))
+        || (sizet && !TEST_true(OSSL_PARAM_get_size_t(param, &s)))
+        || !TEST_true(OSSL_PARAM_get_double(param, &d)))
         return 0;
 
     /* Check signed types */
@@ -102,8 +102,8 @@ static int test_param_type_extra(const OSSL_PARAM *param, unsigned char *cmp,
 
     /* Check a widening write if possible */
     if (sizeof(size_t) > width)
-        if (!TEST_true(OSSL_PARAM_set_int32(param, "a", 12345))
-            || !TEST_true(OSSL_PARAM_get_size_t(param, "a", &s))
+        if (!TEST_true(OSSL_PARAM_set_int32(param, 12345))
+            || !TEST_true(OSSL_PARAM_get_size_t(param, &s))
             || !TEST_size_t_eq(s, 12345))
             return 0;
     return 1;
@@ -134,14 +134,14 @@ static int test_param_type_extra(const OSSL_PARAM *param, unsigned char *cmp,
         swap_copy(le, raw_values[n].value, len); \
         memcpy(&in, buf, sizeof(in)); \
         param.buffer = &out; \
-        if (!TEST_true(OSSL_PARAM_set_##name(&param, "a", in))) \
+        if (!TEST_true(OSSL_PARAM_set_##name(&param, in))) \
             return 0; \
         copy_to_le(cmp, &out, sizeof(out)); \
         if (!TEST_mem_eq(cmp, len, le, len)) \
             return 0; \
         in = 0; \
         param.buffer = buf; \
-        if (!TEST_true(OSSL_PARAM_get_##name(&param, "a", &in))) \
+        if (!TEST_true(OSSL_PARAM_get_##name(&param, &in))) \
             return 0; \
         copy_to_le(cmp, &in, sizeof(in)); \
         if (!TEST_mem_eq(cmp, sizeof(in), le, sizeof(in))) \
@@ -171,7 +171,7 @@ static int test_param_bignum(int n)
     size_t bnsize;
     BIGNUM *b = NULL, *c = NULL;
     OSSL_PARAM param = OSSL_PARAM_DEFN("bn", OSSL_PARAM_UNSIGNED_INTEGER,
-                                       NULL, sizeof(bnbuf), NULL);
+                                       NULL, len, NULL);
     int ret = 0;
 
     param.buffer = bnbuf;
@@ -182,9 +182,9 @@ static int test_param_bignum(int n)
     if (!TEST_ptr(b = BN_bin2bn(raw_values[n].value, (int)len, NULL)))
         goto err;
 
-    if (!TEST_true(OSSL_PARAM_set_BN(&param, "bn", b))
-        || !TEST_mem_eq(bnbuf, len, buf, len)
-        || !TEST_true(OSSL_PARAM_get_BN(&param, "bn", &c))
+    if (!TEST_true(OSSL_PARAM_set_BN(&param, b))
+        || !TEST_mem_eq(bnbuf, bnsize, buf, bnsize)
+        || !TEST_true(OSSL_PARAM_get_BN(&param, &c))
         || !TEST_BN_eq(b, c))
         goto err;
 
@@ -201,7 +201,7 @@ static int test_param_real(void)
     OSSL_PARAM param = OSSL_PARAM_double("r", NULL);
 
     param.buffer = &p;
-    return TEST_true(OSSL_PARAM_set_double(&param, "r", 3.14159))
+    return TEST_true(OSSL_PARAM_set_double(&param, 3.14159))
            && TEST_double_eq(p, 3.14159);
 }
 

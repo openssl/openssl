@@ -296,6 +296,19 @@
                    Typically OpenSSL will automatically load a system config
                    file which configures default ssl options.
 
+  enable-buildtest-c++
+                   While testing, generate C++ buildtest files that
+                   simply check that the public OpenSSL header files
+                   are usable standalone with C++.
+
+                   Enabling this option demands extra care.  For any
+                   compiler flag given directly as configuration
+                   option, you must ensure that it's valid for both
+                   the C and the C++ compiler.  If not, the C++ build
+                   test will most likely break.  As an alternative,
+                   you can use the language specific variables, CFLAGS
+                   and CXXFLAGS.
+
   no-capieng
                    Don't build the CAPI engine. This option will be forced if
                    on a platform that does not support CAPI.
@@ -396,9 +409,6 @@
                    available if the GOST algorithms are also available through
                    loading an externally supplied engine.
 
-  no-hw-padlock
-                   Don't build the padlock engine.
-
   no-makedepend
                    Don't generate dependencies.
 
@@ -412,6 +422,11 @@
 
   no-ocsp
                    Don't build support for OCSP.
+
+  no-padlockeng
+  no-hw-padlock
+                   Don't build the padlock engine.
+                   ('no-hw-padlock' is deprecated and should not be used)
 
   no-pic
                    Don't build with support for Position Independent Code.
@@ -673,6 +688,11 @@
 
                         CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- \
                         ./config -DCOOKIE
+
+                   If CC is set, it is advisable to also set CXX to ensure
+                   both C and C++ compilers are in the same "family".  This
+                   becomes relevant with 'enable-external-tests' and
+                   'enable-buildtest-c++'.
 
   reconf
   reconfigure

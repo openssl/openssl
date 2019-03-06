@@ -205,6 +205,7 @@ static int test_builtin(int n)
     EVP_MD_CTX *mctx = NULL;
     size_t sig_len;
     int nid, ret = 0;
+    int temp;
 
     nid = curves[n].nid;
 
@@ -231,9 +232,10 @@ static int test_builtin(int n)
         || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey_neg, eckey_neg)))
         goto err;
 
-    sig_len = ECDSA_size(eckey);
+    temp = ECDSA_size(eckey);
 
-    if (!TEST_ptr(sig = OPENSSL_malloc(sig_len))
+    if (!TEST_int_ge(temp, 0)
+        || !TEST_ptr(sig = OPENSSL_malloc(sig_len = (size_t)temp))
         /* create a signature */
         || !TEST_true(EVP_DigestSignInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_true(EVP_DigestSign(mctx, sig, &sig_len, tbs, sizeof(tbs)))
