@@ -1471,7 +1471,7 @@ static int underflow_test(void)
     x2 = BN_CTX_get(ctx);
     y2 = BN_CTX_get(ctx);
     k = BN_CTX_get(ctx);
-    if (!TEST_ptr(ctx))
+    if (!TEST_ptr(k))
         goto err;
 
     grp = EC_GROUP_new_by_curve_name(NID_secp521r1);
