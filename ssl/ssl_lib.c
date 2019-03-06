@@ -4205,11 +4205,45 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
     return 1;
 }
 
+int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
+{
+    X509_LOOKUP *lookup;
+
+    lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_store());
+    if (lookup == NULL)
+        return 0;
+
+    X509_LOOKUP_add_store(lookup, NULL);
+
+    /* Clear any errors if the default file does not exist */
+    ERR_clear_error();
+
+    return 1;
+}
+
+int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile)
+{
+    return X509_STORE_load_file(ctx->cert_store, CAfile);
+}
+
+int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath)
+{
+    return X509_STORE_load_path(ctx->cert_store, CApath);
+}
+
+int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore)
+{
+    return X509_STORE_load_store(ctx->cert_store, CAstore);
+}
+
+#if OPENSSL_API_LEVEL < 3
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                   const char *CApath)
 {
-    return X509_STORE_load_locations(ctx->cert_store, CAfile, CApath);
+    return SSL_CTX_load_verify_file(ctx, CAfile)
+        || SSL_CTX_load_verify_dir(ctx, CApath);
 }
+#endif
 
 void SSL_set_info_callback(SSL *ssl,
                            void (*cb) (const SSL *ssl, int type, int val))
