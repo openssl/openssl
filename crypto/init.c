@@ -155,10 +155,10 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_register_atexit,
     return 1;
 }
 
-static CRYPTO_ONCE load_crypto_nodelete = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
+static CRYPTO_ONCE load_crypto_pinshared = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_pinshared)
 {
-    OSSL_TRACE(INIT, "ossl_init_load_crypto_nodelete()\n");
+    OSSL_TRACE(INIT, "ossl_init_load_crypto_pinshared()\n");
 
 #if !defined(OPENSSL_USE_NODELETE) \
     && !defined(OPENSSL_NO_PINSHARED)
@@ -173,7 +173,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
                                 (void *)&base_inited, &handle);
 
         OSSL_TRACE1(INIT,
-                    "ossl_init_load_crypto_nodelete: "
+                    "ossl_init_load_crypto_pinshared: "
                     "obtained DSO reference? %s\n",
                     (ret == TRUE ? "No!" : "Yes."));
         return (ret == TRUE) ? 1 : 0;
@@ -204,6 +204,16 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 # endif
 #endif
 
+    return 1;
+}
+
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_load_crypto_pinshared,
+                           ossl_init_load_crypto_pinshared)
+{
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_no_load_crypto_pinshared ok!\n");
+#endif
+    /* Do nothing in this case */
     return 1;
 }
 
@@ -588,7 +598,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
      * When the caller specifies OPENSSL_INIT_BASE_ONLY, that should be the
      * *only* option specified.  With that option we return immediately after
      * doing the requested limited initialization.  Note that
-     * err_shelve_state() called by us via ossl_init_load_crypto_nodelete()
+     * err_shelve_state() called by us via ossl_init_load_crypto_pinshared()
      * re-enters OPENSSL_init_crypto() with OPENSSL_INIT_BASE_ONLY, but with
      * base already initialized this is a harmless NOOP.
      *
@@ -615,8 +625,15 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
     }
 
-    if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
+    if ((opts & OPENSSL_INIT_NO_PINSHARED) != 0) {
+        if (!RUN_ONCE_ALT(&load_crypto_pinshared,
+                          ossl_init_no_load_crypto_pinshared,
+                          ossl_init_load_crypto_pinshared))
+            return 0;
+    } else if (!RUN_ONCE(&load_crypto_pinshared,
+                         ossl_init_load_crypto_pinshared)) {
         return 0;
+    }
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
             && !RUN_ONCE_ALT(&load_crypto_strings,
