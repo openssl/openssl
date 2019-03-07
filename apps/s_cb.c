@@ -1434,7 +1434,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
             BIO_printf(sdb->out, "%s", nm);
 
             sname= lookup(raw_sig_code, signature_tls13_scheme_list, NULL);
-            if (sname) {
+            if (sname != NULL) {
                 BIO_printf(sdb->out, " scheme=%s", sname);
             } else {
                 int alg_code= salg[1];
@@ -1442,7 +1442,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
                 const char *alg_str= lookup(alg_code, signature_tls12_alg_list, NULL);
                 const char *hash_str= lookup(hash_code, signature_tls12_hash_list, NULL);
 
-                if (alg_str && hash_str) {
+                if (alg_str != NULL && hash_str != NULL) {
                     BIO_printf(sdb->out, " digest=%s, algorithm=%s", hash_str, alg_str);
                 } else {
                     BIO_printf(sdb->out, " scheme=unknown(0x%04x)", raw_sig_code);
