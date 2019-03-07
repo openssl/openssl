@@ -62,7 +62,7 @@ if this option is not specified.
 This indicates that the input data is raw data, which is not hashed by any
 message digest algorithm. The user can specify a digest algorithm by using
 the B<-digest> option. This option can only be used with B<-sign> and
-B<-verify>.
+B<-verify> and must be used with the Ed25519 and Ed448 algorithms.
 
 =item B<-digest algorithm>
 
@@ -216,20 +216,17 @@ hash the input data. It is used (by some algorithms) for sanity-checking the
 lengths of data passed in to the B<pkeyutl> and for creating the structures that
 make up the signature (e.g. B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
 
-This utility does not hash the input data but rather it will use the data
-directly as input to the signature algorithm. Depending on the key type,
-signature type, and mode of padding, the maximum acceptable lengths of input
-data differ. The signed data can't be longer than the key modulus with RSA. In
-case of ECDSA and DSA the data shouldn't be longer than the field
-size, otherwise it will be silently truncated to the field size. In any event
-the input size must not be larger than the largest supported digest size.
+This utility does not hash the input data (except where -rawin is used) but
+rather it will use the data directly as input to the signature algorithm.
+Depending on the key type, signature type, and mode of padding, the maximum
+acceptable lengths of input data differ. The signed data can't be longer than
+the key modulus with RSA. In case of ECDSA and DSA the data shouldn't be longer
+than the field size, otherwise it will be silently truncated to the field size.
+In any event the input size must not be larger than the largest supported digest
+size.
 
 In other words, if the value of digest is B<sha1> the input should be the 20
 bytes long binary encoding of the SHA-1 hash function output.
-
-The Ed25519 and Ed448 signature algorithms are not supported by this utility.
-They accept non-hashed input, but this utility can only be used to sign hashed
-input.
 
 =head1 RSA ALGORITHM
 
@@ -318,6 +315,18 @@ this digest is assumed by default.
 
 The X25519 and X448 algorithms support key derivation only. Currently there are
 no additional options.
+
+=head1 Ed25519 and Ed448 ALGORITHMS
+
+These algorithms only support signing and verifying. OpenSSL only implements the
+"pure" variants of these algorithms so raw data can be passed directly to them
+without hashing them first. The option "-rawin" must be used with these
+algorithms with no "-digest" specified. Additionally OpenSSL only supports
+"oneshot" operation with these algorithms. This means that the entire file to
+be signed/verified must be read into memory before processing it. Signing or
+Verifying very large files should be avoided. Additionally the size of the file
+must be known for this to work. If the size of the file cannot be determined
+(for example if the input is stdin) then the sign or verify operation will fail.
 
 =head1 SM2
 
