@@ -67,15 +67,14 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     unsigned int good, found_zero_byte, mask, threes_in_row;
     int zero_index = 0, msg_index, mlen = -1, err;
 
-    if (flen <= 0)
+    if (tlen <= 0 || flen <= 0)
         return -1;
 
-    if (flen > num || num < 11 || tlen < num - 11) {
+    if (flen > num || num < 11) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_SMALL);
         return -1;
     }
 
-    tlen = num - 11;
     em = OPENSSL_malloc(num);
     if (em == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, ERR_R_MALLOC_FAILURE);
@@ -126,6 +125,7 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     good &= constant_time_ge(threes_in_row, 8);
     err = constant_time_select_int(mask | good, err,
                                    RSA_R_SSLV3_ROLLBACK_ATTACK);
+    mask = ~good;
 
     /*
      * Skip the zero byte. This is incorrect if we never found a zero-byte
@@ -133,6 +133,12 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
      */
     msg_index = zero_index + 1;
     mlen = num - msg_index;
+
+    /*
+     * For good measure, do this check in constant time as well.
+     */
+    good &= constant_time_ge(tlen, mlen);
+    err = constant_time_select_int(mask | good, err, RSA_R_DATA_TOO_LARGE);
 
     /*
      * Even though we can't fake result's length, we can pretend copying
@@ -144,6 +150,8 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
      * should be noted that failure is indistinguishable from normal
      * operation if |tlen| is fixed by protocol.
      */
+    tlen = constant_time_select_int(constant_time_lt(num - 11, tlen),
+                                    num - 11, tlen);
     msg_index = constant_time_select_int(good, msg_index, num - tlen);
     mlen = num - msg_index;
     for (mask = good, i = 0; i < tlen; i++) {
