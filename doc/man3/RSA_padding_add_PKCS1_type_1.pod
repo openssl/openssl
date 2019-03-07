@@ -133,6 +133,11 @@ plaintext and additionally some application specific consistency
 checks on the plaintext need to be performed in constant time.
 If the plaintext is rejected it must be kept secret which of the
 checks caused the application to reject the message.
+Do not remove the zero-padding from the decrypted raw RSA data
+which was computed by RSA_private_decrypt() with B<RSA_NO_PADDING>,
+as this would create a small timing side channel which could be
+used to mount a Bleichenbacher attack against any padding mode
+including PKCS1_OAEP.
 
 =head1 SEE ALSO
 
