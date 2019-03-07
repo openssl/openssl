@@ -735,7 +735,9 @@ typedef enum OPTION_choice {
     OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH, OPT_NO_CACHE,
     OPT_EXT_CACHE, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE, OPT_CHAINCAFILE,
-    OPT_VERIFYCAFILE, OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
+    OPT_VERIFYCAFILE,
+    OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
+    OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
     OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
@@ -807,10 +809,13 @@ const OPTIONS s_server_options[] = {
     {"state", OPT_STATE, '-', "Print the SSL states"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
+    {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store URI"},
     {"nocert", OPT_NOCERT, '-', "Don't use any certificates (Anon-DH)"},
     {"quiet", OPT_QUIET, '-', "No server output"},
     {"no_resume_ephemeral", OPT_NO_RESUME_EPHEMERAL, '-',
@@ -844,8 +849,12 @@ const OPTIONS s_server_options[] = {
      "second certificate chain file in PEM format"},
     {"chainCApath", OPT_CHAINCAPATH, '/',
      "use dir as certificate store path to build CA certificate chain"},
+    {"chainCAstore", OPT_CHAINCASTORE, ':',
+     "use URI as certificate store to build CA certificate chain"},
     {"verifyCApath", OPT_VERIFYCAPATH, '/',
      "use dir as certificate store path to verify CA certificate"},
+    {"verifyCAstore", OPT_VERIFYCASTORE, ':',
+     "use URI as certificate store to verify CA certificate"},
     {"no_cache", OPT_NO_CACHE, '-', "Disable session cache"},
     {"ext_cache", OPT_EXT_CACHE, '-',
      "Disable internal cache, setup and use external cache"},
@@ -986,9 +995,11 @@ int s_server_main(int argc, char *argv[])
     STACK_OF(X509_CRL) *crls = NULL;
     X509 *s_cert = NULL, *s_dcert = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    const char *CApath = NULL, *CAfile = NULL, *chCApath = NULL, *chCAfile = NULL;
+    const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
+    const char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL;
     char *dpassarg = NULL, *dpass = NULL;
-    char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
+    char *passarg = NULL, *pass = NULL;
+    char *vfyCApath = NULL, *vfyCAfile = NULL, *vfyCAstore = NULL;
     char *crl_file = NULL, *prog;
 #ifdef AF_UNIX
     int unlink_unix_path = 0;
@@ -1000,7 +1011,7 @@ int s_server_main(int argc, char *argv[])
     int no_dhe = 0;
 #endif
     int nocert = 0, ret = 1;
-    int noCApath = 0, noCAfile = 0;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
     int rev = 0, naccept = -1, sdebug = 0;
@@ -1257,6 +1268,18 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_VERIFYCAPATH:
             vfyCApath = opt_arg();
+            break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
+            break;
+        case OPT_CHAINCASTORE:
+            chCAstore = opt_arg();
+            break;
+        case OPT_VERIFYCASTORE:
+            vfyCAstore = opt_arg();
             break;
         case OPT_NO_CACHE:
             no_cache = 1;
@@ -1880,7 +1903,8 @@ int s_server_main(int argc, char *argv[])
     }
 #endif
 
-    if (!ctx_set_verify_locations(ctx, CAfile, CApath, noCAfile, noCApath)) {
+    if (!ctx_set_verify_locations(ctx, CAfile, noCAfile, CApath, noCApath,
+                                  CAstore, noCAstore)) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -1892,7 +1916,9 @@ int s_server_main(int argc, char *argv[])
 
     ssl_ctx_add_crls(ctx, crls, 0);
 
-    if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
+    if (!ssl_load_stores(ctx,
+                         vfyCApath, vfyCAfile, vfyCAstore,
+                         chCApath, chCAfile, chCAstore,
                          crls, crl_download)) {
         BIO_printf(bio_err, "Error loading store locations\n");
         ERR_print_errors(bio_err);
@@ -1941,8 +1967,8 @@ int s_server_main(int argc, char *argv[])
         if (async)
             SSL_CTX_set_mode(ctx2, SSL_MODE_ASYNC);
 
-        if (!ctx_set_verify_locations(ctx2, CAfile, CApath, noCAfile,
-                                      noCApath)) {
+        if (!ctx_set_verify_locations(ctx2, CAfile, noCAfile, CApath,
+                                      noCApath, CAstore, noCAstore)) {
             ERR_print_errors(bio_err);
             goto end;
         }

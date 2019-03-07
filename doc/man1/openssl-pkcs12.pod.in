@@ -338,7 +338,8 @@ Include some extra certificates:
 =head1 SEE ALSO
 
 L<openssl(1)>,
-L<openssl-pkcs8(1)>
+L<openssl-pkcs8(1)>,
+L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 

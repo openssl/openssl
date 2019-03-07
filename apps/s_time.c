@@ -45,8 +45,9 @@ static const size_t fmt_http_get_cmd_size = sizeof(fmt_http_get_cmd) - 2;
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
-    OPT_CAPATH, OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NEW, OPT_REUSE,
-    OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
+    OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
+    OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
+    OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
     OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3
 } OPTION_CHOICE;
 
@@ -60,12 +61,15 @@ const OPTIONS s_time_options[] = {
     {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
-    {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"cafile", OPT_CAFILE, '<', "PEM format file of CA's"},
+    {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
+    {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store URI"},
     {"new", OPT_NEW, '-', "Just time new connections"},
     {"reuse", OPT_REUSE, '-', "Just time connection reuse"},
     {"bugs", OPT_BUGS, '-', "Turn on SSL bug compatibility"},
@@ -105,11 +109,12 @@ int s_time_main(int argc, char **argv)
     SSL *scon = NULL;
     SSL_CTX *ctx = NULL;
     const SSL_METHOD *meth = NULL;
-    char *CApath = NULL, *CAfile = NULL, *cipher = NULL, *ciphersuites = NULL;
+    char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
+    char *cipher = NULL, *ciphersuites = NULL;
     char *www_path = NULL;
     char *host = SSL_CONNECT_NAME, *certfile = NULL, *keyfile = NULL, *prog;
     double totalTime = 0.0;
-    int noCApath = 0, noCAfile = 0;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
     long bytes_read = 0, finishtime = 0;
     OPTION_CHOICE o;
@@ -166,6 +171,12 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_NOCAFILE:
             noCAfile = 1;
+            break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
             break;
         case OPT_CIPHER:
             cipher = opt_arg();
@@ -236,7 +247,8 @@ int s_time_main(int argc, char **argv)
     if (!set_cert_stuff(ctx, certfile, keyfile))
         goto end;
 
-    if (!ctx_set_verify_locations(ctx, CAfile, CApath, noCAfile, noCApath)) {
+    if (!ctx_set_verify_locations(ctx, CAfile, noCAfile, CApath, noCApath,
+                                  CAstore, noCAstore)) {
         ERR_print_errors(bio_err);
         goto end;
     }

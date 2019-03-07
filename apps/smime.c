@@ -41,9 +41,10 @@ typedef enum OPTION_choice {
     OPT_CRLFEOL, OPT_ENGINE, OPT_PASSIN,
     OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP, OPT_MD,
     OPT_CIPHER, OPT_INKEY, OPT_KEYFORM, OPT_CERTFILE, OPT_CAFILE,
+    OPT_CAPATH, OPT_CASTORE, OPT_NOCAFILE, OPT_NOCAPATH, OPT_NOCASTORE,
     OPT_R_ENUM,
     OPT_V_ENUM,
-    OPT_CAPATH, OPT_NOCAFILE, OPT_NOCAPATH, OPT_IN, OPT_INFORM, OPT_OUT,
+    OPT_IN, OPT_INFORM, OPT_OUT,
     OPT_OUTFORM, OPT_CONTENT
 } OPTION_CHOICE;
 
@@ -86,10 +87,13 @@ const OPTIONS smime_options[] = {
     {"text", OPT_TEXT, '-', "Include or delete text MIME headers"},
     {"CApath", OPT_CAPATH, '/', "Trusted certificates directory"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
+    {"CAstore", OPT_CASTORE, ':', "Trusted certificates store URI"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store"},
     {"resign", OPT_RESIGN, '-', "Resign a signed message"},
     {"nochain", OPT_NOCHAIN, '-',
      "set PKCS7_NOCHAIN so certificates contained in the message are not used as untrusted CAs" },
@@ -121,12 +125,12 @@ int smime_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *sign_md = NULL;
-    const char *CAfile = NULL, *CApath = NULL, *prog = NULL;
+    const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile = NULL;
     char *passinarg = NULL, *passin = NULL, *to = NULL, *from = NULL, *subject = NULL;
     OPTION_CHOICE o;
-    int noCApath = 0, noCAfile = 0;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int flags = PKCS7_DETACHED, operation = 0, ret = 0, indef = 0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
         FORMAT_PEM;
@@ -302,11 +306,17 @@ int smime_main(int argc, char **argv)
         case OPT_CAPATH:
             CApath = opt_arg();
             break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
         case OPT_NOCAFILE:
             noCAfile = 1;
             break;
         case OPT_NOCAPATH:
             noCApath = 1;
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
             break;
         case OPT_CONTENT:
             contfile = opt_arg();
@@ -473,7 +483,8 @@ int smime_main(int argc, char **argv)
         goto end;
 
     if (operation == SMIME_VERIFY) {
-        if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
+        if ((store = setup_verify(CAfile, noCAfile, CApath, noCApath,
+                                  CAstore, noCAstore)) == NULL)
             goto end;
         X509_STORE_set_verify_cb(store, smime_cb);
         if (vpmtouched)

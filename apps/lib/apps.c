@@ -125,18 +125,29 @@ int app_init(long mesgwin)
 }
 #endif
 
-int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                             const char *CApath, int noCAfile, int noCApath)
+int ctx_set_verify_locations(SSL_CTX *ctx,
+                             const char *CAfile, int noCAfile,
+                             const char *CApath, int noCApath,
+                             const char *CAstore, int noCAstore)
 {
-    if (CAfile == NULL && CApath == NULL) {
+    if (CAfile == NULL && CApath == NULL && CAstore == NULL) {
         if (!noCAfile && SSL_CTX_set_default_verify_file(ctx) <= 0)
             return 0;
         if (!noCApath && SSL_CTX_set_default_verify_dir(ctx) <= 0)
             return 0;
+        if (!noCAstore && SSL_CTX_set_default_verify_store(ctx) <= 0)
+            return 0;
 
         return 1;
     }
-    return SSL_CTX_load_verify_locations(ctx, CAfile, CApath);
+
+    if (CAfile != NULL && !SSL_CTX_load_verify_file(ctx, CAfile))
+        return 0;
+    if (CApath != NULL && !SSL_CTX_load_verify_dir(ctx, CApath))
+        return 0;
+    if (CAstore != NULL && !SSL_CTX_load_verify_store(ctx, CAstore))
+        return 0;
+    return 1;
 }
 
 #ifndef OPENSSL_NO_CT
@@ -1068,7 +1079,9 @@ void print_array(BIO *out, const char* title, int len, const unsigned char* d)
     BIO_printf(out, "\n};\n");
 }
 
-X509_STORE *setup_verify(const char *CAfile, const char *CApath, int noCAfile, int noCApath)
+X509_STORE *setup_verify(const char *CAfile, int noCAfile,
+                         const char *CApath, int noCApath,
+                         const char *CAstore, int noCAstore)
 {
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
@@ -1080,7 +1093,7 @@ X509_STORE *setup_verify(const char *CAfile, const char *CApath, int noCAfile, i
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)
             goto end;
-        if (CAfile) {
+        if (CAfile != NULL) {
             if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM)) {
                 BIO_printf(bio_err, "Error loading file %s\n", CAfile);
                 goto end;
@@ -1094,13 +1107,24 @@ X509_STORE *setup_verify(const char *CAfile, const char *CApath, int noCAfile, i
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
         if (lookup == NULL)
             goto end;
-        if (CApath) {
+        if (CApath != NULL) {
             if (!X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM)) {
                 BIO_printf(bio_err, "Error loading directory %s\n", CApath);
                 goto end;
             }
         } else {
             X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+        }
+    }
+
+    if (CAstore != NULL || !noCAstore) {
+        lookup = X509_STORE_add_lookup(store, X509_LOOKUP_store());
+        if (lookup == NULL)
+            goto end;
+        if (!X509_LOOKUP_add_store(lookup, CAstore)) {
+            if (CAstore != NULL)
+                BIO_printf(bio_err, "Error loading store URI %s\n", CAstore);
+            goto end;
         }
     }
 

@@ -52,6 +52,7 @@ B<-verify>
 [B<-token_in>]
 [B<-CApath> I<trusted_cert_path>]
 [B<-CAfile> I<trusted_certs.pem>]
+[B<-CAstore> I<trusted_certs_uri>]
 [B<-untrusted> I<cert_file.pem>]
 [I<verify options>]
 
@@ -352,9 +353,11 @@ This flag can be used together with the B<-in> option and indicates
 that the input is a DER encoded timestamp token (ContentInfo) instead
 of a timestamp response (TimeStampResp). (Optional)
 
-=item B<-CAfile> I<file>, B<-CApath> I<dir>
+=item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
 
 See L<openssl(1)/Trusted Certificate Options> for more information.
+
+At least one of B<-CApath>, B<-CAfile> or B<-CAstore> must be specified.
 
 =item B<-untrusted> I<cert_file.pem>
 
@@ -649,7 +652,8 @@ L<openssl-req(1)>,
 L<openssl-x509(1)>,
 L<openssl-ca(1)>,
 L<openssl-genrsa(1)>,
-L<config(5)>
+L<config(5)>,
+L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 

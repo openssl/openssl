@@ -35,6 +35,7 @@ B<openssl> B<s_client>
 [B<-pass> I<arg>]
 [B<-chainCApath> I<directory>]
 [B<-chainCAfile> I<filename>]
+[B<-chainCAstore> I<uri>]
 [B<-requestCAfile> I<filename>]
 [B<-dane_tlsa_domain> I<domain>]
 [B<-dane_tlsa_rrdata> I<rrdata>]
@@ -302,6 +303,10 @@ information.
 
 A file containing trusted certificates to use when attempting to build the
 client certificate chain.
+
+=item B<-chainCAstore> I<uri>
+
+The URI to use when attempting to build the client certificate chain.
 
 =item B<-requestCAfile> I<file>
 
@@ -807,7 +812,8 @@ L<openssl-ciphers(1)>,
 L<SSL_CONF_cmd(3)>,
 L<SSL_CTX_set_max_send_fragment(3)>,
 L<SSL_CTX_set_split_send_fragment(3)>,
-L<SSL_CTX_set_max_pipelines(3)>
+L<SSL_CTX_set_max_pipelines(3)>,
+L<ossl_store-file(7)>
 
 =head1 HISTORY
 

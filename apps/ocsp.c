@@ -134,7 +134,8 @@ typedef enum OPTION_choice {
     OPT_NO_CERT_CHECKS, OPT_NO_EXPLICIT, OPT_TRUST_OTHER,
     OPT_NO_INTERN, OPT_BADSIG, OPT_TEXT, OPT_REQ_TEXT, OPT_RESP_TEXT,
     OPT_REQIN, OPT_RESPIN, OPT_SIGNER, OPT_VAFILE, OPT_SIGN_OTHER,
-    OPT_VERIFY_OTHER, OPT_CAFILE, OPT_CAPATH, OPT_NOCAFILE, OPT_NOCAPATH,
+    OPT_VERIFY_OTHER, OPT_CAFILE, OPT_CAPATH, OPT_CASTORE, OPT_NOCAFILE,
+    OPT_NOCAPATH, OPT_NOCASTORE,
     OPT_VALIDITY_PERIOD, OPT_STATUS_AGE, OPT_SIGNKEY, OPT_REQOUT,
     OPT_RESPOUT, OPT_PATH, OPT_ISSUER, OPT_CERT, OPT_SERIAL,
     OPT_INDEX, OPT_CA, OPT_NMIN, OPT_REQUEST, OPT_NDAYS, OPT_RSIGNER,
@@ -195,10 +196,13 @@ const OPTIONS ocsp_options[] = {
      "Additional certificates to search for signer"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
     {"CApath", OPT_CAPATH, '<', "Trusted certificates directory"},
+    {"CAstore", OPT_CASTORE, ':', "Trusted certificates store URI"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates store"},
     {"validity_period", OPT_VALIDITY_PERIOD, 'u',
      "Maximum validity discrepancy in seconds"},
     {"status_age", OPT_STATUS_AGE, 'p', "Maximum status age in seconds"},
@@ -250,7 +254,7 @@ int ocsp_main(int argc, char **argv)
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    const char *CAfile = NULL, *CApath = NULL;
+    const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
     char *header, *value;
     char *host = NULL, *port = NULL, *path = "/", *outfile = NULL;
     char *rca_filename = NULL, *reqin = NULL, *respin = NULL;
@@ -259,7 +263,7 @@ int ocsp_main(int argc, char **argv)
     char *sign_certfile = NULL, *verify_certfile = NULL, *rcertfile = NULL;
     char *signfile = NULL, *keyfile = NULL;
     char *thost = NULL, *tport = NULL, *tpath = NULL;
-    int noCAfile = 0, noCApath = 0;
+    int noCAfile = 0, noCApath = 0, noCAstore = 0;
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, ret = 1;
@@ -395,11 +399,17 @@ int ocsp_main(int argc, char **argv)
         case OPT_CAPATH:
             CApath = opt_arg();
             break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
         case OPT_NOCAFILE:
             noCAfile = 1;
             break;
         case OPT_NOCAPATH:
             noCApath = 1;
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
             break;
         case OPT_V_CASES:
             if (!opt_verify(o, vpm))
@@ -765,7 +775,8 @@ redo_accept:
     }
 
     if (store == NULL) {
-        store = setup_verify(CAfile, CApath, noCAfile, noCApath);
+        store = setup_verify(CAfile, noCAfile, CApath, noCApath,
+                             CAstore, noCAstore);
         if (!store)
             goto end;
     }

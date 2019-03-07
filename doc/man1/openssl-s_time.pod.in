@@ -87,12 +87,6 @@ I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<openssl-x509(1)> manual page for details.
 
-=item B<-CApath> I<directory>
-
-The directory to use for server certificate verification. This directory
-must be in "hash format", see L<openssl-verify(1)> for more information.
-These are also used when building the client certificate chain.
-
 =item B<-new>
 
 Performs the timing test using a new session ID for each connection.
@@ -193,7 +187,8 @@ fails.
 L<openssl(1)>,
 L<openssl-s_client(1)>,
 L<openssl-s_server(1)>,
-L<openssl-ciphers(1)>
+L<openssl-ciphers(1)>,
+L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 
