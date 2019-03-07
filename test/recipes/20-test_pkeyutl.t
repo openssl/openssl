@@ -15,34 +15,56 @@ use OpenSSL::Test::Utils;
 
 setup("test_pkeyutl");
 
-plan tests => 2;
+plan tests => 6;
 
-sub sign
-{
-    # Utilize the sm2.crt as the TBS file
-    return run(app(([ 'openssl', 'pkeyutl', '-sign',
-                      '-in', srctop_file('test', 'certs', 'sm2.crt'),
-                      '-inkey', srctop_file('test', 'certs', 'sm2.key'),
-                      '-out', 'signature.sm2', '-rawin',
-                      '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid'])));
-}
-
-sub verify
-{
-    # Utilize the sm2.crt as the TBS file
-    return run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin',
-                      '-in', srctop_file('test', 'certs', 'sm2.crt'),
-                      '-inkey', srctop_file('test', 'certs', 'sm2.crt'),
-                      '-sigfile', 'signature.sm2', '-rawin',
-                      '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid'])));
-}
+# For the tests below we use the cert itself as the TBS file
 
 SKIP: {
     skip "Skipping tests that require EC, SM2 or SM3", 2
         if disabled("ec") || disabled("sm2") || disabled("sm3");
 
-    ok(sign, "Sign a piece of data using SM2");
-    ok(verify, "Verify an SM2 signature against a piece of data");
+    # SM2
+    ok(run(app(([ 'openssl', 'pkeyutl', '-sign',
+                      '-in', srctop_file('test', 'certs', 'sm2.crt'),
+                      '-inkey', srctop_file('test', 'certs', 'sm2.key'),
+                      '-out', 'signature.dat', '-rawin',
+                      '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid']))),
+                      "Sign a piece of data using SM2");
+    ok(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin',
+                      '-in', srctop_file('test', 'certs', 'sm2.crt'),
+                      '-inkey', srctop_file('test', 'certs', 'sm2.crt'),
+                      '-sigfile', 'signature.dat', '-rawin',
+                      '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid']))),
+                      "Verify an SM2 signature against a piece of data");
 }
 
-unlink 'signature.sm2';
+SKIP: {
+    skip "Skipping tests that require EC", 4
+        if disabled("ec");
+
+    # Ed25519
+    ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
+                  srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
+                  '-inkey', srctop_file('test', 'certs', 'server-ed25519-key.pem'),
+                  '-out', 'signature.dat', '-rawin']))),
+                  "Sign a piece of data using Ed25519");
+    ok(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin', '-in',
+                  srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
+                  '-inkey', srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
+                  '-sigfile', 'signature.dat', '-rawin']))),
+                  "Verify an Ed25519 signature against a piece of data");
+
+    # Ed448
+    ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
+                  srctop_file('test', 'certs', 'server-ed448-cert.pem'),
+                  '-inkey', srctop_file('test', 'certs', 'server-ed448-key.pem'),
+                  '-out', 'signature.dat', '-rawin']))),
+                  "Sign a piece of data using Ed448");
+    ok(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin', '-in',
+                  srctop_file('test', 'certs', 'server-ed448-cert.pem'),
+                  '-inkey', srctop_file('test', 'certs', 'server-ed448-cert.pem'),
+                  '-sigfile', 'signature.dat', '-rawin']))),
+                  "Verify an Ed448 signature against a piece of data");
+}
+
+unlink 'signature.dat';
