@@ -104,13 +104,8 @@ RSA_padding_add_xxx().
 RSA_padding_check_xxx() verifies that the B<fl> bytes at B<f> contain
 a valid encoding for a B<rsa_len> byte RSA key in the respective
 encoding method and stores the recovered data of at most B<tlen> bytes
-(for B<RSA_NO_PADDING>: of size B<tlen>) at B<to>.
-B<tlen> must be large enough to hold the maximal possible plaintext
-length for the used padding mode, which is B<rsa_len> - 11 for
-RSA_padding_check_PKCS1_type_2() and RSA_padding_check_SSLv23(),
-B<rsa_len> - 42 for RSA_padding_check_PKCS1_OAEP()
-and B<rsa_len> - 2 * EVP_MD_size(B<md>) - 2
-for RSA_padding_check_PKCS1_OAEP_mgf1().
+(for B<RSA_NO_PADDING>: of size B<tlen>)
+at B<to>.
 
 For RSA_padding_xxx_OAEP(), B<p> points to the encoding parameter
 of length B<pl>. B<p> may be B<NULL> if B<pl> is 0.
