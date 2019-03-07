@@ -82,9 +82,12 @@ $OpenSSL::safe::opt_trust_synopsis = ""
 . "[B<-CAfile> I<file>]\n"
 . "[B<-no-CAfile>]\n"
 . "[B<-CApath> I<dir>]\n"
-. "[B<-no-CApath>]";
+. "[B<-no-CApath>]\n"
+. "[B<-CAstore> I<uri>]\n"
+. "[B<-no-CAstore>]";
 $OpenSSL::safe::opt_trust_item = ""
-. "=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>\n"
+. "=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>,\n"
+. "B<-CAstore> I<uri>, B<-no-CAstore>\n"
 . "\n"
 . "See L<openssl(1)/Trusted Certificate Options> for details.";
 

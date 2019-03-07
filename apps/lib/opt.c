@@ -146,7 +146,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         switch (i) {
         case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
-        case 'u': case 'c':
+        case 'u': case 'c': case ':':
             break;
         default:
             OPENSSL_assert(0);
@@ -686,6 +686,7 @@ int opt_next(void)
         switch (o->valtype) {
         default:
         case 's':
+        case ':':
             /* Just a string. */
             break;
         case '/':
@@ -804,6 +805,8 @@ static const char *valtype2param(const OPTIONS *o)
     case 0:
     case '-':
         return "";
+    case ':':
+        return "uri";
     case 's':
         return "val";
     case '/':

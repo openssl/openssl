@@ -190,8 +190,8 @@ P-256 and P-384.
 =item B<-trusted_first>
 
 When constructing the certificate chain, use the trusted certificates specified
-via B<-CAfile>, B<-CApath> or B<-trusted> before any certificates specified via
-B<-untrusted>.
+via B<-CAfile>, B<-CApath>, B<-CAstore> or B<-trusted> before any certificates
+specified via B<-untrusted>.
 This can be useful in environments with Bridge or Cross-Certified CAs.
 As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
 
@@ -222,9 +222,9 @@ consulted.
 That is, the only trust-anchors are those listed in I<file>.
 This option can be specified more than once to include trusted certificates
 from multiple I<file>s.
-This option implies the B<-no-CAfile> and B<-no-CApath> options.
-This option cannot be used in combination with either of the B<-CAfile> or
-B<-CApath> options.
+This option implies the B<-no-CAfile>, B<-no-CApath> and B<-no-CAstore> options.
+This option cannot be used in combination with any of the B<-CAfile>,
+B<-CApath> or B<-CAstore> options.
 
 =item B<-use_deltas>
 
@@ -743,8 +743,9 @@ Although the issuer checks are a considerable improvement over the old
 technique they still suffer from limitations in the underlying X509_LOOKUP
 API. One consequence of this is that trusted certificates with matching
 subject name must either appear in a file (as specified by the B<-CAfile>
-option) or a directory (as specified by B<-CApath>). If they occur in
-both then only the certificates in the file will be recognised.
+option), a directory (as specified by B<-CApath>), or a store (as specified
+by B<-CAstore>). If they occur in more than one location then only the
+certificates in the file will be recognised.
 
 Previous versions of OpenSSL assume certificates with matching subject
 name are identical and mishandled them.

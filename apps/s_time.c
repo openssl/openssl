@@ -236,7 +236,8 @@ int s_time_main(int argc, char **argv)
     if (!set_cert_stuff(ctx, certfile, keyfile))
         goto end;
 
-    if (!ctx_set_verify_locations(ctx, CAfile, CApath, noCAfile, noCApath)) {
+    if (!ctx_set_verify_locations(ctx, CAfile, noCAfile, CApath, noCApath,
+                                  NULL, 0)) {
         ERR_print_errors(bio_err);
         goto end;
     }

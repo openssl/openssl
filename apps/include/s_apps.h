@@ -69,8 +69,9 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str, SSL_CTX *ctx);
 int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls,
                      int crl_download);
 int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
-                    const char *vfyCAfile, const char *chCApath,
-                    const char *chCAfile, STACK_OF(X509_CRL) *crls,
+                    const char *vfyCAfile, const char *vfyCAstore,
+                    const char *chCApath, const char *chCAfile,
+                    const char *chCAstore, STACK_OF(X509_CRL) *crls,
                     int crl_download);
 void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose);
 int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);

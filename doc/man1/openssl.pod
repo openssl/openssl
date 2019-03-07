@@ -700,6 +700,21 @@ See L<openssl-rehash(1)> for information on creating this type of directory.
 
 Do not use the default directory of trusted certificates.
 
+=item B<-CAstore> I<uri>
+
+Use I<uri> as a store of trusted CA certificates.  The URI may
+indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this acts as B<-CAfile> or
+B<-CApath>, depending on if the URI indicates a single file or
+directory.
+These certificates are also used when building the server certificate
+chain (for example with L<openssl-s_server(1)>) or client certificate
+chain (for example with L<openssl-s_time(1)>).
+
+=item B<-no-CAstore>
+
+Do not use the default store.
+
 =back
 
 =head2 Random State Options

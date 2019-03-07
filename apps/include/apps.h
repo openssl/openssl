@@ -126,11 +126,13 @@ int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *cert_descrip);
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *cert_descrip);
-X509_STORE *setup_verify(const char *CAfile, const char *CApath,
-                         int noCAfile, int noCApath);
-__owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                                    const char *CApath, int noCAfile,
-                                    int noCApath);
+X509_STORE *setup_verify(const char *CAfile, int noCAfile,
+                         const char *CApath, int noCApath,
+                         const char *CAstore, int noCAstore);
+__owur int ctx_set_verify_locations(SSL_CTX *ctx,
+                                    const char *CAfile, int noCAfile,
+                                    const char *CApath, int noCApath,
+                                    const char *CAstore, int noCAstore);
 
 #ifndef OPENSSL_NO_CT
 

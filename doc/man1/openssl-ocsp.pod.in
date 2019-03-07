@@ -395,9 +395,9 @@ the OCSP request checked using the responder certificate's public key.
 
 Then a normal certificate verify is performed on the OCSP responder certificate
 building up a certificate chain in the process. The locations of the trusted
-certificates used to build the chain can be specified by the B<-CAfile>
-and B<-CApath> options or they will be looked for in the standard OpenSSL
-certificates directory.
+certificates used to build the chain can be specified by the B<-CAfile>,
+B<-CApath> or B<-CAstore> options or they will be looked for in the
+standard OpenSSL certificates directory.
 
 If the initial verify fails then the OCSP verify process halts with an
 error.
@@ -432,8 +432,8 @@ with the B<-VAfile> option.
 =head1 NOTES
 
 As noted, most of the verify options are for testing or debugging purposes.
-Normally only the B<-CApath>, B<-CAfile> and (if the responder is a 'global
-VA') B<-VAfile> options need to be used.
+Normally only the B<-CApath>, B<-CAfile>, B<-CAstore> and (if the responder
+is a 'global VA') B<-VAfile> options need to be used.
 
 The OCSP server is only useful for test and demonstration purposes: it is
 not really usable as a full OCSP responder. It contains only a very

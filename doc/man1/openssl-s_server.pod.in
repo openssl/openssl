@@ -61,6 +61,8 @@ B<openssl> B<s_server>
 [B<-dcert_chain> I<infile>]
 [B<-chainCApath> I<dir>]
 [B<-verifyCApath> I<dir>]
+[B<-chainCAstore> I<uri>]
+[B<-verifyCAstore> I<uri>]
 [B<-no_cache>]
 [B<-ext_cache>]
 [B<-verify_return_error>]
@@ -368,6 +370,15 @@ information.
 
 A file containing trusted certificates to use when attempting to build the
 server certificate chain.
+
+=item B<-chainCAstore> I<uri>
+
+The URI to a store to use for building the chain provided to the client.
+The URI may indicate a single certificate, as well as a collection of
+them.
+With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
+B<-chainCApath>, depending on if the URI indicates a directory or a
+single file.
 
 =item B<-nocert>
 

@@ -57,7 +57,7 @@ typedef enum OPTION_choice {
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
     OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
-    OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE,
+    OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -108,10 +108,13 @@ const OPTIONS pkcs12_options[] = {
     {"password", OPT_PASSWORD, 's', "Set import/export password source"},
     {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
+    {"CAstore", OPT_CASTORE, ':', "URI to store if CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -137,8 +140,8 @@ int pkcs12_main(int argc, char **argv)
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *badpass = NULL;
-    const char *CApath = NULL, *CAfile = NULL, *prog;
-    int noCApath = 0, noCAfile = 0;
+    const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL, *prog;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
@@ -270,11 +273,17 @@ int pkcs12_main(int argc, char **argv)
         case OPT_CAPATH:
             CApath = opt_arg();
             break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
         case OPT_CAFILE:
             CAfile = opt_arg();
             break;
         case OPT_NOCAPATH:
             noCApath = 1;
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
             break;
         case OPT_NOCAFILE:
             noCAfile = 1;
@@ -404,7 +413,8 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
-            if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath))
+            if ((store = setup_verify(CAfile, noCAfile, CApath, noCApath,
+                                      CAstore, noCAstore))
                     == NULL)
                 goto export_end;
 
