@@ -29,6 +29,21 @@ static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
 static const char *engine_name = "A minimal PKCS#11 engine only for sign";
 static int pkcs11_idx = -1;
+static int store_idx = 0;
+
+/* store stuff */
+static const char pkcs11_scheme[] = "pkcs11";
+static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
+    const OSSL_STORE_LOADER *loader, const char *uri,
+    const UI_METHOD *ui_method, void *ui_data);
+static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
+                                          const UI_METHOD *ui_method,
+                                          void *ui_data);
+static int pkcs11_store_eof(OSSL_STORE_LOADER_CTX *ctx);
+static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx);
+static int pkcs11_store_error(OSSL_STORE_LOADER_CTX *ctx);
+static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new();
+static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX* ctx);
 
 static int pkcs11_init(ENGINE *e)
 {
@@ -308,9 +323,121 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     return 0;
 }
 
+static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
+    const OSSL_STORE_LOADER *loader, const char *uri,
+    const UI_METHOD *ui_method, void *ui_data)
+{
+    size_t len;
+    ENGINE *e;
+    PKCS11_CTX *pkcs11_ctx;
+    OSSL_STORE_LOADER_CTX *store_ctx;
+
+    store_ctx = OSSL_STORE_LOADER_CTX_new();
+
+    len = strlen(pkcs11_scheme);
+    if (strncmp(uri, pkcs11_scheme, len) != 0)
+         return NULL;
+
+    uri += len;
+    if (*uri++ != ':')
+        return NULL;
+    if (*uri == '\0')
+        return NULL;
+
+    e = (ENGINE *) OSSL_STORE_LOADER_get0_engine(loader);
+    if (e == NULL)
+        return NULL;
+
+    if (strncmp(uri, "list=all", 8) == 0) {
+        pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+        if (pkcs11_ctx == NULL)
+            return NULL;
+        if (!pkcs11_get_ids(store_ctx, pkcs11_ctx))
+            return NULL;
+    }
+
+    return store_ctx;
+}
+
+static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
+                                          const UI_METHOD *ui_method,
+                                          void *ui_data)
+{
+    OSSL_STORE_INFO *ret = NULL;
+    char *name;
+    char *description;
+
+    if (ctx->ids[store_idx].name == NULL) {
+        ctx->eof = 1;
+        return NULL;
+    }
+
+    name = OPENSSL_strdup(ctx->ids[store_idx].name);
+    description = OPENSSL_strdup(ctx->ids[store_idx].desc);
+    ret = OSSL_STORE_INFO_new_NAME(name);
+    OSSL_STORE_INFO_set0_NAME_description(ret, description);
+
+    if (ctx->ids[store_idx+1].name == NULL || store_idx == MAX - 1)
+        ctx->eof = 1;
+    store_idx++;
+    return ret;
+}
+
+static int pkcs11_store_eof(OSSL_STORE_LOADER_CTX *ctx)
+{
+    return ctx->eof;
+}
+
+static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx)
+{
+    OSSL_STORE_LOADER_CTX_free(ctx);
+    return 1;
+}
+
+static int pkcs11_store_error(OSSL_STORE_LOADER_CTX *ctx)
+{
+/* TODO */
+    return 0;   
+}
+
+static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new()
+{
+    OSSL_STORE_LOADER_CTX *ctx;
+    ctx = OPENSSL_malloc(sizeof(OSSL_STORE_LOADER_CTX));
+    if (ctx == NULL)
+        return NULL;
+    ctx->error = 0;
+    ctx->eof = 0;
+    return ctx;
+}
+
+static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX* ctx)
+{
+    if (ctx == NULL)
+        return;
+    OPENSSL_free(ctx);
+}
+
 static int bind_pkcs11(ENGINE *e)
 {
     const RSA_METHOD *ossl_rsa_meth;
+    OSSL_STORE_LOADER *loader = NULL;
+
+    loader = OSSL_STORE_LOADER_new(e, pkcs11_scheme);
+    if (loader == NULL) {
+        printf("ERR1");
+        return 0;
+    }
+
+    if (!OSSL_STORE_LOADER_set_open(loader, pkcs11_store_open)
+        || !OSSL_STORE_LOADER_set_load(loader, pkcs11_store_load)
+        || !OSSL_STORE_LOADER_set_eof(loader, pkcs11_store_eof)
+        || !OSSL_STORE_LOADER_set_error(loader, pkcs11_store_error)
+        || !OSSL_STORE_LOADER_set_close(loader, pkcs11_store_close)
+        || !OSSL_STORE_register_loader(loader)) {
+        printf("ERR2");
+        return 0;
+    }
 
     ossl_rsa_meth = RSA_PKCS1_OpenSSL();
 

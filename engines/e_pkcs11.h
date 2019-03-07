@@ -10,7 +10,9 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/engine.h>
+#include <openssl/store.h>
 
+#define MAX 32
 #define CK_PTR *
 
 #ifdef _WIN32
@@ -65,6 +67,17 @@ typedef struct PKCS11_CTX_st {
     CRYPTO_RWLOCK *lock;
 } PKCS11_CTX;
 
+struct ids_st {
+    char *name;
+    char *desc;
+};
+
+struct ossl_store_loader_ctx_st {
+    int error;
+    int eof;
+    struct ids_st ids[MAX];
+};
+
 CK_RV pkcs11_initialize(const char *library_path);
 int pkcs11_start_session(PKCS11_CTX *ctx);
 int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType);
@@ -78,3 +91,6 @@ int pkcs11_get_slot(PKCS11_CTX *ctx);
 int pkcs11_find_private_key(PKCS11_CTX *ctx);
 void PKCS11_trace(char *format, ...);
 PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa);
+int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *storectx,
+                   PKCS11_CTX *pkcs11_ctx);
+
