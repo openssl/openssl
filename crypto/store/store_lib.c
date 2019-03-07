@@ -16,6 +16,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/trace.h>
 #include <openssl/store.h>
 #include "internal/thread_once.h"
 #include "crypto/store.h"
@@ -74,9 +75,14 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
 
     /* Try each scheme until we find one that could open the URI */
     for (i = 0; loader_ctx == NULL && i < schemes_n; i++) {
-        if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL)
+        OSSL_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
+        if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
+            OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
             loader_ctx = loader->open(loader, uri, ui_method, ui_data);
+            OSSL_TRACE2(STORE, "Opened %s => %p\n", uri, (void *)loader_ctx);
+        }
     }
+
     if (loader_ctx == NULL)
         goto err;
 
@@ -172,6 +178,7 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
     if (OSSL_STORE_eof(ctx))
         return NULL;
 
+    OSSL_TRACE(STORE, "Loading next object\n");
     v = ctx->loader->load(ctx->loader_ctx, ctx->ui_method, ctx->ui_data);
 
     if (ctx->post_process != NULL && v != NULL) {
@@ -203,6 +210,10 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
         }
     }
 
+    if (v != NULL)
+        OSSL_TRACE1(STORE, "Got a %s\n",
+                    OSSL_STORE_INFO_type_string(OSSL_STORE_INFO_get_type(v)));
+
     return v;
 }
 
@@ -218,7 +229,10 @@ int OSSL_STORE_eof(OSSL_STORE_CTX *ctx)
 
 int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
 {
-    int loader_ret = ctx->loader->close(ctx->loader_ctx);
+    int loader_ret;
+
+    OSSL_TRACE1(STORE, "Closing %p\n", (void *)ctx->loader_ctx);
+    loader_ret = ctx->loader->close(ctx->loader_ctx);
 
     OPENSSL_free(ctx);
     return loader_ret;
