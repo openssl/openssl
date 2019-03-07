@@ -134,21 +134,16 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     {
         int retryCount = 0;
         STATUS result = ERROR;
+        
         unsigned char *buffer;
         buffer = rand_pool_add_begin(pool, bytes_needed);
-        while ((result != OK) && (retryCount < 10))
-        {
-            RANDOM_NUM_GEN_STATUS status=randStatus();
-            if ((status == RANDOM_NUM_GEN_ENOUGH_ENTROPY) || (status == RANDOM_NUM_GEN_MAX_ENTROPY) )
-            {
+        while ((result != OK) && (retryCount < 10)) {
+            RANDOM_NUM_GEN_STATUS status = randStatus();
+            if ((status == RANDOM_NUM_GEN_ENOUGH_ENTROPY) || (status == RANDOM_NUM_GEN_MAX_ENTROPY) ) {
                 result = randBytes(buffer, bytes_needed);
-                if (result == OK) 
-                {
-                    rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
-                } 
-                // no else here: randStatus said ok, if randBytes failed it will result in another loop or no entropy
-            } else
-            {
+                if (result == OK)  rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);                
+                /* no else here: randStatus said ok, if randBytes failed it will result in another loop or no entropy */
+            } else {
                 /* 
                  *   give a minimum delay here to allow OS to collect more entropy 
                  *    taskDelay duration will depend on the system tick, this is by design
