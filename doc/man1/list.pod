@@ -18,6 +18,7 @@ B<openssl list>
 [B<-cipher-algorithms>]
 [B<-public-key-algorithms>]
 [B<-public-key-methods>]
+[B<-engines>]
 [B<-disabled>]
 
 =head1 DESCRIPTION
@@ -79,6 +80,10 @@ a block of multiple lines, all but the first are indented.
 
 Display a list of public key method OIDs: this also includes public key methods
 without an associated ASN.1 method, for example, KDF algorithms.
+
+=item B<-engines>
+
+Display a list of loaded engines.
 
 =item B<-disabled>
 
