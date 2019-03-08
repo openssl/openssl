@@ -548,8 +548,8 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
         CK_BYTE label[256];
         CK_BYTE id[255];
         CK_ATTRIBUTE template[2];
-        char buf_name[50];
-        char buf_desc[512];
+        char buf_name[MAX][50];
+        char buf_desc[MAX][512];
         char tmpbuf[3];
 
         template[0].type = CKA_LABEL;
@@ -573,21 +573,21 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
 
         len = template[1].ulValueLen;
 
-        snprintf(buf_name, 50, "%s", label); 
+        snprintf(buf_name[store_idx], 50, "%s", label); 
 
-        strcpy (buf_desc, "id (hex): ");
+        strcpy (buf_desc[store_idx], "id (hex): ");
         for (j = 0; j < (len < 254 ? len : 254); j++) {
             snprintf(tmpbuf, 3, "%02x",id[j]);
-            strcat(buf_desc, tmpbuf);
+            strcat(buf_desc[store_idx], tmpbuf);
         }
-        strcat (buf_desc, " id (ascii): ");
+        strcat (buf_desc[store_idx], " id (ascii): ");
         for (j = 0; j < (len < 254 ? len : 254); j++) {
             snprintf(tmpbuf, 2, "%c",id[j]);
-            strcat(buf_desc, tmpbuf);
+            strcat(buf_desc[store_idx], tmpbuf);
         }
 
-        store_ctx->ids[store_idx].name = buf_name;
-        store_ctx->ids[store_idx].desc = buf_desc;
+        store_ctx->ids[store_idx].name = buf_name[store_idx];
+        store_ctx->ids[store_idx].desc = buf_desc[store_idx];
 
         store_idx++;
     }
