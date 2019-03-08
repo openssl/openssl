@@ -9,6 +9,30 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added the X509_LOOKUP_METHOD called X509_LOOKUP_store, to allow
+     access to certificate and CRL stores via URIs and OSSL_STORE
+     loaders.
+
+     This adds the following functions:
+
+     X509_LOOKUP_store()
+     X509_STORE_load_file()
+     X509_STORE_load_path()
+     X509_STORE_load_store()
+     SSL_add_store_cert_subjects_to_stack()
+     SSL_CTX_set_default_verify_store()
+     SSL_CTX_load_verify_file()
+     SSL_CTX_load_verify_dir()
+     SSL_CTX_load_verify_store()
+
+     Also, the following functions are now deprecated:
+
+     - X509_STORE_load_locations() (use X509_STORE_load_file(),
+       X509_STORE_load_path() or X509_STORE_load_store() instead)
+     - SSL_CTX_load_verify_locations() (use SSL_CTX_load_verify_file(),
+       SSL_CTX_load_verify_dir() or SSL_CTX_load_verify_store() instead)
+     [Richard Levitte]
+
   *) Added a new method to gather entropy on VMS, based on SYS$GET_ENTROPY.
      The presence of this system service is determined at run-time.
      [Richard Levitte]
