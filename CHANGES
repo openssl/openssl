@@ -9,40 +9,8 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
-  *) Added functionality to create an EVP_PKEY context based on data
-     for methods from providers.  This takes an algorithm name and a
-     property query string and simply stores them, with the intent
-     that any operation that uses this context will use those strings
-     to fetch the needed methods implicitly, thereby making the port
-     of application written for pre-3.0 OpenSSL easier.
-     [Richard Levitte]
-
-  *) The undocumented function NCONF_WIN32() has been deprecated; for
-     conversion details see the HISTORY section of doc/man5/config.pod
-     [Rich Salz]
-
-  *) Introduced the new functions EVP_DigestSignInit_ex() and
-     EVP_DigestVerifyInit_ex(). The macros EVP_DigestSignUpdate() and
-     EVP_DigestVerifyUpdate() have been converted to functions. See the man
-     pages for further details.
-     [Matt Caswell]
-
-  *) Over two thousand fixes were made to the documentation, including:
-     adding missing command flags, better style conformance, documentation
-     of internals, etc.
-     [Rich Salz, Richard Levitte]
-
-  *) s390x assembly pack: add hardware-support for P-256, P-384, P-521,
-     X25519, X448, Ed25519 and Ed448.
-     [Patrick Steuer]
-
-  *) Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
-     the first value.
-     [Jon Spillett]
-
-  *) Deprecated the public definition of ERR_STATE as well as the function
-     ERR_get_state().  This is done in preparation of making ERR_STATE an
-     opaque type.
+  *) Added the X509_LOOKUP_METHOD X509_LOOKUP_store, to allow access to
+     certificate and CRL stores via URIs and OSSL_STORE loaders.
      [Richard Levitte]
 
   *) Added ERR functionality to give callers access to the stored function
