@@ -855,7 +855,7 @@ static void list_engines(void)
         e = ENGINE_get_next(e);
     }
 #else
-    BIO_puts(bio_out, "Engines support is disabled.\n");
+    BIO_puts(bio_out, "Engine support is disabled.\n");
 #endif
 }
 
