@@ -1492,12 +1492,15 @@ int main(int argc, char *argv[])
     (void)no_dhe;
 #endif
 
-    if ((!SSL_CTX_load_verify_locations(s_ctx, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(s_ctx)) ||
-        (!SSL_CTX_load_verify_locations(s_ctx2, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(s_ctx2)) ||
-        (!SSL_CTX_load_verify_locations(c_ctx, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(c_ctx))) {
+    if (!(SSL_CTX_load_verify_file(s_ctx, CAfile)
+          || SSL_CTX_load_verify_dir(s_ctx, CApath))
+        || !SSL_CTX_set_default_verify_paths(s_ctx)
+        || !(SSL_CTX_load_verify_file(s_ctx2, CAfile)
+             || SSL_CTX_load_verify_dir(s_ctx2, CApath))
+        || !SSL_CTX_set_default_verify_paths(s_ctx2)
+        || !(SSL_CTX_load_verify_file(c_ctx, CAfile)
+             || SSL_CTX_load_verify_dir(c_ctx, CApath))
+        || !SSL_CTX_set_default_verify_paths(c_ctx)) {
         ERR_print_errors(bio_err);
     }
 
