@@ -127,16 +127,16 @@ Each of these macros defines a parameter of the specified B<TYPE> with the
 provided B<key> and parameter variable B<address>.
 
 OSSL_PARAM_utf8_string(), OSSL_PARAM_octet_string(), OSSL_PARAM_utf8_ptr(),
-OSSL_PARAM_octet_ptr() are macros that provide supportfor defining UTF8 strings
-and OCTET strings.
+OSSL_PARAM_octet_ptr() are macros that provide support for defining UTF8
+strings and OCTET strings.
 A parameter with name B<key> is defined.
 The storage for this parameter is at B<address> and is of B<size> bytes.
 
 OSSL_PARAM_SIZED_TYPE() are a second series of macros designed to assist with
 the initialisation of OSSL_PARAM structures.
-They are similar to the OSSL_PARAM_TYPE() but also include a B<return_size>
-argument which contains the address of a size_t variable which will be
-populated with the actual size of the parameter upon return from a
+They are similar to the OSSL_PARAM_TYPE() macros but also include a
+B<return_size> argument which contains the address of a size_t variable which
+will be populated with the actual size of the parameter upon return from a
 OSSL_PARAM_set_TYPE() call.
 
 OSSL_PARAM_SIZED_BN(), OSSL_PARAM_SIZED_utf8_string(),
@@ -185,11 +185,11 @@ the one matching the B<key> name.
 
 OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter B<p>.
 The value is copied to the address B<val>.
-Type coercion takes place as discussed in NOTES section.
+Type coercion takes place as discussed in the NOTES section.
 
 OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the paramter
 B<p>.
-Type coercion takes place as discussed in NOTES section.
+Type coercion takes place as discussed in the NOTES section.
 
 OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter pointed to by B<p>.
 The BIGNUM referenced by B<val> is updated and is allocated if B<*val> is
@@ -225,7 +225,7 @@ referenced by B<p> to the values B<val>.
 
 OSSL_PARAM_get_octet_ptr() retrieves the OCTET string pointer from the parameter
 referenced by B<p> and stores it in B<*val>.
-The legnth of the OCTET string is stored in B<*used_len>.
+The length of the OCTET string is stored in B<*used_len>.
 
 OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
 referenced by B<p> to the values B<val>.
@@ -257,6 +257,53 @@ During narrowing, truncation takes place.
 Real values will also be converted between float and double and the standard
 integral types.
 They will not be converted to non-standard integral sizes or BIGNUMs.
+
+=head1 EXAMPLES
+
+Reusing the examples from L<OSSL_PARAM(3)> to just show how
+C<OSSL_PARAM> arrays can be handled using the macros and functions
+defined herein.
+
+=head2 Example 1
+
+This example is for setting parameters on some object:
+
+    #include <openssl/core.h>
+
+    const char *foo = "some string";
+    size_t foo_l = strlen(foo) + 1;
+    const char bar[] = "some other string";
+    const OSSL_PARAM set[] = {
+        OSSL_PARAM_utf8_ptr("foo", foo, foo_l),
+        OSSL_PARAM_utf8_string("bar", bar, sizeof(bar)),
+        OSSL_PARAM_END
+    };
+
+=head2 Example 2
+
+This example is for requesting parameters on some object:
+
+    const char *foo = NULL;
+    size_t foo_l;
+    char bar[1024];
+    size_t bar_l;
+    const OSSL_PARAM request[] = {
+        OSSL_PARAM_UTF8_PTR("foo", foo, 0, foo_l),
+        OSSL_PARAM_UTF8_STRING("bar", bar, sizeof(bar), bar_l),
+        OSSL_PARAM_END
+    };
+
+A I<responder> that receives this array (as C<params> in this example)
+could fill in the parameters like this:
+
+    /* const OSSL_PARAM *params */
+
+    OSSL_PARAM_set_utf8_ptr(OSSL_PARAM_locate(params, "foo"), "foo value");
+    OSSL_PARAM_set_utf8_string(OSSL_PARAM_locate(params, "bar"), "bar value");
+
+=head1 SEE ALSO
+
+L<openssl-core.h(7)>, L<OSSL_PARAM(3)>
 
 =head1 HISTORY
 
