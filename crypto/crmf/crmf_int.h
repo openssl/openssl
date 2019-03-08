@@ -38,8 +38,9 @@
  *                  -- (may be meaningful only to the sending entity, and
  *                  --  used only if EncryptedValue might be re-examined
  *                  --  by the sending entity in the future)
- * encValue            BIT STRING }
+ * encValue      BIT STRING
  *                  -- the encrypted value itself
+ * }
  */
 struct OSSL_crmf_encryptedvalue_st {
     X509_ALGOR *intendedAlg;      /* 0 */
@@ -74,11 +75,11 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PRIVATEKEYINFO)
  * id-ct-encKeyWithID OBJECT IDENTIFIER ::= {id-ct 21}
  *
  * EncKeyWithID ::= SEQUENCE {
- * privateKey               PrivateKeyInfo,
- * identifier CHOICE {
- *      string                     UTF8String,
- *      generalName                GeneralName
- *      } OPTIONAL
+ * privateKey     PrivateKeyInfo,
+ * identifier     CHOICE {
+ *                      string         UTF8String,
+ *                      generalName    GeneralName
+ *                } OPTIONAL
  * }
  */
 typedef struct OSSL_crmf_enckeywithid_identifier_st {
@@ -112,10 +113,10 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
 /*
  * SinglePubInfo ::= SEQUENCE {
  *  pubMethod        INTEGER {
- *  dontCare        (0),
- *  x500            (1),
- *  web             (2),
- *  ldap            (3) },
+ *      dontCare        (0),
+ *      x500            (1),
+ *      web             (2),
+ *      ldap            (3) },
  *  pubLocation  GeneralName OPTIONAL
  * }
  */
@@ -132,10 +133,11 @@ typedef STACK_OF(OSSL_CRMF_SINGLEPUBINFO) OSSL_CRMF_PUBINFOS;
  *      action     INTEGER {
  *                   dontPublish (0),
  *                   pleasePublish (1) },
- *      pubInfos  SEQUENCE SIZE (1..MAX) OF SinglePubInfo OPTIONAL }
+ *      pubInfos   SEQUENCE SIZE (1..MAX) OF SinglePubInfo OPTIONAL
  *      -- pubInfos MUST NOT be present if action is "dontPublish"
  *      -- (if action is "pleasePublish" and pubInfos is omitted,
  *      -- "dontCare" is assumed)
+ * }
  */
 struct OSSL_crmf_pkipublicationinfo_st {
     ASN1_INTEGER *action;
@@ -148,7 +150,8 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_PKIPUBLICATIONINFO)
  * algId  AlgorithmIdentifier,
  * -- algorithm value shall be PasswordBasedMac {1 2 840 113533 7 66 13}
  * -- parameter value is PBMParameter
- * value  BIT STRING }
+ * value  BIT STRING
+ * }
  */
 typedef struct OSSL_crmf_pkmacvalue_st {
     X509_ALGOR *algId;
@@ -162,9 +165,10 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PKMACVALUE)
  * -- requests that resulting certificate be encrypted for the
  * -- end entity (following which, POP will be proven in a
  * -- confirmation message)
- * challengeResp (1) }
+ * challengeResp (1)
  * -- requests that CA engage in challenge-response exchange with
  * -- end entity in order to prove private key possession
+ * }
  *
  * POPOPrivKey ::= CHOICE {
  * thisMessage       [0] BIT STRING,                 -- Deprecated
@@ -172,37 +176,37 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PKMACVALUE)
  * -- key itself (encrypted for the CA))
  * subsequentMessage [1] SubsequentMessage,
  * -- possession will be proven in a subsequent message
- * dhMAC                     [2] BIT STRING,                 -- Deprecated
- * agreeMAC                  [3] PKMACValue,
- * encryptedKey      [4] EnvelopedData }
+ * dhMAC             [2] BIT STRING,                 -- Deprecated
+ * agreeMAC          [3] PKMACValue,
+ * encryptedKey      [4] EnvelopedData
+ * }
  */
 
 typedef struct OSSL_crmf_popoprivkey_st {
     int type;
     union {
-        ASN1_BIT_STRING *thisMessage; /* Deprecated *//* 0 */
+        ASN1_BIT_STRING *thisMessage; /* 0 */     /* Deprecated */
         ASN1_INTEGER *subsequentMessage; /* 1 */
-        ASN1_BIT_STRING *dhMAC; /* 2 */
+        ASN1_BIT_STRING *dhMAC; /* 2 */           /* Deprecated */
         OSSL_CRMF_PKMACVALUE *agreeMAC; /* 3 */
         /*
          * TODO: This is not ASN1_NULL but CMS_ENVELOPEDDATA which should be
          * somehow taken from crypto/cms which exists now
          * - this is not used anywhere so far
          */
-        /* 4 */
-        ASN1_NULL *encryptedKey;
+        ASN1_NULL *encryptedKey; /* 4 */
     } value;
 } OSSL_CRMF_POPOPRIVKEY;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOPRIVKEY)
 
 /*
  * PBMParameter ::= SEQUENCE {
- *    salt                            OCTET STRING,
- *    owf                             AlgorithmIdentifier,
+ *    salt                    OCTET STRING,
+ *    owf                     AlgorithmIdentifier,
  *    -- AlgId for a One-Way Function (SHA-1 recommended)
  *    iterationCount          INTEGER,
  *    -- number of times the OWF is applied
- *    mac                             AlgorithmIdentifier
+ *    mac                     AlgorithmIdentifier
  *    -- the MAC AlgId (e.g., DES-MAC, Triple-DES-MAC [PKCS11],
  *    -- or HMAC [HMAC, RFC2202])
  * }
@@ -217,24 +221,23 @@ struct OSSL_crmf_pbmparameter_st {
 
 /*
  * POPOSigningKeyInput ::= SEQUENCE {
- * authInfo                        CHOICE {
- *     sender                          [0] GeneralName,
+ * authInfo       CHOICE {
+ *     sender                 [0] GeneralName,
  *   -- used only if an authenticated identity has been
  *   -- established for the sender (e.g., a DN from a
  *   -- previously-issued and currently-valid certificate)
- *   publicKeyMAC            PKMACValue },
+ *     publicKeyMAC           PKMACValue },
  *   -- used if no authenticated GeneralName currently exists for
  *   -- the sender; publicKeyMAC contains a password-based MAC
  *   -- on the DER-encoded value of publicKey
- * publicKey                       SubjectPublicKeyInfo }  -- from CertTemplate
+ * publicKey      SubjectPublicKeyInfo  -- from CertTemplate
+ * }
 */
 typedef struct OSSL_crmf_poposigningkeyinput_authinfo_st {
     int type;
     union {
-        /* 0 */
-        GENERAL_NAME *sender;
-        /* 1 */
-        OSSL_CRMF_PKMACVALUE *publicKeyMAC;
+        /* 0 */ GENERAL_NAME *sender;
+        /* 1 */ OSSL_CRMF_PKMACVALUE *publicKeyMAC;
     } value;
 } OSSL_CRMF_POPOSIGNINGKEYINPUT_AUTHINFO;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEYINPUT_AUTHINFO)
@@ -247,9 +250,10 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEYINPUT)
 
 /*
  * POPOSigningKey ::= SEQUENCE {
- *  poposkInput               [0] POPOSigningKeyInput OPTIONAL,
+ *  poposkInput           [0] POPOSigningKeyInput OPTIONAL,
  *  algorithmIdentifier   AlgorithmIdentifier,
- *  signature                         BIT STRING }
+ *  signature             BIT STRING
+ * }
  */
 struct OSSL_crmf_poposigningkey_st {
     OSSL_CRMF_POPOSIGNINGKEYINPUT *poposkInput;
@@ -260,12 +264,13 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEY)
 
 /*
  * ProofOfPossession ::= CHOICE {
- *  raVerified                [0] NULL,
+ *  raVerified        [0] NULL,
  *  -- used if the RA has already verified that the requester is in
  *  -- possession of the private key
- *  signature                 [1] POPOSigningKey,
+ *  signature         [1] POPOSigningKey,
  *  keyEncipherment   [2] POPOPrivKey,
- *  keyAgreement      [3] POPOPrivKey }
+ *  keyAgreement      [3] POPOPrivKey
+ * }
  */
 typedef struct OSSL_crmf_popo_st {
     int type;
@@ -280,29 +285,29 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPO)
 
 /*
  * OptionalValidity ::= SEQUENCE {
- * notBefore      [0] Time OPTIONAL,
- * notAfter       [1] Time OPTIONAL } -- at least one MUST be present
+ *  notBefore      [0] Time OPTIONAL,
+ *  notAfter       [1] Time OPTIONAL  -- at least one MUST be present
+ * }
  */
 struct OSSL_crmf_optionalvalidity_st {
-    /* 0 */
-    ASN1_TIME *notBefore;
-    /* 1 */
-    ASN1_TIME *notAfter;
+    /* 0 */ ASN1_TIME *notBefore;
+    /* 1 */ ASN1_TIME *notAfter;
 } /* OSSL_CRMF_OPTIONALVALIDITY */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_OPTIONALVALIDITY)
 
 /*
  * CertTemplate ::= SEQUENCE {
  * version          [0] Version                   OPTIONAL,
- * serialNumber [1] INTEGER                       OPTIONAL,
- * signingAlg   [2] AlgorithmIdentifier           OPTIONAL,
+ * serialNumber     [1] INTEGER                   OPTIONAL,
+ * signingAlg       [2] AlgorithmIdentifier       OPTIONAL,
  * issuer           [3] Name                      OPTIONAL,
  * validity         [4] OptionalValidity          OPTIONAL,
  * subject          [5] Name                      OPTIONAL,
  * publicKey        [6] SubjectPublicKeyInfo      OPTIONAL,
  * issuerUID        [7] UniqueIdentifier          OPTIONAL,
- * subjectUID   [8] UniqueIdentifier              OPTIONAL,
- * extensions   [9] Extensions                    OPTIONAL }
+ * subjectUID       [8] UniqueIdentifier          OPTIONAL,
+ * extensions       [9] Extensions                OPTIONAL
+ * }
  */
 struct OSSL_crmf_certtemplate_st {
     ASN1_INTEGER *version;           /* 0 */
@@ -323,9 +328,10 @@ struct OSSL_crmf_certtemplate_st {
 
 /*-
  * CertRequest ::= SEQUENCE {
- * certReqId         INTEGER,   -- ID for matching request and reply
- * certTemplate  CertTemplate,  -- Selected fields of cert to be issued
- * controls          Controls OPTIONAL }   -- Attributes affecting issuance
+ *  certReqId        INTEGER,          -- ID for matching request and reply
+ *  certTemplate     CertTemplate,     -- Selected fields of cert to be issued
+ *  controls         Controls OPTIONAL -- Attributes affecting issuance
+ * }
  */
 struct OSSL_crmf_certrequest_st {
     ASN1_INTEGER *certReqId;
@@ -371,10 +377,11 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 /*
  * CertReqMessages ::= SEQUENCE SIZE (1..MAX) OF CertReqMsg
  * CertReqMsg ::= SEQUENCE {
- * certReq   CertRequest,
- * popo           ProofOfPossession  OPTIONAL,
+ *  certReq        CertRequest,
+ *  popo           ProofOfPossession  OPTIONAL,
  * -- content depends upon key type
- * regInfo   SEQUENCE SIZE(1..MAX) OF AttributeTypeAndValue OPTIONAL }
+ *  regInfo   SEQUENCE SIZE(1..MAX) OF AttributeTypeAndValue OPTIONAL
+ * }
  */
 struct OSSL_crmf_msg_st {
     OSSL_CRMF_CERTREQUEST *certReq;

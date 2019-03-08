@@ -108,8 +108,8 @@ int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
                                      int method, GENERAL_NAME *nm)
 {
     if (spi == NULL
-        || method < OSSL_CRMF_PUB_METHOD_DONTCARE
-        || method > OSSL_CRMF_PUB_METHOD_LDAP) {
+            || method < OSSL_CRMF_PUB_METHOD_DONTCARE
+            || method > OSSL_CRMF_PUB_METHOD_LDAP) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO,
                 ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -148,8 +148,8 @@ int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(
                                  OSSL_CRMF_PKIPUBLICATIONINFO *pi, int action)
 {
     if (pi == NULL
-        || action < OSSL_CRMF_PUB_ACTION_DONTPUBLISH
-        || action > OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH) {
+            || action < OSSL_CRMF_PUB_ACTION_DONTPUBLISH
+            || action > OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION,
                 ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -319,8 +319,7 @@ static int CRMF_ASN1_get_int(int func, const ASN1_INTEGER *a)
 
 int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm)
 {
-    if (crm == NULL
-        || /* not really needed: */ crm->certReq == NULL) {
+    if (crm == NULL || /* not really needed: */ crm->certReq == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID, CRMF_R_NULL_ARGUMENT);
         return -1;
     }
@@ -417,17 +416,17 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
         goto err;
     }
     if (!OBJ_find_sigid_algs(alg_nid, &md_nid, NULL)
-        || (alg = EVP_get_digestbynid(md_nid)) == NULL) {
+            || (alg = EVP_get_digestbynid(md_nid)) == NULL) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
     }
     if (!X509_ALGOR_set0(ps->algorithmIdentifier, OBJ_nid2obj(alg_nid),
                          V_ASN1_NULL, NULL)
-        || (ctx = EVP_MD_CTX_new()) == NULL
-        || EVP_DigestSignInit(ctx, NULL, alg, NULL, pkey) <= 0
-        || EVP_DigestSignUpdate(ctx, crder, crlen) <= 0
-        || EVP_DigestSignFinal(ctx, NULL, &siglen) <= 0) {
+            || (ctx = EVP_MD_CTX_new()) == NULL
+            || EVP_DigestSignInit(ctx, NULL, alg, NULL, pkey) <= 0
+            || EVP_DigestSignUpdate(ctx, crder, crlen) <= 0
+            || EVP_DigestSignFinal(ctx, NULL, &siglen) <= 0) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
         goto err;
     }
@@ -436,7 +435,7 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
         goto err;
     }
     if (EVP_DigestSignFinal(ctx, sig, &siglen) <= 0
-        || !ASN1_BIT_STRING_set(ps->signature, sig, siglen)) {
+            || !ASN1_BIT_STRING_set(ps->signature, sig, siglen)) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
         goto err;
     }
@@ -455,8 +454,7 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
 {
     OSSL_CRMF_POPO *pp = NULL;
 
-    if (crm == NULL
-        || (ppmtd == OSSL_CRMF_POPO_SIGNATURE && pkey == NULL)) {
+    if (crm == NULL || (ppmtd == OSSL_CRMF_POPO_SIGNATURE && pkey == NULL)) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_CREATE_POPO, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
@@ -477,7 +475,7 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
         {
             OSSL_CRMF_POPOSIGNINGKEY *ps = OSSL_CRMF_POPOSIGNINGKEY_new();
             if (ps == NULL
-                || !CRMF_poposigningkey_init(ps, crm->certReq, pkey, dgst)) {
+                    || !CRMF_poposigningkey_init(ps, crm->certReq, pkey, dgst)){
                 OSSL_CRMF_POPOSIGNINGKEY_free(ps);
                 goto err;
             }
@@ -523,11 +521,11 @@ static int X509_PUBKEY_cmp(X509_PUBKEY *a, X509_PUBKEY *b)
 
     if (a == b)
         return 0;
-    if (a == NULL
-        || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a) || algA == NULL)
+    if (a == NULL || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a)
+            || algA == NULL)
         return -1;
-    if (b == NULL
-        || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b) || algB == NULL)
+    if (b == NULL || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b)
+            || algB == NULL)
         return 1;
     if ((res = X509_ALGOR_cmp(algA, algB)) != 0)
         return res;
@@ -543,8 +541,8 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     OSSL_CRMF_POPOSIGNINGKEY *sig = NULL;
 
     if (reqs == NULL
-        || (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL
-        || req->popo == NULL) {
+            || (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL
+            || req->popo == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
                 CRMF_R_NULL_ARGUMENT);
         return 0;
@@ -565,17 +563,17 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
              * exactly the same value as contained in the certificate template.
              */
             if (pubkey == NULL
-                || sig->poposkInput->publicKey == NULL
-                || X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey)
-                || ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT),
-                                    sig->algorithmIdentifier, sig->signature,
-                                    sig->poposkInput,
-                                    X509_PUBKEY_get0(pubkey)) < 1)
+                    || sig->poposkInput->publicKey == NULL
+                    || X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey)
+                    || ASN1_item_verify(
+                           ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT),
+                           sig->algorithmIdentifier, sig->signature,
+                           sig->poposkInput, X509_PUBKEY_get0(pubkey)) < 1)
                 break;
         } else {
             if (pubkey == NULL
-                || req->certReq->certTemplate->subject == NULL
-                || ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
+                    || req->certReq->certTemplate->subject == NULL
+                    || ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
                                     sig->algorithmIdentifier, sig->signature,
                                     req->certReq,
                                     X509_PUBKEY_get0(pubkey)) < 1)
@@ -667,7 +665,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     EVP_PKEY_CTX *pkctx = NULL; /* private key context */
 
     if (ecert == NULL || ecert->symmAlg == NULL || ecert->encSymmKey == NULL
-        || ecert->encValue == NULL || pkey == NULL) {
+            || ecert->encValue == NULL || pkey == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
                 CRMF_R_NULL_ARGUMENT);
         return NULL;
@@ -686,9 +684,9 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
 
         if (EVP_PKEY_decrypt(pkctx, NULL, &eksize, encKey->data, encKey->length)
                 <= 0
-            || (ek = OPENSSL_malloc(eksize)) == NULL
-            || EVP_PKEY_decrypt(pkctx, ek, &eksize, encKey->data,
-                                encKey->length) <= 0) {
+                || (ek = OPENSSL_malloc(eksize)) == NULL
+                || EVP_PKEY_decrypt(pkctx, ek, &eksize, encKey->data,
+                                    encKey->length) <= 0) {
             CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
                     CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
             goto end;
@@ -719,15 +717,15 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
      */
     if ((p = outbuf = OPENSSL_malloc(ecert->encValue->length +
                                      EVP_CIPHER_block_size(cipher))) == NULL
-        || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
+            || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto oom;
     EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
 
     if (!EVP_DecryptInit(evp_ctx, cipher, ek, iv)
-        || !EVP_DecryptUpdate(evp_ctx, outbuf, &outlen,
-                              ecert->encValue->data,
-                              ecert->encValue->length)
-        || !EVP_DecryptFinal(evp_ctx, outbuf + outlen, &n)) {
+            || !EVP_DecryptUpdate(evp_ctx, outbuf, &outlen,
+                                  ecert->encValue->data,
+                                  ecert->encValue->length)
+            || !EVP_DecryptFinal(evp_ctx, outbuf + outlen, &n)) {
         CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
                 CRMF_R_ERROR_DECRYPTING_CERTIFICATE);
         goto end;

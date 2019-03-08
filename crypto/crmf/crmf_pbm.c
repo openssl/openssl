@@ -133,7 +133,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     EVP_MAC_CTX *mctx = NULL;
 
     if (mac == NULL || pbmp == NULL || pbmp->mac == NULL
-        || pbmp->mac->algorithm == NULL || msg == NULL || sec == NULL) {
+            || pbmp->mac->algorithm == NULL || msg == NULL || sec == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_NULL_ARGUMENT);
         goto err;
     }
@@ -169,8 +169,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     if (!(EVP_DigestFinal_ex(ctx, basekey, &bklen)))
         goto err;
     if (!ASN1_INTEGER_get_int64(&iterations, pbmp->iterationCount)
-        || iterations < 100 /* min from RFC */
-        || iterations > OSSL_CRMF_PBM_MAX_ITERATION_COUNT) {
+            || iterations < 100 /* min from RFC */
+            || iterations > OSSL_CRMF_PBM_MAX_ITERATION_COUNT) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_BAD_PBM_ITERATIONCOUNT);
         goto err;
     }
@@ -193,17 +193,17 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     mac_nid = OBJ_obj2nid(pbmp->mac->algorithm);
 
     if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
-        || ((m = EVP_get_digestbynid(hmac_md_nid)) == NULL)) {
+            || ((m = EVP_get_digestbynid(hmac_md_nid)) == NULL)) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
 
     if ((mctx = EVP_MAC_CTX_new(EVP_get_macbyname("HMAC"))) == NULL
-        || EVP_MAC_ctrl(mctx, EVP_MAC_CTRL_SET_MD, m) <= 0
-        || EVP_MAC_ctrl(mctx, EVP_MAC_CTRL_SET_KEY, basekey, bklen) <= 0
-        || !EVP_MAC_init(mctx)
-        || !EVP_MAC_update(mctx, msg, msglen)
-        || !EVP_MAC_final(mctx, mac_res, maclen))
+            || EVP_MAC_ctrl(mctx, EVP_MAC_CTRL_SET_MD, m) <= 0
+            || EVP_MAC_ctrl(mctx, EVP_MAC_CTRL_SET_KEY, basekey, bklen) <= 0
+            || !EVP_MAC_init(mctx)
+            || !EVP_MAC_update(mctx, msg, msglen)
+            || !EVP_MAC_final(mctx, mac_res, maclen))
         goto err;
 
     ok = 1;
@@ -223,6 +223,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
 
     if (pbmp != NULL && pbmp->mac != NULL) {
         char buf[128];
+
         if (OBJ_obj2txt(buf, sizeof(buf), pbmp->mac->algorithm, 0))
             ERR_add_error_data(1, buf);
     }
