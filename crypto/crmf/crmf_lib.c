@@ -78,8 +78,8 @@ static int OSSL_CRMF_MSG_push0_regCtrl(OSSL_CRMF_MSG *crm,
     }
 
     if (crm->certReq->controls == NULL) {
-        if ((crm->certReq->controls =
-              sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new_null()) == NULL)
+        crm->certReq->controls = sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new_null();
+        if (crm->certReq->controls == NULL)
             goto oom;
         new = 1;
     }
@@ -117,6 +117,7 @@ int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
 
     if (!ASN1_INTEGER_set(spi->pubMethod, method))
         return 0;
+    GENERAL_NAME_free(spi->pubLocation);
     spi->pubLocation = nm;
     return 1;
 }
@@ -131,7 +132,8 @@ int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
         return 0;
     }
     if (pi->pubInfos == NULL)
-        if ((pi->pubInfos = sk_OSSL_CRMF_SINGLEPUBINFO_new_null()) == NULL)
+        pi->pubInfos = sk_OSSL_CRMF_SINGLEPUBINFO_new_null();
+        if (pi->pubInfos == NULL)
             goto oom;
 
     if (!(sk_OSSL_CRMF_SINGLEPUBINFO_push(pi->pubInfos, spi)))
@@ -210,29 +212,26 @@ IMPLEMENT_CRMF_CTRL_FUNC(protocolEncrKey, X509_PUBKEY, regCtrl)
 static int OSSL_CRMF_MSG_push0_regInfo(OSSL_CRMF_MSG *crm,
                                        OSSL_CRMF_ATTRIBUTETYPEANDVALUE *ri)
 {
-    int new = 0;
+    STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *info = NULL;
 
     if (crm == NULL || ri == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
-    if (crm->regInfo == NULL) {
-        if ((crm->regInfo =
-             sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new_null()) == NULL)
-            goto oom;
-        new = 1;
-    }
+    if (crm->regInfo == NULL)
+        crm->regInfo = info = sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new_null();
+    if (crm->regInfo == NULL)
+        goto oom;
     if (!sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_push(crm->regInfo, ri))
         goto oom;
     return 1;
+
  oom:
     CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO, ERR_R_MALLOC_FAILURE);
-
-    if (new != 0) {
-        sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(crm->regInfo);
+    if (info != NULL)
         crm->regInfo = NULL;
-    }
+    sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(info);
     return 0;
 }
 
@@ -298,7 +297,7 @@ int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid)
 }
 
 /* get ASN.1 encoded integer, return -1 on error */
-static int CRMF_ASN1_get_int(int func, const ASN1_INTEGER *a)
+static int crmf_asn1_get_int(int func, const ASN1_INTEGER *a)
 {
     int64_t res;
 
@@ -323,7 +322,7 @@ int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm)
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID, CRMF_R_NULL_ARGUMENT);
         return -1;
     }
-    return CRMF_ASN1_get_int(CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID,
+    return crmf_asn1_get_int(CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID,
                              crm->certReq->certReqId);
 }
 
@@ -453,6 +452,7 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
                               int dgst, int ppmtd)
 {
     OSSL_CRMF_POPO *pp = NULL;
+    ASN1_INTEGER *tag = NULL;
 
     if (crm == NULL || (ppmtd == OSSL_CRMF_POPO_SIGNATURE && pkey == NULL)) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_CREATE_POPO, CRMF_R_NULL_ARGUMENT);
@@ -486,13 +486,13 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
     case OSSL_CRMF_POPO_KEYENC:
         if ((pp->value.keyEncipherment = OSSL_CRMF_POPOPRIVKEY_new()) == NULL)
             goto oom;
-        pp->value.keyEncipherment->type = OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE;
-        if ((pp->value.keyEncipherment->value.subsequentMessage =
-             ASN1_INTEGER_new()) == NULL
-            ||
-            !ASN1_INTEGER_set(pp->value.keyEncipherment->value.subsequentMessage,
-                              OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT))
+        pp->value.keyEncipherment->type =
+            OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE;
+        tag = ASN1_INTEGER_new();
+        if (tag == NULL
+                || !ASN1_INTEGER_set(tag, OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT))
             goto oom;
+        pp->value.keyEncipherment->value.subsequentMessage = tag;
         break;
 
     default:
