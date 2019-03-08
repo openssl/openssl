@@ -64,7 +64,7 @@ struct OSSL_crmf_encryptedvalue_st {
  */
 typedef struct OSSL_crmf_privatekeyinfo_st {
     ASN1_INTEGER *version;
-    X509_ALGOR *AlgorithmIdentifier;
+    X509_ALGOR *privateKeyAlgorithm;
     ASN1_OCTET_STRING *privateKey;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
 } OSSL_CRMF_PRIVATEKEYINFO;
@@ -141,7 +141,7 @@ typedef STACK_OF(OSSL_CRMF_SINGLEPUBINFO) OSSL_CRMF_PUBINFOS;
  */
 struct OSSL_crmf_pkipublicationinfo_st {
     ASN1_INTEGER *action;
-    OSSL_CRMF_PUBINFOS *pubinfos;
+    OSSL_CRMF_PUBINFOS *pubInfos;
 } /* OSSL_CRMF_PKIPUBLICATIONINFO */;
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_PKIPUBLICATIONINFO)
 
@@ -243,7 +243,7 @@ typedef struct OSSL_crmf_poposigningkeyinput_authinfo_st {
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEYINPUT_AUTHINFO)
 
 typedef struct OSSL_crmf_poposigningkeyinput_st {
-    OSSL_CRMF_POPOSIGNINGKEYINPUT_AUTHINFO *authinfo;
+    OSSL_CRMF_POPOSIGNINGKEYINPUT_AUTHINFO *authInfo;
     X509_PUBKEY *publicKey;
 } OSSL_CRMF_POPOSIGNINGKEYINPUT;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEYINPUT)

@@ -130,11 +130,11 @@ int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
                 CRMF_R_NULL_ARGUMENT);
         return 0;
     }
-    if (pi->pubinfos == NULL)
-        if ((pi->pubinfos = sk_OSSL_CRMF_SINGLEPUBINFO_new_null()) == NULL)
+    if (pi->pubInfos == NULL)
+        if ((pi->pubInfos = sk_OSSL_CRMF_SINGLEPUBINFO_new_null()) == NULL)
             goto oom;
 
-    if (!(sk_OSSL_CRMF_SINGLEPUBINFO_push(pi->pubinfos, spi)))
+    if (!(sk_OSSL_CRMF_SINGLEPUBINFO_push(pi->pubInfos, spi)))
         goto oom;
     return 1;
 
