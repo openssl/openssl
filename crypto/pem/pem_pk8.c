@@ -16,12 +16,12 @@
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
 
-static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder,
+static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder,
                       int nid, const EVP_CIPHER *enc,
                       char *kstr, int klen, pem_password_cb *cb, void *u);
 
 #ifndef OPENSSL_NO_STDIO
-static int do_pk8pkey_fp(FILE *bp, EVP_PKEY *x, int isder,
+static int do_pk8pkey_fp(FILE *bp, const EVP_PKEY *x, int isder,
                          int nid, const EVP_CIPHER *enc,
                          char *kstr, int klen, pem_password_cb *cb, void *u);
 #endif
@@ -32,35 +32,35 @@ static int do_pk8pkey_fp(FILE *bp, EVP_PKEY *x, int isder,
  * uses PKCS#5 v1.5 PBE algorithms whereas the others use PKCS#5 v2.0.
  */
 
-int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, EVP_PKEY *x, int nid,
+int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, const EVP_PKEY *x, int nid,
                                       char *kstr, int klen,
                                       pem_password_cb *cb, void *u)
 {
     return do_pk8pkey(bp, x, 0, nid, NULL, kstr, klen, cb, u);
 }
 
-int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
+int PEM_write_bio_PKCS8PrivateKey(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                                   char *kstr, int klen,
                                   pem_password_cb *cb, void *u)
 {
     return do_pk8pkey(bp, x, 0, -1, enc, kstr, klen, cb, u);
 }
 
-int i2d_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
+int i2d_PKCS8PrivateKey_bio(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                             char *kstr, int klen,
                             pem_password_cb *cb, void *u)
 {
     return do_pk8pkey(bp, x, 1, -1, enc, kstr, klen, cb, u);
 }
 
-int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, EVP_PKEY *x, int nid,
+int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, const EVP_PKEY *x, int nid,
                                 char *kstr, int klen,
                                 pem_password_cb *cb, void *u)
 {
     return do_pk8pkey(bp, x, 1, nid, NULL, kstr, klen, cb, u);
 }
 
-static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid,
+static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                       const EVP_CIPHER *enc, char *kstr, int klen,
                       pem_password_cb *cb, void *u)
 {
@@ -147,34 +147,34 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
 
 #ifndef OPENSSL_NO_STDIO
 
-int i2d_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
+int i2d_PKCS8PrivateKey_fp(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                            char *kstr, int klen, pem_password_cb *cb, void *u)
 {
     return do_pk8pkey_fp(fp, x, 1, -1, enc, kstr, klen, cb, u);
 }
 
-int i2d_PKCS8PrivateKey_nid_fp(FILE *fp, EVP_PKEY *x, int nid,
+int i2d_PKCS8PrivateKey_nid_fp(FILE *fp, const EVP_PKEY *x, int nid,
                                char *kstr, int klen,
                                pem_password_cb *cb, void *u)
 {
     return do_pk8pkey_fp(fp, x, 1, nid, NULL, kstr, klen, cb, u);
 }
 
-int PEM_write_PKCS8PrivateKey_nid(FILE *fp, EVP_PKEY *x, int nid,
+int PEM_write_PKCS8PrivateKey_nid(FILE *fp, const EVP_PKEY *x, int nid,
                                   char *kstr, int klen,
                                   pem_password_cb *cb, void *u)
 {
     return do_pk8pkey_fp(fp, x, 0, nid, NULL, kstr, klen, cb, u);
 }
 
-int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
+int PEM_write_PKCS8PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                               char *kstr, int klen, pem_password_cb *cb,
                               void *u)
 {
     return do_pk8pkey_fp(fp, x, 0, -1, enc, kstr, klen, cb, u);
 }
 
-static int do_pk8pkey_fp(FILE *fp, EVP_PKEY *x, int isder, int nid,
+static int do_pk8pkey_fp(FILE *fp, const EVP_PKEY *x, int isder, int nid,
                          const EVP_CIPHER *enc, char *kstr, int klen,
                          pem_password_cb *cb, void *u)
 {

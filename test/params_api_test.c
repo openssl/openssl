@@ -184,8 +184,10 @@ static int test_param_bignum(int n)
         goto err;
 
     if (!TEST_true(OSSL_PARAM_set_BN(&param, b))
-        || !TEST_mem_eq(bnbuf, bnsize, buf, bnsize)
-        || !TEST_true(OSSL_PARAM_get_BN(&param, &c))
+        || !TEST_mem_eq(bnbuf, bnsize, buf, bnsize))
+        goto err;
+    param.buffer_size = *param.return_size;
+    if (!TEST_true(OSSL_PARAM_get_BN(&param, &c))
         || !TEST_BN_eq(b, c))
         goto err;
 
@@ -206,6 +208,171 @@ static int test_param_real(void)
            && TEST_double_eq(p, 3.14159);
 }
 
+/*
+ * The tests are a bit special in that they are trying to do both sides
+ * of the param passing.  This means that the OSSL_PARAM structure needs to
+ * be updated so that a get call matches size with the corresponding set call.
+ * This is not a problem in normal usage because the owner of the OSSL_PARAM
+ * "knows" the size of what it wants to put in and gets the size back via the
+ * return_size pointer when it needs to get data out.  That is, the owner
+ * does not need to call these APIs since it has direct access.
+ *
+ * The result is that the tests need the locate call to return a non-const
+ * pointer at times.  Hence the cast here.
+ */
+static OSSL_PARAM *locate(OSSL_PARAM *p, const char *name)
+{
+    return (OSSL_PARAM *)OSSL_PARAM_locate(p, name);
+}
+
+static int test_param_construct(void)
+{
+    static const char *number_names[] = {
+        "int", "uint", "long", "ulong", "int32", "uint32",
+        "int64", "uint64", "size_t"
+    };
+    static const unsigned char bn_val[16] = {
+        0xac, 0x75, 0x22, 0x7d, 0x81, 0x06, 0x7a, 0x23,
+        0xa6, 0xed, 0x87, 0xc7, 0xab, 0xf4, 0x73, 0x22
+    };
+    OSSL_PARAM params[20];
+    char buf[100], buf2[100], *bufp, *bufp2;
+    unsigned char ubuf[100];
+    void *vp, *vp2;
+    OSSL_PARAM *p;
+    const OSSL_PARAM *cp;
+    static const OSSL_PARAM pend = OSSL_PARAM_END;
+    int i, n = 0, ret = 0;
+    unsigned int u;
+    long int l;
+    unsigned long int ul;
+    int32_t i32;
+    uint32_t u32;
+    int64_t i64;
+    uint64_t u64;
+    size_t j, k, s, sz;
+    double d, d2;
+    BIGNUM *bn = NULL, *bn2 = NULL;
+
+    params[n++] = OSSL_PARAM_construct_int("int", &i, &sz);
+    params[n++] = OSSL_PARAM_construct_uint("uint", &u, &sz);
+    params[n++] = OSSL_PARAM_construct_long("long", &l, &sz);
+    params[n++] = OSSL_PARAM_construct_ulong("ulong", &ul, &sz);
+    params[n++] = OSSL_PARAM_construct_int32("int32", &i32, &sz);
+    params[n++] = OSSL_PARAM_construct_int64("int64", &i64, &sz);
+    params[n++] = OSSL_PARAM_construct_uint32("uint32", &u32, &sz);
+    params[n++] = OSSL_PARAM_construct_uint64("uint64", &u64, &sz);
+    params[n++] = OSSL_PARAM_construct_size_t("size_t", &s, &sz);
+    params[n++] = OSSL_PARAM_construct_double("double", &d, &sz);
+    params[n++] = OSSL_PARAM_construct_BN("bignum", ubuf, sizeof(ubuf), &sz);
+    params[n++] = OSSL_PARAM_construct_utf8_string("utf8str", buf, sizeof(buf),
+                                                   &sz);
+    params[n++] = OSSL_PARAM_construct_octet_string("octstr", buf, sizeof(buf),
+                                                    &sz);
+    params[n++] = OSSL_PARAM_construct_utf8_ptr("utf8ptr", &bufp, &sz);
+    params[n++] = OSSL_PARAM_construct_octet_ptr("octptr", &vp, &sz);
+    memcpy(params + n, &pend, sizeof(params[n]));
+
+    /* Search failure */
+    if (!TEST_ptr_null(OSSL_PARAM_locate(params, "fnord")))
+        goto err;
+
+    /* All integral types */
+    for (j = 0; j < OSSL_NELEM(number_names); j++) {
+        if (!TEST_ptr(cp = OSSL_PARAM_locate(params, number_names[j]))
+            || !TEST_true(OSSL_PARAM_set_uint32(cp, (uint32_t)(3 + j)))
+            || !TEST_true(OSSL_PARAM_get_uint64(cp, &u64))
+            || !TEST_size_t_eq(cp->buffer_size, sz)
+            || !TEST_size_t_eq((size_t)u64, 3 + j)
+            || !TEST_true(OSSL_PARAM_get_double(cp, &d2))
+            || !TEST_double_eq(d2, (double)u64)) {
+            TEST_note("iteration %zu var %s", j + 1, number_names[j]);
+            goto err;
+        }
+    }
+    /* Real */
+    if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "double"))
+        || !TEST_true(OSSL_PARAM_set_double(cp, 3.14))
+        || !TEST_true(OSSL_PARAM_get_double(cp, &d2))
+        || !TEST_size_t_eq(sz, sizeof(double))
+        || !TEST_double_eq(d, d2))
+        goto err;
+    /* UTF8 string */
+    bufp = NULL;
+    if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "utf8str"))
+        || !TEST_true(OSSL_PARAM_set_utf8_string(cp, "abcdef"))
+        || !TEST_size_t_eq(sz, sizeof("abcdef"))
+        || !TEST_true(OSSL_PARAM_get_utf8_string(cp, &bufp, 0))
+        || !TEST_str_eq(bufp, "abcdef"))
+        goto err;
+    OPENSSL_free(bufp);
+    bufp = buf2;
+    if (!TEST_true(OSSL_PARAM_get_utf8_string(cp, &bufp, sizeof(buf2)))
+        || !TEST_str_eq(buf2, "abcdef"))
+        goto err;
+    /* UTF8 pointer */
+    bufp = buf;
+    sz = 0;
+    if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "utf8ptr"))
+        || !TEST_true(OSSL_PARAM_set_utf8_ptr(cp, "tuvwxyz"))
+        || !TEST_size_t_eq(sz, sizeof("tuvwxyz"))
+        || !TEST_str_eq(bufp, "tuvwxyz")
+        || !TEST_true(OSSL_PARAM_get_utf8_ptr(cp, &bufp2))
+        || !TEST_ptr_eq(bufp2, bufp))
+        goto err;
+    /* OCTET string */
+    vp = NULL;
+    if (!TEST_ptr(p = locate(params, "octstr"))
+        || !TEST_true(OSSL_PARAM_set_octet_string(p, "abcdefghi",
+                                                  sizeof("abcdefghi")))
+        || !TEST_size_t_eq(sz, sizeof("abcdefghi")))
+        goto err;
+    /* Match the return size to avoid trailing garbage bytes */
+    p->buffer_size = *p->return_size;
+    if (!TEST_true(OSSL_PARAM_get_octet_string(p, &vp, 0, &s))
+        || !TEST_size_t_eq(s, sizeof("abcdefghi"))
+        || !TEST_mem_eq(vp, sizeof("abcdefghi"),
+                        "abcdefghi", sizeof("abcdefghi")))
+        goto err;
+    OPENSSL_free(vp);
+    vp = buf2;
+    if (!TEST_true(OSSL_PARAM_get_octet_string(p, &vp, sizeof(buf2), &s))
+        || !TEST_size_t_eq(s, sizeof("abcdefghi"))
+        || !TEST_mem_eq(vp, sizeof("abcdefghi"),
+                        "abcdefghi", sizeof("abcdefghi")))
+        goto err;
+    /* OCTET pointer */
+    vp = &l;
+    sz = 0;
+    if (!TEST_ptr(p = locate(params, "octptr"))
+        || !TEST_true(OSSL_PARAM_set_octet_ptr(p, &ul, sizeof(ul)))
+        || !TEST_size_t_eq(sz, sizeof(ul))
+        || !TEST_ptr_eq(vp, &ul))
+        goto err;
+    /* Match the return size to avoid trailing garbage bytes */
+    p->buffer_size = *p->return_size;
+    if (!TEST_true(OSSL_PARAM_get_octet_ptr(p, &vp2, &k))
+        || !TEST_size_t_eq(k, sizeof(ul))
+        || !TEST_ptr_eq(vp2, vp))
+        goto err;
+    /* BIGNUM */
+    if (!TEST_ptr(p = locate(params, "bignum"))
+        || !TEST_ptr(bn = BN_lebin2bn(bn_val, (int)sizeof(bn_val), NULL))
+        || !TEST_true(OSSL_PARAM_set_BN(p, bn))
+        || !TEST_size_t_eq(sz, sizeof(bn_val)))
+        goto err;
+    /* Match the return size to avoid trailing garbage bytes */
+    p->buffer_size = *p->return_size;
+    if(!TEST_true(OSSL_PARAM_get_BN(p, &bn2))
+        || !TEST_BN_eq(bn, bn2))
+        goto err;
+    ret = 1;
+err:
+    BN_free(bn);
+    BN_free(bn2);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_param_int, OSSL_NELEM(raw_values));
@@ -219,5 +386,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_param_uint64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_bignum, OSSL_NELEM(raw_values));
     ADD_TEST(test_param_real);
+    ADD_TEST(test_param_construct);
     return 1;
 }

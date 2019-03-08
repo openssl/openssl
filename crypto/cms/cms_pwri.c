@@ -273,7 +273,7 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
 
 /* Encrypt/Decrypt content key in PWRI recipient info */
 
-int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
+int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
                                  int en_de)
 {
     CMS_EncryptedContentInfo *ec;
