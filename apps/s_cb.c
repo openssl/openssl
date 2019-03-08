@@ -1428,20 +1428,22 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
         {
             const unsigned char *salg = other;
             const char *sname = NULL;
-            int raw_sig_code= (salg[0]<<8) + salg[1]; /* always big endian (msb, lsb) */
+            int raw_sig_code = (salg[0]<<8) + salg[1]; /* always big endian (msb, lsb) */
                 /* raw_sig_code: signature_scheme from tls1.3, or signature_and_hash from tls1.2 */
 
-            if (nm != NULL) BIO_printf(sdb->out, "%s", nm);
-            else            BIO_printf(sdb->out, "s_cb.c:security_callback_debug op=0x%x", op);
+            if (nm != NULL)
+                BIO_printf(sdb->out, "%s", nm);
+            else
+                BIO_printf(sdb->out, "s_cb.c:security_callback_debug op=0x%x", op);
 
-            sname= lookup(raw_sig_code, signature_tls13_scheme_list, NULL);
+            sname = lookup(raw_sig_code, signature_tls13_scheme_list, NULL);
             if (sname != NULL) {
                 BIO_printf(sdb->out, " scheme=%s", sname);
             } else {
-                int alg_code= salg[1];
-                int hash_code= salg[0];
-                const char *alg_str= lookup(alg_code, signature_tls12_alg_list, NULL);
-                const char *hash_str= lookup(hash_code, signature_tls12_hash_list, NULL);
+                int alg_code = salg[1];
+                int hash_code = salg[0];
+                const char *alg_str = lookup(alg_code, signature_tls12_alg_list, NULL);
+                const char *hash_str = lookup(hash_code, signature_tls12_hash_list, NULL);
 
                 if (alg_str != NULL && hash_str != NULL) {
                     BIO_printf(sdb->out, " digest=%s, algorithm=%s", hash_str, alg_str);
