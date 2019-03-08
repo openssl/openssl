@@ -13,8 +13,8 @@
 #include "internal/thread_once.h"
 
 #define SET_RETURN_SIZE(p, sz) \
-    if (p->return_size != NULL) \
-        *p->return_size = (sz)
+    if ((p)->return_size != NULL) \
+        *(p)->return_size = (sz)
 
 const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
 {
@@ -291,8 +291,8 @@ int OSSL_PARAM_set_utf8_string(const OSSL_PARAM *p, const char *val)
     if (val == NULL)
             return 0;
     return set_string_internal(p, val, strlen(val) + 1, OSSL_PARAM_UTF8_STRING);
-
 }
+
 int OSSL_PARAM_set_octet_string(const OSSL_PARAM *p, const void *val,
                                 size_t len)
 {
@@ -316,39 +316,40 @@ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
     return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, 0, rsize);
 }
 
-static int get_ptr_internal(const OSSL_PARAM *p, void **val, size_t *used_len,
-                            unsigned int type)
+static int get_ptr_internal(const OSSL_PARAM *p, const void **val,
+                            size_t *used_len, unsigned int type)
 {
     if (val == NULL || p == NULL || p->data_type != type)
         return 0;
     if (used_len != NULL)
         *used_len = p->buffer_size;
-    *val = *(void **)p->buffer;
+    *val = *(const void **)p->buffer;
     return 1;
 }
 
-int OSSL_PARAM_get_utf8_ptr(const OSSL_PARAM *p, char **val)
+int OSSL_PARAM_get_utf8_ptr(const OSSL_PARAM *p, const char **val)
 {
-    return get_ptr_internal(p, (void **)val, NULL, OSSL_PARAM_UTF8_PTR);
+    return get_ptr_internal(p, (const void **)val, NULL, OSSL_PARAM_UTF8_PTR);
 }
 
-int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, void **val, size_t *used_len)
+int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, const void **val,
+                             size_t *used_len)
 {
     return get_ptr_internal(p, val, used_len, OSSL_PARAM_OCTET_PTR);
 }
 
-static int set_ptr_internal(const OSSL_PARAM *p, void *val, unsigned int type,
-                            size_t len)
+static int set_ptr_internal(const OSSL_PARAM *p, const void *val,
+                            unsigned int type, size_t len)
 {
     SET_RETURN_SIZE(p, len);
     if (p->data_type == type) {
-        *(void **)p->buffer = val;
+        *(const void **)p->buffer = val;
         return 1;
     }
     return 0;
 }
 
-int OSSL_PARAM_set_utf8_ptr(const OSSL_PARAM *p, char *val)
+int OSSL_PARAM_set_utf8_ptr(const OSSL_PARAM *p, const char *val)
 {
     if (p == NULL)
         return 0;
@@ -358,7 +359,8 @@ int OSSL_PARAM_set_utf8_ptr(const OSSL_PARAM *p, char *val)
     return set_ptr_internal(p, val, OSSL_PARAM_UTF8_PTR, strlen(val) + 1);
 }
 
-int OSSL_PARAM_set_octet_ptr(const OSSL_PARAM *p, void *val, size_t used_len)
+int OSSL_PARAM_set_octet_ptr(const OSSL_PARAM *p, const void *val,
+                             size_t used_len)
 {
     if (p == NULL)
         return 0;
