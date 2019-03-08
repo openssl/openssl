@@ -172,11 +172,13 @@ int OSSL_PARAM_get_octet_string(const OSSL_PARAM *p, void **val, size_t max_len,
 int OSSL_PARAM_set_octet_string(const OSSL_PARAM *p, const void *val,
                                 size_t len);
 
-int OSSL_PARAM_get_utf8_ptr(const OSSL_PARAM *p, char **val);
-int OSSL_PARAM_set_utf8_ptr(const OSSL_PARAM *p, char *val);
+int OSSL_PARAM_get_utf8_ptr(const OSSL_PARAM *p, const char **val);
+int OSSL_PARAM_set_utf8_ptr(const OSSL_PARAM *p, const char *val);
 
-int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, void **val, size_t *used_len);
-int OSSL_PARAM_set_octet_ptr(const OSSL_PARAM *p, void *val, size_t used_len);
+int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, const void **val,
+                             size_t *used_len);
+int OSSL_PARAM_set_octet_ptr(const OSSL_PARAM *p, const void *val,
+                             size_t used_len);
 
 # ifdef  __cplusplus
 }
