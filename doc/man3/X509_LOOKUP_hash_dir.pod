@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_LOOKUP_hash_dir, X509_LOOKUP_file,
+X509_LOOKUP_hash_dir, X509_LOOKUP_file, X509_LOOKUP_store,
 X509_load_cert_file,
 X509_load_crl_file,
 X509_load_cert_crl_file - Default OpenSSL certificate
@@ -14,6 +14,7 @@ lookup methods
 
  X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void);
  X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
+ X509_LOOKUP_METHOD *X509_LOOKUP_store(void);
 
  int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
  int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
@@ -111,10 +112,24 @@ Note that the hash algorithm used for subject name hashing changed in OpenSSL
 OpenSSL includes a L<rehash(1)> utility which creates symlinks with correct
 hashed names for all files with .pem suffix in a given directory.
 
+=head2 OSSL_STORE Method
+
+B<X509_LOOKUP_store> is a method that allows access to any store of
+certificates and CRLs through any loader supported by
+L<OSSL_STORE(3)>.
+It works with the help of URIs, which can be direct references to
+certificates or CRLs, but can also be references to catalogues of such
+objects (that behave like directories).
+
+This method overlaps the L</File Method> and L</Hashed Directory Method>
+because of the 'file:' scheme loader.
+It does no caching of its own, but can use a caching L<OSSL_STORE(3)>
+loader, and therefore depends on the loader's capability.
+
 =head1 RETURN VALUES
 
-X509_LOOKUP_hash_dir() and X509_LOOKUP_file() always return a valid
-B<X509_LOOKUP_METHOD> structure.
+X509_LOOKUP_hash_dir(), X509_LOOKUP_file() and X509_LOOKUP_store()
+always return a valid B<X509_LOOKUP_METHOD> structure.
 
 X509_load_cert_file(), X509_load_crl_file() and X509_load_cert_crl_file() return
 the number of loaded objects or 0 on error.
@@ -126,10 +141,15 @@ L<X509_STORE_load_locations(3)>,
 L<X509_store_add_lookup(3)>,
 L<SSL_CTX_load_verify_locations(3)>,
 L<X509_LOOKUP_meth_new(3)>,
+L<OSSL_STORE(3)>
+
+=head1 HISTORY
+
+B<X509_LOOKUP_store> was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
