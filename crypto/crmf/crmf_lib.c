@@ -12,18 +12,18 @@
  */
 
 /*
+ * This file contains the functions that handle the individual items inside
+ * the CRMF structures
+ */
+
+/*
  * NAMING
  *
- * The 0 versions use the supplied structure pointer directly in the parent and
+ * The 0 functions use the supplied structure pointer directly in the parent and
  * it will be freed up when the parent is freed.
  *
  * The 1 functions use a copy of the supplied structure pointer (or in some
  * cases increases its link count) in the parent and so both should be freed up.
- */
-
-/*
- * This file contains the functions that handle the individual items inside
- * the CRMF structures
  */
 
 #include <openssl/asn1t.h>
@@ -134,8 +134,8 @@ int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
     }
     if (pi->pubInfos == NULL)
         pi->pubInfos = sk_OSSL_CRMF_SINGLEPUBINFO_new_null();
-        if (pi->pubInfos == NULL)
-            goto oom;
+    if (pi->pubInfos == NULL)
+        goto oom;
 
     if (!(sk_OSSL_CRMF_SINGLEPUBINFO_push(pi->pubInfos, spi)))
         goto oom;
@@ -679,8 +679,8 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     }
 
     /* first the symmetric key needs to be decrypted */
-    if ((pkctx = EVP_PKEY_CTX_new(pkey, NULL)) != NULL
-        && EVP_PKEY_decrypt_init(pkctx)) {
+    pkctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
         ASN1_BIT_STRING *encKey = ecert->encSymmKey;
         size_t eksize = 0;
 
