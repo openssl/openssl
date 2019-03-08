@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2018
  * Copyright Siemens AG 2015-2018
@@ -88,7 +88,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
         goto err;
     }
 
-    /*-
+    /*
      * mac identifies the algorithm and associated parameters of the MAC
      * function to be used.  All implementations MUST support HMAC-SHA1 [HMAC].
      * All implementations SHOULD support DES-MAC and Triple-DES-MAC [PKCS11].
@@ -185,7 +185,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
             goto err;
     }
 
-    /*-
+    /*
      * mac identifies the algorithm and associated parameters of the MAC
      * function to be used.  All implementations MUST support HMAC-SHA1 [HMAC].
      * All implementations SHOULD support DES-MAC and Triple-DES-MAC [PKCS11].

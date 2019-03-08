@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2018
  * Copyright Siemens AG 2015-2018
@@ -23,7 +23,7 @@
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 
-/*
+/*-
  * EncryptedValue ::= SEQUENCE {
  * intendedAlg   [0] AlgorithmIdentifier  OPTIONAL,
  *                  -- the intended algorithm for which the value will be used
@@ -110,7 +110,7 @@ struct OSSL_crmf_certid_st {
 } /* OSSL_CRMF_CERTID */;
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
 
-/*
+/*-
  * SinglePubInfo ::= SEQUENCE {
  *  pubMethod        INTEGER {
  *      dontCare        (0),
@@ -128,7 +128,7 @@ DEFINE_STACK_OF(OSSL_CRMF_SINGLEPUBINFO)
 typedef STACK_OF(OSSL_CRMF_SINGLEPUBINFO) OSSL_CRMF_PUBINFOS;
 
 
-/*
+/*-
  * PKIPublicationInfo ::= SEQUENCE {
  *      action     INTEGER {
  *                   dontPublish (0),
@@ -145,7 +145,7 @@ struct OSSL_crmf_pkipublicationinfo_st {
 } /* OSSL_CRMF_PKIPUBLICATIONINFO */;
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_PKIPUBLICATIONINFO)
 
-/*
+/*-
  * PKMACValue ::= SEQUENCE {
  * algId  AlgorithmIdentifier,
  * -- algorithm value shall be PasswordBasedMac {1 2 840 113533 7 66 13}
@@ -159,7 +159,7 @@ typedef struct OSSL_crmf_pkmacvalue_st {
 } OSSL_CRMF_PKMACVALUE;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PKMACVALUE)
 
-/*
+/*-
  * SubsequentMessage ::= INTEGER {
  * encrCert (0),
  * -- requests that resulting certificate be encrypted for the
@@ -199,7 +199,7 @@ typedef struct OSSL_crmf_popoprivkey_st {
 } OSSL_CRMF_POPOPRIVKEY;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOPRIVKEY)
 
-/*
+/*-
  * PBMParameter ::= SEQUENCE {
  *    salt                    OCTET STRING,
  *    owf                     AlgorithmIdentifier,
@@ -219,7 +219,7 @@ struct OSSL_crmf_pbmparameter_st {
 } /* OSSL_CRMF_PBMPARAMETER */;
 #define OSSL_CRMF_PBM_MAX_ITERATION_COUNT 100000 /* if too large allows DoS */
 
-/*
+/*-
  * POPOSigningKeyInput ::= SEQUENCE {
  * authInfo       CHOICE {
  *     sender                 [0] GeneralName,
@@ -248,7 +248,7 @@ typedef struct OSSL_crmf_poposigningkeyinput_st {
 } OSSL_CRMF_POPOSIGNINGKEYINPUT;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEYINPUT)
 
-/*
+/*-
  * POPOSigningKey ::= SEQUENCE {
  *  poposkInput           [0] POPOSigningKeyInput OPTIONAL,
  *  algorithmIdentifier   AlgorithmIdentifier,
@@ -262,7 +262,7 @@ struct OSSL_crmf_poposigningkey_st {
 } /* OSSL_CRMF_POPOSIGNINGKEY */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEY)
 
-/*
+/*-
  * ProofOfPossession ::= CHOICE {
  *  raVerified        [0] NULL,
  *  -- used if the RA has already verified that the requester is in
@@ -283,7 +283,7 @@ typedef struct OSSL_crmf_popo_st {
 } OSSL_CRMF_POPO;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPO)
 
-/*
+/*-
  * OptionalValidity ::= SEQUENCE {
  *  notBefore      [0] Time OPTIONAL,
  *  notAfter       [1] Time OPTIONAL  -- at least one MUST be present
@@ -295,7 +295,7 @@ struct OSSL_crmf_optionalvalidity_st {
 } /* OSSL_CRMF_OPTIONALVALIDITY */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_OPTIONALVALIDITY)
 
-/*
+/*-
  * CertTemplate ::= SEQUENCE {
  * version          [0] Version                   OPTIONAL,
  * serialNumber     [1] INTEGER                   OPTIONAL,
@@ -374,7 +374,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 DEFINE_STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 
-/*
+/*-
  * CertReqMessages ::= SEQUENCE SIZE (1..MAX) OF CertReqMsg
  * CertReqMsg ::= SEQUENCE {
  *  certReq        CertRequest,

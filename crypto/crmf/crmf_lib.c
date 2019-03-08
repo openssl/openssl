@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2018
  * Copyright Siemens AG 2015-2018
@@ -11,10 +11,11 @@
  * CRMF implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
-/* NAMING
+/*
+ * NAMING
+ *
  * The 0 versions use the supplied structure pointer directly in the parent and
- * it will be freed up when the parent is freed. In the above example crl would
- * be freed but rev would not.
+ * it will be freed up when the parent is freed.
  *
  * The 1 functions use a copy of the supplied structure pointer (or in some
  * cases increases its link count) in the parent and so both should be freed up.
@@ -34,7 +35,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-/*
+/*-
  * atyp = Attribute Type
  * valt = Value Type
  * ctrlinf = "regCtrl" or "regInfo"
@@ -62,7 +63,7 @@ int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg,             \
 }
 
 
-/*
+/*-
  * Pushes the given control attribute into the controls stack of a CertRequest
  * (section 6)
  * returns 1 on success, 0 on error
@@ -196,15 +197,16 @@ OSSL_CRMF_CERTID *OSSL_CRMF_CERTID_gen(const X509_NAME *issuer,
     return NULL;
 }
 
- /* id-regCtrl-protocolEncrKey Control (section 6.6) */
  /*
+  * id-regCtrl-protocolEncrKey Control (section 6.6)
+  *
   * For some reason X509_PUBKEY_dup() is not implemented in OpenSSL X509
   * TODO: check whether that should go elsewhere
   */
 static IMPLEMENT_ASN1_DUP_FUNCTION(X509_PUBKEY)
 IMPLEMENT_CRMF_CTRL_FUNC(protocolEncrKey, X509_PUBKEY, regCtrl)
 
-/*
+/*-
  * Pushes the attribute given in regInfo in to the CertReqMsg->regInfo stack.
  * (section 7)
  * returns 1 on success, 0 on error
@@ -235,10 +237,10 @@ static int OSSL_CRMF_MSG_push0_regInfo(OSSL_CRMF_MSG *crm,
     return 0;
 }
 
- /* id-regInfo-utf8Pairs to regInfo (section 7.1) */
+/* id-regInfo-utf8Pairs to regInfo (section 7.1) */
 IMPLEMENT_CRMF_CTRL_FUNC(utf8Pairs, ASN1_UTF8STRING, regInfo)
 
- /* id-regInfo-certReq to regInfo (section 7.2) */
+/* id-regInfo-certReq to regInfo (section 7.2) */
 IMPLEMENT_CRMF_CTRL_FUNC(certReq, OSSL_CRMF_CERTREQUEST, regInfo)
 
 
@@ -557,7 +559,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
         pubkey = req->certReq->certTemplate->publicKey;
         sig = req->popo->value.signature;
         if (sig->poposkInput != NULL) {
-            /*-
+            /*
              * According to RFC 4211: publicKey contains a copy of
              * the public key from the certificate template. This MUST be
              * exactly the same value as contained in the certificate template.
@@ -610,7 +612,7 @@ X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl)
     return tmpl != NULL ? tmpl->issuer : NULL;
 }
 
-/*-
+/*
  * fill in certificate template.
  * Any value argument that is NULL will leave the respective field unchanged.
  */
@@ -643,7 +645,7 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
 }
 
 
-/*
+/*-
  * Decrypts the certificate in the given encryptedValue
  * this is needed for the indirect PoP method as in RFC 4210 section 5.2.8.2
  *

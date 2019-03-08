@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2018
  * Copyright Siemens AG 2015-2018
