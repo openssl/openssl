@@ -56,11 +56,13 @@ struct object_st {
      * Assumed data type OSSL_PARAM_UTF8_STRING
      */
     char *p4;
+    size_t p4_l;
     /*
      * Documented as a pointer to a constant C string.
-     * Assumed data type OSSL_PARAM_UTF8_STRING_PTR
+     * Assumed data type OSSL_PARAM_UTF8_PTR
      */
     const char *p5;
+    size_t p5_l;
 };
 
 #define p1_init 42                              /* The ultimate answer */
@@ -202,25 +204,16 @@ static int api_set_params(void *vobj, const OSSL_PARAM *params)
     if ((p = OSSL_PARAM_locate(params, "p3")) != NULL
         && !TEST_true(OSSL_PARAM_get_BN(p, &obj->p3)))
         return 0;
-#ifdef OSSL_PARAM_utf8_string /* OSSL_PARAM_get_utf8_string doesn't exist yet */
-    if ((p = OSSL_PARAM_locate(params, "p4")) != NULL
-        && !TEST_true(OSSL_PARAM_get_utf8_string(p, &obj->p4)))
-        return 0;
-#else
     if ((p = OSSL_PARAM_locate(params, "p4")) != NULL) {
         OPENSSL_free(obj->p4);
-        if (!TEST_ptr(obj->p4 = OPENSSL_strndup(p->buffer, p->buffer_size)))
+        obj->p4 = NULL;
+        /* If the value pointer is NULL, we get it automatically allocated */
+        if (!TEST_true(OSSL_PARAM_get_utf8_string(p, &obj->p4, 0)))
             return 0;
     }
-#endif
-#ifdef OSSL_PARAM_octet_ptr /* OSSL_PARAM_get_octet_ptr doesn't exist yet */
     if ((p = OSSL_PARAM_locate(params, "p5")) != NULL
         && !TEST_true(OSSL_PARAM_get_utf8_ptr(p, &obj->p5)))
         return 0;
-#else
-    if ((p = OSSL_PARAM_locate(params, "p5")) != NULL)
-        obj->p5 = *(const char **)p->buffer;
-#endif
 
     return 1;
 }
@@ -239,34 +232,12 @@ static int api_get_params(void *vobj, const OSSL_PARAM *params)
     if ((p = OSSL_PARAM_locate(params, "p3")) != NULL
         && !TEST_true(OSSL_PARAM_set_BN(p, obj->p3)))
         return 0;
-#ifdef OSSL_PARAM_utf8_string /* OSSL_PARAM_get_utf8_string doesn't exist yet */
     if ((p = OSSL_PARAM_locate(params, "p4")) != NULL
         && !TEST_true(OSSL_PARAM_set_utf8_string(p, obj->p4)))
         return 0;
-#else
-    if ((p = OSSL_PARAM_locate(params, "p4")) != NULL) {
-        size_t bytes = strlen(obj->p4) + 1;
-
-        if (params->return_size != NULL)
-            *params->return_size = bytes;
-        if (!TEST_size_t_ge(p->buffer_size, bytes))
-            return 0;
-        strcpy(p->buffer, obj->p4);
-    }
-#endif
-#ifdef OSSL_PARAM_octet_ptr /* OSSL_PARAM_get_octet_ptr doesn't exist yet */
     if ((p = OSSL_PARAM_locate(params, "p5")) != NULL
         && !TEST_true(OSSL_PARAM_set_utf8_ptr(p, obj->p5)))
         return 0;
-#else
-    if ((p = OSSL_PARAM_locate(params, "p5")) != NULL) {
-        size_t bytes = strlen(obj->p5) + 1;
-
-        if (p->return_size != NULL)
-            *p->return_size = bytes;
-        *(const char **)p->buffer = obj->p5;
-    }
-#endif
 
     return 1;
 }
@@ -362,7 +333,7 @@ static const OSSL_PARAM raw_params[] = {
     { "p3", OSSL_PARAM_UNSIGNED_INTEGER, &bignumbin, sizeof(bignumbin),
       &bignumbin_l },
     { "p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), &app_p4_l },
-    { "p5", OSSL_PARAM_UTF8_STRING_PTR, &app_p5, sizeof(app_p5), &app_p5_l },
+    { "p5", OSSL_PARAM_UTF8_PTR, &app_p5, sizeof(app_p5), &app_p5_l },
     { "foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), &foo_l },
     { NULL, 0, NULL, 0, NULL }
 };
@@ -373,7 +344,7 @@ static const OSSL_PARAM api_params[] = {
     OSSL_PARAM_SIZED_BN("p3", &bignumbin, sizeof(bignumbin), bignumbin_l),
     OSSL_PARAM_DEFN("p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4),
                     &app_p4_l),
-    OSSL_PARAM_DEFN("p5", OSSL_PARAM_UTF8_STRING_PTR, &app_p5, sizeof(app_p5),
+    OSSL_PARAM_DEFN("p5", OSSL_PARAM_UTF8_PTR, &app_p5, sizeof(app_p5),
                     &app_p5_l),
     OSSL_PARAM_DEFN("foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), &foo_l),
     OSSL_PARAM_END
