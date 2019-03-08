@@ -1431,7 +1431,8 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
             int raw_sig_code= (salg[0]<<8) + salg[1]; /* always big endian (msb, lsb) */
                 /* raw_sig_code: signature_scheme from tls1.3, or signature_and_hash from tls1.2 */
 
-            BIO_printf(sdb->out, "%s", nm);
+            if (nm != NULL) BIO_printf(sdb->out, "%s", nm);
+            else            BIO_printf(sdb->out, "s_cb.c:security_callback_debug op=0x%x", op);
 
             sname= lookup(raw_sig_code, signature_tls13_scheme_list, NULL);
             if (sname != NULL) {
