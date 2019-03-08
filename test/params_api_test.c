@@ -317,7 +317,7 @@ static int test_param_construct(void)
         || !TEST_true(OSSL_PARAM_set_utf8_ptr(cp, "tuvwxyz"))
         || !TEST_size_t_eq(sz, sizeof("tuvwxyz"))
         || !TEST_str_eq(bufp, "tuvwxyz")
-        || !TEST_true(OSSL_PARAM_get_utf8_ptr(cp, &bufp2))
+        || !TEST_true(OSSL_PARAM_get_utf8_ptr(cp, (const char **)&bufp2))
         || !TEST_ptr_eq(bufp2, bufp))
         goto err;
     /* OCTET string */
@@ -351,7 +351,7 @@ static int test_param_construct(void)
         goto err;
     /* Match the return size to avoid trailing garbage bytes */
     p->buffer_size = *p->return_size;
-    if (!TEST_true(OSSL_PARAM_get_octet_ptr(p, &vp2, &k))
+    if (!TEST_true(OSSL_PARAM_get_octet_ptr(p, (const void **)&vp2, &k))
         || !TEST_size_t_eq(k, sizeof(ul))
         || !TEST_ptr_eq(vp2, vp))
         goto err;
