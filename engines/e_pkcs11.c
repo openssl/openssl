@@ -331,6 +331,10 @@ int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType)
     if (ctx->pin != NULL) {
         rv = pkcs11_funcs->C_Login(ctx->session, userType, ctx->pin,
                                    (CK_ULONG)strlen((char *)ctx->pin));
+        if (rv == CKR_GENERAL_ERROR && userType == CKU_CONTEXT_SPECIFIC) {
+            rv = pkcs11_funcs->C_Login(ctx->session, CKU_USER, ctx->pin,
+                                       (CK_ULONG)strlen((char *)ctx->pin));
+        }
         if (rv != CKR_OK) {
             PKCS11_trace("C_Login failed, error: %#08X\n", rv);
             PKCS11err(PKCS11_F_PKCS11_LOGIN, PKCS11_R_LOGIN_FAILED);
@@ -504,7 +508,7 @@ EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
 }
 
 int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
-                          PKCS11_CTX *pkcs11_ctx)
+                   PKCS11_CTX *pkcs11_ctx)
 {
     CK_RV rv;
     CK_BYTE attr_id[2];
@@ -563,8 +567,8 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
         memset(id, 0, sizeof(id));
 
         rv = pkcs11_funcs->C_GetAttributeValue(pkcs11_ctx->session, akey[i],
-                                                template,
-                                                 OSSL_NELEM(template));
+                                               template,
+                                               OSSL_NELEM(template));
         if (rv != CKR_OK) {
             PKCS11_trace("C_GetAttributeValue[%u]: \
                           rv = 0x%.8lX\n", i, rv);
@@ -573,7 +577,7 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
 
         len = template[1].ulValueLen;
 
-        snprintf(buf_name[store_idx], 50, "%s", label); 
+        strcpy(buf_name[store_idx], (char *)label); 
 
         strcpy (buf_desc[store_idx], "id (hex): ");
         for (j = 0; j < (len < 254 ? len : 254); j++) {
@@ -590,6 +594,87 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
         store_ctx->ids[store_idx].desc = buf_desc[store_idx];
 
         store_idx++;
+    }
+    pkcs11_end_session(pkcs11_ctx->session);
+    pkcs11_finalize();
+
+    return 1;
+
+ end:
+    return 0;
+}
+
+int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
+                    PKCS11_CTX *pkcs11_ctx,
+                    char* object)
+{
+    CK_RV rv;
+    CK_OBJECT_CLASS key_class = CKO_CERTIFICATE;
+    CK_ATTRIBUTE tmpl[2];
+    CK_ATTRIBUTE tmpl_cert[2];
+    CK_OBJECT_HANDLE obj;
+    CK_ULONG nObj = 0;
+
+    tmpl[0].type = CKA_CLASS;
+    tmpl[0].pValue = &key_class;
+    tmpl[0].ulValueLen = sizeof(key_class);
+    tmpl[1].type = CKA_LABEL;
+    tmpl[1].pValue = object;
+    tmpl[1].ulValueLen = (CK_ULONG)strlen(object);
+
+    tmpl_cert[0].type = CKA_CLASS;
+    tmpl_cert[0].pValue = &key_class;
+    tmpl_cert[0].ulValueLen = sizeof(key_class);
+    tmpl_cert[1].type = CKA_VALUE;
+    tmpl_cert[1].pValue = NULL;
+    tmpl_cert[1].ulValueLen = 0;
+
+    rv = pkcs11_initialize(pkcs11_ctx->module_path);
+    if (rv != CKR_OK)
+        goto end;
+    if (!pkcs11_get_slot(pkcs11_ctx))
+        goto end;
+    if (!pkcs11_start_session(pkcs11_ctx))
+        goto end;
+
+    rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl, 1);
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjectsInit: Error = 0x%.8lX\n", rv);
+        goto end;
+    }
+
+    rv = pkcs11_funcs->C_FindObjects(pkcs11_ctx->session, &obj,
+                                     1, &nObj);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjects: Error = 0x%.8lX\n", rv);
+        goto end;
+    }
+
+    rv = pkcs11_funcs->C_GetAttributeValue(pkcs11_ctx->session, obj,
+                                           tmpl_cert,
+                                           OSSL_NELEM(tmpl_cert));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue: \
+                      rv = 0x%.8lX\n", rv);
+        goto end;
+    }
+
+    tmpl_cert[1].pValue = OPENSSL_malloc(tmpl_cert[1].ulValueLen);
+
+    rv = pkcs11_funcs->C_GetAttributeValue(pkcs11_ctx->session, obj,
+                                           tmpl_cert,
+                                           OSSL_NELEM(tmpl_cert));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue: \
+                      rv = 0x%.8lX\n", rv);
+        goto end;
+    }
+    if (tmpl_cert[1].ulValueLen > 0) {
+        store_ctx->cert = tmpl_cert[1].pValue;
+        store_ctx->certlen = tmpl_cert[1].ulValueLen;
+    } else {
+        OPENSSL_free(tmpl_cert[1].pValue);
     }
     pkcs11_end_session(pkcs11_ctx->session);
     pkcs11_finalize();

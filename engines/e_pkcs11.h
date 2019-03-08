@@ -67,15 +67,17 @@ typedef struct PKCS11_CTX_st {
     CRYPTO_RWLOCK *lock;
 } PKCS11_CTX;
 
-struct ids_st {
+typedef struct ids_st {
     char *name;
     char *desc;
-};
+} IDS;
 
 struct ossl_store_loader_ctx_st {
     int error;
     int eof;
-    struct ids_st ids[MAX];
+    IDS ids[MAX];
+    size_t certlen;
+    const unsigned char *cert;
 };
 
 CK_RV pkcs11_initialize(const char *library_path);
@@ -91,6 +93,8 @@ int pkcs11_get_slot(PKCS11_CTX *ctx);
 int pkcs11_find_private_key(PKCS11_CTX *ctx);
 void PKCS11_trace(char *format, ...);
 PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa);
-int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *storectx,
+int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
                    PKCS11_CTX *pkcs11_ctx);
-
+int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
+                    PKCS11_CTX *pkcs11_ctx,
+                    char* object);

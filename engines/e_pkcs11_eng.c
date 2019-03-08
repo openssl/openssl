@@ -44,6 +44,9 @@ static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx);
 static int pkcs11_store_error(OSSL_STORE_LOADER_CTX *ctx);
 static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new();
 static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX* ctx);
+static OSSL_STORE_INFO* pkcs11_store_load_cert(OSSL_STORE_LOADER_CTX *ctx,
+                                               const UI_METHOD *ui_method,
+                                               void *ui_data);
 
 static int pkcs11_init(ENGINE *e)
 {
@@ -124,9 +127,8 @@ static char* pkcs11_hex2a(char *hex)
 
     hex2a = OPENSSL_malloc(strlen(hex) + 1);
 
-    if (hex2a == NULL) {
+    if (hex2a == NULL)
         return NULL;
-    }
 
     vlen = strlen(hex);
     ishex = pkcs11_ishex(hex);
@@ -150,10 +152,13 @@ static int pkcs11_ishex(char *hex)
 
     len = strlen(hex);
     for (i = 0; i < len; i++) {
-        if ((*(hex) >= '0' && *(hex) <= '9') || (*(hex) >= 'a' && *(hex) <= 'f')
-            || (*(hex) >= 'A' && *(hex) <= 'F')) h++;
+        if ((*(hex+i) >= '0' && *(hex+i) <= '9') || (*(hex+i) >= 'a' 
+            && *(hex+i) <= 'f') || (*(hex+i) >= 'A'
+            && *(hex+i) <= 'F')) h++;
+        else
+            return 0;
     }
-    if (h == len && !(h % 2))
+    if (!(h % 2))
         return 1;
     return 0;
 }
@@ -162,7 +167,6 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value)
 {
     char *tmp, *end, *hex2a;
     size_t tmplen;
-
     if ((tmp = strstr(path, token)) == NULL)
         return 0;
     tmp += strlen(token);
@@ -327,26 +331,30 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     const OSSL_STORE_LOADER *loader, const char *uri,
     const UI_METHOD *ui_method, void *ui_data)
 {
-    size_t len;
     ENGINE *e;
     PKCS11_CTX *pkcs11_ctx;
     OSSL_STORE_LOADER_CTX *store_ctx;
+    char *objecttype = NULL, *object = NULL;
 
     store_ctx = OSSL_STORE_LOADER_CTX_new();
-
-    len = strlen(pkcs11_scheme);
-    if (strncmp(uri, pkcs11_scheme, len) != 0)
-         return NULL;
-
-    uri += len;
-    if (*uri++ != ':')
-        return NULL;
-    if (*uri == '\0')
-        return NULL;
 
     e = (ENGINE *) OSSL_STORE_LOADER_get0_engine(loader);
     if (e == NULL)
         return NULL;
+
+    uri += 7;
+
+    pkcs11_parse_uri(uri,"objecttype=", &objecttype);
+    pkcs11_parse_uri(uri,"object=", &object);
+
+    if (object != NULL && objecttype != NULL
+        && strncmp(objecttype, "cert", 4) == 0) {
+        pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+        if (pkcs11_ctx == NULL)
+            return NULL;
+        if (!pkcs11_get_cert(store_ctx, pkcs11_ctx, object))
+            return NULL;
+    }
 
     if (strncmp(uri, "list=all", 8) == 0) {
         pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
@@ -366,6 +374,11 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
     OSSL_STORE_INFO *ret = NULL;
     char *name;
     char *description;
+
+    if (ctx->cert != NULL) {
+        ctx->eof = 1;
+        return pkcs11_store_load_cert(ctx, ui_method, ui_data);
+    }
 
     if (ctx->ids[store_idx].name == NULL) {
         ctx->eof = 1;
@@ -408,6 +421,7 @@ static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new()
         return NULL;
     ctx->error = 0;
     ctx->eof = 0;
+    ctx->cert = NULL;
     return ctx;
 }
 
@@ -418,16 +432,24 @@ static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX* ctx)
     OPENSSL_free(ctx);
 }
 
+static OSSL_STORE_INFO* pkcs11_store_load_cert(OSSL_STORE_LOADER_CTX *ctx,
+                                               const UI_METHOD *ui_method,
+                                               void *ui_data)
+{
+    X509 *x = NULL;
+
+    x = d2i_X509(NULL, &ctx->cert, ctx->certlen);
+    return OSSL_STORE_INFO_new_CERT(x);
+}
+
 static int bind_pkcs11(ENGINE *e)
 {
     const RSA_METHOD *ossl_rsa_meth;
     OSSL_STORE_LOADER *loader = NULL;
 
     loader = OSSL_STORE_LOADER_new(e, pkcs11_scheme);
-    if (loader == NULL) {
-        printf("ERR1");
+    if (loader == NULL) 
         return 0;
-    }
 
     if (!OSSL_STORE_LOADER_set_open(loader, pkcs11_store_open)
         || !OSSL_STORE_LOADER_set_load(loader, pkcs11_store_load)
@@ -435,7 +457,6 @@ static int bind_pkcs11(ENGINE *e)
         || !OSSL_STORE_LOADER_set_error(loader, pkcs11_store_error)
         || !OSSL_STORE_LOADER_set_close(loader, pkcs11_store_close)
         || !OSSL_STORE_register_loader(loader)) {
-        printf("ERR2");
         return 0;
     }
 
