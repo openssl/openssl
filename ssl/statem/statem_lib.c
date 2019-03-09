@@ -18,6 +18,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/trace.h>
 
 /*
  * Map error codes to TLS/SSL alart types.
@@ -394,11 +395,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto err;
     }
 
-#ifdef SSL_DEBUG
     if (SSL_USE_SIGALGS(s))
-        fprintf(stderr, "USING TLSv1.2 HASH %s\n",
-                md == NULL ? "n/a" : EVP_MD_name(md));
-#endif
+        OSSL_TRACE1(TLS, "USING TLSv1.2 HASH %s\n",
+                    md == NULL ? "n/a" : EVP_MD_name(md));
 
     /* Check for broken implementations of GOST ciphersuites */
     /*
@@ -439,10 +438,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto err;
     }
 
-#ifdef SSL_DEBUG
-    fprintf(stderr, "Using client verify alg %s\n",
-            md == NULL ? "n/a" : EVP_MD_name(md));
-#endif
+    OSSL_TRACE1(TLS, "Using client verify alg %s\n",
+                md == NULL ? "n/a" : EVP_MD_name(md));
+
     if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  ERR_R_EVP_LIB);
@@ -613,13 +611,6 @@ int tls_construct_key_update(SSL *s, WPACKET *pkt)
 MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
 {
     unsigned int updatetype;
-
-    s->key_update_count++;
-    if (s->key_update_count > MAX_KEY_UPDATE_MESSAGES) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_KEY_UPDATE,
-                 SSL_R_TOO_MANY_KEY_UPDATES);
-        return MSG_PROCESS_ERROR;
-    }
 
     /*
      * A KeyUpdate message signals a key change so the end of the message must

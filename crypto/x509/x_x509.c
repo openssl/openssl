@@ -107,7 +107,6 @@ ASN1_SEQUENCE_ref(X509, x509_cb) = {
 } ASN1_SEQUENCE_END_ref(X509, X509)
 
 IMPLEMENT_ASN1_FUNCTIONS(X509)
-
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)
@@ -163,7 +162,7 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
  * error path, but that depends on similar hygiene in lower-level functions.
  * Here we avoid compounding the problem.
  */
-static int i2d_x509_aux_internal(X509 *a, unsigned char **pp)
+static int i2d_x509_aux_internal(const X509 *a, unsigned char **pp)
 {
     int length, tmplen;
     unsigned char *start = pp != NULL ? *pp : NULL;
@@ -197,7 +196,7 @@ static int i2d_x509_aux_internal(X509 *a, unsigned char **pp)
  * the allocation, nor can we allow i2d_X509_CERT_AUX() to increment the
  * allocated buffer.
  */
-int i2d_X509_AUX(X509 *a, unsigned char **pp)
+int i2d_X509_AUX(const X509 *a, unsigned char **pp)
 {
     int length;
     unsigned char *tmp;

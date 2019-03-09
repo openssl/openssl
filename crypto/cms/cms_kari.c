@@ -363,7 +363,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
 
 /* Encrypt content key in key agreement recipient info */
 
-int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms,
+int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
                                    CMS_RecipientInfo *ri)
 {
     CMS_KeyAgreeRecipientInfo *kari;

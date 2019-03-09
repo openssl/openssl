@@ -10,6 +10,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/kdf.h>
+#include "internal/numbers.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 
@@ -41,6 +42,11 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     int rv = 1;
     EVP_KDF_CTX *kctx;
 
+    if (r > UINT32_MAX || p > UINT32_MAX) {
+        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_PARAMETER_TOO_LARGE);
+        return 0;
+    }
+
     /* Maintain existing behaviour. */
     if (pass == NULL) {
         pass = empty;
@@ -53,10 +59,6 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (kctx == NULL)
         return 0;
 
-    if (r > UINT32_MAX || p > UINT32_MAX) {
-        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_PARAMETER_TOO_LARGE);
-        return 0;
-    }
     if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS, pass, (size_t)passlen) != 1
             || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
                             salt, (size_t)saltlen) != 1

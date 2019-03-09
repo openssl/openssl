@@ -120,22 +120,27 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # code, so we just tell compiler to be pedantic about everything
 # but 'long long' type.
 
-my $gcc_devteam_warn = "-DDEBUG_UNUSED"
-        . " -DPEDANTIC -pedantic -Wno-long-long"
-        . " -Wall"
-        . " -Wextra"
-        . " -Wno-unused-parameter"
-        . " -Wno-missing-field-initializers"
-        . " -Wswitch"
-        . " -Wsign-compare"
-        . " -Wmissing-prototypes"
-        . " -Wstrict-prototypes"
-        . " -Wshadow"
-        . " -Wformat"
-        . " -Wtype-limits"
-        . " -Wundef"
-        . " -Werror"
-        ;
+my %gcc_devteam_warn = ();
+{
+    my @common = qw( -DDEBUG_UNUSED
+                     -DPEDANTIC -pedantic -Wno-long-long
+                     -Wall
+                     -Wextra
+                     -Wno-unused-parameter
+                     -Wno-missing-field-initializers
+                     -Wswitch
+                     -Wsign-compare
+                     -Wshadow
+                     -Wformat
+                     -Wtype-limits
+                     -Wundef
+                     -Werror );
+    %gcc_devteam_warn = (
+        CFLAGS          => [ @common, qw( -Wmissing-prototypes
+                                          -Wstrict-prototypes ) ],
+        CXXFLAGS        => [ @common ]
+    );
+}
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
@@ -145,19 +150,20 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wlanguage-extension-token -- no, we use asm()
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
-#       -Wunused-function -- no, it forces header use of safestack et al
-#                            DEFINE macros
-my $clang_devteam_warn = ""
-        . " -Wswitch-default"
-        . " -Wno-parentheses-equality"
-        . " -Wno-language-extension-token"
-        . " -Wno-extended-offsetof"
-        . " -Wconditional-uninitialized"
-        . " -Wincompatible-pointer-types-discards-qualifiers"
-        . " -Wmissing-variable-declarations"
-        . " -Wno-unknown-warning-option"
-        . " -Wno-unused-function"
-        ;
+my %clang_devteam_warn = ();
+{
+    my @common = qw( -Wswitch-default
+                     -Wno-parentheses-equality
+                     -Wno-language-extension-token
+                     -Wno-extended-offsetof
+                     -Wconditional-uninitialized
+                     -Wincompatible-pointer-types-discards-qualifiers
+                     -Wno-unknown-warning-option );
+    %clang_devteam_warn = (
+        CFLAGS          => [ @common, qw( -Wmissing-variable-declarations ) ],
+        CXXFLAGS        => [ @common ]
+    );
+}
 
 # This adds backtrace information to the memory leak info.  Is only used
 # when crypto-mdebug-backtrace is enabled.
@@ -335,6 +341,7 @@ my @disablables = (
     "autoload-config",
     "bf",
     "blake2",
+    "buildtest-c++",
     "camellia",
     "capieng",
     "cast",
@@ -368,7 +375,6 @@ my @disablables = (
     "fuzz-afl",
     "gost",
     "heartbeats",
-    "hw(-.+)?",
     "idea",
     "makedepend",
     "md2",
@@ -380,6 +386,7 @@ my @disablables = (
     "pinshared",
     "ocb",
     "ocsp",
+    "padlockeng",
     "pic",
     "pkcs11eng",
     "poly1305",
@@ -411,6 +418,7 @@ my @disablables = (
     "tests",
     "threads",
     "tls",
+    "trace",
     "ts",
     "ubsan",
     "ui-console",
@@ -429,6 +437,8 @@ foreach my $proto ((@tls, @dtls))
 my %deprecated_disablables = (
     "ssl2" => undef,
     "buf-freelists" => undef,
+    "hw" => "hw",               # causes cascade, but no macro
+    "hw-padlock" => "padlockeng",
     "ripemd" => "rmd160",
     "ui" => "ui-console",
     );
@@ -437,6 +447,7 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
 		  "asan"		=> "default",
+		  "buildtest-c++"	=> "default",
 		  "crypto-mdebug"       => "default",
 		  "crypto-mdebug-backtrace" => "default",
 		  "devcryptoeng"	=> "default",
@@ -490,8 +501,8 @@ my @disable_cascades = (
     # Without position independent code, there can be no shared libraries or DSOs
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
-    "engine"            => [ "afalgeng", "devcryptoeng", "pkcs11eng" ],
-
+    "engine"            => [ grep /eng$/, @disablables ],
+    "hw"                => [ "padlockeng" ],
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps" ],
 
@@ -549,18 +560,18 @@ my %user = (
     AS          => undef,
     ASFLAGS     => [],
     CC          => env('CC'),
-    CFLAGS      => [],
+    CFLAGS      => [ env('CFLAGS') || () ],
     CXX         => env('CXX'),
-    CXXFLAGS    => [],
+    CXXFLAGS    => [ env('CXXFLAGS') || () ],
     CPP         => undef,
-    CPPFLAGS    => [],  # -D, -I, -Wp,
+    CPPFLAGS    => [ env('CPPFLAGS') || () ],  # -D, -I, -Wp,
     CPPDEFINES  => [],  # Alternative for -D
     CPPINCLUDES => [],  # Alternative for -I
     CROSS_COMPILE => env('CROSS_COMPILE'),
     HASHBANGPERL=> env('HASHBANGPERL') || env('PERL'),
     LD          => undef,
-    LDFLAGS     => [],  # -L, -Wl,
-    LDLIBS      => [],  # -l
+    LDFLAGS     => [ env('LDFLAGS') || () ],  # -L, -Wl,
+    LDLIBS      => [ env('LDLIBS') || () ],  # -l
     MT          => undef,
     MTFLAGS     => [],
     PERL        => env('PERL') || ($^O ne "VMS" ? $^X : "perl"),
@@ -669,8 +680,9 @@ while (@argvcopy)
         if (/^(no|disable|enable)-(.+)$/)
                 {
                 my $word = $2;
-                if (!exists $deprecated_disablables{$word}
-                        && !grep { $word =~ /^${_}$/ } @disablables)
+                if ($word !~ m|hw(?:-.+)| # special treatment for hw regexp opt
+                        && !exists $deprecated_disablables{$word}
+                        && !grep { $word eq $_ } @disablables)
                         {
                         $unsupported_options{$_} = 1;
                         next;
@@ -724,6 +736,10 @@ while (@argvcopy)
                                 $disabled{$deprecated_disablables{$1}} = "option";
                                 }
                         }
+                elsif ($1 =~ m|hw(?:-.+)|) # deprecate hw options in regexp form
+                        {
+                        $deprecated_options{$_} = 1;
+                        }
                 else
                         {
                         $disabled{$1} = "option";
@@ -753,7 +769,11 @@ while (@argvcopy)
 		}
 	elsif (/^--strict-warnings$/)
 		{
-		$strict_warnings = 1;
+		# Pretend that our strict flags is a C flag, and replace it
+		# with the proper flags later on
+		push @{$useradd{CFLAGS}}, '--ossl-strict-warnings';
+		push @{$useradd{CXXFLAGS}}, '--ossl-strict-warnings';
+		$strict_warnings=1;
 		}
 	elsif (/^--debug$/)
 		{
@@ -1184,10 +1204,14 @@ $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 my %skipdir = ();
 my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
+    # There are deprecated disablables that translate to themselves.
+    # They cause disabling cascades, but should otherwise not regiter.
+    next if $deprecated_disablables{$what};
+
     $config{options} .= " no-$what";
 
-    if (!grep { $what eq $_ } ( 'dso', 'threads', 'shared', 'pic',
-                                'dynamic-engine', 'makedepend',
+    if (!grep { $what eq $_ } ( 'buildtest-c++', 'dso', 'threads', 'shared',
+                                'pic', 'dynamic-engine', 'makedepend',
                                 'zlib-dynamic', 'zlib', 'sse2' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
         my $skipdir = $what;
@@ -1415,14 +1439,17 @@ unless ($disabled{asm}) {
 	push @{$config{lib_defines}}, "X25519_ASM";
     }
     if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
-	push @{$config{lib_defines}}, "PADLOCK_ASM";
+	push @{$config{dso_defines}}, "PADLOCK_ASM";
     }
     if ($target{poly1305_asm_src} ne "") {
 	push @{$config{lib_defines}}, "POLY1305_ASM";
     }
 }
 
-my %predefined = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
+my %predefined_C = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
+my %predefined_CXX = $config{CXX}
+    ? compiler_predefined($config{CROSS_COMPILE}.$config{CXX})
+    : ();
 
 # Check for makedepend capabilities.
 if (!$disabled{makedepend}) {
@@ -1430,8 +1457,8 @@ if (!$disabled{makedepend}) {
         # For VC- and vms- targets, there's nothing more to do here.  The
         # functionality is hard coded in the corresponding build files for
         # cl (Windows) and CC/DECC (VMS).
-    } elsif (($predefined{__GNUC__} // -1) >= 3
-	     && !($predefined{__APPLE_CC__} && !$predefined{__clang__})) {
+    } elsif (($predefined_C{__GNUC__} // -1) >= 3
+	     && !($predefined_C{__APPLE_CC__} && !$predefined_C{__clang__})) {
         # We know that GNU C version 3 and up as well as all clang
         # versions support dependency generation, but Xcode did not
         # handle $cc -M before clang support (but claims __GNUC__ = 3)
@@ -1444,9 +1471,9 @@ if (!$disabled{makedepend}) {
     }
 }
 
-if (!$disabled{asm} && !$predefined{__MACH__} && $^O ne 'VMS') {
+if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS') {
     # probe for -Wa,--noexecstack option...
-    if ($predefined{__clang__}) {
+    if ($predefined_C{__clang__}) {
         # clang has builtin assembler, which doesn't recognize --help,
         # but it apparently recognizes the option in question on all
         # supported platforms even when it's meaningless. In other words
@@ -1504,33 +1531,36 @@ $config{openssl_api_defines} = [
     "OPENSSL_MIN_API=".($apitable->{$config{api} // ""} // -1)
 ];
 
+my %strict_warnings_collection=( CFLAGS => [], CXXFLAGS => []);
 if ($strict_warnings)
 	{
 	my $wopt;
-	my $gccver = $predefined{__GNUC__} // -1;
+	my $gccver = $predefined_C{__GNUC__} // -1;
+	my $gxxver = $predefined_CXX{__GNUC__} // -1;
 
-	die "ERROR --strict-warnings requires gcc[>=4] or gcc-alike"
+	warn "WARNING --strict-warnings requires gcc[>=4] or gcc-alike"
             unless $gccver >= 4;
-	foreach $wopt (split /\s+/, $gcc_devteam_warn)
+	warn "WARNING --strict-warnings requires g++[>=4] or g++-alike"
+            unless $gxxver >= 4;
+	foreach (qw(CFLAGS CXXFLAGS))
 		{
-		push @{$config{cflags}}, $wopt
-			unless grep { $_ eq $wopt } @{$config{cflags}};
-		push @{$config{cxxflags}}, $wopt
-			if ($config{CXX}
-			    && !grep { $_ eq $wopt } @{$config{cxxflags}});
+		push @{$strict_warnings_collection{$_}},
+			@{$gcc_devteam_warn{$_}};
 		}
-	if (defined($predefined{__clang__}))
-		{
-		foreach $wopt (split /\s+/, $clang_devteam_warn)
-			{
-			push @{$config{cflags}}, $wopt
-				unless grep { $_ eq $wopt } @{$config{cflags}};
-			push @{$config{cxxflags}}, $wopt
-				if ($config{CXX}
-				    && !grep { $_ eq $wopt } @{$config{cxxflags}});
-			}
-		}
+	push @{$strict_warnings_collection{CFLAGS}},
+		@{$clang_devteam_warn{CFLAGS}}
+			if (defined($predefined_C{__clang__}));
+	push @{$strict_warnings_collection{CXXFLAGS}},
+		@{$clang_devteam_warn{CXXFLAGS}}
+			if (defined($predefined_CXX{__clang__}));
 	}
+foreach my $idx (qw(CFLAGS CXXFLAGS))
+        {
+        $useradd{$idx} = [ map { $_ eq '--ossl-strict-warnings'
+                                     ? @{$strict_warnings_collection{$idx}}
+                                     : ( $_ ) }
+                               @{$useradd{$idx}} ];
+        }
 
 unless ($disabled{"crypto-mdebug-backtrace"})
 	{

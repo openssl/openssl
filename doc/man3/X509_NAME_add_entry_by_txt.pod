@@ -74,6 +74,15 @@ structure respectively. This will then be a multivalued RDN:
 since multivalues RDNs are very seldom used B<set> is almost
 always set to zero.
 
+=head1 RETURN VALUES
+
+X509_NAME_add_entry_by_txt(), X509_NAME_add_entry_by_OBJ(),
+X509_NAME_add_entry_by_NID() and X509_NAME_add_entry() return 1 for
+success of 0 if an error occurred.
+
+X509_NAME_delete_entry() returns either the deleted B<X509_NAME_ENTRY>
+structure of B<NULL> if an error occurred.
+
 =head1 EXAMPLES
 
 Create an B<X509_NAME> structure:
@@ -94,15 +103,6 @@ Create an B<X509_NAME> structure:
  if (!X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
                                  "Joe Bloggs", -1, -1, 0))
      /* Error */
-
-=head1 RETURN VALUES
-
-X509_NAME_add_entry_by_txt(), X509_NAME_add_entry_by_OBJ(),
-X509_NAME_add_entry_by_NID() and X509_NAME_add_entry() return 1 for
-success of 0 if an error occurred.
-
-X509_NAME_delete_entry() returns either the deleted B<X509_NAME_ENTRY>
-structure of B<NULL> if an error occurred.
 
 =head1 BUGS
 

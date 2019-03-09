@@ -6,7 +6,7 @@ LHASH, DECLARE_LHASH_OF,
 OPENSSL_LH_COMPFUNC, OPENSSL_LH_HASHFUNC, OPENSSL_LH_DOALL_FUNC,
 LHASH_DOALL_ARG_FN_TYPE,
 IMPLEMENT_LHASH_HASH_FN, IMPLEMENT_LHASH_COMP_FN,
-lh_TYPE_new, lh_TYPE_free,
+lh_TYPE_new, lh_TYPE_free, lh_TYPE_flush,
 lh_TYPE_insert, lh_TYPE_delete, lh_TYPE_retrieve,
 lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
@@ -20,6 +20,7 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
  LHASH *lh_TYPE_new(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare);
  void lh_TYPE_free(LHASH_OF(TYPE) *table);
+ void lh_TYPE_flush(LHASH_OF(TYPE) *table);
 
  TYPE *lh_TYPE_insert(LHASH_OF(TYPE) *table, TYPE *data);
  TYPE *lh_TYPE_delete(LHASH_OF(TYPE) *table, TYPE *data);
@@ -94,6 +95,11 @@ lh_TYPE_free() frees the B<LHASH_OF(TYPE)> structure
 B<table>. Allocated hash table entries will not be freed; consider
 using lh_TYPE_doall() to deallocate any remaining entries in the
 hash table (see below).
+
+lh_TYPE_flush() empties the B<LHASH_OF(TYPE)> structure B<table>. New
+entries can be added to the flushed table.  Allocated hash table entries
+will not be freed; consider using lh_TYPE_doall() to deallocate any
+remaining entries in the hash table (see below).
 
 lh_TYPE_insert() inserts the structure pointed to by B<data> into
 B<table>.  If there already is an entry with the same key, the old
@@ -173,7 +179,8 @@ B<NULL> otherwise.
 lh_TYPE_error() returns 1 if an error occurred in the last operation, 0
 otherwise. It's meaningful only after non-retrieve operations.
 
-lh_TYPE_free(), lh_TYPE_doall() and lh_TYPE_doall_arg() return no values.
+lh_TYPE_free(), lh_TYPE_flush, lh_TYPE_doall() and lh_TYPE_doall_arg()
+return no values.
 
 =head1 NOTE
 

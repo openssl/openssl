@@ -1,9 +1,10 @@
 IF[{- !$disabled{"engine"} -}]
-
   IF[{- $disabled{"dynamic-engine"} -}]
     LIBS=../libcrypto
-    SOURCE[../libcrypto]=\
-            e_padlock.c {- $target{padlock_asm_src} -}
+    IF[{- !$disabled{padlockeng} -}]
+      SOURCE[../libcrypto]=\
+              e_padlock.c {- $target{padlock_asm_src} -}
+    ENDIF
     IF[{- !$disabled{capieng} -}]
       SOURCE[../libcrypto]=e_capi.c
     ENDIF
@@ -17,13 +18,15 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[../libcrypto]=e_pkcs11.c e_pkcs11_eng.c
     ENDIF
   ELSE
-    MODULES{engine}=padlock
-    SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
-    DEPEND[padlock]=../libcrypto
-    INCLUDE[padlock]=../include
-    IF[{- defined $target{shared_defflag} -}]
-      SHARED_SOURCE[padlock]=padlock.ld
-      GENERATE[padlock.ld]=../util/engines.num
+    IF[{- !$disabled{padlockeng} -}]
+      MODULES{engine}=padlock
+      SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
+      DEPEND[padlock]=../libcrypto
+      INCLUDE[padlock]=../include
+      IF[{- defined $target{shared_defflag} -}]
+        SHARED_SOURCE[padlock]=padlock.ld
+        GENERATE[padlock.ld]=../util/engines.num
+      ENDIF
     ENDIF
     IF[{- !$disabled{capieng} -}]
       MODULES{engine}=capi
@@ -46,7 +49,7 @@ IF[{- !$disabled{"engine"} -}]
       ENDIF
     ENDIF
     IF[{- !$disabled{"devcryptoeng"} -}]
-      MODULES=devcrypto
+      MODULES{engine}=devcrypto
       SOURCE[devcrypto]=e_devcrypto.c
       DEPEND[devcrypto]=../libcrypto
       INCLUDE[devcrypto]=../include
@@ -82,8 +85,7 @@ IF[{- !$disabled{"engine"} -}]
       GENERATE[ossltest.ld]=../util/engines.num
     ENDIF
   ENDIF
-
   GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl \
-        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
+    $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
   GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl $(PERLASM_SCHEME)
 ENDIF

@@ -146,7 +146,7 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
                 (OCSP_CERTSTATUS*)ASN1_dup((int(*)())i2d_OCSP_CERTSTATUS,\
                 (char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
 
-OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
+DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,

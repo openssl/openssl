@@ -25,11 +25,11 @@ NON_EMPTY_TRANSLATION_UNIT
 static int long_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
                     const ASN1_ITEM *it);
 static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
                     int utype, char *free_cont, const ASN1_ITEM *it);
-static int long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+static int long_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                       int indent, const ASN1_PCTX *pctx);
 
 static ASN1_PRIMITIVE_FUNCS long_pf = {
@@ -86,7 +86,7 @@ static int num_bits_ulong(unsigned long value)
     return (int)ret;
 }
 
-static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
                     const ASN1_ITEM *it)
 {
     long ltmp;
@@ -190,7 +190,7 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     return 1;
 }
 
-static int long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+static int long_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                       int indent, const ASN1_PCTX *pctx)
 {
     long l;

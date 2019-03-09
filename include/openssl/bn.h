@@ -223,6 +223,8 @@ int BN_bn2bin(const BIGNUM *a, unsigned char *to);
 int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen);
+BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret);
+int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_mpi2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
 int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);

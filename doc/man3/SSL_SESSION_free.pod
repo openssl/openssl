@@ -12,7 +12,7 @@ SSL_SESSION_free - create, free and manage SSL_SESSION structures
  #include <openssl/ssl.h>
 
  SSL_SESSION *SSL_SESSION_new(void);
- SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src);
+ SSL_SESSION *SSL_SESSION_dup(const SSL_SESSION *src);
  int SSL_SESSION_up_ref(SSL_SESSION *ses);
  void SSL_SESSION_free(SSL_SESSION *session);
 

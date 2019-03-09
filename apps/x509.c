@@ -33,7 +33,7 @@
 #define DEF_DAYS        30
 
 static int callb(int ok, X509_STORE_CTX *ctx);
-static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
+static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
                 int preserve_dates);
 static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
@@ -132,7 +132,7 @@ const OPTIONS x509_options[] = {
     {"CAform", OPT_CAFORM, 'F', "CA format - default PEM"},
     {"CAkeyform", OPT_CAKEYFORM, 'f', "CA key format - default PEM"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"force_pubkey", OPT_FORCE_PUBKEY, '<', "Force the Key to put inside certificate"},
+    {"force_pubkey", OPT_FORCE_PUBKEY, '<', "Force the key to put inside certificate"},
     {"next_serial", OPT_NEXT_SERIAL, '-', "Increment current certificate serial number"},
     {"clrreject", OPT_CLRREJECT, '-',
      "Clears all the prohibited or rejected uses of the certificate"},
@@ -574,18 +574,16 @@ int x509_main(int argc, char **argv)
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
 
-        if (fkey != NULL) {
-            X509_set_pubkey(x, fkey);
-        } else {
-            pkey = X509_REQ_get0_pubkey(req);
-            X509_set_pubkey(x, pkey);
-        }
+        if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
+            goto end;
     } else {
         x = load_cert(infile, informat, "Certificate");
+        if (x == NULL)
+            goto end;
+        if (fkey != NULL && !X509_set_pubkey(x, fkey))
+            goto end;
     }
 
-    if (x == NULL)
-        goto end;
     if (CA_flag) {
         xca = load_cert(CAfile, CAformat, "CA Certificate");
         if (xca == NULL)
@@ -799,7 +797,8 @@ int x509_main(int argc, char **argv)
                         goto end;
                 }
 
-                if (!sign(x, Upkey, days, clrext, digest, extconf, extsect, preserve_dates))
+                if (!sign(x, Upkey, fkey, days, clrext, digest, extconf,
+                          extsect, preserve_dates))
                     goto end;
             } else if (CA_flag == i) {
                 BIO_printf(bio_err, "Getting CA Private Key\n");
@@ -1054,8 +1053,8 @@ static int callb(int ok, X509_STORE_CTX *ctx)
     }
 }
 
-/* self sign */
-static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
+/* self-issue; self-sign unless a forced public key (fkey) is given */
+static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
                 int preserve_dates)
 {
@@ -1064,7 +1063,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
         goto err;
     if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
         goto err;
-    if (!X509_set_pubkey(x, pkey))
+    if (fkey == NULL && !X509_set_pubkey(x, pkey))
         goto err;
     if (clrext) {
         while (X509_get_ext_count(x) > 0)

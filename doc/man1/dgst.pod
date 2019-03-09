@@ -230,8 +230,8 @@ prior to verification.
 
 =head1 HISTORY
 
-The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0
-The FIPS-related options were removed in OpenSSL 1.1.0
+The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
+The FIPS-related options were removed in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 

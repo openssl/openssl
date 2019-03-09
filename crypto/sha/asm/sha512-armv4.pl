@@ -196,6 +196,9 @@ $code.=<<___;
 	add	$Ktbl,$Ktbl,#8
 ___
 }
+
+my $_word = ($flavour =~ /win/ ? "DCDU" : ".word");
+
 $code=<<___;
 #ifndef __KERNEL__
 # include "arm_arch.h"
@@ -211,14 +214,13 @@ $code=<<___;
 #ifdef __ARMEL__
 # define LO 0
 # define HI 4
-# define WORD64(hi0,lo0,hi1,lo1)	.word	lo0,hi0, lo1,hi1
+# define WORD64(hi0,lo0,hi1,lo1)	$_word	lo0,hi0, lo1,hi1
 #else
 # define HI 0
 # define LO 4
-# define WORD64(hi0,lo0,hi1,lo1)	.word	hi0,lo0, hi1,lo1
+# define WORD64(hi0,lo0,hi1,lo1)	$_word	hi0,lo0, hi1,lo1
 #endif
 
-.text
 #if defined(__thumb2__)
 .syntax unified
 .thumb
@@ -226,6 +228,8 @@ $code=<<___;
 #else
 .code	32
 #endif
+
+.text
 
 .type	K512,%object
 .align	5
@@ -273,7 +277,11 @@ WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 .size	K512,.-K512
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 .LOPENSSL_armcap:
+# ifdef	_WIN32
+.word	OPENSSL_armcap_P
+# else
 .word	OPENSSL_armcap_P-.Lsha512_block_data_order
+# endif
 .skip	32-4
 #else
 .skip	32
@@ -290,10 +298,12 @@ sha512_block_data_order:
 #endif
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	ldr	r12,.LOPENSSL_armcap
+# if !defined(_WIN32)
 	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
-#ifdef	__APPLE__
+# endif
+# if defined(__APPLE__) || defined(_WIN32)
 	ldr	r12,[r12]
-#endif
+# endif
 	tst	r12,#ARMV7_NEON
 	bne	.LNEON
 #endif

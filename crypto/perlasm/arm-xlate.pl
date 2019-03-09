@@ -28,6 +28,13 @@ my $fpu = sub {
     if ($flavour =~ /linux/)	{ ".fpu\t".join(',',@_); }
     else			{ ""; }
 };
+my $rodata = sub {
+    SWITCH: for ($flavour) {
+	/linux/		&& return ".section\t.rodata";
+	/ios/		&& return ".section\t__TEXT,__const";
+	last;
+    }
+};
 my $hidden = sub {
     if ($flavour =~ /ios/)	{ ".private_extern\t".join(',',@_); }
     else			{ ".hidden\t".join(',',@_); }
@@ -96,6 +103,12 @@ my $asciz = sub {
     {	"";	}
 };
 
+my $adrp = sub {
+    my ($args,$comment) = split(m|\s*//|,shift);
+    "\tadrp\t$args\@PAGE";
+} if ($flavour =~ /ios64/);
+
+
 sub range {
   my ($r,$sfx,$start,$end) = @_;
 
@@ -124,6 +137,10 @@ sub expand_line {
     }
 
     $line =~ s/\b(\w+)/$GLOBALS{$1} or $1/ge;
+
+    if ($flavour =~ /ios64/) {
+	$line =~ s/#:lo12:(\w+)/$1\@PAGEOFF/;
+    }
 
     return $line;
 }

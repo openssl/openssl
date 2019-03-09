@@ -9,6 +9,33 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added support for enabling instrumentation through trace output.
+     This is left to application control, by allowing it to register BIOs as
+     channels for a number of tracing and debugging categories.
+
+     The 'openssl' application has been expanded to enable any of the types
+     available via environment variables defined by the user, and serves as
+     one possible example on how to use this functionality.
+     [Richard Levitte & Matthias St. Pierre]
+
+  *) Added build tests for C++.  These are generated files that only do one
+     thing, to include one public OpenSSL head file each.  This tests that
+     the public header files can be usefully included in a C++ application.
+
+     This test isn't enabled by default.  It can be enabled with the option
+     'enable-buildtest-c++'.
+     [Richard Levitte]
+
+  *) Added property based algorithm implementation selection framework to
+     the core.
+     [Paul Dale]
+
+  *) Added SCA hardening for modular field inversion in EC_GROUP through
+     a new dedicated field_inv() pointer in EC_METHOD.
+     This also addresses a leakage affecting conversions from projective
+     to affine coordinates.
+     [Billy Bob Brumley, Nicola Tuveri]
+
   *) Added EVP_KDF, an EVP layer KDF API, to simplify adding KDF and PRF
      implementations.  This includes an EVP_PKEY to EVP_KDF bridge for
      those algorithms that were already supported through the EVP_PKEY API

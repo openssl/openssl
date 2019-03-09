@@ -287,6 +287,13 @@ typedef unsigned __int64 uint64_t;
 #  define ossl_noreturn
 # endif
 
+/* ossl_unused: portable unused attribute for use in public headers */
+# if defined(__GNUC__)
+#  define ossl_unused __attribute__((unused))
+# else
+#  define ossl_unused
+# endif
+
 #ifdef  __cplusplus
 }
 #endif

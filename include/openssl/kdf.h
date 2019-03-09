@@ -10,6 +10,8 @@
 #ifndef HEADER_KDF_H
 # define HEADER_KDF_H
 
+# include <stdarg.h>
+# include <stddef.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/kdferr.h>
 # ifdef __cplusplus
@@ -20,6 +22,7 @@ extern "C" {
 # define EVP_KDF_SCRYPT     NID_id_scrypt
 # define EVP_KDF_TLS1_PRF   NID_tls1_prf
 # define EVP_KDF_HKDF       NID_hkdf
+# define EVP_KDF_SSHKDF     NID_sshkdf
 
 EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id);
 void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
@@ -47,11 +50,20 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
 # define EVP_KDF_CTRL_SET_SCRYPT_N      0x0d /* uint64_t */
 # define EVP_KDF_CTRL_SET_SCRYPT_R      0x0e /* uint32_t */
 # define EVP_KDF_CTRL_SET_SCRYPT_P      0x0f /* uint32_t */
+# define EVP_KDF_CTRL_SET_SSHKDF_XCGHASH    0x10 /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_SSHKDF_SESSION_ID 0x11 /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_SSHKDF_TYPE       0x12 /* int */
 
 # define EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND  0
 # define EVP_KDF_HKDF_MODE_EXTRACT_ONLY        1
 # define EVP_KDF_HKDF_MODE_EXPAND_ONLY         2
 
+#define EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV 65
+#define EVP_KDF_SSHKDF_TYPE_INITIAL_IV_SRV_TO_CLI 66
+#define EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_CLI_TO_SRV 67
+#define EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_SRV_TO_CLI 68
+#define EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_CLI_TO_SRV 69
+#define EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_SRV_TO_CLI 70
 
 /**** The legacy PKEY-based KDF API follows. ****/
 

@@ -107,7 +107,8 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_APP             13
 # define CRYPTO_EX_INDEX_UI_METHOD       14
 # define CRYPTO_EX_INDEX_DRBG            15
-# define CRYPTO_EX_INDEX__COUNT          16
+# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
+# define CRYPTO_EX_INDEX__COUNT          17
 
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() while(0) continue
@@ -186,6 +187,10 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
                        const CRYPTO_EX_DATA *from);
 
 void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
+
+/* Allocate a single item in the CRYPTO_EX_DATA variable */
+int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
+                         int idx);
 
 /*
  * Get/set data in a CRYPTO_EX_DATA variable corresponding to a particular
@@ -446,6 +451,8 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
+OPENSSL_CTX *OPENSSL_CTX_new(void);
+void OPENSSL_CTX_free(OPENSSL_CTX *);
 
 # ifdef  __cplusplus
 }

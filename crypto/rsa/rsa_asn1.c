@@ -106,16 +106,16 @@ ASN1_SEQUENCE_cb(RSA_OAEP_PARAMS, rsa_oaep_cb) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(RSA_OAEP_PARAMS)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPrivateKey, RSAPrivateKey)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(RSA, RSAPrivateKey, RSAPrivateKey)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(RSA, RSAPublicKey, RSAPublicKey)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(RSA, RSAPublicKey, RSAPublicKey)
 
-RSA *RSAPublicKey_dup(RSA *rsa)
+RSA *RSAPublicKey_dup(const RSA *rsa)
 {
     return ASN1_item_dup(ASN1_ITEM_rptr(RSAPublicKey), rsa);
 }
 
-RSA *RSAPrivateKey_dup(RSA *rsa)
+RSA *RSAPrivateKey_dup(const RSA *rsa)
 {
     return ASN1_item_dup(ASN1_ITEM_rptr(RSAPrivateKey), rsa);
 }

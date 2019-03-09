@@ -71,7 +71,7 @@ static int pkey_mac_init(EVP_PKEY_CTX *ctx)
 
 static void pkey_mac_cleanup(EVP_PKEY_CTX *ctx);
 
-static int pkey_mac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+static int pkey_mac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     MAC_PKEY_CTX *sctx, *dctx;
 

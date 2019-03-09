@@ -76,7 +76,6 @@ $code=<<___;
 # define __ARM_ARCH__ __LINUX_ARM_ARCH__
 #endif
 
-.text
 #if defined(__thumb2__) && !defined(__APPLE__)
 .syntax	unified
 .thumb
@@ -84,6 +83,8 @@ $code=<<___;
 .code	32
 #undef __thumb2__
 #endif
+
+.text
 
 .type	AES_Te,%object
 .align	5

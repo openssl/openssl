@@ -1,7 +1,7 @@
 # Note that these directories are filtered in Configure.  Look for %skipdir
 # there for further explanations.
 SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 x509v3 conf \
-        txt_db pkcs7 pkcs12 ui kdf store \
+        txt_db pkcs7 pkcs12 ui kdf store property \
         md2 md4 md5 sha mdc2 gmac hmac ripemd whrlpool poly1305 blake2 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
@@ -12,7 +12,8 @@ SOURCE[../libcrypto]=\
         cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
         ebcdic.c uid.c o_time.c o_str.c o_dir.c o_fopen.c ctype.c \
         threads_pthread.c threads_win.c threads_none.c getenv.c \
-        o_init.c o_fips.c mem_sec.c init.c sparse_array.c \
+        o_init.c o_fips.c mem_sec.c init.c context.c sparse_array.c \
+        trace.c \
         {- $target{cpuid_asm_src} -} {- $target{uplink_aux_src} -}
 
 DEPEND[cversion.o]=buildinf.h

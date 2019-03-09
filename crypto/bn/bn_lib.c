@@ -536,6 +536,24 @@ int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
     return tolen;
 }
 
+BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+#ifdef B_ENDIAN
+    return BN_bin2bn(s, len, ret);
+#else
+    return BN_lebin2bn(s, len, ret);
+#endif
+}
+
+int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+#ifdef B_ENDIAN
+    return BN_bn2binpad(a, to, tolen);
+#else
+    return BN_bn2lebinpad(a, to, tolen);
+#endif
+}
+
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 {
     int i;
@@ -694,6 +712,9 @@ int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
 {
     int i;
     BN_ULONG aa, bb;
+
+    if (n == 0)
+        return 0;
 
     aa = a[n - 1];
     bb = b[n - 1];

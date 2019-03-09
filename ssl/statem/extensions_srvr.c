@@ -989,6 +989,9 @@ int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
+    if (s->options & SSL_OP_NO_EXTENDED_MASTER_SECRET)
+        return 1;
+
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
 
     return 1;
@@ -1274,7 +1277,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         goto err;
     }
 
-    sess->ext.tick_identity = id;
+    s->ext.tick_identity = id;
 
     SSL_SESSION_free(s->session);
     s->session = sess;
@@ -1948,7 +1951,7 @@ EXT_RETURN tls_construct_stoc_psk(SSL *s, WPACKET *pkt, unsigned int context,
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_put_bytes_u16(pkt, s->session->ext.tick_identity)
+            || !WPACKET_put_bytes_u16(pkt, s->ext.tick_identity)
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_PSK, ERR_R_INTERNAL_ERROR);
