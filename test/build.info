@@ -50,7 +50,7 @@ IF[{- !$disabled{tests} -}]
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
           sysdefaulttest errtest gosttest \
-          context_internal_test aesgcmtest
+          context_internal_test aesgcmtest params_test
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include ../apps/include

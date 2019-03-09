@@ -54,6 +54,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(void);
 static void list_pkey_meth(void);
 static void list_type(FUNC_TYPE ft, int one);
+static void list_engines(void);
 static void list_disabled(void);
 char *default_config_file = NULL;
 
@@ -523,8 +524,8 @@ typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ONE,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED, OPT_MISSING_HELP,
-    OPT_OBJECTS
+    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
+    OPT_MISSING_HELP, OPT_OBJECTS
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -544,6 +545,8 @@ const OPTIONS list_options[] = {
      "List of public key algorithms"},
     {"public-key-methods", OPT_PK_METHOD, '-',
      "List of public key methods"},
+    {"engines", OPT_ENGINES, '-',
+     "List of loaded engines"},
     {"disabled", OPT_DISABLED, '-',
      "List of disabled features"},
     {"missing-help", OPT_MISSING_HELP, '-',
@@ -598,6 +601,9 @@ opthelp:
             break;
         case OPT_PK_METHOD:
             list_pkey_meth();
+            break;
+        case OPT_ENGINES:
+            list_engines();
             break;
         case OPT_DISABLED:
             list_disabled();
@@ -835,6 +841,22 @@ static int SortFnByName(const void *_f1, const void *_f2)
     if (f1->type != f2->type)
         return f1->type - f2->type;
     return strcmp(f1->name, f2->name);
+}
+
+static void list_engines(void)
+{
+#ifndef OPENSSL_NO_ENGINES
+    ENGINE *e;
+
+    BIO_puts(bio_out, "Engines:\n");
+    e = ENGINE_get_first();
+    while (e) {
+        BIO_printf(bio_out, "%s\n", ENGINE_get_id(e));
+        e = ENGINE_get_next(e);
+    }
+#else
+    BIO_puts(bio_out, "Engine support is disabled.\n");
+#endif
 }
 
 static void list_disabled(void)
