@@ -379,7 +379,7 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
         return pkcs11_store_load_cert(ctx, ui_method, ui_data);
     }
 
-    if (ctx->ids[store_idx].name[0] == '\0') {
+    if (ctx->ids[store_idx].name[0] == '\0' || store_idx == MAX - 1) {
         ctx->eof = 1;
         return NULL;
     }
@@ -389,8 +389,6 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
     ret = OSSL_STORE_INFO_new_NAME(name);
     OSSL_STORE_INFO_set0_NAME_description(ret, description);
 
-    if (ctx->ids[store_idx+1].name == NULL || store_idx == MAX - 1)
-        ctx->eof = 1;
     store_idx++;
     return ret;
 }
