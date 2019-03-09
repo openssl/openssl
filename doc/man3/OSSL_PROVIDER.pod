@@ -2,9 +2,9 @@
 
 =head1 NAME
 
-OSSL_PROVIDER, OSSL_load_provider, OSSL_unload_provider,
-OSSL_get_provider_param_types, OSSL_get_provider_params,
-OSSL_add_provider - provider routines
+OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
+OSSL_PROVIDER_get_param_types, OSSL_PROVIDER_get_params,
+OSSL_PROVIDER_add_builtin - provider routines
 
 =head1 SYNOPSIS
 
