@@ -42,7 +42,7 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
 static int pkcs11_store_eof(OSSL_STORE_LOADER_CTX *ctx);
 static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx);
 static int pkcs11_store_error(OSSL_STORE_LOADER_CTX *ctx);
-static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new();
+static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new(void);
 static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX* ctx);
 static OSSL_STORE_INFO* pkcs11_store_load_cert(OSSL_STORE_LOADER_CTX *ctx,
                                                const UI_METHOD *ui_method,
@@ -147,8 +147,7 @@ static char* pkcs11_hex2a(char *hex)
 
 static int pkcs11_ishex(char *hex)
 {
-    int i;
-    size_t len, h = 0;
+    size_t i, len, h = 0;
 
     len = strlen(hex);
     for (i = 0; i < len; i++) {
@@ -413,7 +412,7 @@ static int pkcs11_store_error(OSSL_STORE_LOADER_CTX *ctx)
     return 0;
 }
 
-static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new()
+static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new(void)
 {
     OSSL_STORE_LOADER_CTX *ctx;
 
