@@ -68,8 +68,8 @@ typedef struct PKCS11_CTX_st {
 } PKCS11_CTX;
 
 typedef struct ids_st {
-    char *name;
-    char *desc;
+    char name[50];
+    char desc[512];
 } IDS;
 
 struct ossl_store_loader_ctx_st {

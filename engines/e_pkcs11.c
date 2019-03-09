@@ -511,9 +511,8 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
                    PKCS11_CTX *pkcs11_ctx)
 {
     CK_RV rv;
-    CK_BYTE attr_id[2];
     CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
-    CK_ATTRIBUTE tmpl[2];
+    CK_ATTRIBUTE tmpl[1];
     CK_OBJECT_HANDLE akey[255];
     CK_ULONG ulObj = 1;
     int i;
@@ -521,9 +520,6 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
     tmpl[0].type = CKA_CLASS;
     tmpl[0].pValue = &key_class;
     tmpl[0].ulValueLen = sizeof(key_class);
-    tmpl[1].type = CKA_ID;
-    tmpl[1].pValue = &attr_id;
-    tmpl[1].ulValueLen = sizeof(attr_id);
 
     rv = pkcs11_initialize(pkcs11_ctx->module_path);
     if (rv != CKR_OK)
@@ -533,7 +529,8 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
     if (!pkcs11_start_session(pkcs11_ctx))
         goto end;
 
-    rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl, 1);
+    rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl,
+                                         OSSL_NELEM(tmpl));
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjectsInit: Error = 0x%.8lX\n", rv);
@@ -577,7 +574,7 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
 
         len = template[1].ulValueLen;
 
-        strcpy(buf_name[store_idx], (char *)label); 
+        strcpy(buf_name[store_idx], (char *)label);
 
         strcpy (buf_desc[store_idx], "id (hex): ");
         for (j = 0; j < (len < 254 ? len : 254); j++) {
@@ -590,8 +587,8 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
             strcat(buf_desc[store_idx], tmpbuf);
         }
 
-        store_ctx->ids[store_idx].name = buf_name[store_idx];
-        store_ctx->ids[store_idx].desc = buf_desc[store_idx];
+        strcpy(store_ctx->ids[store_idx].name, buf_name[store_idx]);
+        strcpy(store_ctx->ids[store_idx].desc, buf_desc[store_idx]);
 
         store_idx++;
     }
@@ -637,7 +634,8 @@ int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
     if (!pkcs11_start_session(pkcs11_ctx))
         goto end;
 
-    rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl, 1);
+    rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl,
+                                         OSSL_NELEM(tmpl));
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjectsInit: Error = 0x%.8lX\n", rv);
@@ -684,4 +682,3 @@ int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
  end:
     return 0;
 }
-

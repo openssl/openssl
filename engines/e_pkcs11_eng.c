@@ -152,7 +152,7 @@ static int pkcs11_ishex(char *hex)
 
     len = strlen(hex);
     for (i = 0; i < len; i++) {
-        if ((*(hex+i) >= '0' && *(hex+i) <= '9') || (*(hex+i) >= 'a' 
+        if ((*(hex+i) >= '0' && *(hex+i) <= '9') || (*(hex+i) >= 'a'
             && *(hex+i) <= 'f') || (*(hex+i) >= 'A'
             && *(hex+i) <= 'F')) h++;
         else
@@ -333,7 +333,7 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
 {
     ENGINE *e;
     PKCS11_CTX *pkcs11_ctx;
-    OSSL_STORE_LOADER_CTX *store_ctx;
+    OSSL_STORE_LOADER_CTX *store_ctx = NULL;
     char *objecttype = NULL, *object = NULL;
 
     store_ctx = OSSL_STORE_LOADER_CTX_new();
@@ -380,7 +380,7 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
         return pkcs11_store_load_cert(ctx, ui_method, ui_data);
     }
 
-    if (ctx->ids[store_idx].name == NULL) {
+    if (ctx->ids[store_idx].name[0] == '\0') {
         ctx->eof = 1;
         return NULL;
     }
@@ -410,13 +410,14 @@ static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx)
 static int pkcs11_store_error(OSSL_STORE_LOADER_CTX *ctx)
 {
 /* TODO */
-    return 0;   
+    return 0;
 }
 
 static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new()
 {
     OSSL_STORE_LOADER_CTX *ctx;
-    ctx = OPENSSL_malloc(sizeof(OSSL_STORE_LOADER_CTX));
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
         return NULL;
     ctx->error = 0;
@@ -448,7 +449,7 @@ static int bind_pkcs11(ENGINE *e)
     OSSL_STORE_LOADER *loader = NULL;
 
     loader = OSSL_STORE_LOADER_new(e, pkcs11_scheme);
-    if (loader == NULL) 
+    if (loader == NULL)
         return 0;
 
     if (!OSSL_STORE_LOADER_set_open(loader, pkcs11_store_open)
