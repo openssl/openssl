@@ -264,7 +264,7 @@ static int init_app_variables(void)
  */
 
 /* An array of OSSL_PARAM, specific in the most raw manner possible */
-const OSSL_PARAM raw_params[] = {
+static const OSSL_PARAM raw_params[] = {
     { "p1", OSSL_PARAM_INTEGER, &app_p1, sizeof(app_p1), NULL },
     { "p3", OSSL_PARAM_UNSIGNED_INTEGER, &bignumbin, sizeof(bignumbin),
       &bignumbin_l },
@@ -282,7 +282,7 @@ const OSSL_PARAM raw_params[] = {
 /*
  * Test cases to combine parameters with "provider side" functions
  */
-struct {
+static struct {
     const struct provider_dispatch_st *prov;
     const OSSL_PARAM *params;
     const char *desc;
