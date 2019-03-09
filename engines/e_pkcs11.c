@@ -515,7 +515,7 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
     CK_ATTRIBUTE tmpl[1];
     CK_OBJECT_HANDLE akey[255];
     CK_ULONG ulObj = 1;
-    int i;
+    CK_ULONG i;
 
     tmpl[0].type = CKA_CLASS;
     tmpl[0].pValue = &key_class;
