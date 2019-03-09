@@ -1,0 +1,46 @@
+=pod
+
+=head1 NAME
+
+RSA_padding_check_PKCS1_type_2_ex - RSA PKCS #1 type 2 encryption padding check
+
+=head1 SYNOPSIS
+
+ #include <openssl/rsa.h>
+
+ int RSA_padding_check_PKCS1_type_2_ex(const unsigned char *from,
+                                       size_t rsa_len, size_t tlen)
+
+=head1 DESCRIPTION
+
+RSA_padding_check_PKCS1_type_2_ex() verifies that the data in B<from> is a valid
+padding according to PKCS #1 v2.0 EME-PKCS1-v1_5 (PKCS #1 v1.5 block type 2).
+B<rsa_len> is the length of the RSA key as returned by RSA_size().
+B<from> should contain exactly B<rsa_len> bytes, and be 0-padded if needed.
+
+It can be used if you know that the decrypted message should be of a fixed
+length B<tlen> and will check that that length is correct.
+
+=head1 RETURN VALUES
+
+It returns 1 when the padding check was succesful, 0 when the padding check
+failed, or -1 on error.
+
+=head1 SEE ALSO
+
+L<RSA_padding_check_PKCS1_type_2(3)>
+
+=head1 HISTORY
+
+This function was added in OpenSSL 3.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

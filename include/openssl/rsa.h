@@ -341,6 +341,8 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
 int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
                                    const unsigned char *f, int fl,
                                    int rsa_len);
+int RSA_padding_check_PKCS1_type_2_ex(const unsigned char *from,
+                                      size_t rsa_len, size_t tlen);
 int PKCS1_MGF1(unsigned char *mask, long len, const unsigned char *seed,
                long seedlen, const EVP_MD *dgst);
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,

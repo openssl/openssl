@@ -253,3 +253,33 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
 
     return constant_time_select_int(good, mlen, -1);
 }
+
+int RSA_padding_check_PKCS1_type_2_ex(const unsigned char *from,
+                                      size_t rsa_len, size_t tlen)
+{
+    size_t i;
+    unsigned char good;
+
+    /*
+     * PKCS#1 v1.5 decryption. See "PKCS #1 v2.2: RSA Cryptography Standard",
+     * section 7.2.2.
+     */
+
+    /*
+     * The smallest padding is 11 bytes. Small keys are publicly invalid, so
+     * this may return immediately. This ensures PS is at least 8 bytes.
+     */
+    if (rsa_len < 11 || tlen == 0 || tlen > rsa_len - 11)
+        return -1;
+
+    good = constant_time_is_zero_8(from[0]);
+    good &= constant_time_eq_8(from[1], 2);
+
+    for (i = 2; i < rsa_len-tlen-1; i++) {
+	good &= ~constant_time_is_zero_8(from[i]);
+    }
+
+    good &= constant_time_is_zero_8(from[rsa_len-tlen-1]);
+
+    return constant_time_select(good, 1, 0);
+}

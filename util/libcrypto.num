@@ -4655,3 +4655,4 @@ OSSL_trace_set_callback                 4610	3_0_0	EXIST::FUNCTION:
 OSSL_trace_enabled                      4611	3_0_0	EXIST::FUNCTION:
 OSSL_trace_begin                        4612	3_0_0	EXIST::FUNCTION:
 OSSL_trace_end                          4613	3_0_0	EXIST::FUNCTION:
+RSA_padding_check_PKCS1_type_2_ex       4614	3_0_0	EXIST::FUNCTION:RSA

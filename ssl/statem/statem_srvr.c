@@ -2978,6 +2978,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
     RSA *rsa = NULL;
     unsigned char *rsa_decrypt = NULL;
     int ret = 0;
+    int padding_check;
 
     rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA].privatekey);
     if (rsa == NULL) {
@@ -3040,7 +3041,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
     decrypt_len = (int)RSA_private_decrypt((int)PACKET_remaining(&enc_premaster),
                                            PACKET_data(&enc_premaster),
                                            rsa_decrypt, rsa, RSA_NO_PADDING);
-    if (decrypt_len < 0) {
+    if (decrypt_len != RSA_size(rsa)) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -3048,24 +3049,15 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
 
     /* Check the padding. See RFC 3447, section 7.2.2. */
 
-    /*
-     * The smallest padded premaster is 11 bytes of overhead. Small keys
-     * are publicly invalid, so this may return immediately. This ensures
-     * PS is at least 8 bytes.
-     */
-    if (decrypt_len < 11 + SSL_MAX_MASTER_KEY_LENGTH) {
+    padding_check = RSA_padding_check_PKCS1_type_2_ex(rsa_decrypt,
+                                                      (size_t)decrypt_len,
+                                                      SSL_MAX_MASTER_KEY_LENGTH); 
+    if (padding_check == -1) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  SSL_R_DECRYPTION_FAILED);
         goto err;
     }
-
-    padding_len = decrypt_len - SSL_MAX_MASTER_KEY_LENGTH;
-    decrypt_good = constant_time_eq_int_8(rsa_decrypt[0], 0) &
-        constant_time_eq_int_8(rsa_decrypt[1], 2);
-    for (j = 2; j < padding_len - 1; j++) {
-        decrypt_good &= ~constant_time_is_zero_8(rsa_decrypt[j]);
-    }
-    decrypt_good &= constant_time_is_zero_8(rsa_decrypt[padding_len - 1]);
+    decrypt_good = constant_time_eq_int_8(padding_check, 1);
 
     /*
      * If the version in the decrypted pre-master secret is correct then
@@ -3075,6 +3067,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * check as a "bad version oracle". Thus version checks are done in
      * constant time and are treated like any other decryption error.
      */
+    padding_len = decrypt_len - SSL_MAX_MASTER_KEY_LENGTH;
     version_good =
         constant_time_eq_8(rsa_decrypt[padding_len],
                            (unsigned)(s->client_version >> 8));
