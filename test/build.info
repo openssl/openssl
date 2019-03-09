@@ -6,6 +6,8 @@ SUBDIRS=ossl_shim
          my ($base, $files) = @_;
          return join(" ", map { "$base/$_" } split(/\s+/, $files));
      }
+     our $apps_aux_src =
+         join(' ', map { "../apps/$_" } split(/\s+/, $target{apps_aux_src}));
      ""
 -}
 IF[{- !$disabled{tests} -}]
@@ -14,7 +16,8 @@ IF[{- !$disabled{tests} -}]
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
           testutil/format_output.c testutil/tap_bio.c \
           testutil/test_cleanup.c testutil/main.c testutil/init.c \
-          testutil/options.c testutil/test_options.c ../apps/opt.c
+          testutil/options.c testutil/test_options.c \
+          testutil/apps_mem.c ../apps/opt.c {- $apps_aux_src; -}
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
@@ -47,7 +50,7 @@ IF[{- !$disabled{tests} -}]
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
           sysdefaulttest errtest gosttest \
-          context_internal_test params_test
+          context_internal_test aesgcmtest params_test
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include ../apps/include
@@ -571,6 +574,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[gosttest]=../include ../apps/include ..
   DEPEND[gosttest]=../libcrypto ../libssl libtestutil.a
 
+  SOURCE[aesgcmtest]=aesgcmtest.c
+  INCLUDE[aesgcmtest]=../include ../apps/include ..
+  DEPEND[aesgcmtest]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=context_internal_test
   SOURCE[context_internal_test]=context_internal_test.c
   INCLUDE[context_internal_test]=.. ../include ../apps/include
@@ -608,7 +615,7 @@ ENDIF
   INCLUDE[buildtest_c_$name]=../include
   DEPEND[buildtest_c_$name]=../libssl ../libcrypto
 _____
-       $OUT .= <<"_____" if $config{CXX};
+       $OUT .= <<"_____" if $config{CXX} && !$disabled{"buildtest-c++"};
 
   PROGRAMS{noinst}=buildtest_cc_$name
   SOURCE[buildtest_cc_$name]=buildtest_$name.cc

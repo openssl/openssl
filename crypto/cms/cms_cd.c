@@ -60,7 +60,7 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
     return NULL;
 }
 
-BIO *cms_CompressedData_init_bio(CMS_ContentInfo *cms)
+BIO *cms_CompressedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_CompressedData *cd;
     const ASN1_OBJECT *compoid;

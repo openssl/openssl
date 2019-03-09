@@ -342,7 +342,7 @@ static int init_app_variables(void)
  */
 
 /* An array of OSSL_PARAM, specific in the most raw manner possible */
-const OSSL_PARAM raw_params[] = {
+static const OSSL_PARAM raw_params[] = {
     { "p1", OSSL_PARAM_INT, &app_p1, sizeof(app_p1), NULL },
     { "p3", OSSL_PARAM_BIGNUM, &bignumbin, sizeof(bignumbin), &bignumbin_l },
     { "p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), &app_p4_l },
@@ -352,7 +352,7 @@ const OSSL_PARAM raw_params[] = {
 };
 
 /* The same array of OSSL_PARAM, specified with the macros from params.h */
-const OSSL_PARAM api_params[] = {
+static const OSSL_PARAM api_params[] = {
     OSSL_PARAM_int("p1", &app_p1),
     /* OSSL_PARAM_bignum() isn't usable, since you can't set rsz with it */
     OSSL_PARAM_DEF("p3", OSSL_PARAM_BIGNUM, &bignumbin, sizeof(bignumbin),
@@ -374,7 +374,7 @@ const OSSL_PARAM api_params[] = {
 /*
  * Test cases to combine parameters with "provider side" functions
  */
-struct {
+static struct {
     const struct provider_dispatch_st *prov;
     const OSSL_PARAM *params;
     const char *desc;

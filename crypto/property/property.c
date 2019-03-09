@@ -131,7 +131,7 @@ static void impl_cache_free(QUERY *elem)
     OPENSSL_free(elem);
 }
 
-static void alg_cleanup(size_t idx, ALGORITHM *a)
+static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a)
 {
     if (a != NULL) {
         sk_IMPLEMENTATION_pop_free(a->impls, &impl_free);
@@ -356,7 +356,7 @@ int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
     return ret;
 }
 
-static void impl_cache_flush_alg(size_t idx, ALGORITHM *alg)
+static void impl_cache_flush_alg(ossl_uintmax_t idx, ALGORITHM *alg)
 {
     lh_QUERY_doall(alg->cache, &impl_cache_free);
     lh_QUERY_flush(alg->cache);
@@ -413,7 +413,8 @@ static void impl_cache_flush_cache(QUERY *c, IMPL_CACHE_FLUSH *state)
         state->nelem++;
 }
 
-static void impl_cache_flush_one_alg(size_t idx, ALGORITHM *alg, void *v)
+static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
+                                     void *v)
 {
     IMPL_CACHE_FLUSH *state = (IMPL_CACHE_FLUSH *)v;
 

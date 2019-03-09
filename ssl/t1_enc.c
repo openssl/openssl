@@ -18,6 +18,7 @@
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
 #include <openssl/obj_mac.h>
+#include <openssl/trace.h>
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL *s,
@@ -276,14 +277,11 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
         EVP_PKEY_free(mac_key);
     }
-#ifdef SSL_DEBUG
-    printf("which = %04X\nmac key=", which);
-    {
-        size_t z;
-        for (z = 0; z < i; z++)
-            printf("%02X%c", ms[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-#endif
+
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "which = %04X, mac key:\n", which);
+        BIO_dump_indent(trc_out, ms, i, 4);
+    } OSSL_TRACE_END(TLS);
 
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
         if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
@@ -388,21 +386,12 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif                          /* OPENSSL_NO_KTLS */
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
 
-#ifdef SSL_DEBUG
-    printf("which = %04X\nkey=", which);
-    {
-        int z;
-        for (z = 0; z < EVP_CIPHER_key_length(c); z++)
-            printf("%02X%c", key[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("\niv=");
-    {
-        size_t z;
-        for (z = 0; z < k; z++)
-            printf("%02X%c", iv[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("\n");
-#endif
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "which = %04X, key:\n", which);
+        BIO_dump_indent(trc_out, key, EVP_CIPHER_key_length(c), 4);
+        BIO_printf(trc_out, "iv:\n");
+        BIO_dump_indent(trc_out, iv, k, 4);
+    } OSSL_TRACE_END(TLS);
 
     return 1;
  err:
@@ -447,41 +436,26 @@ int tls1_setup_key_block(SSL *s)
     s->s3->tmp.key_block_length = num;
     s->s3->tmp.key_block = p;
 
-#ifdef SSL_DEBUG
-    printf("client random\n");
-    {
-        int z;
-        for (z = 0; z < SSL3_RANDOM_SIZE; z++)
-            printf("%02X%c", s->s3->client_random[z],
-                   ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("server random\n");
-    {
-        int z;
-        for (z = 0; z < SSL3_RANDOM_SIZE; z++)
-            printf("%02X%c", s->s3->server_random[z],
-                   ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("master key\n");
-    {
-        size_t z;
-        for (z = 0; z < s->session->master_key_length; z++)
-            printf("%02X%c", s->session->master_key[z],
-                   ((z + 1) % 16) ? ' ' : '\n');
-    }
-#endif
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "client random\n");
+        BIO_dump_indent(trc_out, s->s3->client_random, SSL3_RANDOM_SIZE, 4);
+        BIO_printf(trc_out, "server random\n");
+        BIO_dump_indent(trc_out, s->s3->server_random, SSL3_RANDOM_SIZE, 4);
+        BIO_printf(trc_out, "master key\n");
+        BIO_dump_indent(trc_out,
+                        s->session->master_key,
+                        s->session->master_key_length, 4);
+    } OSSL_TRACE_END(TLS);
+
     if (!tls1_generate_key_block(s, p, num)) {
         /* SSLfatal() already called */
         goto err;
     }
-#ifdef SSL_DEBUG
-    printf("\nkey block\n");
-    {
-        size_t z;
-        for (z = 0; z < num; z++)
-            printf("%02X%c", p[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-#endif
+
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "key block\n");
+        BIO_dump_indent(trc_out, p, num, 4);
+    } OSSL_TRACE_END(TLS);
 
     if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)
         && s->method->version <= TLS1_VERSION) {
@@ -549,10 +523,10 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
             /* SSLfatal() already called */
             return 0;
         }
-#ifdef SSL_DEBUG
-        fprintf(stderr, "Handshake hashes:\n");
-        BIO_dump_fp(stderr, (char *)hash, hashlen);
-#endif
+        OSSL_TRACE_BEGIN(TLS) {
+            BIO_printf(trc_out, "Handshake hashes:\n");
+            BIO_dump(trc_out, (char *)hash, hashlen);
+        } OSSL_TRACE_END(TLS);
         if (!tls1_PRF(s,
                       TLS_MD_EXTENDED_MASTER_SECRET_CONST,
                       TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE,
@@ -578,17 +552,19 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
             return 0;
         }
     }
-#ifdef SSL_DEBUG
-    fprintf(stderr, "Premaster Secret:\n");
-    BIO_dump_fp(stderr, (char *)p, len);
-    fprintf(stderr, "Client Random:\n");
-    BIO_dump_fp(stderr, (char *)s->s3->client_random, SSL3_RANDOM_SIZE);
-    fprintf(stderr, "Server Random:\n");
-    BIO_dump_fp(stderr, (char *)s->s3->server_random, SSL3_RANDOM_SIZE);
-    fprintf(stderr, "Master Secret:\n");
-    BIO_dump_fp(stderr, (char *)s->session->master_key,
-                SSL3_MASTER_SECRET_SIZE);
-#endif
+
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "Premaster Secret:\n");
+        BIO_dump_indent(trc_out, p, len, 4);
+        BIO_printf(trc_out, "Client Random:\n");
+        BIO_dump_indent(trc_out, s->s3->client_random, SSL3_RANDOM_SIZE, 4);
+        BIO_printf(trc_out, "Server Random:\n");
+        BIO_dump_indent(trc_out, s->s3->server_random, SSL3_RANDOM_SIZE, 4);
+        BIO_printf(trc_out, "Master Secret:\n");
+        BIO_dump_indent(trc_out,
+                        s->session->master_key,
+                        SSL3_MASTER_SECRET_SIZE, 4);
+    } OSSL_TRACE_END(TLS);
 
     *secret_size = SSL3_MASTER_SECRET_SIZE;
     return 1;

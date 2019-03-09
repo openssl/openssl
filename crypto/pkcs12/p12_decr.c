@@ -10,11 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
-
-/* Define this to dump decrypted output to files called DERnnn */
-/*
- * #define OPENSSL_DEBUG_DECRYPT
- */
+#include <openssl/trace.h>
 
 /*
  * Encrypt/Decrypt a buffer based on password and algor, result in a
@@ -95,18 +91,11 @@ void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
         return NULL;
     }
     p = out;
-#ifdef OPENSSL_DEBUG_DECRYPT
-    {
-        FILE *op;
-
-        char fname[30];
-        static int fnm = 1;
-        sprintf(fname, "DER%d", fnm++);
-        op = fopen(fname, "wb");
-        fwrite(p, 1, outlen, op);
-        fclose(op);
-    }
-#endif
+    OSSL_TRACE_BEGIN(PKCS12_DECRYPT) {
+        BIO_printf(trc_out, "\n");
+        BIO_dump(trc_out, out, outlen);
+        BIO_printf(trc_out, "\n");
+    } OSSL_TRACE_END(PKCS12_DECRYPT);
     ret = ASN1_item_d2i(NULL, &p, outlen, it);
     if (zbuf)
         OPENSSL_cleanse(out, outlen);
