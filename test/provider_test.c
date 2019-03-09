@@ -11,7 +11,7 @@
 #include <openssl/provider.h>
 #include "testutil.h"
 
-extern ossl_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
+extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
 static size_t buf_l = 0;
@@ -31,12 +31,12 @@ static int test_provider(const char *name)
              OPENSSL_VERSION_STR, name);
 
     return
-        TEST_ptr(prov = OSSL_load_provider(NULL, name))
-        && TEST_true(OSSL_get_provider_params(prov, greeting_request))
+        TEST_ptr(prov = OSSL_PROVIDER_load(NULL, name))
+        && TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
         && TEST_ptr(greeting = greeting_request[0].buffer)
         && TEST_size_t_gt(greeting_request[0].buffer_size, 0)
         && TEST_str_eq(greeting, expected_greeting)
-        && TEST_true(OSSL_unload_provider(prov));
+        && TEST_true(OSSL_PROVIDER_unload(prov));
 }
 
 static int test_builtin_provider(void)
@@ -44,7 +44,8 @@ static int test_builtin_provider(void)
     const char *name = "p_test_builtin";
 
     return
-        TEST_true(OSSL_add_provider(NULL, name, PROVIDER_INIT_FUNCTION_NAME))
+        TEST_true(OSSL_PROVIDER_add_builtin(NULL, name,
+					    PROVIDER_INIT_FUNCTION_NAME))
         && test_provider(name);
 }
 

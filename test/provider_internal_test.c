@@ -11,7 +11,7 @@
 #include "internal/provider.h"
 #include "testutil.h"
 
-extern ossl_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
+extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
 static size_t buf_l = 0;
@@ -35,7 +35,7 @@ static int test_provider(OSSL_PROVIDER *prov)
              OPENSSL_VERSION_STR, name);
 
     ret =
-        TEST_true(ossl_provider_load(prov))
+        TEST_true(ossl_provider_activate(prov))
         && TEST_true(ossl_provider_get_params(prov, greeting_request))
         && TEST_ptr(greeting = greeting_request[0].buffer)
         && TEST_size_t_gt(greeting_request[0].buffer_size, 0)
