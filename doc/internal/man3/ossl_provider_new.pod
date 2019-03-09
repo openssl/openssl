@@ -3,8 +3,8 @@
 =head1 NAME
 
 ossl_provider_find, ossl_provider_new, ossl_provider_upref,
-ossl_provider_free, ossl_provider_add_load_location,
-ossl_provider_load, ossl_provider_name, ossl_provider_dso,
+ossl_provider_free, ossl_provider_add_module_location,
+ossl_provider_activate, ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
 ossl_provider_teardown, ossl_provider_get_param_types,
 ossl_provider_get_params - internal provider routines
@@ -20,10 +20,10 @@ ossl_provider_get_params - internal provider routines
  void ossl_provider_free(OSSL_PROVIDER *prov);
 
  /* Setters */
- int ossl_provider_add_load_location(OSSL_PROVIDER *prov, const char *loc);
+ int ossl_provider_add_module_location(OSSL_PROVIDER *prov, const char *loc);
 
  /* Load and initialize the Provider */
- int ossl_provider_load(OSSL_PROVIDER *prov);
+ int ossl_provider_activate(OSSL_PROVIDER *prov);
 
  /* Getters for other library functions */
  const char *ossl_provider_name(OSSL_PROVIDER *prov);
@@ -52,9 +52,9 @@ I<provider object>s are reference counted.
 
 I<provider object>s are initially inactive, i.e. they are only
 recorded in the store, but are not used.
-They are activated with the first call to ossl_provider_load(), and
-are inactivated when ossl_provider_free() has been called enough
-times.
+They are activated with the first call to ossl_provider_activate(),
+and are inactivated when ossl_provider_free() has been called as many
+times as ossl_provider_activate() has.
 
 =head2 Functions
 
@@ -78,10 +78,10 @@ inactivated (it's teardown function is called) but kept in the store;
 if it drops down to zero, the associated module will be unloaded if
 one was loaded, and the I<provider object> will be freed.
 
-ossl_provider_add_load_location() adds a location to look for a
+ossl_provider_add_module_location() adds a location to look for a
 provider module.
 
-ossl_provider_load() "activates" the provider for the given
+ossl_provider_activate() "activates" the provider for the given
 I<provider object>.
 What "activates" means depends on what type of I<provider object> it
 is:
@@ -135,7 +135,7 @@ Locating a provider module happens as follows:
 
 =item 1.
 
-Look in each directory given by ossl_provider_add_load_location().
+Look in each directory given by ossl_provider_add_module_location().
 
 =item 2.
 
@@ -159,8 +159,8 @@ it has been incremented.
 
 ossl_provider_free() doesn't return any value.
 
-ossl_provider_add_load_location() and ossl_provider_load() return 1 on
-success, or 0 on error.
+ossl_provider_add_module_location() and ossl_provider_activate()
+return 1 on success, or 0 on error.
 
 ossl_provider_name(), ossl_provider_dso(),
 ossl_provider_module_name(), and ossl_provider_module_path() return a

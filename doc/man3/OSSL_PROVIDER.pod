@@ -12,18 +12,18 @@ OSSL_add_provider - provider routines
 
  typedef struct ossl_provider_st OSSL_PROVIDER;
 
- OSSL_PROVIDER *OSSL_load_provider(OPENSSL_CTX *, const char *name);
- int OSSL_unload_provider(OSSL_PROVIDER *prov);
+ OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
+ int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
 
- const OSSL_ITEM *OSSL_get_provider_param_types(OSSL_PROVIDER *prov);
- int OSSL_get_provider_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[]);
+ const OSSL_ITEM *OSSL_PROVIDER_get_param_types(OSSL_PROVIDER *prov);
+ int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[]);
 
- int OSSL_add_provider(OPENSSL_CTX *,
-                       const char *name, ossl_provider_init_fn *init_fn);
+ int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
+                               ossl_provider_init_fn *init_fn);
 
 =head1 DESCRIPTION
 
-C<OSSL_PROVIDER> is a type that holds internal information about
+B<OSSL_PROVIDER> is a type that holds internal information about
 implementation providers (see L<provider(7)> for information on what a
 provider is).
 A provider can be built in to the application or the OpenSSL
@@ -32,44 +32,46 @@ The functions described here handle both forms.
 
 =head2 Functions
 
-OSSL_add_provider() is used to add a built in provider to the given
-library context, by associating a provider name with a provider
-initialization function.
-This name can then be used with OSSL_load_provider().
+OSSL_PROVIDER_add_builtin() is used to add a built in provider to
+B<OSSL_PROVIDER> store in the given library context, by associating a
+provider name with a provider initialization function.
+This name can then be used with OSSL_PROVIDER_load().
 
-OSSL_load_provider() loads and initializes a provider.
+OSSL_PROVIDER_load() loads and initializes a provider.
 This may simply initialize a provider that was previously added with
-OSSL_add_provider() and run its given initialization function, or load
-a provider module with the given name and run its provider entry
-point, C<OSSL_provider_init>.
+OSSL_PROVIDER_add_builtin() and run its given initialization function,
+or load a provider module with the given name and run its provider
+entry point, C<OSSL_provider_init>.
 
-OSSL_unload_provider() unloads the given provider.
+OSSL_PROVIDER_unload() unloads the given provider.
+For a provider added with OSSL_PROVIDER_add_builtin(), this simply
+runs its teardown function.
 
-OSSL_get_provider_param_types() is used to get a provider parameter
-descriptor set as an C<OSSL_ITEM> array.
-Each element is a tuple of an C<OSSL_PARAM> parameter type and a name
+OSSL_PROVIDER_get_param_types() is used to get a provider parameter
+descriptor set as an B<OSSL_ITEM> array.
+Each element is a tuple of an B<OSSL_PARAM> parameter type and a name
 in form of a C string.
-See L<openssl-core.h(7)> for more information on C<OSSL_ITEM> and
+See L<openssl-core.h(7)> for more information on B<OSSL_ITEM> and
 parameter types.
 
-OSSL_get_provider_params() is used to get provider parameter values.
-The caller must prepare the C<OSSL_PARAM> array before calling this
+OSSL_PROVIDER_get_params() is used to get provider parameter values.
+The caller must prepare the B<OSSL_PARAM> array before calling this
 function, and the variables acting as buffers for this parameter array
 should be filled with data when it returns successfully.
 
 =head1 RETURN VALUES
 
-OSSL_add_provider() returns 1 on success, or 0 on error.
+OSSL_PROVIDER_add() returns 1 on success, or 0 on error.
 
-OSSL_load_provider() returns a pointer to a provider object on
+OSSL_PROVIDER_load() returns a pointer to a provider object on
 success, or B<NULL> on error.
 
-OSSL_unload_provider() returns 1 on success, or 0 on error.
+OSSL_PROVIDER_unload() returns 1 on success, or 0 on error.
 
-OSSL_get_provider_param_types() returns a pointer to a constant array
-of C<OSSL_ITEM>, or NULL if none is provided.
+OSSL_PROVIDER_get_param_types() returns a pointer to a constant array
+of B<OSSL_ITEM>, or NULL if none is provided.
 
-OSSL_get_provider_params() returns 1 on success, or 0 on error.
+OSSL_PROVIDER_get_params() returns 1 on success, or 0 on error.
 
 =head1 EXAMPLES
 
@@ -84,8 +86,8 @@ its build number.
      { NULL, 0, NULL, 0, NULL }
  };
 
- if ((prov = OSSL_load_provider(NULL, "foo")) != NULL
-     && OSSL_get_provider_params(prov, request))
+ if ((prov = OSSL_PROVIDER_load(NULL, "foo")) != NULL
+     && OSSL_PROVIDER_get_params(prov, request))
      printf("Provider 'foo' build %s\n", build);
  else
      ERR_print_errors_fp(stderr);
