@@ -51,7 +51,8 @@ int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
     OSSL_PROVIDER *prov = NULL;
 
     if (name == NULL || init_fn == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_ADD_PROVIDER, ERR_R_PASSED_NULL_PARAMETER);
+        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN,
+                  ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 

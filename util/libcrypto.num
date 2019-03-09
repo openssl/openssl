@@ -4655,8 +4655,8 @@ OSSL_trace_set_callback                 4610	3_0_0	EXIST::FUNCTION:
 OSSL_trace_enabled                      4611	3_0_0	EXIST::FUNCTION:
 OSSL_trace_begin                        4612	3_0_0	EXIST::FUNCTION:
 OSSL_trace_end                          4613	3_0_0	EXIST::FUNCTION:
-OSSL_load_provider                      4614	3_0_0	EXIST::FUNCTION:
-OSSL_unload_provider                    4615	3_0_0	EXIST::FUNCTION:
-OSSL_add_provider                       4616	3_0_0	EXIST::FUNCTION:
-OSSL_get_provider_param_types           4617	3_0_0	EXIST::FUNCTION:
-OSSL_get_provider_params                4618	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_load                      4614	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_unload                    4615	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_add_builtin               4616	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_get_param_types           4617	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_get_params                4618	3_0_0	EXIST::FUNCTION:
