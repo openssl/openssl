@@ -33,7 +33,7 @@ struct ossl_provider_st {
 #endif
     char *name;
     DSO *module;
-    ossl_provider_init_fn *init_function;
+    OSSL_provider_init_fn *init_function;
 
     /* Provider side functions */
     OSSL_provider_teardown_fn *teardown;
@@ -153,7 +153,7 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
 }
 
 OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
-                                 ossl_provider_init_fn *init_function)
+                                 OSSL_provider_init_fn *init_function)
 {
     struct provider_store_st *store = NULL;
     OSSL_PROVIDER *prov = NULL;
@@ -195,7 +195,7 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
 
     /*
      * At this point, the provider is only partially "loaded".  To be
-     * fully "loaded", ossl_provider_load() must also be called.
+     * fully "loaded", ossl_provider_activate() must also be called.
      */
 
     return prov;
@@ -248,7 +248,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
  */
 static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 
-int ossl_provider_load(OSSL_PROVIDER *prov)
+int ossl_provider_activate(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
 
@@ -291,13 +291,13 @@ int ossl_provider_load(OSSL_PROVIDER *prov)
         }
 
         if (prov->module != NULL)
-            prov->init_function = (ossl_provider_init_fn *)
+            prov->init_function = (OSSL_provider_init_fn *)
                 DSO_bind_func(prov->module, "OSSL_provider_init");
     }
 
     if (prov->init_function == NULL
         || !prov->init_function(prov, core_dispatch, &provider_dispatch)) {
-        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_LOAD, ERR_R_INIT_FAIL);
+        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_ACTIVATE, ERR_R_INIT_FAIL);
         ERR_add_error_data(2, "name=", prov->name);
         DSO_free(prov->module);
         prov->module = NULL;

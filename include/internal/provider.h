@@ -12,6 +12,7 @@
 
 # include <openssl/core.h>
 # include "internal/dso.h"
+# include "internal/symhacks.h"
 
 # ifdef __cplusplus
 extern "C" {
@@ -27,15 +28,19 @@ extern "C" {
 /* Provider Object finder, constructor and destructor */
 OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name);
 OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
-                                 ossl_provider_init_fn *init_function);
+                                 OSSL_provider_init_fn *init_function);
 int ossl_provider_upref(OSSL_PROVIDER *prov);
 void ossl_provider_free(OSSL_PROVIDER *prov);
 
 /* Setters */
-int ossl_provider_add_load_location(OSSL_PROVIDER *prov, const char *loc);
+int ossl_provider_add_module_location(OSSL_PROVIDER *prov, const char *loc);
 
-/* Load and initialize the Provider */
-int ossl_provider_load(OSSL_PROVIDER *prov);
+/*
+ * Activate the Provider
+ * If the Provider is a module, the module will be loaded
+ * Inactivation is done by freeing the Provider
+ */
+int ossl_provider_activate(OSSL_PROVIDER *prov);
 
 /* Getters for other library functions */
 const char *ossl_provider_name(OSSL_PROVIDER *prov);

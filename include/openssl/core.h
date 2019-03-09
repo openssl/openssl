@@ -151,10 +151,10 @@ struct ossl_param_st {
  * |out|        will be the array of base functions that the provider passes
  *              back to the Core.
  */
-typedef int (ossl_provider_init_fn)(const OSSL_PROVIDER *provider,
+typedef int (OSSL_provider_init_fn)(const OSSL_PROVIDER *provider,
                                     const OSSL_DISPATCH *in,
                                     const OSSL_DISPATCH **out);
-extern ossl_provider_init_fn OSSL_provider_init;
+extern OSSL_provider_init_fn OSSL_provider_init;
 
 # ifdef __cplusplus
 }
