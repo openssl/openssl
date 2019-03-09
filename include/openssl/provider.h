@@ -17,15 +17,15 @@ extern "C" {
 # endif
 
 /* Load and unload a provider */
-OSSL_PROVIDER *OSSL_load_provider(OPENSSL_CTX *, const char *name);
-int OSSL_unload_provider(OSSL_PROVIDER *prov);
+OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
+int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
 
 const OSSL_ITEM *OSSL_get_provider_param_types(OSSL_PROVIDER *prov);
-int OSSL_get_provider_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[]);
+int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[]);
 
-/* Add a provider, for built in providers */
-int OSSL_add_provider(OPENSSL_CTX *,
-                      const char *name, ossl_provider_init_fn *init_fn);
+/* Add a built in providers */
+int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
+                              OSSL_provider_init_fn *init_fn);
 
 # ifdef __cplusplus
 }

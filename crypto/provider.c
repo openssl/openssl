@@ -12,7 +12,7 @@
 #include <openssl/provider.h>
 #include "internal/provider.h"
 
-OSSL_PROVIDER *OSSL_load_provider(OPENSSL_CTX *libctx, const char *name)
+OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name)
 {
     OSSL_PROVIDER *prov = NULL;
 
@@ -21,7 +21,7 @@ OSSL_PROVIDER *OSSL_load_provider(OPENSSL_CTX *libctx, const char *name)
         && (prov = ossl_provider_new(libctx, name, NULL)) == NULL)
         return NULL;
 
-    if (!ossl_provider_load(prov)) {
+    if (!ossl_provider_activate(prov)) {
         ossl_provider_free(prov);
         return NULL;
     }
@@ -29,24 +29,24 @@ OSSL_PROVIDER *OSSL_load_provider(OPENSSL_CTX *libctx, const char *name)
     return prov;
 }
 
-int OSSL_unload_provider(OSSL_PROVIDER *prov)
+int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov)
 {
     ossl_provider_free(prov);
     return 1;
 }
 
-const OSSL_ITEM *OSSL_get_provider_param_types(OSSL_PROVIDER *prov)
+const OSSL_ITEM *OSSL_PROVIDER_get_param_types(OSSL_PROVIDER *prov)
 {
     return ossl_provider_get_param_types(prov);
 }
 
-int OSSL_get_provider_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[])
+int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[])
 {
     return ossl_provider_get_params(prov, params);
 }
 
-int OSSL_add_provider(OPENSSL_CTX *libctx,
-                      const char *name, ossl_provider_init_fn *init_fn)
+int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
+                              OSSL_provider_init_fn *init_fn)
 {
     OSSL_PROVIDER *prov = NULL;
 
