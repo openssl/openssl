@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 #include <openssl/store.h>
+#include <openssl/rsa.h>
 
 #define MAX 32
 #define CK_PTR *

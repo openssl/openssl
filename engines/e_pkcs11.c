@@ -11,6 +11,7 @@
 #include "e_pkcs11_err.c"
 #include <internal/dso.h>
 #include <internal/nelem.h>
+#include <openssl/bn.h>
 
 static int pkcs11_logout(CK_SESSION_HANDLE session);
 typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
