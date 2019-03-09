@@ -35,7 +35,7 @@ extern "C" {
  */
 
 /* Helper macro to create the function signature typedef and the extractor */
-#define OSSL_core_make_func(type,name,args)                             \
+#define OSSL_CORE_MAKE_FUNC(type,name,args)                             \
     typedef type (OSSL_##name##_fn)args;                                \
     static ossl_inline \
     OSSL_##name##_fn *OSSL_get_##name(const OSSL_DISPATCH *opf)         \
@@ -52,20 +52,20 @@ extern "C" {
  */
 /* Functions provided by the Core to the provider, reserved numbers 1-1023 */
 # define OSSL_FUNC_CORE_GET_PARAM_TYPES        1
-OSSL_core_make_func(const OSSL_ITEM *,
+OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
                     core_get_param_types,(const OSSL_PROVIDER *prov))
 # define OSSL_FUNC_CORE_GET_PARAMS             2
-OSSL_core_make_func(int,core_get_params,(const OSSL_PROVIDER *prov,
+OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
                                          const OSSL_PARAM params[]))
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
-OSSL_core_make_func(void,provider_teardown,(void))
+OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void))
 # define OSSL_FUNC_PROVIDER_GET_PARAM_TYPES  1025
-OSSL_core_make_func(const OSSL_ITEM *,
+OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
                     provider_get_param_types,(const OSSL_PROVIDER *prov))
 # define OSSL_FUNC_PROVIDER_GET_PARAMS       1026
-OSSL_core_make_func(int,provider_get_params,(const OSSL_PROVIDER *prov,
+OSSL_CORE_MAKE_FUNC(int,provider_get_params,(const OSSL_PROVIDER *prov,
                                              const OSSL_PARAM params[]))
 
 
