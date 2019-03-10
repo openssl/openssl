@@ -169,18 +169,25 @@ static struct {
 #endif
 
 #ifndef OPENSSL_NO_TRACE
+
+enum {
+    CHANNEL,
+    PREFIX,
+    SUFFIX
+};
+
 static int trace_attach_cb(int category, int type, const void *data)
 {
     switch (type) {
-    case 0:                      /* Channel */
+    case CHANNEL:
         OSSL_TRACE2(TRACE, "Attach channel %p to category '%s'\n",
                     data, trace_categories[category].name);
         break;
-    case 1:                      /* Prefix */
+    case PREFIX:
         OSSL_TRACE2(TRACE, "Attach prefix \"%s\" to category '%s'\n",
                     (const char *)data, trace_categories[category].name);
         break;
-    case 2:                      /* Suffix */
+    case SUFFIX:
         OSSL_TRACE2(TRACE, "Attach suffix \"%s\" to category '%s'\n",
                     (const char *)data, trace_categories[category].name);
         break;
@@ -193,15 +200,15 @@ static int trace_attach_cb(int category, int type, const void *data)
 static int trace_detach_cb(int category, int type, const void *data)
 {
     switch (type) {
-    case 0:                      /* Channel */
+    case CHANNEL:
         OSSL_TRACE2(TRACE, "Detach channel %p from category '%s'\n",
                     data, trace_categories[category].name);
         break;
-    case 1:                      /* Prefix */
+    case PREFIX:
         OSSL_TRACE2(TRACE, "Detach prefix \"%s\" from category '%s'\n",
                     (const char *)data, trace_categories[category].name);
         break;
-    case 2:                      /* Suffix */
+    case SUFFIX:
         OSSL_TRACE2(TRACE, "Detach suffix \"%s\" from category '%s'\n",
                     (const char *)data, trace_categories[category].name);
         break;
@@ -222,15 +229,15 @@ static int set_trace_data(int category, BIO **channel,
 
     /* Make sure to run the detach callback first on all data */
     if (prefix != NULL && curr_prefix != NULL) {
-        detach_cb(category, 1, curr_prefix);
+        detach_cb(category, PREFIX, curr_prefix);
     }
 
     if (suffix != NULL && curr_suffix != NULL) {
-        detach_cb(category, 2, curr_suffix);
+        detach_cb(category, SUFFIX, curr_suffix);
     }
 
     if (channel != NULL && curr_channel != NULL) {
-        detach_cb(category, 0, curr_channel);
+        detach_cb(category, CHANNEL, curr_channel);
     }
 
     /* After detach callbacks are done, clear data where appropriate */
@@ -268,15 +275,15 @@ static int set_trace_data(int category, BIO **channel,
 
     /* Finally, run the attach callback on the new data */
     if (channel != NULL && *channel != NULL) {
-        attach_cb(category, 0, *channel);
+        attach_cb(category, CHANNEL, *channel);
     }
 
     if (prefix != NULL && *prefix != NULL) {
-        attach_cb(category, 1, *prefix);
+        attach_cb(category, PREFIX, *prefix);
     }
 
     if (suffix != NULL && *suffix != NULL) {
-        attach_cb(category, 2, *suffix);
+        attach_cb(category, SUFFIX, *suffix);
     }
 
     return 1;
@@ -332,16 +339,16 @@ int OSSL_trace_set_channel(int category, BIO *channel)
 static int trace_attach_w_callback_cb(int category, int type, const void *data)
 {
     switch (type) {
-    case 0:                      /* Channel */
+    case CHANNEL:
         OSSL_TRACE2(TRACE,
                     "Attach channel %p to category '%s' (with callback)\n",
                     data, trace_categories[category].name);
         break;
-    case 1:                      /* Prefix */
+    case PREFIX:
         OSSL_TRACE2(TRACE, "Attach prefix \"%s\" to category '%s'\n",
                     (const char *)data, trace_categories[category].name);
         break;
-    case 2:                      /* Suffix */
+    case SUFFIX:
         OSSL_TRACE2(TRACE, "Attach suffix \"%s\" to category '%s'\n",
                     (const char *)data, trace_categories[category].name);
         break;
