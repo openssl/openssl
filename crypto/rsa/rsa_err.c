@@ -87,6 +87,8 @@ static const ERR_STRING_DATA RSA_str_functs[] = {
      "RSA_padding_check_SSLv23"},
     {ERR_PACK(ERR_LIB_RSA, RSA_F_RSA_PADDING_CHECK_X931, 0),
      "RSA_padding_check_X931"},
+    {ERR_PACK(ERR_LIB_RSA, RSA_F_RSA_PADDING_REMOVE_PKCS1_OAEP, 0),
+     "RSA_padding_remove_PKCS1_OAEP"},
     {ERR_PACK(ERR_LIB_RSA, RSA_F_RSA_PARAM_DECODE, 0), "rsa_param_decode"},
     {ERR_PACK(ERR_LIB_RSA, RSA_F_RSA_PRINT, 0), "RSA_print"},
     {ERR_PACK(ERR_LIB_RSA, RSA_F_RSA_PRINT_FP, 0), "RSA_print_fp"},

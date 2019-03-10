@@ -11,6 +11,7 @@
 #include "internal/bn_int.h"
 #include "rsa_locl.h"
 #include "internal/constant_time_locl.h"
+#include "openssl/evp.h"
 
 static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                    unsigned char *to, RSA *rsa, int padding);
@@ -602,7 +603,9 @@ static int rsa_ossl_private_decrypt_ex(RSA *rsa, const unsigned char *from, size
         r = RSA_padding_remove_PKCS1_type_2(buf, rsa_len, to, tlen);
         break;
     case RSA_PKCS1_OAEP_PADDING:
-        r = RSA_padding_check_PKCS1_OAEP(to, rsa_len, buf, j, rsa_len, NULL, 0);
+        r = RSA_padding_remove_PKCS1_OAEP(to, tlen, buf, rsa_len, NULL, 0,
+                                          EVP_sha1(), EVP_sha1());
+
         break;
     case RSA_SSLV23_PADDING:
         r = RSA_padding_check_SSLv23(to, rsa_len, buf, j, rsa_len);

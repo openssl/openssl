@@ -68,6 +68,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2             113
 # define RSA_F_RSA_PADDING_CHECK_SSLV23                   114
 # define RSA_F_RSA_PADDING_CHECK_X931                     128
+# define RSA_F_RSA_PADDING_REMOVE_PKCS1_OAEP              170
 # define RSA_F_RSA_PARAM_DECODE                           164
 # define RSA_F_RSA_PRINT                                  115
 # define RSA_F_RSA_PRINT_FP                               116

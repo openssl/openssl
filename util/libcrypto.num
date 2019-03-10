@@ -4659,3 +4659,4 @@ RSA_padding_remove_PKCS1_type_2         4614	3_0_0	EXIST::FUNCTION:RSA
 RSA_private_decrypt_ex                  4615	3_0_0	EXIST::FUNCTION:RSA
 RSA_meth_get_priv_dec_ex                4616	3_0_0	EXIST::FUNCTION:RSA
 RSA_meth_set_priv_dec_ex                4617	3_0_0	EXIST::FUNCTION:RSA
+RSA_padding_remove_PKCS1_OAEP           4618	3_0_0	EXIST::FUNCTION:RSA

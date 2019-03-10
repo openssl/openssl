@@ -270,6 +270,95 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     return constant_time_select_int(good, mlen, -1);
 }
 
+int RSA_padding_remove_PKCS1_OAEP(unsigned char *to, size_t tlen,
+                                  const unsigned char *from, size_t rsa_len,
+                                  const unsigned char *param,
+                                  size_t plen, const EVP_MD *md,
+                                  const EVP_MD *mgf1md)
+{
+    size_t i, dblen = 0;
+    unsigned int good = 0;
+    const unsigned char *maskedseed, *maskeddb;
+    /*
+     * |em| is the encoded message, zero-padded to exactly |num| bytes: em =
+     * Y || maskedSeed || maskedDB
+     */
+    unsigned char *db = NULL, *em = NULL, seed[EVP_MAX_MD_SIZE],
+        phash[EVP_MAX_MD_SIZE];
+    size_t mdlen;
+    int ret = -1;
+
+    mdlen = EVP_MD_size(md);
+
+    if (tlen == 0 || rsa_len == 0)
+        return -1;
+
+    if (md == NULL || mgf1md == NULL) {
+        RSAerr(RSA_F_RSA_PADDING_REMOVE_PKCS1_OAEP,
+               ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
+
+    /*
+     * |rsa_len| >= 2 * |mdlen| + 2 must hold for the modulus irrespective of
+     * the ciphertext, see PKCS #1 v2.2, section 7.1.2.
+     * This does not leak any side-channel information.
+     */
+    if (rsa_len < 2 * mdlen + 2) {
+        RSAerr(RSA_F_RSA_PADDING_REMOVE_PKCS1_OAEP,
+               ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
+
+    dblen = rsa_len - mdlen - 1;
+    db = OPENSSL_malloc(dblen);
+    if (db == NULL) {
+        RSAerr(RSA_F_RSA_PADDING_REMOVE_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+
+    /*
+     * The first byte must be zero, however we must not leak if this is
+     * true. See James H. Manger, "A Chosen Ciphertext Attack on RSA
+     * Optimal Asymmetric Encryption Padding (OAEP) [...]", CRYPTO 2001).
+     */
+    good = constant_time_is_zero(em[0]);
+
+    maskedseed = em + 1;
+    maskeddb = em + 1 + mdlen;
+
+    if (PKCS1_MGF1(seed, mdlen, maskeddb, dblen, mgf1md))
+        goto cleanup;
+    for (i = 0; i < mdlen; i++)
+        seed[i] ^= maskedseed[i];
+
+    if (PKCS1_MGF1(db, dblen, seed, mdlen, mgf1md))
+        goto cleanup;
+    for (i = 0; i < dblen; i++)
+        db[i] ^= maskeddb[i];
+
+    if (!EVP_Digest((void *)param, plen, phash, NULL, md, NULL))
+        goto cleanup;
+
+    good &= constant_time_is_zero(CRYPTO_memcmp(db, phash, mdlen));
+
+    for (i = mdlen; i < dblen-tlen-1; i++) {
+        good &= constant_time_is_zero(db[i]);
+    }
+    good &= constant_time_eq(db[dblen-tlen-1], 1);
+
+    memcpy(to, db+dblen-tlen, tlen);
+
+    ret = constant_time_select_int(good, 1, 0);
+
+ cleanup:
+    OPENSSL_cleanse(seed, sizeof(seed));
+    OPENSSL_clear_free(db, dblen);
+
+    return ret;
+}
+
+
 int PKCS1_MGF1(unsigned char *mask, long len,
                const unsigned char *seed, long seedlen, const EVP_MD *dgst)
 {
