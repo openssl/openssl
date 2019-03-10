@@ -76,6 +76,9 @@ struct rsa_meth_st {
     int (*rsa_priv_dec) (int flen, const unsigned char *from,
                          unsigned char *to, RSA *rsa, int padding);
     /* Can be null */
+    int (*rsa_priv_dec_ex) (RSA *rsa, const unsigned char *from, size_t flen,
+                            unsigned char *to, size_t tlen, int padding);
+    /* Can be null */
     int (*rsa_mod_exp) (BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
     /* Can be null */
     int (*bn_mod_exp) (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,

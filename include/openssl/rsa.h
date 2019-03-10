@@ -259,6 +259,8 @@ int RSA_public_decrypt(int flen, const unsigned char *from,
                        unsigned char *to, RSA *rsa, int padding);
 int RSA_private_decrypt(int flen, const unsigned char *from,
                         unsigned char *to, RSA *rsa, int padding);
+int RSA_private_decrypt_ex(RSA *rsa, const unsigned char *from, size_t flen,
+                        unsigned char *to, size_t tlen, int padding);
 void RSA_free(RSA *r);
 /* "up" the RSA object's reference count */
 int RSA_up_ref(RSA *r);
@@ -341,8 +343,8 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
 int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
                                    const unsigned char *f, int fl,
                                    int rsa_len);
-int RSA_padding_check_PKCS1_type_2_ex(const unsigned char *from,
-                                      size_t rsa_len, size_t tlen);
+int RSA_padding_remove_PKCS1_type_2(const unsigned char *from, size_t rsa_len,
+                                    unsigned char *to, size_t tlen);
 int PKCS1_MGF1(unsigned char *mask, long len, const unsigned char *seed,
                long seedlen, const EVP_MD *dgst);
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
@@ -457,6 +459,16 @@ int RSA_meth_set_priv_dec(RSA_METHOD *rsa,
                           int (*priv_dec) (int flen, const unsigned char *from,
                                            unsigned char *to, RSA *rsa,
                                            int padding));
+int (*RSA_meth_get_priv_dec_ex(const RSA_METHOD *meth))
+    (RSA *rsa, const unsigned char *from, size_t flen,
+     unsigned char *to, size_t tlen, int padding);
+int RSA_meth_set_priv_dec_ex(RSA_METHOD *meth,
+                             int (*priv_dec_ex) (RSA *RSA,
+                                                 const unsigned char *from,
+                                                 size_t flen,
+                                                 unsigned char *to,
+                                                 size_t tlen,
+                                                 int padding));
 int (*RSA_meth_get_mod_exp(const RSA_METHOD *meth))
     (BIGNUM *r0, const BIGNUM *i, RSA *rsa, BN_CTX *ctx);
 int RSA_meth_set_mod_exp(RSA_METHOD *rsa,

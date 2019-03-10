@@ -42,6 +42,16 @@ int RSA_private_decrypt(int flen, const unsigned char *from,
     return rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding);
 }
 
+int RSA_private_decrypt_ex(RSA *rsa, const unsigned char *from, size_t flen,
+                        unsigned char *to, size_t tlen, int padding)
+{
+    if (rsa->meth->rsa_priv_dec_ex)
+        return rsa->meth->rsa_priv_dec_ex(rsa, from, flen, to, tlen, padding);
+
+    RSAerr(RSA_F_RSA_PRIVATE_DECRYPT_EX, RSA_R_UNSUPPORTED_BY_METHOD);
+    return -1;
+}
+
 int RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
                        RSA *rsa, int padding)
 {

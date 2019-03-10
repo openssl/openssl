@@ -2971,12 +2971,11 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
 {
 #ifndef OPENSSL_NO_RSA
     unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
-    int decrypt_len;
+    unsigned char premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
     unsigned char decrypt_good, version_good;
-    size_t j, padding_len;
+    size_t j;
     PACKET enc_premaster;
     RSA *rsa = NULL;
-    unsigned char *rsa_decrypt = NULL;
     int ret = 0;
     int padding_check;
 
@@ -3011,13 +3010,6 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
         return 0;
     }
 
-    rsa_decrypt = OPENSSL_malloc(RSA_size(rsa));
-    if (rsa_decrypt == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
-                 ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-
     /*
      * We must not leak whether a decryption failure occurs because of
      * Bleichenbacher's attack on PKCS #1 v1.5 RSA padding (see RFC 2246,
@@ -3033,25 +3025,11 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    /*
-     * Decrypt with no padding. PKCS#1 padding will be removed as part of
-     * the timing-sensitive code below.
-     */
-     /* TODO(size_t): Convert this function */
-    decrypt_len = (int)RSA_private_decrypt((int)PACKET_remaining(&enc_premaster),
-                                           PACKET_data(&enc_premaster),
-                                           rsa_decrypt, rsa, RSA_NO_PADDING);
-    if (decrypt_len != RSA_size(rsa)) {
-        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
-                 ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* Check the padding. See RFC 3447, section 7.2.2. */
-
-    padding_check = RSA_padding_check_PKCS1_type_2_ex(rsa_decrypt,
-                                                      (size_t)decrypt_len,
-                                                      SSL_MAX_MASTER_KEY_LENGTH); 
+    padding_check = RSA_private_decrypt_ex(rsa, PACKET_data(&enc_premaster),
+                                           PACKET_remaining(&enc_premaster),
+                                           premaster_secret,
+                                           SSL_MAX_MASTER_KEY_LENGTH,
+                                           RSA_PKCS1_PADDING);
     if (padding_check == -1) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  SSL_R_DECRYPTION_FAILED);
@@ -3067,12 +3045,11 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * check as a "bad version oracle". Thus version checks are done in
      * constant time and are treated like any other decryption error.
      */
-    padding_len = decrypt_len - SSL_MAX_MASTER_KEY_LENGTH;
     version_good =
-        constant_time_eq_8(rsa_decrypt[padding_len],
+        constant_time_eq_8(premaster_secret[0],
                            (unsigned)(s->client_version >> 8));
     version_good &=
-        constant_time_eq_8(rsa_decrypt[padding_len + 1],
+        constant_time_eq_8(premaster_secret[1],
                            (unsigned)(s->client_version & 0xff));
 
     /*
@@ -3086,10 +3063,10 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      */
     if (s->options & SSL_OP_TLS_ROLLBACK_BUG) {
         unsigned char workaround_good;
-        workaround_good = constant_time_eq_8(rsa_decrypt[padding_len],
+        workaround_good = constant_time_eq_8(premaster_secret[0],
                                              (unsigned)(s->version >> 8));
         workaround_good &=
-            constant_time_eq_8(rsa_decrypt[padding_len + 1],
+            constant_time_eq_8(premaster_secret[1],
                                (unsigned)(s->version & 0xff));
         version_good |= workaround_good;
     }
@@ -3100,6 +3077,8 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      */
     decrypt_good &= version_good;
 
+    decrypt_good = 0xFF;
+
     /*
      * Now copy rand_premaster_secret over from p using
      * decrypt_good_mask. If decryption failed, then p does not
@@ -3107,21 +3086,20 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * it is still sufficiently large to read from.
      */
     for (j = 0; j < sizeof(rand_premaster_secret); j++) {
-        rsa_decrypt[padding_len + j] =
+        premaster_secret[j] =
             constant_time_select_8(decrypt_good,
-                                   rsa_decrypt[padding_len + j],
+                                   premaster_secret[j],
                                    rand_premaster_secret[j]);
     }
 
-    if (!ssl_generate_master_secret(s, rsa_decrypt + padding_len,
-                                    sizeof(rand_premaster_secret), 0)) {
+    if (!ssl_generate_master_secret(s, premaster_secret,
+                                    sizeof(premaster_secret), 0)) {
         /* SSLfatal() already called */
         goto err;
     }
 
     ret = 1;
  err:
-    OPENSSL_free(rsa_decrypt);
     return ret;
 #else
     /* Should never happen */

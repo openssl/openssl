@@ -254,8 +254,8 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     return constant_time_select_int(good, mlen, -1);
 }
 
-int RSA_padding_check_PKCS1_type_2_ex(const unsigned char *from,
-                                      size_t rsa_len, size_t tlen)
+int RSA_padding_remove_PKCS1_type_2(const unsigned char *from, size_t rsa_len,
+                                    unsigned char *to, size_t tlen)
 {
     size_t i;
     unsigned char good;
@@ -280,6 +280,8 @@ int RSA_padding_check_PKCS1_type_2_ex(const unsigned char *from,
     }
 
     good &= constant_time_is_zero_8(from[rsa_len-tlen-1]);
+
+    memcpy(to, from+rsa_len-tlen, tlen);
 
     return constant_time_select(good, 1, 0);
 }

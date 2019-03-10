@@ -161,6 +161,24 @@ int RSA_meth_set_priv_dec(RSA_METHOD *meth,
     return 1;
 }
 
+int (*RSA_meth_get_priv_dec_ex(const RSA_METHOD *meth))
+    (RSA *rsa, const unsigned char *from, size_t flen,
+     unsigned char *to, size_t tlen, int padding)
+{
+    return meth->rsa_priv_dec_ex;
+}
+
+int RSA_meth_set_priv_dec_ex(RSA_METHOD *meth,
+                             int (*priv_dec_ex) (RSA *RSA,
+                                                 const unsigned char *from,
+                                                 size_t flen,
+                                                 unsigned char *to,
+                                                 size_t tlen,
+                                                 int padding))
+{
+    meth->rsa_priv_dec_ex = priv_dec_ex;
+    return 1;
+}
     /* Can be null */
 int (*RSA_meth_get_mod_exp(const RSA_METHOD *meth))
     (BIGNUM *r0, const BIGNUM *i, RSA *rsa, BN_CTX *ctx)
