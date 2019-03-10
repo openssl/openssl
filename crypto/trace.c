@@ -158,7 +158,7 @@ int OSSL_trace_get_category_num(const char *name)
 
 /* We use one trace channel for each trace category */
 static struct {
-    enum { t_channel, t_callback } type;
+    enum { SIMPLE_CHANNEL, CALLBACK_CHANNEL } type;
     BIO *bio;
     char *prefix;
     char *suffix;
@@ -330,7 +330,7 @@ int OSSL_trace_set_channel(int category, BIO *channel)
                            trace_attach_cb, trace_detach_cb))
         return 0;
 
-    trace_channels[category].type = t_channel;
+    trace_channels[category].type = SIMPLE_CHANNEL;
 #endif
     return 1;
 }
@@ -385,7 +385,7 @@ int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
                         trace_attach_w_callback_cb, trace_detach_cb))
         goto err;
 
-    trace_channels[category].type = t_callback;
+    trace_channels[category].type = CALLBACK_CHANNEL;
     goto done;
 
  err:
@@ -458,13 +458,13 @@ BIO *OSSL_trace_begin(int category)
         CRYPTO_THREAD_write_lock(trace_lock);
         current_channel = channel;
         switch (trace_channels[category].type) {
-        case t_channel:
+        case SIMPLE_CHANNEL:
             if (prefix != NULL) {
                 (void)BIO_puts(channel, prefix);
                 (void)BIO_puts(channel, "\n");
             }
             break;
-        case t_callback:
+        case CALLBACK_CHANNEL:
             (void)BIO_ctrl(channel, OSSL_TRACE_CTRL_BEGIN,
                            prefix == NULL ? 0 : strlen(prefix), prefix);
             break;
@@ -485,13 +485,13 @@ void OSSL_trace_end(int category, BIO * channel)
         && ossl_assert(channel == current_channel)) {
         (void)BIO_flush(channel);
         switch (trace_channels[category].type) {
-        case t_channel:
+        case SIMPLE_CHANNEL:
             if (suffix != NULL) {
                 (void)BIO_puts(channel, suffix);
                 (void)BIO_puts(channel, "\n");
             }
             break;
-        case t_callback:
+        case CALLBACK_CHANNEL:
             (void)BIO_ctrl(channel, OSSL_TRACE_CTRL_END,
                            suffix == NULL ? 0 : strlen(suffix), suffix);
             break;
