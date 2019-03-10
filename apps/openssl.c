@@ -845,7 +845,7 @@ static int SortFnByName(const void *_f1, const void *_f2)
 
 static void list_engines(void)
 {
-#ifndef OPENSSL_NO_ENGINES
+#ifndef OPENSSL_NO_ENGINE
     ENGINE *e;
 
     BIO_puts(bio_out, "Engines:\n");
