@@ -683,3 +683,106 @@ int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
  end:
     return 0;
 }
+
+int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
+                    PKCS11_CTX *pkcs11_ctx,
+                    char* object)
+{
+    CK_RV rv;
+    CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
+    CK_ATTRIBUTE tmpl[2];
+    CK_ATTRIBUTE tmpl_key[3];
+    CK_OBJECT_HANDLE obj;
+    CK_ULONG nObj = 0;
+    CK_BYTE_PTR pMod, pExp;
+
+    tmpl[0].type = CKA_CLASS;
+    tmpl[0].pValue = &key_class;
+    tmpl[0].ulValueLen = sizeof(key_class);
+    tmpl[1].type = CKA_LABEL;
+    tmpl[1].pValue = object;
+    tmpl[1].ulValueLen = (CK_ULONG)strlen(object);
+
+    tmpl_key[0].type = CKA_CLASS;
+    tmpl_key[0].pValue = &key_class;
+    tmpl_key[0].ulValueLen = sizeof(key_class);
+    tmpl_key[1].type = CKA_MODULUS;
+    tmpl_key[1].pValue = NULL;
+    tmpl_key[1].ulValueLen = 0;
+    tmpl_key[2].type = CKA_PUBLIC_EXPONENT;
+    tmpl_key[2].pValue = NULL;
+    tmpl_key[2].ulValueLen = 0;
+
+    rv = pkcs11_initialize(pkcs11_ctx->module_path);
+    if (rv != CKR_OK)
+        goto end;
+    if (!pkcs11_get_slot(pkcs11_ctx))
+        goto end;
+    if (!pkcs11_start_session(pkcs11_ctx))
+        goto end;
+
+    rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl,
+                                         OSSL_NELEM(tmpl));
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjectsInit: Error = 0x%.8lX\n", rv);
+        goto end;
+    }
+
+    rv = pkcs11_funcs->C_FindObjects(pkcs11_ctx->session, &obj,
+                                     1, &nObj);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjects: Error = 0x%.8lX\n", rv);
+        goto end;
+    }
+
+    rv = pkcs11_funcs->C_GetAttributeValue(pkcs11_ctx->session, obj,
+                                           tmpl_key,
+                                           OSSL_NELEM(tmpl_key));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue: \
+                      rv = 0x%.8lX\n", rv);
+        goto end;
+    }
+
+    pMod = (CK_BYTE_PTR) OPENSSL_malloc(tmpl_key[1].ulValueLen);
+    tmpl_key[1].pValue = pMod;
+
+    pExp = (CK_BYTE_PTR) OPENSSL_malloc(tmpl_key[2].ulValueLen);
+    tmpl_key[2].pValue = pExp;
+
+    rv = pkcs11_funcs->C_GetAttributeValue(pkcs11_ctx->session, obj,
+                                           tmpl_key,
+                                           OSSL_NELEM(tmpl_key));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue: \
+                      rv = 0x%.8lX\n", rv);
+        goto end;
+    }
+
+    EVP_PKEY* pRsaKey = EVP_PKEY_new();
+    RSA* rsa = RSA_new();
+
+    RSA_set0_key(rsa,
+                 BN_bin2bn(tmpl_key[1].pValue,
+                           tmpl_key[1].ulValueLen, NULL),
+                 BN_bin2bn(tmpl_key[2].pValue,
+                           tmpl_key[2].ulValueLen, NULL),
+                 NULL);
+
+    EVP_PKEY_set1_RSA(pRsaKey, rsa);
+
+    if (pRsaKey != NULL) {
+        store_ctx->key = pRsaKey;
+    } else {
+        OPENSSL_free(pMod);
+        OPENSSL_free(pExp);
+    }
+    pkcs11_end_session(pkcs11_ctx->session);
+    pkcs11_finalize();
+
+    return 1;
+
+ end:
+    return 0;
+}

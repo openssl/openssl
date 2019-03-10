@@ -291,6 +291,16 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PKEY(EVP_PKEY *pkey)
     return info;
 }
 
+OSSL_STORE_INFO *OSSL_STORE_INFO_new_PUBKEY(EVP_PKEY *pkey)
+{
+    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_PUBKEY, pkey);
+
+    if (info == NULL)
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_PUBKEY,
+                      ERR_R_MALLOC_FAILURE);
+    return info;
+}
+
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_CERT(X509 *x509)
 {
     OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_CERT, x509);
@@ -400,6 +410,24 @@ EVP_PKEY *OSSL_STORE_INFO_get1_PKEY(const OSSL_STORE_INFO *info)
     return NULL;
 }
 
+EVP_PKEY *OSSL_STORE_INFO_get0_PUBKEY(const OSSL_STORE_INFO *info)
+{
+    if (info->type == OSSL_STORE_INFO_PUBKEY)
+        return info->_.pubkey;
+    return NULL;
+}
+
+EVP_PKEY *OSSL_STORE_INFO_get1_PUBKEY(const OSSL_STORE_INFO *info)
+{
+    if (info->type == OSSL_STORE_INFO_PUBKEY) {
+        EVP_PKEY_up_ref(info->_.pubkey);
+        return info->_.pubkey;
+    }
+    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_PUBKEY,
+                  OSSL_STORE_R_NOT_A_KEY);
+    return NULL;
+}
+
 X509 *OSSL_STORE_INFO_get0_CERT(const OSSL_STORE_INFO *info)
 {
     if (info->type == OSSL_STORE_INFO_CERT)
@@ -456,6 +484,9 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
             break;
         case OSSL_STORE_INFO_PKEY:
             EVP_PKEY_free(info->_.pkey);
+            break;
+        case OSSL_STORE_INFO_PUBKEY:
+            EVP_PKEY_free(info->_.pubkey);
             break;
         case OSSL_STORE_INFO_CERT:
             X509_free(info->_.x509);

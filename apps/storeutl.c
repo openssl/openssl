@@ -441,6 +441,13 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                 PEM_write_bio_PrivateKey(out, OSSL_STORE_INFO_get0_PKEY(info),
                                          NULL, NULL, 0, NULL, NULL);
             break;
+        case OSSL_STORE_INFO_PUBKEY:
+            if (text)
+                EVP_PKEY_print_public(out, OSSL_STORE_INFO_get0_PUBKEY(info),
+                                      0, NULL);
+            if (!noout)
+                PEM_write_bio_PUBKEY(out, OSSL_STORE_INFO_get0_PUBKEY(info));
+            break;
         case OSSL_STORE_INFO_CERT:
             if (text)
                 X509_print(out, OSSL_STORE_INFO_get0_CERT(info));

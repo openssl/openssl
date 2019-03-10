@@ -37,6 +37,7 @@ struct ossl_store_info_st {
 
         EVP_PKEY *params;        /* when type == OSSL_STORE_INFO_PARAMS */
         EVP_PKEY *pkey;          /* when type == OSSL_STORE_INFO_PKEY */
+        EVP_PKEY *pubkey;        /* when type == OSSL_STORE_INFO_PUBKEY */
         X509 *x509;              /* when type == OSSL_STORE_INFO_CERT */
         X509_CRL *crl;           /* when type == OSSL_STORE_INFO_CRL */
     } _;

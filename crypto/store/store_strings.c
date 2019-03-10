@@ -14,7 +14,8 @@ static char *type_strings[] = {
     "Parameters",                /* OSSL_STORE_INFO_PARAMS */
     "Pkey",                      /* OSSL_STORE_INFO_PKEY */
     "Certificate",               /* OSSL_STORE_INFO_CERT */
-    "CRL"                        /* OSSL_STORE_INFO_CRL */
+    "CRL",                       /* OSSL_STORE_INFO_CRL */
+    "Public key"                 /* OSSL_STORE_INFO_PUBKEY */
 };
 
 const char *OSSL_STORE_INFO_type_string(int type)

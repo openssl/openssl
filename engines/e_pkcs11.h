@@ -79,6 +79,7 @@ struct ossl_store_loader_ctx_st {
     IDS ids[MAX];
     size_t certlen;
     const unsigned char *cert;
+    EVP_PKEY *key;
 };
 
 CK_RV pkcs11_initialize(const char *library_path);
@@ -99,3 +100,6 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
 int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
                     PKCS11_CTX *pkcs11_ctx,
                     char* object);
+int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
+                   PKCS11_CTX *pkcs11_ctx,
+                   char* object);

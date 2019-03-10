@@ -47,6 +47,9 @@ static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX* ctx);
 static OSSL_STORE_INFO* pkcs11_store_load_cert(OSSL_STORE_LOADER_CTX *ctx,
                                                const UI_METHOD *ui_method,
                                                void *ui_data);
+static OSSL_STORE_INFO* pkcs11_store_load_key(OSSL_STORE_LOADER_CTX *ctx,
+                                              const UI_METHOD *ui_method,
+                                              void *ui_data);
 
 static int pkcs11_init(ENGINE *e)
 {
@@ -333,7 +336,7 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     ENGINE *e;
     PKCS11_CTX *pkcs11_ctx;
     OSSL_STORE_LOADER_CTX *store_ctx = NULL;
-    char *objecttype = NULL, *object = NULL;
+    char *type = NULL, *object = NULL;
 
     store_ctx = OSSL_STORE_LOADER_CTX_new();
 
@@ -343,15 +346,18 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
 
     uri += 7;
 
-    pkcs11_parse_uri(uri,"objecttype=", &objecttype);
+    pkcs11_parse_uri(uri,"type=", &type);
     pkcs11_parse_uri(uri,"object=", &object);
 
-    if (object != NULL && objecttype != NULL
-        && strncmp(objecttype, "cert", 4) == 0) {
+    if (object != NULL && type != NULL) {
         pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
         if (pkcs11_ctx == NULL)
             return NULL;
-        if (!pkcs11_get_cert(store_ctx, pkcs11_ctx, object))
+        if (strncmp(type, "cert", 4) == 0 && !pkcs11_get_cert(
+            store_ctx, pkcs11_ctx, object))
+            return NULL;
+        if (strncmp(type, "public", 6) == 0 && !pkcs11_get_key(
+            store_ctx, pkcs11_ctx, object))
             return NULL;
     }
 
@@ -377,6 +383,11 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
     if (ctx->cert != NULL) {
         ctx->eof = 1;
         return pkcs11_store_load_cert(ctx, ui_method, ui_data);
+    }
+
+    if (ctx->key != NULL) {
+        ctx->eof = 1;
+        return pkcs11_store_load_key(ctx, ui_method, ui_data);
     }
 
     if (ctx->ids[store_idx].name[0] == '\0' || store_idx == MAX - 1) {
@@ -438,6 +449,13 @@ static OSSL_STORE_INFO* pkcs11_store_load_cert(OSSL_STORE_LOADER_CTX *ctx,
 
     x = d2i_X509(NULL, &ctx->cert, ctx->certlen);
     return OSSL_STORE_INFO_new_CERT(x);
+}
+
+static OSSL_STORE_INFO* pkcs11_store_load_key(OSSL_STORE_LOADER_CTX *ctx,
+                                               const UI_METHOD *ui_method,
+                                               void *ui_data)
+{
+    return OSSL_STORE_INFO_new_PUBKEY(ctx->key);
 }
 
 static int bind_pkcs11(ENGINE *e)
