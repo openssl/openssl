@@ -381,8 +381,8 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov,
  * never knows.
  */
 static const OSSL_ITEM param_types[] = {
-    { OSSL_PARAM_UTF8_STRING_PTR, "openssl-version" },
-    { OSSL_PARAM_UTF8_STRING_PTR, "provider-name" },
+    { OSSL_PARAM_UTF8_PTR, "openssl-version" },
+    { OSSL_PARAM_UTF8_PTR, "provider-name" },
     { 0, NULL }
 };
 
