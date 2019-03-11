@@ -3,14 +3,27 @@
 =head1 NAME
 
 OSSL_PARAM_locate,
-OSSL_PARAM_get_int, OSSL_PARAM_set_int,
-OSSL_PARAM_set_uint, OSSL_PARAM_get_uint,
-OSSL_PARAM_get_int64, OSSL_PARAM_set_int64,
-OSSL_PARAM_get_uint64, OSSL_PARAM_set_uint64,
-OSSL_PARAM_get_long, OSSL_PARAM_get_ulong,
-OSSL_PARAM_get_size_t, OSSL_PARAM_set_size_t,
-OSSL_PARAM_get_double, OSSL_PARAM_set_double,
-OSSL_PARAM_get_bignum, OSSL_PARAM_set_bignum
+OSSL_PARAM_int, OSSL_PARAM_get_int OSSL_PARAM_set_int,
+OSSL_PARAM_reserve_int, OSSL_PARAM_return_int,
+OSSL_PARAM_uint, OSSL_PARAM_get_uint OSSL_PARAM_set_uint,
+OSSL_PARAM_reserve_uint, OSSL_PARAM_return_uint,
+OSSL_PARAM_int64, OSSL_PARAM_get_int64 OSSL_PARAM_set_int64,
+OSSL_PARAM_reserve_int64, OSSL_PARAM_return_int64,
+OSSL_PARAM_uint64, OSSL_PARAM_get_uint64 OSSL_PARAM_set_uint64,
+OSSL_PARAM_reserve_uint64, OSSL_PARAM_return_uint64,
+OSSL_PARAM_long, OSSL_PARAM_get_long OSSL_PARAM_set_long,
+OSSL_PARAM_reserve_long, OSSL_PARAM_return_long,
+OSSL_PARAM_size_t, OSSL_PARAM_get_size_t OSSL_PARAM_set_size_t,
+OSSL_PARAM_reserve_size_t, OSSL_PARAM_return_size_t,
+OSSL_PARAM_double, OSSL_PARAM_get_double OSSL_PARAM_set_double,
+OSSL_PARAM_reserve_double, OSSL_PARAM_return_double,
+OSSL_PARAM_pointer, OSSL_PARAM_get_pointer OSSL_PARAM_set_pointer,
+OSSL_PARAM_reserve_pointer, OSSL_PARAM_return_pointer,
+OSSL_PARAM_bignum, OSSL_PARAM_get_bignum OSSL_PARAM_set_bignum,
+OSSL_PARAM_reserve_bignum, OSSL_PARAM_return_bignum,
+OSSL_PARAM_retrieve_bignum,
+OSSL_PARAM_buffer, OSSL_PARAM_get_buffer OSSL_PARAM_set_buffer,
+OSSL_PARAM_reserve_buffer, OSSL_PARAM_return_buffer
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -19,22 +32,34 @@ OSSL_PARAM_get_bignum, OSSL_PARAM_set_bignum
 
  #include <openssl/params.h>
 
- OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key);
+ OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key);
 
- int OSSL_PARAM_get_TYPE(const OSSL_PARAM *p, const char *key, TYPE *val);
- int OSSL_PARAM_set_TYPE(const OSSL_PARAM *p, const char *key, TYPE val);
+ #define OSSL_PARAM_TYPE(name)
 
- int OSSL_PARAM_get_pointer(const OSSL_PARAM *p, const char *key, void **val);
- int OSSL_PARAM_set_pointer(const OSSL_PARAM *p, const char *key, void *val);
+ int OSSL_PARAM_get_TYPE(OSSL_PARAM *p, const char *key, TYPE *val);
+ int OSSL_PARAM_set_TYPE(OSSL_PARAM *p, const char *key, TYPE *val);
 
- BIGNUM *OSSL_PARAM_get_bignum(const OSSL_PARAM *p, const char *key);
- int OSSL_PARAM_set_bignum(OSSL_PARAM *p, const char *key, const BIGNUM *val);
+ int OSSL_PARAM_reserve_TYPE(OSSL_PARAM *p, const char *key TYPE *val);
+ int OSSL_PARAM_reserve_bignum(OSSL_PARAM *p, const char *key,
+                               void *buffer, size_t size);
+ int OSSL_PARAM_reserve_buffer(OSSL_PARAM *p, const char *key,
+                               void *buffer, size_t size);
+
+ int OSSL_PARAM_return_TYPE(OSSL_PARAM *p, const char *key, TYPE val);
+ int OSSL_PARAM_return_buffer(OSSL_PARAM *p, const char *key,
+                              void *buff, size_t size);
+ int OSSL_PARAM_return_bignum(OSSL_PARAM *p, const char *key,
+                              BIGNUM *bn);
+
+ int OSSL_PARAM_retrieve_bignum(OSSL_PARAM *p, const char *key,
+                                BIGNUM **bn);
+
 
 =head1 DESCRIPTION
 
-A collection of utility functions that simplify and add type safety to the
-OSSL_PARAM arrays.  In the following text, B<TYPE> stands for one of the
-following C types:
+This pages describes a set of utility functions and macros that simplify and
+add type safety to L<OSSL_PARAM(3)> arrays.
+In the following text, B<TYPE> stands for one of the following types:
 
  int
  unsigned int ("uint")
@@ -44,38 +69,93 @@ following C types:
  unsigned long ("ulong")
  size_t
  double
+ void * ("pointer")
+ array of bytes ("buffer")
+ BIGNUM
 
-OSSL_PARAM_locate() finds the parameter in the B<p> list with the name B<key>.
-Since a parameter list is NULL terminated, if OSSL_PARAM_locate() returns
-successfully, that return value can be passed into any of the get or set
-functions described here.
+A pointer is a generic pointer. All of the types above are fixed-size,
+except for C<buffer> and C<BIGNUM>.
 
-OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter
-array B<p> using the B<key>.
-The value is copied to the address B<val>.
-No type coercion is done; it is an error if the type used for a get does
-not match the type used during a set.
+OSSL_PARAM_locate() finds the parameter in the B<p> list with the name
+B<key>.  Most of the functions described below take a pointer to a parameter
+list, B<p>, and a key naming a specific parameter, B<key>.  If B<key>
+is NULL, then B<p> is used directly, otherwise OSSL_PARAM_locate() is
+called to find a matching entry for B<key>.  This technique can be used
+for optional parameters, or for passing values when the array has been
+initialized with fixed positions:
 
-OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the parameter
-array B<p> using the B<key>.
+ OSSL_PARAM plist[] = {
+     OSSL_PARAM_int("optional"),
+     OSSL_PARAM_pointer("ptr"),
+     OSSL_PARAM_bignum("prime"),
+     OSSL_PARAM_int("status"),
+     { NULL }
+ };
 
-OSSL_PARAM_get_pointer() retrieves a generic pointer from the array B<p>
-using the B<key>.
-OSSL_PARAM_set_pointer() stores the pointer B<val> into the parameter array B<p>
-at the B<key>.
+ if ((p = OSSL_PARAM_locate(plist, "optional")) != NULL)
+     OSSL_PARAM_get_int(p, NULL, &anint);
 
-OSSL_PARAM_set_bignum() stores the BIGNUM B<val> in the specified parameter
-value.
-Negative numbers are not supported; B<val> must be greater than or equal
-to zero.
-It also internally stores the size of the buffer used; this is why
-the function does not take a constant B<p> value.
+ OSSL_PARAM_get_int(&plist[0], NULL, &anint);
+ OSSL_PARAM_get_pointer(&plist[1], NULL, &ptr);
+ ...
 
-OSSL_PARAM_get_bignum() retrieves a BIGNUM from the parameter B<key> in the
-array pointed to by B<p> and returns it.
+The macro OSSL_PARAM_TYPE() (for example, OSSL_PARAM_int()) returns an
+initialized value of an B<OSSL_PARAM> array initialized for the specified
+B<TYPE>.
 
-OSSL_PARAM_set_bignum() stores the BIGNUM B<val> into the paramater array B<p>
-at the position indicated by B<key>.
+In the following paragraphs, consider one function calling another, and
+that B<OSSL_PARAM> is used to pass parameters between them:
+
+ /* For simplicity, showing only one argument */
+ called_function(OSSL_PARAM *p)
+ {
+ }
+
+ calling_function()
+ {
+     called_function(plist);
+ }
+
+Within the calling function, I<input> parameters (those passed from the
+calling function to the called one) are passed by specifying
+the address of a variable of the same type.  The variable must remain in
+scope for lifetime of the parameter list.  For example:
+
+ OSSL_PARAM_set_int(plist, "optional", &anint);
+ OSSL_PARAM_set_pointer(&plist[1], NULL, &bufptr);
+
+For maximum portability across all platforms, values being returned through
+an B<OSSL_PARAM> list must be declared and have any storage space allocated
+in the calling routine.
+These I<output> parameters are marked by "reserving" space in the calling
+function for the called function to store a value. Fixed-size values
+can be given the address of a local variable; buffers and B<BIGNUM>'s
+must have a buffer and size for the called function to store the
+result.
+This is done using OSSL_PARAM_reserve_TYPE().
+
+ OSSL_PARAM_reserve_int(plist, "status", &status);
+ OSSL_PARAM_reserve_bignum(plist, "prime", buff, sizeof(buff))
+
+Within the called function, parameters are retrieved using
+OSSL_PARAM_get_TYPE() to get a value of type B<TYPE> from the parameter
+pointer using B<p> and B<key> as described above.
+
+To set the value of an output parameter, the called function uses the
+OSSL_PARAM_set_TYPE() function.
+Again, no coercion is done, and it is an error if the types do not match.
+
+ OSSL_PARAM_set_int(plist, "status", status);
+ OSSL_PARAM_set_bignum(plist, "prime", bn);
+
+Variable-sized values will use the reserved buffer. If the value does
+not fit, it will indicate the size needed and return an error.
+
+In the calling function, fixed-size values can be obtained by using the
+variable specified in the "reserve" call.
+Buffers an be used by using the pointer and buffer given when reserved,
+and B<BIGNUM>'s can be obtained by using
+OSSL_PARAM_retrieve_bignum()
 
 =head1 RETURN VALUES
 
@@ -83,6 +163,9 @@ OSSL_PARAM_locate() returns a pointer to the requested parameter or B<NULL>
 if it is not found.
 All other functions return B<1> on success and B<0> on failure.
 
+=head1 BUGS
+
+Only non-negative BIGNUM's can be returned.
 
 =head1 HISTORY
 
