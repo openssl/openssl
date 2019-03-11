@@ -140,7 +140,7 @@ This is used to indicate that constant data is or will be passed,
 and there is therefore no need to copy the data that is passed, just
 the pointer to it.
 
-C<buffer_size> will be set to the size of the data, not the size of
+C<buffer_size> must be set to the size of the data, not the size of
 the pointer to the data.
 If this is used in a parameter request,
 C<buffer_size> is not relevant.  However, the I<responder> will set
@@ -162,7 +162,7 @@ This is used to indicate that constant data is or will be passed,
 and there is therefore no need to copy the data that is passed, just
 the pointer to it.
 
-C<buffer_size> will be set to the size of the data, not the size of
+C<buffer_size> must be set to the size of the data, not the size of
 the pointer to the data.
 If this is used in a parameter request,
 C<buffer_size> is not relevant.  However, the I<responder> will set
