@@ -516,7 +516,7 @@ int pkcs11_get_ids(int store_idx, PKCS11_CTX *pkcs11_ctx,
     CK_OBJECT_HANDLE key;
     CK_ULONG ulObj = 1;
     int count = 0;
-    unsigned int j, len;
+    unsigned int j;
     CK_ATTRIBUTE template[3];
     char buf_name[255];
     char buf_desc[512];
@@ -708,6 +708,7 @@ int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
     CK_ULONG nObj = 0;
     CK_BYTE_PTR pMod, pExp;
     EVP_PKEY* pRsaKey = NULL;
+    RSA* rsa; 
 
     tmpl[0].type = CKA_CLASS;
     tmpl[0].pValue = &key_class;
@@ -777,8 +778,7 @@ int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
     if (pRsaKey == NULL)
         goto end;
 
-    RSA* rsa = RSA_new();
-
+    rsa = RSA_new();
     RSA_set0_key(rsa,
                  BN_bin2bn(tmpl_key[1].pValue,
                            tmpl_key[1].ulValueLen, NULL),
