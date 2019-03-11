@@ -1358,7 +1358,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     BIO_puts(sdb->out, "Security callback: ");
 
     nm = lookup(op, callback_types, NULL);
-    show_nm = nm!=NULL;
+    show_nm = nm != NULL;
     switch (op) {
     case SSL_SECOP_TICKET:
     case SSL_SECOP_COMPRESSION:
@@ -1428,7 +1428,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
         {
             const unsigned char *salg = other;
             const char *sname = NULL;
-            int raw_sig_code = (salg[0]<<8) + salg[1]; /* always big endian (msb, lsb) */
+            int raw_sig_code = (salg[0] << 8) + salg[1]; /* always big endian (msb, lsb) */
                 /* raw_sig_code: signature_scheme from tls1.3, or signature_and_hash from tls1.2 */
 
             if (nm != NULL)
