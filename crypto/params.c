@@ -69,23 +69,25 @@ int OSSL_PARAM_set_int(const OSSL_PARAM *p, int val)
         return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(int)); /* Minimum expected size */
         switch (p->buffer_size) {
         case sizeof(int32_t):
-            SET_RETURN_SIZE(p, sizeof(int32_t));
             if (sizeof(int32_t) >= sizeof(int)) {
+                SET_RETURN_SIZE(p, sizeof(int32_t));
                 *(int32_t *)p->buffer = (int32_t)val;
                 return 1;
             }
             break;
         case sizeof(int64_t):
-            SET_RETURN_SIZE(p, sizeof(int64_t));
             if (sizeof(int64_t) >= sizeof(int)) {
+                SET_RETURN_SIZE(p, sizeof(int64_t));
                 *(int64_t *)p->buffer = (int64_t)val;
                 return 1;
             }
             break;
         }
+    }
     return 0;
 }
 
@@ -125,23 +127,25 @@ int OSSL_PARAM_set_uint(const OSSL_PARAM *p, unsigned int val)
         return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(unsigned int)); /* Minimum expected size */
         switch (p->buffer_size) {
         case sizeof(uint32_t):
-            SET_RETURN_SIZE(p, sizeof(uint32_t));
             if (sizeof(uint32_t) >= sizeof(unsigned int)) {
+                SET_RETURN_SIZE(p, sizeof(uint32_t));
                 *(uint32_t *)p->buffer = (uint32_t)val;
                 return 1;
             }
             break;
         case sizeof(uint64_t):
-            SET_RETURN_SIZE(p, sizeof(uint64_t));
             if (sizeof(uint64_t) >= sizeof(unsigned int)) {
+                SET_RETURN_SIZE(p, sizeof(uint64_t));
                 *(uint64_t *)p->buffer = (uint64_t)val;
                 return 1;
             }
             break;
         }
+    }
     return 0;
 }
 
@@ -181,23 +185,25 @@ int OSSL_PARAM_set_long(const OSSL_PARAM *p, long int val)
         return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(long int)); /* Minimum expected size */
         switch (p->buffer_size) {
         case sizeof(int32_t):
-            SET_RETURN_SIZE(p, sizeof(int32_t));
             if (sizeof(int32_t) >= sizeof(long int)) {
+                SET_RETURN_SIZE(p, sizeof(int32_t));
                 *(int32_t *)p->buffer = (int32_t)val;
                 return 1;
             }
             break;
         case sizeof(int64_t):
-            SET_RETURN_SIZE(p, sizeof(int64_t));
             if (sizeof(int64_t) >= sizeof(long int)) {
+                SET_RETURN_SIZE(p, sizeof(int64_t));
                 *(int64_t *)p->buffer = (int64_t)val;
                 return 1;
             }
             break;
         }
+    }
     return 0;
 }
 
@@ -238,23 +244,25 @@ int OSSL_PARAM_set_ulong(const OSSL_PARAM *p, unsigned long int val)
         return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(unsigned long int)); /* Minimum exp size */
         switch (p->buffer_size) {
         case sizeof(uint32_t):
-            SET_RETURN_SIZE(p, sizeof(uint32_t));
             if (sizeof(uint32_t) >= sizeof(unsigned long int)) {
+                SET_RETURN_SIZE(p, sizeof(uint32_t));
                 *(uint32_t *)p->buffer = (uint32_t)val;
                 return 1;
             }
             break;
         case sizeof(uint64_t):
-            SET_RETURN_SIZE(p, sizeof(uint64_t));
             if (sizeof(uint64_t) >= sizeof(unsigned long int)) {
+                SET_RETURN_SIZE(p, sizeof(uint64_t));
                 *(uint64_t *)p->buffer = (uint64_t)val;
                 return 1;
             }
             break;
         }
+    }
     return 0;
 }
 
@@ -285,7 +293,8 @@ int OSSL_PARAM_set_int32(const OSSL_PARAM *p, int32_t val)
         return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(int32_t)); /* Minimum expected size */
         switch (p->buffer_size) {
         case sizeof(int32_t):
             SET_RETURN_SIZE(p, sizeof(int32_t));
@@ -296,6 +305,7 @@ int OSSL_PARAM_set_int32(const OSSL_PARAM *p, int32_t val)
             *(int64_t *)p->buffer = (int64_t)val;
             return 1;
         }
+    }
     return 0;
 }
 
@@ -325,7 +335,8 @@ int OSSL_PARAM_set_uint32(const OSSL_PARAM *p, uint32_t val)
     if (p == NULL) return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(uint32_t)); /* Minimum expected size */
         switch (p->buffer_size) {
         case sizeof(uint32_t):
             SET_RETURN_SIZE(p, sizeof(uint32_t));
@@ -336,6 +347,7 @@ int OSSL_PARAM_set_uint32(const OSSL_PARAM *p, uint32_t val)
             *(uint64_t *)p->buffer = (uint64_t)val;
             return 1;
         }
+    }
     return 0;
 }
 
@@ -370,16 +382,15 @@ int OSSL_PARAM_set_int64(const OSSL_PARAM *p, int64_t val)
         return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(int64_t)); /* Minimum expected size */
         switch (p->buffer_size) {
-        case sizeof(int32_t):
-            SET_RETURN_SIZE(p, sizeof(int32_t));
-            break;
         case sizeof(int64_t):
             SET_RETURN_SIZE(p, sizeof(int64_t));
             *(int64_t *)p->buffer = val;
             return 1;
         }
+    }
     return 0;
 }
 
@@ -414,16 +425,15 @@ int OSSL_PARAM_set_uint64(const OSSL_PARAM *p, uint64_t val)
         return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-            || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(uint64_t)); /* Minimum expected size */
         switch (p->buffer_size) {
-        case sizeof(uint32_t):
-            SET_RETURN_SIZE(p, sizeof(uint32_t));
-            break;
         case sizeof(uint64_t):
             SET_RETURN_SIZE(p, sizeof(uint64_t));
             *(uint64_t *)p->buffer = val;
             return 1;
         }
+    }
     return 0;
 }
 
@@ -463,11 +473,12 @@ int OSSL_PARAM_set_size_t(const OSSL_PARAM *p, size_t val)
         return 0;
     SET_RETURN_SIZE(p, 0);
     if (p->data_type == OSSL_PARAM_INTEGER
-        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER)
+        || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        SET_RETURN_SIZE(p, sizeof(size_t)); /* Minimum expected size */
         switch (p->buffer_size) {
         case sizeof(uint32_t):
-            SET_RETURN_SIZE(p, sizeof(uint32_t));
             if (sizeof(uint32_t) >= sizeof(size_t)) {
+                SET_RETURN_SIZE(p, sizeof(uint32_t));
                 *(uint32_t *)p->buffer = (uint32_t)val;
                 return 1;
             }
@@ -480,6 +491,7 @@ int OSSL_PARAM_set_size_t(const OSSL_PARAM *p, size_t val)
             }
             break;
         }
+    }
     return 0;
 }
 
