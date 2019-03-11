@@ -397,11 +397,11 @@ static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
 
     for (i = 0; params[i].key != NULL; i++) {
         if (strcmp(params[i].key, "openssl-version") == 0) {
-            *(void **)params[i].buffer = OPENSSL_VERSION_STR;
+            *(void **)params[i].data = OPENSSL_VERSION_STR;
             if (params[i].return_size)
                 *params[i].return_size = sizeof(OPENSSL_VERSION_STR);
         } else if (strcmp(params[i].key, "provider-name") == 0) {
-            *(void **)params[i].buffer = prov->name;
+            *(void **)params[i].data = prov->name;
             if (params[i].return_size)
                 *params[i].return_size = strlen(prov->name) + 1;
         }

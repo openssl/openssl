@@ -63,8 +63,8 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
             size_t buf_l;
 
             if (c_get_params(prov, counter_request)) {
-                const char *versionp = *(void **)counter_request[0].buffer;
-                const char *namep = *(void **)counter_request[1].buffer;
+                const char *versionp = *(void **)counter_request[0].data;
+                const char *namep = *(void **)counter_request[1].data;
                 sprintf(buf, "Hello OpenSSL %.20s, greetings from %s!",
                         versionp, namep);
             } else {
@@ -72,8 +72,8 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
             }
 
             *p->return_size = buf_l = strlen(buf) + 1;
-            if (p->buffer_size >= buf_l)
-                strncpy(p->buffer, buf, buf_l);
+            if (p->data_size >= buf_l)
+                strncpy(p->data, buf, buf_l);
             else
                 ok = 0;
         }

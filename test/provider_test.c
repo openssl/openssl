@@ -33,8 +33,8 @@ static int test_provider(const char *name)
     return
         TEST_ptr(prov = OSSL_PROVIDER_load(NULL, name))
         && TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
-        && TEST_ptr(greeting = greeting_request[0].buffer)
-        && TEST_size_t_gt(greeting_request[0].buffer_size, 0)
+        && TEST_ptr(greeting = greeting_request[0].data)
+        && TEST_size_t_gt(greeting_request[0].data_size, 0)
         && TEST_str_eq(greeting, expected_greeting)
         && TEST_true(OSSL_PROVIDER_unload(prov));
 }

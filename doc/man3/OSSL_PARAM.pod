@@ -11,9 +11,9 @@ OSSL_PARAM - a structure to pass or request object parameters
  typedef struct ossl_param_st OSSL_PARAM;
  struct ossl_param_st {
      const char *key;             /* the name of the parameter */
-     unsigned char data_type;     /* declare what kind of content is in buffer */
-     void *buffer;                /* value being passed in or out */
-     size_t buffer_size;          /* buffer size */
+     unsigned char data_type;     /* declare what kind of content is in data */
+     void *data;                  /* value being passed in or out */
+     size_t data_size;            /* data size */
      size_t *return_size;         /* OPTIONAL: address to content size */
  };
 
@@ -45,8 +45,8 @@ Request parameters of some object.
 The caller (the I<requestor>) sets up the C<OSSL_PARAM> array and
 calls some function (the I<responder>) that has intimate knowledge
 about the object, which can take the internal data of the object and
-copy (possibly convert) that to the buffers prepared by the
-I<requestor>.
+copy (possibly convert) that to the memory prepared by the
+I<requestor> and pointed at with the C<OSSL_PARAM> C<data>.
 
 =back
 
@@ -69,13 +69,13 @@ The C<data_type> is a value that describes the type and organization of
 the data.
 See L</Supported types> below for a description of the types.
 
-=item C<buffer>
+=item C<data>
 
-=item C<buffer_size>
+=item C<data_size>
 
-C<buffer> is a pointer to the memory where the parameter data is (when
+C<data> is a pointer to the memory where the parameter data is (when
 setting parameters) or shall (when requesting parameters) be stored,
-and C<buffer_size> is its size in bytes.
+and C<data_size> is its size in bytes.
 The organization of the data depends on the parameter type and flag.
 
 =item C<return_size>
@@ -83,9 +83,8 @@ The organization of the data depends on the parameter type and flag.
 When an array of C<OSSL_PARAM> is used to request data, the
 I<responder> must set this field to indicate the actual size of the
 parameter data.
-In case the C<buffer_size> is too small for the data, the I<responder>
-must still set this field to indicate the minimum buffer size
-required.
+In case the C<data_size> is too small for the data, the I<responder>
+must still set this field to indicate the minimum data size required.
 
 =back
 
@@ -139,7 +138,7 @@ Additionally, this flag can be added to any type:
 
 =item C<OSSL_PARAM_POINTER_FLAG>
 
-With this flag, C<buffer> doesn't point directly at the data, but at a
+With this flag, C<data> doesn't point directly at the data, but at a
 pointer that points at the data.
 
 This can be used to indicate that constant data is or will be passed,
@@ -147,10 +146,10 @@ and there is therefore no need to copy the data that is passed, just
 the pointer to it.
 
 If an C<OSSL_PARAM> with this flag set is used to set a parameter,
-C<buffer_size> must be set to the size of the data, not the size of
+C<data_size> must be set to the size of the data, not the size of
 the pointer to the data.
 
-If this C<OSSL_PARAM> is used in a parameter request, C<buffer_size>
+If this C<OSSL_PARAM> is used in a parameter request, C<data_size>
 is not relevant.
 However, the I<responder> will set C<*return_size> to the size of the
 data (again, not the size of the pointer to the data).
@@ -197,7 +196,7 @@ enough set of data, that call should succeed.
 =item *
 
 A I<responder> must never change the fields of an C<OSSL_PARAM>, it
-may only change the contents of the buffers that C<buffer> and
+may only change the contents of the memory that C<data> and
 C<return_size> point at.
 
 =item *
@@ -213,7 +212,7 @@ C<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
 
 =item *
 
-If a I<responder> finds that some buffers are too small for the
+If a I<responder> finds that some data sizes are too small for the
 requested data, it must set C<*return_size> for each such
 C<OSSL_PARAM> item to the required size, and eventually return an
 error.
@@ -273,10 +272,10 @@ could fill in the parameters like this:
 
     for (i = 0; params[i].key != NULL; i++) {
         if (strcmp(params[i].key, "foo") == 0) {
-            *(char **)params[i].buffer = "foo value";
+            *(char **)params[i].data = "foo value";
             *params[i].return_size = 10; /* size of "foo value" */
         } else if (strcmp(params[i].key, "bar") == 0) {
-            memcpy(params[1].buffer, "bar value", 10);
+            memcpy(params[1].data, "bar value", 10);
             *params[1].return_size = 10; /* size of "bar value" */
         }
         /* Ignore stuff we don't know */
