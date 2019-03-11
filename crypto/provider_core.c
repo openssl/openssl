@@ -236,15 +236,16 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
 }
 
 /*
- * Provider loader.
+ * Provider activation.
  *
- * "Loading" has a broad meaning here; for built in providers (in the library
- * or the application alike), the provider can already be considered to be
- * loaded, all that's needed is to initialize it.  However, for dynamically
- * loadable provider modules, we must first load that module.
+ * What "activation" means depends on the provider form; for built in
+ * providers (in the library or the application alike), the provider
+ * can already be considered to be loaded, all that's needed is to
+ * initialize it.  However, for dynamically loadable provider modules,
+ * we must first load that module.
  *
- * Built in modules are distinguished from dynamically loaded modules with an
- * already assigned init function.
+ * Built in modules are distinguished from dynamically loaded modules
+ * with an already assigned init function.
  */
 static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 
