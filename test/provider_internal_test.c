@@ -37,8 +37,8 @@ static int test_provider(OSSL_PROVIDER *prov)
     ret =
         TEST_true(ossl_provider_activate(prov))
         && TEST_true(ossl_provider_get_params(prov, greeting_request))
-        && TEST_ptr(greeting = greeting_request[0].buffer)
-        && TEST_size_t_gt(greeting_request[0].buffer_size, 0)
+        && TEST_ptr(greeting = greeting_request[0].data)
+        && TEST_size_t_gt(greeting_request[0].data_size, 0)
         && TEST_str_eq(greeting, expected_greeting);
 
     ossl_provider_free(prov);
