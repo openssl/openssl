@@ -7,6 +7,7 @@ OSSL_PARAM_utf8_ptr, OSSL_PARAM_octet_ptr, OSSL_PARAM_SIZED_TYPE,
 OSSL_PARAM_SIZED_BN, OSSL_PARAM_SIZED_utf8_string,
 OSSL_PARAM_SIZED_octet_string, OSSL_PARAM_SIZED_utf8_ptr,
 OSSL_PARAM_SIZED_octet_ptr, OSSL_PARAM_END, OSSL_PARAM_construct_TYPE,
+OSSL_PARAM_END,
 OSSL_PARAM_construct_BN, OSSL_PARAM_construct_utf8_string,
 OSSL_PARAM_construct_utf8_ptr, OSSL_PARAM_construct_octet_string,
 OSSL_PARAM_construct_octet_ptr, OSSL_PARAM_locate, OSSL_PARAM_get_TYPE,
@@ -19,22 +20,20 @@ OSSL_PARAM_set_octet_ptr
 
 =head1 SYNOPSIS
 
-=for comment generic
-
  #include <openssl/params.h>
 
- OSSL_PARAM_TYPE(key, address)
- OSSL_PARAM_utf8_string(key, address, size)
- OSSL_PARAM_octet_string(key, address, size)
- OSSL_PARAM_utf8_ptr(key, address, size)
- OSSL_PARAM_octet_ptr(key, address, size)
- OSSL_PARAM_SIZED_TYPE(key, address, return_size)
- OSSL_PARAM_SIZED_BN(key, address, size, return_size)
- OSSL_PARAM_SIZED_utf8_string(key, address, size, return_size)
- OSSL_PARAM_SIZED_octet_string(key, address, size, return_size)
- OSSL_PARAM_SIZED_utf8_ptr(key, address, size, return_size)
- OSSL_PARAM_SIZED_octet_ptr(key, address, size, return_size)
- OSSL_PARAM_END
+ #define OSSL_PARAM_TYPE(key, address)
+ #define OSSL_PARAM_utf8_string(key, address, size)
+ #define OSSL_PARAM_octet_string(key, address, size)
+ #define OSSL_PARAM_utf8_ptr(key, address, size)
+ #define OSSL_PARAM_octet_ptr(key, address, size)
+ #define OSSL_PARAM_SIZED_TYPE(key, address, return_size)
+ #define OSSL_PARAM_SIZED_BN(key, address, size, return_size)
+ #define OSSL_PARAM_SIZED_utf8_string(key, address, size, return_size)
+ #define OSSL_PARAM_SIZED_octet_string(key, address, size, return_size)
+ #define OSSL_PARAM_SIZED_utf8_ptr(key, address, size, return_size)
+ #define OSSL_PARAM_SIZED_octet_ptr(key, address, size, return_size)
+ #define OSSL_PARAM_END
 
  OSSL_PARAM OSSL_PARAM_construct_TYPE(const char *key, TYPE *buf, size_t *ret);
  OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
