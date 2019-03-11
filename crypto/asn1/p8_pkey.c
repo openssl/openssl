@@ -78,3 +78,11 @@ int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
         return 1;
     return 0;
 }
+
+int PKCS8_pkey_add1_attr_by_OBJ(PKCS8_PRIV_KEY_INFO *p8, const ASN1_OBJECT *obj, int type,
+                                const unsigned char *bytes, int len)
+{
+    if (X509at_add1_attr_by_OBJ(&p8->attributes, obj, type, bytes, len) != NULL)
+        return 1;
+    return 0;
+}
