@@ -53,9 +53,9 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
             static char *opensslv = NULL;
             static char *provname = NULL;
             static OSSL_PARAM counter_request[] = {
-                { "openssl-version", OSSL_PARAM_UTF8_STRING_PTR,
+                { "openssl-version", OSSL_PARAM_UTF8_PTR,
                   &opensslv, sizeof(&opensslv), NULL },
-                { "provider-name", OSSL_PARAM_UTF8_STRING_PTR,
+                { "provider-name", OSSL_PARAM_UTF8_PTR,
                   &provname, sizeof(&provname), NULL},
                 { NULL, 0, NULL, 0, NULL }
             };
