@@ -10,6 +10,9 @@
 #include "e_pkcs11.h"
 #include "e_pkcs11_err.c"
 
+#define OTYPE_CERT   1
+#define OTYPE_PUBLIC 2
+
 static int pkcs11_parse_uri(const char *path, char *token, char **value);
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path);
 static char pkcs11_hex_int(char nib1, char nib2);
@@ -329,6 +332,16 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     return 0;
 }
 
+static int pkcs11_get_type(char *type)
+{
+    if (strncmp(type, "cert", 4) == 0)
+        return OTYPE_CERT;
+    if (strncmp(type, "public", 6) == 0)
+        return OTYPE_PUBLIC;
+
+    return 0;
+}
+
 static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     const OSSL_STORE_LOADER *loader, const char *uri,
     const UI_METHOD *ui_method, void *ui_data)
@@ -337,6 +350,7 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     PKCS11_CTX *pkcs11_ctx;
     OSSL_STORE_LOADER_CTX *store_ctx = NULL;
     char *type = NULL, *object = NULL;
+    int objecttype;
 
     store_ctx = OSSL_STORE_LOADER_CTX_new();
 
@@ -344,29 +358,27 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     if (e == NULL)
         return NULL;
 
+    store_ctx->engine = e;
     uri += 7;
+
+    pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+    if (pkcs11_ctx == NULL)
+        return NULL;
 
     pkcs11_parse_uri(uri,"type=", &type);
     pkcs11_parse_uri(uri,"object=", &object);
 
-    if (object != NULL && type != NULL) {
-        pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-        if (pkcs11_ctx == NULL)
-            return NULL;
-        if (strncmp(type, "cert", 4) == 0 && !pkcs11_get_cert(
-            store_ctx, pkcs11_ctx, object))
-            return NULL;
-        if (strncmp(type, "public", 6) == 0 && !pkcs11_get_key(
-            store_ctx, pkcs11_ctx, object))
-            return NULL;
-    }
-
-    if (strncmp(uri, "list=all", 8) == 0) {
-        pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-        if (pkcs11_ctx == NULL)
-            return NULL;
-        if (!pkcs11_get_ids(store_ctx, pkcs11_ctx))
-            return NULL;
+    if (type != NULL) {
+        objecttype = pkcs11_get_type(type);
+        switch (objecttype) {
+        case OTYPE_CERT:
+            if (!pkcs11_get_cert(store_ctx, pkcs11_ctx, object))
+                return NULL;
+            break;
+        case OTYPE_PUBLIC:
+            if (!pkcs11_get_key(store_ctx, pkcs11_ctx, object))
+                return NULL;
+        }     
     }
 
     return store_ctx;
@@ -379,6 +391,8 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
     OSSL_STORE_INFO *ret = NULL;
     char *name;
     char *description;
+    ENGINE *e;
+    PKCS11_CTX *pkcs11_ctx;
 
     if (ctx->cert != NULL) {
         ctx->eof = 1;
@@ -390,13 +404,19 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
         return pkcs11_store_load_key(ctx, ui_method, ui_data);
     }
 
-    if (ctx->ids[store_idx].name[0] == '\0' || store_idx == MAX - 1) {
-        ctx->eof = 1;
-        return NULL;
-    }
+    e = ctx->engine;
 
-    name = OPENSSL_strdup(ctx->ids[store_idx].name);
-    description = OPENSSL_strdup(ctx->ids[store_idx].desc);
+    if (e == NULL)
+        return NULL;
+
+    pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+    if (pkcs11_ctx == NULL)
+        return NULL;
+    ctx->eof = pkcs11_get_ids(store_idx, pkcs11_ctx, &name, &description);
+
+    if (name == NULL)
+        return NULL;
+
     ret = OSSL_STORE_INFO_new_NAME(name);
     OSSL_STORE_INFO_set0_NAME_description(ret, description);
 
@@ -431,6 +451,7 @@ static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new(void)
     ctx->error = 0;
     ctx->eof = 0;
     ctx->cert = NULL;
+    ctx->engine = NULL;
     return ctx;
 }
 
