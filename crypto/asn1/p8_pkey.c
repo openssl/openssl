@@ -86,3 +86,10 @@ int PKCS8_pkey_add1_attr_by_OBJ(PKCS8_PRIV_KEY_INFO *p8, const ASN1_OBJECT *obj,
         return 1;
     return 0;
 }
+
+int PKCS8_pkey_add1_attr(PKCS8_PRIV_KEY_INFO *p8, X509_ATTRIBUTE *attr)
+{
+    if (X509at_add1_attr(&p8->attributes, attr) != NULL)
+        return 1;
+    return 0;
+}
