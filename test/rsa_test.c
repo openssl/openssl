@@ -42,6 +42,8 @@ int setup_tests(void)
                         BN_bin2bn(dmp1, sizeof(dmp1)-1, NULL),  \
                         BN_bin2bn(dmq1, sizeof(dmq1)-1, NULL),  \
                         BN_bin2bn(iqmp, sizeof(iqmp)-1, NULL)); \
+    if (c == NULL)                                              \
+        return 0;                                               \
     memcpy(c, ctext_ex, sizeof(ctext_ex) - 1);                  \
     return sizeof(ctext_ex) - 1;
 
