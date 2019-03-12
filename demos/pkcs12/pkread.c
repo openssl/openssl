@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     X509 *cert = NULL;
     STACK_OF(X509) *ca = NULL;
     PKCS12 *p12 = NULL;
-    char *name;
+    char *name = NULL;
     int i, ret = 1;
 
     if (argc != 4) {
