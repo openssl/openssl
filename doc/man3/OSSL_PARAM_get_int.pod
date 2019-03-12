@@ -36,20 +36,20 @@ OSSL_PARAM_reserve_buffer, OSSL_PARAM_return_buffer
 
  #define OSSL_PARAM_TYPE(name)
 
- int OSSL_PARAM_get_TYPE(OSSL_PARAM *p, const char *key, TYPE *val);
  int OSSL_PARAM_set_TYPE(OSSL_PARAM *p, const char *key, TYPE *val);
-
  int OSSL_PARAM_reserve_TYPE(OSSL_PARAM *p, const char *key TYPE *val);
  int OSSL_PARAM_reserve_bignum(OSSL_PARAM *p, const char *key,
                                void *buffer, size_t size);
  int OSSL_PARAM_reserve_buffer(OSSL_PARAM *p, const char *key,
                                void *buffer, size_t size);
 
+ int OSSL_PARAM_get_TYPE(OSSL_PARAM *p, const char *key, TYPE *val);
+ int OSSL_PARAM_get_buffer(OSSL_PARAM *p, const char *key,
+                           void **val, size_t *size);
+
  int OSSL_PARAM_return_TYPE(OSSL_PARAM *p, const char *key, TYPE val);
  int OSSL_PARAM_return_buffer(OSSL_PARAM *p, const char *key,
                               void *buff, size_t size);
- int OSSL_PARAM_return_bignum(OSSL_PARAM *p, const char *key,
-                              BIGNUM *bn);
 
  int OSSL_PARAM_retrieve_bignum(OSSL_PARAM *p, const char *key,
                                 BIGNUM **bn);
@@ -116,23 +116,27 @@ that B<OSSL_PARAM> is used to pass parameters between them:
      called_function(plist);
  }
 
-Within the calling function, I<input> parameters (those passed from the
-calling function to the called one) are passed by specifying
-the address of a variable of the same type.  The variable must remain in
-scope for lifetime of the parameter list.  For example:
+I<Input> parameters are entries in the B<OSSL_PARAM> list that are set
+in the calling function and used in the called function. Variable-sized
+items can be passed using just a pointer to the data.
+I<Output> parameters are entries in the B<OSSL_PARAM> list that have
+space "reserved" in the calling function, and the value is set in the
+called function.
+(For maximum portability across all platforms, output parameters must have
+have any storage space allocated in the calling routine.)
+Using a parameter as both input and output is undefined.
+
+To set an input parameter, use OSSL_PARAM_set_TYPE() and give address of a
+variable of the same type. The variable must remain in scope for lifetime
+of the parameter list.  For example:
 
  OSSL_PARAM_set_int(plist, "optional", &anint);
  OSSL_PARAM_set_pointer(&plist[1], NULL, &bufptr);
 
-For maximum portability across all platforms, values being returned through
-an B<OSSL_PARAM> list must be declared and have any storage space allocated
-in the calling routine.
-These I<output> parameters are marked by "reserving" space in the calling
-function for the called function to store a value. Fixed-size values
-can be given the address of a local variable; buffers and B<BIGNUM>'s
-must have a buffer and size for the called function to store the
-result.
-This is done using OSSL_PARAM_reserve_TYPE().
+To reserve space for an output parameter use OSSL_PARAM_reserve_TYPE().
+Fixed-size values should be given the address of a local variable;
+buffers and B<BIGNUM>'s are given a buffer and size for the called
+function to store the result.
 
  OSSL_PARAM_reserve_int(plist, "status", &status);
  OSSL_PARAM_reserve_bignum(plist, "prime", buff, sizeof(buff))
@@ -142,20 +146,19 @@ OSSL_PARAM_get_TYPE() to get a value of type B<TYPE> from the parameter
 pointer using B<p> and B<key> as described above.
 
 To set the value of an output parameter, the called function uses the
-OSSL_PARAM_set_TYPE() function.
-Again, no coercion is done, and it is an error if the types do not match.
+OSSL_PARAM_return_TYPE() function.
 
- OSSL_PARAM_set_int(plist, "status", status);
- OSSL_PARAM_set_bignum(plist, "prime", bn);
+ OSSL_PARAM_return_int(plist, "status", status);
+ OSSL_PARAM_return_bignum(plist, "prime", bn);
 
+No coercion is done, and it is an error if the types do not match.
 Variable-sized values will use the reserved buffer. If the value does
 not fit, it will indicate the size needed and return an error.
 
 In the calling function, fixed-size values can be obtained by using the
 variable specified in the "reserve" call.
-Buffers an be used by using the pointer and buffer given when reserved,
-and B<BIGNUM>'s can be obtained by using
-OSSL_PARAM_retrieve_bignum()
+Buffers and B<BIGNUM>'s can be obtained by using the relevant "retrieve"
+function.
 
 =head1 RETURN VALUES
 
@@ -165,7 +168,7 @@ All other functions return B<1> on success and B<0> on failure.
 
 =head1 BUGS
 
-Only non-negative BIGNUM's can be returned.
+Negative BIGNUM values cannot be returned.
 
 =head1 HISTORY
 

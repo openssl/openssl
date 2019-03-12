@@ -75,10 +75,9 @@ struct ossl_algorithm_st {
 struct ossl_param_st {
     const char *key;             /* the name of the parameter */
     unsigned int data_type;      /* declare what kind of content is in buffer */
-    void *buffer;                /* value being passed in or out */
-    size_t buffer_size;          /* buffer size */
-    size_t bn_size;              /* Size of converted BIGNUM */
-    size_t *return_size;         /* OPTIONAL: address to content size */
+    void *buffer;                /* value being passed */
+    size_t size;                 /* buffer size */
+    size_t used;                 /* amount used (if not implied by data_type) */
 };
 
 /* Currently supported OSSL_PARAM data types */
@@ -96,19 +95,19 @@ struct ossl_param_st {
 # define OSSL_PARAM_DOUBLE              0x08
 
 /*
+ * A pointer; interpretation is up to the sender/caller.
+ */
+# define OSSL_PARAM_POINTER             0x09
+
+/*
  * OSSL_PARAM_BIGNUM is an OpenSSL BIGNUM; stored in native-endian format.
  */
 # define OSSL_PARAM_BIGNUM              0x10
 
 /*
- * A pointer; interpretation is up to the sender/caller.
+ * A buffer of max fixed size.
  */
-# define OSSL_PARAM_POINTER             0x11
-
-/*
- * A printable string.  It is expected that it can be printed as it is.
- */
-# define OSSL_PARAM_UTF8_STRING         0x11
+# define OSSL_PARAM_BUFFER              0x11
 
 /*-
  * Provider entry point

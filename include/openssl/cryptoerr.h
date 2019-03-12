@@ -34,6 +34,7 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
 # define CRYPTO_F_FIPS_MODE_SET                           109
 # define CRYPTO_F_GET_AND_LOCK                            113
+# define CRYPTO_F_GET_FIXED                               130
 # define CRYPTO_F_GET_PROVIDER_STORE                      133
 # define CRYPTO_F_OPENSSL_ATEXIT                          114
 # define CRYPTO_F_OPENSSL_BUF2HEXSTR                      117
@@ -43,20 +44,23 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_LH_NEW                          126
 # define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    127
 # define CRYPTO_F_OPENSSL_SK_DUP                          128
-# define CRYPTO_F_OSSL_PARAM_GET_BIGNUM                   134
-# define CRYPTO_F_OSSL_PARAM_GET_DOUBLE                   135
-# define CRYPTO_F_OSSL_PARAM_GET_INT_COMMON               136
-# define CRYPTO_F_OSSL_PARAM_GET_POINTER                  137
+# define CRYPTO_F_OSSL_PARAM_GET_BIGNUM                   131
+# define CRYPTO_F_OSSL_PARAM_GET_BUFFER                   132
+# define CRYPTO_F_OSSL_PARAM_RETRIEVE_BIGNUM              134
+# define CRYPTO_F_OSSL_PARAM_RETURN_BIGNUM                135
+# define CRYPTO_F_OSSL_PARAM_RETURN_BUFFER                137
 # define CRYPTO_F_OSSL_PARAM_SET_BIGNUM                   138
-# define CRYPTO_F_OSSL_PARAM_SET_DOUBLE                   139
-# define CRYPTO_F_OSSL_PARAM_SET_INT_COMMON               140
-# define CRYPTO_F_OSSL_PARAM_SET_POINTER                  141
-# define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  130
-# define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               132
-# define CRYPTO_F_OSSL_PROVIDER_NEW                       131
+# define CRYPTO_F_OSSL_PARAM_SET_BUFFER                   141
+# define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  142
+# define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               143
+# define CRYPTO_F_OSSL_PROVIDER_NEW                       144
 # define CRYPTO_F_PKEY_HMAC_INIT                          123
 # define CRYPTO_F_PKEY_POLY1305_INIT                      124
 # define CRYPTO_F_PKEY_SIPHASH_INIT                       125
+# define CRYPTO_F_RESERVE_FIXED                           136
+# define CRYPTO_F_RESERVE_PTRSIZE                         139
+# define CRYPTO_F_RETURN_FIXED                            140
+# define CRYPTO_F_SET_FIXED                               148
 # define CRYPTO_F_SK_RESERVE                              129
 
 /*

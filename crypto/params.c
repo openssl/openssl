@@ -14,7 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/cryptoerr.h>
 
-OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
+OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
     for (; p->key != NULL; p++)
         if (strcmp(key, p->key) == 0)
@@ -22,7 +22,7 @@ OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
     return NULL;
 }
 
-static size_t OSSL_PARAM_get_width(int type)
+static size_t get_width(int type)
 {
     switch (type) {
     case OSSL_PARAM_INT:        return sizeof(int);
@@ -38,217 +38,332 @@ static size_t OSSL_PARAM_get_width(int type)
     return -1;
 }
 
-static int OSSL_PARAM_get_int_common(const OSSL_PARAM *p, const char *key,
-                                     void *val, unsigned long type)
+static int set_fixed(OSSL_PARAM *p, const char *key,
+                     void *val, unsigned long type)
 {
     size_t width;
 
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_INT_COMMON, CRYPTO_R_PARAM_NOT_FOUND);
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_SET_FIXED, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
     }
 
     /* Type safety. */
-    width = OSSL_PARAM_get_width(type);
-    if (p->data_type != type || p->buffer_size != width) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_INT_COMMON, CRYPTO_R_TYPE_MISMATCH);
+    width = get_width(type);
+    if (p->data_type != type || p->size != width) {
+        CRYPTOerr(CRYPTO_F_SET_FIXED, CRYPTO_R_TYPE_MISMATCH);
         return 0;
     }
 
-    memcpy(val, p->buffer, width);
+    p->buffer = val;
     return 1;
 }
 
-static int OSSL_PARAM_set_int_common(const OSSL_PARAM *p, const char *key,
-                                     const void *val, unsigned long type)
+static int reserve_fixed(OSSL_PARAM *p, const char *key,
+                         void *val, unsigned long type)
 {
     size_t width;
 
-
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_INT_COMMON, CRYPTO_R_PARAM_NOT_FOUND);
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_RESERVE_FIXED, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
     }
 
     /* Type safety. */
-    width = OSSL_PARAM_get_width(type);
-    if (p->return_size != NULL)
-        *p->return_size = width;
-    if (p->data_type != type || p->buffer_size != width) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_INT_COMMON, CRYPTO_R_TYPE_MISMATCH);
+    width = get_width(type);
+    if (p->data_type != type) {
+        CRYPTOerr(CRYPTO_F_RESERVE_FIXED, CRYPTO_R_TYPE_MISMATCH);
         return 0;
     }
 
-    memcpy(p->buffer, val, width);
+    p->buffer = val;
+    p->size = width;
     return 1;
 }
 
-#define PARAM_INT(name, type, PARAM) \
-    int OSSL_PARAM_get_##name(const OSSL_PARAM *p, const char *key, type *val) \
+static int reserve_ptrsize(OSSL_PARAM *p, const char *key,
+                           void *buffer, size_t bufsize)
+{
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_RESERVE_PTRSIZE, CRYPTO_R_PARAM_NOT_FOUND);
+        ERR_add_error_data(2, "param name=", key);
+        return 0;
+    }
+
+    /* Type safety. */
+    if (p->data_type != OSSL_PARAM_BIGNUM) {
+        CRYPTOerr(CRYPTO_F_RESERVE_PTRSIZE, CRYPTO_R_TYPE_MISMATCH);
+        return 0;
+    }
+
+    p->buffer = buffer;
+    p->size = bufsize;
+    return 1;
+}
+
+static int get_fixed(OSSL_PARAM *p, const char *key,
+                     void *val, unsigned long type)
+{
+    size_t width;
+
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_GET_FIXED, CRYPTO_R_PARAM_NOT_FOUND);
+        ERR_add_error_data(2, "param name=", key);
+        return 0;
+    }
+
+    /* Type safety. */
+    width = get_width(type);
+    if (p->data_type != type || p->size != width) {
+        CRYPTOerr(CRYPTO_F_GET_FIXED, CRYPTO_R_TYPE_MISMATCH);
+        return 0;
+    }
+
+    switch (type) {
+    case OSSL_PARAM_INT:
+        *(int *)val = *(int *)p->buffer;
+        break;
+    case OSSL_PARAM_UINT:
+        *(unsigned int *)val = *(unsigned int *)p->buffer;
+        break;
+    case OSSL_PARAM_INT64:
+        *(int64_t *)val = *(int64_t *)p->buffer;
+        break;
+    case OSSL_PARAM_UINT64:
+        *(uint64_t *)val = *(uint64_t *)p->buffer;
+        break;
+    case OSSL_PARAM_LONG:
+        *(long *)val = *(long *)p->buffer;
+        break;
+    case OSSL_PARAM_ULONG:
+        *(unsigned long *)val = *(unsigned long *)p->buffer;
+        break;
+    case OSSL_PARAM_SIZET:
+        *(size_t *)val = *(size_t *)p->buffer;
+        break;
+    case OSSL_PARAM_DOUBLE:
+        *(double *)val = *(double *)p->buffer;
+        break;
+    case OSSL_PARAM_POINTER:
+        memcpy(val, p->buffer, width);
+        break;
+    default:
+        CRYPTOerr(CRYPTO_F_GET_FIXED, CRYPTO_R_TYPE_MISMATCH);
+        return 0;
+    }
+
+    return 1;
+}
+
+static int return_fixed(OSSL_PARAM *p, const char *key,
+                         void *val, unsigned long type)
+{
+    size_t width;
+
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_RETURN_FIXED, CRYPTO_R_PARAM_NOT_FOUND);
+        ERR_add_error_data(2, "param name=", key);
+        return 0;
+    }
+
+    /* Type safety. */
+    width = get_width(type);
+    if (p->data_type != type || p->size != width) {
+        CRYPTOerr(CRYPTO_F_RETURN_FIXED, CRYPTO_R_TYPE_MISMATCH);
+        return 0;
+    }
+
+    switch (type) {
+    case OSSL_PARAM_INT:
+        *(int *)p->buffer = *(int *)val;
+        break;
+    case OSSL_PARAM_UINT:
+        *(unsigned int *)p->buffer = *(unsigned int *)val;
+        break;
+    case OSSL_PARAM_INT64:
+        *(int64_t *)p->buffer = *(int64_t *)val;
+        break;
+    case OSSL_PARAM_UINT64:
+        *(uint64_t *)p->buffer = *(uint64_t *)val;
+        break;
+    case OSSL_PARAM_LONG:
+        *(long *)p->buffer = *(long *)val;
+        break;
+    case OSSL_PARAM_ULONG:
+        *(unsigned long *)p->buffer = *(unsigned long *)val;
+        break;
+    case OSSL_PARAM_SIZET:
+        *(size_t *)p->buffer = *(size_t *)val;
+        break;
+    case OSSL_PARAM_DOUBLE:
+        *(double *)p->buffer = *(double *)val;
+        break;
+    case OSSL_PARAM_POINTER:
+        memcpy(p->buffer, val, width);
+        break;
+    default:
+        CRYPTOerr(CRYPTO_F_RETURN_FIXED, CRYPTO_R_TYPE_MISMATCH);
+        return 0;
+    }
+
+    return 1;
+}
+
+#define PARAM_FIXED(name, type, PARAM) \
+    int OSSL_PARAM_set_##name(OSSL_PARAM *p, const char *key, type *val) \
     { \
-        return OSSL_PARAM_get_int_common(p, key, val, PARAM); \
+        return set_fixed(p, key, val, PARAM); \
     } \
-    int OSSL_PARAM_set_##name(const OSSL_PARAM *p, const char *key, type val) \
+    int OSSL_PARAM_reserve_##name(OSSL_PARAM *p, const char *key, type *val) \
     { \
-        return OSSL_PARAM_set_int_common(p, key, &val, PARAM); \
+        return reserve_fixed(p, key, val, PARAM); \
+    } \
+    int OSSL_PARAM_get_##name(OSSL_PARAM *p, const char *key, type *val) \
+    { \
+        return get_fixed(p, key, val, PARAM); \
+    } \
+    int OSSL_PARAM_return_##name(OSSL_PARAM *p, const char *key, type val) \
+    { \
+        return return_fixed(p, key, &val, PARAM); \
     }
 
-PARAM_INT(int, int, OSSL_PARAM_INT)
-PARAM_INT(uint, unsigned int, OSSL_PARAM_UINT)
-PARAM_INT(int64, int64_t, OSSL_PARAM_INT64)
-PARAM_INT(uint64, uint64_t, OSSL_PARAM_UINT64)
-PARAM_INT(long, long int, OSSL_PARAM_LONG)
-PARAM_INT(ulong, unsigned long int, OSSL_PARAM_ULONG)
-PARAM_INT(size_t, size_t, OSSL_PARAM_SIZET)
+PARAM_FIXED(int, int, OSSL_PARAM_INT)
+PARAM_FIXED(uint, unsigned int, OSSL_PARAM_UINT)
+PARAM_FIXED(int64, int64_t, OSSL_PARAM_INT64)
+PARAM_FIXED(uint64, uint64_t, OSSL_PARAM_UINT64)
+PARAM_FIXED(long, long int, OSSL_PARAM_LONG)
+PARAM_FIXED(ulong, unsigned long, OSSL_PARAM_ULONG)
+PARAM_FIXED(size_t, size_t, OSSL_PARAM_SIZET)
+PARAM_FIXED(double, double, OSSL_PARAM_DOUBLE)
+PARAM_FIXED(pointer, void*, OSSL_PARAM_POINTER)
 
-/*
- * In the get/set double functions, "width" is always sizeof(double) but
- * having parallel construction with the integer functions above seems
- * worthwhile.
- */
-
-int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val)
+int OSSL_PARAM_set_bignum(OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
-    size_t width;
-    double *dp;
-
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_DOUBLE, CRYPTO_R_PARAM_NOT_FOUND);
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
     }
 
-    /* Type safety. */
-    width = OSSL_PARAM_get_width(OSSL_PARAM_DOUBLE);
-    if (p->data_type != OSSL_PARAM_DOUBLE || p->buffer_size != width) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_DOUBLE, CRYPTO_R_TYPE_MISMATCH);
+    if (p->data_type != OSSL_PARAM_BIGNUM) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BIGNUM, CRYPTO_R_TYPE_MISMATCH);
         return 0;
     }
 
-    dp = (double *)p->buffer;
-    *val = *dp;
+    p->buffer = *val;
     return 1;
 }
 
-int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
+int OSSL_PARAM_reserve_bignum(OSSL_PARAM *p, const char *key,
+                              void *buffer, size_t bufsize)
 {
-    size_t width;
-    double *dp;
-
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_DOUBLE, CRYPTO_R_PARAM_NOT_FOUND);
-        ERR_add_error_data(2, "param name=", key);
-        return 0;
-    }
-
-    /* Type safety. */
-    width = OSSL_PARAM_get_width(OSSL_PARAM_DOUBLE);
-    if (p->return_size != NULL)
-        *p->return_size = width;
-    if (p->data_type != OSSL_PARAM_DOUBLE || p->buffer_size != width) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_DOUBLE, CRYPTO_R_TYPE_MISMATCH);
-        return 0;
-    }
-    dp = (double *)p->buffer;
-    *dp = val;
-    return 1;
+    return reserve_ptrsize(p, key, buffer, bufsize);
 }
 
-/*
- * Same comment, but the width is always sizeof(void *)
- */
-int OSSL_PARAM_get_pointer(const OSSL_PARAM *p, const char *key, void **val)
+int OSSL_PARAM_get_bignum(OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
-    size_t width;
-
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_POINTER, CRYPTO_R_PARAM_NOT_FOUND);
-        ERR_add_error_data(2, "param name=", key);
-        return 0;
-    }
-
-    /* Type safety. */
-    width = OSSL_PARAM_get_width(OSSL_PARAM_POINTER);
-    if (p->data_type != OSSL_PARAM_POINTER || p->buffer_size != width) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_POINTER, CRYPTO_R_TYPE_MISMATCH);
-        return 0;
-    }
-
-    memcpy(val, p->buffer, width);
-    return 1;
-}
-
-int OSSL_PARAM_set_pointer(const OSSL_PARAM *p, const char *key, void *val)
-{
-    size_t width;
-
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_POINTER, CRYPTO_R_PARAM_NOT_FOUND);
-        ERR_add_error_data(2, "param name=", key);
-        return 0;
-    }
-
-    /* Type safety. */
-    width = OSSL_PARAM_get_width(OSSL_PARAM_POINTER);
-    if (p->return_size != NULL)
-        *p->return_size = width;
-    if (p->data_type != OSSL_PARAM_POINTER || p->buffer_size != width) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_POINTER, CRYPTO_R_TYPE_MISMATCH);
-        return 0;
-    }
-    memcpy(p->buffer, val, width);
-    return 1;
-}
-
-
-BIGNUM *OSSL_PARAM_get_bignum(const OSSL_PARAM *p, const char *key)
-{
-    BIGNUM *b = NULL;
-
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
-        goto end;
+        return 0;
     }
 
     /* Type safety. */
     if (p->data_type != OSSL_PARAM_BIGNUM) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_BIGNUM, CRYPTO_R_TYPE_MISMATCH);
-        goto end;
+        return 0;
     }
 
-    b = BN_native2bn(p->buffer, (int)p->bn_size, NULL);
-end:
-    return b;
+    *val = *(BIGNUM **)p->buffer;
+    return 1;
 }
 
-int OSSL_PARAM_set_bignum(OSSL_PARAM *p, const char *key, const BIGNUM *val)
+int OSSL_PARAM_return_bignum(OSSL_PARAM *p, const char *key, BIGNUM *val)
 {
-    const size_t bytes = (size_t)BN_num_bytes(val);
+    size_t bytes = (size_t)BN_num_bytes(val);
     int r;
 
-
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_RETURN_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
     }
 
     /* Type safety. */
     if (p->data_type != OSSL_PARAM_BIGNUM
-            || BN_is_negative(val)
-            || p->buffer_size < bytes) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BIGNUM, CRYPTO_R_TYPE_MISMATCH);
+            || BN_is_negative(val)) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_RETURN_BIGNUM, CRYPTO_R_TYPE_MISMATCH);
         return 0;
     }
 
-    if (p->buffer_size < bytes
+    if (p->size < bytes
             || (r = BN_bn2nativepad(val, p->buffer, bytes)) < 0)
         return 0;
-    p->bn_size = r;
-    if (p->return_size != NULL)
-        *p->return_size = r;
+    p->used = r;
+    return 1;
+}
+
+int OSSL_PARAM_retrieve_bignum(OSSL_PARAM *p, const char *key, BIGNUM **val)
+{
+    BIGNUM *b = NULL;
+
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_RETRIEVE_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
+        ERR_add_error_data(2, "param name=", key);
+        return 0;
+    }
+
+    b = BN_native2bn(p->buffer, (int)p->used, NULL);
+    if (b == NULL)
+        /* BN conversion should have set the error code. */
+        return 0;
+
+    *val = b;
+    return 1;
+}
+
+int OSSL_PARAM_set_buffer(OSSL_PARAM *p, const char *key,
+                          void *buffer, size_t buffsize)
+{
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BUFFER, CRYPTO_R_PARAM_NOT_FOUND);
+        ERR_add_error_data(2, "param name=", key);
+        return 0;
+    }
+
+    p->buffer = buffer;
+    p->size = buffsize;
+    return 1;
+}
+
+int OSSL_PARAM_reserve_buffer(OSSL_PARAM *p, const char *key,
+                              void *buffer, size_t bufsize)
+{
+    return reserve_ptrsize(p, key, buffer, bufsize);
+}
+
+int OSSL_PARAM_get_buffer(OSSL_PARAM *p, const char *key,
+                          void **buffer, size_t *buffsize)
+{
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_BUFFER, CRYPTO_R_PARAM_NOT_FOUND);
+        ERR_add_error_data(2, "param name=", key);
+        return 0;
+    }
+    *buffer = p->buffer;
+    *buffsize = p->size;
+    return 1;
+}
+
+int OSSL_PARAM_return_buffer(OSSL_PARAM *p, const char *key,
+                             void *buffer, size_t bufsize)
+{
+    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_RETURN_BUFFER, CRYPTO_R_PARAM_NOT_FOUND);
+        ERR_add_error_data(2, "param name=", key);
+        return 0;
+    }
     return 1;
 }
