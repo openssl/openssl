@@ -261,7 +261,7 @@ int pkcs11_get_slot(PKCS11_CTX *ctx)
     CK_RV rv;
     CK_ULONG slotCount;
     CK_SLOT_ID slotId;
-    CK_SLOT_ID_PTR slotList;
+    CK_SLOT_ID_PTR slotList = NULL;
     unsigned int i;
 
     rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, NULL, &slotCount);
@@ -295,7 +295,8 @@ int pkcs11_get_slot(PKCS11_CTX *ctx)
 
     slotId = slotList[0]; /* Default value if slot not set*/
     for (i = 1; i < slotCount; i++) {
-        if (ctx->slotid == slotList[i]) slotId = slotList[i];
+        if (ctx->slotid == slotList[i])
+            slotId = slotList[i];
     }
 
     ctx->slotid = slotId;
@@ -340,7 +341,7 @@ int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType)
             PKCS11err(PKCS11_F_PKCS11_LOGIN, PKCS11_R_LOGIN_FAILED);
             goto err;
         }
-    return 1;
+        return 1;
     }
  err:
     return 0;
@@ -354,12 +355,9 @@ static int pkcs11_logout(CK_SESSION_HANDLE session)
     if (rv != CKR_USER_NOT_LOGGED_IN && rv != CKR_OK) {
         PKCS11_trace("C_Logout failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_LOGOUT, PKCS11_R_LOGOUT_FAILED);
-        goto err;
+        return 0;
     }
     return 1;
-
- err:
-    return 0;
 }
 
 static void pkcs11_end_session(CK_SESSION_HANDLE session)
@@ -464,15 +462,15 @@ EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
     }
-    if  (rsa_attributes[0].ulValueLen == 0 ||
-         rsa_attributes[1].ulValueLen == 0)
+    if  (rsa_attributes[0].ulValueLen == 0
+            || rsa_attributes[1].ulValueLen == 0)
         goto err;
 
     rsa_attributes[0].pValue = OPENSSL_malloc(rsa_attributes[0].ulValueLen);
     rsa_attributes[1].pValue = OPENSSL_malloc(rsa_attributes[1].ulValueLen);
 
-    if (rsa_attributes[0].pValue == NULL ||
-        rsa_attributes[1].pValue == NULL) {
+    if (rsa_attributes[0].pValue == NULL
+           || rsa_attributes[1].pValue == NULL) {
         OPENSSL_free(rsa_attributes[0].pValue);
         OPENSSL_free(rsa_attributes[1].pValue);
         goto err;
@@ -585,7 +583,7 @@ int pkcs11_get_ids(int store_idx, PKCS11_CTX *pkcs11_ctx,
     }
 
     strncpy(buf_name, template[1].pValue, template[1].ulValueLen < 255
-            ? template[1].ulValueLen : 255);
+            ? template[1].ulValueLen + 1 : 255);
 
     strcpy(buf_desc, "ID: ");
     strncat(buf_desc, template[2].pValue, template[2].ulValueLen < 255

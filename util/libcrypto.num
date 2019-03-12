@@ -4655,7 +4655,12 @@ OSSL_trace_set_callback                 4610	3_0_0	EXIST::FUNCTION:
 OSSL_trace_enabled                      4611	3_0_0	EXIST::FUNCTION:
 OSSL_trace_begin                        4612	3_0_0	EXIST::FUNCTION:
 OSSL_trace_end                          4613	3_0_0	EXIST::FUNCTION:
-RSA_encode_pkcs1                        4614	3_0_0	EXIST::FUNCTION:RSA
-OSSL_STORE_INFO_new_PUBKEY              4615	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_INFO_get0_PUBKEY             4616	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_INFO_get1_PUBKEY             4617	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_load                      4614	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_unload                    4615	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_add_builtin               4616	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_get_param_types           4617	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_get_params                4618	3_0_0	EXIST::FUNCTION:
+RSA_encode_pkcs1                        4619	3_0_0	EXIST::FUNCTION:RSA
+OSSL_STORE_INFO_new_PUBKEY              4620	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_INFO_get0_PUBKEY             4621	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_INFO_get1_PUBKEY             4622	3_0_0	EXIST::FUNCTION:
