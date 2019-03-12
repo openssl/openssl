@@ -53,16 +53,16 @@ int main(int argc, char **argv)
     STACK_OF(X509) *ca = NULL;
     PKCS12 *p12 = NULL;
     char *name = NULL;
-    int i, ret = 1;
+    int i, ret = EXIT_FAILURE;
 
     if (argc != 4) {
         fprintf(stderr, "Usage: pkread p12file password opfile\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if ((fp = fopen(argv[1], "rb")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     p12 = d2i_PKCS12_fp(fp, NULL);
     fclose(fp);
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
     }
     fclose(fp);
 
-    ret = 0;
+    ret = EXIT_SUCCESS;
 
  err:
     OPENSSL_free(name);
