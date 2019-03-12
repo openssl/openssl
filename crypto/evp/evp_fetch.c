@@ -154,8 +154,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     void *method = NULL;
 
     if (nid != NID_undef
-        && ossl_method_store_cache_get(NULL, nid, properties,
-                                       (void **)&method)) {
+        && ossl_method_store_cache_get(NULL, nid, properties, &method)) {
         if (!upref_method(method))
             method = NULL;
     } else {
