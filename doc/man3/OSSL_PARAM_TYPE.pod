@@ -247,7 +247,7 @@ All other functions return B<1> on success and B<0> on failure.
 
 Automatic type coercion takes places between the various sizes of types using
 the C conversion rules.
-Integral types  will be widened, sign extended and narrowed as required.
+Integral types will be widened, sign extended and narrowed as required.
 Unsigned and signed integer types will be automatically converted.
 During widening, signed values will be sign extended and unsigned values
 zero extended.
