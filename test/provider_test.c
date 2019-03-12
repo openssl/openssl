@@ -8,16 +8,16 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 #include <openssl/provider.h>
 #include "testutil.h"
 
 extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
-static size_t buf_l = 0;
 static OSSL_PARAM greeting_request[] = {
-    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf), &buf_l },
-    { NULL, 0, NULL, 0, NULL }
+    { "greeting", OSSL_PARAM_BUFFER, buf, sizeof(buf) },
+    { NULL }
 };
 
 static int test_provider(const char *name)
@@ -34,7 +34,7 @@ static int test_provider(const char *name)
         TEST_ptr(prov = OSSL_PROVIDER_load(NULL, name))
         && TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
         && TEST_ptr(greeting = greeting_request[0].buffer)
-        && TEST_size_t_gt(greeting_request[0].buffer_size, 0)
+        && TEST_size_t_gt(greeting_request[0].used, 0)
         && TEST_str_eq(greeting, expected_greeting)
         && TEST_true(OSSL_PROVIDER_unload(prov));
 }

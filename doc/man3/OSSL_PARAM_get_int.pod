@@ -85,7 +85,7 @@ for optional parameters, or for passing values when the array has been
 initialized with fixed positions:
 
  OSSL_PARAM plist[] = {
-     OSSL_PARAM_int("optional"),
+     OSSL_PARAM_int("required"),
      OSSL_PARAM_pointer("ptr"),
      OSSL_PARAM_bignum("prime"),
      OSSL_PARAM_int("status"),
@@ -130,7 +130,7 @@ To set an input parameter, use OSSL_PARAM_set_TYPE() and give address of a
 variable of the same type. The variable must remain in scope for lifetime
 of the parameter list.  For example:
 
- OSSL_PARAM_set_int(plist, "optional", &anint);
+ OSSL_PARAM_set_int(plist, "required", &anint);
  OSSL_PARAM_set_pointer(&plist[1], NULL, &bufptr);
 
 To reserve space for an output parameter use OSSL_PARAM_reserve_TYPE().

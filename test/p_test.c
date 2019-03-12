@@ -34,7 +34,7 @@ static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Tell the core what params we provide and what type they are */
 static const OSSL_ITEM p_param_types[] = {
-    { OSSL_PARAM_UTF8_STRING, "greeting" },
+    { OSSL_PARAM_POINTER, "greeting" },
     { 0, NULL }
 };
 
@@ -43,9 +43,9 @@ static const OSSL_ITEM *p_get_param_types(const OSSL_PROVIDER *_)
     return p_param_types;
 }
 
-static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int p_get_params(OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p = params;
+    OSSL_PARAM *p = params;
     int ok = 1;
 
     for (; ok && p->key != NULL; p++) {
@@ -53,11 +53,11 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
             static char *opensslv = NULL;
             static char *provname = NULL;
             static OSSL_PARAM counter_request[] = {
-                { "openssl-version", OSSL_PARAM_UTF8_STRING_PTR,
-                  &opensslv, sizeof(&opensslv), NULL },
-                { "provider-name", OSSL_PARAM_UTF8_STRING_PTR,
-                  &provname, sizeof(&provname), NULL},
-                { NULL, 0, NULL, 0, NULL }
+                { "openssl-version", OSSL_PARAM_BUFFER,
+                  &opensslv, sizeof(&opensslv) },
+                { "provider-name", OSSL_PARAM_BUFFER,
+                  &provname, sizeof(&provname) },
+                { NULL }
             };
             char buf[256];
             size_t buf_l;
@@ -71,8 +71,8 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
                 sprintf(buf, "Howdy stranger...");
             }
 
-            *p->return_size = buf_l = strlen(buf) + 1;
-            if (p->buffer_size >= buf_l)
+            p->used = buf_l = strlen(buf) + 1;
+            if (p->size >= buf_l)
                 strncpy(p->buffer, buf, buf_l);
             else
                 ok = 0;

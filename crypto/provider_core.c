@@ -381,8 +381,8 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov,
  * never knows.
  */
 static const OSSL_ITEM param_types[] = {
-    { OSSL_PARAM_UTF8_STRING_PTR, "openssl-version" },
-    { OSSL_PARAM_UTF8_STRING_PTR, "provider-name" },
+    { OSSL_PARAM_POINTER, "openssl-version" },
+    { OSSL_PARAM_POINTER, "provider-name" },
     { 0, NULL }
 };
 
@@ -391,19 +391,15 @@ static const OSSL_ITEM *core_get_param_types(const OSSL_PROVIDER *prov)
     return param_types;
 }
 
-static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
+static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
-    int i;
-
-    for (i = 0; params[i].key != NULL; i++) {
-        if (strcmp(params[i].key, "openssl-version") == 0) {
-            *(void **)params[i].buffer = OPENSSL_VERSION_STR;
-            if (params[i].return_size)
-                *params[i].return_size = sizeof(OPENSSL_VERSION_STR);
-        } else if (strcmp(params[i].key, "provider-name") == 0) {
-            *(void **)params[i].buffer = prov->name;
-            if (params[i].return_size)
-                *params[i].return_size = strlen(prov->name) + 1;
+    for (; params->key != NULL; params++) {
+        if (strcmp(params->key, "openssl-version") == 0) {
+            *(void **)params->buffer = OPENSSL_VERSION_STR;
+            params->used = sizeof(OPENSSL_VERSION_STR);
+        } else if (strcmp(params->key, "provider-name") == 0) {
+            *(void **)params->buffer = prov->name;
+            params->used = strlen(prov->name) + 1;
         }
     }
 

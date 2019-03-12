@@ -16,6 +16,10 @@
 
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
+    /* Deliberately undocumented trick we use below. */
+    if (key == NULL)
+        return p;
+
     for (; p->key != NULL; p++)
         if (strcmp(key, p->key) == 0)
             return (OSSL_PARAM *)p;
@@ -43,7 +47,7 @@ static int set_fixed(OSSL_PARAM *p, const char *key,
 {
     size_t width;
 
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_SET_FIXED, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -65,7 +69,7 @@ static int reserve_fixed(OSSL_PARAM *p, const char *key,
 {
     size_t width;
 
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_RESERVE_FIXED, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -86,7 +90,7 @@ static int reserve_fixed(OSSL_PARAM *p, const char *key,
 static int reserve_ptrsize(OSSL_PARAM *p, const char *key,
                            void *buffer, size_t bufsize)
 {
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_RESERVE_PTRSIZE, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -108,7 +112,7 @@ static int get_fixed(OSSL_PARAM *p, const char *key,
 {
     size_t width;
 
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_GET_FIXED, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -162,7 +166,7 @@ static int return_fixed(OSSL_PARAM *p, const char *key,
 {
     size_t width;
 
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_RETURN_FIXED, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -241,7 +245,7 @@ PARAM_FIXED(pointer, void*, OSSL_PARAM_POINTER)
 
 int OSSL_PARAM_set_bignum(OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -264,7 +268,7 @@ int OSSL_PARAM_reserve_bignum(OSSL_PARAM *p, const char *key,
 
 int OSSL_PARAM_get_bignum(OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -285,7 +289,7 @@ int OSSL_PARAM_return_bignum(OSSL_PARAM *p, const char *key, BIGNUM *val)
     size_t bytes = (size_t)BN_num_bytes(val);
     int r;
 
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_RETURN_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -314,7 +318,7 @@ int OSSL_PARAM_retrieve_bignum(OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
     BIGNUM *b = NULL;
 
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_RETRIEVE_BIGNUM, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -332,7 +336,7 @@ int OSSL_PARAM_retrieve_bignum(OSSL_PARAM *p, const char *key, BIGNUM **val)
 int OSSL_PARAM_set_buffer(OSSL_PARAM *p, const char *key,
                           void *buffer, size_t buffsize)
 {
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BUFFER, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -352,7 +356,7 @@ int OSSL_PARAM_reserve_buffer(OSSL_PARAM *p, const char *key,
 int OSSL_PARAM_get_buffer(OSSL_PARAM *p, const char *key,
                           void **buffer, size_t *buffsize)
 {
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_BUFFER, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
@@ -365,7 +369,7 @@ int OSSL_PARAM_get_buffer(OSSL_PARAM *p, const char *key,
 int OSSL_PARAM_return_buffer(OSSL_PARAM *p, const char *key,
                              void *buffer, size_t bufsize)
 {
-    if (key != NULL && (p = OSSL_PARAM_locate(p, key)) == NULL) {
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_RETURN_BUFFER, CRYPTO_R_PARAM_NOT_FOUND);
         ERR_add_error_data(2, "param name=", key);
         return 0;
