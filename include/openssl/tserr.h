@@ -11,6 +11,10 @@
 #ifndef HEADER_TSERR_H
 # define HEADER_TSERR_H
 
+# ifndef HEADER_SYMHACKS_H
+#  include <openssl/symhacks.h>
+# endif
+
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_TS

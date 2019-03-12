@@ -18,6 +18,8 @@ extern "C" {
 
 # include <openssl/e_os2.h>
 
+typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
+
 # ifdef NO_ASN1_TYPEDEFS
 #  define ASN1_INTEGER            ASN1_STRING
 #  define ASN1_ENUMERATED         ASN1_STRING

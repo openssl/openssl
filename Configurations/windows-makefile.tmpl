@@ -148,20 +148,33 @@ OPENSSLDIR_dev={- #
 OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           file_name_is_absolute($libdir) ? "" : $libdir -}
-ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
-                  our $enginesdir = catdir($prefix,$libdir,"engines-$sover_dirname");
-                  our ($enginesdir_dev, $enginesdir_dir, $enginesdir_file) =
-                      splitpath($enginesdir, 1);
-                  $enginesdir_dev -}
+MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
+                  our $modulesprefix = catdir($prefix,$libdir);
+                  our ($modulesprefix_dev, $modulesprefix_dir,
+                       $modulesprefix_file) =
+                      splitpath($modulesprefix, 1);
+                  our $modulesdir_dev = $modulesprefix_dev;
+                  our $modulesdir_dir =
+                      catdir($modulesprefix_dir, "ossl-modules");
+                  our $modulesdir = catpath($modulesdir_dev, $modulesdir_dir);
+                  our $enginesdir_dev = $modulesprefix_dev;
+                  out $enginesdir_dir =
+                      catdir($modulesprefix_dir, "engines-$sover_dirname");
+                  our $enginesdir = catpath($enginesdir_dev, $enginesdir_dir);
+                  $modulesdir_dev -}
+MODULESDIR_dir={- canonpath($modulesdir_dir) -}
+ENGINESDIR_dev={- $enginesdir_dev -}
 ENGINESDIR_dir={- canonpath($enginesdir_dir) -}
 !IF "$(DESTDIR)" != ""
 INSTALLTOP=$(DESTDIR)$(INSTALLTOP_dir)
 OPENSSLDIR=$(DESTDIR)$(OPENSSLDIR_dir)
 ENGINESDIR=$(DESTDIR)$(ENGINESDIR_dir)
+MODULESDIR=$(DESTDIR)$(MODULESDIR_dir)
 !ELSE
 INSTALLTOP=$(INSTALLTOP_dev)$(INSTALLTOP_dir)
 OPENSSLDIR=$(OPENSSLDIR_dev)$(OPENSSLDIR_dir)
 ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
+MODULESDIR=$(MODULESDIR_dev)$(MODULESDIR_dir)
 !ENDIF
 
 # $(libdir) is chosen to be compatible with the GNU coding standards
@@ -255,7 +268,8 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $lib_cppflags,
                           (map { '-D'.quotify1($_) }
                                "OPENSSLDIR=\"$openssldir\"",
-                               "ENGINESDIR=\"$enginesdir\""),
+                               "ENGINESDIR=\"$enginesdir\"",
+                               "MODULESDIR=\"$modulesdir\""),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
                         $target{shared_cflag} || (),
