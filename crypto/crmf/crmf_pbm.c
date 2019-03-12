@@ -55,7 +55,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
         CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_FAILURE_OBTAINING_RANDOM);
         goto err;
     }
-    if (!(ASN1_OCTET_STRING_set(pbm->salt, salt, (int)slen)))
+    if (!ASN1_OCTET_STRING_set(pbm->salt, salt, (int)slen))
         goto err;
 
     /*
@@ -158,7 +158,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     }
 
     /* compute the basekey of the salted secret */
-    if (!(EVP_DigestInit_ex(ctx, m, NULL)))
+    if (!EVP_DigestInit_ex(ctx, m, NULL))
         goto err;
     /* first the secret */
     if (!EVP_DigestUpdate(ctx, sec, seclen))
@@ -166,7 +166,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     /* then the salt */
     if (!EVP_DigestUpdate(ctx, pbmp->salt->data, pbmp->salt->length))
         goto err;
-    if (!(EVP_DigestFinal_ex(ctx, basekey, &bklen)))
+    if (!EVP_DigestFinal_ex(ctx, basekey, &bklen))
         goto err;
     if (!ASN1_INTEGER_get_int64(&iterations, pbmp->iterationCount)
             || iterations < 100 /* min from RFC */
@@ -177,11 +177,11 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
 
     /* the first iteration was already done above */
     while (--iterations > 0) {
-        if (!(EVP_DigestInit_ex(ctx, m, NULL)))
+        if (!EVP_DigestInit_ex(ctx, m, NULL))
             goto err;
         if (!EVP_DigestUpdate(ctx, basekey, bklen))
             goto err;
-        if (!(EVP_DigestFinal_ex(ctx, basekey, &bklen)))
+        if (!EVP_DigestFinal_ex(ctx, basekey, &bklen))
             goto err;
     }
 
