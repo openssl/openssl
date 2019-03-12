@@ -86,7 +86,6 @@ int PKCS8_pkey_add1_attr_by_OBJ(PKCS8_PRIV_KEY_INFO *p8, const ASN1_OBJECT *obj,
         return 1;
     return 0;
 }
-<<<<<<< HEAD
 
 int PKCS8_pkey_add1_attr(PKCS8_PRIV_KEY_INFO *p8, X509_ATTRIBUTE *attr)
 {
@@ -94,5 +93,3 @@ int PKCS8_pkey_add1_attr(PKCS8_PRIV_KEY_INFO *p8, X509_ATTRIBUTE *attr)
         return 1;
     return 0;
 }
-=======
->>>>>>> Function PKCS8_pkey_add1_attr_by_OBJ is similar to PKCS8_pkey_add1_attr_by_NID
