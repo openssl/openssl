@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<!--
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+https://www.openssl.org/source/license.html
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="https://www.openssl.org"
+           xmlns="https://www.openssl.org">
+  <xs:element name="parameters">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="parameter" type="parameterType"
+                    maxOccurs="unbounded"/>
+      </xs:all>
+      <xs:attribute name="algorithm" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="parameterType">
+    <xs:all>
+      <xs:element name="name" type="xs:string"/>
+      <xs:element name="datatype">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="integer"/>
+            <xs:enumeration value="unsigned integer"/>
+            <xs:enumeration value="real"/>
+            <xs:enumeration value="utf8 string"/>
+            <xs:enumeration value="octet string"/>
+            <xs:enumeration value="utf8 pointer"/>
+            <xs:enumeration value="octet pointer"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="datasize" type="xs:integer" />
+      <xs:element name="unit" default="bytes">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="bits"/>
+            <xs:enumeration value="bytes"/>
+            <xs:enumeration value="byte"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+</xs:schema>
