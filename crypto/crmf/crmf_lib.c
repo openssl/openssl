@@ -137,7 +137,7 @@ int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
     if (pi->pubInfos == NULL)
         goto oom;
 
-    if (!(sk_OSSL_CRMF_SINGLEPUBINFO_push(pi->pubInfos, spi)))
+    if (!sk_OSSL_CRMF_SINGLEPUBINFO_push(pi->pubInfos, spi))
         goto oom;
     return 1;
 
@@ -488,13 +488,13 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
     case OSSL_CRMF_POPO_KEYENC:
         if ((pp->value.keyEncipherment = OSSL_CRMF_POPOPRIVKEY_new()) == NULL)
             goto oom;
+        tag = ASN1_INTEGER_new();
         pp->value.keyEncipherment->type =
             OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE;
-        tag = ASN1_INTEGER_new();
+        pp->value.keyEncipherment->value.subsequentMessage = tag;
         if (tag == NULL
                 || !ASN1_INTEGER_set(tag, OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT))
             goto oom;
-        pp->value.keyEncipherment->value.subsequentMessage = tag;
         break;
 
     default:
