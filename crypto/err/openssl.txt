@@ -2158,6 +2158,7 @@ CRMF_R_UNSUPPORTED_POPO_METHOD:116:unsupported popo method
 CRMF_R_UNSUPPORTED_POPO_NOT_ACCEPTED:117:unsupported popo not accepted
 CRYPTO_R_FIPS_MODE_NOT_SUPPORTED:101:fips mode not supported
 CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
+CRYPTO_R_NO_ROOM:107:not enough room for result
 CRYPTO_R_ODD_NUMBER_OF_DIGITS:103:odd number of digits
 CRYPTO_R_PARAM_NOT_FOUND:105:param not found
 CRYPTO_R_PROVIDER_ALREADY_EXISTS:104:provider already exists

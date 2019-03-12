@@ -68,6 +68,7 @@ int ERR_load_CRYPTO_strings(void);
  */
 # define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
 # define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
+# define CRYPTO_R_NO_ROOM                                 107
 # define CRYPTO_R_ODD_NUMBER_OF_DIGITS                    103
 # define CRYPTO_R_PARAM_NOT_FOUND                         105
 # define CRYPTO_R_PROVIDER_ALREADY_EXISTS                 104

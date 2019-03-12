@@ -298,9 +298,14 @@ int OSSL_PARAM_return_bignum(OSSL_PARAM *p, const char *key, BIGNUM *val)
         return 0;
     }
 
+    /* Guess/assume how much space we need. */
+    p->used = bytes;
     if (p->size < bytes
-            || (r = BN_bn2nativepad(val, p->buffer, bytes)) < 0)
+            || (r = BN_bn2nativepad(val, p->buffer, bytes)) < 0) {
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_RETURN_BIGNUM, CRYPTO_R_NO_ROOM);
         return 0;
+    }
+
     p->used = r;
     return 1;
 }

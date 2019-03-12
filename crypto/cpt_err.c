@@ -85,6 +85,7 @@ static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
     "fips mode not supported"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ILLEGAL_HEX_DIGIT),
     "illegal hex digit"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_NO_ROOM), "no room"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ODD_NUMBER_OF_DIGITS),
     "odd number of digits"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_PARAM_NOT_FOUND), "param not found"},
