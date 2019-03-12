@@ -503,3 +503,9 @@ ASYNC_STATUS_EAGAIN                     define
 ASYNC_STATUS_OK                         define
 ASYNC_STATUS_ERR                        define
 ASYNC_STATUS_UNSUPPORTED                define
+OSSL_TRACE_BEGIN                        define
+OSSL_TRACE_END                          define
+OSSL_TRACE_CANCEL                       define
+OSSL_TRACE1                             define
+OSSL_TRACE2                             define
+OSSL_TRACE9                             define
