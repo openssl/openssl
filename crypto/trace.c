@@ -65,7 +65,7 @@ static int trace_write(BIO *channel,
                        const char *buf, size_t num, size_t *written)
 {
     struct trace_data_st *ctx = BIO_get_data(channel);
-    size_t cnt = ctx->callback(buf, num, ctx->category, OSSL_TRACE_CTRL_DURING,
+    size_t cnt = ctx->callback(buf, num, ctx->category, OSSL_TRACE_CTRL_WRITE,
                                ctx->data);
 
     *written = cnt;

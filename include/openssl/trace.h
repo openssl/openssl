@@ -95,7 +95,7 @@ typedef size_t (*OSSL_trace_cb)(const char *buffer, size_t count,
  * Possible |cmd| numbers.
  */
 # define OSSL_TRACE_CTRL_BEGIN  0
-# define OSSL_TRACE_CTRL_DURING 1
+# define OSSL_TRACE_CTRL_WRITE  1
 # define OSSL_TRACE_CTRL_END    2
 
 /*
