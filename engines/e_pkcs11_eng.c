@@ -32,7 +32,6 @@ static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
 static const char *engine_name = "A minimal PKCS#11 engine only for sign";
 static int pkcs11_idx = -1;
-static int store_idx = 0;
 
 /* store stuff */
 static const char pkcs11_scheme[] = "pkcs11";
@@ -358,7 +357,6 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     if (e == NULL)
         return NULL;
 
-    store_ctx->engine = e;
     uri += 7;
 
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
@@ -378,7 +376,10 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
         case OTYPE_PUBLIC:
             if (!pkcs11_get_key(store_ctx, pkcs11_ctx, object))
                 return NULL;
-        }     
+        }
+    } else {
+        if (!pkcs11_start_search(store_ctx, pkcs11_ctx))
+            return NULL;
     }
 
     return store_ctx;
@@ -391,8 +392,6 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
     OSSL_STORE_INFO *ret = NULL;
     char *name;
     char *description;
-    ENGINE *e;
-    PKCS11_CTX *pkcs11_ctx;
 
     if (ctx->cert != NULL) {
         ctx->eof = 1;
@@ -404,23 +403,12 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
         return pkcs11_store_load_key(ctx, ui_method, ui_data);
     }
 
-    e = ctx->engine;
+    ctx->eof = pkcs11_get_ids(ctx, &name, &description);
+    if (name != NULL) {
+        ret = OSSL_STORE_INFO_new_NAME(name);
+        OSSL_STORE_INFO_set0_NAME_description(ret, description);
+    }
 
-    if (e == NULL)
-        return NULL;
-
-    pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-    if (pkcs11_ctx == NULL)
-        return NULL;
-    ctx->eof = pkcs11_get_ids(store_idx, pkcs11_ctx, &name, &description);
-
-    if (name == NULL)
-        return NULL;
-
-    ret = OSSL_STORE_INFO_new_NAME(name);
-    OSSL_STORE_INFO_set0_NAME_description(ret, description);
-
-    store_idx++;
     return ret;
 }
 
@@ -431,6 +419,8 @@ static int pkcs11_store_eof(OSSL_STORE_LOADER_CTX *ctx)
 
 static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx)
 {
+    pkcs11_end_session(ctx->session);
+    pkcs11_finalize();
     OSSL_STORE_LOADER_CTX_free(ctx);
     return 1;
 }
@@ -451,7 +441,7 @@ static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new(void)
     ctx->error = 0;
     ctx->eof = 0;
     ctx->cert = NULL;
-    ctx->engine = NULL;
+    ctx->session = 0;
     return ctx;
 }
 
@@ -535,7 +525,7 @@ static int bind_pkcs11(ENGINE *e)
 
 void PKCS11_trace(char *format, ...)
 {
-#ifdef DEBUG
+#ifndef DEBUG
 # ifndef OPENSSL_NO_STDIO
     BIO *out;
     va_list args;

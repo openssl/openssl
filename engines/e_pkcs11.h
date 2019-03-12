@@ -74,7 +74,7 @@ struct ossl_store_loader_ctx_st {
     size_t certlen;
     const unsigned char *cert;
     EVP_PKEY *key;
-    ENGINE *engine;
+    CK_SESSION_HANDLE session;
 };
 
 CK_RV pkcs11_initialize(const char *library_path);
@@ -90,7 +90,7 @@ int pkcs11_get_slot(PKCS11_CTX *ctx);
 int pkcs11_find_private_key(PKCS11_CTX *ctx);
 void PKCS11_trace(char *format, ...);
 PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa);
-int pkcs11_get_ids(int store_idx, PKCS11_CTX *pkcs11_ctx,
+int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_cdx,
                    char **name, char **description);
 int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
                     PKCS11_CTX *pkcs11_ctx,
@@ -98,3 +98,7 @@ int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
 int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
                    PKCS11_CTX *pkcs11_ctx,
                    char* object);
+int pkcs11_start_search(OSSL_STORE_LOADER_CTX *store_ctx,
+                        PKCS11_CTX *pkcs11_ctx);
+void pkcs11_finalize(void);
+void pkcs11_end_session(CK_SESSION_HANDLE session);

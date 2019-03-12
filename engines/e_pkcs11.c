@@ -15,8 +15,6 @@
 
 static int pkcs11_logout(CK_SESSION_HANDLE session);
 typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
-static void pkcs11_finalize(void);
-static void pkcs11_end_session(CK_SESSION_HANDLE session);
 static CK_RV pkcs11_load_functions(const char *library_path);
 static CK_FUNCTION_LIST *pkcs11_funcs;
 
@@ -251,7 +249,7 @@ CK_RV pkcs11_initialize(const char *library_path)
     return CKR_OK;
 }
 
-static void pkcs11_finalize(void)
+void pkcs11_finalize(void)
 {
     pkcs11_funcs->C_Finalize(NULL);
 }
@@ -360,7 +358,7 @@ static int pkcs11_logout(CK_SESSION_HANDLE session)
     return 1;
 }
 
-static void pkcs11_end_session(CK_SESSION_HANDLE session)
+void pkcs11_end_session(CK_SESSION_HANDLE session)
 {
     pkcs11_funcs->C_CloseSession(session);
 }
@@ -505,52 +503,26 @@ EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
     return NULL;
 }
 
-int pkcs11_get_ids(int store_idx, PKCS11_CTX *pkcs11_ctx,
+int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
                    char **name, char **description)
 {
     CK_RV rv;
     CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
-    CK_ATTRIBUTE tmpl[1];
     CK_OBJECT_HANDLE key;
     CK_ULONG ulObj = 1;
-    int count = 0;
     unsigned int j;
     CK_ATTRIBUTE template[3];
-    char buf_name[255];
     char buf_desc[512];
     char tmpbuf[3];
 
-    tmpl[0].type = CKA_CLASS;
-    tmpl[0].pValue = &key_class;
-    tmpl[0].ulValueLen = sizeof(key_class);
+    rv = pkcs11_funcs->C_FindObjects(store_ctx->session, &key,
+                                     1, &ulObj);
 
-    rv = pkcs11_initialize(pkcs11_ctx->module_path);
-    if (rv != CKR_OK)
-        goto end;
-    if (!pkcs11_get_slot(pkcs11_ctx))
-        goto end;
-    if (!pkcs11_start_session(pkcs11_ctx))
-        goto end;
-
-    rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl,
-                                         OSSL_NELEM(tmpl));
-
-    if (rv != CKR_OK) {
-        PKCS11_trace("C_FindObjectsInit: Error = 0x%.8lX\n", rv);
-        goto end;
-    }
-
-    while (1) {
-        rv = pkcs11_funcs->C_FindObjects(pkcs11_ctx->session, &key,
-                                         1, &ulObj);
-        if (rv != CKR_OK || ulObj == 0 || count == store_idx)
-            break;
-        count++;
-    }
-
-    if (!key || rv != CKR_OK || ulObj == 0)
+    if (rv != CKR_OK || ulObj == 0) {
+        *name = NULL;
+        *description = NULL;
         return 1;
-
+    }
     template[0].type = CKA_CLASS;
     template[0].pValue = &key_class;
     template[0].ulValueLen = sizeof(key_class);
@@ -561,7 +533,7 @@ int pkcs11_get_ids(int store_idx, PKCS11_CTX *pkcs11_ctx,
     template[2].pValue = NULL;
     template[2].ulValueLen = 0;
 
-    rv = pkcs11_funcs->C_GetAttributeValue(pkcs11_ctx->session, key,
+    rv = pkcs11_funcs->C_GetAttributeValue(store_ctx->session, key,
                                            template,
                                            OSSL_NELEM(template));
     if (rv != CKR_OK) {
@@ -573,7 +545,7 @@ int pkcs11_get_ids(int store_idx, PKCS11_CTX *pkcs11_ctx,
     template[1].pValue = OPENSSL_malloc(template[1].ulValueLen);
     template[2].pValue = OPENSSL_malloc(template[2].ulValueLen);
 
-    rv = pkcs11_funcs->C_GetAttributeValue(pkcs11_ctx->session, key,
+    rv = pkcs11_funcs->C_GetAttributeValue(store_ctx->session, key,
                                            template,
                                            OSSL_NELEM(template));
     if (rv != CKR_OK) {
@@ -582,31 +554,19 @@ int pkcs11_get_ids(int store_idx, PKCS11_CTX *pkcs11_ctx,
         goto end;
     }
 
-    strncpy(buf_name, template[1].pValue, template[1].ulValueLen < 255
-            ? template[1].ulValueLen + 1 : 255);
+    *name = template[1].pValue;
+    *(*name + template[1].ulValueLen) = '\0';
 
     strcpy(buf_desc, "ID: ");
     strncat(buf_desc, template[2].pValue, template[2].ulValueLen < 255
             ? template[2].ulValueLen : 255);
     strcat(buf_desc, " hex: ");
     for (j = 0; j < template[2].ulValueLen; j++) {
-        sprintf(tmpbuf, "%.2X", *((char *)template[2].pValue + j));
+        snprintf(tmpbuf, 3, "%.2X", *((char *)template[2].pValue + j));
         strcat(buf_desc, tmpbuf);
     }
-
-    *name = OPENSSL_strdup(buf_name);
     *description = OPENSSL_strdup(buf_desc);
-
-    OPENSSL_free(template[1].pValue);
-    OPENSSL_free(template[2].pValue);
-
-    rv = pkcs11_funcs->C_FindObjects(pkcs11_ctx->session, &key,
-                                     1, &ulObj);
-
-    pkcs11_end_session(pkcs11_ctx->session);
-    pkcs11_finalize();
-
-    return !ulObj;
+    return 0;
 
  end:
     return 1;
@@ -695,8 +655,8 @@ int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
 }
 
 int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
-                    PKCS11_CTX *pkcs11_ctx,
-                    char* object)
+                   PKCS11_CTX *pkcs11_ctx,
+                   char* object)
 {
     CK_RV rv;
     CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
@@ -706,7 +666,7 @@ int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
     CK_ULONG nObj = 0;
     CK_BYTE_PTR pMod, pExp;
     EVP_PKEY* pRsaKey = NULL;
-    RSA* rsa; 
+    RSA* rsa;
 
     tmpl[0].type = CKA_CLASS;
     tmpl[0].pValue = &key_class;
@@ -797,6 +757,40 @@ int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
 
     return 1;
 
+ end:
+    return 0;
+}
+
+int pkcs11_start_search(OSSL_STORE_LOADER_CTX *store_ctx,
+                        PKCS11_CTX *pkcs11_ctx)
+{
+    CK_RV rv;
+    CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
+    CK_ATTRIBUTE tmpl[1];
+
+    tmpl[0].type = CKA_CLASS;
+    tmpl[0].pValue = &key_class;
+    tmpl[0].ulValueLen = sizeof(key_class);
+
+    rv = pkcs11_initialize(pkcs11_ctx->module_path);
+    if (rv != CKR_OK)
+        goto end;
+    if (!pkcs11_get_slot(pkcs11_ctx))
+        goto end;
+    if (!pkcs11_start_session(pkcs11_ctx))
+        goto end;
+
+    rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl,
+                                         OSSL_NELEM(tmpl));
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjectsInit: Error = 0x%.8lX\n", rv);
+        goto end;
+    }
+
+    store_ctx->session = pkcs11_ctx->session;
+
+    return 1;
  end:
     return 0;
 }
