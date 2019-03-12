@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,11 @@ setup("test_evp");
 my @files = ( "evpciph.txt", "evpdigest.txt", "evpencod.txt", "evpkdf.txt",
     "evppkey_kdf.txt", "evpmac.txt", "evppbe.txt", "evppkey.txt",
     "evppkey_ecc.txt", "evpcase.txt", "evpaessiv.txt" );
+
+if (not defined $ENV{'fips'}) {
+    my @extra = ( "evppkey_nonfips.txt", "evppkey_ecc_nonfips.txt" );
+    push(@files, @extra)
+}
 
 plan tests => scalar(@files);
 

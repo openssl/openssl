@@ -109,6 +109,23 @@ int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom)
     return bnrand(PRIVATE, rnd, bits, top, bottom);
 }
 
+/*
+ * Retrieve a string of bits from a private RBG and convert to a BIGNUM.
+ * Repeat this process until the generated BIGNUM is smaller than the 'upper'
+ * bound.
+ */
+int bn_rand_priv_range(BIGNUM *rnd, int bits, BIGNUM *upper)
+{
+    int count = 0;
+    do {
+        if (!BN_priv_rand(rnd, bits, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+            return 0;
+        count++;
+    } while (BN_cmp(rnd, upper) >= 0);
+
+    return 1;
+}
+
 /* random number r:  0 <= r < range */
 static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range)
 {

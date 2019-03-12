@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
 #include "internal/bn_int.h"
 #include "ec_lcl.h"
 
@@ -45,6 +46,11 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
+
+    if (!ec_check_security_strength(group, 0, EVP_PKEY_OP_SIGN)) {
+        ECerr(EC_F_ECDSA_SIGN_SETUP, EC_R_INVALID_STRENGTH);
+        return -1;
     }
 
     if (!EC_KEY_can_sign(eckey)) {
@@ -164,6 +170,11 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 
     if (group == NULL || priv_key == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (!ec_check_security_strength(group, 0, EVP_PKEY_OP_SIGN)) {
+        ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, EC_R_INVALID_STRENGTH);
         return NULL;
     }
 
@@ -321,6 +332,11 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
     if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL ||
         (pub_key = EC_KEY_get0_public_key(eckey)) == NULL || sig == NULL) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, EC_R_MISSING_PARAMETERS);
+        return -1;
+    }
+
+    if (!ec_check_security_strength(group, 0, EVP_PKEY_OP_VERIFY)) {
+        ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, EC_R_INVALID_STRENGTH);
         return -1;
     }
 

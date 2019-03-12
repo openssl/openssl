@@ -66,6 +66,7 @@ static int fbytes(unsigned char *buf, int num)
     if (!TEST_ptr(tmp = BN_new())
         || !TEST_int_lt(fbytes_counter, OSSL_NELEM(numbers))
         || !TEST_true(BN_hex2bn(&tmp, numbers[fbytes_counter]))
+        || (fbytes_counter == 0 && !TEST_true(BN_sub_word(tmp, 1)))
         /* tmp might need leading zeros so pad it out */
         || !TEST_int_le(BN_num_bytes(tmp), num)
         || !TEST_true(BN_bn2binpad(tmp, buf, num)))
@@ -123,9 +124,23 @@ static int x9_62_tests(int n)
         || !TEST_ptr(message = OPENSSL_hexstr2buf(tbs, &msg_len))
         || !TEST_true(EVP_DigestInit_ex(mctx, EVP_get_digestbynid(md_nid), NULL))
         || !TEST_true(EVP_DigestUpdate(mctx, message, msg_len))
-        || !TEST_true(EVP_DigestFinal_ex(mctx, digest, &dgst_len))
-        /* create the key */
-        || !TEST_ptr(key = EC_KEY_new_by_curve_name(nid))
+        || !TEST_true(EVP_DigestFinal_ex(mctx, digest, &dgst_len)))
+        goto err;
+
+    if (!TEST_ptr(qbuf = OPENSSL_hexstr2buf(ecdsa_cavs_kats[n].Q, &q_len)))
+        goto err;
+
+#ifdef FIPS_MODE
+    if (EC_curve_nid2nist(nid) == NULL) {
+        if (!TEST_ptr_null(key = EC_KEY_new_by_curve_name(nid)))
+            goto err;
+        ret = 1; /* Pass */
+        goto err;
+    }
+#endif /* FIPS_MODE */
+
+    /* create the key */
+    if (!TEST_ptr(key = EC_KEY_new_by_curve_name(nid))
         /* load KAT variables */
         || !TEST_ptr(r = BN_new())
         || !TEST_ptr(s = BN_new())
@@ -137,10 +152,19 @@ static int x9_62_tests(int n)
 
     /* public key must match KAT */
     use_fake = 1;
+
+#ifdef FIPS_MODE
+    if ((q_len - 1) / 2 < 28) {
+        if (!TEST_false(EC_KEY_generate_key(key)))
+            goto err;
+        ret = 1; /* Pass */
+        goto err;
+    }
+#endif /* FIPS_MODE */
+
     if (!TEST_true(EC_KEY_generate_key(key))
         || !TEST_true(p_len = EC_KEY_key2buf(key, POINT_CONVERSION_UNCOMPRESSED,
                                              &pbuf, NULL))
-        || !TEST_ptr(qbuf = OPENSSL_hexstr2buf(ecdsa_cavs_kats[n].Q, &q_len))
         || !TEST_int_eq(q_len, p_len)
         || !TEST_mem_eq(qbuf, q_len, pbuf, p_len))
         goto err;
@@ -162,7 +186,7 @@ static int x9_62_tests(int n)
 
     ret = 1;
 
- err:
+err:
     /* restore the RNG source */
     if (!TEST_true(restore_rand()))
         ret = 0;
@@ -206,6 +230,9 @@ static int test_builtin(int n)
     size_t sig_len;
     int nid, ret = 0;
     int temp;
+#ifdef FIPS_MODE
+    const BIGNUM *order = NULL;
+#endif /* FIPS_MODE */
 
     nid = curves[n].nid;
 
@@ -219,10 +246,33 @@ static int test_builtin(int n)
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get some random message data */
-        || !TEST_true(RAND_bytes(tbs, sizeof(tbs)))
-        /* real key */
-        || !TEST_ptr(eckey = EC_KEY_new_by_curve_name(nid))
-        || !TEST_true(EC_KEY_generate_key(eckey))
+        || !TEST_true(RAND_bytes(tbs, sizeof(tbs))))
+        goto err;
+
+#ifdef FIPS_MODE
+    if (EC_curve_nid2nist(nid) == NULL) {
+        if (!TEST_ptr_null(eckey = EC_KEY_new_by_curve_name(nid)))
+            goto err;
+        ret = 1; /* Pass */
+        goto err;
+    }
+#endif /* FIPS_MODE */
+
+    /* real key */
+    if (!TEST_ptr(eckey = EC_KEY_new_by_curve_name(nid)))
+        goto err;
+
+#ifdef FIPS_MODE
+    order = EC_GROUP_get0_order(EC_KEY_get0_group(eckey));
+    if (BN_num_bytes(order) < 28) {
+        if (!TEST_false(EC_KEY_generate_key(eckey)))
+            goto err;
+        ret = 1; /* Pass */
+        goto err;
+    }
+#endif /* FIPS_MODE */
+
+    if (!TEST_true(EC_KEY_generate_key(eckey))
         || !TEST_ptr(pkey = EVP_PKEY_new())
         || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey))
         /* fake key for negative testing */
@@ -306,9 +356,8 @@ static int test_builtin(int n)
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1))
         goto err;
-
     ret = 1;
- err:
+err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(pkey_neg);
     EVP_MD_CTX_free(mctx);

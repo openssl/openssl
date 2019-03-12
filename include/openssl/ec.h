@@ -820,9 +820,10 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 # define EC_PKEY_NO_PUBKEY       0x002
 
 /* some values for the flags field */
-# define EC_FLAG_NON_FIPS_ALLOW  0x1
-# define EC_FLAG_FIPS_CHECKED    0x2
-# define EC_FLAG_COFACTOR_ECDH   0x1000
+# define EC_FLAG_NON_FIPS_ALLOW       0x1
+# define EC_FLAG_FIPS_CHECKED         0x2
+# define EC_FLAG_PARTIAL_PUBKEY_CHECK 0x04
+# define EC_FLAG_COFACTOR_ECDH        0x1000
 
 /** Creates a new EC_KEY object.
  *  \return EC_KEY object or NULL if an error occurred.

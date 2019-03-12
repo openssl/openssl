@@ -110,8 +110,6 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                                   const BIGNUM *r1, const BIGNUM *r2, int nlen,
                                   const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
 
-#ifdef  __cplusplus
-}
-#endif
+int bn_rand_priv_range(BIGNUM *rnd, int bits, BIGNUM *upper);
 
 #endif

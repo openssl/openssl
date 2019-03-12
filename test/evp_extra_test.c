@@ -539,6 +539,7 @@ static int test_EVP_PKCS82PKEY(void)
 #endif
 
 #ifndef OPENSSL_NO_SM2
+# ifndef FIPS_MODE
 
 static int test_EVP_SM2_verify(void)
 {
@@ -747,7 +748,7 @@ done:
     OPENSSL_free(sig);
     return ret;
 }
-
+# endif /* FIPS_MODE */
 #endif
 
 static struct keys_st {
@@ -1019,8 +1020,10 @@ int setup_tests(void)
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
 #ifndef OPENSSL_NO_SM2
+# ifndef FIPS_MODE
     ADD_TEST(test_EVP_SM2);
     ADD_TEST(test_EVP_SM2_verify);
+# endif
 #endif
     ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
     custom_pmeth = EVP_PKEY_meth_new(0xdefaced, 0);

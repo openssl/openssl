@@ -273,20 +273,9 @@ static int ec_bits(const EVP_PKEY *pkey)
     return EC_GROUP_order_bits(EC_KEY_get0_group(pkey->pkey.ec));
 }
 
-static int ec_security_bits(const EVP_PKEY *pkey)
+static int ec_security_bits_pkey(const EVP_PKEY *pkey)
 {
-    int ecbits = ec_bits(pkey);
-    if (ecbits >= 512)
-        return 256;
-    if (ecbits >= 384)
-        return 192;
-    if (ecbits >= 256)
-        return 128;
-    if (ecbits >= 224)
-        return 112;
-    if (ecbits >= 160)
-        return 80;
-    return ecbits / 2;
+    return ec_security_bits(EC_KEY_get0_group(pkey->pkey.ec));
 }
 
 static int ec_missing_parameters(const EVP_PKEY *pkey)
@@ -586,7 +575,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 
     int_ec_size,
     ec_bits,
-    ec_security_bits,
+    ec_security_bits_pkey,
 
     eckey_param_decode,
     eckey_param_encode,

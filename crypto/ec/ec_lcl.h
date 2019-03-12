@@ -735,3 +735,8 @@ static ossl_inline int ec_point_ladder_post(const EC_GROUP *group,
 
     return 1;
 }
+
+int ec_security_bits(const EC_GROUP *group);
+int ec_curve_check_approved(const EC_GROUP *group);
+int ec_check_security_strength(const EC_GROUP *group, size_t max_strength,
+                               int key_operation);

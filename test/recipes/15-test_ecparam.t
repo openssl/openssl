@@ -20,8 +20,22 @@ setup("test_ecparam");
 plan skip_all => "EC isn't supported in this build"
     if disabled("ec") || disabled("ec2m");
 
-my @valid = glob(data_file("valid", "*.pem"));
-my @invalid = glob(data_file("invalid", "*.pem"));
+my @valid = ();
+my @invalid = ();
+
+if (defined $ENV{'fips'}) {
+    @valid = glob(data_file("fips", "*.pem"));
+    my @notfips = glob(data_file("valid", "*.pem"));
+    @invalid = glob(data_file("invalid", "*.pem"));
+
+    push(@invalid, @notfips);
+} else {
+    @valid = glob(data_file("valid", "*.pem"));
+    my @fips = glob(data_file("fips", "*.pem"));
+    @invalid = glob(data_file("invalid", "*.pem"));
+
+    push(@valid, @fips);
+}
 
 plan tests => scalar @valid + scalar @invalid;
 

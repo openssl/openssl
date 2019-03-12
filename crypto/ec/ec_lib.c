@@ -337,6 +337,28 @@ int EC_GROUP_order_bits(const EC_GROUP *group)
     return group->meth->group_order_bits(group);
 }
 
+/*
+ * Returns the maximum security strength supported for an elliptic curve.
+ * Curves with a maximum security strength >= 112
+ * have a minimum security strength of 112.
+ */
+int ec_security_bits(const EC_GROUP *group)
+{
+    int ecbits = EC_GROUP_order_bits(group);
+
+    if (ecbits >= 512)
+        return 256;
+    if (ecbits >= 384)
+        return 192;
+    if (ecbits >= 256)
+        return 128;
+    if (ecbits >= 224)
+        return 112;
+    if (ecbits >= 160)
+        return 80;
+    return ecbits / 2;
+}
+
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
                           BN_CTX *ctx)
 {
@@ -487,6 +509,27 @@ int EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
     return group->meth->group_check_discriminant(group, ctx);
 }
 
+static ossl_inline int pnt_is_compat(const EC_POINT *point,
+                                     const EC_GROUP *group)
+{
+    if ((group->meth != point->meth
+            && group->meth->point_cmp != point->meth->point_cmp)
+            || (group->curve_name != 0
+            && point->curve_name != 0
+            && group->curve_name != point->curve_name))
+        return 0;
+
+    return 1;
+}
+
+static int point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
+                     BN_CTX *ctx)
+{
+    if (!pnt_is_compat(a, group) || !pnt_is_compat(b, group))
+        return -1;
+    return group->meth->point_cmp(group, a, b, ctx);
+}
+
 int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 {
     int r = 0;
@@ -501,9 +544,10 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&
         EC_GROUP_get_curve_name(a) != EC_GROUP_get_curve_name(b))
         return 1;
+#ifndef FIPS_MODE
     if (a->meth->flags & EC_FLAGS_CUSTOM_CURVE)
         return 0;
-
+#endif /* FIPS_MODE */
     if (ctx == NULL)
         ctx_new = ctx = BN_CTX_new();
     if (ctx == NULL)
@@ -534,7 +578,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
         r = 1;
 
     /* XXX EC_POINT_cmp() assumes that the methods are equal */
-    if (r || EC_POINT_cmp(a, EC_GROUP_get0_generator(a),
+    if (r || point_cmp(a, EC_GROUP_get0_generator(a),
                           EC_GROUP_get0_generator(b), ctx))
         r = 1;
 
@@ -543,17 +587,23 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
         /* compare the order and cofactor */
         ao = EC_GROUP_get0_order(a);
         bo = EC_GROUP_get0_order(b);
+        if (ao == NULL || bo == NULL) {
+            r = -1;
+            goto end;
+        }
+        if (BN_cmp(ao, bo)) {
+            r = 1;
+            goto end;
+        }
+        /* The cofactor is optional - so assume they match if either is NULL */
         ac = EC_GROUP_get0_cofactor(a);
         bc = EC_GROUP_get0_cofactor(b);
-        if (ao == NULL || bo == NULL) {
-            BN_CTX_end(ctx);
-            BN_CTX_free(ctx_new);
-            return -1;
-        }
-        if (BN_cmp(ao, bo) || BN_cmp(ac, bc))
+        if (ac == NULL || bc == NULL)
+            goto end;
+        if (BN_cmp(ac, bc))
             r = 1;
     }
-
+end:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx_new);
 

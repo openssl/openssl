@@ -1,6 +1,6 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
+ * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002-2019, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/bn_int.h"
 #include <string.h>
 #include "ec_lcl.h"
 #include "internal/refcount.h"
@@ -195,59 +196,87 @@ int ossl_ec_key_gen(EC_KEY *eckey)
     return eckey->group->meth->keygen(eckey);
 }
 
+/*
+ * ECC Key generation.
+ * See SP800-56AR3 5.6.1.2.2 "Key Pair Generation by Testing Candidates"
+ *
+ * Params:
+ *     eckey An EC key object that contains domain params. The generated keypair
+ *           is stored in this object.
+ * Returns 1 if the keypair was generated or 0 otherwise.
+ */
 int ec_key_simple_generate_key(EC_KEY *eckey)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
-    BIGNUM *priv_key = NULL;
+    BIGNUM *priv_key = NULL, *upper = NULL;
     const BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
+    const EC_GROUP *group = eckey->group;
+
+    /*
+     * Step (9): If there is an error return an invalid keypair.
+     * This is done by invalidating any existing key pair, and only
+     * setting the returned keypair into the key if there is no error.
+     */
+    BN_free(eckey->priv_key);
+    eckey->priv_key = NULL;
+    EC_POINT_free(eckey->pub_key);
+    eckey->pub_key = NULL;
+
+    /* Step (2): Check the security strength */
+    if (!ec_check_security_strength(group, 0, EVP_PKEY_OP_KEYGEN))
+        return 0;
+
+    /* Step (1): Check domain parameters are approved */
+    if (!ec_curve_check_approved(group))
+        return 0;
 
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
 
-    if (eckey->priv_key == NULL) {
-        priv_key = BN_new();
-        if (priv_key == NULL)
-            goto err;
-    } else
-        priv_key = eckey->priv_key;
+    priv_key = BN_secure_new();
+    if (priv_key == NULL)
+        goto err;
 
+    /* Steps (3-7): priv_key = DRBG_RAND(order_n_bits) (range [1, n-1]) */
     order = EC_GROUP_get0_order(eckey->group);
     if (order == NULL)
         goto err;
 
-    do
-        if (!BN_priv_rand_range(priv_key, order))
-            goto err;
-    while (BN_is_zero(priv_key)) ;
+    upper = BN_dup(order);
+    if (!(upper != NULL
+            /* Get a random in the range [0, n-2] */
+            && BN_sub_word(upper, 1)
+            && bn_rand_priv_range(priv_key, BN_num_bits(order), upper)
+            /* Add 1 to get the range [1, n-1] */
+            && BN_add_word(priv_key, 1)))
+        goto err;
 
-    if (eckey->pub_key == NULL) {
-        pub_key = EC_POINT_new(eckey->group);
-        if (pub_key == NULL)
-            goto err;
-    } else
-        pub_key = eckey->pub_key;
+    pub_key = EC_POINT_new(eckey->group);
+    if (pub_key == NULL)
+        goto err;
 
+    /* Step (8) : pub_key = priv_key * G (where G is a point on the curve) */
     if (!EC_POINT_mul(eckey->group, pub_key, priv_key, NULL, NULL, ctx))
         goto err;
 
     eckey->priv_key = priv_key;
     eckey->pub_key = pub_key;
+    priv_key = NULL;
+    pub_key = NULL;
 
     ok = 1;
-
- err:
-    if (eckey->pub_key == NULL)
-        EC_POINT_free(pub_key);
-    if (eckey->priv_key != priv_key)
-        BN_free(priv_key);
+err:
+    EC_POINT_free(pub_key);
+    BN_free(priv_key);
     BN_CTX_free(ctx);
     return ok;
 }
 
 int ec_key_simple_generate_public_key(EC_KEY *eckey)
 {
+    /* Step (8) : pub_key = priv_key * G (where G is a point on the curve) */
     return EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
                         NULL, NULL);
 }
@@ -267,6 +296,56 @@ int EC_KEY_check_key(const EC_KEY *eckey)
     return eckey->group->meth->keycheck(eckey);
 }
 
+/*
+ * Check the range of the EC public key.
+ * See SP800-56A R3 Section 5.6.2.3.3 (Part 2)
+ * i.e.
+ *  - If q = odd prime p: Verify that xQ and yQ are integers in the
+ *    interval[0, p − 1], OR
+ *  - If q = 2m: Verify that xQ and yQ are bit strings of length m bits.
+ */
+static int ec_key_public_range_check(BN_CTX *ctx, const EC_KEY *key)
+{
+    int ret = 0;
+    BIGNUM *x, *y;
+
+    BN_CTX_start(ctx);
+    x = BN_CTX_get(ctx);
+    y = BN_CTX_get(ctx);
+    if (y == NULL)
+        goto err;
+
+    if (!EC_POINT_get_affine_coordinates(key->group, key->pub_key, x, y, ctx))
+        goto err;
+
+    if (EC_METHOD_get_field_type(key->group->meth) == NID_X9_62_prime_field) {
+        if (BN_cmp(x, key->group->field) >= 0
+                || BN_cmp(y, key->group->field) >= 0) {
+            ECerr(EC_F_EC_KEY_PUBLIC_RANGE_CHECK, EC_R_COORDINATES_OUT_OF_RANGE);
+            goto err;
+        }
+    } else {
+        int m = EC_GROUP_get_degree(key->group);
+        if (BN_num_bits(x) > m || BN_num_bits(y) > m) {
+            ECerr(EC_F_EC_KEY_PUBLIC_RANGE_CHECK, EC_R_COORDINATES_OUT_OF_RANGE);
+            goto err;
+        }
+    }
+    ret = 1;
+err:
+    BN_CTX_end(ctx);
+    return ret;
+}
+
+/*
+ * ECC Key validation as specified in SP800-56A R3.
+ *    Section 5.6.2.3.3 ECC Full Public-Key Validation
+ *    Section 5.6.2.1.2 Owner Assurance of Private-Key Validity
+ *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
+ * NOTES:
+ *    Before calling this method in fips mode, there should be an assurance that
+ *    an approved elliptic-curve group is used (EC_GROUP_check()).
+ */
 int ec_key_simple_check_key(const EC_KEY *eckey)
 {
     int ok = 0;
@@ -279,6 +358,7 @@ int ec_key_simple_check_key(const EC_KEY *eckey)
         return 0;
     }
 
+    /* 5.6.2.3.3 (Step 1): Q != infinity */
     if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key)) {
         ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_POINT_AT_INFINITY);
         goto err;
@@ -289,34 +369,52 @@ int ec_key_simple_check_key(const EC_KEY *eckey)
     if ((point = EC_POINT_new(eckey->group)) == NULL)
         goto err;
 
-    /* testing whether the pub_key is on the elliptic curve */
+    /* 5.6.2.3.3 (Step 2) Test if the public key is in range */
+    if (!ec_key_public_range_check(ctx, eckey))
+        goto err;
+
+    /* 5.6.2.3.3 (Step 3) is the pub_key on the elliptic curve */
     if (EC_POINT_is_on_curve(eckey->group, eckey->pub_key, ctx) <= 0) {
         ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
         goto err;
     }
-    /* testing whether pub_key * order is the point at infinity */
+
     order = eckey->group->order;
     if (BN_is_zero(order)) {
         ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
         goto err;
     }
-    if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
-        goto err;
-    }
-    if (!EC_POINT_is_at_infinity(eckey->group, point)) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
-        goto err;
-    }
     /*
-     * in case the priv_key is present : check if generator * priv_key ==
-     * pub_key
+     * 5.6.2.3.3 (Step 4) : pub_key * order is the point at infinity
+     * NOTE: SP800-56A R3 "ECC Partial Public Key Validation" Section 5.6.2.3.4,
+     * does not include the check for nQ = infinity.
      */
-    if (eckey->priv_key != NULL) {
-        if (BN_cmp(eckey->priv_key, order) >= 0) {
+    if ((eckey->flags & EC_FLAG_PARTIAL_PUBKEY_CHECK) == 0) {
+
+        if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order,
+                          ctx)) {
+            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
+            goto err;
+        }
+        if (!EC_POINT_is_at_infinity(eckey->group, point)) {
             ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
             goto err;
         }
+    }
+    if (eckey->priv_key != NULL) {
+        /*
+         * 5.6.2.1.2 Owner Assurance of Private-Key Validity
+         * The private key is in the range [1, order-1]
+         */
+        if (BN_cmp(eckey->priv_key, BN_value_one()) < 0
+                || BN_cmp(eckey->priv_key, order) >= 0) {
+            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
+            goto err;
+        }
+        /*
+         * Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency (b)
+         * Check if generator * priv_key = pub_key
+         */
         if (!EC_POINT_mul(eckey->group, point, eckey->priv_key,
                           NULL, NULL, ctx)) {
             ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
@@ -368,12 +466,10 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
         goto err;
 
     /*
-     * Check if retrieved coordinates match originals and are less than field
-     * order: if not values are out of range.
+     * Check if retrieved coordinates match originals. The range check is done
+     * inside EC_KEY_check_key()
      */
-    if (BN_cmp(x, tx) || BN_cmp(y, ty)
-        || (BN_cmp(x, key->group->field) >= 0)
-        || (BN_cmp(y, key->group->field) >= 0)) {
+    if (BN_cmp(x, tx) || BN_cmp(y, ty)) {
         ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
               EC_R_COORDINATES_OUT_OF_RANGE);
         goto err;
