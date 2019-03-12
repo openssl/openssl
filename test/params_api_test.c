@@ -61,18 +61,24 @@ static int test_param_type_extra(const OSSL_PARAM *param, unsigned char *cmp,
                                  size_t width)
 {
     int32_t i32;
-    double d;
     int64_t i64;
     size_t s, sz;
     unsigned char buf[MAX_LEN];
     const int bit32 = param->data_size == sizeof(int32_t);
     const int sizet = bit32 && sizeof(size_t) > sizeof(int32_t);
+    const int signd = param->data_type == OSSL_PARAM_INTEGER;
 
-    if ((bit32 && !TEST_true(OSSL_PARAM_get_int32(param, &i32)))
-        || !TEST_true(OSSL_PARAM_get_int64(param, &i64))
-        || (sizet && !TEST_true(OSSL_PARAM_get_size_t(param, &s)))
-        || !TEST_true(OSSL_PARAM_get_double(param, &d)))
-        return 0;
+    if (signd) {
+        if ((bit32 && !TEST_true(OSSL_PARAM_get_int32(param, &i32)))
+            || !TEST_true(OSSL_PARAM_get_int64(param, &i64)))
+            return 0;
+    } else {
+        if ((bit32
+             && !TEST_true(OSSL_PARAM_get_uint32(param, (uint32_t *)&i32)))
+            || !TEST_true(OSSL_PARAM_get_uint64(param, (uint64_t *)&i64))
+            || (sizet && !TEST_true(OSSL_PARAM_get_size_t(param, &s))))
+            return 0;
+    }
 
     /* Check signed types */
     if (bit32) {
@@ -85,27 +91,27 @@ static int test_param_type_extra(const OSSL_PARAM *param, unsigned char *cmp,
         sz = sizeof(i64) < width ? sizeof(i64) : width;
     if (!TEST_mem_eq(buf, sz, cmp, sz))
         return 0;
-    if (sizet) {
+    if (sizet && !signd) {
         copy_to_le(buf, &s, sizeof(s));
         sz = sizeof(s) < width ? sizeof(s) : width;
         if (!TEST_mem_eq(buf, sz, cmp, sz))
             return 0;
     }
 
-    /* Check reals, remembering that they can lose accuracy */
-    if (param->data_size <= 6) {
-        i64 = (int64_t)d;
-        copy_to_le(buf, &i64, sizeof(i64));
-        if (!TEST_mem_eq(buf, param->data_size, cmp, param->data_size))
-            return 0;
-    }
-
     /* Check a widening write if possible */
-    if (sizeof(size_t) > width)
-        if (!TEST_true(OSSL_PARAM_set_int32(param, 12345))
-            || !TEST_true(OSSL_PARAM_get_size_t(param, &s))
-            || !TEST_size_t_eq(s, 12345))
-            return 0;
+    if (sizeof(size_t) > width) {
+        if (signd) {
+            if (!TEST_true(OSSL_PARAM_set_int32(param, 12345))
+                || !TEST_true(OSSL_PARAM_get_int64(param, &i64))
+                || !TEST_size_t_eq(i64, 12345))
+                return 0;
+        } else {
+            if (!TEST_true(OSSL_PARAM_set_uint32(param, 12345))
+                || !TEST_true(OSSL_PARAM_get_uint64(param, (uint64_t *)&i64))
+                || !TEST_size_t_eq(i64, 12345))
+                return 0;
+        }
+    }
     return 1;
 }
 
@@ -446,9 +452,11 @@ static OSSL_PARAM *locate(OSSL_PARAM *p, const char *name)
 
 static int test_param_construct(void)
 {
-    static const char *number_names[] = {
-        "int", "uint", "long", "ulong", "int32", "uint32",
-        "int64", "uint64", "size_t"
+    static const char *int_names[] = {
+        "int", "long", "int32", "int64"
+    };
+    static const char *uint_names[] = {
+        "uint", "ulong", "uint32", "uint64", "size_t"
     };
     static const unsigned char bn_val[16] = {
         0xac, 0x75, 0x22, 0x7d, 0x81, 0x06, 0x7a, 0x23,
@@ -496,16 +504,25 @@ static int test_param_construct(void)
     if (!TEST_ptr_null(OSSL_PARAM_locate(params, "fnord")))
         goto err;
 
-    /* All integral types */
-    for (j = 0; j < OSSL_NELEM(number_names); j++) {
-        if (!TEST_ptr(cp = OSSL_PARAM_locate(params, number_names[j]))
+    /* All signed integral types */
+    for (j = 0; j < OSSL_NELEM(int_names); j++) {
+        if (!TEST_ptr(cp = OSSL_PARAM_locate(params, int_names[j]))
+            || !TEST_true(OSSL_PARAM_set_int32(cp, (int32_t)(3 + j)))
+            || !TEST_true(OSSL_PARAM_get_int64(cp, &i64))
+            || !TEST_size_t_eq(cp->data_size, sz)
+            || !TEST_size_t_eq((size_t)i64, 3 + j)) {
+            TEST_note("iteration %zu var %s", j + 1, int_names[j]);
+            goto err;
+        }
+    }
+    /* All unsigned integral types */
+    for (j = 0; j < OSSL_NELEM(uint_names); j++) {
+        if (!TEST_ptr(cp = OSSL_PARAM_locate(params, uint_names[j]))
             || !TEST_true(OSSL_PARAM_set_uint32(cp, (uint32_t)(3 + j)))
             || !TEST_true(OSSL_PARAM_get_uint64(cp, &u64))
             || !TEST_size_t_eq(cp->data_size, sz)
-            || !TEST_size_t_eq((size_t)u64, 3 + j)
-            || !TEST_true(OSSL_PARAM_get_double(cp, &d2))
-            || !TEST_double_eq(d2, (double)u64)) {
-            TEST_note("iteration %zu var %s", j + 1, number_names[j]);
+            || !TEST_size_t_eq((size_t)u64, 3 + j)) {
+            TEST_note("iteration %zu var %s", j + 1, uint_names[j]);
             goto err;
         }
     }
