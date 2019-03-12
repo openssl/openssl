@@ -105,7 +105,6 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
                                void *data)
 {
     struct method_data_st *methdata = data;
-    int ret = 0;
 
     if (store == NULL
         && (store = get_default_method_store(libctx)) == NULL)
