@@ -88,7 +88,7 @@ if ($flavour =~ /64|n32/i) {
 	$SZREG=4;
 	$REG_S="sw";
 	$REG_L="lw";
-	$code=".set	mips2\n";
+	$code="#if !(defined (__mips_isa_rev) && (__mips_isa_rev >= 6))\n.set     mips2\n#endif\n";
 }
 
 # Below is N32/64 register layout used in the original module.
