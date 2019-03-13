@@ -49,10 +49,30 @@ static int deflt_get_params(const OSSL_PROVIDER *prov,
     return 1;
 }
 
+extern const OSSL_DISPATCH sha256_functions[];
+
+static const OSSL_ALGORITHM deflt_digests[] = {
+    { "SHA256", "default=yes", sha256_functions },
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
+                                         int operation_id,
+                                         int *no_cache)
+{
+    *no_cache = 0;
+    switch (operation_id) {
+    case OSSL_OP_DIGEST:
+        return deflt_digests;
+    }
+    return NULL;
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH deflt_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GET_PARAM_TYPES, (void (*)(void))deflt_get_param_types },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))deflt_get_params },
+    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))deflt_query },
     { 0, NULL }
 };
 
