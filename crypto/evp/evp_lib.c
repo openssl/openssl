@@ -317,6 +317,10 @@ int EVP_MD_size(const EVP_MD *md)
         EVPerr(EVP_F_EVP_MD_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
         return -1;
     }
+
+    if (md->prov != NULL && md->size != NULL)
+        return (int)md->size();
+
     return md->md_size;
 }
 
