@@ -47,7 +47,7 @@ static int ossl_method_construct_this(OSSL_PROVIDER *provider, void *cbdata)
             if (!data->mcm->put(data->libctx, NULL,
                                 thismap->property_definition,
                                 method, data->mcm_data)) {
-                data->mcm->destruct(method);
+                data->mcm->destruct(method, data->mcm_data);
                 continue;
             }
         }
@@ -55,7 +55,7 @@ static int ossl_method_construct_this(OSSL_PROVIDER *provider, void *cbdata)
         if (!data->mcm->put(data->libctx, data->store,
                             thismap->property_definition,
                             method, data->mcm_data)) {
-            data->mcm->destruct(method);
+            data->mcm->destruct(method, data->mcm_data);
             continue;
         }
     }
