@@ -80,6 +80,7 @@ int verify_main(int argc, char **argv)
     OPTION_CHOICE o;
     unsigned char *sm2_id = NULL;
     size_t sm2_idlen = 0;
+    int sm2_free = 0;
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
@@ -174,6 +175,7 @@ int verify_main(int argc, char **argv)
             break;
         case OPT_SM2HEXID:
             /* try to parse the input as hex string first */
+            sm2_free = 1;
             sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
             if (sm2_id == NULL) {
                 BIO_printf(bio_err, "Invalid hex string input\n");
@@ -216,6 +218,8 @@ int verify_main(int argc, char **argv)
     }
 
  end:
+    if (sm2_free)
+        OPENSSL_free(sm2_id);
     X509_VERIFY_PARAM_free(vpm);
     X509_STORE_free(store);
     sk_X509_pop_free(untrusted, X509_free);
