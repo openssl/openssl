@@ -1503,6 +1503,7 @@ static int underflow_test(void)
     BN_CTX_end(ctx);
     EC_POINT_free(P);
     EC_POINT_free(Q);
+    EC_POINT_free(R);
     EC_GROUP_free(grp);
     BN_CTX_free(ctx);
 
