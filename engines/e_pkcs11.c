@@ -510,10 +510,9 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
     CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
     CK_OBJECT_HANDLE key;
     CK_ULONG ulObj = 1;
-    unsigned int j;
+    unsigned int i;
     CK_ATTRIBUTE template[3];
-    char buf_desc[512];
-    char tmpbuf[3];
+    CK_BYTE_PTR id;
 
     rv = pkcs11_funcs->C_FindObjects(store_ctx->session, &key,
                                      1, &ulObj);
@@ -543,7 +542,9 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
     }
 
     template[1].pValue = OPENSSL_malloc(template[1].ulValueLen);
-    template[2].pValue = OPENSSL_malloc(template[2].ulValueLen);
+
+    id = (CK_BYTE_PTR) OPENSSL_malloc(template[2].ulValueLen);
+    template[2].pValue = id;
 
     rv = pkcs11_funcs->C_GetAttributeValue(store_ctx->session, key,
                                            template,
@@ -557,15 +558,21 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
     *name = template[1].pValue;
     *(*name + template[1].ulValueLen) = '\0';
 
-    strcpy(buf_desc, "ID: ");
-    strncat(buf_desc, template[2].pValue, template[2].ulValueLen < 255
-            ? template[2].ulValueLen : 255);
-    strcat(buf_desc, " hex: ");
-    for (j = 0; j < template[2].ulValueLen; j++) {
-        snprintf(tmpbuf, 3, "%.2X", *((char *)template[2].pValue + j));
-        strcat(buf_desc, tmpbuf);
+    *description = OPENSSL_malloc(template[2].ulValueLen * 3 + 11);
+    strncpy(*description, "ID: ", 4);
+
+    for (i=0; i < template[2].ulValueLen; i++)
+          *(*description + i + 4) = id[i];
+
+    strncat(*description, " hex: ", 6);
+   
+    for (i=0; i < template[2].ulValueLen; i++) {
+          *(*description + 10 + template[2].ulValueLen + (i*2)) = \
+           "0123456789abcdef"[id[i] >> 4];
+          *(*description + 11 + template[2].ulValueLen + (i*2)) = \
+           "0123456789abcdef"[id[i] % 16];
     }
-    *description = OPENSSL_strdup(buf_desc);
+    *(*description + 10 + (template[2].ulValueLen * 3)) = '\0';
     return 0;
 
  end:
