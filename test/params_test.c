@@ -414,11 +414,11 @@ struct param_owner_st {
     OSSL_PARAM *(*constructed_params)(void);
 };
 
-struct param_owner_st raw_params = {
+static const struct param_owner_st raw_params = {
     static_raw_params, NULL
 };
 
-struct param_owner_st api_params = {
+static const struct param_owner_st api_params = {
     static_api_params, construct_api_params
 };
 
