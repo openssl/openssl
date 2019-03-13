@@ -19,6 +19,10 @@ struct evp_md_ctx_st {
     EVP_PKEY_CTX *pctx;
     /* Update function: usually copied from EVP_MD */
     int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
+
+    /* Provider ctx */
+    void *provctx;
+    EVP_MD *fetched_digest;
 } /* EVP_MD_CTX */ ;
 
 struct evp_cipher_ctx_st {
