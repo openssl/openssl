@@ -53,13 +53,14 @@ DEFINE_RUN_ONCE_STATIC(do_default_method_store_init)
         && default_method_store_init();
 }
 
-/* Structure to be passed to ossl_method_construct() */
+/* Data to be passed through ossl_method_construct() */
 struct method_data_st {
     const char *name;
     int nid;
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     void *(*method_from_dispatch)(int nid, const OSSL_DISPATCH *,
                                   OSSL_PROVIDER *);
+    void (*destruct_method)(void *method);
 };
 
 /*
@@ -111,7 +112,7 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
         return 0;
 
     return ossl_method_store_add(store, methdata->nid, propdef, method,
-                                 methdata->mcm->destruct);
+                                 methdata->destruct_method);
 }
 
 static void *construct_method(const OSSL_DISPATCH *fns, OSSL_PROVIDER *prov,
@@ -143,6 +144,13 @@ static void *construct_method(const OSSL_DISPATCH *fns, OSSL_PROVIDER *prov,
     return method;
 }
 
+static void destruct_method(void *method, void *data)
+{
+    struct method_data_st *methdata = data;
+
+    methdata->destruct_method(method);
+}
+
 void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         const char *algorithm, const char *properties,
                         void *(*new_method)(int nid, const OSSL_DISPATCH *fns,
@@ -164,13 +172,14 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
             get_method_from_store,
             put_method_in_store,
             construct_method,
-            free_method
+            destruct_method
         };
         struct method_data_st mcmdata;
 
         mcmdata.nid = nid;
         mcmdata.mcm = &mcm;
         mcmdata.method_from_dispatch = new_method;
+        mcmdata.destruct_method = free_method;
         method = ossl_method_construct(libctx, operation_id, algorithm,
                                        properties, 0 /* !force_cache */,
                                        &mcm, &mcmdata);
