@@ -582,7 +582,7 @@ int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_ctx,
 
     *(*description + template[2].ulValueLen + 16) = '\0';
     strncat(*description, " hex: ", 6);
-   
+
     for (i=0; i < template[2].ulValueLen; i++) {
           *(*description + 22 + template[2].ulValueLen + (i*2)) = \
            "0123456789abcdef"[id[i] >> 4];
@@ -601,7 +601,7 @@ int pkcs11_get_object(OSSL_STORE_LOADER_CTX *store_ctx,
                       char* object, CK_OBJECT_CLASS key_class, int isObj)
 {
     CK_RV rv;
-    CK_ATTRIBUTE tmpl[key_class ? 2 : 1];
+    CK_ATTRIBUTE tmpl[2];
     CK_ATTRIBUTE template[1];
     CK_OBJECT_HANDLE obj;
     CK_ULONG nObj = 0;
@@ -609,7 +609,7 @@ int pkcs11_get_object(OSSL_STORE_LOADER_CTX *store_ctx,
     tmpl[0].type = isObj ? CKA_LABEL : CKA_ID;
     tmpl[0].pValue = object;
     tmpl[0].ulValueLen = (CK_ULONG)strlen(object);
-   
+
     if (key_class) {
         tmpl[1].type = CKA_CLASS;
         tmpl[1].pValue = &key_class;
@@ -629,7 +629,7 @@ int pkcs11_get_object(OSSL_STORE_LOADER_CTX *store_ctx,
         goto end;
 
     rv = pkcs11_funcs->C_FindObjectsInit(pkcs11_ctx->session, tmpl,
-                                         OSSL_NELEM(tmpl));
+                                         key_class ? OSSL_NELEM(tmpl) : 1);
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjectsInit: Error = 0x%.8lX\n", rv);
@@ -665,8 +665,8 @@ int pkcs11_get_object(OSSL_STORE_LOADER_CTX *store_ctx,
 }
 
 static int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
-                    PKCS11_CTX *pkcs11_ctx,
-                    CK_OBJECT_HANDLE obj)
+                           PKCS11_CTX *pkcs11_ctx,
+                           CK_OBJECT_HANDLE obj)
 {
     CK_RV rv;
     CK_OBJECT_CLASS key_class = CKO_CERTIFICATE;
@@ -698,11 +698,14 @@ static int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
                       rv = 0x%.8lX\n", rv);
         goto end;
     }
+
     if (tmpl_cert[1].ulValueLen > 0) {
         store_ctx->cert = tmpl_cert[1].pValue;
         store_ctx->certlen = tmpl_cert[1].ulValueLen;
     } else {
+        PKCS11_trace("Certificate is empty\n");
         OPENSSL_free(tmpl_cert[1].pValue);
+        return 0;
     }
 
     return 1;
@@ -773,8 +776,10 @@ static int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
     if (pRsaKey != NULL) {
         store_ctx->key = pRsaKey;
     } else {
+        PKCS11_trace("Public Key is empty\n");
         OPENSSL_free(pMod);
         OPENSSL_free(pExp);
+        return 0;
     }
     return 1;
 
