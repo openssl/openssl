@@ -148,7 +148,7 @@ OPENSSLDIR_dev={- #
 OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           file_name_is_absolute($libdir) ? "" : $libdir -}
-MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
+MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
                   our $modulesprefix = catdir($prefix,$libdir);
                   our ($modulesprefix_dev, $modulesprefix_dir,
                        $modulesprefix_file) =
@@ -158,7 +158,7 @@ MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
                       catdir($modulesprefix_dir, "ossl-modules");
                   our $modulesdir = catpath($modulesdir_dev, $modulesdir_dir);
                   our $enginesdir_dev = $modulesprefix_dev;
-                  out $enginesdir_dir =
+                  our $enginesdir_dir =
                       catdir($modulesprefix_dir, "engines-$sover_dirname");
                   our $enginesdir = catpath($enginesdir_dev, $enginesdir_dir);
                   $modulesdir_dev -}
