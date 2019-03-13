@@ -25,14 +25,14 @@ SKIP: {
 
     # SM2
     ok(run(app(([ 'openssl', 'pkeyutl', '-sign',
-                      '-in', srctop_file('test', 'certs', 'sm2.crt'),
+                      '-in', srctop_file('test', 'certs', 'sm2.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.key'),
                       '-out', 'signature.dat', '-rawin',
                       '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid']))),
                       "Sign a piece of data using SM2");
     ok(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin',
-                      '-in', srctop_file('test', 'certs', 'sm2.crt'),
-                      '-inkey', srctop_file('test', 'certs', 'sm2.crt'),
+                      '-in', srctop_file('test', 'certs', 'sm2.pem'),
+                      '-inkey', srctop_file('test', 'certs', 'sm2.pem'),
                       '-sigfile', 'signature.dat', '-rawin',
                       '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid']))),
                       "Verify an SM2 signature against a piece of data");
