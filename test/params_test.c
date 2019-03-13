@@ -387,7 +387,7 @@ static const OSSL_PARAM static_api_params[] = {
  * The same array again, but constructed at run-time
  * This exercises the OSSL_PARAM constructor functions
  */
-OSSL_PARAM *construct_api_params(void)
+static OSSL_PARAM *construct_api_params(void)
 {
     size_t n = 0;
     static OSSL_PARAM params[10];
