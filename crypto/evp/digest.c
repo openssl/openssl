@@ -13,6 +13,7 @@
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 #include "internal/evp_int.h"
+#include "internal/provider.h"
 #include "evp_locl.h"
 
 /* This call frees resources associated with the context */
@@ -295,4 +296,95 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         return 1;
     }
     return 0;
+}
+
+static void *evp_md_from_dispatch(int mdtype, const OSSL_DISPATCH *fns,
+                                    OSSL_PROVIDER *prov)
+{
+    EVP_MD *md = NULL;
+
+    if ((md = EVP_MD_meth_new(mdtype, NID_undef)) == NULL)
+        return NULL;
+
+    for (; fns->function_id != 0; fns++) {
+        int fncnt = 0;
+
+        switch (fns->function_id) {
+        case OSSL_FUNC_DIGEST_NEWCTX:
+            if (md->newctx != NULL)
+                break;
+            md->newctx = OSSL_get_OP_digest_newctx(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_INIT:
+            if (md->dinit != NULL)
+                break;
+            md->dinit = OSSL_get_OP_digest_init(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_UPDDATE:
+            if (md->dupdate != NULL)
+                break;
+            md->dupdate = OSSL_get_OP_digest_update(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_FINAL:
+            if (md->dfinal != NULL)
+                break;
+            md->dfinal = OSSL_get_OP_digest_final(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_DIGEST:
+            if (md->digest != NULL)
+                break;
+            md->digest = OSSL_get_OP_digest_digest(fns);
+            /* We don't increment fnct for this as it is stand alone */
+            break;
+        case OSSL_FUNC_DIGEST_CLEANCTX:
+            if (md->cleanctx != NULL)
+                break;
+            md->cleanctx = OSSL_get_OP_digest_cleanctx(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_FREECTX:
+            if (md->freectx != NULL)
+                break;
+            md->freectx = OSSL_get_OP_digest_freectx(fns);
+            fncnt++;
+            break;
+        }
+        if ((fncnt != 0 && fncnt != 6) || (fncnt == 0 && md->digest == NULL)) {
+            /*
+             * In order to be a consistent set of functions we either need the
+             * whole set of init/update/final etc functions or none of them.
+             * The "digest" function can standalone. We at least need one way to
+             * generate digests.
+             */
+            EVP_MD_meth_free(md);
+            return NULL;
+        }
+    }
+    md->prov = prov;
+    if (prov != NULL)
+        ossl_provider_upref(prov);
+
+    return md;
+}
+
+static int evp_md_upref(void *md)
+{
+    return EVP_MD_upref(md);
+}
+
+static void evp_md_free(void *md)
+{
+    EVP_MD_meth_free(md);
+}
+
+EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                     const char *properties)
+{
+    return evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+                             evp_md_from_dispatch, evp_md_upref,
+                             evp_md_free);
 }
