@@ -20,7 +20,7 @@ The functions described here are mainly interesting for those who provide
 OpenSSL functionality, either in OpenSSL itself or in engine modules
 or similar.
 
-If operational (see L</NOTES> below), these functions are used to
+If tracing is enabled (see L</NOTES> below), these functions are used to
 generate free text tracing output.
 
 The tracing output is divided into types which are enabled
@@ -110,10 +110,11 @@ OSSL_trace_enabled() before generating any output, for example:
         OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trace);
     }
 
-=head2 Tracing disabled
+=head2 Configure Tracing
 
-The OpenSSL library may be built with tracing disabled, which makes
-everything documented here inoperational.
+By default, the OpenSSL library is built with tracing disabled. To
+use the tracing functionality documented here, it is therefore
+necessary to configure and build OpenSSL with the 'enable-trace' option.
 
 When the library is built with tracing disabled:
 
