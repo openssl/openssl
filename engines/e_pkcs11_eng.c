@@ -348,8 +348,10 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     ENGINE *e;
     PKCS11_CTX *pkcs11_ctx;
     OSSL_STORE_LOADER_CTX *store_ctx = NULL;
-    char *type = NULL, *object = NULL;
+    char *type = NULL, *object = NULL, *id = NULL;
     int objecttype;
+    int retK, retC;
+    CK_RV rv;
 
     store_ctx = OSSL_STORE_LOADER_CTX_new();
 
@@ -365,20 +367,37 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
 
     pkcs11_parse_uri(uri,"type=", &type);
     pkcs11_parse_uri(uri,"object=", &object);
+    pkcs11_parse_uri(uri,"id=", &id);
 
-    if (type != NULL) {
+    if (type != NULL && (object != NULL || id != NULL)) {
         objecttype = pkcs11_get_type(type);
         switch (objecttype) {
         case OTYPE_CERT:
-            if (!pkcs11_get_cert(store_ctx, pkcs11_ctx, object))
+            if (!pkcs11_get_object(store_ctx, pkcs11_ctx,
+                                   (object != NULL ? object : id),
+                                   CKO_CERTIFICATE, object != NULL))
                 return NULL;
             break;
         case OTYPE_PUBLIC:
-            if (!pkcs11_get_key(store_ctx, pkcs11_ctx, object))
+            if (!pkcs11_get_object(store_ctx, pkcs11_ctx,
+                                   (object != NULL ? object : id),
+                                   CKO_PUBLIC_KEY, object != NULL))
                 return NULL;
         }
+    } else if (object != NULL) {
+        if (!pkcs11_get_object(store_ctx, pkcs11_ctx, object, 0, 1))
+            return NULL;
+    } else if (id != NULL) {
+        if (!pkcs11_get_object(store_ctx, pkcs11_ctx, id, 0, 0))
+            return NULL;
     } else {
-        if (!pkcs11_start_search(store_ctx, pkcs11_ctx))
+        rv = pkcs11_initialize(pkcs11_ctx->module_path);
+        if (rv != CKR_OK)
+            return NULL;
+
+        retK = pkcs11_start_search(store_ctx, pkcs11_ctx, CKO_PUBLIC_KEY);
+        retC = pkcs11_start_search(store_ctx, pkcs11_ctx, CKO_CERTIFICATE);
+        if (!retK && !retC)
             return NULL;
     }
 
@@ -403,7 +422,12 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
         return pkcs11_store_load_key(ctx, ui_method, ui_data);
     }
 
-    ctx->eof = pkcs11_get_ids(ctx, &name, &description);
+    if (!ctx->eofKey)
+        ctx->eofKey = pkcs11_get_ids(ctx, &name, &description, CKO_PUBLIC_KEY);
+
+    if (ctx->eofKey)
+        ctx->eof = pkcs11_get_ids(ctx, &name, &description, CKO_CERTIFICATE);
+
     if (name != NULL) {
         ret = OSSL_STORE_INFO_new_NAME(name);
         OSSL_STORE_INFO_set0_NAME_description(ret, description);
@@ -419,7 +443,8 @@ static int pkcs11_store_eof(OSSL_STORE_LOADER_CTX *ctx)
 
 static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx)
 {
-    pkcs11_end_session(ctx->session);
+    pkcs11_end_session(ctx->certSession);
+    pkcs11_end_session(ctx->keySession);
     pkcs11_finalize();
     OSSL_STORE_LOADER_CTX_free(ctx);
     return 1;
@@ -440,8 +465,10 @@ static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new(void)
         return NULL;
     ctx->error = 0;
     ctx->eof = 0;
+    ctx->eofKey = 0;
     ctx->cert = NULL;
-    ctx->session = 0;
+    ctx->certSession = 0;
+    ctx->keySession = 0;
     return ctx;
 }
 
@@ -525,7 +552,7 @@ static int bind_pkcs11(ENGINE *e)
 
 void PKCS11_trace(char *format, ...)
 {
-#ifndef DEBUG
+#ifdef DEBUG
 # ifndef OPENSSL_NO_STDIO
     BIO *out;
     va_list args;

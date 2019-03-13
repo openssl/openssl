@@ -71,10 +71,12 @@ typedef struct PKCS11_CTX_st {
 struct ossl_store_loader_ctx_st {
     int error;
     int eof;
+    int eofKey;
     size_t certlen;
     const unsigned char *cert;
     EVP_PKEY *key;
-    CK_SESSION_HANDLE session;
+    CK_SESSION_HANDLE certSession;
+    CK_SESSION_HANDLE keySession;
 };
 
 CK_RV pkcs11_initialize(const char *library_path);
@@ -91,14 +93,11 @@ int pkcs11_find_private_key(PKCS11_CTX *ctx);
 void PKCS11_trace(char *format, ...);
 PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa);
 int pkcs11_get_ids(OSSL_STORE_LOADER_CTX *store_cdx,
-                   char **name, char **description);
-int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
-                    PKCS11_CTX *pkcs11_ctx,
-                    char* object);
-int pkcs11_get_key(OSSL_STORE_LOADER_CTX *store_ctx,
-                   PKCS11_CTX *pkcs11_ctx,
-                   char* object);
+                   char **name, char **description, CK_OBJECT_CLASS key_class);
+int pkcs11_get_object(OSSL_STORE_LOADER_CTX *store_ctx,
+                      PKCS11_CTX *pkcs11_ctx,
+                      char* object, CK_OBJECT_CLASS key_class, int isObj);
 int pkcs11_start_search(OSSL_STORE_LOADER_CTX *store_ctx,
-                        PKCS11_CTX *pkcs11_ctx);
+                        PKCS11_CTX *pkcs11_ctx, CK_OBJECT_CLASS key_class);
 void pkcs11_finalize(void);
 void pkcs11_end_session(CK_SESSION_HANDLE session);
