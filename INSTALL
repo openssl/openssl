@@ -523,6 +523,10 @@
                    require additional system-dependent options! See "Note on
                    multi-threading" below.
 
+  enable-trace
+                   Build with support for the integrated tracing api. See manual pages
+                   OSSL_trace_set_channel(3) and OSSL_trace_enabled(3) for details.
+
   no-ts
                    Don't build Time Stamping Authority support.
 
