@@ -24,7 +24,7 @@
  * ================
  *
  * Even though it's not necessarily ONLY providers doing this part,
- * they are naturally going to be the most common providers of
+ * they are naturally going to be the most common users of
  * set_params and get_params functions.
  */
 
@@ -72,7 +72,7 @@ struct object_st {
 };
 
 #define p1_init 42                              /* The ultimate answer */
-#define p2_init 7.0                             /* Magic number */
+#define p2_init 6.283                           /* Magic number */
 /* Stolen from evp_data, BLAKE2s256 test */
 #define p3_init                                 \
     "4142434445464748494a4b4c4d4e4f50"          \
@@ -316,7 +316,7 @@ static unsigned char foo[1];          /* "foo" */
 static size_t foo_l;                  /* "foo" */
 
 #define app_p1_init 17           /* A random number */
-#define app_p2_init 4711.0       /* Another random number */
+#define app_p2_init 47.11        /* Another random number */
 #define app_p3_init "deadbeef"   /* Classic */
 #define app_p4_init "Hello"
 #define app_p5_init "World"
