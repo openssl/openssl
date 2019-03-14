@@ -23,7 +23,7 @@
 #include "../crypto/include/internal/evp_int.h"
 
 #ifndef OPENSSL_NO_HW
-# ifndef OPENSSL_NO_HW_PADLOCK
+# ifndef OPENSSL_NO_HW_PADLOCK 
 
 /* Attempt to have a single source for both 0.9.7 and 0.9.8 :-) */
 #  if (OPENSSL_VERSION_NUMBER >= 0x00908000L)
@@ -82,11 +82,11 @@ static RAND_METHOD padlock_rand;
 static int padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                            const int **nids, int nid);
 static int zx_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
-                           const int **nids, int nid);
+                      const int **nids, int nid);
 
 /* Digest Stuff*/
 static int gmi_digests(ENGINE *e, const EVP_MD **digest,
-		                          const int **nids, int nid);
+		       const int **nids, int nid);
 
 /* Engine names */
 static const char *padlock_id = "padlock";
@@ -117,7 +117,7 @@ static int padlock_bind_helper(ENGINE *e)
                  "VIA PadLock (%s, %s, %s)",
                  padlock_use_rng ? "RNG" : "no-RNG",
                  padlock_use_ace ? "ACE" : "no-ACE",
-				 padlock_use_ccs ? "CCS" : "no-CCS");
+		 padlock_use_ccs ? "CCS" : "no-CCS");
 
     /* Register everything or return with an error */
     if (!ENGINE_set_id(e, padlock_id) ||
@@ -288,16 +288,16 @@ static int gmi_available(void)
     uint8_t cpu_family;
     unsigned int eax = 0;
     unsigned int edx = 0;
-	unsigned int leaf = 0x1;
+    unsigned int leaf = 0x1;
 
-	asm volatile("cpuid":"=a"(eax):"0"(leaf):"ebx", "ecx");
-	cpu_family = (eax & 0xf00) >> 8; 
+    asm volatile("cpuid":"=a"(eax):"0"(leaf):"ebx", "ecx");
+    cpu_family = (eax & 0xf00) >> 8; 
         
     if(cpu_family > 6){
-		edx = padlock_capability();
-	    padlock_use_ccs = ((edx & (0x3 << 4)) == (0x3 << 4));
+        edx = padlock_capability();
+	padlock_use_ccs = ((edx & (0x3 << 4)) == (0x3 << 4));
     }else{
-		padlock_use_ccs = 0;
+	padlock_use_ccs = 0;
     }
 
     return padlock_use_ccs;
@@ -347,6 +347,29 @@ static const int padlock_cipher_nids[] = {
     NID_aes_256_cbc,
     NID_aes_256_cfb,
     NID_aes_256_ofb,
+    NID_aes_256_ctr
+};
+
+static int padlock_cipher_nids_num = (sizeof(padlock_cipher_nids) /
+                                      sizeof(padlock_cipher_nids[0]));
+
+static const int zx_cipher_nids[] = {
+    NID_aes_128_ecb,
+    NID_aes_128_cbc,
+    NID_aes_128_cfb,
+    NID_aes_128_ofb,
+    NID_aes_128_ctr,
+
+    NID_aes_192_ecb,
+    NID_aes_192_cbc,
+    NID_aes_192_cfb,
+    NID_aes_192_ofb,
+    NID_aes_192_ctr,
+
+    NID_aes_256_ecb,
+    NID_aes_256_cbc,
+    NID_aes_256_cfb,
+    NID_aes_256_ofb,
     NID_aes_256_ctr,
 
     NID_sm4_ecb,
@@ -356,14 +379,14 @@ static const int padlock_cipher_nids[] = {
     NID_sm4_ctr
 };
 
-static int padlock_cipher_nids_num = (sizeof(padlock_cipher_nids) /
-                                      sizeof(padlock_cipher_nids[0]));
+static int zx_cipher_nids_num = (sizeof(zx_cipher_nids) /
+                                 sizeof(zx_cipher_nids[0]));
 
 /* Function prototypes ... */
 static int padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                 const unsigned char *iv, int enc);
 static int gmi_sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                                const unsigned char *iv, int enc);
+                            const unsigned char *iv, int enc);
 
 #   define NEAREST_ALIGNED(ptr) ( (unsigned char *)(ptr) +         \
         ( (0x10 - ((size_t)(ptr) & 0x0F)) & 0x0F )      )
@@ -545,19 +568,23 @@ padlock_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
     return 1;
 }
 
+static int
+gmi_sm4_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
+                   const unsigned char *in_arg, size_t nbytes)
+{
+    struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
+    gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
+    return 1;
+}
 
 static int
 gmi_sm4_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-
     memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
-
     gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
-
-    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);
-   
+    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);   
     return 1;
 }
 
@@ -566,16 +593,14 @@ gmi_sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-	unsigned int num = EVP_CIPHER_CTX_num(ctx);
-	CRYPTO_ctr128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key, 
-			EVP_CIPHER_CTX_iv_noconst(ctx), EVP_CIPHER_CTX_buf_noconst(ctx),
-			&num, (block128_f)gmi_sm4_ecb_enc);
-	EVP_CIPHER_CTX_set_num(ctx, num);
-    
-	/*unsigned int num = EVP_CIPHER_CTX_num(ctx);
+    unsigned int num = EVP_CIPHER_CTX_num(ctx);
     memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
-	gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
-    EVP_CIPHER_CTX_set_num(ctx, (size_t)num);*/
+    if(nbytes%SM4_BLOCK_SIZE){        
+        nbytes = SM4_BLOCK_SIZE - nbytes%SM4_BLOCK_SIZE + nbytes;    
+    }
+    gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
+    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);
+    EVP_CIPHER_CTX_set_num(ctx, (size_t)num);
     return 1;
 }
 
@@ -583,14 +608,13 @@ static int
 gmi_sm4_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
-	struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-	int num = EVP_CIPHER_CTX_num(ctx);
-	CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key, 
-			EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx), (block128_f)gmi_sm4_ecb_enc);
-	EVP_CIPHER_CTX_set_num(ctx, num);
-    /*memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
-	gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
-    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);*/
+    struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
+    memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
+    if(nbytes%SM4_BLOCK_SIZE){        
+        nbytes = SM4_BLOCK_SIZE - nbytes%SM4_BLOCK_SIZE + nbytes;    
+    }
+    gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
+    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);
     return 1;
 }
 
@@ -599,65 +623,12 @@ gmi_sm4_ofb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-	int num = EVP_CIPHER_CTX_num(ctx);
-	CRYPTO_ofb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
-			EVP_CIPHER_CTX_iv_noconst(ctx), &num, (block128_f)gmi_sm4_ecb_enc);
-	EVP_CIPHER_CTX_set_num(ctx, num);
-    /*memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
-	gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
-    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);*/
-	return 1;
-}
-
-static int
-gmi_sm4_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
-                   const unsigned char *in_arg, size_t nbytes)
-{
-    struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-
-    gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
-
-    return 1;
-}
-
-/* Prepare the encryption key for GMI sm4  usage */
-static int
-gmi_sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                     const unsigned char *iv, int enc)
-{
-    struct gmi_cipher_data *cdata;
-    unsigned long mode = EVP_CIPHER_CTX_mode(ctx);
- 
-    if (key == NULL)
-        return 0;               /* ERROR */
-
-    cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-    memset(cdata, 0, sizeof(*cdata));
-
-    /* Prepare Control word. */
-    if (mode == EVP_CIPH_OFB_MODE || mode == EVP_CIPH_CTR_MODE)
-        cdata->cword.b.encdec = 0;
-    else
-        cdata->cword.b.encdec = (EVP_CIPHER_CTX_encrypting(ctx) == 0);
-
-    cdata->cword.b.func = CCS_ENCRYPT_FUNC_SM4;
-    cdata->cword.b.mode = 1<<(mode-1);;
-    cdata->cword.b.digest = 0;
-
-    if(iv != NULL)
-    {
-        memcpy(cdata->iv, iv, SM4_BLOCK_SIZE);
+    memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
+    if(nbytes%SM4_BLOCK_SIZE){        
+        nbytes = SM4_BLOCK_SIZE - nbytes%SM4_BLOCK_SIZE + nbytes;    
     }
-
-    memcpy(cdata->ks.rd_key, key, SM4_KEY_SIZE);
-
-    /*
-     * This is done to cover for cases when user reuses the
-     * context for new key. The catch is that if we don't do
-     * this, gmi_eas_cipher might proceed with old key...
-     */
-    gmi_reload_key();
-
+    gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
+    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);
     return 1;
 }
 
@@ -834,8 +805,8 @@ zx_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
 {
     /* No specific cipher => return a list of supported nids ... */
     if (!cipher) {
-        *nids = padlock_cipher_nids;
-        return padlock_cipher_nids_num;
+        *nids = zx_cipher_nids;
+        return zx_cipher_nids_num;
     }
 
     /* ... or the requested "cipher" otherwise */
@@ -887,22 +858,23 @@ zx_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
     case NID_aes_256_ctr:
         *cipher = padlock_aes_256_ctr();
         break;
-	/* zx ciphers supports gmi's sm4 algorithm  */
-	case NID_sm4_ecb:
-		*cipher = gmi_sm4_ecb();
-		break;
-	case NID_sm4_cbc:
-		*cipher = gmi_sm4_cbc();
-		break;
-	case NID_sm4_cfb128:
-		*cipher = gmi_sm4_cfb128();
-		break;
-	case NID_sm4_ofb128:
-		*cipher = gmi_sm4_ofb128();
-		break;
-	case NID_sm4_ctr:
-		*cipher = gmi_sm4_ctr();
-		break;
+		    
+    /* zx ciphers supports gmi's sm4 algorithm  */
+    case NID_sm4_ecb:
+        *cipher = gmi_sm4_ecb();
+        break;
+    case NID_sm4_cbc:
+        *cipher = gmi_sm4_cbc();
+        break;
+    case NID_sm4_cfb128:
+        *cipher = gmi_sm4_cfb128();
+        break;
+    case NID_sm4_ofb128:
+        *cipher = gmi_sm4_ofb128();
+        break;
+    case NID_sm4_ctr:
+        *cipher = gmi_sm4_ctr();
+        break;
 
     default:
         /* Sorry, we don't support this NID */
@@ -984,22 +956,62 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
+/* Prepare the encryption key for GMI sm4  usage */
+static int
+gmi_sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                     const unsigned char *iv, int enc)
+{
+    struct gmi_cipher_data *cdata;
+    unsigned long mode = EVP_CIPHER_CTX_mode(ctx);
+ 
+    if (key == NULL)
+        return 0;               /* ERROR */
+
+    cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
+    memset(cdata, 0, sizeof(*cdata));
+
+    /* Prepare Control word. */
+    if (mode == EVP_CIPH_OFB_MODE || mode == EVP_CIPH_CTR_MODE)
+        cdata->cword.b.encdec = 0;
+    else
+        cdata->cword.b.encdec = (EVP_CIPHER_CTX_encrypting(ctx) == 0);
+
+    cdata->cword.b.func = CCS_ENCRYPT_FUNC_SM4;
+    cdata->cword.b.mode = 1<<(mode-1);;
+    cdata->cword.b.digest = 0;
+
+    if(iv != NULL)
+    {
+        memcpy(cdata->iv, iv, SM4_BLOCK_SIZE);
+    }
+
+    memcpy(cdata->ks.rd_key, key, SM4_KEY_SIZE);
+
+    /*
+     * This is done to cover for cases when user reuses the
+     * context for new key. The catch is that if we don't do
+     * this, gmi_eas_cipher might proceed with old key...
+     */
+    gmi_reload_key();
+
+    return 1;
+}
+
 /* ===== GMI SM3 digest ===== */
 #define SM3_MAKE_STRING(c, s) do {                     \
         unsigned long ll;                              \
         unsigned int  nn;                              \
         for (nn=0; nn<SM3_DIGEST_LENGTH/4; nn++)       \
         {   ll=(c)->h[nn]; (void)HOST_l2c(ll,(&s));   } \
-                                                       \
         } while (0)
 
 static unsigned int HOST_l2c(unsigned long l, unsigned char **c)
 {
-	unsigned int r = l;
-	asm ("bswapl %0":"=r"(r):"0"(r));
-	*((unsigned int *)(*c))=r;
-	(*c)+=4;
-	return r;
+    unsigned int r = l;
+    asm ("bswapl %0":"=r"(r):"0"(r));
+    *((unsigned int *)(*c))=r;
+    (*c)+=4;
+    return r;
 }
 
 static int gmi_sm3_init(EVP_MD_CTX *ctx)
@@ -1007,13 +1019,13 @@ static int gmi_sm3_init(EVP_MD_CTX *ctx)
     SM3_CTX *c = (SM3_CTX *)EVP_MD_CTX_md_data(ctx);
 
     c->h[0]=0x6f168073UL;
-   	c->h[1]=0xb9b21449UL;
-   	c->h[2]=0xd7422417UL;
-   	c->h[3]=0x00068adaUL;
-   	c->h[4]=0xbc306fa9UL;
-   	c->h[5]=0xaa383116UL;
-   	c->h[6]=0x4dee8de3UL;
-   	c->h[7]=0x4e0efbb0UL;
+    c->h[1]=0xb9b21449UL;
+    c->h[2]=0xd7422417UL;
+    c->h[3]=0x00068adaUL;
+    c->h[4]=0xbc306fa9UL;
+    c->h[5]=0xaa383116UL;
+    c->h[6]=0x4dee8de3UL;
+    c->h[7]=0x4e0efbb0UL;
 
     c->num = 0; 
     return 1;
@@ -1124,7 +1136,7 @@ static const EVP_MD digest_sm3 = {
     NULL,
     SM3_CBLOCK,
     sizeof(EVP_MD *) + sizeof(SM3_CTX),
-	NULL
+    NULL
 };
 
 static int gmi_digests(ENGINE *e, const EVP_MD **digest,
@@ -1219,7 +1231,6 @@ static RAND_METHOD padlock_rand = {
 #  endif                        /* COMPILE_HW_PADLOCK */
 # endif                         /* !OPENSSL_NO_HW_PADLOCK */
 #endif                          /* !OPENSSL_NO_HW */
-
 
 #if defined(OPENSSL_NO_HW) || defined(OPENSSL_NO_HW_PADLOCK) \
         || !defined(COMPILE_HW_PADLOCK)
