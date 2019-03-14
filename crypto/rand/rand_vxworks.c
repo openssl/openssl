@@ -6,10 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
- 
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE
-#endif
+
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_SYS_VXWORKS

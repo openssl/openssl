@@ -88,7 +88,7 @@ static uint64_t get_timer_bits(void);
 # undef OPENSSL_RAND_SEED_EGD
 #endif
 
-#if (defined(OPENSSL_SYS_UEFI)) && !defined(OPENSSL_RAND_SEED_NONE)
+#if defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_RAND_SEED_NONE)
 # error "UEFI only supports seeding NONE"
 #endif
 
