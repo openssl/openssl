@@ -353,7 +353,7 @@ static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
         to_cipher_ctx =
             (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(to_ctx);
         memset(&to_cipher_ctx->sess, 0, sizeof(to_cipher_ctx->sess));
-        return cipher_init(to_ctx, cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
+        return cipher_init(to_ctx, (void *)cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
                            (cipher_ctx->op == COP_ENCRYPT));
 
     case EVP_CTRL_INIT:
