@@ -11,6 +11,12 @@
 #include <openssl/provider.h>
 #include "testutil.h"
 
+#if !defined(DSO_VMS) && !defined(DSO_DLCFN) && !defined(DSO_DL) \
+    && !defined(DSO_WIN32) && !defined(DSO_DLFCN)
+# define OPENSSL_NO_DSO
+#endif
+
+
 extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
@@ -33,8 +39,8 @@ static int test_provider(const char *name)
     return
         TEST_ptr(prov = OSSL_PROVIDER_load(NULL, name))
         && TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
-        && TEST_ptr(greeting = greeting_request[0].buffer)
-        && TEST_size_t_gt(greeting_request[0].buffer_size, 0)
+        && TEST_ptr(greeting = greeting_request[0].data)
+        && TEST_size_t_gt(greeting_request[0].data_size, 0)
         && TEST_str_eq(greeting, expected_greeting)
         && TEST_true(OSSL_PROVIDER_unload(prov));
 }
@@ -45,11 +51,11 @@ static int test_builtin_provider(void)
 
     return
         TEST_true(OSSL_PROVIDER_add_builtin(NULL, name,
-					    PROVIDER_INIT_FUNCTION_NAME))
+                                            PROVIDER_INIT_FUNCTION_NAME))
         && test_provider(name);
 }
 
-#ifndef OPENSSL_NO_SHARED
+#ifndef OPENSSL_NO_DSO
 static int test_loaded_provider(void)
 {
     const char *name = "p_test";
@@ -61,7 +67,7 @@ static int test_loaded_provider(void)
 int setup_tests(void)
 {
     ADD_TEST(test_builtin_provider);
-#ifndef OPENSSL_NO_SHARED
+#ifndef OPENSSL_NO_DSO
     ADD_TEST(test_loaded_provider);
 #endif
     return 1;

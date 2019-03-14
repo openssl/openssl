@@ -28,9 +28,7 @@ struct ossl_provider_st {
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
-#ifndef HAVE_ATOMICS
-    CRYPTO_RWLOCK refcnt_lock;   /* For the ref counter */
-#endif
+    CRYPTO_RWLOCK *refcnt_lock;  /* For the ref counter */
     char *name;
     DSO *module;
     OSSL_provider_init_fn *init_function;
@@ -39,6 +37,7 @@ struct ossl_provider_st {
     OSSL_provider_teardown_fn *teardown;
     OSSL_provider_get_param_types_fn *get_param_types;
     OSSL_provider_get_params_fn *get_params;
+    OSSL_provider_query_operation_fn *query_operation;
 };
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -122,11 +121,7 @@ int ossl_provider_upref(OSSL_PROVIDER *prov)
 {
     int ref = 0;
 
-#ifndef HAVE_ATOMICS
     CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock);
-#else
-    CRYPTO_UP_REF(&prov->refcnt, &ref, NULL);
-#endif
     return ref;
 }
 
@@ -170,6 +165,9 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
     }
 
     if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL
+#ifndef HAVE_ATOMICS
+        || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
+#endif
         || !ossl_provider_upref(prov) /* +1 One reference to be returned */
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
         ossl_provider_free(prov);
@@ -206,11 +204,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
     if (prov != NULL) {
         int ref = 0;
 
-#ifndef HAVE_ATOMICS
-        CRYPTO_DOWN_REF(&prov->refcnt, &ref, provider_lock);
-#else
-        CRYPTO_DOWN_REF(&prov->refcnt, &ref, NULL);
-#endif
+        CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
 
         /*
          * When the refcount drops down to one, there is only one reference,
@@ -230,6 +224,9 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
         if (ref == 0) {
             DSO_free(prov->module);
             OPENSSL_free(prov->name);
+#ifndef HAVE_ATOMICS
+            CRYPTO_THREAD_lock_free(prov->refcnt_lock);
+#endif
             OPENSSL_free(prov);
         }
     }
@@ -319,6 +316,10 @@ int ossl_provider_activate(OSSL_PROVIDER *prov)
             prov->get_params =
                 OSSL_get_provider_get_params(provider_dispatch);
             break;
+        case OSSL_FUNC_PROVIDER_QUERY_OPERATION:
+            prov->query_operation =
+                OSSL_get_provider_query_operation(provider_dispatch);
+            break;
         }
     }
 
@@ -326,6 +327,30 @@ int ossl_provider_activate(OSSL_PROVIDER *prov)
     prov->flag_initialized = 1;
 
     return 1;
+}
+
+int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
+                                int (*cb)(OSSL_PROVIDER *provider,
+                                          void *cbdata),
+                                void *cbdata)
+{
+    int ret = 1;
+    int i;
+    struct provider_store_st *store = get_provider_store(ctx);
+
+    if (store != NULL) {
+        CRYPTO_THREAD_read_lock(store->lock);
+        for (i = 0; i < sk_OSSL_PROVIDER_num(store->providers); i++) {
+            OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
+
+            if (prov->flag_initialized
+                && !(ret = cb(prov, cbdata)))
+                break;
+        }
+        CRYPTO_THREAD_unlock(store->lock);
+    }
+
+    return ret;
 }
 
 /* Getters of Provider Object data */
@@ -368,6 +393,14 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov,
     return prov->get_params == NULL ? 0 : prov->get_params(prov, params);
 }
 
+
+const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
+                                                    int operation_id,
+                                                    int *no_cache)
+{
+    return prov->query_operation(prov, operation_id, no_cache);
+}
+
 /*-
  * Core functions for the provider
  * ===============================
@@ -381,8 +414,8 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov,
  * never knows.
  */
 static const OSSL_ITEM param_types[] = {
-    { OSSL_PARAM_UTF8_STRING_PTR, "openssl-version" },
-    { OSSL_PARAM_UTF8_STRING_PTR, "provider-name" },
+    { OSSL_PARAM_UTF8_PTR, "openssl-version" },
+    { OSSL_PARAM_UTF8_PTR, "provider-name" },
     { 0, NULL }
 };
 
@@ -397,11 +430,11 @@ static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
 
     for (i = 0; params[i].key != NULL; i++) {
         if (strcmp(params[i].key, "openssl-version") == 0) {
-            *(void **)params[i].buffer = OPENSSL_VERSION_STR;
+            *(void **)params[i].data = OPENSSL_VERSION_STR;
             if (params[i].return_size)
                 *params[i].return_size = sizeof(OPENSSL_VERSION_STR);
         } else if (strcmp(params[i].key, "provider-name") == 0) {
-            *(void **)params[i].buffer = prov->name;
+            *(void **)params[i].data = prov->name;
             if (params[i].return_size)
                 *params[i].return_size = strlen(prov->name) + 1;
         }

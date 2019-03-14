@@ -261,10 +261,11 @@ The output is almost the same as for the simple example above.
 
 =head1 NOTES
 
-=head2 Tracing disabled
+=head2 Configure Tracing
 
-The OpenSSL library may be built with tracing disabled, which makes
-everything documented here inoperational.
+By default, the OpenSSL library is built with tracing disabled. To
+use the tracing functionality documented here, it is therefore
+necessary to configure and build OpenSSL with the 'enable-trace' option.
 
 When the library is built with tracing disabled, the macro
 C<OPENSSL_NO_TRACE> is defined in C<openssl/opensslconf.h> and all

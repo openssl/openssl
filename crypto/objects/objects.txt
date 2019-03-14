@@ -394,6 +394,8 @@ sm-scheme 301           : SM2                   : sm2
 sm-scheme 401           : SM3                   : sm3
 sm-scheme 504           : RSA-SM3		: sm3WithRSAEncryption
 
+sm-scheme 501           : SM2-SM3               : SM2-with-SM3
+
 # From RFC4231
 rsadsi 2 8		:			: hmacWithSHA224
 rsadsi 2 9		:			: hmacWithSHA256

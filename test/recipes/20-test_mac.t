@@ -17,26 +17,11 @@ use Storable qw(dclone);
 setup("test_mac");
 
 my @mac_tests = (
-    { cmd => [qw{openssl mac -macopt hexkey:000102030405060708090A0B0C0D0E0F}],
-      type => 'SipHash',
-      input => '00',
-      expected => 'da87c1d86b99af44347659119b22fc45',
-      desc => 'SipHash No input' },
     { cmd => [qw{openssl mac -macopt digest:SHA1 -macopt hexkey:000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F}],
       type => 'HMAC',
       input => unpack("H*", "Sample message for keylen=blocklen"),
       expected => '5FD596EE78D5553C8FF4E72D266DFD192366DA29',
       desc => 'HMAC SHA1' },
-    { cmd => [qw{openssl mac -macopt cipher:AES-256-CBC -macopt hexkey:0B122AC8F34ED1FE082A3625D157561454167AC145A10BBF77C6A70596D574F1}],
-      type => 'CMAC',
-      input => '498B53FDEC87EDCBF07097DCCDE93A084BAD7501A224E388DF349CE18959FE8485F8AD1537F0D896EA73BEDC7214713F',
-      expected => 'F62C46329B41085625669BAF51DEA66A',
-      desc => 'CMAC AES-256-CBC' },
-    { cmd => [qw{openssl mac -macopt hexkey:02000000000000000000000000000000ffffffffffffffffffffffffffffffff}],
-      type => 'Poly1305',
-      input => '02000000000000000000000000000000',
-      expected => '03000000000000000000000000000000',
-      desc => 'Poly1305 (wrap 2^128)' },
    { cmd => [qw{openssl mac -macopt cipher:AES-256-GCM -macopt hexkey:4C973DBC7364621674F8B5B89E5C15511FCED9216490FB1C1A2CAA0FFE0407E5 -macopt hexiv:7AE8E2CA4EC500012E58495C}],
      type => 'GMAC',
      input => '68F2E77696CE7AE8E2CA4EC588E541002E58495C08000F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D0007',
@@ -59,18 +44,51 @@ my @mac_tests = (
      desc => 'KMAC256 with xof len of 64' },
 );
 
-my @mac_fail_tests = (
-    { cmd => [qw{openssl mac}],
+my @siphash_tests = (
+    { cmd => [qw{openssl mac -macopt hexkey:000102030405060708090A0B0C0D0E0F}],
       type => 'SipHash',
       input => '00',
-      err => '',
-      desc => 'SipHash Fail no key' },
+      expected => 'da87c1d86b99af44347659119b22fc45',
+      desc => 'SipHash No input' }
+);
+
+my @cmac_tests = (
+    { cmd => [qw{openssl mac -macopt cipher:AES-256-CBC -macopt hexkey:0B122AC8F34ED1FE082A3625D157561454167AC145A10BBF77C6A70596D574F1}],
+      type => 'CMAC',
+      input => '498B53FDEC87EDCBF07097DCCDE93A084BAD7501A224E388DF349CE18959FE8485F8AD1537F0D896EA73BEDC7214713F',
+      expected => 'F62C46329B41085625669BAF51DEA66A',
+      desc => 'CMAC AES-256-CBC' }
+);
+
+my @poly1305_tests = (
+    { cmd => [qw{openssl mac -macopt hexkey:02000000000000000000000000000000ffffffffffffffffffffffffffffffff}],
+      type => 'Poly1305',
+      input => '02000000000000000000000000000000',
+      expected => '03000000000000000000000000000000',
+      desc => 'Poly1305 (wrap 2^128)' },
+);
+
+push @mac_tests, @siphash_tests unless disabled("siphash");
+push @mac_tests, @cmac_tests unless disabled("cmac");
+push @mac_tests, @poly1305_tests unless disabled("poly1305");
+
+my @mac_fail_tests = (
     { cmd => [qw{openssl mac}],
       type => 'KMAC128',
       input => '00',
       err => 'EVP_MAC_Init',
       desc => 'KMAC128 Fail no key' },
 );
+
+my @siphash_fail_tests = (
+    { cmd => [qw{openssl mac}],
+      type => 'SipHash',
+      input => '00',
+      err => '',
+      desc => 'SipHash Fail no key' },
+);
+
+push @mac_fail_tests, @siphash_fail_tests unless disabled("siphash");
 
 plan tests => (scalar @mac_tests * 2) + scalar @mac_fail_tests;
 

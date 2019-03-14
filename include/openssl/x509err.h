@@ -82,8 +82,10 @@ int ERR_load_X509_strings(void);
 # define X509_F_X509_TO_X509_REQ                          126
 # define X509_F_X509_TRUST_ADD                            133
 # define X509_F_X509_TRUST_SET                            141
+# define X509_F_X509_VERIFY                               161
 # define X509_F_X509_VERIFY_CERT                          127
 # define X509_F_X509_VERIFY_PARAM_NEW                     159
+# define X509_F_X509_VERIFY_SM2                           162
 
 /*
  * X509 reason codes.

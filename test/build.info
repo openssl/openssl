@@ -34,7 +34,7 @@ IF[{- !$disabled{tests} -}]
           bftest ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
-          conf_include_test \
+          conf_include_test params_api_test \
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
@@ -50,7 +50,7 @@ IF[{- !$disabled{tests} -}]
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
           sysdefaulttest errtest gosttest \
-          context_internal_test aesgcmtest
+          context_internal_test aesgcmtest params_test
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include ../apps/include
@@ -306,6 +306,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include ../apps/include
   DEPEND[bioprinttest]=../libcrypto libtestutil.a
+
+  SOURCE[params_api_test]=params_api_test.c
+  INCLUDE[params_api_test]=../include ../apps/include
+  DEPEND[params_api_test]=../libcrypto libtestutil.a
 
   SOURCE[sslapitest]=sslapitest.c ssltestlib.c
   INCLUDE[sslapitest]=../include ../apps/include ..
@@ -611,6 +615,11 @@ IF[{- !$disabled{tests} -}]
     DEFINE[provider_test]=OPENSSL_NO_SHARED
     DEFINE[provider_internal_test]=OPENSSL_NO_SHARED
   ENDIF
+
+  PROGRAMS{noinst}=params_test
+  SOURCE[params_test]=params_test.c
+  INCLUDE[params_test]=.. ../include ../apps/include
+  DEPEND[params_test]=../libcrypto.a libtestutil.a
 ENDIF
 
 {-

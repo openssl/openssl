@@ -9,9 +9,14 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
-  *) Added support for enabling instrumentation through trace output.
-     This is left to application control, by allowing it to register BIOs as
-     channels for a number of tracing and debugging categories.
+  *) Added a new generic trace API which provides support for enabling
+     instrumentation through trace output. This feature is mainly intended
+     as an aid for developers and is disabled by default. To utilize it,
+     OpenSSL needs to be configured with the `enable-trace` option.
+
+     If the tracing API is enabled, the application can activate trace output
+     by registering BIOs as trace channels for a number of tracing and debugging
+     categories.
 
      The 'openssl' application has been expanded to enable any of the types
      available via environment variables defined by the user, and serves as

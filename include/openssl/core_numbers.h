@@ -67,6 +67,10 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
 # define OSSL_FUNC_PROVIDER_GET_PARAMS       1026
 OSSL_CORE_MAKE_FUNC(int,provider_get_params,(const OSSL_PROVIDER *prov,
                                              const OSSL_PARAM params[]))
+# define OSSL_FUNC_PROVIDER_QUERY_OPERATION  1027
+OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
+                    (const OSSL_PROVIDER *, int operation_id,
+                     const int *no_store))
 
 
 # ifdef __cplusplus

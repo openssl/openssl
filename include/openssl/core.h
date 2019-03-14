@@ -75,8 +75,8 @@ struct ossl_algorithm_st {
 struct ossl_param_st {
     const char *key;             /* the name of the parameter */
     unsigned int data_type;      /* declare what kind of content is in buffer */
-    void *buffer;                /* value being passed in or out */
-    size_t buffer_size;          /* buffer size */
+    void *data;                  /* value being passed in or out */
+    size_t data_size;            /* data size */
     size_t *return_size;         /* OPTIONAL: address to content size */
 };
 
@@ -111,13 +111,12 @@ struct ossl_param_st {
  * printed as a hexdump.
  */
 # define OSSL_PARAM_OCTET_STRING         5
-
 /*-
- * Pointer flag
+ * OSSL_PARAM_UTF8_PTR
+ * is a pointer to a printable string.  Is expteced to be printed as it is.
  *
- * This flag can be added to any type to signify that the buffer
- * pointer is set to point at a pointer to the data instead of
- * pointing directly at the data.
+ * The difference between this and OSSL_PARAM_UTF8_STRING is that only pointers
+ * are manipulated for this type.
  *
  * This is more relevant for parameter requests, where the responding
  * function doesn't need to copy the data to the provided buffer, but
@@ -126,15 +125,23 @@ struct ossl_param_st {
  * WARNING!  Using these is FRAGILE, as it assumes that the actual
  * data and its location are constant.
  */
-# define OSSL_PARAM_POINTER_FLAG    0x80000000UL
-
-/*
- * Convenience pointer types for strings.
+# define OSSL_PARAM_UTF8_PTR             6
+/*-
+ * OSSL_PARAM_OCTET_PTR
+ * is a pointer to a string of bytes with no further specification.  It is
+ * expected to be printed as a hexdump.
+ *
+ * The difference between this and OSSL_PARAM_OCTET_STRING is that only pointers
+ * are manipulated for this type.
+ *
+ * This is more relevant for parameter requests, where the responding
+ * function doesn't need to copy the data to the provided buffer, but
+ * sets the provided buffer to point at the actual data instead.
+ *
+ * WARNING!  Using these is FRAGILE, as it assumes that the actual
+ * data and its location are constant.
  */
-# define OSSL_PARAM_UTF8_STRING_PTR                     \
-    (OSSL_PARAM_UTF8_STRING|OSSL_PARAM_POINTER_FLAG)
-# define OSSL_PARAM_OCTET_STRING_PTR                    \
-    (OSSL_PARAM_OCTET_STRING|OSSL_PARAM_POINTER_FLAG)
+# define OSSL_PARAM_OCTET_PTR            7
 
 /*-
  * Provider entry point

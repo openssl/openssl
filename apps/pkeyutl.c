@@ -13,6 +13,9 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
+#ifndef OPENSSL_NO_POSIX_IO
+# include <sys/stat.h>
+#endif
 
 #define KEY_NONE        0
 #define KEY_PRIVKEY     1
@@ -22,7 +25,7 @@
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-                              const int impl, EVP_PKEY **ppkey);
+                              const int impl, int rawin, EVP_PKEY **ppkey);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e);
@@ -33,7 +36,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
 static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
                         const EVP_MD *md, EVP_PKEY *pkey, BIO *in,
-                        unsigned char *sig, int siglen,
+                        int filesize, unsigned char *sig, int siglen,
                         unsigned char **out, size_t *poutlen);
 
 typedef enum OPTION_choice {
@@ -109,6 +112,7 @@ int pkeyutl_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
     int rawin = 0;
     const EVP_MD *md = NULL;
+    int filesize = -1;
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -264,7 +268,7 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
-                   passinarg, pkey_op, e, engine_impl, &pkey);
+                   passinarg, pkey_op, e, engine_impl, rawin, &pkey);
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         ERR_print_errors(bio_err);
@@ -344,6 +348,15 @@ int pkeyutl_main(int argc, char **argv)
 
     if (pkey_op != EVP_PKEY_OP_DERIVE) {
         in = bio_open_default(infile, 'r', FORMAT_BINARY);
+#ifndef OPENSSL_NO_POSIX_IO
+        if (infile != NULL)
+        {
+            struct stat st;
+
+            if (stat(infile, &st) == 0 && st.st_size <= INT_MAX)
+                filesize = (int)st.st_size;
+        }
+#endif
         if (in == NULL)
             goto end;
     }
@@ -399,7 +412,7 @@ int pkeyutl_main(int argc, char **argv)
 
     if (pkey_op == EVP_PKEY_OP_VERIFY) {
         if (rawin) {
-            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, sig, siglen,
+            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, filesize, sig, siglen,
                               NULL, 0);
         } else {
             rv = EVP_PKEY_verify(ctx, sig, (size_t)siglen,
@@ -419,7 +432,7 @@ int pkeyutl_main(int argc, char **argv)
     } else {
         if (rawin) {
             /* rawin allocates the buffer in do_raw_keyop() */
-            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, NULL, 0,
+            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, filesize, NULL, 0,
                               &buf_out, (size_t *)&buf_outlen);
         } else {
             rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
@@ -468,7 +481,8 @@ int pkeyutl_main(int argc, char **argv)
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-                              const int engine_impl, EVP_PKEY **ppkey)
+                              const int engine_impl, int rawin,
+                              EVP_PKEY **ppkey)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -554,30 +568,39 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     if (ctx == NULL)
         goto end;
 
-    switch (pkey_op) {
-    case EVP_PKEY_OP_SIGN:
-        rv = EVP_PKEY_sign_init(ctx);
-        break;
+    /*
+     * If rawin then we don't need to actually initialise the EVP_PKEY_CTX
+     * itself. That will get initialised during EVP_DigestSignInit or
+     * EVP_DigestVerifyInit.
+     */
+    if (rawin) {
+        rv = 1;
+    } else {
+        switch (pkey_op) {
+        case EVP_PKEY_OP_SIGN:
+            rv = EVP_PKEY_sign_init(ctx);
+            break;
 
-    case EVP_PKEY_OP_VERIFY:
-        rv = EVP_PKEY_verify_init(ctx);
-        break;
+        case EVP_PKEY_OP_VERIFY:
+            rv = EVP_PKEY_verify_init(ctx);
+            break;
 
-    case EVP_PKEY_OP_VERIFYRECOVER:
-        rv = EVP_PKEY_verify_recover_init(ctx);
-        break;
+        case EVP_PKEY_OP_VERIFYRECOVER:
+            rv = EVP_PKEY_verify_recover_init(ctx);
+            break;
 
-    case EVP_PKEY_OP_ENCRYPT:
-        rv = EVP_PKEY_encrypt_init(ctx);
-        break;
+        case EVP_PKEY_OP_ENCRYPT:
+            rv = EVP_PKEY_encrypt_init(ctx);
+            break;
 
-    case EVP_PKEY_OP_DECRYPT:
-        rv = EVP_PKEY_decrypt_init(ctx);
-        break;
+        case EVP_PKEY_OP_DECRYPT:
+            rv = EVP_PKEY_decrypt_init(ctx);
+            break;
 
-    case EVP_PKEY_OP_DERIVE:
-        rv = EVP_PKEY_derive_init(ctx);
-        break;
+        case EVP_PKEY_OP_DERIVE:
+            rv = EVP_PKEY_derive_init(ctx);
+            break;
+        }
     }
 
     if (rv <= 0) {
@@ -649,13 +672,14 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
 static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
                         const EVP_MD *md, EVP_PKEY *pkey, BIO *in,
-                        unsigned char *sig, int siglen,
+                        int filesize, unsigned char *sig, int siglen,
                         unsigned char **out, size_t *poutlen)
 {
     int rv = 0;
     EVP_MD_CTX *mctx = NULL;
     unsigned char tbuf[TBUF_MAXSIZE];
-    int tbuf_len = 0;
+    unsigned char *mbuf = NULL;
+    int buf_len = 0;
 
     if ((mctx = EVP_MD_CTX_new()) == NULL) {
         BIO_printf(bio_err, "Error: out of memory\n");
@@ -663,19 +687,58 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
     }
     EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
 
+    /* Some algorithms only support oneshot digests */
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_ED25519
+            || EVP_PKEY_id(pkey) == EVP_PKEY_ED448) {
+        if (filesize < 0) {
+            BIO_printf(bio_err,
+                       "Error: unable to determine file size for oneshot operation\n");
+            return rv;
+        }
+        mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
+        switch(pkey_op) {
+        case EVP_PKEY_OP_VERIFY:
+            if (EVP_DigestVerifyInit(mctx, NULL, md, NULL, pkey) != 1)
+                goto end;
+            buf_len = BIO_read(in, mbuf, filesize);
+            if (buf_len != filesize) {
+                BIO_printf(bio_err, "Error reading raw input data\n");
+                goto end;
+            }
+            rv = EVP_DigestVerify(mctx, sig, (size_t)siglen, mbuf, buf_len);
+            break;
+        case EVP_PKEY_OP_SIGN:
+            if (EVP_DigestSignInit(mctx, NULL, md, NULL, pkey) != 1)
+                goto end;
+            buf_len = BIO_read(in, mbuf, filesize);
+            if (buf_len != filesize) {
+                BIO_printf(bio_err, "Error reading raw input data\n");
+                goto end;
+            }
+            rv = EVP_DigestSign(mctx, NULL, poutlen, mbuf, buf_len);
+            if (rv == 1 && out != NULL) {
+                *out = app_malloc(*poutlen, "buffer output");
+                rv = EVP_DigestSign(mctx, *out, poutlen, mbuf, buf_len);
+            }
+            break;
+        }
+        OPENSSL_free(mbuf);
+        goto end;
+    }
+
     switch(pkey_op) {
     case EVP_PKEY_OP_VERIFY:
         if (EVP_DigestVerifyInit(mctx, NULL, md, NULL, pkey) != 1)
             goto end;
         for (;;) {
-            tbuf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
-            if (tbuf_len == 0)
+            buf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
+            if (buf_len == 0)
                 break;
-            if (tbuf_len < 0) {
+            if (buf_len < 0) {
                 BIO_printf(bio_err, "Error reading raw input data\n");
                 goto end;
             }
-            rv = EVP_DigestVerifyUpdate(mctx, tbuf, (size_t)tbuf_len);
+            rv = EVP_DigestVerifyUpdate(mctx, tbuf, (size_t)buf_len);
             if (rv != 1) {
                 BIO_printf(bio_err, "Error verifying raw input data\n");
                 goto end;
@@ -687,14 +750,14 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
         if (EVP_DigestSignInit(mctx, NULL, md, NULL, pkey) != 1)
             goto end;
         for (;;) {
-            tbuf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
-            if (tbuf_len == 0)
+            buf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
+            if (buf_len == 0)
                 break;
-            if (tbuf_len < 0) {
+            if (buf_len < 0) {
                 BIO_printf(bio_err, "Error reading raw input data\n");
                 goto end;
             }
-            rv = EVP_DigestSignUpdate(mctx, tbuf, (size_t)tbuf_len);
+            rv = EVP_DigestSignUpdate(mctx, tbuf, (size_t)buf_len);
             if (rv != 1) {
                 BIO_printf(bio_err, "Error signing raw input data\n");
                 goto end;

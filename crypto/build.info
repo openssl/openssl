@@ -9,7 +9,7 @@ SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 x509v3 conf \
 
 LIBS=../libcrypto
 # The Core
-SOURCE[../libcrypto]=provider_core.c
+SOURCE[../libcrypto]=provider_core.c core_fetch.c
 
 # Central utilities
 SOURCE[../libcrypto]=\
@@ -17,7 +17,7 @@ SOURCE[../libcrypto]=\
         ebcdic.c uid.c o_time.c o_str.c o_dir.c o_fopen.c ctype.c \
         threads_pthread.c threads_win.c threads_none.c getenv.c \
         o_init.c o_fips.c mem_sec.c init.c context.c sparse_array.c \
-        trace.c provider.c \
+        trace.c provider.c params.c \
         {- $target{cpuid_asm_src} -} {- $target{uplink_aux_src} -}
 
 DEPEND[cversion.o]=buildinf.h
