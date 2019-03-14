@@ -29,7 +29,7 @@ struct ossl_provider_st {
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
 #ifndef HAVE_ATOMICS
-    CRYPTO_RWLOCK refcnt_lock;   /* For the ref counter */
+    CRYPTO_RWLOCK *refcnt_lock;  /* For the ref counter */
 #endif
     char *name;
     DSO *module;
@@ -208,7 +208,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
         int ref = 0;
 
 #ifndef HAVE_ATOMICS
-        CRYPTO_DOWN_REF(&prov->refcnt, &ref, provider_lock);
+        CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
 #else
         CRYPTO_DOWN_REF(&prov->refcnt, &ref, NULL);
 #endif
