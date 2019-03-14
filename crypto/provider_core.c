@@ -25,6 +25,7 @@ struct provider_store_st;        /* Forward declaration */
 struct ossl_provider_st {
     /* Flag bits */
     unsigned int flag_initialized:1;
+    unsigned int flag_fallback:1;
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
@@ -207,11 +208,13 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
         CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
 
         /*
-         * When the refcount drops down to one, there is only one reference,
-         * the store.
+         * When the refcount drops below two, the store is the only
+         * possible reference, or it has already been taken away from
+         * the store (this may happen if a provider was activated
+         * because it's a fallback, but isn't currently used)
          * When that happens, the provider is inactivated.
          */
-        if (ref == 1 && prov->flag_initialized) {
+        if (ref < 2 && prov->flag_initialized) {
             if (prov->teardown != NULL)
                 prov->teardown();
             prov->flag_initialized = 0;
@@ -336,21 +339,67 @@ int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
 {
     int ret = 1;
     int i;
+    int use_fallbacks;
     struct provider_store_st *store = get_provider_store(ctx);
 
     if (store != NULL) {
         CRYPTO_THREAD_read_lock(store->lock);
-        for (i = 0; i < sk_OSSL_PROVIDER_num(store->providers); i++) {
-            OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
+        for (use_fallbacks = 0; use_fallbacks < 2; use_fallbacks++) {
+            int num_provs = sk_OSSL_PROVIDER_num(store->providers);
 
-            if (prov->flag_initialized
-                && !(ret = cb(prov, cbdata)))
-                break;
+            /*
+             * if use_fallbacks is 1, it means there were no activated
+             * providers at all, and we need to auto-activate any fallback
+             * and try once more.
+             */
+            if (use_fallbacks) {
+                for (i = 0; i < num_provs; i++) {
+                    OSSL_PROVIDER *prov =
+                        sk_OSSL_PROVIDER_value(store->providers, i);
+
+                    /*
+                     * Note that we don't care if the activation succeeds or
+                     * not.  If it doesn't succeed, then the next loop will
+                     * fail anyway.
+                     */
+                    if (prov->flag_fallback)
+                        ossl_provider_activate(prov);
+                }
+            }
+
+            {
+                int found_activated = 0;
+
+                for (i = 0; i < num_provs; i++) {
+                    OSSL_PROVIDER *prov =
+                        sk_OSSL_PROVIDER_value(store->providers, i);
+
+                    if (prov->flag_initialized) {
+                        found_activated = 1;
+                        if (!(ret = cb(prov, cbdata)))
+                            break;
+                    }
+                }
+
+                /* If anything activated was found, don't use fallbacks */
+                if (found_activated)
+                    break;
+            }
         }
         CRYPTO_THREAD_unlock(store->lock);
     }
 
     return ret;
+}
+
+/* Setters of Provider Object data */
+int ossl_provider_set_fallback(OSSL_PROVIDER *prov)
+{
+    if (prov == NULL)
+        return 0;
+
+    prov->flag_fallback = 1;
+    return 1;
 }
 
 /* Getters of Provider Object data */
