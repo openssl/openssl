@@ -28,9 +28,7 @@ struct ossl_provider_st {
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
-#ifndef HAVE_ATOMICS
-    CRYPTO_RWLOCK refcnt_lock;   /* For the ref counter */
-#endif
+    CRYPTO_RWLOCK *refcnt_lock;  /* For the ref counter */
     char *name;
     DSO *module;
     OSSL_provider_init_fn *init_function;
@@ -123,11 +121,7 @@ int ossl_provider_upref(OSSL_PROVIDER *prov)
 {
     int ref = 0;
 
-#ifndef HAVE_ATOMICS
     CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock);
-#else
-    CRYPTO_UP_REF(&prov->refcnt, &ref, NULL);
-#endif
     return ref;
 }
 
@@ -171,6 +165,9 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
     }
 
     if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL
+#ifndef HAVE_ATOMICS
+        || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
+#endif
         || !ossl_provider_upref(prov) /* +1 One reference to be returned */
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
         ossl_provider_free(prov);
@@ -207,11 +204,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
     if (prov != NULL) {
         int ref = 0;
 
-#ifndef HAVE_ATOMICS
-        CRYPTO_DOWN_REF(&prov->refcnt, &ref, provider_lock);
-#else
-        CRYPTO_DOWN_REF(&prov->refcnt, &ref, NULL);
-#endif
+        CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
 
         /*
          * When the refcount drops down to one, there is only one reference,
@@ -231,6 +224,9 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
         if (ref == 0) {
             DSO_free(prov->module);
             OPENSSL_free(prov->name);
+#ifndef HAVE_ATOMICS
+            CRYPTO_THREAD_lock_free(prov->refcnt_lock);
+#endif
             OPENSSL_free(prov);
         }
     }
