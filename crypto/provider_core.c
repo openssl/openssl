@@ -171,6 +171,9 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
     }
 
     if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL
+#ifndef HAVE_ATOMICS
+        || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
+#endif
         || !ossl_provider_upref(prov) /* +1 One reference to be returned */
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
         ossl_provider_free(prov);
@@ -231,6 +234,9 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
         if (ref == 0) {
             DSO_free(prov->module);
             OPENSSL_free(prov->name);
+#ifndef HAVE_ATOMICS
+            CRYPTO_THREAD_lock_free(prov->refcnt_lock);
+#endif
             OPENSSL_free(prov);
         }
     }
