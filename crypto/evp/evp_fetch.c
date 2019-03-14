@@ -60,6 +60,7 @@ struct method_data_st {
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     void *(*method_from_dispatch)(int nid, const OSSL_DISPATCH *,
                                   OSSL_PROVIDER *);
+    int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
 
@@ -98,6 +99,10 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
 
     (void)ossl_method_store_fetch(store, methdata->nid, propquery, &method);
 
+    if (method != NULL
+        && !methdata->refcnt_up_method(method)) {
+        method = NULL;
+    }
     return method;
 }
 
@@ -111,8 +116,11 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
         && (store = get_default_method_store(libctx)) == NULL)
         return 0;
 
-    return ossl_method_store_add(store, methdata->nid, propdef, method,
-                                 methdata->destruct_method);
+    if (methdata->refcnt_up_method(method)
+        && ossl_method_store_add(store, methdata->nid, propdef, method,
+                                 methdata->destruct_method))
+        return 1;
+    return 0;
 }
 
 static void *construct_method(const OSSL_DISPATCH *fns, OSSL_PROVIDER *prov,
@@ -161,11 +169,8 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     int nid = OBJ_sn2nid(algorithm);
     void *method = NULL;
 
-    if (nid != NID_undef
-        && ossl_method_store_cache_get(NULL, nid, properties, &method)) {
-        if (!upref_method(method))
-            method = NULL;
-    } else {
+    if (nid == NID_undef
+        || !ossl_method_store_cache_get(NULL, nid, properties, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             alloc_tmp_method_store,
             dealloc_tmp_method_store,
@@ -180,10 +185,13 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.mcm = &mcm;
         mcmdata.method_from_dispatch = new_method;
         mcmdata.destruct_method = free_method;
+        mcmdata.refcnt_up_method = upref_method;
+        mcmdata.destruct_method = free_method;
         method = ossl_method_construct(libctx, operation_id, algorithm,
                                        properties, 0 /* !force_cache */,
                                        &mcm, &mcmdata);
         ossl_method_store_cache_set(NULL, nid, properties, method);
     }
+
     return method;
 }
