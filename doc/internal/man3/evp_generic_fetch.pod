@@ -62,13 +62,13 @@ C<include/openssl/core_numbers.h>:
     #define OSSL_OP_FOO_OPERATE                2003
     #define OSSL_OP_FOO_CLEANCTX_FUNC          2004
     #define OSSL_OP_FOO_FREECTX_FUNC           2005
-    OSSL_core_make_func(void *,OP_foo_newctx,(void))
-    OSSL_core_make_func(int,OP_foo_init,(void *vctx))
-    OSSL_core_make_func(int,OP_foo_operate,(void *vctx,
-                                            unsigned char *out, size_t *out_l))
+    OSSL_CORE_MAKE_FUNC(void *,OP_foo_newctx,(void))
+    OSSL_CORE_MAKE_FUNC(int,OP_foo_init,(void *vctx))
+    OSSL_CORE_MAKE_FUNC(int,OP_foo_operate,(void *vctx,
+                                            unsigned char *out, size_t *out_l,
                                             unsigned char *in, size_t in_l))
-    OSSL_core_make_func(void,OP_foo_cleanctx,(void *vctx))
-    OSSL_core_make_func(void,OP_foo_freectx,(void *vctx))
+    OSSL_CORE_MAKE_FUNC(void,OP_foo_cleanctx,(void *vctx))
+    OSSL_CORE_MAKE_FUNC(void,OP_foo_freectx,(void *vctx))
 
 And here's the implementation of the FOO method fetcher:
 
