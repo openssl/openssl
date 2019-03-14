@@ -116,8 +116,13 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
 #   endif
 
 #  endif
-# endif
+# endif  /* !OPENSSL_DEV_NO_ATOMICS */
 
+/*
+ * All the refcounting implementations above define HAVE_ATOMICS, so if it's
+ * still undefined here (such as when OPENSSL_DEV_NO_ATMOICS is defined), it
+ * means we need to implement a fallback.  This fallback uses locks.
+ */
 # ifndef HAVE_ATOMICS
 
 typedef int CRYPTO_REF_COUNT;
