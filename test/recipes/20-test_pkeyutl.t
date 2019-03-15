@@ -39,8 +39,8 @@ SKIP: {
 }
 
 SKIP: {
-    skip "Skipping tests that require EC", 4
-        if disabled("ec");
+    skip "Skipping tests that require EC or posix-io", 4
+        if disabled("ec") || disabled("posix-io");
 
     # Ed25519
     ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
