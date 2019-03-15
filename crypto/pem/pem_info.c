@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -297,7 +297,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
                 goto err;
             }
 
-            /* Create the right magic header stuff */ 
+            /* Create the right magic header stuff */
             buf[0] = '\0';
             PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
             PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc),

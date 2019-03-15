@@ -1,7 +1,7 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -14,11 +14,13 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
+#include <openssl/ess.h>
 #include "cms_lcl.h"
+#include "internal/ess_int.h"
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
-/* ESS services: for now just Signed Receipt related */
+/* ESS services */
 
 int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr)
 {
@@ -334,4 +336,71 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
  err:
     CMS_ReceiptRequest_free(rr);
     return os;
+}
+
+/*
+ * Add signer certificate's V2 digest to a SignerInfo
+ * structure
+ */
+
+int CMS_add1_signing_cert_v2(CMS_SignerInfo *si,
+                             ESS_SIGNING_CERT_V2 *sc)
+{
+    ASN1_STRING *seq = NULL;
+    unsigned char *p, *pp;
+    int len;
+
+    /* Add SigningCertificateV2 signed attribute to the signer info. */
+    len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
+    if ((pp = OPENSSL_malloc(len)) == NULL)
+        goto err;
+    p = pp;
+    i2d_ESS_SIGNING_CERT_V2(sc, &p);
+    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
+        goto err;
+    OPENSSL_free(pp);
+    pp = NULL;
+    if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2,
+                                     V_ASN1_SEQUENCE, seq, -1))
+        goto err;
+    ASN1_STRING_free(seq);
+    return 1;
+ err:
+    CMSerr(CMS_F_CMS_ADD1_SIGNING_CERT_V2, ERR_R_MALLOC_FAILURE);
+    ASN1_STRING_free(seq);
+    OPENSSL_free(pp);
+    return 0;
+}
+
+/*
+ * Add signer certificate's digest to a SignerInfo
+ * structure
+ */
+
+int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc)
+{
+    ASN1_STRING *seq = NULL;
+    unsigned char *p, *pp;
+    int len;
+
+    /* Add SigningCertificate signed attribute to the signer info. */
+    len = i2d_ESS_SIGNING_CERT(sc, NULL);
+    if ((pp = OPENSSL_malloc(len)) == NULL)
+        goto err;
+    p = pp;
+    i2d_ESS_SIGNING_CERT(sc, &p);
+    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
+        goto err;
+    OPENSSL_free(pp);
+    pp = NULL;
+    if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificate,
+                                     V_ASN1_SEQUENCE, seq, -1))
+        goto err;
+    ASN1_STRING_free(seq);
+    return 1;
+ err:
+    CMSerr(CMS_F_CMS_ADD1_SIGNING_CERT, ERR_R_MALLOC_FAILURE);
+    ASN1_STRING_free(seq);
+    OPENSSL_free(pp);
+    return 0;
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -14,10 +14,14 @@
 extern "C" {
 #endif
 
+#include <openssl/opensslconf.h>
+
 # define DTLS1_VERSION                   0xFEFF
 # define DTLS1_2_VERSION                 0xFEFD
-# define DTLS_MIN_VERSION                DTLS1_VERSION
-# define DTLS_MAX_VERSION                DTLS1_2_VERSION
+# if !OPENSSL_API_3
+#  define DTLS_MIN_VERSION                DTLS1_VERSION
+#  define DTLS_MAX_VERSION                DTLS1_2_VERSION
+# endif
 # define DTLS1_VERSION_MAJOR             0xFE
 
 # define DTLS1_BAD_VER                   0x0100

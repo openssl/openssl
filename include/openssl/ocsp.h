@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -146,7 +146,7 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
                 (OCSP_CERTSTATUS*)ASN1_dup((int(*)())i2d_OCSP_CERTSTATUS,\
                 (char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
 
-OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
+DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,

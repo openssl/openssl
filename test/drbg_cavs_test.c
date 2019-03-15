@@ -1,7 +1,7 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -106,12 +106,9 @@ static int single_kat_no_reseed(const struct drbg_kat *td)
         failures++;
 
 err:
-    if (buff != NULL)
-        OPENSSL_free(buff);
-    if (drbg != NULL) {
-        RAND_DRBG_uninstantiate(drbg);
-        RAND_DRBG_free(drbg);
-    }
+    OPENSSL_free(buff);
+    RAND_DRBG_uninstantiate(drbg);
+    RAND_DRBG_free(drbg);
     return failures == 0;
 }
 
@@ -176,12 +173,9 @@ static int single_kat_pr_false(const struct drbg_kat *td)
         failures++;
 
 err:
-    if (buff != NULL)
-        OPENSSL_free(buff);
-    if (drbg != NULL) {
-        RAND_DRBG_uninstantiate(drbg);
-        RAND_DRBG_free(drbg);
-    }
+    OPENSSL_free(buff);
+    RAND_DRBG_uninstantiate(drbg);
+    RAND_DRBG_free(drbg);
     return failures == 0;
 }
 
@@ -249,12 +243,9 @@ static int single_kat_pr_true(const struct drbg_kat *td)
         failures++;
 
 err:
-    if (buff != NULL)
-        OPENSSL_free(buff);
-    if (drbg != NULL) {
-        RAND_DRBG_uninstantiate(drbg);
-        RAND_DRBG_free(drbg);
-    }
+    OPENSSL_free(buff);
+    RAND_DRBG_uninstantiate(drbg);
+    RAND_DRBG_free(drbg);
     return failures == 0;
 }
 

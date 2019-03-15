@@ -250,6 +250,15 @@
                    Don't build the AFALG engine. This option will be forced if
                    on a platform that does not support AFALG.
 
+  enable-ktls
+                   Build with Kernel TLS support. This option will enable the
+                   use of the Kernel TLS data-path, which can improve
+                   performance and allow for the use of sendfile and splice
+                   system calls on TLS sockets. The Kernel may use TLS
+                   accelerators if any are available on the system.
+                   This option will be forced off on systems that do not support
+                   the Kernel TLS data-path.
+
   enable-asan
                    Build with the Address sanitiser. This is a developer option
                    only. It may not work on all platforms and should never be
@@ -286,6 +295,19 @@
                    Don't automatically load the default openssl.cnf file.
                    Typically OpenSSL will automatically load a system config
                    file which configures default ssl options.
+
+  enable-buildtest-c++
+                   While testing, generate C++ buildtest files that
+                   simply check that the public OpenSSL header files
+                   are usable standalone with C++.
+
+                   Enabling this option demands extra care.  For any
+                   compiler flag given directly as configuration
+                   option, you must ensure that it's valid for both
+                   the C and the C++ compiler.  If not, the C++ build
+                   test will most likely break.  As an alternative,
+                   you can use the language specific variables, CFLAGS
+                   and CXXFLAGS.
 
   no-capieng
                    Don't build the CAPI engine. This option will be forced if
@@ -325,6 +347,11 @@
   no-dgram
                    Don't build support for datagram based BIOs. Selecting this
                    option will also force the disabling of DTLS.
+
+  enable-devcryptoeng
+                   Build the /dev/crypto engine.  It is automatically selected
+                   on BSD implementations, in which case it can be disabled with
+                   no-devcryptoeng.
 
   no-dso
                    Don't build support for loading Dynamic Shared Objects.
@@ -382,9 +409,6 @@
                    available if the GOST algorithms are also available through
                    loading an externally supplied engine.
 
-  no-hw-padlock
-                   Don't build the padlock engine.
-
   no-makedepend
                    Don't generate dependencies.
 
@@ -399,8 +423,31 @@
   no-ocsp
                    Don't build support for OCSP.
 
+  no-padlockeng
+  no-hw-padlock
+                   Don't build the padlock engine.
+                   ('no-hw-padlock' is deprecated and should not be used)
+
   no-pic
                    Don't build with support for Position Independent Code.
+
+  no-pinshared     By default OpenSSL will attempt to stay in memory until the
+                   process exits. This is so that libcrypto and libssl can be
+                   properly cleaned up automatically via an "atexit()" handler.
+                   The handler is registered by libcrypto and cleans up both
+                   libraries. On some platforms the atexit() handler will run on
+                   unload of libcrypto (if it has been dynamically loaded)
+                   rather than at process exit. This option can be used to stop
+                   OpenSSL from attempting to stay in memory until the process
+                   exits. This could lead to crashes if either libcrypto or
+                   libssl have already been unloaded at the point
+                   that the atexit handler is invoked, e.g. on a platform which
+                   calls atexit() on unload of the library, and libssl is
+                   unloaded before libcrypto then a crash is likely to happen.
+                   Applications can suppress running of the atexit() handler at
+                   run time by using the OPENSSL_INIT_NO_ATEXIT option to
+                   OPENSSL_init_crypto(). See the man page for it for further
+                   details.
 
   no-posix-io
                    Don't use POSIX IO capabilities.
@@ -476,6 +523,10 @@
                    require additional system-dependent options! See "Note on
                    multi-threading" below.
 
+  enable-trace
+                   Build with support for the integrated tracing api. See manual pages
+                   OSSL_trace_set_channel(3) and OSSL_trace_enabled(3) for details.
+
   no-ts
                    Don't build Time Stamping Authority support.
 
@@ -542,9 +593,9 @@
                    Build without support for the specified algorithm, where
                    <alg> is one of: aria, bf, blake2, camellia, cast, chacha,
                    cmac, des, dh, dsa, ecdh, ecdsa, idea, md4, mdc2, ocb,
-                   poly1305, rc2, rc4, rmd160, scrypt, seed, siphash, sm2, sm3,
-                   sm4 or whirlpool.  The "ripemd" algorithm is deprecated and
-                   if used is synonymous with rmd160.
+                   poly1305, rc2, rc4, rmd160, scrypt, seed, siphash, siv, sm2,
+                   sm3, sm4 or whirlpool.  The "ripemd" algorithm is deprecated
+                   and if used is synonymous with rmd160.
 
   -Dxxx, -Ixxx, -Wp, -lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
                    These system specific options will be recognised and
@@ -641,6 +692,11 @@
 
                         CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- \
                         ./config -DCOOKIE
+
+                   If CC is set, it is advisable to also set CXX to ensure
+                   both C and C++ compilers are in the same "family".  This
+                   becomes relevant with 'enable-external-tests' and
+                   'enable-buildtest-c++'.
 
   reconf
   reconfigure
@@ -941,10 +997,10 @@
 
   *  COMPILING existing applications
 
-     OpenSSL 1.1.0 hides a number of structures that were previously
-     open.  This includes all internal libssl structures and a number
-     of EVP types.  Accessor functions have been added to allow
-     controlled access to the structures' data.
+     Starting with version 1.1.0, OpenSSL hides a number of structures
+     that were previously open.  This includes all internal libssl
+     structures and a number of EVP types.  Accessor functions have
+     been added to allow controlled access to the structures' data.
 
      This means that some software needs to be rewritten to adapt to
      the new ways of doing things.  This often amounts to allocating
@@ -1047,7 +1103,7 @@
 
  depend
                 Rebuild the dependencies in the Makefiles. This is a legacy
-                option that no longer needs to be used in OpenSSL 1.1.0.
+                option that no longer needs to be used since OpenSSL 1.1.0.
 
  install
                 Install all OpenSSL components.

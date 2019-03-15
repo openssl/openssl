@@ -114,18 +114,21 @@ L<EVP_PKEY_set1_EC_KEY>
 
 =head1 HISTORY
 
-EVP_PKEY_new() and EVP_PKEY_free() exist in all versions of OpenSSL.
+The
+EVP_PKEY_new() and EVP_PKEY_free() functions exist in all versions of OpenSSL.
 
-EVP_PKEY_up_ref() was first added to OpenSSL 1.1.0.
+The EVP_PKEY_up_ref() function was added in OpenSSL 1.1.0.
+
+The
 EVP_PKEY_new_raw_private_key(), EVP_PKEY_new_raw_public_key(),
 EVP_PKEY_new_CMAC_key(), EVP_PKEY_new_raw_private_key() and
-EVP_PKEY_get_raw_public_key() were first added to OpenSSL 1.1.1.
+EVP_PKEY_get_raw_public_key() functions were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
 Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

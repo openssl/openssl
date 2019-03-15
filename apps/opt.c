@@ -1,12 +1,18 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include "apps.h"
+
+/*
+ * This file is also used by the test suite. Do not #include "apps.h".
+ */
+#include "opt.h"
+#include "fmt.h"
+#include "internal/nelem.h"
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 # include OPENSSL_UNISTD
@@ -116,7 +122,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     /* Store state. */
     argc = ac;
     argv = av;
-    opt_index = 1;
+    opt_begin();
     opts = o;
     opt_progname(av[0]);
     unknown = NULL;
@@ -133,15 +139,15 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         i = o->valtype;
 
         /* Make sure options are legit. */
-        assert(o->name[0] != '-');
-        assert(o->retval > 0);
+        OPENSSL_assert(o->name[0] != '-');
+        OPENSSL_assert(o->retval > 0);
         switch (i) {
         case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
         case 'u': case 'c':
             break;
         default:
-            assert(0);
+            OPENSSL_assert(0);
         }
 
         /* Make sure there are no duplicates. */
@@ -150,13 +156,13 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
              * Some compilers inline strcmp and the assert string is too long.
              */
             duplicated = strcmp(o->name, next->name) == 0;
-            assert(!duplicated);
+            OPENSSL_assert(!duplicated);
         }
 #endif
         if (o->name[0] == '\0') {
-            assert(unknown == NULL);
+            OPENSSL_assert(unknown == NULL);
             unknown = o;
-            assert(unknown->valtype == 0 || unknown->valtype == '-');
+            OPENSSL_assert(unknown->valtype == 0 || unknown->valtype == '-');
         }
     }
     return prog;
@@ -168,7 +174,6 @@ static OPT_PAIR formats[] = {
     {"smime", OPT_FMT_SMIME},
     {"engine", OPT_FMT_ENGINE},
     {"msblob", OPT_FMT_MSBLOB},
-    {"netscape", OPT_FMT_NETSCAPE},
     {"nss", OPT_FMT_NSS},
     {"text", OPT_FMT_TEXT},
     {"http", OPT_FMT_HTTP},
@@ -182,14 +187,14 @@ int opt_format_error(const char *s, unsigned long flags)
     OPT_PAIR *ap;
 
     if (flags == OPT_FMT_PEMDER) {
-        BIO_printf(bio_err, "%s: Bad format \"%s\"; must be pem or der\n",
-                   prog, s);
+        opt_printf_stderr("%s: Bad format \"%s\"; must be pem or der\n",
+                          prog, s);
     } else {
-        BIO_printf(bio_err, "%s: Bad format \"%s\"; must be one of:\n",
-                   prog, s);
+        opt_printf_stderr("%s: Bad format \"%s\"; must be one of:\n",
+                          prog, s);
         for (ap = formats; ap->name; ap++)
             if (flags & ap->retval)
-                BIO_printf(bio_err, "   %s\n", ap->name);
+                opt_printf_stderr("   %s\n", ap->name);
     }
     return 0;
 }
@@ -278,7 +283,7 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
     *cipherp = EVP_get_cipherbyname(name);
     if (*cipherp != NULL)
         return 1;
-    BIO_printf(bio_err, "%s: Unrecognized flag %s\n", prog, name);
+    opt_printf_stderr("%s: Unrecognized flag %s\n", prog, name);
     return 0;
 }
 
@@ -290,7 +295,7 @@ int opt_md(const char *name, const EVP_MD **mdp)
     *mdp = EVP_get_digestbyname(name);
     if (*mdp != NULL)
         return 1;
-    BIO_printf(bio_err, "%s: Unrecognized flag %s\n", prog, name);
+    opt_printf_stderr("%s: Unrecognized flag %s\n", prog, name);
     return 0;
 }
 
@@ -304,9 +309,9 @@ int opt_pair(const char *name, const OPT_PAIR* pairs, int *result)
             *result = pp->retval;
             return 1;
         }
-    BIO_printf(bio_err, "%s: Value must be one of:\n", prog);
+    opt_printf_stderr("%s: Value must be one of:\n", prog);
     for (pp = pairs; pp->name; pp++)
-        BIO_printf(bio_err, "\t%s\n", pp->name);
+        opt_printf_stderr("\t%s\n", pp->name);
     return 0;
 }
 
@@ -319,8 +324,8 @@ int opt_int(const char *value, int *result)
         return 0;
     *result = (int)l;
     if (*result != l) {
-        BIO_printf(bio_err, "%s: Value \"%s\" outside integer range\n",
-                   prog, value);
+        opt_printf_stderr("%s: Value \"%s\" outside integer range\n",
+                          prog, value);
         return 0;
     }
     return 1;
@@ -340,13 +345,12 @@ static void opt_number_error(const char *v)
 
     for (i = 0; i < OSSL_NELEM(b); i++) {
         if (strncmp(v, b[i].prefix, strlen(b[i].prefix)) == 0) {
-            BIO_printf(bio_err,
-                       "%s: Can't parse \"%s\" as %s number\n",
-                       prog, v, b[i].name);
+            opt_printf_stderr("%s: Can't parse \"%s\" as %s number\n",
+                              prog, v, b[i].name);
             return;
         }
     }
-    BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n", prog, v);
+    opt_printf_stderr("%s: Can't parse \"%s\" as a number\n", prog, v);
     return;
 }
 
@@ -459,9 +463,9 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     X509_PURPOSE *xptmp;
     const X509_VERIFY_PARAM *vtmp;
 
-    assert(vpm != NULL);
-    assert(opt > OPT_V__FIRST);
-    assert(opt < OPT_V__LAST);
+    OPENSSL_assert(vpm != NULL);
+    OPENSSL_assert(opt > OPT_V__FIRST);
+    OPENSSL_assert(opt < OPT_V__LAST);
 
     switch ((enum range)opt) {
     case OPT_V__FIRST:
@@ -470,7 +474,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_POLICY:
         otmp = OBJ_txt2obj(opt_arg(), 0);
         if (otmp == NULL) {
-            BIO_printf(bio_err, "%s: Invalid Policy %s\n", prog, opt_arg());
+            opt_printf_stderr("%s: Invalid Policy %s\n", prog, opt_arg());
             return 0;
         }
         X509_VERIFY_PARAM_add0_policy(vpm, otmp);
@@ -479,7 +483,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         /* purpose name -> purpose index */
         i = X509_PURPOSE_get_by_sname(opt_arg());
         if (i < 0) {
-            BIO_printf(bio_err, "%s: Invalid purpose %s\n", prog, opt_arg());
+            opt_printf_stderr("%s: Invalid purpose %s\n", prog, opt_arg());
             return 0;
         }
 
@@ -490,17 +494,16 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         i = X509_PURPOSE_get_id(xptmp);
 
         if (!X509_VERIFY_PARAM_set_purpose(vpm, i)) {
-            BIO_printf(bio_err,
-                       "%s: Internal error setting purpose %s\n",
-                       prog, opt_arg());
+            opt_printf_stderr("%s: Internal error setting purpose %s\n",
+                              prog, opt_arg());
             return 0;
         }
         break;
     case OPT_V_VERIFY_NAME:
         vtmp = X509_VERIFY_PARAM_lookup(opt_arg());
         if (vtmp == NULL) {
-            BIO_printf(bio_err, "%s: Invalid verify name %s\n",
-                       prog, opt_arg());
+            opt_printf_stderr("%s: Invalid verify name %s\n",
+                              prog, opt_arg());
             return 0;
         }
         X509_VERIFY_PARAM_set1(vpm, vtmp);
@@ -519,8 +522,8 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         if (!opt_imax(opt_arg(), &t))
             return 0;
         if (t != (time_t)t) {
-            BIO_printf(bio_err, "%s: epoch time out of range %s\n",
-                       prog, opt_arg());
+            opt_printf_stderr("%s: epoch time out of range %s\n",
+                              prog, opt_arg());
             return 0;
         }
         X509_VERIFY_PARAM_set_time(vpm, (time_t)t);
@@ -607,6 +610,13 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
 
 }
 
+void opt_begin(void)
+{
+    opt_index = 1;
+    arg = NULL;
+    flag = NULL;
+}
+
 /*
  * Parse the next flag (and value if specified), return 0 if done, -1 on
  * error, otherwise the flag's retval.
@@ -652,8 +662,8 @@ int opt_next(void)
         /* If it doesn't take a value, make sure none was given. */
         if (o->valtype == 0 || o->valtype == '-') {
             if (arg) {
-                BIO_printf(bio_err,
-                           "%s: Option -%s does not take a value\n", prog, p);
+                opt_printf_stderr("%s: Option -%s does not take a value\n",
+                                  prog, p);
                 return -1;
             }
             return o->retval;
@@ -662,8 +672,8 @@ int opt_next(void)
         /* Want a value; get the next param if =foo not used. */
         if (arg == NULL) {
             if (argv[opt_index] == NULL) {
-                BIO_printf(bio_err,
-                           "%s: Option -%s needs a value\n", prog, o->name);
+                opt_printf_stderr("%s: Option -%s needs a value\n",
+                                  prog, o->name);
                 return -1;
             }
             arg = argv[opt_index++];
@@ -676,9 +686,9 @@ int opt_next(void)
             /* Just a string. */
             break;
         case '/':
-            if (app_isdir(arg) > 0)
+            if (opt_isdir(arg) > 0)
                 break;
-            BIO_printf(bio_err, "%s: Not a directory: %s\n", prog, arg);
+            opt_printf_stderr("%s: Not a directory: %s\n", prog, arg);
             return -1;
         case '<':
             /* Input file. */
@@ -690,41 +700,36 @@ int opt_next(void)
         case 'n':
             if (!opt_int(arg, &ival)
                     || (o->valtype == 'p' && ival <= 0)) {
-                BIO_printf(bio_err,
-                           "%s: Non-positive number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                opt_printf_stderr("%s: Non-positive number \"%s\" for -%s\n",
+                                  prog, arg, o->name);
                 return -1;
             }
             break;
         case 'M':
             if (!opt_imax(arg, &imval)) {
-                BIO_printf(bio_err,
-                           "%s: Invalid number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
+                                  prog, arg, o->name);
                 return -1;
             }
             break;
         case 'U':
             if (!opt_umax(arg, &umval)) {
-                BIO_printf(bio_err,
-                           "%s: Invalid number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
+                                  prog, arg, o->name);
                 return -1;
             }
             break;
         case 'l':
             if (!opt_long(arg, &lval)) {
-                BIO_printf(bio_err,
-                           "%s: Invalid number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
+                                  prog, arg, o->name);
                 return -1;
             }
             break;
         case 'u':
             if (!opt_ulong(arg, &ulval)) {
-                BIO_printf(bio_err,
-                           "%s: Invalid number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
+                                  prog, arg, o->name);
                 return -1;
             }
             break;
@@ -738,9 +743,8 @@ int opt_next(void)
                            o->valtype == 'F' ? OPT_FMT_PEMDER
                            : OPT_FMT_ANY, &ival))
                 break;
-            BIO_printf(bio_err,
-                       "%s: Invalid format \"%s\" for -%s\n",
-                       prog, arg, o->name);
+            opt_printf_stderr("%s: Invalid format \"%s\" for -%s\n",
+                              prog, arg, o->name);
             return -1;
         }
 
@@ -751,7 +755,7 @@ int opt_next(void)
         dunno = p;
         return unknown->retval;
     }
-    BIO_printf(bio_err, "%s: Option unknown option -%s\n", prog, p);
+    opt_printf_stderr("%s: Option unknown option -%s\n", prog, p);
     return -1;
 }
 
@@ -849,18 +853,17 @@ void opt_help(const OPTIONS *list)
             i += 1 + strlen(valtype2param(o));
         if (i < MAX_OPT_HELP_WIDTH && i > width)
             width = i;
-        assert(i < (int)sizeof(start));
+        OPENSSL_assert(i < (int)sizeof(start));
     }
 
     if (standard_prolog)
-        BIO_printf(bio_err, "Usage: %s [options]\nValid options are:\n",
-                   prog);
+        opt_printf_stderr("Usage: %s [options]\nValid options are:\n", prog);
 
     /* Now let's print. */
     for (o = list; o->name; o++) {
         help = o->helpstr ? o->helpstr : "(No additional info)";
         if (o->name == OPT_HELP_STR) {
-            BIO_printf(bio_err, help, prog);
+            opt_printf_stderr(help, prog);
             continue;
         }
 
@@ -871,7 +874,7 @@ void opt_help(const OPTIONS *list)
         if (o->name == OPT_MORE_STR) {
             /* Continuation of previous line; pad and print. */
             start[width] = '\0';
-            BIO_printf(bio_err, "%s  %s\n", start, help);
+            opt_printf_stderr("%s  %s\n", start, help);
             continue;
         }
 
@@ -890,10 +893,62 @@ void opt_help(const OPTIONS *list)
         *p = ' ';
         if ((int)(p - start) >= MAX_OPT_HELP_WIDTH) {
             *p = '\0';
-            BIO_printf(bio_err, "%s\n", start);
+            opt_printf_stderr("%s\n", start);
             memset(start, ' ', sizeof(start));
         }
         start[width] = '\0';
-        BIO_printf(bio_err, "%s  %s\n", start, help);
+        opt_printf_stderr("%s  %s\n", start, help);
     }
 }
+
+/* opt_isdir section */
+#ifdef _WIN32
+# include <windows.h>
+int opt_isdir(const char *name)
+{
+    DWORD attr;
+# if defined(UNICODE) || defined(_UNICODE)
+    size_t i, len_0 = strlen(name) + 1;
+    WCHAR tempname[MAX_PATH];
+
+    if (len_0 > MAX_PATH)
+        return -1;
+
+#  if !defined(_WIN32_WCE) || _WIN32_WCE>=101
+    if (!MultiByteToWideChar(CP_ACP, 0, name, len_0, tempname, MAX_PATH))
+#  endif
+        for (i = 0; i < len_0; i++)
+            tempname[i] = (WCHAR)name[i];
+
+    attr = GetFileAttributes(tempname);
+# else
+    attr = GetFileAttributes(name);
+# endif
+    if (attr == INVALID_FILE_ATTRIBUTES)
+        return -1;
+    return ((attr & FILE_ATTRIBUTE_DIRECTORY) != 0);
+}
+#else
+# include <sys/stat.h>
+# ifndef S_ISDIR
+#  if defined(_S_IFMT) && defined(_S_IFDIR)
+#   define S_ISDIR(a)   (((a) & _S_IFMT) == _S_IFDIR)
+#  else
+#   define S_ISDIR(a)   (((a) & S_IFMT) == S_IFDIR)
+#  endif
+# endif
+
+int opt_isdir(const char *name)
+{
+# if defined(S_ISDIR)
+    struct stat st;
+
+    if (stat(name, &st) == 0)
+        return S_ISDIR(st.st_mode);
+    else
+        return -1;
+# else
+    return -1;
+# endif
+}
+#endif

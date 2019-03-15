@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -273,6 +273,8 @@ my $mtvrwz	= sub {
     my ($f, $vrt, $ra) = @_;
     "	.long	".sprintf "0x%X",(31<<26)|($vrt<<21)|($ra<<16)|(243<<1)|1;
 };
+my $lvwzx_u	= sub { vsxmem_op(@_, 12); };	# lxsiwzx
+my $stvwx_u	= sub { vsxmem_op(@_, 140); };	# stxsiwx
 
 # PowerISA 3.0 stuff
 my $maddhdu	= sub { vfour(@_,49); };

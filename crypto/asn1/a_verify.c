@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -48,6 +48,10 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
     }
 
     inl = i2d(data, NULL);
+    if (inl <= 0) {
+        ASN1err(ASN1_F_ASN1_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     buf_in = OPENSSL_malloc((unsigned int)inl);
     if (buf_in == NULL) {
         ASN1err(ASN1_F_ASN1_VERIFY, ERR_R_MALLOC_FAILURE);
@@ -87,10 +91,10 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
     EVP_MD_CTX *ctx = NULL;
     unsigned char *buf_in = NULL;
     int ret = -1, inl = 0;
-
     int mdnid, pknid;
+    size_t inll = 0;
 
-    if (!pkey) {
+    if (pkey == NULL) {
         ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
@@ -127,8 +131,8 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
             goto err;
         ret = -1;
     } else {
-        const EVP_MD *type;
-        type = EVP_get_digestbynid(mdnid);
+        const EVP_MD *type = EVP_get_digestbynid(mdnid);
+
         if (type == NULL) {
             ASN1err(ASN1_F_ASN1_ITEM_VERIFY,
                     ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
@@ -146,15 +150,18 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
             ret = 0;
             goto err;
         }
-
     }
 
     inl = ASN1_item_i2d(asn, &buf_in, it);
-
+    if (inl <= 0) {
+        ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     if (buf_in == NULL) {
         ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
+    inll = inl;
 
     ret = EVP_DigestVerify(ctx, signature->data, (size_t)signature->length,
                            buf_in, inl);
@@ -164,7 +171,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
     }
     ret = 1;
  err:
-    OPENSSL_clear_free(buf_in, (unsigned int)inl);
+    OPENSSL_clear_free(buf_in, inll);
     EVP_MD_CTX_free(ctx);
     return ret;
 }

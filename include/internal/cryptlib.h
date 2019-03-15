@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -92,5 +92,16 @@ void *openssl_fopen(const char *filename, const char *mode);
 # endif
 
 uint32_t OPENSSL_rdtsc(void);
+size_t OPENSSL_instrument_bus(unsigned int *, size_t);
+size_t OPENSSL_instrument_bus2(unsigned int *, size_t, size_t);
+
+typedef struct openssl_ctx_method {
+    void *(*new_func)(void);
+    void (*free_func)(void *);
+} OPENSSL_CTX_METHOD;
+/* For each type of data to store in the context, an index must be created */
+int openssl_ctx_new_index(const OPENSSL_CTX_METHOD *);
+/* Functions to retrieve pointers to data by index */
+void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */);
 
 #endif

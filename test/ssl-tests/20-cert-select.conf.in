@@ -139,6 +139,28 @@ our @tests = (
         },
     },
     {
+        name => "ECDSA with brainpool",
+        server =>  {
+            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
+            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        client => {
+            #We don't restrict this to TLSv1.2, although use of brainpool
+            #should force this anyway so that this should succeed
+            "CipherString" => "aECDSA",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "brainpoolP256r1",
+            "ExpectedServerSignType" =>, "EC",
+            # Note: certificate_authorities not sent for TLS < 1.3
+            "ExpectedServerCANames" =>, "empty",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
         name => "RSA CipherString Selection",
         server => $server,
         client => {
@@ -760,6 +782,23 @@ my @tests_tls_1_3 = (
             "ExpectedClientCertType" => "Ed448",
             "ExpectedClientSignType" => "Ed448",
             "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.3 ECDSA with brainpool",
+        server =>  {
+            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
+            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        client => {
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "Groups" => "brainpoolP256r1",
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3"
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
         },
     },
 );

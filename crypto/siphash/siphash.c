@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -94,7 +94,19 @@ int SipHash_set_hash_size(SIPHASH *ctx, size_t hash_size)
         && hash_size != SIPHASH_MAX_DIGEST_SIZE)
         return 0;
 
-    ctx->hash_size = hash_size;
+    /*
+     * It's possible that the key was set first.  If the hash size changes,
+     * we need to adjust v1 (see SipHash_Init().
+     */
+
+    /* Start by adjusting the stored size, to make things easier */
+    ctx->hash_size = siphash_adjust_hash_size(ctx->hash_size);
+
+    /* Now, adjust ctx->v1 if the old and the new size differ */
+    if ((size_t)ctx->hash_size != hash_size) {
+        ctx->v1 ^= 0xee;
+        ctx->hash_size = hash_size;
+    }
     return 1;
 }
 

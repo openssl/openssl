@@ -1,7 +1,7 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -106,14 +106,25 @@ failed:
     return ret;
 }
 
+const OPTIONS *test_get_options(void)
+{
+    enum { OPT_TEST_ENUM };
+    static const OPTIONS test_options[] = {
+        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("certname key.pem type expected\n"),
+        { OPT_HELP_STR, 1, '-', "certname\tCertificate filename .pem/.req\n" },
+        { OPT_HELP_STR, 1, '-', "type\t\tvalue must be 'pem' or 'req'\n" },
+        { OPT_HELP_STR, 1, '-', "expected\tthe expected return value\n" },
+        { NULL }
+    };
+    return test_options;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(c = test_get_argument(0))
             || !TEST_ptr(k = test_get_argument(1))
             || !TEST_ptr(t = test_get_argument(2))
             || !TEST_ptr(e = test_get_argument(3))) {
-        TEST_note("usage: x509_check_cert_pkey cert.pem|cert.req"
-                  " key.pem cert|req <expected>");
         return 0;
     }
 

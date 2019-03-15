@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -360,6 +360,36 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
  err:
     sk_void_free(ad->sk);
     ad->sk = NULL;
+}
+
+/*
+ * Allocate a given CRYPTO_EX_DATA item using the class specific allocation
+ * function
+ */
+int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
+                         int idx)
+{
+    EX_CALLBACK *f;
+    EX_CALLBACKS *ip;
+    void *curval;
+
+    curval = CRYPTO_get_ex_data(ad, idx);
+
+    /* Already there, no need to allocate */
+    if (curval != NULL)
+        return 1;
+
+    ip = get_and_lock(class_index);
+    f = sk_EX_CALLBACK_value(ip->meth, idx);
+    CRYPTO_THREAD_unlock(ex_data_lock);
+
+    /*
+     * This should end up calling CRYPTO_set_ex_data(), which allocates
+     * everything necessary to support placing the new data in the right spot.
+     */
+    f->new_func(obj, curval, ad, idx, f->argl, f->argp);
+
+    return 1;
 }
 
 /*

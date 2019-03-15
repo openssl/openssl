@@ -107,22 +107,26 @@ ASYNC_pause_job() is called whilst not within the context of a job then no
 action is taken and ASYNC_pause_job() returns immediately.
 
 ASYNC_get_wait_ctx() can be used to get a pointer to the ASYNC_WAIT_CTX
-for the B<job>. ASYNC_WAIT_CTXs can have a "wait" file descriptor associated
-with them. Applications can wait for the file descriptor to be ready for "read"
-using a system function call such as select or poll (being ready for "read"
-indicates that the job should be resumed). If no file descriptor is made
-available then an application will have to periodically "poll" the job by
-attempting to restart it to see if it is ready to continue.
+for the B<job>. ASYNC_WAIT_CTXs contain two different ways to notify
+applications that a job is ready to be resumed. One is a "wait" file
+descriptor, and the other is a "callback" mechanism.
 
-An example of typical usage might be an async capable engine. User code would
-initiate cryptographic operations. The engine would initiate those operations
-asynchronously and then call L<ASYNC_WAIT_CTX_set_wait_fd(3)> followed by
-ASYNC_pause_job() to return control to the user code. The user code can then
-perform other tasks or wait for the job to be ready by calling "select" or other
-similar function on the wait file descriptor. The engine can signal to the user
-code that the job should be resumed by making the wait file descriptor
-"readable". Once resumed the engine should clear the wake signal on the wait
-file descriptor.
+The "wait" file descriptor associated with ASYNC_WAIT_CTX is used for
+applications to wait for the file descriptor to be ready for "read" using a
+system function call such as select or poll (being ready for "read" indicates
+that the job should be resumed). If no file descriptor is made available then
+an application will have to periodically "poll" the job by attempting to restart
+it to see if it is ready to continue.
+
+ASYNC_WAIT_CTXs also have a "callback" mechanism to notify applications. The
+callback is set by an application, and it will be automatically called when an
+engine completes a cryptography operation, so that the application can resume
+the paused work flow without polling. An engine could be written to look whether
+the callback has been set. If it has then it would use the callback mechanism
+in preference to the file descriptor notifications. If a callback is not set
+then the engine may use file descriptor based notifications. Please note that
+not all engines may support the callback mechanism, so the callback may not be
+used even if it has been set. See ASYNC_WAIT_CTX_new() for more details.
 
 The ASYNC_block_pause() function will prevent the currently active job from
 pausing. The block will remain in place until a subsequent call to
@@ -317,13 +321,13 @@ L<crypto(7)>, L<ERR_print_errors(3)>
 ASYNC_init_thread, ASYNC_cleanup_thread,
 ASYNC_start_job, ASYNC_pause_job, ASYNC_get_current_job, ASYNC_get_wait_ctx(),
 ASYNC_block_pause(), ASYNC_unblock_pause() and ASYNC_is_capable() were first
-added to OpenSSL 1.1.0.
+added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

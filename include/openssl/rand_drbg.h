@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,6 +12,7 @@
 
 # include <time.h>
 # include <openssl/ossl_typ.h>
+# include <openssl/obj_mac.h>
 
 /*
  * RAND_DRBG  flags
@@ -35,7 +36,7 @@
 /* Used by RAND_DRBG_set_defaults() to set the private DRBG type and flags. */
 # define RAND_DRBG_FLAG_PRIVATE              0x10
 
-# if OPENSSL_API_COMPAT < 0x10200000L
+# if !OPENSSL_API_3
 /* This #define was replaced by an internal constant and should not be used. */
 #  define RAND_DRBG_USED_FLAGS  (RAND_DRBG_FLAG_CTR_NO_DF)
 # endif

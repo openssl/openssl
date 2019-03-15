@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -36,6 +36,7 @@ static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         /* Attempt to decode public key and cache in pubkey structure. */
         X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
         EVP_PKEY_free(pubkey->pkey);
+        pubkey->pkey = NULL;
         /*
          * Opportunistically decode the key but remove any non fatal errors
          * from the queue. Subsequent explicit attempts to decode/use the key
@@ -56,6 +57,7 @@ ASN1_SEQUENCE_cb(X509_PUBKEY, pubkey_cb) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
 
+/* TODO should better be called X509_PUBKEY_set1 */
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 {
     X509_PUBKEY *pk = NULL;
@@ -66,7 +68,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     if ((pk = X509_PUBKEY_new()) == NULL)
         goto error;
 
-    if (pkey->ameth) {
+    if (pkey != NULL && pkey->ameth) {
         if (pkey->ameth->pub_encode) {
             if (!pkey->ameth->pub_encode(pk, pkey)) {
                 X509err(X509_F_X509_PUBKEY_SET,
@@ -85,8 +87,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     X509_PUBKEY_free(*x);
     *x = pk;
     pk->pkey = pkey;
-    EVP_PKEY_up_ref(pkey);
-    return 1;
+    return EVP_PKEY_up_ref(pkey);
 
  error:
     X509_PUBKEY_free(pk);
@@ -199,15 +200,22 @@ EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
     return pktmp;
 }
 
-int i2d_PUBKEY(EVP_PKEY *a, unsigned char **pp)
+int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 {
     X509_PUBKEY *xpk = NULL;
-    int ret;
-    if (!a)
+    int ret = -1;
+
+    if (a == NULL)
         return 0;
-    if (!X509_PUBKEY_set(&xpk, a))
+    if ((xpk = X509_PUBKEY_new()) == NULL)
         return -1;
+    if (a->ameth != NULL && a->ameth->pub_encode != NULL
+        && !a->ameth->pub_encode(xpk, a))
+        goto error;
+    xpk->pkey = (EVP_PKEY *)a;
     ret = i2d_X509_PUBKEY(xpk, pp);
+    xpk->pkey = NULL;
+ error:
     X509_PUBKEY_free(xpk);
     return ret;
 }
@@ -237,7 +245,7 @@ RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
     return key;
 }
 
-int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
+int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
 {
     EVP_PKEY *pktmp;
     int ret;
@@ -248,8 +256,9 @@ int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_RSA_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_RSA(pktmp, a);
+    (void)EVP_PKEY_assign_RSA(pktmp, (RSA *)a);
     ret = i2d_PUBKEY(pktmp, pp);
+    pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
     return ret;
 }
@@ -277,7 +286,7 @@ DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
     return key;
 }
 
-int i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
+int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
 {
     EVP_PKEY *pktmp;
     int ret;
@@ -288,8 +297,9 @@ int i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_DSA_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_DSA(pktmp, a);
+    (void)EVP_PKEY_assign_DSA(pktmp, (DSA *)a);
     ret = i2d_PUBKEY(pktmp, pp);
+    pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
     return ret;
 }
@@ -317,7 +327,7 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
     return key;
 }
 
-int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
+int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
 {
     EVP_PKEY *pktmp;
     int ret;
@@ -327,8 +337,9 @@ int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_EC_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_EC_KEY(pktmp, a);
+    (void)EVP_PKEY_assign_EC_KEY(pktmp, (EC_KEY *)a);
     ret = i2d_PUBKEY(pktmp, pp);
+    pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
     return ret;
 }

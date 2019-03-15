@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,7 +15,7 @@
 #ifndef NO_OLD_ASN1
 
 # ifndef OPENSSL_NO_STDIO
-int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x)
+int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, const void *x)
 {
     BIO *b;
     int ret;
@@ -31,7 +31,7 @@ int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x)
 }
 # endif
 
-int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x)
+int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x)
 {
     char *b;
     unsigned char *p;
@@ -68,7 +68,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x)
 #endif
 
 #ifndef OPENSSL_NO_STDIO
-int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
+int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, const void *x)
 {
     BIO *b;
     int ret;
@@ -84,7 +84,7 @@ int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
 }
 #endif
 
-int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x)
+int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x)
 {
     unsigned char *b = NULL;
     int i, j = 0, n, ret = 1;

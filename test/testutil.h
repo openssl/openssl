@@ -1,7 +1,7 @@
 /*
- * Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,6 +15,7 @@
 #include <openssl/err.h>
 #include <openssl/e_os2.h>
 #include <openssl/bn.h>
+#include "opt.h"
 
 /*-
  * Simple unit tests should implement setup_tests().
@@ -117,22 +118,80 @@
 #  define TEST_CASE_NAME __func__
 # endif                         /* __STDC_VERSION__ */
 
+
+/* The default test enum which should be common to all tests */
+#define OPT_TEST_ENUM \
+    OPT_TEST_HELP = 500, \
+    OPT_TEST_LIST, \
+    OPT_TEST_SINGLE, \
+    OPT_TEST_ITERATION, \
+    OPT_TEST_INDENT, \
+    OPT_TEST_SEED
+
+/* The Default test OPTIONS common to all tests (without a usage string) */
+#define OPT_TEST_OPTIONS \
+    { OPT_HELP_STR, 1,  '-', "Valid options are:\n" }, \
+    { "help", OPT_TEST_HELP, '-', "Display this summary" }, \
+    { "list", OPT_TEST_LIST, '-', "Display the list of tests available" }, \
+    { "test", OPT_TEST_SINGLE, 's', "Run a single test by id or name" }, \
+    { "iter", OPT_TEST_ITERATION, 'n', "Run a single iteration of a test" }, \
+    { "indent", OPT_TEST_INDENT,'p', "Number of tabs added to output" }, \
+    { "seed", OPT_TEST_SEED, 'n', "Seed value to randomize tests with" }
+
+/* The Default test OPTIONS common to all tests starting with an additional usage string */
+#define OPT_TEST_OPTIONS_WITH_EXTRA_USAGE(usage) \
+    { OPT_HELP_STR, 1, '-', "Usage: %s [options] " usage }, \
+    OPT_TEST_OPTIONS
+
+/* The Default test OPTIONS common to all tests with an default usage string */
+#define OPT_TEST_OPTIONS_DEFAULT_USAGE \
+    { OPT_HELP_STR, 1, '-', "Usage: %s [options]\n" }, \
+    OPT_TEST_OPTIONS
+
 /*
- * Tests that need access to command line arguments should use the functions:
- * test_get_argument(int n) to get the nth argument, the first argument is
- *      argument 0.  This function returns NULL on error.
- * test_get_argument_count() to get the count of the arguments.
- * test_has_option(const char *) to check if the specified option was passed.
- * test_get_option_argument(const char *) to get an option which includes an
- *      argument.  NULL is returns if the option is not found.
- * const char *test_get_program_name(void) returns the name of the test program
- *      being executed.
+ * Optional Cases that need to be ignored by the test app when using opt_next(),
+ * (that are handled internally).
  */
-const char *test_get_program_name(void);
+#define OPT_TEST_CASES \
+         OPT_TEST_HELP: \
+    case OPT_TEST_LIST: \
+    case OPT_TEST_SINGLE: \
+    case OPT_TEST_ITERATION: \
+    case OPT_TEST_INDENT: \
+    case OPT_TEST_SEED
+
+/*
+ * Tests that use test_get_argument() that dont have any additional options
+ * (i.e- dont use opt_next()) can use this to set the usage string.
+ * It embeds test_get_options() which gives default command line options for
+ * the test system.
+ *
+ * Tests that need to use opt_next() need to specify
+ *  (1) test_get_options() containing an options[] (Which should include either
+ *    OPT_TEST_OPTIONS_DEFAULT_USAGE OR
+ *    OPT_TEST_OPTIONS_WITH_EXTRA_USAGE).
+ *  (2) An enum outside the test_get_options() which contains OPT_TEST_ENUM, as
+ *      well as the additional options that need to be handled.
+ *  (3) case OPT_TEST_CASES: break; inside the opt_next() handling code.
+ */
+#define OPT_TEST_DECLARE_USAGE(usage_str) \
+const OPTIONS *test_get_options(void) \
+{ \
+    enum { OPT_TEST_ENUM }; \
+    static const OPTIONS options[] = { \
+        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE(usage_str), \
+        { NULL } \
+    }; \
+    return options; \
+}
+
+/*
+ * Used to read non optional command line values that follow after the options.
+ * Returns NULL if there is no argument.
+ */
 char *test_get_argument(size_t n);
+/* Return the number of additional non optional command line arguments */
 size_t test_get_argument_count(void);
-int test_has_option(const char *option);
-const char *test_get_option_argument(const char *option);
 
 /*
  * Internal helpers. Test programs shouldn't use these directly, but should
@@ -150,6 +209,16 @@ void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
 int global_init(void);
 int setup_tests(void);
 void cleanup_tests(void);
+/*
+ * Used to supply test specific command line options,
+ * If non optional parameters are used, then the first entry in the OPTIONS[]
+ * should contain:
+ * { OPT_HELP_STR, 1, '-', "list of non optional commandline params\n"},
+ * The last entry should always be { NULL }.
+ *
+ * Run the test locally using './test/test_name -help' to check the usage.
+ */
+const OPTIONS *test_get_options(void);
 
 /*
  *  Test assumption verification helpers.
@@ -186,7 +255,9 @@ DECLARE_COMPARISONS(char, char)
 DECLARE_COMPARISONS(unsigned char, uchar)
 DECLARE_COMPARISONS(long, long)
 DECLARE_COMPARISONS(unsigned long, ulong)
+DECLARE_COMPARISONS(double, double)
 DECLARE_COMPARISONS(time_t, time_t)
+
 /*
  * Because this comparison uses a printf format specifier that's not
  * universally known (yet), we provide an option to not have it declared.
@@ -336,6 +407,13 @@ void test_perror(const char *s);
 # define TEST_size_t_le(a, b) test_size_t_le(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_size_t_gt(a, b) test_size_t_gt(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_size_t_ge(a, b) test_size_t_ge(__FILE__, __LINE__, #a, #b, a, b)
+
+# define TEST_double_eq(a, b) test_double_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_ne(a, b) test_double_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_lt(a, b) test_double_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_le(a, b) test_double_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_gt(a, b) test_double_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_ge(a, b) test_double_ge(__FILE__, __LINE__, #a, #b, a, b)
 
 # define TEST_time_t_eq(a, b) test_time_t_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_time_t_ne(a, b) test_time_t_ne(__FILE__, __LINE__, #a, #b, a, b)

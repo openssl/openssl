@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -37,7 +37,7 @@ ASN1_SEQUENCE_cb(DHparams, dh_cb) = {
         ASN1_OPT_EMBED(DH, length, ZINT32),
 } ASN1_SEQUENCE_END_cb(DH, DHparams)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DH, DHparams, DHparams)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(DH, DHparams, DHparams)
 
 /*
  * Internal only structures for handling X9.42 DH: this gets translated to or
@@ -74,7 +74,7 @@ int_dhx942_dh *d2i_int_dhx(int_dhx942_dh **a,
                            const unsigned char **pp, long length);
 int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(int_dhx942_dh, DHxparams, int_dhx)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(int_dhx942_dh, DHxparams, int_dhx)
 
 /* Application public function: read in X9.42 DH parameters into DH structure */
 

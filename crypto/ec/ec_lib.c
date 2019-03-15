@@ -2,7 +2,7 @@
  * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -364,6 +364,11 @@ int EC_GROUP_get_curve_name(const EC_GROUP *group)
     return group->curve_name;
 }
 
+const BIGNUM *EC_GROUP_get0_field(const EC_GROUP *group)
+{
+    return group->field;
+}
+
 void EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag)
 {
     group->asn1_flag = flag;
@@ -435,7 +440,7 @@ int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
     return group->meth->group_get_curve(group, p, a, b, ctx);
 }
 
-#if OPENSSL_API_COMPAT < 0x10200000L
+#if !OPENSSL_API_3
 int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
                            const BIGNUM *b, BN_CTX *ctx)
 {
@@ -726,7 +731,7 @@ int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
     return 1;
 }
 
-#if OPENSSL_API_COMPAT < 0x10200000L
+#if !OPENSSL_API_3
 int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
                                         EC_POINT *point, const BIGNUM *x,
                                         const BIGNUM *y, BN_CTX *ctx)
@@ -764,7 +769,7 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
     return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
 }
 
-#if OPENSSL_API_COMPAT < 0x10200000L
+#if !OPENSSL_API_3
 int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
                                         const EC_POINT *point, BIGNUM *x,
                                         BIGNUM *y, BN_CTX *ctx)

@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -63,7 +63,7 @@ static CT_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         goto end;
     fixture->test_case_name = test_case_name;
-    fixture->epoch_time_in_ms = 1473269626000; /* Sep 7 17:33:46 2016 GMT */
+    fixture->epoch_time_in_ms = 1473269626000ULL; /* Sep 7 17:33:46 2016 GMT */
     if (!TEST_ptr(fixture->ctlog_store = CTLOG_STORE_new())
             || !TEST_int_eq(
                     CTLOG_STORE_load_default_file(fixture->ctlog_store), 1))
@@ -423,7 +423,7 @@ static int test_verify_fails_for_future_sct(void)
     SETUP_CT_TEST_FIXTURE();
     if (fixture == NULL)
         return 0;
-    fixture->epoch_time_in_ms = 1365094800000; /* Apr 4 17:00:00 2013 GMT */
+    fixture->epoch_time_in_ms = 1365094800000ULL; /* Apr 4 17:00:00 2013 GMT */
     fixture->certs_dir = certs_dir;
     fixture->certificate_file = "embeddedSCTs1.pem";
     fixture->issuer_file = "embeddedSCTs1_issuer.pem";

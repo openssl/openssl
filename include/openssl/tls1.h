@@ -3,7 +3,7 @@
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -28,7 +28,9 @@ extern "C" {
 # define TLS1_1_VERSION                  0x0302
 # define TLS1_2_VERSION                  0x0303
 # define TLS1_3_VERSION                  0x0304
-# define TLS_MAX_VERSION                 TLS1_3_VERSION
+# if !OPENSSL_API_3
+#  define TLS_MAX_VERSION                TLS1_3_VERSION
+# endif
 
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
@@ -241,6 +243,7 @@ __owur int SSL_export_keying_material_early(SSL *s, unsigned char *out,
                                             size_t contextlen);
 
 int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid);
+int SSL_get_signature_type_nid(const SSL *s, int *pnid);
 
 int SSL_get_sigalgs(SSL *s, int idx,
                     int *psign, int *phash, int *psignandhash,
@@ -334,7 +337,7 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 #  define SSL_set_dtlsext_heartbeat_no_requests(ssl, arg) \
         SSL_ctrl(ssl,SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS,arg,NULL)
 
-#  if OPENSSL_API_COMPAT < 0x10100000L
+#  if !OPENSSL_API_1_1_0
 #   define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT \
         SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT
 #   define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING \

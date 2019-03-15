@@ -116,6 +116,20 @@ OCSP_SIGNATURE_free,
 OCSP_SIGNATURE_new,
 OCSP_SINGLERESP_free,
 OCSP_SINGLERESP_new,
+OSSL_CRMF_CERTID_free,
+OSSL_CRMF_CERTID_new,
+OSSL_CRMF_CERTTEMPLATE_free,
+OSSL_CRMF_CERTTEMPLATE_new,
+OSSL_CRMF_ENCRYPTEDVALUE_free,
+OSSL_CRMF_ENCRYPTEDVALUE_new,
+OSSL_CRMF_MSG_free,
+OSSL_CRMF_MSG_new,
+OSSL_CRMF_PBMPARAMETER_free,
+OSSL_CRMF_PBMPARAMETER_new,
+OSSL_CRMF_PKIPUBLICATIONINFO_free,
+OSSL_CRMF_PKIPUBLICATIONINFO_new,
+OSSL_CRMF_MSGS_free,
+OSSL_CRMF_MSGS_new,
 OTHERNAME_free,
 OTHERNAME_new,
 PBE2PARAM_free,
@@ -259,7 +273,7 @@ X509_dup,
 
  extern const ASN1_ITEM TYPE_it;
  TYPE *TYPE_new(void);
- TYPE *TYPE_dup(TYPE *a);
+ TYPE *TYPE_dup(const TYPE *a);
  void TYPE_free(TYPE *a);
  int TYPE_print_ctx(BIO *out, TYPE *a, int indent, const ASN1_PCTX *pctx);
 
@@ -285,7 +299,7 @@ to generate the function bodies.
 TYPE_new() allocates an empty object of the indicated type.
 The object returned must be released by calling TYPE_free().
 
-TYPE_dup() copies an existing object.
+TYPE_dup() copies an existing object, leaving it untouched.
 
 TYPE_free() releases the object and all pointers and sub-objects
 within it.
@@ -306,7 +320,7 @@ TYPE_print_ctx() returns 1 on success or zero on failure.
 
 Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -67,7 +67,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     if (buffer != NULL) {
         size_t bytes = 0;
         if (BCryptGenRandom(NULL, buffer, bytes_needed,
-            BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
+                            BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
             bytes = bytes_needed;
 
         rand_pool_add_end(pool, bytes, 8 * bytes);
@@ -82,7 +82,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         size_t bytes = 0;
         /* poll the CryptoAPI PRNG */
         if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
-            CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
+                                 CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
             if (CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
                 bytes = bytes_needed;
 
@@ -156,7 +156,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     RAND_poll();

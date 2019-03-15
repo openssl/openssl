@@ -3,7 +3,7 @@
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -193,9 +193,8 @@ static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
 
     if (strlen(psk_identity) != identity_len
             || memcmp(psk_identity, identity, identity_len) != 0) {
-        BIO_printf(bio_s_out,
-                   "PSK warning: client identity not what we expected"
-                   " (got '%s' expected '%s')\n", identity, psk_identity);
+        *sess = NULL;
+        return 1;
     }
 
     if (psksess != NULL) {
@@ -752,7 +751,7 @@ typedef enum OPTION_choice {
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
-    OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY,
+    OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -939,6 +938,7 @@ const OPTIONS s_server_options[] = {
 #endif
 #ifndef OPENSSL_NO_SCTP
     {"sctp", OPT_SCTP, '-', "Use SCTP"},
+    {"sctp_label_bug", OPT_SCTP_LABEL_BUG, '-', "Enable SCTP label length bug"},
 #endif
 #ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
@@ -1048,6 +1048,9 @@ int s_server_main(int argc, char *argv[])
     const char *keylog_file = NULL;
     int max_early_data = -1, recv_max_early_data = -1;
     char *psksessf = NULL;
+#ifndef OPENSSL_NO_SCTP
+    int sctp_label_bug = 0;
+#endif
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1408,7 +1411,7 @@ int s_server_main(int argc, char *argv[])
             for (p = psk_key = opt_arg(); *p; p++) {
                 if (isxdigit(_UC(*p)))
                     continue;
-                BIO_printf(bio_err, "Not a hex number '%s'\n", *argv);
+                BIO_printf(bio_err, "Not a hex number '%s'\n", psk_key);
                 goto end;
             }
             break;
@@ -1489,6 +1492,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_SCTP:
 #ifndef OPENSSL_NO_SCTP
             protocol = IPPROTO_SCTP;
+#endif
+            break;
+        case OPT_SCTP_LABEL_BUG:
+#ifndef OPENSSL_NO_SCTP
+            sctp_label_bug = 1;
 #endif
             break;
         case OPT_TIMEOUT:
@@ -1793,6 +1801,12 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
     }
+
+#ifndef OPENSSL_NO_SCTP
+    if (protocol == IPPROTO_SCTP && sctp_label_bug == 1)
+        SSL_CTX_set_mode(ctx, SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG);
+#endif
+
     if (min_version != 0
         && SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;
@@ -2755,6 +2769,8 @@ static int init_ssl_connection(SSL *con)
                     BIO_ADDR_free(client);
                     return 0;
                 }
+
+                (void)BIO_ctrl_set_connected(wbio, client);
                 BIO_ADDR_free(client);
                 dtlslisten = 0;
             } else {
@@ -2910,6 +2926,10 @@ static void print_connection_info(SSL *con)
         }
         OPENSSL_free(exportedkeymat);
     }
+#ifndef OPENSSL_NO_KTLS
+    if (BIO_get_ktls_send(SSL_get_wbio(con)))
+        BIO_printf(bio_err, "Using Kernel TLS for sending\n");
+#endif
 
     (void)BIO_flush(bio_s_out);
 }

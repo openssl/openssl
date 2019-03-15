@@ -1,0 +1,191 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_VERSION_MAJOR, OPENSSL_VERSION_MINOR, OPENSSL_VERSION_PATCH,
+OPENSSL_VERSION_PRE_RELEASE, OPENSSL_VERSION_BUILD_METADATA,
+OPENSSL_VERSION_PRE_RELEASE_STR, OPENSSL_VERSION_BUILD_METADATA_STR,
+OPENSSL_VERSION_TEXT,
+OPENSSL_version_major, OPENSSL_version_minor, OPENSSL_version_patch,
+OPENSSL_version_pre_release, OPENSSL_version_build_metadata, OpenSSL_version,
+OPENSSL_VERSION_NUMBER, OpenSSL_version_num
+- get OpenSSL version number
+
+=head1 SYNOPSIS
+
+ #include <openssl/opensslv.h>
+
+ #define OPENSSL_VERSION_MAJOR  x
+ #define OPENSSL_VERSION_MINOR  y
+ #define OPENSSL_VERSION_PATCH  z
+
+ /* The definitions here are typical release values */
+ #undef OPENSSL_VERSION_PRE_RELEASE
+ #undef OPENSSL_VERSION_BUILD_METADATA
+ #define OPENSSL_VERSION_PRE_RELEASE_STR ""
+ #define OPENSSL_VERSION_BUILD_METADATA_STR ""
+
+ #define OPENSSL_VERSION_TEXT "OpenSSL x.y.z xx XXX xxxx"
+
+ unsigned int OPENSSL_version_major(void);
+ unsigned int OPENSSL_version_minor(void);
+ unsigned int OPENSSL_version_patch(void);
+ const char *OPENSSL_version_pre_release(void);
+ const char *OPENSSL_version_build_metadata(void);
+
+ #include <openssl/crypto.h>
+
+ const char *OpenSSL_version(int t);
+
+Deprecated:
+
+ /* from openssl/opensslv.h */
+ #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
+
+ /* from openssl/crypto.h */
+ unsigned long OpenSSL_version_num();
+
+=head1 DESCRIPTION
+
+=head2 Macros
+
+The three macros B<OPENSSL_VERSION_MAJOR>, B<OPENSSL_VERSION_MINOR> and
+B<OPENSSL_VERSION_PATCH> represent the three parts of a 3 numbered version
+number, MAJOR.MINOR.PATCH.
+
+The macro B<OPENSSL_VERSION_PRE_RELEASE> is an added bit of text that,
+when defined, indicates that this is a pre-release version, such as
+C<"-dev"> for an ongoing development snapshot, C<"-alpha3"> for an
+alpha release, etc...
+The value must be a string.
+
+The macro B<OPENSSL_VERSION_BUILD_METADATA> is extra metadata, reserved
+for other parties (examples: C<"+fips">, C<"+vendor.1">).
+The OpenSSL project will not touch this macro.
+The value must be a string.
+
+B<OPENSSL_VERSION_STR> is a convenience macro to get the short version
+number string, "MAJOR.MINOR.PATCH".
+
+B<OPENSSL_FULL_VERSION_STR> is a convenience macro to get the longer
+version number string, which combines B<OPENSSL_VERSION_STR>,
+B<OPENSSL_VERSION_PRE_RELEASE> and B<OPENSSL_VERSION_BUILD_METADATA>.
+
+B<OPENSSL_VERSION_TEXT> is a convenience macro to get a full descriptive
+version text, which includes B<OPENSSL_FULL_VERSION_STR> and the release
+date.
+
+=head2 Functions
+
+OPENSSL_version_major(), OPENSSL_version_minor(), OPENSSL_version_patch(),
+OPENSSL_version_pre_release(), and OPENSSL_version_build_metadata() return
+the values of the macros above for the build of the library, respectively.
+
+OpenSSL_version() returns different strings depending on B<t>:
+
+=over 4
+
+=item OPENSSL_VERSION
+
+The value of B<OPENSSL_VERSION_TEXT>
+
+=item OPENSSL_VERSION_STRING
+
+The value of B<OPENSSL_VERSION_STR>
+
+=item OPENSSL_FULL_VERSION_STRING
+
+The value of B<OPENSSL_FULL_VERSION_STR>
+
+=item OPENSSL_CFLAGS
+
+The compiler flags set for the compilation process in the form
+"compiler: ..."  if available or "compiler: information not available"
+otherwise.
+
+=item OPENSSL_BUILT_ON
+
+The date of the build process in the form "built on: ..." if available
+or "built on: date not available" otherwise.
+
+=item OPENSSL_PLATFORM
+
+The "Configure" target of the library build in the form "platform: ..."
+if available or "platform: information not available" otherwise.
+
+=item OPENSSL_DIR
+
+The "OPENSSLDIR" setting of the library build in the form "OPENSSLDIR: "...""
+if available or "OPENSSLDIR: N/A" otherwise.
+
+=item OPENSSL_ENGINES_DIR
+
+The "ENGINESDIR" setting of the library build in the form "ENGINESDIR: "...""
+if available or "ENGINESDIR: N/A" otherwise.
+
+=back
+
+For an unknown B<t>, the text "not available" is returned.
+
+=head1 BACKWARD COMPATIBILITY
+
+For compatibility, some older macros and functions are retained or
+synthesised.
+They are all considered deprecated.
+
+=head2 Macros
+
+B<OPENSSL_VERSION_NUMBER> is a combination of the major, minor and
+patch version into a single integer 0xMNN00PP0L, where:
+
+=over 4
+
+=item M
+
+is the number from B<OPENSSL_VERSION_MAJOR>, in hexadecimal notation
+
+=item NN
+
+is the number from B<OPENSSL_VERSION_MINOR>, in hexadecimal notation
+
+=item PP
+
+is the number from B<OPENSSL_VERSION_PATCH>, in hexadecimal notation
+
+=back
+
+=head2 Functions
+
+OpenSSL_version_num() returns the value of B<OPENSSL_VERSION_NUMBER>.
+
+=head1 RETURN VALUES
+
+OPENSSL_version_major(), OPENSSL_version_minor() and OPENSSL_version_patch()
+return the version number parts as integers.
+
+OPENSSL_version_pre_release() and OPENSSL_version_build_metadata() return
+the values of B<OPENSSL_VERSION_PRE_RELEASE> and
+B<OPENSSL_VERSION_BUILD_METADATA> respectively as constant strings.
+For any of them that is undefined, the empty string is returned.
+
+OpenSSL_version() returns constant strings.
+
+=head1 SEE ALSO
+
+L<crypto(7)>
+
+=head1 HISTORY
+
+The macros and functions described here were added in OpenSSL 3.0.0,
+with the exception of the L</BACKWARD COMPATIBILITY> ones.
+
+=head1 COPYRIGHT
+
+Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -17,6 +17,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/kdf.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/evp_int.h"
@@ -290,6 +291,21 @@ static const unsigned char kExampleBadECKeyDER[] = {
 static const unsigned char kExampleECPubKeyDER[] = {
     0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
     0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+    0x42, 0x00, 0x04, 0xba, 0xeb, 0x83, 0xfb, 0x3b, 0xb2, 0xff, 0x30, 0x53,
+    0xdb, 0xce, 0x32, 0xf2, 0xac, 0xae, 0x44, 0x0d, 0x3d, 0x13, 0x53, 0xb8,
+    0xd1, 0x68, 0x55, 0xde, 0x44, 0x46, 0x05, 0xa6, 0xc9, 0xd2, 0x04, 0xb7,
+    0xe3, 0xa2, 0x96, 0xc8, 0xb2, 0x5e, 0x22, 0x03, 0xd7, 0x03, 0x7a, 0x8b,
+    0x13, 0x5c, 0x42, 0x49, 0xc2, 0xab, 0x86, 0xd6, 0xac, 0x6b, 0x93, 0x20,
+    0x56, 0x6a, 0xc6, 0xc8, 0xa5, 0x0b, 0xe5
+};
+
+/*
+ * kExampleBadECKeyDER is a sample EC public key with a wrong OID
+ * 1.2.840.10045.2.2 instead of 1.2.840.10045.2.1 - EC Public Key
+ */
+static const unsigned char kExampleBadECPubKeyDER[] = {
+    0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
+    0x02, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
     0x42, 0x00, 0x04, 0xba, 0xeb, 0x83, 0xfb, 0x3b, 0xb2, 0xff, 0x30, 0x53,
     0xdb, 0xce, 0x32, 0xf2, 0xac, 0xae, 0x44, 0x0d, 0x3d, 0x13, 0x53, 0xb8,
     0xd1, 0x68, 0x55, 0xde, 0x44, 0x46, 0x05, 0xa6, 0xc9, 0xd2, 0x04, 0xb7,
@@ -918,6 +934,81 @@ static int test_EVP_PKEY_check(int i)
     return ret;
 }
 
+static int test_HKDF(void)
+{
+    EVP_PKEY_CTX *pctx;
+    unsigned char out[20];
+    size_t outlen;
+    int i, ret = 0;
+    unsigned char salt[] = "0123456789";
+    unsigned char key[] = "012345678901234567890123456789";
+    unsigned char info[] = "infostring";
+    const unsigned char expected[] = {
+        0xe5, 0x07, 0x70, 0x7f, 0xc6, 0x78, 0xd6, 0x54, 0x32, 0x5f, 0x7e, 0xc5,
+        0x7b, 0x59, 0x3e, 0xd8, 0x03, 0x6b, 0xed, 0xca
+    };
+    size_t expectedlen = sizeof(expected);
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL)))
+        goto done;
+
+    /* We do this twice to test reuse of the EVP_PKEY_CTX */
+    for (i = 0; i < 2; i++) {
+        outlen = sizeof(out);
+        memset(out, 0, outlen);
+
+        if (!TEST_int_gt(EVP_PKEY_derive_init(pctx), 0)
+                || !TEST_int_gt(EVP_PKEY_CTX_set_hkdf_md(pctx, EVP_sha256()), 0)
+                || !TEST_int_gt(EVP_PKEY_CTX_set1_hkdf_salt(pctx, salt,
+                                                            sizeof(salt) - 1), 0)
+                || !TEST_int_gt(EVP_PKEY_CTX_set1_hkdf_key(pctx, key,
+                                                           sizeof(key) - 1), 0)
+                || !TEST_int_gt(EVP_PKEY_CTX_add1_hkdf_info(pctx, info,
+                                                            sizeof(info) - 1), 0)
+                || !TEST_int_gt(EVP_PKEY_derive(pctx, out, &outlen), 0)
+                || !TEST_mem_eq(out, outlen, expected, expectedlen))
+            goto done;
+    }
+
+    ret = 1;
+
+ done:
+    EVP_PKEY_CTX_free(pctx);
+
+    return ret;
+}
+
+#ifndef OPENSSL_NO_EC
+static int test_X509_PUBKEY_inplace(void)
+{
+  int ret = 0;
+  X509_PUBKEY *xp = NULL;
+  const unsigned char *p = kExampleECPubKeyDER;
+  size_t input_len = sizeof(kExampleECPubKeyDER);
+
+  if (!TEST_ptr(xp = d2i_X509_PUBKEY(NULL, &p, input_len)))
+    goto done;
+
+  if (!TEST_ptr(X509_PUBKEY_get0(xp)))
+    goto done;
+
+  p = kExampleBadECPubKeyDER;
+  input_len = sizeof(kExampleBadECPubKeyDER);
+
+  if (!TEST_ptr(xp = d2i_X509_PUBKEY(&xp, &p, input_len)))
+    goto done;
+
+  if (!TEST_true(X509_PUBKEY_get0(xp) == NULL))
+    goto done;
+
+  ret = 1;
+
+done:
+  X509_PUBKEY_free(xp);
+  return ret;
+}
+#endif
+
 int setup_tests(void)
 {
     ADD_TEST(test_EVP_DigestSignInit);
@@ -941,5 +1032,9 @@ int setup_tests(void)
     if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
         return 0;
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
+    ADD_TEST(test_HKDF);
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_X509_PUBKEY_inplace);
+#endif
     return 1;
 }

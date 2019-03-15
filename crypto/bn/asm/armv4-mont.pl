@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -97,7 +97,6 @@ $_num="$num,#15*4";	$_bpend=$_num;
 $code=<<___;
 #include "arm_arch.h"
 
-.text
 #if defined(__thumb2__)
 .syntax	unified
 .thumb
@@ -105,10 +104,16 @@ $code=<<___;
 .code	32
 #endif
 
+.text
+
 #if __ARM_MAX_ARCH__>=7
 .align	5
 .LOPENSSL_armcap:
+# ifdef	_WIN32
+.word	OPENSSL_armcap_P
+# else
 .word	OPENSSL_armcap_P-.Lbn_mul_mont
+# endif
 #endif
 
 .global	bn_mul_mont
@@ -122,12 +127,14 @@ bn_mul_mont:
 #if __ARM_MAX_ARCH__>=7
 	tst	ip,#7
 	bne	.Lialu
-	adr	r0,.Lbn_mul_mont
-	ldr	r2,.LOPENSSL_armcap
+	ldr	r0,.LOPENSSL_armcap
+#if !defined(_WIN32)
+	adr	r2,.Lbn_mul_mont
 	ldr	r0,[r0,r2]
-#ifdef	__APPLE__
+# endif
+# if defined(__APPLE__) || defined(_WIN32)
 	ldr	r0,[r0]
-#endif
+# endif
 	tst	r0,#ARMV7_NEON		@ NEON available?
 	ldmia	sp, {r0,r2}
 	beq	.Lialu

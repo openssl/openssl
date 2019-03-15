@@ -1,7 +1,7 @@
 /*
  * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -507,7 +507,11 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
      * concurrently (which is the case for the <master> drbg).
      */
     data.tid = CRYPTO_THREAD_get_current_id();
+#if __CRTL_VER >= 80400000
     sys$gettim_prec(&data.time);
+#else
+    sys$gettim((void*)&data.time);
+#endif
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }

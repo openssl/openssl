@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -197,7 +197,7 @@ bn_mul_mont:
 	mul	$nlo,$nj,$m1		// np[j]*m1
 	adds	$lo1,$lo1,$lo0
 	umulh	$nhi,$nj,$m1
-	str	$lo1,[$tp,#-16]		// tp[j-1]
+	stur	$lo1,[$tp,#-16]		// tp[j-1]
 	cbnz	$j,.Linner
 
 .Linner_skip:
@@ -253,13 +253,13 @@ bn_mul_mont:
 	csel	$nj,$tj,$aj,lo		// did it borrow?
 	ldr	$tj,[$tp],#8
 	ldr	$aj,[$rp],#8
-	str	xzr,[$tp,#-16]		// wipe tp
-	str	$nj,[$rp,#-16]
+	stur	xzr,[$tp,#-16]		// wipe tp
+	stur	$nj,[$rp,#-16]
 	cbnz	$num,.Lcond_copy
 
 	csel	$nj,$tj,$aj,lo
-	str	xzr,[$tp,#-8]		// wipe tp
-	str	$nj,[$rp,#-8]
+	stur	xzr,[$tp,#-8]		// wipe tp
+	stur	$nj,[$rp,#-8]
 
 	ldp	x19,x20,[x29,#16]
 	mov	sp,x29
@@ -287,6 +287,7 @@ __bn_sqr8x_mont:
 	cmp	$ap,$bp
 	b.ne	__bn_mul4x_mont
 .Lsqr8x_mont:
+	.inst	0xd503233f		// paciasp
 	stp	x29,x30,[sp,#-128]!
 	add	x29,sp,#0
 	stp	x19,x20,[sp,#16]
@@ -595,7 +596,7 @@ __bn_sqr8x_mont:
 	ldp	$a4,$a5,[$tp,#8*4]
 	ldp	$a6,$a7,[$tp,#8*6]
 	adds	$acc0,$acc0,$a0
-	ldr	$n0,[$rp,#-8*8]
+	ldur	$n0,[$rp,#-8*8]
 	adcs	$acc1,$acc1,$a1
 	ldp	$a0,$a1,[$ap,#8*0]
 	adcs	$acc2,$acc2,$a2
@@ -793,7 +794,7 @@ $code.=<<___;
 	//adc	$carry,xzr,xzr		// moved below
 	cbz	$cnt,.Lsqr8x8_post_condition
 
-	ldr	$n0,[$tp,#-8*8]
+	ldur	$n0,[$tp,#-8*8]
 	ldp	$a0,$a1,[$np,#8*0]
 	ldp	$a2,$a3,[$np,#8*2]
 	ldp	$a4,$a5,[$np,#8*4]
@@ -851,7 +852,7 @@ $code.=<<___;
 	ldp	$a6,$a7,[$tp,#8*6]
 	cbz	$cnt,.Lsqr8x_tail_break
 
-	ldr	$n0,[$rp,#-8*8]
+	ldur	$n0,[$rp,#-8*8]
 	adds	$acc0,$acc0,$a0
 	adcs	$acc1,$acc1,$a1
 	ldp	$a0,$a1,[$np,#8*0]
@@ -1040,6 +1041,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldr	x29,[sp],#128
+	.inst	0xd50323bf		// autiasp
 	ret
 .size	__bn_sqr8x_mont,.-__bn_sqr8x_mont
 ___
@@ -1063,6 +1065,7 @@ $code.=<<___;
 .type	__bn_mul4x_mont,%function
 .align	5
 __bn_mul4x_mont:
+	.inst	0xd503233f		// paciasp
 	stp	x29,x30,[sp,#-128]!
 	add	x29,sp,#0
 	stp	x19,x20,[sp,#16]
@@ -1496,6 +1499,7 @@ __bn_mul4x_mont:
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldr	x29,[sp],#128
+	.inst	0xd50323bf		// autiasp
 	ret
 .size	__bn_mul4x_mont,.-__bn_mul4x_mont
 ___

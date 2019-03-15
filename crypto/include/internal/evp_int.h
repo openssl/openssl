@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -44,7 +44,7 @@ struct evp_pkey_method_st {
     int pkey_id;
     int flags;
     int (*init) (EVP_PKEY_CTX *ctx);
-    int (*copy) (EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src);
+    int (*copy) (EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src);
     void (*cleanup) (EVP_PKEY_CTX *ctx);
     int (*paramgen_init) (EVP_PKEY_CTX *ctx);
     int (*paramgen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
@@ -111,6 +111,64 @@ extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD poly1305_pkey_meth;
 extern const EVP_PKEY_METHOD siphash_pkey_meth;
+
+/* struct evp_mac_impl_st is defined by the implementation */
+typedef struct evp_mac_impl_st EVP_MAC_IMPL;
+struct evp_mac_st {
+    int type;
+    EVP_MAC_IMPL *(*new) (void);
+    int (*copy) (EVP_MAC_IMPL *macdst, EVP_MAC_IMPL *macsrc);
+    void (*free) (EVP_MAC_IMPL *macctx);
+    size_t (*size) (EVP_MAC_IMPL *macctx);
+    int (*init) (EVP_MAC_IMPL *macctx);
+    int (*update) (EVP_MAC_IMPL *macctx, const unsigned char *data,
+                   size_t datalen);
+    int (*final) (EVP_MAC_IMPL *macctx, unsigned char *out);
+    int (*ctrl) (EVP_MAC_IMPL *macctx, int cmd, va_list args);
+    int (*ctrl_str) (EVP_MAC_IMPL *macctx, const char *type, const char *value);
+};
+
+extern const EVP_MAC blake2b_mac_meth;
+extern const EVP_MAC blake2s_mac_meth;
+extern const EVP_MAC cmac_meth;
+extern const EVP_MAC gmac_meth;
+extern const EVP_MAC hmac_meth;
+extern const EVP_MAC kmac128_meth;
+extern const EVP_MAC kmac256_meth;
+extern const EVP_MAC siphash_meth;
+extern const EVP_MAC poly1305_meth;
+
+/* Internal keccak algorithms used for KMAC */
+const EVP_MD *evp_keccak_kmac128(void);
+const EVP_MD *evp_keccak_kmac256(void);
+
+/*
+ * This function is internal for now, but can be made external when needed.
+ * The documentation would read:
+ *
+ * EVP_add_mac() adds the MAC implementation C<mac> to the internal
+ * object database.
+ */
+int EVP_add_mac(const EVP_MAC *mac);
+
+/* struct evp_kdf_impl_st is defined by the implementation */
+typedef struct evp_kdf_impl_st EVP_KDF_IMPL;
+typedef struct {
+    int type;
+    EVP_KDF_IMPL *(*new) (void);
+    void (*free) (EVP_KDF_IMPL *impl);
+    void (*reset) (EVP_KDF_IMPL *impl);
+    int (*ctrl) (EVP_KDF_IMPL *impl, int cmd, va_list args);
+    int (*ctrl_str) (EVP_KDF_IMPL *impl, const char *type, const char *value);
+    size_t (*size) (EVP_KDF_IMPL *impl);
+    int (*derive) (EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen);
+} EVP_KDF_METHOD;
+
+extern const EVP_KDF_METHOD pbkdf2_kdf_meth;
+extern const EVP_KDF_METHOD scrypt_kdf_meth;
+extern const EVP_KDF_METHOD tls1_prf_kdf_meth;
+extern const EVP_KDF_METHOD hkdf_kdf_meth;
+extern const EVP_KDF_METHOD sshkdf_kdf_meth;
 
 struct evp_md_st {
     int type;
@@ -423,6 +481,7 @@ struct evp_pkey_st {
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
+void openssl_add_all_macs_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 

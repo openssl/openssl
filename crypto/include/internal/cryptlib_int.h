@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -32,4 +32,6 @@ int ossl_init_thread_start(uint64_t opts);
 # define OPENSSL_INIT_THREAD_ERR_STATE       0x02
 # define OPENSSL_INIT_THREAD_RAND            0x04
 
+int ossl_trace_init(void);
+void ossl_trace_cleanup(void);
 void ossl_malloc_setup_failures(void);

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,6 +9,7 @@
 
 #include "../ssl_locl.h"
 #include "internal/constant_time_locl.h"
+#include <openssl/trace.h>
 #include <openssl/rand.h>
 #include "record_locl.h"
 #include "internal/cryptlib.h"
@@ -563,15 +564,10 @@ int ssl3_get_record(SSL *s)
                  SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         return -1;
     }
-#ifdef SSL_DEBUG
-    printf("dec %lu\n", (unsigned long)rr[0].length);
-    {
-        size_t z;
-        for (z = 0; z < rr[0].length; z++)
-            printf("%02X%c", rr[0].data[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("\n");
-#endif
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "dec %lu\n", (unsigned long)rr[0].length);
+        BIO_dump_indent(trc_out, rr[0].data, rr[0].length, 4);
+    } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) &&
@@ -1361,22 +1357,12 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
 
     EVP_MD_CTX_free(hmac);
 
-#ifdef SSL_DEBUG
-    fprintf(stderr, "seq=");
-    {
-        int z;
-        for (z = 0; z < 8; z++)
-            fprintf(stderr, "%02X ", seq[z]);
-        fprintf(stderr, "\n");
-    }
-    fprintf(stderr, "rec=");
-    {
-        size_t z;
-        for (z = 0; z < rec->length; z++)
-            fprintf(stderr, "%02X ", rec->data[z]);
-        fprintf(stderr, "\n");
-    }
-#endif
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "seq:\n");
+        BIO_dump_indent(trc_out, seq, 8, 4);
+        BIO_printf(trc_out, "rec:\n");
+        BIO_dump_indent(trc_out, rec->data, rec->length, 4);
+    } OSSL_TRACE_END(TLS);
 
     if (!SSL_IS_DTLS(ssl)) {
         for (i = 7; i >= 0; i--) {
@@ -1385,14 +1371,10 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
                 break;
         }
     }
-#ifdef SSL_DEBUG
-    {
-        unsigned int z;
-        for (z = 0; z < md_size; z++)
-            fprintf(stderr, "%02X ", md[z]);
-        fprintf(stderr, "\n");
-    }
-#endif
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "md:\n");
+        BIO_dump_indent(trc_out, md, md_size, 4);
+    } OSSL_TRACE_END(TLS);
     return 1;
 }
 
@@ -1683,15 +1665,10 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         return 0;
     }
-#ifdef SSL_DEBUG
-    printf("dec %ld\n", rr->length);
-    {
-        size_t z;
-        for (z = 0; z < rr->length; z++)
-            printf("%02X%c", rr->data[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("\n");
-#endif
+    OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "dec %ld\n", rr->length);
+        BIO_dump_indent(trc_out, rr->data, rr->length, 4);
+    } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) && !SSL_READ_ETM(s) &&
@@ -2029,4 +2006,29 @@ int dtls1_get_record(SSL *s)
 
     return 1;
 
+}
+
+int dtls_buffer_listen_record(SSL *s, size_t len, unsigned char *seq, size_t off)
+{
+    SSL3_RECORD *rr;
+
+    rr = RECORD_LAYER_get_rrec(&s->rlayer);
+    memset(rr, 0, sizeof(SSL3_RECORD));
+
+    rr->length = len;
+    rr->type = SSL3_RT_HANDSHAKE;
+    memcpy(rr->seq_num, seq, sizeof(rr->seq_num));
+    rr->off = off;
+
+    s->rlayer.packet = RECORD_LAYER_get_rbuf(&s->rlayer)->buf;
+    s->rlayer.packet_length = DTLS1_RT_HEADER_LENGTH + len;
+    rr->data = s->rlayer.packet + DTLS1_RT_HEADER_LENGTH;
+
+    if (dtls1_buffer_record(s, &(s->rlayer.d->processed_rcds),
+                            SSL3_RECORD_get_seq_num(s->rlayer.rrec)) <= 0) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    return 1;
 }

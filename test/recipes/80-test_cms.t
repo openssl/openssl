@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -217,6 +217,22 @@ my @smime_cms_tests = (
 	"-out", "test2.cms" ],
       [ "-verify_receipt", "test2.cms", "-in", "test.cms",
 	"-CAfile", catfile($smdir, "smroot.pem") ]
+    ],
+
+    [ "signed content DER format, RSA key, CAdES-BES compatible",
+      [ "-sign", "-cades", "-in", $smcont, "-outform", "DER", "-nodetach",
+        "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "test.cms" ],
+      [ "-verify", "-in", "test.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
+    ],
+
+    [ "signed content DER format, RSA key, SHA256 md, CAdES-BES compatible",
+      [ "-sign", "-cades", "-md", "sha256", "-in", $smcont, "-outform",
+        "DER", "-nodetach", "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "test.cms" ],
+      [ "-verify", "-in", "test.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
     ],
 
     [ "enveloped content test streaming S/MIME format, DES, 3 recipients, keyid",

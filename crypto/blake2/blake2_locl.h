@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -49,6 +49,7 @@ struct blake2s_ctx_st {
     uint32_t f[2];
     uint8_t  buf[BLAKE2S_BLOCKBYTES];
     size_t   buflen;
+    size_t   outlen;
 };
 
 struct blake2b_param_st {
@@ -73,6 +74,7 @@ struct blake2b_ctx_st {
     uint64_t f[2];
     uint8_t  buf[BLAKE2B_BLOCKBYTES];
     size_t   buflen;
+    size_t   outlen;
 };
 
 #define BLAKE2B_DIGEST_LENGTH 64
@@ -81,10 +83,29 @@ struct blake2b_ctx_st {
 typedef struct blake2s_ctx_st BLAKE2S_CTX;
 typedef struct blake2b_ctx_st BLAKE2B_CTX;
 
-int BLAKE2b_Init(BLAKE2B_CTX *c);
+int BLAKE2b_Init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
+int BLAKE2b_Init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P, const void *key);
 int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen);
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c);
 
-int BLAKE2s_Init(BLAKE2S_CTX *c);
+/*
+ * These setters are internal and do not check the validity of their parameters.
+ * See blake2b_mac_ctrl for validation logic.
+ */
+
+void blake2b_param_init(BLAKE2B_PARAM *P);
+void blake2b_param_set_digest_length(BLAKE2B_PARAM *P, uint8_t outlen);
+void blake2b_param_set_key_length(BLAKE2B_PARAM *P, uint8_t keylen);
+void blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal, size_t length);
+void blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt, size_t length);
+
+int BLAKE2s_Init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P);
+int BLAKE2s_Init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P, const void *key);
 int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen);
 int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c);
+
+void blake2s_param_init(BLAKE2S_PARAM *P);
+void blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen);
+void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen);
+void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t length);
+void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t length);

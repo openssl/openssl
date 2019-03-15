@@ -1192,3 +1192,13 @@ magma_cfb		1191
 magma_mac		1192
 hmacWithSHA512_224		1193
 hmacWithSHA512_256		1194
+gmac		1195
+kmac128		1196
+kmac256		1197
+aes_128_siv		1198
+aes_192_siv		1199
+aes_256_siv		1200
+blake2bmac		1201
+blake2smac		1202
+sshkdf		1203
+SM2_with_SM3		1204

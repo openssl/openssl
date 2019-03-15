@@ -3,7 +3,7 @@
  * Copyright (c) 2014, Intel Corporation. All Rights Reserved.
  * Copyright (c) 2015, CloudFlare, Inc.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -1432,7 +1432,7 @@ void EC_nistz256_pre_comp_free(NISTZ256_PRE_COMP *pre)
         return;
 
     CRYPTO_DOWN_REF(&pre->references, &i, pre->lock);
-    REF_PRINT_COUNT("EC_nistz256", x);
+    REF_PRINT_COUNT("EC_nistz256", pre);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
@@ -1677,6 +1677,7 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         ec_GFp_mont_field_mul,
         ec_GFp_mont_field_sqr,
         0,                                          /* field_div */
+        ec_GFp_mont_field_inv,
         ec_GFp_mont_field_encode,
         ec_GFp_mont_field_decode,
         ec_GFp_mont_field_set_to_one,

@@ -1,5 +1,10 @@
 #!/bin/sh
-
+{-
+    use lib '.';
+    use configdata;
+    use lib catdir($config{sourcedir}, 'Configurations');
+    use platform;
+-}
 # To test this OpenSSL version's applications against another version's
 # shared libraries, simply set
 #
@@ -25,15 +30,8 @@ fi
 THERE="`echo $0 | sed -e 's|[^/]*$||' 2>/dev/null`.."
 [ -d "${THERE}" ] || exec "$@"	# should never happen...
 
-# Alternative to this is to parse ${THERE}/Makefile...
-LIBCRYPTOSO="${THERE}/libcrypto.so"
-if [ -f "$LIBCRYPTOSO" ]; then
-    while [ -h "$LIBCRYPTOSO" ]; do
-	LIBCRYPTOSO="${THERE}/`ls -l "$LIBCRYPTOSO" | sed -e 's|.*\-> ||'`"
-    done
-    SOSUFFIX=`echo ${LIBCRYPTOSO} | sed -e 's|.*\.so||' 2>/dev/null`
-    LIBSSLSO="${THERE}/libssl.so${SOSUFFIX}"
-fi
+LIBCRYPTOSO="${THERE}/{- platform->sharedlib('libcrypto') -}"
+LIBSSLSO="${THERE}/{- platform->sharedlib('libssl') -}"
 
 SYSNAME=`(uname -s) 2>/dev/null`;
 case "$SYSNAME" in

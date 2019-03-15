@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -100,7 +100,7 @@
 #include <openssl/modes.h>
 
 #ifndef HAVE_FORK
-# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_VXWORKS)
 #  define HAVE_FORK 0
 # else
 #  define HAVE_FORK 1
@@ -1522,11 +1522,11 @@ int speed_main(int argc, char **argv)
         {"nistp192", NID_X9_62_prime192v1, 192},
         {"nistp224", NID_secp224r1, 224},
         {"nistp256", NID_X9_62_prime256v1, 256},
-        {"nistp384", NID_secp384r1, 384}, 
+        {"nistp384", NID_secp384r1, 384},
         {"nistp521", NID_secp521r1, 521},
         /* Binary Curves */
         {"nistk163", NID_sect163k1, 163},
-        {"nistk233", NID_sect233k1, 233}, 
+        {"nistk233", NID_sect233k1, 233},
         {"nistk283", NID_sect283k1, 283},
         {"nistk409", NID_sect409k1, 409},
         {"nistk571", NID_sect571k1, 571},
@@ -2657,6 +2657,10 @@ int speed_main(int argc, char **argv)
                     EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
                                       loopargs[k].key, NULL, -1);
                     OPENSSL_clear_free(loopargs[k].key, keylen);
+
+                    /* SIV mode only allows for a single Update operation */
+                    if (EVP_CIPHER_mode(evp_cipher) == EVP_CIPH_SIV_MODE)
+                        EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_SET_SPEED, 1, NULL);
                 }
 
                 Time_F(START);
@@ -2947,7 +2951,7 @@ int speed_main(int argc, char **argv)
 
             if (rsa_count <= 1) {
                 /* if longer than 10s, don't do any more */
-                for (testnum++; testnum < EC_NUM; testnum++)
+                for (testnum++; testnum < ECDSA_NUM; testnum++)
                     ecdsa_doit[testnum] = 0;
             }
         }
@@ -3223,8 +3227,8 @@ int speed_main(int argc, char **argv)
  show_res:
 #endif
     if (!mr) {
-        printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
-        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
+        printf("version: %s\n", OpenSSL_version(OPENSSL_FULL_VERSION_STRING));
+        printf("built on: %s\n", OpenSSL_version(OPENSSL_BUILT_ON));
         printf("options:");
         printf("%s ", BN_options());
 #ifndef OPENSSL_NO_MD2

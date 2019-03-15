@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,16 +16,17 @@
 #  endif
 # endif
 
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
-     && !defined(__STDC_NO_ATOMICS__)
-#  include <stdatomic.h>
-#  define HAVE_C11_ATOMICS
-# endif
+# ifndef OPENSSL_DEV_NO_ATOMICS
+#  if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
+      && !defined(__STDC_NO_ATOMICS__)
+#   include <stdatomic.h>
+#   define HAVE_C11_ATOMICS
+#  endif
 
-# if defined(HAVE_C11_ATOMICS) && defined(ATOMIC_INT_LOCK_FREE) \
-     && ATOMIC_INT_LOCK_FREE > 0
+#  if defined(HAVE_C11_ATOMICS) && defined(ATOMIC_INT_LOCK_FREE) \
+      && ATOMIC_INT_LOCK_FREE > 0
 
-#  define HAVE_ATOMICS 1
+#   define HAVE_ATOMICS 1
 
 typedef _Atomic int CRYPTO_REF_COUNT;
 
@@ -53,9 +54,9 @@ static inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
     return 1;
 }
 
-# elif defined(__GNUC__) && defined(__ATOMIC_RELAXED) && __GCC_ATOMIC_INT_LOCK_FREE > 0
+#  elif defined(__GNUC__) && defined(__ATOMIC_RELAXED) && __GCC_ATOMIC_INT_LOCK_FREE > 0
 
-#  define HAVE_ATOMICS 1
+#   define HAVE_ATOMICS 1
 
 typedef int CRYPTO_REF_COUNT;
 
@@ -73,17 +74,17 @@ static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
     return 1;
 }
 
-# elif defined(_MSC_VER) && _MSC_VER>=1200
+#  elif defined(_MSC_VER) && _MSC_VER>=1200
 
-#  define HAVE_ATOMICS 1
+#   define HAVE_ATOMICS 1
 
 typedef volatile int CRYPTO_REF_COUNT;
 
-#  if (defined(_M_ARM) && _M_ARM>=7) || defined(_M_ARM64)
-#   include <intrin.h>
-#   if defined(_M_ARM64) && !defined(_ARM_BARRIER_ISH)
-#    define _ARM_BARRIER_ISH _ARM64_BARRIER_ISH
-#   endif
+#   if (defined(_M_ARM) && _M_ARM>=7) || defined(_M_ARM64)
+#    include <intrin.h>
+#    if defined(_M_ARM64) && !defined(_ARM_BARRIER_ISH)
+#     define _ARM_BARRIER_ISH _ARM64_BARRIER_ISH
+#    endif
 
 static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
 {
@@ -98,8 +99,8 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
         __dmb(_ARM_BARRIER_ISH);
     return 1;
 }
-#  else
-#   pragma intrinsic(_InterlockedExchangeAdd)
+#   else
+#    pragma intrinsic(_InterlockedExchangeAdd)
 
 static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
 {
@@ -112,9 +113,17 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
     *ret = _InterlockedExchangeAdd(val, -1) - 1;
     return 1;
 }
-#  endif
+#   endif
 
-# else
+#  endif
+# endif  /* !OPENSSL_DEV_NO_ATOMICS */
+
+/*
+ * All the refcounting implementations above define HAVE_ATOMICS, so if it's
+ * still undefined here (such as when OPENSSL_DEV_NO_ATMOICS is defined), it
+ * means we need to implement a fallback.  This fallback uses locks.
+ */
+# ifndef HAVE_ATOMICS
 
 typedef int CRYPTO_REF_COUNT;
 

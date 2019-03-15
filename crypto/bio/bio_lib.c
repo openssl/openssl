@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -52,7 +52,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
         argi = (int)len;
     }
 
-    if (inret && (oper & BIO_CB_RETURN) && bareoper != BIO_CB_CTRL) {
+    if (inret > 0 && (oper & BIO_CB_RETURN) && bareoper != BIO_CB_CTRL) {
         if (*processed > INT_MAX)
             return -1;
         inret = *processed;
@@ -60,7 +60,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
 
     ret = b->callback(b, oper, argp, argi, argl, inret);
 
-    if (ret >= 0 && (oper & BIO_CB_RETURN) && bareoper != BIO_CB_CTRL) {
+    if (ret > 0 && (oper & BIO_CB_RETURN) && bareoper != BIO_CB_CTRL) {
         *processed = (size_t)ret;
         ret = 1;
     }

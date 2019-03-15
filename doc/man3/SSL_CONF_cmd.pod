@@ -308,11 +308,6 @@ Attempts to pad TLSv1.3 records so that they are a multiple of B<value> in
 length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
 B<value> must be >1 or <=16384.
 
-=item B<NoRenegotiation>
-
-Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
-B<SSL_OP_NO_RENEGOTIATION>.
-
 =item B<SignatureAlgorithms>
 
 This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
@@ -456,6 +451,9 @@ Only used by servers.
 B<NoResumptionOnRenegotiation>: set
 B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.
 
+B<NoRenegotiation>: disables all attempts at renegotiation in TLSv1.2 and
+earlier, same as setting B<SSL_OP_NO_RENEGOTIATION>.
+
 B<UnsafeLegacyRenegotiation>: permits the use of unsafe legacy renegotiation.
 Equivalent to B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
@@ -485,6 +483,10 @@ servers. Anti-replay measures are required to comply with the TLSv1.3
 specification. Some applications may be able to mitigate the replay risks in
 other ways and in such cases the built-in OpenSSL functionality is not required.
 Disabling anti-replay is equivalent to setting B<SSL_OP_NO_ANTI_REPLAY>.
+
+B<ExtendedMasterSecret>: use extended master secret extension, enabled by
+default. Inverse of B<SSL_OP_NO_EXTENDED_MASTER_SECRET>: that is,
+B<-ExtendedMasterSecret> is the same as setting B<SSL_OP_NO_EXTENDED_MASTER_SECRET>.
 
 =item B<VerifyMode>
 
@@ -596,6 +598,23 @@ checking or translation of the command value. For example if the return
 value is B<SSL_CONF_TYPE_FILE> an application could translate a relative
 pathname to an absolute pathname.
 
+=head1 RETURN VALUES
+
+SSL_CONF_cmd() returns 1 if the value of B<cmd> is recognised and B<value> is
+B<NOT> used and 2 if both B<cmd> and B<value> are used. In other words it
+returns the number of arguments processed. This is useful when processing
+command lines.
+
+A return value of -2 means B<cmd> is not recognised.
+
+A return value of -3 means B<cmd> is recognised and the command requires a
+value but B<value> is NULL.
+
+A return code of 0 indicates that both B<cmd> and B<value> are valid but an
+error occurred attempting to perform the operation: for example due to an
+error in the syntax of B<value> in this case the error queue may provide
+additional information.
+
 =head1 EXAMPLES
 
 Set supported signature algorithms:
@@ -642,23 +661,6 @@ Set supported curves to P-256, P-384:
 
  SSL_CONF_cmd(ctx, "Curves", "P-256:P-384");
 
-=head1 RETURN VALUES
-
-SSL_CONF_cmd() returns 1 if the value of B<cmd> is recognised and B<value> is
-B<NOT> used and 2 if both B<cmd> and B<value> are used. In other words it
-returns the number of arguments processed. This is useful when processing
-command lines.
-
-A return value of -2 means B<cmd> is not recognised.
-
-A return value of -3 means B<cmd> is recognised and the command requires a
-value but B<value> is NULL.
-
-A return code of 0 indicates that both B<cmd> and B<value> are valid but an
-error occurred attempting to perform the operation: for example due to an
-error in the syntax of B<value> in this case the error queue may provide
-additional information.
-
 =head1 SEE ALSO
 
 L<SSL_CONF_CTX_new(3)>,
@@ -670,12 +672,12 @@ L<SSL_CTX_set_options(3)>
 
 =head1 HISTORY
 
-SSL_CONF_cmd() was first added to OpenSSL 1.0.2
+The SSL_CONF_cmd() function was added in OpenSSL 1.0.2.
 
-B<SSL_OP_NO_SSL2> doesn't have effect since 1.1.0, but the macro is retained
-for backwards compatibility.
+The B<SSL_OP_NO_SSL2> option doesn't have effect since 1.1.0, but the macro
+is retained for backwards compatibility.
 
-B<SSL_CONF_TYPE_NONE> was first added to OpenSSL 1.1.0. In earlier versions of
+The B<SSL_CONF_TYPE_NONE> was added in OpenSSL 1.1.0. In earlier versions of
 OpenSSL passing a command which didn't take an argument would return
 B<SSL_CONF_TYPE_UNKNOWN>.
 
@@ -687,7 +689,7 @@ B<AllowNoDHEKEX> and B<PrioritizeChaCha> were added in OpenSSL 1.1.1.
 
 Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

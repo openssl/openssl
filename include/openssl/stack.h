@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -50,7 +50,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *st);
 void OPENSSL_sk_sort(OPENSSL_STACK *st);
 int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define _STACK OPENSSL_STACK
 #  define sk_num OPENSSL_sk_num
 #  define sk_value OPENSSL_sk_value

@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,7 +12,7 @@
 #include <openssl/pkcs12.h>
 #include "p12_lcl.h"
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#if !OPENSSL_API_1_1_0
 ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag, int attr_nid)
 {
     return PKCS12_get_attr_gen(bag->attrib, attr_nid);

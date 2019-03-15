@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -94,7 +94,7 @@ SSL_SESSION *SSL_SESSION_new(void)
     return ss;
 }
 
-SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
+SSL_SESSION *SSL_SESSION_dup(const SSL_SESSION *src)
 {
     return ssl_session_dup(src, 1);
 }
@@ -103,7 +103,7 @@ SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
  * Create a new SSL_SESSION and duplicate the contents of |src| into it. If
  * ticket == 0 then no ticket information is duplicated, otherwise it is.
  */
-SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
+SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *dest;
 

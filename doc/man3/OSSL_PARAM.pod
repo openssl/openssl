@@ -1,0 +1,302 @@
+=pod
+
+=head1 NAME
+
+OSSL_PARAM - a structure to pass or request object parameters
+
+=head1 SYNOPSIS
+
+ #include <openssl/core.h>
+
+ typedef struct ossl_param_st OSSL_PARAM;
+ struct ossl_param_st {
+     const char *key;             /* the name of the parameter */
+     unsigned char data_type;     /* declare what kind of content is in data */
+     void *data;                  /* value being passed in or out */
+     size_t data_size;            /* data size */
+     size_t *return_size;         /* OPTIONAL: address to content size */
+ };
+
+=head1 DESCRIPTION
+
+C<OSSL_PARAM> is a type that allows passing arbitrary data for some
+object between two parties that have no or very little shared
+knowledge about their respective internal structures for that object.
+
+A typical usage example could be an application that wants to set some
+parameters for an object, or wants to find out some parameters of an
+object.
+
+Arrays of this type can be used for two purposes:
+
+=over 4
+
+=item *
+
+Setting parameters for some object.
+The caller sets up the C<OSSL_PARAM> array and calls some function
+(the I<setter>) that has intimate knowledge about the object that can
+take the data from the C<OSSL_PARAM> array and assign them in a
+suitable form for the internal structure of the object.
+
+=item *
+
+Request parameters of some object.
+The caller (the I<requestor>) sets up the C<OSSL_PARAM> array and
+calls some function (the I<responder>) that has intimate knowledge
+about the object, which can take the internal data of the object and
+copy (possibly convert) that to the memory prepared by the
+I<requestor> and pointed at with the C<OSSL_PARAM> C<data>.
+
+=back
+
+=head2 C<OSSL_PARAM> fields
+
+=over 4
+
+=item C<key>
+
+The identity of the parameter in the form of a string.
+
+=item C<data_type>
+
+=for comment It's still debated if this field should be present, or if
+the type should always be implied by how it's used.
+Either way, these data types will have to be passed together with the
+names as an array of OSSL_ITEM, for discovery purposes.
+
+The C<data_type> is a value that describes the type and organization of
+the data.
+See L</Supported types> below for a description of the types.
+
+=item C<data>
+
+=item C<data_size>
+
+C<data> is a pointer to the memory where the parameter data is (when
+setting parameters) or shall (when requesting parameters) be stored,
+and C<data_size> is its size in bytes.
+The organization of the data depends on the parameter type and flag.
+
+=item C<return_size>
+
+When an array of C<OSSL_PARAM> is used to request data, the
+I<responder> must set this field to indicate the actual size of the
+parameter data.
+In case the C<data_size> is too small for the data, the I<responder>
+must still set this field to indicate the minimum data size required.
+
+=back
+
+B<NOTE:>
+
+The key names and associated types are defined by the entity that
+offers these parameters, i.e. names for parameters provided by the
+OpenSSL libraries are defined by the libraries, and names for
+parameters provided by providers are defined by those providers,
+except for the pointer form of strings (see data type descriptions
+below).
+Entities that want to set or request parameters need to know what
+those keys are and of what type, any functionality between those two
+entities should remain oblivious and just pass the C<OSSL_PARAM> array
+along.
+
+=head2 Supported types
+
+The C<data_type> field can be one of the following types:
+
+=over 4
+
+=item C<OSSL_PARAM_INTEGER>
+
+=item C<OSSL_PARAM_UNSIGNED_INTEGER>
+
+The parameter data is an integer (signed or unsigned) of arbitrary
+length, organized in native form, i.e. most significant byte first on
+Big-Endian systems, and least significant byte first on Little-Endian
+systems.
+
+=item C<OSSL_PARAM_REAL>
+
+The parameter data is a floating point value in native form.
+
+=item C<OSSL_PARAM_UTF8_STRING>
+
+The parameter data is a printable string.
+
+=item C<OSSL_PARAM_OCTET_STRING>
+
+The parameter data is an arbitrary string of bytes.
+
+=item C<OSSL_PARAM_UTF8_PTR>
+
+The parameter data is a pointer to a printable string.
+
+The difference between this and C<OSSL_PARAM_UTF8_STRING> is that C<data>
+doesn't point directly at the data, but to a pointer that points to the data.
+
+This is used to indicate that constant data is or will be passed,
+and there is therefore no need to copy the data that is passed, just
+the pointer to it.
+
+C<data_size> must be set to the size of the data, not the size of the
+pointer to the data.
+If this is used in a parameter request,
+C<data_size> is not relevant.  However, the I<responder> will set
+C<*return_size> to the size of the data.
+
+Note that the use of this type is B<fragile> and can only be safely
+used for data that remains constant and in a constant location for a
+long enough duration (such as the life-time of the entity that
+offers these parameters).
+
+=item C<OSSL_PARAM_OCTET_PTR>
+
+The parameter data is a pointer to an arbitrary string of bytes.
+
+The difference between this and C<OSSL_PARAM_OCTET_STRING> is that
+C<data> doesn't point directly at the data, but to a pointer that
+points to the data.
+
+This is used to indicate that constant data is or will be passed, and
+there is therefore no need to copy the data that is passed, just the
+pointer to it.
+
+C<data_size> must be set to the size of the data, not the size of the
+pointer to the data.
+If this is used in a parameter request,
+C<data_size> is not relevant.  However, the I<responder> will set
+C<*return_size> to the size of the data.
+
+Note that the use of this type is B<fragile> and can only be safely
+used for data that remains constant and in a constant location for a
+long enough duration (such as the life-time of the entity that
+offers these parameters).
+
+=back
+
+=head1 NOTES
+
+Both when setting and requesting parameters, the functions that are
+called will have to decide what is and what is not an error.
+The recommended behaviour is:
+
+=over 4
+
+=item *
+
+Keys that a I<setter> or I<responder> doesn't recognise should simply
+be ignored.
+That in itself isn't an error.
+
+=item *
+
+If the keys that a called I<setter> recognises form a consistent
+enough set of data, that call should succeed.
+
+=item *
+
+A I<responder> must never change the fields of an C<OSSL_PARAM>, it
+may only change the contents of the memory that C<data> and
+C<return_size> point at.
+
+=item *
+
+If the data type for a key that it's associated with is incorrect,
+the called function may return an error.
+
+The called function may also try to convert the data to a suitable
+form (for example, it's plausible to pass a large number as an octet
+string, so even though a given key is defined as an
+C<OSSL_PARAM_UNSIGNED_INTEGER>, is plausible to pass the value as an
+C<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
+
+=item *
+
+If a I<responder> finds that some data sizes are too small for the
+requested data, it must set C<*return_size> for each such
+C<OSSL_PARAM> item to the required size, and eventually return an
+error.
+
+=back
+
+=begin comment RETURN VALUES doesn't make sense for a manual that only
+describes a type, but document checkers still want that section, and
+to have more than just the section title.
+
+=head1 RETURN VALUES
+
+txt
+
+=end comment
+
+=head1 EXAMPLES
+
+A couple of examples to just show how C<OSSL_PARAM> arrays could be
+set up.
+
+=head3 Example 1
+
+This example is for setting parameters on some object:
+
+    #include <openssl/core.h>
+
+    const char *foo = "some string";
+    size_t foo_l = strlen(foo) + 1;
+    const char bar[] = "some other string";
+    const OSSL_PARAM set[] = {
+        { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, foo_l, NULL },
+        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), NULL },
+        { NULL, 0, NULL, 0, NULL }
+    };
+
+=head3 Example 2
+
+This example is for requesting parameters on some object:
+
+    const char *foo = NULL;
+    size_t foo_l;
+    char bar[1024];
+    size_t bar_l;
+    const OSSL_PARAM request[] = {
+        { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, 0 /*irrelevant*/, &foo_l },
+        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), &bar_l },
+        { NULL, 0, NULL, 0, NULL }
+    };
+
+A I<responder> that receives this array (as C<params> in this example)
+could fill in the parameters like this:
+
+    /* const OSSL_PARAM *params */
+
+    int i;
+
+    for (i = 0; params[i].key != NULL; i++) {
+        if (strcmp(params[i].key, "foo") == 0) {
+            *(char **)params[i].data = "foo value";
+            *params[i].return_size = 10; /* size of "foo value" */
+        } else if (strcmp(params[i].key, "bar") == 0) {
+            memcpy(params[1].data, "bar value", 10);
+            *params[1].return_size = 10; /* size of "bar value" */
+        }
+        /* Ignore stuff we don't know */
+    }
+
+=head1 SEE ALSO
+
+L<openssl-core.h(7)>, L<OSSL_PARAM_get_int32_t(3)>
+
+=head1 HISTORY
+
+C<OSSL_PARAM> was added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

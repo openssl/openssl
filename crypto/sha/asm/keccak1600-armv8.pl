@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -121,6 +121,7 @@ $code.=<<___;
 .align	5
 KeccakF1600_int:
 	adr	$C[2],iotas
+	.inst	0xd503233f			// paciasp
 	stp	$C[2],x30,[sp,#16]		// 32 bytes on top are mine
 	b	.Loop
 .align	4
@@ -292,12 +293,14 @@ $code.=<<___;
 	bne	.Loop
 
 	ldr	x30,[sp,#24]
+	.inst	0xd50323bf			// autiasp
 	ret
 .size	KeccakF1600_int,.-KeccakF1600_int
 
 .type	KeccakF1600,%function
 .align	5
 KeccakF1600:
+	.inst	0xd503233f			// paciasp
 	stp	x29,x30,[sp,#-128]!
 	add	x29,sp,#0
 	stp	x19,x20,[sp,#16]
@@ -347,6 +350,7 @@ KeccakF1600:
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#128
+	.inst	0xd50323bf			// autiasp
 	ret
 .size	KeccakF1600,.-KeccakF1600
 
@@ -354,6 +358,7 @@ KeccakF1600:
 .type	SHA3_absorb,%function
 .align	5
 SHA3_absorb:
+	.inst	0xd503233f			// paciasp
 	stp	x29,x30,[sp,#-128]!
 	add	x29,sp,#0
 	stp	x19,x20,[sp,#16]
@@ -451,6 +456,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#128
+	.inst	0xd50323bf			// autiasp
 	ret
 .size	SHA3_absorb,.-SHA3_absorb
 ___
@@ -461,6 +467,7 @@ $code.=<<___;
 .type	SHA3_squeeze,%function
 .align	5
 SHA3_squeeze:
+	.inst	0xd503233f			// paciasp
 	stp	x29,x30,[sp,#-48]!
 	add	x29,sp,#0
 	stp	x19,x20,[sp,#16]
@@ -523,6 +530,7 @@ SHA3_squeeze:
 	ldp	x19,x20,[sp,#16]
 	ldp	x21,x22,[sp,#32]
 	ldp	x29,x30,[sp],#48
+	.inst	0xd50323bf			// autiasp
 	ret
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
@@ -533,30 +541,28 @@ my @A = map([ "v".$_.".16b", "v".($_+1).".16b", "v".($_+2).".16b",
             (0, 5, 10, 15, 20));
 
 my @C = map("v$_.16b", (25..31));
+my @D = @C[4,5,6,2,3];
 
 $code.=<<___;
 .type	KeccakF1600_ce,%function
 .align	5
 KeccakF1600_ce:
-	mov	x9,#12
+	mov	x9,#24
 	adr	x10,iotas
 	b	.Loop_ce
 .align	4
 .Loop_ce:
-___
-for($i=0; $i<2; $i++) {
-$code.=<<___;
 	////////////////////////////////////////////////// Theta
-	eor3	$C[0],$A[0][0],$A[1][0],$A[2][0]
-	eor3	$C[1],$A[0][1],$A[1][1],$A[2][1]
-	eor3	$C[2],$A[0][2],$A[1][2],$A[2][2]
-	eor3	$C[3],$A[0][3],$A[1][3],$A[2][3]
-	eor3	$C[4],$A[0][4],$A[1][4],$A[2][4]
-	eor3	$C[0],$C[0],   $A[3][0],$A[4][0]
-	eor3	$C[1],$C[1],   $A[3][1],$A[4][1]
-	eor3	$C[2],$C[2],   $A[3][2],$A[4][2]
-	eor3	$C[3],$C[3],   $A[3][3],$A[4][3]
-	eor3	$C[4],$C[4],   $A[3][4],$A[4][4]
+	eor3	$C[0],$A[4][0],$A[3][0],$A[2][0]
+	eor3	$C[1],$A[4][1],$A[3][1],$A[2][1]
+	eor3	$C[2],$A[4][2],$A[3][2],$A[2][2]
+	eor3	$C[3],$A[4][3],$A[3][3],$A[2][3]
+	eor3	$C[4],$A[4][4],$A[3][4],$A[2][4]
+	eor3	$C[0],$C[0],   $A[1][0],$A[0][0]
+	eor3	$C[1],$C[1],   $A[1][1],$A[0][1]
+	eor3	$C[2],$C[2],   $A[1][2],$A[0][2]
+	eor3	$C[3],$C[3],   $A[1][3],$A[0][3]
+	eor3	$C[4],$C[4],   $A[1][4],$A[0][4]
 
 	rax1	$C[5],$C[0],$C[2]			// D[1]
 	rax1	$C[6],$C[1],$C[3]			// D[2]
@@ -565,81 +571,75 @@ $code.=<<___;
 	rax1	$C[4],$C[4],$C[1]			// D[0]
 
 	////////////////////////////////////////////////// Theta+Rho+Pi
-	xar	$C[0],   $A[1][1],$C[5],#64-$rhotates[1][1]	// C[0]=A[0][1]
-	xar	$A[1][1],$A[1][4],$C[3],#64-$rhotates[1][4]
-	xar	$A[1][4],$A[4][2],$C[6],#64-$rhotates[4][2]
-	xar	$A[4][2],$A[2][4],$C[3],#64-$rhotates[2][4]
-	xar	$A[2][4],$A[4][0],$C[4],#64-$rhotates[4][0]
+	xar	$C[0],   $A[0][1],$D[1],#64-$rhotates[0][1] // C[0]=A[2][0]
 
-	xar	$A[4][0],$A[0][2],$C[6],#64-$rhotates[0][2]
+	xar	$A[0][1],$A[1][1],$D[1],#64-$rhotates[1][1]
+	xar	$A[1][1],$A[1][4],$D[4],#64-$rhotates[1][4]
+	xar	$A[1][4],$A[4][2],$D[2],#64-$rhotates[4][2]
+	xar	$A[4][2],$A[2][4],$D[4],#64-$rhotates[2][4]
+	xar	$A[2][4],$A[4][0],$D[0],#64-$rhotates[4][0]
 
-	xar	$A[0][2],$A[2][2],$C[6],#64-$rhotates[2][2]
-	xar	$A[2][2],$A[2][3],$C[2],#64-$rhotates[2][3]
-	xar	$A[2][3],$A[3][4],$C[3],#64-$rhotates[3][4]
-	xar	$A[3][4],$A[4][3],$C[2],#64-$rhotates[4][3]
-	xar	$A[4][3],$A[3][0],$C[4],#64-$rhotates[3][0]
+	xar	$C[1],   $A[0][2],$D[2],#64-$rhotates[0][2] // C[1]=A[4][0]
 
-	xar	$A[3][0],$A[0][4],$C[3],#64-$rhotates[0][4]
+	xar	$A[0][2],$A[2][2],$D[2],#64-$rhotates[2][2]
+	xar	$A[2][2],$A[2][3],$D[3],#64-$rhotates[2][3]
+	xar	$A[2][3],$A[3][4],$D[4],#64-$rhotates[3][4]
+	xar	$A[3][4],$A[4][3],$D[3],#64-$rhotates[4][3]
+	xar	$A[4][3],$A[3][0],$D[0],#64-$rhotates[3][0]
 
-	eor	$A[0][0],$A[0][0],$C[4]
-	ldr	x11,[x10],#8
+	xar	$A[3][0],$A[0][4],$D[4],#64-$rhotates[0][4]
 
-	xar	$C[1],   $A[3][3],$C[2],#64-$rhotates[3][3]	// C[1]=A[0][3]
-	xar	$A[3][3],$A[3][2],$C[6],#64-$rhotates[3][2]
-	xar	$A[3][2],$A[2][1],$C[5],#64-$rhotates[2][1]
-	xar	$A[2][1],$A[1][2],$C[6],#64-$rhotates[1][2]
-	xar	$A[1][2],$A[2][0],$C[4],#64-$rhotates[2][0]
+	xar	$D[4],   $A[4][4],$D[4],#64-$rhotates[4][4] // D[4]=A[0][4]
+	xar	$A[4][4],$A[4][1],$D[1],#64-$rhotates[4][1]
+	xar	$A[1][3],$A[1][3],$D[3],#64-$rhotates[1][3] // A[1][3]=A[4][1]
+	xar	$A[0][4],$A[3][1],$D[1],#64-$rhotates[3][1] // A[0][4]=A[1][3]
+	xar	$A[3][1],$A[1][0],$D[0],#64-$rhotates[1][0]
 
-	xar	$A[2][0],$A[0][1],$C[5],#64-$rhotates[0][1]	// *
+	xar	$A[1][0],$A[0][3],$D[3],#64-$rhotates[0][3]
 
-	xar	$A[0][4],$A[4][4],$C[3],#64-$rhotates[4][4]
-	xar	$A[4][4],$A[4][1],$C[5],#64-$rhotates[4][1]
-	xar	$A[4][1],$A[1][3],$C[2],#64-$rhotates[1][3]
-	xar	$A[1][3],$A[3][1],$C[5],#64-$rhotates[3][1]
-	xar	$A[3][1],$A[1][0],$C[4],#64-$rhotates[1][0]
+	eor	$A[0][0],$A[0][0],$D[0]
 
-	xar	$C[2],   $A[0][3],$C[2],#64-$rhotates[0][3]	// C[2]=A[1][0]
+	xar	$D[3],   $A[3][3],$D[3],#64-$rhotates[3][3] // D[3]=A[0][3]
+	xar	$A[0][3],$A[3][2],$D[2],#64-$rhotates[3][2] // A[0][3]=A[3][3]
+	xar	$D[1],   $A[2][1],$D[1],#64-$rhotates[2][1] // D[1]=A[3][2]
+	xar	$D[2],   $A[1][2],$D[2],#64-$rhotates[1][2] // D[2]=A[2][1]
+	xar	$D[0],   $A[2][0],$D[0],#64-$rhotates[2][0] // D[0]=A[1][2]
 
 	////////////////////////////////////////////////// Chi+Iota
-	dup	$C[6],x11				// borrow C[6]
-	bcax	$C[3],   $A[0][0],$A[0][2],$C[0]	// *
-	bcax	$A[0][1],$C[0],   $C[1],   $A[0][2]	// *
-	bcax	$A[0][2],$A[0][2],$A[0][4],$C[1]
-	bcax	$A[0][3],$C[1],   $A[0][0],$A[0][4]
-	bcax	$A[0][4],$A[0][4],$C[0],   $A[0][0]
-
-	bcax	$A[1][0],$C[2],   $A[1][2],$A[1][1]	// *
-	bcax	$C[0],   $A[1][1],$A[1][3],$A[1][2]	// *
-	bcax	$A[1][2],$A[1][2],$A[1][4],$A[1][3]
-	bcax	$A[1][3],$A[1][3],$C[2],   $A[1][4]
-	bcax	$A[1][4],$A[1][4],$A[1][1],$C[2]
-
-	eor	$A[0][0],$C[3],$C[6]			// Iota
-
-	bcax	$C[1],   $A[2][0],$A[2][2],$A[2][1]	// *
-	bcax	$C[2],   $A[2][1],$A[2][3],$A[2][2]	// *
-	bcax	$A[2][2],$A[2][2],$A[2][4],$A[2][3]
-	bcax	$A[2][3],$A[2][3],$A[2][0],$A[2][4]
-	bcax	$A[2][4],$A[2][4],$A[2][1],$A[2][0]
-
-	bcax	$C[3],   $A[3][0],$A[3][2],$A[3][1]	// *
-	bcax	$C[4],   $A[3][1],$A[3][3],$A[3][2]	// *
-	bcax	$A[3][2],$A[3][2],$A[3][4],$A[3][3]
-	bcax	$A[3][3],$A[3][3],$A[3][0],$A[3][4]
-	bcax	$A[3][4],$A[3][4],$A[3][1],$A[3][0]
-
-	bcax	$C[5],   $A[4][0],$A[4][2],$A[4][1]	// *
-	bcax	$C[6],   $A[4][1],$A[4][3],$A[4][2]	// *
+	bcax	$A[4][0],$C[1],   $A[4][2],$A[1][3]	// A[1][3]=A[4][1]
+	bcax	$A[4][1],$A[1][3],$A[4][3],$A[4][2]	// A[1][3]=A[4][1]
 	bcax	$A[4][2],$A[4][2],$A[4][4],$A[4][3]
-	bcax	$A[4][3],$A[4][3],$A[4][0],$A[4][4]
-	bcax	$A[4][4],$A[4][4],$A[4][1],$A[4][0]
-___
-	(         $A[1][1],       $C[0]) = (      $C[0],          $A[1][1]);
-	($A[2][0],$A[2][1], $C[1],$C[2]) = ($C[1],$C[2], $A[2][0],$A[2][1]);
-	($A[3][0],$A[3][1], $C[3],$C[4]) = ($C[3],$C[4], $A[3][0],$A[3][1]);
-	($A[4][0],$A[4][1], $C[5],$C[6]) = ($C[5],$C[6], $A[4][0],$A[4][1]);
-}
-$code.=<<___;
+	bcax	$A[4][3],$A[4][3],$C[1],   $A[4][4]
+	bcax	$A[4][4],$A[4][4],$A[1][3],$C[1]	// A[1][3]=A[4][1]
+
+	ld1r	{$C[1]},[x10],#8
+
+	bcax	$A[3][2],$D[1],   $A[3][4],$A[0][3]	// A[0][3]=A[3][3]
+	bcax	$A[3][3],$A[0][3],$A[3][0],$A[3][4]	// A[0][3]=A[3][3]
+	bcax	$A[3][4],$A[3][4],$A[3][1],$A[3][0]
+	bcax	$A[3][0],$A[3][0],$D[1],   $A[3][1]
+	bcax	$A[3][1],$A[3][1],$A[0][3],$D[1]	// A[0][3]=A[3][3]
+
+	bcax	$A[2][0],$C[0],   $A[2][2],$D[2]
+	bcax	$A[2][1],$D[2],   $A[2][3],$A[2][2]
+	bcax	$A[2][2],$A[2][2],$A[2][4],$A[2][3]
+	bcax	$A[2][3],$A[2][3],$C[0],   $A[2][4]
+	bcax	$A[2][4],$A[2][4],$D[2],   $C[0]
+
+	bcax	$A[1][2],$D[0],   $A[1][4],$A[0][4]	// A[0][4]=A[1][3]
+	bcax	$A[1][3],$A[0][4],$A[1][0],$A[1][4]	// A[0][4]=A[1][3]
+	bcax	$A[1][4],$A[1][4],$A[1][1],$A[1][0]
+	bcax	$A[1][0],$A[1][0],$D[0],   $A[1][1]
+	bcax	$A[1][1],$A[1][1],$A[0][4],$D[0]	// A[0][4]=A[1][3]
+
+	bcax	$A[0][3],$D[3],   $A[0][0],$D[4]
+	bcax	$A[0][4],$D[4],   $A[0][1],$A[0][0]
+	bcax	$A[0][0],$A[0][0],$A[0][2],$A[0][1]
+	bcax	$A[0][1],$A[0][1],$D[3],   $A[0][2]
+	bcax	$A[0][2],$A[0][2],$D[4],   $D[3]
+
+	eor	$A[0][0],$A[0][0],$C[1]
+
 	subs	x9,x9,#1
 	bne	.Loop_ce
 
@@ -649,6 +649,7 @@ $code.=<<___;
 .type	KeccakF1600_cext,%function
 .align	5
 KeccakF1600_cext:
+	.inst	0xd503233f		// paciasp
 	stp	x29,x30,[sp,#-80]!
 	add	x29,sp,#0
 	stp	d8,d9,[sp,#16]		// per ABI requirement
@@ -681,6 +682,7 @@ $code.=<<___;
 	ldp	d12,d13,[sp,#48]
 	ldp	d14,d15,[sp,#64]
 	ldr	x29,[sp],#80
+	.inst	0xd50323bf		// autiasp
 	ret
 .size	KeccakF1600_cext,.-KeccakF1600_cext
 ___
@@ -693,6 +695,7 @@ $code.=<<___;
 .type	SHA3_absorb_cext,%function
 .align	5
 SHA3_absorb_cext:
+	.inst	0xd503233f		// paciasp
 	stp	x29,x30,[sp,#-80]!
 	add	x29,sp,#0
 	stp	d8,d9,[sp,#16]		// per ABI requirement
@@ -764,6 +767,7 @@ $code.=<<___;
 	ldp	d12,d13,[sp,#48]
 	ldp	d14,d15,[sp,#64]
 	ldp	x29,x30,[sp],#80
+	.inst	0xd50323bf		// autiasp
 	ret
 .size	SHA3_absorb_cext,.-SHA3_absorb_cext
 ___
@@ -775,6 +779,7 @@ $code.=<<___;
 .type	SHA3_squeeze_cext,%function
 .align	5
 SHA3_squeeze_cext:
+	.inst	0xd503233f		// paciasp
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
 	mov	x9,$ctx
@@ -830,6 +835,7 @@ SHA3_squeeze_cext:
 
 .Lsqueeze_done_ce:
 	ldr	x29,[sp],#16
+	.inst	0xd50323bf		// autiasp
 	ret
 .size	SHA3_squeeze_cext,.-SHA3_squeeze_cext
 ___
@@ -857,7 +863,7 @@ foreach(split("\n",$code)) {
 
 	s/\`([^\`]*)\`/eval($1)/ge;
 
-	m/\bdup\b/ and s/\.16b/.2d/g	or
+	m/\bld1r\b/ and s/\.16b/.2d/g	or
 	s/\b(eor3|rax1|xar|bcax)\s+(v.*)/unsha3($1,$2)/ge;
 
 	print $_,"\n";

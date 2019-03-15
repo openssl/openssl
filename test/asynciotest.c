@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL licenses, (the "License");
+ * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * https://www.openssl.org/source/license.html
@@ -297,7 +297,7 @@ static int test_asyncio(int test)
     char buf[sizeof(testdata)];
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       TLS1_VERSION, 0,
                                        &serverctx, &clientctx, cert, privkey)))
         goto end;
 
@@ -392,6 +392,8 @@ static int test_asyncio(int test)
 
     return testresult;
 }
+
+OPT_TEST_DECLARE_USAGE("certname privkey\n")
 
 int setup_tests(void)
 {

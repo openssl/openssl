@@ -1,7 +1,7 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -65,7 +65,7 @@ struct cms_key_param_st {
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENCRYPT,
-    OPT_DECRYPT, OPT_SIGN, OPT_SIGN_RECEIPT, OPT_RESIGN,
+    OPT_DECRYPT, OPT_SIGN, OPT_CADES, OPT_SIGN_RECEIPT, OPT_RESIGN,
     OPT_VERIFY, OPT_VERIFY_RETCODE, OPT_VERIFY_RECEIPT,
     OPT_CMSOUT, OPT_DATA_OUT, OPT_DATA_CREATE, OPT_DIGEST_VERIFY,
     OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
@@ -102,6 +102,7 @@ const OPTIONS cms_options[] = {
     {"sign", OPT_SIGN, '-', "Sign message"},
     {"sign_receipt", OPT_SIGN_RECEIPT, '-', "Generate a signed receipt for the message"},
     {"resign", OPT_RESIGN, '-', "Resign a signed message"},
+    {"cades", OPT_CADES, '-', "Include signer certificate digest"},
     {"verify", OPT_VERIFY, '-', "Verify signed message"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-'},
     {"verify_receipt", OPT_VERIFY_RECEIPT, '<'},
@@ -325,6 +326,9 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_BINARY:
             flags |= CMS_BINARY;
+            break;
+        case OPT_CADES:
+            flags |= CMS_CADES;
             break;
         case OPT_KEYID:
             flags |= CMS_USE_KEYID;

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,8 +11,8 @@
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
-#include "evp_locl.h"
 #include "internal/evp_int.h"
+#include "evp_locl.h"
 
 static unsigned char conv_ascii2bin(unsigned char a,
                                     const unsigned char *table);
@@ -134,7 +134,7 @@ void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
-int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, EVP_ENCODE_CTX *sctx)
+int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, const EVP_ENCODE_CTX *sctx)
 {
     memcpy(dctx, sctx, sizeof(EVP_ENCODE_CTX));
 

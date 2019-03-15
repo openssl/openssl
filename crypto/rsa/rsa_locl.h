@@ -1,11 +1,14 @@
 /*
  * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#ifndef RSA_LOCAL_HEADER_H
+#define RSA_LOCAL_HEADER_H
 
 #include <openssl/rsa.h>
 #include "internal/refcount.h"
@@ -130,3 +133,38 @@ void rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
 RSA_PRIME_INFO *rsa_multip_info_new(void);
 int rsa_multip_calc_product(RSA *rsa);
 int rsa_multip_cap(int bits);
+
+uint16_t rsa_compute_security_bits(int n);
+
+int rsa_sp800_56b_validate_strength(int nbits, int strength);
+int rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
+                           int nbits);
+int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
+                BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
+                BIGNUM *p1q1);
+
+int rsa_check_public_exponent(const BIGNUM *e);
+int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx);
+int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx);
+int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx);
+int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx);
+
+int rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx);
+int rsa_sp800_56b_check_public(const RSA *rsa);
+int rsa_sp800_56b_check_private(const RSA *rsa);
+int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
+                                int strength, int nbits);
+int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
+                               BN_GENCB *cb);
+
+int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
+                                        const BIGNUM *e, BN_CTX *ctx);
+int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
+                                  BIGNUM *Xpout, const BIGNUM *Xp,
+                                  const BIGNUM *Xp1, const BIGNUM *Xp2,
+                                  BIGNUM *q1, BIGNUM *q2, BIGNUM *Xqout,
+                                  const BIGNUM *Xq, const BIGNUM *Xq1,
+                                  const BIGNUM *Xq2, int nbits,
+                                  const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
+
+#endif /* RSA_LOCAL_HEADER_H */

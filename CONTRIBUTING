@@ -28,7 +28,7 @@ guidelines:
 
         Copyright 20xx-20yy The OpenSSL Project Authors. All Rights Reserved.
 
-        Licensed under the OpenSSL license (the "License").  You may not use
+        Licensed under the Apache License 2.0 (the "License").  You may not use
         this file except in compliance with the License.  You can obtain a copy
         in the file LICENSE in the source distribution or at
         https://www.openssl.org/source/license.html
@@ -57,7 +57,7 @@ guidelines:
     7.  For user visible changes (API changes, behaviour changes, ...),
     consider adding a note in CHANGES.  This could be a summarising
     description of the change, and could explain the grander details.
-    Have a look through existing entries for inspiration. 
+    Have a look through existing entries for inspiration.
     Please note that this is NOT simply a copy of git-log oneliners.
     Also note that security fixes get an entry in CHANGES.
     This file helps users get more in depth information of what comes

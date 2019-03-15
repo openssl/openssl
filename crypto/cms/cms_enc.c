@@ -1,7 +1,7 @@
 /*
  * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -204,7 +204,7 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
     return cms_EncryptedContent_init(ec, ciph, key, keylen);
 }
 
-BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms)
+BIO *cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_EncryptedData *enc = cms->d.encryptedData;
     if (enc->encryptedContentInfo->cipher && enc->unprotectedAttrs)

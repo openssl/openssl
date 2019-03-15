@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -225,7 +225,6 @@ static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
-    EC_KEY *ecdh;
     int nid;
 
     /* Ignore values supported by 1.0.2 for the automatic selection */
@@ -242,14 +241,11 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
         nid = OBJ_sn2nid(value);
     if (nid == 0)
         return 0;
-    ecdh = EC_KEY_new_by_curve_name(nid);
-    if (!ecdh)
-        return 0;
+
     if (cctx->ctx)
-        rv = SSL_CTX_set_tmp_ecdh(cctx->ctx, ecdh);
+        rv = SSL_CTX_set1_groups(cctx->ctx, &nid, 1);
     else if (cctx->ssl)
-        rv = SSL_set_tmp_ecdh(cctx->ssl, ecdh);
-    EC_KEY_free(ecdh);
+        rv = SSL_set1_groups(cctx->ssl, &nid, 1);
 
     return rv > 0;
 }
@@ -384,7 +380,8 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL("AllowNoDHEKEX", SSL_OP_ALLOW_NO_DHE_KEX),
         SSL_FLAG_TBL("PrioritizeChaCha", SSL_OP_PRIORITIZE_CHACHA),
         SSL_FLAG_TBL("MiddleboxCompat", SSL_OP_ENABLE_MIDDLEBOX_COMPAT),
-        SSL_FLAG_TBL_INV("AntiReplay", SSL_OP_NO_ANTI_REPLAY)
+        SSL_FLAG_TBL_INV("AntiReplay", SSL_OP_NO_ANTI_REPLAY),
+        SSL_FLAG_TBL_INV("ExtendedMasterSecret", SSL_OP_NO_EXTENDED_MASTER_SECRET)
     };
     if (value == NULL)
         return -3;

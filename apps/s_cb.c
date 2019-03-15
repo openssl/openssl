@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -24,7 +24,7 @@
 
 #define COOKIE_SECRET_LENGTH    16
 
-VERIFY_CB_ARGS verify_args = { 0, 0, X509_V_OK, 0 };
+VERIFY_CB_ARGS verify_args = { -1, 0, X509_V_OK, 0 };
 
 #ifndef OPENSSL_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
@@ -63,7 +63,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     if (!ok) {
         BIO_printf(bio_err, "verify error:num=%d:%s\n", err,
                    X509_verify_cert_error_string(err));
-        if (verify_args.depth >= depth) {
+        if (verify_args.depth < 0 || verify_args.depth >= depth) {
             if (!verify_args.return_error)
                 ok = 1;
             verify_args.error = err;
@@ -394,7 +394,8 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {
     EVP_PKEY *key;
-    if (!SSL_get_server_tmp_key(s, &key))
+
+    if (!SSL_get_peer_tmp_key(s, &key))
         return 1;
     BIO_puts(out, "Server Temp Key: ");
     switch (EVP_PKEY_id(key)) {

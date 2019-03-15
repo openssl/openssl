@@ -1,7 +1,7 @@
 /*
  * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -41,8 +41,11 @@ static int test_bio_callback(void)
     int ok = 0;
     BIO *bio;
     int i;
-    char *test1 = "test";
-    char *test2 = "hello";
+    char test1[] = "test";
+    const int test1len = sizeof(test1) - 1;
+    char test2[] = "hello";
+    const int test2len = sizeof(test2) - 1;
+    char buf[16];
 
     my_param_count = 0;
 
@@ -51,50 +54,108 @@ static int test_bio_callback(void)
         goto err;
 
     BIO_set_callback(bio, my_bio_callback);
-    i = BIO_write(bio, test1, 4);
-    if (!TEST_int_eq(i, 4)
+    i = BIO_write(bio, test1, test1len);
+    if (!TEST_int_eq(i, test1len)
             || !TEST_int_eq(my_param_count, 2)
             || !TEST_ptr_eq(my_param_b[0], bio)
             || !TEST_int_eq(my_param_oper[0], BIO_CB_WRITE)
             || !TEST_ptr_eq(my_param_argp[0], test1)
-            || !TEST_int_eq(my_param_argi[0], 4)
+            || !TEST_int_eq(my_param_argi[0], test1len)
             || !TEST_long_eq(my_param_argl[0], 0L)
             || !TEST_long_eq(my_param_ret[0], 1L)
             || !TEST_ptr_eq(my_param_b[1], bio)
             || !TEST_int_eq(my_param_oper[1], BIO_CB_WRITE | BIO_CB_RETURN)
             || !TEST_ptr_eq(my_param_argp[1], test1)
-            || !TEST_int_eq(my_param_argi[1], 4)
+            || !TEST_int_eq(my_param_argi[1], test1len)
             || !TEST_long_eq(my_param_argl[1], 0L)
-            || !TEST_long_eq(my_param_ret[1], 4L))
+            || !TEST_long_eq(my_param_ret[1], (long)test1len))
         goto err;
 
+    my_param_count = 0;
+    i = BIO_read(bio, buf, sizeof(buf));
+    if (!TEST_mem_eq(buf, i, test1, test1len)
+            || !TEST_int_eq(my_param_count, 2)
+            || !TEST_ptr_eq(my_param_b[0], bio)
+            || !TEST_int_eq(my_param_oper[0], BIO_CB_READ)
+            || !TEST_ptr_eq(my_param_argp[0], buf)
+            || !TEST_int_eq(my_param_argi[0], sizeof(buf))
+            || !TEST_long_eq(my_param_argl[0], 0L)
+            || !TEST_long_eq(my_param_ret[0], 1L)
+            || !TEST_ptr_eq(my_param_b[1], bio)
+            || !TEST_int_eq(my_param_oper[1], BIO_CB_READ | BIO_CB_RETURN)
+            || !TEST_ptr_eq(my_param_argp[1], buf)
+            || !TEST_int_eq(my_param_argi[1], sizeof(buf))
+            || !TEST_long_eq(my_param_argl[1], 0L)
+            || !TEST_long_eq(my_param_ret[1], (long)test1len))
+        goto err;
+
+    /* By default a mem bio returns -1 if it has run out of data */
+    my_param_count = 0;
+    i = BIO_read(bio, buf, sizeof(buf));
+    if (!TEST_int_eq(i, -1)
+            || !TEST_int_eq(my_param_count, 2)
+            || !TEST_ptr_eq(my_param_b[0], bio)
+            || !TEST_int_eq(my_param_oper[0], BIO_CB_READ)
+            || !TEST_ptr_eq(my_param_argp[0], buf)
+            || !TEST_int_eq(my_param_argi[0], sizeof(buf))
+            || !TEST_long_eq(my_param_argl[0], 0L)
+            || !TEST_long_eq(my_param_ret[0], 1L)
+            || !TEST_ptr_eq(my_param_b[1], bio)
+            || !TEST_int_eq(my_param_oper[1], BIO_CB_READ | BIO_CB_RETURN)
+            || !TEST_ptr_eq(my_param_argp[1], buf)
+            || !TEST_int_eq(my_param_argi[1], sizeof(buf))
+            || !TEST_long_eq(my_param_argl[1], 0L)
+            || !TEST_long_eq(my_param_ret[1], -1L))
+        goto err;
+
+    /* Force the mem bio to return 0 if it has run out of data */
+    BIO_set_mem_eof_return(bio, 0);
+    my_param_count = 0;
+    i = BIO_read(bio, buf, sizeof(buf));
+    if (!TEST_int_eq(i, 0)
+            || !TEST_int_eq(my_param_count, 2)
+            || !TEST_ptr_eq(my_param_b[0], bio)
+            || !TEST_int_eq(my_param_oper[0], BIO_CB_READ)
+            || !TEST_ptr_eq(my_param_argp[0], buf)
+            || !TEST_int_eq(my_param_argi[0], sizeof(buf))
+            || !TEST_long_eq(my_param_argl[0], 0L)
+            || !TEST_long_eq(my_param_ret[0], 1L)
+            || !TEST_ptr_eq(my_param_b[1], bio)
+            || !TEST_int_eq(my_param_oper[1], BIO_CB_READ | BIO_CB_RETURN)
+            || !TEST_ptr_eq(my_param_argp[1], buf)
+            || !TEST_int_eq(my_param_argi[1], sizeof(buf))
+            || !TEST_long_eq(my_param_argl[1], 0L)
+            || !TEST_long_eq(my_param_ret[1], 0L))
+        goto err;
+
+    my_param_count = 0;
     i = BIO_puts(bio, test2);
     if (!TEST_int_eq(i, 5)
-            || !TEST_int_eq(my_param_count, 4)
-            || !TEST_ptr_eq(my_param_b[2], bio)
-            || !TEST_int_eq(my_param_oper[2], BIO_CB_PUTS)
-            || !TEST_ptr_eq(my_param_argp[2], test2)
-            || !TEST_int_eq(my_param_argi[2], 0)
-            || !TEST_long_eq(my_param_argl[2], 0L)
-            || !TEST_long_eq(my_param_ret[2], 1L)
-            || !TEST_ptr_eq(my_param_b[3], bio)
-            || !TEST_int_eq(my_param_oper[3], BIO_CB_PUTS | BIO_CB_RETURN)
-            || !TEST_ptr_eq(my_param_argp[3], test2)
-            || !TEST_int_eq(my_param_argi[3], 0)
-            || !TEST_long_eq(my_param_argl[3], 0L)
-            || !TEST_long_eq(my_param_ret[3], 5L))
+            || !TEST_int_eq(my_param_count, 2)
+            || !TEST_ptr_eq(my_param_b[0], bio)
+            || !TEST_int_eq(my_param_oper[0], BIO_CB_PUTS)
+            || !TEST_ptr_eq(my_param_argp[0], test2)
+            || !TEST_int_eq(my_param_argi[0], 0)
+            || !TEST_long_eq(my_param_argl[0], 0L)
+            || !TEST_long_eq(my_param_ret[0], 1L)
+            || !TEST_ptr_eq(my_param_b[1], bio)
+            || !TEST_int_eq(my_param_oper[1], BIO_CB_PUTS | BIO_CB_RETURN)
+            || !TEST_ptr_eq(my_param_argp[1], test2)
+            || !TEST_int_eq(my_param_argi[1], 0)
+            || !TEST_long_eq(my_param_argl[1], 0L)
+            || !TEST_long_eq(my_param_ret[1], (long)test2len))
         goto err;
 
+    my_param_count = 0;
     i = BIO_free(bio);
-
     if (!TEST_int_eq(i, 1)
-            || !TEST_int_eq(my_param_count, 5)
-            || !TEST_ptr_eq(my_param_b[4], bio)
-            || !TEST_int_eq(my_param_oper[4], BIO_CB_FREE)
-            || !TEST_ptr_eq(my_param_argp[4], NULL)
-            || !TEST_int_eq(my_param_argi[4], 0)
-            || !TEST_long_eq(my_param_argl[4], 0L)
-            || !TEST_long_eq(my_param_ret[4], 1L))
+            || !TEST_int_eq(my_param_count, 1)
+            || !TEST_ptr_eq(my_param_b[0], bio)
+            || !TEST_int_eq(my_param_oper[0], BIO_CB_FREE)
+            || !TEST_ptr_eq(my_param_argp[0], NULL)
+            || !TEST_int_eq(my_param_argi[0], 0)
+            || !TEST_long_eq(my_param_argl[0], 0L)
+            || !TEST_long_eq(my_param_ret[0], 1L))
         goto finish;
 
     ok = 1;

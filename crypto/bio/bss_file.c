@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -253,9 +253,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             }
 #  elif defined(OPENSSL_SYS_WIN32_CYGWIN)
             int fd = fileno((FILE *)ptr);
-            if (num & BIO_FP_TEXT)
-                setmode(fd, O_TEXT);
-            else
+            if (!(num & BIO_FP_TEXT))
                 setmode(fd, O_BINARY);
 #  endif
         }
@@ -279,11 +277,14 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = 0;
             break;
         }
-#  if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32_CYGWIN)
+#  if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS)
         if (!(num & BIO_FP_TEXT))
             OPENSSL_strlcat(p, "b", sizeof(p));
         else
             OPENSSL_strlcat(p, "t", sizeof(p));
+#  elif defined(OPENSSL_SYS_WIN32_CYGWIN)
+        if (!(num & BIO_FP_TEXT))
+            OPENSSL_strlcat(p, "b", sizeof(p));
 #  endif
         fp = openssl_fopen(ptr, p);
         if (fp == NULL) {

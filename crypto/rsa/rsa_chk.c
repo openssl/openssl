@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,8 +16,21 @@ int RSA_check_key(const RSA *key)
     return RSA_check_key_ex(key, NULL);
 }
 
+/*
+ * NOTE: Key validation requires separate checks to be able to be accessed
+ *  individually. These should be visible from the PKEY API..
+ *  See rsa_sp800_56b_check_public, rsa_sp800_56b_check_private and
+ *      rsa_sp800_56b_check_keypair.
+ */
 int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 {
+#ifdef FIPS_MODE
+    if (!(rsa_sp800_56b_check_public(key)
+            && rsa_sp800_56b_check_private(key)
+            && rsa_sp800_56b_check_keypair(key, NULL, -1, RSA_bits(key))
+        return 0;
+
+#else
     BIGNUM *i, *j, *k, *l, *m;
     BN_CTX *ctx;
     int ret = 1, ex_primes = 0, idx;
@@ -225,4 +238,5 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
     BN_free(m);
     BN_CTX_free(ctx);
     return ret;
+#endif /* FIPS_MODE */
 }

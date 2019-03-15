@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,7 +13,7 @@
 
 #ifndef NO_OLD_ASN1
 
-void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x)
+void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)
 {
     unsigned char *b, *p;
     const unsigned char *p2;
@@ -46,7 +46,7 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x)
  * decode.
  */
 
-void *ASN1_item_dup(const ASN1_ITEM *it, void *x)
+void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
 {
     unsigned char *b = NULL;
     const unsigned char *p;

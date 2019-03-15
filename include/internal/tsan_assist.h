@@ -1,12 +1,12 @@
 /*
  * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
- 
+
 /*
  * Contemporary compilers implement lock-free atomic memory access
  * primitives that facilitate writing "thread-opportunistic" or even real
@@ -57,6 +57,7 @@
 #  define tsan_load(ptr) atomic_load_explicit((ptr), memory_order_relaxed)
 #  define tsan_store(ptr, val) atomic_store_explicit((ptr), (val), memory_order_relaxed)
 #  define tsan_counter(ptr) atomic_fetch_add_explicit((ptr), 1, memory_order_relaxed)
+#  define tsan_decr(ptr) atomic_fetch_add_explicit((ptr), -1, memory_order_relaxed)
 #  define tsan_ld_acq(ptr) atomic_load_explicit((ptr), memory_order_acquire)
 #  define tsan_st_rel(ptr, val) atomic_store_explicit((ptr), (val), memory_order_release)
 # endif
@@ -69,6 +70,7 @@
 #  define tsan_load(ptr) __atomic_load_n((ptr), __ATOMIC_RELAXED)
 #  define tsan_store(ptr, val) __atomic_store_n((ptr), (val), __ATOMIC_RELAXED)
 #  define tsan_counter(ptr) __atomic_fetch_add((ptr), 1, __ATOMIC_RELAXED)
+#  define tsan_decr(ptr) __atomic_fetch_add((ptr), -1, __ATOMIC_RELAXED)
 #  define tsan_ld_acq(ptr) __atomic_load_n((ptr), __ATOMIC_ACQUIRE)
 #  define tsan_st_rel(ptr, val) __atomic_store_n((ptr), (val), __ATOMIC_RELEASE)
 # endif
@@ -113,8 +115,11 @@
 #  pragma intrinsic(_InterlockedExchangeAdd64)
 #  define tsan_counter(ptr) (sizeof(*(ptr)) == 8 ? _InterlockedExchangeAdd64((ptr), 1) \
                                                  : _InterlockedExchangeAdd((ptr), 1))
+#  define tsan_decr(ptr) (sizeof(*(ptr)) == 8 ? _InterlockedExchangeAdd64((ptr), -1) \
+                                                 : _InterlockedExchangeAdd((ptr), -1))
 # else
 #  define tsan_counter(ptr) _InterlockedExchangeAdd((ptr), 1)
+#  define tsan_decr(ptr) _InterlockedExchangeAdd((ptr), -1)
 # endif
 # if !defined(_ISO_VOLATILE)
 #  define tsan_ld_acq(ptr) (*(ptr))
@@ -129,6 +134,7 @@
 # define tsan_load(ptr) (*(ptr))
 # define tsan_store(ptr, val) (*(ptr) = (val))
 # define tsan_counter(ptr) ((*(ptr))++)
+# define tsan_decr(ptr) ((*(ptr))--)
 /*
  * Lack of tsan_ld_acq and tsan_ld_rel means that compiler support is not
  * sophisticated enough to support them. Code that relies on them should be
