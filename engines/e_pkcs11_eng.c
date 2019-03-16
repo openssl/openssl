@@ -467,7 +467,7 @@ static OSSL_STORE_INFO* pkcs11_store_load_key(OSSL_STORE_LOADER_CTX *ctx,
                                                const UI_METHOD *ui_method,
                                                void *ui_data)
 {
-    return OSSL_STORE_INFO_new_PKEY(ctx->key);
+    return OSSL_STORE_INFO_new_PUBKEY(ctx->key);
 }
 
 static int bind_pkcs11(ENGINE *e)
