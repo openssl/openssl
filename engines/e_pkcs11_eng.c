@@ -10,11 +10,8 @@
 #include "e_pkcs11.h"
 #include "e_pkcs11_err.c"
 
-#define OTYPE_CERT   1
-#define OTYPE_PUBLIC 2
-
 static int pkcs11_parse_uri(const char *path, char *token, char **value);
-static int pkcs11_parse(PKCS11_CTX *ctx, const char *path);
+static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store);
 static char pkcs11_hex_int(char nib1, char nib2);
 static int pkcs11_ishex(char *hex);
 static char* pkcs11_hex2a(char *hex);
@@ -234,32 +231,45 @@ static int pkcs11_get_console_pin(char **pin)
     return 0;
 }
 
-static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
+static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
 {
-    char *id, *module_path = NULL;
+    char *id = NULL, *module_path = NULL, *type = NULL;
     char *pin = NULL, *label = NULL, *slotid = NULL;
 
     ctx->slotid = 0;
+    if (strncmp(path, "'", 1) == 0 || strncmp(path, "\"", 1) == 0)
+        path++;
+
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
-        if (ctx->module_path == NULL &&
-            !pkcs11_parse_uri(path,"module-path=", &module_path))
+        pkcs11_parse_uri(path,"module-path=", &module_path);
+
+        if (module_path != NULL)
+            ctx->module_path = module_path;
+
+        if (ctx->module_path == NULL)
             goto err;
-        if (ctx->module_path == NULL) ctx->module_path = module_path;
-        if (!pkcs11_parse_uri(path,"id=", &id) &&
-            !pkcs11_parse_uri(path,"object=", &label)) {
+
+         pkcs11_parse_uri(path,"id=", &id);
+         pkcs11_parse_uri(path,"object=", &label);
+
+         if (id == NULL && label == NULL && !store) {
             PKCS11_trace("ID and OBJECT are null\n");
             goto err;
-        }
-        if (!pkcs11_parse_uri(path,"slot-id=", &slotid)) {
+         }
+
+        if (!pkcs11_parse_uri(path,"slot-id=", &slotid))
             slotid = NULL;
-        }
+
         pkcs11_parse_uri(path,"pin-value=", &pin);
         if (pin != NULL)
             ctx->pin = (CK_BYTE *) pin;
+        pkcs11_parse_uri(path,"type=", &type);
+        if (type != NULL)
+            ctx->type = (CK_BYTE *) type;
     } else if (path == NULL) {
-       PKCS11_trace("inkey is null\n");
-       goto err;
+        PKCS11_trace("inkey is null\n");
+        goto err;
     } else {
         if (ctx->module_path == NULL) {
             PKCS11_trace("Module path is null\n");
@@ -285,7 +295,7 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
     if (slotid != NULL)
         ctx->slotid = (CK_SLOT_ID) atoi(slotid);
 
-    if (ctx->pin == NULL) {
+    if (ctx->pin == NULL && !store) {
         if (!pkcs11_get_console_pin(&pin))
             goto err;
         ctx->pin = (CK_BYTE *) pin;
@@ -306,38 +316,27 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 {
     CK_RV rv;
     PKCS11_CTX *ctx;
+    CK_SESSION_HANDLE session = 0;
 
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-    if (!pkcs11_parse(ctx, path))
+    if (!pkcs11_parse(ctx, path, 0))
         goto err;
 
     rv = pkcs11_initialize(ctx->module_path);
-
     if (rv != CKR_OK)
         goto err;
     if (!pkcs11_get_slot(ctx))
         goto err;
-    if (!pkcs11_start_session(ctx))
+    if (!pkcs11_start_session(ctx, &session))
         goto err;
-    if (!pkcs11_login(ctx, CKU_USER))
+    if (!pkcs11_login(session, ctx, CKU_USER))
         goto err;
-    if (!pkcs11_find_private_key(ctx))
+    if (!pkcs11_find_private_key(session, ctx))
         goto err;
-
-    return pkcs11_load_pkey(ctx);
+    return pkcs11_load_pkey(session, ctx);
 
  err:
     PKCS11_trace("pkcs11_engine_load_private_key failed\n");
-    return 0;
-}
-
-static int pkcs11_get_type(char *type)
-{
-    if (strncmp(type, "cert", 4) == 0)
-        return OTYPE_CERT;
-    if (strncmp(type, "public", 6) == 0)
-        return OTYPE_PUBLIC;
-
     return 0;
 }
 
@@ -348,10 +347,7 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     ENGINE *e;
     PKCS11_CTX *pkcs11_ctx;
     OSSL_STORE_LOADER_CTX *store_ctx = NULL;
-    char *type = NULL, *object = NULL, *id = NULL;
-    int objecttype;
-    int retK, retC;
-    CK_RV rv;
+    CK_SESSION_HANDLE session = 0;
 
     store_ctx = OSSL_STORE_LOADER_CTX_new();
 
@@ -359,47 +355,30 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     if (e == NULL)
         return NULL;
 
-    uri += 7;
-
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
     if (pkcs11_ctx == NULL)
         return NULL;
 
-    pkcs11_parse_uri(uri,"type=", &type);
-    pkcs11_parse_uri(uri,"object=", &object);
-    pkcs11_parse_uri(uri,"id=", &id);
+    if (!pkcs11_parse(pkcs11_ctx, uri, 1))
+        return NULL;
 
-    if (type != NULL && (object != NULL || id != NULL)) {
-        objecttype = pkcs11_get_type(type);
-        switch (objecttype) {
-        case OTYPE_CERT:
-            if (!pkcs11_get_object(store_ctx, pkcs11_ctx,
-                                   (object != NULL ? object : id),
-                                   CKO_CERTIFICATE, object != NULL))
-                return NULL;
-            break;
-        case OTYPE_PUBLIC:
-            if (!pkcs11_get_object(store_ctx, pkcs11_ctx,
-                                   (object != NULL ? object : id),
-                                   CKO_PUBLIC_KEY, object != NULL))
-                return NULL;
-        }
-    } else if (object != NULL) {
-        if (!pkcs11_get_object(store_ctx, pkcs11_ctx, object, 0, 1))
-            return NULL;
-    } else if (id != NULL) {
-        if (!pkcs11_get_object(store_ctx, pkcs11_ctx, id, 0, 0))
-            return NULL;
-    } else {
-        rv = pkcs11_initialize(pkcs11_ctx->module_path);
-        if (rv != CKR_OK)
-            return NULL;
+    if (pkcs11_initialize(pkcs11_ctx->module_path) != CKR_OK)
+        return NULL;
 
-        retK = pkcs11_start_search(store_ctx, pkcs11_ctx, CKO_PUBLIC_KEY);
-        retC = pkcs11_start_search(store_ctx, pkcs11_ctx, CKO_CERTIFICATE);
-        if (!retK && !retC)
-            return NULL;
-    }
+    if (!pkcs11_get_slot(pkcs11_ctx))
+        return NULL;
+
+    if (!pkcs11_start_session(pkcs11_ctx, &session))
+        return NULL;
+
+    /* NEW store-ctx->session, not a copy of pkcs11_ctx->session */
+    store_ctx->session = session;
+
+    if (!pkcs11_search_start(store_ctx, pkcs11_ctx))
+        return NULL;
+
+    if (pkcs11_ctx->label == NULL && pkcs11_ctx->id == NULL)
+        store_ctx->listflag = 1;    /* we want names */
 
     return store_ctx;
 }
@@ -409,30 +388,27 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
                                           void *ui_data)
 {
     OSSL_STORE_INFO *ret = NULL;
-    char *name;
-    char *description;
 
-    if (ctx->cert != NULL) {
-        ctx->eof = 1;
-        return pkcs11_store_load_cert(ctx, ui_method, ui_data);
+    if (ctx->listflag) {
+        char *name;
+        char *description;
+
+        ctx->eof = pkcs11_search_next_ids(ctx, &name, &description);
+        if (!ctx->eof) {
+            ret = OSSL_STORE_INFO_new_NAME(name);
+            OSSL_STORE_INFO_set0_NAME_description(ret, description);
+        }
+    } else {
+        CK_OBJECT_CLASS class;
+
+        ctx->eof = pkcs11_search_next_object(ctx, &class);
+        if (!ctx->eof) {
+            if (class == CKO_CERTIFICATE)
+                ret = pkcs11_store_load_cert(ctx, ui_method, ui_data);
+            if (class == CKO_PUBLIC_KEY)
+                ret = pkcs11_store_load_key(ctx, ui_method, ui_data);
+        }
     }
-
-    if (ctx->key != NULL) {
-        ctx->eof = 1;
-        return pkcs11_store_load_key(ctx, ui_method, ui_data);
-    }
-
-    if (!ctx->eofKey)
-        ctx->eofKey = pkcs11_get_ids(ctx, &name, &description, CKO_PUBLIC_KEY);
-
-    if (ctx->eofKey)
-        ctx->eof = pkcs11_get_ids(ctx, &name, &description, CKO_CERTIFICATE);
-
-    if (name != NULL) {
-        ret = OSSL_STORE_INFO_new_NAME(name);
-        OSSL_STORE_INFO_set0_NAME_description(ret, description);
-    }
-
     return ret;
 }
 
@@ -443,8 +419,7 @@ static int pkcs11_store_eof(OSSL_STORE_LOADER_CTX *ctx)
 
 static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx)
 {
-    pkcs11_end_session(ctx->certSession);
-    pkcs11_end_session(ctx->keySession);
+    pkcs11_end_session(ctx->session);
     pkcs11_finalize();
     OSSL_STORE_LOADER_CTX_free(ctx);
     return 1;
@@ -464,11 +439,10 @@ static OSSL_STORE_LOADER_CTX* OSSL_STORE_LOADER_CTX_new(void)
     if (ctx == NULL)
         return NULL;
     ctx->error = 0;
+    ctx->listflag = 0;
     ctx->eof = 0;
-    ctx->eofKey = 0;
     ctx->cert = NULL;
-    ctx->certSession = 0;
-    ctx->keySession = 0;
+    ctx->session = 0;
     return ctx;
 }
 
@@ -493,7 +467,7 @@ static OSSL_STORE_INFO* pkcs11_store_load_key(OSSL_STORE_LOADER_CTX *ctx,
                                                const UI_METHOD *ui_method,
                                                void *ui_data)
 {
-    return OSSL_STORE_INFO_new_PUBKEY(ctx->key);
+    return OSSL_STORE_INFO_new_PKEY(ctx->key);
 }
 
 static int bind_pkcs11(ENGINE *e)
