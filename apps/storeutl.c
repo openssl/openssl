@@ -339,6 +339,8 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    const char *prog)
 {
     OSSL_STORE_CTX *store_ctx = NULL;
+    EC_KEY *ec_key = NULL;
+
     int ret = 1, items = 0;
 
     if ((store_ctx = OSSL_STORE_open(uri, uimeth, uidata, NULL, NULL))
@@ -434,19 +436,24 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                                          OSSL_STORE_INFO_get0_PARAMS(info));
             break;
         case OSSL_STORE_INFO_PKEY:
-            if (text)
-                EVP_PKEY_print_private(out, OSSL_STORE_INFO_get0_PKEY(info),
-                                       0, NULL);
-            if (!noout)
-                PEM_write_bio_PrivateKey(out, OSSL_STORE_INFO_get0_PKEY(info),
-                                         NULL, NULL, 0, NULL, NULL);
-            break;
-        case OSSL_STORE_INFO_PUBKEY:
-            if (text)
-                EVP_PKEY_print_public(out, OSSL_STORE_INFO_get0_PUBKEY(info),
-                                      0, NULL);
-            if (!noout)
-                PEM_write_bio_PUBKEY(out, OSSL_STORE_INFO_get0_PUBKEY(info));
+            ec_key = EVP_PKEY_get1_EC_KEY(OSSL_STORE_INFO_get0_PKEY(info));
+
+            if (EC_KEY_check_key(ec_key)) {
+                if (text)
+                    EVP_PKEY_print_private(out, OSSL_STORE_INFO_get0_PKEY(info),
+                                           0, NULL);
+                if (!noout)
+                    PEM_write_bio_PrivateKey(out, OSSL_STORE_INFO_get0_PKEY(info),
+                                             NULL, NULL, 0, NULL, NULL);
+            } else {
+                if (text)
+                     EVP_PKEY_print_public(out, OSSL_STORE_INFO_get0_PKEY(info),
+                                           0, NULL);
+                 if (!noout)
+                     PEM_write_bio_PUBKEY(out, OSSL_STORE_INFO_get0_PKEY(info));
+            }
+            EC_KEY_free(ec_key);
+
             break;
         case OSSL_STORE_INFO_CERT:
             if (text)
