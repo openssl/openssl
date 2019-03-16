@@ -103,12 +103,12 @@ static int test_param_type_extra(const OSSL_PARAM *param, unsigned char *cmp,
         if (signd) {
             if (!TEST_true(OSSL_PARAM_set_int32(param, 12345))
                 || !TEST_true(OSSL_PARAM_get_int64(param, &i64))
-                || !TEST_size_t_eq(i64, 12345))
+                || !TEST_size_t_eq((size_t)i64, 12345))
                 return 0;
         } else {
             if (!TEST_true(OSSL_PARAM_set_uint32(param, 12345))
                 || !TEST_true(OSSL_PARAM_get_uint64(param, (uint64_t *)&i64))
-                || !TEST_size_t_eq(i64, 12345))
+                || !TEST_size_t_eq((size_t)i64, 12345))
                 return 0;
         }
     }
