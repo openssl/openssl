@@ -138,7 +138,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     ret = 1;
 
  err:
-    EC_POINT_free(tmp);
+    EC_POINT_clear_free(tmp);
     if (ctx)
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
