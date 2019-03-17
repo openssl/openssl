@@ -259,9 +259,6 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * To avoid chosen ciphertext attacks, the error message should not
      * reveal which kind of decoding error happened.
      */
-    RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
-           RSA_R_OAEP_DECODING_ERROR);
-    err_clear_last_constant_time(1 & good);
  cleanup:
     OPENSSL_cleanse(seed, sizeof(seed));
     OPENSSL_clear_free(db, dblen);

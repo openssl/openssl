@@ -65,7 +65,7 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     /* |em| is the encoded message, zero-padded to exactly |num| bytes */
     unsigned char *em = NULL;
     unsigned int good, found_zero_byte, mask, threes_in_row;
-    int zero_index = 0, msg_index, mlen = -1, err;
+    int zero_index = 0, msg_index, mlen;
 
     if (tlen <= 0 || flen <= 0)
         return -1;
@@ -95,8 +95,6 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
 
     good = constant_time_is_zero(em[0]);
     good &= constant_time_eq(em[1], 2);
-    err = constant_time_select_int(good, 0, RSA_R_BLOCK_TYPE_IS_NOT_02);
-    mask = ~good;
 
     /* scan over padding data */
     found_zero_byte = 0;
@@ -118,14 +116,8 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
      * also fails.
      */
     good &= constant_time_ge(zero_index, 2 + 8);
-    err = constant_time_select_int(mask | good, err,
-                                   RSA_R_NULL_BEFORE_BLOCK_MISSING);
-    mask = ~good;
 
     good &= constant_time_ge(threes_in_row, 8);
-    err = constant_time_select_int(mask | good, err,
-                                   RSA_R_SSLV3_ROLLBACK_ATTACK);
-    mask = ~good;
 
     /*
      * Skip the zero byte. This is incorrect if we never found a zero-byte
@@ -138,7 +130,6 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
      * For good measure, do this check in constant time as well.
      */
     good &= constant_time_ge(tlen, mlen);
-    err = constant_time_select_int(mask | good, err, RSA_R_DATA_TOO_LARGE);
 
     /*
      * Even though we can't fake result's length, we can pretend copying
@@ -163,8 +154,6 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     }
 
     OPENSSL_clear_free(em, num);
-    RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, err);
-    err_clear_last_constant_time(1 & good);
 
     return constant_time_select_int(good, mlen, -1);
 }

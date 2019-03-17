@@ -480,8 +480,6 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
-    RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
-    err_clear_last_constant_time(r >= 0);
 
  err:
     if (ctx != NULL)
