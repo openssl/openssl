@@ -207,7 +207,7 @@ static int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
  err:
     if (tmp)
-        EC_POINT_free(tmp);
+        EC_POINT_clear_free(tmp);
     if (ctx)
         BN_CTX_end(ctx);
     if (ctx)
