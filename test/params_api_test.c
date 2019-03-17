@@ -465,7 +465,7 @@ static int test_param_construct(void)
     OSSL_PARAM params[20];
     char buf[100], buf2[100], *bufp, *bufp2;
     unsigned char ubuf[100];
-    void *vp, *vp2;
+    void *vp, *vpn = NULL, *vp2;
     OSSL_PARAM *p;
     const OSSL_PARAM *cp;
     static const OSSL_PARAM pend = OSSL_PARAM_END;
@@ -557,7 +557,6 @@ static int test_param_construct(void)
         || !TEST_ptr_eq(bufp2, bufp))
         goto err;
     /* OCTET string */
-    vp = NULL;
     if (!TEST_ptr(p = locate(params, "octstr"))
         || !TEST_true(OSSL_PARAM_set_octet_string(p, "abcdefghi",
                                                   sizeof("abcdefghi")))
@@ -565,12 +564,11 @@ static int test_param_construct(void)
         goto err;
     /* Match the return size to avoid trailing garbage bytes */
     p->data_size = *p->return_size;
-    if (!TEST_true(OSSL_PARAM_get_octet_string(p, &vp, 0, &s))
+    if (!TEST_true(OSSL_PARAM_get_octet_string(p, &vpn, 0, &s))
         || !TEST_size_t_eq(s, sizeof("abcdefghi"))
-        || !TEST_mem_eq(vp, sizeof("abcdefghi"),
+        || !TEST_mem_eq(vpn, sizeof("abcdefghi"),
                         "abcdefghi", sizeof("abcdefghi")))
         goto err;
-    OPENSSL_free(vp);
     vp = buf2;
     if (!TEST_true(OSSL_PARAM_get_octet_string(p, &vp, sizeof(buf2), &s))
         || !TEST_size_t_eq(s, sizeof("abcdefghi"))
@@ -604,6 +602,7 @@ static int test_param_construct(void)
         goto err;
     ret = 1;
 err:
+    OPENSSL_free(vpn);
     BN_free(bn);
     BN_free(bn2);
     return ret;
