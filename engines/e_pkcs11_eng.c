@@ -24,6 +24,8 @@ static int pkcs11_finish(ENGINE *e);
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data);
+static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
+                                   void *p, void (*f) ());
 void engine_load_pkcs11_int(void);
 static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
@@ -110,6 +112,8 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             ret = 0;
         }
         break;
+    case PKCS11_CMD_LOAD_CERT_CTRL:
+        return pkcs11_engine_load_cert(e, cmd, i, p, f);
     }
 
     return ret;
@@ -307,6 +311,51 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
     return 1;
 
  err:
+    return 0;
+}
+
+static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
+                                   void *p, void (*f) ())
+{
+    PKCS11_CTX *pkcs11_ctx;
+    OSSL_STORE_LOADER_CTX *store_ctx = NULL;
+    CK_SESSION_HANDLE session = 0;
+    CK_OBJECT_CLASS class;
+    struct {
+        const char *uri_string;
+        X509 *cert;
+    } *params = p;
+
+    store_ctx = OSSL_STORE_LOADER_CTX_new();
+
+    pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+    if (pkcs11_ctx == NULL)
+        return 0;
+
+    if (!pkcs11_parse(pkcs11_ctx, params->uri_string, 1))
+        return 0;
+
+    if (pkcs11_initialize(pkcs11_ctx->module_path) != CKR_OK)
+        return 0;
+
+    if (!pkcs11_get_slot(pkcs11_ctx))
+        return 0;
+
+    if (!pkcs11_start_session(pkcs11_ctx, &session))
+        return 0;
+
+    store_ctx->session = session;
+    if (!pkcs11_search_start(store_ctx, pkcs11_ctx))
+        return 0;
+
+    pkcs11_search_next_object(store_ctx, &class);
+    pkcs11_end_session(session);
+    pkcs11_finalize();
+
+    if (class == CKO_CERTIFICATE) {
+        params->cert = d2i_X509(NULL, &store_ctx->cert, store_ctx->certlen);
+        return 1;
+    }
     return 0;
 }
 

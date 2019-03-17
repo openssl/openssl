@@ -44,6 +44,7 @@
 
 #define PKCS11_CMD_MODULE_PATH            ENGINE_CMD_BASE
 #define PKCS11_CMD_PIN                    (ENGINE_CMD_BASE + 1)
+#define PKCS11_CMD_LOAD_CERT_CTRL         (ENGINE_CMD_BASE + 2)
 
 static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
     {PKCS11_CMD_MODULE_PATH,
@@ -54,6 +55,10 @@ static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
      "PIN",
      "PIN",
      ENGINE_CMD_FLAG_STRING},
+    {PKCS11_CMD_LOAD_CERT_CTRL,
+     "LOAD_CERT_CTRL",
+     "Get certificate",
+     ENGINE_CMD_FLAG_INTERNAL},
     {0, NULL, NULL, 0}
 };
 
