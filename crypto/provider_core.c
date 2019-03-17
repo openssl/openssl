@@ -11,9 +11,14 @@
 #include <openssl/core_numbers.h>
 #include <openssl/opensslv.h>
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
 #include "internal/refcount.h"
+#include "provider_local.h"
+
+static OSSL_PROVIDER *provider_new(const char *name,
+                                   OSSL_provider_init_fn *init_function);
 
 /*-
  * Provider Object structure
@@ -78,6 +83,7 @@ static void provider_store_free(void *vstore)
 static void *provider_store_new(void)
 {
     struct provider_store_st *store = OPENSSL_zalloc(sizeof(*store));
+    const struct predefined_providers_st *p = NULL;
 
     if (store == NULL
         || (store->providers = sk_OSSL_PROVIDER_new(ossl_provider_cmp)) == NULL
@@ -86,6 +92,28 @@ static void *provider_store_new(void)
         return NULL;
     }
     store->use_fallbacks = 1;
+
+    for (p = predefined_providers; p->name != NULL; p++) {
+        OSSL_PROVIDER *prov = NULL;
+
+        /*
+         * We use the internal constructor directly here,
+         * otherwise we get a call loop
+         */
+        prov = provider_new(p->name, p->init);
+
+        if (prov == NULL
+            || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
+            ossl_provider_free(prov);
+            provider_store_free(store);
+            CRYPTOerr(CRYPTO_F_PROVIDER_STORE_NEW, ERR_R_INTERNAL_ERROR);
+            return NULL;
+        }
+        prov->store = store;
+        if(p->is_fallback)
+            ossl_provider_set_fallback(prov);
+    }
+
     return store;
 }
 
@@ -116,20 +144,6 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
     return store;
 }
 
-/*-
- * Provider Object methods
- * =======================
- */
-
-int ossl_provider_upref(OSSL_PROVIDER *prov)
-{
-    int ref = 0;
-
-    CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock);
-    return ref;
-}
-
-/* Finder, constructor and destructor */
 OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
 {
     struct provider_store_st *store = NULL;
@@ -151,6 +165,39 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
     return prov;
 }
 
+/*-
+ * Provider Object methods
+ * =======================
+ */
+
+static OSSL_PROVIDER *provider_new(const char *name,
+                                   OSSL_provider_init_fn *init_function)
+{
+    OSSL_PROVIDER *prov = NULL;
+
+    if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL
+#ifndef HAVE_ATOMICS
+        || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
+#endif
+        || !ossl_provider_upref(prov) /* +1 One reference to be returned */
+        || (prov->name = OPENSSL_strdup(name)) == NULL) {
+        ossl_provider_free(prov);
+        CRYPTOerr(CRYPTO_F_PROVIDER_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    prov->init_function = init_function;
+    return prov;
+}
+
+int ossl_provider_upref(OSSL_PROVIDER *prov)
+{
+    int ref = 0;
+
+    CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock);
+    return ref;
+}
+
 OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
                                  OSSL_provider_init_fn *init_function)
 {
@@ -168,18 +215,9 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
         return NULL;
     }
 
-    if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL
-#ifndef HAVE_ATOMICS
-        || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
-#endif
-        || !ossl_provider_upref(prov) /* +1 One reference to be returned */
-        || (prov->name = OPENSSL_strdup(name)) == NULL) {
-        ossl_provider_free(prov);
-        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_NEW, ERR_R_MALLOC_FAILURE);
+    /* provider_new() generates an error, so no need here */
+    if ((prov = provider_new(name, init_function)) == NULL)
         return NULL;
-    }
-
-    prov->init_function = init_function;
 
     CRYPTO_THREAD_write_lock(store->lock);
     if (!ossl_provider_upref(prov)) { /* +1 One reference for the store */

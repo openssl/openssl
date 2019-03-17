@@ -59,6 +59,9 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
      "pkey_siphash_init"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_ACTIVATE, 0),
      "provider_activate"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_NEW, 0), "provider_new"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_STORE_NEW, 0),
+     "provider_store_new"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_SK_RESERVE, 0), "sk_reserve"},
     {0, NULL}
 };
