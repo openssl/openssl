@@ -378,7 +378,7 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
 
  err:
     EC_POINT_free(p);
-    EC_POINT_free(s);
+    EC_POINT_clear_free(s);
     BN_CTX_end(ctx);
 
     return ret;
