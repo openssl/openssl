@@ -50,6 +50,7 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_PKEY_POLY1305_INIT                      124
 # define CRYPTO_F_PKEY_SIPHASH_INIT                       125
 # define CRYPTO_F_PROVIDER_ACTIVATE                       134
+# define CRYPTO_F_PROVIDER_NEW                            135
 # define CRYPTO_F_SK_RESERVE                              129
 
 /*
