@@ -205,10 +205,8 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
     ret = BN_bn2bin(tmp, key);
  err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
     return ret;
 }
 
