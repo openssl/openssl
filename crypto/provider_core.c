@@ -254,7 +254,8 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
  */
 static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 
-int ossl_provider_activate(OSSL_PROVIDER *prov)
+/* Internal lockless version */
+static int provider_activate(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
 
@@ -333,12 +334,22 @@ int ossl_provider_activate(OSSL_PROVIDER *prov)
 
     /* With this flag set, this provider has become fully "loaded". */
     prov->flag_initialized = 1;
-    CRYPTO_THREAD_write_lock(prov->store->lock);
-    prov->store->use_fallbacks = 0;
-    CRYPTO_THREAD_unlock(prov->store->lock);
 
     return 1;
 }
+
+int ossl_provider_activate(OSSL_PROVIDER *prov)
+{
+    if (provider_activate(prov)) {
+        CRYPTO_THREAD_write_lock(prov->store->lock);
+        prov->store->use_fallbacks = 0;
+        CRYPTO_THREAD_unlock(prov->store->lock);
+        return 1;
+    }
+
+    return 0;
+}
+
 
 static int provider_forall_loaded(struct provider_store_st *store,
                                   int *found_activated,
@@ -399,13 +410,15 @@ int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
                  * fail anyway.
                  */
                 if (prov->flag_fallback)
-                    ossl_provider_activate(prov);
+                    provider_activate(prov);
             }
 
             /*
              * Now that we've activated available fallbacks, try a second sweep
              */
             ret = provider_forall_loaded(store, NULL, cb, cbdata);
+
+            /* TODO: should we set store->use_fallbacks = 0 here? */
         }
         CRYPTO_THREAD_unlock(store->lock);
     }
