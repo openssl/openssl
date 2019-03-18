@@ -11,7 +11,7 @@ EVP_MD_meth_set_ctrl, EVP_MD_meth_get_input_blocksize,
 EVP_MD_meth_get_result_size, EVP_MD_meth_get_app_datasize,
 EVP_MD_meth_get_flags, EVP_MD_meth_get_init, EVP_MD_meth_get_update,
 EVP_MD_meth_get_final, EVP_MD_meth_get_copy, EVP_MD_meth_get_cleanup,
-EVP_MD_meth_get_ctrl
+EVP_MD_meth_get_ctrl, EVP_MD_upref
 - Routines to build up EVP_MD methods
 
 =head1 SYNOPSIS
@@ -54,17 +54,21 @@ EVP_MD_meth_get_ctrl
  int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
                                                int p1, void *p2);
 
+ int EVP_MD_upref(EVP_MD *md);
+
 =head1 DESCRIPTION
 
 The B<EVP_MD> type is a structure for digest method implementation.
 It can also have associated public/private key signing and verifying
 routines.
 
-EVP_MD_meth_new() creates a new B<EVP_MD> structure.
+EVP_MD_meth_new() creates a new B<EVP_MD> structure. Note that B<EVP_MD>
+structures are reference counted.
 
 EVP_MD_meth_dup() creates a copy of B<md>.
 
-EVP_MD_meth_free() destroys a B<EVP_MD> structure.
+EVP_MD_meth_free() decrements the reference count for the B<EVP_MD> structure.
+If the reference count drops to 0 then the structure is freed.
 
 EVP_MD_meth_set_input_blocksize() sets the internal input block size
 for the method B<md> to B<blocksize> bytes.
@@ -158,6 +162,8 @@ EVP_MD_meth_get_cleanup() and EVP_MD_meth_get_ctrl() are all used
 to retrieve the method data given with the EVP_MD_meth_set_*()
 functions above.
 
+EVP_MD_upref() increments the reference count for an EVP_MD structure.
+
 =head1 RETURN VALUES
 
 EVP_MD_meth_new() and EVP_MD_meth_dup() return a pointer to a newly
@@ -169,6 +175,8 @@ indicated sizes or flags.
 All other EVP_CIPHER_meth_get_*() functions return pointers to their
 respective B<md> function.
 
+EVP_MD_upref() returns 1 for success or 0 otherwise.
+
 =head1 SEE ALSO
 
 L<EVP_DigestInit(3)>, L<EVP_SignInit(3)>, L<EVP_VerifyInit(3)>
@@ -176,7 +184,8 @@ L<EVP_DigestInit(3)>, L<EVP_SignInit(3)>, L<EVP_VerifyInit(3)>
 =head1 HISTORY
 
 The B<EVP_MD> structure was openly available in OpenSSL before version
-1.1.  The functions described here were added in OpenSSL 1.1.
+1.1.  EVP_MD_upref() was added in OpenSSL 3.0. All other functions described
+here were added in OpenSSL 1.1.
 
 =head1 COPYRIGHT
 
