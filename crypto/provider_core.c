@@ -123,11 +123,9 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
         if (sk_OSSL_PROVIDER_num(store->providers) == 0) {
             const struct predefined_providers_st *p = NULL;
 
-            for (p = predefined_providers; p->name == NULL; p++) {
+            for (p = predefined_providers; p->name != NULL; p++) {
                 OSSL_PROVIDER *prov = NULL;
 
-                if (p->name == NULL)
-                    continue;
                 /*
                  * We use the internal constructor directly here,
                  * otherwise we get a call loop
