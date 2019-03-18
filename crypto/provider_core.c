@@ -361,14 +361,14 @@ static int provider_forall_loaded(struct provider_store_st *store,
     int ret = 1;
     int num_provs = sk_OSSL_PROVIDER_num(store->providers);
 
-    if (found_activated == NULL)
+    if (found_activated != NULL)
         *found_activated = 0;
     for (i = 0; i < num_provs; i++) {
         OSSL_PROVIDER *prov =
             sk_OSSL_PROVIDER_value(store->providers, i);
 
         if (prov->flag_initialized) {
-            if (found_activated == NULL)
+            if (found_activated != NULL)
                 *found_activated = 1;
             if (!(ret = cb(prov, cbdata)))
                 break;
