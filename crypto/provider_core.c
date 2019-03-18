@@ -304,7 +304,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
 
     if (prov->init_function == NULL
         || !prov->init_function(prov, core_dispatch, &provider_dispatch)) {
-        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_ACTIVATE, ERR_R_INIT_FAIL);
+        CRYPTOerr(CRYPTO_F_PROVIDER_ACTIVATE, ERR_R_INIT_FAIL);
         ERR_add_error_data(2, "name=", prov->name);
         DSO_free(prov->module);
         prov->module = NULL;
