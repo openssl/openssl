@@ -15,7 +15,7 @@
 #include "internal/thread_once.h"
 #include "internal/provider.h"
 #include "internal/refcount.h"
-#include "provider_predefined.h"
+#include "provider_local.h"
 
 static OSSL_PROVIDER *provider_new(const char *name,
                                    OSSL_provider_init_fn *init_function);
@@ -121,19 +121,18 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
     } else {
         CRYPTO_THREAD_write_lock(store->lock);
         if (sk_OSSL_PROVIDER_num(store->providers) == 0) {
-            size_t i;
+            const struct predefined_providers_st *p = NULL;
 
-            for (i = 0; i < OSSL_NELEM(predefined_providers); i++) {
+            for (p = predefined_providers; p->name == NULL; p++) {
                 OSSL_PROVIDER *prov = NULL;
 
-                if (predefined_providers[i].name == NULL)
+                if (p->name == NULL)
                     continue;
                 /*
                  * We use the internal constructor directly here,
                  * otherwise we get a call loop
                  */
-                prov = provider_new(predefined_providers[i].name,
-                                    predefined_providers[i].init);
+                prov = provider_new(p->name, p->init);
 
                 if (prov == NULL
                     || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
@@ -143,7 +142,7 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
                     return NULL;
                 }
                 prov->store = store;
-                if(predefined_providers[i].is_fallback)
+                if(p->is_fallback)
                     ossl_provider_set_fallback(prov);
             }
         }
