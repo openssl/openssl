@@ -170,8 +170,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     found = 1;
  err:
     OPENSSL_free(mods);
-    if (ctx != NULL)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     bn_check_top(ret);
     return found;
