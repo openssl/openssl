@@ -113,8 +113,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
 
  err:
     EC_POINT_clear_free(tmp);
-    if (ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_free(buf);
     return ret;

@@ -58,10 +58,8 @@ int DH_check_params(const DH *dh, int *ret)
 
     ok = 1;
  err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
     return ok;
 }
 
@@ -171,10 +169,8 @@ int DH_check(const DH *dh, int *ret)
     }
     ok = 1;
  err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
     return ok;
 }
 
@@ -225,9 +221,7 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 
     ok = 1;
  err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
     return ok;
 }
