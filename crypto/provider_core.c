@@ -333,9 +333,9 @@ int ossl_provider_activate(OSSL_PROVIDER *prov)
 
     /* With this flag set, this provider has become fully "loaded". */
     prov->flag_initialized = 1;
-    CRYPTO_THREAD_write_lock(store->lock);
+    CRYPTO_THREAD_write_lock(prov->store->lock);
     prov->store->use_fallbacks = 0;
-    CRYPTO_THREAD_unlock(store->lock);
+    CRYPTO_THREAD_unlock(prov->store->lock);
 
     return 1;
 }
@@ -346,6 +346,7 @@ static int provider_forall_loaded(struct provider_store_st *store,
                                             void *cbdata),
                                   void *cbdata)
 {
+    int i;
     int ret = 1;
     int num_provs = sk_OSSL_PROVIDER_num(store->providers);
 
