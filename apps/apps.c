@@ -1623,8 +1623,10 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
     if (n == NULL)
         return NULL;
     work = OPENSSL_strdup(cp);
-    if (work == NULL)
+    if (work == NULL) {
+        BIO_printf(bio_err, "%s: Error copying name input\n", opt_getprog());
         goto err;
+    }
 
     while (*cp) {
         char *bp = work;
@@ -1639,7 +1641,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
             *bp++ = *cp++;
         if (*cp == '\0') {
             BIO_printf(bio_err,
-                    "%s: Hit end of string before finding the equals.\n",
+                    "%s: Hit end of string before finding the '='\n",
                     opt_getprog());
             goto err;
         }
@@ -1655,8 +1657,8 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
             }
             if (*cp == '\\' && *++cp == '\0') {
                 BIO_printf(bio_err,
-                        "%s: escape character at end of string\n",
-                        opt_getprog());
+                           "%s: escape character at end of string\n",
+                           opt_getprog());
                 goto err;
             }
         }
@@ -1670,7 +1672,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         nid = OBJ_txt2nid(typestr);
         if (nid == NID_undef) {
             BIO_printf(bio_err, "%s: Skipping unknown attribute \"%s\"\n",
-                      opt_getprog(), typestr);
+                       opt_getprog(), typestr);
             continue;
         }
         if (*valstr == '\0') {
@@ -1681,8 +1683,11 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         }
         if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
                                         valstr, strlen((char *)valstr),
-                                        -1, ismulti ? -1 : 0))
+                                        -1, ismulti ? -1 : 0)) {
+            BIO_printf(bio_err, "%s: Error adding name attribute \"/%s=%s\"\n",
+                       opt_getprog(), typestr ,valstr);
             goto err;
+        }
     }
 
     OPENSSL_free(work);
