@@ -142,6 +142,7 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
                               ERR_R_INTERNAL_ERROR);
                     return NULL;
                 }
+                prov->store = store;
                 if(predefined_providers[i].is_fallback)
                     ossl_provider_set_fallback(prov);
             }
