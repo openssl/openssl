@@ -83,6 +83,7 @@ static void provider_store_free(void *vstore)
 static void *provider_store_new(void)
 {
     struct provider_store_st *store = OPENSSL_zalloc(sizeof(*store));
+    const struct predefined_providers_st *p = NULL;
 
     if (store == NULL
         || (store->providers = sk_OSSL_PROVIDER_new(ossl_provider_cmp)) == NULL
@@ -91,6 +92,27 @@ static void *provider_store_new(void)
         return NULL;
     }
     store->use_fallbacks = 1;
+
+    for (p = predefined_providers; p->name != NULL; p++) {
+        OSSL_PROVIDER *prov = NULL;
+
+        /*
+         * We use the internal constructor directly here,
+         * otherwise we get a call loop
+         */
+        prov = provider_new(p->name, p->init);
+
+        if (prov == NULL
+            || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
+            ossl_provider_free(prov);
+            CRYPTOerr(CRYPTO_F_PROVIDER_STORE_NEW, ERR_R_INTERNAL_ERROR);
+            return NULL;
+        }
+        prov->store = store;
+        if(p->is_fallback)
+            ossl_provider_set_fallback(prov);
+    }
+
     return store;
 }
 
@@ -116,36 +138,8 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
         return NULL;
 
     store = openssl_ctx_get_data(libctx, provider_store_index);
-    if (store == NULL) {
+    if (store == NULL)
         CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE, ERR_R_INTERNAL_ERROR);
-    } else {
-        CRYPTO_THREAD_write_lock(store->lock);
-        if (sk_OSSL_PROVIDER_num(store->providers) == 0) {
-            const struct predefined_providers_st *p = NULL;
-
-            for (p = predefined_providers; p->name != NULL; p++) {
-                OSSL_PROVIDER *prov = NULL;
-
-                /*
-                 * We use the internal constructor directly here,
-                 * otherwise we get a call loop
-                 */
-                prov = provider_new(p->name, p->init);
-
-                if (prov == NULL
-                    || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
-                    ossl_provider_free(prov);
-                    CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE,
-                              ERR_R_INTERNAL_ERROR);
-                    return NULL;
-                }
-                prov->store = store;
-                if(p->is_fallback)
-                    ossl_provider_set_fallback(prov);
-            }
-        }
-        CRYPTO_THREAD_unlock(store->lock);
-    }
     return store;
 }
 
