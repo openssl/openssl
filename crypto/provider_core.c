@@ -254,7 +254,11 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
  */
 static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 
-/* Internal lockless version */
+/*
+ * Internal version that doesn't affect the store flags, and thereby avoid
+ * locking.  Direct callers must remember to set the store flags when
+ * appropriate
+ */
 static int provider_activate(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
