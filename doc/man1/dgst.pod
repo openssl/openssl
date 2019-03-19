@@ -22,6 +22,7 @@ B<openssl dgst>
 [B<-verify filename>]
 [B<-prverify filename>]
 [B<-signature filename>]
+[B<-sigopt nm:v>]
 [B<-hmac key>]
 [B<-fips-fingerprint>]
 [B<-rand file...>]
