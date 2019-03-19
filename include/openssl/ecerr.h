@@ -138,6 +138,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_KEY_PRINT_FP                             181
 #  define EC_F_EC_KEY_PRIV2BUF                             279
 #  define EC_F_EC_KEY_PRIV2OCT                             256
+#  define EC_F_EC_KEY_PUBLIC_RANGE_CHECK                   299
 #  define EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES    229
 #  define EC_F_EC_KEY_SIMPLE_CHECK_KEY                     258
 #  define EC_F_EC_KEY_SIMPLE_OCT2PRIV                      259
@@ -237,6 +238,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_INVALID_PEER_KEY                            133
 #  define EC_R_INVALID_PENTANOMIAL_BASIS                   132
 #  define EC_R_INVALID_PRIVATE_KEY                         123
+#  define EC_R_INVALID_STRENGTH                            166
 #  define EC_R_INVALID_TRINOMIAL_BASIS                     137
 #  define EC_R_KDF_PARAMETER_ERROR                         148
 #  define EC_R_KEYS_NOT_SET                                140
@@ -246,6 +248,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_MISSING_PARAMETERS                          124
 #  define EC_R_MISSING_PRIVATE_KEY                         125
 #  define EC_R_NEED_NEW_SETUP_VALUES                       157
+#  define EC_R_NOT_APPROVED                                167
 #  define EC_R_NOT_A_NIST_PRIME                            135
 #  define EC_R_NOT_IMPLEMENTED                             126
 #  define EC_R_NOT_INITIALIZED                             111
