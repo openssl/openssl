@@ -323,7 +323,15 @@ OSSL_PARAM_locate_set_octet_ptr() is a shortcut for:
 OSSL_PARAM_set_octet_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
 B<used_len>).
 
+OSSL_PARAM_optional_get_TYPE() is the same as OSSL_PARAM_optional_get_TYPE()
+except that it returns success if the parameter B<key> is not present in the
+parameter array B<p>.
+
 OSSL_PARAM_optional_set_TYPE() is the same as OSSL_PARAM_optional_set_TYPE()
+except that it returns success if the parameter B<key> is not present in the
+parameter array B<p>.
+
+OSSL_PARAM_optional_get_BN() is the same as OSSL_PARAM_optional_get_BN()
 except that it returns success if the parameter B<key> is not present in the
 parameter array B<p>.
 
@@ -331,16 +339,32 @@ OSSL_PARAM_optional_set_BN() is the same as OSSL_PARAM_optional_set_BN()
 except that it returns success if the parameter B<key> is not present in the
 parameter array B<p>.
 
+OSSL_PARAM_optional_get_utf8_string() is the same as
+OSSL_PARAM_locate_get_utf8_string() except that it returns success if the
+parameter B<key> is not present in the parameter array B<p>.
+
 OSSL_PARAM_optional_set_utf8_string() is the same as
 OSSL_PARAM_locate_set_utf8_string() except that it returns success if the
+parameter B<key> is not present in the parameter array B<p>.
+
+OSSL_PARAM_optional_get_octet_string() is the same as
+OSSL_PARAM_locate_get_octet_string() except that it returns success if the
 parameter B<key> is not present in the parameter array B<p>.
 
 OSSL_PARAM_optional_set_octet_string() is the same as
 OSSL_PARAM_locate_set_octet_string() except that it returns success if the
 parameter B<key> is not present in the parameter array B<p>.
 
+OSSL_PARAM_optional_get_utf8_ptr() is the same as
+OSSL_PARAM_locate_get_utf8_ptr() except that it returns success if the
+parameter B<key> is not present in the parameter array B<p>.
+
 OSSL_PARAM_optional_set_utf8_ptr() is the same as
 OSSL_PARAM_locate_set_utf8_ptr() except that it returns success if the
+parameter B<key> is not present in the parameter array B<p>.
+
+OSSL_PARAM_optional_get_octet_ptr() is the same as
+OSSL_PARAM_locate_get_octet_ptr() except that it returns success if the
 parameter B<key> is not present in the parameter array B<p>.
 
 OSSL_PARAM_optional_set_octet_ptr() is the same as
