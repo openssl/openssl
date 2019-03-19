@@ -723,3 +723,183 @@ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
 {
     return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, 0, rsize);
 }
+
+int OSSL_PARAM_locate_get_int(const OSSL_PARAM *p, const char *key, int *val)
+{
+    return OSSL_PARAM_get_int(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_uint(const OSSL_PARAM *p, const char *key,
+                               unsigned int *val)
+{
+    return OSSL_PARAM_get_uint(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_long(const OSSL_PARAM *p, const char *key,
+                               long int *val)
+{
+    return OSSL_PARAM_get_long(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_ulong(const OSSL_PARAM *p, const char *key,
+                                unsigned long int *val)
+{
+    return OSSL_PARAM_get_ulong(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_int32(const OSSL_PARAM *p, const char *key,
+                                int32_t *val)
+{
+    return OSSL_PARAM_get_int32(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_uint32(const OSSL_PARAM *p, const char *key,
+                                 uint32_t *val)
+{
+    return OSSL_PARAM_get_uint32(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_int64(const OSSL_PARAM *p, const char *key,
+                                int64_t *val)
+{
+    return OSSL_PARAM_get_int64(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_uint64(const OSSL_PARAM *p, const char *key,
+                                 uint64_t *val)
+{
+    return OSSL_PARAM_get_uint64(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_size_t(const OSSL_PARAM *p, const char *key,
+                                 size_t *val)
+{
+    return OSSL_PARAM_get_size_t(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_int(const OSSL_PARAM *p, const char *key, int val)
+{
+    return OSSL_PARAM_set_int(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_uint(const OSSL_PARAM *p, const char *key,
+                               unsigned int val)
+{
+    return OSSL_PARAM_set_uint(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_long(const OSSL_PARAM *p, const char *key,
+                               long int val)
+{
+    return OSSL_PARAM_set_long(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_ulong(const OSSL_PARAM *p, const char *key,
+                                unsigned long int val)
+{
+    return OSSL_PARAM_set_ulong(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_int32(const OSSL_PARAM *p, const char *key,
+                                int32_t val)
+{
+    return OSSL_PARAM_set_int32(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_uint32(const OSSL_PARAM *p, const char *key,
+                                 uint32_t val)
+{
+    return OSSL_PARAM_set_uint32(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_int64(const OSSL_PARAM *p, const char *key,
+                                int64_t val)
+{
+    return OSSL_PARAM_set_int64(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_uint64(const OSSL_PARAM *p, const char *key,
+                                 uint64_t val)
+{
+    return OSSL_PARAM_set_uint64(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_size_t(const OSSL_PARAM *p, const char *key,
+                                 size_t val)
+{
+    return OSSL_PARAM_set_size_t(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_double(const OSSL_PARAM *p, const char *key,
+                                 double *val)
+{
+    return OSSL_PARAM_get_double(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_double(const OSSL_PARAM *p, const char *key,
+                                 double val)
+{
+    return OSSL_PARAM_set_double(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_BN(const OSSL_PARAM *p, const char *key,
+                             BIGNUM **val)
+{
+    return OSSL_PARAM_get_BN(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_BN(const OSSL_PARAM *p, const char *key,
+                             const BIGNUM *val)
+{
+    return OSSL_PARAM_set_BN(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_utf8_string(const OSSL_PARAM *p, const char *key,
+                                      char **val, size_t max_len)
+{
+    return OSSL_PARAM_get_utf8_string(OSSL_PARAM_locate(p, key), val, max_len);
+}
+
+int OSSL_PARAM_locate_set_utf8_string(const OSSL_PARAM *p, const char *key,
+                                      const char *val)
+{
+    return OSSL_PARAM_set_utf8_string(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_octet_string(const OSSL_PARAM *p, const char *key,
+                                       void **val, size_t max_len,
+                                       size_t *used_len)
+{
+    return OSSL_PARAM_get_octet_string(OSSL_PARAM_locate(p, key), val, max_len,
+                                       used_len);
+}
+
+int OSSL_PARAM_locate_set_octet_string(const OSSL_PARAM *p, const char *key,
+                                       const void *val, size_t len)
+{
+    return OSSL_PARAM_set_octet_string(OSSL_PARAM_locate(p, key), val, len);
+}
+
+int OSSL_PARAM_locate_get_utf8_ptr(const OSSL_PARAM *p, const char *key,
+                                   const char **val)
+{
+    return OSSL_PARAM_get_utf8_ptr(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_set_utf8_ptr(const OSSL_PARAM *p, const char *key,
+                                   const char *val)
+{
+    return OSSL_PARAM_set_utf8_ptr(OSSL_PARAM_locate(p, key), val);
+}
+
+int OSSL_PARAM_locate_get_octet_ptr(const OSSL_PARAM *p, const char *key,
+                                    const void **val, size_t *used_len)
+{
+    return OSSL_PARAM_get_octet_ptr(OSSL_PARAM_locate(p, key), val, used_len);
+}
+
+int OSSL_PARAM_locate_set_octet_ptr(const OSSL_PARAM *p, const char *key,
+                                    const void *val, size_t used_len)
+{
+    return OSSL_PARAM_set_octet_ptr(OSSL_PARAM_locate(p, key), val, used_len);
+}
