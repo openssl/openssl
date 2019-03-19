@@ -601,8 +601,13 @@ EOF
   }
 
  sub src2obj {
+     my $asmext = platform->asmext();
      my %args = @_;
-     my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x } ( @{$args{srcs}} );
+     my @srcs =
+         map { my $x = $_;
+               (platform->isasm($x) && grep { $x eq $_ } @generated)
+               ? platform->asm($x) : $x }
+         ( @{$args{srcs}} );
      my $srcs = '"'.join('" "',  @srcs).'"';
      my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
      my $incs = join("", map { ' /I "'.$_.'"' } @{$args{incs}});
@@ -630,7 +635,7 @@ EOF
      }
      my $obj = platform->obj($args{obj});
      my $dep = platform->dep($args{obj});
-     if ($srcs[0] =~ /\.asm$/) {
+     if ($srcs[0] =~ /\Q${asmext}\E$/) {
          return <<"EOF";
 $obj: $deps
 	\$(AS) $asflags \$(ASOUTFLAG)\$\@ $srcs
