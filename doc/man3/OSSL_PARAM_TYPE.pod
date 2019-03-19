@@ -21,7 +21,10 @@ OSSL_PARAM_locate_get_BN, OSSL_PARAM_locate_set_BN,
 OSSL_PARAM_locate_get_utf8_string, OSSL_PARAM_locate_set_utf8_string,
 OSSL_PARAM_locate_get_octet_string, OSSL_PARAM_locate_set_octet_string,
 OSSL_PARAM_locate_get_utf8_ptr, OSSL_PARAM_locate_set_utf8_ptr,
-OSSL_PARAM_locate_get_octet_ptr, OSSL_PARAM_locate_set_octet_ptr
+OSSL_PARAM_locate_get_octet_ptr, OSSL_PARAM_locate_set_octet_ptr,
+OSSL_PARAM_optional_set_TYPE, OSSL_PARAM_optional_set_BN,
+OSSL_PARAM_optional_set_utf8_string, OSSL_PARAM_optional_set_octet_string,
+OSSL_PARAM_optional_set_utf8_ptr, OSSL_PARAM_optional_set_octet_ptr
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -106,6 +109,19 @@ OSSL_PARAM_locate_get_octet_ptr, OSSL_PARAM_locate_set_octet_ptr
                                      void **val, size_t *used_len);
  int OSSL_PARAM_locate_set_octet_ptr(const OSSL_PARAM *p, const char *key,
                                      void *val, size_t used_len);
+
+ int OSSL_PARAM_optional_set_TYPE(const OSSL_PARAM *p, const char *key,
+                                  TYPE val);
+ int OSSL_PARAM_optional_set_BN(const OSSL_PARAM *p, const char *key,
+                                const BIGNUM *val);
+ int OSSL_PARAM_optional_set_utf8_string(const OSSL_PARAM *p, const char *key,
+                                         const char *val);
+ int OSSL_PARAM_optional_set_octet_string(const OSSL_PARAM *p, const char *key,
+                                          const void *val, size_t len);
+ int OSSL_PARAM_optional_set_utf8_ptr(const OSSL_PARAM *p, const char *key,
+                                      const char *val);
+ int OSSL_PARAM_optional_set_octet_ptr(const OSSL_PARAM *p, const char *key,
+                                       const void *val, size_t used_len);
 
 =head1 DESCRIPTION
 
@@ -266,46 +282,70 @@ OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
 referenced by B<p> to the values B<val>.
 The length of the OCTET string is provided by B<used_len>.
 
-OSSL_PARAM_locate_get_TYPE() behaves exactly like:
+OSSL_PARAM_locate_get_TYPE() is a shortcut for:
 OSSL_PARAM_get_TYPE(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
 
-OSSL_PARAM_locate_set_TYPE() behaves exactly like:
+OSSL_PARAM_locate_set_TYPE() is a shortcut for:
 OSSL_PARAM_set_TYPE(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
 
-OSSL_PARAM_locate_get_BN() behaves exactly like:
-OSSL_PARAM_locate_get_BN(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
+OSSL_PARAM_locate_get_BN() is a shortcut for:
+OSSL_PARAM_get_BN(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
 
-OSSL_PARAM_locate_set_BN() behaves exactly like:
-OSSL_PARAM_locate_set_BN(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
+OSSL_PARAM_locate_set_BN() is a shortcut for:
+OSSL_PARAM_set_BN(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
 
-OSSL_PARAM_locate_get_utf8_string() behaves exactly like:
-OSSL_PARAM_locate_get_utf8_string(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
+OSSL_PARAM_locate_get_utf8_string() is a shortcut for:
+OSSL_PARAM_get_utf8_string(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
 B<max_len>).
 
-OSSL_PARAM_locate_set_utf8_string() behaves exactly like:
-OSSL_PARAM_locate_set_utf8_string(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
+OSSL_PARAM_locate_set_utf8_string() is a shortcut for:
+OSSL_PARAM_set_utf8_string(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
 
-OSSL_PARAM_locate_get_octet_string() behaves exactly like:
-OSSL_PARAM_locate_get_octet_string(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
+OSSL_PARAM_locate_get_octet_string() is a shortcut for:
+OSSL_PARAM_get_octet_string(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
 B<max_len>, B<used_len>).
 
-OSSL_PARAM_locate_set_octet_string() behaves exactly like:
-OSSL_PARAM_locate_set_octet_string(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
+OSSL_PARAM_locate_set_octet_string() is a shortcut for:
+OSSL_PARAM_set_octet_string(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
 B<len>).
 
-OSSL_PARAM_locate_get_utf8_ptr() behaves exactly like:
-OSSL_PARAM_locate_get_utf8_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
+OSSL_PARAM_locate_get_utf8_ptr() is a shortcut for:
+OSSL_PARAM_get_utf8_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
 
-OSSL_PARAM_locate_set_utf8_ptr() behaves exactly like:
-OSSL_PARAM_locate_set_utf8_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
+OSSL_PARAM_locate_set_utf8_ptr() is a shortcut for:
+OSSL_PARAM_set_utf8_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>).
 
-OSSL_PARAM_locate_get_octet_ptr() behaves exactly like:
-OSSL_PARAM_locate_get_octet_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
+OSSL_PARAM_locate_get_octet_ptr() is a shortcut for:
+OSSL_PARAM_get_octet_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
 B<used_len>).
 
-OSSL_PARAM_locate_set_octet_ptr() behaves exactly like:
-OSSL_PARAM_locate_set_octet_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
+OSSL_PARAM_locate_set_octet_ptr() is a shortcut for:
+OSSL_PARAM_set_octet_ptr(OSSL_PARAM_locate(B<p>, B<key>), B<val>,
 B<used_len>).
+
+OSSL_PARAM_optional_set_TYPE() is the same as OSSL_PARAM_optional_set_TYPE()
+except that it returns success if the parameter B<key> is not present in the
+parameter array B<p>.
+
+OSSL_PARAM_optional_set_BN() is the same as OSSL_PARAM_optional_set_BN()
+except that it returns success if the parameter B<key> is not present in the
+parameter array B<p>.
+
+OSSL_PARAM_optional_set_utf8_string() is the same as
+OSSL_PARAM_locate_set_utf8_string() except that it returns success if the
+parameter B<key> is not present in the parameter array B<p>.
+
+OSSL_PARAM_optional_set_octet_string() is the same as
+OSSL_PARAM_locate_set_octet_string() except that it returns success if the
+parameter B<key> is not present in the parameter array B<p>.
+
+OSSL_PARAM_optional_set_utf8_ptr() is the same as
+OSSL_PARAM_locate_set_utf8_ptr() except that it returns success if the
+parameter B<key> is not present in the parameter array B<p>.
+
+OSSL_PARAM_optional_set_octet_ptr() is the same as
+OSSL_PARAM_locate_set_octet_ptr() except that it returns success if the
+parameter B<key> is not present in the parameter array B<p>.
 
 =head1 RETURN VALUES
 
@@ -370,19 +410,20 @@ could fill in the parameters like this:
 
     const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, "foo")) == NULL)
+    if ((p = OSSL_PARAM_locate(params, "foo")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, "foo value");
-    if ((p = OSSL_PARAM_locate(params, "bar")) == NULL)
+    if ((p = OSSL_PARAM_locate(params, "bar")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, "bar value");
-    if ((p = OSSL_PARAM_locate(params, "cookie")) == NULL)
+    if ((p = OSSL_PARAM_locate(params, "cookie")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, "cookie value");
 
 or, more succinctly, like this:
 
     /* const OSSL_PARAM *params */
 
-    OSSL_PARAM_locate_set_utf8_ptr(params, "foo", "foo value");
-    OSSL_PARAM_locate_set_utf8_string(params, "bar", "bar value");
+    OSSL_PARAM_optional_set_utf8_ptr(params, "foo", "foo value");
+    OSSL_PARAM_optional_set_utf8_string(params, "bar", "bar value");
+    OSSL_PARAM_optional_set_utf8_string(params, "cookie", "cookie value");
 
 =head1 SEE ALSO
 
