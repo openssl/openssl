@@ -326,6 +326,9 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
         X509 *cert;
     } *params = p;
 
+    if (params->uri_string == NULL)
+        return 0;
+
     store_ctx = OSSL_STORE_LOADER_CTX_new();
 
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
@@ -368,6 +371,10 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     CK_SESSION_HANDLE session = 0;
 
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+
+    if (ctx == NULL || path == NULL)
+        goto err;
+
     if (!pkcs11_parse(ctx, path, 0))
         goto err;
 
@@ -405,7 +412,8 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
         return NULL;
 
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-    if (pkcs11_ctx == NULL)
+
+    if (pkcs11_ctx == NULL || uri == NULL)
         return NULL;
 
     if (!pkcs11_parse(pkcs11_ctx, uri, 1))
