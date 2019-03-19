@@ -105,6 +105,7 @@ static void *provider_store_new(void)
         if (prov == NULL
             || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
             ossl_provider_free(prov);
+            provider_store_free(store);
             CRYPTOerr(CRYPTO_F_PROVIDER_STORE_NEW, ERR_R_INTERNAL_ERROR);
             return NULL;
         }
@@ -214,6 +215,7 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
         return NULL;
     }
 
+    /* provider_new() generates an error, so no need here */
     if ((prov = provider_new(name, init_function)) == NULL)
         return NULL;
 
