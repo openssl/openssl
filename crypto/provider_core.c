@@ -189,13 +189,13 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
         ossl_provider_free(prov); /* -1 Store reference */
         ossl_provider_free(prov); /* -1 Reference that was to be returned */
         prov = NULL;
+    } else {
+        prov->store = store;
     }
     CRYPTO_THREAD_unlock(store->lock);
 
     if (prov == NULL)
         CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_NEW, ERR_R_MALLOC_FAILURE);
-    else
-        prov->store = store;
 
     /*
      * At this point, the provider is only partially "loaded".  To be
