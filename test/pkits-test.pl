@@ -12,14 +12,11 @@ my $ossl_path;
 
 if ( -f "../apps/openssl" ) {
     $ossl_path = "../util/shlib_wrap.sh ../apps/openssl";
-}
-elsif ( -f "..\\out32dll\\openssl.exe" ) {
+} elsif ( -f "..\\out32dll\\openssl.exe" ) {
     $ossl_path = "..\\out32dll\\openssl.exe";
-}
-elsif ( -f "..\\out32\\openssl.exe" ) {
+} elsif ( -f "..\\out32\\openssl.exe" ) {
     $ossl_path = "..\\out32\\openssl.exe";
-}
-else {
+} else {
     die "Can't find OpenSSL executable";
 }
 
@@ -743,11 +740,10 @@ $ossl_cmd .= "-CAfile pkitsta.pem -crl_check_all -x509_strict ";
 
 # Check for expiry of trust anchor
 system "$ossl_path x509 -inform DER -in $pkitsta -checkend 0";
-if ($? == 256)
-	{
-	print STDERR "WARNING: using older expired data\n";
-	$ossl_cmd .= "-attime 1291940972 ";
-	}
+if ($? == 256) {
+    print STDERR "WARNING: using older expired data\n";
+    $ossl_cmd .= "-attime 1291940972 ";
+}
 
 $ossl_cmd .= "-policy_check -extended_crl -use_deltas -out /dev/null 2>&1 ";
 
@@ -762,8 +758,7 @@ foreach (@testlists) {
     if ( $argnum == 2 ) {
         my ( $tnum, $title ) = @$_;
         print "$tnum $title\n" if $verbose;
-    }
-    elsif ( $argnum == 3 ) {
+    } elsif ( $argnum == 3 ) {
         my ( $tnum, $title, $exp_ret ) = @$_;
         my $filename = $title;
         $exp_ret += 32 if $exp_ret;
@@ -771,8 +766,7 @@ foreach (@testlists) {
         $filename = "Signed${filename}.eml";
         if ( !-f "$pkitsdir/$filename" ) {
             print "\"$filename\" not found\n";
-        }
-        else {
+        } else {
             my $ret;
             my $test_fail = 0;
             my $errmsg    = "";
@@ -798,8 +792,7 @@ foreach (@testlists) {
             }
             $numtest++;
         }
-    }
-    elsif ( $argnum == 7 ) {
+    } elsif ( $argnum == 7 ) {
         my ( $tnum, $title, $exargs, $exp_epol, $exp_aset, $exp_uset, $exp_ret )
           = @$_;
         my $filename = $title;
@@ -808,8 +801,7 @@ foreach (@testlists) {
         $filename = "Signed${filename}.eml";
         if ( !-f "$pkitsdir/$filename" ) {
             print "\"$filename\" not found\n";
-        }
-        else {
+        } else {
             my $ret;
             my $cmdout    = "";
             my $errmsg    = "";
@@ -836,8 +828,7 @@ foreach (@testlists) {
                 if (/^Authority Policies/) {
                     if (/empty/) {
                         $aset = "<empty>";
-                    }
-                    else {
+                    } else {
                         $pol = 1;
                     }
                 }
@@ -845,8 +836,7 @@ foreach (@testlists) {
                 if (/^User Policies/) {
                     if (/empty/) {
                         $uset = "<empty>";
-                    }
-                    else {
+                    } else {
                         $pol = 2;
                     }
                 }
@@ -854,8 +844,7 @@ foreach (@testlists) {
                     if ( $pol == 1 ) {
                         $aset .= ":" if $aset ne "";
                         $aset .= $1;
-                    }
-                    elsif ( $pol == 2 ) {
+                    } elsif ( $pol == 2 ) {
                         $uset .= ":" if $uset ne "";
                         $uset .= $1;
                     }
@@ -896,8 +885,7 @@ foreach (@testlists) {
 
 if ($numfail) {
     print "$numfail tests failed out of $numtest\n";
-}
-else {
+} else {
     print "All Tests Successful.\n";
 }
 

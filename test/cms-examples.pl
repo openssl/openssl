@@ -18,18 +18,13 @@ my $cmscmd;
 my $exdir  = "./";
 my $exfile = "./rfc4134.txt";
 
-if (-f "../apps/openssl")
-	{
-	$cmscmd = "../util/shlib_wrap.sh ../apps/openssl cms";
-	}
-elsif (-f "..\\out32dll\\openssl.exe")
-	{
-	$cmscmd = "..\\out32dll\\openssl.exe cms";
-	}
-elsif (-f "..\\out32\\openssl.exe")
-	{
-	$cmscmd = "..\\out32\\openssl.exe cms";
-	}
+if (-f "../apps/openssl") {
+    $cmscmd = "../util/shlib_wrap.sh ../apps/openssl cms";
+} elsif (-f "..\\out32dll\\openssl.exe") {
+    $cmscmd = "..\\out32dll\\openssl.exe cms";
+} elsif (-f "..\\out32\\openssl.exe") {
+    $cmscmd = "..\\out32\\openssl.exe cms";
+}
 
 my @test_list = (
     [ "3.1.bin"  => "dataout" ],
@@ -134,8 +129,7 @@ foreach (@cleanup) {
 
 if ($badtest) {
     print "\n$badtest TESTS FAILED!!\n";
-}
-else {
+} else {
     print "\n***All tests successful***\n";
 }
 
@@ -165,12 +159,10 @@ sub run_reencode_test {
     if ($?) {
         print "\tReencode command FAILED!!\n";
         $badtest++;
-    }
-    elsif ( !cmp_files( "$cmsdir/$tfile", "tmp.der" ) ) {
+    } elsif ( !cmp_files( "$cmsdir/$tfile", "tmp.der" ) ) {
         print "\tReencode FAILED!!\n";
         $badtest++;
-    }
-    else {
+    } else {
         print "\tReencode passed\n" if $verbose;
     }
 }
@@ -186,8 +178,7 @@ sub run_certsout_test {
     if ($?) {
         print "\tCertificate output command FAILED!!\n";
         $badtest++;
-    }
-    else {
+    } else {
         print "\tCertificate output passed\n" if $verbose;
     }
 }
@@ -202,12 +193,10 @@ sub run_dataout_test {
     if ($?) {
         print "\tDataout command FAILED!!\n";
         $badtest++;
-    }
-    elsif ( !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) ) {
+    } elsif ( !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) ) {
         print "\tDataout compare FAILED!!\n";
         $badtest++;
-    }
-    else {
+    } else {
         print "\tDataout passed\n" if $verbose;
     }
 }
@@ -233,14 +222,11 @@ sub run_verify_test {
     if ($?) {
         print "\tVerify command FAILED!!\n";
         $badtest++;
-    }
-    elsif ( $tlist =~ /cont/
-        && !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) )
-    {
+    } elsif ( $tlist =~ /cont/
+                  && !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) ) {
         print "\tVerify content compare FAILED!!\n";
         $badtest++;
-    }
-    else {
+    } else {
         print "\tVerify passed\n" if $verbose;
     }
 }
@@ -263,14 +249,11 @@ sub run_envelope_test {
     if ($?) {
         print "\tDecrypt command FAILED!!\n";
         $badtest++;
-    }
-    elsif ( $tlist =~ /cont/
-        && !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) )
-    {
+    } elsif ( $tlist =~ /cont/
+                  && !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) ) {
         print "\tDecrypt content compare FAILED!!\n";
         $badtest++;
-    }
-    else {
+    } else {
         print "\tDecrypt passed\n" if $verbose;
     }
 }
@@ -287,14 +270,11 @@ sub run_digest_test {
     if ($?) {
         print "\tDigest verify command FAILED!!\n";
         $badtest++;
-    }
-    elsif ( $tlist =~ /cont/
-        && !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) )
-    {
+    } elsif ( $tlist =~ /cont/
+                  && !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) ) {
         print "\tDigest verify content compare FAILED!!\n";
         $badtest++;
-    }
-    else {
+    } else {
         print "\tDigest verify passed\n" if $verbose;
     }
 }
@@ -310,14 +290,11 @@ sub run_encrypted_test {
     if ($?) {
         print "\tEncrypted Data command FAILED!!\n";
         $badtest++;
-    }
-    elsif ( $tlist =~ /cont/
-        && !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) )
-    {
+    } elsif ( $tlist =~ /cont/
+                  && !cmp_files( "$cmsdir/ExContent.bin", "tmp.txt" ) ) {
         print "\tEncrypted Data content compare FAILED!!\n";
         $badtest++;
-    }
-    else {
+    } else {
         print "\tEncryptedData verify passed\n" if $verbose;
     }
 }
@@ -353,7 +330,6 @@ sub cmp_files {
             $ret = 1;
             last;
         }
-
     }
 
     close $fp1;

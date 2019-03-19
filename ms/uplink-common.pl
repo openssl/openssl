@@ -16,8 +16,8 @@ close(INPUT);
 ($#max==0) or die "can't find APPLINK_MAX in $applink_c";
 
 $max[0]=~/APPLINK_MAX\s+(\d+)/;
-$N=$1;	# number of entries in OPENSSL_UplinkTable not including
-	# OPENSSL_UplinkTable[0], which contains this value...
+$N=$1;  # number of entries in OPENSSL_UplinkTable not including
+        # OPENSSL_UplinkTable[0], which contains this value...
 
 1;
 

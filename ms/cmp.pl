@@ -15,8 +15,7 @@ binmode IN1;
 
 $tot=0;
 $ret=1;
-for (;;)
-{
+for (;;) {
     $n1=sysread(IN0,$b1,4096);
     $n2=sysread(IN1,$b2,4096);
 
@@ -33,15 +32,12 @@ for (;;)
 
 close(IN0);
 close(IN1);
-if ($ret)
-{
+if ($ret) {
     printf STDERR "$ARGV[0] and $ARGV[1] are different\n";
     @a1=unpack("C*",$b1);
     @a2=unpack("C*",$b2);
-    for ($i=0; $i<=$#a1; $i++)
-    {
-        if ($a1[$i] ne $a2[$i])
-        {
+    for ($i=0; $i<=$#a1; $i++) {
+        if ($a1[$i] ne $a2[$i]) {
             printf "%02X %02X <<\n",$a1[$i],$a2[$i];
             last;
         }

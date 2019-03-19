@@ -43,41 +43,41 @@ my %tests = ();
 my $initial_arg = 1;
 foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
     if ($arg eq 'list') {
-	foreach (@alltests) {
-	    (my $x = basename($_)) =~ s|^[0-9][0-9]-(.*)\.t$|$1|;
-	    print $x,"\n";
-	}
-	exit 0;
+        foreach (@alltests) {
+            (my $x = basename($_)) =~ s|^[0-9][0-9]-(.*)\.t$|$1|;
+            print $x,"\n";
+        }
+        exit 0;
     }
     if ($arg eq 'alltests') {
-	warn "'alltests' encountered, ignoring everything before that...\n"
-	    unless $initial_arg;
-	%tests = map { $_ => 1 } @alltests;
+        warn "'alltests' encountered, ignoring everything before that...\n"
+            unless $initial_arg;
+        %tests = map { $_ => 1 } @alltests;
     } elsif ($arg =~ m/^(-?)(.*)/) {
-	my $sign = $1;
-	my $test = $2;
-	my @matches = find_matching_tests($test);
+        my $sign = $1;
+        my $test = $2;
+        my @matches = find_matching_tests($test);
 
-	# If '-foo' is the first arg, it's short for 'alltests -foo'
-	if ($sign eq '-' && $initial_arg) {
-	    %tests = map { $_ => 1 } @alltests;
-	}
+        # If '-foo' is the first arg, it's short for 'alltests -foo'
+        if ($sign eq '-' && $initial_arg) {
+            %tests = map { $_ => 1 } @alltests;
+        }
 
-	if (scalar @matches == 0) {
-	    warn "Test $test found no match, skipping ",
-		($sign eq '-' ? "removal" : "addition"),
-		"...\n";
-	} else {
-	    foreach $test (@matches) {
-		if ($sign eq '-') {
-		    delete $tests{$test};
-		} else {
-		    $tests{$test} = 1;
-		}
-	    }
-	}
+        if (scalar @matches == 0) {
+            warn "Test $test found no match, skipping ",
+                ($sign eq '-' ? "removal" : "addition"),
+                "...\n";
+        } else {
+            foreach $test (@matches) {
+                if ($sign eq '-') {
+                    delete $tests{$test};
+                } else {
+                    $tests{$test} = 1;
+                }
+            }
+        }
     } else {
-	warn "I don't know what '$arg' is about, ignoring...\n";
+        warn "I don't know what '$arg' is about, ignoring...\n";
     }
 
     $initial_arg = 0;
@@ -124,18 +124,18 @@ sub runtests {
 
     my @switches = ();
     if ($self->{switches}) {
-	push @switches, $self->{switches};
+        push @switches, $self->{switches};
     }
     if ($self->{lib}) {
-	foreach (@{$self->{lib}}) {
-	    my $l = $_;
+        foreach (@{$self->{lib}}) {
+            my $l = $_;
 
-	    # It seems that $switches is getting interpreted with 'eval' or
-	    # something like that, and that we need to take care of backslashes
-	    # or they will disappear along the way.
-	    $l =~ s|\\|\\\\|g if $^O eq "MSWin32";
-	    push @switches, "-I$l";
-	}
+            # It seems that $switches is getting interpreted with 'eval' or
+            # something like that, and that we need to take care of backslashes
+            # or they will disappear along the way.
+            $l =~ s|\\|\\\\|g if $^O eq "MSWin32";
+            push @switches, "-I$l";
+        }
     }
 
     $Test::Harness::switches = join(' ', @switches);

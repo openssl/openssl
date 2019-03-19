@@ -14,8 +14,7 @@ use Math::BigInt;
 my $EXPECTED_FAILURES = 0;
 my $failures = 0;
 
-sub bn
-{
+sub bn {
     my $x = shift;
     my ($sign, $hex) = ($x =~ /^([+\-]?)(.*)$/);
 
@@ -23,8 +22,7 @@ sub bn
     return Math::BigInt->from_hex($sign.$hex);
 }
 
-sub evaluate
-{
+sub evaluate {
     my $lineno = shift;
     my %s = @_;
 
