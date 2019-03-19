@@ -63,6 +63,7 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
+[B<-sigopt nm:v>]
 [B<-rand file...>]
 [B<-writerand file>]
 [B<-engine id>]
@@ -363,6 +364,11 @@ B<-force_pubkey>). It sets the validity start date to the current time
 and the end date to a value determined by the B<-days> option.
 It retains any certificate extensions unless the B<-clrext> option is supplied;
 this includes, for example, any existing key identifier extensions.
+
+=item B<-sigopt nm:v>
+
+Pass options to the signature algorithm during sign or verify operations.
+Names and values of these options are algorithm-specific.
 
 =item B<-passin arg>
 
@@ -948,7 +954,7 @@ the old form must have their links rebuilt using B<c_rehash> or similar.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
