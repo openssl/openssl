@@ -328,12 +328,11 @@ void ossl_trace_cleanup(void)
 int OSSL_trace_set_channel(int category, BIO *channel)
 {
 #ifndef OPENSSL_NO_TRACE
-    if (category < 0 || category >= OSSL_TRACE_CATEGORY_NUM
-        || !set_trace_data(category, SIMPLE_CHANNEL, &channel, NULL, NULL,
-                           trace_attach_cb, trace_detach_cb))
-        return 0;
+    if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
+        return set_trace_data(category, SIMPLE_CHANNEL, &channel, NULL, NULL,
+                              trace_attach_cb, trace_detach_cb))
 #endif
-    return 1;
+    return 0;
 }
 
 #ifndef OPENSSL_NO_TRACE
@@ -367,7 +366,7 @@ int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
     struct trace_data_st *trace_data = NULL;
 
     if (category < 0 || category >= OSSL_TRACE_CATEGORY_NUM)
-        goto err;
+        return 0;
 
     if (callback != NULL) {
         if ((channel = BIO_new(&trace_method)) == NULL
@@ -386,41 +385,34 @@ int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
                         trace_attach_w_callback_cb, trace_detach_cb))
         goto err;
 
-    goto done;
+    return 1;
 
  err:
     BIO_free(channel);
     OPENSSL_free(trace_data);
-    return 0;
- done:
 #endif
-    return 1;
+
+    return 0;
 }
 
 int OSSL_trace_set_prefix(int category, const char *prefix)
 {
-    int rv = 1;
-
 #ifndef OPENSSL_NO_TRACE
-    if (category >= 0 || category < OSSL_TRACE_CATEGORY_NUM)
+    if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, 0, NULL, &prefix, NULL,
                               trace_attach_cb, trace_detach_cb);
-    rv = 0;
 #endif
-    return rv;
+    return 0;
 }
 
 int OSSL_trace_set_suffix(int category, const char *suffix)
 {
-    int rv = 1;
-
 #ifndef OPENSSL_NO_TRACE
-    if (category >= 0 || category < OSSL_TRACE_CATEGORY_NUM)
+    if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, 0, NULL, NULL, &suffix,
                               trace_attach_cb, trace_detach_cb);
-    rv = 0;
 #endif
-    return rv;
+    return 0;
 }
 
 #ifndef OPENSSL_NO_TRACE

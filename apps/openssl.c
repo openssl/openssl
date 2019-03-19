@@ -118,6 +118,8 @@ static char *make_config_name(void)
     return p;
 }
 
+
+#ifndef OPENSSL_NO_TRACE
 typedef struct tracedata_st {
     BIO *bio;
     unsigned int ingroup:1;
@@ -224,6 +226,7 @@ static void setup_trace(const char *str)
     OPENSSL_free(val);
     atexit(cleanup_trace);
 }
+#endif /* OPENSSL_NO_TRACE */
 
 int main(int argc, char *argv[])
 {
@@ -260,7 +263,9 @@ int main(int argc, char *argv[])
      */
     atexit(destroy_prefix_method);
 
+#ifndef OPENSSL_NO_TRACE
     setup_trace(getenv("OPENSSL_TRACE"));
+#endif
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
