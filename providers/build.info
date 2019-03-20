@@ -1,1 +1,12 @@
 SUBDIRS=common default
+
+IF[{- !$disabled{fips} -}]
+  SUBDIRS=fips
+  MODULES=fips
+  IF[{- defined $target{shared_defflag} -}]
+    SOURCE[fips]=fips.ld
+    GENERATE[fips.ld]=../util/providers.num
+  ENDIF
+  INCLUDE[fips]=.. ../include ../crypto/include
+  DEFINE[fips]=FIPS_MODE
+ENDIF

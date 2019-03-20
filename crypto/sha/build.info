@@ -3,6 +3,8 @@ SOURCE[../../libcrypto]=\
         sha1dgst.c sha1_one.c sha256.c sha512.c {- $target{sha1_asm_src} -} \
         {- $target{keccak1600_asm_src} -}
 
+SOURCE[../../providers/fips]= sha256.c
+
 GENERATE[sha1-586.s]=asm/sha1-586.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
 DEPEND[sha1-586.s]=../perlasm/x86asm.pl
