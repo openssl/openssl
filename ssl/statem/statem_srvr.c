@@ -24,6 +24,7 @@
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 #include <openssl/trace.h>
+#include <openssl/ocsp.h>
 
 #define TICKET_NONCE_SIZE       8
 
@@ -4166,22 +4167,92 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
  * In TLSv1.3 this is called from the extensions code, otherwise it is used to
  * create a separate message. Returns 1 on success or 0 on failure.
  */
-int tls_construct_cert_status_body(SSL *s, WPACKET *pkt)
+int tls_construct_cert_status_body(SSL *s, size_t chainidx, WPACKET *pkt)
 {
-    if (!WPACKET_put_bytes_u8(pkt, s->ext.status_type)
-            || !WPACKET_sub_memcpy_u24(pkt, s->ext.ocsp.resp,
-                                       s->ext.ocsp.resp_len)) {
+    unsigned char *respder = NULL;
+    int resplen = 0;
+    int i = 0;
+
+    if (!WPACKET_put_bytes_u8(pkt, s->ext.status_type)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY,
                  ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
+    /* In TLSv1.3 the caller gives the index of the certificate for which the
+     * status message should be created.
+     * Prior to TLSv1.3 the chain index is 0 and the body should only the status
+     * of the server certificate itself.
+     */
+    OCSP_RESPONSE *resp = NULL;
+    OCSP_BASICRESP *bs = NULL;
+    X509 *x = SSL_get_certificate(s);
+
+    STACK_OF(X509) *server_certs = NULL;
+    SSL_get0_chain_certs(s, &server_certs);
+    X509 *issuer = X509_find_by_subject(server_certs, X509_get_issuer_name(x));
+        
+    if (server_certs != NULL) {
+        // if the certificate chain was built, get the status message for the 
+        // requested certificate specified by chainidx
+        // SSL_get0_chain_certs contains certificate chain except the server cert
+        // if chainidx = 0 the server certificate is request
+        // if chainidx > 0 an intermediate certificate is request
+        if(chainidx < sk_X509_num(server_certs)+1 && chainidx > 0) {
+            x = sk_X509_value(server_certs, chainidx-1);
+            issuer = X509_find_by_subject(server_certs, X509_get_issuer_name(x));
+        }
+
+        // search the stack for the requested OCSP response
+        OCSP_CERTID *cert_id = OCSP_cert_to_id(NULL, x, issuer);
+        int found;
+ 
+        // find the correct OCSP response for the requested certificate
+        for (i=0; i<sk_OCSP_RESPONSE_num(s->ext.ocsp.resp); i++) {
+            if ((resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp, i)) == NULL)
+                continue;
+ 
+            if ((bs = OCSP_response_get1_basic(resp)) == NULL)
+                continue;
+ 
+            found = OCSP_resp_find(bs, cert_id, -1);
+ 
+            if (bs != NULL) OCSP_BASICRESP_free(bs);
+ 
+            if (found > -1)
+                break;
+        }
+        if(found < 0) resp = NULL;
+
+    } else if (chainidx == 0) {
+        // if certificate chain was not built and only the response for the server
+        // certificate (chainidx=0) was requested, check if the stack contains an
+        // OCSP response and get the first one
+        // TODO: check if the first response on the stack is indeed the one for the 
+        //       server certificate
+        if (sk_OCSP_RESPONSE_num(s->ext.ocsp.resp) > 0) {
+            resp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp, 0);
+        }
+    }
+
+    respder = NULL;
+    if (resp != NULL) {
+        resplen = i2d_OCSP_RESPONSE(resp, &respder);
+    }
+ 
+    if (!WPACKET_sub_memcpy_u24(pkt, respder, resplen)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (respder != NULL) OPENSSL_free(respder);
+    
     return 1;
 }
 
 int tls_construct_cert_status(SSL *s, WPACKET *pkt)
 {
-    if (!tls_construct_cert_status_body(s, pkt)) {
+    if (!tls_construct_cert_status_body(s, 0, pkt)) {
         /* SSLfatal() already called */
         return 0;
     }

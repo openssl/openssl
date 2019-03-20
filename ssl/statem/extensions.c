@@ -1082,7 +1082,6 @@ static int init_status_request(SSL *s, unsigned int context)
          */
         OPENSSL_free(s->ext.ocsp.resp);
         s->ext.ocsp.resp = NULL;
-        s->ext.ocsp.resp_len = 0;
     }
 
     return 1;

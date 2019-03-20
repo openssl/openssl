@@ -95,6 +95,10 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         if (!verify_args.quiet)
             policies_print(ctx);
         break;
+    case X509_V_ERR_OCSP_NO_RESPONSE:
+        if (!verify_args.quiet)
+            BIO_printf(bio_err, "no OCSP response for certificate found.\n");
+        break;
     }
     if (err == X509_V_OK && ok == 2 && !verify_args.quiet)
         policies_print(ctx);

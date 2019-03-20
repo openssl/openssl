@@ -202,6 +202,8 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     STACK_OF(X509) *untrusted;
     /* set of CRLs passed in */
     STACK_OF(X509_CRL) *crls;
+    int ocsp_status_flags;
+    STACK_OF(OCSP_RESPONSE) *ocsp_resp;
     X509_VERIFY_PARAM *param;
     /* Other info for use with get_issuer() */
     void *other_ctx;

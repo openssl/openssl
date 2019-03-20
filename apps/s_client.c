@@ -3427,25 +3427,27 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 # ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
-    const unsigned char *p;
-    int len;
+    int len, i;
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
-    len = SSL_get_tlsext_status_ocsp_resp(s, &p);
+    SSL_get_tlsext_status_ocsp_resp(s, &sk_resp);
     BIO_puts(arg, "OCSP response: ");
-    if (p == NULL) {
+    if (sk_resp == NULL) {
         BIO_puts(arg, "no response sent\n");
         return 1;
     }
-    rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
-    if (rsp == NULL) {
-        BIO_puts(arg, "response parse error\n");
-        BIO_dump_indent(arg, (char *)p, len, 4);
-        return 0;
+    len = sk_OCSP_RESPONSE_num(sk_resp);
+    BIO_printf(arg, "number of responses: %d", len);
+    for (i=0; i<len; i++) {
+        rsp = sk_OCSP_RESPONSE_value(sk_resp, i);
+        if (rsp == NULL) {
+            BIO_puts(arg, "response parse error\n");
+            return 0;
+        }
+        BIO_puts(arg, "\n======================================\n");
+        OCSP_RESPONSE_print(arg, rsp, 0);
+        BIO_puts(arg, "======================================\n");
     }
-    BIO_puts(arg, "\n======================================\n");
-    OCSP_RESPONSE_print(arg, rsp, 0);
-    BIO_puts(arg, "======================================\n");
-    OCSP_RESPONSE_free(rsp);
     return 1;
 }
 # endif

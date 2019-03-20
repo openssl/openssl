@@ -24,6 +24,7 @@
 #include <openssl/engine.h>
 #include <openssl/trace.h>
 #include <internal/cryptlib.h>
+#include <openssl/ocsp.h>
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s, PACKET *pkt);
 static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt);
@@ -1901,6 +1902,13 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
         x = NULL;
     }
 
+    /*
+     * Prior to TLS 1.3 the OCSP responses are sent in the CERT_STATUS message
+     * after the SERVER_CERTIFICATE message. Therefore the verification of the
+     * OCSP response here works only for TLS 1.3.
+     * Prior to TLS 1.3 the verification needs to be done in the client
+     * callback function.
+     */
     i = ssl_verify_cert_chain(s, sk);
     /*
      * The documented interface is that SSL_VERIFY_PEER should be set in order
@@ -2756,10 +2764,11 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
  * In TLSv1.3 this is called from the extensions code, otherwise it is used to
  * parse a separate message. Returns 1 on success or 0 on failure
  */
-int tls_process_cert_status_body(SSL *s, PACKET *pkt)
+int tls_process_cert_status_body(SSL *s, size_t chainidx, PACKET *pkt)
 {
-    size_t resplen;
-    unsigned int type;
+    unsigned int type, resplen;
+    unsigned char* respder;
+    OCSP_RESPONSE *resp = NULL;
 
     if (!PACKET_get_1(pkt, &type)
         || type != TLSEXT_STATUSTYPE_ocsp) {
@@ -2767,24 +2776,40 @@ int tls_process_cert_status_body(SSL *s, PACKET *pkt)
                  SSL_R_UNSUPPORTED_STATUS_TYPE);
         return 0;
     }
-    if (!PACKET_get_net_3_len(pkt, &resplen)
-        || PACKET_remaining(pkt) != resplen) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CERT_STATUS_BODY,
-                 SSL_R_LENGTH_MISMATCH);
-        return 0;
+
+    if(s->ext.ocsp.resp == NULL) {
+        s->ext.ocsp.resp = sk_OCSP_RESPONSE_new_null();
     }
-    s->ext.ocsp.resp = OPENSSL_malloc(resplen);
-    if (s->ext.ocsp.resp == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_STATUS_BODY,
-                 ERR_R_MALLOC_FAILURE);
-        return 0;
+
+    if (!SSL_IS_TLS13(s) && type == TLSEXT_STATUSTYPE_ocsp) {
+        while( (resp = sk_OCSP_RESPONSE_pop(s->ext.ocsp.resp)) != NULL ) {
+            OPENSSL_free(resp);
+        }
     }
-    if (!PACKET_copy_bytes(pkt, s->ext.ocsp.resp, resplen)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CERT_STATUS_BODY,
-                 SSL_R_LENGTH_MISMATCH);
-        return 0;
+
+    if (SSL_IS_TLS13(s) || type == TLSEXT_STATUSTYPE_ocsp) {
+        if(PACKET_remaining(pkt) > 0) {
+            if (!PACKET_get_net_3_len(pkt, (size_t *)&resplen)
+                    || PACKET_remaining(pkt) != resplen) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CERT_STATUS_BODY,
+                        SSL_R_LENGTH_MISMATCH);
+                return 0;
+            }
+
+            if (resplen > 0) {
+                respder = OPENSSL_malloc(resplen);
+                if (!PACKET_copy_bytes(pkt, respder, resplen)) {
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CERT_STATUS_BODY,
+                            SSL_R_LENGTH_MISMATCH);
+                    return 0;
+                }
+                const unsigned char *p = respder;
+                resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
+                sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp, resp, chainidx);
+                OPENSSL_free(respder);
+            }
+        }
     }
-    s->ext.ocsp.resp_len = resplen;
 
     return 1;
 }
@@ -2792,7 +2817,7 @@ int tls_process_cert_status_body(SSL *s, PACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
 {
-    if (!tls_process_cert_status_body(s, pkt)) {
+    if (!tls_process_cert_status_body(s, 0, pkt)) {
         /* SSLfatal() already called */
         return MSG_PROCESS_ERROR;
     }

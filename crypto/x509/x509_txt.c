@@ -178,7 +178,17 @@ const char *X509_verify_cert_error_string(long n)
         return "Subject signature algorithm and issuer public key algorithm mismatch";
     case X509_V_ERR_NO_ISSUER_PUBLIC_KEY:
         return "Issuer certificate doesn't have a public key";
-
+    case X509_V_ERR_OCSP_INVALID:
+        return "OCSP response invalid";
+    case X509_V_ERR_OCSP_SIGNATURE_FAILURE:
+        return "OCSP signature failure";
+    case X509_V_ERR_OCSP_NOT_YET_VALID:
+        return "OCSP response not yet valid";
+    case X509_V_ERR_OCSP_HAS_EXPIRED:
+        return "OCSP response has expired";
+    case X509_V_ERR_OCSP_NO_RESPONSE:
+        return "no OCSP response found";
+    
     default:
         /* Printing an error number into a static buffer is not thread-safe */
         return "unknown certificate verification error";

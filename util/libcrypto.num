@@ -4793,3 +4793,5 @@ X509_get0_sm2_id                        4740	3_0_0	EXIST::FUNCTION:SM2
 EVP_PKEY_get0_engine                    4741	3_0_0	EXIST::FUNCTION:ENGINE
 EVP_MD_upref                            4742	3_0_0	EXIST::FUNCTION:
 EVP_MD_fetch                            4743	3_0_0	EXIST::FUNCTION:
+X509_STORE_CTX_set_ocsp_resp            4744    3_0_0   EXIST::FUNCTION:
+X509_STORE_CTX_set0_ocsp_flags          4745    3_0_0   EXIST::FUNCTION:
