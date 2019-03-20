@@ -449,6 +449,36 @@ or, more succinctly, like this:
     OSSL_PARAM_optional_set_utf8_string(params, "bar", "bar value");
     OSSL_PARAM_optional_set_utf8_string(params, "cookie", "cookie value");
 
+=head2 Example 3
+
+This example is of sending RSA public key parameters to a function.
+To send a public key:
+
+    OSSL_PARAM params[3];
+    size_t n = 0;
+    unsigned char n_buf[512];
+
+    BN_bn2nativepad(rsa_n, n_buf, sizeof(n_buf));
+
+    params[n++] = OSSL_PARAM_construct_BN("n", n_buf, sizeof(n_buf), NULL);
+    params[n++] = OSSL_PARAM_construct_uint32("e", rsa_e, NULL);
+    params[n] = OSSL_PARAM_END;
+
+To unpack RSA parameters:
+
+    static int rsa_set_params(void *vrsa, const OSSL_PARAM *params)
+    {
+        PROV_RSA *rsa = vrsa;
+
+        return OSSL_PARAM_locate_get_BN(params, "n", rsa->n)
+            && OSSL_PARAM_optional_get_BN(params, "e", rsa->e)
+            && OSSL_PARAM_optional_get_BN(params, "d", rsa->d);
+    }
+
+The sending side is responsible for only using the parameters that were
+transferred because there is no missing detection in the
+OSSL_PARAM_optional_get_BN() function.
+
 =head1 SEE ALSO
 
 L<openssl-core.h(7)>, L<OSSL_PARAM(3)>
