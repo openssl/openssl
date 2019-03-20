@@ -369,6 +369,7 @@ my @disablables = (
     "err",
     "external-tests",
     "filenames",
+    "fips",
     "fuzz-libfuzzer",
     "fuzz-afl",
     "gost",
@@ -511,6 +512,8 @@ my @disable_cascades = (
     # Without position independent code, there can be no shared libraries
     # or modules.
     "pic"               => [ "shared", "module" ],
+
+    "dynamic-engine"    => [ "fips" ],
 
     "engine"            => [ grep /eng$/, @disablables ],
     "hw"                => [ "padlockeng" ],
