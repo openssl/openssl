@@ -269,6 +269,7 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
     ok = 1;
 err:
     EC_POINT_free(pub_key);
+    BN_free(upper);
     BN_free(priv_key);
     BN_CTX_free(ctx);
     return ok;
