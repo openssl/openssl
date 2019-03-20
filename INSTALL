@@ -394,6 +394,9 @@
                    Don't compile in filename and line number information (e.g.
                    for errors and memory allocation).
 
+  no-fips
+                   Don't compile the FIPS module
+
   enable-fuzz-libfuzzer, enable-fuzz-afl
                    Build with support for fuzzing using either libfuzzer or AFL.
                    These are developer options only. They may not work on all
