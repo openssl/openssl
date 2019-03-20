@@ -38,8 +38,8 @@ typedef struct ossl_method_construct_method_st {
     int (*put)(OPENSSL_CTX *libctx, void *store, const char *propdef,
                void *method, void *data);
     /* Construct a new method */
-    void *(*construct)(const OSSL_DISPATCH *fns, OSSL_PROVIDER *prov,
-                       void *data);
+    void *(*construct)(const char *algorithm_name, const OSSL_DISPATCH *fns,
+                       OSSL_PROVIDER *prov, void *data);
     /* Destruct a method */
     void (*destruct)(void *method, void *data);
 } OSSL_METHOD_CONSTRUCT_METHOD;

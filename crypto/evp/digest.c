@@ -585,10 +585,17 @@ static void evp_md_free(void *md)
     EVP_MD_meth_free(md);
 }
 
+static int evp_md_nid(void *vmd)
+{
+    EVP_MD *md = vmd;
+
+    return md->type;
+}
+
 EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
                              evp_md_from_dispatch, evp_md_upref,
-                             evp_md_free);
+                             evp_md_free, evp_md_nid);
 }

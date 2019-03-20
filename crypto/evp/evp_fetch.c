@@ -62,6 +62,7 @@ struct method_data_st {
                                   OSSL_PROVIDER *);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
+    int (*nid_method)(void *method);
 };
 
 /*
@@ -106,29 +107,35 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
 }
 
 static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
-                               const char *propdef, void *method,
-                               void *data)
+                               const char *propdef,
+                               void *method, void *data)
 {
     struct method_data_st *methdata = data;
+    int nid = methdata->nid_method(method);
+
+    if (nid == NID_undef)
+        return 0;
 
     if (store == NULL
         && (store = get_default_method_store(libctx)) == NULL)
         return 0;
 
     if (methdata->refcnt_up_method(method)
-        && ossl_method_store_add(store, methdata->nid, propdef, method,
+        && ossl_method_store_add(store, nid, propdef, method,
                                  methdata->destruct_method))
         return 1;
     return 0;
 }
 
-static void *construct_method(const OSSL_DISPATCH *fns, OSSL_PROVIDER *prov,
+static void *construct_method(const char *algorithm_name,
+                              const OSSL_DISPATCH *fns, OSSL_PROVIDER *prov,
                               void *data)
 {
     struct method_data_st *methdata = data;
     void *method = NULL;
+    int nid = OBJ_sn2nid(algorithm_name);
 
-    if (methdata->nid == NID_undef) {
+    if (nid == NID_undef) {
         /* Create a new NID for that name on the fly */
         ASN1_OBJECT tmpobj;
 
@@ -139,13 +146,13 @@ static void *construct_method(const OSSL_DISPATCH *fns, OSSL_PROVIDER *prov,
         tmpobj.length = 0;
         tmpobj.data = NULL;
 
-        methdata->nid = OBJ_add_object(&tmpobj);
+        nid = OBJ_add_object(&tmpobj);
     }
 
-    if (methdata->nid == NID_undef)
+    if (nid == NID_undef)
         return NULL;
 
-    method = methdata->method_from_dispatch(methdata->nid, fns, prov);
+    method = methdata->method_from_dispatch(nid, fns, prov);
     if (method == NULL)
         return NULL;
     return method;
@@ -163,7 +170,8 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         void *(*new_method)(int nid, const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
                         int (*upref_method)(void *),
-                        void (*free_method)(void *))
+                        void (*free_method)(void *),
+                        int (*nid_method)(void *))
 {
     int nid = OBJ_sn2nid(algorithm);
     void *method = NULL;
@@ -186,6 +194,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.destruct_method = free_method;
         mcmdata.refcnt_up_method = upref_method;
         mcmdata.destruct_method = free_method;
+        mcmdata.nid_method = nid_method;
         method = ossl_method_construct(libctx, operation_id, algorithm,
                                        properties, 0 /* !force_cache */,
                                        &mcm, &mcmdata);
