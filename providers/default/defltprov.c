@@ -76,9 +76,8 @@ static const OSSL_DISPATCH deflt_dispatch_table[] = {
     { 0, NULL }
 };
 
-int ossl_default_provider_init(const OSSL_PROVIDER *provider,
-                               const OSSL_DISPATCH *in,
-                               const OSSL_DISPATCH **out);
+OSSL_provider_init_fn ossl_default_provider_init;
+
 int ossl_default_provider_init(const OSSL_PROVIDER *provider,
                                const OSSL_DISPATCH *in,
                                const OSSL_DISPATCH **out)
