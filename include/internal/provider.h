@@ -66,6 +66,9 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache);
 
+/* Configuration */
+void ossl_provider_add_conf_module(void);
+
 # ifdef __cplusplus
 }
 # endif

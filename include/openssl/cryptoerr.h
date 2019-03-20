@@ -52,6 +52,8 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_PKEY_POLY1305_INIT                      124
 # define CRYPTO_F_PKEY_SIPHASH_INIT                       125
 # define CRYPTO_F_PROVIDER_ACTIVATE                       134
+# define CRYPTO_F_PROVIDER_CONF_INIT                      137
+# define CRYPTO_F_PROVIDER_CONF_LOAD                      138
 # define CRYPTO_F_PROVIDER_NEW                            135
 # define CRYPTO_F_PROVIDER_STORE_NEW                      136
 # define CRYPTO_F_SK_RESERVE                              129
@@ -63,5 +65,6 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
 # define CRYPTO_R_ODD_NUMBER_OF_DIGITS                    103
 # define CRYPTO_R_PROVIDER_ALREADY_EXISTS                 104
+# define CRYPTO_R_PROVIDER_SECTION_ERROR                  105
 
 #endif

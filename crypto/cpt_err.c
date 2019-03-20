@@ -63,6 +63,10 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
      "pkey_siphash_init"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_ACTIVATE, 0),
      "provider_activate"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_CONF_INIT, 0),
+     "provider_conf_init"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_CONF_LOAD, 0),
+     "provider_conf_load"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_NEW, 0), "provider_new"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_STORE_NEW, 0),
      "provider_store_new"},
@@ -79,6 +83,8 @@ static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
     "odd number of digits"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_PROVIDER_ALREADY_EXISTS),
     "provider already exists"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_PROVIDER_SECTION_ERROR),
+    "provider section error"},
     {0, NULL}
 };
 
