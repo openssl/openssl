@@ -141,25 +141,25 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     err = constant_time_select_int(mask | good, err, RSA_R_DATA_TOO_LARGE);
 
     /*
-     * Even though we can't fake result's length, we can pretend copying
-     * |tlen| bytes where |mlen| bytes would be real. Last |tlen| of |num|
-     * bytes are viewed as circular buffer with start at |tlen|-|mlen'|,
-     * where |mlen'| is "saturated" |mlen| value. Deducing information
-     * about failure or |mlen| would take attacker's ability to observe
-     * memory access pattern with byte granularity *as it occurs*. It
-     * should be noted that failure is indistinguishable from normal
-     * operation if |tlen| is fixed by protocol.
+     * Move the result in-place by |num|-11-|mlen| bytes to the left.
+     * Then if |good| move |mlen| bytes from |em|+11 to |to|.
+     * Otherwise leave |to| unchanged.
+     * Copy the memory back in a way that does not reveal the size of
+     * the data being copied via a timing side channel. This requires copying
+     * parts of the buffer multiple times based on the bits set in the real
+     * length. Clear bits do a non-copy with identical access pattern.
+     * The loop below has overall complexity of O(N*log(N)).
      */
     tlen = constant_time_select_int(constant_time_lt(num - 11, tlen),
                                     num - 11, tlen);
-    msg_index = constant_time_select_int(good, msg_index, num - tlen);
-    mlen = num - msg_index;
-    for (mask = good, i = 0; i < tlen; i++) {
-        unsigned int equals = constant_time_eq(msg_index, num);
-
-        msg_index -= tlen & equals;  /* rewind at EOF */
-        mask &= ~equals;  /* mask = 0 at EOF */
-        to[i] = constant_time_select_8(mask, em[msg_index++], to[i]);
+    for (msg_index = 1; msg_index < num - 11; msg_index <<= 1) {
+        mask = ~constant_time_eq(msg_index & (num - 11 - mlen), 0);
+        for (i = 11; i < num - msg_index; i++)
+            em[i] = constant_time_select_8(mask, em[i + msg_index], em[i]);
+    }
+    for (i = 0; i < tlen; i++) {
+        mask = good & constant_time_lt(i, mlen);
+        to[i] = constant_time_select_8(mask, em[i + 11], to[i]);
     }
 
     OPENSSL_clear_free(em, num);
