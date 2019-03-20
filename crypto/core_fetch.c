@@ -35,8 +35,9 @@ static int ossl_method_construct_this(OSSL_PROVIDER *provider, void *cbdata)
         const OSSL_ALGORITHM *thismap = map++;
         void *method = NULL;
 
-        if ((method = data->mcm->construct(thismap->implementation, provider,
-                                            data->mcm_data)) == NULL)
+        if ((method = data->mcm->construct(thismap->algorithm_name,
+                                           thismap->implementation, provider,
+                                           data->mcm_data)) == NULL)
             continue;
 
         /*
