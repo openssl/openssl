@@ -431,7 +431,8 @@ int OSSL_trace_enabled(int category)
     int ret = 0;
 #ifndef OPENSSL_NO_TRACE
     category = ossl_trace_get_category(category);
-    ret = trace_channels[category].bio != NULL;
+    if (category >= 0)
+        ret = trace_channels[category].bio != NULL;
 #endif
     return ret;
 }
@@ -443,6 +444,9 @@ BIO *OSSL_trace_begin(int category)
     char *prefix = NULL;
 
     category = ossl_trace_get_category(category);
+    if (category < 0)
+        return NULL;
+
     channel = trace_channels[category].bio;
     prefix = trace_channels[category].prefix;
 
