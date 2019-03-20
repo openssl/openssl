@@ -481,7 +481,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         goto err;
     }
     RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
-    err_clear_last_constant_time(r >= 0);
+    err_clear_last_constant_time(1 & ~constant_time_msb(r));
 
  err:
     if (ctx != NULL)
