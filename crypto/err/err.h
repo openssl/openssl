@@ -143,6 +143,7 @@ extern "C" {
 # define ERR_TXT_STRING          0x02
 
 # define ERR_FLAG_MARK           0x01
+# define ERR_FLAG_CLEAR          0x02
 
 # define ERR_NUM_ERRORS  16
 typedef struct err_state_st {
