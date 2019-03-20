@@ -399,6 +399,8 @@ CRYPTO_F_PKEY_HMAC_INIT:123:pkey_hmac_init
 CRYPTO_F_PKEY_POLY1305_INIT:124:pkey_poly1305_init
 CRYPTO_F_PKEY_SIPHASH_INIT:125:pkey_siphash_init
 CRYPTO_F_PROVIDER_ACTIVATE:134:provider_activate
+CRYPTO_F_PROVIDER_CONF_INIT:137:provider_conf_init
+CRYPTO_F_PROVIDER_CONF_LOAD:138:provider_conf_load
 CRYPTO_F_PROVIDER_NEW:135:provider_new
 CRYPTO_F_PROVIDER_STORE_NEW:136:provider_store_new
 CRYPTO_F_SK_RESERVE:129:sk_reserve
@@ -2161,6 +2163,7 @@ CRYPTO_R_FIPS_MODE_NOT_SUPPORTED:101:fips mode not supported
 CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_ODD_NUMBER_OF_DIGITS:103:odd number of digits
 CRYPTO_R_PROVIDER_ALREADY_EXISTS:104:provider already exists
+CRYPTO_R_PROVIDER_SECTION_ERROR:105:provider section error
 CT_R_BASE64_DECODE_ERROR:108:base64 decode error
 CT_R_INVALID_LOG_ID_LENGTH:100:invalid log id length
 CT_R_LOG_CONF_INVALID:109:log conf invalid
