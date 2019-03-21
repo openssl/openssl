@@ -241,7 +241,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * the data being copied via a timing side channel. This requires copying
      * parts of the buffer multiple times based on the bits set in the real
      * length. Clear bits do a non-copy with identical access pattern.
-     * The loop below has an overall complexity of O(N*log(N)).
+     * The loop below has overall complexity of O(N*log(N)).
      */
     tlen = constant_time_select_int(constant_time_lt(dblen - mdlen - 1, tlen),
                                     dblen - mdlen - 1, tlen);
