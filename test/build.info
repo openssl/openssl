@@ -186,6 +186,9 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include ../apps/include ../crypto/include
   DEPEND[evp_extra_test]=../libcrypto libtestutil.a
+  IF[{- $disabled{fips} || !$target{dso_scheme} -}]
+    DEFINE[evp_extra_test]=NO_FIPS_MODULE
+  ENDIF
 
   SOURCE[igetest]=igetest.c
   INCLUDE[igetest]=../include ../apps/include
