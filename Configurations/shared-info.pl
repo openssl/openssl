@@ -32,6 +32,7 @@ my %shared_info;
         return {
             %{$shared_info{'gnu-shared'}},
             shared_defflag    => '-Wl,--version-script=',
+            dso_ldflags       => '-z defs',
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },
