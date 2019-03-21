@@ -238,6 +238,9 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * Then if |good| move |mlen| bytes from |db|+|mdlen|+1 to |to|.
      * Otherwise leave |to| unchanged.
      * Do that all in constant time.
+     * The loop below combines conditional moves by 2^X bytes. Each move
+     * is enabled or disabled dependent on the bit set in the required
+     * displacement. It has a complexity of O(N*log(N)).
      */
     tlen = constant_time_select_int(constant_time_lt(dblen - mdlen - 1, tlen),
                                     dblen - mdlen - 1, tlen);
