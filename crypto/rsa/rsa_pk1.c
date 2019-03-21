@@ -230,10 +230,10 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      * Then if |good| move |mlen| bytes from |em|+11 to |to|.
      * Otherwise leave |to| unchanged.
      * Copy the memory back in a way that does not reveal the size of
-     * the data being copied via a timing side channel. The requires copying
+     * the data being copied via a timing side channel. This requires copying
      * parts of the buffer multiple times based on the bits set in the real
      * length. Clear bits do a non-copy with identical access pattern.
-     * The loop below has a overall complexity of O(N*log(N)).
+     * The loop below has an overall complexity of O(N*log(N)).
      */
     tlen = constant_time_select_int(constant_time_lt(num - 11, tlen),
                                     num - 11, tlen);
