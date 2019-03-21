@@ -10,7 +10,7 @@
 #include "e_pkcs11.h"
 #include "e_pkcs11_err.c"
 
-static int pkcs11_parse_uri(const char *path, char *token, char **value);
+static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri);
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store);
 static char pkcs11_hex_int(char nib1, char nib2);
 static int pkcs11_ishex(char *hex);
@@ -157,9 +157,10 @@ static int pkcs11_ishex(char *hex)
 
     len = strlen(hex);
     for (i = 0; i < len; i++) {
-        if ((*(hex+i) >= '0' && *(hex+i) <= '9') || (*(hex+i) >= 'a'
-            && *(hex+i) <= 'f') || (*(hex+i) >= 'A'
-            && *(hex+i) <= 'F')) h++;
+        if ((*(hex+i) >= '0' && *(hex+i) <= '9')
+            || (*(hex+i) >= 'a' && *(hex+i) <= 'f')
+            || (*(hex+i) >= 'A' && *(hex+i) <= 'F'))
+            h++;
         else
             return 0;
     }
@@ -168,34 +169,57 @@ static int pkcs11_ishex(char *hex)
     return 0;
 }
 
-static int pkcs11_parse_uri(const char *path, char *token, char **value)
+static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
 {
-    char *tmp, *end, *hex2a;
-    size_t tmplen;
-    if ((tmp = strstr(path, token)) == NULL)
-        return 0;
-    tmp += strlen(token);
-    tmplen = strlen(tmp);
-    *value = OPENSSL_malloc(tmplen + 1);
+    char *p, *q, *tmpstr;
+    int len = 0;
 
-    if (*value == NULL) {
-        PKCS11err(PKCS11_F_PKCS11_PARSE_URI, ERR_R_MALLOC_FAILURE);
-        goto err;
+    p = q = (char *) uri;
+    len = strlen(uri);
+
+    while (q - uri <= len) {
+        if (*q != ';' && *q != '\0') {
+            q++;
+            continue;
+        }
+        if (p != q) {
+            /* found */
+            *q = '\0';
+            if (strncmp(p, "pin-value=", 10) == 0 && ctx->pin == NULL) {
+                p += 10;
+                tmpstr = OPENSSL_strdup(p);
+                ctx->pin = (CK_BYTE *) tmpstr;
+            }
+            if (strncmp(p, "object=", 7) == 0 && ctx->label == NULL) {
+                p += 7;
+                tmpstr = OPENSSL_strdup(p);
+                ctx->label = (CK_BYTE *) pkcs11_hex2a(tmpstr);
+            }
+            if (strncmp(p, "id=", 3) == 0 && ctx->id == NULL) {
+                p += 3;
+                tmpstr = OPENSSL_strdup(p);
+                ctx->id = (CK_BYTE *) pkcs11_hex2a(tmpstr);
+            }
+            if (strncmp(p, "type=", 5) == 0 && ctx->type == NULL) {
+                p += 5;
+                tmpstr = OPENSSL_strdup(p);
+                ctx->type = tmpstr;
+            }
+            if (strncmp(p, "module-path=", 12) == 0
+                && ctx->module_path == NULL) {
+                p += 12;
+                tmpstr = OPENSSL_strdup(p);
+                ctx->module_path = tmpstr;
+            }
+            if (strncmp(p, "slot-id=", 8) == 0 && ctx->slotid == 0) {
+                p += 8;
+                tmpstr = OPENSSL_strdup(p);
+                ctx->slotid = (CK_SLOT_ID) atoi(tmpstr);
+            }
+        }
+        p = ++q;
     }
-
-    end = strpbrk(tmp, ";");
-    BIO_snprintf(*value, end == NULL ? tmplen + 1 :
-                 (size_t) (end - tmp + 1), "%s", tmp);
-
-    hex2a = pkcs11_hex2a(*value);
-    free(*value);
-    *value = hex2a;
     return 1;
-
- err:
-    free(*value);
-    *value = NULL;
-    return 0;
 }
 
 static int pkcs11_get_console_pin(char **pin)
@@ -214,7 +238,7 @@ static int pkcs11_get_console_pin(char **pin)
         char prompt[200];
         BIO_snprintf(prompt, sizeof(prompt), "Enter PIN: ");
         strbuf[0] = '\0';
-        i = EVP_read_pw_string((char *)strbuf, buflen, prompt, 1);
+        i = EVP_read_pw_string((char *)strbuf, buflen, prompt, 0);
         if (i == 0) {
             if (strbuf[0] == '\0') {
                 goto err;
@@ -237,69 +261,37 @@ static int pkcs11_get_console_pin(char **pin)
 
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
 {
-    char *id = NULL, *module_path = NULL, *type = NULL;
-    char *pin = NULL, *label = NULL, *slotid = NULL;
+    char *pin = NULL;
+    char *id = NULL;
 
-    ctx->slotid = 0;
-    if (strncmp(path, "'", 1) == 0 || strncmp(path, "\"", 1) == 0)
-        path++;
+    if (path == NULL) {
+        PKCS11_trace("URI is empty\n");
+        return 0;
+    }
 
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
-        pkcs11_parse_uri(path,"module-path=", &module_path);
-
-        if (module_path != NULL)
-            ctx->module_path = module_path;
-
-        if (ctx->module_path == NULL)
-            goto err;
-
-         pkcs11_parse_uri(path,"id=", &id);
-         pkcs11_parse_uri(path,"object=", &label);
-
-         if (id == NULL && label == NULL && !store) {
+        pkcs11_parse_items(ctx, path);
+        if (ctx->id == NULL && ctx->label == NULL && !store) {
             PKCS11_trace("ID and OBJECT are null\n");
             goto err;
          }
-
-        if (!pkcs11_parse_uri(path,"slot-id=", &slotid))
-            slotid = NULL;
-
-        pkcs11_parse_uri(path,"pin-value=", &pin);
-        if (pin != NULL)
-            ctx->pin = (CK_BYTE *) pin;
-        pkcs11_parse_uri(path,"type=", &type);
-        if (type != NULL)
-            ctx->type = (CK_BYTE *) type;
-    } else if (path == NULL) {
-        PKCS11_trace("inkey is null\n");
-        goto err;
     } else {
-        if (ctx->module_path == NULL) {
-            PKCS11_trace("Module path is null\n");
-            goto err;
-        }
         id = OPENSSL_strdup(path);
-
         if (id == NULL) {
             PKCS11err(PKCS11_F_PKCS11_PARSE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        if (pkcs11_ishex(id))
-            id = pkcs11_hex2a(id);
-
-        slotid = NULL;
+        id = pkcs11_hex2a(id);
     }
 
-    if (label != NULL)
-        ctx->label = (CK_BYTE *) label;
-    else
-        ctx->id = (CK_BYTE *) id;
+    if (ctx->module_path == NULL) {
+            PKCS11_trace("Module path is null\n");
+            goto err;
+    }
 
-    if (slotid != NULL)
-        ctx->slotid = (CK_SLOT_ID) atoi(slotid);
-
-    if (ctx->pin == NULL && !store) {
+    if (ctx->pin == NULL && (!store || (store
+        && ctx->type != NULL && strncmp(ctx->type, "private", 7) == 0))) {
         if (!pkcs11_get_console_pin(&pin))
             goto err;
         ctx->pin = (CK_BYTE *) pin;
@@ -326,12 +318,9 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
         X509 *cert;
     } *params = p;
 
-    if (params->uri_string == NULL)
-        return 0;
-
     store_ctx = OSSL_STORE_LOADER_CTX_new();
-
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+
     if (pkcs11_ctx == NULL)
         return 0;
 
@@ -372,7 +361,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
 
-    if (ctx == NULL || path == NULL)
+    if (ctx == NULL)
         goto err;
 
     if (!pkcs11_parse(ctx, path, 0))
@@ -413,7 +402,7 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
 
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
 
-    if (pkcs11_ctx == NULL || uri == NULL)
+    if (pkcs11_ctx == NULL)
         return NULL;
 
     if (!pkcs11_parse(pkcs11_ctx, uri, 1))

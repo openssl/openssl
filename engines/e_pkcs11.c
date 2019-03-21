@@ -529,6 +529,7 @@ int pkcs11_search_next_ids(OSSL_STORE_LOADER_CTX *ctx, char **name,
     if (rv != CKR_OK || ulObj == 0) {
         *name = NULL;
         *description = NULL;
+        /* return eof */
         return 1;
     }
 
@@ -546,9 +547,10 @@ int pkcs11_search_next_ids(OSSL_STORE_LOADER_CTX *ctx, char **name,
                                            template,
                                            OSSL_NELEM(template));
     if (rv != CKR_OK) {
-        PKCS11_trace("C_GetAttributeValue: \
-                      rv = 0x%.8lX\n", rv);
-        goto end;
+        *name = NULL;
+        *description = NULL;
+        /* return no eof, search next id */
+        return 0;
     }
 
     template[1].pValue = OPENSSL_malloc(template[1].ulValueLen);
@@ -771,11 +773,11 @@ int pkcs11_search_start(OSSL_STORE_LOADER_CTX *store_ctx,
     session = store_ctx->session;
 
     if (pkcs11_ctx->type != NULL) {
-        if (strncmp((char *) pkcs11_ctx->type, "public", 6) == 0)
+        if (strncmp(pkcs11_ctx->type, "public", 6) == 0)
            key_class = CKO_PUBLIC_KEY;
-        else if (strncmp((char *) pkcs11_ctx->type, "cert", 4) == 0)
+        else if (strncmp(pkcs11_ctx->type, "cert", 4) == 0)
            key_class = CKO_CERTIFICATE;
-        else if (strncmp((char *) pkcs11_ctx->type, "private", 7) == 0)
+        else if (strncmp(pkcs11_ctx->type, "private", 7) == 0)
            key_class = CKO_PRIVATE_KEY;
         else
            pkcs11_ctx->type = NULL;
@@ -785,14 +787,15 @@ int pkcs11_search_start(OSSL_STORE_LOADER_CTX *store_ctx,
         tmpl[0].type = CKA_CLASS;
         tmpl[0].pValue = &key_class;
         tmpl[0].ulValueLen = sizeof(key_class);
-        idx++;
     }
 
     if (pkcs11_ctx->id != NULL) {
+        idx++;
         tmpl[idx].type = CKA_ID;
         tmpl[idx].pValue = pkcs11_ctx->id;
         tmpl[idx].ulValueLen = (CK_ULONG)strlen((char *)pkcs11_ctx->id);
     } else if (pkcs11_ctx->label != NULL) {
+        idx++;
         tmpl[idx].type = CKA_LABEL;
         tmpl[idx].pValue = pkcs11_ctx->label;
         tmpl[idx].ulValueLen = (CK_ULONG)strlen((char *)pkcs11_ctx->label);
@@ -807,8 +810,7 @@ int pkcs11_search_start(OSSL_STORE_LOADER_CTX *store_ctx,
         && pkcs11_ctx->label == NULL)
         rv = pkcs11_funcs->C_FindObjectsInit(session, NULL_PTR, 0);
     else
-        rv = pkcs11_funcs->C_FindObjectsInit(session, tmpl,
-                                             idx + 1);
+        rv = pkcs11_funcs->C_FindObjectsInit(session, tmpl, idx + 1);
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjectsInit: Error = 0x%.8lX\n", rv);

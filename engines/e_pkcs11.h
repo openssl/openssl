@@ -66,7 +66,7 @@ typedef struct PKCS11_CTX_st {
     CK_BYTE *id;
     CK_BYTE *label;
     CK_BYTE *pin;
-    CK_BYTE *type;
+    char *type;
     CK_SLOT_ID slotid;
     CK_SESSION_HANDLE session;
     CK_OBJECT_HANDLE key;
