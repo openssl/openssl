@@ -178,7 +178,7 @@ Traces BIGNUM context operations.
 
 =back
 
-There is also C<OSSL_TRACE_CATEGORY_ANY>, which works as a fallback
+There is also C<OSSL_TRACE_CATEGORY_ALL>, which works as a fallback
 and can be used to get I<all> trace output.
 
 Note, however, that in this case all trace output will effectively be
