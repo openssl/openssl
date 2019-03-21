@@ -1098,12 +1098,14 @@ static int calculate_digest(const EVP_MD *md, const char *msg, size_t len,
  * Test 0: Test with the default OPENSSL_CTX
  * Test 1: Test with an explicit OPENSSL_CTX
  * Test 2: Explicit OPENSSL_CTX with explicit load of default provider
+ * Test 3: Explicit OPENSSL_CTX with explicit load of default and fips provider
+ * Test 4: Explicit OPENSSL_CTX with explicit load of fips provider
  */
 static int test_EVP_MD_fetch(int tst)
 {
     OPENSSL_CTX *ctx = NULL;
     EVP_MD *md = NULL;
-    OSSL_PROVIDER *prov = NULL;
+    OSSL_PROVIDER *defltprov = NULL, *fipsprov = NULL;
     int ret = 0;
     const char testmsg[] = "Hello world";
     const unsigned char exptd[] = {
@@ -1117,9 +1119,14 @@ static int test_EVP_MD_fetch(int tst)
         if (!TEST_ptr(ctx))
             goto err;
 
-        if (tst == 2) {
-            prov = OSSL_PROVIDER_load(ctx, "default");
-            if (!TEST_ptr(prov))
+        if (tst == 2 || tst == 3) {
+            defltprov = OSSL_PROVIDER_load(ctx, "default");
+            if (!TEST_ptr(defltprov))
+                goto err;
+        }
+        if (tst == 3 || tst == 4) {
+            fipsprov = OSSL_PROVIDER_load(ctx, "fips");
+            if (!TEST_ptr(fipsprov))
                 goto err;
         }
     }
@@ -1132,8 +1139,8 @@ static int test_EVP_MD_fetch(int tst)
         goto err;
 
     /*
-     * Test that without loading any providers or specifying any properties we
-     * can get a sha256 md from the default provider.
+     * Test that without specifying any properties we can get a sha256 md from a
+     * provider.
      */
     if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL))
             || !TEST_ptr(md)
@@ -1152,28 +1159,64 @@ static int test_EVP_MD_fetch(int tst)
     md = NULL;
 
     /*
-     * We've only loaded the default provider so explicitly asking for a
-     * non-default implementation should fail.
+     * In tests 0 - 2 we've only loaded the default provider so explicitly
+     * asking for a non-default implementation should fail. In tests 3 and 4 we
+     * have the FIPS provider loaded so we should succeed in that case.
      */
-    if (!TEST_ptr_null(md = EVP_MD_fetch(ctx, "SHA256", "default=no")))
-        goto err;
+    md = EVP_MD_fetch(ctx, "SHA256", "default=no");
+    if (tst == 3 || tst == 4) {
+        if (!TEST_ptr(md)
+                || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg),
+                                               exptd)))
+            goto err;
+    } else  {
+        if (!TEST_ptr_null(md))
+            goto err;
+    }
 
-    /* Explicitly asking for the default implementation should succeeed */
-    if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", "default=yes"))
-            || !TEST_int_eq(EVP_MD_nid(md), NID_sha256)
-            || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg), exptd))
-            || !TEST_int_eq(EVP_MD_size(md), SHA256_DIGEST_LENGTH)
-            || !TEST_int_eq(EVP_MD_block_size(md), SHA256_CBLOCK))
-        goto err;
+    /*
+     * Explicitly asking for the default implementation should succeeed except
+     * in test 4 where the default provider is not loaded.
+     */
+    md = EVP_MD_fetch(ctx, "SHA256", "default=yes");
+    if (tst != 4) {
+        if (!TEST_ptr(md)
+                || !TEST_int_eq(EVP_MD_nid(md), NID_sha256)
+                || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg),
+                                               exptd))
+                || !TEST_int_eq(EVP_MD_size(md), SHA256_DIGEST_LENGTH)
+                || !TEST_int_eq(EVP_MD_block_size(md), SHA256_CBLOCK))
+            goto err;
+    } else {
+        if (!TEST_ptr_null(md))
+            goto err;
+    }
 
     EVP_MD_meth_free(md);
     md = NULL;
+
+    /*
+     * Explicitly asking for a fips implementation should succeed if we have
+     * the FIPS provider loaded and fail otherwise
+     */
+    md = EVP_MD_fetch(ctx, "SHA256", "fips=yes");
+    if (tst == 3 || tst == 4) {
+        if (!TEST_ptr(md)
+                || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg),
+                                               exptd)))
+            goto err;
+    } else  {
+        if (!TEST_ptr_null(md))
+            goto err;
+    }
+
 
     ret = 1;
 
  err:
     EVP_MD_meth_free(md);
-    OSSL_PROVIDER_unload(prov);
+    OSSL_PROVIDER_unload(defltprov);
+    OSSL_PROVIDER_unload(fipsprov);
     OPENSSL_CTX_free(ctx);
     return ret;
 }
@@ -1207,6 +1250,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_invalide_ec_char2_pub_range_decode,
                   OSSL_NELEM(ec_der_pub_keys));
 #endif
+#ifdef OPENSSL_NO_FIPS
     ADD_ALL_TESTS(test_EVP_MD_fetch, 3);
+#else
+    ADD_ALL_TESTS(test_EVP_MD_fetch, 5);
+#endif
     return 1;
 }
