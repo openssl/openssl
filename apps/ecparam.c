@@ -30,7 +30,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
     OPT_CHECK, OPT_LIST_CURVES, OPT_NO_SEED, OPT_NOOUT, OPT_NAME,
-    OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_ENGINE,
+    OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_ENGINE, OPT_CHECK_NAMED,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -43,6 +43,8 @@ const OPTIONS ecparam_options[] = {
     {"text", OPT_TEXT, '-', "Print the ec parameters in text form"},
     {"C", OPT_C, '-', "Print a 'C' function creating the parameters"},
     {"check", OPT_CHECK, '-', "Validate the ec parameters"},
+    {"check_named", OPT_CHECK_NAMED, '-',
+     "Check that named EC curve parameters have not been modified"},
     {"list_curves", OPT_LIST_CURVES, '-',
      "Prints a list of all curve 'short names'"},
     {"no_seed", OPT_NO_SEED, '-',
@@ -90,7 +92,7 @@ int ecparam_main(int argc, char **argv)
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, private = 0;
     int list_curves = 0, no_seed = 0, check = 0, new_form = 0;
-    int text = 0, i, genkey = 0;
+    int text = 0, i, genkey = 0, check_named = 0;
 
     prog = opt_init(argc, argv, ecparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -126,6 +128,9 @@ int ecparam_main(int argc, char **argv)
             break;
         case OPT_CHECK:
             check = 1;
+            break;
+        case OPT_CHECK_NAMED:
+            check_named = 1;
             break;
         case OPT_LIST_CURVES:
             list_curves = 1;
@@ -264,6 +269,16 @@ int ecparam_main(int argc, char **argv)
     if (text) {
         if (!ECPKParameters_print(out, group, 0))
             goto end;
+    }
+
+    if (check_named) {
+        BIO_printf(bio_err, "validating named elliptic curve parameters: ");
+        if (EC_GROUP_check_named_curve(group, 0) <= 0) {
+            BIO_printf(bio_err, "failed\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        BIO_printf(bio_err, "ok\n");
     }
 
     if (check) {

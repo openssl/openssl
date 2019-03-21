@@ -156,7 +156,7 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_UNKNOWN_ORDER);
         return 0;
     }
-    if (BN_is_zero(group->cofactor)) {
+    if (BN_is_zero(group->cofactor) || BN_is_zero(group->cofactor)) {
         ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_UNKNOWN_COFACTOR);
         return 0;
     }
