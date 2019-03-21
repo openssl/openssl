@@ -144,10 +144,11 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
      * Move the result in-place by |num|-11-|mlen| bytes to the left.
      * Then if |good| move |mlen| bytes from |em|+11 to |to|.
      * Otherwise leave |to| unchanged.
-     * Do that all in constant time.
-     * The loop below combines conditional moves by 2^X bytes. Each move
-     * is enabled or disabled dependent on the bit set in the required
-     * displacement. It has a complexity of O(N*log(N)).
+     * Copy the memory back in a way that does not reveal the size of
+     * the data being copied via a timing side channel. The requires copying
+     * parts of the buffer multiple times based on the bits set in the real
+     * length. Clear bits do a non-copy with identical access pattern.
+     * The loop below has a overall complexity of O(N*log(N)).
      */
     tlen = constant_time_select_int(constant_time_lt(num - 11, tlen),
                                     num - 11, tlen);
