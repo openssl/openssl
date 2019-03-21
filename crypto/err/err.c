@@ -942,6 +942,10 @@ void err_clear_last_constant_time(int clear)
 
     top = es->top;
 
+    /*
+     * Flag error as cleared but remove it elsewhere to avoid two errors
+     * accessing the same error stack location, revealing timing information.
+     */
     clear = constant_time_select_int(constant_time_eq_int(clear, 0),
                                      0, ERR_FLAG_CLEAR);
     es->err_flags[top] |= clear;
