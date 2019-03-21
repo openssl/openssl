@@ -119,7 +119,7 @@ struct trace_category_st {
 #define TRACE_CATEGORY_(name)       { #name, OSSL_TRACE_CATEGORY_##name }
 
 static const struct trace_category_st trace_categories[] = {
-    TRACE_CATEGORY_(ANY),
+    TRACE_CATEGORY_(ALL),
     TRACE_CATEGORY_(TRACE),
     TRACE_CATEGORY_(INIT),
     TRACE_CATEGORY_(TLS),
@@ -422,7 +422,7 @@ static int ossl_trace_get_category(int category)
         return -1;
     if (trace_channels[category].bio != NULL)
         return category;
-    return OSSL_TRACE_CATEGORY_ANY;
+    return OSSL_TRACE_CATEGORY_ALL;
 }
 #endif
 

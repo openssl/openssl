@@ -40,7 +40,7 @@ The tracing output is divided into types which are enabled
 individually by the application.
 The tracing types are described in detail in
 L<OSSL_trace_set_callback(3)/Trace types>.
-The fallback type C<OSSL_TRACE_CATEGORY_ANY> should I<not> be used
+The fallback type C<OSSL_TRACE_CATEGORY_ALL> should I<not> be used
 with the functions described here.
 
 Tracing for a specific category is enabled if a so called
