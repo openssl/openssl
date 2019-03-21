@@ -330,7 +330,7 @@ int OSSL_trace_set_channel(int category, BIO *channel)
 #ifndef OPENSSL_NO_TRACE
     if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, SIMPLE_CHANNEL, &channel, NULL, NULL,
-                              trace_attach_cb, trace_detach_cb))
+                              trace_attach_cb, trace_detach_cb);
 #endif
     return 0;
 }
