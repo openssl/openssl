@@ -284,15 +284,17 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     if (order != NULL) {
         if (!BN_copy(group->order, order))
             return 0;
-    } else
+    } else {
         BN_zero(group->order);
+    }
 
+    /* The cofactor is an optional field, so it should be able to be NULL. */
     if (cofactor != NULL) {
         if (!BN_copy(group->cofactor, cofactor))
             return 0;
-    } else
+    } else {
         BN_zero(group->cofactor);
-
+    }
     /*
      * Some groups have an order with
      * factors of two, which makes the Montgomery setup fail.
@@ -530,30 +532,42 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
         !b->meth->group_get_curve(b, b1, b2, b3, ctx))
         r = 1;
 
-    if (r || BN_cmp(a1, b1) || BN_cmp(a2, b2) || BN_cmp(a3, b3))
+    /* return 1 if the curve parameters are different */
+    if (r || BN_cmp(a1, b1) != 0 || BN_cmp(a2, b2) != 0 || BN_cmp(a3, b3) != 0)
         r = 1;
 
-    /* XXX EC_POINT_cmp() assumes that the methods are equal */
+    /* return 1 if the generators are different */
     if (r || EC_POINT_cmp(a, EC_GROUP_get0_generator(a),
-                          EC_GROUP_get0_generator(b), ctx))
+                          EC_GROUP_get0_generator(b), ctx) != 0)
         r = 1;
 
     if (!r) {
         const BIGNUM *ao, *bo, *ac, *bc;
-        /* compare the order and cofactor */
+        /* compare the order's */
         ao = EC_GROUP_get0_order(a);
         bo = EC_GROUP_get0_order(b);
+        if (ao == NULL || bo == NULL) {
+            /* return an error if either order is NULL */
+            r = -1;
+            goto end;
+        }
+        if (BN_cmp(ao, bo) != 0) {
+            /* return 1 if orders are different */
+            r = 1;
+            goto end;
+        }
+        /*
+         * It gets here if the curve parameters and generator matched.
+         * Now check the optional cofactors (if both are present).
+         */
         ac = EC_GROUP_get0_cofactor(a);
         bc = EC_GROUP_get0_cofactor(b);
-        if (ao == NULL || bo == NULL) {
-            BN_CTX_end(ctx);
-            BN_CTX_free(ctx_new);
-            return -1;
-        }
-        if (BN_cmp(ao, bo) || BN_cmp(ac, bc))
+        /* Returns 1 (mismatch) if both cofactors are specified and different */
+        if (!BN_is_zero(ac) && !BN_is_zero(bc) && BN_cmp(ac, bc) != 0)
             r = 1;
+        /* Returns 0 if the parameters matched */
     }
-
+end:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx_new);
 
@@ -622,8 +636,8 @@ int EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
     }
     if (dest->meth != src->meth
             || (dest->curve_name != src->curve_name
-                && dest->curve_name != 0
-                && src->curve_name != 0)) {
+                 && dest->curve_name != 0
+                 && src->curve_name != 0)) {
         ECerr(EC_F_EC_POINT_COPY, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
