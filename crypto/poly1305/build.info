@@ -18,4 +18,5 @@ INCLUDE[poly1305-armv8.o]=..
 GENERATE[poly1305-mips.S]=asm/poly1305-mips.pl $(PERLASM_SCHEME)
 INCLUDE[poly1305-mips.o]=..
 GENERATE[poly1305-c64xplus.S]=asm/poly1305-c64xplus.pl $(PERLASM_SCHEME)
+INCLUDE[poly1305-s390x.o]=..
 GENERATE[poly1305-s390x.S]=asm/poly1305-s390x.pl $(PERLASM_SCHEME)
