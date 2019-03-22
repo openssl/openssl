@@ -59,7 +59,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         }
     }
 
-    k = BN_new();               /* this value is later returned in *kinvp */
+    k = BN_secure_new();        /* this value is later returned in *kinvp */
     r = BN_new();               /* this value is later returned in *rp */
     X = BN_new();
     if (k == NULL || r == NULL || X == NULL) {
