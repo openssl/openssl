@@ -108,4 +108,4 @@ int pkcs11_search_start(OSSL_STORE_LOADER_CTX *store_ctx,
 void pkcs11_finalize(void);
 void pkcs11_end_session(CK_SESSION_HANDLE session);
 int pkcs11_logout(CK_SESSION_HANDLE session);
-int rsa_pkcs11_idx;
+extern int rsa_pkcs11_idx;
