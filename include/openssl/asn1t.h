@@ -165,10 +165,6 @@ extern "C" {
             {NULL, ASN1_AFLG_CONST_CB, 0, 0, cb, 0, const_cb}; \
         ASN1_SEQUENCE(tname)
 
-# define ASN1_BROKEN_SEQUENCE(tname) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, NULL, 0, NULL}; \
-        ASN1_SEQUENCE(tname)
-
 # define ASN1_SEQUENCE_ref(tname, cb) \
         static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), offsetof(tname, lock), cb, 0, NULL}; \
         ASN1_SEQUENCE(tname)
@@ -200,9 +196,6 @@ extern "C" {
                 #tname \
         ASN1_ITEM_end(tname)
 
-# define ASN1_BROKEN_SEQUENCE_END(stname) ASN1_SEQUENCE_END_ref(stname, stname)
-# define static_ASN1_BROKEN_SEQUENCE_END(stname) \
-        static_ASN1_SEQUENCE_END_ref(stname, stname)
 
 # define ASN1_SEQUENCE_END_enc(stname, tname) ASN1_SEQUENCE_END_ref(stname, tname)
 

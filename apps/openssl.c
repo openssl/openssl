@@ -126,30 +126,19 @@ typedef struct tracedata_st {
 static size_t internal_trace_cb(const char *buf, size_t cnt,
                                 int category, int cmd, void *vdata)
 {
-    int ret;
+    int ret = 0;
     tracedata *trace_data = vdata;
-    int set_prefix = 0;
+    union {
+        CRYPTO_THREAD_ID tid;
+        unsigned long ltid;
+    } tid;
+    char buffer[256];
 
     switch (cmd) {
     case OSSL_TRACE_CTRL_BEGIN:
+        if (!ossl_assert(!trace_data->ingroup))
+            return 0;
         trace_data->ingroup = 1;
-        set_prefix = 1;
-        break;
-    case OSSL_TRACE_CTRL_DURING:
-        if (!trace_data->ingroup)
-            set_prefix = 1;
-        break;
-    case OSSL_TRACE_CTRL_END:
-        trace_data->ingroup = 0;
-        break;
-    }
-
-    if (set_prefix) {
-        union {
-            CRYPTO_THREAD_ID tid;
-            unsigned long ltid;
-        } tid;
-        char buffer[256];
 
         tid.ltid = 0;
         tid.tid = CRYPTO_THREAD_get_current_id();
@@ -158,8 +147,22 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
                      OSSL_trace_get_category_name(category));
         BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX,
                  strlen(buffer), buffer);
+        break;
+    case OSSL_TRACE_CTRL_WRITE:
+        if (!ossl_assert(trace_data->ingroup))
+            return 0;
+
+        ret = BIO_write(trace_data->bio, buf, cnt);
+        break;
+    case OSSL_TRACE_CTRL_END:
+        if (!ossl_assert(trace_data->ingroup))
+            return 0;
+        trace_data->ingroup = 0;
+
+        BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX, 0, NULL);
+
+        break;
     }
-    ret = BIO_write(trace_data->bio, buf, cnt);
 
     return ret < 0 ? 0 : ret;
 }

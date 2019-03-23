@@ -258,6 +258,7 @@ $data=<<EOF;
 # .text section
 
 	.machine	"any"
+	.text
 
 #
 #	NOTE:	The following label name should be changed to

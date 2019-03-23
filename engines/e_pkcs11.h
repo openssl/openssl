@@ -69,7 +69,6 @@ typedef struct PKCS11_CTX_st {
     char *type;
     CK_SLOT_ID slotid;
     CK_SESSION_HANDLE session;
-    CK_OBJECT_HANDLE key;
     char *module_path;
     CRYPTO_RWLOCK *lock;
 } PKCS11_CTX;
@@ -88,14 +87,16 @@ CK_RV pkcs11_initialize(const char *library_path);
 int pkcs11_start_session(PKCS11_CTX *ctx, CK_SESSION_HANDLE *session);
 int pkcs11_login(CK_SESSION_HANDLE session, PKCS11_CTX *ctx,
                  CK_USER_TYPE userType);
-EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx);
+EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx,
+                           CK_OBJECT_HANDLE key);
 int pkcs11_rsa_sign(int alg, const unsigned char *md,
                     unsigned int md_len, unsigned char *sigret,
                     unsigned int *siglen, const RSA *rsa);
 int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
                         unsigned char *to, RSA *rsa, int padding);
 int pkcs11_get_slot(PKCS11_CTX *ctx);
-int pkcs11_find_private_key(CK_SESSION_HANDLE session, PKCS11_CTX *ctx);
+CK_OBJECT_HANDLE pkcs11_find_private_key(CK_SESSION_HANDLE session,
+                                         PKCS11_CTX *ctx);
 void PKCS11_trace(char *format, ...);
 PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa);
 int pkcs11_search_next_ids(OSSL_STORE_LOADER_CTX *ctx, char **name,
@@ -107,3 +108,4 @@ int pkcs11_search_start(OSSL_STORE_LOADER_CTX *store_ctx,
 void pkcs11_finalize(void);
 void pkcs11_end_session(CK_SESSION_HANDLE session);
 int pkcs11_logout(CK_SESSION_HANDLE session);
+int rsa_pkcs11_idx;

@@ -25,8 +25,9 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data);
 static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
-                                   void *p, void (*f) ());
+                                   void *p, void (*f)(void));
 void engine_load_pkcs11_int(void);
+static int pkcs11_rsa_free(RSA *rsa);
 static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
 static const char *engine_name = "A minimal PKCS#11 engine only for sign";
@@ -51,6 +52,8 @@ static OSSL_STORE_INFO* pkcs11_store_load_cert(OSSL_STORE_LOADER_CTX *ctx,
 static OSSL_STORE_INFO* pkcs11_store_load_key(OSSL_STORE_LOADER_CTX *ctx,
                                               const UI_METHOD *ui_method,
                                               void *ui_data);
+
+int rsa_pkcs11_idx = -1;
 
 static int pkcs11_init(ENGINE *e)
 {
@@ -176,7 +179,6 @@ static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
 
     p = q = (char *) uri;
     len = strlen(uri);
-
     while (q - uri <= len) {
         if (*q != ';' && *q != '\0') {
             q++;
@@ -188,38 +190,49 @@ static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
             if (strncmp(p, "pin-value=", 10) == 0 && ctx->pin == NULL) {
                 p += 10;
                 tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
                 ctx->pin = (CK_BYTE *) tmpstr;
-            }
-            if (strncmp(p, "object=", 7) == 0 && ctx->label == NULL) {
+            } else if (strncmp(p, "object=", 7) == 0 && ctx->label == NULL) {
                 p += 7;
                 tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
                 ctx->label = (CK_BYTE *) pkcs11_hex2a(tmpstr);
-            }
-            if (strncmp(p, "id=", 3) == 0 && ctx->id == NULL) {
+            } else if (strncmp(p, "id=", 3) == 0 && ctx->id == NULL) {
                 p += 3;
                 tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
                 ctx->id = (CK_BYTE *) pkcs11_hex2a(tmpstr);
-            }
-            if (strncmp(p, "type=", 5) == 0 && ctx->type == NULL) {
+            } else if (strncmp(p, "type=", 5) == 0 && ctx->type == NULL) {
                 p += 5;
                 tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
                 ctx->type = tmpstr;
-            }
-            if (strncmp(p, "module-path=", 12) == 0
+            } else if (strncmp(p, "module-path=", 12) == 0
                 && ctx->module_path == NULL) {
                 p += 12;
                 tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
                 ctx->module_path = tmpstr;
-            }
-            if (strncmp(p, "slot-id=", 8) == 0 && ctx->slotid == 0) {
+            } else if (strncmp(p, "slot-id=", 8) == 0 && ctx->slotid == 0) {
                 p += 8;
                 tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
                 ctx->slotid = (CK_SLOT_ID) atoi(tmpstr);
             }
         }
         p = ++q;
     }
     return 1;
+
+ memerr:
+    PKCS11err(PKCS11_F_PKCS11_PARSE_ITEMS, ERR_R_MALLOC_FAILURE);
+    return 0;
 }
 
 static int pkcs11_get_console_pin(char **pin)
@@ -272,6 +285,7 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
         pkcs11_parse_items(ctx, path);
+
         if (ctx->id == NULL && ctx->label == NULL && !store) {
             PKCS11_trace("ID and OBJECT are null\n");
             goto err;
@@ -307,7 +321,7 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
 }
 
 static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
-                                   void *p, void (*f) ())
+                                   void *p, void (*f)(void))
 {
     PKCS11_CTX *pkcs11_ctx;
     OSSL_STORE_LOADER_CTX *store_ctx = NULL;
@@ -358,6 +372,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     CK_RV rv;
     PKCS11_CTX *ctx;
     CK_SESSION_HANDLE session = 0;
+    CK_OBJECT_HANDLE key = 0;
 
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
 
@@ -376,9 +391,10 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
         goto err;
     if (!pkcs11_login(session, ctx, CKU_USER))
         goto err;
-    if (!pkcs11_find_private_key(session, ctx))
+    key = pkcs11_find_private_key(session, ctx);
+    if (!key)
         goto err;
-    return pkcs11_load_pkey(session, ctx);
+    return pkcs11_load_pkey(session, ctx, key);
 
  err:
     PKCS11_trace("pkcs11_engine_load_private_key failed\n");
@@ -534,10 +550,12 @@ static int bind_pkcs11(ENGINE *e)
         return 0;
     }
 
+    rsa_pkcs11_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
     ossl_rsa_meth = RSA_PKCS1_OpenSSL();
 
     if ((pkcs11_rsa = RSA_meth_new("PKCS#11 RSA method", 0)) == NULL
         || !RSA_meth_set_sign(pkcs11_rsa, pkcs11_rsa_sign)
+        || !RSA_meth_set_finish(pkcs11_rsa, pkcs11_rsa_free)
         || !RSA_meth_set_pub_enc(pkcs11_rsa,
                                  RSA_meth_get_pub_enc(ossl_rsa_meth))
         || !RSA_meth_set_pub_dec(pkcs11_rsa,
@@ -617,6 +635,12 @@ static int pkcs11_destroy(ENGINE *e)
     pkcs11_rsa = NULL;
     PKCS11_trace("Calling pkcs11_destroy with engine: %p\n", e);
     ERR_unload_PKCS11_strings();
+    return 1;
+}
+
+static int pkcs11_rsa_free(RSA *rsa)
+{
+    RSA_set_ex_data(rsa, rsa_pkcs11_idx, 0);
     return 1;
 }
 

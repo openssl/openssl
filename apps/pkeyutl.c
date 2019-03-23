@@ -13,9 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
-#ifndef OPENSSL_NO_POSIX_IO
-# include <sys/stat.h>
-#endif
+#include <sys/stat.h>
 
 #define KEY_NONE        0
 #define KEY_PRIVKEY     1
@@ -348,15 +346,12 @@ int pkeyutl_main(int argc, char **argv)
 
     if (pkey_op != EVP_PKEY_OP_DERIVE) {
         in = bio_open_default(infile, 'r', FORMAT_BINARY);
-#ifndef OPENSSL_NO_POSIX_IO
-        if (infile != NULL)
-        {
+        if (infile != NULL) {
             struct stat st;
 
             if (stat(infile, &st) == 0 && st.st_size <= INT_MAX)
                 filesize = (int)st.st_size;
         }
-#endif
         if (in == NULL)
             goto end;
     }

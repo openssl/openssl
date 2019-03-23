@@ -72,6 +72,32 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
                     (const OSSL_PROVIDER *, int operation_id,
                      const int *no_store))
 
+/* Digests */
+
+# define OSSL_OP_DIGEST                     1
+
+# define OSSL_FUNC_DIGEST_NEWCTX            1
+# define OSSL_FUNC_DIGEST_INIT              2
+# define OSSL_FUNC_DIGEST_UPDDATE           3
+# define OSSL_FUNC_DIGEST_FINAL             4
+# define OSSL_FUNC_DIGEST_DIGEST            5
+# define OSSL_FUNC_DIGEST_FREECTX           6
+# define OSSL_FUNC_DIGEST_DUPCTX            7
+# define OSSL_FUNC_DIGEST_SIZE              8
+
+OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *vctx))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_update,
+                    (void *, const unsigned char *in, size_t inl))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_final,
+                    (void *, unsigned char *out, size_t *outl))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
+                    (const unsigned char *in, size_t inl, unsigned char *out,
+                     size_t *out_l))
+OSSL_CORE_MAKE_FUNC(void, OP_digest_cleanctx, (void *vctx))
+OSSL_CORE_MAKE_FUNC(void, OP_digest_freectx, (void *vctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *vctx))
+OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
 
 # ifdef __cplusplus
 }

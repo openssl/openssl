@@ -42,7 +42,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     char *tmp;
     if (akeyid->keyid) {
         tmp = OPENSSL_buf2hexstr(akeyid->keyid->data, akeyid->keyid->length);
-        X509V3_add_value("keyid", tmp, &extlist);
+        X509V3_add_value((akeyid->issuer || akeyid->serial) ? "keyid" : NULL, tmp, &extlist);
         OPENSSL_free(tmp);
     }
     if (akeyid->issuer)

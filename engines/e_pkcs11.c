@@ -35,6 +35,7 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
     unsigned char *tmps = NULL;
     int encoded_len = 0;
     const unsigned char *encoded = NULL;
+    CK_OBJECT_HANDLE key = 0;
 
     ctx = pkcs11_get_ctx(rsa);
 
@@ -50,12 +51,15 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
         goto err;
     encoded = tmps;
     if ((unsigned int)encoded_len > (num - RSA_PKCS1_PADDING_SIZE)) {
-        PKCS11err(PKCS11_F_PKCS11_RSA_SIGN, PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
+        PKCS11err(PKCS11_F_PKCS11_RSA_SIGN,
+                  PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         goto err;
     }
 
     sign_mechanism.mechanism = CKM_RSA_PKCS;
-    rv = pkcs11_funcs->C_SignInit(session, &sign_mechanism, ctx->key);
+    key = (CK_OBJECT_HANDLE) RSA_get_ex_data(rsa, rsa_pkcs11_idx);
+
+    rv = pkcs11_funcs->C_SignInit(session, &sign_mechanism, key);
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_SignInit failed, error: %#08X\n", rv);
@@ -66,7 +70,7 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
     keyAttribute[0].type = CKA_ALWAYS_AUTHENTICATE;
     keyAttribute[0].pValue = &bAwaysAuthentificate;
     keyAttribute[0].ulValueLen = sizeof(bAwaysAuthentificate);
-    rv = pkcs11_funcs->C_GetAttributeValue(session, ctx->key,
+    rv = pkcs11_funcs->C_GetAttributeValue(session, key,
                                            keyAttribute,
                                            OSSL_NELEM(keyAttribute));
     if (rv != CKR_OK) {
@@ -107,6 +111,7 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     CK_BBOOL bAwaysAuthentificate = CK_TRUE;
     CK_ATTRIBUTE keyAttribute[1] = {{ 0 }};
     CK_SESSION_HANDLE session = 0;
+    CK_OBJECT_HANDLE key = 0;
     int useSign = 0;
 
     ctx = pkcs11_get_ctx(rsa);
@@ -123,11 +128,12 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     enc_mechanism.mechanism = CKM_RSA_PKCS;
     CRYPTO_THREAD_write_lock(ctx->lock);
 
-    rv = pkcs11_funcs->C_EncryptInit(session, &enc_mechanism, ctx->key);
+    key = (CK_OBJECT_HANDLE) RSA_get_ex_data(rsa, rsa_pkcs11_idx);
+    rv = pkcs11_funcs->C_EncryptInit(session, &enc_mechanism, key);
 
     if (rv == CKR_KEY_FUNCTION_NOT_PERMITTED) {
         PKCS11_trace("C_EncryptInit failed try SignInit, error: %#08X\n", rv);
-        rv = pkcs11_funcs->C_SignInit(session, &enc_mechanism, ctx->key);
+        rv = pkcs11_funcs->C_SignInit(session, &enc_mechanism, key);
 
         if (rv != CKR_OK) {
             PKCS11_trace("C_SignInit failed, error: %#08X\n", rv);
@@ -141,7 +147,7 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     keyAttribute[0].pValue = &bAwaysAuthentificate;
     keyAttribute[0].ulValueLen = sizeof(bAwaysAuthentificate);
 
-    rv = pkcs11_funcs->C_GetAttributeValue(session, ctx->key,
+    rv = pkcs11_funcs->C_GetAttributeValue(session, key,
                                            keyAttribute,
                                            OSSL_NELEM(keyAttribute));
     if (rv != CKR_OK) {
@@ -369,14 +375,15 @@ void pkcs11_end_session(CK_SESSION_HANDLE session)
     pkcs11_funcs->C_CloseSession(session);
 }
 
-int pkcs11_find_private_key(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
+CK_OBJECT_HANDLE pkcs11_find_private_key(CK_SESSION_HANDLE session,
+                                         PKCS11_CTX *ctx)
 {
     CK_RV rv;
     CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
     CK_KEY_TYPE key_type = CKK_RSA;
-    CK_OBJECT_HANDLE objhandle;
     unsigned long count;
     CK_ATTRIBUTE tmpl[3];
+    CK_OBJECT_HANDLE key = 0;
 
     tmpl[0].type = CKA_CLASS;
     tmpl[0].pValue = &key_class;
@@ -404,7 +411,7 @@ int pkcs11_find_private_key(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
         goto err;
     }
 
-    rv = pkcs11_funcs->C_FindObjects(session, &objhandle, 1, &count);
+    rv = pkcs11_funcs->C_FindObjects(session, &key, 1, &count);
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjects failed, error: %#08X\n", rv);
@@ -422,8 +429,7 @@ int pkcs11_find_private_key(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
         goto err;
     }
 
-    ctx->key = objhandle;
-    rv = pkcs11_funcs->C_GetAttributeValue(session, ctx->key,
+    rv = pkcs11_funcs->C_GetAttributeValue(session, key,
                                            tmpl, OSSL_NELEM(tmpl));
     if (rv != CKR_OK) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
@@ -431,13 +437,14 @@ int pkcs11_find_private_key(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
     }
-    return 1;
+    return key;
 
  err:
     return 0;
 }
 
-EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
+EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx,
+                           CK_OBJECT_HANDLE key)
 {
     EVP_PKEY *k = NULL;
     CK_RV rv;
@@ -457,7 +464,7 @@ EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
         goto err;
     }
 
-    rv = pkcs11_funcs->C_GetAttributeValue(session, ctx->key,
+    rv = pkcs11_funcs->C_GetAttributeValue(session, key,
                                            rsa_attributes,
                                            OSSL_NELEM(rsa_attributes));
     if (rv != CKR_OK) {
@@ -467,19 +474,22 @@ EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
         goto err;
     }
     if  (rsa_attributes[0].ulValueLen == 0
-            || rsa_attributes[1].ulValueLen == 0)
+         || rsa_attributes[1].ulValueLen == 0)
         goto err;
 
     rsa_attributes[0].pValue = OPENSSL_malloc(rsa_attributes[0].ulValueLen);
-    rsa_attributes[1].pValue = OPENSSL_malloc(rsa_attributes[1].ulValueLen);
-
-    if (rsa_attributes[0].pValue == NULL
-           || rsa_attributes[1].pValue == NULL) {
-        OPENSSL_free(rsa_attributes[0].pValue);
-        OPENSSL_free(rsa_attributes[1].pValue);
+    if (rsa_attributes[0].pValue == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    rv = pkcs11_funcs->C_GetAttributeValue(session, ctx->key,
+
+    rsa_attributes[1].pValue = OPENSSL_malloc(rsa_attributes[1].ulValueLen);
+    if (rsa_attributes[1].pValue == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    rv = pkcs11_funcs->C_GetAttributeValue(session, key,
                                            rsa_attributes,
                                            OSSL_NELEM(rsa_attributes));
     if (rv != CKR_OK) {
@@ -488,6 +498,14 @@ EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
     }
+
+    k = EVP_PKEY_new();
+    if (k == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    RSA_set_ex_data(rsa, rsa_pkcs11_idx, (char *) (CK_OBJECT_HANDLE) key);
     RSA_set0_key(rsa,
                  BN_bin2bn(rsa_attributes[0].pValue,
                            rsa_attributes[0].ulValueLen, NULL),
@@ -495,9 +513,9 @@ EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx)
                            rsa_attributes[1].ulValueLen, NULL),
                  NULL);
 
-    if((k = EVP_PKEY_new()) != NULL) {
-        EVP_PKEY_set1_RSA(k, rsa);
-    }
+    RSA_set_flags(rsa, RSA_FLAG_EXT_PKEY);
+    EVP_PKEY_assign_RSA(k, rsa);
+    rsa = NULL;
 
     OPENSSL_free(rsa_attributes[0].pValue);
     OPENSSL_free(rsa_attributes[1].pValue);
