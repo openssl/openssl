@@ -247,10 +247,13 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
     }
     ret = 1;
 end:
-    OPENSSL_free(kmac_buffer);
+    if (kmac_buffer != NULL)
+        OPENSSL_clear_free(kmac_buffer, kmac_out_len);
+    else
+        OPENSSL_cleanse(mac_buf, sizeof(mac_buf));
+
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_CTX_free(ctx_init);
-    OPENSSL_cleanse(mac, sizeof(mac));
     return ret;
 }
 
