@@ -71,7 +71,7 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
     if (!rsa_check_public_exponent(e)) {
         RSAerr(RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES,
                RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
-        goto err;
+        return 0;
     }
 
     /* (Step 3) Determine strength and check rand generator strength is ok -
