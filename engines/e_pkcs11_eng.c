@@ -327,6 +327,7 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
     OSSL_STORE_LOADER_CTX *store_ctx = NULL;
     CK_SESSION_HANDLE session = 0;
     CK_OBJECT_CLASS class;
+    int ret = 0;
     struct {
         const char *uri_string;
         X509 *cert;
@@ -334,7 +335,6 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
 
     store_ctx = OSSL_STORE_LOADER_CTX_new();
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-
     if (pkcs11_ctx == NULL)
         return 0;
 
@@ -344,25 +344,31 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
     if (pkcs11_initialize(pkcs11_ctx->module_path) != CKR_OK)
         return 0;
 
-    if (!pkcs11_get_slot(pkcs11_ctx))
+    if (!pkcs11_get_slot(pkcs11_ctx)) {
+        pkcs11_finalize();
         return 0;
+     }
 
     if (!pkcs11_start_session(pkcs11_ctx, &session))
-        return 0;
+        goto end;
 
     store_ctx->session = session;
+    pkcs11_ctx->type = "cert";
+
     if (!pkcs11_search_start(store_ctx, pkcs11_ctx))
-        return 0;
+        goto end;
 
     pkcs11_search_next_object(store_ctx, &class);
-    pkcs11_end_session(session);
-    pkcs11_finalize();
 
     if (class == CKO_CERTIFICATE) {
         params->cert = d2i_X509(NULL, &store_ctx->cert, store_ctx->certlen);
-        return 1;
+        ret = 1;
     }
-    return 0;
+
+ end:
+    pkcs11_end_session(session);
+    pkcs11_finalize();
+    return ret;
 }
 
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
@@ -625,7 +631,6 @@ static int pkcs11_finish(ENGINE *e)
     PKCS11_CTX *ctx;
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
     pkcs11_ctx_free(ctx);
-    ENGINE_set_ex_data(e, pkcs11_idx, NULL);
     return 1;
 }
 
@@ -650,9 +655,6 @@ static void pkcs11_ctx_free(PKCS11_CTX *ctx)
     CRYPTO_THREAD_lock_free(ctx->lock);
     free(ctx->id);
     free(ctx->label);
-    free(ctx->pin);
-    free(ctx->module_path);
-    OPENSSL_free(ctx);
 }
 
 PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa)
