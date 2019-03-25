@@ -22,7 +22,7 @@
 #include "e_zx.h"
 
 #ifndef OPENSSL_NO_HW
-# ifndef OPENSSL_NO_HW_PADLOCK 
+# ifndef OPENSSL_NO_HW_PADLOCK
 
 /* Attempt to have a single source for both 0.9.7 and 0.9.8 :-) */
 #  if (OPENSSL_VERSION_NUMBER >= 0x00908000L)
@@ -94,7 +94,7 @@ static char padlock_name[100];
 /* Available features */
 static int padlock_use_ace = 0; /* Advanced Cryptography Engine */
 static int padlock_use_rng = 0; /* Random Number Generator */
-static int padlock_use_ccs = 0; /* SM3 and SM4 Support */
+static int padlock_use_ccs = 0; /* Chinese Cipher Standard SM3 and SM4 Support */
 
 /* ===== Engine "management" functions ===== */
 
@@ -599,15 +599,15 @@ gmi_sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
     unsigned int num = EVP_CIPHER_CTX_num(ctx);
-    if(f_ZXC == 1) {
+    if (f_ZXC == 1) {
         unsigned char * buf = EVP_CIPHER_CTX_buf_noconst(ctx);
         CRYPTO_ctr128_encrypt(in_arg, out_arg, nbytes,
-                                    cdata->ks.rd_key, EVP_CIPHER_CTX_iv_noconst(ctx), buf, &num,
-                                    (block128_f) gmi_sm4_ecb_enc);
+                              cdata->ks.rd_key, EVP_CIPHER_CTX_iv_noconst(ctx), buf, &num,
+                              (block128_f) gmi_sm4_ecb_enc);
        EVP_CIPHER_CTX_set_num(ctx, (size_t)num);
     } else {
         memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
-        if(nbytes % SM4_BLOCK_SIZE){        
+        if (nbytes % SM4_BLOCK_SIZE) {        
             nbytes = SM4_BLOCK_SIZE - nbytes % SM4_BLOCK_SIZE + nbytes;    
         }
         gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
@@ -622,14 +622,12 @@ gmi_sm4_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-    if(f_ZXC == 1)
-    {
+    if (f_ZXC == 1) {
         unsigned int num = EVP_CIPHER_CTX_num(ctx);
         CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
                               EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx),
                               (block128_f)gmi_sm4_ecb_enc);
-    }
-    else {
+    } else {
         memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
         if(nbytes % SM4_BLOCK_SIZE){        
             nbytes = SM4_BLOCK_SIZE - nbytes % SM4_BLOCK_SIZE + nbytes;    
@@ -645,15 +643,14 @@ gmi_sm4_ofb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-    if(f_ZXC == 1)
-    {
+    if (f_ZXC == 1) {
         unsigned int num = EVP_CIPHER_CTX_num(ctx);
         CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
                               EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx),
                               (block128_f)gmi_sm4_ecb_enc);
     } else {
         memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
-        if(nbytes % SM4_BLOCK_SIZE){        
+        if (nbytes % SM4_BLOCK_SIZE) {        
             nbytes = SM4_BLOCK_SIZE - nbytes % SM4_BLOCK_SIZE + nbytes;    
         }
         gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
