@@ -11,6 +11,7 @@
 #include <string.h>
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "endian.h"
 #include <openssl/params.h>
 #include <openssl/bn.h>
 
@@ -27,20 +28,22 @@ static void swap_copy(unsigned char *out, const void *in, size_t len)
 
 static void copy_to_le(unsigned char *out, const void *in, size_t len)
 {
-#ifdef B_ENDIAN
-    swap_copy(out, in, len);
-#else
-    memcpy(out, in, len);
-#endif
+    DECLARE_IS_ENDIAN;
+
+    if (IS_LITTLE_ENDIAN)
+        memcpy(out, in, len);
+    else
+        swap_copy(out, in, len);
 }
 
 static void copy_be_to_native(unsigned char *out, const void *in, size_t len)
 {
-#ifdef B_ENDIAN
-    memcpy(out, in, len);
-#else
-    swap_copy(out, in, len);
-#endif
+    DECLARE_IS_ENDIAN;
+
+    if (IS_LITTLE_ENDIAN)
+        swap_copy(out, in, len);
+    else
+        memcpy(out, in, len);
 }
 
 static const struct {
