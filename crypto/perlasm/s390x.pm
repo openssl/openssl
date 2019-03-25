@@ -6,23 +6,37 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Copyright IBM Corp. 2018
+# Copyright IBM Corp. 2018-2019
 # Author: Patrick Steuer <patrick.steuer@de.ibm.com>
 
 package perlasm::s390x;
 
 use strict;
 use warnings;
+use bigint;
 use Carp qw(confess);
 use Exporter qw(import);
 
 our @EXPORT=qw(PERLASM_BEGIN PERLASM_END);
 our @EXPORT_OK=qw(AUTOLOAD LABEL INCLUDE stfle);
 our %EXPORT_TAGS=(
+	# long-displacement facility
+	LD => [qw(clgfi)],
+	# general-instruction-extension facility
+	GE => [qw(risbg)],
+	# extended-immediate facility
+	EI => [qw(lt)],
+	# miscellaneous-instruction-extensions facility 1
+	MI1 => [qw(risbgn)],
+	# message-security assist
 	MSA => [qw(kmac km kmc kimd klmd)],
+	# message-security-assist extension 4
 	MSA4 => [qw(kmf kmo pcc kmctr)],
+	# message-security-assist extension 5
 	MSA5 => [qw(ppno prno)],
+	# message-security-assist extension 8
 	MSA8 => [qw(kma)],
+	# vector facility
 	VX => [qw(vgef vgeg vgbm vzero vone vgm vgmb vgmh vgmf vgmg
 	    vl vlr vlrep vlrepb vlreph vlrepf vlrepg vleb vleh vlef vleg vleib
 	    vleih vleif vleig vlgv vlgvb vlgvh vlgvf vlgvg vllez vllezb vllezh
@@ -71,6 +85,7 @@ our %EXPORT_TAGS=(
 	    wfmadb vfms vfmsdb wfmsdb vfpso vfpsodb wfpsodb vflcdb wflcdb
 	    vflndb wflndb vflpdb wflpdb vfsq vfsqdb wfsqdb vfs vfsdb wfsdb
 	    vftci vftcidb wftcidb)],
+	# vector-enhancements facility 1
 	VXE => [qw(vbperm vllezlf vmsl vmslg vnx vnn voc vpopctb vpopcth
 	    vpopctf vpopctg vfasb wfasb wfaxb wfcsb wfcxb wfksb wfkxb vfcesb
 	    vfcesbs wfcesb wfcesbs wfcexb wfcexbs vfchsb vfchsbs wfchsb wfchsbs
@@ -83,10 +98,11 @@ our %EXPORT_TAGS=(
 	    wfnmsxb vfpsosb wfpsosb vflcsb wflcsb vflnsb wflnsb vflpsb wflpsb
 	    vfpsoxb wfpsoxb vflcxb wflcxb vflnxb wflnxb vflpxb wflpxb vfsqsb
 	    wfsqsb wfsqxb vfssb wfssb wfsxb vftcisb wftcisb wftcixb)],
+	# vector-packed-decimal facility
 	VXD => [qw(vlrlr vlrl vstrlr vstrl vap vcp vcvb vcvbg vcvd vcvdg vdp
 	    vlip vmp vmsp vpkz vpsop vrp vsdp vsrp vsp vtp vupkz)],
 );
-Exporter::export_ok_tags(qw(MSA MSA4 MSA5 MSA8 VX VXE VXD));
+Exporter::export_ok_tags(qw(LD GE EI MI1 MSA MSA4 MSA5 MSA8 VX VXE VXD));
 
 our $AUTOLOAD;
 
@@ -141,6 +157,28 @@ sub INCLUDE {
 sub stfle {
 	confess(err("ARGNUM")) if ($#_!=0);
 	S(0xb2b0,@_);
+}
+
+# MISC
+
+sub clgfi {
+	confess(err("ARGNUM")) if ($#_!=1);
+	RILa(0xc2e,@_);
+}
+
+sub lt {
+	confess(err("ARGNUM")) if ($#_!=1);
+	RXYa(0xe312,@_);
+}
+
+sub risbg {
+	confess(err("ARGNUM")) if ($#_<3||$#_>4);
+	RIEf(0xec55,@_);
+}
+
+sub risbgn {
+	confess(err("ARGNUM")) if ($#_<3||$#_>4);
+	RIEf(0xec59,@_);
 }
 
 # MSA
@@ -2486,6 +2524,36 @@ sub vupkz {
 # Instruction Formats
 #
 
+sub RIEf {
+	confess(err("ARGNUM")) if ($#_<4||5<$#_);
+	my $ops=join(',',@_[1..$#_]);
+	my $memn=(caller(1))[3];
+	$memn=~s/^.*:://;
+	my ($opcode,$r1,$r2,$i3,$i4,$i5)=(shift,get_R(shift),get_R(shift),
+					  get_I(shift,8),get_I(shift,8),
+					  get_I(shift,8));
+
+	$out.="\t.word\t";
+	$out.=sprintf("%#06x",(($opcode>>8)<<8|$r1<<4|$r2)).",";
+	$out.=sprintf("%#06x",($i3<<8)|$i4).",";
+	$out.=sprintf("%#06x",($i5<<8)|($opcode&0xff));
+	$out.="\t# $memn\t$ops\n"
+}
+
+sub RILa {
+	confess(err("ARGNUM")) if ($#_!=2);
+	my $ops=join(',',@_[1..$#_]);
+	my $memn=(caller(1))[3];
+	$memn=~s/^.*:://;
+	my ($opcode,$r1,$i2)=(shift,get_R(shift),get_I(shift,32));
+
+	$out.="\t.word\t";
+	$out.=sprintf("%#06x",(($opcode>>4)<<8|$r1<<4|($opcode&0xf))).",";
+	$out.=sprintf("%#06x",($i2>>16)).",";
+	$out.=sprintf("%#06x",($i2&0xffff));
+	$out.="\t# $memn\t$ops\n"
+}
+
 sub RRE {
 	confess(err("ARGNUM")) if ($#_<0||2<$#_);
 	my $ops=join(',',@_[1..$#_]);
@@ -2507,6 +2575,20 @@ sub RRFb {
 
 	$out.="\t.long\t"
 	    .sprintf("%#010x",($opcode<<16|$r3<<12|$m4<<8|$r1<<4|$r2));
+	$out.="\t# $memn\t$ops\n"
+}
+
+sub RXYa {
+	confess(err("ARGNUM")) if ($#_!=2);
+	my $ops=join(',',@_[1..$#_]);
+	my $memn=(caller(1))[3];
+	$memn=~s/^.*:://;
+	my ($opcode,$r1,$d2,$x2,$b2)=(shift,get_R(shift),get_DXB(shift));
+
+	$out.="\t.word\t";
+	$out.=sprintf("%#06x",(($opcode>>8)<<8|$r1<<4|$x2)).",";
+	$out.=sprintf("%#06x",($b2<<12|($d2&0xfff))).",";
+	$out.=sprintf("%#06x",(($d2>>12)<<8|$opcode&0xff));
 	$out.="\t# $memn\t$ops\n"
 }
 
