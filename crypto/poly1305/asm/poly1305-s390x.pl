@@ -45,7 +45,7 @@
 use strict;
 use FindBin qw($Bin);
 use lib "$Bin/../..";
-use perlasm::s390x qw(:DEFAULT :VX AUTOLOAD LABEL INCLUDE);
+use perlasm::s390x qw(:DEFAULT :LD :GE :EI :MI1 :VX AUTOLOAD LABEL INCLUDE);
 
 my $flavour = shift;
 
