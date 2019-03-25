@@ -130,6 +130,8 @@ B<openssl> B<s_client>
 [B<-writerand file>]
 [B<-serverinfo types>]
 [B<-status>]
+[B<-ocsp_check>]
+[B<-ocsp_check_all>]
 [B<-alpn protocols>]
 [B<-nextprotoneg protocols>]
 [B<-ct>]
@@ -389,12 +391,13 @@ connections to any server of its choice, and in any case SMTP and XMPP clients
 do not execute scripts downloaded from remote servers.
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-no_alt_chains>, B<-no_check_time>, B<-partial_chain>, B<-policy>,
-B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
-B<-verify_ip>, B<-verify_name>, B<-x509_strict>
+B<-ocsp_check>, B<-ocsp_check_all>, B<-explicit_policy>, B<-extended_crl>,
+B<-ignore_critical>, B<-inhibit_any>, B<-inhibit_map>, B<-no_alt_chains>,
+B<-no_check_time>, B<-partial_chain>, B<-policy>, B<-policy_check>,
+B<-policy_print>, B<-purpose>, B<-suiteB_128>, B<-suiteB_128_only>,
+B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>, B<-auth_level>,
+B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
+B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
 L<verify(1)> manual page for details.

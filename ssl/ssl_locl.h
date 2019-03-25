@@ -28,6 +28,7 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
+# include <openssl/ocsp.h>
 # include "record/record.h"
 # include "statem/statem.h"
 # include "packet_locl.h"

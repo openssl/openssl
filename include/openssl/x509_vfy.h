@@ -18,7 +18,6 @@
 # endif
 
 # include <openssl/ocsp.h>
-# include <openssl/ocsp_respst.h>
 # include <openssl/opensslconf.h>
 # include <openssl/lhash.h>
 # include <openssl/bio.h>
@@ -248,6 +247,11 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 /* Do not check certificate/CRL validity against current time */
 # define X509_V_FLAG_NO_CHECK_TIME               0x200000
 
+/* Verify OCSP stapling response for server certificate */
+# define X509_V_FLAG_OCSP_CHECK                   0x400000
+/* Verify OCSP stapling responses for whole chain */
+# define X509_V_FLAG_OCSP_CHECK_ALL               0x800000
+
 # define X509_VP_FLAG_DEFAULT                    0x1
 # define X509_VP_FLAG_OVERWRITE                  0x2
 # define X509_VP_FLAG_RESET_FLAGS                0x4
@@ -259,11 +263,6 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
                                 | X509_V_FLAG_EXPLICIT_POLICY \
                                 | X509_V_FLAG_INHIBIT_ANY \
                                 | X509_V_FLAG_INHIBIT_MAP)
-
-/* Lookup OCSP */
-# define X509_V_OCSP_CHECK                       0x2
-/* Lookup OCSP for whole chain */
-# define X509_V_OCSP_CHECK_ALL                   0x4
 
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
                                X509_NAME *name);
@@ -538,7 +537,6 @@ int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name);
  * offline testing in test/danetest.c
  */
 void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane);
-void X509_STORE_CTX_set0_ocsp_flags(X509_STORE_CTX *ctx, unsigned long flags);
 #define DANE_FLAG_NO_DANE_EE_NAMECHECKS (1L << 0)
 
 /* X509_VERIFY_PARAM functions */

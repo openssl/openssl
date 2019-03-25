@@ -615,28 +615,24 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *resp = NULL;
  
-    if (*sk_resp == NULL) {
-        *sk_resp = sk_OCSP_RESPONSE_new_null();
-    } else {
-        while ((resp = sk_OCSP_RESPONSE_pop(*sk_resp)) != NULL) {
-            resp = sk_OCSP_RESPONSE_pop(*sk_resp);
-            OPENSSL_free(resp);
-        }
+    if (*sk_resp != NULL) {
+        sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
     }
- 
+    *sk_resp = sk_OCSP_RESPONSE_new_null();
+
     SSL_get0_chain_certs(s, &server_certs);
     if (server_certs != NULL) 
-        // certificate chain is available
+        /* certificate chain is available */
         len = sk_X509_num(server_certs);
     else
-        // certificate chain is not available, set len to 1 for server certificate
+        /* certificate chain is not available, set len to 1 for server certificate */
         len = 1; 
     for (i = -1; i < len-1; i++) {
         if (i == -1) {
-            // get OCSP response for server certificate first
+            /* get OCSP response for server certificate first */
             x = SSL_get_certificate(s);
         } else {
-            // for each certificate in chain (except root) get the OCSP response
+            /* for each certificate in chain (except root) get the OCSP response */
             x = sk_X509_value(server_certs, i);
         }
  
@@ -661,6 +657,7 @@ static int cert_status_cb(SSL *s, void *arg)
     OCSP_RESPONSE *resp = NULL;
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+    int i;
 
     if (srctx->verbose)
         BIO_puts(bio_err, "cert_status: callback called\n");
@@ -688,13 +685,12 @@ static int cert_status_cb(SSL *s, void *arg)
 
     if (srctx->verbose) {
         BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
-        int i;
-         for (i=0; i<sk_OCSP_RESPONSE_num(sk_resp); i++) {
-             resp = sk_OCSP_RESPONSE_value(sk_resp, i);
-             if (resp != NULL) {
-                 OCSP_RESPONSE_print(bio_err, resp, 2);
-             }
-         }
+        for (i=0; i<sk_OCSP_RESPONSE_num(sk_resp); i++) {
+            resp = sk_OCSP_RESPONSE_value(sk_resp, i);
+            if (resp != NULL) {
+                OCSP_RESPONSE_print(bio_err, resp, 2);
+            }
+        }
     }
 
     ret = SSL_TLSEXT_ERR_OK;

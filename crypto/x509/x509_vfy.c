@@ -21,7 +21,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
-#include <openssl/ocsp_respst.h>
 #include <openssl/tls1.h>
 #include <openssl/objects.h>
 #include "internal/dane.h"
@@ -862,10 +861,10 @@ static int check_revocation(X509_STORE_CTX *ctx)
 {
     int i = 0, last = 0, ok = 0;
     if (!(ctx->param->flags & X509_V_FLAG_CRL_CHECK)
-            && !(ctx->ocsp_status_flags & X509_V_OCSP_CHECK))
+            && !(ctx->param->flags & X509_V_FLAG_OCSP_CHECK))
         return 1;
     if (ctx->param->flags & X509_V_FLAG_CRL_CHECK_ALL
-            || ctx->ocsp_status_flags & X509_V_OCSP_CHECK_ALL)
+            || ctx->param->flags & X509_V_FLAG_OCSP_CHECK_ALL)
         last = sk_X509_num(ctx->chain) - 1;
     else {
         /* If checking CRL paths this isn't the EE certificate */
@@ -876,7 +875,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
     for (i = 0; i <= last; i++) {
         ctx->error_depth = i;
 
-        if (ctx->ocsp_status_flags & X509_V_OCSP_CHECK) {
+        if (ctx->param->flags & X509_V_FLAG_OCSP_CHECK) {
             ok = check_cert_ocsp(ctx);
  
             /*
@@ -893,13 +892,13 @@ static int check_revocation(X509_STORE_CTX *ctx)
              */
             if (ok == V_OCSP_CERTSTATUS_REVOKED) {
                 verify_cb_ocsp(ctx, X509_V_ERR_CERT_REVOKED);
-                return 0; //X509_V_ERR_CERT_REVOKED;
+                return 0; /* X509_V_ERR_CERT_REVOKED */
             }
  
-             if (ok == V_OCSP_CERTSTATUS_GOOD)
+            if (ok == V_OCSP_CERTSTATUS_GOOD)
                 continue;
  
-             if (!(ctx->param->flags & X509_V_FLAG_CRL_CHECK)) {
+            if (!(ctx->param->flags & X509_V_FLAG_CRL_CHECK)) {
                 verify_cb_ocsp(ctx, ok);
                 return ok;
             }
@@ -979,7 +978,7 @@ static int check_cert_ocsp(X509_STORE_CTX *ctx)
  
     switch(cert_status) {
     case V_OCSP_CERTSTATUS_GOOD:
-        // Note: A OCSP stapling result will be accepted up to 5 minutes after it expired!
+        /* Note: A OCSP stapling result will be accepted up to 5 minutes after it expired! */
         if(!OCSP_check_validity(thisupd, nextupd, 300L, -1L)) {
             ret = X509_V_ERR_OCSP_HAS_EXPIRED;
         } else {
@@ -2668,11 +2667,6 @@ void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
 void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane)
 {
     ctx->dane = dane;
-}
-
-void X509_STORE_CTX_set0_ocsp_flags(X509_STORE_CTX *ctx, unsigned long flags)
-{
-    ctx->ocsp_status_flags |= flags;
 }
 
 static unsigned char *dane_i2d(

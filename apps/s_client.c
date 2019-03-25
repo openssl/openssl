@@ -572,7 +572,8 @@ typedef enum OPTION_choice {
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_OCSP_CHECK,
+    OPT_STATUS_OCSP_CHECK_ALL, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
     OPT_PSK_IDENTITY, OPT_PSK, OPT_PSK_SESS,
@@ -711,6 +712,10 @@ const OPTIONS s_client_options[] = {
      "Hex dump of all TLS extensions received"},
 #ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
+    {"ocsp_check", OPT_STATUS_OCSP_CHECK, '-',
+     "check leaf certificate revocation with OCSP response"},
+    {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
+     "check full chain revocation with OCSP response"},
 #endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
@@ -1214,6 +1219,20 @@ int s_client_main(int argc, char **argv)
         case OPT_STATUS:
 #ifndef OPENSSL_NO_OCSP
             c_status_req = 1;
+#endif
+            break;
+        case OPT_STATUS_OCSP_CHECK:
+#ifndef OPENSSL_NO_OCSP
+            X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_CHECK);
+            vpmtouched++;
+#endif
+            break;
+        case OPT_STATUS_OCSP_CHECK_ALL:
+#ifndef OPENSSL_NO_OCSP
+            X509_VERIFY_PARAM_set_flags(vpm,
+                                        X509_V_FLAG_OCSP_CHECK |
+                                        X509_V_FLAG_OCSP_CHECK_ALL);
+            vpmtouched++;
 #endif
             break;
         case OPT_WDEBUG:

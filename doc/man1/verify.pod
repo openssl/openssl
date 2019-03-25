@@ -20,6 +20,8 @@ B<openssl> B<verify>
 [B<-crl_download>]
 [B<-crl_check>]
 [B<-crl_check_all>]
+[B<-ocsp_check>]
+[B<-ocsp_check_all>]
 [B<-engine id>]
 [B<-explicit_policy>]
 [B<-extended_crl>]
@@ -120,6 +122,17 @@ If a valid CRL cannot be found an error occurs.
 
 Checks the validity of B<all> certificates in the chain by attempting
 to look up valid CRLs.
+
+=item B<-ocsp_check>
+
+Checks end entity certificate validity with a OCSP response provided in the
+TLS handshake (OCSP stapling). If no valid OCSP response can be found no error
+occurs and the client should attempt to check to validity with a CRL.
+
+=item B<-ocsp_check_all>
+
+Checks the validity of B<all> certificates in the chain by attempting
+to look up valid OCSP responses.
 
 =item B<-engine id>
 

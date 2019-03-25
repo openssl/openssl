@@ -41,6 +41,14 @@
 
 # ifndef OPENSSL_NO_OCSP
 
+# ifndef STACK_OF_OCSP_RESPONSE
+/* Protect against recursion */
+#  define STACK_OF_OCSP_RESPONSE
+# include <openssl/asn1.h>
+DEFINE_STACK_OF(OCSP_RESPONSE)
+DECLARE_ASN1_FUNCTIONS(OCSP_RESPONSE)
+# endif
+
 #  include <openssl/ossl_typ.h>
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>

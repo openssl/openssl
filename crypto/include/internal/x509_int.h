@@ -8,6 +8,7 @@
  */
 
 #include "internal/refcount.h"
+#include <openssl/ocsp.h>
 
 /* Internal X509 structures and functions: not for application use */
 

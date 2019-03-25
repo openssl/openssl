@@ -1906,8 +1906,6 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      * Prior to TLS 1.3 the OCSP responses are sent in the CERT_STATUS message
      * after the SERVER_CERTIFICATE message. Therefore the verification of the
      * OCSP response here works only for TLS 1.3.
-     * Prior to TLS 1.3 the verification needs to be done in the client
-     * callback function.
      */
     i = ssl_verify_cert_chain(s, sk);
     /*
@@ -2769,6 +2767,7 @@ int tls_process_cert_status_body(SSL *s, size_t chainidx, PACKET *pkt)
     unsigned int type, resplen;
     unsigned char* respder;
     OCSP_RESPONSE *resp = NULL;
+    const unsigned char *p;
 
     if (!PACKET_get_1(pkt, &type)
         || type != TLSEXT_STATUSTYPE_ocsp) {
@@ -2782,9 +2781,8 @@ int tls_process_cert_status_body(SSL *s, size_t chainidx, PACKET *pkt)
     }
 
     if (!SSL_IS_TLS13(s) && type == TLSEXT_STATUSTYPE_ocsp) {
-        while( (resp = sk_OCSP_RESPONSE_pop(s->ext.ocsp.resp)) != NULL ) {
-            OPENSSL_free(resp);
-        }
+        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp, OCSP_RESPONSE_free);
+        s->ext.ocsp.resp = sk_OCSP_RESPONSE_new_null();
     }
 
     if (SSL_IS_TLS13(s) || type == TLSEXT_STATUSTYPE_ocsp) {
@@ -2803,8 +2801,13 @@ int tls_process_cert_status_body(SSL *s, size_t chainidx, PACKET *pkt)
                             SSL_R_LENGTH_MISMATCH);
                     return 0;
                 }
-                const unsigned char *p = respder;
+                p = respder;
                 resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
+                if (resp == NULL) {
+                    SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE, SSL_F_TLS_PROCESS_CERT_STATUS_BODY,
+                             SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
+                    return 0;
+                }
                 sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp, resp, chainidx);
                 OPENSSL_free(respder);
             }
