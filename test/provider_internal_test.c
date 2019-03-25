@@ -35,9 +35,9 @@ static int test_provider(OSSL_PROVIDER *prov)
     if (!TEST_ptr(name = ossl_provider_name(prov)))
         return 0;
 
-    snprintf(expected_greeting, sizeof(expected_greeting),
-             "Hello OpenSSL %.20s, greetings from %s!",
-             OPENSSL_VERSION_STR, name);
+    BIO_snprintf(expected_greeting, sizeof(expected_greeting),
+                 "Hello OpenSSL %.20s, greetings from %s!",
+                 OPENSSL_VERSION_STR, name);
 
     ret =
         TEST_true(ossl_provider_activate(prov))
