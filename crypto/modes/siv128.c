@@ -166,8 +166,8 @@ int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
             || (ctx->cipher_ctx = EVP_CIPHER_CTX_new()) == NULL
             || (ctx->mac_ctx_init = EVP_MAC_CTX_new_id(EVP_MAC_CMAC)) == NULL
             || (ctx->mac_ctx = EVP_MAC_CTX_new_id(EVP_MAC_CMAC)) == NULL
-            || !EVP_MAC_ctrl(ctx->mac_ctx_init, EVP_MAC_CTRL_SET_CIPHER, cbc)
-            || !EVP_MAC_ctrl(ctx->mac_ctx_init, EVP_MAC_CTRL_SET_KEY, key, klen)
+            || EVP_MAC_ctrl(ctx->mac_ctx_init, EVP_MAC_CTRL_SET_CIPHER, cbc) <= 0
+            || EVP_MAC_ctrl(ctx->mac_ctx_init, EVP_MAC_CTRL_SET_KEY, key, klen) <= 0
             || !EVP_EncryptInit_ex(ctx->cipher_ctx, ctr, NULL, key + klen, NULL)
             || !EVP_MAC_CTX_copy(ctx->mac_ctx, ctx->mac_ctx_init)
             || !EVP_MAC_update(ctx->mac_ctx, zero, sizeof(zero))
