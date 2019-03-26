@@ -35,6 +35,10 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
         return 0;
     }
 
+    /* We currently don't support shake128 and shake256 with HMAC */
+    if ((EVP_MD_meth_get_flags(md) & EVP_MD_FLAG_XOF) != 0)
+        return 0;
+
     if (key != NULL) {
         reset = 1;
         j = EVP_MD_block_size(md);
