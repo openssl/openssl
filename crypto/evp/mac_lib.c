@@ -82,6 +82,8 @@ int EVP_MAC_init(EVP_MAC_CTX *ctx)
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 {
+    if (datalen == 0)
+        return 1;
     return ctx->meth->update(ctx->data, data, datalen);
 }
 
