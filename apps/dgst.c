@@ -413,25 +413,31 @@ int dgst_main(int argc, char **argv)
     return ret;
 }
 
-const char * newline_escape_filename(const char *file, int * backslash)
+static const char *newline_escape_filename(const char *file, int *backslash)
 {
-    int i = 0, length = strlen(file);
-    char *file_cpy = app_malloc(length + 3, file);
+    int i = 0, length = strlen(file), newline_count = 0;
     while(i < length) {
         const char c = file[i];
         if (c == '\n') {
-            file_cpy[i] = '\\';
-            i += 1;
-            file_cpy[i] = 'n';
-            i += 1;
+            newline_count++;
+        }
+        i++;
+    }
+    char *file_cpy = app_malloc(length + newline_count, file);
+    i = 0;
+
+    while(i < length) {
+        const char c = file[i];
+        if (c == '\n') {
+            file_cpy[i++] = '\\';
+            file_cpy[i++] = 'n';
             *backslash = 1;
         } else {
-            file_cpy[i] = c;
-            i += 1;
+            file_cpy[i++] = c;
         }
     }
     file_cpy[i] = '\0';
-    return (const char *)file_cpy;
+    return (const char*)file_cpy;
 }
 
 
