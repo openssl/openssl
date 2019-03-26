@@ -33,8 +33,8 @@ static int test_provider(const char *name)
     char expected_greeting[256];
 
     BIO_snprintf(expected_greeting, sizeof(expected_greeting),
-             "Hello OpenSSL %.20s, greetings from %s!",
-             OPENSSL_VERSION_STR, name);
+                 "Hello OpenSSL %.20s, greetings from %s!",
+                 OPENSSL_VERSION_STR, name);
 
     return
         TEST_ptr(prov = OSSL_PROVIDER_load(NULL, name))
