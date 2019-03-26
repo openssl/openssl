@@ -150,6 +150,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
+    if (count == 0)
+        return 1;
+
     return ctx->update(ctx, data, count);
 }
 
