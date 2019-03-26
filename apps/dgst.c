@@ -95,6 +95,7 @@ int dgst_main(int argc, char **argv)
     prog = opt_progname(argv[0]);
     buf = app_malloc(BUFSIZE, "I/O buffer");
     md = EVP_get_digestbyname(prog);
+
     prog = opt_init(argc, argv, dgst_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -441,6 +442,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 {
     size_t len;
     int i;
+
     for (;;) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
         if (i < 0) {
