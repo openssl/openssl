@@ -559,7 +559,7 @@ further information).
 
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-comp>
