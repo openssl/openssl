@@ -259,6 +259,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
+    if (count == 0)
+        return 1;
+
     if (ctx->digest == NULL || ctx->digest->prov == NULL)
         goto legacy;
 
