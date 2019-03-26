@@ -95,7 +95,6 @@ int dgst_main(int argc, char **argv)
     prog = opt_progname(argv[0]);
     buf = app_malloc(BUFSIZE, "I/O buffer");
     md = EVP_get_digestbyname(prog);
-
     prog = opt_init(argc, argv, dgst_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -413,6 +412,28 @@ int dgst_main(int argc, char **argv)
     return ret;
 }
 
+const char * newline_escape_filename(const char *file, int * backslash)
+{
+    int i = 0, length = strlen(file);
+    char *file_cpy = app_malloc(length + 3, file);
+    while(i < length) {
+        const char c = file[i];
+        if (c == '\n') {
+            file_cpy[i] = '\\';
+            i += 1;
+            file_cpy[i] = 'n';
+            i += 1;
+            *backslash = 1;
+        } else {
+            file_cpy[i] = c;
+            i += 1;
+        }
+    }
+    file_cpy[i] = '\0';
+    return (const char *)file_cpy;
+}
+
+
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
@@ -420,7 +441,6 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 {
     size_t len;
     int i;
-
     for (;;) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
         if (i < 0) {
@@ -467,9 +487,17 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     if (binout) {
         BIO_write(out, buf, len);
     } else if (sep == 2) {
+        int backslash = 0;
+        file = newline_escape_filename(file, &backslash);
+
         for (i = 0; i < (int)len; i++)
-            BIO_printf(out, "%02x", buf[i]);
+            if (i == 0 && backslash == 1)
+                BIO_printf(out, "\\%02x", buf[i]);
+            else
+                BIO_printf(out, "%02x", buf[i]);
+
         BIO_printf(out, " *%s\n", file);
+        OPENSSL_free((char *)file);
     } else {
         if (sig_name != NULL) {
             BIO_puts(out, sig_name);
