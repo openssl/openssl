@@ -413,9 +413,9 @@ int dgst_main(int argc, char **argv)
     return ret;
 }
 
-static const char *newline_escape_filename(const char *file, int *backslash)
+static const char *newline_escape_filename(const char *file)
 {
-    int i = 0, length = strlen(file), newline_count = 0;
+    size_t i = 0, e = 0, length = strlen(file), newline_count = 0, mem_len = 0;
     while(i < length) {
         const char c = file[i];
         if (c == '\n') {
@@ -423,18 +423,19 @@ static const char *newline_escape_filename(const char *file, int *backslash)
         }
         i++;
     }
-    char *file_cpy = app_malloc(length + newline_count, file);
+    mem_len = length + newline_count;
+    char *file_cpy = app_malloc(mem_len, file);
     i = 0;
 
-    while(i < length) {
-        const char c = file[i];
+    while(e < length) {
+        const char c = file[e];
         if (c == '\n') {
             file_cpy[i++] = '\\';
             file_cpy[i++] = 'n';
-            *backslash = 1;
         } else {
             file_cpy[i++] = c;
         }
+        e++;
     }
     file_cpy[i] = '\0';
     return (const char*)file_cpy;
@@ -495,13 +496,9 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     if (binout) {
         BIO_write(out, buf, len);
     } else if (sep == 2) {
-        int backslash = 0;
-        file = newline_escape_filename(file, &backslash);
+        file = newline_escape_filename(file);
 
         for (i = 0; i < (int)len; i++)
-            if (i == 0 && backslash == 1)
-                BIO_printf(out, "\\%02x", buf[i]);
-            else
                 BIO_printf(out, "%02x", buf[i]);
 
         BIO_printf(out, " *%s\n", file);
