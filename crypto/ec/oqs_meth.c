@@ -771,7 +771,6 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
                            X509_ALGOR *sigalg, ASN1_BIT_STRING *str,
                            EVP_PKEY *pkey)
 {
-    /* TODO: is there anything to do for hybrid schemes here? Not sure when this is called */
     const ASN1_OBJECT *obj;
     int ptype;
     int nid;
@@ -785,8 +784,11 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 	 nid != NID_rsa3072_picnicL1FS &&
 	 nid != NID_qteslaI &&
 	 nid != NID_p256_qteslaI &&
+	 nid != NID_rsa3072_qteslaI &&
 	 nid != NID_qteslaIIIsize &&
-	 nid != NID_qteslaIIIspeed
+	 nid != NID_p384_qteslaIIIsize &&
+	 nid != NID_qteslaIIIspeed &&
+	 nid != NID_p384_qteslaIIIspeed
 	 /* ADD_MORE_OQS_SIG_HERE */
 	 ) || ptype != V_ASN1_UNDEF) {
         ECerr(EC_F_OQS_ITEM_VERIFY, EC_R_UNKNOWN_NID);
