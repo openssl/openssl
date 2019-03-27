@@ -440,6 +440,21 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 }
 
 #endif
+
+static X509 *x509upref(const X509 *cx)
+{
+    /*
+     * Only used by X509_chain_up_ref where we know that its not really const,
+     * so this is safe
+     */
+    X509 *x = (X509 *)cx;
+
+    if (!X509_up_ref(x))
+        return NULL;
+
+    return x;
+}
+
 /*
  * Not strictly speaking an "up_ref" as a STACK doesn't have a reference
  * count but it has the same effect by duping the STACK and upping the ref of
@@ -447,12 +462,6 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
  */
 STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain)
 {
-    STACK_OF(X509) *ret;
-    int i;
-    ret = sk_X509_dup(chain);
-    for (i = 0; i < sk_X509_num(ret); i++) {
-        X509 *x = sk_X509_value(ret, i);
-        X509_up_ref(x);
-    }
-    return ret;
+    /* We upref each element rather than actually copying */
+    return sk_X509_deep_copy(chain, x509upref, X509_free);
 }
