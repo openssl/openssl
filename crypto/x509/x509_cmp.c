@@ -452,7 +452,16 @@ STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain)
     ret = sk_X509_dup(chain);
     for (i = 0; i < sk_X509_num(ret); i++) {
         X509 *x = sk_X509_value(ret, i);
-        X509_up_ref(x);
+        if (!X509_up_ref(x)) {
+            int j;
+
+            for (j = 0; j < i; j++) {
+                x = sk_X509_value(ret, j);
+                X509_free(x);
+            }
+            sk_X509_free(ret);
+            return NULL;
+        }
     }
     return ret;
 }
