@@ -416,6 +416,7 @@ int dgst_main(int argc, char **argv)
 static const char *newline_escape_filename(const char *file)
 {
     size_t i = 0, e = 0, length = strlen(file), newline_count = 0, mem_len = 0;
+    char *file_cpy = NULL;
     while(i < length) {
         const char c = file[i];
         if (c == '\n') {
@@ -424,7 +425,7 @@ static const char *newline_escape_filename(const char *file)
         i++;
     }
     mem_len = length + newline_count;
-    char *file_cpy = app_malloc(mem_len, file);
+    file_cpy = app_malloc(mem_len, file);
     i = 0;
 
     while(e < length) {
