@@ -1151,7 +1151,6 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 {
     ASN1_TIME *thisupd = NULL, *nextupd = NULL;
     OCSP_CERTID *cid;
-    OCSP_CERTID *cid_resp_md = NULL;
     OCSP_BASICRESP *bs = NULL;
     int i, id_count;
     EVP_MD_CTX *mctx = NULL;
@@ -1179,9 +1178,8 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         int found = 0;
         ASN1_OBJECT *cert_id_md_oid;
         const EVP_MD *cert_id_md;
+        OCSP_CERTID *cid_resp_md = NULL;
 
-        OCSP_CERTID_free(cid_resp_md);
-        cid_resp_md = NULL;
         one = OCSP_request_onereq_get0(req, i);
         cid = OCSP_onereq_get0_id(one);
 
@@ -1199,10 +1197,8 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 
             if (OCSP_id_issuer_cmp(ca_id, cid) == 0) {
                 found = 1;
-                if (resp_md != NULL && jj == 0) {
-                    OCSP_CERTID_free(cid_resp_md);
+                if (resp_md != NULL)
                     cid_resp_md = OCSP_cert_to_id(resp_md, NULL, ca_cert);
-                }
             }
             OCSP_CERTID_free(ca_id);
         }
@@ -1232,6 +1228,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             ASN1_GENERALIZEDTIME *invtm = NULL;
             OCSP_SINGLERESP *single;
             int reason = -1;
+
             unpack_revinfo(&revtm, &reason, &inst, &invtm, inf[DB_rev_date]);
             single = OCSP_basic_add1_status(bs, cid,
                                             V_OCSP_CERTSTATUS_REVOKED,
@@ -1247,6 +1244,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             ASN1_TIME_free(revtm);
             ASN1_GENERALIZEDTIME_free(invtm);
         }
+        OCSP_CERTID_free(cid_resp_md);
     }
 
     OCSP_copy_nonce(bs, req);
@@ -1280,7 +1278,6 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
     EVP_MD_CTX_free(mctx);
     ASN1_TIME_free(thisupd);
     ASN1_TIME_free(nextupd);
-    OCSP_CERTID_free(cid_resp_md);
     OCSP_BASICRESP_free(bs);
 }
 
