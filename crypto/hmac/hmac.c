@@ -35,7 +35,10 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
         return 0;
     }
 
-    /* We currently don't support shake128 and shake256 with HMAC */
+    /*
+     * The HMAC construction is not allowed  to be used with the
+     * extendable-output functions (XOF) shake128 and shake256.
+     */
     if ((EVP_MD_meth_get_flags(md) & EVP_MD_FLAG_XOF) != 0)
         return 0;
 
