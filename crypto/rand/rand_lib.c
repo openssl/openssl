@@ -235,7 +235,7 @@ size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
     struct {
         void * instance;
         int count;
-    } data = { NULL, 0 };
+    } data = { 0 };
 
     pool = rand_pool_new(0, min_len, max_len);
     if (pool == NULL)
