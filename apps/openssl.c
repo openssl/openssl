@@ -194,7 +194,7 @@ static void setup_trace_category(int category)
         return;
 
     channel = BIO_push(BIO_new(apps_bf_prefix()),
-                            dup_bio_err(FORMAT_TEXT));
+                       dup_bio_err(FORMAT_TEXT));
     trace_data = OPENSSL_zalloc(sizeof(*trace_data));
 
     if (trace_data == NULL
