@@ -33,6 +33,47 @@ static int test_509_dup_cert(int n)
     return ret;
 }
 
+static int test_X509_chain_up_ref(void)
+{
+    STACK_OF(X509) *chain1 = sk_X509_new_null();
+    STACK_OF(X509) *chain2 = NULL;
+    X509 *x1 = X509_new();
+    X509 *x2 = X509_new();
+    int i, ret = 0;
+
+    if (!TEST_ptr(chain1)
+            || !TEST_ptr(x1)
+            || !TEST_ptr(x2))
+        goto err;
+
+    if (!TEST_true(sk_X509_push(chain1, x1)))
+        goto err;
+    x1 = NULL;
+
+    if (!TEST_true(sk_X509_push(chain1, x2)))
+        goto err;
+    x2 = NULL;
+
+    chain2 = X509_chain_up_ref(chain1);
+    if (!TEST_ptr(chain2)
+            || !TEST_int_eq(sk_X509_num(chain1), sk_X509_num(chain2)))
+        goto err;
+
+    for (i = 0; i < sk_X509_num(chain1); i++) {
+        if (!TEST_true(sk_X509_value(chain1, i) == sk_X509_value(chain2, i)))
+            goto err;
+    }
+
+    ret = 1;
+ err:
+    sk_X509_pop_free(chain1, X509_free);
+    sk_X509_pop_free(chain2, X509_free);
+    X509_free(x1);
+    X509_free(x2);
+
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("cert.pem...\n")
 
 int setup_tests(void)
@@ -43,5 +84,7 @@ int setup_tests(void)
         return 0;
 
     ADD_ALL_TESTS(test_509_dup_cert, n);
+    ADD_TEST(test_X509_chain_up_ref);
+
     return 1;
 }
