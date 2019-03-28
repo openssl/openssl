@@ -229,6 +229,7 @@ static void setup_trace(const char *str)
             if (category == OSSL_TRACE_CATEGORY_ALL) {
                 while (++category < OSSL_TRACE_CATEGORY_NUM)
                     setup_trace_category(category);
+                break;
             } else if (category > 0) {
                 setup_trace_category(category);
             } else {
