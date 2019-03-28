@@ -543,6 +543,10 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
     module_first = (MODULE32) GetProcAddress(dll, "Module32First");
     module_next = (MODULE32) GetProcAddress(dll, "Module32Next");
 
+    /*
+     * Take a snapshot of current process which includes
+     * list of all involved modules.
+     */
     hModuleSnap = (*create_snap) (TH32CS_SNAPMODULE, 0);
     if (hModuleSnap == INVALID_HANDLE_VALUE) {
         FreeLibrary(dll);
@@ -559,9 +563,10 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
         return -1;
     }
 
+    /* Enumerate the modules to find one which includes me. */
     do {
-        if ((BYTE *) addr >= me32.modBaseAddr &&
-            (BYTE *) addr < me32.modBaseAddr + me32.modBaseSize) {
+        if ((uintptr_t) addr >= (uintptr_t) me32.modBaseAddr &&
+            (uintptr_t) addr < (uintptr_t) (me32.modBaseAddr + me32.modBaseSize)) {
             (*close_snap) (hModuleSnap);
             FreeLibrary(dll);
 # ifdef _WIN32_WCE
