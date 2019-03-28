@@ -67,7 +67,7 @@ static CRYPTO_THREAD_LOCAL private_drbg;
 
 
 /* NIST SP 800-90A DRBG recommends the use of a personalization string. */
-static const char ossl_pers_string[] = DRBG_DEFAULT_NONCE;
+static const char ossl_pers_string[] = DRBG_DEFAULT_PERS_STRING;
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 

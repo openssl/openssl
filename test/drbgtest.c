@@ -159,7 +159,7 @@ static size_t kat_nonce(RAND_DRBG *drbg, unsigned char **pout,
  */
 static int disable_crngt(RAND_DRBG *drbg)
 {
-    static const char pers[] = DRBG_DEFAULT_NONCE;
+    static const char pers[] = DRBG_DEFAULT_PERS_STRING;
     const int instantiate = drbg->state != DRBG_UNINITIALISED;
 
     if (drbg->get_entropy != rand_crngt_get_entropy)
@@ -1191,7 +1191,10 @@ static int test_crngt(int n)
     int res = 0;
     int expect;
 
+    if (!TEST_true(rand_crngt_single_init()))
+        return 0;
     rand_crngt_cleanup();
+
     if (!TEST_ptr(drbg = RAND_DRBG_new(dt->nid, dt->flags, NULL)))
         return 0;
     ent = (drbg->min_entropylen + CRNGT_BUFSIZ - 1) / CRNGT_BUFSIZ;

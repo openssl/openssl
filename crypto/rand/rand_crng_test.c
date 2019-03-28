@@ -64,6 +64,11 @@ DEFINE_RUN_ONCE_STATIC(do_rand_crngt_init)
         && OPENSSL_atexit(&rand_crngt_cleanup);
 }
 
+int rand_crngt_single_init(void)
+{
+    return RUN_ONCE(&rand_crngt_init_flag, do_rand_crngt_init);
+}
+
 size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,

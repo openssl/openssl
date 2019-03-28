@@ -53,7 +53,7 @@
 # define DRBG_MAX_LENGTH                         INT32_MAX
 
 /* The default nonce */
-# define DRBG_DEFAULT_NONCE                      "OpenSSL NIST SP 800-90A DRBG"
+# define DRBG_DEFAULT_PERS_STRING                "OpenSSL NIST SP 800-90A DRBG"
 
 /*
  * Maximum allocation size for RANDOM_POOL buffers
@@ -338,5 +338,12 @@ int rand_crngt_get_entropy_cb(unsigned char *buf);
 extern int (*crngt_get_entropy)(unsigned char *);
 int rand_crngt_init(void);
 void rand_crngt_cleanup(void);
+
+/*
+ * Expose the run once initialisation function for the unit tests because.
+ * they need to restart from scratch to validate the first block is skipped
+ * properly.
+ */
+int rand_crngt_single_init(void);
 
 #endif
