@@ -320,13 +320,13 @@ flagged as "untrusted".
 
 =item B<-sm2-id>
 
-Specifies the ID string when verifying an SM2 certificate. The ID string is
+Specify the ID string to use when verifying an SM2 certificate. The ID string is
 required by the SM2 signature algorithm for signing and verification.
 
 =item B<-sm2-hex-id>
 
-Specifies the SM2 ID string in binary form. The only valid input of this option
-is hexadecimal string.
+Specify a binary ID string to use when signing or verifying using an SM2
+certificate. The argument for this option is string of hexadecimal digits.
 
 =item B<->
 

@@ -20,9 +20,8 @@ X509_set_sm2_id() sets the B<sm2_id> value to an SM2 certificate B<x>.
 =head1 NOTES
 
 SM2 signature algorithm requires an ID value when generating and verifying a
-signature. Functions described in this manual provides the users the ability
-of manipulating the SM2 ID value when dealing with an SM2 certificate, e.g.,
-verifying an SM2 certificate.
+signature. The functions described in this manual provide the user with the
+ability to set and retrieve the SM2 ID value.
 
 =head1 RETURN VALUES
 
