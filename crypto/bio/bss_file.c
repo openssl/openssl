@@ -33,6 +33,8 @@
 # include "bio_lcl.h"
 # include <openssl/err.h>
 
+# if !defined(OPENSSL_NO_STDIO)
+
 static int file_write(BIO *h, const char *buf, int num);
 static int file_read(BIO *h, char *buf, int size);
 static int file_puts(BIO *h, const char *str);
@@ -361,5 +363,65 @@ static int file_puts(BIO *bp, const char *str)
     ret = file_write(bp, str, n);
     return ret;
 }
+
+#else
+
+static int file_write(BIO *b, const char *in, int inl)
+{
+    return -1;
+}
+static int file_read(BIO *b, char *out, int outl)
+{
+    return -1;
+}
+static int file_puts(BIO *bp, const char *str)
+{
+    return -1;
+}
+static int file_gets(BIO *bp, char *buf, int size)
+{
+    return 0;
+}
+static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
+{
+    return 0;
+}
+static int file_new(BIO *bi)
+{
+    return 0;
+}
+static int file_free(BIO *a)
+{
+    return 0;
+}
+
+static const BIO_METHOD methods_filep = {
+    BIO_TYPE_FILE,
+    "FILE pointer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
+    file_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
+    file_read,
+    file_puts,
+    file_gets,
+    file_ctrl,
+    file_new,
+    file_free,
+    NULL,                      /* file_callback_ctrl */
+};
+
+const BIO_METHOD *BIO_s_file(void)
+{
+    return &methods_filep;
+}
+
+BIO *BIO_new_file(const char *filename, const char *mode)
+{
+    return NULL;
+}
+
+# endif                         /* OPENSSL_NO_STDIO */
 
 #endif                          /* HEADER_BSS_FILE_C */

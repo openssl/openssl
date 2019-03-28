@@ -28,6 +28,8 @@
 #include "e_os.h"
 #include "internal/cryptlib.h"
 
+#if !defined(OPENSSL_NO_STDIO)
+
 # include <stdio.h>
 # ifdef __DJGPP__
 #  include <unistd.h>
@@ -113,3 +115,12 @@ FILE *openssl_fopen(const char *filename, const char *mode)
 # endif
     return file;
 }
+
+#else
+
+void *openssl_fopen(const char *filename, const char *mode)
+{
+    return NULL;
+}
+
+#endif
