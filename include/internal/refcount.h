@@ -102,27 +102,25 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
 #   else
 #    if !defined(_WIN32_WCE)
 #     pragma intrinsic(_InterlockedExchangeAdd)
-#     define INTERLOCKED_EXCHANGE_ADD _InterlockedExchangeAdd
 #    else
 #     if _WIN32_WCE >= 0x600
        extern long __cdecl _InterlockedExchangeAdd(long volatile*, long);
-#      define INTERLOCKED_EXCHANGE_ADD _InterlockedExchangeAdd
 #     else
        // under Windows CE we still have old-style Interlocked* functions
        extern long __cdecl InterlockedExchangeAdd(long volatile*, long);
-#      define INTERLOCKED_EXCHANGE_ADD InterlockedExchangeAdd
+#      define _InterlockedExchangeAdd InterlockedExchangeAdd
 #     endif
 #    endif
 
 static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
 {
-    *ret = INTERLOCKED_EXCHANGE_ADD(val, 1) + 1;
+    *ret = _InterlockedExchangeAdd(val, 1) + 1;
     return 1;
 }
 
 static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
 {
-    *ret = INTERLOCKED_EXCHANGE_ADD(val, -1) - 1;
+    *ret = _InterlockedExchangeAdd(val, -1) - 1;
     return 1;
 }
 #   endif
