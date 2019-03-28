@@ -50,6 +50,11 @@ static size_t sha256_size(void)
     return SHA256_DIGEST_LENGTH;
 }
 
+static size_t sha256_block_size(void)
+{
+    return SHA256_CBLOCK;
+}
+
 extern const OSSL_DISPATCH sha256_functions[];
 const OSSL_DISPATCH sha256_functions[] = {
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))sha256_newctx },
@@ -59,5 +64,6 @@ const OSSL_DISPATCH sha256_functions[] = {
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))sha256_freectx },
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))sha256_dupctx },
     { OSSL_FUNC_DIGEST_SIZE, (void (*)(void))sha256_size },
+    { OSSL_FUNC_DIGEST_BLOCK_SIZE, (void (*)(void))sha256_block_size },
     { 0, NULL }
 };

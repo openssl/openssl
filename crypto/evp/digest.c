@@ -549,6 +549,11 @@ static void *evp_md_from_dispatch(int mdtype, const OSSL_DISPATCH *fns,
                 break;
             md->size = OSSL_get_OP_digest_size(fns);
             break;
+        case OSSL_FUNC_DIGEST_BLOCK_SIZE:
+            if (md->dblock_size != NULL)
+                break;
+            md->dblock_size = OSSL_get_OP_digest_block_size(fns);
+            break;
         }
     }
     if ((fncnt != 0 && fncnt != 5)

@@ -70,6 +70,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_MAC_CTX_COPY                           211
 # define EVP_F_EVP_MAC_CTX_NEW                            213
 # define EVP_F_EVP_MAC_INIT                               212
+# define EVP_F_EVP_MD_BLOCK_SIZE                          229
 # define EVP_F_EVP_MD_CTX_COPY_EX                         110
 # define EVP_F_EVP_MD_SIZE                                162
 # define EVP_F_EVP_OPENINIT                               102
