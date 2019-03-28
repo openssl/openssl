@@ -582,7 +582,7 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
                     len = sz - 1;
                 for (i = 0; i < len; i++)
                     path[i] = (char)me32.szExePath[i];
-                path[len++] = 0;
+                path[len++] = '\0';
                 return len;
             }
 #  endif
@@ -594,7 +594,7 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
                 if (len >= sz)
                     len = sz - 1;
                 memcpy(path, me32.szExePath, len);
-                path[len++] = 0;
+                path[len++] = '\0';
                 return len;
             }
 # endif
