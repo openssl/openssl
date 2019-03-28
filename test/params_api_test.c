@@ -11,7 +11,7 @@
 #include <string.h>
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "endian.h"
+#include "ossl_test_endian.h"
 #include <openssl/params.h>
 #include <openssl/bn.h>
 
