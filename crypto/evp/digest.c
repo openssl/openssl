@@ -83,6 +83,7 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
     EVP_MD_meth_free(ctx->fetched_digest);
     ctx->fetched_digest = NULL;
     ctx->digest = NULL;
+    ctx->reqdigest = NULL;
 
     OPENSSL_free(ctx);
     return;
@@ -105,6 +106,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     ENGINE *tmpimpl = NULL;
 
     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
+
+    if (type != NULL)
+        ctx->reqdigest = type;
 
     /* TODO(3.0): Legacy work around code below. Remove this */
 #ifndef OPENSSL_NO_ENGINE

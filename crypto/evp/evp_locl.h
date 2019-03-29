@@ -10,6 +10,7 @@
 /* EVP_MD_CTX related stuff */
 
 struct evp_md_ctx_st {
+    const EVP_MD *reqdigest;    /* The original requested digest */
     const EVP_MD *digest;
     ENGINE *engine;             /* functional reference if 'digest' is
                                  * ENGINE-provided */
