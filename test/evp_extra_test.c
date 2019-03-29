@@ -1083,7 +1083,8 @@ static int calculate_digest(const EVP_MD *md, const char *msg, size_t len,
             || !TEST_true(EVP_DigestUpdate(ctx, msg, len))
             || !TEST_true(EVP_DigestFinal_ex(ctx, out, NULL))
             || !TEST_mem_eq(out, SHA256_DIGEST_LENGTH, exptd,
-                            SHA256_DIGEST_LENGTH))
+                            SHA256_DIGEST_LENGTH)
+            || !TEST_true(md == EVP_MD_CTX_md(ctx)))
         goto err;
 
     ret = 1;
