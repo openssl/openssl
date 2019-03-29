@@ -1126,8 +1126,11 @@ static int test_EVP_MD_fetch(int tst)
 
     /* Implicit fetching of the MD should produce the expected result */
     if (!TEST_true(calculate_digest(EVP_sha256(), testmsg, sizeof(testmsg),
-                                    exptd)))
+                                    exptd))
+            || !TEST_int_eq(EVP_MD_size(EVP_sha256()), SHA256_DIGEST_LENGTH)
+            || !TEST_int_eq(EVP_MD_block_size(EVP_sha256()), SHA256_CBLOCK))
         goto err;
+
     /*
      * Test that without loading any providers or specifying any properties we
      * can get a sha256 md from the default provider.
@@ -1135,7 +1138,9 @@ static int test_EVP_MD_fetch(int tst)
     if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL))
             || !TEST_ptr(md)
             || !TEST_int_eq(EVP_MD_nid(md), NID_sha256)
-            || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg), exptd)))
+            || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg), exptd))
+            || !TEST_int_eq(EVP_MD_size(md), SHA256_DIGEST_LENGTH)
+            || !TEST_int_eq(EVP_MD_block_size(md), SHA256_CBLOCK))
         goto err;
 
     /* Also test EVP_MD_upref() while we're doing this */
@@ -1156,7 +1161,9 @@ static int test_EVP_MD_fetch(int tst)
     /* Explicitly asking for the default implementation should succeeed */
     if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", "default=yes"))
             || !TEST_int_eq(EVP_MD_nid(md), NID_sha256)
-            || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg), exptd)))
+            || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg), exptd))
+            || !TEST_int_eq(EVP_MD_size(md), SHA256_DIGEST_LENGTH)
+            || !TEST_int_eq(EVP_MD_block_size(md), SHA256_CBLOCK))
         goto err;
 
     EVP_MD_meth_free(md);
