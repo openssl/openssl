@@ -12,7 +12,7 @@
   *) Added newline escaping functionality to a filename when using openssl dgst.
      This output format is to replicate the output format found in the '*sum' 
      checksum programs. This aims to preserve backward compatibility.
-     [Matt Eaton]
+     [Matt Eaton, Richard Levitte, and Paul Dale]
 
   *) Removed the heartbeat message in DTLS feature, as it has very
      little usage and doesn't seem to fulfill a valuable purpose.
