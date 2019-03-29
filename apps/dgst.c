@@ -420,7 +420,7 @@ int dgst_main(int argc, char **argv)
  * is present in the filename.  If a newline is present, the backslash flag is 
  * set and the output format will contain a backslash at the beginning of the
  * digest output. This output format is to replicate the output format found
- * in *sum and sha256sum. This aims to preserve backwards compatibility.
+ * in the '*sum' checksum program. This aims to preserve backward compatibility.
  */
 static const char *newline_escape_filename(const char *file, int * backslash)
 {
@@ -509,11 +509,11 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     } else if (sep == 2) {
         file = newline_escape_filename(file, &backslash);
 
+        if (backslash == 1)
+            BIO_puts(out, "\\");
+
         for (i = 0; i < (int)len; i++)
-            if (i == 0 && backslash == 1)
-                BIO_printf(out, "\\%02x", buf[i]);
-            else
-                BIO_printf(out, "%02x", buf[i]);
+            BIO_printf(out, "%02x", buf[i]);
 
         BIO_printf(out, " *%s\n", file);
         OPENSSL_free((char *)file);
