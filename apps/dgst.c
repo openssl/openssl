@@ -413,7 +413,16 @@ int dgst_main(int argc, char **argv)
     return ret;
 }
 
-static const char *newline_escape_filename(const char *file)
+/*
+ * The newline_escape_filename function performs newline escaping for any 
+ * filename that contains a newline.  This function also takes a pointer 
+ * to backslash. The backslash pointer is a flag to indicating whether a newline
+ * is present in the filename.  If a newline is present, the backslash flag is 
+ * set and the output format will contain a backslash at the beginning of the
+ * digest output. This output format is to replicate the output format found
+ * in *sum and sha256sum. This aims to preserve backwards compatibility.
+ */
+static const char *newline_escape_filename(const char *file, int * backslash)
 {
     size_t i = 0, e = 0, length = strlen(file), newline_count = 0, mem_len = 0;
     char *file_cpy = NULL;
@@ -433,6 +442,7 @@ static const char *newline_escape_filename(const char *file)
         if (c == '\n') {
             file_cpy[i++] = '\\';
             file_cpy[i++] = 'n';
+            *backslash = 1;
         } else {
             file_cpy[i++] = c;
         }
@@ -449,7 +459,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           const char *file)
 {
     size_t len;
-    int i;
+    int i, backslash = 0;
 
     for (;;) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
@@ -497,9 +507,12 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     if (binout) {
         BIO_write(out, buf, len);
     } else if (sep == 2) {
-        file = newline_escape_filename(file);
+        file = newline_escape_filename(file, &backslash);
 
         for (i = 0; i < (int)len; i++)
+            if (i == 0 && backslash == 1)
+                BIO_printf(out, "\\%02x", buf[i]);
+            else
                 BIO_printf(out, "%02x", buf[i]);
 
         BIO_printf(out, " *%s\n", file);
