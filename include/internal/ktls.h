@@ -118,12 +118,13 @@ static ossl_inline int ktls_start(int fd,
 static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
                                               const void *data, size_t length)
 {
-    struct msghdr msg = { 0 };
+    struct msghdr msg;
     int cmsg_len = sizeof(record_type);
     struct cmsghdr *cmsg;
     char buf[CMSG_SPACE(cmsg_len)];
     struct iovec msg_iov;       /* Vector of data to send/receive into */
 
+    memset(&msg, 0, sizeof(msg));
     msg.msg_control = buf;
     msg.msg_controllen = sizeof(buf);
     cmsg = CMSG_FIRSTHDR(&msg);
