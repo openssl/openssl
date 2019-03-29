@@ -456,7 +456,13 @@ static X509 *x509upref(X509 *x)
  */
 STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain)
 {
-    /* We upref each element rather than actually copying */
+    /*
+     * We upref each element rather than actually copying. We're "misusing"
+     * sk_X509_deep_copy a little here since we're not actually dong a "deep"
+     * copy. Note that we're casting the "copy" function to one that takes a
+     * const parameter, even though in reality it doesn't (because we need to
+     * modify the argument in order to upref it).
+     */
     return sk_X509_deep_copy(chain, (X509 *(*)(const X509 *))x509upref,
                              X509_free);
 }
