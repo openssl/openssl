@@ -479,9 +479,9 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 {
-    if (!ctx)
+    if (ctx == NULL)
         return NULL;
-    return ctx->digest;
+    return ctx->reqdigest;
 }
 
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
