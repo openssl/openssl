@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Changed the output of 'openssl {digestname} < file' to display the
+     digest name in its output.
+     [Richard Levitte]
+
   *) Added a new generic trace API which provides support for enabling
      instrumentation through trace output. This feature is mainly intended
      as an aid for developers and is disabled by default. To utilize it,
