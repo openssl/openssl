@@ -9,6 +9,11 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added newline escaping functionality to a filename when using openssl dgst.
+     This output format is to replicate the output format found in the '*sum' 
+     checksum programs. This aims to preserve backward compatibility.
+     [Matt Eaton]
+
   *) Removed the heartbeat message in DTLS feature, as it has very
      little usage and doesn't seem to fulfill a valuable purpose.
      [Richard Levitte]
