@@ -420,7 +420,8 @@ int dgst_main(int argc, char **argv)
  * is present in the filename.  If a newline is present, the backslash flag is 
  * set and the output format will contain a backslash at the beginning of the
  * digest output. This output format is to replicate the output format found
- * in the '*sum' checksum program. This aims to preserve backward compatibility.
+ * in the '*sum' checksum programs. This aims to preserve backward 
+ * compatibility.
  */
 static const char *newline_escape_filename(const char *file, int * backslash)
 {
