@@ -3111,15 +3111,7 @@ int s_client_main(int argc, char **argv)
                                cbuf[0] == 'K' ? SSL_KEY_UPDATE_REQUESTED
                                               : SSL_KEY_UPDATE_NOT_REQUESTED);
                 cbuf_len = 0;
-            }
-#ifndef OPENSSL_NO_HEARTBEATS
-            else if ((!c_ign_eof) && (cbuf[0] == 'B' && cmdletters)) {
-                BIO_printf(bio_err, "HEARTBEATING\n");
-                SSL_heartbeat(con);
-                cbuf_len = 0;
-            }
-#endif
-            else {
+            } else {
                 cbuf_len = i;
                 cbuf_off = 0;
 #ifdef CHARSET_EBCDIC

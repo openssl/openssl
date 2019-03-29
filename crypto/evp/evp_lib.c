@@ -12,6 +12,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "internal/evp_int.h"
+#include "internal/provider.h"
 #include "evp_locl.h"
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
@@ -316,6 +317,10 @@ int EVP_MD_size(const EVP_MD *md)
         EVPerr(EVP_F_EVP_MD_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
         return -1;
     }
+
+    if (md->prov != NULL && md->size != NULL)
+        return (int)md->size();
+
     return md->md_size;
 }
 
@@ -331,6 +336,12 @@ EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
     if (md != NULL) {
         md->type = md_type;
         md->pkey_type = pkey_type;
+        md->lock = CRYPTO_THREAD_lock_new();
+        if (md->lock == NULL) {
+            OPENSSL_free(md);
+            return NULL;
+        }
+        md->refcnt = 1;
     }
     return md;
 }
@@ -342,9 +353,27 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
         memcpy(to, md, sizeof(*to));
     return to;
 }
+
+int EVP_MD_upref(EVP_MD *md)
+{
+    int ref = 0;
+
+    CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
+    return 1;
+}
+
 void EVP_MD_meth_free(EVP_MD *md)
 {
-    OPENSSL_free(md);
+    if (md != NULL) {
+        int i;
+
+        CRYPTO_DOWN_REF(&md->refcnt, &i, md->lock);
+        if (i > 0)
+            return;
+        ossl_provider_free(md->prov);
+        CRYPTO_THREAD_lock_free(md->lock);
+        OPENSSL_free(md);
+    }
 }
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
 {

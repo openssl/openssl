@@ -393,8 +393,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
         RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, ERR_LIB_BN);
         ok = 0;
     }
-    if (ctx != NULL)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ok;
 #endif /* FIPS_MODE */

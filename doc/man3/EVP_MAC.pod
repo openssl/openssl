@@ -202,6 +202,9 @@ For MAC implementations that use an underlying computation algorithm,
 these controls set what the algorithm should be, and the engine that
 implements the algorithm if needed.
 
+Note that not all algorithms may support all digests. HMAC does not support
+variable output length digests such as SHAKE128 or SHAKE256.
+
 B<EVP_MAC_CTRL_SET_ENGINE> takes one argument: C<ENGINE *>
 
 B<EVP_MAC_CTRL_SET_MD> takes one argument: C<EVP_MD *>

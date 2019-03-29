@@ -458,6 +458,8 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         DSA_SIG_free(dsa_sig);
         return rv;
     }
+    if (BIO_puts(bp, "\n") <= 0)
+        return 0;
     return X509_signature_dump(bp, sig, indent);
 }
 

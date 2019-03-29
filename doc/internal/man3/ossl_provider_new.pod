@@ -4,7 +4,8 @@
 
 ossl_provider_find, ossl_provider_new, ossl_provider_upref,
 ossl_provider_free, ossl_provider_add_module_location,
-ossl_provider_activate, ossl_provider_forall_loaded,
+ossl_provider_set_fallback, ossl_provider_activate,
+ossl_provider_forall_loaded,
 ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
 ossl_provider_teardown, ossl_provider_get_param_types,
@@ -23,6 +24,7 @@ ossl_provider_get_params, ossl_provider_query_operation
 
  /* Setters */
  int ossl_provider_add_module_location(OSSL_PROVIDER *prov, const char *loc);
+ int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
 
  /* Load and initialize the Provider */
  int ossl_provider_activate(OSSL_PROVIDER *prov);
@@ -71,7 +73,7 @@ times as ossl_provider_activate() has.
 
 ossl_provider_find() finds an existing I<provider object> in the
 I<provider object> store by C<name>.
-The I<provider object> it finds gets it's reference count
+The I<provider object> it finds gets its reference count
 incremented.
 
 ossl_provider_new() creates a new I<provider object> and stores it in
@@ -84,13 +86,19 @@ To indicate a built-in provider, the C<init_function> argument must
 point at the provider initialization function for that provider.
 
 ossl_provider_free() decrements a I<provider object>'s reference
-counter; if it drops to one, the I<provider object> will be
-inactivated (it's teardown function is called) but kept in the store;
-if it drops down to zero, the associated module will be unloaded if
-one was loaded, and the I<provider object> will be freed.
+counter; if it drops below 2, the I<provider object> is assumed to
+have fallen out of use and will be inactivated (its teardown function
+is called); if it drops down to zero, the I<provider object> is
+assumed to have been taken out of the store, and the associated module
+will be unloaded if one was loaded, and the I<provider object> will be
+freed.
 
 ossl_provider_add_module_location() adds a location to look for a
 provider module.
+
+ossl_provider_set_fallback() marks an available provider as fallback.
+Note that after this call, the I<provider object> pointer that was
+used can simply be dropped, but not freed.
 
 ossl_provider_activate() "activates" the provider for the given
 I<provider object>.
@@ -115,6 +123,8 @@ be located in that module, and called.
 
 ossl_provider_forall_loaded() iterates over all the currently
 "activated" providers, and calls C<cb> for each of them.
+If no providers have been "activated" yet, it tries to activate all
+available fallback providers and tries another iteration.
 
 ossl_provider_name() returns the name that was given with
 ossl_provider_new().
@@ -178,8 +188,8 @@ it has been incremented.
 
 ossl_provider_free() doesn't return any value.
 
-ossl_provider_add_module_location() and ossl_provider_activate()
-return 1 on success, or 0 on error.
+ossl_provider_add_module_location(), ossl_provider_set_fallback() and
+ossl_provider_activate() return 1 on success, or 0 on error.
 
 ossl_provider_name(), ossl_provider_dso(),
 ossl_provider_module_name(), and ossl_provider_module_path() return a

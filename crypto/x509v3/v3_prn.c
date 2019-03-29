@@ -34,8 +34,11 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
             BIO_puts(out, "<EMPTY>\n");
     }
     for (i = 0; i < sk_CONF_VALUE_num(val); i++) {
-        if (ml)
+        if (ml) {
+            if (i > 0)
+                BIO_printf(out, "\n");
             BIO_printf(out, "%*s", indent, "");
+        }
         else if (i > 0)
             BIO_printf(out, ", ");
         nval = sk_CONF_VALUE_value(val, i);
@@ -59,8 +62,6 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
             }
         }
 #endif
-        if (ml)
-            BIO_puts(out, "\n");
     }
 }
 

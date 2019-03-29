@@ -77,6 +77,7 @@ extern "C" {
 # ifndef EVP_MD
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
+int EVP_MD_upref(EVP_MD *md);
 void EVP_MD_meth_free(EVP_MD *md);
 
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
@@ -560,6 +561,9 @@ __owur int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
                            unsigned int *s);
 __owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
                               size_t len);
+
+__owur EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                            const char *properties);
 
 int EVP_read_pw_string(char *buf, int length, const char *prompt, int verify);
 int EVP_read_pw_string_min(char *buf, int minlen, int maxlen,
@@ -1055,6 +1059,7 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 # ifndef OPENSSL_NO_ENGINE
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e);
+ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
 # endif
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
 void *EVP_PKEY_get0(const EVP_PKEY *pkey);

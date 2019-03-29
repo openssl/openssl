@@ -290,19 +290,31 @@ static int test_check_private_exponent(void)
           && TEST_ptr(ctx = BN_CTX_new())
           && TEST_ptr(p = BN_new())
           && TEST_ptr(q = BN_new())
-          && TEST_ptr(e = BN_new())
-          && TEST_ptr(d = BN_new())
-          && TEST_ptr(n = BN_new())
           /* lcm(15-1,17-1) = 14*16 / 2 = 112 */
           && TEST_true(BN_set_word(p, 15))
           && TEST_true(BN_set_word(q, 17))
+          && TEST_true(RSA_set0_factors(key, p, q));
+    if (!ret) {
+        BN_free(p);
+        BN_free(q);
+        goto end;
+    }
+
+    ret = TEST_ptr(e = BN_new())
+          && TEST_ptr(d = BN_new())
+          && TEST_ptr(n = BN_new())
           && TEST_true(BN_set_word(e, 5))
           && TEST_true(BN_set_word(d, 157))
           && TEST_true(BN_set_word(n, 15*17))
-          && TEST_true(RSA_set0_factors(key, p, q))
-          && TEST_true(RSA_set0_key(key, n, e, d))
-          /* fails since d >= lcm(p-1, q-1) */
-          && TEST_false(rsa_check_private_exponent(key, 8, ctx))
+          && TEST_true(RSA_set0_key(key, n, e, d));
+    if (!ret) {
+        BN_free(e);
+        BN_free(d);
+        BN_free(n);
+        goto end;
+    }
+    /* fails since d >= lcm(p-1, q-1) */
+    ret = TEST_false(rsa_check_private_exponent(key, 8, ctx))
           && TEST_true(BN_set_word(d, 45))
           /* d is correct size and 1 = e.d mod lcm(p-1, q-1) */
           && TEST_true(rsa_check_private_exponent(key, 8, ctx))
@@ -314,7 +326,7 @@ static int test_check_private_exponent(void)
           /* fail if 1 != e.d mod lcm(p-1, q-1) */
           && TEST_true(BN_set_word(d, 46))
           && TEST_false(rsa_check_private_exponent(key, 8, ctx));
-
+end:
     RSA_free(key);
     BN_CTX_free(ctx);
     return ret;
@@ -343,8 +355,13 @@ static int test_check_crt_components(void)
           && TEST_true(BN_set_word(p, P))
           && TEST_true(BN_set_word(q, Q))
           && TEST_true(BN_set_word(e, E))
-          && TEST_true(RSA_set0_factors(key, p, q))
-          && TEST_true(rsa_sp800_56b_derive_params_from_pq(key, 8, e, ctx))
+          && TEST_true(RSA_set0_factors(key, p, q));
+    if (!ret) {
+        BN_free(p);
+        BN_free(q);
+        goto end;
+    }
+    ret = TEST_true(rsa_sp800_56b_derive_params_from_pq(key, 8, e, ctx))
           && TEST_BN_eq_word(key->n, N)
           && TEST_BN_eq_word(key->dmp1, DP)
           && TEST_BN_eq_word(key->dmq1, DQ)
@@ -382,7 +399,7 @@ static int test_check_crt_components(void)
           && TEST_true(BN_set_word(key->iqmp, QINV))
           /* check defaults are still valid */
           && TEST_true(rsa_check_crt_components(key, ctx));
-
+end:
     BN_free(e);
     RSA_free(key);
     BN_CTX_free(ctx);
@@ -427,14 +444,25 @@ static int test_invalid_keypair(void)
           /* load key */
           && TEST_ptr(p = bn_load_new(cav_p, sizeof(cav_p)))
           && TEST_ptr(q = bn_load_new(cav_q, sizeof(cav_q)))
-          && TEST_ptr(e = bn_load_new(cav_e, sizeof(cav_e)))
+          && TEST_true(RSA_set0_factors(key, p, q));
+    if (!ret) {
+        BN_free(p);
+        BN_free(q);
+        goto end;
+    }
+
+    ret = TEST_ptr(e = bn_load_new(cav_e, sizeof(cav_e)))
           && TEST_ptr(n = bn_load_new(cav_n, sizeof(cav_n)))
           && TEST_ptr(d = bn_load_new(cav_d, sizeof(cav_d)))
-          && TEST_true(RSA_set0_key(key, n, e, d))
-          && TEST_true(RSA_set0_factors(key, p, q))
-
+          && TEST_true(RSA_set0_key(key, n, e, d));
+    if (!ret) {
+        BN_free(e);
+        BN_free(n);
+        BN_free(d);
+        goto end;
+    }
           /* bad strength/key size */
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 100, 2048))
+    ret = TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 100, 2048))
           && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 112, 1024))
           && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 128, 2048))
           && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 140, 3072))
@@ -466,7 +494,7 @@ static int test_invalid_keypair(void)
           && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, -1, 2048))
           && TEST_true(BN_add_word(q, 2))
           && TEST_true(BN_mul(n, p, q, ctx));
-
+end:
     RSA_free(key);
     BN_CTX_free(ctx);
     return ret;
@@ -567,16 +595,22 @@ static int test_check_private_key(void)
           && TEST_ptr(n = bn_load_new(cav_n, sizeof(cav_n)))
           && TEST_ptr(d = bn_load_new(cav_d, sizeof(cav_d)))
           && TEST_ptr(e = bn_load_new(cav_e, sizeof(cav_e)))
-          && TEST_true(RSA_set0_key(key, n, e, d))
-          /* check d is in range */
-          && TEST_true(rsa_sp800_56b_check_private(key))
+          && TEST_true(RSA_set0_key(key, n, e, d));
+    if (!ret) {
+        BN_free(n);
+        BN_free(e);
+        BN_free(d);
+        goto end;
+    }
+    /* check d is in range */
+    ret = TEST_true(rsa_sp800_56b_check_private(key))
           /* check d is too low */
           && TEST_true(BN_set_word(d, 0))
           && TEST_false(rsa_sp800_56b_check_private(key))
           /* check d is too high */
           && TEST_ptr(BN_copy(d, n))
           && TEST_false(rsa_sp800_56b_check_private(key));
-
+end:
     RSA_free(key);
     return ret;
 }
@@ -593,9 +627,14 @@ static int test_check_public_key(void)
           /* load public key */
           && TEST_ptr(e = bn_load_new(cav_e, sizeof(cav_e)))
           && TEST_ptr(n = bn_load_new(cav_n, sizeof(cav_n)))
-          && TEST_true(RSA_set0_key(key, n, e, NULL))
-          /* check public key is valid */
-          && TEST_true(rsa_sp800_56b_check_public(key))
+          && TEST_true(RSA_set0_key(key, n, e, NULL));
+    if (!ret) {
+        BN_free(e);
+        BN_free(n);
+        goto end;
+    }
+    /* check public key is valid */
+    ret = TEST_true(rsa_sp800_56b_check_public(key))
           /* check fail if n is even */
           && TEST_true(BN_add_word(n, 1))
           && TEST_false(rsa_sp800_56b_check_public(key))
@@ -611,7 +650,7 @@ static int test_check_public_key(void)
           /* modulus fails composite check */
           && TEST_true(BN_add_word(n, 2))
           && TEST_false(rsa_sp800_56b_check_public(key));
-
+end:
     RSA_free(key);
     return ret;
 }

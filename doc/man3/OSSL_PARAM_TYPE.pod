@@ -272,7 +272,9 @@ This example is for setting parameters on some object:
 
 =head2 Example 2
 
-This example is for requesting parameters on some object:
+This example is for requesting parameters on some object, and also
+demonstrates that the requestor isn't obligated to request all
+available parameters:
 
     const char *foo = NULL;
     size_t foo_l;
@@ -289,8 +291,14 @@ could fill in the parameters like this:
 
     /* const OSSL_PARAM *params */
 
-    OSSL_PARAM_set_utf8_ptr(OSSL_PARAM_locate(params, "foo"), "foo value");
-    OSSL_PARAM_set_utf8_string(OSSL_PARAM_locate(params, "bar"), "bar value");
+    const OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params, "foo")) == NULL)
+        OSSL_PARAM_set_utf8_ptr(p, "foo value");
+    if ((p = OSSL_PARAM_locate(params, "bar")) == NULL)
+        OSSL_PARAM_set_utf8_ptr(p, "bar value");
+    if ((p = OSSL_PARAM_locate(params, "cookie")) == NULL)
+        OSSL_PARAM_set_utf8_ptr(p, "cookie value");
 
 =head1 SEE ALSO
 

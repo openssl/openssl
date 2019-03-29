@@ -306,9 +306,10 @@ static int test_keylog(void)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    struct sslapitest_log_counts expected = {0};
+    struct sslapitest_log_counts expected;
 
     /* Clean up logging space */
+    memset(&expected, 0, sizeof(expected));
     memset(client_log_buffer, 0, sizeof(client_log_buffer));
     memset(server_log_buffer, 0, sizeof(server_log_buffer));
     client_log_buffer_index = 0;
@@ -387,11 +388,12 @@ static int test_keylog_no_master_key(void)
     SSL *clientssl = NULL, *serverssl = NULL;
     SSL_SESSION *sess = NULL;
     int testresult = 0;
-    struct sslapitest_log_counts expected = {0};
+    struct sslapitest_log_counts expected;
     unsigned char buf[1];
     size_t readbytes, written;
 
     /* Clean up logging space */
+    memset(&expected, 0, sizeof(expected));
     memset(client_log_buffer, 0, sizeof(client_log_buffer));
     memset(server_log_buffer, 0, sizeof(server_log_buffer));
     client_log_buffer_index = 0;
@@ -4593,11 +4595,15 @@ static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
 {
     long len;
     unsigned char *data;
-    PACKET pkt = {0}, pkt2 = {0}, pkt3 = {0};
+    PACKET pkt, pkt2, pkt3;
     unsigned int MFL_code = 0, type = 0;
 
     if (!TEST_uint_gt( len = BIO_get_mem_data( bio, (char **) &data ), 0 ) )
         goto end;
+
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&pkt2, 0, sizeof(pkt2));
+    memset(&pkt3, 0, sizeof(pkt3));
 
     if (!TEST_true( PACKET_buf_init( &pkt, data, len ) )
                /* Skip the record header */

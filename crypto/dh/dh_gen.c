@@ -122,9 +122,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         ok = 0;
     }
 
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
     return ok;
 }

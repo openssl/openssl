@@ -254,7 +254,7 @@ const char *RAND_file_name(char *buf, size_t size)
     size_t len;
     int use_randfile = 1;
 
-#if defined(_WIN32) && defined(CP_UTF8)
+#if defined(_WIN32) && defined(CP_UTF8) && !defined(_WIN32_WCE)
     DWORD envlen;
     WCHAR *var;
 

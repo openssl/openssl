@@ -396,6 +396,9 @@ CRYPTO_F_OSSL_PROVIDER_NEW:131:ossl_provider_new
 CRYPTO_F_PKEY_HMAC_INIT:123:pkey_hmac_init
 CRYPTO_F_PKEY_POLY1305_INIT:124:pkey_poly1305_init
 CRYPTO_F_PKEY_SIPHASH_INIT:125:pkey_siphash_init
+CRYPTO_F_PROVIDER_ACTIVATE:134:provider_activate
+CRYPTO_F_PROVIDER_NEW:135:provider_new
+CRYPTO_F_PROVIDER_STORE_NEW:136:provider_store_new
 CRYPTO_F_SK_RESERVE:129:sk_reserve
 CT_F_CTLOG_NEW:117:CTLOG_new
 CT_F_CTLOG_NEW_FROM_BASE64:118:CTLOG_new_from_base64
@@ -778,7 +781,9 @@ EVP_F_EVP_CIPHER_PARAM_TO_ASN1:205:EVP_CIPHER_param_to_asn1
 EVP_F_EVP_DECRYPTFINAL_EX:101:EVP_DecryptFinal_ex
 EVP_F_EVP_DECRYPTUPDATE:166:EVP_DecryptUpdate
 EVP_F_EVP_DIGESTFINALXOF:174:EVP_DigestFinalXOF
+EVP_F_EVP_DIGESTFINAL_EX:230:EVP_DigestFinal_ex
 EVP_F_EVP_DIGESTINIT_EX:128:EVP_DigestInit_ex
+EVP_F_EVP_DIGESTUPDATE:231:EVP_DigestUpdate
 EVP_F_EVP_ENCRYPTDECRYPTUPDATE:219:evp_EncryptDecryptUpdate
 EVP_F_EVP_ENCRYPTFINAL_EX:127:EVP_EncryptFinal_ex
 EVP_F_EVP_ENCRYPTUPDATE:167:EVP_EncryptUpdate
@@ -898,6 +903,11 @@ KDF_F_PKEY_TLS1_PRF_CTRL_STR:100:pkey_tls1_prf_ctrl_str
 KDF_F_PKEY_TLS1_PRF_DERIVE:101:pkey_tls1_prf_derive
 KDF_F_PKEY_TLS1_PRF_INIT:110:pkey_tls1_prf_init
 KDF_F_SCRYPT_SET_MEMBUF:129:scrypt_set_membuf
+KDF_F_SSKDF_CTRL_STR:134:sskdf_ctrl_str
+KDF_F_SSKDF_DERIVE:135:sskdf_derive
+KDF_F_SSKDF_MAC2CTRL:136:sskdf_mac2ctrl
+KDF_F_SSKDF_NEW:137:sskdf_new
+KDF_F_SSKDF_SIZE:138:sskdf_size
 KDF_F_TLS1_PRF_ALG:111:tls1_prf_alg
 OBJ_F_OBJ_ADD_OBJECT:105:OBJ_add_object
 OBJ_F_OBJ_ADD_SIGID:107:OBJ_add_sigid
@@ -1215,7 +1225,6 @@ SSL_F_DO_DTLS1_WRITE:245:do_dtls1_write
 SSL_F_DO_SSL3_WRITE:104:do_ssl3_write
 SSL_F_DTLS1_BUFFER_RECORD:247:dtls1_buffer_record
 SSL_F_DTLS1_CHECK_TIMEOUT_NUM:318:dtls1_check_timeout_num
-SSL_F_DTLS1_HEARTBEAT:305:*
 SSL_F_DTLS1_HM_FRAGMENT_NEW:623:dtls1_hm_fragment_new
 SSL_F_DTLS1_PREPROCESS_FRAGMENT:288:dtls1_preprocess_fragment
 SSL_F_DTLS1_PROCESS_BUFFERED_RECORDS:424:dtls1_process_buffered_records
@@ -2128,7 +2137,6 @@ CONF_R_UNKNOWN_MODULE_NAME:113:unknown module name
 CONF_R_VARIABLE_EXPANSION_TOO_LONG:116:variable expansion too long
 CONF_R_VARIABLE_HAS_NO_VALUE:104:variable has no value
 CRMF_R_BAD_PBM_ITERATIONCOUNT:100:bad pbm iterationcount
-CRMF_R_MALFORMED_IV:101:malformed iv
 CRMF_R_CRMFERROR:102:crmferror
 CRMF_R_ERROR:103:error
 CRMF_R_ERROR_DECODING_CERTIFICATE:104:error decoding certificate
@@ -2136,6 +2144,7 @@ CRMF_R_ERROR_DECRYPTING_CERTIFICATE:105:error decrypting certificate
 CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:106:error decrypting symmetric key
 CRMF_R_FAILURE_OBTAINING_RANDOM:107:failure obtaining random
 CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
+CRMF_R_MALFORMED_IV:101:malformed iv
 CRMF_R_NULL_ARGUMENT:109:null argument
 CRMF_R_SETTING_MAC_ALGOR_FAILURE:110:setting mac algor failure
 CRMF_R_SETTING_OWF_ALGOR_FAILURE:111:setting owf algor failure
@@ -2348,6 +2357,7 @@ EVP_R_EXPECTING_A_DSA_KEY:129:expecting a dsa key
 EVP_R_EXPECTING_A_EC_KEY:142:expecting a ec key
 EVP_R_EXPECTING_A_POLY1305_KEY:164:expecting a poly1305 key
 EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
+EVP_R_FINAL_ERROR:188:final error
 EVP_R_FIPS_MODE_NOT_SUPPORTED:167:fips mode not supported
 EVP_R_GET_RAW_KEY_FAILED:182:get raw key failed
 EVP_R_ILLEGAL_SCRYPT_PARAMETERS:171:illegal scrypt parameters
@@ -2366,6 +2376,7 @@ EVP_R_MEMORY_LIMIT_EXCEEDED:172:memory limit exceeded
 EVP_R_MESSAGE_DIGEST_IS_NULL:159:message digest is null
 EVP_R_METHOD_NOT_SUPPORTED:144:method not supported
 EVP_R_MISSING_PARAMETERS:103:missing parameters
+EVP_R_NOT_ABLE_TO_COPY_CTX:190:not able to copy ctx
 EVP_R_NOT_XOF_OR_INVALID_LENGTH:178:not XOF or invalid length
 EVP_R_NO_CIPHER_SET:131:no cipher set
 EVP_R_NO_DEFAULT_DIGEST:158:no default digest
@@ -2399,9 +2410,11 @@ EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS:135:unsupported number of rounds
 EVP_R_UNSUPPORTED_PRF:125:unsupported prf
 EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM:118:unsupported private key algorithm
 EVP_R_UNSUPPORTED_SALT_TYPE:126:unsupported salt type
+EVP_R_UPDATE_ERROR:189:update error
 EVP_R_WRAP_MODE_NOT_ALLOWED:170:wrap mode not allowed
 EVP_R_WRONG_FINAL_BLOCK_LENGTH:109:wrong final block length
 KDF_R_INVALID_DIGEST:100:invalid digest
+KDF_R_INVALID_MAC_TYPE:116:invalid mac type
 KDF_R_MISSING_ITERATION_COUNT:109:missing iteration count
 KDF_R_MISSING_KEY:104:missing key
 KDF_R_MISSING_MESSAGE_DIGEST:105:missing message digest
@@ -2414,6 +2427,7 @@ KDF_R_MISSING_SESSION_ID:113:missing session id
 KDF_R_MISSING_TYPE:114:missing type
 KDF_R_MISSING_XCGHASH:115:missing xcghash
 KDF_R_UNKNOWN_PARAMETER_TYPE:103:unknown parameter type
+KDF_R_UNSUPPORTED_MAC_TYPE:117:unsupported mac type
 KDF_R_VALUE_ERROR:108:value error
 KDF_R_VALUE_MISSING:102:value missing
 KDF_R_WRONG_OUTPUT_BUFFER_SIZE:112:wrong output buffer size
@@ -2959,8 +2973,6 @@ SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH:303:ssl session id has bad length
 SSL_R_SSL_SESSION_ID_TOO_LONG:408:ssl session id too long
 SSL_R_SSL_SESSION_VERSION_MISMATCH:210:ssl session version mismatch
 SSL_R_STILL_IN_INIT:121:still in init
-SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT:365:peer does not accept heartbeats
-SSL_R_TLS_HEARTBEAT_PENDING:366:heartbeat request already pending
 SSL_R_TLS_ILLEGAL_EXPORTER_LABEL:367:tls illegal exporter label
 SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST:157:tls invalid ecpointformat list
 SSL_R_TOO_MANY_KEY_UPDATES:132:too many key updates

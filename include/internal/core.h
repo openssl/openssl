@@ -41,7 +41,7 @@ typedef struct ossl_method_construct_method_st {
     void *(*construct)(const OSSL_DISPATCH *fns, OSSL_PROVIDER *prov,
                        void *data);
     /* Destruct a method */
-    void (*destruct)(void *method);
+    void (*destruct)(void *method, void *data);
 } OSSL_METHOD_CONSTRUCT_METHOD;
 
 void *ossl_method_construct(OPENSSL_CTX *ctx, int operation_id,

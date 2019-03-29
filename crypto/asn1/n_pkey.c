@@ -22,6 +22,12 @@ NON_EMPTY_TRANSLATION_UNIT
 
 # ifndef OPENSSL_NO_RC4
 
+# define ASN1_BROKEN_SEQUENCE(tname) \
+        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
+        ASN1_SEQUENCE(tname)
+# define static_ASN1_BROKEN_SEQUENCE_END(stname) \
+        static_ASN1_SEQUENCE_END_ref(stname, stname)
+
 typedef struct netscape_pkey_st {
     int32_t version;
     X509_ALGOR *algor;

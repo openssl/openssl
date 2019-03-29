@@ -3547,13 +3547,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         ret = 1;
         break;
 
-#ifndef OPENSSL_NO_HEARTBEATS
-    case SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT:
-    case SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING:
-    case SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS:
-        break;
-#endif
-
     case SSL_CTRL_CHAIN:
         if (larg)
             return ssl_cert_set1_chain(s, NULL, (STACK_OF(X509) *)parg);

@@ -58,7 +58,7 @@ static int test_client_hello(int currtest)
     BIO *wbio;
     long len;
     unsigned char *data;
-    PACKET pkt = {0}, pkt2 = {0}, pkt3 = {0};
+    PACKET pkt, pkt2, pkt3;
     char *dummytick = "Hello World!";
     unsigned int type = 0;
     int testresult = 0;
@@ -70,6 +70,10 @@ static int test_client_hello(int currtest)
     if (currtest == TEST_ADD_PADDING_AND_PSK)
         return 1;
 #endif
+
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&pkt2, 0, sizeof(pkt2));
+    memset(&pkt3, 0, sizeof(pkt3));
 
     /*
      * For each test set up an SSL_CTX and SSL and see what ClientHello gets

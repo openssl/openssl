@@ -163,7 +163,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 #if !defined(OPENSSL_NO_DSO) \
     && !defined(OPENSSL_USE_NODELETE) \
     && !defined(OPENSSL_NO_PINSHARED)
-# ifdef DSO_WIN32
+# if defined(DSO_WIN32) && !defined(_WIN32_WCE)
     {
         HMODULE handle = NULL;
         BOOL ret;
@@ -743,7 +743,7 @@ int OPENSSL_atexit(void (*handler)(void))
         } handlersym;
 
         handlersym.func = handler;
-# ifdef DSO_WIN32
+# if defined(DSO_WIN32) && !defined(_WIN32_WCE)
         {
             HMODULE handle = NULL;
             BOOL ret;

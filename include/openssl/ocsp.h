@@ -229,8 +229,8 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
 int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
                    int *pssl);
 
-int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
-int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
+int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
+int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 
 int OCSP_request_onereq_count(OCSP_REQUEST *req);
 OCSP_ONEREQ *OCSP_request_onereq_get0(OCSP_REQUEST *req, int i);

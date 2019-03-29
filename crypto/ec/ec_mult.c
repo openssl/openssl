@@ -378,7 +378,7 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
 
  err:
     EC_POINT_free(p);
-    EC_POINT_free(s);
+    EC_POINT_clear_free(s);
     BN_CTX_end(ctx);
 
     return ret;
@@ -948,8 +948,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     ret = 1;
 
  err:
-    if (ctx != NULL)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     EC_ec_pre_comp_free(pre_comp);
     if (points) {

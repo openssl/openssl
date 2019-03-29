@@ -135,6 +135,17 @@ EVP_KDF_ctrl_str() type string: "iter"
 
 The value string is expected to be a decimal number.
 
+=item B<EVP_KDF_CTRL_SET_MAC>
+
+This control expects one argument: C<EVP_MAC *mac>
+
+Some KDF implementations use a MAC as an underlying computation
+algorithm, this control sets what the MAC algorithm should be.
+
+EVP_KDF_ctrl_str() type string: "mac"
+
+The value string is expected to be the name of a MAC.
+
 =item B<EVP_KDF_CTRL_SET_MD>
 
 This control expects one argument: C<EVP_MD *md>
@@ -167,6 +178,19 @@ The value string is expected to be a hexadecimal number, which will be
 decoded before being passed on as the control value.
 
 =back
+
+=item B<EVP_KDF_CTRL_SET_MAC_SIZE>
+
+This control expects one argument: C<size_t size>
+
+Used by implementations that use a MAC with a variable output size (KMAC). For
+those KDF implementations that support it, this control sets the MAC output size.
+
+The default value, if any, is implementation dependent.
+
+EVP_KDF_ctrl_str() type string: "outlen"
+
+The value string is expected to be a decimal number.
 
 =item B<EVP_KDF_CTRL_SET_MAXMEM_BYTES>
 
@@ -204,10 +228,18 @@ supported by the KDF algorithm.
 =head1 SEE ALSO
 
 L<EVP_KDF_SCRYPT(7)>
+L<EVP_KDF_TLS1_PRF(7)>
+L<EVP_KDF_PBKDF2(7)>
+L<EVP_KDF_HKDF(7)>
+L<EVP_KDF_SS(7)>
+
+=head1 HISTORY
+
+This functionality was added to OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

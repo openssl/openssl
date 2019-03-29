@@ -184,6 +184,8 @@ void BN_CTX_start(BN_CTX *ctx)
 
 void BN_CTX_end(BN_CTX *ctx)
 {
+    if (ctx == NULL)
+        return;
     CTXDBG("ENTER BN_CTX_end()", ctx);
     if (ctx->err_stack)
         ctx->err_stack--;

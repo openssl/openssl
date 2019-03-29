@@ -27,6 +27,7 @@ calls must be made before calling any other functions that use the
 B<ctx> as an argument.
 
 Finally, BN_CTX_end() must be called before returning from the function.
+If B<ctx> is NULL, nothing is done.
 When BN_CTX_end() is called, the B<BIGNUM> pointers obtained from
 BN_CTX_get() become invalid.
 

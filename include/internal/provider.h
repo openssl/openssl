@@ -34,6 +34,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov);
 
 /* Setters */
 int ossl_provider_add_module_location(OSSL_PROVIDER *prov, const char *loc);
+int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
 
 /*
  * Activate the Provider

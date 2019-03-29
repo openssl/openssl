@@ -676,7 +676,9 @@ static void felem_contract(felem out, const felem in)
  */
 static void felem_neg(felem out, const felem in)
 {
-    widefelem tmp = {0};
+    widefelem tmp;
+
+    memset(tmp, 0, sizeof(tmp));
     felem_diff_128_64(tmp, in);
     felem_reduce(out, tmp);
 }

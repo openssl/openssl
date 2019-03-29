@@ -59,12 +59,18 @@ static const ERR_STRING_DATA KDF_str_functs[] = {
      "pkey_tls1_prf_derive"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_TLS1_PRF_INIT, 0), "pkey_tls1_prf_init"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_SCRYPT_SET_MEMBUF, 0), "scrypt_set_membuf"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_SSKDF_CTRL_STR, 0), "sskdf_ctrl_str"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_SSKDF_DERIVE, 0), "sskdf_derive"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_SSKDF_MAC2CTRL, 0), "sskdf_mac2ctrl"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_SSKDF_NEW, 0), "sskdf_new"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_SSKDF_SIZE, 0), "sskdf_size"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_TLS1_PRF_ALG, 0), "tls1_prf_alg"},
     {0, NULL}
 };
 
 static const ERR_STRING_DATA KDF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_DIGEST), "invalid digest"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_MAC_TYPE), "invalid mac type"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_ITERATION_COUNT),
     "missing iteration count"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_KEY), "missing key"},
@@ -80,6 +86,8 @@ static const ERR_STRING_DATA KDF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_XCGHASH), "missing xcghash"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNKNOWN_PARAMETER_TYPE),
     "unknown parameter type"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNSUPPORTED_MAC_TYPE),
+    "unsupported mac type"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_VALUE_ERROR), "value error"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_VALUE_MISSING), "value missing"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_WRONG_OUTPUT_BUFFER_SIZE),

@@ -55,7 +55,9 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_DECRYPTFINAL_EX                        101
 # define EVP_F_EVP_DECRYPTUPDATE                          166
 # define EVP_F_EVP_DIGESTFINALXOF                         174
+# define EVP_F_EVP_DIGESTFINAL_EX                         230
 # define EVP_F_EVP_DIGESTINIT_EX                          128
+# define EVP_F_EVP_DIGESTUPDATE                           231
 # define EVP_F_EVP_ENCRYPTDECRYPTUPDATE                   219
 # define EVP_F_EVP_ENCRYPTFINAL_EX                        127
 # define EVP_F_EVP_ENCRYPTUPDATE                          167
@@ -170,6 +172,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_EXPECTING_A_EC_KEY                         142
 # define EVP_R_EXPECTING_A_POLY1305_KEY                   164
 # define EVP_R_EXPECTING_A_SIPHASH_KEY                    175
+# define EVP_R_FINAL_ERROR                                188
 # define EVP_R_FIPS_MODE_NOT_SUPPORTED                    167
 # define EVP_R_GET_RAW_KEY_FAILED                         182
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
@@ -188,6 +191,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_MESSAGE_DIGEST_IS_NULL                     159
 # define EVP_R_METHOD_NOT_SUPPORTED                       144
 # define EVP_R_MISSING_PARAMETERS                         103
+# define EVP_R_NOT_ABLE_TO_COPY_CTX                       190
 # define EVP_R_NOT_XOF_OR_INVALID_LENGTH                  178
 # define EVP_R_NO_CIPHER_SET                              131
 # define EVP_R_NO_DEFAULT_DIGEST                          158
@@ -218,6 +222,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_UNSUPPORTED_PRF                            125
 # define EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM          118
 # define EVP_R_UNSUPPORTED_SALT_TYPE                      126
+# define EVP_R_UPDATE_ERROR                               189
 # define EVP_R_WRAP_MODE_NOT_ALLOWED                      170
 # define EVP_R_WRONG_FINAL_BLOCK_LENGTH                   109
 

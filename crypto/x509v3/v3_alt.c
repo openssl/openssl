@@ -183,7 +183,6 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
                 BIO_printf(out, ":%X", p[0] << 8 | p[1]);
                 p += 2;
             }
-            BIO_puts(out, "\n");
         } else {
             BIO_printf(out, "IP Address:<invalid>");
             break;

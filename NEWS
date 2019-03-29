@@ -13,6 +13,7 @@
         3.0.0
       o Added EVP_MAC, an EVP layer MAC API, and a generic EVP_PKEY to EVP_MAC
         bridge.
+      o Removed the heartbeat message in DTLS feature.
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 1.1.1a [20 Nov 2018]
 

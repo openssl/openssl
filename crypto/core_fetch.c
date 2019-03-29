@@ -39,25 +39,33 @@ static int ossl_method_construct_this(OSSL_PROVIDER *provider, void *cbdata)
                                             data->mcm_data)) == NULL)
             continue;
 
+        /*
+         * Note regarding putting the method in stores:
+         *
+         * we don't need to care if it actually got in or not here.
+         * If it didn't get in, it will simply not be available when
+         * ossl_method_construct() tries to get it from the store.
+         *
+         * It is *expected* that the put function increments the refcnt
+         * of the passed method.
+         */
+
         if (data->force_store || !no_store) {
             /*
              * If we haven't been told not to store,
              * add to the global store
              */
-            if (!data->mcm->put(data->libctx, NULL,
-                                thismap->property_definition,
-                                method, data->mcm_data)) {
-                data->mcm->destruct(method);
-                continue;
-            }
+            data->mcm->put(data->libctx, NULL,
+                           thismap->property_definition,
+                           method, data->mcm_data);
         }
 
-        if (!data->mcm->put(data->libctx, data->store,
-                            thismap->property_definition,
-                            method, data->mcm_data)) {
-            data->mcm->destruct(method);
-            continue;
-        }
+        data->mcm->put(data->libctx, data->store,
+                       thismap->property_definition,
+                       method, data->mcm_data);
+
+        /* refcnt-- because we're dropping the reference */
+        data->mcm->destruct(method, data->mcm_data);
     }
 
     return 1;

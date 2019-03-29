@@ -49,6 +49,11 @@ functions given by the sub-system specific method creator through
 C<mcm> and the data in C<mcm_data> (which is passed by
 ossl_method_construct()).
 
+This function assumes that the sub-system method creator implements
+reference counting and acts accordingly (i.e. it will call the
+sub-system destruct() method to decrement the reference count when
+appropriate).
+
 =head2 Structures
 
 A central part of constructing a sub-system specific method is to give
@@ -82,6 +87,8 @@ The method to be looked up should be identified with data from C<data>
 (which is the C<mcm_data> that was passed to ossl_construct_method())
 and the provided property query C<propquery>.
 
+This function is expected to increment the method's reference count.
+
 =item put()
 
 Places the C<method> created by the construct() function (see below)
@@ -96,6 +103,8 @@ The method should be associated with the given property definition
 C<propdef> and any identification data given through C<data> (which is
 the C<mcm_data> that was passed to ossl_construct_method()).
 
+This function is expected to increment the C<method>'s reference count.
+
 =item construct()
 
 Constructs a sub-system method given a dispatch table C<fns>.
@@ -106,9 +115,12 @@ is recommended.
 If such a reference is kept, the I<provider object> reference counter
 must be incremented, using ossl_provider_upref().
 
+This function is expected to set the method's reference count to 1.
+
 =item desctruct()
 
-Destruct the given C<method>.
+Decrement the C<method>'s reference count, and destruct it when
+the reference count reaches zero.
 
 =back
 

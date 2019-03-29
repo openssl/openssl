@@ -16,6 +16,10 @@ SOURCE[../../libcrypto]=\
         e_chacha20_poly1305.c cmeth_lib.c \
         mac_lib.c c_allm.c pkey_mac.c
 
+# New design
+SOURCE[../../libcrypto]=\
+	evp_fetch.c
+
 INCLUDE[e_aes.o]=.. ../modes
 INCLUDE[e_aes_cbc_hmac_sha1.o]=../modes
 INCLUDE[e_aes_cbc_hmac_sha256.o]=../modes

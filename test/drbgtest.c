@@ -152,6 +152,31 @@ static size_t kat_nonce(RAND_DRBG *drbg, unsigned char **pout,
     return t->noncelen;
 }
 
+ /*
+ * Disable CRNG testing if it is enabled.
+ * If the DRBG is ready or in an error state, this means an instantiate cycle
+ * for which the default personalisation string is used.
+ */
+static int disable_crngt(RAND_DRBG *drbg)
+{
+    static const char pers[] = DRBG_DEFAULT_PERS_STRING;
+    const int instantiate = drbg->state != DRBG_UNINITIALISED;
+
+    if (drbg->get_entropy != rand_crngt_get_entropy)
+        return 1;
+
+     if ((instantiate && !RAND_DRBG_uninstantiate(drbg))
+        || !TEST_true(RAND_DRBG_set_callbacks(drbg, &rand_drbg_get_entropy,
+                                              &rand_drbg_cleanup_entropy,
+                                              &rand_drbg_get_nonce,
+                                              &rand_drbg_cleanup_nonce))
+        || (instantiate
+            && !RAND_DRBG_instantiate(drbg, (const unsigned char *)pers,
+                                      sizeof(pers) - 1)))
+        return 0;
+    return 1;
+}
+
 static int uninstantiate(RAND_DRBG *drbg)
 {
     int ret = drbg == NULL ? 1 : RAND_DRBG_uninstantiate(drbg);
@@ -177,7 +202,8 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
     if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, td->flags, NULL)))
         return 0;
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
-                                           kat_nonce, NULL))) {
+                                           kat_nonce, NULL))
+        || !TEST_true(disable_crngt(drbg))) {
         failures++;
         goto err;
     }
@@ -295,7 +321,8 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     unsigned int reseed_counter_tmp;
     int ret = 0;
 
-    if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, td->flags, NULL)))
+    if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, td->flags, NULL))
+        || !TEST_true(disable_crngt(drbg)))
         goto err;
 
     /*
@@ -708,6 +735,10 @@ static int test_rand_drbg_reseed(void)
         || !TEST_ptr_eq(private->parent, master))
         return 0;
 
+    /* Disable CRNG testing for the master DRBG */
+    if (!TEST_true(disable_crngt(master)))
+        return 0;
+
     /* uninstantiate the three global DRBGs */
     RAND_DRBG_uninstantiate(private);
     RAND_DRBG_uninstantiate(public);
@@ -928,7 +959,8 @@ static int test_rand_seed(void)
     size_t rand_buflen;
     size_t required_seed_buflen = 0;
 
-    if (!TEST_ptr(master = RAND_DRBG_get0_master()))
+    if (!TEST_ptr(master = RAND_DRBG_get0_master())
+        || !TEST_true(disable_crngt(master)))
         return 0;
 
 #ifdef OPENSSL_RAND_SEED_NONE
@@ -983,7 +1015,8 @@ static int test_multi_set(void)
     RAND_DRBG *drbg = NULL;
 
     /* init drbg with default CTR initializer */
-    if (!TEST_ptr(drbg = RAND_DRBG_new(0, 0, NULL)))
+    if (!TEST_ptr(drbg = RAND_DRBG_new(0, 0, NULL))
+        || !TEST_true(disable_crngt(drbg)))
         goto err;
     /* change it to use hmac */
     if (!TEST_true(RAND_DRBG_set(drbg, NID_sha1, RAND_DRBG_FLAG_HMAC)))
@@ -1093,6 +1126,118 @@ static int test_set_defaults(void)
            && TEST_true(RAND_DRBG_uninstantiate(private));
 }
 
+/*
+ * A list of the FIPS DRGB types.
+ * Because of the way HMAC DRGBs are implemented, both the NID and flags
+ * are required.
+ */
+static const struct s_drgb_types {
+    int nid;
+    int flags;
+} drgb_types[] = {
+    { NID_aes_128_ctr,  0                   },
+    { NID_aes_192_ctr,  0                   },
+    { NID_aes_256_ctr,  0                   },
+    { NID_sha1,         0                   },
+    { NID_sha224,       0                   },
+    { NID_sha256,       0                   },
+    { NID_sha384,       0                   },
+    { NID_sha512,       0                   },
+    { NID_sha512_224,   0                   },
+    { NID_sha512_256,   0                   },
+    { NID_sha3_224,     0                   },
+    { NID_sha3_256,     0                   },
+    { NID_sha3_384,     0                   },
+    { NID_sha3_512,     0                   },
+    { NID_sha1,         RAND_DRBG_FLAG_HMAC },
+    { NID_sha224,       RAND_DRBG_FLAG_HMAC },
+    { NID_sha256,       RAND_DRBG_FLAG_HMAC },
+    { NID_sha384,       RAND_DRBG_FLAG_HMAC },
+    { NID_sha512,       RAND_DRBG_FLAG_HMAC },
+    { NID_sha512_224,   RAND_DRBG_FLAG_HMAC },
+    { NID_sha512_256,   RAND_DRBG_FLAG_HMAC },
+    { NID_sha3_224,     RAND_DRBG_FLAG_HMAC },
+    { NID_sha3_256,     RAND_DRBG_FLAG_HMAC },
+    { NID_sha3_384,     RAND_DRBG_FLAG_HMAC },
+    { NID_sha3_512,     RAND_DRBG_FLAG_HMAC },
+};
+
+/* Six cases for each covers seed sizes up to 32 bytes */
+static const size_t crngt_num_cases = 6;
+
+static size_t crngt_case, crngt_idx;
+
+static int crngt_entropy_cb(unsigned char *buf)
+{
+    size_t i, z;
+
+    if (!TEST_int_lt(crngt_idx, crngt_num_cases))
+        return 0;
+    /* Generate a block of unique data unless this is the duplication point */
+    z = crngt_idx++;
+    if (z > 0 && crngt_case == z)
+        z--;
+    for (i = 0; i < CRNGT_BUFSIZ; i++)
+        buf[i] = (unsigned char)(i + 'A' + z);
+    return 1;
+}
+
+static int test_crngt(int n)
+{
+    const struct s_drgb_types *dt = drgb_types + n / crngt_num_cases;
+    RAND_DRBG *drbg = NULL;
+    unsigned char buff[100];
+    size_t ent;
+    int res = 0;
+    int expect;
+
+    if (!TEST_true(rand_crngt_single_init()))
+        return 0;
+    rand_crngt_cleanup();
+
+    if (!TEST_ptr(drbg = RAND_DRBG_new(dt->nid, dt->flags, NULL)))
+        return 0;
+    ent = (drbg->min_entropylen + CRNGT_BUFSIZ - 1) / CRNGT_BUFSIZ;
+    crngt_case = n % crngt_num_cases;
+    crngt_idx = 0;
+    crngt_get_entropy = &crngt_entropy_cb;
+    if (!TEST_true(rand_crngt_init()))
+        goto err;
+#ifndef FIPS_MODE
+    if (!TEST_true(RAND_DRBG_set_callbacks(drbg, &rand_crngt_get_entropy,
+                                           &rand_crngt_cleanup_entropy,
+                                           &rand_drbg_get_nonce,
+                                           &rand_drbg_cleanup_nonce)))
+        goto err;
+#endif
+    expect = crngt_case == 0 || crngt_case > ent;
+    if (!TEST_int_eq(RAND_DRBG_instantiate(drbg, NULL, 0), expect))
+        goto err;
+    if (!expect)
+        goto fin;
+    if (!TEST_true(RAND_DRBG_generate(drbg, buff, sizeof(buff), 0, NULL, 0)))
+        goto err;
+
+    expect = crngt_case == 0 || crngt_case > 2 * ent;
+    if (!TEST_int_eq(RAND_DRBG_reseed(drbg, NULL, 0, 0), expect))
+        goto err;
+    if (!expect)
+        goto fin;
+    if (!TEST_true(RAND_DRBG_generate(drbg, buff, sizeof(buff), 0, NULL, 0)))
+        goto err;
+
+fin:
+    res = 1;
+err:
+    if (!res)
+        TEST_note("DRBG %zd case %zd block %zd", n / crngt_num_cases,
+                  crngt_case, crngt_idx);
+    uninstantiate(drbg);
+    RAND_DRBG_free(drbg);
+    crngt_get_entropy = &rand_crngt_get_entropy_cb;
+    return res;
+}
+
 int setup_tests(void)
 {
     app_data_index = RAND_DRBG_get_ex_new_index(0L, NULL, NULL, NULL, NULL);
@@ -1107,5 +1252,6 @@ int setup_tests(void)
 #if defined(OPENSSL_THREADS)
     ADD_TEST(test_multi_thread);
 #endif
+    ADD_ALL_TESTS(test_crngt, crngt_num_cases * OSSL_NELEM(drgb_types));
     return 1;
 }

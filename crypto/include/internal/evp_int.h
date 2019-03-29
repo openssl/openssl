@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+#include <openssl/core_numbers.h>
 #include "internal/refcount.h"
 
 /*
@@ -169,9 +170,14 @@ extern const EVP_KDF_METHOD scrypt_kdf_meth;
 extern const EVP_KDF_METHOD tls1_prf_kdf_meth;
 extern const EVP_KDF_METHOD hkdf_kdf_meth;
 extern const EVP_KDF_METHOD sshkdf_kdf_meth;
+extern const EVP_KDF_METHOD ss_kdf_meth;
 
 struct evp_md_st {
+    /* nid */
     int type;
+
+    /* Legacy structure members */
+    /* TODO(3.0): Remove these */
     int pkey_type;
     int md_size;
     unsigned long flags;
@@ -184,6 +190,21 @@ struct evp_md_st {
     int ctx_size;               /* how big does the ctx->md_data need to be */
     /* control function */
     int (*md_ctrl) (EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
+
+    /* New structure members */
+    /* TODO(3.0): Remove above comment when legacy has gone */
+    OSSL_PROVIDER *prov;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+    OSSL_OP_digest_newctx_fn *newctx;
+    OSSL_OP_digest_init_fn *dinit;
+    OSSL_OP_digest_update_fn *dupdate;
+    OSSL_OP_digest_final_fn *dfinal;
+    OSSL_OP_digest_digest_fn *digest;
+    OSSL_OP_digest_freectx_fn *freectx;
+    OSSL_OP_digest_dupctx_fn *dupctx;
+    OSSL_OP_digest_size_fn *size;
+
 } /* EVP_MD */ ;
 
 struct evp_cipher_st {

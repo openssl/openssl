@@ -1079,8 +1079,7 @@ static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
     ret = 1;
 
  err:
-    if (ctx != NULL)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;
 }

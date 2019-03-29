@@ -86,6 +86,7 @@ int dgst_main(int argc, char **argv)
     const EVP_MD *md = NULL, *m;
     const char *outfile = NULL, *keyfile = NULL, *prog = NULL;
     const char *sigfile = NULL;
+    const char *md_name = NULL;
     OPTION_CHOICE o;
     int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
     int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
@@ -365,13 +366,15 @@ int dgst_main(int argc, char **argv)
         BIO_get_md_ctx(bmd, &tctx);
         md = EVP_MD_CTX_md(tctx);
     }
+    if (md != NULL)
+        md_name = EVP_MD_name(md);
 
     if (argc == 0) {
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         ret = do_fp(out, buf, inp, separator, out_bin, sigkey, sigbuf,
-                    siglen, NULL, NULL, "stdin");
+                    siglen, NULL, md_name, "stdin");
     } else {
-        const char *md_name = NULL, *sig_name = NULL;
+        const char *sig_name = NULL;
         if (!out_bin) {
             if (sigkey != NULL) {
                 const EVP_PKEY_ASN1_METHOD *ameth;
@@ -380,8 +383,6 @@ int dgst_main(int argc, char **argv)
                     EVP_PKEY_asn1_get0_info(NULL, NULL,
                                             NULL, NULL, &sig_name, ameth);
             }
-            if (md != NULL)
-                md_name = EVP_MD_name(md);
         }
         ret = 0;
         for (i = 0; i < argc; i++) {

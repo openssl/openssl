@@ -715,8 +715,9 @@ static void list_type(FUNC_TYPE ft, int one)
 {
     FUNCTION *fp;
     int i = 0;
-    DISPLAY_COLUMNS dc = {0};
+    DISPLAY_COLUMNS dc;
 
+    memset(&dc, 0, sizeof(dc));
     if (!one)
         calculate_columns(&dc);
 
@@ -921,9 +922,6 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_GOST
     BIO_puts(bio_out, "GOST\n");
-#endif
-#ifdef OPENSSL_NO_HEARTBEATS
-    BIO_puts(bio_out, "HEARTBEATS\n");
 #endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
