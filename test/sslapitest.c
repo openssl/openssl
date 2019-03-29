@@ -4595,11 +4595,15 @@ static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
 {
     long len;
     unsigned char *data;
-    PACKET pkt = {0}, pkt2 = {0}, pkt3 = {0};
+    PACKET pkt, pkt2, pkt3;
     unsigned int MFL_code = 0, type = 0;
 
     if (!TEST_uint_gt( len = BIO_get_mem_data( bio, (char **) &data ), 0 ) )
         goto end;
+
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&pkt2, 0, sizeof(pkt2));
+    memset(&pkt3, 0, sizeof(pkt3));
 
     if (!TEST_true( PACKET_buf_init( &pkt, data, len ) )
                /* Skip the record header */
