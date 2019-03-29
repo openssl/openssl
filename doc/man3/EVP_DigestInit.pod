@@ -185,7 +185,7 @@ EVP_MD_meth_set_app_datasize().
 Returns the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>. This
 will be the same B<EVP_MD> object originally passed to EVP_DigestInit_ex() (or
 other similar function) when the EVP_MD_CTX was first initialised. Note that
-where explicit fetch is in use (see L<EVP_MD_fetch(3)) the value returned from
+where explicit fetch is in use (see L<EVP_MD_fetch(3)>) the value returned from
 this function will not have its reference count incremented and therefore it
 should not be used after the EVP_MD_CTX is freed.
 
