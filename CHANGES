@@ -14,6 +14,14 @@
      checksum programs. This aims to preserve backward compatibility.
      [Matt Eaton]
 
+  *) Removed the heartbeat message in DTLS feature, as it has very
+     little usage and doesn't seem to fulfill a valuable purpose.
+     [Richard Levitte]
+
+  *) Changed the output of 'openssl {digestname} < file' to display the
+     digest name in its output.
+     [Richard Levitte]
+
   *) Added a new generic trace API which provides support for enabling
      instrumentation through trace output. This feature is mainly intended
      as an aid for developers and is disabled by default. To utilize it,
@@ -35,6 +43,12 @@
      This test isn't enabled by default.  It can be enabled with the option
      'enable-buildtest-c++'.
      [Richard Levitte]
+
+  *) Add Single Step KDF (EVP_KDF_SS) to EVP_KDF.
+     [Shane Lontis]
+
+  *) Add KMAC to EVP_MAC.
+     [Shane Lontis]
 
   *) Added property based algorithm implementation selection framework to
      the core.
