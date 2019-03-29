@@ -412,7 +412,7 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
                                  size_t inl, const unsigned char *iv,
                                  unsigned int enc)
 {
-    struct msghdr msg = { 0 };
+    struct msghdr msg;
     struct cmsghdr *cmsg;
     struct iovec iov;
     ssize_t sbytes;
@@ -421,6 +421,7 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
 # endif
     char cbuf[CMSG_SPACE(ALG_IV_LEN(ALG_AES_IV_LEN)) + CMSG_SPACE(ALG_OP_LEN)];
 
+    memset(&msg, 0, sizeof(msg));
     memset(cbuf, 0, sizeof(cbuf));
     msg.msg_control = cbuf;
     msg.msg_controllen = sizeof(cbuf);
