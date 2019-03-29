@@ -669,7 +669,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
 static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
                             char **dirpath)
 {
-    struct stat st = { 0 };
+    struct stat st;
     BIO *next;
 
     if (stat(include, &st) < 0) {
