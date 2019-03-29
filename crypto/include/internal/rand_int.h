@@ -49,6 +49,14 @@ size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout);
 
 void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out);
 
+/* CRNG test entropy filter callbacks. */
+size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
+                              unsigned char **pout,
+                              int entropy, size_t min_len, size_t max_len,
+                              int prediction_resistance);
+void rand_crngt_cleanup_entropy(RAND_DRBG *drbg,
+                                unsigned char *out, size_t outlen);
+
 /*
  * RAND_POOL functions
  */
