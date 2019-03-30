@@ -52,21 +52,33 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
         if (strcmp(p->key, "greeting") == 0) {
             static char *opensslv = NULL;
             static char *provname = NULL;
+            static char *greeting = NULL;
             static OSSL_PARAM counter_request[] = {
+                /* Known libcrypto provided parameters */
                 { "openssl-version", OSSL_PARAM_UTF8_PTR,
                   &opensslv, sizeof(&opensslv), NULL },
                 { "provider-name", OSSL_PARAM_UTF8_PTR,
                   &provname, sizeof(&provname), NULL},
+
+                /* This might be present, if there's such a configuration */
+                { "greeting", OSSL_PARAM_UTF8_PTR,
+                  &greeting, sizeof(&greeting), NULL },
+
                 { NULL, 0, NULL, 0, NULL }
             };
             char buf[256];
             size_t buf_l;
 
             if (c_get_params(prov, counter_request)) {
-                const char *versionp = *(void **)counter_request[0].data;
-                const char *namep = *(void **)counter_request[1].data;
-                sprintf(buf, "Hello OpenSSL %.20s, greetings from %s!",
-                        versionp, namep);
+                if (greeting) {
+                    strcpy(buf, greeting);
+                } else {
+                    const char *versionp = *(void **)counter_request[0].data;
+                    const char *namep = *(void **)counter_request[1].data;
+
+                    sprintf(buf, "Hello OpenSSL %.20s, greetings from %s!",
+                            versionp, namep);
+                }
             } else {
                 sprintf(buf, "Howdy stranger...");
             }

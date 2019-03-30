@@ -616,6 +616,8 @@ IF[{- !$disabled{tests} -}]
     DEFINE[provider_test]=OPENSSL_NO_MODULE
     DEFINE[provider_internal_test]=OPENSSL_NO_MODULE
   ENDIF
+  DEPEND[]=provider_internal_test.conf
+  GENERATE[provider_internal_test.conf]=provider_internal_test.conf.in
 
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c
