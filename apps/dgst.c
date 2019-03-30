@@ -428,14 +428,12 @@ static const char *newline_escape_filename(const char *file, int * backslash)
 {
     size_t i = 0, e = 0, length = strlen(file), newline_count = 0, mem_len = 0;
     char *file_cpy = NULL;
-    while(i < length) {
-        const char c = file[i];
-        if (c == '\n') {
+
+    for (i = 0; i < length; i++)
+        if (file[i] == '\n')
             newline_count++;
-        }
-        i++;
-    }
-    mem_len = length + newline_count;
+
+    mem_len = length + newline_count + 1;
     file_cpy = app_malloc(mem_len, file);
     i = 0;
 
