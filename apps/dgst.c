@@ -414,13 +414,52 @@ int dgst_main(int argc, char **argv)
     return ret;
 }
 
+/*
+ * The newline_escape_filename function performs newline escaping for any
+ * filename that contains a newline.  This function also takes a pointer
+ * to backslash. The backslash pointer is a flag to indicating whether a newline
+ * is present in the filename.  If a newline is present, the backslash flag is
+ * set and the output format will contain a backslash at the beginning of the
+ * digest output. This output format is to replicate the output format found
+ * in the '*sum' checksum programs. This aims to preserve backward
+ * compatibility.
+ */
+static const char *newline_escape_filename(const char *file, int * backslash)
+{
+    size_t i, e = 0, length = strlen(file), newline_count = 0, mem_len = 0;
+    char *file_cpy = NULL;
+
+    for (i = 0; i < length; i++)
+        if (file[i] == '\n')
+            newline_count++;
+
+    mem_len = length + newline_count + 1;
+    file_cpy = app_malloc(mem_len, file);
+    i = 0;
+
+    while(e < length) {
+        const char c = file[e];
+        if (c == '\n') {
+            file_cpy[i++] = '\\';
+            file_cpy[i++] = 'n';
+            *backslash = 1;
+        } else {
+            file_cpy[i++] = c;
+        }
+        e++;
+    }
+    file_cpy[i] = '\0';
+    return (const char*)file_cpy;
+}
+
+
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
           const char *file)
 {
     size_t len;
-    int i;
+    int i, backslash = 0;
 
     for (;;) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
@@ -468,9 +507,16 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     if (binout) {
         BIO_write(out, buf, len);
     } else if (sep == 2) {
+        file = newline_escape_filename(file, &backslash);
+
+        if (backslash == 1)
+            BIO_puts(out, "\\");
+
         for (i = 0; i < (int)len; i++)
             BIO_printf(out, "%02x", buf[i]);
+
         BIO_printf(out, " *%s\n", file);
+        OPENSSL_free((char *)file);
     } else {
         if (sig_name != NULL) {
             BIO_puts(out, sig_name);
