@@ -324,6 +324,14 @@ my @smime_cms_param_tests = (
 	"-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
     ],
 
+    [ "signed content test streaming PEM format, RSA keys, PSS signature, saltlen=-3",
+      [ "-sign", "-in", $smcont, "-outform", "PEM", "-nodetach",
+	"-signer", catfile($smdir, "smrsa1.pem"), "-keyopt", "rsa_padding_mode:pss",
+	"-keyopt", "rsa_pss_saltlen:-3", "-out", "test.cms" ],
+      [ "-verify", "-in", "test.cms", "-inform", "PEM",
+	"-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
+    ],
+
     [ "signed content test streaming PEM format, RSA keys, PSS signature, no attributes",
       [ "-sign", "-in", $smcont, "-outform", "PEM", "-nodetach", "-noattr",
 	"-signer", catfile($smdir, "smrsa1.pem"), "-keyopt", "rsa_padding_mode:pss",
