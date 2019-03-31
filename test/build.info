@@ -611,9 +611,10 @@ IF[{- !$disabled{tests} -}]
       SOURCE[p_test]=p_test.ld
       GENERATE[p_test.ld]=../util/providers.num
     ENDIF
-  ELSE
-    DEFINE[provider_test]=OPENSSL_NO_SHARED
-    DEFINE[provider_internal_test]=OPENSSL_NO_SHARED
+  ENDIF
+  IF[{- $disabled{module} || !$target{dso_scheme} -}]
+    DEFINE[provider_test]=OPENSSL_NO_MODULE
+    DEFINE[provider_internal_test]=OPENSSL_NO_MODULE
   ENDIF
 
   PROGRAMS{noinst}=params_test

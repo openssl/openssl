@@ -11,11 +11,6 @@
 #include "internal/provider.h"
 #include "testutil.h"
 
-#if !defined(DSO_VMS) && !defined(DSO_DLCFN) && !defined(DSO_DL) \
-    && !defined(DSO_WIN32) && !defined(DSO_DLFCN)
-# define OPENSSL_NO_DSO
-#endif
-
 extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
@@ -61,7 +56,7 @@ static int test_builtin_provider(void)
         && test_provider(prov);
 }
 
-#ifndef OPENSSL_NO_DSO
+#ifndef OPENSSL_NO_MODULE
 static int test_loaded_provider(void)
 {
     const char *name = "p_test";
@@ -76,7 +71,7 @@ static int test_loaded_provider(void)
 int setup_tests(void)
 {
     ADD_TEST(test_builtin_provider);
-#ifndef OPENSSL_NO_DSO
+#ifndef OPENSSL_NO_MODULE
     ADD_TEST(test_loaded_provider);
 #endif
     return 1;
