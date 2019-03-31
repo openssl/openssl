@@ -17,8 +17,9 @@
     # by a define "DSO_<name>" ... we translate the "dso_scheme" config
     # string entry into using the following logic;
     my $scheme = uc $target{dso_scheme};
-    if (!$scheme)
+    if (!$scheme) {
         $scheme = "NONE";
+    }
     my @macros = ( "DSO_$scheme" );
     if ($scheme eq 'DLFCN') {
         @macros = ( "DSO_DLFCN", "HAVE_DLFCN_H" );
