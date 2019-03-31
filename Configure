@@ -492,9 +492,6 @@ my @disable_cascades = (
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
 
-    # Without DSO, we can't load dynamic engines, so don't build them dynamic
-    "dso"               => [ "dynamic-engine" ],
-
     # Without position independent code, there can be no shared libraries or DSOs
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
