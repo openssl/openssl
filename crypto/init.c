@@ -160,8 +160,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 {
     OSSL_TRACE(INIT, "ossl_init_load_crypto_nodelete()\n");
 
-#if !defined(OPENSSL_NO_DSO) \
-    && !defined(OPENSSL_USE_NODELETE) \
+#if !defined(OPENSSL_USE_NODELETE) \
     && !defined(OPENSSL_NO_PINSHARED)
 # if defined(DSO_WIN32) && !defined(_WIN32_WCE)
     {
@@ -179,7 +178,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
                     (ret == TRUE ? "No!" : "Yes."));
         return (ret == TRUE) ? 1 : 0;
     }
-# else
+# elif !defined(DSO_NONE)
     /*
      * Deliberately leak a reference to ourselves. This will force the library
      * to remain loaded until the atexit() handler is run at process exit.
@@ -733,8 +732,7 @@ int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
 
-#if !defined(OPENSSL_NO_DSO) \
-    && !defined(OPENSSL_USE_NODELETE)\
+#if !defined(OPENSSL_USE_NODELETE)\
     && !defined(OPENSSL_NO_PINSHARED)
     {
         union {
@@ -759,7 +757,7 @@ int OPENSSL_atexit(void (*handler)(void))
             if (!ret)
                 return 0;
         }
-# else
+# elif !defined(DSO_NONE)
         /*
          * Deliberately leak a reference to the handler. This will force the
          * library/code containing the handler to remain loaded until we run the

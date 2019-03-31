@@ -17,11 +17,9 @@
 
 # include <openssl/opensslconf.h>
 
-# ifndef OPENSSL_NO_DSO
-
-#  ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C"
-#  endif
+# endif
 int ERR_load_DSO_strings(void);
 
 /*

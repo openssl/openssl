@@ -24,7 +24,7 @@ use OpenSSL::Glob;
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -59,8 +59,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # [no-]pic      [don't] try to build position independent code when supported.
 #               If disabled, it also disables shared and dynamic-engine.
 # no-asm        do not use assembler
-# no-dso        do not compile in any native shared-library methods. This
-#               will ensure that all methods just return NULL.
 # no-egd        do not compile support for the entropy-gathering daemon APIs
 # [no-]zlib     [don't] compile support for zlib compression.
 # zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
@@ -76,7 +74,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # -static       while -static is also a pass-through compiler option (and
 #               as such is limited to environments where it's actually
 #               meaningful), it triggers a number configuration options,
-#               namely no-dso, no-pic, no-shared and no-threads. It is
+#               namely no-pic, no-shared and no-threads. It is
 #               argued that the only reason to produce statically linked
 #               binaries (and in context it means executables linked with
 #               -static flag, and not just executables linked with static
@@ -359,7 +357,6 @@ my @disablables = (
     "dgram",
     "dh",
     "dsa",
-    "dso",
     "dtls",
     "dynamic-engine",
     "ec",
@@ -876,7 +873,6 @@ while (@argvcopy)
                 elsif (/^-static$/)
                         {
                         push @{$useradd{LDFLAGS}}, $_;
-                        $disabled{"dso"} = "forced";
                         $disabled{"pic"} = "forced";
                         $disabled{"shared"} = "forced";
                         $disabled{"threads"} = "forced";
@@ -1211,7 +1207,7 @@ foreach my $what (sort keys %disabled) {
 
     $config{options} .= " no-$what";
 
-    if (!grep { $what eq $_ } ( 'buildtest-c++', 'dso', 'threads', 'shared',
+    if (!grep { $what eq $_ } ( 'buildtest-c++', 'threads', 'shared',
                                 'pic', 'dynamic-engine', 'makedepend',
                                 'zlib-dynamic', 'zlib', 'sse2' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
