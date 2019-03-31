@@ -1557,10 +1557,15 @@ static const unsigned char p521_explicit[] = {
     0xbb, 0x6f, 0xb7, 0x1e, 0x91, 0x38, 0x64, 0x09, 0x02, 0x01, 0x01,
 };
 
-static int check_named_curve(int id)
+/*
+ * This test validates a named curve's group parameters using
+ * EC_GROUP_check_named_curve(). It also checks that modifying any of the
+ * group parameters results in the curve not being valid.
+ */
+static int check_named_curve_test(int id)
 {
-    int ret = 0, nid, field_nid, has_seed, rv = 0;
-    EC_GROUP *group = NULL, *gtest = NULL, *galias = NULL;
+    int ret = 0, nid, field_nid, has_seed;
+    EC_GROUP *group = NULL, *gtest = NULL;
     const EC_POINT *group_gen = NULL;
     EC_POINT *other_gen = NULL;
     BIGNUM *group_p = NULL, *group_a = NULL, *group_b = NULL;
@@ -1622,35 +1627,21 @@ static int check_named_curve(int id)
     /* Passes because this is a valid curve */
     if (!TEST_int_eq(EC_GROUP_check_named_curve(group, 0), nid)
         /* Only NIST curves pass */
-	|| !TEST_int_eq(EC_GROUP_check_named_curve(group, 1),
+        || !TEST_int_eq(EC_GROUP_check_named_curve(group, 1),
                         EC_curve_nid2nist(nid) != NULL ? nid : NID_undef))
         goto err;
-    /*
-     * Pass if the named curve is not known but the parameters are correct.
-     * It is possible to find the wrong alias if there is no curve name.
-     */
-    EC_GROUP_set_curve_name(group, NID_undef);
-    if (!TEST_int_gt(rv = EC_GROUP_check_named_curve(group, 0), 0))
-        goto err;
-#if 0
-    /* This code does not currently work since aliases are not supported
-     * currently.
-     */
-    /* Found an alias */
-    if (rv != nid) {
-        /* Fail if the returned nid is not an alias of the original group */
-        if (!TEST_ptr(galias = EC_GROUP_new_by_curve_name(rv)))
-            goto err;
-        EC_GROUP_set_curve_name(galias, nid);
-        if (!TEST_int_eq(EC_GROUP_check_named_curve(galias, 0), nid))
-            goto err;
-    }
-#endif
-    /* Fail if the curve name doesnt match the parameters */
+
+    /* Fail if the curve name doesn't match the parameters */
     EC_GROUP_set_curve_name(group, nid + 1);
+    ERR_set_mark();
     if (!TEST_int_le(EC_GROUP_check_named_curve(group, 0), 0))
         goto err;
+    ERR_pop_to_mark();
+
+    /* Restore curve name and ensure it's passing */
     EC_GROUP_set_curve_name(group, nid);
+    if (!TEST_int_eq(EC_GROUP_check_named_curve(group, 0), nid))
+        goto err;
 
     if (!TEST_int_eq(EC_GROUP_set_seed(group, invalid_seed, invalid_seed_len),
                      invalid_seed_len))
@@ -1673,14 +1664,14 @@ static int check_named_curve(int id)
     }
     /* Pass if the seed is unknown (as it is optional) */
     if (!TEST_int_eq(EC_GROUP_set_seed(group, NULL, 0), 1)
-        || !TEST_int_gt(EC_GROUP_check_named_curve(group, 0), 0))
+        || !TEST_int_eq(EC_GROUP_check_named_curve(group, 0), nid))
         goto err;
 
     /* Check that a duped group passes */
     if (!TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), nid))
         goto err;
 
-    /* check that changing any generator parameters fail */
+    /* check that changing any generator parameter fails */
     if (!TEST_true(EC_GROUP_set_generator(gtest, other_gen, group_order,
                                           group_cofactor))
         || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), 0)
@@ -1704,8 +1695,7 @@ static int check_named_curve(int id)
         || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), nid))
         goto err;
 
-
-    /*-
+    /*
      * check that changing any curve parameter fails
      *
      * Setting arbitrary p, a or b might fail for some EC_GROUPs
@@ -1739,7 +1729,7 @@ static int check_named_curve(int id)
     }
     ERR_pop_to_mark();
 
-    /* Check that restoring the curve parameters pass */
+    /* Check that restoring the curve parameters passes */
     if (!TEST_true(EC_GROUP_set_curve(gtest, group_p, group_a, group_b, NULL))
         || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), nid))
         goto err;
@@ -1756,10 +1746,70 @@ err:
     BN_free(other_cofactor);
     BN_free(other_order);
     EC_POINT_free(other_gen);
-    EC_GROUP_free(galias);
     EC_GROUP_free(gtest);
     EC_GROUP_free(group);
     BN_CTX_free(bn_ctx);
+    return ret;
+}
+
+/*
+ * This checks the lookup capability of EC_GROUP_check_named_curve()
+ * when the given group was created with explicit parameters.
+ *
+ * It is possible to retrieve an alternative alias that does not match
+ * the original nid in this case.
+ */
+static int check_named_curve_lookup_test(int id)
+{
+    int ret = 0, nid, rv = 0;
+    EC_GROUP *g = NULL , *ga = NULL;
+    ECPARAMETERS *p = NULL, *pa = NULL;
+    BN_CTX *ctx = NULL;
+
+    /* Do some setup */
+    nid = curves[id].nid;
+    if (!TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(g = EC_GROUP_new_by_curve_name(nid))
+        || !TEST_ptr(p = EC_GROUP_get_ecparameters(g, NULL)))
+        goto err;
+
+    /* replace with group from explicit parameters */
+    EC_GROUP_free(g);
+    if (!TEST_ptr(g = EC_GROUP_new_from_ecparameters(p)))
+        goto err;
+
+    if (!TEST_int_gt(rv = EC_GROUP_check_named_curve(g, 0), 0))
+        goto err;
+    if (rv != nid) {
+        /*
+         * Found an alias:
+         * fail if the returned nid is not an alias of the original group.
+         *
+         * The comparison here is done by comparing two explicit
+         * parameter EC_GROUPs with EC_GROUP_cmp(), to ensure the
+         * comparison happens with unnamed EC_GROUPs using the same
+         * EC_METHODs.
+         */
+        if (!TEST_ptr(ga = EC_GROUP_new_by_curve_name(rv))
+                || !TEST_ptr(pa = EC_GROUP_get_ecparameters(ga, NULL)))
+            goto err;
+
+        /* replace with group from explicit parameters, then compare */
+        EC_GROUP_free(ga);
+        if (!TEST_ptr(ga = EC_GROUP_new_from_ecparameters(pa))
+                || !TEST_int_eq(EC_GROUP_cmp(g, ga, ctx), 0))
+            goto err;
+    }
+
+    ret = 1;
+
+ err:
+    EC_GROUP_free(g);
+    EC_GROUP_free(ga);
+    ECPARAMETERS_free(p);
+    ECPARAMETERS_free(pa);
+    BN_CTX_free(ctx);
+
     return ret;
 }
 
@@ -1828,7 +1878,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(internal_curve_test, crv_len);
     ADD_ALL_TESTS(internal_curve_test_method, crv_len);
     ADD_TEST(group_field_test);
-    ADD_ALL_TESTS(check_named_curve, crv_len);
+    ADD_ALL_TESTS(check_named_curve_test, crv_len);
+    ADD_ALL_TESTS(check_named_curve_lookup_test, crv_len);
 #endif
     return 1;
 }

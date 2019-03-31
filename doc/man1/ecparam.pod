@@ -17,6 +17,7 @@ B<openssl ecparam>
 [B<-text>]
 [B<-C>]
 [B<-check>]
+[B<-check_named>]
 [B<-name arg>]
 [B<-list_curves>]
 [B<-conv_form arg>]
@@ -78,6 +79,11 @@ be loaded by calling the get_ec_group_XXX() function.
 =item B<-check>
 
 Validate the elliptic curve parameters.
+
+=item B<-check_named>
+
+Validate the elliptic name curve parameters by checking if the curve parameters
+match an inbuilt curves.
 
 =item B<-name arg>
 
