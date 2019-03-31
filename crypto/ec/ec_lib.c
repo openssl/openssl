@@ -536,6 +536,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     if (r || BN_cmp(a1, b1) != 0 || BN_cmp(a2, b2) != 0 || BN_cmp(a3, b3) != 0)
         r = 1;
 
+    /* XXX EC_POINT_cmp() assumes that the methods are equal */
     /* return 1 if the generators are different */
     if (r || EC_POINT_cmp(a, EC_GROUP_get0_generator(a),
                           EC_GROUP_get0_generator(b), ctx) != 0)
@@ -543,7 +544,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 
     if (!r) {
         const BIGNUM *ao, *bo, *ac, *bc;
-        /* compare the order's */
+        /* compare the orders */
         ao = EC_GROUP_get0_order(a);
         bo = EC_GROUP_get0_order(b);
         if (ao == NULL || bo == NULL) {
