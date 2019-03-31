@@ -1701,16 +1701,46 @@ static int check_named_curve(int id)
         /* check that restoring the generator passes */
         || !TEST_true(EC_GROUP_set_generator(gtest, group_gen, group_order,
                                              group_cofactor))
-        || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), nid)
-        /* check that changing any curve parameters fail */
-        || !TEST_true(EC_GROUP_set_curve(gtest, other_p, group_a, group_b, NULL))
-        || !TEST_int_le(EC_GROUP_check_named_curve(gtest, 0), 0)
-        || !TEST_true(EC_GROUP_set_curve(gtest, group_p, other_a, group_b, NULL))
-        || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), 0)
-        || !TEST_true(EC_GROUP_set_curve(gtest, group_p, group_a, other_b, NULL))
-        || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), 0)
-        /* Check that restoring the curve parameters pass */
-        || !TEST_true(EC_GROUP_set_curve(gtest, group_p, group_a, group_b, NULL))
+        || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), nid))
+        goto err;
+
+
+    /*-
+     * check that changing any curve parameter fails
+     *
+     * Setting arbitrary p, a or b might fail for some EC_GROUPs
+     * depending on the internal EC_METHOD implementation, hence run
+     * these tests conditionally to the success of EC_GROUP_set_curve().
+     */
+    ERR_set_mark();
+    if (EC_GROUP_set_curve(gtest, other_p, group_a, group_b, NULL)) {
+        if (!TEST_int_le(EC_GROUP_check_named_curve(gtest, 0), 0))
+            goto err;
+    } else {
+        /* clear the error stack if EC_GROUP_set_curve() failed */
+        ERR_pop_to_mark();
+        ERR_set_mark();
+    }
+    if (EC_GROUP_set_curve(gtest, group_p, other_a, group_b, NULL)) {
+        if (!TEST_int_le(EC_GROUP_check_named_curve(gtest, 0), 0))
+            goto err;
+    } else {
+        /* clear the error stack if EC_GROUP_set_curve() failed */
+        ERR_pop_to_mark();
+        ERR_set_mark();
+    }
+    if (EC_GROUP_set_curve(gtest, group_p, group_a, other_b, NULL)) {
+        if (!TEST_int_le(EC_GROUP_check_named_curve(gtest, 0), 0))
+            goto err;
+    } else {
+        /* clear the error stack if EC_GROUP_set_curve() failed */
+        ERR_pop_to_mark();
+        ERR_set_mark();
+    }
+    ERR_pop_to_mark();
+
+    /* Check that restoring the curve parameters pass */
+    if (!TEST_true(EC_GROUP_set_curve(gtest, group_p, group_a, group_b, NULL))
         || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0), nid))
         goto err;
 
