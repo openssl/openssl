@@ -437,6 +437,7 @@ my %deprecated_disablables = (
     "hw-padlock" => "padlockeng",
     "ripemd" => "rmd160",
     "ui" => "ui-console",
+    "dso" => undef,
     );
 
 # All of the following are disabled by default:
