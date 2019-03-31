@@ -377,6 +377,7 @@ my @disablables = (
     "md2",
     "md4",
     "mdc2",
+    "module",
     "msan",
     "multiblock",
     "nextprotoneg",
@@ -493,9 +494,23 @@ my @disable_cascades = (
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
 
-    # Without position independent code, there can be no shared libraries or DSOs
-    "pic"               => [ "shared" ],
+    # If no modules, then no dynamic engines either
+    "module"            => [ "dynamic-engine" ],
+
+    # Without shared libraries, dynamic engines aren't possible.
+    # This is due to them having to link with libcrypto and register features
+    # using the ENGINE functionality, and since that relies on global tables,
+    # those *have* to be exacty the same as the ones accessed from the app,
+    # which cannot be guaranteed if shared libraries aren't present.
+    # (note that even with shared libraries, both the app and dynamic engines
+    # must be linked with the same library)
     "shared"            => [ "dynamic-engine" ],
+    # Other modules don't necessarily have to link with libcrypto, so shared
+    # libraries do not have to be a condition to produce those.
+
+    # Without position independent code, there can be no shared libraries
+    # or modules.
+    "pic"               => [ "shared", "module" ],
 
     "engine"            => [ grep /eng$/, @disablables ],
     "hw"                => [ "padlockeng" ],
@@ -1206,7 +1221,7 @@ foreach my $what (sort keys %disabled) {
 
     $config{options} .= " no-$what";
 
-    if (!grep { $what eq $_ } ( 'buildtest-c++', 'threads', 'shared',
+    if (!grep { $what eq $_ } ( 'buildtest-c++', 'threads', 'shared', 'module',
                                 'pic', 'dynamic-engine', 'makedepend',
                                 'zlib-dynamic', 'zlib', 'sse2' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
@@ -1312,9 +1327,8 @@ if ($target{shared_target} eq "")
         {
         $no_shared_warn = 1
             if (!$disabled{shared} || !$disabled{"dynamic-engine"});
-        $disabled{shared} = "no-shared-target";
         $disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
-            "no-shared-target";
+            $disabled{module} = "no-shared-target";
         }
 
 if ($disabled{"dynamic-engine"}) {
