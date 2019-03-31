@@ -603,7 +603,7 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider_test]=provider_test.c p_test.c
   INCLUDE[provider_test]=../include ../apps/include
   DEPEND[provider_test]=../libcrypto.a libtestutil.a
-  IF[{- !$disabled{shared} -}]
+  IF[{- !$disabled{module} -}]
     MODULES{noinst}=p_test
     SOURCE[p_test]=p_test.c
     INCLUDE[p_test]=../include
