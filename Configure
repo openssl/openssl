@@ -2191,9 +2191,8 @@ EOF
                                            src => [ 'sources',
                                                     'shared_sources' ],
                                            dst => 'shared_sources' } },
-                modules   => { dso    => { src => [ 'sources',
-                                                    'shared_sources' ],
-                                           dst => 'shared_sources' } },
+                modules   => { dso    => { src => [ 'sources' ],
+                                           dst => 'sources' } },
                 scripts   => { script => { src => [ 'sources' ],
                                            dst => 'sources' } }
                } -> {$prodtype};
