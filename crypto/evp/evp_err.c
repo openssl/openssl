@@ -21,6 +21,7 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_OCB_CIPHER, 0), "aes_ocb_cipher"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_T4_INIT_KEY, 0), "aes_t4_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_WRAP_CIPHER, 0), "aes_wrap_cipher"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_XTS_CIPHER, 0), "aes_xts_cipher"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ALG_MODULE_INIT, 0), "alg_module_init"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_CCM_INIT_KEY, 0), "aria_ccm_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_GCM_CTRL, 0), "aria_gcm_ctrl"},
@@ -303,6 +304,8 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     "wrap mode not allowed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_WRONG_FINAL_BLOCK_LENGTH),
     "wrong final block length"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE),
+    "xts data unit is too large"},
     {0, NULL}
 };
 
