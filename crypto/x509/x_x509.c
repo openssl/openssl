@@ -252,7 +252,7 @@ int X509_get_signature_nid(const X509 *x)
 }
 
 #ifndef OPENSSL_NO_SM2
-void X509_set_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id)
+void X509_set0_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id)
 {
     ASN1_OCTET_STRING_free(x->sm2_id);
     x->sm2_id = sm2_id;

@@ -260,7 +260,7 @@ static int check(X509_STORE *ctx, const char *file,
             goto end;
         }
 
-        X509_set_sm2_id(x, v);
+        X509_set0_sm2_id(x, v);
 #endif
     }
 
