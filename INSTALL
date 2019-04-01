@@ -331,9 +331,6 @@
                    on BSD implementations, in which case it can be disabled with
                    no-devcryptoeng.
 
-  no-dso
-                   Don't build support for loading Dynamic Shared Objects.
-
   no-dynamic-engine
                    Don't build the dynamically loaded engines. This only has an
                    effect in a "shared" build
