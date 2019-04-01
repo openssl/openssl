@@ -2,20 +2,24 @@
 
 =head1 NAME
 
-X509_get0_sm2_id, X509_set_sm2_id - get or set SM2 ID for certificate operations
+X509_get0_sm2_id, X509_set0_sm2_id - get or set SM2 ID for certificate operations
 
 =head1 SYNOPSIS
 
  #include <openssl/x509.h>
 
  ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x);
- void X509_set_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id);
+ void X509_set0_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id);
 
 =head1 DESCRIPTION
 
 X509_get0_sm2_id() gets the ID value of an SM2 certificate B<x> by returning an
 B<ASN1_OCTET_STRING> object which should not be freed by the caller.
-X509_set_sm2_id() sets the B<sm2_id> value to an SM2 certificate B<x>.
+
+X509_set0_sm2_id() sets the B<sm2_id> value to an SM2 certificate B<x>. Calling
+this function transfers the memory management of the value to the X509 object,
+and therefore the value that has been passed in should not be freed by the
+caller after this function has been called.
 
 =head1 NOTES
 
@@ -25,7 +29,7 @@ ability to set and retrieve the SM2 ID value.
 
 =head1 RETURN VALUES
 
-X509_set_sm2_id() does not return a value.
+X509_set0_sm2_id() does not return a value.
 
 =head1 SEE ALSO
 

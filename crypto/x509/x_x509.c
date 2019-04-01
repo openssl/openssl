@@ -73,6 +73,9 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->rfc3779_addr = NULL;
         ret->rfc3779_asid = NULL;
 #endif
+#ifndef OPENSSL_NO_SM2
+        ret->sm2_id = NULL;
+#endif
         ret->aux = NULL;
         ret->crldp = NULL;
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
@@ -91,6 +94,9 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 #ifndef OPENSSL_NO_RFC3779
         sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
         ASIdentifiers_free(ret->rfc3779_asid);
+#endif
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING_free(ret->sm2_id);
 #endif
         break;
 
@@ -246,13 +252,14 @@ int X509_get_signature_nid(const X509 *x)
 }
 
 #ifndef OPENSSL_NO_SM2
-void X509_set_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id)
+void X509_set0_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id)
 {
-    x->sm2_id = *sm2_id;
+    ASN1_OCTET_STRING_free(x->sm2_id);
+    x->sm2_id = sm2_id;
 }
 
 ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x)
 {
-    return &x->sm2_id;
+    return x->sm2_id;
 }
 #endif

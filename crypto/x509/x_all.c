@@ -72,7 +72,10 @@ static int x509_verify_sm2(X509 *x, EVP_PKEY *pkey, int mdnid, int pknid)
         ret = 0;
         goto err;
     }
-    if (EVP_PKEY_CTX_set1_id(pctx, x->sm2_id.data, x->sm2_id.length) != 1) {
+    /* NOTE: we tolerate no actual ID, to provide maximum flexibility */
+    if (x->sm2_id != NULL
+            && EVP_PKEY_CTX_set1_id(pctx, x->sm2_id->data,
+                                    x->sm2_id->length) != 1) {
         X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
         ret = 0;
         goto err;
