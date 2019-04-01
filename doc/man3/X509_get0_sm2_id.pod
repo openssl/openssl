@@ -15,7 +15,11 @@ X509_get0_sm2_id, X509_set_sm2_id - get or set SM2 ID for certificate operations
 
 X509_get0_sm2_id() gets the ID value of an SM2 certificate B<x> by returning an
 B<ASN1_OCTET_STRING> object which should not be freed by the caller.
-X509_set_sm2_id() sets the B<sm2_id> value to an SM2 certificate B<x>.
+
+X509_set_sm2_id() sets the B<sm2_id> value to an SM2 certificate B<x>. Calling
+this function transfers the memory management of the value to the X509 object,
+and therefore the value that has been passed in should not be freed by the
+caller after this function has been called.
 
 =head1 NOTES
 

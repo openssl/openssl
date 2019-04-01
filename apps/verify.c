@@ -246,12 +246,21 @@ static int check(X509_STORE *ctx, const char *file,
 
     if (sm2id != NULL) {
 #ifndef OPENSSL_NO_SM2
-        ASN1_OCTET_STRING v;
+        ASN1_OCTET_STRING *v;
 
-        v.data = sm2id;
-        v.length = sm2idlen;
+        v = ASN1_OCTET_STRING_new();
+        if (v == NULL) {
+            printf("error: SM2 ID allocation failed\n");
+            goto end;
+        }
 
-        X509_set_sm2_id(x, &v);
+        if (!ASN1_OCTET_STRING_set(v, sm2id, sm2idlen)) {
+            printf("error: setting SM2 ID failed\n");
+            ASN1_OCTET_STRING_free(v);
+            goto end;
+        }
+
+        X509_set_sm2_id(x, v);
 #endif
     }
 

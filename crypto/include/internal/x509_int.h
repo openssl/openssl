@@ -184,7 +184,7 @@ struct x509_st {
     CRYPTO_RWLOCK *lock;
     volatile int ex_cached;
 # ifndef OPENSSL_NO_SM2
-    ASN1_OCTET_STRING sm2_id;
+    ASN1_OCTET_STRING *sm2_id;
 # endif
 } /* X509 */ ;
 
