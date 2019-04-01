@@ -16,6 +16,7 @@
 
   *) Removed the heartbeat message in DTLS feature, as it has very
      little usage and doesn't seem to fulfill a valuable purpose.
+     The configuration option is now deprecated.
      [Richard Levitte]
 
   *) Changed the output of 'openssl {digestname} < file' to display the
