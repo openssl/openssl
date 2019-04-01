@@ -438,6 +438,7 @@ my %deprecated_disablables = (
     "ripemd" => "rmd160",
     "ui" => "ui-console",
     "dso" => undef,
+    "heartbeats" => undef,
     );
 
 # All of the following are disabled by default:
