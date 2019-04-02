@@ -130,7 +130,7 @@ in that a parameter obtained in this way is highly unlikely to be susceptible to
 If the seed is present for a curve then the b parameter was generated in a verifiable fashion using that seed. The OpenSSL EC library
 does not use this seed value but does enable you to inspect it using EC_GROUP_get0_seed. This returns a pointer to a memory block
 containing the seed that was used. The length of the memory block can be obtained using EC_GROUP_get_seed_len. A number of the
-builtin curves within the library provide seed values that can be obtained. It is also possible to set a custom seed using
+built-in curves within the library provide seed values that can be obtained. It is also possible to set a custom seed using
 EC_GROUP_set_seed and passing a pointer to a memory block, along with the length of the seed. Again, the EC library will not use
 this seed value, although it will be preserved in any ASN1 based communications.
 
@@ -145,13 +145,13 @@ The function EC_GROUP_check performs a number of checks on a curve to verify tha
 verifying that the discriminant is non zero; that a generator has been defined; that the generator is on the curve and has
 the correct order.
 
-EC_GROUP_check_named_curve determines if the group's domain parameters match one of the built in curves supported by the library.
+The function EC_GROUP_check_named_curve determines if the group's domain parameters match one of the built-in curves supported by the library.
 The curve name is returned as a B<NID> if it matches. If the group's domain parameters have been modified then no match will be found.
 If the curve name of the given group is B<NID_undef> (e.g. it has been created by using explicit parameters with no curve name),
-then this method can be used to lookup the name of the curve that matches the group domain parameters. The built in curves contain
+then this method can be used to lookup the name of the curve that matches the group domain parameters. The built-in curves contain
 aliases, so that multiple NID's can map to the same domain parameters. For such curves it is unspecified which of the aliases will be
 returned if the curve name of the given group is NID_undef.
-If B<nist_only> is 1 it will only look for NIST approved curves, otherwise it searches all built in curves.
+If B<nist_only> is 1 it will only look for NIST approved curves, otherwise it searches all built-in curves.
 
 EC_GROUP_cmp compares B<a> and B<b> to determine whether they represent the same curve or not.
 
@@ -185,7 +185,7 @@ EC_GROUP_get_order, EC_GROUP_get_cofactor, EC_GROUP_get_curve_name, EC_GROUP_get
 and EC_GROUP_get_degree return the order, cofactor, curve name (NID), ASN1 flag, point_conversion_form and degree for the
 specified curve respectively. If there is no curve name associated with a curve then EC_GROUP_get_curve_name will return 0.
 
-EC_GROUP_check_named_curve returns the nid of the matching named curve, otherwise it returns 0 for no match, or -1 on error.
+EC_GROUP_check_named_curve() returns the nid of the matching named curve, otherwise it returns 0 for no match, or -1 on error.
 
 EC_GROUP_get0_order() returns an internal pointer to the group order.
 EC_GROUP_order_bits() returns the number of bits in the group order.
@@ -216,7 +216,7 @@ The EC_GROUP_check_named_curve() function was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

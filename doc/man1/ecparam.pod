@@ -83,7 +83,7 @@ Validate the elliptic curve parameters.
 =item B<-check_named>
 
 Validate the elliptic name curve parameters by checking if the curve parameters
-match an inbuilt curves.
+match an built-in curves.
 
 =item B<-name arg>
 

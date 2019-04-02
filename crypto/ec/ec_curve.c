@@ -3241,8 +3241,8 @@ int ec_curve_nid_from_params(const EC_GROUP *group)
     BN_CTX_start(ctx);
 
     /*
-     * The in built curves contains data fields (p, a, b, x, y, order) that are
-     * all zero padded to be the same size. The size of the padding is
+     * The built-in curves contains data fields (p, a, b, x, y, order) that are
+     * all zero-padded to be the same size. The size of the padding is
      * determined by either the number of bytes in the field modulus (p) or the
      * EC group order, whichever is larger.
      */
@@ -3303,7 +3303,7 @@ int ec_curve_nid_from_params(const EC_GROUP *group)
             && (data->seed_len == 0 || seed_len == 0
                 || ((size_t)data->seed_len == seed_len
                      && OPENSSL_memcmp(params_seed, seed, seed_len) == 0))
-            /* Check that the groups params match the inbuilt curve params */
+            /* Check that the groups params match the built-in curve params */
             && OPENSSL_memcmp(param_bytes, params, param_len * NUM_BN_FIELDS)
                               == 0) {
             ret = curve.nid;
