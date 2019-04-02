@@ -116,7 +116,7 @@
         * might be possible to achieve the goal by /DELAYLOAD-ing .DLLs
         * and check for current OS version instead.
         */
-#    define _WIN32_WINNT 0x0501
+#    define _WIN32_WINNT 0x0600
 #   endif
 #   if defined(_WIN32_WINNT) || defined(_WIN32_WCE)
        /*

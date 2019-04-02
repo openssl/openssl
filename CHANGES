@@ -9,6 +9,15 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Increase minimal Windows target version from XP to Vista, since
+     support for Windows XP ended in April 2014 and leaving Windows XP
+     as default target version would prevent BCryptGenRandom() from being
+     used when seeding the CSPRNG. As a consequence, libcrypto.dll will fail
+     to load on Windows XP because `bcrypt.dll` is missing. To build OpenSSL
+     for Windows XP (if necessary) add the -D_WIN32_WINNT=0x501 as Configure
+     argument.
+     [Matthias St. Pierre]
+
   *) Added newline escaping functionality to a filename when using openssl dgst.
      This output format is to replicate the output format found in the '*sum'
      checksum programs. This aims to preserve backward compatibility.
