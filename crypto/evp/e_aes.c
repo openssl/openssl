@@ -15,7 +15,6 @@
 #include <assert.h>
 #include <openssl/aes.h>
 #include "internal/evp_int.h"
-#include "internal/ossl_limits.h"
 #include "modes_lcl.h"
 #include <openssl/rand.h>
 #include <openssl/cmac.h>
