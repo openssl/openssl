@@ -11,6 +11,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 #include "internal/rand_int.h"
+#include "e_os.h"                /* For a default _WIN32_WINNT */
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 
 # ifndef OPENSSL_RAND_SEED_OS
