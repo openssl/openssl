@@ -30,6 +30,7 @@ L COMP          include/openssl/comp.h          crypto/comp/comp_err.c
 L TS            include/openssl/ts.h            crypto/ts/ts_err.c
 L CMS           include/openssl/cms.h           crypto/cms/cms_err.c
 L CRMF          include/openssl/crmf.h          crypto/crmf/crmf_err.c
+L CMP           include/openssl/cmp.h           crypto/cmp/cmp_err.c
 L CT            include/openssl/ct.h            crypto/ct/ct_err.c
 L ASYNC         include/openssl/async.h         crypto/async/async_err.c
 L KDF           include/openssl/kdf.h           crypto/kdf/kdf_err.c

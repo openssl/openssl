@@ -314,6 +314,9 @@
                    Don't build the CAPI engine. This option will be forced if
                    on a platform that does not support CAPI.
 
+  no-cmp
+                   Don't build support for CMP features
+
   no-cms
                    Don't build support for CMS features
 

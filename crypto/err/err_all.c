@@ -35,6 +35,7 @@
 #include <openssl/tserr.h>
 #include <openssl/cmserr.h>
 #include <openssl/crmferr.h>
+#include <openssl/cmperr.h>
 #include <openssl/cterr.h>
 #include <openssl/asyncerr.h>
 #include <openssl/kdferr.h>
@@ -94,6 +95,7 @@ int err_load_crypto_strings_int(void)
 # endif
 # ifndef OPENSSL_NO_CRMF
         ERR_load_CRMF_strings() == 0 ||
+        ERR_load_CMP_strings() == 0 ||
 # endif
 # ifndef OPENSSL_NO_CT
         ERR_load_CT_strings() == 0 ||
