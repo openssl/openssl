@@ -1602,7 +1602,7 @@ static int check_named_curve_test(int id)
         || !TEST_true(BN_add_word(other_cofactor, 1)))
         goto err;
 
-    /* Determine if the inbuilt curve has a seed field set */
+    /* Determine if the built-in curve has a seed field set */
     has_seed = (EC_GROUP_get_seed_len(group) > 0);
     field_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
     if (field_nid == NID_X9_62_characteristic_two_field) {
@@ -1649,14 +1649,14 @@ static int check_named_curve_test(int id)
 
     if (has_seed) {
         /*
-         * If the built in curve has a seed and we set the seed to another value
+         * If the built-in curve has a seed and we set the seed to another value
          * then it will fail the check.
          */
         if (!TEST_int_eq(EC_GROUP_check_named_curve(group, 0), 0))
             goto err;
     } else {
         /*
-         * If the built in curve does not have a seed then setting the seed will
+         * If the built-in curve does not have a seed then setting the seed will
          * pass the check (as the seed is optional).
          */
         if (!TEST_int_eq(EC_GROUP_check_named_curve(group, 0), nid))
