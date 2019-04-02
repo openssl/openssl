@@ -1844,6 +1844,114 @@ static int test_psk_tickets(void)
 
     return testresult;
 }
+
+
+static int test_psk_tickets_no_dhe(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    int sess_id_ctx = 1;
+    int retc = -1, rets = -1, err, clienterr = 0, servererr = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_3_VERSION, TLS1_3_VERSION, &sctx,
+                                       &cctx, NULL, NULL))
+        || !TEST_true(SSL_CTX_set_session_id_context(sctx,
+                                                     (void *)&sess_id_ctx,
+                                                     sizeof(sess_id_ctx))))
+        goto end;
+
+    SSL_CTX_set_options(sctx,
+            SSL_CTX_get_options(sctx) | SSL_OP_ALLOW_NO_DHE_KEX);
+    SSL_CTX_set_options(cctx,
+            SSL_CTX_get_options(cctx) | SSL_OP_ALLOW_NO_DHE_KEX);
+    SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION);
+    SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION);
+
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_OFF);
+    SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
+    SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
+
+    use_session_cb_cnt = 0;
+    find_session_cb_cnt = 0;
+    srvid = pskid;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+    clientpsk = serverpsk = create_a_psk(clientssl);
+    if (!TEST_ptr(clientpsk))
+        goto end;
+    SSL_SESSION_up_ref(clientpsk);
+
+    /*
+     * Verify that we can establish a connection without needing any
+     * HelloRetryRequests
+     */
+
+    /* First, push through a ClientHello */
+    err = SSL_ERROR_WANT_WRITE;
+    while (!clienterr && retc <= 0 && err == SSL_ERROR_WANT_WRITE) {
+        retc = SSL_connect(clientssl);
+        if (retc <= 0)
+            err = SSL_get_error(clientssl, retc);
+    }
+
+    if (err != SSL_ERROR_WANT_READ) {
+        TEST_info("Unexpected error return at ClientHello %d, %d", retc, err);
+        TEST_openssl_errors();
+        goto end;
+    }
+
+    /* Verify that the client did not generate a key share at all */
+    if (!TEST_ptr_null(clientssl->s3->tmp.pkey))
+        goto end;
+
+    /* Next, the ServerHello */
+    err = SSL_ERROR_WANT_WRITE;
+    while (!servererr && rets <= 0 && err == SSL_ERROR_WANT_WRITE) {
+        retc = SSL_accept(serverssl);
+        if (retc <= 0)
+            err = SSL_get_error(serverssl, retc);
+    }
+    if (err != SSL_ERROR_WANT_READ) {
+        TEST_info("Unexpected error return at ServerHello %d, %d", retc, err);
+        TEST_openssl_errors();
+        goto end;
+    }
+
+    /* Establish the connection on the client */
+    err = SSL_ERROR_WANT_WRITE;
+    while (!clienterr && retc <= 0 && err == SSL_ERROR_WANT_WRITE) {
+        retc = SSL_connect(clientssl);
+        if (retc <= 0)
+            err = SSL_get_error(clientssl, retc);
+    }
+
+    if (retc != 1) {
+        TEST_info("Failed to establish 1-RTT connection %d, %d", retc, err);
+        TEST_openssl_errors();
+        goto end;
+    }
+
+    if (!TEST_int_eq(1, find_session_cb_cnt)
+        || !TEST_int_eq(1, use_session_cb_cnt))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+
+    return testresult;
+}
 #endif
 
 #define USE_NULL            0
@@ -6296,6 +6404,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_stateful_tickets, 3);
     ADD_ALL_TESTS(test_stateless_tickets, 3);
     ADD_TEST(test_psk_tickets);
+    ADD_TEST(test_psk_tickets_no_dhe);
 #endif
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
     ADD_TEST(test_ssl_bio_pop_next_bio);
