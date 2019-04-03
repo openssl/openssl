@@ -11,6 +11,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
 #include "internal/evp_int.h"
 #include "internal/provider.h"
 #include "evp_locl.h"
@@ -18,13 +20,28 @@
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     int ret;
+    const EVP_CIPHER *cipher = c->cipher;
 
-    if (c->cipher->set_asn1_parameters != NULL)
-        ret = c->cipher->set_asn1_parameters(c, type);
-    else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) {
-        switch (EVP_CIPHER_CTX_mode(c)) {
+    if (cipher->prov != NULL) {
+        /*
+         * The cipher has come from a provider and won't have the default flags.
+         * Find the implicit form so we can check the flags.
+         * TODO(3.0): This won't work for 3rd party ciphers we know nothing about
+         * We'll need to think of something else for those.
+         */
+        cipher = EVP_get_cipherbynid(cipher->nid);
+        if (cipher == NULL) {
+            EVPerr(EVP_F_EVP_CIPHER_PARAM_TO_ASN1, ASN1_R_UNSUPPORTED_CIPHER);
+            return -1;
+        }
+    }
+
+    if (cipher->set_asn1_parameters != NULL)
+        ret = cipher->set_asn1_parameters(c, type);
+    else if (cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) {
+        switch (EVP_CIPHER_mode(cipher)) {
         case EVP_CIPH_WRAP_MODE:
-            if (EVP_CIPHER_CTX_nid(c) == NID_id_smime_alg_CMS3DESwrap)
+            if (EVP_CIPHER_nid(cipher) == NID_id_smime_alg_CMS3DESwrap)
                 ASN1_TYPE_set(type, V_ASN1_NULL, NULL);
             ret = 1;
             break;
@@ -53,11 +70,22 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     int ret;
+    const EVP_CIPHER *cipher = c->cipher;
 
-    if (c->cipher->get_asn1_parameters != NULL)
-        ret = c->cipher->get_asn1_parameters(c, type);
-    else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) {
-        switch (EVP_CIPHER_CTX_mode(c)) {
+    if (cipher->prov != NULL) {
+        /*
+         * The cipher has come from a provider and won't have the default flags.
+         * Find the implicit form so we can check the flags.
+         */
+        cipher = EVP_get_cipherbynid(cipher->nid);
+        if (cipher == NULL)
+            return -1;
+    }
+
+    if (cipher->get_asn1_parameters != NULL)
+        ret = cipher->get_asn1_parameters(c, type);
+    else if (cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) {
+        switch (EVP_CIPHER_mode(cipher)) {
 
         case EVP_CIPH_WRAP_MODE:
             ret = 1;
@@ -85,19 +113,23 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     return ret;
 }
 
-int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
     int i = 0;
     unsigned int l;
 
     if (type != NULL) {
-        l = EVP_CIPHER_CTX_iv_length(c);
-        OPENSSL_assert(l <= sizeof(c->iv));
-        i = ASN1_TYPE_get_octetstring(type, c->oiv, l);
+        unsigned char iv[EVP_MAX_IV_LENGTH];
+
+        l = EVP_CIPHER_CTX_iv_length(ctx);
+        if (!ossl_assert(l <= sizeof(iv)))
+            return -1;
+        i = ASN1_TYPE_get_octetstring(type, iv, l);
         if (i != (int)l)
             return -1;
-        else if (i > 0)
-            memcpy(c->iv, c->oiv, l);
+
+        if (!EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1))
+            return -1;
     }
     return i;
 }
@@ -175,14 +207,20 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
     }
 }
 
-int EVP_CIPHER_block_size(const EVP_CIPHER *e)
+int EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
 {
-    return e->block_size;
+    if (cipher->prov != NULL) {
+        if (cipher->blocksize != NULL)
+            return cipher->blocksize();
+        /* We default to a block size of 1 */
+        return 1;
+    }
+    return cipher->block_size;
 }
 
 int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
 {
-    return ctx->cipher->block_size;
+    return EVP_CIPHER_block_size(ctx->cipher);
 }
 
 int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
@@ -193,6 +231,12 @@ int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
 int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                const unsigned char *in, unsigned int inl)
 {
+    if (ctx->cipher->prov != NULL) {
+        if (ctx->cipher->ccipher != NULL)
+            return ctx->cipher->ccipher(ctx->provctx, out, in, (size_t)inl);
+        return 0;
+    }
+
     return ctx->cipher->do_cipher(ctx, out, in, inl);
 }
 
@@ -238,12 +282,18 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 
 int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 {
+    if (cipher->prov != NULL) {
+        if (cipher->iv_length != NULL)
+            return (int)cipher->iv_length();
+        return 0;
+    }
+
     return cipher->iv_len;
 }
 
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
-    return ctx->cipher->iv_len;
+    return EVP_CIPHER_iv_length(ctx->cipher);
 }
 
 const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx)
@@ -307,6 +357,33 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 {
     return ctx->cipher->nid;
 }
+
+int EVP_CIPHER_mode(const EVP_CIPHER *cipher)
+{
+    if (cipher->prov != NULL) {
+        int mode;
+
+        /* Cipher comes from a provider - so ask the provider for the mode */
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_int(OSSL_CIPHER_PARAM_MODE, NULL),
+            OSSL_PARAM_END
+        };
+
+        params[0].data = &mode;
+
+        if (cipher->get_params == NULL) {
+            EVPerr(EVP_F_EVP_CIPHER_MODE, EVP_R_CTRL_NOT_IMPLEMENTED);
+            return 0;
+        }
+
+        if (!cipher->get_params(params))
+            return 0;
+
+        return mode;
+    }
+    return EVP_CIPHER_flags(cipher) & EVP_CIPH_MODE;
+}
+
 
 int EVP_MD_block_size(const EVP_MD *md)
 {

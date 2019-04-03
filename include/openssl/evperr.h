@@ -57,6 +57,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH              122
 # define EVP_F_EVP_CIPHER_CTX_SET_PADDING                 237
 # define EVP_F_EVP_CIPHER_FROM_DISPATCH                   238
+# define EVP_F_EVP_CIPHER_MODE                            239
 # define EVP_F_EVP_CIPHER_PARAM_TO_ASN1                   205
 # define EVP_F_EVP_DECRYPTFINAL_EX                        101
 # define EVP_F_EVP_DECRYPTUPDATE                          166

@@ -57,6 +57,7 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
      "EVP_CIPHER_CTX_set_padding"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_CIPHER_FROM_DISPATCH, 0),
      "evp_cipher_from_dispatch"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_CIPHER_MODE, 0), "EVP_CIPHER_mode"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_CIPHER_PARAM_TO_ASN1, 0),
      "EVP_CIPHER_param_to_asn1"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_DECRYPTFINAL_EX, 0),
