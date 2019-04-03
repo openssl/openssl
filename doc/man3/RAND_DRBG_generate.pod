@@ -29,7 +29,9 @@ number of generate requests (I<reseed interval>) or the maximum timespan
 (I<reseed time interval>) since its last seeding have been reached.
 If this is the case, the DRBG reseeds automatically.
 Additionally, an immediate reseeding can be requested by setting the
-B<prediction_resistance> flag to 1. See NOTES section for more details.
+B<prediction_resistance> flag to 1.
+Requesting prediction resistance is a relative expensive operation.
+See NOTES section for more details.
 
 The caller can optionally provide additional data to be used for reseeding
 by passing a pointer B<adin> to a buffer of length B<adinlen>.
@@ -59,15 +61,15 @@ If necessary, they can be changed using L<RAND_DRBG_set_reseed_interval(3)>
 and L<RAND_DRBG_set_reseed_time_interval(3)>, respectively.
 
 A request for prediction resistance can only be satisfied by pulling fresh
-entropy from one of the approved entropy sources listed in section 5.5.2 of
-[NIST SP 800-90C].
-Since the default DRBG implementation does not have access to such an approved
-entropy source, a request for prediction resistance will always fail.
-In other words, prediction resistance is currently not supported yet by the DRBG.
+entropy from a live entropy source (section 5.5.2 of [NIST SP 800-90C]).
+It is up to the user to ensure that a live entropy source is configured
+and is being used.
 
 =head1 HISTORY
 
 The RAND_DRBG functions were added in OpenSSL 1.1.1.
+
+Prediction resistance is supported from OpenSSL 3.0.0.
 
 =head1 SEE ALSO
 

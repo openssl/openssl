@@ -183,17 +183,6 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         }
 
     } else {
-        if (prediction_resistance) {
-            /*
-             * We don't have any entropy sources that comply with the NIST
-             * standard to provide prediction resistance (see NIST SP 800-90C,
-             * Section 5.4).
-             */
-            RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY,
-                    RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED);
-            goto err;
-        }
-
         /* Get entropy by polling system entropy sources. */
         entropy_available = rand_pool_acquire_entropy(pool);
     }
@@ -203,7 +192,6 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         *pout = rand_pool_detach(pool);
     }
 
- err:
     if (drbg->seed_pool == NULL)
         rand_pool_free(pool);
     return ret;

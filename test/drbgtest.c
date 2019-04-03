@@ -1012,6 +1012,83 @@ static int test_rand_add(void)
     return 1;
 }
 
+static int test_rand_drbg_prediction_resistance(void)
+{
+    RAND_DRBG *m = NULL, *i = NULL, *s = NULL;
+    unsigned char buf1[51], buf2[sizeof(buf1)];
+    int ret = 0, mreseed, ireseed, sreseed;
+
+    /* Initialise a three long DRBG chain */
+    if (!TEST_ptr(m = RAND_DRBG_new(0, 0, NULL))
+        || !TEST_true(disable_crngt(m))
+        || !TEST_true(RAND_DRBG_instantiate(m, NULL, 0))
+        || !TEST_ptr(i = RAND_DRBG_new(0, 0, m))
+        || !TEST_true(RAND_DRBG_instantiate(i, NULL, 0))
+        || !TEST_ptr(s = RAND_DRBG_new(0, 0, i))
+        || !TEST_true(RAND_DRBG_instantiate(s, NULL, 0)))
+        goto err;
+
+    /* During a normal reseed, only the slave DRBG should be reseed */
+    mreseed = ++m->reseed_prop_counter;
+    ireseed = ++i->reseed_prop_counter;
+    sreseed = s->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_reseed(s, NULL, 0, 0))
+        || !TEST_int_eq(m->reseed_prop_counter, mreseed)
+        || !TEST_int_eq(i->reseed_prop_counter, ireseed)
+        || !TEST_int_gt(s->reseed_prop_counter, sreseed))
+        goto err;
+
+    /*
+     * When prediction resistance is requested, the request should be
+     * propagated to the master, so that the entire DRBG chain reseeds.
+     */
+    sreseed = s->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_reseed(s, NULL, 0, 1))
+        || !TEST_int_gt(m->reseed_prop_counter, mreseed)
+        || !TEST_int_gt(i->reseed_prop_counter, ireseed)
+        || !TEST_int_gt(s->reseed_prop_counter, sreseed))
+        goto err;
+
+    /* During a normal generate, only the slave DRBG should be reseed */
+    mreseed = ++m->reseed_prop_counter;
+    ireseed = ++i->reseed_prop_counter;
+    sreseed = s->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_generate(s, buf1, sizeof(buf1), 0, NULL, 0))
+        || !TEST_int_eq(m->reseed_prop_counter, mreseed)
+        || !TEST_int_eq(i->reseed_prop_counter, ireseed)
+        || !TEST_int_gt(s->reseed_prop_counter, sreseed))
+        goto err;
+
+    /*
+     * When a prediction resistant generate is requested, the request
+     * should be propagated to the master, reseeding the entire DRBG chain.
+     */
+    sreseed = s->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_generate(s, buf2, sizeof(buf2), 1, NULL, 0))
+        || !TEST_int_gt(m->reseed_prop_counter, mreseed)
+        || !TEST_int_gt(i->reseed_prop_counter, ireseed)
+        || !TEST_int_gt(s->reseed_prop_counter, sreseed)
+        || !TEST_mem_ne(buf1, sizeof(buf1), buf2, sizeof(buf2)))
+        goto err;
+
+    /* Verify that a normal reseed still only reseeds the slave DRBG */
+    mreseed = ++m->reseed_prop_counter;
+    ireseed = ++i->reseed_prop_counter;
+    sreseed = s->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_reseed(s, NULL, 0, 0))
+        || !TEST_int_eq(m->reseed_prop_counter, mreseed)
+        || !TEST_int_eq(i->reseed_prop_counter, ireseed)
+        || !TEST_int_gt(s->reseed_prop_counter, sreseed))
+        goto err;
+
+    ret = 1;
+err:
+    RAND_DRBG_free(s);
+    RAND_DRBG_free(i);
+    RAND_DRBG_free(m);
+    return ret;
+}
+
 static int test_multi_set(void)
 {
     int rv = 0;
@@ -1252,6 +1329,7 @@ int setup_tests(void)
     ADD_TEST(test_rand_drbg_reseed);
     ADD_TEST(test_rand_seed);
     ADD_TEST(test_rand_add);
+    ADD_TEST(test_rand_drbg_prediction_resistance);
     ADD_TEST(test_multi_set);
     ADD_TEST(test_set_defaults);
 #if defined(OPENSSL_THREADS)
