@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include "internal/cryptlib.h"
+#include "internal/provider_algs.h"
 #include "ciphers_locl.h"
 
 static void PROV_AES_KEY_generic_init(PROV_AES_KEY *ctx,
@@ -195,7 +196,6 @@ static int aes_set_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-extern const OSSL_DISPATCH aes256ecb_functions[];
 const OSSL_DISPATCH aes256ecb_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_256_ecb_newctx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_einit },

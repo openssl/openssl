@@ -13,6 +13,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "internal/provider_algs.h"
 
 /* Functions provided by the core */
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
@@ -49,14 +50,10 @@ static int deflt_get_params(const OSSL_PROVIDER *prov,
     return 1;
 }
 
-extern const OSSL_DISPATCH sha256_functions[];
-
 static const OSSL_ALGORITHM deflt_digests[] = {
     { "SHA256", "default=yes", sha256_functions },
     { NULL, NULL, NULL }
 };
-
-extern const OSSL_DISPATCH aes256ecb_functions[];
 
 static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-256-ECB", "default=yes", aes256ecb_functions },

@@ -7,7 +7,7 @@ IF[{- !$disabled{fips} -}]
     SOURCE[fips]=fips.ld
     GENERATE[fips.ld]=../util/providers.num
   ENDIF
-  INCLUDE[fips]=.. ../include ../crypto/include
+  INCLUDE[fips]=.. ../include ../crypto/include common/include
   DEFINE[fips]=FIPS_MODE
 ENDIF
 
