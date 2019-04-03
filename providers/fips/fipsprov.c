@@ -88,8 +88,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_get_core_get_params(in);
             break;
+        /* Just ignore anything we don't understand */
         default:
-            /* Just ignore anything we don't understand */
             break;
         }
     }
