@@ -104,12 +104,11 @@ contents safely before freeing it, in order not to leave sensitive information
 about the DRBG's state in memory.
 
 A request for prediction resistance can only be satisfied by pulling fresh
-entropy from one of the approved entropy sources listed in section 5.5.2 of
-[NIST SP 800-90C].
-Since the default implementation of the get_entropy callback does not have access
-to such an approved entropy source, a request for prediction resistance will
-always fail.
-In other words, prediction resistance is currently not supported yet by the DRBG.
+entropy from a live entropy source (section 5.5.2 of [NIST SP 800-90C]).
+Some random seed sources are not live entropy sources and a request
+for prediction resistance with such a source configured will always fail.
+For example, configuring with I<--with-rand-seed=none> will ensure that
+prediction resistance always fails.
 
 The derivation function is disabled during initialization by calling the
 RAND_DRBG_set() function with the RAND_DRBG_FLAG_CTR_NO_DF flag.
