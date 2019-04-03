@@ -10,6 +10,7 @@
 #include <openssl/sha.h>
 #include <openssl/crypto.h>
 #include <openssl/core_numbers.h>
+#include "internal/provider_algs.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -73,7 +74,6 @@ static size_t sha256_block_size(void)
     return SHA256_CBLOCK;
 }
 
-extern const OSSL_DISPATCH sha256_functions[];
 const OSSL_DISPATCH sha256_functions[] = {
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))sha256_newctx },
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))SHA256_Init },
