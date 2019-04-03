@@ -375,7 +375,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "SM2 is not supported by this OpenSSL build", 1
+    skip "SM2 is not supported by this OpenSSL build", 2
 	      if disabled("sm2");
 
    # Test '-sm2-id' and '-sm2-hex-id'  option
