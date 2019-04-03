@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -3518,6 +3518,17 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             || in == NULL
             || len < AES_BLOCK_SIZE)
         return 0;
+
+    /*
+     * Impose a limit of 2^20 blocks per data unit as specifed by
+     * IEEE Std 1619-2018.  The earlier and obsolete IEEE Std 1619-2007
+     * indicated that this was a SHOULD NOT rather than a MUST NOT.
+     * NIST SP 800-38E mandates the same limit.
+     */
+    if (len > XTS_MAX_BLOCKS_PER_DATA_UNIT * AES_BLOCK_SIZE) {
+        EVPerr(EVP_F_AES_XTS_CIPHER, EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE);
+        return 0;
+    }
 
     /*
      * Verify that the two keys are different.
