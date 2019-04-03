@@ -323,7 +323,7 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
 
     if (pair != NULL) {
         OPENSSL_free(pair->name);
-        OPENSSL_free(pair->name);
+        OPENSSL_free(pair->value);
         OPENSSL_free(pair);
     }
     CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_ADD_PARAMETER, ERR_R_MALLOC_FAILURE);
