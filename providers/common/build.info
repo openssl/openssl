@@ -1,1 +1,1 @@
-SUBDIRS=digests
+SUBDIRS=digests ciphers

@@ -139,6 +139,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     if (tmpcipher->prov == NULL) {
         switch(tmpcipher->nid) {
+        case NID_aes_256_ecb:
+            break;
         default:
             goto legacy;
         }
