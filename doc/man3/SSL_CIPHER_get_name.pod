@@ -124,7 +124,10 @@ Textual representation of the cipher name.
 
 =item <protocol version>
 
-Protocol version, such as B<TLSv1.2>, when the cipher was first defined.
+The minimum protocol version that the ciphersuite supports, such as B<TLSv1.2>.
+Note that this is not always the same as the protocol version in which the
+ciphersuite was first defined because some ciphersuites are backwards compatible
+with earlier protocol versions.
 
 =item Kx=<key exchange>
 
