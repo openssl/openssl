@@ -1,0 +1,4 @@
+LIBS=../../../libcrypto
+SOURCE[../../../libcrypto]=\
+        block.c aes.c aes_basic.c
+INCLUDE[../../../libcrypto]=. ../../../crypto

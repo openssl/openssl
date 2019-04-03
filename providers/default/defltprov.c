@@ -56,6 +56,13 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { NULL, NULL, NULL }
 };
 
+extern const OSSL_DISPATCH aes256ecb_functions[];
+
+static const OSSL_ALGORITHM deflt_ciphers[] = {
+    { "AES-256-ECB", "default=yes", aes256ecb_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
                                          int operation_id,
                                          int *no_cache)
@@ -64,6 +71,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
     switch (operation_id) {
     case OSSL_OP_DIGEST:
         return deflt_digests;
+    case OSSL_OP_CIPHER:
+        return deflt_ciphers;
     }
     return NULL;
 }
