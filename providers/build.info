@@ -4,7 +4,7 @@ IF[{- !$disabled{fips} -}]
   SUBDIRS=fips
   MODULES=fips
   IF[{- defined $target{shared_defflag} -}]
-    SHARED_SOURCE[fips]=fips.ld
+    SOURCE[fips]=fips.ld
     GENERATE[fips.ld]=../util/providers.num
   ENDIF
   INCLUDE[fips]=.. ../include ../crypto/include
