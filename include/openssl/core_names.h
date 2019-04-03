@@ -34,6 +34,11 @@ extern "C" {
  */
 #define OSSL_PROV_PARAM_BUILDINFO   "buildinfo"
 
+
+/* Well known cipher parameters */
+
+#define OSSL_CIPHER_PARAM_PADDING   "padding"
+
 # ifdef __cplusplus
 }
 # endif

@@ -77,7 +77,7 @@ extern const OSSL_DISPATCH sha256_functions[];
 const OSSL_DISPATCH sha256_functions[] = {
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))sha256_newctx },
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))SHA256_Init },
-    { OSSL_FUNC_DIGEST_UPDDATE, (void (*)(void))SHA256_Update },
+    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))SHA256_Update },
     { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))sha256_final },
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))sha256_freectx },
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))sha256_dupctx },

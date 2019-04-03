@@ -210,10 +210,14 @@ struct evp_md_st {
 
 struct evp_cipher_st {
     int nid;
+
     int block_size;
     /* Default value for variable length ciphers */
     int key_len;
     int iv_len;
+
+    /* Legacy structure members */
+    /* TODO(3.0): Remove these */
     /* Various flags */
     unsigned long flags;
     /* init key */
@@ -234,6 +238,22 @@ struct evp_cipher_st {
     int (*ctrl) (EVP_CIPHER_CTX *, int type, int arg, void *ptr);
     /* Application data */
     void *app_data;
+
+    /* New structure members */
+    /* TODO(3.0): Remove above comment when legacy has gone */
+    OSSL_PROVIDER *prov;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+    OSSL_OP_cipher_newctx_fn *newctx;
+    OSSL_OP_cipher_encrypt_init_fn *einit;
+    OSSL_OP_cipher_decrypt_init_fn *dinit;
+    OSSL_OP_cipher_update_fn *cupdate;
+    OSSL_OP_cipher_final_fn *cfinal;
+    OSSL_OP_cipher_freectx_fn *freectx;
+    OSSL_OP_cipher_dupctx_fn *dupctx;
+    OSSL_OP_cipher_key_length_fn *key_length;
+    OSSL_OP_cipher_get_params_fn *get_params;
+    OSSL_OP_cipher_get_params_fn *set_params;
 } /* EVP_CIPHER */ ;
 
 /* Macros to code block cipher wrappers */

@@ -61,6 +61,9 @@ const BIO_METHOD *BIO_f_cipher(void)
     return &methods_enc;
 }
 
+extern BIO_ENC_CTX *ctxcpy;
+BIO_ENC_CTX *ctxcpy = NULL;
+
 static int enc_new(BIO *bi)
 {
     BIO_ENC_CTX *ctx;
@@ -69,6 +72,8 @@ static int enc_new(BIO *bi)
         EVPerr(EVP_F_ENC_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
+
+    ctxcpy = ctx;
 
     ctx->cipher = EVP_CIPHER_CTX_new();
     if (ctx->cipher == NULL) {

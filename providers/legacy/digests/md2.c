@@ -54,7 +54,7 @@ extern const OSSL_DISPATCH md2_functions[];
 const OSSL_DISPATCH md2_functions[] = {
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))md2_newctx },
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))MD2_Init },
-    { OSSL_FUNC_DIGEST_UPDDATE, (void (*)(void))MD2_Update },
+    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))MD2_Update },
     { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))md2_final },
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))md2_freectx },
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))md2_dupctx },
