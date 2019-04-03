@@ -146,6 +146,28 @@ static void *aes_256_ecb_newctx(void)
     return ctx;
 }
 
+static void *aes_192_ecb_newctx(void)
+{
+    PROV_AES_KEY *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    ctx->pad = 1;
+    ctx->keylen = 192 / 8;
+    ctx->ciph = PROV_AES_CIPHER_ecb();
+    ctx->mode = EVP_CIPH_ECB_MODE;
+    return ctx;
+}
+
+static void *aes_128_ecb_newctx(void)
+{
+    PROV_AES_KEY *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    ctx->pad = 1;
+    ctx->keylen = 128 / 8;
+    ctx->ciph = PROV_AES_CIPHER_ecb();
+    ctx->mode = EVP_CIPH_ECB_MODE;
+    return ctx;
+}
+
 static void aes_freectx(void *vctx)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
@@ -166,6 +188,16 @@ static void *aes_dupctx(void *ctx)
 static size_t key_length_256(void)
 {
     return 256 / 8;
+}
+
+static size_t key_length_192(void)
+{
+    return 192 / 8;
+}
+
+static size_t key_length_128(void)
+{
+    return 128 / 8;
 }
 
 static int aes_get_params(void *vctx, const OSSL_PARAM params[])
@@ -205,6 +237,38 @@ const OSSL_DISPATCH aes256ecb_functions[] = {
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))aes_freectx },
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))aes_dupctx },
     { OSSL_FUNC_CIPHER_KEY_LENGTH, (void (*)(void))key_length_256 },
+    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))aes_get_params },
+    { OSSL_FUNC_CIPHER_SET_PARAMS, (void (*)(void))aes_set_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH aes192ecb_functions[] = {
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_192_ecb_newctx },
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_einit },
+    { OSSL_FUNC_CIPHER_ENCRYPT_UPDATE, (void (*)(void))aes_update },
+    { OSSL_FUNC_CIPHER_ENCRYPT_FINAL, (void (*)(void))aes_efinal },
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))aes_dinit },
+    { OSSL_FUNC_CIPHER_DECRYPT_UPDATE, (void (*)(void))aes_update },
+    { OSSL_FUNC_CIPHER_DECRYPT_FINAL, (void (*)(void))aes_dfinal },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))aes_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))aes_dupctx },
+    { OSSL_FUNC_CIPHER_KEY_LENGTH, (void (*)(void))key_length_192 },
+    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))aes_get_params },
+    { OSSL_FUNC_CIPHER_SET_PARAMS, (void (*)(void))aes_set_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH aes128ecb_functions[] = {
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_128_ecb_newctx },
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_einit },
+    { OSSL_FUNC_CIPHER_ENCRYPT_UPDATE, (void (*)(void))aes_update },
+    { OSSL_FUNC_CIPHER_ENCRYPT_FINAL, (void (*)(void))aes_efinal },
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))aes_dinit },
+    { OSSL_FUNC_CIPHER_DECRYPT_UPDATE, (void (*)(void))aes_update },
+    { OSSL_FUNC_CIPHER_DECRYPT_FINAL, (void (*)(void))aes_dfinal },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))aes_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))aes_dupctx },
+    { OSSL_FUNC_CIPHER_KEY_LENGTH, (void (*)(void))key_length_128 },
     { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))aes_get_params },
     { OSSL_FUNC_CIPHER_SET_PARAMS, (void (*)(void))aes_set_params },
     { 0, NULL }

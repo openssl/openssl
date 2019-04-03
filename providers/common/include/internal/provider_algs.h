@@ -12,3 +12,5 @@ extern const OSSL_DISPATCH sha256_functions[];
 
 /* Ciphers */
 extern const OSSL_DISPATCH aes256ecb_functions[];
+extern const OSSL_DISPATCH aes192ecb_functions[];
+extern const OSSL_DISPATCH aes128ecb_functions[];
