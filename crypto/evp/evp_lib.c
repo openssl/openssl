@@ -278,11 +278,23 @@ void EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
 
 int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 {
+    if (cipher->prov != NULL) {
+        if (cipher->key_length != NULL)
+            return (int)cipher->key_length();
+        return -1;
+    }
+
     return cipher->key_len;
 }
 
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 {
+    /*
+     * TODO(3.0): This may need to change if/when we introduce variable length
+     * key ciphers into the providers.
+     */
+    if (ctx->cipher != NULL && ctx->cipher->prov != NULL)
+        return EVP_CIPHER_key_length(ctx->cipher);
     return ctx->key_len;
 }
 
@@ -353,12 +365,16 @@ EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
     }
     return md;
 }
+
 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
 {
     EVP_MD *to = EVP_MD_meth_new(md->type, md->pkey_type);
 
-    if (to != NULL)
+    if (to != NULL) {
+        CRYPTO_RWLOCK *lock = to->lock;
         memcpy(to, md, sizeof(*to));
+        to->lock = lock;
+    }
     return to;
 }
 

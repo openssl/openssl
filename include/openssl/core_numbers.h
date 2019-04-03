@@ -78,13 +78,14 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
 
 # define OSSL_FUNC_DIGEST_NEWCTX            1
 # define OSSL_FUNC_DIGEST_INIT              2
-# define OSSL_FUNC_DIGEST_UPDDATE           3
+# define OSSL_FUNC_DIGEST_UPDATE            3
 # define OSSL_FUNC_DIGEST_FINAL             4
 # define OSSL_FUNC_DIGEST_DIGEST            5
 # define OSSL_FUNC_DIGEST_FREECTX           6
 # define OSSL_FUNC_DIGEST_DUPCTX            7
 # define OSSL_FUNC_DIGEST_SIZE              8
 # define OSSL_FUNC_DIGEST_BLOCK_SIZE        9
+
 
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *vctx))
@@ -95,11 +96,53 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_final,
 OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
                     (const unsigned char *in, size_t inl, unsigned char *out,
                      size_t *out_l, size_t outsz))
+
 OSSL_CORE_MAKE_FUNC(void, OP_digest_cleanctx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(void, OP_digest_freectx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
+
+
+/* Symmetric Ciphers */
+
+# define OSSL_OP_CIPHER                              2
+
+# define OSSL_FUNC_CIPHER_NEWCTX                     1
+# define OSSL_FUNC_CIPHER_ENCRYPT_INIT               2
+# define OSSL_FUNC_CIPHER_DECRYPT_INIT               3
+# define OSSL_FUNC_CIPHER_UPDATE                     4
+# define OSSL_FUNC_CIPHER_FINAL                      5
+# define OSSL_FUNC_CIPHER_FREECTX                    6
+# define OSSL_FUNC_CIPHER_DUPCTX                     7
+# define OSSL_FUNC_CIPHER_KEY_LENGTH                 8
+# define OSSL_FUNC_CIPHER_GET_PARAMS                 9
+# define OSSL_FUNC_CIPHER_SET_PARAMS                10
+
+
+OSSL_CORE_MAKE_FUNC(void *, OP_cipher_newctx, (void))
+OSSL_CORE_MAKE_FUNC(int, OP_cipher_encrypt_init, (void *vctx,
+                                                  const unsigned char *key,
+                                                  const unsigned char *iv))
+OSSL_CORE_MAKE_FUNC(int, OP_cipher_decrypt_init, (void *vctx,
+                                                  const unsigned char *key,
+                                                  const unsigned char *iv))
+OSSL_CORE_MAKE_FUNC(int, OP_cipher_update,
+                    (void *, unsigned char *out, size_t *outl,
+                     const unsigned char *in, size_t inl))
+OSSL_CORE_MAKE_FUNC(int, OP_cipher_final,
+                    (void *, unsigned char *out, size_t *outl))
+OSSL_CORE_MAKE_FUNC(int, OP_cipher_cipher,
+                    (void *, unsigned char *out, const unsigned char *in,
+                     size_t inl))
+OSSL_CORE_MAKE_FUNC(void, OP_cipher_freectx, (void *vctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_cipher_dupctx, (void *vctx))
+OSSL_CORE_MAKE_FUNC(size_t, OP_cipher_key_length, (void))
+OSSL_CORE_MAKE_FUNC(int, OP_cipher_get_params, (void *vctx,
+                                                const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_cipher_set_params, (void *vctx,
+                                                const OSSL_PARAM params[]))
+
 
 # ifdef __cplusplus
 }

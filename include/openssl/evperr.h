@@ -55,6 +55,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_CIPHER_CTX_COPY                        163
 # define EVP_F_EVP_CIPHER_CTX_CTRL                        124
 # define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH              122
+# define EVP_F_EVP_CIPHER_CTX_SET_PADDING                 237
+# define EVP_F_EVP_CIPHER_FROM_DISPATCH                   238
 # define EVP_F_EVP_CIPHER_PARAM_TO_ASN1                   205
 # define EVP_F_EVP_DECRYPTFINAL_EX                        101
 # define EVP_F_EVP_DECRYPTUPDATE                          166
@@ -190,6 +192,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_INVALID_KEY                                163
 # define EVP_R_INVALID_KEY_LENGTH                         130
 # define EVP_R_INVALID_OPERATION                          148
+# define EVP_R_INVALID_PROVIDER_FUNCTIONS                 193
 # define EVP_R_INVALID_SALT_LENGTH                        186
 # define EVP_R_KEYGEN_FAILURE                             120
 # define EVP_R_KEY_SETUP_FAILED                           180
