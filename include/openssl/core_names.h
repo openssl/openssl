@@ -38,6 +38,7 @@ extern "C" {
 /* Well known cipher parameters */
 
 #define OSSL_CIPHER_PARAM_PADDING   "padding"
+#define OSSL_CIPHER_PARAM_MODE      "mode"
 
 # ifdef __cplusplus
 }

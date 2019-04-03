@@ -142,6 +142,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_aes_256_ecb:
         case NID_aes_192_ecb:
         case NID_aes_128_ecb:
+        case NID_aes_256_cbc:
+        case NID_aes_192_cbc:
+        case NID_aes_128_cbc:
             break;
         default:
             goto legacy;
@@ -201,6 +204,19 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
          */
         if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
             return 0;
+    }
+
+    switch (EVP_CIPHER_mode(ctx->cipher)) {
+    case EVP_CIPH_CFB_MODE:
+    case EVP_CIPH_OFB_MODE:
+    case EVP_CIPH_CBC_MODE:
+        /* For these modes we remember the original IV for later use */
+        if (!ossl_assert(EVP_CIPHER_CTX_iv_length(ctx) <= (int)sizeof(ctx->oiv))) {
+            EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        if (iv != NULL)
+            memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
     }
 
     if (enc) {
@@ -850,12 +866,12 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 
         params[0].data = &pad;
 
-        if (ctx->cipher->set_params == NULL) {
+        if (ctx->cipher->ctx_set_params == NULL) {
             EVPerr(EVP_F_EVP_CIPHER_CTX_SET_PADDING, EVP_R_CTRL_NOT_IMPLEMENTED);
             return 0;
         }
 
-        if (!ctx->cipher->set_params(ctx->provctx, params))
+        if (!ctx->cipher->ctx_set_params(ctx->provctx, params))
             return 0;
     }
 
@@ -914,7 +930,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
     *out = *in;
     out->provctx = NULL;
 
-    if (in->fetched_cipher != NULL || !EVP_CIPHER_upref(in->fetched_cipher)) {
+    if (in->fetched_cipher != NULL && !EVP_CIPHER_upref(in->fetched_cipher)) {
         out->fetched_cipher = NULL;
         return 0;
     }
@@ -1001,6 +1017,11 @@ static void *evp_cipher_from_dispatch(int nid, const OSSL_DISPATCH *fns,
             cipher->cfinal = OSSL_get_OP_cipher_final(fns);
             fnciphcnt++;
             break;
+        case OSSL_FUNC_CIPHER_CIPHER:
+            if (cipher->ccipher != NULL)
+                break;
+            cipher->ccipher = OSSL_get_OP_cipher_cipher(fns);
+            break;
         case OSSL_FUNC_CIPHER_FREECTX:
             if (cipher->freectx != NULL)
                 break;
@@ -1017,25 +1038,41 @@ static void *evp_cipher_from_dispatch(int nid, const OSSL_DISPATCH *fns,
                 break;
             cipher->key_length = OSSL_get_OP_cipher_key_length(fns);
             break;
+        case OSSL_FUNC_CIPHER_IV_LENGTH:
+            if (cipher->iv_length != NULL)
+                break;
+            cipher->iv_length = OSSL_get_OP_cipher_iv_length(fns);
+            break;
+        case OSSL_FUNC_CIPHER_BLOCK_SIZE:
+            if (cipher->blocksize != NULL)
+                break;
+            cipher->blocksize = OSSL_get_OP_cipher_block_size(fns);
+            break;
         case OSSL_FUNC_CIPHER_GET_PARAMS:
             if (cipher->get_params != NULL)
                 break;
             cipher->get_params = OSSL_get_OP_cipher_get_params(fns);
             break;
-        case OSSL_FUNC_CIPHER_SET_PARAMS:
-            if (cipher->set_params != NULL)
+        case OSSL_FUNC_CIPHER_CTX_GET_PARAMS:
+            if (cipher->ctx_get_params != NULL)
                 break;
-            cipher->set_params = OSSL_get_OP_cipher_set_params(fns);
+            cipher->ctx_get_params = OSSL_get_OP_cipher_ctx_get_params(fns);
+            break;
+        case OSSL_FUNC_CIPHER_CTX_SET_PARAMS:
+            if (cipher->ctx_set_params != NULL)
+                break;
+            cipher->ctx_set_params = OSSL_get_OP_cipher_ctx_set_params(fns);
             break;
         }
     }
-    if ((fnciphcnt != 3 && fnciphcnt != 4)
+    if ((fnciphcnt != 0 && fnciphcnt != 3 && fnciphcnt != 4)
+            || (fnciphcnt == 0 && cipher->ccipher == NULL)
             || fnctxcnt != 2) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "encrypt" functions, or a complete set of "decrypt"
-         * functions. In both cases we need a complete set of context management
-         * functions
+         * functions, or a single "cipher" function. In all cases we need a
+         * complete set of context management functions
          */
         EVP_CIPHER_meth_free(cipher);
         EVPerr(EVP_F_EVP_CIPHER_FROM_DISPATCH, EVP_R_INVALID_PROVIDER_FUNCTIONS);
