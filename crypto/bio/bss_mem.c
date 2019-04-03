@@ -205,6 +205,7 @@ static int mem_read(BIO *b, char *out, int outl)
     if ((out != NULL) && (ret > 0)) {
         memcpy(out, bm->data, ret);
         bm->length -= ret;
+        bm->max -= ret;
         bm->data += ret;
     } else if (bm->length == 0) {
         ret = b->num;
