@@ -1009,6 +1009,48 @@ static int test_rand_add(void)
     return 1;
 }
 
+static int test_rand_drbg_prediction_resistance(void)
+{
+    RAND_DRBG *m = NULL, *s = NULL;
+    int ret = 0, mreseed, sreseed;
+
+    if (!TEST_ptr(m = RAND_DRBG_new(0, 0, NULL))
+        || !TEST_true(disable_crngt(m))
+        || !TEST_true(RAND_DRBG_instantiate(m, NULL, 0))
+        || !TEST_ptr(s = RAND_DRBG_new(0, 0, m))
+        || !TEST_true(RAND_DRBG_instantiate(s, NULL, 0)))
+        goto err;
+
+    /* Normal reseed */
+    mreseed = ++m->reseed_prop_counter;
+    sreseed = s->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_reseed(s, NULL, 0, 0))
+        || !TEST_int_eq(m->reseed_prop_counter, mreseed)
+        || !TEST_int_gt(s->reseed_prop_counter, sreseed))
+        goto err;
+
+    /* Prediction resistant reseed */
+    sreseed = s->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_reseed(s, NULL, 0, 1))
+        || !TEST_int_gt(m->reseed_prop_counter, mreseed)
+        || !TEST_int_gt(s->reseed_prop_counter, sreseed))
+        goto err;
+
+    /* Normal reseed */
+    mreseed = ++m->reseed_prop_counter;
+    sreseed = s->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_reseed(s, NULL, 0, 0))
+        || !TEST_int_eq(m->reseed_prop_counter, mreseed)
+        || !TEST_int_gt(s->reseed_prop_counter, sreseed))
+        goto err;
+
+    ret = 1;
+err:
+    RAND_DRBG_free(s);
+    RAND_DRBG_free(m);
+    return ret;
+}
+
 static int test_multi_set(void)
 {
     int rv = 0;
@@ -1247,6 +1289,7 @@ int setup_tests(void)
     ADD_TEST(test_rand_drbg_reseed);
     ADD_TEST(test_rand_seed);
     ADD_TEST(test_rand_add);
+    ADD_TEST(test_rand_drbg_prediction_resistance);
     ADD_TEST(test_multi_set);
     ADD_TEST(test_set_defaults);
 #if defined(OPENSSL_THREADS)

@@ -152,7 +152,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     } else {
         pool = rand_pool_new(entropy, min_len, max_len);
         if (pool == NULL)
-            return 0;
+            goto err;
     }
 
     if (drbg->parent != NULL) {
@@ -183,6 +183,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         }
 
     } else {
+#if defined(OPENSSL_RAND_SEED_NONE)
         if (prediction_resistance) {
             /*
              * We don't have any entropy sources that comply with the NIST
@@ -193,6 +194,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                     RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED);
             goto err;
         }
+#endif
 
         /* Get entropy by polling system entropy sources. */
         entropy_available = rand_pool_acquire_entropy(pool);
