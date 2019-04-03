@@ -104,9 +104,12 @@ typedef struct drbg_selftest_data_st {
     make_drbg_test_data(nid, 0, pr, p)
 
 static DRBG_SELFTEST_DATA drbg_test[] = {
+#ifndef FIPS_MODE
+    /* FIPS mode doesn't support CTR DRBG without a derivation function */
     make_drbg_test_data_no_df (NID_aes_128_ctr, aes_128_no_df,  0),
     make_drbg_test_data_no_df (NID_aes_192_ctr, aes_192_no_df,  0),
     make_drbg_test_data_no_df (NID_aes_256_ctr, aes_256_no_df,  1),
+#endif
     make_drbg_test_data_use_df(NID_aes_128_ctr, aes_128_use_df, 0),
     make_drbg_test_data_use_df(NID_aes_192_ctr, aes_192_use_df, 0),
     make_drbg_test_data_use_df(NID_aes_256_ctr, aes_256_use_df, 1),
@@ -1107,14 +1110,16 @@ static int test_set_defaults(void)
            && TEST_int_eq(public->type, NID_sha256)
            && TEST_int_eq(public->flags, RAND_DRBG_FLAG_PUBLIC)
 
-           /* Change DRBG defaults and change master and check again */
+          /* FIPS mode doesn't support CTR DRBG without a derivation function */
+#ifndef FIPS_MODE
+          /* Change DRBG defaults and change master and check again */
            && TEST_true(RAND_DRBG_set_defaults(NID_aes_256_ctr,
                                                RAND_DRBG_FLAG_CTR_NO_DF))
            && TEST_true(RAND_DRBG_uninstantiate(master))
            && TEST_int_eq(master->type, NID_aes_256_ctr)
            && TEST_int_eq(master->flags,
                           RAND_DRBG_FLAG_MASTER|RAND_DRBG_FLAG_CTR_NO_DF)
-
+#endif
            /* Reset back to the standard defaults */
            && TEST_true(RAND_DRBG_set_defaults(RAND_DRBG_TYPE,
                                                RAND_DRBG_FLAGS
