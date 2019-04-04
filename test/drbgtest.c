@@ -1051,6 +1051,42 @@ err:
     return ret;
 }
 
+static struct {
+    int m;
+    int s;
+} expand_tests[] = {
+    { NID_aes_192_ctr, NID_aes_256_ctr },
+    { NID_aes_128_ctr, NID_aes_192_ctr },
+    { NID_aes_128_ctr, NID_aes_256_ctr },
+    { NID_sha1,        NID_sha512      }, 
+};
+
+static int test_rand_drbg_entropy_expansion(int n)
+{
+    RAND_DRBG *m = NULL, *s = NULL;
+    int ret = 0, mreseed;
+
+    if (!TEST_ptr(m = RAND_DRBG_new(expand_tests[n].m, 0, NULL))
+        || !TEST_true(disable_crngt(m))
+        || !TEST_true(RAND_DRBG_instantiate(m, NULL, 0))
+        || !TEST_ptr(s = RAND_DRBG_new(expand_tests[n].s, 0, m))
+        || !TEST_true(RAND_DRBG_instantiate(s, NULL, 0)))
+        goto err;
+
+    /* Normal reseed */
+    mreseed = ++m->reseed_prop_counter;
+    if (!TEST_true(RAND_DRBG_reseed(s, NULL, 0, 0))
+        || !TEST_int_gt(m->reseed_prop_counter, mreseed)
+        || !TEST_int_eq(s->reseed_prop_counter, m->reseed_prop_counter))
+        goto err;
+
+    ret = 1;
+err:
+    RAND_DRBG_free(s);
+    RAND_DRBG_free(m);
+    return ret;
+}
+
 static int test_multi_set(void)
 {
     int rv = 0;
@@ -1290,6 +1326,7 @@ int setup_tests(void)
     ADD_TEST(test_rand_seed);
     ADD_TEST(test_rand_add);
     ADD_TEST(test_rand_drbg_prediction_resistance);
+    ADD_ALL_TESTS(test_rand_drbg_entropy_expansion, OSSL_NELEM(expand_tests));
     ADD_TEST(test_multi_set);
     ADD_TEST(test_set_defaults);
 #if defined(OPENSSL_THREADS)

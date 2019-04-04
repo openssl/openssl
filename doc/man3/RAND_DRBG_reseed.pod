@@ -40,7 +40,7 @@ The additional data can be omitted by setting B<adin> to NULL and B<adinlen>
 to 0.
 An immediate reseeding from a live entropy source can be requested by setting
 the B<prediction_resistance> flag to 1.
-Requesting prediction resistance is a relative expensive operation.
+Requesting prediction resistance is a relatively expensive operation.
 See NOTES section for more details.
 
 RAND_DRBG_set_reseed_interval()

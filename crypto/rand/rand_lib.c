@@ -137,15 +137,6 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     size_t entropy_available = 0;
     RAND_POOL *pool;
 
-    if (drbg->parent != NULL && drbg->strength > drbg->parent->strength) {
-        /*
-         * We currently don't support the algorithm from NIST SP 800-90C
-         * 10.1.2 to use a weaker DRBG as source
-         */
-        RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY, RAND_R_PARENT_STRENGTH_TOO_WEAK);
-        return 0;
-    }
-
     if (drbg->seed_pool != NULL) {
         pool = drbg->seed_pool;
         pool->entropy_requested = entropy;
@@ -157,31 +148,63 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 
     if (drbg->parent != NULL) {
         size_t bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        size_t i, max_iter = 1, bytes = 0, request = bytes_needed;
         unsigned char *buffer = rand_pool_add_begin(pool, bytes_needed);
 
-        if (buffer != NULL) {
-            size_t bytes = 0;
-
+        if (buffer == NULL)
+            goto err;
+        /*
+         * Check if NIST SP 800-90C 10.1.2 is required to seed from a weaker
+         * parent DRBG.  This standard mandates prediction resistance with
+         * a halved strength per collection and the collections concatenated
+         * together.
+         *
+         * The iteration limit is computed using bytes not bits and it uses
+         * number of bytes wanted rather than the parent DRBG strength.  The
+         * former (bytes vs bits) doesn't result in a difference from the
+         * specified algorithm and the latter is conservative because more
+         * bytes are asked for than the DRBG strength -- i.e. more entropy
+         * will be loaded than is required by 10.1.2.
+         */
+        if (drbg->strength > drbg->parent->strength) {
+            prediction_resistance = 1;
+            request = drbg->parent->strength / 8 / 2;
+            max_iter = (bytes_needed + request - 1) / request;
+        }
+        /* Get random from parent */
+        for (i = 0; bytes < bytes_needed && i < max_iter; i++) {
+            if (bytes_needed - bytes < request)
+                request = bytes_needed - bytes;
             /*
-             * Get random from parent, include our state as additional input.
              * Our lock is already held, but we need to lock our parent before
-             * generating bits from it. (Note: taking the lock will be a no-op
-             * if locking if drbg->parent->lock == NULL.)
+             * generating bits from it.  Note that taking the lock will be a
+             * no-op if locking if drbg->parent->lock == NULL.  Also note that
+             * the lock is taken and released each iteration to allow others
+             * simultaneous access to the parent DRBG.
              */
             rand_drbg_lock(drbg->parent);
             if (RAND_DRBG_generate(drbg->parent,
-                                   buffer, bytes_needed,
+                                   buffer, request,
                                    prediction_resistance,
-                                   NULL, 0) != 0)
-                bytes = bytes_needed;
+                                   NULL, 0) != 0) {
+                bytes += request;
+                buffer += request;
+            }
             drbg->reseed_next_counter
                 = tsan_load(&drbg->parent->reseed_prop_counter);
             rand_drbg_unlock(drbg->parent);
-
-            rand_pool_add_end(pool, bytes, 8 * bytes);
-            entropy_available = rand_pool_entropy_available(pool);
         }
-
+        /* SP 800-90C 10.1.2 step 6 TODO */
+        if (bytes > max_len) {
+            /* We should call the appropriate derivation function over the
+             * collected data.  For the moment we'll record a failure instead.
+             * This should be safe because, the size passed in is either
+             * 2^31-1 or 2^32-1 depending on the DRBG.
+             */
+            goto err;
+        }
+        rand_pool_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_entropy_available(pool);
     } else {
 #if defined(OPENSSL_RAND_SEED_NONE)
         if (prediction_resistance) {

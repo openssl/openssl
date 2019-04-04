@@ -283,20 +283,6 @@ static RAND_DRBG *rand_drbg_new(int secure,
     if (RAND_DRBG_set(drbg, type, flags) == 0)
         goto err;
 
-    if (parent != NULL) {
-        rand_drbg_lock(parent);
-        if (drbg->strength > parent->strength) {
-            /*
-             * We currently don't support the algorithm from NIST SP 800-90C
-             * 10.1.2 to use a weaker DRBG as source
-             */
-            rand_drbg_unlock(parent);
-            RANDerr(RAND_F_RAND_DRBG_NEW, RAND_R_PARENT_STRENGTH_TOO_WEAK);
-            goto err;
-        }
-        rand_drbg_unlock(parent);
-    }
-
     return drbg;
 
  err:
