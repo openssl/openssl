@@ -124,7 +124,7 @@ static int test_bio_rdonly_mem_buf(void)
     bio2 = BIO_new(BIO_s_mem());
     if (!TEST_ptr(bio2))
         goto finish;
-    BIO_set_mem_buf(bio2, bufmem, BIO_NOCLOSE);
+    BIO_set_mem_buf(bio2, bufmem, BIO_CLOSE);
     BIO_set_flags(bio2, BIO_FLAGS_MEM_RDONLY);
 
     if (!TEST_int_eq(BIO_read(bio2, data, 16), 7))
