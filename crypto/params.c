@@ -375,6 +375,10 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const BIGNUM *val)
     if (val == NULL || p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
         return 0;
 
+    /* For the moment, only positive values are permitted */
+    if (BN_is_negative(val))
+        return 0;
+
     bytes = (size_t)BN_num_bytes(val);
     SET_RETURN_SIZE(p, bytes);
     return p->data_size >= bytes
