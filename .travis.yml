@@ -27,6 +27,7 @@ compiler:
 
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
+    - CONFIG_OPTS="" DESTDIR="_install" FIPS_MODE=1
     - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2"
     - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
 
@@ -196,10 +197,12 @@ script:
           if [ -e krb5/src ]; then
               sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
           fi;
-          if HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
-              echo -e '+\057\057\057\057\057 MAKE TEST OK';
+          fips=;
+          if [ -n "$FIPS_MODE" ]; then fips=FIPS_MODE=1; fi;
+          if HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test $fips; then
+              echo -e '+\057\057\057\057\057 MAKE TEST' $fips 'OK';
           else
-              echo -e '+\057\057\057\057\057 MAKE TEST FAILED'; false;
+              echo -e '+\057\057\057\057\057 MAKE TEST' $fips 'FAILED'; false;
           fi;
       else
           if $make build_tests >~/build.log 2>&1; then
