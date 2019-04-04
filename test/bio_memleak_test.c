@@ -119,7 +119,7 @@ static int test_bio_rdonly_mem_buf(void)
         goto finish;
     if (!TEST_int_gt(BIO_get_mem_ptr(bio, &bufmem), 0))
         goto finish;
-    BIO_set_close(bio, BIO_NOCLOSE);
+    (void)BIO_set_close(bio, BIO_NOCLOSE);
 
     bio2 = BIO_new(BIO_s_mem());
     if (!TEST_ptr(bio2))
