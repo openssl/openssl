@@ -513,7 +513,7 @@ my @disable_cascades = (
     # or modules.
     "pic"               => [ "shared", "module" ],
 
-    "dynamic-engine"    => [ "fips" ],
+    "module"            => [ "fips" ],
 
     "engine"            => [ grep /eng$/, @disablables ],
     "hw"                => [ "padlockeng" ],
@@ -1224,8 +1224,8 @@ foreach my $what (sort keys %disabled) {
 
     $config{options} .= " no-$what";
 
-    if (!grep { $what eq $_ } ( 'buildtest-c++', 'threads', 'shared', 'module',
-                                'pic', 'dynamic-engine', 'makedepend',
+    if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
+                                'module', 'pic', 'dynamic-engine', 'makedepend',
                                 'zlib-dynamic', 'zlib', 'sse2' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
         my $skipdir = $what;
