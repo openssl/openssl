@@ -176,6 +176,10 @@ point during evaluation.
 
 Traces BIGNUM context operations.
 
+=item C<OSSL_TRACE_CATEGORY_PROVIDER_CONF>
+
+Traces the OSSL_PROVIDER configuration.
+
 =back
 
 There is also C<OSSL_TRACE_CATEGORY_ALL>, which works as a fallback
