@@ -44,6 +44,10 @@ matrix:
           compiler: clang
           env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
         - os: linux
+          dist: trusty
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings -DFIPS_MODE -D__NO_STRING_INLINES no-deprecated"
+        - os: linux
           addons:
               apt:
                   packages:
