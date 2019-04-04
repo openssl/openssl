@@ -16,7 +16,7 @@ int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only)
 
     nid = ec_curve_nid_from_params(group);
     if (nid > 0 && nist_only && EC_curve_nid2nist(nid) == NULL)
-        nid = 0;
+        nid = NID_undef;
     return nid;
 }
 
