@@ -43,7 +43,6 @@ The following additional mechanisms are supported only when using liboqs's nist-
 
 - `kyber512`, `kyber768`, `kyber1024`
 - `ledakem_C1_N02`, `ledakem_C1_N03`, `ledakem_C1_N04`, `ledakem_C3_N02`, `ledakem_C3_N03`, `ledakem_C3_N04`, `ledakem_C5_N02`
-- `lima_2p_1024_cca`, `lima_2p_2048_cca`, `lima_sp_1018_cca` (not for hybrid), `lima_sp_1306_cca`, `lima_sp_1822_cca`
 - `saber_light_saber` (not for hybrid), `saber_saber`, `saber_fire_saber`
 
 Note that some mechanisms from the nist-branch have been disabled in OpenSSL because they use keys/ciphertexts too large for TLS 1.3.
