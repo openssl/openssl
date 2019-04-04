@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <openssl/crypto.h>
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE) && !defined(FIPS_MODE)
 # include <execinfo.h>
 #endif
 
@@ -30,7 +30,7 @@ static void *(*realloc_impl)(void *, size_t, const char *, int)
 static void (*free_impl)(void *, const char *, int)
     = CRYPTO_free;
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
 # include "internal/tsan_assist.h"
 
 static TSAN_QUALIFIER int malloc_count;
@@ -94,7 +94,7 @@ void CRYPTO_get_mem_functions(
         *f = free_impl;
 }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
 {
     if (mcount != NULL)
@@ -209,7 +209,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
          */
         allow_customize = 0;
     }
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
     if (call_malloc_debug) {
         CRYPTO_mem_debug_malloc(NULL, num, 0, file, line);
         ret = malloc(num);
@@ -250,7 +250,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
     if (call_malloc_debug) {
         void *ret;
         CRYPTO_mem_debug_realloc(str, NULL, num, 0, file, line);
@@ -300,7 +300,7 @@ void CRYPTO_free(void *str, const char *file, int line)
         return;
     }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
     if (call_malloc_debug) {
         CRYPTO_mem_debug_free(str, 0, file, line);
         free(str);
