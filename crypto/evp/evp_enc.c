@@ -306,6 +306,12 @@ static int evp_EncryptDecryptUpdate(EVP_CIPHER_CTX *ctx,
     bl = ctx->cipher->block_size;
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
+        /* Prevent accidental "final" call */
+        if (inl <= 0 && in == NULL) {
+            *outl = 0;
+            return inl == 0;
+        }
+
         /* If block size > 1 then the cipher will have to do this check */
         if (bl == 1 && is_partially_overlapping(out, in, cmpl)) {
             EVPerr(EVP_F_EVP_ENCRYPTDECRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
@@ -458,6 +464,12 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         cmpl = (cmpl + 7) / 8;
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
+        /* Prevent accidental "final" call */
+        if (inl <= 0 && in == NULL) {
+            *outl = 0;
+            return inl == 0;
+        }
+
         if (b == 1 && is_partially_overlapping(out, in, cmpl)) {
             EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
             return 0;
