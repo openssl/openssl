@@ -1250,7 +1250,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_invalide_ec_char2_pub_range_decode,
                   OSSL_NELEM(ec_der_pub_keys));
 #endif
-#ifdef OPENSSL_NO_FIPS
+#ifdef NO_FIPS_MODULE
     ADD_ALL_TESTS(test_EVP_MD_fetch, 3);
 #else
     ADD_ALL_TESTS(test_EVP_MD_fetch, 5);
