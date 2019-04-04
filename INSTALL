@@ -409,6 +409,10 @@
   no-makedepend
                    Don't generate dependencies.
 
+  no-module
+                   Don't build any dynamically loadable engines.  This also
+                   implies 'no-dynamic-engine'.
+
   no-multiblock
                    Don't build support for writing multiple records in one
                    go in libssl (Note: this is a different capability to the
