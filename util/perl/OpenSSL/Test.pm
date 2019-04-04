@@ -1,4 +1,4 @@
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -22,7 +22,8 @@ $VERSION = "0.8";
                                          srctop_dir srctop_file
                                          data_file data_dir
                                          pipe with cmdstr quotify
-                                         openssl_versions));
+                                         openssl_versions
+                                         ok_nofips is_nofips isnt_nofips));
 
 =head1 NAME
 
@@ -831,6 +832,49 @@ sub openssl_versions {
     return @versions;
 }
 
+=over 4
+
+=item B<ok_nofips test>
+
+Returns ok(test) if the environment variable FIPS_MODE is undefined,
+otherwise it returns ok(!test). This can be used for ok tests that will
+fail in FIPS mode only.
+
+An example:
+
+  ok_nofips(run(app(["md5.pl"])));
+
+=item B<is_nofips test>
+
+Returns is(test) if the environment variable FIPS_MODE is undefined,
+otherwise it returns is(test). This can be used for is tests that will
+fail in FIPS mode only.
+
+=item B<isnt_nofips test>
+
+Returns isnt(test) if the environment variable FIPS_MODE is undefined,
+otherwise it returns is(test). This can be used for is tests that will
+pass in FIPS mode only.
+
+=back
+
+=cut
+
+sub ok_nofips {
+    return ok(!$_[0], @_[1..$#_]) if defined $ENV{FIPS_MODE};
+    return ok($_[0], @_[1..$#_]);
+}
+
+sub is_nofips {
+    return isnt($_[0], $_[1], @_[2..$#_]) if defined $ENV{FIPS_MODE};
+    return is($_[0], $_[1], @_[2..$#_]);
+}
+
+sub isnt_nofips {
+    return is($_[0], $_[1], @_[2..$#_]) if defined $ENV{FIPS_MODE};
+    return isnt($_[0], $_[1], @_[2..$#_]);
+}
+
 ######################################################################
 # private functions.  These are never exported.
 
@@ -860,6 +904,12 @@ are located.  Defaults to C<$TOP/test> (adapted to the operating system).
 
 If defined, it puts testing in a different mode, where a recipe with
 failures will result in a C<BAIL_OUT> at the end of its run.
+
+=item B<FIPS_MODE>
+
+If defined it indicates that the FIPS provider is being tested. Tests may use
+B<ok_nofips>, B<is_nofips> and B<isnt_nofips> to invert test results
+i.e. Some tests may only work in non FIPS mode.
 
 =back
 
