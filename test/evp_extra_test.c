@@ -1174,6 +1174,9 @@ static int test_EVP_MD_fetch(int tst)
             goto err;
     }
 
+    EVP_MD_meth_free(md);
+    md = NULL;
+
     /*
      * Explicitly asking for the default implementation should succeeed except
      * in test 4 where the default provider is not loaded.
