@@ -9,7 +9,4 @@ IF[{- !$disabled{fips} -}]
   ENDIF
   INCLUDE[fips]=.. ../include ../crypto/include
   DEFINE[fips]=FIPS_MODE
-  SOURCE[fips]=\
-    ../crypto/cryptlib.c ../crypto/mem.c ../crypto/mem_clr.c \
-    ../crypto/sha/sha256.c ../crypto/params.c
 ENDIF
