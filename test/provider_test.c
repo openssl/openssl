@@ -49,7 +49,7 @@ static int test_builtin_provider(void)
         && test_provider(name);
 }
 
-#ifndef OPENSSL_NO_MODULE
+#ifndef NO_PROVIDER_MODULE
 static int test_loaded_provider(void)
 {
     const char *name = "p_test";
@@ -61,7 +61,7 @@ static int test_loaded_provider(void)
 int setup_tests(void)
 {
     ADD_TEST(test_builtin_provider);
-#ifndef OPENSSL_NO_MODULE
+#ifndef NO_PROVIDER_MODULE
     ADD_TEST(test_loaded_provider);
 #endif
     return 1;
