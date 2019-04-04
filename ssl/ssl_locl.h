@@ -479,14 +479,10 @@
 #define NID_OQS_NEWHOPE_1024_CCA (NID_OQS_START + 19)
 #if defined(OQS_NIST_BRANCH)
 /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-/*
-#define NID_OQS_bigquake1        (NID_OQS_START + 20)
-#define NID_OQS_bigquake3        (NID_OQS_START + 21)
-#define NID_OQS_bigquake5        (NID_OQS_START + 22)
-*/
 #define NID_OQS_kyber512         (NID_OQS_START + 23)
 #define NID_OQS_kyber768         (NID_OQS_START + 24)
 #define NID_OQS_kyber1024        (NID_OQS_START + 25)
+/* OQS note: ledakem was replaced with LEDAcrypt in round 2; needs an update */
 #define NID_OQS_ledakem_C1_N02   (NID_OQS_START + 26)
 #define NID_OQS_ledakem_C1_N03   (NID_OQS_START + 27)
 #define NID_OQS_ledakem_C1_N04   (NID_OQS_START + 28)
@@ -498,23 +494,9 @@
 #define NID_OQS_ledakem_C5_N03   (NID_OQS_START + 33)
 #define NID_OQS_ledakem_C5_N04   (NID_OQS_START + 34)
 */
-#define NID_OQS_lima_2p_1024_cca (NID_OQS_START + 35)
-#define NID_OQS_lima_2p_2048_cca (NID_OQS_START + 36)
-#define NID_OQS_lima_sp_1018_cca (NID_OQS_START + 37)
-#define NID_OQS_lima_sp_1306_cca (NID_OQS_START + 38)
-#define NID_OQS_lima_sp_1822_cca (NID_OQS_START + 39)
-/*
-#define NID_OQS_lima_sp_2062_cca (NID_OQS_START + 40)
-*/
 #define NID_OQS_saber_light_saber (NID_OQS_START + 41)
 #define NID_OQS_saber_saber      (NID_OQS_START + 42)
 #define NID_OQS_saber_fire_saber (NID_OQS_START + 43)
-/*
-#define NID_OQS_titanium_cca_std (NID_OQS_START + 44)
-#define NID_OQS_titanium_cca_hi  (NID_OQS_START + 45)
-#define NID_OQS_titanium_cca_med (NID_OQS_START + 46)
-#define NID_OQS_titanium_cca_super (NID_OQS_START + 47)
-*/
 #endif
 /* ADD_MORE_OQS_KEM_HERE (update counter below)*/
 #define NID_OQS_END              (NID_OQS_START + 47)
@@ -532,18 +514,13 @@
 #define NID_OQS_p256_BIKE3_L1         (NID_HYBRID_START + 7)
 #define NID_OQS_p256_NEWHOPE_512_CCA  (NID_HYBRID_START + 8)
 #if defined(OQS_NIST_BRANCH)
-/*
-#define NID_OQS_p256_bigquake1        (NID_HYBRID_START + 9)
-*/
 #define NID_OQS_p256_kyber512         (NID_HYBRID_START + 10)
+/* OQS note: ledakem was replaced with LEDAcrypt in round 2; needs an update */
 #define NID_OQS_p256_ledakem_C1_N02   (NID_HYBRID_START + 11)
 #define NID_OQS_p256_ledakem_C1_N03   (NID_HYBRID_START + 12)
 #define NID_OQS_p256_ledakem_C1_N04   (NID_HYBRID_START + 13)
 /*
-#define NID_OQS_p256_lima_sp_1018_cca (NID_HYBRID_START + 14)
 #define NID_OQS_p256_saber_light_saber (NID_HYBRID_START + 15)
-#define NID_OQS_p256_titanium_cca_std (NID_HYBRID_START + 16)
-#define NID_OQS_p256_titanium_cca_med (NID_HYBRID_START + 17)
 */
 #endif
 /* ADD_MORE_OQS_KEM_HERE (L1 schemes, update counter below) */
@@ -559,9 +536,6 @@
 #define OQS_KEM_CURVEID_NIST_BRANCH(nid) \
   /* schemes only in nist branch */ \
   /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
-  /* (nid == NID_OQS_bigquake1 ? 0x0213 : */ \
-  /* (nid == NID_OQS_bigquake3 ? 0x0214 : */ \
-  /* (nid == NID_OQS_bigquake5 ? 0x0215 : */ \
   (nid == NID_OQS_kyber512 ? 0x0216 : \
   (nid == NID_OQS_kyber768 ? 0x0217 : \
   (nid == NID_OQS_kyber1024 ? 0x0218 : \
@@ -577,17 +551,7 @@
   (nid == NID_OQS_saber_light_saber ? 0x0228 : \
   (nid == NID_OQS_saber_saber ? 0x0229 : \
   (nid == NID_OQS_saber_fire_saber ? 0x022a : \
-  (nid == NID_OQS_lima_2p_1024_cca ? 0x0222 : \
-  (nid == NID_OQS_lima_2p_2048_cca ? 0x0223 : \
-  (nid == NID_OQS_lima_sp_1018_cca ? 0x0224 : \
-  (nid == NID_OQS_lima_sp_1306_cca ? 0x0225 : \
-  (nid == NID_OQS_lima_sp_1822_cca ? 0x0226 : \
-  /* (nid == NID_OQS_lima_sp_2062_cca ? 0x0227 : */ \
-  /* (nid == NID_OQS_titanium_cca_std ? 0x022b : */ \
-  /* (nid == NID_OQS_titanium_cca_hi ? 0x022c : */ \
-  /* (nid == NID_OQS_titanium_cca_med ? 0x022d : */ \
-  /* (nid == NID_OQS_titanium_cca_super ? 0x022e : */ \
-   0))))))))))))))))))
+   0)))))))))))))
 #else
 #define OQS_KEM_CURVEID_NIST_BRANCH(nid) \
   /* schemes only in master branch */ \
@@ -623,15 +587,11 @@
 #define OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
   /* schemes only in nist branch */ \
   /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
-  /* (nid == NID_OQS_p256_bigquake1       ? 0x0308 : */ \
   (nid == NID_OQS_p256_kyber512         ? 0x0309 : \
   (nid == NID_OQS_p256_ledakem_C1_N02   ? 0x030a : \
   (nid == NID_OQS_p256_ledakem_C1_N03   ? 0x030b : \
   (nid == NID_OQS_p256_ledakem_C1_N04   ? 0x030c : \
-  /* (nid == NID_OQS_p256_lima_sp_1018_cca ? 0x030d : */ \
   /* (nid == NID_OQS_p256_saber_light_saber ? 0x030e :  */ \
-  /* (nid == NID_OQS_p256_titanium_cca_std ? 0x030f : */ \
-  /* (nid == NID_OQS_p256_titanium_cca_med ? 0x0310 : */ \
    0))))
 #else
 #define OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
@@ -657,9 +617,6 @@
 #define OQS_KEM_NID_NIST_BRANCH(curveID) \
   /* schemes only in nist branch */ \
   /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
-  /* (curveID == 0x0213 || curveID == 0x0308 ? NID_OQS_bigquake1 : */ \
-  /* (curveID == 0x0214 ? NID_OQS_bigquake3 : */ \
-  /* (curveID == 0x0215 ? NID_OQS_bigquake5 : */ \
   (curveID == 0x0216 || curveID == 0x0309 ? NID_OQS_kyber512 : \
   (curveID == 0x0217 ? NID_OQS_kyber768 : \
   (curveID == 0x0218 ? NID_OQS_kyber1024 : \
@@ -672,20 +629,10 @@
   (curveID == 0x021f ? NID_OQS_ledakem_C5_N02 : \
   /* (curveID == 0x0220 ? NID_OQS_ledakem_C5_N03 : */ \
   /* (curveID == 0x0221 ? NID_OQS_ledakem_C5_N04 : */ \
-  (curveID == 0x0222 ? NID_OQS_lima_2p_1024_cca : \
-  (curveID == 0x0223 ? NID_OQS_lima_2p_2048_cca : \
-  (curveID == 0x0224 /* || curveID == 0x030d */ ? NID_OQS_lima_sp_1018_cca : \
-  (curveID == 0x0225 ? NID_OQS_lima_sp_1306_cca : \
-  (curveID == 0x0226 ? NID_OQS_lima_sp_1822_cca : \
-  /* (curveID == 0x0227 ? NID_OQS_lima_sp_2062_cca : */         \
   (curveID == 0x0228 /* || (curveID == 0x030e: */ ? NID_OQS_saber_light_saber : \
   (curveID == 0x0229 ? NID_OQS_saber_saber : \
   (curveID == 0x022a ? NID_OQS_saber_fire_saber : \
-   /* (curveID == 0x022b || curveID == 0x030f ? NID_OQS_titanium_cca_std : */ \
-   /* (curveID == 0x022c ? NID_OQS_titanium_cca_hi : */ \
-   /* (curveID == 0x022d || curveID == 0x0310 ? NID_OQS_titanium_cca_med : */ \
-   /* (curveID == 0x022e ? NID_OQS_titanium_cca_super : */ \
-   0 ))))))))))))))))))
+   0 )))))))))))))
 #else
 #define OQS_KEM_NID_NIST_BRANCH(curveID) \
   /* schemes only in master branch */ \
@@ -727,9 +674,6 @@
 #define OQS_ALG_NAME_NIST_BRANCH(nid) \
   /* schemes only in nist branch */ \
   /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
-  /* (nid == NID_OQS_bigquake1          ? OQS_KEM_alg_BIG_QUAKE_1 */ \
-  /* (nid == NID_OQS_bigquake3          ? OQS_KEM_alg_BIG_QUAKE_3 */ \
-  /* (nid == NID_OQS_bigquake5          ? OQS_KEM_alg_BIG_QUAKE_5 */ \
   (nid == NID_OQS_kyber512           ? OQS_KEM_alg_kyber512 : \
   (nid == NID_OQS_kyber768           ? OQS_KEM_alg_kyber768 : \
   (nid == NID_OQS_kyber1024          ? OQS_KEM_alg_kyber1024 : \
@@ -742,20 +686,10 @@
   (nid == NID_OQS_ledakem_C5_N02     ? OQS_KEM_alg_ledakem_C5_N02 : \
   /* (nid == NID_OQS_ledakem_C5_N03     ? OQS_KEM_alg_ledakem_C5_N03 : */ \
   /* (nid == NID_OQS_ledakem_C5_N04     ? OQS_KEM_alg_ledakem_C5_N04 : */ \
-  (nid == NID_OQS_lima_2p_1024_cca   ? OQS_KEM_alg_lima_2p_1024_cca_kem : \
-  (nid == NID_OQS_lima_2p_2048_cca   ? OQS_KEM_alg_lima_2p_2048_cca_kem : \
-  (nid == NID_OQS_lima_sp_1018_cca   ? OQS_KEM_alg_lima_sp_1018_cca_kem : \
-  (nid == NID_OQS_lima_sp_1306_cca   ? OQS_KEM_alg_lima_sp_1306_cca_kem : \
-  (nid == NID_OQS_lima_sp_1822_cca   ? OQS_KEM_alg_lima_sp_1822_cca_kem : \
-  /* (nid == NID_OQS_lima_sp_2062_cca   ? OQS_KEM_alg_lima_sp_2062_cca_kem : */ \
   (nid == NID_OQS_saber_light_saber  ? OQS_KEM_alg_saber_light_saber_kem : \
   (nid == NID_OQS_saber_saber        ? OQS_KEM_alg_saber_saber_kem : \
   (nid == NID_OQS_saber_fire_saber   ? OQS_KEM_alg_saber_fire_saber_kem : \
-  /* (nid == NID_OQS_titanium_cca_std   ? OQS_KEM_alg_titanium_cca_std_kem : */ \
-  /* (nid == NID_OQS_titanium_cca_hi    ? OQS_KEM_alg_titanium_cca_hi_kem : */ \
-  /* (nid == NID_OQS_titanium_cca_med   ? OQS_KEM_alg_titanium_cca_med_kem : */ \
-  /* (nid == NID_OQS_titanium_cca_super ? OQS_KEM_alg_titanium_cca_super_kem : */ \
-   0 ))))))))))))))))))
+   0 )))))))))))))
 #else
 #define OQS_ALG_NAME_NIST_BRANCH(nid) \
   /* schemes only in master branch */ \

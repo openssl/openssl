@@ -444,11 +444,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0212: return "newhope1024cca";
 #if defined(OQS_NIST_BRANCH)
     /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /*
-  case 0x0213: return "bigquake1";
-  case 0x0214: return "bigquake3";
-  case 0x0215: return "bigquake5";
-    */
   case 0x0216: return "kyber512";
   case 0x0217: return "kyber768";
   case 0x0218: return "kyber1024";
@@ -463,23 +458,9 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0220: return "ledakem_C5_N03";
   case 0x0221: return "ledakem_C5_N04";
     */
-  case 0x0222: return "lima_2p_1024_cca";
-  case 0x0223: return "lima_2p_2048_cca";
-  case 0x0224: return "lima_sp_1018_cca";
-  case 0x0225: return "lima_sp_1306_cca";
-  case 0x0226: return "lima_sp_1822_cca";
-    /*
-  case 0x0227: return "lima_sp_2062_cca";
-    */
   case 0x0228: return "saber_light_saber";
   case 0x0229: return "saber_saber";
   case 0x022a: return "saber_fire_saber";
-    /*
-  case 0x022b: return "titanium_cca_std";
-  case 0x022c: return "titanium_cca_hi";
-  case 0x022d: return "titanium_cca_med";
-  case 0x022e: return "titanium_cca_super";
-    */
 #endif
   /* ADD_MORE_OQS_KEM_HERE */
   case 0x02FF: return "p256-oqs_kem_default hybrid";
@@ -492,18 +473,12 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0306: return "p256-bike3l1 hybrid";
   case 0x0307: return "p256-newhope512cca hybrid";
 #if defined(OQS_NIST_BRANCH)
-    /*
-  case 0x0308: return "p256-bigquake1 hybrid";
-    */
   case 0x0309: return "p256-kyber512 hybrid";
   case 0x030a: return "p256-ledakem_C1_N02 hybrid";
   case 0x030b: return "p256-ledakem_C1_N03 hybrid";
   case 0x030c: return "p256-ledakem_C1_N04 hybrid";
     /*
-  case 0x030d: return "p256-lima_sp_1018_cca hybrid";
   case 0x030e: return "p256-saber_light_saber hybrid";
-  case 0x030f: return "p256-titanium_cca_std hybrid";
-  case 0x0310: return "p256-titanium_cca_med hybrid";
     */
 #endif
   /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */

@@ -48,14 +48,6 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_NEWHOPE_1024_CCA;
 #if defined(OQS_NIST_BRANCH)
     /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /*
-  } else if (strncmp(value,"bigquake1", len) == 0) {
-    nid = NID_OQS_bigquake1;
-  } else if (strncmp(value,"bigquake3", len) == 0) {
-    nid = NID_OQS_bigquake3;
-  } else if (strncmp(value,"bigquake5", len) == 0) {
-    nid = NID_OQS_bigquake5;
-    */
   } else if (strncmp(value,"kyber512", len) == 0) {
     nid = NID_OQS_kyber512;
   } else if (strncmp(value,"kyber768", len) == 0) {
@@ -82,36 +74,12 @@ static int OQS_nid_from_string(const char *value) {
   } else if (strncmp(value,"ledakem_C5_N04", len) == 0) {
     nid = NID_OQS_ledakem_C5_N04;
     */
-  } else if (strncmp(value,"lima_2p_1024_cca", len) == 0) {
-    nid = NID_OQS_lima_2p_1024_cca;
-  } else if (strncmp(value,"lima_2p_2048_cca", len) == 0) {
-    nid = NID_OQS_lima_2p_2048_cca;
-  } else if (strncmp(value,"lima_sp_1018_cca", len) == 0) {
-    nid = NID_OQS_lima_sp_1018_cca;
-  } else if (strncmp(value,"lima_sp_1306_cca", len) == 0) {
-    nid = NID_OQS_lima_sp_1306_cca;
-  } else if (strncmp(value,"lima_sp_1822_cca", len) == 0) {
-    nid = NID_OQS_lima_sp_1822_cca;
-    /*
-  } else if (strncmp(value,"lima_sp_2062_cca", len) == 0) {
-    nid = NID_OQS_lima_sp_2062_cca;
-    */
   } else if (strncmp(value,"saber_light_saber", len) == 0) {
     nid = NID_OQS_saber_light_saber;
   } else if (strncmp(value,"saber_saber", len) == 0) {
     nid = NID_OQS_saber_saber;
   } else if (strncmp(value,"saber_fire_saber", len) == 0) {
     nid = NID_OQS_saber_fire_saber;
-    /*
-  } else if (strncmp(value,"titanium_cca_std", len) == 0) {
-    nid = NID_OQS_titanium_cca_std;
-  } else if (strncmp(value,"titanium_cca_hi", len) == 0) {
-    nid = NID_OQS_titanium_cca_hi;
-  } else if (strncmp(value,"titanium_cca_med", len) == 0) {
-    nid = NID_OQS_titanium_cca_med;
-  } else if (strncmp(value,"titanium_cca_super", len) == 0) {
-    nid = NID_OQS_titanium_cca_super;
-    */
 #endif
   /* ADD_MORE_OQS_KEM_HERE */
   /* hybrid algs */
@@ -136,10 +104,6 @@ static int OQS_nid_from_string(const char *value) {
   } else if (strncmp(value,"p256-newhope512cca", len) == 0) {
     nid = NID_OQS_p256_NEWHOPE_512_CCA;
 #if defined(OQS_NIST_BRANCH)
-    /*
-  } else if (strncmp(value,"p256-bigquake1", len) == 0) {
-    nid = NID_OQS_p256_bigquake1;
-    */
   } else if (strncmp(value,"p256-kyber512", len) == 0) {
     nid = NID_OQS_p256_kyber512;
   } else if (strncmp(value,"p256-ledakem_C1_N02", len) == 0) {
@@ -149,14 +113,8 @@ static int OQS_nid_from_string(const char *value) {
   } else if (strncmp(value,"p256-ledakem_C1_N04", len) == 0) {
     nid = NID_OQS_p256_ledakem_C1_N04;
     /*
-  } else if (strncmp(value,"p256-lima_sp_1018_cca", len) == 0) {
-    nid = NID_OQS_p256_lima_sp_1018_cca;
   } else if (strncmp(value,"p256-saber_light_saber", len) == 0) {
     nid = NID_OQS_p256_saber_light_saber;
-  } else if (strncmp(value,"p256-titanium_cca_std", len) == 0) {
-    nid = NID_OQS_p256_titanium_cca_std;
-  } else if (strncmp(value,"p256-titanium_cca_med", len) == 0) {
-    nid = NID_OQS_p256_titanium_cca_med;
     */
 #endif
   }

@@ -554,11 +554,6 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_NEWHOPE_1024_CCA), "newhope1024cca"},
 #if defined(OQS_NIST_BRANCH)
     /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /*
-    {OQS_KEM_CURVEID(NID_OQS_bigquake1), "bigquake1"},
-    {OQS_KEM_CURVEID(NID_OQS_bigquake3), "bigquake3"},
-    {OQS_KEM_CURVEID(NID_OQS_bigquake5), "bigquake5"},
-    */
     {OQS_KEM_CURVEID(NID_OQS_kyber512), "kyber512"},
     {OQS_KEM_CURVEID(NID_OQS_kyber768), "kyber768"},
     {OQS_KEM_CURVEID(NID_OQS_kyber1024), "kyber1024"},
@@ -573,23 +568,9 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_ledakem_C5_N03), "ledakem_C5_N03"},
     {OQS_KEM_CURVEID(NID_OQS_ledakem_C5_N04), "ledakem_C5_N04"},
     */
-    {OQS_KEM_CURVEID(NID_OQS_lima_2p_1024_cca), "lima_2p_1024_cca"},
-    {OQS_KEM_CURVEID(NID_OQS_lima_2p_2048_cca), "lima_2p_2048_cca"},
-    {OQS_KEM_CURVEID(NID_OQS_lima_sp_1018_cca), "lima_sp_1018_cca"},
-    {OQS_KEM_CURVEID(NID_OQS_lima_sp_1306_cca), "lima_sp_1306_cca"},
-    {OQS_KEM_CURVEID(NID_OQS_lima_sp_1822_cca), "lima_sp_1822_cca"},
-    /*
-    {OQS_KEM_CURVEID(NID_OQS_lima_sp_2062_cca), "lima_sp_2062_cca"},
-    */
     {OQS_KEM_CURVEID(NID_OQS_saber_light_saber), "saber_light_saber"},
     {OQS_KEM_CURVEID(NID_OQS_saber_saber), "saber_saber"},
     {OQS_KEM_CURVEID(NID_OQS_saber_fire_saber), "saber_fire_saber"},
-    /*
-    {OQS_KEM_CURVEID(NID_OQS_titanium_cca_std), "titanium_cca_std"},
-    {OQS_KEM_CURVEID(NID_OQS_titanium_cca_hi), "titanium_cca_hi"},
-    {OQS_KEM_CURVEID(NID_OQS_titanium_cca_med), "titanium_cca_med"},
-    {OQS_KEM_CURVEID(NID_OQS_titanium_cca_super), "titanium_cca_super"},
-    */
 #endif
     /* ADD_MORE_OQS_KEM_HERE */
     {OQS_KEM_CURVEID(NID_OQS_p256_KEM_DEFAULT), "p256 - OQS KEM default hybrid"},
@@ -603,18 +584,12 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE2_L1), "p256 - bike2l1 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE3_L1), "p256 - bike3l1 hybrid"},
 #if defined(OQS_NIST_BRANCH)
-    /*
-    {OQS_KEM_CURVEID(NID_OQS_p256_bigquake1), "p256 - bigquake1"},
-    */
     {OQS_KEM_CURVEID(NID_OQS_p256_kyber512), "p256 - kyber512"},
     {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N02), "p256 - ledakem_C1_N02"},
     {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N03), "p256 - ledakem_C1_N03"},
     {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N04), "p256 - ledakem_C1_N04"},
     /*
-    {OQS_KEM_CURVEID(NID_OQS_p256_lima_sp_1018_cca), "p256 - lima_sp_1018_cca"},
     {OQS_KEM_CURVEID(NID_OQS_p256_saber_light_saber), "p256 - saber_light_saber"},
-    {OQS_KEM_CURVEID(NID_OQS_p256_titanium_cca_std), "p256 - titanium_cca_std"},
-    {OQS_KEM_CURVEID(NID_OQS_p256_titanium_cca_med), "p256 - titanium_cca_med"},
     */
 #endif
     /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */

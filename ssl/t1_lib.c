@@ -198,9 +198,6 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_NEWHOPE_1024_CCA, 256, TLS_CURVE_CUSTOM}, /* newhope1024cca (0x0212) */
 #if defined(OQS_NIST_BRANCH)
     /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /* {NID_OQS_bigquake1, 128, TLS_CURVE_CUSTOM}, */ /* bigquake1 (0x0213) */
-    /* {NID_OQS_bigquake3, 192, TLS_CURVE_CUSTOM}, */ /* bigquake3 (0x0214) */
-    /* {NID_OQS_bigquake5, 256, TLS_CURVE_CUSTOM}, */ /* bigquake5 (0x0215) */
     {NID_OQS_kyber512, 128, TLS_CURVE_CUSTOM}, /* kyber512 (0x0216) */
     {NID_OQS_kyber768, 192, TLS_CURVE_CUSTOM}, /* kyber768 (0x0217) */
     {NID_OQS_kyber1024, 256, TLS_CURVE_CUSTOM}, /* kyber1024 (0x0218) */
@@ -213,19 +210,9 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_ledakem_C5_N02, 256, TLS_CURVE_CUSTOM}, /* ledakem_C5_N02 (0x021f) */
     /* {NID_OQS_ledakem_C5_N03, 256, TLS_CURVE_CUSTOM}, */ /* ledakem_C5_N03 (0x0220) */
     /* {NID_OQS_ledakem_C5_N04, 256, TLS_CURVE_CUSTOM}, */ /* ledakem_C5_N04 (0x0221) */
-    {NID_OQS_lima_2p_1024_cca, 192, TLS_CURVE_CUSTOM}, /* lima_2p_1024_cca (0x0222) */
-    {NID_OQS_lima_2p_2048_cca, 192, TLS_CURVE_CUSTOM}, /* lima_2p_2048_cca (0x0223) */ /* FIXMEOQS: what is the security level for NIST level 4? */
-    {NID_OQS_lima_sp_1018_cca, 128, TLS_CURVE_CUSTOM}, /* lima_sp_1018_cca (0x0224) */
-    {NID_OQS_lima_sp_1306_cca, 128, TLS_CURVE_CUSTOM}, /* lima_sp_1306_cca (0x0225) */ /* FIXMEOQS: what is the security level for NIST level 2? */
-    {NID_OQS_lima_sp_1822_cca, 192, TLS_CURVE_CUSTOM}, /* lima_sp_1822_cca (0x0226) */
-    /* {NID_OQS_lima_sp_2062_cca, 192, TLS_CURVE_CUSTOM}, */ /* lima_sp_2062_cca (0x0227) */ /* FIXMEOQS: what is the security level for NIST level 4? */
     {NID_OQS_saber_light_saber, 128, TLS_CURVE_CUSTOM}, /* saber_light_saber (0x0228) */
     {NID_OQS_saber_saber, 192, TLS_CURVE_CUSTOM}, /* saber_saber (0x0229) */
     {NID_OQS_saber_fire_saber, 256, TLS_CURVE_CUSTOM}, /* saber_fire_saber (0x022a) */
-    /* {NID_OQS_titanium_cca_std, 128, TLS_CURVE_CUSTOM}, /*titanium_cca_hi titanium_cca_std (0x022b) */
-    /* {NID_OQS_titanium_cca_hi, 192, TLS_CURVE_CUSTOM}, */ /* titanium_cca_hi (0x022c) */
-    /* {NID_OQS_titanium_cca_med, 128, TLS_CURVE_CUSTOM}, */ /* titanium_cca_med (0x022d) */
-    /* {NID_OQS_titanium_cca_super, 256, TLS_CURVE_CUSTOM}, */ /* titanium_cca_super (0x022e) */
 #endif
     /* ADD_MORE_OQS_KEM_HERE */
 };
@@ -244,15 +231,11 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_OQS_p256_NEWHOPE_512_CCA, 128, TLS_CURVE_CUSTOM}, /* p256 + newhope512cca hybrid (0x0307) */
 #if defined(OQS_NIST_BRANCH)
     /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /* {NID_OQS_p256_bigquake1, 128, TLS_CURVE_CUSTOM}, */ /* p256 + bigquake1 hybrid (0x0308) */
     {NID_OQS_p256_kyber512, 128, TLS_CURVE_CUSTOM}, /* p256 + kyber512 hybrid (0x0309) */
     {NID_OQS_p256_ledakem_C1_N02, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N02 hybrid (0x030a) */
     {NID_OQS_p256_ledakem_C1_N03, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N03 hybrid (0x030b) */
     {NID_OQS_p256_ledakem_C1_N04, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N04 hybrid (0x030c) */
-    /* {NID_OQS_p256_lima_sp_1018_cca, 128, TLS_CURVE_CUSTOM}, */ /* p256 + lima_sp_1018_cca hybrid (0x030d) */
     /* {NID_OQS_p256_saber_light_saber, 128, TLS_CURVE_CUSTOM}, */ /* p256 + saber_light_saber hybrid (0x030e) */
-    /* {NID_OQS_p256_titanium_cca_std, 128, TLS_CURVE_CUSTOM}, */ /* p256 + titanium_cca_std hybrid (0x030f) */
-    /* {NID_OQS_p256_titanium_cca_med, 128, TLS_CURVE_CUSTOM}, */ /* p256 + titanium_cca_med hybrid (0x0310) */
 #endif
     /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
 };
@@ -296,9 +279,6 @@ static const uint16_t eccurves_default[] = {
     0x0212, /* OQS newhope1024cca */
 #if defined(OQS_NIST_BRANCH)
     /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /* 0x0213, */ /* OQS bigquake1 */
-    /* 0x0214, */ /* OQS bigquake3 */
-    /* 0x0215, */ /* OQS bigquake5 */
     0x0216, /* OQS kyber512 */
     0x0217, /* OQS kyber768 */
     0x0218, /* OQS kyber1024 */
@@ -311,19 +291,9 @@ static const uint16_t eccurves_default[] = {
     0x021f, /* OQS ledakem_C5_N02 */
     /* 0x0220, */ /* OQS ledakem_C5_N03 */
     /* 0x0221, */ /* OQS ledakem_C5_N04 */
-    0x0222, /* OQS lima_2p_1024_cca */
-    0x0223, /* OQS lima_2p_2048_cca */
-    0x0224, /* OQS lima_sp_1018_cca */
-    0x0225, /* OQS lima_sp_1306_cca */
-    0x0226, /* OQS lima_sp_1822_cca */
-    0x0227, /* OQS lima_sp_2062_cca */
     0x0228, /* OQS saber_light_saber */
     0x0229, /* OQS saber_saber */
     0x022a, /* OQS saber_fire_saber */
-    /* 0x022b, */ /* OQS titanium_cca_std */
-    /* 0x022c, */ /* OQS titanium_cca_hi */
-    /* 0x022d, */ /* OQS titanium_cca_med */
-    /* 0x022e, */ /* OQS titanium_cca_super */
 #endif
     /* ADD_MORE_OQS_KEM_HERE */
     0x02FF, /* p256 - OQS default KEM hybrid */
@@ -338,15 +308,11 @@ static const uint16_t eccurves_default[] = {
     0x0306, /* p256 - OQS bike3l1 hybrid */
     0x0307, /* p256 - OQS newhope512cca hybrid */
 #if defined(OQS_NIST_BRANCH)
-    /* 0x0308, */ /* p256 - OQS bigquake1 hybrid */
     0x0309, /* p256 - OQS kyber512 hybrid */
     0x030a, /* p256 - OQS ledakem_C1_N02 hybrid */
     0x030b, /* p256 - OQS ledakem_C1_N03 hybrid */
     0x030c, /* p256 - OQS ledakem_C1_N04 hybrid */
-    /* 0x030d, */ /* p256 - OQS lima_sp_1018_cca hybrid */
     /* 0x030e, */ /* p256 - OQS saber_light_saber hybrid */
-    /* 0x030f, */ /* p256 - OQS titanium_cca_std hybrid */
-    /* 0x0310, */ /* p256 - OQS titanium_cca_med hybrid */
 #endif
     /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
 };
