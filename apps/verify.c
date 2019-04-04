@@ -250,12 +250,12 @@ static int check(X509_STORE *ctx, const char *file,
 
         v = ASN1_OCTET_STRING_new();
         if (v == NULL) {
-            printf("error: SM2 ID allocation failed\n");
+            BIO_printf(bio_err, "error: SM2 ID allocation failed\n");
             goto end;
         }
 
         if (!ASN1_OCTET_STRING_set(v, sm2id, sm2idlen)) {
-            printf("error: setting SM2 ID failed\n");
+            BIO_printf(bio_err, "error: setting SM2 ID failed\n");
             ASN1_OCTET_STRING_free(v);
             goto end;
         }
@@ -266,16 +266,17 @@ static int check(X509_STORE *ctx, const char *file,
 
     csc = X509_STORE_CTX_new();
     if (csc == NULL) {
-        printf("error %s: X.509 store context allocation failed\n",
-               (file == NULL) ? "stdin" : file);
+        BIO_printf(bio_err, "error %s: X.509 store context allocation failed\n",
+                   (file == NULL) ? "stdin" : file);
         goto end;
     }
 
     X509_STORE_set_flags(ctx, vflags);
     if (!X509_STORE_CTX_init(csc, ctx, x, uchain)) {
         X509_STORE_CTX_free(csc);
-        printf("error %s: X.509 store context initialization failed\n",
-               (file == NULL) ? "stdin" : file);
+        BIO_printf(bio_err,
+                   "error %s: X.509 store context initialization failed\n",
+                   (file == NULL) ? "stdin" : file);
         goto end;
     }
     if (tchain != NULL)
@@ -284,28 +285,30 @@ static int check(X509_STORE *ctx, const char *file,
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
     if (i > 0 && X509_STORE_CTX_get_error(csc) == X509_V_OK) {
-        printf("%s: OK\n", (file == NULL) ? "stdin" : file);
+        BIO_printf(bio_out, "%s: OK\n", (file == NULL) ? "stdin" : file);
         ret = 1;
         if (show_chain) {
             int j;
 
             chain = X509_STORE_CTX_get1_chain(csc);
             num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
-            printf("Chain:\n");
+            BIO_printf(bio_out, "Chain:\n");
             for (j = 0; j < sk_X509_num(chain); j++) {
                 X509 *cert = sk_X509_value(chain, j);
-                printf("depth=%d: ", j);
+                BIO_printf(bio_out, "depth=%d: ", j);
                 X509_NAME_print_ex_fp(stdout,
                                       X509_get_subject_name(cert),
                                       0, get_nameopt());
                 if (j < num_untrusted)
-                    printf(" (untrusted)");
-                printf("\n");
+                    BIO_printf(bio_out, " (untrusted)");
+                BIO_printf(bio_out, "\n");
             }
             sk_X509_pop_free(chain, X509_free);
         }
     } else {
-        printf("error %s: verification failed\n", (file == NULL) ? "stdin" : file);
+        BIO_printf(bio_err,
+                   "error %s: verification failed\n",
+                   (file == NULL) ? "stdin" : file);
     }
     X509_STORE_CTX_free(csc);
 
