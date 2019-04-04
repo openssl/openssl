@@ -461,14 +461,9 @@ static int test_invalid_keypair(void)
         BN_free(d);
         goto end;
     }
-          /* bad strength/key size */
-    ret = TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 100, 2048))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 112, 1024))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 128, 2048))
-          && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, 140, 3072))
-          /* mismatching exponent */
-          && TEST_false(rsa_sp800_56b_check_keypair(key, BN_value_one(), -1,
-                        2048))
+
+    /* mismatching exponent */
+    ret = TEST_false(rsa_sp800_56b_check_keypair(key, BN_value_one(), -1, 2048))
           /* bad exponent */
           && TEST_true(BN_add_word(e, 1))
           && TEST_false(rsa_sp800_56b_check_keypair(key, NULL, -1,

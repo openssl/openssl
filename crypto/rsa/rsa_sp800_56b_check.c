@@ -244,13 +244,11 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
 
     /*
      * (Step a): modulus must be 2048 or 3072 (caveat from SP800-56Br1)
-     * NOTE: changed to allow keys >= 2048
+     * NOTE: changed to allow keys >= 2048.
+     * This will be noted in the security policy only.
      */
     nbits = BN_num_bits(rsa->n);
-    if (!rsa_sp800_56b_validate_strength(nbits, -1)) {
-        RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_KEY_LENGTH);
-        return 0;
-    }
+
     if (!BN_is_odd(rsa->n)) {
         RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_MODULUS);
         return 0;
@@ -328,9 +326,7 @@ int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
         RSAerr(RSA_F_RSA_SP800_56B_CHECK_KEYPAIR, RSA_R_INVALID_REQUEST);
         return 0;
     }
-    /* (Step 1): Check Ranges */
-    if (!rsa_sp800_56b_validate_strength(nbits, strength))
-        return 0;
+    /* (Step 1): Check Ranges  - this is noted in the security policy only. */
 
     /* If the exponent is known */
     if (efixed != NULL) {

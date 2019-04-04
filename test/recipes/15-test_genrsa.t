@@ -11,7 +11,7 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips/;
 use OpenSSL::Test::Utils;
 
 setup("test_genrsa");
@@ -44,9 +44,9 @@ $good++ if $good == $bad;
 $good = 2 ** $good;
 note "Found lowest allowed amount of bits to be $good";
 
-ok(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', $good ])),
-   "genrsa -3 $good");
-ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
+ok_nofips(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', $good ])),
+          "genrsa -3 $good");
+ok_nofips(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
    "rsa -check");
 ok(run(app([ 'openssl', 'genrsa', '-f4', '-out', 'genrsatest.pem', $good ])),
    "genrsa -f4 $good");

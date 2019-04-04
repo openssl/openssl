@@ -12,14 +12,14 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT data_file/;
+use OpenSSL::Test qw/:DEFAULT data_file ok_nofips/;
 use OpenSSL::Test::Utils;
 
 setup("test_mp_rsa");
 
 plan tests => 31;
 
-ok(run(test(["rsa_mp_test"])), "running rsa multi prime test");
+ok_nofips(run(test(["rsa_mp_test"])), "running rsa multi prime test");
 
 my $cleartext = data_file("plain_text");
 
@@ -55,33 +55,35 @@ sub run_mp_tests {
         my $name = ($evp ? "evp" : "") . "${bits}p${primes}";
 
         if ($evp) {
-            ok(run(app([ 'openssl', 'genpkey', '-out', 'rsamptest.pem',
-                         '-algorithm', 'RSA', '-pkeyopt', "rsa_keygen_primes:$primes",
-                         '-pkeyopt', "rsa_keygen_bits:$bits"])), "genrsa $name");
+            ok_nofips(run(app([ 'openssl', 'genpkey', '-out', 'rsamptest.pem',
+                                '-algorithm', 'RSA',
+                                '-pkeyopt', "rsa_keygen_primes:$primes",
+                                '-pkeyopt', "rsa_keygen_bits:$bits"])),
+               "genrsa $name");
         } else {
-            ok(run(app([ 'openssl', 'genrsa', '-out', 'rsamptest.pem',
-                         '-primes', $primes, $bits])), "genrsa $name");
+            ok_nofips(run(app([ 'openssl', 'genrsa', '-out', 'rsamptest.pem',
+                                '-primes', $primes, $bits])), "genrsa $name");
         }
 
-        ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'rsamptest.pem',
-                     '-noout'])), "rsa -check $name");
+        ok_nofips(run(app([ 'openssl', 'rsa', '-check', '-in', 'rsamptest.pem',
+                            '-noout'])), "rsa -check $name");
         if ($evp) {
-            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
-                         '-encrypt', '-in', $cleartext,
-                         '-out', 'rsamptest.enc' ])), "rsa $name encrypt");
-            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
-                         '-decrypt', '-in', 'rsamptest.enc',
-                         '-out', 'rsamptest.dec' ])), "rsa $name decrypt");
+            ok_nofips(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
+                                '-encrypt', '-in', $cleartext,
+                                '-out', 'rsamptest.enc' ])), "rsa $name encrypt");
+            ok_nofips(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
+                                '-decrypt', '-in', 'rsamptest.enc',
+                                '-out', 'rsamptest.dec' ])), "rsa $name decrypt");
         } else {
-            ok(run(app([ 'openssl', 'rsautl', '-inkey', 'rsamptest.pem',
-                         '-encrypt', '-in', $cleartext,
-                         '-out', 'rsamptest.enc' ])), "rsa $name encrypt");
-            ok(run(app([ 'openssl', 'rsautl', '-inkey', 'rsamptest.pem',
-                         '-decrypt', '-in', 'rsamptest.enc',
-                         '-out', 'rsamptest.dec' ])), "rsa $name decrypt");
+            ok_nofips(run(app([ 'openssl', 'rsautl', '-inkey', 'rsamptest.pem',
+                                '-encrypt', '-in', $cleartext,
+                                '-out', 'rsamptest.enc' ])), "rsa $name encrypt");
+            ok_nofips(run(app([ 'openssl', 'rsautl', '-inkey', 'rsamptest.pem',
+                                '-decrypt', '-in', 'rsamptest.enc',
+                                '-out', 'rsamptest.dec' ])), "rsa $name decrypt");
         }
 
-        ok(check_msg(), "rsa $name check result");
+        ok_nofips(check_msg(), "rsa $name check result");
 
         # clean up temp files
         unlink 'rsamptest.pem';
