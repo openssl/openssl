@@ -17,6 +17,7 @@
 /* Functions provided by the core */
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;
+static SELF_TEST_POST_PARAMS selftest_params;
 
 /* Parameters we provide to the core */
 static const OSSL_ITEM fips_param_types[] = {
@@ -76,10 +77,28 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
     { 0, NULL }
 };
 
+static OSSL_PARAM core_params[] =
+{
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_MODULE_FILENAME,
+                        selftest_params.module_filename,
+                        sizeof(selftest_params.module_filename)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_MODULE_MAC,
+                        selftest_params.module_checksum_data,
+                        sizeof(selftest_params.module_checksum_data)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_INSTALL_MAC,
+                        selftest_params.indicator_checksum_data,
+                        sizeof(selftest_params.indicator_checksum_data)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_INSTALL_STATUS,
+                        selftest_params.indicator_data,
+                        sizeof(selftest_params.indicator_data)),
+    OSSL_PARAM_END
+};
+
 int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out)
 {
+    memset(&selftest_params, sizeof(selftest_params), 0);
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_PARAM_TYPES:
@@ -88,11 +107,29 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_get_core_get_params(in);
             break;
+        case OSSL_FUNC_CORE_GET_BIO_NEW_FILE:
+            selftest_params.bio_new_file_cb = (BIO_NEW_FILE_CB)in->function;
+            break;
+        case OSSL_FUNC_CORE_GET_BIO_NEW_MEMBUF:
+            selftest_params.bio_new_buffer_cb = (BIO_NEW_MEM_BUF_CB)in->function;
+            break;
+        case OSSL_FUNC_CORE_GET_BIO_READ:
+            selftest_params.bio_read_cb = (BIO_READ_CB)in->function;
+            break;
+        case OSSL_FUNC_CORE_GET_BIO_FREE:
+            selftest_params.bio_free_cb = (BIO_FREE_CB)in->function;
+            break;
         /* Just ignore anything we don't understand */
         default:
             break;
         }
     }
+
+    if (!c_get_params(provider, core_params))
+        return 0;
+
+    if (!SELF_TEST_post(&selftest_params))
+        return 0;
 
     *out = fips_dispatch_table;
     return 1;

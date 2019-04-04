@@ -1,3 +1,0 @@
-LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        self_test.c self_test_kats.c

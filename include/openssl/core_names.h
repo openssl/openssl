@@ -34,6 +34,30 @@ extern "C" {
  */
 #define OSSL_PROV_PARAM_BUILDINFO   "buildinfo"
 
+/*
+ * A integer identifier for a test callback's phase.
+ * Type: OSSL_PARAM_INTEGER
+ */
+#define OSSL_PROV_PARAM_TEST_PHASE  "phase"
+/*
+ * A integer identifier for a test callback's type.
+ * Type: OSSL_PARAM_INTEGER
+ */
+#define OSSL_PROV_PARAM_TEST_TYPE   "type"
+/*
+ * A integer identifier for a test callback's description.
+ * Type: OSSL_PARAM_INTEGER
+ */
+#define OSSL_PROV_PARAM_TEST_DESC   "desc"
+
+#define OSSL_PROV_PARAM_OPENSSL_VERSION "openssl-version"
+#define OSSL_PROV_PARAM_PROV_NAME        "provider-name"
+#define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"
+#define OSSL_PROV_PARAM_MODULE_MAC      "module-checksum"
+#define OSSL_PROV_PARAM_INSTALL_VERSION "install-version"
+#define OSSL_PROV_PARAM_INSTALL_MAC     "install-checksum"
+#define OSSL_PROV_PARAM_INSTALL_STATUS  "install-status"
+
 # ifdef __cplusplus
 }
 # endif

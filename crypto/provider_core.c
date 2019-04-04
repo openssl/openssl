@@ -9,6 +9,7 @@
 
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
+#include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include <openssl/params.h>
@@ -609,12 +610,13 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
  * never knows.
  */
 static const OSSL_ITEM param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, "openssl-version" },
-    { OSSL_PARAM_UTF8_PTR, "provider-name" },
-    { OSSL_PARAM_UTF8_PTR, "module-filename" },
-    { OSSL_PARAM_OCTET_STRING, "module-checksum" },
-    { OSSL_PARAM_OCTET_STRING, "indicator-checksum" },
-    { OSSL_PARAM_OCTET_STRING, "indicator-data" },
+    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_OPENSSL_VERSION },
+    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_PROV_NAME },
+    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_MODULE_FILENAME },
+    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_MODULE_MAC },
+    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_INSTALL_VERSION },
+    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_INSTALL_MAC },
+    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_INSTALL_STATUS },
     { 0, NULL }
 };
 
@@ -628,9 +630,9 @@ static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
     int i;
     const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, "openssl-version")) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_OPENSSL_VERSION)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
-    if ((p = OSSL_PARAM_locate(params, "provider-name")) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_PROV_NAME)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, prov->name);
 
     if (prov->parameters == NULL)

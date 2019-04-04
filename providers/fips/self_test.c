@@ -7,20 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "self_test.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/ossl_typ.h>
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/hmac.h>
-#include "self_test.h"
 
 #define FIPS_STATE_INIT     0
 #define FIPS_STATE_RUNNING  1
 #define FIPS_STATE_SELFTEST 2
 #define FIPS_STATE_ERROR    3
+
+/* The size of a temp buffer used to read in data */
+#define INTEGRITY_BUF_SIZE (4 * 1024)
 
 static int FIPS_state = FIPS_STATE_INIT;
 static unsigned char fixed_key[32] = {0};
@@ -35,9 +40,12 @@ void SELF_TEST_EVENT_init(ST_EVENT *ev)
         return;
 
     if (SELF_TEST_cb != NULL) {
-        ev->params[n++] = OSSL_PARAM_construct_int("phase", &ev->phase, NULL);
-        ev->params[n++] = OSSL_PARAM_construct_int("type",  &ev->type, NULL);
-        ev->params[n++] = OSSL_PARAM_construct_int("desc",  &ev->desc, NULL);
+        ev->params[n++] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_TEST_PHASE,
+                                                   &ev->phase, NULL);
+        ev->params[n++] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_TEST_TYPE,
+                                                   &ev->type, NULL);
+        ev->params[n++] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_TEST_DESC,
+                                                   &ev->desc, NULL);
     }
     ev->params[n++] = param_end;
 }
@@ -145,7 +153,7 @@ int SELF_TEST_keygen_pairwise_test_ecdsa(EC_KEY *eckey)
 {
     int ret = 1;
     unsigned char dgst[16] = {0};
-    unsigned int dgst_len = (unsigned int)sizeof(dgst);
+    int dgst_len = (int)sizeof(dgst);
     ECDSA_SIG *sig = NULL;
     ST_EVENT ev;
 
@@ -194,8 +202,6 @@ err:
     DSA_SIG_free(sig);
     return ret;
 }
-
-#define INTEGRITY_BUF_SIZE (4 * 1024)
 
 /*
  * Calculate the HMAC SHA256 of data read using a BIO and read_cb, and verify

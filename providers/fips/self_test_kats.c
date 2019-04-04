@@ -14,7 +14,7 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 
-#include "self_test_data.c"
+#include "../../providers/fips/self_test_data.c"
 #include "internal/nelem.h"
 
 static int self_test_digests(ST_EVENT *event);
@@ -128,9 +128,8 @@ static BIGNUM *keydata2bn(ST_KEYDATA *list, int id)
     int i;
 
     for (i = 0; list[i].key.data != NULL; ++i) {
-        if (list[i].id == id) {
+        if (list[i].id == id)
             return BN_bin2bn(list[i].key.data, list[i].key.len, NULL);
-        }
     }
     return NULL;
 }
@@ -141,9 +140,8 @@ static const char *keydata2str(ST_KEYDATA *list, int id)
     int i;
 
     for (i = 0; list[i].key.data != NULL; ++i) {
-        if (list[i].id == id) {
+        if (list[i].id == id)
             return (const char *)list[i].key.data;
-        }
     }
     return NULL;
 }

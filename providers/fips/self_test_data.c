@@ -8,6 +8,7 @@
  */
 
 #include <openssl/obj_mac.h>
+
 #include "self_test.h"
 #include "internal/evp_int.h"
 
