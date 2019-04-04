@@ -145,6 +145,43 @@ finish:
     return ok;
 }
 
+static int test_bio_rdwr_rdonly(void)
+{
+    int ok = 0;
+    BIO *bio = NULL;
+    char data[16];
+
+    bio = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(bio))
+        goto finish;
+    if (!TEST_int_eq(BIO_puts(bio, "Hello World\n"), 12))
+        goto finish;
+
+    BIO_set_flags(bio, BIO_FLAGS_MEM_RDONLY);
+    if (!TEST_int_eq(BIO_read(bio, data, 16), 12))
+        goto finish;
+    if (!TEST_mem_eq(data, 12, "Hello World\n", 12))
+        goto finish;
+    if (!TEST_int_gt(BIO_reset(bio), 0))
+        goto finish;
+
+    BIO_clear_flags(bio, BIO_FLAGS_MEM_RDONLY);
+    if (!TEST_int_eq(BIO_puts(bio, "Hi!\n"), 4))
+        goto finish;
+    if (!TEST_int_eq(BIO_read(bio, data, 16), 16))
+        goto finish;
+
+    if (!TEST_mem_eq(data, 16, "Hello World\nHi!\n", 16))
+        goto finish;
+
+    ok = 1;
+
+finish:
+    BIO_free(bio);
+    return ok;
+}
+
+
 int global_init(void)
 {
     CRYPTO_set_mem_debug(1);
@@ -158,5 +195,6 @@ int setup_tests(void)
     ADD_TEST(test_bio_get_mem);
     ADD_TEST(test_bio_new_mem_buf);
     ADD_TEST(test_bio_rdonly_mem_buf);
+    ADD_TEST(test_bio_rdwr_rdonly);
     return 1;
 }
