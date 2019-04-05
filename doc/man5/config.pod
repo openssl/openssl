@@ -274,17 +274,17 @@ available to the provider.
 
 =head2 EVP Configuration Module
 
-This modules has the name B<alg_section> which points to a section containing
+This module has the name B<alg_section> which points to a section containing
 algorithm commands.
 
-The supported algorithms commands are:
+The supported algorithm commands are:
 
 =over 4
 
 =item B<default_properties>
 
-The value may be anything that is acceptable as property query string for
-EVP_set_default_properties().
+The value may be anything that is acceptable as a property query
+string for EVP_set_default_properties().
 
 =item B<fips_mode> (deprecated)
 
