@@ -78,8 +78,7 @@ static void *alloc_tmp_method_store(void)
         ossl_method_store_free(store);
 }
 
-static
-struct OSSL_METHOD_STORE *get_default_method_store(OPENSSL_CTX *libctx)
+static OSSL_METHOD_STORE *get_default_method_store(OPENSSL_CTX *libctx)
 {
     if (!RUN_ONCE(&default_method_store_init_flag,
                   do_default_method_store_init))
@@ -194,4 +193,14 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     }
 
     return method;
+}
+
+int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
+{
+    OSSL_METHOD_STORE *store = get_default_method_store(libctx);
+
+    if (store != NULL)
+        return ossl_method_store_set_global_properties(store, propq);
+    EVPerr(EVP_F_EVP_SET_DEFAULT_PROPERTIES, ERR_R_INTERNAL_ERROR);
+    return 0;
 }

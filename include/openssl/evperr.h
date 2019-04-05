@@ -128,6 +128,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_VERIFY_INIT                       143
 # define EVP_F_EVP_PKEY_VERIFY_RECOVER                    144
 # define EVP_F_EVP_PKEY_VERIFY_RECOVER_INIT               145
+# define EVP_F_EVP_SET_DEFAULT_PROPERTIES                 233
 # define EVP_F_EVP_SIGNFINAL                              107
 # define EVP_F_EVP_VERIFYFINAL                            108
 # define EVP_F_GMAC_CTRL                                  215

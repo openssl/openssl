@@ -156,6 +156,8 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
      "EVP_PKEY_verify_recover"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_PKEY_VERIFY_RECOVER_INIT, 0),
      "EVP_PKEY_verify_recover_init"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_SET_DEFAULT_PROPERTIES, 0),
+     "EVP_set_default_properties"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_SIGNFINAL, 0), "EVP_SignFinal"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_VERIFYFINAL, 0), "EVP_VerifyFinal"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_GMAC_CTRL, 0), "gmac_ctrl"},
