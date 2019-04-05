@@ -41,7 +41,7 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
         char buffer[512];
         size_t buffer_len = 0;
 
-        OSSL_TRACE1(CONF, "PROVIDER conf: start section %s\n", value);
+        OSSL_TRACE1(CONF, "Provider params: start section %s\n", value);
 
         if (name != NULL) {
             OPENSSL_strlcpy(buffer, name, sizeof(buffer));
@@ -60,9 +60,9 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
                 return 0;
         }
 
-        OSSL_TRACE1(CONF, "PROVIDER conf: finish section %s\n", value);
+        OSSL_TRACE1(CONF, "Provider params: finish section %s\n", value);
     } else {
-        OSSL_TRACE2(CONF, "PROVIDER conf: %s = %s\n", name, value);
+        OSSL_TRACE2(CONF, "Provider params: %s = %s\n", name, value);
         ok = ossl_provider_add_parameter(prov, name, value);
     }
 
@@ -96,7 +96,7 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
         const char *confname = skip_dot(ecmd->name);
         const char *confvalue = ecmd->value;
 
-        OSSL_TRACE2(CONF, "PROVIDER conf: %s = %s\n",
+        OSSL_TRACE2(CONF, "Provider command: %s = %s\n",
                     confname, confvalue);
 
         /* First handle some special pseudo confs */
