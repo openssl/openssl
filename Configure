@@ -374,6 +374,7 @@ my @disablables = (
     "fuzz-afl",
     "gost",
     "idea",
+    "legacy",
     "makedepend",
     "md2",
     "md4",
@@ -513,7 +514,7 @@ my @disable_cascades = (
     # or modules.
     "pic"               => [ "shared", "module" ],
 
-    "module"            => [ "fips" ],
+    "module"            => [ "fips", "legacy" ],
 
     "engine"            => [ grep /eng$/, @disablables ],
     "hw"                => [ "padlockeng" ],
@@ -532,6 +533,7 @@ my @disable_cascades = (
     sub { !$disabled{"msan"} } => [ "asm" ],
 
     sub { $disabled{cmac}; } => [ "siv" ],
+    "legacy"                 => [ "md2" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -1226,7 +1228,7 @@ foreach my $what (sort keys %disabled) {
 
     if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
                                 'module', 'pic', 'dynamic-engine', 'makedepend',
-                                'zlib-dynamic', 'zlib', 'sse2' )) {
+                                'zlib-dynamic', 'zlib', 'sse2', 'legacy' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
         my $skipdir = $what;
 

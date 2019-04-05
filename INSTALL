@@ -409,6 +409,10 @@
                    available if the GOST algorithms are also available through
                    loading an externally supplied engine.
 
+  no-legacy
+                   Don't build the legacy provider. Disabling this also disables
+                   the legacy algorithms: MD2 (already disabled by default).
+
   no-makedepend
                    Don't generate dependencies.
 

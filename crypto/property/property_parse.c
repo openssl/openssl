@@ -523,6 +523,7 @@ int ossl_property_parse_init(void)
 {
     static const char *const predefined_names[] = {
         "default",      /* Being provided by the default built-in provider */
+        "legacy",       /* Provided by the legacy provider */
         "provider",     /* Name of provider (default, fips) */
         "version",      /* Version number of this provider */
         "fips",         /* FIPS supporting provider */
