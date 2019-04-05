@@ -298,7 +298,7 @@ If the value is B<no>, nothing happens.
 =back
 
 These two commands should not be used together, as there is no control
-of how they affect each other.
+over how they affect each other.
 The use of B<fips_mode> is strongly discouraged and is only present
 for backward compatibility with earlier OpenSSL FIPS modules.
 
