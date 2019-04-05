@@ -63,7 +63,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
         ecmd = sk_CONF_VALUE_value(ecmds, i);
         ctrlname = skip_dot(ecmd->name);
         ctrlvalue = ecmd->value;
-        OSSL_TRACE2(CONF, "ENGINE conf: doing ctrl(%s,%s)\n",
+        OSSL_TRACE2(CONF, "ENGINE: doing ctrl(%s,%s)\n",
                     ctrlname, ctrlvalue);
 
         /* First handle some special pseudo ctrls */
