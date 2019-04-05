@@ -1573,7 +1573,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     ok = 1;
     rule_p = rule_str;
     if (strncmp(rule_str, "DEFAULT", 7) == 0) {
-        ok = ssl_cipher_process_rulestr(SSL_DEFAULT_CIPHER_LIST,
+        ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
                                         &head, &tail, ca_list, c);
         rule_p += 7;
         if (*rule_p == ':')
@@ -2167,4 +2167,28 @@ int ssl_cert_is_disabled(size_t idx)
     if (cl == NULL || (cl->amask & disabled_auth_mask) != 0)
         return 1;
     return 0;
+}
+
+/*
+ * Default list of TLSv1.2 (and earlier) ciphers
+ * SSL_DEFAULT_CIPHER_LIST deprecated in 3.0.0
+ * Update both macro and function simultaneously
+ */
+const char *OSSL_default_cipher_list(void)
+{
+    return "ALL:!COMPLEMENTOFDEFAULT:!eNULL";
+}
+
+/*
+ * Default list of TLSv1.3 (and later) ciphers
+ * TLS_DEFAULT_CIPHERSUITES deprecated in 3.0.0
+ * Update both macro and function simultaneously
+ */
+const char *OSSL_default_ciphersuites(void)
+{
+    return "TLS_AES_256_GCM_SHA384:"
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+           "TLS_CHACHA20_POLY1305_SHA256:"
+#endif
+           "TLS_AES_128_GCM_SHA256";
 }

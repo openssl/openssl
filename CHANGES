@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Default cipher lists/suites are now avaialble via a function, the
+     #defines are deprecated.
+     [Todd Short]
+
   *) Join the directories crypto/x509 and crypto/x509v3
      [Richard Levitte]
 

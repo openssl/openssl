@@ -421,6 +421,7 @@ SSL_CTX_set_tlsext_status_type          define
 SSL_CTX_set_tlsext_ticket_key_cb        define
 SSL_CTX_set_tmp_dh                      define
 SSL_CTX_set_tmp_ecdh                    define
+SSL_DEFAULT_CIPHER_LIST                 define deprecated 3.0.0
 SSL_add0_chain_cert                     define
 SSL_add1_chain_cert                     define
 SSL_build_cert_chain                    define
@@ -499,6 +500,7 @@ SSL_want_x509_lookup                    define
 SSLv23_client_method                    define
 SSLv23_method                           define
 SSLv23_server_method                    define
+TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
 EVP_PKEY_CTX_set1_id                    define

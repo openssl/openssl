@@ -504,3 +504,5 @@ SSL_set_async_callback                  504	3_0_0	EXIST::FUNCTION:
 SSL_set_async_callback_arg              505	3_0_0	EXIST::FUNCTION:
 SSL_get_async_status                    506	3_0_0	EXIST::FUNCTION:
 SSL_sendfile                            507	3_0_0	EXIST::FUNCTION:
+OSSL_default_cipher_list                508	3_0_0	EXIST::FUNCTION:
+OSSL_default_ciphersuites               509	3_0_0	EXIST::FUNCTION:

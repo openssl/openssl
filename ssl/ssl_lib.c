@@ -655,7 +655,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 
     ctx->method = meth;
 
-    if (!SSL_CTX_set_ciphersuites(ctx, TLS_DEFAULT_CIPHERSUITES)) {
+    if (!SSL_CTX_set_ciphersuites(ctx, OSSL_default_ciphersuites())) {
         SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
     }
@@ -663,7 +663,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
                                 ctx->tls13_ciphersuites,
                                 &(ctx->cipher_list),
                                 &(ctx->cipher_list_by_id),
-                                SSL_DEFAULT_CIPHER_LIST, ctx->cert);
+                                OSSL_default_cipher_list(), ctx->cert);
     if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
         SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
@@ -3078,13 +3078,13 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err;
 #endif
 
-    if (!SSL_CTX_set_ciphersuites(ret, TLS_DEFAULT_CIPHERSUITES))
+    if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
         goto err;
 
     if (!ssl_create_cipher_list(ret->method,
                                 ret->tls13_ciphersuites,
                                 &ret->cipher_list, &ret->cipher_list_by_id,
-                                SSL_DEFAULT_CIPHER_LIST, ret->cert)
+                                OSSL_default_cipher_list(), ret->cert)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
         goto err2;
