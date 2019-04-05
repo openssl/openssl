@@ -134,8 +134,7 @@ static const OPENSSL_CTX_METHOD provider_store_method = {
 static CRYPTO_ONCE provider_store_init_flag = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_provider_store_init)
 {
-    return OPENSSL_init_crypto(0, NULL)
-        && (provider_store_index =
+    return (provider_store_index =
             openssl_ctx_new_index(&provider_store_method)) != -1;
 }
 

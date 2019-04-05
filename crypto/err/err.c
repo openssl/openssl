@@ -293,8 +293,6 @@ static void ERR_STATE_free(ERR_STATE *s)
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
     err_string_lock = CRYPTO_THREAD_lock_new();
     if (err_string_lock == NULL)
         return 0;
@@ -742,9 +740,6 @@ ERR_STATE *ERR_get_state(void)
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
         }
-
-        /* Ignore failures from these */
-        OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     }
 
     set_sys_error(saveerrno);

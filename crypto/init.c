@@ -431,9 +431,6 @@ int ossl_init_thread_start(uint64_t opts)
 {
     struct thread_local_inits_st *locals;
 
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
-
     locals = ossl_init_get_thread_local(1);
 
     if (locals == NULL)

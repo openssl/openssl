@@ -38,8 +38,7 @@ static void do_default_context_deinit(void)
 }
 DEFINE_RUN_ONCE_STATIC(do_default_context_init)
 {
-    return OPENSSL_init_crypto(0, NULL)
-        && context_init(&default_context)
+    return context_init(&default_context)
         && OPENSSL_atexit(do_default_context_deinit);
 }
 
