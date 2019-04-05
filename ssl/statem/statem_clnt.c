@@ -2511,11 +2511,8 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         s->session = new_sess;
     }
 
-    /*
-     * Technically the cast to long here is not guaranteed by the C standard -
-     * but we use it elsewhere, so this should be ok.
-     */
-    s->session->time = (long)time(NULL);
+    s->session->time = time(NULL);
+    ssl_session_calculate_timeout(s->session);
 
     OPENSSL_free(s->session->ext.tick);
     s->session->ext.tick = NULL;

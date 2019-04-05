@@ -3633,7 +3633,7 @@ static int create_ticket_prequel(SSL *s, WPACKET *pkt, uint32_t age_add,
      */
     if (!WPACKET_put_bytes_u32(pkt,
                                (s->hit && !SSL_IS_TLS13(s))
-                               ? 0 : s->session->timeout)) {
+                               ? 0 : (uint32_t)s->session->timeout)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -3930,7 +3930,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         }
         s->session->master_key_length = hashlen;
 
-        s->session->time = (long)time(NULL);
+        s->session->time = time(NULL);
+        ssl_session_calculate_timeout(s->session);
         if (s->s3.alpn_selected != NULL) {
             OPENSSL_free(s->session->ext.alpn_selected);
             s->session->ext.alpn_selected =
