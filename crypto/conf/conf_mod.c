@@ -14,6 +14,7 @@
 #include "internal/conf.h"
 #include "internal/dso.h"
 #include <openssl/x509.h>
+#include <openssl/trace.h>
 
 #define DSO_mod_init_name "OPENSSL_init"
 #define DSO_mod_finish_name "OPENSSL_finish"
@@ -92,6 +93,7 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
         return 1;
     }
 
+    OSSL_TRACE1(CONF, "Configuration in section %s\n", vsection);
     values = NCONF_get_section(cnf, vsection);
 
     if (!values)
@@ -100,6 +102,8 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         vl = sk_CONF_VALUE_value(values, i);
         ret = module_run(cnf, vl->name, vl->value, flags);
+        OSSL_TRACE3(CONF, "Running module %s (%s) returned %d\n",
+                    vl->name, vl->value, ret);
         if (ret <= 0)
             if (!(flags & CONF_MFLAGS_IGNORE_ERRORS))
                 return ret;
