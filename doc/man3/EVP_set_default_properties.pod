@@ -13,8 +13,8 @@ EVP_set_default_properties
 
 =head1 DESCRIPTION
 
-EVP_set_default_properties() sets default properties for all future EVP
-algorithm fetches, implicit as well as explicit.
+EVP_set_default_properties() sets the default properties for all
+future EVP algorithm fetches, implicit as well as explicit.
 
 =for comment TODO(3.0) We should consider having an EVP document in
 section 7 that details everything about implicit vs explicit fetches
@@ -24,8 +24,8 @@ EVP_set_default_properties stores the properties given with the string
 I<propq> among the EVP data that's been stored in the library context
 given with I<libctx> (NULL signifies the default library context).
 
-Any previous default property for the given library context will be
-dropped.
+Any previous default property for the specified library context will
+be dropped.
 
 =head1 RETURN VALUES
 
