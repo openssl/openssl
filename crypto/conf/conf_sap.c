@@ -60,10 +60,6 @@ int openssl_config_int(const OPENSSL_INIT_SETTINGS *settings)
 #endif
 
     OPENSSL_load_builtin_modules();
-#ifndef OPENSSL_NO_ENGINE
-    /* Need to load ENGINEs */
-    ENGINE_load_builtin_engines();
-#endif
     ERR_clear_error();
 #ifndef OPENSSL_SYS_UEFI
     ret = CONF_modules_load_file(filename, appname, flags);
