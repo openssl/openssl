@@ -169,17 +169,25 @@ extern "C" {
  * The following cipher list is used by default. It also is substituted when
  * an application-defined cipher list string starts with 'DEFAULT'.
  * This applies to ciphersuites for TLSv1.2 and below.
+ * DEPRECATED IN 3.0.0, in favor of OSSL_default_cipher_list()
+ * Update both macro and function simultaneously
  */
-# define SSL_DEFAULT_CIPHER_LIST "ALL:!COMPLEMENTOFDEFAULT:!eNULL"
-/* This is the default set of TLSv1.3 ciphersuites */
-# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
-                                   "TLS_CHACHA20_POLY1305_SHA256:" \
+# if !OPENSSL_API_3
+#  define SSL_DEFAULT_CIPHER_LIST "ALL:!COMPLEMENTOFDEFAULT:!eNULL"
+/*
+ * This is the default set of TLSv1.3 ciphersuites
+ * DEPRECATED IN 3.0.0, in favor of OSSL_default_ciphersuites()
+ * Update both macro and function simultaneously
+ */
+#  if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+#   define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+                                    "TLS_CHACHA20_POLY1305_SHA256:" \
+                                    "TLS_AES_128_GCM_SHA256"
+#  else
+#   define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
                                    "TLS_AES_128_GCM_SHA256"
-# else
-#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
-                                   "TLS_AES_128_GCM_SHA256"
-#endif
+#  endif
+# endif
 /*
  * As of OpenSSL 1.0.0, ssl_create_cipher_list() in ssl/ssl_ciph.c always
  * starts with a reasonable order, and all we have to do for DEFAULT is
@@ -2442,6 +2450,10 @@ void SSL_CTX_set_allow_early_data_cb(SSL_CTX *ctx,
 void SSL_set_allow_early_data_cb(SSL *s,
                                  SSL_allow_early_data_cb_fn cb,
                                  void *arg);
+
+/* store the default cipher strings inside the library */
+const char *OSSL_default_cipher_list(void);
+const char *OSSL_default_ciphersuites(void);
 
 # ifdef  __cplusplus
 }
