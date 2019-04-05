@@ -42,7 +42,8 @@ an algorithm implementation. An implementation with the given name and
 satisfying the search criteria specified in the B<properties> parameter
 combined with the default search criteria will be looked for within the
 available providers and returned.
-See L<OSSL_PROVIDER(3)> for information about providers.
+See L<EVP_set_default_properties(3)> for information on default search criteria
+and L<OSSL_PROVIDER(3)> for information about providers.
 
 =item User defined
 
