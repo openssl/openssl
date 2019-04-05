@@ -35,13 +35,13 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
     STACK_OF(CONF_VALUE) *sect;
     int ok = 1;
 
-    OSSL_TRACE2(PROVIDER_CONF, "PROVIDER conf: %s = %s\n", name, value);
-
     sect = NCONF_get_section(cnf, value);
     if (sect != NULL) {
         int i;
         char buffer[512];
         size_t buffer_len = 0;
+
+        OSSL_TRACE1(CONF, "PROVIDER conf: start section %s\n", value);
 
         if (name != NULL) {
             OPENSSL_strlcpy(buffer, name, sizeof(buffer));
@@ -59,7 +59,10 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
             if (!provider_conf_params(prov, buffer, sectconf->value, cnf))
                 return 0;
         }
+
+        OSSL_TRACE1(CONF, "PROVIDER conf: finish section %s\n", value);
     } else {
+        OSSL_TRACE2(CONF, "PROVIDER conf: %s = %s\n", name, value);
         ok = ossl_provider_add_parameter(prov, name, value);
     }
 
@@ -78,7 +81,7 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
     int ok = 0;
 
     name = skip_dot(name);
-    OSSL_TRACE1(PROVIDER_CONF, "Configuring provider %s\n", name);
+    OSSL_TRACE1(CONF, "Configuring provider %s\n", name);
     /* Value is a section containing PROVIDER commands */
     ecmds = NCONF_get_section(cnf, value);
 
@@ -93,7 +96,7 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
         const char *confname = skip_dot(ecmd->name);
         const char *confvalue = ecmd->value;
 
-        OSSL_TRACE2(PROVIDER_CONF, "PROVIDER conf: %s = %s\n",
+        OSSL_TRACE2(CONF, "PROVIDER conf: %s = %s\n",
                     confname, confvalue);
 
         /* First handle some special pseudo confs */
@@ -145,8 +148,9 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
     CONF_VALUE *cval;
     int i;
 
-    OSSL_TRACE2(PROVIDER_CONF, "Loading provider module: name %s, value %s\n",
-                CONF_imodule_get_name(md), CONF_imodule_get_value(md));
+    OSSL_TRACE1(CONF, "Loading providers module: section %s\n",
+                CONF_imodule_get_value(md));
+
     /* Value is a section containing PROVIDERs to configure */
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
 
@@ -170,10 +174,11 @@ static void provider_conf_deinit(CONF_IMODULE *md)
 {
     sk_OSSL_PROVIDER_pop_free(activated_providers, ossl_provider_free);
     activated_providers = NULL;
-    OSSL_TRACE(PROVIDER_CONF, "Cleaned up providers\n");
+    OSSL_TRACE(CONF, "Cleaned up providers\n");
 }
 
 void ossl_provider_add_conf_module(void)
 {
+    OSSL_TRACE(CONF, "Adding config module 'providers'\n");
     CONF_module_add("providers", provider_conf_init, provider_conf_deinit);
 }
