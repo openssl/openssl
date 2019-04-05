@@ -670,7 +670,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         ret = RUN_ONCE(&config, ossl_init_config);
         conf_settings = NULL;
         CRYPTO_THREAD_unlock(init_lock);
-        if (!ret)
+        if (ret <= 0)
             return 0;
     }
 
