@@ -277,9 +277,25 @@ available to the provider.
 This modules has the name B<alg_section> which points to a section containing
 algorithm commands.
 
-Currently the only algorithm command supported is B<fips_mode> whose
-value can only be the boolean string B<off>. If B<fips_mode> is set to B<on>,
-an error occurs as this library version is not FIPS capable.
+The supported algorithms commands are:
+
+=over 4
+
+=item B<default_properties>
+
+The value may be anything that is acceptable as property query string for
+EVP_set_default_properties().
+
+=item B<fips_mode> (deprecated)
+
+The value is a boolean that can be B<yes> or B<no>.  If the value is
+B<yes>, this is exactly equivalent to:
+
+    default_properties = fips=yes
+
+If the value is B<no>, nothing happens.
+
+=back
 
 =head2 SSL Configuration Module
 
