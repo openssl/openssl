@@ -589,6 +589,8 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
     if (len == 0)
         return;
 
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+
     l = ERR_GET_LIB(e);
     ls = ERR_lib_error_string(e);
     if (ls == NULL) {
