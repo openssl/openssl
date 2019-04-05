@@ -24,6 +24,8 @@ EVP_set_default_properties stores the properties given with the string
 I<propq> among the EVP data that's been stored in the library context
 given with I<libctx> (NULL signifies the default library context).
 
+Any previous default property for the given library context will be
+dropped.
 
 =head1 RETURN VALUES
 
