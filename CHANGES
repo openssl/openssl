@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Automatic libcrypto initialization now loads the config file by default.
+     [Richard Levitte]
+
   *) Limit the number of blocks in a data unit for AES-XTS to 2^20 as
      mandated by IEEE Std 1619-2018.
 

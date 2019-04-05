@@ -660,19 +660,22 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CONFIG)
-            && !RUN_ONCE_ALT(&config, ossl_init_no_config, ossl_init_config))
+            && !RUN_ONCE_ALT(&config, ossl_init_no_config, ossl_init_config)) {
         return 0;
-
-    if (opts & OPENSSL_INIT_LOAD_CONFIG) {
-        int ret;
-        CRYPTO_THREAD_write_lock(init_lock);
-        conf_settings = settings;
-        ret = RUN_ONCE(&config, ossl_init_config);
-        conf_settings = NULL;
-        CRYPTO_THREAD_unlock(init_lock);
-        if (ret <= 0)
-            return 0;
-    }
+    } else
+#ifndef OPENSSL_NO_AUTOLOAD_CONFIG
+        if ((opts & OPENSSL_INIT_LOAD_CONFIG))
+#endif
+            {
+                int ret;
+                CRYPTO_THREAD_write_lock(init_lock);
+                conf_settings = settings;
+                ret = RUN_ONCE(&config, ossl_init_config);
+                conf_settings = NULL;
+                CRYPTO_THREAD_unlock(init_lock);
+                if (ret <= 0)
+                    return 0;
+            }
 
     if ((opts & OPENSSL_INIT_ASYNC)
             && !RUN_ONCE(&async, ossl_init_async))
