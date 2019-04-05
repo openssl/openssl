@@ -39,9 +39,11 @@ algorithm from the default provider.
 
 With explicit fetch an application uses the EVP_MD_fetch() function to obtain
 an algorithm implementation. An implementation with the given name and
-satisfying the search criteria specified in the B<properties> parameter will be
-looked for within the available providers and returned. See L<OSSL_PROVIDER(3)>
-for information about providers.
+satisfying the search criteria specified in the B<properties> parameter
+combined with the default search criteria will be looked for within the
+available providers and returned.
+See L<EVP_set_default_properties(3)> for information on default search criteria
+and L<OSSL_PROVIDER(3)> for information about providers.
 
 =item User defined
 
@@ -156,7 +158,8 @@ other providers:
 =head1 SEE ALSO
 
 L<EVP_DigestInit(3)>, L<EVP_MD_meth_new(3)>, L<EVP_MD_meth_free(3)>,
-L<EVP_MD_upref(3)>, L<OSSL_PROVIDER_load(3)>, L<OPENSSL_CTX(3)>
+L<EVP_MD_upref(3)>, L<OSSL_PROVIDER_load(3)>, L<OPENSSL_CTX(3)>,
+L<EVP_set_default_properties(3)>
 
 =head1 HISTORY
 
