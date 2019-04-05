@@ -42,11 +42,14 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
                 EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_INVALID_FIPS_MODE);
                 return 0;
             }
-            if (m > 0) {
+            /*
+             * fips_mode is deprecated and should not be used in new
+             * configurations.  Old configurations are likely to ONLY
+             * have this, so we assume that no default properties have
+             * been set before this.
+             */
+            if (m > 0)
                 EVP_set_default_properties(NULL, "fips=yes");
-            } else {
-                /* TODO(3.0): remove the single propery "fips=yes" */
-            }
         } else if (strcmp(oval->name, "default_properties") == 0) {
             EVP_set_default_properties(NULL, oval->value);
         } else {
