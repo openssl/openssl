@@ -670,6 +670,7 @@ typedef int (*GEN_SESSION_CB) (SSL *ssl, unsigned char *id,
 # define SSL_SESS_CACHE_NO_INTERNAL_STORE        0x0200
 # define SSL_SESS_CACHE_NO_INTERNAL \
         (SSL_SESS_CACHE_NO_INTERNAL_LOOKUP|SSL_SESS_CACHE_NO_INTERNAL_STORE)
+# define SSL_SESS_CACHE_UPDATE_TIME              0x0400
 
 LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx);
 # define SSL_CTX_sess_number(ctx) \
