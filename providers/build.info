@@ -10,3 +10,14 @@ IF[{- !$disabled{fips} -}]
   INCLUDE[fips]=.. ../include ../crypto/include
   DEFINE[fips]=FIPS_MODE
 ENDIF
+
+IF[{- !$disabled{legacy} -}]
+  SUBDIRS=legacy
+  MODULES=legacy
+  IF[{- defined $target{shared_defflag} -}]
+    SOURCE[legacy]=legacy.ld
+    GENERATE[legacy.ld]=../util/providers.num
+  ENDIF
+  INCLUDE[legacy]=.. ../include ../crypto/include
+  DEPEND[legacy]=../libcrypto
+ENDIF

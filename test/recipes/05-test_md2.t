@@ -8,5 +8,10 @@
 
 
 use OpenSSL::Test::Simple;
+use OpenSSL::Test qw/:DEFAULT bldtop_dir/;
+
+setup("test_md2");
+
+$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
 
 simple_test("test_md2", "md2test", "md2");

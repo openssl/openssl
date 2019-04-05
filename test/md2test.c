@@ -9,8 +9,11 @@
 
 #include <string.h>
 
+#include <openssl/provider.h>
 #include "internal/nelem.h"
 #include "testutil.h"
+
+static OSSL_PROVIDER *prov = NULL;
 
 #ifndef OPENSSL_NO_MD2
 # include <openssl/evp.h>
@@ -57,6 +60,17 @@ static int test_md2(int n)
     return 1;
 }
 #endif
+
+int global_init(void)
+{
+    prov = OSSL_PROVIDER_load(NULL, "legacy");
+
+    return prov != NULL;
+}
+void cleanup_tests(void)
+{
+    OSSL_PROVIDER_unload(prov);
+}
 
 int setup_tests(void)
 {

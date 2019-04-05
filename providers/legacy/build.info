@@ -1,0 +1,4 @@
+SUBDIRS=digests
+
+SOURCE[../legacy]=\
+        legacyprov.c

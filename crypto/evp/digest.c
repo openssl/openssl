@@ -145,6 +145,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     if (type->prov == NULL) {
         switch(type->type) {
         case NID_sha256:
+        case NID_md2:
             break;
         default:
             goto legacy;
