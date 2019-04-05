@@ -49,7 +49,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
     int soft = 0;
 
     name = skip_dot(name);
-    OSSL_TRACE1(ENGINE_CONF, "Configuring engine %s\n", name);
+    OSSL_TRACE1(CONF, "Configuring engine %s\n", name);
     /* Value is a section containing ENGINE commands */
     ecmds = NCONF_get_section(cnf, value);
 
@@ -63,7 +63,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
         ecmd = sk_CONF_VALUE_value(ecmds, i);
         ctrlname = skip_dot(ecmd->name);
         ctrlvalue = ecmd->value;
-        OSSL_TRACE2(ENGINE_CONF, "ENGINE conf: doing ctrl(%s,%s)\n",
+        OSSL_TRACE2(CONF, "ENGINE: doing ctrl(%s,%s)\n",
                     ctrlname, ctrlvalue);
 
         /* First handle some special pseudo ctrls */
@@ -148,7 +148,7 @@ static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
     STACK_OF(CONF_VALUE) *elist;
     CONF_VALUE *cval;
     int i;
-    OSSL_TRACE2(ENGINE_CONF, "Called engine module: name %s, value %s\n",
+    OSSL_TRACE2(CONF, "Called engine module: name %s, value %s\n",
                 CONF_imodule_get_name(md), CONF_imodule_get_value(md));
     /* Value is a section containing ENGINEs to configure */
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
