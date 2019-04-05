@@ -663,7 +663,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             && !RUN_ONCE_ALT(&config, ossl_init_no_config, ossl_init_config)) {
         return 0;
     } else
-#ifndef OPENSSL_NO_AUTOLOAD_CONFIG
+#ifdef OPENSSL_NO_AUTOLOAD_CONFIG
         if ((opts & OPENSSL_INIT_LOAD_CONFIG))
 #endif
             {
