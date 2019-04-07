@@ -182,6 +182,8 @@ static int kdf_hkdf_ctrl_str(EVP_KDF_IMPL *impl, const char *type,
 
 static size_t kdf_hkdf_size(EVP_KDF_IMPL *impl)
 {
+    int sz;
+
     if (impl->mode != EVP_KDF_HKDF_MODE_EXTRACT_ONLY)
         return SIZE_MAX;
 
@@ -189,7 +191,11 @@ static size_t kdf_hkdf_size(EVP_KDF_IMPL *impl)
         KDFerr(KDF_F_KDF_HKDF_SIZE, KDF_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    return EVP_MD_size(impl->md);
+    sz = EVP_MD_size(impl->md);
+    if (sz < 0)
+        return 0;
+
+    return sz;
 }
 
 static int kdf_hkdf_derive(EVP_KDF_IMPL *impl, unsigned char *key,
@@ -241,8 +247,13 @@ static int HKDF(const EVP_MD *evp_md,
                 unsigned char *okm, size_t okm_len)
 {
     unsigned char prk[EVP_MAX_MD_SIZE];
-    int ret;
-    size_t prk_len = EVP_MD_size(evp_md);
+    int ret, sz;
+    size_t prk_len;
+
+    sz = EVP_MD_size(evp_md);
+    if (sz < 0)
+        return 0;
+    prk_len = (size_t)sz;
 
     if (!HKDF_Extract(evp_md, salt, salt_len, key, key_len, prk, prk_len))
         return 0;
@@ -258,7 +269,11 @@ static int HKDF_Extract(const EVP_MD *evp_md,
                         const unsigned char *key, size_t key_len,
                         unsigned char *prk, size_t prk_len)
 {
-    if (prk_len != (size_t)EVP_MD_size(evp_md)) {
+    int sz = EVP_MD_size(evp_md);
+
+    if (sz < 0)
+        return 0;
+    if (prk_len != (size_t)sz) {
         KDFerr(KDF_F_HKDF_EXTRACT, KDF_R_WRONG_OUTPUT_BUFFER_SIZE);
         return 0;
     }
@@ -271,11 +286,16 @@ static int HKDF_Expand(const EVP_MD *evp_md,
                        unsigned char *okm, size_t okm_len)
 {
     HMAC_CTX *hmac;
-    int ret = 0;
+    int ret = 0, sz;
     unsigned int i;
     unsigned char prev[EVP_MAX_MD_SIZE];
-    size_t done_len = 0, dig_len = EVP_MD_size(evp_md);
-    size_t n = okm_len / dig_len;
+    size_t done_len = 0, dig_len, n;
+
+    sz = EVP_MD_size(evp_md);
+    if (sz <= 0)
+        return 0;
+    dig_len = (size_t)sz;
+    n = okm_len / dig_len;
 
     if (okm_len % dig_len)
         n++;
