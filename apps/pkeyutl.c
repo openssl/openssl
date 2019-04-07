@@ -688,7 +688,7 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
         if (filesize < 0) {
             BIO_printf(bio_err,
                        "Error: unable to determine file size for oneshot operation\n");
-            return rv;
+            goto end;
         }
         mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
         switch(pkey_op) {
@@ -717,7 +717,6 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
             }
             break;
         }
-        OPENSSL_free(mbuf);
         goto end;
     }
 
@@ -767,6 +766,7 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
     }
 
  end:
+    OPENSSL_free(mbuf);
     EVP_MD_CTX_free(mctx);
     return rv;
 }
