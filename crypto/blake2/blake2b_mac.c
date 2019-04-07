@@ -95,7 +95,8 @@ static int blake2b_mac_ctrl(EVP_MAC_IMPL *macctx, int cmd, va_list args)
             }
             blake2b_param_set_key_length(&macctx->params, (uint8_t)len);
             memcpy(macctx->key, p, len);
-            memset(macctx->key + len, 0, BLAKE2B_KEYBYTES - len);
+            if (len < BLAKE2B_KEYBYTES)
+                memset(macctx->key + len, 0, BLAKE2B_KEYBYTES - len);
             return 1;
 
         case EVP_MAC_CTRL_SET_CUSTOM:
