@@ -219,6 +219,12 @@ IMPLEMENT_new_ctx(cfb8, CFB, 256)
 IMPLEMENT_new_ctx(cfb8, CFB, 192)
 IMPLEMENT_new_ctx(cfb8, CFB, 128)
 
+/* CTR */
+IMPLEMENT_new_params(ctr, CTR)
+IMPLEMENT_new_ctx(ctr, CTR, 256)
+IMPLEMENT_new_ctx(ctr, CTR, 192)
+IMPLEMENT_new_ctx(ctr, CTR, 128)
+
 static void aes_freectx(void *vctx)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
@@ -362,3 +368,8 @@ IMPLEMENT_stream_funcs(cfb1, 128, 16)
 IMPLEMENT_stream_funcs(cfb8, 256, 16)
 IMPLEMENT_stream_funcs(cfb8, 192, 16)
 IMPLEMENT_stream_funcs(cfb8, 128, 16)
+
+/* CTR */
+IMPLEMENT_stream_funcs(ctr, 256, 16)
+IMPLEMENT_stream_funcs(ctr, 192, 16)
+IMPLEMENT_stream_funcs(ctr, 128, 16)

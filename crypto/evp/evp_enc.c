@@ -157,6 +157,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_aes_256_cfb8:
         case NID_aes_192_cfb8:
         case NID_aes_128_cfb8:
+        case NID_aes_256_ctr:
+        case NID_aes_192_ctr:
+        case NID_aes_128_ctr:
             break;
         default:
             goto legacy;
