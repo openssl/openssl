@@ -29,3 +29,6 @@ extern const OSSL_DISPATCH aes128cfb1_functions[];
 extern const OSSL_DISPATCH aes256cfb8_functions[];
 extern const OSSL_DISPATCH aes192cfb8_functions[];
 extern const OSSL_DISPATCH aes128cfb8_functions[];
+extern const OSSL_DISPATCH aes256ctr_functions[];
+extern const OSSL_DISPATCH aes192ctr_functions[];
+extern const OSSL_DISPATCH aes128ctr_functions[];

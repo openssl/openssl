@@ -74,6 +74,9 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-256-CFB8", "default=yes", aes256cfb8_functions },
     { "AES-192-CFB8", "default=yes", aes192cfb8_functions },
     { "AES-128-CFB8", "default=yes", aes128cfb8_functions },
+    { "AES-256-CTR", "default=yes", aes256ctr_functions },
+    { "AES-192-CTR", "default=yes", aes192ctr_functions },
+    { "AES-128-CTR", "default=yes", aes128ctr_functions },
     { NULL, NULL, NULL }
 };
 
