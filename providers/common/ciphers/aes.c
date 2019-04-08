@@ -50,8 +50,8 @@ static int aes_dinit(void *vctx, const unsigned char *key,
     return 1;
 }
 
-static int aes_update(void *vctx, unsigned char *out, size_t *outl,
-                      const unsigned char *in, size_t inl)
+static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
+                            const unsigned char *in, size_t inl)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
     size_t nextblocks = fillblock(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE, &in,
@@ -90,7 +90,7 @@ static int aes_update(void *vctx, unsigned char *out, size_t *outl,
     return inl == 0;
 }
 
-static int aes_final(void *vctx, unsigned char *out, size_t *outl)
+static int aes_block_final(void *vctx, unsigned char *out, size_t *outl)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
@@ -132,6 +132,23 @@ static int aes_final(void *vctx, unsigned char *out, size_t *outl)
     memcpy(out, ctx->buf, ctx->bufsz);
     *outl = ctx->bufsz;
     ctx->bufsz = 0;
+    return 1;
+}
+
+static int aes_stream_update(void *vctx, unsigned char *out, size_t *outl,
+                             const unsigned char *in, size_t inl)
+{
+    PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
+
+    if (!ctx->ciph->cipher(ctx, out, in, inl))
+        return 0;
+
+    *outl = inl;
+    return 1;
+}
+static int aes_stream_final(void *vctx, unsigned char *out, size_t *outl)
+{
+    *outl = 0;
     return 1;
 }
 
@@ -182,6 +199,13 @@ IMPLEMENT_new_ctx(cbc, CBC, 256)
 IMPLEMENT_new_ctx(cbc, CBC, 192)
 IMPLEMENT_new_ctx(cbc, CBC, 128)
 
+/* OFB */
+IMPLEMENT_new_params(ofb, OFB)
+IMPLEMENT_new_ctx(ofb, OFB, 256)
+IMPLEMENT_new_ctx(ofb, OFB, 192)
+IMPLEMENT_new_ctx(ofb, OFB, 128)
+
+
 static void aes_freectx(void *vctx)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
@@ -229,6 +253,11 @@ static size_t block_size_16(void)
     return 16;
 }
 
+static size_t block_size_1(void)
+{
+    return 1;
+}
+
 static int aes_ctx_get_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
@@ -257,19 +286,38 @@ static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-#define IMPLEMENT_funcs(mode, keylen, ivlen, blksz) \
+#define IMPLEMENT_block_funcs(mode, keylen, ivlen) \
     const OSSL_DISPATCH aes##keylen##mode##_functions[] = { \
         { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_##keylen##_##mode##_newctx }, \
         { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_einit }, \
         { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))aes_dinit }, \
-        { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))aes_update }, \
-        { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))aes_final }, \
+        { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))aes_block_update }, \
+        { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))aes_block_final }, \
         { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))aes_cipher }, \
         { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))aes_freectx }, \
         { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))aes_dupctx }, \
         { OSSL_FUNC_CIPHER_KEY_LENGTH, (void (*)(void))key_length_##keylen }, \
         { OSSL_FUNC_CIPHER_IV_LENGTH, (void (*)(void))iv_length_##ivlen }, \
-        { OSSL_FUNC_CIPHER_BLOCK_SIZE, (void (*)(void))block_size_##blksz }, \
+        { OSSL_FUNC_CIPHER_BLOCK_SIZE, (void (*)(void))block_size_16 }, \
+        { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))aes_##mode##_get_params }, \
+        { OSSL_FUNC_CIPHER_CTX_GET_PARAMS, (void (*)(void))aes_ctx_get_params }, \
+        { OSSL_FUNC_CIPHER_CTX_SET_PARAMS, (void (*)(void))aes_ctx_set_params }, \
+        { 0, NULL } \
+    };
+
+#define IMPLEMENT_stream_funcs(mode, keylen, ivlen) \
+    const OSSL_DISPATCH aes##keylen##mode##_functions[] = { \
+        { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_##keylen##_##mode##_newctx }, \
+        { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_einit }, \
+        { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))aes_dinit }, \
+        { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))aes_stream_update }, \
+        { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))aes_stream_final }, \
+        { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))aes_cipher }, \
+        { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))aes_freectx }, \
+        { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))aes_dupctx }, \
+        { OSSL_FUNC_CIPHER_KEY_LENGTH, (void (*)(void))key_length_##keylen }, \
+        { OSSL_FUNC_CIPHER_IV_LENGTH, (void (*)(void))iv_length_##ivlen }, \
+        { OSSL_FUNC_CIPHER_BLOCK_SIZE, (void (*)(void))block_size_1 }, \
         { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))aes_##mode##_get_params }, \
         { OSSL_FUNC_CIPHER_CTX_GET_PARAMS, (void (*)(void))aes_ctx_get_params }, \
         { OSSL_FUNC_CIPHER_CTX_SET_PARAMS, (void (*)(void))aes_ctx_set_params }, \
@@ -277,13 +325,16 @@ static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[])
     };
 
 /* ECB */
-
-IMPLEMENT_funcs(ecb, 256, 0, 16)
-IMPLEMENT_funcs(ecb, 192, 0, 16)
-IMPLEMENT_funcs(ecb, 128, 0, 16)
+IMPLEMENT_block_funcs(ecb, 256, 0)
+IMPLEMENT_block_funcs(ecb, 192, 0)
+IMPLEMENT_block_funcs(ecb, 128, 0)
 
 /* CBC */
+IMPLEMENT_block_funcs(cbc, 256, 16)
+IMPLEMENT_block_funcs(cbc, 192, 16)
+IMPLEMENT_block_funcs(cbc, 128, 16)
 
-IMPLEMENT_funcs(cbc, 256, 16, 16)
-IMPLEMENT_funcs(cbc, 192, 16, 16)
-IMPLEMENT_funcs(cbc, 128, 16, 16)
+/* OFB */
+IMPLEMENT_stream_funcs(ofb, 256, 16)
+IMPLEMENT_stream_funcs(ofb, 192, 16)
+IMPLEMENT_stream_funcs(ofb, 128, 16)
