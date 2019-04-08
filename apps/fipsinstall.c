@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/provider.h>
+#include <openssl/params.h>
 
 #define BUFSIZE 4096
 #define DEFAULT_MAC_NAME "HMAC"
@@ -92,18 +93,40 @@ err:
 static int print_mac(BIO *bio, const char *label, const unsigned char *mac,
                      size_t len)
 {
-    if (!BIO_printf(bio, "%s =", label))
+    int ret;
+    char *hexstr = NULL;
+
+    hexstr = OPENSSL_buf2hexstr(mac, (long)len);
+    if (hexstr == NULL)
         return 0;
-    if (!BIO_hex_string(bio, 1, (int)len, mac, (int)len))
-        return 0;
-    return BIO_printf(bio, "\n");
+    ret = BIO_printf(bio, "%s = %s\n", label, hexstr);
+    OPENSSL_free(hexstr);
+    return ret;
 }
 
-static int load_fips_prov_and_run_self_test(char *fname)
+static int load_fips_prov_and_run_self_test(char *fname,
+                                            const unsigned char *mac,
+                                            size_t mac_len)
 {
+    char *buffer, *buf;
+    size_t sz;
     int ret = 0;
     OSSL_PROVIDER *prov = NULL;
     char *prov_name, *dot;
+    static OSSL_PARAM params[2];
+    OSSL_PARAM param_end = OSSL_PARAM_END;
+
+    mem_bio = BIO_new_mem_buf(buffer, sizeof(buffer));
+    if (mem_bio == NULL)
+        return 0;
+
+    if (!hexstr2bio(mem_bio, mac, mac_len))
+        goto end;
+
+    params[0] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_MODULE_MAC,
+                                              &buf, &sz);
+    params[1] = param_end;
+    OSSL_PARAM_set_utf8_ptr(&params[0], buffer);
 
     /* strip the path and extension off the name */
     prov_name = strrchr(fname, '/');
@@ -116,17 +139,14 @@ static int load_fips_prov_and_run_self_test(char *fname)
     if (dot != NULL)
         *dot = 0;
 
-    prov = OSSL_PROVIDER_load(NULL, prov_name);
+    prov = OSSL_PROVIDER_load(NULL, prov_name, params);
     if (prov == NULL) {
         BIO_printf(bio_err, "Failed to load fips module\n");
         goto end;
     }
-    /*
-     * TODO - make sure self tests are activated here
-     * It must return NULL if the self tests fails.
-     */
     ret = 1;
 end:
+    BIO_free(mem_bio);
     OSSL_PROVIDER_unload(prov);
     return ret;
 }
@@ -137,34 +157,28 @@ end:
  *
  * Returns 1 if the config file is written otherwise it returns 0 on error.
  */
-static int write_config(const char *outfile, const char *section,
+static int write_config(BIO *out, const char *section,
                         unsigned char *module_mac, size_t module_mac_len,
                         unsigned char *install_mac, size_t install_mac_len)
 {
-    BIO *out = NULL;
     int ret = 0;
-
-    out = bio_open_default(outfile, 'w', FORMAT_TEXT);
-    if (out == NULL) {
-        BIO_printf(bio_err, "Failed to open file\n");
-        goto end;
-    }
 
     if (!(BIO_printf(out, "[%s]\n", section) > 0
           && BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_INSTALL_VERSION,
                         VERSION_VAL) > 0
           && print_mac(out, OSSL_PROV_PARAM_MODULE_MAC, module_mac,
-                       module_mac_len)
-          && print_mac(out, OSSL_PROV_PARAM_INSTALL_MAC, install_mac,
-                       install_mac_len)
-          && BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_INSTALL_STATUS,
-                        INSTALL_STATUS_VAL) > 0)) {
-        BIO_printf(bio_err, "Failed writing to %s\n", outfile);
+                       module_mac_len)))
+        goto end;
+
+    if (install_mac != NULL) {
+        if (!(print_mac(out, OSSL_PROV_PARAM_INSTALL_MAC, install_mac,
+                      install_mac_len)
+              && BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_INSTALL_STATUS,
+                          INSTALL_STATUS_VAL) > 0))
         goto end;
     }
     ret = 1;
 end:
-    BIO_free(out);
     return ret;
 }
 
@@ -341,9 +355,18 @@ opthelp:
             goto end;
         BIO_printf(bio_out, "VERIFY PASSED\n");
     } else {
-        if (!load_fips_prov_and_run_self_test(in_fname))
+        if (!write_config(fout, section_name, module_mac, module_mac_len,
+                          install_mac, install_mac_len))
+
+        if (!load_fips_prov_and_run_self_test(in_fname, module_mac,
+                                              module_mac_len))
             goto end;
-        if (!write_config(cfg_fname, section_name, module_mac, module_mac_len,
+        fout = bio_open_default(cfg_fname, 'w', FORMAT_TEXT);
+        if (fout == NULL) {
+            BIO_printf(bio_err, "Failed to open file\n");
+            goto end;
+        }
+        if (!write_config(fout, section_name, module_mac, module_mac_len,
                           install_mac, install_mac_len))
             goto end;
         BIO_printf(bio_out, "INSTALL PASSED\n");
@@ -356,6 +379,7 @@ end:
         ERR_print_errors(bio_err);
     }
 
+    BIO_free(fout);
     BIO_free(mem_bio);
     BIO_free(module_bio);
     sk_OPENSSL_STRING_free(opts);

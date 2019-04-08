@@ -17,7 +17,8 @@ extern "C" {
 # endif
 
 /* Load and unload a provider */
-OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
+OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name,
+                                  const OSSL_PARAM *params);
 int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
 
 const OSSL_ITEM *OSSL_PROVIDER_get_param_types(OSSL_PROVIDER *prov);

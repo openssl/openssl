@@ -13,6 +13,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "self_test.h"
 
 /* Functions provided by the core */
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
@@ -98,7 +99,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out)
 {
-    memset(&selftest_params, sizeof(selftest_params), 0);
+    memset(&selftest_params, 0, sizeof(selftest_params));
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_PARAM_TYPES:

@@ -12,7 +12,8 @@
 #include <openssl/provider.h>
 #include "internal/provider.h"
 
-OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name)
+OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name,
+                                  const OSSL_PARAM *params)
 {
     OSSL_PROVIDER *prov = NULL;
 
@@ -20,6 +21,9 @@ OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name)
     if ((prov = ossl_provider_find(libctx, name)) == NULL
         && (prov = ossl_provider_new(libctx, name, NULL)) == NULL)
         return NULL;
+
+    if (params != NULL)
+        ossl_provider_set_load_params(prov, params);
 
     if (!ossl_provider_activate(prov)) {
         ossl_provider_free(prov);

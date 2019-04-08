@@ -37,6 +37,7 @@ int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
 int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
 int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                 const char *value);
+int ossl_provider_set_load_params(OSSL_PROVIDER *prov, const OSSL_PARAM *params);
 
 /*
  * Activate the Provider

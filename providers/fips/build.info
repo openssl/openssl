@@ -1,3 +1,1 @@
-LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        self_test.c self_test_kats.c
+SOURCE[../fips]=fipsprov.c self_test.c self_test_kats.c
