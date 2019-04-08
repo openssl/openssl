@@ -146,7 +146,6 @@ static int test_param_int(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_int(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
@@ -174,7 +173,6 @@ static int test_param_long(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_long(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
@@ -201,7 +199,6 @@ static int test_param_uint(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_uint(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
@@ -229,7 +226,6 @@ static int test_param_ulong(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_ulong(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
@@ -257,7 +253,6 @@ static int test_param_int32(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_int32(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
@@ -285,7 +280,6 @@ static int test_param_uint32(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_uint32(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
@@ -313,7 +307,6 @@ static int test_param_int64(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_int64(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
@@ -341,7 +334,6 @@ static int test_param_uint64(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_uint64(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
@@ -369,7 +361,6 @@ static int test_param_size_t(int n)
     if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
         return 0;
     in = 0;
-    param.data = buf;
     if (!TEST_true(OSSL_PARAM_get_size_t(&param, &in)))
         return 0;
     le_copy(cmp, &in, sizeof(in));
