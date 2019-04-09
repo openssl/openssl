@@ -259,7 +259,6 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_RESET:
         bm = bbm->buf;
         if (bm->data != NULL) {
-            /* For read only case just reset to the start again */
             if (!(b->flags & BIO_FLAGS_MEM_RDONLY)) {
                 if (b->flags & BIO_FLAGS_NONCLEAR_RST) {
                     bm->length = bm->max;
@@ -269,6 +268,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
                 }
                 *bbm->readp = *bbm->buf;
             } else {
+                /* For read only case just reset to the start again */
                 *bbm->buf = *bbm->readp;
             }
         }
