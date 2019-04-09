@@ -65,12 +65,6 @@ entropy from a live entropy source (section 5.5.2 of [NIST SP 800-90C]).
 It is up to the user to ensure that a live entropy source is configured
 and is being used.
 
-=head1 HISTORY
-
-The RAND_DRBG functions were added in OpenSSL 1.1.1.
-
-Prediction resistance is supported from OpenSSL 3.0.0.
-
 =head1 SEE ALSO
 
 L<RAND_bytes(3)>,
@@ -78,9 +72,15 @@ L<RAND_DRBG_set_reseed_interval(3)>,
 L<RAND_DRBG_set_reseed_time_interval(3)>,
 L<RAND_DRBG(7)>
 
+=head1 HISTORY
+
+The RAND_DRBG functions were added in OpenSSL 1.1.1.
+
+Prediction resistance is supported from OpenSSL 3.0.0.
+
 =head1 COPYRIGHT
 
-Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
