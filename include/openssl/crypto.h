@@ -163,6 +163,7 @@ const char *OpenSSL_version(int type);
 # define OPENSSL_ENGINES_DIR            5
 # define OPENSSL_VERSION_STRING         6
 # define OPENSSL_FULL_VERSION_STRING    7
+# define OPENSSL_MODULES_DIR            8
 
 int OPENSSL_issetugid(void);
 
