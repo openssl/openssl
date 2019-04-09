@@ -586,3 +586,10 @@ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
 {
     return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, 0, rsize);
 }
+
+OSSL_PARAM OSSL_PARAM_construct_end(void)
+{
+    OSSL_PARAM end = OSSL_PARAM_END;
+
+    return end;
+}

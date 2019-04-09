@@ -10,7 +10,8 @@ OSSL_PARAM_SIZED_octet_ptr, OSSL_PARAM_END, OSSL_PARAM_construct_TYPE,
 OSSL_PARAM_END,
 OSSL_PARAM_construct_BN, OSSL_PARAM_construct_utf8_string,
 OSSL_PARAM_construct_utf8_ptr, OSSL_PARAM_construct_octet_string,
-OSSL_PARAM_construct_octet_ptr, OSSL_PARAM_locate, OSSL_PARAM_get_TYPE,
+OSSL_PARAM_construct_octet_ptr, OSSL_PARAM_construct_end,
+OSSL_PARAM_locate, OSSL_PARAM_get_TYPE,
 OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN,
 OSSL_PARAM_get_utf8_string, OSSL_PARAM_set_utf8_string,
 OSSL_PARAM_get_octet_string, OSSL_PARAM_set_octet_string,
@@ -46,6 +47,7 @@ OSSL_PARAM_set_octet_ptr
                                           size_t *rsize);
  OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
                                            size_t *rsize);
+ OSSL_PARAM OSSL_PARAM_construct_end(void);
 
  OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *array, const char *key);
 
@@ -178,6 +180,9 @@ OSSL_PARAM_construct_octet_ptr() is a function that constructes an OCTET string
 pointer OSSL_PARAM structure.
 A parameter with name B<key>, storage pointer B<*buf> and return size B<rsize>
 is created.
+
+OSSL_PARAM_construct_end() is a function that constructs the terminating
+OSSL_PARAM structure.
 
 OSSL_PARAM_locate() is a function that searches an B<array> of parameters for
 the one matching the B<key> name.
