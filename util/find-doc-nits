@@ -171,6 +171,10 @@ sub check()
 
     # Check if EXAMPLES is located after RETURN VALUES section.
     &check_section_location($filename, $contents, "RETURN VALUES", "EXAMPLES") if $filename =~ m|man3/|;
+    # Check if HISTORY is located after SEE ALSO
+    &check_section_location($filename, $contents, "SEE ALSO", "HISTORY") if $filename =~ m|man3/|;
+    # Check if SEE ALSO is located after EXAMPLES
+    &check_section_location($filename, $contents, "EXAMPLES", "SEE ALSO") if $filename =~ m|man3/|;
 
     my $id = "${filename}:1:";
 
