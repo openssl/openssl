@@ -14,7 +14,7 @@ use Test::More 0.96;
 
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = "0.8";
+$VERSION = "1.0";
 @ISA = qw(Exporter);
 @EXPORT = (@Test::More::EXPORT, qw(setup run indir cmd app fuzz test
                                    perlapp perltest subtest));
@@ -834,27 +834,41 @@ sub openssl_versions {
 
 =over 4
 
-=item B<ok_nofips test>
+=item B<ok_nofips EXPR, TEST_NAME>
 
-Returns ok(test) if the environment variable FIPS_MODE is undefined,
-otherwise it returns ok(!test). This can be used for ok tests that will
-fail in FIPS mode only.
+C<ok_nofips> is equivalent to using C<ok> when the environment variable
+C<FIPS_MODE> is undefined, otherwise it is equivalent to C<not ok>. This can be
+used for C<ok> tests that must fail when testing a FIPS provider. The parameters
+are the same as used by C<ok> which is an expression EXPR followed by the test
+description TEST_NAME.
 
 An example:
 
-  ok_nofips(run(app(["md5.pl"])));
+  ok_nofips(run(app(["md5.pl"])), "md5 should fail in fips mode");
 
-=item B<is_nofips test>
+=item B<is_nofips EXPR1, EXPR2, TEST_NAME>
 
-Returns is(test) if the environment variable FIPS_MODE is undefined,
-otherwise it returns is(test). This can be used for is tests that will
-fail in FIPS mode only.
+C<is_nofips> is equivalent to using C<is> when the environment variable
+C<FIPS_MODE> is undefined, otherwise it is equivalent to C<isnt>. This can be
+used for C<is> tests that must fail when testing a FIPS provider. The parameters
+are the same as used by C<is> which has 2 arguments EXPR1 and EXPR2 that can be
+compared using eq or ne, followed by a test description TEST_NAME.
 
-=item B<isnt_nofips test>
+An example:
 
-Returns isnt(test) if the environment variable FIPS_MODE is undefined,
-otherwise it returns is(test). This can be used for is tests that will
-pass in FIPS mode only.
+  is_nofips(ultimate_answer(), 42,  "Meaning of Life");
+
+=item B<isnt_nofips EXPR1, EXPR2, TEST_NAME>
+
+C<isnt_nofips> is equivalent to using C<isnt> when the environment variable
+C<FIPS_MODE> is undefined, otherwise it is equivalent to C<is>. This can be
+used for C<isnt> tests that must fail when testing a FIPS provider. The
+parameters are the same as used by C<isnt> which has 2 arguments EXPR1 and EXPR2
+that can be compared using ne or eq, followed by a test description TEST_NAME.
+
+An example:
+
+  isnt_nofips($foo, '',  "Got some foo");
 
 =back
 
