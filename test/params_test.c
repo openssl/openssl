@@ -400,7 +400,7 @@ static OSSL_PARAM *construct_api_params(void)
     params[n++] = OSSL_PARAM_construct_utf8_string("p5", app_p5,
                                                    sizeof(app_p5), &app_p5_l);
     params[n++] = OSSL_PARAM_construct_utf8_ptr("p6", (char **)&app_p6,
-                                                &app_p6_l);
+                                                sizeof(app_p6), &app_p6_l);
     params[n++] = OSSL_PARAM_construct_octet_string("foo", &foo, sizeof(foo),
                                                     &foo_l);
     params[n++] = OSSL_PARAM_construct_end();

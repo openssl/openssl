@@ -475,8 +475,8 @@ static int test_param_construct(void)
                                                    &sz);
     params[n++] = OSSL_PARAM_construct_octet_string("octstr", buf, sizeof(buf),
                                                     &sz);
-    params[n++] = OSSL_PARAM_construct_utf8_ptr("utf8ptr", &bufp, &sz);
-    params[n++] = OSSL_PARAM_construct_octet_ptr("octptr", &vp, &sz);
+    params[n++] = OSSL_PARAM_construct_utf8_ptr("utf8ptr", &bufp, 0, &sz);
+    params[n++] = OSSL_PARAM_construct_octet_ptr("octptr", &vp, 0, &sz);
     params[n] = OSSL_PARAM_construct_end();
 
     /* Search failure */
