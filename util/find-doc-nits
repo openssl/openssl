@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -142,16 +142,18 @@ sub name_synopsis()
     }
 }
 
-# Check if EXAMPLES is located after RETURN VALUES section.
-sub check_example_location()
+# Check if SECTION is located before BEFORE
+sub check_section_location()
 {
     my $filename = shift;
     my $contents = shift;
+    my $section = shift;
+    my $before = shift;
 
-    return unless $contents =~ /=head1 RETURN VALUES/
-        and $contents =~ /=head1 EXAMPLES/;
-    print "$filename: RETURN VAULES should be placed before EXAMPLES section\n"
-        if $contents =~ /=head1 EXAMPLES.*=head1 RETURN VALUES/ms;
+    return unless $contents =~ /=head1 $section/
+        and $contents =~ /=head1 $before/;
+    print "$filename: $section should be placed before $before section\n"
+        if $contents =~ /=head1 $before.*=head1 $section/ms;
 }
 
 sub check()
@@ -167,7 +169,8 @@ sub check()
         close POD;
     }
 
-    &check_example_location($filename, $contents) if $filename =~ m|man3/|;
+    # Check if EXAMPLES is located after RETURN VALUES section.
+    &check_section_location($filename, $contents, "RETURN VALUES", "EXAMPLES") if $filename =~ m|man3/|;
 
     my $id = "${filename}:1:";
 
