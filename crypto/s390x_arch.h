@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,6 +12,10 @@
 
 # ifndef __ASSEMBLER__
 
+void s390x_kimd(const unsigned char *in, size_t len, unsigned int fc,
+                void *param);
+void s390x_klmd(const unsigned char *in, size_t inlen, unsigned char *out,
+                size_t outlen, unsigned int fc, void *param);
 void s390x_km(const unsigned char *in, size_t len, unsigned char *out,
               unsigned int fc, void *param);
 void s390x_kmac(const unsigned char *in, size_t len, unsigned int fc,
@@ -45,6 +49,9 @@ struct OPENSSL_s390xcap_st {
 
 extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
+/* Max number of 64-bit words currently returned by STFLE */
+#  define S390X_STFLE_MAX	3
+
 /* convert facility bit number or function code to bit mask */
 #  define S390X_CAPBIT(i)	(1ULL << (63 - (i) % 64))
 
@@ -64,9 +71,15 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_KMA		0xb0
 
 /* Facility Bit Numbers */
-# define S390X_VX		129
-# define S390X_VXD		134
-# define S390X_VXE		135
+# define S390X_MSA		17	/* message-security-assist */
+# define S390X_STCKF		25	/* store-clock-fast */
+# define S390X_MSA5		57	/* message-security-assist-ext. 5 */
+# define S390X_MSA3		76	/* message-security-assist-ext. 3 */
+# define S390X_MSA4		77	/* message-security-assist-ext. 4 */
+# define S390X_VX		129	/* vector */
+# define S390X_VXD		134	/* vector packed decimal */
+# define S390X_VXE		135	/* vector enhancements 1 */
+# define S390X_MSA8		146	/* message-security-assist-ext. 8 */
 
 /* Function Codes */
 
@@ -74,6 +87,9 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_QUERY		0
 
 /* kimd/klmd */
+# define S390X_SHA_1		1
+# define S390X_SHA_256		2
+# define S390X_SHA_512		3
 # define S390X_SHA3_224		32
 # define S390X_SHA3_256		33
 # define S390X_SHA3_384		34
@@ -87,7 +103,12 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_AES_192		19
 # define S390X_AES_256		20
 
+/* km */
+# define S390X_XTS_AES_128	50
+# define S390X_XTS_AES_256	52
+
 /* prno */
+# define S390X_SHA_512_DRNG	3
 # define S390X_TRNG		114
 
 /* Register 0 Flags */

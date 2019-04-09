@@ -1,5 +1,5 @@
 
- OpenSSL 1.1.1-pre8-dev
+ OpenSSL 3.0.0-dev
 
  Copyright (c) 1998-2018 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
@@ -14,10 +14,11 @@
  full-strength general purpose cryptographic library.
 
  OpenSSL is descended from the SSLeay library developed by Eric A. Young
- and Tim J. Hudson.  The OpenSSL toolkit is licensed under a dual-license (the
- OpenSSL license plus the SSLeay license), which means that you are free to
- get and use it for commercial and non-commercial purposes as long as you
- fulfill the conditions of both licenses.
+ and Tim J. Hudson.
+
+ The OpenSSL toolkit is licensed under the Apache License 2.0, which means
+ that you are free to get and use it for commercial and non-commercial
+ purposes as long as you fulfill its conditions.
 
  OVERVIEW
  --------

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -71,17 +71,12 @@ poly1305_init:
 	csel	x0,xzr,x0,eq
 	b.eq	.Lno_key
 
-#ifdef	__ILP32__
-	ldrsw	$t1,.LOPENSSL_armcap_P
-#else
-	ldr	$t1,.LOPENSSL_armcap_P
-#endif
-	adr	$t0,.LOPENSSL_armcap_P
+	adrp	x17,OPENSSL_armcap_P
+	ldr	w17,[x17,#:lo12:OPENSSL_armcap_P]
 
 	ldp	$r0,$r1,[$inp]		// load key
 	mov	$s1,#0xfffffffc0fffffff
 	movk	$s1,#0x0fff,lsl#48
-	ldr	w17,[$t0,$t1]
 #ifdef	__ARMEB__
 	rev	$r0,$r0			// flip bytes
 	rev	$r1,$r1
@@ -93,10 +88,10 @@ poly1305_init:
 
 	tst	w17,#ARMV7_NEON
 
-	adr	$d0,poly1305_blocks
-	adr	$r0,poly1305_blocks_neon
-	adr	$d1,poly1305_emit
-	adr	$r1,poly1305_emit_neon
+	adr	$d0,.Lpoly1305_blocks
+	adr	$r0,.Lpoly1305_blocks_neon
+	adr	$d1,.Lpoly1305_emit
+	adr	$r1,.Lpoly1305_emit_neon
 
 	csel	$d0,$d0,$r0,eq
 	csel	$d1,$d1,$r1,eq
@@ -115,6 +110,7 @@ poly1305_init:
 .type	poly1305_blocks,%function
 .align	5
 poly1305_blocks:
+.Lpoly1305_blocks:
 	ands	$len,$len,#-16
 	b.eq	.Lno_data
 
@@ -179,6 +175,7 @@ poly1305_blocks:
 .type	poly1305_emit,%function
 .align	5
 poly1305_emit:
+.Lpoly1305_emit:
 	ldp	$h0,$h1,[$ctx]		// load hash base 2^64
 	ldr	$h2,[$ctx,#16]
 	ldp	$t0,$t1,[$nonce]	// load nonce
@@ -285,12 +282,14 @@ poly1305_splat:
 .type	poly1305_blocks_neon,%function
 .align	5
 poly1305_blocks_neon:
+.Lpoly1305_blocks_neon:
 	ldr	$is_base2_26,[$ctx,#24]
 	cmp	$len,#128
 	b.hs	.Lblocks_neon
-	cbz	$is_base2_26,poly1305_blocks
+	cbz	$is_base2_26,.Lpoly1305_blocks
 
 .Lblocks_neon:
+	.inst	0xd503233f		// paciasp
 	stp	x29,x30,[sp,#-80]!
 	add	x29,sp,#0
 
@@ -430,7 +429,7 @@ poly1305_blocks_neon:
 	csel	$in2,$zeros,$in2,lo
 
 	mov	x4,#1
-	str	x4,[$ctx,#-24]		// set is_base2_26
+	stur	x4,[$ctx,#-24]		// set is_base2_26
 	sub	$ctx,$ctx,#48		// restore original $ctx
 	b	.Ldo_neon
 
@@ -859,6 +858,7 @@ poly1305_blocks_neon:
 	st1	{$ACC4}[0],[$ctx]
 
 .Lno_data_neon:
+	.inst	0xd50323bf		// autiasp
 	ldr	x29,[sp],#80
 	ret
 .size	poly1305_blocks_neon,.-poly1305_blocks_neon
@@ -866,6 +866,7 @@ poly1305_blocks_neon:
 .type	poly1305_emit_neon,%function
 .align	5
 poly1305_emit_neon:
+.Lpoly1305_emit_neon:
 	ldr	$is_base2_26,[$ctx,#24]
 	cbz	$is_base2_26,poly1305_emit
 
@@ -918,12 +919,6 @@ poly1305_emit_neon:
 .align	5
 .Lzeros:
 .long	0,0,0,0,0,0,0,0
-.LOPENSSL_armcap_P:
-#ifdef	__ILP32__
-.long	OPENSSL_armcap_P-.
-#else
-.quad	OPENSSL_armcap_P-.
-#endif
 .asciz	"Poly1305 for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___

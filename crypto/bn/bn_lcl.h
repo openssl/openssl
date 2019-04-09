@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -22,10 +22,6 @@
 # endif
 
 # include "internal/bn_int.h"
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 /*
  * These preprocessor symbols control various aspects of the bignum headers
@@ -145,7 +141,16 @@ extern "C" {
  */
 
 # ifdef BN_DEBUG
-#  include <assert.h>
+/*
+ * The new BN_FLG_FIXED_TOP flag marks vectors that were not treated with
+ * bn_correct_top, in other words such vectors are permitted to have zeros
+ * in most significant limbs. Such vectors are used internally to achieve
+ * execution time invariance for critical operations with private keys.
+ * It's BN_DEBUG-only flag, because user application is not supposed to
+ * observe it anyway. Moreover, optimizing compiler would actually remove
+ * all operations manipulating the bit in question in non-BN_DEBUG build.
+ */
+#  define BN_FLG_FIXED_TOP 0x10000
 #  ifdef BN_DEBUG_RAND
 #   define bn_pollute(a) \
         do { \
@@ -169,8 +174,10 @@ extern "C" {
         do { \
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
-                        assert(((_bnum2->top == 0) && !_bnum2->neg) || \
-                               (_bnum2->top && (_bnum2->d[_bnum2->top - 1] != 0))); \
+                        int _top = _bnum2->top; \
+                        (void)ossl_assert((_top == 0 && !_bnum2->neg) || \
+                                  (_top && ((_bnum2->flags & BN_FLG_FIXED_TOP) \
+                                            || _bnum2->d[_top - 1] != 0))); \
                         bn_pollute(_bnum2); \
                 } \
         } while(0)
@@ -189,6 +196,7 @@ extern "C" {
 
 # else                          /* !BN_DEBUG */
 
+#  define BN_FLG_FIXED_TOP 0
 #  define bn_pollute(a)
 #  define bn_check_top(a)
 #  define bn_fix_top(a)           bn_correct_top(a)
@@ -220,7 +228,8 @@ struct bignum_st {
 /* Used for montgomery multiplication */
 struct bn_mont_ctx_st {
     int ri;                     /* number of bits in R */
-    BIGNUM RR;                  /* used to convert to montgomery form */
+    BIGNUM RR;                  /* used to convert to montgomery form,
+                                   possibly zero-padded */
     BIGNUM N;                   /* The modulus */
     BIGNUM Ni;                  /* R*(1/R mod N) - N*Ni = 1 (Ni is only
                                  * stored for bignum algorithm) */
@@ -658,9 +667,5 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 
     return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
 }
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif

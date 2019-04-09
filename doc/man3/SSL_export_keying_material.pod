@@ -26,8 +26,7 @@ During the creation of a TLS or DTLS connection shared keying material is
 established between the two endpoints. The functions
 SSL_export_keying_material() and SSL_export_keying_material_early() enable an
 application to use some of this keying material for its own purposes in
-accordance with RFC5705 (for TLSv1.2 and below) or RFCXXXX (for TLSv1.3).
-TODO(TLS1.3): Update the RFC number when the RFC is published.
+accordance with RFC5705 (for TLSv1.2 and below) or RFC8446 (for TLSv1.3).
 
 SSL_export_keying_material() derives keying material using
 the F<exporter_master_secret> established in the handshake.
@@ -60,7 +59,8 @@ B<label> and should be B<llen> bytes long. Typically this will be a value from
 the IANA Exporter Label Registry
 (L<https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#exporter-labels>).
 Alternatively labels beginning with "EXPERIMENTAL" are permitted by the standard
-to be used without registration.
+to be used without registration. TLSv1.3 imposes a maximum label length of
+249 bytes.
 
 Note that this function is only defined for TLSv1.0 and above, and DTLSv1.0 and
 above. Attempting to use it in SSLv3 will result in an error.
@@ -73,13 +73,13 @@ SSL_export_keying_material_early() returns 0 on failure or 1 on success.
 
 =head1 HISTORY
 
-SSL_export_keying_material_early() was first added in OpenSSL 1.1.1.
+The SSL_export_keying_material_early() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
 Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

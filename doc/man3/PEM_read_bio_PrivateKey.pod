@@ -36,7 +36,7 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
                                    pem_password_cb *cb, void *u);
  EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x,
                                pem_password_cb *cb, void *u);
- int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
+ int PEM_write_bio_PrivateKey(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                               unsigned char *kstr, int klen,
                               pem_password_cb *cb, void *u);
  int PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
@@ -46,17 +46,16 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                           unsigned char *kstr, int klen,
                           pem_password_cb *cb, void *u);
-
  int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
                                    char *kstr, int klen,
                                    pem_password_cb *cb, void *u);
  int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                                char *kstr, int klen,
                                pem_password_cb *cb, void *u);
- int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, EVP_PKEY *x, int nid,
+ int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, const EVP_PKEY *x, int nid,
                                        char *kstr, int klen,
                                        pem_password_cb *cb, void *u);
- int PEM_write_PKCS8PrivateKey_nid(FILE *fp, EVP_PKEY *x, int nid,
+ int PEM_write_PKCS8PrivateKey_nid(FILE *fp, const EVP_PKEY *x, int nid,
                                    char *kstr, int klen,
                                    pem_password_cb *cb, void *u);
 
@@ -298,71 +297,6 @@ arbitrary data to be passed to the callback by the application
 B<must> return the number of characters in the passphrase or -1 if
 an error occurred.
 
-=head1 EXAMPLES
-
-Although the PEM routines take several arguments in almost all applications
-most of them are set to 0 or NULL.
-
-Read a certificate in PEM format from a BIO:
-
- X509 *x;
-
- x = PEM_read_bio_X509(bp, NULL, 0, NULL);
- if (x == NULL)
-     /* Error */
-
-Alternative method:
-
- X509 *x = NULL;
-
- if (!PEM_read_bio_X509(bp, &x, 0, NULL))
-     /* Error */
-
-Write a certificate to a BIO:
-
- if (!PEM_write_bio_X509(bp, x))
-     /* Error */
-
-Write a private key (using traditional format) to a BIO using
-triple DES encryption, the pass phrase is prompted for:
-
- if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
-     /* Error */
-
-Write a private key (using PKCS#8 format) to a BIO using triple
-DES encryption, using the pass phrase "hello":
-
- if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
-                                    NULL, 0, 0, "hello"))
-     /* Error */
-
-Read a private key from a BIO using a pass phrase callback:
-
- key = PEM_read_bio_PrivateKey(bp, NULL, pass_cb, "My Private Key");
- if (key == NULL)
-     /* Error */
-
-Skeleton pass phrase callback:
-
- int pass_cb(char *buf, int size, int rwflag, void *u)
- {
-
-     /* We'd probably do something else if 'rwflag' is 1 */
-     printf("Enter pass phrase for \"%s\"\n", (char *)u);
-
-     /* get pass phrase, length 'len' into 'tmp' */
-     char *tmp = "hello";
-     if (tmp == NULL) /* An error occurred */
-         return -1;
-
-     size_t len = strlen(tmp);
-
-     if (len > size)
-         len = size;
-     memcpy(buf, tmp, len);
-     return len;
- }
-
 =head1 NOTES
 
 The old B<PrivateKey> write routines are retained for compatibility.
@@ -460,6 +394,71 @@ if an error occurred.
 
 The write routines return 1 for success or 0 for failure.
 
+=head1 EXAMPLES
+
+Although the PEM routines take several arguments in almost all applications
+most of them are set to 0 or NULL.
+
+Read a certificate in PEM format from a BIO:
+
+ X509 *x;
+
+ x = PEM_read_bio_X509(bp, NULL, 0, NULL);
+ if (x == NULL)
+     /* Error */
+
+Alternative method:
+
+ X509 *x = NULL;
+
+ if (!PEM_read_bio_X509(bp, &x, 0, NULL))
+     /* Error */
+
+Write a certificate to a BIO:
+
+ if (!PEM_write_bio_X509(bp, x))
+     /* Error */
+
+Write a private key (using traditional format) to a BIO using
+triple DES encryption, the pass phrase is prompted for:
+
+ if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
+     /* Error */
+
+Write a private key (using PKCS#8 format) to a BIO using triple
+DES encryption, using the pass phrase "hello":
+
+ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
+                                    NULL, 0, 0, "hello"))
+     /* Error */
+
+Read a private key from a BIO using a pass phrase callback:
+
+ key = PEM_read_bio_PrivateKey(bp, NULL, pass_cb, "My Private Key");
+ if (key == NULL)
+     /* Error */
+
+Skeleton pass phrase callback:
+
+ int pass_cb(char *buf, int size, int rwflag, void *u)
+ {
+
+     /* We'd probably do something else if 'rwflag' is 1 */
+     printf("Enter pass phrase for \"%s\"\n", (char *)u);
+
+     /* get pass phrase, length 'len' into 'tmp' */
+     char *tmp = "hello";
+     if (tmp == NULL) /* An error occurred */
+         return -1;
+
+     size_t len = strlen(tmp);
+
+     if (len > size)
+         len = size;
+     memcpy(buf, tmp, len);
+     return len;
+ }
+
 =head1 HISTORY
 
 The old Netscape certificate sequences were no longer documented
@@ -475,7 +474,7 @@ L<passphrase-encoding(7)>
 
 Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

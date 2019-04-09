@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -18,6 +18,11 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
                         char *privkeyfile);
 int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                        SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio);
+int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
+                               int read);
+int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
+                       SSL **cssl, int sfd, int cfd);
+int create_test_sockets(int *cfd, int *sfd);
 int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want);
 void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl);
 
@@ -36,9 +41,10 @@ void bio_s_mempacket_test_free(void);
  * Mempacket BIO ctrls. We make them large enough to not clash with standard BIO
  * ctrl codes.
  */
-#define MEMPACKET_CTRL_SET_DROP_EPOCH  (1 << 15)
-#define MEMPACKET_CTRL_SET_DROP_REC    (2 << 15)
-#define MEMPACKET_CTRL_GET_DROP_REC    (3 << 15)
+#define MEMPACKET_CTRL_SET_DROP_EPOCH       (1 << 15)
+#define MEMPACKET_CTRL_SET_DROP_REC         (2 << 15)
+#define MEMPACKET_CTRL_GET_DROP_REC         (3 << 15)
+#define MEMPACKET_CTRL_SET_DUPLICATE_REC    (4 << 15)
 
 int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
                           int type);

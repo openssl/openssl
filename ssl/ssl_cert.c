@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -501,17 +501,17 @@ const STACK_OF(X509_NAME) *SSL_get0_CA_list(const SSL *s)
 
 void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list)
 {
-    SSL_CTX_set0_CA_list(ctx, name_list);
+    set0_CA_list(&ctx->client_ca_names, name_list);
 }
 
 STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 {
-    return ctx->ca_names;
+    return ctx->client_ca_names;
 }
 
 void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 {
-    SSL_set0_CA_list(s, name_list);
+    set0_CA_list(&s->client_ca_names, name_list);
 }
 
 const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s)
@@ -523,7 +523,8 @@ STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
     if (!s->server)
         return s->s3 != NULL ?  s->s3->tmp.peer_ca_names : NULL;
-    return s->ca_names != NULL ?  s->ca_names : s->ctx->ca_names;
+    return s->client_ca_names != NULL ?  s->client_ca_names
+                                      : s->ctx->client_ca_names;
 }
 
 static int add_ca_name(STACK_OF(X509_NAME) **sk, const X509 *x)
@@ -545,24 +546,28 @@ static int add_ca_name(STACK_OF(X509_NAME) **sk, const X509 *x)
     return 1;
 }
 
-int SSL_add1_CA_list(SSL *ssl, const X509 *x)
+int SSL_add1_to_CA_list(SSL *ssl, const X509 *x)
 {
     return add_ca_name(&ssl->ca_names, x);
 }
 
-int SSL_CTX_add1_CA_list(SSL_CTX *ctx, const X509 *x)
+int SSL_CTX_add1_to_CA_list(SSL_CTX *ctx, const X509 *x)
 {
     return add_ca_name(&ctx->ca_names, x);
 }
 
+/*
+ * The following two are older names are to be replaced with
+ * SSL(_CTX)_add1_to_CA_list
+ */
 int SSL_add_client_CA(SSL *ssl, X509 *x)
 {
-    return add_ca_name(&ssl->ca_names, x);
+    return add_ca_name(&ssl->client_ca_names, x);
 }
 
 int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
 {
-    return add_ca_name(&ctx->ca_names, x);
+    return add_ca_name(&ctx->client_ca_names, x);
 }
 
 static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
@@ -947,7 +952,8 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
             if (level >= 2 && c->algorithm_enc == SSL_RC4)
                 return 0;
             /* Level 3: forward secure ciphersuites only */
-            if (level >= 3 && !(c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)))
+            if (level >= 3 && c->min_tls != TLS1_3_VERSION &&
+                               !(c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)))
                 return 0;
             break;
         }
@@ -995,22 +1001,35 @@ int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid, void *other)
                              ctx->cert->sec_ex);
 }
 
+int ssl_cert_lookup_by_nid(int nid, size_t *pidx)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
+        if (ssl_cert_info[i].nid == nid) {
+            *pidx = i;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx)
 {
     int nid = EVP_PKEY_id(pk);
-    size_t i;
+    size_t tmpidx;
 
     if (nid == NID_undef)
         return NULL;
 
-    for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
-        if (ssl_cert_info[i].nid == nid) {
-            if (pidx != NULL)
-                *pidx = i;
-            return &ssl_cert_info[i];
-        }
-    }
-    return NULL;
+    if (!ssl_cert_lookup_by_nid(nid, &tmpidx))
+        return NULL;
+
+    if (pidx != NULL)
+        *pidx = tmpidx;
+
+    return &ssl_cert_info[tmpidx];
 }
 
 const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx)

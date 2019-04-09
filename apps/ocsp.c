@@ -1,7 +1,7 @@
 /*
  * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -36,7 +36,21 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/x509v3.h>
 # include <openssl/rand.h>
 
-# if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_NO_SOCK) \
+#ifndef HAVE_FORK
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS)
+#  define HAVE_FORK 0
+# else
+#  define HAVE_FORK 1
+# endif
+#endif
+
+#if HAVE_FORK
+# undef NO_FORK
+#else
+# define NO_FORK
+#endif
+
+# if !defined(NO_FORK) && !defined(OPENSSL_NO_SOCK) \
      && !defined(OPENSSL_NO_POSIX_IO)
 #  define OCSP_DAEMON
 #  include <sys/types.h>
@@ -53,6 +67,20 @@ NON_EMPTY_TRANSLATION_UNIT
 #  define LOG_ERR       2
 # endif
 
+# if defined(OPENSSL_SYS_VXWORKS)
+/* not supported */
+int setpgid(pid_t pid, pid_t pgid)
+{
+    errno = ENOSYS;
+    return 0;
+}
+/* not supported */
+pid_t fork(void)
+{
+    errno = ENOSYS;
+    return (pid_t) -1;
+}
+# endif
 /* Maximum leeway in validity period: default 5 minutes */
 # define MAX_VALIDITY_PERIOD    (5 * 60)
 
@@ -71,7 +99,8 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
                               EVP_PKEY *rkey, const EVP_MD *md,
                               STACK_OF(OPENSSL_STRING) *sigopts,
                               STACK_OF(X509) *rother, unsigned long flags,
-                              int nmin, int ndays, int badsig);
+                              int nmin, int ndays, int badsig,
+                              const EVP_MD *resp_md);
 
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(const char *port);
@@ -110,6 +139,7 @@ typedef enum OPTION_choice {
     OPT_RESPOUT, OPT_PATH, OPT_ISSUER, OPT_CERT, OPT_SERIAL,
     OPT_INDEX, OPT_CA, OPT_NMIN, OPT_REQUEST, OPT_NDAYS, OPT_RSIGNER,
     OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_RSIGOPT, OPT_HEADER,
+    OPT_RCID,
     OPT_V_ENUM,
     OPT_MD,
     OPT_MULTI
@@ -192,6 +222,7 @@ const OPTIONS ocsp_options[] = {
     {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
     {"rsigopt", OPT_RSIGOPT, 's', "OCSP response signature parameter in n:v form"},
     {"header", OPT_HEADER, 's', "key=value header to add"},
+    {"rcid", OPT_RCID, 's', "Use specified algorithm for cert id in response"},
     {"", OPT_MD, '-', "Any supported digest algorithm (sha1,sha256, ... )"},
     OPT_V_OPTIONS,
     {NULL}
@@ -215,6 +246,7 @@ int ocsp_main(int argc, char **argv)
     STACK_OF(X509) *issuers = NULL;
     X509 *issuer = NULL, *cert = NULL;
     STACK_OF(X509) *rca_cert = NULL;
+    const EVP_MD *resp_certid_md = NULL;
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
@@ -471,6 +503,11 @@ int ocsp_main(int argc, char **argv)
             if (!X509V3_add_value(header, value, &headers))
                 goto end;
             break;
+        case OPT_RCID:
+            resp_certid_md = EVP_get_digestbyname(opt_arg());
+            if (resp_certid_md == NULL)
+                goto opthelp;
+            break;
         case OPT_MD:
             if (trailing_md) {
                 BIO_printf(bio_err,
@@ -613,8 +650,10 @@ redo_accept:
         goto end;
     }
 
-    if (req != NULL && add_nonce)
-        OCSP_request_add1_nonce(req, NULL, -1);
+    if (req != NULL && add_nonce) {
+        if (!OCSP_request_add1_nonce(req, NULL, -1))
+            goto end;
+    }
 
     if (signfile != NULL) {
         if (keyfile == NULL)
@@ -654,7 +693,8 @@ redo_accept:
 
     if (rdb != NULL) {
         make_ocsp_response(bio_err, &resp, req, rdb, rca_cert, rsigner, rkey,
-                               rsign_md, rsign_sigopts, rother, rflags, nmin, ndays, badsig);
+                           rsign_md, rsign_sigopts, rother, rflags, nmin, ndays, badsig,
+                           resp_certid_md);
         if (cbio != NULL)
             send_ocsp_response(cbio, resp);
     } else if (host != NULL) {
@@ -863,6 +903,7 @@ static void killall(int ret, pid_t *kidpids)
     for (i = 0; i < multi; ++i)
         if (kidpids[i] != 0)
             (void)kill(kidpids[i], SIGTERM);
+    OPENSSL_free(kidpids);
     sleep(1);
     exit(ret);
 }
@@ -950,6 +991,7 @@ static void spawn_loop(void)
             sleep(30);
             break;
         case 0:             /* child */
+            OPENSSL_free(kidpids);
             signal(SIGINT, SIG_DFL);
             signal(SIGTERM, SIG_DFL);
             if (termsig)
@@ -1106,7 +1148,8 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
                               EVP_PKEY *rkey, const EVP_MD *rmd,
                               STACK_OF(OPENSSL_STRING) *sigopts,
                               STACK_OF(X509) *rother, unsigned long flags,
-                              int nmin, int ndays, int badsig)
+                              int nmin, int ndays, int badsig,
+                              const EVP_MD *resp_md)
 {
     ASN1_TIME *thisupd = NULL, *nextupd = NULL;
     OCSP_CERTID *cid;
@@ -1137,6 +1180,8 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         int found = 0;
         ASN1_OBJECT *cert_id_md_oid;
         const EVP_MD *cert_id_md;
+        OCSP_CERTID *cid_resp_md = NULL;
+
         one = OCSP_request_onereq_get0(req, i);
         cid = OCSP_onereq_get0_id(one);
 
@@ -1152,11 +1197,18 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             X509 *ca_cert = sk_X509_value(ca, jj);
             OCSP_CERTID *ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca_cert);
 
-            if (OCSP_id_issuer_cmp(ca_id, cid) == 0)
+            if (OCSP_id_issuer_cmp(ca_id, cid) == 0) {
                 found = 1;
-
+                if (resp_md != NULL)
+                    cid_resp_md = OCSP_cert_to_id(resp_md, NULL, ca_cert);
+            }
             OCSP_CERTID_free(ca_id);
         }
+        OCSP_id_get0_info(NULL, NULL, NULL, &serial, cid);
+        inf = lookup_serial(db, serial);
+
+        /* at this point, we can have cid be an alias of cid_resp_md */
+        cid = (cid_resp_md != NULL) ? cid_resp_md : cid;
 
         if (!found) {
             OCSP_basic_add1_status(bs, cid,
@@ -1164,8 +1216,6 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
                                    0, NULL, thisupd, nextupd);
             continue;
         }
-        OCSP_id_get0_info(NULL, NULL, NULL, &serial, cid);
-        inf = lookup_serial(db, serial);
         if (inf == NULL) {
             OCSP_basic_add1_status(bs, cid,
                                    V_OCSP_CERTSTATUS_UNKNOWN,
@@ -1180,6 +1230,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             ASN1_GENERALIZEDTIME *invtm = NULL;
             OCSP_SINGLERESP *single;
             int reason = -1;
+
             unpack_revinfo(&revtm, &reason, &inst, &invtm, inf[DB_rev_date]);
             single = OCSP_basic_add1_status(bs, cid,
                                             V_OCSP_CERTSTATUS_REVOKED,
@@ -1195,6 +1246,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             ASN1_TIME_free(revtm);
             ASN1_GENERALIZEDTIME_free(invtm);
         }
+        OCSP_CERTID_free(cid_resp_md);
     }
 
     OCSP_copy_nonce(bs, req);
@@ -1215,7 +1267,10 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             goto end;
         }
     }
-    OCSP_basic_sign_ctx(bs, rcert, mctx, rother, flags);
+    if (!OCSP_basic_sign_ctx(bs, rcert, mctx, rother, flags)) {
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, bs);
+        goto end;
+    }
 
     if (badsig) {
         const ASN1_OCTET_STRING *sig = OCSP_resp_get0_signature(bs);

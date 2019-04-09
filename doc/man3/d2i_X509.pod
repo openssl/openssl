@@ -368,8 +368,11 @@ i2d_X509_VAL,
  TYPE *d2i_TYPE_bio(BIO *bp, TYPE **a);
  TYPE *d2i_TYPE_fp(FILE *fp, TYPE **a);
 
+ int i2d_TYPE(const TYPE *a, unsigned char **ppout);
  int i2d_TYPE(TYPE *a, unsigned char **ppout);
+ int i2d_TYPE_fp(FILE *fp, const TYPE *a);
  int i2d_TYPE_fp(FILE *fp, TYPE *a);
+ int i2d_TYPE_bio(BIO *bp, const TYPE *a);
  int i2d_TYPE_bio(BIO *bp, TYPE *a);
 
 =head1 DESCRIPTION
@@ -496,6 +499,19 @@ Represents the B<DigestInfo> structure defined in PKCS#1 and PKCS#7.
 
 =back
 
+=head1 RETURN VALUES
+
+d2i_TYPE(), d2i_TYPE_bio() and d2i_TYPE_fp() return a valid B<TYPE> structure
+or B<NULL> if an error occurs.  If the "reuse" capability has been used with
+a valid structure being passed in via B<a>, then the object is not freed in
+the event of error but may be in a potentially invalid or inconsistent state.
+
+i2d_TYPE() returns the number of bytes successfully encoded or a negative
+value if an error occurs.
+
+i2d_TYPE_bio() and i2d_TYPE_fp() return 1 for success and 0 if an error
+occurs.
+
 =head1 EXAMPLES
 
 Allocate and encode the DER encoding of an X509 structure:
@@ -586,24 +602,11 @@ structure has been modified after deserialization or previous
 serialization. This is because some objects cache the encoding for
 efficiency reasons.
 
-=head1 RETURN VALUES
-
-d2i_TYPE(), d2i_TYPE_bio() and d2i_TYPE_fp() return a valid B<TYPE> structure
-or B<NULL> if an error occurs.  If the "reuse" capability has been used with
-a valid structure being passed in via B<a>, then the object is not freed in
-the event of error but may be in a potentially invalid or inconsistent state.
-
-i2d_TYPE() returns the number of bytes successfully encoded or a negative
-value if an error occurs.
-
-i2d_TYPE_bio() and i2d_TYPE_fp() return 1 for success and 0 if an error
-occurs.
-
 =head1 COPYRIGHT
 
 Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

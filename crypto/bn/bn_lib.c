@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,9 +12,10 @@
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
 #include <openssl/opensslconf.h>
+#include "internal/constant_time_locl.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
-#if OPENSSL_API_COMPAT < 0x00908000L
+#if !OPENSSL_API_0_9_8
 /*-
  * For a 32 bit machine
  * 2 -   4 ==  128
@@ -209,8 +210,6 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 {
     BN_ULONG *a = NULL;
 
-    bn_check_top(b);
-
     if (words > (INT_MAX / (4 * BN_BITS2))) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, BN_R_BIGNUM_TOO_LONG);
         return NULL;
@@ -245,8 +244,6 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 
 BIGNUM *bn_expand2(BIGNUM *b, int words)
 {
-    bn_check_top(b);
-
     if (words > b->dmax) {
         BN_ULONG *a = bn_expand_internal(b, words);
         if (!a)
@@ -259,7 +256,6 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
         b->dmax = words;
     }
 
-    bn_check_top(b);
     return b;
 }
 
@@ -294,15 +290,17 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     if (b->top > 0)
         memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
 
-    a->top = b->top;
     a->neg = b->neg;
+    a->top = b->top;
+    a->flags |= b->flags & BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return a;
 }
 
 #define FLAGS_DATA(flags) ((flags) & (BN_FLG_STATIC_DATA \
                                     | BN_FLG_CONSTTIME   \
-                                    | BN_FLG_SECURE))
+                                    | BN_FLG_SECURE      \
+                                    | BN_FLG_FIXED_TOP))
 #define FLAGS_STRUCT(flags) ((flags) & (BN_FLG_MALLOCED))
 
 void BN_swap(BIGNUM *a, BIGNUM *b)
@@ -340,11 +338,14 @@ void BN_swap(BIGNUM *a, BIGNUM *b)
 
 void BN_clear(BIGNUM *a)
 {
+    if (a == NULL)
+        return;
     bn_check_top(a);
     if (a->d != NULL)
         OPENSSL_cleanse(a->d, sizeof(*a->d) * a->dmax);
-    a->top = 0;
     a->neg = 0;
+    a->top = 0;
+    a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
 BN_ULONG BN_get_word(const BIGNUM *a)
@@ -365,6 +366,7 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
     a->neg = 0;
     a->d[0] = w;
     a->top = (w ? 1 : 0);
+    a->flags &= ~BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return 1;
 }
@@ -417,24 +419,43 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 /* ignore negative */
 static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
-    int i;
+    int n;
+    size_t i, lasti, j, atop, mask;
     BN_ULONG l;
 
-    bn_check_top(a);
-    i = BN_num_bytes(a);
-    if (tolen == -1)
-        tolen = i;
-    else if (tolen < i)
-        return -1;
-    /* Add leading zeroes if necessary */
-    if (tolen > i) {
-        memset(to, 0, tolen - i);
-        to += tolen - i;
+    /*
+     * In case |a| is fixed-top, BN_num_bytes can return bogus length,
+     * but it's assumed that fixed-top inputs ought to be "nominated"
+     * even for padded output, so it works out...
+     */
+    n = BN_num_bytes(a);
+    if (tolen == -1) {
+        tolen = n;
+    } else if (tolen < n) {     /* uncommon/unlike case */
+        BIGNUM temp = *a;
+
+        bn_correct_top(&temp);
+        n = BN_num_bytes(&temp);
+        if (tolen < n)
+            return -1;
     }
-    while (i--) {
+
+    /* Swipe through whole available data and don't give away padded zero. */
+    atop = a->dmax * BN_BYTES;
+    if (atop == 0) {
+        OPENSSL_cleanse(to, tolen);
+        return tolen;
+    }
+
+    lasti = atop - 1;
+    atop = a->top * BN_BYTES;
+    for (i = 0, j = 0, to += tolen; j < (size_t)tolen; j++) {
         l = a->d[i / BN_BYTES];
-        *(to++) = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
+        mask = 0 - ((j - atop) >> (8 * sizeof(i) - 1));
+        *--to = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
+        i += (i - lasti) >> (8 * sizeof(i) - 1); /* stay on last limb */
     }
+
     return tolen;
 }
 
@@ -515,6 +536,24 @@ int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
         *to = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
     }
     return tolen;
+}
+
+BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+#ifdef B_ENDIAN
+    return BN_bin2bn(s, len, ret);
+#else
+    return BN_lebin2bn(s, len, ret);
+#endif
+}
+
+int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+#ifdef B_ENDIAN
+    return BN_bn2binpad(a, to, tolen);
+#else
+    return BN_bn2lebinpad(a, to, tolen);
+#endif
 }
 
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
@@ -601,6 +640,7 @@ int BN_set_bit(BIGNUM *a, int n)
         for (k = a->top; k < i + 1; k++)
             a->d[k] = 0;
         a->top = i + 1;
+        a->flags &= ~BN_FLG_FIXED_TOP;
     }
 
     a->d[i] |= (((BN_ULONG)1) << j);
@@ -675,6 +715,9 @@ int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
     int i;
     BN_ULONG aa, bb;
 
+    if (n == 0)
+        return 0;
+
     aa = a[n - 1];
     bb = b[n - 1];
     if (aa != bb)
@@ -717,26 +760,25 @@ int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b, int cl, int dl)
     return bn_cmp_words(a, b, cl);
 }
 
-/*
+/*-
  * Constant-time conditional swap of a and b.
- * a and b are swapped if condition is not 0.  The code assumes that at most one bit of condition is set.
- * nwords is the number of words to swap.  The code assumes that at least nwords are allocated in both a and b,
- * and that no more than nwords are used by either a or b.
- * a and b cannot be the same number
+ * a and b are swapped if condition is not 0.
+ * nwords is the number of words to swap.
+ * Assumes that at least nwords are allocated in both a and b.
+ * Assumes that no more than nwords are used by either a or b.
  */
 void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 {
     BN_ULONG t;
     int i;
 
+    if (a == b)
+        return;
+
     bn_wcheck_size(a, nwords);
     bn_wcheck_size(b, nwords);
 
-    assert(a != b);
-    assert((condition & (condition - 1)) == 0);
-    assert(sizeof(BN_ULONG) >= sizeof(int));
-
-    condition = ((condition - 1) >> (BN_BITS2 - 1)) - 1;
+    condition = ((~condition & ((condition - 1))) >> (BN_BITS2 - 1)) - 1;
 
     t = (a->top ^ b->top) & condition;
     a->top ^= t;
@@ -747,64 +789,42 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
     b->neg ^= t;
 
     /*-
-     * Idea behind BN_FLG_STATIC_DATA is actually to
-     * indicate that data may not be written to.
-     * Intention is actually to treat it as it's
-     * read-only data, and some (if not most) of it does
-     * reside in read-only segment. In other words
-     * observation of BN_FLG_STATIC_DATA in
-     * BN_consttime_swap should be treated as fatal
-     * condition. It would either cause SEGV or
-     * effectively cause data corruption.
-     * BN_FLG_MALLOCED refers to BN structure itself,
-     * and hence must be preserved. Remaining flags are
-     * BN_FLG_CONSTIME and BN_FLG_SECURE. Latter must be
-     * preserved, because it determines how x->d was
-     * allocated and hence how to free it. This leaves
-     * BN_FLG_CONSTTIME that one can do something about.
-     * To summarize it's sufficient to mask and swap
-     * BN_FLG_CONSTTIME alone. BN_FLG_STATIC_DATA should
-     * be treated as fatal.
+     * BN_FLG_STATIC_DATA: indicates that data may not be written to. Intention
+     * is actually to treat it as it's read-only data, and some (if not most)
+     * of it does reside in read-only segment. In other words observation of
+     * BN_FLG_STATIC_DATA in BN_consttime_swap should be treated as fatal
+     * condition. It would either cause SEGV or effectively cause data
+     * corruption.
+     *
+     * BN_FLG_MALLOCED: refers to BN structure itself, and hence must be
+     * preserved.
+     *
+     * BN_FLG_SECURE: must be preserved, because it determines how x->d was
+     * allocated and hence how to free it.
+     *
+     * BN_FLG_CONSTTIME: sufficient to mask and swap
+     *
+     * BN_FLG_FIXED_TOP: indicates that we haven't called bn_correct_top() on
+     * the data, so the d array may be padded with additional 0 values (i.e.
+     * top could be greater than the minimal value that it could be). We should
+     * be swapping it
      */
-    t = ((a->flags ^ b->flags) & BN_FLG_CONSTTIME) & condition;
+
+#define BN_CONSTTIME_SWAP_FLAGS (BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP)
+
+    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition;
     a->flags ^= t;
     b->flags ^= t;
 
-#define BN_CONSTTIME_SWAP(ind) \
-        do { \
-                t = (a->d[ind] ^ b->d[ind]) & condition; \
-                a->d[ind] ^= t; \
-                b->d[ind] ^= t; \
-        } while (0)
-
-    switch (nwords) {
-    default:
-        for (i = 10; i < nwords; i++)
-            BN_CONSTTIME_SWAP(i);
-        /* Fallthrough */
-    case 10:
-        BN_CONSTTIME_SWAP(9);   /* Fallthrough */
-    case 9:
-        BN_CONSTTIME_SWAP(8);   /* Fallthrough */
-    case 8:
-        BN_CONSTTIME_SWAP(7);   /* Fallthrough */
-    case 7:
-        BN_CONSTTIME_SWAP(6);   /* Fallthrough */
-    case 6:
-        BN_CONSTTIME_SWAP(5);   /* Fallthrough */
-    case 5:
-        BN_CONSTTIME_SWAP(4);   /* Fallthrough */
-    case 4:
-        BN_CONSTTIME_SWAP(3);   /* Fallthrough */
-    case 3:
-        BN_CONSTTIME_SWAP(2);   /* Fallthrough */
-    case 2:
-        BN_CONSTTIME_SWAP(1);   /* Fallthrough */
-    case 1:
-        BN_CONSTTIME_SWAP(0);
+    /* conditionally swap the data */
+    for (i = 0; i < nwords; i++) {
+        t = (a->d[i] ^ b->d[i]) & condition;
+        a->d[i] ^= t;
+        b->d[i] ^= t;
     }
-#undef BN_CONSTTIME_SWAP
 }
+
+#undef BN_CONSTTIME_SWAP_FLAGS
 
 /* Bits of security, see SP800-57 */
 
@@ -833,8 +853,9 @@ int BN_security_bits(int L, int N)
 
 void BN_zero_ex(BIGNUM *a)
 {
-    a->top = 0;
     a->neg = 0;
+    a->top = 0;
+    a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
 int BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
@@ -958,5 +979,6 @@ void bn_correct_top(BIGNUM *a)
     }
     if (a->top == 0)
         a->neg = 0;
+    a->flags &= ~BN_FLG_FIXED_TOP;
     bn_pollute(a);
 }

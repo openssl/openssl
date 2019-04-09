@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -40,7 +40,7 @@ package OpenSSL::Template;
 use File::Basename;
 use File::Spec::Functions;
 use lib "$FindBin::Bin/perl";
-use with_fallback qw(Text::Template);
+use with_fallback "Text::Template 1.46";
 
 #use parent qw/Text::Template/;
 use vars qw/@ISA/;
@@ -176,10 +176,20 @@ my $text =
 # Load the full template (combination of files) into Text::Template
 # and fill it up with our data.  Output goes directly to STDOUT
 
+my $prepend = qq{
+use File::Spec::Functions;
+use lib catdir('$config{sourcedir}', 'util', 'perl');
+};
+$prepend .= qq{
+use lib catdir('$config{sourcedir}', 'Configurations');
+use lib '$config{builddir}';
+use platform;
+} if defined $target{perl_platform};
+
 my $template =
     OpenSSL::Template->new(TYPE => 'STRING',
                            SOURCE => $text,
-                           PREPEND => qq{use lib "$FindBin::Bin/perl";});
+                           PREPEND => $prepend);
 
 sub output_reset_on {
     $template->output_reset_on();

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -459,6 +459,20 @@ static int CustomExtensionParseCallback(SSL *ssl, unsigned extension_value,
   return 1;
 }
 
+static int ServerNameCallback(SSL *ssl, int *out_alert, void *arg) {
+  // SNI must be accessible from the SNI callback.
+  const TestConfig *config = GetTestConfig(ssl);
+  const char *server_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+  if (server_name == nullptr ||
+      std::string(server_name) != config->expected_server_name) {
+    fprintf(stderr, "servername mismatch (got %s; want %s)\n", server_name,
+            config->expected_server_name.c_str());
+    return SSL_TLSEXT_ERR_ALERT_FATAL;
+  }
+
+  return SSL_TLSEXT_ERR_OK;
+}
+
 // Connect returns a new socket connected to localhost on |port| or -1 on
 // error.
 static int Connect(uint16_t port) {
@@ -645,6 +659,10 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
                                       sizeof(sess_id_ctx) - 1))
     return nullptr;
 
+  if (!config->expected_server_name.empty()) {
+    SSL_CTX_set_tlsext_servername_callback(ssl_ctx.get(), ServerNameCallback);
+  }
+
   return ssl_ctx;
 }
 
@@ -809,7 +827,8 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume) {
   if (!config->expected_server_name.empty()) {
     const char *server_name =
         SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
-    if (server_name != config->expected_server_name) {
+    if (server_name == nullptr ||
+            std::string(server_name) != config->expected_server_name) {
       fprintf(stderr, "servername mismatch (got %s; want %s)\n",
               server_name, config->expected_server_name.c_str());
       return false;

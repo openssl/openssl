@@ -51,6 +51,7 @@ B<openssl> B<ca>
 [B<-engine id>]
 [B<-subj arg>]
 [B<-utf8>]
+[B<-sigopt nm:v>]
 [B<-create_serial>]
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
@@ -134,6 +135,11 @@ The private key to sign requests with.
 The format of the data in the private key file.
 The default is PEM.
 
+=item B<-sigopt nm:v>
+
+Pass options to the signature algorithm during sign or verify operations.
+Names and values of these options are algorithm-specific.
+
 =item B<-key password>
 
 The password used to encrypt the private key. Since on some
@@ -184,9 +190,9 @@ The number of days to certify the certificate for.
 =item B<-md alg>
 
 The message digest to use.
-Any digest supported by the OpenSSL B<dgst> command can be used. If the signing
-key is using Ed25519 or Ed448 then you should specify "null" for the digest.
-This option also applies to CRLs.
+Any digest supported by the OpenSSL B<dgst> command can be used. For signing
+algorithms that do not support a digest (i.e. Ed25519 and Ed448) any message
+digest that is set is ignored. This option also applies to CRLs.
 
 =item B<-policy arg>
 
@@ -230,7 +236,7 @@ The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to B<x509_extensions>
 unless the B<-extfile> option is used). If no extension section is
 present then, a V1 certificate is created. If the extension section
-is present (even if it is empty), then a V3 certificate is created. See the:w
+is present (even if it is empty), then a V3 certificate is created. See the
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 
@@ -250,8 +256,10 @@ for all available algorithms.
 =item B<-subj arg>
 
 Supersedes subject name given in the request.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by \ (backslash), no spaces are skipped.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Empty values are permitted, but the corresponding type will not be included
+in the resulting certificate.
 
 =item B<-utf8>
 
@@ -453,7 +461,8 @@ least one of these must be present to generate a CRL.
 
 =item B<default_md>
 
-The same as the B<-md> option. Mandatory.
+The same as the B<-md> option. Mandatory except where the signing algorithm does
+not require a digest (i.e. Ed25519 and Ed448).
 
 =item B<database>
 
@@ -472,7 +481,7 @@ the B<-selfsign> command line option.
 
 Note that it is valid in some circumstances for certificates to be created
 without any subject. In the case where there are multiple certificates without
-subjects this does not count as a duplicate. 
+subjects this does not count as a duplicate.
 
 =item B<serial>
 
@@ -750,9 +759,9 @@ L<config(5)>, L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

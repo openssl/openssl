@@ -1,7 +1,7 @@
 /*
  * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -34,7 +34,7 @@ static int rsa_param_encode(const EVP_PKEY *pkey,
 
     *pstr = NULL;
     /* If RSA it's just NULL type */
-    if (pkey->ameth->pkey_id == EVP_PKEY_RSA) {
+    if (pkey->ameth->pkey_id != EVP_PKEY_RSA_PSS) {
         *pstrtype = V_ASN1_NULL;
         return 1;
     }
@@ -58,7 +58,7 @@ static int rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
     int algptype;
 
     X509_ALGOR_get0(&algoid, &algptype, &algp, alg);
-    if (OBJ_obj2nid(algoid) == EVP_PKEY_RSA)
+    if (OBJ_obj2nid(algoid) != EVP_PKEY_RSA_PSS)
         return 1;
     if (algptype == V_ASN1_UNDEF)
         return 1;
@@ -109,7 +109,10 @@ static int rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
         RSA_free(rsa);
         return 0;
     }
-    EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
+    if (!EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa)) {
+        RSA_free(rsa);
+        return 0;
+    }
     return 1;
 }
 
@@ -444,7 +447,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         RSA_PSS_PARAMS_free(pss);
         if (!rv)
             return 0;
-    } else if (!sig && BIO_puts(bp, "\n") <= 0) {
+    } else if (BIO_puts(bp, "\n") <= 0) {
         return 0;
     }
     if (sig)

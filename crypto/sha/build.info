@@ -3,6 +3,8 @@ SOURCE[../../libcrypto]=\
         sha1dgst.c sha1_one.c sha256.c sha512.c {- $target{sha1_asm_src} -} \
         {- $target{keccak1600_asm_src} -}
 
+SOURCE[../../providers/fips]= sha256.c
+
 GENERATE[sha1-586.s]=asm/sha1-586.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
 DEPEND[sha1-586.s]=../perlasm/x86asm.pl
@@ -26,6 +28,7 @@ GENERATE[sha256-mb-x86_64.s]=asm/sha256-mb-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[sha512-x86_64.s]=asm/sha512-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[keccak1600-x86_64.s]=asm/keccak1600-x86_64.pl $(PERLASM_SCHEME)
 
+GENERATE[sha1-sparcv9a.S]=asm/sha1-sparcv9a.pl $(PERLASM_SCHEME)
 GENERATE[sha1-sparcv9.S]=asm/sha1-sparcv9.pl $(PERLASM_SCHEME)
 INCLUDE[sha1-sparcv9.o]=..
 GENERATE[sha256-sparcv9.S]=asm/sha512-sparcv9.pl $(PERLASM_SCHEME)
@@ -76,14 +79,15 @@ GENERATE[sha512-s390x.S]=asm/sha512-s390x.pl $(PERLASM_SCHEME)
 INCLUDE[sha512-s390x.o]=..
 GENERATE[keccak1600-s390x.S]=asm/keccak1600-s390x.pl $(PERLASM_SCHEME)
 
-BEGINRAW[Makefile(unix)]
-##### SHA assembler implementations
+GENERATE[sha1-c64xplus.S]=asm/sha1-c64xplus.pl $(PERLASM_SCHEME)
+GENERATE[sha256-c64xplus.S]=asm/sha256-c64xplus.pl $(PERLASM_SCHEME)
+GENERATE[sha512-c64xplus.S]=asm/sha512-c64xplus.pl $(PERLASM_SCHEME)
+GENERATE[keccak1600-c64x.S]=asm/keccak1600-c64x.pl $(PERLASM_SCHEME)
 
-# GNU make "catch all"
-{- $builddir -}/sha1-%.S:	{- $sourcedir -}/asm/sha1-%.pl
-	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
-{- $builddir -}/sha256-%.S:	{- $sourcedir -}/asm/sha512-%.pl
-	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
-{- $builddir -}/sha512-%.S:	{- $sourcedir -}/asm/sha512-%.pl
-	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
-ENDRAW[Makefile(unix)]
+# These are not yet used
+GENERATE[keccak1600-avx2.S]=asm/keccak1600-avx2.pl $(PERLASM_SCHEME)
+GENERATE[keccak1600-avx512.S]=asm/keccak1600-avx512.pl $(PERLASM_SCHEME)
+GENERATE[keccak1600-avx512vl.S]=asm/keccak1600-avx512vl.pl $(PERLASM_SCHEME)
+GENERATE[keccak1600-mmx.S]=asm/keccak1600-mmx.pl $(PERLASM_SCHEME)
+GENERATE[keccak1600p8-ppc.S]=asm/keccak1600p8-ppc.pl $(PERLASM_SCHEME)
+GENERATE[sha1-thumb.S]=asm/sha1-thumb.pl $(PERLASM_SCHEME)

@@ -6,7 +6,7 @@ LHASH, DECLARE_LHASH_OF,
 OPENSSL_LH_COMPFUNC, OPENSSL_LH_HASHFUNC, OPENSSL_LH_DOALL_FUNC,
 LHASH_DOALL_ARG_FN_TYPE,
 IMPLEMENT_LHASH_HASH_FN, IMPLEMENT_LHASH_COMP_FN,
-lh_TYPE_new, lh_TYPE_free,
+lh_TYPE_new, lh_TYPE_free, lh_TYPE_flush,
 lh_TYPE_insert, lh_TYPE_delete, lh_TYPE_retrieve,
 lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
@@ -18,16 +18,17 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
  DECLARE_LHASH_OF(TYPE);
 
- LHASH *lh_TYPE_new();
- void lh_TYPE_free(LHASH_OF(TYPE *table);
+ LHASH *lh_TYPE_new(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare);
+ void lh_TYPE_free(LHASH_OF(TYPE) *table);
+ void lh_TYPE_flush(LHASH_OF(TYPE) *table);
 
- TYPE *lh_TYPE_insert(LHASH_OF(TYPE *table, TYPE *data);
- TYPE *lh_TYPE_delete(LHASH_OF(TYPE *table, TYPE *data);
- TYPE *lh_retrieve(LHASH_OFTYPE *table, TYPE *data);
+ TYPE *lh_TYPE_insert(LHASH_OF(TYPE) *table, TYPE *data);
+ TYPE *lh_TYPE_delete(LHASH_OF(TYPE) *table, TYPE *data);
+ TYPE *lh_retrieve(LHASH_OF(TYPE) *table, TYPE *data);
 
- void lh_TYPE_doall(LHASH_OF(TYPE *table, OPENSSL_LH_DOALL_FUNC func);
+ void lh_TYPE_doall(LHASH_OF(TYPE) *table, OPENSSL_LH_DOALL_FUNC func);
  void lh_TYPE_doall_arg(LHASH_OF(TYPE) *table, OPENSSL_LH_DOALL_FUNCARG func,
-          TYPE, TYPE *arg);
+                        TYPE *arg);
 
  int lh_TYPE_error(LHASH_OF(TYPE) *table);
 
@@ -94,6 +95,11 @@ lh_TYPE_free() frees the B<LHASH_OF(TYPE)> structure
 B<table>. Allocated hash table entries will not be freed; consider
 using lh_TYPE_doall() to deallocate any remaining entries in the
 hash table (see below).
+
+lh_TYPE_flush() empties the B<LHASH_OF(TYPE)> structure B<table>. New
+entries can be added to the flushed table.  Allocated hash table entries
+will not be freed; consider using lh_TYPE_doall() to deallocate any
+remaining entries in the hash table (see below).
 
 lh_TYPE_insert() inserts the structure pointed to by B<data> into
 B<table>.  If there already is an entry with the same key, the old
@@ -171,25 +177,19 @@ lh_TYPE_retrieve() returns the hash table entry if it has been found,
 B<NULL> otherwise.
 
 lh_TYPE_error() returns 1 if an error occurred in the last operation, 0
-otherwise.
+otherwise. It's meaningful only after non-retrieve operations.
 
-lh_TYPE_free(), lh_TYPE_doall() and lh_TYPE_doall_arg() return no values.
+lh_TYPE_free(), lh_TYPE_flush, lh_TYPE_doall() and lh_TYPE_doall_arg()
+return no values.
 
 =head1 NOTE
 
-The various LHASH macros and callback types exist to make it possible
-to write type-checked code without resorting to function-prototype
-casting - an evil that makes application code much harder to
-audit/verify and also opens the window of opportunity for stack
-corruption and other hard-to-find bugs.  It also, apparently, violates
-ANSI-C.
-
-The LHASH code is not thread safe. All updating operations must be
-performed under a write lock. All retrieve operations should be performed
-under a read lock, I<unless> accurate usage statistics are desired.
-In which case, a write lock should be used for retrieve operations
-as well.  For output of the usage statistics, using the functions from
-L<OPENSSL_LH_stats(3)>, a read lock suffices.
+The LHASH code is not thread safe. All updating operations, as well as
+lh_TYPE_error call must be performed under a write lock. All retrieve
+operations should be performed under a read lock, I<unless> accurate
+usage statistics are desired. In which case, a write lock should be used
+for retrieve operations as well. For output of the usage statistics,
+using the functions from L<OPENSSL_LH_stats(3)>, a read lock suffices.
 
 The LHASH code regards table entries as constant data.  As such, it
 internally represents lh_insert()'d items with a "const void *"
@@ -236,9 +236,9 @@ type checking.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,6 +13,8 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/err.h>
+#include "internal/ctype.h"
+#include "internal/lhash.h"
 #include "lhash_lcl.h"
 
 /*
@@ -73,6 +75,16 @@ err:
 
 void OPENSSL_LH_free(OPENSSL_LHASH *lh)
 {
+    if (lh == NULL)
+        return;
+
+    OPENSSL_LH_flush(lh);
+    OPENSSL_free(lh->b);
+    OPENSSL_free(lh);
+}
+
+void OPENSSL_LH_flush(OPENSSL_LHASH *lh)
+{
     unsigned int i;
     OPENSSL_LH_NODE *n, *nn;
 
@@ -87,8 +99,6 @@ void OPENSSL_LH_free(OPENSSL_LHASH *lh)
             n = nn;
         }
     }
-    OPENSSL_free(lh->b);
-    OPENSSL_free(lh);
 }
 
 void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
@@ -157,16 +167,18 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
     OPENSSL_LH_NODE **rn;
     void *ret;
 
-    lh->error = 0;
+    tsan_store((TSAN_QUALIFIER int *)&lh->error, 0);
+
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
-        lh->num_retrieve_miss++;
+        tsan_counter(&lh->num_retrieve_miss);
         return NULL;
     } else {
         ret = (*rn)->data;
-        lh->num_retrieve++;
+        tsan_counter(&lh->num_retrieve);
     }
+
     return ret;
 }
 
@@ -296,7 +308,7 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     OPENSSL_LH_COMPFUNC cf;
 
     hash = (*(lh->hash)) (data);
-    lh->num_hash_calls++;
+    tsan_counter(&lh->num_hash_calls);
     *rhash = hash;
 
     nn = hash % lh->pmax;
@@ -306,12 +318,12 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     cf = lh->comp;
     ret = &(lh->b[(int)nn]);
     for (n1 = *ret; n1 != NULL; n1 = n1->next) {
-        lh->num_hash_comps++;
+        tsan_counter(&lh->num_hash_comps);
         if (n1->hash != hash) {
             ret = &(n1->next);
             continue;
         }
-        lh->num_comp_calls++;
+        tsan_counter(&lh->num_comp_calls);
         if (cf(n1->data, data) == 0)
             break;
         ret = &(n1->next);
@@ -338,6 +350,27 @@ unsigned long OPENSSL_LH_strhash(const char *c)
     while (*c) {
         v = n | (*c);
         n += 0x100;
+        r = (int)((v >> 2) ^ v) & 0x0f;
+        ret = (ret << r) | (ret >> (32 - r));
+        ret &= 0xFFFFFFFFL;
+        ret ^= v * v;
+        c++;
+    }
+    return (ret >> 16) ^ ret;
+}
+
+unsigned long openssl_lh_strcasehash(const char *c)
+{
+    unsigned long ret = 0;
+    long n;
+    unsigned long v;
+    int r;
+
+    if (c == NULL || *c == '\0')
+        return ret;
+
+    for (n = 0x100; *c != '\0'; n += 0x100) {
+        v = n | ossl_tolower(*c);
         r = (int)((v >> 2) ^ v) & 0x0f;
         ret = (ret << r) | (ret >> (32 - r));
         ret &= 0xFFFFFFFFL;

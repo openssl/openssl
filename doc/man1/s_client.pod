@@ -12,6 +12,8 @@ B<openssl> B<s_client>
 [B<-connect host:port>]
 [B<-bind host:port>]
 [B<-proxy host:port>]
+[B<-proxy_user userid>]
+[B<-proxy_pass arg>]
 [B<-unix path>]
 [B<-4>]
 [B<-6>]
@@ -23,9 +25,19 @@ B<openssl> B<s_client>
 [B<-certform DER|PEM>]
 [B<-key filename>]
 [B<-keyform DER|PEM>]
+[B<-cert_chain filename>]
+[B<-build_chain>]
+[B<-xkey>]
+[B<-xcert>]
+[B<-xchain>]
+[B<-xchain_build>]
+[B<-xcertform PEM|DER>]
+[B<-xkeyform PEM|DER>]
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-chainCApath directory>]
+[B<-chainCAfile filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-requestCAfile filename>]
@@ -60,6 +72,7 @@ B<openssl> B<s_client>
 [B<-verify_hostname hostname>]
 [B<-verify_ip ip>]
 [B<-verify_name name>]
+[B<-build_chain>]
 [B<-x509_strict>]
 [B<-reconnect>]
 [B<-showcerts>]
@@ -89,6 +102,7 @@ B<openssl> B<s_client>
 [B<-dtls1>]
 [B<-dtls1_2>]
 [B<-sctp>]
+[B<-sctp_label_bug>]
 [B<-fallback_scsv>]
 [B<-async>]
 [B<-max_send_frag>]
@@ -123,7 +137,7 @@ B<openssl> B<s_client>
 [B<-ctlogfile>]
 [B<-keylogfile file>]
 [B<-early_data file>]
-[B<-force_pha>]
+[B<-enable_pha>]
 [B<target>]
 
 =head1 DESCRIPTION
@@ -164,6 +178,21 @@ When used with the B<-connect> flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
 to the desired server.
 
+=item B<-proxy_user userid>
+
+When used with the B<-proxy> flag, the program will attempt to authenticate
+with the specified proxy using basic (base64) authentication.
+NB: Basic authentication is insecure; the credentials are sent to the proxy
+in easily reversible base64 encoding before any TLS/SSL session is established.
+Therefore these credentials are easily recovered by anyone able to sniff/trace
+the network. Use with caution.
+
+=item B<-proxy_pass arg>
+
+The proxy password source, used with the B<-proxy_user> flag.
+For more information about the format of B<arg> see the B<PASS PHRASE ARGUMENTS>
+section in L<openssl(1)>.
+
 =item B<-unix path>
 
 Connect over the specified Unix-domain socket.
@@ -179,14 +208,17 @@ Use IPv6 only.
 =item B<-servername name>
 
 Set the TLS SNI (Server Name Indication) extension in the ClientHello message to
-the given value. If both this option and the B<-noservername> are not given, the
-TLS SNI extension is still set to the hostname provided to the B<-connect> option,
-or "localhost" if B<-connect> has not been supplied. This is default since OpenSSL
-1.1.1.
+the given value. 
+If B<-servername> is not provided, the TLS SNI extension will be populated with 
+the name given to B<-connect> if it follows a DNS name format. If B<-connect> is 
+not provided either, the SNI is set to "localhost".
+This is the default since OpenSSL 1.1.1.
 
-Even though SNI name should normally be a DNS name and not an IP address, this
-option will not make the distinction when parsing B<-connect> and will send
-IP address if one passed.
+Even though SNI should normally be a DNS name and not an IP address, if 
+B<-servername> is provided then that name will be sent, regardless of whether 
+it is a DNS name or not.
+
+This option cannot be used in conjunction with B<-noservername>.
 
 =item B<-noservername>
 
@@ -211,6 +243,34 @@ be used.
 =item B<-keyform format>
 
 The private format to use: DER or PEM. PEM is the default.
+
+=item B<-cert_chain>
+
+A file containing trusted certificates to use when attempting to build the
+client/server certificate chain related to the certificate specified via the
+B<-cert> option.
+
+=item B<-build_chain>
+
+Specify whether the application should build the certificate chain to be
+provided to the server.
+
+=item B<-xkey infile>, B<-xcert infile>, B<-xchain>
+
+Specify an extra certificate, private key and certificate chain. These behave
+in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
+specified, the callback returning the first valid chain will be in use by the
+client.
+
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to the server for the extra certificates provided via B<-xkey infile>,
+B<-xcert infile>, B<-xchain> options.
+
+=item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
+
+Extra certificate and private key format respectively.
 
 =item B<-pass arg>
 
@@ -240,13 +300,23 @@ set multiple options. See the L<x509(1)> manual page for details.
 =item B<-CApath directory>
 
 The directory to use for server certificate verification. This directory
-must be in "hash format", see B<verify> for more information. These are
+must be in "hash format", see L<verify(1)> for more information. These are
 also used when building the client certificate chain.
 
 =item B<-CAfile file>
 
 A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
+
+=item B<-chainCApath directory>
+
+The directory to use for building the chain provided to the server. This
+directory must be in "hash format", see L<verify(1)> for more information.
+
+=item B<-chainCAfile file>
+
+A file containing trusted certificates to use when attempting to build the
+client certificate chain.
 
 =item B<-no-CAfile>
 
@@ -424,6 +494,8 @@ By default B<s_client> will negotiate the highest mutually supported protocol
 version.
 When a specific TLS version is required, only that version will be offered to
 and accepted from the server.
+Note that not all protocols and flags may be available, depending on how
+OpenSSL was built.
 
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
@@ -436,6 +508,14 @@ respectively.
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
 conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
+available where OpenSSL has support for SCTP enabled.
+
+=item B<-sctp_label_bug>
+
+Use the incorrect behaviour of older OpenSSL implementations when computing
+endpoint-pair shared secrets for DTLS/SCTP. This allows communication with
+older broken implementations but breaks interoperability with correct
+implementations. Must be used in conjunction with B<-sctp>. This option is only
 available where OpenSSL has support for SCTP enabled.
 
 =item B<-fallback_scsv>
@@ -479,7 +559,7 @@ further information).
 
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-comp>
@@ -649,10 +729,10 @@ Reads the contents of the specified file and attempts to send it as early data
 to the server. This will only work with resumed sessions that support early
 data and when the server accepts the early data.
 
-=item B<-force_pha>
+=item B<-enable_pha>
 
-For TLSv1.3 only, always send the Post-Handshake Authentication extension,
-whether or not a certificate has been provided via B<-cert>.
+For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
+happen whether or not a certificate has been provided via B<-cert>.
 
 =item B<[target]>
 
@@ -682,10 +762,6 @@ End the current SSL connection and exit.
 =item B<R>
 
 Renegotiate the SSL session (TLSv1.2 and below only).
-
-=item B<B>
-
-Send a heartbeat message to the server (DTLS only)
 
 =item B<k>
 
@@ -755,19 +831,19 @@ information whenever a session is renegotiated.
 =head1 SEE ALSO
 
 L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>,
-L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
+L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY
 
-The B<-no_alt_chains> option was first added to OpenSSL 1.1.0.
+The B<-no_alt_chains> option was added in OpenSSL 1.1.0.
 The B<-name> option was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
 Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

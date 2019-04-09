@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -118,7 +118,8 @@ opthelp:
         version = 1;
 
     if (version) {
-        if (OpenSSL_version_num() == OPENSSL_VERSION_NUMBER)
+        if (strcmp(OpenSSL_version(OPENSSL_FULL_VERSION_STRING),
+                   OPENSSL_FULL_VERSION_STR) == 0)
             printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
         else
             printf("%s (Library: %s)\n",

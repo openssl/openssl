@@ -1,7 +1,7 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,10 +9,6 @@
 
 #ifndef HEADER_CMS_LCL_H
 # define HEADER_CMS_LCL_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 # include <openssl/x509.h>
 
@@ -372,8 +368,8 @@ BIO *cms_content_bio(CMS_ContentInfo *cms);
 CMS_ContentInfo *cms_Data_create(void);
 
 CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md);
-BIO *cms_DigestedData_init_bio(CMS_ContentInfo *cms);
-int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify);
+BIO *cms_DigestedData_init_bio(const CMS_ContentInfo *cms);
+int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify);
 
 BIO *cms_SignedData_init_bio(CMS_ContentInfo *cms);
 int cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain);
@@ -386,7 +382,7 @@ int cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
 int cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert);
 
 CMS_ContentInfo *cms_CompressedData_create(int comp_nid);
-BIO *cms_CompressedData_init_bio(CMS_ContentInfo *cms);
+BIO *cms_CompressedData_init_bio(const CMS_ContentInfo *cms);
 
 BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm);
 int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
@@ -398,7 +394,7 @@ int cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert);
 int cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert);
 
 BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec);
-BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms);
+BIO *cms_EncryptedData_init_bio(const CMS_ContentInfo *cms);
 int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
                               const EVP_CIPHER *cipher,
                               const unsigned char *key, size_t keylen);
@@ -407,18 +403,18 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms);
 int cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src);
 ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si);
 
-BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
+BIO *cms_EnvelopedData_init_bio(const CMS_ContentInfo *cms);
 CMS_EnvelopedData *cms_get0_enveloped(CMS_ContentInfo *cms);
 int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd);
 int cms_pkey_get_ri_type(EVP_PKEY *pk);
 /* KARI routines */
 int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
                                 EVP_PKEY *pk, unsigned int flags);
-int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms,
+int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
                                    CMS_RecipientInfo *ri);
 
 /* PWRI routines */
-int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
+int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
                                  int en_de);
 
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)
@@ -438,7 +434,4 @@ DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
 DECLARE_ASN1_ITEM(CMS_SignedData)
 DECLARE_ASN1_ITEM(CMS_CompressedData)
 
-#ifdef  __cplusplus
-}
-#endif
 #endif

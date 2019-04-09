@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -75,9 +75,8 @@ static int i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *pci,
     BIO_puts(out, "\n");
     BIO_printf(out, "%*sPolicy Language: ", indent, "");
     i2a_ASN1_OBJECT(out, pci->proxyPolicy->policyLanguage);
-    BIO_puts(out, "\n");
     if (pci->proxyPolicy->policy && pci->proxyPolicy->policy->data)
-        BIO_printf(out, "%*sPolicy Text: %s\n", indent, "",
+        BIO_printf(out, "\n%*sPolicy Text: %s", indent, "",
                    pci->proxyPolicy->policy->data);
     return 1;
 }

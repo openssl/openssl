@@ -1,0 +1,225 @@
+=pod
+
+=head1 NAME
+
+ossl_provider_find, ossl_provider_new, ossl_provider_upref,
+ossl_provider_free, ossl_provider_add_module_location,
+ossl_provider_set_fallback, ossl_provider_activate,
+ossl_provider_forall_loaded,
+ossl_provider_name, ossl_provider_dso,
+ossl_provider_module_name, ossl_provider_module_path,
+ossl_provider_teardown, ossl_provider_get_param_types,
+ossl_provider_get_params, ossl_provider_query_operation
+- internal provider routines
+
+=head1 SYNOPSIS
+
+ #include "internal/provider.h"
+
+ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name);
+ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
+                                  ossl_provider_init_fn *init_function);
+ int ossl_provider_upref(OSSL_PROVIDER *prov);
+ void ossl_provider_free(OSSL_PROVIDER *prov);
+
+ /* Setters */
+ int ossl_provider_add_module_location(OSSL_PROVIDER *prov, const char *loc);
+ int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
+
+ /* Load and initialize the Provider */
+ int ossl_provider_activate(OSSL_PROVIDER *prov);
+
+ /* Iterate over all loaded providers */
+ int ossl_provider_forall_loaded(OPENSSL_CTX *,
+                                 int (*cb)(OSSL_PROVIDER *provider,
+                                           void *cbdata),
+                                 void *cbdata);
+
+ /* Getters for other library functions */
+ const char *ossl_provider_name(OSSL_PROVIDER *prov);
+ const DSO *ossl_provider_dso(OSSL_PROVIDER *prov);
+ const char *ossl_provider_module_name(OSSL_PROVIDER *prov);
+ const char *ossl_provider_module_path(OSSL_PROVIDER *prov);
+
+ /* Thin wrappers around calls to the provider */
+ void ossl_provider_teardown(const OSSL_PROVIDER *prov);
+ const OSSL_ITEM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov);
+ int ossl_provider_get_params(const OSSL_PROVIDER *prov,
+                              const OSSL_PARAM params[]);
+ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
+                                                     int operation_id,
+                                                     int *no_cache);
+
+=head1 DESCRIPTION
+
+C<OSSL_PROVIDER> is a type that holds all the necessary information
+to handle a provider, regardless of if it's built in to the
+application or the OpenSSL libraries, or if it's a loadable provider
+module.
+Instances of this type are commonly refered to as I<provider object>s.
+
+A I<provider object> is always stored in a set of I<provider object>s
+in the library context.
+
+I<provider object>s are reference counted.
+
+I<provider object>s are initially inactive, i.e. they are only
+recorded in the store, but are not used.
+They are activated with the first call to ossl_provider_activate(),
+and are inactivated when ossl_provider_free() has been called as many
+times as ossl_provider_activate() has.
+
+=head2 Functions
+
+ossl_provider_find() finds an existing I<provider object> in the
+I<provider object> store by C<name>.
+The I<provider object> it finds gets its reference count
+incremented.
+
+ossl_provider_new() creates a new I<provider object> and stores it in
+the I<provider object> store, unless there already is one there with
+the same name.
+The reference counter of a newly created I<provider object> will
+always be 2; one for being added to the store, and one for the
+returned reference.
+To indicate a built-in provider, the C<init_function> argument must
+point at the provider initialization function for that provider.
+
+ossl_provider_free() decrements a I<provider object>'s reference
+counter; if it drops below 2, the I<provider object> is assumed to
+have fallen out of use and will be inactivated (its teardown function
+is called); if it drops down to zero, the I<provider object> is
+assumed to have been taken out of the store, and the associated module
+will be unloaded if one was loaded, and the I<provider object> will be
+freed.
+
+ossl_provider_add_module_location() adds a location to look for a
+provider module.
+
+ossl_provider_set_fallback() marks an available provider as fallback.
+Note that after this call, the I<provider object> pointer that was
+used can simply be dropped, but not freed.
+
+ossl_provider_activate() "activates" the provider for the given
+I<provider object>.
+What "activates" means depends on what type of I<provider object> it
+is:
+
+=over 4
+
+=item *
+
+If an initialization function was given with ossl_provider_new(), that
+function will get called.
+
+=item *
+
+If no intialization function was given with ossl_provider_new(), a
+loadable module with the C<name> that was given to ossl_provider_new()
+will be located and loaded, then the symbol C<OSSL_provider_init> will
+be located in that module, and called.
+
+=back
+
+ossl_provider_forall_loaded() iterates over all the currently
+"activated" providers, and calls C<cb> for each of them.
+If no providers have been "activated" yet, it tries to activate all
+available fallback providers and tries another iteration.
+
+ossl_provider_name() returns the name that was given with
+ossl_provider_new().
+
+ossl_provider_dso() returns a reference to the module, for providers
+that come in the form of loadable modules.
+
+ossl_provider_module_name() returns the file name of the module, for
+providers that come in the form of loadable modules.
+
+ossl_provider_module_path() returns the full path of the module file,
+for providers that come in the form of loadable modules.
+
+ossl_provider_teardown() calls the provider's C<teardown> function, if
+the provider has one.
+
+ossl_provider_get_param_types() calls the provider's C<get_param_types>
+function, if the provider has one.
+It should return an array of C<OSSL_ITEM> to describe all the
+parameters that the provider has for the I<provider object>.
+
+ossl_provider_get_params() calls the provider's parameter request
+responder.
+It should treat the given C<OSSL_PARAM> array as described in
+L<OSSL_PARAM(3)>.
+
+ossl_provider_query_operation() calls the provider's
+C<query_operation> function, if the provider has one.
+It should return an array of C<OSSL_ALGORITHM> for the given
+C<operation_id>.
+
+=head1 NOTES
+
+Locating a provider module happens as follows:
+
+=over 4
+
+=item 1.
+
+Look in each directory given by ossl_provider_add_module_location().
+
+=item 2.
+
+Look in the directory given by the environment variable
+B<OPENSSL_MODULES>.
+
+=item 3.
+
+Look in the directory given by the OpenSSL built in macro
+B<MODULESDIR>.
+
+=back
+
+=head1 RETURN VALUES
+
+ossl_provider_find() and ossl_provider_new() return a pointer to a
+I<provider object> (C<OSSL_PROVIDER>) on success, or B<NULL> on error.
+
+ossl_provider_upref() returns the value of the reference counter after
+it has been incremented.
+
+ossl_provider_free() doesn't return any value.
+
+ossl_provider_add_module_location(), ossl_provider_set_fallback() and
+ossl_provider_activate() return 1 on success, or 0 on error.
+
+ossl_provider_name(), ossl_provider_dso(),
+ossl_provider_module_name(), and ossl_provider_module_path() return a
+pointer to their respective data if it's available, otherwise B<NULL>
+is returned.
+
+ossl_provider_teardown() doesnt't return any value.
+
+ossl_provider_get_param_types() returns a pointer to an C<OSSL_ITEM>
+array if this function is available in the provider, otherwise
+B<NULL>.
+
+ossl_provider_get_params() returns 1 on success, or 0 on error.
+If this function isn't available in the provider, 0 is returned.
+
+=head1 SEE ALSO
+
+L<OSSL_PROVIDER(3)>, L<provider(7)>
+
+=head1 HISTORY
+
+The functions described here were all added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

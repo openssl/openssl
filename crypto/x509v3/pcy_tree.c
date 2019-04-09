@@ -1,83 +1,78 @@
 /*
  * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
+#include <openssl/trace.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "pcy_int.h"
 
-/*
- * Enable this to print out the complete policy tree at various point during
- * evaluation.
- */
-
-/*
- * #define OPENSSL_POLICY_DEBUG
- */
-
-#ifdef OPENSSL_POLICY_DEBUG
-
-static void expected_print(BIO *err, X509_POLICY_LEVEL *lev,
-                           X509_POLICY_NODE *node, int indent)
+static void expected_print(BIO *channel,
+                           X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,
+                           int indent)
 {
     if ((lev->flags & X509_V_FLAG_INHIBIT_MAP)
         || !(node->data->flags & POLICY_DATA_FLAG_MAP_MASK))
-        BIO_puts(err, "  Not Mapped\n");
+        BIO_puts(channel, "  Not Mapped\n");
     else {
         int i;
+
         STACK_OF(ASN1_OBJECT) *pset = node->data->expected_policy_set;
         ASN1_OBJECT *oid;
-        BIO_puts(err, "  Expected: ");
+        BIO_puts(channel, "  Expected: ");
         for (i = 0; i < sk_ASN1_OBJECT_num(pset); i++) {
             oid = sk_ASN1_OBJECT_value(pset, i);
             if (i)
-                BIO_puts(err, ", ");
-            i2a_ASN1_OBJECT(err, oid);
+                BIO_puts(channel, ", ");
+            i2a_ASN1_OBJECT(channel, oid);
         }
-        BIO_puts(err, "\n");
+        BIO_puts(channel, "\n");
     }
 }
 
-static void tree_print(char *str, X509_POLICY_TREE *tree,
+static void tree_print(BIO *channel,
+                       char *str, X509_POLICY_TREE *tree,
                        X509_POLICY_LEVEL *curr)
 {
-    BIO *err = BIO_new_fp(stderr, BIO_NOCLOSE);
     X509_POLICY_LEVEL *plev;
 
-    if (err == NULL)
-        return;
     if (!curr)
         curr = tree->levels + tree->nlevel;
     else
         curr++;
 
-    BIO_printf(err, "Level print after %s\n", str);
-    BIO_printf(err, "Printing Up to Level %ld\n", curr - tree->levels);
+    BIO_printf(channel, "Level print after %s\n", str);
+    BIO_printf(channel, "Printing Up to Level %ld\n",
+               curr - tree->levels);
     for (plev = tree->levels; plev != curr; plev++) {
         int i;
 
-        BIO_printf(err, "Level %ld, flags = %x\n",
+        BIO_printf(channel, "Level %ld, flags = %x\n",
                    (long)(plev - tree->levels), plev->flags);
         for (i = 0; i < sk_X509_POLICY_NODE_num(plev->nodes); i++) {
-            X509_POLICY_NODE *node = sk_X509_POLICY_NODE_value(plev->nodes, i);
+            X509_POLICY_NODE *node =
+                sk_X509_POLICY_NODE_value(plev->nodes, i);
 
-            X509_POLICY_NODE_print(err, node, 2);
-            expected_print(err, plev, node, 2);
-            BIO_printf(err, "  Flags: %x\n", node->data->flags);
+            X509_POLICY_NODE_print(channel, node, 2);
+            expected_print(channel, plev, node, 2);
+            BIO_printf(channel, "  Flags: %x\n", node->data->flags);
         }
         if (plev->anyPolicy)
-            X509_POLICY_NODE_print(err, plev->anyPolicy, 2);
+            X509_POLICY_NODE_print(channel, plev->anyPolicy, 2);
     }
-    BIO_free(err);
 }
-#endif
+
+#define TREE_PRINT(str, tree, curr) \
+    OSSL_TRACE_BEGIN(X509V3_POLICY) { \
+        tree_print(trc_out, "before tree_prune()", tree, curr); \
+    } OSSL_TRACE_END(X509V3_POLICY)
 
 /*-
  * Return value: <= 0 on error, or positive bit mask:
@@ -442,7 +437,7 @@ static int tree_add_auth_node(STACK_OF(X509_POLICY_NODE) **pnodes,
     if (*pnodes == NULL &&
         (*pnodes = policy_node_cmp_new()) == NULL)
         return 0;
-    if (sk_X509_POLICY_NODE_find(*pnodes, pcy) != -1)
+    if (sk_X509_POLICY_NODE_find(*pnodes, pcy) >= 0)
         return 1;
     return sk_X509_POLICY_NODE_push(*pnodes, pcy) != 0;
 }
@@ -588,9 +583,7 @@ static int tree_evaluate(X509_POLICY_TREE *tree)
         if (!(curr->flags & X509_V_FLAG_INHIBIT_ANY)
             && !tree_link_any(curr, cache, tree))
             return X509_PCY_TREE_INTERNAL;
-#ifdef OPENSSL_POLICY_DEBUG
-        tree_print("before tree_prune()", tree, curr);
-#endif
+        TREE_PRINT("before tree_prune()", tree, curr);
         ret = tree_prune(tree, curr);
         if (ret != X509_PCY_TREE_VALID)
             return ret;
@@ -665,9 +658,7 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
     }
 
     ret = tree_evaluate(tree);
-#ifdef OPENSSL_POLICY_DEBUG
-    tree_print("tree_evaluate()", tree, NULL);
-#endif
+    TREE_PRINT("tree_evaluate()", tree, NULL);
     if (ret <= 0)
         goto error;
 

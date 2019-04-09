@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,6 +13,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #include "internal/x509_int.h"
+#include "internal/tsan_assist.h"
 
 static void x509v3_cache_extensions(X509 *x);
 
@@ -133,13 +134,14 @@ int X509_PURPOSE_get_by_id(int purpose)
 {
     X509_PURPOSE tmp;
     int idx;
+
     if ((purpose >= X509_PURPOSE_MIN) && (purpose <= X509_PURPOSE_MAX))
         return purpose - X509_PURPOSE_MIN;
-    tmp.purpose = purpose;
-    if (!xptable)
+    if (xptable == NULL)
         return -1;
+    tmp.purpose = purpose;
     idx = sk_X509_PURPOSE_find(xptable, &tmp);
-    if (idx == -1)
+    if (idx < 0)
         return -1;
     return idx + X509_PURPOSE_COUNT;
 }
@@ -350,11 +352,13 @@ static void x509v3_cache_extensions(X509 *x)
     ASN1_BIT_STRING *ns;
     EXTENDED_KEY_USAGE *extusage;
     X509_EXTENSION *ex;
-
     int i;
 
-    if (x->ex_flags & EXFLAG_SET)
+#ifdef tsan_ld_acq
+    /* fast lock-free check, see end of the function for details. */
+    if (tsan_ld_acq((TSAN_QUALIFIER int *)&x->ex_cached))
         return;
+#endif
 
     CRYPTO_THREAD_write_lock(x->lock);
     if (x->ex_flags & EXFLAG_SET) {
@@ -496,6 +500,14 @@ static void x509v3_cache_extensions(X509 *x)
     }
     x509_init_sig_info(x);
     x->ex_flags |= EXFLAG_SET;
+#ifdef tsan_st_rel
+    tsan_st_rel((TSAN_QUALIFIER int *)&x->ex_cached, 1);
+    /*
+     * Above store triggers fast lock-free check in the beginning of the
+     * function. But one has to ensure that the structure is "stable", i.e.
+     * all stores are visible on all processors. Hence the release fence.
+     */
+#endif
     CRYPTO_THREAD_unlock(x->lock);
 }
 
@@ -752,8 +764,9 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * subject name.
  * These are:
  * 1. Check issuer_name(subject) == subject_name(issuer)
- * 2. If akid(subject) exists check it matches issuer
- * 3. If key_usage(issuer) exists check it supports certificate signing
+ * 2. If akid(subject) exists, check that it matches issuer
+ * 3. Check that issuer public key algorithm matches subject signature algorithm
+ * 4. If key_usage(issuer) exists, check that it supports certificate signing
  * returns 0 for OK, positive for reason for mismatch, reasons match
  * codes for X509_verify_cert()
  */
@@ -771,6 +784,24 @@ int X509_check_issued(X509 *issuer, X509 *subject)
         int ret = X509_check_akid(issuer, subject->akid);
         if (ret != X509_V_OK)
             return ret;
+    }
+
+    {
+        /*
+         * Check if the subject signature algorithm matches the issuer's PUBKEY
+         * algorithm
+         */
+        EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
+        X509_ALGOR *s_algor = &subject->cert_info.signature;
+        int s_pknid = NID_undef, s_mdnid = NID_undef;
+
+        if (i_pkey == NULL)
+            return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+
+        if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
+                                 &s_mdnid, &s_pknid)
+            || EVP_PKEY_type(s_pknid) != EVP_PKEY_base_id(i_pkey))
+            return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
     }
 
     if (subject->ex_flags & EXFLAG_PROXY) {

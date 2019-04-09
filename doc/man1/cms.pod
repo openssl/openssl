@@ -15,6 +15,7 @@ B<openssl> B<cms>
 [B<-verify>]
 [B<-cmsout>]
 [B<-resign>]
+[B<-cades>]
 [B<-data_create>]
 [B<-data_out>]
 [B<-digest_create>]
@@ -83,7 +84,8 @@ B<openssl> B<cms>
 [B<-signer file>]
 [B<-recip file>]
 [B<-keyid>]
-[B<-receipt_request_all -receipt_request_first>]
+[B<-receipt_request_all>]
+[B<-receipt_request_first>]
 [B<-receipt_request_from emailaddress>]
 [B<-receipt_request_to emailaddress>]
 [B<-receipt_request_print>]
@@ -156,6 +158,12 @@ Takes an input message and writes out a PEM encoded CMS structure.
 =item B<-resign>
 
 Resign a message: take an existing message and one or more new signers.
+
+=item B<-cades>
+
+Add an ESS signing-certificate or ESS signing-certificate-v2 signed-attribute to the SignerInfo, in order to make
+the signature comply with the requirements for a CAdES Basic Electronic Signature (CAdES-BES). See the NOTES
+section for more details.
 
 =item B<-data_create>
 
@@ -304,7 +312,7 @@ default digest algorithm for the signing key will be used (usually SHA1).
 The encryption algorithm to use. For example triple DES (168 bits) - B<-des3>
 or 256 bit AES - B<-aes256>. Any standard algorithm name (as used by the
 EVP_get_cipherbyname() function) can also be used preceded by a dash, for
-example B<-aes-128-cbc>. See L<B<enc>|enc(1)> for a list of ciphers
+example B<-aes-128-cbc>. See L<enc(1)> for a list of ciphers
 supported by your version of OpenSSL.
 
 If not specified triple DES is used. Only used with B<-encrypt> and
@@ -403,7 +411,7 @@ Use subject key identifier to identify certificates instead of issuer name and
 serial number. The supplied certificate B<must> include a subject key
 identifier extension. Supported by B<-sign> and B<-encrypt> options.
 
-=item B<-receipt_request_all -receipt_request_first>
+=item B<-receipt_request_all>, B<-receipt_request_first>
 
 For B<-sign> option include a signed receipt request. Indicate requests should
 be provided by all recipient or first tier recipients (those mailed directly
@@ -551,6 +559,40 @@ is "decrypted" using a random key which will typically output garbage.
 The B<-debug_decrypt> option can be used to disable the MMA attack protection
 and return an error if no recipient can be found: this option should be used
 with caution. For a fuller description see L<CMS_decrypt(3)>).
+
+=head1 CAdES Basic Electronic Signature (CAdES-BES)
+
+A CAdES Basic Electronic Signature (CAdES-BES), as defined in the European Standard ETSI EN 319 122-1 V1.1.1, contains:
+
+=over 4
+
+=item *
+
+The signed user data as defined in CMS (RFC 3852);
+
+=item *
+
+Content-type of the EncapsulatedContentInfo value being signed;
+
+=item *
+
+Message-digest of the eContent OCTET STRING within encapContentInfo being signed;
+
+=item *
+
+An ESS signing-certificate or ESS signing-certificate-v2 attribute, as defined in Enhanced Security Services (ESS), RFC 2634 and RFC 5035.
+An ESS signing-certificate attribute only allows for the use of SHA-1 as a digest algorithm.
+An ESS signing-certificate-v2 attribute allows for the use of any digest algorithm.
+
+=item *
+
+The digital signature value computed on the user data and, when present, on the signed attributes.
+
+Note that currently the B<-cades> option applies only to the B<-sign> operation and is ignored during
+the B<-verify> operation, i.e. the signing certification is not checked during the verification process.
+This feature might be added in a future version.
+
+=back
 
 =head1 EXIT CODES
 
@@ -723,20 +765,20 @@ No revocation checking is done on the signer's certificate.
 The use of multiple B<-signer> options and the B<-resign> command were first
 added in OpenSSL 1.0.0.
 
-The B<keyopt> option was first added in OpenSSL 1.0.2.
+The B<keyopt> option was added in OpenSSL 1.0.2.
 
-Support for RSA-OAEP and RSA-PSS was first added to OpenSSL 1.0.2.
+Support for RSA-OAEP and RSA-PSS was added in OpenSSL 1.0.2.
 
-The use of non-RSA keys with B<-encrypt> and B<-decrypt> was first added
-to OpenSSL 1.0.2.
+The use of non-RSA keys with B<-encrypt> and B<-decrypt>
+was added in OpenSSL 1.0.2.
 
-The -no_alt_chains options was first added to OpenSSL 1.0.2b.
+The -no_alt_chains option was added in OpenSSL 1.0.2b.
 
 =head1 COPYRIGHT
 
 Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,6 +12,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "internal/evp_int.h"
+#include "internal/provider.h"
 #include "evp_locl.h"
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
@@ -32,13 +33,19 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
         case EVP_CIPH_CCM_MODE:
         case EVP_CIPH_XTS_MODE:
         case EVP_CIPH_OCB_MODE:
-            ret = -1;
+            ret = -2;
             break;
 
         default:
             ret = EVP_CIPHER_set_asn1_iv(c, type);
         }
     } else
+        ret = -1;
+    if (ret <= 0)
+        EVPerr(EVP_F_EVP_CIPHER_PARAM_TO_ASN1, ret == -2 ?
+               ASN1_R_UNSUPPORTED_CIPHER :
+               EVP_R_CIPHER_PARAMETER_ERROR);
+    if (ret < -1)
         ret = -1;
     return ret;
 }
@@ -60,7 +67,7 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
         case EVP_CIPH_CCM_MODE:
         case EVP_CIPH_XTS_MODE:
         case EVP_CIPH_OCB_MODE:
-            ret = -1;
+            ret = -2;
             break;
 
         default:
@@ -68,6 +75,12 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
             break;
         }
     } else
+        ret = -1;
+    if (ret <= 0)
+        EVPerr(EVP_F_EVP_CIPHER_ASN1_TO_PARAM, ret == -2 ?
+               EVP_R_UNSUPPORTED_CIPHER :
+               EVP_R_CIPHER_PARAMETER_ERROR);
+    if (ret < -1)
         ret = -1;
     return ret;
 }
@@ -285,6 +298,14 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 
 int EVP_MD_block_size(const EVP_MD *md)
 {
+    if (md == NULL) {
+        EVPerr(EVP_F_EVP_MD_BLOCK_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return -1;
+    }
+
+    if (md->prov != NULL && md->dblock_size != NULL)
+        return (int)md->dblock_size();
+
     return md->block_size;
 }
 
@@ -304,6 +325,10 @@ int EVP_MD_size(const EVP_MD *md)
         EVPerr(EVP_F_EVP_MD_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
         return -1;
     }
+
+    if (md->prov != NULL && md->size != NULL)
+        return (int)md->size();
+
     return md->md_size;
 }
 
@@ -319,6 +344,12 @@ EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
     if (md != NULL) {
         md->type = md_type;
         md->pkey_type = pkey_type;
+        md->lock = CRYPTO_THREAD_lock_new();
+        if (md->lock == NULL) {
+            OPENSSL_free(md);
+            return NULL;
+        }
+        md->refcnt = 1;
     }
     return md;
 }
@@ -330,9 +361,27 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
         memcpy(to, md, sizeof(*to));
     return to;
 }
+
+int EVP_MD_upref(EVP_MD *md)
+{
+    int ref = 0;
+
+    CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
+    return 1;
+}
+
 void EVP_MD_meth_free(EVP_MD *md)
 {
-    OPENSSL_free(md);
+    if (md != NULL) {
+        int i;
+
+        CRYPTO_DOWN_REF(&md->refcnt, &i, md->lock);
+        if (i > 0)
+            return;
+        ossl_provider_free(md->prov);
+        CRYPTO_THREAD_lock_free(md->lock);
+        OPENSSL_free(md);
+    }
 }
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
 {
@@ -438,14 +487,33 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 {
-    if (!ctx)
+    if (ctx == NULL)
         return NULL;
-    return ctx->digest;
+    return ctx->reqdigest;
 }
 
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
 {
     return ctx->pctx;
+}
+
+void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
+{
+    /*
+     * it's reasonable to set NULL pctx (a.k.a clear the ctx->pctx), so
+     * we have to deal with the cleanup job here.
+     */
+    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
+        EVP_PKEY_CTX_free(ctx->pctx);
+
+    ctx->pctx = pctx;
+
+    if (pctx != NULL) {
+        /* make sure pctx is not freed when destroying EVP_MD_CTX */
+        EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+    } else {
+        EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+    }
 }
 
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
@@ -494,4 +562,31 @@ void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags)
 int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 {
     return (ctx->flags & flags);
+}
+
+int EVP_str2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
+                 void *ctx, int cmd, const char *value)
+{
+    size_t len;
+
+    len = strlen(value);
+    if (len > INT_MAX)
+        return -1;
+    return cb(ctx, cmd, (void *)value, len);
+}
+
+int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
+                 void *ctx, int cmd, const char *hex)
+{
+    unsigned char *bin;
+    long binlen;
+    int rv = -1;
+
+    bin = OPENSSL_hexstr2buf(hex, &binlen);
+    if (bin == NULL)
+        return 0;
+    if (binlen <= INT_MAX)
+        rv = cb(ctx, cmd, bin, binlen);
+    OPENSSL_free(bin);
+    return rv;
 }

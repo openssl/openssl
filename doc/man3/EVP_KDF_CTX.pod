@@ -1,0 +1,249 @@
+=pod
+
+=head1 NAME
+
+EVP_KDF_CTX, EVP_KDF_CTX_new_id, EVP_KDF_CTX_free, EVP_KDF_reset,
+EVP_KDF_ctrl, EVP_KDF_vctrl, EVP_KDF_ctrl_str, EVP_KDF_size,
+EVP_KDF_derive - EVP KDF routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/kdf.h>
+
+ typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
+
+ EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id);
+ void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
+ void EVP_KDF_reset(EVP_KDF_CTX *ctx);
+ int EVP_KDF_ctrl(EVP_KDF_CTX *ctx, int cmd, ...);
+ int EVP_KDF_vctrl(EVP_KDF_CTX *ctx, int cmd, va_list args);
+ int EVP_KDF_ctrl_str(EVP_KDF_CTX *ctx, const char *type, const char *value);
+ size_t EVP_KDF_size(EVP_KDF_CTX *ctx);
+ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
+
+=head1 DESCRIPTION
+
+The EVP KDF routines are a high level interface to Key Derivation Function
+algorithms and should be used instead of algorithm-specific functions.
+
+After creating a C<EVP_KDF_CTX> for the required algorithm using
+EVP_KDF_CTX_new_id(), inputs to the algorithm are supplied using calls to
+EVP_KDF_ctrl(), EVP_KDF_vctrl() or EVP_KDF_ctrl_str() before calling
+EVP_KDF_derive() to derive the key.
+
+=head2 Types
+
+B<EVP_KDF_CTX> is a context type that holds the algorithm inputs.
+
+=head2 Context manipulation functions
+
+EVP_KDF_CTX_new_id() creates a KDF context for the algorithm identified by the
+specified NID.
+
+EVP_KDF_CTX_free() frees up the context C<ctx>.  If C<ctx> is C<NULL>, nothing
+is done.
+
+=head2 Computing functions
+
+EVP_KDF_reset() resets the context to the default state as if the context
+had just been created.
+
+EVP_KDF_ctrl() is used to provide inputs to the KDF algorithm prior to
+EVP_KDF_derive() being called.  The inputs that may be provided will vary
+depending on the KDF algorithm or its implementation.  This functions takes
+variable arguments, the exact expected arguments depend on C<cmd>.
+See L</CONTROLS> below for a description of standard controls.
+
+EVP_KDF_vctrl() is the variant of EVP_KDF_ctrl() that takes a C<va_list>
+argument instead of variadic arguments.
+
+EVP_KDF_ctrl_str() allows an application to send an algorithm specific control
+operation to a context C<ctx> in string form.  This is intended to be used for
+options specified on the command line or in text files.
+
+EVP_KDF_size() returns the output size if the algorithm produces a fixed amount
+of output and C<SIZE_MAX> otherwise.  If an error occurs then 0 is returned.
+For some algorithms an error may result if input parameters necessary to
+calculate a fixed output size have not yet been supplied.
+
+EVP_KDF_derive() derives C<keylen> bytes of key material and places it in the
+C<key> buffer.  If the algorithm produces a fixed amount of output then an
+error will occur unless the C<keylen> parameter is equal to that output size,
+as returned by EVP_KDF_size().
+
+=head1 CONTROLS
+
+The standard controls are:
+
+=over 4
+
+=item B<EVP_KDF_CTRL_SET_PASS>
+
+This control expects two arguments: C<unsigned char *pass>, C<size_t passlen>
+
+Some KDF implementations require a password.  For those KDF implementations
+that support it, this control sets the password.
+
+EVP_KDF_ctrl_str() takes two type strings for this control:
+
+=over 4
+
+=item "pass"
+
+The value string is used as is.
+
+=item "hexpass"
+
+The value string is expected to be a hexadecimal number, which will be
+decoded before being passed on as the control value.
+
+=back
+
+=item B<EVP_KDF_CTRL_SET_SALT>
+
+This control expects two arguments: C<unsigned char *salt>, C<size_t saltlen>
+
+Some KDF implementations can take a salt.  For those KDF implementations that
+support it, this control sets the salt.
+
+The default value, if any, is implementation dependent.
+
+EVP_KDF_ctrl_str() takes two type strings for this control:
+
+=over 4
+
+=item "salt"
+
+The value string is used as is.
+
+=item "hexsalt"
+
+The value string is expected to be a hexadecimal number, which will be
+decoded before being passed on as the control value.
+
+=back
+
+=item B<EVP_KDF_CTRL_SET_ITER>
+
+This control expects one argument: C<int iter>
+
+Some KDF implementations require an iteration count. For those KDF implementations that support it, this control sets the iteration count.
+
+The default value, if any, is implementation dependent.
+
+EVP_KDF_ctrl_str() type string: "iter"
+
+The value string is expected to be a decimal number.
+
+=item B<EVP_KDF_CTRL_SET_MAC>
+
+This control expects one argument: C<EVP_MAC *mac>
+
+Some KDF implementations use a MAC as an underlying computation
+algorithm, this control sets what the MAC algorithm should be.
+
+EVP_KDF_ctrl_str() type string: "mac"
+
+The value string is expected to be the name of a MAC.
+
+=item B<EVP_KDF_CTRL_SET_MD>
+
+This control expects one argument: C<EVP_MD *md>
+
+For MAC implementations that use a message digest as an underlying computation
+algorithm, this control set what the digest algorithm should be.
+
+EVP_KDF_ctrl_str() type string: "md"
+
+The value string is expected to be the name of a digest.
+
+=item B<EVP_KDF_CTRL_SET_KEY>
+
+This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
+
+Some KDF implementations require a key.  For those KDF implementations that
+support it, this control sets the key.
+
+EVP_KDF_ctrl_str() takes two type strings for this control:
+
+=over 4
+
+=item "key"
+
+The value string is used as is.
+
+=item "hexkey"
+
+The value string is expected to be a hexadecimal number, which will be
+decoded before being passed on as the control value.
+
+=back
+
+=item B<EVP_KDF_CTRL_SET_MAC_SIZE>
+
+This control expects one argument: C<size_t size>
+
+Used by implementations that use a MAC with a variable output size (KMAC). For
+those KDF implementations that support it, this control sets the MAC output size.
+
+The default value, if any, is implementation dependent.
+
+EVP_KDF_ctrl_str() type string: "outlen"
+
+The value string is expected to be a decimal number.
+
+=item B<EVP_KDF_CTRL_SET_MAXMEM_BYTES>
+
+This control expects one argument: C<uint64_t maxmem_bytes>
+
+Memory-hard password-based KDF algorithms, such as scrypt, use an amount of
+memory that depends on the load factors provided as input.  For those KDF
+implementations that support it, this control sets an upper limit on the amount
+of memory that may be consumed while performing a key derivation.  If this
+memory usage limit is exceeded because the load factors are chosen too high,
+the key derivation will fail.
+
+The default value is implementation dependent.
+
+EVP_KDF_ctrl_str() type string: "maxmem_bytes"
+
+The value string is expected to be a decimal number.
+
+=back
+
+=head1 RETURN VALUES
+
+EVP_KDF_CTX_new_id() returns either the newly allocated C<EVP_KDF_CTX>
+structure or C<NULL> if an error occurred.
+
+EVP_KDF_CTX_free() and EVP_KDF_reset() do not return a value.
+
+EVP_KDF_size() returns the output size.  C<SIZE_MAX> is returned to indicate
+that the algorithm produces a variable amount of output; 0 to indicate failure.
+
+The remaining functions return 1 for success and 0 or a negative value for
+failure.  In particular, a return value of -2 indicates the operation is not
+supported by the KDF algorithm.
+
+=head1 SEE ALSO
+
+L<EVP_KDF_SCRYPT(7)>
+L<EVP_KDF_TLS1_PRF(7)>
+L<EVP_KDF_PBKDF2(7)>
+L<EVP_KDF_HKDF(7)>
+L<EVP_KDF_SS(7)>
+
+=head1 HISTORY
+
+This functionality was added to OpenSSL 3.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

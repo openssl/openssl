@@ -29,11 +29,14 @@ L UI            include/openssl/ui.h            crypto/ui/ui_err.c
 L COMP          include/openssl/comp.h          crypto/comp/comp_err.c
 L TS            include/openssl/ts.h            crypto/ts/ts_err.c
 L CMS           include/openssl/cms.h           crypto/cms/cms_err.c
+L CRMF          include/openssl/crmf.h          crypto/crmf/crmf_err.c
 L CT            include/openssl/ct.h            crypto/ct/ct_err.c
 L ASYNC         include/openssl/async.h         crypto/async/async_err.c
 L KDF           include/openssl/kdf.h           crypto/kdf/kdf_err.c
 L SM2           crypto/include/internal/sm2.h   crypto/sm2/sm2_err.c
 L OSSL_STORE    include/openssl/store.h         crypto/store/store_err.c
+L ESS           include/openssl/ess.h           crypto/ess/ess_err.c
+L PROP          include/internal/property.h     crypto/property/property_err.c
 
 # additional header files to be scanned for function names
 L NONE          include/openssl/x509_vfy.h      NONE
@@ -67,10 +70,12 @@ R SSL_R_TLSV1_ALERT_INTERNAL_ERROR              1080
 R SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK      1086
 R SSL_R_TLSV1_ALERT_USER_CANCELLED              1090
 R SSL_R_TLSV1_ALERT_NO_RENEGOTIATION            1100
+R SSL_R_TLSV13_ALERT_MISSING_EXTENSION          1109
 R SSL_R_TLSV1_UNSUPPORTED_EXTENSION             1110
 R SSL_R_TLSV1_CERTIFICATE_UNOBTAINABLE          1111
 R SSL_R_TLSV1_UNRECOGNIZED_NAME                 1112
 R SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE   1113
 R SSL_R_TLSV1_BAD_CERTIFICATE_HASH_VALUE        1114
 R TLS1_AD_UNKNOWN_PSK_IDENTITY                  1115
+R SSL_R_TLSV13_ALERT_CERTIFICATE_REQUIRED       1116
 R TLS1_AD_NO_APPLICATION_PROTOCOL               1120

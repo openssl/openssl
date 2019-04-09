@@ -1,7 +1,7 @@
 /*
  * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -475,16 +475,24 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
         pid_t pid;
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
-     * Add process id, thread id, and a high resolution timestamp to
-     * ensure that the nonce is unique whith high probability for
-     * different process instances.
+     * Add process id, thread id, and a high resolution timestamp
+     * (where available, which is OpenVMS v8.4 and up) to ensure that
+     * the nonce is unique whith high probability for different process
+     * instances.
      */
     data.pid = getpid();
     data.tid = CRYPTO_THREAD_get_current_id();
+#if __CRTL_VER >= 80400000
     sys$gettim_prec(&data.time);
+#else
+    sys$gettim((void*)&data.time);
+#endif
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
@@ -494,7 +502,10 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     struct {
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add some noise from the thread id and a high resolution timer.
@@ -502,9 +513,26 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
      * concurrently (which is the case for the <master> drbg).
      */
     data.tid = CRYPTO_THREAD_get_current_id();
+#if __CRTL_VER >= 80400000
     sys$gettim_prec(&data.time);
+#else
+    sys$gettim((void*)&data.time);
+#endif
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+}
+
+int rand_pool_init(void)
+{
+    return 1;
+}
+
+void rand_pool_cleanup(void)
+{
+}
+
+void rand_pool_keep_random_devices_open(int keep)
+{
 }
 
 #endif

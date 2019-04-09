@@ -2,7 +2,7 @@
  * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,18 +15,17 @@
 
 #include "ec_lcl.h"
 
-int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
-                                            EC_POINT *point, const BIGNUM *x,
-                                            int y_bit, BN_CTX *ctx)
+int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
+                                        const BIGNUM *x, int y_bit, BN_CTX *ctx)
 {
-    if (group->meth->point_set_compressed_coordinates == 0
+    if (group->meth->point_set_compressed_coordinates == NULL
         && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,
+        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES,
               ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (!ec_point_is_compat(point, group)) {
-        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,
+        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES,
               EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
@@ -37,7 +36,7 @@ int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
         else
 #ifdef OPENSSL_NO_EC2M
         {
-            ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,
+            ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES,
                   EC_R_GF2M_NOT_SUPPORTED);
             return 0;
         }
@@ -50,33 +49,22 @@ int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
                                                          y_bit, ctx);
 }
 
-#ifndef OPENSSL_NO_EC2M
+#if !OPENSSL_API_3
+int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
+                                            EC_POINT *point, const BIGNUM *x,
+                                            int y_bit, BN_CTX *ctx)
+{
+    return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
+}
+
+# ifndef OPENSSL_NO_EC2M
 int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
                                              EC_POINT *point, const BIGNUM *x,
                                              int y_bit, BN_CTX *ctx)
 {
-    if (group->meth->point_set_compressed_coordinates == 0
-        && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GF2M,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return 0;
-    }
-    if (!ec_point_is_compat(point, group)) {
-        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GF2M,
-              EC_R_INCOMPATIBLE_OBJECTS);
-        return 0;
-    }
-    if (group->meth->flags & EC_FLAGS_DEFAULT_OCT) {
-        if (group->meth->field_type == NID_X9_62_prime_field)
-            return ec_GFp_simple_set_compressed_coordinates(group, point, x,
-                                                            y_bit, ctx);
-        else
-            return ec_GF2m_simple_set_compressed_coordinates(group, point, x,
-                                                             y_bit, ctx);
-    }
-    return group->meth->point_set_compressed_coordinates(group, point, x,
-                                                         y_bit, ctx);
+    return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
 }
+# endif
 #endif
 
 size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,

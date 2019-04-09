@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -216,6 +216,8 @@ extern "C" {
 #   define OSSL_SSIZE_MAX SSIZE_MAX
 #  elif defined(_POSIX_SSIZE_MAX)
 #   define OSSL_SSIZE_MAX _POSIX_SSIZE_MAX
+#  else
+#   define OSSL_SSIZE_MAX ((ssize_t)(SIZE_MAX>>1))
 #  endif
 # endif
 
@@ -283,6 +285,13 @@ typedef unsigned __int64 uint64_t;
 #  define ossl_noreturn __attribute__((noreturn))
 # else
 #  define ossl_noreturn
+# endif
+
+/* ossl_unused: portable unused attribute for use in public headers */
+# if defined(__GNUC__)
+#  define ossl_unused __attribute__((unused))
+# else
+#  define ossl_unused
 # endif
 
 #ifdef  __cplusplus

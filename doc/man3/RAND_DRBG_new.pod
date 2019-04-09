@@ -49,15 +49,45 @@ RAND_DRBG_set() initializes the B<drbg> with the given B<type> and B<flags>.
 RAND_DRBG_set_defaults() sets the default B<type> and B<flags> for new DRBG
 instances.
 
-Currently, all DRBG types are based on AES-CTR, so B<type> can be one of the
-following values: NID_aes_128_ctr, NID_aes_192_ctr, NID_aes_256_ctr.
+The DRBG types are AES-CTR, HMAC and HASH so B<type> can be one of the
+following values:
+
+NID_aes_128_ctr, NID_aes_192_ctr, NID_aes_256_ctr, NID_sha1, NID_sha224,
+NID_sha256, NID_sha384, NID_sha512, NID_sha512_224, NID_sha512_256,
+NID_sha3_224, NID_sha3_256, NID_sha3_384 or NID_sha3_512.
+
+If this method is not called then the default type is given by NID_aes_256_ctr
+and the default flags are zero.
+
 Before the DRBG can be used to generate random bits, it is necessary to set
 its type and to instantiate it.
 
 The optional B<flags> argument specifies a set of bit flags which can be
-joined using the | operator. Currently, the only flag is
-RAND_DRBG_FLAG_CTR_NO_DF, which disables the use of a the derivation function
-ctr_df. For an explanation, see [NIST SP 800-90A Rev. 1].
+joined using the | operator. The supported flags are:
+
+=over 4
+
+=item RAND_DRBG_FLAG_CTR_NO_DF
+
+Disables the use of the derivation function ctr_df. For an explanation,
+see [NIST SP 800-90A Rev. 1].
+
+=item RAND_DRBG_FLAG_HMAC
+
+Enables use of HMAC instead of the HASH DRBG.
+
+=item RAND_DRBG_FLAG_MASTER
+
+=item RAND_DRBG_FLAG_PUBLIC
+
+=item RAND_DRBG_FLAG_PRIVATE
+
+These 3 flags can be used to set the individual DRBG types created. Multiple
+calls are required to set the types to different values. If none of these 3
+flags are used, then the same type and flags are used for all 3 DRBGs in the
+B<drbg> chain (<master>, <public> and <private>).
+
+=back
 
 If a B<parent> instance is specified then this will be used instead of
 the default entropy source for reseeding the B<drbg>. It is said that the
@@ -119,7 +149,7 @@ L<RAND_DRBG(7)>
 
 Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

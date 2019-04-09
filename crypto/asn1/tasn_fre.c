@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -103,7 +103,7 @@ void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             ASN1_VALUE **pseqval;
 
             tt--;
-            seqtt = asn1_do_adb(pval, tt, 0);
+            seqtt = asn1_do_adb(*pval, tt, 0);
             if (!seqtt)
                 continue;
             pseqval = asn1_get_field_ptr(pval, seqtt);

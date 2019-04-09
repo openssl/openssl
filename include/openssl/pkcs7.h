@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -208,11 +208,11 @@ int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
                                    unsigned int *len);
 # ifndef OPENSSL_NO_STDIO
 PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7);
-int i2d_PKCS7_fp(FILE *fp, PKCS7 *p7);
+int i2d_PKCS7_fp(FILE *fp, const PKCS7 *p7);
 # endif
-PKCS7 *PKCS7_dup(PKCS7 *p7);
+DECLARE_ASN1_DUP_FUNCTION(PKCS7)
 PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7);
-int i2d_PKCS7_bio(BIO *bp, PKCS7 *p7);
+int i2d_PKCS7_bio(BIO *bp, const PKCS7 *p7);
 int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
 int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
 

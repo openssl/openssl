@@ -3,7 +3,7 @@
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,6 +16,7 @@
 #include <openssl/md5.h>
 #include <openssl/dh.h>
 #include <openssl/rand.h>
+#include <openssl/trace.h>
 #include "internal/cryptlib.h"
 
 #define TLS13_NUM_CIPHERS       OSSL_NELEM(tls13_ciphers)
@@ -3414,7 +3415,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             EVP_PKEY *pkdh = NULL;
             if (dh == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
-                return ret;
+                return 0;
             }
             pkdh = ssl_dh_to_pkey(dh);
             if (pkdh == NULL) {
@@ -3425,11 +3426,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                               EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_DH_KEY_TOO_SMALL);
                 EVP_PKEY_free(pkdh);
-                return ret;
+                return 0;
             }
             EVP_PKEY_free(s->cert->dh_tmp);
             s->cert->dh_tmp = pkdh;
-            ret = 1;
+            return 1;
         }
         break;
     case SSL_CTRL_SET_TMP_DH_CB:
@@ -3466,6 +3467,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
+        /*
+         * TODO(OpenSSL1.2)
+         * This API is only used for a client to set what SNI it will request
+         * from the server, but we currently allow it to be used on servers
+         * as well, which is a programming error.  Currently we just clear
+         * the field in SSL_do_handshake() for server SSLs, but when we can
+         * make ABI-breaking changes, we may want to make use of this API
+         * an error on server SSLs.
+         */
         if (larg == TLSEXT_NAMETYPE_host_name) {
             size_t len;
 
@@ -3536,13 +3546,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         s->ext.ocsp.resp_len = larg;
         ret = 1;
         break;
-
-#ifndef OPENSSL_NO_HEARTBEATS
-    case SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT:
-    case SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING:
-    case SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS:
-        break;
-#endif
 
     case SSL_CTRL_CHAIN:
         if (larg)
@@ -3672,9 +3675,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         *(int *)parg = s->s3->tmp.peer_sigalg->hash;
         return 1;
 
-    case SSL_CTRL_GET_SERVER_TMP_KEY:
+    case SSL_CTRL_GET_SIGNATURE_NID:
+        if (s->s3->tmp.sigalg == NULL)
+            return 0;
+        *(int *)parg = s->s3->tmp.sigalg->hash;
+        return 1;
+
+    case SSL_CTRL_GET_PEER_TMP_KEY:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-        if (s->server || s->session == NULL || s->s3->peer_tmp == NULL) {
+        if (s->session == NULL || s->s3->peer_tmp == NULL) {
             return 0;
         } else {
             EVP_PKEY_up_ref(s->s3->peer_tmp);
@@ -3684,6 +3693,20 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #else
         return 0;
 #endif
+
+    case SSL_CTRL_GET_TMP_KEY:
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+        if (s->session == NULL || s->s3->tmp.pkey == NULL) {
+            return 0;
+        } else {
+            EVP_PKEY_up_ref(s->s3->tmp.pkey);
+            *(EVP_PKEY **)parg = s->s3->tmp.pkey;
+            return 1;
+        }
+#else
+        return 0;
+#endif
+
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_EC_POINT_FORMATS:
         {
@@ -3752,7 +3775,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                                   EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_DH_KEY_TOO_SMALL);
                 EVP_PKEY_free(pkdh);
-                return 1;
+                return 0;
             }
             EVP_PKEY_free(ctx->cert->dh_tmp);
             ctx->cert->dh_tmp = pkdh;
@@ -4124,20 +4147,20 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
      * pay with the price of sk_SSL_CIPHER_dup().
      */
 
-#ifdef CIPHER_DEBUG
-    fprintf(stderr, "Server has %d from %p:\n", sk_SSL_CIPHER_num(srvr),
-            (void *)srvr);
-    for (i = 0; i < sk_SSL_CIPHER_num(srvr); ++i) {
-        c = sk_SSL_CIPHER_value(srvr, i);
-        fprintf(stderr, "%p:%s\n", (void *)c, c->name);
-    }
-    fprintf(stderr, "Client sent %d from %p:\n", sk_SSL_CIPHER_num(clnt),
-            (void *)clnt);
-    for (i = 0; i < sk_SSL_CIPHER_num(clnt); ++i) {
-        c = sk_SSL_CIPHER_value(clnt, i);
-        fprintf(stderr, "%p:%s\n", (void *)c, c->name);
-    }
-#endif
+    OSSL_TRACE_BEGIN(TLS_CIPHER) {
+        BIO_printf(trc_out, "Server has %d from %p:\n",
+                   sk_SSL_CIPHER_num(srvr), (void *)srvr);
+        for (i = 0; i < sk_SSL_CIPHER_num(srvr); ++i) {
+            c = sk_SSL_CIPHER_value(srvr, i);
+            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
+        }
+        BIO_printf(trc_out, "Client sent %d from %p:\n",
+                   sk_SSL_CIPHER_num(clnt), (void *)clnt);
+        for (i = 0; i < sk_SSL_CIPHER_num(clnt); ++i) {
+            c = sk_SSL_CIPHER_value(clnt, i);
+            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
+        }
+    } OSSL_TRACE_END(TLS_CIPHER);
 
     /* SUITE-B takes precedence over server preference and ChaCha priortiy */
     if (tls1_suiteb(s)) {
@@ -4251,10 +4274,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif                          /* OPENSSL_NO_PSK */
 
             ok = (alg_k & mask_k) && (alg_a & mask_a);
-#ifdef CIPHER_DEBUG
-            fprintf(stderr, "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n", ok, alg_k,
-                    alg_a, mask_k, mask_a, (void *)c, c->name);
-#endif
+            OSSL_TRACE7(TLS_CIPHER,
+                        "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
+                        ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
 
 #ifndef OPENSSL_NO_EC
             /*
@@ -4559,7 +4581,7 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
     } else {
         ret = RAND_bytes(result, len);
     }
-#ifndef OPENSSL_NO_TLS13DOWNGRADE
+
     if (ret > 0) {
         if (!ossl_assert(sizeof(tls11downgrade) < len)
                 || !ossl_assert(sizeof(tls12downgrade) < len))
@@ -4571,7 +4593,7 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
             memcpy(result + len - sizeof(tls11downgrade), tls11downgrade,
                    sizeof(tls11downgrade));
     }
-#endif
+
     return ret;
 }
 
@@ -4612,6 +4634,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
         if (!s->method->ssl3_enc->generate_master_secret(s,
                     s->session->master_key,pskpms, pskpmslen,
                     &s->session->master_key_length)) {
+            OPENSSL_clear_free(pskpms, pskpmslen);
             /* SSLfatal() already called */
             goto err;
         }

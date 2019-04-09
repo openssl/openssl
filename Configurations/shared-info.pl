@@ -2,7 +2,7 @@
 # -*- mode: perl; -*-
 # Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -32,6 +32,7 @@ my %shared_info;
         return {
             %{$shared_info{'gnu-shared'}},
             shared_defflag    => '-Wl,--version-script=',
+            dso_ldflags       => '-z defs',
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },
@@ -53,7 +54,7 @@ my %shared_info;
     'mingw-shared' => sub {
         return {
             %{$shared_info{'cygwin-shared'}},
-            # def_flag made to empty string so  it still generates
+            # def_flag made to empty string so it still generates
             # something
             shared_defflag    => '',
         };
@@ -64,10 +65,6 @@ my %shared_info;
             module_ldflags    => '-shared -Wl,-Bsymbolic',
             shared_ldflag     => '-shared -Wl,-Bsymbolic -set_version $(SHLIB_VERSION_NUMBER)',
         };
-    },
-    'solaris-shared' => {
-        shared_ldflag     => '-Wl,-Bsymbolic',
-        shared_defflag    => '-Wl,-M,',
     },
     'svr3-shared' => sub {
         return $shared_info{'gnu-shared'} if detect_gnu_ld();
@@ -82,21 +79,5 @@ my %shared_info;
             shared_ldflag     => detect_gnu_cc() ? '-shared' : '-G',
             shared_sonameflag => '-h ',
         };
-    },
-    'irix-shared' => sub {
-        return $shared_info{'gnu-shared'} if detect_gnu_ld();
-        return {
-            shared_ldflag     => '-shared -Wl,-Bsymbolic',
-            shared_sonameflag => '-Wl,-soname=',
-        };
-    },
-    'hpux-shared' => {
-        bin_lflags        => '-Wl,+s,+cdp,../:,+cdp,./:',
-        shared_ldflag     => '-Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:',
-        shared_sonameflag => '-Wl,+h,',
-    },
-    'aix-shared' => {
-        bin_lflags            => '-Wl,-bsvr4',
-        shared_ldflag         => '-Wl,-bexpall,-bnolibpath,-bM:SRE',
     },
 );

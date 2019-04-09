@@ -3,6 +3,7 @@
 # assembly language, etc.
 #
 OPENSSL_ia32cap                         environment
+OPENSSL_s390xcap                        environment
 OPENSSL_MALLOC_FD                       environment
 OPENSSL_MALLOC_FAILURES                 environment
 OPENSSL_instrument_bus                  assembler
@@ -21,12 +22,18 @@ CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype
 DTLS_timer_cb                           datatype
+EVP_KDF_CTX                             datatype
+EVP_MAC                                 datatype
+EVP_MAC_CTX                             datatype
 EVP_PKEY_gen_cb                         datatype
 EVP_PKEY_METHOD                         datatype
 EVP_PKEY_ASN1_METHOD                    datatype
 GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
+OPENSSL_CTX                             datatype
 NAMING_AUTHORITY                        datatype
+OSSL_PARAM                              datatype
+OSSL_PROVIDER                           datatype
 OSSL_STORE_CTX                          datatype
 OSSL_STORE_INFO                         datatype
 OSSL_STORE_LOADER                       datatype
@@ -41,6 +48,7 @@ OSSL_STORE_error_fn                     datatype
 OSSL_STORE_load_fn                      datatype
 OSSL_STORE_open_fn                      datatype
 OSSL_STORE_post_process_info_fn         datatype
+OSSL_trace_cb                           datatype
 PROFESSION_INFO                         datatype
 PROFESSION_INFOS                        datatype
 RAND_DRBG_cleanup_entropy_fn            datatype
@@ -48,7 +56,9 @@ RAND_DRBG_cleanup_nonce_fn              datatype
 RAND_DRBG_get_entropy_fn                datatype
 RAND_DRBG_get_nonce_fn                  datatype
 RAND_poll_cb                            datatype
+SSL_CTX_allow_early_data_cb_fn          datatype
 SSL_CTX_keylog_cb_func                  datatype
+SSL_allow_early_data_cb_fn              datatype
 SSL_client_hello_cb_fn                  datatype
 SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype
@@ -85,6 +95,8 @@ custom_ext_free_cb                      datatype
 custom_ext_parse_cb                     datatype
 pem_password_cb                         datatype
 ssl_ct_validation_cb                    datatype
+ASYNC_callback_fn                       datatype
+SSL_async_callback_fn                   datatype
 #
 BIO_append_filename                     define
 BIO_destroy_bio_pair                    define
@@ -103,6 +115,8 @@ BIO_get_buffer_num_lines                define
 BIO_get_cipher_ctx                      define
 BIO_get_cipher_status                   define
 BIO_get_close                           define
+BIO_get_ktls_send                       define
+BIO_get_ktls_recv                       define
 BIO_get_conn_address                    define
 BIO_get_conn_hostname                   define
 BIO_get_conn_port                       define
@@ -182,14 +196,34 @@ ERR_free_strings                        define deprecated 1.1.0
 ERR_load_crypto_strings                 define deprecated 1.1.0
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
+EVP_MAC_name                            define
 EVP_MD_CTX_block_size                   define
 EVP_MD_CTX_size                         define
 EVP_MD_CTX_type                         define
 EVP_OpenUpdate                          define
 EVP_PKEY_CTX_add1_hkdf_info             define
 EVP_PKEY_CTX_add1_tls1_prf_seed         define
+EVP_PKEY_CTX_get0_dh_kdf_oid            define
+EVP_PKEY_CTX_get0_dh_kdf_ukm            define
+EVP_PKEY_CTX_get0_ecdh_kdf_ukm          define
+EVP_PKEY_CTX_get0_rsa_oaep_label        define
+EVP_PKEY_CTX_get_dh_kdf_md              define
+EVP_PKEY_CTX_get_dh_kdf_outlen          define
+EVP_PKEY_CTX_get_dh_kdf_type            define
+EVP_PKEY_CTX_get_ecdh_cofactor_mode     define
+EVP_PKEY_CTX_get_ecdh_kdf_md            define
+EVP_PKEY_CTX_get_ecdh_kdf_outlen        define
+EVP_PKEY_CTX_get_ecdh_kdf_type          define
+EVP_PKEY_CTX_get_rsa_mgf1_md            define
+EVP_PKEY_CTX_get_rsa_oaep_md            define
+EVP_PKEY_CTX_get_rsa_padding            define
+EVP_PKEY_CTX_get_rsa_pss_saltlen        define
 EVP_PKEY_CTX_get_signature_md           define
 EVP_PKEY_CTX_hkdf_mode                  define
+EVP_PKEY_CTX_set0_dh_kdf_oid            define
+EVP_PKEY_CTX_set0_dh_kdf_ukm            define
+EVP_PKEY_CTX_set0_ecdh_kdf_ukm          define
+EVP_PKEY_CTX_set0_rsa_oaep_label        define
 EVP_PKEY_CTX_set1_hkdf_key              define
 EVP_PKEY_CTX_set1_hkdf_salt             define
 EVP_PKEY_CTX_set1_pbe_pass              define
@@ -197,14 +231,31 @@ EVP_PKEY_CTX_set1_scrypt_salt           define
 EVP_PKEY_CTX_set1_tls1_prf_secret       define
 EVP_PKEY_CTX_set_dh_paramgen_generator  define
 EVP_PKEY_CTX_set_dh_paramgen_prime_len  define
-EVP_PKEY_CTX_set_dh_pad                 define
+EVP_PKEY_CTX_set_dh_paramgen_subprime_len     define
+EVP_PKEY_CTX_set_dh_paramgen_type       define
+EVP_PKEY_CTX_set_dh_kdf_md              define
+EVP_PKEY_CTX_set_dh_kdf_outlen          define
+EVP_PKEY_CTX_set_dh_kdf_type            define
 EVP_PKEY_CTX_set_dh_nid                 define
+EVP_PKEY_CTX_set_dh_pad                 define
+EVP_PKEY_CTX_set_dh_rfc5114             define
+EVP_PKEY_CTX_set_dhx_rfc5114            define
 EVP_PKEY_CTX_set_dsa_paramgen_bits      define
+EVP_PKEY_CTX_set_dsa_paramgen_q_bits    define
+EVP_PKEY_CTX_set_dsa_paramgen_md        define
 EVP_PKEY_CTX_set_ec_param_enc           define
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid  define
+EVP_PKEY_CTX_set_ecdh_cofactor_mode     define
+EVP_PKEY_CTX_set_ecdh_kdf_md            define
+EVP_PKEY_CTX_set_ecdh_kdf_outlen        define
+EVP_PKEY_CTX_set_ecdh_kdf_type          define
 EVP_PKEY_CTX_set_hkdf_md                define
 EVP_PKEY_CTX_set_mac_key                define
+EVP_PKEY_CTX_set_rsa_keygen_bits        define
 EVP_PKEY_CTX_set_rsa_keygen_pubexp      define
+EVP_PKEY_CTX_set_rsa_keygen_primes      define
+EVP_PKEY_CTX_set_rsa_mgf1_md            define
+EVP_PKEY_CTX_set_rsa_oaep_md            define
 EVP_PKEY_CTX_set_rsa_padding            define
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md define
 EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen define
@@ -219,7 +270,9 @@ EVP_PKEY_CTX_set_tls1_prf_md            define
 EVP_PKEY_assign_DH                      define
 EVP_PKEY_assign_DSA                     define
 EVP_PKEY_assign_EC_KEY                  define
+EVP_PKEY_assign_POLY1305                define
 EVP_PKEY_assign_RSA                     define
+EVP_PKEY_assign_SIPHASH                 define
 EVP_SealUpdate                          define
 EVP_SignInit                            define
 EVP_SignInit_ex                         define
@@ -232,13 +285,23 @@ EVP_cast5_cfb                           define
 EVP_cleanup                             define deprecated 1.1.0
 EVP_get_digestbynid                     define
 EVP_get_digestbyobj                     define
+EVP_get_macbynid                        define
+EVP_get_macbyobj                        define
 EVP_idea_cfb                            define
 EVP_rc2_cfb                             define
 EVP_rc5_32_12_16_cfb                    define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
-OPENSSL_VERSION_NUMBER                  define
+OPENSSL_VERSION_MAJOR                   define
+OPENSSL_VERSION_MINOR                   define
+OPENSSL_VERSION_NUMBER                  define deprecated 3.0.0
+OPENSSL_VERSION_PATCH                   define
+OPENSSL_VERSION_PRE_RELEASE             define
+OPENSSL_VERSION_BUILD_METADATA          define
+OPENSSL_VERSION_PRE_RELEASE_STR         define
+OPENSSL_VERSION_BUILD_METADATA_STR      define
+OPENSSL_VERSION_TEXT                    define
 OPENSSL_clear_free                      define
 OPENSSL_clear_realloc                   define
 OPENSSL_free                            define
@@ -261,12 +324,26 @@ OpenSSL_add_all_algorithms              define deprecated 1.1.0
 OpenSSL_add_all_ciphers                 define deprecated 1.1.0
 OpenSSL_add_all_digests                 define deprecated 1.1.0
 OpenSSL_add_ssl_algorithms              define
+OSSL_PARAM_utf8_ptr                     define
+OSSL_PARAM_SIZED_BN                     define
+OSSL_PARAM_TYPE                         generic
+OSSL_PARAM_construct_TYPE               generic
+OSSL_PARAM_octet_string                 define
+OSSL_PARAM_SIZED_octet_ptr              define
+OSSL_PARAM_utf8_string                  define
+OSSL_PARAM_octet_ptr                    define
+OSSL_PARAM_SIZED_utf8_ptr               define
+OSSL_PARAM_SIZED_utf8_string            define
+OSSL_PARAM_SIZED_TYPE                   generic
+OSSL_PARAM_get_TYPE                     generic
+OSSL_PARAM_END                          define
+OSSL_PARAM_set_TYPE                     generic
+OSSL_PARAM_SIZED_octet_string           define
 PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define
 RAND_cleanup                            define deprecated 1.1.0
 RAND_DRBG_get_ex_new_index              define
-EVP_PKEY_CTX_set_rsa_keygen_bits        define
 SSL_COMP_free_compression_methods       define deprecated 1.1.0
 SSL_CTX_add0_chain_cert                 define
 SSL_CTX_add1_chain_cert                 define
@@ -280,6 +357,8 @@ SSL_CTX_disable_ct                      define
 SSL_CTX_generate_session_ticket_fn      define
 SSL_CTX_get0_chain_certs                define
 SSL_CTX_get_default_read_ahead          define
+SSL_CTX_get_extra_chain_certs           define
+SSL_CTX_get_extra_chain_certs_only      define
 SSL_CTX_get_max_cert_list               define
 SSL_CTX_get_max_proto_version           define
 SSL_CTX_get_min_proto_version           define
@@ -319,6 +398,7 @@ SSL_CTX_set1_sigalgs                    define
 SSL_CTX_set1_sigalgs_list               define
 SSL_CTX_set1_verify_cert_store          define
 SSL_CTX_set_current_cert                define
+SSL_CTX_set_ecdh_auto                   define
 SSL_CTX_set_max_cert_list               define
 SSL_CTX_set_max_pipelines               define
 SSL_CTX_set_max_proto_version           define
@@ -336,6 +416,7 @@ SSL_CTX_set_tlsext_status_cb            define
 SSL_CTX_set_tlsext_status_type          define
 SSL_CTX_set_tlsext_ticket_key_cb        define
 SSL_CTX_set_tmp_dh                      define
+SSL_CTX_set_tmp_ecdh                    define
 SSL_add0_chain_cert                     define
 SSL_add1_chain_cert                     define
 SSL_build_cert_chain                    define
@@ -356,14 +437,17 @@ SSL_get_max_proto_version               define
 SSL_get_min_proto_version               define
 SSL_get_mode                            define
 SSL_get_peer_signature_nid              define
+SSL_get_peer_tmp_key                    define
 SSL_get_secure_renegotiation_support    define
 SSL_get_server_tmp_key                  define
 SSL_get_shared_curve                    define
 SSL_get_shared_group                    define
+SSL_get_signature_nid                   define
 SSL_get_time                            define
 SSL_get_timeout                         define
 SSL_get_tlsext_status_ocsp_resp         define
 SSL_get_tlsext_status_type              define
+SSL_get_tmp_key                         define
 SSL_in_accept_init                      define
 SSL_in_connect_init                     define
 SSL_library_init                        define
@@ -384,6 +468,7 @@ SSL_set1_sigalgs                        define
 SSL_set1_sigalgs_list                   define
 SSL_set1_verify_cert_store              define
 SSL_set_current_cert                    define
+SSL_set_ecdh_auto                       define
 SSL_set_max_cert_list                   define
 SSL_set_max_pipelines                   define
 SSL_set_max_proto_version               define
@@ -399,6 +484,7 @@ SSL_set_tlsext_host_name                define
 SSL_set_tlsext_status_ocsp_resp         define
 SSL_set_tlsext_status_type              define
 SSL_set_tmp_dh                          define
+SSL_set_tmp_ecdh                        define
 SSL_want_async                          define
 SSL_want_async_job                      define
 SSL_want_client_hello_cb                define
@@ -411,3 +497,16 @@ SSLv23_method                           define
 SSLv23_server_method                    define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
+EVP_PKEY_CTX_set1_id                    define
+EVP_PKEY_CTX_get1_id                    define
+EVP_PKEY_CTX_get1_id_len                define
+ASYNC_STATUS_EAGAIN                     define
+ASYNC_STATUS_OK                         define
+ASYNC_STATUS_ERR                        define
+ASYNC_STATUS_UNSUPPORTED                define
+OSSL_TRACE_BEGIN                        define
+OSSL_TRACE_END                          define
+OSSL_TRACE_CANCEL                       define
+OSSL_TRACE1                             define
+OSSL_TRACE2                             define
+OSSL_TRACE9                             define

@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -335,7 +335,6 @@ ___
 }
 {
 $code.=<<___;
-.globl	KeccakF1600
 .type	KeccakF1600,\@function
 .align	32
 KeccakF1600:
@@ -433,9 +432,9 @@ SHA3_absorb:
 	lrvg	%r0,0($inp)
 	la	$inp,8($inp)
 	xg	%r0,0(%r1)
-	la	%r1,8(%r1)
 	a${g}hi	$len,-8
-	stg	%r0,-8(%r1)
+	stg	%r0,0(%r1)
+	la	%r1,8(%r1)
 	brct	$bsz,.Lblock_absorb
 
 	stm${g}	$inp,$len,$frame+3*$SIZE_T($sp)

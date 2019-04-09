@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -34,10 +34,13 @@
 #include <openssl/err.h>
 #include <openssl/tserr.h>
 #include <openssl/cmserr.h>
+#include <openssl/crmferr.h>
 #include <openssl/cterr.h>
 #include <openssl/asyncerr.h>
 #include <openssl/kdferr.h>
 #include <openssl/storeerr.h>
+#include <openssl/esserr.h>
+#include "internal/propertyerr.h"
 
 int err_load_crypto_strings_int(void)
 {
@@ -88,13 +91,18 @@ int err_load_crypto_strings_int(void)
 # ifndef OPENSSL_NO_CMS
         ERR_load_CMS_strings() == 0 ||
 # endif
+# ifndef OPENSSL_NO_CMP
+        ERR_load_CRMF_strings() == 0 ||
+# endif
 # ifndef OPENSSL_NO_CT
         ERR_load_CT_strings() == 0 ||
 # endif
+        ERR_load_ESS_strings() == 0 ||
         ERR_load_ASYNC_strings() == 0 ||
 #endif
         ERR_load_KDF_strings() == 0 ||
-        ERR_load_OSSL_STORE_strings() == 0)
+        ERR_load_OSSL_STORE_strings() == 0 ||
+        ERR_load_PROP_strings() == 0)
         return 0;
 
     return 1;

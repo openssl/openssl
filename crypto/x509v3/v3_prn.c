@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -34,8 +34,11 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
             BIO_puts(out, "<EMPTY>\n");
     }
     for (i = 0; i < sk_CONF_VALUE_num(val); i++) {
-        if (ml)
+        if (ml) {
+            if (i > 0)
+                BIO_printf(out, "\n");
             BIO_printf(out, "%*s", indent, "");
+        }
         else if (i > 0)
             BIO_printf(out, ", ");
         nval = sk_CONF_VALUE_value(val, i);
@@ -59,8 +62,6 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
             }
         }
 #endif
-        if (ml)
-            BIO_puts(out, "\n");
     }
 }
 

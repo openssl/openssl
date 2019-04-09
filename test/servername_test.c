@@ -1,8 +1,8 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -22,18 +22,28 @@
 
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "ssltestlib.h"
 
 #define CLIENT_VERSION_LEN      2
 
 static const char *host = "dummy-host";
 
+static char *cert = NULL;
+static char *privkey = NULL;
+
 static int get_sni_from_client_hello(BIO *bio, char **sni)
 {
     long len;
     unsigned char *data;
-    PACKET pkt = {0}, pkt2 = {0}, pkt3 = {0}, pkt4 = {0}, pkt5 = {0};
+    PACKET pkt, pkt2, pkt3, pkt4, pkt5;
     unsigned int servname_type = 0, type = 0;
     int ret = 0;
+
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&pkt2, 0, sizeof(pkt2));
+    memset(&pkt3, 0, sizeof(pkt3));
+    memset(&pkt4, 0, sizeof(pkt4));
+    memset(&pkt5, 0, sizeof(pkt5));
 
     len = BIO_get_mem_data(bio, (char **)&data);
     if (!TEST_true(PACKET_buf_init(&pkt, data, len))
@@ -176,45 +186,38 @@ end:
 
 static int server_setup_sni(void)
 {
-    SSL_CTX *ctx;
-    SSL *con = NULL;
-    BIO *rbio;
-    BIO *wbio;
-    int ret = 0;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
 
-    /* use TLS_server_method to choose 'server-side' */
-    ctx = SSL_CTX_new(TLS_server_method());
-    if (!TEST_ptr(ctx))
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
         goto end;
 
-    con = SSL_new(ctx);
-    if (!TEST_ptr(con))
+    /* set SNI at server side */
+    SSL_set_tlsext_host_name(serverssl, host);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
-    rbio = BIO_new(BIO_s_mem());
-    wbio = BIO_new(BIO_s_mem());
-    if (!TEST_ptr(rbio)|| !TEST_ptr(wbio)) {
-        BIO_free(rbio);
-        BIO_free(wbio);
+    if (!TEST_ptr_null(SSL_get_servername(serverssl,
+                                          TLSEXT_NAMETYPE_host_name))) {
+        /* SNI should have been cleared during handshake */
         goto end;
     }
 
-    SSL_set_bio(con, rbio, wbio);
-
-    /* set SNI at server side */
-    SSL_set_tlsext_host_name(con, host);
-
-    if (!TEST_int_le(SSL_accept(con), 0))
-        /* This shouldn't succeed because we have nothing to listen on */
-        goto end;
-    if (!TEST_ptr_null(SSL_get_servername(con, TLSEXT_NAMETYPE_host_name)))
-        /* SNI should be cleared by SSL_accpet */
-        goto end;
-    ret = 1;
+    testresult = 1;
 end:
-    SSL_free(con);
-    SSL_CTX_free(ctx);
-    return ret;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
 }
 
 typedef int (*sni_test_fn)(void);
@@ -236,6 +239,10 @@ static int test_servername(int test)
 
 int setup_tests(void)
 {
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(privkey = test_get_argument(1)))
+        return 0;
+
     ADD_ALL_TESTS(test_servername, OSSL_NELEM(sni_test_fns));
     return 1;
 }

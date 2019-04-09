@@ -10,12 +10,14 @@ EVP_PKEY_meth_set_verify, EVP_PKEY_meth_set_verify_recover, EVP_PKEY_meth_set_si
 EVP_PKEY_meth_set_verifyctx, EVP_PKEY_meth_set_encrypt, EVP_PKEY_meth_set_decrypt,
 EVP_PKEY_meth_set_derive, EVP_PKEY_meth_set_ctrl, EVP_PKEY_meth_set_check,
 EVP_PKEY_meth_set_public_check, EVP_PKEY_meth_set_param_check,
+EVP_PKEY_meth_set_digest_custom,
 EVP_PKEY_meth_get_init, EVP_PKEY_meth_get_copy, EVP_PKEY_meth_get_cleanup,
 EVP_PKEY_meth_get_paramgen, EVP_PKEY_meth_get_keygen, EVP_PKEY_meth_get_sign,
 EVP_PKEY_meth_get_verify, EVP_PKEY_meth_get_verify_recover, EVP_PKEY_meth_get_signctx,
 EVP_PKEY_meth_get_verifyctx, EVP_PKEY_meth_get_encrypt, EVP_PKEY_meth_get_decrypt,
 EVP_PKEY_meth_get_derive, EVP_PKEY_meth_get_ctrl, EVP_PKEY_meth_get_check,
 EVP_PKEY_meth_get_public_check, EVP_PKEY_meth_get_param_check,
+EVP_PKEY_meth_get_digest_custom,
 EVP_PKEY_meth_remove
 - manipulating EVP_PKEY_METHOD structure
 
@@ -116,6 +118,9 @@ EVP_PKEY_meth_remove
                                      int (*check) (EVP_PKEY *pkey));
  void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
                                     int (*check) (EVP_PKEY *pkey));
+ void EVP_PKEY_meth_set_digest_custom(EVP_PKEY_METHOD *pmeth,
+                                     int (*digest_custom) (EVP_PKEY_CTX *ctx,
+                                                           EVP_MD_CTX *mctx));
 
  void EVP_PKEY_meth_get_init(const EVP_PKEY_METHOD *pmeth,
                              int (**pinit) (EVP_PKEY_CTX *ctx));
@@ -201,6 +206,9 @@ EVP_PKEY_meth_remove
                                      int (**pcheck) (EVP_PKEY *pkey));
  void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
                                     int (**pcheck) (EVP_PKEY *pkey));
+ void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
+                                     int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
+                                                             EVP_MD_CTX *mctx));
 
 =head1 DESCRIPTION
 
@@ -334,6 +342,15 @@ key-pair, the public component and parameters respectively for a given B<pkey>.
 They could be called by L<EVP_PKEY_check(3)>, L<EVP_PKEY_public_check(3)> and
 L<EVP_PKEY_param_check(3)> respectively.
 
+ int (*digest_custom) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
+
+The digest_custom() method is used to generate customized digest content before
+the real message is passed to functions like L<EVP_DigestSignUpdate(3)> or
+L<EVP_DigestVerifyInit(3)>. This is usually required by some public key
+signature algorithms like SM2 which requires a hashed prefix to the message to
+be signed. The digest_custom() function will be called by L<EVP_DigestSignInit(3)>
+and L<EVP_DigestVerifyInit(3)>.
+
 =head2 Functions
 
 EVP_PKEY_meth_new() creates and returns a new B<EVP_PKEY_METHOD> object,
@@ -399,7 +416,7 @@ arguments.
 
 Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

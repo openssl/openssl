@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -131,12 +131,6 @@ $code.=<<___;
 .quad	0x3320646e61707865,0x6b20657479622d32		// endian-neutral
 .Lone:
 .long	1,0,0,0
-.LOPENSSL_armcap_P:
-#ifdef	__ILP32__
-.long	OPENSSL_armcap_P-.
-#else
-.quad	OPENSSL_armcap_P-.
-#endif
 .asciz	"ChaCha20 for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 
 .globl	ChaCha20_ctr32
@@ -144,19 +138,16 @@ $code.=<<___;
 .align	5
 ChaCha20_ctr32:
 	cbz	$len,.Labort
-	adr	@x[0],.LOPENSSL_armcap_P
 	cmp	$len,#192
 	b.lo	.Lshort
-#ifdef	__ILP32__
-	ldrsw	@x[1],[@x[0]]
-#else
-	ldr	@x[1],[@x[0]]
-#endif
-	ldr	w17,[@x[1],@x[0]]
+
+	adrp	x17,OPENSSL_armcap_P
+	ldr	w17,[x17,#:lo12:OPENSSL_armcap_P]
 	tst	w17,#ARMV7_NEON
-	b.ne	ChaCha20_neon
+	b.ne	.LChaCha20_neon
 
 .Lshort:
+	.inst	0xd503233f			// paciasp
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
@@ -276,6 +267,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#96
+	.inst	0xd50323bf			// autiasp
 .Labort:
 	ret
 
@@ -332,6 +324,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#96
+	.inst	0xd50323bf			// autiasp
 	ret
 .size	ChaCha20_ctr32,.-ChaCha20_ctr32
 ___
@@ -377,6 +370,8 @@ $code.=<<___;
 .type	ChaCha20_neon,%function
 .align	5
 ChaCha20_neon:
+.LChaCha20_neon:
+	.inst	0xd503233f			// paciasp
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
@@ -575,6 +570,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#96
+	.inst	0xd50323bf			// autiasp
 	ret
 
 .Ltail_neon:
@@ -684,6 +680,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#96
+	.inst	0xd50323bf			// autiasp
 	ret
 .size	ChaCha20_neon,.-ChaCha20_neon
 ___
@@ -696,6 +693,7 @@ $code.=<<___;
 .type	ChaCha20_512_neon,%function
 .align	5
 ChaCha20_512_neon:
+	.inst	0xd503233f			// paciasp
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 
@@ -1114,6 +1112,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#96
+	.inst	0xd50323bf			// autiasp
 	ret
 .size	ChaCha20_512_neon,.-ChaCha20_512_neon
 ___

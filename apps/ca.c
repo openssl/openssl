@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -255,7 +255,7 @@ int ca_main(int argc, char **argv)
     int batch = 0, default_op = 1, doupdatedb = 0, ext_copy = EXT_COPY_NONE;
     int keyformat = FORMAT_PEM, multirdn = 0, notext = 0, output_der = 0;
     int ret = 1, email_dn = 1, req = 0, verbose = 0, gencrl = 0, dorevoke = 0;
-    int rand_ser = 0, i, j, selfsign = 0;
+    int rand_ser = 0, i, j, selfsign = 0, def_nid, def_ret;
     long crldays = 0, crlhours = 0, crlsec = 0, days = 0;
     unsigned long chtype = MBSTRING_ASC, certopt = 0;
     X509 *x509 = NULL, *x509p = NULL, *x = NULL;
@@ -605,7 +605,7 @@ end_of_options:
         /*
          * outdir is a directory spec, but access() for VMS demands a
          * filename.  We could use the DEC C routine to convert the
-         * directory syntax to Unixly, and give that to app_isdir,
+         * directory syntax to Unix, and give that to app_isdir,
          * but for now the fopen will catch the error if it's not a
          * directory
          */
@@ -722,34 +722,34 @@ end_of_options:
 
     /*****************************************************************/
     if (req || gencrl) {
-        if (spkac_file != NULL) {
+        if (spkac_file != NULL && outfile != NULL) {
             output_der = 1;
             batch = 1;
         }
-        Sout = bio_open_default(outfile, 'w',
-                                output_der ? FORMAT_ASN1 : FORMAT_TEXT);
-        if (Sout == NULL)
-            goto end;
     }
 
-    if (md == NULL && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL)
-        goto end;
-
-    if (strcmp(md, "null") == 0) {
+    def_ret = EVP_PKEY_get_default_digest_nid(pkey, &def_nid);
+    /*
+     * EVP_PKEY_get_default_digest_nid() returns 2 if the digest is
+     * mandatory for this algorithm.
+     */
+    if (def_ret == 2 && def_nid == NID_undef) {
+        /* The signing algorithm requires there to be no digest */
         dgst = EVP_md_null();
+    } else if (md == NULL
+               && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL) {
+        goto end;
     } else {
         if (strcmp(md, "default") == 0) {
-            int def_nid;
-            if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
+            if (def_ret <= 0) {
                 BIO_puts(bio_err, "no default digest\n");
                 goto end;
             }
             md = (char *)OBJ_nid2sn(def_nid);
         }
 
-        if (!opt_md(md, &dgst)) {
+        if (!opt_md(md, &dgst))
             goto end;
-        }
     }
 
     if (req) {
@@ -976,7 +976,7 @@ end_of_options:
             BIO_printf(bio_err, "Write out database with %d new entries\n",
                        sk_X509_num(cert_sk));
 
-            if (!rand_ser
+            if (serialfile != NULL
                     && !save_serial(serialfile, "new", serial, NULL))
                 goto end;
 
@@ -1025,6 +1025,11 @@ end_of_options:
             if (verbose)
                 BIO_printf(bio_err, "writing %s\n", new_cert);
 
+            Sout = bio_open_default(outfile, 'w',
+                                    output_der ? FORMAT_ASN1 : FORMAT_TEXT);
+            if (Sout == NULL)
+                goto end;
+
             Cout = BIO_new_file(new_cert, "w");
             if (Cout == NULL) {
                 perror(new_cert);
@@ -1033,11 +1038,14 @@ end_of_options:
             write_new_certificate(Cout, xi, 0, notext);
             write_new_certificate(Sout, xi, output_der, notext);
             BIO_free_all(Cout);
+            BIO_free_all(Sout);
+            Sout = NULL;
         }
 
         if (sk_X509_num(cert_sk)) {
             /* Rename the database and the serial file */
-            if (!rotate_serial(serialfile, "new", "old"))
+            if (serialfile != NULL
+                    && !rotate_serial(serialfile, "new", "old"))
                 goto end;
 
             if (!rotate_index(dbfile, "new", "old"))
@@ -1170,10 +1178,9 @@ end_of_options:
         }
 
         /* we have a CRL number that need updating */
-        if (crlnumberfile != NULL)
-            if (!rand_ser
-                    && !save_serial(crlnumberfile, "new", crlnumber, NULL))
-                goto end;
+        if (crlnumberfile != NULL
+                && !save_serial(crlnumberfile, "new", crlnumber, NULL))
+            goto end;
 
         BN_free(crlnumber);
         crlnumber = NULL;
@@ -1181,11 +1188,17 @@ end_of_options:
         if (!do_X509_CRL_sign(crl, pkey, dgst, sigopts))
             goto end;
 
+        Sout = bio_open_default(outfile, 'w',
+                                output_der ? FORMAT_ASN1 : FORMAT_TEXT);
+        if (Sout == NULL)
+            goto end;
+
         PEM_write_bio_X509_CRL(Sout, crl);
 
-        if (crlnumberfile != NULL) /* Rename the crlnumber file */
-            if (!rotate_serial(crlnumberfile, "new", "old"))
-                goto end;
+        /* Rename the crlnumber file */
+        if (crlnumberfile != NULL
+                && !rotate_serial(crlnumberfile, "new", "old"))
+            goto end;
 
     }
     /*****************************************************************/
@@ -1698,11 +1711,11 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto end;
         }
+        i = -1;
         while ((i = X509_NAME_get_index_by_NID(dn_subject,
                                                NID_pkcs9_emailAddress,
-                                               -1)) >= 0) {
-            tmpne = X509_NAME_get_entry(dn_subject, i);
-            X509_NAME_delete_entry(dn_subject, i);
+                                               i)) >= 0) {
+            tmpne = X509_NAME_delete_entry(dn_subject, i--);
             X509_NAME_ENTRY_free(tmpne);
         }
 

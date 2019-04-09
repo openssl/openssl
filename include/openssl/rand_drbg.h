@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -12,32 +12,56 @@
 
 # include <time.h>
 # include <openssl/ossl_typ.h>
+# include <openssl/obj_mac.h>
 
+/*
+ * RAND_DRBG  flags
+ *
+ * Note: if new flags are added, the constant `rand_drbg_used_flags`
+ *       in drbg_lib.c needs to be updated accordingly.
+ */
 
 /* In CTR mode, disable derivation function ctr_df */
 # define RAND_DRBG_FLAG_CTR_NO_DF            0x1
+/*
+ * This flag is only used when a digest NID is specified (i.e: not a CTR cipher)
+ * Selects DRBG_HMAC if this is set otherwise use DRBG_HASH.
+ */
+# define RAND_DRBG_FLAG_HMAC                 0x2
 
-/* A logical OR of all used flag bits (currently there is only one) */
-# define RAND_DRBG_USED_FLAGS  ( \
-    RAND_DRBG_FLAG_CTR_NO_DF \
-                                 )
+/* Used by RAND_DRBG_set_defaults() to set the master DRBG type and flags. */
+# define RAND_DRBG_FLAG_MASTER               0x4
+/* Used by RAND_DRBG_set_defaults() to set the public DRBG type and flags. */
+# define RAND_DRBG_FLAG_PUBLIC               0x8
+/* Used by RAND_DRBG_set_defaults() to set the private DRBG type and flags. */
+# define RAND_DRBG_FLAG_PRIVATE              0x10
+
+# if !OPENSSL_API_3
+/* This #define was replaced by an internal constant and should not be used. */
+#  define RAND_DRBG_USED_FLAGS  (RAND_DRBG_FLAG_CTR_NO_DF)
+# endif
 
 /*
  * Default security strength (in the sense of [NIST SP 800-90Ar1])
  *
  * NIST SP 800-90Ar1 supports the strength of the DRBG being smaller than that
- * of the cipher by collecting less entropy. The current DRBG implemantion does
- * not take RAND_DRBG_STRENGTH into account and sets the strength of the DRBG
- * to that of the cipher.
+ * of the cipher by collecting less entropy. The current DRBG implementation
+ * does not take RAND_DRBG_STRENGTH into account and sets the strength of the
+ * DRBG to that of the cipher.
  *
  * RAND_DRBG_STRENGTH is currently only used for the legacy RAND
  * implementation.
  *
  * Currently supported ciphers are: NID_aes_128_ctr, NID_aes_192_ctr and
- * NID_aes_256_ctr
+ * NID_aes_256_ctr.
+ * The digest types for DRBG_hash or DRBG_hmac are: NID_sha1, NID_sha224,
+ * NID_sha256, NID_sha384, NID_sha512, NID_sha512_224, NID_sha512_256,
+ * NID_sha3_224, NID_sha3_256, NID_sha3_384 and NID_sha3_512.
  */
 # define RAND_DRBG_STRENGTH             256
+/* Default drbg type */
 # define RAND_DRBG_TYPE                 NID_aes_256_ctr
+/* Default drbg flags */
 # define RAND_DRBG_FLAGS                0
 
 

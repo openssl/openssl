@@ -1,8 +1,8 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -125,19 +125,10 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
             reason = ERR_R_MALLOC_FAILURE;
             goto err;
         }
-#ifndef OPENSSL_NO_EC2M
-        if (is_char_two) {
-            if (!EC_GROUP_get_curve_GF2m(x, p, a, b, ctx)) {
-                reason = ERR_R_EC_LIB;
-                goto err;
-            }
-        } else                  /* prime field */
-#endif
-        {
-            if (!EC_GROUP_get_curve_GFp(x, p, a, b, ctx)) {
-                reason = ERR_R_EC_LIB;
-                goto err;
-            }
+
+        if (!EC_GROUP_get_curve(x, p, a, b, ctx)) {
+            reason = ERR_R_EC_LIB;
+            goto err;
         }
 
         if ((point = EC_GROUP_get0_generator(x)) == NULL) {

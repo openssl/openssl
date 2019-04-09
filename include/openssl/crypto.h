@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -36,7 +36,7 @@
  */
 # include <openssl/symhacks.h>
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/opensslv.h>
 # endif
 
@@ -44,7 +44,7 @@
 extern "C" {
 #endif
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define SSLeay                  OpenSSL_version_num
 #  define SSLeay_version          OpenSSL_version
 #  define SSLEAY_VERSION_NUMBER   OPENSSL_VERSION_NUMBER
@@ -62,7 +62,7 @@ typedef struct {
     int dummy;
 } CRYPTO_dynlock;
 
-# endif /* OPENSSL_API_COMPAT */
+# endif /* OPENSSL_API_1_1_0 */
 
 typedef void CRYPTO_RWLOCK;
 
@@ -73,8 +73,6 @@ int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);
 void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
-int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock);
-int CRYPTO_atomic_write(int *val, int n, CRYPTO_RWLOCK *lock);
 
 /*
  * The following can be used to detect memory leaks in the library. If
@@ -109,15 +107,11 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_APP             13
 # define CRYPTO_EX_INDEX_UI_METHOD       14
 # define CRYPTO_EX_INDEX_DRBG            15
-# define CRYPTO_EX_INDEX__COUNT          16
+# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
+# define CRYPTO_EX_INDEX__COUNT          17
 
-/*
- * This is the default callbacks, but we can have others as well: this is
- * needed in Win32 where the application malloc and the library malloc may
- * not be the same.
- */
-#define OPENSSL_malloc_init() \
-    CRYPTO_set_mem_functions(CRYPTO_malloc, CRYPTO_realloc, CRYPTO_free)
+/* No longer needed, so this is a no-op */
+#define OPENSSL_malloc_init() while(0) continue
 
 int CRYPTO_mem_ctrl(int mode);
 
@@ -159,14 +153,16 @@ int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
-unsigned long OpenSSL_version_num(void);
+DEPRECATEDIN_3(unsigned long OpenSSL_version_num(void))
 const char *OpenSSL_version(int type);
-# define OPENSSL_VERSION          0
-# define OPENSSL_CFLAGS           1
-# define OPENSSL_BUILT_ON         2
-# define OPENSSL_PLATFORM         3
-# define OPENSSL_DIR              4
-# define OPENSSL_ENGINES_DIR      5
+# define OPENSSL_VERSION                0
+# define OPENSSL_CFLAGS                 1
+# define OPENSSL_BUILT_ON               2
+# define OPENSSL_PLATFORM               3
+# define OPENSSL_DIR                    4
+# define OPENSSL_ENGINES_DIR            5
+# define OPENSSL_VERSION_STRING         6
+# define OPENSSL_FULL_VERSION_STRING    7
 
 int OPENSSL_issetugid(void);
 
@@ -192,6 +188,10 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
 
 void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 
+/* Allocate a single item in the CRYPTO_EX_DATA variable */
+int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
+                         int idx);
+
 /*
  * Get/set data in a CRYPTO_EX_DATA variable corresponding to a particular
  * index (relative to the class type involved)
@@ -199,7 +199,7 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 /*
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
@@ -246,11 +246,11 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_THREADID_cpy(dest, src)
 #  define CRYPTO_THREADID_hash(id)                      (0UL)
 
-#  if OPENSSL_API_COMPAT < 0x10000000L
+#  if !OPENSSL_API_1_0_0
 #   define CRYPTO_set_id_callback(func)
 #   define CRYPTO_get_id_callback()                     (NULL)
 #   define CRYPTO_thread_id()                           (0UL)
-#  endif /* OPENSSL_API_COMPAT < 0x10000000L */
+#  endif /* OPENSSL_API_1_0_0 */
 
 #  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
 #  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
@@ -258,7 +258,7 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_get_dynlock_create_callback()          (NULL)
 #  define CRYPTO_get_dynlock_lock_callback()            (NULL)
 #  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
-# endif /* OPENSSL_API_COMPAT < 0x10100000L */
+# endif /* OPENSSL_API_1_1_0 */
 
 int CRYPTO_set_mem_functions(
         void *(*m) (size_t, const char *, int),
@@ -327,7 +327,7 @@ int CRYPTO_mem_leaks(BIO *bio);
 
 /* die if we have to */
 ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line);
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
 # endif
 # define OPENSSL_assert(e) \
@@ -379,7 +379,14 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 /* OPENSSL_INIT_ZLIB                         0x00010000L */
 # define OPENSSL_INIT_ATFORK                 0x00020000L
 /* OPENSSL_INIT_BASE_ONLY                    0x00040000L */
-/* OPENSSL_INIT flag range 0xfff00000 reserved for OPENSSL_init_ssl() */
+# define OPENSSL_INIT_NO_ATEXIT              0x00080000L
+/* OPENSSL_INIT flag range 0x03f00000 reserved for OPENSSL_init_ssl() */
+# define OPENSSL_INIT_NO_ADD_ALL_MACS        0x04000000L
+# define OPENSSL_INIT_ADD_ALL_MACS           0x08000000L
+/* FREE: 0x10000000L */
+/* FREE: 0x20000000L */
+/* FREE: 0x40000000L */
+/* FREE: 0x80000000L */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
 
 /* openssl and dasync not counted as builtin */
@@ -398,8 +405,12 @@ void OPENSSL_thread_stop(void);
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
 # ifndef OPENSSL_NO_STDIO
+int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
+                                     const char *config_filename);
+void OPENSSL_INIT_set_config_file_flags(OPENSSL_INIT_SETTINGS *settings,
+                                        unsigned long flags);
 int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
-                                    const char *config_file);
+                                    const char *config_appname);
 # endif
 void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings);
 
@@ -440,6 +451,8 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
+OPENSSL_CTX *OPENSSL_CTX_new(void);
+void OPENSSL_CTX_free(OPENSSL_CTX *);
 
 # ifdef  __cplusplus
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -33,7 +33,7 @@
 #define DEF_DAYS        30
 
 static int callb(int ok, X509_STORE_CTX *ctx);
-static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
+static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
                 int preserve_dates);
 static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
@@ -49,8 +49,8 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_KEYFORM, OPT_REQ, OPT_CAFORM,
     OPT_CAKEYFORM, OPT_SIGOPT, OPT_DAYS, OPT_PASSIN, OPT_EXTFILE,
-    OPT_EXTENSIONS, OPT_IN, OPT_OUT, OPT_SIGNKEY, OPT_CA,
-    OPT_CAKEY, OPT_CASERIAL, OPT_SET_SERIAL, OPT_FORCE_PUBKEY,
+    OPT_EXTENSIONS, OPT_IN, OPT_OUT, OPT_SIGNKEY, OPT_CA, OPT_CAKEY,
+    OPT_CASERIAL, OPT_SET_SERIAL, OPT_NEW, OPT_FORCE_PUBKEY, OPT_SUBJ,
     OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_NAMEOPT,
     OPT_C, OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
     OPT_MODULUS, OPT_PUBKEY, OPT_X509TOREQ, OPT_TEXT, OPT_HASH,
@@ -67,10 +67,10 @@ typedef enum OPTION_choice {
 const OPTIONS x509_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f',
-     "Input format - default PEM (one of DER, NET or PEM)"},
+     "Input format - default PEM (one of DER or PEM)"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"outform", OPT_OUTFORM, 'f',
-     "Output format - default PEM (one of DER, NET or PEM)"},
+     "Output format - default PEM (one of DER or PEM)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
     {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},
@@ -132,7 +132,9 @@ const OPTIONS x509_options[] = {
     {"CAform", OPT_CAFORM, 'F', "CA format - default PEM"},
     {"CAkeyform", OPT_CAKEYFORM, 'f', "CA key format - default PEM"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"force_pubkey", OPT_FORCE_PUBKEY, '<', "Force the Key to put inside certificate"},
+    {"new", OPT_NEW, '-', "Generate a certificate from scratch"},
+    {"force_pubkey", OPT_FORCE_PUBKEY, '<', "Force the key to put inside certificate"},
+    {"subj", OPT_SUBJ, 's', "Set or override certificate subject (and issuer)"},
     {"next_serial", OPT_NEXT_SERIAL, '-', "Increment current certificate serial number"},
     {"clrreject", OPT_CLRREJECT, '-',
      "Clears all the prohibited or rejected uses of the certificate"},
@@ -158,6 +160,11 @@ int x509_main(int argc, char **argv)
     BIO *out = NULL;
     CONF *extconf = NULL;
     EVP_PKEY *Upkey = NULL, *CApkey = NULL, *fkey = NULL;
+    int newcert = 0;
+    char *subj = NULL;
+    X509_NAME *fsubj = NULL;
+    const unsigned long chtype = MBSTRING_ASC;
+    const int multirdn = 0;
     STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL;
     X509 *x = NULL, *xca = NULL;
@@ -281,8 +288,14 @@ int x509_main(int argc, char **argv)
             if ((sno = s2i_ASN1_INTEGER(NULL, opt_arg())) == NULL)
                 goto opthelp;
             break;
+        case OPT_NEW:
+            newcert = 1;
+            break;
         case OPT_FORCE_PUBKEY:
             fkeyfile = opt_arg();
+            break;
+        case OPT_SUBJ:
+            subj = opt_arg();
             break;
         case OPT_ADDTRUST:
             if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
@@ -477,18 +490,38 @@ int x509_main(int argc, char **argv)
         goto end;
     }
 
+    if (newcert && infile != NULL) {
+        BIO_printf(bio_err, "The -in option must not be used since -new is set\n");
+        goto end;
+    }
+    if (newcert && fkeyfile == NULL) {
+        BIO_printf(bio_err,
+                   "The -new option requires a public key to be set using -force_pubkey\n");
+        goto end;
+    }
     if (fkeyfile != NULL) {
         fkey = load_pubkey(fkeyfile, keyformat, 0, NULL, e, "Forced key");
         if (fkey == NULL)
             goto end;
     }
 
-    if ((CAkeyfile == NULL) && (CA_flag) && (CAformat == FORMAT_PEM)) {
+    if (newcert && subj == NULL) {
+        BIO_printf(bio_err,
+                   "The -new option requires a subject to be set using -subj\n");
+        goto end;
+    }
+    if (subj != NULL && (fsubj = parse_name(subj, chtype, multirdn)) == NULL)
+        goto end;
+
+    if (CAkeyfile == NULL && CA_flag && CAformat == FORMAT_PEM) {
         CAkeyfile = CAfile;
-    } else if ((CA_flag) && (CAkeyfile == NULL)) {
+    } else if (CA_flag && CAkeyfile == NULL) {
         BIO_printf(bio_err,
                    "need to specify a CAkey if using the CA command\n");
         goto end;
+    } else if (!CA_flag && CAkeyfile != NULL) {
+        BIO_printf(bio_err,
+                   "ignoring -CAkey option since no -CA option is given\n");
     }
 
     if (extfile != NULL) {
@@ -516,10 +549,6 @@ int x509_main(int argc, char **argv)
         EVP_PKEY *pkey;
         BIO *in;
 
-        if (!sign_flag && !CA_flag) {
-            BIO_printf(bio_err, "We need a private key to sign with\n");
-            goto end;
-        }
         in = bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
@@ -537,21 +566,30 @@ int x509_main(int argc, char **argv)
         }
         i = X509_REQ_verify(req, pkey);
         if (i < 0) {
-            BIO_printf(bio_err, "Signature verification error\n");
+            BIO_printf(bio_err, "Request self-signature verification error\n");
             ERR_print_errors(bio_err);
             goto end;
         }
         if (i == 0) {
             BIO_printf(bio_err,
-                       "Signature did not match the certificate request\n");
+                       "Request self-signature did not match the certificate request\n");
             goto end;
         } else {
-            BIO_printf(bio_err, "Signature ok\n");
+            BIO_printf(bio_err, "Request self-signature ok\n");
         }
 
         print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
                    get_nameopt());
+    }
 
+    if (reqfile || newcert) {
+        X509_NAME *n;
+
+        if (!sign_flag && CAkeyfile == NULL) {
+            BIO_printf(bio_err,
+                       "We need a private key to sign with, use -signkey or -CAkey or -CA <file> with private key\n");
+            goto end;
+        }
         if ((x = X509_new()) == NULL)
             goto end;
 
@@ -567,25 +605,24 @@ int x509_main(int argc, char **argv)
             goto end;
         }
 
-        if (!X509_set_issuer_name(x, X509_REQ_get_subject_name(req)))
-            goto end;
-        if (!X509_set_subject_name(x, X509_REQ_get_subject_name(req)))
+        n = req == NULL ? fsubj : X509_REQ_get_subject_name(req);
+        if (!X509_set_issuer_name(x, n) || !X509_set_subject_name(x, n))
             goto end;
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
 
-        if (fkey != NULL) {
-            X509_set_pubkey(x, fkey);
-        } else {
-            pkey = X509_REQ_get0_pubkey(req);
-            X509_set_pubkey(x, pkey);
-        }
+        if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
+            goto end;
     } else {
         x = load_cert(infile, informat, "Certificate");
+        if (x == NULL)
+            goto end;
+        if (fkey != NULL && !X509_set_pubkey(x, fkey))
+            goto end;
+        if (fsubj != NULL && !X509_set_subject_name(x, fsubj))
+            goto end;
     }
 
-    if (x == NULL)
-        goto end;
     if (CA_flag) {
         xca = load_cert(CAfile, CAformat, "CA Certificate");
         if (xca == NULL)
@@ -656,7 +693,7 @@ int x509_main(int argc, char **argv)
                 i2a_ASN1_INTEGER(out, ser);
                 ASN1_INTEGER_free(ser);
                 BIO_puts(out, "\n");
-            } else if ((email == i) || (ocsp_uri == i)) {
+            } else if (email == i || ocsp_uri == i) {
                 int j;
                 STACK_OF(OPENSSL_STRING) *emlst;
                 if (email == i)
@@ -790,7 +827,7 @@ int x509_main(int argc, char **argv)
             }
 
             /* should be in the library */
-            else if ((sign_flag == i) && (x509req == 0)) {
+            else if (sign_flag == i && x509req == 0) {
                 BIO_printf(bio_err, "Getting Private key\n");
                 if (Upkey == NULL) {
                     Upkey = load_key(keyfile, keyformat, 0,
@@ -799,7 +836,8 @@ int x509_main(int argc, char **argv)
                         goto end;
                 }
 
-                if (!sign(x, Upkey, days, clrext, digest, extconf, extsect, preserve_dates))
+                if (!sign(x, Upkey, fkey, days, clrext, digest, extconf,
+                          extsect, preserve_dates))
                     goto end;
             } else if (CA_flag == i) {
                 BIO_printf(bio_err, "Getting CA Private Key\n");
@@ -891,6 +929,7 @@ int x509_main(int argc, char **argv)
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);
+    X509_NAME_free(fsubj);
     X509_REQ_free(req);
     X509_free(x);
     X509_free(xca);
@@ -916,7 +955,7 @@ static ASN1_INTEGER *x509_load_serial(const char *CAfile,
     BIGNUM *serial = NULL;
 
     if (serialfile == NULL) {
-        const char *p = strchr(CAfile, '.');
+        const char *p = strrchr(CAfile, '.');
         size_t len = p != NULL ? (size_t)(p - CAfile) : strlen(CAfile);
 
         buf = app_malloc(len + sizeof(POSTFIX), "serial# buffer");
@@ -1054,8 +1093,8 @@ static int callb(int ok, X509_STORE_CTX *ctx)
     }
 }
 
-/* self sign */
-static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
+/* self-issue; self-sign unless a forced public key (fkey) is given */
+static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
                 int preserve_dates)
 {
@@ -1064,7 +1103,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
         goto err;
     if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
         goto err;
-    if (!X509_set_pubkey(x, pkey))
+    if (fkey == NULL && !X509_set_pubkey(x, pkey))
         goto err;
     if (clrext) {
         while (X509_get_ext_count(x) > 0)

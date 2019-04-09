@@ -3,7 +3,7 @@
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,44 +15,44 @@
 
 # ifndef OPENSSL_NO_SM2
 
-#  ifdef __cplusplus
-extern "C" {
-#  endif
-
 #  include <openssl/ec.h>
 
 /* The default user id as specified in GM/T 0009-2012 */
 #  define SM2_DEFAULT_USERID "1234567812345678"
 
-int sm2_compute_userid_digest(uint8_t *out,
-                              const EVP_MD *digest,
-                              const char *user_id, const EC_KEY *key);
+int sm2_compute_z_digest(uint8_t *out,
+                         const EVP_MD *digest,
+                         const uint8_t *id,
+                         const size_t id_len,
+                         const EC_KEY *key);
 
 /*
- * SM2 signature operation. Computes ZA (user id digest) and then signs
- * H(ZA || msg) using SM2
+ * SM2 signature operation. Computes Z and then signs H(Z || msg) using SM2
  */
 ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
                        const EVP_MD *digest,
-                       const char *user_id, const uint8_t *msg, size_t msg_len);
+                       const uint8_t *id,
+                       const size_t id_len,
+                       const uint8_t *msg, size_t msg_len);
 
 int sm2_do_verify(const EC_KEY *key,
                   const EVP_MD *digest,
                   const ECDSA_SIG *signature,
-                  const char *user_id, const uint8_t *msg, size_t msg_len);
+                  const uint8_t *id,
+                  const size_t id_len,
+                  const uint8_t *msg, size_t msg_len);
 
 /*
- * SM2 signature generation. Assumes input is an SM3 digest
+ * SM2 signature generation.
  */
-int sm2_sign(int type, const unsigned char *dgst, int dgstlen,
+int sm2_sign(const unsigned char *dgst, int dgstlen,
              unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
 
 /*
- * SM2 signature verification. Assumes input is an SM3 digest
+ * SM2 signature verification.
  */
-int sm2_verify(int type, const unsigned char *dgst, int dgstlen,
+int sm2_verify(const unsigned char *dgst, int dgstlen,
                const unsigned char *sig, int siglen, EC_KEY *eckey);
-
 
 /*
  * SM2 encryption
@@ -73,10 +73,6 @@ int sm2_decrypt(const EC_KEY *key,
                 const EVP_MD *digest,
                 const uint8_t *ciphertext,
                 size_t ciphertext_len, uint8_t *ptext_buf, size_t *ptext_len);
-
-#  ifdef __cplusplus
-}
-#  endif
 
 # endif /* OPENSSL_NO_SM2 */
 #endif

@@ -1,7 +1,7 @@
 /*
  * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -67,6 +67,25 @@ static int poly1305_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
     return 1;
 }
 
+static int poly1305_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv,
+                                 size_t *len)
+{
+    ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
+
+    if (priv == NULL) {
+        *len = POLY1305_KEY_SIZE;
+        return 1;
+    }
+
+    if (os == NULL || *len < POLY1305_KEY_SIZE)
+        return 0;
+
+    memcpy(priv, ASN1_STRING_get0_data(os), ASN1_STRING_length(os));
+    *len = POLY1305_KEY_SIZE;
+
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD poly1305_asn1_meth = {
     EVP_PKEY_POLY1305,
     EVP_PKEY_POLY1305,
@@ -97,5 +116,7 @@ const EVP_PKEY_ASN1_METHOD poly1305_asn1_meth = {
     NULL,
 
     poly1305_set_priv_key,
+    NULL,
+    poly1305_get_priv_key,
     NULL,
 };

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -121,7 +121,7 @@ int tls1_clear(SSL *s)
         return 0;
 
     if (s->method->version == TLS_ANY_VERSION)
-        s->version = TLS_MAX_VERSION;
+        s->version = TLS_MAX_VERSION_INTERNAL;
     else
         s->version = s->method->version;
 
@@ -343,6 +343,10 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
      */
     unsigned long dup_list = 0;
 
+    if (ngroups == 0) {
+        SSLerr(SSL_F_TLS1_SET_GROUPS, SSL_R_BAD_LENGTH);
+        return 0;
+    }
     if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL) {
         SSLerr(SSL_F_TLS1_SET_GROUPS, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -945,6 +949,39 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
     }
 }
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Called by servers only. Checks that we have a sig alg that supports the
+ * specified EC curve.
+ */
+int tls_check_sigalg_curve(const SSL *s, int curve)
+{
+   const uint16_t *sigs;
+   size_t siglen, i;
+
+    if (s->cert->conf_sigalgs) {
+        sigs = s->cert->conf_sigalgs;
+        siglen = s->cert->conf_sigalgslen;
+    } else {
+        sigs = tls12_sigalgs;
+        siglen = OSSL_NELEM(tls12_sigalgs);
+    }
+
+    for (i = 0; i < siglen; i++) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(sigs[i]);
+
+        if (lu == NULL)
+            continue;
+        if (lu->sig == EVP_PKEY_EC
+                && lu->curve != NID_undef
+                && curve == lu->curve)
+            return 1;
+    }
+
+    return 0;
+}
+#endif
+
 /*
  * Check signature algorithm is consistent with sent supported signature
  * algorithms and if so set relevant digest and signature scheme in
@@ -955,7 +992,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     const uint16_t *sent_sigs;
     const EVP_MD *md = NULL;
     char sigalgstr[2];
-    size_t sent_sigslen, i;
+    size_t sent_sigslen, i, cidx;
     int pkeyid = EVP_PKEY_id(pkey);
     const SIGALG_LOOKUP *lu;
 
@@ -986,6 +1023,14 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                  SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
+    /* Check the sigalg is consistent with the key OID */
+    if (!ssl_cert_lookup_by_nid(EVP_PKEY_id(pkey), &cidx)
+            || lu->sig_idx != (int)cidx) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_WRONG_SIGNATURE_TYPE);
+        return 0;
+    }
+
 #ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
 
@@ -1079,6 +1124,14 @@ int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid)
     return 1;
 }
 
+int SSL_get_signature_type_nid(const SSL *s, int *pnid)
+{
+    if (s->s3->tmp.sigalg == NULL)
+        return 0;
+    *pnid = s->s3->tmp.sigalg->sig;
+    return 1;
+}
+
 /*
  * Set a mask of disabled algorithms: an algorithm is disabled if it isn't
  * supported, doesn't appear in supported signature algorithms, isn't supported
@@ -1095,7 +1148,7 @@ int ssl_set_client_disabled(SSL *s)
     s->s3->tmp.mask_k = 0;
     ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
     if (ssl_get_min_max_version(s, &s->s3->tmp.min_ver,
-                                &s->s3->tmp.max_ver) != 0)
+                                &s->s3->tmp.max_ver, NULL) != 0)
         return 0;
 #ifndef OPENSSL_NO_PSK
     /* with PSK there must be client callback set */
@@ -1487,11 +1540,13 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         }
     }
 
-    switch (ret) {
-    case SSL_TICKET_NO_DECRYPT:
-    case SSL_TICKET_SUCCESS_RENEW:
-    case SSL_TICKET_EMPTY:
-        s->ext.ticket_expected = 1;
+    if (s->ext.session_secret_cb == NULL || SSL_IS_TLS13(s)) {
+        switch (ret) {
+        case SSL_TICKET_NO_DECRYPT:
+        case SSL_TICKET_SUCCESS_RENEW:
+        case SSL_TICKET_EMPTY:
+            s->ext.ticket_expected = 1;
+        }
     }
 
     *psess = sess;
@@ -1517,9 +1572,50 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
             || lu->hash_idx == SSL_MD_MD5_IDX
             || lu->hash_idx == SSL_MD_SHA224_IDX))
         return 0;
+
     /* See if public key algorithm allowed */
     if (ssl_cert_is_disabled(lu->sig_idx))
         return 0;
+
+    if (lu->sig == NID_id_GostR3410_2012_256
+            || lu->sig == NID_id_GostR3410_2012_512
+            || lu->sig == NID_id_GostR3410_2001) {
+        /* We never allow GOST sig algs on the server with TLSv1.3 */
+        if (s->server && SSL_IS_TLS13(s))
+            return 0;
+        if (!s->server
+                && s->method->version == TLS_ANY_VERSION
+                && s->s3->tmp.max_ver >= TLS1_3_VERSION) {
+            int i, num;
+            STACK_OF(SSL_CIPHER) *sk;
+
+            /*
+             * We're a client that could negotiate TLSv1.3. We only allow GOST
+             * sig algs if we could negotiate TLSv1.2 or below and we have GOST
+             * ciphersuites enabled.
+             */
+
+            if (s->s3->tmp.min_ver >= TLS1_3_VERSION)
+                return 0;
+
+            sk = SSL_get_ciphers(s);
+            num = sk != NULL ? sk_SSL_CIPHER_num(sk) : 0;
+            for (i = 0; i < num; i++) {
+                const SSL_CIPHER *c;
+
+                c = sk_SSL_CIPHER_value(sk, i);
+                /* Skip disabled ciphers */
+                if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
+                    continue;
+
+                if ((c->algorithm_mkey & SSL_kGOST) != 0)
+                    break;
+            }
+            if (i == num)
+                return 0;
+        }
+    }
+
     if (lu->hash == NID_undef)
         return 1;
     /* Security bits: half digest bits */
@@ -2307,13 +2403,16 @@ DH *ssl_get_auto_dh(SSL *s)
         if (dhp == NULL)
             return NULL;
         g = BN_new();
-        if (g != NULL)
-            BN_set_word(g, 2);
+        if (g == NULL || !BN_set_word(g, 2)) {
+            DH_free(dhp);
+            BN_free(g);
+            return NULL;
+        }
         if (dh_secbits >= 192)
             p = BN_get_rfc3526_prime_8192(NULL);
         else
             p = BN_get_rfc3526_prime_3072(NULL);
-        if (p == NULL || g == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
+        if (p == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
             DH_free(dhp);
             BN_free(p);
             BN_free(g);
@@ -2419,7 +2518,10 @@ static int tls12_get_cert_sigalg_idx(const SSL *s, const SIGALG_LOOKUP *lu)
     const SSL_CERT_LOOKUP *clu = ssl_cert_lookup_by_idx(sig_idx);
 
     /* If not recognised or not supported by cipher mask it is not suitable */
-    if (clu == NULL || !(clu->amask & s->s3->tmp.new_cipher->algorithm_auth))
+    if (clu == NULL
+            || (clu->amask & s->s3->tmp.new_cipher->algorithm_auth) == 0
+            || (clu->nid == EVP_PKEY_RSA_PSS
+                && (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kRSA) != 0))
         return -1;
 
     return s->s3->tmp.valid_flags[sig_idx] & CERT_PKEY_VALID ? sig_idx : -1;
@@ -2435,7 +2537,7 @@ static int tls12_get_cert_sigalg_idx(const SSL *s, const SIGALG_LOOKUP *lu)
 static int has_usable_cert(SSL *s, const SIGALG_LOOKUP *sig, int idx)
 {
     const SIGALG_LOOKUP *lu;
-    int mdnid, pknid;
+    int mdnid, pknid, supported;
     size_t i;
 
     /* TLS 1.2 callers can override lu->sig_idx, but not TLS 1.3 callers. */
@@ -2448,19 +2550,39 @@ static int has_usable_cert(SSL *s, const SIGALG_LOOKUP *sig, int idx)
             lu = tls1_lookup_sigalg(s->s3->tmp.peer_cert_sigalgs[i]);
             if (lu == NULL
                 || !X509_get_signature_info(s->cert->pkeys[idx].x509, &mdnid,
-                                            &pknid, NULL, NULL))
+                                            &pknid, NULL, NULL)
+                /*
+                 * TODO this does not differentiate between the
+                 * rsa_pss_pss_* and rsa_pss_rsae_* schemes since we do not
+                 * have a chain here that lets us look at the key OID in the
+                 * signing certificate.
+                 */
+                || mdnid != lu->hash
+                || pknid != lu->sig)
                 continue;
-            /*
-             * TODO this does not differentiate between the
-             * rsa_pss_pss_* and rsa_pss_rsae_* schemes since we do not
-             * have a chain here that lets us look at the key OID in the
-             * signing certificate.
-             */
-            if (mdnid == lu->hash && pknid == lu->sig)
-                return 1;
+
+            ERR_set_mark();
+            supported = EVP_PKEY_supports_digest_nid(s->cert->pkeys[idx].privatekey,
+                                                     mdnid);
+            if (supported == 0)
+                continue;
+            else if (supported < 0)
+            {
+                /* If it didn't report a mandatory NID, for whatever reasons,
+                 * just clear the error and allow all hashes to be used. */
+                ERR_pop_to_mark();
+            }
+            return 1;
         }
         return 0;
     }
+    supported = EVP_PKEY_supports_digest_nid(s->cert->pkeys[idx].privatekey,
+                                             sig->hash);
+    if (supported == 0)
+        return 0;
+    else if (supported < 0)
+        ERR_clear_error();
+
     return 1;
 }
 
@@ -2589,8 +2711,9 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                 if (i == s->cert->shared_sigalgslen) {
                     if (!fatalerrs)
                         return 1;
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CHOOSE_SIGALG,
-                             ERR_R_INTERNAL_ERROR);
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                             SSL_F_TLS_CHOOSE_SIGALG,
+                             SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
                     return 0;
                 }
             } else {

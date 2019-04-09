@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,6 +15,16 @@
  * I've just gone over this and it is now %20 faster on x86 - eay - 27 Jun 96
  */
 int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
+{
+    int ret = bn_sqr_fixed_top(r, a, ctx);
+
+    bn_correct_top(r);
+    bn_check_top(r);
+
+    return ret;
+}
+
+int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 {
     int max, al;
     int ret = 0;
@@ -82,14 +92,8 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
     }
 
     rr->neg = 0;
-    /*
-     * If the most-significant half of the top word of 'a' is zero, then the
-     * square of 'a' will max-1 words.
-     */
-    if (a->d[al - 1] == (a->d[al - 1] & BN_MASK2l))
-        rr->top = max - 1;
-    else
-        rr->top = max;
+    rr->top = max;
+    rr->flags |= BN_FLG_FIXED_TOP;
     if (r != rr && BN_copy(r, rr) == NULL)
         goto err;
 

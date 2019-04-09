@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -38,7 +38,26 @@ OPENSSL_s390x_facilities:
 	stg	%r0,S390X_STFLE+8(%r4)	# wipe capability vectors
 	stg	%r0,S390X_STFLE+16(%r4)
 	stg	%r0,S390X_STFLE+24(%r4)
-	stg	%r0,S390X_KIMD(%r4)
+
+	.long	0xb2b04000		# stfle	0(%r4)
+	brc	8,.Ldone
+	lghi	%r0,1
+	.long	0xb2b04000		# stfle 0(%r4)
+	brc	8,.Ldone
+	lghi	%r0,2
+	.long	0xb2b04000		# stfle 0(%r4)
+.Ldone:
+	br	$ra
+.size	OPENSSL_s390x_facilities,.-OPENSSL_s390x_facilities
+
+.globl	OPENSSL_s390x_functions
+.type	OPENSSL_s390x_functions,\@function
+.align	16
+OPENSSL_s390x_functions:
+	lghi	%r0,0
+	larl	%r4,OPENSSL_s390xcap_P
+
+	stg	%r0,S390X_KIMD(%r4)	# wipe capability vectors
 	stg	%r0,S390X_KIMD+8(%r4)
 	stg	%r0,S390X_KLMD(%r4)
 	stg	%r0,S390X_KLMD+8(%r4)
@@ -59,14 +78,6 @@ OPENSSL_s390x_facilities:
 	stg	%r0,S390X_KMA(%r4)
 	stg	%r0,S390X_KMA+8(%r4)
 
-	.long	0xb2b04000		# stfle	0(%r4)
-	brc	8,.Ldone
-	lghi	%r0,1
-	.long	0xb2b04000		# stfle 0(%r4)
-	brc	8,.Ldone
-	lghi	%r0,2
-	.long	0xb2b04000		# stfle 0(%r4)
-.Ldone:
 	lmg	%r2,%r3,S390X_STFLE(%r4)
 	tmhl	%r2,0x4000		# check for message-security-assist
 	jz	.Lret
@@ -123,7 +134,7 @@ OPENSSL_s390x_facilities:
 
 .Lret:
 	br	$ra
-.size	OPENSSL_s390x_facilities,.-OPENSSL_s390x_facilities
+.size	OPENSSL_s390x_functions,.-OPENSSL_s390x_functions
 
 .globl	OPENSSL_rdtsc
 .type	OPENSSL_rdtsc,\@function
@@ -261,6 +272,48 @@ OPENSSL_vx_probe:
 	br	$ra
 .size	OPENSSL_vx_probe,.-OPENSSL_vx_probe
 ___
+
+{
+################
+# void s390x_kimd(const unsigned char *in, size_t len, unsigned int fc,
+#                 void *param)
+my ($in,$len,$fc,$param) = map("%r$_",(2..5));
+$code.=<<___;
+.globl	s390x_kimd
+.type	s390x_kimd,\@function
+.align	16
+s390x_kimd:
+	llgfr	%r0,$fc
+	lgr	%r1,$param
+
+	.long	0xb93e0002	# kimd %r0,%r2
+	brc	1,.-4		# pay attention to "partial completion"
+
+	br	$ra
+.size	s390x_kimd,.-s390x_kimd
+___
+}
+
+{
+################
+# void s390x_klmd(const unsigned char *in, size_t inlen, unsigned char *out,
+#                 size_t outlen, unsigned int fc, void *param)
+my ($in,$inlen,$out,$outlen,$fc) = map("%r$_",(2..6));
+$code.=<<___;
+.globl	s390x_klmd
+.type	s390x_klmd,\@function
+.align	32
+s390x_klmd:
+	llgfr	%r0,$fc
+	l${g}	%r1,$stdframe($sp)
+
+	.long	0xb93f0042	# klmd %r4,%r2
+	brc	1,.-4		# pay attention to "partial completion"
+
+	br	$ra
+.size	s390x_klmd,.-s390x_klmd
+___
+}
 
 ################
 # void s390x_km(const unsigned char *in, size_t len, unsigned char *out,

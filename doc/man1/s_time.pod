@@ -112,19 +112,22 @@ specified, they are both on by default and executed in sequence.
 
 =item B<-ssl3>
 
-These options disable the use of certain SSL or TLS protocols. By default
+This option disables the use of SSL version 3. By default
 the initial handshake uses a method which should be compatible with all
 servers and permit them to use SSL v3 or TLS as appropriate.
+
 The timing program is not as rich in options to turn protocols on and off as
 the L<s_client(1)> program and may not connect to all servers.
-
 Unfortunately there are a lot of ancient and broken servers in use which
 cannot handle this technique and will fail to connect. Some servers only
 work if TLS is turned off with the B<-ssl3> option.
 
+Note that this option may not be available, depending on how
+OpenSSL was built.
+
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-cipher cipherlist>
@@ -132,16 +135,16 @@ option enables various workarounds.
 This allows the TLSv1.2 and below cipher list sent by the client to be modified.
 This list will be combined with any TLSv1.3 ciphersuites that have been
 configured. Although the server determines which cipher suite is used it should
-take the first supported cipher in the list sent by the client. See the
-L<ciphers(1)> command for more information.
+take the first supported cipher in the list sent by the client. See
+L<ciphers(1)> for more information.
 
 =item B<-ciphersuites val>
 
 This allows the TLSv1.3 ciphersuites sent by the client to be modified. This
 list will be combined with any TLSv1.2 and below ciphersuites that have been
 configured. Although the server determines which cipher suite is used it should
-take the first supported cipher in the list sent by the client. See the
-B<ciphers> command for more information. The format for this list is a simple
+take the first supported cipher in the list sent by the client. See
+L<ciphers(1)> for more information. The format for this list is a simple
 colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-time length>
@@ -201,7 +204,7 @@ L<s_client(1)>, L<s_server(1)>, L<ciphers(1)>
 
 Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

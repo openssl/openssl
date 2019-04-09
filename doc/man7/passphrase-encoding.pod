@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-password encoding
+passphrase-encoding
 - How diverse parts of OpenSSL treat pass phrases character encoding
 
 =head1 DESCRIPTION
@@ -61,11 +61,11 @@ OpenSSL still does this, to be able to read files produced with older versions.
 
 It should be noted that this approach isn't entirely fault free.
 
-A passphrase encoded in ISO-8859-2 could very well have a sequence such as
+A pass phrase encoded in ISO-8859-2 could very well have a sequence such as
 0xC3 0xAF (which is the two characters "LATIN CAPITAL LETTER A WITH BREVE"
 and "LATIN CAPITAL LETTER Z WITH DOT ABOVE" in ISO-8859-2 encoding), but would
 be misinterpreted as the perfectly valid UTF-8 encoded code point U+00EF (LATIN
-SMALL LETTER I WITH DIARESIS) I<if the passphrase doesn't contain anything that
+SMALL LETTER I WITH DIARESIS) I<if the pass phrase doesn't contain anything that
 would be invalid UTF-8>.
 A pass phrase that contains this kind of byte sequence will give a different
 outcome in OpenSSL 1.1.0 and newer than in OpenSSL older than 1.1.0.
@@ -80,13 +80,11 @@ than 1.1.0 was misinterpreted as ISO-8859-1 sequences.
 
 L<ossl_store(7)> acts as a general interface to access all kinds of objects,
 potentially protected with a pass phrase, a PIN or something else.
-This API currently doesn't stipulate any specific encoding of pass phrases, but
-uses the underlying routines with their behaviours.
-This means that when using the built-in C<file:> scheme loader, the pass phrase
-to unlock a PKCS#12 file will be treated as described for PKCS#12 above, and
-the pass phrase for a PEM files will be treated as the general case described
-above, since that loader uses the same underlying routines.
-I<Note that other loaders will have their own behaviours>.
+This API stipulates that pass phrases should be UTF-8 encoded, and that any
+other pass phrase encoding may give undefined results.
+This API relies on the application to ensure UTF-8 encoding, and doesn't check
+that this is the case, so what it gets, it will also pass to the underlying
+loader.
 
 =head1 RECOMMENDATIONS
 
@@ -135,7 +133,7 @@ following:
 
 =item 1.
 
-Try the password that you have as it is in the character encoding of your
+Try the pass phrase that you have as it is in the character encoding of your
 environment.
 It's possible that its byte sequence is exactly right.
 
@@ -174,7 +172,7 @@ L<d2i_PKCS8PrivateKey_bio(3)>
 
 Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

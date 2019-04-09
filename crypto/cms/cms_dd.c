@@ -1,7 +1,7 @@
 /*
  * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -45,14 +45,14 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
     return NULL;
 }
 
-BIO *cms_DigestedData_init_bio(CMS_ContentInfo *cms)
+BIO *cms_DigestedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_DigestedData *dd;
     dd = cms->d.digestedData;
     return cms_DigestAlgorithm_init_bio(dd->digestAlgorithm);
 }
 
-int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
+int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify)
 {
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     unsigned char md[EVP_MAX_MD_SIZE];

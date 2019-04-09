@@ -1,7 +1,7 @@
 /*
  * Copyright 2003-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -14,6 +14,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+#include <openssl/bn.h>
 
 #include "internal/x509_int.h"
 #include "ext_dat.h"
@@ -157,6 +158,8 @@ static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,
     NAME_CONSTRAINTS *ncons = a;
     do_i2r_name_constraints(method, ncons->permittedSubtrees,
                             bp, ind, "Permitted");
+    if (ncons->permittedSubtrees && ncons->excludedSubtrees)
+        BIO_puts(bp, "\n");
     do_i2r_name_constraints(method, ncons->excludedSubtrees,
                             bp, ind, "Excluded");
     return 1;
@@ -171,13 +174,14 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
     if (sk_GENERAL_SUBTREE_num(trees) > 0)
         BIO_printf(bp, "%*s%s:\n", ind, "", name);
     for (i = 0; i < sk_GENERAL_SUBTREE_num(trees); i++) {
+        if (i > 0)
+            BIO_puts(bp, "\n");
         tree = sk_GENERAL_SUBTREE_value(trees, i);
         BIO_printf(bp, "%*s", ind + 2, "");
         if (tree->base->type == GEN_IPADD)
             print_nc_ipadd(bp, tree->base->d.ip);
         else
             GENERAL_NAME_print(bp, tree->base);
-        BIO_puts(bp, "\n");
     }
     return 1;
 }
@@ -435,6 +439,27 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
     return X509_V_OK;
 }
 
+/*
+ * Return nonzero if the GeneralSubtree has valid 'minimum' field
+ * (must be absent or 0) and valid 'maximum' field (must be absent).
+ */
+static int nc_minmax_valid(GENERAL_SUBTREE *sub) {
+    BIGNUM *bn = NULL;
+    int ok = 1;
+
+    if (sub->maximum)
+        ok = 0;
+
+    if (sub->minimum) {
+        bn = ASN1_INTEGER_to_BN(sub->minimum, NULL);
+        if (bn == NULL || !BN_is_zero(bn))
+            ok = 0;
+        BN_free(bn);
+    }
+
+    return ok;
+}
+
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
     GENERAL_SUBTREE *sub;
@@ -449,7 +474,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
         sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
         if (gen->type != sub->base->type)
             continue;
-        if (sub->minimum || sub->maximum)
+        if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
         /* If we already have a match don't bother trying any more */
         if (match == 2)
@@ -472,7 +497,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
         sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
         if (gen->type != sub->base->type)
             continue;
-        if (sub->minimum || sub->maximum)
+        if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
 
         r = nc_match_single(gen, sub->base);

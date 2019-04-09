@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -10,18 +10,7 @@
 #include <string.h>
 #include <openssl/e_os2.h>
 #include <openssl/evp.h>
-
-#ifdef __VMS
-# pragma names save
-# pragma names as_is,shortened
-#endif
-
 #include "curve448_lcl.h"
-
-#ifdef __VMS
-# pragma names restore
-#endif
-
 #include "testutil.h"
 
 static unsigned int max = 1000;
@@ -693,19 +682,49 @@ static int test_x448(void)
     return 1;
 }
 
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_PROGRESS,
+    OPT_SLOW,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS test_options[] = {
+        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("conf_file\n"),
+        { "f", OPT_SLOW, '-', "Enables a slow test" },
+        { "v", OPT_PROGRESS, '-',
+              "Enables verbose mode (prints progress dots)" },
+        { NULL }
+    };
+    return test_options;
+}
+
 int setup_tests(void)
 {
-    /*
-     * The test vectors contain one test which takes a very long time to run,
-     * so we don't do that be default. Using the -f option will cause it to be
-     * run.
-     */
-    if (test_has_option("-f"))
-        max = 1000000;
+    OPTION_CHOICE o;
 
-    /* Print progress dots */
-    if (test_has_option("-v"))
-        verbose = 1;
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_TEST_CASES:
+            break;
+        default:
+            return 0;
+        /*
+         * The test vectors contain one test which takes a very long time to run
+         * so we don't do that be default. Using the -f option will cause it to
+         * be run.
+         */
+        case OPT_SLOW:
+            max = 1000000;
+            break;
+        case OPT_PROGRESS:
+            verbose = 1; /* Print progress dots */
+            break;
+        }
+    }
 
     ADD_TEST(test_x448);
     ADD_TEST(test_ed448);

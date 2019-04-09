@@ -1,7 +1,7 @@
 /*
  * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -43,7 +43,7 @@
  * If unistd.h defines _POSIX_VERSION, we conclude that we are on a POSIX
  * system and have sigaction and termios.
  */
-#  if defined(_POSIX_VERSION)
+#  if defined(_POSIX_VERSION) && _POSIX_VERSION>=199309L
 
 #   define SIGACTION
 #   if !defined(TERMIOS) && !defined(TERMIO) && !defined(SGTTY)
@@ -99,6 +99,12 @@
 #   undef  SGTTY
 #  endif
 
+# endif
+
+# if defined(OPENSSL_SYS_VXWORKS)
+#  undef TERMIOS
+#  undef TERMIO
+#  undef SGTTY
 # endif
 
 # ifdef TERMIOS
@@ -412,6 +418,24 @@ static int open_console(UI *ui)
              * This should be ok
              */
         if (errno == EINVAL)
+            is_a_tty = 0;
+        else
+#  endif
+#  ifdef ENXIO
+            /*
+             * Solaris can return ENXIO.
+             * This should be ok
+             */
+        if (errno == ENXIO)
+            is_a_tty = 0;
+        else
+#  endif
+#  ifdef EIO
+            /*
+             * Linux can return EIO.
+             * This should be ok
+             */
+        if (errno == EIO)
             is_a_tty = 0;
         else
 #  endif

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -25,6 +25,10 @@
 #  define stat    _stat
 #  define strcasecmp _stricmp
 # endif
+#endif
+
+#ifndef S_ISDIR
+# define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
 #endif
 
 /*
@@ -344,10 +348,15 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 psection = section;
             }
             p = eat_ws(conf, end);
-            if (strncmp(pname, ".include", 8) == 0 && p != pname + 8) {
+            if (strncmp(pname, ".include", 8) == 0
+                && (p != pname + 8 || *p == '=')) {
                 char *include = NULL;
                 BIO *next;
 
+                if (*p == '=') {
+                    p++;
+                    p = eat_ws(conf, p);
+                }
                 trim_ws(conf, p);
                 if (!str_copy(conf, psection, &include, p))
                     goto err;
@@ -420,12 +429,26 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     }
     BUF_MEM_free(buff);
     OPENSSL_free(section);
-    sk_BIO_pop_free(biosk, BIO_vfree);
+    /*
+     * No need to pop, since we only get here if the stack is empty.
+     * If this causes a BIO leak, THE ISSUE IS SOMEWHERE ELSE!
+     */
+    sk_BIO_free(biosk);
     return 1;
  err:
     BUF_MEM_free(buff);
     OPENSSL_free(section);
-    sk_BIO_pop_free(biosk, BIO_vfree);
+    /*
+     * Since |in| is the first element of the stack and should NOT be freed
+     * here, we cannot use sk_BIO_pop_free().  Instead, we pop and free one
+     * BIO at a time, making sure that the last one popped isn't.
+     */
+    while (sk_BIO_num(biosk) > 0) {
+        BIO *popped = sk_BIO_pop(biosk);
+        BIO_vfree(in);
+        in = popped;
+    }
+    sk_BIO_free(biosk);
 #ifndef OPENSSL_NO_POSIX_IO
     OPENSSL_free(dirpath);
     if (dirctx != NULL)
@@ -646,7 +669,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
 static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
                             char **dirpath)
 {
-    struct stat st = { 0 };
+    struct stat st;
     BIO *next;
 
     if (stat(include, &st) < 0) {
@@ -656,7 +679,7 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
         return NULL;
     }
 
-    if ((st.st_mode & S_IFDIR) == S_IFDIR) {
+    if (S_ISDIR(st.st_mode)) {
         if (*dirctx != NULL) {
             CONFerr(CONF_F_PROCESS_INCLUDE,
                     CONF_R_RECURSIVE_DIRECTORY_INCLUDE);

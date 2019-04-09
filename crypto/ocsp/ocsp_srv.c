@@ -1,7 +1,7 @@
 /*
  * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -236,6 +236,9 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_PKEY_CTX *pkctx = NULL;
     int i;
+
+    if (ctx == NULL)
+        return 0;
 
     if (!EVP_DigestSignInit(ctx, &pkctx, dgst, NULL, key)) {
         EVP_MD_CTX_free(ctx);

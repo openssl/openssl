@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -57,13 +57,14 @@ if ($flavour && $flavour ne "void") {
 $code=<<___;
 #include "arm_arch.h"
 
-.text
 #if defined(__thumb2__)
 .syntax	unified
 .thumb
 #else
 .code	32
 #endif
+
+.text
 ___
 ################
 # private interface to mul_1x1_ialu
@@ -176,11 +177,13 @@ bn_GF2m_mul_2x2:
 #if __ARM_MAX_ARCH__>=7
 	stmdb	sp!,{r10,lr}
 	ldr	r12,.LOPENSSL_armcap
+# if !defined(_WIN32)
 	adr	r10,.LOPENSSL_armcap
 	ldr	r12,[r12,r10]
-#ifdef	__APPLE__
+# endif
+# if defined(__APPLE__) || defined(_WIN32)
 	ldr	r12,[r12]
-#endif
+# endif
 	tst	r12,#ARMV7_NEON
 	itt	ne
 	ldrne	r10,[sp],#8
@@ -310,7 +313,11 @@ $code.=<<___;
 #if __ARM_MAX_ARCH__>=7
 .align	5
 .LOPENSSL_armcap:
+# ifdef	_WIN32
+.word	OPENSSL_armcap_P
+# else
 .word	OPENSSL_armcap_P-.
+# endif
 #endif
 .asciz	"GF(2^m) Multiplication for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	5

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -18,19 +18,31 @@
 #
 # ChaCha20 for PowerPC/AltiVec.
 #
+# June 2018
+#
+# Add VSX 2.07 code path. Original 3xAltiVec+1xIALU is well-suited for
+# processors that can't issue more than one vector instruction per
+# cycle. But POWER8 (and POWER9) can issue a pair, and vector-only 4x
+# interleave would perform better. Incidentally PowerISA 2.07 (first
+# implemented by POWER8) defined new usable instructions, hence 4xVSX
+# code path...
+#
 # Performance in cycles per byte out of large buffer.
 #
-#			IALU/gcc-4.x    3xAltiVec+1xIALU
+#			IALU/gcc-4.x    3xAltiVec+1xIALU	4xVSX
 #
-# Freescale e300	13.6/+115%	-
-# PPC74x0/G4e		6.81/+310%	3.81
-# PPC970/G5		9.29/+160%	?
-# POWER7		8.62/+61%	3.35
-# POWER8		8.70/+51%	2.91
-# POWER9		8.80/+29%	4.44(*)
+# Freescale e300	13.6/+115%	-			-
+# PPC74x0/G4e		6.81/+310%	3.81			-
+# PPC970/G5		9.29/+160%	?			-
+# POWER7		8.62/+61%	3.35			-
+# POWER8		8.70/+51%	2.91			2.09
+# POWER9		8.80/+29%	4.44(*)			2.45(**)
 #
 # (*)	this is trade-off result, it's possible to improve it, but
 #	then it would negatively affect all others;
+# (**)	POWER9 seems to be "allergic" to mixing vector and integer
+#	instructions, which is why switch to vector-only code pays
+#	off that much;
 
 $flavour = shift;
 
@@ -426,9 +438,9 @@ my ($a,$b,$c,$d)=@_;
 	"&vxor		('$b','$b','$c')",
 	"&vrlw		('$b','$b','$seven')",
 
-	"&vsldoi	('$c','$c','$c',8)",
-	"&vsldoi	('$b','$b','$b',$odd?4:12)",
-	"&vsldoi	('$d','$d','$d',$odd?12:4)"
+	"&vrldoi	('$c','$c',8)",
+	"&vrldoi	('$b','$b',$odd?4:12)",
+	"&vrldoi	('$d','$d',$odd?12:4)"
 	);
 }
 
@@ -893,7 +905,390 @@ Ldone_vmx:
 	.byte	0,12,0x04,1,0x80,18,5,0
 	.long	0
 .size	.ChaCha20_ctr32_vmx,.-.ChaCha20_ctr32_vmx
+___
+}}}
+{{{
+my ($xa0,$xa1,$xa2,$xa3, $xb0,$xb1,$xb2,$xb3,
+    $xc0,$xc1,$xc2,$xc3, $xd0,$xd1,$xd2,$xd3) = map("v$_",(0..15));
+my @K = map("v$_",(16..19));
+my $CTR = "v26";
+my ($xt0,$xt1,$xt2,$xt3) = map("v$_",(27..30));
+my ($sixteen,$twelve,$eight,$seven) = ($xt0,$xt1,$xt2,$xt3);
+my $beperm = "v31";
 
+my ($x00,$x10,$x20,$x30) = (0, map("r$_",(8..10)));
+
+my $FRAME=$LOCALS+64+7*16;	# 7*16 is for v26-v31 offload
+
+sub VSX_lane_ROUND {
+my ($a0,$b0,$c0,$d0)=@_;
+my ($a1,$b1,$c1,$d1)=map(($_&~3)+(($_+1)&3),($a0,$b0,$c0,$d0));
+my ($a2,$b2,$c2,$d2)=map(($_&~3)+(($_+1)&3),($a1,$b1,$c1,$d1));
+my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
+my @x=map("\"v$_\"",(0..15));
+
+	(
+	"&vadduwm	(@x[$a0],@x[$a0],@x[$b0])",	# Q1
+	 "&vadduwm	(@x[$a1],@x[$a1],@x[$b1])",	# Q2
+	  "&vadduwm	(@x[$a2],@x[$a2],@x[$b2])",	# Q3
+	   "&vadduwm	(@x[$a3],@x[$a3],@x[$b3])",	# Q4
+	"&vxor		(@x[$d0],@x[$d0],@x[$a0])",
+	 "&vxor		(@x[$d1],@x[$d1],@x[$a1])",
+	  "&vxor	(@x[$d2],@x[$d2],@x[$a2])",
+	   "&vxor	(@x[$d3],@x[$d3],@x[$a3])",
+	"&vrlw		(@x[$d0],@x[$d0],'$sixteen')",
+	 "&vrlw		(@x[$d1],@x[$d1],'$sixteen')",
+	  "&vrlw	(@x[$d2],@x[$d2],'$sixteen')",
+	   "&vrlw	(@x[$d3],@x[$d3],'$sixteen')",
+
+	"&vadduwm	(@x[$c0],@x[$c0],@x[$d0])",
+	 "&vadduwm	(@x[$c1],@x[$c1],@x[$d1])",
+	  "&vadduwm	(@x[$c2],@x[$c2],@x[$d2])",
+	   "&vadduwm	(@x[$c3],@x[$c3],@x[$d3])",
+	"&vxor		(@x[$b0],@x[$b0],@x[$c0])",
+	 "&vxor		(@x[$b1],@x[$b1],@x[$c1])",
+	  "&vxor	(@x[$b2],@x[$b2],@x[$c2])",
+	   "&vxor	(@x[$b3],@x[$b3],@x[$c3])",
+	"&vrlw		(@x[$b0],@x[$b0],'$twelve')",
+	 "&vrlw		(@x[$b1],@x[$b1],'$twelve')",
+	  "&vrlw	(@x[$b2],@x[$b2],'$twelve')",
+	   "&vrlw	(@x[$b3],@x[$b3],'$twelve')",
+
+	"&vadduwm	(@x[$a0],@x[$a0],@x[$b0])",
+	 "&vadduwm	(@x[$a1],@x[$a1],@x[$b1])",
+	  "&vadduwm	(@x[$a2],@x[$a2],@x[$b2])",
+	   "&vadduwm	(@x[$a3],@x[$a3],@x[$b3])",
+	"&vxor		(@x[$d0],@x[$d0],@x[$a0])",
+	 "&vxor		(@x[$d1],@x[$d1],@x[$a1])",
+	  "&vxor	(@x[$d2],@x[$d2],@x[$a2])",
+	   "&vxor	(@x[$d3],@x[$d3],@x[$a3])",
+	"&vrlw		(@x[$d0],@x[$d0],'$eight')",
+	 "&vrlw		(@x[$d1],@x[$d1],'$eight')",
+	  "&vrlw	(@x[$d2],@x[$d2],'$eight')",
+	   "&vrlw	(@x[$d3],@x[$d3],'$eight')",
+
+	"&vadduwm	(@x[$c0],@x[$c0],@x[$d0])",
+	 "&vadduwm	(@x[$c1],@x[$c1],@x[$d1])",
+	  "&vadduwm	(@x[$c2],@x[$c2],@x[$d2])",
+	   "&vadduwm	(@x[$c3],@x[$c3],@x[$d3])",
+	"&vxor		(@x[$b0],@x[$b0],@x[$c0])",
+	 "&vxor		(@x[$b1],@x[$b1],@x[$c1])",
+	  "&vxor	(@x[$b2],@x[$b2],@x[$c2])",
+	   "&vxor	(@x[$b3],@x[$b3],@x[$c3])",
+	"&vrlw		(@x[$b0],@x[$b0],'$seven')",
+	 "&vrlw		(@x[$b1],@x[$b1],'$seven')",
+	  "&vrlw	(@x[$b2],@x[$b2],'$seven')",
+	   "&vrlw	(@x[$b3],@x[$b3],'$seven')"
+	);
+}
+
+$code.=<<___;
+
+.globl	.ChaCha20_ctr32_vsx
+.align	5
+.ChaCha20_ctr32_vsx:
+	$STU	$sp,-$FRAME($sp)
+	mflr	r0
+	li	r10,`15+$LOCALS+64`
+	li	r11,`31+$LOCALS+64`
+	mfspr	r12,256
+	stvx	v26,r10,$sp
+	addi	r10,r10,32
+	stvx	v27,r11,$sp
+	addi	r11,r11,32
+	stvx	v28,r10,$sp
+	addi	r10,r10,32
+	stvx	v29,r11,$sp
+	addi	r11,r11,32
+	stvx	v30,r10,$sp
+	stvx	v31,r11,$sp
+	stw	r12,`$FRAME-4`($sp)		# save vrsave
+	li	r12,-4096+63
+	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
+	mtspr	256,r12				# preserve 29 AltiVec registers
+
+	bl	Lconsts				# returns pointer Lsigma in r12
+	lvx_4w	@K[0],0,r12			# load sigma
+	addi	r12,r12,0x50
+	li	$x10,16
+	li	$x20,32
+	li	$x30,48
+	li	r11,64
+
+	lvx_4w	@K[1],0,$key			# load key
+	lvx_4w	@K[2],$x10,$key
+	lvx_4w	@K[3],0,$ctr			# load counter
+
+	vxor	$xt0,$xt0,$xt0
+	lvx_4w	$xt1,r11,r12
+	vspltw	$CTR,@K[3],0
+	vsldoi	@K[3],@K[3],$xt0,4
+	vsldoi	@K[3],$xt0,@K[3],12		# clear @K[3].word[0]
+	vadduwm	$CTR,$CTR,$xt1
+
+	be?lvsl	$beperm,0,$x10			# 0x00..0f
+	be?vspltisb $xt0,3			# 0x03..03
+	be?vxor	$beperm,$beperm,$xt0		# swap bytes within words
+
+	li	r0,10				# inner loop counter
+	mtctr	r0
+	b	Loop_outer_vsx
+
+.align	5
+Loop_outer_vsx:
+	lvx	$xa0,$x00,r12			# load [smashed] sigma
+	lvx	$xa1,$x10,r12
+	lvx	$xa2,$x20,r12
+	lvx	$xa3,$x30,r12
+
+	vspltw	$xb0,@K[1],0			# smash the key
+	vspltw	$xb1,@K[1],1
+	vspltw	$xb2,@K[1],2
+	vspltw	$xb3,@K[1],3
+
+	vspltw	$xc0,@K[2],0
+	vspltw	$xc1,@K[2],1
+	vspltw	$xc2,@K[2],2
+	vspltw	$xc3,@K[2],3
+
+	vmr	$xd0,$CTR			# smash the counter
+	vspltw	$xd1,@K[3],1
+	vspltw	$xd2,@K[3],2
+	vspltw	$xd3,@K[3],3
+
+	vspltisw $sixteen,-16			# synthesize constants
+	vspltisw $twelve,12
+	vspltisw $eight,8
+	vspltisw $seven,7
+
+Loop_vsx:
+___
+	foreach (&VSX_lane_ROUND(0, 4, 8,12)) { eval; }
+	foreach (&VSX_lane_ROUND(0, 5,10,15)) { eval; }
+$code.=<<___;
+	bdnz	Loop_vsx
+
+	vadduwm	$xd0,$xd0,$CTR
+
+	vmrgew	$xt0,$xa0,$xa1			# transpose data
+	vmrgew	$xt1,$xa2,$xa3
+	vmrgow	$xa0,$xa0,$xa1
+	vmrgow	$xa2,$xa2,$xa3
+	 vmrgew	$xt2,$xb0,$xb1
+	 vmrgew	$xt3,$xb2,$xb3
+	vpermdi	$xa1,$xa0,$xa2,0b00
+	vpermdi	$xa3,$xa0,$xa2,0b11
+	vpermdi	$xa0,$xt0,$xt1,0b00
+	vpermdi	$xa2,$xt0,$xt1,0b11
+
+	vmrgow	$xb0,$xb0,$xb1
+	vmrgow	$xb2,$xb2,$xb3
+	 vmrgew	$xt0,$xc0,$xc1
+	 vmrgew	$xt1,$xc2,$xc3
+	vpermdi	$xb1,$xb0,$xb2,0b00
+	vpermdi	$xb3,$xb0,$xb2,0b11
+	vpermdi	$xb0,$xt2,$xt3,0b00
+	vpermdi	$xb2,$xt2,$xt3,0b11
+
+	vmrgow	$xc0,$xc0,$xc1
+	vmrgow	$xc2,$xc2,$xc3
+	 vmrgew	$xt2,$xd0,$xd1
+	 vmrgew	$xt3,$xd2,$xd3
+	vpermdi	$xc1,$xc0,$xc2,0b00
+	vpermdi	$xc3,$xc0,$xc2,0b11
+	vpermdi	$xc0,$xt0,$xt1,0b00
+	vpermdi	$xc2,$xt0,$xt1,0b11
+
+	vmrgow	$xd0,$xd0,$xd1
+	vmrgow	$xd2,$xd2,$xd3
+	 vspltisw $xt0,4
+	 vadduwm  $CTR,$CTR,$xt0		# next counter value
+	vpermdi	$xd1,$xd0,$xd2,0b00
+	vpermdi	$xd3,$xd0,$xd2,0b11
+	vpermdi	$xd0,$xt2,$xt3,0b00
+	vpermdi	$xd2,$xt2,$xt3,0b11
+
+	vadduwm	$xa0,$xa0,@K[0]
+	vadduwm	$xb0,$xb0,@K[1]
+	vadduwm	$xc0,$xc0,@K[2]
+	vadduwm	$xd0,$xd0,@K[3]
+
+	be?vperm $xa0,$xa0,$xa0,$beperm
+	be?vperm $xb0,$xb0,$xb0,$beperm
+	be?vperm $xc0,$xc0,$xc0,$beperm
+	be?vperm $xd0,$xd0,$xd0,$beperm
+
+	${UCMP}i $len,0x40
+	blt	Ltail_vsx
+
+	lvx_4w	$xt0,$x00,$inp
+	lvx_4w	$xt1,$x10,$inp
+	lvx_4w	$xt2,$x20,$inp
+	lvx_4w	$xt3,$x30,$inp
+
+	vxor	$xt0,$xt0,$xa0
+	vxor	$xt1,$xt1,$xb0
+	vxor	$xt2,$xt2,$xc0
+	vxor	$xt3,$xt3,$xd0
+
+	stvx_4w	$xt0,$x00,$out
+	stvx_4w	$xt1,$x10,$out
+	addi	$inp,$inp,0x40
+	stvx_4w	$xt2,$x20,$out
+	subi	$len,$len,0x40
+	stvx_4w	$xt3,$x30,$out
+	addi	$out,$out,0x40
+	beq	Ldone_vsx
+
+	vadduwm	$xa0,$xa1,@K[0]
+	vadduwm	$xb0,$xb1,@K[1]
+	vadduwm	$xc0,$xc1,@K[2]
+	vadduwm	$xd0,$xd1,@K[3]
+
+	be?vperm $xa0,$xa0,$xa0,$beperm
+	be?vperm $xb0,$xb0,$xb0,$beperm
+	be?vperm $xc0,$xc0,$xc0,$beperm
+	be?vperm $xd0,$xd0,$xd0,$beperm
+
+	${UCMP}i $len,0x40
+	blt	Ltail_vsx
+
+	lvx_4w	$xt0,$x00,$inp
+	lvx_4w	$xt1,$x10,$inp
+	lvx_4w	$xt2,$x20,$inp
+	lvx_4w	$xt3,$x30,$inp
+
+	vxor	$xt0,$xt0,$xa0
+	vxor	$xt1,$xt1,$xb0
+	vxor	$xt2,$xt2,$xc0
+	vxor	$xt3,$xt3,$xd0
+
+	stvx_4w	$xt0,$x00,$out
+	stvx_4w	$xt1,$x10,$out
+	addi	$inp,$inp,0x40
+	stvx_4w	$xt2,$x20,$out
+	subi	$len,$len,0x40
+	stvx_4w	$xt3,$x30,$out
+	addi	$out,$out,0x40
+	beq	Ldone_vsx
+
+	vadduwm	$xa0,$xa2,@K[0]
+	vadduwm	$xb0,$xb2,@K[1]
+	vadduwm	$xc0,$xc2,@K[2]
+	vadduwm	$xd0,$xd2,@K[3]
+
+	be?vperm $xa0,$xa0,$xa0,$beperm
+	be?vperm $xb0,$xb0,$xb0,$beperm
+	be?vperm $xc0,$xc0,$xc0,$beperm
+	be?vperm $xd0,$xd0,$xd0,$beperm
+
+	${UCMP}i $len,0x40
+	blt	Ltail_vsx
+
+	lvx_4w	$xt0,$x00,$inp
+	lvx_4w	$xt1,$x10,$inp
+	lvx_4w	$xt2,$x20,$inp
+	lvx_4w	$xt3,$x30,$inp
+
+	vxor	$xt0,$xt0,$xa0
+	vxor	$xt1,$xt1,$xb0
+	vxor	$xt2,$xt2,$xc0
+	vxor	$xt3,$xt3,$xd0
+
+	stvx_4w	$xt0,$x00,$out
+	stvx_4w	$xt1,$x10,$out
+	addi	$inp,$inp,0x40
+	stvx_4w	$xt2,$x20,$out
+	subi	$len,$len,0x40
+	stvx_4w	$xt3,$x30,$out
+	addi	$out,$out,0x40
+	beq	Ldone_vsx
+
+	vadduwm	$xa0,$xa3,@K[0]
+	vadduwm	$xb0,$xb3,@K[1]
+	vadduwm	$xc0,$xc3,@K[2]
+	vadduwm	$xd0,$xd3,@K[3]
+
+	be?vperm $xa0,$xa0,$xa0,$beperm
+	be?vperm $xb0,$xb0,$xb0,$beperm
+	be?vperm $xc0,$xc0,$xc0,$beperm
+	be?vperm $xd0,$xd0,$xd0,$beperm
+
+	${UCMP}i $len,0x40
+	blt	Ltail_vsx
+
+	lvx_4w	$xt0,$x00,$inp
+	lvx_4w	$xt1,$x10,$inp
+	lvx_4w	$xt2,$x20,$inp
+	lvx_4w	$xt3,$x30,$inp
+
+	vxor	$xt0,$xt0,$xa0
+	vxor	$xt1,$xt1,$xb0
+	vxor	$xt2,$xt2,$xc0
+	vxor	$xt3,$xt3,$xd0
+
+	stvx_4w	$xt0,$x00,$out
+	stvx_4w	$xt1,$x10,$out
+	addi	$inp,$inp,0x40
+	stvx_4w	$xt2,$x20,$out
+	subi	$len,$len,0x40
+	stvx_4w	$xt3,$x30,$out
+	addi	$out,$out,0x40
+	mtctr	r0
+	bne	Loop_outer_vsx
+
+Ldone_vsx:
+	lwz	r12,`$FRAME-4`($sp)		# pull vrsave
+	li	r10,`15+$LOCALS+64`
+	li	r11,`31+$LOCALS+64`
+	$POP	r0, `$FRAME+$LRSAVE`($sp)
+	mtspr	256,r12				# restore vrsave
+	lvx	v26,r10,$sp
+	addi	r10,r10,32
+	lvx	v27,r11,$sp
+	addi	r11,r11,32
+	lvx	v28,r10,$sp
+	addi	r10,r10,32
+	lvx	v29,r11,$sp
+	addi	r11,r11,32
+	lvx	v30,r10,$sp
+	lvx	v31,r11,$sp
+	mtlr	r0
+	addi	$sp,$sp,$FRAME
+	blr
+
+.align	4
+Ltail_vsx:
+	addi	r11,$sp,$LOCALS
+	mtctr	$len
+	stvx_4w	$xa0,$x00,r11			# offload block to stack
+	stvx_4w	$xb0,$x10,r11
+	stvx_4w	$xc0,$x20,r11
+	stvx_4w	$xd0,$x30,r11
+	subi	r12,r11,1			# prepare for *++ptr
+	subi	$inp,$inp,1
+	subi	$out,$out,1
+
+Loop_tail_vsx:
+	lbzu	r6,1(r12)
+	lbzu	r7,1($inp)
+	xor	r6,r6,r7
+	stbu	r6,1($out)
+	bdnz	Loop_tail_vsx
+
+	stvx_4w	$K[0],$x00,r11			# wipe copy of the block
+	stvx_4w	$K[0],$x10,r11
+	stvx_4w	$K[0],$x20,r11
+	stvx_4w	$K[0],$x30,r11
+
+	b	Ldone_vsx
+	.long	0
+	.byte	0,12,0x04,1,0x80,0,5,0
+	.long	0
+.size	.ChaCha20_ctr32_vsx,.-.ChaCha20_ctr32_vsx
+___
+}}}
+$code.=<<___;
 .align	5
 Lconsts:
 	mflr	r0
@@ -919,10 +1314,14 @@ $code.=<<___ 	if (!$LITTLE_ENDIAN);	# flipped words
 	.long	0x01020300,0x05060704,0x090a0b08,0x0d0e0f0c
 ___
 $code.=<<___;
+	.long	0x61707865,0x61707865,0x61707865,0x61707865
+	.long	0x3320646e,0x3320646e,0x3320646e,0x3320646e
+	.long	0x79622d32,0x79622d32,0x79622d32,0x79622d32
+	.long	0x6b206574,0x6b206574,0x6b206574,0x6b206574
+	.long	0,1,2,3
 .asciz  "ChaCha20 for PowerPC/AltiVec, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___
-}}}
 
 foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
@@ -935,11 +1334,12 @@ foreach (split("\n",$code)) {
 	    s/\?lvsr/lvsl/	or
 	    s/\?lvsl/lvsr/	or
 	    s/\?(vperm\s+v[0-9]+,\s*)(v[0-9]+,\s*)(v[0-9]+,\s*)(v[0-9]+)/$1$3$2$4/ or
-	    s/(vsldoi\s+v[0-9]+,\s*)(v[0-9]+,)\s*(v[0-9]+,\s*)([0-9]+)/$1$3$2 16-$4/;
+	    s/vrldoi(\s+v[0-9]+,\s*)(v[0-9]+,)\s*([0-9]+)/vsldoi$1$2$2 16-$3/;
 	} else {			# little-endian
 	    s/le\?//		or
 	    s/be\?/#be#/	or
-	    s/\?([a-z]+)/$1/;
+	    s/\?([a-z]+)/$1/	or
+	    s/vrldoi(\s+v[0-9]+,\s*)(v[0-9]+,)\s*([0-9]+)/vsldoi$1$2$2 $3/;
 	}
 
 	print $_,"\n";

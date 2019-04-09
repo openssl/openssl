@@ -1,8 +1,8 @@
 /*
- * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -25,10 +25,6 @@
 # define ARIA_BLOCK_SIZE    16  /* Size of each encryption/decryption block */
 # define ARIA_MAX_KEYS      17  /* Number of keys needed in the worst case  */
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
-
 typedef union {
     unsigned char c[ARIA_BLOCK_SIZE];
     unsigned int u[ARIA_BLOCK_SIZE / sizeof(unsigned int)];
@@ -50,9 +46,5 @@ int aria_set_decrypt_key(const unsigned char *userKey, const int bits,
 
 void aria_encrypt(const unsigned char *in, unsigned char *out,
                   const ARIA_KEY *key);
-
-# ifdef  __cplusplus
-}
-# endif
 
 #endif

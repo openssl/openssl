@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -22,10 +22,11 @@ enum drbg_kat_type {
     PR_TRUE
 };
 
-enum drbg_df {
-    USE_DF,
-    NO_DF,
-    NA
+enum drbg_flags {
+    NA       = 0,
+    USE_DF   = 1<<0,
+    NO_DF    = 1<<1,
+    USE_HMAC = 1<<2
 };
 
 struct drbg_kat_no_reseed {
@@ -64,7 +65,7 @@ struct drbg_kat_pr_true {
 
 struct drbg_kat {
     enum drbg_kat_type type;
-    enum drbg_df df;
+    enum drbg_flags flags;
     int nid;
 
     size_t entropyinlen;
@@ -76,7 +77,12 @@ struct drbg_kat {
     const void *t;
 };
 
-extern const struct drbg_kat *drbg_test[];
-extern const size_t drbg_test_nelem;
+extern const struct drbg_kat *drbg_ctr_test[];
+extern const struct drbg_kat *drbg_hmac_test[];
+extern const struct drbg_kat *drbg_hash_test[];
+
+extern const size_t drbg_ctr_nelem;
+extern const size_t drbg_hmac_nelem;
+extern const size_t drbg_hash_nelem;
 
 #endif

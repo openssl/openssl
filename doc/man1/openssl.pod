@@ -11,7 +11,7 @@ I<command>
 [ I<command_opts> ]
 [ I<command_args> ]
 
-B<openssl> B<list> [ B<standard-commands> | B<digest-commands> | B<cipher-commands> | B<cipher-algorithms> | B<digest-algorithms> | B<public-key-algorithms>]
+B<openssl> B<list> [ B<standard-commands> | B<digest-commands> | B<cipher-commands> | B<cipher-algorithms> | B<digest-algorithms> | B<mac-algorithms> | B<public-key-algorithms>]
 
 B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
 
@@ -28,7 +28,7 @@ It can be used for
  o  Creation and management of private keys, public keys and parameters
  o  Public key cryptographic operations
  o  Creation of X.509 certificates, CSRs and CRLs
- o  Calculation of Message Digests
+ o  Calculation of Message Digests and Message Authentication Codes
  o  Encryption and Decryption with Ciphers
  o  SSL/TLS Client and Server Tests
  o  Handling of S/MIME signed or encrypted mail
@@ -39,6 +39,9 @@ It can be used for
 The B<openssl> program provides a rich variety of commands (I<command> in the
 SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
+
+Detailed documentation and use cases for most standard subcommands are available
+(e.g., L<x509(1)> or L<openssl-x509(1)>).
 
 Many commands use an external configuration file for some or all of their
 arguments and have a B<-config> option to specify that file.
@@ -54,8 +57,9 @@ and B<cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,
 respectively, that are available in the present B<openssl> utility.
 
-The list parameters B<cipher-algorithms> and
-B<digest-algorithms> list all cipher and message digest names, one entry per line. Aliases are listed as:
+The list parameters B<cipher-algorithms>, B<digest-algorithms>,
+and B<mac-algorithms> list all cipher, message digest, and message
+authentication code names, one entry per line. Aliases are listed as:
 
  from => to
 
@@ -77,161 +81,165 @@ B<list>, or B<no->I<XXX> itself.)
 
 =over 4
 
-=item L<B<asn1parse>|asn1parse(1)>
+=item B<asn1parse>
 
 Parse an ASN.1 sequence.
 
-=item L<B<ca>|ca(1)>
+=item B<ca>
 
 Certificate Authority (CA) Management.
 
-=item L<B<ciphers>|ciphers(1)>
+=item B<ciphers>
 
 Cipher Suite Description Determination.
 
-=item L<B<cms>|cms(1)>
+=item B<cms>
 
 CMS (Cryptographic Message Syntax) utility.
 
-=item L<B<crl>|crl(1)>
+=item B<crl>
 
 Certificate Revocation List (CRL) Management.
 
-=item L<B<crl2pkcs7>|crl2pkcs7(1)>
+=item B<crl2pkcs7>
 
 CRL to PKCS#7 Conversion.
 
-=item L<B<dgst>|dgst(1)>
+=item B<dgst>
 
-Message Digest Calculation.
+Message Digest calculation. MAC calculations are superseded by
+L<mac(1)>.
 
 =item B<dh>
 
 Diffie-Hellman Parameter Management.
-Obsoleted by L<B<dhparam>|dhparam(1)>.
+Obsoleted by L<dhparam(1)>.
 
-=item L<B<dhparam>|dhparam(1)>
+=item B<dhparam>
 
 Generation and Management of Diffie-Hellman Parameters. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>.
+L<genpkey(1)> and L<pkeyparam(1)>.
 
-=item L<B<dsa>|dsa(1)>
+=item B<dsa>
 
 DSA Data Management.
 
-=item L<B<dsaparam>|dsaparam(1)>
+=item B<dsaparam>
 
 DSA Parameter Generation and Management. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>.
+L<genpkey(1)> and L<pkeyparam(1)>.
 
-=item L<B<ec>|ec(1)>
+=item B<ec>
 
 EC (Elliptic curve) key processing.
 
-=item L<B<ecparam>|ecparam(1)>
+=item B<ecparam>
 
 EC parameter manipulation and generation.
 
-=item L<B<enc>|enc(1)>
+=item B<enc>
 
 Encoding with Ciphers.
 
-=item L<B<engine>|engine(1)>
+=item B<engine>
 
 Engine (loadable module) information and manipulation.
 
-=item L<B<errstr>|errstr(1)>
+=item B<errstr>
 
 Error Number to Error String Conversion.
 
 =item B<gendh>
 
 Generation of Diffie-Hellman Parameters.
-Obsoleted by L<B<dhparam>|dhparam(1)>.
+Obsoleted by L<dhparam(1)>.
 
-=item L<B<gendsa>|gendsa(1)>
+=item B<gendsa>
 
 Generation of DSA Private Key from Parameters. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkey>|pkey(1)>.
+L<genpkey(1)> and L<pkey(1)>.
 
-=item L<B<genpkey>|genpkey(1)>
+=item B<genpkey>
 
 Generation of Private Key or Parameters.
 
-=item L<B<genrsa>|genrsa(1)>
+=item B<genrsa>
 
-Generation of RSA Private Key. Superseded by L<B<genpkey>|genpkey(1)>.
+Generation of RSA Private Key. Superseded by L<genpkey(1)>.
 
-=item L<B<nseq>|nseq(1)>
+=item B<mac>
+
+Message Authentication Code Calculation.
+
+=item B<nseq>
 
 Create or examine a Netscape certificate sequence.
 
-=item L<B<ocsp>|ocsp(1)>
+=item B<ocsp>
 
 Online Certificate Status Protocol utility.
 
-=item L<B<passwd>|passwd(1)>
+=item B<passwd>
 
 Generation of hashed passwords.
 
-=item L<B<pkcs12>|pkcs12(1)>
+=item B<pkcs12>
 
 PKCS#12 Data Management.
 
-=item L<B<pkcs7>|pkcs7(1)>
+=item B<pkcs7>
 
 PKCS#7 Data Management.
 
-=item L<B<pkcs8>|pkcs8(1)>
+=item B<pkcs8>
 
 PKCS#8 format private key conversion tool.
 
-=item L<B<pkey>|pkey(1)>
+=item B<pkey>
 
 Public and private key management.
 
-=item L<B<pkeyparam>|pkeyparam(1)>
+=item B<pkeyparam>
 
 Public key algorithm parameter management.
 
-=item L<B<pkeyutl>|pkeyutl(1)>
+=item B<pkeyutl>
 
 Public key algorithm cryptographic operation utility.
 
-=item L<B<prime>|prime(1)>
+=item B<prime>
 
 Compute prime numbers.
 
-=item L<B<rand>|rand(1)>
+=item B<rand>
 
 Generate pseudo-random bytes.
 
-=item L<B<rehash>|rehash(1)>
+=item B<rehash>
 
 Create symbolic links to certificate and CRL files named by the hash values.
 
-=item L<B<req>|req(1)>
+=item B<req>
 
 PKCS#10 X.509 Certificate Signing Request (CSR) Management.
 
-=item L<B<rsa>|rsa(1)>
+=item B<rsa>
 
 RSA key management.
 
-
-=item L<B<rsautl>|rsautl(1)>
+=item B<rsautl>
 
 RSA utility for signing, verification, encryption, and decryption. Superseded
-by  L<B<pkeyutl>|pkeyutl(1)>.
+by  L<pkeyutl(1)>.
 
-=item L<B<s_client>|s_client(1)>
+=item B<s_client>
 
 This implements a generic SSL/TLS client which can establish a transparent
 connection to a remote server speaking SSL/TLS. It's intended for testing
 purposes only and provides only rudimentary interface functionality but
 internally uses mostly all functionality of the OpenSSL B<ssl> library.
 
-=item L<B<s_server>|s_server(1)>
+=item B<s_server>
 
 This implements a generic SSL/TLS server which accepts connections from remote
 clients speaking SSL/TLS. It's intended for testing purposes only and provides
@@ -240,47 +248,47 @@ functionality of the OpenSSL B<ssl> library.  It provides both an own command
 line oriented protocol for testing SSL functions and a simple HTTP response
 facility to emulate an SSL/TLS-aware webserver.
 
-=item L<B<s_time>|s_time(1)>
+=item B<s_time>
 
 SSL Connection Timer.
 
-=item L<B<sess_id>|sess_id(1)>
+=item B<sess_id>
 
 SSL Session Data Management.
 
-=item L<B<smime>|smime(1)>
+=item B<smime>
 
 S/MIME mail processing.
 
-=item L<B<speed>|speed(1)>
+=item B<speed>
 
 Algorithm Speed Measurement.
 
-=item L<B<spkac>|spkac(1)>
+=item B<spkac>
 
 SPKAC printing and generating utility.
 
-=item L<B<srp>|srp(1)>
+=item B<srp>
 
 Maintain SRP password file.
 
-=item L<B<storeutl>|storeutl(1)>
+=item B<storeutl>
 
 Utility to list and display certificates, keys, CRLs, etc.
 
-=item L<B<ts>|ts(1)>
+=item B<ts>
 
 Time Stamping Authority tool (client/server).
 
-=item L<B<verify>|verify(1)>
+=item B<verify>
 
 X.509 Certificate Verification.
 
-=item L<B<version>|version(1)>
+=item B<version>
 
 OpenSSL Version Information.
 
-=item L<B<x509>|x509(1)>
+=item B<x509>
 
 X.509 Certificate Data Management.
 
@@ -370,37 +378,83 @@ SM3 Digest
 
 =head2 Encoding and Cipher Commands
 
+The following aliases provide convenient access to the most used encodings
+and ciphers.
+
+Depending on how OpenSSL was configured and built, not all ciphers listed
+here may be present. See L<enc(1)> for more information and command usage.
+
 =over 4
+
+=item B<aes128>, B<aes-128-cbc>, B<aes-128-cfb>, B<aes-128-ctr>, B<aes-128-ecb>, B<aes-128-ofb>
+
+AES-128 Cipher
+
+=item B<aes192>, B<aes-192-cbc>, B<aes-192-cfb>, B<aes-192-ctr>, B<aes-192-ecb>, B<aes-192-ofb>
+
+AES-192 Cipher
+
+=item B<aes256>, B<aes-256-cbc>, B<aes-256-cfb>, B<aes-256-ctr>, B<aes-256-ecb>, B<aes-256-ofb>
+
+AES-256 Cipher
+
+=item B<aria128>, B<aria-128-cbc>, B<aria-128-cfb>, B<aria-128-ctr>, B<aria-128-ecb>, B<aria-128-ofb>
+
+Aria-128 Cipher
+
+=item B<aria192>, B<aria-192-cbc>, B<aria-192-cfb>, B<aria-192-ctr>, B<aria-192-ecb>, B<aria-192-ofb>
+
+Aria-192 Cipher
+
+=item B<aria256>, B<aria-256-cbc>, B<aria-256-cfb>, B<aria-256-ctr>, B<aria-256-ecb>, B<aria-256-ofb>
+
+Aria-256 Cipher
 
 =item B<base64>
 
 Base64 Encoding
 
-=item B<bf bf-cbc bf-cfb bf-ecb bf-ofb>
+=item B<bf>, B<bf-cbc>, B<bf-cfb>, B<bf-ecb>, B<bf-ofb>
 
 Blowfish Cipher
 
-=item B<cast cast-cbc>
+=item B<camellia128>, B<camellia-128-cbc>, B<camellia-128-cfb>, B<camellia-128-ctr>, B<camellia-128-ecb>, B<camellia-128-ofb>
+
+Camellia-128 Cipher
+
+=item B<camellia192>, B<camellia-192-cbc>, B<camellia-192-cfb>, B<camellia-192-ctr>, B<camellia-192-ecb>, B<camellia-192-ofb>
+
+Camellia-192 Cipher
+
+=item B<camellia256>, B<camellia-256-cbc>, B<camellia-256-cfb>, B<camellia-256-ctr>, B<camellia-256-ecb>, B<camellia-256-ofb>
+
+Camellia-256 Cipher
+
+=item B<cast>, B<cast-cbc>
 
 CAST Cipher
 
-=item B<cast5-cbc cast5-cfb cast5-ecb cast5-ofb>
+=item B<cast5-cbc>, B<cast5-cfb>, B<cast5-ecb>, B<cast5-ofb>
 
 CAST5 Cipher
 
-=item B<des des-cbc des-cfb des-ecb des-ede des-ede-cbc des-ede-cfb des-ede-ofb des-ofb>
+=item B<chacha20>
+
+Chacha20 Cipher
+
+=item B<des>, B<des-cbc>, B<des-cfb>, B<des-ecb>, B<des-ede>, B<des-ede-cbc>, B<des-ede-cfb>, B<des-ede-ofb>, B<des-ofb>
 
 DES Cipher
 
-=item B<des3 desx des-ede3 des-ede3-cbc des-ede3-cfb des-ede3-ofb>
+=item B<des3>, B<desx>, B<des-ede3>, B<des-ede3-cbc>, B<des-ede3-cfb>, B<des-ede3-ofb>
 
 Triple-DES Cipher
 
-=item B<idea idea-cbc idea-cfb idea-ecb idea-ofb>
+=item B<idea>, B<idea-cbc>, B<idea-cfb>, B<idea-ecb>, B<idea-ofb>
 
 IDEA Cipher
 
-=item B<rc2 rc2-cbc rc2-cfb rc2-ecb rc2-ofb>
+=item B<rc2>, B<rc2-cbc>, B<rc2-cfb>, B<rc2-ecb>, B<rc2-ofb>
 
 RC2 Cipher
 
@@ -408,9 +462,17 @@ RC2 Cipher
 
 RC4 Cipher
 
-=item B<rc5 rc5-cbc rc5-cfb rc5-ecb rc5-ofb>
+=item B<rc5>, B<rc5-cbc>, B<rc5-cfb>, B<rc5-ecb>, B<rc5-ofb>
 
 RC5 Cipher
+
+=item B<seed>, B<seed-cbc>, B<seed-cfb>, B<seed-ecb>, B<seed-ofb>
+
+SEED Cipher
+
+=item B<sm4>, B<sm4-cbc>, B<sm4-cfb>, B<sm4-ctr>, B<sm4-ecb>, B<sm4-ofb>
+
+SM4 Cipher
 
 =back
 
@@ -475,6 +537,74 @@ Read the password from standard input.
 
 =back
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<OPENSSL_TRACE=>I<name,...>
+
+Enable tracing output of OpenSSL library, by name.
+This output will only make sense if you know OpenSSL internals well.
+Also, it might not give you any output at all, depending on how
+OpenSSL was built.
+
+The value is a comma separated list of names, with the following
+available:
+
+=over 4
+
+=item B<TRACE>
+
+The tracing functionality.
+
+=item B<TLS>
+
+General SSL/TLS.
+
+=item B<TLS_CIPHER>
+
+SSL/TLS cipher.
+
+=item B<ENGINE_CONF>
+
+ENGINE configuration.
+
+=item B<ENGINE_TABLE>
+
+The function that is used by RSA, DSA (etc) code to select registered
+ENGINEs, cache defaults and functional references (etc), will generate
+debugging summaries.
+
+=item B<ENGINE_REF_COUNT>
+
+Reference counts in the ENGINE structure will be monitored with a line
+of generated for each change.
+
+=item B<PKCS5V2>
+
+PKCS#5 v2 keygen.
+
+=item B<PKCS12_KEYGEN>
+
+PKCS#12 key generation.
+
+=item B<PKCS12_DECRYPT>
+
+PKCS#12 decryption.
+
+=item B<X509V3_POLICY>
+
+Generates the complete policy tree at various point during X.509 v3
+policy evaluation.
+
+=item B<BN_CTX>
+
+BIGNUM context.
+
+=back
+
+=back
+
 =head1 SEE ALSO
 
 L<asn1parse(1)>, L<ca(1)>, L<ciphers(1)>, L<cms(1)>, L<config(5)>,
@@ -482,7 +612,7 @@ L<crl(1)>, L<crl2pkcs7(1)>, L<dgst(1)>,
 L<dhparam(1)>, L<dsa(1)>, L<dsaparam(1)>,
 L<ec(1)>, L<ecparam(1)>,
 L<enc(1)>, L<engine(1)>, L<errstr(1)>, L<gendsa(1)>, L<genpkey(1)>,
-L<genrsa(1)>, L<nseq(1)>, L<ocsp(1)>,
+L<genrsa(1)>, L<mac(1)>, L<nseq(1)>, L<ocsp(1)>,
 L<passwd(1)>,
 L<pkcs12(1)>, L<pkcs7(1)>, L<pkcs8(1)>,
 L<pkey(1)>, L<pkeyparam(1)>, L<pkeyutl(1)>, L<prime(1)>,
@@ -504,7 +634,7 @@ manual pages.
 
 Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

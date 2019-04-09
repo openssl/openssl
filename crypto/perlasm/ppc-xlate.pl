@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -256,6 +256,8 @@ my $vsubudm	= sub { vcrypto_op(@_, 1216); };
 my $vaddcuq	= sub { vcrypto_op(@_, 320);  };
 my $vaddeuqm	= sub { vfour(@_,60); };
 my $vaddecuq	= sub { vfour(@_,61); };
+my $vmrgew	= sub { vfour(@_,0,1932); };
+my $vmrgow	= sub { vfour(@_,0,1676); };
 
 my $mtsle	= sub {
     my ($f, $arg) = @_;
@@ -271,6 +273,8 @@ my $mtvrwz	= sub {
     my ($f, $vrt, $ra) = @_;
     "	.long	".sprintf "0x%X",(31<<26)|($vrt<<21)|($ra<<16)|(243<<1)|1;
 };
+my $lvwzx_u	= sub { vsxmem_op(@_, 12); };	# lxsiwzx
+my $stvwx_u	= sub { vsxmem_op(@_, 140); };	# stxsiwx
 
 # PowerISA 3.0 stuff
 my $maddhdu	= sub { vfour(@_,49); };

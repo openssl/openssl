@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -24,7 +24,7 @@
 
 #define COOKIE_SECRET_LENGTH    16
 
-VERIFY_CB_ARGS verify_args = { 0, 0, X509_V_OK, 0 };
+VERIFY_CB_ARGS verify_args = { -1, 0, X509_V_OK, 0 };
 
 #ifndef OPENSSL_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
@@ -63,7 +63,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     if (!ok) {
         BIO_printf(bio_err, "verify error:num=%d:%s\n", err,
                    X509_verify_cert_error_string(err));
-        if (verify_args.depth >= depth) {
+        if (verify_args.depth < 0 || verify_args.depth >= depth) {
             if (!verify_args.return_error)
                 ok = 1;
             verify_args.error = err;
@@ -394,7 +394,8 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {
     EVP_PKEY *key;
-    if (!SSL_get_server_tmp_key(s, &key))
+
+    if (!SSL_get_peer_tmp_key(s, &key))
         return 1;
     BIO_puts(out, "Server Temp Key: ");
     switch (EVP_PKEY_id(key)) {
@@ -599,22 +600,6 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         case 23:
             str_content_type = ", ApplicationData";
             break;
-#ifndef OPENSSL_NO_HEARTBEATS
-        case 24:
-            str_details1 = ", Heartbeat";
-
-            if (len > 0) {
-                switch (bp[0]) {
-                case 1:
-                    str_details1 = ", HeartbeatRequest";
-                    break;
-                case 2:
-                    str_details1 = ", HeartbeatResponse";
-                    break;
-                }
-            }
-            break;
-#endif
         }
     }
 
@@ -655,7 +640,6 @@ static STRINT_PAIR tlsext_types[] = {
     {"SRP", TLSEXT_TYPE_srp},
     {"signature algorithms", TLSEXT_TYPE_signature_algorithms},
     {"use SRTP", TLSEXT_TYPE_use_srtp},
-    {"heartbeat", TLSEXT_TYPE_heartbeat},
     {"session ticket", TLSEXT_TYPE_session_ticket},
     {"renegotiation info", TLSEXT_TYPE_renegotiate},
     {"signed certificate timestamps", TLSEXT_TYPE_signed_certificate_timestamp},
@@ -679,6 +663,53 @@ static STRINT_PAIR tlsext_types[] = {
     {"psk kex modes", TLSEXT_TYPE_psk_kex_modes},
     {"certificate authorities", TLSEXT_TYPE_certificate_authorities},
     {"post handshake auth", TLSEXT_TYPE_post_handshake_auth},
+    {NULL}
+};
+
+/* from rfc8446 4.2.3. + gost (https://tools.ietf.org/id/draft-smyshlyaev-tls12-gost-suites-04.html) */
+static STRINT_PAIR signature_tls13_scheme_list[] = {
+    {"rsa_pkcs1_sha1",         0x0201 /* TLSEXT_SIGALG_rsa_pkcs1_sha1 */},
+    {"ecdsa_sha1",             0x0203 /* TLSEXT_SIGALG_ecdsa_sha1 */},
+/*  {"rsa_pkcs1_sha224",       0x0301    TLSEXT_SIGALG_rsa_pkcs1_sha224}, not in rfc8446 */
+/*  {"ecdsa_sha224",           0x0303    TLSEXT_SIGALG_ecdsa_sha224}      not in rfc8446 */
+    {"rsa_pkcs1_sha256",       0x0401 /* TLSEXT_SIGALG_rsa_pkcs1_sha256 */},
+    {"ecdsa_secp256r1_sha256", 0x0403 /* TLSEXT_SIGALG_ecdsa_secp256r1_sha256 */},
+    {"rsa_pkcs1_sha384",       0x0501 /* TLSEXT_SIGALG_rsa_pkcs1_sha384 */},
+    {"ecdsa_secp384r1_sha384", 0x0503 /* TLSEXT_SIGALG_ecdsa_secp384r1_sha384 */},
+    {"rsa_pkcs1_sha512",       0x0601 /* TLSEXT_SIGALG_rsa_pkcs1_sha512 */},
+    {"ecdsa_secp521r1_sha512", 0x0603 /* TLSEXT_SIGALG_ecdsa_secp521r1_sha512 */},
+    {"rsa_pss_rsae_sha256",    0x0804 /* TLSEXT_SIGALG_rsa_pss_rsae_sha256 */},
+    {"rsa_pss_rsae_sha384",    0x0805 /* TLSEXT_SIGALG_rsa_pss_rsae_sha384 */},
+    {"rsa_pss_rsae_sha512",    0x0806 /* TLSEXT_SIGALG_rsa_pss_rsae_sha512 */},
+    {"ed25519",                0x0807 /* TLSEXT_SIGALG_ed25519 */},
+    {"ed448",                  0x0808 /* TLSEXT_SIGALG_ed448 */},
+    {"rsa_pss_pss_sha256",     0x0809 /* TLSEXT_SIGALG_rsa_pss_pss_sha256 */},
+    {"rsa_pss_pss_sha384",     0x080a /* TLSEXT_SIGALG_rsa_pss_pss_sha384 */},
+    {"rsa_pss_pss_sha512",     0x080b /* TLSEXT_SIGALG_rsa_pss_pss_sha512 */},
+    {"gostr34102001",          0xeded /* TLSEXT_SIGALG_gostr34102001_gostr3411 */},
+    {"gostr34102012_256",      0xeeee /* TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256 */},
+    {"gostr34102012_512",      0xefef /* TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 */},
+    {NULL}
+};
+
+/* from rfc5246 7.4.1.4.1. */
+static STRINT_PAIR signature_tls12_alg_list[] = {
+    {"anonymous", TLSEXT_signature_anonymous /* 0 */},
+    {"RSA",       TLSEXT_signature_rsa       /* 1 */},
+    {"DSA",       TLSEXT_signature_dsa       /* 2 */},
+    {"ECDSA",     TLSEXT_signature_ecdsa     /* 3 */},
+    {NULL}
+};
+
+/* from rfc5246 7.4.1.4.1. */
+static STRINT_PAIR signature_tls12_hash_list[] = {
+    {"none",   TLSEXT_hash_none   /* 0 */},
+    {"MD5",    TLSEXT_hash_md5    /* 1 */},
+    {"SHA1",   TLSEXT_hash_sha1   /* 2 */},
+    {"SHA224", TLSEXT_hash_sha224 /* 3 */},
+    {"SHA256", TLSEXT_hash_sha256 /* 4 */},
+    {"SHA384", TLSEXT_hash_sha384 /* 5 */},
+    {"SHA512", TLSEXT_hash_sha512 /* 6 */},
     {NULL}
 };
 
@@ -1281,9 +1312,9 @@ static STRINT_PAIR callback_types[] = {
     {"Supported Curve", SSL_SECOP_CURVE_SUPPORTED},
     {"Shared Curve", SSL_SECOP_CURVE_SHARED},
     {"Check Curve", SSL_SECOP_CURVE_CHECK},
-    {"Supported Signature Algorithm digest", SSL_SECOP_SIGALG_SUPPORTED},
-    {"Shared Signature Algorithm digest", SSL_SECOP_SIGALG_SHARED},
-    {"Check Signature Algorithm digest", SSL_SECOP_SIGALG_CHECK},
+    {"Supported Signature Algorithm", SSL_SECOP_SIGALG_SUPPORTED},
+    {"Shared Signature Algorithm", SSL_SECOP_SIGALG_SHARED},
+    {"Check Signature Algorithm", SSL_SECOP_SIGALG_CHECK},
     {"Signature Algorithm mask", SSL_SECOP_SIGALG_MASK},
     {"Certificate chain EE key", SSL_SECOP_EE_KEY},
     {"Certificate chain CA key", SSL_SECOP_CA_KEY},
@@ -1303,29 +1334,37 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     security_debug_ex *sdb = ex;
     int rv, show_bits = 1, cert_md = 0;
     const char *nm;
+    int show_nm;
     rv = sdb->old_cb(s, ctx, op, bits, nid, other, ex);
     if (rv == 1 && sdb->verbose < 2)
         return 1;
     BIO_puts(sdb->out, "Security callback: ");
 
     nm = lookup(op, callback_types, NULL);
+    show_nm = nm != NULL;
     switch (op) {
     case SSL_SECOP_TICKET:
     case SSL_SECOP_COMPRESSION:
         show_bits = 0;
-        nm = NULL;
+        show_nm = 0;
         break;
     case SSL_SECOP_VERSION:
         BIO_printf(sdb->out, "Version=%s", lookup(nid, ssl_versions, "???"));
         show_bits = 0;
-        nm = NULL;
+        show_nm = 0;
         break;
     case SSL_SECOP_CA_MD:
     case SSL_SECOP_PEER_CA_MD:
         cert_md = 1;
         break;
+    case SSL_SECOP_SIGALG_SUPPORTED:
+    case SSL_SECOP_SIGALG_SHARED:
+    case SSL_SECOP_SIGALG_CHECK:
+    case SSL_SECOP_SIGALG_MASK:
+        show_nm = 0;
+        break;
     }
-    if (nm != NULL)
+    if (show_nm)
         BIO_printf(sdb->out, "%s=", nm);
 
     switch (op & SSL_SECOP_OTHER_TYPE) {
@@ -1372,27 +1411,28 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
         {
             const unsigned char *salg = other;
             const char *sname = NULL;
-            switch (salg[1]) {
-            case TLSEXT_signature_anonymous:
-                sname = "anonymous";
-                break;
-            case TLSEXT_signature_rsa:
-                sname = "RSA";
-                break;
-            case TLSEXT_signature_dsa:
-                sname = "DSA";
-                break;
-            case TLSEXT_signature_ecdsa:
-                sname = "ECDSA";
-                break;
-            }
+            int raw_sig_code = (salg[0] << 8) + salg[1]; /* always big endian (msb, lsb) */
+                /* raw_sig_code: signature_scheme from tls1.3, or signature_and_hash from tls1.2 */
 
-            BIO_puts(sdb->out, OBJ_nid2sn(nid));
-            if (sname)
-                BIO_printf(sdb->out, ", algorithm=%s", sname);
+            if (nm != NULL)
+                BIO_printf(sdb->out, "%s", nm);
             else
-                BIO_printf(sdb->out, ", algid=%d", salg[1]);
-            break;
+                BIO_printf(sdb->out, "s_cb.c:security_callback_debug op=0x%x", op);
+
+            sname = lookup(raw_sig_code, signature_tls13_scheme_list, NULL);
+            if (sname != NULL) {
+                BIO_printf(sdb->out, " scheme=%s", sname);
+            } else {
+                int alg_code = salg[1];
+                int hash_code = salg[0];
+                const char *alg_str = lookup(alg_code, signature_tls12_alg_list, NULL);
+                const char *hash_str = lookup(hash_code, signature_tls12_hash_list, NULL);
+
+                if (alg_str != NULL && hash_str != NULL)
+                    BIO_printf(sdb->out, " digest=%s, algorithm=%s", hash_str, alg_str);
+                else
+                    BIO_printf(sdb->out, " scheme=unknown(0x%04x)", raw_sig_code);
+            }
         }
 
     }

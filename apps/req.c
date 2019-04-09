@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 #include "apps.h"
 #include "progs.h"
 #include <openssl/bio.h>
@@ -23,6 +24,7 @@
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
+#include <openssl/lhash.h>
 #ifndef OPENSSL_NO_RSA
 # include <openssl/rsa.h>
 #endif
@@ -147,6 +149,66 @@ const OPTIONS req_options[] = {
     {NULL}
 };
 
+
+/*
+ * An LHASH of strings, where each string is an extension name.
+ */
+static unsigned long ext_name_hash(const OPENSSL_STRING *a)
+{
+    return OPENSSL_LH_strhash((const char *)a);
+}
+
+static int ext_name_cmp(const OPENSSL_STRING *a, const OPENSSL_STRING *b)
+{
+    return strcmp((const char *)a, (const char *)b);
+}
+
+static void exts_cleanup(OPENSSL_STRING *x)
+{
+    OPENSSL_free((char *)x);
+}
+
+/*
+ * Is the |kv| key already duplicated?  This is remarkably tricky to get
+ * right.  Return 0 if unique, -1 on runtime error; 1 if found or a syntax
+ * error.
+ */
+static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
+{
+    char *p;
+    size_t off;
+
+    /* Check syntax. */
+    /* Skip leading whitespace, make a copy. */
+    while (*kv && isspace(*kv))
+        if (*++kv == '\0')
+            return 1;
+    if ((p = strchr(kv, '=')) == NULL)
+        return 1;
+    off = p - kv;
+    if ((kv = OPENSSL_strdup(kv)) == NULL)
+        return -1;
+
+    /* Skip trailing space before the equal sign. */
+    for (p = kv + off; p > kv; --p)
+        if (!isspace(p[-1]))
+            break;
+    if (p == kv) {
+        OPENSSL_free(kv);
+        return 1;
+    }
+    *p = '\0';
+
+    /* Finally have a clean "key"; see if it's there [by attempt to add it]. */
+    if ((p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv))
+        != NULL || lh_OPENSSL_STRING_error(addexts)) {
+        OPENSSL_free(p != NULL ? p : kv);
+        return -1;
+    }
+
+    return 0;
+}
+
 int req_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
@@ -155,6 +217,7 @@ int req_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
+    LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *x509ss = NULL;
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
@@ -324,11 +387,17 @@ int req_main(int argc, char **argv)
             multirdn = 1;
             break;
         case OPT_ADDEXT:
-            if (addext_bio == NULL) {
+            p = opt_arg();
+            if (addexts == NULL) {
+                addexts = lh_OPENSSL_STRING_new(ext_name_hash, ext_name_cmp);
                 addext_bio = BIO_new(BIO_s_mem());
+                if (addexts == NULL || addext_bio == NULL)
+                    goto end;
             }
-            if (addext_bio == NULL
-                || BIO_printf(addext_bio, "%s\n", opt_arg()) < 0)
+            i = duplicated(addexts, p);
+            if (i == 1)
+                goto opthelp;
+            if (i < 0 || BIO_printf(addext_bio, "%s\n", opt_arg()) < 0)
                 goto end;
             break;
         case OPT_EXTENSIONS:
@@ -523,11 +592,13 @@ int req_main(int argc, char **argv)
                        "         Your key size is %ld! Larger key size may behave not as expected.\n",
                        OPENSSL_RSA_MAX_MODULUS_BITS, newkey);
 
+#ifndef OPENSSL_NO_DSA
         if (pkey_type == EVP_PKEY_DSA && newkey > OPENSSL_DSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
                        "         Your key size is %ld! Larger key size may behave not as expected.\n",
                        OPENSSL_DSA_MAX_MODULUS_BITS, newkey);
+#endif
 
         if (genctx == NULL) {
             genctx = set_keygen_ctx(NULL, &pkey_type, &newkey,
@@ -551,8 +622,7 @@ int req_main(int argc, char **argv)
         if (pkey_type == EVP_PKEY_EC) {
             BIO_printf(bio_err, "Generating an EC private key\n");
         } else {
-            BIO_printf(bio_err, "Generating a %ld bit %s private key\n",
-                       newkey, keyalgstr);
+            BIO_printf(bio_err, "Generating a %s private key\n", keyalgstr);
         }
 
         EVP_PKEY_CTX_set_cb(genctx, genpkey_cb);
@@ -876,6 +946,7 @@ int req_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     }
     NCONF_free(req_conf);
+    NCONF_free(addext_conf);
     BIO_free(addext_bio);
     BIO_free(in);
     BIO_free_all(out);
@@ -883,6 +954,8 @@ int req_main(int argc, char **argv)
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(sigopts);
+    lh_OPENSSL_STRING_doall(addexts, exts_cleanup);
+    lh_OPENSSL_STRING_free(addexts);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_free(gen_eng);
 #endif
@@ -1527,10 +1600,19 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
                         const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
 {
     EVP_PKEY_CTX *pkctx = NULL;
-    int i;
+    int i, def_nid;
 
     if (ctx == NULL)
         return 0;
+    /*
+     * EVP_PKEY_get_default_digest_nid() returns 2 if the digest is mandatory
+     * for this algorithm.
+     */
+    if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) == 2
+            && def_nid == NID_undef) {
+        /* The signing algorithm requires there to be no digest */
+        md = NULL;
+    }
     if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
         return 0;
     for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {

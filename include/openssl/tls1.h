@@ -3,7 +3,7 @@
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -28,15 +28,9 @@ extern "C" {
 # define TLS1_1_VERSION                  0x0302
 # define TLS1_2_VERSION                  0x0303
 # define TLS1_3_VERSION                  0x0304
-# define TLS_MAX_VERSION                 TLS1_3_VERSION
-
-/* TODO(TLS1.3) REMOVE ME: Version indicators for draft version */
-# define TLS1_3_VERSION_DRAFT_26         0x7f1a
-# define TLS1_3_VERSION_DRAFT_27         0x7f1b
-# define TLS1_3_VERSION_DRAFT            0x7f1c
-# define TLS1_3_VERSION_DRAFT_TXT_26     "TLS 1.3 (draft 26)"
-# define TLS1_3_VERSION_DRAFT_TXT_27     "TLS 1.3 (draft 27)"
-# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 28)"
+# if !OPENSSL_API_3
+#  define TLS_MAX_VERSION                TLS1_3_VERSION
+# endif
 
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
@@ -70,7 +64,6 @@ extern "C" {
 # define TLS1_AD_USER_CANCELLED          90
 # define TLS1_AD_NO_RENEGOTIATION        100
 /* TLSv1.3 alerts */
-# define TLS13_AD_END_OF_EARLY_DATA      1
 # define TLS13_AD_MISSING_EXTENSION      109 /* fatal */
 # define TLS13_AD_CERTIFICATE_REQUIRED   116 /* fatal */
 /* codes 110-114 are from RFC3546 */
@@ -115,9 +108,6 @@ extern "C" {
 
 /* ExtensionType value from RFC5764 */
 # define TLSEXT_TYPE_use_srtp    14
-
-/* ExtensionType value from RFC5620 */
-# define TLSEXT_TYPE_heartbeat   15
 
 /* ExtensionType value from RFC7301 */
 # define TLSEXT_TYPE_application_layer_protocol_negotiation 16
@@ -250,6 +240,7 @@ __owur int SSL_export_keying_material_early(SSL *s, unsigned char *out,
                                             size_t contextlen);
 
 int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid);
+int SSL_get_signature_type_nid(const SSL *s, int *pnid);
 
 int SSL_get_sigalgs(SSL *s, int idx,
                     int *psign, int *phash, int *psignandhash,
@@ -333,35 +324,6 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
         SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,\
                 (void (*)(void))cb)
-
-# ifndef OPENSSL_NO_HEARTBEATS
-#  define SSL_DTLSEXT_HB_ENABLED                   0x01
-#  define SSL_DTLSEXT_HB_DONT_SEND_REQUESTS        0x02
-#  define SSL_DTLSEXT_HB_DONT_RECV_REQUESTS        0x04
-#  define SSL_get_dtlsext_heartbeat_pending(ssl) \
-        SSL_ctrl(ssl,SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING,0,NULL)
-#  define SSL_set_dtlsext_heartbeat_no_requests(ssl, arg) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS,arg,NULL)
-
-#  if OPENSSL_API_COMPAT < 0x10100000L
-#   define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT \
-        SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT
-#   define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING \
-        SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING
-#   define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS \
-        SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS
-#   define SSL_TLSEXT_HB_ENABLED \
-        SSL_DTLSEXT_HB_ENABLED
-#   define SSL_TLSEXT_HB_DONT_SEND_REQUESTS \
-        SSL_DTLSEXT_HB_DONT_SEND_REQUESTS
-#   define SSL_TLSEXT_HB_DONT_RECV_REQUESTS \
-        SSL_DTLSEXT_HB_DONT_RECV_REQUESTS
-#   define SSL_get_tlsext_heartbeat_pending(ssl) \
-        SSL_get_dtlsext_heartbeat_pending(ssl)
-#   define SSL_set_tlsext_heartbeat_no_requests(ssl, arg) \
-        SSL_set_dtlsext_heartbeat_no_requests(ssl,arg)
-#  endif
-# endif
 
 /* PSK ciphersuites from 4279 */
 # define TLS1_CK_PSK_WITH_RC4_128_SHA                    0x0300008A
@@ -1150,7 +1112,13 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
  * comment there)
  */
-# define TLS_CT_NUMBER                   9
+# define TLS_CT_NUMBER                   10
+
+# if defined(SSL3_CT_NUMBER)
+#  if TLS_CT_NUMBER != SSL3_CT_NUMBER
+#    error "SSL/TLS CT_NUMBER values do not match"
+#  endif
+# endif
 
 # define TLS1_FINISH_MAC_LENGTH          12
 

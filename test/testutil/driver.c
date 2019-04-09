@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -17,16 +17,19 @@
 #include "internal/nelem.h"
 #include <openssl/bio.h>
 
+#include "platform.h"            /* From libapps */
+
 #ifdef _WIN32
 # define strdup _strdup
 #endif
+
 
 /*
  * Declares the structures needed to register each test case function.
  */
 typedef struct test_info {
     const char *test_case_name;
-    int (*test_fn) ();
+    int (*test_fn) (void);
     int (*param_test_fn)(int idx);
     int num;
 
@@ -36,13 +39,20 @@ typedef struct test_info {
 
 static TEST_INFO all_tests[1024];
 static int num_tests = 0;
+static int show_list = 0;
+static int single_test = -1;
+static int single_iter = -1;
+static int level = 0;
 static int seed = 0;
 /*
- * A parameterised tests runs a loop of test cases.
+ * A parameterised test runs a loop of test cases.
  * |num_test_cases| counts the total number of test cases
  * across all tests.
  */
 static int num_test_cases = 0;
+
+static int process_shared_options(void);
+
 
 void add_test(const char *test_case_name, int (*test_fn) (void))
 {
@@ -66,15 +76,13 @@ void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
     num_test_cases += num;
 }
 
-static int level = 0;
-
 int subtest_level(void)
 {
     return level;
 }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-static int should_report_leaks()
+static int should_report_leaks(void)
 {
     /*
      * When compiled with enable-crypto-mdebug, OPENSSL_DEBUG_MEMORY=0
@@ -99,21 +107,26 @@ static int gcd(int a, int b)
     return a;
 }
 
-void setup_test_framework()
+static void set_seed(int s)
 {
-    char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
+    seed = s;
+    if (seed <= 0)
+        seed = (int)time(NULL);
+    test_printf_stdout("%*s# RAND SEED %d\n", subtest_level(), "", seed);
+    test_flush_stdout();
+    srand(seed);
+}
+
+
+int setup_test_framework(int argc, char *argv[])
+{
     char *test_seed = getenv("OPENSSL_TEST_RAND_ORDER");
+    char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
 
-    level = TAP_levels != NULL ? 4 * atoi(TAP_levels) : 0;
-
-    if (test_seed != NULL) {
-        seed = atoi(test_seed);
-        if (seed <= 0)
-            seed = (int)time(NULL);
-        test_printf_stdout("%*s# RAND SEED %d\n", subtest_level(), "", seed);
-        test_flush_stdout();
-        srand(seed);
-    }
+    if (TAP_levels != NULL)
+        level = 4 * atoi(TAP_levels);
+    if (test_seed != NULL)
+        set_seed(atoi(test_seed));
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (should_report_leaks()) {
@@ -121,7 +134,124 @@ void setup_test_framework()
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
     }
 #endif
+
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+    argv = copy_argv(&argc, argv);
+#elif defined(_WIN32)
+    /*
+     * Replace argv[] with UTF-8 encoded strings.
+     */
+    win32_utf8argv(&argc, &argv);
+#endif
+
+    if (!opt_init(argc, argv, test_get_options()))
+        return 0;
+    return 1;
 }
+
+
+/*
+ * This can only be called after setup() has run, since num_tests and
+ * all_tests[] are setup at this point
+ */
+static int check_single_test_params(char *name, char *testname, char *itname)
+{
+    if (name != NULL) {
+        int i;
+        for (i = 0; i < num_tests; ++i) {
+            if (strcmp(name, all_tests[i].test_case_name) == 0) {
+                single_test = 1 + i;
+                break;
+	    } 
+        }
+        if (i >= num_tests) 
+	    single_test = atoi(name);
+    }
+
+
+    /* if only iteration is specified, assume we want the first test */
+    if (single_test == -1 && single_iter != -1)
+        single_test = 1;
+
+    if (single_test != -1) {
+        if (single_test < 1 || single_test > num_tests) {
+            test_printf_stderr("Invalid -%s value "
+                               "(Value must be a valid test name OR a value between %d..%d)\n",
+                               testname, 1, num_tests);
+            return 0;
+        }
+    }
+    if (single_iter != -1) {
+        if (all_tests[single_test - 1].num == -1) {
+            test_printf_stderr("-%s option is not valid for test %d:%s\n",
+                               itname,
+                               single_test,
+                               all_tests[single_test - 1].test_case_name);
+            return 0;
+        } else if (single_iter < 1
+                   || single_iter > all_tests[single_test - 1].num) {
+            test_printf_stderr("Invalid -%s value for test %d:%s\t"
+                               "(Value must be in the range %d..%d)\n",
+                               itname, single_test,
+                               all_tests[single_test - 1].test_case_name,
+                               1, all_tests[single_test - 1].num);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int process_shared_options(void)
+{
+    OPTION_CHOICE_DEFAULT o;
+    int value;
+    int ret = -1;
+    char *flag_test = "";
+    char *flag_iter = "";
+    char *testname = NULL;
+
+    opt_begin();
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        /* Ignore any test options at this level */
+        default:
+            break;
+        case OPT_ERR:
+            return ret;
+        case OPT_TEST_HELP:
+            opt_help(test_get_options());
+            return 0;
+        case OPT_TEST_LIST:
+            show_list = 1;
+            break;
+        case OPT_TEST_SINGLE:
+            flag_test = opt_flag();
+            testname = opt_arg();
+            break;
+        case OPT_TEST_ITERATION:
+            flag_iter = opt_flag();
+            if (!opt_int(opt_arg(), &single_iter))
+                goto end;
+            break;
+        case OPT_TEST_INDENT:
+            if (!opt_int(opt_arg(), &value))
+                goto end;
+            level = 4 * value;
+            break;
+        case OPT_TEST_SEED:
+            if (!opt_int(opt_arg(), &value))
+                goto end;
+            set_seed(value);
+            break;
+        }
+    }
+    if (!check_single_test_params(testname, flag_test, flag_iter))
+        goto end;
+    ret = 1;
+end:
+    return ret;
+}
+
 
 int pulldown_test_framework(int ret)
 {
@@ -131,7 +261,6 @@ int pulldown_test_framework(int ret)
         && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
         return EXIT_FAILURE;
 #endif
-
     return ret;
 }
 
@@ -176,14 +305,21 @@ int run_tests(const char *test_prog_name)
     int ii, i, jj, j, jstep;
     int permute[OSSL_NELEM(all_tests)];
 
+    i = process_shared_options();
+    if (i == 0)
+        return EXIT_SUCCESS;
+    if (i == -1)
+        return EXIT_FAILURE;
+
     if (num_tests < 1) {
         test_printf_stdout("%*s1..0 # Skipped: %s\n", level, "",
                            test_prog_name);
-    } else {
+    } else if (show_list == 0 && single_test == -1) {
         if (level > 0)
             test_printf_stdout("%*s# Subtest: %s\n", level, "", test_prog_name);
         test_printf_stdout("%*s1..%d\n", level, "", num_tests);
     }
+
     test_flush_stdout();
 
     for (i = 0; i < num_tests; i++)
@@ -198,12 +334,25 @@ int run_tests(const char *test_prog_name)
 
     for (ii = 0; ii != num_tests; ++ii) {
         i = permute[ii];
-        if (all_tests[i].num == -1) {
+
+        if (single_test != -1 && ((i+1) != single_test)) {
+            continue;
+        }
+        else if (show_list) {
+            if (all_tests[i].num != -1) {
+                test_printf_stdout("%d - %s (%d..%d)\n", ii + 1,
+                                   all_tests[i].test_case_name, 1,
+                                   all_tests[i].num);
+            } else {
+                test_printf_stdout("%d - %s\n", ii + 1,
+                                   all_tests[i].test_case_name);
+            }
+            test_flush_stdout();
+        } else if (all_tests[i].num == -1) {
             int ret = 0;
 
             set_test_title(all_tests[i].test_case_name);
             ret = all_tests[i].test_fn();
-
             verdict = 1;
             if (!ret) {
                 verdict = 0;
@@ -215,7 +364,7 @@ int run_tests(const char *test_prog_name)
             int num_failed_inner = 0;
 
             level += 4;
-            if (all_tests[i].subtest) {
+            if (all_tests[i].subtest && single_iter == -1) {
                 test_printf_stdout("%*s# Subtest: %s\n", level, "",
                                    all_tests[i].test_case_name);
                 test_printf_stdout("%*s%d..%d\n", level, "", 1,
@@ -235,6 +384,8 @@ int run_tests(const char *test_prog_name)
                 int ret;
 
                 j = (j + jstep) % all_tests[i].num;
+                if (single_iter != -1 && ((jj + 1) != single_iter))
+                    continue;
                 set_test_title(NULL);
                 ret = all_tests[i].param_test_fn(j);
 

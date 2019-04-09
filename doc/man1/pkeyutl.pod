@@ -10,6 +10,8 @@ pkeyutl - public key algorithm utility
 B<openssl> B<pkeyutl>
 [B<-help>]
 [B<-in file>]
+[B<-rawin>]
+[B<-digest algorithm>]
 [B<-out file>]
 [B<-sigfile file>]
 [B<-inkey file>]
@@ -29,6 +31,7 @@ B<openssl> B<pkeyutl>
 [B<-kdf algorithm>]
 [B<-kdflen length>]
 [B<-pkeyopt opt:value>]
+[B<-pkeyopt_passin opt:passarg>]
 [B<-hexdump>]
 [B<-asn1parse>]
 [B<-rand file...>]
@@ -53,6 +56,23 @@ Print out a usage message.
 
 This specifies the input filename to read data from or standard input
 if this option is not specified.
+
+=item B<-rawin>
+
+This indicates that the input data is raw data, which is not hashed by any
+message digest algorithm. The user can specify a digest algorithm by using
+the B<-digest> option. This option can only be used with B<-sign> and
+B<-verify> and must be used with the Ed25519 and Ed448 algorithms.
+
+=item B<-digest algorithm>
+
+This specifies the digest algorithm which is used to hash the input data before
+signing or verifying it with the input key. This option could be omitted if the
+signature algorithm does not require one (for instance, EdDSA). If this option
+is omitted but the signature algorithm requires one, a default value will be
+used. For signature algorithms like RSA, DSA and ECDSA, SHA-256 will be the
+default digest algorithm. For SM2, it will be SM3. If this option is present,
+then the B<-rawin> option must be also specified to B<pkeyutl>.
 
 =item B<-out filename>
 
@@ -140,6 +160,13 @@ Set the output length for KDF.
 
 Public key options specified as opt:value. See NOTES below for more details.
 
+=item B<-pkeyopt_passin opt:passarg>
+
+Allows reading a public key option B<opt> from stdin or a password source. If
+only opt is specified, the user will be prompted to enter the value on stdin.
+Alternatively, passarg can be specified which can be any value supported by
+B<PASS PHRASE ARGUMENTS> in L<openssl(1)>.
+
 =item B<-hexdump>
 
 hex dump the output data.
@@ -189,20 +216,17 @@ hash the input data. It is used (by some algorithms) for sanity-checking the
 lengths of data passed in to the B<pkeyutl> and for creating the structures that
 make up the signature (e.g. B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
 
-This utility does not hash the input data but rather it will use the data
-directly as input to the signature algorithm. Depending on the key type,
-signature type, and mode of padding, the maximum acceptable lengths of input
-data differ. The signed data can't be longer than the key modulus with RSA. In
-case of ECDSA and DSA the data shouldn't be longer than the field
-size, otherwise it will be silently truncated to the field size. In any event
-the input size must not be larger than the largest supported digest size.
+This utility does not hash the input data (except where -rawin is used) but
+rather it will use the data directly as input to the signature algorithm.
+Depending on the key type, signature type, and mode of padding, the maximum
+acceptable lengths of input data differ. The signed data can't be longer than
+the key modulus with RSA. In case of ECDSA and DSA the data shouldn't be longer
+than the field size, otherwise it will be silently truncated to the field size.
+In any event the input size must not be larger than the largest supported digest
+size.
 
 In other words, if the value of digest is B<sha1> the input should be the 20
 bytes long binary encoding of the SHA-1 hash function output.
-
-The Ed25519 and Ed448 signature algorithms are not supported by this utility.
-They accept non-hashed input, but this utility can only be used to sign hashed
-input.
 
 =head1 RSA ALGORITHM
 
@@ -272,25 +296,52 @@ value less than the minimum restriction.
 =head1 DSA ALGORITHM
 
 The DSA algorithm supports signing and verification operations only. Currently
-there are no additional options other than B<digest>. Only the SHA1
-digest can be used and this digest is assumed by default.
+there are no additional B<-pkeyopt> options other than B<digest>. The SHA1
+digest is assumed by default.
 
 =head1 DH ALGORITHM
 
 The DH algorithm only supports the derivation operation and no additional
-options.
+B<-pkeyopt> options.
 
 =head1 EC ALGORITHM
 
 The EC algorithm supports sign, verify and derive operations. The sign and
-verify operations use ECDSA and derive uses ECDH. Currently there are no
-additional options other than B<digest>. Only the SHA1 digest can be used and
-this digest is assumed by default.
+verify operations use ECDSA and derive uses ECDH. SHA1 is assumed by default for
+the B<-pkeyopt> B<digest> option.
 
 =head1 X25519 and X448 ALGORITHMS
 
 The X25519 and X448 algorithms support key derivation only. Currently there are
 no additional options.
+
+=head1 Ed25519 and Ed448 ALGORITHMS
+
+These algorithms only support signing and verifying. OpenSSL only implements the
+"pure" variants of these algorithms so raw data can be passed directly to them
+without hashing them first. The option "-rawin" must be used with these
+algorithms with no "-digest" specified. Additionally OpenSSL only supports
+"oneshot" operation with these algorithms. This means that the entire file to
+be signed/verified must be read into memory before processing it. Signing or
+Verifying very large files should be avoided. Additionally the size of the file
+must be known for this to work. If the size of the file cannot be determined
+(for example if the input is stdin) then the sign or verify operation will fail.
+
+=head1 SM2
+
+The SM2 algorithm supports sign, verify, encrypt and decrypt operations. For
+the sign and verify operations, SM2 requires an ID string to be passed in. The
+following B<pkeyopt> value is supported:
+
+=over 4
+
+=item B<sm2_id:string>
+
+This sets the ID string used in SM2 sign or verify operations. While verifying
+an SM2 signature, the ID string must be the same one used when signing the data.
+Otherwise the verification will fail.
+
+=back
 
 =head1 EXAMPLES
 
@@ -320,6 +371,26 @@ seed consisting of the single byte 0xFF:
  openssl pkeyutl -kdf TLS1-PRF -kdflen 48 -pkeyopt md:SHA256 \
     -pkeyopt hexsecret:ff -pkeyopt hexseed:ff -hexdump
 
+Derive a key using B<scrypt> where the password is read from command line:
+
+ openssl pkeyutl -kdf scrypt -kdflen 16 -pkeyopt_passin pass \
+    -pkeyopt hexsalt:aabbcc -pkeyopt N:16384 -pkeyopt r:8 -pkeyopt p:1
+
+Derive using the same algorithm, but read key from environment variable MYPASS:
+
+ openssl pkeyutl -kdf scrypt -kdflen 16 -pkeyopt_passin pass:env:MYPASS \
+    -pkeyopt hexsalt:aabbcc -pkeyopt N:16384 -pkeyopt r:8 -pkeyopt p:1
+
+Sign some data using an L<SM2(7)> private key and a specific ID:
+
+ openssl pkeyutl -sign -in file -inkey sm2.key -out sig -rawin -digest sm3 \
+    -pkeyopt sm2_id:someid
+
+Verify some data using an L<SM2(7)> certificate and a specific ID:
+
+ openssl pkeyutl -verify -certin -in file -inkey sm2.cert -sigfile sig \
+    -rawin -digest sm3 -pkeyopt sm2_id:someid
+
 =head1 SEE ALSO
 
 L<genpkey(1)>, L<pkey(1)>, L<rsautl(1)>
@@ -330,7 +401,7 @@ L<EVP_PKEY_CTX_set_hkdf_md(3)>, L<EVP_PKEY_CTX_set_tls1_prf_md(3)>
 
 Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

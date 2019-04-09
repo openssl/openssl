@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -309,33 +309,31 @@ int dhparam_main(int argc, char **argv)
         bits = DH_bits(dh);
         DH_get0_pqg(dh, &pbn, NULL, &gbn);
         data = app_malloc(len, "print a BN");
-        BIO_printf(out, "#ifndef HEADER_DH_H\n"
-                        "# include <openssl/dh.h>\n"
-                        "#endif\n"
-                        "\n");
-        BIO_printf(out, "DH *get_dh%d()\n{\n", bits);
+
+        BIO_printf(out, "static DH *get_dh%d(void)\n{\n", bits);
         print_bignum_var(out, pbn, "dhp", bits, data);
         print_bignum_var(out, gbn, "dhg", bits, data);
         BIO_printf(out, "    DH *dh = DH_new();\n"
-                        "    BIGNUM *dhp_bn, *dhg_bn;\n"
+                        "    BIGNUM *p, *g;\n"
                         "\n"
                         "    if (dh == NULL)\n"
                         "        return NULL;\n");
-        BIO_printf(out, "    dhp_bn = BN_bin2bn(dhp_%d, sizeof(dhp_%d), NULL);\n",
+        BIO_printf(out, "    p = BN_bin2bn(dhp_%d, sizeof(dhp_%d), NULL);\n",
                    bits, bits);
-        BIO_printf(out, "    dhg_bn = BN_bin2bn(dhg_%d, sizeof(dhg_%d), NULL);\n",
+        BIO_printf(out, "    g = BN_bin2bn(dhg_%d, sizeof(dhg_%d), NULL);\n",
                    bits, bits);
-        BIO_printf(out, "    if (dhp_bn == NULL || dhg_bn == NULL\n"
-                        "            || !DH_set0_pqg(dh, dhp_bn, NULL, dhg_bn)) {\n"
+        BIO_printf(out, "    if (p == NULL || g == NULL\n"
+                        "            || !DH_set0_pqg(dh, p, NULL, g)) {\n"
                         "        DH_free(dh);\n"
-                        "        BN_free(dhp_bn);\n"
-                        "        BN_free(dhg_bn);\n"
+                        "        BN_free(p);\n"
+                        "        BN_free(g);\n"
                         "        return NULL;\n"
                         "    }\n");
         if (DH_get_length(dh) > 0)
             BIO_printf(out,
                         "    if (!DH_set_length(dh, %ld)) {\n"
                         "        DH_free(dh);\n"
+                        "        return NULL;\n"
                         "    }\n", DH_get_length(dh));
         BIO_printf(out, "    return dh;\n}\n");
         OPENSSL_free(data);
@@ -371,16 +369,9 @@ int dhparam_main(int argc, char **argv)
 
 static int dh_cb(int p, int n, BN_GENCB *cb)
 {
-    char c = '*';
+    static const char symbols[] = ".+*\n";
+    char c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
 
-    if (p == 0)
-        c = '.';
-    if (p == 1)
-        c = '+';
-    if (p == 2)
-        c = '*';
-    if (p == 3)
-        c = '\n';
     BIO_write(BN_GENCB_get_arg(cb), &c, 1);
     (void)BIO_flush(BN_GENCB_get_arg(cb));
     return 1;

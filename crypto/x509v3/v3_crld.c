@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -410,9 +410,10 @@ static int print_gens(BIO *out, STACK_OF(GENERAL_NAME) *gens, int indent)
 {
     int i;
     for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
+        if (i > 0)
+            BIO_puts(out, "\n");
         BIO_printf(out, "%*s", indent + 2, "");
         GENERAL_NAME_print(out, sk_GENERAL_NAME_value(gens, i));
-        BIO_puts(out, "\n");
     }
     return 1;
 }
@@ -463,7 +464,8 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
     DIST_POINT *point;
     int i;
     for (i = 0; i < sk_DIST_POINT_num(crld); i++) {
-        BIO_puts(out, "\n");
+        if (i > 0)
+            BIO_puts(out, "\n");
         point = sk_DIST_POINT_value(crld, i);
         if (point->distpoint)
             print_distpoint(out, point->distpoint, indent);

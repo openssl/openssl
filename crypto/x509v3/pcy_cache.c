@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -26,19 +26,19 @@ static int policy_cache_set_int(long *out, ASN1_INTEGER *value);
 static int policy_cache_create(X509 *x,
                                CERTIFICATEPOLICIES *policies, int crit)
 {
-    int i, ret = 0;
+    int i, num, ret = 0;
     X509_POLICY_CACHE *cache = x->policy_cache;
     X509_POLICY_DATA *data = NULL;
     POLICYINFO *policy;
 
-    if (sk_POLICYINFO_num(policies) == 0)
+    if ((num = sk_POLICYINFO_num(policies)) <= 0)
         goto bad_policy;
     cache->data = sk_X509_POLICY_DATA_new(policy_data_cmp);
     if (cache->data == NULL) {
         X509V3err(X509V3_F_POLICY_CACHE_CREATE, ERR_R_MALLOC_FAILURE);
         goto just_cleanup;
     }
-    for (i = 0; i < sk_POLICYINFO_num(policies); i++) {
+    for (i = 0; i < num; i++) {
         policy = sk_POLICYINFO_value(policies, i);
         data = policy_data_new(policy, NULL, crit);
         if (data == NULL) {
@@ -54,7 +54,7 @@ static int policy_cache_create(X509 *x,
                 goto bad_policy;
             }
             cache->anyPolicy = data;
-        } else if (sk_X509_POLICY_DATA_find(cache->data, data) != -1) {
+        } else if (sk_X509_POLICY_DATA_find(cache->data, data) >=0 ) {
             ret = -1;
             goto bad_policy;
         } else if (!sk_X509_POLICY_DATA_push(cache->data, data)) {
@@ -204,8 +204,6 @@ X509_POLICY_DATA *policy_cache_find_data(const X509_POLICY_CACHE *cache,
     X509_POLICY_DATA tmp;
     tmp.valid_policy = (ASN1_OBJECT *)id;
     idx = sk_X509_POLICY_DATA_find(cache->data, &tmp);
-    if (idx == -1)
-        return NULL;
     return sk_X509_POLICY_DATA_value(cache->data, idx);
 }
 

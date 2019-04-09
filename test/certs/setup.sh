@@ -365,3 +365,7 @@ REQMASK=MASK:0x800 ./mkcert.sh req badalt7-key "O = Bad NC Test Certificate 7" \
 # SHA256
 ./mkcert.sh genee PSS-SHA256 ee-key ee-pss-sha256-cert ca-key ca-cert \
     -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest
+
+OPENSSL_KEYALG=ec OPENSSL_KEYBITS=brainpoolP256r1 ./mkcert.sh genee \
+    "Server ECDSA brainpoolP256r1 cert" server-ecdsa-brainpoolP256r1-key \
+    server-ecdsa-brainpoolP256r1-cert rootkey rootcert

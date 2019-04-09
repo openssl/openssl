@@ -54,7 +54,8 @@ signature algorithms: after a client hello (for servers) or a certificate
 request (for clients). They can (for example) be called in the certificate
 callback.
 
-Only TLS 1.2 and DTLS 1.2 currently support signature algorithms. If these
+Only TLS 1.2, TLS 1.3 and DTLS 1.2 currently support signature algorithms.
+If these
 functions are called on an earlier version of TLS or DTLS zero is returned.
 
 The shared signature algorithms returned by SSL_get_shared_sigalgs() are
@@ -66,8 +67,9 @@ rsa(1) then B<*rhash> would be 4, B<*rsign> 1, B<*phash> NID_sha256, B<*psig>
 NID_rsaEncryption and B<*psighash> NID_sha256WithRSAEncryption.
 
 If a signature algorithm is not recognised the corresponding NIDs
-will be set to B<NID_undef>. This may be because the value is not supported
-or is not an appropriate combination (for example MD5 and DSA).
+will be set to B<NID_undef>. This may be because the value is not supported,
+is not an appropriate combination (for example MD5 and DSA) or the
+signature algorithm does not use a hash (for example Ed25519).
 
 =head1 SEE ALSO
 
@@ -76,9 +78,9 @@ L<ssl(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

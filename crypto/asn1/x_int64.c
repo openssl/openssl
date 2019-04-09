@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -46,8 +46,8 @@ static void uint64_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
     **(uint64_t **)pval = 0;
 }
 
-static int uint64_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
-                    const ASN1_ITEM *it)
+static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+                      const ASN1_ITEM *it)
 {
     uint64_t utmp;
     int neg = 0;
@@ -71,7 +71,7 @@ static int uint64_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                    int utype, char *free_cont, const ASN1_ITEM *it)
+                      int utype, char *free_cont, const ASN1_ITEM *it)
 {
     uint64_t utmp = 0;
     char *cp;
@@ -81,6 +81,16 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         return 0;
 
     cp = (char *)*pval;
+
+    /*
+     * Strictly speaking, zero length is malformed.  However, long_c2i
+     * (x_long.c) encodes 0 as a zero length INTEGER (wrongly, of course),
+     * so for the sake of backward compatibility, we still decode zero
+     * length INTEGERs as the number zero.
+     */
+    if (len == 0)
+        goto long_compat;
+
     if (!c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
@@ -95,11 +105,13 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     if (neg)
         /* c2i_uint64_int() returns positive values */
         utmp = 0 - utmp;
+
+ long_compat:
     memcpy(cp, &utmp, sizeof(utmp));
     return 1;
 }
 
-static int uint64_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
@@ -129,8 +141,8 @@ static void uint32_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
     **(uint32_t **)pval = 0;
 }
 
-static int uint32_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
-                    const ASN1_ITEM *it)
+static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+                      const ASN1_ITEM *it)
 {
     uint32_t utmp;
     int neg = 0;
@@ -161,7 +173,7 @@ static int uint32_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
 #define ABS_INT32_MIN ((uint32_t)INT32_MAX + 1)
 
 static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                    int utype, char *free_cont, const ASN1_ITEM *it)
+                      int utype, char *free_cont, const ASN1_ITEM *it)
 {
     uint64_t utmp = 0;
     uint32_t utmp2 = 0;
@@ -172,6 +184,16 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         return 0;
 
     cp = (char *)*pval;
+
+    /*
+     * Strictly speaking, zero length is malformed.  However, long_c2i
+     * (x_long.c) encodes 0 as a zero length INTEGER (wrongly, of course),
+     * so for the sake of backward compatibility, we still decode zero
+     * length INTEGERs as the number zero.
+     */
+    if (len == 0)
+        goto long_compat;
+
     if (!c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
@@ -191,12 +213,14 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
             return 0;
         }
     }
+
+ long_compat:
     utmp2 = (uint32_t)utmp;
     memcpy(cp, &utmp2, sizeof(utmp2));
     return 1;
 }
 
-static int uint32_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+static int uint32_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)

@@ -36,22 +36,23 @@ in build.info.  Their file name extensions will be inferred by the
 build-file templates, adapted for the platform they are meant for (see
 sections on %unified_info and build-file templates further down).
 
-The variables PROGRAMS, LIBS, ENGINES and SCRIPTS are used to declare
+The variables PROGRAMS, LIBS, MODULES and SCRIPTS are used to declare
 end products.  There are variants for them with '_NO_INST' as suffix
 (PROGRAM_NO_INST etc) to specify end products that shouldn't get
 installed.
 
-The variables SOURCE, DEPEND and INCLUDE are indexed by a produced
-file, and their values are the source used to produce that particular
-produced file, extra dependencies, and include directories needed.
+The variables SOURCE, DEPEND, INCLUDE and DEFINE are indexed by a
+produced file, and their values are the source used to produce that
+particular produced file, extra dependencies, include directories
+needed, or C macros to be defined.
 
 All their values in all the build.info throughout the source tree are
-collected together and form a set of programs, libraries, engines and
+collected together and form a set of programs, libraries, modules and
 scripts to be produced, source files, dependencies, etc etc etc.
 
 Let's have a pretend example, a very limited contraption of OpenSSL,
 composed of the program 'apps/openssl', the libraries 'libssl' and
-'libcrypto', an engine 'engines/ossltest' and their sources and
+'libcrypto', an module 'engines/ossltest' and their sources and
 dependencies.
 
     # build.info
@@ -86,7 +87,7 @@ depends on the library 'libssl' to function properly.
     LIBS=../libcrypto
     SOURCE[../libcrypto]=aes.c evp.c cversion.c
     DEPEND[cversion.o]=buildinf.h
-    
+
     GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)"
     DEPEND[buildinf.h]=../Makefile
     DEPEND[../util/mkbuildinf.pl]=../util/Foo.pm
@@ -101,7 +102,7 @@ show that duplicate information isn't an issue.
 This build.info file informs us that 'libcrypto' is built from a few
 source files, 'crypto/aes.c', 'crypto/evp.c' and 'crypto/cversion.c'.
 It also shows us that building the object file inferred from
-'crypto/cversion.c' depends on 'crypto/buildinf.h'.  Finally, it 
+'crypto/cversion.c' depends on 'crypto/buildinf.h'.  Finally, it
 also shows the possibility to declare how some files are generated
 using some script, in this case a perl script, and how such scripts
 can be declared to depend on other files, in this case a perl module.
@@ -111,9 +112,6 @@ Two things are worth an extra note:
 'DEPEND[cversion.o]' mentions an object file.  DEPEND indexes is the
 only location where it's valid to mention them
 
-Lines in 'BEGINRAW'..'ENDRAW' sections must always mention files as
-seen from the top directory, no exception.
-
     # ssl/build.info
     LIBS=../libssl
     SOURCE[../libssl]=tls.c
@@ -122,22 +120,22 @@ This is the build.info file in 'ssl/', and it tells us that the
 library 'libssl' is built from the source file 'ssl/tls.c'.
 
     # engines/build.info
-    ENGINES=dasync
+    MODULES=dasync
     SOURCE[dasync]=e_dasync.c
     DEPEND[dasync]=../libcrypto
     INCLUDE[dasync]=../include
 
-    ENGINES_NO_INST=ossltest
+    MODULES_NO_INST=ossltest
     SOURCE[ossltest]=e_ossltest.c
     DEPEND[ossltest]=../libcrypto.a
     INCLUDE[ossltest]=../include
 
-This is the build.info file in 'engines/', telling us that two engines
+This is the build.info file in 'engines/', telling us that two modules
 called 'engines/dasync' and 'engines/ossltest' shall be built, that
 dasync's source is 'engines/e_dasync.c' and ossltest's source is
 'engines/e_ossltest.c' and that the include directory 'include/' may
-be used when building anything that will be part of these engines.
-Also, both engines depend on the library 'libcrypto' to function
+be used when building anything that will be part of these modules.
+Also, both modules depend on the library 'libcrypto' to function
 properly.  ossltest is explicitly linked with the static variant of
 the library 'libcrypto'.  Finally, only dasync is being installed, as
 ossltest is only for internal testing.
@@ -152,22 +150,22 @@ information comes down to this:
     SOURCE[libssl]=ssl/tls.c
     INCLUDE[libssl]=include
     DEPEND[libssl]=libcrypto
-    
+
     PROGRAMS=apps/openssl
     SOURCE[apps/openssl]=apps/openssl.c
     INCLUDE[apps/openssl]=. include
     DEPEND[apps/openssl]=libssl
 
-    ENGINES=engines/dasync
+    MODULES=engines/dasync
     SOURCE[engines/dasync]=engines/e_dasync.c
     DEPEND[engines/dasync]=libcrypto
     INCLUDE[engines/dasync]=include
 
-    ENGINES_NO_INST=engines/ossltest
+    MODULES_NO_INST=engines/ossltest
     SOURCE[engines/ossltest]=engines/e_ossltest.c
     DEPEND[engines/ossltest]=libcrypto.a
     INCLUDE[engines/ossltest]=include
-    
+
     GENERATE[crypto/buildinf.h]=util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)"
     DEPEND[crypto/buildinf.h]=Makefile
     DEPEND[util/mkbuildinf.pl]=util/Foo.pm
@@ -179,10 +177,10 @@ LIBS may be used to declare routine libraries only.
 
 PROGRAMS may be used to declare programs only.
 
-ENGINES may be used to declare engines only.
+MODULES may be used to declare modules only.
 
 The indexes for SOURCE must only be end product files, such as
-libraries, programs or engines.  The values of SOURCE variables must
+libraries, programs or modules.  The values of SOURCE variables must
 only be source files (possibly generated).
 
 INCLUDE and DEPEND shows a relationship between different files
@@ -211,8 +209,8 @@ indexes:
                pairs.  These are directly inferred from the DEPEND
                variables in build.info files.
 
-  engines   => a list of engines.  These are directly inferred from
-               the ENGINES variable in build.info files.
+  modules   => a list of modules.  These are directly inferred from
+               the MODULES variable in build.info files.
 
   generate  => a hash table containing 'file' => [ 'generator' ... ]
                pairs.  These are directly inferred from the GENERATE
@@ -223,7 +221,7 @@ indexes:
                variables in build.info files.
 
   install   => a hash table containing 'type' => [ 'file' ... ] pairs.
-               The types are 'programs', 'libraries', 'engines' and
+               The types are 'programs', 'libraries', 'modules' and
                'scripts', and the array of files list the files of
                that type that should be installed.
 
@@ -232,11 +230,6 @@ indexes:
 
   programs  => a list of programs.  These are directly inferred from
                the PROGRAMS variable in build.info files.
-
-  rawlines  => a list of build-file lines.  These are a direct copy of
-               the BEGINRAW..ENDRAW lines in build.info files.  Note:
-               only the BEGINRAW..ENDRAW section for the current
-               platform are copied, the rest are ignored.
 
   scripts   => a list of scripts.  There are directly inferred from
                the SCRIPTS variable in build.info files.
@@ -287,7 +280,7 @@ section above would be digested into a %unified_info table:
                         "util/Foo.pm",
                     ],
             },
-        "engines" =>
+        "modules" =>
             [
                 "engines/dasync",
                 "engines/ossltest",
@@ -328,7 +321,7 @@ section above would be digested into a %unified_info table:
             }
         "install" =>
             {
-                "engines" =>
+                "modules" =>
                     [
                         "engines/dasync",
                     ],
@@ -350,9 +343,6 @@ section above would be digested into a %unified_info table:
         "programs" =>
             [
                 "apps/openssl",
-            ],
-        "rawlines" =>
-            [
             ],
         "sources" =>
             {
@@ -471,8 +461,9 @@ etc.
                                 incs => [ "INCL/PATH", ... ]
                                 intent => one of "lib", "dso", "bin" );
 
-                  'obj' has the intended object file *without*
-                  extension, src2obj() is expected to add that.
+                  'obj' has the intended object file with '.o'
+                  extension, src2obj() is expected to change it to
+                  something more suitable for the platform.
                   'srcs' has the list of source files to build the
                   object file, with the first item being the source
                   file that directly corresponds to the object file.
@@ -492,51 +483,50 @@ etc.
 
                   'lib' has the intended library file name *without*
                   extension, obj2lib is expected to add that.  'objs'
-                  has the list of object files (also *without*
-                  extension) to build this library.
+                  has the list of object files to build this library.
 
-    libobj2shlib - function that produces build file lines to build a
+    libobj2shlib - backward compatibility function that's used the
+                  same way as obj2shlib (described next), and was
+                  expected to build the shared library from the
+                  corresponding static library when that was suitable.
+                  NOTE: building a shared library from a static
+                  library is now DEPRECATED, as they no longer share
+                  object files.  Attempting to do this will fail.
+
+    obj2shlib   - function that produces build file lines to build a
                   shareable object library file ("libfoo.so" in Unix
-                  terms) from the corresponding static library file
-                  or object files.
+                  terms) from the corresponding object files.
 
                   called like this:
 
-                        libobj2shlib(shlib => "PATH/TO/shlibfile",
-                                     lib => "PATH/TO/libfile",
-                                     objs => [ "PATH/TO/objectfile", ... ],
-                                     deps => [ "PATH/TO/otherlibfile", ... ]);
+                        obj2shlib(shlib => "PATH/TO/shlibfile",
+                                  lib => "PATH/TO/libfile",
+                                  objs => [ "PATH/TO/objectfile", ... ],
+                                  deps => [ "PATH/TO/otherlibfile", ... ]);
 
-                  'lib' has the intended library file name *without*
-                  extension, libobj2shlib is expected to add that.
+                  'lib' has the base (static) library file name
+                  *without* extension.  This is useful in case
+                  supporting files are needed (such as import
+                  libraries on Windows).
                   'shlib' has the corresponding shared library name
                   *without* extension.  'deps' has the list of other
                   libraries (also *without* extension) this library
                   needs to be linked with.  'objs' has the list of
-                  object files (also *without* extension) to build
-                  this library.
+                  object files to build this library.
 
-                  This function has a choice; it can use the
-                  corresponding static library as input to make the
-                  shared library, or the list of object files.
-
-    obj2dynlib  - function that produces build file lines to build a
-                  dynamically loadable library file ("libfoo.so" on
-                  Unix) from object files.
+    obj2dso     - function that produces build file lines to build a
+                  dynamic shared object file from object files.
 
                   called like this:
 
-                        obj2dynlib(lib => "PATH/TO/libfile",
-                                   objs => [ "PATH/TO/objectfile", ... ],
-                                   deps => [ "PATH/TO/otherlibfile",
-                                   ... ]);
+                        obj2dso(lib => "PATH/TO/libfile",
+                                objs => [ "PATH/TO/objectfile", ... ],
+                                deps => [ "PATH/TO/otherlibfile",
+                                ... ]);
 
-                  This is almost the same as libobj2shlib, but the
+                  This is almost the same as obj2shlib, but the
                   intent is to build a shareable library that can be
-                  loaded in runtime (a "plugin"...).  The differences
-                  are subtle, one of the most visible ones is that the
-                  resulting shareable library is produced from object
-                  files only.
+                  loaded in runtime (a "plugin"...).
 
     obj2bin     - function that produces build file lines to build an
                   executable file from object files.
@@ -549,11 +539,10 @@ etc.
 
                   'bin' has the intended executable file name
                   *without* extension, obj2bin is expected to add
-                  that.  'objs' has the list of object files (also
-                  *without* extension) to build this library.  'deps'
-                  has the list of library files (also *without*
-                  extension) that the programs needs to be linked
-                  with.
+                  that.  'objs' has the list of object files to build
+                  this library.  'deps' has the list of library files
+                  (also *without* extension) that the programs needs
+                  to be linked with.
 
     in2script   - function that produces build file lines to build a
                   script file from some input.
@@ -567,7 +556,7 @@ etc.
                   'sources' has the list of source files to build the
                   resulting script from.
 
-Along with the build-file templates is the driving engine
+Along with the build-file templates is the driving template
 Configurations/common.tmpl, which looks through all the information in
 %unified_info and generates all the rulesets to build libraries,
 programs and all intermediate files, using the rule generating
@@ -577,34 +566,30 @@ As an example with the smaller build.info set we've seen as an
 example, producing the rules to build 'libcrypto' would result in the
 following calls:
 
-    # Note: libobj2shlib will only be called if shared libraries are
+    # Note: obj2shlib will only be called if shared libraries are
     # to be produced.
-    # Note 2: libobj2shlib gets both the name of the static library
-    # and the names of all the object files that go into it.  It's up
-    # to the implementation to decide which to use as input.
-    # Note 3: common.tmpl peals off the ".o" extension from all object
-    # files, as the platform at hand may have a different one.
-    libobj2shlib(shlib => "libcrypto",
-                 lib => "libcrypto",
-                 objs => [ "crypto/aes", "crypto/evp", "crypto/cversion" ],
-                 deps => [  ]);
+    # Note 2: obj2shlib must convert the '.o' extension to whatever
+    # is suitable on the local platform.
+    obj2shlib(shlib => "libcrypto",
+              objs => [ "crypto/aes.o", "crypto/evp.o", "crypto/cversion.o" ],
+              deps => [  ]);
 
     obj2lib(lib => "libcrypto"
-            objs => [ "crypto/aes", "crypto/evp", "crypto/cversion" ]);
+            objs => [ "crypto/aes.o", "crypto/evp.o", "crypto/cversion.o" ]);
 
-    src2obj(obj => "crypto/aes"
+    src2obj(obj => "crypto/aes.o"
             srcs => [ "crypto/aes.c" ],
             deps => [ ],
             incs => [ "include" ],
             intent => "lib");
 
-    src2obj(obj => "crypto/evp"
+    src2obj(obj => "crypto/evp.o"
             srcs => [ "crypto/evp.c" ],
             deps => [ ],
             incs => [ "include" ],
             intent => "lib");
 
-    src2obj(obj => "crypto/cversion"
+    src2obj(obj => "crypto/cversion.o"
             srcs => [ "crypto/cversion.c" ],
             deps => [ "crypto/buildinf.h" ],
             incs => [ "include" ],

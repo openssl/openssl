@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -92,8 +92,7 @@ $idx="r7";
 $lrsave="r8";
 $offload="r11";
 $vrsave="r12";
-@I = ($x00,$x10,$x20,$x30,$x40,$x50,$x60,$x70)=map("r$_",(0,10,26..31));
-      $x00=0 if ($flavour =~ /osx/);
+@I = ($x00,$x10,$x20,$x30,$x40,$x50,$x60,$x70) = (0,map("r$_",(10,26..31)));
 
 @V=($A,$B,$C,$D,$E,$F,$G,$H)=map("v$_",(0..7));
 @X=map("v$_",(8..19,24..27));
@@ -167,8 +166,8 @@ $func:
 	addi		r11,r11,32
 	stvx		v30,r10,$sp
 	stvx		v31,r11,$sp
-	li		r11,-4096+255
-	stw		$vrsave,`$FRAME+6*$SIZE_T-4`($sp)	# save vrsave
+	li		r11,-4096+255		# 0xfffff0ff
+	stw		$vrsave,`$FRAME-6*$SIZE_T-4`($sp)	# save vrsave
 	li		$x10,0x10
 	$PUSH		r26,`$FRAME-6*$SIZE_T`($sp)
 	li		$x20,0x20
@@ -287,24 +286,17 @@ $code.=<<___		if ($SZ==8);
 	stvx_u		$G,$x30,$ctx
 ___
 $code.=<<___;
-	li		r10,`$LOCALS+15`
+	addi		$offload,$sp,`$LOCALS+15`
 	mtlr		$lrsave
-	li		r11,`$LOCALS+31`
 	mtspr		256,$vrsave
-	lvx		v24,r10,$sp		# ABI says so
-	addi		r10,r10,32
-	lvx		v25,r11,$sp
-	addi		r11,r11,32
-	lvx		v26,r10,$sp
-	addi		r10,r10,32
-	lvx		v27,r11,$sp
-	addi		r11,r11,32
-	lvx		v28,r10,$sp
-	addi		r10,r10,32
-	lvx		v29,r11,$sp
-	addi		r11,r11,32
-	lvx		v30,r10,$sp
-	lvx		v31,r11,$sp
+	lvx		v24,$x00,$offload	# ABI says so
+	lvx		v25,$x10,$offload
+	lvx		v26,$x20,$offload
+	lvx		v27,$x30,$offload
+	lvx		v28,$x40,$offload
+	lvx		v29,$x50,$offload
+	lvx		v30,$x60,$offload
+	lvx		v31,$x70,$offload
 	$POP		r26,`$FRAME-6*$SIZE_T`($sp)
 	$POP		r27,`$FRAME-5*$SIZE_T`($sp)
 	$POP		r28,`$FRAME-4*$SIZE_T`($sp)

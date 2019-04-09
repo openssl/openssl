@@ -1,7 +1,7 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -10,12 +10,13 @@
 #include <string.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
+#include "ec_lcl.h"
 
-/* Key derivation function from X9.62/SECG */
+/* Key derivation function from X9.63/SECG */
 /* Way more than we will ever need */
 #define ECDH_KDF_MAX    (1 << 30)
 
-int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,
                    const EVP_MD *md)
@@ -66,3 +67,17 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
     EVP_MD_CTX_free(mctx);
     return rv;
 }
+
+/*-
+ * The old name for ecdh_KDF_X9_63
+ * Retained for ABI compatibility
+ */
+#if !OPENSSL_API_3
+int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+                   const unsigned char *Z, size_t Zlen,
+                   const unsigned char *sinfo, size_t sinfolen,
+                   const EVP_MD *md)
+{
+    return ecdh_KDF_X9_63(out, outlen, Z, Zlen, sinfo, sinfolen, md);
+}
+#endif

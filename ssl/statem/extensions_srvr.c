@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -127,7 +127,7 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    if (!s->hit) {
+    if (!s->hit || SSL_IS_TLS13(s)) {
         if (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name) {
             SSLfatal(s, SSL_AD_UNRECOGNIZED_NAME,
                      SSL_F_TLS_PARSE_CTOS_SERVER_NAME,
@@ -142,21 +142,26 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
             return 0;
         }
 
-        OPENSSL_free(s->session->ext.hostname);
-        s->session->ext.hostname = NULL;
-        if (!PACKET_strndup(&hostname, &s->session->ext.hostname)) {
+        /*
+         * Store the requested SNI in the SSL as temporary storage.
+         * If we accept it, it will get stored in the SSL_SESSION as well.
+         */
+        OPENSSL_free(s->ext.hostname);
+        s->ext.hostname = NULL;
+        if (!PACKET_strndup(&hostname, &s->ext.hostname)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_SERVER_NAME,
                      ERR_R_INTERNAL_ERROR);
             return 0;
         }
 
         s->servername_done = 1;
-    } else {
+    }
+    if (s->hit) {
         /*
          * TODO(openssl-team): if the SNI doesn't match, we MUST
          * fall back to a full handshake.
          */
-        s->servername_done = s->session->ext.hostname
+        s->servername_done = (s->session->ext.hostname != NULL)
             && PACKET_equal(&hostname, s->session->ext.hostname,
                             strlen(s->session->ext.hostname));
 
@@ -892,8 +897,7 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
     if (!WPACKET_put_bytes_u16(&hrrpkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(&hrrpkt)
-               /* TODO(TLS1.3): Fix this before release */
-            || !WPACKET_put_bytes_u16(&hrrpkt, s->version_draft)
+            || !WPACKET_put_bytes_u16(&hrrpkt, s->version)
             || !WPACKET_close(&hrrpkt)) {
         WPACKET_cleanup(&hrrpkt);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
@@ -985,6 +989,9 @@ int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
+    if (s->options & SSL_OP_NO_EXTENDED_MASTER_SECRET)
+        return 1;
+
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
 
     return 1;
@@ -1007,6 +1014,34 @@ int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     return 1;
+}
+
+static SSL_TICKET_STATUS tls_get_stateful_ticket(SSL *s, PACKET *tick,
+                                                 SSL_SESSION **sess)
+{
+    SSL_SESSION *tmpsess = NULL;
+
+    s->ext.ticket_expected = 1;
+
+    switch (PACKET_remaining(tick)) {
+        case 0:
+            return SSL_TICKET_EMPTY;
+
+        case SSL_MAX_SSL_SESSION_ID_LENGTH:
+            break;
+
+        default:
+            return SSL_TICKET_NO_DECRYPT;
+    }
+
+    tmpsess = lookup_sess_in_cache(s, PACKET_data(tick),
+                                   SSL_MAX_SSL_SESSION_ID_LENGTH);
+
+    if (tmpsess == NULL)
+        return SSL_TICKET_NO_DECRYPT;
+
+    *sess = tmpsess;
+    return SSL_TICKET_SUCCESS;
 }
 
 int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
@@ -1128,13 +1163,24 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             ext = 1;
             if (id == 0)
                 s->ext.early_data_ok = 1;
+            s->ext.ticket_expected = 1;
         } else {
             uint32_t ticket_age = 0, now, agesec, agems;
             int ret;
 
-            ret = tls_decrypt_ticket(s, PACKET_data(&identity),
-                                     PACKET_remaining(&identity), NULL, 0,
-                                     &sess);
+            /*
+             * If we are using anti-replay protection then we behave as if
+             * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
+             * is no point in using full stateless tickets.
+             */
+            if ((s->options & SSL_OP_NO_TICKET) != 0
+                    || (s->max_early_data > 0
+                        && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0))
+                ret = tls_get_stateful_ticket(s, &identity, &sess);
+            else
+                ret = tls_decrypt_ticket(s, PACKET_data(&identity),
+                                         PACKET_remaining(&identity), NULL, 0,
+                                         &sess);
 
             if (ret == SSL_TICKET_EMPTY) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_PSK,
@@ -1153,6 +1199,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
             /* Check for replay */
             if (s->max_early_data > 0
+                    && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0
                     && !SSL_CTX_remove_session(s->session_ctx, sess)) {
                 SSL_SESSION_free(sess);
                 sess = NULL;
@@ -1192,6 +1239,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             SSL_SESSION_free(sess);
             sess = NULL;
             s->ext.early_data_ok = 0;
+            s->ext.ticket_expected = 0;
             continue;
         }
         break;
@@ -1229,7 +1277,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         goto err;
     }
 
-    sess->ext.tick_identity = id;
+    s->ext.tick_identity = id;
 
     SSL_SESSION_free(s->session);
     s->session = sess;
@@ -1286,7 +1334,7 @@ EXT_RETURN tls_construct_stoc_server_name(SSL *s, WPACKET *pkt,
                                           size_t chainidx)
 {
     if (s->hit || s->servername_done != 1
-            || s->session->ext.hostname == NULL)
+            || s->ext.hostname == NULL)
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
@@ -1607,8 +1655,7 @@ EXT_RETURN tls_construct_stoc_supported_versions(SSL *s, WPACKET *pkt,
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
-                /* TODO(TLS1.3): Update to remove the TLSv1.3 draft indicator */
-            || !WPACKET_put_bytes_u16(pkt, s->version_draft)
+            || !WPACKET_put_bytes_u16(pkt, s->version)
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_VERSIONS,
@@ -1904,7 +1951,7 @@ EXT_RETURN tls_construct_stoc_psk(SSL *s, WPACKET *pkt, unsigned int context,
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_put_bytes_u16(pkt, s->session->ext.tick_identity)
+            || !WPACKET_put_bytes_u16(pkt, s->ext.tick_identity)
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_PSK, ERR_R_INTERNAL_ERROR);

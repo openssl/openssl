@@ -1,0 +1,48 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_CTX, OPENSSL_CTX_new, OPENSSL_CTX_free - OpenSSL library context
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ typedef struct openssl_ctx_st OPENSSL_CTX;
+
+ OPENSSL_CTX *OPENSSL_CTX_new(void);
+ void OPENSSL_CTX_free(OPENSSL_CTX *ctx);
+
+=head1 DESCRIPTION
+
+C<OPENSSL_CTX> is an internal OpenSSL library context type.
+Applications may allocate their own, but may also use C<NULL> to use
+the internal default context with functions that take a C<OPENSSL_CTX>
+argument.
+
+OPENSSL_CTX_new() creates a new OpenSSL library context.
+
+OPENSSL_CTX_free() frees the given C<ctx>.
+
+=head1 RETURN VALUES
+
+OPENSSL_CTX_new() return a library context pointer on success, or
+C<NULL> on error.
+
+OPENSSL_CTX_free() doesn't return any value.
+
+=head1 HISTORY
+
+OPENSSL_CTX, OPENSSL_CTX_new() and OPENSSL_CTX_free()
+were added in OpenSSL 3.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

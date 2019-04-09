@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -33,9 +33,11 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 {
     size_t i;
     const char *s;
+    int istls13;
 
     if (x == NULL)
         goto err;
+    istls13 = (x->ssl_version == TLS1_3_VERSION);
     if (BIO_puts(bp, "SSL-Session:\n") <= 0)
         goto err;
     s = ssl_protocol_to_string(x->ssl_version);
@@ -70,7 +72,10 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (BIO_printf(bp, "%02X", x->sid_ctx[i]) <= 0)
             goto err;
     }
-    if (BIO_puts(bp, "\n    Master-Key: ") <= 0)
+    if (istls13) {
+        if (BIO_puts(bp, "\n    Resumption PSK: ") <= 0)
+            goto err;
+    } else if (BIO_puts(bp, "\n    Master-Key: ") <= 0)
         goto err;
     for (i = 0; i < x->master_key_length; i++) {
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
@@ -144,6 +149,12 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
     if (BIO_printf(bp, "    Extended master secret: %s\n",
                    x->flags & SSL_SESS_FLAG_EXTMS ? "yes" : "no") <= 0)
         goto err;
+
+    if (istls13) {
+        if (BIO_printf(bp, "    Max Early Data: %u\n",
+                       x->ext.max_early_data) <= 0)
+            goto err;
+    }
 
     return 1;
  err:

@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -200,7 +200,7 @@ static int slg_write(BIO *b, const char *in, int inl)
         BIOerr(BIO_F_SLG_WRITE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    strncpy(buf, in, inl);
+    memcpy(buf, in, inl);
     buf[inl] = '\0';
 
     i = 0;
@@ -408,4 +408,9 @@ static void xcloselog(BIO *bp)
 
 # endif                         /* Unix */
 
+#else                           /* NO_SYSLOG */
+const BIO_METHOD *BIO_s_log(void)
+{
+    return NULL;
+}
 #endif                          /* NO_SYSLOG */

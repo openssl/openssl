@@ -1,12 +1,13 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
@@ -62,7 +63,7 @@ static int test_dtls_unprocessed(int testidx)
 
     if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, DTLS_MAX_VERSION,
+                                       DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -86,17 +87,21 @@ static int test_dtls_unprocessed(int testidx)
     /*
      * Inject a dummy record from the next epoch. In test 0, this should never
      * get used because the message sequence number is too big. In test 1 we set
-     * the record sequence number to be way off in the future. This should not
-     * have an impact on the record replay protection because the record should
-     * be dropped before it is marked as arrived
+     * the record sequence number to be way off in the future.
      */
     c_to_s_mempacket = SSL_get_wbio(clientssl1);
     c_to_s_mempacket = BIO_next(c_to_s_mempacket);
     mempacket_test_inject(c_to_s_mempacket, (char *)certstatus,
                           sizeof(certstatus), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
-    if (!TEST_true(create_ssl_connection(serverssl1, clientssl1,
-                                         SSL_ERROR_NONE)))
+    /*
+     * Create the connection. We use "create_bare_ssl_connection" here so that
+     * we can force the connection to not do "SSL_read" once partly conencted.
+     * We don't want to accidentally read the dummy records we injected because
+     * they will fail to decrypt.
+     */
+    if (!TEST_true(create_bare_ssl_connection(serverssl1, clientssl1,
+                                              SSL_ERROR_NONE, 0)))
         goto end;
 
     if (timer_cb_count == 0) {
@@ -153,7 +158,7 @@ static int test_dtls_drop_records(int idx)
 
     if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
                                        DTLS_client_method(),
-                                       DTLS1_VERSION, DTLS_MAX_VERSION,
+                                       DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -240,6 +245,91 @@ static int test_dtls_drop_records(int idx)
     return testresult;
 }
 
+static const char dummy_cookie[] = "0123456";
+
+static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
+                              unsigned int *cookie_len)
+{
+    memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
+    *cookie_len = sizeof(dummy_cookie);
+    return 1;
+}
+
+static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+                            unsigned int cookie_len)
+{
+    return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));
+}
+
+static int test_cookie(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+                                       DTLS_client_method(),
+                                       DTLS1_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    SSL_CTX_set_options(sctx, SSL_OP_COOKIE_EXCHANGE);
+    SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
+    SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+static int test_dtls_duplicate_records(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+                                       DTLS_client_method(),
+                                       DTLS1_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    DTLS_set_timer_cb(clientssl, timer_cb);
+    DTLS_set_timer_cb(serverssl, timer_cb);
+
+    BIO_ctrl(SSL_get_wbio(clientssl), MEMPACKET_CTRL_SET_DUPLICATE_REC, 1, NULL);
+    BIO_ctrl(SSL_get_wbio(serverssl), MEMPACKET_CTRL_SET_DUPLICATE_REC, 1, NULL);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -248,6 +338,8 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
     ADD_ALL_TESTS(test_dtls_drop_records, TOTAL_RECORDS);
+    ADD_TEST(test_cookie);
+    ADD_TEST(test_dtls_duplicate_records);
 
     return 1;
 }

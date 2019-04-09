@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -179,7 +179,7 @@ typedef struct {
     ENCDEC_DATA(-1, -1),                        \
     ENCDEC_DATA(0, ASN1_LONG_UNDEF)
 
-#if OPENSSL_API_COMPAT < 0x10200000L
+#if !OPENSSL_API_3
 /***** LONG ******************************************************************/
 
 typedef struct {
@@ -396,7 +396,7 @@ static ASN1_INT64_DATA int64_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad (illegal padding) */
     CUSTOM_EXPECTED_SUCCESS(INT64_MIN, INT64_MIN), /* t_8bytes_4_neg */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_5_negpad (illegal padding) */
-    CUSTOM_EXPECTED_SUCCESS(0x1ffffffff, 0x1ffffffff), /* t_5bytes_1 */
+    CUSTOM_EXPECTED_SUCCESS(0x1ffffffffULL, 0x1ffffffffULL), /* t_5bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(0x80000000, 0x80000000), /* t_4bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(INT32_MAX - 1, INT32_MAX -1), /* t_4bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_3_pad (illegal padding) */
@@ -446,7 +446,7 @@ static ASN1_UINT64_DATA uint64_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_4_neg */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_5_negpad */
-    CUSTOM_EXPECTED_SUCCESS(0x1ffffffff, 0x1ffffffff), /* t_5bytes_1 */
+    CUSTOM_EXPECTED_SUCCESS(0x1ffffffffULL, 0x1ffffffffULL), /* t_5bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(0x80000000, 0x80000000), /* t_4bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(INT32_MAX - 1, INT32_MAX -1), /* t_4bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_3_pad (illegal padding) */
@@ -824,7 +824,7 @@ static int test_intern(const TEST_PACKAGE *package)
     return fail == 0;
 }
 
-#if OPENSSL_API_COMPAT < 0x10200000L
+#if !OPENSSL_API_3
 static int test_long_32bit(void)
 {
     return test_intern(&long_test_package_32bit);
@@ -858,7 +858,7 @@ static int test_uint64(void)
 
 int setup_tests(void)
 {
-#if OPENSSL_API_COMPAT < 0x10200000L
+#if !OPENSSL_API_3
     ADD_TEST(test_long_32bit);
     ADD_TEST(test_long_64bit);
 #endif

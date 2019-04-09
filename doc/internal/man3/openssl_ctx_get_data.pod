@@ -1,0 +1,112 @@
+=pod
+
+=head1 NAME
+
+openssl_ctx_new_index, openssl_ctx_get_data - internal OPENSSL_CTX routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/ossl_typ.h>
+ #include "internal/cryptlib.h"
+
+ typedef struct openssl_ctx_method {
+     void *(*new_func)(void);
+     void (*free_func)(void *);
+ } OPENSSL_CTX_METHOD;
+
+ int openssl_ctx_new_index(const OPENSSL_CTX_METHOD *meth);
+ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index);
+
+=head1 DESCRIPTION
+
+Internally, the OpenSSL library context C<OPENSSL_CTX> is implemented
+as a C<CRYPTO_EX_DATA>, which allows data from diverse parts of the
+library to be added and removed dynamically.
+Each such data item must have a corresponding CRYPTO_EX_DATA index
+associated with it.
+See the example further down to see how that's done.
+
+openssl_ctx_new_index() allocates a new library context index, and
+associates it with the functions given through C<meth>.
+The functions given through that method are used to create or free
+items that are stored at that index whenever a library context is
+created or freed, meaning that the code that use a data item of that
+index doesn't have to worry about that, just use the data available.
+
+Deallocation of an index happens automatically when the library
+context is freed.
+
+openssl_ctx_get_data() is used to retrieve a pointer to the data in
+the library context C<ctx> associated with the given C<index>.
+
+=head1 RETURN VALUES
+
+openssl_ctx_new_index() returns -1 on error, otherwise the allocated
+index number.
+
+openssl_ctx_get_data() returns a pointer on success, or C<NULL> on
+failure.
+
+=head1 EXAMPLES
+
+=head2 Initialization
+
+For a type C<FOO> that should end up in the OpenSSL library context, a
+small bit of initialization is needed, i.e. to associate a constructor
+and a destructor to a new index.
+
+ /* The index will always be entirely global, and dynamically allocated */
+ static int foo_index = -1;
+
+ typedef struct foo_st {
+     int i;
+     void *data;
+ } FOO;
+
+ static void *foo_new(void)
+ {
+     FOO *ptr = OPENSSL_zalloc(sizeof(*foo));
+     if (ptr != NULL)
+         ptr->i = 42;
+     return ptr;
+ }
+ static void foo_free(void *ptr)
+ {
+     OPENSSL_free(ptr);
+ }
+ static const OPENSSL_CTX_METHOD foo_method = {
+     foo_new,
+     foo_free
+ };
+
+ static int foo_init(void)
+ {
+     foo_index = openssl_ctx_new_index(foo_method);
+
+     return foo_index != -1;
+ }
+
+=head2 Usage
+
+To get and use the data stored in the library context, simply do this:
+
+ /*
+  * ctx is received from a caller,
+  * foo_index comes from the example above
+  */
+ FOO *data = openssl_ctx_get_data(ctx, foo_index);
+
+=head1 SEE ALSO
+
+L<OPENSSL_CTX(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

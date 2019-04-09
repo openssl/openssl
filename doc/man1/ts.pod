@@ -262,7 +262,7 @@ specified, the argument is given to the engine as a key identifier.
 =item B<-I<digest>>
 
 Signing digest to use. Overrides the B<signer_digest> config file
-option. (Optional)
+option. (Mandatory unless specified in the config file)
 
 =item B<-chain> certs_file.pem
 
@@ -460,7 +460,8 @@ command line option. (Optional)
 =item B<signer_digest>
 
 Signing digest to use. The same as the
-B<-I<digest>> command line option. (Optional)
+B<-I<digest>> command line option. (Mandatory unless specified on the command
+line)
 
 =item B<default_policy>
 
@@ -557,10 +558,12 @@ OID section of the config file):
 
 Before generating a response a signing certificate must be created for
 the TSA that contains the B<timeStamping> critical extended key usage extension
-without any other key usage extensions. You can add the
-'extendedKeyUsage = critical,timeStamping' line to the user certificate section
-of the config file to generate a proper certificate. See L<req(1)>,
-L<ca(1)>, L<x509(1)> for instructions. The examples
+without any other key usage extensions. You can add this line to the
+user certificate section of the config file to generate a proper certificate;
+
+   extendedKeyUsage = critical,timeStamping
+
+See L<req(1)>, L<ca(1)>, and L<x509(1)> for instructions. The examples
 below assume that cacert.pem contains the certificate of the CA,
 tsacert.pem is the signing certificate issued by cacert.pem and
 tsakey.pem is the private key of the TSA.
@@ -662,9 +665,9 @@ L<config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

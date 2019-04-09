@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -133,7 +133,9 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
  */
 int BIO_bind(int sock, const BIO_ADDR *addr, int options)
 {
+# ifndef OPENSSL_SYS_WINDOWS
     int on = 1;
+# endif
 
     if (sock == -1) {
         BIOerr(BIO_F_BIO_BIND, BIO_R_INVALID_SOCKET);

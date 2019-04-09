@@ -6,11 +6,18 @@ SSL_set_max_early_data,
 SSL_CTX_set_max_early_data,
 SSL_get_max_early_data,
 SSL_CTX_get_max_early_data,
+SSL_set_recv_max_early_data,
+SSL_CTX_set_recv_max_early_data,
+SSL_get_recv_max_early_data,
+SSL_CTX_get_recv_max_early_data,
 SSL_SESSION_get_max_early_data,
 SSL_SESSION_set_max_early_data,
 SSL_write_early_data,
 SSL_read_early_data,
-SSL_get_early_data_status
+SSL_get_early_data_status,
+SSL_allow_early_data_cb_fn,
+SSL_CTX_set_allow_early_data_cb,
+SSL_set_allow_early_data_cb
 - functions for sending and receiving early data
 
 =head1 SYNOPSIS
@@ -21,6 +28,12 @@ SSL_get_early_data_status
  uint32_t SSL_CTX_get_max_early_data(const SSL_CTX *ctx);
  int SSL_set_max_early_data(SSL *s, uint32_t max_early_data);
  uint32_t SSL_get_max_early_data(const SSL *s);
+
+ int SSL_CTX_set_recv_max_early_data(SSL_CTX *ctx, uint32_t recv_max_early_data);
+ uint32_t SSL_CTX_get_recv_max_early_data(const SSL_CTX *ctx);
+ int SSL_set_recv_max_early_data(SSL *s, uint32_t recv_max_early_data);
+ uint32_t SSL_get_recv_max_early_data(const SSL *s);
+
  uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s);
  int SSL_SESSION_set_max_early_data(SSL_SESSION *s, uint32_t max_early_data);
 
@@ -29,6 +42,16 @@ SSL_get_early_data_status
  int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes);
 
  int SSL_get_early_data_status(const SSL *s);
+
+
+ typedef int (*SSL_allow_early_data_cb_fn)(SSL *s, void *arg);
+
+ void SSL_CTX_set_allow_early_data_cb(SSL_CTX *ctx,
+                                      SSL_allow_early_data_cb_fn cb,
+                                      void *arg);
+ void SSL_set_allow_early_data_cb(SSL *s,
+                                  SSL_allow_early_data_cb_fn cb,
+                                  void *arg);
 
 =head1 DESCRIPTION
 
@@ -70,7 +93,7 @@ the server.
 A client uses the function SSL_write_early_data() to send early data. This
 function is similar to the L<SSL_write_ex(3)> function, but with the following
 differences. See L<SSL_write_ex(3)> for information on how to write bytes to
-the underlying connection, and how to handle any errors that may arise. This 
+the underlying connection, and how to handle any errors that may arise. This
 page describes the differences between SSL_write_early_data() and
 L<SSL_write_ex(3)>.
 
@@ -182,9 +205,40 @@ since there is no practical benefit from using only one of them. If the maximum
 early data setting for a server is non-zero then replay protection is
 automatically enabled (see L</REPLAY PROTECTION> below).
 
-In the event that the current maximum early data setting for the server is
-different to that originally specified in a session that a client is resuming
-with then the lower of the two values will apply.
+If the server rejects the early data sent by a client then it will skip over
+the data that is sent. The maximum amount of received early data that is skipped
+is controlled by the recv_max_early_data setting. If a client sends more than
+this then the connection will abort. This value can be set by calling
+SSL_CTX_set_recv_max_early_data() or SSL_set_recv_max_early_data(). The current
+value for this setting can be obtained by calling
+SSL_CTX_get_recv_max_early_data() or SSL_get_recv_max_early_data(). The default
+value for this setting is 16,384 bytes.
+
+The recv_max_early_data value also has an impact on early data that is accepted.
+The amount of data that is accepted will always be the lower of the
+max_early_data for the session and the recv_max_early_data setting for the
+server. If a client sends more data than this then the connection will abort.
+
+The configured value for max_early_data on a server may change over time as
+required. However clients may have tickets containing the previously configured
+max_early_data value. The recv_max_early_data should always be equal to or
+higher than any recently configured max_early_data value in order to avoid
+aborted connections. The recv_max_early_data should never be set to less than
+the current configured max_early_data value.
+
+Some server applications may wish to have more control over whether early data
+is accepted or not, for example to mitigate replay risks (see L</REPLAY PROTECTION>
+below) or to decline early_data when the server is heavily loaded. The functions
+SSL_CTX_set_allow_early_data_cb() and SSL_set_allow_early_data_cb() set a
+callback which is called at a point in the handshake immediately before a
+decision is made to accept or reject early data. The callback is provided with a
+pointer to the user data argument that was provided when the callback was first
+set. Returning 1 from the callback will allow early data and returning 0 will
+reject it. Note that the OpenSSL library may reject early data for other reasons
+in which case this callback will not get called. Notably, the built-in replay
+protection feature will still be used even if a callback is present unless it
+has been explicitly disabled using the SSL_OP_NO_ANTI_REPLAY option. See
+L</REPLAY PROTECTION> below.
 
 =head1 NOTES
 
@@ -213,6 +267,19 @@ Nagle's algorithm. If an application opts to disable Nagle's algorithm
 consideration should be given to turning it back on again after the handshake is
 complete if appropriate.
 
+In rare circumstances, it may be possible for a client to have a session that
+reports a max early data value greater than 0, but where the server does not
+support this. For example, this can occur if a server has had its configuration
+changed to accept a lower max early data value such as by calling
+SSL_CTX_set_recv_max_early_data(). Another example is if a server used to
+support TLSv1.3 but was later downgraded to TLSv1.2. Sending early data to such
+a server will cause the connection to abort. Clients that encounter an aborted
+connection while sending early data may want to retry the connection without
+sending early data as this does not happen automatically. A client will have to
+establish a new transport layer connection to the server and attempt the SSL/TLS
+connection again but without sending early data. Note that it is inadvisable to
+retry with a lower maximum protocol version.
+
 =head1 REPLAY PROTECTION
 
 When early data is in use the TLS protocol provides no security guarantees that
@@ -226,12 +293,14 @@ was submitted will be ignored). Note that single use tickets are enforced even
 if a client does not send any early data.
 
 The replay protection mechanism relies on the internal OpenSSL server session
-cache (see L<SSL_CTX_set_session_cache_mode(3)>). By default sessions will be
-added to the cache whenever a session ticket is issued. When a client attempts
-to resume the session OpenSSL will check for its presence in the internal cache.
-If it exists then the resumption is allowed and the session is removed from the
-cache. If it does not exist then the resumption is not allowed and a full
-handshake will occur.
+cache (see L<SSL_CTX_set_session_cache_mode(3)>). When replay protection is
+being used the server will operate as if the SSL_OP_NO_TICKET option had been
+selected (see L<SSL_CTX_set_options(3)>). Sessions will be added to the cache
+whenever a session ticket is issued. When a client attempts to resume the
+session, OpenSSL will check for its presence in the internal cache. If it exists
+then the resumption is allowed and the session is removed from the cache. If it
+does not exist then the resumption is not allowed and a full handshake will
+occur.
 
 Note that some applications may maintain an external cache of sessions (see
 L<SSL_CTX_sess_set_new_cb(3)> and similar functions). It is the application's
@@ -249,6 +318,12 @@ the possibility of replay attacks.
 The OpenSSL replay protection does not apply to external Pre Shared Keys (PSKs)
 (e.g. see SSL_CTX_set_psk_find_session_callback(3)). Therefore extreme caution
 should be applied when combining external PSKs with early data.
+
+Some applications may mitigate the replay risks in other ways. For those
+applications it is possible to turn off the built-in replay protection feature
+using the B<SSL_OP_NO_ANTI_REPLAY> option. See L<SSL_CTX_set_options(3)> for
+details. Applications can also set a callback to make decisions about accepting
+early data or not. See SSL_CTX_set_allow_early_data_cb() above for details.
 
 =head1 RETURN VALUES
 
@@ -291,7 +366,7 @@ All of the functions described above were added in OpenSSL 1.1.1.
 
 Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -17,11 +17,12 @@
 extern "C" {
 # endif
 # include <openssl/e_os2.h>
+# include <openssl/asn1.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/bn.h>
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/dh.h>
 # endif
 # include <openssl/dsaerr.h>
@@ -33,7 +34,7 @@ extern "C" {
 # define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
 
 # define DSA_FLAG_CACHE_MONT_P   0x01
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
  */
@@ -69,13 +70,12 @@ typedef struct DSA_SIG_st DSA_SIG;
 # define i2d_DSAparams_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
                 (unsigned char *)(x))
 # define d2i_DSAparams_bio(bp,x) ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAparams,bp,x)
-# define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio_of_const(DSA,i2d_DSAparams,bp,x)
+# define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio_of(DSA,i2d_DSAparams,bp,x)
 
-DSA *DSAparams_dup(DSA *x);
+DECLARE_ASN1_DUP_FUNCTION_name(DSA, DSAparams)
 DSA_SIG *DSA_SIG_new(void);
 void DSA_SIG_free(DSA_SIG *a);
-int i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
-DSA_SIG *d2i_DSA_SIG(DSA_SIG **v, const unsigned char **pp, long length);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA_SIG, DSA_SIG)
 void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
 int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 
@@ -99,7 +99,7 @@ int DSA_size(const DSA *);
 int DSA_bits(const DSA *d);
 int DSA_security_bits(const DSA *d);
         /* next 4 return -1 on error */
-int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
+DEPRECATEDIN_3(int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp))
 int DSA_sign(int type, const unsigned char *dgst, int dlen,
              unsigned char *sig, unsigned int *siglen, DSA *dsa);
 int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
@@ -109,9 +109,9 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
 
-DSA *d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
-DSA *d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
-DSA *d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAPublicKey)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAPrivateKey)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAparams)
 
 /* Deprecated version */
 DEPRECATEDIN_0_9_8(DSA *DSA_generate_parameters(int bits,
@@ -130,9 +130,6 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
                                BN_GENCB *cb);
 
 int DSA_generate_key(DSA *a);
-int i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
-int i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
-int i2d_DSAparams(const DSA *a, unsigned char **pp);
 
 int DSAparams_print(BIO *bp, const DSA *x);
 int DSA_print(BIO *bp, const DSA *x, int off);
@@ -141,10 +138,12 @@ int DSAparams_print_fp(FILE *fp, const DSA *x);
 int DSA_print_fp(FILE *bp, const DSA *x, int off);
 # endif
 
-# define DSS_prime_checks 50
+# define DSS_prime_checks 64
 /*
- * Primality test according to FIPS PUB 186[-1], Appendix 2.1: 50 rounds of
- * Rabin-Miller
+ * Primality test according to FIPS PUB 186-4, Appendix C.3. Since we only
+ * have one value here we set the number of checks to 64 which is the 128 bit
+ * security level that is the highest level and valid for creating a 3072 bit
+ * DSA key.
  */
 # define DSA_is_prime(n, callback, cb_arg) \
         BN_is_prime(n, DSS_prime_checks, callback, NULL, cb_arg)
@@ -160,6 +159,12 @@ DH *DSA_dup_DH(const DSA *r);
 # define EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
                                 EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL)
+# define EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, qbits) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
+                                EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL)
+# define EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, md) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
+                                EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md))
 
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_BITS         (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)

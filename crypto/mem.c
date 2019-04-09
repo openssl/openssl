@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <openssl/crypto.h>
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE) && !defined(FIPS_MODE)
 # include <execinfo.h>
 #endif
 
@@ -30,14 +30,14 @@ static void *(*realloc_impl)(void *, size_t, const char *, int)
 static void (*free_impl)(void *, const char *, int)
     = CRYPTO_free;
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-static int malloc_count;
-static int realloc_count;
-static int free_count;
-static int dummy;
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+# include "internal/tsan_assist.h"
 
-# define INCREMENT(x) CRYPTO_atomic_add(&x, 1, &dummy, memdbg_lock)
-# define GET(ret, val) CRYPTO_atomic_read(&val, ret, memdbg_lock)
+static TSAN_QUALIFIER int malloc_count;
+static TSAN_QUALIFIER int realloc_count;
+static TSAN_QUALIFIER int free_count;
+
+# define INCREMENT(x) tsan_counter(&(x))
 
 static char *md_failstring;
 static long md_count;
@@ -94,15 +94,15 @@ void CRYPTO_get_mem_functions(
         *f = free_impl;
 }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
 {
     if (mcount != NULL)
-        GET(mcount, malloc_count);
+        *mcount = tsan_load(&malloc_count);
     if (rcount != NULL)
-        GET(rcount, realloc_count);
+        *rcount = tsan_load(&realloc_count);
     if (fcount != NULL)
-        GET(fcount, free_count);
+        *fcount = tsan_load(&free_count);
 }
 
 /*
@@ -209,7 +209,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
          */
         allow_customize = 0;
     }
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
     if (call_malloc_debug) {
         CRYPTO_mem_debug_malloc(NULL, num, 0, file, line);
         ret = malloc(num);
@@ -250,7 +250,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
     if (call_malloc_debug) {
         void *ret;
         CRYPTO_mem_debug_realloc(str, NULL, num, 0, file, line);
@@ -300,7 +300,7 @@ void CRYPTO_free(void *str, const char *file, int line)
         return;
     }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
     if (call_malloc_debug) {
         CRYPTO_mem_debug_free(str, 0, file, line);
         free(str);

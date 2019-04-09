@@ -1,0 +1,177 @@
+=pod
+
+=head1 NAME
+
+EVP_MD_fetch
+- Functions to explicitly fetch algorithm implementations
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                      const char *properties);
+
+=head1 DESCRIPTION
+
+The B<EVP_MD> object is used for representing a digest method implementation.
+
+Having obtained a digest implementation as an B<EVP_MD> type it can be used to
+calculate the digest of input data using functions such as
+L<EVP_DigestInit_ex(3)>, L<EVP_DigestUpdate(3)> and L<EVP_DigestFinal_ex(3)>.
+
+Digest implementations may be obtained in one of three ways, i.e. implicit
+fetch, explicit fetch or user defined.
+
+=over 4
+
+=item Implicit Fetch
+
+With implicit fetch an application can use functions such as L<EVP_sha256(3)>,
+L<EVP_sha512(3)> or L<EVP_blake2b512(3)> to obtain an B<EVP_MD> object. When
+used in a function like L<EVP_DigestInit_ex(3)> the actual implementation to
+be used will be fetched implicitly using default search criteria. Typically,
+(unless the default search criteria have been changed and/or different providers
+have been loaded), this will return an implementation of the appropriate
+algorithm from the default provider.
+
+=item Explicit Fetch
+
+With explicit fetch an application uses the EVP_MD_fetch() function to obtain
+an algorithm implementation. An implementation with the given name and
+satisfying the search criteria specified in the B<properties> parameter
+combined with the default search criteria will be looked for within the
+available providers and returned.
+See L<EVP_set_default_properties(3)> for information on default search criteria
+and L<OSSL_PROVIDER(3)> for information about providers.
+
+=item User defined
+
+Using the user defined approach an application constructs its own EVP_MD object.
+See L<EVP_MD_meth_new(3)> for details.
+
+=back
+
+The EVP_MD_fetch() function will look for an algorithm within the providers that
+have been loaded into the B<OPENSSL_CTX> given in the B<ctx> parameter. This
+parameter may be NULL in which case the default B<OPENSSL_CTX> will be used. See
+L<OPENSSL_CTX_new(3)> and L<OSSL_PROVIDER_load(3)> for further details.
+
+The B<algorithm> parameter gives the name of the algorithm to be looked up.
+Different algorithms can be made available by loading different providers. The
+built-in default provider algorithm implementation names are: SHA1, SHA224,
+SHA256, SHA384, SHA512, SHA512-224, SHA512-256,SHA3-224, SHA3-256, SHA3-384,
+SHA3-512, SHAKE128, SHAKE256, SM3, BLAKE2b512, BLAKE2s256 and MD5-SHA1.
+
+Additional algorithm implementations may be obtained by loading the "legacy"
+provider. The names of these algorithms are: RIPEMD160, MD2, MD4, MD5, MDC2 and
+whirlpool.
+
+The B<properties> parameter specifies the search criteria that will be used to
+look for an algorithm implementation. Properties are given as a comma delimited
+string of name value pairs. In order for an implementation to match, all the
+properties in the query string must match those defined for that implementation.
+Any properties defined by an implementation but not given in the query string
+are ignored. All algorithm implementations in the default provider have the
+property "default=yes". All algorithm implementations in the legacy provider have
+the property "legacy=yes". All algorithm implementations in the FIPS provider
+have the property "fips=yes". In the event that more than one implementation
+of the given algorithm name matches the specified properties then an unspecified
+one of those implementations may be returned. The B<properties> parameter may be
+NULL in which case any implementation from the available providers with the
+given algorithm name will be returned.
+
+The return value from a call to EVP_MD_fetch() must be freed by the caller using
+L<EVP_MD_meth_free(3)>. Note that EVP_MD objects are reference counted. See
+L<EVP_MD_upref(3)>.
+
+=head1 NOTES
+
+Where an application that previously used implicit fetch is converted to use
+explicit fetch care should be taken with the L<EVP_MD_CTX_md(3)> function.
+Specifically, this function returns the EVP_MD object orginally passed to
+EVP_DigestInit_ex() (or other similar function). With implicit fetch the
+returned EVP_MD object is guaranteed to be available throughout the application
+lifetime. However, with explicit fetch EVP_MD objects are reference counted.
+EVP_MD_CTX_md does not increment the reference count and so the returned EVP_MD
+object may not be accessible beyond the lifetime of the EVP_MD_CTX it is
+associated with.
+
+=head1 RETURN VALUES
+
+EVP_MD_fetch() returns a pointer to the algorithm implementation represented by
+an EVP_MD object, or NULL on error.
+
+=head1 EXAMPLES
+
+Fetch any available implementation of SHA256 in the default context:
+
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", NULL);
+
+Fetch an implementation of SHA256 from the default provider in the default
+context:
+
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", "default=yes");
+ ...
+ EVP_MD_meth_free(md);
+
+Fetch an implementation of SHA256 that is not from the default provider in the
+default context:
+
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", "default=no");
+ ...
+ EVP_MD_meth_free(md);
+
+Fetch an implementation of SHA256 from the default provider in the specified
+context:
+
+ EVP_MD *md = EVP_MD_fetch(ctx, "SHA256", "default=yes");
+ ...
+ EVP_MD_meth_free(md);
+
+Load the legacy provider into the default context and then fetch an
+implementation of whirlpool from it:
+
+ /* This only needs to be done once - usually at application start up */
+ OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
+
+ EVP_MD *md = EVP_MD_fetch(NULL, "whirlpool", "legacy=yes");
+ ...
+ EVP_MD_meth_free(md);
+
+Note that in the above example the property string "legacy=yes" is optional
+since, assuming no other providers have been loaded, the only implmentation of
+the "whirlpool" algorithm is in the "legacy" provider. Also note that the
+default provider should be explicitly loaded if it is required in addition to
+other providers:
+
+ /* This only needs to be done once - usually at application start up */
+ OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
+ OSSL_PROVIDER *default = OSSL_PROVIDER_load(NULL, "default");
+
+ EVP_MD *md_whirlpool = EVP_MD_fetch(NULL, "whirlpool", NULL);
+ EVP_MD *md_sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
+ ...
+ EVP_MD_meth_free(md_whirlpool);
+ EVP_MD_meth_free(md_sha256);
+
+=head1 SEE ALSO
+
+L<EVP_DigestInit(3)>, L<EVP_MD_meth_new(3)>, L<EVP_MD_meth_free(3)>,
+L<EVP_MD_upref(3)>, L<OSSL_PROVIDER_load(3)>, L<OPENSSL_CTX(3)>,
+L<EVP_set_default_properties(3)>
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

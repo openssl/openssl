@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -115,7 +115,7 @@ EXT_RETURN tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context,
 #ifndef OPENSSL_NO_EC
 static int use_ecc(SSL *s)
 {
-    int i, end;
+    int i, end, ret = 0;
     unsigned long alg_k, alg_a;
     STACK_OF(SSL_CIPHER) *cipher_stack = NULL;
 
@@ -123,7 +123,7 @@ static int use_ecc(SSL *s)
     if (s->version == SSL3_VERSION)
         return 0;
 
-    cipher_stack = SSL_get_ciphers(s);
+    cipher_stack = SSL_get1_supported_ciphers(s);
     end = sk_SSL_CIPHER_num(cipher_stack);
     for (i = 0; i < end; i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
@@ -132,11 +132,14 @@ static int use_ecc(SSL *s)
         alg_a = c->algorithm_auth;
         if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
                 || (alg_a & SSL_aECDSA)
-                || c->min_tls >= TLS1_3_VERSION)
-            return 1;
+                || c->min_tls >= TLS1_3_VERSION) {
+            ret = 1;
+            break;
+        }
     }
 
-    return 0;
+    sk_SSL_CIPHER_free(cipher_stack);
+    return ret;
 }
 
 EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
@@ -491,6 +494,9 @@ EXT_RETURN tls_construct_ctos_sct(SSL *s, WPACKET *pkt, unsigned int context,
 EXT_RETURN tls_construct_ctos_ems(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx)
 {
+    if (s->options & SSL_OP_NO_EXTENDED_MASTER_SECRET)
+        return EXT_RETURN_NOT_SENT;
+
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_EMS,
@@ -507,7 +513,7 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
 {
     int currv, min_version, max_version, reason;
 
-    reason = ssl_get_min_max_version(s, &min_version, &max_version);
+    reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
     if (reason != 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS, reason);
@@ -530,23 +536,8 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    /*
-     * TODO(TLS1.3): There is some discussion on the TLS list as to whether
-     * we should include versions <TLS1.2. For the moment we do. To be
-     * reviewed later.
-     */
     for (currv = max_version; currv >= min_version; currv--) {
-        /* TODO(TLS1.3): Remove this first if clause prior to release!! */
-        if (currv == TLS1_3_VERSION) {
-            if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
-                    || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT_27)
-                    || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT_26)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
-                         ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
-        } else if (!WPACKET_put_bytes_u16(pkt, currv)) {
+        if (!WPACKET_put_bytes_u16(pkt, currv)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                      ERR_R_INTERNAL_ERROR);
@@ -1005,7 +996,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
     int dores = 0;
 
-    s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
+    s->ext.tick_identity = 0;
 
     /*
      * Note: At this stage of the code we only support adding a single
@@ -1095,6 +1086,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
         agems += s->session->ext.tick_age_add;
 
         reshashsize = EVP_MD_size(mdres);
+        s->ext.tick_identity++;
         dores = 1;
     }
 
@@ -1154,6 +1146,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
                      ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
         }
+        s->ext.tick_identity++;
     }
 
     if (!WPACKET_close(pkt)
@@ -1192,11 +1185,6 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
         return EXT_RETURN_FAIL;
     }
 
-    if (dores)
-        s->session->ext.tick_identity = 0;
-    if (s->psksession != NULL)
-        s->psksession->ext.tick_identity = (dores ? 1 : 0);
-
     return EXT_RETURN_SENT;
 #else
     return EXT_RETURN_NOT_SENT;
@@ -1208,23 +1196,8 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL *s, WPACKET *pkt,
                                                   X509 *x, size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    if (!s->pha_forced) {
-        int i, n = 0;
-
-        /* check for cert, if present, we can do post-handshake auth */
-        if (s->cert == NULL)
-            return EXT_RETURN_NOT_SENT;
-
-        for (i = 0; i < SSL_PKEY_NUM; i++) {
-            if (s->cert->pkeys[i].x509 != NULL
-                    && s->cert->pkeys[i].privatekey != NULL)
-                n++;
-        }
-
-        /* no identity certificates, so no extension */
-        if (n == 0)
-            return EXT_RETURN_NOT_SENT;
-    }
+    if (!s->pha_enabled)
+        return EXT_RETURN_NOT_SENT;
 
     /* construct extension - 0 length, no contents */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_post_handshake_auth)
@@ -1770,6 +1743,8 @@ int tls_parse_stoc_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 int tls_parse_stoc_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx)
 {
+    if (s->options & SSL_OP_NO_EXTENDED_MASTER_SECRET)
+        return 1;
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
     if (!s->hit)
         s->session->flags |= SSL_SESS_FLAG_EXTMS;
@@ -1789,12 +1764,6 @@ int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
                  SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-
-    /* TODO(TLS1.3): Remove this before release */
-    if (version == TLS1_3_VERSION_DRAFT
-            || version == TLS1_3_VERSION_DRAFT_27
-            || version == TLS1_3_VERSION_DRAFT_26)
-        version = TLS1_3_VERSION;
 
     /*
      * The only protocol version we support which is valid in this extension in
@@ -1960,8 +1929,7 @@ int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     if (!s->ext.early_data_ok
-            || !s->hit
-            || s->session->ext.tick_identity != 0) {
+            || !s->hit) {
         /*
          * If we get here then we didn't send early data, or we didn't resume
          * using the first identity, or the SNI/ALPN is not consistent so the
@@ -1989,17 +1957,28 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    if (s->session->ext.tick_identity == (int)identity) {
+    if (identity >= (unsigned int)s->ext.tick_identity) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_PSK,
+                 SSL_R_BAD_PSK_IDENTITY);
+        return 0;
+    }
+
+    /*
+     * Session resumption tickets are always sent before PSK tickets. If the
+     * ticket index is 0 then it must be for a session resumption ticket if we
+     * sent two tickets, or if we didn't send a PSK ticket.
+     */
+    if (identity == 0 && (s->psksession == NULL || s->ext.tick_identity == 2)) {
         s->hit = 1;
         SSL_SESSION_free(s->psksession);
         s->psksession = NULL;
         return 1;
     }
 
-    if (s->psksession == NULL
-            || s->psksession->ext.tick_identity != (int)identity) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_PSK,
-                 SSL_R_BAD_PSK_IDENTITY);
+    if (s->psksession == NULL) {
+        /* Should never happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_PSK,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -2018,6 +1997,9 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     s->session = s->psksession;
     s->psksession = NULL;
     s->hit = 1;
+    /* Early data is only allowed if we used the first ticket */
+    if (identity != 0)
+        s->ext.early_data_ok = 0;
 #endif
 
     return 1;

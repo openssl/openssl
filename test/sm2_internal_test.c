@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -28,6 +28,7 @@ static const RAND_METHOD *saved_rand;
 
 static uint8_t *fake_rand_bytes = NULL;
 static size_t fake_rand_bytes_offset = 0;
+static size_t fake_rand_size = 0;
 
 static int get_faked_bytes(unsigned char *buf, int num)
 {
@@ -35,6 +36,9 @@ static int get_faked_bytes(unsigned char *buf, int num)
 
     if (fake_rand_bytes == NULL)
         return saved_rand->bytes(buf, num);
+
+    if (!TEST_size_t_le(fake_rand_bytes_offset + num, fake_rand_size))
+        return 0;
 
     for (i = 0; i != num; ++i)
         buf[i] = fake_rand_bytes[fake_rand_bytes_offset + i];
@@ -54,6 +58,7 @@ static int start_fake_rand(const char *hex_bytes)
 
     fake_rand_bytes = OPENSSL_hexstr2buf(hex_bytes, NULL);
     fake_rand_bytes_offset = 0;
+    fake_rand_size = strlen(hex_bytes) / 2;
 
     /* set new RAND_METHOD */
     if (!TEST_true(RAND_set_rand_method(&fake_rand)))
@@ -102,8 +107,8 @@ static EC_GROUP *create_EC_group(const char *p_hex, const char *a_hex,
 
     if (!TEST_true(BN_hex2bn(&g_x, x_hex))
             || !TEST_true(BN_hex2bn(&g_y, y_hex))
-            || !TEST_true(EC_POINT_set_affine_coordinates_GFp(group, generator,
-                                                              g_x, g_y, NULL)))
+            || !TEST_true(EC_POINT_set_affine_coordinates(group, generator, g_x,
+                                                          g_y, NULL)))
         goto done;
 
     if (!TEST_true(BN_hex2bn(&order, order_hex))
@@ -170,7 +175,8 @@ static int test_sm2_crypt(const EC_GROUP *group,
 
     start_fake_rand(k_hex);
     if (!TEST_true(sm2_encrypt(key, digest, (const uint8_t *)message, msg_len,
-                               ctext, &ctext_len))) {
+                               ctext, &ctext_len))
+            || !TEST_size_t_eq(fake_rand_bytes_offset, fake_rand_size)) {
         restore_rand();
         goto done;
     }
@@ -203,7 +209,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
 
 static int sm2_crypt_test(void)
 {
-    int testresult = 1;
+    int testresult = 0;
     EC_GROUP *test_group =
         create_EC_group
         ("8542D69E4C044F18E8B92435BF6FF7DE457283915C45517D722EDB8B08F1DFC3",
@@ -222,7 +228,9 @@ static int sm2_crypt_test(void)
             EVP_sm3(),
             "1649AB77A00637BD5E2EFE283FBF353534AA7F7CB89463F208DDBC2920BB0DA0",
             "encryption standard",
-            "004C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F",
+            "004C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F"
+            "0092e8ff62146873c258557548500ab2df2a365e0609ab67640a1f6d57d7b17820"
+            "008349312695a3e1d2f46905f39a766487f2432e95d6be0cb009fe8c69fd8825a7",
             "307B0220245C26FB68B1DDDDB12C4B6BF9F2B6D5FE60A383B0D18D1C4144ABF1"
             "7F6252E7022076CB9264C2A7E88E52B19903FDC47378F605E36811F5C07423A2"
             "4B84400F01B804209C3D7360C30156FAB7C80A0276712DA9D8094A634B766D3A"
@@ -235,7 +243,9 @@ static int sm2_crypt_test(void)
             EVP_sha256(),
             "1649AB77A00637BD5E2EFE283FBF353534AA7F7CB89463F208DDBC2920BB0DA0",
             "encryption standard",
-            "004C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F",
+            "004C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F"
+            "003da18008784352192d70f22c26c243174a447ba272fec64163dd4742bae8bc98"
+            "00df17605cf304e9dd1dfeb90c015e93b393a6f046792f790a6fa4228af67d9588",
             "307B0220245C26FB68B1DDDDB12C4B6BF9F2B6D5FE60A383B0D18D1C4144ABF17F"
             "6252E7022076CB9264C2A7E88E52B19903FDC47378F605E36811F5C07423A24B84"
             "400F01B80420BE89139D07853100EFA763F60CBE30099EA3DF7F8F364F9D10A5E9"
@@ -284,11 +294,14 @@ static int test_sm2_sign(const EC_GROUP *group,
         goto done;
 
     start_fake_rand(k_hex);
-    sig = sm2_do_sign(key, EVP_sm3(), userid, (const uint8_t *)message, msg_len);
-    restore_rand();
-
-    if (!TEST_ptr(sig))
+    sig = sm2_do_sign(key, EVP_sm3(), (const uint8_t *)userid, strlen(userid),
+                      (const uint8_t *)message, msg_len);
+    if (!TEST_ptr(sig)
+            || !TEST_size_t_eq(fake_rand_bytes_offset, fake_rand_size)) {
+        restore_rand();
         goto done;
+    }
+    restore_rand();
 
     ECDSA_SIG_get0(sig, &sig_r, &sig_s);
 
@@ -298,8 +311,8 @@ static int test_sm2_sign(const EC_GROUP *group,
             || !TEST_BN_eq(s, sig_s))
         goto done;
 
-    ok = sm2_do_verify(key, EVP_sm3(), sig, userid, (const uint8_t *)message,
-                       msg_len);
+    ok = sm2_do_verify(key, EVP_sm3(), sig, (const uint8_t *)userid,
+                       strlen(userid), (const uint8_t *)message, msg_len);
 
     /* We goto done whether this passes or fails */
     TEST_true(ok);
@@ -337,7 +350,8 @@ static int sm2_sig_test(void)
                         "ALICE123@YAHOO.COM",
                         "128B2FA8BD433C6C068C8D803DFF79792A519A55171B1B650C23661D15897263",
                         "message digest",
-                        "006CB28D99385C175C94F94E934817663FC176D925DD72B727260DBAAE1FB2F96F",
+                        "006CB28D99385C175C94F94E934817663FC176D925DD72B727260DBAAE1FB2F96F"
+                        "007c47811054c6f99613a578eb8453706ccb96384fe7df5c171671e760bfa8be3a",
                         "40F1EC59F793D9F49E09DCEF49130D4194F79FB1EED2CAA55BACDB49C4E755D1",
                         "6FC6DAC32C5D5CF10C77DFB20F7C2EB667A457872FB09EC56327A67EC7DEEBE7")))
         goto done;

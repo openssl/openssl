@@ -1,7 +1,7 @@
 /*
  * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -217,9 +217,9 @@ ASN1_CHOICE(ECPKPARAMETERS) = {
         ASN1_SIMPLE(ECPKPARAMETERS, value.implicitlyCA, ASN1_NULL)
 } ASN1_CHOICE_END(ECPKPARAMETERS)
 
-DECLARE_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECPKPARAMETERS, ECPKPARAMETERS)
-IMPLEMENT_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
+DECLARE_ASN1_FUNCTIONS(ECPKPARAMETERS)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECPKPARAMETERS, ECPKPARAMETERS)
+IMPLEMENT_ASN1_FUNCTIONS(ECPKPARAMETERS)
 
 ASN1_SEQUENCE(EC_PRIVATEKEY) = {
         ASN1_EMBED(EC_PRIVATEKEY, version, INT32),
@@ -228,9 +228,9 @@ ASN1_SEQUENCE(EC_PRIVATEKEY) = {
         ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
 } static_ASN1_SEQUENCE_END(EC_PRIVATEKEY)
 
-DECLARE_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(EC_PRIVATEKEY, EC_PRIVATEKEY)
-IMPLEMENT_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
+DECLARE_ASN1_FUNCTIONS(EC_PRIVATEKEY)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(EC_PRIVATEKEY, EC_PRIVATEKEY)
+IMPLEMENT_ASN1_FUNCTIONS(EC_PRIVATEKEY)
 
 /* some declarations of internal function */
 
@@ -266,7 +266,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
             goto err;
         }
         /* the parameters are specified by the prime number p */
-        if (!EC_GROUP_get_curve_GFp(group, tmp, NULL, NULL, NULL)) {
+        if (!EC_GROUP_get_curve(group, tmp, NULL, NULL, NULL)) {
             ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_EC_LIB);
             goto err;
         }
@@ -365,7 +365,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 
 static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 {
-    int ok = 0, nid;
+    int ok = 0;
     BIGNUM *tmp_1 = NULL, *tmp_2 = NULL;
     unsigned char *a_buf = NULL, *b_buf = NULL;
     size_t len;
@@ -378,24 +378,12 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
         goto err;
     }
 
-    nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
-
     /* get a and b */
-    if (nid == NID_X9_62_prime_field) {
-        if (!EC_GROUP_get_curve_GFp(group, NULL, tmp_1, tmp_2, NULL)) {
-            ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_EC_LIB);
-            goto err;
-        }
+    if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
+        ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_EC_LIB);
+        goto err;
     }
-#ifndef OPENSSL_NO_EC2M
-    else {                      /* nid == NID_X9_62_characteristic_two_field */
 
-        if (!EC_GROUP_get_curve_GF2m(group, NULL, tmp_1, tmp_2, NULL)) {
-            ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_EC_LIB);
-            goto err;
-        }
-    }
-#endif
     /*
      * Per SEC 1, the curve coefficients must be padded up to size. See C.2's
      * definition of Curve, C.1's definition of FieldElement, and 2.3.5's
@@ -980,7 +968,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     return NULL;
 }
 
-int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
+int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
 {
     int ret = 0, ok = 0;
     unsigned char *priv= NULL, *pub= NULL;
@@ -1052,7 +1040,7 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
     return (ok ? ret : 0);
 }
 
-int i2d_ECParameters(EC_KEY *a, unsigned char **out)
+int i2d_ECParameters(const EC_KEY *a, unsigned char **out)
 {
     if (a == NULL) {
         ECerr(EC_F_I2D_ECPARAMETERS, ERR_R_PASSED_NULL_PARAMETER);
@@ -1154,9 +1142,9 @@ ASN1_SEQUENCE(ECDSA_SIG) = {
         ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
 } static_ASN1_SEQUENCE_END(ECDSA_SIG)
 
-DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ECDSA_SIG, ECDSA_SIG, ECDSA_SIG)
+DECLARE_ASN1_FUNCTIONS(ECDSA_SIG)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECDSA_SIG, ECDSA_SIG)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(ECDSA_SIG, ECDSA_SIG, ECDSA_SIG)
 
 ECDSA_SIG *ECDSA_SIG_new(void)
 {

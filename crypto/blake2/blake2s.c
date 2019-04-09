@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -58,27 +58,26 @@ static ossl_inline void blake2s_init0(BLAKE2S_CTX *S)
     }
 }
 
-/* init2 xors IV with input parameter block */
+/* init xors IV with input parameter block and sets the output length */
 static void blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
 {
-    const uint8_t *p = (const uint8_t *)(P);
     size_t i;
+    const uint8_t *p = (const uint8_t *)(P);
+
+    blake2s_init0(S);
+    S->outlen = P->digest_length;
 
     /* The param struct is carefully hand packed, and should be 32 bytes on
      * every platform. */
     assert(sizeof(BLAKE2S_PARAM) == 32);
-    blake2s_init0(S);
     /* IV XOR ParamBlock */
     for (i = 0; i < 8; ++i) {
         S->h[i] ^= load32(&p[i*4]);
     }
 }
 
-/* Initialize the hashing context.  Always returns 1. */
-int BLAKE2s_Init(BLAKE2S_CTX *c)
+void blake2s_param_init(BLAKE2S_PARAM *P)
 {
-    BLAKE2S_PARAM P[1];
-
     P->digest_length = BLAKE2S_DIGEST_LENGTH;
     P->key_length    = 0;
     P->fanout        = 1;
@@ -89,7 +88,56 @@ int BLAKE2s_Init(BLAKE2S_CTX *c)
     P->inner_length  = 0;
     memset(P->salt,     0, sizeof(P->salt));
     memset(P->personal, 0, sizeof(P->personal));
+}
+
+void blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen)
+{
+    P->digest_length = outlen;
+}
+
+void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen)
+{
+    P->key_length = keylen;
+}
+
+void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t len)
+{
+    memcpy(P->personal, personal, len);
+    memset(P->personal + len, 0, BLAKE2S_PERSONALBYTES - len);
+}
+
+void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t len)
+{
+    memcpy(P->salt, salt, len);
+    memset(P->salt + len, 0, BLAKE2S_SALTBYTES - len);}
+
+/*
+ * Initialize the hashing context with the given parameter block.
+ * Always returns 1.
+ */
+int BLAKE2s_Init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P)
+{
     blake2s_init_param(c, P);
+    return 1;
+}
+
+/*
+ * Initialize the hashing context with the given parameter block and key.
+ * Always returns 1.
+ */
+int BLAKE2s_Init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P, const void *key)
+{
+    blake2s_init_param(c, P);
+
+    /* Pad the key to form first data block */
+    {
+        uint8_t block[BLAKE2S_BLOCKBYTES] = {0};
+
+        memcpy(block, key, P->key_length);
+        BLAKE2s_Update(c, block, BLAKE2S_BLOCKBYTES);
+        OPENSSL_cleanse(block, BLAKE2S_BLOCKBYTES);
+    }
+
     return 1;
 }
 
@@ -246,17 +294,26 @@ int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen)
  */
 int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c)
 {
+    uint8_t outbuffer[BLAKE2S_OUTBYTES] = {0};
+    uint8_t *target = outbuffer;
+    int iter = (c->outlen + 3) / 4;
     int i;
+
+    /* Avoid writing to the temporary buffer if possible */
+    if ((c->outlen % sizeof(c->h[0])) == 0)
+        target = md;
 
     blake2s_set_lastblock(c);
     /* Padding */
     memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
     blake2s_compress(c, c->buf, c->buflen);
 
-    /* Output full hash to temp buffer */
-    for (i = 0; i < 8; ++i) {
-        store32(md + sizeof(c->h[i]) * i, c->h[i]);
-    }
+    /* Output full hash to buffer */
+    for (i = 0; i < iter; ++i)
+        store32(target + sizeof(c->h[i]) * i, c->h[i]);
+
+    if (target != md)
+        memcpy(md, target, c->outlen);
 
     OPENSSL_cleanse(c, sizeof(BLAKE2S_CTX));
     return 1;

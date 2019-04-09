@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -146,14 +146,14 @@ typedef struct j_data_st {
 } j_data;
 
 static j_data jf_data[] = {
-    { 0xffffffffffffffffU, "%ju", "18446744073709551615" },
-    { 0xffffffffffffffffU, "%jx", "ffffffffffffffff" },
-    { 0x8000000000000000U, "%ju", "9223372036854775808" },
+    { 0xffffffffffffffffULL, "%ju", "18446744073709551615" },
+    { 0xffffffffffffffffULL, "%jx", "ffffffffffffffff" },
+    { 0x8000000000000000ULL, "%ju", "9223372036854775808" },
     /*
      * These tests imply two's-complement, but it's the only binary
      * representation we support, see test/sanitytest.c...
      */
-    { 0x8000000000000000U, "%ji", "-9223372036854775808" },
+    { 0x8000000000000000ULL, "%ji", "-9223372036854775808" },
 };
 
 static int test_j(int i)
@@ -252,10 +252,38 @@ static int test_big(void)
     return 1;
 }
 
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_PRINT,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS options[] = {
+        OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "expected", OPT_PRINT, '-', "Output values" },
+        { NULL }
+    };
+    return options;
+}
 
 int setup_tests(void)
 {
-    justprint = test_has_option("-expected");
+    OPTION_CHOICE o;
+
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_PRINT:
+            justprint = 1;
+            break;
+        case OPT_TEST_CASES:
+            break;
+        default:
+            return 0;
+        }
+    }
 
     ADD_TEST(test_big);
     ADD_ALL_TESTS(test_fp, nelem(pw_params));
@@ -300,3 +328,4 @@ int test_flush_stderr(void)
 {
     return fflush(stderr);
 }
+

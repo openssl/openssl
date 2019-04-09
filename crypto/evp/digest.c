@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,6 +13,7 @@
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 #include "internal/evp_int.h"
+#include "internal/provider.h"
 #include "evp_locl.h"
 
 /* This call frees resources associated with the context */
@@ -20,6 +21,24 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 {
     if (ctx == NULL)
         return 1;
+
+    if (ctx->digest == NULL || ctx->digest->prov == NULL)
+        goto legacy;
+
+    if (ctx->provctx != NULL) {
+        if (ctx->digest->freectx != NULL)
+            ctx->digest->freectx(ctx->provctx);
+        ctx->provctx = NULL;
+        EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
+    }
+
+    if (ctx->pctx != NULL)
+        goto legacy;
+
+    return 1;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
 
     /*
      * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
@@ -32,7 +51,12 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
         && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
         OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
     }
-    EVP_PKEY_CTX_free(ctx->pctx);
+    /*
+     * pctx should be freed by the user of EVP_MD_CTX
+     * if EVP_MD_CTX_FLAG_KEEP_PKEY_CTX is set
+     */
+    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
+        EVP_PKEY_CTX_free(ctx->pctx);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(ctx->engine);
 #endif
@@ -48,6 +72,24 @@ EVP_MD_CTX *EVP_MD_CTX_new(void)
 
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
 {
+    if (ctx == NULL)
+        return;
+
+    if (ctx->digest == NULL || ctx->digest->prov == NULL)
+        goto legacy;
+
+    EVP_MD_CTX_reset(ctx);
+
+    EVP_MD_meth_free(ctx->fetched_digest);
+    ctx->fetched_digest = NULL;
+    ctx->digest = NULL;
+    ctx->reqdigest = NULL;
+
+    OPENSSL_free(ctx);
+    return;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
     EVP_MD_CTX_reset(ctx);
     OPENSSL_free(ctx);
 }
@@ -60,7 +102,15 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 {
+    EVP_MD *provmd;
+    ENGINE *tmpimpl = NULL;
+
     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
+
+    if (type != NULL)
+        ctx->reqdigest = type;
+
+    /* TODO(3.0): Legacy work around code below. Remove this */
 #ifndef OPENSSL_NO_ENGINE
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
@@ -71,6 +121,74 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     if (ctx->engine && ctx->digest &&
         (type == NULL || (type->type == ctx->digest->type)))
         goto skip_to_init;
+
+    if (type != NULL && impl == NULL)
+        tmpimpl = ENGINE_get_digest_engine(type->type);
+#endif
+
+    /*
+     * If there are engines involved or if we're being used as part of
+     * EVP_DigestSignInit then we should use legacy handling for now.
+     */
+    if (ctx->engine != NULL
+            || impl != NULL
+            || tmpimpl != NULL
+            || ctx->pctx != NULL
+            || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0) {
+        if (ctx->digest == ctx->fetched_digest)
+            ctx->digest = NULL;
+        EVP_MD_meth_free(ctx->fetched_digest);
+        ctx->fetched_digest = NULL;
+        goto legacy;
+    }
+
+    if (type->prov == NULL) {
+        switch(type->type) {
+        case NID_sha256:
+            break;
+        default:
+            goto legacy;
+        }
+    }
+
+    if (ctx->digest != NULL && ctx->digest->ctx_size > 0) {
+        OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
+        ctx->md_data = NULL;
+    }
+
+    /* TODO(3.0): Start of non-legacy code below */
+
+    if (type->prov == NULL) {
+        provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
+        if (provmd == NULL) {
+            EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        type = provmd;
+        EVP_MD_meth_free(ctx->fetched_digest);
+        ctx->fetched_digest = provmd;
+    }
+
+    ctx->digest = type;
+    if (ctx->provctx == NULL) {
+        ctx->provctx = ctx->digest->newctx();
+        if (ctx->provctx == NULL) {
+            EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+    }
+
+    if (ctx->digest->dinit == NULL) {
+        EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    return ctx->digest->dinit(ctx->provctx);
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
+
+#ifndef OPENSSL_NO_ENGINE
     if (type) {
         /*
          * Ensure an ENGINE left lying around from last time is cleared (the
@@ -85,7 +203,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             }
         } else {
             /* Ask if an ENGINE is reserved for this job */
-            impl = ENGINE_get_digest_engine(type->type);
+            impl = tmpimpl;
         }
         if (impl != NULL) {
             /* There's an ENGINE for this job ... (apparently) */
@@ -145,6 +263,20 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
+    if (count == 0)
+        return 1;
+
+    if (ctx->digest == NULL || ctx->digest->prov == NULL)
+        goto legacy;
+
+    if (ctx->digest->dupdate == NULL) {
+        EVPerr(EVP_F_EVP_DIGESTUPDATE, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+    return ctx->digest->dupdate(ctx->provctx, data, count);
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
     return ctx->update(ctx, data, count);
 }
 
@@ -158,14 +290,40 @@ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 }
 
 /* The caller can assume that this removes any secret data from the context */
-int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
+int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
 {
     int ret;
+    size_t size = 0;
 
+    if (ctx->digest == NULL || ctx->digest->prov == NULL)
+        goto legacy;
+
+    if (ctx->digest->dfinal == NULL) {
+        EVPerr(EVP_F_EVP_DIGESTFINAL_EX, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
+    ret = ctx->digest->dfinal(ctx->provctx, md, &size);
+
+    if (isize != NULL) {
+        if (size <= UINT_MAX) {
+            *isize = (int)size;
+        } else {
+            EVPerr(EVP_F_EVP_DIGESTFINAL_EX, EVP_R_FINAL_ERROR);
+            ret = 0;
+        }
+    }
+
+    EVP_MD_CTX_reset(ctx);
+
+    return ret;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
     OPENSSL_assert(ctx->digest->md_size <= EVP_MAX_MD_SIZE);
     ret = ctx->digest->final(ctx, md);
-    if (size != NULL)
-        *size = ctx->digest->md_size;
+    if (isize != NULL)
+        *isize = ctx->digest->md_size;
     if (ctx->digest->cleanup) {
         ctx->digest->cleanup(ctx);
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
@@ -204,10 +362,52 @@ int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 {
     unsigned char *tmp_buf;
-    if ((in == NULL) || (in->digest == NULL)) {
+
+    if (in == NULL || in->digest == NULL) {
         EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_INPUT_NOT_INITIALIZED);
         return 0;
     }
+
+    if (in->digest->prov == NULL)
+        goto legacy;
+
+    if (in->digest->dupctx == NULL) {
+        EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_NOT_ABLE_TO_COPY_CTX);
+        return 0;
+    }
+
+    EVP_MD_CTX_reset(out);
+    if (out->fetched_digest != NULL)
+        EVP_MD_meth_free(out->fetched_digest);
+    *out = *in;
+    /* NULL out pointers in case of error */
+    out->pctx = NULL;
+    out->provctx = NULL;
+
+    if (in->fetched_digest != NULL)
+        EVP_MD_upref(in->fetched_digest);
+
+    out->provctx = in->digest->dupctx(in->provctx);
+    if (out->provctx == NULL) {
+        EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_NOT_ABLE_TO_COPY_CTX);
+        return 0;
+    }
+
+    /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
+    EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+    if (in->pctx != NULL) {
+        out->pctx = EVP_PKEY_CTX_dup(in->pctx);
+        if (out->pctx == NULL) {
+            EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_NOT_ABLE_TO_COPY_CTX);
+            EVP_MD_CTX_reset(out);
+            return 0;
+        }
+    }
+
+    return 1;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
 #ifndef OPENSSL_NO_ENGINE
     /* Make sure it's safe to copy a digest context using an ENGINE */
     if (in->engine && !ENGINE_init(in->engine)) {
@@ -223,6 +423,9 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         tmp_buf = NULL;
     EVP_MD_CTX_reset(out);
     memcpy(out, in, sizeof(*out));
+
+    /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
+    EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
 
     /* Null these variables, since they are getting fixed up
      * properly below.  Anything else may cause a memleak and/or
@@ -287,4 +490,105 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         return 1;
     }
     return 0;
+}
+
+static void *evp_md_from_dispatch(int mdtype, const OSSL_DISPATCH *fns,
+                                    OSSL_PROVIDER *prov)
+{
+    EVP_MD *md = NULL;
+    int fncnt = 0;
+
+    if ((md = EVP_MD_meth_new(mdtype, NID_undef)) == NULL)
+        return NULL;
+
+    for (; fns->function_id != 0; fns++) {
+        switch (fns->function_id) {
+        case OSSL_FUNC_DIGEST_NEWCTX:
+            if (md->newctx != NULL)
+                break;
+            md->newctx = OSSL_get_OP_digest_newctx(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_INIT:
+            if (md->dinit != NULL)
+                break;
+            md->dinit = OSSL_get_OP_digest_init(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_UPDDATE:
+            if (md->dupdate != NULL)
+                break;
+            md->dupdate = OSSL_get_OP_digest_update(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_FINAL:
+            if (md->dfinal != NULL)
+                break;
+            md->dfinal = OSSL_get_OP_digest_final(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_DIGEST:
+            if (md->digest != NULL)
+                break;
+            md->digest = OSSL_get_OP_digest_digest(fns);
+            /* We don't increment fnct for this as it is stand alone */
+            break;
+        case OSSL_FUNC_DIGEST_FREECTX:
+            if (md->freectx != NULL)
+                break;
+            md->freectx = OSSL_get_OP_digest_freectx(fns);
+            fncnt++;
+            break;
+        case OSSL_FUNC_DIGEST_DUPCTX:
+            if (md->dupctx != NULL)
+                break;
+            md->dupctx = OSSL_get_OP_digest_dupctx(fns);
+            break;
+        case OSSL_FUNC_DIGEST_SIZE:
+            if (md->size != NULL)
+                break;
+            md->size = OSSL_get_OP_digest_size(fns);
+            break;
+        case OSSL_FUNC_DIGEST_BLOCK_SIZE:
+            if (md->dblock_size != NULL)
+                break;
+            md->dblock_size = OSSL_get_OP_digest_block_size(fns);
+            break;
+        }
+    }
+    if ((fncnt != 0 && fncnt != 5)
+        || (fncnt == 0 && md->digest == NULL)
+        || md->size == NULL) {
+        /*
+         * In order to be a consistent set of functions we either need the
+         * whole set of init/update/final etc functions or none of them.
+         * The "digest" function can standalone. We at least need one way to
+         * generate digests.
+         */
+        EVP_MD_meth_free(md);
+        return NULL;
+    }
+    md->prov = prov;
+    if (prov != NULL)
+        ossl_provider_upref(prov);
+
+    return md;
+}
+
+static int evp_md_upref(void *md)
+{
+    return EVP_MD_upref(md);
+}
+
+static void evp_md_free(void *md)
+{
+    EVP_MD_meth_free(md);
+}
+
+EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                     const char *properties)
+{
+    return evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+                             evp_md_from_dispatch, evp_md_upref,
+                             evp_md_free);
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -97,7 +97,7 @@ RSA *RSA_new_method(ENGINE *engine)
 
     return ret;
 
-err:
+ err:
     RSA_free(ret);
     return NULL;
 }
@@ -115,7 +115,7 @@ void RSA_free(RSA *r)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    if (r->meth->finish)
+    if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(r->engine);
@@ -125,8 +125,8 @@ void RSA_free(RSA *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    BN_clear_free(r->n);
-    BN_clear_free(r->e);
+    BN_free(r->n);
+    BN_free(r->e);
     BN_clear_free(r->d);
     BN_clear_free(r->p);
     BN_clear_free(r->q);
@@ -163,6 +163,133 @@ void *RSA_get_ex_data(const RSA *r, int idx)
     return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
 
+/*
+ * Define a scaling constant for our fixed point arithmetic.
+ * This value must be a power of two because the base two logarithm code
+ * makes this assumption.  The exponent must also be a multiple of three so
+ * that the scale factor has an exact cube root.  Finally, the scale factor
+ * should not be so large that a multiplication of two scaled numbers
+ * overflows a 64 bit unsigned integer.
+ */
+static const unsigned int scale = 1 << 18;
+static const unsigned int cbrt_scale = 1 << (2 * 18 / 3);
+
+/* Define some constants, none exceed 32 bits */
+static const unsigned int log_2  = 0x02c5c8;    /* scale * log(2) */
+static const unsigned int log_e  = 0x05c551;    /* scale * log2(M_E) */
+static const unsigned int c1_923 = 0x07b126;    /* scale * 1.923 */
+static const unsigned int c4_690 = 0x12c28f;    /* scale * 4.690 */
+
+/*
+ * Multiply two scaled integers together and rescale the result.
+ */
+static ossl_inline uint64_t mul2(uint64_t a, uint64_t b)
+{
+    return a * b / scale;
+}
+
+/*
+ * Calculate the cube root of a 64 bit scaled integer.
+ * Although the cube root of a 64 bit number does fit into a 32 bit unsigned
+ * integer, this is not guaranteed after scaling, so this function has a
+ * 64 bit return.  This uses the shifting nth root algorithm with some
+ * algebraic simplifications.
+ */
+static uint64_t icbrt64(uint64_t x)
+{
+    uint64_t r = 0;
+    uint64_t b;
+    int s;
+
+    for (s = 63; s >= 0; s -= 3) {
+        r <<= 1;
+        b = 3 * r * (r + 1) + 1;
+        if ((x >> s) >= b) {
+            x -= b << s;
+            r++;
+        }
+    }
+    return r * cbrt_scale;
+}
+
+/*
+ * Calculate the natural logarithm of a 64 bit scaled integer.
+ * This is done by calculating a base two logarithm and scaling.
+ * The maximum logarithm (base 2) is 64 and this reduces base e, so
+ * a 32 bit result should not overflow.  The argument passed must be
+ * greater than unity so we don't need to handle negative results.
+ */
+static uint32_t ilog_e(uint64_t v)
+{
+    uint32_t i, r = 0;
+
+    /*
+     * Scale down the value into the range 1 .. 2.
+     *
+     * If fractional numbers need to be processed, another loop needs
+     * to go here that checks v < scale and if so multiplies it by 2 and
+     * reduces r by scale.  This also means making r signed.
+     */
+    while (v >= 2 * scale) {
+        v >>= 1;
+        r += scale;
+    }
+    for (i = scale / 2; i != 0; i /= 2) {
+        v = mul2(v, v);
+        if (v >= 2 * scale) {
+            v >>= 1;
+            r += i;
+        }
+    }
+    r = (r * (uint64_t)scale) / log_e;
+    return r;
+}
+
+/*
+ * NIST SP 800-56B rev 2 Appendix D: Maximum Security Strength Estimates for IFC
+ * Modulus Lengths.
+ *
+ * E = \frac{1.923 \sqrt[3]{nBits \cdot log_e(2)}
+ *           \cdot(log_e(nBits \cdot log_e(2))^{2/3} - 4.69}{log_e(2)}
+ * The two cube roots are merged together here.
+ */
+uint16_t rsa_compute_security_bits(int n)
+{
+    uint64_t x;
+    uint32_t lx;
+    uint16_t y;
+
+    /* Look for common values as listed in SP 800-56B rev 2 Appendix D */
+    switch (n) {
+    case 2048:
+        return 112;
+    case 3072:
+        return 128;
+    case 4096:
+        return 152;
+    case 6144:
+        return 176;
+    case 8192:
+        return 200;
+    }
+    /*
+     * The first incorrect result (i.e. not accurate or off by one low) occurs
+     * for n = 699668.  The true value here is 1200.  Instead of using this n
+     * as the check threshold, the smallest n such that the correct result is
+     * 1200 is used instead.
+     */
+    if (n >= 687737)
+        return 1200;
+    if (n < 8)
+        return 0;
+
+    x = n * (uint64_t)log_2;
+    lx = ilog_e(x);
+    y = (uint16_t)((mul2(c1_923, icbrt64(mul2(mul2(x, lx), lx))) - c4_690)
+                   / log_2);
+    return (y + 4) & ~7;
+}
+
 int RSA_security_bits(const RSA *rsa)
 {
     int bits = BN_num_bits(rsa->n);
@@ -174,7 +301,7 @@ int RSA_security_bits(const RSA *rsa)
         if (ex_primes <= 0 || (ex_primes + 2) > rsa_multip_cap(bits))
             return 0;
     }
-    return BN_security_bits(bits, -1);
+    return rsa_compute_security_bits(bits);
 }
 
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
@@ -196,7 +323,7 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
         r->e = e;
     }
     if (d != NULL) {
-        BN_free(r->d);
+        BN_clear_free(r->d);
         r->d = d;
     }
 
@@ -213,11 +340,11 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
         return 0;
 
     if (p != NULL) {
-        BN_free(r->p);
+        BN_clear_free(r->p);
         r->p = p;
     }
     if (q != NULL) {
-        BN_free(r->q);
+        BN_clear_free(r->q);
         r->q = q;
     }
 
@@ -235,15 +362,15 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
         return 0;
 
     if (dmp1 != NULL) {
-        BN_free(r->dmp1);
+        BN_clear_free(r->dmp1);
         r->dmp1 = dmp1;
     }
     if (dmq1 != NULL) {
-        BN_free(r->dmq1);
+        BN_clear_free(r->dmq1);
         r->dmq1 = dmq1;
     }
     if (iqmp != NULL) {
-        BN_free(r->iqmp);
+        BN_clear_free(r->iqmp);
         r->iqmp = iqmp;
     }
 

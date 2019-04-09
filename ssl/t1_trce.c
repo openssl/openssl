@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -65,10 +65,6 @@ static const ssl_trace_tbl ssl_version_tbl[] = {
     {TLS1_1_VERSION, "TLS 1.1"},
     {TLS1_2_VERSION, "TLS 1.2"},
     {TLS1_3_VERSION, "TLS 1.3"},
-    /* TODO(TLS1.3): Remove these lines before release */
-    {TLS1_3_VERSION_DRAFT_26, TLS1_3_VERSION_DRAFT_TXT_26},
-    {TLS1_3_VERSION_DRAFT_27, TLS1_3_VERSION_DRAFT_TXT_27},
-    {TLS1_3_VERSION_DRAFT, TLS1_3_VERSION_DRAFT_TXT},
     {DTLS1_VERSION, "DTLS 1.0"},
     {DTLS1_2_VERSION, "DTLS 1.2"},
     {DTLS1_BAD_VER, "DTLS 1.0 (bad)"}
@@ -472,7 +468,6 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_srp, "srp"},
     {TLSEXT_TYPE_signature_algorithms, "signature_algorithms"},
     {TLSEXT_TYPE_use_srtp, "use_srtp"},
-    {TLSEXT_TYPE_heartbeat, "tls_heartbeat"},
     {TLSEXT_TYPE_application_layer_protocol_negotiation,
      "application_layer_protocol_negotiation"},
     {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
@@ -642,18 +637,8 @@ static int ssl_print_version(BIO *bio, int indent, const char *name,
     if (*pmsglen < 2)
         return 0;
     vers = ((*pmsg)[0] << 8) | (*pmsg)[1];
-    if (version != NULL) {
-        /* TODO(TLS1.3): Remove the draft conditional here before release */
-        switch(vers) {
-        case TLS1_3_VERSION_DRAFT_26:
-        case TLS1_3_VERSION_DRAFT_27:
-        case TLS1_3_VERSION_DRAFT:
-            *version = TLS1_3_VERSION;
-            break;
-        default:
-            *version = vers;
-        }
-    }
+    if (version != NULL)
+        *version = vers;
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "%s=0x%x (%s)\n",
                name, vers, ssl_trace_str(vers, ssl_version_tbl));
@@ -797,9 +782,6 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         }
         break;
 
-    case TLSEXT_TYPE_heartbeat:
-        return 0;
-
     case TLSEXT_TYPE_session_ticket:
         if (extlen != 0)
             ssl_print_hex(bio, indent + 4, "ticket", ext, extlen);
@@ -899,28 +881,35 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
 
     BIO_indent(bio, indent, 80);
     if (msglen == 0) {
-        BIO_puts(bio, "No Extensions\n");
+        BIO_puts(bio, "No extensions\n");
         return 1;
     }
     if (msglen < 2)
         return 0;
     extslen = (msg[0] << 8) | msg[1];
-    if (extslen != msglen - 2)
-        return 0;
+    msglen -= 2;
     msg += 2;
-    msglen = extslen;
-    BIO_printf(bio, "extensions, length = %d\n", (int)msglen);
-    while (msglen > 0) {
+    if (extslen == 0) {
+        BIO_puts(bio, "No extensions\n");
+        *msgin = msg;
+        *msginlen = msglen;
+        return 1;
+    }
+    if (extslen > msglen)
+        return 0;
+    BIO_printf(bio, "extensions, length = %d\n", (int)extslen);
+    msglen -= extslen;
+    while (extslen > 0) {
         int extype;
         size_t extlen;
-        if (msglen < 4)
+        if (extslen < 4)
             return 0;
         extype = (msg[0] << 8) | msg[1];
         extlen = (msg[2] << 8) | msg[3];
-        if (msglen < extlen + 4) {
+        if (extslen < extlen + 4) {
             BIO_printf(bio, "extensions, extype = %d, extlen = %d\n", extype,
                        (int)extlen);
-            BIO_dump_indent(bio, (const char *)msg, msglen, indent + 2);
+            BIO_dump_indent(bio, (const char *)msg, extslen, indent + 2);
             return 0;
         }
         msg += 4;
@@ -928,7 +917,7 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
                                  extlen))
             return 0;
         msg += extlen;
-        msglen -= extlen + 4;
+        extslen -= extlen + 4;
     }
 
     *msgin = msg;

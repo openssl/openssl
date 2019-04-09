@@ -1,26 +1,26 @@
-{- our $tsget_name = $config{target} =~ /^(VC|vms)-/ ? "tsget.pl" : "tsget";
-   our @apps_openssl_src =
+{- our @apps_openssl_src =
        qw(openssl.c
           asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c
           dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c gendsa.c
-          genpkey.c genrsa.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c pkcs8.c
-          pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c rsa.c rsautl.c
-          s_client.c s_server.c s_time.c sess_id.c smime.c speed.c spkac.c
-          srp.c ts.c verify.c version.c x509.c rehash.c storeutl.c);
+          genpkey.c genrsa.c mac.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c
+          pkcs8.c pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c rsa.c
+          rsautl.c s_client.c s_server.c s_time.c sess_id.c smime.c speed.c
+          spkac.c srp.c ts.c verify.c version.c x509.c rehash.c storeutl.c);
    our @apps_lib_src =
-       ( qw(apps.c opt.c s_cb.c s_socket.c app_rand.c bf_prefix.c),
+       ( qw(apps.c apps_ui.c opt.c fmt.c s_cb.c s_socket.c app_rand.c
+            bf_prefix.c),
          split(/\s+/, $target{apps_aux_src}) );
    our @apps_init_src = split(/\s+/, $target{apps_init_src});
    "" -}
 IF[{- !$disabled{apps} -}]
-  LIBS_NO_INST=libapps.a
+  LIBS{noinst}=libapps.a
   SOURCE[libapps.a]={- join(" ", @apps_lib_src) -}
-  INCLUDE[libapps.a]=.. ../include
+  INCLUDE[libapps.a]=.. ../include include
 
   PROGRAMS=openssl
   SOURCE[openssl]={- join(" ", @apps_init_src) -}
   SOURCE[openssl]={- join(" ", @apps_openssl_src) -}
-  INCLUDE[openssl]=.. ../include
+  INCLUDE[openssl]=.. ../include include
   DEPEND[openssl]=libapps.a ../libssl
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
@@ -33,7 +33,10 @@ ENDIF
   GENERATE[progs.h]=progs.pl $(APPS_OPENSSL)
   DEPEND[progs.h]=../configdata.pm
 
-  SCRIPTS=CA.pl {- $tsget_name -}
+  SCRIPTS{misc}=CA.pl
   SOURCE[CA.pl]=CA.pl.in
-  SOURCE[{- $tsget_name -}]=tsget.in
+  # linkname tells build files that a symbolic link or copy of this script
+  # without extension must be installed as well.  Unix or Unix lookalike only.
+  SCRIPTS{misc,linkname=tsget}=tsget.pl
+  SOURCE[tsget.pl]=tsget.in
 ENDIF

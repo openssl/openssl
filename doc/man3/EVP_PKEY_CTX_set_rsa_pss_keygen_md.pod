@@ -32,7 +32,7 @@ The EVP_PKEY_CTX_set_rsa_pss_saltlen() macro is used to set the salt length.
 If the key has usage restrictions then an error is returned if an attempt is
 made to set the salt length below the minimum value. It is otherwise similar
 to the B<RSA> operation except detection of the salt length (using
-RSA_PSS_SALTLEN_AUTO is not supported for verification if the key has
+RSA_PSS_SALTLEN_AUTO) is not supported for verification if the key has
 usage restrictions.
 
 The EVP_PKEY_CTX_set_signature_md() and EVP_PKEY_CTX_set_rsa_mgf1_md() macros
@@ -43,7 +43,7 @@ similar to the B<RSA> versions.
 
 =head2 Key Generation
 
-As with RSA key generation the EVP_PKEY_CTX_set_rsa_rsa_keygen_bits()
+As with RSA key generation the EVP_PKEY_CTX_set_rsa_keygen_bits()
 and EVP_PKEY_CTX_set_rsa_keygen_pubexp() macros are supported for RSA-PSS:
 they have exactly the same meaning as for the RSA algorithm.
 
@@ -86,7 +86,7 @@ L<EVP_PKEY_derive(3)>
 
 Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

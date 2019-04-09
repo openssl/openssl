@@ -1,6 +1,6 @@
 # Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -20,7 +20,7 @@ $VERSION = "0.8";
                                    perlapp perltest subtest));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
-                                         data_file
+                                         data_file data_dir
                                          pipe with cmdstr quotify
                                          openssl_versions));
 
@@ -810,11 +810,11 @@ sub quotify {
 
 =item B<openssl_versions>
 
-Returns a list of two numbers, the first representing the build version,
-the second representing the library version.  See opensslv.h for more
-information on those numbers.
+Returns a list of two version numbers, the first representing the build
+version, the second representing the library version.  See opensslv.h for
+more information on those numbers.
 
-= back
+=back
 
 =cut
 
@@ -823,9 +823,8 @@ sub openssl_versions {
     unless (@versions) {
         my %lines =
             map { s/\R$//;
-                  /^(.*): (0x[[:xdigit:]]{8})$/;
-                  die "Weird line: $_" unless defined $1;
-                  $1 => hex($2) }
+                  /^(.*): (.*)$/;
+                  $1 => $2 }
             run(test(['versions']), capture => 1);
         @versions = ( $lines{'Build version'}, $lines{'Library version'} );
     }

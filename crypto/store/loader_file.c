@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -33,6 +33,10 @@
 
 #ifdef _WIN32
 # define stat    _stat
+#endif
+
+#ifndef S_ISDIR
+# define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
 #endif
 
 /*-
@@ -839,7 +843,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         return NULL;
     }
 
-    if ((st.st_mode & S_IFDIR) == S_IFDIR) {
+    if (S_ISDIR(st.st_mode)) {
         /*
          * Try to copy everything, even if we know that some of them must be
          * NULL for the moment.  This prevents errors in the future, when more
@@ -1216,9 +1220,9 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
      * Last, check that the rest of the extension is a decimal number, at
      * least one digit long.
      */
-    if (!isdigit(*p))
+    if (!ossl_isdigit(*p))
         return 0;
-    while (isdigit(*p))
+    while (ossl_isdigit(*p))
         p++;
 
 # ifdef __VMS
@@ -1227,7 +1231,7 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
      */
     if (*p == ';')
         for (p++; *p != '\0'; p++)
-            if (!isdigit(*p))
+            if (!ossl_isdigit(*p))
                 break;
 # endif
 

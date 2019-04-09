@@ -35,11 +35,11 @@ OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup
  size_t OBJ_length(const ASN1_OBJECT *obj);
  const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj);
 
-Deprecated:
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
 
- #if OPENSSL_API_COMPAT < 0x10100000L
  void OBJ_cleanup(void)
- #endif
 
 =head1 DESCRIPTION
 
@@ -84,7 +84,8 @@ OBJ_dup() returns a copy of B<o>.
 
 OBJ_create() adds a new object to the internal table. B<oid> is the
 numerical form of the object, B<sn> the short name and B<ln> the
-long name. A new NID is returned for the created object.
+long name. A new NID is returned for the created object in case of
+success and NID_undef in case of failure.
 
 OBJ_length() returns the size of the content octets of B<obj>.
 
@@ -129,6 +130,17 @@ These functions cannot return B<const> because an B<ASN1_OBJECT> can
 represent both an internal, constant, OID and a dynamically-created one.
 The latter cannot be constant because it needs to be freed after use.
 
+=head1 RETURN VALUES
+
+OBJ_nid2obj() returns an B<ASN1_OBJECT> structure or B<NULL> is an
+error occurred.
+
+OBJ_nid2ln() and OBJ_nid2sn() returns a valid string or B<NULL>
+on error.
+
+OBJ_obj2nid(), OBJ_ln2nid(), OBJ_sn2nid() and OBJ_txt2nid() return
+a NID or B<NID_undef> on error.
+
 =head1 EXAMPLES
 
 Create an object for B<commonName>:
@@ -158,17 +170,6 @@ Instead B<buf> must point to a valid buffer and B<buf_len> should
 be set to a positive value. A buffer length of 80 should be more
 than enough to handle any OID encountered in practice.
 
-=head1 RETURN VALUES
-
-OBJ_nid2obj() returns an B<ASN1_OBJECT> structure or B<NULL> is an
-error occurred.
-
-OBJ_nid2ln() and OBJ_nid2sn() returns a valid string or B<NULL>
-on error.
-
-OBJ_obj2nid(), OBJ_ln2nid(), OBJ_sn2nid() and OBJ_txt2nid() return
-a NID or B<NID_undef> on error.
-
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
@@ -182,7 +183,7 @@ and should not be used.
 
 Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

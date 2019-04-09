@@ -1,8 +1,8 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -21,7 +21,7 @@
 # include <openssl/safestack.h>
 # include <openssl/ec.h>
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/rsa.h>
 #  include <openssl/dsa.h>
 #  include <openssl/dh.h>
@@ -391,87 +391,87 @@ int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
 
 # ifndef OPENSSL_NO_STDIO
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);
-int i2d_X509_fp(FILE *fp, X509 *x509);
+int i2d_X509_fp(FILE *fp, const X509 *x509);
 X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl);
-int i2d_X509_CRL_fp(FILE *fp, X509_CRL *crl);
+int i2d_X509_CRL_fp(FILE *fp, const X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ **req);
-int i2d_X509_REQ_fp(FILE *fp, X509_REQ *req);
+int i2d_X509_REQ_fp(FILE *fp, const X509_REQ *req);
 #  ifndef OPENSSL_NO_RSA
 RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa);
-int i2d_RSAPrivateKey_fp(FILE *fp, RSA *rsa);
+int i2d_RSAPrivateKey_fp(FILE *fp, const RSA *rsa);
 RSA *d2i_RSAPublicKey_fp(FILE *fp, RSA **rsa);
-int i2d_RSAPublicKey_fp(FILE *fp, RSA *rsa);
+int i2d_RSAPublicKey_fp(FILE *fp, const RSA *rsa);
 RSA *d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa);
-int i2d_RSA_PUBKEY_fp(FILE *fp, RSA *rsa);
+int i2d_RSA_PUBKEY_fp(FILE *fp, const RSA *rsa);
 #  endif
 #  ifndef OPENSSL_NO_DSA
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa);
-int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa);
+int i2d_DSA_PUBKEY_fp(FILE *fp, const DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
-int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
+int i2d_DSAPrivateKey_fp(FILE *fp, const DSA *dsa);
 #  endif
 #  ifndef OPENSSL_NO_EC
 EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey);
-int i2d_EC_PUBKEY_fp(FILE *fp, EC_KEY *eckey);
+int i2d_EC_PUBKEY_fp(FILE *fp, const EC_KEY *eckey);
 EC_KEY *d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey);
-int i2d_ECPrivateKey_fp(FILE *fp, EC_KEY *eckey);
+int i2d_ECPrivateKey_fp(FILE *fp, const EC_KEY *eckey);
 #  endif
 X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8);
-int i2d_PKCS8_fp(FILE *fp, X509_SIG *p8);
+int i2d_PKCS8_fp(FILE *fp, const X509_SIG *p8);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
                                                 PKCS8_PRIV_KEY_INFO **p8inf);
-int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO *p8inf);
-int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key);
-int i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey);
+int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, const PKCS8_PRIV_KEY_INFO *p8inf);
+int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, const EVP_PKEY *key);
+int i2d_PrivateKey_fp(FILE *fp, const EVP_PKEY *pkey);
 EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a);
-int i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey);
+int i2d_PUBKEY_fp(FILE *fp, const EVP_PKEY *pkey);
 EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a);
 # endif
 
 X509 *d2i_X509_bio(BIO *bp, X509 **x509);
-int i2d_X509_bio(BIO *bp, X509 *x509);
+int i2d_X509_bio(BIO *bp, const X509 *x509);
 X509_CRL *d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl);
-int i2d_X509_CRL_bio(BIO *bp, X509_CRL *crl);
+int i2d_X509_CRL_bio(BIO *bp, const X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req);
-int i2d_X509_REQ_bio(BIO *bp, X509_REQ *req);
+int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req);
 #  ifndef OPENSSL_NO_RSA
 RSA *d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa);
-int i2d_RSAPrivateKey_bio(BIO *bp, RSA *rsa);
+int i2d_RSAPrivateKey_bio(BIO *bp, const RSA *rsa);
 RSA *d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa);
-int i2d_RSAPublicKey_bio(BIO *bp, RSA *rsa);
+int i2d_RSAPublicKey_bio(BIO *bp, const RSA *rsa);
 RSA *d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa);
-int i2d_RSA_PUBKEY_bio(BIO *bp, RSA *rsa);
+int i2d_RSA_PUBKEY_bio(BIO *bp, const RSA *rsa);
 #  endif
 #  ifndef OPENSSL_NO_DSA
 DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa);
-int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa);
+int i2d_DSA_PUBKEY_bio(BIO *bp, const DSA *dsa);
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
-int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
+int i2d_DSAPrivateKey_bio(BIO *bp, const DSA *dsa);
 #  endif
 #  ifndef OPENSSL_NO_EC
 EC_KEY *d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey);
-int i2d_EC_PUBKEY_bio(BIO *bp, EC_KEY *eckey);
+int i2d_EC_PUBKEY_bio(BIO *bp, const EC_KEY *eckey);
 EC_KEY *d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey);
-int i2d_ECPrivateKey_bio(BIO *bp, EC_KEY *eckey);
+int i2d_ECPrivateKey_bio(BIO *bp, const EC_KEY *eckey);
 #  endif
 X509_SIG *d2i_PKCS8_bio(BIO *bp, X509_SIG **p8);
-int i2d_PKCS8_bio(BIO *bp, X509_SIG *p8);
+int i2d_PKCS8_bio(BIO *bp, const X509_SIG *p8);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
                                                  PKCS8_PRIV_KEY_INFO **p8inf);
-int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO *p8inf);
-int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key);
-int i2d_PrivateKey_bio(BIO *bp, EVP_PKEY *pkey);
+int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, const PKCS8_PRIV_KEY_INFO *p8inf);
+int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, const EVP_PKEY *key);
+int i2d_PrivateKey_bio(BIO *bp, const EVP_PKEY *pkey);
 EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a);
-int i2d_PUBKEY_bio(BIO *bp, EVP_PKEY *pkey);
+int i2d_PUBKEY_bio(BIO *bp, const EVP_PKEY *pkey);
 EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a);
 
-X509 *X509_dup(X509 *x509);
-X509_ATTRIBUTE *X509_ATTRIBUTE_dup(X509_ATTRIBUTE *xa);
-X509_EXTENSION *X509_EXTENSION_dup(X509_EXTENSION *ex);
-X509_CRL *X509_CRL_dup(X509_CRL *crl);
-X509_REVOKED *X509_REVOKED_dup(X509_REVOKED *rev);
-X509_REQ *X509_REQ_dup(X509_REQ *req);
-X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
+DECLARE_ASN1_DUP_FUNCTION(X509)
+DECLARE_ASN1_DUP_FUNCTION(X509_ATTRIBUTE)
+DECLARE_ASN1_DUP_FUNCTION(X509_EXTENSION)
+DECLARE_ASN1_DUP_FUNCTION(X509_CRL)
+DECLARE_ASN1_DUP_FUNCTION(X509_REVOKED)
+DECLARE_ASN1_DUP_FUNCTION(X509_REQ)
+DECLARE_ASN1_DUP_FUNCTION(X509_ALGOR)
 int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype,
                     void *pval);
 void X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype,
@@ -479,8 +479,8 @@ void X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype,
 void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
-X509_NAME *X509_NAME_dup(X509_NAME *xn);
-X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
+DECLARE_ASN1_DUP_FUNCTION(X509_NAME)
+DECLARE_ASN1_DUP_FUNCTION(X509_NAME_ENTRY)
 
 int X509_cmp_time(const ASN1_TIME *s, time_t *t);
 int X509_cmp_current_time(const ASN1_TIME *s);
@@ -510,19 +510,15 @@ EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key);
 EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key);
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain);
 long X509_get_pathlen(X509 *x);
-int i2d_PUBKEY(EVP_PKEY *a, unsigned char **pp);
-EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(EVP_PKEY, PUBKEY)
 # ifndef OPENSSL_NO_RSA
-int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp);
-RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(RSA, RSA_PUBKEY)
 # endif
 # ifndef OPENSSL_NO_DSA
-int i2d_DSA_PUBKEY(DSA *a, unsigned char **pp);
-DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSA_PUBKEY)
 # endif
 # ifndef OPENSSL_NO_EC
-int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp);
-EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(EC_KEY, EC_PUBKEY)
 # endif
 
 DECLARE_ASN1_FUNCTIONS(X509_SIG)
@@ -544,10 +540,9 @@ DECLARE_ASN1_FUNCTIONS(X509_NAME_ENTRY)
 
 DECLARE_ASN1_FUNCTIONS(X509_NAME)
 
-int X509_NAME_set(X509_NAME **xn, X509_NAME *name);
+int X509_NAME_set(X509_NAME **xn, const X509_NAME *name);
 
 DECLARE_ASN1_FUNCTIONS(X509_CINF)
-
 DECLARE_ASN1_FUNCTIONS(X509)
 DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
 
@@ -555,8 +550,7 @@ DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509, l, p, newf, dupf, freef)
 int X509_set_ex_data(X509 *r, int idx, void *arg);
 void *X509_get_ex_data(X509 *r, int idx);
-int i2d_X509_AUX(X509 *a, unsigned char **pp);
-X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(X509,X509_AUX)
 
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
 
@@ -571,6 +565,11 @@ int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
                          const X509_ALGOR **palg, const X509 *x);
 int X509_get_signature_nid(const X509 *x);
+
+# ifndef OPENSSL_NO_SM2
+void X509_set_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id);
+ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x);
+# endif
 
 int X509_trusted(const X509 *x);
 int X509_alias_set1(X509 *x, const unsigned char *name, int len);
@@ -650,7 +649,7 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 int X509_up_ref(X509 *x);
 int X509_get_signature_type(const X509 *x);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define X509_get_notBefore X509_getm_notBefore
 #  define X509_get_notAfter X509_getm_notAfter
 #  define X509_set_notBefore X509_set1_notBefore
@@ -660,7 +659,7 @@ int X509_get_signature_type(const X509 *x);
 
 /*
  * This one is only used so that a binary form can output, as in
- * i2d_X509_NAME(X509_get_X509_PUBKEY(x), &buf)
+ * i2d_X509_PUBKEY(X509_get_X509_PUBKEY(x), &buf)
  */
 X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x);
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
@@ -716,7 +715,7 @@ int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 int X509_CRL_up_ref(X509_CRL *crl);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define X509_CRL_set_lastUpdate X509_CRL_set1_lastUpdate
 #  define X509_CRL_set_nextUpdate X509_CRL_set1_nextUpdate
 #endif
@@ -1009,7 +1008,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 DECLARE_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
 
 EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8);
-PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey);
+PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey);
 
 int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
                     int version, int ptype, void *pval,

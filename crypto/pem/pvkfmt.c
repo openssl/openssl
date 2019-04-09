@@ -1,7 +1,7 @@
 /*
  * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -676,11 +676,11 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
     const unsigned char *p = *in;
     unsigned int magic;
     unsigned char *enctmp = NULL, *q;
+    unsigned char keybuf[20];
 
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
     if (saltlen) {
         char psbuf[PEM_BUFSIZE];
-        unsigned char keybuf[20];
         int enctmplen, inlen;
         if (cb)
             inlen = cb(psbuf, PEM_BUFSIZE, 0, u);
@@ -720,7 +720,6 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
             memset(keybuf + 5, 0, 11);
             if (!EVP_DecryptInit_ex(cctx, EVP_rc4(), NULL, keybuf, NULL))
                 goto err;
-            OPENSSL_cleanse(keybuf, 20);
             if (!EVP_DecryptUpdate(cctx, q, &enctmplen, p, inlen))
                 goto err;
             if (!EVP_DecryptFinal_ex(cctx, q + enctmplen, &enctmplen))
@@ -730,15 +729,17 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
                 PEMerr(PEM_F_DO_PVK_BODY, PEM_R_BAD_DECRYPT);
                 goto err;
             }
-        } else
-            OPENSSL_cleanse(keybuf, 20);
+        }
         p = enctmp;
     }
 
     ret = b2i_PrivateKey(&p, keylen);
  err:
     EVP_CIPHER_CTX_free(cctx);
-    OPENSSL_free(enctmp);
+    if (enctmp != NULL) {
+        OPENSSL_cleanse(keybuf, sizeof(keybuf));
+        OPENSSL_free(enctmp);
+    }
     return ret;
 }
 

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -58,10 +58,10 @@ $code.=<<___ if ($i<15 && !($i&1));
 	lsr	@Xx[$i+1],@Xx[$i],#32
 ___
 $code.=<<___ if ($i<14 && !($i&1));
-	ldr	@Xx[$i+2],[$inp,#`($i+2)*4-64`]
+	ldur	@Xx[$i+2],[$inp,#`($i+2)*4-64`]
 ___
 $code.=<<___ if ($i<14 && ($i&1));
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	ror	@Xx[$i+1],@Xx[$i+1],#32
 #else
 	rev32	@Xx[$i+1],@Xx[$i+1]
@@ -171,23 +171,19 @@ ___
 }
 
 $code.=<<___;
-#include "arm_arch.h"
+#ifndef	__KERNEL__
+# include "arm_arch.h"
+.extern OPENSSL_armcap_P
+#endif
 
 .text
 
-.extern	OPENSSL_armcap_P
 .globl	sha1_block_data_order
 .type	sha1_block_data_order,%function
 .align	6
 sha1_block_data_order:
-#ifdef	__ILP32__
-	ldrsw	x16,.LOPENSSL_armcap_P
-#else
-	ldr	x16,.LOPENSSL_armcap_P
-#endif
-	adr	x17,.LOPENSSL_armcap_P
-	add	x16,x16,x17
-	ldr	w16,[x16]
+	adrp	x16,OPENSSL_armcap_P
+	ldr	w16,[x16,#:lo12:OPENSSL_armcap_P]
 	tst	w16,#ARMV8_SHA1
 	b.ne	.Lv8_entry
 
@@ -208,7 +204,7 @@ sha1_block_data_order:
 	movz	$K,#0x7999
 	sub	$num,$num,#1
 	movk	$K,#0x5a82,lsl#16
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	ror	$Xx[0],@Xx[0],#32
 #else
 	rev32	@Xx[0],@Xx[0]
@@ -321,15 +317,11 @@ $code.=<<___;
 .long	0x6ed9eba1,0x6ed9eba1,0x6ed9eba1,0x6ed9eba1	//K_20_39
 .long	0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc	//K_40_59
 .long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	//K_60_79
-.LOPENSSL_armcap_P:
-#ifdef	__ILP32__
-.long	OPENSSL_armcap_P-.
-#else
-.quad	OPENSSL_armcap_P-.
-#endif
 .asciz	"SHA1 block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
+#if !defined(__KERNELL__) && !defined(_WIN64)
 .comm	OPENSSL_armcap_P,4,4
+#endif
 ___
 }}}
 

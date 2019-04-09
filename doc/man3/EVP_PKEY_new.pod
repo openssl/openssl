@@ -8,8 +8,10 @@ EVP_PKEY_free,
 EVP_PKEY_new_raw_private_key,
 EVP_PKEY_new_raw_public_key,
 EVP_PKEY_new_CMAC_key,
-EVP_PKEY_new_mac_key
-- public/private key allocation functions
+EVP_PKEY_new_mac_key,
+EVP_PKEY_get_raw_private_key,
+EVP_PKEY_get_raw_public_key
+- public/private key allocation and raw key handling functions
 
 =head1 SYNOPSIS
 
@@ -28,10 +30,16 @@ EVP_PKEY_new_mac_key
  EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e, const unsigned char *key,
                                 int keylen);
 
+ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
+                                  size_t *len);
+ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
+                                 size_t *len);
+
 =head1 DESCRIPTION
 
 The EVP_PKEY_new() function allocates an empty B<EVP_PKEY> structure which is
-used by OpenSSL to store private keys. The reference count is set to B<1>.
+used by OpenSSL to store public and private keys. The reference count is set to
+B<1>.
 
 EVP_PKEY_up_ref() increments the reference count of B<key>.
 
@@ -63,14 +71,32 @@ creation of a CMAC in the B<cipher> argument.
 EVP_PKEY_new_mac_key() works in the same way as EVP_PKEY_new_raw_private_key().
 New applications should use EVP_PKEY_new_raw_private_key() instead.
 
+EVP_PKEY_get_raw_private_key() fills the buffer provided by B<priv> with raw
+private key data. The number of bytes written is populated in B<*len>. If the
+buffer B<priv> is NULL then B<*len> is populated with the number of bytes
+required to hold the key. The calling application is responsible for ensuring
+that the buffer is large enough to receive the private key data. This function
+only works for algorithms that support raw private keys. Currently this is:
+B<EVP_PKEY_HMAC>, B<EVP_PKEY_POLY1305>, B<EVP_PKEY_SIPHASH>, B<EVP_PKEY_X25519>,
+B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
+
+EVP_PKEY_get_raw_public_key() fills the buffer provided by B<pub> with raw
+public key data. The number of bytes written is populated in B<*len>. If the
+buffer B<pub> is NULL then B<*len> is populated with the number of bytes
+required to hold the key. The calling application is responsible for ensuring
+that the buffer is large enough to receive the public key data. This function
+only works for algorithms that support raw public  keys. Currently this is:
+B<EVP_PKEY_X25519>, B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
+
 =head1 NOTES
 
 The B<EVP_PKEY> structure is used by various OpenSSL functions which require a
 general private key without reference to any particular algorithm.
 
-The structure returned by EVP_PKEY_new() is empty. To add a private key to this
-empty structure the functions described in L<EVP_PKEY_set1_RSA(3)> should be
-used.
+The structure returned by EVP_PKEY_new() is empty. To add a private or public
+key to this empty structure use the appropriate functions described in
+L<EVP_PKEY_set1_RSA(3)>, L<EVP_PKEY_set1_DSA>, L<EVP_PKEY_set1_DH> or
+L<EVP_PKEY_set1_EC_KEY>.
 
 =head1 RETURN VALUES
 
@@ -78,25 +104,31 @@ EVP_PKEY_new(), EVP_PKEY_new_raw_private_key(), EVP_PKEY_new_raw_public_key(),
 EVP_PKEY_new_CMAC_key() and EVP_PKEY_new_mac_key() return either the newly
 allocated B<EVP_PKEY> structure or B<NULL> if an error occurred.
 
-EVP_PKEY_up_ref() returns 1 for success and 0 for failure.
+EVP_PKEY_up_ref(), EVP_PKEY_get_raw_private_key() and
+EVP_PKEY_get_raw_public_key() return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_set1_RSA(3)>
+L<EVP_PKEY_set1_RSA(3)>, L<EVP_PKEY_set1_DSA>, L<EVP_PKEY_set1_DH> or
+L<EVP_PKEY_set1_EC_KEY>
 
 =head1 HISTORY
 
-EVP_PKEY_new() and EVP_PKEY_free() exist in all versions of OpenSSL.
+The
+EVP_PKEY_new() and EVP_PKEY_free() functions exist in all versions of OpenSSL.
 
-EVP_PKEY_up_ref() was first added to OpenSSL 1.1.0.
-EVP_PKEY_new_raw_private_key(), EVP_PKEY_new_raw_public_key() and
-EVP_PKEY_new_CMAC_key() were first added to OpenSSL 1.1.1.
+The EVP_PKEY_up_ref() function was added in OpenSSL 1.1.0.
+
+The
+EVP_PKEY_new_raw_private_key(), EVP_PKEY_new_raw_public_key(),
+EVP_PKEY_new_CMAC_key(), EVP_PKEY_new_raw_private_key() and
+EVP_PKEY_get_raw_public_key() functions were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
 Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

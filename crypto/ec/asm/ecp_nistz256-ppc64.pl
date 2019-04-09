@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -2297,21 +2297,21 @@ ecp_nistz256_scatter_w7:
 
 .Loop_scatter_w7:
 	ldu	r0,8($inp)
-	stb	r0,64*0-1($out)
+	stb	r0,64*0($out)
 	srdi	r0,r0,8
-	stb	r0,64*1-1($out)
+	stb	r0,64*1($out)
 	srdi	r0,r0,8
-	stb	r0,64*2-1($out)
+	stb	r0,64*2($out)
 	srdi	r0,r0,8
-	stb	r0,64*3-1($out)
+	stb	r0,64*3($out)
 	srdi	r0,r0,8
-	stb	r0,64*4-1($out)
+	stb	r0,64*4($out)
 	srdi	r0,r0,8
-	stb	r0,64*5-1($out)
+	stb	r0,64*5($out)
 	srdi	r0,r0,8
-	stb	r0,64*6-1($out)
+	stb	r0,64*6($out)
 	srdi	r0,r0,8
-	stb	r0,64*7-1($out)
+	stb	r0,64*7($out)
 	addi	$out,$out,64*8
 	bdnz	.Loop_scatter_w7
 

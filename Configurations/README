@@ -118,7 +118,7 @@ In each table entry, the following keys are significant:
                            '<unistd.h>'.  This is very rarely needed.
 
         shared_extension => File name extension used for shared
-                            libraries. 
+                            libraries.
         obj_extension   => File name extension used for object files.
                            On unix, this defaults to ".o" (NOTE: this
                            is here for future use, it's not
@@ -159,7 +159,7 @@ In each table entry, the following keys are significant:
                            below [2].
         dso_scheme      => The type of dynamic shared objects to build
                            for.  This mostly comes into play with
-                           engines, but can be used for other purposes
+                           modules, but can be used for other purposes
                            as well.  Valid values are "DLFCN"
                            (dlopen() et al), "DLFCN_NO_H" (for systems
                            that use dlopen() et al but do not have
@@ -169,7 +169,14 @@ In each table entry, the following keys are significant:
                            assembler files used when compiling with
                            assembler implementations.
         shared_target   => The shared library building method used.
-                           This is a target found in Makefile.shared.
+                           This serves multiple purposes:
+                           - as index for targets found in shared_info.pl.
+                           - as linker script generation selector.
+                           To serve both purposes, the index for shared_info.pl
+                           should end with '-shared', and this suffix will be
+                           removed for use as a linker script generation
+                           selector.  Note that the latter is only used if
+                           'shared_defflag' is defined.
         build_scheme    => The scheme used to build up a Makefile.
                            In its simplest form, the value is a string
                            with the name of the build scheme.
@@ -233,7 +240,7 @@ In each table entry, the following keys are significant:
                            apps, as needed by the target.  This code
                            cannot be placed in a library, as the rest
                            of the code isn't expected to link to it
-                           explicitely.
+                           explicitly.
         cpuid_asm_src   => assembler implementation of cpuid code as
                            well as OPENSSL_cleanse().
                            Default to mem_clr.c
@@ -343,7 +350,7 @@ In each table entry, the following keys are significant:
 
     - shared libraries; that would be libcrypto and libssl.
     - shared objects (sometimes called dynamic libraries);  that would
-      be the engines.
+      be the modules.
     - applications; those are apps/openssl and all the test apps.
 
     Very roughly speaking, linking is done like this (words in braces
@@ -393,16 +400,21 @@ $sourcedir and $builddir, which are the locations of the source
 directory for the current build.info file and the corresponding build
 directory, all relative to the top of the build tree.
 
-To begin with, things to be built are declared by setting specific
+'Configure' only knows inherently about the top build.info file.  For
+any other directory that has one, further directories to look into
+must be indicated like this:
+
+    SUBDIRS=something someelse
+
+On to things to be built; they are declared by setting specific
 variables:
 
     PROGRAMS=foo bar
     LIBS=libsomething
-    ENGINES=libeng
+    MODULES=libeng
     SCRIPTS=myhack
-    EXTRA=file1 file2
 
-Note that the files mentioned for PROGRAMS, LIBS and ENGINES *must* be
+Note that the files mentioned for PROGRAMS, LIBS and MODULES *must* be
 without extensions.  The build file templates will figure them out.
 
 For each thing to be built, it is then possible to say what sources
@@ -433,23 +445,6 @@ support building static libraries and DLLs at the same time, so using
 static libraries on Windows can only be done when configured
 'no-shared'.
 
-One some platforms, shared libraries come with a name that's different
-from their static counterpart.  That's declared as follows:
-
-    SHARED_NAME[libfoo]=cygfoo-{- $config{shlibver} -}
-
-The example is from Cygwin, which has a required naming convention.
-
-Sometimes, it makes sense to rename an output file, for example a
-library:
-
-    RENAME[libfoo]=libbar
-
-That line has "libfoo" renamed to "libbar".  While it makes no
-sense at all to just have a rename like that (why not just use
-"libbar" everywhere?), it does make sense when it can be used
-conditionally.  See a little further below for an example.
-
 In some cases, it's desirable to include some source files in the
 shared form of a library only:
 
@@ -459,6 +454,10 @@ For any file to be built, it's also possible to tell what extra
 include paths the build of their source files should use:
 
     INCLUDE[foo]=include
+
+It's also possible to specify C macros that should be defined:
+
+    DEFINE[foo]=FOO BAR=1
 
 In some cases, one might want to generate some source files from
 others, that's done as follows:
@@ -486,48 +485,6 @@ be used in that case:
 
 NOTE: GENERATE lines are limited to one command only per GENERATE.
 
-As a last resort, it's possible to have raw build file lines, between
-BEGINRAW and ENDRAW lines as follows:
-
-    BEGINRAW[Makefile(unix)]
-    haha.h: {- $builddir -}/Makefile
-        echo "/* haha */" > haha.h
-    ENDRAW[Makefile(unix)]
-
-The word within square brackets is the build_file configuration item
-or the build_file configuration item followed by the second word in the
-build_scheme configuration item for the configured target within
-parenthesis as shown above.  For example, with the following relevant
-configuration items:
-
-   build_file   => "build.ninja"
-   build_scheme => [ "unified", "unix" ]
-
-... these lines will be considered:
-
-   BEGINRAW[build.ninja]
-   build haha.h: echo "/* haha */" > haha.h
-   ENDRAW[build.ninja]
-
-   BEGINRAW[build.ninja(unix)]
-   build hoho.h: echo "/* hoho */" > hoho.h
-   ENDRAW[build.ninja(unix)]
-
-Should it be needed because the recipes within a RAW section might
-clash with those generated by Configure, it's possible to tell it
-not to generate them with the use of OVERRIDES, for example:
-
-    SOURCE[libfoo]=foo.c bar.c
-    
-    OVERRIDES=bar.o
-    BEGINRAW[Makefile(unix)]
-    bar.o: bar.c
-    	$(CC) $(CFLAGS) -DSPECIAL -c -o $@ $<
-    ENDRAW[Makefile(unix)]
-
-See the documentation further up for more information on configuration
-items.
-
 Finally, you can have some simple conditional use of the build.info
 information, looking like this:
 
@@ -552,15 +509,6 @@ conditions based on something in the passed variables, for example:
     ELSE
       LIBS=libfoo
       SOURCE[libfoo]=...
-    ENDIF
-
-or:
-
-    # VMS has a cultural standard where all libraries are prefixed.
-    # For OpenSSL, the choice is 'ossl_'
-    IF[{- $config{target} =~ /^vms/ -}]
-     RENAME[libcrypto]=ossl_libcrypto
-     RENAME[libssl]=ossl_libssl
     ENDIF
 
 
@@ -636,8 +584,9 @@ They are all expected to return a string with the lines they produce.
                                 incs => [ "INCL/PATH", ... ]
                                 intent => one of "lib", "dso", "bin" );
 
-                  'obj' has the intended object file *without*
-                  extension, src2obj() is expected to add that.
+                  'obj' has the intended object file with '.o'
+                  extension, src2obj() is expected to change it to
+                  something more suitable for the platform.
                   'srcs' has the list of source files to build the
                   object file, with the first item being the source
                   file that directly corresponds to the object file.
@@ -657,33 +606,36 @@ They are all expected to return a string with the lines they produce.
 
                   'lib' has the intended library file name *without*
                   extension, obj2lib is expected to add that.  'objs'
-                  has the list of object files (also *without*
-                  extension) to build this library.
+                  has the list of object files to build this library.
 
-    libobj2shlib - function that produces build file lines to build a
+    libobj2shlib - backward compatibility function that's used the
+                  same way as obj2shlib (described next), and was
+                  expected to build the shared library from the
+                  corresponding static library when that was suitable.
+                  NOTE: building a shared library from a static
+                  library is now DEPRECATED, as they no longer share
+                  object files.  Attempting to do this will fail.
+
+    obj2shlib   - function that produces build file lines to build a
                   shareable object library file ("libfoo.so" in Unix
-                  terms) from the corresponding static library file
-                  or object files.
+                  terms) from the corresponding object files.
 
                   called like this:
 
-                        libobj2shlib(shlib => "PATH/TO/shlibfile",
-                                     lib => "PATH/TO/libfile",
-                                     objs => [ "PATH/TO/objectfile", ... ],
-                                     deps => [ "PATH/TO/otherlibfile", ... ]);
+                        obj2shlib(shlib => "PATH/TO/shlibfile",
+                                  lib => "PATH/TO/libfile",
+                                  objs => [ "PATH/TO/objectfile", ... ],
+                                  deps => [ "PATH/TO/otherlibfile", ... ]);
 
-                  'lib' has the intended library file name *without*
-                  extension, libobj2shlib is expected to add that.
+                  'lib' has the base (static) library ffile name
+                  *without* extension.  This is useful in case
+                  supporting files are needed (such as import
+                  libraries on Windows).
                   'shlib' has the corresponding shared library name
                   *without* extension.  'deps' has the list of other
                   libraries (also *without* extension) this library
                   needs to be linked with.  'objs' has the list of
-                  object files (also *without* extension) to build
-                  this library.
-
-                  This function has a choice; it can use the
-                  corresponding static library as input to make the
-                  shared library, or the list of object files.
+                  object files to build this library.
 
     obj2dso     - function that produces build file lines to build a
                   dynamic shared object file from object files.
@@ -695,12 +647,9 @@ They are all expected to return a string with the lines they produce.
                                 deps => [ "PATH/TO/otherlibfile",
                                 ... ]);
 
-                  This is almost the same as libobj2shlib, but the
+                  This is almost the same as obj2shlib, but the
                   intent is to build a shareable library that can be
-                  loaded in runtime (a "plugin"...).  The differences
-                  are subtle, one of the most visible ones is that the
-                  resulting shareable library is produced from object
-                  files only.
+                  loaded in runtime (a "plugin"...).
 
     obj2bin     - function that produces build file lines to build an
                   executable file from object files.
@@ -713,11 +662,10 @@ They are all expected to return a string with the lines they produce.
 
                   'bin' has the intended executable file name
                   *without* extension, obj2bin is expected to add
-                  that.  'objs' has the list of object files (also
-                  *without* extension) to build this library.  'deps'
-                  has the list of library files (also *without*
-                  extension) that the programs needs to be linked
-                  with.
+                  that.  'objs' has the list of object files to build
+                  this library.  'deps' has the list of library files
+                  (also *without* extension) that the programs needs
+                  to be linked with.
 
     in2script   - function that produces build file lines to build a
                   script file from some input.

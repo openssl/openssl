@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/trace.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 #include <openssl/x509.h>
@@ -53,6 +54,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(void);
 static void list_pkey_meth(void);
 static void list_type(FUNC_TYPE ft, int one);
+static void list_engines(void);
 static void list_disabled(void);
 char *default_config_file = NULL;
 
@@ -93,7 +95,6 @@ static int apps_startup(void)
 static void apps_shutdown(void)
 {
     destroy_ui_method();
-    destroy_prefix_method();
 }
 
 static char *make_config_name(void)
@@ -117,11 +118,136 @@ static char *make_config_name(void)
     return p;
 }
 
+
+#ifndef OPENSSL_NO_TRACE
+typedef struct tracedata_st {
+    BIO *bio;
+    unsigned int ingroup:1;
+} tracedata;
+
+static size_t internal_trace_cb(const char *buf, size_t cnt,
+                                int category, int cmd, void *vdata)
+{
+    int ret = 0;
+    tracedata *trace_data = vdata;
+    union {
+        CRYPTO_THREAD_ID tid;
+        unsigned long ltid;
+    } tid;
+    char buffer[256];
+
+    switch (cmd) {
+    case OSSL_TRACE_CTRL_BEGIN:
+        if (!ossl_assert(!trace_data->ingroup))
+            return 0;
+        trace_data->ingroup = 1;
+
+        tid.ltid = 0;
+        tid.tid = CRYPTO_THREAD_get_current_id();
+
+        BIO_snprintf(buffer, sizeof(buffer), "TRACE[%lx]:%s: ", tid.ltid,
+                     OSSL_trace_get_category_name(category));
+        BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX,
+                 strlen(buffer), buffer);
+        break;
+    case OSSL_TRACE_CTRL_WRITE:
+        if (!ossl_assert(trace_data->ingroup))
+            return 0;
+
+        ret = BIO_write(trace_data->bio, buf, cnt);
+        break;
+    case OSSL_TRACE_CTRL_END:
+        if (!ossl_assert(trace_data->ingroup))
+            return 0;
+        trace_data->ingroup = 0;
+
+        BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX, 0, NULL);
+
+        break;
+    }
+
+    return ret < 0 ? 0 : ret;
+}
+
+DEFINE_STACK_OF(tracedata)
+static STACK_OF(tracedata) *trace_data_stack;
+
+static void tracedata_free(tracedata *data)
+{
+    BIO_free_all(data->bio);
+    OPENSSL_free(data);
+}
+
+static STACK_OF(tracedata) *trace_data_stack;
+
+static void cleanup_trace(void)
+{
+    sk_tracedata_pop_free(trace_data_stack, tracedata_free);
+}
+
+static void setup_trace_category(int category)
+{
+    BIO *channel;
+    tracedata *trace_data;
+
+    if (OSSL_trace_enabled(category))
+        return;
+
+    channel = BIO_push(BIO_new(apps_bf_prefix()),
+                       dup_bio_err(FORMAT_TEXT));
+    trace_data = OPENSSL_zalloc(sizeof(*trace_data));
+
+    if (trace_data == NULL
+        || (trace_data->bio = channel) == NULL
+        || OSSL_trace_set_callback(category, internal_trace_cb,
+                                   trace_data) == 0
+        || sk_tracedata_push(trace_data_stack, trace_data) == 0) {
+
+        fprintf(stderr,
+                "warning: unable to setup trace callback for category '%s'.\n",
+                OSSL_trace_get_category_name(category));
+
+        OSSL_trace_set_callback(category, NULL, NULL);
+        BIO_free_all(channel);
+    }
+}
+
+static void setup_trace(const char *str)
+{
+    char *val;
+
+    trace_data_stack = sk_tracedata_new_null();
+    val = OPENSSL_strdup(str);
+
+    if (val != NULL) {
+        char *valp = val;
+        char *item;
+
+        for (valp = val; (item = strtok(valp, ",")) != NULL; valp = NULL) {
+            int category = OSSL_trace_get_category_num(item);
+
+            if (category == OSSL_TRACE_CATEGORY_ALL) {
+                while (++category < OSSL_TRACE_CATEGORY_NUM)
+                    setup_trace_category(category);
+                break;
+            } else if (category > 0) {
+                setup_trace_category(category);
+            } else {
+                fprintf(stderr,
+                        "warning: unknown trace category: '%s'.\n", item);
+            }
+        }
+    }
+
+    OPENSSL_free(val);
+    atexit(cleanup_trace);
+}
+#endif /* OPENSSL_NO_TRACE */
+
 int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
     LHASH_OF(FUNCTION) *prog = NULL;
-    char **copied_argv = NULL;
     char *p, *pname;
     char buf[1024];
     const char *prompt;
@@ -138,12 +264,23 @@ int main(int argc, char *argv[])
     bio_err = dup_bio_err(FORMAT_TEXT);
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-    copied_argv = argv = copy_argv(&argc, argv);
+    argv = copy_argv(&argc, argv);
 #elif defined(_WIN32)
     /*
      * Replace argv[] with UTF-8 encoded strings.
      */
     win32_utf8argv(&argc, &argv);
+#endif
+
+    /*
+     * We use the prefix method to get the trace output we want.  Since some
+     * trace outputs happen with OPENSSL_cleanup(), which is run automatically
+     * after exit(), we need to destroy the prefix method as late as possible.
+     */
+    atexit(destroy_prefix_method);
+
+#ifndef OPENSSL_NO_TRACE
+    setup_trace(getenv("OPENSSL_TRACE"));
 #endif
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
@@ -252,7 +389,6 @@ int main(int argc, char *argv[])
     }
     ret = 1;
  end:
-    OPENSSL_free(copied_argv);
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
@@ -297,6 +433,20 @@ static void list_md_fn(const EVP_MD *m,
     }
 }
 
+static void list_mac_fn(const EVP_MAC *m,
+                        const char *from, const char *to, void *arg)
+{
+    if (m != NULL) {
+        BIO_printf(arg, "%s\n", EVP_MAC_name(m));
+    } else {
+        if (from == NULL)
+            from = "<undefined>";
+        if (to == NULL)
+            to = "<undefined>";
+        BIO_printf(arg, "%s => %s\n", from, to);
+    }
+}
+
 static void list_missing_help(void)
 {
     const FUNCTION *fp;
@@ -314,6 +464,56 @@ static void list_missing_help(void)
             BIO_printf(bio_out, "%s *\n", fp->name);
         }
     }
+}
+
+static void list_objects(void)
+{
+    int max_nid = OBJ_new_nid(0);
+    int i;
+    char *oid_buf = NULL;
+    int oid_size = 0;
+
+    /* Skip 0, since that's NID_undef */
+    for (i = 1; i < max_nid; i++) {
+        const ASN1_OBJECT *obj = OBJ_nid2obj(i);
+        const char *sn = OBJ_nid2sn(i);
+        const char *ln = OBJ_nid2ln(i);
+        int n = 0;
+
+        /*
+         * If one of the retrieved objects somehow generated an error,
+         * we ignore it.  The check for NID_undef below will detect the
+         * error and simply skip to the next NID.
+         */
+        ERR_clear_error();
+
+        if (OBJ_obj2nid(obj) == NID_undef)
+            continue;
+
+        if ((n = OBJ_obj2txt(NULL, 0, obj, 1)) == 0) {
+            BIO_printf(bio_out, "# None-OID object: %s, %s\n", sn, ln);
+            continue;
+        }
+        if (n < 0)
+            break;               /* Error */
+
+        if (n > oid_size) {
+            oid_buf = OPENSSL_realloc(oid_buf, n + 1);
+            if (oid_buf == NULL) {
+                BIO_printf(bio_err, "ERROR: Memory allocation\n");
+                break;           /* Error */
+            }
+            oid_size = n + 1;
+        }
+        if (OBJ_obj2txt(oid_buf, oid_size, obj, 1) < 0)
+            break;               /* Error */
+        if (ln == NULL || strcmp(sn, ln) == 0)
+            BIO_printf(bio_out, "%s = %s\n", sn, oid_buf);
+        else
+            BIO_printf(bio_out, "%s = %s, %s\n", sn, ln, oid_buf);
+    }
+
+    OPENSSL_free(oid_buf);
 }
 
 static void list_options_for_command(const char *command)
@@ -346,9 +546,10 @@ static void list_options_for_command(const char *command)
 /* Unified enum for help and list commands. */
 typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ONE,
-    OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_OPTIONS,
+    OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED, OPT_MISSING_HELP
+    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
+    OPT_MISSING_HELP, OPT_OBJECTS
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -359,6 +560,8 @@ const OPTIONS list_options[] = {
      "List of message digest commands"},
     {"digest-algorithms", OPT_DIGEST_ALGORITHMS, '-',
      "List of message digest algorithms"},
+    {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
+     "List of message authentication code algorithms"},
     {"cipher-commands", OPT_CIPHER_COMMANDS, '-', "List of cipher commands"},
     {"cipher-algorithms", OPT_CIPHER_ALGORITHMS, '-',
      "List of cipher algorithms"},
@@ -366,12 +569,16 @@ const OPTIONS list_options[] = {
      "List of public key algorithms"},
     {"public-key-methods", OPT_PK_METHOD, '-',
      "List of public key methods"},
+    {"engines", OPT_ENGINES, '-',
+     "List of loaded engines"},
     {"disabled", OPT_DISABLED, '-',
      "List of disabled features"},
     {"missing-help", OPT_MISSING_HELP, '-',
      "List missing detailed help strings"},
     {"options", OPT_OPTIONS, 's',
      "List options for specified command"},
+    {"objects", OPT_OBJECTS, '-',
+     "List built in objects (OID<->name mappings)"},
     {NULL}
 };
 
@@ -404,6 +611,9 @@ opthelp:
         case OPT_DIGEST_ALGORITHMS:
             EVP_MD_do_all_sorted(list_md_fn, bio_out);
             break;
+        case OPT_MAC_ALGORITHMS:
+            EVP_MAC_do_all_sorted(list_mac_fn, bio_out);
+            break;
         case OPT_CIPHER_COMMANDS:
             list_type(FT_cipher, one);
             break;
@@ -416,11 +626,17 @@ opthelp:
         case OPT_PK_METHOD:
             list_pkey_meth();
             break;
+        case OPT_ENGINES:
+            list_engines();
+            break;
         case OPT_DISABLED:
             list_disabled();
             break;
         case OPT_MISSING_HELP:
             list_missing_help();
+            break;
+        case OPT_OBJECTS:
+            list_objects();
             break;
         case OPT_OPTIONS:
             list_options_for_command(opt_arg());
@@ -520,8 +736,9 @@ static void list_type(FUNC_TYPE ft, int one)
 {
     FUNCTION *fp;
     int i = 0;
-    DISPLAY_COLUMNS dc = {0};
+    DISPLAY_COLUMNS dc;
 
+    memset(&dc, 0, sizeof(dc));
     if (!one)
         calculate_columns(&dc);
 
@@ -651,6 +868,22 @@ static int SortFnByName(const void *_f1, const void *_f2)
     return strcmp(f1->name, f2->name);
 }
 
+static void list_engines(void)
+{
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *e;
+
+    BIO_puts(bio_out, "Engines:\n");
+    e = ENGINE_get_first();
+    while (e) {
+        BIO_printf(bio_out, "%s\n", ENGINE_get_id(e));
+        e = ENGINE_get_next(e);
+    }
+#else
+    BIO_puts(bio_out, "Engine support is disabled.\n");
+#endif
+}
+
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
@@ -710,9 +943,6 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_GOST
     BIO_puts(bio_out, "GOST\n");
-#endif
-#ifdef OPENSSL_NO_HEARTBEATS
-    BIO_puts(bio_out, "HEARTBEATS\n");
 #endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");

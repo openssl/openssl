@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,6 +16,9 @@
 # include <openssl/hmac.h>
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
+# include "internal/tsan_assist.h"
+
+# include "internal/numbers.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -30,20 +33,53 @@
 # define MASTER_RESEED_TIME_INTERVAL             (60*60)   /* 1 hour */
 # define SLAVE_RESEED_TIME_INTERVAL              (7*60)    /* 7 minutes */
 
-
-
-/* Max size of additional input and personalization string. */
-# define DRBG_MAX_LENGTH                4096
+/*
+ * The number of bytes that constitutes an atomic lump of entropy with respect
+ * to the FIPS 140-2 section 4.9.2 Conditional Tests.  The size is somewhat
+ * arbitrary, the smaller the value, the less entropy is consumed on first
+ * read but the higher the probability of the test failing by accident.
+ *
+ * The value is in bytes.
+ */
+#define CRNGT_BUFSIZ    16
 
 /*
- * The quotient between max_{entropy,nonce}len and min_{entropy,nonce}len
+ * Maximum input size for the DRBG (entropy, nonce, personalization string)
  *
- * The current factor is large enough that the RAND_POOL can store a
- * random input which has a lousy entropy rate of 0.0625 bits per byte.
- * This input will be sent through the derivation function which 'compresses'
- * the low quality input into a high quality output.
+ * NIST SP800 90Ar1 allows a maximum of (1 << 35) bits i.e., (1 << 32) bytes.
+ *
+ * We lower it to 'only' INT32_MAX bytes, which is equivalent to 2 gigabytes.
  */
-# define DRBG_MINMAX_FACTOR              128
+# define DRBG_MAX_LENGTH                         INT32_MAX
+
+/* The default nonce */
+# define DRBG_DEFAULT_PERS_STRING                "OpenSSL NIST SP 800-90A DRBG"
+
+/*
+ * Maximum allocation size for RANDOM_POOL buffers
+ *
+ * The max_len value for the buffer provided to the rand_drbg_get_entropy()
+ * callback is currently 2^31 bytes (2 gigabytes), if a derivation function
+ * is used. Since this is much too large to be allocated, the rand_pool_new()
+ * function chooses more modest values as default pool length, bounded
+ * by RAND_POOL_MIN_LENGTH and RAND_POOL_MAX_LENGTH
+ *
+ * The choice of the RAND_POOL_FACTOR is large enough such that the
+ * RAND_POOL can store a random input which has a lousy entropy rate of
+ * 8/256 (= 0.03125) bits per byte. This input will be sent through the
+ * derivation function which 'compresses' the low quality input into a
+ * high quality output.
+ *
+ * The factor 1.5 below is the pessimistic estimate for the extra amount
+ * of entropy required when no get_nonce() callback is defined.
+ */
+# define RAND_POOL_FACTOR        256
+# define RAND_POOL_MAX_LENGTH    (RAND_POOL_FACTOR * \
+                                  3 * (RAND_DRBG_STRENGTH / 16))
+/*
+ *                             = (RAND_POOL_FACTOR * \
+ *                                1.5 * (RAND_DRBG_STRENGTH / 8))
+ */
 
 
 /* DRBG status values */
@@ -54,7 +90,7 @@ typedef enum drbg_status_e {
 } DRBG_STATUS;
 
 
-/* intantiate */
+/* instantiate */
 typedef int (*RAND_DRBG_instantiate_fn)(RAND_DRBG *ctx,
                                         const unsigned char *ent,
                                         size_t entlen,
@@ -68,7 +104,7 @@ typedef int (*RAND_DRBG_reseed_fn)(RAND_DRBG *ctx,
                                    size_t entlen,
                                    const unsigned char *adin,
                                    size_t adinlen);
-/* generat output */
+/* generate output */
 typedef int (*RAND_DRBG_generate_fn)(RAND_DRBG *ctx,
                                      unsigned char *out,
                                      size_t outlen,
@@ -89,6 +125,26 @@ typedef struct rand_drbg_method_st {
     RAND_DRBG_uninstantiate_fn uninstantiate;
 } RAND_DRBG_METHOD;
 
+/* 888 bits from SP800-90Ar1 10.1 table 2 */
+#define HASH_PRNG_MAX_SEEDLEN    (888/8)
+
+typedef struct rand_drbg_hash_st {
+    const EVP_MD *md;
+    EVP_MD_CTX *ctx;
+    size_t blocklen;
+    unsigned char V[HASH_PRNG_MAX_SEEDLEN];
+    unsigned char C[HASH_PRNG_MAX_SEEDLEN];
+    /* Temporary value storage: should always exceed max digest length */
+    unsigned char vtmp[HASH_PRNG_MAX_SEEDLEN];
+} RAND_DRBG_HASH;
+
+typedef struct rand_drbg_hmac_st {
+    const EVP_MD *md;
+    HMAC_CTX *ctx;
+    size_t blocklen;
+    unsigned char K[EVP_MAX_MD_SIZE];
+    unsigned char V[EVP_MAX_MD_SIZE];
+} RAND_DRBG_HMAC;
 
 /*
  * The state of a DRBG AES-CTR.
@@ -122,10 +178,12 @@ struct rand_pool_st {
     unsigned char *buffer;  /* points to the beginning of the random pool */
     size_t len; /* current number of random bytes contained in the pool */
 
+    int attached;  /* true pool was attached to existing buffer */
+
     size_t min_len; /* minimum number of random bytes requested */
     size_t max_len; /* maximum number of random bytes (allocated buffer size) */
     size_t entropy; /* current entropy count in bits */
-    size_t requested_entropy; /* requested entropy count in bits */
+    size_t entropy_requested; /* requested entropy count in bits */
 };
 
 /*
@@ -139,7 +197,7 @@ struct rand_drbg_st {
     int type; /* the nid of the underlying algorithm */
     /*
      * Stores the value of the rand_fork_count global as of when we last
-     * reseeded.  The DRG reseeds automatically whenever drbg->fork_count !=
+     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_count !=
      * rand_fork_count.  Used to provide fork-safety and reseed this DRBG in
      * the child process.
      */
@@ -147,19 +205,27 @@ struct rand_drbg_st {
     unsigned short flags; /* various external flags */
 
     /*
-     * The random pool is used by RAND_add()/drbg_add() to attach random
+     * The random_data is used by RAND_add()/drbg_add() to attach random
      * data to the global drbg, such that the rand_drbg_get_entropy() callback
      * can pull it during instantiation and reseeding. This is necessary to
      * reconcile the different philosophies of the RAND and the RAND_DRBG
      * with respect to how randomness is added to the RNG during reseeding
      * (see PR #4328).
      */
-    struct rand_pool_st *pool;
+    struct rand_pool_st *seed_pool;
+
+    /*
+     * Auxiliary pool for additional data.
+     */
+    struct rand_pool_st *adin_pool;
 
     /*
      * The following parameters are setup by the per-type "init" function.
      *
-     * Currently the only type is CTR_DRBG, its init function is drbg_ctr_init().
+     * The supported types and their init functions are:
+     *    (1) CTR_DRBG:  drbg_ctr_init().
+     *    (2) HMAC_DRBG: drbg_hmac_init().
+     *    (3) HASH_DRBG: drbg_hash_init().
      *
      * The parameters are closely related to the ones described in
      * section '10.2.1 CTR_DRBG' of [NIST SP 800-90Ar1], with one
@@ -179,8 +245,12 @@ struct rand_drbg_st {
     size_t min_noncelen, max_noncelen;
     size_t max_perslen, max_adinlen;
 
-    /* Counts the number of generate requests since the last reseed. */
-    unsigned int generate_counter;
+    /*
+     * Counts the number of generate requests since the last reseed
+     * (Starts at 1). This value is the reseed_counter as defined in
+     * NIST SP 800-90Ar1
+     */
+    unsigned int reseed_gen_counter;
     /*
      * Maximum number of generate requests until a reseed is required.
      * This value is ignored if it is zero.
@@ -203,7 +273,8 @@ struct rand_drbg_st {
      * is added by RAND_add() or RAND_seed() will have an immediate effect on
      * the output of RAND_bytes() resp. RAND_priv_bytes().
      */
-    unsigned int reseed_counter;
+    TSAN_QUALIFIER unsigned int reseed_prop_counter;
+    unsigned int reseed_next_counter;
 
     size_t seedlen;
     DRBG_STATUS state;
@@ -211,9 +282,11 @@ struct rand_drbg_st {
     /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
 
-    /* Implementation specific data (currently only one implementation) */
+    /* Implementation specific data */
     union {
         RAND_DRBG_CTR ctr;
+        RAND_DRBG_HASH hash;
+        RAND_DRBG_HMAC hmac;
     } data;
 
     /* Implementation specific methods */
@@ -245,14 +318,32 @@ extern int rand_fork_count;
 /* DRBG helpers */
 int rand_drbg_restart(RAND_DRBG *drbg,
                       const unsigned char *buffer, size_t len, size_t entropy);
-
+size_t rand_drbg_seedlen(RAND_DRBG *drbg);
 /* locking api */
 int rand_drbg_lock(RAND_DRBG *drbg);
 int rand_drbg_unlock(RAND_DRBG *drbg);
 int rand_drbg_enable_locking(RAND_DRBG *drbg);
 
 
-/* initializes the AES-CTR DRBG implementation */
+/* initializes the DRBG implementation */
 int drbg_ctr_init(RAND_DRBG *drbg);
+int drbg_hash_init(RAND_DRBG *drbg);
+int drbg_hmac_init(RAND_DRBG *drbg);
+
+/*
+ * Entropy call back for the FIPS 140-2 section 4.9.2 Conditional Tests.
+ * These need to be exposed for the unit tests.
+ */
+int rand_crngt_get_entropy_cb(unsigned char *buf);
+extern int (*crngt_get_entropy)(unsigned char *);
+int rand_crngt_init(void);
+void rand_crngt_cleanup(void);
+
+/*
+ * Expose the run once initialisation function for the unit tests because.
+ * they need to restart from scratch to validate the first block is skipped
+ * properly.
+ */
+int rand_crngt_single_init(void);
 
 #endif

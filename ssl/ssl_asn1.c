@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -41,7 +41,6 @@ typedef struct {
     uint64_t flags;
     uint32_t max_early_data;
     ASN1_OCTET_STRING *alpn_selected;
-    ASN1_OCTET_STRING *tick_nonce;
     uint32_t tlsext_max_fragment_len_mode;
     ASN1_OCTET_STRING *ticket_appdata;
 } SSL_SESSION_ASN1;
@@ -73,9 +72,8 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_tick_age_add, ZUINT32, 14),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_early_data, ZUINT32, 15),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, tick_nonce, ASN1_OCTET_STRING, 17),
-    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_max_fragment_len_mode, ZUINT32, 18),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 19)
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_max_fragment_len_mode, ZUINT32, 17),
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -85,9 +83,9 @@ IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
 /* Initialise OCTET STRING from buffer and length */
 
 static void ssl_session_oinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
-                              unsigned char *data, size_t len)
+                              const unsigned char *data, size_t len)
 {
-    os->data = data;
+    os->data = (unsigned char *)data; /* justified cast: data is not modified */
     os->length = (int)len;
     os->flags = 0;
     *dest = os;
@@ -95,15 +93,15 @@ static void ssl_session_oinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
 
 /* Initialise OCTET STRING from string */
 static void ssl_session_sinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
-                              char *data)
+                              const char *data)
 {
     if (data != NULL)
-        ssl_session_oinit(dest, os, (unsigned char *)data, strlen(data));
+        ssl_session_oinit(dest, os, (const unsigned char *)data, strlen(data));
     else
         *dest = NULL;
 }
 
-int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
+int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
 {
 
     SSL_SESSION_ASN1 as;
@@ -124,7 +122,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     ASN1_OCTET_STRING psk_identity, psk_identity_hint;
 #endif
     ASN1_OCTET_STRING alpn_selected;
-    ASN1_OCTET_STRING tick_nonce;
     ASN1_OCTET_STRING ticket_appdata;
 
     long l;
@@ -194,12 +191,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     else
         ssl_session_oinit(&as.alpn_selected, &alpn_selected,
                           in->ext.alpn_selected, in->ext.alpn_selected_len);
-
-    if (in->ext.tick_nonce == NULL)
-        as.tick_nonce = NULL;
-    else
-        ssl_session_oinit(&as.tick_nonce, &tick_nonce,
-                          in->ext.tick_nonce, in->ext.tick_nonce_len);
 
     as.tlsext_max_fragment_len_mode = in->ext.max_fragment_len_mode;
 
@@ -299,7 +290,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
 
     if (!ssl_session_memcpy(ret->master_key, &tmpl,
-                            as->master_key, TLS13_MAX_RESUMPTION_MASTER_LENGTH))
+                            as->master_key, TLS13_MAX_RESUMPTION_PSK_LENGTH))
         goto err;
 
     ret->master_key_length = tmpl;
@@ -337,7 +328,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
     ret->ext.tick_lifetime_hint = (unsigned long)as->tlsext_tick_lifetime_hint;
     ret->ext.tick_age_add = as->tlsext_tick_age_add;
-    if (as->tlsext_tick) {
+    OPENSSL_free(ret->ext.tick);
+    if (as->tlsext_tick != NULL) {
         ret->ext.tick = as->tlsext_tick->data;
         ret->ext.ticklen = as->tlsext_tick->length;
         as->tlsext_tick->data = NULL;
@@ -364,27 +356,19 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     ret->flags = (int32_t)as->flags;
     ret->ext.max_early_data = as->max_early_data;
 
+    OPENSSL_free(ret->ext.alpn_selected);
     if (as->alpn_selected != NULL) {
-        if (!ssl_session_strndup((char **)&ret->ext.alpn_selected,
-                                 as->alpn_selected))
-            goto err;
+        ret->ext.alpn_selected = as->alpn_selected->data;
         ret->ext.alpn_selected_len = as->alpn_selected->length;
+        as->alpn_selected->data = NULL;
     } else {
         ret->ext.alpn_selected = NULL;
         ret->ext.alpn_selected_len = 0;
     }
 
-    if (as->tick_nonce != NULL) {
-        ret->ext.tick_nonce = as->tick_nonce->data;
-        ret->ext.tick_nonce_len = as->tick_nonce->length;
-        as->tick_nonce->data = NULL;
-    } else {
-        ret->ext.tick_nonce = NULL;
-        ret->ext.tick_nonce_len = 0;
-    }
-
     ret->ext.max_fragment_len_mode = as->tlsext_max_fragment_len_mode;
 
+    OPENSSL_free(ret->ticket_appdata);
     if (as->ticket_appdata != NULL) {
         ret->ticket_appdata = as->ticket_appdata->data;
         ret->ticket_appdata_len = as->ticket_appdata->length;

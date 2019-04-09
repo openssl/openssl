@@ -1,7 +1,7 @@
 /*
  * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,10 +15,6 @@
 #include "ec_lcl.h"
 #include <openssl/evp.h>
 #include "internal/evp_int.h"
-
-#if !defined(OPENSSL_NO_SM2)
-# include "internal/sm2.h"
-#endif
 
 /* EC pkey context structure */
 
@@ -57,7 +53,7 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
-static int pkey_ec_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+static int pkey_ec_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     EC_PKEY_CTX *dctx, *sctx;
     if (!pkey_ec_init(dst))
@@ -92,11 +88,12 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
 {
     EC_PKEY_CTX *dctx = ctx->data;
-    if (dctx) {
+    if (dctx != NULL) {
         EC_GROUP_free(dctx->gen_group);
         EC_KEY_free(dctx->co_key);
         OPENSSL_free(dctx->kdf_ukm);
         OPENSSL_free(dctx);
+        ctx->data = NULL;
     }
 }
 
@@ -107,30 +104,25 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     unsigned int sltmp;
     EC_PKEY_CTX *dctx = ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
-    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+    const int sig_sz = ECDSA_size(ec);
 
-    if (!sig) {
-        *siglen = ECDSA_size(ec);
+    /* ensure cast to size_t is safe */
+    if (!ossl_assert(sig_sz > 0))
+        return 0;
+
+    if (sig == NULL) {
+        *siglen = (size_t)sig_sz;
         return 1;
-    } else if (*siglen < (size_t)ECDSA_size(ec)) {
+    }
+
+    if (*siglen < (size_t)sig_sz) {
         ECerr(EC_F_PKEY_EC_SIGN, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
-    if (dctx->md)
-        type = EVP_MD_type(dctx->md);
-    else
-        type = NID_sha1;
+    type = (dctx->md != NULL) ? EVP_MD_type(dctx->md) : NID_sha1;
 
-    if (ec_nid == NID_sm2) {
-#if defined(OPENSSL_NO_SM2)
-        return -1;
-#else
-        ret = sm2_sign(type, tbs, tbslen, sig, &sltmp, ec);
-#endif
-    } else {
-        ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
-    }
+    ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
 
     if (ret <= 0)
         return ret;
@@ -145,22 +137,13 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
     int ret, type;
     EC_PKEY_CTX *dctx = ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
-    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
     if (dctx->md)
         type = EVP_MD_type(dctx->md);
     else
         type = NID_sha1;
 
-    if (ec_nid == NID_sm2) {
-#if defined(OPENSSL_NO_SM2)
-        ret = -1;
-#else
-        ret = sm2_verify(type, tbs, tbslen, sig, siglen, ec);
-#endif
-    } else {
-        ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
-    }
+    ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
 
     return ret;
 }
@@ -202,86 +185,6 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     return 1;
 }
 
-static int pkey_ecies_encrypt(EVP_PKEY_CTX *ctx,
-                              unsigned char *out, size_t *outlen,
-                              const unsigned char *in, size_t inlen)
-{
-    int ret;
-    EC_KEY *ec = ctx->pkey->pkey.ec;
-    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-
-    if (ec_nid == NID_sm2) {
-# if defined(OPENSSL_NO_SM2)
-        ret = -1;
-# else
-        int md_type;
-        EC_PKEY_CTX *dctx = ctx->data;
-
-        if (dctx->md)
-            md_type = EVP_MD_type(dctx->md);
-        else
-            md_type = NID_sm3;
-
-        if (out == NULL) {
-            if (!sm2_ciphertext_size(ec, EVP_get_digestbynid(md_type), inlen,
-                                     outlen))
-                ret = -1;
-            else
-                ret = 1;
-        }
-        else {
-            ret = sm2_encrypt(ec, EVP_get_digestbynid(md_type),
-                              in, inlen, out, outlen);
-        }
-# endif
-    } else {
-        /* standard ECIES not implemented */
-        ret = -1;
-    }
-
-    return ret;
-}
-
-static int pkey_ecies_decrypt(EVP_PKEY_CTX *ctx,
-                              unsigned char *out, size_t *outlen,
-                              const unsigned char *in, size_t inlen)
-{
-    int ret;
-    EC_KEY *ec = ctx->pkey->pkey.ec;
-    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-
-    if (ec_nid == NID_sm2) {
-# if defined(OPENSSL_NO_SM2)
-        ret = -1;
-# else
-        int md_type;
-        EC_PKEY_CTX *dctx = ctx->data;
-
-        if (dctx->md)
-            md_type = EVP_MD_type(dctx->md);
-        else
-            md_type = NID_sm3;
-
-        if (out == NULL) {
-            if (!sm2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen,
-                                    outlen))
-                ret = -1;
-            else
-                ret = 1;
-        }
-        else {
-            ret = sm2_decrypt(ec, EVP_get_digestbynid(md_type),
-                              in, inlen, out, outlen);
-        }
-# endif
-    } else {
-        /* standard ECIES not implemented */
-        ret = -1;
-    }
-
-    return ret;
-}
-
 static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
                               unsigned char *key, size_t *keylen)
 {
@@ -306,7 +209,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
     if (!pkey_ec_derive(ctx, ktmp, &ktmplen))
         goto err;
     /* Do KDF stuff */
-    if (!ECDH_KDF_X9_62(key, *keylen, ktmp, ktmplen,
+    if (!ecdh_KDF_X9_63(key, *keylen, ktmp, ktmplen,
                         dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md))
         goto err;
     rv = 1;
@@ -378,7 +281,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_EC_KDF_TYPE:
         if (p1 == -2)
             return dctx->kdf_type;
-        if (p1 != EVP_PKEY_ECDH_KDF_NONE && p1 != EVP_PKEY_ECDH_KDF_X9_62)
+        if (p1 != EVP_PKEY_ECDH_KDF_NONE && p1 != EVP_PKEY_ECDH_KDF_X9_63)
             return -2;
         dctx->kdf_type = p1;
         return 1;
@@ -420,8 +323,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha256 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha384 &&
-            EVP_MD_type((const EVP_MD *)p2) != NID_sha512 &&
-            EVP_MD_type((const EVP_MD *)p2) != NID_sm3) {
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha512) {
             ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_DIGEST_TYPE);
             return 0;
         }
@@ -489,7 +391,8 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     EC_KEY *ec = NULL;
     EC_PKEY_CTX *dctx = ctx->data;
-    int ret = 0;
+    int ret;
+
     if (dctx->gen_group == NULL) {
         ECerr(EC_F_PKEY_EC_PARAMGEN, EC_R_NO_PARAMETERS_SET);
         return 0;
@@ -497,10 +400,8 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     ec = EC_KEY_new();
     if (ec == NULL)
         return 0;
-    ret = EC_KEY_set_group(ec, dctx->gen_group);
-    if (ret)
-        EVP_PKEY_assign_EC_KEY(pkey, ec);
-    else
+    if (!(ret = EC_KEY_set_group(ec, dctx->gen_group))
+        || !ossl_assert(ret = EVP_PKEY_assign_EC_KEY(pkey, ec)))
         EC_KEY_free(ec);
     return ret;
 }
@@ -509,23 +410,26 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     EC_KEY *ec = NULL;
     EC_PKEY_CTX *dctx = ctx->data;
+    int ret;
+
     if (ctx->pkey == NULL && dctx->gen_group == NULL) {
         ECerr(EC_F_PKEY_EC_KEYGEN, EC_R_NO_PARAMETERS_SET);
         return 0;
     }
     ec = EC_KEY_new();
-    if (!ec)
+    if (ec == NULL)
         return 0;
-    EVP_PKEY_assign_EC_KEY(pkey, ec);
-    if (ctx->pkey) {
-        /* Note: if error return, pkey is freed by parent routine */
-        if (!EVP_PKEY_copy_parameters(pkey, ctx->pkey))
-            return 0;
-    } else {
-        if (!EC_KEY_set_group(ec, dctx->gen_group))
-            return 0;
+    if (!ossl_assert(EVP_PKEY_assign_EC_KEY(pkey, ec))) {
+        EC_KEY_free(ec);
+        return 0;
     }
-    return EC_KEY_generate_key(pkey->pkey.ec);
+    /* Note: if error is returned, we count on caller to free pkey->pkey.ec */
+    if (ctx->pkey != NULL)
+        ret = EVP_PKEY_copy_parameters(pkey, ctx->pkey);
+    else
+        ret = EC_KEY_set_group(ec, dctx->gen_group);
+
+    return ret ? EC_KEY_generate_key(ec) : 0;
 }
 
 const EVP_PKEY_METHOD ec_pkey_meth = {
@@ -552,10 +456,10 @@ const EVP_PKEY_METHOD ec_pkey_meth = {
     0, 0, 0, 0,
 
     0,
-    pkey_ecies_encrypt,
+    0,
 
     0,
-    pkey_ecies_decrypt,
+    0,
 
     0,
 #ifndef OPENSSL_NO_EC

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -19,7 +19,7 @@
 # include <openssl/symhacks.h>
 
 # include <openssl/ossl_typ.h>
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/bn.h>
 # endif
 
@@ -221,43 +221,41 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 # define DECLARE_ASN1_FUNCTIONS_name(type, name) \
         DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
-        DECLARE_ASN1_ENCODE_FUNCTIONS(type, name, name)
-
-# define DECLARE_ASN1_FUNCTIONS_fname(type, itname, name) \
-        DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
-        DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)
+        DECLARE_ASN1_ENCODE_FUNCTIONS_name(type, name)
 
 # define DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
-        type *d2i_##name(type **a, const unsigned char **in, long len); \
-        int i2d_##name(type *a, unsigned char **out); \
+        DECLARE_ASN1_ENCODE_FUNCTIONS_only(type, name) \
         DECLARE_ASN1_ITEM(itname)
 
-# define DECLARE_ASN1_ENCODE_FUNCTIONS_const(type, name) \
+# define DECLARE_ASN1_ENCODE_FUNCTIONS_name(type, name) \
+         DECLARE_ASN1_ENCODE_FUNCTIONS(type, name, name)
+
+# define DECLARE_ASN1_ENCODE_FUNCTIONS_only(type, name) \
         type *d2i_##name(type **a, const unsigned char **in, long len); \
-        int i2d_##name(const type *a, unsigned char **out); \
-        DECLARE_ASN1_ITEM(name)
+        int i2d_##name(const type *a, unsigned char **out);
 
 # define DECLARE_ASN1_NDEF_FUNCTION(name) \
-        int i2d_##name##_NDEF(name *a, unsigned char **out);
-
-# define DECLARE_ASN1_FUNCTIONS_const(name) \
-        DECLARE_ASN1_ALLOC_FUNCTIONS(name) \
-        DECLARE_ASN1_ENCODE_FUNCTIONS_const(name, name)
+        int i2d_##name##_NDEF(const name *a, unsigned char **out);
 
 # define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
         type *name##_new(void); \
         void name##_free(type *a);
 
+# define DECLARE_ASN1_DUP_FUNCTION(type) \
+        DECLARE_ASN1_DUP_FUNCTION_name(type, type)
+
+# define DECLARE_ASN1_DUP_FUNCTION_name(type, name) \
+        type *name##_dup(const type *a);
+
 # define DECLARE_ASN1_PRINT_FUNCTION(stname) \
         DECLARE_ASN1_PRINT_FUNCTION_fname(stname, stname)
 
 # define DECLARE_ASN1_PRINT_FUNCTION_fname(stname, fname) \
-        int fname##_print_ctx(BIO *out, stname *x, int indent, \
+        int fname##_print_ctx(BIO *out, const stname *x, int indent, \
                                          const ASN1_PCTX *pctx);
 
 # define D2I_OF(type) type *(*)(type **,const unsigned char **,long)
-# define I2D_OF(type) int (*)(type *,unsigned char **)
-# define I2D_OF_const(type) int (*)(const type *,unsigned char **)
+# define I2D_OF(type) int (*)(const type *,unsigned char **)
 
 # define CHECKED_D2I_OF(type, d2i) \
     ((d2i_of_void*) (1 ? d2i : ((D2I_OF(type))0)))
@@ -271,7 +269,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
     ((void**) (1 ? p : (type**)0))
 
 # define TYPEDEF_D2I_OF(type) typedef type *d2i_of_##type(type **,const unsigned char **,long)
-# define TYPEDEF_I2D_OF(type) typedef int i2d_of_##type(type *,unsigned char **)
+# define TYPEDEF_I2D_OF(type) typedef int i2d_of_##type(const type *,unsigned char **)
 # define TYPEDEF_D2I2D_OF(type) TYPEDEF_D2I_OF(type); TYPEDEF_I2D_OF(type)
 
 TYPEDEF_D2I2D_OF(void);
@@ -476,8 +474,8 @@ DEFINE_STACK_OF(ASN1_TYPE)
 
 typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ASN1_SEQUENCE_ANY, ASN1_SEQUENCE_ANY)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ASN1_SEQUENCE_ANY, ASN1_SET_ANY)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(ASN1_SEQUENCE_ANY, ASN1_SEQUENCE_ANY)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(ASN1_SEQUENCE_ANY, ASN1_SET_ANY)
 
 /* This is used to contain a list of bit names */
 typedef struct BIT_STRING_BITNAME_st {
@@ -515,7 +513,8 @@ typedef struct BIT_STRING_BITNAME_st {
                         B_ASN1_BMPSTRING|\
                         B_ASN1_UTF8STRING
 
-DECLARE_ASN1_FUNCTIONS_fname(ASN1_TYPE, ASN1_ANY, ASN1_TYPE)
+DECLARE_ASN1_ALLOC_FUNCTIONS_name(ASN1_TYPE, ASN1_TYPE)
+DECLARE_ASN1_ENCODE_FUNCTIONS(ASN1_TYPE, ASN1_ANY, ASN1_TYPE)
 
 int ASN1_TYPE_get(const ASN1_TYPE *a);
 void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);
@@ -525,21 +524,14 @@ int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b);
 ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t);
 void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
 
-ASN1_OBJECT *ASN1_OBJECT_new(void);
-void ASN1_OBJECT_free(ASN1_OBJECT *a);
-int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp);
-ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
-                             long length);
-
-DECLARE_ASN1_ITEM(ASN1_OBJECT)
-
+DECLARE_ASN1_FUNCTIONS(ASN1_OBJECT)
 DEFINE_STACK_OF(ASN1_OBJECT)
 
 ASN1_STRING *ASN1_STRING_new(void);
 void ASN1_STRING_free(ASN1_STRING *a);
 void ASN1_STRING_clear_free(ASN1_STRING *a);
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str);
-ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *a);
+DECLARE_ASN1_DUP_FUNCTION(ASN1_STRING)
 ASN1_STRING *ASN1_STRING_type_new(int type);
 int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b);
   /*
@@ -570,7 +562,7 @@ int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
 DECLARE_ASN1_FUNCTIONS(ASN1_INTEGER)
 ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
                                 long length);
-ASN1_INTEGER *ASN1_INTEGER_dup(const ASN1_INTEGER *x);
+DECLARE_ASN1_DUP_FUNCTION(ASN1_INTEGER)
 int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_ENUMERATED)
@@ -594,7 +586,7 @@ int ASN1_TIME_diff(int *pday, int *psec,
                    const ASN1_TIME *from, const ASN1_TIME *to);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_OCTET_STRING)
-ASN1_OCTET_STRING *ASN1_OCTET_STRING_dup(const ASN1_OCTET_STRING *a);
+DECLARE_ASN1_DUP_FUNCTION(ASN1_OCTET_STRING)
 int ASN1_OCTET_STRING_cmp(const ASN1_OCTET_STRING *a,
                           const ASN1_OCTET_STRING *b);
 int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str, const unsigned char *data,
@@ -685,19 +677,14 @@ int ASN1_put_eoc(unsigned char **pp);
 int ASN1_object_size(int constructed, int length, int tag);
 
 /* Used to implement other functions */
-void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x);
+void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x);
 
 # define ASN1_dup_of(type,i2d,d2i,x) \
     ((type*)ASN1_dup(CHECKED_I2D_OF(type, i2d), \
                      CHECKED_D2I_OF(type, d2i), \
-                     CHECKED_PTR_OF(type, x)))
-
-# define ASN1_dup_of_const(type,i2d,d2i,x) \
-    ((type*)ASN1_dup(CHECKED_I2D_OF(const type, i2d), \
-                     CHECKED_D2I_OF(type, d2i), \
                      CHECKED_PTR_OF(const type, x)))
 
-void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
+void *ASN1_item_dup(const ASN1_ITEM *it, const void *x);
 
 /* ASN1 alloc/free macros for when a type is only used internally */
 
@@ -715,19 +702,14 @@ void *ASN1_d2i_fp(void *(*xnew) (void), d2i_of_void *d2i, FILE *in, void **x);
                         CHECKED_PPTR_OF(type, x)))
 
 void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x);
-int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x);
+int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, const void *x);
 
 #  define ASN1_i2d_fp_of(type,i2d,out,x) \
     (ASN1_i2d_fp(CHECKED_I2D_OF(type, i2d), \
                  out, \
-                 CHECKED_PTR_OF(type, x)))
-
-#  define ASN1_i2d_fp_of_const(type,i2d,out,x) \
-    (ASN1_i2d_fp(CHECKED_I2D_OF(const type, i2d), \
-                 out, \
                  CHECKED_PTR_OF(const type, x)))
 
-int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x);
+int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, const void *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags);
 # endif
 
@@ -742,19 +724,14 @@ void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
                           CHECKED_PPTR_OF(type, x)))
 
 void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x);
-int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x);
+int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x);
 
 #  define ASN1_i2d_bio_of(type,i2d,out,x) \
     (ASN1_i2d_bio(CHECKED_I2D_OF(type, i2d), \
                   out, \
-                  CHECKED_PTR_OF(type, x)))
-
-#  define ASN1_i2d_bio_of_const(type,i2d,out,x) \
-    (ASN1_i2d_bio(CHECKED_I2D_OF(const type, i2d), \
-                  out, \
                   CHECKED_PTR_OF(const type, x)))
 
-int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x);
+int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x);
 int ASN1_UTCTIME_print(BIO *fp, const ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
@@ -807,8 +784,8 @@ ASN1_VALUE *ASN1_item_new(const ASN1_ITEM *it);
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it);
 ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **val, const unsigned char **in,
                           long len, const ASN1_ITEM *it);
-int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
-int ASN1_item_ndef_i2d(ASN1_VALUE *val, unsigned char **out,
+int ASN1_item_i2d(const ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
+int ASN1_item_ndef_i2d(const ASN1_VALUE *val, unsigned char **out,
                        const ASN1_ITEM *it);
 
 void ASN1_add_oid_module(void);
@@ -839,7 +816,7 @@ int ASN1_str2mask(const char *str, unsigned long *pmask);
 /* Don't show structure name even at top level */
 # define ASN1_PCTX_FLAGS_NO_STRUCT_NAME          0x100
 
-int ASN1_item_print(BIO *out, ASN1_VALUE *ifld, int indent,
+int ASN1_item_print(BIO *out, const ASN1_VALUE *ifld, int indent,
                     const ASN1_ITEM *it, const ASN1_PCTX *pctx);
 ASN1_PCTX *ASN1_PCTX_new(void);
 void ASN1_PCTX_free(ASN1_PCTX *p);
@@ -864,12 +841,14 @@ void *ASN1_SCTX_get_app_data(ASN1_SCTX *p);
 
 const BIO_METHOD *BIO_f_asn1(void);
 
+/* cannot constify val because of CMS_stream() */
 BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it);
 
 int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
                         const ASN1_ITEM *it);
 int PEM_write_bio_ASN1_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
                               const char *hdr, const ASN1_ITEM *it);
+/* cannot constify val because of CMS_dataFinal() */
 int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
                      int ctype_nid, int econt_nid,
                      STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it);
@@ -879,6 +858,18 @@ int SMIME_text(BIO *in, BIO *out);
 
 const ASN1_ITEM *ASN1_ITEM_lookup(const char *name);
 const ASN1_ITEM *ASN1_ITEM_get(size_t i);
+
+/* Legacy compatibility */
+# define DECLARE_ASN1_FUNCTIONS_fname(type, itname, name) \
+         DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
+         DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)
+# define DECLARE_ASN1_FUNCTIONS_const(type) DECLARE_ASN1_FUNCTIONS(type)
+# define DECLARE_ASN1_ENCODE_FUNCTIONS_const(type, name) \
+         DECLARE_ASN1_ENCODE_FUNCTIONS(type, name)
+# define I2D_OF_const(type) I2D_OF(type)
+# define ASN1_dup_of_const(type,i2d,d2i,x) ASN1_dup_of(type,i2d,d2i,x)
+# define ASN1_i2d_fp_of_const(type,i2d,out,x) ASN1_i2d_fp_of(type,i2d,out,x)
+# define ASN1_i2d_bio_of_const(type,i2d,out,x) ASN1_i2d_bio_of(type,i2d,out,x)
 
 # ifdef  __cplusplus
 }

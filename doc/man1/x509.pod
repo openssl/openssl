@@ -9,8 +9,8 @@ x509 - Certificate display and signing utility
 
 B<openssl> B<x509>
 [B<-help>]
-[B<-inform DER|PEM|NET>]
-[B<-outform DER|PEM|NET>]
+[B<-inform DER|PEM>]
+[B<-outform DER|PEM>]
 [B<-keyform DER|PEM>]
 [B<-CAform DER|PEM>]
 [B<-CAkeyform DER|PEM>]
@@ -52,7 +52,9 @@ B<openssl> B<x509>
 [B<-CAkey filename>]
 [B<-CAcreateserial>]
 [B<-CAserial filename>]
-[B<-force_pubkey key>]
+[B<-new>]
+[B<-force_pubkey filename>]
+[B<-subj arg>]
 [B<-text>]
 [B<-ext extensions>]
 [B<-certopt option>]
@@ -61,6 +63,7 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
+[B<-sigopt nm:v>]
 [B<-rand file...>]
 [B<-writerand file>]
 [B<-engine id>]
@@ -86,16 +89,15 @@ various sections.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM|NET>
+=item B<-inform DER|PEM>
 
 This specifies the input format normally the command will expect an X509
 certificate but this can change if other options such as B<-req> are
 present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
-added. The NET option is an obscure Netscape server format that is now
-obsolete. The default format is PEM.
+added. The default format is PEM.
 
-=item B<-outform DER|PEM|NET>
+=item B<-outform DER|PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
@@ -141,8 +143,9 @@ for all available algorithms.
 
 =item B<-preserve_dates>
 
-When signing a certificate, preserve the "notBefore" and "notAfter" dates instead
-of adjusting them to current time and duration. Cannot be used with the B<-days> option.
+When signing a certificate, preserve the "notBefore" and "notAfter" dates
+instead of adjusting them to current time and duration.
+Cannot be used with the B<-days> option.
 
 =back
 
@@ -174,7 +177,7 @@ options. See the B<TEXT OPTIONS> section for more information.
 
 =item B<-noout>
 
-This option prevents output of the encoded version of the request.
+This option prevents output of the encoded version of the certificate.
 
 =item B<-pubkey>
 
@@ -355,17 +358,17 @@ can thus behave like a "mini CA".
 This option causes the input file to be self signed using the supplied
 private key.
 
-If the input file is a certificate it sets the issuer name to the
-subject name (i.e.  makes it self signed) changes the public key to the
-supplied value and changes the start and end dates. The start date is
-set to the current time and the end date is set to a value determined
-by the B<-days> option. Any certificate extensions are retained unless
-the B<-clrext> option is supplied; this includes, for example, any existing
-key identifier extensions.
+It sets the issuer name to the subject name (i.e., makes it self-issued)
+and changes the public key to the supplied value (unless overridden by
+B<-force_pubkey>). It sets the validity start date to the current time
+and the end date to a value determined by the B<-days> option.
+It retains any certificate extensions unless the B<-clrext> option is supplied;
+this includes, for example, any existing key identifier extensions.
 
-If the input is a certificate request then a self signed certificate
-is created using the supplied private key using the subject name in
-the request.
+=item B<-sigopt nm:v>
+
+Pass options to the signature algorithm during sign or verify operations.
+Names and values of these options are algorithm-specific.
 
 =item B<-passin arg>
 
@@ -459,14 +462,38 @@ specified then the extensions should either be contained in the unnamed
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 
-=item B<-force_pubkey key>
+=item B<-new>
 
-When a certificate is created set its public key to B<key> instead of the
-key in the certificate or certificate request. This option is useful for
-creating certificates where the algorithm can't normally sign requests, for
-example DH.
+Generate a certificate from scratch, not using an input certificate
+or certificate request. So the B<-in> option must not be used in this case.
+Instead, the B<-subj> and <-force_pubkey> options need to be given.
 
-The format or B<key> can be specified using the B<-keyform> option.
+=item B<-force_pubkey filename>
+
+When a certificate is created set its public key to the key in B<filename>
+instead of the key contained in the input or given with the B<-signkey> option.
+
+This option is useful for creating self-issued certificates that are not
+self-signed, for instance when the key cannot be used for signing, such as DH.
+It can also be used in conjunction with b<-new> and B<-subj> to directly
+generate a certificate containing any desired public key.
+
+The format of the key file can be specified using the B<-keyform> option.
+
+=item B<-subj arg>
+
+When a certificate is created set its subject name to the given value.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Empty values are permitted, but the corresponding type will not be included
+in the certificate. Giving a single I</> will lead to an empty sequence of RDNs
+(a NULL subject DN).
+
+Unless the B<-CA> option is given the issuer is set to the same value.
+
+This option can be used in conjunction with the B<-force_pubkey> option
+to create a certificate even without providing an input certificate
+or certificate request.
 
 =back
 
@@ -579,7 +606,8 @@ Dump any field whose OID is not recognised by OpenSSL.
 B<sep_multiline>
 
 These options determine the field separators. The first character is
-between RDNs and the second between multiple AVAs (multiple AVAs are
+between Relative Distinguished Names (RDNs) and the second is between
+multiple Attribute Value Assertions (AVAs, multiple AVAs are
 very rare and their use is discouraged). The options ending in
 "space" additionally place a space after the separator to make it
 more readable. The B<sep_multiline> uses a linefeed character for
@@ -926,9 +954,9 @@ the old form must have their links rebuilt using B<c_rehash> or similar.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -36,8 +36,10 @@ my @depfiles =
         scalar @st > 0;         # Determines the grep result
     }
     map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
-    grep { $unified_info{sources}->{$_}->[0] =~ /\.cc?$/ }
-    keys %{$unified_info{sources}};
+    ( ( grep { $unified_info{sources}->{$_}->[0] =~ /\.cc?$/ }
+            keys %{$unified_info{sources}} ),
+      ( grep { $unified_info{shared_sources}->{$_}->[0] =~ /\.cc?$/ }
+            keys %{$unified_info{shared_sources}} ) );
 
 exit 0 unless $rebuild;
 
@@ -63,7 +65,7 @@ my $abs_blddir = rel2abs($blddir);
 # files we depend on in the same directory that only differ by character case,
 # we're fine.
 my %depconv_cache =
-    map { lc catfile($abs_blddir, $_) => $_ }
+    map { catfile($abs_blddir, $_) => $_ }
     keys %{$unified_info{generate}};
 
 my %procedures = (
@@ -139,7 +141,7 @@ my %procedures = (
 
             # VMS C gives us absolute paths, always.  Let's see if we can
             # make them relative instead.
-            $line = lc canonpath($line);
+            $line = canonpath($line);
 
             unless (defined $depconv_cache{$line}) {
                 my $dep = $line;
@@ -184,7 +186,7 @@ my %procedures = (
                 # VC gives us absolute paths for all include files, so to
                 # remove system header dependencies, we need to check that
                 # they don't match $abs_srcdir or $abs_blddir.
-                $tail = lc canonpath($tail);
+                $tail = canonpath($tail);
 
                 unless (defined $depconv_cache{$tail}) {
                     my $dep = $tail;

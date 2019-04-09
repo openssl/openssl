@@ -1,0 +1,5 @@
+SOURCE[../../../libcrypto]=\
+        sha2.c
+
+SOURCE[../../fips]=\
+        sha2.c

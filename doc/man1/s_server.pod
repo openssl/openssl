@@ -98,6 +98,7 @@ B<openssl> B<s_server>
 [B<-no_comp>]
 [B<-comp>]
 [B<-no_ticket>]
+[B<-num_tickets>]
 [B<-serverpref>]
 [B<-legacy_renegotiation>]
 [B<-no_renegotiation>]
@@ -172,6 +173,7 @@ B<openssl> B<s_server>
 [B<-dtls1>]
 [B<-dtls1_2>]
 [B<-sctp>]
+[B<-sctp_label_bug>]
 [B<-no_dhe>]
 [B<-nextprotoneg val>]
 [B<-use_srtp val>]
@@ -180,6 +182,8 @@ B<openssl> B<s_server>
 [B<-keylogfile outfile>]
 [B<-max_early_data int>]
 [B<-early_data>]
+[B<-anti_replay>]
+[B<-no_anti_replay>]
 
 =head1 DESCRIPTION
 
@@ -246,6 +250,17 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 (DSA) key. If not specified then the filename "server.pem" will be used.
 
+=item B<-cert_chain>
+
+A file containing trusted certificates to use when attempting to build the
+client/server certificate chain related to the certificate specified via the
+B<-cert> option.
+
+=item B<-build_chain>
+
+Specify whether the application should build the certificate chain to be
+provided to the client.
+
 =item B<-nameopt val>
 
 Option which determines how the subject or issuer names are displayed. The
@@ -295,9 +310,32 @@ and some a DSS (DSA) key. By using RSA and DSS certificates and keys
 a server can support clients which only support RSA or DSS cipher suites
 by using an appropriate certificate.
 
+=item B<-dcert_chain>
+
+A file containing trusted certificates to use when attempting to build the
+server certificate chain when a certificate specified via the B<-dcert> option
+is in use.
+
 =item B<-dcertform PEM|DER>, B<-dkeyform PEM|DER>, B<-dpass val>
 
 Additional certificate and private key format and passphrase respectively.
+
+=item B<-xkey infile>, B<-xcert infile>, B<-xchain>
+
+Specify an extra certificate, private key and certificate chain. These behave
+in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
+specified, the callback returning the first valid chain will be in use by
+the server.
+
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to the client for the extra certificates provided via B<-xkey infile>,
+B<-xcert infile>, B<-xchain> options.
+
+=item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
+
+Extra certificate and private key format respectively.
 
 =item B<-nbio_test>
 
@@ -333,8 +371,18 @@ a certificate is requested.
 =item B<-CApath dir>
 
 The directory to use for client certificate verification. This directory
-must be in "hash format", see B<verify> for more information. These are
+must be in "hash format", see L<verify(1)> for more information. These are
 also used when building the server certificate chain.
+
+=item B<-chainCApath dir>
+
+The directory to use for building the chain provided to the client. This
+directory must be in "hash format", see L<verify(1)> for more information.
+
+=item B<-chainCAfile file>
+
+A file containing trusted certificates to use when attempting to build the
+server certificate chain.
 
 =item B<-no-CAfile>
 
@@ -359,13 +407,14 @@ Inhibit printing of session and certificate information.
 Sends a status message back to the client when it connects. This includes
 information about the ciphers used and various session parameters.
 The output is in HTML format so this option will normally be used with a
-web browser.
+web browser. Cannot be used in conjunction with B<-early_data>.
 
 =item B<-WWW>
 
 Emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
-requested the file ./page.html will be loaded.
+requested the file ./page.html will be loaded. Cannot be used in conjunction
+with B<-early_data>.
 
 =item B<-tlsextdebug>
 
@@ -377,7 +426,8 @@ Emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
 requested the file ./page.html will be loaded. The files loaded are
 assumed to contain a complete and correct HTTP response (lines that
-are part of the HTTP response line and headers must end with CRLF).
+are part of the HTTP response line and headers must end with CRLF). Cannot be
+used in conjunction with B<-early_data>.
 
 =item B<-id_prefix val>
 
@@ -442,7 +492,8 @@ output.
 =item B<-rev>
 
 Simple test server which just reverses the text received from the client
-and sends it back to the server. Also sets B<-brief>.
+and sends it back to the server. Also sets B<-brief>. Cannot be used in
+conjunction with B<-early_data>.
 
 =item B<-async>
 
@@ -486,10 +537,12 @@ By default B<s_server> will negotiate the highest mutually supported protocol
 version.
 When a specific TLS version is required, only that version will be accepted
 from the client.
+Note that not all protocols and flags may be available, depending on how
+OpenSSL was built.
 
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-no_comp>
@@ -507,7 +560,14 @@ OpenSSL 1.1.0.
 
 =item B<-no_ticket>
 
-Disable RFC4507bis session ticket support.
+Disable RFC4507bis session ticket support. This option has no effect if TLSv1.3
+is negotiated. See B<-num_tickets>.
+
+=item B<-num_tickets>
+
+Control the number of tickets that will be sent to the client after a full
+handshake in TLSv1.3. The default number of tickets is 2. This option does not
+affect the number of tickets sent after a resumption handshake.
 
 =item B<-serverpref>
 
@@ -626,6 +686,14 @@ Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
 conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
 available where OpenSSL has support for SCTP enabled.
 
+=item B<-sctp_label_bug>
+
+Use the incorrect behaviour of older OpenSSL implementations when computing
+endpoint-pair shared secrets for DTLS/SCTP. This allows communication with
+older broken implementations but breaks interoperability with correct
+implementations. Must be used in conjunction with B<-sctp>. This option is only
+available where OpenSSL has support for SCTP enabled.
+
 =item B<-no_dhe>
 
 If this option is set then no DH parameters will be loaded effectively
@@ -663,7 +731,17 @@ greater than or equal to 0.
 
 =item B<-early_data>
 
-Accept early data where possible.
+Accept early data where possible. Cannot be used in conjunction with B<-www>,
+B<-WWW>, B<-HTTP> or B<-rev>.
+
+=item B<-anti_replay>, B<-no_anti_replay>
+
+Switches replay protection on or off, respectively. Replay protection is on by
+default unless overridden by a configuration file. When it is on, OpenSSL will
+automatically detect if a session ticket has been used more than once, TLSv1.3
+has been negotiated, and early data is enabled on the server. A full handshake
+is forced if a session ticket is used a second or subsequent time. Any early
+data that was sent will be rejected.
 
 =back
 
@@ -704,10 +782,6 @@ cause the client to disconnect due to a protocol violation.
 =item B<S>
 
 Print out some session cache status information.
-
-=item B<B>
-
-Send a heartbeat message to the client (DTLS only)
 
 =item B<k>
 
@@ -754,21 +828,22 @@ unknown cipher suites a client says it supports.
 =head1 SEE ALSO
 
 L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
-L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
-L<SSL_CTX_set_max_pipelines(3)> 
+L<SSL_CTX_set_max_send_fragment(3)>,
+L<SSL_CTX_set_split_send_fragment(3)>,
+L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY
 
-The -no_alt_chains option was first added to OpenSSL 1.1.0.
+The -no_alt_chains option was added in OpenSSL 1.1.0.
 
-The -allow-no-dhe-kex and -prioritize_chacha options were first added to
-OpenSSL 1.1.1.
+The
+-allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
 Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

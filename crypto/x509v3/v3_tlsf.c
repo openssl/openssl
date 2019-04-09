@@ -1,7 +1,7 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -122,13 +122,12 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
             }
         }
 
-        ai = ASN1_INTEGER_new();
-        if (ai == NULL) {
+        if ((ai = ASN1_INTEGER_new()) == NULL
+                || !ASN1_INTEGER_set(ai, tlsextid)
+                || sk_ASN1_INTEGER_push(tlsf, ai) <= 0) {
             X509V3err(X509V3_F_V2I_TLS_FEATURE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        ASN1_INTEGER_set(ai, tlsextid);
-        sk_ASN1_INTEGER_push(tlsf, ai);
     }
     return tlsf;
 

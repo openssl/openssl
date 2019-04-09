@@ -47,16 +47,13 @@ only).
 
 When needed, the 'file' scheme loader will require a pass phrase by
 using the C<UI_METHOD> that was passed via OSSL_STORE_open().
-This pass phrase is used as it is, which may present some challenge
-when the file that's loaded contains a PKCS#12 object.
+This pass phrase is expected to be UTF-8 encoded, anything else will
+give an undefined result.
+The files made accessible through this loader are expected to be
+standard compliant with regards to pass phrase encoding.
+Files that aren't should be re-generated with a correctly encoded pass
+phrase.
 See L<passphrase-encoding(7)> for more information.
-
-=begin comment
-
-The treatment of pass phrases is currently being worked on and may
-change.
-
-=end comment
 
 =head1 SEE ALSO
 
@@ -66,7 +63,7 @@ L<ossl_store(7)>, L<passphrase-encoding(7)>
 
 Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

@@ -1,7 +1,7 @@
 /*
  * Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -282,7 +282,7 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
     return rv;
 }
 
-/* Initialise a ktri based on passed certificate and key */
+/* Initialise a kari based on passed certificate and key */
 
 int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
                                 EVP_PKEY *pk, unsigned int flags)
@@ -299,6 +299,9 @@ int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
     kari->version = 3;
 
     rek = M_ASN1_new_of(CMS_RecipientEncryptedKey);
+    if (rek == NULL)
+        return 0;
+
     if (!sk_CMS_RecipientEncryptedKey_push(kari->recipientEncryptedKeys, rek)) {
         M_ASN1_free_of(rek, CMS_RecipientEncryptedKey);
         return 0;
@@ -360,7 +363,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
 
 /* Encrypt content key in key agreement recipient info */
 
-int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms,
+int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
                                    CMS_RecipientInfo *ri)
 {
     CMS_KeyAgreeRecipientInfo *kari;

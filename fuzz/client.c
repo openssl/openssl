@@ -1,7 +1,7 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL licenses, (the "License");
+ * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * https://www.openssl.org/source/license.html
@@ -49,8 +49,8 @@ int FuzzerInitialize(int *argc, char ***argv)
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
     FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
-    sk_SSL_COMP_sort(comp_methods);
-
+    if (comp_methods != NULL)
+        sk_SSL_COMP_sort(comp_methods);
 
     return 1;
 }
@@ -73,6 +73,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     ctx = SSL_CTX_new(SSLv23_method());
 
     client = SSL_new(ctx);
+    OPENSSL_assert(SSL_set_min_proto_version(client, 0) == 1);
     OPENSSL_assert(SSL_set_cipher_list(client, "ALL:eNULL:@SECLEVEL=0") == 1);
     SSL_set_tlsext_host_name(client, "localhost");
     in = BIO_new(BIO_s_mem());

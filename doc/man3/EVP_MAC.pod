@@ -1,0 +1,371 @@
+=pod
+
+=head1 NAME
+
+EVP_MAC, EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_new_id, EVP_MAC_CTX_free,
+EVP_MAC_CTX_copy, EVP_MAC_CTX_mac, EVP_MAC_size, EVP_MAC_init, EVP_MAC_update,
+EVP_MAC_final, EVP_MAC_ctrl, EVP_MAC_vctrl, EVP_MAC_ctrl_str,
+EVP_MAC_str2ctrl, EVP_MAC_hex2ctrl, EVP_MAC_nid, EVP_MAC_name,
+EVP_get_macbyname, EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ typedef struct evp_mac_st EVP_MAC;
+ typedef struct evp_mac_ctx_st EVP_MAC_CTX;
+
+ EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
+ EVP_MAC_CTX *EVP_MAC_CTX_new_id(int nid);
+ void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
+ int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, EVP_MAC_CTX *src);
+ const EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
+ size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
+ int EVP_MAC_init(EVP_MAC_CTX *ctx);
+ int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
+ int EVP_MAC_final(EVP_MAC_CTX *ctx, unsigned char *out, size_t *poutlen);
+ int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...);
+ int EVP_MAC_vctrl(EVP_MAC_CTX *ctx, int cmd, va_list args);
+ int EVP_MAC_ctrl_str(EVP_MAC_CTX *ctx, const char *type, const char *value);
+ int EVP_MAC_str2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
+ int EVP_MAC_hex2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
+ int EVP_MAC_nid(const EVP_MAC *mac);
+ const char *EVP_MAC_name(const EVP_MAC *mac);
+ const EVP_MAC *EVP_get_macbyname(const char *name);
+ const EVP_MAC *EVP_get_macbynid(int nid);
+ const EVP_MAC *EVP_get_macbyobj(const ASN1_OBJECT *o);
+
+=head1 DESCRIPTION
+
+These types and functions help the application to calculate MACs of
+different types and with different underlying algorithms if there are
+any.
+
+MACs are a bit complex insofar that some of them use other algorithms
+for actual computation.  HMAC uses a digest, and CMAC uses a cipher.
+Therefore, there are sometimes two contexts to keep track of, one for
+the MAC algorithm itself and one for the underlying computation
+algorithm if there is one.
+
+To make things less ambiguous, this manual talks about a "context" or
+"MAC context", which is to denote the MAC level context, and about a
+"underlying context", or "computation context", which is to denote the
+context for the underlying computation algorithm if there is one.
+
+=head2 Types
+
+B<EVP_MAC> is a type that holds the implementation of a MAC.
+
+B<EVP_MAC_CTX> is a context type that holds internal MAC information
+as well as a reference to a computation context, for those MACs that
+rely on an underlying computation algorithm.
+
+=head2 Context manipulation functions
+
+EVP_MAC_CTX_new() creates a new context for the MAC type C<mac>.
+EVP_MAC_CTX_new_id() creates a new context for the numerical MAC
+identity <nid>.
+The created context can then be used with most other functions
+described here.
+
+EVP_MAC_CTX_free() frees the contents of the context, including an
+underlying context if there is one, as well as the context itself.
+B<NULL> is a valid parameter, for which this function is a no-op.
+
+EVP_MAC_CTX_copy() makes a deep copy of the C<src> context to the
+C<dest> context.
+The C<dest> context I<must> have been created before calling this
+function.
+
+EVP_MAC_CTX_mac() returns the B<EVP_MAC> associated with the context
+C<ctx>.
+
+=head2 Computing functions
+
+EVP_MAC_init() sets up the underlying context with information given
+through diverse controls.
+This should be called before calling EVP_MAC_update() and
+EVP_MAC_final().
+
+EVP_MAC_update() adds C<datalen> bytes from C<data> to the MAC input.
+
+EVP_MAC_final() does the final computation and stores the result in
+the memory pointed at by C<out>, and sets its size in the B<size_t>
+the C<poutlen> points at.
+If C<out> is B<NULL>, then no computation is made.
+To figure out what the output length will be and allocate space for it
+dynamically, simply call with C<out> being B<NULL> and C<poutlen>
+pointing at a valid location, then allocate space and make a second
+call with C<out> pointing at the allocated space.
+
+EVP_MAC_ctrl() is used to manipulate or get information on aspects of
+the MAC which may vary depending on the MAC algorithm or its
+implementation.
+This includes the MAC key, and for MACs that use other algorithms to
+do their computation, this is also the way to tell it which one to
+use.
+This functions takes variable arguments, the exact expected arguments
+depend on C<cmd>.
+EVP_MAC_ctrl() can be called both before and after EVP_MAC_init(), but
+the effect will depend on what control is being use.
+See L</CONTROLS> below for a description of standard controls.
+
+EVP_MAC_vctrl() is the variant of EVP_MAC_ctrl() that takes a
+C<va_list> argument instead of variadic arguments.
+
+EVP_MAC_ctrl_str() is an alternative to EVP_MAC_ctrl() to control the
+MAC implementation as E<lt> C<type>, C<value> E<gt> pairs.
+The MAC implementation documentation should specify what control type
+strings are accepted.
+
+EVP_MAC_str2ctrl() and EVP_MAC_hex2ctrl() are helper functions to
+control the MAC implementation with raw strings or with strings
+containing hexadecimal numbers.
+The latter are decoded into bitstrings that are sent on to
+EVP_MAC_ctrl().
+
+=head2 Information functions
+
+EVP_MAC_size() returns the MAC output size for the given context.
+
+EVP_MAC_nid() returns the numeric identity of the given MAC implementation.
+
+EVP_MAC_name() returns the name of the given MAC implementation.
+
+=head2 Object database functions
+
+EVP_get_macbyname() fetches a MAC implementation from the object
+database by name.
+
+EVP_get_macbynid() fetches a MAC implementation from the object
+database by numeric identity.
+
+EVP_get_macbyobj() fetches a MAC implementation from the object
+database by ASN.1 OBJECT (i.e. an encoded OID).
+
+=head1 CONTROLS
+
+The standard controls are:
+
+=over 4
+
+=item B<EVP_MAC_CTRL_SET_KEY>
+
+This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
+
+These will set the MAC key from the given string of the given length.
+The string may be any bitstring, and can contain NUL bytes.
+
+For MACs that use an underlying computation algorithm, the algorithm
+I<must> be set first, see B<EVP_MAC_CTRL_SET_ENGINE>,
+B<EVP_MAC_CTRL_SET_MD> and B<EVP_MAC_CTRL_SET_CIPHER> below.
+
+=item B<EVP_MAC_CTRL_SET_IV>
+
+This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
+
+Some MAC implementations require an IV, this control sets the IV.
+
+=item B<EVP_MAC_CTRL_SET_CUSTOM>
+
+This control expects two arguments: C<unsigned char *custom>, C<size_t customlen>
+
+Some MAC implementations (KMAC, BLAKE2) accept a Customization String,
+this control sets the Customization String. The default value is "".
+
+=item B<EVP_MAC_CTRL_SET_SALT>
+
+This control expects two arguments: C<unsigned char *salt>, C<size_t saltlen>
+
+This option is used by BLAKE2 MAC.
+
+=item B<EVP_MAC_CTRL_SET_XOF>
+
+This control expects one argument: C<int xof>
+
+This option is used by KMAC.
+
+=item B<EVP_MAC_CTRL_SET_FLAGS>
+
+This control expects one argument: C<unsigned long flags>
+
+These will set the MAC flags to the given numbers.
+Some MACs do not support this option.
+
+=item B<EVP_MAC_CTRL_SET_ENGINE>
+
+=item B<EVP_MAC_CTRL_SET_MD>
+
+=item B<EVP_MAC_CTRL_SET_CIPHER>
+
+For MAC implementations that use an underlying computation algorithm,
+these controls set what the algorithm should be, and the engine that
+implements the algorithm if needed.
+
+Note that not all algorithms may support all digests. HMAC does not support
+variable output length digests such as SHAKE128 or SHAKE256.
+
+B<EVP_MAC_CTRL_SET_ENGINE> takes one argument: C<ENGINE *>
+
+B<EVP_MAC_CTRL_SET_MD> takes one argument: C<EVP_MD *>
+
+B<EVP_MAC_CTRL_SET_CIPHER> takes one argument: C<EVP_CIPHER *>
+
+=item B<EVP_MAC_CTRL_SET_SIZE>
+
+For MAC implementations that support it, set the output size that
+EVP_MAC_final() should produce.
+The allowed sizes vary between MAC implementations.
+
+=back
+
+All these control should be used before the calls to any of
+EVP_MAC_init(), EVP_MAC_update() and EVP_MAC_final() for a full
+computation.
+Anything else may give undefined results.
+
+=head1 NOTES
+
+EVP_get_macbynid(), EVP_get_macbyobj() and EVP_MAC_name() are
+implemented as a macro.
+
+=head1 RETURN VALUES
+
+EVP_MAC_CTX_new() and EVP_MAC_CTX_new_id() return a pointer to a newly
+created EVP_MAC_CTX, or NULL if allocation failed.
+
+EVP_MAC_CTX_free() returns nothing at all.
+
+EVP_MAC_CTX_copy(), EVP_MAC_init(), EVP_MAC_update(),
+and EVP_MAC_final() return 1 on success, 0 on error.
+
+EVP_MAC_ctrl(), EVP_MAC_ctrl_str(), EVP_MAC_str2ctrl() and
+EVP_MAC_hex2ctrl() return 1 on success and 0 or a negative value on
+error.
+In particular, the value -2 indicates that the given control type
+isn't supported by the MAC implementation.
+
+EVP_MAC_size() returns the expected output size, or 0 if it isn't
+set.
+If it isn't set, a call to EVP_MAC_init() should get it set.
+
+EVP_MAC_nid() returns the numeric identity for the given C<mac>.
+
+EVP_MAC_name() returns the name for the given C<mac>, if it has been
+added to the object database.
+
+EVP_add_mac() returns 1 if the given C<mac> was successfully added to
+the object database, otherwise 0.
+
+EVP_get_macbyname(), EVP_get_macbynid() and EVP_get_macbyobj() return
+the request MAC implementation, if it exists in the object database,
+otherwise B<NULL>.
+
+=head1 EXAMPLE
+
+  #include <stdlib.h>
+  #include <stdio.h>
+  #include <string.h>
+  #include <stdarg.h>
+  #include <unistd.h>
+
+  #include <openssl/evp.h>
+  #include <openssl/err.h>
+
+  int ctrl_ign_unsupported(EVP_MAC_CTX *ctx, int cmd, ...)
+  {
+      va_list args;
+      int rv;
+
+      va_start(args, cmd);
+      rv = EVP_MAC_vctrl(ctx, cmd, args);
+      va_end(args);
+
+      if (rv == -2)
+          rv = 1;       /* Ignore unsupported, pretend it worked fine */
+
+      return rv;
+  }
+
+  int main() {
+      const EVP_MAC *mac =
+          EVP_get_macbyname(getenv("MY_MAC"));
+      const EVP_CIPHER *cipher =
+          EVP_get_cipherbyname(getenv("MY_MAC_CIPHER"));
+      const EVP_MD *digest =
+          EVP_get_digestbyname(getenv("MY_MAC_DIGEST"));
+      const char *key = getenv("MY_KEY");
+      EVP_MAC_CTX *ctx = NULL;
+
+      unsigned char buf[4096];
+      ssize_t read_l;
+      size_t final_l;
+
+      size_t i;
+
+      if (mac == NULL
+          || key == NULL
+          || (ctx = EVP_MAC_CTX_new(mac)) == NULL
+          || (cipher != NULL
+              && !ctrl_ign_unsupported(ctx, EVP_MAC_CTRL_SET_CIPHER, cipher))
+          || (digest != NULL
+              && !ctrl_ign_unsupported(ctx, EVP_MAC_CTRL_SET_MD, digest))
+          || EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY, key, strlen(key)) <= 0)
+          goto err;
+
+      if (!EVP_MAC_init(ctx))
+          goto err;
+
+      while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) < 0) {
+          if (!EVP_MAC_update(ctx, buf, read_l))
+              goto err;
+      }
+
+      if (!EVP_MAC_final(ctx, buf, &final_l))
+          goto err;
+
+      printf("Result: ");
+      for (i = 0; i < final_l; i++)
+          printf("%02X", buf[i]);
+      printf("\n");
+
+      EVP_MAC_CTX_free(ctx);
+      exit(0);
+
+   err:
+      EVP_MAC_CTX_free(ctx);
+      fprintf(stderr, "Something went wrong\n");
+      ERR_print_errors_fp(stderr);
+      exit (1);
+  }
+
+A run of this program, called with correct environment variables, can
+look like this:
+
+  $ MY_MAC=cmac MY_KEY=secret0123456789 MY_MAC_CIPHER=aes-128-cbc \
+    LD_LIBRARY_PATH=. ./foo < foo.c
+  Result: ECCAAFF041B22A2299EB90A1B53B6D45
+
+(in this example, that program was stored in F<foo.c> and compiled to
+F<./foo>)
+
+=head1 SEE ALSO
+
+L<EVP_MAC_BLAKE2(7)>,
+L<EVP_MAC_CMAC(7)>,
+L<EVP_MAC_GMAC(7)>,
+L<EVP_MAC_HMAC(7)>,
+L<EVP_MAC_KMAC(7)>,
+L<EVP_MAC_SIPHASH(7)>,
+L<EVP_MAC_POLY1305(7)>
+
+=head1 COPYRIGHT
+
+Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

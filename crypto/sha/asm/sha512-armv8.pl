@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -188,24 +188,18 @@ ___
 $code.=<<___;
 #ifndef	__KERNEL__
 # include "arm_arch.h"
+.extern	OPENSSL_armcap_P
 #endif
 
 .text
 
-.extern	OPENSSL_armcap_P
 .globl	$func
 .type	$func,%function
 .align	6
 $func:
 #ifndef	__KERNEL__
-# ifdef	__ILP32__
-	ldrsw	x16,.LOPENSSL_armcap_P
-# else
-	ldr	x16,.LOPENSSL_armcap_P
-# endif
-	adr	x17,.LOPENSSL_armcap_P
-	add	x16,x16,x17
-	ldr	w16,[x16]
+	adrp	x16,OPENSSL_armcap_P
+	ldr	w16,[x16,#:lo12:OPENSSL_armcap_P]
 ___
 $code.=<<___	if ($SZ==4);
 	tst	w16,#ARMV8_SHA256
@@ -219,6 +213,7 @@ $code.=<<___	if ($SZ==8);
 ___
 $code.=<<___;
 #endif
+	.inst	0xd503233f				// paciasp
 	stp	x29,x30,[sp,#-128]!
 	add	x29,sp,#0
 
@@ -280,6 +275,7 @@ $code.=<<___;
 	ldp	x25,x26,[x29,#64]
 	ldp	x27,x28,[x29,#80]
 	ldp	x29,x30,[sp],#128
+	.inst	0xd50323bf				// autiasp
 	ret
 .size	$func,.-$func
 
@@ -351,15 +347,6 @@ $code.=<<___ if ($SZ==4);
 ___
 $code.=<<___;
 .size	.LK$BITS,.-.LK$BITS
-#ifndef	__KERNEL__
-.align	3
-.LOPENSSL_armcap_P:
-# ifdef	__ILP32__
-	.long	OPENSSL_armcap_P-.
-# else
-	.quad	OPENSSL_armcap_P-.
-# endif
-#endif
 .asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___
@@ -839,7 +826,7 @@ ___
 }
 
 $code.=<<___;
-#ifndef	__KERNEL__
+#if !defined(__KERNEL__) && !defined(_WIN64)
 .comm	OPENSSL_armcap_P,4,4
 #endif
 ___

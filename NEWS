@@ -5,22 +5,73 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.0h and OpenSSL 1.1.1 [in pre-release]
+  Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
 
-      o Support for TLSv1.3 added
+      o Add support for enabling instrumentation through trace and debug
+        output.
+      o Changed our version number scheme and set the next major release to
+        3.0.0
+      o Added EVP_MAC, an EVP layer MAC API, and a generic EVP_PKEY to EVP_MAC
+        bridge.
+      o Removed the heartbeat message in DTLS feature.
+
+  Major changes between OpenSSL 1.1.1 and OpenSSL 1.1.1a [20 Nov 2018]
+
+      o Timing vulnerability in DSA signature generation (CVE-2018-0734)
+      o Timing vulnerability in ECDSA signature generation (CVE-2018-0735)
+
+  Major changes between OpenSSL 1.1.0i and OpenSSL 1.1.1 [11 Sep 2018]
+
+      o Support for TLSv1.3 added (see https://wiki.openssl.org/index.php/TLS1.3
+        for further important information). The TLSv1.3 implementation includes:
+          o Fully compliant implementation of RFC8446 (TLSv1.3) on by default
+          o Early data (0-RTT)
+          o Post-handshake authentication and key update
+          o Middlebox Compatibility Mode
+          o TLSv1.3 PSKs
+          o Support for all five RFC8446 ciphersuites
+          o RSA-PSS signature algorithms (backported to TLSv1.2)
+          o Configurable session ticket support
+          o Stateless server support
+          o Rewrite of the packet construction code for "safer" packet handling
+          o Rewrite of the extension handling code
+      o Complete rewrite of the OpenSSL random number generator to introduce the
+        following capabilities
+          o The default RAND method now utilizes an AES-CTR DRBG according to
+            NIST standard SP 800-90Ar1.
+          o Support for multiple DRBG instances with seed chaining.
+          o There is a public and private DRBG instance.
+          o The DRBG instances are fork-safe.
+          o Keep all global DRBG instances on the secure heap if it is enabled.
+          o The public and private DRBG instance are per thread for lock free
+            operation
+      o Support for various new cryptographic algorithms including:
+          o SHA3
+          o SHA512/224 and SHA512/256
+          o EdDSA (both Ed25519 and Ed448) including X509 and TLS support
+          o X448 (adding to the existing X25519 support in 1.1.0)
+          o Multi-prime RSA
+          o SM2
+          o SM3
+          o SM4
+          o SipHash
+          o ARIA (including TLS support)
+      o Significant Side-Channel attack security improvements
+      o Add a new ClientHello callback to provide the ability to adjust the SSL
+        object at an early stage.
+      o Add 'Maximum Fragment Length' TLS extension negotiation and support
+      o A new STORE module, which implements a uniform and URI based reader of
+        stores that can contain keys, certificates, CRLs and numerous other
+        objects.
       o Move the display of configuration data to configdata.pm.
       o Allow GNU style "make variables" to be used with Configure.
-      o Add a STORE module (OSSL_STORE)
       o Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes
-      o Add multi-prime RSA (RFC 8017) support
-      o Add SM3 implemented according to GB/T 32905-2016
-      o Add SM4 implemented according to GB/T 32907-2016.
-      o Add 'Maximum Fragment Length' TLS extension negotiation and support
-      o Add ARIA support
-      o Add SHA3
       o Rewrite of devcrypto engine
-      o Add support for SipHash
-      o Grand redesign of the OpenSSL random generator
+
+  Major changes between OpenSSL 1.1.0h and OpenSSL 1.1.0i [under development]
+
+      o Client DoS due to large DH parameter (CVE-2018-0732)
+      o Cache timing vulnerability in RSA Key Generation (CVE-2018-0737)
 
   Major changes between OpenSSL 1.1.0g and OpenSSL 1.1.0h [under development]
 

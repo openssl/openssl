@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -134,7 +134,6 @@ int PKCS7_set_type(PKCS7 *p7, int type)
         if ((p7->d.signed_and_enveloped = PKCS7_SIGN_ENVELOPE_new())
             == NULL)
             goto err;
-        ASN1_INTEGER_set(p7->d.signed_and_enveloped->version, 1);
         if (!ASN1_INTEGER_set(p7->d.signed_and_enveloped->version, 1))
             goto err;
         p7->d.signed_and_enveloped->enc_data->content_type
@@ -545,6 +544,7 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
     return 1;
 }
 
+/* unfortunately cannot constify BIO_new_NDEF() due to this and CMS_stream() */
 int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
 {
     ASN1_OCTET_STRING *os = NULL;

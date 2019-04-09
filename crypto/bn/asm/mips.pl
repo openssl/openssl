@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -12,8 +12,7 @@
 # project.
 #
 # Rights for redistribution and usage in source and binary forms are
-# granted according to the OpenSSL license. Warranty of any kind is
-# disclaimed.
+# granted according to the License. Warranty of any kind is disclaimed.
 # ====================================================================
 
 
@@ -89,7 +88,7 @@ if ($flavour =~ /64|n32/i) {
 	$SZREG=4;
 	$REG_S="sw";
 	$REG_L="lw";
-	$code=".set	mips2\n";
+	$code="#if !(defined (__mips_isa_rev) && (__mips_isa_rev >= 6))\n.set     mips2\n#endif\n";
 }
 
 # Below is N32/64 register layout used in the original module.
@@ -798,6 +797,11 @@ $code.=<<___;
 	move	$a0,$v0
 .end	bn_sub_words_internal
 
+#if 0
+/*
+ * The bn_div_3_words entry point is re-used for constant-time interface.
+ * Implementation is retained as hystorical reference.
+ */
 .align 5
 .globl	bn_div_3_words
 .ent	bn_div_3_words
@@ -877,6 +881,7 @@ $code.=<<___;
 	jr	$ra
 	move	$a0,$v0
 .end	bn_div_3_words_internal
+#endif
 
 .align	5
 .globl	bn_div_words

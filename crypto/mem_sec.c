@@ -2,7 +2,7 @@
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2004-2014, Akamai Technologies. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -20,12 +20,8 @@
 
 #include <string.h>
 
-/* e_os.h includes unistd.h, which defines _POSIX_VERSION */
-#if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
-    && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L) \
-         || defined(__sun) || defined(__hpux) || defined(__sgi) \
-         || defined(__osf__) )
-# define IMPLEMENTED
+/* e_os.h defines OPENSSL_SECURE_MEMORY if secure memory can be implemented */
+#ifdef OPENSSL_SECURE_MEMORY
 # include <stdlib.h>
 # include <assert.h>
 # include <unistd.h>
@@ -51,7 +47,7 @@
 # define MAP_ANON MAP_ANONYMOUS
 #endif
 
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
 static size_t secure_mem_used;
 
 static int secure_mem_initialized;
@@ -71,7 +67,7 @@ static int sh_allocated(const char *ptr);
 
 int CRYPTO_secure_malloc_init(size_t size, int minsize)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     int ret = 0;
 
     if (!secure_mem_initialized) {
@@ -89,12 +85,12 @@ int CRYPTO_secure_malloc_init(size_t size, int minsize)
     return ret;
 #else
     return 0;
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */
 }
 
 int CRYPTO_secure_malloc_done(void)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     if (secure_mem_used == 0) {
         sh_done();
         secure_mem_initialized = 0;
@@ -102,22 +98,22 @@ int CRYPTO_secure_malloc_done(void)
         sec_malloc_lock = NULL;
         return 1;
     }
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */
     return 0;
 }
 
 int CRYPTO_secure_malloc_initialized(void)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     return secure_mem_initialized;
 #else
     return 0;
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */
 }
 
 void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     void *ret;
     size_t actual_size;
 
@@ -132,21 +128,22 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
     return ret;
 #else
     return CRYPTO_malloc(num, file, line);
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */
 }
 
 void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
 {
-    void *ret = CRYPTO_secure_malloc(num, file, line);
-
-    if (ret != NULL)
-        memset(ret, 0, num);
-    return ret;
+#ifdef OPENSSL_SECURE_MEMORY
+    if (secure_mem_initialized)
+        /* CRYPTO_secure_malloc() zeroes allocations when it is implemented */
+        return CRYPTO_secure_malloc(num, file, line);
+#endif
+    return CRYPTO_zalloc(num, file, line);
 }
 
 void CRYPTO_secure_free(void *ptr, const char *file, int line)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     size_t actual_size;
 
     if (ptr == NULL)
@@ -163,13 +160,13 @@ void CRYPTO_secure_free(void *ptr, const char *file, int line)
     CRYPTO_THREAD_unlock(sec_malloc_lock);
 #else
     CRYPTO_free(ptr, file, line);
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */
 }
 
 void CRYPTO_secure_clear_free(void *ptr, size_t num,
                               const char *file, int line)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     size_t actual_size;
 
     if (ptr == NULL)
@@ -190,12 +187,12 @@ void CRYPTO_secure_clear_free(void *ptr, size_t num,
         return;
     OPENSSL_cleanse(ptr, num);
     CRYPTO_free(ptr, file, line);
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */
 }
 
 int CRYPTO_secure_allocated(const void *ptr)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     int ret;
 
     if (!secure_mem_initialized)
@@ -206,21 +203,21 @@ int CRYPTO_secure_allocated(const void *ptr)
     return ret;
 #else
     return 0;
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */
 }
 
 size_t CRYPTO_secure_used(void)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     return secure_mem_used;
 #else
     return 0;
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */
 }
 
 size_t CRYPTO_secure_actual_size(void *ptr)
 {
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
     size_t actual_size;
 
     CRYPTO_THREAD_write_lock(sec_malloc_lock);
@@ -238,7 +235,7 @@ size_t CRYPTO_secure_actual_size(void *ptr)
 /*
  * SECURE HEAP IMPLEMENTATION
  */
-#ifdef IMPLEMENTED
+#ifdef OPENSSL_SECURE_MEMORY
 
 
 /*
@@ -588,6 +585,9 @@ static void *sh_malloc(size_t size)
 
     OPENSSL_assert(WITHIN_ARENA(chunk));
 
+    /* zero the free list header as a precaution against information leakage */
+    memset(chunk, 0, sizeof(SH_LIST));
+
     return chunk;
 }
 
@@ -620,6 +620,8 @@ static void sh_free(void *ptr)
 
         list--;
 
+        /* Zero the higher addressed block's free list pointers */
+        memset(ptr > buddy ? ptr : buddy, 0, sizeof(SH_LIST));
         if (ptr > buddy)
             ptr = buddy;
 
@@ -641,4 +643,4 @@ static size_t sh_actual_size(char *ptr)
     OPENSSL_assert(sh_testbit(ptr, list, sh.bittable));
     return sh.arena_size / (ONE << list);
 }
-#endif /* IMPLEMENTED */
+#endif /* OPENSSL_SECURE_MEMORY */

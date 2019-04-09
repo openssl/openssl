@@ -1,7 +1,7 @@
 /*
  * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -58,9 +58,9 @@ int (*X509_LOOKUP_meth_get_new_item(const X509_LOOKUP_METHOD* method))
 
 int X509_LOOKUP_meth_set_free(
     X509_LOOKUP_METHOD *method,
-    void (*free) (X509_LOOKUP *ctx))
+    void (*free_fn) (X509_LOOKUP *ctx))
 {
-    method->free = free;
+    method->free = free_fn;
     return 1;
 }
 

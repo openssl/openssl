@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -19,6 +19,9 @@
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
 #include "internal/thread_once.h"
+#include "internal/ctype.h"
+#include "internal/constant_time_locl.h"
+#include "e_os.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -55,12 +58,14 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_UI, 0, 0), "UI routines"},
     {ERR_PACK(ERR_LIB_FIPS, 0, 0), "FIPS routines"},
     {ERR_PACK(ERR_LIB_CMS, 0, 0), "CMS routines"},
+    {ERR_PACK(ERR_LIB_CRMF, 0, 0), "CRMF routines"},
     {ERR_PACK(ERR_LIB_HMAC, 0, 0), "HMAC routines"},
     {ERR_PACK(ERR_LIB_CT, 0, 0), "CT routines"},
     {ERR_PACK(ERR_LIB_ASYNC, 0, 0), "ASYNC routines"},
     {ERR_PACK(ERR_LIB_KDF, 0, 0), "KDF routines"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, 0), "STORE routines"},
     {ERR_PACK(ERR_LIB_SM2, 0, 0), "SM2 routines"},
+    {ERR_PACK(ERR_LIB_ESS, 0, 0), "ESS routines"},
     {0, NULL},
 };
 
@@ -181,8 +186,9 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
+/* A measurement on Linux 2018-11-21 showed about 3.5kib */
+# define SPACE_SYS_STR_REASONS 4 * 1024
 # define NUM_SYS_STR_REASONS 127
-# define LEN_SYS_STR_REASON 32
 
 static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 /*
@@ -198,9 +204,12 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 static void build_SYS_str_reasons(void)
 {
     /* OPENSSL_malloc cannot be used here, use static storage instead */
-    static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
+    static char strerror_pool[SPACE_SYS_STR_REASONS];
+    char *cur = strerror_pool;
+    size_t cnt = 0;
     static int init = 1;
     int i;
+    int saveerrno = get_last_sys_error();
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     if (!init) {
@@ -213,9 +222,26 @@ static void build_SYS_str_reasons(void)
 
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
         if (str->string == NULL) {
-            char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
-            if (openssl_strerror_r(i, *dest, sizeof(*dest)))
-                str->string = *dest;
+            if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
+                size_t l = strlen(cur);
+
+                str->string = cur;
+                cnt += l;
+                if (cnt > sizeof(strerror_pool))
+                    cnt = sizeof(strerror_pool);
+                cur += l;
+
+                /*
+                 * VMS has an unusual quirk of adding spaces at the end of
+                 * some (most? all?) messages.  Lets trim them off.
+                 */
+                while (ossl_isspace(cur[-1])) {
+                    cur--;
+                    cnt--;
+                }
+                *cur++ = '\0';
+                cnt++;
+            }
         }
         if (str->string == NULL)
             str->string = "unknown";
@@ -229,6 +255,8 @@ static void build_SYS_str_reasons(void)
     init = 0;
 
     CRYPTO_THREAD_unlock(err_string_lock);
+    /* openssl_strerror_r could change errno, but we want to preserve it */
+    set_sys_error(saveerrno);
     err_load_strings(SYS_str_reasons);
 }
 #endif
@@ -497,8 +525,24 @@ static unsigned long get_error_values(int inc, int top, const char **file,
         return ERR_R_INTERNAL_ERROR;
     }
 
+    while (es->bottom != es->top) {
+        if (es->err_flags[es->top] & ERR_FLAG_CLEAR) {
+            err_clear(es, es->top);
+            es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
+            continue;
+        }
+        i = (es->bottom + 1) % ERR_NUM_ERRORS;
+        if (es->err_flags[i] & ERR_FLAG_CLEAR) {
+            es->bottom = i;
+            err_clear(es, es->bottom);
+            continue;
+        }
+        break;
+    }
+
     if (es->bottom == es->top)
         return 0;
+
     if (top)
         i = es->top;            /* last error */
     else
@@ -650,13 +694,13 @@ void err_delete_thread_state(void)
     ERR_STATE_free(state);
 }
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#if !OPENSSL_API_1_1_0
 void ERR_remove_thread_state(void *dummy)
 {
 }
 #endif
 
-#if OPENSSL_API_COMPAT < 0x10000000L
+#if !OPENSSL_API_1_0_0
 void ERR_remove_state(unsigned long pid)
 {
 }
@@ -671,6 +715,7 @@ DEFINE_RUN_ONCE_STATIC(err_do_init)
 ERR_STATE *ERR_get_state(void)
 {
     ERR_STATE *state;
+    int saveerrno = get_last_sys_error();
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return NULL;
@@ -702,6 +747,7 @@ ERR_STATE *ERR_get_state(void)
         OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     }
 
+    set_sys_error(saveerrno);
     return state;
 }
 
@@ -711,6 +757,20 @@ ERR_STATE *ERR_get_state(void)
  */
 int err_shelve_state(void **state)
 {
+    int saveerrno = get_last_sys_error();
+
+    /*
+     * Note, at present our only caller is OPENSSL_init_crypto(), indirectly
+     * via ossl_init_load_crypto_nodelete(), by which point the requested
+     * "base" initialization has already been performed, so the below call is a
+     * NOOP, that re-enters OPENSSL_init_crypto() only to quickly return.
+     *
+     * If are no other valid callers of this function, the call below can be
+     * removed, avoiding the re-entry into OPENSSL_init_crypto().  If there are
+     * potential uses that are not from inside OPENSSL_init_crypto(), then this
+     * call is needed, but some care is required to make sure that the re-entry
+     * remains a NOOP.
+     */
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return 0;
 
@@ -721,6 +781,7 @@ int err_shelve_state(void **state)
     if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
         return 0;
 
+    set_sys_error(saveerrno);
     return 1;
 }
 
@@ -747,20 +808,31 @@ int ERR_get_next_error_library(void)
     return ret;
 }
 
-void ERR_set_error_data(char *data, int flags)
+static int err_set_error_data_int(char *data, int flags)
 {
     ERR_STATE *es;
     int i;
 
     es = ERR_get_state();
     if (es == NULL)
-        return;
+        return 0;
 
     i = es->top;
 
     err_clear_data(es, i);
     es->err_data[i] = data;
     es->err_data_flags[i] = flags;
+
+    return 1;
+}
+
+void ERR_set_error_data(char *data, int flags)
+{
+    /*
+     * This function is void so we cannot propagate the error return. Since it
+     * is also in the public API we can't change the return type.
+     */
+    err_set_error_data_int(data, flags);
 }
 
 void ERR_add_error_data(int num, ...)
@@ -800,7 +872,8 @@ void ERR_add_error_vdata(int num, va_list args)
         }
         OPENSSL_strlcat(str, a, (size_t)s + 1);
     }
-    ERR_set_error_data(str, ERR_TXT_MALLOCED | ERR_TXT_STRING);
+    if (!err_set_error_data_int(str, ERR_TXT_MALLOCED | ERR_TXT_STRING))
+        OPENSSL_free(str);
 }
 
 int ERR_set_mark(void)
@@ -856,4 +929,24 @@ int ERR_clear_last_mark(void)
         return 0;
     es->err_flags[top] &= ~ERR_FLAG_MARK;
     return 1;
+}
+
+void err_clear_last_constant_time(int clear)
+{
+    ERR_STATE *es;
+    int top;
+
+    es = ERR_get_state();
+    if (es == NULL)
+        return;
+
+    top = es->top;
+
+    /*
+     * Flag error as cleared but remove it elsewhere to avoid two errors
+     * accessing the same error stack location, revealing timing information.
+     */
+    clear = constant_time_select_int(constant_time_eq_int(clear, 0),
+                                     0, ERR_FLAG_CLEAR);
+    es->err_flags[top] |= clear;
 }

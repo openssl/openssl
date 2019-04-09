@@ -316,7 +316,7 @@ OBJECT IDENTIFIER or NID_undef if it has no defined OBJECT IDENTIFIER.
 EVP_CIPHER_CTX_cipher() returns an B<EVP_CIPHER> structure.
 
 EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return greater
-than zero for success and zero or a negative number.
+than zero for success and zero or a negative number on failure.
 
 EVP_CIPHER_CTX_rand_key() returns 1 for success.
 
@@ -426,6 +426,49 @@ AES.
 
 =back
 
+=head2 SIV Mode
+
+For SIV mode ciphers the behaviour of the EVP interface is subtly
+altered and several additional ctrl operations are supported.
+
+To specify any additional authenticated data (AAD) and/or a Nonce, a call to
+EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made
+with the output parameter B<out> set to B<NULL>.
+
+RFC5297 states that the Nonce is the last piece of AAD before the actual
+encrypt/decrypt takes place. The API does not differentiate the Nonce from
+other AAD.
+
+When decrypting the return value of EVP_DecryptFinal() or EVP_CipherFinal()
+indicates if the operation was successful. If it does not indicate success
+the authentication operation has failed and any output data B<MUST NOT>
+be used as it is corrupted.
+
+The following ctrls are supported in both SIV modes.
+
+=over 4
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag);
+
+Writes B<taglen> bytes of the tag value to the buffer indicated by B<tag>.
+This call can only be made when encrypting data and B<after> all data has been
+processed (e.g. after an EVP_EncryptFinal() call). For SIV mode the taglen must
+be 16.
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
+
+Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
+when decrypting data and must be made B<before> any data is processed (e.g.
+before any EVP_DecryptUpdate() call). For SIV mode the taglen must be 16.
+
+=back
+
+SIV mode makes two passes over the input data, thus, only one call to
+EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made
+with B<out> set to a non-B<NULL> value. A call to EVP_Decrypt_Final() or
+EVP_CipherFinal() is not required, but will indicate if the update
+operation succeeded.
+
 =head2 ChaCha20-Poly1305
 
 The following I<ctrl>s are supported for the ChaCha20-Poly1305 AEAD algorithm.
@@ -436,7 +479,9 @@ The following I<ctrl>s are supported for the ChaCha20-Poly1305 AEAD algorithm.
 
 Sets the nonce length. This call can only be made before specifying the nonce.
 If not called a default nonce length of 12 (i.e. 96 bits) is used. The maximum
-nonce length is 16 (B<CHACHA_CTR_SIZE>, i.e. 128-bits).
+nonce length is 12 bytes (i.e. 96-bits). If a nonce of less than 12 bytes is set
+then the nonce is automatically padded with leading 0 bytes to make it 12 bytes
+in length.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag)
 
@@ -632,7 +677,7 @@ L<EVP_sm4(3)>
 
 =head1 HISTORY
 
-Support for OCB mode was added in OpenSSL 1.1.0
+Support for OCB mode was added in OpenSSL 1.1.0.
 
 B<EVP_CIPHER_CTX> was made opaque in OpenSSL 1.1.0.  As a result,
 EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup()
@@ -643,7 +688,7 @@ EVP_CIPHER_CTX_reset().
 
 Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -40,8 +40,6 @@ my $proxy = TLSProxy::Proxy->new(
 
 #Test 1: Sending a status_request extension in both ClientHello and
 #ServerHello but then omitting the CertificateStatus message is valid
-#TODO(TLS1.3): Temporarily disabling this test in TLS1.3 until we've completed
-#the move the status request extension to the Certificate message.
 $proxy->clientflags("-status -no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 1;

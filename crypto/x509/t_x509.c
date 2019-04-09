@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -284,7 +284,7 @@ int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
     s = sig->data;
     for (i = 0; i < n; i++) {
         if ((i % 18) == 0) {
-            if (BIO_write(bp, "\n", 1) <= 0)
+            if (i > 0 && BIO_write(bp, "\n", 1) <= 0)
                 return 0;
             if (BIO_indent(bp, indent, indent) <= 0)
                 return 0;
@@ -302,11 +302,14 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
                          const ASN1_STRING *sig)
 {
     int sig_nid;
-    if (BIO_puts(bp, "    Signature Algorithm: ") <= 0)
+    int indent = 4;
+    if (BIO_printf(bp, "%*sSignature Algorithm: ", indent, "") <= 0)
         return 0;
     if (i2a_ASN1_OBJECT(bp, sigalg->algorithm) <= 0)
         return 0;
 
+    if (sig && BIO_printf(bp, "\n%*sSignature Value:", indent, "") <= 0)
+        return 0;
     sig_nid = OBJ_obj2nid(sigalg->algorithm);
     if (sig_nid != NID_undef) {
         int pkey_nid, dig_nid;
@@ -314,13 +317,13 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
         if (OBJ_find_sigid_algs(sig_nid, &dig_nid, &pkey_nid)) {
             ameth = EVP_PKEY_asn1_find(NULL, pkey_nid);
             if (ameth && ameth->sig_print)
-                return ameth->sig_print(bp, sigalg, sig, 9, 0);
+                return ameth->sig_print(bp, sigalg, sig, indent + 4, 0);
         }
     }
-    if (sig)
-        return X509_signature_dump(bp, sig, 9);
-    else if (BIO_puts(bp, "\n") <= 0)
+    if (BIO_write(bp, "\n", 1) != 1)
         return 0;
+    if (sig)
+        return X509_signature_dump(bp, sig, indent + 4);
     return 1;
 }
 

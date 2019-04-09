@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -36,9 +36,6 @@ X509_POLICY_NODE *tree_find_sk(STACK_OF(X509_POLICY_NODE) *nodes,
     l.data = &n;
 
     idx = sk_X509_POLICY_NODE_find(nodes, &l);
-    if (idx == -1)
-        return NULL;
-
     return sk_X509_POLICY_NODE_value(nodes, idx);
 
 }

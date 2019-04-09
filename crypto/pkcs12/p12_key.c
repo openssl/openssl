@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,16 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include <openssl/bn.h>
-
-/* Uncomment out this line to get debugging info about key generation */
-/*
- * #define OPENSSL_DEBUG_KEYGEN
- */
-#ifdef OPENSSL_DEBUG_KEYGEN
-# include <openssl/bio.h>
-extern BIO *bio_err;
-void h__dump(unsigned char *p, int len);
-#endif
+#include <openssl/trace.h>
 
 /* PKCS12 compatible key/IV generation */
 #ifndef min
@@ -82,23 +73,22 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     int i, j, u, v;
     int ret = 0;
     EVP_MD_CTX *ctx = NULL;
-#ifdef  OPENSSL_DEBUG_KEYGEN
     unsigned char *tmpout = out;
     int tmpn = n;
-#endif
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
         goto err;
 
-#ifdef  OPENSSL_DEBUG_KEYGEN
-    fprintf(stderr, "KEYGEN DEBUG\n");
-    fprintf(stderr, "ID %d, ITER %d\n", id, iter);
-    fprintf(stderr, "Password (length %d):\n", passlen);
-    h__dump(pass, passlen);
-    fprintf(stderr, "Salt (length %d):\n", saltlen);
-    h__dump(salt, saltlen);
-#endif
+    OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
+        BIO_printf(trc_out, "PKCS12_key_gen_uni(): ID %d, ITER %d\n", id, iter);
+        BIO_printf(trc_out, "Password (length %d):\n", passlen);
+        BIO_hex_string(trc_out, 0, passlen, pass, passlen);
+        BIO_printf(trc_out, "\n");
+        BIO_printf(trc_out, "Salt (length %d):\n", saltlen);
+        BIO_hex_string(trc_out, 0, saltlen, salt, saltlen);
+        BIO_printf(trc_out, "\n");
+    } OSSL_TRACE_END(PKCS12_KEYGEN);
     v = EVP_MD_block_size(md_type);
     u = EVP_MD_size(md_type);
     if (u < 0 || v <= 0)
@@ -136,10 +126,11 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
         }
         memcpy(out, Ai, min(n, u));
         if (u >= n) {
-#ifdef OPENSSL_DEBUG_KEYGEN
-            fprintf(stderr, "Output KEY (length %d)\n", tmpn);
-            h__dump(tmpout, tmpn);
-#endif
+            OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
+                BIO_printf(trc_out, "Output KEY (length %d)\n", tmpn);
+                BIO_hex_string(trc_out, 0, tmpn, tmpout, tmpn);
+                BIO_printf(trc_out, "\n");
+            } OSSL_TRACE_END(PKCS12_KEYGEN);
             ret = 1;
             goto end;
         }
@@ -172,12 +163,3 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     EVP_MD_CTX_free(ctx);
     return ret;
 }
-
-#ifdef OPENSSL_DEBUG_KEYGEN
-void h__dump(unsigned char *p, int len)
-{
-    for (; len--; p++)
-        fprintf(stderr, "%02X", *p);
-    fprintf(stderr, "\n");
-}
-#endif

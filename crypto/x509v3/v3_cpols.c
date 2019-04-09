@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -403,12 +403,15 @@ static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
     POLICYINFO *pinfo;
     /* First print out the policy OIDs */
     for (i = 0; i < sk_POLICYINFO_num(pol); i++) {
+        if (i > 0)
+            BIO_puts(out, "\n");
         pinfo = sk_POLICYINFO_value(pol, i);
         BIO_printf(out, "%*sPolicy: ", indent, "");
         i2a_ASN1_OBJECT(out, pinfo->policyid);
-        BIO_puts(out, "\n");
-        if (pinfo->qualifiers)
+        if (pinfo->qualifiers) {
+            BIO_puts(out, "\n");
             print_qualifiers(out, pinfo->qualifiers, indent + 2);
+        }
     }
     return 1;
 }
@@ -419,10 +422,12 @@ static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
     POLICYQUALINFO *qualinfo;
     int i;
     for (i = 0; i < sk_POLICYQUALINFO_num(quals); i++) {
+        if (i > 0)
+            BIO_puts(out, "\n");
         qualinfo = sk_POLICYQUALINFO_value(quals, i);
         switch (OBJ_obj2nid(qualinfo->pqualid)) {
         case NID_id_qt_cps:
-            BIO_printf(out, "%*sCPS: %s\n", indent, "",
+            BIO_printf(out, "%*sCPS: %s", indent, "",
                        qualinfo->d.cpsuri->data);
             break;
 
@@ -435,7 +440,6 @@ static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
             BIO_printf(out, "%*sUnknown Qualifier: ", indent + 2, "");
 
             i2a_ASN1_OBJECT(out, qualinfo->pqualid);
-            BIO_puts(out, "\n");
             break;
         }
     }
@@ -467,10 +471,11 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
                 OPENSSL_free(tmp);
             }
         }
-        BIO_puts(out, "\n");
+        if (notice->exptext)
+            BIO_puts(out, "\n");
     }
     if (notice->exptext)
-        BIO_printf(out, "%*sExplicit Text: %s\n", indent, "",
+        BIO_printf(out, "%*sExplicit Text: %s", indent, "",
                    notice->exptext->data);
 }
 
@@ -484,8 +489,10 @@ void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent)
     BIO_puts(out, "\n");
     BIO_printf(out, "%*s%s\n", indent + 2, "",
                node_data_critical(dat) ? "Critical" : "Non Critical");
-    if (dat->qualifier_set)
+    if (dat->qualifier_set) {
         print_qualifiers(out, dat->qualifier_set, indent + 2);
+        BIO_puts(out, "\n");
+    }
     else
         BIO_printf(out, "%*sNo Qualifiers\n", indent + 2, "");
 }

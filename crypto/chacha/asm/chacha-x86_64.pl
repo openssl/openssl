@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -28,33 +28,32 @@
 #
 # Performance in cycles per byte out of large buffer.
 #
-#		IALU/gcc 4.8(i)	1xSSSE3/SSE2	4xSSSE3	    NxAVX(v)
+#		IALU/gcc 4.8(i)	1x/2xSSSE3(ii)	4xSSSE3	    NxAVX(v)
 #
-# P4		9.48/+99%	-/22.7(ii)	-
-# Core2		7.83/+55%	7.90/8.08	4.35
-# Westmere	7.19/+50%	5.60/6.70	3.00
-# Sandy Bridge	8.31/+42%	5.45/6.76	2.72
-# Ivy Bridge	6.71/+46%	5.40/6.49	2.41
-# Haswell	5.92/+43%	5.20/6.45	2.42	    1.23
-# Skylake[-X]	5.87/+39%	4.70/-		2.31	    1.19[0.80(vi)]
-# Silvermont	12.0/+33%	7.75/7.40	7.03(iii)
-# Knights L	11.7/-		-		9.60(iii)   0.80
-# Goldmont	10.6/+17%	5.10/-		3.28
-# Sledgehammer	7.28/+52%	-/14.2(ii)	-
-# Bulldozer	9.66/+28%	9.85/11.1	3.06(iv)
-# Ryzen		5.96/+50%	5.19/-		2.40        2.09
-# VIA Nano	10.5/+46%	6.72/8.60	6.05
+# P4		9.48/+99%	-		-
+# Core2		7.83/+55%	7.90/5.76	4.35
+# Westmere	7.19/+50%	5.60/4.50	3.00
+# Sandy Bridge	8.31/+42%	5.45/4.00	2.72
+# Ivy Bridge	6.71/+46%	5.40/?		2.41
+# Haswell	5.92/+43%	5.20/3.45	2.42        1.23
+# Skylake[-X]	5.87/+39%	4.70/3.22	2.31        1.19[0.80(vi)]
+# Silvermont	12.0/+33%	7.75/6.90	7.03(iii)
+# Knights L	11.7/-		?		9.60(iii)   0.80
+# Goldmont	10.6/+17%	5.10/3.52	3.28
+# Sledgehammer	7.28/+52%	-		-
+# Bulldozer	9.66/+28%	9.85/5.35(iv)	3.06(iv)
+# Ryzen		5.96/+50%	5.19/3.00	2.40        2.09
+# VIA Nano	10.5/+46%	6.72/6.88	6.05
 #
 # (i)	compared to older gcc 3.x one can observe >2x improvement on
 #	most platforms;
-# (ii)	as it can be seen, SSE2 performance is too low on legacy
-#	processors; NxSSE2 results are naturally better, but not
-#	impressively better than IALU ones, which is why you won't
-#	find SSE2 code below;
+# (ii)	2xSSSE3 is code path optimized specifically for 128 bytes used
+#	by chacha20_poly1305_tls_cipher, results are EVP-free;
 # (iii)	this is not optimal result for Atom because of MSROM
 #	limitations, SSE2 can do better, but gain is considered too
 #	low to justify the [maintenance] effort;
-# (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20;
+# (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20
+#	and 4.85 for 128-byte inputs;
 # (v)	8xAVX2, 8xAVX512VL or 16xAVX512F, whichever best applicable;
 # (vi)	even though Skylake-X can execute AVX512F code and deliver 0.57
 #	cpb in single thread, the corresponding capability is suppressed;
@@ -489,6 +488,7 @@ $code.=<<___	if ($avx);
 ___
 $code.=<<___;
 	cmp	\$128,$len		# we might throw away some data,
+	je	.LChaCha20_128
 	ja	.LChaCha20_4x		# but overall it won't be slower
 
 .Ldo_sse3_after_all:
@@ -602,6 +602,172 @@ $code.=<<___;
 	ret
 .cfi_endproc
 .size	ChaCha20_ssse3,.-ChaCha20_ssse3
+___
+}
+
+########################################################################
+# SSSE3 code path that handles 128-byte inputs
+{
+my ($a,$b,$c,$d,$t,$t1,$rot16,$rot24)=map("%xmm$_",(8,9,2..7));
+my ($a1,$b1,$c1,$d1)=map("%xmm$_",(10,11,0,1));
+
+sub SSSE3ROUND_2x {
+	&paddd	($a,$b);
+	&pxor	($d,$a);
+	 &paddd	($a1,$b1);
+	 &pxor	($d1,$a1);
+	&pshufb	($d,$rot16);
+	 &pshufb($d1,$rot16);
+
+	&paddd	($c,$d);
+	 &paddd	($c1,$d1);
+	&pxor	($b,$c);
+	 &pxor	($b1,$c1);
+	&movdqa	($t,$b);
+	&psrld	($b,20);
+	 &movdqa($t1,$b1);
+	&pslld	($t,12);
+	 &psrld	($b1,20);
+	&por	($b,$t);
+	 &pslld	($t1,12);
+	 &por	($b1,$t1);
+
+	&paddd	($a,$b);
+	&pxor	($d,$a);
+	 &paddd	($a1,$b1);
+	 &pxor	($d1,$a1);
+	&pshufb	($d,$rot24);
+	 &pshufb($d1,$rot24);
+
+	&paddd	($c,$d);
+	 &paddd	($c1,$d1);
+	&pxor	($b,$c);
+	 &pxor	($b1,$c1);
+	&movdqa	($t,$b);
+	&psrld	($b,25);
+	 &movdqa($t1,$b1);
+	&pslld	($t,7);
+	 &psrld	($b1,25);
+	&por	($b,$t);
+	 &pslld	($t1,7);
+	 &por	($b1,$t1);
+}
+
+my $xframe = $win64 ? 0x68 : 8;
+
+$code.=<<___;
+.type	ChaCha20_128,\@function,5
+.align	32
+ChaCha20_128:
+.cfi_startproc
+.LChaCha20_128:
+	mov	%rsp,%r9		# frame pointer
+.cfi_def_cfa_register	%r9
+	sub	\$64+$xframe,%rsp
+___
+$code.=<<___	if ($win64);
+	movaps	%xmm6,-0x68(%r9)
+	movaps	%xmm7,-0x58(%r9)
+	movaps	%xmm8,-0x48(%r9)
+	movaps	%xmm9,-0x38(%r9)
+	movaps	%xmm10,-0x28(%r9)
+	movaps	%xmm11,-0x18(%r9)
+.L128_body:
+___
+$code.=<<___;
+	movdqa	.Lsigma(%rip),$a
+	movdqu	($key),$b
+	movdqu	16($key),$c
+	movdqu	($counter),$d
+	movdqa	.Lone(%rip),$d1
+	movdqa	.Lrot16(%rip),$rot16
+	movdqa	.Lrot24(%rip),$rot24
+
+	movdqa	$a,$a1
+	movdqa	$a,0x00(%rsp)
+	movdqa	$b,$b1
+	movdqa	$b,0x10(%rsp)
+	movdqa	$c,$c1
+	movdqa	$c,0x20(%rsp)
+	paddd	$d,$d1
+	movdqa	$d,0x30(%rsp)
+	mov	\$10,$counter		# reuse $counter
+	jmp	.Loop_128
+
+.align	32
+.Loop_128:
+___
+	&SSSE3ROUND_2x();
+	&pshufd	($c,$c,0b01001110);
+	&pshufd	($b,$b,0b00111001);
+	&pshufd	($d,$d,0b10010011);
+	&pshufd	($c1,$c1,0b01001110);
+	&pshufd	($b1,$b1,0b00111001);
+	&pshufd	($d1,$d1,0b10010011);
+
+	&SSSE3ROUND_2x();
+	&pshufd	($c,$c,0b01001110);
+	&pshufd	($b,$b,0b10010011);
+	&pshufd	($d,$d,0b00111001);
+	&pshufd	($c1,$c1,0b01001110);
+	&pshufd	($b1,$b1,0b10010011);
+	&pshufd	($d1,$d1,0b00111001);
+
+	&dec	($counter);
+	&jnz	(".Loop_128");
+
+$code.=<<___;
+	paddd	0x00(%rsp),$a
+	paddd	0x10(%rsp),$b
+	paddd	0x20(%rsp),$c
+	paddd	0x30(%rsp),$d
+	paddd	.Lone(%rip),$d1
+	paddd	0x00(%rsp),$a1
+	paddd	0x10(%rsp),$b1
+	paddd	0x20(%rsp),$c1
+	paddd	0x30(%rsp),$d1
+
+	movdqu	0x00($inp),$t
+	movdqu	0x10($inp),$t1
+	pxor	$t,$a			# xor with input
+	movdqu	0x20($inp),$t
+	pxor	$t1,$b
+	movdqu	0x30($inp),$t1
+	pxor	$t,$c
+	movdqu	0x40($inp),$t
+	pxor	$t1,$d
+	movdqu	0x50($inp),$t1
+	pxor	$t,$a1
+	movdqu	0x60($inp),$t
+	pxor	$t1,$b1
+	movdqu	0x70($inp),$t1
+	pxor	$t,$c1
+	pxor	$t1,$d1
+
+	movdqu	$a,0x00($out)		# write output
+	movdqu	$b,0x10($out)
+	movdqu	$c,0x20($out)
+	movdqu	$d,0x30($out)
+	movdqu	$a1,0x40($out)
+	movdqu	$b1,0x50($out)
+	movdqu	$c1,0x60($out)
+	movdqu	$d1,0x70($out)
+___
+$code.=<<___	if ($win64);
+	movaps	-0x68(%r9),%xmm6
+	movaps	-0x58(%r9),%xmm7
+	movaps	-0x48(%r9),%xmm8
+	movaps	-0x38(%r9),%xmm9
+	movaps	-0x28(%r9),%xmm10
+	movaps	-0x18(%r9),%xmm11
+___
+$code.=<<___;
+	lea	(%r9),%rsp
+.cfi_def_cfa_register	%rsp
+.L128_epilogue:
+	ret
+.cfi_endproc
+.size	ChaCha20_128,.-ChaCha20_128
 ___
 }
 
@@ -3674,9 +3840,9 @@ se_handler:
 	ret
 .size	se_handler,.-se_handler
 
-.type	ssse3_handler,\@abi-omnipotent
+.type	simd_handler,\@abi-omnipotent
 .align	16
-ssse3_handler:
+simd_handler:
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -3702,57 +3868,20 @@ ssse3_handler:
 	mov	192($context),%rax	# pull context->R9
 
 	mov	4(%r11),%r10d		# HandlerData[1]
+	mov	8(%r11),%ecx		# HandlerData[2]
 	lea	(%rsi,%r10),%r10	# epilogue label
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
 
-	lea	-0x28(%rax),%rsi
+	neg	%rcx
+	lea	-8(%rax,%rcx),%rsi
 	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$4,%ecx
+	neg	%ecx
+	shr	\$3,%ecx
 	.long	0xa548f3fc		# cld; rep movsq
 
 	jmp	.Lcommon_seh_tail
-.size	ssse3_handler,.-ssse3_handler
-
-.type	full_handler,\@abi-omnipotent
-.align	16
-full_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	192($context),%rax	# pull context->R9
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	lea	-0xa8(%rax),%rsi
-	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$20,%ecx
-	.long	0xa548f3fc		# cld; rep movsq
-
-	jmp	.Lcommon_seh_tail
-.size	full_handler,.-full_handler
+.size	simd_handler,.-simd_handler
 
 .section	.pdata
 .align	4
@@ -3763,6 +3892,10 @@ full_handler:
 	.rva	.LSEH_begin_ChaCha20_ssse3
 	.rva	.LSEH_end_ChaCha20_ssse3
 	.rva	.LSEH_info_ChaCha20_ssse3
+
+	.rva	.LSEH_begin_ChaCha20_128
+	.rva	.LSEH_end_ChaCha20_128
+	.rva	.LSEH_info_ChaCha20_128
 
 	.rva	.LSEH_begin_ChaCha20_4x
 	.rva	.LSEH_end_ChaCha20_4x
@@ -3804,46 +3937,60 @@ $code.=<<___;
 
 .LSEH_info_ChaCha20_ssse3:
 	.byte	9,0,0,0
-	.rva	ssse3_handler
+	.rva	simd_handler
 	.rva	.Lssse3_body,.Lssse3_epilogue
+	.long	0x20,0
+
+.LSEH_info_ChaCha20_128:
+	.byte	9,0,0,0
+	.rva	simd_handler
+	.rva	.L128_body,.L128_epilogue
+	.long	0x60,0
 
 .LSEH_info_ChaCha20_4x:
 	.byte	9,0,0,0
-	.rva	full_handler
+	.rva	simd_handler
 	.rva	.L4x_body,.L4x_epilogue
+	.long	0xa0,0
 ___
 $code.=<<___ if ($avx);
 .LSEH_info_ChaCha20_4xop:
 	.byte	9,0,0,0
-	.rva	full_handler
+	.rva	simd_handler
 	.rva	.L4xop_body,.L4xop_epilogue		# HandlerData[]
+	.long	0xa0,0
 ___
 $code.=<<___ if ($avx>1);
 .LSEH_info_ChaCha20_8x:
 	.byte	9,0,0,0
-	.rva	full_handler
+	.rva	simd_handler
 	.rva	.L8x_body,.L8x_epilogue			# HandlerData[]
+	.long	0xa0,0
 ___
 $code.=<<___ if ($avx>2);
 .LSEH_info_ChaCha20_avx512:
 	.byte	9,0,0,0
-	.rva	ssse3_handler
+	.rva	simd_handler
 	.rva	.Lavx512_body,.Lavx512_epilogue		# HandlerData[]
+	.long	0x20,0
 
 .LSEH_info_ChaCha20_avx512vl:
 	.byte	9,0,0,0
-	.rva	ssse3_handler
+	.rva	simd_handler
 	.rva	.Lavx512vl_body,.Lavx512vl_epilogue	# HandlerData[]
+	.long	0x20,0
 
 .LSEH_info_ChaCha20_16x:
 	.byte	9,0,0,0
-	.rva	full_handler
+	.rva	simd_handler
 	.rva	.L16x_body,.L16x_epilogue		# HandlerData[]
+	.long	0xa0,0
 
 .LSEH_info_ChaCha20_8xvl:
 	.byte	9,0,0,0
-	.rva	full_handler
+	.rva	simd_handler
 	.rva	.L8xvl_body,.L8xvl_epilogue		# HandlerData[]
+	.long	0xa0,0
 ___
 }
 

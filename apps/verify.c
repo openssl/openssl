@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -21,7 +21,8 @@
 static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-                 STACK_OF(X509_CRL) *crls, int show_chain);
+                 STACK_OF(X509_CRL) *crls, int show_chain,
+                 unsigned char *sm2id, size_t sm2idlen);
 static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
@@ -29,7 +30,7 @@ typedef enum OPTION_choice {
     OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE,
     OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
     OPT_V_ENUM, OPT_NAMEOPT,
-    OPT_VERBOSE
+    OPT_VERBOSE, OPT_SM2ID, OPT_SM2HEXID
 } OPTION_CHOICE;
 
 const OPTIONS verify_options[] = {
@@ -57,6 +58,12 @@ const OPTIONS verify_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+#ifndef OPENSSL_NO_SM2
+    {"sm2-id", OPT_SM2ID, 's',
+     "Specify an ID string to verify an SM2 certificate"},
+    {"sm2-hex-id", OPT_SM2HEXID, 's',
+     "Specify a hex ID string to verify an SM2 certificate"},
+#endif
     {NULL}
 };
 
@@ -71,6 +78,9 @@ int verify_main(int argc, char **argv)
     int noCApath = 0, noCAfile = 0;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
+    unsigned char *sm2_id = NULL;
+    size_t sm2_idlen = 0;
+    int sm2_free = 0;
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
@@ -158,6 +168,20 @@ int verify_main(int argc, char **argv)
         case OPT_VERBOSE:
             v_verbose = 1;
             break;
+        case OPT_SM2ID:
+            /* we assume the input is not a hex string */
+            sm2_id = (unsigned char *)opt_arg();
+            sm2_idlen = strlen((const char *)sm2_id);
+            break;
+        case OPT_SM2HEXID:
+            /* try to parse the input as hex string first */
+            sm2_free = 1;
+            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            if (sm2_id == NULL) {
+                BIO_printf(bio_err, "Invalid hex string input\n");
+                goto end;
+            }
+            break;
         }
     }
     argc = opt_num_rest();
@@ -183,16 +207,19 @@ int verify_main(int argc, char **argv)
 
     ret = 0;
     if (argc < 1) {
-        if (check(store, NULL, untrusted, trusted, crls, show_chain) != 1)
+        if (check(store, NULL, untrusted, trusted, crls, show_chain,
+                  sm2_id, sm2_idlen) != 1)
             ret = -1;
     } else {
         for (i = 0; i < argc; i++)
             if (check(store, argv[i], untrusted, trusted, crls,
-                      show_chain) != 1)
+                      show_chain, sm2_id, sm2_idlen) != 1)
                 ret = -1;
     }
 
  end:
+    if (sm2_free)
+        OPENSSL_free(sm2_id);
     X509_VERIFY_PARAM_free(vpm);
     X509_STORE_free(store);
     sk_X509_pop_free(untrusted, X509_free);
@@ -204,7 +231,8 @@ int verify_main(int argc, char **argv)
 
 static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-                 STACK_OF(X509_CRL) *crls, int show_chain)
+                 STACK_OF(X509_CRL) *crls, int show_chain,
+                 unsigned char *sm2id, size_t sm2idlen)
 {
     X509 *x = NULL;
     int i = 0, ret = 0;
@@ -215,6 +243,17 @@ static int check(X509_STORE *ctx, const char *file,
     x = load_cert(file, FORMAT_PEM, "certificate file");
     if (x == NULL)
         goto end;
+
+    if (sm2id != NULL) {
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING v;
+
+        v.data = sm2id;
+        v.length = sm2idlen;
+
+        X509_set_sm2_id(x, &v);
+#endif
+    }
 
     csc = X509_STORE_CTX_new();
     if (csc == NULL) {
@@ -286,16 +325,19 @@ static int cb(int ok, X509_STORE_CTX *ctx)
                cert_error,
                X509_STORE_CTX_get_error_depth(ctx),
                X509_verify_cert_error_string(cert_error));
+
+        /*
+         * Pretend that some errors are ok, so they don't stop further
+         * processing of the certificate chain.  Setting ok = 1 does this.
+         * After X509_verify_cert() is done, we verify that there were
+         * no actual errors, even if the returned value was positive.
+         */
         switch (cert_error) {
         case X509_V_ERR_NO_EXPLICIT_POLICY:
             policies_print(ctx);
             /* fall thru */
         case X509_V_ERR_CERT_HAS_EXPIRED:
-
-            /*
-             * since we are just checking the certificates, it is ok if they
-             * are self signed. But we should still warn the user.
-             */
+            /* Continue even if the leaf is a self signed cert */
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
             /* Continue after extension errors too */
         case X509_V_ERR_INVALID_CA:

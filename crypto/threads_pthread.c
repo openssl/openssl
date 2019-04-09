@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -168,44 +168,6 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 
     *val += amount;
     *ret  = *val;
-
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-
-    return 1;
-}
-
-int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock)
-{
-# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE)
-    if (__atomic_is_lock_free(sizeof(*val), val)) {
-        __atomic_load(val, ret, __ATOMIC_ACQUIRE);
-        return 1;
-    }
-# endif
-    if (!CRYPTO_THREAD_read_lock(lock))
-        return 0;
-
-    *ret  = *val;
-
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-
-    return 1;
-}
-
-int CRYPTO_atomic_write(int *val, int n, CRYPTO_RWLOCK *lock)
-{
-# if defined(__GNUC__) && defined(__ATOMIC_RELEASE)
-    if (__atomic_is_lock_free(sizeof(*val), val)) {
-        __atomic_store(val, &n, __ATOMIC_RELEASE);
-        return 1;
-    }
-# endif
-    if (!CRYPTO_THREAD_write_lock(lock))
-        return 0;
-
-    *val = n;
 
     if (!CRYPTO_THREAD_unlock(lock))
         return 0;

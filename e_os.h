@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -22,19 +22,14 @@
  * outside; this file e_os.h is not part of the exported interface.
  */
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 # ifndef DEVRANDOM
 /*
  * set this to a comma-separated list of 'random' device files to try out. By
  * default, we will try to read at least one of these files
  */
-#  if defined(__s390__)
-#   define DEVRANDOM "/dev/prandom","/dev/urandom","/dev/hwrng","/dev/random"
-#  else
-#   define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
+#  define DEVRANDOM "/dev/urandom", "/dev/random", "/dev/hwrng", "/dev/srandom"
+#  ifdef __linux
+#   define DEVRANDOM_WAIT "/dev/random"
 #  endif
 # endif
 # if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
@@ -43,7 +38,7 @@ extern "C" {
  * sockets will be tried in the order listed in case accessing the device
  * files listed in DEVRANDOM did not return enough randomness.
  */
-#  define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
+#  define DEVRANDOM_EGD "/var/run/egd-pool", "/dev/egd-pool", "/etc/egd-pool", "/etc/entropy"
 # endif
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
@@ -53,6 +48,7 @@ extern "C" {
 
 # define get_last_sys_error()    errno
 # define clear_sys_error()       errno=0
+# define set_sys_error(e)        errno=(e)
 
 /********************************************************************
  The Microsoft section
@@ -70,8 +66,10 @@ extern "C" {
 # ifdef WIN32
 #  undef get_last_sys_error
 #  undef clear_sys_error
+#  undef set_sys_error
 #  define get_last_sys_error()    GetLastError()
 #  define clear_sys_error()       SetLastError(0)
+#  define set_sys_error(e)        SetLastError(e)
 #  if !defined(WINNT)
 #   define WIN_CONSOLE_BUG
 #  endif
@@ -249,7 +247,7 @@ extern FILE *_imp___iob;
 
      Finally, we add the VMS C facility code 0x35a000, because there are some
      programs, such as Perl, that will reinterpret the code back to something
-     POSIXly.  'man perlvms' explains it further.
+     POSIX.  'man perlvms' explains it further.
 
      NOTE: the perlvms manual wants to turn all codes 2 to 255 into success
      codes (status type = 1).  I couldn't disagree more.  Fortunately, the
@@ -321,12 +319,15 @@ struct servent *getservbyname(const char *name, const char *proto);
 # endif
 /* end vxworks */
 
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-# define CRYPTO_memcmp memcmp
-#endif
+# ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#  define CRYPTO_memcmp memcmp
+# endif
 
-#ifdef  __cplusplus
-}
-#endif
-
+/* unistd.h defines _POSIX_VERSION */
+# if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
+     && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)      \
+          || defined(__sun) || defined(__hpux) || defined(__sgi)      \
+          || defined(__osf__) )
+#  define OPENSSL_SECURE_MEMORY  /* secure memory is implemented */
+# endif
 #endif

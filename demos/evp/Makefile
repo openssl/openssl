@@ -11,10 +11,13 @@
 CFLAGS = $(OPENSSL_INCS_LOCATION)
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
 
-all: aesccm aesgcm 
+all: aesccm aesgcm
 
 aesccm: aesccm.o
 aesgcm: aesgcm.o
 
 aesccm aesgcm:
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+
+clean:
+	$(RM) aesccm aesgcm *.o

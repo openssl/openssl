@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -158,6 +158,18 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     int idx;
 
     switch (operation) {
+    case ASN1_OP_D2I_PRE:
+        if (crl->meth->crl_free) {
+            if (!crl->meth->crl_free(crl))
+                return 0;
+        }
+        AUTHORITY_KEYID_free(crl->akid);
+        ISSUING_DIST_POINT_free(crl->idp);
+        ASN1_INTEGER_free(crl->crl_number);
+        ASN1_INTEGER_free(crl->base_crl_number);
+        sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
+        /* fall thru */
+
     case ASN1_OP_NEW_POST:
         crl->idp = NULL;
         crl->akid = NULL;
@@ -383,8 +395,11 @@ static int def_crl_lookup(X509_CRL *crl,
                           X509_NAME *issuer)
 {
     X509_REVOKED rtmp, *rev;
-    int idx;
-    rtmp.serialNumber = *serial;
+    int idx, num;
+
+    if (crl->crl.revoked == NULL)
+        return 0;
+
     /*
      * Sort revoked into serial number order if not already sorted. Do this
      * under a lock to avoid race condition.
@@ -394,11 +409,12 @@ static int def_crl_lookup(X509_CRL *crl,
         sk_X509_REVOKED_sort(crl->crl.revoked);
         CRYPTO_THREAD_unlock(crl->lock);
     }
+    rtmp.serialNumber = *serial;
     idx = sk_X509_REVOKED_find(crl->crl.revoked, &rtmp);
     if (idx < 0)
         return 0;
     /* Need to look for matching name */
-    for (; idx < sk_X509_REVOKED_num(crl->crl.revoked); idx++) {
+    for (num = sk_X509_REVOKED_num(crl->crl.revoked); idx < num; idx++) {
         rev = sk_X509_REVOKED_value(crl->crl.revoked, idx);
         if (ASN1_INTEGER_cmp(&rev->serialNumber, serial))
             return 0;

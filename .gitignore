@@ -59,6 +59,9 @@ Makefile
 /test/v3ext
 /test/versions
 /test/ossl_shim/ossl_shim
+/test/rsa_complex
+# Other generated files in test/
+/test/provider_internal_test.conf
 
 # Certain files that get created by tests on the fly
 /test/test-runs
@@ -75,14 +78,15 @@ Makefile
 !/fuzz/*.*
 
 # Misc auto generated files
+/doc/man7/openssl_user_macros.pod
 /include/openssl/opensslconf.h
 /tools/c_rehash
 /tools/c_rehash.pl
 /util/shlib_wrap.sh
 /tags
 /TAGS
-/libcrypto.map
-/libssl.map
+*.map
+*.ld
 
 # Windows (legacy)
 /tmp32

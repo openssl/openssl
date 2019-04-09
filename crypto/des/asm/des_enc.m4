@@ -1,6 +1,6 @@
 ! Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 !
-! Licensed under the OpenSSL license (the "License").  You may not use
+! Licensed under the Apache License 2.0 (the "License").  You may not use
 ! this file except in compliance with the License.  You can obtain a copy
 ! in the file LICENSE in the source distribution or at
 ! https://www.openssl.org/source/license.html
@@ -28,8 +28,6 @@
 
 .ident "des_enc.m4 2.1"
 .file  "des_enc-sparc.S"
-
-#include <openssl/opensslconf.h>
 
 #if defined(__SUNPRO_C) && defined(__sparcv9)
 # define ABI64  /* They've said -xarch=v9 at command line */
@@ -313,7 +311,7 @@ $4:
 	sll	out1, 28, out1            ! rotate
 	xor	$1, local1, $1            ! 1 finished, local1 now sbox 7
 
-	ld	[global2+local2], local2  ! 2 
+	ld	[global2+local2], local2  ! 2
 	srl	out0, 24, local1          ! 7
 	or	out1, local0, out1        ! rotate
 
@@ -1392,7 +1390,7 @@ DES_ncbc_encrypt:
 	add	%o7,global1,global1
 	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
-	cmp	in5, 0                    ! enc   
+	cmp	in5, 0                    ! enc
 
 	be	.ncbc.dec
 	STPTR	in4, IVEC

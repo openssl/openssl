@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -409,14 +409,14 @@ end:
     return ret;
 }
 
+OPT_TEST_DECLARE_USAGE("basedomain CAfile tlsafile\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(basedomain = test_get_argument(0))
             || !TEST_ptr(CAfile = test_get_argument(1))
-            || !TEST_ptr(tlsafile = test_get_argument(2))) {
-        TEST_error("Usage error: danetest basedomain CAfile tlsafile");
+            || !TEST_ptr(tlsafile = test_get_argument(2)))
         return 0;
-    }
 
     ADD_TEST(run_tlsatest);
     return 1;

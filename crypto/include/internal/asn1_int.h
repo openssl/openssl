@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -61,6 +61,8 @@ struct evp_pkey_asn1_method_st {
     /* Get/set raw private/public key data */
     int (*set_priv_key) (EVP_PKEY *pk, const unsigned char *priv, size_t len);
     int (*set_pub_key) (EVP_PKEY *pk, const unsigned char *pub, size_t len);
+    int (*get_priv_key) (const EVP_PKEY *pk, unsigned char *priv, size_t *len);
+    int (*get_pub_key) (const EVP_PKEY *pk, unsigned char *pub, size_t *len);
 } /* EVP_PKEY_ASN1_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
@@ -74,6 +76,7 @@ extern const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed448_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD sm2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD poly1305_asn1_meth;
 
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;

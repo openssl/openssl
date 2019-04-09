@@ -1,7 +1,7 @@
 /*
  * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -51,7 +51,7 @@
 #endif
 
 /*
- * The POSIXly macro for the maximum number of characters in a file path is
+ * The POSIX macro for the maximum number of characters in a file path is
  * NAME_MAX.  However, some operating systems use PATH_MAX instead.
  * Therefore, it seems natural to first check for PATH_MAX and use that, and
  * if it doesn't exist, use NAME_MAX.

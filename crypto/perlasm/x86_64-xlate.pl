@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -541,6 +541,7 @@ my %globals;
 	);
 
     my ($cfa_reg, $cfa_rsp);
+    my @cfa_stack;
 
     # [us]leb128 format is variable-length integer representation base
     # 2^128, with most significant bit of each byte being 0 denoting
@@ -648,7 +649,13 @@ my %globals;
 	    # why it starts with -8. Recall that CFA is top of caller's
 	    # stack...
 	    /startproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp", -8); last; };
-	    /endproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp",  0); last; };
+	    /endproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp",  0);
+				# .cfi_remember_state directives that are not
+				# matched with .cfi_restore_state are
+				# unnecessary.
+				die "unpaired .cfi_remember_state" if (@cfa_stack);
+				last;
+			      };
 	    /def_cfa_register/
 			&& do {	$cfa_reg = $$line; last; };
 	    /def_cfa_offset/
@@ -686,6 +693,14 @@ my %globals;
 				$self->{value} = ".cfi_escape\t" .
 					join(",", map(sprintf("0x%02x", $_),
 						      cfa_expression($$line)));
+				last;
+			      };
+	    /remember_state/
+			&& do {	push @cfa_stack, [$cfa_reg, $cfa_rsp];
+				last;
+			      };
+	    /restore_state/
+			&& do {	($cfa_reg, $cfa_rsp) = @{pop @cfa_stack};
 				last;
 			      };
 	    }
@@ -877,7 +892,7 @@ my %globals;
 							$var=~s/^(0b[0-1]+)/oct($1)/eig;
 							$var=~s/^0x([0-9a-f]+)/0$1h/ig if ($masm);
 							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
-							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
+							{ $var=~s/^([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
 						    };
 

@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -123,24 +123,103 @@ static int test_load_config(void)
     return 1;
 }
 
+static int test_check_null_numbers(void)
+{
+#if defined(_BSD_SOURCE) \
+        || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) \
+        || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    long val = 0;
+
+    /* Verify that a NULL config with a present environment variable returns
+     * success and the value.
+     */
+    if (!TEST_int_eq(setenv("FNORD", "123", 1), 0)
+            || !TEST_true(NCONF_get_number(NULL, "missing", "FNORD", &val))
+            || !TEST_long_eq(val, 123)) {
+        TEST_note("environment variable with NULL conf failed");
+        return 0;
+    }
+
+    /*
+     * Verify that a NULL config with a missing envrionment variable returns
+     * a failure code.
+     */
+    if (!TEST_int_eq(unsetenv("FNORD"), 0)
+            || !TEST_false(NCONF_get_number(NULL, "missing", "FNORD", &val))) {
+        TEST_note("missing environment variable with NULL conf failed");
+        return 0;
+    }
+#endif
+    return 1;
+}
+
+static int test_check_overflow(void)
+{
+#if defined(_BSD_SOURCE) \
+        || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) \
+        || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    long val = 0;
+    char max[(sizeof(long) * 8) / 3 + 3];
+    char *p;
+
+    p = max + sprintf(max, "0%ld", LONG_MAX) - 1;
+    setenv("FNORD", max, 1);
+    if (!TEST_true(NCONF_get_number(NULL, "missing", "FNORD", &val))
+            || !TEST_long_eq(val, LONG_MAX))
+        return 0;
+
+    while (++*p > '9')
+        *p-- = '0';
+
+    setenv("FNORD", max, 1);
+    if (!TEST_false(NCONF_get_number(NULL, "missing", "FNORD", &val)))
+        return 0;
+#endif
+    return 1;
+}
+
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_FAIL,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS test_options[] = {
+        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("conf_file\n"),
+        { "f", OPT_FAIL, '-', "A failure is expected" },
+        { NULL }
+    };
+    return test_options;
+}
+
 int setup_tests(void)
 {
     const char *conf_file;
-    const char *arg2;
+    OPTION_CHOICE o;
 
     if (!TEST_ptr(conf = NCONF_new(NULL)))
         return 0;
 
-    conf_file = test_get_argument(0);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_FAIL:
+            expect_failure = 1;
+            break;
+        case OPT_TEST_CASES:
+            break;
+        default:
+            return 0;
+        }
+    }
 
+    conf_file = test_get_argument(0);
     if (!TEST_ptr(conf_file)
         || !TEST_ptr(in = BIO_new_file(conf_file, "r"))) {
         TEST_note("Unable to open the file argument");
         return 0;
-    }
-
-    if ((arg2 = test_get_argument(1)) != NULL && *arg2 == 'f') {
-       expect_failure = 1;
     }
 
     /*
@@ -150,6 +229,8 @@ int setup_tests(void)
     change_path(conf_file);
 
     ADD_TEST(test_load_config);
+    ADD_TEST(test_check_null_numbers);
+    ADD_TEST(test_check_overflow);
     return 1;
 }
 

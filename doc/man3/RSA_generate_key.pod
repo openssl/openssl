@@ -12,12 +12,12 @@ RSA_generate_multi_prime_key - generate RSA key pair
  int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
  int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes, BIGNUM *e, BN_GENCB *cb);
 
-Deprecated:
+Deprecated since OpenSSL 0.9.8, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
 
- #if OPENSSL_API_COMPAT < 0x00908000L
  RSA *RSA_generate_key(int num, unsigned long e,
                        void (*callback)(int, int, void *), void *cb_arg);
- #endif
 
 =head1 DESCRIPTION
 
@@ -93,13 +93,13 @@ L<ERR_get_error(3)>, L<RAND_bytes(3)>, L<BN_generate_prime(3)>
 =head1 HISTORY
 
 RSA_generate_key() was deprecated in OpenSSL 0.9.8; use
-RSA_generate_key_ex() intsead.
+RSA_generate_key_ex() instead.
 
 =head1 COPYRIGHT
 
 Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
-Licensed under the OpenSSL license (the "License").  You may not use
+Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.

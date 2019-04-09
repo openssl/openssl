@@ -1,8 +1,8 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -51,7 +51,7 @@ void EC_KEY_free(EC_KEY *r)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    if (r->meth->finish != NULL)
+    if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 
 #ifndef OPENSSL_NO_ENGINE
@@ -195,59 +195,90 @@ int ossl_ec_key_gen(EC_KEY *eckey)
     return eckey->group->meth->keygen(eckey);
 }
 
+/*
+ * ECC Key generation.
+ * See SP800-56AR3 5.6.1.2.2 "Key Pair Generation by Testing Candidates"
+ *
+ * Params:
+ *     eckey An EC key object that contains domain params. The generated keypair
+ *           is stored in this object.
+ * Returns 1 if the keypair was generated or 0 otherwise.
+ */
 int ec_key_simple_generate_key(EC_KEY *eckey)
 {
     int ok = 0;
-    BN_CTX *ctx = NULL;
     BIGNUM *priv_key = NULL;
     const BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
-
-    if ((ctx = BN_CTX_new()) == NULL)
-        goto err;
+    const EC_GROUP *group = eckey->group;
 
     if (eckey->priv_key == NULL) {
-        priv_key = BN_new();
+        priv_key = BN_secure_new();
         if (priv_key == NULL)
             goto err;
     } else
         priv_key = eckey->priv_key;
 
-    order = EC_GROUP_get0_order(eckey->group);
+    /*
+     * Steps (1-2): Check domain parameters and security strength.
+     * These steps must be done by the user. This would need to be
+     * stated in the security policy.
+     */
+
+    order = EC_GROUP_get0_order(group);
     if (order == NULL)
         goto err;
 
+    /*
+     * Steps (3-7): priv_key = DRBG_RAND(order_n_bits) (range [1, n-1]).
+     * Although this is slightly different from the standard, it is effectively
+     * equivalent as it gives an unbiased result ranging from 1..n-1. It is also
+     * faster as the standard needs to retry more often. Also doing
+     * 1 + rand[0..n-2] would effect the way that tests feed dummy entropy into
+     * rand so the simpler backward compatible method has been used here.
+     */
     do
         if (!BN_priv_rand_range(priv_key, order))
             goto err;
     while (BN_is_zero(priv_key)) ;
 
     if (eckey->pub_key == NULL) {
-        pub_key = EC_POINT_new(eckey->group);
+        pub_key = EC_POINT_new(group);
         if (pub_key == NULL)
             goto err;
     } else
         pub_key = eckey->pub_key;
 
-    if (!EC_POINT_mul(eckey->group, pub_key, priv_key, NULL, NULL, ctx))
+    /* Step (8) : pub_key = priv_key * G (where G is a point on the curve) */
+    if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, NULL))
         goto err;
 
     eckey->priv_key = priv_key;
     eckey->pub_key = pub_key;
+    priv_key = NULL;
+    pub_key = NULL;
 
     ok = 1;
 
- err:
-    if (eckey->pub_key == NULL)
-        EC_POINT_free(pub_key);
-    if (eckey->priv_key != priv_key)
-        BN_free(priv_key);
-    BN_CTX_free(ctx);
+err:
+    /* Step (9): If there is an error return an invalid keypair. */
+    if (!ok) {
+        BN_clear(eckey->priv_key);
+        if (eckey->pub_key != NULL)
+            EC_POINT_set_to_infinity(group, eckey->pub_key);
+    }
+
+    EC_POINT_free(pub_key);
+    BN_clear_free(priv_key);
     return ok;
 }
 
 int ec_key_simple_generate_public_key(EC_KEY *eckey)
 {
+    /*
+     * See SP800-56AR3 5.6.1.2.2: Step (8)
+     * pub_key = priv_key * G (where G is a point on the curve)
+     */
     return EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
                         NULL, NULL);
 }
@@ -341,9 +372,6 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
     BIGNUM *tx, *ty;
     EC_POINT *point = NULL;
     int ok = 0;
-#ifndef OPENSSL_NO_EC2M
-    int tmp_nid, is_char_two = 0;
-#endif
 
     if (key == NULL || key->group == NULL || x == NULL || y == NULL) {
         ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
@@ -365,29 +393,11 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
     if (ty == NULL)
         goto err;
 
-#ifndef OPENSSL_NO_EC2M
-    tmp_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(key->group));
+    if (!EC_POINT_set_affine_coordinates(key->group, point, x, y, ctx))
+        goto err;
+    if (!EC_POINT_get_affine_coordinates(key->group, point, tx, ty, ctx))
+        goto err;
 
-    if (tmp_nid == NID_X9_62_characteristic_two_field)
-        is_char_two = 1;
-
-    if (is_char_two) {
-        if (!EC_POINT_set_affine_coordinates_GF2m(key->group, point,
-                                                  x, y, ctx))
-            goto err;
-        if (!EC_POINT_get_affine_coordinates_GF2m(key->group, point,
-                                                  tx, ty, ctx))
-            goto err;
-    } else
-#endif
-    {
-        if (!EC_POINT_set_affine_coordinates_GFp(key->group, point,
-                                                 x, y, ctx))
-            goto err;
-        if (!EC_POINT_get_affine_coordinates_GFp(key->group, point,
-                                                 tx, ty, ctx))
-            goto err;
-    }
     /*
      * Check if retrieved coordinates match originals and are less than field
      * order: if not values are out of range.

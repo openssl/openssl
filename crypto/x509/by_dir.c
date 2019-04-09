@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -73,7 +73,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     switch (cmd) {
     case X509_L_ADD_DIR:
         if (argl == X509_FILETYPE_DEFAULT) {
-            const char *dir = getenv(X509_get_default_cert_dir_env());
+            const char *dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
 
             if (dir)
                 ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);
@@ -329,10 +329,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
          */
         CRYPTO_THREAD_write_lock(ctx->lock);
         j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
-        if (j != -1)
-            tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
-        else
-            tmp = NULL;
+        tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
         CRYPTO_THREAD_unlock(ctx->lock);
 
         /* If a CRL, update the last file suffix added for this */
@@ -343,11 +340,10 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
              * Look for entry again in case another thread added an entry
              * first.
              */
-            if (!hent) {
+            if (hent == NULL) {
                 htmp.hash = h;
                 idx = sk_BY_DIR_HASH_find(ent->hashes, &htmp);
-                if (idx >= 0)
-                    hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
+                hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
             }
             if (hent == NULL) {
                 hent = OPENSSL_malloc(sizeof(*hent));

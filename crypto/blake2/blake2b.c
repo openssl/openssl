@@ -1,7 +1,7 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -23,10 +23,10 @@
 
 static const uint64_t blake2b_IV[8] =
 {
-    0x6a09e667f3bcc908U, 0xbb67ae8584caa73bU,
-    0x3c6ef372fe94f82bU, 0xa54ff53a5f1d36f1U,
-    0x510e527fade682d1U, 0x9b05688c2b3e6c1fU,
-    0x1f83d9abfb41bd6bU, 0x5be0cd19137e2179U
+    0x6a09e667f3bcc908ULL, 0xbb67ae8584caa73bULL,
+    0x3c6ef372fe94f82bULL, 0xa54ff53a5f1d36f1ULL,
+    0x510e527fade682d1ULL, 0x9b05688c2b3e6c1fULL,
+    0x1f83d9abfb41bd6bULL, 0x5be0cd19137e2179ULL
 };
 
 static const uint8_t blake2b_sigma[12][16] =
@@ -62,12 +62,14 @@ static ossl_inline void blake2b_init0(BLAKE2B_CTX *S)
     }
 }
 
-/* init xors IV with input parameter block */
+/* init xors IV with input parameter block and sets the output length */
 static void blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
 {
     size_t i;
     const uint8_t *p = (const uint8_t *)(P);
+
     blake2b_init0(S);
+    S->outlen = P->digest_length;
 
     /* The param struct is carefully hand packed, and should be 64 bytes on
      * every platform. */
@@ -78,10 +80,9 @@ static void blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
     }
 }
 
-/* Initialize the hashing context.  Always returns 1. */
-int BLAKE2b_Init(BLAKE2B_CTX *c)
+/* Initialize the parameter block with default values */
+void blake2b_param_init(BLAKE2B_PARAM *P)
 {
-    BLAKE2B_PARAM P[1];
     P->digest_length = BLAKE2B_DIGEST_LENGTH;
     P->key_length    = 0;
     P->fanout        = 1;
@@ -93,7 +94,57 @@ int BLAKE2b_Init(BLAKE2B_CTX *c)
     memset(P->reserved, 0, sizeof(P->reserved));
     memset(P->salt,     0, sizeof(P->salt));
     memset(P->personal, 0, sizeof(P->personal));
+}
+
+void blake2b_param_set_digest_length(BLAKE2B_PARAM *P, uint8_t outlen)
+{
+    P->digest_length = outlen;
+}
+
+void blake2b_param_set_key_length(BLAKE2B_PARAM *P, uint8_t keylen)
+{
+    P->key_length = keylen;
+}
+
+void blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal, size_t len)
+{
+    memcpy(P->personal, personal, len);
+    memset(P->personal + len, 0, BLAKE2B_PERSONALBYTES - len);
+}
+
+void blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt, size_t len)
+{
+    memcpy(P->salt, salt, len);
+    memset(P->salt + len, 0, BLAKE2B_SALTBYTES - len);
+}
+
+/*
+ * Initialize the hashing context with the given parameter block.
+ * Always returns 1.
+ */
+int BLAKE2b_Init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P)
+{
     blake2b_init_param(c, P);
+    return 1;
+}
+
+/*
+ * Initialize the hashing context with the given parameter block and key.
+ * Always returns 1.
+ */
+int BLAKE2b_Init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P, const void *key)
+{
+    blake2b_init_param(c, P);
+
+    /* Pad the key to form first data block */
+    {
+        uint8_t block[BLAKE2B_BLOCKBYTES] = {0};
+
+        memcpy(block, key, P->key_length);
+        BLAKE2b_Update(c, block, BLAKE2B_BLOCKBYTES);
+        OPENSSL_cleanse(block, BLAKE2B_BLOCKBYTES);
+    }
+
     return 1;
 }
 
@@ -252,17 +303,26 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
  */
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
 {
+    uint8_t outbuffer[BLAKE2B_OUTBYTES] = {0};
+    uint8_t *target = outbuffer;
+    int iter = (c->outlen + 7) / 8;
     int i;
+
+    /* Avoid writing to the temporary buffer if possible */
+    if ((c->outlen % sizeof(c->h[0])) == 0)
+        target = md;
 
     blake2b_set_lastblock(c);
     /* Padding */
     memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
     blake2b_compress(c, c->buf, c->buflen);
 
-    /* Output full hash to message digest */
-    for (i = 0; i < 8; ++i) {
-        store64(md + sizeof(c->h[i]) * i, c->h[i]);
-    }
+    /* Output full hash to buffer */
+    for (i = 0; i < iter; ++i)
+        store64(target + sizeof(c->h[i]) * i, c->h[i]);
+
+    if (target != md)
+        memcpy(md, target, c->outlen);
 
     OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
     return 1;

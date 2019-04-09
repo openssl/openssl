@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -35,7 +35,7 @@ Find small errors (nits) in documentation.  Options:
     -l Print bogus links
     -n Print nits in POD pages
     -p Warn if non-public name documented (implies -n)
-    -u List undocumented functions
+    -u Count undocumented functions
     -h Print this help message
     -c List undocumented commands and options
 EOF
@@ -68,7 +68,6 @@ sub name_synopsis()
     $tmp =~ s/ -.*//g;
     $tmp =~ s/  */ /g;
     print "$id missing comma in NAME\n" if $tmp =~ /[^,] /;
-    $tmp =~ s/,//g;
 
     my $dirname = dirname($filename);
     my $simplename = basename($filename);
@@ -76,7 +75,11 @@ sub name_synopsis()
     my $foundfilename = 0;
     my %foundfilenames = ();
     my %names;
-    foreach my $n ( split ' ', $tmp ) {
+    foreach my $n ( split ',', $tmp ) {
+        $n =~ s/^\s+//;
+        $n =~ s/\s+$//;
+        print "$id the name '$n' contains white-space\n"
+            if $n =~ /\s/;
         $names{$n} = 1;
         $foundfilename++ if $n eq $simplename;
         $foundfilenames{$n} = 1
@@ -96,8 +99,10 @@ sub name_synopsis()
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
     my $syn = $1;
     foreach my $line ( split /\n+/, $syn ) {
+        next unless $line =~ /^\s/;
         my $sym;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
+        $line =~ s/SPARSE_ARRAY_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
         if ( $line =~ /env (\S*)=/ ) {
             # environment variable env NAME=...
@@ -114,7 +119,7 @@ sub name_synopsis()
         } elsif ( $line =~ /enum (\S*) \{/ ) {
             # an enumeration: enum ... {
             $sym = $1;
-        } elsif ( $line =~ /#define ([A-Za-z0-9_]+)/ ) {
+        } elsif ( $line =~ /#(?:define|undef) ([A-Za-z0-9_]+)/ ) {
             $sym = $1;
         } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
             $sym = $1;
@@ -137,6 +142,18 @@ sub name_synopsis()
     }
 }
 
+# Check if EXAMPLES is located after RETURN VALUES section.
+sub check_example_location()
+{
+    my $filename = shift;
+    my $contents = shift;
+
+    return unless $contents =~ /=head1 RETURN VALUES/
+        and $contents =~ /=head1 EXAMPLES/;
+    print "$filename: RETURN VAULES should be placed before EXAMPLES section\n"
+        if $contents =~ /=head1 EXAMPLES.*=head1 RETURN VALUES/ms;
+}
+
 sub check()
 {
     my $filename = shift;
@@ -149,6 +166,8 @@ sub check()
         $contents = <POD>;
         close POD;
     }
+
+    &check_example_location($filename, $contents) if $filename =~ m|man3/|;
 
     my $id = "${filename}:1:";
 
@@ -246,7 +265,7 @@ sub parsenum()
     return sort @apis;
 }
 
-sub getdocced()
+sub getdocced
 {
     my $dir = shift;
     my %return;
@@ -269,6 +288,7 @@ my %docced;
 sub checkmacros()
 {
     my $count = 0;
+    my %seen;
 
     print "# Checking macros (approximate)\n";
     foreach my $f ( glob('include/openssl/*.h') ) {
@@ -280,7 +300,7 @@ sub checkmacros()
         while ( <IN> ) {
             next unless /^#\s*define\s*(\S+)\(/;
             my $macro = $1;
-            next if $docced{$macro};
+            next if $docced{$macro} || defined $seen{$macro};
             next if $macro =~ /i2d_/
                 || $macro =~ /d2i_/
                 || $macro =~ /DEPRECATEDIN/
@@ -288,6 +308,7 @@ sub checkmacros()
                 || $macro =~ /DECLARE_/;
             print "$f:$macro\n" if $opt_d;
             $count++;
+            $seen{$macro} = 1;
         }
         close(IN);
     }
@@ -299,15 +320,17 @@ sub printem()
     my $libname = shift;
     my $numfile = shift;
     my $count = 0;
+    my %seen;
 
     foreach my $func ( &parsenum($numfile) ) {
-        next if $docced{$func};
+        next if $docced{$func} || defined $seen{$func};
 
         # Skip ASN1 utilities
         next if $func =~ /^ASN1_/;
 
         print "$libname:$func\n" if $opt_d;
         $count++;
+        $seen{$func} = 1;
     }
     print "# Found $count missing from $numfile\n\n";
 }
@@ -344,13 +367,16 @@ sub collectnames {
     $tmp =~ tr/\n/ /;
     $tmp =~ s/-.*//g;
 
-    my @names = map { s/\s+//g; $_ } split(/,/, $tmp);
+    my @names = map { s/^\s+//g; s/\s+$//g; $_ } split(/,/, $tmp);
     unless (grep { $simplename eq $_ } @names) {
         print "$id missing $simplename\n";
         push @names, $simplename;
     }
     foreach my $name (@names) {
         next if $name eq "";
+        if ($name =~ /\s/) {
+            print "$id '$name' contains white space\n";
+        }
         my $name_sec = "$name($section)";
         if (! exists $name_collection{$name_sec}) {
             $name_collection{$name_sec} = $filename;
@@ -519,7 +545,8 @@ if ( $opt_c ) {
 }
 
 if ( $opt_l ) {
-    foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
+    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'),
+                              glob('doc/internal/*/*.pod'))) {
         collectnames($_);
     }
     checklinks();
@@ -530,10 +557,16 @@ if ( $opt_n ) {
     foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
         &check($_);
     }
+    {
+        local $opt_p = undef;
+        foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
+            &check($_);
+        }
+    }
 }
 
 if ( $opt_u ) {
-    my %temp = &getdocced('doc/man3');
+    my %temp = getdocced('doc/man3');
     foreach ( keys %temp ) {
         $docced{$_} = $temp{$_};
     }

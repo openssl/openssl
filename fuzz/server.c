@@ -1,7 +1,7 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL licenses, (the "License");
+ * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * https://www.openssl.org/source/license.html
@@ -496,8 +496,8 @@ int FuzzerInitialize(int *argc, char ***argv)
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
     FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
-    sk_SSL_COMP_sort(comp_methods);
-
+    if (comp_methods != NULL)
+        sk_SSL_COMP_sort(comp_methods);
 
     return 1;
 }
@@ -533,6 +533,11 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     /* This only fuzzes the initial flow from the client so far. */
     ctx = SSL_CTX_new(SSLv23_method());
+
+    ret = SSL_CTX_set_min_proto_version(ctx, 0);
+    OPENSSL_assert(ret == 1);
+    ret = SSL_CTX_set_cipher_list(ctx, "ALL:eNULL:@SECLEVEL=0");
+    OPENSSL_assert(ret == 1);
 
     /* RSA */
     bufp = kRSAPrivateKeyDER;
@@ -602,8 +607,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     /* TODO: Set up support for SRP and PSK */
 
     server = SSL_new(ctx);
-    ret = SSL_set_cipher_list(server, "ALL:eNULL:@SECLEVEL=0");
-    OPENSSL_assert(ret == 1);
     in = BIO_new(BIO_s_mem());
     out = BIO_new(BIO_s_mem());
     SSL_set_bio(server, in, out);
