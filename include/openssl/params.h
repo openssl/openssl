@@ -132,11 +132,11 @@ OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf,
 OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
                                             size_t bsize, size_t *rsize);
 OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
-                                         size_t *rsize);
+                                         size_t bsize, size_t *rsize);
 OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
                                              size_t bsize, size_t *rsize);
 OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
-                                          size_t *rsize);
+                                          size_t bsize, size_t *rsize);
 OSSL_PARAM OSSL_PARAM_construct_end(void);
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val);

@@ -580,15 +580,15 @@ int OSSL_PARAM_set_octet_ptr(const OSSL_PARAM *p, const void *val,
 }
 
 OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
-                                         size_t *rsize)
+                                         size_t bsize, size_t *rsize)
 {
-    return ossl_param_construct(key, OSSL_PARAM_UTF8_PTR, buf, 0, rsize);
+    return ossl_param_construct(key, OSSL_PARAM_UTF8_PTR, buf, bsize, rsize);
 }
 
 OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
-                                          size_t *rsize)
+                                          size_t bsize, size_t *rsize)
 {
-    return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, 0, rsize);
+    return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, bsize, rsize);
 }
 
 OSSL_PARAM OSSL_PARAM_construct_end(void)
