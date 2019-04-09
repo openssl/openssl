@@ -154,12 +154,15 @@ int OPENSSL_hexchar2int(unsigned char c);
 
 unsigned long OpenSSL_version_num(void);
 const char *OpenSSL_version(int type);
-# define OPENSSL_VERSION          0
-# define OPENSSL_CFLAGS           1
-# define OPENSSL_BUILT_ON         2
-# define OPENSSL_PLATFORM         3
-# define OPENSSL_DIR              4
-# define OPENSSL_ENGINES_DIR      5
+# define OPENSSL_VERSION                0
+# define OPENSSL_CFLAGS                 1
+# define OPENSSL_BUILT_ON               2
+# define OPENSSL_PLATFORM               3
+# define OPENSSL_DIR                    4
+# define OPENSSL_ENGINES_DIR            5
+# define OPENSSL_VERSION_STRING         6
+# define OPENSSL_FULL_VERSION_STRING    7
+# define OPENSSL_MODULES_DIR            8
 
 int OPENSSL_issetugid(void);
 
