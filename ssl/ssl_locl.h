@@ -454,81 +454,76 @@
 /* NID for OQS KEM algs. Pick values starting way above NUM_NID (defined in obj_dat.h)
    to avoid conflicts with dynamically registered schemes (we keep things local to
    avoid modifying the libcrypto layer) */
-#define NID_OQS_START            2000
-#define NID_OQS_KEM_DEFAULT      (NID_OQS_START + 0)
-#define NID_OQS_SIKE_503         (NID_OQS_START + 1)
-#define NID_OQS_SIKE_751         (NID_OQS_START + 2)
-#if !defined(OQS_NIST_BRANCH)
-#define NID_OQS_SIDH_503         (NID_OQS_START + 3)
-#define NID_OQS_SIDH_751         (NID_OQS_START + 4)
-#endif
-#define NID_OQS_Frodo_640_AES    (NID_OQS_START + 5)
-#define NID_OQS_Frodo_640_cshake (NID_OQS_START + 6)
-#define NID_OQS_Frodo_976_AES    (NID_OQS_START + 7)
-#define NID_OQS_Frodo_976_cshake (NID_OQS_START + 8)
-#define NID_OQS_BIKE1_L1         (NID_OQS_START + 9)
-#define NID_OQS_BIKE1_L3         (NID_OQS_START + 10)
-#define NID_OQS_BIKE1_L5         (NID_OQS_START + 11)
-#define NID_OQS_BIKE2_L1         (NID_OQS_START + 12)
-#define NID_OQS_BIKE2_L3         (NID_OQS_START + 13)
-#define NID_OQS_BIKE2_L5         (NID_OQS_START + 14)
-#define NID_OQS_BIKE3_L1         (NID_OQS_START + 15)
-#define NID_OQS_BIKE3_L3         (NID_OQS_START + 16)
-#define NID_OQS_BIKE3_L5         (NID_OQS_START + 17)
-#define NID_OQS_NEWHOPE_512_CCA  (NID_OQS_START + 18)
-#define NID_OQS_NEWHOPE_1024_CCA (NID_OQS_START + 19)
-#if defined(OQS_NIST_BRANCH)
+#define NID_OQS_START            0x01FF
+#define NID_OQS_KEM_DEFAULT      0x01FF
+#define NID_OQS_SIKE_503         0x0200
+#define NID_OQS_SIKE_751         0x0201
+#define NID_OQS_SIDH_503         0x0202
+#define NID_OQS_SIDH_751         0x0203
+#define NID_OQS_Frodo_640_AES    0x0204
+#define NID_OQS_Frodo_640_cshake 0x0205
+#define NID_OQS_Frodo_976_AES    0x0206
+#define NID_OQS_Frodo_976_cshake 0x0207
+#define NID_OQS_BIKE1_L1         0x0208
+#define NID_OQS_BIKE1_L3         0x0209
+#define NID_OQS_BIKE1_L5         0x020a
+#define NID_OQS_BIKE2_L1         0x020b
+#define NID_OQS_BIKE2_L3         0x020c
+#define NID_OQS_BIKE2_L5         0x020d
+#define NID_OQS_BIKE3_L1         0x020e
+#define NID_OQS_BIKE3_L3         0x020f
+#define NID_OQS_BIKE3_L5         0x0210
+#define NID_OQS_NEWHOPE_512_CCA  0x0211
+#define NID_OQS_NEWHOPE_1024_CCA 0x0212
 /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-#define NID_OQS_kyber512         (NID_OQS_START + 23)
-#define NID_OQS_kyber768         (NID_OQS_START + 24)
-#define NID_OQS_kyber1024        (NID_OQS_START + 25)
+/* skip 0x0213, 0x0214, 0x0215; removed round1 schemes */
+#define NID_OQS_kyber512         0x0216
+#define NID_OQS_kyber768         0x0217
+#define NID_OQS_kyber1024        0x0218
 /* OQS note: ledakem was replaced with LEDAcrypt in round 2; needs an update */
-#define NID_OQS_ledakem_C1_N02   (NID_OQS_START + 26)
-#define NID_OQS_ledakem_C1_N03   (NID_OQS_START + 27)
-#define NID_OQS_ledakem_C1_N04   (NID_OQS_START + 28)
-#define NID_OQS_ledakem_C3_N02   (NID_OQS_START + 29)
-#define NID_OQS_ledakem_C3_N03   (NID_OQS_START + 30)
-#define NID_OQS_ledakem_C3_N04   (NID_OQS_START + 31)
-#define NID_OQS_ledakem_C5_N02   (NID_OQS_START + 32)
+#define NID_OQS_ledakem_C1_N02   0x0219
+#define NID_OQS_ledakem_C1_N03   0x021a
+#define NID_OQS_ledakem_C1_N04   0x021b
+#define NID_OQS_ledakem_C3_N02   0x021c
+#define NID_OQS_ledakem_C3_N03   0x021d
+#define NID_OQS_ledakem_C3_N04   0x021e
+#define NID_OQS_ledakem_C5_N02   0x021f
 /*
-#define NID_OQS_ledakem_C5_N03   (NID_OQS_START + 33)
-#define NID_OQS_ledakem_C5_N04   (NID_OQS_START + 34)
+#define NID_OQS_ledakem_C5_N03
+#define NID_OQS_ledakem_C5_N04
 */
-#define NID_OQS_saber_light_saber (NID_OQS_START + 41)
-#define NID_OQS_saber_saber      (NID_OQS_START + 42)
-#define NID_OQS_saber_fire_saber (NID_OQS_START + 43)
-#endif
+#define NID_OQS_saber_light_saber 0x0228
+#define NID_OQS_saber_saber       0x0229
+#define NID_OQS_saber_fire_saber  0x022a
 /* ADD_MORE_OQS_KEM_HERE (update counter below)*/
-#define NID_OQS_END              (NID_OQS_START + 47)
+ #define NID_OQS_END              0x022a
 
-#define NID_HYBRID_START              (NID_OQS_END + 1)
-#define NID_OQS_p256_KEM_DEFAULT      (NID_HYBRID_START + 0)
-#define NID_OQS_p256_SIKE_503         (NID_HYBRID_START + 1)
-#if !defined(OQS_NIST_BRANCH)
-#define NID_OQS_p256_SIDH_503         (NID_HYBRID_START + 2)
-#endif
-#define NID_OQS_p256_Frodo_640_AES    (NID_HYBRID_START + 3)
-#define NID_OQS_p256_Frodo_640_cshake (NID_HYBRID_START + 4)
-#define NID_OQS_p256_BIKE1_L1         (NID_HYBRID_START + 5)
-#define NID_OQS_p256_BIKE2_L1         (NID_HYBRID_START + 6)
-#define NID_OQS_p256_BIKE3_L1         (NID_HYBRID_START + 7)
-#define NID_OQS_p256_NEWHOPE_512_CCA  (NID_HYBRID_START + 8)
-#if defined(OQS_NIST_BRANCH)
-#define NID_OQS_p256_kyber512         (NID_HYBRID_START + 10)
+#define NID_HYBRID_START           0x02FF
+#define NID_OQS_p256_KEM_DEFAULT   0x02FF
+#define NID_OQS_p256_SIKE_503      0x0300
+#define NID_OQS_p256_SIDH_503      0x0301
+#define NID_OQS_p256_Frodo_640_AES    0x0302
+#define NID_OQS_p256_Frodo_640_cshake 0x0303
+#define NID_OQS_p256_BIKE1_L1         0x0304
+#define NID_OQS_p256_BIKE2_L1         0x0305
+#define NID_OQS_p256_BIKE3_L1         0x0306
+#define NID_OQS_p256_NEWHOPE_512_CCA  0x0307
+#define NID_OQS_p256_kyber512         0x0309
 /* OQS note: ledakem was replaced with LEDAcrypt in round 2; needs an update */
-#define NID_OQS_p256_ledakem_C1_N02   (NID_HYBRID_START + 11)
-#define NID_OQS_p256_ledakem_C1_N03   (NID_HYBRID_START + 12)
-#define NID_OQS_p256_ledakem_C1_N04   (NID_HYBRID_START + 13)
+#define NID_OQS_p256_ledakem_C1_N02   0x030a
+#define NID_OQS_p256_ledakem_C1_N03   0x030b
+#define NID_OQS_p256_ledakem_C1_N04   0x030c
 /*
-#define NID_OQS_p256_saber_light_saber (NID_HYBRID_START + 15)
+#define NID_OQS_p256_saber_light_saber 0x030d
 */
-#endif
 /* ADD_MORE_OQS_KEM_HERE (L1 schemes, update counter below) */
-#define NID_HYBRID_END                (NID_HYBRID_START + 17)
+#define NID_HYBRID_END                0x030c
 
 /* OQS TODO: add L3 algs with p384 curve */
 
 /* Returns true if the nid is for an OQS KEM */
+/* FIXMEOQS: didn't we make the curveid that same as nid; could be simplified a lot 
+             TODO: fix in round2 integration */
 #define IS_OQS_KEM_NID(nid) (nid >= NID_OQS_START && nid <= NID_OQS_END)
 
 /* Returns the curve ID for an OQS KEM NID */
