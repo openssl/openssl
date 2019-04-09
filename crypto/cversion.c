@@ -70,6 +70,12 @@ const char *OpenSSL_version(int t)
 #else
         return "ENGINESDIR: N/A";
 #endif
+    case OPENSSL_MODULES_DIR:
+#ifdef MODULESDIR
+        return "MODULESDIR: \"" MODULESDIR "\"";
+#else
+        return "MODULESDIR: N/A";
+#endif
     }
     return "not available";
 }
