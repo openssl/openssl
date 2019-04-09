@@ -320,7 +320,12 @@ int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
     ret->type = tmp->type;
     ret->data.ptr = tmp->data.ptr;
 
-    X509_OBJECT_up_ref_count(ret);
+    /*
+     * If we got this via X509_LOOKUP_by subject then the ref count of the
+     * contained object is already correct.
+     */
+    if (tmp != &stmp)
+         X509_OBJECT_up_ref_count(ret);
 
     return 1;
 }

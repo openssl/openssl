@@ -374,6 +374,11 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             ok = 1;
             ret->type = tmp->type;
             memcpy(&ret->data, &tmp->data, sizeof(ret->data));
+            /*
+             * Up the ref count of the contained object (note X509_OBJECT itself
+             * is not ref counted).
+             */
+            X509_OBJECT_up_ref_count(ret);
 
             /*
              * Clear any errors that might have been raised processing empty
