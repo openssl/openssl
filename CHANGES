@@ -9,6 +9,17 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) The functions AES_ige_encrypt() and AES_bi_ige_encrypt() have been
+     deprecated. These undocumented functions were never integrated into the EVP
+     layer and implement the AES Infinite Garble Extension (IGE) mode and AES
+     Bi-directional IGE mode. These modes were never formally standardised and
+     usage of these functions is believed to be very small. In particular
+     AES_bi_ige_encrypt() has a known bug. It accepts 2 AES keys, but only one
+     is ever used. The security implications are believed to be minimal, but
+     this issue was never fixed for backwards compatibility reasons. New code
+     should not use these modes.
+     [Matt Caswell]
+
   *) Limit the number of blocks in a data unit for AES-XTS to 2^20 as
      mandated by IEEE Std 1619-2018.
 

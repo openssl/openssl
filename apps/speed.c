@@ -163,10 +163,12 @@ static int DES_ede3_cbc_encrypt_loop(void *args);
 #endif
 static int AES_cbc_128_encrypt_loop(void *args);
 static int AES_cbc_192_encrypt_loop(void *args);
-static int AES_ige_128_encrypt_loop(void *args);
 static int AES_cbc_256_encrypt_loop(void *args);
+#if !OPENSSL_API_3
+static int AES_ige_128_encrypt_loop(void *args);
 static int AES_ige_192_encrypt_loop(void *args);
 static int AES_ige_256_encrypt_loop(void *args);
+#endif
 static int CRYPTO_gcm128_aad_loop(void *args);
 static int RAND_bytes_loop(void *args);
 static int EVP_Update_loop(void *args);
@@ -421,9 +423,11 @@ static const OPT_PAIR doit_choices[] = {
     {"aes-128-cbc", D_CBC_128_AES},
     {"aes-192-cbc", D_CBC_192_AES},
     {"aes-256-cbc", D_CBC_256_AES},
+#if !OPENSSL_API_3
     {"aes-128-ige", D_IGE_128_AES},
     {"aes-192-ige", D_IGE_192_AES},
     {"aes-256-ige", D_IGE_256_AES},
+#endif
 #ifndef OPENSSL_NO_RC2
     {"rc2-cbc", D_CBC_RC2},
     {"rc2", D_CBC_RC2},
@@ -859,6 +863,7 @@ static int AES_cbc_256_encrypt_loop(void *args)
     return count;
 }
 
+#if !OPENSSL_API_3
 static int AES_ige_128_encrypt_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -894,6 +899,7 @@ static int AES_ige_256_encrypt_loop(void *args)
                         (size_t)lengths[testnum], &aes_ks3, iv, AES_ENCRYPT);
     return count;
 }
+#endif
 
 static int CRYPTO_gcm128_aad_loop(void *args)
 {
@@ -2381,6 +2387,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
+#if !OPENSSL_API_3
     if (doit[D_IGE_128_AES]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_IGE_128_AES], c[D_IGE_128_AES][testnum],
@@ -2414,6 +2421,7 @@ int speed_main(int argc, char **argv)
             print_result(D_IGE_256_AES, testnum, count, d);
         }
     }
+#endif
     if (doit[D_GHASH]) {
         for (i = 0; i < loopargs_len; i++) {
             loopargs[i].gcm_ctx =
