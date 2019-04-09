@@ -4796,3 +4796,4 @@ EVP_MD_fetch                            4743	3_0_0	EXIST::FUNCTION:
 EVP_set_default_properties              4744	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_construct_end                4745	3_0_0	EXIST::FUNCTION:
 EC_GROUP_check_named_curve              4746	3_0_0	EXIST::FUNCTION:EC
+OPENSSL_info                            4747	3_0_0	EXIST::FUNCTION:

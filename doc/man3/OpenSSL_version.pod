@@ -8,8 +8,8 @@ OPENSSL_VERSION_PRE_RELEASE_STR, OPENSSL_VERSION_BUILD_METADATA_STR,
 OPENSSL_VERSION_TEXT,
 OPENSSL_version_major, OPENSSL_version_minor, OPENSSL_version_patch,
 OPENSSL_version_pre_release, OPENSSL_version_build_metadata, OpenSSL_version,
-OPENSSL_VERSION_NUMBER, OpenSSL_version_num
-- get OpenSSL version number
+OPENSSL_VERSION_NUMBER, OpenSSL_version_num, OPENSSL_info
+- get OpenSSL version number and other information
 
 =head1 SYNOPSIS
 
@@ -36,6 +36,8 @@ OPENSSL_VERSION_NUMBER, OpenSSL_version_num
  #include <openssl/crypto.h>
 
  const char *OpenSSL_version(int t);
+
+ const char *OPENSSL_info(int t);
 
 Deprecated:
 
@@ -126,6 +128,33 @@ if available or "ENGINESDIR: N/A" otherwise.
 =back
 
 For an unknown B<t>, the text "not available" is returned.
+
+OPENSSL_info() also returns different strings depending on B<t>:
+
+=over 4
+
+=item OPENSSL_INFO_CONFIG_DIR
+
+The configured C<OPENSSLDIR>, which is the default location for
+OpenSSL configuration files.
+
+=item OPENSSL_INFO_ENGINES_DIR
+
+The configured C<ENGINESDIR>, which is the default location for
+OpenSSL engines.
+
+=item OPENSSL_INFO_MODULES_DIR
+
+The configured C<MODULESDIR>, which is the default location for
+dynamically loadable OpenSSL modules other than engines.
+
+=item OPENSSL_INFO_DSO_EXTENSION
+
+The configured dynamically loadable module extension.
+
+=back
+
+For an unknown B<t>, NULL is returned.
 
 =head1 BACKWARD COMPATIBILITY
 
