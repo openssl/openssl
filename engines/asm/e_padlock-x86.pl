@@ -14,6 +14,12 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
+# ====================================================================
+# GMI's SM3 and SM4 assembly is Written by yunshen@zhaoxin.com and 
+# kelvinkli@zhaoxin.com. 
+#
+# ====================================================================
+
 # September 2011
 #
 # Assembler helpers for Padlock engine. Compared to original engine
@@ -611,8 +617,136 @@ my ($mode,$opcode) = @_;
 	&ret	();
 &function_end_B("padlock_sha512_blocks");
 
-&asciz	("VIA Padlock x86 module, CRYPTOGAMS by <appro\@openssl.org>");
-&align	(16);
+&function_begin_B("gmi_reload_key");
+    &pushf  ();
+    &popf   ();
+    &ret    ();
+&function_end_B("gmi_reload_key");
+
+&function_begin_B("gmi_xstore");
+    &push   ("edi");
+    &mov    ("edi",&wparam(0));
+    &mov    ("edx",&wparam(1));
+    &data_byte(0x0f,0xa7,0xc0);     # xstore
+    &pop    ("edi");
+    &ret    ();
+&function_end_B("gmi_xstore");
+
+&function_begin_B("gmi_sm3_oneshot");
+    &push   ("ebx");
+    &push   ("edi");
+    &push   ("esi");
+    &xor    ("eax","eax");
+    &mov    ("edi",&wparam(0));
+    &mov    ("esi",&wparam(1));
+    &mov    ("ecx",&wparam(2));
+    if ($::win32 or $::coff) {
+        &push   (&::islabel("_win32_segv_handler"));
+    &data_byte(0x64,0xff,0x30);     # push  %fs:(%eax)
+    &data_byte(0x64,0x89,0x20);     # mov   %esp,%fs:(%eax)
+    }
+    &mov    ("edx","esp");          # put aside %esp
+    &add    ("esp",-128);
+    &movups ("xmm0",&QWP(0,"edi"));     # copy-in context
+    &and    ("esp",-16);
+    &movups ("xmm1",&QWP(16,"edi"));
+    &movaps (&QWP(0,"esp"),"xmm0");
+    &mov    ("edi","esp");
+    &movaps (&QWP(16,"esp"),"xmm1");
+    &mov    ("ebx", 0x20);
+    &xor    ("eax","eax");
+    &data_byte(0xf3,0x0f,0xa6,0xe8);    # gm5 ccs_hash
+    &movaps ("xmm0",&QWP(0,"esp"));
+    &movaps ("xmm1",&QWP(16,"esp"));
+    &mov    ("esp","edx");          # restore %esp
+    if ($::win32 or $::coff) {
+    &data_byte(0x64,0x8f,0x05,0,0,0,0); # pop   %fs:0
+    &lea    ("esp",&DWP(4,"esp"));
+    }
+    &mov    ("edi",&wparam(0));
+    &movups (&QWP(0,"edi"),"xmm0");     # copy-out context
+    &movups (&QWP(16,"edi"),"xmm1");
+    &pop    ("esi");
+    &pop    ("edi");
+    &pop    ("ebx");
+    &ret    ();
+&function_end_B("gmi_sm3_oneshot");
+
+&function_begin_B("gmi_sm3_blocks");
+    &push   ("ebx");
+    &push   ("edi");
+    &push   ("esi");
+    &mov    ("edi",&wparam(0));
+    &mov    ("esi",&wparam(1));
+    &mov    ("ecx",&wparam(2));
+    &mov    ("edx","esp");          # put aside %esp
+    &add    ("esp",-128);
+    &movups ("xmm0",&QWP(0,"edi"));     # copy-in context
+    &and    ("esp",-16);
+    &movups ("xmm1",&QWP(16,"edi"));
+    &movaps (&QWP(0,"esp"),"xmm0");
+    &mov    ("edi","esp");
+    &movaps (&QWP(16,"esp"),"xmm1");
+    &mov    ("ebx", 0x20);
+    &mov    ("eax",-1);
+    &data_byte(0xf3,0x0f,0xa6,0xe8);    # gm5 ccs_hash
+    &movaps ("xmm0",&QWP(0,"esp"));
+    &movaps ("xmm1",&QWP(16,"esp"));
+    &mov    ("esp","edx");          # restore %esp
+    &mov    ("edi",&wparam(0));
+    &movups (&QWP(0,"edi"),"xmm0");     # copy-out context
+    &movups (&QWP(16,"edi"),"xmm1");
+    &pop    ("esi");
+    &pop    ("edi");
+    &pop    ("ebx");
+    &ret    ();
+&function_end_B("gmi_sm3_blocks");
+
+&function_begin_B("gmi_sm4_encrypt");
+
+    &push   ("ebx");
+    &push   ("edi");
+    &push   ("esi");
+    &mov    ("edi",&wparam(0));
+    &mov    ("esi",&wparam(1));
+    &mov    ("edx",&wparam(2));
+    &mov    ("ecx",&wparam(3));
+
+
+    &lea    ("ebx",&DWP(32,"edx"));
+    &shr    ("ecx", 4);
+    &mov    ("eax",&DWP(16,"edx"));
+
+    &data_byte(0xf3,0x0f,0xa7,0xf0);    # gx6 ccs_encrypt
+
+    &pop    ("esi");
+    &pop    ("edi");
+    &pop    ("ebx");
+    &ret    ();
+&function_end_B("gmi_sm4_encrypt");
+
+&function_begin_B("gmi_sm4_ecb_enc");
+
+    &push   ("ebx");
+    &push   ("edi");
+    &push   ("esi");
+    &mov    ("esi",&wparam(0));
+    &mov    ("edi",&wparam(1));
+    &mov    ("ebx",&wparam(2));
+
+    &mov    ("ecx", 1);
+    &mov    ("eax", 0x60);
+    
+    &data_byte(0xf3,0x0f,0xa7,0xf0);    # gx6 ccs_encrypt
+
+    &pop    ("esi");
+    &pop    ("edi");
+    &pop    ("ebx");
+    &ret    ();
+&function_end_B("gmi_sm4_ecb_enc");
+
+&asciz  ("VIA Padlock x86 module, CRYPTOGAMS by <appro\@openssl.org>");
+&align  (16);
 
 &dataseg();
 # Essentially this variable belongs in thread local storage.

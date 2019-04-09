@@ -14,6 +14,12 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
+# ====================================================================
+# GMI's SM3 and SM4 assembly is Written by yunshen@zhaoxin.com and 
+# kelvinkli@zhaoxin.com. 
+#
+# ====================================================================
+
 # September 2011
 #
 # Assembler helpers for Padlock engine. See even e_padlock-x86.pl for
@@ -276,6 +282,115 @@ padlock_sha512_blocks:
 	movups	%xmm3,48(%rdx)
 	ret
 .size	padlock_sha512_blocks,.-padlock_sha512_blocks
+.globl  gmi_reload_key
+.type   gmi_reload_key,\@abi-omnipotent
+.align  16
+gmi_reload_key:
+    pushf
+    popf
+    ret
+.size   gmi_reload_key,.-gmi_reload_key
+
+.globl  gmi_sm3_oneshot
+.type   gmi_sm3_oneshot,\@function,3
+.align  16
+gmi_sm3_oneshot:
+    mov %rbx, %r11      # save rbx
+    mov %rdx,%rcx
+    mov %rdi,%rdx       # put aside %rdi
+    movups  (%rdi),%xmm0        # copy-in context
+    sub \$128+8,%rsp
+    movups  16(%rdi),%xmm1
+    movaps  %xmm0,(%rsp)
+    mov %rsp,%rdi
+    movaps  %xmm1,16(%rsp)
+    mov \$0x20, %rbx
+    xor %rax,%rax
+    .byte   0xf3,0x0f,0xa6,0xe8 # gm5 ccs_hash
+    movaps  (%rsp),%xmm0
+    movaps  16(%rsp),%xmm1
+    add \$128+8,%rsp
+    movups  %xmm0,(%rdx)        # copy-out context
+    movups  %xmm1,16(%rdx)
+    mov %r11, %rbx      #restore rbx
+    ret
+.size   gmi_sm3_oneshot,.-gmi_sm3_oneshot
+
+.globl  gmi_sm3_blocks
+.type   gmi_sm3_blocks,\@function,3
+.align  16
+gmi_sm3_blocks:
+    mov %rbx, %r11      # save rbx
+    mov %rdx,%rcx
+    mov %rdi,%rdx       # put aside %rdi
+    movups  (%rdi),%xmm0        # copy-in context
+    sub \$128+8,%rsp
+    movups  16(%rdi),%xmm1
+    movaps  %xmm0,(%rsp)
+    mov %rsp,%rdi
+    movaps  %xmm1,16(%rsp)
+    mov \$0x20, %rbx
+    mov \$-1,%rax
+    .byte   0xf3,0x0f,0xa6,0xe8 # gm5 ccs_hash
+    movaps  (%rsp),%xmm0
+    movaps  16(%rsp),%xmm1
+    add \$128+8,%rsp
+    movups  %xmm0,(%rdx)        # copy-out context
+    movups  %xmm1,16(%rdx)
+    mov %r11, %rbx      #restore rbx
+    ret
+.size   gmi_sm3_blocks,.-gmi_sm3_blocks
+
+.globl  gmi_sm4_encrypt
+.type   gmi_sm4_encrypt,\@function,4
+.align  16
+gmi_sm4_encrypt:
+
+    push %rbp
+    push %rbx   # save rbx
+    push %rdi
+    push %rsi
+
+
+    lea 32(%rdx), %rbx
+    shr \$0x04, %rcx
+    mov 16(%rdx), %rax
+    
+    .byte   0xf3,0x0f,0xa7,0xf0 # gx6 ccs_encrypt
+
+    pop %rsi
+    pop %rdi
+    pop %rbx        #restore rbx
+    pop %rbp
+    ret
+.size   gmi_sm4_encrypt,.-gmi_sm4_encrypt
+
+.globl  gmi_sm4_ecb_enc
+.type   gmi_sm4_ecb_enc,\@function,3
+.align  16
+gmi_sm4_ecb_enc:
+
+    push %rbp
+    push %rbx   # save rbx
+    push %rdi
+    push %rsi
+
+    mov %rsi, %rax
+    mov %rdi, %rsi
+    mov %rax, %rdi
+
+    mov %rdx, %rbx
+    mov \$1, %rcx
+    mov \$0x60, %rax
+    
+    .byte   0xf3,0x0f,0xa7,0xf0 # gx6 ccs_encrypt
+
+    pop %rsi
+    pop %rdi
+    pop %rbx        #restore rbx
+    pop %rbp
+    ret
+.size   gmi_sm4_ecb_enc,.-gmi_sm4_ecb_enc
 ___
 
 sub generate_mode {
