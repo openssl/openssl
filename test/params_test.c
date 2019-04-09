@@ -391,7 +391,6 @@ static OSSL_PARAM *construct_api_params(void)
 {
     size_t n = 0;
     static OSSL_PARAM params[10];
-    OSSL_PARAM param_end = OSSL_PARAM_END;
 
     params[n++] = OSSL_PARAM_construct_int("p1", &app_p1, NULL);
     params[n++] = OSSL_PARAM_construct_BN("p3", bignumbin, sizeof(bignumbin),
@@ -404,7 +403,7 @@ static OSSL_PARAM *construct_api_params(void)
                                                 &app_p6_l);
     params[n++] = OSSL_PARAM_construct_octet_string("foo", &foo, sizeof(foo),
                                                     &foo_l);
-    params[n++] = param_end;
+    params[n++] = OSSL_PARAM_construct_end();
 
     return params;
 }

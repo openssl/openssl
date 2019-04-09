@@ -137,6 +137,7 @@ OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
                                              size_t bsize, size_t *rsize);
 OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
                                           size_t *rsize);
+OSSL_PARAM OSSL_PARAM_construct_end(void);
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val);
 int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val);
