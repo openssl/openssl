@@ -9,6 +9,11 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added OPENSSL_info() to get diverse built-in OpenSSL data, such
+     as default directories.  Also added the command 'openssl info'
+     for scripting purposes.
+     [Richard Levitte]
+
   *) The functions AES_ige_encrypt() and AES_bi_ige_encrypt() have been
      deprecated. These undocumented functions were never integrated into the EVP
      layer and implement the AES Infinite Garble Extension (IGE) mode and AES

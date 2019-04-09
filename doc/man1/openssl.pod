@@ -167,6 +167,10 @@ Generation of Private Key or Parameters.
 
 Generation of RSA Private Key. Superseded by L<genpkey(1)>.
 
+=item B<info>
+
+Display diverse information built into the OpenSSL libraries.
+
 =item B<mac>
 
 Message Authentication Code Calculation.

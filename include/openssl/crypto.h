@@ -165,6 +165,18 @@ const char *OpenSSL_version(int type);
 # define OPENSSL_FULL_VERSION_STRING    7
 # define OPENSSL_MODULES_DIR            8
 
+const char *OPENSSL_info(int type);
+/*
+ * The series starts at 1001 to avoid confusion with the OpenSSL_version
+ * types.
+ */
+# define OPENSSL_INFO_CONFIG_DIR                1001
+# define OPENSSL_INFO_ENGINES_DIR               1002
+# define OPENSSL_INFO_MODULES_DIR               1003
+# define OPENSSL_INFO_DSO_EXTENSION             1004
+# define OPENSSL_INFO_DIR_FILENAME_SEPARATOR    1005
+# define OPENSSL_INFO_LIST_SEPARATOR            1006
+
 int OPENSSL_issetugid(void);
 
 typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,

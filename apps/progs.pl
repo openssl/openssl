@@ -51,6 +51,9 @@ print <<"EOF";
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/lhash.h>
+#include "opt.h"
+
 typedef enum FUNC_TYPE {
     FT_none, FT_general, FT_md, FT_cipher, FT_pkey,
     FT_md_alg, FT_cipher_alg

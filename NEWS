@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
 
+      o Add OPENSSL_info() and 'openssl info' to get built-in data.
       o Add support for enabling instrumentation through trace and debug
         output.
       o Changed our version number scheme and set the next major release to
