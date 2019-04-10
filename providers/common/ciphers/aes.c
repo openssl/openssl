@@ -17,35 +17,49 @@
 #include "internal/provider_algs.h"
 #include "ciphers_locl.h"
 
-static void PROV_AES_KEY_generic_init(PROV_AES_KEY *ctx,
+static int PROV_AES_KEY_generic_init(PROV_AES_KEY *ctx,
                                       const unsigned char *iv,
+                                      size_t ivlen,
                                       int enc)
 {
-    if (iv != NULL)
+    if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
+        if (ivlen != AES_BLOCK_SIZE)
+            return 0;
         memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
+    }
     ctx->enc = enc;
-}
-
-static int aes_einit(void *vctx, const unsigned char *key,
-                           const unsigned char *iv)
-{
-    PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
-
-    PROV_AES_KEY_generic_init(ctx, iv, 1);
-    if (key != NULL)
-        return ctx->ciph->init(ctx, key, ctx->keylen);
 
     return 1;
 }
 
-static int aes_dinit(void *vctx, const unsigned char *key,
-                     const unsigned char *iv)
+static int aes_einit(void *vctx, const unsigned char *key, size_t keylen,
+                           const unsigned char *iv, size_t ivlen)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
-    PROV_AES_KEY_generic_init(ctx, iv, 0);
-    if (key != NULL)
+    if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 1))
+        return 0;
+    if (key != NULL) {
+        if (keylen != ctx->keylen)
+            return 0;
         return ctx->ciph->init(ctx, key, ctx->keylen);
+    }
+
+    return 1;
+}
+
+static int aes_dinit(void *vctx, const unsigned char *key, size_t keylen,
+                     const unsigned char *iv, size_t ivlen)
+{
+    PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
+
+    if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 0))
+        return 0;
+    if (key != NULL) {
+        if (keylen != ctx->keylen)
+            return 0;
+        return ctx->ciph->init(ctx, key, ctx->keylen);
+    }
 
     return 1;
 }
