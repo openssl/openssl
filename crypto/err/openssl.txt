@@ -1103,6 +1103,7 @@ PROP_F_PARSE_OCT:105:parse_oct
 PROP_F_PARSE_STRING:106:parse_string
 PROP_F_PARSE_UNQUOTED:107:parse_unquoted
 RAND_F_DRBG_BYTES:101:drbg_bytes
+RAND_F_DRBG_CTR_INIT:125:drbg_ctr_init
 RAND_F_DRBG_GET_ENTROPY:105:drbg_get_entropy
 RAND_F_DRBG_SETUP:117:drbg_setup
 RAND_F_GET_ENTROPY:106:get_entropy
@@ -2607,6 +2608,8 @@ RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long
 RAND_R_ALREADY_INSTANTIATED:103:already instantiated
 RAND_R_ARGUMENT_OUT_OF_RANGE:105:argument out of range
 RAND_R_CANNOT_OPEN_FILE:121:Cannot open file
+RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS:137:\
+	derivation function mandatory for fips
 RAND_R_DRBG_ALREADY_INITIALIZED:129:drbg already initialized
 RAND_R_DRBG_NOT_INITIALISED:104:drbg not initialised
 RAND_R_ENTROPY_INPUT_TOO_LONG:106:entropy input too long
