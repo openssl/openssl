@@ -11,8 +11,13 @@
 #include "provider_local.h"
 
 OSSL_provider_init_fn ossl_default_provider_init;
+OSSL_provider_init_fn fips_intern_provider_init;
 
 const struct predefined_providers_st predefined_providers[] = {
+#ifdef FIPS_MODE
+    { "fips", fips_intern_provider_init, 1 },
+#else
     { "default", ossl_default_provider_init, 1 },
+#endif
     { NULL, NULL, 0 }
 };

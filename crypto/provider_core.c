@@ -275,7 +275,9 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          * the store.  All we have to do here is clean it out.
          */
         if (ref == 0) {
+#ifndef FIPS_MODE
             DSO_free(prov->module);
+#endif
             OPENSSL_free(prov->name);
             OPENSSL_free(prov->path);
             sk_INFOPAIR_pop_free(prov->parameters, free_infopair);
@@ -352,6 +354,9 @@ static int provider_activate(OSSL_PROVIDER *prov)
      * a loadable module.
      */
     if (prov->init_function == NULL) {
+#ifdef FIPS_MODE
+        return 0;
+#else
         if (prov->module == NULL) {
             char *allocated_path = NULL;
             const char *module_path = NULL;
@@ -389,6 +394,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
         if (prov->module != NULL)
             prov->init_function = (OSSL_provider_init_fn *)
                 DSO_bind_func(prov->module, "OSSL_provider_init");
+#endif
     }
 
     if (prov->init_function == NULL
@@ -396,8 +402,10 @@ static int provider_activate(OSSL_PROVIDER *prov)
                                 &prov->provctx)) {
         CRYPTOerr(CRYPTO_F_PROVIDER_ACTIVATE, ERR_R_INIT_FAIL);
         ERR_add_error_data(2, "name=", prov->name);
+#ifndef FIPS_MODE
         DSO_free(prov->module);
         prov->module = NULL;
+#endif
         return 0;
     }
 
@@ -557,13 +565,21 @@ const DSO *ossl_provider_dso(OSSL_PROVIDER *prov)
 
 const char *ossl_provider_module_name(OSSL_PROVIDER *prov)
 {
+#ifdef FIPS_MODE
+    return NULL;
+#else
     return DSO_get_filename(prov->module);
+#endif
 }
 
 const char *ossl_provider_module_path(OSSL_PROVIDER *prov)
 {
+#ifdef FIPS_MODE
+    return NULL;
+#else
     /* FIXME: Ensure it's a full path */
     return DSO_get_filename(prov->module);
+#endif
 }
 
 /* Wrappers around calls to the provider */
@@ -643,6 +659,8 @@ static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
+    { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))ERR_put_error },
+    { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))ERR_add_error_vdata },
     { 0, NULL }
 };
 static const OSSL_DISPATCH *core_dispatch = core_dispatch_;
