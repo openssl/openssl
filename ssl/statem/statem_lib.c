@@ -945,9 +945,9 @@ static int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
          * ignore the error return from this call. We're not actually verifying
          * the cert - we're just building as much of the chain as we can
          */
+        (void)ERR_set_mark();
         (void)X509_verify_cert(xs_ctx);
-        /* Don't leave errors in the queue */
-        ERR_clear_error();
+        (void)ERR_pop_to_mark(); /* Don't leave any new errors in the queue */
         chain = X509_STORE_CTX_get0_chain(xs_ctx);
         i = ssl_security_cert_chain(s, chain, NULL, 0);
         if (i != 1) {

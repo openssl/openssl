@@ -1901,6 +1901,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
         x = NULL;
     }
 
+    (void)ERR_set_mark();
     i = ssl_verify_cert_chain(s, sk);
     /*
      * The documented interface is that SSL_VERIFY_PEER should be set in order
@@ -1922,7 +1923,8 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
                  SSL_R_CERTIFICATE_VERIFY_FAILED);
         goto err;
     }
-    ERR_clear_error();          /* but we keep s->verify_result */
+    (void)ERR_pop_to_mark(); /* Don't leave any new errors in the queue */
+    /* but we keep s->verify_result */
     if (i > 1) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                  SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, i);

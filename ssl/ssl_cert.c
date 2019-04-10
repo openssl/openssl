@@ -620,6 +620,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     STACK_OF(X509_NAME) *ret = NULL;
     LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
 
+    (void)ERR_set_mark();
     if ((name_hash == NULL) || (in == NULL)) {
         SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -664,8 +665,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     BIO_free(in);
     X509_free(x);
     lh_X509_NAME_free(name_hash);
-    if (ret != NULL)
-        ERR_clear_error();
+    (void)ERR_pop_to_mark();
     return ret;
 }
 
@@ -687,6 +687,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     int ret = 1;
     int (*oldcmp) (const X509_NAME *const *a, const X509_NAME *const *b);
 
+    (void)ERR_set_mark();
     oldcmp = sk_X509_NAME_set_cmp_func(stack, xname_sk_cmp);
 
     in = BIO_new(BIO_s_file());
@@ -716,7 +717,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         }
     }
 
-    ERR_clear_error();
+    (void)ERR_pop_to_mark();
     goto done;
 
  err:

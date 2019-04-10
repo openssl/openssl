@@ -3371,8 +3371,9 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
      */
     client_pub_pkey = X509_get0_pubkey(s->session->peer);
     if (client_pub_pkey) {
-        if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
-            ERR_clear_error();
+        (void)ERR_set_mark();
+        (void)EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey);
+        (void)ERR_pop_to_mark();
     }
     /* Decrypt session key */
     if (!PACKET_get_1(pkt, &asn1id)

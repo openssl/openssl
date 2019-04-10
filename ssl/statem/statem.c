@@ -308,7 +308,7 @@ static int state_machine(SSL *s, int server)
         return -1;
     }
 
-    ERR_clear_error();
+    ERR_clear_error(); /* TODO replace using ERR_pop_to_mark() if possible */
     clear_sys_error();
 
     cb = get_callback(s);

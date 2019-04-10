@@ -1477,7 +1477,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             ret = SSL_TICKET_SUCCESS;
         goto end;
     }
-    ERR_clear_error();
+    ERR_clear_error(); /* TODO replace using ERR_pop_to_mark() if possible */
     /*
      * For session parse failure, indicate that we need to send a new ticket.
      */
@@ -2576,12 +2576,13 @@ static int has_usable_cert(SSL *s, const SIGALG_LOOKUP *sig, int idx)
         }
         return 0;
     }
+    (void)ERR_set_mark();
     supported = EVP_PKEY_supports_digest_nid(s->cert->pkeys[idx].privatekey,
                                              sig->hash);
     if (supported == 0)
         return 0;
     else if (supported < 0)
-        ERR_clear_error();
+        (void)ERR_pop_to_mark();
 
     return 1;
 }

@@ -465,7 +465,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     if (!SSL_clear(s))
         return -1;
 
-    ERR_clear_error();
+    ERR_clear_error(); /* TODO replace using ERR_pop_to_mark() if possible */
 
     rbio = SSL_get_rbio(s);
     wbio = SSL_get_wbio(s);

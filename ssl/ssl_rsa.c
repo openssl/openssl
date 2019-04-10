@@ -145,8 +145,9 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
          * The return code from EVP_PKEY_copy_parameters is deliberately
          * ignored. Some EVP_PKEY types cannot do this.
          */
+        (void)ERR_set_mark();
         EVP_PKEY_copy_parameters(pktmp, pkey);
-        ERR_clear_error();
+        (void)ERR_pop_to_mark();
 
 #ifndef OPENSSL_NO_RSA
         /*
@@ -339,8 +340,9 @@ static int ssl_set_cert(CERT *c, X509 *x)
          * The return code from EVP_PKEY_copy_parameters is deliberately
          * ignored. Some EVP_PKEY types cannot do this.
          */
+        (void)ERR_set_mark();
         EVP_PKEY_copy_parameters(pkey, c->pkeys[i].privatekey);
-        ERR_clear_error();
+        (void)ERR_pop_to_mark();
 
 #ifndef OPENSSL_NO_RSA
         /*
@@ -352,6 +354,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
             RSA_METHOD_FLAG_NO_CHECK) ;
         else
 #endif                          /* OPENSSL_NO_RSA */
+        (void)ERR_set_mark();
         if (!X509_check_private_key(x, c->pkeys[i].privatekey)) {
             /*
              * don't fail for a cert/key mismatch, just free current private
@@ -360,9 +363,8 @@ static int ssl_set_cert(CERT *c, X509 *x)
              */
             EVP_PKEY_free(c->pkeys[i].privatekey);
             c->pkeys[i].privatekey = NULL;
-            /* clear error queue */
-            ERR_clear_error();
         }
+        (void)ERR_pop_to_mark(); /* Don't leave any new errors in the queue */
     }
 
     X509_free(c->pkeys[i].x509);
@@ -594,8 +596,8 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
     pem_password_cb *passwd_callback;
     void *passwd_callback_userdata;
 
-    ERR_clear_error();          /* clear error stack for
-                                 * SSL_CTX_use_certificate() */
+    /* clear error stack for SSL_CTX_use_certificate() */
+    ERR_clear_error(); /* TODO replace using ERR_pop_to_mark() if possible */
 
     if (ctx != NULL) {
         passwd_callback = ctx->default_passwd_callback;
@@ -650,6 +652,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
             goto end;
         }
 
+        (void)ERR_set_mark();
         while ((ca = PEM_read_bio_X509(in, NULL, passwd_callback,
                                        passwd_callback_userdata))
                != NULL) {
@@ -672,7 +675,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         err = ERR_peek_last_error();
         if (ERR_GET_LIB(err) == ERR_LIB_PEM
             && ERR_GET_REASON(err) == PEM_R_NO_START_LINE)
-            ERR_clear_error();
+            (void)ERR_pop_to_mark();
         else
             ret = 0;            /* some real error */
     }

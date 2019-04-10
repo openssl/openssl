@@ -3088,14 +3088,16 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     /* Use specific client engine automatically... ignore errors */
     {
         ENGINE *eng;
+
+        (void)ERR_set_mark();
         eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
         if (!eng) {
-            ERR_clear_error();
             ENGINE_load_builtin_engines();
             eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
         }
-        if (!eng || !SSL_CTX_set_client_cert_engine(ret, eng))
-            ERR_clear_error();
+        if (eng != NULL)
+            (void)SSL_CTX_set_client_cert_engine(ret, eng);
+        (void)ERR_pop_to_mark();
     }
 # endif
 #endif
@@ -4117,10 +4119,11 @@ int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_hash_dir());
     if (lookup == NULL)
         return 0;
+    (void)ERR_set_mark();
     X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
 
     /* Clear any errors if the default directory does not exist */
-    ERR_clear_error();
+    (void)ERR_pop_to_mark();
 
     return 1;
 }
@@ -4133,10 +4136,11 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
     if (lookup == NULL)
         return 0;
 
+    (void)ERR_set_mark();
     X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
 
     /* Clear any errors if the default file does not exist */
-    ERR_clear_error();
+    (void)ERR_pop_to_mark();
 
     return 1;
 }
@@ -5551,7 +5555,7 @@ int SSL_stateless(SSL *s)
     if (!SSL_clear(s))
         return 0;
 
-    ERR_clear_error();
+    ERR_clear_error(); /* TODO replace using ERR_pop_to_mark() if possible */
 
     s->s3->flags |= TLS1_FLAGS_STATELESS;
     ret = SSL_accept(s);
