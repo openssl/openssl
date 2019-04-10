@@ -1101,6 +1101,17 @@ static int drbg_add(const void *buf, int num, double randomness)
 
     buflen = (size_t)num;
 
+#ifdef FIPS_MODE
+    /*
+     * NIST SP-800-90A mandates that entropy *shall not* be provided
+     * by the consuming application. By setting the randomness to zero,
+     * we ensure that the buffer contents will be added to the internal
+     * state of the DRBG only as additional data.
+     *
+     * (NIST SP-800-90Ar1, Sections 9.1 and 9.2)
+     */
+    randomness = 0.0;
+#endif
     if (buflen < seedlen || randomness < (double) seedlen) {
 #if defined(OPENSSL_RAND_SEED_NONE)
         /*
@@ -1117,14 +1128,13 @@ static int drbg_add(const void *buf, int num, double randomness)
         return ret;
 #else
         /*
-         * If an os entropy source is avaible then we declare the buffer content
+         * If an os entropy source is available then we declare the buffer content
          * as additional data by setting randomness to zero and trigger a regular
          * reseeding.
          */
         randomness = 0.0;
 #endif
     }
-
 
     if (randomness > (double)seedlen) {
         /*
