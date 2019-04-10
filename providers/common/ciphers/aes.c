@@ -65,7 +65,7 @@ static int aes_dinit(void *vctx, const unsigned char *key, size_t keylen,
 }
 
 static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
-                            const unsigned char *in, size_t inl)
+                            size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
     size_t nextblocks = fillblock(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE, &in,
@@ -79,6 +79,8 @@ static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
      */
     if (ctx->bufsz == AES_BLOCK_SIZE
             && (ctx->enc || inl > 0 || !ctx->pad)) {
+        if (outsize < AES_BLOCK_SIZE)
+            return 0;
         if (!ctx->ciph->cipher(ctx, out, ctx->buf, AES_BLOCK_SIZE))
             return 0;
         ctx->bufsz = 0;
@@ -91,11 +93,13 @@ static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
                 return 0;
             nextblocks -= AES_BLOCK_SIZE;
         }
+        outlint += nextblocks;
+        if (outsize < outlint)
+            return 0;
         if (!ctx->ciph->cipher(ctx, out, in, nextblocks))
             return 0;
         in += nextblocks;
         inl -= nextblocks;
-        outlint += nextblocks;
     }
     if (!trailingdata(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE, &in, &inl))
         return 0;
@@ -104,7 +108,8 @@ static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
     return inl == 0;
 }
 
-static int aes_block_final(void *vctx, unsigned char *out, size_t *outl)
+static int aes_block_final(void *vctx, unsigned char *out, size_t *outl,
+                           size_t outsize)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
@@ -119,6 +124,8 @@ static int aes_block_final(void *vctx, unsigned char *out, size_t *outl)
             return 0;
         }
 
+        if (outsize < AES_BLOCK_SIZE)
+            return 0;
         if (!ctx->ciph->cipher(ctx, out, ctx->buf, AES_BLOCK_SIZE))
             return 0;
         ctx->bufsz = 0;
@@ -143,6 +150,8 @@ static int aes_block_final(void *vctx, unsigned char *out, size_t *outl)
     if (ctx->pad && !unpadblock(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE))
         return 0;
 
+    if (outsize < ctx->bufsz)
+        return 0;
     memcpy(out, ctx->buf, ctx->bufsz);
     *outl = ctx->bufsz;
     ctx->bufsz = 0;
@@ -150,9 +159,13 @@ static int aes_block_final(void *vctx, unsigned char *out, size_t *outl)
 }
 
 static int aes_stream_update(void *vctx, unsigned char *out, size_t *outl,
-                             const unsigned char *in, size_t inl)
+                             size_t outsize, const unsigned char *in,
+                             size_t inl)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
+
+    if (outsize < inl)
+        return 0;
 
     if (!ctx->ciph->cipher(ctx, out, in, inl))
         return 0;
@@ -160,7 +173,8 @@ static int aes_stream_update(void *vctx, unsigned char *out, size_t *outl,
     *outl = inl;
     return 1;
 }
-static int aes_stream_final(void *vctx, unsigned char *out, size_t *outl)
+static int aes_stream_final(void *vctx, unsigned char *out, size_t *outl,
+                            size_t outsize)
 {
     *outl = 0;
     return 1;
