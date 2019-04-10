@@ -132,6 +132,8 @@ static int write_config_header(BIO *out, const char *prov_name,
 {
     return BIO_printf(out, "openssl_conf = openssl_init\n\n")
            && BIO_printf(out, "[openssl_init]\n")
+           && BIO_printf(out, "providers = provider_section\n\n")
+           && BIO_printf(out, "[provider_section]\n")
            && BIO_printf(out, "%s = %s\n\n", prov_name, section);
 }
 
@@ -284,6 +286,8 @@ int fipsinstall_main(int argc, char **argv)
     size_t install_mac_len = EVP_MAX_MD_SIZE;
     const EVP_MAC *mac = NULL;
     CONF *conf = NULL;
+    OPENSSL_CTX *lib_ctx = NULL;
+    OSSL_PROVIDER *default_prov = NULL;
 
     section_name = DEFAULT_FIPS_SECTION;
 
@@ -341,6 +345,13 @@ opthelp:
         BIO_printf(bio_err, "Failed to open module file\n");
         goto end;
     }
+
+    lib_ctx = OPENSSL_CTX_new();
+    if (lib_ctx == NULL)
+        goto end;
+    default_prov = OSSL_PROVIDER_load(lib_ctx, "default");
+    if (default_prov == NULL)
+        goto end;
 
     read_buffer = app_malloc(BUFSIZE, "I/O buffer");
     if (read_buffer == NULL)
@@ -426,5 +437,7 @@ end:
     EVP_MAC_CTX_free(ctx);
     OPENSSL_free(read_buffer);
     free_config_and_unload(conf);
+    OSSL_PROVIDER_unload(default_prov);
+    OPENSSL_CTX_free(lib_ctx);
     return ret;
 }

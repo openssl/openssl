@@ -300,20 +300,6 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *params)
     int on_demand_test = (FIPS_state != FIPS_STATE_INIT);
     BIO *bio_module = NULL, *bio_indicator = NULL;
     ST_EVENT ev;
-/*
-    const OSSL_PARAM *prms = NULL;
-    const OSSL_PARAM *p = NULL;
-    p = OSSL_PARAM_locate(prms, "module-filename");
-    OSSL_PARAM_get_utf8_string(p, &params->module_filename, 0);
-    p = OSSL_PARAM_locate(prms, "module-checksum");
-    OSSL_PARAM_get_octet_string(p, &params->module_checksum_data, 0,
-                                &params->module_checksum_len);
-    p = OSSL_PARAM_locate(prms, "indicator-checksum");
-    OSSL_PARAM_get_octet_string(p, &params->indicator_checksum_data, 0,
-                                &params->indicator_checksum_len);
-    p = OSSL_PARAM_locate(prms, "indicator-data");
-    OSSL_PARAM_get_utf8_string(p, &params->indicator_data, 0);
-*/
 
     if (params == NULL)
         goto end;

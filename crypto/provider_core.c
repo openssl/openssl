@@ -565,7 +565,7 @@ const char *ossl_provider_module_name(const OSSL_PROVIDER *prov)
     return DSO_get_filename(prov->module);
 }
 
-const char *ossl_provider_module_path(OSSL_PROVIDER *prov)
+const char *ossl_provider_module_path(const OSSL_PROVIDER *prov)
 {
     /* FIXME: Ensure it's a full path */
     return DSO_get_filename(prov->module);
@@ -634,6 +634,8 @@ static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
     if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_PROV_NAME)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, prov->name);
+    if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_MODULE_FILENAME)) != NULL)
+        OSSL_PARAM_set_utf8_ptr(p, ossl_provider_module_path(prov));
 
     if (prov->parameters == NULL)
         return 1;

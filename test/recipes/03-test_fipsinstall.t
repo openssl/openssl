@@ -21,11 +21,10 @@ setup("test_fipsinstall");
 plan skip_all => "Test disabled in this configuration"
     if $^O eq 'MSWin32';
 
-plan tests => 4;
+plan tests => 2;
 
-my $infile = srctop_file("test", "p_test.so");
-$ENV{'OPENSSL_MODULES'} = srctop_file("test");
-ok(!run(app([qw{openssl fipsinstall -in unknown -cfg fips.conf -mac HMAC -macopt digest:SHA224 -macopt hexkey:00}])), "unknown infile");
-ok(!run(app(['openssl', 'fipsinstall', '-in', $infile, '-mac', 'HMAC', '-macopt', 'digest:SHA224', '-macopt', 'hexkey:00'])), "no config file");
-ok(run(app(['openssl', 'fipsinstall', '-in', $infile, '-cfg', 'fips.conf', '-mac', 'HMAC', '-macopt', 'digest:SHA224', '-macopt', 'hexkey:00', '-section', 'test'])), "fipinstall");
-ok(run(app(['openssl', 'fipsinstall', '-in', $infile, '-cfg', 'fips.conf', '-mac', 'HMAC', '-macopt', 'digest:SHA224', '-macopt', 'hexkey:00', '-section', 'test', '-verify'])), "fipsinstall -verify");
+my $infile = srctop_file("providers", "fips.so");
+$ENV{'OPENSSL_MODULES'} = srctop_file("providers");
+
+ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile, '-name', 'fips', '-mac', 'HMAC', '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00', '-section', 'fips_install'])), "fipinstall");
+ok(run(app(['openssl', 'fipsinstall', '-in', 'fips.conf', '-module', $infile, '-name', 'fips', '-mac', 'HMAC', '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00', '-section', 'fips_install', '-verify'])), "fipinstall verify");
