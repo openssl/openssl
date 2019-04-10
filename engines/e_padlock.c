@@ -280,6 +280,7 @@ static int gmi_available(void)
     family = (eax & 0xf00) >> 8;  // bit 11-08
     model = (eax & 0xf0) >> 4; // bit 7-4
 
+    f_zxc = 0; // 1 is for zx-c
     if ((family == 7)&(model == 0xb)) {
         f_zxc = 0;
         edx = padlock_capability();
