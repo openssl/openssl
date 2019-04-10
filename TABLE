@@ -1190,6 +1190,40 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
+*** android64-aarch64
+$cc           = gcc
+$cflags       = -mandroid -fPIC -I$(ANDROID_DEV)/include -B$(ANDROID_DEV)/lib -O3 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -pie%-ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR
+$cpuid_obj    = armcap.o arm64cpuid.o mem_clr.o
+$bn_obj       = 
+$ec_obj       = 
+$des_obj      = 
+$aes_obj      = aes_core.o aes_cbc.o aesv8-armx.o
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = sha1-armv8.o sha256-armv8.o sha512-armv8.o
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$modes_obj    = ghashv8-armx.o
+$engines_obj  = 
+$perlasm_scheme = linux64
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+$multilib     = 
+
 *** aux3-gcc
 $cc           = gcc
 $cflags       = -O2 -DTERMIO
