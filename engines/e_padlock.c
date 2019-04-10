@@ -243,7 +243,7 @@ void padlock_sha1_oneshot(void *ctx, const void *inp, size_t len);
 void padlock_sha1(void *ctx, const void *inp, size_t len);
 void padlock_sha256_oneshot(void *ctx, const void *inp, size_t len);
 void padlock_sha256(void *ctx, const void *inp, size_t len);
-void gmi_reload_key();
+void gmi_reload_key(void);
 void gmi_sm4_encrypt(unsigned char *out, const unsigned char *in, 
                      struct gmi_cipher_data *ctx, size_t len);
 void gmi_sm4_ecb_enc(unsigned char *in, unsigned char *out, 
@@ -265,7 +265,6 @@ static int padlock_available(void)
     return padlock_use_ace + padlock_use_rng;
 }
 
-unsigned char f_ZXC = 0;// 1 is for zx-d
 /*
  * Load supported features of the CPU to see if the GMI is available.
  */
@@ -273,21 +272,20 @@ static int gmi_available(void)
 {
     unsigned int eax = 0;
     unsigned int edx = 0;
-    unsigned char family,model,stepping;
+    unsigned char family,model;
    
-    // check zx's FMS
+    // Diff ZXC with ZXD
     unsigned int leaf = 0x1;
     asm volatile("cpuid":"=a"(eax):"0"(leaf):"ebx","ecx");
     family = (eax & 0xf00) >> 8;  // bit 11-08
     model = (eax & 0xf0) >> 4; // bit 7-4
-    stepping = eax & 0xf; // bit 3-0
 
     if ((family == 7)&(model == 0xb)) {
         f_ZXC = 0;
         edx = padlock_capability();
         padlock_use_ccs = ((edx & (0x3 << 4)) == (0x3 << 4));  
-    } else if (((family == 6)&(model == 0xf)&(stepping >= 0xe)) ||
-              ((family == 6)&(model == 9)&(stepping >= 0))) {
+    } else if (((family == 6)&(model == 0xf)) ||
+              ((family == 6)&(model == 9))) {
         f_ZXC = 1;
         edx = padlock_capability();
         padlock_use_ccs = ((edx & (0x3 << 4)) == (0x3 << 4));  
@@ -591,7 +589,7 @@ gmi_sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
         CRYPTO_ctr128_encrypt(in_arg, out_arg, nbytes,
                               cdata->ks.rd_key, EVP_CIPHER_CTX_iv_noconst(ctx), buf, &num,
                               (block128_f) gmi_sm4_ecb_enc);
-       EVP_CIPHER_CTX_set_num(ctx, (size_t)num);
+       EVP_CIPHER_CTX_set_num(ctx, num);
     } else {
         memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
         if (nbytes % SM4_BLOCK_SIZE) {        
@@ -599,7 +597,7 @@ gmi_sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
         }
         gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
         memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);
-        EVP_CIPHER_CTX_set_num(ctx, (size_t)num);
+        EVP_CIPHER_CTX_set_num(ctx, num);
     }
     return 1;
 }
@@ -610,7 +608,7 @@ gmi_sm4_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
     if (f_ZXC == 1) {
-        unsigned int num = EVP_CIPHER_CTX_num(ctx);
+        int num = EVP_CIPHER_CTX_num(ctx);
         CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
                               EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx),
                               (block128_f)gmi_sm4_ecb_enc);
@@ -631,7 +629,7 @@ gmi_sm4_ofb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
     if (f_ZXC == 1) {
-        unsigned int num = EVP_CIPHER_CTX_num(ctx);
+        int num = EVP_CIPHER_CTX_num(ctx);
         CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
                               EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx),
                               (block128_f)gmi_sm4_ecb_enc);
