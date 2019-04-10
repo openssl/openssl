@@ -36,7 +36,6 @@ static unsigned char fixed_key[32] = {0};
 void SELF_TEST_EVENT_init(ST_EVENT *ev)
 {
     size_t n = 0;
-    OSSL_PARAM param_end = OSSL_PARAM_END;
 
     if (ev == NULL)
         return;
@@ -49,7 +48,7 @@ void SELF_TEST_EVENT_init(ST_EVENT *ev)
         ev->params[n++] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_TEST_DESC,
                                                    &ev->desc, NULL);
     }
-    ev->params[n++] = param_end;
+    ev->params[n++] = OSSL_PARAM_construct_end();
 }
 
 /*

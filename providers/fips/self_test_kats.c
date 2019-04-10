@@ -244,15 +244,58 @@ static int self_test_sig(ST_SIGNATURE *t, ST_EVENT *event)
 /* Test a single KAT for encrypt/decrypt */
 static int self_test_cipher(ST_CIPHER *t, ST_EVENT *event)
 {
-#if 0
-    int ret = 1;
-    /* unsigned char out[64]; */
+#if 1
+    int ret = 1, encrypt = 1, len, ct_len, pt_len;
+    EVP_CIPHER_CTX *ctx = NULL;
+    const EVP_CIPHER *cipher = NULL;
+    unsigned char ct_buf[256] = { 0 };
+    unsigned char pt_buf[256] = { 0 };
 
     SELF_TEST_EVENT_onbegin(event, SELF_TEST_TYPE_KAT_CIPHER, t->desc);
 
-    /* TODO - Add once the method layers exist */
-    /* SELF_TEST_EVENT_oncorrupt_byte(event, out); */
+    ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL)
+        goto end;
+    cipher = EVP_get_cipherbyname(t->name);
+    if (cipher == NULL)
+        goto end;
 
+    /* Encrypt plain text message */
+    if (!(cipher_init(ctx, cipher, t, encrypt)
+          && EVP_CipherUpdate(ctx, ct_buf, &len, t->plaintxt.data,
+                              t->plaintxt.len)
+          && EVP_CipherFinal_ex(ctx, ct_buf + len, &ct_len)))
+        goto end;
+
+    if (ct_len != t->ciphertxt.len
+        || memcmp(t->ciphertxt.data, ct_buf, ct_len) != 0)
+        goto end;
+
+    if (t->tag.data != NULL) {
+        unsigned char tag[16] = {0};
+
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, t->tag.len, tag)
+            || memcmp(tag, t->tag, t->tag.len) != 0)
+            goto end;
+    }
+
+    if (!(cipher_init(ctx, cipher, t, !encrypt)
+          && EVP_CipherUpdate(ctx, pt_buf, &len, ct_buf, ct_len)
+          && EVP_CipherFinal_ex(ctx, pt_buf + len, &pt_len)))
+        goto end;
+    pt_len += len;
+
+
+    SELF_TEST_EVENT_oncorrupt_byte(event, ct_buf);
+
+    if (pt_len != t->plaintxt.len
+        || memcmp(pt_buf, t->plaintxt.data, pt_len) != 0)
+        goto end;
+
+
+
+end:
+    EVP_CIPHER_CTX_free(ctx);
     SELF_TEST_EVENT_onend(event, ret);
     return ret;
 #else
