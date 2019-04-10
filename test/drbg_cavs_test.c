@@ -255,7 +255,7 @@ static int test_cavs_kats(const struct drbg_kat *test[], int i)
     int rv = 0;
 
 #ifdef FIPS_MODE
-    /* FIPS mode doesn't support CTR DRBG without a derivation function */
+    /* FIPS mode doesn't support instantiating without a derivation function */
     if ((td->flags & USE_DF) == 0)
         return 1;
 #endif
