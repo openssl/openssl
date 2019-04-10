@@ -13,6 +13,7 @@ B<openssl speed>
 [B<-elapsed>]
 [B<-evp algo>]
 [B<-hmac algo>]
+[B<-cmac algo>]
 [B<-decrypt>]
 [B<-rand file...>]
 [B<-writerand file>]
@@ -59,6 +60,10 @@ aes-128-cbc-hmac-sha1, then B<-mb> will time multi-buffer operation.
 =item B<-hmac digest>
 
 Time the HMAC algorithm using the specified message digest.
+
+=item B<-cmac cipher>
+
+Time the CMAC algorithm using the specified cipher e.g. B<speed -cmac aes128>.
 
 =item B<-decrypt>
 
