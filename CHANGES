@@ -9,7 +9,13 @@
 
  Changes between 1.0.2r and 1.0.2s [xx XXX xxxx]
 
-  *)
+  *) Add FIPS support for Android Arm 64-bit
+
+     Support for Android Arm 64-bit was added to the OpenSSL FIPS Object Module in
+     Version 2.0.10. For some reason, the corresponding target 'android64-aarch64'
+     was missing OpenSSL 1.0.2, whence it could not be built with FIPS support on
+     Android Arm 64-bit. This omission has been fixed.
+     [Matthias St. Pierre]
 
  Changes between 1.0.2q and 1.0.2r [26 Feb 2019]
 
