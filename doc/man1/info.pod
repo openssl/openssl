@@ -3,7 +3,7 @@
 =head1 NAME
 
 openssl-info,
-info - print OpenSSL built in information
+info - print OpenSSL built-in information
 
 =head1 SYNOPSIS
 

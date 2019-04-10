@@ -9,7 +9,7 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
-  *) Added OPENSSL_info() to get diverse built in OpenSSL data, such
+  *) Added OPENSSL_info() to get diverse built-in OpenSSL data, such
      as default directories.  Also added the command 'openssl info'
      for scripting purposes.
      [Richard Levitte]
