@@ -1108,12 +1108,16 @@ static void *evp_cipher_from_dispatch(int nid, const OSSL_DISPATCH *fns,
     }
     if ((fnciphcnt != 0 && fnciphcnt != 3 && fnciphcnt != 4)
             || (fnciphcnt == 0 && cipher->ccipher == NULL)
-            || fnctxcnt != 2) {
+            || fnctxcnt != 2
+            || cipher->blocksize == NULL
+            || cipher->iv_length == NULL
+            || cipher->key_length == NULL) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "encrypt" functions, or a complete set of "decrypt"
          * functions, or a single "cipher" function. In all cases we need a
-         * complete set of context management functions
+         * complete set of context management functions, as well as the
+         * blocksize, iv_length and key_length functions.
          */
         EVP_CIPHER_meth_free(cipher);
         EVPerr(EVP_F_EVP_CIPHER_FROM_DISPATCH, EVP_R_INVALID_PROVIDER_FUNCTIONS);
