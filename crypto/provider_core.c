@@ -50,7 +50,6 @@ struct ossl_provider_st {
     OSSL_provider_init_fn *init_function;
     STACK_OF(INFOPAIR) *parameters;
     struct provider_store_st *store; /* The store this instance belongs to */
-    const OSSL_PARAM *load_params;
 
     /* Provider side functions */
     OSSL_provider_teardown_fn *teardown;
@@ -309,12 +308,6 @@ int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path)
         return 1;
     CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_SET_MODULE_PATH, ERR_R_MALLOC_FAILURE);
     return 0;
-}
-
-int ossl_provider_set_load_params(OSSL_PROVIDER *prov, const OSSL_PARAM *params)
-{
-    prov->load_params = params;
-    return 1;
 }
 
 int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
@@ -642,14 +635,6 @@ static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_PROV_NAME)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, prov->name);
 
-    if (prov->load_params != NULL) {
-        for (i = 0; prov->load_params[i].key != NULL; ++i) {
-            if ((p = OSSL_PARAM_locate(params, prov->load_params[i].key)) != NULL) {
-                if (p->data_type == OSSL_PARAM_UTF8_PTR)
-                    OSSL_PARAM_set_utf8_ptr(p, prov->load_params[i].data);
-            }
-        }
-    }
     if (prov->parameters == NULL)
         return 1;
     for (i = 0; i < sk_INFOPAIR_num(prov->parameters); i++) {

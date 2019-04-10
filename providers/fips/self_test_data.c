@@ -8,9 +8,10 @@
  */
 
 #include <openssl/obj_mac.h>
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
 
 #include "self_test.h"
-#include "internal/evp_int.h"
 
 /* Macros to build Self test data */
 #define ITM(x) { x, sizeof(x) }
@@ -357,7 +358,7 @@ static ST_SIGNATURE signature_tests[] = {
     {
         SELF_TEST_DESC_SIGN_RSA,
         SN_sha256,
-        &rsa_pkey_meth,
+        EVP_PKEY_RSA,
         keydata_rsa_2048,
         ITM_STR(rsa_msg),
         ITM(rsa_sig)
@@ -365,14 +366,14 @@ static ST_SIGNATURE signature_tests[] = {
     {
         SELF_TEST_DESC_SIGN_ECDSA,
         SN_sha256,
-        &ec_pkey_meth,
+        EVP_PKEY_EC,
         keydata_ecdsa_p224,
         ITM_STR(dsa_msg)
     },
     {
         SELF_TEST_DESC_SIGN_DSA,
         SN_sha512,
-        &dsa_pkey_meth,
+        EVP_PKEY_DSA,
         keydata_dsa_2048,
         ITM_STR(dsa_msg)
     }
@@ -448,9 +449,8 @@ static ST_CIPHER cipher_tests[] = {
 };
 
 /* KDF TEST DATA */
-#if 0
 
-static SELF_TEST_NVP hkdf_ctrl[] =
+static ST_NVP hkdf_ctrl[] =
 {
     { "digest", "SHA256" },
     { "key", "secret" },
@@ -461,15 +461,14 @@ static unsigned char hkdf_expected[] = {
     0x2a, 0xc4, 0x36, 0x9f, 0x52, 0x59, 0x96, 0xf8, 0xde, 0x13
 };
 
-static SELF_TEST_KDF kdf_tests[] =
+static ST_KDF kdf_tests[] =
 {
     {
-        hkdf_kdf_meth,
+        EVP_KDF_HKDF,
         hkdf_ctrl,
-        hkdf_expected, sizeof(hkdf_expected)
+        ITM(hkdf_expected)
     }
 };
-#endif
 
 /* DRBG Test Data */
 static unsigned char drbg_aes_128_ctr_init_entropy[] = {

@@ -53,7 +53,7 @@ typedef struct keydata_st {
 typedef struct sig_st {
     int desc;
     const char *md_name;
-    const EVP_PKEY_METHOD *pkey_meth;
+    int id;
     ST_KEYDATA *key_data;
     ST_ITEM msg;
     ST_ITEM sig;
@@ -84,18 +84,17 @@ typedef struct st_drbg_st {
     ST_ITEM reseed_ka;
 } ST_DRBG;
 
-#if 0
 typedef struct nvp_st {
     const char *name;
     const char *value;
 } ST_NVP;
 
 typedef struct SELF_TEST_KDF_st {
-    const EVP_KDF_METHOD *meth;
-    const SELF_TEST_NVP *ctrls;
+    int id;
+    const ST_NVP *ctrls;
     ST_ITEM expected;
 } ST_KDF;
-#endif
+
 
 /* The test event phases */
 #  define SELF_TEST_PHASE_NONE     0

@@ -1120,12 +1120,12 @@ static int test_EVP_MD_fetch(int tst)
             goto err;
 
         if (tst == 2 || tst == 3) {
-            defltprov = OSSL_PROVIDER_load(ctx, "default", NULL);
+            defltprov = OSSL_PROVIDER_load(ctx, "default");
             if (!TEST_ptr(defltprov))
                 goto err;
         }
         if (tst == 3 || tst == 4) {
-            fipsprov = OSSL_PROVIDER_load(ctx, "fips", NULL);
+            fipsprov = OSSL_PROVIDER_load(ctx, "fips");
             if (!TEST_ptr(fipsprov))
                 goto err;
         }

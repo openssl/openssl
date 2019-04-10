@@ -14,13 +14,14 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 
-#include "../../providers/fips/self_test_data.c"
+#include "self_test_data.c"
 #include "internal/nelem.h"
 
 static int self_test_digests(ST_EVENT *event);
 static int self_test_ciphers(ST_EVENT *event);
 static int self_test_signatures(ST_EVENT *event);
 static int self_test_drbgs(ST_EVENT *event);
+static int self_test_kdfs(ST_EVENT *event);
 
 /*
  * Run the algorithm KAT's.
@@ -39,9 +40,12 @@ int self_test_kats(ST_EVENT *event)
         ret = 0;
     if (!self_test_drbgs(event))
         ret = 0;
-
+    if (!self_test_kdfs(event))
+        ret = 0;
     return ret;
 }
+
+#if 0
 
 /* Utility function to setup a EC EVP_PKEY */
 static EVP_PKEY *ec_set_pkey(const char *curve, BIGNUM *x, BIGNUM *y,
@@ -147,9 +151,9 @@ static const char *keydata2str(ST_KEYDATA *list, int id)
 }
 
 /* Utility function to load a EVP_KEY from binary key data */
-static EVP_PKEY *bin2pkey(const EVP_PKEY_METHOD *meth, ST_KEYDATA *data)
+static EVP_PKEY *bin2pkey(int id, ST_KEYDATA *data)
 {
-    if (meth == &rsa_pkey_meth)
+    if (id == EVP_PKEY_RSA)
         return rsa_set_pkey(keydata2bn(data, RSA_P),
                             keydata2bn(data, RSA_Q),
                             keydata2bn(data, RSA_N),
@@ -158,12 +162,12 @@ static EVP_PKEY *bin2pkey(const EVP_PKEY_METHOD *meth, ST_KEYDATA *data)
                             keydata2bn(data, RSA_DMP1),
                             keydata2bn(data, RSA_DMQ1),
                             keydata2bn(data, RSA_IQMP));
-    else if (meth == &ec_pkey_meth)
+    else if (id == EVP_PKEY_EC)
         return ec_set_pkey(keydata2str(data, EC_CURVE),
                            keydata2bn(data, EC_X),
                            keydata2bn(data, EC_Y),
                            keydata2bn(data, EC_D));
-    else if (meth == &dsa_pkey_meth)
+    else if (id == EVP_PKEY_DSA)
         return dsa_set_pkey(keydata2bn(data, DSA_P),
                             keydata2bn(data, DSA_Q),
                             keydata2bn(data, DSA_G),
@@ -172,10 +176,12 @@ static EVP_PKEY *bin2pkey(const EVP_PKEY_METHOD *meth, ST_KEYDATA *data)
     else
         return NULL;
 }
+#endif
 
 /* Test a single KAT for digest algorithm */
 static int self_test_digest(ST_DIGEST *t, ST_EVENT *event)
 {
+#if 0
     int ret = 0;
     EVP_MD_CTX *ctx = NULL;
     const EVP_MD *md = NULL;
@@ -185,18 +191,15 @@ static int self_test_digest(ST_DIGEST *t, ST_EVENT *event)
 
     md = EVP_get_digestbyname(t->md_name);
     if (md == NULL)
-        return 0;
+        goto end;
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
-        return 0;
-
-    if (!md->init(ctx))
-        goto end;
-    if (!md->update(ctx, t->plaintxt.data, t->plaintxt.len))
         goto end;
 
-    if (!md->final(ctx, out))
+    if (!(EVP_DigestInit(ctx, md)
+          && EVP_DigestUpdate(ctx, t->plaintxt.data, t->plaintxt.len)
+          && EVP_DigestFinal(ctx, out, NULL)))
         goto end;
 
     /* Optional corruption */
@@ -210,19 +213,22 @@ end:
 
     EVP_MD_CTX_free(ctx);
     return ret;
+#else
+    return 1;
+#endif
 }
 
 /* Test a single KAT for sign/verify */
 static int self_test_sig(ST_SIGNATURE *t, ST_EVENT *event)
 {
+#if 0
     int ret = 1;
-    const EVP_PKEY_METHOD *meth = t->pkey_meth;
     EVP_PKEY *pkey = NULL;
 
     SELF_TEST_EVENT_onbegin(event, SELF_TEST_TYPE_KAT_SIGNATURE, t->desc);
 
     /* TODO - Add after method layers exist */
-    pkey = bin2pkey(meth, t->key_data);
+    pkey = bin2pkey(t->id, t->key_data);
 
     /* Optional corruption */
     /* SELF_TEST_EVENT_oncorrupt_byte(event, sig); */
@@ -230,11 +236,15 @@ static int self_test_sig(ST_SIGNATURE *t, ST_EVENT *event)
     SELF_TEST_EVENT_onend(event, ret);
     EVP_PKEY_free(pkey);
     return ret;
+#else
+    return 1;
+#endif
 }
 
 /* Test a single KAT for encrypt/decrypt */
 static int self_test_cipher(ST_CIPHER *t, ST_EVENT *event)
 {
+#if 0
     int ret = 1;
     /* unsigned char out[64]; */
 
@@ -245,46 +255,55 @@ static int self_test_cipher(ST_CIPHER *t, ST_EVENT *event)
 
     SELF_TEST_EVENT_onend(event, ret);
     return ret;
+#else
+    return 1;
+#endif
 }
 
-#if 0
-
-/* TODO - once KDF API exists */
-static int selt_test_kdf(ST_KDF *t, ST_EVENT *event)
+static int self_test_kdf(ST_KDF *t, ST_EVENT *event)
 {
+#if 0
+    EVP_KDF_CTX *ctx = NULL;
     int ret = 0;
     int i;
-    const EVP_KDF_METHOD *meth = t->meth;
     void *obj = NULL;
     unsigned char out[64];
 
     SELF_TEST_EVENT_onbegin(event, SELF_TEST_TYPE_KAT_KDF, t->desc);
 
-    obj = meth->new();
+    ctx = EVP_KDF_CTX_new_id(t->id);
+    if (ctx == NULL)
+        goto end;
+
     for (i = 0; i < OSSL_NELEM(test->ctrls); ++i) {
-        if (!meth->ctrl_str(obj, test->ctrls[i].name, test->ctrls[i].value))
+        if (EVP_KDF_ctrl_str(ctx, test->ctrls[i].name,
+                             test->ctrls[i].value) <= 0)
             goto end;
     }
 
     SELF_TEST_EVENT_oncorrupt_byte(event, out);
 
-    meth->derive(obj, out, sizeof(out));
+    if (EVP_KDF_derive(ctx, out, sizeof(out)) <= 0)
+        goto end;
 
     if (decoded_len != plaintxt_len
-            || memcmp(decoded, plaintxt,  decoded_len) != 0) {
+        || memcmp(decoded, plaintxt,  decoded_len) != 0)
         goto err;
 
     ret = 1;
 end:
-    meth->free(obj);
+    EVP_KDF_CTX_free(ctx);
     SELF_TEST_EVENT_onend(event, ret);
     return ret;
-}
+#else
+    return 1;
 #endif
+}
 
 /* Test a single KAT for encrypt/decrypt */
 static int self_test_drbg(ST_DRBG *t, ST_EVENT *event)
 {
+#if 0
     int ret = 1;
 /*    unsigned char out[64]; */
 
@@ -295,6 +314,9 @@ static int self_test_drbg(ST_DRBG *t, ST_EVENT *event)
 
     SELF_TEST_EVENT_onend(event, ret);
     return ret;
+#else
+    return 1;
+#endif
 }
 /*
  * Test a data driven list of KAT for digest algorithms.
@@ -355,6 +377,17 @@ static int self_test_drbgs(ST_EVENT *event)
 
     for (i = 0; i < (int)OSSL_NELEM(drbg_tests); ++i) {
         if (!self_test_drbg(&drbg_tests[i], event))
+            ret = 0;
+    }
+    return ret;
+}
+
+static int self_test_kdfs(ST_EVENT *event)
+{
+    int i, ret = 1;
+
+    for (i = 0; i < (int)OSSL_NELEM(kdf_tests); ++i) {
+        if (!self_test_kdf(&kdf_tests[i], event))
             ret = 0;
     }
     return ret;
