@@ -281,12 +281,12 @@ static int gmi_available(void)
     model = (eax & 0xf0) >> 4; // bit 7-4
 
     if ((family == 7)&(model == 0xb)) {
-        f_ZXC = 0;
+        f_zxc = 0;
         edx = padlock_capability();
         padlock_use_ccs = ((edx & (0x3 << 4)) == (0x3 << 4));  
     } else if (((family == 6)&(model == 0xf)) ||
               ((family == 6)&(model == 9))) {
-        f_ZXC = 1;
+        f_zxc = 1;
         edx = padlock_capability();
         padlock_use_ccs = ((edx & (0x3 << 4)) == (0x3 << 4));  
     } else {
@@ -584,7 +584,7 @@ gmi_sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
     unsigned int num = EVP_CIPHER_CTX_num(ctx);
-    if (f_ZXC == 1) {
+    if (f_zxc == 1) {
         unsigned char * buf = EVP_CIPHER_CTX_buf_noconst(ctx);
         CRYPTO_ctr128_encrypt(in_arg, out_arg, nbytes,
                               cdata->ks.rd_key, EVP_CIPHER_CTX_iv_noconst(ctx), buf, &num,
@@ -607,7 +607,7 @@ gmi_sm4_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                       const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-    if (f_ZXC == 1) {
+    if (f_zxc == 1) {
         int num = EVP_CIPHER_CTX_num(ctx);
         CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
                               EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx),
@@ -628,7 +628,7 @@ gmi_sm4_ofb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                       const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
-    if (f_ZXC == 1) {
+    if (f_zxc == 1) {
         int num = EVP_CIPHER_CTX_num(ctx);
         CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
                               EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx),
