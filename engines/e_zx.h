@@ -9,8 +9,6 @@
 extern "C" {
 #endif
 
-extern unsigned char f_zxc;
-
 # define SM3_LONG unsigned int
 # define SM3_WORD unsigned int
 
