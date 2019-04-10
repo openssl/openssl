@@ -39,9 +39,9 @@ const OPTIONS fipsinstall_options[] = {
      "-macopt digest:SHA256 -macopt hexkey:00"},
     {"verify", OPT_VERIFY, '-', "Verification mode, i.e verify a config file "
      "instead of generating one"},
-    {"in", OPT_IN, 's', "Input config file, used when verifying"},
-    {"out", OPT_OUT, 's', "Output config file, used when generating"},
-    {"module", OPT_MODULE, '>', "File name of the provider module"},
+    {"in", OPT_IN, '<', "Input config file, used when verifying"},
+    {"out", OPT_OUT, '>', "Output config file, used when generating"},
+    {"module", OPT_MODULE, '<', "File name of the provider module"},
     {"name", OPT_PROV_NAME, 's', "FIPS provider name"},
     {"section", OPT_SECTION_NAME, 's',
      "FIPS Provider config section name (optional)"},
