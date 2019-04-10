@@ -65,7 +65,8 @@ extern CRYPTO_RWLOCK *global_engine_lock;
     } while (0)
 
 # define ENGINE_FUNCT_REF(e, i)                                 \
-    CRYPTO_atomic_read(&(e)->funct_ref, (i), (e)->lock)
+    *(i) = (e)->funct_ref
+
 /*
  * Any code that will need cleanup operations should use these functions to
  * register callbacks. engine_cleanup_int() will call all registered
