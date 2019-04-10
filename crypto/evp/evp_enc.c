@@ -562,6 +562,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
     int ret;
     size_t soutl;
+    int blocksize;
 
     /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
@@ -572,11 +573,15 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
         goto legacy;
 
-    if (ctx->cipher->cupdate == NULL) {
+    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
+    if (ctx->cipher->cupdate == NULL  || blocksize < 1) {
         EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_UPDATE_ERROR);
         return 0;
     }
-    ret = ctx->cipher->cupdate(ctx->provctx, out, &soutl, in, (size_t)inl);
+    ret = ctx->cipher->cupdate(ctx->provctx, out, &soutl,
+                               inl + (blocksize == 1 ? 0 : blocksize), in,
+                               (size_t)inl);
 
     if (soutl > INT_MAX) {
         EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_UPDATE_ERROR);
@@ -603,6 +608,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     int n, ret;
     unsigned int i, b, bl;
     size_t soutl;
+    int blocksize;
 
     /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
@@ -613,12 +619,15 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
         goto legacy;
 
-    if (ctx->cipher->cfinal == NULL) {
+    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
+    if (blocksize < 1 || ctx->cipher->cfinal == NULL) {
         EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_FINAL_ERROR);
         return 0;
     }
 
-    ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl);
+    ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl,
+                              blocksize == 1 ? 0 : blocksize);
 
     if (soutl > INT_MAX) {
         EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_FINAL_ERROR);
@@ -674,6 +683,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     int fix_len, cmpl = inl, ret;
     unsigned int b;
     size_t soutl;
+    int blocksize;
 
     /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
@@ -684,11 +694,15 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
         goto legacy;
 
-    if (ctx->cipher->cupdate == NULL) {
+    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
+    if (ctx->cipher->cupdate == NULL || blocksize < 1) {
         EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_UPDATE_ERROR);
         return 0;
     }
-    ret = ctx->cipher->cupdate(ctx->provctx, out, &soutl, in, (size_t)inl);
+    ret = ctx->cipher->cupdate(ctx->provctx, out, &soutl,
+                               inl + (blocksize == 1 ? 0 : blocksize), in,
+                               (size_t)inl);
 
     if (ret) {
         if (soutl > INT_MAX) {
@@ -779,6 +793,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     unsigned int b;
     size_t soutl;
     int ret;
+    int blocksize;
 
     /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
@@ -789,12 +804,15 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
         goto legacy;
 
-    if (ctx->cipher->cfinal == NULL) {
+    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
+    if (blocksize < 1 || ctx->cipher->cfinal == NULL) {
         EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_FINAL_ERROR);
         return 0;
     }
 
-    ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl);
+    ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl,
+                              blocksize == 1 ? 0 : blocksize);
 
     if (ret) {
         if (soutl > INT_MAX) {
