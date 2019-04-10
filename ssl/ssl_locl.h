@@ -1515,7 +1515,7 @@ typedef struct cert_pkey_st CERT_PKEY;
  * CERT_PKEY entries
  */
 typedef struct {
-    int nid; /* NID of pubic key algorithm */
+    int nid; /* NID of public key algorithm */
     uint32_t amask; /* authmask corresponding to key type */
 } SSL_CERT_LOOKUP;
 
