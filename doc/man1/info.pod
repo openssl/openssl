@@ -13,6 +13,8 @@ B<openssl info>
 [B<-enginesdir> | B<-e>]
 [B<-modulesdir> | B<-m>]
 [B<-dsoext>]
+[B<-dirfilesep>]
+[B<-listsep]>
 
 =head1 DESCRIPTION
 
@@ -42,6 +44,19 @@ other than engine modules.
 =item B<-dsoext>
 
 Outputs the DSO extension OpenSSL uses.
+
+=item B<-dirnamesep>
+
+Outputs the separator character between a directory specification and
+a file name.
+Note that on some operating systems, this is not the same as the
+separator between directory elements.
+
+=item B<-listsep>
+
+Outputs the OpenSSL list separator character.
+This is typically used to construct C<$PATH> (C<%PATH%> on Windows)
+style lists.
 
 =back
 

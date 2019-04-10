@@ -152,6 +152,20 @@ dynamically loadable OpenSSL modules other than engines.
 
 The configured dynamically loadable module extension.
 
+=item OPENSSL_INFO_DIR_FILENAME_SEPARATOR
+
+The separator between a directory specification and a file name.
+Note that on some operating systems, this is not the same as the
+separator between directory elements.
+
+=item OPENSSL_INFO_LIST_SEPARATOR
+
+The OpenSSL list separator.
+This is typically used in strings that are lists of items, such as the
+value of the environment variable C<$PATH> on Unix (where the
+separator is ":") or C<%PATH%> on Windows (where the separator is
+";").
+
 =back
 
 For an unknown B<t>, NULL is returned.
