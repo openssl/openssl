@@ -10,6 +10,7 @@
 #ifndef OSSL_CORE_NUMBERS_H
 # define OSSL_CORE_NUMBERS_H
 
+# include <stdarg.h>
 # include <openssl/core.h>
 
 # ifdef __cplusplus
@@ -57,6 +58,12 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
 # define OSSL_FUNC_CORE_GET_PARAMS             2
 OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
                                          const OSSL_PARAM params[]))
+# define OSSL_FUNC_CORE_PUT_ERROR              3
+OSSL_CORE_MAKE_FUNC(void,core_put_error,(int lib, int func, int reason,
+                                         const char *file, int line))
+# define OSSL_FUNC_CORE_ADD_ERROR_VDATA        4
+OSSL_CORE_MAKE_FUNC(void,core_add_error_vdata,(int num, va_list args))
+
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024

@@ -36,10 +36,10 @@ struct openssl_ctx_st {
 
 #ifndef FIPS_MODE
 static OPENSSL_CTX default_context_int;
-#endif
 
 /* Always points at default_context_int if it has been initialised */
 static OPENSSL_CTX *default_context = NULL;
+#endif
 
 static int context_init(OPENSSL_CTX *ctx)
 {
