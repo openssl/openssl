@@ -94,7 +94,20 @@ static int fips_get_params(const OSSL_PROVIDER *prov,
 }
 
 static const OSSL_ALGORITHM fips_digests[] = {
+    { "SHA1", "fips=yes", sha1_functions },
+    { "SHA224", "fips=yes", sha224_functions },
     { "SHA256", "fips=yes", sha256_functions },
+    { "SHA384", "fips=yes", sha384_functions },
+    { "SHA512", "fips=yes", sha512_functions },
+    { "SHA512-224", "fips=yes", sha512_224_functions },
+    { "SHA512-256", "fips=yes", sha512_256_functions },
+    { "SHA3-224", "fips=yes", sha3_224_functions },
+    { "SHA3-256", "fips=yes", sha3_256_functions },
+    { "SHA3-384", "fips=yes", sha3_384_functions },
+    { "SHA3-512", "fips=yes", sha3_512_functions },
+    { "KMAC128", "fips=yes", keccak_kmac_128_functions },
+    { "KMAC256", "fips=yes", keccak_kmac_256_functions },
+
     { NULL, NULL, NULL }
 };
 

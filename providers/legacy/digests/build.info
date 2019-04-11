@@ -2,3 +2,23 @@ IF[{- !$disabled{md2} -}]
   SOURCE[../../legacy]=\
           md2.c
 ENDIF
+
+IF[{- !$disabled{md4} -}]
+  SOURCE[../../legacy]=\
+          md4.c
+ENDIF
+
+IF[{- !$disabled{mdc2} -}]
+  SOURCE[../../legacy]=\
+          mdc2.c
+ENDIF
+
+IF[{- !$disabled{whirlpool} -}]
+  SOURCE[../../legacy]=\
+          wp.c
+ENDIF
+
+IF[{- !$disabled{rmd160} -}]
+  SOURCE[../../legacy]=\
+          ripemd.c
+ENDIF

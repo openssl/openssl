@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,19 +17,16 @@
 #include <assert.h>
 #include <string.h>
 #include <openssl/crypto.h>
-
-#include "blake2_locl.h"
 #include "blake2_impl.h"
+#include "internal/blake2.h"
 
-static const uint64_t blake2b_IV[8] =
+static const uint32_t blake2s_IV[8] =
 {
-    0x6a09e667f3bcc908ULL, 0xbb67ae8584caa73bULL,
-    0x3c6ef372fe94f82bULL, 0xa54ff53a5f1d36f1ULL,
-    0x510e527fade682d1ULL, 0x9b05688c2b3e6c1fULL,
-    0x1f83d9abfb41bd6bULL, 0x5be0cd19137e2179ULL
+    0x6A09E667U, 0xBB67AE85U, 0x3C6EF372U, 0xA54FF53AU,
+    0x510E527FU, 0x9B05688CU, 0x1F83D9ABU, 0x5BE0CD19U
 };
 
-static const uint8_t blake2b_sigma[12][16] =
+static const uint8_t blake2s_sigma[10][16] =
 {
     {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,
     { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 } ,
@@ -41,90 +38,85 @@ static const uint8_t blake2b_sigma[12][16] =
     { 13, 11,  7, 14, 12,  1,  3,  9,  5,  0, 15,  4,  8,  6,  2, 10 } ,
     {  6, 15, 14,  9, 11,  3,  0,  8, 12,  2, 13,  7,  1,  4, 10,  5 } ,
     { 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13 , 0 } ,
-    {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 } ,
-    { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
 };
 
 /* Set that it's the last block we'll compress */
-static ossl_inline void blake2b_set_lastblock(BLAKE2B_CTX *S)
+static ossl_inline void blake2s_set_lastblock(BLAKE2S_CTX *S)
 {
     S->f[0] = -1;
 }
 
 /* Initialize the hashing state. */
-static ossl_inline void blake2b_init0(BLAKE2B_CTX *S)
+static ossl_inline void blake2s_init0(BLAKE2S_CTX *S)
 {
     int i;
 
-    memset(S, 0, sizeof(BLAKE2B_CTX));
+    memset(S, 0, sizeof(BLAKE2S_CTX));
     for (i = 0; i < 8; ++i) {
-        S->h[i] = blake2b_IV[i];
+        S->h[i] = blake2s_IV[i];
     }
 }
 
 /* init xors IV with input parameter block and sets the output length */
-static void blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
+static void blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
 {
     size_t i;
     const uint8_t *p = (const uint8_t *)(P);
 
-    blake2b_init0(S);
+    blake2s_init0(S);
     S->outlen = P->digest_length;
 
-    /* The param struct is carefully hand packed, and should be 64 bytes on
+    /* The param struct is carefully hand packed, and should be 32 bytes on
      * every platform. */
-    assert(sizeof(BLAKE2B_PARAM) == 64);
+    assert(sizeof(BLAKE2S_PARAM) == 32);
     /* IV XOR ParamBlock */
     for (i = 0; i < 8; ++i) {
-        S->h[i] ^= load64(p + sizeof(S->h[i]) * i);
+        S->h[i] ^= load32(&p[i*4]);
     }
 }
 
-/* Initialize the parameter block with default values */
-void blake2b_param_init(BLAKE2B_PARAM *P)
+void blake2s_param_init(BLAKE2S_PARAM *P)
 {
-    P->digest_length = BLAKE2B_DIGEST_LENGTH;
+    P->digest_length = BLAKE2S_DIGEST_LENGTH;
     P->key_length    = 0;
     P->fanout        = 1;
     P->depth         = 1;
     store32(P->leaf_length, 0);
-    store64(P->node_offset, 0);
+    store48(P->node_offset, 0);
     P->node_depth    = 0;
     P->inner_length  = 0;
-    memset(P->reserved, 0, sizeof(P->reserved));
     memset(P->salt,     0, sizeof(P->salt));
     memset(P->personal, 0, sizeof(P->personal));
 }
 
-void blake2b_param_set_digest_length(BLAKE2B_PARAM *P, uint8_t outlen)
+void blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen)
 {
     P->digest_length = outlen;
 }
 
-void blake2b_param_set_key_length(BLAKE2B_PARAM *P, uint8_t keylen)
+void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen)
 {
     P->key_length = keylen;
 }
 
-void blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal, size_t len)
+void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t len)
 {
     memcpy(P->personal, personal, len);
-    memset(P->personal + len, 0, BLAKE2B_PERSONALBYTES - len);
+    memset(P->personal + len, 0, BLAKE2S_PERSONALBYTES - len);
 }
 
-void blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt, size_t len)
+void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t len)
 {
     memcpy(P->salt, salt, len);
-    memset(P->salt + len, 0, BLAKE2B_SALTBYTES - len);
-}
+    memset(P->salt + len, 0, BLAKE2S_SALTBYTES - len);}
 
 /*
  * Initialize the hashing context with the given parameter block.
  * Always returns 1.
  */
-int BLAKE2b_Init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P)
+int blake2s_init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P)
 {
-    blake2b_init_param(c, P);
+    blake2s_init_param(c, P);
     return 1;
 }
 
@@ -132,52 +124,52 @@ int BLAKE2b_Init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P)
  * Initialize the hashing context with the given parameter block and key.
  * Always returns 1.
  */
-int BLAKE2b_Init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P, const void *key)
+int blake2s_init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P, const void *key)
 {
-    blake2b_init_param(c, P);
+    blake2s_init_param(c, P);
 
     /* Pad the key to form first data block */
     {
-        uint8_t block[BLAKE2B_BLOCKBYTES] = {0};
+        uint8_t block[BLAKE2S_BLOCKBYTES] = {0};
 
         memcpy(block, key, P->key_length);
-        BLAKE2b_Update(c, block, BLAKE2B_BLOCKBYTES);
-        OPENSSL_cleanse(block, BLAKE2B_BLOCKBYTES);
+        blake2s_update(c, block, BLAKE2S_BLOCKBYTES);
+        OPENSSL_cleanse(block, BLAKE2S_BLOCKBYTES);
     }
 
     return 1;
 }
 
 /* Permute the state while xoring in the block of data. */
-static void blake2b_compress(BLAKE2B_CTX *S,
+static void blake2s_compress(BLAKE2S_CTX *S,
                             const uint8_t *blocks,
                             size_t len)
 {
-    uint64_t m[16];
-    uint64_t v[16];
-    int i;
+    uint32_t m[16];
+    uint32_t v[16];
+    size_t i;
     size_t increment;
 
     /*
      * There are two distinct usage vectors for this function:
      *
-     * a) BLAKE2b_Update uses it to process complete blocks,
+     * a) BLAKE2s_Update uses it to process complete blocks,
      *    possibly more than one at a time;
      *
-     * b) BLAK2b_Final uses it to process last block, always
+     * b) BLAK2s_Final uses it to process last block, always
      *    single but possibly incomplete, in which case caller
      *    pads input with zeros.
      */
-    assert(len < BLAKE2B_BLOCKBYTES || len % BLAKE2B_BLOCKBYTES == 0);
+    assert(len < BLAKE2S_BLOCKBYTES || len % BLAKE2S_BLOCKBYTES == 0);
 
     /*
      * Since last block is always processed with separate call,
      * |len| not being multiple of complete blocks can be observed
-     * only with |len| being less than BLAKE2B_BLOCKBYTES ("less"
+     * only with |len| being less than BLAKE2S_BLOCKBYTES ("less"
      * including even zero), which is why following assignment doesn't
      * have to reside inside the main loop below.
      */
-    increment = len < BLAKE2B_BLOCKBYTES ? len : BLAKE2B_BLOCKBYTES;
+    increment = len < BLAKE2S_BLOCKBYTES ? len : BLAKE2S_BLOCKBYTES;
 
     for (i = 0; i < 8; ++i) {
         v[i] = S->h[i];
@@ -185,31 +177,31 @@ static void blake2b_compress(BLAKE2B_CTX *S,
 
     do {
         for (i = 0; i < 16; ++i) {
-            m[i] = load64(blocks + i * sizeof(m[i]));
+            m[i] = load32(blocks + i * sizeof(m[i]));
         }
 
-        /* blake2b_increment_counter */
+        /* blake2s_increment_counter */
         S->t[0] += increment;
         S->t[1] += (S->t[0] < increment);
 
-        v[8]  = blake2b_IV[0];
-        v[9]  = blake2b_IV[1];
-        v[10] = blake2b_IV[2];
-        v[11] = blake2b_IV[3];
-        v[12] = S->t[0] ^ blake2b_IV[4];
-        v[13] = S->t[1] ^ blake2b_IV[5];
-        v[14] = S->f[0] ^ blake2b_IV[6];
-        v[15] = S->f[1] ^ blake2b_IV[7];
+        v[ 8] = blake2s_IV[0];
+        v[ 9] = blake2s_IV[1];
+        v[10] = blake2s_IV[2];
+        v[11] = blake2s_IV[3];
+        v[12] = S->t[0] ^ blake2s_IV[4];
+        v[13] = S->t[1] ^ blake2s_IV[5];
+        v[14] = S->f[0] ^ blake2s_IV[6];
+        v[15] = S->f[1] ^ blake2s_IV[7];
 #define G(r,i,a,b,c,d) \
         do { \
-            a = a + b + m[blake2b_sigma[r][2*i+0]]; \
-            d = rotr64(d ^ a, 32); \
+            a = a + b + m[blake2s_sigma[r][2*i+0]]; \
+            d = rotr32(d ^ a, 16); \
             c = c + d; \
-            b = rotr64(b ^ c, 24); \
-            a = a + b + m[blake2b_sigma[r][2*i+1]]; \
-            d = rotr64(d ^ a, 16); \
+            b = rotr32(b ^ c, 12); \
+            a = a + b + m[blake2s_sigma[r][2*i+1]]; \
+            d = rotr32(d ^ a, 8); \
             c = c + d; \
-            b = rotr64(b ^ c, 63); \
+            b = rotr32(b ^ c, 7); \
         } while (0)
 #define ROUND(r)  \
         do { \
@@ -223,8 +215,8 @@ static void blake2b_compress(BLAKE2B_CTX *S,
             G(r,7,v[ 3],v[ 4],v[ 9],v[14]); \
         } while (0)
 #if defined(OPENSSL_SMALL_FOOTPRINT)
-        /* 3x size reduction on x86_64, almost 7x on ARMv8, 9x on ARMv4 */
-        for (i = 0; i < 12; i++) {
+        /* almost 3x reduction on x86_64, 4.5x on ARMv8, 4x on ARMv4 */
+        for (i = 0; i < 10; i++) {
             ROUND(i);
         }
 #else
@@ -238,8 +230,6 @@ static void blake2b_compress(BLAKE2B_CTX *S,
         ROUND(7);
         ROUND(8);
         ROUND(9);
-        ROUND(10);
-        ROUND(11);
 #endif
 
         for (i = 0; i < 8; ++i) {
@@ -253,7 +243,7 @@ static void blake2b_compress(BLAKE2B_CTX *S,
 }
 
 /* Absorb the input data into the hash state.  Always returns 1. */
-int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
+int blake2s_update(BLAKE2S_CTX *c, const void *data, size_t datalen)
 {
     const uint8_t *in = data;
     size_t fill;
@@ -270,26 +260,26 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
     if (datalen > fill) {
         if (c->buflen) {
             memcpy(c->buf + c->buflen, in, fill); /* Fill buffer */
-            blake2b_compress(c, c->buf, BLAKE2B_BLOCKBYTES);
+            blake2s_compress(c, c->buf, BLAKE2S_BLOCKBYTES);
             c->buflen = 0;
             in += fill;
             datalen -= fill;
         }
-        if (datalen > BLAKE2B_BLOCKBYTES) {
-            size_t stashlen = datalen % BLAKE2B_BLOCKBYTES;
+        if (datalen > BLAKE2S_BLOCKBYTES) {
+            size_t stashlen = datalen % BLAKE2S_BLOCKBYTES;
             /*
              * If |datalen| is a multiple of the blocksize, stash
              * last complete block, it can be final one...
              */
-            stashlen = stashlen ? stashlen : BLAKE2B_BLOCKBYTES;
+            stashlen = stashlen ? stashlen : BLAKE2S_BLOCKBYTES;
             datalen -= stashlen;
-            blake2b_compress(c, in, datalen);
+            blake2s_compress(c, in, datalen);
             in += datalen;
             datalen = stashlen;
         }
     }
 
-    assert(datalen <= BLAKE2B_BLOCKBYTES);
+    assert(datalen <= BLAKE2S_BLOCKBYTES);
 
     memcpy(c->buf + c->buflen, in, datalen);
     c->buflen += datalen; /* Be lazy, do not compress */
@@ -301,29 +291,29 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
  * Calculate the final hash and save it in md.
  * Always returns 1.
  */
-int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
+int blake2s_final(unsigned char *md, BLAKE2S_CTX *c)
 {
-    uint8_t outbuffer[BLAKE2B_OUTBYTES] = {0};
+    uint8_t outbuffer[BLAKE2S_OUTBYTES] = {0};
     uint8_t *target = outbuffer;
-    int iter = (c->outlen + 7) / 8;
+    int iter = (c->outlen + 3) / 4;
     int i;
 
     /* Avoid writing to the temporary buffer if possible */
     if ((c->outlen % sizeof(c->h[0])) == 0)
         target = md;
 
-    blake2b_set_lastblock(c);
+    blake2s_set_lastblock(c);
     /* Padding */
     memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
-    blake2b_compress(c, c->buf, c->buflen);
+    blake2s_compress(c, c->buf, c->buflen);
 
     /* Output full hash to buffer */
     for (i = 0; i < iter; ++i)
-        store64(target + sizeof(c->h[i]) * i, c->h[i]);
+        store32(target + sizeof(c->h[i]) * i, c->h[i]);
 
     if (target != md)
         memcpy(md, target, c->outlen);
 
-    OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
+    OPENSSL_cleanse(c, sizeof(BLAKE2S_CTX));
     return 1;
 }

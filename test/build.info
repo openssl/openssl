@@ -182,6 +182,9 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_test]=evp_test.c
   INCLUDE[evp_test]=../include ../apps/include
   DEPEND[evp_test]=../libcrypto libtestutil.a
+  IF[{- $disabled{legacy} || !$target{dso_scheme} -}]
+    DEFINE[evp_test]=NO_LEGACY_MODULE
+  ENDIF
 
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include ../apps/include ../crypto/include

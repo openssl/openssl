@@ -7,81 +7,64 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/sha.h>
 #include <openssl/crypto.h>
 #include <openssl/core_numbers.h>
+#include <openssl/sha.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
+#include "internal/core_mkdigest.h"
 #include "internal/provider_algs.h"
+#include "internal/sha.h"
 
-/*
- * Forward declaration of everything implemented here.  This is not strictly
- * necessary for the compiler, but provides an assurance that the signatures
- * of the functions in the dispatch table are correct.
- */
-static OSSL_OP_digest_newctx_fn sha256_newctx;
-#if 0                           /* Not defined here */
-static OSSL_OP_digest_init_fn sha256_init;
-static OSSL_OP_digest_update_fn sha256_update;
-#endif
-static OSSL_OP_digest_final_fn sha256_final;
-static OSSL_OP_digest_freectx_fn sha256_freectx;
-static OSSL_OP_digest_dupctx_fn sha256_dupctx;
-static OSSL_OP_digest_size_fn sha256_size;
-static OSSL_OP_digest_block_size_fn sha256_size;
+static OSSL_OP_digest_set_params_fn sha1_set_params;
 
-static int sha256_final(void *ctx,
-                        unsigned char *md, size_t *mdl, size_t mdsz)
+/* Special set_params method for SSL3 */
+static int sha1_set_params(void *vctx, const OSSL_PARAM params[])
 {
-    if (mdsz >= SHA256_DIGEST_LENGTH
-        && SHA256_Final(md, ctx)) {
-        *mdl = SHA256_DIGEST_LENGTH;
-        return 1;
-    }
+    int cmd = 0;
+    size_t msg_len = 0;
+    const void *msg = NULL;
+    const OSSL_PARAM *p;
+    SHA_CTX *ctx = (SHA_CTX *)vctx;
 
+    if (ctx != NULL && params != NULL) {
+        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_CMD);
+        if (p != NULL && !OSSL_PARAM_get_int(p, &cmd))
+            return 0;
+        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_MSG);
+        if (p != NULL && !OSSL_PARAM_get_octet_ptr(p, &msg, &msg_len))
+            return 0;
+        return sha1_ctrl(ctx, cmd, msg_len, (void *)msg);
+    }
     return 0;
 }
 
-static void *sha256_newctx(void *provctx)
-{
-    SHA256_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+OSSL_FUNC_DIGEST_CONSTRUCT_PARAMS(sha1, SHA_CTX,
+                           SHA_CBLOCK, SHA_DIGEST_LENGTH,
+                           SHA1_Init, SHA1_Update, SHA1_Final,
+                           sha1_set_params)
 
-    return ctx;
-}
+OSSL_FUNC_DIGEST_CONSTRUCT(sha224, SHA256_CTX,
+                           SHA256_CBLOCK, SHA224_DIGEST_LENGTH,
+                           SHA224_Init, SHA224_Update, SHA224_Final)
 
-static void sha256_freectx(void *vctx)
-{
-    SHA256_CTX *ctx = (SHA256_CTX *)vctx;
+OSSL_FUNC_DIGEST_CONSTRUCT(sha256, SHA256_CTX,
+                           SHA256_CBLOCK, SHA256_DIGEST_LENGTH,
+                           SHA256_Init, SHA256_Update, SHA256_Final)
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
-}
+OSSL_FUNC_DIGEST_CONSTRUCT(sha384, SHA512_CTX,
+                           SHA512_CBLOCK, SHA384_DIGEST_LENGTH,
+                           SHA384_Init, SHA384_Update, SHA384_Final)
 
-static void *sha256_dupctx(void *ctx)
-{
-    SHA256_CTX *in = (SHA256_CTX *)ctx;
-    SHA256_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+OSSL_FUNC_DIGEST_CONSTRUCT(sha512, SHA512_CTX,
+                           SHA512_CBLOCK, SHA512_DIGEST_LENGTH,
+                           SHA512_Init, SHA512_Update, SHA512_Final)
 
-    *ret = *in;
+OSSL_FUNC_DIGEST_CONSTRUCT(sha512_224, SHA512_CTX,
+                           SHA512_CBLOCK, SHA224_DIGEST_LENGTH,
+                           sha512_224_init, SHA512_Update, SHA512_Final)
 
-    return ret;
-}
+OSSL_FUNC_DIGEST_CONSTRUCT(sha512_256, SHA512_CTX,
+                           SHA512_CBLOCK, SHA256_DIGEST_LENGTH,
+                           sha512_256_init, SHA512_Update, SHA512_Final)
 
-static size_t sha256_size(void)
-{
-    return SHA256_DIGEST_LENGTH;
-}
-
-static size_t sha256_block_size(void)
-{
-    return SHA256_CBLOCK;
-}
-
-const OSSL_DISPATCH sha256_functions[] = {
-    { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))sha256_newctx },
-    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))SHA256_Init },
-    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))SHA256_Update },
-    { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))sha256_final },
-    { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))sha256_freectx },
-    { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))sha256_dupctx },
-    { OSSL_FUNC_DIGEST_SIZE, (void (*)(void))sha256_size },
-    { OSSL_FUNC_DIGEST_BLOCK_SIZE, (void (*)(void))sha256_block_size },
-    { 0, NULL }
-};

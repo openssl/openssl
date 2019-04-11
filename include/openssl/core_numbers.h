@@ -91,7 +91,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
 # define OSSL_FUNC_DIGEST_DUPCTX            7
 # define OSSL_FUNC_DIGEST_SIZE              8
 # define OSSL_FUNC_DIGEST_BLOCK_SIZE        9
-
+# define OSSL_FUNC_DIGEST_SET_PARAMS        10
+# define OSSL_FUNC_DIGEST_GET_PARAMS        11
 
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *dctx))
@@ -107,9 +108,13 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
 OSSL_CORE_MAKE_FUNC(void, OP_digest_cleanctx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(void, OP_digest_freectx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *dctx))
+
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
-
+OSSL_CORE_MAKE_FUNC(int, OP_digest_set_params,
+                    (void *vctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params,
+                    (void *vctx, const OSSL_PARAM params[]))
 
 /* Symmetric Ciphers */
 
@@ -162,7 +167,6 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
-
 
 # ifdef __cplusplus
 }

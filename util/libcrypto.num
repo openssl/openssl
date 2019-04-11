@@ -3562,7 +3562,7 @@ X509_NAME_get_index_by_NID              3515	3_0_0	EXIST::FUNCTION:
 ENGINE_get_first                        3516	3_0_0	EXIST::FUNCTION:ENGINE
 CERTIFICATEPOLICIES_it                  3517	3_0_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 CERTIFICATEPOLICIES_it                  3517	3_0_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-EVP_MD_CTX_ctrl                         3518	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_ctrl                         3518	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 PKCS7_final                             3519	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_size                           3520	3_0_0	EXIST::FUNCTION:
 EVP_DecryptFinal_ex                     3521	3_0_0	EXIST::FUNCTION:
@@ -4822,3 +4822,5 @@ OSSL_CMP_MSG_free                       4766	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_PKISI_free                     4767	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_dup                        4768	3_0_0	EXIST::FUNCTION:CMP
 ERR_load_CMP_strings                    4769	3_0_0	EXIST::FUNCTION:CMP
+EVP_MD_CTX_set_params                   4770	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_get_params                   4771	3_0_0	EXIST::FUNCTION:

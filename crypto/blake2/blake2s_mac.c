@@ -10,7 +10,7 @@
 #ifndef OPENSSL_NO_BLAKE2
 
 # include <openssl/evp.h>
-# include "blake2_locl.h"
+# include "internal/blake2.h"
 # include "internal/cryptlib.h"
 # include "internal/evp_int.h"
 
@@ -53,18 +53,18 @@ static int blake2s_mac_init(EVP_MAC_IMPL *macctx)
         return 0;
     }
 
-    return BLAKE2s_Init_key(&macctx->ctx, &macctx->params, macctx->key);
+    return blake2s_init_key(&macctx->ctx, &macctx->params, macctx->key);
 }
 
 static int blake2s_mac_update(EVP_MAC_IMPL *macctx, const unsigned char *data,
                               size_t datalen)
 {
-    return BLAKE2s_Update(&macctx->ctx, data, datalen);
+    return blake2s_update(&macctx->ctx, data, datalen);
 }
 
 static int blake2s_mac_final(EVP_MAC_IMPL *macctx, unsigned char *out)
 {
-    return BLAKE2s_Final(out, &macctx->ctx);
+    return blake2s_final(out, &macctx->ctx);
 }
 
 /*
