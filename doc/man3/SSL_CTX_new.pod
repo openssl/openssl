@@ -203,7 +203,7 @@ removed in OpenSSL 1.1.0.
 
 SSLv23_method(), SSLv23_server_method() and SSLv23_client_method()
 were deprecated and the preferred TLS_method(), TLS_server_method()
-and TLS_client_method() functions were introduced in OpenSSL 1.1.0.
+and TLS_client_method() functions were added in OpenSSL 1.1.0.
 
 All version-specific methods were deprecated in OpenSSL 1.1.0.
 

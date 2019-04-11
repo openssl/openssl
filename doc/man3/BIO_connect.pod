@@ -102,8 +102,8 @@ L<BIO_ADDR(3)>
 =head1 HISTORY
 
 BIO_gethostname(), BIO_get_port(), BIO_get_host_ip(),
-BIO_get_accept_socket() and BIO_accept() were deprecated in
-OpenSSL 1.1.0.  Use the functions described above instead.
+BIO_get_accept_socket() and BIO_accept() were deprecated in OpenSSL 1.1.0.
+Use the functions described above instead.
 
 =head1 COPYRIGHT
 
