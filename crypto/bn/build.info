@@ -7,6 +7,8 @@ SOURCE[../../libcrypto]=\
         bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c \
         bn_depr.c bn_const.c bn_x931p.c bn_intern.c bn_dh.c bn_srp.c \
         bn_rsa_fips186_4.c
+SOURCE[../../providers/fips]=\
+        bn_lib.c
 INCLUDE[../../libcrypto]=../../crypto/include
 
 INCLUDE[bn_exp.o]=..

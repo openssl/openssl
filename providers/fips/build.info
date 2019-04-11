@@ -1,2 +1,2 @@
 
-SOURCE[../fips]=fipsprov.c
+SOURCE[../fips]=fipsprov.c stubs.c

@@ -348,7 +348,6 @@ OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf,
     return ossl_param_construct(key, OSSL_PARAM_UNSIGNED_INTEGER, buf,
                                 sizeof(size_t), rsize); }
 
-#ifndef FIPS_MODE
 /*
  * TODO(3.0): Make this available in FIPS mode.
  *
@@ -398,7 +397,6 @@ OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
     return ossl_param_construct(key, OSSL_PARAM_UNSIGNED_INTEGER,
                                 buf, bsize, rsize);
 }
-#endif
 
 int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
 {
