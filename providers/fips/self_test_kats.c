@@ -222,30 +222,85 @@ end:
 static int self_test_sig(ST_SIGNATURE *t, ST_EVENT *event)
 {
 #if 0
-    int ret = 1;
+    int ret = 0;
     EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *ctx = NULL;
+    const EVP_MD *md = NULL;
+    size_t out_len = 0;
+    unsigned char out[256];
 
     SELF_TEST_EVENT_onbegin(event, SELF_TEST_TYPE_KAT_SIGNATURE, t->desc);
 
-    /* TODO - Add after method layers exist */
     pkey = bin2pkey(t->id, t->key_data);
 
-    /* Optional corruption */
-    /* SELF_TEST_EVENT_oncorrupt_byte(event, sig); */
+    md = EVP_get_digestbyname(t->md_name);
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL || md == NULL)
+        goto end;
 
+    if (!(EVP_DigestSignInit(ctx, NULL, md, NULL, pkey) > 0
+          && EVP_DigestSignUpdate(ctx, t->msg.data, t->msg.len) > 0
+          && EVP_DigestSignFinal(ctx, NULL, &out_len) > 0
+          && EVP_DigestSignFinal(ctx, out, &out_len) > 0))
+        goto end;
+
+    /* Optional corruption */
+    SELF_TEST_EVENT_oncorrupt_byte(event, out);
+
+    if (!(EVP_DigestVerifyInit(ctx, NULL, md, NULL, pkey) > 0
+          && EVP_DigestVerifyUpdate(ctx, t->msg.data, t->msg.len) > 0
+          && EVP_DigestVerifyFinal(ctx, out, out_len) > 0))
+        goto end;
+    ret = 1;
+end:
     SELF_TEST_EVENT_onend(event, ret);
     EVP_PKEY_free(pkey);
+    EVP_MD_CTX_free(ctx);
     return ret;
 #else
     return 1;
 #endif
 }
 
+#if 0
+/*
+ * Helper function to setup a EVP_CipherInit
+ * Used to hide the complexity of Authenticated ciphers.
+ */
+static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+                       ST_CIPHER *t, int enc)
+{
+    unsigned char *in_tag = NULL;
+    int pad = 0, tmp;
+
+    /* Flag required for Key wrapping */
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
+    if (t->tag.data == NULL) {
+        /* Use a normal cipher init */
+        return EVP_CipherInit_ex(ctx, cipher, NULL, t->key.data, t->iv.data, enc)
+               && EVP_CIPHER_CTX_set_padding(ctx, pad);
+    }
+
+    /* The authenticated cipher init */
+    if (!enc)
+        in_tag = (unsigned char *)t->tag.data;
+
+    return EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)
+           && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, t->iv.len, NULL)
+           && (in_tag == NULL
+               || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, t->tag.len,
+                                      in_tag))
+           && EVP_CipherInit_ex(ctx, NULL, NULL, t->key.data, NULL, enc)
+           && EVP_CIPHER_CTX_set_padding(ctx, pad)
+           && EVP_CipherUpdate(ctx, NULL, &tmp, t->add.data, t->add.len);
+}
+#endif
+
 /* Test a single KAT for encrypt/decrypt */
 static int self_test_cipher(ST_CIPHER *t, ST_EVENT *event)
 {
-#if 1
-    int ret = 1, encrypt = 1, len, ct_len, pt_len;
+#if 0
+    int ret = 0, encrypt = 1, len, ct_len, pt_len;
     EVP_CIPHER_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL;
     unsigned char ct_buf[256] = { 0 };
@@ -275,7 +330,7 @@ static int self_test_cipher(ST_CIPHER *t, ST_EVENT *event)
         unsigned char tag[16] = {0};
 
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, t->tag.len, tag)
-            || memcmp(tag, t->tag, t->tag.len) != 0)
+            || memcmp(tag, t->tag.data, t->tag.len) != 0)
             goto end;
     }
 
@@ -285,15 +340,13 @@ static int self_test_cipher(ST_CIPHER *t, ST_EVENT *event)
         goto end;
     pt_len += len;
 
-
     SELF_TEST_EVENT_oncorrupt_byte(event, ct_buf);
 
     if (pt_len != t->plaintxt.len
         || memcmp(pt_buf, t->plaintxt.data, pt_len) != 0)
         goto end;
 
-
-
+    ret = 1;
 end:
     EVP_CIPHER_CTX_free(ctx);
     SELF_TEST_EVENT_onend(event, ret);
