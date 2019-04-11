@@ -7623,15 +7623,13 @@ static int test_cert_cb(int tst)
 
 static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 {
-    X509 *xcert, *peer;
+    X509 *xcert;
     EVP_PKEY *privpkey;
     BIO *in = NULL;
 
-    /* Check that SSL_get_peer_certificate() returns something sensible */
-    peer = SSL_get_peer_certificate(ssl);
-    if (!TEST_ptr(peer))
+    /* Check that SSL_get0_peer_certificate() returns something sensible */
+    if (!TEST_ptr(SSL_get0_peer_certificate(ssl)))
         return 0;
-    X509_free(peer);
 
     in = BIO_new_file(cert, "r");
     if (!TEST_ptr(in))

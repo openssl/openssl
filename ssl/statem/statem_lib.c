@@ -537,7 +537,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
      * certificate after the CertVerify instead of when we get the
      * CertificateRequest. This is because in TLSv1.3 the CertificateRequest
      * comes *before* the Certificate message. In TLSv1.2 it comes after. We
-     * want to make sure that SSL_get_peer_certificate() will return the actual
+     * want to make sure that SSL_get1_peer_certificate() will return the actual
      * server certificate from the client_cert_cb callback.
      */
     if (!s->server && SSL_IS_TLS13(s) && s->s3.tmp.cert_req == 1)

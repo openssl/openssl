@@ -505,6 +505,7 @@ SSL_get_max_cert_list                   define
 SSL_get_max_proto_version               define
 SSL_get_min_proto_version               define
 SSL_get_mode                            define
+SSL_get_peer_certificate                define deprecated 3.0.0
 SSL_get_peer_signature_nid              define
 SSL_get_peer_tmp_key                    define
 SSL_get_secure_renegotiation_support    define

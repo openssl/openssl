@@ -1524,21 +1524,22 @@ int SSL_has_pending(const SSL *s)
     return RECORD_LAYER_read_pending(&s->rlayer);
 }
 
-X509 *SSL_get_peer_certificate(const SSL *s)
+X509 *SSL_get1_peer_certificate(const SSL *s)
 {
-    X509 *r;
+    X509 *r = SSL_get0_peer_certificate(s);
 
-    if ((s == NULL) || (s->session == NULL))
-        r = NULL;
-    else
-        r = s->session->peer;
-
-    if (r == NULL)
-        return r;
-
-    X509_up_ref(r);
+    if (r != NULL)
+        X509_up_ref(r);
 
     return r;
+}
+
+X509 *SSL_get0_peer_certificate(const SSL *s)
+{
+    if ((s == NULL) || (s->session == NULL))
+        return NULL;
+    else
+        return s->session->peer;
 }
 
 STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
