@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/provider.h>
 #include <openssl/x509v3.h>
 #include <openssl/pkcs12.h>
 #include <openssl/kdf.h>
@@ -74,6 +75,9 @@ static KEY_LIST *public_keys;
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
+
+static OSSL_PROVIDER *defltprov = NULL;
+static OSSL_PROVIDER *legacyprov = NULL;
 
 /*
  * Compare two memory regions for equality, returning zero if they differ.
@@ -370,6 +374,11 @@ static int digest_test_parse(EVP_TEST *t,
         return evp_test_buffer_set_count(value, mdata->input);
     if (strcmp(keyword, "Ncopy") == 0)
         return evp_test_buffer_ncopy(value, mdata->input);
+    if (strcmp(keyword, "Legacy") == 0) {
+        if (legacyprov == NULL)
+            t->skip = 1;
+        return 1;
+    }
     return 0;
 }
 
@@ -3053,8 +3062,10 @@ static int run_file_tests(int i)
 
     while (!BIO_eof(t->s.fp)) {
         c = parse(t);
-        if (t->skip)
+        if (t->skip) {
+            t->s.numskip++;
             continue;
+        }
         if (c == 0 || !run_test(t)) {
             t->s.errors++;
             break;
@@ -3080,6 +3091,21 @@ int setup_tests(void)
     if (n == 0)
         return 0;
 
+    defltprov = OSSL_PROVIDER_load(NULL, "default");
+    if (!TEST_ptr(defltprov))
+        return 0;
+#ifndef NO_LEGACY_MODULE
+    legacyprov = OSSL_PROVIDER_load(NULL, "legacy");
+    if (!TEST_ptr(legacyprov))
+        return 0;
+#endif /* NO_LEGACY_MODULE */
+
     ADD_ALL_TESTS(run_file_tests, n);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    OSSL_PROVIDER_unload(legacyprov);
+    OSSL_PROVIDER_unload(defltprov);
 }

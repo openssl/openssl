@@ -3,8 +3,8 @@
 =head1 NAME
 
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy,
-EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl, EVP_MD_CTX_set_flags,
-EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
+EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl, EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
+EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
 EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
 EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_flags,
@@ -22,6 +22,8 @@ EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
  int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void* p2);
+ int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
+ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
  void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
  void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
  int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
@@ -88,11 +90,24 @@ Cleans up digest context B<ctx> and frees up the space allocated to it.
 
 =item EVP_MD_CTX_ctrl()
 
+This is a deprecated function. EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params()
+is the mechanism that should be used to set and get parameters that are used by
+providers.
 Performs digest-specific control actions on context B<ctx>. The control command
 is indicated in B<cmd> and any additional arguments in B<p1> and B<p2>.
 EVP_MD_CTX_ctrl() must be called after EVP_DigestInit_ex(). Other restrictions
 may apply depending on the control type and digest implementation.
 See L</CONTROLS> below for more information.
+
+=item EVP_MD_CTX_get_params
+
+Retrieves the requested list of B<params> from a MD context B<ctx>.
+See L</PARAMS> below for more information.
+
+=item EVP_MD_CTX_set_params
+
+Sets the list of <params> into a MD context B<ctx>.
+See L</PARAMS> below for more information.
 
 =item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
 
@@ -239,6 +254,38 @@ depends on how the B<EVP_PKEY_CTX> is created.
 
 =back
 
+=head1 PARAMS
+
+See L<OSSL_PARAM(3)> for information about passing parameters.
+
+EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
+
+=over 4
+
+=item OSSL_PARAM_DIGEST_KEY_XOFLEN <size_t>
+
+Sets the digest length for extendable output functions.
+It is used by the SHAKE algorithm.
+
+=item OSSL_PARAM_DIGEST_KEY_PAD_TYPE <int>
+
+Sets the pad type.
+It is used by the MDC2 algorithm.
+
+=back
+
+EVP_MD_CTX_get_params() can be used with the following OSSL_PARAM keys:
+
+=over 4
+
+=item OSSL_PARAM_DIGEST_KEY_MICALG <utf8string>.
+
+Gets the digest Message Integrity Check algorithm string. This is used when
+creating S/MIME multipart/signed messages, as specified in RFC 3851.
+It may be used by external engines or providers.
+
+=back
+
 =head1 CONTROLS
 
 EVP_MD_CTX_ctrl() can be used to send the following standard controls:
@@ -304,6 +351,11 @@ Returns 1 for
 success and 0 for failure.
 
 =item EVP_MD_CTX_ctrl()
+
+Returns 1 if successful or 0 for failure.
+
+=item EVP_MD_CTX_set_params(),
+EVP_MD_CTX_get_params()
 
 Returns 1 if successful or 0 for failure.
 
@@ -418,7 +470,9 @@ digest name passed on the command line.
 
 L<EVP_MD_meth_new(3)>,
 L<dgst(1)>,
-L<evp(7)>
+L<evp(7)>,
+L<OSSL_PROVIDER(3)>,
+L<OSSL_PARAM(3)>
 
 The full list of digest algorithms are provided below.
 
@@ -446,9 +500,12 @@ The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
 The EVP_MD_CTX_set_pkey_ctx() function was added in 1.1.1.
 
+The EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params() functions were
+added in 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

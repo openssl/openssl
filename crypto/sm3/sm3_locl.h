@@ -34,6 +34,7 @@
       } while (0)
 #define HASH_BLOCK_DATA_ORDER   sm3_block_data_order
 
+void sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void sm3_transform(SM3_CTX *c, const unsigned char *data);
 
 #include "internal/md32_common.h"

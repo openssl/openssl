@@ -20,6 +20,6 @@ IF[{- !$disabled{legacy} -}]
     SOURCE[legacy]=legacy.ld
     GENERATE[legacy.ld]=../util/providers.num
   ENDIF
-  INCLUDE[legacy]=.. ../include ../crypto/include
+  INCLUDE[legacy]=.. ../include ../crypto/include common/include
   DEPEND[legacy]=../libcrypto
 ENDIF

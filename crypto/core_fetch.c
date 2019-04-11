@@ -31,6 +31,9 @@ static int ossl_method_construct_this(OSSL_PROVIDER *provider, void *cbdata)
     const OSSL_ALGORITHM *map =
         ossl_provider_query_operation(provider, data->operation_id, &no_store);
 
+    if (map == NULL)
+        return 0;
+
     while (map->algorithm_name != NULL) {
         const OSSL_ALGORITHM *thismap = map++;
         void *method = NULL;

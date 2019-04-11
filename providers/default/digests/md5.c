@@ -8,11 +8,10 @@
  */
 
 #include <openssl/crypto.h>
-#include <openssl/md2.h>
-
+#include <openssl/md5.h>
 #include "internal/core_mkdigest.h"
 #include "internal/provider_algs.h"
 
-OSSL_FUNC_DIGEST_CONSTRUCT(md2, MD2_CTX,
-                           MD2_BLOCK, MD2_DIGEST_LENGTH,
-                           MD2_Init, MD2_Update, MD2_Final)
+OSSL_FUNC_DIGEST_CONSTRUCT(md5, MD5_CTX,
+                           MD5_CBLOCK, MD5_DIGEST_LENGTH,
+                           MD5_Init, MD5_Update, MD5_Final)
