@@ -1285,14 +1285,10 @@ static int pkey_type(EVP_PKEY *pkey)
 
 static int peer_pkey_type(SSL *s)
 {
-    X509 *x = SSL_get_peer_certificate(s);
+    X509 *x = SSL_get0_peer_certificate(s);
 
-    if (x != NULL) {
-        int nid = pkey_type(X509_get0_pubkey(x));
-
-        X509_free(x);
-        return nid;
-    }
+    if (x != NULL)
+        return pkey_type(X509_get0_pubkey(x));
     return NID_undef;
 }
 

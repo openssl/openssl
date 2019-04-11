@@ -1706,7 +1706,12 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
                              long length);
 
 # ifdef OPENSSL_X509_H
-__owur X509 *SSL_get_peer_certificate(const SSL *s);
+__owur X509 *SSL_get0_peer_certificate(const SSL *s);
+__owur X509 *SSL_get1_peer_certificate(const SSL *s);
+/* Deprecated in 3.0.0 */
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#   define SSL_get_peer_certificate SSL_get1_peer_certifiate
+#  endif
 # endif
 
 __owur STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s);
