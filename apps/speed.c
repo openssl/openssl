@@ -1077,6 +1077,7 @@ static int EVP_HMAC_loop(void *args)
 #ifndef OPENSSL_NO_CMAC
 static const EVP_CIPHER *evp_cmac_cipher = NULL;
 static char *evp_cmac_name = NULL;
+
 static int EVP_CMAC_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -1897,7 +1898,7 @@ int speed_main(int argc, char **argv)
     /* No parameters; turn on everything. */
     if (argc == 0 && !doit[D_EVP] && !doit[D_EVP_HMAC] && !doit[D_EVP_CMAC]) {
         for (i = 0; i < ALGOR_NUM; i++)
-            if (i != D_EVP && i != D_EVP_HMAC && 1 != D_EVP_CMAC)
+            if (i != D_EVP && i != D_EVP_HMAC && i != D_EVP_CMAC)
                 doit[i] = 1;
 #ifndef OPENSSL_NO_RSA
         for (i = 0; i < RSA_NUM; i++)
