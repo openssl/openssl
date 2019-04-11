@@ -7,6 +7,20 @@
 # https://www.openssl.org/source/license.html
 
 
-use OpenSSL::Test::Simple;
+use strict;
+use warnings;
 
-simple_test("test_mdc2", "mdc2test", "mdc2");
+use OpenSSL::Test qw/:DEFAULT bldtop_dir/;
+use OpenSSL::Test::Utils;
+
+setup("test_mdc2");
+
+if (disabled("mdc2") || disabled("legacy")) {
+    plan skip_all => "mdc2 is not supported by this OpenSSL build";
+}
+
+plan tests => 1;
+
+$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+
+ok(run(test(["mdc2test"])), "running mdc2test");

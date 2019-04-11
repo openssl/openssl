@@ -13,6 +13,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "internal/provider_algs.h"
 
 /* Functions provided by the core */
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
@@ -49,12 +50,27 @@ static int legacy_get_params(const OSSL_PROVIDER *prov,
     return 1;
 }
 
-extern const OSSL_DISPATCH md2_functions[];
-
 static const OSSL_ALGORITHM legacy_digests[] = {
 #ifndef OPENSSL_NO_MD2
     { "MD2", "legacy=yes", md2_functions },
 #endif
+
+#ifndef OPENSSL_NO_MD4
+    { "MD4", "legacy=yes", md4_functions },
+#endif
+
+#ifndef OPENSSL_NO_MDC2
+    { "MDC2", "legacy=yes", mdc2_functions },
+#endif /* OPENSSL_NO_MDC2 */
+
+#ifndef OPENSSL_NO_WHIRLPOOL
+    { "whirlpool", "legacy=yes", wp_functions },
+#endif /* OPENSSL_NO_WHIRLPOOL */
+
+#ifndef OPENSSL_NO_RMD160
+    { "RIPEMD160", "legacy=yes", ripemd160_functions },
+#endif /* OPENSSL_NO_RMD160 */
+
     { NULL, NULL, NULL }
 };
 

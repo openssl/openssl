@@ -8,7 +8,32 @@
  */
 
 /* Digests */
+extern const OSSL_DISPATCH sha1_functions[];
+extern const OSSL_DISPATCH sha224_functions[];
 extern const OSSL_DISPATCH sha256_functions[];
+extern const OSSL_DISPATCH sha384_functions[];
+extern const OSSL_DISPATCH sha512_functions[];
+extern const OSSL_DISPATCH sha512_224_functions[];
+extern const OSSL_DISPATCH sha512_256_functions[];
+extern const OSSL_DISPATCH sha3_224_functions[];
+extern const OSSL_DISPATCH sha3_256_functions[];
+extern const OSSL_DISPATCH sha3_384_functions[];
+extern const OSSL_DISPATCH sha3_512_functions[];
+extern const OSSL_DISPATCH keccak_kmac_128_functions[];
+extern const OSSL_DISPATCH keccak_kmac_256_functions[];
+extern const OSSL_DISPATCH shake_128_functions[];
+extern const OSSL_DISPATCH shake_256_functions[];
+extern const OSSL_DISPATCH blake2s256_functions[];
+extern const OSSL_DISPATCH blake2b512_functions[];
+extern const OSSL_DISPATCH md5_functions[];
+extern const OSSL_DISPATCH md5_sha1_functions[];
+extern const OSSL_DISPATCH sm3_functions[];
+extern const OSSL_DISPATCH nullmd_functions[];
+extern const OSSL_DISPATCH md2_functions[];
+extern const OSSL_DISPATCH md4_functions[];
+extern const OSSL_DISPATCH mdc2_functions[];
+extern const OSSL_DISPATCH wp_functions[];
+extern const OSSL_DISPATCH ripemd160_functions[];
 
 /* Ciphers */
 extern const OSSL_DISPATCH aes256ecb_functions[];

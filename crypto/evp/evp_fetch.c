@@ -159,6 +159,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
 
         mcmdata.mcm = &mcm;
         mcmdata.libctx = libctx;
+        mcmdata.name = name;
         mcmdata.method_from_dispatch = new_method;
         mcmdata.destruct_method = free_method;
         mcmdata.refcnt_up_method = upref_method;

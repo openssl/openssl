@@ -1,0 +1,17 @@
+SOURCE[../../../libcrypto]=\
+        null.c
+
+IF[{- !$disabled{blake2} -}]
+  SOURCE[../../../libcrypto]=\
+          blake2.c blake2b.c blake2s.c
+ENDIF
+
+IF[{- !$disabled{sm3} -}]
+  SOURCE[../../../libcrypto]=\
+          sm3.c
+ENDIF
+
+IF[{- !$disabled{md5} -}]
+  SOURCE[../../../libcrypto]=\
+          md5.c md5_sha1.c
+ENDIF

@@ -8,11 +8,11 @@
  */
 
 #include <openssl/crypto.h>
-#include <openssl/md2.h>
+#include <openssl/whrlpool.h>
 
 #include "internal/core_mkdigest.h"
 #include "internal/provider_algs.h"
 
-OSSL_FUNC_DIGEST_CONSTRUCT(md2, MD2_CTX,
-                           MD2_BLOCK, MD2_DIGEST_LENGTH,
-                           MD2_Init, MD2_Update, MD2_Final)
+OSSL_FUNC_DIGEST_CONSTRUCT(wp, WHIRLPOOL_CTX,
+                           WHIRLPOOL_BBLOCK / 8, WHIRLPOOL_DIGEST_LENGTH,
+                           WHIRLPOOL_Init, WHIRLPOOL_Update, WHIRLPOOL_Final)
