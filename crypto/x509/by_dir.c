@@ -372,13 +372,19 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 
         if (tmp != NULL) {
             ok = 1;
-            ret->type = tmp->type;
-            memcpy(&ret->data, &tmp->data, sizeof(ret->data));
-            /*
-             * Up the ref count of the contained object (note X509_OBJECT itself
-             * is not ref counted).
-             */
-            X509_OBJECT_up_ref_count(ret);
+            switch (tmp->type) {
+            case X509_LU_X509:
+                X509_OBJECT_set1_X509(ret, tmp->data.x509);
+                break;
+            case X509_LU_CRL:
+                X509_OBJECT_set1_X509_CRL(ret, tmp->data.crl);
+                break;
+            default:
+                /* Shouldn't happen */
+                X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_INTERNAL_ERROR);
+                ok = 0;
+                goto finish;
+            }
 
             /*
              * Clear any errors that might have been raised processing empty
