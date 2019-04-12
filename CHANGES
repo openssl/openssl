@@ -9,8 +9,12 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Add prediction resistance to the DRBG reseeding process.
+     [Paul Dale]
+
   *) Limit the number of blocks in a data unit for AES-XTS to 2^20 as
      mandated by IEEE Std 1619-2018.
+     [Paul Dale]
 
   *) Added newline escaping functionality to a filename when using openssl dgst.
      This output format is to replicate the output format found in the '*sum'
