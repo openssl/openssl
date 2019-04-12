@@ -288,6 +288,10 @@ OpenSSL 3.0
 
    *Antonio Iacono*
 
+ * Add QUIC API support from BoringSSL.
+
+   *Todd Short*
+
  * Deprecated EC_POINT_make_affine() and EC_POINTs_make_affine(). These
    functions are not widely used and now OpenSSL automatically perform this
    conversion when needed.

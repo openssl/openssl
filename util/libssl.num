@@ -520,3 +520,14 @@ SSL_load_client_CA_file_ex              ?	3_0_0	EXIST::FUNCTION:
 SSL_set0_tmp_dh_pkey                    ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set0_tmp_dh_pkey                ?	3_0_0	EXIST::FUNCTION:
 SSL_group_to_name                       ?	3_0_0	EXIST::FUNCTION:
+SSL_set_quic_transport_params           ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_get_peer_quic_transport_params      ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_quic_max_handshake_flight_len       ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_quic_read_level                     ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_quic_write_level                    ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_provide_quic_data                   ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_CTX_set_quic_method                 ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_set_quic_method                     ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_process_quic_post_handshake         ?	3_0_0	EXIST::FUNCTION:QUIC
+SSL_CIPHER_get_prf_nid                  ?	3_0_0	EXIST::FUNCTION:
+SSL_is_quic                             ?	3_0_0	EXIST::FUNCTION:QUIC
