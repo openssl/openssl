@@ -1,0 +1,49 @@
+version: 2
+
+.openssl_job: &openssljob
+  docker:
+    - image: ${IMAGE}
+  steps:
+    - checkout
+    - run:
+        name: Clone liboqs
+        command: cd oqs_test && scripts/clone_liboqs.sh
+    - run:
+        name: Build liboqs
+        command: cd oqs_test && scripts/build_liboqs.sh
+    - run:
+        name: Build OpenSSL
+        command: cd oqs_test && scripts/build_openssl.sh
+    - run:
+        name: Run unit tests
+        command: cd oqs_test && python3 -m nose --rednose --verbose
+
+jobs:
+  ################
+  # OPENSSL JOBS #
+  ################
+  # amd64-buster (Debian 10)
+  # liboqs master branch
+  ssl-amd64-buster-liboqs-master-openssl-111:
+    <<: *openssljob
+    environment:
+      IMAGE: dstebila/liboqs:amd64-buster-0.0.1
+      ARCH: x64
+      LIBOQS: master
+      OPENSSL: 111
+  # x86_64-xenial (Ubuntu 16.04)
+  # liboqs master branch
+  ssl-x86_64-xenial-liboqs-master-openssl-111:
+    <<: *openssljob
+    environment:
+      IMAGE: dstebila/liboqs:x86_64-xenial-0.0.2
+      ARCH: x64
+      LIBOQS: master
+      OPENSSL: 111
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - ssl-amd64-buster-liboqs-master-openssl-111
+      - ssl-x86_64-xenial-liboqs-master-openssl-111

@@ -184,3 +184,13 @@ pod2htmd.tmp
 # Windows manifest files
 *.manifest
 doc-nits
+
+# OQS stuff
+/oqs_test/tests/__pycache__
+/oqs_test/tmp/
+/*.crt
+/*.key
+/*.csr
+/*.srl
+/*.pem
+/*.out
