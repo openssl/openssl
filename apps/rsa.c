@@ -31,7 +31,7 @@ typedef enum OPTION_choice {
     /* Do not change the order here; see case statements below */
     OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
     OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_CIPHER,
-    OPT_PROV_ENUM
+    OPT_PROV_ENUM, OPT_TRADITIONAL
 } OPTION_CHOICE;
 
 const OPTIONS rsa_options[] = {
@@ -59,6 +59,8 @@ const OPTIONS rsa_options[] = {
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key in text"},
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
+    {"traditional", OPT_TRADITIONAL, '-',
+     "Use traditional format for private keys"},
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
     OPT_SECTION("PVK"),
@@ -88,6 +90,7 @@ int rsa_main(int argc, char **argv)
     int pvk_encr = 2;
 #endif
     OPTION_CHOICE o;
+    int traditional = 0;
 
     prog = opt_init(argc, argv, rsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -162,6 +165,9 @@ int rsa_main(int argc, char **argv)
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
+            break;
+        case OPT_TRADITIONAL:
+            traditional = 1;
             break;
         }
     }
@@ -280,8 +286,13 @@ int rsa_main(int argc, char **argv)
                 i = PEM_write_bio_RSA_PUBKEY(out, rsa);
         } else {
             assert(private);
-            i = PEM_write_bio_RSAPrivateKey(out, rsa,
-                                            enc, NULL, 0, NULL, passout);
+            if (traditional) {
+                i = PEM_write_bio_PrivateKey_traditional(out, pkey, enc, NULL, 0,
+                                                         NULL, passout);
+            } else {
+                i = PEM_write_bio_PrivateKey(out, pkey,
+                                             enc, NULL, 0, NULL, passout);
+            }
         }
 #ifndef OPENSSL_NO_DSA
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {

@@ -38,7 +38,7 @@ typedef enum OPTION_choice {
 #endif
     OPT_F4, OPT_ENGINE,
     OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_VERBOSE,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_TRADITIONAL
 } OPTION_CHOICE;
 
 const OPTIONS genrsa_options[] = {
@@ -62,6 +62,8 @@ const OPTIONS genrsa_options[] = {
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"primes", OPT_PRIMES, 'p', "Specify number of primes"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"traditional", OPT_TRADITIONAL, '-',
+     "Use traditional format for private keys"},
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
 
     OPT_R_OPTIONS,
@@ -88,7 +90,7 @@ int genrsa_main(int argc, char **argv)
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
     char *prog, *hexe, *dece;
     OPTION_CHOICE o;
-    unsigned char *ebuf = NULL;
+    int traditional = 0;
 
     if (bn == NULL || cb == NULL)
         goto end;
@@ -140,6 +142,9 @@ opthelp:
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_TRADITIONAL:
+            traditional = 1;
             break;
         }
     }
@@ -214,8 +219,14 @@ opthelp:
         OPENSSL_free(hexe);
         OPENSSL_free(dece);
     }
-    if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout))
-        goto end;
+    if (traditional) {
+        if (!PEM_write_bio_PrivateKey_traditional(out, pkey, enc, NULL, 0,
+                                                  NULL, passout))
+            goto end;
+    } else {
+        if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout))
+            goto end;
+    }
 
     ret = 0;
  end:
@@ -226,7 +237,6 @@ opthelp:
     BIO_free_all(out);
     release_engine(eng);
     OPENSSL_free(passout);
-    OPENSSL_free(ebuf);
     if (ret != 0)
         ERR_print_errors(bio_err);
     return ret;
