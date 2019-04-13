@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -17,6 +18,7 @@
 #include <openssl/srp.h>
 #include <openssl/txt_db.h>
 #include <openssl/aes.h>
+#include <openssl/rand.h>
 
 #include "ssltestlib.h"
 #include "testutil.h"
@@ -918,6 +920,111 @@ end:
     return testresult;
 }
 
+#define SENDFILE_SZ                     (16 * 4096)
+#define SENDFILE_CHUNK                  (4 * 4096)
+#define min(a,b)                        ((a) > (b) ? (b) : (a))
+
+static int test_ktls_sendfile(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    unsigned char *buf, *buf_dst;
+    BIO *out = NULL, *in = NULL;
+    int cfd, sfd, ffd, err;
+    ssize_t chunk_size = 0;
+    off_t chunk_off = 0;
+    int testresult = 0;
+    FILE *ffdp;
+
+    buf = OPENSSL_zalloc(SENDFILE_SZ);
+    buf_dst = OPENSSL_zalloc(SENDFILE_SZ);
+    if (!TEST_ptr(buf) || !TEST_ptr(buf_dst)
+        || !TEST_true(create_test_sockets(&cfd, &sfd)))
+        goto end;
+
+    /* Skip this test if the platform does not support ktls */
+    if (!ktls_chk_platform(sfd)) {
+        testresult = 1;
+        goto end;
+    }
+
+    /* Create a session based on SHA-256 */
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_2_VERSION, TLS1_2_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                              "AES128-GCM-SHA256"))
+        || !TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
+                                          &clientssl, sfd, cfd)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE))
+        || !TEST_true(BIO_get_ktls_send(serverssl->wbio)))
+        goto end;
+
+    RAND_bytes(buf, SENDFILE_SZ);
+    out = BIO_new_file(tmpfilename, "wb");
+    if (!TEST_ptr(out))
+        goto end;
+
+    if (BIO_write(out, buf, SENDFILE_SZ) != SENDFILE_SZ)
+        goto end;
+
+    BIO_free(out);
+    out = NULL;
+    in = BIO_new_file(tmpfilename, "rb");
+    BIO_get_fp(in, &ffdp);
+    ffd = fileno(ffdp);
+
+    while (chunk_off < SENDFILE_SZ) {
+        chunk_size = min(SENDFILE_CHUNK, SENDFILE_SZ - chunk_off);
+        while ((err = SSL_sendfile(serverssl,
+                                   ffd,
+                                   chunk_off,
+                                   chunk_size,
+                                   0)) != chunk_size) {
+            if (SSL_get_error(serverssl, err) != SSL_ERROR_WANT_WRITE)
+                goto end;
+        }
+        while ((err = SSL_read(clientssl,
+                               buf_dst + chunk_off,
+                               chunk_size)) != chunk_size) {
+            if (SSL_get_error(clientssl, err) != SSL_ERROR_WANT_READ)
+                goto end;
+        }
+
+        /* verify the payload */
+        if (!TEST_mem_eq(buf_dst + chunk_off,
+                         chunk_size,
+                         buf + chunk_off,
+                         chunk_size))
+            goto end;
+
+        chunk_off += chunk_size;
+    }
+
+    testresult = 1;
+end:
+    if (clientssl) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    serverssl = clientssl = NULL;
+    BIO_free(out);
+    BIO_free(in);
+    OPENSSL_free(buf);
+    OPENSSL_free(buf_dst);
+    return testresult;
+}
+
 static int test_ktls_no_txrx_client_no_txrx_server(void)
 {
     return execute_test_ktls(0, 0, 0, 0);
@@ -997,7 +1104,6 @@ static int test_ktls_client_server(void)
 {
     return execute_test_ktls(1, 1, 1, 1);
 }
-
 #endif
 
 static int test_large_message_tls(void)
@@ -6280,6 +6386,7 @@ int setup_tests(void)
     ADD_TEST(test_ktls_no_rx_client_server);
     ADD_TEST(test_ktls_no_tx_client_server);
     ADD_TEST(test_ktls_client_server);
+    ADD_TEST(test_ktls_sendfile);
 #endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
