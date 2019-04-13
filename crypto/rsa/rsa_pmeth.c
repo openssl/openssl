@@ -48,7 +48,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
     rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL)
         return 0;
-    rctx->nbits = 1024;
+    rctx->nbits = 2048;
     rctx->pad_mode = RSA_PKCS1_PADDING;
     rctx->saltlen = -2;
     ctx->data = rctx;

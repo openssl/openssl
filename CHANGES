@@ -9,6 +9,12 @@
 
  Changes between 1.1.0j and 1.1.0k [xx XXX xxxx]
 
+  *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
+     This changes the size when using the genpkey app when no size is given. It
+     fixes an omission in earlier changes that changed all RSA, DSA and DH
+     generation apps to use 2048 bits by default.
+     [Kurt Roeckx]
+
   *) Added SCA hardening for modular field inversion in EC_GROUP through
      a new dedicated field_inv() pointer in EC_METHOD.
      This also addresses a leakage affecting conversions from projective
