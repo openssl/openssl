@@ -329,8 +329,6 @@ int bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
             if (BN_is_one(z))
                 goto composite;
         }
-        if (!BN_GENCB_call(cb, 1, i))
-            goto err;
         /* At this point z = b^((w-1)/2) mod w */
         /* (Steps 4.8 - 4.9) x = z, z = x^2 mod w */
         if (!BN_copy(x, z) || !BN_mod_mul(z, x, x, w, ctx))
@@ -358,6 +356,8 @@ composite:
         goto err;
 outer_loop: ;
         /* (Step 4.1.5) */
+        if (!BN_GENCB_call(cb, 1, i))
+            goto err;
     }
     /* (Step 5) */
     *status = BN_PRIMETEST_PROBABLY_PRIME;
