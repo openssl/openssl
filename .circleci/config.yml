@@ -1,10 +1,20 @@
 version: 2
 
+# CircleCI doesn't handle large file sets properly for local builds
+# https://github.com/CircleCI-Public/circleci-cli/issues/281#issuecomment-472808051
+localCheckout: &localCheckout
+  run: |-
+    PROJECT_PATH=$(cd ${CIRCLE_WORKING_DIRECTORY}; pwd)
+    mkdir -p ${PROJECT_PATH}
+    cd /tmp/_circleci_local_build_repo 
+    git ls-files -z | xargs -0 -s 2090860 tar -c | tar -x -C ${PROJECT_PATH} 
+    cp -a /tmp/_circleci_local_build_repo/.git ${PROJECT_PATH}
+
 .openssl_job: &openssljob
   docker:
     - image: ${IMAGE}
   steps:
-    - checkout
+    - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
     - run:
         name: Clone liboqs
         command: cd oqs_test && scripts/clone_liboqs.sh
