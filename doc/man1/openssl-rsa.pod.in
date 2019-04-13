@@ -34,6 +34,7 @@ B<openssl> B<rsa>
 [B<-text>]
 [B<-noout>]
 [B<-modulus>]
+[B<-traditional>]
 [B<-check>]
 [B<-pubin>]
 [B<-pubout>]
@@ -47,10 +48,7 @@ B<openssl> B<rsa>
 =head1 DESCRIPTION
 
 This command processes RSA keys. They can be converted between
-various forms and their components printed out. B<Note> this command uses the
-traditional SSLeay compatible format for private key encryption: newer
-applications should use the more secure PKCS#8 format using the
-L<openssl-pkcs8(1)> command.
+various forms and their components printed out.
 
 =head1 OPTIONS
 
@@ -72,10 +70,10 @@ See L<openssl(1)/Format Options> for details.
 The key output format; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-traditional>
 
-The data is a PKCS#1 B<RSAPrivateKey> or B<SubjectPublicKey> object.
-On input, PKCS#8 format private keys are also accepted.
+When writing a private key, use the traditional PKCS#1 format
+instead of the PKCS#8 format.
 
 =item B<-in> I<filename>
 

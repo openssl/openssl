@@ -529,7 +529,7 @@ parameters start with a minus sign:
 Several OpenSSL commands can take input or generate output in a variety
 of formats.
 Since OpenSSL 3.0 keys, single certificates, and CRLs can be read from
-files in any of the B<DER>, B<PEM>, or B<P12> formats,
+files in any of the B<DER>, B<PEM> or B<P12> formats,
 while specifying their input format is no more needed.
 
 The list of acceptable formats, and the default, is

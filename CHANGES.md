@@ -353,8 +353,8 @@ OpenSSL 3.0
    *Paul Dale*
 
  * The command line utilities genrsa and rsa have been modified to use PKEY
-   APIs  These commands are now in maintenance mode and no new features will
-   be added to them.
+   APIs. They now write PKCS#8 keys by default. These commands are now in
+   maintenance mode and no new features will be added to them.
 
    *Paul Dale*
 
