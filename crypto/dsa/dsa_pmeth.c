@@ -20,7 +20,7 @@
 
 typedef struct {
     /* Parameter gen parameters */
-    int nbits;                  /* size of p in bits (default: 1024) */
+    int nbits;                  /* size of p in bits (default: 2048) */
     int qbits;                  /* size of q in bits (default: 160) */
     const EVP_MD *pmd;          /* MD for parameter generation */
     /* Keygen callback info */
@@ -35,8 +35,8 @@ static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 
     if (dctx == NULL)
         return 0;
-    dctx->nbits = 1024;
-    dctx->qbits = 160;
+    dctx->nbits = 2048;
+    dctx->qbits = 224;
     dctx->pmd = NULL;
     dctx->md = NULL;
 
