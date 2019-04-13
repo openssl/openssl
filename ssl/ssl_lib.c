@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
+#include "e_os.h"
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
@@ -2006,6 +2007,72 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
     } else {
         return s->method->ssl_write(s, buf, num, written);
     }
+}
+
+ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
+{
+    ossl_ssize_t ret;
+
+    if (s->handshake_func == NULL) {
+        SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
+        return -1;
+    }
+
+    if (s->shutdown & SSL_SENT_SHUTDOWN) {
+        s->rwstate = SSL_NOTHING;
+        SSLerr(SSL_F_SSL_SENDFILE, SSL_R_PROTOCOL_IS_SHUTDOWN);
+        return -1;
+    }
+
+    if (!BIO_get_ktls_send(s->wbio)) {
+        SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
+        return -1;
+    }
+
+    /* If we have an alert to send, lets send it */
+    if (s->s3.alert_dispatch) {
+        ret = (ossl_ssize_t)s->method->ssl_dispatch_alert(s);
+        if (ret <= 0) {
+            /* SSLfatal() already called if appropriate */
+            return ret;
+        }
+        /* if it went, fall through and send more stuff */
+    }
+
+    s->rwstate = SSL_WRITING;
+    if (BIO_flush(s->wbio) <= 0) {
+        if (!BIO_should_retry(s->wbio)) {
+            s->rwstate = SSL_NOTHING;
+        } else {
+#ifdef EAGAIN
+            set_sys_error(EAGAIN);
+#endif
+        }
+        return -1;
+    }
+
+#ifndef OPENSSL_NO_KTLS
+    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, flags);
+#else
+    ret = -1;
+#endif
+    if (ret < 0) {
+#if defined(EAGAIN) && defined(EINTR) && defined(EBUSY)
+        if ((get_last_sys_error() == EAGAIN) ||
+            (get_last_sys_error() == EINTR) ||
+            (get_last_sys_error() == EBUSY))
+            BIO_set_retry_write(s->wbio);
+        else
+#endif
+#ifdef OPENSSL_NO_KTLS
+            SYSerr(SYS_F_SENDFILE, get_last_sys_error());
+#else
+            SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
+#endif
+        return ret;
+    }
+    s->rwstate = SSL_NOTHING;
+    return ret;
 }
 
 int SSL_write(SSL *s, const void *buf, int num)
