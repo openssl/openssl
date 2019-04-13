@@ -56,7 +56,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 
     if (rctx == NULL)
         return 0;
-    rctx->nbits = 1024;
+    rctx->nbits = 2048;
     rctx->primes = RSA_DEFAULT_PRIME_NUM;
     if (pkey_ctx_is_pss(ctx))
         rctx->pad_mode = RSA_PKCS1_PSS_PADDING;

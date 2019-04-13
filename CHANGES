@@ -9,7 +9,11 @@
 
  Changes between 1.1.1b and 1.1.1c [xx XXX xxxx]
 
-  *)
+  *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
+     This changes the size when using the genpkey app when no size is given. It
+     fixes an omission in earlier changes that changed all RSA, DSA and DH
+     generation apps to use 2048 bits by default.
+     [Kurt Roeckx]
 
  Changes between 1.1.1a and 1.1.1b [26 Feb 2019]
 
