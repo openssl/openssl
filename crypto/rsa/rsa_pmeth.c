@@ -103,7 +103,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
     rctx = OPENSSL_malloc(sizeof(RSA_PKEY_CTX));
     if (!rctx)
         return 0;
-    rctx->nbits = 1024;
+    rctx->nbits = 2048;
     rctx->pub_exp = NULL;
     rctx->pad_mode = RSA_PKCS1_PADDING;
     rctx->md = NULL;

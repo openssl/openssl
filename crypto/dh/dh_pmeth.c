@@ -101,7 +101,7 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
     dctx = OPENSSL_malloc(sizeof(DH_PKEY_CTX));
     if (!dctx)
         return 0;
-    dctx->prime_len = 1024;
+    dctx->prime_len = 2048;
     dctx->subprime_len = -1;
     dctx->generator = 2;
     dctx->use_dsa = 0;
