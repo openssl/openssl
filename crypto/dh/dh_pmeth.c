@@ -54,7 +54,7 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
         DHerr(DH_F_PKEY_DH_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    dctx->prime_len = 1024;
+    dctx->prime_len = 2048;
     dctx->subprime_len = -1;
     dctx->generator = 2;
     dctx->kdf_type = EVP_PKEY_DH_KDF_NONE;
