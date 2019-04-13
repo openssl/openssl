@@ -1,6 +1,10 @@
 OQS-OpenSSL\_1\_1\_1-stable
 ==========================
 
+[![CircleCI](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable.svg?style=svg)](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable)
+
+---
+
 **OpenSSL** ([https://openssl.org/](https://openssl.org/)) is an open-source TLS/SSL and crypto library.  (View the original [README file](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README) for OpenSSL.)
 
 This branch (OQS-OpenSSL\_1\_1\_1-stable) is a fork of OpenSSL 1.1.1 (currently in sync with the [OpenSSL_1_1_1b tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1b)) that adds the following:
@@ -219,6 +223,11 @@ To run a basic TLS server with all OQS ciphersuites enabled, run the following c
 In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEXALG>` = one of the key exchange mechanisms listed above) or the hybrid ciphersuites (`p256-<KEXALG>`, only the NIST p256 curve in combination with L1 PQC KEM schemes are supported for now):
 
 	apps/openssl s_client -curves <KEXALG> -CAfile <SIGALG>_CA.crt -connect localhost:4433
+
+Integration tests
+-----------------
+
+Integration tests are available under the `oqs_test` directory; see the [README.md](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/oqs_test/README.md) for details on how to run the tests locally.
 
 Contributing
 ------------
