@@ -21,7 +21,7 @@
 typedef struct {
     /* Parameter gen parameters */
     int nbits;                  /* size of p in bits (default: 2048) */
-    int qbits;                  /* size of q in bits (default: 160) */
+    int qbits;                  /* size of q in bits (default: 224) */
     const EVP_MD *pmd;          /* MD for parameter generation */
     /* Keygen callback info */
     int gentmp[2];
