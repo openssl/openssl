@@ -12,6 +12,8 @@
 #include <openssl/bio.h>
 #include "../testutil.h"
 
+#define TEST_SKIP_CODE  123
+
 int subtest_level(void);
 int openssl_error_cb(const char *str, size_t len, void *u);
 const BIO_METHOD *BIO_f_tap(void);
