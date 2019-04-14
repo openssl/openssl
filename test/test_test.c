@@ -531,6 +531,25 @@ static int test_bn_output(int n)
     return 1;
 }
 
+static int test_skip_one(void)
+{
+    return TEST_skip("skip test");
+}
+
+static int test_skip_many(int n)
+{
+    return TEST_skip("skip tests: %d", n);
+}
+
+static int test_skip_null(void)
+{
+    /*
+     * This is not a recommended way of skipping a test, a reason or
+     * description should be included.
+     */
+    return TEST_skip(NULL);
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_int);
@@ -553,5 +572,8 @@ int setup_tests(void)
     ADD_TEST(test_single_eval);
     ADD_TEST(test_output);
     ADD_ALL_TESTS(test_bn_output, OSSL_NELEM(bn_output_tests));
+    ADD_TEST(test_skip_one);
+    ADD_TEST(test_skip_null);
+    ADD_ALL_TESTS(test_skip_many, 3);
     return 1;
 }

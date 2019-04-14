@@ -346,6 +346,9 @@ void test_info(const char *file, int line, const char *desc, ...)
     PRINTF_FORMAT(3, 4);
 void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_note(const char *desc, ...) PRINTF_FORMAT(1, 2);
+int test_skip(const char *file, int line, const char *desc, ...)
+    PRINTF_FORMAT(3, 4);
+int test_skip_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_openssl_errors(void);
 void test_perror(const char *s);
 
@@ -463,9 +466,11 @@ void test_perror(const char *s);
 # if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
 #  define TEST_error         test_error_c90
 #  define TEST_info          test_info_c90
+#  define TEST_skip          test_skip_c90
 # else
 #  define TEST_error(...)    test_error(__FILE__, __LINE__, __VA_ARGS__)
 #  define TEST_info(...)     test_info(__FILE__, __LINE__, __VA_ARGS__)
+#  define TEST_skip(...)     test_skip(__FILE__, __LINE__, __VA_ARGS__)
 # endif
 # define TEST_note           test_note
 # define TEST_openssl_errors test_openssl_errors
