@@ -11,10 +11,12 @@
 #include <openssl/crypto.h>
 #include <openssl/core_numbers.h>
 
-static int sha256_final(void *ctx, unsigned char *md, size_t *size)
+static int sha256_final(void *ctx,
+                        unsigned char *md, size_t *mdl, size_t mdsz)
 {
-    if (SHA256_Final(md, ctx)) {
-        *size = SHA256_DIGEST_LENGTH;
+    if (mdsz >= SHA256_DIGEST_LENGTH
+        && SHA256_Final(md, ctx)) {
+        *mdl = SHA256_DIGEST_LENGTH;
         return 1;
     }
 
