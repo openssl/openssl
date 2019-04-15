@@ -32,7 +32,10 @@ my %shared_info;
         return {
             %{$shared_info{'gnu-shared'}},
             shared_defflag    => '-Wl,--version-script=',
-            dso_ldflags       => '-z defs',
+            dso_ldflags       =>
+                $disabled{asan} && $disabled{msan} && $disabled{ubsan}
+                ? '-z defs'
+                : '',
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },
