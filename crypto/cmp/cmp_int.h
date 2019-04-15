@@ -117,7 +117,7 @@ struct OSSL_cmp_itav_st {
         X509 *caProtEncCert;
         /* NID_id_it_signKeyPairTypes - Signing Key Pair Types */
         STACK_OF(X509_ALGOR) *signKeyPairTypes;
-        /* NID_id_it_encKeyPairTypes - Encryption/Key Agreement Key Pair Types*/
+        /* NID_id_it_encKeyPairTypes - Encryption/Key Agreement Key Pair Types */
         STACK_OF(X509_ALGOR) *encKeyPairTypes;
         /* NID_id_it_preferredSymmAlg - Preferred Symmetric Algorithm */
         X509_ALGOR *preferredSymmAlg;
