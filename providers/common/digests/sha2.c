@@ -11,6 +11,22 @@
 #include <openssl/crypto.h>
 #include <openssl/core_numbers.h>
 
+/*
+ * Forward declaration of everything implemented here.  This is not strictly
+ * necessary for the compiler, but provides an assurance that the signatures
+ * of the functions in the dispatch table are correct.
+ */
+static OSSL_OP_digest_newctx_fn sha256_newctx;
+#if 0                           /* Not defined here */
+static OSSL_OP_digest_init_fn sha256_init;
+static OSSL_OP_digest_update_fn sha256_update;
+#endif
+static OSSL_OP_digest_final_fn sha256_final;
+static OSSL_OP_digest_freectx_fn sha256_freectx;
+static OSSL_OP_digest_dupctx_fn sha256_dupctx;
+static OSSL_OP_digest_size_fn sha256_size;
+static OSSL_OP_digest_block_size_fn sha256_size;
+
 static int sha256_final(void *ctx,
                         unsigned char *md, size_t *mdl, size_t mdsz)
 {
