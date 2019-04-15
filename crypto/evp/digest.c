@@ -295,6 +295,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
 {
     int ret;
     size_t size = 0;
+    size_t mdsize = EVP_MD_size(ctx->digest);
 
     if (ctx->digest == NULL || ctx->digest->prov == NULL)
         goto legacy;
@@ -304,7 +305,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
         return 0;
     }
 
-    ret = ctx->digest->dfinal(ctx->provctx, md, &size);
+    ret = ctx->digest->dfinal(ctx->provctx, md, &size, mdsize);
 
     if (isize != NULL) {
         if (size <= UINT_MAX) {
@@ -321,10 +322,10 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
-    OPENSSL_assert(ctx->digest->md_size <= EVP_MAX_MD_SIZE);
+    OPENSSL_assert(mdsize <= EVP_MAX_MD_SIZE);
     ret = ctx->digest->final(ctx, md);
     if (isize != NULL)
-        *isize = ctx->digest->md_size;
+        *isize = mdsize;
     if (ctx->digest->cleanup) {
         ctx->digest->cleanup(ctx);
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);

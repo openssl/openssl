@@ -91,10 +91,10 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *vctx))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_update,
                     (void *, const unsigned char *in, size_t inl))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_final,
-                    (void *, unsigned char *out, size_t *outl))
+                    (void *, unsigned char *out, size_t *outl, size_t outsz))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
                     (const unsigned char *in, size_t inl, unsigned char *out,
-                     size_t *out_l))
+                     size_t *out_l, size_t outsz))
 OSSL_CORE_MAKE_FUNC(void, OP_digest_cleanctx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(void, OP_digest_freectx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *vctx))
