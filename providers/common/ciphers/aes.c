@@ -17,6 +17,25 @@
 #include "internal/provider_algs.h"
 #include "ciphers_locl.h"
 
+static OSSL_OP_cipher_encrypt_init_fn aes_einit;
+static OSSL_OP_cipher_decrypt_init_fn aes_dinit;
+static OSSL_OP_cipher_update_fn aes_block_update;
+static OSSL_OP_cipher_final_fn aes_block_final;
+static OSSL_OP_cipher_update_fn aes_stream_update;
+static OSSL_OP_cipher_final_fn aes_stream_final;
+static OSSL_OP_cipher_cipher_fn aes_cipher;
+static OSSL_OP_cipher_freectx_fn aes_freectx;
+static OSSL_OP_cipher_dupctx_fn aes_dupctx;
+static OSSL_OP_cipher_key_length_fn key_length_256;
+static OSSL_OP_cipher_key_length_fn key_length_192;
+static OSSL_OP_cipher_key_length_fn key_length_128;
+static OSSL_OP_cipher_iv_length_fn iv_length_16;
+static OSSL_OP_cipher_iv_length_fn iv_length_0;
+static OSSL_OP_cipher_block_size_fn block_size_16;
+static OSSL_OP_cipher_block_size_fn block_size_1;
+static OSSL_OP_cipher_ctx_get_params_fn aes_ctx_get_params;
+static OSSL_OP_cipher_ctx_set_params_fn aes_ctx_set_params;
+
 static int PROV_AES_KEY_generic_init(PROV_AES_KEY *ctx,
                                       const unsigned char *iv,
                                       size_t ivlen,
@@ -192,6 +211,7 @@ static int aes_cipher(void *vctx, unsigned char *out, const unsigned char *in,
 }
 
 #define IMPLEMENT_new_params(lcmode, UCMODE) \
+    static OSSL_OP_cipher_get_params_fn aes_##lcmode##_get_params; \
     static int aes_##lcmode##_get_params(const OSSL_PARAM params[]) \
     { \
         const OSSL_PARAM *p; \
@@ -204,6 +224,7 @@ static int aes_cipher(void *vctx, unsigned char *out, const unsigned char *in,
     }
 
 #define IMPLEMENT_new_ctx(lcmode, UCMODE, len) \
+    static OSSL_OP_cipher_newctx_fn aes_##len##_##lcmode##_newctx; \
     static void *aes_##len##_##lcmode##_newctx(void) \
     { \
         PROV_AES_KEY *ctx = OPENSSL_zalloc(sizeof(*ctx)); \
