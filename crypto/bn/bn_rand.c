@@ -110,10 +110,11 @@ int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom)
 }
 
 /* random number r:  0 <= r < range */
+/* according to FIPS 186-4 B.1.1 and BSI TR-02102-1 Table B4 Method 2 */
 static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range)
 {
     int n;
-    int count = 100;
+    int rv = 0;
 
     if (range->neg || BN_is_zero(range)) {
         BNerr(BN_F_BNRAND_RANGE, BN_R_INVALID_RANGE);
@@ -124,54 +125,35 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range)
 
     /* BN_is_bit_set(range, n - 1) always holds */
 
-    if (n == 1)
+    if (n == 1) {
         BN_zero(r);
-    else if (!BN_is_bit_set(range, n - 2) && !BN_is_bit_set(range, n - 3)) {
-        /*
-         * range = 100..._2, so 3*range (= 11..._2) is exactly one bit longer
-         * than range
-         */
-        do {
-            if (!bnrand(flag, r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
-                return 0;
-
-            /*
-             * If r < 3*range, use r := r MOD range (which is either r, r -
-             * range, or r - 2*range). Otherwise, iterate once more. Since
-             * 3*range = 11..._2, each iteration succeeds with probability >=
-             * .75.
-             */
-            if (BN_cmp(r, range) >= 0) {
-                if (!BN_sub(r, r, range))
-                    return 0;
-                if (BN_cmp(r, range) >= 0)
-                    if (!BN_sub(r, r, range))
-                        return 0;
-            }
-
-            if (!--count) {
-                BNerr(BN_F_BNRAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
-                return 0;
-            }
-
-        }
-        while (BN_cmp(r, range) >= 0);
     } else {
-        do {
-            /* range = 11..._2  or  range = 101..._2 */
-            if (!bnrand(flag, r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
-                return 0;
+        BIGNUM *rnew = NULL;
+        BIGNUM *rem = NULL;
+        BN_CTX *ctx = NULL;
 
-            if (!--count) {
-                BNerr(BN_F_BNRAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
-                return 0;
-            }
-        }
-        while (BN_cmp(r, range) >= 0);
+        if ((rnew = BN_new()) == NULL)
+            return 0;
+
+        if (!bnrand(flag, rnew, n + 64, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+            goto err;
+        if ((rem = BN_new()) == NULL
+                || (ctx = BN_CTX_new()) == NULL
+                || !BN_mod(rem, rnew, range, ctx)
+                || BN_copy(r, rem) == NULL)
+            goto err;
+        rv = 1;
+
+    err:
+        BN_CTX_free(ctx);
+        BN_free(rem);
+        BN_free(rnew);
     }
 
-    bn_check_top(r);
-    return 1;
+    if (rv != 0) {
+        bn_check_top(r);
+    }
+    return rv;
 }
 
 int BN_rand_range(BIGNUM *r, const BIGNUM *range)
