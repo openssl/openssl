@@ -23,6 +23,37 @@ typedef struct prov_aes_key_st {
         ctr128_f ctr;
     } stream;
 
+    /* Platform specific data */
+    union {
+        int dummy;
+#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
+        struct {
+            union {
+                double align;
+                /*-
+                 * KM-AES parameter block - begin
+                 * (see z/Architecture Principles of Operation >= SA22-7832-06)
+                 */
+                struct {
+                    unsigned char k[32];
+                } km;
+                /* KM-AES parameter block - end */
+                /*-
+                 * KMO-AES/KMF-AES parameter block - begin
+                 * (see z/Architecture Principles of Operation >= SA22-7832-08)
+                 */
+                struct {
+                    unsigned char cv[16];
+                    unsigned char k[32];
+                } kmo_kmf;
+                /* KMO-AES/KMF-AES parameter block - end */
+            } param;
+            unsigned int fc;
+            int res;
+        } s390x;
+#endif /* defined(OPENSSL_CPUID_OBJ) && defined(__s390__) */
+    } plat;
+
     /* The cipher functions we are going to use */
     const PROV_AES_CIPHER *ciph;
 
@@ -60,13 +91,13 @@ struct prov_aes_cipher_st {
                 size_t inl);
 };
 
-const PROV_AES_CIPHER *PROV_AES_CIPHER_ecb(void);
-const PROV_AES_CIPHER *PROV_AES_CIPHER_cbc(void);
-const PROV_AES_CIPHER *PROV_AES_CIPHER_ofb(void);
-const PROV_AES_CIPHER *PROV_AES_CIPHER_cfb(void);
-const PROV_AES_CIPHER *PROV_AES_CIPHER_cfb1(void);
-const PROV_AES_CIPHER *PROV_AES_CIPHER_cfb8(void);
-const PROV_AES_CIPHER *PROV_AES_CIPHER_ctr(void);
+const PROV_AES_CIPHER *PROV_AES_CIPHER_ecb(size_t keylen);
+const PROV_AES_CIPHER *PROV_AES_CIPHER_cbc(size_t keylen);
+const PROV_AES_CIPHER *PROV_AES_CIPHER_ofb(size_t keylen);
+const PROV_AES_CIPHER *PROV_AES_CIPHER_cfb(size_t keylen);
+const PROV_AES_CIPHER *PROV_AES_CIPHER_cfb1(size_t keylen);
+const PROV_AES_CIPHER *PROV_AES_CIPHER_cfb8(size_t keylen);
+const PROV_AES_CIPHER *PROV_AES_CIPHER_ctr(size_t keylen);
 
 size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
                  const unsigned char **in, size_t *inlen);
