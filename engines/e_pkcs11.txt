@@ -33,6 +33,8 @@ PKCS11_F_PKCS11_TRACE:109:PKCS11_trace
 PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY:121:digest too big for rsa key
 PKCS11_R_ENCRYPT_FAILED:124:encrypt failed
 PKCS11_R_ENCRYPT_INIT_FAILED:125:encrypt init failed
+PKCS11_R_DECRYPT_FAILED:129:encrypt failed
+PKCS11_R_DECRYPT_INIT_FAILED:130:encrypt init failed
 PKCS11_R_ENGINE_NOT_INITIALIZED:117:engine not initialized
 PKCS11_R_FILE_OPEN_ERROR:102:file open error
 PKCS11_R_FIND_OBJECT_FAILED:103:find object failed
@@ -54,6 +56,8 @@ PKCS11_R_RSA_INIT_FAILED:120:rsa init failed
 PKCS11_R_RSA_NOT_FOUND:118:rsa not found
 PKCS11_R_SIGN_FAILED:100:sign failed
 PKCS11_R_SIGN_INIT_FAILED:101:sign init failed
+PKCS11_R_VERIFY_FAILED:127:sign failed
+PKCS11_R_VERIFY_INIT_FAILED:128:sign init failed
 PKCS11_R_SLOT_NOT_FOUND:113:slot not found
 PKCS11_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD:122:\
 	the asn1 object identifier is not known for this md

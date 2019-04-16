@@ -606,6 +606,7 @@ static int bind_pkcs11(ENGINE *e)
         || !RSA_meth_set_pub_dec(pkcs11_rsa,
                                  RSA_meth_get_pub_dec(ossl_rsa_meth))
         || !RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_priv_enc)
+        || !RSA_meth_set_priv_dec(pkcs11_rsa, pkcs11_rsa_priv_dec)
         || !RSA_meth_set_mod_exp(pkcs11_rsa,
                                  RSA_meth_get_mod_exp(ossl_rsa_meth))
         || !RSA_meth_set_bn_mod_exp(pkcs11_rsa,

@@ -117,7 +117,7 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     ctx = pkcs11_get_ctx(rsa);
 
     if (!ctx->session) {
-        return RSA_meth_get_pub_enc(RSA_PKCS1_OpenSSL())
+        return RSA_meth_get_priv_enc(RSA_PKCS1_OpenSSL())
             (flen, from, to, rsa, padding);
     }
 
@@ -150,6 +150,7 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     rv = pkcs11_funcs->C_GetAttributeValue(session, key,
                                            keyAttribute,
                                            OSSL_NELEM(keyAttribute));
+
     if (rv != CKR_OK) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_PRIV_ENC,
@@ -186,6 +187,88 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     /* FIXME useless call */
     ERR_load_PKCS11_strings();
     ERR_unload_PKCS11_strings();
+
+    return 1;
+
+ err:
+    return 0;
+}
+
+int pkcs11_rsa_priv_dec(int flen, const unsigned char *from,
+                        unsigned char *to, RSA *rsa, int padding)
+{
+    CK_RV rv;
+    PKCS11_CTX *ctx;
+    CK_ULONG num;
+    CK_MECHANISM enc_mechanism = { 0 };
+    CK_BBOOL bAwaysAuthentificate = CK_FALSE;
+    CK_ATTRIBUTE keyAttribute[1] = {{ 0 }};
+    CK_SESSION_HANDLE session = 0;
+    CK_OBJECT_HANDLE key = 0;
+    int useVerify = 0;
+
+    ctx = pkcs11_get_ctx(rsa);
+
+    if (!ctx->session) {
+        return RSA_meth_get_priv_dec(RSA_PKCS1_OpenSSL())
+            (flen, from, to, rsa, padding);
+    }
+
+    session = ctx->session;
+
+    num = RSA_size(rsa);
+
+    enc_mechanism.mechanism = CKM_RSA_PKCS;
+    CRYPTO_THREAD_write_lock(ctx->lock);
+
+    key = (CK_OBJECT_HANDLE) RSA_get_ex_data(rsa, rsa_pkcs11_idx);
+    rv = pkcs11_funcs->C_DecryptInit(session, &enc_mechanism, key);
+
+    if (rv == CKR_KEY_FUNCTION_NOT_PERMITTED) {
+        PKCS11_trace("C_DecryptInit failed try VerifyInit, error: %#08X\n", rv);
+        rv = pkcs11_funcs->C_VerifyInit(session, &enc_mechanism, key);
+
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_VerifyInit failed, error: %#08X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_RSA_PRIV_DEC, PKCS11_R_VERIFY_INIT_FAILED);
+            goto err;
+        }
+        useVerify = 1;
+    }
+
+    keyAttribute[0].type = CKA_ALWAYS_AUTHENTICATE;
+    keyAttribute[0].pValue = &bAwaysAuthentificate;
+    keyAttribute[0].ulValueLen = sizeof(bAwaysAuthentificate);
+
+    rv = pkcs11_funcs->C_GetAttributeValue(session, key,
+                                           keyAttribute,
+                                           OSSL_NELEM(keyAttribute));
+
+    if (bAwaysAuthentificate
+        && !pkcs11_login(session, ctx, CKU_CONTEXT_SPECIFIC))
+        goto err;
+
+    if (!useVerify) {
+        /* Decrypt */
+        rv = pkcs11_funcs->C_Decrypt(session, (CK_BYTE *) from,
+                                     flen, to, &num);
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_Decrypt failed, error: %#08X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_RSA_PRIV_DEC, PKCS11_R_DECRYPT_FAILED);
+            goto err;
+        }
+    } else {
+        /* Verify */
+        rv = pkcs11_funcs->C_Verify(session, (CK_BYTE *) from,
+                                    flen, to, num);
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_Verify failed, error: %#08X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_RSA_PRIV_DEC, PKCS11_R_VERIFY_FAILED);
+            goto err;
+        }
+    }
+
+    CRYPTO_THREAD_unlock(ctx->lock);
 
     return 1;
 

@@ -94,6 +94,8 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
                     unsigned int *siglen, const RSA *rsa);
 int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
                         unsigned char *to, RSA *rsa, int padding);
+int pkcs11_rsa_priv_dec(int flen, const unsigned char *from,
+                        unsigned char *to, RSA *rsa, int padding);
 int pkcs11_get_slot(PKCS11_CTX *ctx);
 CK_OBJECT_HANDLE pkcs11_find_private_key(CK_SESSION_HANDLE session,
                                          PKCS11_CTX *ctx);
