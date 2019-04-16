@@ -231,7 +231,7 @@ static int aes_cipher(void *vctx, unsigned char *out, const unsigned char *in,
     \
         ctx->pad = 1; \
         ctx->keylen = (len / 8); \
-        ctx->ciph = PROV_AES_CIPHER_##lcmode(); \
+        ctx->ciph = PROV_AES_CIPHER_##lcmode(ctx->keylen); \
         ctx->mode = EVP_CIPH_##UCMODE##_MODE; \
         return ctx; \
     }
