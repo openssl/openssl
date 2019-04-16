@@ -79,7 +79,8 @@ Output the digest or signature in binary form.
 
 =item B<-r>
 
-Output the digest in the "coreutils" format used by programs like B<sha1sum>.
+Output the digest in the "coreutils" format, including newlines.
+Used by programs like B<sha1sum>.
 
 =item B<-out filename>
 

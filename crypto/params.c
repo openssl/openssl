@@ -41,50 +41,22 @@ static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val)
 {
-    if (val == NULL || p == NULL || p->data_type != OSSL_PARAM_INTEGER)
-        return 0;
-
-    switch (p->data_size) {
+    switch (sizeof(int)) {
     case sizeof(int32_t):
-        if (sizeof(int) >= sizeof(int32_t)) {
-            *val = (int)*(const int32_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_int32(p, (int32_t *)val);
     case sizeof(int64_t):
-        if (sizeof(int) >= sizeof(int64_t)) {
-            *val = (int)*(const int64_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_int64(p, (int64_t *)val);
     }
     return 0;
 }
 
 int OSSL_PARAM_set_int(const OSSL_PARAM *p, int val)
 {
-    if (p == NULL)
-        return 0;
-    SET_RETURN_SIZE(p, 0);
-    if (p->data_type != OSSL_PARAM_INTEGER)
-        return 0;
-
-    SET_RETURN_SIZE(p, sizeof(int)); /* Minimum expected size */
-    switch (p->data_size) {
+    switch (sizeof(int)) {
     case sizeof(int32_t):
-        if (sizeof(int32_t) >= sizeof(int)) {
-            SET_RETURN_SIZE(p, sizeof(int32_t));
-            *(int32_t *)p->data = (int32_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_int32(p, (int32_t)val);
     case sizeof(int64_t):
-        if (sizeof(int64_t) >= sizeof(int)) {
-            SET_RETURN_SIZE(p, sizeof(int64_t));
-            *(int64_t *)p->data = (int64_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_int64(p, (int64_t)val);
     }
     return 0;
 }
@@ -97,52 +69,22 @@ OSSL_PARAM OSSL_PARAM_construct_int(const char *key, int *buf, size_t *rsize)
 
 int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val)
 {
-    if (val == NULL
-        || p == NULL
-        || (p->data_type != OSSL_PARAM_UNSIGNED_INTEGER))
-        return 0;
-
-    switch (p->data_size) {
+    switch (sizeof(unsigned int)) {
     case sizeof(uint32_t):
-        if (sizeof(unsigned int) >= sizeof(uint32_t)) {
-            *val = (unsigned int)*(const uint32_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_uint32(p, (uint32_t *)val);
     case sizeof(uint64_t):
-        if (sizeof(unsigned int) >= sizeof(uint64_t)) {
-            *val = (unsigned int)*(const uint64_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_uint64(p, (uint64_t *)val);
     }
     return 0;
 }
 
 int OSSL_PARAM_set_uint(const OSSL_PARAM *p, unsigned int val)
 {
-    if (p == NULL)
-        return 0;
-    SET_RETURN_SIZE(p, 0);
-    if (p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
-        return 0;
-
-    SET_RETURN_SIZE(p, sizeof(unsigned int)); /* Minimum expected size */
-    switch (p->data_size) {
+    switch (sizeof(unsigned int)) {
     case sizeof(uint32_t):
-        if (sizeof(uint32_t) >= sizeof(unsigned int)) {
-            SET_RETURN_SIZE(p, sizeof(uint32_t));
-            *(uint32_t *)p->data = (uint32_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_uint32(p, (uint32_t)val);
     case sizeof(uint64_t):
-        if (sizeof(uint64_t) >= sizeof(unsigned int)) {
-            SET_RETURN_SIZE(p, sizeof(uint64_t));
-            *(uint64_t *)p->data = (uint64_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_uint64(p, (uint64_t)val);
     }
     return 0;
 }
@@ -156,49 +98,22 @@ OSSL_PARAM OSSL_PARAM_construct_uint(const char *key, unsigned int *buf,
 
 int OSSL_PARAM_get_long(const OSSL_PARAM *p, long int *val)
 {
-    if (val == NULL || p == NULL || (p->data_type != OSSL_PARAM_INTEGER))
-        return 0;
-
-    switch (p->data_size) {
+    switch (sizeof(long int)) {
     case sizeof(int32_t):
-        if (sizeof(long int) >= sizeof(int32_t)) {
-            *val = (long int)*(const int32_t *)p->data;
-            return 1;
-        } break;
+        return OSSL_PARAM_get_int32(p, (int32_t *)val);
     case sizeof(int64_t):
-        if (sizeof(long int) >= sizeof(int64_t)) {
-            *val = (long int)*(const int64_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_int64(p, (int64_t *)val);
     }
     return 0;
 }
 
 int OSSL_PARAM_set_long(const OSSL_PARAM *p, long int val)
 {
-    if (p == NULL)
-        return 0;
-    SET_RETURN_SIZE(p, 0);
-    if (p->data_type != OSSL_PARAM_INTEGER)
-        return 0;
-
-    SET_RETURN_SIZE(p, sizeof(long int)); /* Minimum expected size */
-    switch (p->data_size) {
+    switch (sizeof(long int)) {
     case sizeof(int32_t):
-        if (sizeof(int32_t) >= sizeof(long int)) {
-            SET_RETURN_SIZE(p, sizeof(int32_t));
-            *(int32_t *)p->data = (int32_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_int32(p, (int32_t)val);
     case sizeof(int64_t):
-        if (sizeof(int64_t) >= sizeof(long int)) {
-            SET_RETURN_SIZE(p, sizeof(int64_t));
-            *(int64_t *)p->data = (int64_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_int64(p, (int64_t)val);
     }
     return 0;
 }
@@ -212,52 +127,22 @@ OSSL_PARAM OSSL_PARAM_construct_long(const char *key, long int *buf,
 
 int OSSL_PARAM_get_ulong(const OSSL_PARAM *p, unsigned long int *val)
 {
-    if (val == NULL
-        || p == NULL
-        || (p->data_type != OSSL_PARAM_UNSIGNED_INTEGER))
-        return 0;
-
-    switch (p->data_size) {
+    switch (sizeof(unsigned long int)) {
     case sizeof(uint32_t):
-        if (sizeof(unsigned long int) >= sizeof(uint32_t)) {
-            *val = (unsigned long int)*(const uint32_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_uint32(p, (uint32_t *)val);
     case sizeof(uint64_t):
-        if (sizeof(unsigned long int) >= sizeof(uint64_t)) {
-            *val = (unsigned long int)*(const uint64_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_uint64(p, (uint64_t *)val);
     }
     return 0;
 }
 
 int OSSL_PARAM_set_ulong(const OSSL_PARAM *p, unsigned long int val)
 {
-    if (p == NULL)
-        return 0;
-    SET_RETURN_SIZE(p, 0);
-    if (p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
-        return 0;
-
-    SET_RETURN_SIZE(p, sizeof(unsigned long int)); /* Minimum exp size */
-    switch (p->data_size) {
+    switch (sizeof(unsigned long int)) {
     case sizeof(uint32_t):
-        if (sizeof(uint32_t) >= sizeof(unsigned long int)) {
-            SET_RETURN_SIZE(p, sizeof(uint32_t));
-            *(uint32_t *)p->data = (uint32_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_uint32(p, (uint32_t)val);
     case sizeof(uint64_t):
-        if (sizeof(uint64_t) >= sizeof(unsigned long int)) {
-            SET_RETURN_SIZE(p, sizeof(uint64_t));
-            *(uint64_t *)p->data = (uint64_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_uint64(p, (uint64_t)val);
     }
     return 0;
 }
@@ -437,52 +322,22 @@ OSSL_PARAM OSSL_PARAM_construct_uint64(const char *key, uint64_t *buf,
 
 int OSSL_PARAM_get_size_t(const OSSL_PARAM *p, size_t *val)
 {
-    if (val == NULL
-        || p == NULL
-        || p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
-        return 0;
-
-    switch (p->data_size) {
+    switch (sizeof(size_t)) {
     case sizeof(uint32_t):
-        if (sizeof(size_t) >= sizeof(uint32_t)) {
-            *val = (size_t)*(const uint32_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_uint32(p, (uint32_t *)val);
     case sizeof(uint64_t):
-        if (sizeof(size_t) >= sizeof(uint64_t)) {
-            *val = (size_t)*(const uint64_t *)p->data;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_get_uint64(p, (uint64_t *)val);
     }
     return 0;
 }
 
 int OSSL_PARAM_set_size_t(const OSSL_PARAM *p, size_t val)
 {
-    if (p == NULL)
-        return 0;
-    SET_RETURN_SIZE(p, 0);
-    if (p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
-        return 0;
-
-    SET_RETURN_SIZE(p, sizeof(size_t)); /* Minimum expected size */
-    switch (p->data_size) {
+    switch (sizeof(size_t)) {
     case sizeof(uint32_t):
-        if (sizeof(uint32_t) >= sizeof(size_t)) {
-            SET_RETURN_SIZE(p, sizeof(uint32_t));
-            *(uint32_t *)p->data = (uint32_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_uint32(p, (uint32_t)val);
     case sizeof(uint64_t):
-        SET_RETURN_SIZE(p, sizeof(uint64_t));
-        if (sizeof(uint64_t) >= sizeof(size_t)) {
-            *(uint64_t *)p->data = (uint64_t)val;
-            return 1;
-        }
-        break;
+        return OSSL_PARAM_set_uint64(p, (uint64_t)val);
     }
     return 0;
 }
@@ -493,6 +348,13 @@ OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf,
     return ossl_param_construct(key, OSSL_PARAM_UNSIGNED_INTEGER, buf,
                                 sizeof(size_t), rsize); }
 
+#ifndef FIPS_MODE
+/*
+ * TODO(3.0): Make this available in FIPS mode.
+ *
+ * Temporarily we don't include these functions in FIPS mode to avoid pulling
+ * in the entire BN sub-library into the module at this point.
+ */
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
 {
     BIGNUM *b;
@@ -520,6 +382,10 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const BIGNUM *val)
     if (val == NULL || p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
         return 0;
 
+    /* For the moment, only positive values are permitted */
+    if (BN_is_negative(val))
+        return 0;
+
     bytes = (size_t)BN_num_bytes(val);
     SET_RETURN_SIZE(p, bytes);
     return p->data_size >= bytes
@@ -532,6 +398,7 @@ OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
     return ossl_param_construct(key, OSSL_PARAM_UNSIGNED_INTEGER,
                                 buf, bsize, rsize);
 }
+#endif
 
 int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
 {
@@ -713,13 +580,20 @@ int OSSL_PARAM_set_octet_ptr(const OSSL_PARAM *p, const void *val,
 }
 
 OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
-                                         size_t *rsize)
+                                         size_t bsize, size_t *rsize)
 {
-    return ossl_param_construct(key, OSSL_PARAM_UTF8_PTR, buf, 0, rsize);
+    return ossl_param_construct(key, OSSL_PARAM_UTF8_PTR, buf, bsize, rsize);
 }
 
 OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
-                                          size_t *rsize)
+                                          size_t bsize, size_t *rsize)
 {
-    return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, 0, rsize);
+    return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, bsize, rsize);
+}
+
+OSSL_PARAM OSSL_PARAM_construct_end(void)
+{
+    OSSL_PARAM end = OSSL_PARAM_END;
+
+    return end;
 }

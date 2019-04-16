@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 135;
+plan tests => 137;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -372,4 +372,16 @@ SKIP: {
     ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
        "ED25519 signature");
 
+}
+
+SKIP: {
+    skip "SM2 is not supported by this OpenSSL build", 2
+	      if disabled("sm2");
+
+   # Test '-sm2-id' and '-sm2-hex-id'  option
+   ok(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-id", "1234567812345678"),
+       "SM2 ID test");
+   ok(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-hex-id",
+             "31323334353637383132333435363738"),
+       "SM2 hex ID test");
 }

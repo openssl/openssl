@@ -15,12 +15,17 @@
 
 static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AESNI_INIT_KEY, 0), "aesni_init_key"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_AESNI_XTS_INIT_KEY, 0), "aesni_xts_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_GCM_CTRL, 0), "aes_gcm_ctrl"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_GCM_TLS_CIPHER, 0), "aes_gcm_tls_cipher"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_INIT_KEY, 0), "aes_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_OCB_CIPHER, 0), "aes_ocb_cipher"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_T4_INIT_KEY, 0), "aes_t4_init_key"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_T4_XTS_INIT_KEY, 0),
+     "aes_t4_xts_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_WRAP_CIPHER, 0), "aes_wrap_cipher"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_XTS_CIPHER, 0), "aes_xts_cipher"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_XTS_INIT_KEY, 0), "aes_xts_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ALG_MODULE_INIT, 0), "alg_module_init"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_CCM_INIT_KEY, 0), "aria_ccm_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_GCM_CTRL, 0), "aria_gcm_ctrl"},
@@ -70,6 +75,7 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_MAC_CTX_COPY, 0), "EVP_MAC_CTX_copy"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_MAC_CTX_NEW, 0), "EVP_MAC_CTX_new"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_MAC_INIT, 0), "EVP_MAC_init"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_MD_BLOCK_SIZE, 0), "EVP_MD_block_size"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_MD_CTX_COPY_EX, 0), "EVP_MD_CTX_copy_ex"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_MD_SIZE, 0), "EVP_MD_size"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_OPENINIT, 0), "EVP_OpenInit"},
@@ -150,6 +156,8 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
      "EVP_PKEY_verify_recover"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_PKEY_VERIFY_RECOVER_INIT, 0),
      "EVP_PKEY_verify_recover_init"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_SET_DEFAULT_PROPERTIES, 0),
+     "EVP_set_default_properties"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_SIGNFINAL, 0), "EVP_SignFinal"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_VERIFYFINAL, 0), "EVP_VerifyFinal"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_GMAC_CTRL, 0), "gmac_ctrl"},
@@ -303,6 +311,10 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     "wrap mode not allowed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_WRONG_FINAL_BLOCK_LENGTH),
     "wrong final block length"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE),
+    "xts data unit is too large"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_XTS_DUPLICATED_KEYS),
+    "xts duplicated keys"},
     {0, NULL}
 };
 

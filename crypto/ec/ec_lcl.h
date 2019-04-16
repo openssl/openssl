@@ -309,13 +309,10 @@ struct ec_point_st {
 static ossl_inline int ec_point_is_compat(const EC_POINT *point,
                                           const EC_GROUP *group)
 {
-    if (group->meth != point->meth
-        || (group->curve_name != 0
-            && point->curve_name != 0
-            && group->curve_name != point->curve_name))
-        return 0;
-
-    return 1;
+    return group->meth == point->meth
+           && (group->curve_name == 0
+               || point->curve_name == 0
+               || group->curve_name == point->curve_name);
 }
 
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
@@ -594,6 +591,8 @@ int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len);
 int ec_key_simple_generate_key(EC_KEY *eckey);
 int ec_key_simple_generate_public_key(EC_KEY *eckey);
 int ec_key_simple_check_key(const EC_KEY *eckey);
+
+int ec_curve_nid_from_params(const EC_GROUP *group);
 
 /* EC_METHOD definitions */
 

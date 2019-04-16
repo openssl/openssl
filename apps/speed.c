@@ -57,6 +57,9 @@
 # include <openssl/md5.h>
 #endif
 #include <openssl/hmac.h>
+#ifndef OPENSSL_NO_CMAC
+#include <openssl/cmac.h>
+#endif
 #include <openssl/sha.h>
 #ifndef OPENSSL_NO_RMD160
 # include <openssl/ripemd.h>
@@ -163,10 +166,12 @@ static int DES_ede3_cbc_encrypt_loop(void *args);
 #endif
 static int AES_cbc_128_encrypt_loop(void *args);
 static int AES_cbc_192_encrypt_loop(void *args);
-static int AES_ige_128_encrypt_loop(void *args);
 static int AES_cbc_256_encrypt_loop(void *args);
+#if !OPENSSL_API_3
+static int AES_ige_128_encrypt_loop(void *args);
 static int AES_ige_192_encrypt_loop(void *args);
 static int AES_ige_256_encrypt_loop(void *args);
+#endif
 static int CRYPTO_gcm128_aad_loop(void *args);
 static int RAND_bytes_loop(void *args);
 static int EVP_Update_loop(void *args);
@@ -300,7 +305,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ELAPSED, OPT_EVP, OPT_HMAC, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
     OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM,
-    OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD
+    OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD, OPT_CMAC
 } OPTION_CHOICE;
 
 const OPTIONS speed_options[] = {
@@ -309,6 +314,9 @@ const OPTIONS speed_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
     {"hmac", OPT_HMAC, 's', "HMAC using EVP-named digest"},
+#ifndef OPENSSL_NO_CMAC
+    {"cmac", OPT_CMAC, 's', "CMAC using EVP-named cipher"},
+#endif
     {"decrypt", OPT_DECRYPT, '-',
      "Time decryption instead of encryption (only EVP)"},
     {"aead", OPT_AEAD, '-',
@@ -371,6 +379,7 @@ const OPTIONS speed_options[] = {
 #define D_GHASH         29
 #define D_RAND          30
 #define D_EVP_HMAC      31
+#define D_EVP_CMAC      32
 
 /* name of algorithms to test */
 static const char *names[] = {
@@ -381,7 +390,7 @@ static const char *names[] = {
     "camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
     "evp", "sha256", "sha512", "whirlpool",
     "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash",
-    "rand", "hmac"
+    "rand", "hmac", "cmac"
 };
 #define ALGOR_NUM       OSSL_NELEM(names)
 
@@ -421,9 +430,11 @@ static const OPT_PAIR doit_choices[] = {
     {"aes-128-cbc", D_CBC_128_AES},
     {"aes-192-cbc", D_CBC_192_AES},
     {"aes-256-cbc", D_CBC_256_AES},
+#if !OPENSSL_API_3
     {"aes-128-ige", D_IGE_128_AES},
     {"aes-192-ige", D_IGE_192_AES},
     {"aes-256-ige", D_IGE_256_AES},
+#endif
 #ifndef OPENSSL_NO_RC2
     {"rc2-cbc", D_CBC_RC2},
     {"rc2", D_CBC_RC2},
@@ -629,6 +640,9 @@ typedef struct loopargs_st {
 #endif
     EVP_CIPHER_CTX *ctx;
     HMAC_CTX *hctx;
+#ifndef OPENSSL_NO_CMAC
+    CMAC_CTX *cmac_ctx;
+#endif
     GCM128_CONTEXT *gcm_ctx;
 } loopargs_t;
 static int run_benchmark(int async_jobs, int (*loop_function) (void *),
@@ -859,6 +873,7 @@ static int AES_cbc_256_encrypt_loop(void *args)
     return count;
 }
 
+#if !OPENSSL_API_3
 static int AES_ige_128_encrypt_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -894,6 +909,7 @@ static int AES_ige_256_encrypt_loop(void *args)
                         (size_t)lengths[testnum], &aes_ks3, iv, AES_ENCRYPT);
     return count;
 }
+#endif
 
 static int CRYPTO_gcm128_aad_loop(void *args)
 {
@@ -1063,6 +1079,33 @@ static int EVP_HMAC_loop(void *args)
     }
     return count;
 }
+
+#ifndef OPENSSL_NO_CMAC
+static const EVP_CIPHER *evp_cmac_cipher = NULL;
+static char *evp_cmac_name = NULL;
+
+static int EVP_CMAC_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    CMAC_CTX *cmac_ctx = tempargs->cmac_ctx;
+    static const char key[16] = "This is a key...";
+    unsigned char mac[16];
+    size_t len = sizeof(mac);
+    int count;
+#ifndef SIGALRM
+    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
+#endif
+
+    for (count = 0; COND(nb_iter); count++) {
+        if (!CMAC_Init(cmac_ctx, key, sizeof(key), evp_cmac_cipher, NULL)
+                || !CMAC_Update(cmac_ctx, buf, lengths[testnum])
+                || !CMAC_Final(cmac_ctx, mac, &len))
+            return -1;
+    }
+    return count;
+}
+#endif
 
 #ifndef OPENSSL_NO_RSA
 static long rsa_c[RSA_NUM][2];  /* # RSA iteration test */
@@ -1610,6 +1653,17 @@ int speed_main(int argc, char **argv)
             }
             doit[D_EVP_HMAC] = 1;
             break;
+        case OPT_CMAC:
+#ifndef OPENSSL_NO_CMAC
+            evp_cmac_cipher = EVP_get_cipherbyname(opt_arg());
+            if (evp_cmac_cipher == NULL) {
+                BIO_printf(bio_err, "%s: %s is an unknown cipher\n",
+                           prog, opt_arg());
+                goto end;
+            }
+            doit[D_EVP_CMAC] = 1;
+#endif
+            break;
         case OPT_DECRYPT:
             decrypt = 1;
             break;
@@ -1848,9 +1902,9 @@ int speed_main(int argc, char **argv)
     e = setup_engine(engine_id, 0);
 
     /* No parameters; turn on everything. */
-    if (argc == 0 && !doit[D_EVP] && !doit[D_EVP_HMAC]) {
+    if (argc == 0 && !doit[D_EVP] && !doit[D_EVP_HMAC] && !doit[D_EVP_CMAC]) {
         for (i = 0; i < ALGOR_NUM; i++)
-            if (i != D_EVP && i != D_EVP_HMAC)
+            if (i != D_EVP && i != D_EVP_HMAC && i != D_EVP_CMAC)
                 doit[i] = 1;
 #ifndef OPENSSL_NO_RSA
         for (i = 0; i < RSA_NUM; i++)
@@ -2381,6 +2435,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
+#if !OPENSSL_API_3
     if (doit[D_IGE_128_AES]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_IGE_128_AES], c[D_IGE_128_AES][testnum],
@@ -2414,6 +2469,7 @@ int speed_main(int argc, char **argv)
             print_result(D_IGE_256_AES, testnum, count, d);
         }
     }
+#endif
     if (doit[D_GHASH]) {
         for (i = 0; i < loopargs_len; i++) {
             loopargs[i].gcm_ctx =
@@ -2718,6 +2774,36 @@ int speed_main(int argc, char **argv)
             }
         }
     }
+
+#ifndef OPENSSL_NO_CMAC
+    if (doit[D_EVP_CMAC]) {
+        if (evp_cmac_cipher != NULL) {
+            const char *cipher_name = OBJ_nid2ln(EVP_CIPHER_type(evp_cmac_cipher));
+            evp_cmac_name = app_malloc(sizeof("CMAC()") + strlen(cipher_name),
+                                       "CMAC name");
+            sprintf(evp_cmac_name, "CMAC(%s)", cipher_name);
+            names[D_EVP_CMAC] = evp_cmac_name;
+
+            for (i = 0; i < loopargs_len; i++) {
+                loopargs[i].cmac_ctx = CMAC_CTX_new();
+                if (loopargs[i].cmac_ctx == NULL) {
+                    BIO_printf(bio_err, "CMAC malloc failure, exiting...");
+                    exit(1);
+                }
+            }
+            for (testnum = 0; testnum < size_num; testnum++) {
+                print_message(names[D_EVP_CMAC], save_count, lengths[testnum],
+                              seconds.sym);
+                Time_F(START);
+                count = run_benchmark(async_jobs, EVP_CMAC_loop, loopargs);
+                d = Time_F(STOP);
+                print_result(D_EVP_CMAC, testnum, count, d);
+            }
+            for (i = 0; i < loopargs_len; i++)
+                CMAC_CTX_free(loopargs[i].cmac_ctx);
+        }
+    }
+#endif
 
     for (i = 0; i < loopargs_len; i++)
         if (RAND_bytes(loopargs[i].buf, 36) <= 0)
@@ -3418,6 +3504,9 @@ int speed_main(int argc, char **argv)
 #endif
     }
     OPENSSL_free(evp_hmac_name);
+#ifndef OPENSSL_NO_CMAC
+    OPENSSL_free(evp_cmac_name);
+#endif
 
     if (async_jobs > 0) {
         for (i = 0; i < loopargs_len; i++)

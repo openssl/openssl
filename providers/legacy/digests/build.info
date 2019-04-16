@@ -1,0 +1,4 @@
+IF[{- !$disabled{md2} -}]
+  SOURCE[../../legacy]=\
+          md2.c
+ENDIF

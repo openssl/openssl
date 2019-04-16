@@ -24,6 +24,7 @@ int ERR_load_RAND_strings(void);
  * RAND function codes.
  */
 # define RAND_F_DRBG_BYTES                                101
+# define RAND_F_DRBG_CTR_INIT                             125
 # define RAND_F_DRBG_GET_ENTROPY                          105
 # define RAND_F_DRBG_SETUP                                117
 # define RAND_F_GET_ENTROPY                               106
@@ -56,6 +57,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_ALREADY_INSTANTIATED                      103
 # define RAND_R_ARGUMENT_OUT_OF_RANGE                     105
 # define RAND_R_CANNOT_OPEN_FILE                          121
+# define RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS    137
 # define RAND_R_DRBG_ALREADY_INITIALIZED                  129
 # define RAND_R_DRBG_NOT_INITIALISED                      104
 # define RAND_R_ENTROPY_INPUT_TOO_LONG                    106

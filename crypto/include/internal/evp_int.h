@@ -204,6 +204,7 @@ struct evp_md_st {
     OSSL_OP_digest_freectx_fn *freectx;
     OSSL_OP_digest_dupctx_fn *dupctx;
     OSSL_OP_digest_size_fn *size;
+    OSSL_OP_digest_block_size_fn *dblock_size;
 
 } /* EVP_MD */ ;
 

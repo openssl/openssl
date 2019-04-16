@@ -231,9 +231,9 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 int rv;
 
                 if ((rv = EVP_MAC_ctrl(hctx->ctx, EVP_MAC_CTRL_SET_ENGINE,
-                                       ctx->engine)) < 0
+                                       ctx->engine)) <= 0
                     || (rv = EVP_MAC_ctrl(hctx->ctx, EVP_MAC_CTRL_SET_CIPHER,
-                                          p2)) < 0
+                                          p2)) <= 0
                     || !(rv = EVP_MAC_init(hctx->ctx)))
                     return rv;
             }
@@ -275,7 +275,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 return 0;
             break;
         case MAC_TYPE_MAC:
-            if (!EVP_MAC_ctrl(hctx->ctx, EVP_MAC_CTRL_SET_KEY, p2, p1))
+            if (EVP_MAC_ctrl(hctx->ctx, EVP_MAC_CTRL_SET_KEY, p2, p1) <= 0)
                 return 0;
             break;
         default:
@@ -296,11 +296,11 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                     (ASN1_OCTET_STRING *)ctx->pkey->pkey.ptr;
 
                 if ((rv = EVP_MAC_ctrl(hctx->ctx, EVP_MAC_CTRL_SET_ENGINE,
-                                       ctx->engine)) < 0
+                                       ctx->engine)) <= 0
                     || (rv = EVP_MAC_ctrl(hctx->ctx, EVP_MAC_CTRL_SET_MD,
-                                          hctx->raw_data.md)) < 0
+                                          hctx->raw_data.md)) <= 0
                     || (rv = EVP_MAC_ctrl(hctx->ctx, EVP_MAC_CTRL_SET_KEY,
-                                          key->data, key->length)) < 0)
+                                          key->data, key->length)) <= 0)
                     return rv;
             }
             break;

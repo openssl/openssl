@@ -88,7 +88,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
     return NULL;
 }
 
-int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
+int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b)
 {
     int ret;
     ret = OBJ_cmp(a->hashAlgorithm.algorithm, b->hashAlgorithm.algorithm);
@@ -100,7 +100,7 @@ int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
     return ASN1_OCTET_STRING_cmp(&a->issuerKeyHash, &b->issuerKeyHash);
 }
 
-int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
+int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b)
 {
     int ret;
     ret = OCSP_id_issuer_cmp(a, b);

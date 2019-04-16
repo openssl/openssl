@@ -8,13 +8,9 @@
  */
 
 #include <stddef.h>
+#include <openssl/crypto.h>
 #include "internal/provider.h"
 #include "testutil.h"
-
-#if !defined(DSO_VMS) && !defined(DSO_DLCFN) && !defined(DSO_DL) \
-    && !defined(DSO_WIN32) && !defined(DSO_DLFCN)
-# define OPENSSL_NO_DSO
-#endif
 
 extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
@@ -25,19 +21,10 @@ static OSSL_PARAM greeting_request[] = {
     { NULL, 0, NULL, 0, NULL }
 };
 
-static int test_provider(OSSL_PROVIDER *prov)
+static int test_provider(OSSL_PROVIDER *prov, const char *expected_greeting)
 {
-    const char *name = NULL;
     const char *greeting = NULL;
-    char expected_greeting[256];
     int ret = 0;
-
-    if (!TEST_ptr(name = ossl_provider_name(prov)))
-        return 0;
-
-    snprintf(expected_greeting, sizeof(expected_greeting),
-             "Hello OpenSSL %.20s, greetings from %s!",
-             OPENSSL_VERSION_STR, name);
 
     ret =
         TEST_true(ossl_provider_activate(prov))
@@ -46,8 +33,20 @@ static int test_provider(OSSL_PROVIDER *prov)
         && TEST_size_t_gt(greeting_request[0].data_size, 0)
         && TEST_str_eq(greeting, expected_greeting);
 
+    TEST_info("Got this greeting: %s\n", greeting);
     ossl_provider_free(prov);
     return ret;
+}
+
+static const char *expected_greeting1(const char *name)
+{
+    static char expected_greeting[256] = "";
+
+    BIO_snprintf(expected_greeting, sizeof(expected_greeting),
+                 "Hello OpenSSL %.20s, greetings from %s!",
+                 OPENSSL_VERSION_STR, name);
+
+    return expected_greeting;
 }
 
 static int test_builtin_provider(void)
@@ -58,10 +57,10 @@ static int test_builtin_provider(void)
     return
         TEST_ptr(prov =
                  ossl_provider_new(NULL, name, PROVIDER_INIT_FUNCTION_NAME))
-        && test_provider(prov);
+        && test_provider(prov, expected_greeting1(name));
 }
 
-#ifndef OPENSSL_NO_DSO
+#ifndef NO_PROVIDER_MODULE
 static int test_loaded_provider(void)
 {
     const char *name = "p_test";
@@ -69,15 +68,30 @@ static int test_loaded_provider(void)
 
     return
         TEST_ptr(prov = ossl_provider_new(NULL, name, NULL))
-        && test_provider(prov);
+        && test_provider(prov, expected_greeting1(name));
+}
+
+static int test_configured_provider(void)
+{
+    const char *name = "p_test_configured";
+    OSSL_PROVIDER *prov = NULL;
+    /* This MUST match the config file */
+    const char *expected_greeting =
+        "Hello OpenSSL, greetings from Test Provider";
+
+    return
+        OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL)
+        && TEST_ptr(prov = ossl_provider_find(NULL, name))
+        && test_provider(prov, expected_greeting);
 }
 #endif
 
 int setup_tests(void)
 {
     ADD_TEST(test_builtin_provider);
-#ifndef OPENSSL_NO_DSO
+#ifndef NO_PROVIDER_MODULE
     ADD_TEST(test_loaded_provider);
+    ADD_TEST(test_configured_provider);
 #endif
     return 1;
 }

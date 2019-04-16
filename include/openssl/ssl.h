@@ -500,7 +500,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  */
 # define SSL_MODE_ASYNC 0x00000100U
 /*
- * Use the kernel TLS transmission data-path.
+ * Don't use the kernel TLS data-path for sending.
  */
 # define SSL_MODE_NO_KTLS_TX 0x00000200U
 /*
@@ -515,6 +515,10 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  * - OpenSSL 1.1.1 and 1.1.1a
  */
 # define SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG 0x00000400U
+/*
+ * Don't use the kernel TLS data-path for receiving.
+ */
+# define SSL_MODE_NO_KTLS_RX 0x00000800U
 
 /* Cert related flags */
 /*
@@ -617,11 +621,6 @@ unsigned long SSL_set_options(SSL *s, unsigned long op);
 
 # define SSL_get_secure_renegotiation_support(ssl) \
         SSL_ctrl((ssl), SSL_CTRL_GET_RI_SUPPORT, 0, NULL)
-
-# ifndef OPENSSL_NO_HEARTBEATS
-#  define SSL_heartbeat(ssl) \
-        SSL_ctrl((ssl),SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT,0,NULL)
-# endif
 
 # define SSL_CTX_set_cert_flags(ctx,op) \
         SSL_CTX_ctrl((ctx),SSL_CTRL_CERT_FLAGS,(op),NULL)
@@ -1263,11 +1262,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME               79
 # define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH               80
 # define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD               81
-# ifndef OPENSSL_NO_HEARTBEATS
-#  define SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT               85
-#  define SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING        86
-#  define SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS    87
-# endif
 # define DTLS_CTRL_GET_TIMEOUT           73
 # define DTLS_CTRL_HANDLE_TIMEOUT        74
 # define SSL_CTRL_GET_RI_SUPPORT                 76

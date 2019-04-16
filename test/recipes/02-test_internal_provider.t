@@ -7,12 +7,13 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw(:DEFAULT bldtop_dir);
+use OpenSSL::Test qw(:DEFAULT bldtop_dir bldtop_file);
 use OpenSSL::Test::Simple;
 use OpenSSL::Test::Utils;
 
 setup("test_internal_provider");
 
-$ENV{"OPENSSL_MODULES"} = bldtop_dir("test");
+$ENV{OPENSSL_MODULES} = bldtop_dir("test");
+$ENV{OPENSSL_CONF} = bldtop_file("test", "provider_internal_test.conf");
 
 simple_test("test_internal_provider", "provider_internal_test");

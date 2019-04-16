@@ -192,9 +192,10 @@ I<prediction resistance> parameter to 1 when calling L<RAND_DRBG_generate(3)>.
 The document [NIST SP 800-90C] describes prediction resistance requests
 in detail and imposes strict conditions on the entropy sources that are
 approved for providing prediction resistance.
-Since the default DRBG implementation does not have access to such an approved
-entropy source, a request for prediction resistance will currently always fail.
-In other words, prediction resistance is currently not supported yet by the DRBG.
+A request for prediction resistance can only be satisfied by pulling fresh
+entropy from a live entropy source (section 5.5.2 of [NIST SP 800-90C]).
+It is up to the user to ensure that a live entropy source is configured
+and is being used.
 
 
 For the three shared DRBGs (and only for these) there is another way to

@@ -138,7 +138,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
     if (custom == NULL)
         return 1;
 
-    if (!EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_CUSTOM, custom, custom_len))
+    if (EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_CUSTOM, custom, custom_len) <= 0)
         return 0;
 
     /* By default only do one iteration if kmac_out_len is not specified */
@@ -153,7 +153,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
             || kmac_out_len == 64))
         return 0;
 
-    if (!EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_SIZE, kmac_out_len))
+    if (EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_SIZE, kmac_out_len) <= 0)
         return 0;
 
     /*
@@ -200,10 +200,10 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
     if (ctx == NULL || ctx_init == NULL)
         goto end;
     if (hmac_md != NULL &&
-            !EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_MD, hmac_md))
+            EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_MD, hmac_md) <= 0)
         goto end;
 
-    if (!EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_KEY, salt, salt_len))
+    if (EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_KEY, salt, salt_len) <= 0)
         goto end;
 
     if (!kmac_init(ctx_init, kmac_custom, kmac_custom_len, kmac_out_len,
@@ -247,10 +247,13 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
     }
     ret = 1;
 end:
-    OPENSSL_free(kmac_buffer);
+    if (kmac_buffer != NULL)
+        OPENSSL_clear_free(kmac_buffer, kmac_out_len);
+    else
+        OPENSSL_cleanse(mac_buf, sizeof(mac_buf));
+
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_CTX_free(ctx_init);
-    OPENSSL_cleanse(mac, sizeof(mac));
     return ret;
 }
 

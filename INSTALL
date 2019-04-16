@@ -353,9 +353,6 @@
                    on BSD implementations, in which case it can be disabled with
                    no-devcryptoeng.
 
-  no-dso
-                   Don't build support for loading Dynamic Shared Objects.
-
   no-dynamic-engine
                    Don't build the dynamically loaded engines. This only has an
                    effect in a "shared" build
@@ -397,6 +394,9 @@
                    Don't compile in filename and line number information (e.g.
                    for errors and memory allocation).
 
+  no-fips
+                   Don't compile the FIPS module
+
   enable-fuzz-libfuzzer, enable-fuzz-afl
                    Build with support for fuzzing using either libfuzzer or AFL.
                    These are developer options only. They may not work on all
@@ -409,8 +409,16 @@
                    available if the GOST algorithms are also available through
                    loading an externally supplied engine.
 
+  no-legacy
+                   Don't build the legacy provider. Disabling this also disables
+                   the legacy algorithms: MD2 (already disabled by default).
+
   no-makedepend
                    Don't generate dependencies.
+
+  no-module
+                   Don't build any dynamically loadable engines.  This also
+                   implies 'no-dynamic-engine'.
 
   no-multiblock
                    Don't build support for writing multiple records in one

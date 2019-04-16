@@ -10,7 +10,8 @@ OSSL_PARAM_SIZED_octet_ptr, OSSL_PARAM_END, OSSL_PARAM_construct_TYPE,
 OSSL_PARAM_END,
 OSSL_PARAM_construct_BN, OSSL_PARAM_construct_utf8_string,
 OSSL_PARAM_construct_utf8_ptr, OSSL_PARAM_construct_octet_string,
-OSSL_PARAM_construct_octet_ptr, OSSL_PARAM_locate, OSSL_PARAM_get_TYPE,
+OSSL_PARAM_construct_octet_ptr, OSSL_PARAM_construct_end,
+OSSL_PARAM_locate, OSSL_PARAM_get_TYPE,
 OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN,
 OSSL_PARAM_get_utf8_string, OSSL_PARAM_set_utf8_string,
 OSSL_PARAM_get_octet_string, OSSL_PARAM_set_octet_string,
@@ -43,9 +44,10 @@ OSSL_PARAM_set_octet_ptr
  OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
                                               size_t bsize, size_t *rsize);
  OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
-                                          size_t *rsize);
+                                          size_t bsize, size_t *rsize);
  OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
-                                           size_t *rsize);
+                                           size_t bsize, size_t *rsize);
+ OSSL_PARAM OSSL_PARAM_construct_end(void);
 
  OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *array, const char *key);
 
@@ -171,13 +173,16 @@ size B<rsize> is created.
 
 OSSL_PARAM_construct_utf8_ptr() is a function that constructes a UTF string
 pointer OSSL_PARAM structure.
-A parameter with name B<key>, storage pointer B<*buf> and return size B<rsize>
-is created.
+A parameter with name B<key>, storage pointer B<*buf>, size B<bsize> and
+return size B<rsize> is created.
 
 OSSL_PARAM_construct_octet_ptr() is a function that constructes an OCTET string
 pointer OSSL_PARAM structure.
-A parameter with name B<key>, storage pointer B<*buf> and return size B<rsize>
-is created.
+A parameter with name B<key>, storage pointer B<*buf>, size B<bsize> and
+return size B<rsize> is created.
+
+OSSL_PARAM_construct_end() is a function that constructs the terminating
+OSSL_PARAM structure.
 
 OSSL_PARAM_locate() is a function that searches an B<array> of parameters for
 the one matching the B<key> name.
@@ -248,6 +253,13 @@ All other functions return B<1> on success and B<0> on failure.
 Integral types will be widened and sign extended as required.
 Apart from that, the functions must be used appropriately for the
 expected type of the parameter.
+
+For OSSL_PARAM_get_utf8_ptr() and OSSL_PARAM_get_octet_ptr(), B<bsize>
+is not relevant if the purpose is to send the B<OSSL_PARAM> array to a
+I<responder>, i.e. to get parameter data back.
+In that case, B<bsize> can safely be given zero.
+See L<OSSL_PARAM(3)/DESCRIPTION> for further information on the
+possible purposes.
 
 =head1 EXAMPLES
 

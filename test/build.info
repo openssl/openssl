@@ -186,6 +186,9 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include ../apps/include ../crypto/include
   DEPEND[evp_extra_test]=../libcrypto libtestutil.a
+  IF[{- $disabled{fips} || !$target{dso_scheme} -}]
+    DEFINE[evp_extra_test]=NO_FIPS_MODULE
+  ENDIF
 
   SOURCE[igetest]=igetest.c
   INCLUDE[igetest]=../include ../apps/include
@@ -603,7 +606,7 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider_test]=provider_test.c p_test.c
   INCLUDE[provider_test]=../include ../apps/include
   DEPEND[provider_test]=../libcrypto.a libtestutil.a
-  IF[{- !$disabled{shared} -}]
+  IF[{- !$disabled{module} -}]
     MODULES{noinst}=p_test
     SOURCE[p_test]=p_test.c
     INCLUDE[p_test]=../include
@@ -611,10 +614,13 @@ IF[{- !$disabled{tests} -}]
       SOURCE[p_test]=p_test.ld
       GENERATE[p_test.ld]=../util/providers.num
     ENDIF
-  ELSE
-    DEFINE[provider_test]=OPENSSL_NO_SHARED
-    DEFINE[provider_internal_test]=OPENSSL_NO_SHARED
   ENDIF
+  IF[{- $disabled{module} || !$target{dso_scheme} -}]
+    DEFINE[provider_test]=NO_PROVIDER_MODULE
+    DEFINE[provider_internal_test]=NO_PROVIDER_MODULE
+  ENDIF
+  DEPEND[]=provider_internal_test.conf
+  GENERATE[provider_internal_test.conf]=provider_internal_test.conf.in
 
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c

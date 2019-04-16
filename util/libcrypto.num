@@ -684,7 +684,7 @@ PKCS7_SIGNER_INFO_it                    683	3_0_0	EXIST:!EXPORT_VAR_AS_FUNCTION:
 PKCS7_SIGNER_INFO_it                    683	3_0_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 CRYPTO_ocb128_copy_ctx                  684	3_0_0	EXIST::FUNCTION:OCB
 TS_REQ_get_ext_d2i                      685	3_0_0	EXIST::FUNCTION:TS
-AES_ige_encrypt                         686	3_0_0	EXIST::FUNCTION:
+AES_ige_encrypt                         686	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 d2i_SXNET                               687	3_0_0	EXIST::FUNCTION:
 CTLOG_get0_log_id                       688	3_0_0	EXIST::FUNCTION:CT
 CMS_RecipientInfo_ktri_get0_signer_id   689	3_0_0	EXIST::FUNCTION:CMS
@@ -1456,7 +1456,7 @@ EVP_PKEY_get0_DH                        1442	3_0_0	EXIST::FUNCTION:DH
 d2i_OCSP_CRLID                          1443	3_0_0	EXIST::FUNCTION:OCSP
 EVP_CIPHER_CTX_set_padding              1444	3_0_0	EXIST::FUNCTION:
 CTLOG_new_from_base64                   1445	3_0_0	EXIST::FUNCTION:CT
-AES_bi_ige_encrypt                      1446	3_0_0	EXIST::FUNCTION:
+AES_bi_ige_encrypt                      1446	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 ERR_pop_to_mark                         1447	3_0_0	EXIST::FUNCTION:
 CRL_DIST_POINTS_new                     1449	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get0_asn1                      1450	3_0_0	EXIST::FUNCTION:
@@ -4788,9 +4788,12 @@ OSSL_PARAM_get_utf8_ptr                 4735	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_set_utf8_ptr                 4736	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_octet_ptr                4737	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_ptr                4738	3_0_0	EXIST::FUNCTION:
-X509_set_sm2_id                         4739	3_0_0	EXIST::FUNCTION:SM2
+X509_set0_sm2_id                        4739	3_0_0	EXIST::FUNCTION:SM2
 X509_get0_sm2_id                        4740	3_0_0	EXIST::FUNCTION:SM2
 EVP_PKEY_get0_engine                    4741	3_0_0	EXIST::FUNCTION:ENGINE
 EVP_MD_upref                            4742	3_0_0	EXIST::FUNCTION:
 EVP_MD_fetch                            4743	3_0_0	EXIST::FUNCTION:
-RSA_encode_pkcs1                        4999	3_0_0	EXIST::FUNCTION:RSA
+EVP_set_default_properties              4744	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_construct_end                4745	3_0_0	EXIST::FUNCTION:
+EC_GROUP_check_named_curve              4746	3_0_0	EXIST::FUNCTION:EC
+RSA_encode_pkcs1                        4747	3_0_0	EXIST::FUNCTION:RSA

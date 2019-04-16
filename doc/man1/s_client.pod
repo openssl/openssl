@@ -559,7 +559,7 @@ further information).
 
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-comp>
@@ -762,10 +762,6 @@ End the current SSL connection and exit.
 =item B<R>
 
 Renegotiate the SSL session (TLSv1.2 and below only).
-
-=item B<B>
-
-Send a heartbeat message to the server (DTLS only)
 
 =item B<k>
 

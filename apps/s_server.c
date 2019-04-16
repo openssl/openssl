@@ -2507,14 +2507,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                      */
                     goto err;
                 }
-#ifndef OPENSSL_NO_HEARTBEATS
-                if ((buf[0] == 'B') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
-                    BIO_printf(bio_err, "HEARTBEATING\n");
-                    SSL_heartbeat(con);
-                    i = 0;
-                    continue;
-                }
-#endif
                 if ((buf[0] == 'r') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
                     SSL_renegotiate(con);
                     i = SSL_do_handshake(con);
@@ -2929,6 +2921,8 @@ static void print_connection_info(SSL *con)
 #ifndef OPENSSL_NO_KTLS
     if (BIO_get_ktls_send(SSL_get_wbio(con)))
         BIO_printf(bio_err, "Using Kernel TLS for sending\n");
+    if (BIO_get_ktls_recv(SSL_get_rbio(con)))
+        BIO_printf(bio_err, "Using Kernel TLS for receiving\n");
 #endif
 
     (void)BIO_flush(bio_s_out);

@@ -35,35 +35,38 @@ void bio_cleanup(void);
 int bwrite_conv(BIO *bio, const char *data, size_t datal, size_t *written);
 int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
 
-# define BIO_CTRL_SET_KTLS_SEND                 72
-# define BIO_CTRL_SET_KTLS_SEND_CTRL_MSG        74
-# define BIO_CTRL_CLEAR_KTLS_CTRL_MSG      75
+/* Changes to these internal BIOs must also update include/openssl/bio.h */
+# define BIO_CTRL_SET_KTLS                      72
+# define BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG     74
+# define BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG        75
 
 /*
  * This is used with socket BIOs:
- * BIO_FLAGS_KTLS means we are using ktls with this BIO.
- * BIO_FLAGS_KTLS_CTRL_MSG means we are about to send a ctrl message next.
+ * BIO_FLAGS_KTLS_TX means we are using ktls with this BIO for sending.
+ * BIO_FLAGS_KTLS_TX_CTRL_MSG means we are about to send a ctrl message next.
+ * BIO_FLAGS_KTLS_RX means we are using ktls with this BIO for receiving.
  */
-# define BIO_FLAGS_KTLS          0x800
-# define BIO_FLAGS_KTLS_CTRL_MSG 0x1000
+# define BIO_FLAGS_KTLS_TX          0x800
+# define BIO_FLAGS_KTLS_TX_CTRL_MSG 0x1000
+# define BIO_FLAGS_KTLS_RX          0x2000
 
 /* KTLS related controls and flags */
-# define BIO_set_ktls_flag(b) \
-    BIO_set_flags(b, BIO_FLAGS_KTLS)
-# define BIO_should_ktls_flag(b) \
-    BIO_test_flags(b, BIO_FLAGS_KTLS)
+# define BIO_set_ktls_flag(b, is_tx) \
+    BIO_set_flags(b, (is_tx) ? BIO_FLAGS_KTLS_TX : BIO_FLAGS_KTLS_RX)
+# define BIO_should_ktls_flag(b, is_tx) \
+    BIO_test_flags(b, (is_tx) ? BIO_FLAGS_KTLS_TX : BIO_FLAGS_KTLS_RX)
 # define BIO_set_ktls_ctrl_msg_flag(b) \
-    BIO_set_flags(b, BIO_FLAGS_KTLS_CTRL_MSG)
+    BIO_set_flags(b, BIO_FLAGS_KTLS_TX_CTRL_MSG)
 # define BIO_should_ktls_ctrl_msg_flag(b) \
-    BIO_test_flags(b, (BIO_FLAGS_KTLS_CTRL_MSG))
+    BIO_test_flags(b, BIO_FLAGS_KTLS_TX_CTRL_MSG)
 # define BIO_clear_ktls_ctrl_msg_flag(b) \
-    BIO_clear_flags(b, (BIO_FLAGS_KTLS_CTRL_MSG))
+    BIO_clear_flags(b, BIO_FLAGS_KTLS_TX_CTRL_MSG)
 
 #  define BIO_set_ktls(b, keyblob, is_tx)   \
-     BIO_ctrl(b, BIO_CTRL_SET_KTLS_SEND, is_tx, keyblob)
+     BIO_ctrl(b, BIO_CTRL_SET_KTLS, is_tx, keyblob)
 #  define BIO_set_ktls_ctrl_msg(b, record_type)   \
-     BIO_ctrl(b, BIO_CTRL_SET_KTLS_SEND_CTRL_MSG, record_type, NULL)
+     BIO_ctrl(b, BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG, record_type, NULL)
 #  define BIO_clear_ktls_ctrl_msg(b) \
-     BIO_ctrl(b, BIO_CTRL_CLEAR_KTLS_CTRL_MSG, 0, NULL)
+     BIO_ctrl(b, BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG, 0, NULL)
 
 #endif

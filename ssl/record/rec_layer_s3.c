@@ -268,11 +268,15 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
         return -1;
     }
 
-    /* We always act like read_ahead is set for DTLS */
-    if (!s->rlayer.read_ahead && !SSL_IS_DTLS(s))
+    /*
+     * Ktls always reads full records.
+     * Also, we always act like read_ahead is set for DTLS.
+     */
+    if (!BIO_get_ktls_recv(s->rbio) && !s->rlayer.read_ahead
+        && !SSL_IS_DTLS(s)) {
         /* ignore max parameter */
         max = n;
-    else {
+    } else {
         if (max < n)
             max = n;
         if (max > rb->len - rb->offset)
@@ -1508,9 +1512,9 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         && (s->server || rr->type != SSL3_RT_ALERT)) {
         /*
          * If we've got this far and still haven't decided on what version
-         * we're using then this must be a client side alert we're dealing with
-         * (we don't allow heartbeats yet). We shouldn't be receiving anything
-         * other than a ClientHello if we are a server.
+         * we're using then this must be a client side alert we're dealing
+         * with. We shouldn't be receiving anything other than a ClientHello
+         * if we are a server.
          */
         s->version = rr->rec_version;
         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_SSL3_READ_BYTES,

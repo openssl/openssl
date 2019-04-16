@@ -542,7 +542,7 @@ OpenSSL was built.
 
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-no_comp>
@@ -782,10 +782,6 @@ cause the client to disconnect due to a protocol violation.
 =item B<S>
 
 Print out some session cache status information.
-
-=item B<B>
-
-Send a heartbeat message to the client (DTLS only)
 
 =item B<k>
 

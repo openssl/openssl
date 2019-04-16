@@ -67,7 +67,7 @@ static CRYPTO_THREAD_LOCAL private_drbg;
 
 
 /* NIST SP 800-90A DRBG recommends the use of a personalization string. */
-static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
+static const char ossl_pers_string[] = DRBG_DEFAULT_PERS_STRING;
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 
@@ -254,8 +254,13 @@ static RAND_DRBG *rand_drbg_new(int secure,
     drbg->parent = parent;
 
     if (parent == NULL) {
+#ifdef FIPS_MODE
+        drbg->get_entropy = rand_crngt_get_entropy;
+        drbg->cleanup_entropy = rand_crngt_cleanup_entropy;
+#else
         drbg->get_entropy = rand_drbg_get_entropy;
         drbg->cleanup_entropy = rand_drbg_cleanup_entropy;
+#endif
 #ifndef RAND_DRBG_GET_RANDOM_NONCE
         drbg->get_nonce = rand_drbg_get_nonce;
         drbg->cleanup_nonce = rand_drbg_cleanup_nonce;

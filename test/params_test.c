@@ -143,8 +143,10 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
                 return 0;
         } else if (strcmp(params->key, "p5") == 0) {
             strncpy(obj->p5, params->data, params->data_size);
+            obj->p5_l = strlen(obj->p5) + 1;
         } else if (strcmp(params->key, "p6") == 0) {
             obj->p6 = *(const char **)params->data;
+            obj->p6_l = params->data_size;
         }
 
     return 1;
@@ -233,10 +235,13 @@ static int api_set_params(void *vobj, const OSSL_PARAM *params)
         char *p5_ptr = obj->p5;
         if (!TEST_true(OSSL_PARAM_get_utf8_string(p, &p5_ptr, sizeof(obj->p5))))
             return 0;
+        obj->p5_l = strlen(obj->p5) + 1;
     }
-    if ((p = OSSL_PARAM_locate(params, "p6")) != NULL
-        && !TEST_true(OSSL_PARAM_get_utf8_ptr(p, &obj->p6)))
-        return 0;
+    if ((p = OSSL_PARAM_locate(params, "p6")) != NULL) {
+        if (!TEST_true(OSSL_PARAM_get_utf8_ptr(p, &obj->p6)))
+            return 0;
+        obj->p6_l = strlen(obj->p6) + 1;
+    }
 
     return 1;
 }
@@ -364,7 +369,8 @@ static const OSSL_PARAM static_raw_params[] = {
       &bignumbin_l },
     { "p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), &app_p4_l },
     { "p5", OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5), &app_p5_l },
-    { "p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6), &app_p6_l },
+    /* sizeof(app_p6_init), because we know that's what we're using */
+    { "p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init), &app_p6_l },
     { "foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), &foo_l },
     { NULL, 0, NULL, 0, NULL }
 };
@@ -377,8 +383,9 @@ static const OSSL_PARAM static_api_params[] = {
                     &app_p4, sizeof(app_p4), &app_p4_l),
     OSSL_PARAM_DEFN("p5", OSSL_PARAM_UTF8_STRING,
                     &app_p5, sizeof(app_p5), &app_p5_l),
+    /* sizeof(app_p6_init), because we know that's what we're using */
     OSSL_PARAM_DEFN("p6", OSSL_PARAM_UTF8_PTR,
-                    &app_p6, sizeof(app_p6), &app_p6_l),
+                    &app_p6, sizeof(app_p6_init), &app_p6_l),
     OSSL_PARAM_DEFN("foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), &foo_l),
     OSSL_PARAM_END
 };
@@ -391,7 +398,6 @@ static OSSL_PARAM *construct_api_params(void)
 {
     size_t n = 0;
     static OSSL_PARAM params[10];
-    OSSL_PARAM param_end = OSSL_PARAM_END;
 
     params[n++] = OSSL_PARAM_construct_int("p1", &app_p1, NULL);
     params[n++] = OSSL_PARAM_construct_BN("p3", bignumbin, sizeof(bignumbin),
@@ -400,11 +406,12 @@ static OSSL_PARAM *construct_api_params(void)
                                                    &app_p4_l);
     params[n++] = OSSL_PARAM_construct_utf8_string("p5", app_p5,
                                                    sizeof(app_p5), &app_p5_l);
+    /* sizeof(app_p6_init), because we know that's what we're using */
     params[n++] = OSSL_PARAM_construct_utf8_ptr("p6", (char **)&app_p6,
-                                                &app_p6_l);
+                                                sizeof(app_p6_init), &app_p6_l);
     params[n++] = OSSL_PARAM_construct_octet_string("foo", &foo, sizeof(foo),
                                                     &foo_l);
-    params[n++] = param_end;
+    params[n++] = OSSL_PARAM_construct_end();
 
     return params;
 }
@@ -473,7 +480,9 @@ static int test_case_variant(const OSSL_PARAM *params,
         || !TEST_ptr(BN_native2bn(bignumbin, bignumbin_l, app_p3))
         || !TEST_BN_eq(app_p3, verify_p3)       /* "provider" value */
         || !TEST_str_eq(app_p4, p4_init)        /* "provider" value */
+        || !TEST_size_t_eq(app_p5_l, sizeof(p5_init)) /* "provider" value */
         || !TEST_str_eq(app_p5, p5_init)        /* "provider" value */
+        || !TEST_size_t_eq(app_p6_l, sizeof(p6_init)) /* "provider" value */
         || !TEST_str_eq(app_p6, p6_init)        /* "provider" value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
         || !TEST_int_eq(foo_l, sizeof(app_foo_init)))
@@ -494,7 +503,11 @@ static int test_case_variant(const OSSL_PARAM *params,
             || !TEST_double_eq(sneakpeek->p2, p2_init)  /* Should remain untouched */
             || !TEST_BN_eq(sneakpeek->p3, app_p3)       /* app value set */
             || !TEST_str_eq(sneakpeek->p4, app_p4)      /* app value set */
-            || !TEST_str_eq(sneakpeek->p5, app_p5))     /* app value set */
+            || !TEST_size_t_eq(sneakpeek->p5_l, app_p5_l) /* app value set */
+            || !TEST_str_eq(sneakpeek->p5, app_p5)      /* app value set */
+            || !TEST_size_t_eq(sneakpeek->p6_l,
+                               sizeof(app_p6_init))     /* app value set */
+            || !TEST_str_eq(sneakpeek->p6, app_p6))     /* app value set */
             errcnt++;
     }
 
@@ -516,7 +529,11 @@ static int test_case_variant(const OSSL_PARAM *params,
         || !TEST_ptr(BN_native2bn(bignumbin, bignumbin_l, app_p3))
         || !TEST_BN_eq(app_p3, verify_p3)       /* app value */
         || !TEST_str_eq(app_p4, app_p4_init)    /* app value */
+        || !TEST_size_t_eq(app_p5_l,
+                           sizeof(app_p5_init)) /* app value */
         || !TEST_str_eq(app_p5, app_p5_init)    /* app value */
+        || !TEST_size_t_eq(app_p6_l,
+                           sizeof(app_p6_init)) /* app value */
         || !TEST_str_eq(app_p6, app_p6_init)    /* app value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
         || !TEST_int_eq(foo_l, sizeof(app_foo_init)))

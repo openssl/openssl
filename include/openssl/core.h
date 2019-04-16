@@ -161,7 +161,14 @@ struct ossl_param_st {
 typedef int (OSSL_provider_init_fn)(const OSSL_PROVIDER *provider,
                                     const OSSL_DISPATCH *in,
                                     const OSSL_DISPATCH **out);
+# ifdef __VMS
+#  pragma names save
+#  pragma names uppercase,truncated
+# endif
 extern OSSL_provider_init_fn OSSL_provider_init;
+# ifdef __VMS
+#  pragma names restore
+# endif
 
 # ifdef __cplusplus
 }

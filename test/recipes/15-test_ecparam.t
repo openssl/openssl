@@ -23,12 +23,20 @@ plan skip_all => "EC isn't supported in this build"
 my @valid = glob(data_file("valid", "*.pem"));
 my @invalid = glob(data_file("invalid", "*.pem"));
 
-plan tests => scalar @valid + scalar @invalid;
+plan tests => scalar @valid + scalar @invalid + scalar @valid + scalar @invalid;
 
 foreach (@valid) {
     ok(run(app([qw{openssl ecparam -noout -check -in}, $_])));
 }
 
+foreach (@valid) {
+    ok(run(app([qw{openssl ecparam -noout -check_named -in}, $_])));
+}
+
 foreach (@invalid) {
     ok(!run(app([qw{openssl ecparam -noout -check -in}, $_])));
+}
+
+foreach (@invalid) {
+    ok(!run(app([qw{openssl ecparam -noout -check_named -in}, $_])));
 }

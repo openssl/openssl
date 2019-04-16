@@ -152,17 +152,17 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * Facility detection would fail on real hw (no STFLE).
      */
     static const struct OPENSSL_s390xcap_st z900 = {
-        .stfle  = {0ULL, 0ULL, 0ULL, 0ULL},
-        .kimd   = {0ULL, 0ULL},
-        .klmd   = {0ULL, 0ULL},
-        .km     = {0ULL, 0ULL},
-        .kmc    = {0ULL, 0ULL},
-        .kmac   = {0ULL, 0ULL},
-        .kmctr  = {0ULL, 0ULL},
-        .kmo    = {0ULL, 0ULL},
-        .kmf    = {0ULL, 0ULL},
-        .prno   = {0ULL, 0ULL},
-        .kma    = {0ULL, 0ULL},
+        /*.stfle  = */{0ULL, 0ULL, 0ULL, 0ULL},
+        /*.kimd   = */{0ULL, 0ULL},
+        /*.klmd   = */{0ULL, 0ULL},
+        /*.km     = */{0ULL, 0ULL},
+        /*.kmc    = */{0ULL, 0ULL},
+        /*.kmac   = */{0ULL, 0ULL},
+        /*.kmctr  = */{0ULL, 0ULL},
+        /*.kmo    = */{0ULL, 0ULL},
+        /*.kmf    = */{0ULL, 0ULL},
+        /*.prno   = */{0ULL, 0ULL},
+        /*.kma    = */{0ULL, 0ULL},
     };
 
     /*-
@@ -170,25 +170,25 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * Implements MSA. Facility detection would fail on real hw (no STFLE).
      */
     static const struct OPENSSL_s390xcap_st z990 = {
-        .stfle  = {S390X_CAPBIT(S390X_MSA),
-                   0ULL, 0ULL, 0ULL},
-        .kimd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1),
-                   0ULL},
-        .klmd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1),
-                   0ULL},
-        .km     = {S390X_CAPBIT(S390X_QUERY),
-                   0ULL},
-        .kmc    = {S390X_CAPBIT(S390X_QUERY),
-                   0ULL},
-        .kmac   = {S390X_CAPBIT(S390X_QUERY),
-                   0ULL},
-        .kmctr  = {0ULL, 0ULL},
-        .kmo    = {0ULL, 0ULL},
-        .kmf    = {0ULL, 0ULL},
-        .prno   = {0ULL, 0ULL},
-        .kma    = {0ULL, 0ULL},
+        /*.stfle  = */{S390X_CAPBIT(S390X_MSA),
+                       0ULL, 0ULL, 0ULL},
+        /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1),
+                       0ULL},
+        /*.klmd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1),
+                       0ULL},
+        /*.km     = */{S390X_CAPBIT(S390X_QUERY),
+                       0ULL},
+        /*.kmc    = */{S390X_CAPBIT(S390X_QUERY),
+                       0ULL},
+        /*.kmac   = */{S390X_CAPBIT(S390X_QUERY),
+                       0ULL},
+        /*.kmctr  = */{0ULL, 0ULL},
+        /*.kmo    = */{0ULL, 0ULL},
+        /*.kmf    = */{0ULL, 0ULL},
+        /*.prno   = */{0ULL, 0ULL},
+        /*.kma    = */{0ULL, 0ULL},
     };
 
     /*-
@@ -196,30 +196,30 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * Implements MSA and MSA1.
      */
     static const struct OPENSSL_s390xcap_st z9 = {
-        .stfle  = {S390X_CAPBIT(S390X_MSA)
-                     | S390X_CAPBIT(S390X_STCKF),
-                   0ULL, 0ULL, 0ULL},
-        .kimd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256),
-                   0ULL},
-        .klmd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256),
-                   0ULL},
-        .km     = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128),
-                   0ULL},
-        .kmc    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128),
-                   0ULL},
-        .kmac   = {S390X_CAPBIT(S390X_QUERY),
-                   0ULL},
-        .kmctr  = {0ULL, 0ULL},
-        .kmo    = {0ULL, 0ULL},
-        .kmf    = {0ULL, 0ULL},
-        .prno   = {0ULL, 0ULL},
-        .kma    = {0ULL, 0ULL},
+        /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
+                       | S390X_CAPBIT(S390X_STCKF),
+                       0ULL, 0ULL, 0ULL},
+        /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256),
+                       0ULL},
+        /*.klmd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256),
+                       0ULL},
+        /*.km     = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128),
+                       0ULL},
+        /*.kmc    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128),
+                       0ULL},
+        /*.kmac   = */{S390X_CAPBIT(S390X_QUERY),
+                       0ULL},
+        /*.kmctr  = */{0ULL, 0ULL},
+        /*.kmo    = */{0ULL, 0ULL},
+        /*.kmf    = */{0ULL, 0ULL},
+        /*.prno   = */{0ULL, 0ULL},
+        /*.kma    = */{0ULL, 0ULL},
     };
 
     /*-
@@ -227,36 +227,36 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * Implements MSA and MSA1-2.
      */
     static const struct OPENSSL_s390xcap_st z10 = {
-        .stfle  = {S390X_CAPBIT(S390X_MSA)
-                     | S390X_CAPBIT(S390X_STCKF),
-                   0ULL, 0ULL, 0ULL},
-        .kimd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512),
-                   0ULL},
-        .klmd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512),
-                   0ULL},
-        .km     = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmc    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmac   = {S390X_CAPBIT(S390X_QUERY),
-                   0ULL},
-        .kmctr  = {0ULL, 0ULL},
-        .kmo    = {0ULL, 0ULL},
-        .kmf    = {0ULL, 0ULL},
-        .prno   = {0ULL, 0ULL},
-        .kma    = {0ULL, 0ULL},
+        /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
+                       | S390X_CAPBIT(S390X_STCKF),
+                       0ULL, 0ULL, 0ULL},
+        /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512),
+                       0ULL},
+        /*.klmd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512),
+                       0ULL},
+        /*.km     = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmc    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmac   = */{S390X_CAPBIT(S390X_QUERY),
+                       0ULL},
+        /*.kmctr  = */{0ULL, 0ULL},
+        /*.kmo    = */{0ULL, 0ULL},
+        /*.kmf    = */{0ULL, 0ULL},
+        /*.prno   = */{0ULL, 0ULL},
+        /*.kma    = */{0ULL, 0ULL},
     };
 
     /*-
@@ -264,55 +264,55 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * Implements MSA and MSA1-4.
      */
     static const struct OPENSSL_s390xcap_st z196 = {
-        .stfle  = {S390X_CAPBIT(S390X_MSA)
-                     | S390X_CAPBIT(S390X_STCKF),
-                   S390X_CAPBIT(S390X_MSA3)
-                     | S390X_CAPBIT(S390X_MSA4),
-                   0ULL, 0ULL},
-        .kimd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512),
-                   S390X_CAPBIT(S390X_GHASH)},
-        .klmd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512),
-                   0ULL},
-        .km     = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256)
-                     | S390X_CAPBIT(S390X_XTS_AES_128)
-                     | S390X_CAPBIT(S390X_XTS_AES_256),
-                   0ULL},
-        .kmc    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmac   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmctr  = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmo    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmf    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .prno   = {0ULL, 0ULL},
-        .kma    = {0ULL, 0ULL},
+        /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
+                       | S390X_CAPBIT(S390X_STCKF),
+                       S390X_CAPBIT(S390X_MSA3)
+                       | S390X_CAPBIT(S390X_MSA4),
+                       0ULL, 0ULL},
+        /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512),
+                       S390X_CAPBIT(S390X_GHASH)},
+        /*.klmd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512),
+                       0ULL},
+        /*.km     = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256)
+                       | S390X_CAPBIT(S390X_XTS_AES_128)
+                       | S390X_CAPBIT(S390X_XTS_AES_256),
+                       0ULL},
+        /*.kmc    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmac   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmctr  = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmo    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmf    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.prno   = */{0ULL, 0ULL},
+        /*.kma    = */{0ULL, 0ULL},
     };
 
     /*-
@@ -320,55 +320,55 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * Implements MSA and MSA1-4.
      */
     static const struct OPENSSL_s390xcap_st zEC12 = {
-        .stfle  = {S390X_CAPBIT(S390X_MSA)
-                     | S390X_CAPBIT(S390X_STCKF),
-                   S390X_CAPBIT(S390X_MSA3)
-                     | S390X_CAPBIT(S390X_MSA4),
-                   0ULL, 0ULL},
-        .kimd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512),
+        /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
+                       | S390X_CAPBIT(S390X_STCKF),
+                       S390X_CAPBIT(S390X_MSA3)
+                       | S390X_CAPBIT(S390X_MSA4),
+                       0ULL, 0ULL},
+        /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512),
                    S390X_CAPBIT(S390X_GHASH)},
-        .klmd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512),
-                   0ULL},
-        .km     = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256)
-                     | S390X_CAPBIT(S390X_XTS_AES_128)
-                     | S390X_CAPBIT(S390X_XTS_AES_256),
-                   0ULL},
-        .kmc    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmac   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmctr  = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmo    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmf    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .prno   = {0ULL, 0ULL},
-        .kma    = {0ULL, 0ULL},
+        /*.klmd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512),
+                       0ULL},
+        /*.km     = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256)
+                       | S390X_CAPBIT(S390X_XTS_AES_128)
+                       | S390X_CAPBIT(S390X_XTS_AES_256),
+                       0ULL},
+        /*.kmc    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmac   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmctr  = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmo    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmf    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.prno   = */{0ULL, 0ULL},
+        /*.kma    = */{0ULL, 0ULL},
     };
 
     /*-
@@ -376,59 +376,59 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * Implements MSA and MSA1-5.
      */
     static const struct OPENSSL_s390xcap_st z13 = {
-        .stfle  = {S390X_CAPBIT(S390X_MSA)
-                     | S390X_CAPBIT(S390X_STCKF)
-                     | S390X_CAPBIT(S390X_MSA5),
-                   S390X_CAPBIT(S390X_MSA3)
-                     | S390X_CAPBIT(S390X_MSA4),
-                   S390X_CAPBIT(S390X_VX),
-                   0ULL},
-        .kimd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512),
-                   S390X_CAPBIT(S390X_GHASH)},
-        .klmd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512),
-                   0ULL},
-        .km     = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256)
-                     | S390X_CAPBIT(S390X_XTS_AES_128)
-                     | S390X_CAPBIT(S390X_XTS_AES_256),
-                   0ULL},
-        .kmc    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmac   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmctr  = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmo    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmf    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .prno   = {S390X_CAPBIT(S390X_QUERY)
-                   | S390X_CAPBIT(S390X_SHA_512_DRNG),
-                   0ULL},
-        .kma    = {0ULL, 0ULL},
+        /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
+                       | S390X_CAPBIT(S390X_STCKF)
+                       | S390X_CAPBIT(S390X_MSA5),
+                       S390X_CAPBIT(S390X_MSA3)
+                       | S390X_CAPBIT(S390X_MSA4),
+                       S390X_CAPBIT(S390X_VX),
+                       0ULL},
+        /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512),
+                       S390X_CAPBIT(S390X_GHASH)},
+        /*.klmd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512),
+                       0ULL},
+        /*.km     = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256)
+                       | S390X_CAPBIT(S390X_XTS_AES_128)
+                       | S390X_CAPBIT(S390X_XTS_AES_256),
+                       0ULL},
+        /*.kmc    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmac   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmctr  = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmo    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmf    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.prno   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_512_DRNG),
+                       0ULL},
+        /*.kma    = */{0ULL, 0ULL},
     };
 
     /*-
@@ -436,78 +436,78 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * Implements MSA and MSA1-8.
      */
     static const struct OPENSSL_s390xcap_st z14 = {
-        .stfle  = {S390X_CAPBIT(S390X_MSA)
-                     | S390X_CAPBIT(S390X_STCKF)
-                     | S390X_CAPBIT(S390X_MSA5),
-                   S390X_CAPBIT(S390X_MSA3)
-                     | S390X_CAPBIT(S390X_MSA4),
-                   S390X_CAPBIT(S390X_VX)
-                     | S390X_CAPBIT(S390X_VXD)
-                     | S390X_CAPBIT(S390X_VXE)
-                     | S390X_CAPBIT(S390X_MSA8),
-                   0ULL},
-        .kimd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512)
-                     | S390X_CAPBIT(S390X_SHA3_224)
-                     | S390X_CAPBIT(S390X_SHA3_256)
-                     | S390X_CAPBIT(S390X_SHA3_384)
-                     | S390X_CAPBIT(S390X_SHA3_512)
-                     | S390X_CAPBIT(S390X_SHAKE_128)
-                     | S390X_CAPBIT(S390X_SHAKE_256),
-                   S390X_CAPBIT(S390X_GHASH)},
-        .klmd   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_SHA_1)
-                     | S390X_CAPBIT(S390X_SHA_256)
-                     | S390X_CAPBIT(S390X_SHA_512)
-                     | S390X_CAPBIT(S390X_SHA3_224)
-                     | S390X_CAPBIT(S390X_SHA3_256)
-                     | S390X_CAPBIT(S390X_SHA3_384)
-                     | S390X_CAPBIT(S390X_SHA3_512)
-                     | S390X_CAPBIT(S390X_SHAKE_128)
-                     | S390X_CAPBIT(S390X_SHAKE_256),
-                   0ULL},
-        .km     = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256)
-                     | S390X_CAPBIT(S390X_XTS_AES_128)
-                     | S390X_CAPBIT(S390X_XTS_AES_256),
-                   0ULL},
-        .kmc    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmac   = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmctr  = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmo    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .kmf    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
-        .prno   = {S390X_CAPBIT(S390X_QUERY)
-                   | S390X_CAPBIT(S390X_SHA_512_DRNG),
-                   S390X_CAPBIT(S390X_TRNG)},
-        .kma    = {S390X_CAPBIT(S390X_QUERY)
-                     | S390X_CAPBIT(S390X_AES_128)
-                     | S390X_CAPBIT(S390X_AES_192)
-                     | S390X_CAPBIT(S390X_AES_256),
-                   0ULL},
+        /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
+                       | S390X_CAPBIT(S390X_STCKF)
+                       | S390X_CAPBIT(S390X_MSA5),
+                       S390X_CAPBIT(S390X_MSA3)
+                       | S390X_CAPBIT(S390X_MSA4),
+                       S390X_CAPBIT(S390X_VX)
+                       | S390X_CAPBIT(S390X_VXD)
+                       | S390X_CAPBIT(S390X_VXE)
+                       | S390X_CAPBIT(S390X_MSA8),
+                       0ULL},
+        /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512)
+                       | S390X_CAPBIT(S390X_SHA3_224)
+                       | S390X_CAPBIT(S390X_SHA3_256)
+                       | S390X_CAPBIT(S390X_SHA3_384)
+                       | S390X_CAPBIT(S390X_SHA3_512)
+                       | S390X_CAPBIT(S390X_SHAKE_128)
+                       | S390X_CAPBIT(S390X_SHAKE_256),
+                       S390X_CAPBIT(S390X_GHASH)},
+        /*.klmd   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_1)
+                       | S390X_CAPBIT(S390X_SHA_256)
+                       | S390X_CAPBIT(S390X_SHA_512)
+                       | S390X_CAPBIT(S390X_SHA3_224)
+                       | S390X_CAPBIT(S390X_SHA3_256)
+                       | S390X_CAPBIT(S390X_SHA3_384)
+                       | S390X_CAPBIT(S390X_SHA3_512)
+                       | S390X_CAPBIT(S390X_SHAKE_128)
+                       | S390X_CAPBIT(S390X_SHAKE_256),
+                       0ULL},
+        /*.km     = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256)
+                       | S390X_CAPBIT(S390X_XTS_AES_128)
+                       | S390X_CAPBIT(S390X_XTS_AES_256),
+                       0ULL},
+        /*.kmc    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmac   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmctr  = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmo    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.kmf    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
+        /*.prno   = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_SHA_512_DRNG),
+                       S390X_CAPBIT(S390X_TRNG)},
+        /*.kma    = */{S390X_CAPBIT(S390X_QUERY)
+                       | S390X_CAPBIT(S390X_AES_128)
+                       | S390X_CAPBIT(S390X_AES_192)
+                       | S390X_CAPBIT(S390X_AES_256),
+                       0ULL},
     };
 
     char *tok_begin, *tok_end, *buff, tok[S390X_STFLE_MAX][LEN + 1];

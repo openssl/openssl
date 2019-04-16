@@ -2277,7 +2277,7 @@ int s_client_main(int argc, char **argv)
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             }
-            while (mbuf_len > 3 && mbuf[3] == '-');
+            while (mbuf_len > 3 && (!isdigit(mbuf[0]) || !isdigit(mbuf[1]) || !isdigit(mbuf[2]) || mbuf[3] != ' '));
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
@@ -3111,15 +3111,7 @@ int s_client_main(int argc, char **argv)
                                cbuf[0] == 'K' ? SSL_KEY_UPDATE_REQUESTED
                                               : SSL_KEY_UPDATE_NOT_REQUESTED);
                 cbuf_len = 0;
-            }
-#ifndef OPENSSL_NO_HEARTBEATS
-            else if ((!c_ign_eof) && (cbuf[0] == 'B' && cmdletters)) {
-                BIO_printf(bio_err, "HEARTBEATING\n");
-                SSL_heartbeat(con);
-                cbuf_len = 0;
-            }
-#endif
-            else {
+            } else {
                 cbuf_len = i;
                 cbuf_off = 0;
 #ifdef CHARSET_EBCDIC
@@ -3321,6 +3313,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #ifndef OPENSSL_NO_KTLS
     if (BIO_get_ktls_send(SSL_get_wbio(s)))
         BIO_printf(bio_err, "Using Kernel TLS for sending\n");
+    if (BIO_get_ktls_recv(SSL_get_rbio(s)))
+        BIO_printf(bio_err, "Using Kernel TLS for receiving\n");
 #endif
 
     if (OSSL_TRACE_ENABLED(TLS)) {

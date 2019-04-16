@@ -106,6 +106,7 @@ section containing configuration module specific information. E.g.:
 
  oid_section = new_oids
  engines = engine_section
+ providers = provider_section
 
  [new_oids]
 
@@ -114,6 +115,10 @@ section containing configuration module specific information. E.g.:
  [engine_section]
 
  ... engine stuff here ...
+
+ [provider_section]
+
+ ... provider stuff here ...
 
 The features of each configuration module are described below.
 
@@ -216,14 +221,86 @@ For example:
  # Supply all default algorithms
  default_algorithms = ALL
 
+=head2 Provider Configuration Module
+
+This provider configuration module has the name B<providers>. The
+value of this variable points to a section containing further provider
+configuration information.
+
+The section pointed to by B<providers> is a table of provider names
+(though see B<identity> below) and further sections containing
+configuration information specific to each provider module.
+
+Each provider specific section is used to load its module, perform
+activation and set parameters to pass to the provider on demand. The
+actual operation performed depends on the name of the name value pair.
+The currently supported commands are listed below.
+
+For example:
+
+ [provider_section]
+
+ # Configure provider named "foo"
+ foo = foo_section
+ # Configure provider named "bar"
+ bar = bar_section
+
+ [foo_section]
+ ... "foo" provider specific parameters ...
+
+ [bar_section]
+ ... "bar" provider specific parameters ...
+
+The command B<identity> is used to give the provider name. For example:
+
+ [provider_section]
+ # This would normally handle a provider named "foo"
+ foo = foo_section
+
+ [foo_section]
+ # Override default name and use "myfoo" instead.
+ identity = myfoo
+
+The parameter B<module> loads and adds a provider module from the
+given module path.  That path may be a simple file name, a relative
+path or an absolute path.
+
+The parameter B<activate> determines whether to activate the
+provider. The value has no importance, the presence of the parameter
+is enough for activation to take place.
+
+All parameters in the section as well as sub-sections are made
+available to the provider.
+
 =head2 EVP Configuration Module
 
-This modules has the name B<alg_section> which points to a section containing
+This module has the name B<alg_section> which points to a section containing
 algorithm commands.
 
-Currently the only algorithm command supported is B<fips_mode> whose
-value can only be the boolean string B<off>. If B<fips_mode> is set to B<on>,
-an error occurs as this library version is not FIPS capable.
+The supported algorithm commands are:
+
+=over 4
+
+=item B<default_properties>
+
+The value may be anything that is acceptable as a property query
+string for EVP_set_default_properties().
+
+=item B<fips_mode> (deprecated)
+
+The value is a boolean that can be B<yes> or B<no>.  If the value is
+B<yes>, this is exactly equivalent to:
+
+    default_properties = fips=yes
+
+If the value is B<no>, nothing happens.
+
+=back
+
+These two commands should not be used together, as there is no control
+over how they affect each other.
+The use of B<fips_mode> is strongly discouraged and is only present
+for backward compatibility with earlier OpenSSL FIPS modules.
 
 =head2 SSL Configuration Module
 
@@ -403,6 +480,11 @@ Ignored in set-user-ID and set-group-ID programs.
 =item B<OPENSSL_ENGINES>
 
 The path to the engines directory.
+Ignored in set-user-ID and set-group-ID programs.
+
+=item B<OPENSSL_MODULES>
+
+The path to the directory with OpenSSL modules, such as providers.
 Ignored in set-user-ID and set-group-ID programs.
 
 =back

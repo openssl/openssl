@@ -18,8 +18,8 @@
 # endif
 
 # include <windows.h>
-/* On Windows 7 or higher use BCrypt instead of the legacy CryptoAPI */
-# if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0601
+/* On Windows Vista or higher use BCrypt instead of the legacy CryptoAPI */
+# if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
 #  define USE_BCRYPTGENRANDOM
 # endif
 
@@ -125,7 +125,10 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
         DWORD pid;
         DWORD tid;
         FILETIME time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
@@ -144,7 +147,10 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     struct {
         DWORD tid;
         LARGE_INTEGER time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add some noise from the thread id and a high resolution timer.

@@ -21,10 +21,11 @@
 
 #    ifndef PEDANTIC
 #     warning "KTLS requires Kernel Headers >= 4.13.0"
-#     warning "Skipping Compilation of KTLS data path"
+#     warning "Skipping Compilation of KTLS"
 #    endif
 
 #    define TLS_TX                  1
+#    define TLS_RX                  2
 
 #    define TLS_CIPHER_AES_GCM_128                          51
 #    define TLS_CIPHER_AES_GCM_128_IV_SIZE                  8
@@ -67,11 +68,19 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     return -1;
 }
 
+static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+{
+    return -1;
+}
+
 #   else                        /* KERNEL_VERSION */
 
 #    include <netinet/tcp.h>
 #    include <linux/tls.h>
 #    include <linux/socket.h>
+#    include "openssl/ssl3.h"
+#    include "openssl/tls1.h"
+#    include "openssl/evp.h"
 
 #    ifndef SOL_TLS
 #     define SOL_TLS 282
@@ -96,16 +105,16 @@ static ossl_inline int ktls_enable(int fd)
  * The TLS_TX socket option changes the send/sendmsg handlers of the TCP socket.
  * If successful, then data sent using this socket will be encrypted and
  * encapsulated in TLS records using the crypto_info provided here.
+ * The TLS_RX socket option changes the recv/recvmsg handlers of the TCP socket.
+ * If successful, then data received using this socket will be decrypted,
+ * authenticated and decapsulated using the crypto_info provided here.
  */
 static ossl_inline int ktls_start(int fd,
                                   struct tls12_crypto_info_aes_gcm_128
                                   *crypto_info, size_t len, int is_tx)
 {
-    if (is_tx)
-        return setsockopt(fd, SOL_TLS, TLS_TX, crypto_info,
-                          sizeof(*crypto_info)) ? 0 : 1;
-    else
-        return 0;
+    return setsockopt(fd, SOL_TLS, is_tx ? TLS_TX : TLS_RX,
+                      crypto_info, sizeof(*crypto_info)) ? 0 : 1;
 }
 
 /*
@@ -118,14 +127,18 @@ static ossl_inline int ktls_start(int fd,
 static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
                                               const void *data, size_t length)
 {
-    struct msghdr msg = { 0 };
+    struct msghdr msg;
     int cmsg_len = sizeof(record_type);
     struct cmsghdr *cmsg;
-    char buf[CMSG_SPACE(cmsg_len)];
+    union {
+        struct cmsghdr hdr;
+        char buf[CMSG_SPACE(sizeof(unsigned char))];
+    } cmsgbuf;
     struct iovec msg_iov;       /* Vector of data to send/receive into */
 
-    msg.msg_control = buf;
-    msg.msg_controllen = sizeof(buf);
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_control = cmsgbuf.buf;
+    msg.msg_controllen = sizeof(cmsgbuf.buf);
     cmsg = CMSG_FIRSTHDR(&msg);
     cmsg->cmsg_level = SOL_TLS;
     cmsg->cmsg_type = TLS_SET_RECORD_TYPE;
@@ -141,7 +154,76 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     return sendmsg(fd, &msg, 0);
 }
 
-#   endif                       /* KERNEL_VERSION */
-#  endif                        /* OPENSSL_SYS_LINUX */
-# endif                         /* HEADER_INTERNAL_KTLS */
-#endif                          /* OPENSSL_NO_KTLS */
+#    define K_MIN1_RX  17
+#    if LINUX_VERSION_CODE < KERNEL_VERSION(K_MAJ, K_MIN1_RX, K_MIN2)
+
+#     ifndef PEDANTIC
+#      warning "KTLS requires Kernel Headers >= 4.17.0 for receiving"
+#      warning "Skipping Compilation of KTLS receive data path"
+#     endif
+
+static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+{
+    return -1;
+}
+
+#    else
+
+/*
+ * Receive a TLS record using the crypto_info provided in ktls_start.
+ * The kernel strips the TLS record header, IV and authentication tag,
+ * returning only the plaintext data or an error on failure.
+ * We add the TLS record header here to satisfy routines in rec_layer_s3.c
+ */
+static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+{
+    struct msghdr msg;
+    struct cmsghdr *cmsg;
+    union {
+        struct cmsghdr hdr;
+        char buf[CMSG_SPACE(sizeof(unsigned char))];
+    } cmsgbuf;
+    struct iovec msg_iov;
+    int ret;
+    unsigned char *p = data;
+    const size_t prepend_length = SSL3_RT_HEADER_LENGTH;
+
+    if (length < prepend_length + EVP_GCM_TLS_TAG_LEN) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_control = cmsgbuf.buf;
+    msg.msg_controllen = sizeof(cmsgbuf.buf);
+
+    msg_iov.iov_base = p + prepend_length;
+    msg_iov.iov_len = length - prepend_length - EVP_GCM_TLS_TAG_LEN;
+    msg.msg_iov = &msg_iov;
+    msg.msg_iovlen = 1;
+
+    ret = recvmsg(fd, &msg, 0);
+    if (ret < 0)
+        return ret;
+
+    if (msg.msg_controllen > 0) {
+        cmsg = CMSG_FIRSTHDR(&msg);
+        if (cmsg->cmsg_type == TLS_GET_RECORD_TYPE) {
+            p[0] = *((unsigned char *)CMSG_DATA(cmsg));
+            p[1] = TLS1_2_VERSION_MAJOR;
+            p[2] = TLS1_2_VERSION_MINOR;
+            /* returned length is limited to msg_iov.iov_len above */
+            p[3] = (ret >> 8) & 0xff;
+            p[4] = ret & 0xff;
+            ret += prepend_length;
+        }
+    }
+
+    return ret;
+}
+
+#    endif
+#   endif
+#  endif
+# endif
+#endif

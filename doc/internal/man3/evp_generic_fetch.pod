@@ -14,7 +14,8 @@ evp_generic_fetch - generic algorithm fetcher and method creator for EVP
                          void *(*new_method)(int nid, const OSSL_DISPATCH *fns,
                                              OSSL_PROVIDER *prov),
                          int (*upref_method)(void *),
-                         void (*free_method)(void *));
+                         void (*free_method)(void *),
+                         int (*nid_method)(void *));
 
 =head1 DESCRIPTION
 
@@ -40,6 +41,10 @@ one.
 =item free_method()
 
 frees the given method.
+
+=item nid_method()
+
+returns the nid associated with the given method.
 
 =back
 

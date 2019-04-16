@@ -84,20 +84,22 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
 # define OSSL_FUNC_DIGEST_FREECTX           6
 # define OSSL_FUNC_DIGEST_DUPCTX            7
 # define OSSL_FUNC_DIGEST_SIZE              8
+# define OSSL_FUNC_DIGEST_BLOCK_SIZE        9
 
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *vctx))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_update,
                     (void *, const unsigned char *in, size_t inl))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_final,
-                    (void *, unsigned char *out, size_t *outl))
+                    (void *, unsigned char *out, size_t *outl, size_t outsz))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
                     (const unsigned char *in, size_t inl, unsigned char *out,
-                     size_t *out_l))
+                     size_t *out_l, size_t outsz))
 OSSL_CORE_MAKE_FUNC(void, OP_digest_cleanctx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(void, OP_digest_freectx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
+OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
 
 # ifdef __cplusplus
 }

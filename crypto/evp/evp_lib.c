@@ -298,6 +298,14 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 
 int EVP_MD_block_size(const EVP_MD *md)
 {
+    if (md == NULL) {
+        EVPerr(EVP_F_EVP_MD_BLOCK_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return -1;
+    }
+
+    if (md->prov != NULL && md->dblock_size != NULL)
+        return (int)md->dblock_size();
+
     return md->block_size;
 }
 
@@ -479,9 +487,9 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 {
-    if (!ctx)
+    if (ctx == NULL)
         return NULL;
-    return ctx->digest;
+    return ctx->reqdigest;
 }
 
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)

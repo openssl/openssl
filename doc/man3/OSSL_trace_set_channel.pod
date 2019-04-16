@@ -176,10 +176,20 @@ point during evaluation.
 
 Traces BIGNUM context operations.
 
+=item C<OSSL_TRACE_CATEGORY_PROVIDER_CONF>
+
+Traces the OSSL_PROVIDER configuration.
+
 =back
 
-There is also C<OSSL_TRACE_CATEGORY_ANY>, which works as a fallback
+There is also C<OSSL_TRACE_CATEGORY_ALL>, which works as a fallback
 and can be used to get I<all> trace output.
+
+Note, however, that in this case all trace output will effectively be
+associated with the 'ALL' category, which is undesirable if the
+application intends to include the category name in the trace output.
+In this case it is better to register separate channels for each
+trace category instead.
 
 =head1 RETURN VALUES
 
