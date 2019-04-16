@@ -78,7 +78,8 @@ int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
 /* Pad the final block for encryption */
 void padblock(unsigned char *buf, size_t *buflen, size_t blocksize)
 {
-    size_t i, pad = blocksize - *buflen;
+    size_t i;
+    unsigned char pad = (unsigned char)(blocksize - *buflen);
 
     for (i = *buflen; i < blocksize; i++)
         buf[i] = pad;
