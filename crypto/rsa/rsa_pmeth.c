@@ -89,6 +89,7 @@ static int pkey_rsa_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     dctx->pad_mode = sctx->pad_mode;
     dctx->md = sctx->md;
     dctx->mgf1md = sctx->mgf1md;
+    dctx->saltlen = sctx->saltlen;
     if (sctx->oaep_label) {
         OPENSSL_free(dctx->oaep_label);
         dctx->oaep_label = OPENSSL_memdup(sctx->oaep_label, sctx->oaep_labellen);

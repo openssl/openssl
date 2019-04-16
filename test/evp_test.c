@@ -1378,6 +1378,7 @@ static int pkey_test_run(EVP_TEST *t)
     PKEY_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len;
+    EVP_PKEY_CTX *copy = NULL;
 
     if (expected->keyop(expected->ctx, NULL, &got_len,
                         expected->input, expected->input_len) <= 0
@@ -1396,8 +1397,33 @@ static int pkey_test_run(EVP_TEST *t)
         goto err;
 
     t->err = NULL;
+    OPENSSL_free(got);
+    got = NULL;
+
+    /* Repeat the test on a copy. */
+    if (!TEST_ptr(copy = EVP_PKEY_CTX_dup(expected->ctx))) {
+        t->err = "INTERNAL_ERROR";
+        goto err;
+    }
+    if (expected->keyop(copy, NULL, &got_len, expected->input,
+                        expected->input_len) <= 0
+            || !TEST_ptr(got = OPENSSL_malloc(got_len))) {
+        t->err = "KEYOP_LENGTH_ERROR";
+        goto err;
+    }
+    if (expected->keyop(copy, got, &got_len, expected->input,
+                        expected->input_len) <= 0) {
+        t->err = "KEYOP_ERROR";
+        goto err;
+    }
+    if (!memory_err_compare(t, "KEYOP_MISMATCH",
+                            expected->output, expected->output_len,
+                            got, got_len))
+        goto err;
+
  err:
     OPENSSL_free(got);
+    EVP_PKEY_CTX_free(copy);
     return 1;
 }
 
