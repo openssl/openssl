@@ -188,7 +188,7 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     ERR_load_PKCS11_strings();
     ERR_unload_PKCS11_strings();
 
-    return 1;
+    return num;
 
  err:
     return 0;
@@ -270,7 +270,7 @@ int pkcs11_rsa_priv_dec(int flen, const unsigned char *from,
 
     CRYPTO_THREAD_unlock(ctx->lock);
 
-    return 1;
+    return num;
 
  err:
     return 0;
