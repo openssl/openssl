@@ -9,13 +9,11 @@ kdf - perform Key Derivation Function operations
 
 B<openssl kdf>
 [B<-help>]
-[B<-kdfopt>]
-[B<-keylen num>]
-[B<-out filename>]
+[B<-kdfopt> I<nm:v>]
+[B<-keylen I<num>>]
+[B<-out I<filename>>]
 [B<-binary>]
-B<kdf_name>
-
-B<openssl> I<kdf> [B<...>] B<kdf_name>
+I<kdf_name>
 
 =head1 DESCRIPTION
 
@@ -64,22 +62,20 @@ Specifies the secret key in hexadecimal form (two hex digits per byte).
 The key length must conform to any restrictions of the KDF algorithm.
 A key must be specified for most KDF algorithms.
 
-=item B<password:string>
+=item B<pass:string>
 
 Specifies the password as an alphanumeric string (use if the password contains
 printable characters only).
-The password must be specified for most KDF algorithms.
+The password must be specified for PBKDF2 and scrypt.
 
-=item B<password:string>
+=item B<hexpass:string>
 
-Specifies the secret key in hexadecimal form (two hex digits per byte).
-The key length must conform to any restrictions of the KDF algorithm.
-A key must be specified for most KDF algorithms.
+Specifies the password in hexadecimal form (two hex digits per byte).
+The password must be specified for PBKDF2 and scrypt.
 
 =item B<digest:string>
 
-Used by TLS1-PRF, HKDF, SSKDF HMAC, SSKDF Hash, and PBKDF2, as an alphanumeric
-string.
+Specifies the name of a digest as an alphanumeric string.
 To see the list of supported digests, use the command I<list -digest-commands>.
 
 =back
@@ -87,45 +83,43 @@ To see the list of supported digests, use the command I<list -digest-commands>.
 =item B<kdf_name>
 
 Specifies the name of a supported KDF algorithm which will be used.
-The supported algorithms are TLS1-PRF, HKDF, SSKDF, PBKDF2 and id-scrypt.
+The supported algorithms are TLS1-PRF, HKDF, SSKDF, PBKDF2, SSHKDF and id-scrypt.
 
 =back
 
 =head1 EXAMPLES
 
-Use TLS1-PRF to create a hex-encoded derived key from a secret key and seed: \
-openssl kdf -keylen 16 -kdfopt digest:SHA256 -kdfopt key:secret \
-        -kdfopt seed:seed TLS1-PRF
+=head2 Use TLS1-PRF to create a hex-encoded derived key from a secret key and seed:
 
-Use HKDF to create a hex-encoded derived key from a secret key, salt and info: \
-openssl kdf -keylen 10 -kdfopt digest:SHA256 -kdfopt key:secret \
-        -kdfopt salt:salt -kdfopt info:label HKDF
+C<openssl kdf -keylen 16 -kdfopt digest:SHA256 -kdfopt key:secret -kdfopt seed:seed TLS1-PRF>
 
-Use SSKDF with KMAC to create a hex-encoded derived key from a secret key, salt
-and info: \
-openssl kdf -keylen 64 -kdfopt mac:KMAC128 -kdfopt maclen:20 \
-        -kdfopt hexkey:b74a149a161545 -kdfopt hexinfo:348a37a2 \
-        -kdfopt hexsalt:3638271ccd68a2 SSKDF
+=head2 Use HKDF to create a hex-encoded derived key from a secret key, salt and info:
 
-Use SSKDF with HMAC to create a hex-encoded derived key from a secret key, salt
-and info: \
-openssl kdf -keylen 16 -kdfopt mac:HMAC -kdfopt digest:SHA256 \
-        -kdfopt hexkey:b74a149a -kdfopt hexinfo:348a37a2 \
-        -kdfopt hexsalt:3638271c SSKDF
+C<openssl kdf -keylen 10 -kdfopt digest:SHA256 -kdfopt key:secret -kdfopt salt:salt -kdfopt info:label HKDF>
 
-Use SSKDF with Hash to create a hex-encoded derived key from a secret key, salt
-and info: \
-openssl kdf -keylen 14 -kdfopt digest:SHA256 -kdfopt hexkey:6dbdc23f045488 \
-        -kdfopt hexinfo:a1b2c3d4 SSKDF
+=head2 Use SSKDF with KMAC to create a hex-encoded derived key from a secret key, salt and info:
 
-Use PBKDF2 to create a hex-encoded derived key from a password and salt: \
-openssl kdf -keylen 32 -kdfopt digest:SHA256 -kdfopt pass:password \
-        -kdfopt salt:salt -kdfopt iter:2 PBKDF2
+C<openssl kdf -keylen 64 -kdfopt mac:KMAC128 -kdfopt maclen:20 -kdfopt hexkey:b74a149a161545 -kdfopt hexinfo:348a37a2 -kdfopt hexsalt:3638271ccd68a2 SSKDF>
 
-Use scrypt to create a hex-encoded derived key from a password and salt: \
-openssl kdf -keylen 64 -kdfopt pass:password -kdfopt salt:NaCl \
-        -kdfopt N:1024 -kdfopt r:8 -kdfopt p:16 -kdfopt maxmem_bytes:10485760 \
-        id-scrypt
+=head2 Use SSKDF with HMAC to create a hex-encoded derived key from a secret key, salt and info:
+
+C<openssl kdf -keylen 16 -kdfopt mac:HMAC -kdfopt digest:SHA256 -kdfopt hexkey:b74a149a -kdfopt hexinfo:348a37a2 -kdfopt hexsalt:3638271c SSKDF>
+
+=head2 Use SSKDF with Hash to create a hex-encoded derived key from a secret key, salt and info:
+
+C<openssl kdf -keylen 14 -kdfopt digest:SHA256 -kdfopt hexkey:6dbdc23f045488 -kdfopt hexinfo:a1b2c3d4 SSKDF>
+
+=head2 Use SSHKDF to create a hex-encoded derived key from a secret key, hash and session_id:
+
+C<openssl kdf -keylen 16 -kdfopt md:SHA256 -kdfopt hexkey:0102030405 -kdfopt hexxcghash:06090A -kdfopt hexsession_id:01020304 -kdfopt type:A SSHKDF>
+
+=head2 Use PBKDF2 to create a hex-encoded derived key from a password and salt:
+
+C<openssl kdf -keylen 32 -kdfopt digest:SHA256 -kdfopt pass:password -kdfopt salt:salt -kdfopt iter:2 PBKDF2>
+
+=head2 Use scrypt to create a hex-encoded derived key from a password and salt:
+
+C<openssl kdf -keylen 64 -kdfopt pass:password -kdfopt salt:NaCl -kdfopt N:1024 -kdfopt r:8 -kdfopt p:16 -kdfopt maxmem_bytes:10485760 id-scrypt>
 
 =head1 NOTES
 
@@ -140,6 +134,7 @@ L<EVP_KDF_TLS1_PRF(7)>
 L<EVP_KDF_PBKDF2(7)>
 L<EVP_KDF_HKDF(7)>
 L<EVP_KDF_SS(7)>
+L<EVP_KDF_SSHKDF(7)>
 
 =head1 HISTORY
 
