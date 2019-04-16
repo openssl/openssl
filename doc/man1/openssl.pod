@@ -171,6 +171,10 @@ Generation of RSA Private Key. Superseded by L<genpkey(1)>.
 
 Display diverse information built into the OpenSSL libraries.
 
+=item B<kdf>
+
+Key Derivation Functions.
+
 =item B<mac>
 
 Message Authentication Code Calculation.
@@ -616,7 +620,7 @@ L<crl(1)>, L<crl2pkcs7(1)>, L<dgst(1)>,
 L<dhparam(1)>, L<dsa(1)>, L<dsaparam(1)>,
 L<ec(1)>, L<ecparam(1)>,
 L<enc(1)>, L<engine(1)>, L<errstr(1)>, L<gendsa(1)>, L<genpkey(1)>,
-L<genrsa(1)>, L<mac(1)>, L<nseq(1)>, L<ocsp(1)>,
+L<genrsa(1)>, L<kdf(1)>, L<mac(1)>, L<nseq(1)>, L<ocsp(1)>,
 L<passwd(1)>,
 L<pkcs12(1)>, L<pkcs7(1)>, L<pkcs8(1)>,
 L<pkey(1)>, L<pkeyparam(1)>, L<pkeyutl(1)>, L<prime(1)>,
@@ -636,7 +640,7 @@ manual pages.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
