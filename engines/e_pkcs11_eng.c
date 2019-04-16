@@ -24,6 +24,9 @@ static int pkcs11_finish(ENGINE *e);
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data);
+static EVP_PKEY *pkcs11_engine_load_public_key(ENGINE * e, const char *path,
+                                               UI_METHOD * ui_method,
+                                               void *callback_data);
 static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
                                    void *p, void (*f)(void));
 void engine_load_pkcs11_int(void);
@@ -407,6 +410,42 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     return 0;
 }
 
+static EVP_PKEY *pkcs11_engine_load_public_key(ENGINE * e, const char *path,
+                                               UI_METHOD * ui_method,
+                                               void *callback_data)
+{
+    CK_RV rv;
+    PKCS11_CTX *ctx;
+    CK_SESSION_HANDLE session = 0;
+    CK_OBJECT_HANDLE key = 0;
+
+    ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+
+    if (ctx == NULL)
+        goto err;
+
+    if (!pkcs11_parse(ctx, path, 0))
+        goto err;
+
+    rv = pkcs11_initialize(ctx->module_path);
+    if (rv != CKR_OK)
+        goto err;
+    if (!pkcs11_get_slot(ctx))
+        goto err;
+    if (!pkcs11_start_session(ctx, &session))
+        goto err;
+    if (!pkcs11_login(session, ctx, CKU_USER))
+        goto err;
+    key = pkcs11_find_public_key(session, ctx);
+    if (!key)
+        goto err;
+    return pkcs11_load_pkey(session, ctx, key);
+
+ err:
+    PKCS11_trace("pkcs11_engine_load_public_key failed\n");
+    return 0;
+}
+
 static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     const OSSL_STORE_LOADER *loader, const char *uri,
     const UI_METHOD *ui_method, void *ui_data)
@@ -579,6 +618,7 @@ static int bind_pkcs11(ENGINE *e)
         || !ENGINE_set_name(e, engine_name)
         || !ENGINE_set_RSA(e, pkcs11_rsa)
         || !ENGINE_set_load_privkey_function(e, pkcs11_engine_load_private_key)
+        || !ENGINE_set_load_pubkey_function(e, pkcs11_engine_load_public_key)
         || !ENGINE_set_destroy_function(e, pkcs11_destroy)
         || !ENGINE_set_init_function(e, pkcs11_init)
         || !ENGINE_set_finish_function(e, pkcs11_finish)

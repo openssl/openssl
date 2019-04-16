@@ -22,6 +22,8 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
      "pkcs11_engine_load_private_key"},
     {ERR_PACK(0, PKCS11_F_PKCS11_FIND_PRIVATE_KEY, 0),
      "pkcs11_find_private_key"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_FIND_PUBLIC_KEY, 0),
+     "pkcs11_find_public_key"},
     {ERR_PACK(0, PKCS11_F_PKCS11_GET_CONSOLE_PIN, 0), "pkcs11_get_console_pin"},
     {ERR_PACK(0, PKCS11_F_PKCS11_GET_SLOT, 0), "pkcs11_get_slot"},
     {ERR_PACK(0, PKCS11_F_PKCS11_INIT, 0), "pkcs11_init"},

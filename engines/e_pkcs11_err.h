@@ -23,6 +23,7 @@
 # define PKCS11_F_PKCS11_PARSE_ITEMS                      119
 # define PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY          100
 # define PKCS11_F_PKCS11_FIND_PRIVATE_KEY                 120
+# define PKCS11_F_PKCS11_FIND_PUBLIC_KEY                  127
 # define PKCS11_F_PKCS11_GET_CONSOLE_PIN                  113
 # define PKCS11_F_PKCS11_GET_SLOT                         102
 # define PKCS11_F_PKCS11_INIT                             112

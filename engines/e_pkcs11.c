@@ -443,6 +443,74 @@ CK_OBJECT_HANDLE pkcs11_find_private_key(CK_SESSION_HANDLE session,
     return 0;
 }
 
+CK_OBJECT_HANDLE pkcs11_find_public_key(CK_SESSION_HANDLE session,
+                                        PKCS11_CTX *ctx)
+{
+    CK_RV rv;
+    CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
+    CK_KEY_TYPE key_type = CKK_RSA;
+    unsigned long count;
+    CK_ATTRIBUTE tmpl[3];
+    CK_OBJECT_HANDLE key = 0;
+
+    tmpl[0].type = CKA_CLASS;
+    tmpl[0].pValue = &key_class;
+    tmpl[0].ulValueLen = sizeof(key_class);
+    tmpl[1].type = CKA_KEY_TYPE;
+    tmpl[1].pValue = &key_type;
+    tmpl[1].ulValueLen = sizeof(key_type);
+
+    if (ctx->id != NULL) {
+        tmpl[2].type = CKA_ID;
+        tmpl[2].pValue = ctx->id;
+        tmpl[2].ulValueLen = (CK_ULONG)strlen((char *)ctx->id);
+    } else {
+        tmpl[2].type = CKA_LABEL;
+        tmpl[2].pValue = ctx->label;
+        tmpl[2].ulValueLen = (CK_ULONG)strlen((char *)ctx->label);
+    }
+
+    rv = pkcs11_funcs->C_FindObjectsInit(session, tmpl, OSSL_NELEM(tmpl));
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjectsInit failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_FIND_PUBLIC_KEY,
+                  PKCS11_R_FIND_OBJECT_INIT_FAILED);
+        goto err;
+    }
+
+    rv = pkcs11_funcs->C_FindObjects(session, &key, 1, &count);
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjects failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_FIND_PUBLIC_KEY,
+                  PKCS11_R_FIND_OBJECT_FAILED);
+        goto err;
+    }
+
+    rv = pkcs11_funcs->C_FindObjectsFinal(session);
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjectsFinal failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_FIND_PUBLIC_KEY,
+                  PKCS11_R_FIND_OBJECT_FINAL_FAILED);
+        goto err;
+    }
+
+    rv = pkcs11_funcs->C_GetAttributeValue(session, key,
+                                           tmpl, OSSL_NELEM(tmpl));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_FIND_PUBLIC_KEY,
+                  PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+        goto err;
+    }
+    return key;
+
+ err:
+    return 0;
+}
+
 EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx,
                            CK_OBJECT_HANDLE key)
 {
