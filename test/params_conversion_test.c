@@ -305,7 +305,6 @@ static int run_param_file_tests(int i)
     }
 
     while (!BIO_eof(s->fp)) {
-        test_clearstanza(s);
         if (!test_readstanza(s)) {
             res = 0;
             goto end;
@@ -314,6 +313,7 @@ static int run_param_file_tests(int i)
             if (!param_conversion_load_stanza(&pc, s)
                 || !param_conversion_test(&pc, s->curr))
                 res = 0;
+        test_clearstanza(s);
     }
 end:
     test_end_file(s);
