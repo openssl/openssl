@@ -4290,6 +4290,11 @@ static int test_key_update(void)
                 || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)),
                                          strlen(mess)))
             goto end;
+
+        if (!TEST_int_eq(SSL_write(serverssl, mess, strlen(mess)), strlen(mess))
+                || !TEST_int_eq(SSL_read(clientssl, buf, sizeof(buf)),
+                                         strlen(mess)))
+            goto end;
     }
 
     testresult = 1;
@@ -4299,6 +4304,91 @@ static int test_key_update(void)
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test we can handle a KeyUpdate (update requested) message while write data
+ * is pending.
+ * Test 0: Client sends KeyUpdate while Server is writing
+ * Test 1: Server sends KeyUpdate while Client is writing
+ */
+static int test_key_update_in_write(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[20];
+    static char *mess = "A test message";
+    BIO *bretry = BIO_new(bio_s_always_retry());
+    BIO *tmp = NULL;
+    SSL *peerupdate = NULL, *peerwrite = NULL;
+
+    if (!TEST_ptr(bretry)
+            || !TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_3_VERSION,
+                                              0,
+                                              &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    peerupdate = tst == 0 ? clientssl : serverssl;
+    peerwrite = tst == 0 ? serverssl : clientssl;
+
+    if (!TEST_true(SSL_key_update(peerupdate, SSL_KEY_UPDATE_REQUESTED))
+            || !TEST_true(SSL_do_handshake(peerupdate)))
+        goto end;
+
+    /* Swap the writing endpoint's write BIO to force a retry */
+    tmp = SSL_get_wbio(peerwrite);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(peerwrite, bretry);
+    bretry = NULL;
+
+    /* Write data that we know will fail with SSL_ERROR_WANT_WRITE */
+    if (!TEST_int_eq(SSL_write(peerwrite, mess, strlen(mess)), -1)
+            || !TEST_int_eq(SSL_get_error(peerwrite, 0), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Reinstate the original writing endpoint's write BIO */
+    SSL_set0_wbio(peerwrite, tmp);
+    tmp = NULL;
+
+    /* Now read some data - we will read the key update */
+    if (!TEST_int_eq(SSL_read(peerwrite, buf, sizeof(buf)), -1)
+            || !TEST_int_eq(SSL_get_error(peerwrite, 0), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Complete the write we started previously and read it from the other
+     * endpoint
+     */
+    if (!TEST_int_eq(SSL_write(peerwrite, mess, strlen(mess)), strlen(mess))
+            || !TEST_int_eq(SSL_read(peerupdate, buf, sizeof(buf)), strlen(mess)))
+        goto end;
+
+    /* Write more data to ensure we send the KeyUpdate message back */
+    if (!TEST_int_eq(SSL_write(peerwrite, mess, strlen(mess)), strlen(mess))
+            || !TEST_int_eq(SSL_read(peerupdate, buf, sizeof(buf)), strlen(mess)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
 
     return testresult;
 }
@@ -5982,6 +6072,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_export_key_mat_early, 3);
     ADD_TEST(test_key_update);
+    ADD_ALL_TESTS(test_key_update_in_write, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
@@ -6002,4 +6093,5 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
     bio_s_mempacket_test_free();
+    bio_s_always_retry_free();
 }
