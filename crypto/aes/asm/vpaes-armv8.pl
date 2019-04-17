@@ -30,6 +30,7 @@
 # Denver(***)       16.6(**)    15.1/17.8(**)    [8.80/9.93         ]
 # Apple A7(***)     22.7(**)    10.9/14.3        [8.45/10.0         ]
 # Mongoose(***)     26.3(**)    21.0/25.0(**)    [13.3/16.8         ]
+# ThunderX2(***)    39.4(**)    33.8/48.6(**)
 #
 # (*)	ECB denotes approximate result for parallelizable modes
 #	such as CBC decrypt, CTR, etc.;

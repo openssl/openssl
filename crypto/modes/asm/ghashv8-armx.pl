@@ -42,6 +42,7 @@
 # Denver	0.51		0.65		6.02
 # Mongoose	0.65		1.10		8.06
 # Kryo		0.76		1.16		8.00
+# ThunderX2	1.05
 #
 # (*)	presented for reference/comparison purposes;
 
