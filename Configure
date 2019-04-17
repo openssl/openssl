@@ -1340,6 +1340,27 @@ unless ($disabled{threads}) {
     }
 }
 
+# Find out if clang's sanitizers have been enabled with -fsanitize
+# flags and ensure that the corresponding %disabled elements area
+# removed to reflect that the sanitizers are indeed enabled.
+my %detected_sanitizers = ();
+foreach (grep /^-fsanitize=/, @{$config{CFLAGS} || []}) {
+    (my $checks = $_) =~ s/^-fsanitize=//;
+    foreach (split /,/, $checks) {
+        my $d = { address       => 'asan',
+                  undefined     => 'ubsan',
+                  memory        => 'msan' } -> {$_};
+        next unless defined $d;
+
+        $detected_sanitizers{$d} = 1;
+        if (defined $disabled{$d}) {
+            die "***** Conflict between disabling $d and enabling $_ sanitizer"
+                if $disabled{$d} ne "default";
+            delete $disabled{$d};
+        }
+    }
+}
+
 # If threads still aren't disabled, add a C macro to ensure the source
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
@@ -1367,12 +1388,12 @@ if ($disabled{"dynamic-engine"}) {
         $config{dynamic_engines} = 1;
 }
 
-unless ($disabled{asan}) {
+unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
     push @{$config{cflags}}, "-fsanitize=address";
     push @{$config{cxxflags}}, "-fsanitize=address" if $config{CXX};
 }
 
-unless ($disabled{ubsan}) {
+unless ($disabled{ubsan} || defined $detected_sanitizers{ubsan}) {
     # -DPEDANTIC or -fnosanitize=alignment may also be required on some
     # platforms.
     push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all";
@@ -1380,7 +1401,7 @@ unless ($disabled{ubsan}) {
         if $config{CXX};
 }
 
-unless ($disabled{msan}) {
+unless ($disabled{msan} || defined $detected_sanitizers{msan}) {
   push @{$config{cflags}}, "-fsanitize=memory";
   push @{$config{cxxflags}}, "-fsanitize=memory" if $config{CXX};
 }
