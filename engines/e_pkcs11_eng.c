@@ -303,8 +303,19 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
     }
 
     if (ctx->module_path == NULL) {
+        if ((ctx->module_path =
+#if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+# if __GLIBC_PREREQ(2, 17)
+            secure_getenv("PKCS11_MODULE_PATH")) == NULL) {
+# else 
+            getenv("PKCS11_MODULE_PATH")) == NULL) {
+# endif
+#else
+            getenv("PKCS11_MODULE_PATH")) == NULL) {
+#endif
             PKCS11_trace("Module path is null\n");
             goto err;
+        }
     }
 
     if (ctx->pin == NULL && (!store || (store
