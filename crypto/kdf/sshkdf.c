@@ -125,6 +125,9 @@ static int kdf_sshkdf_ctrl_str(EVP_KDF_IMPL *impl, const char *type,
         return 0;
     }
 
+    if (strcmp(type, "digest") == 0)
+        return kdf_md2ctrl(impl, kdf_sshkdf_ctrl, EVP_KDF_CTRL_SET_MD, value);
+    /* alias, for historical reasons */
     if (strcmp(type, "md") == 0)
         return kdf_md2ctrl(impl, kdf_sshkdf_ctrl, EVP_KDF_CTRL_SET_MD, value);
 
