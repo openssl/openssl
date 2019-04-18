@@ -16,6 +16,7 @@
 #include "internal/cryptlib.h"
 #include "internal/provider_algs.h"
 #include "ciphers_locl.h"
+#include "internal/providercommonerr.h"
 
 static OSSL_OP_cipher_encrypt_init_fn aes_einit;
 static OSSL_OP_cipher_decrypt_init_fn aes_dinit;
@@ -42,8 +43,10 @@ static int PROV_AES_KEY_generic_init(PROV_AES_KEY *ctx,
                                       int enc)
 {
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
-        if (ivlen != AES_BLOCK_SIZE)
+        if (ivlen != AES_BLOCK_SIZE) {
+            PROVerr(PROV_F_PROV_AES_KEY_GENERIC_INIT, ERR_R_INTERNAL_ERROR);
             return 0;
+        }
         memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
     }
     ctx->enc = enc;
@@ -56,11 +59,15 @@ static int aes_einit(void *vctx, const unsigned char *key, size_t keylen,
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
-    if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 1))
+    if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 1)) {
+        /* PROVerr already called */
         return 0;
+    }
     if (key != NULL) {
-        if (keylen != ctx->keylen)
+        if (keylen != ctx->keylen) {
+            PROVerr(PROV_F_AES_EINIT, PROV_R_INVALID_KEYLEN);
             return 0;
+        }
         return ctx->ciph->init(ctx, key, ctx->keylen);
     }
 
@@ -72,11 +79,15 @@ static int aes_dinit(void *vctx, const unsigned char *key, size_t keylen,
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
-    if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 0))
+    if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 0)) {
+        /* PROVerr already called */
         return 0;
+    }
     if (key != NULL) {
-        if (keylen != ctx->keylen)
+        if (keylen != ctx->keylen) {
+            PROVerr(PROV_F_AES_DINIT, PROV_R_INVALID_KEYLEN);
             return 0;
+        }
         return ctx->ciph->init(ctx, key, ctx->keylen);
     }
 
@@ -98,30 +109,42 @@ static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
      */
     if (ctx->bufsz == AES_BLOCK_SIZE
             && (ctx->enc || inl > 0 || !ctx->pad)) {
-        if (outsize < AES_BLOCK_SIZE)
+        if (outsize < AES_BLOCK_SIZE) {
+            PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
-        if (!ctx->ciph->cipher(ctx, out, ctx->buf, AES_BLOCK_SIZE))
+        }
+        if (!ctx->ciph->cipher(ctx, out, ctx->buf, AES_BLOCK_SIZE)) {
+            PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
+        }
         ctx->bufsz = 0;
         outlint = AES_BLOCK_SIZE;
         out += AES_BLOCK_SIZE;
     }
     if (nextblocks > 0) {
         if (!ctx->enc && ctx->pad && nextblocks == inl) {
-            if (!ossl_assert(inl >= AES_BLOCK_SIZE))
+            if (!ossl_assert(inl >= AES_BLOCK_SIZE)) {
+                PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
                 return 0;
+            }
             nextblocks -= AES_BLOCK_SIZE;
         }
         outlint += nextblocks;
-        if (outsize < outlint)
+        if (outsize < outlint) {
+            PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
-        if (!ctx->ciph->cipher(ctx, out, in, nextblocks))
+        }
+        if (!ctx->ciph->cipher(ctx, out, in, nextblocks)) {
+            PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
+        }
         in += nextblocks;
         inl -= nextblocks;
     }
-    if (!trailingdata(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE, &in, &inl))
+    if (!trailingdata(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE, &in, &inl)) {
+        /* PROVerr already called */
         return 0;
+    }
 
     *outl = outlint;
     return inl == 0;
@@ -139,38 +162,47 @@ static int aes_block_final(void *vctx, unsigned char *out, size_t *outl,
             *outl = 0;
             return 1;
         } else if (ctx->bufsz != AES_BLOCK_SIZE) {
-            /* TODO(3.0): What is the correct error code here? */
+            PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_WRONG_FINAL_BLOCK_LENGTH);
             return 0;
         }
 
-        if (outsize < AES_BLOCK_SIZE)
+        if (outsize < AES_BLOCK_SIZE) {
+            PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
-        if (!ctx->ciph->cipher(ctx, out, ctx->buf, AES_BLOCK_SIZE))
+        }
+        if (!ctx->ciph->cipher(ctx, out, ctx->buf, AES_BLOCK_SIZE)) {
+            PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
+        }
         ctx->bufsz = 0;
         *outl = AES_BLOCK_SIZE;
         return 1;
     }
 
     /* Decrypting */
-    /* TODO(3.0): What's the correct error here */
     if (ctx->bufsz != AES_BLOCK_SIZE) {
         if (ctx->bufsz == 0 && !ctx->pad) {
             *outl = 0;
             return 1;
         }
+        PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_WRONG_FINAL_BLOCK_LENGTH);
         return 0;
     }
 
-    if (!ctx->ciph->cipher(ctx, ctx->buf, ctx->buf, AES_BLOCK_SIZE))
+    if (!ctx->ciph->cipher(ctx, ctx->buf, ctx->buf, AES_BLOCK_SIZE)) {
+        PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
+    }
 
-    /* TODO(3.0): What is the correct error here */
-    if (ctx->pad && !unpadblock(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE))
+    if (ctx->pad && !unpadblock(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE)) {
+        /* PROVerr already called */
         return 0;
+    }
 
-    if (outsize < ctx->bufsz)
+    if (outsize < ctx->bufsz) {
+        PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
+    }
     memcpy(out, ctx->buf, ctx->bufsz);
     *outl = ctx->bufsz;
     ctx->bufsz = 0;
@@ -183,11 +215,15 @@ static int aes_stream_update(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
-    if (outsize < inl)
+    if (outsize < inl) {
+        PROVerr(PROV_F_AES_STREAM_UPDATE, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
+    }
 
-    if (!ctx->ciph->cipher(ctx, out, in, inl))
+    if (!ctx->ciph->cipher(ctx, out, in, inl)) {
+        PROVerr(PROV_F_AES_STREAM_UPDATE, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
+    }
 
     *outl = inl;
     return 1;
@@ -204,8 +240,10 @@ static int aes_cipher(void *vctx, unsigned char *out, const unsigned char *in,
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
-    if (!ctx->ciph->cipher(ctx, out, in, inl))
+    if (!ctx->ciph->cipher(ctx, out, in, inl)) {
+        PROVerr(PROV_F_AES_CIPHER, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
+    }
 
     return 1;
 }
@@ -286,6 +324,10 @@ static void *aes_dupctx(void *ctx)
     PROV_AES_KEY *in = (PROV_AES_KEY *)ctx;
     PROV_AES_KEY *ret = OPENSSL_malloc(sizeof(*ret));
 
+    if (ret == NULL) {
+        PROVerr(PROV_F_AES_DUPCTX, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
     *ret = *in;
 
     return ret;
@@ -332,8 +374,10 @@ static int aes_ctx_get_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
-    if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->pad))
+    if (p != NULL && !OSSL_PARAM_set_int(p, ctx->pad)) {
+        PROVerr(PROV_F_AES_CTX_GET_PARAMS, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
+    }
 
     return 1;
 }
@@ -347,8 +391,10 @@ static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[])
     if (p != NULL) {
         int pad;
 
-        if (!OSSL_PARAM_get_int(p, &pad))
+        if (!OSSL_PARAM_get_int(p, &pad)) {
+        PROVerr(PROV_F_AES_CTX_SET_PARAMS, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
+        }
         ctx->pad = pad ? 1 : 0;
     }
     return 1;

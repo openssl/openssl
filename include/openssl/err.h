@@ -98,6 +98,7 @@ typedef struct err_state_st {
 # define ERR_LIB_ESS             54
 # define ERR_LIB_PROP            55
 # define ERR_LIB_CRMF            56
+# define ERR_LIB_PROV            57
 
 # define ERR_LIB_USER            128
 
@@ -140,6 +141,7 @@ typedef struct err_state_st {
 # define SM2err(f,r) ERR_PUT_error(ERR_LIB_SM2,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define ESSerr(f,r) ERR_PUT_error(ERR_LIB_ESS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define PROPerr(f,r) ERR_PUT_error(ERR_LIB_PROP,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
+# define PROVerr(f,r) ERR_PUT_error(ERR_LIB_PROV,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 # define ERR_PACK(l,f,r) ( \
         (((unsigned int)(l) & 0x0FF) << 24L) | \
