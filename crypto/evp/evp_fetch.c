@@ -173,11 +173,15 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         void (*free_method)(void *),
                         int (*nid_method)(void *))
 {
+    OSSL_METHOD_STORE *store = get_default_method_store(libctx);
     int nid = OBJ_sn2nid(algorithm);
     void *method = NULL;
 
+    if (store == NULL)
+        return NULL;
+
     if (nid == NID_undef
-        || !ossl_method_store_cache_get(NULL, nid, properties, &method)) {
+        || !ossl_method_store_cache_get(store, nid, properties, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             alloc_tmp_method_store,
             dealloc_tmp_method_store,
@@ -198,7 +202,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         method = ossl_method_construct(libctx, operation_id, algorithm,
                                        properties, 0 /* !force_cache */,
                                        &mcm, &mcmdata);
-        ossl_method_store_cache_set(NULL, nid, properties, method);
+        ossl_method_store_cache_set(store, nid, properties, method);
     }
 
     return method;
