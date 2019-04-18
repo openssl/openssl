@@ -203,6 +203,8 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                                        properties, 0 /* !force_cache */,
                                        &mcm, &mcmdata);
         ossl_method_store_cache_set(store, nid, properties, method);
+    } else {
+        upref_method(method);
     }
 
     return method;
