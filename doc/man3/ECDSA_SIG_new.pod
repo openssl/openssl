@@ -200,7 +200,7 @@ ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
 
 =head1 SEE ALSO
 
-L<DSA_new(3)>,
+L<EC_KEY_new(3)>,
 L<EVP_DigestSignInit(3)>,
 L<EVP_DigestVerifyInit(3)>
 
