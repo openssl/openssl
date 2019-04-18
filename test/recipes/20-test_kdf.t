@@ -37,7 +37,7 @@ my @kdf_tests = (
     { cmd => [qw{openssl kdf -keylen 14 -kdfopt digest:SHA224 -kdfopt hexkey:6dbdc23f045488e4062757b06b9ebae183fc5a5946d80db93fec6f62ec07e3727f0126aed12ce4b262f47d48d54287f81d474c7c3b1850e9 -kdfopt hexinfo:a1b2c3d4e54341565369643c832e9849dcdba71e9a3139e606e095de3c264a66e98a165854cd07989b1ee0ec3f8dbe SSKDF}],
       expected => 'a4:62:de:16:a8:9d:e8:46:6e:f5:46:0b:47:b8',
       desc => 'SSKDF HASH SHA224'},
-    { cmd => [qw{openssl kdf -keylen 16 -kdfopt md:SHA256 -kdfopt hexkey:0102030405 -kdfopt hexxcghash:06090A -kdfopt hexsession_id:01020304 -kdfopt type:A SSHKDF}],
+    { cmd => [qw{openssl kdf -keylen 16 -kdfopt digest:SHA256 -kdfopt hexkey:0102030405 -kdfopt hexxcghash:06090A -kdfopt hexsession_id:01020304 -kdfopt type:A SSHKDF}],
     expected => '5C:49:94:47:3B:B1:53:3A:58:EB:19:42:04:D3:78:16',
     desc => 'SSHKDF SHA256'},
 );
