@@ -9,7 +9,6 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
-#include <openssl/evp.h>
 #include <openssl/err.h>
 #include <string.h>
 #include <assert.h>
@@ -18,6 +17,7 @@
 #include <openssl/rand.h>
 #include <openssl/cmac.h>
 #include "ciphers_locl.h"
+#include "internal/providercommonerr.h"
 
 #define MAXBITCHUNK     ((size_t)1 << (sizeof(size_t) * 8 - 4))
 
@@ -133,7 +133,7 @@ static int aesni_init_key(PROV_AES_KEY *dat, const unsigned char *key,
     }
 
     if (ret < 0) {
-        EVPerr(EVP_F_AESNI_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+        PROVerr(PROV_F_AESNI_INIT_KEY, PROV_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 
@@ -316,7 +316,7 @@ static int aes_t4_init_key(PROV_AES_KEY *dat, const unsigned char *key,
     }
 
     if (ret < 0) {
-        EVPerr(EVP_F_AES_T4_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+        PROVerr(PROV_F_AES_T4_INIT_KEY, PROV_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 
@@ -746,7 +746,7 @@ static int aes_init_key(PROV_AES_KEY *dat, const unsigned char *key,
     }
 
     if (ret < 0) {
-        EVPerr(EVP_F_AES_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+        PROVerr(PROV_F_AES_INIT_KEY, PROV_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 

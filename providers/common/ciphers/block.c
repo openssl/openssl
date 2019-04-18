@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 #include "ciphers_locl.h"
 #include <assert.h>
+#include "internal/providercommonerr.h"
 
 /*
  * Fills a single block of buffered data from the input, and returns the amount
@@ -65,8 +66,10 @@ int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
     if (*inlen == 0)
         return 1;
 
-    if (*buflen + *inlen > blocksize)
+    if (*buflen + *inlen > blocksize) {
+        PROVerr(PROV_F_TRAILINGDATA, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     memcpy(buf + *buflen, *in, *inlen);
     *buflen += *inlen;
@@ -90,8 +93,10 @@ int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
     size_t pad, i;
     size_t len = *buflen;
 
-    if(len != blocksize)
+    if(len != blocksize) {
+        PROVerr(PROV_F_UNPADBLOCK, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     /*
      * The following assumes that the ciphertext has been authenticated.
@@ -99,12 +104,12 @@ int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
      */
     pad = buf[blocksize - 1];
     if (pad == 0 || pad > blocksize) {
-        EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_BAD_DECRYPT);
+        PROVerr(PROV_F_UNPADBLOCK, PROV_R_BAD_DECRYPT);
         return 0;
     }
     for (i = 0; i < pad; i++) {
         if (buf[--len] != pad) {
-            EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_BAD_DECRYPT);
+            PROVerr(PROV_F_UNPADBLOCK, PROV_R_BAD_DECRYPT);
             return 0;
         }
     }
