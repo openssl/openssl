@@ -450,7 +450,7 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
         return 0;
     }
 
-    elem.query = prop_query;
+    elem.query = prop_query != NULL ? prop_query : "";
     r = lh_QUERY_retrieve(alg->cache, &elem);
     if (r == NULL) {
         ossl_property_unlock(store);
