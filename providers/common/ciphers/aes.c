@@ -135,10 +135,10 @@ static int aes_block_final(void *vctx, unsigned char *out, size_t *outl,
     if (ctx->enc) {
         if (ctx->pad) {
             padblock(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE);
-        } else if(ctx->bufsz == 0) {
+        } else if (ctx->bufsz == 0) {
             *outl = 0;
             return 1;
-        } else if(ctx->bufsz != AES_BLOCK_SIZE) {
+        } else if (ctx->bufsz != AES_BLOCK_SIZE) {
             /* TODO(3.0): What is the correct error code here? */
             return 0;
         }
