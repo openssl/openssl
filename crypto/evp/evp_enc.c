@@ -181,6 +181,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     /* Ensure a context left lying around from last time is cleared */
     if (cipher != NULL && ctx->cipher != NULL) {
         unsigned long flags = ctx->flags;
+
         EVP_CIPHER_CTX_reset(ctx);
         /* Restore encrypt and flags */
         ctx->encrypt = enc;
