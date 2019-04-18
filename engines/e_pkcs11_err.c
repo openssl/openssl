@@ -17,13 +17,11 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
     {ERR_PACK(0, PKCS11_F_BIND_PKCS11, 0), "bind_pkcs11"},
     {ERR_PACK(0, PKCS11_F_PKCS11_CTRL, 0), "pkcs11_ctrl"},
     {ERR_PACK(0, PKCS11_F_PKCS11_CTX_NEW, 0), "pkcs11_ctx_new"},
-    {ERR_PACK(0, PKCS11_F_PKCS11_PARSE_ITEMS, 0), "pkcs11_parse_items"},
     {ERR_PACK(0, PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 0),
      "pkcs11_engine_load_private_key"},
     {ERR_PACK(0, PKCS11_F_PKCS11_FIND_PRIVATE_KEY, 0),
      "pkcs11_find_private_key"},
-    {ERR_PACK(0, PKCS11_F_PKCS11_FIND_PUBLIC_KEY, 0),
-     "pkcs11_find_public_key"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_FIND_PUBLIC_KEY, 0), "pkcs11_find_public_key"},
     {ERR_PACK(0, PKCS11_F_PKCS11_GET_CONSOLE_PIN, 0), "pkcs11_get_console_pin"},
     {ERR_PACK(0, PKCS11_F_PKCS11_GET_SLOT, 0), "pkcs11_get_slot"},
     {ERR_PACK(0, PKCS11_F_PKCS11_INIT, 0), "pkcs11_init"},
@@ -33,10 +31,11 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
     {ERR_PACK(0, PKCS11_F_PKCS11_LOGIN, 0), "pkcs11_login"},
     {ERR_PACK(0, PKCS11_F_PKCS11_LOGOUT, 0), "pkcs11_logout"},
     {ERR_PACK(0, PKCS11_F_PKCS11_PARSE, 0), "pkcs11_parse"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_PARSE_ITEMS, 0), "pkcs11_parse_items"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_ENC, 0), "pkcs11_rsa_enc"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_INIT, 0), "pkcs11_rsa_init"},
-    {ERR_PACK(0, PKCS11_F_PKCS11_RSA_PRIV_ENC, 0), "pkcs11_rsa_priv_enc"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_PRIV_DEC, 0), "pkcs11_rsa_priv_dec"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_RSA_PRIV_ENC, 0), "pkcs11_rsa_priv_enc"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_SIGN, 0), "pkcs11_rsa_sign"},
     {ERR_PACK(0, PKCS11_F_PKCS11_START_SESSION, 0), "pkcs11_start_session"},
     {ERR_PACK(0, PKCS11_F_PKCS11_TRACE, 0), "PKCS11_trace"},
@@ -44,12 +43,12 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
 };
 
 static ERR_STRING_DATA PKCS11_str_reasons[] = {
+    {ERR_PACK(0, 0, PKCS11_R_DECRYPT_FAILED), "encrypt failed"},
+    {ERR_PACK(0, 0, PKCS11_R_DECRYPT_INIT_FAILED), "encrypt init failed"},
     {ERR_PACK(0, 0, PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY),
     "digest too big for rsa key"},
     {ERR_PACK(0, 0, PKCS11_R_ENCRYPT_FAILED), "encrypt failed"},
     {ERR_PACK(0, 0, PKCS11_R_ENCRYPT_INIT_FAILED), "encrypt init failed"},
-    {ERR_PACK(0, 0, PKCS11_R_DECRYPT_FAILED), "decrypt failed"},
-    {ERR_PACK(0, 0, PKCS11_R_DECRYPT_INIT_FAILED), "decrypt init failed"},
     {ERR_PACK(0, 0, PKCS11_R_ENGINE_NOT_INITIALIZED), "engine not initialized"},
     {ERR_PACK(0, 0, PKCS11_R_FILE_OPEN_ERROR), "file open error"},
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_FAILED), "find object failed"},
@@ -81,6 +80,8 @@ static ERR_STRING_DATA PKCS11_str_reasons[] = {
     {ERR_PACK(0, 0, PKCS11_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD),
     "the asn1 object identifier is not known for this md"},
     {ERR_PACK(0, 0, PKCS11_R_UNKNOWN_ALGORITHM_TYPE), "unknown algorithm type"},
+    {ERR_PACK(0, 0, PKCS11_R_VERIFY_FAILED), "sign failed"},
+    {ERR_PACK(0, 0, PKCS11_R_VERIFY_INIT_FAILED), "sign init failed"},
     {0, NULL}
 };
 

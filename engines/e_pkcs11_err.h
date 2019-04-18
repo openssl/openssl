@@ -11,6 +11,10 @@
 #ifndef HEADER_PKCS11ERR_H
 # define HEADER_PKCS11ERR_H
 
+# ifndef HEADER_SYMHACKS_H
+#  include <openssl/symhacks.h>
+# endif
+
 # define PKCS11err(f, r) ERR_PKCS11_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
 
 
@@ -20,7 +24,6 @@
 # define PKCS11_F_BIND_PKCS11                             121
 # define PKCS11_F_PKCS11_CTRL                             110
 # define PKCS11_F_PKCS11_CTX_NEW                          111
-# define PKCS11_F_PKCS11_PARSE_ITEMS                      119
 # define PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY          100
 # define PKCS11_F_PKCS11_FIND_PRIVATE_KEY                 120
 # define PKCS11_F_PKCS11_FIND_PUBLIC_KEY                  127
@@ -33,10 +36,11 @@
 # define PKCS11_F_PKCS11_LOGIN                            103
 # define PKCS11_F_PKCS11_LOGOUT                           104
 # define PKCS11_F_PKCS11_PARSE                            115
+# define PKCS11_F_PKCS11_PARSE_ITEMS                      119
 # define PKCS11_F_PKCS11_RSA_ENC                          105
 # define PKCS11_F_PKCS11_RSA_INIT                         117
+# define PKCS11_F_PKCS11_RSA_PRIV_DEC                     123
 # define PKCS11_F_PKCS11_RSA_PRIV_ENC                     122
-# define PKCS11_F_PKCS11_RSA_PRIV_DEC                     128
 # define PKCS11_F_PKCS11_RSA_SIGN                         118
 # define PKCS11_F_PKCS11_START_SESSION                    106
 # define PKCS11_F_PKCS11_TRACE                            109
@@ -44,11 +48,11 @@
 /*
  * PKCS11 reason codes.
  */
+# define PKCS11_R_DECRYPT_FAILED                          129
+# define PKCS11_R_DECRYPT_INIT_FAILED                     130
 # define PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY              121
 # define PKCS11_R_ENCRYPT_FAILED                          124
 # define PKCS11_R_ENCRYPT_INIT_FAILED                     125
-# define PKCS11_R_DECRYPT_FAILED                          129
-# define PKCS11_R_DECRYPT_INIT_FAILED                     130
 # define PKCS11_R_ENGINE_NOT_INITIALIZED                  117
 # define PKCS11_R_FILE_OPEN_ERROR                         102
 # define PKCS11_R_FIND_OBJECT_FAILED                      103
@@ -70,10 +74,10 @@
 # define PKCS11_R_RSA_NOT_FOUND                           118
 # define PKCS11_R_SIGN_FAILED                             100
 # define PKCS11_R_SIGN_INIT_FAILED                        101
-# define PKCS11_R_VERIFY_FAILED                           127
-# define PKCS11_R_VERIFY_INIT_FAILED                      128
 # define PKCS11_R_SLOT_NOT_FOUND                          113
 # define PKCS11_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 122
 # define PKCS11_R_UNKNOWN_ALGORITHM_TYPE                  123
+# define PKCS11_R_VERIFY_FAILED                           127
+# define PKCS11_R_VERIFY_INIT_FAILED                      128
 
 #endif
