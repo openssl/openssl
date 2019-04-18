@@ -98,6 +98,7 @@ void OPENSSL_LH_flush(OPENSSL_LHASH *lh)
             OPENSSL_free(n);
             n = nn;
         }
+        lh->b[i] = NULL;
     }
 }
 
