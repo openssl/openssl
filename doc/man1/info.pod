@@ -18,7 +18,12 @@ B<openssl info>
 
 =head1 DESCRIPTION
 
-This command is used to print out info information about OpenSSL.
+This command is used to print out information about OpenSSL.
+The information is written exactly as it is with no extra text, which
+makes useful for scripts.
+
+As a consequence, only one item may be chosen for each run of this
+command.
 
 =head1 OPTIONS
 
