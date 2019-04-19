@@ -171,7 +171,7 @@ int OSSL_CMP_ITAV_stack_item_push0(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     return 1;
  err:
     if (created != 0) {
-        sk_OSSL_CMP_ITAV_pop_free(*itav_sk_p, OSSL_CMP_ITAV_free);
+        sk_OSSL_CMP_ITAV_free(*itav_sk_p);
         *itav_sk_p = NULL;
     }
     return 0;
