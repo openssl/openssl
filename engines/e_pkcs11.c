@@ -747,7 +747,7 @@ int pkcs11_search_next_ids(OSSL_STORE_LOADER_CTX *ctx, char **name,
         strncpy(*description, "Public Key  ID: ", 16);
     else if (key_class == CKO_PRIVATE_KEY)
         strncpy(*description, "Private Key ID: ", 16);
-    else 
+    else
         strncpy(*description, "Data        ID: ", 16);
 
     for (i=0; i < template[2].ulValueLen; i++)
@@ -763,9 +763,11 @@ int pkcs11_search_next_ids(OSSL_STORE_LOADER_CTX *ctx, char **name,
            "0123456789abcdef"[id[i] % 16];
     }
     *(*description + 22 + (template[2].ulValueLen * 3)) = '\0';
+    OPENSSL_free(template[2].pValue);
     return 0;
 
  end:
+    OPENSSL_free(template[2].pValue);
     return 1;
 }
 

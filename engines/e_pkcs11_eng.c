@@ -513,8 +513,8 @@ static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
     OSSL_STORE_INFO *ret = NULL;
 
     if (ctx->listflag) {
-        char *name;
-        char *description;
+        char *name = NULL;
+        char *description = NULL;
 
         ctx->eof = pkcs11_search_next_ids(ctx, &name, &description);
         if (!ctx->eof) {
@@ -543,7 +543,6 @@ static int pkcs11_store_eof(OSSL_STORE_LOADER_CTX *ctx)
 static int pkcs11_store_close(OSSL_STORE_LOADER_CTX *ctx)
 {
     pkcs11_end_session(ctx->session);
-    pkcs11_finalize();
     OSSL_STORE_LOADER_CTX_free(ctx);
     return 1;
 }
