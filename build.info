@@ -3,7 +3,7 @@
 SUBDIRS=crypto ssl apps test util tools fuzz engines providers
 
 LIBS=libcrypto libssl
-INCLUDE[libcrypto]=. crypto/include include providers/common/include
+INCLUDE[libcrypto]=. crypto/include include
 INCLUDE[libssl]=. include
 DEPEND[libssl]=libcrypto
 
