@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* Required for secure_getenv */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+
 #include "e_pkcs11.h"
 #include "e_pkcs11_err.c"
 
@@ -307,7 +312,7 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 # if __GLIBC_PREREQ(2, 17)
             secure_getenv("PKCS11_MODULE_PATH")) == NULL) {
-# else 
+# else
             getenv("PKCS11_MODULE_PATH")) == NULL) {
 # endif
 #else
