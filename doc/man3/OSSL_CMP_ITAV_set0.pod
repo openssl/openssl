@@ -21,6 +21,10 @@ OSSL_CMP_ITAV_stack_item_push0
 
 =head1 DESCRIPTION
 
+ITAV is short for InfoTypeAndValue. This type is defined in RFC 4210
+section 5.3.19 and Appendix F. It is used at various places in CMP messages,
+e.g., in the generalInfo PKIHeader field, to hold a key-value pair.
+
 OSSL_CMP_ITAV_set0() sets the B<itav> with an infoType of B<type> and an
 infoValue of B<value>. This function uses the pointers B<type> and B<value>
 internally, so they must B<not> be freed up after the call.
