@@ -1,5 +1,7 @@
 SUBDIRS=common default
 
+INCLUDE[../libcrypto]=common/include
+
 IF[{- !$disabled{fips} -}]
   SUBDIRS=fips
   MODULES=fips
