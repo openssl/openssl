@@ -1884,11 +1884,14 @@ static int check_ec_key_field_public_range_test(int id)
      * be the same point on the curve). The add is different for char2 fields.
      */
     type = EC_METHOD_get_field_type(meth);
+#ifndef OPENSSL_NO_EC2M
     if (type == NID_X9_62_characteristic_two_field) {
         /* test for binary curves */
         if (!TEST_true(BN_GF2m_add(x, x, field)))
             goto err;
-    } else if (type == NID_X9_62_prime_field) {
+    } else
+#endif
+    if (type == NID_X9_62_prime_field) {
         /* test for prime curves */
         if (!TEST_true(BN_add(x, x, field)))
             goto err;
