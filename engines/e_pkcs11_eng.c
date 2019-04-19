@@ -380,7 +380,7 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
     pkcs11_search_next_object(store_ctx, &class);
 
     if (class == CKO_CERTIFICATE) {
-        params->cert = d2i_X509(NULL, &store_ctx->cert, store_ctx->certlen);
+        params->cert = store_ctx->cert;
         ret = 1;
     }
 
@@ -572,17 +572,17 @@ static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX* ctx)
 {
     if (ctx == NULL)
         return;
+    EVP_PKEY_free(ctx->key);
+    X509_free(ctx->cert);
     OPENSSL_free(ctx);
+    OSSL_STORE_unregister_loader(pkcs11_scheme);
 }
 
 static OSSL_STORE_INFO* pkcs11_store_load_cert(OSSL_STORE_LOADER_CTX *ctx,
                                                const UI_METHOD *ui_method,
                                                void *ui_data)
 {
-    X509 *x = NULL;
-
-    x = d2i_X509(NULL, &ctx->cert, ctx->certlen);
-    return OSSL_STORE_INFO_new_CERT(x);
+    return OSSL_STORE_INFO_new_CERT(ctx->cert);
 }
 
 static OSSL_STORE_INFO* pkcs11_store_load_key(OSSL_STORE_LOADER_CTX *ctx,

@@ -820,6 +820,7 @@ static int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
     CK_RV rv;
     CK_OBJECT_CLASS key_class = CKO_CERTIFICATE;
     CK_ATTRIBUTE tmpl_cert[2];
+    const unsigned char *tmpcert = NULL;
 
     tmpl_cert[0].type = CKA_CLASS;
     tmpl_cert[0].pValue = &key_class;
@@ -849,8 +850,9 @@ static int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
     }
 
     if (tmpl_cert[1].ulValueLen > 0) {
-        store_ctx->cert = tmpl_cert[1].pValue;
-        store_ctx->certlen = tmpl_cert[1].ulValueLen;
+        tmpcert= tmpl_cert[1].pValue;
+        store_ctx->cert = d2i_X509(NULL, &tmpcert,
+                                   tmpl_cert[1].ulValueLen);
         return 0;
     } else {
         PKCS11_trace("Certificate is empty\n");

@@ -77,8 +77,7 @@ struct ossl_store_loader_ctx_st {
     int error;
     int eof;
     int listflag;
-    size_t certlen;
-    const unsigned char *cert;
+    X509 *cert;
     EVP_PKEY *key;
     CK_SESSION_HANDLE session;
 };
