@@ -243,9 +243,11 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
         return ctx->cipher->einit(ctx->provctx,
                                   key,
-                                  EVP_CIPHER_CTX_key_length(ctx),
+                                  key == NULL ? 0
+                                              : EVP_CIPHER_CTX_key_length(ctx),
                                   iv,
-                                  EVP_CIPHER_CTX_iv_length(ctx));
+                                  iv == NULL ? 0
+                                             : EVP_CIPHER_CTX_iv_length(ctx));
     }
 
     if (ctx->cipher->dinit == NULL) {
@@ -255,9 +257,11 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     return ctx->cipher->dinit(ctx->provctx,
                               key,
-                              EVP_CIPHER_CTX_key_length(ctx),
+                              key == NULL ? 0
+                                          : EVP_CIPHER_CTX_key_length(ctx),
                               iv,
-                              EVP_CIPHER_CTX_iv_length(ctx));
+                              iv == NULL ? 0
+                                         : EVP_CIPHER_CTX_iv_length(ctx));
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
