@@ -354,7 +354,9 @@ int pkcs11_get_slot(PKCS11_CTX *ctx)
     CK_ULONG slotCount;
     CK_SLOT_ID slotId;
     CK_SLOT_ID_PTR slotList = NULL;
+    CK_TOKEN_INFO tokenInfo;
     unsigned int i;
+    int match = 1;
 
     rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, NULL, &slotCount);
 
@@ -386,13 +388,44 @@ int pkcs11_get_slot(PKCS11_CTX *ctx)
     }
 
     slotId = slotList[0]; /* Default value if slot not set*/
-    for (i = 1; i < slotCount; i++) {
-        if (ctx->slotid == slotList[i])
-            slotId = slotList[i];
+    if (ctx->slotid > 0) {
+        for (i = 1; i < slotCount; i++) {
+            if (ctx->slotid == slotList[i])
+                slotId = slotList[i];
+        }
+    } else {
+        if (ctx->model[0] != 0 || ctx->token[0] != 0
+            || ctx->serial[0] != 0 || ctx->manufacturer[0] != 0) {
+            match = 0;
+            for (i = 1; i < slotCount; i++) {
+                rv = pkcs11_funcs->C_GetTokenInfo(slotList[i], &tokenInfo);
+
+                if (rv != CKR_OK)
+                    continue;
+                if (ctx->model[0] != 0 && memcmp(ctx->model, tokenInfo.model,
+                    sizeof(ctx->model)))
+                    continue;
+                if (ctx->token[0] != 0 && memcmp(ctx->token, tokenInfo.label,
+                    sizeof(ctx->token)))
+                    continue;
+                if (ctx->serial[0] != 0 && memcmp(ctx->serial,
+                    tokenInfo.serialNumber, sizeof(ctx->serial)))
+                    continue;
+                if (ctx->manufacturer[0] != 0 && memcmp(ctx->manufacturer,
+                    tokenInfo.manufacturerID, sizeof(ctx->manufacturer)))
+                    continue;
+                slotId = slotList[i];
+                match = 1;
+                break;
+            }
+        }
     }
+    OPENSSL_free(slotList);
+
+    if (!match)
+        return 0;
 
     ctx->slotid = slotId;
-    OPENSSL_free(slotList);
     return 1;
 
  err:

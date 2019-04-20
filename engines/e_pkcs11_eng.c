@@ -36,6 +36,8 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
                                    void *p, void (*f)(void));
 void engine_load_pkcs11_int(void);
 static int pkcs11_rsa_free(RSA *rsa);
+static unsigned char *pkcs11_pad(char *field, int len);
+
 static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
 static const char *engine_name = "A minimal PKCS#11 engine only for sign";
@@ -180,6 +182,22 @@ static int pkcs11_ishex(char *hex)
     return 0;
 }
 
+static unsigned char *pkcs11_pad(char *field, int len)
+{
+    int i;
+    unsigned char *ret = NULL;
+
+    ret = OPENSSL_malloc(len);
+    for (i=0; i<len; i++)
+        ret[i]=' ';
+    for (i=0; i<len; i++) {
+        if (*(field+i) == '\0')
+            break;
+        ret[i]=*(field+i);
+    }
+    return ret;
+}
+
 static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
 {
     char *p, *q, *tmpstr;
@@ -207,6 +225,30 @@ static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
                 if (tmpstr == NULL)
                     goto memerr;
                 ctx->label = (CK_BYTE *) pkcs11_hex2a(tmpstr);
+            } else if (strncmp(p, "model=", 6) == 0) {
+                p += 6;
+                tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
+                memcpy(ctx->model, pkcs11_pad(pkcs11_hex2a(tmpstr), 16), 16);
+            } else if (strncmp(p, "serial=", 7) == 0) {
+                p += 7;
+                tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
+                memcpy(ctx->serial, pkcs11_pad(tmpstr, 16), 16);
+            } else if (strncmp(p, "token=", 6) == 0) {
+                p += 6;
+                tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
+                memcpy(ctx->token, pkcs11_pad(pkcs11_hex2a(tmpstr), 32), 32);
+            } else if (strncmp(p, "manufacturer=", 13) == 0) {
+                p += 13;
+                tmpstr = OPENSSL_strdup(p);
+                if (tmpstr == NULL)
+                    goto memerr;
+                memcpy(ctx->manufacturer, pkcs11_pad(pkcs11_hex2a(tmpstr), 32), 32);
             } else if (strncmp(p, "id=", 3) == 0 && ctx->id == NULL) {
                 p += 3;
                 tmpstr = OPENSSL_strdup(p);
@@ -475,34 +517,35 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
 
     e = (ENGINE *) OSSL_STORE_LOADER_get0_engine(loader);
     if (e == NULL)
-        return NULL;
+        goto err;
 
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
 
     if (pkcs11_ctx == NULL)
-        return NULL;
+        goto err;
 
     if (!pkcs11_parse(pkcs11_ctx, uri, 1))
-        return NULL;
+        goto err;
 
     if (pkcs11_initialize(pkcs11_ctx->module_path) != CKR_OK)
-        return NULL;
+        goto err;
 
     if (!pkcs11_get_slot(pkcs11_ctx))
-        return NULL;
+        goto err;
 
     if (!pkcs11_start_session(pkcs11_ctx, &session))
-        return NULL;
+        goto err;
 
     /* NEW store-ctx->session, not a copy of pkcs11_ctx->session */
     store_ctx->session = session;
 
     if (!pkcs11_search_start(store_ctx, pkcs11_ctx))
-        return NULL;
+        goto err;
 
     if (pkcs11_ctx->label == NULL && pkcs11_ctx->id == NULL)
         store_ctx->listflag = 1;    /* we want names */
 
+ err:
     return store_ctx;
 }
 
