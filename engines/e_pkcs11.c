@@ -775,19 +775,19 @@ int pkcs11_search_next_ids(OSSL_STORE_LOADER_CTX *ctx, char **name,
     *description = OPENSSL_malloc(template[2].ulValueLen * 3 + 23);
 
     if (key_class == CKO_CERTIFICATE)
-        strncpy(*description, "Certificate ID: ", 16);
+        strncpy(*description, "Certificate ID: ", 17);
     else if (key_class == CKO_PUBLIC_KEY)
-        strncpy(*description, "Public Key  ID: ", 16);
+        strncpy(*description, "Public Key  ID: ", 17);
     else if (key_class == CKO_PRIVATE_KEY)
-        strncpy(*description, "Private Key ID: ", 16);
+        strncpy(*description, "Private Key ID: ", 17);
     else
-        strncpy(*description, "Data        ID: ", 16);
+        strncpy(*description, "Data        ID: ", 17);
 
     for (i=0; i < template[2].ulValueLen; i++)
           *(*description + i + 16) = id[i];
 
     *(*description + template[2].ulValueLen + 16) = '\0';
-    strncat(*description, " hex: ", 6);
+    strncat(*description, " hex: ", 7);
 
     for (i=0; i < template[2].ulValueLen; i++) {
           *(*description + 22 + template[2].ulValueLen + (i*2)) = \
