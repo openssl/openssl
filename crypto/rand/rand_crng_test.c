@@ -27,15 +27,16 @@ int (*crngt_get_entropy)(unsigned char *, unsigned char *, unsigned int *)
 int rand_crngt_get_entropy_cb(unsigned char *buf, unsigned char *md,
                               unsigned int *md_size)
 {
-    int r;
+    int r, i;
     size_t n;
     unsigned char *p;
 
-    while ((n = rand_pool_acquire_entropy(crngt_pool)) != 0)
+    for (i = 0; i < 5 && (n = rand_pool_acquire_entropy(crngt_pool)) != 0; i++)
         if (n >= CRNGT_BUFSIZ) {
             p = rand_pool_detach(crngt_pool);
-            memcpy(buf, p, CRNGT_BUFSIZ);
             r = EVP_Digest(p, CRNGT_BUFSIZ, md, md_size, EVP_sha256(), NULL);
+            if (r != 0)
+                memcpy(buf, p, CRNGT_BUFSIZ);
             rand_pool_reattach(crngt_pool, p);
             return r;
         }
