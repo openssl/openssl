@@ -454,17 +454,18 @@ int a2ulabel(const char *in, char *out, size_t *outlen)
                     result = 0;
 
                 if (result > 0) {
-                    memcpy(outptr, seed, size);
-                    outptr += size;
+                    memcpy(outptr, seed, utfsize);
+                    outptr += utfsize;
                 }
             }
 
-						if (tmpptr != NULL) {
-							*outptr = '.';
-							size++;
-							if (size >= *outlen - 1)
-								result = 0;
-						}
+            if (tmpptr != NULL) {
+                *outptr = '.';
+                outptr++;
+                size++;
+                if (size >= *outlen - 1)
+                    result = 0;
+            }
         }
 
         if (tmpptr == NULL)
