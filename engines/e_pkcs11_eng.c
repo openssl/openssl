@@ -290,32 +290,22 @@ static int pkcs11_get_console_pin(char **pin)
 #ifndef OPENSSL_NO_UI_CONSOLE
     int i;
     const int buflen = 512;
-    char *strbuf = OPENSSL_malloc(buflen);
+    char *strbuf = NULL;
 
+    strbuf = OPENSSL_malloc(buflen);
     if (strbuf == NULL) {
         PKCS11err(PKCS11_F_PKCS11_GET_CONSOLE_PIN, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    for (;;) {
-        char prompt[200];
-        BIO_snprintf(prompt, sizeof(prompt), "Enter PIN: ");
-        strbuf[0] = '\0';
-        i = EVP_read_pw_string((char *)strbuf, buflen, prompt, 0);
-        if (i == 0) {
-            if (strbuf[0] == '\0') {
-                goto err;
-            }
-            *pin = strbuf;
-            return 1;
-        }
-        if (i < 0) {
-            PKCS11_trace("bad password read\n");
-            goto err;
-        }
+    EVP_set_pw_prompt("Enter PIN: ");
+    strbuf[0] = '\0';
+    i = EVP_read_pw_string(strbuf, buflen, NULL, 0);
+    if (i == 0 && strbuf[0] != '\0') {
+        *pin = strbuf;
+        return 1;
     }
-
- err:
+    PKCS11_trace("bad password read\n");
     OPENSSL_free(strbuf);
 #endif
 
@@ -378,6 +368,8 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
     return 1;
 
  err:
+    OPENSSL_free(pin);
+    OPENSSL_free(id);
     return 0;
 }
 
@@ -397,17 +389,17 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
     store_ctx = OSSL_STORE_LOADER_CTX_new();
     pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
     if (pkcs11_ctx == NULL)
-        return 0;
+        goto err;
 
     if (!pkcs11_parse(pkcs11_ctx, params->uri_string, 1))
-        return 0;
+        goto err;
 
     if (pkcs11_initialize(pkcs11_ctx->module_path) != CKR_OK)
-        return 0;
+        goto err;
 
     if (!pkcs11_get_slot(pkcs11_ctx)) {
         pkcs11_finalize();
-        return 0;
+        goto err;
      }
 
     if (!pkcs11_start_session(pkcs11_ctx, &session))
@@ -429,6 +421,8 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
  end:
     pkcs11_end_session(session);
     pkcs11_finalize();
+ err:
+    OSSL_STORE_LOADER_CTX_free(store_ctx);
     return ret;
 }
 
@@ -461,11 +455,12 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     key = pkcs11_find_private_key(session, ctx);
     if (!key)
         goto err;
+
     return pkcs11_load_pkey(session, ctx, key);
 
  err:
     PKCS11_trace("pkcs11_engine_load_private_key failed\n");
-    return 0;
+    return NULL;
 }
 
 static EVP_PKEY *pkcs11_engine_load_public_key(ENGINE * e, const char *path,
@@ -545,8 +540,11 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
     if (pkcs11_ctx->label == NULL && pkcs11_ctx->id == NULL)
         store_ctx->listflag = 1;    /* we want names */
 
- err:
     return store_ctx;
+
+ err:
+    OSSL_STORE_LOADER_CTX_free(store_ctx);
+    return NULL;
 }
 
 static OSSL_STORE_INFO* pkcs11_store_load(OSSL_STORE_LOADER_CTX *ctx,
@@ -649,9 +647,8 @@ static int bind_pkcs11(ENGINE *e)
         || !OSSL_STORE_LOADER_set_eof(loader, pkcs11_store_eof)
         || !OSSL_STORE_LOADER_set_error(loader, pkcs11_store_error)
         || !OSSL_STORE_LOADER_set_close(loader, pkcs11_store_close)
-        || !OSSL_STORE_register_loader(loader)) {
+        || !OSSL_STORE_register_loader(loader))
         return 0;
-    }
 
     rsa_pkcs11_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
     ossl_rsa_meth = RSA_PKCS1_OpenSSL();
@@ -738,6 +735,7 @@ static int pkcs11_destroy(ENGINE *e)
     RSA_meth_free(pkcs11_rsa);
     pkcs11_rsa = NULL;
     PKCS11_trace("Calling pkcs11_destroy with engine: %p\n", e);
+    OSSL_STORE_unregister_loader(pkcs11_scheme);
     ERR_unload_PKCS11_strings();
     return 1;
 }
