@@ -206,6 +206,7 @@ AS={- $config{AS} -}
 ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
 
 RC={- $config{RC} -}
+RCFLAGS={- join(' ', @{$config{RCFLAGS}}) -}
 
 ECHO="$(PERL)" "$(SRCDIR)\util\echo.pl"
 
@@ -630,7 +631,7 @@ EOF
          my $res = platform->res($args{obj});
          return <<"EOF";
 $res: $deps
-	\$(RC) \$(RCOUTFLAG)\$\@ $srcs
+	\$(RC) \$(RCFLAGS) \$(RCOUTFLAG)\$\@ $srcs
 EOF
      }
      my $obj = platform->obj($args{obj});
