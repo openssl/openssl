@@ -398,7 +398,7 @@ int pkcs11_get_slot(PKCS11_CTX *ctx)
             || ctx->serial[0] != 0 || ctx->manufacturer[0] != 0) {
             match = 0;
             for (i = 0; i < slotCount; i++) {
-              rv = pkcs11_funcs->C_GetTokenInfo(slotList[i], &tokenInfo);
+                rv = pkcs11_funcs->C_GetTokenInfo(slotList[i], &tokenInfo);
                 if (rv != CKR_OK)
                     continue;
                 if (ctx->model[0] != 0 && memcmp(ctx->model, tokenInfo.model,
@@ -726,7 +726,6 @@ int pkcs11_search_next_ids(OSSL_STORE_LOADER_CTX *ctx, char **name,
     session = ctx->session;
     rv = pkcs11_funcs->C_FindObjects(session, &key,
                                      1, &ulObj);
-printf("KEY %d\n",key);
     if (rv != CKR_OK || ulObj == 0) {
         *name = NULL;
         *description = NULL;
