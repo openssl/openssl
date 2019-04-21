@@ -586,7 +586,7 @@ EOF
      if ($srcs[0] =~ /\.rc$/) {
          return <<"EOF";
 $args{obj}: $deps
-	\$(RC) \$(RCOUTFLAG)\$\@ $srcs
+	\$(RC) \$(RCFLAGS) \$(RCOUTFLAG)\$\@ $srcs
 EOF
      }
      (my $obj = $args{obj}) =~ s|\.o$||;
