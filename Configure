@@ -611,6 +611,7 @@ my %useradd = (
     CXXFLAGS    => [],
     LDFLAGS     => [],
     LDLIBS      => [],
+    RCFLAGS     => [],
    );
 
 my %user_synonyms = (
