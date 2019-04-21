@@ -630,7 +630,7 @@ EOF
          my $res = platform->res($args{obj});
          return <<"EOF";
 $res: $deps
-	\$(RC) \$(RCOUTFLAG)\$\@ $srcs
+	\$(RC) \$(RCFLAGS) \$(RCOUTFLAG)\$\@ $srcs
 EOF
      }
      my $obj = platform->obj($args{obj});
