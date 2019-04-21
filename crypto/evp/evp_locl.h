@@ -44,6 +44,10 @@ struct evp_cipher_ctx_st {
     int final_used;
     int block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
+
+    /* Provider ctx */
+    void *provctx;
+    EVP_CIPHER *fetched_cipher;
 } /* EVP_CIPHER_CTX */ ;
 
 struct evp_mac_ctx_st {

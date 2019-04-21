@@ -517,7 +517,7 @@ static void *evp_md_from_dispatch(int mdtype, const OSSL_DISPATCH *fns,
             md->dinit = OSSL_get_OP_digest_init(fns);
             fncnt++;
             break;
-        case OSSL_FUNC_DIGEST_UPDDATE:
+        case OSSL_FUNC_DIGEST_UPDATE:
             if (md->dupdate != NULL)
                 break;
             md->dupdate = OSSL_get_OP_digest_update(fns);

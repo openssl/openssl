@@ -15,25 +15,46 @@
 #include <openssl/rand.h>
 #include <openssl/rand_drbg.h>
 #include <openssl/engine.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
 #include "internal/evp_int.h"
+#include "internal/provider.h"
 #include "evp_locl.h"
 
-int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c)
+int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 {
-    if (c == NULL)
+    if (ctx == NULL)
         return 1;
-    if (c->cipher != NULL) {
-        if (c->cipher->cleanup && !c->cipher->cleanup(c))
+
+    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+        goto legacy;
+
+    if (ctx->provctx != NULL) {
+        if (ctx->cipher->freectx != NULL)
+            ctx->cipher->freectx(ctx->provctx);
+        ctx->provctx = NULL;
+    }
+    if (ctx->fetched_cipher != NULL)
+        EVP_CIPHER_meth_free(ctx->fetched_cipher);
+    memset(ctx, 0, sizeof(*ctx));
+
+    return 1;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
+
+    if (ctx->cipher != NULL) {
+        if (ctx->cipher->cleanup && !ctx->cipher->cleanup(ctx))
             return 0;
         /* Cleanse cipher context data */
-        if (c->cipher_data && c->cipher->ctx_size)
-            OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
+        if (ctx->cipher_data && ctx->cipher->ctx_size)
+            OPENSSL_cleanse(ctx->cipher_data, ctx->cipher->ctx_size);
     }
-    OPENSSL_free(c->cipher_data);
+    OPENSSL_free(ctx->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(c->engine);
+    ENGINE_finish(ctx->engine);
 #endif
-    memset(c, 0, sizeof(*c));
+    memset(ctx, 0, sizeof(*ctx));
     return 1;
 }
 
@@ -60,13 +81,30 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                       ENGINE *impl, const unsigned char *key,
                       const unsigned char *iv, int enc)
 {
-    if (enc == -1)
+    EVP_CIPHER *provciph = NULL;
+    ENGINE *tmpimpl = NULL;
+    const EVP_CIPHER *tmpcipher;
+
+    /*
+     * enc == 1 means we are encrypting.
+     * enc == 0 means we are decrypting.
+     * enc == -1 means, use the previously initialised value for encrypt/decrypt
+     */
+    if (enc == -1) {
         enc = ctx->encrypt;
-    else {
+    } else {
         if (enc)
             enc = 1;
         ctx->encrypt = enc;
     }
+
+    if (cipher == NULL && ctx->cipher == NULL) {
+        EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    /* TODO(3.0): Legacy work around code below. Remove this */
+
 #ifndef OPENSSL_NO_ENGINE
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
@@ -77,11 +115,157 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     if (ctx->engine && ctx->cipher
         && (cipher == NULL || cipher->nid == ctx->cipher->nid))
         goto skip_to_init;
+
+    if (cipher != NULL && impl == NULL) {
+         /* Ask if an ENGINE is reserved for this job */
+        tmpimpl = ENGINE_get_cipher_engine(cipher->nid);
+    }
 #endif
-    if (cipher) {
+
+    /*
+     * If there are engines involved then we should use legacy handling for now.
+     */
+    if (ctx->engine != NULL
+            || impl != NULL
+            || tmpimpl != NULL) {
+        if (ctx->cipher == ctx->fetched_cipher)
+            ctx->cipher = NULL;
+        EVP_CIPHER_meth_free(ctx->fetched_cipher);
+        ctx->fetched_cipher = NULL;
+        goto legacy;
+    }
+
+    tmpcipher = (cipher == NULL) ? ctx->cipher : cipher;
+
+    if (tmpcipher->prov == NULL) {
+        switch(tmpcipher->nid) {
+        case NID_aes_256_ecb:
+        case NID_aes_192_ecb:
+        case NID_aes_128_ecb:
+        case NID_aes_256_cbc:
+        case NID_aes_192_cbc:
+        case NID_aes_128_cbc:
+        case NID_aes_256_ofb128:
+        case NID_aes_192_ofb128:
+        case NID_aes_128_ofb128:
+        case NID_aes_256_cfb128:
+        case NID_aes_192_cfb128:
+        case NID_aes_128_cfb128:
+        case NID_aes_256_cfb1:
+        case NID_aes_192_cfb1:
+        case NID_aes_128_cfb1:
+        case NID_aes_256_cfb8:
+        case NID_aes_192_cfb8:
+        case NID_aes_128_cfb8:
+        case NID_aes_256_ctr:
+        case NID_aes_192_ctr:
+        case NID_aes_128_ctr:
+            break;
+        default:
+            goto legacy;
+        }
+    }
+
+    /*
+     * Ensure a context left lying around from last time is cleared
+     * (legacy code)
+     */
+    if (cipher != NULL && ctx->cipher != NULL) {
+        OPENSSL_clear_free(ctx->cipher_data, ctx->cipher->ctx_size);
+        ctx->cipher_data = NULL;
+    }
+
+
+    /* TODO(3.0): Start of non-legacy code below */
+
+    /* Ensure a context left lying around from last time is cleared */
+    if (cipher != NULL && ctx->cipher != NULL) {
+        unsigned long flags = ctx->flags;
+
+        EVP_CIPHER_CTX_reset(ctx);
+        /* Restore encrypt and flags */
+        ctx->encrypt = enc;
+        ctx->flags = flags;
+    }
+
+    if (cipher != NULL)
+        ctx->cipher = cipher;
+    else
+        cipher = ctx->cipher;
+
+    if (cipher->prov == NULL) {
+        provciph = EVP_CIPHER_fetch(NULL, OBJ_nid2sn(cipher->nid), "");
+        if (provciph == NULL) {
+            EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        cipher = provciph;
+        EVP_CIPHER_meth_free(ctx->fetched_cipher);
+        ctx->fetched_cipher = provciph;
+    }
+
+    ctx->cipher = cipher;
+    if (ctx->provctx == NULL) {
+        ctx->provctx = ctx->cipher->newctx();
+        if (ctx->provctx == NULL) {
+            EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+    }
+
+    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
         /*
-         * Ensure a context left lying around from last time is cleared (the
-         * previous check attempted to avoid this if the same ENGINE and
+         * If this ctx was already set up for no padding then we need to tell
+         * the new cipher about it.
+         */
+        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
+            return 0;
+    }
+
+    switch (EVP_CIPHER_mode(ctx->cipher)) {
+    case EVP_CIPH_CFB_MODE:
+    case EVP_CIPH_OFB_MODE:
+    case EVP_CIPH_CBC_MODE:
+        /* For these modes we remember the original IV for later use */
+        if (!ossl_assert(EVP_CIPHER_CTX_iv_length(ctx) <= (int)sizeof(ctx->oiv))) {
+            EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        if (iv != NULL)
+            memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+    }
+
+    if (enc) {
+        if (ctx->cipher->einit == NULL) {
+            EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+
+        return ctx->cipher->einit(ctx->provctx,
+                                  key,
+                                  EVP_CIPHER_CTX_key_length(ctx),
+                                  iv,
+                                  EVP_CIPHER_CTX_iv_length(ctx));
+    }
+
+    if (ctx->cipher->dinit == NULL) {
+        EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    return ctx->cipher->dinit(ctx->provctx,
+                              key,
+                              EVP_CIPHER_CTX_key_length(ctx),
+                              iv,
+                              EVP_CIPHER_CTX_iv_length(ctx));
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
+
+    if (cipher != NULL) {
+        /*
+         * Ensure a context left lying around from last time is cleared (we
+         * previously attempted to avoid this if the same ENGINE and
          * EVP_CIPHER could be used).
          */
         if (ctx->cipher) {
@@ -92,18 +276,19 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             ctx->flags = flags;
         }
 #ifndef OPENSSL_NO_ENGINE
-        if (impl) {
+        if (impl != NULL) {
             if (!ENGINE_init(impl)) {
                 EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
                 return 0;
             }
-        } else
-            /* Ask if an ENGINE is reserved for this job */
-            impl = ENGINE_get_cipher_engine(cipher->nid);
-        if (impl) {
+        } else {
+            impl = tmpimpl;
+        }
+        if (impl != NULL) {
             /* There's an ENGINE for this job ... (apparently) */
             const EVP_CIPHER *c = ENGINE_get_cipher(impl, cipher->nid);
-            if (!c) {
+
+            if (c == NULL) {
                 /*
                  * One positive side-effect of US's export control history,
                  * is that we should at least be able to avoid using US
@@ -119,8 +304,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
              * from an ENGINE and we need to release it when done.
              */
             ctx->engine = impl;
-        } else
+        } else {
             ctx->engine = NULL;
+        }
 #endif
 
         ctx->cipher = cipher;
@@ -144,9 +330,6 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                 return 0;
             }
         }
-    } else if (!ctx->cipher) {
-        EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_NO_CIPHER_SET);
-        return 0;
     }
 #ifndef OPENSSL_NO_ENGINE
  skip_to_init:
@@ -377,11 +560,38 @@ static int evp_EncryptDecryptUpdate(EVP_CIPHER_CTX *ctx,
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl)
 {
+    int ret;
+    size_t soutl;
+    int blocksize;
+
     /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
         EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_INVALID_OPERATION);
         return 0;
     }
+
+    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+        goto legacy;
+
+    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
+    if (ctx->cipher->cupdate == NULL  || blocksize < 1) {
+        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+    ret = ctx->cipher->cupdate(ctx->provctx, out, &soutl,
+                               inl + (blocksize == 1 ? 0 : blocksize), in,
+                               (size_t)inl);
+
+    if (soutl > INT_MAX) {
+        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+    *outl = soutl;
+    return ret;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
 
     return evp_EncryptDecryptUpdate(ctx, out, outl, in, inl);
 }
@@ -397,12 +607,38 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
     int n, ret;
     unsigned int i, b, bl;
+    size_t soutl;
+    int blocksize;
 
     /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
         EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_INVALID_OPERATION);
         return 0;
     }
+
+    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+        goto legacy;
+
+    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
+    if (blocksize < 1 || ctx->cipher->cfinal == NULL) {
+        EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
+    ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl,
+                              blocksize == 1 ? 0 : blocksize);
+
+    if (soutl > INT_MAX) {
+        EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+    *outl = soutl;
+
+    return ret;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         ret = ctx->cipher->do_cipher(ctx, out, NULL, 0);
@@ -444,14 +680,42 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl)
 {
-    int fix_len, cmpl = inl;
+    int fix_len, cmpl = inl, ret;
     unsigned int b;
+    size_t soutl;
+    int blocksize;
 
     /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
         EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_INVALID_OPERATION);
         return 0;
     }
+
+    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+        goto legacy;
+
+    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
+    if (ctx->cipher->cupdate == NULL || blocksize < 1) {
+        EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+    ret = ctx->cipher->cupdate(ctx->provctx, out, &soutl,
+                               inl + (blocksize == 1 ? 0 : blocksize), in,
+                               (size_t)inl);
+
+    if (ret) {
+        if (soutl > INT_MAX) {
+            EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_UPDATE_ERROR);
+            return 0;
+        }
+        *outl = soutl;
+    }
+
+    return ret;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
 
     b = ctx->cipher->block_size;
 
@@ -527,12 +791,41 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
     int i, n;
     unsigned int b;
+    size_t soutl;
+    int ret;
+    int blocksize;
 
     /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
         EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_INVALID_OPERATION);
         return 0;
     }
+
+    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+        goto legacy;
+
+    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
+    if (blocksize < 1 || ctx->cipher->cfinal == NULL) {
+        EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
+    ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl,
+                              blocksize == 1 ? 0 : blocksize);
+
+    if (ret) {
+        if (soutl > INT_MAX) {
+            EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_FINAL_ERROR);
+            return 0;
+        }
+        *outl = soutl;
+    }
+
+    return ret;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
 
     *outl = 0;
 
@@ -590,7 +883,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
     if (c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
         return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
-    if (c->key_len == keylen)
+    if (EVP_CIPHER_CTX_key_length(c) == keylen)
         return 1;
     if ((keylen > 0) && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
         c->key_len = keylen;
@@ -606,6 +899,24 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
         ctx->flags &= ~EVP_CIPH_NO_PADDING;
     else
         ctx->flags |= EVP_CIPH_NO_PADDING;
+
+    if (ctx->cipher != NULL && ctx->cipher->prov != NULL) {
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_int(OSSL_CIPHER_PARAM_PADDING, NULL),
+            OSSL_PARAM_END
+        };
+
+        params[0].data = &pad;
+
+        if (ctx->cipher->ctx_set_params == NULL) {
+            EVPerr(EVP_F_EVP_CIPHER_CTX_SET_PADDING, EVP_R_CTRL_NOT_IMPLEMENTED);
+            return 0;
+        }
+
+        if (!ctx->cipher->ctx_set_params(ctx->provctx, params))
+            return 0;
+    }
+
     return 1;
 }
 
@@ -647,6 +958,36 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
         EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, EVP_R_INPUT_NOT_INITIALIZED);
         return 0;
     }
+
+    if (in->cipher->prov == NULL)
+        goto legacy;
+
+    if (in->cipher->dupctx == NULL) {
+        EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, EVP_R_NOT_ABLE_TO_COPY_CTX);
+        return 0;
+    }
+
+    EVP_CIPHER_CTX_reset(out);
+
+    *out = *in;
+    out->provctx = NULL;
+
+    if (in->fetched_cipher != NULL && !EVP_CIPHER_upref(in->fetched_cipher)) {
+        out->fetched_cipher = NULL;
+        return 0;
+    }
+
+    out->provctx = in->cipher->dupctx(in->provctx);
+    if (out->provctx == NULL) {
+        EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, EVP_R_NOT_ABLE_TO_COPY_CTX);
+        return 0;
+    }
+
+    return 1;
+
+    /* TODO(3.0): Remove legacy code below */
+ legacy:
+
 #ifndef OPENSSL_NO_ENGINE
     /* Make sure it's safe to copy a cipher context using an ENGINE */
     if (in->engine && !ENGINE_init(in->engine)) {
@@ -675,4 +1016,142 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
             return 0;
         }
     return 1;
+}
+
+static void *evp_cipher_from_dispatch(int nid, const OSSL_DISPATCH *fns,
+                                      OSSL_PROVIDER *prov)
+{
+    EVP_CIPHER *cipher = NULL;
+    int fnciphcnt = 0, fnctxcnt = 0;
+
+    if ((cipher = EVP_CIPHER_meth_new(nid, 0, 0)) == NULL)
+        return NULL;
+
+    for (; fns->function_id != 0; fns++) {
+        switch (fns->function_id) {
+        case OSSL_FUNC_CIPHER_NEWCTX:
+            if (cipher->newctx != NULL)
+                break;
+            cipher->newctx = OSSL_get_OP_cipher_newctx(fns);
+            fnctxcnt++;
+            break;
+        case OSSL_FUNC_CIPHER_ENCRYPT_INIT:
+            if (cipher->einit != NULL)
+                break;
+            cipher->einit = OSSL_get_OP_cipher_encrypt_init(fns);
+            fnciphcnt++;
+            break;
+        case OSSL_FUNC_CIPHER_DECRYPT_INIT:
+            if (cipher->dinit != NULL)
+                break;
+            cipher->dinit = OSSL_get_OP_cipher_decrypt_init(fns);
+            fnciphcnt++;
+            break;
+        case OSSL_FUNC_CIPHER_UPDATE:
+            if (cipher->cupdate != NULL)
+                break;
+            cipher->cupdate = OSSL_get_OP_cipher_update(fns);
+            fnciphcnt++;
+            break;
+        case OSSL_FUNC_CIPHER_FINAL:
+            if (cipher->cfinal != NULL)
+                break;
+            cipher->cfinal = OSSL_get_OP_cipher_final(fns);
+            fnciphcnt++;
+            break;
+        case OSSL_FUNC_CIPHER_CIPHER:
+            if (cipher->ccipher != NULL)
+                break;
+            cipher->ccipher = OSSL_get_OP_cipher_cipher(fns);
+            break;
+        case OSSL_FUNC_CIPHER_FREECTX:
+            if (cipher->freectx != NULL)
+                break;
+            cipher->freectx = OSSL_get_OP_cipher_freectx(fns);
+            fnctxcnt++;
+            break;
+        case OSSL_FUNC_CIPHER_DUPCTX:
+            if (cipher->dupctx != NULL)
+                break;
+            cipher->dupctx = OSSL_get_OP_cipher_dupctx(fns);
+            break;
+        case OSSL_FUNC_CIPHER_KEY_LENGTH:
+            if (cipher->key_length != NULL)
+                break;
+            cipher->key_length = OSSL_get_OP_cipher_key_length(fns);
+            break;
+        case OSSL_FUNC_CIPHER_IV_LENGTH:
+            if (cipher->iv_length != NULL)
+                break;
+            cipher->iv_length = OSSL_get_OP_cipher_iv_length(fns);
+            break;
+        case OSSL_FUNC_CIPHER_BLOCK_SIZE:
+            if (cipher->blocksize != NULL)
+                break;
+            cipher->blocksize = OSSL_get_OP_cipher_block_size(fns);
+            break;
+        case OSSL_FUNC_CIPHER_GET_PARAMS:
+            if (cipher->get_params != NULL)
+                break;
+            cipher->get_params = OSSL_get_OP_cipher_get_params(fns);
+            break;
+        case OSSL_FUNC_CIPHER_CTX_GET_PARAMS:
+            if (cipher->ctx_get_params != NULL)
+                break;
+            cipher->ctx_get_params = OSSL_get_OP_cipher_ctx_get_params(fns);
+            break;
+        case OSSL_FUNC_CIPHER_CTX_SET_PARAMS:
+            if (cipher->ctx_set_params != NULL)
+                break;
+            cipher->ctx_set_params = OSSL_get_OP_cipher_ctx_set_params(fns);
+            break;
+        }
+    }
+    if ((fnciphcnt != 0 && fnciphcnt != 3 && fnciphcnt != 4)
+            || (fnciphcnt == 0 && cipher->ccipher == NULL)
+            || fnctxcnt != 2
+            || cipher->blocksize == NULL
+            || cipher->iv_length == NULL
+            || cipher->key_length == NULL) {
+        /*
+         * In order to be a consistent set of functions we must have at least
+         * a complete set of "encrypt" functions, or a complete set of "decrypt"
+         * functions, or a single "cipher" function. In all cases we need a
+         * complete set of context management functions, as well as the
+         * blocksize, iv_length and key_length functions.
+         */
+        EVP_CIPHER_meth_free(cipher);
+        EVPerr(EVP_F_EVP_CIPHER_FROM_DISPATCH, EVP_R_INVALID_PROVIDER_FUNCTIONS);
+        return NULL;
+    }
+    cipher->prov = prov;
+    if (prov != NULL)
+        ossl_provider_upref(prov);
+
+    return cipher;
+}
+
+static int evp_cipher_upref(void *cipher)
+{
+    return EVP_CIPHER_upref(cipher);
+}
+
+static void evp_cipher_free(void *cipher)
+{
+    EVP_CIPHER_meth_free(cipher);
+}
+
+static int evp_cipher_nid(void *vcipher)
+{
+    EVP_CIPHER *cipher = vcipher;
+
+    return cipher->nid;
+}
+
+EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                             const char *properties)
+{
+    return evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
+                             evp_cipher_from_dispatch, evp_cipher_upref,
+                             evp_cipher_free, evp_cipher_nid);
 }

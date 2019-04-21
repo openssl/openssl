@@ -13,6 +13,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "internal/provider_algs.h"
 
 /* Functions provided by the core */
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
@@ -49,10 +50,33 @@ static int deflt_get_params(const OSSL_PROVIDER *prov,
     return 1;
 }
 
-extern const OSSL_DISPATCH sha256_functions[];
-
 static const OSSL_ALGORITHM deflt_digests[] = {
     { "SHA256", "default=yes", sha256_functions },
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM deflt_ciphers[] = {
+    { "AES-256-ECB", "default=yes", aes256ecb_functions },
+    { "AES-192-ECB", "default=yes", aes192ecb_functions },
+    { "AES-128-ECB", "default=yes", aes128ecb_functions },
+    { "AES-256-CBC", "default=yes", aes256cbc_functions },
+    { "AES-192-CBC", "default=yes", aes192cbc_functions },
+    { "AES-128-CBC", "default=yes", aes128cbc_functions },
+    { "AES-256-OFB", "default=yes", aes256ofb_functions },
+    { "AES-192-OFB", "default=yes", aes192ofb_functions },
+    { "AES-128-OFB", "default=yes", aes128ofb_functions },
+    { "AES-256-CFB", "default=yes", aes256cfb_functions },
+    { "AES-192-CFB", "default=yes", aes192cfb_functions },
+    { "AES-128-CFB", "default=yes", aes128cfb_functions },
+    { "AES-256-CFB1", "default=yes", aes256cfb1_functions },
+    { "AES-192-CFB1", "default=yes", aes192cfb1_functions },
+    { "AES-128-CFB1", "default=yes", aes128cfb1_functions },
+    { "AES-256-CFB8", "default=yes", aes256cfb8_functions },
+    { "AES-192-CFB8", "default=yes", aes192cfb8_functions },
+    { "AES-128-CFB8", "default=yes", aes128cfb8_functions },
+    { "AES-256-CTR", "default=yes", aes256ctr_functions },
+    { "AES-192-CTR", "default=yes", aes192ctr_functions },
+    { "AES-128-CTR", "default=yes", aes128ctr_functions },
     { NULL, NULL, NULL }
 };
 
@@ -64,6 +88,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
     switch (operation_id) {
     case OSSL_OP_DIGEST:
         return deflt_digests;
+    case OSSL_OP_CIPHER:
+        return deflt_ciphers;
     }
     return NULL;
 }

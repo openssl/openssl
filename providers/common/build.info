@@ -1,1 +1,4 @@
-SUBDIRS=digests
+SUBDIRS=digests ciphers
+
+SOURCE[../../libcrypto]=\
+        provider_err.c

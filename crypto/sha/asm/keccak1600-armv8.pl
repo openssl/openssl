@@ -51,6 +51,7 @@
 # Kryo		12
 # Denver	7.8
 # Apple A7	7.2
+# ThunderX2	9.7
 #
 # (*)	Corresponds to SHA3-256. No improvement coefficients are listed
 #	because they vary too much from compiler to compiler. Newer

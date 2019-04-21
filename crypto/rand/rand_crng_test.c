@@ -30,7 +30,7 @@ int rand_crngt_get_entropy_cb(unsigned char *buf)
     while ((n = rand_pool_acquire_entropy(crngt_pool)) != 0)
         if (n >= CRNGT_BUFSIZ) {
             p = rand_pool_detach(crngt_pool);
-            memcpy(crngt_prev, p, CRNGT_BUFSIZ);
+            memcpy(buf, p, CRNGT_BUFSIZ);
             rand_pool_reattach(crngt_pool, p);
             return 1;
         }

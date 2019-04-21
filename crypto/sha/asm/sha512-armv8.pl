@@ -28,6 +28,7 @@
 # X-Gene			20.0 (+100%)	12.8 (+300%(***))
 # Mongoose	2.36		13.0 (+50%)	8.36 (+33%)
 # Kryo		1.92		17.4 (+30%)	11.2 (+8%)
+# ThunderX2	2.54		13.2 (+40%)	8.40 (+18%)
 #
 # (*)	Software SHA256 results are of lesser relevance, presented
 #	mostly for informational purposes.

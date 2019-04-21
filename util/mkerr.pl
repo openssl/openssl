@@ -114,7 +114,8 @@ if ( $internal ) {
     die "Cannot mix -internal and -static\n" if $static;
     die "Extra parameters given.\n" if @ARGV;
     @source = ( glob('crypto/*.c'), glob('crypto/*/*.c'),
-                glob('ssl/*.c'), glob('ssl/*/*.c') );
+                glob('ssl/*.c'), glob('ssl/*/*.c'), glob('providers/*.c'),
+                glob('providers/*/*.c'), glob('providers/*/*/*.c') );
 } else {
     die "-module isn't useful without -internal\n" if scalar keys %modules > 0;
     @source = @ARGV;
