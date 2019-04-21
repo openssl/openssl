@@ -594,7 +594,7 @@ my %user = (
     PERL        => env('PERL') || ($^O ne "VMS" ? $^X : "perl"),
     RANLIB      => env('RANLIB'),
     RC          => env('RC') || env('WINDRES'),
-    RCFLAGS     => [],
+    RCFLAGS     => [ env('RCFLAGS') || () ],
     RM          => undef,
    );
 # Info about what "make variables" may be prefixed with the cross compiler
@@ -611,6 +611,7 @@ my %useradd = (
     CXXFLAGS    => [],
     LDFLAGS     => [],
     LDLIBS      => [],
+    RCFLAGS     => [],
    );
 
 my %user_synonyms = (
