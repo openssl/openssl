@@ -293,6 +293,26 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_macs, ossl_init_add_all_macs)
     return 1;
 }
 
+static CRYPTO_ONCE add_all_kdfs = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_init_add_all_kdfs)
+{
+    /*
+     * OPENSSL_NO_AUTOALGINIT is provided here to prevent at compile time
+     * pulling in all the macs during static linking
+     */
+#ifndef OPENSSL_NO_AUTOALGINIT
+    OSSL_TRACE(INIT, "openssl_add_all_kdfs_int()\n");
+    openssl_add_all_kdfs_int();
+#endif
+    return 1;
+}
+
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_kdfs, ossl_init_add_all_kdfs)
+{
+    /* Do nothing */
+    return 1;
+}
+
 static CRYPTO_ONCE config = CRYPTO_ONCE_STATIC_INIT;
 static int config_inited = 0;
 static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
@@ -664,6 +684,15 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if ((opts & OPENSSL_INIT_ADD_ALL_MACS)
             && !RUN_ONCE(&add_all_macs, ossl_init_add_all_macs))
+        return 0;
+
+    if ((opts & OPENSSL_INIT_NO_ADD_ALL_KDFS)
+            && !RUN_ONCE_ALT(&add_all_kdfs, ossl_init_no_add_all_kdfs,
+                             ossl_init_add_all_kdfs))
+        return 0;
+
+    if ((opts & OPENSSL_INIT_ADD_ALL_KDFS)
+            && !RUN_ONCE(&add_all_kdfs, ossl_init_add_all_kdfs))
         return 0;
 
     if ((opts & OPENSSL_INIT_ATFORK)

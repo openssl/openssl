@@ -1938,7 +1938,7 @@ typedef struct kdf_data_st {
 static int kdf_test_init(EVP_TEST *t, const char *name)
 {
     KDF_DATA *kdata;
-    int kdf_nid = OBJ_sn2nid(name);
+    const EVP_KDF *kdf;
 
 #ifdef OPENSSL_NO_SCRYPT
     if (strcmp(name, "scrypt") == 0) {
@@ -1947,12 +1947,13 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     }
 #endif
 
-    if (kdf_nid == NID_undef)
-        kdf_nid = OBJ_ln2nid(name);
+    kdf = EVP_get_kdfbyname(name);
+    if (kdf == NULL)
+        return 0;
 
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
-    kdata->ctx = EVP_KDF_CTX_new_id(kdf_nid);
+    kdata->ctx = EVP_KDF_CTX_new(kdf);
     if (kdata->ctx == NULL) {
         OPENSSL_free(kdata);
         return 0;

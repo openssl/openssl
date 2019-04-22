@@ -200,7 +200,7 @@ static int kdf_sshkdf_derive(EVP_KDF_IMPL *impl, unsigned char *key,
                   impl->type, key, keylen);
 }
 
-const EVP_KDF_METHOD sshkdf_kdf_meth = {
+const EVP_KDF sshkdf_kdf_meth = {
     EVP_KDF_SSHKDF,
     kdf_sshkdf_new,
     kdf_sshkdf_free,

@@ -151,10 +151,11 @@ const EVP_MD *evp_keccak_kmac256(void);
  * object database.
  */
 int EVP_add_mac(const EVP_MAC *mac);
+int EVP_add_kdf(const EVP_KDF *kdf);
 
 /* struct evp_kdf_impl_st is defined by the implementation */
 typedef struct evp_kdf_impl_st EVP_KDF_IMPL;
-typedef struct {
+struct evp_kdf_st {
     int type;
     EVP_KDF_IMPL *(*new) (void);
     void (*free) (EVP_KDF_IMPL *impl);
@@ -163,14 +164,14 @@ typedef struct {
     int (*ctrl_str) (EVP_KDF_IMPL *impl, const char *type, const char *value);
     size_t (*size) (EVP_KDF_IMPL *impl);
     int (*derive) (EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen);
-} EVP_KDF_METHOD;
+};
 
-extern const EVP_KDF_METHOD pbkdf2_kdf_meth;
-extern const EVP_KDF_METHOD scrypt_kdf_meth;
-extern const EVP_KDF_METHOD tls1_prf_kdf_meth;
-extern const EVP_KDF_METHOD hkdf_kdf_meth;
-extern const EVP_KDF_METHOD sshkdf_kdf_meth;
-extern const EVP_KDF_METHOD ss_kdf_meth;
+extern const EVP_KDF pbkdf2_kdf_meth;
+extern const EVP_KDF scrypt_kdf_meth;
+extern const EVP_KDF tls1_prf_kdf_meth;
+extern const EVP_KDF hkdf_kdf_meth;
+extern const EVP_KDF sshkdf_kdf_meth;
+extern const EVP_KDF ss_kdf_meth;
 
 struct evp_md_st {
     /* nid */
@@ -528,6 +529,7 @@ struct evp_pkey_st {
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void openssl_add_all_macs_int(void);
+void openssl_add_all_kdfs_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 
