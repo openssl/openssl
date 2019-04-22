@@ -614,7 +614,6 @@ static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX* ctx)
     if (ctx == NULL)
         return;
     EVP_PKEY_free(ctx->key);
-    X509_free(ctx->cert);
     OPENSSL_free(ctx);
     OSSL_STORE_unregister_loader(pkcs11_scheme);
 }

@@ -640,12 +640,6 @@ EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx,
     rsa_attributes[1].type = CKA_PUBLIC_EXPONENT;
     rsa_attributes[1].pValue = NULL;
     rsa_attributes[1].ulValueLen = 0;
-    rsa = RSA_new();
-
-    if (rsa == NULL) {
-        PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
 
     rv = pkcs11_funcs->C_GetAttributeValue(session, key,
                                            rsa_attributes,
@@ -683,12 +677,14 @@ EVP_PKEY *pkcs11_load_pkey(CK_SESSION_HANDLE session, PKCS11_CTX *ctx,
     }
 
     k = EVP_PKEY_new();
-    if (k == NULL) {
+    rsa = RSA_new();
+
+    if (k == NULL || rsa == NULL) {
         PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    RSA_set_ex_data(rsa, rsa_pkcs11_idx, (char *) (CK_OBJECT_HANDLE) key);
+    RSA_set_ex_data(rsa, rsa_pkcs11_idx, (void *) key);
     RSA_set0_key(rsa,
                  BN_bin2bn(rsa_attributes[0].pValue,
                            rsa_attributes[0].ulValueLen, NULL),
