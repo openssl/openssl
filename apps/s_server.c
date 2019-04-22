@@ -975,7 +975,7 @@ const OPTIONS s_server_options[] = {
 
 int s_server_main(int argc, char *argv[])
 {
-    ENGINE *engine = NULL, *key_engine = NULL;
+    ENGINE *engine = NULL, *key_engine = NULL, dkey_engine = NULL;
     EVP_PKEY *s_key = NULL, *s_dkey = NULL;
     SSL_CONF_CTX *cctx = NULL;
     const SSL_METHOD *meth = TLS_server_method();
@@ -1230,7 +1230,7 @@ int s_server_main(int argc, char *argv[])
             s_dcert_file = opt_arg();
             break;
         case OPT_DKEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &s_dkey_format))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &s_dkey_format))
                 goto opthelp;
             break;
         case OPT_DPASS:

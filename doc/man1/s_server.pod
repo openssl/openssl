@@ -29,7 +29,7 @@ B<openssl> B<s_server>
 [B<-dcert infile|URI>]
 [B<-dcertform PEM|DER>]
 [B<-dkey infile|URI>]
-[B<-dkeyform PEM|DER>]
+[B<-dkeyform PEM|DER|ENGINE>]
 [B<-dpass val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -320,11 +320,11 @@ A file containing trusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
 
-=item B<-dcertform PEM|DER>, B<-dkeyform PEM|DER>
+=item B<-dcertform PEM|DER>, B<-dkeyform PEM|DER|ENGINE>
 
-DEPRECATED AND IGNORED.  The format of the private key is determined
-automatically or according to its scheme, see
-L<openssl/Key, Certificate and CRL Options>.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-dpass val>
 
