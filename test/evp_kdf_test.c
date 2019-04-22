@@ -20,7 +20,7 @@
 static int test_kdf_tls1_prf(void)
 {
     int ret;
-    EVP_KDF_CTX *kctx;
+    EVP_KDF_CTX *kctx = NULL;
     const EVP_KDF *kdf;
     unsigned char out[16];
     const unsigned char expected[sizeof(out)] = {
