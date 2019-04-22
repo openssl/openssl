@@ -975,7 +975,7 @@ const OPTIONS s_server_options[] = {
 
 int s_server_main(int argc, char *argv[])
 {
-    ENGINE *engine = NULL, *key_engine = NULL, dkey_engine = NULL;
+    ENGINE *engine = NULL, *key_engine = NULL, *dkey_engine = NULL;
     EVP_PKEY *s_key = NULL, *s_dkey = NULL;
     SSL_CONF_CTX *cctx = NULL;
     const SSL_METHOD *meth = TLS_server_method();
