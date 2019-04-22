@@ -180,7 +180,7 @@ static int kdf_pbkdf2_derive(EVP_KDF_IMPL *impl, unsigned char *key,
                             impl->md, key, keylen);
 }
 
-const EVP_KDF_METHOD pbkdf2_kdf_meth = {
+const EVP_KDF pbkdf2_kdf_meth = {
     EVP_KDF_PBKDF2,
     kdf_pbkdf2_new,
     kdf_pbkdf2_free,

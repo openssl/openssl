@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include "internal/objects.h"
 #include <openssl/x509.h>
 #include "internal/evp_int.h"
@@ -71,6 +72,24 @@ int EVP_add_mac(const EVP_MAC *m)
     return r;
 }
 
+int EVP_add_kdf(const EVP_KDF *k)
+{
+    int r;
+
+    if (k == NULL)
+        return 0;
+
+    r = OBJ_NAME_add(OBJ_nid2sn(k->type), OBJ_NAME_TYPE_KDF_METH,
+                     (const char *)k);
+    if (r == 0)
+        return 0;
+    r = OBJ_NAME_add(OBJ_nid2ln(k->type), OBJ_NAME_TYPE_KDF_METH,
+                     (const char *)k);
+    return r;
+}
+
+
+
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 {
     const EVP_CIPHER *cp;
@@ -104,9 +123,22 @@ const EVP_MAC *EVP_get_macbyname(const char *name)
     return mp;
 }
 
+const EVP_KDF *EVP_get_kdfbyname(const char *name)
+{
+    const EVP_KDF *kdf;
+
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_KDFS, NULL))
+        return NULL;
+
+    kdf = (const EVP_KDF *)OBJ_NAME_get(name, OBJ_NAME_TYPE_KDF_METH);
+    return kdf;
+}
+
+
 void evp_cleanup_int(void)
 {
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_MAC_METH);
+    OBJ_NAME_cleanup(OBJ_NAME_TYPE_KDF_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
     /*
@@ -251,3 +283,46 @@ void EVP_MAC_do_all_sorted(void (*fn)
     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MAC_METH, do_all_mac_fn, &dc);
 }
 
+struct doall_kdf {
+    void *arg;
+    void (*fn) (const EVP_KDF *kdf,
+                const char *from, const char *to, void *arg);
+};
+
+static void do_all_kdf_fn(const OBJ_NAME *nm, void *arg)
+{
+    struct doall_kdf *dc = arg;
+
+    if (nm->alias)
+        dc->fn(NULL, nm->name, nm->data, dc->arg);
+    else
+        dc->fn((const EVP_KDF *)nm->data, nm->name, NULL, dc->arg);
+}
+
+void EVP_KDF_do_all(void (*fn)
+                    (const EVP_KDF *kdf, const char *from, const char *to,
+                     void *x), void *arg)
+{
+    struct doall_kdf dc;
+
+    /* Ignore errors */
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_KDFS, NULL);
+
+    dc.fn = fn;
+    dc.arg = arg;
+    OBJ_NAME_do_all(OBJ_NAME_TYPE_KDF_METH, do_all_kdf_fn, &dc);
+}
+
+void EVP_KDF_do_all_sorted(void (*fn)
+                           (const EVP_KDF *kdf, const char *from,
+                            const char *to, void *x), void *arg)
+{
+    struct doall_kdf dc;
+
+    /* Ignore errors */
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_KDFS, NULL);
+
+    dc.fn = fn;
+    dc.arg = arg;
+    OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_KDF_METH, do_all_kdf_fn, &dc);
+}

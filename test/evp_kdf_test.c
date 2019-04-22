@@ -21,13 +21,17 @@ static int test_kdf_tls1_prf(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
+    const EVP_KDF *kdf;
     unsigned char out[16];
     const unsigned char expected[sizeof(out)] = {
         0x8e, 0x4d, 0x93, 0x25, 0x30, 0xd7, 0x65, 0xa0,
         0xaa, 0xe9, 0x74, 0xc3, 0x04, 0x73, 0x5e, 0xcc
     };
 
-    ret = TEST_ptr(kctx = EVP_KDF_CTX_new_id(EVP_KDF_TLS1_PRF))
+    ret = TEST_ptr(kdf = EVP_get_kdfbyname(SN_tls1_prf))
+          && TEST_ptr(kctx = EVP_KDF_CTX_new(kdf))
+          && TEST_ptr_eq(EVP_KDF_CTX_kdf(kctx), kdf)
+          && TEST_str_eq(EVP_KDF_name(kdf), SN_tls1_prf)
           && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, EVP_sha256()),
                          0)
           && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_TLS_SECRET,
@@ -307,8 +311,25 @@ static int test_kdf_sshkdf(void)
     return ret;
 }
 
+static int test_kdf_get_kdf(void)
+{
+    const EVP_KDF *kdf1, *kdf2;
+    ASN1_OBJECT *obj;
+
+    return TEST_ptr(obj = OBJ_nid2obj(NID_id_pbkdf2))
+           && TEST_ptr(kdf1 = EVP_get_kdfbyname(LN_id_pbkdf2))
+           && TEST_ptr(kdf2 = EVP_get_kdfbyobj(obj))
+           && TEST_ptr_eq(kdf1, kdf2)
+           && TEST_ptr(kdf1 = EVP_get_kdfbyname(SN_tls1_prf))
+           && TEST_ptr(kdf2 = EVP_get_kdfbyname(LN_tls1_prf))
+           && TEST_ptr_eq(kdf1, kdf2)
+           && TEST_ptr(kdf2 = EVP_get_kdfbynid(NID_tls1_prf))
+           && TEST_ptr_eq(kdf1, kdf2);
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_kdf_get_kdf);
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_hkdf);
     ADD_TEST(test_kdf_pbkdf2);

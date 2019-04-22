@@ -157,7 +157,7 @@ static int kdf_tls1_prf_derive(EVP_KDF_IMPL *impl, unsigned char *key,
                         key, keylen);
 }
 
-const EVP_KDF_METHOD tls1_prf_kdf_meth = {
+const EVP_KDF tls1_prf_kdf_meth = {
     EVP_KDF_TLS1_PRF,
     kdf_tls1_prf_new,
     kdf_tls1_prf_free,

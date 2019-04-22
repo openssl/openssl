@@ -56,8 +56,8 @@ struct evp_mac_ctx_st {
 } /* EVP_MAC_CTX */;
 
 struct evp_kdf_ctx_st {
-    const EVP_KDF_METHOD *kmeth;
-    EVP_KDF_IMPL *impl;          /* Algorithm-specific data */
+    const EVP_KDF *meth;        /* Method structure */
+    void *data;                 /* Individual method data */
 } /* EVP_KDF_CTX */ ;
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
