@@ -4799,5 +4799,5 @@ EC_GROUP_check_named_curve              4746	3_0_0	EXIST::FUNCTION:EC
 EVP_CIPHER_upref                        4747	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_fetch                        4748	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_mode                         4749	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_attach                       4750	1_1_2	EXIST::FUNCTION:
-OSSL_STORE_LOADER_set_attach            4751	1_1_2	EXIST::FUNCTION:
+OSSL_STORE_attach                       4750	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_LOADER_set_attach            4751	3_0_0	EXIST::FUNCTION:
