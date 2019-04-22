@@ -88,8 +88,6 @@ int EVP_add_kdf(const EVP_KDF *k)
     return r;
 }
 
-
-
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 {
     const EVP_CIPHER *cp;
@@ -133,7 +131,6 @@ const EVP_KDF *EVP_get_kdfbyname(const char *name)
     kdf = (const EVP_KDF *)OBJ_NAME_get(name, OBJ_NAME_TYPE_KDF_METH);
     return kdf;
 }
-
 
 void evp_cleanup_int(void)
 {

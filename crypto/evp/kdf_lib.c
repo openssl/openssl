@@ -1,6 +1,6 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
- * Copyright (c) 2018, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,7 +24,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf)
 {
     EVP_KDF_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_KDF_CTX));
 
-    if (ctx == NULL || (ctx->data = kdf->new()) == NULL) {
+    if (ctx == NULL || (ctx->impl = kdf->new()) == NULL) {
         EVPerr(EVP_F_EVP_KDF_CTX_NEW, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ctx);
         ctx = NULL;
@@ -58,7 +58,7 @@ void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx)
     if (ctx == NULL)
         return;
 
-    ctx->meth->free(ctx->data);
+    ctx->meth->free(ctx->impl);
     OPENSSL_free(ctx);
 }
 
@@ -68,7 +68,7 @@ void EVP_KDF_reset(EVP_KDF_CTX *ctx)
         return;
 
     if (ctx->meth->reset != NULL)
-        ctx->meth->reset(ctx->data);
+        ctx->meth->reset(ctx->impl);
 }
 
 int EVP_KDF_ctrl(EVP_KDF_CTX *ctx, int cmd, ...)
@@ -91,7 +91,7 @@ int EVP_KDF_vctrl(EVP_KDF_CTX *ctx, int cmd, va_list args)
     if (ctx == NULL)
         return 0;
 
-    return ctx->meth->ctrl(ctx->data, cmd, args);
+    return ctx->meth->ctrl(ctx->impl, cmd, args);
 }
 
 int EVP_KDF_ctrl_str(EVP_KDF_CTX *ctx, const char *type, const char *value)
@@ -106,7 +106,7 @@ int EVP_KDF_ctrl_str(EVP_KDF_CTX *ctx, const char *type, const char *value)
         return -2;
     }
 
-    ret = ctx->meth->ctrl_str(ctx->data, type, value);
+    ret = ctx->meth->ctrl_str(ctx->impl, type, value);
     if (ret == -2)
         EVPerr(EVP_F_EVP_KDF_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
 
@@ -121,7 +121,7 @@ size_t EVP_KDF_size(EVP_KDF_CTX *ctx)
     if (ctx->meth->size == NULL)
         return SIZE_MAX;
 
-    return ctx->meth->size(ctx->data);
+    return ctx->meth->size(ctx->impl);
 }
 
 int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen)
@@ -129,6 +129,5 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen)
     if (ctx == NULL)
         return 0;
 
-    return ctx->meth->derive(ctx->data, key, keylen);
+    return ctx->meth->derive(ctx->impl, key, keylen);
 }
-
