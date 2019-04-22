@@ -17,7 +17,6 @@
 #include <openssl/ec.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
-#include <openssl/hmac.h>
 
 #define FIPS_STATE_INIT     0
 #define FIPS_STATE_RUNNING  1
@@ -221,41 +220,45 @@ static int verify_integrity(BIO *bio, BIO_READ_CB read_cb,
 {
 #if 0
     int ret = 0;
-    HMAC_CTX *ctx = NULL;
     unsigned char out[EVP_MAX_MD_SIZE];
-    unsigned int out_len = 0;
-    size_t bytes_read = 0;
+    size_t bytes_read = 0, out_len = 0;
     unsigned char buf[INTEGRITY_BUF_SIZE];
     const EVP_MD *md = EVP_sha256();
+    const EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
 
     SELF_TEST_EVENT_onbegin(ev, type, SELF_TEST_DESC_INTEGRITY_HMAC);
 
-    /* TODO - Is HMAC_ the correct interface to call ? */
-    ctx = HMAC_CTX_new();
-    if (ctx == NULL)
+    mac = EVP_get_macbyname("HMAC");
+    if (mac == NULL)
+        goto err;
+    ctx = EVP_MAC_CTX_new(mac);
+    if (ctx == NULL
+        || EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_MD, md) <= 0
+        || EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY, fixed_key,
+                        sizeof(fixed_key)) <= 0
+        || !EVP_MAC_init(ctx))
         goto err;
 
-    if (!HMAC_Init_ex(ctx, fixed_key, (int)sizeof(fixed_key), md, NULL))
-        goto err;
     while (1) {
         ret = read_cb(bio, buf, sizeof(buf), &bytes_read);
         if (ret != 1)
             break;
-        if (!HMAC_Update(ctx, buf, bytes_read))
+        if (!EVP_MAC_update(ctx, buf, bytes_read))
             goto err;
     }
-    if (!HMAC_Final(ctx, out, &out_len))
+    if (!EVP_MAC_final(ctx, out, &out_len))
         goto err;
 
     SELF_TEST_EVENT_oncorrupt_byte(ev, out);
 
-    if (expected_len != (size_t)out_len
-            || memcmp(expected, out, (size_t)out_len) != 0)
+    if (expected_len != out_len
+            || memcmp(expected, out, out_len) != 0)
         goto err;
     ret = 0;
 err:
     SELF_TEST_EVENT_onend(ev, ret);
-    HMAC_CTX_free(ctx);
+    EVP_MAC_CTX_free(ctx);
     return ret;
 #else
     return 1;
