@@ -425,7 +425,7 @@ size_t CRYPTO_ccm128_tag(CCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
 
     M *= 2;
     M += 2;
-    if (len < M)
+    if (len != M)
         return 0;
     memcpy(tag, ctx->cmac.c, M);
     return M;
