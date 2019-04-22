@@ -3249,7 +3249,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 break;
             }
 
-            if ((file = BIO_new_file(p, "r")) == NULL) {
+            if ((file = BIO_new_file(p, "rb")) == NULL) {
                 BIO_puts(io, text);
                 BIO_printf(io, "Error opening '%s'\r\n", p);
                 ERR_print_errors(io);
