@@ -971,20 +971,30 @@ if (grep { /-rpath\b/ } ($user{LDFLAGS} ? @{$user{LDFLAGS}} : ())
         "***** any of asan, msan or ubsan\n";
 }
 
-my @tocheckfor = (keys %disabled);
-while (@tocheckfor) {
-    my %new_tocheckfor = ();
-    my @cascade_copy = (@disable_cascades);
-    while (@cascade_copy) {
-        my ($test, $descendents) = (shift @cascade_copy, shift @cascade_copy);
-        if (ref($test) eq "CODE" ? $test->() : defined($disabled{$test})) {
-            foreach(grep { !defined($disabled{$_}) } @$descendents) {
-                $new_tocheckfor{$_} = 1; $disabled{$_} = "forced";
+sub disable {
+    my $disable_type = shift;
+
+    for (@_) {
+        $disabled{$_} = $disable_type;
+    }
+
+    my @tocheckfor = (@_ ? @_ : keys %disabled);
+    while (@tocheckfor) {
+        my %new_tocheckfor = ();
+        my @cascade_copy = (@disable_cascades);
+        while (@cascade_copy) {
+            my ($test, $descendents) =
+                (shift @cascade_copy, shift @cascade_copy);
+            if (ref($test) eq "CODE" ? $test->() : defined($disabled{$test})) {
+                foreach (grep { !defined($disabled{$_}) } @$descendents) {
+                    $new_tocheckfor{$_} = 1; $disabled{$_} = "cascade";
+                }
             }
         }
+        @tocheckfor = (keys %new_tocheckfor);
     }
-    @tocheckfor = (keys %new_tocheckfor);
 }
+disable();                     # First cascade run
 
 our $die = sub { die @_; };
 if ($target eq "TABLE") {
@@ -1109,6 +1119,8 @@ $target{module_ldflags} = $target{shared_ldflag} unless defined $target{module_l
 my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
 $config{conf_files} = [ sort keys %conf_files ];
 
+# Using sub disable within these loops may prove fragile, so we run
+# a cascade afterwards
 foreach my $feature (@{$target{disable}}) {
     if (exists $deprecated_disablables{$feature}) {
         warn "***** config $target disables deprecated feature $feature\n";
@@ -1127,6 +1139,7 @@ foreach my $feature (@{$target{enable}}) {
         delete $disabled{$feature};
     }
 }
+disable();                      # Run a cascade now
 
 $target{CXXFLAGS}//=$target{CFLAGS} if $target{CXX};
 $target{cxxflags}//=$target{cflags} if $target{CXX};
@@ -1282,7 +1295,7 @@ unless ($disabled{threads}) {
     if ($auto_threads) {
         # Enabled by default, disable it forcibly if unavailable
         if ($target{thread_scheme} eq "(unknown)") {
-            $disabled{threads} = "unavailable";
+            disable("unavailable", 'threads');
         }
     } else {
         # The user chose to enable threads explicitly, let's see
@@ -1317,9 +1330,7 @@ if ($target{shared_target} eq "")
         {
         $no_shared_warn = 1
             if (!$disabled{shared} || !$disabled{"dynamic-engine"});
-        $disabled{shared} = "no-shared-target";
-        $disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
-            "no-shared-target";
+        disable('no-shared-target', 'pic');
         }
 
 if ($disabled{"dynamic-engine"}) {
@@ -1468,7 +1479,7 @@ if (!$disabled{makedepend}) {
         # In all other cases, we look for 'makedepend', and disable the
         # capability if not found.
         $config{makedepprog} = which('makedepend');
-        $disabled{makedepend} = "unavailable" unless $config{makedepprog};
+        disable('unavailable', 'makedepend') unless $config{makedepprog};
     }
 }
 
@@ -1559,9 +1570,7 @@ if ($strict_warnings)
         }
 
 if (grep { $_ eq '-static' } @{$config{LDFLAGS}}) {
-    $disabled{"pic"} = "forced";
-    $disabled{"shared"} = "forced";
-    $disabled{"threads"} = "forced";
+    disable('static', 'pic', 'threads');
 }
 
 foreach my $idx (qw(CFLAGS CXXFLAGS))
@@ -1598,15 +1607,15 @@ unless ($disabled{afalgeng}) {
             ($mi2) = $mi2 =~ /(\d+)/;
             my $ver = $ma*10000 + $mi1*100 + $mi2;
             if ($ver < $minver) {
-                $disabled{afalgeng} = "too-old-kernel";
+                disable('too-old-kernel', 'afalgeng');
             } else {
                 push @{$config{engdirs}}, "afalg";
             }
         } else {
-            $disabled{afalgeng} = "cross-compiling";
+            disable('cross-compiling', 'afalgeng');
         }
     } else {
-        $disabled{afalgeng}  = "not-linux";
+        disable('not-linux', 'afalgeng');
     }
 }
 
