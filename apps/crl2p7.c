@@ -123,7 +123,7 @@ int crl2pkcs7_main(int argc, char **argv)
     if (certflst != NULL)
         for (i = 0; i < sk_OPENSSL_STRING_num(certflst); i++) {
             certfile = sk_OPENSSL_STRING_value(certflst, i);
-            if (!load_certs(certfile, cert_stack, NULL, "certificates")) {
+            if (!load_certs(certfile, &cert_stack, NULL, "certificates")) {
                 BIO_printf(bio_err, "error loading certificates\n");
                 ERR_print_errors(bio_err);
                 goto end;
