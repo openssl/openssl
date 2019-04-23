@@ -892,9 +892,6 @@ while (@argvcopy)
                 elsif (/^-static$/)
                         {
                         push @{$useradd{LDFLAGS}}, $_;
-                        $disabled{"pic"} = "forced";
-                        $disabled{"shared"} = "forced";
-                        $disabled{"threads"} = "forced";
                         }
                 elsif (/^-D(.*)$/)
                         {
@@ -1583,6 +1580,13 @@ if ($strict_warnings)
                 @{$clang_devteam_warn{CXXFLAGS}}
                         if (defined($predefined_CXX{__clang__}));
         }
+
+if (grep { $_ eq '-static' } @{$config{LDFLAGS}}) {
+    $disabled{"pic"} = "forced";
+    $disabled{"shared"} = "forced";
+    $disabled{"threads"} = "forced";
+}
+
 foreach my $idx (qw(CFLAGS CXXFLAGS))
         {
         $config{$idx} = [ map { $_ eq '--ossl-strict-warnings'
