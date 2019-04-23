@@ -1179,6 +1179,22 @@ foreach (keys %user) {
     delete $config{$_} unless defined $config{$_};
 }
 
+# Finish up %config by appending things the user gave us on the command line
+# apart from "make variables"
+foreach (keys %useradd) {
+    # The must all be lists, so we assert that here
+    die "internal error: \$useradd{$_} isn't an ARRAY\n"
+        unless ref $useradd{$_} eq 'ARRAY';
+
+    if (defined $config{$_}) {
+        push @{$config{$_}}, @{$useradd{$_}};
+    } else {
+        $config{$_} = [ @{$useradd{$_}} ];
+    }
+}
+# At this point, we can forget everything about %user and %useradd,
+# because it's now all been merged into the corresponding $config entry
+
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
@@ -1255,8 +1271,7 @@ if ($target =~ /^mingw/ && `$config{CC} --target-help 2>&1` =~ m/-mno-cygwin/m)
         }
 
 if ($target =~ /linux.*-mips/ && !$disabled{asm}
-        && !grep { $_ !~ /-m(ips|arch=)/ } (@{$user{CFLAGS}},
-                                            @{$useradd{CFLAGS}})) {
+        && !grep { $_ !~ /-m(ips|arch=)/ } (@{$config{CFLAGS}})) {
         # minimally required architecture flags for assembly modules
         my $value;
         $value = '-mips2' if ($target =~ /mips32/);
@@ -1281,8 +1296,7 @@ unless ($disabled{threads}) {
             # system-dependent compiler options that are necessary.  We
             # can't truly check that the given options are correct, but
             # we expect the user to know what [s]He is doing.
-            if (!@{$user{CFLAGS}} && !@{$useradd{CFLAGS}}
-                    && !@{$user{CPPDEFINES}} && !@{$useradd{CPPDEFINES}}) {
+            if (!@{$config{CFLAGS}} && !@{$config{CPPDEFINES}}) {
                 die "You asked for multi-threading support, but didn't\n"
                     ,"provide any system-specific compiler options\n";
             }
@@ -1548,10 +1562,10 @@ if ($strict_warnings)
         }
 foreach my $idx (qw(CFLAGS CXXFLAGS))
         {
-        $useradd{$idx} = [ map { $_ eq '--ossl-strict-warnings'
-                                     ? @{$strict_warnings_collection{$idx}}
-                                     : ( $_ ) }
-                               @{$useradd{$idx}} ];
+        $config{$idx} = [ map { $_ eq '--ossl-strict-warnings'
+                                    ? @{$strict_warnings_collection{$idx}}
+                                : ( $_ ) }
+                          @{$config{$idx}} ];
         }
 
 unless ($disabled{"crypto-mdebug-backtrace"})
@@ -1593,20 +1607,6 @@ unless ($disabled{afalgeng}) {
 }
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
-
-# Finish up %config by appending things the user gave us on the command line
-# apart from "make variables"
-foreach (keys %useradd) {
-    # The must all be lists, so we assert that here
-    die "internal error: \$useradd{$_} isn't an ARRAY\n"
-        unless ref $useradd{$_} eq 'ARRAY';
-
-    if (defined $config{$_}) {
-        push @{$config{$_}}, @{$useradd{$_}};
-    } else {
-        $config{$_} = [ @{$useradd{$_}} ];
-    }
-}
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
