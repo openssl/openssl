@@ -125,7 +125,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
 # if defined(RAND_SEED_VXRANDLIB)
-/* vxRandLib based entropy method */
+    /* vxRandLib based entropy method */
     size_t bytes_needed;
 
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
@@ -139,15 +139,20 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         while ((result != OK) && (retryCount < 10)) {
             RANDOM_NUM_GEN_STATUS status = randStatus();
             
-            if ((status == RANDOM_NUM_GEN_ENOUGH_ENTROPY) || (status == RANDOM_NUM_GEN_MAX_ENTROPY) ) {
+            if ((status == RANDOM_NUM_GEN_ENOUGH_ENTROPY) 
+				|| (status == RANDOM_NUM_GEN_MAX_ENTROPY) ) {
                 result = randBytes(buffer, bytes_needed);
-                if (result == OK)  rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);                
-                /* no else here: randStatus said ok, if randBytes failed it will result in another loop or no entropy */
+                if (result == OK)  
+					rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);                
+                /* no else here: randStatus said ok, if randBytes failed 
+				 * it will result in another loop or no entropy 
+				 */
             } else {
                 /* 
-                 *   give a minimum delay here to allow OS to collect more entropy 
-                 *    taskDelay duration will depend on the system tick, this is by design
-                 *    as the sw-random lib uses interupts which will at least happen during ticks
+                 *   give a minimum delay here to allow OS to collect more 
+                 *   entropytaskDelay duration will depend on the system tick,  
+                 *   this is by design as the sw-random lib uses interupts 
+				 *   which will at least happen during ticks
                  */                
                 taskDelay (5);
             }
@@ -156,7 +161,9 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     }
     return rand_pool_entropy_available(pool);    
 # else
-    /* SEED_NONE means none, without randlib we dont have entropy and rely on it being added externaly */
+    /* SEED_NONE means none, without randlib we dont have entropy and 
+	 * rely on it being added externaly 
+	 */
     return rand_pool_entropy_available(pool);
 # endif /* defined(RAND_SEED_VXRANDLIB) */
 }
