@@ -317,10 +317,22 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
  */
 static void bin28_to_felem(felem out, const u8 in[28])
 {
+#ifdef PEDANTIC
+    uint64_t temp;
+    memcpy(&temp, in+ 0, 8);
+    out[0] = temp & 0x00ffffffffffffff;
+    memcpy(&temp, in+ 7, 8);
+    out[1] = temp & 0x00ffffffffffffff;
+    memcpy(&temp, in+14, 8);
+    out[2] = temp & 0x00ffffffffffffff;
+    memcpy(&temp, in+20, 8);
+    out[3] = temp >> 8;
+#else
     out[0] = *((const uint64_t *)(in)) & 0x00ffffffffffffff;
     out[1] = (*((const uint64_t *)(in + 7))) & 0x00ffffffffffffff;
     out[2] = (*((const uint64_t *)(in + 14))) & 0x00ffffffffffffff;
     out[3] = (*((const uint64_t *)(in+20))) >> 8;
+#endif
 }
 
 static void felem_to_bin28(u8 out[28], const felem in)

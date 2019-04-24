@@ -463,7 +463,7 @@ unsigned long lh_strhash(const char *c)
         v = n | (*c);
         n += 0x100;
         r = (int)((v >> 2) ^ v) & 0x0f;
-        ret = (ret << r) | (ret >> (32 - r));
+        ret = (ret << (r&31)) | (ret >> ((32-r)&31));
         ret &= 0xFFFFFFFFL;
         ret ^= v * v;
         c++;

@@ -139,6 +139,27 @@ static const limb bottom58bits = 0x3ffffffffffffff;
  */
 static void bin66_to_felem(felem out, const u8 in[66])
 {
+#ifdef PEDANTIC
+    limb temp;
+    memcpy(&temp, in+ 0, sizeof(limb));
+    out[0] = temp & bottom58bits;
+    memcpy(&temp, in+ 7, sizeof(limb));
+    out[1] = (temp >> 2) & bottom58bits;
+    memcpy(&temp, in+14, sizeof(limb));
+    out[2] = (temp >> 4) & bottom58bits;
+    memcpy(&temp, in+21, sizeof(limb));
+    out[3] = (temp >> 6) & bottom58bits;
+    memcpy(&temp, in+29, sizeof(limb));
+    out[4] = temp & bottom58bits;
+    memcpy(&temp, in+36, sizeof(limb));
+    out[5] = (temp >> 2) & bottom58bits;
+    memcpy(&temp, in+43, sizeof(limb));
+    out[6] = (temp >> 4) & bottom58bits;
+    memcpy(&temp, in+50, sizeof(limb));
+    out[7] = (temp >> 6) & bottom58bits;
+    memcpy(&temp, in+58, sizeof(limb));
+    out[8] = temp & bottom57bits;
+#else
     out[0] = (*((limb *) & in[0])) & bottom58bits;
     out[1] = (*((limb *) & in[7]) >> 2) & bottom58bits;
     out[2] = (*((limb *) & in[14]) >> 4) & bottom58bits;
@@ -148,6 +169,7 @@ static void bin66_to_felem(felem out, const u8 in[66])
     out[6] = (*((limb *) & in[43]) >> 4) & bottom58bits;
     out[7] = (*((limb *) & in[50]) >> 6) & bottom58bits;
     out[8] = (*((limb *) & in[58])) & bottom57bits;
+#endif
 }
 
 /*
@@ -156,6 +178,46 @@ static void bin66_to_felem(felem out, const u8 in[66])
  */
 static void felem_to_bin66(u8 out[66], const felem in)
 {
+#ifdef PEDANTIC
+    limb temp;
+    memset(out, 0, 66);
+
+    memcpy(&temp, out+ 0, sizeof(limb));
+    temp = in[0];
+    memcpy(out+ 0, &temp, sizeof(limb));
+
+    memcpy(&temp, out+ 7, sizeof(limb));
+    temp |= in[1] << 2;
+    memcpy(out+ 7, &temp, sizeof(limb));
+
+    memcpy(&temp, out+14, sizeof(limb));
+    temp |= in[2] << 4;
+    memcpy(out+14, &temp, sizeof(limb));
+
+    memcpy(&temp, out+21, sizeof(limb));
+    temp |= in[3] << 6;
+    memcpy(out+21, &temp, sizeof(limb));
+
+    memcpy(&temp, out+29, sizeof(limb));
+    temp = in[4];
+    memcpy(out+29, &temp, sizeof(limb));
+
+    memcpy(&temp, out+36, sizeof(limb));
+    temp |= in[5] << 2;
+    memcpy(out+36, &temp, sizeof(limb));
+
+    memcpy(&temp, out+43, sizeof(limb));
+    temp |= in[6] << 4;
+    memcpy(out+43, &temp, sizeof(limb));
+
+    memcpy(&temp, out+50, sizeof(limb));
+    temp |= in[7] << 6;
+    memcpy(out+50, &temp, sizeof(limb));
+
+    memcpy(&temp, out+58, sizeof(limb));
+    temp = in[8];
+    memcpy(out+58, &temp, sizeof(limb));
+#else
     memset(out, 0, 66);
     (*((limb *) & out[0])) = in[0];
     (*((limb *) & out[7])) |= in[1] << 2;
@@ -166,6 +228,7 @@ static void felem_to_bin66(u8 out[66], const felem in)
     (*((limb *) & out[43])) |= in[6] << 4;
     (*((limb *) & out[50])) |= in[7] << 6;
     (*((limb *) & out[58])) = in[8];
+#endif
 }
 
 /* To preserve endianness when using BN_bn2bin and BN_bin2bn */

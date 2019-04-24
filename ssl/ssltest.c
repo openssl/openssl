@@ -470,9 +470,16 @@ static int cb_server_alpn(SSL *s, const unsigned char **out,
 static int verify_alpn(SSL *client, SSL *server)
 {
     const unsigned char *client_proto, *server_proto;
+    const unsigned char null_protocol[1] = {0};
     unsigned int client_proto_len = 0, server_proto_len = 0;
     SSL_get0_alpn_selected(client, &client_proto, &client_proto_len);
     SSL_get0_alpn_selected(server, &server_proto, &server_proto_len);
+
+    if (client_proto == NULL)
+	client_proto = null_protocol;
+
+    if (server_proto == NULL)
+        server_proto = null_protocol;
 
     if (alpn_selected != NULL) {
         OPENSSL_free(alpn_selected);

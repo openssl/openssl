@@ -133,7 +133,8 @@ int ssl_check_serverhello_tlsext(SSL *s);
 #endif
 
 #define CHECKLEN(curr, val, limit) \
-    (((curr) >= (limit)) || (size_t)((limit) - (curr)) < (size_t)(val))
+    (((size_t)(curr) >= (size_t)(limit)) || \
+     ((size_t)(limit) - (size_t)(curr)) < (size_t)(val))
 
 SSL3_ENC_METHOD TLSv1_enc_data = {
     tls1_enc,

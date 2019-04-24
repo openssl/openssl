@@ -153,7 +153,7 @@
 #if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
 # define ROTL(a,n)     (_lrotl(a,n))
 #elif defined(PEDANTIC)
-# define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>((32-(n))&31)))
+# define ROTL(a,n)     ((((a)<<((n)&31))|((a)>>((32-(n))&31)))&0xffffffffL)
 #else
 # define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>(32-(n))))
 #endif
