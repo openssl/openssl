@@ -265,6 +265,7 @@ static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
                 if (tmpstr == NULL)
                     goto memerr;
                 ctx->id = (CK_BYTE *) pkcs11_hex2a(tmpstr);
+                ctx->idlen = (CK_ULONG) strlen((char *) ctx->id);
             } else if (strncmp(p, "type=", 5) == 0 && ctx->type == NULL) {
                 p += 5;
                 tmpstr = OPENSSL_strdup(p);
@@ -346,7 +347,8 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
             PKCS11err(PKCS11_F_PKCS11_PARSE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        id = pkcs11_hex2a(id);
+        ctx->id = (CK_BYTE *) pkcs11_hex2a(id);
+        ctx->idlen = (CK_ULONG) strlen((char *) ctx->id);
     }
 
     if (ctx->module_path == NULL) {
