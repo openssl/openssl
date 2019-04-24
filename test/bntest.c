@@ -1954,6 +1954,73 @@ static int test_rand(void)
     return st;
 }
 
+/*
+ * Run some statistical tests to provide a degree confidence that the
+ * BN_rand_range() function works as expected.  The critical value
+ * is computed using the R statistical suite:
+ *
+ *      qchisq(alpha, df=iterations - 1)
+ *
+ * where alpha is the significance level (0.95 is used here) and iterations
+ * is the number of samples being drawn.
+ */
+static const struct {
+    unsigned int range;
+    unsigned int iterations;
+    double critical;
+} rand_range_cases[] = {
+    { 2,    100,    123.2252 /* = qchisq(.95, df=99)    */ },
+    { 12,   1000,   1073.643 /* = qchisq(.95, df=999)   */ },
+    { 1023, 100000, 100735.7 /* = qchisq(.95, df=99999) */ },
+};
+
+static int test_rand_range(int n)
+{
+    const unsigned int range = rand_range_cases[n].range;
+    const unsigned int iterations = rand_range_cases[n].iterations;
+    const double critical = rand_range_cases[n].critical;
+    const double expected = iterations / (double)range;
+    double sum = 0;
+    BIGNUM *rng = NULL, *val = NULL;
+    size_t *counts;
+    unsigned int i, v;
+    int res = 0;
+
+    if (!TEST_ptr(counts = OPENSSL_zalloc(sizeof(*counts) * range))
+        || !TEST_ptr(rng = BN_new())
+        || !TEST_ptr(val = BN_new())
+        || !TEST_true(BN_set_word(rng, range)))
+        goto err;
+    for (i = 0; i < iterations; i++) {
+        if (!TEST_true(BN_rand_range(val, rng))
+            || !TEST_uint_lt(v = (unsigned int)BN_get_word(val), range))
+            goto err;
+        counts[v]++;
+    }
+
+    TEST_note("range %u  iterations %u  critical %.4f", range, iterations,
+              critical);
+    if (range < 20) {
+        TEST_note("frequencies (expected %.2f)", expected);
+        for (i = 0; i < range; i++)
+            TEST_note("    %2u  %6zu", i, counts[i]);
+    }
+    for (i = 0; i < range; i++) {
+        const double delta = counts[i] - expected;
+        sum += delta * delta;
+    }
+    sum /= expected;
+    TEST_note("test statistic %.4f", sum);
+
+    if (TEST_double_lt(sum, critical))
+        res = 1;
+err:
+    BN_free(rng);
+    BN_free(val);
+    OPENSSL_free(counts);
+    return res;
+}
+
 static int test_negzero(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
@@ -2421,6 +2488,7 @@ int setup_tests(void)
 #endif
         ADD_ALL_TESTS(test_is_prime, (int)OSSL_NELEM(primes));
         ADD_ALL_TESTS(test_not_prime, (int)OSSL_NELEM(not_primes));
+        ADD_ALL_TESTS(test_rand_range, OSSL_NELEM(rand_range_cases));
     } else {
         ADD_ALL_TESTS(run_file_tests, n);
     }
