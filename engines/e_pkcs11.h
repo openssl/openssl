@@ -64,8 +64,10 @@ static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
 
 typedef struct PKCS11_CTX_st {
     CK_BYTE *id;
+    CK_ULONG idlen;
     CK_BYTE *label;
     CK_BYTE *pin;
+    CK_ULONG pinlen;
     CK_UTF8CHAR token[32];
     CK_CHAR serial[16];
     CK_UTF8CHAR model[16];
@@ -110,9 +112,12 @@ int pkcs11_search_next_ids(OSSL_STORE_LOADER_CTX *ctx, char **name,
                            char **description);
 int pkcs11_search_next_object(OSSL_STORE_LOADER_CTX *ctx,
                               CK_OBJECT_CLASS *class);
+int pkcs11_search_next_cert(OSSL_STORE_LOADER_CTX *ctx,
+                            CK_BYTE **id, CK_ULONG *idlen);
 int pkcs11_search_start(OSSL_STORE_LOADER_CTX *store_ctx,
                         PKCS11_CTX *pkcs11_ctx);
 void pkcs11_finalize(void);
 void pkcs11_end_session(CK_SESSION_HANDLE session);
 int pkcs11_logout(CK_SESSION_HANDLE session);
+void pkcs11_close_operation(CK_SESSION_HANDLE session);
 extern int rsa_pkcs11_idx;

@@ -454,11 +454,10 @@ int pkcs11_login(CK_SESSION_HANDLE session, PKCS11_CTX *ctx,
     /* Binary pins not supported */
     CK_RV rv;
     if (ctx->pin != NULL) {
-        rv = pkcs11_funcs->C_Login(session, userType, ctx->pin,
-                                   (CK_ULONG)strlen((char *)ctx->pin));
+        rv = pkcs11_funcs->C_Login(session, userType, ctx->pin, ctx->pinlen);
         if (rv == CKR_GENERAL_ERROR && userType == CKU_CONTEXT_SPECIFIC) {
             rv = pkcs11_funcs->C_Login(session, CKU_USER, ctx->pin,
-                                       (CK_ULONG)strlen((char *)ctx->pin));
+                                       ctx->pinlen);
         }
         if (rv != CKR_OK) {
             PKCS11_trace("C_Login failed, error: %#08X\n", rv);
@@ -510,7 +509,7 @@ CK_OBJECT_HANDLE pkcs11_find_private_key(CK_SESSION_HANDLE session,
     if (ctx->id != NULL) {
         tmpl[2].type = CKA_ID;
         tmpl[2].pValue = ctx->id;
-        tmpl[2].ulValueLen = (CK_ULONG)strlen((char *)ctx->id);
+        tmpl[2].ulValueLen = ctx->idlen;
     } else {
         tmpl[2].type = CKA_LABEL;
         tmpl[2].pValue = ctx->label;
@@ -578,7 +577,7 @@ CK_OBJECT_HANDLE pkcs11_find_public_key(CK_SESSION_HANDLE session,
     if (ctx->id != NULL) {
         tmpl[2].type = CKA_ID;
         tmpl[2].pValue = ctx->id;
-        tmpl[2].ulValueLen = (CK_ULONG)strlen((char *)ctx->id);
+        tmpl[2].ulValueLen = ctx->idlen;
     } else {
         tmpl[2].type = CKA_LABEL;
         tmpl[2].pValue = ctx->label;
@@ -816,7 +815,7 @@ int pkcs11_search_next_object(OSSL_STORE_LOADER_CTX *ctx,
                                      1, &nObj);
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjects: Error = 0x%.8lX\n", rv);
-        goto end;
+        return 1;
     }
 
     if (nObj == 0)
@@ -828,7 +827,7 @@ int pkcs11_search_next_object(OSSL_STORE_LOADER_CTX *ctx,
     if (rv != CKR_OK) {
         PKCS11_trace("C_GetAttributeValue: \
                       rv = 0x%.8lX\n", rv);
-        goto end;
+        return 1;
     }
     if (key_class == CKO_CERTIFICATE)
         ret = pkcs11_get_cert(ctx, obj);
@@ -837,8 +836,69 @@ int pkcs11_search_next_object(OSSL_STORE_LOADER_CTX *ctx,
 
     *class = key_class;
     return ret;
- end:
-    return 1;
+}
+
+int pkcs11_search_next_cert(OSSL_STORE_LOADER_CTX *ctx,
+                            CK_BYTE **id, CK_ULONG *idlen)
+{
+    CK_RV rv;
+    CK_ATTRIBUTE template[2];
+    CK_OBJECT_HANDLE obj;
+    CK_ULONG nObj = 0;
+    CK_OBJECT_CLASS key_class = CKO_CERTIFICATE;
+    int ret = 0;
+
+    template[0].type = CKA_CLASS;
+    template[0].pValue = &key_class;
+    template[0].ulValueLen = sizeof(key_class);
+    template[1].type = CKA_ID;
+    template[1].pValue = NULL;
+    template[1].ulValueLen = 0;
+
+    rv = pkcs11_funcs->C_FindObjects(ctx->session, &obj,
+                                     1, &nObj);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjects: Error = 0x%.8lX\n", rv);
+        return 1;
+    }
+
+    if (nObj == 0)
+        return 1;
+
+    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, obj,
+                                           template,
+                                           OSSL_NELEM(template));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue: \
+                      rv = 0x%.8lX\n", rv);
+        return 1;
+    }
+
+    template[1].pValue = OPENSSL_malloc(template[1].ulValueLen);
+
+    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, obj,
+                                           template,
+                                           OSSL_NELEM(template));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue: \
+                      rv = 0x%.8lX\n", rv);
+        return 1;
+    }
+
+    ret = pkcs11_get_cert(ctx, obj);
+    *id = (CK_BYTE *) template[1].pValue;
+    *idlen = (CK_ULONG) template[1].ulValueLen;
+    return ret;
+}
+
+void pkcs11_close_operation(CK_SESSION_HANDLE session)
+{
+    CK_RV rv;
+
+    rv = pkcs11_funcs->C_FindObjectsFinal(session);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjectsFinal failed, error: %#08X\n", rv);
+    }
 }
 
 static int pkcs11_get_cert(OSSL_STORE_LOADER_CTX *store_ctx,
@@ -993,7 +1053,7 @@ int pkcs11_search_start(OSSL_STORE_LOADER_CTX *store_ctx,
         idx++;
         tmpl[idx].type = CKA_ID;
         tmpl[idx].pValue = pkcs11_ctx->id;
-        tmpl[idx].ulValueLen = (CK_ULONG)strlen((char *)pkcs11_ctx->id);
+        tmpl[idx].ulValueLen = pkcs11_ctx->idlen;
     } else if (pkcs11_ctx->label != NULL) {
         idx++;
         tmpl[idx].type = CKA_LABEL;

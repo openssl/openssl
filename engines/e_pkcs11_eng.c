@@ -14,6 +14,7 @@
 
 #include "e_pkcs11.h"
 #include "e_pkcs11_err.c"
+#include <openssl/x509v3.h>
 
 static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri);
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store);
@@ -37,6 +38,7 @@ static int pkcs11_engine_load_cert(ENGINE *e, int cmd, long i,
 void engine_load_pkcs11_int(void);
 static int pkcs11_rsa_free(RSA *rsa);
 static unsigned char *pkcs11_pad(char *field, int len);
+static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x);
 
 static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
@@ -62,6 +64,11 @@ static OSSL_STORE_INFO* pkcs11_store_load_cert(OSSL_STORE_LOADER_CTX *ctx,
 static OSSL_STORE_INFO* pkcs11_store_load_key(OSSL_STORE_LOADER_CTX *ctx,
                                               const UI_METHOD *ui_method,
                                               void *ui_data);
+static int pkcs11_load_ssl_client_cert(ENGINE *e, SSL *ssl,
+                                       STACK_OF(X509_NAME) *ca_dn, X509 **pcert,
+                                       EVP_PKEY **pkey, STACK_OF(X509) **pother,
+                                       UI_METHOD *ui_method,
+                                       void *callback_data);
 
 int rsa_pkcs11_idx = -1;
 
@@ -115,10 +122,12 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         }
         break;
 
+    /* TODO binary pin support */
     case PKCS11_CMD_PIN:
         tmpstr = OPENSSL_strdup(p);
         if (tmpstr != NULL) {
             ctx->pin = (CK_BYTE *) tmpstr;
+            ctx->pinlen = (CK_ULONG) strlen((char *) ctx->pin);
             PKCS11_trace("Setting pin\n");
         } else {
             PKCS11err(PKCS11_F_PKCS11_CTRL, ERR_R_MALLOC_FAILURE);
@@ -219,6 +228,7 @@ static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
                 if (tmpstr == NULL)
                     goto memerr;
                 ctx->pin = (CK_BYTE *) tmpstr;
+                ctx->pinlen = (CK_ULONG) strlen((char *) ctx->pin);
             } else if (strncmp(p, "object=", 7) == 0 && ctx->label == NULL) {
                 p += 7;
                 tmpstr = OPENSSL_strdup(p);
@@ -364,12 +374,28 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
             PKCS11_trace("PIN is invalid\n");
             goto err;
         }
+        ctx->pinlen = (CK_ULONG) strlen((char *) ctx->pin);
     }
     return 1;
 
  err:
     OPENSSL_free(pin);
     OPENSSL_free(id);
+    return 0;
+}
+
+static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
+{
+    int i;
+    X509_NAME *nm;
+    /* Special case: empty list: match anything */
+    if (sk_X509_NAME_num(ca_dn) <= 0)
+        return 1;
+    for (i = 0; i < sk_X509_NAME_num(ca_dn); i++) {
+        nm = sk_X509_NAME_value(ca_dn, i);
+        if (!X509_NAME_cmp(nm, X509_get_issuer_name(x)))
+            return 1;
+    }
     return 0;
 }
 
@@ -678,6 +704,8 @@ static int bind_pkcs11(ENGINE *e)
         || !ENGINE_set_init_function(e, pkcs11_init)
         || !ENGINE_set_finish_function(e, pkcs11_finish)
         || !ENGINE_set_cmd_defns(e, pkcs11_cmd_defns)
+        || !ENGINE_set_load_ssl_client_cert_function(e,
+                                                     pkcs11_load_ssl_client_cert)
         || !ENGINE_set_ctrl_function(e, pkcs11_ctrl))
         goto end;
 
@@ -758,6 +786,71 @@ PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa)
     return ENGINE_get_ex_data(RSA_get0_engine(rsa), pkcs11_idx);
 }
 
+static int pkcs11_load_ssl_client_cert(ENGINE *e, SSL *ssl,
+                                       STACK_OF(X509_NAME) *ca_dn, X509 **pcert,
+                                       EVP_PKEY **pkey, STACK_OF(X509) **pother,
+                                       UI_METHOD *ui_method,
+                                       void *callback_data)
+{
+    PKCS11_CTX *pkcs11_ctx;
+    OSSL_STORE_LOADER_CTX *store_ctx = NULL;
+    CK_SESSION_HANDLE session = 0;
+    CK_BYTE *id;
+    CK_ULONG idlen;
+    CK_OBJECT_HANDLE key = 0;
+    int ret = 0;
+    int i;
+
+    *pcert = NULL;
+    *pkey = NULL;
+    store_ctx = OSSL_STORE_LOADER_CTX_new();
+    pkcs11_ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+    if (pkcs11_ctx == NULL)
+        goto err;
+
+    if (pkcs11_initialize(pkcs11_ctx->module_path) != CKR_OK)
+        goto err;
+
+    if (!pkcs11_get_slot(pkcs11_ctx)) {
+        pkcs11_finalize();
+        goto err;
+     }
+
+    if (!pkcs11_start_session(pkcs11_ctx, &session))
+        goto end;
+
+    store_ctx->session = session;
+    pkcs11_ctx->type = "cert";
+
+    if (!pkcs11_search_start(store_ctx, pkcs11_ctx))
+        goto end;
+
+    for (i = 0;; i++) {
+        if (pkcs11_search_next_cert(store_ctx, &id, &idlen))
+            break;
+        if (cert_issuer_match(ca_dn, store_ctx->cert)
+            && X509_check_purpose(store_ctx->cert,
+            X509_PURPOSE_SSL_CLIENT, 0)) {
+            *pcert = store_ctx->cert;
+            pkcs11_ctx->id = id;
+            pkcs11_ctx->idlen = idlen;
+            pkcs11_close_operation(session);
+            key = pkcs11_find_private_key(session, pkcs11_ctx);
+            if (!key)
+                goto err;
+            *pkey = pkcs11_load_pkey(session, pkcs11_ctx, key);
+            break;
+        }
+        ret = 1;
+    }
+
+ end:
+    pkcs11_end_session(session);
+    pkcs11_finalize();
+ err:
+    OSSL_STORE_LOADER_CTX_free(store_ctx);
+    return ret;
+}
 
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
 static int bind_helper(ENGINE *e, const char *id)
