@@ -34,8 +34,11 @@ static int nc_match_single(GENERAL_NAME *sub, GENERAL_NAME *gen);
 static int nc_dn(X509_NAME *sub, X509_NAME *nm);
 static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
+static int nc_email_eai(ASN1_UTF8STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base);
+
+int a2ulabel(const char *in, char *out, size_t *outlen); /* FIXME beldmit */
 
 const X509V3_EXT_METHOD v3_name_constraints = {
     NID_name_constraints, 0,
@@ -464,6 +467,9 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
     GENERAL_SUBTREE *sub;
     int i, r, match = 0;
+    int effective_type = ((gen->type == GEN_OTHERNAME) &&
+                          (OBJ_obj2nid(gen->d.otherName->type_id) ==
+                           NID_id_on_SmtpUTF8Mailbox)) ? GEN_EMAIL : gen->type;
 
     /*
      * Permitted subtrees: if any subtrees exist of matching the type at
@@ -472,7 +478,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
-        if (gen->type != sub->base->type)
+        if (effective_type != sub->base->type)
             continue;
         if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
@@ -495,7 +501,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->excludedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
-        if (gen->type != sub->base->type)
+        if (effective_type != sub->base->type)
             continue;
         if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
@@ -514,7 +520,11 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
 static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
 {
-    switch (base->type) {
+    switch (gen->type) {
+    case GEN_OTHERNAME:
+        /* We are here only when we have SmtpUTF8 name, so we match the value of othername with base->d.rfc822Name */
+        return nc_email_eai(gen->d.otherName->value->value.utf8string,
+                            base->d.rfc822Name);
     case GEN_DIRNAME:
         return nc_dn(gen->d.directoryName, base->d.directoryName);
 
@@ -575,6 +585,54 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
     }
 
     if (ia5casecmp(baseptr, dnsptr))
+        return X509_V_ERR_PERMITTED_VIOLATION;
+
+    return X509_V_OK;
+
+}
+
+/* FIXME beldmit
+ * This function implements comparison between ASCII/U-label in eml
+ * and A-label in base according to RFC 8398, section 6.
+ * Convert base to U-label and ASCII-parts of domain names, for base
+ * Octet-to-octet comparison of `eml` and `base` hostname parts
+ * (ASCII-parts should be compared in case-insensitive manner)
+ */
+static int nc_email_eai(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
+{
+    const char *baseptr = (char *)base->data;
+    const char *emlptr = (char *)eml->data;
+    const char *emlat = strchr(emlptr, '@');
+
+    char ulabel[256];
+    size_t size = sizeof(ulabel) - 1;
+
+    emlat = strchr(emlptr, '@');
+
+    if (!emlat)
+        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+
+    memset(ulabel, 0, sizeof(ulabel));
+    /* Special case: initial '.' is RHS match */
+    if (*baseptr == '.') {
+        ulabel[0] = '.';
+        size -= 1;
+        if (a2ulabel(baseptr, ulabel + 1, &size) <= 0)
+            return X509_V_ERR_UNSPECIFIED;
+
+        if (size + 1 > base->length) {
+            emlptr += size + 1 - base->length;
+            if (ia5casecmp(ulabel, emlptr) == 0)
+                return X509_V_OK;
+        }
+        return X509_V_ERR_PERMITTED_VIOLATION;
+    }
+
+    emlptr = emlat + 1;
+    if (a2ulabel(baseptr, ulabel, &size) <= 0)
+        return X509_V_ERR_UNSPECIFIED;
+    /* Just have hostname left to match: case insensitive */
+    if (ia5casecmp(ulabel, emlptr))
         return X509_V_ERR_PERMITTED_VIOLATION;
 
     return X509_V_OK;
