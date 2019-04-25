@@ -1969,9 +1969,9 @@ static const struct {
     unsigned int iterations;
     double critical;
 } rand_range_cases[] = {
-    { 2,    100,    123.2252 /* = qchisq(.95, df=99)    */ },
-    { 12,   1000,   1073.643 /* = qchisq(.95, df=999)   */ },
-    { 1023, 100000, 100735.7 /* = qchisq(.95, df=99999) */ },
+    { 2,    100,    3.841459 /* = qchisq(.95, df=1)    */ },
+    { 12,   1000,   19.67514 /* = qchisq(.95, df=11)   */ },
+    { 1023, 100000, 1097.484 /* = qchisq(.95, df=1022) */ },
 };
 
 static int test_rand_range(int n)
