@@ -194,6 +194,14 @@ Examples:
  OU=My Unit
  CN=My Name
 
+Non-ASCII Email Address conforming the syntax defined in Section 3.3 of RFC 6531
+are provided as otherName.SmtpUTF8Mailbox. According to RFC 8398, the email
+adddress should be provided as UTF8String. To enforce the valid representation int
+the certificate, the SmtpUTF8Mailbox should be provided like
+
+ subjectAltName=@alts
+ [alts]
+ otherName = 1.3.6.1.5.5.7.8.9;FORMAT:UTF8,UTF8String:医生@大学.example.com
 
 =head2 Issuer Alternative Name.
 
