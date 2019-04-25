@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib_int.h"
+#include "internal/refcount.h"
 #include "internal/thread_once.h"
 
 /*
@@ -32,15 +33,42 @@ typedef struct ex_callbacks_st {
 
 static EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
 
+/*
+ * There is the possibility that initialization happens more than once,
+ * for example with provider modules being initialized multiple times,
+ * but also with multiple library contexts.
+ * However, the inner EX_DATA stuff is global for the shared library or
+ * module, and should therefore only be initialized once (on first use)
+ * and cleaned away once (on last cleanup) in the life time of the shlib
+ * or module.
+ *
+ * The most practical way to handle this is with a reference count.
+ */
+static CRYPTO_REF_COUNT ex_data_lock_count = 0;
+static CRYPTO_RWLOCK *ex_data_lock_count_lock = NULL;
+
 static CRYPTO_RWLOCK *ex_data_lock = NULL;
-static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
+
+static CRYPTO_ONCE ex_data_init_flag = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_ex_data_init)
 {
-    if (!OPENSSL_init_crypto(0, NULL))
+    if (!OPENSSL_init_crypto(0, NULL)
+        || (ex_data_lock_count_lock = CRYPTO_THREAD_lock_new()) == NULL
+        || (ex_data_lock = CRYPTO_THREAD_lock_new()) == NULL) {
+        CRYPTO_THREAD_lock_free(ex_data_lock);
+        CRYPTO_THREAD_lock_free(ex_data_lock_count_lock);
         return 0;
-    ex_data_lock = CRYPTO_THREAD_lock_new();
-    return ex_data_lock != NULL;
+    }
+    return 1;
+}
+
+static int ex_data_init(void)
+{
+    int i;
+
+    return RUN_ONCE(&ex_data_init_flag, do_ex_data_init)
+        && CRYPTO_UP_REF(&ex_data_lock_count, &i, ex_data_lock_count_lock);
 }
 
 /*
@@ -56,7 +84,7 @@ static EX_CALLBACKS *get_and_lock(int class_index)
         return NULL;
     }
 
-    if (!RUN_ONCE(&ex_data_init, do_ex_data_init)) {
+    if (!ex_data_init()) {
         CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -94,6 +122,10 @@ void crypto_cleanup_all_ex_data_int(void)
 {
     int i;
 
+    CRYPTO_DOWN_REF(&ex_data_lock_count, &i, ex_data_lock_count_lock);
+    if (i > 0)
+        return;
+
     for (i = 0; i < CRYPTO_EX_INDEX__COUNT; ++i) {
         EX_CALLBACKS *ip = &ex_data[i];
 
@@ -101,7 +133,9 @@ void crypto_cleanup_all_ex_data_int(void)
         ip->meth = NULL;
     }
 
+    CRYPTO_THREAD_lock_free(ex_data_lock_count_lock);
     CRYPTO_THREAD_lock_free(ex_data_lock);
+    ex_data_lock_count_lock = NULL;
     ex_data_lock = NULL;
 }
 
