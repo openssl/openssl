@@ -819,13 +819,13 @@ static int pkcs11_load_ssl_client_cert(ENGINE *e, SSL *ssl,
      }
 
     if (!pkcs11_start_session(pkcs11_ctx, &session))
-        goto end;
+        goto err;
 
     store_ctx->session = session;
     pkcs11_ctx->type = "cert";
 
     if (!pkcs11_search_start(store_ctx, pkcs11_ctx))
-        goto end;
+        goto err;
 
     for (i = 0;; i++) {
         if (pkcs11_search_next_cert(store_ctx, &id, &idlen))
@@ -841,14 +841,11 @@ static int pkcs11_load_ssl_client_cert(ENGINE *e, SSL *ssl,
             if (!key)
                 goto err;
             *pkey = pkcs11_load_pkey(session, pkcs11_ctx, key);
+            ret = 1;
             break;
         }
-        ret = 1;
     }
 
- end:
-    pkcs11_end_session(session);
-    pkcs11_finalize();
  err:
     OSSL_STORE_LOADER_CTX_free(store_ctx);
     return ret;
