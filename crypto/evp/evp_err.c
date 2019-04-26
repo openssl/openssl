@@ -153,6 +153,8 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_PKEY_SET_TYPE, 0), "pkey_set_type"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_RC2_MAGIC_TO_METH, 0), "rc2_magic_to_meth"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_RC5_CTRL, 0), "rc5_ctrl"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_R_32_12_16_INIT_KEY, 0),
+     "r_32_12_16_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_S390X_AES_GCM_CTRL, 0), "s390x_aes_gcm_ctrl"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_UPDATE, 0), "update"},
     {0, NULL}
@@ -164,6 +166,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ARIA_KEY_SETUP_FAILED),
     "aria key setup failed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_BAD_DECRYPT), "bad decrypt"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_BAD_KEY_LENGTH), "bad key length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_BUFFER_TOO_SMALL), "buffer too small"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_CAMELLIA_KEY_SETUP_FAILED),
     "camellia key setup failed"},
