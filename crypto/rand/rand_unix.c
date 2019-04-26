@@ -30,7 +30,8 @@
 # include <sys/param.h>
 #endif
 
-#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) || defined(__DJGPP__)
+#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+     || defined(__DJGPP__)
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <fcntl.h>
@@ -586,7 +587,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 #endif
 
-#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) || defined(__DJGPP__)
+#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+     || defined(__DJGPP__)
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {

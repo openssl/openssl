@@ -51,21 +51,18 @@ static uint64_t get_time_stamp(void)
 static uint64_t get_timer_bits(void)
 {
     uint64_t res = OPENSSL_rdtsc();
-
+    struct timespec ts;
+    
     if (res != 0)
         return res;
 
-    {
-        struct timespec ts;
-
-        if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
-            return TWO32TO64(ts.tv_sec, ts.tv_nsec);
-    }
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+        return TWO32TO64(ts.tv_sec, ts.tv_nsec);
     return time(NULL);
 }
 
 /* 
- *	empty implementation 
+ *  empty implementation 
  *  vxworks does not need to init/cleanup or keep open the random lib
  */
 int rand_pool_init(void)
@@ -140,20 +137,21 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             RANDOM_NUM_GEN_STATUS status = randStatus();
             
             if ((status == RANDOM_NUM_GEN_ENOUGH_ENTROPY) 
-				|| (status == RANDOM_NUM_GEN_MAX_ENTROPY) ) {
+                || (status == RANDOM_NUM_GEN_MAX_ENTROPY) ) {
                 result = randBytes(buffer, bytes_needed);
                 if (result == OK)  
-					rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);                
-                /* no else here: randStatus said ok, if randBytes failed 
-				 * it will result in another loop or no entropy 
-				 */
+                    rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
+                /* 
+                 * no else here: randStatus said ok, if randBytes failed 
+                 * it will result in another loop or no entropy 
+                 */
             } else {
                 /* 
-                 *   give a minimum delay here to allow OS to collect more 
-                 *   entropytaskDelay duration will depend on the system tick,  
-                 *   this is by design as the sw-random lib uses interupts 
-				 *   which will at least happen during ticks
-                 */                
+                 * give a minimum delay here to allow OS to collect more 
+                 * entropytaskDelay duration will depend on the system tick,
+                 * this is by design as the sw-random lib uses interupts 
+                 * which will at least happen during ticks
+                 */
                 taskDelay (5);
             }
             retryCount++;
@@ -161,9 +159,9 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     }
     return rand_pool_entropy_available(pool);    
 # else
-    /* SEED_NONE means none, without randlib we dont have entropy and 
-	 * rely on it being added externaly 
-	 */
+    /* SEED_NONE means none, without randlib we dont have entropy and
+     * rely on it being added externaly 
+     */
     return rand_pool_entropy_available(pool);
 # endif /* defined(RAND_SEED_VXRANDLIB) */
 }
