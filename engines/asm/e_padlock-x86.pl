@@ -624,4 +624,4 @@ my ($mode,$opcode) = @_;
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

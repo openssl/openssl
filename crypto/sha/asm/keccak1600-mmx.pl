@@ -437,4 +437,4 @@ sub Rho() {				######### regular Rho step
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

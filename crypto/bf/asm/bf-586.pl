@@ -32,7 +32,7 @@ $tmp4="edx";
 &cbc("BF_cbc_encrypt","BF_encrypt","BF_decrypt",1,4,5,3,-1,-1);
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";
 
 sub BF_encrypt
 	{

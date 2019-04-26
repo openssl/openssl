@@ -289,4 +289,4 @@ stringz "ChaCha20 for IA64, CRYPTOGAMS by \@dot-asm"
 ___
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

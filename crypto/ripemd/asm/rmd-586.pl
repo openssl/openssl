@@ -70,7 +70,7 @@ $KR3=0x7A6D76E9;
 &ripemd160_block("ripemd160_block_asm_data_order");
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";
 
 sub Xv
 	{

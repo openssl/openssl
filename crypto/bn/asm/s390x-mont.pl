@@ -281,4 +281,4 @@ foreach (split("\n",$code)) {
 	s/_dswap\s+(%r[0-9]+)/sprintf("rllg\t%s,%s,32",$1,$1) if($SIZE_T==4)/e;
 	print $_,"\n";
 }
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

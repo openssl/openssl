@@ -458,4 +458,4 @@ $code.=<<___;
 .asciiz	"SHA1 for MIPS, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

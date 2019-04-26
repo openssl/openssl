@@ -1863,4 +1863,4 @@ for ($i=0;$i<7;$i++) {
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

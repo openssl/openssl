@@ -1812,4 +1812,4 @@ sub vlazy_reduction {
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

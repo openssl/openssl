@@ -2259,4 +2259,4 @@ $code.=<<___;
 .end	bn_sqr_comba4
 ___
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

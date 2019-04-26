@@ -68,4 +68,4 @@ ${prefix}_unwind_info:
 	.byte	0x04,0x42,0x00,0x00
 ___
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

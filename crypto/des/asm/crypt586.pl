@@ -25,7 +25,7 @@ $R="esi";
 &fcrypt_body("fcrypt_body");
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";
 
 sub fcrypt_body
 	{

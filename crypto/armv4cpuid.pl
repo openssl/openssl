@@ -294,4 +294,4 @@ atomic_add_spinlock:
 ___
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

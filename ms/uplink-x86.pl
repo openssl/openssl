@@ -41,4 +41,4 @@ for ($i=1;$i<=$N;$i++) {
 }
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

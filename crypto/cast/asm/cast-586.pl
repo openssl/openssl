@@ -46,7 +46,7 @@ $S4="CAST_S_table3";
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";
 
 sub CAST_encrypt {
     local($name,$enc)=@_;

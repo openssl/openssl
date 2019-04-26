@@ -58,4 +58,4 @@ print <<___;
 .size   OPENSSL_UplinkTable,.-OPENSSL_UplinkTable#
 ___
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

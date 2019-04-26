@@ -504,4 +504,4 @@ for($i=0;$i<8;$i++) {
 &function_end_B("whirlpool_block_mmx");
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

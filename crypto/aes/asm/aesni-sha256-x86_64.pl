@@ -1767,4 +1767,4 @@ sub rex {
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 $code =~ s/\b(sha256[^\s]*)\s+(.*)/sha256op38($1,$2)/gem;
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

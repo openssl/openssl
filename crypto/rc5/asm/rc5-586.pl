@@ -32,7 +32,7 @@ $tmp4="edx";
 &cbc("RC5_32_cbc_encrypt","RC5_32_encrypt","RC5_32_decrypt",0,4,5,3,-1,-1);
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";
 
 sub RC5_32_encrypt
 	{

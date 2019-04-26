@@ -1511,4 +1511,4 @@ ___
 
 print $code;
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

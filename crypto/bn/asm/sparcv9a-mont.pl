@@ -884,4 +884,4 @@ $code =~ s/fzeros\s+%f([0-9]+)/
 
 print $code;
 # flush
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

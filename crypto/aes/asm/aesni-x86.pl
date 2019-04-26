@@ -3412,4 +3412,4 @@ my ($l_,$block,$i1,$i3,$i5) = ($rounds_,$key_,$rounds,$len,$out);
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

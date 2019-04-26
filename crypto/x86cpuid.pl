@@ -506,4 +506,4 @@ my $rdop = shift;
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

@@ -248,4 +248,4 @@ $sp=&DWP(28,"esp");
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

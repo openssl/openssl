@@ -747,4 +747,4 @@ foreach (split($/,$code)) {
 	print $_,$/;
 }
 
-close STDOUT; # enforce flush
+close STDOUT or die "error closing STDOUT"; # enforce flush

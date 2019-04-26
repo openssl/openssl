@@ -1471,4 +1471,4 @@ $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 $code =~ s/\b(aes.*%xmm[0-9]+).*$/aesni($1)/gem;
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

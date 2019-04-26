@@ -605,4 +605,4 @@ $code =~ s/\b(alignaddr)\s+(%[goli][0-7]),(%[goli][0-7]),(%[goli][0-7])/
 		&unalignaddr($1,$2,$3,$4)
 	  /gem;
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";
