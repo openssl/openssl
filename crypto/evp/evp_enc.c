@@ -243,9 +243,11 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
         return ctx->cipher->einit(ctx->provctx,
                                   key,
-                                  EVP_CIPHER_CTX_key_length(ctx),
+                                  key == NULL ? 0
+                                              : EVP_CIPHER_CTX_key_length(ctx),
                                   iv,
-                                  EVP_CIPHER_CTX_iv_length(ctx));
+                                  iv == NULL ? 0
+                                             : EVP_CIPHER_CTX_iv_length(ctx));
     }
 
     if (ctx->cipher->dinit == NULL) {
@@ -255,9 +257,11 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     return ctx->cipher->dinit(ctx->provctx,
                               key,
-                              EVP_CIPHER_CTX_key_length(ctx),
+                              key == NULL ? 0
+                                          : EVP_CIPHER_CTX_key_length(ctx),
                               iv,
-                              EVP_CIPHER_CTX_iv_length(ctx));
+                              iv == NULL ? 0
+                                         : EVP_CIPHER_CTX_iv_length(ctx));
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
@@ -947,7 +951,7 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 {
     if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
         return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
-    if (RAND_priv_bytes(key, ctx->key_len) <= 0)
+    if (RAND_priv_bytes(key, EVP_CIPHER_CTX_key_length(ctx)) <= 0)
         return 0;
     return 1;
 }

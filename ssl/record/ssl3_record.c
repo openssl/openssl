@@ -211,9 +211,9 @@ int ssl3_get_record(SSL *s)
                                SSL3_BUFFER_get_len(rbuf), 0,
                                num_recs == 0 ? 1 : 0, &n);
             if (rret <= 0) {
+#ifndef OPENSSL_NO_KTLS
                 if (!BIO_get_ktls_recv(s->rbio))
                     return rret;     /* error or non-blocking */
-#ifndef OPENSSL_NO_KTLS
                 switch (errno) {
                 case EBADMSG:
                     SSLfatal(s, SSL_AD_BAD_RECORD_MAC,
@@ -233,8 +233,8 @@ int ssl3_get_record(SSL *s)
                 default:
                     break;
                 }
-                return rret;
 #endif
+                return rret;
             }
             RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
 

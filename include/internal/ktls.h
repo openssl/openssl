@@ -90,6 +90,10 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 #     define TCP_ULP 31
 #    endif
 
+#    ifndef TLS_RX
+#     define TLS_RX                  2
+#    endif
+
 /*
  * When successful, this socket option doesn't change the behaviour of the
  * TCP socket, except changing the TCP setsockopt handler to enable the

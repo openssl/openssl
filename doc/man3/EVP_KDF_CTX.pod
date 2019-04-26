@@ -151,9 +151,9 @@ The value string is expected to be the name of a MAC.
 This control expects one argument: C<EVP_MD *md>
 
 For MAC implementations that use a message digest as an underlying computation
-algorithm, this control set what the digest algorithm should be.
+algorithm, this control sets what the digest algorithm should be.
 
-EVP_KDF_ctrl_str() type string: "md"
+EVP_KDF_ctrl_str() type string: "digest"
 
 The value string is expected to be the name of a digest.
 
@@ -232,6 +232,7 @@ L<EVP_KDF_TLS1_PRF(7)>
 L<EVP_KDF_PBKDF2(7)>
 L<EVP_KDF_HKDF(7)>
 L<EVP_KDF_SS(7)>
+L<EVP_KDF_SSHKDF(7)>
 
 =head1 HISTORY
 

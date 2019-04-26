@@ -7,6 +7,9 @@
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
 
+      o Added 'openssl mac' that uses the EVP_MAC API.
+      o Added 'openssl kdf' that uses the EVP_KDF API.
+      o Add OPENSSL_info() and 'openssl info' to get built-in data.
       o Add support for enabling instrumentation through trace and debug
         output.
       o Changed our version number scheme and set the next major release to
@@ -14,6 +17,8 @@
       o Added EVP_MAC, an EVP layer MAC API, and a generic EVP_PKEY to EVP_MAC
         bridge.
       o Removed the heartbeat message in DTLS feature.
+      o Added EVP_KDF, an EVP layer KDF API, and a generic EVP_PKEY to EVP_KDF
+        bridge.
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 1.1.1a [20 Nov 2018]
 

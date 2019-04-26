@@ -892,9 +892,6 @@ while (@argvcopy)
                 elsif (/^-static$/)
                         {
                         push @{$useradd{LDFLAGS}}, $_;
-                        $disabled{"pic"} = "forced";
-                        $disabled{"shared"} = "forced";
-                        $disabled{"threads"} = "forced";
                         }
                 elsif (/^-D(.*)$/)
                         {
@@ -1006,20 +1003,30 @@ if (grep { /-rpath\b/ } ($user{LDFLAGS} ? @{$user{LDFLAGS}} : ())
         "***** any of asan, msan or ubsan\n";
 }
 
-my @tocheckfor = (keys %disabled);
-while (@tocheckfor) {
-    my %new_tocheckfor = ();
-    my @cascade_copy = (@disable_cascades);
-    while (@cascade_copy) {
-        my ($test, $descendents) = (shift @cascade_copy, shift @cascade_copy);
-        if (ref($test) eq "CODE" ? $test->() : defined($disabled{$test})) {
-            foreach(grep { !defined($disabled{$_}) } @$descendents) {
-                $new_tocheckfor{$_} = 1; $disabled{$_} = "forced";
+sub disable {
+    my $disable_type = shift;
+
+    for (@_) {
+        $disabled{$_} = $disable_type;
+    }
+
+    my @tocheckfor = (@_ ? @_ : keys %disabled);
+    while (@tocheckfor) {
+        my %new_tocheckfor = ();
+        my @cascade_copy = (@disable_cascades);
+        while (@cascade_copy) {
+            my ($test, $descendents) =
+                (shift @cascade_copy, shift @cascade_copy);
+            if (ref($test) eq "CODE" ? $test->() : defined($disabled{$test})) {
+                foreach (grep { !defined($disabled{$_}) } @$descendents) {
+                    $new_tocheckfor{$_} = 1; $disabled{$_} = "cascade";
+                }
             }
         }
+        @tocheckfor = (keys %new_tocheckfor);
     }
-    @tocheckfor = (keys %new_tocheckfor);
 }
+disable();                     # First cascade run
 
 our $die = sub { die @_; };
 if ($target eq "TABLE") {
@@ -1144,6 +1151,8 @@ $target{module_ldflags} = $target{shared_ldflag} unless defined $target{module_l
 my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
 $config{conf_files} = [ sort keys %conf_files ];
 
+# Using sub disable within these loops may prove fragile, so we run
+# a cascade afterwards
 foreach my $feature (@{$target{disable}}) {
     if (exists $deprecated_disablables{$feature}) {
         warn "***** config $target disables deprecated feature $feature\n";
@@ -1162,6 +1171,7 @@ foreach my $feature (@{$target{enable}}) {
         delete $disabled{$feature};
     }
 }
+disable();                      # Run a cascade now
 
 $target{CXXFLAGS}//=$target{CFLAGS} if $target{CXX};
 $target{cxxflags}//=$target{cflags} if $target{CXX};
@@ -1201,6 +1211,22 @@ foreach (keys %user) {
         || $mkvalue->($ref_type, $target{$_});
     delete $config{$_} unless defined $config{$_};
 }
+
+# Finish up %config by appending things the user gave us on the command line
+# apart from "make variables"
+foreach (keys %useradd) {
+    # The must all be lists, so we assert that here
+    die "internal error: \$useradd{$_} isn't an ARRAY\n"
+        unless ref $useradd{$_} eq 'ARRAY';
+
+    if (defined $config{$_}) {
+        push @{$config{$_}}, @{$useradd{$_}};
+    } else {
+        $config{$_} = [ @{$useradd{$_}} ];
+    }
+}
+# At this point, we can forget everything about %user and %useradd,
+# because it's now all been merged into the corresponding $config entry
 
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
@@ -1281,8 +1307,7 @@ if ($target =~ /^mingw/ && `$config{CC} --target-help 2>&1` =~ m/-mno-cygwin/m)
         }
 
 if ($target =~ /linux.*-mips/ && !$disabled{asm}
-        && !grep { $_ !~ /-m(ips|arch=)/ } (@{$user{CFLAGS}},
-                                            @{$useradd{CFLAGS}})) {
+        && !grep { $_ !~ /-m(ips|arch=)/ } (@{$config{CFLAGS}})) {
         # minimally required architecture flags for assembly modules
         my $value;
         $value = '-mips2' if ($target =~ /mips32/);
@@ -1296,7 +1321,7 @@ unless ($disabled{threads}) {
     if ($auto_threads) {
         # Enabled by default, disable it forcibly if unavailable
         if ($target{thread_scheme} eq "(unknown)") {
-            $disabled{threads} = "unavailable";
+            disable("unavailable", 'threads');
         }
     } else {
         # The user chose to enable threads explicitly, let's see
@@ -1307,11 +1332,31 @@ unless ($disabled{threads}) {
             # system-dependent compiler options that are necessary.  We
             # can't truly check that the given options are correct, but
             # we expect the user to know what [s]He is doing.
-            if (!@{$user{CFLAGS}} && !@{$useradd{CFLAGS}}
-                    && !@{$user{CPPDEFINES}} && !@{$useradd{CPPDEFINES}}) {
+            if (!@{$config{CFLAGS}} && !@{$config{CPPDEFINES}}) {
                 die "You asked for multi-threading support, but didn't\n"
                     ,"provide any system-specific compiler options\n";
             }
+        }
+    }
+}
+
+# Find out if clang's sanitizers have been enabled with -fsanitize
+# flags and ensure that the corresponding %disabled elements area
+# removed to reflect that the sanitizers are indeed enabled.
+my %detected_sanitizers = ();
+foreach (grep /^-fsanitize=/, @{$config{CFLAGS} || []}) {
+    (my $checks = $_) =~ s/^-fsanitize=//;
+    foreach (split /,/, $checks) {
+        my $d = { address       => 'asan',
+                  undefined     => 'ubsan',
+                  memory        => 'msan' } -> {$_};
+        next unless defined $d;
+
+        $detected_sanitizers{$d} = 1;
+        if (defined $disabled{$d}) {
+            die "***** Conflict between disabling $d and enabling $_ sanitizer"
+                if $disabled{$d} ne "default";
+            delete $disabled{$d};
         }
     }
 }
@@ -1332,8 +1377,7 @@ if ($target{shared_target} eq "")
         {
         $no_shared_warn = 1
             if (!$disabled{shared} || !$disabled{"dynamic-engine"});
-        $disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
-            $disabled{module} = "no-shared-target";
+        disable('no-shared-target', 'pic');
         }
 
 if ($disabled{"dynamic-engine"}) {
@@ -1344,12 +1388,12 @@ if ($disabled{"dynamic-engine"}) {
         $config{dynamic_engines} = 1;
 }
 
-unless ($disabled{asan}) {
+unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
     push @{$config{cflags}}, "-fsanitize=address";
     push @{$config{cxxflags}}, "-fsanitize=address" if $config{CXX};
 }
 
-unless ($disabled{ubsan}) {
+unless ($disabled{ubsan} || defined $detected_sanitizers{ubsan}) {
     # -DPEDANTIC or -fnosanitize=alignment may also be required on some
     # platforms.
     push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all";
@@ -1357,7 +1401,7 @@ unless ($disabled{ubsan}) {
         if $config{CXX};
 }
 
-unless ($disabled{msan}) {
+unless ($disabled{msan} || defined $detected_sanitizers{msan}) {
   push @{$config{cflags}}, "-fsanitize=memory";
   push @{$config{cxxflags}}, "-fsanitize=memory" if $config{CXX};
 }
@@ -1482,7 +1526,7 @@ if (!$disabled{makedepend}) {
         # In all other cases, we look for 'makedepend', and disable the
         # capability if not found.
         $config{makedepprog} = which('makedepend');
-        $disabled{makedepend} = "unavailable" unless $config{makedepprog};
+        disable('unavailable', 'makedepend') unless $config{makedepprog};
     }
 }
 
@@ -1569,12 +1613,17 @@ if ($strict_warnings)
                 @{$clang_devteam_warn{CXXFLAGS}}
                         if (defined($predefined_CXX{__clang__}));
         }
+
+if (grep { $_ eq '-static' } @{$config{LDFLAGS}}) {
+    disable('static', 'pic', 'threads');
+}
+
 foreach my $idx (qw(CFLAGS CXXFLAGS))
         {
-        $useradd{$idx} = [ map { $_ eq '--ossl-strict-warnings'
-                                     ? @{$strict_warnings_collection{$idx}}
-                                     : ( $_ ) }
-                               @{$useradd{$idx}} ];
+        $config{$idx} = [ map { $_ eq '--ossl-strict-warnings'
+                                    ? @{$strict_warnings_collection{$idx}}
+                                : ( $_ ) }
+                          @{$config{$idx}} ];
         }
 
 unless ($disabled{"crypto-mdebug-backtrace"})
@@ -1603,15 +1652,15 @@ unless ($disabled{afalgeng}) {
             ($mi2) = $mi2 =~ /(\d+)/;
             my $ver = $ma*10000 + $mi1*100 + $mi2;
             if ($ver < $minver) {
-                $disabled{afalgeng} = "too-old-kernel";
+                disable('too-old-kernel', 'afalgeng');
             } else {
                 push @{$config{engdirs}}, "afalg";
             }
         } else {
-            $disabled{afalgeng} = "cross-compiling";
+            disable('cross-compiling', 'afalgeng');
         }
     } else {
-        $disabled{afalgeng}  = "not-linux";
+        disable('not-linux', 'afalgeng');
     }
 }
 
@@ -1629,28 +1678,14 @@ unless ($disabled{ktls}) {
         my @verstr = split(" ",`cat $usr/include/linux/version.h | grep LINUX_VERSION_CODE`);
 
         if ($verstr[2] < $minver) {
-            $disabled{ktls} = "too-old-kernel";
+            disable('too-old-kernel', 'ktls');
         }
     } else {
-        $disabled{ktls}  = "not-linux";
+        disable('not-linux', 'ktls');
     }
 }
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
-
-# Finish up %config by appending things the user gave us on the command line
-# apart from "make variables"
-foreach (keys %useradd) {
-    # The must all be lists, so we assert that here
-    die "internal error: \$useradd{$_} isn't an ARRAY\n"
-        unless ref $useradd{$_} eq 'ARRAY';
-
-    if (defined $config{$_}) {
-        push @{$config{$_}}, @{$useradd{$_}};
-    } else {
-        $config{$_} = [ @{$useradd{$_}} ];
-    }
-}
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
