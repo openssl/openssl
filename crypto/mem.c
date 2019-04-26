@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,17 +18,123 @@
 # include <execinfo.h>
 #endif
 
+typedef void *(*OSSL_REALLOC)(void *, size_t, const char *, int);
+typedef void *(*OSSL_MALLOC)(size_t, const char *, int);
+typedef void (*OSSL_FREE)(void *, const char *, int);
+
+static void *simple_malloc(size_t n, const char *file, int line)
+{
+    (void)file; (void)line;
+    if (n == 0)
+        return NULL;
+    return malloc(n);
+}
+static void *simple_realloc(void *p, size_t n, const char *file, int line)
+{
+    (void)file; (void)line;
+    return realloc(p, n);
+}
+static void simple_free(void *p, const char *file, int line)
+{
+    (void)file; (void)line;
+    free(p);
+}
+
 /*
  * the following pointers may be changed as long as 'allow_customize' is set
  */
 static int allow_customize = 1;
 
-static void *(*malloc_impl)(size_t, const char *, int)
-    = CRYPTO_malloc;
-static void *(*realloc_impl)(void *, size_t, const char *, int)
-    = CRYPTO_realloc;
-static void (*free_impl)(void *, const char *, int)
-    = CRYPTO_free;
+static OSSL_MALLOC malloc_impl = simple_malloc;
+static OSSL_REALLOC realloc_impl = simple_realloc;
+static OSSL_FREE free_impl = simple_free;
+
+#if !defined(OPENSSL_NO_CRYPTO_MPROTECT) && !defined(FIPS_MODE)
+/*
+ * OPENSSL EXTENDED MALLOC SUPPORT
+ *
+ * OpenSSL allocates an extra 4*sizeof(void*) bytes to protect and help track memory
+ * allocations. A broad assumption is that sizeof(size_t) <= sizeof(void*), which
+ * is a reasonable assumption for 32-bit+ systems supported by OpenSSL.
+ *
+ * +----------+---------+------+---------+-------------------     +---------+
+ * | self-ptr | size    | free | realloc | guard | allocation ... | guard   |
+ * +----------+---------+------+---------+-------------------     +---------+
+ *
+ * Each field is sizeof(void*) in size:
+ * self-ptr:  is a pointer to the allocation itself, used as an indicator of
+ *            legal OpenSSL memory
+ * size:      size of the allocation (n)
+ * free:      a pointer to free function
+ * realloc:   a pointer to the realloc function
+ * guard:     guard bytes at the beginning and end of data
+ * The trailing guard is accessed as bytes, to avoid alignment issues
+ */
+
+#define GUARD_SIZE            sizeof(void*)
+#define EXTRA_ALLOC           (sizeof(OSSL_MEM_HEADER) + GUARD_SIZE)
+#define OUT_PTR(x)            ((OSSL_MEM_HEADER*)x + 1)
+#define IN_PTR(x)             ((OSSL_MEM_HEADER*)x - 1)
+#define SELF_VAL(x)           ((OSSL_MEM_HEADER*)x)->self
+#define SIZE_VAL(x)           ((OSSL_MEM_HEADER*)x)->size
+#define HEAD_GUARD_PTR(x)     ((OSSL_MEM_HEADER*)x)->guard
+#define TAIL_GUARD_PTR(x, n)  ((void*)((char*)OUT_PTR(x) + n))
+
+typedef struct ossl_mem_header_st {
+    void* self;
+    size_t size;
+    unsigned char guard[GUARD_SIZE];
+} OSSL_MEM_HEADER;
+
+/* Will work until there are 128-bit systems */
+static uint8_t guard[] = { 'O', 'p', 'e', 'n', 'S', 'S', 'L', '!' };
+
+/* assumes |n| is original allocation request size */
+static void *protect_mem(void *p, size_t n)
+{
+    if (p == NULL || n == 0)
+        return p;
+    SELF_VAL(p) = p;
+    SIZE_VAL(p) = n;
+    memcpy(HEAD_GUARD_PTR(p), guard, GUARD_SIZE);
+    memcpy(TAIL_GUARD_PTR(p, n), guard, GUARD_SIZE);
+    return OUT_PTR(p);
+}
+
+static void *check_mem(void *p, size_t *num, const char *file, int line)
+{
+    if (p == NULL)
+        return p;
+    p = IN_PTR(p);
+
+    if (SELF_VAL(p) == NULL)
+        OPENSSL_die("check_mem: possible double-free", file, line);
+    if (SELF_VAL(p) != p)
+        OPENSSL_die("check_mem: bad pointer", file, line);
+    if (memcmp(HEAD_GUARD_PTR(p), guard, GUARD_SIZE))
+        OPENSSL_die("check_mem: bad head guard", file, line);
+    if (memcmp(TAIL_GUARD_PTR(p, SIZE_VAL(p)), guard, GUARD_SIZE))
+        OPENSSL_die("check_mem: bad tail guard", file, line);
+
+    if (num != NULL)
+        *num += EXTRA_ALLOC;
+
+    SELF_VAL(p) = NULL;
+    return p;
+}
+#else
+static void *protect_mem(void *p, size_t n)
+{
+    (void)n;
+    return p;
+}
+static void *check_mem(void *p, size_t *num, const char *file, int line)
+{
+    (void)num; (void)file; (void)line;
+    return p;
+}
+#define EXTRA_ALLOC 0
+#endif
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
 # include "internal/tsan_assist.h"
@@ -40,6 +146,7 @@ static TSAN_QUALIFIER int free_count;
 # define INCREMENT(x) tsan_counter(&(x))
 
 static char *md_failstring;
+static char *md_failstring_orig;
 static long md_count;
 static int md_fail_percent = 0;
 static int md_tracefd = -1;
@@ -64,12 +171,22 @@ int CRYPTO_set_mem_functions(
 {
     if (!allow_customize)
         return 0;
-    if (m)
+
+    if (m == CRYPTO_malloc)
+        malloc_impl = simple_malloc;
+    else if (m != NULL)
         malloc_impl = m;
-    if (r)
+
+    if (r == CRYPTO_realloc)
+        realloc_impl = simple_realloc;
+    else if (r != NULL)
         realloc_impl = r;
-    if (f)
+
+    if (f == CRYPTO_free)
+        free_impl = simple_free;
+    else if (f != NULL)
         free_impl = f;
+
     return 1;
 }
 
@@ -182,7 +299,7 @@ void ossl_malloc_setup_failures(void)
 {
     const char *cp = getenv("OPENSSL_MALLOC_FAILURES");
 
-    if (cp != NULL && (md_failstring = strdup(cp)) != NULL)
+    if (cp != NULL && (md_failstring_orig = md_failstring = strdup(cp)) != NULL)
         parseit();
     if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
         md_tracefd = atoi(cp);
@@ -192,14 +309,9 @@ void ossl_malloc_setup_failures(void)
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ret = NULL;
+    size_t new_num = num;
 
     INCREMENT(malloc_count);
-    if (malloc_impl != NULL && malloc_impl != CRYPTO_malloc)
-        return malloc_impl(num, file, line);
-
-    if (num == 0)
-        return NULL;
-
     FAILTEST();
     if (allow_customize) {
         /*
@@ -209,27 +321,27 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
          */
         allow_customize = 0;
     }
+
+    if (num != 0)
+        new_num += EXTRA_ALLOC;
+
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
-    if (call_malloc_debug) {
-        CRYPTO_mem_debug_malloc(NULL, num, 0, file, line);
-        ret = malloc(num);
-        CRYPTO_mem_debug_malloc(ret, num, 1, file, line);
-    } else {
-        ret = malloc(num);
-    }
-#else
-    (void)(file); (void)(line);
-    ret = malloc(num);
+    if (call_malloc_debug && new_num != 0)
+        CRYPTO_mem_debug_malloc(NULL, new_num, 0, file, line);
+#endif
+    ret = malloc_impl(new_num, file, line);
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+    if (call_malloc_debug && new_num != 0)
+        CRYPTO_mem_debug_malloc(ret, new_num, 1, file, line);
 #endif
 
-    return ret;
+    return protect_mem(ret, num);
 }
 
 void *CRYPTO_zalloc(size_t num, const char *file, int line)
 {
     void *ret = CRYPTO_malloc(num, file, line);
 
-    FAILTEST();
     if (ret != NULL)
         memset(ret, 0, num);
     return ret;
@@ -237,11 +349,9 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
-    INCREMENT(realloc_count);
-    if (realloc_impl != NULL && realloc_impl != &CRYPTO_realloc)
-        return realloc_impl(str, num, file, line);
+    void *ret;
+    size_t new_num = num;
 
-    FAILTEST();
     if (str == NULL)
         return CRYPTO_malloc(num, file, line);
 
@@ -250,19 +360,23 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
-    if (call_malloc_debug) {
-        void *ret;
-        CRYPTO_mem_debug_realloc(str, NULL, num, 0, file, line);
-        ret = realloc(str, num);
-        CRYPTO_mem_debug_realloc(str, ret, num, 1, file, line);
-        return ret;
-    }
-#else
-    (void)(file); (void)(line);
-#endif
-    return realloc(str, num);
+    INCREMENT(realloc_count);
+    FAILTEST();
 
+    new_num = num;
+    str = check_mem(str, &new_num, file, line);
+
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+    if (call_malloc_debug)
+        CRYPTO_mem_debug_realloc(str, NULL, new_num, 0, file, line);
+#endif
+    ret = realloc_impl(str, new_num, file, line);
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+    if (call_malloc_debug)
+        CRYPTO_mem_debug_realloc(str, ret, new_num, 1, file, line);
+#endif
+
+    return protect_mem(ret, num);
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
@@ -295,21 +409,16 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 void CRYPTO_free(void *str, const char *file, int line)
 {
     INCREMENT(free_count);
-    if (free_impl != NULL && free_impl != &CRYPTO_free) {
-        free_impl(str, file, line);
-        return;
-    }
+    str = check_mem(str, NULL, file, line);
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
-    if (call_malloc_debug) {
+    if (call_malloc_debug)
         CRYPTO_mem_debug_free(str, 0, file, line);
-        free(str);
+#endif
+    free_impl(str, file, line);
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+    if (call_malloc_debug)
         CRYPTO_mem_debug_free(str, 1, file, line);
-    } else {
-        free(str);
-    }
-#else
-    free(str);
 #endif
 }
 

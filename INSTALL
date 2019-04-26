@@ -337,6 +337,11 @@
                    system (through Gnulib), the functions might just be stubs
                    that do nothing.
 
+  enable-crypto-mprotect
+                   Adds buffer over- and under- run protection, and ensures
+                   that OpenSSL memory is only freed via OpenSSL APIs, and
+                   that OpenSSL does not free non-OpenSSL allocated memory.
+
   no-ct
                    Don't build support for Certificate Transparency.
 
