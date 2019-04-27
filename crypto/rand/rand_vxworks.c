@@ -24,7 +24,7 @@ NON_EMPTY_TRANSLATION_UNIT
 #  undef OPENSSL_RAND_SEED_OS
 # endif
 
-# if defined(OPENSSL_RAND_SEED_OS) 
+# if defined(OPENSSL_RAND_SEED_OS)
 #  if _WRS_VXWORKS_MAJOR >= 7
 #    define RAND_SEED_VXRANDLIB
 #  else
@@ -32,7 +32,7 @@ NON_EMPTY_TRANSLATION_UNIT
 #  endif
 # endif
 
-# if defined(RAND_SEED_VXRANDLIB)    
+# if defined(RAND_SEED_VXRANDLIB)
 #  include <randomNumGen.h>
 # endif
 
@@ -52,7 +52,7 @@ static uint64_t get_timer_bits(void)
 {
     uint64_t res = OPENSSL_rdtsc();
     struct timespec ts;
-    
+
     if (res != 0)
         return res;
 
@@ -61,9 +61,9 @@ static uint64_t get_timer_bits(void)
     return time(NULL);
 }
 
-/* 
- *  empty implementation 
- *  vxworks does not need to init/cleanup or keep open the random lib
+/*
+ * empty implementation
+ * vxworks does not need to init/cleanup or keep open the random lib
  */
 int rand_pool_init(void)
 {
@@ -84,6 +84,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
         CRYPTO_THREAD_ID tid;
         uint64_t time;
     } data;
+
     memset(&data, 0, sizeof(data));
 
     /*
@@ -104,16 +105,16 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
         CRYPTO_THREAD_ID tid;
         uint64_t time;
     } data;
+
     memset(&data, 0, sizeof(data));
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
-     * ensure that the nonce is unique whith high probability for
+     * ensure that the nonce is unique with high probability for
      * different process instances.
      */
     data.pid = getpid();
     data.tid = CRYPTO_THREAD_get_current_id();
-
     data.time = get_time_stamp();
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
@@ -126,30 +127,30 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     size_t bytes_needed;
 
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    if (bytes_needed > 0) 
+    if (bytes_needed > 0)
     {
         int retryCount = 0;
-        STATUS result = ERROR;       
+        STATUS result = ERROR;
         unsigned char *buffer;
-        
+
         buffer = rand_pool_add_begin(pool, bytes_needed);
         while ((result != OK) && (retryCount < 10)) {
             RANDOM_NUM_GEN_STATUS status = randStatus();
-            
-            if ((status == RANDOM_NUM_GEN_ENOUGH_ENTROPY) 
-                || (status == RANDOM_NUM_GEN_MAX_ENTROPY) ) {
+
+            if ((status == RANDOM_NUM_GEN_ENOUGH_ENTROPY)
+                    || (status == RANDOM_NUM_GEN_MAX_ENTROPY) ) {
                 result = randBytes(buffer, bytes_needed);
-                if (result == OK)  
+                if (result == OK)
                     rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
-                /* 
-                 * no else here: randStatus said ok, if randBytes failed 
-                 * it will result in another loop or no entropy 
+                /*
+                 * no else here: randStatus said ok, if randBytes failed
+                 * it will result in another loop or no entropy
                  */
             } else {
-                /* 
-                 * give a minimum delay here to allow OS to collect more 
-                 * entropytaskDelay duration will depend on the system tick,
-                 * this is by design as the sw-random lib uses interupts 
+                /*
+                 * give a minimum delay here to allow OS to collect more
+                 * entropy. taskDelay duration will depend on the system tick,
+                 * this is by design as the sw-random lib uses interrupts
                  * which will at least happen during ticks
                  */
                 taskDelay (5);
@@ -157,10 +158,11 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             retryCount++;
         }
     }
-    return rand_pool_entropy_available(pool);    
+    return rand_pool_entropy_available(pool);
 # else
-    /* SEED_NONE means none, without randlib we dont have entropy and
-     * rely on it being added externaly 
+    /*
+     * SEED_NONE means none, without randlib we dont have entropy and
+     * rely on it being added externally
      */
     return rand_pool_entropy_available(pool);
 # endif /* defined(RAND_SEED_VXRANDLIB) */
