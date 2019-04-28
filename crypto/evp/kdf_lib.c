@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -18,11 +18,11 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 #include "internal/numbers.h"
+#include "internal/sparse_array.h"
+#include "internal/thread_once.h"
+#include "internal/nelem.h"
 #include "evp_locl.h"
 
-typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
-
-/* This array needs to be in order of NIDs */
 static const EVP_KDF_METHOD *standard_methods[] = {
     &pbkdf2_kdf_meth,
 #ifndef OPENSSL_NO_SCRYPT
@@ -34,30 +34,33 @@ static const EVP_KDF_METHOD *standard_methods[] = {
     &ss_kdf_meth
 };
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_KDF_METHOD *, const EVP_KDF_METHOD *,
-                           kmeth);
+DEFINE_SPARSE_ARRAY_OF_CONST(EVP_KDF_METHOD);
+static SPARSE_ARRAY_OF(EVP_KDF_METHOD) *kdf_methods;
 
-static int kmeth_cmp(const EVP_KDF_METHOD *const *a,
-                     const EVP_KDF_METHOD *const *b)
+static void do_kdf_cleanup(void)
 {
-    return ((*a)->type - (*b)->type);
+    ossl_sa_EVP_KDF_METHOD_free(kdf_methods);
+    kdf_methods = NULL;
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_KDF_METHOD *, const EVP_KDF_METHOD *,
-                             kmeth);
-
-static const EVP_KDF_METHOD *kdf_meth_find(int type)
+static CRYPTO_ONCE kdf_init = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_kdf_init)
 {
-    EVP_KDF_METHOD tmp;
-    const EVP_KDF_METHOD *t = &tmp, **ret;
+    size_t i;
 
-    tmp.type = type;
-    ret = OBJ_bsearch_kmeth(&t, standard_methods,
-                            OSSL_NELEM(standard_methods));
-    if (ret == NULL || *ret == NULL)
-        return NULL;
+    if ((kdf_methods = ossl_sa_EVP_KDF_METHOD_new()) == NULL)
+        return 0;
 
-    return *ret;
+    for (i = 0; i < OSSL_NELEM(standard_methods); i++)
+        if (!ossl_sa_EVP_KDF_METHOD_set(kdf_methods, standard_methods[i]->type,
+                                        standard_methods[i]))
+            goto err;
+
+    if (OPENSSL_atexit(&do_kdf_cleanup))
+        return 1;
+err:
+    ossl_sa_EVP_KDF_METHOD_free(kdf_methods);
+    return 0;
 }
 
 EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id)
@@ -65,7 +68,12 @@ EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id)
     EVP_KDF_CTX *ret;
     const EVP_KDF_METHOD *kmeth;
 
-    kmeth = kdf_meth_find(id);
+    if (!RUN_ONCE(&kdf_init, do_kdf_init)) {
+        EVPerr(EVP_F_EVP_KDF_CTX_NEW_ID, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    kmeth = ossl_sa_EVP_KDF_METHOD_get(kdf_methods, id);
     if (kmeth == NULL) {
         EVPerr(EVP_F_EVP_KDF_CTX_NEW_ID, EVP_R_UNSUPPORTED_ALGORITHM);
         return NULL;
