@@ -25,11 +25,9 @@ int RSA_check_key(const RSA *key)
 int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 {
 #ifdef FIPS_MODE
-    if (!(rsa_sp800_56b_check_public(key)
-            && rsa_sp800_56b_check_private(key)
-            && rsa_sp800_56b_check_keypair(key, NULL, -1, RSA_bits(key))
-        return 0;
-
+    return rsa_sp800_56b_check_public(key)
+               && rsa_sp800_56b_check_private(key)
+               && rsa_sp800_56b_check_keypair(key, NULL, -1, RSA_bits(key));
 #else
     BIGNUM *i, *j, *k, *l, *m;
     BN_CTX *ctx;
