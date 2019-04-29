@@ -153,7 +153,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
                  * this is by design as the sw-random lib uses interrupts
                  * which will at least happen during ticks
                  */
-                taskDelay (5);
+                taskDelay(5);
             }
             retryCount++;
         }
