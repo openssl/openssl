@@ -2963,6 +2963,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 #endif
     int width;
     fd_set readfds;
+    const char *opmode;
 
     /* Set width for a select call if needed */
     width = s + 1;
@@ -3256,8 +3257,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 break;
             }
 
-            const char *opmode = http_server_binmode==1 ? "rb" : "r";
-
+            opmode = (http_server_binmode == 1) ? "rb" : "r";
             if ((file = BIO_new_file(p, opmode)) == NULL) {
                 BIO_puts(io, text);
                 BIO_printf(io, "Error opening '%s' mode='%s'\r\n", p, opmode);
