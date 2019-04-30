@@ -38,13 +38,18 @@ static const OSSL_ITEM p_param_types[] = {
     { 0, NULL }
 };
 
-static const OSSL_ITEM *p_get_param_types(const OSSL_PROVIDER *_)
+/* This is a trick to ensure we define the provider functions correctly */
+static OSSL_provider_get_param_types_fn p_get_param_types;
+static OSSL_provider_get_params_fn p_get_params;
+
+static const OSSL_ITEM *p_get_param_types(void *_)
 {
     return p_param_types;
 }
 
-static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int p_get_params(void *vprov, const OSSL_PARAM params[])
 {
+    const OSSL_PROVIDER *prov = vprov;
     const OSSL_PARAM *p = params;
     int ok = 1;
 
@@ -101,7 +106,8 @@ static const OSSL_DISPATCH p_test_table[] = {
 
 int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        const OSSL_DISPATCH *in,
-                       const OSSL_DISPATCH **out)
+                       const OSSL_DISPATCH **out,
+                       void **provctx)
 {
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -116,6 +122,9 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
             break;
         }
     }
+
+    /* Because we use this in get_params, we need to pass it back */
+    *provctx = (void *)provider;
 
     *out = p_test_table;
     return 1;
