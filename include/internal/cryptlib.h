@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -41,6 +41,16 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                                          __FILE__, __LINE__)
 
 #endif
+
+/*
+ * Use this inside a union with the field that needs to be aligned to a
+ * reasonable boundary for the platform.  The most pessimistic alignment
+ * of the listed types will be used by the compiler.
+ */
+# define OSSL_UNION_ALIGN       \
+    double align;               \
+    ossl_uintmax_t align_int;   \
+    void *align_ptr
 
 typedef struct ex_callback_st EX_CALLBACK;
 
