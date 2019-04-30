@@ -123,7 +123,7 @@ static SSL_SESSION *psksess = NULL;
 static char *psk_identity = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
-static const char *http_server_readmode = "r";
+static char http_server_binmode = 0; /* for now: 0/1 = default/binary */
 
 #ifndef OPENSSL_NO_PSK
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
@@ -754,7 +754,7 @@ typedef enum OPTION_choice {
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
     OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
-    OPT_HTTP_SERVER_READMODE,
+    OPT_HTTP_SERVER_BINMODE,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -969,7 +969,7 @@ const OPTIONS s_server_options[] = {
      "The number of TLSv1.3 session tickets that a server will automatically  issue" },
     {"anti_replay", OPT_ANTI_REPLAY, '-', "Switch on anti-replay protection (default)"},
     {"no_anti_replay", OPT_NO_ANTI_REPLAY, '-', "Switch off anti-replay protection"},
-    {"http_server_readmode", OPT_HTTP_SERVER_READMODE, 's', "file-opening mode for 'fopen' in -WWW and -HTTP"},
+    {"http_server_binmode", OPT_HTTP_SERVER_BINMODE, '-', "opening files in binary mode when acting as http server (-WWW and -HTTP)"},
     {NULL, OPT_EOF, 0, NULL}
 };
 
@@ -1599,14 +1599,8 @@ int s_server_main(int argc, char *argv[])
             if (max_early_data == -1)
                 max_early_data = SSL3_RT_MAX_PLAIN_LENGTH;
             break;
-        case OPT_HTTP_SERVER_READMODE:
-            http_server_readmode = opt_arg();
-/* this _should_ begin with letter 'r' meaning reading */
-            if (http_server_readmode[0] != 'r') {
-                char *tmp= app_malloc(strlen(http_server_readmode) + 2, "http_server_readmode");
-                sprintf(tmp, "r%s", http_server_readmode);
-                http_server_readmode= tmp;
-            }
+        case OPT_HTTP_SERVER_BINMODE:
+            http_server_binmode = 1;
             break;
         }
     }
@@ -3262,9 +3256,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 break;
             }
 
-            if ((file = BIO_new_file(p, "rb")) == NULL) {
+            const char *opmode = http_server_binmode==1 ? "rb" : "r";
+
+            if ((file = BIO_new_file(p, opmode)) == NULL) {
                 BIO_puts(io, text);
-                BIO_printf(io, "Error opening '%s'\r\n", p);
+                BIO_printf(io, "Error opening '%s' mode='%s'\r\n", p, opmode);
                 ERR_print_errors(io);
                 break;
             }
