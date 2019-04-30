@@ -50,10 +50,10 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 
     for (; ok && p->key != NULL; p++) {
         if (strcmp(p->key, "greeting") == 0) {
-            static char *opensslv = NULL;
-            static char *provname = NULL;
-            static char *greeting = NULL;
-            static OSSL_PARAM counter_request[] = {
+            static char *opensslv;
+            static char *provname;
+            static char *greeting;
+            static const OSSL_PARAM counter_request[] = {
                 /* Known libcrypto provided parameters */
                 { "openssl-version", OSSL_PARAM_UTF8_PTR,
                   &opensslv, sizeof(&opensslv), NULL },
@@ -68,6 +68,8 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
             };
             char buf[256];
             size_t buf_l;
+
+            opensslv = provname = greeting = NULL;
 
             if (c_get_params(prov, counter_request)) {
                 if (greeting) {
