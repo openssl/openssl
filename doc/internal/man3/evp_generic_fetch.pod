@@ -171,7 +171,7 @@ And finally, the library functions:
     /* typedef struct evp_foo_st EVP_FOO_CTX */
     struct evp_foo_ctx_st {
         const EVP_FOO *foo;
-        void *provctx;		/* corresponding provider context */
+        void *provdata;		/* corresponding provider data */
     };
 
     int EVP_FOO_CTX_reset(EVP_FOO_CTX *c)
@@ -179,7 +179,7 @@ And finally, the library functions:
         if (c == NULL)
             return 1;
         if (c->foo != NULL && c->foo->cleanctx != NULL)
-            c->foo->cleanctx(c->provctx);
+            c->foo->cleanctx(c->provdata);
         return 1;
     }
 
@@ -191,7 +191,7 @@ And finally, the library functions:
     void EVP_FOO_CTX_free(EVP_FOO_CTX *c)
     {
         EVP_FOO_CTX_reset(c);
-        c->foo->freectx(c->provctx);
+        c->foo->freectx(c->provdata);
         OPENSSL_free(c);
     }
 
@@ -200,10 +200,10 @@ And finally, the library functions:
         int ok = 1;
 
         c->foo = foo;
-        if (c->provctx == NULL)
-            c->provctx = c->foo->newctx();
+        if (c->provdata == NULL)
+            c->provdata = c->foo->newctx();
 
-        ok = c->foo->init(c->provctx);
+        ok = c->foo->init(c->provdata);
 
         return ok;
     }
@@ -213,7 +213,7 @@ And finally, the library functions:
     {
         int ok = 1;
 
-        ok = c->foo->update(c->provctx, out, inl, &outl, in, inl);
+        ok = c->foo->update(c->provdata, out, inl, &outl, in, inl);
         return ok;
     }
 

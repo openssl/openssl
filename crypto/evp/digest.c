@@ -25,10 +25,10 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
     if (ctx->digest == NULL || ctx->digest->prov == NULL)
         goto legacy;
 
-    if (ctx->provctx != NULL) {
+    if (ctx->provdata != NULL) {
         if (ctx->digest->freectx != NULL)
-            ctx->digest->freectx(ctx->provctx);
-        ctx->provctx = NULL;
+            ctx->digest->freectx(ctx->provdata);
+        ctx->provdata = NULL;
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
     }
 
@@ -171,9 +171,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     }
 
     ctx->digest = type;
-    if (ctx->provctx == NULL) {
-        ctx->provctx = ctx->digest->newctx(ossl_provider_ctx(type->prov));
-        if (ctx->provctx == NULL) {
+    if (ctx->provdata == NULL) {
+        ctx->provdata = ctx->digest->newctx(ossl_provider_data(type->prov));
+        if (ctx->provdata == NULL) {
             EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
@@ -184,7 +184,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         return 0;
     }
 
-    return ctx->digest->dinit(ctx->provctx);
+    return ctx->digest->dinit(ctx->provdata);
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
@@ -274,7 +274,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
         EVPerr(EVP_F_EVP_DIGESTUPDATE, EVP_R_UPDATE_ERROR);
         return 0;
     }
-    return ctx->digest->dupdate(ctx->provctx, data, count);
+    return ctx->digest->dupdate(ctx->provdata, data, count);
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
@@ -305,7 +305,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
         return 0;
     }
 
-    ret = ctx->digest->dfinal(ctx->provctx, md, &size, mdsize);
+    ret = ctx->digest->dfinal(ctx->provdata, md, &size, mdsize);
 
     if (isize != NULL) {
         if (size <= UINT_MAX) {
@@ -384,13 +384,13 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     *out = *in;
     /* NULL out pointers in case of error */
     out->pctx = NULL;
-    out->provctx = NULL;
+    out->provdata = NULL;
 
     if (in->fetched_digest != NULL)
         EVP_MD_upref(in->fetched_digest);
 
-    out->provctx = in->digest->dupctx(in->provctx);
-    if (out->provctx == NULL) {
+    out->provdata = in->digest->dupctx(in->provdata);
+    if (out->provdata == NULL) {
         EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_NOT_ABLE_TO_COPY_CTX);
         return 0;
     }

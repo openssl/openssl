@@ -270,7 +270,7 @@ static int aes_cipher(void *vctx,
 
 #define IMPLEMENT_new_ctx(lcmode, UCMODE, len) \
     static OSSL_OP_cipher_newctx_fn aes_##len##_##lcmode##_newctx; \
-    static void *aes_##len##_##lcmode##_newctx(void *provctx) \
+    static void *aes_##len##_##lcmode##_newctx(void *provdata) \
     { \
         PROV_AES_KEY *ctx = OPENSSL_zalloc(sizeof(*ctx)); \
     \

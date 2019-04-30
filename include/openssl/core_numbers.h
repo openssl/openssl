@@ -60,16 +60,16 @@ OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
-OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void *provctx))
+OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void *provdata))
 # define OSSL_FUNC_PROVIDER_GET_PARAM_TYPES  1025
 OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
-                    provider_get_param_types,(void *provctx))
+                    provider_get_param_types,(void *provdata))
 # define OSSL_FUNC_PROVIDER_GET_PARAMS       1026
-OSSL_CORE_MAKE_FUNC(int,provider_get_params,(void *provctx,
+OSSL_CORE_MAKE_FUNC(int,provider_get_params,(void *provdata,
                                              const OSSL_PARAM params[]))
 # define OSSL_FUNC_PROVIDER_QUERY_OPERATION  1027
 OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
-                    (void *provctx, int operation_id, const int *no_store))
+                    (void *provdata, int operation_id, const int *no_store))
 
 /* Digests */
 
@@ -86,7 +86,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
 # define OSSL_FUNC_DIGEST_BLOCK_SIZE        9
 
 
-OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void *provdata))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *dctx))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_update,
                     (void *dctx, const unsigned char *in, size_t inl))
@@ -94,7 +94,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_final,
                     (void *dctx,
                      unsigned char *out, size_t *outl, size_t outsz))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
-                    (void *provctx, const unsigned char *in, size_t inl,
+                    (void *provdata, const unsigned char *in, size_t inl,
                      unsigned char *out, size_t *out_l, size_t outsz))
 
 OSSL_CORE_MAKE_FUNC(void, OP_digest_cleanctx, (void *dctx))
@@ -123,7 +123,7 @@ OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
 # define OSSL_FUNC_CIPHER_CTX_GET_PARAMS            13
 # define OSSL_FUNC_CIPHER_CTX_SET_PARAMS            14
 
-OSSL_CORE_MAKE_FUNC(void *, OP_cipher_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_cipher_newctx, (void *provdata))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_encrypt_init, (void *cctx,
                                                   const unsigned char *key,
                                                   size_t keylen,

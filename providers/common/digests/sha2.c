@@ -40,7 +40,7 @@ static int sha256_final(void *ctx,
     return 0;
 }
 
-static void *sha256_newctx(void *provctx)
+static void *sha256_newctx(void *provdata)
 {
     SHA256_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 

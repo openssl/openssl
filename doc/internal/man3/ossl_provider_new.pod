@@ -5,7 +5,7 @@
 ossl_provider_find, ossl_provider_new, ossl_provider_upref,
 ossl_provider_free, ossl_provider_add_module_location,
 ossl_provider_set_fallback, ossl_provider_activate,
-ossl_provider_ctx, ossl_provider_forall_loaded,
+ossl_provider_data, ossl_provider_forall_loaded,
 ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
 ossl_provider_teardown, ossl_provider_get_param_types,
@@ -29,8 +29,8 @@ ossl_provider_get_params, ossl_provider_query_operation
  /* Load and initialize the Provider */
  int ossl_provider_activate(OSSL_PROVIDER *prov);
 
- /* Return pointer to the provider's context */
- void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
+ /* Return pointer to the provider's data blob */
+ void *ossl_provider_data(const OSSL_PROVIDER *prov);
 
  /* Iterate over all loaded providers */
  int ossl_provider_forall_loaded(OPENSSL_CTX *,
@@ -124,7 +124,7 @@ be located in that module, and called.
 
 =back
 
-ossl_provider_ctx() returns a context created by the provider.
+ossl_provider_data() returns a data blob created by the provider.
 Outside of the provider, it's completely opaque, but it needs to be
 passed back to some of the provider functions.
 

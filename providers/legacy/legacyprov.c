@@ -81,7 +81,7 @@ static const OSSL_DISPATCH legacy_dispatch_table[] = {
 int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
-                       void **provctx)
+                       void **provdata)
 {
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -98,5 +98,6 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     }
 
     *out = legacy_dispatch_table;
+    *provdata = NULL;
     return 1;
 }

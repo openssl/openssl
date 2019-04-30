@@ -157,14 +157,14 @@ struct ossl_param_st {
  * |in|         is the array of functions that the Core passes to the provider.
  * |out|        will be the array of base functions that the provider passes
  *              back to the Core.
- * |provctx|    a provider side context object, optionally created if the
- *              provider needs it.  This value is passed to other provider
- *              functions, notably other context constructors.
+ * |provdata|   a provider side data blob, created by the provider if it
+ *              needs it.  This value is passed to other provider functions,
+ *              notably context constructors.
  */
 typedef int (OSSL_provider_init_fn)(const OSSL_PROVIDER *provider,
                                     const OSSL_DISPATCH *in,
                                     const OSSL_DISPATCH **out,
-                                    void **provctx);
+                                    void **provdata);
 # ifdef __VMS
 #  pragma names save
 #  pragma names uppercase,truncated

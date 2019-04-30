@@ -29,10 +29,10 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
     if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
         goto legacy;
 
-    if (ctx->provctx != NULL) {
+    if (ctx->provdata != NULL) {
         if (ctx->cipher->freectx != NULL)
-            ctx->cipher->freectx(ctx->provctx);
-        ctx->provctx = NULL;
+            ctx->cipher->freectx(ctx->provdata);
+        ctx->provdata = NULL;
     }
     if (ctx->fetched_cipher != NULL)
         EVP_CIPHER_meth_free(ctx->fetched_cipher);
@@ -205,9 +205,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     }
 
     ctx->cipher = cipher;
-    if (ctx->provctx == NULL) {
-        ctx->provctx = ctx->cipher->newctx(ossl_provider_ctx(cipher->prov));
-        if (ctx->provctx == NULL) {
+    if (ctx->provdata == NULL) {
+        ctx->provdata = ctx->cipher->newctx(ossl_provider_data(cipher->prov));
+        if (ctx->provdata == NULL) {
             EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
@@ -241,7 +241,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             return 0;
         }
 
-        return ctx->cipher->einit(ctx->provctx,
+        return ctx->cipher->einit(ctx->provdata,
                                   key,
                                   key == NULL ? 0
                                               : EVP_CIPHER_CTX_key_length(ctx),
@@ -255,7 +255,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         return 0;
     }
 
-    return ctx->cipher->dinit(ctx->provctx,
+    return ctx->cipher->dinit(ctx->provdata,
                               key,
                               key == NULL ? 0
                                           : EVP_CIPHER_CTX_key_length(ctx),
@@ -583,7 +583,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_UPDATE_ERROR);
         return 0;
     }
-    ret = ctx->cipher->cupdate(ctx->provctx, out, &soutl,
+    ret = ctx->cipher->cupdate(ctx->provdata, out, &soutl,
                                inl + (blocksize == 1 ? 0 : blocksize), in,
                                (size_t)inl);
 
@@ -630,7 +630,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         return 0;
     }
 
-    ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl,
+    ret = ctx->cipher->cfinal(ctx->provdata, out, &soutl,
                               blocksize == 1 ? 0 : blocksize);
 
     if (soutl > INT_MAX) {
@@ -704,7 +704,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_UPDATE_ERROR);
         return 0;
     }
-    ret = ctx->cipher->cupdate(ctx->provctx, out, &soutl,
+    ret = ctx->cipher->cupdate(ctx->provdata, out, &soutl,
                                inl + (blocksize == 1 ? 0 : blocksize), in,
                                (size_t)inl);
 
@@ -815,7 +815,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         return 0;
     }
 
-    ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl,
+    ret = ctx->cipher->cfinal(ctx->provdata, out, &soutl,
                               blocksize == 1 ? 0 : blocksize);
 
     if (ret) {
@@ -917,7 +917,7 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
             return 0;
         }
 
-        if (!ctx->cipher->ctx_set_params(ctx->provctx, params))
+        if (!ctx->cipher->ctx_set_params(ctx->provdata, params))
             return 0;
     }
 
@@ -974,15 +974,15 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
     EVP_CIPHER_CTX_reset(out);
 
     *out = *in;
-    out->provctx = NULL;
+    out->provdata = NULL;
 
     if (in->fetched_cipher != NULL && !EVP_CIPHER_upref(in->fetched_cipher)) {
         out->fetched_cipher = NULL;
         return 0;
     }
 
-    out->provctx = in->cipher->dupctx(in->provctx);
-    if (out->provctx == NULL) {
+    out->provdata = in->cipher->dupctx(in->provdata);
+    if (out->provdata == NULL) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, EVP_R_NOT_ABLE_TO_COPY_CTX);
         return 0;
     }
