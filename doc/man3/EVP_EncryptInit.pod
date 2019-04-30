@@ -287,7 +287,10 @@ EVP_EncryptInit_ex(), EVP_EncryptUpdate() and EVP_EncryptFinal_ex()
 return 1 for success and 0 for failure.
 
 EVP_DecryptInit_ex() and EVP_DecryptUpdate() return 1 for success and 0 for failure.
-EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
+EVP_DecryptFinal_ex() returns 1 for success and a value <= 0 for failure.
+(Note: previous versions of this manual page stated that the value 0 is returned
+in the case of failure. But in some cases a value < 0 is returned, which happens
+in particular for AEAD ciphers when the authentication fails.)
 
 EVP_CipherInit_ex() and EVP_CipherUpdate() return 1 for success and 0 for failure.
 EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
