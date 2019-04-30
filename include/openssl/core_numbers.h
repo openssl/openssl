@@ -57,7 +57,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
 # define OSSL_FUNC_CORE_GET_PARAMS             2
 OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
                                          const OSSL_PARAM params[]))
-# define OSSL_FUNC_PROVIDER_EXDATA_NEW         3
+# define OSSL_FUNC_CORE_EXDATA_NEW             3
 # ifdef HEADER_CRYPTO_H
 OSSL_CORE_MAKE_FUNC(int, core_get_exdata_index,
         (int class_index, long argl, void *argp,

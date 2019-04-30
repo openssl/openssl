@@ -117,7 +117,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_get_core_get_params(in);
             break;
-        case OSSL_FUNC_PROVIDER_EXDATA_NEW:
+        case OSSL_FUNC_CORE_EXDATA_NEW:
             c_get_exdata_index = OSSL_get_core_get_exdata_index(in);
             break;
         /* Just ignore anything we don't understand */
