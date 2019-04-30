@@ -3292,18 +3292,15 @@ int ssl3_handshake_write(SSL *s)
 
 int ssl3_new(SSL *s)
 {
-
 #ifndef OPENSSL_NO_SRP
     if (!SSL_SRP_CTX_init(s))
-        goto err;
+        return 0;
 #endif
 
     if (!s->method->ssl_clear(s))
         return 0;
 
     return 1;
- err:
-    return 0;
 }
 
 void ssl3_free(SSL *s)
