@@ -10,9 +10,17 @@
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 
+struct openssl_ctx_onfree_list_st {
+    openssl_ctx_onfree_fn fn;
+    struct openssl_ctx_onfree_list_st *next;
+};
+
 struct openssl_ctx_st {
     CRYPTO_RWLOCK *lock;
     CRYPTO_EX_DATA data;
+    int run_once_done[MAX_OPENSSL_CTX_RUN_ONCE];
+    int run_once_ret[MAX_OPENSSL_CTX_RUN_ONCE];
+    struct openssl_ctx_onfree_list_st *onfreelist;
 };
 
 static OPENSSL_CTX default_context;
@@ -26,6 +34,14 @@ static int context_init(OPENSSL_CTX *ctx)
 
 static int context_deinit(OPENSSL_CTX *ctx)
 {
+    struct openssl_ctx_onfree_list_st *tmp, *onfree = ctx->onfreelist;
+
+    while (onfree != NULL) {
+        onfree->fn(ctx);
+        tmp = onfree;
+        onfree = onfree->next;
+        OPENSSL_free(tmp);
+    }
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_OPENSSL_CTX, NULL, &ctx->data);
     CRYPTO_THREAD_lock_free(ctx->lock);
     return 1;
@@ -92,9 +108,11 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index)
 
     if (ctx == NULL) {
         if (!RUN_ONCE(&default_context_init, do_default_context_init))
-            return 0;
+            return NULL;
         ctx = &default_context;
     }
+    if (ctx == NULL)
+        return NULL;
 
     CRYPTO_THREAD_read_lock(ctx->lock);
 
@@ -108,3 +126,56 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index)
     return data;
 }
 
+int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
+                         openssl_ctx_run_once_fn run_once_fn)
+{
+    int done = 0, ret = 0;
+
+#ifndef FIPS_MODE
+    if (ctx == NULL) {
+        if (!RUN_ONCE(&default_context_init, do_default_context_init))
+            return 0;
+        ctx = &default_context;
+    }
+#endif
+    if (ctx == NULL)
+        return 0;
+
+    CRYPTO_THREAD_read_lock(ctx->lock);
+    done = ctx->run_once_done[idx];
+    if (done)
+        ret = ctx->run_once_ret[idx];
+    CRYPTO_THREAD_unlock(ctx->lock);
+
+    if (done)
+        return ret;
+
+    CRYPTO_THREAD_write_lock(ctx->lock);
+    if (ctx->run_once_done[idx]) {
+        ret = ctx->run_once_ret[idx];
+        CRYPTO_THREAD_unlock(ctx->lock);
+        return ret;
+    }
+
+    ret = run_once_fn(ctx);
+    ctx->run_once_done[idx] = 1;
+    ctx->run_once_ret[idx] = ret;
+    CRYPTO_THREAD_unlock(ctx->lock);
+
+    return ret;
+}
+
+int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn)
+{
+    struct openssl_ctx_onfree_list_st *newonfree
+        = OPENSSL_malloc(sizeof(*newonfree));
+
+    if (newonfree == NULL)
+        return 0;
+
+    newonfree->fn = onfreefn;
+    newonfree->next = ctx->onfreelist;
+    ctx->onfreelist = newonfree;
+
+    return 1;
+}

@@ -105,6 +105,8 @@ uint32_t OPENSSL_rdtsc(void);
 size_t OPENSSL_instrument_bus(unsigned int *, size_t);
 size_t OPENSSL_instrument_bus2(unsigned int *, size_t, size_t);
 
+# define MAX_OPENSSL_CTX_RUN_ONCE           1
+
 typedef struct openssl_ctx_method {
     void *(*new_func)(void);
     void (*free_func)(void *);
@@ -114,4 +116,10 @@ int openssl_ctx_new_index(const OPENSSL_CTX_METHOD *);
 /* Functions to retrieve pointers to data by index */
 void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */);
 
+typedef int (*openssl_ctx_run_once_fn)(OPENSSL_CTX *ctx);
+typedef void (*openssl_ctx_onfree_fn)(OPENSSL_CTX *ctx);
+
+int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
+                         openssl_ctx_run_once_fn run_once_fn);
+int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn);
 #endif
