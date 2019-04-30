@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -27,7 +27,7 @@ typedef struct {
 /* ARIA GCM context */
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         ARIA_KEY ks;
     } ks;                       /* ARIA subkey to use */
     int key_set;                /* Set if key initialised */
@@ -43,7 +43,7 @@ typedef struct {
 /* ARIA CCM context */
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         ARIA_KEY ks;
     } ks;                       /* ARIA key schedule to use */
     int key_set;                /* Set if key initialised */

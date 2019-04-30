@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <openssl/aes.h>
 #include "internal/evp_int.h"
+#include "internal/cryptlib.h"
 #include "modes_lcl.h"
 #include <openssl/rand.h>
 #include <openssl/cmac.h>
@@ -22,7 +23,7 @@
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ks;
     block128_f block;
@@ -34,7 +35,7 @@ typedef struct {
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ks;                       /* AES key schedule to use */
     int key_set;                /* Set if key initialised */
@@ -52,7 +53,7 @@ typedef struct {
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ks1, ks2;                 /* AES key schedules to use */
     XTS128_CONTEXT xts;
@@ -64,7 +65,7 @@ typedef struct {
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ks;                       /* AES key schedule to use */
     int key_set;                /* Set if key initialised */
@@ -80,11 +81,11 @@ typedef struct {
 #ifndef OPENSSL_NO_OCB
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ksenc;                    /* AES key schedule to use for encryption */
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ksdec;                    /* AES key schedule to use for decryption */
     int key_set;                /* Set if key initialised */
@@ -1008,7 +1009,7 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         /*-
          * KM-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-06)
@@ -1023,7 +1024,7 @@ typedef struct {
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         /*-
          * KMO-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-08)
@@ -1041,7 +1042,7 @@ typedef struct {
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         /*-
          * KMF-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-08)
@@ -1059,7 +1060,7 @@ typedef struct {
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         /*-
          * KMA-GCM-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-11)
@@ -1108,7 +1109,7 @@ typedef struct {
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         /*-
          * Padding is chosen so that ccm.kmac_param.k overlaps with key.k and
          * ccm.fc with key.k.rounds. Remember that on s390x, an AES_KEY's
@@ -3853,7 +3854,7 @@ BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, ccm, CCM,
 
 typedef struct {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ks;
     /* Indicates if IV has been set */
