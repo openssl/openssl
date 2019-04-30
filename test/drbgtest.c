@@ -1249,7 +1249,8 @@ static const size_t crngt_num_cases = 6;
 
 static size_t crngt_case, crngt_idx;
 
-static int crngt_entropy_cb(unsigned char *buf)
+static int crngt_entropy_cb(unsigned char *buf, unsigned char *md,
+                            unsigned int *md_size)
 {
     size_t i, z;
 
@@ -1261,7 +1262,7 @@ static int crngt_entropy_cb(unsigned char *buf)
         z--;
     for (i = 0; i < CRNGT_BUFSIZ; i++)
         buf[i] = (unsigned char)(i + 'A' + z);
-    return 1;
+    return EVP_Digest(buf, CRNGT_BUFSIZ, md, md_size, EVP_sha256(), NULL);
 }
 
 static int test_crngt(int n)

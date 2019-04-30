@@ -13,45 +13,52 @@
  */
 
 #include <string.h>
+#include <openssl/evp.h>
 #include "internal/rand_int.h"
 #include "internal/thread_once.h"
 #include "rand_lcl.h"
 
 static RAND_POOL *crngt_pool;
-static unsigned char *crngt_prev;
+static unsigned char crngt_prev[EVP_MAX_MD_SIZE];
 
-int (*crngt_get_entropy)(unsigned char *) = &rand_crngt_get_entropy_cb;
+int (*crngt_get_entropy)(unsigned char *, unsigned char *, unsigned int *)
+    = &rand_crngt_get_entropy_cb;
 
-int rand_crngt_get_entropy_cb(unsigned char *buf)
+int rand_crngt_get_entropy_cb(unsigned char *buf, unsigned char *md,
+                              unsigned int *md_size)
 {
+    int r;
     size_t n;
     unsigned char *p;
 
-    while ((n = rand_pool_acquire_entropy(crngt_pool)) != 0)
-        if (n >= CRNGT_BUFSIZ) {
-            p = rand_pool_detach(crngt_pool);
+    n = rand_pool_acquire_entropy(crngt_pool);
+    if (n >= CRNGT_BUFSIZ) {
+        p = rand_pool_detach(crngt_pool);
+        r = EVP_Digest(p, CRNGT_BUFSIZ, md, md_size, EVP_sha256(), NULL);
+        if (r != 0)
             memcpy(buf, p, CRNGT_BUFSIZ);
-            rand_pool_reattach(crngt_pool, p);
-            return 1;
-        }
+        rand_pool_reattach(crngt_pool, p);
+        return r;
+    }
     return 0;
-
 }
+
 void rand_crngt_cleanup(void)
 {
     rand_pool_free(crngt_pool);
-    OPENSSL_secure_free(crngt_prev);
     crngt_pool = NULL;
-    crngt_prev = NULL;
 }
 
 int rand_crngt_init(void)
 {
+    unsigned char buf[CRNGT_BUFSIZ];
+
     if ((crngt_pool = rand_pool_new(0, CRNGT_BUFSIZ, CRNGT_BUFSIZ)) == NULL)
         return 0;
-    if ((crngt_prev = OPENSSL_secure_malloc(CRNGT_BUFSIZ)) != NULL
-        && crngt_get_entropy(crngt_prev))
+    if (crngt_get_entropy(buf, crngt_prev, NULL)) {
+        OPENSSL_cleanse(buf, sizeof(buf));
         return 1;
+    }
     rand_crngt_cleanup();
     return 0;
 }
@@ -74,7 +81,8 @@ size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
                               int entropy, size_t min_len, size_t max_len,
                               int prediction_resistance)
 {
-    unsigned char buf[CRNGT_BUFSIZ];
+    unsigned char buf[CRNGT_BUFSIZ], md[EVP_MAX_MD_SIZE];
+    unsigned int sz;
     RAND_POOL *pool;
     size_t q, r = 0, s, t = 0;
     int attempts = 3;
@@ -87,17 +95,18 @@ size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
 
     while ((q = rand_pool_bytes_needed(pool, 1)) > 0 && attempts-- > 0) {
         s = q > sizeof(buf) ? sizeof(buf) : q;
-        if (!crngt_get_entropy(buf)
-            || memcmp(crngt_prev, buf, CRNGT_BUFSIZ) == 0
+        if (!crngt_get_entropy(buf, md, &sz)
+            || memcmp(crngt_prev, md, sz) == 0
             || !rand_pool_add(pool, buf, s, s * 8))
             goto err;
-        memcpy(crngt_prev, buf, CRNGT_BUFSIZ);
+        memcpy(crngt_prev, md, sz);
         t += s;
         attempts++;
     }
     r = t;
     *pout = rand_pool_detach(pool);
 err:
+    OPENSSL_cleanse(buf, sizeof(buf));
     rand_pool_free(pool);
     return r;
 }

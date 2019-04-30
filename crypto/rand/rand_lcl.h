@@ -334,8 +334,10 @@ int drbg_hmac_init(RAND_DRBG *drbg);
  * Entropy call back for the FIPS 140-2 section 4.9.2 Conditional Tests.
  * These need to be exposed for the unit tests.
  */
-int rand_crngt_get_entropy_cb(unsigned char *buf);
-extern int (*crngt_get_entropy)(unsigned char *);
+int rand_crngt_get_entropy_cb(unsigned char *buf, unsigned char *md,
+                              unsigned int *md_size);
+extern int (*crngt_get_entropy)(unsigned char *buf, unsigned char *md,
+                                unsigned int *md_size);
 int rand_crngt_init(void);
 void rand_crngt_cleanup(void);
 
