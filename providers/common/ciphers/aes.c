@@ -235,16 +235,23 @@ static int aes_stream_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static int aes_cipher(void *vctx, unsigned char *out, const unsigned char *in,
-                      size_t inl)
+static int aes_cipher(void *vctx,
+                      unsigned char *out, size_t *outl, size_t outsize,
+                      const unsigned char *in, size_t inl)
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
+
+    if (outsize < inl) {
+        PROVerr(PROV_F_AES_CIPHER, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        return 0;
+    }
 
     if (!ctx->ciph->cipher(ctx, out, in, inl)) {
         PROVerr(PROV_F_AES_CIPHER, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
     }
 
+    *outl = inl;
     return 1;
 }
 

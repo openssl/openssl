@@ -140,8 +140,9 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_update,
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_final,
                     (void *, unsigned char *out, size_t *outl, size_t outsize))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_cipher,
-                    (void *, unsigned char *out, const unsigned char *in,
-                     size_t inl))
+                    (void *,
+                     unsigned char *out, size_t *outl, size_t outsize,
+                     const unsigned char *in, size_t inl))
 OSSL_CORE_MAKE_FUNC(void, OP_cipher_freectx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_cipher_dupctx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(size_t, OP_cipher_key_length, (void))
