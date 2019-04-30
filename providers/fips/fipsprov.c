@@ -78,7 +78,8 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
 
 int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        const OSSL_DISPATCH *in,
-                       const OSSL_DISPATCH **out)
+                       const OSSL_DISPATCH **out,
+                       void **provctx)
 {
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {

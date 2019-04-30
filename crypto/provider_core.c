@@ -54,6 +54,9 @@ struct ossl_provider_st {
     OSSL_provider_get_param_types_fn *get_param_types;
     OSSL_provider_get_params_fn *get_params;
     OSSL_provider_query_operation_fn *query_operation;
+
+    /* Provider side data */
+    void *provctx;
 };
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -275,7 +278,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          */
         if (ref < 2 && prov->flag_initialized) {
             if (prov->teardown != NULL)
-                prov->teardown();
+                prov->teardown(prov->provctx);
             prov->flag_initialized = 0;
         }
 
@@ -401,7 +404,8 @@ static int provider_activate(OSSL_PROVIDER *prov)
     }
 
     if (prov->init_function == NULL
-        || !prov->init_function(prov, core_dispatch, &provider_dispatch)) {
+        || !prov->init_function(prov, core_dispatch, &provider_dispatch,
+                                &prov->provctx)) {
         CRYPTOerr(CRYPTO_F_PROVIDER_ACTIVATE, ERR_R_INIT_FAIL);
         ERR_add_error_data(2, "name=", prov->name);
         DSO_free(prov->module);
@@ -446,6 +450,11 @@ int ossl_provider_activate(OSSL_PROVIDER *prov)
     }
 
     return 0;
+}
+
+void *ossl_provider_ctx(const OSSL_PROVIDER *prov)
+{
+    return prov->provctx;
 }
 
 
@@ -573,18 +582,20 @@ const char *ossl_provider_module_path(OSSL_PROVIDER *prov)
 void ossl_provider_teardown(const OSSL_PROVIDER *prov)
 {
     if (prov->teardown != NULL)
-        prov->teardown();
+        prov->teardown(prov->provctx);
 }
 
 const OSSL_ITEM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov)
 {
-    return prov->get_param_types == NULL ? NULL : prov->get_param_types(prov);
+    return prov->get_param_types == NULL
+        ? NULL : prov->get_param_types(prov->provctx);
 }
 
 int ossl_provider_get_params(const OSSL_PROVIDER *prov,
                              const OSSL_PARAM params[])
 {
-    return prov->get_params == NULL ? 0 : prov->get_params(prov, params);
+    return prov->get_params == NULL
+        ? 0 : prov->get_params(prov->provctx, params);
 }
 
 
@@ -592,7 +603,7 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache)
 {
-    return prov->query_operation(prov, operation_id, no_cache);
+    return prov->query_operation(prov->provctx, operation_id, no_cache);
 }
 
 /*-
