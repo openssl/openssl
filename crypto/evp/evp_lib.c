@@ -232,8 +232,14 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                const unsigned char *in, unsigned int inl)
 {
     if (ctx->cipher->prov != NULL) {
+        size_t outl = 0;         /* ignored */
+        int blocksize = EVP_CIPHER_CTX_block_size(ctx);
+
         if (ctx->cipher->ccipher != NULL)
-            return ctx->cipher->ccipher(ctx->provctx, out, in, (size_t)inl);
+            return
+                ctx->cipher->ccipher(ctx->provctx, out, &outl,
+                                     inl + (blocksize == 1 ? 0 : blocksize),
+                                     in, (size_t)inl);
         return 0;
     }
 
