@@ -1110,44 +1110,6 @@ foreach (keys %target_attr_translate) {
 
 %target = ( %{$table{DEFAULTS}}, %target );
 
-# Make the flags to build DSOs the same as for shared libraries unless they
-# are already defined
-$target{module_cflags} = $target{shared_cflag} unless defined $target{module_cflags};
-$target{module_cxxflags} = $target{shared_cxxflag} unless defined $target{module_cxxflags};
-$target{module_ldflags} = $target{shared_ldflag} unless defined $target{module_ldflags};
-{
-    my $shared_info_pl =
-        catfile(dirname($0), "Configurations", "shared-info.pl");
-    my %shared_info = read_eval_file($shared_info_pl);
-    push @{$target{_conf_fname_int}}, $shared_info_pl;
-    my $si = $target{shared_target};
-    while (ref $si ne "HASH") {
-        last if ! defined $si;
-        if (ref $si eq "CODE") {
-            $si = $si->();
-        } else {
-            $si = $shared_info{$si};
-        }
-    }
-
-    # Some of the 'shared_target' values don't have any entried in
-    # %shared_info.  That's perfectly fine, AS LONG AS the build file
-    # template knows how to handle this.  That is currently the case for
-    # Windows and VMS.
-    if (defined $si) {
-        # Just as above, copy certain shared_* attributes to the corresponding
-        # module_ attribute unless the latter is already defined
-        $si->{module_cflags} = $si->{shared_cflag} unless defined $si->{module_cflags};
-        $si->{module_cxxflags} = $si->{shared_cxxflag} unless defined $si->{module_cxxflags};
-        $si->{module_ldflags} = $si->{shared_ldflag} unless defined $si->{module_ldflags};
-        foreach (sort keys %$si) {
-            $target{$_} = defined $target{$_}
-                ? add($si->{$_})->($target{$_})
-                : $si->{$_};
-        }
-    }
-}
-
 my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
 $config{conf_files} = [ sort keys %conf_files ];
 
@@ -1687,7 +1649,48 @@ unless ($disabled{ktls}) {
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
 
-# ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
+# Get the extra flags used when building shared libraries and modules.  We
+# do this late because some of them depend on %disabled.
+
+# Make the flags to build DSOs the same as for shared libraries unless they
+# are already defined
+$target{module_cflags} = $target{shared_cflag} unless defined $target{module_cflags};
+$target{module_cxxflags} = $target{shared_cxxflag} unless defined $target{module_cxxflags};
+$target{module_ldflags} = $target{shared_ldflag} unless defined $target{module_ldflags};
+{
+    my $shared_info_pl =
+        catfile(dirname($0), "Configurations", "shared-info.pl");
+    my %shared_info = read_eval_file($shared_info_pl);
+    push @{$target{_conf_fname_int}}, $shared_info_pl;
+    my $si = $target{shared_target};
+    while (ref $si ne "HASH") {
+        last if ! defined $si;
+        if (ref $si eq "CODE") {
+            $si = $si->();
+        } else {
+            $si = $shared_info{$si};
+        }
+    }
+
+    # Some of the 'shared_target' values don't have any entries in
+    # %shared_info.  That's perfectly fine, AS LONG AS the build file
+    # template knows how to handle this.  That is currently the case for
+    # Windows and VMS.
+    if (defined $si) {
+        # Just as above, copy certain shared_* attributes to the corresponding
+        # module_ attribute unless the latter is already defined
+        $si->{module_cflags} = $si->{shared_cflag} unless defined $si->{module_cflags};
+        $si->{module_cxxflags} = $si->{shared_cxxflag} unless defined $si->{module_cxxflags};
+        $si->{module_ldflags} = $si->{shared_ldflag} unless defined $si->{module_ldflags};
+        foreach (sort keys %$si) {
+            $target{$_} = defined $target{$_}
+                ? add($si->{$_})->($target{$_})
+                : $si->{$_};
+        }
+    }
+}
+
+# ALL MODIFICATIONS TO %disabled, %config and %target MUST BE DONE FROM HERE ON
 
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
