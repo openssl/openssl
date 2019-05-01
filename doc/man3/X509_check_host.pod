@@ -48,9 +48,13 @@ is responsible for freeing the peername via OPENSSL_free() when it
 is no longer needed.
 
 X509_check_email() checks if the certificate matches the specified
-email B<address>.  Only the mailbox syntax of RFC 822 is supported,
+email B<address>. The mailbox syntax of RFC 822 is supported,
 comments are not allowed, and no attempt is made to normalize quoted
-characters.  The B<addresslen> argument must be the number of
+characters. The mailbox syntax of RFC 6531 is supported for
+SmtpUTF8Mailbox address in subjectAltName according to RFC 8398,
+with similar limitations as for RFC 822 syntax, and no attempt
+is made to convert from A-label to U-label before comparison.
+The B<addresslen> argument must be the number of
 characters in the address string or zero in which case the length
 is calculated with strlen(B<address>).
 
