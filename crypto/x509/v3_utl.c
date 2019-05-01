@@ -857,7 +857,21 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
             GENERAL_NAME *gen;
             ASN1_STRING *cstr;
             gen = sk_GENERAL_NAME_value(gens, i);
-            if (gen->type != check_type)
+            if ((gen->type != check_type) && gen->type != GEN_OTHERNAME)
+                continue;
+            if ((gen->type == GEN_OTHERNAME) && (check_type == GEN_EMAIL)) {
+                if (OBJ_obj2nid(gen->d.otherName->type_id) ==
+                    NID_id_on_SmtpUTF8Mailbox) {
+                    san_present = 1;
+                    cstr = gen->d.otherName->value->value.utf8string;
+
+                    /* Positive on success, negative on error! */
+                    if ((rv = do_check_string(cstr, 0, equal, flags,
+                                              chk, chklen, peername)) != 0)
+                        break;
+                } else
+                    continue;
+            } else
                 continue;
             san_present = 1;
             if (check_type == GEN_EMAIL)
