@@ -184,6 +184,7 @@ B<openssl> B<s_server>
 [B<-early_data>]
 [B<-anti_replay>]
 [B<-no_anti_replay>]
+[B<-http_server_binmode>]
 
 =head1 DESCRIPTION
 
@@ -742,6 +743,11 @@ automatically detect if a session ticket has been used more than once, TLSv1.3
 has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
+
+=item B<-http_server_binmode>
+
+When acting as web-server (using option B<-WWW> or B<-HTTP>) open files requested
+by the client in binary mode.
 
 =back
 
