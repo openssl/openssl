@@ -237,7 +237,7 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
         if (ctx->cipher->ccipher != NULL)
             return
-                ctx->cipher->ccipher(ctx->provdata, out, &outl,
+                ctx->cipher->ccipher(ctx->provctx, out, &outl,
                                      inl + (blocksize == 1 ? 0 : blocksize),
                                      in, (size_t)inl);
         return 0;

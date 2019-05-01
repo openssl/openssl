@@ -21,8 +21,8 @@ struct evp_md_ctx_st {
     /* Update function: usually copied from EVP_MD */
     int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
 
-    /* Provider data blob */
-    void *provdata;
+    /* Provider context */
+    void *provctx;
     EVP_MD *fetched_digest;
 } /* EVP_MD_CTX */ ;
 
@@ -45,8 +45,8 @@ struct evp_cipher_ctx_st {
     int block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
 
-    /* Provider data blob */
-    void *provdata;
+    /* Provider context */
+    void *provctx;
     EVP_CIPHER *fetched_cipher;
 } /* EVP_CIPHER_CTX */ ;
 
