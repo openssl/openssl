@@ -105,6 +105,7 @@ $code=<<___;
 .align	16
 bn_mul_mont:
 .cfi_startproc
+	endbr64
 	mov	${num}d,${num}d
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -369,6 +370,7 @@ $code.=<<___;
 .align	16
 bn_mul4x_mont:
 .cfi_startproc
+	endbr64
 	mov	${num}d,${num}d
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -840,6 +842,7 @@ $code.=<<___;
 .align	32
 bn_sqr8x_mont:
 .cfi_startproc
+	endbr64
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 .Lsqr8x_enter:
@@ -1038,6 +1041,7 @@ $code.=<<___;
 .align	32
 bn_mulx4x_mont:
 .cfi_startproc
+	endbr64
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 .Lmulx4x_enter:
@@ -1415,6 +1419,7 @@ $code.=<<___;
 .type	mul_handler,\@abi-omnipotent
 .align	16
 mul_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -1453,6 +1458,7 @@ mul_handler:
 .type	sqr_handler,\@abi-omnipotent
 .align	16
 sqr_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

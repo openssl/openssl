@@ -364,6 +364,7 @@ $code.=<<___;
 .align	32
 sha1_multi_block:
 .cfi_startproc
+	endbr64
 	mov	OPENSSL_ia32cap_P+4(%rip),%rcx
 	bt	\$61,%rcx			# check SHA bit
 	jc	_shaext_shortcut
@@ -528,6 +529,7 @@ $code.=<<___;
 .align	32
 sha1_multi_block_shaext:
 .cfi_startproc
+	endbr64
 _shaext_shortcut:
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -1021,6 +1023,7 @@ $code.=<<___;
 .align	32
 sha1_multi_block_avx:
 .cfi_startproc
+	endbr64
 _avx_shortcut:
 ___
 $code.=<<___ if ($avx>1);
@@ -1193,6 +1196,7 @@ $code.=<<___;
 .align	32
 sha1_multi_block_avx2:
 .cfi_startproc
+	endbr64
 _avx2_shortcut:
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -1384,6 +1388,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -1469,6 +1474,7 @@ $code.=<<___ if ($avx>1);
 .type	avx2_handler,\@abi-omnipotent
 .align	16
 avx2_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

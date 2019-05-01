@@ -122,6 +122,7 @@ $code.=<<___;
 .align	64
 ecp_nistz256_mul_by_2:
 .cfi_startproc
+	endbr64
 	push	%r12
 .cfi_push	%r12
 	push	%r13
@@ -177,6 +178,7 @@ ecp_nistz256_mul_by_2:
 .align	32
 ecp_nistz256_div_by_2:
 .cfi_startproc
+	endbr64
 	push	%r12
 .cfi_push	%r12
 	push	%r13
@@ -247,6 +249,7 @@ ecp_nistz256_div_by_2:
 .align	32
 ecp_nistz256_mul_by_3:
 .cfi_startproc
+	endbr64
 	push	%r12
 .cfi_push	%r12
 	push	%r13
@@ -323,6 +326,7 @@ ecp_nistz256_mul_by_3:
 .align	32
 ecp_nistz256_add:
 .cfi_startproc
+	endbr64
 	push	%r12
 .cfi_push	%r12
 	push	%r13
@@ -379,6 +383,7 @@ ecp_nistz256_add:
 .align	32
 ecp_nistz256_sub:
 .cfi_startproc
+	endbr64
 	push	%r12
 .cfi_push	%r12
 	push	%r13
@@ -435,6 +440,7 @@ ecp_nistz256_sub:
 .align	32
 ecp_nistz256_neg:
 .cfi_startproc
+	endbr64
 	push	%r12
 .cfi_push	%r12
 	push	%r13
@@ -503,6 +509,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_ord_mul_mont:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -833,6 +840,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_ord_sqr_mont:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -1129,6 +1137,7 @@ $code.=<<___	if ($addx);
 .align	32
 ecp_nistz256_ord_mul_montx:
 .cfi_startproc
+	endbr64
 .Lecp_nistz256_ord_mul_montx:
 	push	%rbp
 .cfi_push	%rbp
@@ -1365,6 +1374,7 @@ ecp_nistz256_ord_mul_montx:
 .align	32
 ecp_nistz256_ord_sqr_montx:
 .cfi_startproc
+	endbr64
 .Lecp_nistz256_ord_sqr_montx:
 	push	%rbp
 .cfi_push	%rbp
@@ -1600,6 +1610,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_mul_mont:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -1675,6 +1686,7 @@ $code.=<<___;
 .align	32
 __ecp_nistz256_mul_montq:
 .cfi_startproc
+	endbr64
 	########################################################################
 	# Multiply a by b[0]
 	mov	%rax, $t1
@@ -1901,6 +1913,7 @@ __ecp_nistz256_mul_montq:
 .align	32
 ecp_nistz256_sqr_mont:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -1971,6 +1984,7 @@ $code.=<<___;
 .align	32
 __ecp_nistz256_sqr_montq:
 .cfi_startproc
+	endbr64
 	mov	%rax, $acc5
 	mulq	$acc6			# a[1]*a[0]
 	mov	%rax, $acc1
@@ -2138,6 +2152,7 @@ $code.=<<___;
 .align	32
 __ecp_nistz256_mul_montx:
 .cfi_startproc
+	endbr64
 	########################################################################
 	# Multiply by b[0]
 	mulx	$acc1, $acc0, $acc1
@@ -2307,6 +2322,7 @@ __ecp_nistz256_mul_montx:
 .align	32
 __ecp_nistz256_sqr_montx:
 .cfi_startproc
+	endbr64
 	mulx	$acc6, $acc1, $acc2	# a[0]*a[1]
 	mulx	$acc7, $t0, $acc3	# a[0]*a[2]
 	xor	%eax, %eax
@@ -2452,6 +2468,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_from_mont:
 .cfi_startproc
+	endbr64
 	push	%r12
 .cfi_push	%r12
 	push	%r13
@@ -2587,6 +2604,7 @@ ecp_nistz256_scatter_w5:
 .align	32
 ecp_nistz256_gather_w5:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($avx>1);
 	mov	OPENSSL_ia32cap_P+8(%rip), %eax
@@ -2705,6 +2723,7 @@ ecp_nistz256_scatter_w7:
 .align	32
 ecp_nistz256_gather_w7:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($avx>1);
 	mov	OPENSSL_ia32cap_P+8(%rip), %eax
@@ -2800,6 +2819,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_avx2_gather_w5:
 .cfi_startproc
+	endbr64
 .Lavx2_gather_w5:
 	vzeroupper
 ___
@@ -2908,6 +2928,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_avx2_gather_w7:
 .cfi_startproc
+	endbr64
 .Lavx2_gather_w7:
 	vzeroupper
 ___
@@ -3081,6 +3102,7 @@ $code.=<<___;
 .align	32
 __ecp_nistz256_add_toq:
 .cfi_startproc
+	endbr64
 	xor	$t4,$t4
 	add	8*0($b_ptr), $a0
 	adc	8*1($b_ptr), $a1
@@ -3115,6 +3137,7 @@ __ecp_nistz256_add_toq:
 .align	32
 __ecp_nistz256_sub_fromq:
 .cfi_startproc
+	endbr64
 	sub	8*0($b_ptr), $a0
 	sbb	8*1($b_ptr), $a1
 	 mov	$a0, $t0
@@ -3148,6 +3171,7 @@ __ecp_nistz256_sub_fromq:
 .align	32
 __ecp_nistz256_subq:
 .cfi_startproc
+	endbr64
 	sub	$a0, $t0
 	sbb	$a1, $t1
 	 mov	$t0, $a0
@@ -3177,6 +3201,7 @@ __ecp_nistz256_subq:
 .align	32
 __ecp_nistz256_mul_by_2q:
 .cfi_startproc
+	endbr64
 	xor	$t4, $t4
 	add	$a0, $a0		# a0:a3+a0:a3
 	adc	$a1, $a1
@@ -3224,6 +3249,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_point_double:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -3241,6 +3267,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_point_doublex:
 .cfi_startproc
+	endbr64
 .Lpoint_doublex:
 ___
     }
@@ -3475,6 +3502,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_point_add:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -3492,6 +3520,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_point_addx:
 .cfi_startproc
+	endbr64
 .Lpoint_addx:
 ___
     }
@@ -3865,6 +3894,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_point_add_affine:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -3882,6 +3912,7 @@ $code.=<<___;
 .align	32
 ecp_nistz256_point_add_affinex:
 .cfi_startproc
+	endbr64
 .Lpoint_add_affinex:
 ___
     }
@@ -4183,6 +4214,7 @@ $code.=<<___;
 .align	32
 __ecp_nistz256_add_tox:
 .cfi_startproc
+	endbr64
 	xor	$t4, $t4
 	adc	8*0($b_ptr), $a0
 	adc	8*1($b_ptr), $a1
@@ -4218,6 +4250,7 @@ __ecp_nistz256_add_tox:
 .align	32
 __ecp_nistz256_sub_fromx:
 .cfi_startproc
+	endbr64
 	xor	$t4, $t4
 	sbb	8*0($b_ptr), $a0
 	sbb	8*1($b_ptr), $a1
@@ -4253,6 +4286,7 @@ __ecp_nistz256_sub_fromx:
 .align	32
 __ecp_nistz256_subx:
 .cfi_startproc
+	endbr64
 	xor	$t4, $t4
 	sbb	$a0, $t0
 	sbb	$a1, $t1
@@ -4284,6 +4318,7 @@ __ecp_nistz256_subx:
 .align	32
 __ecp_nistz256_mul_by_2x:
 .cfi_startproc
+	endbr64
 	xor	$t4, $t4
 	adc	$a0, $a0		# a0:a3+a0:a3
 	adc	$a1, $a1
@@ -4336,6 +4371,7 @@ $code.=<<___;
 .type	short_handler,\@abi-omnipotent
 .align	16
 short_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -4378,6 +4414,7 @@ short_handler:
 .type	full_handler,\@abi-omnipotent
 .align	16
 full_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

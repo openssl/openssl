@@ -67,6 +67,7 @@ $code=<<___;
 .align	16
 $func:
 .cfi_startproc
+	endbr64
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	push	%rbx
@@ -519,6 +520,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

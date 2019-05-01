@@ -344,6 +344,7 @@ $code.=<<___;
 ${func}_xop:
 .cfi_startproc
 .Lxop_shortcut:
+	endbr64
 	mov	`($win64?56:8)`(%rsp),$in0	# load 7th parameter
 	mov	%rsp,%rax		# copy %rsp
 .cfi_def_cfa_register	%rax
@@ -660,6 +661,7 @@ $code.=<<___;
 ${func}_avx:
 .cfi_startproc
 .Lavx_shortcut:
+	endbr64
 	mov	`($win64?56:8)`(%rsp),$in0	# load 7th parameter
 	mov	%rsp,%rax		# copy %rsp
 .cfi_def_cfa_register	%rax
@@ -974,6 +976,7 @@ $code.=<<___;
 ${func}_avx2:
 .cfi_startproc
 .Lavx2_shortcut:
+	endbr64
 	mov	`($win64?56:8)`(%rsp),$in0	# load 7th parameter
 	mov	%rsp,%rax		# copy %rsp
 .cfi_def_cfa_register	%rax
@@ -1573,6 +1576,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

@@ -253,6 +253,7 @@ $code.=<<___;
 .align	64
 ChaCha20_ctr32:
 .cfi_startproc
+	endbr64
 	cmp	\$0,$len
 	je	.Lno_data
 	mov	OPENSSL_ia32cap_P+4(%rip),%r10
@@ -478,6 +479,7 @@ $code.=<<___;
 .align	32
 ChaCha20_ssse3:
 .cfi_startproc
+	endbr64
 .LChaCha20_ssse3:
 	mov	%rsp,%r9		# frame pointer
 .cfi_def_cfa_register	%r9
@@ -660,6 +662,7 @@ $code.=<<___;
 .align	32
 ChaCha20_128:
 .cfi_startproc
+	endbr64
 .LChaCha20_128:
 	mov	%rsp,%r9		# frame pointer
 .cfi_def_cfa_register	%r9
@@ -909,6 +912,7 @@ $code.=<<___;
 .align	32
 ChaCha20_4x:
 .cfi_startproc
+	endbr64
 .LChaCha20_4x:
 	mov		%rsp,%r9		# frame pointer
 .cfi_def_cfa_register	%r9
@@ -1442,6 +1446,7 @@ $code.=<<___;
 .align	32
 ChaCha20_4xop:
 .cfi_startproc
+	endbr64
 .LChaCha20_4xop:
 	mov		%rsp,%r9		# frame pointer
 .cfi_def_cfa_register	%r9
@@ -1944,6 +1949,7 @@ $code.=<<___;
 .align	32
 ChaCha20_8x:
 .cfi_startproc
+	endbr64
 .LChaCha20_8x:
 	mov		%rsp,%r9		# frame register
 .cfi_def_cfa_register	%r9
@@ -2506,6 +2512,7 @@ $code.=<<___;
 .align	32
 ChaCha20_avx512:
 .cfi_startproc
+	endbr64
 .LChaCha20_avx512:
 	mov	%rsp,%r9		# frame pointer
 .cfi_def_cfa_register	%r9
@@ -2702,6 +2709,7 @@ $code.=<<___;
 .align	32
 ChaCha20_avx512vl:
 .cfi_startproc
+	endbr64
 .LChaCha20_avx512vl:
 	mov	%rsp,%r9		# frame pointer
 .cfi_def_cfa_register	%r9
@@ -2927,6 +2935,7 @@ $code.=<<___;
 .align	32
 ChaCha20_16x:
 .cfi_startproc
+	endbr64
 .LChaCha20_16x:
 	mov		%rsp,%r9		# frame register
 .cfi_def_cfa_register	%r9
@@ -3367,6 +3376,7 @@ $code.=<<___;
 .align	32
 ChaCha20_8xvl:
 .cfi_startproc
+	endbr64
 .LChaCha20_8xvl:
 	mov		%rsp,%r9		# frame register
 .cfi_def_cfa_register	%r9

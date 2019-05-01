@@ -555,6 +555,7 @@ $code.=<<___;
 .align	16
 _x86_64_AES_encrypt_compact:
 .cfi_startproc
+	endbr64
 	lea	128($sbox),$inp			# size optimization
 	mov	0-128($inp),$acc1		# prefetch Te4
 	mov	32-128($inp),$acc2
@@ -602,6 +603,7 @@ $code.=<<___;
 asm_AES_encrypt:
 AES_encrypt:
 .cfi_startproc
+	endbr64
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	push	%rbx
@@ -1164,6 +1166,7 @@ $code.=<<___;
 .align	16
 _x86_64_AES_decrypt_compact:
 .cfi_startproc
+	endbr64
 	lea	128($sbox),$inp			# size optimization
 	mov	0-128($inp),$acc1		# prefetch Td4
 	mov	32-128($inp),$acc2
@@ -1220,6 +1223,7 @@ $code.=<<___;
 asm_AES_decrypt:
 AES_decrypt:
 .cfi_startproc
+	endbr64
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	push	%rbx
@@ -1337,6 +1341,7 @@ $code.=<<___;
 .align	16
 AES_set_encrypt_key:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1370,6 +1375,7 @@ AES_set_encrypt_key:
 .align	16
 _x86_64_AES_set_encrypt_key:
 .cfi_startproc
+	endbr64
 	mov	%esi,%ecx			# %ecx=bits
 	mov	%rdi,%rsi			# %rsi=userKey
 	mov	%rdx,%rdi			# %rdi=key
@@ -1617,6 +1623,7 @@ $code.=<<___;
 .align	16
 AES_set_decrypt_key:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1731,6 +1738,7 @@ $code.=<<___;
 asm_AES_cbc_encrypt:
 AES_cbc_encrypt:
 .cfi_startproc
+	endbr64
 	cmp	\$0,%rdx	# check length
 	je	.Lcbc_epilogue
 	pushfq
@@ -2647,6 +2655,7 @@ $code.=<<___;
 .type	block_se_handler,\@abi-omnipotent
 .align	16
 block_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -2704,6 +2713,7 @@ block_se_handler:
 .type	key_se_handler,\@abi-omnipotent
 .align	16
 key_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -2761,6 +2771,7 @@ key_se_handler:
 .type	cbc_se_handler,\@abi-omnipotent
 .align	16
 cbc_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

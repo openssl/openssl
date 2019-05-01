@@ -141,6 +141,7 @@ $code .= <<EOF;
 .type md5_block_asm_data_order,\@function,3
 md5_block_asm_data_order:
 .cfi_startproc
+	endbr64
 	push	%rbp
 .cfi_push	%rbp
 	push	%rbx
@@ -297,6 +298,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

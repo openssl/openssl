@@ -272,6 +272,7 @@ $code=<<___;
 .align	16
 $func:
 .cfi_startproc
+	endbr64
 ___
 $code.=<<___ if ($SZ==4 || $avx);
 	lea	OPENSSL_ia32cap_P(%rip),%r11
@@ -781,6 +782,7 @@ $code.=<<___;
 .align	64
 ${func}_ssse3:
 .cfi_startproc
+	endbr64
 .Lssse3_shortcut:
 	mov	%rsp,%rax		# copy %rsp
 .cfi_def_cfa_register	%rax
@@ -1143,6 +1145,7 @@ $code.=<<___;
 .align	64
 ${func}_xop:
 .cfi_startproc
+	endbr64
 .Lxop_shortcut:
 	mov	%rsp,%rax		# copy %rsp
 .cfi_def_cfa_register	%rax
@@ -1537,6 +1540,7 @@ $code.=<<___;
 .align	64
 ${func}_avx:
 .cfi_startproc
+	endbr64
 .Lavx_shortcut:
 	mov	%rsp,%rax		# copy %rsp
 .cfi_def_cfa_register	%rax
@@ -1906,6 +1910,7 @@ $code.=<<___;
 .align	64
 ${func}_avx2:
 .cfi_startproc
+	endbr64
 .Lavx2_shortcut:
 	mov	%rsp,%rax		# copy %rsp
 .cfi_def_cfa_register	%rax
@@ -2260,6 +2265,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -2369,6 +2375,7 @@ $code.=<<___ if ($SZ==4 && $shaext);
 .type	shaext_handler,\@abi-omnipotent
 .align	16
 shaext_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

@@ -410,6 +410,7 @@ $code.=<<___;
 .align	32
 aesni_gcm_decrypt:
 .cfi_startproc
+	endbr64
 	xor	$ret,$ret
 	cmp	\$0x60,$len			# minimal accepted length
 	jb	.Lgcm_dec_abort
@@ -636,6 +637,7 @@ _aesni_ctr32_6x:
 .align	32
 aesni_gcm_encrypt:
 .cfi_startproc
+	endbr64
 	xor	$ret,$ret
 	cmp	\$0x60*3,$len			# minimal accepted length
 	jb	.Lgcm_enc_abort
@@ -962,6 +964,7 @@ $code.=<<___
 .type	gcm_se_handler,\@abi-omnipotent
 .align	16
 gcm_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

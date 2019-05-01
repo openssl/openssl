@@ -143,6 +143,7 @@ RC4:	or	$len,$len
 	ret
 .Lentry:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%r12
@@ -560,6 +561,7 @@ $code.=<<___;
 .type	stream_se_handler,\@abi-omnipotent
 .align	16
 stream_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -606,6 +608,7 @@ stream_se_handler:
 .type	key_se_handler,\@abi-omnipotent
 .align	16
 key_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

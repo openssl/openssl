@@ -100,6 +100,7 @@ $code.=<<___;
 .align	32
 rsaz_512_sqr:				# 25-29% faster than rsaz_512_mul
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -798,6 +799,7 @@ $code.=<<___;
 .align	32
 rsaz_512_mul:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -911,6 +913,7 @@ $code.=<<___;
 .align	32
 rsaz_512_mul_gather4:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1380,6 +1383,7 @@ $code.=<<___;
 .align	32
 rsaz_512_mul_scatter4:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1507,6 +1511,7 @@ $code.=<<___;
 .align	32
 rsaz_512_mul_by_one:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -2239,6 +2244,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

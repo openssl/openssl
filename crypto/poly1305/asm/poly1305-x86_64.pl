@@ -225,6 +225,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks:
 .cfi_startproc
+	endbr64
 .Lblocks:
 	shr	\$4,$len
 	jz	.Lno_data		# too short
@@ -514,6 +515,7 @@ __poly1305_init_avx:
 .align	32
 poly1305_blocks_avx:
 .cfi_startproc
+	endbr64
 	mov	20($ctx),%r8d		# is_base2_26
 	cmp	\$128,$len
 	jae	.Lblocks_avx
@@ -667,6 +669,7 @@ poly1305_blocks_avx:
 .align	32
 .Lbase2_64_avx:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -759,6 +762,7 @@ poly1305_blocks_avx:
 .align	32
 .Leven_avx:
 .cfi_startproc
+	endbr64
 	vmovd		4*0($ctx),$H0		# load hash value
 	vmovd		4*1($ctx),$H1
 	vmovd		4*2($ctx),$H2
@@ -1436,6 +1440,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks_avx2:
 .cfi_startproc
+	endbr64
 	mov	20($ctx),%r8d		# is_base2_26
 	cmp	\$128,$len
 	jae	.Lblocks_avx2
@@ -1595,6 +1600,7 @@ poly1305_blocks_avx2:
 .align	32
 .Lbase2_64_avx2:
 .cfi_startproc
+	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1694,6 +1700,7 @@ poly1305_blocks_avx2:
 .align	32
 .Leven_avx2:
 .cfi_startproc
+	endbr64
 	mov		OPENSSL_ia32cap_P+8(%rip),%r10d
 	vmovd		4*0($ctx),%x#$H0	# load hash value base 2^26
 	vmovd		4*1($ctx),%x#$H1
@@ -2132,6 +2139,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks_avx512:
 .cfi_startproc
+	endbr64
 .Lblocks_avx512:
 	mov		\$15,%eax
 	kmovw		%eax,%k2
@@ -3909,6 +3917,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -3959,6 +3968,7 @@ se_handler:
 .type	avx_handler,\@abi-omnipotent
 .align	16
 avx_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
