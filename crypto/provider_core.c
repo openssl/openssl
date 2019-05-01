@@ -79,7 +79,6 @@ struct provider_store_st {
     CRYPTO_RWLOCK *lock;
     unsigned int use_fallbacks:1;
 };
-static int provider_store_index = -1;
 
 static void provider_store_free(void *vstore)
 {
@@ -92,7 +91,7 @@ static void provider_store_free(void *vstore)
     OPENSSL_free(store);
 }
 
-static void *provider_store_new(void)
+static void *provider_store_new(OPENSSL_CTX *ctx)
 {
     struct provider_store_st *store = OPENSSL_zalloc(sizeof(*store));
     const struct predefined_providers_st *p = NULL;
@@ -134,12 +133,11 @@ static const OPENSSL_CTX_METHOD provider_store_method = {
     provider_store_free,
 };
 
-static CRYPTO_ONCE provider_store_init_flag = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(do_provider_store_init)
+static openssl_ctx_run_once_fn do_provider_store_init;
+int do_provider_store_init(OPENSSL_CTX *ctx)
 {
-    return OPENSSL_init_crypto(0, NULL)
-        && (provider_store_index =
-            openssl_ctx_new_index(&provider_store_method)) != -1;
+    return openssl_ctx_init_index(ctx, OPENSSL_CTX_PROVIDER_STORE_INDEX,
+                                  &provider_store_method);
 }
 
 
@@ -147,10 +145,12 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
 {
     struct provider_store_st *store = NULL;
 
-    if (!RUN_ONCE(&provider_store_init_flag, do_provider_store_init))
+    if (!openssl_ctx_run_once(libctx,
+                              OPENSSL_CTX_PROVIDER_STORE_RUN_ONCE_INDEX,
+                              do_provider_store_init))
         return NULL;
 
-    store = openssl_ctx_get_data(libctx, provider_store_index);
+    store = openssl_ctx_get_data(libctx, OPENSSL_CTX_PROVIDER_STORE_INDEX);
     if (store == NULL)
         CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE, ERR_R_INTERNAL_ERROR);
     return store;

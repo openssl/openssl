@@ -84,6 +84,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 # define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
 struct crypto_ex_data_st {
+    OPENSSL_CTX *ctx;
     STACK_OF(void) *sk;
 };
 DEFINE_STACK_OF(void)
@@ -188,13 +189,21 @@ typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
 __owur int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
                             CRYPTO_EX_free *free_func);
+__owur int CRYPTO_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index,
+                                      long argl, void *argp,
+                                      CRYPTO_EX_new *new_func,
+                                      CRYPTO_EX_dup *dup_func,
+                                      CRYPTO_EX_free *free_func);
 /* No longer use an index. */
 int CRYPTO_free_ex_index(int class_index, int idx);
+int CRYPTO_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx);
 
 /*
  * Initialise/duplicate/free CRYPTO_EX_DATA variables corresponding to a
  * given class (invokes whatever per-class callbacks are applicable)
  */
+int CRYPTO_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
+                          CRYPTO_EX_DATA *ad);
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
                        const CRYPTO_EX_DATA *from);

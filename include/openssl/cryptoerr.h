@@ -27,8 +27,10 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_DUP_EX_DATA                      110
 # define CRYPTO_F_CRYPTO_FREE_EX_DATA                     111
 # define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 100
+# define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX              141
 # define CRYPTO_F_CRYPTO_MEMDUP                           115
 # define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112
+# define CRYPTO_F_CRYPTO_NEW_EX_DATA_EX                   142
 # define CRYPTO_F_CRYPTO_OCB128_COPY_CTX                  121
 # define CRYPTO_F_CRYPTO_OCB128_INIT                      122
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
@@ -43,8 +45,8 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_LH_NEW                          126
 # define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    127
 # define CRYPTO_F_OPENSSL_SK_DUP                          128
-# define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               132
 # define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  130
+# define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               132
 # define CRYPTO_F_OSSL_PROVIDER_ADD_PARAMETER             139
 # define CRYPTO_F_OSSL_PROVIDER_NEW                       131
 # define CRYPTO_F_OSSL_PROVIDER_SET_MODULE_PATH           140

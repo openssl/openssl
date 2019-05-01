@@ -19,17 +19,14 @@
 #include "internal/evp_int.h"    /* evp_locl.h needs it */
 #include "evp_locl.h"
 
-/* The OpenSSL library context index for the default method store */
-static int default_method_store_index = -1;
-
 static void default_method_store_free(void *vstore)
 {
     ossl_method_store_free(vstore);
 }
 
-static void *default_method_store_new(void)
+static void *default_method_store_new(OPENSSL_CTX *ctx)
 {
-    return ossl_method_store_new();
+    return ossl_method_store_new(ctx);
 }
 
 
@@ -38,19 +35,11 @@ static const OPENSSL_CTX_METHOD default_method_store_method = {
     default_method_store_free,
 };
 
-static int default_method_store_init(void)
+static openssl_ctx_run_once_fn do_default_method_store_init;
+static int do_default_method_store_init(OPENSSL_CTX *ctx)
 {
-    default_method_store_index =
-        openssl_ctx_new_index(&default_method_store_method);
-
-    return default_method_store_index != -1;
-}
-
-static CRYPTO_ONCE default_method_store_init_flag = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(do_default_method_store_init)
-{
-    return OPENSSL_init_crypto(0, NULL)
-        && default_method_store_init();
+    return openssl_ctx_init_index(ctx, OPENSSL_CTX_DEFAULT_METHOD_STORE_INDEX,
+                                  &default_method_store_method);
 }
 
 /* Data to be passed through ossl_method_construct() */
@@ -68,9 +57,9 @@ struct method_data_st {
 /*
  * Generic routines to fetch / create EVP methods with ossl_method_construct()
  */
-static void *alloc_tmp_method_store(void)
+static void *alloc_tmp_method_store(OPENSSL_CTX *ctx)
 {
-    return ossl_method_store_new();
+    return ossl_method_store_new(ctx);
 }
 
  static void dealloc_tmp_method_store(void *store)
@@ -81,10 +70,12 @@ static void *alloc_tmp_method_store(void)
 
 static OSSL_METHOD_STORE *get_default_method_store(OPENSSL_CTX *libctx)
 {
-    if (!RUN_ONCE(&default_method_store_init_flag,
-                  do_default_method_store_init))
+    if (!openssl_ctx_run_once(libctx,
+                              OPENSSL_CTX_DEFAULT_METHOD_STORE_RUN_ONCE_INDEX,
+                              do_default_method_store_init))
         return NULL;
-    return openssl_ctx_get_data(libctx, default_method_store_index);
+
+    return openssl_ctx_get_data(libctx, OPENSSL_CTX_DEFAULT_METHOD_STORE_INDEX);
 }
 
 static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,

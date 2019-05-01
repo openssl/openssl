@@ -11,10 +11,12 @@
 #ifndef HEADER_PROPERTY_H
 # define HEADER_PROPERTY_H
 
+#include "internal/cryptlib.h"
+
 typedef struct ossl_method_store_st OSSL_METHOD_STORE;
 
 /* Implementation store functions */
-OSSL_METHOD_STORE *ossl_method_store_new(void);
+OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx);
 void ossl_method_store_free(OSSL_METHOD_STORE *store);
 int ossl_method_store_add(OSSL_METHOD_STORE *store, int nid,
                           const char *properties, void *implementation,
@@ -31,5 +33,4 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
                                 const char *prop_query, void **result);
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
                                 const char *prop_query, void *result);
-
 #endif

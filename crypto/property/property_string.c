@@ -34,10 +34,33 @@ typedef struct {
 DEFINE_LHASH_OF(PROPERTY_STRING);
 typedef LHASH_OF(PROPERTY_STRING) PROP_TABLE;
 
-static PROP_TABLE *prop_names;
-static PROP_TABLE *prop_values;
-static OSSL_PROPERTY_IDX prop_name_idx = 0;
-static OSSL_PROPERTY_IDX prop_value_idx = 0;
+typedef struct {
+    PROP_TABLE *prop_names;
+    PROP_TABLE *prop_values;
+    OSSL_PROPERTY_IDX prop_name_idx;
+    OSSL_PROPERTY_IDX prop_value_idx;
+} PROPERTY_STRING_DATA;
+
+static void property_string_data_free(void *vpropdata)
+{
+    PROPERTY_STRING_DATA *propdata = vpropdata;
+
+    if (propdata == NULL)
+        return;
+
+    OPENSSL_free(propdata);
+}
+
+static void *property_string_data_new(OPENSSL_CTX *ctx) {
+    PROPERTY_STRING_DATA *propdata = OPENSSL_zalloc(sizeof(*propdata));
+
+    return propdata;
+}
+
+static const OPENSSL_CTX_METHOD property_string_data_method = {
+    property_string_data_new,
+    property_string_data_free,
+};
 
 static unsigned long property_hash(const PROPERTY_STRING *a)
 {
@@ -103,35 +126,68 @@ static OSSL_PROPERTY_IDX ossl_property_string(PROP_TABLE *t,
     return ps != NULL ? ps->idx : 0;
 }
 
-OSSL_PROPERTY_IDX ossl_property_name(const char *s, int create)
+OSSL_PROPERTY_IDX ossl_property_name(OPENSSL_CTX *ctx, const char *s,
+                                     int create)
 {
-    return ossl_property_string(prop_names, create ? &prop_name_idx : NULL, s);
+    PROPERTY_STRING_DATA *propdata
+        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX);
+
+    if (propdata == NULL)
+        return 0;
+    return ossl_property_string(propdata->prop_names,
+                                create ? &propdata->prop_name_idx : NULL,
+                                s);
 }
 
-OSSL_PROPERTY_IDX ossl_property_value(const char *s, int create)
+OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
+                                      int create)
 {
-    return ossl_property_string(prop_values, create ? &prop_value_idx : NULL, s);
+    PROPERTY_STRING_DATA *propdata
+        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX);
+
+    if (propdata == NULL)
+        return 0;
+    return ossl_property_string(propdata->prop_values,
+                                create ? &propdata->prop_value_idx : NULL,
+                                s);
 }
 
-int ossl_property_string_init(void)
+int ossl_property_string_init(OPENSSL_CTX *ctx)
 {
-    prop_names = lh_PROPERTY_STRING_new(&property_hash, &property_cmp);
-    if (prop_names == NULL)
+    PROPERTY_STRING_DATA *propdata;
+
+    if (!openssl_ctx_init_index(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX,
+                                &property_string_data_method))
         return 0;
 
-    prop_values = lh_PROPERTY_STRING_new(&property_hash, &property_cmp);
-    if (prop_values == NULL)
+    propdata = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX);
+    if (propdata == NULL)
+        return 0;
+
+    propdata->prop_names = lh_PROPERTY_STRING_new(&property_hash,
+                                                  &property_cmp);
+    if (propdata->prop_names == NULL)
+        return 0;
+
+    propdata->prop_values = lh_PROPERTY_STRING_new(&property_hash,
+                                                   &property_cmp);
+    if (propdata->prop_values == NULL)
         goto err;
     return 1;
 
 err:
-    ossl_property_string_cleanup();
+    ossl_property_string_cleanup(ctx);
     return 0;
 }
 
-void ossl_property_string_cleanup(void)
+void ossl_property_string_cleanup(OPENSSL_CTX *ctx)
 {
-    property_table_free(&prop_names);
-    property_table_free(&prop_values);
-    prop_name_idx = prop_value_idx = 0;
+    PROPERTY_STRING_DATA *propdata
+        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX);
+
+    if (propdata == NULL)
+        return;
+    property_table_free(&propdata->prop_names);
+    property_table_free(&propdata->prop_values);
+    propdata->prop_name_idx = propdata->prop_value_idx = 0;
 }
