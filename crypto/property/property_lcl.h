@@ -14,18 +14,14 @@
 typedef struct ossl_property_list_st OSSL_PROPERTY_LIST;
 typedef int OSSL_PROPERTY_IDX;
 
-/* Initialisation and finalisation for subsystem */
-int ossl_method_store_init(void);
-void ossl_method_store_cleanup(void);
-
 /* Property string functions */
-OSSL_PROPERTY_IDX ossl_property_name(const char *s, int create);
-OSSL_PROPERTY_IDX ossl_property_value(const char *s, int create);
-int ossl_property_string_init(void);
-void ossl_property_string_cleanup(void);
+OSSL_PROPERTY_IDX ossl_property_name(OPENSSL_CTX *ctx, const char *s,
+                                     int create);
+OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
+                                      int create);
 
 /* Property list functions */
-int ossl_property_parse_init(void);
+int ossl_property_parse_init(OPENSSL_CTX *ctx);
 void ossl_property_free(OSSL_PROPERTY_LIST *p);
 int ossl_property_match(const OSSL_PROPERTY_LIST *query,
                         const OSSL_PROPERTY_LIST *defn);
@@ -33,16 +29,15 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
                                         const OSSL_PROPERTY_LIST *b);
 
 /* Property definition functions */
-OSSL_PROPERTY_LIST *ossl_parse_property(const char *s);
+OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *s);
 
 /* Property query functions */
-OSSL_PROPERTY_LIST *ossl_parse_query(const char *s);
+OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s);
 
 /* Property definition cache functions */
-int ossl_prop_defn_init(void);
-void ossl_prop_defn_cleanup(void);
-OSSL_PROPERTY_LIST *ossl_prop_defn_get(const char *prop);
-int ossl_prop_defn_set(const char *prop, OSSL_PROPERTY_LIST *pl);
+OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop);
+int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
+                       OSSL_PROPERTY_LIST *pl);
 
 /* Property cache lock / unlock */
 int ossl_property_write_lock(OSSL_METHOD_STORE *);

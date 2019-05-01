@@ -84,6 +84,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 # define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
 struct crypto_ex_data_st {
+    OPENSSL_CTX *ctx;
     STACK_OF(void) *sk;
 };
 DEFINE_STACK_OF(void)

@@ -28,7 +28,7 @@
  */
 typedef struct ossl_method_construct_method_st {
     /* Create store */
-    void *(*alloc_tmp_store)(void);
+    void *(*alloc_tmp_store)(OPENSSL_CTX *ctx);
     /* Remove a store */
     void (*dealloc_tmp_store)(void *store);
     /* Get an already existing method from a store */

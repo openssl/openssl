@@ -86,7 +86,7 @@ void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
          * We have a temporary store to be able to easily search among new
          * items, or items that should find themselves in the global store.
          */
-        if ((cbdata.store = mcm->alloc_tmp_store()) == NULL)
+        if ((cbdata.store = mcm->alloc_tmp_store(libctx)) == NULL)
             goto fin;
 
         cbdata.libctx = libctx;

@@ -22,15 +22,12 @@
  * BEGIN EXAMPLE
  */
 
-/* The index will always be entirely global, and dynamically allocated */
-static int foo_index = -1;
-
 typedef struct foo_st {
     int i;
     void *data;
 } FOO;
 
-static void *foo_new(void)
+static void *foo_new(OPENSSL_CTX *ctx)
 {
     FOO *ptr = OPENSSL_zalloc(sizeof(*ptr));
     if (ptr != NULL)
@@ -46,14 +43,6 @@ static const OPENSSL_CTX_METHOD foo_method = {
     foo_free
 };
 
-static int foo_init(void)
-{
-    if (foo_index == -1)
-        foo_index = openssl_ctx_new_index(&foo_method);
-
-    return foo_index != -1;
-}
-
 /*
  * END EXAMPLE
  * ======================================================================
@@ -63,9 +52,7 @@ static int test_context(OPENSSL_CTX *ctx)
 {
     FOO *data = NULL;
 
-    return
-        TEST_true(foo_init())
-        && TEST_ptr(data = openssl_ctx_get_data(ctx, foo_index))
+    return TEST_ptr(data = openssl_ctx_get_data(ctx, 0, &foo_method))
         /* OPENSSL_zalloc in foo_new() initialized it to zero */
         && TEST_int_eq(data->i, 42);
 }
@@ -74,8 +61,7 @@ static int test_app_context(void)
 {
     OPENSSL_CTX *ctx = NULL;
     int result =
-        TEST_true(foo_init())
-        && TEST_ptr(ctx = OPENSSL_CTX_new())
+        TEST_ptr(ctx = OPENSSL_CTX_new())
         && test_context(ctx);
 
     OPENSSL_CTX_free(ctx);
