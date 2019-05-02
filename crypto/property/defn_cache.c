@@ -29,31 +29,6 @@ typedef struct {
 
 DEFINE_LHASH_OF(PROPERTY_DEFN_ELEM);
 
-typedef struct {
-    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
-} PROPERTY_DEFN_DATA;
-
-static void property_defn_data_free(void *vpropdefndata)
-{
-    PROPERTY_DEFN_DATA *propdefndata = vpropdefndata;
-
-    if (propdefndata == NULL)
-        return;
-
-    OPENSSL_free(propdefndata);
-}
-
-static void *property_defn_data_new(OPENSSL_CTX *ctx) {
-    PROPERTY_DEFN_DATA *propdefndata = OPENSSL_zalloc(sizeof(*propdefndata));
-
-    return propdefndata;
-}
-
-static const OPENSSL_CTX_METHOD property_defn_data_method = {
-    property_defn_data_new,
-    property_defn_data_free,
-};
-
 static unsigned long property_defn_hash(const PROPERTY_DEFN_ELEM *a)
 {
     return OPENSSL_LH_strhash(a->prop);
@@ -71,49 +46,37 @@ static void property_defn_free(PROPERTY_DEFN_ELEM *elem)
     OPENSSL_free(elem);
 }
 
-int ossl_prop_defn_init(OPENSSL_CTX *ctx)
+static void property_defns_free(void *vproperty_defns)
 {
-    PROPERTY_DEFN_DATA *propdefndata;
+    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns = vproperty_defns;
 
-    if (!openssl_ctx_init_index(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
-                                &property_defn_data_method))
-        return 0;
-
-    propdefndata = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX);
-    if (propdefndata == NULL)
-        return 0;
-
-    propdefndata->property_defns
-        = lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
-    return propdefndata->property_defns != NULL;
-}
-
-void ossl_prop_defn_cleanup(OPENSSL_CTX *ctx)
-{
-    PROPERTY_DEFN_DATA *propdefndata;
-
-    propdefndata = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX);
-    if (propdefndata == NULL)
-        return;
-    if (propdefndata->property_defns != NULL) {
-        lh_PROPERTY_DEFN_ELEM_doall(propdefndata->property_defns,
+    if (property_defns != NULL) {
+        lh_PROPERTY_DEFN_ELEM_doall(property_defns,
                                     &property_defn_free);
-        lh_PROPERTY_DEFN_ELEM_free(propdefndata->property_defns);
-        propdefndata->property_defns = NULL;
+        lh_PROPERTY_DEFN_ELEM_free(property_defns);
     }
 }
+
+static void *property_defns_new(OPENSSL_CTX *ctx) {
+    return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
+}
+
+const OPENSSL_CTX_METHOD property_defns_method = {
+    property_defns_new,
+    property_defns_free,
+};
 
 OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop)
 {
     PROPERTY_DEFN_ELEM elem, *r;
-    PROPERTY_DEFN_DATA *propdefndata;
+    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
-    propdefndata = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX);
-    if (propdefndata == NULL)
+    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX);
+    if (property_defns == NULL)
         return NULL;
 
     elem.prop = prop;
-    r = lh_PROPERTY_DEFN_ELEM_retrieve(propdefndata->property_defns, &elem);
+    r = lh_PROPERTY_DEFN_ELEM_retrieve(property_defns, &elem);
     return r != NULL ? r->defn : NULL;
 }
 
@@ -122,10 +85,10 @@ int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
 {
     PROPERTY_DEFN_ELEM elem, *old, *p = NULL;
     size_t len;
-    PROPERTY_DEFN_DATA *propdefndata;
+    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
-    propdefndata = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX);
-    if (propdefndata == NULL)
+    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX);
+    if (property_defns == NULL)
         return 0;
 
     if (prop == NULL)
@@ -133,7 +96,7 @@ int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
 
     if (pl == NULL) {
         elem.prop = prop;
-        lh_PROPERTY_DEFN_ELEM_delete(propdefndata->property_defns, &elem);
+        lh_PROPERTY_DEFN_ELEM_delete(property_defns, &elem);
         return 1;
     }
     len = strlen(prop);
@@ -142,12 +105,12 @@ int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
         p->prop = p->body;
         p->defn = pl;
         memcpy(p->body, prop, len + 1);
-        old = lh_PROPERTY_DEFN_ELEM_insert(propdefndata->property_defns, p);
+        old = lh_PROPERTY_DEFN_ELEM_insert(property_defns, p);
         if (old != NULL) {
             property_defn_free(old);
             return 1;
         }
-        if (!lh_PROPERTY_DEFN_ELEM_error(propdefndata->property_defns))
+        if (!lh_PROPERTY_DEFN_ELEM_error(property_defns))
             return 1;
     }
     OPENSSL_free(p);

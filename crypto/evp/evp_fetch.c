@@ -30,17 +30,10 @@ static void *default_method_store_new(OPENSSL_CTX *ctx)
 }
 
 
-static const OPENSSL_CTX_METHOD default_method_store_method = {
+const OPENSSL_CTX_METHOD default_method_store_method = {
     default_method_store_new,
     default_method_store_free,
 };
-
-static openssl_ctx_run_once_fn do_default_method_store_init;
-static int do_default_method_store_init(OPENSSL_CTX *ctx)
-{
-    return openssl_ctx_init_index(ctx, OPENSSL_CTX_DEFAULT_METHOD_STORE_INDEX,
-                                  &default_method_store_method);
-}
 
 /* Data to be passed through ossl_method_construct() */
 struct method_data_st {
@@ -70,11 +63,6 @@ static void *alloc_tmp_method_store(OPENSSL_CTX *ctx)
 
 static OSSL_METHOD_STORE *get_default_method_store(OPENSSL_CTX *libctx)
 {
-    if (!openssl_ctx_run_once(libctx,
-                              OPENSSL_CTX_DEFAULT_METHOD_STORE_RUN_ONCE_INDEX,
-                              do_default_method_store_init))
-        return NULL;
-
     return openssl_ctx_get_data(libctx, OPENSSL_CTX_DEFAULT_METHOD_STORE_INDEX);
 }
 

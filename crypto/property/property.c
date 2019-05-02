@@ -83,28 +83,10 @@ int ossl_property_unlock(OSSL_METHOD_STORE *p)
     return p != 0 ? CRYPTO_THREAD_unlock(p->lock) : 0;
 }
 
-void ossl_method_store_cleanup(OPENSSL_CTX *ctx)
-{
-    ossl_property_string_cleanup(ctx);
-    ossl_prop_defn_cleanup(ctx);
-}
-
-static int ossl_method_store_init(OPENSSL_CTX *ctx)
-{
-    if (ossl_property_string_init(ctx)
-            && ossl_prop_defn_init(ctx)
-            && ossl_property_parse_init(ctx))
-        return 1;
-
-    ossl_method_store_cleanup(ctx);
-    return 0;
-}
-
 static openssl_ctx_run_once_fn do_method_store_init;
 int do_method_store_init(OPENSSL_CTX *ctx)
 {
-    return ossl_method_store_init(ctx)
-           && openssl_ctx_onfree(ctx, &ossl_method_store_cleanup);
+    return ossl_property_parse_init(ctx);
 }
 
 static unsigned long query_hash(const QUERY *a)

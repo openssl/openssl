@@ -14,16 +14,11 @@
 typedef struct ossl_property_list_st OSSL_PROPERTY_LIST;
 typedef int OSSL_PROPERTY_IDX;
 
-/* Initialisation and finalisation for subsystem */
-openssl_ctx_onfree_fn ossl_method_store_cleanup;
-
 /* Property string functions */
 OSSL_PROPERTY_IDX ossl_property_name(OPENSSL_CTX *ctx, const char *s,
                                      int create);
 OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
                                       int create);
-int ossl_property_string_init(OPENSSL_CTX *ctx);
-void ossl_property_string_cleanup(OPENSSL_CTX *ctx);
 
 /* Property list functions */
 int ossl_property_parse_init(OPENSSL_CTX *ctx);
@@ -40,8 +35,6 @@ OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *s);
 OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s);
 
 /* Property definition cache functions */
-int ossl_prop_defn_init(OPENSSL_CTX *ctx);
-void ossl_prop_defn_cleanup(OPENSSL_CTX *ctx);
 OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop);
 int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
                        OSSL_PROPERTY_LIST *pl);

@@ -15,6 +15,19 @@ struct openssl_ctx_onfree_list_st {
     struct openssl_ctx_onfree_list_st *next;
 };
 
+extern const OPENSSL_CTX_METHOD default_method_store_method;
+extern const OPENSSL_CTX_METHOD provider_store_method;
+extern const OPENSSL_CTX_METHOD property_defns_method;
+extern const OPENSSL_CTX_METHOD property_string_data_method;
+
+/* Must be in the same order as the indexes in cryptlib.h */
+static const OPENSSL_CTX_METHOD *methods[] = {
+    &default_method_store_method,
+    &provider_store_method,
+    &property_defns_method,
+    &property_string_data_method
+};
+
 struct openssl_ctx_st {
     CRYPTO_RWLOCK *lock;
     CRYPTO_EX_DATA data;
@@ -43,6 +56,8 @@ static OPENSSL_CTX *default_context = NULL;
 
 static int context_init(OPENSSL_CTX *ctx)
 {
+    size_t i;
+
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
         return 0;
@@ -50,6 +65,9 @@ static int context_init(OPENSSL_CTX *ctx)
     ctx->oncelock = CRYPTO_THREAD_lock_new();
     if (ctx->oncelock == NULL)
         goto err;
+
+    for (i = 0; i < OPENSSL_CTX_MAX_INDEXES; i++)
+        ctx->dyn_indexes[i] = -1;
 
     if (!do_ex_data_init(ctx))
         goto err;
@@ -143,6 +161,7 @@ static void openssl_ctx_generic_free(void *parent_ign, void *ptr,
     meth->free_func(ptr);
 }
 
+/* Non-static so we can use it in context_internal_test */
 int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
                            const OPENSSL_CTX_METHOD *meth)
 {
@@ -159,7 +178,10 @@ int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
         return 0;
 
     idx = crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, 0,
-                                     (void *)meth, openssl_ctx_generic_new,
+                                     meth == NULL
+                                     ? (void *)methods[static_index]
+                                     : (void *)meth,
+                                     openssl_ctx_generic_new,
                                      NULL, openssl_ctx_generic_free);
     if (idx < 0)
         return 0;
@@ -172,15 +194,23 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index)
 {
     void *data = NULL;
 
+#ifndef FIPS_MODE
     if (ctx == NULL) {
         if (!RUN_ONCE(&default_context_init, do_default_context_init))
             return NULL;
         ctx = default_context;
     }
+#endif
     if (ctx == NULL)
         return NULL;
 
     CRYPTO_THREAD_read_lock(ctx->lock);
+
+    if (ctx->dyn_indexes[index] == -1
+            && !openssl_ctx_init_index(ctx, index, NULL)) {
+        CRYPTO_THREAD_unlock(ctx->lock);
+        return NULL;
+    }
 
     /* The alloc call ensures there's a value there */
     if (CRYPTO_alloc_ex_data(CRYPTO_EX_INDEX_OPENSSL_CTX, NULL,

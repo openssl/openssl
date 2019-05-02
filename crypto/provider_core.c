@@ -128,27 +128,14 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
     return store;
 }
 
-static const OPENSSL_CTX_METHOD provider_store_method = {
+const OPENSSL_CTX_METHOD provider_store_method = {
     provider_store_new,
     provider_store_free,
 };
 
-static openssl_ctx_run_once_fn do_provider_store_init;
-static int do_provider_store_init(OPENSSL_CTX *ctx)
-{
-    return openssl_ctx_init_index(ctx, OPENSSL_CTX_PROVIDER_STORE_INDEX,
-                                  &provider_store_method);
-}
-
-
 static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
 {
     struct provider_store_st *store = NULL;
-
-    if (!openssl_ctx_run_once(libctx,
-                              OPENSSL_CTX_PROVIDER_STORE_RUN_ONCE_INDEX,
-                              do_provider_store_init))
-        return NULL;
 
     store = openssl_ctx_get_data(libctx, OPENSSL_CTX_PROVIDER_STORE_INDEX);
     if (store == NULL)
