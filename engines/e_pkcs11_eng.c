@@ -39,6 +39,7 @@ void engine_load_pkcs11_int(void);
 static int pkcs11_rsa_free(RSA *rsa);
 static unsigned char *pkcs11_pad(char *field, int len);
 static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x);
+static char *pkcs11_get_console_pin(PKCS11_CTX *ctx);
 
 static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
@@ -296,31 +297,61 @@ static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
     return 0;
 }
 
-static int pkcs11_get_console_pin(char **pin)
+/*-
+ *  Password prompting
+ *  ------------------
+ */
+
+static char *pkcs11_get_console_pin(PKCS11_CTX *ctx)
 {
-#ifndef OPENSSL_NO_UI_CONSOLE
-    int i;
+    UI *ui = UI_new();
+    char *prompt = NULL;
+    size_t maxsize = 512;
     const int buflen = 512;
-    char *strbuf = NULL;
+    char *pass = NULL;
+    char *prompt_info = "Token";
 
-    strbuf = OPENSSL_malloc(buflen);
-    if (strbuf == NULL) {
+    pass = OPENSSL_malloc(buflen);
+    if (pass == NULL) {
         PKCS11err(PKCS11_F_PKCS11_GET_CONSOLE_PIN, ERR_R_MALLOC_FAILURE);
-        return 0;
+        return NULL;
     }
 
-    EVP_set_pw_prompt("Enter PIN: ");
-    strbuf[0] = '\0';
-    i = EVP_read_pw_string(strbuf, buflen, NULL, 0);
-    if (i == 0 && strbuf[0] != '\0') {
-        *pin = strbuf;
-        return 1;
+    if (ui == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_GET_CONSOLE_PIN, ERR_R_MALLOC_FAILURE);
+        return NULL;
     }
-    PKCS11_trace("bad password read\n");
-    OPENSSL_free(strbuf);
-#endif
 
-    return 0;
+    if (ctx->ui_method != NULL)
+        UI_set_method(ui, ctx->ui_method);
+    UI_add_user_data(ui, ctx->callback_data);
+
+    if ((prompt = UI_construct_prompt(ui, "PIN",
+                                      prompt_info)) == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_GET_CONSOLE_PIN, ERR_R_MALLOC_FAILURE);
+        pass = NULL;
+    } else if (!UI_add_input_string(ui, prompt, UI_INPUT_FLAG_DEFAULT_PWD,
+                                    pass, 0, maxsize - 1)) {
+        PKCS11_trace("ERR UI_LIB\n");
+        pass = NULL;
+    } else {
+        switch (UI_process(ui)) {
+        case -2:
+            PKCS11_trace("PROCESS INTERRUPTED \n");
+            pass = NULL;
+            break;
+        case -1:
+            PKCS11_trace("ERR UI_LIB\n");
+            pass = NULL;
+            break;
+        default:
+            break;
+        }
+    }
+
+    OPENSSL_free(prompt);
+    UI_free(ui);
+    return pass;
 }
 
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
@@ -369,13 +400,13 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
 
     if (ctx->pin == NULL && (!store || (store
         && ctx->type != NULL && strncmp(ctx->type, "private", 7) == 0))) {
-        if (!pkcs11_get_console_pin(&pin))
-            goto err;
-        ctx->pin = (CK_BYTE *) pin;
-        if (ctx->pin == NULL) {
+        pin = pkcs11_get_console_pin(ctx);
+        if (pin == NULL) {
             PKCS11_trace("PIN is invalid\n");
-            goto err;
+            OPENSSL_free(id);
+            return 0;
         }
+        ctx->pin = (CK_BYTE *) pin;
         ctx->pinlen = (CK_ULONG) strlen((char *) ctx->pin);
     }
     return 1;
@@ -468,6 +499,9 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     if (ctx == NULL)
         goto err;
 
+    ctx->ui_method = ui_method;
+    ctx->callback_data = callback_data;
+
     if (!pkcs11_parse(ctx, path, 0))
         goto err;
 
@@ -504,6 +538,9 @@ static EVP_PKEY *pkcs11_engine_load_public_key(ENGINE * e, const char *path,
 
     if (ctx == NULL)
         goto err;
+
+    ctx->ui_method = ui_method;
+    ctx->callback_data = callback_data;
 
     if (!pkcs11_parse(ctx, path, 0))
         goto err;
@@ -546,6 +583,9 @@ static OSSL_STORE_LOADER_CTX* pkcs11_store_open(
 
     if (pkcs11_ctx == NULL)
         goto err;
+
+    pkcs11_ctx->ui_method = ui_method;
+    pkcs11_ctx->callback_data = ui_data;
 
     if (!pkcs11_parse(pkcs11_ctx, uri, 1))
         goto err;
@@ -811,6 +851,9 @@ static int pkcs11_load_ssl_client_cert(ENGINE *e, SSL *ssl,
     if (pkcs11_ctx == NULL)
         goto err;
 
+    pkcs11_ctx->ui_method = ui_method;
+    pkcs11_ctx->callback_data = callback_data;
+
     if (pkcs11_initialize(pkcs11_ctx->module_path) != CKR_OK)
         goto err;
 
@@ -823,13 +866,12 @@ static int pkcs11_load_ssl_client_cert(ENGINE *e, SSL *ssl,
         goto err;
 
     if (pkcs11_ctx->pin == NULL) {
-        if (!pkcs11_get_console_pin(&pin))
-            goto err;
-        pkcs11_ctx->pin = (CK_BYTE *) pin;
-        if (pkcs11_ctx->pin == NULL) {
+        pin = pkcs11_get_console_pin(pkcs11_ctx);
+        if (pin == NULL) {
             PKCS11_trace("PIN is invalid\n");
             goto err;
         }
+        pkcs11_ctx->pin = (CK_BYTE *) pin;
         pkcs11_ctx->pinlen = (CK_ULONG) strlen((char *) pkcs11_ctx->pin);
     }
 
@@ -898,3 +940,4 @@ void engine_load_pkcs11_int(void)
     ERR_clear_error();
 }
 #endif
+

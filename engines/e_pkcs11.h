@@ -77,6 +77,8 @@ typedef struct PKCS11_CTX_st {
     CK_SESSION_HANDLE session;
     char *module_path;
     CRYPTO_RWLOCK *lock;
+    const UI_METHOD *ui_method;
+    void *callback_data;
 } PKCS11_CTX;
 
 struct ossl_store_loader_ctx_st {
