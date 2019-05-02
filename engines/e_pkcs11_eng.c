@@ -42,7 +42,7 @@ static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x);
 
 static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
-static const char *engine_name = "A minimal PKCS#11 engine only for sign";
+static const char *engine_name = "PKCS#11 engine";
 static int pkcs11_idx = -1;
 
 /* store stuff */
@@ -799,6 +799,7 @@ static int pkcs11_load_ssl_client_cert(ENGINE *e, SSL *ssl,
     CK_SESSION_HANDLE session = 0;
     CK_BYTE *id;
     CK_ULONG idlen;
+    char *pin = NULL;
     CK_OBJECT_HANDLE key = 0;
     int ret = 0;
     int i;
@@ -820,6 +821,17 @@ static int pkcs11_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
     if (!pkcs11_start_session(pkcs11_ctx, &session))
         goto err;
+
+    if (pkcs11_ctx->pin == NULL) {
+        if (!pkcs11_get_console_pin(&pin))
+            goto err;
+        pkcs11_ctx->pin = (CK_BYTE *) pin;
+        if (pkcs11_ctx->pin == NULL) {
+            PKCS11_trace("PIN is invalid\n");
+            goto err;
+        }
+        pkcs11_ctx->pinlen = (CK_ULONG) strlen((char *) pkcs11_ctx->pin);
+    }
 
     store_ctx->session = session;
     pkcs11_ctx->type = "cert";
