@@ -210,6 +210,11 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
 
 OSSL_EX_DATA_GLOBAL *openssl_ctx_get_ex_data_global(OPENSSL_CTX *ctx)
 {
+    /*
+     * The default context code is not needed in FIPS_MODE and ctx should never
+     * be NULL in the FIPS provider. However we compile this code out to ensure
+     * we fail immediately if ctx == NULL in FIPS_MODE
+     */
 #ifndef FIPS_MODE
     if (ctx == NULL) {
         if (!RUN_ONCE(&default_context_init, do_default_context_init))
