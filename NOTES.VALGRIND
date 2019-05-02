@@ -32,7 +32,7 @@ programs. The default program (util/shlib_wrap.sh) initializes the
 enviroment to allow programs to find shared libraries. The variable can
 be modified to specify a different executable environment.
 
-   EXE_SHELL="$(pwd)/util/shlib_wrap.sh valgrind --error-exitcode=1 --leak-check=full -q"
+   EXE_SHELL="`/bin/pwd`/util/shlib_wrap.sh valgrind --error-exitcode=1 --leak-check=full -q"
 
 This will start up Valgrind with the default checker (memcheck).
 The --error-exitcode=1 option specifies that Valgrind should exit with an
@@ -62,9 +62,9 @@ INSTALL file in the root of the OpenSSL source tree.
 
 Example command line:
 
-   make test EXE_SHELL="$(pwd)/util/shlib_wrap.sh valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
+   make test EXE_SHELL="`/bin/pwd`/util/shlib_wrap.sh valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
 
 If an error occurs, you can then run the specific test via the TESTS
 variable with the VERBOSE option to gather additional information.
 
-   make test VERBOSE=1 TESTS=test_test EXE_SHELL="$(pwd)/util/shlib_wrap.sh valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
+   make test VERBOSE=1 TESTS=test_test EXE_SHELL="`/bin/pwd`/util/shlib_wrap.sh valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
