@@ -141,6 +141,10 @@ static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a)
     }
 }
 
+/*
+ * The OPENSSL_CTX param here allows access to underlying property data needed
+ * for computation
+ */
 OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx)
 {
     OSSL_METHOD_STORE *res;

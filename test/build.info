@@ -503,7 +503,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[wpackettest]=../libcrypto ../libssl.a libtestutil.a
 
     SOURCE[property_test]=property_test.c
-    INCLUDE[property_test]=../include ../apps/include
+    INCLUDE[property_test]=.. ../include ../apps/include
     DEPEND[property_test]=../libcrypto.a libtestutil.a
 
     SOURCE[ctype_internal_test]=ctype_internal_test.c

@@ -134,7 +134,7 @@ static const OPENSSL_CTX_METHOD provider_store_method = {
 };
 
 static openssl_ctx_run_once_fn do_provider_store_init;
-int do_provider_store_init(OPENSSL_CTX *ctx)
+static int do_provider_store_init(OPENSSL_CTX *ctx)
 {
     return openssl_ctx_init_index(ctx, OPENSSL_CTX_PROVIDER_STORE_INDEX,
                                   &provider_store_method);
