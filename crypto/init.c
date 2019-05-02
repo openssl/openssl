@@ -468,6 +468,11 @@ void OPENSSL_cleanup(void)
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
     CRYPTO_THREAD_LOCAL key;
 
+    /*
+     * TODO(3.0): This function needs looking at with a view to moving most/all
+     * of this into onfree handlers in OPENSSL_CTX.
+     */
+
     /* If we've not been inited then no need to deinit */
     if (!base_inited)
         return;
@@ -579,6 +584,11 @@ void OPENSSL_cleanup(void)
  */
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
+    /*
+     * TODO(3.0): This function needs looking at with a view to moving most/all
+     * of this into OPENSSL_CTX.
+     */
+
     if (stopped) {
         if (!(opts & OPENSSL_INIT_BASE_ONLY))
             CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
