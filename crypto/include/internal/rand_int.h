@@ -18,6 +18,8 @@
 #ifndef HEADER_RAND_INT_H
 # define HEADER_RAND_INT_H
 
+#define FIPS_MODE /* Testing only; to be removed */
+
 # include <openssl/rand.h>
 
 /* forward declaration */
