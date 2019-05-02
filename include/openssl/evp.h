@@ -1115,6 +1115,12 @@ EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
                              long length);
 int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp);
 
+int i2d_KeyParams(const EVP_PKEY *a, unsigned char **pp);
+EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
+                        long length);
+int i2d_KeyParams_bio(BIO *bp, const EVP_PKEY *pkey);
+EVP_PKEY *d2i_KeyParams_bio(int type, EVP_PKEY **a, BIO *in);
+
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode);
