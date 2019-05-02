@@ -15,10 +15,10 @@ ossl_method_store_cache_get, ossl_method_store_cache_set
 
  typedef struct ossl_method_store_st OSSL_METHOD_STORE;
 
- OSSL_METHOD_STORE *ossl_method_store_new(void);
+ OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx);
  void ossl_method_store_free(OSSL_METHOD_STORE *store);
- int ossl_method_store_init(void);
- void ossl_method_store_cleanup(void);
+ int ossl_method_store_init(OPENSSL_CTX *ctx);
+ void ossl_method_store_cleanup(OPENSSL_CTX *ctx);
  int ossl_method_store_add(OSSL_METHOD_STORE *store,
                            int nid, const char *properties,
                            void *method, void (*method_destruct)(void *));
@@ -51,12 +51,14 @@ separately (see L</Cache Functions> below).
 
 =head2 Store Functions
 
-ossl_method_store_init() initialises the method store subsystem.
+ossl_method_store_init() initialises the method store subsystem in the scope of
+the library context B<ctx>.
 
 ossl_method_store_cleanup() cleans up and shuts down the implementation method
-store subsystem.
+store subsystem in the scope of the library context B<ctx>.
 
-ossl_method_store_new() create a new empty method store.
+ossl_method_store_new() create a new empty method store using the supplied
+B<ctx> to allow access to the required underlying property data.
 
 ossl_method_store_free() frees resources allocated to B<store>.
 

@@ -11,7 +11,7 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
 
  struct ossl_method_construct_method_st {
      /* Create store */
-     void *(*alloc_tmp_store)(void);
+     void *(*alloc_tmp_store)(OPENSSL_CTX *ctx);
      /* Remove a store */
      void (*dealloc_tmp_store)(void *store);
      /* Get an already existing method from a store */
@@ -32,6 +32,7 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
                              const char *name, const char *properties,
                              int force_cache,
                              OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data);
+
 
 =head1 DESCRIPTION
 
@@ -65,7 +66,7 @@ function pointers:
 
 =item alloc_tmp_store()
 
-Create a temporary method store.
+Create a temporary method store in the scope of the library context C<ctx>.
 This store is used to temporarily store methods for easier lookup, for
 when the provider doesn't want its dispatch table stored in a longer
 term cache.
