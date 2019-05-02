@@ -54,7 +54,7 @@ static int context_init(OPENSSL_CTX *ctx)
     if (!do_ex_data_init(ctx))
         goto err;
 
-    if (!CRYPTO_new_ex_data_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, NULL,
+    if (!crypto_new_ex_data_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, NULL,
                                &ctx->data)) {
         crypto_cleanup_all_ex_data_int(ctx);
         goto err;
@@ -158,7 +158,7 @@ int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
     if (ctx == NULL)
         return 0;
 
-    idx = CRYPTO_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, 0,
+    idx = crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, 0,
                                      (void *)meth, openssl_ctx_generic_new,
                                      NULL, openssl_ctx_generic_free);
     if (idx < 0)

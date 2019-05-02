@@ -106,7 +106,7 @@ static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
     return 1;
 }
 
-int CRYPTO_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx)
+int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx)
 {
     EX_CALLBACKS *ip = get_and_lock(ctx, class_index);
     EX_CALLBACK *a;
@@ -135,13 +135,13 @@ err:
 
 int CRYPTO_free_ex_index(int class_index, int idx)
 {
-    return CRYPTO_free_ex_index_ex(NULL, class_index, idx);
+    return crypto_free_ex_index_ex(NULL, class_index, idx);
 }
 
 /*
  * Register a new index.
  */
-int CRYPTO_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
+int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
                                void *argp, CRYPTO_EX_new *new_func,
                                CRYPTO_EX_dup *dup_func,
                                CRYPTO_EX_free *free_func)
@@ -197,7 +197,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
                             CRYPTO_EX_free *free_func)
 {
-    return CRYPTO_get_ex_new_index_ex(NULL, class_index, argl, argp, new_func,
+    return crypto_get_ex_new_index_ex(NULL, class_index, argl, argp, new_func,
                                       dup_func, free_func);
 }
 
@@ -208,7 +208,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
  * in the lock, then using them outside the lock. Note this only applies
  * to the global "ex_data" state (ie. class definitions), not 'ad' itself.
  */
-int CRYPTO_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
+int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
                           CRYPTO_EX_DATA *ad)
 {
     int mx, i;
@@ -258,7 +258,7 @@ int CRYPTO_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
 
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 {
-    return CRYPTO_new_ex_data_ex(NULL, class_index, obj, ad);
+    return crypto_new_ex_data_ex(NULL, class_index, obj, ad);
 }
 
 /*

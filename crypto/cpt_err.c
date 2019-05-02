@@ -27,7 +27,7 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_NEW_EX_DATA, 0),
      "CRYPTO_new_ex_data"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_NEW_EX_DATA_EX, 0),
-     "CRYPTO_new_ex_data_ex"},
+     "crypto_new_ex_data_ex"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_OCB128_COPY_CTX, 0),
      "CRYPTO_ocb128_copy_ctx"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_OCB128_INIT, 0),

@@ -167,5 +167,12 @@ int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
 int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn);
 
 OPENSSL_CTX *crypto_ex_data_get_openssl_ctx(const CRYPTO_EX_DATA *ad);
-
+int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
+                          CRYPTO_EX_DATA *ad);
+int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index,
+                               long argl, void *argp,
+                               CRYPTO_EX_new *new_func,
+                               CRYPTO_EX_dup *dup_func,
+                               CRYPTO_EX_free *free_func);
+int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx);
 #endif
