@@ -23,6 +23,7 @@
   * NOTES.WIN (any supported Windows)
   * NOTES.DJGPP (DOS platform with DJGPP)
   * NOTES.ANDROID (obviously Android [NDK])
+  * NOTES.VALGRIND (testing with Valgrind)
 
  Notational conventions in this document
  ---------------------------------------
