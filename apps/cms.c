@@ -640,6 +640,7 @@ int cms_main(int argc, char **argv)
             goto opthelp;
         }
     } else if (!operation) {
+        BIO_printf(bio_err, "No operation option (-encrypt|-decrypt|-sign|-verify|...) specified.\n");
         goto opthelp;
     }
 
