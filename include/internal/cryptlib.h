@@ -152,15 +152,9 @@ typedef struct openssl_ctx_method {
     void (*free_func)(void *);
 } OPENSSL_CTX_METHOD;
 
-/*
- * For each type of data to store in the context, an index must be initialised.
- * This normally happens automatically. This function enables the internal tests
- * to work
- */
-int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
-                           const OPENSSL_CTX_METHOD *);
 /* Functions to retrieve pointers to data by index */
-void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */);
+void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */,
+                           const OPENSSL_CTX_METHOD * ctx);
 
 void openssl_ctx_default_deinit(void);
 OSSL_EX_DATA_GLOBAL *openssl_ctx_get_ex_data_global(OPENSSL_CTX *ctx);

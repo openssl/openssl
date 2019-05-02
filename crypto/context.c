@@ -15,19 +15,6 @@ struct openssl_ctx_onfree_list_st {
     struct openssl_ctx_onfree_list_st *next;
 };
 
-extern const OPENSSL_CTX_METHOD default_method_store_method;
-extern const OPENSSL_CTX_METHOD provider_store_method;
-extern const OPENSSL_CTX_METHOD property_defns_method;
-extern const OPENSSL_CTX_METHOD property_string_data_method;
-
-/* Must be in the same order as the indexes in cryptlib.h */
-static const OPENSSL_CTX_METHOD *methods[] = {
-    &default_method_store_method,
-    &provider_store_method,
-    &property_defns_method,
-    &property_string_data_method
-};
-
 struct openssl_ctx_st {
     CRYPTO_RWLOCK *lock;
     CRYPTO_EX_DATA data;
@@ -162,8 +149,8 @@ static void openssl_ctx_generic_free(void *parent_ign, void *ptr,
 }
 
 /* Non-static so we can use it in context_internal_test */
-int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
-                           const OPENSSL_CTX_METHOD *meth)
+static int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
+                                  const OPENSSL_CTX_METHOD *meth)
 {
     int idx;
 
@@ -178,9 +165,7 @@ int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
         return 0;
 
     idx = crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, 0,
-                                     meth == NULL
-                                     ? (void *)methods[static_index]
-                                     : (void *)meth,
+                                     (void *)meth,
                                      openssl_ctx_generic_new,
                                      NULL, openssl_ctx_generic_free);
     if (idx < 0)
@@ -190,7 +175,8 @@ int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
     return 1;
 }
 
-void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index)
+void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
+                           const OPENSSL_CTX_METHOD *meth)
 {
     void *data = NULL;
 
@@ -207,7 +193,7 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index)
     CRYPTO_THREAD_read_lock(ctx->lock);
 
     if (ctx->dyn_indexes[index] == -1
-            && !openssl_ctx_init_index(ctx, index, NULL)) {
+            && !openssl_ctx_init_index(ctx, index, meth)) {
         CRYPTO_THREAD_unlock(ctx->lock);
         return NULL;
     }

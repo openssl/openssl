@@ -104,7 +104,7 @@ err:
     return NULL;
 }
 
-const OPENSSL_CTX_METHOD property_string_data_method = {
+static const OPENSSL_CTX_METHOD property_string_data_method = {
     property_string_data_new,
     property_string_data_free,
 };
@@ -151,7 +151,8 @@ OSSL_PROPERTY_IDX ossl_property_name(OPENSSL_CTX *ctx, const char *s,
                                      int create)
 {
     PROPERTY_STRING_DATA *propdata
-        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX);
+        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX,
+                               &property_string_data_method);
 
     if (propdata == NULL)
         return 0;
@@ -164,7 +165,8 @@ OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
                                       int create)
 {
     PROPERTY_STRING_DATA *propdata
-        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX);
+        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX,
+                               &property_string_data_method);
 
     if (propdata == NULL)
         return 0;

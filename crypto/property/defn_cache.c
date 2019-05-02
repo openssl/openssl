@@ -61,7 +61,7 @@ static void *property_defns_new(OPENSSL_CTX *ctx) {
     return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
 }
 
-const OPENSSL_CTX_METHOD property_defns_method = {
+static const OPENSSL_CTX_METHOD property_defns_method = {
     property_defns_new,
     property_defns_free,
 };
@@ -71,7 +71,8 @@ OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop)
     PROPERTY_DEFN_ELEM elem, *r;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
-    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX);
+    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
+                                          &property_defns_method);
     if (property_defns == NULL)
         return NULL;
 
@@ -87,7 +88,8 @@ int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
     size_t len;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
-    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX);
+    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
+                                          &property_defns_method);
     if (property_defns == NULL)
         return 0;
 
