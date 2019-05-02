@@ -37,18 +37,22 @@ to identify data items. These are mapped transparetnly to CRYPTO_EX_DATA dynamic
 indexes internally to the implementation.
 See the example further down to see how that's done.
 
+openssl_ctx_get_data() is used to retrieve a pointer to the data in
+the library context C<ctx> associated with the given C<index>. An
+OPENSSL_CTX_METHOD must be defined and a reference to it included in the methods
+table in context.c along with a index for it in cryptlib.h. The functions
+through the method are used to create or free items that are stored at that
+index whenever a library context is created or freed, meaning that the code that
+use a data item of that index doesn't have to worry about that, just use the
+data available.
+
 openssl_ctx_init_index() initialises a given library context index, and
-associates it with the functions given through C<meth>.
-The functions given through that method are used to create or free
-items that are stored at that index whenever a library context is
-created or freed, meaning that the code that use a data item of that
-index doesn't have to worry about that, just use the data available.
+associates it with the functions given through C<meth>. This is not normally
+needed except in test code where there is no pre-registered method available in
+the context.c methods table.
 
 Deallocation of an index happens automatically when the library
 context is freed.
-
-openssl_ctx_get_data() is used to retrieve a pointer to the data in
-the library context C<ctx> associated with the given C<index>.
 
 openssl_ctx_run_once is used to run some initialisation routine C<run_once_fn>
 exactly once per library context C<ctx> object. Each initialisation routine
@@ -90,16 +94,15 @@ and a destructor to an index.
  {
      OPENSSL_free(ptr);
  }
- static const OPENSSL_CTX_METHOD foo_method = {
+
+ /*
+  * Include a reference to this in the methods table in context.c 
+  * OPENSSL_CTX_FOO_INDEX should be added to internal/cryptlib.h
+  */
+ const OPENSSL_CTX_METHOD foo_method = {
      foo_new,
      foo_free
  };
-
- static int foo_init(OPENSSL_CTX *ctx)
- {
-     /* OPENSSL_CTX_FOO_INDEX should be added to internal/cryptlib.h */
-     return openssl_ctx_init_index(ctx, OPENSSL_CTX_FOO_INDEX, foo_method);
- }
 
 =head2 Usage
 
