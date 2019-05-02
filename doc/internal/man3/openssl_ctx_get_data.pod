@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-openssl_ctx_init_index, openssl_ctx_get_data, openssl_ctx_run_once,
-openssl_ctx_onfree - internal OPENSSL_CTX routines
+openssl_ctx_get_data, openssl_ctx_run_once, openssl_ctx_onfree
+- internal OPENSSL_CTX routines
 
 =head1 SYNOPSIS
 
@@ -15,12 +15,8 @@ openssl_ctx_onfree - internal OPENSSL_CTX routines
      void (*free_func)(void *);
  } OPENSSL_CTX_METHOD;
 
- int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
+ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
                             const OPENSSL_CTX_METHOD *meth);
- void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index);
-
- typedef int (openssl_ctx_run_once_fn)(OPENSSL_CTX *ctx);
- typedef void (openssl_ctx_onfree_fn)(OPENSSL_CTX *ctx);
 
  int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
                           openssl_ctx_run_once_fn run_once_fn);
@@ -39,17 +35,11 @@ See the example further down to see how that's done.
 
 openssl_ctx_get_data() is used to retrieve a pointer to the data in
 the library context C<ctx> associated with the given C<index>. An
-OPENSSL_CTX_METHOD must be defined and a reference to it included in the methods
-table in context.c along with a index for it in cryptlib.h. The functions
-through the method are used to create or free items that are stored at that
-index whenever a library context is created or freed, meaning that the code that
-use a data item of that index doesn't have to worry about that, just use the
-data available.
-
-openssl_ctx_init_index() initialises a given library context index, and
-associates it with the functions given through C<meth>. This is not normally
-needed except in test code where there is no pre-registered method available in
-the context.c methods table.
+OPENSSL_CTX_METHOD must be defined and given in the C<meth> parameter. The index
+for it should be defined in cryptlib.h. The functions through the method are
+used to create or free items that are stored at that index whenever a library
+context is created or freed, meaning that the code that use a data item of that
+index doesn't have to worry about that, just use the data available.
 
 Deallocation of an index happens automatically when the library
 context is freed.
@@ -64,8 +54,6 @@ the library context C<ctx>. When C<ctx> is freed all associated "on free"
 routines are called.
 
 =head1 RETURN VALUES
-
-openssl_ctx_init_index() returns 0 on error or 1 on success.
 
 openssl_ctx_get_data() returns a pointer on success, or C<NULL> on
 failure.
@@ -111,7 +99,7 @@ To get and use the data stored in the library context, simply do this:
  /*
   * ctx is received from a caller,
   */
- FOO *data = openssl_ctx_get_data(ctx, OPENSSL_CTX_FOO_INDEX);
+ FOO *data = openssl_ctx_get_data(ctx, OPENSSL_CTX_FOO_INDEX, &foo_method);
 
 =head2 Run Once
 

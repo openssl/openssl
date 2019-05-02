@@ -32,7 +32,7 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
                              const char *name, const char *properties,
                              int force_cache,
                              OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data);
-    
+
 
 =head1 DESCRIPTION
 
