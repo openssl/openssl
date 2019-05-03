@@ -23,13 +23,13 @@ Requirements
 Running Tests
 -------------
 
-Test behavior can be modified by adjusting envionment variables.
+Test behavior can be modified by adjusting environment variables.
 
 EXE_SHELL
 
 This variable is used to specify the shell used to execute OpenSSL test
 programs. The default program (util/shlib_wrap.sh) initializes the
-enviroment to allow programs to find shared libraries. The variable can
+environment to allow programs to find shared libraries. The variable can
 be modified to specify a different executable environment.
 
    EXE_SHELL="`/bin/pwd`/util/shlib_wrap.sh valgrind --error-exitcode=1 --leak-check=full -q"
