@@ -590,11 +590,14 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                                inl + (blocksize == 1 ? 0 : blocksize), in,
                                (size_t)inl);
 
-    if (soutl > INT_MAX) {
-        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_UPDATE_ERROR);
-        return 0;
+    if (ret) {
+        if (soutl > INT_MAX) {
+            EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_UPDATE_ERROR);
+            return 0;
+        }
+        *outl = soutl;
     }
-    *outl = soutl;
+
     return ret;
 
     /* TODO(3.0): Remove legacy code below */
@@ -640,11 +643,13 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     ret = ctx->cipher->cfinal(ctx->provctx, out, &soutl,
                               blocksize == 1 ? 0 : blocksize);
 
-    if (soutl > INT_MAX) {
-        EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_FINAL_ERROR);
-        return 0;
+    if (ret) {
+        if (soutl > INT_MAX) {
+            EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_FINAL_ERROR);
+            return 0;
+        }
+        *outl = soutl;
     }
-    *outl = soutl;
 
     return ret;
 
