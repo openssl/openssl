@@ -1055,6 +1055,9 @@ uninstall_html_docs:
 # It's important that generate_buildinfo comes after ordinals, as ordinals
 # is sensitive to build.info changes.
 update: generate errors ordinals generate_buildinfo
+{- output_off() if $disabled{fips}; "" -}
+update: fips-checksums
+{- output_on() if $disabled{fips}; "" -}
 
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
@@ -1266,6 +1269,20 @@ tags TAGS: FORCE
 	rm -f TAGS tags
 	-ctags -R .
 	-etags `find . -name '*.[ch]' -o -name '*.pm'`
+
+{- output_off() if $disabled{fips}; "" -}
+fips-checksums: generate_fips_sources
+	if which unifdef > /dev/null; then \
+	    cat $(SRCDIR)/providers/fips.module.sources \
+	       | (cd $(SRCDIR); xargs ./util/fips-checksums.sh ) \
+	       > $(SRCDIR)/providers/fips-sources.checksums \
+	    && openssl sha256 -hex \
+	       < $(SRCDIR)/providers/fips-sources.checksums \
+	       > $(SRCDIR)/providers/fips.checksum; \
+	else \
+	    echo >&2 "WARNING: unifdef not in your \$$PATH, FIPS checksums not calculated"; \
+	fi
+{- output_on() if $disabled{fips}; "" -}
 
 # Release targets (note: only available on Unix) #####################
 
