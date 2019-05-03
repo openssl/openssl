@@ -130,6 +130,16 @@ ASN1_SEQUENCE(OSSL_CMP_ITAV) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ITAV)
 IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
 
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value)
+{
+    OSSL_CMP_ITAV *itav;
+
+    if (type == NULL || (itav = OSSL_CMP_ITAV_new()) == NULL)
+        return NULL;
+    OSSL_CMP_ITAV_set0(itav, type, value);
+    return itav;
+}
+
 void OSSL_CMP_ITAV_set0(OSSL_CMP_ITAV *itav, ASN1_OBJECT *type,
                         ASN1_TYPE *value)
 {
