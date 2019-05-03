@@ -19,6 +19,7 @@ static const ERR_STRING_DATA KDF_str_functs[] = {
     {ERR_PACK(ERR_LIB_KDF, KDF_F_KDF_HKDF_NEW, 0), "kdf_hkdf_new"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_KDF_HKDF_SIZE, 0), "kdf_hkdf_size"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_KDF_MD2CTRL, 0), "kdf_md2ctrl"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_KDF_PBKDF2_CTRL, 0), "kdf_pbkdf2_ctrl"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_KDF_PBKDF2_CTRL_STR, 0),
      "kdf_pbkdf2_ctrl_str"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_KDF_PBKDF2_DERIVE, 0), "kdf_pbkdf2_derive"},
@@ -41,6 +42,7 @@ static const ERR_STRING_DATA KDF_str_functs[] = {
     {ERR_PACK(ERR_LIB_KDF, KDF_F_KDF_TLS1_PRF_DERIVE, 0),
      "kdf_tls1_prf_derive"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_KDF_TLS1_PRF_NEW, 0), "kdf_tls1_prf_new"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_PBKDF2_DERIVE, 0), "pbkdf2_derive"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PBKDF2_SET_MEMBUF, 0), "pbkdf2_set_membuf"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_CTRL_STR, 0), "pkey_hkdf_ctrl_str"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_DERIVE, 0), "pkey_hkdf_derive"},
@@ -71,7 +73,11 @@ static const ERR_STRING_DATA KDF_str_functs[] = {
 
 static const ERR_STRING_DATA KDF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_DIGEST), "invalid digest"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_ITERATION_COUNT),
+    "invalid iteration count"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_KEY_LEN), "invalid key len"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_MAC_TYPE), "invalid mac type"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_SALT_LEN), "invalid salt len"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_ITERATION_COUNT),
     "missing iteration count"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_KEY), "missing key"},

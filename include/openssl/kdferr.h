@@ -28,6 +28,7 @@ int ERR_load_KDF_strings(void);
 # define KDF_F_KDF_HKDF_NEW                               114
 # define KDF_F_KDF_HKDF_SIZE                              115
 # define KDF_F_KDF_MD2CTRL                                116
+# define KDF_F_KDF_PBKDF2_CTRL                            140
 # define KDF_F_KDF_PBKDF2_CTRL_STR                        117
 # define KDF_F_KDF_PBKDF2_DERIVE                          118
 # define KDF_F_KDF_PBKDF2_NEW                             119
@@ -43,6 +44,7 @@ int ERR_load_KDF_strings(void);
 # define KDF_F_KDF_TLS1_PRF_CTRL_STR                      125
 # define KDF_F_KDF_TLS1_PRF_DERIVE                        126
 # define KDF_F_KDF_TLS1_PRF_NEW                           127
+# define KDF_F_PBKDF2_DERIVE                              141
 # define KDF_F_PBKDF2_SET_MEMBUF                          128
 # define KDF_F_PKEY_HKDF_CTRL_STR                         103
 # define KDF_F_PKEY_HKDF_DERIVE                           102
@@ -68,7 +70,10 @@ int ERR_load_KDF_strings(void);
  * KDF reason codes.
  */
 # define KDF_R_INVALID_DIGEST                             100
+# define KDF_R_INVALID_ITERATION_COUNT                    119
+# define KDF_R_INVALID_KEY_LEN                            120
 # define KDF_R_INVALID_MAC_TYPE                           116
+# define KDF_R_INVALID_SALT_LEN                           121
 # define KDF_R_MISSING_ITERATION_COUNT                    109
 # define KDF_R_MISSING_KEY                                104
 # define KDF_R_MISSING_MESSAGE_DIGEST                     105

@@ -74,24 +74,57 @@ static int test_kdf_pbkdf2(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    unsigned char out[32];
-    static const unsigned char expected[sizeof(out)] = {
-        0xae, 0x4d, 0x0c, 0x95, 0xaf, 0x6b, 0x46, 0xd3,
-        0x2d, 0x0a, 0xdf, 0xf9, 0x28, 0xf0, 0x6d, 0xd0,
-        0x2a, 0x30, 0x3f, 0x8e, 0xf3, 0xc2, 0x51, 0xdf,
-        0xd6, 0xe2, 0xd8, 0x5a, 0x95, 0x47, 0x4c, 0x43
+    unsigned char out[25];
+    size_t len = 0;
+    const unsigned char expected[sizeof(out)] = {
+        0x34, 0x8c, 0x89, 0xdb, 0xcb, 0xd3, 0x2b, 0x2f,
+        0x32, 0xd8, 0x14, 0xb8, 0x11, 0x6e, 0x84, 0xcf,
+        0x2b, 0x17, 0x34, 0x7e, 0xbc, 0x18, 0x00, 0x18,
+        0x1c
     };
 
-    ret =
-        TEST_ptr(kctx = EVP_KDF_CTX_new_id(EVP_KDF_PBKDF2))
-        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS, "password",
-                                    (size_t)8), 0)
-        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT, "salt",
-                                    (size_t)4), 0)
-        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_ITER, 2), 0)
-        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, EVP_sha256()), 0)
-        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
-        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+    if (sizeof(len) > 32)
+        len = SIZE_MAX;
+
+    ret = TEST_ptr(kctx = EVP_KDF_CTX_new_id(EVP_KDF_PBKDF2))
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS,
+                                      "passwordPASSWORDpassword",
+                                      (size_t)24), 0)
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
+                                      "saltSALTsaltSALTsaltSALTsaltSALTsalt",
+                                      (size_t)36), 0)
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_ITER, 4096), 0)
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, EVP_sha256()),
+                         0)
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE,
+                                            0), 0)
+          && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
+          && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected))
+          /* A key length that is too small should fail */
+          && TEST_int_eq(EVP_KDF_derive(kctx, out, 112 / 8 - 1), 0)
+          /* A key length that is too large should fail */
+          && (len == 0 || TEST_int_eq(EVP_KDF_derive(kctx, out, len), 0))
+          /* Salt length less than 128 bits should fail */
+          && TEST_int_eq(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
+                                      "123456781234567",
+                                      (size_t)15), 0)
+          /* A small iteration count should fail */
+          && TEST_int_eq(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_ITER, 1), 0)
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE,
+                                      1), 0)
+          /* Small salts will pass if the "pkcs5" mode is enabled */
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
+                                      "123456781234567",
+                                      (size_t)15), 0)
+          /* A small iteration count will pass if "pkcs5" mode is enabled */
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_ITER, 1), 0)
+          /*
+           * If the "pkcs5" mode is disabled then the small salt and iter will
+           * fail when the derive gets called.
+           */
+          && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE,
+                                      0), 0)
+          && TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out)), 0);
 
     EVP_KDF_CTX_free(kctx);
     return ret;

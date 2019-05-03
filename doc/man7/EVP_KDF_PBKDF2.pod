@@ -10,7 +10,7 @@ Support for computing the B<PBKDF2> password-based KDF through the B<EVP_KDF>
 API.
 
 The EVP_KDF_PBKDF2 algorithm implements the PBKDF2 password-based key
-derivation function, as described in RFC 2898; it derives a key from a password
+derivation function, as described in SP800-132; it derives a key from a password
 using a salt and iteration count.
 
 =head2 Numeric identity
@@ -30,13 +30,38 @@ The supported controls are:
 
 =item B<EVP_KDF_CTRL_SET_ITER>
 
+This control has a default value of 2048.
+
 =item B<EVP_KDF_CTRL_SET_MD>
 
 These controls work as described in L<EVP_KDF_CTX(3)/CONTROLS>.
 
-B<iter> is the iteration count and its value should be greater than or equal to
-1. RFC 2898 suggests an iteration count of at least 1000.  The default value is
-2048.  Any B<iter> less than 1 is treated as a single iteration.
+=item B<EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE>
+
+This control expects one argument: C<int mode>
+
+This control can be used to enable or disable SP800-132 compliance checks.
+
+Setting the mode to 0 enables the compliance checks.
+
+The checks performed are:
+
+=over 4
+
+=item - the iteration count is at least 1000.
+
+=item - the salt length is at least 128 bits.
+
+=item - the derived key length is at least 112 bits.
+
+=back
+
+The default provider uses a default mode of 1 for backwards compatibility,
+and the fips provider uses a default mode of 0.
+
+EVP_KDF_ctrl_str() type string: "pkcs5"
+
+The value string is expected to be a decimal number 0 or 1.
 
 =back
 
@@ -55,7 +80,7 @@ byte sequence.
 
 =head1 CONFORMING TO
 
-RFC 2898
+SP800-132
 
 =head1 SEE ALSO
 
@@ -66,9 +91,13 @@ L<EVP_KDF_ctrl(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF_CTX(3)/CONTROLS>
 
+=head1 HISTORY
+
+This functionality was added to OpenSSL 3.0.0.
+
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

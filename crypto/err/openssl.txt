@@ -895,6 +895,7 @@ KDF_F_KDF_HKDF_DERIVE:113:kdf_hkdf_derive
 KDF_F_KDF_HKDF_NEW:114:kdf_hkdf_new
 KDF_F_KDF_HKDF_SIZE:115:kdf_hkdf_size
 KDF_F_KDF_MD2CTRL:116:kdf_md2ctrl
+KDF_F_KDF_PBKDF2_CTRL:140:kdf_pbkdf2_ctrl
 KDF_F_KDF_PBKDF2_CTRL_STR:117:kdf_pbkdf2_ctrl_str
 KDF_F_KDF_PBKDF2_DERIVE:118:kdf_pbkdf2_derive
 KDF_F_KDF_PBKDF2_NEW:119:kdf_pbkdf2_new
@@ -910,6 +911,7 @@ KDF_F_KDF_SSHKDF_NEW:133:kdf_sshkdf_new
 KDF_F_KDF_TLS1_PRF_CTRL_STR:125:kdf_tls1_prf_ctrl_str
 KDF_F_KDF_TLS1_PRF_DERIVE:126:kdf_tls1_prf_derive
 KDF_F_KDF_TLS1_PRF_NEW:127:kdf_tls1_prf_new
+KDF_F_PBKDF2_DERIVE:141:pbkdf2_derive
 KDF_F_PBKDF2_SET_MEMBUF:128:pbkdf2_set_membuf
 KDF_F_PKEY_HKDF_CTRL_STR:103:pkey_hkdf_ctrl_str
 KDF_F_PKEY_HKDF_DERIVE:102:pkey_hkdf_derive
@@ -2458,7 +2460,10 @@ EVP_R_WRONG_FINAL_BLOCK_LENGTH:109:wrong final block length
 EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE:191:xts data unit is too large
 EVP_R_XTS_DUPLICATED_KEYS:192:xts duplicated keys
 KDF_R_INVALID_DIGEST:100:invalid digest
+KDF_R_INVALID_ITERATION_COUNT:119:invalid iteration count
+KDF_R_INVALID_KEY_LEN:120:invalid key len
 KDF_R_INVALID_MAC_TYPE:116:invalid mac type
+KDF_R_INVALID_SALT_LEN:121:invalid salt len
 KDF_R_MISSING_ITERATION_COUNT:109:missing iteration count
 KDF_R_MISSING_KEY:104:missing key
 KDF_R_MISSING_MESSAGE_DIGEST:105:missing message digest
