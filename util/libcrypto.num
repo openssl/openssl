@@ -4804,5 +4804,3 @@ EVP_KDF_CTX_new                         4751	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_kdf                         4752	3_0_0	EXIST::FUNCTION:
 EVP_KDF_nid                             4753	3_0_0	EXIST::FUNCTION:
 EVP_get_kdfbyname                       4754	3_0_0	EXIST::FUNCTION:
-EVP_KDF_do_all                          4755	3_0_0	EXIST::FUNCTION:
-EVP_KDF_do_all_sorted                   4756	3_0_0	EXIST::FUNCTION:
