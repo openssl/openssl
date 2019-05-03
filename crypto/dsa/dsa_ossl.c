@@ -190,6 +190,12 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
         return 0;
     }
 
+    /* Reject obviously invalid parameters */
+    if (BN_is_zero(dsa->p) || BN_is_zero(dsa->q) || BN_is_zero(dsa->g)) {
+        DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_INVALID_PARAMETERS);
+        return 0;
+    }
+
     k = BN_new();
     l = BN_new();
     if (k == NULL || l == NULL)
