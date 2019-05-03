@@ -9,6 +9,15 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Change PBKDF2 to conform to SP800-132 instead of the older PKCS5 RFC2898.
+     This checks that the salt length is at least 128 bits, the derived key
+     length is at least 112 bits, and that the iteration count is at least 1000.
+     For backwards compatibility these checks are disabled by default in the
+     default provider, but are enabled by default in the fips provider.
+     To enable or disable these checks use the control
+     EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE.
+     [Shane Lontis]
+
   *) Default cipher lists/suites are now avaialble via a function, the
      #defines are deprecated.
      [Todd Short]
@@ -30,7 +39,7 @@
   *) Added command 'openssl kdf' that uses the EVP_KDF API.
      [Shane Lontis]
 
-   *) Added command 'openssl mac' that uses the EVP_MAC API.
+  *) Added command 'openssl mac' that uses the EVP_MAC API.
      [Shane Lontis]
 
   *) Added OPENSSL_info() to get diverse built-in OpenSSL data, such
