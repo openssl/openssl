@@ -15,6 +15,10 @@ jobs:
   check_update:
     runs-on: ubuntu-latest
     steps:
+    - name: install unifdef
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unifdef
     - uses: actions/checkout@v2
     - name: config
       run: ./config --strict-warnings enable-fips && perl configdata.pm --dump
