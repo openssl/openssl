@@ -42,12 +42,6 @@ int EVP_KDF_nid(const EVP_KDF *kdf);
 # define EVP_get_kdfbyobj(a)    EVP_get_kdfbynid(OBJ_obj2nid(a))
 # define EVP_KDF_name(o)        OBJ_nid2sn(EVP_KDF_nid(o))
 const EVP_KDF *EVP_get_kdfbyname(const char *name);
-void EVP_KDF_do_all(void (*fn)
-                    (const EVP_KDF *kdf, const char *from, const char *to,
-                     void *x), void *arg);
-void EVP_KDF_do_all_sorted(void (*fn)
-                           (const EVP_KDF *kdf, const char *from,
-                            const char *to, void *x), void *arg);
 
 # define EVP_KDF_CTRL_SET_PASS          0x01 /* unsigned char *, size_t */
 # define EVP_KDF_CTRL_SET_SALT          0x02 /* unsigned char *, size_t */

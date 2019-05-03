@@ -72,6 +72,7 @@ int EVP_add_mac(const EVP_MAC *m)
     return r;
 }
 
+/* TODO(3.0) Is this needed after changing to providers? */
 int EVP_add_kdf(const EVP_KDF *k)
 {
     int r;
@@ -121,6 +122,7 @@ const EVP_MAC *EVP_get_macbyname(const char *name)
     return mp;
 }
 
+/* TODO(3.0) Is this API needed after implementing providers? */
 const EVP_KDF *EVP_get_kdfbyname(const char *name)
 {
     const EVP_KDF *kdf;
@@ -236,6 +238,7 @@ void EVP_MD_do_all_sorted(void (*fn) (const EVP_MD *md,
     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
 }
 
+/* TODO(3.0) Are these do_all API's needed for MAC? */
 struct doall_mac {
     void *arg;
     void (*fn) (const EVP_MAC *ciph,
@@ -278,48 +281,4 @@ void EVP_MAC_do_all_sorted(void (*fn)
     dc.fn = fn;
     dc.arg = arg;
     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MAC_METH, do_all_mac_fn, &dc);
-}
-
-struct doall_kdf {
-    void *arg;
-    void (*fn) (const EVP_KDF *kdf,
-                const char *from, const char *to, void *arg);
-};
-
-static void do_all_kdf_fn(const OBJ_NAME *nm, void *arg)
-{
-    struct doall_kdf *dc = arg;
-
-    if (nm->alias)
-        dc->fn(NULL, nm->name, nm->data, dc->arg);
-    else
-        dc->fn((const EVP_KDF *)nm->data, nm->name, NULL, dc->arg);
-}
-
-void EVP_KDF_do_all(void (*fn)
-                    (const EVP_KDF *kdf, const char *from, const char *to,
-                     void *x), void *arg)
-{
-    struct doall_kdf dc;
-
-    /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_KDFS, NULL);
-
-    dc.fn = fn;
-    dc.arg = arg;
-    OBJ_NAME_do_all(OBJ_NAME_TYPE_KDF_METH, do_all_kdf_fn, &dc);
-}
-
-void EVP_KDF_do_all_sorted(void (*fn)
-                           (const EVP_KDF *kdf, const char *from,
-                            const char *to, void *x), void *arg)
-{
-    struct doall_kdf dc;
-
-    /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_KDFS, NULL);
-
-    dc.fn = fn;
-    dc.arg = arg;
-    OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_KDF_METH, do_all_kdf_fn, &dc);
 }
