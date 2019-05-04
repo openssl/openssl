@@ -10,7 +10,7 @@ SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 x509v3 conf \
 LIBS=../libcrypto
 # The Core
 SOURCE[../libcrypto]=provider_core.c provider_predefined.c provider_conf.c \
-        core_fetch.c
+        core_fetch.c core_namemap.c
 
 # Central utilities
 SOURCE[../libcrypto]=\
