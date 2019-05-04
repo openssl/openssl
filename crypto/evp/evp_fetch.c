@@ -13,9 +13,9 @@
 #include <openssl/core.h>
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
-#include "internal/asn1_int.h"
 #include "internal/property.h"
 #include "internal/core.h"
+#include "internal/namemap.h"
 #include "internal/evp_int.h"    /* evp_locl.h needs it */
 #include "evp_locl.h"
 
@@ -37,6 +37,7 @@ static const OPENSSL_CTX_METHOD default_method_store_method = {
 
 /* Data to be passed through ossl_method_construct() */
 struct method_data_st {
+    OPENSSL_CTX *libctx;
     const char *name;
     int nid;
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
@@ -93,7 +94,7 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
     struct method_data_st *methdata = data;
     int nid = methdata->nid_method(method);
 
-    if (nid == NID_undef)
+    if (nid == 0)
         return 0;
 
     if (store == NULL
@@ -112,30 +113,14 @@ static void *construct_method(const char *algorithm_name,
                               void *data)
 {
     struct method_data_st *methdata = data;
-    void *method = NULL;
-    int nid = OBJ_sn2nid(algorithm_name);
+    OSSL_NAMEMAP *namemap;
+    int nid;
 
-    if (nid == NID_undef) {
-        /* Create a new NID for that name on the fly */
-        ASN1_OBJECT tmpobj;
-
-        /* This is the same as OBJ_create() but without requiring a OID */
-        tmpobj.nid = OBJ_new_nid(1);
-        tmpobj.sn = tmpobj.ln = methdata->name;
-        tmpobj.flags = ASN1_OBJECT_FLAG_DYNAMIC;
-        tmpobj.length = 0;
-        tmpobj.data = NULL;
-
-        nid = OBJ_add_object(&tmpobj);
-    }
-
-    if (nid == NID_undef)
+    if ((namemap = ossl_namemap_stored(methdata->libctx)) == NULL
+        || (nid = ossl_namemap_add(namemap, algorithm_name)) == 0)
         return NULL;
 
-    method = methdata->method_from_dispatch(nid, fns, prov);
-    if (method == NULL)
-        return NULL;
-    return method;
+    return methdata->method_from_dispatch(nid, fns, prov);
 }
 
 static void destruct_method(void *method, void *data)
@@ -154,13 +139,14 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         int (*nid_method)(void *))
 {
     OSSL_METHOD_STORE *store = get_default_method_store(libctx);
-    int nid = OBJ_sn2nid(algorithm);
+    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    int nid;
     void *method = NULL;
 
-    if (store == NULL)
+    if (store == NULL || namemap == NULL)
         return NULL;
 
-    if (nid == NID_undef
+    if ((nid = ossl_namemap_number(namemap, algorithm)) == 0
         || !ossl_method_store_cache_get(store, nid, properties, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             alloc_tmp_method_store,
@@ -174,6 +160,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
 
         mcmdata.nid = nid;
         mcmdata.mcm = &mcm;
+        mcmdata.libctx = libctx;
         mcmdata.method_from_dispatch = new_method;
         mcmdata.destruct_method = free_method;
         mcmdata.refcnt_up_method = upref_method;
