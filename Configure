@@ -1403,13 +1403,17 @@ if ($target{sys_id} ne "")
         push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
         }
 
-unless ($disabled{asm}) {
-}
-
 my %predefined_C = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
 my %predefined_CXX = $config{CXX}
     ? compiler_predefined($config{CROSS_COMPILE}.$config{CXX})
     : ();
+
+unless ($disabled{asm}) {
+    # big endian systems can use ELFv2 ABI
+    if ($target eq "linux-ppc64") {
+        $target{perlasm_scheme} = "linux64v2" if ($predefined_C{_CALL_ELF} == 2);
+    }
+}
 
 # Check for makedepend capabilities.
 if (!$disabled{makedepend}) {
