@@ -10,7 +10,7 @@ evp_generic_fetch - generic algorithm fetcher and method creator for EVP
  #include "evp_locl.h"
 
  void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
-                         const char *algorithm, const char *properties,
+                         const char *name, const char *properties,
                          void *(*new_method)(int nid, const OSSL_DISPATCH *fns,
                                              OSSL_PROVIDER *prov),
                          int (*upref_method)(void *),
@@ -20,7 +20,7 @@ evp_generic_fetch - generic algorithm fetcher and method creator for EVP
 =head1 DESCRIPTION
 
 evp_generic_fetch() calls ossl_method_construct() with the given
-C<libctx>, C<operation_id>, C<algorithm>, and C<properties> and uses
+C<libctx>, C<operation_id>, C<name>, and C<properties> and uses
 it to create an EVP method with the help of the functions
 C<new_method>, C<upref_method>, and C<free_method>.
 
@@ -159,10 +159,10 @@ And here's the implementation of the FOO method fetcher:
     }
 
     EVP_FOO *EVP_FOO_fetch(OPENSSL_CTX *ctx,
-                           const char *algorithm,
+                           const char *name,
                            const char *properties)
     {
-        return evp_generic_fetch(ctx, OSSL_OP_FOO, algorithm, properties,
+        return evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
                                  foo_from_dispatch, foo_upref, foo_free);
     }
 
