@@ -145,8 +145,8 @@ int ossl_namemap_new(OPENSSL_CTX *libctx, const char *name)
     if (name == NULL || store == NULL)
         return 0;
 
-    if (ossl_namemap_number(libctx, name) != 0)
-        return 1;                /* Pretend success */
+    if ((number = ossl_namemap_number(libctx, name)) != 0)
+        return number;           /* Pretend success */
 
     if ((entry = OPENSSL_zalloc(sizeof(*entry) + strlen(name))) == NULL)
         goto err;
