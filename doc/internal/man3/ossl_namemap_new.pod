@@ -4,7 +4,7 @@
 
 ossl_namemap_new, ossl_namemap_free, ossl_namemap_stored,
 ossl_namemap_add, ossl_namemap_name, ossl_namemap_number
-- internal number <-> name map
+- internal number E<lt>-E<gt> name map
 
 =head1 SYNOPSIS
 
@@ -21,9 +21,10 @@ ossl_namemap_add, ossl_namemap_name, ossl_namemap_number
 
 =head1 DESCRIPTION
 
-A B<OSSL_NAMEMAP> is a simple number <-> name map, which can be used
-to give arbitrary any name (any string) a unique dynamic identity that
-is valid throughout the lifetime of the associated library context.
+A B<OSSL_NAMEMAP> is a simple number E<lt>-E<gt> name map, which can
+be used to give arbitrary any name (any string) a unique dynamic
+identity that is valid throughout the lifetime of the associated
+library context.
 
 ossl_namemap_new() and ossl_namemap_free() construct and destruct a
 new B<OSSL_NAMEMAP>.
