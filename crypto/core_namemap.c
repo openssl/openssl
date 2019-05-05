@@ -40,6 +40,7 @@ static void namemap_free(NAMEMAP *n)
 /* The store, which provides for bidirectional indexing */
 
 typedef struct {
+    CRYPTO_RWLOCK *lock;
     LHASH_OF(NAMEMAP) *namenum;  /* Name->number mapping */
     STACK_OF(NAMEMAP) *numname;  /* Number->name mapping */
 } NAMEMAP_STORE;
@@ -58,6 +59,7 @@ static void namemap_store_free(void *vstore)
 
     sk_NAMEMAP_pop_free(store->numname, namemap_free);
 
+    CRYPTO_THREAD_lock_free(store->lock);
     OPENSSL_free(store);
 }
 
@@ -66,6 +68,7 @@ static void *namemap_store_new(OPENSSL_CTX *ctx)
     NAMEMAP_STORE *store;
 
     if ((store = OPENSSL_zalloc(sizeof(*store))) != NULL
+        && (store->lock = CRYPTO_THREAD_lock_new()) != NULL
         && (store->numname = sk_NAMEMAP_new_null()) != NULL
         && (store->namenum = lh_NAMEMAP_new(namemap_hash,
                                             namemap_cmp)) != NULL)
@@ -84,9 +87,18 @@ static const OPENSSL_CTX_METHOD namemap_store_method = {
 
 static NAMEMAP_STORE *namemap_store(OPENSSL_CTX *libctx)
 {
+    /*
+     * TODO(3.0): Figure out a way to always have this in the default
+     * library context no matter what.  There's no reason why the same
+     * string wouldn't result in the same number within a unit...
+     * However, this forces the default library context to always exist,
+     * and that's currently not always possible.
+     */
     return openssl_ctx_get_data(libctx, OPENSSL_CTX_NAMEMAP_INDEX,
                                 &namemap_store_method);
 }
+
+/* API functions */
 
 const char *ossl_namemap_name(OPENSSL_CTX *libctx, int number)
 {
@@ -96,7 +108,9 @@ const char *ossl_namemap_name(OPENSSL_CTX *libctx, int number)
     if (store == NULL || number == 0)
         return NULL;
 
+    CRYPTO_THREAD_read_lock(store->lock);
     entry = sk_NAMEMAP_value(store->numname, number);
+    CRYPTO_THREAD_unlock(store->lock);
 
     if (entry != NULL)
         return entry->name;
@@ -112,7 +126,10 @@ int ossl_namemap_number(OPENSSL_CTX *libctx, const char *name)
         return 0;
 
     template.name = name;
+    CRYPTO_THREAD_read_lock(store->lock);
     entry = lh_NAMEMAP_retrieve(store->namenum, &template);
+    CRYPTO_THREAD_unlock(store->lock);
+
     if (entry == NULL)
         return 0;
 
@@ -123,6 +140,7 @@ int ossl_namemap_new(OPENSSL_CTX *libctx, const char *name)
 {
     NAMEMAP_STORE *store = namemap_store(libctx);
     NAMEMAP *entry;
+    int lherror;
 
     if (name == NULL || store == NULL)
         return 0;
@@ -135,6 +153,9 @@ int ossl_namemap_new(OPENSSL_CTX *libctx, const char *name)
 
     strcpy(entry->body, name);
     entry->name = entry->body;
+
+    CRYPTO_THREAD_write_lock(store->lock);
+
     entry->number = sk_NAMEMAP_push(store->numname, entry);
 
     if (entry->number == 0)
@@ -144,13 +165,16 @@ int ossl_namemap_new(OPENSSL_CTX *libctx, const char *name)
     if (lh_NAMEMAP_error(store->namenum))
         goto err;
 
+    CRYPTO_THREAD_unlock(store->lock);
+
     return entry->number;
 
  err:
     if (entry != NULL) {
-        if (entry->number != 0)
+        if (entry->number != 0) {
             (void)sk_NAMEMAP_pop(store->numname);
         lh_NAMEMAP_delete(store->namenum, entry);
+        CRYPTO_THREAD_unlock(store->lock);
     }
     return 0;
 }
