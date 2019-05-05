@@ -113,10 +113,11 @@ static void *construct_method(const char *algorithm_name,
                               void *data)
 {
     struct method_data_st *methdata = data;
+    OSSL_NAMEMAP *namemap;
     int nid;
 
-    if ((nid = ossl_namemap_number(methdata->libctx, algorithm_name)) == 0
-        || (nid = ossl_namemap_new(methdata->libctx, algorithm_name)) == 0)
+    if ((namemap = ossl_namemap_stored(methdata->libctx)) == NULL
+        || (nid = ossl_namemap_add(namemap, algorithm_name)) == 0)
         return NULL;
 
     return methdata->method_from_dispatch(nid, fns, prov);
@@ -138,13 +139,14 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         int (*nid_method)(void *))
 {
     OSSL_METHOD_STORE *store = get_default_method_store(libctx);
-    int nid = ossl_namemap_number(libctx, algorithm);
+    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    int nid;
     void *method = NULL;
 
-    if (store == NULL)
+    if (store == NULL || namemap == NULL)
         return NULL;
 
-    if (nid == 0
+    if ((nid = ossl_namemap_number(namemap, algorithm)) == 0
         || !ossl_method_store_cache_get(store, nid, properties, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             alloc_tmp_method_store,
