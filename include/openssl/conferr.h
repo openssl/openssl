@@ -59,7 +59,9 @@ int ERR_load_CONF_strings(void);
  * CONF reason codes.
  */
 # define CONF_R_ERROR_LOADING_DSO                         110
+# define CONF_R_INVALID_PRAGMA                            122
 # define CONF_R_LIST_CANNOT_BE_NULL                       115
+# define CONF_R_MANDATORY_BRACES_IN_VARIABLE_EXPANSION    123
 # define CONF_R_MISSING_CLOSE_SQUARE_BRACKET              100
 # define CONF_R_MISSING_EQUAL_SIGN                        101
 # define CONF_R_MISSING_INIT_FUNCTION                     112

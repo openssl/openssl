@@ -9,6 +9,18 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added a .pragma directive to the syntax of configuration files, to
+     allow varying behavior in a supported and predictable manner.
+     Currently added pragma:
+
+     .pragma dollarid:on
+
+     This allows dollar signs to be a keyword character unless it's
+     followed by a opening brace or parenthesis.  This is useful for
+     platforms where dollar signs are commonly used in names, such as
+     volume names and system directory names on VMS.
+     [Richard Levitte]
+
   *) Added functionality to create an EVP_PKEY from user data.  This
      is effectively the same as creating a RSA, DH or DSA object and
      then assigning them to an EVP_PKEY, but directly using algorithm

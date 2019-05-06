@@ -2163,7 +2163,10 @@ COMP_R_ZLIB_DEFLATE_ERROR:99:zlib deflate error
 COMP_R_ZLIB_INFLATE_ERROR:100:zlib inflate error
 COMP_R_ZLIB_NOT_SUPPORTED:101:zlib not supported
 CONF_R_ERROR_LOADING_DSO:110:error loading dso
+CONF_R_INVALID_PRAGMA:122:invalid pragma
 CONF_R_LIST_CANNOT_BE_NULL:115:list cannot be null
+CONF_R_MANDATORY_BRACES_IN_VARIABLE_EXPANSION:123:\
+	mandatory braces in variable expansion
 CONF_R_MISSING_CLOSE_SQUARE_BRACKET:100:missing close square bracket
 CONF_R_MISSING_EQUAL_SIGN:101:missing equal sign
 CONF_R_MISSING_INIT_FUNCTION:112:missing init function
