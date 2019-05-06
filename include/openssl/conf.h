@@ -110,6 +110,7 @@ struct conf_st {
     CONF_METHOD *meth;
     void *meth_data;
     LHASH_OF(CONF_VALUE) *data;
+    unsigned int flag_dollarid:1;
 };
 
 CONF *NCONF_new(CONF_METHOD *meth);

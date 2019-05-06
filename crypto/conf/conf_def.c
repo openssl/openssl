@@ -354,7 +354,49 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 psection = section;
             }
             p = eat_ws(conf, end);
-            if (strncmp(pname, ".include", 8) == 0
+            if (strncmp(pname, ".pragma", 7) == 0
+                && (p != pname + 7 || *p == '=')) {
+                char *pval;
+
+                if (*p == '=') {
+                    p++;
+                    p = eat_ws(conf, p);
+                }
+                trim_ws(conf, p);
+
+                /* Pragma values take the form keyword:value */
+                pval = strchr(p, ':');
+                if (pval == NULL || pval == p || pval[1] == '\0') {
+                    CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_INVALID_PRAGMA);
+                    goto err;
+                }
+
+                *pval++ = '\0';
+                trim_ws(conf, p);
+                pval = eat_ws(conf, pval);
+
+                /*
+                 * Known pragmas:
+                 *
+                 * dollarid     takes "on", "true or "off", "false"
+                 */
+                if (strcmp(p, "dollarid") == 0) {
+                    if (strcmp(pval, "on") == 0
+                        || strcmp(pval, "true") == 0) {
+                        conf->flag_dollarid = 1;
+                    } else if (strcmp(pval, "off") == 0
+                               || strcmp(pval, "false") == 0) {
+                        conf->flag_dollarid = 0;
+                    } else {
+                        CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_INVALID_PRAGMA);
+                        goto err;
+                    }
+                }
+                /*
+                 * We *ignore* any unknown pragma.
+                 */
+                continue;
+            } else if (strncmp(pname, ".include", 8) == 0
                 && (p != pname + 8 || *p == '=')) {
                 char *include = NULL;
                 BIO *next;
@@ -590,7 +632,10 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
             buf->data[to++] = v;
         } else if (IS_EOF(conf, *from))
             break;
-        else if (*from == '$') {
+        else if (*from == '$'
+                 && (!conf->flag_dollarid
+                     || from[1] == '{'
+                     || from[1] == '(')) {
             size_t newsize;
 
             /* try to expand it */
@@ -607,7 +652,8 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 s++;
             cp = section;
             e = np = s;
-            while (IS_ALNUM(conf, *e))
+            while (IS_ALNUM(conf, *e)
+                   || (conf->flag_dollarid && IS_DOLLAR(conf, *e)))
                 e++;
             if ((e[0] == ':') && (e[1] == ':')) {
                 cp = np;
@@ -616,7 +662,8 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 *rrp = '\0';
                 e += 2;
                 np = e;
-                while (IS_ALNUM(conf, *e))
+                while (IS_ALNUM(conf, *e)
+                       || (conf->flag_dollarid && IS_DOLLAR(conf, *e)))
                     e++;
             }
             r = *e;
@@ -832,7 +879,8 @@ static char *eat_alpha_numeric(CONF *conf, char *p)
             p = scan_esc(conf, p);
             continue;
         }
-        if (!IS_ALNUM_PUNCT(conf, *p))
+        if (!(IS_ALNUM_PUNCT(conf, *p)
+              || (conf->flag_dollarid && IS_DOLLAR(conf, *p))))
             return p;
         p++;
     }
