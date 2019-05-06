@@ -25,7 +25,7 @@ DEFINE_STACK_OF(NAMEMAP_ENTRY)
 
 struct ossl_namemap_st {
     /* Flags */
-    unsigned int floating:1; /* If 0, it's stored in a library context */
+    unsigned int stored:1; /* If 1, it's stored in a library context */
 
     CRYPTO_RWLOCK *lock;
     LHASH_OF(NAMEMAP_ENTRY) *namenum;  /* Name->number mapping */
@@ -56,7 +56,7 @@ static void *stored_namemap_new(OPENSSL_CTX *libctx)
     OSSL_NAMEMAP *namemap = ossl_namemap_new();
 
     if (namemap != NULL) {
-        namemap->floating = 0;
+        namemap->stored = 1;
     }
 
     return namemap;
@@ -66,8 +66,8 @@ static void stored_namemap_free(void *vnamemap)
 {
     OSSL_NAMEMAP *namemap = vnamemap;
 
-    /* Pretend it's floating, or ossl_namemap_free() will do nothing */
-    namemap->floating = 1;
+    /* Pretend it's stored, or ossl_namemap_free() will do nothing */
+    namemap->stored = 0;
     ossl_namemap_free(namemap);
 }
 
@@ -93,7 +93,7 @@ OSSL_NAMEMAP *ossl_namemap_new(void)
         && (namemap->numname = sk_NAMEMAP_ENTRY_new_null()) != NULL
         && (namemap->namenum =
             lh_NAMEMAP_ENTRY_new(namemap_hash, namemap_cmp)) != NULL) {
-        namemap->floating = 1;
+        namemap->stored = 0;
         return namemap;
     }
 
@@ -103,7 +103,7 @@ OSSL_NAMEMAP *ossl_namemap_new(void)
 
 void ossl_namemap_free(OSSL_NAMEMAP *namemap)
 {
-    if (namemap == NULL || !namemap->floating)
+    if (namemap == NULL || namemap->stored)
         return;
 
      /* The elements will be freed by sk_NAMEMAP_ENTRY_pop_free() */
@@ -125,7 +125,7 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
  * we currently disable the code that would allow it.
  */
 
-const char *ossl_namemap_name(OSSL_NAMEMAP *namemap, int number)
+const char *ossl_namemap_name(const OSSL_NAMEMAP *namemap, int number)
 {
     NAMEMAP_ENTRY *entry;
 
@@ -146,7 +146,7 @@ const char *ossl_namemap_name(OSSL_NAMEMAP *namemap, int number)
     return NULL;
 }
 
-int ossl_namemap_number(OSSL_NAMEMAP *namemap, const char *name)
+int ossl_namemap_number(const OSSL_NAMEMAP *namemap, const char *name)
 {
     NAMEMAP_ENTRY *entry, template;
 

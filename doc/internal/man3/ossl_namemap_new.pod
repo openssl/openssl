@@ -16,23 +16,23 @@ ossl_namemap_add, ossl_namemap_name, ossl_namemap_number
  void ossl_namemap_free(OSSL_NAMEMAP *namemap);
 
  int ossl_namemap_add(OSSL_NAMEMAP *namemap, const char *name);
- const char *ossl_namemap_name(OSSL_NAMEMAP *namemap, int number);
- int ossl_namemap_number(OSSL_NAMEMAP *namemap, const char *name);
+ const char *ossl_namemap_name(const OSSL_NAMEMAP *namemap, int number);
+ int ossl_namemap_number(const OSSL_NAMEMAP *namemap, const char *name);
 
 =head1 DESCRIPTION
 
 A B<OSSL_NAMEMAP> is a simple number E<lt>-E<gt> name map, which can
-be used to give arbitrary any name (any string) a unique dynamic
-identity that is valid throughout the lifetime of the associated
-library context.
+be used to give arbitrary any arbitrary name (any string) a unique
+dynamic identity that is valid throughout the lifetime of the
+associated library context.
 
 ossl_namemap_new() and ossl_namemap_free() construct and destruct a
 new B<OSSL_NAMEMAP>.
 This is suitable to use when the B<OSSL_NAMEMAP> is embedded in other
 structures, or should be independent for any reason.
 
-ossl_namemap_stored() finds or a auto-creates the default namemap in
-the given library context.
+ossl_namemap_stored() finds or auto-creates the default namemap in the
+given library context.
 The returned B<OSSL_NAMEMAP> can't be destructed using
 ossl_namemap_free().
 

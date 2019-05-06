@@ -17,7 +17,5 @@ OSSL_NAMEMAP *ossl_namemap_new(void);
 void ossl_namemap_free(OSSL_NAMEMAP *namemap);
 
 int ossl_namemap_add(OSSL_NAMEMAP *namemap, const char *name);
-const char *ossl_namemap_name(OSSL_NAMEMAP *namemap, int number);
-int ossl_namemap_number(OSSL_NAMEMAP *namemap, const char *name);
-
-
+const char *ossl_namemap_name(const OSSL_NAMEMAP *namemap, int number);
+int ossl_namemap_number(const OSSL_NAMEMAP *namemap, const char *name);
