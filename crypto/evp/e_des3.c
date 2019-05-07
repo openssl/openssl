@@ -280,15 +280,17 @@ static int des3_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
 
     DES_cblock *deskey = ptr;
+    int kl;
 
     switch (type) {
     case EVP_CTRL_RAND_KEY:
-        if (RAND_priv_bytes(ptr, EVP_CIPHER_CTX_key_length(ctx)) <= 0)
+        kl = EVP_CIPHER_CTX_key_length(ctx);
+        if (kl < 0 || RAND_priv_bytes(ptr, kl) <= 0)
             return 0;
         DES_set_odd_parity(deskey);
-        if (EVP_CIPHER_CTX_key_length(ctx) >= 16)
+        if (kl >= 16)
             DES_set_odd_parity(deskey + 1);
-        if (EVP_CIPHER_CTX_key_length(ctx) >= 24)
+        if (kl >= 24)
             DES_set_odd_parity(deskey + 2);
         return 1;
 
