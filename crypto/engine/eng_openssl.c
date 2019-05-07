@@ -189,12 +189,15 @@ typedef struct {
 static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
+    const int n = EVP_CIPHER_CTX_key_length(ctx);
+
 # ifdef TEST_ENG_OPENSSL_RC4_P_INIT
     fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) test_init_key() called\n");
 # endif
-    memcpy(&test(ctx)->key[0], key, EVP_CIPHER_CTX_key_length(ctx));
-    RC4_set_key(&test(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx),
-                test(ctx)->key);
+    if (n <= 0)
+        return n;
+    memcpy(&test(ctx)->key[0], key, n);
+    RC4_set_key(&test(ctx)->ks, n, test(ctx)->key);
     return 1;
 }
 
