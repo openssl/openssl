@@ -229,7 +229,7 @@ static int kdf_hkdf_derive(EVP_KDF_IMPL *impl, unsigned char *key,
     }
 }
 
-const EVP_KDF_METHOD hkdf_kdf_meth = {
+const EVP_KDF hkdf_kdf_meth = {
     EVP_KDF_HKDF,
     kdf_hkdf_new,
     kdf_hkdf_free,

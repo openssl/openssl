@@ -266,7 +266,7 @@ static int kdf_scrypt_derive(EVP_KDF_IMPL *impl, unsigned char *key,
                       impl->maxmem_bytes, key, keylen);
 }
 
-const EVP_KDF_METHOD scrypt_kdf_meth = {
+const EVP_KDF scrypt_kdf_meth = {
     EVP_KDF_SCRYPT,
     kdf_scrypt_new,
     kdf_scrypt_free,

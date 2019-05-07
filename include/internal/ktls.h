@@ -73,8 +73,14 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     return -1;
 }
 
+static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)
+{
+    return -1;
+}
+
 #   else                        /* KERNEL_VERSION */
 
+#    include <sys/sendfile.h>
 #    include <netinet/tcp.h>
 #    include <linux/tls.h>
 #    include <linux/socket.h>
@@ -156,6 +162,15 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     msg.msg_iovlen = 1;
 
     return sendmsg(fd, &msg, 0);
+}
+
+/*
+ * KTLS enables the sendfile system call to send data from a file over TLS.
+ * @flags are ignored on Linux. (placeholder for FreeBSD sendfile)
+ * */
+static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)
+{
+    return sendfile(s, fd, &off, size);
 }
 
 #    define K_MIN1_RX  17

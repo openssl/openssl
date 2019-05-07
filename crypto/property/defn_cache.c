@@ -29,8 +29,6 @@ typedef struct {
 
 DEFINE_LHASH_OF(PROPERTY_DEFN_ELEM);
 
-static LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns = NULL;
-
 static unsigned long property_defn_hash(const PROPERTY_DEFN_ELEM *a)
 {
     return OPENSSL_LH_strhash(a->prop);
@@ -48,35 +46,52 @@ static void property_defn_free(PROPERTY_DEFN_ELEM *elem)
     OPENSSL_free(elem);
 }
 
-int ossl_prop_defn_init(void)
+static void property_defns_free(void *vproperty_defns)
 {
-    property_defns = lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash,
-                                               &property_defn_cmp);
-    return property_defns != NULL;
-}
+    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns = vproperty_defns;
 
-void ossl_prop_defn_cleanup(void)
-{
     if (property_defns != NULL) {
-        lh_PROPERTY_DEFN_ELEM_doall(property_defns, &property_defn_free);
+        lh_PROPERTY_DEFN_ELEM_doall(property_defns,
+                                    &property_defn_free);
         lh_PROPERTY_DEFN_ELEM_free(property_defns);
-        property_defns = NULL;
     }
 }
 
-OSSL_PROPERTY_LIST *ossl_prop_defn_get(const char *prop)
+static void *property_defns_new(OPENSSL_CTX *ctx) {
+    return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
+}
+
+static const OPENSSL_CTX_METHOD property_defns_method = {
+    property_defns_new,
+    property_defns_free,
+};
+
+OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop)
 {
     PROPERTY_DEFN_ELEM elem, *r;
+    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
+
+    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
+                                          &property_defns_method);
+    if (property_defns == NULL)
+        return NULL;
 
     elem.prop = prop;
     r = lh_PROPERTY_DEFN_ELEM_retrieve(property_defns, &elem);
     return r != NULL ? r->defn : NULL;
 }
 
-int ossl_prop_defn_set(const char *prop, OSSL_PROPERTY_LIST *pl)
+int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
+                       OSSL_PROPERTY_LIST *pl)
 {
     PROPERTY_DEFN_ELEM elem, *old, *p = NULL;
     size_t len;
+    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
+
+    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
+                                          &property_defns_method);
+    if (property_defns == NULL)
+        return 0;
 
     if (prop == NULL)
         return 1;

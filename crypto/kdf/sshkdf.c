@@ -125,6 +125,9 @@ static int kdf_sshkdf_ctrl_str(EVP_KDF_IMPL *impl, const char *type,
         return 0;
     }
 
+    if (strcmp(type, "digest") == 0)
+        return kdf_md2ctrl(impl, kdf_sshkdf_ctrl, EVP_KDF_CTRL_SET_MD, value);
+    /* alias, for historical reasons */
     if (strcmp(type, "md") == 0)
         return kdf_md2ctrl(impl, kdf_sshkdf_ctrl, EVP_KDF_CTRL_SET_MD, value);
 
@@ -200,7 +203,7 @@ static int kdf_sshkdf_derive(EVP_KDF_IMPL *impl, unsigned char *key,
                   impl->type, key, keylen);
 }
 
-const EVP_KDF_METHOD sshkdf_kdf_meth = {
+const EVP_KDF sshkdf_kdf_meth = {
     EVP_KDF_SSHKDF,
     kdf_sshkdf_new,
     kdf_sshkdf_free,

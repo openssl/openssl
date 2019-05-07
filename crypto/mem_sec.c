@@ -33,8 +33,8 @@
 #   include <linux/mman.h>
 #   include <errno.h>
 #  endif
+#  include <sys/param.h>
 # endif
-# include <sys/param.h>
 # include <sys/stat.h>
 # include <fcntl.h>
 #endif

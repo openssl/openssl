@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-openssl_ctx_new_index, openssl_ctx_get_data - internal OPENSSL_CTX routines
+openssl_ctx_get_data, openssl_ctx_run_once, openssl_ctx_onfree
+- internal OPENSSL_CTX routines
 
 =head1 SYNOPSIS
 
@@ -10,12 +11,16 @@ openssl_ctx_new_index, openssl_ctx_get_data - internal OPENSSL_CTX routines
  #include "internal/cryptlib.h"
 
  typedef struct openssl_ctx_method {
-     void *(*new_func)(void);
+     void *(*new_func)(OPENSSL_CTX *ctx);
      void (*free_func)(void *);
  } OPENSSL_CTX_METHOD;
 
- int openssl_ctx_new_index(const OPENSSL_CTX_METHOD *meth);
- void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index);
+ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
+                            const OPENSSL_CTX_METHOD *meth);
+
+ int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
+                          openssl_ctx_run_once_fn run_once_fn);
+ int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn);
 
 =head1 DESCRIPTION
 
@@ -23,26 +28,32 @@ Internally, the OpenSSL library context C<OPENSSL_CTX> is implemented
 as a C<CRYPTO_EX_DATA>, which allows data from diverse parts of the
 library to be added and removed dynamically.
 Each such data item must have a corresponding CRYPTO_EX_DATA index
-associated with it.
+associated with it. Unlike normal CRYPTO_EX_DATA objects we use static indexes
+to identify data items. These are mapped transparetnly to CRYPTO_EX_DATA dynamic
+indexes internally to the implementation.
 See the example further down to see how that's done.
 
-openssl_ctx_new_index() allocates a new library context index, and
-associates it with the functions given through C<meth>.
-The functions given through that method are used to create or free
-items that are stored at that index whenever a library context is
-created or freed, meaning that the code that use a data item of that
+openssl_ctx_get_data() is used to retrieve a pointer to the data in
+the library context C<ctx> associated with the given C<index>. An
+OPENSSL_CTX_METHOD must be defined and given in the C<meth> parameter. The index
+for it should be defined in cryptlib.h. The functions through the method are
+used to create or free items that are stored at that index whenever a library
+context is created or freed, meaning that the code that use a data item of that
 index doesn't have to worry about that, just use the data available.
 
 Deallocation of an index happens automatically when the library
 context is freed.
 
-openssl_ctx_get_data() is used to retrieve a pointer to the data in
-the library context C<ctx> associated with the given C<index>.
+openssl_ctx_run_once is used to run some initialisation routine C<run_once_fn>
+exactly once per library context C<ctx> object. Each initialisation routine
+should be allocate a unique run once index in cryptlib.h.
+
+Any resources allocated via a run once initialisation routine can be cleaned up
+using openssl_ctx_onfree. This associates an "on free" routine C<onfreefn> with
+the library context C<ctx>. When C<ctx> is freed all associated "on free"
+routines are called.
 
 =head1 RETURN VALUES
-
-openssl_ctx_new_index() returns -1 on error, otherwise the allocated
-index number.
 
 openssl_ctx_get_data() returns a pointer on success, or C<NULL> on
 failure.
@@ -53,17 +64,14 @@ failure.
 
 For a type C<FOO> that should end up in the OpenSSL library context, a
 small bit of initialization is needed, i.e. to associate a constructor
-and a destructor to a new index.
-
- /* The index will always be entirely global, and dynamically allocated */
- static int foo_index = -1;
+and a destructor to an index.
 
  typedef struct foo_st {
      int i;
      void *data;
  } FOO;
 
- static void *foo_new(void)
+ static void *foo_new(OPENSSL_CTX *ctx)
  {
      FOO *ptr = OPENSSL_zalloc(sizeof(*foo));
      if (ptr != NULL)
@@ -74,17 +82,15 @@ and a destructor to a new index.
  {
      OPENSSL_free(ptr);
  }
- static const OPENSSL_CTX_METHOD foo_method = {
+
+ /*
+  * Include a reference to this in the methods table in context.c 
+  * OPENSSL_CTX_FOO_INDEX should be added to internal/cryptlib.h
+  */
+ const OPENSSL_CTX_METHOD foo_method = {
      foo_new,
      foo_free
  };
-
- static int foo_init(void)
- {
-     foo_index = openssl_ctx_new_index(foo_method);
-
-     return foo_index != -1;
- }
 
 =head2 Usage
 
@@ -92,9 +98,33 @@ To get and use the data stored in the library context, simply do this:
 
  /*
   * ctx is received from a caller,
-  * foo_index comes from the example above
   */
- FOO *data = openssl_ctx_get_data(ctx, foo_index);
+ FOO *data = openssl_ctx_get_data(ctx, OPENSSL_CTX_FOO_INDEX, &foo_method);
+
+=head2 Run Once
+
+ void foo_cleanup(OPENSSL_CTX *ctx)
+ {
+     /* Free foo resources associated with ctx */
+ }
+
+ static openssl_ctx_run_once_fn do_foo_init;
+ static int do_foo_init(OPENSSL_CTX *ctx)
+ {
+     /* Allocate and initialise some foo resources and associated with ctx */
+     return openssl_ctx_onfree(ctx, &foo_cleanup)
+ }
+
+ int foo_some_function(OPENSSL_CTX *ctx)
+ {
+    if (!openssl_ctx_run_once(ctx,
+                              OPENSSL_CTX_FOO_RUN_ONCE_INDEX,
+                              do_foo_init))
+        return 0;
+
+    /* Do some work using foo resources in ctx */
+ }
+
 
 =head1 SEE ALSO
 

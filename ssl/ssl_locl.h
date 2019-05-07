@@ -334,8 +334,8 @@
      || (s)->early_data_state == SSL_EARLY_DATA_WRITE_RETRY \
      || (s)->hello_retry_request == SSL_HRR_PENDING)
 
-# define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3->tmp.finish_md_len == 0 \
-                                    || (s)->s3->tmp.peer_finish_md_len == 0)
+# define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3.tmp.finish_md_len == 0 \
+                                    || (s)->s3.tmp.peer_finish_md_len == 0)
 
 /* See if we need explicit IV */
 # define SSL_USE_EXPLICIT_IV(s)  \
@@ -374,8 +374,8 @@
 # define GET_MAX_FRAGMENT_LENGTH(session) \
     (512U << (session->ext.max_fragment_len_mode - 1))
 
-# define SSL_READ_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
-# define SSL_WRITE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
+# define SSL_READ_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
+# define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
 
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA            0
@@ -1081,6 +1081,8 @@ struct ssl_ctx_st {
     void *async_cb_arg;
 };
 
+typedef struct cert_pkey_st CERT_PKEY;
+
 struct ssl_st {
     /*
      * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
@@ -1134,7 +1136,179 @@ struct ssl_st {
                                  * ssl3_get_message() */
     size_t init_num;               /* amount read/written */
     size_t init_off;               /* amount read/written */
-    struct ssl3_state_st *s3;   /* SSLv3 variables */
+
+    struct {
+        long flags;
+        size_t read_mac_secret_size;
+        unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
+        size_t write_mac_secret_size;
+        unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
+        unsigned char server_random[SSL3_RANDOM_SIZE];
+        unsigned char client_random[SSL3_RANDOM_SIZE];
+        /* flags for countermeasure against known-IV weakness */
+        int need_empty_fragments;
+        int empty_fragment_done;
+        /* used during startup, digest all incoming/outgoing packets */
+        BIO *handshake_buffer;
+        /*
+         * When handshake digest is determined, buffer is hashed and
+         * freed and MD_CTX for the required digest is stored here.
+         */
+        EVP_MD_CTX *handshake_dgst;
+        /*
+         * Set whenever an expected ChangeCipherSpec message is processed.
+         * Unset when the peer's Finished message is received.
+         * Unexpected ChangeCipherSpec messages trigger a fatal alert.
+         */
+        int change_cipher_spec;
+        int warn_alert;
+        int fatal_alert;
+        /*
+         * we allow one fatal and one warning alert to be outstanding, send close
+         * alert via the warning alert
+         */
+        int alert_dispatch;
+        unsigned char send_alert[2];
+        /*
+         * This flag is set when we should renegotiate ASAP, basically when there
+         * is no more data in the read or write buffers
+         */
+        int renegotiate;
+        int total_renegotiations;
+        int num_renegotiations;
+        int in_read_app_data;
+        struct {
+            /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
+            unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
+            size_t finish_md_len;
+            unsigned char peer_finish_md[EVP_MAX_MD_SIZE * 2];
+            size_t peer_finish_md_len;
+            size_t message_size;
+            int message_type;
+            /* used to hold the new cipher we are going to use */
+            const SSL_CIPHER *new_cipher;
+# if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+            EVP_PKEY *pkey;         /* holds short lived DH/ECDH key */
+# endif
+            /* used for certificate requests */
+            int cert_req;
+            /* Certificate types in certificate request message. */
+            uint8_t *ctype;
+            size_t ctype_len;
+            /* Certificate authorities list peer sent */
+            STACK_OF(X509_NAME) *peer_ca_names;
+            size_t key_block_length;
+            unsigned char *key_block;
+            const EVP_CIPHER *new_sym_enc;
+            const EVP_MD *new_hash;
+            int new_mac_pkey_type;
+            size_t new_mac_secret_size;
+# ifndef OPENSSL_NO_COMP
+            const SSL_COMP *new_compression;
+# else
+            char *new_compression;
+# endif
+            int cert_request;
+            /* Raw values of the cipher list from a client */
+            unsigned char *ciphers_raw;
+            size_t ciphers_rawlen;
+            /* Temporary storage for premaster secret */
+            unsigned char *pms;
+            size_t pmslen;
+# ifndef OPENSSL_NO_PSK
+            /* Temporary storage for PSK key */
+            unsigned char *psk;
+            size_t psklen;
+# endif
+            /* Signature algorithm we actually use */
+            const struct sigalg_lookup_st *sigalg;
+            /* Pointer to certificate we use */
+            CERT_PKEY *cert;
+            /*
+             * signature algorithms peer reports: e.g. supported signature
+             * algorithms extension for server or as part of a certificate
+             * request for client.
+             * Keep track of the algorithms for TLS and X.509 usage separately.
+             */
+            uint16_t *peer_sigalgs;
+            uint16_t *peer_cert_sigalgs;
+            /* Size of above arrays */
+            size_t peer_sigalgslen;
+            size_t peer_cert_sigalgslen;
+            /* Sigalg peer actually uses */
+            const struct sigalg_lookup_st *peer_sigalg;
+            /*
+             * Set if corresponding CERT_PKEY can be used with current
+             * SSL session: e.g. appropriate curve, signature algorithms etc.
+             * If zero it can't be used at all.
+             */
+            uint32_t valid_flags[SSL_PKEY_NUM];
+            /*
+             * For servers the following masks are for the key and auth algorithms
+             * that are supported by the certs below. For clients they are masks of
+             * *disabled* algorithms based on the current session.
+             */
+            uint32_t mask_k;
+            uint32_t mask_a;
+            /*
+             * The following are used by the client to see if a cipher is allowed or
+             * not.  It contains the minimum and maximum version the client's using
+             * based on what it knows so far.
+             */
+            int min_ver;
+            int max_ver;
+        } tmp;
+
+        /* Connection binding to prevent renegotiation attacks */
+        unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
+        size_t previous_client_finished_len;
+        unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
+        size_t previous_server_finished_len;
+        int send_connection_binding; /* TODOEKR */
+
+# ifndef OPENSSL_NO_NEXTPROTONEG
+        /*
+         * Set if we saw the Next Protocol Negotiation extension from our peer.
+         */
+        int npn_seen;
+# endif
+
+        /*
+         * ALPN information (we are in the process of transitioning from NPN to
+         * ALPN.)
+         */
+
+        /*
+         * In a server these point to the selected ALPN protocol after the
+         * ClientHello has been processed. In a client these contain the protocol
+         * that the server selected once the ServerHello has been processed.
+         */
+        unsigned char *alpn_selected;
+        size_t alpn_selected_len;
+        /* used by the server to know what options were proposed */
+        unsigned char *alpn_proposed;
+        size_t alpn_proposed_len;
+        /* used by the client to know if it actually sent alpn */
+        int alpn_sent;
+
+# ifndef OPENSSL_NO_EC
+        /*
+         * This is set to true if we believe that this is a version of Safari
+         * running on OS X 10.6 or newer. We wish to know this because Safari on
+         * 10.8 .. 10.8.3 has broken ECDHE-ECDSA support.
+         */
+        char is_probably_safari;
+# endif                         /* !OPENSSL_NO_EC */
+
+        /* For clients: peer temporary key */
+# if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+        /* The group_id for the DH/ECDH key */
+        uint16_t group_id;
+        EVP_PKEY *peer_tmp;
+# endif
+
+    } s3;
+
     struct dtls1_state_st *d1;  /* DTLSv1 variables */
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback) (int write_p, int version, int content_type,
@@ -1520,8 +1694,6 @@ typedef struct tls_group_info_st {
 # define TLS_CURVE_CHAR2         0x1
 # define TLS_CURVE_CUSTOM        0x2
 
-typedef struct cert_pkey_st CERT_PKEY;
-
 /*
  * Structure containing table entry of certificate info corresponding to
  * CERT_PKEY entries
@@ -1530,178 +1702,6 @@ typedef struct {
     int nid; /* NID of public key algorithm */
     uint32_t amask; /* authmask corresponding to key type */
 } SSL_CERT_LOOKUP;
-
-typedef struct ssl3_state_st {
-    long flags;
-    size_t read_mac_secret_size;
-    unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
-    size_t write_mac_secret_size;
-    unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
-    unsigned char server_random[SSL3_RANDOM_SIZE];
-    unsigned char client_random[SSL3_RANDOM_SIZE];
-    /* flags for countermeasure against known-IV weakness */
-    int need_empty_fragments;
-    int empty_fragment_done;
-    /* used during startup, digest all incoming/outgoing packets */
-    BIO *handshake_buffer;
-    /*
-     * When handshake digest is determined, buffer is hashed and
-     * freed and MD_CTX for the required digest is stored here.
-     */
-    EVP_MD_CTX *handshake_dgst;
-    /*
-     * Set whenever an expected ChangeCipherSpec message is processed.
-     * Unset when the peer's Finished message is received.
-     * Unexpected ChangeCipherSpec messages trigger a fatal alert.
-     */
-    int change_cipher_spec;
-    int warn_alert;
-    int fatal_alert;
-    /*
-     * we allow one fatal and one warning alert to be outstanding, send close
-     * alert via the warning alert
-     */
-    int alert_dispatch;
-    unsigned char send_alert[2];
-    /*
-     * This flag is set when we should renegotiate ASAP, basically when there
-     * is no more data in the read or write buffers
-     */
-    int renegotiate;
-    int total_renegotiations;
-    int num_renegotiations;
-    int in_read_app_data;
-    struct {
-        /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
-        unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
-        size_t finish_md_len;
-        unsigned char peer_finish_md[EVP_MAX_MD_SIZE * 2];
-        size_t peer_finish_md_len;
-        size_t message_size;
-        int message_type;
-        /* used to hold the new cipher we are going to use */
-        const SSL_CIPHER *new_cipher;
-# if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-        EVP_PKEY *pkey;         /* holds short lived DH/ECDH key */
-# endif
-        /* used for certificate requests */
-        int cert_req;
-        /* Certificate types in certificate request message. */
-        uint8_t *ctype;
-        size_t ctype_len;
-        /* Certificate authorities list peer sent */
-        STACK_OF(X509_NAME) *peer_ca_names;
-        size_t key_block_length;
-        unsigned char *key_block;
-        const EVP_CIPHER *new_sym_enc;
-        const EVP_MD *new_hash;
-        int new_mac_pkey_type;
-        size_t new_mac_secret_size;
-# ifndef OPENSSL_NO_COMP
-        const SSL_COMP *new_compression;
-# else
-        char *new_compression;
-# endif
-        int cert_request;
-        /* Raw values of the cipher list from a client */
-        unsigned char *ciphers_raw;
-        size_t ciphers_rawlen;
-        /* Temporary storage for premaster secret */
-        unsigned char *pms;
-        size_t pmslen;
-# ifndef OPENSSL_NO_PSK
-        /* Temporary storage for PSK key */
-        unsigned char *psk;
-        size_t psklen;
-# endif
-        /* Signature algorithm we actually use */
-        const SIGALG_LOOKUP *sigalg;
-        /* Pointer to certificate we use */
-        CERT_PKEY *cert;
-        /*
-         * signature algorithms peer reports: e.g. supported signature
-         * algorithms extension for server or as part of a certificate
-         * request for client.
-         * Keep track of the algorithms for TLS and X.509 usage separately.
-         */
-        uint16_t *peer_sigalgs;
-        uint16_t *peer_cert_sigalgs;
-        /* Size of above arrays */
-        size_t peer_sigalgslen;
-        size_t peer_cert_sigalgslen;
-        /* Sigalg peer actually uses */
-        const SIGALG_LOOKUP *peer_sigalg;
-        /*
-         * Set if corresponding CERT_PKEY can be used with current
-         * SSL session: e.g. appropriate curve, signature algorithms etc.
-         * If zero it can't be used at all.
-         */
-        uint32_t valid_flags[SSL_PKEY_NUM];
-        /*
-         * For servers the following masks are for the key and auth algorithms
-         * that are supported by the certs below. For clients they are masks of
-         * *disabled* algorithms based on the current session.
-         */
-        uint32_t mask_k;
-        uint32_t mask_a;
-        /*
-         * The following are used by the client to see if a cipher is allowed or
-         * not.  It contains the minimum and maximum version the client's using
-         * based on what it knows so far.
-         */
-        int min_ver;
-        int max_ver;
-    } tmp;
-
-    /* Connection binding to prevent renegotiation attacks */
-    unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
-    size_t previous_client_finished_len;
-    unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
-    size_t previous_server_finished_len;
-    int send_connection_binding; /* TODOEKR */
-
-# ifndef OPENSSL_NO_NEXTPROTONEG
-    /*
-     * Set if we saw the Next Protocol Negotiation extension from our peer.
-     */
-    int npn_seen;
-# endif
-
-    /*
-     * ALPN information (we are in the process of transitioning from NPN to
-     * ALPN.)
-     */
-
-    /*
-     * In a server these point to the selected ALPN protocol after the
-     * ClientHello has been processed. In a client these contain the protocol
-     * that the server selected once the ServerHello has been processed.
-     */
-    unsigned char *alpn_selected;
-    size_t alpn_selected_len;
-    /* used by the server to know what options were proposed */
-    unsigned char *alpn_proposed;
-    size_t alpn_proposed_len;
-    /* used by the client to know if it actually sent alpn */
-    int alpn_sent;
-
-# ifndef OPENSSL_NO_EC
-    /*
-     * This is set to true if we believe that this is a version of Safari
-     * running on OS X 10.6 or newer. We wish to know this because Safari on
-     * 10.8 .. 10.8.3 has broken ECDHE-ECDSA support.
-     */
-    char is_probably_safari;
-# endif                         /* !OPENSSL_NO_EC */
-
-    /* For clients: peer temporary key */
-# if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-    /* The group_id for the DH/ECDH key */
-    uint16_t group_id;
-    EVP_PKEY *peer_tmp;
-# endif
-
-} SSL3_STATE;
 
 /* DTLS structures */
 
@@ -2070,8 +2070,8 @@ typedef enum downgrade_en {
 #define TLSEXT_KEX_MODE_FLAG_KE                                 1
 #define TLSEXT_KEX_MODE_FLAG_KE_DHE                             2
 
-#define SSL_USE_PSS(s) (s->s3->tmp.peer_sigalg != NULL && \
-                        s->s3->tmp.peer_sigalg->sig == EVP_PKEY_RSA_PSS)
+#define SSL_USE_PSS(s) (s->s3.tmp.peer_sigalg != NULL && \
+                        s->s3.tmp.peer_sigalg->sig == EVP_PKEY_RSA_PSS)
 
 /* A dummy signature value not valid for TLSv1.2 signature algs */
 #define TLSEXT_signature_rsa_pss                                0x0101

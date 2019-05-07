@@ -78,7 +78,8 @@ static int match(const char *t[], const char m[], size_t m_len)
     return 0;
 }
 
-static int parse_name(const char *t[], int create, OSSL_PROPERTY_IDX *idx)
+static int parse_name(OPENSSL_CTX *ctx, const char *t[], int create,
+                      OSSL_PROPERTY_IDX *idx)
 {
     char name[100];
     int err = 0;
@@ -109,7 +110,7 @@ static int parse_name(const char *t[], int create, OSSL_PROPERTY_IDX *idx)
     name[i] = '\0';
     *t = skip_space(s);
     if (!err) {
-        *idx = ossl_property_name(name, user_name && create);
+        *idx = ossl_property_name(ctx, name, user_name && create);
         return 1;
     }
     PROPerr(PROP_F_PARSE_NAME, PROP_R_NAME_TOO_LONG);
@@ -180,8 +181,8 @@ static int parse_oct(const char *t[], PROPERTY_DEFINITION *res)
     return 1;
 }
 
-static int parse_string(const char *t[], char delim, PROPERTY_DEFINITION *res,
-                        const int create)
+static int parse_string(OPENSSL_CTX *ctx, const char *t[], char delim,
+                        PROPERTY_DEFINITION *res, const int create)
 {
     char v[1000];
     const char *s = *t;
@@ -205,13 +206,13 @@ static int parse_string(const char *t[], char delim, PROPERTY_DEFINITION *res,
     if (err)
         PROPerr(PROP_F_PARSE_STRING, PROP_R_STRING_TOO_LONG);
     else
-        res->v.str_val = ossl_property_value(v, create);
+        res->v.str_val = ossl_property_value(ctx, v, create);
     res->type = PROPERTY_TYPE_STRING;
     return !err;
 }
 
-static int parse_unquoted(const char *t[], PROPERTY_DEFINITION *res,
-                          const int create)
+static int parse_unquoted(OPENSSL_CTX *ctx, const char *t[],
+                          PROPERTY_DEFINITION *res, const int create)
 {
     char v[1000];
     const char *s = *t;
@@ -236,19 +237,20 @@ static int parse_unquoted(const char *t[], PROPERTY_DEFINITION *res,
     if (err)
         PROPerr(PROP_F_PARSE_UNQUOTED, PROP_R_STRING_TOO_LONG);
     else
-        res->v.str_val = ossl_property_value(v, create);
+        res->v.str_val = ossl_property_value(ctx, v, create);
     res->type = PROPERTY_TYPE_STRING;
     return !err;
 }
 
-static int parse_value(const char *t[], PROPERTY_DEFINITION *res, int create)
+static int parse_value(OPENSSL_CTX *ctx, const char *t[],
+                       PROPERTY_DEFINITION *res, int create)
 {
     const char *s = *t;
     int r = 0;
 
     if (*s == '"' || *s == '\'') {
         s++;
-        r = parse_string(&s, s[-1], res, create);
+        r = parse_string(ctx, &s, s[-1], res, create);
     } else if (*s == '+') {
         s++;
         r = parse_number(&s, res);
@@ -265,7 +267,7 @@ static int parse_value(const char *t[], PROPERTY_DEFINITION *res, int create)
     } else if (ossl_isdigit(*s)) {
         return parse_number(t, res);
     } else if (ossl_isalpha(*s))
-        return parse_unquoted(t, res, create);
+        return parse_unquoted(ctx, t, res, create);
     if (r)
         *t = s;
     return r;
@@ -312,7 +314,7 @@ static OSSL_PROPERTY_LIST *stack_to_property_list(STACK_OF(PROPERTY_DEFINITION)
     return r;
 }
 
-OSSL_PROPERTY_LIST *ossl_parse_property(const char *defn)
+OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *defn)
 {
     PROPERTY_DEFINITION *prop = NULL;
     OSSL_PROPERTY_LIST *res = NULL;
@@ -330,7 +332,7 @@ OSSL_PROPERTY_LIST *ossl_parse_property(const char *defn)
         if (prop == NULL)
             goto err;
         memset(&prop->v, 0, sizeof(prop->v));
-        if (!parse_name(&s, 1, &prop->name_idx))
+        if (!parse_name(ctx, &s, 1, &prop->name_idx))
             goto err;
         prop->oper = PROPERTY_OPER_EQ;
         if (prop->name_idx == 0) {
@@ -338,7 +340,7 @@ OSSL_PROPERTY_LIST *ossl_parse_property(const char *defn)
             goto err;
         }
         if (match_ch(&s, '=')) {
-            if (!parse_value(&s, prop, 1)) {
+            if (!parse_value(ctx, &s, prop, 1)) {
                 PROPerr(PROP_F_OSSL_PARSE_PROPERTY, PROP_R_NO_VALUE);
                 goto err;
             }
@@ -365,7 +367,7 @@ err:
     return res;
 }
 
-OSSL_PROPERTY_LIST *ossl_parse_query(const char *s)
+OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s)
 {
     STACK_OF(PROPERTY_DEFINITION) *sk;
     OSSL_PROPERTY_LIST *res = NULL;
@@ -385,11 +387,11 @@ OSSL_PROPERTY_LIST *ossl_parse_query(const char *s)
 
         if (match_ch(&s, '-')) {
             prop->oper = PROPERTY_OVERRIDE;
-            if (!parse_name(&s, 0, &prop->name_idx))
+            if (!parse_name(ctx, &s, 0, &prop->name_idx))
                 goto err;
             goto skip_value;
         }
-        if (!parse_name(&s, 0, &prop->name_idx))
+        if (!parse_name(ctx, &s, 0, &prop->name_idx))
             goto err;
 
         if (match_ch(&s, '=')) {
@@ -403,7 +405,7 @@ OSSL_PROPERTY_LIST *ossl_parse_query(const char *s)
             prop->v.str_val = ossl_property_true;
             goto skip_value;
         }
-        if (!parse_value(&s, prop, 0))
+        if (!parse_value(ctx, &s, prop, 0))
             prop->type = PROPERTY_TYPE_VALUE_UNDEFINED;
 
 skip_value:
@@ -519,7 +521,7 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
     return r;
 }
 
-int ossl_property_parse_init(void)
+int ossl_property_parse_init(OPENSSL_CTX *ctx)
 {
     static const char *const predefined_names[] = {
         "default",      /* Being provided by the default built-in provider */
@@ -532,12 +534,12 @@ int ossl_property_parse_init(void)
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(predefined_names); i++)
-        if (ossl_property_name(predefined_names[i], 1) == 0)
+        if (ossl_property_name(ctx, predefined_names[i], 1) == 0)
             goto err;
 
     /* Pre-populate the two Boolean values */
-    if ((ossl_property_true = ossl_property_value("yes", 1)) == 0
-        || (ossl_property_false = ossl_property_value("no", 1)) == 0)
+    if ((ossl_property_true = ossl_property_value(ctx, "yes", 1)) == 0
+        || (ossl_property_false = ossl_property_value(ctx, "no", 1)) == 0)
         goto err;
 
     return 1;

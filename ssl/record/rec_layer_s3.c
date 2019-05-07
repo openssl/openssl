@@ -172,7 +172,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
     /*
      * If extend == 0, obtain new n-byte packet; if extend == 1, increase
      * packet by another n bytes. The packet will be in the sub-array of
-     * s->s3->rbuf.buf specified by s->packet and s->packet_length. (If
+     * s->s3.rbuf.buf specified by s->packet and s->packet_length. (If
      * s->rlayer.read_ahead is set, 'max' bytes may be stored in rbuf [plus
      * s->packet_length bytes if extend == 1].)
      * if clearold == 1, move the packet to the start of the buffer; if
@@ -288,7 +288,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
         int ret;
 
         /*
-         * Now we have len+left bytes at the front of s->s3->rbuf.buf and
+         * Now we have len+left bytes at the front of s->s3.rbuf.buf and
          * need to read in more until we have len+n (up to len+max if
          * possible)
          */
@@ -461,7 +461,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
                 break;
             }
 
-            if (s->s3->alert_dispatch) {
+            if (s->s3.alert_dispatch) {
                 i = s->method->ssl_dispatch_alert(s);
                 if (i <= 0) {
                     /* SSLfatal() already called if appropriate */
@@ -630,7 +630,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
              * next chunk of data should get another prepended empty fragment
              * in ciphersuites with known-IV weakness:
              */
-            s->s3->empty_fragment_done = 0;
+            s->s3.empty_fragment_done = 0;
 
             if ((i == (int)n) && s->mode & SSL_MODE_RELEASE_BUFFERS &&
                 !SSL_IS_DTLS(s))
@@ -675,7 +675,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     }
 
     /* If we have an alert to send, lets send it */
-    if (s->s3->alert_dispatch) {
+    if (s->s3.alert_dispatch) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0) {
             /* SSLfatal() already called if appropriate */
@@ -713,13 +713,13 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     /*
      * 'create_empty_fragment' is true only when this function calls itself
      */
-    if (!clear && !create_empty_fragment && !s->s3->empty_fragment_done) {
+    if (!clear && !create_empty_fragment && !s->s3.empty_fragment_done) {
         /*
          * countermeasure against known-IV weakness in CBC ciphersuites (see
          * http://www.openssl.org/~bodo/tls-cbc.txt)
          */
 
-        if (s->s3->need_empty_fragments && type == SSL3_RT_APPLICATION_DATA) {
+        if (s->s3.need_empty_fragments && type == SSL3_RT_APPLICATION_DATA) {
             /*
              * recursive function call with 'create_empty_fragment' set; this
              * prepares and buffers the data for an empty fragment (these
@@ -744,7 +744,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             }
         }
 
-        s->s3->empty_fragment_done = 1;
+        s->s3.empty_fragment_done = 1;
     }
 
     if (BIO_get_ktls_send(s->wbio)) {
@@ -1148,7 +1148,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     return -1;
 }
 
-/* if s->s3->wbuf.left != 0, we need to call this
+/* if s->s3.wbuf.left != 0, we need to call this
  *
  * Return values are as per SSL_write()
  */
@@ -1385,8 +1385,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     /* we now have a packet which can be read and processed */
 
-    if (s->s3->change_cipher_spec /* set when we receive ChangeCipherSpec,
-                                   * reset by ssl3_get_finished */
+    if (s->s3.change_cipher_spec /* set when we receive ChangeCipherSpec,
+                                  * reset by ssl3_get_finished */
         && (SSL3_RECORD_get_type(rr) != SSL3_RT_HANDSHAKE)) {
         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_SSL3_READ_BYTES,
                  SSL_R_DATA_BETWEEN_CCS_AND_FINISHED);
@@ -1558,7 +1558,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         if (alert_level == SSL3_AL_WARNING
                 || (is_tls13 && alert_descr == SSL_AD_USER_CANCELLED)) {
-            s->s3->warn_alert = alert_descr;
+            s->s3.warn_alert = alert_descr;
             SSL3_RECORD_set_read(rr);
 
             s->rlayer.alert_count++;
@@ -1583,7 +1583,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             char tmp[16];
 
             s->rwstate = SSL_NOTHING;
-            s->s3->fatal_alert = alert_descr;
+            s->s3.fatal_alert = alert_descr;
             SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_READ_BYTES,
                      SSL_AD_REASON_OFFSET + alert_descr);
             BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
@@ -1767,7 +1767,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * started), we will indulge it.
          */
         if (ossl_statem_app_data_allowed(s)) {
-            s->s3->in_read_app_data = 2;
+            s->s3.in_read_app_data = 2;
             return -1;
         } else if (ossl_statem_skip_early_data(s)) {
             /*

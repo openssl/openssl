@@ -293,6 +293,26 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_macs, ossl_init_add_all_macs)
     return 1;
 }
 
+static CRYPTO_ONCE add_all_kdfs = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_init_add_all_kdfs)
+{
+    /*
+     * OPENSSL_NO_AUTOALGINIT is provided here to prevent at compile time
+     * pulling in all the macs during static linking
+     */
+#ifndef OPENSSL_NO_AUTOALGINIT
+    OSSL_TRACE(INIT, "openssl_add_all_kdfs_int()\n");
+    openssl_add_all_kdfs_int();
+#endif
+    return 1;
+}
+
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_kdfs, ossl_init_add_all_kdfs)
+{
+    /* Do nothing */
+    return 1;
+}
+
 static CRYPTO_ONCE config = CRYPTO_ONCE_STATIC_INIT;
 static int config_inited = 0;
 static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
@@ -468,6 +488,11 @@ void OPENSSL_cleanup(void)
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
     CRYPTO_THREAD_LOCAL key;
 
+    /*
+     * TODO(3.0): This function needs looking at with a view to moving most/all
+     * of this into onfree handlers in OPENSSL_CTX.
+     */
+
     /* If we've not been inited then no need to deinit */
     if (!base_inited)
         return;
@@ -526,7 +551,7 @@ void OPENSSL_cleanup(void)
      * - rand_cleanup_int could call an ENGINE's RAND cleanup function so
      * must be called before engine_cleanup_int()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
-     * before the ex data handlers are wiped in CRYPTO_cleanup_all_ex_data().
+     * before the ex data handlers are wiped during default openssl_ctx deinit.
      * - conf_modules_free_int() can end up in ENGINE code so must be called
      * before engine_cleanup_int()
      * - ENGINEs and additional EVP algorithms might use added OIDs names so
@@ -540,6 +565,7 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: conf_modules_free_int()\n");
     conf_modules_free_int();
+
 #ifndef OPENSSL_NO_ENGINE
     OSSL_TRACE(INIT, "OPENSSL_cleanup: engine_cleanup_int()\n");
     engine_cleanup_int();
@@ -547,8 +573,8 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_store_cleanup_int()\n");
     ossl_store_cleanup_int();
 
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: crypto_cleanup_all_ex_data_int()\n");
-    crypto_cleanup_all_ex_data_int();
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: openssl_ctx_default_deinit()\n");
+    openssl_ctx_default_deinit();
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: bio_cleanup()\n");
     bio_cleanup();
@@ -578,6 +604,11 @@ void OPENSSL_cleanup(void)
  */
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
+    /*
+     * TODO(3.0): This function needs looking at with a view to moving most/all
+     * of this into OPENSSL_CTX.
+     */
+
     if (stopped) {
         if (!(opts & OPENSSL_INIT_BASE_ONLY))
             CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
@@ -653,6 +684,15 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if ((opts & OPENSSL_INIT_ADD_ALL_MACS)
             && !RUN_ONCE(&add_all_macs, ossl_init_add_all_macs))
+        return 0;
+
+    if ((opts & OPENSSL_INIT_NO_ADD_ALL_KDFS)
+            && !RUN_ONCE_ALT(&add_all_kdfs, ossl_init_no_add_all_kdfs,
+                             ossl_init_add_all_kdfs))
+        return 0;
+
+    if ((opts & OPENSSL_INIT_ADD_ALL_KDFS)
+            && !RUN_ONCE(&add_all_kdfs, ossl_init_add_all_kdfs))
         return 0;
 
     if ((opts & OPENSSL_INIT_ATFORK)

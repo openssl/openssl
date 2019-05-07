@@ -206,7 +206,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     ctx->cipher = cipher;
     if (ctx->provctx == NULL) {
-        ctx->provctx = ctx->cipher->newctx();
+        ctx->provctx = ctx->cipher->newctx(ossl_provider_ctx(cipher->prov));
         if (ctx->provctx == NULL) {
             EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
             return 0;

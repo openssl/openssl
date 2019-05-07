@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -9,12 +10,13 @@
 
 #include <openssl/aes.h>
 #include <openssl/modes.h>
+#include "internal/cryptlib.h"
 
 typedef struct prov_aes_cipher_st PROV_AES_CIPHER;
 
 typedef struct prov_aes_key_st {
     union {
-        double align;
+        OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ks;
     block128_f block;
@@ -29,7 +31,7 @@ typedef struct prov_aes_key_st {
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
         struct {
             union {
-                double align;
+                OSSL_UNION_ALIGN;
                 /*-
                  * KM-AES parameter block - begin
                  * (see z/Architecture Principles of Operation >= SA22-7832-06)

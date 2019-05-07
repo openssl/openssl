@@ -70,6 +70,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_ENCRYPTUPDATE                          167
 # define EVP_F_EVP_KDF_CTRL                               224
 # define EVP_F_EVP_KDF_CTRL_STR                           225
+# define EVP_F_EVP_KDF_CTX_NEW                            240
 # define EVP_F_EVP_KDF_CTX_NEW_ID                         226
 # define EVP_F_EVP_MAC_CTRL                               209
 # define EVP_F_EVP_MAC_CTRL_STR                           210

@@ -84,6 +84,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 # define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
 struct crypto_ex_data_st {
+    OPENSSL_CTX *ctx;
     STACK_OF(void) *sk;
 };
 DEFINE_STACK_OF(void)
@@ -401,6 +402,8 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 /* FREE: 0x40000000L */
 /* FREE: 0x80000000L */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
+# define OPENSSL_INIT_NO_ADD_ALL_KDFS        0x100000000L
+# define OPENSSL_INIT_ADD_ALL_KDFS           0x200000000L
 
 /* openssl and dasync not counted as builtin */
 # define OPENSSL_INIT_ENGINE_ALL_BUILTIN \

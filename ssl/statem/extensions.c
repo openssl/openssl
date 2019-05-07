@@ -1030,8 +1030,8 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent)
     if (s->server)
         return 1;
 
-    alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-    alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+    alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
+    alg_a = s->s3.tmp.new_cipher->algorithm_auth;
 
     /*
      * If we are client and using an elliptic curve cryptography cipher
@@ -1092,7 +1092,7 @@ static int init_status_request(SSL *s, unsigned int context)
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int init_npn(SSL *s, unsigned int context)
 {
-    s->s3->npn_seen = 0;
+    s->s3.npn_seen = 0;
 
     return 1;
 }
@@ -1100,13 +1100,13 @@ static int init_npn(SSL *s, unsigned int context)
 
 static int init_alpn(SSL *s, unsigned int context)
 {
-    OPENSSL_free(s->s3->alpn_selected);
-    s->s3->alpn_selected = NULL;
-    s->s3->alpn_selected_len = 0;
+    OPENSSL_free(s->s3.alpn_selected);
+    s->s3.alpn_selected = NULL;
+    s->s3.alpn_selected_len = 0;
     if (s->server) {
-        OPENSSL_free(s->s3->alpn_proposed);
-        s->s3->alpn_proposed = NULL;
-        s->s3->alpn_proposed_len = 0;
+        OPENSSL_free(s->s3.alpn_proposed);
+        s->s3.alpn_proposed = NULL;
+        s->s3.alpn_proposed_len = 0;
     }
     return 1;
 }
@@ -1134,8 +1134,8 @@ static int final_alpn(SSL *s, unsigned int context, int sent)
 static int init_sig_algs(SSL *s, unsigned int context)
 {
     /* Clear any signature algorithms extension received */
-    OPENSSL_free(s->s3->tmp.peer_sigalgs);
-    s->s3->tmp.peer_sigalgs = NULL;
+    OPENSSL_free(s->s3.tmp.peer_sigalgs);
+    s->s3.tmp.peer_sigalgs = NULL;
 
     return 1;
 }
@@ -1143,8 +1143,8 @@ static int init_sig_algs(SSL *s, unsigned int context)
 static int init_sig_algs_cert(SSL *s, unsigned int context)
 {
     /* Clear any signature algorithms extension received */
-    OPENSSL_free(s->s3->tmp.peer_cert_sigalgs);
-    s->s3->tmp.peer_cert_sigalgs = NULL;
+    OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
+    s->s3.tmp.peer_cert_sigalgs = NULL;
 
     return 1;
 }
@@ -1168,7 +1168,7 @@ static int init_etm(SSL *s, unsigned int context)
 
 static int init_ems(SSL *s, unsigned int context)
 {
-    s->s3->flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
+    s->s3.flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
 
     return 1;
 }
@@ -1180,7 +1180,7 @@ static int final_ems(SSL *s, unsigned int context, int sent)
          * Check extended master secret extension is consistent with
          * original session.
          */
-        if (!(s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) !=
+        if (!(s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS) !=
             !(s->session->flags & SSL_SESS_FLAG_EXTMS)) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_FINAL_EMS,
                      SSL_R_INCONSISTENT_EXTMS);
@@ -1193,8 +1193,8 @@ static int final_ems(SSL *s, unsigned int context, int sent)
 
 static int init_certificate_authorities(SSL *s, unsigned int context)
 {
-    sk_X509_NAME_pop_free(s->s3->tmp.peer_ca_names, X509_NAME_free);
-    s->s3->tmp.peer_ca_names = NULL;
+    sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
+    s->s3.tmp.peer_ca_names = NULL;
     return 1;
 }
 
@@ -1331,9 +1331,9 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
      *             send a HelloRetryRequest
      */
     if (s->server) {
-        if (s->s3->peer_tmp != NULL) {
+        if (s->s3.peer_tmp != NULL) {
             /* We have a suitable key_share */
-            if ((s->s3->flags & TLS1_FLAGS_STATELESS) != 0
+            if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0
                     && !s->ext.cookieok) {
                 if (!ossl_assert(s->hello_retry_request == SSL_HRR_NONE)) {
                     /*
@@ -1377,7 +1377,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
 
                 if (i < num_groups) {
                     /* A shared group exists so send a HelloRetryRequest */
-                    s->s3->group_id = group_id;
+                    s->s3.group_id = group_id;
                     s->hello_retry_request = SSL_HRR_PENDING;
                     return 1;
                 }
@@ -1391,7 +1391,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
                 return 0;
             }
 
-            if ((s->s3->flags & TLS1_FLAGS_STATELESS) != 0
+            if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0
                     && !s->ext.cookieok) {
                 if (!ossl_assert(s->hello_retry_request == SSL_HRR_NONE)) {
                     /*
@@ -1539,7 +1539,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         void *hdata;
 
         hdatalen = hdatalen_l =
-            BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+            BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
         if (hdatalen_l <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                      SSL_R_BAD_HANDSHAKE_LENGTH);

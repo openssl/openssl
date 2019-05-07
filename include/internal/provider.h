@@ -45,6 +45,9 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
  */
 int ossl_provider_activate(OSSL_PROVIDER *prov);
 
+/* Return pointer to the provider's context */
+void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
+
 /* Iterate over all loaded providers */
 int ossl_provider_forall_loaded(OPENSSL_CTX *,
                                 int (*cb)(OSSL_PROVIDER *provider,

@@ -1224,11 +1224,11 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     int t;
 
     if (sending) {
-        mac_sec = &(ssl->s3->write_mac_secret[0]);
+        mac_sec = &(ssl->s3.write_mac_secret[0]);
         seq = RECORD_LAYER_get_write_sequence(&ssl->rlayer);
         hash = ssl->write_hash;
     } else {
-        mac_sec = &(ssl->s3->read_mac_secret[0]);
+        mac_sec = &(ssl->s3.read_mac_secret[0]);
         seq = RECORD_LAYER_get_read_sequence(&ssl->rlayer);
         hash = ssl->read_hash;
     }
@@ -1377,8 +1377,8 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
                                    md, &md_size,
                                    header, rec->input,
                                    rec->length + md_size, rec->orig_len,
-                                   ssl->s3->read_mac_secret,
-                                   ssl->s3->read_mac_secret_size, 0) <= 0) {
+                                   ssl->s3.read_mac_secret,
+                                   ssl->s3.read_mac_secret_size, 0) <= 0) {
             EVP_MD_CTX_free(hmac);
             return 0;
         }
@@ -1805,11 +1805,11 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     rr->off = 0;
     /*-
      * So at this point the following is true
-     * ssl->s3->rrec.type   is the type of record
-     * ssl->s3->rrec.length == number of bytes in record
-     * ssl->s3->rrec.off    == offset to first valid byte
-     * ssl->s3->rrec.data   == where to take bytes from, increment
-     *                         after use :-).
+     * ssl->s3.rrec.type   is the type of record
+     * ssl->s3.rrec.length == number of bytes in record
+     * ssl->s3.rrec.off    == offset to first valid byte
+     * ssl->s3.rrec.data   == where to take bytes from, increment
+     *                        after use :-).
      */
 
     /* we have pulled in a full packet so zero things */
@@ -1833,9 +1833,9 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
  * It will return <= 0 if more data is needed, normally due to an error
  * or non-blocking IO.
  * When it finishes, one packet has been decoded and can be found in
- * ssl->s3->rrec.type    - is the type of record
- * ssl->s3->rrec.data,   - data
- * ssl->s3->rrec.length, - number of bytes
+ * ssl->s3.rrec.type    - is the type of record
+ * ssl->s3.rrec.data    - data
+ * ssl->s3.rrec.length  - number of bytes
  */
 /* used only by dtls1_read_bytes */
 int dtls1_get_record(SSL *s)

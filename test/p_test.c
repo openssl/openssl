@@ -38,22 +38,27 @@ static const OSSL_ITEM p_param_types[] = {
     { 0, NULL }
 };
 
-static const OSSL_ITEM *p_get_param_types(const OSSL_PROVIDER *_)
+/* This is a trick to ensure we define the provider functions correctly */
+static OSSL_provider_get_param_types_fn p_get_param_types;
+static OSSL_provider_get_params_fn p_get_params;
+
+static const OSSL_ITEM *p_get_param_types(void *_)
 {
     return p_param_types;
 }
 
-static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int p_get_params(void *vprov, const OSSL_PARAM params[])
 {
+    const OSSL_PROVIDER *prov = vprov;
     const OSSL_PARAM *p = params;
     int ok = 1;
 
     for (; ok && p->key != NULL; p++) {
         if (strcmp(p->key, "greeting") == 0) {
-            static char *opensslv = NULL;
-            static char *provname = NULL;
-            static char *greeting = NULL;
-            static OSSL_PARAM counter_request[] = {
+            static char *opensslv;
+            static char *provname;
+            static char *greeting;
+            static const OSSL_PARAM counter_request[] = {
                 /* Known libcrypto provided parameters */
                 { "openssl-version", OSSL_PARAM_UTF8_PTR,
                   &opensslv, sizeof(&opensslv), NULL },
@@ -68,6 +73,8 @@ static int p_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
             };
             char buf[256];
             size_t buf_l;
+
+            opensslv = provname = greeting = NULL;
 
             if (c_get_params(prov, counter_request)) {
                 if (greeting) {
@@ -101,7 +108,8 @@ static const OSSL_DISPATCH p_test_table[] = {
 
 int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        const OSSL_DISPATCH *in,
-                       const OSSL_DISPATCH **out)
+                       const OSSL_DISPATCH **out,
+                       void **provctx)
 {
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -116,6 +124,9 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
             break;
         }
     }
+
+    /* Because we use this in get_params, we need to pass it back */
+    *provctx = (void *)provider;
 
     *out = p_test_table;
     return 1;
