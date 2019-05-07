@@ -134,7 +134,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              const EVP_CIPHER *c, const EVP_MD *md, int en_de)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
-    int saltlen, iter;
+    int saltlen, iter, t;
     int rv = 0;
     unsigned int keylen = 0;
     int prf_nid, hmac_md_nid;
@@ -157,7 +157,12 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         goto err;
     }
 
-    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    t = EVP_CIPHER_CTX_key_length(ctx);
+    if (t < 0) {
+        EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_INVALID_KEY_LENGTH);
+        goto err;        
+    }
+    keylen = t;
 
     /* Now check the parameters of the kdf */
 
