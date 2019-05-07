@@ -706,6 +706,11 @@ const char *ossl_provider_module_path(const OSSL_PROVIDER *prov)
 #endif
 }
 
+OPENSSL_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov)
+{
+    return prov->libctx;
+}
+
 /* Wrappers around calls to the provider */
 void ossl_provider_teardown(const OSSL_PROVIDER *prov)
 {
@@ -801,7 +806,7 @@ static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 
 static OPENSSL_CTX *core_get_libctx(const OSSL_PROVIDER *prov)
 {
-    return prov->libctx;
+    return ossl_provider_library_context(prov);
 }
 
 static int core_thread_start(const OSSL_PROVIDER *prov,

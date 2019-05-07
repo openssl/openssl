@@ -181,8 +181,7 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
     }
 
     opts |= OPENSSL_INIT_ADD_ALL_CIPHERS
-         |  OPENSSL_INIT_ADD_ALL_DIGESTS
-         |  OPENSSL_INIT_ADD_ALL_MACS;
+         |  OPENSSL_INIT_ADD_ALL_DIGESTS;
 #ifndef OPENSSL_NO_AUTOLOAD_CONFIG
     if ((opts & OPENSSL_INIT_NO_LOAD_CONFIG) == 0)
         opts |= OPENSSL_INIT_LOAD_CONFIG;

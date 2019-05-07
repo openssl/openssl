@@ -121,28 +121,26 @@ extern const EVP_PKEY_METHOD siphash_pkey_meth;
 /* struct evp_mac_impl_st is defined by the implementation */
 typedef struct evp_mac_impl_st EVP_MAC_IMPL;
 struct evp_mac_st {
-    int type;
-    EVP_MAC_IMPL *(*new) (void);
-    EVP_MAC_IMPL *(*dup) (const EVP_MAC_IMPL *macsrc);
-    void (*free) (EVP_MAC_IMPL *macctx);
-    size_t (*size) (EVP_MAC_IMPL *macctx);
-    int (*init) (EVP_MAC_IMPL *macctx);
-    int (*update) (EVP_MAC_IMPL *macctx, const unsigned char *data,
-                   size_t datalen);
-    int (*final) (EVP_MAC_IMPL *macctx, unsigned char *out);
-    int (*ctrl) (EVP_MAC_IMPL *macctx, int cmd, va_list args);
-    int (*ctrl_str) (EVP_MAC_IMPL *macctx, const char *type, const char *value);
-};
+    OSSL_PROVIDER *prov;
+    char *name;
 
-extern const EVP_MAC blake2b_mac_meth;
-extern const EVP_MAC blake2s_mac_meth;
-extern const EVP_MAC cmac_meth;
-extern const EVP_MAC gmac_meth;
-extern const EVP_MAC hmac_meth;
-extern const EVP_MAC kmac128_meth;
-extern const EVP_MAC kmac256_meth;
-extern const EVP_MAC siphash_meth;
-extern const EVP_MAC poly1305_meth;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+
+    OSSL_OP_mac_newctx_fn *newctx;
+    OSSL_OP_mac_dupctx_fn *dupctx;
+    OSSL_OP_mac_freectx_fn *freectx;
+    OSSL_OP_mac_size_fn *size;
+    OSSL_OP_mac_init_fn *init;
+    OSSL_OP_mac_update_fn *update;
+    OSSL_OP_mac_final_fn *final;
+    OSSL_OP_mac_gettable_params_fn *gettable_params;
+    OSSL_OP_mac_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_OP_mac_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_OP_mac_get_params_fn *get_params;
+    OSSL_OP_mac_ctx_get_params_fn *ctx_get_params;
+    OSSL_OP_mac_ctx_set_params_fn *ctx_set_params;
+};
 
 /* Internal keccak algorithms used for KMAC */
 const EVP_MD *evp_keccak_kmac128(void);
