@@ -276,11 +276,11 @@ static int gmi_available(void)
     unsigned int edx = 0;
     unsigned char family,model;
    
-    // Diff ZXC with ZXD
+    /* Diff ZXC with ZXD */ 
     unsigned int leaf = 0x1;
     asm volatile("cpuid":"=a"(eax):"0"(leaf):"ebx","ecx");
-    family = (eax & 0xf00) >> 8;  // bit 11-08
-    model = (eax & 0xf0) >> 4; // bit 7-4
+    family = (eax & 0xf00) >> 8;  /* bit 11-08 */ 
+    model = (eax & 0xf0) >> 4; /* bit 7-4 */ 
 
     if ((family == 7)&(model == 0xb)) {
         f_zxc = 0;
@@ -565,6 +565,7 @@ gmi_sm4_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
+    
     gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
     return 1;
 }
@@ -574,6 +575,7 @@ gmi_sm4_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
+    
     memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
     gmi_sm4_encrypt(out_arg, in_arg, cdata, nbytes);
     memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, SM4_BLOCK_SIZE);   
@@ -586,6 +588,7 @@ gmi_sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
     unsigned int num = EVP_CIPHER_CTX_num(ctx);
+    
     if (f_zxc == 1) {
         unsigned char * buf = EVP_CIPHER_CTX_buf_noconst(ctx);
         CRYPTO_ctr128_encrypt(in_arg, out_arg, nbytes,
@@ -609,6 +612,7 @@ gmi_sm4_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                       const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
+    
     if (f_zxc == 1) {
         int num = EVP_CIPHER_CTX_num(ctx);
         CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
@@ -630,6 +634,7 @@ gmi_sm4_ofb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                       const unsigned char *in_arg, size_t nbytes)
 {
     struct gmi_cipher_data *cdata = ALIGNED_CIPHER_DATA_GMI(ctx);
+    
     if (f_zxc == 1) {
         int num = EVP_CIPHER_CTX_num(ctx);
         CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
@@ -818,7 +823,7 @@ zx_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
            int nid)
 {
     /* No specific cipher => return a list of supported nids ... */
-    if (!cipher) {
+    if (cipher == NULL) {
         *nids = zx_cipher_nids;
         return zx_cipher_nids_num;
     }
@@ -991,13 +996,11 @@ gmi_sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         cdata->cword.b.encdec = (EVP_CIPHER_CTX_encrypting(ctx) == 0);
 
     cdata->cword.b.func = CCS_ENCRYPT_FUNC_SM4;
-    cdata->cword.b.mode = 1<<(mode-1);;
+    cdata->cword.b.mode = 1<<(mode-1);
     cdata->cword.b.digest = 0;
 
-    if(iv != NULL)
-    {
+    if (iv != NULL)
         memcpy(cdata->iv, iv, SM4_BLOCK_SIZE);
-    }
 
     memcpy(cdata->ks.rd_key, key, SM4_KEY_SIZE);
 
@@ -1157,7 +1160,7 @@ static int gmi_digests(ENGINE *e, const EVP_MD **digest,
 {
     int ok = 1;
 
-    if (!digest) {
+    if (digest == NULL) {
         /* We are returning a list of supported nids */
         *nids = gmi_digest_nids;
         return OSSL_NELEM(gmi_digest_nids);
