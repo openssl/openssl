@@ -338,6 +338,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 #ifndef OPENSSL_NO_ENGINE
  skip_to_init:
 #endif
+    if (ctx->cipher == NULL)
+        return 0;
+
     /* we assume block size is a power of 2 in *cryptUpdate */
     OPENSSL_assert(ctx->cipher->block_size == 1
                    || ctx->cipher->block_size == 8
