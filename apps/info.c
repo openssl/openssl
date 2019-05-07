@@ -42,8 +42,7 @@ int info_main(int argc, char **argv)
     prog = opt_init(argc, argv, info_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-        case OPT_EOF:
-        case OPT_ERR:
+        default:
 opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
