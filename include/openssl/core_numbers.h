@@ -230,6 +230,42 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_settable_ctx_params,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_ctx_params,
                     (void))
 
+/* MACs */
+
+# define OSSL_OP_MAC                                 3
+
+# define OSSL_FUNC_MAC_NEWCTX                        1
+# define OSSL_FUNC_MAC_DUPCTX                        2
+# define OSSL_FUNC_MAC_FREECTX                       3
+# define OSSL_FUNC_MAC_INIT                          4
+# define OSSL_FUNC_MAC_UPDATE                        5
+# define OSSL_FUNC_MAC_FINAL                         6
+# define OSSL_FUNC_MAC_GETTABLE_PARAMS               7
+# define OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS           8
+# define OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS           9
+# define OSSL_FUNC_MAC_GET_PARAMS                   10
+# define OSSL_FUNC_MAC_CTX_GET_PARAMS               11
+# define OSSL_FUNC_MAC_CTX_SET_PARAMS               12
+
+OSSL_CORE_MAKE_FUNC(void *, OP_mac_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_mac_dupctx, (void *src))
+OSSL_CORE_MAKE_FUNC(void, OP_mac_freectx, (void *mctx))
+OSSL_CORE_MAKE_FUNC(size_t, OP_mac_size, (void *mctx))
+OSSL_CORE_MAKE_FUNC(int, OP_mac_init, (void *mctx))
+OSSL_CORE_MAKE_FUNC(int, OP_mac_update,
+                    (void *mctx, const unsigned char *in, size_t inl))
+OSSL_CORE_MAKE_FUNC(int, OP_mac_final,
+                    (void *mctx,
+                     unsigned char *out, size_t *outl, size_t outsize))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_mac_gettable_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_mac_gettable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_mac_settable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(int, OP_mac_get_params, (OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_mac_ctx_get_params,
+                    (void *mctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_mac_ctx_set_params,
+                    (void *mctx, const OSSL_PARAM params[]))
+
 /*-
  * Key management
  *

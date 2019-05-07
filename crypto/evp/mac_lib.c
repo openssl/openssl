@@ -11,26 +11,24 @@
 #include <stdarg.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/core.h>
+#include <openssl/core_names.h>
 #include <openssl/ossl_typ.h>
 #include "internal/nelem.h"
 #include "internal/evp_int.h"
+#include "internal/provider.h"
 #include "evp_locl.h"
 
-EVP_MAC_CTX *EVP_MAC_CTX_new_id(int id)
-{
-    const EVP_MAC *mac = EVP_get_macbynid(id);
-
-    if (mac == NULL)
-        return NULL;
-    return EVP_MAC_CTX_new(mac);
-}
-
-EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac)
+EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
 {
     EVP_MAC_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_MAC_CTX));
 
-    if (ctx == NULL || (ctx->data = mac->new()) == NULL) {
+    if (ctx == NULL
+        || (ctx->data = mac->newctx(ossl_provider_ctx(mac->prov))) == NULL
+        || !EVP_MAC_up_ref(mac)) {
         EVPerr(EVP_F_EVP_MAC_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        if (ctx != NULL)
+            mac->freectx(ctx->data);
         OPENSSL_free(ctx);
         ctx = NULL;
     } else {
@@ -41,9 +39,11 @@ EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac)
 
 void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
 {
-    if (ctx != NULL && ctx->data != NULL) {
-        ctx->meth->free(ctx->data);
+    if (ctx != NULL) {
+        ctx->meth->freectx(ctx->data);
         ctx->data = NULL;
+        /* refcnt-- */
+        EVP_MAC_free(ctx->meth);
     }
     OPENSSL_free(ctx);
 }
@@ -62,8 +62,13 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
     }
 
     *dst = *src;
+    if (!EVP_MAC_up_ref(dst->meth)) {
+        EVPerr(EVP_F_EVP_MAC_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(dst);
+        return NULL;
+    }
 
-    dst->data = src->meth->dup(src->data);
+    dst->data = src->meth->dupctx(src->data);
     if (dst->data == NULL) {
         EVP_MAC_CTX_free(dst);
         return NULL;
@@ -72,16 +77,31 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
     return dst;
 }
 
-const EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx)
+EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx)
 {
     return ctx->meth;
 }
 
 size_t EVP_MAC_size(EVP_MAC_CTX *ctx)
 {
-    if (ctx->data != NULL)
-        return ctx->meth->size(ctx->data);
-    /* If the MAC hasn't been initialized yet, we return zero */
+    size_t sz = 0;
+
+    if (ctx->data != NULL) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN, &sz);
+        if (ctx->meth->ctx_get_params != NULL) {
+            if (ctx->meth->ctx_get_params(ctx->data, params))
+                return sz;
+        } else if (ctx->meth->get_params != NULL) {
+            if (ctx->meth->get_params(params))
+                return sz;
+        }
+    }
+    /*
+     * If the MAC hasn't been initialized yet, or there is no size to get,
+     * we return zero
+     */
     return 0;
 }
 
@@ -97,101 +117,43 @@ int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
     return ctx->meth->update(ctx->data, data, datalen);
 }
 
-int EVP_MAC_final(EVP_MAC_CTX *ctx, unsigned char *out, size_t *poutlen)
+int EVP_MAC_final(EVP_MAC_CTX *ctx,
+                  unsigned char *out, size_t *outl, size_t outsize)
 {
-    int l = ctx->meth->size(ctx->data);
+    int l = EVP_MAC_size(ctx);
 
     if (l < 0)
         return 0;
-    if (poutlen != NULL)
-        *poutlen = l;
+    if (outl != NULL)
+        *outl = l;
     if (out == NULL)
         return 1;
-    return ctx->meth->final(ctx->data, out);
+    return ctx->meth->final(ctx->data, out, outl, outsize);
 }
 
-int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...)
+/*
+ * The {get,set}_params functions return 1 if there is no corresponding
+ * function in the implementation.  This is the same as if there was one,
+ * but it didn't recognise any of the given params, i.e. nothing in the
+ * bag of parameters was useful.
+ */
+int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[])
 {
-    int ok = -1;
-    va_list args;
-
-    va_start(args, cmd);
-    ok = EVP_MAC_vctrl(ctx, cmd, args);
-    va_end(args);
-
-    if (ok == -2)
-        EVPerr(EVP_F_EVP_MAC_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
-
-    return ok;
+    if (mac->get_params != NULL)
+        return mac->get_params(params);
+    return 1;
 }
 
-int EVP_MAC_vctrl(EVP_MAC_CTX *ctx, int cmd, va_list args)
+int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
 {
-    int ok = 1;
-
-    if (ctx == NULL || ctx->meth == NULL)
-        return -2;
-
-    switch (cmd) {
-#if 0
-    case ...:
-        /* code */
-        ok = 1;
-        break;
-#endif
-    default:
-        if (ctx->meth->ctrl != NULL)
-            ok = ctx->meth->ctrl(ctx->data, cmd, args);
-        else
-            ok = -2;
-        break;
-    }
-
-    return ok;
+    if (ctx->meth->ctx_get_params != NULL)
+        return ctx->meth->ctx_get_params(ctx->data, params);
+    return 1;
 }
 
-int EVP_MAC_ctrl_str(EVP_MAC_CTX *ctx, const char *type, const char *value)
+int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 {
-    int ok = 1;
-
-    if (ctx == NULL || ctx->meth == NULL || ctx->meth->ctrl_str == NULL) {
-        EVPerr(EVP_F_EVP_MAC_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
-    }
-
-    ok = ctx->meth->ctrl_str(ctx->data, type, value);
-
-    if (ok == -2)
-        EVPerr(EVP_F_EVP_MAC_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
-    return ok;
-}
-
-int EVP_MAC_str2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value)
-{
-    size_t len;
-
-    len = strlen(value);
-    if (len > INT_MAX)
-        return -1;
-    return EVP_MAC_ctrl(ctx, cmd, value, len);
-}
-
-int EVP_MAC_hex2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *hex)
-{
-    unsigned char *bin;
-    long binlen;
-    int rv = -1;
-
-    bin = OPENSSL_hexstr2buf(hex, &binlen);
-    if (bin == NULL)
-        return 0;
-    if (binlen <= INT_MAX)
-        rv = EVP_MAC_ctrl(ctx, cmd, bin, (size_t)binlen);
-    OPENSSL_free(bin);
-    return rv;
-}
-
-int EVP_MAC_nid(const EVP_MAC *mac)
-{
-    return mac->type;
+    if (ctx->meth->ctx_set_params != NULL)
+        return ctx->meth->ctx_set_params(ctx->data, params);
+    return 1;
 }

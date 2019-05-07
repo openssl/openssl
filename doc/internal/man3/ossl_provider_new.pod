@@ -11,6 +11,7 @@ ossl_provider_ctx,
 ossl_provider_forall_loaded,
 ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
+ossl_provider_library_context,
 ossl_provider_teardown, ossl_provider_gettable_params,
 ossl_provider_get_params, ossl_provider_query_operation
 - internal provider routines
@@ -52,6 +53,7 @@ ossl_provider_get_params, ossl_provider_query_operation
  const DSO *ossl_provider_dso(OSSL_PROVIDER *prov);
  const char *ossl_provider_module_name(OSSL_PROVIDER *prov);
  const char *ossl_provider_module_path(OSSL_PROVIDER *prov);
+ OPENSSL_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov);
 
  /* Thin wrappers around calls to the provider */
  void ossl_provider_teardown(const OSSL_PROVIDER *prov);
@@ -131,6 +133,9 @@ provider module given the provider object I<prov>.
 This will be used in preference to automatically trying to figure out
 the path from the provider name and the default module directory (more
 on this in L</NOTES>).
+
+ossl_provider_library_context() returns the library context the given
+provider I<prov> is registered in.
 
 ossl_provider_add_parameter() adds a global parameter for the provider
 to retrieve as it sees fit.
@@ -251,6 +256,10 @@ ossl_provider_name(), ossl_provider_dso(),
 ossl_provider_module_name(), and ossl_provider_module_path() return a
 pointer to their respective data if it's available, otherwise NULL
 is returned.
+
+ossl_provider_library_context() return a pointer to the library context.
+This may be NULL, and is perfectly valid, as it denotes the default
+global library context.
 
 ossl_provider_teardown() doesnt't return any value.
 

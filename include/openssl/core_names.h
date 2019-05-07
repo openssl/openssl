@@ -59,6 +59,26 @@ extern "C" {
 #define OSSL_DIGEST_PARAM_SIZE      "size" /* OSSL_PARAM_INTEGER */
 #define OSSL_DIGEST_PARAM_FLAGS     "flags" /* OSSL_PARAM_UNSIGNED_INTEGER */
 
+/* MAC parameters */
+#define OSSL_MAC_PARAM_KEY          "key"       /* octet string */
+#define OSSL_MAC_PARAM_IV           "iv"        /* octet string */
+#define OSSL_MAC_PARAM_CUSTOM       "custom"    /* utf8 string */
+#define OSSL_MAC_PARAM_SALT         "salt"      /* octet string */
+#define OSSL_MAC_PARAM_XOF          "xof"       /* int, 0 or 1 */
+#define OSSL_MAC_PARAM_FLAGS        "flags"     /* int */
+/* Note that "md" and "digest" are equivalent */
+#define OSSL_MAC_PARAM_MD           "md"        /* utf8 string */
+#define OSSL_MAC_PARAM_DIGEST       "digest"    /* utf8 string */
+#define OSSL_MAC_PARAM_CIPHER       "cipher"    /* utf8 string */
+/* Note that "algorithm" can be used instead of "md", "digest" or "cipher" */
+#define OSSL_MAC_PARAM_ALGORITHM    "algorithm" /* utf8 string */
+#define OSSL_MAC_PARAM_ENGINE       "engine"    /* utf8 string */
+#define OSSL_MAC_PARAM_PROPERTIES   "properties" /* utf8 string */
+/* Note that "size", "digestsize" and "outlen" are equivalent */
+#define OSSL_MAC_PARAM_SIZE         "size"      /* size_t */
+#define OSSL_MAC_PARAM_DIGESTSIZE   "digestsize" /* size_t */
+#define OSSL_MAC_PARAM_OUTLEN       "outlen"    /* size_t */
+
 /* PKEY parameters */
 /* Diffie-Hellman Parameters */
 #define OSSL_PKEY_PARAM_DH_P         "dh-p"
