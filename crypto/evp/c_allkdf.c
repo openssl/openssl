@@ -20,4 +20,5 @@ void openssl_add_all_kdfs_int(void)
     EVP_add_kdf(&hkdf_kdf_meth);
     EVP_add_kdf(&sshkdf_kdf_meth);
     EVP_add_kdf(&ss_kdf_meth);
+    EVP_add_kdf(&x963_kdf_meth);
 }

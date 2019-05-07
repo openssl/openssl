@@ -24,6 +24,7 @@ extern "C" {
 # define EVP_KDF_HKDF       NID_hkdf
 # define EVP_KDF_SSHKDF     NID_sshkdf
 # define EVP_KDF_SS         NID_sskdf
+# define EVP_KDF_X963       NID_x963kdf
 
 EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id);
 EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf);
@@ -64,6 +65,7 @@ const EVP_KDF *EVP_get_kdfbyname(const char *name);
 # define EVP_KDF_CTRL_SET_MAC           0x13 /* EVP_MAC * */
 # define EVP_KDF_CTRL_SET_MAC_SIZE      0x14 /* size_t */
 # define EVP_KDF_CTRL_SET_SSKDF_INFO    0x15 /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_SHARED_INFO   EVP_KDF_CTRL_SET_SSKDF_INFO
 
 # define EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND  0
 # define EVP_KDF_HKDF_MODE_EXTRACT_ONLY        1

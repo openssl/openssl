@@ -1617,6 +1617,9 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 # NID for SSKDF
                             : SSKDF              : sskdf
 
+# NID for X963-2001 KDF
+                            : X963KDF            : x963kdf
+
 # RFC 4556
 1 3 6 1 5 2 3 : id-pkinit
 id-pkinit 4                     : pkInitClientAuth      : PKINIT Client Auth

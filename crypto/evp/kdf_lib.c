@@ -22,8 +22,12 @@
 
 EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf)
 {
-    EVP_KDF_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_KDF_CTX));
+    EVP_KDF_CTX *ctx = NULL;
 
+    if (kdf == NULL)
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(EVP_KDF_CTX));
     if (ctx == NULL || (ctx->impl = kdf->new()) == NULL) {
         EVPerr(EVP_F_EVP_KDF_CTX_NEW, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ctx);
@@ -38,8 +42,6 @@ EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id)
 {
     const EVP_KDF *kdf = EVP_get_kdfbynid(id);
 
-    if (kdf == NULL)
-        return NULL;
     return EVP_KDF_CTX_new(kdf);
 }
 
