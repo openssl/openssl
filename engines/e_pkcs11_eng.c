@@ -15,6 +15,7 @@
 #include "e_pkcs11.h"
 #include "e_pkcs11_err.c"
 #include <openssl/x509v3.h>
+#include <openssl/ui.h>
 
 static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri);
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store);
