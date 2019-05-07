@@ -114,7 +114,7 @@ int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx)
     OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
-        goto err;
+        return 0;
 
     ip = get_and_lock(ctx, class_index);
     if (ip == NULL)
