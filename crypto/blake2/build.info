@@ -1,3 +1,2 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        blake2b_mac.c blake2s_mac.c m_blake2b.c m_blake2s.c
+SOURCE[../../libcrypto]=m_blake2b.c m_blake2s.c

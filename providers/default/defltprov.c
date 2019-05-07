@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <openssl/opensslconf.h>
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
@@ -122,6 +123,14 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_macs[] = {
+#ifndef OPENSSL_NO_BLAKE2
+    { "BLAKE2BMAC", "default=yes", blake2bmac_functions },
+    { "BLAKE2SMAC", "default=yes", blake2smac_functions },
+#endif
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM deflt_keyexch[] = {
 #ifndef OPENSSL_NO_DH
     { "dhKeyAgreement", "default=yes", dh_keyexch_functions },
@@ -146,6 +155,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
         return deflt_digests;
     case OSSL_OP_CIPHER:
         return deflt_ciphers;
+    case OSSL_OP_MAC:
+        return deflt_macs;
     case OSSL_OP_KEYMGMT:
         return deflt_keymgmt;
     case OSSL_OP_KEYEXCH:
