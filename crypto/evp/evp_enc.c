@@ -699,7 +699,11 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         return 0;
     }
 
-    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+    if (ctx->cipher == NULL) {
+        EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+    if (ctx->cipher->prov == NULL)
         goto legacy;
 
     blocksize = EVP_CIPHER_CTX_block_size(ctx);
