@@ -50,9 +50,13 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_FAILED_TO_GET_PARAMETER                   103
 # define PROV_R_FAILED_TO_SET_PARAMETER                   104
 # define PROV_R_INVALID_AAD                               108
+# define PROV_R_INVALID_CUSTOM_LENGTH                     111
 # define PROV_R_INVALID_IVLEN                             109
 # define PROV_R_INVALID_KEYLEN                            105
+# define PROV_R_INVALID_SALT_LENGTH                       112
 # define PROV_R_INVALID_TAG                               110
+# define PROV_R_NOT_XOF_OR_INVALID_LENGTH                 113
+# define PROV_R_NO_KEY_SET                                114
 # define PROV_R_OUTPUT_BUFFER_TOO_SMALL                   106
 # define PROV_R_WRONG_FINAL_BLOCK_LENGTH                  107
 

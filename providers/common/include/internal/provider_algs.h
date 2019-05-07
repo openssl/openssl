@@ -66,6 +66,10 @@ extern const OSSL_DISPATCH aria192gcm_functions[];
 extern const OSSL_DISPATCH aria128gcm_functions[];
 #endif /* OPENSSL_NO_ARIA */
 
+/* MACs */
+extern const OSSL_DISPATCH blake2bmac_functions[];
+extern const OSSL_DISPATCH blake2smac_functions[];
+
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
 
