@@ -160,6 +160,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_INPUT_NOT_INITIALIZED                      111
 # define EVP_R_INVALID_DIGEST                             152
 # define EVP_R_INVALID_FIPS_MODE                          168
+# define EVP_R_INVALID_IV_LENGTH                          194
 # define EVP_R_INVALID_KEY                                163
 # define EVP_R_INVALID_KEY_LENGTH                         130
 # define EVP_R_INVALID_OPERATION                          148
