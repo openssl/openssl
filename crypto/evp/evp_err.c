@@ -249,6 +249,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     "invalid custom length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_DIGEST), "invalid digest"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_FIPS_MODE), "invalid fips mode"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_IV_LENGTH), "invalid iv length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_KEY), "invalid key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_KEY_LENGTH), "invalid key length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_OPERATION), "invalid operation"},

@@ -2399,6 +2399,7 @@ EVP_R_INPUT_NOT_INITIALIZED:111:input not initialized
 EVP_R_INVALID_CUSTOM_LENGTH:185:invalid custom length
 EVP_R_INVALID_DIGEST:152:invalid digest
 EVP_R_INVALID_FIPS_MODE:168:invalid fips mode
+EVP_R_INVALID_IV_LENGTH:194:invalid iv length
 EVP_R_INVALID_KEY:163:invalid key
 EVP_R_INVALID_KEY_LENGTH:130:invalid key length
 EVP_R_INVALID_OPERATION:148:invalid operation

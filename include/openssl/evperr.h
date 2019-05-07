@@ -191,6 +191,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_INVALID_CUSTOM_LENGTH                      185
 # define EVP_R_INVALID_DIGEST                             152
 # define EVP_R_INVALID_FIPS_MODE                          168
+# define EVP_R_INVALID_IV_LENGTH                          194
 # define EVP_R_INVALID_KEY                                163
 # define EVP_R_INVALID_KEY_LENGTH                         130
 # define EVP_R_INVALID_OPERATION                          148
