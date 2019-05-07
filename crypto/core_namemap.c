@@ -55,9 +55,8 @@ static void *stored_namemap_new(OPENSSL_CTX *libctx)
 {
     OSSL_NAMEMAP *namemap = ossl_namemap_new();
 
-    if (namemap != NULL) {
+    if (namemap != NULL)
         namemap->stored = 1;
-    }
 
     return namemap;
 }
@@ -66,7 +65,7 @@ static void stored_namemap_free(void *vnamemap)
 {
     OSSL_NAMEMAP *namemap = vnamemap;
 
-    /* Pretend it's stored, or ossl_namemap_free() will do nothing */
+    /* Pretend it isn't stored, or ossl_namemap_free() will do nothing */
     namemap->stored = 0;
     ossl_namemap_free(namemap);
 }
@@ -93,7 +92,6 @@ OSSL_NAMEMAP *ossl_namemap_new(void)
         && (namemap->numname = sk_NAMEMAP_ENTRY_new_null()) != NULL
         && (namemap->namenum =
             lh_NAMEMAP_ENTRY_new(namemap_hash, namemap_cmp)) != NULL) {
-        namemap->stored = 0;
         return namemap;
     }
 
