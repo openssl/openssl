@@ -3,56 +3,67 @@
 LibFuzzer
 =========
 
-Or, how to fuzz OpenSSL with [libfuzzer](http://llvm.org/docs/LibFuzzer.html).
+How to fuzz OpenSSL with [libfuzzer](http://llvm.org/docs/LibFuzzer.html),
+starting from a vanilla+OpenSSH server Ubuntu install.
 
-Starting from a vanilla+OpenSSH server Ubuntu install.
+With `clang` from a package manager
+-----------------------------------
 
-Use Chrome's handy recent build of clang. Older versions may also work.
+Install `clang`, which [ships with `libfuzzer`](http://llvm.org/docs/LibFuzzer.html#fuzzer-usage)
+since version 6.0:
 
-    $ sudo apt-get install git
-    $ mkdir git-work
-    $ git clone https://chromium.googlesource.com/chromium/src/tools/clang
-    $ clang/scripts/update.py
+    $ sudo apt-get install clang
 
-You may want to git pull and re-run the update from time to time.
-
-Update your path:
-
-    $ PATH=~/third_party/llvm-build/Release+Asserts/bin/:$PATH
-
-Get and build libFuzzer (there is a git mirror at
-https://github.com/llvm-mirror/llvm/tree/master/lib/Fuzzer if you prefer):
-
-    $ cd
-    $ sudo apt-get install subversion
-    $ mkdir svn-work
-    $ cd svn-work
-    $ svn co https://llvm.org/svn/llvm-project/compiler-rt/trunk/lib/fuzzer Fuzzer
-    $ cd Fuzzer
-    $ clang++ -c -g -O2 -std=c++11 *.cpp
-    $ ar r libFuzzer.a *.o
-    $ ranlib libFuzzer.a
-
-Configure for fuzzing:
+Configure `openssl` for fuzzing. For now, you'll still need to pass in the path
+to the `libFuzzer` library file while configuring; this is represented as
+`$PATH_TO_LIBFUZZER` below. A typical value would be
+`/usr/lib/llvm-6.0/lib/clang/6.0.0/lib/linux/libclang_rt.fuzzer-x86_64.a`.
 
     $ CC=clang ./config enable-fuzz-libfuzzer \
-            --with-fuzzer-include=../../svn-work/Fuzzer \
-            --with-fuzzer-lib=../../svn-work/Fuzzer/libFuzzer.a \
+            --with-fuzzer-lib=$PATH_TO_LIBFUZZER \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
             -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
-            -fsanitize-coverage=trace-pc-guard,indirect-calls,trace-cmp \
-            enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment enable-tls1_3 \
+            -fsanitize=fuzzer-no-link \
+            enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment \
             enable-weak-ssl-ciphers enable-rc5 enable-md2 \
             enable-ssl3 enable-ssl3-method enable-nextprotoneg \
             --debug
+
+Compile:
+
     $ sudo apt-get install make
     $ LDCMD=clang++ make -j
+
+Finally, perform the actual fuzzing:
+
     $ fuzz/helper.py $FUZZER
 
-Where $FUZZER is one of the executables in `fuzz/`.
+where $FUZZER is one of the executables in `fuzz/`.
 
 If you get a crash, you should find a corresponding input file in
 `fuzz/corpora/$FUZZER-crash/`.
+
+With `clang` from source/pre-built binaries
+-------------------------------------------
+
+You may also wish to use a pre-built binary from the [LLVM Download
+site](http://releases.llvm.org/download.html), or to [build `clang` from
+source](https://clang.llvm.org/get_started.html). After adding `clang` to your
+path and locating the `libfuzzer` library file, the procedure for configuring
+fuzzing is the same, except that you also need to specify
+a `--with-fuzzer-include` option, which should be the parent directory of the
+prebuilt fuzzer library. This is represented as `$PATH_TO_LIBFUZZER_DIR` below.
+
+    $ CC=clang ./config enable-fuzz-libfuzzer \
+            --with-fuzzer-include=$PATH_TO_LIBFUZZER_DIR \
+            --with-fuzzer-lib=$PATH_TO_LIBFUZZER \
+            -DPEDANTIC enable-asan enable-ubsan no-shared \
+            -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
+            -fsanitize=fuzzer-no-link \
+            enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment \
+            enable-weak-ssl-ciphers enable-rc5 enable-md2 \
+            enable-ssl3 enable-ssl3-method enable-nextprotoneg \
+            --debug
 
 AFL
 ===
