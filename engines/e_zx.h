@@ -1,5 +1,5 @@
-#ifndef HEADER_SM4_H
-# define HEADER_SM4_H
+#ifndef HEADER_ZX_H
+# define HEADER_ZX_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/e_os2.h>
