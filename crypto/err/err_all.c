@@ -92,7 +92,7 @@ int err_load_crypto_strings_int(void)
 # ifndef OPENSSL_NO_CMS
         ERR_load_CMS_strings() == 0 ||
 # endif
-# ifndef OPENSSL_NO_CMP
+# ifndef OPENSSL_NO_CRMF
         ERR_load_CRMF_strings() == 0 ||
 # endif
 # ifndef OPENSSL_NO_CT
