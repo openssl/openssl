@@ -114,14 +114,9 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
 }
 
 /*
- * TODO(3.0) Make NULL to signify the default namemap, found in the default
- * library context.  The argument for wanting this is that there's no
- * general reason why the same string wouldn't result in the same number
- * within a unit...
- *
- * This isn't currently possible in the FIPS module because if init and
- * cleanup constraints, so we currently disable the code that would allow
- * it when FIPS_MODE is defined.
+ * TODO(3.0) It isn't currently possible to have a default namemap in the
+ * FIPS module because if init and cleanup constraints, so we currently
+ * disable the code that would allow it when FIPS_MODE is defined.
  */
 
 const char *ossl_namemap_name(const OSSL_NAMEMAP *namemap, int number)
@@ -151,7 +146,7 @@ int ossl_namemap_number(const OSSL_NAMEMAP *namemap, const char *name)
 
 #ifndef FIPS_MODE
     if (namemap == NULL)
-        namemap = default_namemap();
+        namemap = ossl_namemap_stored(NULL);
 #endif
 
     if (namemap == NULL)
@@ -175,7 +170,7 @@ int ossl_namemap_add(OSSL_NAMEMAP *namemap, const char *name)
 
 #ifndef FIPS_MODE
     if (namemap == NULL)
-        namemap = default_namemap();
+        namemap = ossl_namemap_stored(NULL);
 #endif
 
     if (name == NULL || namemap == NULL)
