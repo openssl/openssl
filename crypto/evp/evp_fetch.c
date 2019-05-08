@@ -39,13 +39,11 @@ static const OPENSSL_CTX_METHOD default_method_store_method = {
 struct method_data_st {
     OPENSSL_CTX *libctx;
     const char *name;
-    int nid;
+    int id;
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
-    void *(*method_from_dispatch)(int nid, const OSSL_DISPATCH *,
-                                  OSSL_PROVIDER *);
+    void *(*method_from_dispatch)(const OSSL_DISPATCH *, OSSL_PROVIDER *);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
-    int (*nid_method)(void *method);
 };
 
 /*
@@ -121,10 +119,8 @@ static void *construct_method(const char *name, const OSSL_DISPATCH *fns,
                               OSSL_PROVIDER *prov, void *data)
 {
     struct method_data_st *methdata = data;
-    /* TODO(3.0) get rid of the need for legacy NIDs */
-    int legacy_nid = OBJ_sn2nid(name);
 
-    return methdata->method_from_dispatch(legacy_nid, fns, prov);
+    return methdata->method_from_dispatch(fns, prov);
 }
 
 static void destruct_method(void *method, void *data)
@@ -136,11 +132,10 @@ static void destruct_method(void *method, void *data)
 
 void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         const char *name, const char *properties,
-                        void *(*new_method)(int nid, const OSSL_DISPATCH *fns,
+                        void *(*new_method)(const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
                         int (*upref_method)(void *),
-                        void (*free_method)(void *),
-                        int (*nid_method)(void *))
+                        void (*free_method)(void *))
 {
     OSSL_METHOD_STORE *store = get_default_method_store(libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
@@ -168,7 +163,6 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.destruct_method = free_method;
         mcmdata.refcnt_up_method = upref_method;
         mcmdata.destruct_method = free_method;
-        mcmdata.nid_method = nid_method;
         method = ossl_method_construct(libctx, operation_id, name,
                                        properties, 0 /* !force_cache */,
                                        &mcm, &mcmdata);
