@@ -11,7 +11,6 @@
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include <openssl/stack.h>
-#include <openssl/objects.h>
 #include <errno.h>
 #include <openssl/e_os2.h>      /* For ossl_inline */
 
@@ -307,20 +306,20 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
     }
     if (data == NULL)
         return -1;
-    r = OBJ_bsearch_ex_(&data, st->data, st->num, sizeof(void *), st->comp,
-                        ret_val_options);
+    r = ossl_bsearch(&data, st->data, st->num, sizeof(void *), st->comp,
+                     ret_val_options);
 
     return r == NULL ? -1 : (int)((const void **)r - st->data);
 }
 
 int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data)
 {
-    return internal_find(st, data, OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
+    return internal_find(st, data, OSSL_BSEARCH_FIRST_VALUE_ON_MATCH);
 }
 
 int OPENSSL_sk_find_ex(OPENSSL_STACK *st, const void *data)
 {
-    return internal_find(st, data, OBJ_BSEARCH_VALUE_ON_NOMATCH);
+    return internal_find(st, data, OSSL_BSEARCH_VALUE_ON_NOMATCH);
 }
 
 int OPENSSL_sk_push(OPENSSL_STACK *st, const void *data)

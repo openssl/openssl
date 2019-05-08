@@ -174,4 +174,15 @@ int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index,
                                CRYPTO_EX_dup *dup_func,
                                CRYPTO_EX_free *free_func);
 int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx);
+
+/* Function for simple binary search */
+
+/* Flags */
+# define OSSL_BSEARCH_VALUE_ON_NOMATCH            0x01
+# define OSSL_BSEARCH_FIRST_VALUE_ON_MATCH        0x02
+
+const void *ossl_bsearch(const void *key, const void *base, int num,
+                         int size, int (*cmp) (const void *, const void *),
+                         int flags);
+
 #endif
