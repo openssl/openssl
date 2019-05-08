@@ -817,7 +817,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
     s->psksession = psksess;
     if (psksess != NULL) {
         OPENSSL_free(s->psksession_id);
-        s->psksession_id = OPENSSL_memdup(id, idlen);
+        s->psksession_id = OPENSSL_memdup(id, idlen + 1);
         if (s->psksession_id == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA, ERR_R_INTERNAL_ERROR);
