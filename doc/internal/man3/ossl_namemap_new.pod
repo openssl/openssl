@@ -46,6 +46,7 @@ name.
 
 =begin comment
 
+TODO(3.0)
 It's possible that ossl_namemap_add(), ossl_namemap_name() and
 ossl_namemap_number() will change to accept NULL as a B<OSSL_NAMEMAP>
 to use one that is auto-created and associated with the default
