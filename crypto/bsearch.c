@@ -8,7 +8,7 @@
  */
 
 #include <stddef.h>
-#include "internal/bsearch.h"
+#include "internal/cryptlib.h"
 
 const void *ossl_bsearch(const void *key, const void *base, int num,
                          int size, int (*cmp) (const void *, const void *),
