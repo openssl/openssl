@@ -16,7 +16,7 @@
 
 # include <openssl/opensslconf.h>
 
-# ifndef OPENSSL_NO_CMP
+# ifndef OPENSSL_NO_CRMF
 #  include <openssl/opensslv.h>
 #  include <openssl/safestack.h>
 #  include <openssl/crmferr.h>
@@ -133,5 +133,5 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
 #  ifdef __cplusplus
 }
 #  endif
-# endif /* !defined OPENSSL_NO_CMP */
+# endif /* !defined OPENSSL_NO_CRMF */
 #endif /* !defined OSSL_HEADER_CRMF_H */

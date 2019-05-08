@@ -345,9 +345,9 @@ my @disablables = (
     "cast",
     "chacha",
     "cmac",
+    "cmp",
     "cms",
     "comp",
-    "crmf",
     "crypto-mdebug",
     "crypto-mdebug-backtrace",
     "ct",
@@ -432,6 +432,14 @@ foreach my $proto ((@tls, @dtls))
         push(@disablables, $proto);
         push(@disablables, "$proto-method") unless $proto eq "tls1_3";
         }
+
+# Internal disablables, for aliasing purposes.  They serve no special
+# purpose here, but allow scripts to get to know them through configdata.pm,
+# where these are merged with @disablables.
+# The actual aliasing mechanism is done via %disable_cascades
+my @disablables_int = qw(
+    crmf
+    );
 
 my %deprecated_disablables = (
     "ssl2" => undef,
@@ -534,6 +542,8 @@ my @disable_cascades = (
 
     sub { $disabled{cmac}; } => [ "siv" ],
     "legacy"                 => [ "md2" ],
+
+    "cmp"               => [ "crmf" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -2415,7 +2425,7 @@ use warnings;
 use Exporter;
 #use vars qw(\@ISA \@EXPORT);
 our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\%config \%target \%disabled \%withargs \%unified_info \@disablables);
+our \@EXPORT = qw(\%config \%target \%disabled \%withargs \%unified_info \@disablables \@disablables_int);
 
 EOF
 print OUT "our %config = (\n";
@@ -2471,6 +2481,15 @@ print OUT <<"EOF";
 EOF
 print OUT "our \@disablables = (\n";
 foreach (@disablables) {
+    print OUT "  ", quotify("perl", $_), ",\n";
+}
+print OUT <<"EOF";
+);
+
+EOF
+print OUT "# The following come from Configure's @disablables_int\n";
+print OUT "our \@disablables_int = (\n";
+foreach (@disablables_int) {
     print OUT "  ", quotify("perl", $_), ",\n";
 }
 print OUT <<"EOF";

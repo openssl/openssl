@@ -463,7 +463,7 @@ EOF
         # Declare the load function because the generate C file
         # includes "fooerr.h" not "foo.h"
         if ($lib ne "SSL" && $lib ne "ASYNC"
-                && grep { $lib eq uc $_ } @disablables) {
+                && (grep { $lib eq uc $_ } @disablables, @disablables_int)) {
             print OUT <<"EOF";
 # include <openssl/opensslconf.h>
 
