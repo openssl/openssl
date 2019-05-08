@@ -494,13 +494,14 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     return 0;
 }
 
-static void *evp_md_from_dispatch(int mdtype, const OSSL_DISPATCH *fns,
-                                    OSSL_PROVIDER *prov)
+static void *evp_md_from_dispatch(const OSSL_DISPATCH *fns,
+                                  OSSL_PROVIDER *prov)
 {
     EVP_MD *md = NULL;
     int fncnt = 0;
 
-    if ((md = EVP_MD_meth_new(mdtype, NID_undef)) == NULL)
+    /* EVP_MD_fetch() will set the legacy NID if available */
+    if ((md = EVP_MD_meth_new(NID_undef, NID_undef)) == NULL)
         return NULL;
 
     for (; fns->function_id != 0; fns++) {
@@ -587,17 +588,25 @@ static void evp_md_free(void *md)
     EVP_MD_meth_free(md);
 }
 
-static int evp_md_nid(void *vmd)
-{
-    EVP_MD *md = vmd;
-
-    return md->type;
-}
-
 EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-                             evp_md_from_dispatch, evp_md_upref,
-                             evp_md_free, evp_md_nid);
+    EVP_MD *md =
+        evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+                          evp_md_from_dispatch, evp_md_upref,
+                          evp_md_free);
+
+#ifndef FIPS_MODE
+    /* TODO(3.x) get rid of the need for legacy NIDs */
+    if (md != NULL) {
+        /*
+         * FIPS module note: since internal fetches will be entirely
+         * provider based, we know that none of its code depends on legacy
+         * NIDs or any functionality that use them.
+         */
+        md->type = OBJ_sn2nid(algorithm);
+    }
+#endif
+
+    return md;
 }

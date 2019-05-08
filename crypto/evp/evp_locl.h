@@ -91,8 +91,7 @@ int is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 
 void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
                         const char *algorithm, const char *properties,
-                        void *(*new_method)(int nid, const OSSL_DISPATCH *fns,
+                        void *(*new_method)(const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
                         int (*upref_method)(void *),
-                        void (*free_method)(void *),
-                        int (*nid_method)(void *));
+                        void (*free_method)(void *));

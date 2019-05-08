@@ -11,11 +11,10 @@ evp_generic_fetch - generic algorithm fetcher and method creator for EVP
 
  void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                          const char *name, const char *properties,
-                         void *(*new_method)(int nid, const OSSL_DISPATCH *fns,
+                         void *(*new_method)(const OSSL_DISPATCH *fns,
                                              OSSL_PROVIDER *prov),
                          int (*upref_method)(void *),
-                         void (*free_method)(void *),
-                         int (*nid_method)(void *));
+                         void (*free_method)(void *));
 
 =head1 DESCRIPTION
 
@@ -41,10 +40,6 @@ one.
 =item free_method()
 
 frees the given method.
-
-=item nid_method()
-
-returns the nid associated with the given method.
 
 =back
 
@@ -80,7 +75,6 @@ And here's the implementation of the FOO method fetcher:
     /* typedef struct evp_foo_st EVP_FOO */
     struct evp_foo_st {
         OSSL_PROVIDER *prov;
-        int nid;
 	CRYPTO_REF_COUNT refcnt;
         OSSL_OP_foo_newctx_fn *newctx;
         OSSL_OP_foo_init_fn *init;
@@ -93,7 +87,7 @@ And here's the implementation of the FOO method fetcher:
      * In this example, we have a public method creator and destructor.
      * It's not absolutely necessary, but is in the spirit of OpenSSL.
      */
-    EVP_FOO *EVP_FOO_meth_from_dispatch(int foo_type, const OSSL_DISPATCH *fns,
+    EVP_FOO *EVP_FOO_meth_from_dispatch(const OSSL_DISPATCH *fns,
                                         OSSL_PROVIDER *prov)
     {
         EVP_FOO *foo = NULL;
@@ -120,7 +114,6 @@ And here's the implementation of the FOO method fetcher:
                 break;
             }
         }
-        foo->nid = foo_type;
         foo->prov = prov;
         if (prov)
             ossl_provider_upref(prov);
@@ -138,10 +131,10 @@ And here's the implementation of the FOO method fetcher:
         }
     }
 
-    static void *foo_from_dispatch(int nid, const OSSL_DISPATCH *fns,
+    static void *foo_from_dispatch(const OSSL_DISPATCH *fns,
                                    OSSL_PROVIDER *prov)
     {
-        return EVP_FOO_meth_from_dispatch(nid, fns, prov);
+        return EVP_FOO_meth_from_dispatch(fns, prov);
     }
 
     static int foo_upref(void *vfoo)
@@ -162,8 +155,18 @@ And here's the implementation of the FOO method fetcher:
                            const char *name,
                            const char *properties)
     {
-        return evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
-                                 foo_from_dispatch, foo_upref, foo_free);
+        EVP_FOO *foo =
+            evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
+                              foo_from_dispatch, foo_upref, foo_free);
+
+        /*
+         * If this method exists in legacy form, with a constant NID for the
+         * given |name|, this is the spot to find that NID and set it in
+         * the newly constructed EVP_FOO instance.
+         */
+
+        return foo;
+
     }
 
 And finally, the library functions:
