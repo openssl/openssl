@@ -119,17 +119,18 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
  * general reason why the same string wouldn't result in the same number
  * within a unit...
  *
- * This isn't currently possible because of FIPS module constraints, so
- * we currently disable the code that would allow it.
+ * This isn't currently possible in the FIPS module because if init and
+ * cleanup constraints, so we currently disable the code that would allow
+ * it when FIPS_MODE is defined.
  */
 
 const char *ossl_namemap_name(const OSSL_NAMEMAP *namemap, int number)
 {
     NAMEMAP_ENTRY *entry;
 
-#if 0                            /* TODO(3.0) */
+#ifndef FIPS_MODE
     if (namemap == NULL)
-        namemap = default_namemap();
+        namemap = ossl_namemap_stored(NULL);
 #endif
 
     if (namemap == NULL || number == 0)
@@ -148,7 +149,7 @@ int ossl_namemap_number(const OSSL_NAMEMAP *namemap, const char *name)
 {
     NAMEMAP_ENTRY *entry, template;
 
-#if 0                            /* TODO(3.0) */
+#ifndef FIPS_MODE
     if (namemap == NULL)
         namemap = default_namemap();
 #endif
@@ -172,7 +173,7 @@ int ossl_namemap_add(OSSL_NAMEMAP *namemap, const char *name)
     NAMEMAP_ENTRY *entry;
     int number;
 
-#if 0                            /* TODO(3.0) */
+#ifndef FIPS_MODE
     if (namemap == NULL)
         namemap = default_namemap();
 #endif
