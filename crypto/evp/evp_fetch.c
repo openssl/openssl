@@ -75,17 +75,17 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
     struct method_data_st *methdata = data;
     void *method = NULL;
     OSSL_NAMEMAP *namemap;
-    int nid;
+    int id;
 
     if (store == NULL
         && (store = get_default_method_store(libctx)) == NULL)
         return NULL;
 
     if ((namemap = ossl_namemap_stored(libctx)) == NULL
-        || (nid = ossl_namemap_add(namemap, name)) == 0)
+        || (id = ossl_namemap_add(namemap, name)) == 0)
         return NULL;
 
-    (void)ossl_method_store_fetch(store, nid, propquery, &method);
+    (void)ossl_method_store_fetch(store, id, propquery, &method);
 
     if (method != NULL
         && !methdata->refcnt_up_method(method)) {
@@ -100,10 +100,10 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
 {
     struct method_data_st *methdata = data;
     OSSL_NAMEMAP *namemap;
-    int nid;
+    int id;
 
     if ((namemap = ossl_namemap_stored(methdata->libctx)) == NULL
-        || (nid = ossl_namemap_add(namemap, name)) == 0)
+        || (id = ossl_namemap_add(namemap, name)) == 0)
         return 0;
 
     if (store == NULL
@@ -111,7 +111,7 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
         return 0;
 
     if (methdata->refcnt_up_method(method)
-        && ossl_method_store_add(store, nid, propdef, method,
+        && ossl_method_store_add(store, id, propdef, method,
                                  methdata->destruct_method))
         return 1;
     return 0;
@@ -144,14 +144,14 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
 {
     OSSL_METHOD_STORE *store = get_default_method_store(libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    int nid;
+    int id;
     void *method = NULL;
 
     if (store == NULL || namemap == NULL)
         return NULL;
 
-    if ((nid = ossl_namemap_number(namemap, name)) == 0
-        || !ossl_method_store_cache_get(store, nid, properties, &method)) {
+    if ((id = ossl_namemap_number(namemap, name)) == 0
+        || !ossl_method_store_cache_get(store, id, properties, &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             alloc_tmp_method_store,
             dealloc_tmp_method_store,
@@ -172,7 +172,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         method = ossl_method_construct(libctx, operation_id, name,
                                        properties, 0 /* !force_cache */,
                                        &mcm, &mcmdata);
-        ossl_method_store_cache_set(store, nid, properties, method);
+        ossl_method_store_cache_set(store, id, properties, method);
     } else {
         upref_method(method);
     }
