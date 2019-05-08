@@ -44,16 +44,6 @@ ossl_namemap_name() finds the name corresponding to the given number.
 ossl_namemap_number() finds the number corresponding to the given
 name.
 
-=begin comment
-
-TODO(3.0)
-It's possible that ossl_namemap_add(), ossl_namemap_name() and
-ossl_namemap_number() will change to accept NULL as a B<OSSL_NAMEMAP>
-to use one that is auto-created and associated with the default
-library context.
-
-=end comment
-
 =head1 RETURN VALUES
 
 ossl_namemap_new() and ossl_namemap_stored() return the pointer to a
