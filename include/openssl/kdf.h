@@ -25,6 +25,7 @@ extern "C" {
 # define EVP_KDF_SSHKDF     NID_sshkdf
 # define EVP_KDF_SS         NID_sskdf
 # define EVP_KDF_X963       NID_x963kdf
+# define EVP_KDF_X942       NID_x942kdf
 
 EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id);
 EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf);
@@ -66,18 +67,20 @@ const EVP_KDF *EVP_get_kdfbyname(const char *name);
 # define EVP_KDF_CTRL_SET_MAC_SIZE           0x14 /* size_t */
 # define EVP_KDF_CTRL_SET_SSKDF_INFO         0x15 /* unsigned char *, size_t */
 # define EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE  0x16 /* int */
+# define EVP_KDF_CTRL_SET_UKM                0x17 /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_CEK_ALG            0x18 /* char * */
 # define EVP_KDF_CTRL_SET_SHARED_INFO        EVP_KDF_CTRL_SET_SSKDF_INFO
 
 # define EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND  0
 # define EVP_KDF_HKDF_MODE_EXTRACT_ONLY        1
 # define EVP_KDF_HKDF_MODE_EXPAND_ONLY         2
 
-#define EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV 65
-#define EVP_KDF_SSHKDF_TYPE_INITIAL_IV_SRV_TO_CLI 66
+#define EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV     65
+#define EVP_KDF_SSHKDF_TYPE_INITIAL_IV_SRV_TO_CLI     66
 #define EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_CLI_TO_SRV 67
 #define EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_SRV_TO_CLI 68
-#define EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_CLI_TO_SRV 69
-#define EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_SRV_TO_CLI 70
+#define EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_CLI_TO_SRV  69
+#define EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_SRV_TO_CLI  70
 
 /**** The legacy PKEY-based KDF API follows. ****/
 

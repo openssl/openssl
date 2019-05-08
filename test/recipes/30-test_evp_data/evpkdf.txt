@@ -6488,3 +6488,18 @@ Ctrl.digest = digest:SHA512
 Ctrl.hexsecret = hexsecret:0037cd001a0ad87f35ddf58ab355d6144ba2ed0749a7435dab548ba0bfbe723c047e2396b4eef99653412a92c8db74bb5c03063f2eb0525ae87356750ae3676faa86
 Ctrl.hexinfo = hexinfo:eb17da8851c41c7ac6710b1c49f324f8
 Output = 829a28b81f9e95b5f306604067499c07d5944ca034ed130d513951f7143e4e162bad8adb2833e53b8235c293cd2a809659ac7f7e392cba6a543660e5d95070c0c9e6a9cdc38123e22da61bb4cbb6ad6d1a58a069e934fc231bd9fe39a24afcbf322ccea385f0418f3b01c1edd6e7124593a1cefe3e48fcd95daaf72cfd973c59
+
+Title = X9.42 KDF tests (from RFC2631 test vectors)
+
+KDF = X942KDF
+Ctrl.digest = digest:SHA1
+Ctrl.hexsecret = hexsecret:000102030405060708090a0b0c0d0e0f10111213
+Ctrl.cekalg = cekalg:id-smime-alg-CMS3DESwrap
+Output = a09661392376f7044d9052a397883246b67f5f1ef63eb5fb
+
+KDF = X942KDF
+Ctrl.digest = digest:SHA1
+Ctrl.hexsecret = hexsecret:000102030405060708090a0b0c0d0e0f10111213
+Ctrl.cekalg = cekalg:id-smime-alg-CMSRC2wrap
+Ctrl.hexukm = hexukm:0123456789abcdeffedcba98765432010123456789abcdeffedcba98765432010123456789abcdeffedcba98765432010123456789abcdeffedcba9876543201
+Output = 48950c46e0530075403cce72889604e0
