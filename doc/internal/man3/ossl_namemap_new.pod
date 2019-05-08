@@ -22,9 +22,9 @@ ossl_namemap_add, ossl_namemap_name, ossl_namemap_number
 =head1 DESCRIPTION
 
 A B<OSSL_NAMEMAP> is a simple number E<lt>-E<gt> name map, which can
-be used to give arbitrary any arbitrary name (any string) a unique
-dynamic identity that is valid throughout the lifetime of the
-associated library context.
+be used to give any arbitrary name (any string) a unique dynamic
+identity that is valid throughout the lifetime of the associated
+library context.
 
 ossl_namemap_new() and ossl_namemap_free() construct and destruct a
 new B<OSSL_NAMEMAP>.
@@ -44,12 +44,14 @@ ossl_namemap_name() finds the name corresponding to the given number.
 ossl_namemap_number() finds the number corresponding to the given
 name.
 
-=head1 NOTES
+=begin comment
 
 It's possible that ossl_namemap_add(), ossl_namemap_name() and
 ossl_namemap_number() will change to accept NULL as a B<OSSL_NAMEMAP>
 to use one that is auto-created and associated with the default
 library context.
+
+=end comment
 
 =head1 RETURN VALUES
 
