@@ -14,6 +14,10 @@
 #include <openssl/evp.h>
 #include <openssl/ui.h>
 
+#ifndef BUFSIZ
+# define BUFSIZ 256
+#endif
+
 /* should be init to zeros. */
 static char prompt_string[80];
 
