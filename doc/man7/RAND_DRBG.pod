@@ -269,8 +269,7 @@ NIST SP-800-90A mandates that entropy *shall not* be provided by the
 consuming application, neither for instantiation, nor for reseeding.
 [NIST SP 800-90Ar1, Sections 9.1 and 9.2]. For that reason the B<randomness>
 argument is ignored and the random bytes provided by the L<RAND_add(3)> and
-L<RAND_seed(3)> calls are treated as additional data. (In other words, the
-B<randomness> parameter is set to zero internally.)
+L<RAND_seed(3)> calls are treated as additional data.
 
 =head2 Reseeding the master DRBG with automatic seeding disabled
 
