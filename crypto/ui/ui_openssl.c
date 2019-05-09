@@ -598,10 +598,10 @@ static void pushsig(void)
 
 #  ifdef OPENSSL_SYS_WIN32
     savsig[SIGABRT] = signal(SIGABRT, recsig);
-    savsig[SIGFPE] = signal(SIGFPE, recsig);
-    savsig[SIGILL] = signal(SIGILL, recsig);
+    savsig[SIGFPE] = signal(SIGFPE, SIG_DFL);
+    savsig[SIGILL] = signal(SIGILL, SIG_DFL);
     savsig[SIGINT] = signal(SIGINT, recsig);
-    savsig[SIGSEGV] = signal(SIGSEGV, recsig);
+    savsig[SIGSEGV] = signal(SIGSEGV, SIG_DFL);
     savsig[SIGTERM] = signal(SIGTERM, recsig);
 #  else
     for (i = 1; i < NX509_SIG; i++) {
