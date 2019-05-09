@@ -964,6 +964,20 @@ BIGNUM *bn_wexpand(BIGNUM *a, int words)
     return (words <= a->dmax) ? a : bn_expand2(a, words);
 }
 
+BIGNUM *bn_wexpand_top(BIGNUM *a, int words)
+{
+    int i;
+
+    a = bn_wexpand(a, words);
+    if (a) {
+        for (i = a->top; i < words; i++)
+            a->d[i] = 0;
+        a->top = words;
+        a->flags |= BN_FLG_FIXED_TOP;
+    }
+    return a;
+}
+
 void bn_correct_top(BIGNUM *a)
 {
     BN_ULONG *ftl;

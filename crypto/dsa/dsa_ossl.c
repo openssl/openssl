@@ -251,8 +251,16 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
      * specificly refer to the discussion starting with:
      *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
      * The fix is to rework BN so these gymnastics aren't required.
+     *
+     * For the first addition, l=k+q might spill over to next word via
+     * the carry. Thus, resulting l->top is either q_words or q_words+1.
+     * To avoid conditional carry, increase k->top beforehand such that
+     * the resulting l->top is always q_words+1.
+     * The second addition (k=l+q) cannot spill again since l->top has
+     * enough space already.
      */
-    if (!BN_add(l, k, dsa->q)
+    if (!bn_wexpand_top(k, q_words + 1)
+        || !BN_add(l, k, dsa->q)
         || !BN_add(k, l, dsa->q))
         goto err;
 

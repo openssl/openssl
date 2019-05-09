@@ -230,7 +230,16 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         }
     }
 
-    if (!BN_add(lambda, k, cardinality)) {
+    /*
+     * For this addition, lambda=k+cardinality might spill over to next
+     * word via the carry. Thus, resulting lambda->top is either q_words
+     * or q_words+1. To avoid conditional carry, increase k->top beforehand
+     * such that the resulting lambda->top is always q_words+1.
+     * The later addition (k=lambda+cardinality) cannot spill again since
+     * lambda->top has enough space already.
+     */
+    if (!bn_wexpand_top(k, group_top + 1)
+        || !BN_add(lambda, k, cardinality)) {
         ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
         goto err;
     }

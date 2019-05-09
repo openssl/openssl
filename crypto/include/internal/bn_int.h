@@ -60,6 +60,12 @@ void bn_set_static_words(BIGNUM *a, const BN_ULONG *words, int size);
  */
 int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words);
 
+/* 
+ * Expand a BIGNUM so that it has a fixed top of words length.
+ * Newly added words are zeroed and the BN_FLG_FIXED_TOP flag is set.
+ */
+BIGNUM *bn_wexpand_top(BIGNUM *a, int words);
+
 /*
  * Some BIGNUM functions assume most significant limb to be non-zero, which
  * is customarily arranged by bn_correct_top. Output from below functions
