@@ -566,7 +566,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_BIND, OPT_UNIX,
     OPT_XMPPHOST, OPT_VERIFY, OPT_NAMEOPT,
-    OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
+    OPT_CERT, OPT_CERT_ENC, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_IGN_EOF, OPT_NO_IGN_EOF,
@@ -582,7 +582,7 @@ typedef enum OPTION_choice {
     OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
-    OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
+    OPT_KEY,  OPT_KEY_ENC, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_NOSERVERNAME, OPT_ASYNC,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_PROTOHOST,
@@ -619,10 +619,16 @@ const OPTIONS s_client_options[] = {
 #endif
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
+#ifndef OPENSSL_NO_CNSM
+    {"cert_enc", OPT_CERT_ENC, '<', "Encrypto Certificate file to use when use cnsm, PEM format assumed"},
+#endif
     {"certform", OPT_CERTFORM, 'F',
      "Certificate format (PEM or DER) PEM default"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"key", OPT_KEY, 's', "Private key file to use, if not in -cert file"},
+#ifndef OPENSSL_NO_CNSM
+    {"key_enc", OPT_KEY_ENC, 's', "Encrypto Private key file to use when use cnsm, if not in -cert_enc file"},
+#endif
     {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER or engine) PEM default"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
@@ -900,6 +906,10 @@ int s_client_main(int argc, char **argv)
     char *cbuf = NULL, *sbuf = NULL;
     char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
+#ifndef OPENSSL_NO_CNSM
+    int cnsm_flag = 0;
+    char *cert_enc_file = NULL, *key_enc_file = NULL;
+#endif
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
     char *port = OPENSSL_strdup(PORT);
     char *bindhost = NULL, *bindport = NULL;
@@ -1101,6 +1111,11 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_CERT:
             cert_file = opt_arg();
+#ifndef OPENSSL_NO_CNSM
+        case OPT_CERT_ENC:
+            cnsm_flag++;
+            cert_enc_file = opt_arg();
+#endif
             break;
         case OPT_NAMEOPT:
             if (!set_nameopt(opt_arg()))
@@ -1361,6 +1376,12 @@ int s_client_main(int argc, char **argv)
         case OPT_KEY:
             key_file = opt_arg();
             break;
+#ifndef OPENSSL_NO_CNSM
+        case OPT_KEY_ENC:
+            cnsm_flag++;
+            key_enc_file = opt_arg();
+            break;
+#endif
         case OPT_RECONNECT:
             reconnect = 5;
             break;
@@ -1637,6 +1658,10 @@ int s_client_main(int argc, char **argv)
 
     if (key_file == NULL)
         key_file = cert_file;
+#ifndef OPENSSL_NO_CNSM
+    if (cnsm_flag && key_enc_file == NULL)
+        key_enc_file = cert_enc_file;
+#endif
 
     if (key_file != NULL) {
         key = load_key(key_file, key_format, 0, pass, e,
@@ -1694,6 +1719,10 @@ int s_client_main(int argc, char **argv)
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
+#endif
+
+#ifndef OPENSSL_NO_CNSM
+            if(cnsm_flag) meth = CNTLS_client_method();
 #endif
 
     ctx = SSL_CTX_new(meth);
@@ -1912,6 +1941,25 @@ int s_client_main(int argc, char **argv)
 
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
+
+#ifndef OPENSSL_NO_CNSM
+    if (cnsm_flag && SSL_CTX_use_certificate_file(ctx, key_enc_file, SSL_FILETYPE_PEM) <= 0)
+    {
+            ERR_print_errors(bio_err);
+            goto end;
+    }
+    if (cnsm_flag && SSL_CTX_use_enc_PrivateKey_file(ctx, cert_enc_file, SSL_FILETYPE_PEM) <= 0)
+    {
+            ERR_print_errors(bio_err);
+            goto end;
+    }
+
+     if (cnsm_flag && !SSL_CTX_check_enc_private_key(ctx))
+     {
+             ERR_print_errors(bio_err);
+             goto end;
+     }
+#endif
 
     if (!noservername) {
         tlsextcbp.biodebug = bio_err;
@@ -2590,7 +2638,7 @@ int s_client_main(int argc, char **argv)
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
                 /*
-                 * According to RFC 5804 § 1.7, capability
+                 * According to RFC 5804 搂 1.7, capability
                  * is case-insensitive, make it uppercase
                  */
                 if (mbuf_len > 1 && mbuf[0] == '"') {
@@ -2618,7 +2666,7 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
             /*
-             * According to RFC 5804 § 2.2, response codes are case-
+             * According to RFC 5804 搂 2.2, response codes are case-
              * insensitive, make it uppercase but preserve the response.
              */
             strncpy(sbuf, mbuf, 2);
