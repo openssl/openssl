@@ -311,6 +311,9 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
     GEN_SESSION_CB cb = def_generate_session_id;
 
     switch (s->version) {
+    #ifndef OPENSSL_NO_CNSM
+    case SM1_1_VERSION:
+    #endif
     case SSL3_VERSION:
     case TLS1_VERSION:
     case TLS1_1_VERSION:
