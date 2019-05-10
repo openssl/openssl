@@ -11,6 +11,12 @@
 #include "ec_lcl.h"
 #include <openssl/err.h>
 
+#ifndef OPENSSL_NO_CNSM
+
+int sm2_sign(const unsigned char *dgst, int dgstlen, unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
+
+#endif
+
 ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
 {
     return ECDSA_do_sign_ex(dgst, dlen, NULL, NULL, eckey);
@@ -29,7 +35,13 @@ ECDSA_SIG *ECDSA_do_sign_ex(const unsigned char *dgst, int dlen,
 int ECDSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char
                *sig, unsigned int *siglen, EC_KEY *eckey)
 {
-    return ECDSA_sign_ex(type, dgst, dlen, sig, siglen, NULL, NULL, eckey);
+#ifndef OPENSSL_NO_CNSM
+
+    if (EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey)) == NID_sm2)
+        return  sm2_sign(dgst, dlen, sig, siglen, eckey);
+     else
+#endif	
+        return ECDSA_sign_ex(type, dgst, dlen, sig, siglen, NULL, NULL, eckey);
 }
 
 int ECDSA_sign_ex(int type, const unsigned char *dgst, int dlen,
