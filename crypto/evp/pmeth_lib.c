@@ -250,6 +250,13 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
     return int_ctx_new(NULL, e, id);
 }
 
+#ifndef OPENSSL_NO_CNSM
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_pkey_id(EVP_PKEY *pkey, int id, ENGINE *e)
+{
+    return int_ctx_new(pkey, e, id);
+}
+#endif
+
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 {
     EVP_PKEY_CTX *rctx;
