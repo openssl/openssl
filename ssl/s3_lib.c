@@ -2667,6 +2667,46 @@ static SSL_CIPHER ssl3_ciphers[] = {
      },
 #endif                          /* OPENSSL_NO_GOST */
 
+#ifndef OPENSSL_NO_CNSM
+ /* Cipher E011 */
+     {
+     1,
+     TLS1_TXT_ECDHE_WITH_SM4_SM3,
+     NULL,
+     TLS1_CK_ECDHE_WITH_SM4_SM3,
+     SSL_kSM2DH,
+     SSL_aSM2DSA,
+     SSL_SM4,
+     SSL_SM3,
+     TLS1_VERSION,
+     TLS1_2_VERSION,
+     0, 0,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SM3 | TLS1_PRF_SM3,
+     128,
+     128,
+     },
+
+     /* Cipher E013 */
+     {
+     1,
+     TLS1_TXT_ECC_WITH_SM4_SM3,
+     NULL,
+     TLS1_CK_ECC_WITH_SM4_SM3,
+     SSL_kECC,
+     SSL_aSM2DSA,
+     SSL_SM4,
+     SSL_SM3,
+     TLS1_VERSION,
+     TLS1_2_VERSION,
+     0, 0,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SM3 | TLS1_PRF_SM3,
+     128,
+     128,
+     },
+#endif
+
 #ifndef OPENSSL_NO_IDEA
     {
      1,
@@ -4248,7 +4288,11 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         c = sk_SSL_CIPHER_value(prio, i);
 
         /* Skip ciphers not supported by the protocol version */
-        if (!SSL_IS_DTLS(s) &&
+        #ifndef OPENSSL_NO_CNSM
+            if (!SSL_IS_DTLS(s) && s->version != SM1_1_VERSION &&
+        #else
+            if (!SSL_IS_DTLS(s) &&
+        #endif
             ((s->version < c->min_tls) || (s->version > c->max_tls)))
             continue;
         if (SSL_IS_DTLS(s) &&
@@ -4311,6 +4355,25 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                 continue;
             }
 #endif
+
+        #ifndef OPENSSL_NO_CNSM
+            if (c->id == TLS1_CK_ECC_WITH_SM4_SM3) {   //prefer ECC-SM4-SM3
+                ii = sk_SSL_CIPHER_find(allow, c);
+                if (ii >= 0) {
+                	const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
+                	ret = tmp;
+                	break;
+                }  
+            }
+            else{
+                const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
+                if (ret == NULL)
+                	ret = tmp;
+                continue;
+								
+            }
+        #endif
+		
             if (prefer_sha256) {
                 const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
 
@@ -4847,6 +4910,143 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
     EVP_PKEY_CTX_free(pctx);
     return rv;
 }
+
+#ifndef OPENSSL_NO_CNSM
+/* Derive secrets for sm2 ECDH*/
+typedef struct {
+    /* Key and paramgen group */
+    EC_GROUP *gen_group;
+    /* message digest */
+    const EVP_MD *md;
+    /* Duplicate key if custom cofactor needed */
+    EC_KEY *co_key;
+    /* Cofactor mode */
+    signed char cofactor_mode;
+    /* KDF (if any) to use for ECDH */
+    char kdf_type;
+    /* Message digest to use for key derivation */
+    const EVP_MD *kdf_md;
+    /* User key material */
+    unsigned char *kdf_ukm;
+    size_t kdf_ukmlen;
+    /* KDF output length */
+    size_t kdf_outlen;
+
+    /* server tag */
+    int server;
+    /* peer uid */
+    char *peer_id;
+    /* self uid */
+    char *self_id;
+    /* peer uid length */
+    int peerid_len;
+    /* self uid length */
+    int selfid_len;
+    /* peer ephemeral public key */
+    EC_KEY *peer_ecdhe_key;
+    /* self ephemeral key */
+    EC_KEY *self_ecdhe_key;
+    /* sm2/ecc encrypt out format, 0 for ASN1 */
+    int encdata_format;
+}EC_PKEY_CTX;
+
+
+int ssl_derive_SM2(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,  int gensecret)
+{
+    int rv = 0;
+    unsigned char *pms = NULL;
+    size_t pmslen = 0;
+    EVP_PKEY_CTX *pctx = NULL;
+    EC_PKEY_CTX *dctx = NULL;
+    EVP_PKEY *srvr_pub_pkey = NULL;
+    const EVP_MD *md = NULL;
+
+    if (privkey == NULL || pubkey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE_SM2,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    pctx = EVP_PKEY_CTX_new(s->cert->pkeys[SSL_PKEY_ECC_ENC].privatekey, NULL);
+    if(!pctx){
+         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE_SM2,
+                   ERR_R_INTERNAL_ERROR);
+         goto err;
+    	}
+
+    srvr_pub_pkey = X509_get_pubkey(sk_X509_value(s->session->peer_chain, sk_X509_num(s->session->peer_chain)-1));
+    if ((srvr_pub_pkey == NULL) || (EVP_PKEY_id(srvr_pub_pkey) != EVP_PKEY_EC) || (EVP_PKEY_get0_EC_KEY(srvr_pub_pkey) == NULL))
+    {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE_SM2,
+           ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    md = EVP_sm3();
+
+    /*Init the dctx for EVP_PKEY_derive */
+    dctx = (EC_PKEY_CTX *)EVP_PKEY_CTX_get_data(pctx);
+	
+    /* First : Set the server tag */
+    dctx->server = s->server;
+    dctx->peer_ecdhe_key = EVP_PKEY_get0_EC_KEY(pubkey);
+    dctx->self_ecdhe_key = EVP_PKEY_get0_EC_KEY(privkey);
+    dctx->kdf_md = md;
+    dctx->peer_id = "1234567812345678";
+    dctx->peerid_len = 16;
+    dctx->self_id  = "1234567812345678";
+    dctx->selfid_len= 16;
+
+	
+    pmslen = 48;
+    pms = OPENSSL_malloc(pmslen);
+    if (pms == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE_SM2,
+                 ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (EVP_PKEY_derive_init(pctx) <= 0
+        || EVP_PKEY_derive_set_peer(pctx, srvr_pub_pkey) <= 0
+        || EVP_PKEY_derive(pctx, pms, &pmslen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE_SM2,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    
+    if (gensecret) {
+        /* SSLfatal() called as appropriate in the below functions */
+        if (SSL_IS_TLS13(s)) {
+            /*
+             * If we are resuming then we already generated the early secret
+             * when we created the ClientHello, so don't recreate it.
+             */
+            if (!s->hit)
+                rv = tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL,
+                                           0,
+                                           (unsigned char *)&s->early_secret);
+            else
+                rv = 1;
+
+            rv = rv && tls13_generate_handshake_secret(s, pms, pmslen);
+        } else {
+            rv = ssl_generate_master_secret(s, pms, pmslen, 0);
+        }
+    } else {
+        /* Save premaster secret */
+        s->s3->tmp.pms = pms;
+        s->s3->tmp.pmslen = pmslen;
+        pms = NULL;
+        rv = 1;
+    }
+
+ err:
+    OPENSSL_clear_free(pms, pmslen);
+    EVP_PKEY_CTX_free(pctx);
+    return rv;
+}
+#endif
 
 #ifndef OPENSSL_NO_DH
 EVP_PKEY *ssl_dh_to_pkey(DH *dh)
