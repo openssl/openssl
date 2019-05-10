@@ -26,6 +26,13 @@
 
 #define TICKET_NONCE_SIZE       8
 
+
+#ifndef OPENSSL_NO_CNSM
+
+int ssl_derive_SM2(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,  int gensecret);
+
+#endif
+
 static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt);
 
 /*
@@ -334,6 +341,12 @@ static int send_server_key_exchange(SSL *s)
         /* SRP: send ServerKeyExchange */
         || (alg_k & SSL_kSRP)
 #endif
+#ifndef OPENSSL_NO_CNSM
+        /* ECC-SM4-SM3: send ServerKeyExchange */
+        || (alg_k & SSL_kECC)
+        /* ECDHE-SM4-SM3: send ServerKeyExchange */
+        || (alg_k & SSL_kSM2DH)
+#endif
         ) {
         return 1;
     }
@@ -386,6 +399,13 @@ int send_certificate_request(SSL *s)
            && !(s->s3->tmp.new_cipher->algorithm_auth & SSL_aPSK)) {
         return 1;
     }
+	
+#ifndef OPENSSL_NO_CNSM
+    if(s->s3 && s->s3->tmp.new_cipher && s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3){ //ECDHE-SM4-SM3 need client's certificate
+        return 1;
+    }
+#endif
+
 
     return 0;
 }
@@ -773,10 +793,6 @@ static ossl_inline int conn_is_closed(void)
 #endif
 #if defined(ECONNRESET)
     case ECONNRESET:
-        return 1;
-#endif
-#if defined(WSAECONNRESET)
-    case WSAECONNRESET:
         return 1;
 #endif
     default:
@@ -2448,6 +2464,9 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
             return 0;
         }
     } else if (!(s->verify_mode & SSL_VERIFY_PEER)
+    #ifndef OPENSSL_NO_CNSM
+	&&(s->s3 && s->s3->tmp.new_cipher && s->s3->tmp.new_cipher->id != TLS1_CK_ECDHE_WITH_SM4_SM3)  //ECDHE-SM4-SM3 will use the s->s3->hansdshake_buff later,so shouldn't digest the cached record here modify by gujq on 20190313
+    #endif
                 && !ssl3_digest_cached_records(s, 0)) {
         /* SSLfatal() already called */;
         return 0;
@@ -2639,6 +2658,59 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         r[3] = s->srp_ctx.B;
     } else
 #endif
+#ifndef OPENSSL_NO_CNSM
+    if (type & SSL_kECC) {
+    	#ifdef CIPHER_DEBUG
+    	printf("we need do nothing if we are SM2-SM4-SM3\n");
+    	#endif 
+      r[0] = NULL;
+      r[1] = NULL;
+      r[2] = NULL;
+      r[3] = NULL;
+    } else
+    if (type & SSL_kSM2DH) {
+
+        if (s->s3->tmp.pkey != NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                     ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        /* Get NID of appropriate shared curve */
+        curve_id = tls1_shared_group(s, -2);
+        if (curve_id == 0) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                     SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                     SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
+            goto err;
+        }
+        s->s3->tmp.pkey = ssl_generate_pkey_group(s, curve_id);
+        /* Generate a new key for this curve */
+        if (s->s3->tmp.pkey == NULL) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+
+        /* Encode the public key. */
+        encodedlen = EVP_PKEY_get1_tls_encodedpoint(s->s3->tmp.pkey,
+                                                    &encodedPoint);
+        if (encodedlen == 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_EC_LIB);
+            goto err;
+        }
+
+        /*
+         * We'll generate the serverKeyExchange message explicitly so we
+         * can set these to NULLs
+         */
+        r[0] = NULL;
+        r[1] = NULL;
+        r[2] = NULL;
+        r[3] = NULL;
+    }else 
+#endif
     {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
@@ -2725,7 +2797,11 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
     }
 
 #ifndef OPENSSL_NO_EC
-    if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
+    #ifndef OPENSSL_NO_CNSM
+        if (type & (SSL_kECDHE | SSL_kECDHEPSK |SSL_kSM2DH)) {
+    #else
+        if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
+    #endif
         /*
          * We only support named (not generic) curves. In this situation, the
          * ServerKeyExchange message has: [1 byte CurveType], [2 byte CurveName]
@@ -2798,9 +2874,35 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                 goto err;
             }
         }
+        #ifndef OPENSSL_NO_CNSM
+				if(s->s3->tmp.new_cipher->id == TLS1_CK_ECC_WITH_SM4_SM3){
+					size_t sm2_certs_len = 0;
+					BUF_MEM *sm2_certs = NULL;
+					sm2_certs = BUF_MEM_new();
+        	if (!sm2_certs){
+        		SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                        ERR_R_INTERNAL_ERROR);
+            goto err;
+          }
+          
+        	if (!ssl_add_cert_to_buf(sm2_certs, &sm2_certs_len, (&s->cert->pkeys[SSL_PKEY_ECC_ENC])->x509))
+            goto err;
+        	tbslen = construct_key_exchange_tbs(s, &tbs, sm2_certs ? sm2_certs->data : NULL,
+                                            sm2_certs_len);
+        }
+        else{
+        	tbslen = construct_key_exchange_tbs(s, &tbs,
+                                            s->init_buf->data + paramoffset,
+                                            paramlen);
+        }
+        #else
+        
         tbslen = construct_key_exchange_tbs(s, &tbs,
                                             s->init_buf->data + paramoffset,
                                             paramlen);
+        #endif
+				                                            
         if (tbslen == 0) {
             /* SSLfatal() already called */
             goto err;
@@ -2967,6 +3069,161 @@ static int tls_process_cke_psk_preamble(SSL *s, PACKET *pkt)
     return 0;
 #endif
 }
+
+#ifndef OPENSSL_NO_CNSM
+static int tls_process_cke_sm2ecc(SSL *s, PACKET *pkt)
+{
+    unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
+    size_t decrypt_len = 0;
+    PACKET enc_premaster;
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+
+    pkey = s->cert->pkeys[SSL_PKEY_ECC_ENC].privatekey;
+    if (pkey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_SM2ECC,
+                 SSL_R_MISSING_RSA_CERTIFICATE);
+        goto err;
+    }
+
+    /* SSLv3 and pre-standard DTLS omit the length bytes. */
+    if (s->version == SSL3_VERSION || s->version == DTLS1_BAD_VER) {
+        enc_premaster = *pkt;
+    } else {
+        if (!PACKET_get_length_prefixed_2(pkt, &enc_premaster)
+            || PACKET_remaining(pkt) != 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_SM2ECC,
+                     SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+    }
+			
+		/*
+     * We must not leak whether a decryption failure occurs because of
+     * Bleichenbacher's attack on PKCS #1 v1.5 RSA padding (see RFC 2246,
+     * section 7.4.7.1). The code follows that advice of the TLS RFC and
+     * generates a random premaster secret for the case that the decrypt
+     * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
+     */
+
+    if (RAND_priv_bytes(rand_premaster_secret,
+                      sizeof(rand_premaster_secret)) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_SM2ECC,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+        
+    /* EVP Decrypt Pre Master Secret Key */
+     pkey_ctx = EVP_PKEY_CTX_new_pkey_id(pkey, NID_sm2, NULL);
+    	if (pkey_ctx == NULL || EVP_PKEY_decrypt_init(pkey_ctx) <= 0) {
+    	    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_SM2ECC,
+    	             ERR_R_EVP_LIB);
+    	    goto err;
+    	}
+
+     /* Need to call EVP_PKEY_CTX_CTL(pkey_ctx, EVP_PKEY_EC, EVP_PKEY_CTRL_MD, 0, (void *)EVP_sm3()) */
+     decrypt_len = sizeof(rand_premaster_secret);
+     if (EVP_PKEY_decrypt(pkey_ctx, rand_premaster_secret, (size_t *)&decrypt_len, PACKET_data(&enc_premaster), (int)PACKET_remaining(&enc_premaster)) <= 0)
+     {
+         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_SM2ECC,
+                     ERR_R_INTERNAL_ERROR);
+         goto err;
+     }
+     
+     
+    if (decrypt_len < 0) {
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_SM2ECC,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+			
+		#ifdef CIPHER_DEBUG
+    {
+    	int gi = 0;
+    	printf("the pre mask key =[");
+    	for(gi=0; gi<sizeof(rand_premaster_secret); gi++){
+    		printf("%02X", rand_premaster_secret[gi]);
+    	}
+    	printf("]\n");
+    }
+    #endif
+
+    if (!ssl_generate_master_secret(s, rand_premaster_secret,
+                                    sizeof(rand_premaster_secret), 0)) {
+        /* SSLfatal() already called */
+        goto err;
+    }
+    
+    
+    
+    OPENSSL_cleanse(rand_premaster_secret, sizeof(rand_premaster_secret));
+
+    ret = 1;
+ err:
+ 		if(pkey_ctx) EVP_PKEY_CTX_free(pkey_ctx);
+    return ret;
+}
+
+static int tls_process_cke_sm2dhe(SSL *s, PACKET *pkt)
+{
+    EVP_PKEY *skey = s->s3->tmp.pkey;
+    EVP_PKEY *ckey = NULL;
+    int ret = 0;
+
+    if (PACKET_remaining(pkt) == 0L) {
+        /* We don't support ECDH client auth */
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_PROCESS_CKE_SM2DHE,
+                 SSL_R_MISSING_TMP_ECDH_KEY);
+        goto err;
+    } else {
+        unsigned int i;
+        const unsigned char *data;
+
+        /*
+         * Get client's public key from encoded point in the
+         * ClientKeyExchange message.
+         */
+
+        /* Get encoded point length */
+	if(!PACKET_forward(pkt, 3)){
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_SM2DHE,
+                    SSL_R_LENGTH_MISMATCH);
+           goto err;
+	}
+       if (!PACKET_get_1(pkt, &i) || !PACKET_get_bytes(pkt, &data, i)
+           || PACKET_remaining(pkt) != 0) {
+           SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_SM2DHE,
+                    SSL_R_LENGTH_MISMATCH);
+           goto err;
+       }
+       ckey = EVP_PKEY_new();
+       if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) <= 0) {
+           SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_SM2DHE,
+                    ERR_R_EVP_LIB);
+           goto err;
+       }
+       if (EVP_PKEY_set1_tls_encodedpoint(ckey, data, i) == 0) {
+           SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_SM2DHE,
+                    ERR_R_EC_LIB);
+           goto err;
+       }
+    }
+    if (ssl_derive_SM2(s, skey, ckey, 1) == 0) {
+            /* SSLfatal() already called */
+            goto err;
+    }
+	
+    ret = 1;
+    EVP_PKEY_free(s->s3->tmp.pkey);
+    s->s3->tmp.pkey = NULL;
+ err:
+    EVP_PKEY_free(ckey);
+
+    return ret;
+}
+#endif
 
 static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
 {
@@ -3467,7 +3724,22 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
-    } else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
+    }
+    #ifndef OPENSSL_NO_CNSM 
+    else if (alg_k & (SSL_kECC)) {
+        if (!tls_process_cke_sm2ecc(s, pkt)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+    } 
+    else if (alg_k & (SSL_kSM2DH)) {
+        if (!tls_process_cke_sm2dhe(s, pkt)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+    } 
+    #endif
+    else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         if (!tls_process_cke_dhe(s, pkt)) {
             /* SSLfatal() already called */
             goto err;
@@ -3687,6 +3959,11 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
         }
     } else {
         EVP_PKEY *pkey;
+#ifndef OPENSSL_NO_CNSM
+    if(s->s3 && s->s3->tmp.new_cipher && s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3 && !(s->verify_mode & SSL_VERIFY_PEER)){
+        goto NO_CHECK_CNSM;
+    	}
+#endif
         i = ssl_verify_cert_chain(s, sk);
         if (i <= 0) {
             SSLfatal(s, ssl_x509err2alert(s->verify_result),
@@ -3699,6 +3976,9 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
                      SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, i);
             goto err;
         }
+#ifndef OPENSSL_NO_CNSM
+NO_CHECK_CNSM:
+#endif
         pkey = X509_get0_pubkey(sk_X509_value(sk, 0));
         if (pkey == NULL) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
@@ -3790,10 +4070,26 @@ int tls_construct_server_certificate(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+    
+    #ifndef OPENSSL_NO_CNSM
+     if (s->s3->tmp.new_cipher->algorithm_mkey & (SSL_kECC | SSL_kSM2DH))
+     {
+         if (!ssl3_output_sm2_cert_chain(s, pkt,  s->cert->key, &s->cert->pkeys[SSL_PKEY_ECC_ENC]))
+         {
+             return 0;
+         }
+     }
+     else{
+    #endif   
+    
     if (!ssl3_output_cert_chain(s, pkt, cpk)) {
         /* SSLfatal() already called */
         return 0;
     }
+    
+    #ifndef OPENSSL_NO_CNSM
+  	}
+    #endif
 
     return 1;
 }
