@@ -506,6 +506,7 @@ install_dev: install_runtime_libs
 	@chmod 644 $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
 	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@set -e; for i in $(SRCDIR)/include/openssl/*.h \
+			  $(SRCDIR)/crypto/include/internal/*.h \
 			  $(BLDDIR)/include/openssl/*.h; do \
 		fn=`basename $$i`; \
 		$(ECHO) "install $$i -> $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
