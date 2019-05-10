@@ -265,9 +265,9 @@ from the trusted entropy sources.
 =back
 
 NOTE: Manual reseeding is *not allowed* in FIPS mode, because
-NIST SP-800-90A mandates that entropy *shall not* be provided by the
-consuming application, neither for instantiation, nor for reseeding.
-[NIST SP 800-90Ar1, Sections 9.1 and 9.2]. For that reason the B<randomness>
+[NIST SP 800-90A Rev. 1] mandates that entropy *shall not* be provided by
+the consuming application, neither for instantiation (Section 9.1), nor for
+reseeding (Section 9.2). For that reason the B<randomness>
 argument is ignored and the random bytes provided by the L<RAND_add(3)> and
 L<RAND_seed(3)> calls are treated as additional data.
 
