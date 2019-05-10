@@ -138,6 +138,9 @@ my @known_algorithms = ( # These are algorithms we know are guarded in relevant
 			 # header files, but aren't actually disablable.
 			 # Without these, this script will warn a lot.
 			 "RSA", "MD5",
+			 # ifndef OPENSSL_NO_CNSM
+			 "CNSM",
+			 # endif like c style -:)
 			 # @disablables comes from configdata.pm
 			 map { (my $x = uc $_) =~ s|-|_|g; $x; } @disablables,
 			 # Deprecated functions.  Not really algorithmss, but
