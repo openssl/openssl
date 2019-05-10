@@ -177,6 +177,13 @@
 # define SSL_kECDHEPSK           0x00000080U
 # define SSL_kDHEPSK             0x00000100U
 
+#ifndef OPENSSL_NO_CNSM
+/* SM2 ECC */
+#  define SSL_kECC               0x00000800L
+/* SM2 KAP */
+#  define SSL_kSM2DH             0x00001000L
+#endif
+
 /* all PSK */
 
 # define SSL_PSK     (SSL_kPSK | SSL_kRSAPSK | SSL_kECDHEPSK | SSL_kDHEPSK)
@@ -204,6 +211,12 @@
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 # define SSL_aANY                0x00000000U
 /* All bits requiring a certificate */
+
+#ifndef OPENSSL_NO_CNSM
+/* SM2 auth */
+#  define SSL_aSM2DSA            0x00000808L
+#endif
+
 #define SSL_aCERT \
     (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12)
 
@@ -231,6 +244,12 @@
 # define SSL_ARIA128GCM          0x00100000U
 # define SSL_ARIA256GCM          0x00200000U
 
+#ifndef OPENSSL_NO_CNSM
+#  define SSL_SM1                0x00400000L
+#  define SSL_SM4                0x00800000L
+#endif
+
+
 # define SSL_AESGCM              (SSL_AES128GCM | SSL_AES256GCM)
 # define SSL_AESCCM              (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
 # define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AESGCM|SSL_AESCCM)
@@ -252,6 +271,9 @@
 # define SSL_GOST12_256          0x00000080U
 # define SSL_GOST89MAC12         0x00000100U
 # define SSL_GOST12_512          0x00000200U
+#ifndef OPENSSL_NO_CNSM
+# define SSL_SM3                 0x00000400U
+#endif
 
 /*
  * When adding new digest in the ssl_ciph.c and increment SSL_MD_NUM_IDX make
@@ -270,8 +292,12 @@
 # define SSL_MD_MD5_SHA1_IDX 9
 # define SSL_MD_SHA224_IDX 10
 # define SSL_MD_SHA512_IDX 11
+#ifndef OPENSSL_NO_CNSM
+# define SSL_MD_SM3_IDX 12
+# define SSL_MAX_DIGEST 13
+#else
 # define SSL_MAX_DIGEST 12
-
+#endif
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
 /* Bits 0-7 are handshake MAC */
@@ -283,6 +309,9 @@
 # define SSL_HANDSHAKE_MAC_GOST12_256 SSL_MD_GOST12_256_IDX
 # define SSL_HANDSHAKE_MAC_GOST12_512 SSL_MD_GOST12_512_IDX
 # define SSL_HANDSHAKE_MAC_DEFAULT  SSL_HANDSHAKE_MAC_MD5_SHA1
+#ifndef OPENSSL_NO_CNSM
+#  define SSL_HANDSHAKE_MAC_SM3 SSL_MD_SM3_IDX
+#endif
 
 /* Bits 8-15 bits are PRF */
 # define TLS1_PRF_DGST_SHIFT 8
@@ -293,6 +322,10 @@
 # define TLS1_PRF_GOST12_256 (SSL_MD_GOST12_256_IDX << TLS1_PRF_DGST_SHIFT)
 # define TLS1_PRF_GOST12_512 (SSL_MD_GOST12_512_IDX << TLS1_PRF_DGST_SHIFT)
 # define TLS1_PRF            (SSL_MD_MD5_SHA1_IDX << TLS1_PRF_DGST_SHIFT)
+
+#ifndef OPENSSL_NO_CNSM
+#  define TLS1_PRF_SM3 (SSL_MD_SM3_IDX << TLS1_PRF_DGST_SHIFT)
+#endif
 
 /*
  * Stream MAC for GOST ciphersuites from cryptopro draft (currently this also
@@ -383,7 +416,17 @@
 # define SSL_PKEY_GOST12_512     6
 # define SSL_PKEY_ED25519        7
 # define SSL_PKEY_ED448          8
+#ifndef OPENSSL_NO_CNSM
+#  define SSL_PKEY_ECC_ENC       9
+# define SSL_PKEY_RSA_ENC        10
+# define SSL_PKEY_RSA_SIGN       11
+# define SSL_PKEY_DH_RSA         12
+# define SSL_PKEY_DH_DSA         13
+# define SSL_PKEY_GOST94         14
+# define SSL_PKEY_NUM            15
+#else
 # define SSL_PKEY_NUM            9
+#endif
 
 /*-
  * SSL_kRSA <- RSA_ENC
@@ -2024,6 +2067,10 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_ecdsa_secp521r1_sha512                    0x0603
 #define TLSEXT_SIGALG_ecdsa_sha224                              0x0303
 #define TLSEXT_SIGALG_ecdsa_sha1                                0x0203
+#ifndef OPENSSL_NO_CNSM
+#define TLSEXT_SIGALG_ecdsa_sm3                                 0x0703
+#define TLSEXT_SIGALG_rsa_sm3                                   0x0701
+#endif
 #define TLSEXT_SIGALG_rsa_pss_rsae_sha256                       0x0804
 #define TLSEXT_SIGALG_rsa_pss_rsae_sha384                       0x0805
 #define TLSEXT_SIGALG_rsa_pss_rsae_sha512                       0x0806
@@ -2057,6 +2104,9 @@ typedef enum downgrade_en {
 #define TLSEXT_KEX_MODE_FLAG_NONE                               0
 #define TLSEXT_KEX_MODE_FLAG_KE                                 1
 #define TLSEXT_KEX_MODE_FLAG_KE_DHE                             2
+
+/* An invalid index into the TLSv1.3 PSK identities */
+#define TLSEXT_PSK_BAD_IDENTITY                                 -1
 
 #define SSL_USE_PSS(s) (s->s3->tmp.peer_sigalg != NULL && \
                         s->s3->tmp.peer_sigalg->sig == EVP_PKEY_RSA_PSS)
@@ -2093,6 +2143,9 @@ __owur const SSL_METHOD *dtls_bad_ver_client_method(void);
 __owur const SSL_METHOD *dtlsv1_2_method(void);
 __owur const SSL_METHOD *dtlsv1_2_server_method(void);
 __owur const SSL_METHOD *dtlsv1_2_client_method(void);
+#ifndef OPENSSL_NO_CNSM
+__owur const SSL_METHOD *cntls_client_method(void);
+#endif
 
 extern const SSL3_ENC_METHOD TLSv1_enc_data;
 extern const SSL3_ENC_METHOD TLSv1_1_enc_data;
