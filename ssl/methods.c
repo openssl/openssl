@@ -99,6 +99,12 @@ IMPLEMENT_tls_meth_func(TLS1_1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1_1,
                         ssl_undefined_function,
                         ossl_statem_connect, TLSv1_1_enc_data)
 #endif
+#ifndef OPENSSL_NO_CNSM
+IMPLEMENT_tls_meth_func(SM1_1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1_1,
+                        cntls_client_method,
+                        ssl_undefined_function,
+                        ossl_statem_connect, TLSv1_1_enc_data)
+#endif
 #ifndef OPENSSL_NO_TLS1_METHOD
 IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
                         tlsv1_client_method,
@@ -206,6 +212,13 @@ const SSL_METHOD *TLSv1_1_client_method(void)
     return tlsv1_1_client_method();
 }
 # endif
+
+#ifndef OPENSSL_NO_CNSM
+const SSL_METHOD *CNTLS_client_method(void)
+{
+    return cntls_client_method();
+}
+#endif
 
 # ifndef OPENSSL_NO_TLS1_METHOD
 const SSL_METHOD *TLSv1_method(void)
