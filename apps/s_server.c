@@ -80,6 +80,9 @@ static const int bufsize = 16 * 1024;
 static int accept_socket = -1;
 
 #define TEST_CERT       "server.pem"
+#ifndef OPENSSL_NO_CNSM
+#define TEST_CERT_ENC   "server_enc.pem"
+#endif
 #define TEST_CERT2      "server2.pem"
 
 static int s_nbio = 0;
@@ -729,8 +732,8 @@ static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE,
     OPT_4, OPT_6, OPT_ACCEPT, OPT_PORT, OPT_UNIX, OPT_UNLINK, OPT_NACCEPT,
-    OPT_VERIFY, OPT_NAMEOPT, OPT_UPPER_V_VERIFY, OPT_CONTEXT, OPT_CERT, OPT_CRL,
-    OPT_CRL_DOWNLOAD, OPT_SERVERINFO, OPT_CERTFORM, OPT_KEY, OPT_KEYFORM,
+    OPT_VERIFY, OPT_NAMEOPT, OPT_UPPER_V_VERIFY, OPT_CONTEXT, OPT_CERT, OPT_CERT_ENC, OPT_CRL,
+    OPT_CRL_DOWNLOAD, OPT_SERVERINFO, OPT_CERTFORM, OPT_KEY,  OPT_KEY_ENC,  OPT_KEYFORM,
     OPT_PASS, OPT_CERT_CHAIN, OPT_DHPARAM, OPT_DCERTFORM, OPT_DCERT,
     OPT_DKEYFORM, OPT_DPASS, OPT_DKEY, OPT_DCERT_CHAIN, OPT_NOCERT,
     OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH, OPT_NO_CACHE,
@@ -777,6 +780,9 @@ const OPTIONS s_server_options[] = {
     {"Verify", OPT_UPPER_V_VERIFY, 'n',
      "Turn on peer certificate verification, must have a cert"},
     {"cert", OPT_CERT, '<', "Certificate file to use; default is " TEST_CERT},
+#ifndef OPENSSL_NO_CNSM
+    {"cert_enc", OPT_CERT_ENC, '<', "Encrypto Certificate file to use when ciphersuit is CNSM; default is " TEST_CERT_ENC},
+#endif
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"naccept", OPT_NACCEPT, 'p', "Terminate after #num connections"},
     {"serverinfo", OPT_SERVERINFO, 's',
@@ -785,6 +791,10 @@ const OPTIONS s_server_options[] = {
      "Certificate format (PEM or DER) PEM default"},
     {"key", OPT_KEY, 's',
      "Private Key if not in -cert; default is " TEST_CERT},
+#ifndef OPENSSL_NO_CNSM
+    {"key_enc", OPT_KEY_ENC, 's',
+     "Encypto Private Key if not in -cert when ciphersuit is CNSM; default is " TEST_CERT_ENC},
+#endif
     {"keyform", OPT_KEYFORM, 'f',
      "Key format (PEM, DER or ENGINE) PEM default"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
@@ -1036,6 +1046,10 @@ int s_server_main(int argc, char *argv[])
     int s_server_verify = SSL_VERIFY_NONE;
     int s_server_session_id_context = 1; /* anything will do */
     const char *s_cert_file = TEST_CERT, *s_key_file = NULL, *s_chain_file = NULL;
+#ifndef OPENSSL_NO_CNSM
+    int enc_flag = 0;
+    const char *s_cert_enc_file = TEST_CERT_ENC, *s_key_enc_file = NULL;
+#endif
     const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
     char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
 #ifndef OPENSSL_NO_OCSP
@@ -1187,6 +1201,12 @@ int s_server_main(int argc, char *argv[])
         case OPT_CERT:
             s_cert_file = opt_arg();
             break;
+#ifndef OPENSSL_NO_CNSM
+        case OPT_CERT_ENC:
+            enc_flag++;
+            s_cert_enc_file = opt_arg();
+            break;
+#endif
         case OPT_NAMEOPT:
             if (!set_nameopt(opt_arg()))
                 goto end;
@@ -1207,6 +1227,12 @@ int s_server_main(int argc, char *argv[])
         case OPT_KEY:
             s_key_file = opt_arg();
             break;
+#ifndef OPENSSL_NO_CNSM
+        case OPT_KEY_ENC:
+            enc_flag++;
+            s_key_enc_file = opt_arg();
+            break;
+#endif
         case OPT_KEYFORM:
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &s_key_format))
                 goto opthelp;
@@ -1654,6 +1680,10 @@ int s_server_main(int argc, char *argv[])
 
     if (s_key_file == NULL)
         s_key_file = s_cert_file;
+#ifndef OPENSSL_NO_CNSM
+    if (enc_flag!= 2 && s_key_enc_file == NULL)
+        s_key_enc_file = s_cert_enc_file;
+#endif
 
     if (s_key_file2 == NULL)
         s_key_file2 = s_cert_file2;
@@ -2008,7 +2038,6 @@ int s_server_main(int argc, char *argv[])
         DH_free(dh);
     }
 #endif
-
     if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
         goto end;
 
@@ -2017,6 +2046,20 @@ int s_server_main(int argc, char *argv[])
         ERR_print_errors(bio_err);
         goto end;
     }
+	
+#ifndef OPENSSL_NO_CNSM
+    if (enc_flag && SSL_CTX_use_certificate_file(ctx, s_cert_enc_file, SSL_FILETYPE_PEM) <= 0)
+        {
+                ERR_print_errors(bio_err);
+                exit(1);
+        }
+    if (enc_flag && SSL_CTX_use_enc_PrivateKey_file(ctx, s_key_enc_file, SSL_FILETYPE_PEM) <= 0)
+        {
+                ERR_print_errors(bio_err);
+                exit(1);
+        }
+
+#endif
 
     if (ctx2 != NULL
         && !set_cert_key_stuff(ctx2, s_cert2, s_key2, NULL, build_chain))
