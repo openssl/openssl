@@ -166,6 +166,9 @@ static const TLS_GROUP_INFO nid_list[] = {
     {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME}, /* brainpool512r1 (28) */
     {EVP_PKEY_X25519, 128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
     {EVP_PKEY_X448, 224, TLS_CURVE_CUSTOM}, /* X448 (30) */
+    #ifndef OPENSSL_NO_CNSM
+    [248]={NID_sm2, 80, TLS_CURVE_PRIME}, /* sm2 (249) */  //add by tass gujq for sm2 curve
+    #endif
 };
 
 static const unsigned char ecformats_default[] = {
@@ -181,7 +184,31 @@ static const uint16_t eccurves_default[] = {
     30,                      /* X448 (30) */
     25,                      /* secp521r1 (25) */
     24,                      /* secp384r1 (24) */
+#ifndef OPENSSL_NO_CNSM
+    249,                     /* sm2 (default 249, use set_sm2_group_id_custom(int value) to config) */
+#endif
 };
+
+#ifndef OPENSSL_NO_CNSM
+/* The default sm2 curves */
+static  uint16_t eccurves_default_sm2[11] = {
+    249,                      /* tassl default (249) */
+};
+
+uint16_t SM2_group_id_custom = 249;
+static int sm2_curve_config_index = 0;
+int set_sm2_group_id_custom(uint16_t value)
+{
+    if(value > 0){
+        SM2_group_id_custom = value;
+        memcpy(eccurves_default_sm2+1+sm2_curve_config_index++, &SM2_group_id_custom, sizeof(uint16_t));
+        return 1;
+    }
+
+    return 0;	
+}
+
+#endif
 
 static const uint16_t suiteb_curves[] = {
     TLSEXT_curve_P_256,
@@ -190,13 +217,23 @@ static const uint16_t suiteb_curves[] = {
 
 const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 {
+#ifndef OPENSSL_NO_CNSM
+    if(SM2_group_id_custom != 249 && SM2_group_id_custom > 0){
+    	return &nid_list[248];
+    }
+#endif
+
     /* ECC curves from RFC 4492 and RFC 7027 */
     if (group_id < 1 || group_id > OSSL_NELEM(nid_list))
         return NULL;
     return &nid_list[group_id - 1];
 }
 
+#ifndef OPENSSL_CNSM
+uint16_t tls1_nid2group_id(int nid)
+#else
 static uint16_t tls1_nid2group_id(int nid)
+#endif
 {
     size_t i;
     for (i = 0; i < OSSL_NELEM(nid_list); i++) {
@@ -233,8 +270,18 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 
     default:
         if (s->ext.supportedgroups == NULL) {
-            *pgroups = eccurves_default;
-            *pgroupslen = OSSL_NELEM(eccurves_default);
+        #ifndef OPENSSL_NO_CNSM
+            if(s->s3 && s->s3->tmp.new_cipher && s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3){ //ECDHE-SM4-SM3 only allow sm2 curve, and other custom configed sm2 curve id    modify by gujq on 20190426
+	            *pgroups = eccurves_default_sm2;
+                *pgroupslen = sm2_curve_config_index+1;
+	     	}
+            else{ 
+        #endif		
+                *pgroups = eccurves_default;
+                *pgroupslen = OSSL_NELEM(eccurves_default);
+        #ifndef OPENSSL_NO_CNSM
+            }
+        #endif
         } else {
             *pgroups = s->ext.supportedgroups;
             *pgroupslen = s->ext.supportedgroups_len;
@@ -315,6 +362,9 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
         tls1_get_peer_groups(s, &pref, &num_pref);
         tls1_get_supported_groups(s, &supp, &num_supp);
     }
+#ifndef OPENSSL_NO_CNSM
+int reserve_sm2_curve_id = 0;
+#endif
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
@@ -322,10 +372,29 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
         if (!tls1_in_list(id, supp, num_supp)
             || !tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
                     continue;
+#ifndef OPENSSL_NO_CNSM
+            if(s->s3 && s->s3->tmp.new_cipher && s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3){ //ECDHE-SM4-SM3 prefer 249(define for sm2 curve id in tassl-1.1.1b by tass)  for sm2 curve id
+                if(id != 249){
+                    reserve_sm2_curve_id = id;
+		      continue;
+                }
+		  else{
+                    return id;
+		  }
+
+            }
+#endif
+
         if (nmatch == k)
             return id;
          k++;
     }
+
+#ifndef OPENSSL_NO_CNSM
+    if(reserve_sm2_curve_id > 0)   //found one match curve id for TLS1_CK_ECDHE_WITH_SM4_SM3, but not 249
+        return reserve_sm2_curve_id;
+#endif
+
     if (nmatch == -1)
         return k;
     /* Out of range (nmatch > k). */
@@ -525,6 +594,19 @@ int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
      */
     if (groups_len == 0)
             return 1;
+	
+#ifndef OPENSSL_NO_CNSM
+    if(group_id == 249 && SM2_group_id_custom != 249 && SM2_group_id_custom > 0){
+	int i;
+        for(i=0; i< sm2_curve_config_index; i++){
+		group_id = eccurves_default_sm2[i+1];
+		if(tls1_in_list(group_id, groups, groups_len)) 
+			return 1;
+        }
+	return 0;
+    }
+#endif
+
     return tls1_in_list(group_id, groups, groups_len);
 }
 
@@ -635,6 +717,10 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 /* Default sigalg schemes */
 static const uint16_t tls12_sigalgs[] = {
 #ifndef OPENSSL_NO_EC
+    #ifndef OPENSSL_NO_CNSM
+    TLSEXT_SIGALG_rsa_sm3,
+    TLSEXT_SIGALG_ecdsa_sm3,
+    #endif
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
     TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
@@ -683,6 +769,14 @@ static const uint16_t suiteb_sigalgs[] = {
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
 #ifndef OPENSSL_NO_EC
+    #ifndef OPENSSL_NO_CNSM
+     {"sm2_sm3", TLSEXT_SIGALG_ecdsa_sm3,
+     NID_sm3, SSL_MD_SM3_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
+     NID_sm3WithSM2Sign, NID_sm2},
+     {"rsa_sm3", TLSEXT_SIGALG_rsa_sm3,
+     NID_sm3, SSL_MD_SM3_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
+     NID_sm3WithRSAEncryption, NID_undef},
+    #endif
     {"ecdsa_secp256r1_sha256", TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA256, NID_X9_62_prime256v1},
@@ -792,6 +886,9 @@ static const uint16_t tls_default_sigalg[] = {
     TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, /* SSL_PKEY_GOST12_512 */
     0, /* SSL_PKEY_ED25519 */
     0, /* SSL_PKEY_ED448 */
+#ifndef OPENSSL_NO_CNSM
+    TLSEXT_SIGALG_ecdsa_sm3,
+#endif
 };
 
 /* Lookup TLS signature algorithm */
@@ -888,6 +985,11 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
     if (idx < 0 || idx >= (int)OSSL_NELEM(tls_default_sigalg))
         return NULL;
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
+        #ifndef OPENSSL_NO_CNSM
+            if(idx == SSL_PKEY_ECC && s->s3->tmp.new_cipher && ((s->s3->tmp.new_cipher->id == TLS1_CK_ECC_WITH_SM4_SM3) || (s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3) )){  //SM2 should set idx to SSL_PKEY_ECC_ENC modify by gujq on 20181120
+                idx = SSL_PKEY_ECC_ENC;
+            }
+        #endif
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(tls_default_sigalg[idx]);
 
         if (!tls1_lookup_md(lu, NULL))
@@ -1193,7 +1295,11 @@ int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
                 && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
             min_tls = SSL3_VERSION;
 
-        if ((min_tls > s->s3->tmp.max_ver) || (c->max_tls < s->s3->tmp.min_ver))
+        #ifndef OPENSSL_NO_CNSM
+            if ((s->version != SM1_1_VERSION ) && ((min_tls > s->s3->tmp.max_ver) || (c->max_tls < s->s3->tmp.min_ver)))
+        #else
+            if ((min_tls > s->s3->tmp.max_ver) || (c->max_tls < s->s3->tmp.min_ver))
+        #endif
             return 1;
     }
     if (SSL_IS_DTLS(s) && (DTLS_VERSION_GT(c->min_dtls, s->s3->tmp.max_ver)
