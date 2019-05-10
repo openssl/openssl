@@ -35,6 +35,7 @@ dsaWithSHA1		sha1	dsa
 
 dsaWithSHA1_2		sha1	dsa_2
 
+sm3WithSM2Sign          sm3     X9_62_id_ecPublicKey 
 ecdsa_with_SHA1		sha1	X9_62_id_ecPublicKey
 ecdsa_with_SHA224	sha224	X9_62_id_ecPublicKey
 ecdsa_with_SHA256	sha256	X9_62_id_ecPublicKey
