@@ -63,6 +63,11 @@ int construct_ca_names(SSL *s, const STACK_OF(X509_NAME) *ca_sk, WPACKET *pkt);
 size_t construct_key_exchange_tbs(SSL *s, unsigned char **ptbs,
                                   const void *param, size_t paramlen);
 
+#ifndef OPENSSL_NO_CNSM
+int sm2_compute_z_digest(uint8_t *out, const EVP_MD *digest, const uint8_t *id, const size_t id_len, const EC_KEY *key);
+int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x);
+unsigned long ssl3_output_sm2_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk, CERT_PKEY *enc_cpk);
+#endif
 /*
  * TLS/DTLS client state machine functions
  */
