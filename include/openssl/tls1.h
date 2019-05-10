@@ -24,6 +24,9 @@ extern "C" {
 #  define OPENSSL_TLS_SECURITY_LEVEL 1
 # endif
 
+#ifndef OPENSSL_NO_CNSM
+# define SM1_1_VERSION                   0x0101
+#endif
 # define TLS1_VERSION                    0x0301
 # define TLS1_1_VERSION                  0x0302
 # define TLS1_2_VERSION                  0x0303
@@ -641,6 +644,23 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define TLS1_CK_RSA_PSK_WITH_ARIA_128_GCM_SHA256         0x0300C06E
 # define TLS1_CK_RSA_PSK_WITH_ARIA_256_GCM_SHA384         0x0300C06F
 
+# ifndef OPENSSL_NO_CNSM
+#  define TLS1_CK_ECDHE_WITH_SM1_SM3                     0x0300E001
+#  define TLS1_CK_ECC_WITH_SM1_SM3                       0x0300E003
+#  define TLS1_CK_IBSDH_WITH_SM1_SM3                     0x0300E005
+#  define TLS1_CK_IBC_WITH_SM1_SM3                       0x0300E007
+#  define TLS1_CK_RSA_WITH_SM1_SM3                       0x0300E009
+#  define TLS1_CK_RSA_WITH_SM1_SHA1                      0x0300E00A
+#  define TLS1_CK_ECDHE_WITH_SM4_SM3                     0x0300E011
+#  define TLS1_CK_ECC_WITH_SM4_SM3                       0x0300E013
+#  define TLS1_CK_IBSDH_WITH_SM4_SM3                     0x0300E015
+#  define TLS1_CK_IBC_WITH_SM4_SM3                       0x0300E017
+#  define TLS1_CK_RSA_WITH_SM4_SM3                       0x0300E019
+#  define TLS1_CK_RSA_WITH_SM4_SHA1                      0x0300E01A
+# endif
+
+
+
 /* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
 # define TLS1_RFC_RSA_WITH_AES_128_SHA                   "TLS_RSA_WITH_AES_128_CBC_SHA"
 # define TLS1_RFC_DHE_DSS_WITH_AES_128_SHA               "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
@@ -1126,6 +1146,22 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define TLS1_TXT_DHE_PSK_WITH_ARIA_256_GCM_SHA384         "DHE-PSK-ARIA256-GCM-SHA384"
 # define TLS1_TXT_RSA_PSK_WITH_ARIA_128_GCM_SHA256         "RSA-PSK-ARIA128-GCM-SHA256"
 # define TLS1_TXT_RSA_PSK_WITH_ARIA_256_GCM_SHA384         "RSA-PSK-ARIA256-GCM-SHA384"
+
+# ifndef OPENSSL_NO_CNSM
+#  define TLS1_TXT_ECDHE_WITH_SM1_SM3                    "ECDHE-SM1-SM3"
+#  define TLS1_TXT_ECC_WITH_SM1_SM3                      "ECC-SM1-SM3"
+#  define TLS1_TXT_IBSDH_WITH_SM1_SM3                    "IBSDH-SM1-SM3"
+#  define TLS1_TXT_IBC_WITH_SM1_SM3                      "IBC-SM1-SM3"
+#  define TLS1_TXT_RSA_WITH_SM1_SM3                      "RSA-SM1-SM3"
+#  define TLS1_TXT_RSA_WITH_SM1_SHA1                     "RSA-SM1-SHA1"
+#  define TLS1_TXT_ECDHE_WITH_SM4_SM3                    "ECDHE-SM4-SM3"
+#  define TLS1_TXT_ECC_WITH_SM4_SM3                      "ECC-SM4-SM3"
+#  define TLS1_TXT_IBSDH_WITH_SM4_SM3                    "IBSDH-SM4-SM3"
+#  define TLS1_TXT_IBC_WITH_SM4_SM3                      "IBC-SM4-SM3"
+#  define TLS1_TXT_RSA_WITH_SM4_SM3                      "RSA-SM4-SM3"
+#  define TLS1_TXT_RSA_WITH_SM4_SHA1                     "RSA-SM4-SHA1"
+# endif
+
 
 # define TLS_CT_RSA_SIGN                 1
 # define TLS_CT_DSS_SIGN                 2
