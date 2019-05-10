@@ -39,6 +39,59 @@ DEFINE_RUN_ONCE_STATIC(ssl_x509_store_ctx_init)
     return ssl_x509_store_ctx_idx >= 0;
 }
 
+
+/* Add a certificate to a BUF_MEM structure */
+#ifndef OPENSSL_NO_CNSM
+int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
+#else
+static int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
+#endif
+{
+    int n;
+    unsigned char *p;
+
+    n = i2d_X509(x, NULL);
+    if (n < 0 || !BUF_MEM_grow_clean(buf, (int)(n + (*l) + 3))) {
+        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
+        return 0;
+    }
+    p = (unsigned char *)&(buf->data[*l]);
+    l2n3(n, p);
+    n = i2d_X509(x, &p);
+    if (n < 0) {
+        /* Shouldn't happen */
+        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
+        return 0;
+    }
+    *l += n + 3;
+
+    return 1;
+}
+
+#ifndef OPENSSL_NO_CNSM
+int ssl_add_sm2_cert(SSL *s, CERT_PKEY *cpk, CERT_PKEY *enc_cpk, unsigned long *l)
+{
+    BUF_MEM *buf = s->init_buf;
+    /* TLSv1 sends a chain with nothing in it, instead of an alert */
+    if (!BUF_MEM_grow_clean(buf, 10)) {
+        SSLerr(SSL_F_SSL_ADD_SM2_CERT, ERR_R_BUF_LIB);
+        return 0;
+    }
+    if (cpk != NULL && cpk->x509 != NULL) {     //add check cpk!= NULL by tass gujq on 20180608
+        if (!ssl_add_cert_to_buf(buf, l, cpk->x509))
+            return 0;
+    }
+
+    if ((enc_cpk != NULL) && (enc_cpk->x509 != NULL))
+    {
+        if (!ssl_add_cert_to_buf(buf, l, enc_cpk->x509))
+            return 0;
+    }
+
+    return 1;
+}
+#endif
+
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 {
 
@@ -251,6 +304,34 @@ void ssl_cert_free(CERT *c)
     CRYPTO_THREAD_lock_free(c->lock);
     OPENSSL_free(c);
 }
+
+#ifndef OPENSSL_NO_CNSM
+int ssl_cert_inst(CERT **o)
+{
+    /*
+     * Create a CERT if there isn't already one (which cannot really happen,
+     * as it is initially created in SSL_CTX_new; but the earlier code
+     * usually allows for that one being non-existant, so we follow that
+     * behaviour, as it might turn out that there actually is a reason for it
+     * -- but I'm not sure that *all* of the existing code could cope with
+     * s->cert being NULL, otherwise we could do without the initialization
+     * in SSL_CTX_new).
+     */
+
+    if (o == NULL) {
+        SSLerr(SSL_F_SSL_CERT_INST, ERR_R_PASSED_NULL_PARAMETER);
+        return (0);
+    }
+    if (*o == NULL) {
+        if ((*o = ssl_cert_new()) == NULL) {
+            SSLerr(SSL_F_SSL_CERT_INST, ERR_R_MALLOC_FAILURE);
+            return (0);
+        }
+    }
+    return (1);
+
+}
+#endif
 
 int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
 {
