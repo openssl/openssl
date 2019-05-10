@@ -309,7 +309,11 @@ int ssl3_get_record(SSL *s)
                     return -1;
                 }
 
-                if ((version >> 8) != SSL3_VERSION_MAJOR) {
+                #ifndef OPENSSL_NO_CNSM
+                    if ((version >> 8) != SSL3_VERSION_MAJOR && (version != SM1_1_VERSION)) {
+                #else 
+                    if ((version >> 8) != SSL3_VERSION_MAJOR) {
+                #endif
                     if (RECORD_LAYER_is_first_record(&s->rlayer)) {
                         /* Go back to start of packet, look at the five bytes
                          * that we have. */
