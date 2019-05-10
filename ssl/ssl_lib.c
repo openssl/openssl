@@ -25,6 +25,63 @@
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
+#ifndef OPENSLL_NO_CNSM
+int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
+{
+    EVP_PKEY *pk;
+    int ret = -1, i;
+
+    if (pkey == NULL)
+        pk = X509_get_pubkey(x);
+    else
+        pk = pkey;
+    if (pk == NULL)
+        goto err;
+
+    i = EVP_PKEY_id(pk);
+    if (i == EVP_PKEY_RSA) {
+        ret = SSL_PKEY_RSA_ENC;
+    } else if (i == EVP_PKEY_DSA) {
+        ret = SSL_PKEY_DSA_SIGN;
+    }
+#ifndef OPENSSL_NO_EC
+    else if (i == EVP_PKEY_EC) {
+# ifndef OPENSSL_NO_CNSM
+        if (EC_GROUP_get_curve_name(EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pk))) == NID_sm2)
+        {
+            if (x && (X509_get_extension_flags(x)& EXFLAG_KUSAGE) && (X509_get_key_usage(x) & (X509v3_KU_KEY_ENCIPHERMENT | X509v3_KU_DATA_ENCIPHERMENT | X509v3_KU_KEY_AGREEMENT)))
+                ret = SSL_PKEY_ECC_ENC;
+            else
+                ret = SSL_PKEY_ECC;
+        }
+        else
+# endif
+        ret = SSL_PKEY_ECC;
+    }
+#endif
+    else if (i == NID_id_GostR3410_94 || i == NID_id_GostR3410_94_cc) {
+        ret = SSL_PKEY_GOST94;
+    } else if (i == NID_id_GostR3410_2001 || i == NID_id_GostR3410_2001_cc) {
+        ret = SSL_PKEY_GOST01;
+    } else if (x && (i == EVP_PKEY_DH || i == EVP_PKEY_DHX)) {
+        /*
+         * For DH two cases: DH certificate signed with RSA and DH
+         * certificate signed with DSA.
+         */
+        i = X509_certificate_type(x, pk);
+        if (i & EVP_PKS_RSA)
+            ret = SSL_PKEY_DH_RSA;
+        else if (i & EVP_PKS_DSA)
+            ret = SSL_PKEY_DH_DSA;
+    }
+
+ err:
+    if (!pkey)
+        EVP_PKEY_free(pk);
+    return (ret);
+}
+#endif
+
 static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t)
 {
     (void)r;
@@ -1604,6 +1661,83 @@ int SSL_check_private_key(const SSL *ssl)
     return X509_check_private_key(ssl->cert->key->x509,
                                    ssl->cert->key->privatekey);
 }
+#ifndef OPENSSL_NO_CNSM
+int SSL_CTX_check_enc_private_key(const SSL_CTX *ctx)
+{
+    int type;
+    if ((ctx == NULL) ||
+        (ctx->cert == NULL) || (ctx->cert->key->x509 == NULL))
+    {
+        SSLerr(SSL_F_SSL_CTX_CHECK_ENC_PRIVATE_KEY,
+            SSL_R_NO_CERTIFICATE_ASSIGNED);
+        return (0);
+    }
+    type = ssl_cert_type(ctx->cert->key->x509, NULL);
+    if ((SSL_PKEY_ECC == type) || (SSL_PKEY_ECC_ENC == type))
+        type = SSL_PKEY_ECC_ENC;
+    else if ((SSL_PKEY_RSA_SIGN == type) || (SSL_PKEY_RSA_ENC == type))
+        type = SSL_PKEY_RSA_ENC;
+    else
+        return 1;
+
+    if (ctx->cert->pkeys[type].x509 == NULL)
+    {
+        SSLerr(SSL_F_SSL_CTX_CHECK_ENC_PRIVATE_KEY, SSL_R_NO_CERTIFICATE_ASSIGNED);
+        return (0);
+    }
+
+    if (ctx->cert->pkeys[type].privatekey == NULL)
+    {
+        SSLerr(SSL_F_SSL_CTX_CHECK_ENC_PRIVATE_KEY, SSL_R_NO_PRIVATE_KEY_ASSIGNED);
+        return (0);
+    }
+    return (X509_check_private_key(ctx->cert->pkeys[type].x509, ctx->cert->pkeys[type].privatekey));
+}
+
+int SSL_check_enc_private_key(const SSL *ssl)
+{
+    int type;
+
+    if (ssl == NULL)
+    {
+        SSLerr(SSL_F_SSL_CHECK_ENC_PRIVATE_KEY, ERR_R_PASSED_NULL_PARAMETER);
+        return (0);
+    }
+    if (ssl->cert == NULL)
+    {
+        SSLerr(SSL_F_SSL_CHECK_ENC_PRIVATE_KEY, SSL_R_NO_CERTIFICATE_ASSIGNED);
+        return 0;
+    }
+    if (ssl->cert->key->x509 == NULL)
+    {
+        SSLerr(SSL_F_SSL_CHECK_ENC_PRIVATE_KEY, SSL_R_NO_CERTIFICATE_ASSIGNED);
+        return (0);
+    }
+
+    type = ssl_cert_type(ssl->cert->key->x509, NULL);
+    if ((SSL_PKEY_ECC == type) || (SSL_PKEY_ECC_ENC == type))
+        type = SSL_PKEY_ECC_ENC;
+    else if ((SSL_PKEY_RSA_SIGN == type) || (SSL_PKEY_RSA_ENC == type))
+        type = SSL_PKEY_RSA_ENC;
+    else
+        return 1;
+
+    if (ssl->cert->pkeys[type].x509 == NULL)
+    {
+        SSLerr(SSL_F_SSL_CHECK_ENC_PRIVATE_KEY, SSL_R_NO_CERTIFICATE_ASSIGNED);
+        return (0);
+    }
+
+    if (ssl->cert->pkeys[type].privatekey == NULL)
+    {
+        SSLerr(SSL_F_SSL_CHECK_ENC_PRIVATE_KEY, SSL_R_NO_PRIVATE_KEY_ASSIGNED);
+        return (0);
+    }
+
+    return (X509_check_private_key(ssl->cert->pkeys[type].x509, ssl->cert->pkeys[type].privatekey));
+}
+#endif
+
 
 int SSL_waiting_for_async(SSL *s)
 {
@@ -3275,6 +3409,13 @@ void ssl_set_masks(SSL *s)
     if (ssl_has_cert(s, SSL_PKEY_GOST01)) {
         mask_k |= SSL_kGOST;
         mask_a |= SSL_aGOST01;
+    }
+#endif
+
+#ifndef OPENSSL_NO_CNSM
+    if (ssl_has_cert(s, SSL_PKEY_ECC) && ssl_has_cert(s, SSL_PKEY_ECC_ENC)) {
+        mask_k |= SSL_kECC|SSL_kSM2DH;
+        mask_a |= SSL_aSM2DSA;
     }
 #endif
 
