@@ -1594,6 +1594,10 @@ __owur int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file,
 #endif
 __owur int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file,
                                        int type);
+#ifndef OPENSSL_NO_CNSM
+__owur int SSL_CTX_use_enc_PrivateKey_file(SSL_CTX *ctx, const char *file,
+                                       int type);
+#endif
 __owur int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file,
                                         int type);
 /* PEM type */
@@ -1714,6 +1718,9 @@ pem_password_cb *SSL_get_default_passwd_cb(SSL *s);
 void *SSL_get_default_passwd_cb_userdata(SSL *s);
 
 __owur int SSL_CTX_check_private_key(const SSL_CTX *ctx);
+#ifndef OPENSSL_NO_CNSM
+__owur int SSL_CTX_check_enc_private_key(const SSL_CTX *ctx);
+#endif
 __owur int SSL_check_private_key(const SSL *ctx);
 
 __owur int SSL_CTX_set_session_id_context(SSL_CTX *ctx,
@@ -1872,6 +1879,10 @@ DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_client_method(void))
 __owur const SSL_METHOD *TLS_method(void);
 __owur const SSL_METHOD *TLS_server_method(void);
 __owur const SSL_METHOD *TLS_client_method(void);
+#ifndef OPENSSL_NO_CNSM
+__owur const SSL_METHOD *CNTLS_client_method(void);
+#endif
+
 
 # ifndef OPENSSL_NO_TLS1_METHOD
 DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_method(void)) /* TLSv1.0 */
