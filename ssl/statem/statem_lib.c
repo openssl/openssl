@@ -120,6 +120,11 @@ int tls_setup_handshake(SSL *s)
             } else if (ver_max >= c->min_tls && ver_max <= c->max_tls) {
                 ok = 1;
             }
+            #ifndef OPENSSL_NO_CNSM
+            else if(ver_max == SM1_1_VERSION){
+            	ok = 1;
+            }
+            #endif
             if (ok)
                 break;
         }
@@ -254,6 +259,32 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         /* SSLfatal() already called */
         goto err;
     }
+    
+    #ifndef OPENSSL_NO_CNSM
+    unsigned char cert_verify_md[32];
+    EVP_MD_CTX *md_ctx;
+    
+    md_ctx = EVP_MD_CTX_new();
+    if(s->s3->tmp.new_cipher->id == TLS1_CK_ECC_WITH_SM4_SM3 || s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3 ){
+        EVP_DigestInit(md_ctx, EVP_sm3());
+        EVP_DigestUpdate(md_ctx, (const void *)hdata, hdatalen);
+        EVP_DigestFinal(md_ctx, cert_verify_md, (unsigned int *)&hdatalen);
+        if(md_ctx != NULL)
+        	EVP_MD_CTX_free(md_ctx);
+        hdata = cert_verify_md;
+    }
+    #ifdef CIPHER_DEBUG
+    {
+    	int gi = 0;
+    	printf("tls_construct_cert_verify tell: digest of hdata gi =[%ld]\n",hdatalen);
+    	for(gi=0; gi<hdatalen; gi++){
+            printf("%02X", *(unsigned char *)(hdata+gi));
+    	}
+    	printf("\n\n");
+    }
+    #endif
+    #endif
+        
 
     if (SSL_USE_SIGALGS(s) && !WPACKET_put_bytes_u16(pkt, lu->sigalg)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
@@ -299,6 +330,16 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
                  ERR_R_EVP_LIB);
         goto err;
     }
+    #ifdef CIPHER_DEBUG
+    {
+    	int gi = 0;
+    	printf("tls_construct_cert_verify tell: siglen =[%ld], sig =[\n", siglen);
+    	for(gi=0; gi<siglen; gi++){
+            printf("%02X", *(unsigned char *)(sig+gi));
+    	}
+    	printf("\n\n");
+    }
+    #endif
 
 #ifndef OPENSSL_NO_GOST
     {
@@ -438,6 +479,33 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         /* SSLfatal() already called */
         goto err;
     }
+    
+    #ifndef OPENSSL_NO_CNSM
+    unsigned char cert_verify_md[32];
+    EVP_MD_CTX *md_ctx;
+    
+    md_ctx = EVP_MD_CTX_new();
+    
+    
+    if(s->s3->tmp.new_cipher->id == TLS1_CK_ECC_WITH_SM4_SM3 || s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3){
+        EVP_DigestInit(md_ctx, EVP_sm3());
+        EVP_DigestUpdate(md_ctx, (const void *)hdata, hdatalen);
+        EVP_DigestFinal(md_ctx, cert_verify_md, (unsigned int *)&hdatalen);
+        if(md_ctx != NULL)
+        	EVP_MD_CTX_free(md_ctx);
+        hdata = cert_verify_md;
+    }
+    #ifdef CIPHER_DEBUG
+    {
+    	int gi = 0;
+    	printf("server?¨oo digest of hdata gi =[%ld]\n",hdatalen);
+    	for(gi=0; gi<hdatalen; gi++){
+            printf("%02X", *(unsigned char *)(hdata+gi));
+    	}
+    	printf("\n\n");
+    }
+    #endif
+    #endif
 
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client verify alg %s\n",
@@ -995,6 +1063,133 @@ static int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
     return 1;
 }
 
+#ifndef OPENSSL_NO_CNSM
+/* Add certificate chain to provided WPACKET */
+static int ssl_add_sm2_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk, CERT_PKEY *enc_cpk)
+{
+    int i, chain_count;
+    X509 *x;
+    STACK_OF(X509) *extra_certs;
+    STACK_OF(X509) *chain = NULL;
+    X509_STORE *chain_store;
+
+    if (cpk == NULL || cpk->x509 == NULL)
+        return 1;
+
+    x = cpk->x509;
+
+    /*
+     * If we have a certificate specific chain use it, else use parent ctx.
+     */
+    if (cpk->chain != NULL)
+        extra_certs = cpk->chain;
+    else
+        extra_certs = s->ctx->extra_certs;
+
+    if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || extra_certs)
+        chain_store = NULL;
+    else if (s->cert->chain_store)
+        chain_store = s->cert->chain_store;
+    else
+        chain_store = s->ctx->cert_store;
+
+    if (chain_store != NULL) {
+        X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new();
+
+        if (xs_ctx == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ADD_SM2_CERT_CHAIN,
+                     ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
+            X509_STORE_CTX_free(xs_ctx);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ADD_SM2_CERT_CHAIN,
+                     ERR_R_X509_LIB);
+            return 0;
+        }
+        /*
+         * It is valid for the chain not to be complete (because normally we
+         * don't include the root cert in the chain). Therefore we deliberately
+         * ignore the error return from this call. We're not actually verifying
+         * the cert - we're just building as much of the chain as we can
+         */
+        (void)X509_verify_cert(xs_ctx);
+        /* Don't leave errors in the queue */
+        ERR_clear_error();
+        chain = X509_STORE_CTX_get0_chain(xs_ctx);
+        i = ssl_security_cert_chain(s, chain, NULL, 0);
+        if (i != 1) {
+#if 0
+            /* Dummy error calls so mkerr generates them */
+            SSLerr(SSL_F_SSL_ADD_SM2_CERT_CHAIN, SSL_R_EE_KEY_TOO_SMALL);
+            SSLerr(SSL_F_SSL_ADD_SM2_CERT_CHAIN, SSL_R_CA_KEY_TOO_SMALL);
+            SSLerr(SSL_F_SSL_ADD_SM2_CERT_CHAIN, SSL_R_CA_MD_TOO_WEAK);
+#endif
+            X509_STORE_CTX_free(xs_ctx);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ADD_SM2_CERT_CHAIN, i);
+            return 0;
+        }
+        chain_count = sk_X509_num(chain);
+        for (i = 0; i < chain_count; i++) {
+            x = sk_X509_value(chain, i);
+
+            if (!ssl_add_cert_to_wpacket(s, pkt, x, i)) {
+                /* SSLfatal() already called */
+                X509_STORE_CTX_free(xs_ctx);
+                return 0;
+            }
+        }
+        X509_STORE_CTX_free(xs_ctx);
+    } else {
+        i = ssl_security_cert_chain(s, extra_certs, x, 0);
+        if (i != 1) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ADD_SM2_CERT_CHAIN, i);
+            return 0;
+        }
+        if (!ssl_add_cert_to_wpacket(s, pkt, x, 0)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
+        for (i = 0; i < sk_X509_num(extra_certs); i++) {
+            x = sk_X509_value(extra_certs, i);
+            if (!ssl_add_cert_to_wpacket(s, pkt, x, i + 1)) {
+                /* SSLfatal() already called */
+                return 0;
+            }
+        }
+    }
+    //add one enc cert to cert chain by tass gujq 2018/11/2 16:37:30
+    if ((enc_cpk != NULL) && (enc_cpk->x509 != NULL))
+    {
+        if (!ssl_add_cert_to_wpacket(s, pkt, enc_cpk->x509, i+1))
+            return 0;
+    }
+    
+    
+    return 1;
+}
+
+unsigned long ssl3_output_sm2_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk, CERT_PKEY *enc_cpk)
+{
+    if (!WPACKET_start_sub_packet_u24(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_OUTPUT_SM2_CERT_CHAIN,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!ssl_add_sm2_cert_chain(s, pkt, cpk, enc_cpk))
+        return 0;
+
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_OUTPUT_SM2_CERT_CHAIN,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
 unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
 {
     if (!WPACKET_start_sub_packet_u24(pkt)) {
@@ -1423,11 +1618,17 @@ static const version_info tls_version_table[] = {
 #else
     {TLS1_VERSION, NULL, NULL},
 #endif
+#ifndef OPENSSL_NO_CNSM
+    {SM1_1_VERSION, cntls_client_method, tlsv1_1_server_method},
+#else
+    {SM1_1_VERSION, NULL, NULL},
+#endif
 #ifndef OPENSSL_NO_SSL3
     {SSL3_VERSION, sslv3_client_method, sslv3_server_method},
 #else
     {SSL3_VERSION, NULL, NULL},
 #endif
+
     {0, NULL, NULL},
 };
 
@@ -2057,6 +2258,10 @@ int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version,
         *real_max = 0;
     tmp_real_max = 0;
     for (vent = table; vent->version != 0; ++vent) {
+        #ifndef OPENSSL_NO_CNSM
+        if(vent->version == 0x0101) continue;  //SM1_1_VERSION not in 
+        #endif
+
         /*
          * A table entry with a NULL client method is still a hole in the
          * "version capability" vector.
