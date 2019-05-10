@@ -391,3 +391,350 @@ int sm2_decrypt(const EC_KEY *key,
 
     return rc;
 }
+
+#ifndef OPENSSL_NO_CNSM
+/* GM/T003_2012 Defined Key Derive Function */
+int kdf_gmt003_2012(unsigned char *out, size_t outlen, const unsigned char *Z, size_t Zlen, const unsigned char *SharedInfo, size_t SharedInfolen, const EVP_MD *md)
+{
+    EVP_MD_CTX *mctx = NULL;
+    unsigned int counter;
+    unsigned char ctr[4];
+    size_t mdlen;
+    int retval = 0;
+
+    if (!out || !outlen) return retval;
+    if (md == NULL) md = EVP_sm3();
+    mdlen = EVP_MD_size(md);
+    mctx = EVP_MD_CTX_new();
+    if (mctx == NULL) {
+        SM2err(SM2_F_KDF_GMT003_2012, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    for (counter = 1;; counter++)
+    {
+        unsigned char dgst[EVP_MAX_MD_SIZE];
+
+        EVP_DigestInit(mctx, md);
+        ctr[0] = (unsigned char)((counter >> 24) & 0xFF);
+        ctr[1] = (unsigned char)((counter >> 16) & 0xFF);
+        ctr[2] = (unsigned char)((counter >> 8) & 0xFF);
+        ctr[3] = (unsigned char)(counter & 0xFF);
+        if (!EVP_DigestUpdate(mctx, Z, Zlen))
+            goto err;
+        if (!EVP_DigestUpdate(mctx, ctr, sizeof(ctr)))
+            goto err;
+        if (!EVP_DigestUpdate(mctx, SharedInfo, SharedInfolen))
+            goto err;
+        if (!EVP_DigestFinal(mctx, dgst, NULL))
+            goto err;
+
+        if (outlen > mdlen)
+        {
+            memcpy(out, dgst, mdlen);
+            out += mdlen;
+            outlen -= mdlen;
+        }
+        else
+        {
+            memcpy(out, dgst, outlen);
+            memset(dgst, 0, mdlen);
+            break;
+        }
+    }
+
+    retval = 1;
+
+err:
+    EVP_MD_CTX_free(mctx);
+    return retval;
+}
+
+
+int SM2Kap_compute_key(void *out, size_t outlen, int server,\
+    const char *peer_uid, int peer_uid_len, const char *self_uid, int self_uid_len, \
+    const EC_KEY *peer_ecdhe_key, const EC_KEY *self_ecdhe_key, const EC_KEY *peer_pub_key, const EC_KEY *self_eckey, \
+    const EVP_MD *md)
+{
+    BN_CTX *ctx = NULL;
+    EC_POINT *UorV = NULL;
+    const EC_POINT *Rs, *Rp;
+    BIGNUM *Xs = NULL, *Xp = NULL, *h = NULL, *t = NULL, *two_power_w = NULL, *order = NULL;
+    const BIGNUM *priv_key, *r;
+    const EC_GROUP *group;
+    int w;
+    int ret = -1;
+    size_t buflen, len;
+    unsigned char *buf = NULL;
+
+    if (outlen > INT_MAX)
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!peer_pub_key || !self_eckey)
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    
+    priv_key = EC_KEY_get0_private_key(self_eckey);
+    if (!priv_key)
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!peer_ecdhe_key || !self_ecdhe_key)
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    Rs = EC_KEY_get0_public_key(self_ecdhe_key);
+    Rp = EC_KEY_get0_public_key(peer_ecdhe_key);
+    r = EC_KEY_get0_private_key(self_ecdhe_key);
+
+    if (!Rs || !Rp || !r)
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    ctx = BN_CTX_new();
+    Xs = BN_new();
+    Xp = BN_new();
+    h = BN_new();
+    t = BN_new();
+    two_power_w = BN_new();
+    order = BN_new();
+
+    if (!Xs || !Xp || !h || !t || !two_power_w || !order)
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    group = EC_KEY_get0_group(self_eckey);
+
+    /*Second: Caculate -- w*/
+    if (!EC_GROUP_get_order(group, order, ctx) || !EC_GROUP_get_cofactor(group, h, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    w = (BN_num_bits(order) + 1) / 2 - 1;
+    if (!BN_lshift(two_power_w, BN_value_one(), w))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /*Third: Caculate -- X =  2 ^ w + (x & (2 ^ w - 1)) = 2 ^ w + (x mod 2 ^ w)*/
+    UorV = EC_POINT_new(group);
+
+    if (!UorV)
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    /*Test peer public key On curve*/
+    if (!EC_POINT_is_on_curve(group, Rp, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    /*Get x*/
+    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_prime_field)
+    {
+        if (!EC_POINT_get_affine_coordinates_GFp(group, Rs, Xs, NULL, ctx))
+        {
+            SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+            goto err;
+        }
+
+        if (!EC_POINT_get_affine_coordinates_GFp(group, Rp, Xp, NULL, ctx))
+        {
+            SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+            goto err;
+        }
+    }
+#ifndef OPENSSL_NO_EC2M
+    else
+    {
+        if (!EC_POINT_get_affine_coordinates_GF2m(group, Rs, Xs, NULL, ctx))
+        {
+            SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+            goto err;
+        }
+
+        if (!EC_POINT_get_affine_coordinates_GF2m(group, Rp, Xp, NULL, ctx))
+        {
+            SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+            goto err;
+        }
+    }
+#endif
+
+    /*x mod 2 ^ w*/
+    /*Caculate Self x*/
+    if (!BN_nnmod(Xs, Xs, two_power_w, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    if (!BN_add(Xs, Xs, two_power_w))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /*Caculate Peer x*/
+    if (!BN_nnmod(Xp, Xp, two_power_w, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    if (!BN_add(Xp, Xp, two_power_w))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /*Forth: Caculate t*/
+    if (!BN_mod_mul(t, Xs, r, order, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    if (!BN_mod_add(t, t, priv_key, order, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /*Fifth: Caculate V or U*/
+    if (!BN_mul(t, t, h, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    /* [x]R */
+    if (!EC_POINT_mul(group, UorV, NULL, Rp, Xp, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    /* P + [x]R */
+    if (!EC_POINT_add(group, UorV, UorV, EC_KEY_get0_public_key(peer_pub_key), ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    if (!EC_POINT_mul(group, UorV, NULL, UorV, t, ctx))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    /* Detect UorV is in */
+    if (EC_POINT_is_at_infinity(group, UorV))
+    {
+        SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    /*Sixth: Caculate Key -- Need Xuorv, Yuorv, Zc, Zs, klen*/
+    {
+        /*
+        size_t buflen, len;
+        unsigned char *buf = NULL;
+        */
+        size_t elemet_len, idx;
+
+        elemet_len = (size_t)((EC_GROUP_get_degree(group) + 7) / 8);
+        buflen = elemet_len * 2 + 32 * 2 + 1;    /*add 1 byte tag*/
+        buf = (unsigned char *)OPENSSL_malloc(buflen + 10);
+        if (!buf)
+        {
+            SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        memset(buf, 0, buflen + 10);
+
+        /*1 : Get public key for UorV, Notice: the first byte is a tag, not a valid char*/
+        idx = EC_POINT_point2oct(group, UorV, 4, buf, buflen, ctx);
+        if (!idx)
+        {
+            SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_EC_LIB);
+            goto err;
+        }
+
+        if (!server)
+        {
+            /*SIDE A*/
+            len = buflen - idx;
+            if (!sm2_compute_z_digest( (unsigned char *)(buf + idx), md, (const uint8_t *)self_uid, self_uid_len, self_eckey))
+            {
+                goto err;
+            }
+            len = 32;
+            idx += len;
+        }
+
+        /*Caculate Peer Z*/
+        len = buflen - idx;
+	  if (!sm2_compute_z_digest( (unsigned char *)(buf + idx), md, (const uint8_t *)peer_uid, peer_uid_len, peer_pub_key))
+            {
+                goto err;
+            }
+        len = 32;
+        idx += len;
+
+        if (server)
+        {
+            /*SIDE B*/
+            len = buflen - idx;
+	     if (!sm2_compute_z_digest( (unsigned char *)(buf + idx), md, (const uint8_t *)self_uid, self_uid_len, self_eckey))
+            {
+                goto err;
+            }
+	     len = 32;
+            idx += len;
+        }
+
+        len = outlen;
+        if (!kdf_gmt003_2012(out, len, (const unsigned char *)(buf + 1), idx - 1, NULL, 0, md))
+        {
+            SM2err(SM2_F_SM2KAP_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
+    ret = outlen;
+
+err:
+    if (Xs) BN_free(Xs);
+    if (Xp) BN_free(Xp);
+    if (h) BN_free(h);
+    if (t) BN_free(t);
+    if (two_power_w) BN_free(two_power_w);
+    if (order) BN_free(order);
+    if (UorV) EC_POINT_free(UorV);
+    if (buf) OPENSSL_free(buf);
+    if (ctx) BN_CTX_free(ctx);
+
+    return ret;
+}
+#endif
