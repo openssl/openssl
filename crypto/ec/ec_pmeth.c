@@ -36,7 +36,36 @@ typedef struct {
     size_t kdf_ukmlen;
     /* KDF output length */
     size_t kdf_outlen;
+
+    #ifndef OPENSSL_NO_CNSM
+    /* server tag */
+    int server;
+    /* peer uid */
+    char *peer_id;
+    /* self uid */
+    char *self_id;
+    /* peer uid length */
+    int peerid_len;
+    /* self uid length */
+    int selfid_len;
+    /* peer ephemeral public key */
+    EC_KEY *peer_ecdhe_key;
+    /* self ephemeral key */
+    EC_KEY *self_ecdhe_key;
+    /* sm2/ecc encrypt out format, 0 for ASN1 */
+    int encdata_format;
+    #endif
+
 } EC_PKEY_CTX;
+
+#ifndef OPENSSL_NO_CNSM
+
+int SM2Kap_compute_key(void *out, size_t outlen, int server,\
+    const char *peer_uid, int peer_uid_len, const char *self_uid, int self_uid_len, \
+    const EC_KEY *peer_ecdhe_key, const EC_KEY *self_ecdhe_key, const EC_KEY *peer_pub_key, const EC_KEY *self_eckey, \
+    const EVP_MD *md);
+
+#endif
 
 static int pkey_ec_init(EVP_PKEY_CTX *ctx)
 {
@@ -185,6 +214,37 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     return 1;
 }
 
+#ifndef OPENSSL_NO_CNSM
+/*this function only used to SM2Kap*/
+static int pkey_ec_sm2dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
+    size_t *keylen)
+{
+    int ret;
+    size_t outlen;
+    EC_PKEY_CTX *dctx = ctx->data;
+
+    if (!ctx->pkey || !ctx->peerkey)
+    {
+        ECerr(EC_F_PKEY_EC_SM2DH_DERIVE, EC_R_KEYS_NOT_SET);
+        return 0;
+    }
+
+    if (!key || (*keylen == 0))
+    {
+        ECerr(EC_F_PKEY_EC_SM2DH_DERIVE, EC_R_MISSING_PARAMETERS);
+        return 0;
+    }
+
+    outlen = *keylen;
+    ret = SM2Kap_compute_key(key, outlen, dctx->server, dctx->peer_id, dctx->peerid_len, dctx->self_id, dctx->selfid_len, \
+        dctx->peer_ecdhe_key, dctx->self_ecdhe_key, ctx->peerkey->pkey.ec, ctx->pkey->pkey.ec, dctx->kdf_md);
+
+    if (ret <= 0)
+        return 0;
+    return 1;
+}
+#endif
+
 static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
                               unsigned char *key, size_t *keylen)
 {
@@ -192,6 +252,15 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
     unsigned char *ktmp = NULL;
     size_t ktmplen;
     int rv = 0;
+
+    #ifndef OPENSSL_NO_CNSM
+    if (EC_GROUP_get_curve_name(EC_KEY_get0_group(ctx->pkey->pkey.ec)) == NID_sm2)
+    {
+        /*to SM2DH or SM2KAP*/
+        return pkey_ec_sm2dh_derive(ctx, key, keylen);
+    }
+    #endif
+	
     if (dctx->kdf_type == EVP_PKEY_ECDH_KDF_NONE)
         return pkey_ec_derive(ctx, key, keylen);
     if (!key) {
@@ -323,7 +392,10 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha256 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha384 &&
-            EVP_MD_type((const EVP_MD *)p2) != NID_sha512) {
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha512 &&
+            #ifndef OPENSSL_NO_CNSM
+            EVP_MD_type((const EVP_MD *)p2) != NID_sm3) {
+            #endif
             ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_DIGEST_TYPE);
             return 0;
         }
