@@ -9,6 +9,11 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Add target VC-WIN32-UWP, VC-WIN64A-UWP, VC-WIN32-ARM-UWP and
+     VC-WIN64-ARM-UWP in Windows OneCore target for making building libraries
+     for Windows Store apps easier. Also, the "no-uplink" option has been added.
+     [Kenji Mouri]
+
   *) Join the directories crypto/x509 and crypto/x509v3
      [Richard Levitte]
 

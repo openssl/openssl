@@ -64,6 +64,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
 #               library and will be loaded in run-time by the OpenSSL library.
 # sctp          include SCTP support
+# no-uplink     Don't build support for UPLINK interface.
 # enable-weak-ssl-ciphers
 #               Enable weak ciphers that are disabled by default.
 # 386           generate 80386 code in assembly modules
@@ -412,6 +413,7 @@ my @disablables = (
     "ubsan",
     "ui-console",
     "unit-test",
+    "uplink",
     "whirlpool",
     "weak-ssl-ciphers",
     "zlib",
@@ -504,7 +506,7 @@ my @disable_cascades = (
     # which cannot be guaranteed if shared libraries aren't present.
     # (note that even with shared libraries, both the app and dynamic engines
     # must be linked with the same library)
-    "shared"            => [ "dynamic-engine" ],
+    "shared"            => [ "dynamic-engine", "uplink" ],
     # Other modules don't necessarily have to link with libcrypto, so shared
     # libraries do not have to be a condition to produce those.
 

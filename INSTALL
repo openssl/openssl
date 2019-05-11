@@ -558,6 +558,9 @@
                    Enable additional unit test APIs. This should not typically
                    be used in production deployments.
 
+  no-uplink
+                   Don't build support for UPLINK interface.
+
   enable-weak-ssl-ciphers
                    Build support for SSL/TLS ciphers that are considered "weak"
                    (e.g. RC4 based ciphersuites).
