@@ -20,8 +20,11 @@
 # include <windows.h>
 /* On Windows Vista or higher use BCrypt instead of the legacy CryptoAPI */
 # if defined(_MSC_VER) && _MSC_VER > 1500 /* 1500 = Visual Studio 2008 */ \
-     && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
+     && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600 && defined(FIPS_MODE)
 #  define USE_BCRYPTGENRANDOM
+#  define bcrypt_gen_random BCryptGenRandom
+#elif !defined(FIPS_MODE) /* Try dynamic loading for bcrypt if not FIPS_MODE */
+#  define USE_BCRYPTGENRANDOM_DL
 # endif
 
 # ifdef USE_BCRYPTGENRANDOM
@@ -38,6 +41,30 @@
  */
 #  define PROV_INTEL_SEC 22
 #  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
+
+#  ifdef USE_BCRYPTGENRANDOM_DL
+#   include "internal/thread_once.h"
+#   ifndef STATUS_SUCCESS
+#    define STATUS_SUCCESS ((NTSTATUS)0x00000000)
+#   endif
+#   ifndef BCRYPT_USE_SYSTEM_PREFERRED_RNG
+#    define BCRYPT_USE_SYSTEM_PREFERRED_RNG 0x00000002
+#   endif
+typedef LONG NTSTATUS;
+typedef PVOID BCRYPT_ALG_HANDLE;
+typedef NTSTATUS(WINAPI *BCRYPTGENRANDOM)(BCRYPT_ALG_HANDLE, PUCHAR, ULONG,
+                                          ULONG);
+static BCRYPTGENRANDOM bcrypt_gen_random = NULL;
+static CRYPTO_ONCE bcrypt_init = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_bcrypt_init)
+{
+    HMODULE bcrypt = LoadLibrary(TEXT("BCRYPT.DLL"));
+    if (bcrypt != NULL)
+        bcrypt_gen_random = (BCRYPTGENRANDOM)GetProcAddress(bcrypt,
+                                                            "BCryptGenRandom");
+    return 1;
+}
+#  endif
 # endif
 
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
@@ -48,7 +75,6 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     unsigned char *buffer;
     size_t bytes_needed;
     size_t entropy_available = 0;
-
 
 # ifdef OPENSSL_RAND_SEED_RDTSC
     entropy_available = rand_acquire_entropy_from_tsc(pool);
@@ -62,21 +88,27 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         return entropy_available;
 # endif
 
-# ifdef USE_BCRYPTGENRANDOM
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    buffer = rand_pool_add_begin(pool, bytes_needed);
-    if (buffer != NULL) {
-        size_t bytes = 0;
-        if (BCryptGenRandom(NULL, buffer, bytes_needed,
+# if defined(USE_BCRYPTGENRANDOM) || defined(USE_BCRYPTGENRANDOM_DL)
+#  ifndef USE_BCRYPTGENRANDOM
+     RUN_ONCE(&bcrypt_init, do_bcrypt_init);
+#  endif
+    if (bcrypt_gen_random != NULL) {
+        bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        buffer = rand_pool_add_begin(pool, bytes_needed);
+        if (buffer != NULL) {
+            size_t bytes = 0;
+            if (bcrypt_gen_random(NULL, buffer, bytes_needed,
                             BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
-            bytes = bytes_needed;
+                bytes = bytes_needed;
 
-        rand_pool_add_end(pool, bytes, 8 * bytes);
-        entropy_available = rand_pool_entropy_available(pool);
+            rand_pool_add_end(pool, bytes, 8 * bytes);
+            entropy_available = rand_pool_entropy_available(pool);
+        }
+        if (entropy_available > 0)
+            return entropy_available;
     }
-    if (entropy_available > 0)
-        return entropy_available;
-# else
+# endif /* USE_BCRYPTGENRANDOM || USE_BCRYPTGENRANDOM_DL */
+# ifndef USE_BCRYPTGENRANDOM
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
