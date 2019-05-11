@@ -422,6 +422,7 @@ my @disablables = (
     "ubsan",
     "ui-console",
     "unit-test",
+	"uplink",
     "whirlpool",
     "weak-ssl-ciphers",
     "zlib",
@@ -506,7 +507,7 @@ my @disable_cascades = (
     # which cannot be guaranteed if shared libraries aren't present.
     # (note that even with shared libraries, both the app and dynamic engines
     # must be linked with the same library)
-    "shared"            => [ "dynamic-engine" ],
+    "shared"            => [ "dynamic-engine", "uplink" ],
     # Other modules don't necessarily have to link with libcrypto, so shared
     # libraries do not have to be a condition to produce those.
 
