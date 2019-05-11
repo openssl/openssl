@@ -39,11 +39,16 @@ SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
 groups in the array B<glist>. The array consist of all NIDs of groups in
 preference order. For a TLS client the groups are used directly in the
 supported groups extension. For a TLS server the groups are used to
-determine the set of shared groups.
+determine the set of shared groups. Currently supported groups for
+B<TLSv1.3> are B<NID_X9_62_prime256v1>, B<NID_secp384r1>, B<NID_secp521r1>,
+B<NID_X25519>, B<NID_X448>, B<NID_ffdhe2048>, B<NID_ffdhe3072>,
+B<NID_ffdhe4096>, B<NID_ffdhe6144> and B<NID_ffdhe8192>.
 
 SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
 string B<list>. The string is a colon separated list of group NIDs or
-names, for example "P-521:P-384:P-256".
+names, for example "P-521:P-384:P-256:X25519:ffdhe2048". Currently supported
+groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>, B<X25519>, B<X448>,
+B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>.
 
 SSL_set1_groups() and SSL_set1_groups_list() are similar except they set
 supported groups for the SSL structure B<ssl>.
