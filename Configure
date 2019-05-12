@@ -64,6 +64,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
 #               library and will be loaded in run-time by the OpenSSL library.
 # sctp          include SCTP support
+# no-uplink     Don't build support for UPLINK interface.
 # enable-weak-ssl-ciphers
 #               Enable weak ciphers that are disabled by default.
 # 386           generate 80386 code in assembly modules
@@ -422,7 +423,7 @@ my @disablables = (
     "ubsan",
     "ui-console",
     "unit-test",
-	"uplink",
+    "uplink",
     "whirlpool",
     "weak-ssl-ciphers",
     "zlib",
