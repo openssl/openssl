@@ -20,6 +20,10 @@ SOURCE[../../libcrypto]=\
 SOURCE[../../libcrypto]=\
 	evp_fetch.c
 
+# FIPS Module
+SOURCE[../../providers/fips]=\
+        digest.c evp_enc.c evp_lib.c evp_fetch.c cmeth_lib.c
+
 INCLUDE[e_aes.o]=.. ../modes
 INCLUDE[e_aes_cbc_hmac_sha1.o]=../modes
 INCLUDE[e_aes_cbc_hmac_sha256.o]=../modes

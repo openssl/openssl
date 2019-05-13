@@ -388,6 +388,8 @@ IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);
  */
 static void impl_cache_flush_cache(QUERY *c, IMPL_CACHE_FLUSH *state)
 {
+#if !defined(FIPS_MODE)
+/* TODO(3.0): No RAND_bytes yet in FIPS module. Add this back when available */
     OSSL_METHOD_STORE *store = state->store;
     unsigned int n;
 
@@ -401,6 +403,7 @@ static void impl_cache_flush_cache(QUERY *c, IMPL_CACHE_FLUSH *state)
         OPENSSL_free(lh_QUERY_delete(state->cache, c));
     else
         state->nelem++;
+#endif /* !defined(FIPS_MODE) */
 }
 
 static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
