@@ -2069,7 +2069,6 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_ecdsa_sha1                                0x0203
 #ifndef OPENSSL_NO_CNSM
 #define TLSEXT_SIGALG_ecdsa_sm3                                 0x0703
-#define TLSEXT_SIGALG_rsa_sm3                                   0x0701
 #endif
 #define TLSEXT_SIGALG_rsa_pss_rsae_sha256                       0x0804
 #define TLSEXT_SIGALG_rsa_pss_rsae_sha384                       0x0805
