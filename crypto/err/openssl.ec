@@ -19,7 +19,7 @@ L EC            include/openssl/ec.h            crypto/ec/ec_err.c
 L SSL           include/openssl/ssl.h           ssl/ssl_err.c
 L BIO           include/openssl/bio.h           crypto/bio/bio_err.c
 L PKCS7         include/openssl/pkcs7.h         crypto/pkcs7/pkcs7err.c
-L X509V3        include/openssl/x509v3.h        crypto/x509v3/v3err.c
+L X509V3        include/openssl/x509v3.h        crypto/x509/v3err.c
 L PKCS12        include/openssl/pkcs12.h        crypto/pkcs12/pk12err.c
 L RAND          include/openssl/rand.h          crypto/rand/rand_err.c
 L DSO           include/internal/dso.h          crypto/dso/dso_err.c
