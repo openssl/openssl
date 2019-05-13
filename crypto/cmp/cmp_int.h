@@ -449,8 +449,10 @@ typedef struct OSSL_cmp_pkibody_st {
         OSSL_CRMF_MSGS *cr; /* 2 */
         OSSL_CMP_CERTREPMESSAGE *cp; /* 3 */
         /* p10cr      [4]  CertificationRequest,     --imported from [PKCS10] */
-        /* PKCS10_CERTIFICATIONREQUEST is effectively X509_REQ
-           so it is used directly */
+        /*
+         * PKCS10_CERTIFICATIONREQUEST is effectively X509_REQ
+         * so it is used directly
+         */
         X509_REQ *p10cr; /* 4 */
         /* popdecc    [5]  POPODecKeyChallContent, --pop Challenge */
         /* POPODecKeyChallContent ::= SEQUENCE OF Challenge */
@@ -486,8 +488,10 @@ typedef struct OSSL_cmp_pkibody_st {
         /* pkiconf    [19] PKIConfirmContent,        --Confirmation */
         /* OSSL_CMP_PKICONFIRMCONTENT would be only a typedef of ASN1_NULL */
         /* OSSL_CMP_CONFIRMCONTENT *pkiconf; */
-        /* NOTE: this should ASN1_NULL according to the RFC
-           but there might be a struct in it when sent from faulty servers... */
+        /*
+         * NOTE: this should ASN1_NULL according to the RFC
+         * but there might be a struct in it when sent from faulty servers...
+         */
         ASN1_TYPE *pkiconf; /* 19 */
         /* nested     [20] NestedMessageContent,     --Nested Message */
         /* NestedMessageContent ::= PKIMessages */
