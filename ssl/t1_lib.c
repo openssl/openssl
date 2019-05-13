@@ -191,21 +191,18 @@ static const uint16_t eccurves_default[] = {
 
 #ifndef OPENSSL_NO_CNSM
 /* The default sm2 curves */
-static  uint16_t eccurves_default_sm2[11] = {
+static  uint16_t eccurves_default_sm2[2] = {
     249,                      /* tassl default (249) */
 };
 
 uint16_t SM2_group_id_custom = 249;
-static int sm2_curve_config_index = 0;
 int set_sm2_group_id_custom(uint16_t value)
 {
-    if(value > 0){
-        SM2_group_id_custom = value;
-        memcpy(eccurves_default_sm2+1+sm2_curve_config_index++, &SM2_group_id_custom, sizeof(uint16_t));
-        return 1;
-    }
-
-    return 0;	
+	if(value > 0){
+		SM2_group_id_custom = value;
+		memcpy(eccurves_default_sm2+1, &SM2_group_id_custom, sizeof(uint16_t));
+	}
+	
 }
 
 #endif
@@ -271,9 +268,9 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
     default:
         if (s->ext.supportedgroups == NULL) {
         #ifndef OPENSSL_NO_CNSM
-            if(s->s3 && s->s3->tmp.new_cipher && s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3){ //ECDHE-SM4-SM3 only allow sm2 curve, and other custom configed sm2 curve id    modify by gujq on 20190426
+            if(s->s3 && s->s3->tmp.new_cipher && s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3){ //ECDHE-SM4-SM3 only allow sm2 curve
 	            *pgroups = eccurves_default_sm2;
-                *pgroupslen = sm2_curve_config_index+1;
+                *pgroupslen = 2;
 	     	}
             else{ 
         #endif		
@@ -362,9 +359,6 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
         tls1_get_peer_groups(s, &pref, &num_pref);
         tls1_get_supported_groups(s, &supp, &num_supp);
     }
-#ifndef OPENSSL_NO_CNSM
-int reserve_sm2_curve_id = 0;
-#endif
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
@@ -372,29 +366,10 @@ int reserve_sm2_curve_id = 0;
         if (!tls1_in_list(id, supp, num_supp)
             || !tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
                     continue;
-#ifndef OPENSSL_NO_CNSM
-            if(s->s3 && s->s3->tmp.new_cipher && s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3){ //ECDHE-SM4-SM3 prefer 249(define for sm2 curve id in tassl-1.1.1b by tass)  for sm2 curve id
-                if(id != 249){
-                    reserve_sm2_curve_id = id;
-		      continue;
-                }
-		  else{
-                    return id;
-		  }
-
-            }
-#endif
-
         if (nmatch == k)
             return id;
          k++;
     }
-
-#ifndef OPENSSL_NO_CNSM
-    if(reserve_sm2_curve_id > 0)   //found one match curve id for TLS1_CK_ECDHE_WITH_SM4_SM3, but not 249
-        return reserve_sm2_curve_id;
-#endif
-
     if (nmatch == -1)
         return k;
     /* Out of range (nmatch > k). */
@@ -597,13 +572,7 @@ int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
 	
 #ifndef OPENSSL_NO_CNSM
     if(group_id == 249 && SM2_group_id_custom != 249 && SM2_group_id_custom > 0){
-	int i;
-        for(i=0; i< sm2_curve_config_index; i++){
-		group_id = eccurves_default_sm2[i+1];
-		if(tls1_in_list(group_id, groups, groups_len)) 
-			return 1;
-        }
-	return 0;
+        group_id = SM2_group_id_custom;
     }
 #endif
 
@@ -717,8 +686,7 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 /* Default sigalg schemes */
 static const uint16_t tls12_sigalgs[] = {
 #ifndef OPENSSL_NO_EC
-    #ifndef OPENSSL_NO_CNSM
-    TLSEXT_SIGALG_rsa_sm3,
+	#ifndef OPENSSL_NO_CNSM
     TLSEXT_SIGALG_ecdsa_sm3,
     #endif
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
@@ -769,13 +737,10 @@ static const uint16_t suiteb_sigalgs[] = {
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
 #ifndef OPENSSL_NO_EC
-    #ifndef OPENSSL_NO_CNSM
+#ifndef OPENSSL_NO_CNSM
      {"sm2_sm3", TLSEXT_SIGALG_ecdsa_sm3,
      NID_sm3, SSL_MD_SM3_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_sm3WithSM2Sign, NID_sm2},
-     {"rsa_sm3", TLSEXT_SIGALG_rsa_sm3,
-     NID_sm3, SSL_MD_SM3_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
-     NID_sm3WithRSAEncryption, NID_undef},
     #endif
     {"ecdsa_secp256r1_sha256", TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
@@ -798,6 +763,7 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {NULL, TLSEXT_SIGALG_ecdsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA1, NID_undef},
+    
 #endif
     {"rsa_pss_rsae_sha256", TLSEXT_SIGALG_rsa_pss_rsae_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA,
@@ -986,7 +952,7 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
         return NULL;
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
         #ifndef OPENSSL_NO_CNSM
-            if(idx == SSL_PKEY_ECC && s->s3->tmp.new_cipher && ((s->s3->tmp.new_cipher->id == TLS1_CK_ECC_WITH_SM4_SM3) || (s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3) )){  //SM2 should set idx to SSL_PKEY_ECC_ENC modify by gujq on 20181120
+             if(idx == SSL_PKEY_ECC && s->s3->tmp.new_cipher && ((s->s3->tmp.new_cipher->id == TLS1_CK_ECC_WITH_SM4_SM3) || (s->s3->tmp.new_cipher->id == TLS1_CK_ECDHE_WITH_SM4_SM3) )){  //SM2 should set idx to SSL_PKEY_ECC_ENC modify by gujq on 20181120
                 idx = SSL_PKEY_ECC_ENC;
             }
         #endif
