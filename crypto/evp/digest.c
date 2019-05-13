@@ -55,10 +55,14 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
      * pctx should be freed by the user of EVP_MD_CTX
      * if EVP_MD_CTX_FLAG_KEEP_PKEY_CTX is set
      */
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
         EVP_PKEY_CTX_free(ctx->pctx);
-#ifndef OPENSSL_NO_ENGINE
+
+# ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(ctx->engine);
+# endif
 #endif
     OPENSSL_cleanse(ctx, sizeof(*ctx));
 
@@ -102,8 +106,9 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 {
-    EVP_MD *provmd;
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE *tmpimpl = NULL;
+#endif
 
     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
 
@@ -111,7 +116,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         ctx->reqdigest = type;
 
     /* TODO(3.0): Legacy work around code below. Remove this */
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
      * this context may already have an ENGINE! Try to avoid releasing the
@@ -132,7 +137,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
      */
     if (ctx->engine != NULL
             || impl != NULL
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
             || tmpimpl != NULL
+#endif
             || ctx->pctx != NULL
             || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0) {
         if (ctx->digest == ctx->fetched_digest)
@@ -160,7 +167,13 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     /* TODO(3.0): Start of non-legacy code below */
 
     if (type->prov == NULL) {
-        provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
+#ifdef FIPS_MODE
+        /* We only do explict fetches inside the FIPS module */
+        EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+#else
+        EVP_MD *provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
+
         if (provmd == NULL) {
             EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
             return 0;
@@ -168,6 +181,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         type = provmd;
         EVP_MD_meth_free(ctx->fetched_digest);
         ctx->fetched_digest = provmd;
+#endif
     }
 
     ctx->digest = type;
@@ -189,7 +203,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     /* TODO(3.0): Remove legacy code below */
  legacy:
 
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     if (type) {
         /*
          * Ensure an ENGINE left lying around from last time is cleared (the
@@ -247,16 +261,19 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             }
         }
     }
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
  skip_to_init:
 #endif
-    if (ctx->pctx) {
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
+    if (ctx->pctx != NULL) {
         int r;
         r = EVP_PKEY_CTX_ctrl(ctx->pctx, -1, EVP_PKEY_OP_TYPE_SIG,
                               EVP_PKEY_CTRL_DIGESTINIT, 0, ctx);
         if (r <= 0 && (r != -2))
             return 0;
     }
+#endif
     if (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT)
         return 1;
     return ctx->digest->init(ctx);
@@ -397,6 +414,8 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
     EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     if (in->pctx != NULL) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
         if (out->pctx == NULL) {
@@ -405,12 +424,13 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
             return 0;
         }
     }
+#endif
 
     return 1;
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     /* Make sure it's safe to copy a digest context using an ENGINE */
     if (in->engine && !ENGINE_init(in->engine)) {
         EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, ERR_R_ENGINE_LIB);
@@ -451,6 +471,8 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     out->update = in->update;
 
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     if (in->pctx) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
         if (!out->pctx) {
@@ -458,6 +480,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
             return 0;
         }
     }
+#endif
 
     if (out->digest->copy)
         return out->digest->copy(out, in);
