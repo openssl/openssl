@@ -32,9 +32,20 @@
 #  pragma message disable DOLLARID
 # endif
 
+# include <dlfcn.h>              /* SYS$GET_ENTROPY presence */
+
 # ifndef OPENSSL_RAND_SEED_OS
 #  error "Unsupported seeding method configured; must be os"
 # endif
+
+/*
+ * DATA COLLECTION METHOD
+ * ======================
+ *
+ * This is a method to get low quality entropy.
+ * It works by collecting all kinds of statistical data that
+ * VMS offers and using them as random seed.
+ */
 
 /* We need to make sure we have the right size pointer in some cases */
 # if __INITIAL_POINTER_SIZE == 64
@@ -330,7 +341,7 @@ static void massage_JPI(ILE3 *items)
  */
 #define ENTROPY_FACTOR  20
 
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+size_t data_collect_method(RAND_POOL *pool)
 {
     ILE3 JPI_items_64bit[OSSL_NELEM(JPI_item_data_64bit) + 1];
     ILE3 RMI_items_64bit[OSSL_NELEM(RMI_item_data_64bit) + 1];
@@ -445,15 +456,9 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
      * If we can't feed the requirements from the caller, we're in deep trouble.
      */
     if (!ossl_assert(total_length >= bytes_needed)) {
-        char neededstr[20];
-        char availablestr[20];
-
-        BIO_snprintf(neededstr, sizeof(neededstr), "%zu", bytes_needed);
-        BIO_snprintf(availablestr, sizeof(availablestr), "%zu", total_length);
-        RANDerr(RAND_F_RAND_POOL_ACQUIRE_ENTROPY,
-                RAND_R_RANDOM_POOL_UNDERFLOW);
-        ERR_add_error_data(4, "Needed: ", neededstr, ", Available: ",
-                           availablestr);
+        ERR_raise_data(ERR_LIB_RAND, RAND_R_RANDOM_POOL_UNDERFLOW,
+                       "Needed: %zu, Available: %zu",
+                       bytes_needed, total_length);
         return 0;
     }
 
@@ -496,6 +501,80 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
+
+/*
+ * SYS$GET_ENTROPY METHOD
+ * ======================
+ *
+ * This is a high entropy method based on a new system service that is
+ * based on getentropy() from FreeBSD 12.  It's only used if available,
+ * and its availability is detected at run-time.
+ *
+ * We assume that this function provides full entropy random output.
+ */
+#define PUBLIC_VECTORS "SYS$LIBRARY:SYS$PUBLIC_VECTORS.EXE"
+#define GET_ENTROPY "SYS$GET_ENTROPY"
+
+static int get_entropy_address_flag = 0;
+static int (*get_entropy_address)(void *buffer, size_t buffer_size) = NULL;
+static int init_get_entropy_address(void)
+{
+    if (get_entropy_address_flag == 0)
+        get_entropy_address = dlsym(dlopen(PUBLIC_VECTORS, 0), GET_ENTROPY);
+    get_entropy_address_flag = 1;
+    return get_entropy_address != NULL;
+}
+
+size_t get_entropy_method(RAND_POOL *pool)
+{
+    /*
+     * The documentation says that SYS$GET_ENTROPY will give a maximum of
+     * 256 bytes of data.
+     */
+    unsigned char buffer[256];
+    size_t bytes_needed;
+    size_t bytes_to_get = 0;
+    uint32_t status;
+
+    for (bytes_needed = rand_pool_bytes_needed(pool, 1);
+         bytes_needed > 0;
+         bytes_needed -= bytes_to_get) {
+        bytes_to_get =
+            bytes_needed > sizeof(buffer) ? sizeof(buffer) : bytes_needed;
+
+        status = get_entropy_address(buffer, bytes_to_get);
+        if (status == SS$_RETRY) {
+            /* Set to zero so the loop doesn't diminish |bytes_needed| */
+            bytes_to_get = 0;
+            /* Should sleep some amount of time */
+            continue;
+        }
+
+        if (status != SS$_NORMAL) {
+            lib$signal(status);
+            return 0;
+        }
+
+        rand_pool_add(pool, buffer, bytes_to_get, 8 * bytes_to_get);
+    }
+
+    return rand_pool_entropy_available(pool);
+}
+
+/*
+ * MAIN ENTROPY ACQUISITION FUNCTIONS
+ * ==================================
+ *
+ * These functions are called by the RAND / DRBG functions
+ */
+
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+{
+    if (init_get_entropy_address())
+        return get_entropy_method(pool);
+    return data_collect_method(pool);
+}
+
 
 int rand_pool_add_additional_data(RAND_POOL *pool)
 {

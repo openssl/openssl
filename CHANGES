@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added a new method to gather entropy on VMS, based on SYS$GET_ENTROPY.
+     The presence of this system service is determined at run-time.
+     [Richard Levitte]
+
   *) Added functionality to create an EVP_PKEY context based on data
      for methods from providers.  This takes an algorithm name and a
      property query string and simply stores them, with the intent
