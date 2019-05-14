@@ -5,7 +5,7 @@
 OSSL_CMP_ITAV_set0,
 OSSL_CMP_ITAV_get0_type,
 OSSL_CMP_ITAV_get0_value,
-OSSL_CMP_ITAV_stack_item_push0
+OSSL_CMP_ITAV_push0_stack_item
 - OSSL_CMP_ITAV utility functions
 
 =head1 SYNOPSIS
@@ -16,7 +16,7 @@ OSSL_CMP_ITAV_stack_item_push0
   ASN1_OBJECT *OSSL_CMP_ITAV_get0_type(const OSSL_CMP_ITAV *itav);
   ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav);
 
-  int OSSL_CMP_ITAV_stack_item_push0(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
+  int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
                                      OSSL_CMP_ITAV *itav);
 
 =head1 DESCRIPTION
@@ -35,7 +35,7 @@ B<itav>.
 OSSL_CMP_ITAV_get0_value() returns a direct pointer to the infoValue in
 the B<itav> as generic ASN1_TYPE*.
 
-OSSL_CMP_ITAV_stack_item_push0() pushes B<itav> to the stack pointed to
+OSSL_CMP_ITAV_push0_stack_item() pushes B<itav> to the stack pointed to
 by B<*itav_sk_p>. It creates a new stack if B<*itav_sk_p> points to NULL.
 
 =head1 NOTES
@@ -46,7 +46,10 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 
 OSSL_CMP_ITAV_set0() does not return a value.
 
-OSSL_CMP_ITAV_stack_item_push0() returns 1 on success, 0 on error.
+OSSL_CMP_ITAV_get0_type() and OSSL_CMP_ITAV_get0_value()
+return the respective pointer or NULL if their input is NULL.
+
+OSSL_CMP_ITAV_push0_stack_item() returns 1 on success, 0 on error.
 
 =head1 EXAMPLE
 
@@ -68,8 +71,8 @@ included in the requests' PKIHeader's genInfo field.
     OSSL_CMP_ITAV_set0(itav, type, val);
 
     OSSL_CMP_CTX *ctx = OSSL_CMP_CTX_new();
-    if (!OSSL_CMP_CTX_geninfo_itav_push0(ctx, itav)) {
-        OSSL_CMP_ITAV_free(itav);
+    if (ctx == NULL || !OSSL_CMP_CTX_geninfo_push0_ITAV(ctx, itav)) {
+        OSSL_CMP_ITAV_free(itav); /* also frees type and val */
         goto err;
     }
 

@@ -4826,7 +4826,7 @@ OSSL_CMP_MSG_it                         4770	3_0_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 OSSL_CMP_ITAV_set0                      4771	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_type                 4772	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_value                4773	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_ITAV_stack_item_push0          4774	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_push0_stack_item          4774	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_free                      4775	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_free                       4776	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_PKISI_free                     4777	3_0_0	EXIST::FUNCTION:CMP
