@@ -14,8 +14,7 @@ steps:
   displayName: 'Run a one-line script'
 - task: CmdLine@2
   inputs:
-    script: 'env
-      export'
+    script: 'env'
 - script: |
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
