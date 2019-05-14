@@ -32,9 +32,20 @@
 #  pragma message disable DOLLARID
 # endif
 
+# include <dlfcn.h>              /* SYS$GET_ENTROPY presence */
+
 # ifndef OPENSSL_RAND_SEED_OS
 #  error "Unsupported seeding method configured; must be os"
 # endif
+
+/*
+ * DATA COLLECTION METHOD
+ * ======================
+ *
+ * This is a method to get *some* very low quality entropy.
+ * It works by collecting all kinds of statistical data that
+ * VMS offers and using them as "entropy".
+ */
 
 /* We need to make sure we have the right size pointer in some cases */
 # if __INITIAL_POINTER_SIZE == 64
@@ -330,7 +341,7 @@ static void massage_JPI(ILE3 *items)
  */
 #define ENTROPY_FACTOR  20
 
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+size_t data_collect_method(RAND_POOL *pool)
 {
     ILE3 JPI_items_64bit[OSSL_NELEM(JPI_item_data_64bit) + 1];
     ILE3 RMI_items_64bit[OSSL_NELEM(RMI_item_data_64bit) + 1];
@@ -496,6 +507,72 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
+
+/*
+ * SYS$GET_ENTROPY METHOD
+ * ======================
+ *
+ * This is a high entropy method based on a new systems service that is
+ * based on getentropy() from FreeBSD 12.  It's only used if available,
+ * and its availability is detected at run-time.
+ *
+ * We assume that this function gives 1 bit of entropy for each bit of
+ * output.
+ */
+#define PUBLIC_VECTORS "SYS$PUBLIC_VECTORS"
+#define GET_ENTROPY "SYS$GET_ENTROPY"
+
+static int get_entropy_address_flag = 0;
+static int (*get_entropy_address)(void *buffer, size_t buffer_size) = NULL;
+static int init_get_entropy_address(void)
+{
+    if (get_entropy_address_flag == 0)
+        get_entropy_addr = dlsym(dlopen(PUBLIC_VECTORS, 0), OLD_ROUTINE);
+    get_entropy_address_flag = 1;
+    return get_entropy_addr != NULL;
+}
+
+size_t get_entropy_method(RAND_POOL *pool)
+{
+    /*
+     * The documentation says that SYS$GET_ENTROPY will give a maximum of
+     * 256 bytes of data.
+     */
+    unsigned char buffer[256];
+    size_t bytes_needed = rand_pool_bytes_needed(pool, 1);
+    size_t bytes_remaining = rand_pool_bytes_remaining(pool);
+    uint32_t status;
+
+ again:
+    status = get_entropy_address(buffer, bytes_remaining);
+    if (status != SS$_RETRY) {
+        /* Should sleep some amount of time */
+        goto again;
+    }
+
+    if (status != SS$_NORMAL) {
+        lib$signal(status);
+        return 0;
+    }
+
+    rand_pool_add(pool, buffer, bytes_remaining, 8 * bytes_remaining);
+    return rand_pool_entropy_available(pool);
+}
+
+/*
+ * MAIN ENTTROPY AQUISITION FUNCTIONS
+ * ==================================
+ *
+ * These functions are called by the RAND / DRBG functions
+ */
+
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+{
+    if (init_get_entropy_address())
+        return get_entropy_method(pool);
+    return data_collect_method(pool);
+}
+
 
 int rand_pool_add_additional_data(RAND_POOL *pool)
 {
