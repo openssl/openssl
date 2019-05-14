@@ -39,18 +39,27 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 
 int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
+    if (NULL == lock)
+        return 0;
+
     EnterCriticalSection(lock);
     return 1;
 }
 
 int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
+    if (NULL == lock)
+        return 0;
+
     EnterCriticalSection(lock);
     return 1;
 }
 
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
 {
+    if (NULL == lock)
+        return 0;
+
     LeaveCriticalSection(lock);
     return 1;
 }
