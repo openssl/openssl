@@ -150,6 +150,8 @@ BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED:143:\
 BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED:144:no hostname or service specified
 BIO_R_NO_PORT_DEFINED:113:no port defined
 BIO_R_NO_SUCH_FILE:128:no such file
+BIO_R_TFO_DISABLED:106:tfo disabled
+BIO_R_TFO_NO_KERNEL_SUPPORT:108:tfo no kernel support
 BIO_R_TRANSFER_ERROR:104:transfer error
 BIO_R_TRANSFER_TIMEOUT:105:transfer timeout
 BIO_R_UNABLE_TO_BIND_SOCKET:117:unable to bind socket
@@ -158,6 +160,7 @@ BIO_R_UNABLE_TO_KEEPALIVE:137:unable to keepalive
 BIO_R_UNABLE_TO_LISTEN_SOCKET:119:unable to listen socket
 BIO_R_UNABLE_TO_NODELAY:138:unable to nodelay
 BIO_R_UNABLE_TO_REUSEADDR:139:unable to reuseaddr
+BIO_R_UNABLE_TO_TFO:109:unable to tfo
 BIO_R_UNAVAILABLE_IP_FAMILY:145:unavailable ip family
 BIO_R_UNINITIALIZED:120:uninitialized
 BIO_R_UNKNOWN_INFO_TYPE:140:unknown info type

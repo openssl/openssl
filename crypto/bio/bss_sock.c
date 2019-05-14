@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
+#include "bio_tfo.h"
 #include "internal/cryptlib.h"
 #include "internal/ktls.h"
 
@@ -138,6 +139,15 @@ static int sock_write(BIO *b, const char *in, int inl)
         }
     } else
 # endif
+# if defined(OSSL_TFO_SENDTO)
+    if (b->tfo.first) {
+        int peerlen = BIO_ADDR_sockaddr_size(&b->tfo.peer);
+
+        ret = sendto(b->num, in, inl, OSSL_TFO_SENDTO,
+                     BIO_ADDR_sockaddr(&b->tfo.peer), peerlen);
+        b->tfo.first = 0;
+    } else
+# endif
         ret = writesocket(b->num, in, inl);
     BIO_clear_retry_flags(b);
     if (ret <= 0) {
@@ -161,6 +171,8 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->num = *((int *)ptr);
         b->shutdown = (int)num;
         b->init = 1;
+        b->tfo.first = 0;
+        memset(&b->tfo.peer, 0, sizeof(b->tfo.peer));
         break;
     case BIO_C_GET_FD:
         if (b->init) {
@@ -204,6 +216,25 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 # endif
     case BIO_CTRL_EOF:
         ret = (b->flags & BIO_FLAGS_IN_EOF) != 0;
+        break;
+    case BIO_C_GET_CONNECT:
+        if (ptr != NULL && num == 2) {
+            const char **pptr = (const char **)ptr;
+
+            *pptr = (const char *)&b->tfo.peer;
+        } else {
+            ret = 0;
+        }
+        break;
+    case BIO_C_SET_CONNECT:
+        if (ptr != NULL && num == 2) {
+            ret = BIO_ADDR_make(&b->tfo.peer,
+                                BIO_ADDR_sockaddr((const BIO_ADDR*)ptr));
+            if (ret)
+                b->tfo.first = 1;
+        } else {
+            ret = 0;
+        }
         break;
     default:
         ret = 0;
