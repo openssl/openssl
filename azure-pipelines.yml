@@ -12,14 +12,10 @@ pool:
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
-- task: Bash@3
+- task: CmdLine@2
   inputs:
-    targetType: 'inline'
-    script: '# Write your commands here
-      env
-      export
-      
-      # Use the environment variables input below to pass secret variables to this script'
+    script: 'env
+      export'
 - script: |
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
