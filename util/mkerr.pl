@@ -451,8 +451,8 @@ foreach my $lib ( keys %errorfile ) {
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_${lib}ERR_H
-# define HEADER_${lib}ERR_H
+#ifndef OSSL_HEADER_${lib}ERR_H
+# define OSSL_HEADER_${lib}ERR_H
 
 # ifndef HEADER_SYMHACKS_H
 #  include <openssl/symhacks.h>
@@ -494,7 +494,7 @@ void ERR_unload_${lib}_strings(void);
 void ERR_${lib}_error(int function, int reason, char *file, int line);
 # ifdef  __cplusplus
 }
-# endif
+# endif /* !defined OSSL_HEADER_${lib}ERR_H */
 EOF
         }
     }
@@ -538,7 +538,9 @@ EOF
 
     while (length($indent) > 0) {
         $indent = substr $indent, 0, -1;
-        print OUT "#${indent}endif\n";
+        my $comment = "";
+        $comment = " /* !defined OSSL_HEADER_${lib}ERR_H */" if length($indent) == 0;
+        print OUT "#${indent}endif$comment\n";
     }
 
     # Rewrite the C source file containing the error details.
