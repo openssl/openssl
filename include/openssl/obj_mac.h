@@ -5004,6 +5004,10 @@
 #define LN_sskdf                "sskdf"
 #define NID_sskdf               1205
 
+#define SN_x963kdf              "X963KDF"
+#define LN_x963kdf              "x963kdf"
+#define NID_x963kdf             1206
+
 #define SN_id_pkinit            "id-pkinit"
 #define NID_id_pkinit           1031
 #define OBJ_id_pkinit           1L,3L,6L,1L,5L,2L,3L
