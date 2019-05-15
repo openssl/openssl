@@ -14,6 +14,9 @@ steps:
   displayName: 'Run a one-line script'
 - task: CmdLine@2
   inputs:
+    script: 'ls /usr/bin'
+- task: CmdLine@2
+  inputs:
     script: 'which mvn'
 - task: CmdLine@2
   inputs:
