@@ -14,6 +14,9 @@ steps:
   displayName: 'Run a one-line script'
 - task: CmdLine@2
   inputs:
+    script: 'docker info'
+- task: CmdLine@2
+  inputs:
     script: 'ls /usr/bin'
 - task: CmdLine@2
   inputs:
