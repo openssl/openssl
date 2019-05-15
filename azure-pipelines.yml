@@ -14,7 +14,7 @@ steps:
   displayName: 'Run a one-line script'
 - task: CmdLine@2
   inputs:
-    script: 'iptables -L'
+    script: 'ip addr'
 - task: CmdLine@2
   inputs:
     script: 'docker info'
