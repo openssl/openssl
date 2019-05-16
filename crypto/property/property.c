@@ -277,7 +277,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
     IMPLEMENTATION *impl;
     OSSL_PROPERTY_LIST *pq = NULL, *p2;
     int ret = 0;
-    int j;
+    int j, best = -1, score, optional;
 
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
@@ -310,13 +310,16 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
         ossl_property_free(pq);
         pq = p2;
     }
+    optional = ossl_property_has_optional(pq);
     for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
         impl = sk_IMPLEMENTATION_value(alg->impls, j);
-
-        if (ossl_property_match(pq, impl->properties)) {
+        score = ossl_property_match_count(pq, impl->properties);
+        if (score > best) {
             *method = impl->method;
             ret = 1;
-            goto fin;
+            if (!optional)
+                goto fin;
+            best = score;
         }
     }
 fin:
