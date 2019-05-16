@@ -65,6 +65,7 @@ static const ERR_STRING_DATA KDF_str_functs[] = {
     {ERR_PACK(ERR_LIB_KDF, KDF_F_SSKDF_NEW, 0), "sskdf_new"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_SSKDF_SIZE, 0), "sskdf_size"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_TLS1_PRF_ALG, 0), "tls1_prf_alg"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_X963KDF_DERIVE, 0), "x963kdf_derive"},
     {0, NULL}
 };
 
@@ -84,6 +85,7 @@ static const ERR_STRING_DATA KDF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_SESSION_ID), "missing session id"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_TYPE), "missing type"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_XCGHASH), "missing xcghash"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_NOT_SUPPORTED), "not supported"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNKNOWN_PARAMETER_TYPE),
     "unknown parameter type"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNSUPPORTED_MAC_TYPE),

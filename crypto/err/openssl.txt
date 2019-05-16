@@ -925,6 +925,7 @@ KDF_F_SSKDF_MAC2CTRL:136:sskdf_mac2ctrl
 KDF_F_SSKDF_NEW:137:sskdf_new
 KDF_F_SSKDF_SIZE:138:sskdf_size
 KDF_F_TLS1_PRF_ALG:111:tls1_prf_alg
+KDF_F_X963KDF_DERIVE:139:x963kdf_derive
 OBJ_F_OBJ_ADD_OBJECT:105:OBJ_add_object
 OBJ_F_OBJ_ADD_SIGID:107:OBJ_add_sigid
 OBJ_F_OBJ_CREATE:100:OBJ_create
@@ -2464,6 +2465,7 @@ KDF_R_MISSING_SEED:106:missing seed
 KDF_R_MISSING_SESSION_ID:113:missing session id
 KDF_R_MISSING_TYPE:114:missing type
 KDF_R_MISSING_XCGHASH:115:missing xcghash
+KDF_R_NOT_SUPPORTED:118:not supported
 KDF_R_UNKNOWN_PARAMETER_TYPE:103:unknown parameter type
 KDF_R_UNSUPPORTED_MAC_TYPE:117:unsupported mac type
 KDF_R_VALUE_ERROR:108:value error

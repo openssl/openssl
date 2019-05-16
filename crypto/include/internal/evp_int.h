@@ -172,6 +172,7 @@ extern const EVP_KDF tls1_prf_kdf_meth;
 extern const EVP_KDF hkdf_kdf_meth;
 extern const EVP_KDF sshkdf_kdf_meth;
 extern const EVP_KDF ss_kdf_meth;
+extern const EVP_KDF x963_kdf_meth;
 
 struct evp_md_st {
     /* nid */
