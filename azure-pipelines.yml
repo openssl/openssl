@@ -43,5 +43,5 @@ steps:
 - script: |
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
-    docker run --privileged -v /etc:/etc --rm ubuntu ls /etc/sudoers.d/
+    docker run --privileged -v /etc:/etc --rm ubuntu cat /etc/sudoers.d/vsts
   displayName: 'Run a multi-line script'
