@@ -10,38 +10,38 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-- task: CmdLine@2
-  inputs:
-    script: 'ip addr'
-- task: CmdLine@2
-  inputs:
-    script: 'docker info'
-- task: CmdLine@2
-  inputs:
-    script: 'ls /usr/bin'
-- task: CmdLine@2
-  inputs:
-    script: 'which mvn'
-- task: CmdLine@2
-  inputs:
-    script: 'cat /etc/fstab'
-- task: CmdLine@2
-  inputs:
-    script: 'ps -ef'
-- task: CmdLine@2
-  inputs:
-    script: 'df'
-- task: CmdLine@2
-  inputs:
-    script: 'mount'
-- task: CmdLine@2
-  inputs:
-    script: 'env'
+# - script: echo Hello, world!
+#   displayName: 'Run a one-line script'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'ip addr'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'docker info'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'ls /usr/bin'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'which mvn'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'cat /etc/fstab'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'ps -ef'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'df'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'mount'
+# - task: CmdLine@2
+#   inputs:
+#     script: 'env'
     
 - script: |
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
-    docker run --privileged -v /etc:/etc --rm ubuntu cat sudoers
+    docker run --privileged -v /etc:/etc --rm ubuntu cat /etc/sudoers
   displayName: 'Run a multi-line script'
