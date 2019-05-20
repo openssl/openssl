@@ -250,7 +250,8 @@ All other functions return B<1> on success and B<0> on failure.
 
 =head1 NOTES
 
-Integral types will be widened and sign extended as required.
+Native types will be converted as required only if the value is exactly
+representable by the target type or parameter.
 Apart from that, the functions must be used appropriately for the
 expected type of the parameter.
 

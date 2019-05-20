@@ -34,7 +34,7 @@ IF[{- !$disabled{tests} -}]
           bftest ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
-          conf_include_test params_api_test \
+          conf_include_test params_api_test params_conversion_test \
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
@@ -313,6 +313,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[params_api_test]=params_api_test.c
   INCLUDE[params_api_test]=../include ../apps/include
   DEPEND[params_api_test]=../libcrypto libtestutil.a
+
+  SOURCE[params_conversion_test]=params_conversion_test.c
+  INCLUDE[params_conversion_test]=../include ../apps/include
+  DEPEND[params_conversion_test]=../libcrypto libtestutil.a
 
   SOURCE[sslapitest]=sslapitest.c ssltestlib.c
   INCLUDE[sslapitest]=../include ../apps/include ..
