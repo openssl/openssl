@@ -459,7 +459,7 @@ int pkcs11_login(CK_SESSION_HANDLE session, PKCS11_CTX *ctx,
             rv = pkcs11_funcs->C_Login(session, CKU_USER, ctx->pin,
                                        ctx->pinlen);
         }
-        if (rv != CKR_OK) {
+        if (rv != CKR_OK && rv != CKR_USER_ALREADY_LOGGED_IN) {
             PKCS11_trace("C_Login failed, error: %#08X\n", rv);
             PKCS11err(PKCS11_F_PKCS11_LOGIN, PKCS11_R_LOGIN_FAILED);
             return 0;
