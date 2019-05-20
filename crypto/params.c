@@ -309,7 +309,8 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
 
 int OSSL_PARAM_set_uint32(const OSSL_PARAM *p, uint32_t val)
 {
-    if (p == NULL) return 0;
+    if (p == NULL)
+        return 0;
     SET_RETURN_SIZE(p, 0);
 
     if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
@@ -507,7 +508,8 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
 
 int OSSL_PARAM_set_uint64(const OSSL_PARAM *p, uint64_t val)
 {
-    if (p == NULL) return 0;
+    if (p == NULL)
+        return 0;
     SET_RETURN_SIZE(p, 0);
 
     if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
