@@ -178,7 +178,14 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
 
 /*
  * The internal init function used when the FIPS module uses EVP to call
- * another algorithm also in the FIPS module.
+ * another algorithm also in the FIPS module. This is a recursive call that has
+ * been made from within the FIPS module itself. Normally we are responsible for
+ * providing our own provctx value, but in this recursive case it has been
+ * pre-populated for us with the same library context that was used in the EVP
+ * call that initiated this recursive call - so we don't need to do anything
+ * further with that parameter. This only works because we *know* in the core
+ * code that the FIPS module uses a library context for its provctx. This is
+ * not generally true for all providers.
  */
 OSSL_provider_init_fn fips_intern_provider_init;
 int fips_intern_provider_init(const OSSL_PROVIDER *provider,
