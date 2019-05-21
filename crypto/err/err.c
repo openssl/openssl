@@ -187,8 +187,8 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
-/* A measurement on Linux 2018-11-21 showed about 3.5kib */
-# define SPACE_SYS_STR_REASONS 4 * 1024
+/* 2019-05-21: Some locale on Linux (Russian, Ukrainian) require more than 6,5 kB */
+# define SPACE_SYS_STR_REASONS 8 * 1024
 # define NUM_SYS_STR_REASONS 127
 
 static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
@@ -228,8 +228,8 @@ static void build_SYS_str_reasons(void)
 
                 str->string = cur;
                 cnt += l;
-                if (cnt > sizeof(strerror_pool))
-                    cnt = sizeof(strerror_pool);
+                if (cnt >= sizeof(strerror_pool))
+                    cnt = sizeof(strerror_pool) - 1;
                 cur += l;
 
                 /*
