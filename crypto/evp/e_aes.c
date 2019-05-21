@@ -2264,9 +2264,6 @@ static int s390x_aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (!cctx->aes.ccm.iv_set)
         return -1;
 
-    if (!enc && !cctx->aes.ccm.tag_set)
-        return -1;
-
     if (out == NULL) {
         /* Update(): Pass message length. */
         if (in == NULL) {
@@ -2284,6 +2281,10 @@ static int s390x_aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         s390x_aes_ccm_aad(cctx, in, len);
         return len;
     }
+
+    /* The tag must be set before actually decrypting data */
+    if (!enc && !cctx->aes.ccm.tag_set)
+        return -1;
 
     /* Update(): Process message. */
 
