@@ -21,7 +21,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name)
         && (prov = ossl_provider_new(libctx, name, NULL)) == NULL)
         return NULL;
 
-    if (!ossl_provider_activate(prov)) {
+    if (!ossl_provider_activate(prov, libctx)) {
         ossl_provider_free(prov);
         return NULL;
     }

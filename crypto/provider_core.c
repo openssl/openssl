@@ -342,7 +342,7 @@ static const OSSL_DISPATCH *core_dispatch; /* Define further down */
  * locking.  Direct callers must remember to set the store flags when
  * appropriate
  */
-static int provider_activate(OSSL_PROVIDER *prov)
+static int provider_activate(OSSL_PROVIDER *prov, OPENSSL_CTX *libctx)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
 
@@ -397,6 +397,22 @@ static int provider_activate(OSSL_PROVIDER *prov)
 #endif
     }
 
+    /*
+     * We call the initialise function for the provider.
+     *
+     * If FIPS_MODE is defined then we are inside the FIPS module and are about
+     * to recursively initialise ourselves. We need to do this so that we can
+     * get all the provider callback functions set up in order for us to be able
+     * to make EVP calls from within the FIPS module itself. Only algorithms
+     * from the FIPS module itself are available via the FIPS module EVP
+     * interface, i.e. we only ever have one provider available inside the FIPS
+     * module - the FIPS provider itself. We default the provctx value to our
+     * current library context so that EVP calls from within the module are
+     * still associated with the currently active library context.
+     */
+#ifdef FIPS_MODE
+    prov->provctx = libctx;
+#endif
     if (prov->init_function == NULL
         || !prov->init_function(prov, core_dispatch, &provider_dispatch,
                                 &prov->provctx)) {
@@ -436,9 +452,9 @@ static int provider_activate(OSSL_PROVIDER *prov)
     return 1;
 }
 
-int ossl_provider_activate(OSSL_PROVIDER *prov)
+int ossl_provider_activate(OSSL_PROVIDER *prov, OPENSSL_CTX *libctx)
 {
-    if (provider_activate(prov)) {
+    if (provider_activate(prov, libctx)) {
         CRYPTO_THREAD_write_lock(prov->store->lock);
         prov->store->use_fallbacks = 0;
         CRYPTO_THREAD_unlock(prov->store->lock);
@@ -515,7 +531,7 @@ int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
                  */
                 if (prov->flag_fallback) {
                     activated_fallback_count++;
-                    provider_activate(prov);
+                    provider_activate(prov, ctx);
                 }
             }
 

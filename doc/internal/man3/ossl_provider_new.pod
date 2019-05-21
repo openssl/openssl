@@ -27,7 +27,7 @@ ossl_provider_get_params, ossl_provider_query_operation
  int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
 
  /* Load and initialize the Provider */
- int ossl_provider_activate(OSSL_PROVIDER *prov);
+ int ossl_provider_activate(OSSL_PROVIDER *prov, OPENSSL_CTX *libctx);
 
  /* Return pointer to the provider's context */
  void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
