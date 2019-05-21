@@ -122,14 +122,9 @@ opthelp:
     if (!dirty)
         version = 1;
 
-    if (version) {
-        if (strcmp(OpenSSL_version(OPENSSL_FULL_VERSION_STRING),
-                   OPENSSL_FULL_VERSION_STR) == 0)
-            printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
-        else
-            printf("%s (Library: %s)\n",
-                   OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION));
-    }
+    if (version)
+        printf("%s (Library: %s)\n",
+               OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION));
     if (date)
         printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
     if (platform)
