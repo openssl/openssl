@@ -130,22 +130,22 @@ opthelp:
     if (platform)
         printf("%s\n", OpenSSL_version(OPENSSL_PLATFORM));
     if (options) {
-        printf("options:  ");
-        printf("%s ", BN_options());
+        printf("options: ");
+        printf(" %s", BN_options());
 #ifndef OPENSSL_NO_MD2
-        printf("%s ", MD2_options());
+        printf(" %s", MD2_options());
 #endif
 #ifndef OPENSSL_NO_RC4
-        printf("%s ", RC4_options());
+        printf(" %s", RC4_options());
 #endif
 #ifndef OPENSSL_NO_DES
-        printf("%s ", DES_options());
+        printf(" %s", DES_options());
 #endif
 #ifndef OPENSSL_NO_IDEA
-        printf("%s ", IDEA_options());
+        printf(" %s", IDEA_options());
 #endif
 #ifndef OPENSSL_NO_BF
-        printf("%s ", BF_options());
+        printf(" %s", BF_options());
 #endif
         printf("\n");
     }
