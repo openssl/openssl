@@ -187,7 +187,7 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
-/* 2019-05-21: Some locale on Linux (Russian, Ukrainian) require more than 6,5 kB */
+/* 2019-05-21: Russian and Ukrainian locales on Linux require more than 6,5 kB */
 # define SPACE_SYS_STR_REASONS 8 * 1024
 # define NUM_SYS_STR_REASONS 127
 
@@ -224,24 +224,33 @@ static void build_SYS_str_reasons(void)
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
         if (str->string == NULL) {
             if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
-                size_t l = strlen(cur);
+                size_t l = strlen(cur) + 1;
 
                 str->string = cur;
                 cnt += l;
-                if (cnt >= sizeof(strerror_pool))
-                    cnt = sizeof(strerror_pool) - 1;
-                cur += l;
+                /*
+                 * If we have used up all the space in strerror_pool,
+                 * openssl_strerror_r didn't copy any data to cur,
+                 * so keep cur pointing to the empty string at the end.
+                 * cnt is now equal to sizeof(strerror_pool) + 1, so reset it.
+                 */
+                if (cnt > sizeof(strerror_pool))
+                    cnt = sizeof(strerror_pool);
+                else
+                    cur += l;
 
                 /*
                  * VMS has an unusual quirk of adding spaces at the end of
-                 * some (most? all?) messages.  Lets trim them off.
+                 * some (most? all?) messages. Lets trim them off.
                  */
-                while (ossl_isspace(cur[-1])) {
-                    cur--;
-                    cnt--;
+                if (cur > strerror_pool && ossl_isspace(cur[-1])) {
+                    while (cur > strerror_pool && ossl_isspace(cur[-1])) {
+                        cur--;
+                        cnt--;
+                    }
+                    *cur++ = '\0';
+                    cnt++;
                 }
-                *cur++ = '\0';
-                cnt++;
             }
         }
         if (str->string == NULL)
