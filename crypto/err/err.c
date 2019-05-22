@@ -222,22 +222,17 @@ static void build_SYS_str_reasons(void)
         ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
 
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
-        if (str->string == NULL) {
+        /*
+         * If we have used up all the space in strerror_pool,
+         * there's no point in calling openssl_strerror_r()
+         */
+        if (str->string == NULL && cnt < sizeof(strerror_pool)) {
             if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
                 size_t l = strlen(cur) + 1;
 
                 str->string = cur;
                 cnt += l;
-                /*
-                 * If we have used up all the space in strerror_pool,
-                 * openssl_strerror_r didn't copy any data to cur,
-                 * so keep cur pointing to the empty string at the end.
-                 * cnt is now equal to sizeof(strerror_pool) + 1, so reset it.
-                 */
-                if (cnt > sizeof(strerror_pool))
-                    cnt = sizeof(strerror_pool);
-                else
-                    cur += l;
+                cur += l;
 
                 /*
                  * VMS has an unusual quirk of adding spaces at the end of
