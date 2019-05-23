@@ -35,10 +35,10 @@ typedef struct ossl_method_construct_method_st {
     void *(*get)(OPENSSL_CTX *libctx, void *store, void *data);
     /* Store a method in a store */
     int (*put)(OPENSSL_CTX *libctx, void *store, void *method,
-               const OSSL_PROVIDER *prov, int operation_id, const char *name,
+               const OSSL_PROVIDER *prov, int operation_id, const char **names,
                const char *propdef, void *data);
     /* Construct a new method */
-    void *(*construct)(const char *name, const OSSL_DISPATCH *fns,
+    void *(*construct)(const char **names, const OSSL_DISPATCH *fns,
                        OSSL_PROVIDER *prov, void *data);
     /* Destruct a method */
     void (*destruct)(void *method, void *data);

@@ -61,7 +61,7 @@ struct ossl_item_st {
  * An array of these is always terminated by algorithm_name == NULL
  */
 struct ossl_algorithm_st {
-    const char *algorithm_name;      /* key */
+    const char **algorithm_names;    /* key */
     const char *property_definition; /* key */
     const OSSL_DISPATCH *implementation;
 };
