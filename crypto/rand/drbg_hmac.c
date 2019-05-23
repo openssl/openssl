@@ -183,6 +183,7 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
 
 static int drbg_hmac_uninstantiate(RAND_DRBG *drbg)
 {
+    EVP_MD_meth_free(drbg->data.hmac.md);
     HMAC_CTX_free(drbg->data.hmac.ctx);
     OPENSSL_cleanse(&drbg->data.hmac, sizeof(drbg->data.hmac));
     return 1;
@@ -197,11 +198,22 @@ static RAND_DRBG_METHOD drbg_hmac_meth = {
 
 int drbg_hmac_init(RAND_DRBG *drbg)
 {
-    const EVP_MD *md = NULL;
+    EVP_MD *md = NULL;
     RAND_DRBG_HMAC *hmac = &drbg->data.hmac;
 
+#ifndef FIPS_MODE
     /* Any approved digest is allowed - assume we pass digest (not NID_hmac*) */
-    md = EVP_get_digestbynid(drbg->type);
+    md = EVP_MD_meth_dup(EVP_get_digestbynid(drbg->type));
+#else
+    /* TODO(3.0): Fill this out with the complete list of allowed digests */
+    switch (drbg->type) {
+    default:
+        return 0;
+    case NID_sha256:
+        md = EVP_MD_fetch(drbg->libctx, "SHA256", "");
+        break;
+    }
+#endif
     if (md == NULL)
         return 0;
 
@@ -209,11 +221,14 @@ int drbg_hmac_init(RAND_DRBG *drbg)
 
     if (hmac->ctx == NULL) {
         hmac->ctx = HMAC_CTX_new();
-        if (hmac->ctx == NULL)
+        if (hmac->ctx == NULL) {
+            EVP_MD_meth_free(md);
             return 0;
+        }
     }
 
     /* These are taken from SP 800-90 10.1 Table 2 */
+    EVP_MD_meth_free(hmac->md);
     hmac->md = md;
     hmac->blocklen = EVP_MD_size(md);
     /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */

@@ -17,6 +17,7 @@
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
 # include "internal/tsan_assist.h"
+# include "internal/rand_int.h"
 
 # include "internal/numbers.h"
 
@@ -129,7 +130,7 @@ typedef struct rand_drbg_method_st {
 #define HASH_PRNG_MAX_SEEDLEN    (888/8)
 
 typedef struct rand_drbg_hash_st {
-    const EVP_MD *md;
+    EVP_MD *md;
     EVP_MD_CTX *ctx;
     size_t blocklen;
     unsigned char V[HASH_PRNG_MAX_SEEDLEN];
@@ -139,7 +140,7 @@ typedef struct rand_drbg_hash_st {
 } RAND_DRBG_HASH;
 
 typedef struct rand_drbg_hmac_st {
-    const EVP_MD *md;
+    EVP_MD *md;
     HMAC_CTX *ctx;
     size_t blocklen;
     unsigned char K[EVP_MAX_MD_SIZE];
@@ -152,7 +153,7 @@ typedef struct rand_drbg_hmac_st {
 typedef struct rand_drbg_ctr_st {
     EVP_CIPHER_CTX *ctx;
     EVP_CIPHER_CTX *ctx_df;
-    const EVP_CIPHER *cipher;
+    EVP_CIPHER *cipher;
     size_t keylen;
     unsigned char K[32];
     unsigned char V[16];
@@ -336,10 +337,11 @@ int drbg_hmac_init(RAND_DRBG *drbg);
  * Entropy call back for the FIPS 140-2 section 4.9.2 Conditional Tests.
  * These need to be exposed for the unit tests.
  */
-int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx, unsigned char *buf,
-                              unsigned char *md, unsigned int *md_size);
-extern int (*crngt_get_entropy)(OPENSSL_CTX *ctx, unsigned char *buf,
-                                unsigned char *md,
+int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx, RAND_POOL *pool,
+                              unsigned char *buf, unsigned char *md,
+                              unsigned int *md_size);
+extern int (*crngt_get_entropy)(OPENSSL_CTX *ctx, RAND_POOL *pool,
+                                unsigned char *buf, unsigned char *md,
                                 unsigned int *md_size);
 
 #endif

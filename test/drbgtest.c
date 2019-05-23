@@ -1264,8 +1264,8 @@ static const size_t crngt_num_cases = 6;
 
 static size_t crngt_case, crngt_idx;
 
-static int crngt_entropy_cb(OPENSSL_CTX *ctx, unsigned char *buf,
-                            unsigned char *md,
+static int crngt_entropy_cb(OPENSSL_CTX *ctx, RAND_POOL *pool,
+                            unsigned char *buf, unsigned char *md,
                             unsigned int *md_size)
 {
     size_t i, z;

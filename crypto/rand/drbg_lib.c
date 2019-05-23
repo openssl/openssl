@@ -1339,7 +1339,8 @@ RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
 
     drbg = CRYPTO_THREAD_get_local(&dgbl->public_drbg);
     if (drbg == NULL) {
-        if (!ossl_init_thread_start(NULL, NULL, drbg_delete_thread_state))
+        ctx = openssl_ctx_get_concrete(ctx);
+        if (!ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PUBLIC);
         CRYPTO_THREAD_set_local(&dgbl->public_drbg, drbg);
@@ -1366,7 +1367,8 @@ RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
 
     drbg = CRYPTO_THREAD_get_local(&dgbl->private_drbg);
     if (drbg == NULL) {
-        if (!ossl_init_thread_start(NULL, NULL, drbg_delete_thread_state))
+        ctx = openssl_ctx_get_concrete(ctx);
+        if (!ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PRIVATE);
         CRYPTO_THREAD_set_local(&dgbl->private_drbg, drbg);

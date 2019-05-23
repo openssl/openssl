@@ -371,13 +371,13 @@ IF[{- !$disabled{tests} -}]
   DEPEND[recordlentest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[drbgtest]=drbgtest.c
-  INCLUDE[drbgtest]=../include ../apps/include
+  INCLUDE[drbgtest]=../include ../apps/include ../crypto/include
   DEPEND[drbgtest]=../libcrypto.a libtestutil.a
 
   SOURCE[drbg_cavs_test]=drbg_cavs_test.c drbg_cavs_data_ctr.c \
                          drbg_cavs_data_hash.c drbg_cavs_data_hmac.c
 
-  INCLUDE[drbg_cavs_test]=../include ../apps/include . ..
+  INCLUDE[drbg_cavs_test]=../include ../apps/include . .. ../crypto/include
   DEPEND[drbg_cavs_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c

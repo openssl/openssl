@@ -152,6 +152,8 @@ static int hmac_ctrl_str(EVP_MAC_IMPL *hctx, const char *type,
 {
     if (!value)
         return 0;
+#ifndef FIPS_MODE
+    /* Not supported in FIPS mode due to the implict fetch of the md */
     if (strcmp(type, "digest") == 0) {
         const EVP_MD *d = EVP_get_digestbyname(value);
 
@@ -159,6 +161,7 @@ static int hmac_ctrl_str(EVP_MAC_IMPL *hctx, const char *type,
             return 0;
         return hmac_ctrl_int(hctx, EVP_MAC_CTRL_SET_MD, d);
     }
+#endif
     if (strcmp(type, "key") == 0)
         return EVP_str2ctrl(hmac_ctrl_str_cb, hctx, EVP_MAC_CTRL_SET_KEY,
                             value);

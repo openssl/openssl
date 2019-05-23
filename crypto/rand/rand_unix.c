@@ -285,7 +285,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
 
     if (getentropy != NULL)
         return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  else
+#  elif !defined(FIPS_MODE)
     union {
         void *p;
         int (*f)(void *buffer, size_t length);
