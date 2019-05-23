@@ -1264,7 +1264,8 @@ static const size_t crngt_num_cases = 6;
 
 static size_t crngt_case, crngt_idx;
 
-static int crngt_entropy_cb(unsigned char *buf, unsigned char *md,
+static int crngt_entropy_cb(OPENSSL_CTX *ctx, unsigned char *buf,
+                            unsigned char *md,
                             unsigned int *md_size)
 {
     size_t i, z;
@@ -1288,19 +1289,16 @@ static int test_crngt(int n)
     size_t ent;
     int res = 0;
     int expect;
+    OPENSSL_CTX *ctx = OPENSSL_CTX_new();
 
-    if (!TEST_true(rand_crngt_single_init()))
+    if (!TEST_ptr(ctx))
         return 0;
-    rand_crngt_cleanup();
-
-    if (!TEST_ptr(drbg = RAND_DRBG_new(dt->nid, dt->flags, NULL)))
-        return 0;
+    if (!TEST_ptr(drbg = RAND_DRBG_new_ex(ctx, dt->nid, dt->flags, NULL)))
+        goto err;
     ent = (drbg->min_entropylen + CRNGT_BUFSIZ - 1) / CRNGT_BUFSIZ;
     crngt_case = n % crngt_num_cases;
     crngt_idx = 0;
     crngt_get_entropy = &crngt_entropy_cb;
-    if (!TEST_true(rand_crngt_init()))
-        goto err;
 #ifndef FIPS_MODE
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, &rand_crngt_get_entropy,
                                            &rand_crngt_cleanup_entropy,
@@ -1333,6 +1331,7 @@ err:
     uninstantiate(drbg);
     RAND_DRBG_free(drbg);
     crngt_get_entropy = &rand_crngt_get_entropy_cb;
+    OPENSSL_CTX_free(ctx);
     return res;
 }
 
