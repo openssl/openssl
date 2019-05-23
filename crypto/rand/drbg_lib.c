@@ -29,48 +29,48 @@
  * a much bigger deal than just re-setting an allocated resource.)
  */
 
-/*
- * The three shared DRBG instances
- *
- * There are three shared DRBG instances: <master>, <public>, and <private>.
- */
 
-/*
- * The <master> DRBG
- *
- * Not used directly by the application, only for reseeding the two other
- * DRBGs. It reseeds itself by pulling either randomness from os entropy
- * sources or by consuming randomness which was added by RAND_add().
- *
- * The <master> DRBG is a global instance which is accessed concurrently by
- * all threads. The necessary locking is managed automatically by its child
- * DRBG instances during reseeding.
- */
-static RAND_DRBG *master_drbg;
-/*
- * The <public> DRBG
- *
- * Used by default for generating random bytes using RAND_bytes().
- *
- * The <public> DRBG is thread-local, i.e., there is one instance per thread.
- */
-static CRYPTO_THREAD_LOCAL public_drbg;
-/*
- * The <private> DRBG
- *
- * Used by default for generating private keys using RAND_priv_bytes()
- *
- * The <private> DRBG is thread-local, i.e., there is one instance per thread.
- */
-static CRYPTO_THREAD_LOCAL private_drbg;
+typedef struct drbg_global_st {
+    /*
+     * The three shared DRBG instances
+     *
+     * There are three shared DRBG instances: <master>, <public>, and <private>.
+     */
 
-
+    /*
+     * The <master> DRBG
+     *
+     * Not used directly by the application, only for reseeding the two other
+     * DRBGs. It reseeds itself by pulling either randomness from os entropy
+     * sources or by consuming randomness which was added by RAND_add().
+     *
+     * The <master> DRBG is a global instance which is accessed concurrently by
+     * all threads. The necessary locking is managed automatically by its child
+     * DRBG instances during reseeding.
+     */
+    RAND_DRBG *master_drbg;
+    /*
+     * The <public> DRBG
+     *
+     * Used by default for generating random bytes using RAND_bytes().
+     *
+     * The <public> DRBG is thread-local, i.e., there is one instance per
+     * thread.
+     */
+    CRYPTO_THREAD_LOCAL public_drbg;
+    /*
+     * The <private> DRBG
+     *
+     * Used by default for generating private keys using RAND_priv_bytes()
+     *
+     * The <private> DRBG is thread-local, i.e., there is one instance per
+     * thread.
+     */
+    CRYPTO_THREAD_LOCAL private_drbg;
+} DRBG_GLOBAL;
 
 /* NIST SP 800-90A DRBG recommends the use of a personalization string. */
 static const char ossl_pers_string[] = DRBG_DEFAULT_PERS_STRING;
-
-static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
-
 
 #define RAND_DRBG_TYPE_FLAGS    ( \
     RAND_DRBG_FLAG_MASTER | RAND_DRBG_FLAG_PUBLIC | RAND_DRBG_FLAG_PRIVATE )
@@ -102,9 +102,10 @@ static const unsigned int rand_drbg_used_flags =
     RAND_DRBG_FLAG_CTR_NO_DF | RAND_DRBG_FLAG_HMAC | RAND_DRBG_TYPE_FLAGS;
 
 
-static RAND_DRBG *drbg_setup(RAND_DRBG *parent, int drbg_type);
+static RAND_DRBG *drbg_setup(OPENSSL_CTX *ctx, RAND_DRBG *parent, int drbg_type);
 
-static RAND_DRBG *rand_drbg_new(int secure,
+static RAND_DRBG *rand_drbg_new(OPENSSL_CTX *ctx,
+                                int secure,
                                 int type,
                                 unsigned int flags,
                                 RAND_DRBG *parent);
@@ -236,7 +237,8 @@ int RAND_DRBG_set_defaults(int type, unsigned int flags)
  *
  * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
-static RAND_DRBG *rand_drbg_new(int secure,
+static RAND_DRBG *rand_drbg_new(OPENSSL_CTX *ctx,
+                                int secure,
                                 int type,
                                 unsigned int flags,
                                 RAND_DRBG *parent)
@@ -249,6 +251,7 @@ static RAND_DRBG *rand_drbg_new(int secure,
         return NULL;
     }
 
+    drbg->libctx = ctx;
     drbg->secure = secure && CRYPTO_secure_allocated(drbg);
     drbg->fork_count = rand_fork_count;
     drbg->parent = parent;
@@ -305,16 +308,27 @@ static RAND_DRBG *rand_drbg_new(int secure,
     return NULL;
 }
 
+RAND_DRBG *RAND_DRBG_new_ex(OPENSSL_CTX *ctx, int type, unsigned int flags,
+                            RAND_DRBG *parent)
+{
+    return rand_drbg_new(ctx, 0, type, flags, parent);
+}
+
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
 {
-    return rand_drbg_new(0, type, flags, parent);
+    return RAND_DRBG_new_ex(NULL, type, flags, parent);
+}
+
+RAND_DRBG *RAND_DRBG_secure_new_ex(OPENSSL_CTX *ctx, int type,
+                                   unsigned int flags, RAND_DRBG *parent)
+{
+    return rand_drbg_new(ctx, 1, type, flags, parent);
 }
 
 RAND_DRBG *RAND_DRBG_secure_new(int type, unsigned int flags, RAND_DRBG *parent)
 {
-    return rand_drbg_new(1, type, flags, parent);
+    return RAND_DRBG_secure_new_ex(NULL, type, flags, parent);
 }
-
 /*
  * Uninstantiate |drbg| and free all memory.
  */
@@ -943,12 +957,12 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
  *
  * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
-static RAND_DRBG *drbg_setup(RAND_DRBG *parent, int drbg_type)
+static RAND_DRBG *drbg_setup(OPENSSL_CTX *ctx, RAND_DRBG *parent, int drbg_type)
 {
     RAND_DRBG *drbg;
 
-    drbg = RAND_DRBG_secure_new(rand_drbg_type[drbg_type],
-                                rand_drbg_flags[drbg_type], parent);
+    drbg = RAND_DRBG_secure_new_ex(ctx, rand_drbg_type[drbg_type],
+                                   rand_drbg_flags[drbg_type], parent);
     if (drbg == NULL)
         return NULL;
 
@@ -976,59 +990,72 @@ err:
 }
 
 /*
- * Initialize the global DRBGs on first use.
- * Returns 1 on success, 0 on failure.
+ * Initialize the OPENSSL_CTX global DRBGs on first use.
+ * Returns the allocated global data on success or NULL on failure.
  */
-DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
+static void *drbg_ossl_ctx_new(OPENSSL_CTX *libctx)
 {
-    /*
-     * ensure that libcrypto is initialized, otherwise the
-     * DRBG locks are not cleaned up properly
-     */
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
+    DRBG_GLOBAL *dgbl = OPENSSL_zalloc(sizeof(*dgbl));
 
-    if (!CRYPTO_THREAD_init_local(&private_drbg, NULL))
-        return 0;
+    if (dgbl == NULL)
+        return NULL;
 
-    if (!CRYPTO_THREAD_init_local(&public_drbg, NULL))
+    if (!CRYPTO_THREAD_init_local(&dgbl->private_drbg, NULL))
         goto err1;
 
-    master_drbg = drbg_setup(NULL, RAND_DRBG_TYPE_MASTER);
-    if (master_drbg == NULL)
+    if (!CRYPTO_THREAD_init_local(&dgbl->public_drbg, NULL))
         goto err2;
 
-    return 1;
+    dgbl->master_drbg = drbg_setup(libctx, NULL, RAND_DRBG_TYPE_MASTER);
+    if (dgbl->master_drbg == NULL)
+        goto err3;
 
-err2:
-    CRYPTO_THREAD_cleanup_local(&public_drbg);
-err1:
-    CRYPTO_THREAD_cleanup_local(&private_drbg);
-    return 0;
+    return dgbl;
+
+ err3:
+    CRYPTO_THREAD_cleanup_local(&dgbl->public_drbg);
+ err2:
+    CRYPTO_THREAD_cleanup_local(&dgbl->private_drbg);
+ err1:
+    OPENSSL_free(dgbl);
+    return NULL;
 }
 
-/* Clean up the global DRBGs before exit */
-void rand_drbg_cleanup_int(void)
+static void drbg_ossl_ctx_free(void *vdgbl)
 {
-    if (master_drbg != NULL) {
-        RAND_DRBG_free(master_drbg);
-        master_drbg = NULL;
+    DRBG_GLOBAL *dgbl = vdgbl;
 
-        CRYPTO_THREAD_cleanup_local(&private_drbg);
-        CRYPTO_THREAD_cleanup_local(&public_drbg);
-    }
+    RAND_DRBG_free(dgbl->master_drbg);
+    CRYPTO_THREAD_cleanup_local(&dgbl->private_drbg);
+    CRYPTO_THREAD_cleanup_local(&dgbl->public_drbg);
+
+    OPENSSL_free(dgbl);
+}
+
+static const OPENSSL_CTX_METHOD drbg_ossl_ctx_method = {
+    drbg_ossl_ctx_new,
+    drbg_ossl_ctx_free,
+};
+
+static DRBG_GLOBAL *drbg_get_global(OPENSSL_CTX *libctx)
+{
+    return openssl_ctx_get_data(libctx, OPENSSL_CTX_DRBG_INDEX,
+                                &drbg_ossl_ctx_method);
 }
 
 void drbg_delete_thread_state(void)
 {
+    DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
     RAND_DRBG *drbg;
 
-    drbg = CRYPTO_THREAD_get_local(&public_drbg);
-    CRYPTO_THREAD_set_local(&public_drbg, NULL);
+    if (dgbl == NULL)
+        return;
+    drbg = CRYPTO_THREAD_get_local(&dgbl->public_drbg);
+    CRYPTO_THREAD_set_local(&dgbl->public_drbg, NULL);
     RAND_DRBG_free(drbg);
 
-    drbg = CRYPTO_THREAD_get_local(&private_drbg);
-    CRYPTO_THREAD_set_local(&private_drbg, NULL);
+    drbg = CRYPTO_THREAD_get_local(&dgbl->private_drbg);
+    CRYPTO_THREAD_set_local(&dgbl->private_drbg, NULL);
     RAND_DRBG_free(drbg);
 }
 
@@ -1180,54 +1207,73 @@ static int drbg_status(void)
  * Returns pointer to the DRBG on success, NULL on failure.
  *
  */
-RAND_DRBG *RAND_DRBG_get0_master(void)
+RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx)
 {
-    if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
+    DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
+
+    if (dgbl == NULL)
         return NULL;
 
-    return master_drbg;
+    return dgbl->master_drbg;
+}
+
+RAND_DRBG *RAND_DRBG_get0_master(void)
+{
+    return OPENSSL_CTX_get0_master_drbg(NULL);
 }
 
 /*
  * Get the public DRBG.
  * Returns pointer to the DRBG on success, NULL on failure.
  */
-RAND_DRBG *RAND_DRBG_get0_public(void)
+RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
 {
+    DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
     RAND_DRBG *drbg;
 
-    if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
+    if (dgbl == NULL)
         return NULL;
 
-    drbg = CRYPTO_THREAD_get_local(&public_drbg);
+    drbg = CRYPTO_THREAD_get_local(&dgbl->public_drbg);
     if (drbg == NULL) {
         if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND))
             return NULL;
-        drbg = drbg_setup(master_drbg, RAND_DRBG_TYPE_PUBLIC);
-        CRYPTO_THREAD_set_local(&public_drbg, drbg);
+        drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PUBLIC);
+        CRYPTO_THREAD_set_local(&dgbl->public_drbg, drbg);
     }
     return drbg;
+}
+
+RAND_DRBG *RAND_DRBG_get0_public(void)
+{
+    return OPENSSL_CTX_get0_public_drbg(NULL);
 }
 
 /*
  * Get the private DRBG.
  * Returns pointer to the DRBG on success, NULL on failure.
  */
-RAND_DRBG *RAND_DRBG_get0_private(void)
+RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
 {
+    DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
     RAND_DRBG *drbg;
 
-    if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
+    if (dgbl == NULL)
         return NULL;
 
-    drbg = CRYPTO_THREAD_get_local(&private_drbg);
+    drbg = CRYPTO_THREAD_get_local(&dgbl->private_drbg);
     if (drbg == NULL) {
         if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND))
             return NULL;
-        drbg = drbg_setup(master_drbg, RAND_DRBG_TYPE_PRIVATE);
-        CRYPTO_THREAD_set_local(&private_drbg, drbg);
+        drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PRIVATE);
+        CRYPTO_THREAD_set_local(&dgbl->private_drbg, drbg);
     }
     return drbg;
+}
+
+RAND_DRBG *RAND_DRBG_get0_private(void)
+{
+    return OPENSSL_CTX_get0_private_drbg(NULL);
 }
 
 RAND_METHOD rand_meth = {

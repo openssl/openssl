@@ -192,6 +192,8 @@ struct rand_pool_st {
  */
 struct rand_drbg_st {
     CRYPTO_RWLOCK *lock;
+    /* The library context this DRBG is associated with, if any */
+    OPENSSL_CTX *libctx;
     RAND_DRBG *parent;
     int secure; /* 1: allocated on the secure heap, 0: otherwise */
     int type; /* the nid of the underlying algorithm */
