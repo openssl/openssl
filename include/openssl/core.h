@@ -55,13 +55,13 @@ struct ossl_item_st {
 };
 
 /*
- * Type to tie together algorithm name, property definition string and
+ * Type to tie together algorithm names, property definition string and
  * the algorithm implementation in the form of a dispatch table.
  *
- * An array of these is always terminated by algorithm_name == NULL
+ * An array of these is always terminated by algorithm_names == NULL
  */
 struct ossl_algorithm_st {
-    const char *algorithm_name;      /* key */
+    const char *algorithm_names;     /* key */
     const char *property_definition; /* key */
     const OSSL_DISPATCH *implementation;
 };
