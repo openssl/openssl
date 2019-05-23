@@ -72,6 +72,10 @@ extern "C" {
 /*
  * Object lifetime functions.
  */
+RAND_DRBG *RAND_DRBG_new_ex(OPENSSL_CTX *ctx, int type, unsigned int flags,
+                            RAND_DRBG *parent);
+RAND_DRBG *RAND_DRBG_secure_new_ex(OPENSSL_CTX *ctx, int type,
+                                   unsigned int flags, RAND_DRBG *parent);
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent);
 RAND_DRBG *RAND_DRBG_secure_new(int type, unsigned int flags, RAND_DRBG *parent);
 int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags);
@@ -102,6 +106,9 @@ int RAND_DRBG_set_reseed_defaults(
                                   time_t slave_reseed_time_interval
                                   );
 
+RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx);
+RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx);
+RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx);
 RAND_DRBG *RAND_DRBG_get0_master(void);
 RAND_DRBG *RAND_DRBG_get0_public(void);
 RAND_DRBG *RAND_DRBG_get0_private(void);
