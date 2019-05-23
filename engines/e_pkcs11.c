@@ -73,14 +73,15 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
     rv = pkcs11_funcs->C_GetAttributeValue(session, key,
                                            keyAttribute,
                                            OSSL_NELEM(keyAttribute));
-    if (rv != CKR_OK) {
+
+    if (rv != CKR_OK && rv != CKR_ATTRIBUTE_TYPE_INVALID) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_SIGN,
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
     }
 
-    if (bAwaysAuthentificate
+    if (rv != CKR_ATTRIBUTE_TYPE_INVALID && bAwaysAuthentificate
         && !pkcs11_login(session, ctx, CKU_CONTEXT_SPECIFIC))
         goto err;
 
