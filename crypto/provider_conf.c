@@ -126,7 +126,7 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
     ok = provider_conf_params(prov, NULL, value, cnf);
 
     if (ok && activate) {
-        if (!ossl_provider_activate(prov, libctx)) {
+        if (!ossl_provider_activate(prov)) {
             ok = 0;
         } else {
             if (activated_providers == NULL)

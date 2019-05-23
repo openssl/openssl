@@ -43,7 +43,7 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
  * If the Provider is a module, the module will be loaded
  * Inactivation is done by freeing the Provider
  */
-int ossl_provider_activate(OSSL_PROVIDER *prov, OPENSSL_CTX *libctx);
+int ossl_provider_activate(OSSL_PROVIDER *prov);
 
 /* Return pointer to the provider's context */
 void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
