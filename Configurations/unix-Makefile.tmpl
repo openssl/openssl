@@ -20,6 +20,40 @@
 
          return "$target: build_generated\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
      }
+
+     our $COLUMNS = $ENV{COLUMNS};
+     if ($COLUMNS =~ /^\d+$/) {
+         $COLUMNS = int($COLUMNS) - 2; # 2 to leave space for ending ' \'
+     } else {
+         $COLUMNS = 76;
+     }
+
+     sub fill_lines {
+         my $item_sep = shift;                  # string
+         my $line_length = shift;               # number of chars
+
+         my @result = ();
+         my $resultpos = 0;
+
+         foreach (@_) {
+             my $fill_line = $result[$resultpos] // '';
+             my $newline =
+                 ($fill_line eq '' ? '' : $fill_line . $item_sep) . $_;
+
+             if (length($newline) > $line_length) {
+                 # If this is a single item and the intended result line
+                 # is empty, we put it there anyway
+                 if ($fill_line eq '') {
+                     $result[$resultpos++] = $newline;
+                 } else {
+                     $result[++$resultpos] = $_;
+                 }
+             } else {
+                 $result[$resultpos] = $newline;
+             }
+         }
+         return @result;
+     }
      '';
 -}
 PLATFORM={- $config{target} -}
@@ -34,65 +68,99 @@ MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 SHLIB_TARGET={- $target{shared_target} -}
 
-LIBS={- join(" ", map { platform->staticlib($_) // () } @{$unified_info{libraries}}) -}
-SHLIBS={- join(" ", map { platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
-SHLIB_INFO={- join(" ", map { my $x = platform->sharedlib($_);
-                              my $y = platform->sharedlib_simple($_);
-                              $x ? "\"$x;$y\"" : () }
-                        @{$unified_info{libraries}}) -}
-MODULES={- join(" ", map { platform->dso($_) } @{$unified_info{modules}}) -}
-PROGRAMS={- join(" ", map { platform->bin($_) } @{$unified_info{programs}}) -}
-SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
+LIBS={- join(" \\\n" . ' ' x 5,
+             fill_lines(" ", $COLUMNS - 5,
+                        map { platform->staticlib($_) // () }
+                        @{$unified_info{libraries}})) -}
+SHLIBS={- join(" \\\n" . ' ' x 7,
+               fill_lines(" ", $COLUMNS - 7,
+                          map { platform->sharedlib($_) // () }
+                          @{$unified_info{libraries}})) -}
+SHLIB_INFO={- join(" \\\n" . ' ' x 11,
+                   fill_lines(" ", $COLUMNS - 11,
+                          map { my $x = platform->sharedlib($_);
+                                my $y = platform->sharedlib_simple($_);
+                                $x ? "\"$x;$y\"" : () }
+                          @{$unified_info{libraries}})) -}
+MODULES={- join(" \\\n" . ' ' x 8,
+                fill_lines(" ", $COLUMNS - 8,
+                           map { platform->dso($_) }
+                           @{$unified_info{modules}})) -}
+PROGRAMS={- join(" \\\n" . ' ' x 9,
+                 fill_lines(" ", $COLUMNS - 9,
+                            map { platform->bin($_) }
+                            @{$unified_info{programs}})) -}
+SCRIPTS={- join(" \\\n" . ' ' x 8,
+                fill_lines(" ", $COLUMNS - 8, @{$unified_info{scripts}})) -}
 {- output_off() if $disabled{makedepend}; "" -}
-DEPS={- join(" ", map { platform->isobj($_) ? platform->dep($_) : () }
-                  grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
-                  keys %{$unified_info{sources}}); -}
+DEPS={- join(" \\\n" . ' ' x 5,
+             fill_lines(" ", $COLUMNS - 5,
+                        map { platform->isobj($_) ? platform->dep($_) : () }
+                        grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
+                        keys %{$unified_info{sources}})); -}
 {- output_on() if $disabled{makedepend}; "" -}
-GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}}) -}
+GENERATED_MANDATORY={- join(" \\\n" . ' ' x 20,
+                            fill_lines(" ", $COLUMNS - 20,
+                                       @{$unified_info{depends}->{""}})) -}
 GENERATED={- # common0.tmpl provides @generated
-             join(" ", map { platform->convertext($_) } @generated ) -}
+             join(" \\\n" . ' ' x 5,
+                  fill_lines(" ", $COLUMNS - 5,
+                             map { platform->convertext($_) } @generated )) -}
 
 INSTALL_LIBS={-
-        join(" ", map { platform->staticlib($_) // () }
-                  grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
-                  @{$unified_info{libraries}})
+        join(" \\\n" . ' ' x 13,
+             fill_lines(" ", $COLUMNS - 13,
+                        map { platform->staticlib($_) // () }
+                        grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
+                        @{$unified_info{libraries}}))
 -}
 INSTALL_SHLIBS={-
-        join(" ", map { platform->sharedlib($_) // () }
-                  grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
-                  @{$unified_info{libraries}})
+        join(" \\\n" . ' ' x 15,
+             fill_lines(" ", $COLUMNS - 15,
+                        map { platform->sharedlib($_) // () }
+                        grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
+                        @{$unified_info{libraries}}))
 -}
 INSTALL_SHLIB_INFO={-
-        join(" ", map { my $x = platform->sharedlib($_);
-                        my $y = platform->sharedlib_simple($_);
-                        $x ? "\"$x;$y\"" : () }
-                  grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
-                  @{$unified_info{libraries}})
+        join(" \\\n" . ' ' x 19,
+             fill_lines(" ", $COLUMNS - 19,
+                        map { my $x = platform->sharedlib($_);
+                              my $y = platform->sharedlib_simple($_);
+                              $x ? "\"$x;$y\"" : () }
+                        grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
+                        @{$unified_info{libraries}}))
 -}
 INSTALL_ENGINES={-
-        join(" ", map { platform->dso($_) }
-                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                         && $unified_info{attributes}->{modules}->{$_}->{engine} }
-                  @{$unified_info{modules}})
+        join(" \\\n" . ' ' x 16,
+             fill_lines(" ", $COLUMNS - 16,
+                        map { platform->dso($_) }
+                        grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                               && $unified_info{attributes}->{modules}->{$_}->{engine} }
+                        @{$unified_info{modules}}))
 -}
 INSTALL_PROGRAMS={-
-        join(" ", map { platform->bin($_) }
-                  grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
-                  @{$unified_info{programs}})
+        join(" \\\n" . ' ' x 16,
+             fill_lines(" ", $COLUMNS - 16, map { platform->bin($_) }
+                        grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
+                        @{$unified_info{programs}}))
 -}
 BIN_SCRIPTS={-
-        join(" ", map { my $x = $unified_info{attributes}->{scripts}->{$_}->{linkname};
-                        $x ? "$_:$x" : $_ }
-                  grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
-                         && !$unified_info{attributes}->{scripts}->{$_}->{misc} }
-                  @{$unified_info{scripts}})
+        join(" \\\n" . ' ' x 12,
+             fill_lines(" ", $COLUMNS - 12,
+                        map { my $x = $unified_info{attributes}->{scripts}->{$_}->{linkname};
+                              $x ? "$_:$x" : $_ }
+                        grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+                               && !$unified_info{attributes}->{scripts}->{$_}->{misc} }
+                        @{$unified_info{scripts}}))
 -}
 MISC_SCRIPTS={-
-        join(" ", map { my $x = $unified_info{attributes}->{scripts}->{$_}->{linkname};
-                        $x ? "$_:$x" : $_ }
-                  grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
-                         && $unified_info{attributes}->{scripts}->{$_}->{misc} }
-                  @{$unified_info{scripts}})
+        join(" \\\n" . ' ' x 13,
+             fill_lines(" ", $COLUMNS - 13,
+                        map { my $x = $unified_info{attributes}->{scripts}->{$_}->{linkname};
+                              $x ? "$_:$x" : $_ }
+                        grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+                               && $unified_info{attributes}->{scripts}->{$_}->{misc} }
+                        @{$unified_info{scripts}}))
 -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
@@ -823,8 +891,10 @@ errors:
    }
    "";
 -}
-CRYPTOHEADERS={- join(" \\\n\t", sort @cryptoheaders) -}
-SSLHEADERS={- join(" \\\n\t", sort @sslheaders) -}
+CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
+                      fill_lines(" ", $COLUMNS - 14, sort @cryptoheaders)) -}
+SSLHEADERS={- join(" \\\n" . ' ' x 11,
+                   fill_lines(" ", $COLUMNS - 11, sort @sslheaders)) -}
 ordinals:
 	( cd $(SRCDIR); \
           $(PERL) util/mknum.pl --version $(VERSION) --no-warnings \
@@ -918,7 +988,12 @@ openssl.pc:
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
-configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
+configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config \
+               {- join(" \\\n" . ' ' x 15,
+                       fill_lines(" ", $COLUMNS - 15,
+                                  @{$config{build_file_templates}},
+                                  @{$config{build_infos}},
+                                  @{$config{conf_files}})) -}
 	@echo "Detected changed: $?"
 	$(PERL) configdata.pm -r
 	@echo "**************************************************"
@@ -1118,8 +1193,7 @@ EOF
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one exported symbol map" if scalar @defs > 1;
-      my $objs = join(" ", @objs);
-      my $deps = join(" ", @objs, @defs, @deps);
+
       my $simple = platform->sharedlib_simple($args{lib});
       my $full = platform->sharedlib($args{lib});
       my $shared_soname = "";
@@ -1129,6 +1203,12 @@ EOF
       $shared_imp .= ' '.$target{shared_impflag}.basename($simple)
           if defined $target{shared_impflag};
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
+
+      my $objs = join(" \\\n\t\t", fill_lines(' ', $COLUMNS - 16, @objs));
+      my $deps = join(" \\\n" . ' ' x (length($full) + 2),
+                      fill_lines(' ', $COLUMNS - length($full) - 2,
+                                 @objs, @defs, @deps));
+
       my $recipe = <<"EOF";
 $simple: $full
 EOF
@@ -1146,7 +1226,8 @@ EOF
       $recipe .= <<"EOF";
 $full: $deps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
-		-o $full$shared_def $objs \\
+		-o $full$shared_def \\
+		$objs \\
                 $linklibs \$(LIB_EX_LIBS)
 EOF
       if (windowsdll()) {
@@ -1188,13 +1269,18 @@ EOF
                  grep { platform->isdef($_) }
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
-      my $objs = join(" ", @objs);
-      my $deps = join(" ", @objs, @defs, @deps);
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
+
+      my $objs = join(" \\\n\t\t", fill_lines(' ', $COLUMNS - 16, @objs));
+      my $deps = join(" \\\n" . ' ' x (length($dso) + 2),
+                      fill_lines(' ', $COLUMNS - length($dso) - 2,
+                                 @objs, @defs, @deps));
+
       return <<"EOF";
 $dso: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
-		-o $dso$shared_def $objs \\
+		-o $dso$shared_def \\
+		$objs \\
                 $linklibs\$(DSO_EX_LIBS)
 EOF
   }
@@ -1202,7 +1288,8 @@ EOF
       my %args = @_;
       my $lib = platform->staticlib($args{lib});
       my @objs = map { platform->obj($_) } @{$args{objs}};
-      my $objs = join(" ", @objs);
+      my $objs = join(" \\\n" . ' ' x (length($lib) + 2),
+                      fill_lines(' ', $COLUMNS - length($lib) - 2, @objs));
       return <<"EOF";
 $lib: $objs
 	\$(AR) \$(ARFLAGS) \$\@ \$\?
@@ -1212,8 +1299,10 @@ EOF
   sub obj2bin {
       my %args = @_;
       my $bin = platform->bin($args{bin});
-      my $objs = join(" ", map { platform->obj($_) } @{$args{objs}});
-      my $deps = join(" ", compute_lib_depends(@{$args{deps}}));
+      my @objs = map { platform->obj($_) } @{$args{objs}};
+      my @deps = compute_lib_depends(@{$args{deps}});
+      my $objs = join(" \\\n" . ' ' x (length($bin) + 2),
+                      fill_lines(' ', $COLUMNS - length($bin) - 2, @objs));
       my @linkdirs = ();
       my @linklibs = ();
       foreach (@{$args{deps}}) {
@@ -1237,11 +1326,18 @@ EOF
           $cmd = '$(CXX)';
           $cmdflags = '$(BIN_CXXFLAGS)';
       }
+
+      my $objs = join(" \\\n\t\t", fill_lines(' ', $COLUMNS - 16, @objs));
+      my $deps = join(" \\\n" . ' ' x (length($bin) + 2),
+                      fill_lines(' ', $COLUMNS - length($bin) - 2,
+                                 @objs, @deps));
+
       return <<"EOF";
-$bin: $objs $deps
+$bin: $deps
 	rm -f $bin
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
-		-o $bin $objs \\
+		-o $bin \\
+		$objs \\
 		$linklibs\$(BIN_EX_LIBS)
 EOF
   }
@@ -1263,7 +1359,7 @@ EOF
       my %args = @_;
       my $dir = $args{dir};
       my @deps = map { platform->convertext($_) } @{$args{deps}};
-      my @actions = ();
+      my @comments = ();
       my %extinfo = ( dso => platform->dsoext(),
                       lib => platform->libext(),
                       bin => platform->binext() );
@@ -1283,16 +1379,19 @@ EOF
                   if (dirname($prod) eq $dir) {
                       push @deps, $prod.$extinfo{$type};
                   } else {
-                      push @actions, "\t@ : No support to produce $type ".join(", ", @{$unified_info{dirinfo}->{$dir}->{products}->{$type}});
+                      push @comments, "# No support to produce $type ".join(", ", @{$unified_info{dirinfo}->{$dir}->{products}->{$type}});
                   }
               }
           }
       }
 
-      my $deps = join(" ", @deps);
-      my $actions = join("\n", "", @actions);
+      my $target = "$dir $dir/";
+      my $deps = join(" \\\n\t",
+                      fill_lines(' ', $COLUMNS - 8, @deps));
+      my $comments = join("\n", "", @comments);
       return <<"EOF";
-$dir $dir/: $deps$actions
+$target: \\
+	$deps$comments
 EOF
   }
   ""    # Important!  This becomes part of the template result.
