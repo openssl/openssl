@@ -28,7 +28,7 @@ static int HKDF(const EVP_MD *evp_md,
                 unsigned char *okm, size_t okm_len);
 static int HKDF_Extract(const EVP_MD *evp_md,
                         const unsigned char *salt, size_t salt_len,
-                        const unsigned char *key, size_t key_len,
+                        const unsigned char *ikm, size_t ikm_len,
                         unsigned char *prk, size_t prk_len);
 static int HKDF_Expand(const EVP_MD *evp_md,
                        const unsigned char *prk, size_t prk_len,
@@ -240,9 +240,34 @@ const EVP_KDF hkdf_kdf_meth = {
     kdf_hkdf_derive
 };
 
+/*
+ * Refer to "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
+ * Section 2 (https://tools.ietf.org/html/rfc5869#section-2) and
+ * "Cryptographic Extraction and Key Derivation: The HKDF Scheme"
+ * Section 4.2 (https://eprint.iacr.org/2010/264.pdf).
+ *
+ * From the paper:
+ *   The scheme HKDF is specified as:
+ *     HKDF(XTS, SKM, CTXinfo, L) = K(1) | K(2) | ... | K(t)
+ *
+ *     where:
+ *       SKM is source key material
+ *       XTS is extractor salt (which may be null or constant)
+ *       CTXinfo is context information (may be null)
+ *       L is the number of key bits to be produced by KDF
+ *       k is the output length in bits of the hash function used with HMAC
+ *       t = ceil(L/k)
+ *       the value K(t) is truncated to its first d = L mod k bits.
+ *
+ * From RFC 5869:
+ *   2.2.  Step 1: Extract
+ *     HKDF-Extract(salt, IKM) -> PRK
+ *   2.3.  Step 2: Expand
+ *     HKDF-Expand(PRK, info, L) -> OKM
+ */
 static int HKDF(const EVP_MD *evp_md,
                 const unsigned char *salt, size_t salt_len,
-                const unsigned char *key, size_t key_len,
+                const unsigned char *ikm, size_t ikm_len,
                 const unsigned char *info, size_t info_len,
                 unsigned char *okm, size_t okm_len)
 {
@@ -255,18 +280,44 @@ static int HKDF(const EVP_MD *evp_md,
         return 0;
     prk_len = (size_t)sz;
 
-    if (!HKDF_Extract(evp_md, salt, salt_len, key, key_len, prk, prk_len))
+    /* Step 1: HKDF-Extract(salt, IKM) -> PRK */
+    if (!HKDF_Extract(evp_md, salt, salt_len, ikm, ikm_len, prk, prk_len))
         return 0;
 
+    /* Step 2: HKDF-Expand(PRK, info, L) -> OKM */
     ret = HKDF_Expand(evp_md, prk, prk_len, info, info_len, okm, okm_len);
     OPENSSL_cleanse(prk, sizeof(prk));
 
     return ret;
 }
 
+/*
+ * Refer to "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
+ * Section 2.2 (https://tools.ietf.org/html/rfc5869#section-2.2).
+ *
+ * 2.2.  Step 1: Extract
+ *
+ *   HKDF-Extract(salt, IKM) -> PRK
+ *
+ *   Options:
+ *      Hash     a hash function; HashLen denotes the length of the
+ *               hash function output in octets
+ *
+ *   Inputs:
+ *      salt     optional salt value (a non-secret random value);
+ *               if not provided, it is set to a string of HashLen zeros.
+ *      IKM      input keying material
+ *
+ *   Output:
+ *      PRK      a pseudorandom key (of HashLen octets)
+ *
+ *   The output PRK is calculated as follows:
+ *
+ *   PRK = HMAC-Hash(salt, IKM)
+ */
 static int HKDF_Extract(const EVP_MD *evp_md,
                         const unsigned char *salt, size_t salt_len,
-                        const unsigned char *key, size_t key_len,
+                        const unsigned char *ikm, size_t ikm_len,
                         unsigned char *prk, size_t prk_len)
 {
     int sz = EVP_MD_size(evp_md);
@@ -277,9 +328,49 @@ static int HKDF_Extract(const EVP_MD *evp_md,
         KDFerr(KDF_F_HKDF_EXTRACT, KDF_R_WRONG_OUTPUT_BUFFER_SIZE);
         return 0;
     }
-    return HMAC(evp_md, salt, salt_len, key, key_len, prk, NULL) != NULL;
+    /* calc: PRK = HMAC-Hash(salt, IKM) */
+    return HMAC(evp_md, salt, salt_len, ikm, ikm_len, prk, NULL) != NULL;
 }
 
+/*
+ * Refer to "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
+ * Section 2.3 (https://tools.ietf.org/html/rfc5869#section-2.3).
+ *
+ * 2.3.  Step 2: Expand
+ *
+ *   HKDF-Expand(PRK, info, L) -> OKM
+ *
+ *   Options:
+ *      Hash     a hash function; HashLen denotes the length of the
+ *               hash function output in octets
+ *
+ *   Inputs:
+ *      PRK      a pseudorandom key of at least HashLen octets
+ *               (usually, the output from the extract step)
+ *      info     optional context and application specific information
+ *               (can be a zero-length string)
+ *      L        length of output keying material in octets
+ *               (<= 255*HashLen)
+ *
+ *   Output:
+ *      OKM      output keying material (of L octets)
+ *
+ *   The output OKM is calculated as follows:
+ *
+ *   N = ceil(L/HashLen)
+ *   T = T(1) | T(2) | T(3) | ... | T(N)
+ *   OKM = first L octets of T
+ *
+ *   where:
+ *   T(0) = empty string (zero length)
+ *   T(1) = HMAC-Hash(PRK, T(0) | info | 0x01)
+ *   T(2) = HMAC-Hash(PRK, T(1) | info | 0x02)
+ *   T(3) = HMAC-Hash(PRK, T(2) | info | 0x03)
+ *   ...
+ *
+ *   (where the constant concatenated to the end of each T(n) is a
+ *   single octet.)
+ */
 static int HKDF_Expand(const EVP_MD *evp_md,
                        const unsigned char *prk, size_t prk_len,
                        const unsigned char *info, size_t info_len,
@@ -295,8 +386,9 @@ static int HKDF_Expand(const EVP_MD *evp_md,
     if (sz <= 0)
         return 0;
     dig_len = (size_t)sz;
-    n = okm_len / dig_len;
 
+    /* calc: N = ceil(L/HashLen) */
+    n = okm_len / dig_len;
     if (okm_len % dig_len)
         n++;
 
@@ -313,6 +405,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
         size_t copy_len;
         const unsigned char ctr = i;
 
+        /* calc: T(i) = HMAC-Hash(PRK, T(i - 1) | info | i) */
         if (i > 1) {
             if (!HMAC_Init_ex(hmac, NULL, 0, NULL, NULL))
                 goto err;
