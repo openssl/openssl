@@ -16,3 +16,4 @@
 IMPLEMENT_digest_functions(sm3, SM3_CTX,
                            SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
                            sm3_init, sm3_update, sm3_final)
+= { "SM3", NULL };

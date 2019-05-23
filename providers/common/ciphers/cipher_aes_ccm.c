@@ -32,8 +32,11 @@ static void aes_ccm_freectx(void *vctx)
 }
 
 /* aes128ccm_functions */
-IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 128, 8, 96);
+IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 128, 8, 96)
+= { "id-aes128-CCM", "AES-128-CCM", NULL };
 /* aes192ccm_functions */
-IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 192, 8, 96);
+IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 192, 8, 96)
+= { "id-aes192-CCM", "AES-192-CCM", NULL };
 /* aes256ccm_functions */
-IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 256, 8, 96);
+IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 256, 8, 96)
+= { "id-aes256-CCM", "AES-256-CCM", NULL };

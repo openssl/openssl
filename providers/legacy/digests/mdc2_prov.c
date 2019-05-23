@@ -50,3 +50,4 @@ IMPLEMENT_digest_functions_with_settable_ctx(
     mdc2, MDC2_CTX, MDC2_BLOCK, MDC2_DIGEST_LENGTH, 0,
     MDC2_Init, MDC2_Update, MDC2_Final,
     mdc2_settable_ctx_params, mdc2_set_ctx_params)
+= { "MDC2", NULL };

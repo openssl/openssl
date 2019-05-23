@@ -233,6 +233,7 @@ const OSSL_DISPATCH kdf_scrypt_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_scrypt_get_ctx_params },
     { 0, NULL }
 };
+const char *kdf_scrypt_names[] = { "SCRYPT", "id-scrypt", NULL };
 
 #define R(a,b) (((a) << (b)) | ((a) >> (32 - (b))))
 static void salsa208_word_specification(uint32_t inout[16])

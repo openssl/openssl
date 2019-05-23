@@ -16,3 +16,4 @@
 IMPLEMENT_digest_functions(wp, WHIRLPOOL_CTX,
                            WHIRLPOOL_BBLOCK / 8, WHIRLPOOL_DIGEST_LENGTH, 0,
                            WHIRLPOOL_Init, WHIRLPOOL_Update, WHIRLPOOL_Final)
+= { "WHIRLPOOL", NULL };

@@ -16,3 +16,4 @@
 IMPLEMENT_digest_functions(ripemd160, RIPEMD160_CTX,
                            RIPEMD160_CBLOCK, RIPEMD160_DIGEST_LENGTH, 0,
                            RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final)
+= { "RIPEMD160", "ripemd", "rmd160", NULL };

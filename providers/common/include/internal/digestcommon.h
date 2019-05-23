@@ -72,15 +72,16 @@ const OSSL_DISPATCH name##_functions[] = {                                     \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))name##_dupctx },                \
     PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)
 
-# define PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END                               \
+# define PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END(name)                         \
     { 0, NULL }                                                                \
-};
+};                                                                             \
+const char *name##_names[]
 
 # define IMPLEMENT_digest_functions(                                           \
     name, CTX, blksize, dgstsize, flags, init, upd, fin)                       \
 PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags, \
                                           init, upd, fin),                     \
-PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END(name)
 
 # define IMPLEMENT_digest_functions_with_settable_ctx(                         \
     name, CTX, blksize, dgstsize, flags, init, upd, fin,                       \
@@ -89,7 +90,7 @@ PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags, \
                                           init, upd, fin),                     \
 { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS, (void (*)(void))settable_ctx_params }, \
 { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))set_ctx_params },           \
-PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END(name)
 
 
 const OSSL_PARAM *digest_default_gettable_params(void);

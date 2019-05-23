@@ -186,3 +186,4 @@ const OSSL_DISPATCH cmac_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))cmac_set_ctx_params },
     { 0, NULL }
 };
+const char *cmac_names[] = { "CMAC", NULL };

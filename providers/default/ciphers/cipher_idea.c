@@ -38,9 +38,13 @@ static void *idea_dupctx(void *ctx)
 
 /* idea128ecb_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, ecb, ECB, 0, 128, 64, 0, block)
+= { "IDEA-ECB", NULL };
 /* idea128cbc_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, cbc, CBC, 0, 128, 64, 64, block)
+= { "IDEA-CBC", "IDEA", NULL };
 /* idea128ofb64_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, ofb64, OFB, 0, 128, 8, 64, stream)
+= { "IDEA-OFB64", "IDEA-OFB", NULL };
 /* idea128cfb64_functions */
 IMPLEMENT_generic_cipher(idea, IDEA, cfb64,  CFB, 0, 128, 8, 64, stream)
+= { "IDEA-CFB64", "IDEA-CFB", NULL };

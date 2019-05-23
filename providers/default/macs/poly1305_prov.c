@@ -160,3 +160,4 @@ const OSSL_DISPATCH poly1305_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))poly1305_set_ctx_params },
     { 0, NULL }
 };
+const char *poly1305_names[] = { "Poly1305", NULL };

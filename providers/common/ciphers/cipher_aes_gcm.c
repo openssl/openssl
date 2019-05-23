@@ -32,8 +32,11 @@ static void aes_gcm_freectx(void *vctx)
 }
 
 /* aes128gcm_functions */
-IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 128, 8, 96);
+IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 128, 8, 96)
+= { "id-aes128-GCM", "AES-128-GCM", NULL };
 /* aes192gcm_functions */
-IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 192, 8, 96);
+IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 192, 8, 96)
+= { "id-aes192-GCM", "AES-192-GCM", NULL };
 /* aes256gcm_functions */
-IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 256, 8, 96);
+IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 256, 8, 96)
+= { "id-aes256-GCM", "AES-256-GCM", NULL };

@@ -41,11 +41,16 @@ static void *sm4_dupctx(void *ctx)
 
 /* sm4128ecb_functions */
 IMPLEMENT_generic_cipher(sm4, SM4, ecb, ECB, SM4_FLAGS, 128, 128, 0, block)
+= { "SM4-ECB", NULL };
 /* sm4128cbc_functions */
 IMPLEMENT_generic_cipher(sm4, SM4, cbc, CBC, SM4_FLAGS, 128, 128, 128, block)
+= { "SM4-CBC", "SM4", NULL };
 /* sm4128ctr_functions */
 IMPLEMENT_generic_cipher(sm4, SM4, ctr, CTR, SM4_FLAGS, 128, 8, 128, stream)
+= { "SM4-CTR", NULL };
 /* sm4128ofb128_functions */
 IMPLEMENT_generic_cipher(sm4, SM4, ofb128, OFB, SM4_FLAGS, 128, 8, 128, stream)
+= { "SM4-OFB128", "SM4-OFB", NULL };
 /* sm4128cfb128_functions */
 IMPLEMENT_generic_cipher(sm4, SM4, cfb128,  CFB, SM4_FLAGS, 128, 8, 128, stream)
+= { "SM4-CFB128", "SM4-CFB", NULL };

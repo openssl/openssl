@@ -522,6 +522,7 @@ const OSSL_DISPATCH kdf_sskdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))sskdf_get_ctx_params },
     { 0, NULL }
 };
+const char *kdf_sskdf_names[] = { "SSKDF", NULL };
 
 const OSSL_DISPATCH kdf_x963_kdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))sskdf_new },
@@ -536,3 +537,4 @@ const OSSL_DISPATCH kdf_x963_kdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))sskdf_get_ctx_params },
     { 0, NULL }
 };
+const char *kdf_x963_kdf_names[] = { "X963KDF", NULL };

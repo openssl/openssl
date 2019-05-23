@@ -193,7 +193,9 @@ const OSSL_DISPATCH tdes_wrap_cbc_functions[] =                                \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))cipher_generic_settable_ctx_params },                    \
     { 0, NULL }                                                                \
-}
+};                                                                             \
+const char *tdes_wrap_cbc_names[]
 
 /* tdes_wrap_cbc_functions */
-IMPLEMENT_WRAP_CIPHER(TDES_WRAP_FLAGS, 64*3, 64, 0);
+IMPLEMENT_WRAP_CIPHER(TDES_WRAP_FLAGS, 64*3, 64, 0)
+= { "DES3-WRAP", "id-smime-alg-CMS3DESwrap", NULL };

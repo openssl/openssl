@@ -38,9 +38,13 @@ static void *blowfish_dupctx(void *ctx)
 
 /* bf_ecb_functions */
 IMPLEMENT_generic_cipher(blowfish, BLOWFISH, ecb, ECB, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, block)
+= { "BF-ECB", NULL };
 /* bf_cbc_functions */
 IMPLEMENT_generic_cipher(blowfish, BLOWFISH, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 64, block)
+= { "BF-CBC", "BF", "BLOWFISH", NULL };
 /* bf_ofb_functions */
 IMPLEMENT_generic_cipher(blowfish, BLOWFISH, ofb64, OFB, EVP_CIPH_VARIABLE_LENGTH, 64, 8, 64, stream)
+= { "BF-OFB", NULL };
 /* bf_cfb_functions */
 IMPLEMENT_generic_cipher(blowfish, BLOWFISH, cfb64,  CFB, EVP_CIPH_VARIABLE_LENGTH, 64, 8, 64, stream)
+= { "BF-CFB", NULL };

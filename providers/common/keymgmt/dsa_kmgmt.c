@@ -89,3 +89,4 @@ const OSSL_DISPATCH dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))DSA_free },
     { 0, NULL }
 };
+const char *dsa_names[] = { "DSA", "dsaEncryption", NULL };

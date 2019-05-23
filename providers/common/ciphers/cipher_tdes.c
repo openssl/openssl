@@ -112,6 +112,9 @@ int tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
  */
 
 /* tdes_ede3_ecb_functions */
-IMPLEMENT_tdes_cipher(ede3, EDE3, ecb, ECB, TDES_FLAGS, 64*3, 64, 64, block);
+IMPLEMENT_tdes_cipher(ede3, EDE3, ecb, ECB, TDES_FLAGS, 64*3, 64, 64, block)
+= { "DES-EDE3-ECB", "DES-EDE3", NULL };
+
 /* tdes_ede3_cbc_functions */
-IMPLEMENT_tdes_cipher(ede3, EDE3, cbc, CBC, TDES_FLAGS, 64*3, 64, 64, block);
+IMPLEMENT_tdes_cipher(ede3, EDE3, cbc, CBC, TDES_FLAGS, 64*3, 64, 64, block)
+= { "DES-EDE3-CBC", "DES3", NULL };

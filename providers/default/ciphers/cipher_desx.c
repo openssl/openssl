@@ -11,5 +11,6 @@
 #include "internal/provider_algs.h"
 
 /* desx_cbc_functions */
-IMPLEMENT_tdes_cipher(desx, DESX, cbc, CBC, TDES_FLAGS, 64*3, 64, 64, block);
+IMPLEMENT_tdes_cipher(desx, DESX, cbc, CBC, TDES_FLAGS, 64*3, 64, 64, block)
+= { "DESX-CBC", "DESX", NULL };
 

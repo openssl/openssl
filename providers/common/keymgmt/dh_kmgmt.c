@@ -86,3 +86,5 @@ const OSSL_DISPATCH dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))DH_free },
     { 0, NULL }
 };
+
+const char *dh_names[] = { "DH", "dhKeyAgreement", NULL };
