@@ -99,7 +99,7 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
         return NULL;
 
     if ((namemap = ossl_namemap_stored(libctx)) == NULL
-        || (nameid = ossl_namemap_add(namemap, name)) == 0
+        || (nameid = ossl_namemap_name2num(namemap, name)) == 0
         || (methid = method_id(operation_id, nameid)) == 0)
         return NULL;
 
@@ -123,7 +123,7 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
     uint32_t methid;
 
     if ((namemap = ossl_namemap_stored(methdata->libctx)) == NULL
-        || (nameid = ossl_namemap_add(namemap, name)) == 0
+        || (nameid = ossl_namemap_add(namemap, 0, name)) == 0
         || (methid = method_id(operation_id, nameid)) == 0)
         return 0;
 
@@ -181,7 +181,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
      * about 2^8) or too many names (more than about 2^24).  In that
      * case, we can't create any new method.
      */
-    if ((nameid = ossl_namemap_number(namemap, name)) != 0
+    if ((nameid = ossl_namemap_name2num(namemap, name)) != 0
         && (methid = method_id(operation_id, nameid)) == 0)
         return NULL;
 
@@ -214,7 +214,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
              * already been calculated in get_method_from_store() and
              * put_method_in_store() above.
              */
-            nameid = ossl_namemap_number(namemap, name);
+            nameid = ossl_namemap_name2num(namemap, name);
             methid = method_id(operation_id, nameid);
             ossl_method_store_cache_set(store, methid, properties, method);
         }

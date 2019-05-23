@@ -16,6 +16,14 @@ OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx);
 OSSL_NAMEMAP *ossl_namemap_new(void);
 void ossl_namemap_free(OSSL_NAMEMAP *namemap);
 
-int ossl_namemap_add(OSSL_NAMEMAP *namemap, const char *name);
-const char *ossl_namemap_name(const OSSL_NAMEMAP *namemap, int number);
-int ossl_namemap_number(const OSSL_NAMEMAP *namemap, const char *name);
+int ossl_namemap_add(OSSL_NAMEMAP *namemap, int number, const char *name);
+
+/*
+ * The number<->name relationship is 1<->many
+ * Therefore, the name->number mapping is a simple function, while the
+ * number->name mapping is an iterator.
+ */
+int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name);
+void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
+                              void (*fn)(const char *name, void *data),
+                              void *data);

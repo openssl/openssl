@@ -3,7 +3,7 @@
 =head1 NAME
 
 ossl_namemap_new, ossl_namemap_free, ossl_namemap_stored,
-ossl_namemap_add, ossl_namemap_name, ossl_namemap_number
+ossl_namemap_add, ossl_namemap_name2num, ossl_namemap_doall_names
 - internal number E<lt>-E<gt> name map
 
 =head1 SYNOPSIS
@@ -15,15 +15,18 @@ ossl_namemap_add, ossl_namemap_name, ossl_namemap_number
  OSSL_NAMEMAP *ossl_namemap_new(void);
  void ossl_namemap_free(OSSL_NAMEMAP *namemap);
 
- int ossl_namemap_add(OSSL_NAMEMAP *namemap, const char *name);
- const char *ossl_namemap_name(const OSSL_NAMEMAP *namemap, int number);
- int ossl_namemap_number(const OSSL_NAMEMAP *namemap, const char *name);
+ int ossl_namemap_add(OSSL_NAMEMAP *namemap, int number, const char *name);
+
+ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name);
+ void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
 
 =head1 DESCRIPTION
 
-A B<OSSL_NAMEMAP> is a simple number E<lt>-E<gt> name map, which can
-be used to give any arbitrary name (any string) a unique dynamic
-identity that is valid throughout the lifetime of the associated
+A B<OSSL_NAMEMAP> is a one-to-many number E<lt>-E<gt> names map, which
+can be used to give any arbitrary set of names (any string) a unique
+dynamic identity that is valid throughout the lifetime of the associated
 library context.
 
 ossl_namemap_new() and ossl_namemap_free() construct and destruct a
@@ -38,11 +41,19 @@ ossl_namemap_free().
 
 ossl_namemap_add() adds a new name to the namemap if it's not already
 present.
+If the given I<number> is zero, a new number will be allocated to
+identify this I<name>.
+If the given I<number> is non-zero, the I<name> is added to the set of
+names already associated with that number.
 
-ossl_namemap_name() finds the name corresponding to the given number.
+ossl_namemap_name2num() finds the number corresponding to the given
+I<name>.
 
-ossl_namemap_number() finds the number corresponding to the given
-name.
+ossl_namemap_doall_names() walks through all names associated with
+I<number> in the given I<namemap> and calls the function I<fn> for
+each of them.
+I<fn> gets the I<data> argument as well, which allows any caller to
+pass extra data for that function to use.
 
 =head1 RETURN VALUES
 
@@ -52,11 +63,20 @@ B<OSSL_NAMEMAP>, or NULL on error.
 ossl_namemap_add() returns the number associated with the added
 string, or zero on error.
 
-ossl_namemap_name() returns a pointer to the name corresponding to the
-given number, or NULL if it's undefined in the given B<OSSL_NAMEMAP>.
+ossl_namemap_num2names() returns a pointer to a NULL-terminated list of
+pointers to the names corresponding to the given number, or NULL if
+it's undefined in the given B<OSSL_NAMEMAP>.
 
-ossl_namemap_number() returns the number corresponding to the given
+ossl_namemap_name2num() returns the number corresponding to the given
 name, or 0 if it's undefined in the given B<OSSL_NAMEMAP>.
+
+=head1 NOTES
+
+The result from ossl_namemap_num2names() isn't thread safe, other threads
+dealing with the same namemap may cause the list of names to change
+location.
+It is therefore strongly recommended to only use the result in code
+guarded by a thread lock.
 
 =head1 HISTORY
 
