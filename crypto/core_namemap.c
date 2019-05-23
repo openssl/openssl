@@ -119,6 +119,18 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
     OPENSSL_free(namemap);
 }
 
+int ossl_namemap_empty(OSSL_NAMEMAP *namemap)
+{
+    int rv = 0;
+
+    CRYPTO_THREAD_read_lock(namemap->lock);
+    if (namemap->max_number == 0)
+        rv = 1;
+    CRYPTO_THREAD_unlock(namemap->lock);
+
+    return rv;
+}
+
 typedef struct doall_names_data_st {
     int number;
     void (*fn)(const char *name, void *data);
