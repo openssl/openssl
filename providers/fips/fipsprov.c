@@ -31,12 +31,13 @@
  * the OPENSSL_CTX as a parameter.
  */
 /* Functions provided by the core */
-static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
-static OSSL_core_get_params_fn *c_get_params = NULL;
 extern OSSL_core_thread_start_fn *c_thread_start;
-OSSL_core_thread_start_fn *c_thread_start = NULL;
-static OSSL_core_put_error_fn *c_put_error = NULL;
-static OSSL_core_add_error_vdata_fn *c_add_error_vdata = NULL;
+
+OSSL_core_thread_start_fn *c_thread_start;
+static OSSL_core_get_param_types_fn *c_get_param_types;
+static OSSL_core_get_params_fn *c_get_params;
+static OSSL_ERR_put_error_fn *c_ERR_put_error;
+static OSSL_ERR_add_error_vdata_fn *c_ERR_add_error_vdata;
 
 typedef struct fips_global_st {
     const OSSL_PROVIDER *prov;
@@ -240,11 +241,11 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CORE_THREAD_START:
             c_thread_start = OSSL_get_core_thread_start(in);
             break;
-        case OSSL_FUNC_CORE_PUT_ERROR:
-            c_put_error = OSSL_get_core_put_error(in);
+        case OSSL_FUNC_ERR_PUT_ERROR:
+            c_ERR_put_error = OSSL_get_ERR_put_error(in);
             break;
-        case OSSL_FUNC_CORE_ADD_ERROR_VDATA:
-            c_add_error_vdata = OSSL_get_core_add_error_vdata(in);
+        case OSSL_FUNC_ERR_ADD_ERROR_VDATA:
+            c_ERR_add_error_vdata = OSSL_get_ERR_add_error_vdata(in);
             break;
         /* Just ignore anything we don't understand */
         default:
@@ -319,26 +320,22 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
 
 void ERR_put_error(int lib, int func, int reason, const char *file, int line)
 {
-    /*
-     * TODO(3.0): This works for the FIPS module because we're going to be
-     * using lib/func/reason codes that libcrypto already knows about. This
-     * won't work for third party providers that have their own error mechanisms,
-     * so we'll need to come up with something else for them.
-     */
-    c_put_error(lib, func, reason, file, line);
+    c_ERR_put_error(lib, func, reason, file, line);
+    ERR_add_error_data(1, "(in the FIPS module)");
 }
 
 void ERR_add_error_data(int num, ...)
 {
     va_list args;
+
     va_start(args, num);
-    ERR_add_error_vdata(num, args);
+    c_ERR_add_error_vdata(num, args);
     va_end(args);
 }
 
 void ERR_add_error_vdata(int num, va_list args)
 {
-    c_add_error_vdata(num, args);
+    c_ERR_add_error_vdata(num, args);
 }
 
 const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx)

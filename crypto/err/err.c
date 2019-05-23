@@ -408,25 +408,6 @@ void ERR_put_error(int lib, int func, int reason, const char *file, int line)
 {
     ERR_STATE *es;
 
-#ifdef _OSD_POSIX
-    /*
-     * In the BS2000-OSD POSIX subsystem, the compiler generates path names
-     * in the form "*POSIX(/etc/passwd)". This dirty hack strips them to
-     * something sensible. @@@ We shouldn't modify a const string, though.
-     */
-    if (strncmp(file, "*POSIX(", sizeof("*POSIX(") - 1) == 0) {
-        char *end;
-
-        /* Skip the "*POSIX(" prefix */
-        file += sizeof("*POSIX(") - 1;
-        end = &file[strlen(file) - 1];
-        if (*end == ')')
-            *end = '\0';
-        /* Optional: use the basename of the path only. */
-        if ((end = strrchr(file, '/')) != NULL)
-            file = &end[1];
-    }
-#endif
     es = ERR_get_state();
     if (es == NULL)
         return;
@@ -850,32 +831,41 @@ void ERR_add_error_data(int num, ...)
 
 void ERR_add_error_vdata(int num, va_list args)
 {
-    int i, n, s;
-    char *str, *p, *a;
+    int i, len, size;
+    char *str, *p, *arg;
+    ERR_STATE *es;
 
-    s = 80;
-    if ((str = OPENSSL_malloc(s + 1)) == NULL) {
+    /* Get the current error data; if an allocated string get it. */
+    es = ERR_get_state();
+    if (es == NULL)
+        return;
+    i = es->top;
+    p = es->err_data_flags[i] == (ERR_TXT_MALLOCED | ERR_TXT_STRING)
+            ? es->err_data[i] : "";
+
+    /* Start with initial (or empty) string and allocate a new buffer */
+    size = 80 + strlen(p);
+    if ((str = OPENSSL_malloc(size + 1)) == NULL) {
         /* ERRerr(ERR_F_ERR_ADD_ERROR_VDATA, ERR_R_MALLOC_FAILURE); */
         return;
     }
-    str[0] = '\0';
+    strcpy(str, p);
 
-    n = 0;
-    for (i = 0; i < num; i++) {
-        a = va_arg(args, char *);
-        if (a == NULL)
-            a = "<NULL>";
-        n += strlen(a);
-        if (n > s) {
-            s = n + 20;
-            p = OPENSSL_realloc(str, s + 1);
+    for (len = 0; --num >= 0; ) {
+        arg = va_arg(args, char *);
+        if (arg == NULL)
+            arg = "<NULL>";
+        len += strlen(arg);
+        if (len > size) {
+            size = len + 20;
+            p = OPENSSL_realloc(str, size + 1);
             if (p == NULL) {
                 OPENSSL_free(str);
                 return;
             }
             str = p;
         }
-        OPENSSL_strlcat(str, a, (size_t)s + 1);
+        OPENSSL_strlcat(str, arg, (size_t)size + 1);
     }
     if (!err_set_error_data_int(str, ERR_TXT_MALLOCED | ERR_TXT_STRING))
         OPENSSL_free(str);

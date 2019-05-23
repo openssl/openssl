@@ -32,8 +32,21 @@ static int preserves_system_error(void)
 #endif
 }
 
+/* Test that calls to vdata append */
+static int vdata_appends(void)
+{
+    const char *data;
+
+    CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+    ERR_add_error_data(1, "hello ");
+    ERR_add_error_data(1, "world");
+    ERR_get_error_line_data(NULL, NULL, &data, NULL);
+    return TEST_str_eq(data, "hello world");
+}
+
 int setup_tests(void)
 {
     ADD_TEST(preserves_system_error);
+    ADD_TEST(vdata_appends);
     return 1;
 }

@@ -676,10 +676,12 @@ static int core_thread_start(const OSSL_PROVIDER *prov,
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
-    { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
-    { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))ERR_put_error },
-    { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))ERR_add_error_vdata },
+    { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
+
+    { OSSL_FUNC_ERR_PUT_ERROR, (void (*)(void)) ERR_put_error },
+    { OSSL_FUNC_ERR_ADD_ERROR_VDATA, (void (*)(void))ERR_add_error_vdata },
+
     { 0, NULL }
 };
 static const OSSL_DISPATCH *core_dispatch = core_dispatch_;
