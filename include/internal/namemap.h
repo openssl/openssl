@@ -15,6 +15,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx);
 
 OSSL_NAMEMAP *ossl_namemap_new(void);
 void ossl_namemap_free(OSSL_NAMEMAP *namemap);
+int ossl_namemap_empty(OSSL_NAMEMAP *namemap);
 
 int ossl_namemap_add(OSSL_NAMEMAP *namemap, int number, const char *name);
 int ossl_namemap_add_n(OSSL_NAMEMAP *namemap, int number,

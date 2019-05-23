@@ -20,6 +20,11 @@
 #include "crypto/evp.h"    /* evp_local.h needs it */
 #include "evp_local.h"
 
+#include "ossl_cipher_names.inc"
+#include "ossl_digest_names.inc"
+#include "ossl_mac_names.inc"
+#include "ossl_kdf_names.inc"
+
 #define NAME_SEPARATOR ':'
 
 static void evp_method_store_free(void *vstore)
@@ -113,6 +118,29 @@ static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
     }
 
     return id;
+}
+
+static OSSL_NAMEMAP *get_prepopulated_namemap(OPENSSL_CTX *libctx)
+{
+    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+
+    if (namemap != NULL && ossl_namemap_empty(namemap)) {
+        static const char * const * const * const all_names[] = {
+            all_cipher_names, all_digest_names, all_mac_names, all_kdf_names,
+            NULL
+        };
+        const char * const * const * const *iterate_all;
+
+        for (iterate_all = all_names; *iterate_all != NULL; iterate_all++) {
+            const char * const *const *iterate_class;
+
+            for (iterate_class = *iterate_all; *iterate_class != NULL;
+                 iterate_class++)
+                add_names_to_namemap(namemap, *iterate_class);
+        }
+    }
+
+    return namemap;
 }
 
 /*
@@ -274,7 +302,7 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         void (*free_method)(void *))
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    OSSL_NAMEMAP *namemap = get_prepopulated_namemap(libctx);
     uint32_t meth_id = 0;
     void *method = NULL;
 
