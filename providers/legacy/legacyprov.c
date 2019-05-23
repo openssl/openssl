@@ -72,7 +72,7 @@ static const OSSL_ALGORITHM legacy_digests[] = {
 #endif /* OPENSSL_NO_WHIRLPOOL */
 
 #ifndef OPENSSL_NO_RMD160
-    { "RIPEMD160", "legacy=yes", ripemd160_functions },
+    { "RIPEMD160:RIPEMD:RMD160", "legacy=yes", ripemd160_functions },
 #endif /* OPENSSL_NO_RMD160 */
 
     { NULL, NULL, NULL }
