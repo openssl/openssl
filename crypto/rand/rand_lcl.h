@@ -336,18 +336,10 @@ int drbg_hmac_init(RAND_DRBG *drbg);
  * Entropy call back for the FIPS 140-2 section 4.9.2 Conditional Tests.
  * These need to be exposed for the unit tests.
  */
-int rand_crngt_get_entropy_cb(unsigned char *buf, unsigned char *md,
-                              unsigned int *md_size);
-extern int (*crngt_get_entropy)(unsigned char *buf, unsigned char *md,
+int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx, unsigned char *buf,
+                              unsigned char *md, unsigned int *md_size);
+extern int (*crngt_get_entropy)(OPENSSL_CTX *ctx, unsigned char *buf,
+                                unsigned char *md,
                                 unsigned int *md_size);
-int rand_crngt_init(void);
-void rand_crngt_cleanup(void);
-
-/*
- * Expose the run once initialisation function for the unit tests because.
- * they need to restart from scratch to validate the first block is skipped
- * properly.
- */
-int rand_crngt_single_init(void);
 
 #endif
