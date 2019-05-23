@@ -637,6 +637,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include
   DEPEND[params_test]=../libcrypto.a libtestutil.a
+
+  PROGRAMS{noinst}=namemap_internal_test
+  SOURCE[namemap_internal_test]=namemap_internal_test.c
+  INCLUDE[namemap_internal_test]=.. ../include ../apps/include
+  DEPEND[namemap_internal_test]=../libcrypto.a libtestutil.a
 ENDIF
 
 {-
