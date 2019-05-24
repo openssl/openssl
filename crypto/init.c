@@ -31,6 +31,13 @@
 
 static int stopped = 0;
 
+typedef struct thread_event_handler_st THREAD_EVENT_HANDLER;
+struct thread_event_handler_st {
+    OPENSSL_CTX *ctx;
+    ossl_thread_stop_handler_fn handfn;
+    THREAD_EVENT_HANDLER *next;
+};
+
 /*
  * Since per-thread-specific-data destructors are not universally
  * available, i.e. not on Windows, only below CRYPTO_THREAD_LOCAL key
@@ -50,30 +57,30 @@ static union {
     CRYPTO_THREAD_LOCAL value;
 } destructor_key = { -1 };
 
-static void ossl_init_thread_stop(struct thread_local_inits_st *locals);
+static void ossl_init_thread_stop(THREAD_EVENT_HANDLER **hands);
 
-static void ossl_init_thread_destructor(void *local)
+static void ossl_init_thread_destructor(void *hands)
 {
-    ossl_init_thread_stop((struct thread_local_inits_st *)local);
+    ossl_init_thread_stop((THREAD_EVENT_HANDLER **)hands);
 }
 
-static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
+static THREAD_EVENT_HANDLER **ossl_init_get_thread_local(int alloc)
 {
-    struct thread_local_inits_st *local =
+    THREAD_EVENT_HANDLER **hands =
         CRYPTO_THREAD_get_local(&destructor_key.value);
 
     if (alloc) {
-        if (local == NULL
-            && (local = OPENSSL_zalloc(sizeof(*local))) != NULL
-            && !CRYPTO_THREAD_set_local(&destructor_key.value, local)) {
-            OPENSSL_free(local);
+        if (hands == NULL
+            && (hands = OPENSSL_zalloc(sizeof(*hands))) != NULL
+            && !CRYPTO_THREAD_set_local(&destructor_key.value, hands)) {
+            OPENSSL_free(hands);
             return NULL;
         }
     } else {
         CRYPTO_THREAD_set_local(&destructor_key.value, NULL);
     }
 
-    return local;
+    return hands;
 }
 
 typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
@@ -417,28 +424,23 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_zlib)
 }
 #endif
 
-static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
+static void ossl_init_thread_stop(THREAD_EVENT_HANDLER **hands)
 {
+    THREAD_EVENT_HANDLER *curr, *prev = NULL;
+
     /* Can't do much about this */
-    if (locals == NULL)
+    if (hands == NULL)
         return;
 
-    if (locals->async) {
-        OSSL_TRACE(INIT, "async_delete_thread_state()\n");
-        async_delete_thread_state();
+    curr = *hands;
+    while (curr != NULL) {
+        curr->handfn(curr->ctx);
+        prev = curr;
+        curr = curr->next;
+        OPENSSL_free(prev);
     }
 
-    if (locals->err_state) {
-        OSSL_TRACE(INIT, "err_delete_thread_state()\n");
-        err_delete_thread_state();
-    }
-
-    if (locals->rand) {
-        OSSL_TRACE(INIT, "drbg_delete_thread_state()\n");
-        drbg_delete_thread_state();
-    }
-
-    OPENSSL_free(locals);
+    OPENSSL_free(hands);
 }
 
 void OPENSSL_thread_stop(void)
@@ -447,38 +449,27 @@ void OPENSSL_thread_stop(void)
         ossl_init_thread_stop(ossl_init_get_thread_local(0));
 }
 
-int ossl_init_thread_start(uint64_t opts)
+int ossl_init_thread_start(OPENSSL_CTX *ctx, ossl_thread_stop_handler_fn handfn)
 {
-    struct thread_local_inits_st *locals;
+    THREAD_EVENT_HANDLER **hands;
+    THREAD_EVENT_HANDLER *hand;
 
     if (!OPENSSL_init_crypto(0, NULL))
         return 0;
 
-    locals = ossl_init_get_thread_local(1);
+    hands = ossl_init_get_thread_local(1);
 
-    if (locals == NULL)
+    if (hands == NULL)
         return 0;
 
-    if (opts & OPENSSL_INIT_THREAD_ASYNC) {
-        OSSL_TRACE(INIT,
-                   "ossl_init_thread_start: "
-                   "marking thread for async\n");
-        locals->async = 1;
-    }
+    hand = OPENSSL_malloc(sizeof(*hand));
+    if (hand == NULL)
+        return 0;
 
-    if (opts & OPENSSL_INIT_THREAD_ERR_STATE) {
-        OSSL_TRACE(INIT,
-                   "ossl_init_thread_start: "
-                   "marking thread for err_state\n");
-        locals->err_state = 1;
-    }
-
-    if (opts & OPENSSL_INIT_THREAD_RAND) {
-        OSSL_TRACE(INIT,
-                   "ossl_init_thread_start: "
-                   "marking thread for rand\n");
-        locals->rand = 1;
-    }
+    hand->handfn = handfn;
+    hand->ctx = ctx;
+    hand->next = *hands;
+    *hands = hand;
 
     return 1;
 }

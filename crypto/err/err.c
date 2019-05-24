@@ -688,7 +688,8 @@ const char *ERR_reason_error_string(unsigned long e)
     return ((p == NULL) ? NULL : p->string);
 }
 
-void err_delete_thread_state(void)
+/* OPENSSL_CTX ignored for now */
+static void err_delete_thread_state(OPENSSL_CTX *ctx)
 {
     ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == NULL)
@@ -740,7 +741,7 @@ ERR_STATE *ERR_get_state(void)
             return NULL;
         }
 
-        if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE)
+        if (!ossl_init_thread_start(NULL, err_delete_thread_state)
                 || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
             ERR_STATE_free(state);
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);

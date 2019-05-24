@@ -158,6 +158,14 @@ static void *drbg_ossl_ctx_new(OPENSSL_CTX *libctx)
     if (dgbl == NULL)
         return NULL;
 
+#ifndef FIPS_MODE
+    /*
+     * We need to ensure that base libcrypto thread handling has been
+     * initialised.
+     */
+     OPENSSL_init_crypto(0, NULL);
+#endif
+
     if (!CRYPTO_THREAD_init_local(&dgbl->private_drbg, NULL))
         goto err1;
 
@@ -1137,10 +1145,8 @@ err:
     return NULL;
 }
 
-void drbg_delete_thread_state(void)
+static void drbg_delete_thread_state(OPENSSL_CTX *ctx)
 {
-    /* TODO(3.0): Other PRs will pass the ctx as a param to this function */
-    OPENSSL_CTX *ctx = NULL;
     DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
     RAND_DRBG *drbg;
 
@@ -1332,7 +1338,7 @@ RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
 
     drbg = CRYPTO_THREAD_get_local(&dgbl->public_drbg);
     if (drbg == NULL) {
-        if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND))
+        if (!ossl_init_thread_start(NULL, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PUBLIC);
         CRYPTO_THREAD_set_local(&dgbl->public_drbg, drbg);
@@ -1359,7 +1365,7 @@ RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
 
     drbg = CRYPTO_THREAD_get_local(&dgbl->private_drbg);
     if (drbg == NULL) {
-        if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND))
+        if (!ossl_init_thread_start(NULL, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PRIVATE);
         CRYPTO_THREAD_set_local(&dgbl->private_drbg, drbg);
