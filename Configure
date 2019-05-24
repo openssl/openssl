@@ -131,7 +131,8 @@ my %gcc_devteam_warn = ();
                      -Wformat
                      -Wtype-limits
                      -Wundef
-                     -Werror );
+                     -Werror
+                     -fkeep-inline-functions );
     %gcc_devteam_warn = (
         CFLAGS          => [ @common, qw( -Wmissing-prototypes
                                           -Wstrict-prototypes ) ],
