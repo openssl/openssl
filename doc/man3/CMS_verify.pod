@@ -46,7 +46,7 @@ are used as untrusted CAs. If CRL checking is enabled in B<store> any internal
 CRLs are used in addition to attempting to look them up in B<store>. If any
 chain verify fails an error code is returned.
 
-Finally the signed content is read (and written to B<out> is it is not NULL)
+Finally the signed content is read (and written to B<out> if it is not NULL)
 and the signature's checked.
 
 If all signature's verify correctly then the function is successful.
