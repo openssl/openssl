@@ -92,7 +92,7 @@ negotiate the highest version mutually supported by the client and the server,
 the version-specific methods only support a single protocol version and will
 fail if that version is not supported by the peer.
 
-Another significant disadvantage of using the version-specific methods is that
+A significant disadvantage of using the version-specific methods is that
 an application will not automatically upgrade to newer protocol versions as
 they are added to OpenSSL, without having to be modified and recompiled.
 For that reason, applications should use only the general-purpose methods.
