@@ -31,58 +31,6 @@
 
 static int stopped = 0;
 
-typedef struct thread_event_handler_st THREAD_EVENT_HANDLER;
-struct thread_event_handler_st {
-    OPENSSL_CTX *ctx;
-    ossl_thread_stop_handler_fn handfn;
-    THREAD_EVENT_HANDLER *next;
-};
-
-/*
- * Since per-thread-specific-data destructors are not universally
- * available, i.e. not on Windows, only below CRYPTO_THREAD_LOCAL key
- * is assumed to have destructor associated. And then an effort is made
- * to call this single destructor on non-pthread platform[s].
- *
- * Initial value is "impossible". It is used as guard value to shortcut
- * destructor for threads terminating before libcrypto is initialized or
- * after it's de-initialized. Access to the key doesn't have to be
- * serialized for the said threads, because they didn't use libcrypto
- * and it doesn't matter if they pick "impossible" or derefernce real
- * key value and pull NULL past initialization in the first thread that
- * intends to use libcrypto.
- */
-static union {
-    long sane;
-    CRYPTO_THREAD_LOCAL value;
-} destructor_key = { -1 };
-
-static void ossl_init_thread_stop(THREAD_EVENT_HANDLER **hands);
-
-static void ossl_init_thread_destructor(void *hands)
-{
-    ossl_init_thread_stop((THREAD_EVENT_HANDLER **)hands);
-}
-
-static THREAD_EVENT_HANDLER **ossl_init_get_thread_local(int alloc)
-{
-    THREAD_EVENT_HANDLER **hands =
-        CRYPTO_THREAD_get_local(&destructor_key.value);
-
-    if (alloc) {
-        if (hands == NULL
-            && (hands = OPENSSL_zalloc(sizeof(*hands))) != NULL
-            && !CRYPTO_THREAD_set_local(&destructor_key.value, hands)) {
-            OPENSSL_free(hands);
-            return NULL;
-        }
-    } else {
-        CRYPTO_THREAD_set_local(&destructor_key.value, NULL);
-    }
-
-    return hands;
-}
-
 typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
 struct ossl_init_stop_st {
     void (*handler)(void);
@@ -96,8 +44,6 @@ static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 {
-    CRYPTO_THREAD_LOCAL key;
-
     if (ossl_trace_init() == 0)
         return 0;
 
@@ -105,13 +51,14 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     ossl_malloc_setup_failures();
 #endif
-    if (!CRYPTO_THREAD_init_local(&key, ossl_init_thread_destructor))
-        return 0;
+
     if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
     OPENSSL_cpuid_setup();
 
-    destructor_key.value = key;
+    if (!init_thread())
+        return 0;
+
     base_inited = 1;
     return 1;
 
@@ -120,7 +67,6 @@ err:
     CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
 
-    CRYPTO_THREAD_cleanup_local(&key);
     return 0;
 }
 
@@ -424,60 +370,9 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_zlib)
 }
 #endif
 
-static void ossl_init_thread_stop(THREAD_EVENT_HANDLER **hands)
-{
-    THREAD_EVENT_HANDLER *curr, *prev = NULL;
-
-    /* Can't do much about this */
-    if (hands == NULL)
-        return;
-
-    curr = *hands;
-    while (curr != NULL) {
-        curr->handfn(curr->ctx);
-        prev = curr;
-        curr = curr->next;
-        OPENSSL_free(prev);
-    }
-
-    OPENSSL_free(hands);
-}
-
-void OPENSSL_thread_stop(void)
-{
-    if (destructor_key.sane != -1)
-        ossl_init_thread_stop(ossl_init_get_thread_local(0));
-}
-
-int ossl_init_thread_start(OPENSSL_CTX *ctx, ossl_thread_stop_handler_fn handfn)
-{
-    THREAD_EVENT_HANDLER **hands;
-    THREAD_EVENT_HANDLER *hand;
-
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
-
-    hands = ossl_init_get_thread_local(1);
-
-    if (hands == NULL)
-        return 0;
-
-    hand = OPENSSL_malloc(sizeof(*hand));
-    if (hand == NULL)
-        return 0;
-
-    hand->handfn = handfn;
-    hand->ctx = ctx;
-    hand->next = *hands;
-    *hands = hand;
-
-    return 1;
-}
-
 void OPENSSL_cleanup(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
-    CRYPTO_THREAD_LOCAL key;
 
     /*
      * TODO(3.0): This function needs looking at with a view to moving most/all
@@ -497,7 +392,7 @@ void OPENSSL_cleanup(void)
      * Thread stop may not get automatically called by the thread library for
      * the very last thread in some situations, so call it directly.
      */
-    ossl_init_thread_stop(ossl_init_get_thread_local(0));
+    OPENSSL_thread_stop();
 
     currhandler = stop_handlers;
     while (currhandler != NULL) {
@@ -533,9 +428,7 @@ void OPENSSL_cleanup(void)
         err_free_strings_int();
     }
 
-    key = destructor_key.value;
-    destructor_key.sane = -1;
-    CRYPTO_THREAD_cleanup_local(&key);
+    cleanup_thread();
 
     /*
      * Note that cleanup order is important:
