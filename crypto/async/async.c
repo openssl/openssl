@@ -30,11 +30,13 @@
 static CRYPTO_THREAD_LOCAL ctxkey;
 static CRYPTO_THREAD_LOCAL poolkey;
 
+static void async_delete_thread_state(OPENSSL_CTX *ctx);
+
 static async_ctx *async_ctx_new(void)
 {
     async_ctx *nctx;
 
-    if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ASYNC))
+    if (!ossl_init_thread_start(NULL, async_delete_thread_state))
         return NULL;
 
     nctx = OPENSSL_malloc(sizeof(*nctx));
@@ -326,7 +328,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
         return 0;
 
-    if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ASYNC))
+    if (!ossl_init_thread_start(NULL, async_delete_thread_state))
         return 0;
 
     pool = OPENSSL_zalloc(sizeof(*pool));
@@ -374,7 +376,8 @@ err:
     return 0;
 }
 
-void async_delete_thread_state(void)
+/* OPENSSL_CTX ignored for now */
+static void async_delete_thread_state(OPENSSL_CTX *ctx)
 {
     async_pool *pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
 
@@ -393,7 +396,7 @@ void ASYNC_cleanup_thread(void)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
         return;
 
-    async_delete_thread_state();
+    async_delete_thread_state(NULL);
 }
 
 ASYNC_JOB *ASYNC_get_current_job(void)

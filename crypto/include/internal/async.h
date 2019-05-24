@@ -11,5 +11,4 @@
 
 int async_init(void);
 void async_deinit(void);
-void async_delete_thread_state(void);
 

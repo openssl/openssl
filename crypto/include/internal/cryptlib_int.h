@@ -11,13 +11,9 @@
 
 /* This file is not scanned by mkdef.pl, whereas cryptlib.h is */
 
-struct thread_local_inits_st {
-    int async;
-    int err_state;
-    int rand;
-};
-
-int ossl_init_thread_start(uint64_t opts);
+typedef void (*ossl_thread_stop_handler_fn)(OPENSSL_CTX *ctx);
+int ossl_init_thread_start(OPENSSL_CTX *ctx,
+                           ossl_thread_stop_handler_fn handfn);
 
 /*
  * OPENSSL_INIT flags. The primary list of these is in crypto.h. Flags below
@@ -26,11 +22,6 @@ int ossl_init_thread_start(uint64_t opts);
  */
 # define OPENSSL_INIT_ZLIB                   0x00010000L
 # define OPENSSL_INIT_BASE_ONLY              0x00040000L
-
-/* OPENSSL_INIT_THREAD flags */
-# define OPENSSL_INIT_THREAD_ASYNC           0x01
-# define OPENSSL_INIT_THREAD_ERR_STATE       0x02
-# define OPENSSL_INIT_THREAD_RAND            0x04
 
 int ossl_trace_init(void);
 void ossl_trace_cleanup(void);

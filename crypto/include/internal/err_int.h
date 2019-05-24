@@ -12,7 +12,6 @@
 
 int err_load_crypto_strings_int(void);
 void err_cleanup(void);
-void err_delete_thread_state(void);
 int err_shelve_state(void **);
 void err_unshelve_state(void *);
 
