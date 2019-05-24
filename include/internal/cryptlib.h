@@ -147,8 +147,9 @@ typedef struct ossl_ex_data_global_st {
 # define OPENSSL_CTX_PROPERTY_STRING_INDEX          3
 # define OPENSSL_CTX_NAMEMAP_INDEX                  4
 # define OPENSSL_CTX_DRBG_INDEX                     5
-# define OPENSSL_CTX_RAND_CRNGT_INDEX               6
-# define OPENSSL_CTX_MAX_INDEXES                    7
+# define OPENSSL_CTX_DRBG_NONCE_INDEX               6
+# define OPENSSL_CTX_RAND_CRNGT_INDEX               7
+# define OPENSSL_CTX_MAX_INDEXES                    8
 
 typedef struct openssl_ctx_method {
     void *(*new_func)(OPENSSL_CTX *ctx);
