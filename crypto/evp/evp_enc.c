@@ -587,7 +587,12 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         return 0;
     }
 
-    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+    if (ctx->cipher == NULL) {
+        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ctx->cipher->prov == NULL)
         goto legacy;
 
     blocksize = EVP_CIPHER_CTX_block_size(ctx);
@@ -831,7 +836,12 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         return 0;
     }
 
-    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+    if (ctx->cipher == NULL) {
+        EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ctx->cipher->prov == NULL)
         goto legacy;
 
     blocksize = EVP_CIPHER_CTX_block_size(ctx);
@@ -858,11 +868,6 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
  legacy:
 
     *outl = 0;
-    if (ctx->cipher == NULL) {
-        EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_NO_CIPHER_SET);
-        return 0;
-    }
-
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         i = ctx->cipher->do_cipher(ctx, out, NULL, 0);
         if (i < 0)
