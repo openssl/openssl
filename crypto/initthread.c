@@ -17,6 +17,9 @@ struct thread_event_handler_st {
     THREAD_EVENT_HANDLER *next;
 };
 
+static void ossl_init_thread_stop(THREAD_EVENT_HANDLER **hands);
+
+#ifndef FIPS_MODE
 /*
  * Since per-thread-specific-data destructors are not universally
  * available, i.e. not on Windows, only below CRYPTO_THREAD_LOCAL key
@@ -35,8 +38,6 @@ static union {
     long sane;
     CRYPTO_THREAD_LOCAL value;
 } destructor_key = { -1 };
-
-static void ossl_init_thread_stop(THREAD_EVENT_HANDLER **hands);
 
 static void ossl_init_thread_destructor(void *hands)
 {
@@ -78,6 +79,61 @@ static THREAD_EVENT_HANDLER **ossl_init_get_thread_local(int alloc)
     return hands;
 }
 
+void OPENSSL_thread_stop(void)
+{
+    if (destructor_key.sane != -1)
+        ossl_init_thread_stop(ossl_init_get_thread_local(0));
+}
+#else
+static void *thread_event_ossl_ctx_new(OPENSSL_CTX *libctx)
+{
+    THREAD_EVENT_HANDLER **hands = NULL;
+    CRYPTO_THREAD_LOCAL *tlocal = OPENSSL_zalloc(sizeof(CRYPTO_THREAD_LOCAL));
+
+    if (tlocal == NULL)
+        return NULL;
+
+    hands = OPENSSL_zalloc(sizeof(*hands));
+    if (hands == NULL)
+        goto err;
+
+    if (!CRYPTO_THREAD_set_local(tlocal, hands))
+        goto err;
+
+    return tlocal;
+ err:
+    OPENSSL_free(hands);
+    OPENSSL_free(tlocal);
+    return NULL;
+}
+
+static void thread_event_ossl_ctx_free(void *vtlocal)
+{
+    CRYPTO_THREAD_LOCAL *tlocal = vtlocal;
+    THREAD_EVENT_HANDLER **hands = CRYPTO_THREAD_get_local(tlocal);
+
+    if (hands != NULL)
+        ossl_init_thread_stop(hands);
+
+    OPENSSL_free(tlocal);
+}
+
+static const OPENSSL_CTX_METHOD thread_event_ossl_ctx_method = {
+    thread_event_ossl_ctx_new,
+    thread_event_ossl_ctx_free,
+};
+
+void fips_thread_stop(OPENSSL_CTX *ctx)
+{
+    THREAD_EVENT_HANDLER **hands;
+
+    hands = openssl_ctx_get_data(ctx, OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX,
+                                 &thread_event_ossl_ctx_method);
+    if (hands != NULL)
+        ossl_init_thread_stop(hands);
+}
+#endif /* FIPS_MODE */
+
 static void ossl_init_thread_stop(THREAD_EVENT_HANDLER **hands)
 {
     THREAD_EVENT_HANDLER *curr, *prev = NULL;
@@ -97,21 +153,28 @@ static void ossl_init_thread_stop(THREAD_EVENT_HANDLER **hands)
     OPENSSL_free(hands);
 }
 
-void OPENSSL_thread_stop(void)
-{
-    if (destructor_key.sane != -1)
-        ossl_init_thread_stop(ossl_init_get_thread_local(0));
-}
-
 int ossl_init_thread_start(OPENSSL_CTX *ctx, ossl_thread_stop_handler_fn handfn)
 {
     THREAD_EVENT_HANDLER **hands;
     THREAD_EVENT_HANDLER *hand;
 
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
-
+#ifdef FIPS_MODE
+    /*
+     * In FIPS mode the list of THREAD_EVENT_HANDLERs is unique per combination
+     * of OPENSSL_CTX and thread. This is because in FIPS mode each OPENSSL_CTX
+     * gets informed about thread stop events individually.
+     */
+    hands = openssl_ctx_get_data(ctx, OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX,
+                                 &thread_event_ossl_ctx_method);
+#else
+    /*
+     * Outside of FIPS mode the list of THREAD_EVENT_HANDLERs is unique per
+     * thread, but may hold multiple OPENSSL_CTXs. We only get told about
+     * thread stop events globally, so we have to ensure all affected
+     * OPENSSL_CTXs are informed.
+     */
     hands = ossl_init_get_thread_local(1);
+#endif
 
     if (hands == NULL)
         return 0;
