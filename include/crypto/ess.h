@@ -25,8 +25,8 @@ ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
                                                   int issuer_needed);
 
 /* Returns < 0 if certificate is not found, certificate index otherwise. */
-int ess_find_cert_v2(STACK_OF(ESS_CERT_ID_V2) *cert_ids, X509 *cert);
-int ess_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
+int ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids, const X509 *cert);
+int ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
 
 /*-
  * IssuerSerial ::= SEQUENCE {
