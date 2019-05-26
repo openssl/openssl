@@ -55,8 +55,8 @@
  Android is deprecating gcc in favor of clang so set CC and CXX.
  Note that the compiler name includes the API-level
 
- If you downloaded the NDK and unzip it you can setup the toolchain for
- you system
+ If you download the NDK and unzip it you can setup the toolchain for
+ your system
     cd android-ndk-r19c
     ./build/tools/make-standalone-toolchain.sh --arch=arm64 --platform=android-28 --install-dir=android-toolchain
     export PATH="$PATH:$PWD/android-toolchain/bin"
