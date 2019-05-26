@@ -31,7 +31,7 @@ static int tls1_PRF(SSL *s,
                     unsigned char *out, size_t olen, int fatal)
 {
     const EVP_MD *md = ssl_prf_md(s);
-    EVP_PKEY_CTX *pctx = NULL;
+    EVP_KDF_CTX *kctx = NULL;
     int ret = 0;
 
     if (md == NULL) {
@@ -43,16 +43,22 @@ static int tls1_PRF(SSL *s,
             SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
-    if (pctx == NULL || EVP_PKEY_derive_init(pctx) <= 0
-        || EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) <= 0
-        || EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, (int)slen) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, (int)seed1_len) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, (int)seed2_len) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, (int)seed3_len) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed4, (int)seed4_len) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, (int)seed5_len) <= 0
-        || EVP_PKEY_derive(pctx, out, &olen) <= 0) {
+    kctx = EVP_KDF_CTX_new_id(EVP_PKEY_TLS1_PRF);
+    if (kctx == NULL
+        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, md) <= 0
+        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_TLS_SECRET,
+                        sec, (size_t)slen) <= 0
+        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
+                        seed1, (size_t)seed1_len) <= 0
+        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
+                        seed2, (size_t)seed2_len) <= 0
+        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
+                        seed3, (size_t)seed3_len) <= 0
+        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
+                        seed4, (size_t)seed4_len) <= 0
+        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
+                        seed5, (size_t)seed5_len) <= 0
+        || EVP_KDF_derive(kctx, out, olen) <= 0) {
         if (fatal)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
                      ERR_R_INTERNAL_ERROR);
@@ -64,7 +70,7 @@ static int tls1_PRF(SSL *s,
     ret = 1;
 
  err:
-    EVP_PKEY_CTX_free(pctx);
+    EVP_KDF_CTX_free(kctx);
     return ret;
 }
 
