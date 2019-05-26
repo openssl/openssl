@@ -26,15 +26,22 @@
  you need to set ANDROID_NDK_HOME environment to point at NDK directory
  as /some/where/android-ndk-<ver>. Both variables are significant at both
  configuration and compilation times. NDK customarily supports multiple
- Android API levels, e.g. android-14, android-21, etc. By default latest
+ Android API levels, e.g. android-16, android-29, etc. By default latest
  one available is chosen. If you need to target older platform, pass
  additional -D__ANDROID_API__=N to Configure. N is numeric value of the
- target platform version. For example, to compile for ICS on ARM with
- NDK 10d:
+ target platform version. 
+ If you have Android Studio installed then the NDK is in 
+ $HOME/Android/Sdk/ndk-bundle.
 
-    export ANDROID_NDK_HOME=/some/where/android-ndk-10d
-    PATH=$ANDROID_NDK_HOME/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin:$PATH
-    ./Configure android-arm -D__ANDROID_API__=14
+ For example, to compile for target aarch64-linux-android using NDK r19c:
+
+    export ANDROID_NDK_HOME=$HOME/Android/Sdk/ndk-bundle
+    NDK=$ANDROID_NDK_HOME \
+    HOST_TAG=linux-x86_64 \
+    PATH=$NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin:$PATH \
+    CC=$NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/aarch64-linux-android28-clang \
+    CXX=$NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/aarch64-linux-android28-clang++ \
+    ./Configure --prefix=/usr/local/android-arm64-28 android-arm64 -D__ANDROID_API__=28
     make
 
  Caveat lector! Earlier OpenSSL versions relied on additional CROSS_SYSROOT
@@ -45,17 +52,15 @@
  conflict, and mixing the two is therefore not supported. Migration to
  CROSS_SYSROOT-less setup is recommended.
 
- One can engage clang by adjusting PATH to cover same NDK's clang. Just
- keep in mind that if you miss it, Configure will try to use gcc...
- Also, PATH would need even further adjustment to cover unprefixed, yet
- target-specific, ar and ranlib. It's possible that you don't need to
- bother, if binutils-multiarch is installed on your Linux system.
+ Android is deprecating gcc in favor of clang so set CC and CXX.
+ Note that the compiler name includes the API-level
 
- Another option is to create so called "standalone toolchain" tailored
- for single specific platform including Android API level, and assign its
- location to ANDROID_NDK_HOME. In such case you have to pass matching
- target name to Configure and shouldn't use -D__ANDROID_API__=N. PATH
- adjustment becomes simpler, $ANDROID_NDK_HOME/bin:$PATH suffices.
+ If you downloaded the NDK and unzip it you can setup the toolchain for
+ you system
+    cd android-ndk-r19c
+    ./build/tools/make-standalone-toolchain.sh --arch=arm64 --platform=android-28 --install-dir=android-toolchain
+    export PATH="$PATH:$PWD/android-toolchain/bin"
+    export ANDROID_NDK_HOME="$PWD/android-toolchain"
 
  Running tests (on Linux)
  ------------------------
