@@ -26,8 +26,6 @@ static CRYPTO_RWLOCK *rand_meth_lock;
 static const RAND_METHOD *default_RAND_meth;
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 
-int rand_fork_count;
-
 static CRYPTO_RWLOCK *rand_nonce_lock;
 static int rand_nonce_count;
 
@@ -301,11 +299,6 @@ size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout)
 void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out)
 {
     rand_pool_reattach(pool, out);
-}
-
-void rand_fork(void)
-{
-    rand_fork_count++;
 }
 
 DEFINE_RUN_ONCE_STATIC(do_rand_init)

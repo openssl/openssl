@@ -22,6 +22,13 @@
 # include <windows.h>
 #endif
 
+
+#if defined(OPENSSL_SYS_UNIX)
+# include <sys/types.h>
+# include <sys/wait.h>
+# include <unistd.h>
+#endif
+
 #include "testutil.h"
 #include "drbgtest.h"
 
@@ -669,6 +676,40 @@ static int test_drbg_reseed(int expect_success,
     return 1;
 }
 
+
+#if defined(OPENSSL_SYS_UNIX)
+/*
+ * Test whether master, public and private DRBG are reseeded after
+ * forking the process.
+ */
+static int test_drbg_reseed_after_fork(RAND_DRBG *master,
+                                       RAND_DRBG *public,
+                                       RAND_DRBG *private)
+{
+    pid_t pid;
+    int status=0;
+
+    pid = fork();
+    if (!TEST_int_ge(pid, 0))
+        return 0;
+
+    if (pid > 0) {
+        /* I'm the parent; wait for the child and check its exit code */
+        return TEST_int_eq(waitpid(pid, &status, 0), pid) && TEST_int_eq(status, 0);
+    }
+
+    /* I'm the child; check whether all three DRBGs reseed. */
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1, 0)))
+        status = 1;
+
+    /* Remove hooks  */
+    unhook_drbg(master);
+    unhook_drbg(public);
+    unhook_drbg(private);
+    exit(status);
+}
+#endif
+
 /*
  * Test whether the default rand_method (RAND_OpenSSL()) is
  * setup correctly, in particular whether reseeding  works
@@ -755,6 +796,10 @@ static int test_rand_drbg_reseed(void)
         goto error;
     reset_drbg_hook_ctx();
 
+#if defined(OPENSSL_SYS_UNIX)
+    if (!TEST_true(test_drbg_reseed_after_fork(master, public, private)))
+        goto error;
+#endif
 
     /* fill 'randomness' buffer with some arbitrary data */
     memset(rand_add_buf, 'r', sizeof(rand_add_buf));
