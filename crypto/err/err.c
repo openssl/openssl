@@ -688,8 +688,8 @@ const char *ERR_reason_error_string(unsigned long e)
     return ((p == NULL) ? NULL : p->string);
 }
 
-/* OPENSSL_CTX ignored for now */
-static void err_delete_thread_state(OPENSSL_CTX *ctx)
+/* TODO(3.0): arg ignored for now */
+static void err_delete_thread_state(void *arg)
 {
     ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == NULL)

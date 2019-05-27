@@ -58,12 +58,15 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
 # define OSSL_FUNC_CORE_GET_PARAMS             2
 OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
                                          const OSSL_PARAM params[]))
-# define OSSL_FUNC_CORE_PUT_ERROR              3
+# define OSSL_FUNC_CORE_THREAD_START           3
+OSSL_CORE_MAKE_FUNC(int,core_thread_start,(const OSSL_PROVIDER *prov,
+                                           OSSL_thread_stop_handler_fn handfn))
+# define OSSL_FUNC_CORE_PUT_ERROR              4
 OSSL_CORE_MAKE_FUNC(void,core_put_error,(int lib, int func, int reason,
                                          const char *file, int line))
-# define OSSL_FUNC_CORE_ADD_ERROR_VDATA        4
+# define OSSL_FUNC_CORE_ADD_ERROR_VDATA        5
 OSSL_CORE_MAKE_FUNC(void,core_add_error_vdata,(int num, va_list args))
-# define OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT    5
+# define OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT    6
 OSSL_CORE_MAKE_FUNC(OPENSSL_CTX *,core_get_library_context,
                     (const OSSL_PROVIDER *prov))
 

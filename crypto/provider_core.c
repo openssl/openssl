@@ -11,7 +11,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
-#include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
@@ -667,10 +667,17 @@ static OPENSSL_CTX *core_get_libctx(const OSSL_PROVIDER *prov)
     return prov->libctx;
 }
 
+static int core_thread_start(const OSSL_PROVIDER *prov,
+                             OSSL_thread_stop_handler_fn handfn)
+{
+    return ossl_init_thread_start(prov->provctx, handfn);
+}
+
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
     { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
+    { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
     { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))ERR_put_error },
     { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))ERR_add_error_vdata },
     { 0, NULL }
