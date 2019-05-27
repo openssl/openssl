@@ -35,7 +35,7 @@
      [Matt Caswell]
 
   *) Have apps like 's_client' and 's_server' output the signature scheme
-     along with other cipher ssuite parameters when debugging.
+     along with other cipher suite parameters when debugging.
      [Lorinczy Zsigmond]
 
   *) Make OPENSSL_config() error agnostic again.
