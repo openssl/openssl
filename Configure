@@ -102,8 +102,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # SHA512_ASM    sha512_block is implemented in assembler
 # AES_ASM       AES_[en|de]crypt is implemented in assembler
 
-# Minimum warning options... any contributions to OpenSSL should at least get
-# past these.
+# Minimum warning options... any contributions to OpenSSL should at least
+# get past these.  Note that we only use these with C compilers, not with
+# C++ compilers.
 
 # DEBUG_UNUSED enables __owur (warn unused result) checks.
 # -DPEDANTIC complements -pedantic and is meant to mask code that
@@ -118,27 +119,23 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # code, so we just tell compiler to be pedantic about everything
 # but 'long long' type.
 
-my %gcc_devteam_warn = ();
-{
-    my @common = qw( -DDEBUG_UNUSED
-                     -DPEDANTIC -pedantic -Wno-long-long
-                     -Wall
-                     -Wextra
-                     -Wno-unused-parameter
-                     -Wno-missing-field-initializers
-                     -Wswitch
-                     -Wsign-compare
-                     -Wshadow
-                     -Wformat
-                     -Wtype-limits
-                     -Wundef
-                     -Werror );
-    %gcc_devteam_warn = (
-        CFLAGS          => [ @common, qw( -Wmissing-prototypes
-                                          -Wstrict-prototypes ) ],
-        CXXFLAGS        => [ @common ]
-    );
-}
+my @gcc_devteam_warn = qw(
+    -DDEBUG_UNUSED
+    -DPEDANTIC -pedantic -Wno-long-long
+    -Wall
+    -Wextra
+    -Wno-unused-parameter
+    -Wno-missing-field-initializers
+    -Wswitch
+    -Wsign-compare
+    -Wshadow
+    -Wformat
+    -Wtype-limits
+    -Wundef
+    -Werror
+    -Wmissing-prototypes
+    -Wstrict-prototypes
+);
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
@@ -148,20 +145,16 @@ my %gcc_devteam_warn = ();
 #       -Wlanguage-extension-token -- no, we use asm()
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
-my %clang_devteam_warn = ();
-{
-    my @common = qw( -Wswitch-default
-                     -Wno-parentheses-equality
-                     -Wno-language-extension-token
-                     -Wno-extended-offsetof
-                     -Wconditional-uninitialized
-                     -Wincompatible-pointer-types-discards-qualifiers
-                     -Wno-unknown-warning-option );
-    %clang_devteam_warn = (
-        CFLAGS          => [ @common, qw( -Wmissing-variable-declarations ) ],
-        CXXFLAGS        => [ @common ]
-    );
-}
+my @clang_devteam_warn = qw(
+    -Wswitch-default
+    -Wno-parentheses-equality
+    -Wno-language-extension-token
+    -Wno-extended-offsetof
+    -Wconditional-uninitialized
+    -Wincompatible-pointer-types-discards-qualifiers
+    -Wno-unknown-warning-option
+    -Wmissing-variable-declarations
+);
 
 # This adds backtrace information to the memory leak info.  Is only used
 # when crypto-mdebug-backtrace is enabled.
@@ -800,7 +793,6 @@ while (@argvcopy)
                 # Pretend that our strict flags is a C flag, and replace it
                 # with the proper flags later on
                 push @{$useradd{CFLAGS}}, '--ossl-strict-warnings';
-                push @{$useradd{CXXFLAGS}}, '--ossl-strict-warnings';
                 $strict_warnings=1;
                 }
         elsif (/^--debug$/)
@@ -1363,20 +1355,16 @@ if ($disabled{"dynamic-engine"}) {
 
 unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
     push @{$config{cflags}}, "-fsanitize=address";
-    push @{$config{cxxflags}}, "-fsanitize=address" if $config{CXX};
 }
 
 unless ($disabled{ubsan} || defined $detected_sanitizers{ubsan}) {
     # -DPEDANTIC or -fnosanitize=alignment may also be required on some
     # platforms.
     push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all";
-    push @{$config{cxxflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all"
-        if $config{CXX};
 }
 
 unless ($disabled{msan} || defined $detected_sanitizers{msan}) {
   push @{$config{cflags}}, "-fsanitize=memory";
-  push @{$config{cxxflags}}, "-fsanitize=memory" if $config{CXX};
 }
 
 unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
@@ -1563,41 +1551,27 @@ $config{openssl_api_defines} = [
     "OPENSSL_MIN_API=".($apitable->{$config{api} // ""} // -1)
 ];
 
-my %strict_warnings_collection=( CFLAGS => [], CXXFLAGS => []);
+my @strict_warnings_collection=();
 if ($strict_warnings)
         {
         my $wopt;
         my $gccver = $predefined_C{__GNUC__} // -1;
-        my $gxxver = $predefined_CXX{__GNUC__} // -1;
 
         warn "WARNING --strict-warnings requires gcc[>=4] or gcc-alike"
             unless $gccver >= 4;
-        warn "WARNING --strict-warnings requires g++[>=4] or g++-alike"
-            unless $gxxver >= 4;
-        foreach (qw(CFLAGS CXXFLAGS))
-                {
-                push @{$strict_warnings_collection{$_}},
-                        @{$gcc_devteam_warn{$_}};
-                }
-        push @{$strict_warnings_collection{CFLAGS}},
-                @{$clang_devteam_warn{CFLAGS}}
-                        if (defined($predefined_C{__clang__}));
-        push @{$strict_warnings_collection{CXXFLAGS}},
-                @{$clang_devteam_warn{CXXFLAGS}}
-                        if (defined($predefined_CXX{__clang__}));
+        push @strict_warnings_collection, @gcc_devteam_warn;
+        push @strict_warnings_collection, @clang_devteam_warn
+            if (defined($predefined_C{__clang__}));
         }
 
 if (grep { $_ eq '-static' } @{$config{LDFLAGS}}) {
     disable('static', 'pic', 'threads');
 }
 
-foreach my $idx (qw(CFLAGS CXXFLAGS))
-        {
-        $config{$idx} = [ map { $_ eq '--ossl-strict-warnings'
-                                    ? @{$strict_warnings_collection{$idx}}
-                                : ( $_ ) }
-                          @{$config{$idx}} ];
-        }
+$config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
+                              ? @strict_warnings_collection
+                              : ( $_ ) }
+                    @{$config{CFLAGS}} ];
 
 unless ($disabled{"crypto-mdebug-backtrace"})
         {
@@ -1605,9 +1579,6 @@ unless ($disabled{"crypto-mdebug-backtrace"})
                 {
                 push @{$config{cflags}}, $wopt
                         unless grep { $_ eq $wopt } @{$config{cflags}};
-                push @{$config{cxxflags}}, $wopt
-                        if ($config{CXX}
-                            && !grep { $_ eq $wopt } @{$config{cxxflags}});
                 }
         if ($target =~ /^BSD-/)
                 {
