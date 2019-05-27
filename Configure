@@ -332,7 +332,7 @@ my @disablables = (
     "autoload-config",
     "bf",
     "blake2",
-    "buildtest-c++",
+    "buildtest-c\\+\\+",
     "camellia",
     "capieng",
     "cast",
