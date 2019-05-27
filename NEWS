@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.1.0j and OpenSSL 1.1.0k [under development]
 
-      o
+      o Prevent over long nonces in ChaCha20-Poly1305 (CVE-2019-1543)
 
   Major changes between OpenSSL 1.1.0i and OpenSSL 1.1.0j [20 Nov 2018]
 

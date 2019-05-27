@@ -15,6 +15,37 @@
      generation apps to use 2048 bits by default.
      [Kurt Roeckx]
 
+  *) Prevent over long nonces in ChaCha20-Poly1305.
+
+     ChaCha20-Poly1305 is an AEAD cipher, and requires a unique nonce input
+     for every encryption operation. RFC 7539 specifies that the nonce value
+     (IV) should be 96 bits (12 bytes). OpenSSL allows a variable nonce length
+     and front pads the nonce with 0 bytes if it is less than 12
+     bytes. However it also incorrectly allows a nonce to be set of up to 16
+     bytes. In this case only the last 12 bytes are significant and any
+     additional leading bytes are ignored.
+
+     It is a requirement of using this cipher that nonce values are
+     unique. Messages encrypted using a reused nonce value are susceptible to
+     serious confidentiality and integrity attacks. If an application changes
+     the default nonce length to be longer than 12 bytes and then makes a
+     change to the leading bytes of the nonce expecting the new value to be a
+     new unique nonce then such an application could inadvertently encrypt
+     messages with a reused nonce.
+
+     Additionally the ignored bytes in a long nonce are not covered by the
+     integrity guarantee of this cipher. Any application that relies on the
+     integrity of these ignored leading bytes of a long nonce may be further
+     affected. Any OpenSSL internal use of this cipher, including in SSL/TLS,
+     is safe because no such use sets such a long nonce value. However user
+     applications that use this cipher directly and set a non-default nonce
+     length to be longer than 12 bytes may be vulnerable.
+
+     This issue was reported to OpenSSL on 16th of March 2019 by Joran Dirk
+     Greef of Ronomon.
+     (CVE-2019-1543)
+     [Matt Caswell]
+
   *) Added SCA hardening for modular field inversion in EC_GROUP through
      a new dedicated field_inv() pointer in EC_METHOD.
      This also addresses a leakage affecting conversions from projective
