@@ -539,7 +539,7 @@ sub contentType_matches {
   local $/;
   my $str = <HEX_IN>;
 
-  #Find ASN1 data for a Content Type Attribute (with a OID od PKCS7 data)
+  # Find ASN1 data for a Content Type Attribute (with a OID of PKCS7 data)
   my @c = $str =~ /\x30\x18\x06\x09\x2A\x86\x48\x86\xF7\x0D\x01\x09\x03\x31\x0B\x06\x09\x2A\x86\x48\x86\xF7\x0D\x01\x07\x01/gs;
 
   close(HEX_IN);
