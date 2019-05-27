@@ -16,6 +16,11 @@
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_SYS_WINDOWS)
 
+# if defined(OPENSSL_SYS_UNIX)
+#  include <sys/types.h>
+#  include <unistd.h>
+#endif
+
 # ifdef PTHREAD_RWLOCK_INITIALIZER
 #  define USE_RWLOCK
 # endif
@@ -207,4 +212,9 @@ int openssl_init_fork_handlers(void)
     return 0;
 }
 # endif /* FIPS_MODE */
+
+int openssl_get_fork_id(void)
+{
+    return getpid();
+}
 #endif

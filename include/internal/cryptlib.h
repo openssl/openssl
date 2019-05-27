@@ -93,6 +93,7 @@ void OPENSSL_showfatal(const char *fmta, ...);
 int do_ex_data_init(OPENSSL_CTX *ctx);
 void crypto_cleanup_all_ex_data_int(OPENSSL_CTX *ctx);
 int openssl_init_fork_handlers(void);
+int openssl_get_fork_id(void);
 
 char *ossl_safe_getenv(const char *name);
 
