@@ -4804,3 +4804,7 @@ EVP_KDF_CTX_new                         4751	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_kdf                         4752	3_0_0	EXIST::FUNCTION:
 EVP_KDF_nid                             4753	3_0_0	EXIST::FUNCTION:
 EVP_get_kdfbyname                       4754	3_0_0	EXIST::FUNCTION:
+i2d_KeyParams                           4755	3_0_0	EXIST::FUNCTION:
+d2i_KeyParams                           4756	3_0_0	EXIST::FUNCTION:
+i2d_KeyParams_bio                       4757	3_0_0	EXIST::FUNCTION:
+d2i_KeyParams_bio                       4758	3_0_0	EXIST::FUNCTION:
