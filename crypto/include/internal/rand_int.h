@@ -24,7 +24,6 @@
 typedef struct rand_pool_st RAND_POOL;
 
 void rand_cleanup_int(void);
-void rand_fork(void);
 
 /* Hardware-based seeding functions. */
 size_t rand_acquire_entropy_from_tsc(RAND_POOL *pool);

@@ -676,7 +676,6 @@ void OPENSSL_fork_parent(void)
 
 void OPENSSL_fork_child(void)
 {
-    rand_fork();
     /* TODO(3.0): Inform all providers about a fork event */
 }
 #endif

@@ -30,8 +30,6 @@ static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 static int rand_inited = 0;
 #endif /* FIPS_MODE */
 
-int rand_fork_count;
-
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
  * IMPORTANT NOTE:  It is not currently possible to use this code
@@ -236,11 +234,6 @@ size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout)
 void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out)
 {
     rand_pool_reattach(pool, out);
-}
-
-void rand_fork(void)
-{
-    rand_fork_count++;
 }
 
 #ifndef FIPS_MODE
