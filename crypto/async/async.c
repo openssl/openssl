@@ -30,7 +30,7 @@
 static CRYPTO_THREAD_LOCAL ctxkey;
 static CRYPTO_THREAD_LOCAL poolkey;
 
-static void async_delete_thread_state(OPENSSL_CTX *ctx);
+static void async_delete_thread_state(void *arg);
 
 static async_ctx *async_ctx_new(void)
 {
@@ -376,8 +376,8 @@ err:
     return 0;
 }
 
-/* OPENSSL_CTX ignored for now */
-static void async_delete_thread_state(OPENSSL_CTX *ctx)
+/* TODO(3.0): arg ignored for now */
+static void async_delete_thread_state(void *arg)
 {
     async_pool *pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
 

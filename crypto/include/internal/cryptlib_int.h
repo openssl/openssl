@@ -7,16 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core.h>
 #include "internal/cryptlib.h"
 
 /* This file is not scanned by mkdef.pl, whereas cryptlib.h is */
 
-typedef void (*ossl_thread_stop_handler_fn)(OPENSSL_CTX *ctx);
-int ossl_init_thread_start(OPENSSL_CTX *ctx,
-                           ossl_thread_stop_handler_fn handfn);
+int ossl_init_thread_start(void *arg,
+                           OSSL_thread_stop_handler_fn handfn);
 int init_thread(void);
 void cleanup_thread(void);
-void fips_thread_stop(OPENSSL_CTX *ctx);
+void ossl_ctx_thread_stop(void *arg);
 
 /*
  * OPENSSL_INIT flags. The primary list of these is in crypto.h. Flags below

@@ -1145,8 +1145,9 @@ err:
     return NULL;
 }
 
-static void drbg_delete_thread_state(OPENSSL_CTX *ctx)
+static void drbg_delete_thread_state(void *arg)
 {
+    OPENSSL_CTX *ctx = arg;
     DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
     RAND_DRBG *drbg;
 

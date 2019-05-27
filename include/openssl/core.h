@@ -143,6 +143,10 @@ struct ossl_param_st {
  */
 # define OSSL_PARAM_OCTET_PTR            7
 
+/* Typedef for thread stop handling callback */
+typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
+
+
 /*-
  * Provider entry point
  * --------------------

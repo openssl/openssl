@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include "internal/thread_once.h"
 
 struct openssl_ctx_onfree_list_st {
@@ -79,6 +79,8 @@ static int context_deinit(OPENSSL_CTX *ctx)
 
     if (ctx == NULL)
         return 1;
+
+    ossl_ctx_thread_stop(ctx);
 
     onfree = ctx->onfreelist;
     while (onfree != NULL) {
