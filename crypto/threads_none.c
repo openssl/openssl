@@ -133,4 +133,8 @@ int openssl_init_fork_handlers(void)
     return 0;
 }
 
+int openssl_get_fork_id(void)
+{
+    return return 0;
+}
 #endif

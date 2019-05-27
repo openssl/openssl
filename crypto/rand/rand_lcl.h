@@ -186,12 +186,12 @@ struct rand_drbg_st {
     int secure; /* 1: allocated on the secure heap, 0: otherwise */
     int type; /* the nid of the underlying algorithm */
     /*
-     * Stores the value of the rand_fork_count global as of when we last
-     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_count !=
-     * rand_fork_count.  Used to provide fork-safety and reseed this DRBG in
-     * the child process.
+     * Stores the return value of openssl_get_fork_id() as of when we last
+     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_id !=
+     * openssl_get_fork_id().  Used to provide fork-safety and reseed this
+     * DRBG in the child process.
      */
-    int fork_count;
+    int fork_id;
     unsigned short flags; /* various external flags */
 
     /*
@@ -282,19 +282,6 @@ struct rand_drbg_st {
 
 /* The global RAND method, and the global buffer and DRBG instance. */
 extern RAND_METHOD rand_meth;
-
-/*
- * A "generation count" of forks.  Incremented in the child process after a
- * fork.  Since rand_fork_count is increment-only, and only ever written to in
- * the child process of the fork, which is guaranteed to be single-threaded, no
- * locking is needed for normal (read) accesses; the rest of pthread fork
- * processing is assumed to introduce the necessary memory barriers.  Sibling
- * children of a given parent will produce duplicate values, but this is not
- * problematic because the reseeding process pulls input from the system CSPRNG
- * and/or other global sources, so the siblings will end up generating
- * different output streams.
- */
-extern int rand_fork_count;
 
 /* DRBG helpers */
 int rand_drbg_restart(RAND_DRBG *drbg,
