@@ -24,7 +24,7 @@ A I<reserved> property name consists of a single C-style identifier
 (except for leading underscores not being permitted), which begins
 with a letter and can be followed by any number of letters, numbers
 and underscores.
-Property names are case-insensitive, but OpenSSL to only use lowercase
+Property names are case-insensitive, but OpenSSL will only use lowercase
 letters.
 
 A I<user defined> property name is similar, but it B<must> consist of
@@ -50,8 +50,8 @@ The full syntax for property definitions appears below.
 
 =head2 Implementations
 
-Each implementation of an algorithm can define any number of properties
-it has.
+Each implementation of an algorithm can have and define any number of
+properties.
 For example, the default provider defines the property I<default=yes>
 for all of its algorithms.
 Likewise, the FIPS provider defines I<fips=yes> and the legacy provider
@@ -59,10 +59,10 @@ defines I<legacy=yes> for all of their algorithms.
 
 =head2 Queries
 
-A property query clause is a single conditional test.  For example,
-"fips=yes", "default!=yes" or "?iteration.count!=3".
+A property query clause is a single conditional test.
+For example, "fips=yes", "default!=yes" or "?iteration.count!=3".
 The first two represent mandatory clauses, such clauses B<must> match
-for any algorithm to even be in consideration.
+for any algorithm to even be under consideration.
 The third clause represents an optional clause.
 Matching such clauses is not a requirement, but any additional optional
 match counts in favor of the algorithm.
@@ -78,7 +78,8 @@ All mandatory query clauses B<must> be present and the implementation
 that additionally has the largest number of matching optional query
 clauses will be used.
 If there is more than one such optimal candidate, the result will be
-chosen among those in an indeterminate way.
+chosen from amongst those in an indeterminate way.
+Ordering of optional clauses is not significant.
 
 =head2 Shortcut
 
