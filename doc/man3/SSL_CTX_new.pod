@@ -81,36 +81,29 @@ an existing B<SSL_CTX> structure.
 =head1 NOTES
 
 The SSL_CTX object uses B<method> as connection method.
-A list of available SSL/TLS methods is shown below.
-
 The methods exist in a generic type (for client and server use), a server only
 type, and a client only type.
-
-The methods are further divided into I<general-purpose> methods and
-I<version-specific> methods: while the general-purpose methods will automatically
-negotiate the highest version mutually supported by the client and the server,
-the version-specific methods only support a single protocol version and will
-fail if that version is not supported by the peer.
-
-A significant disadvantage of using the version-specific methods is that
-an application will not automatically upgrade to newer protocol versions as
-they are added to OpenSSL, without having to be modified and recompiled.
-For that reason, applications should use only the general-purpose methods.
-In fact, all version-specific methods have been deprecated.
+B<method> can be of the following types:
 
 =over 4
 
 =item TLS_method(), TLS_server_method(), TLS_client_method()
 
-These are the general-purpose SSL/TLS methods.
+These are the general-purpose I<version-flexible> SSL/TLS methods.
+The actual protocol version used will be negotiated to the highest version
+mutually supported by the client and the server.
 The supported protocols are SSLv3, TLSv1, TLSv1.1, TLSv1.2 and TLSv1.3.
+Applications should use these methods, and avoid the version-specific
+methods described below, which are deprecated.
 
 =item SSLv23_method(), SSLv23_server_method(), SSLv23_client_method()
 
-These used to be the general-purpose SSL/TLS methods,
-but their names do not match their current use anymore.
-They have been deprecated and replaced with the above
+These functions do not exist anymore, they have been renamed to
 TLS_method(), TLS_server_method() and TLS_client_method() respectively.
+Currently, the old function calls are renamed to the corresponding new
+ones by preprocessor macros, to ensure that existing code which uses the
+old function names still compiles. However, using the old function names
+is deprecated and new code should call the new functions instead.
 
 =item TLSv1_2_method(), TLSv1_2_server_method(), TLSv1_2_client_method()
 
