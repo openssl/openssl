@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.0k and 1.1.0l [xx XXX xxxx]
+
+  *)
+
  Changes between 1.1.0j and 1.1.0k [28 May 2019]
 
   *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
