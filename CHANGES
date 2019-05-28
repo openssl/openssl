@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.0.2r and 1.0.2s [xx XXX xxxx]
+ Changes between 1.0.2r and 1.0.2s [28 May 2019]
 
   *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
      This changes the size when using the genpkey app when no size is given. It
