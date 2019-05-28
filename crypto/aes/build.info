@@ -3,6 +3,10 @@ SOURCE[../../libcrypto]=\
         aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c \
         aes_ige.c aes_wrap.c {- $target{aes_asm_src} -}
 
+SOURCE[../../providers/fips]=\
+        aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c \
+        {- $target{aes_asm_src} -}
+
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
 
 GENERATE[aes-586.s]=asm/aes-586.pl \

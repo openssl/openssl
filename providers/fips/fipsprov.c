@@ -20,6 +20,7 @@
 #include "internal/cryptlib.h"
 #include "internal/property.h"
 #include "internal/evp_int.h"
+#include "internal/provider_algs.h"
 
 /* Functions provided by the core */
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
@@ -92,10 +93,21 @@ static int fips_get_params(const OSSL_PROVIDER *prov,
     return 1;
 }
 
-extern const OSSL_DISPATCH sha256_functions[];
-
 static const OSSL_ALGORITHM fips_digests[] = {
     { "SHA256", "fips=yes", sha256_functions },
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM fips_ciphers[] = {
+    { "AES-256-ECB", "fips=yes", aes256ecb_functions },
+    { "AES-192-ECB", "fips=yes", aes192ecb_functions },
+    { "AES-128-ECB", "fips=yes", aes128ecb_functions },
+    { "AES-256-CBC", "fips=yes", aes256cbc_functions },
+    { "AES-192-CBC", "fips=yes", aes192cbc_functions },
+    { "AES-128-CBC", "fips=yes", aes128cbc_functions },
+    { "AES-256-CTR", "fips=yes", aes256ctr_functions },
+    { "AES-192-CTR", "fips=yes", aes192ctr_functions },
+    { "AES-128-CTR", "fips=yes", aes128ctr_functions },
     { NULL, NULL, NULL }
 };
 
@@ -107,6 +119,8 @@ static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
     switch (operation_id) {
     case OSSL_OP_DIGEST:
         return fips_digests;
+    case OSSL_OP_CIPHER:
+        return fips_ciphers;
     }
     return NULL;
 }
