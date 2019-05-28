@@ -97,6 +97,17 @@ void cleanup_thread(void)
     destructor_key.sane = -1;
 }
 
+void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx)
+{
+    ctx = openssl_ctx_get_concrete(ctx);
+    /*
+     * TODO(3.0). It would be nice if we could figure out a way to do this on
+     * all threads that have used the OPENSSL_CTX when the OPENSSL_CTX is freed.
+     * This is currently not possible due to the use of thread local variables.
+     */
+    ossl_ctx_thread_stop(ctx);
+}
+
 void OPENSSL_thread_stop(void)
 {
     if (destructor_key.sane != -1) {

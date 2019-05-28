@@ -1220,6 +1220,11 @@ static int test_EVP_MD_fetch(int tst)
     EVP_MD_meth_free(md);
     OSSL_PROVIDER_unload(defltprov);
     OSSL_PROVIDER_unload(fipsprov);
+    /* Not normally needed, but we would like to test that
+     * OPENSSL_thread_stop_ex() behaves as expected.
+     */
+    if (ctx != NULL)
+        OPENSSL_thread_stop_ex(ctx);
     OPENSSL_CTX_free(ctx);
     return ret;
 }

@@ -415,6 +415,7 @@ void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_atexit(void (*handler)(void));
 void OPENSSL_thread_stop(void);
+void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
