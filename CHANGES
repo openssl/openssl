@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1b and 1.1.1c [xx XXX xxxx]
+ Changes between 1.1.1b and 1.1.1c [28 May 2019]
 
   *) Add build tests for C++.  These are generated files that only do one
      thing, to include one public OpenSSL head file each.  This tests that
