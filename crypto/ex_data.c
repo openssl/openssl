@@ -36,7 +36,7 @@ static EX_CALLBACKS *get_and_lock(OPENSSL_CTX *ctx, int class_index)
     }
 
     global = openssl_ctx_get_ex_data_global(ctx);
-    if (global->ex_data_lock == NULL) {
+    if (global == NULL || global->ex_data_lock == NULL) {
         /*
          * This can happen in normal operation when using CRYPTO_mem_leaks().
          * The CRYPTO_mem_leaks() function calls OPENSSL_cleanup() which cleans
