@@ -201,9 +201,9 @@ void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
 
 /*
  * Retrieve an attribute by nid from a stack of attributes starting at index
- * *lastpos.
+ * *lastpos + 1.
  * Returns the attribute or NULL if there is no attribute.
- * *lastpos returns the index of the found attribute or -1 if not found.
+ * If an attribute was found *lastpos returns the index of the found attribute.
  */
 static X509_ATTRIBUTE *cms_attrib_get(int nid,
                                       const STACK_OF(X509_ATTRIBUTE) *attrs,
@@ -232,12 +232,12 @@ static int cms_check_attribute(int nid, int flags, int type,
         int count = X509_ATTRIBUTE_count(at);
 
         /* Is this attribute allowed? */
-        if (!(flags & type)
+        if (((flags & type) == 0)
             /* check if multiple attributes of the same type are allowed */
-            || ((flags & CMS_ATTR_F_ONLY_ONE)
+            || (((flags & CMS_ATTR_F_ONLY_ONE) != 0)
                 && cms_attrib_get(nid, attrs, &lastpos) != NULL)
             /* Check if attribute should have exactly one value in its set */
-            || ((flags & CMS_ATTR_F_ONE_ATTR_VALUE)
+            || (((flags & CMS_ATTR_F_ONE_ATTR_VALUE) != 0)
                 && count != 1)
             /* There should be at least one value */
             || count == 0)
@@ -245,8 +245,8 @@ static int cms_check_attribute(int nid, int flags, int type,
     } else {
         /* fail if a required attribute is missing */
         if (have_attrs
-            && (flags & CMS_ATTR_F_REQUIRED_COND)
-            && (flags & type))
+            && ((flags & CMS_ATTR_F_REQUIRED_COND) != 0)
+            && (flags & type) != 0)
             return 0;
     }
     return 1;
