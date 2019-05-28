@@ -15,8 +15,11 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+
 /* TODO(3.0): Needed for dummy_evp_call(). To be removed */
 #include <openssl/sha.h>
+#include <openssl/rand_drbg.h>
+
 #include "internal/cryptlib.h"
 #include "internal/property.h"
 #include "internal/evp_int.h"
@@ -85,8 +88,10 @@ static int dummy_evp_call(void *provctx)
     int ret = 0;
     BN_CTX *bnctx = NULL;
     BIGNUM *a = NULL, *b = NULL;
+    unsigned char randbuf[128];
+    RAND_DRBG *drbg = OPENSSL_CTX_get0_public_drbg(libctx);
 
-    if (ctx == NULL || sha256 == NULL)
+    if (ctx == NULL || sha256 == NULL || drbg == NULL)
         goto err;
 
     if (!EVP_DigestInit_ex(ctx, sha256, NULL))
@@ -112,6 +117,9 @@ static int dummy_evp_call(void *provctx)
         || BN_cmp(a, b) != 0)
         goto err;
     
+    if (RAND_DRBG_bytes(drbg, randbuf, sizeof(randbuf)) <= 0)
+        goto err;
+
     ret = 1;
  err:
     BN_CTX_end(bnctx);
