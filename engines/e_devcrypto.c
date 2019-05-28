@@ -26,7 +26,7 @@
 /* #define ENGINE_DEVCRYPTO_DEBUG */
 
 #if CRYPTO_ALGORITHM_MIN < CRYPTO_ALGORITHM_MAX
-#define CHECK_BSD_STYLE_MACROS
+# define CHECK_BSD_STYLE_MACROS
 #endif
 
 #define engine_devcrypto_id "devcrypto"
