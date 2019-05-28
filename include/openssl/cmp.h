@@ -127,6 +127,12 @@ extern "C" {
 #  define OSSL_CMP_PKIFAILUREINFO_systemFailure 25
 #  define OSSL_CMP_PKIFAILUREINFO_duplicateCertReq 26
 #  define OSSL_CMP_PKIFAILUREINFO_MAX 26
+#  define OSSL_CMP_PKIFAILUREINFO_MAX_BIT_PATTERN \
+    ( (1<<(OSSL_CMP_PKIFAILUREINFO_MAX+1)) - 1)
+#  if OSSL_CMP_PKIFAILUREINFO_MAX_BIT_PATTERN > INT_MAX
+#   error  CMP_PKIFAILUREINFO_MAX bit pattern does not fit in type int
+#  endif
+
 typedef ASN1_BIT_STRING OSSL_CMP_PKIFAILUREINFO;
 
 #  define OSSL_CMP_CTX_FAILINFO_badAlg (1 << 0)

@@ -173,12 +173,6 @@ typedef struct OSSL_cmp_certifiedkeypair_st {
 } OSSL_CMP_CERTIFIEDKEYPAIR;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTIFIEDKEYPAIR)
 
-#define OSSL_CMP_PKIFAILUREINFO_MAX_BIT_PATTERN \
-    ( (1<<(OSSL_CMP_PKIFAILUREINFO_MAX+1)) - 1)
-#if OSSL_CMP_PKIFAILUREINFO_MAX_BIT_PATTERN > INT_MAX
-# error  CMP_PKIFAILUREINFO_MAX bit pattern does not fit in type int
-#endif
-
 /*-
  *   PKIStatusInfo ::= SEQUENCE {
  *       status        PKIStatus,
