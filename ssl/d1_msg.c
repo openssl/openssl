@@ -52,8 +52,7 @@ int dtls1_dispatch_alert(SSL *s)
         s->s3.alert_dispatch = 1;
         /* fprintf( stderr, "not done with alert\n" ); */
     } else {
-        if (s->s3.send_alert[0] == SSL3_AL_FATAL)
-            (void)BIO_flush(s->wbio);
+        (void)BIO_flush(s->wbio);
 
         if (s->msg_callback)
             s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3.send_alert,
