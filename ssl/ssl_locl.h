@@ -697,9 +697,9 @@
   (nid == NID_OQS_SIKE_503        ? OQS_KEM_alg_sike_p503 : \
   (nid == NID_OQS_SIKE_751        ? OQS_KEM_alg_sike_p751 : \
   (nid == NID_OQS_Frodo_640_AES   ? OQS_KEM_alg_frodokem_640_aes : \
-  (nid == NID_OQS_Frodo_640_cshake? OQS_KEM_alg_frodokem_640_cshake : \
+  (nid == NID_OQS_Frodo_640_cshake? OQS_KEM_alg_frodokem_640_shake : \
   (nid == NID_OQS_Frodo_976_AES   ? OQS_KEM_alg_frodokem_976_aes : \
-  (nid == NID_OQS_Frodo_976_cshake? OQS_KEM_alg_frodokem_976_cshake : \
+  (nid == NID_OQS_Frodo_976_cshake? OQS_KEM_alg_frodokem_976_shake : \
   (nid == NID_OQS_BIKE1_L1        ? OQS_KEM_alg_bike1_l1 : \
   (nid == NID_OQS_BIKE1_L3        ? OQS_KEM_alg_bike1_l3 : \
   (nid == NID_OQS_BIKE1_L5        ? OQS_KEM_alg_bike1_l5 : \
