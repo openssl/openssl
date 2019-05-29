@@ -2,6 +2,9 @@
 
 =head1 NAME
 
+OPENSSL_CTX_get0_master_drbg,
+OPENSSL_CTX_get0_public_drbg,
+OPENSSL_CTX_get0_private_drbg,
 RAND_DRBG_get0_master,
 RAND_DRBG_get0_public,
 RAND_DRBG_get0_private
@@ -11,6 +14,9 @@ RAND_DRBG_get0_private
 
  #include <openssl/rand_drbg.h>
 
+ RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx);
+ RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx);
+ RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx);
  RAND_DRBG *RAND_DRBG_get0_master(void);
  RAND_DRBG *RAND_DRBG_get0_public(void);
  RAND_DRBG *RAND_DRBG_get0_private(void);
@@ -21,26 +27,35 @@ RAND_DRBG_get0_private
 The default RAND API implementation (RAND_OpenSSL()) utilizes three
 shared DRBG instances which are accessed via the RAND API:
 
-The <public> and <private> DRBG are thread-local instances, which are used
+The I<public> and I<private> DRBG are thread-local instances, which are used
 by RAND_bytes() and RAND_priv_bytes(), respectively.
-The <master> DRBG is a global instance, which is not intended to be used
+The I<master> DRBG is a global instance, which is not intended to be used
 directly, but is used internally to reseed the other two instances.
 
 These functions here provide access to the shared DRBG instances.
 
 =head1 RETURN VALUES
 
-RAND_DRBG_get0_master() returns a pointer to the <master> DRBG instance.
+OPENSSL_CTX_get0_master_drbg() returns a pointer to the I<master> DRBG instance
+for the given OPENSSL_CTX B<ctx>.
 
-RAND_DRBG_get0_public() returns a pointer to the <public> DRBG instance.
+OPENSSL_CTX_get0_public_drbg() returns a pointer to the I<public> DRBG instance
+for the given OPENSSL_CTX B<ctx>.
 
-RAND_DRBG_get0_private() returns a pointer to the <private> DRBG instance.
+OPENSSL_CTX_get0_private_drbg() returns a pointer to the I<private> DRBG instance
+for the given OPENSSL_CTX B<ctx>.
 
+In all the above cases the B<ctx> parameter can
+be NULL in which case the default OPENSSL_CTX is used. RAND_DRBG_get0_master(),
+RAND_DRBG_get0_public() and RAND_DRBG_get0_private() are the same as
+OPENSSL_CTX_get0_master_drbg(), OPENSSL_CTX_get0_public_drbg() and
+OPENSSL_CTX_get0_private_drbg() respectively except that the default OPENSSL_CTX
+is always used.
 
 =head1 NOTES
 
-It is not thread-safe to access the <master> DRBG instance.
-The <public> and <private> DRBG instance can be accessed safely, because
+It is not thread-safe to access the I<master> DRBG instance.
+The I<public> and I<private> DRBG instance can be accessed safely, because
 they are thread-local. Note however, that changes to these two instances
 apply only to the current thread.
 
@@ -65,7 +80,10 @@ L<RAND_DRBG(7)>
 
 =head1 HISTORY
 
-The RAND_DRBG functions were added in OpenSSL 1.1.1.
+The OPENSSL_CTX_get0_master_drbg(), OPENSSL_CTX_get0_public_drbg() and
+OPENSSL_CTX_get0_private_drbg() functions were added in OpenSSL 3.0.
+
+All other RAND_DRBG functions were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
