@@ -1227,9 +1227,6 @@ foreach my $what (sort keys %disabled) {
         $skipdir = "ripemd" if $what eq "rmd160";
         $skipdir = "whrlpool" if $what eq "whirlpool";
 
-        # no-cmp also disables building of crmf
-        $skipdir{"crypto/crmf"} = $what if $what eq "cmp";
-
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
         push @{$config{openssl_feature_defines}}, $macro;
 
