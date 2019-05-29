@@ -7,7 +7,7 @@ OQS-OpenSSL\_1\_1\_1-stable
 
 **OpenSSL** ([https://openssl.org/](https://openssl.org/)) is an open-source TLS/SSL and crypto library.  (View the original [README file](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README) for OpenSSL.)
 
-This branch (OQS-OpenSSL\_1\_1\_1-stable) is a fork of OpenSSL 1.1.1 (currently in sync with the [OpenSSL_1_1_1b tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1b)) that adds the following:
+This branch (OQS-OpenSSL\_1\_1\_1-stable) is a fork of OpenSSL 1.1.1 (currently in sync with the [OpenSSL_1_1_1c tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1c)) that adds the following:
 
 - post-quantum key exchange in TLS 1.3
 - hybrid (post-quantum + elliptic curve) key exchange in TLS 1.3
