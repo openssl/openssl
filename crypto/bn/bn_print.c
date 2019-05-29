@@ -49,6 +49,8 @@ char *BN_bn2hex(const BIGNUM *a)
     return buf;
 }
 
+#ifndef FIPS_MODE
+/* No BIO_snprintf in FIPS_MODE */
 /* Must 'OPENSSL_free' the returned data */
 char *BN_bn2dec(const BIGNUM *a)
 {
@@ -122,6 +124,7 @@ char *BN_bn2dec(const BIGNUM *a)
     OPENSSL_free(buf);
     return NULL;
 }
+#endif
 
 int BN_hex2bn(BIGNUM **bn, const char *a)
 {
@@ -286,6 +289,7 @@ int BN_asc2bn(BIGNUM **bn, const char *a)
     return 1;
 }
 
+#ifndef FIPS_MODE
 # ifndef OPENSSL_NO_STDIO
 int BN_print_fp(FILE *fp, const BIGNUM *a)
 {
@@ -333,13 +337,14 @@ char *BN_options(void)
 
     if (!init) {
         init++;
-#ifdef BN_LLONG
+# ifdef BN_LLONG
         BIO_snprintf(data, sizeof(data), "bn(%zu,%zu)",
                      sizeof(BN_ULLONG) * 8, sizeof(BN_ULONG) * 8);
-#else
+# else
         BIO_snprintf(data, sizeof(data), "bn(%zu,%zu)",
                      sizeof(BN_ULONG) * 8, sizeof(BN_ULONG) * 8);
-#endif
+# endif
     }
     return data;
 }
+#endif

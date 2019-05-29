@@ -90,6 +90,7 @@ struct bignum_ctx {
     OPENSSL_CTX *libctx;
 };
 
+#ifndef FIPS_MODE
 /* Debugging functionality */
 static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
 {
@@ -118,10 +119,13 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
     BIO_printf(channel, "\n");
 }
 
-#define CTXDBG(str, ctx)            \
+# define CTXDBG(str, ctx)           \
     OSSL_TRACE_BEGIN(BN_CTX) {      \
         ctxdbg(trc_out, str, ctx);  \
     } OSSL_TRACE_END(BN_CTX)
+#else
+# define CTXDBG(str, ctx) do {}  while(0)
+#endif
 
 BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
 {
@@ -236,6 +240,11 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     ctx->used++;
     CTXDBG("LEAVE BN_CTX_get()", ctx);
     return ret;
+}
+
+OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx)
+{
+    return ctx->libctx;
 }
 
 /************/
