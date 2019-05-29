@@ -15,8 +15,8 @@
 # define OSSL_HEADER_CMP_H
 
 # include <openssl/opensslconf.h>
-
 # ifndef OPENSSL_NO_CMP
+
 #  include <openssl/crmf.h>
 #  include <openssl/cmperr.h>
 
@@ -26,11 +26,11 @@
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 
-#  define OSSL_CMP_PVNO 2
-
 #  ifdef  __cplusplus
 extern "C" {
 #  endif
+
+#  define OSSL_CMP_PVNO 2
 
 /*-
  *   PKIFailureInfo ::= BIT STRING {
