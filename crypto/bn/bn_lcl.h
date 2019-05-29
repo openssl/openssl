@@ -668,4 +668,6 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
     return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
 }
 
+OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx);
+
 #endif

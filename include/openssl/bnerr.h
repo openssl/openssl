@@ -93,6 +93,7 @@ int ERR_load_BN_strings(void);
 # define BN_R_NOT_INITIALIZED                             107
 # define BN_R_NO_INVERSE                                  108
 # define BN_R_NO_SOLUTION                                 116
+# define BN_R_NO_SUITABLE_DIGEST                          120
 # define BN_R_PRIVATE_KEY_TOO_LARGE                       117
 # define BN_R_P_IS_NOT_PRIME                              112
 # define BN_R_TOO_MANY_ITERATIONS                         113

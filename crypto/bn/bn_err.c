@@ -96,6 +96,7 @@ static const ERR_STRING_DATA BN_str_reasons[] = {
     {ERR_PACK(ERR_LIB_BN, 0, BN_R_NOT_INITIALIZED), "not initialized"},
     {ERR_PACK(ERR_LIB_BN, 0, BN_R_NO_INVERSE), "no inverse"},
     {ERR_PACK(ERR_LIB_BN, 0, BN_R_NO_SOLUTION), "no solution"},
+    {ERR_PACK(ERR_LIB_BN, 0, BN_R_NO_SUITABLE_DIGEST), "no suitable digest"},
     {ERR_PACK(ERR_LIB_BN, 0, BN_R_PRIVATE_KEY_TOO_LARGE),
     "private key too large"},
     {ERR_PACK(ERR_LIB_BN, 0, BN_R_P_IS_NOT_PRIME), "p is not prime"},
