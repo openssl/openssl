@@ -103,6 +103,9 @@ The lexical syntax in EBNF is given by:
  NumberLiteral  ::= '0' ( [0-7]* | 'x' [0-9A-Fa-f]+ ) | '-'? [1-9] [0-9]+
  PropertyName   ::= [A-Z] [A-Z0-9_]* ( '.' [A-Z] [A-Z0-9_]* )*
 
+Railroad diagrams for this grammar can be found in the
+`crypto/property/properties.xhtml` file.
+
 =head1 HISTORY
 
 Properties were added in OpenSSL 3.0
