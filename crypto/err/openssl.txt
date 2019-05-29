@@ -318,6 +318,7 @@ CMS_F_CMS_SIGNERINFO_VERIFY:152:CMS_SignerInfo_verify
 CMS_F_CMS_SIGNERINFO_VERIFY_CERT:153:cms_signerinfo_verify_cert
 CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT:154:CMS_SignerInfo_verify_content
 CMS_F_CMS_SIGN_RECEIPT:163:CMS_sign_receipt
+CMS_F_CMS_SI_CHECK_ATTRIBUTES:183:CMS_si_check_attributes
 CMS_F_CMS_STREAM:155:CMS_stream
 CMS_F_CMS_UNCOMPRESS:156:CMS_uncompress
 CMS_F_CMS_VERIFY:157:CMS_verify
@@ -2061,6 +2062,7 @@ BN_R_P_IS_NOT_PRIME:112:p is not prime
 BN_R_TOO_MANY_ITERATIONS:113:too many iterations
 BN_R_TOO_MANY_TEMPORARY_VARIABLES:109:too many temporary variables
 CMS_R_ADD_SIGNER_ERROR:99:add signer error
+CMS_R_ATTRIBUTE_ERROR:161:attribute error
 CMS_R_CERTIFICATE_ALREADY_PRESENT:175:certificate already present
 CMS_R_CERTIFICATE_HAS_NO_KEYID:160:certificate has no keyid
 CMS_R_CERTIFICATE_VERIFY_ERROR:100:certificate verify error
