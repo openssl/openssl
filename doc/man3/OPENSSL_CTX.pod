@@ -21,6 +21,10 @@ the internal default context with functions that take a C<OPENSSL_CTX>
 argument.
 
 OPENSSL_CTX_new() creates a new OpenSSL library context.
+When a non default library context is in use care should be taken with
+multi-threaded applications to properly clean up thread local resources before
+the OPENSSL_CTX is freed.
+See L<OPENSSL_thread_stop_ex(3)> for more information.
 
 OPENSSL_CTX_free() frees the given C<ctx>.
 
