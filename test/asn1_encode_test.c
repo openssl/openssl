@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -396,7 +396,7 @@ static ASN1_INT64_DATA int64_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad (illegal padding) */
     CUSTOM_EXPECTED_SUCCESS(INT64_MIN, INT64_MIN), /* t_8bytes_4_neg */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_5_negpad (illegal padding) */
-    CUSTOM_EXPECTED_SUCCESS(0x1ffffffff, 0x1ffffffff), /* t_5bytes_1 */
+    CUSTOM_EXPECTED_SUCCESS(0x1ffffffffULL, 0x1ffffffffULL), /* t_5bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(0x80000000, 0x80000000), /* t_4bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(INT32_MAX - 1, INT32_MAX -1), /* t_4bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_3_pad (illegal padding) */
@@ -446,7 +446,7 @@ static ASN1_UINT64_DATA uint64_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_4_neg */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_5_negpad */
-    CUSTOM_EXPECTED_SUCCESS(0x1ffffffff, 0x1ffffffff), /* t_5bytes_1 */
+    CUSTOM_EXPECTED_SUCCESS(0x1ffffffffULL, 0x1ffffffffULL), /* t_5bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(0x80000000, 0x80000000), /* t_4bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(INT32_MAX - 1, INT32_MAX -1), /* t_4bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_3_pad (illegal padding) */
