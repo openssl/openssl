@@ -35,6 +35,7 @@ int ERR_load_BN_strings(void);
 # define BN_F_BN_COMPUTE_WNAF                             142
 # define BN_F_BN_CTX_GET                                  116
 # define BN_F_BN_CTX_NEW                                  106
+# define BN_F_BN_CTX_NEW_EX                               151
 # define BN_F_BN_CTX_START                                129
 # define BN_F_BN_DIV                                      107
 # define BN_F_BN_DIV_RECP                                 130
