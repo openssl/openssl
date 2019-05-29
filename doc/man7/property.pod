@@ -50,7 +50,7 @@ The full syntax for property definitions appears below.
 
 =head2 Implementations
 
-Each implementation of an algorithm can have and define any number of
+Each implementation of an algorithm can define any number of
 properties.
 For example, the default provider defines the property I<default=yes>
 for all of its algorithms.
@@ -104,7 +104,7 @@ The lexical syntax in EBNF is given by:
  PropertyName   ::= [A-Z] [A-Z0-9_]* ( '.' [A-Z] [A-Z0-9_]* )*
 
 Railroad diagrams for this grammar can be found in the
-`crypto/property/properties.xhtml` file.
+F<crypto/property/properties.xhtml> file.
 
 =head1 HISTORY
 
