@@ -30,7 +30,7 @@ letters.
 A I<user defined> property name is similar, but it B<must> consist of
 two or more C-style identifiers, separated by periods.
 The last identifier in the name can be considered the 'true' property
-name, which is prefixed prefixed by some sort of 'namespace'.
+name, which is prefixed by some sort of 'namespace'.
 Providers for example could include their name in the prefix and use
 property names like
 
@@ -39,8 +39,8 @@ property names like
 
 =head2 Properties
 
-A property is a I<name=value> pair.
-A property definition is a sequence of comma separated properties.
+A I<property> is a I<name=value> pair.
+A I<property definition> is a sequence of comma separated properties.
 There can be any number of properties in a definition.
 For example: "" defines a null property definition; "my.foo=bar"
 defines a property named I<my.foo> which has a string value I<bar> and
@@ -59,7 +59,7 @@ defines I<legacy=yes> for all of their algorithms.
 
 =head2 Queries
 
-A property query clause is a single conditional test.
+A I<property query clause> is a single conditional test.
 For example, "fips=yes", "default!=yes" or "?iteration.count!=3".
 The first two represent mandatory clauses, such clauses B<must> match
 for any algorithm to even be under consideration.
@@ -67,7 +67,7 @@ The third clause represents an optional clause.
 Matching such clauses is not a requirement, but any additional optional
 match counts in favor of the algorithm.
 More details about that in the B<Lookups> section.
-A query is a sequence of comma separated query clauses.
+A I<property query> is a sequence of comma separated property query clauses.
 The full syntax for property queries appears below.
 
 =head2 Lookups
@@ -95,7 +95,7 @@ The lexical syntax in EBNF is given by:
                         ( ',' PropertyName ( '=' Value )? )*
  Query          ::= PropertyQuery ( ',' PropertyQuery )*
  PropertyQuery  ::= '-'? PropertyName
-                  | '?' ( PropertyName (( '=' | '!=' ) Value)?)
+                  | '?'? ( PropertyName (( '=' | '!=' ) Value)?)
  Value          ::= NumberLiteral | StringLiteral
  StringLiteral  ::= QuotedString | UnquotedString
  QuotedString   ::= '"' [^"]* '"' | "'" [^']* "'"
