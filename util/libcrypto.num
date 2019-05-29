@@ -4829,3 +4829,5 @@ RAND_DRBG_secure_new_ex                 4773	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_get0_master_drbg            4774	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_get0_public_drbg            4775	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_get0_private_drbg           4776	3_0_0	EXIST::FUNCTION:
+BN_CTX_new_ex                           4777	3_0_0	EXIST::FUNCTION:
+BN_CTX_secure_new_ex                    4778	3_0_0	EXIST::FUNCTION:

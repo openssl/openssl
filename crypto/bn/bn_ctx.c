@@ -86,6 +86,8 @@ struct bignum_ctx {
     int too_many;
     /* Flags. */
     int flags;
+    /* The library context */
+    OPENSSL_CTX *libctx;
 };
 
 /* Debugging functionality */
@@ -121,28 +123,38 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
         ctxdbg(trc_out, str, ctx);  \
     } OSSL_TRACE_END(BN_CTX)
 
-
-BN_CTX *BN_CTX_new(void)
+BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
 {
     BN_CTX *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BNerr(BN_F_BN_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        BNerr(BN_F_BN_CTX_NEW_EX, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     /* Initialise the structure */
     BN_POOL_init(&ret->pool);
     BN_STACK_init(&ret->stack);
+    ret->libctx = ctx;
+    return ret;
+}
+
+BN_CTX *BN_CTX_new(void)
+{
+    return BN_CTX_new_ex(NULL);
+}
+
+BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx)
+{
+    BN_CTX *ret = BN_CTX_new_ex(ctx);
+
+    if (ret != NULL)
+        ret->flags = BN_FLG_SECURE;
     return ret;
 }
 
 BN_CTX *BN_CTX_secure_new(void)
 {
-    BN_CTX *ret = BN_CTX_new();
-
-    if (ret != NULL)
-        ret->flags = BN_FLG_SECURE;
-    return ret;
+    return BN_CTX_secure_new_ex(NULL);
 }
 
 void BN_CTX_free(BN_CTX *ctx)
