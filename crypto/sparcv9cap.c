@@ -24,6 +24,11 @@ __attribute__ ((visibility("hidden")))
 #endif
 unsigned int OPENSSL_sparcv9cap_P[2] = { SPARCV9_TICK_PRIVILEGED, 0 };
 
+/*
+ * TODO(3.0): Temporarily disabled some assembler that hasn't been brought into
+ * the FIPS module yet.
+ */
+#ifndef FIPS_MODE
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                 const BN_ULONG *np, const BN_ULONG *n0, int num)
 {
@@ -86,6 +91,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     }
     return bn_mul_mont_int(rp, ap, bp, np, n0, num);
 }
+#endif /* FIPS_MODE */
 
 unsigned long _sparcv9_rdtick(void);
 void _sparcv9_vis1_probe(void);

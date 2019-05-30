@@ -287,7 +287,17 @@ DSO_ASFLAGS={- join(' ', $target{dso_asflags} || (),
                          @{$config{module_asflags}},
                          '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
 DSO_CPPFLAGS={- join(' ', $target{dso_cppflags} || (),
-                          $target{module_cppflags} || (),
+                          $target{module_cppflag} || (),
+                          (map { '-D'.quotify1($_) }
+                               @{$target{dso_defines}},
+                               @{$target{module_defines}},
+                               @{$config{dso_defines}},
+                               @{$config{module_defines}}),
+                          (map { '-I'.quotify1($_) }
+                               @{$target{dso_includes}},
+                               @{$target{module_includes}},
+                               @{$config{dso_includes}},
+                               @{$config{module_includes}}),
                           @{$config{dso_cppflags}},
                           @{$config{module_cppflags}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}

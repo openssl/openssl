@@ -38,7 +38,12 @@ unsigned int OPENSSL_ppccap_P = 0;
 
 static sigset_t all_masked;
 
-#ifdef OPENSSL_BN_ASM_MONT
+/*
+ * TODO(3.0): Temporarily disabled some assembler that hasn't been brought into
+ * the FIPS module yet.
+ */
+#ifndef FIPS_MODE
+# ifdef OPENSSL_BN_ASM_MONT
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                 const BN_ULONG *np, const BN_ULONG *n0, int num)
 {
@@ -63,7 +68,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 
     return bn_mul_mont_int(rp, ap, bp, np, n0, num);
 }
-#endif
+# endif
 
 void sha256_block_p8(void *ctx, const void *inp, size_t len);
 void sha256_block_ppc(void *ctx, const void *inp, size_t len);
@@ -83,7 +88,7 @@ void sha512_block_data_order(void *ctx, const void *inp, size_t len)
         sha512_block_ppc(ctx, inp, len);
 }
 
-#ifndef OPENSSL_NO_CHACHA
+# ifndef OPENSSL_NO_CHACHA
 void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,
                         size_t len, const unsigned int key[8],
                         const unsigned int counter[4]);
@@ -103,9 +108,9 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
             ? ChaCha20_ctr32_vmx(out, inp, len, key, counter)
             : ChaCha20_ctr32_int(out, inp, len, key, counter);
 }
-#endif
+# endif
 
-#ifndef OPENSSL_NO_POLY1305
+# ifndef OPENSSL_NO_POLY1305
 void poly1305_init_int(void *ctx, const unsigned char key[16]);
 void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
                          unsigned int padbit);
@@ -139,9 +144,9 @@ int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
     }
     return 1;
 }
-#endif
+# endif
 
-#ifdef ECP_NISTZ256_ASM
+# ifdef ECP_NISTZ256_ASM
 void ecp_nistz256_mul_mont(unsigned long res[4], const unsigned long a[4],
                            const unsigned long b[4]);
 
@@ -163,7 +168,8 @@ void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4])
 
     ecp_nistz256_mul_mont(res, in, one);
 }
-#endif
+# endif
+#endif /* FIPS_MODE */
 
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
