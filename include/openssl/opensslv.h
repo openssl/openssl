@@ -78,7 +78,7 @@ extern "C" {
 
 /* For checking general API compatibility when preprocessing */
 # define OPENSSL_VERSION_PREREQ(maj,min)                                \
-    ((OPENSSL_VERSION_MAJOR << 16) + OPENSSL_VERSION_MINOR >= (maj << 16) + min)
+    ((OPENSSL_VERSION_MAJOR << 16) + OPENSSL_VERSION_MINOR >= ((maj) << 16) + (min))
 
 /* Helper macros for CPP string composition */
 #   define OPENSSL_MSTR_HELPER(x) #x
