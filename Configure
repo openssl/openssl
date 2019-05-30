@@ -1400,7 +1400,10 @@ if ($target{sys_id} ne "")
 
 unless ($disabled{asm}) {
     $target{cpuid_asm_src}=$table{DEFAULTS}->{cpuid_asm_src} if ($config{processor} eq "386");
-    push @{$config{lib_defines}}, "OPENSSL_CPUID_OBJ" if ($target{cpuid_asm_src} ne "mem_clr.c");
+    if ($target{cpuid_asm_src} ne "mem_clr.c") {
+        push @{$config{lib_defines}}, "OPENSSL_CPUID_OBJ";
+        push @{$config{dso_defines}}, "OPENSSL_CPUID_OBJ";
+    }
 
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
@@ -1432,15 +1435,30 @@ unless ($disabled{asm}) {
         push @{$config{lib_defines}}, "RMD160_ASM";
     }
     if ($target{aes_asm_src}) {
-        push @{$config{lib_defines}}, "AES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
+        if ($target{aes_asm_src} =~ m/\baes-/) {
+            push @{$config{lib_defines}}, "AES_ASM";
+            push @{$config{dso_defines}}, "AES_ASM";
+        }
         # aes-ctr.fake is not a real file, only indication that assembler
         # module implements AES_ctr32_encrypt...
-        push @{$config{lib_defines}}, "AES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
+        if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//) {
+            push @{$config{lib_defines}}, "AES_CTR_ASM";
+            push @{$config{dso_defines}}, "AES_CTR_ASM";
+        }
         # aes-xts.fake indicates presence of AES_xts_[en|de]crypt...
-        push @{$config{lib_defines}}, "AES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
+        if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//) {
+            push @{$config{lib_defines}}, "AES_XTS_ASM";
+            push @{$config{dso_defines}}, "AES_XTS_ASM";
+        }
         $target{aes_asm_src} =~ s/\s*(vpaes|aesni)-x86\.s//g if ($disabled{sse2});
-        push @{$config{lib_defines}}, "VPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
-        push @{$config{lib_defines}}, "BSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
+        if ($target{aes_asm_src} =~ m/vpaes/) {
+            push @{$config{lib_defines}}, "VPAES_ASM";
+            push @{$config{dso_defines}}, "VPAES_ASM";
+        }
+        if ($target{aes_asm_src} =~ m/bsaes/) {
+            push @{$config{lib_defines}}, "BSAES_ASM";
+            push @{$config{dso_defines}}, "BSAES_ASM";
+        }
     }
     if ($target{wp_asm_src} =~ /mmx/) {
         if ($config{processor} eq "386") {
