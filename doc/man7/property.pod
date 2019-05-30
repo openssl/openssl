@@ -68,7 +68,40 @@ Matching such clauses is not a requirement, but any additional optional
 match counts in favor of the algorithm.
 More details about that in the B<Lookups> section.
 A I<property query> is a sequence of comma separated property query clauses.
-The full syntax for property queries appears below.
+The full syntax for property queries appears below, but the available syntatic
+features are:
+
+=over
+
+=item *
+
+B<=> is an infix operator providing an equality test.
+
+=item *
+
+B<!=> is an infix operator providing an inequality test.
+
+=item *
+
+B<?> is a prefix operator that means that the following clause is optional
+but preferred.
+
+=item *
+
+B<-> is a prefix operator that means any global query clause involving the
+following property name should be ignored.
+
+=item *
+
+B<"..."> is a quoted string.
+The quotes are not included in the body of the string.
+
+=item *
+
+B<'...'> is a quoted string.
+The quotes are not included in the body of the string.
+
+=back
 
 =head2 Lookups
 
@@ -87,7 +120,31 @@ In order to permit a more concise expression of boolean properties, there
 is one short cut: a property name alone (e.g. "default") is
 exactly equivalent to "default=yes" in both definitions and queries.
 
-=head1 Syntax
+=head2 Global and Local
+
+Two levels of property query are supported.
+A context based property query that applies to all fetch operations and a local
+property query.
+Where both the context and local queries include a clause with the same name,
+the local clause is used and the context one ignored.
+For example, a context property query of "fips=yes" and a local property query
+of "fips=no" would result in algorithms that have the "fips" property set t
+"no".
+
+=head2 Override
+
+It is possible for a local property query to override a clause in the context
+property query by preceeding the property name with a '-'.
+For example, a conxtet property query that contains "fips=yes" would normally
+result in implementations that have "fips=yes".
+However, if the setting of
+the "fips" property is irrelevant to the operations being performed, the local
+property query can include the clause "-fips".
+Note that the local property query could not use "fips=no" because that would
+disallow any implementations with "fips=yes" rather than not caring about the
+setting.
+
+=head1 SYNTAX
 
 The lexical syntax in EBNF is given by:
 
