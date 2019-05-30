@@ -41,7 +41,9 @@ static int cfd = -1;
 #define DEVCRYPTO_USE_SOFTWARE        1 /* allow software drivers */
 #define DEVCRYPTO_REJECT_SOFTWARE     2 /* only disallow confirmed software drivers */
 
-#define DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS DEVCRYPTO_REJECT_SOFTWARE
+#ifndef DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS
+# define DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS DEVCRYPTO_REJECT_SOFTWARE
+#endif
 static int use_softdrivers = DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS;
 
 /*
@@ -605,9 +607,22 @@ static void dump_cipher_info(void)
  * data updates and session copying.  Otherwise, we would be forced to maintain
  * a cache, which is perilous if there's a lot of data coming in (if someone
  * wants to checksum an OpenSSL tarball, for example).
+ * We will maintain a cache for performance reasons, but we'll call a data
+ * update when its size gets larger than DIGEST_CACHE_SIZE.
+ * If the new data size is larger than DIGEST_CACHE_MAXSIZE, the cache is
+ * run through an update on its own, followed by the new data update, instead
+ * of realloc'ing the cache, appending new data, and then running the update.
  */
 #if defined(CIOCCPHASH) && defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
 #define IMPLEMENT_DIGEST
+
+#ifndef DIGEST_CACHE_SIZE
+# define DIGEST_CACHE_SIZE 8192
+#endif
+
+#ifndef DIGEST_CACHE_MAXSIZE
+# define DIGEST_CACHE_MAXSIZE 262144
+#endif
 
 /******************************************************************************
  *
@@ -621,9 +636,10 @@ static void dump_cipher_info(void)
 
 struct digest_ctx {
     struct session_op sess;
-    /* This signals that the init function was called, not that it succeeded. */
     int init_called;
     unsigned char digest_res[HASH_MAX_LEN];
+    void *inp_data;
+    size_t inp_count;
 };
 
 static const struct digest_data_st {
@@ -689,6 +705,8 @@ static const struct digest_data_st *get_digest_data(int nid)
 /*
  * Following are the five necessary functions to map OpenSSL functionality
  * with cryptodev: init, update, final, cleanup, and copy.
+ * Cryptodev initialization has ben deferred to when it is first used, to
+ * accommodate HMAC use across forks.
  */
 
 static int digest_init(EVP_MD_CTX *ctx)
@@ -698,14 +716,9 @@ static int digest_init(EVP_MD_CTX *ctx)
     const struct digest_data_st *digest_d =
         get_digest_data(EVP_MD_CTX_type(ctx));
 
-    digest_ctx->init_called = 1;
 
     memset(&digest_ctx->sess, 0, sizeof(digest_ctx->sess));
     digest_ctx->sess.mac = digest_d->devcryptoid;
-    if (ioctl(cfd, CIOCGSESSION, &digest_ctx->sess) < 0) {
-        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
-        return 0;
-    }
     return 1;
 }
 
@@ -713,21 +726,33 @@ static int digest_op(struct digest_ctx *ctx, const void *src, size_t srclen,
                      void *res, unsigned int flags)
 {
     struct crypt_op cryp;
+    int ret;
 
     memset(&cryp, 0, sizeof(cryp));
+    if (ctx->init_called != 1) {
+        if (ioctl(cfd, CIOCGSESSION, &ctx->sess) < 0) {
+            ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
+            return 0;
+        }
+        ctx->init_called = 1;
+    }
     cryp.ses = ctx->sess.ses;
     cryp.len = srclen;
     cryp.src = (void *)src;
     cryp.dst = NULL;
     cryp.mac = res;
     cryp.flags = flags;
-    return ioctl(cfd, CIOCCRYPT, &cryp);
+    if ((ret = ioctl(cfd, CIOCCRYPT, &cryp)) < 0)
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
+    return ret;
 }
 
 static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
+    char *new_data;
+    int ret = 0;
 
     if (count == 0)
         return 1;
@@ -735,33 +760,53 @@ static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
     if (digest_ctx == NULL)
         return 0;
 
-    if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT)) {
-        if (digest_op(digest_ctx, data, count, digest_ctx->digest_res, 0) >= 0)
-            return 1;
-    } else if (digest_op(digest_ctx, data, count, NULL, COP_FLAG_UPDATE) >= 0) {
-        return 1;
+    if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT))
+        return (digest_op(digest_ctx, data, count, digest_ctx->digest_res, 0) >= 0);
+    if (digest_ctx->inp_count == 0 && count > DIGEST_CACHE_SIZE)
+        return (digest_op(digest_ctx, data, count, NULL, COP_FLAG_UPDATE) >= 0);
+    if (count > DIGEST_CACHE_MAXSIZE) {
+        ret = (digest_op(digest_ctx, digest_ctx->inp_data, digest_ctx->inp_count, NULL,
+                         COP_FLAG_UPDATE) >= 0) &&
+              (digest_op(digest_ctx, data, count, NULL, COP_FLAG_UPDATE) >= 0);
+        goto reset_data;
     }
-
-    ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
-    return 0;
+    new_data = OPENSSL_realloc(digest_ctx->inp_data, digest_ctx->inp_count + count);
+    if (!new_data) {
+        ERR_raise(ERR_LIB_SYS, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    memcpy(new_data + digest_ctx->inp_count, data, count);
+    digest_ctx->inp_count += count;
+    digest_ctx->inp_data = new_data;
+    if (digest_ctx->inp_count < DIGEST_CACHE_SIZE)
+        return 1;
+    ret = (digest_op(digest_ctx, digest_ctx->inp_data, digest_ctx->inp_count, NULL,
+                     COP_FLAG_UPDATE) >= 0);
+reset_data:
+    free(digest_ctx->inp_data);
+    digest_ctx->inp_data = NULL;
+    digest_ctx->inp_count = 0;
+    return ret;
 }
 
 static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
+    int ret = 1;
 
     if (md == NULL || digest_ctx == NULL)
         return 0;
 
-    if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT)) {
+    if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT))
         memcpy(md, digest_ctx->digest_res, EVP_MD_CTX_size(ctx));
-    } else if (digest_op(digest_ctx, NULL, 0, md, COP_FLAG_FINAL) < 0) {
-        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
-        return 0;
-    }
-
-    return 1;
+    else
+        ret = (digest_op(digest_ctx, digest_ctx->inp_data, digest_ctx->inp_count,
+                         md, COP_FLAG_FINAL) >= 0);
+    free(digest_ctx->inp_data);
+    digest_ctx->inp_data = NULL;
+    digest_ctx->inp_count = 0;
+    return ret;
 }
 
 static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
@@ -772,21 +817,36 @@ static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
         (struct digest_ctx *)EVP_MD_CTX_md_data(to);
     struct cphash_op cphash;
 
-    if (digest_from == NULL || digest_from->init_called != 1)
+    if (digest_from == NULL)
         return 1;
-
-    if (!digest_init(to)) {
+    if (digest_from->inp_count > 0) {
+        digest_to->inp_data = OPENSSL_malloc(digest_from->inp_count);
+        if (digest_to->inp_data == NULL) {
+            ERR_raise(ERR_LIB_SYS, ERR_R_MALLOC_FAILURE);
+            goto fail;
+        }
+        memcpy(digest_to->inp_data, digest_from->inp_data, digest_from->inp_count);
+    }
+    if (digest_from->init_called != 1)
+        return 1;
+    if (ioctl(cfd, CIOCGSESSION, &digest_to->sess) < 0) {
         ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
-        return 0;
+        goto fail;
     }
 
     cphash.src_ses = digest_from->sess.ses;
     cphash.dst_ses = digest_to->sess.ses;
     if (ioctl(cfd, CIOCCPHASH, &cphash) < 0) {
         ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
-        return 0;
+        goto fail;
     }
     return 1;
+
+fail:
+    free(digest_to->inp_data);
+    digest_to->inp_data = NULL;
+    digest_to->inp_count = 0;
+    return 0;
 }
 
 static int digest_cleanup(EVP_MD_CTX *ctx)
@@ -794,7 +854,7 @@ static int digest_cleanup(EVP_MD_CTX *ctx)
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
 
-    if (digest_ctx == NULL)
+    if (digest_ctx == NULL || digest_ctx->init_called != 1)
         return 1;
 
     return clean_devcrypto_session(&digest_ctx->sess);
