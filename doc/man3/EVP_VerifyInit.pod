@@ -72,7 +72,7 @@ data have been passed through EVP_SignUpdate().
 
 It is not possible to change the signing parameters using these function.
 
-The previous two bugs are fixed in the newer EVP_VerifyDigest*() function.
+The previous two bugs are fixed in the newer EVP_DigestVerify*() function.
 
 =head1 SEE ALSO
 
