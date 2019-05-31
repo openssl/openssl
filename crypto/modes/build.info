@@ -24,7 +24,7 @@ IF[{- !$disabled{asm} -}]
 
   $MODESASM_armv4=ghash-armv4.S ghashv8-armx.S
   $MODESDEF_armv4=GHASH_ASM
-  $MODESASM_aarch64=ghashv8-armx.S
+  $MODESASM_aarch64=ghashv8-armx.S aes-gcm-armv8_64.S
   $MODESDEF_aarch64=
 
   $MODESASM_parisc11=ghash-parisc.s
@@ -71,6 +71,8 @@ GENERATE[ghash-armv4.S]=asm/ghash-armv4.pl $(PERLASM_SCHEME)
 INCLUDE[ghash-armv4.o]=..
 GENERATE[ghashv8-armx.S]=asm/ghashv8-armx.pl $(PERLASM_SCHEME)
 INCLUDE[ghashv8-armx.o]=..
+GENERATE[aes-gcm-armv8_64.S]=asm/aes-gcm-armv8_64.pl $(PERLASM_SCHEME)
+INCLUDE[aes-gcm-armv8_64.o]=..
 GENERATE[ghash-s390x.S]=asm/ghash-s390x.pl $(PERLASM_SCHEME)
 INCLUDE[ghash-s390x.o]=..
 GENERATE[ghash-c64xplus.S]=asm/ghash-c64xplus.pl $(PERLASM_SCHEME)

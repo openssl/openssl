@@ -30,14 +30,16 @@ int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
 #if defined(AES_GCM_ASM)
             size_t bulk = 0;
 
-            if (len >= 32 && AES_GCM_ASM(ctx)) {
+            if (len >= ENC_BYTES && AES_GCM_ASM(ctx)) {
                 size_t res = (16 - ctx->gcm.mres) % 16;
 
                 if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, res))
                     return 0;
-                bulk = aesni_gcm_encrypt(in + res, out + res, len - res,
+
+                bulk = AES_gcm_encrypt(in + res, out + res, len - res,
                                          ctx->gcm.key,
                                          ctx->gcm.Yi.c, ctx->gcm.Xi.u);
+
                 ctx->gcm.len.u[1] += bulk;
                 bulk += res;
             }
@@ -57,15 +59,16 @@ int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
 #if defined(AES_GCM_ASM)
             size_t bulk = 0;
 
-            if (len >= 16 && AES_GCM_ASM(ctx)) {
+            if (len >= DEC_BYTES && AES_GCM_ASM(ctx)) {
                 size_t res = (16 - ctx->gcm.mres) % 16;
 
                 if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, res))
                     return -1;
 
-                bulk = aesni_gcm_decrypt(in + res, out + res, len - res,
+                bulk = AES_gcm_decrypt(in + res, out + res, len - res,
                                          ctx->gcm.key,
                                          ctx->gcm.Yi.c, ctx->gcm.Xi.u);
+
                 ctx->gcm.len.u[1] += bulk;
                 bulk += res;
             }
