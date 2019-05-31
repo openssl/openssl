@@ -3290,6 +3290,142 @@ static int test_ciphersuite_change(void)
 }
 
 /*
+ * Test TLSv1.3 Cipher Suite
+ * Test 0 = Set TLS1.3 cipher on context
+ * Test 1 = Set TLS1.3 cipher on SSL
+ * Test 2 = Set TLS1.3 and TLS1.2 cipher on context
+ * Test 3 = Set TLS1.3 and TLS1.2 cipher on SSL
+ */
+static int test_tls13_ciphersuite(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    static const char *t13_ciphers[] = {
+        TLS1_3_RFC_AES_128_GCM_SHA256,
+        TLS1_3_RFC_AES_256_GCM_SHA384,
+        TLS1_3_RFC_AES_128_CCM_SHA256,
+# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+        TLS1_3_RFC_AES_256_GCM_SHA384 ":" TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+# endif
+        TLS1_3_RFC_AES_128_CCM_8_SHA256 ":" TLS1_3_RFC_AES_128_CCM_SHA256
+    };
+    const char *t13_cipher = NULL;
+    const char *t12_cipher = NULL;
+    const char *negotiated_scipher;
+    const char *negotiated_ccipher;
+    int set_at_ctx = 0;
+    int set_at_ssl = 0;
+    int testresult = 0;
+    int max_ver;
+    size_t i;
+
+    switch (idx) {
+        case 0:
+            set_at_ctx = 1;
+            break;
+        case 1:
+            set_at_ssl = 1;
+            break;
+        case 2:
+            set_at_ctx = 1;
+            t12_cipher = TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256;
+            break;
+        case 3:
+            set_at_ssl = 1;
+            t12_cipher = TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256;
+            break;
+    }
+
+    for (max_ver = TLS1_2_VERSION; max_ver <= TLS1_3_VERSION; max_ver++) {
+# ifdef OPENSSL_NO_TLS1_2
+        if (max_ver == TLS1_2_VERSION)
+            continue;
+# endif
+        for (i = 0; i < OSSL_NELEM(t13_ciphers); i++) {
+            t13_cipher = t13_ciphers[i];
+            if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                               TLS_client_method(),
+                                               TLS1_VERSION, max_ver,
+                                               &sctx, &cctx, cert, privkey)))
+                goto end;
+
+            if (set_at_ctx) {
+                if (!TEST_true(SSL_CTX_set_ciphersuites(sctx, t13_cipher))
+                    || !TEST_true(SSL_CTX_set_ciphersuites(cctx, t13_cipher)))
+                    goto end;
+                if (t12_cipher != NULL) {
+                    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, t12_cipher))
+                        || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                              t12_cipher)))
+                        goto end;
+                }
+            }
+
+            if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                              &clientssl, NULL, NULL)))
+                goto end;
+
+            if (set_at_ssl) {
+                if (!TEST_true(SSL_set_ciphersuites(serverssl, t13_cipher))
+                    || !TEST_true(SSL_set_ciphersuites(clientssl, t13_cipher)))
+                    goto end;
+                if (t12_cipher != NULL) {
+                    if (!TEST_true(SSL_set_cipher_list(serverssl, t12_cipher))
+                        || !TEST_true(SSL_set_cipher_list(clientssl,
+                                                          t12_cipher)))
+                        goto end;
+                }
+            }
+
+            if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                 SSL_ERROR_NONE)))
+                goto end;
+
+            negotiated_scipher = SSL_CIPHER_get_name(SSL_get_current_cipher(
+                                                                 serverssl));
+            negotiated_ccipher = SSL_CIPHER_get_name(SSL_get_current_cipher(
+                                                                 clientssl));
+            if (!TEST_str_eq(negotiated_scipher, negotiated_ccipher))
+                goto end;
+
+            /*
+             * TEST_strn_eq is used below because t13_cipher can contain
+             * multiple ciphersuites
+             */
+            if (max_ver == TLS1_3_VERSION
+                && !TEST_strn_eq(t13_cipher, negotiated_scipher,
+                                 strlen(negotiated_scipher)))
+                goto end;
+
+# ifndef OPENSSL_NO_TLS1_2
+            /* Below validation is not done when t12_cipher is NULL */
+            if (max_ver == TLS1_2_VERSION && t12_cipher != NULL
+                && !TEST_str_eq(t12_cipher, negotiated_scipher))
+                goto end;
+# endif
+
+            SSL_free(serverssl);
+            serverssl = NULL;
+            SSL_free(clientssl);
+            clientssl = NULL;
+            SSL_CTX_free(sctx);
+            sctx = NULL;
+            SSL_CTX_free(cctx);
+            cctx = NULL;
+        }
+    }
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * Test TLSv1.3 PSKs
  * Test 0 = Test new style callbacks
  * Test 1 = Test both new and old style callbacks
@@ -6154,6 +6290,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_set_ciphersuite, 10);
     ADD_TEST(test_ciphersuite_change);
+    ADD_ALL_TESTS(test_tls13_ciphersuite, 4);
 #ifdef OPENSSL_NO_PSK
     ADD_ALL_TESTS(test_tls13_psk, 1);
 #else
