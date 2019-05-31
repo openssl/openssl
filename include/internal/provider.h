@@ -55,10 +55,10 @@ int ossl_provider_forall_loaded(OPENSSL_CTX *,
                                 void *cbdata);
 
 /* Getters for other library functions */
-const char *ossl_provider_name(OSSL_PROVIDER *prov);
-const DSO *ossl_provider_dso(OSSL_PROVIDER *prov);
-const char *ossl_provider_module_name(OSSL_PROVIDER *prov);
-const char *ossl_provider_module_path(OSSL_PROVIDER *prov);
+const char *ossl_provider_name(const OSSL_PROVIDER *prov);
+const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov);
+const char *ossl_provider_module_name(const OSSL_PROVIDER *prov);
+const char *ossl_provider_module_path(const OSSL_PROVIDER *prov);
 
 /* Thin wrappers around calls to the provider */
 void ossl_provider_teardown(const OSSL_PROVIDER *prov);
