@@ -172,7 +172,7 @@ extern "C" {
  * DEPRECATED IN 3.0.0, in favor of OSSL_default_cipher_list()
  * Update both macro and function simultaneously
  */
-# if OPENSSL_API_LEVEL < 4
+# if !OPENSSL_API_3
 #  define SSL_DEFAULT_CIPHER_LIST "ALL:!COMPLEMENTOFDEFAULT:!eNULL"
 /*
  * This is the default set of TLSv1.3 ciphersuites
