@@ -353,6 +353,8 @@ int run_tests(const char *test_prog_name)
             verdict = all_tests[i].test_fn();
             test_verdict(verdict, "%d - %s", ii + 1, test_title);
             finalize(verdict != 0);
+            if (verdict == 0)
+                num_failed++;
         } else {
             int num_failed_inner = 0;
 
