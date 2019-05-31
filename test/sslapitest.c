@@ -3289,6 +3289,114 @@ static int test_ciphersuite_change(void)
 }
 
 /*
+ * Test TLSv1.3 Cipher Suite
+ * Test 0 = Set TLS1.3 cipher on context
+ * Test 1 = Set TLS1.3 cipher on SSL
+ * Test 2 = Set TLS1.3 and TLS1.2 cipher on context
+ * Test 3 = Set TLS1.3 and TLS1.2 cipher on SSL
+ */
+static int test_tls13_ciphersuite(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    static const char *t13_ciphers[] = {
+        TLS1_3_RFC_AES_128_GCM_SHA256,
+        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+        TLS1_3_RFC_AES_128_CCM_SHA256,
+        TLS1_3_RFC_AES_256_GCM_SHA384":"TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+        TLS1_3_RFC_AES_128_CCM_8_SHA256":"TLS1_3_RFC_AES_128_CCM_SHA256
+    };
+    const char *t13_cipher = NULL;
+    const char *t12_cipher = NULL;
+    int set_at_ctx = 0;
+    int set_at_ssl = 0;
+    int testresult = 0;
+    int i;
+
+    switch (idx) {
+        case 0:
+            set_at_ctx = 1;
+            break;
+        case 1:
+            set_at_ssl = 1;
+            break;
+        case 2:
+            set_at_ctx = 1;
+            t12_cipher = TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256;
+            break;
+        case 3:
+            set_at_ssl = 1;
+            t12_cipher = TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256;
+            break;
+    }
+
+    for (i = 0; i < (int)(sizeof(t13_ciphers)/sizeof(t13_ciphers[0])); i++) {
+        t13_cipher = t13_ciphers[i];
+        if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                           TLS1_VERSION, 0,
+                                           &sctx, &cctx, cert, privkey)))
+            goto end;
+
+        if (set_at_ctx) {
+            if (t13_cipher != NULL) {
+                if (!TEST_true(SSL_CTX_set_ciphersuites(sctx, t13_cipher))
+                    || !TEST_true(SSL_CTX_set_ciphersuites(cctx, t13_cipher)))
+                    goto end;
+            }
+            if (t12_cipher != NULL) {
+                if (!TEST_true(SSL_CTX_set_cipher_list(sctx, t12_cipher))
+                    || !TEST_true(SSL_CTX_set_cipher_list(cctx, t12_cipher)))
+                    goto end;
+            }
+        }
+
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                                 NULL, NULL)))
+            goto end;
+
+        if (set_at_ssl) {
+            if (t13_cipher != NULL) {
+                if (!TEST_true(SSL_set_ciphersuites(serverssl, t13_cipher))
+                    || !TEST_true(SSL_set_ciphersuites(clientssl, t13_cipher)))
+                    goto end;
+            }
+            if (t12_cipher != NULL) {
+                if (!TEST_true(SSL_set_cipher_list(serverssl, t12_cipher))
+                    || !TEST_true(SSL_set_cipher_list(clientssl, t12_cipher)))
+                    goto end;
+            }
+        }
+
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+            goto end;
+
+        if (!TEST_str_eq(SSL_CIPHER_get_name(SSL_get_current_cipher(serverssl)),
+                SSL_CIPHER_get_name(SSL_get_current_cipher(clientssl))))
+            goto end;
+        if (!TEST_strn_eq(t13_cipher, SSL_CIPHER_get_name(SSL_get_current_cipher(serverssl)),
+                strlen(SSL_CIPHER_get_name(SSL_get_current_cipher(serverssl)))))
+            goto end;
+
+        SSL_free(serverssl);
+        serverssl = NULL;
+        SSL_free(clientssl);
+        clientssl = NULL;
+        SSL_CTX_free(sctx);
+        sctx = NULL;
+        SSL_CTX_free(cctx);
+        cctx = NULL;
+    }
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * Test TLSv1.3 PSKs
  * Test 0 = Test new style callbacks
  * Test 1 = Test both new and old style callbacks
@@ -5966,6 +6074,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_set_ciphersuite, 10);
     ADD_TEST(test_ciphersuite_change);
+    ADD_ALL_TESTS(test_tls13_ciphersuite, 4);
 #ifdef OPENSSL_NO_PSK
     ADD_ALL_TESTS(test_tls13_psk, 1);
 #else
