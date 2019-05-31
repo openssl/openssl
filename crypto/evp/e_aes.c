@@ -130,8 +130,6 @@ static void ctr64_inc(unsigned char *counter)
 
 #if defined(AESNI_CAPABLE)
 # if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-#  define AES_gcm_encrypt aesni_gcm_encrypt
-#  define AES_gcm_decrypt aesni_gcm_decrypt
 #  define AES_GCM_ASM2(gctx)      (gctx->gcm.block==(block128_f)aesni_encrypt && \
                                  gctx->gcm.ghash==gcm_ghash_avx)
 #  undef AES_GCM_ASM2          /* minor size optimization */

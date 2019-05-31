@@ -91,6 +91,32 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #    define HWAES_cbc_encrypt aes_v8_cbc_encrypt
 #    define HWAES_ecb_encrypt aes_v8_ecb_encrypt
 #    define HWAES_ctr32_encrypt_blocks aes_v8_ctr32_encrypt_blocks
+#    define AES_PMULL_CAPABLE ((OPENSSL_armcap_P & ARMV8_PMULL) && (OPENSSL_armcap_P & ARMV8_AES))
+#    define AES_GCM_ENC_BYTES 512
+#    define AES_GCM_DEC_BYTES 512
+#    if __ARM_MAX_ARCH__>=8
+#     define AES_gcm_encrypt armv8_aes_gcm_encrypt
+#     define AES_gcm_decrypt armv8_aes_gcm_decrypt
+#     define AES_GCM_ASM(gctx) ((gctx)->ctr==aes_v8_ctr32_encrypt_blocks && \
+                                (gctx)->gcm.ghash==gcm_ghash_v8)
+size_t aes_gcm_enc_128_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+                              uint64_t *Xi, unsigned char ivec[16], const void *key);
+size_t aes_gcm_enc_192_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+                              uint64_t *Xi, unsigned char ivec[16], const void *key);
+size_t aes_gcm_enc_256_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
+                              uint64_t *Xi, unsigned char ivec[16], const void *key);
+size_t aes_gcm_dec_128_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+                              uint64_t *Xi, unsigned char ivec[16], const void *key);
+size_t aes_gcm_dec_192_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+                              uint64_t *Xi, unsigned char ivec[16], const void *key);
+size_t aes_gcm_dec_256_kernel(const uint8_t * ciphertext, uint64_t plaintext_length, uint8_t * plaintext,
+                              uint64_t *Xi, unsigned char ivec[16], const void *key);
+size_t armv8_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len, const void *key,
+                             unsigned char ivec[16], u64 *Xi);
+size_t armv8_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len, const void *key,
+                             unsigned char ivec[16], u64 *Xi);
+void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
+#    endif
 #   endif
 #  endif
 # endif /* OPENSSL_CPUID_OBJ */
@@ -110,6 +136,9 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #  ifdef BSAES_ASM
 #   define BSAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
 #  endif
+
+#  define AES_GCM_ENC_BYTES 32
+#  define AES_GCM_DEC_BYTES 16
 
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
                           AES_KEY *key);
@@ -181,6 +210,8 @@ size_t aesni_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len
                          const void *key, unsigned char ivec[16], u64 *Xi);
 void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in, size_t len);
 
+#   define AES_gcm_encrypt aesni_gcm_encrypt
+#   define AES_gcm_decrypt aesni_gcm_decrypt
 #   define AES_GCM_ASM(ctx)    (ctx->ctr == aesni_ctr32_encrypt_blocks && \
                                 ctx->gcm.ghash == gcm_ghash_avx)
 #  endif
@@ -416,7 +447,7 @@ void HWAES_ecb_encrypt(const unsigned char *in, unsigned char *out,
                        size_t length, const AES_KEY *key,
                        const int enc);
 void HWAES_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
-                                size_t len, const AES_KEY *key,
+                                size_t len, const void *key,
                                 const unsigned char ivec[16]);
 void HWAES_xts_encrypt(const unsigned char *inp, unsigned char *out,
                        size_t len, const AES_KEY *key1,

@@ -85,6 +85,7 @@ DEFINE[../libcrypto]=$UTIL_DEFINE $UPLINKDEF
 DEFINE[../providers/libfips.a]=$UTIL_DEFINE
 DEFINE[../providers/fips]=$UTIL_DEFINE
 DEFINE[../providers/libimplementations.a]=$UTIL_DEFINE
+DEFINE[../providers/libcommon.a]=$UTIL_DEFINE
 
 DEPEND[info.o]=buildinf.h
 DEPEND[cversion.o]=buildinf.h
