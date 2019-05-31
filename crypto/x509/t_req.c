@@ -129,8 +129,10 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                     count = X509_ATTRIBUTE_count(a);
  get_next:
                     at = X509_ATTRIBUTE_get0_type(a, ii);
-                    type = at->type;
-                    bs = at->value.asn1_string;
+                    if (at != NULL) {
+                        type = at->type;
+                        bs = at->value.asn1_string;
+                    }
                 }
                 for (j = 25 - j; j > 0; j--)
                     if (BIO_write(bp, " ", 1) != 1)
