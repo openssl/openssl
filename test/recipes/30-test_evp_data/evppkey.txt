@@ -374,13 +374,11 @@ Result = KEYOP_ERROR
 # Illegal RSA key derivation
 Derive = RSA-2048
 Result = KEYOP_INIT_ERROR
-Function = EVP_PKEY_derive_init
 Reason = operation not supported for this keytype
 
 Sign = RSA-2048
 Ctrl = rsa_mgf1_md:sha1
 Result = PKEY_CTRL_INVALID
-Function = pkey_rsa_ctrl
 Reason = invalid mgf1 md
 
 # RSA PSS key tests
@@ -571,19 +569,16 @@ Result = PKEY_CTRL_ERROR
 # Illegal decrypt
 Decrypt = RSA-PSS
 Result = KEYOP_INIT_ERROR
-Function = EVP_PKEY_decrypt_init
 Reason = operation not supported for this keytype
 
 # Invalid key: rejected when we try to init
 Verify = RSA-PSS-BAD
 Result = KEYOP_INIT_ERROR
-Function = rsa_pss_get_param
 Reason = invalid salt length
 
 # Invalid key: rejected when we try to init
 Verify = RSA-PSS-BAD2
 Result = KEYOP_INIT_ERROR
-Function = pkey_pss_init
 Reason = invalid salt length
 
 
@@ -762,12 +757,10 @@ SharedSecret=4A5D9D5BA4CE2DE1728E3BF480350F25E07E21C947D19E3376F09B3C1E161742
 
 Sign=Alice-25519
 Result = KEYOP_INIT_ERROR
-Function = EVP_PKEY_sign_init
 Reason = operation not supported for this keytype
 
 Verify=Alice-25519
 Result = KEYOP_INIT_ERROR
-Function = EVP_PKEY_verify_init
 Reason = operation not supported for this keytype
 
 Title = X448 test vectors (from RFC7748 6.2)
@@ -834,12 +827,10 @@ SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2
 
 Sign=Alice-448
 Result = KEYOP_INIT_ERROR
-Function = EVP_PKEY_sign_init
 Reason = operation not supported for this keytype
 
 Verify=Alice-448
 Result = KEYOP_INIT_ERROR
-Function = EVP_PKEY_verify_init
 Reason = operation not supported for this keytype
 
 
@@ -17286,7 +17277,6 @@ Derive=ALICE_cf_sect283k1
 PeerKey=BOB_cf_sect283k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result = DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title = Test keypair mismatches
@@ -17830,7 +17820,6 @@ KeyGen = rsaEncryption
 Ctrl = rsa_keygen_bits:128
 KeyName = tmprsa
 Result = PKEY_CTRL_INVALID
-Function = pkey_rsa_ctrl
 Reason = key size too small
 
 # RSA-PSS with restrictions, should succeed.

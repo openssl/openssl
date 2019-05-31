@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Removed the function names from error messages and deprecated the
+     xxx_F_xxx define's.
+     [Rich Salz]
+
   *) Removed NextStep support and the macro OPENSSL_UNISTD
      [Rich Salz]
 

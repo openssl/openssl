@@ -122,20 +122,22 @@ if ( $internal ) {
 }
 
 # Data parsed out of the config and state files.
+# We always map function-code values to zero, so items marked below with
+# an asterisk could eventually be removed.  TODO(4.0)
 my %hinc;       # lib -> header
 my %libinc;     # header -> lib
 my %cskip;      # error_file -> lib
 my %errorfile;  # lib -> error file name
-my %fmax;       # lib -> max assigned function code
+my %fmax;       # lib -> max assigned function code*
 my %rmax;       # lib -> max assigned reason code
-my %fassigned;  # lib -> colon-separated list of assigned function codes
+my %fassigned;  # lib -> colon-separated list of assigned function codes*
 my %rassigned;  # lib -> colon-separated list of assigned reason codes
-my %fnew;       # lib -> count of new function codes
+my %fnew;       # lib -> count of new function codes*
 my %rnew;       # lib -> count of new reason codes
 my %rextra;     # "extra" reason code -> lib
 my %rcodes;     # reason-name -> value
-my %ftrans;     # old name -> #define-friendly name (all caps)
-my %fcodes;     # function-name -> value
+my %ftrans;     # old name -> #define-friendly name (all caps)*
+my %fcodes;     # function-name -> value*
 my $statefile;  # state file with assigned reason and function codes
 my %strings;    # define -> text
 
@@ -454,9 +456,9 @@ foreach my $lib ( keys %errorfile ) {
 #ifndef HEADER_${lib}ERR_H
 # define HEADER_${lib}ERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 EOF
     if ( $internal ) {
@@ -480,7 +482,7 @@ int ERR_load_${lib}_strings(void);
 EOF
     } else {
         print OUT <<"EOF";
-# define ${lib}err(f, r) ERR_${lib}_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
+# define ${lib}err(f, r) ERR_${lib}_error(0, (r), OPENSSL_FILE, OPENSSL_LINE)
 
 EOF
         if ( ! $static ) {
@@ -500,6 +502,7 @@ EOF
     }
 
     print OUT "\n/*\n * $lib function codes.\n */\n";
+    print OUT "# if !OPENSSL_API_3\n";
     foreach my $i ( @function ) {
         my $z = 48 - length($i);
         $z = 0 if $z < 0;
@@ -514,8 +517,9 @@ EOF
             $fassigned{$lib} .= "$findcode:";
             print STDERR "New Function code $i\n" if $debug;
         }
-        printf OUT "#${indent}define $i%s $fcodes{$i}\n", " " x $z;
+        printf OUT "#${indent} define $i%s 0\n", " " x $z;
     }
+    print OUT "# endif\n";
 
     print OUT "\n/*\n * $lib reason codes.\n */\n";
     foreach my $i ( @reasons ) {
@@ -575,32 +579,6 @@ EOF
 
 #ifndef OPENSSL_NO_ERR
 
-static ${const}ERR_STRING_DATA ${lib}_str_functs[] = {
-EOF
-
-    # Add each function code: if a function name is found then use it.
-    foreach my $i ( @function ) {
-        my $fn;
-        if ( exists $strings{$i} and $strings{$i} ne '' ) {
-            $fn = $strings{$i};
-            $fn = "" if $fn eq '*';
-        } else {
-            $i =~ /^${lib}_F_(\S+)$/;
-            $fn = $1;
-            $fn = $ftrans{$fn} if exists $ftrans{$fn};
-            $strings{$i} = $fn;
-        }
-        my $short = "    {ERR_PACK($pack_lib, $i, 0), \"$fn\"},";
-        if ( length($short) <= 80 ) {
-            print OUT "$short\n";
-        } else {
-            print OUT "    {ERR_PACK($pack_lib, $i, 0),\n     \"$fn\"},\n";
-        }
-    }
-    print OUT <<"EOF";
-    {0, NULL}
-};
-
 static ${const}ERR_STRING_DATA ${lib}_str_reasons[] = {
 EOF
 
@@ -635,10 +613,8 @@ EOF
 int ERR_load_${lib}_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(${lib}_str_functs[0].error) == NULL) {
-        ERR_load_strings_const(${lib}_str_functs);
+    if (ERR_func_error_string(${lib}_str_reasons[0].error) == NULL)
         ERR_load_strings_const(${lib}_str_reasons);
-    }
 #endif
     return 1;
 }
@@ -657,7 +633,6 @@ ${st}int ERR_load_${lib}_strings(void)
 
     if (!error_loaded) {
 #ifndef OPENSSL_NO_ERR
-        ERR_load_strings(lib_code, ${lib}_str_functs);
         ERR_load_strings(lib_code, ${lib}_str_reasons);
 #endif
         error_loaded = 1;
@@ -669,7 +644,6 @@ ${st}void ERR_unload_${lib}_strings(void)
 {
     if (error_loaded) {
 #ifndef OPENSSL_NO_ERR
-        ERR_unload_strings(lib_code, ${lib}_str_functs);
         ERR_unload_strings(lib_code, ${lib}_str_reasons);
 #endif
         error_loaded = 0;
