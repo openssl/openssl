@@ -3764,7 +3764,6 @@ static int test_tls13_key_exchange(int idx)
     int kexch_groups_size = 0;
     int max_version = TLS1_3_VERSION;
     int want_err = SSL_ERROR_NONE;
-    int expected_err_func = 0;
     int expected_err_reason = 0;
 
     switch (idx) {
@@ -3824,16 +3823,16 @@ static int test_tls13_key_exchange(int idx)
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, want_err))) {
         /* Fail only if no error is expected in handshake */
-        if (expected_err_func == 0)
+        if (expected_err_reason == 0)
             goto end;
     }
 
     /* Fail if expected error is not happening for failure testcases */
-    if (expected_err_func) {
+    if (expected_err_reason != 0) {
         unsigned long err_code = ERR_get_error();
+
         ERR_print_errors_fp(stdout);
-        if (TEST_int_eq(ERR_GET_FUNC(err_code), expected_err_func)
-                && TEST_int_eq(ERR_GET_REASON(err_code), expected_err_reason))
+        if (TEST_int_eq(ERR_GET_REASON(err_code), expected_err_reason))
             testresult = 1;
         goto end;
     }

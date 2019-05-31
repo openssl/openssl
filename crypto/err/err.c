@@ -71,36 +71,6 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {0, NULL},
 };
 
-static ERR_STRING_DATA ERR_str_functs[] = {
-    {ERR_PACK(0, SYS_F_FOPEN, 0), "fopen"},
-    {ERR_PACK(0, SYS_F_CONNECT, 0), "connect"},
-    {ERR_PACK(0, SYS_F_GETSERVBYNAME, 0), "getservbyname"},
-    {ERR_PACK(0, SYS_F_SOCKET, 0), "socket"},
-    {ERR_PACK(0, SYS_F_IOCTLSOCKET, 0), "ioctlsocket"},
-    {ERR_PACK(0, SYS_F_BIND, 0), "bind"},
-    {ERR_PACK(0, SYS_F_LISTEN, 0), "listen"},
-    {ERR_PACK(0, SYS_F_ACCEPT, 0), "accept"},
-# ifdef OPENSSL_SYS_WINDOWS
-    {ERR_PACK(0, SYS_F_WSASTARTUP, 0), "WSAstartup"},
-# endif
-    {ERR_PACK(0, SYS_F_OPENDIR, 0), "opendir"},
-    {ERR_PACK(0, SYS_F_FREAD, 0), "fread"},
-    {ERR_PACK(0, SYS_F_GETADDRINFO, 0), "getaddrinfo"},
-    {ERR_PACK(0, SYS_F_GETNAMEINFO, 0), "getnameinfo"},
-    {ERR_PACK(0, SYS_F_SETSOCKOPT, 0), "setsockopt"},
-    {ERR_PACK(0, SYS_F_GETSOCKOPT, 0), "getsockopt"},
-    {ERR_PACK(0, SYS_F_GETSOCKNAME, 0), "getsockname"},
-    {ERR_PACK(0, SYS_F_GETHOSTBYNAME, 0), "gethostbyname"},
-    {ERR_PACK(0, SYS_F_FFLUSH, 0), "fflush"},
-    {ERR_PACK(0, SYS_F_OPEN, 0), "open"},
-    {ERR_PACK(0, SYS_F_CLOSE, 0), "close"},
-    {ERR_PACK(0, SYS_F_IOCTL, 0), "ioctl"},
-    {ERR_PACK(0, SYS_F_STAT, 0), "stat"},
-    {ERR_PACK(0, SYS_F_FCNTL, 0), "fcntl"},
-    {ERR_PACK(0, SYS_F_FSTAT, 0), "fstat"},
-    {0, NULL},
-};
-
 static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_SYS_LIB, "system lib"},
     {ERR_R_BN_LIB, "BN lib"},
@@ -164,7 +134,7 @@ static unsigned long err_string_data_hash(const ERR_STRING_DATA *a)
     unsigned long ret, l;
 
     l = a->error;
-    ret = l ^ ERR_GET_LIB(l) ^ ERR_GET_FUNC(l);
+    ret = l ^ ERR_GET_LIB(l);
     return (ret ^ ret % 19 * 13);
 }
 
@@ -354,8 +324,6 @@ int ERR_load_ERR_strings(void)
 
     err_load_strings(ERR_str_libraries);
     err_load_strings(ERR_str_reasons);
-    err_patch(ERR_LIB_SYS, ERR_str_functs);
-    err_load_strings(ERR_str_functs);
     build_SYS_str_reasons();
 #endif
     return 1;
@@ -588,9 +556,9 @@ static unsigned long get_error_values(int inc, int top, const char **file,
 
 void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 {
-    char lsbuf[64], fsbuf[64], rsbuf[64];
-    const char *ls, *fs, *rs;
-    unsigned long l, f, r;
+    char lsbuf[64], rsbuf[64];
+    const char *ls, *rs;
+    unsigned long f = 0, l, r;
 
     if (len == 0)
         return;
@@ -602,13 +570,6 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         ls = lsbuf;
     }
 
-    fs = ERR_func_error_string(e);
-    f = ERR_GET_FUNC(e);
-    if (fs == NULL) {
-        BIO_snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
-        fs = fsbuf;
-    }
-
     rs = ERR_reason_error_string(e);
     r = ERR_GET_REASON(e);
     if (rs == NULL) {
@@ -616,7 +577,7 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         rs = rsbuf;
     }
 
-    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, fs, rs);
+    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, "", rs);
     if (strlen(buf) == len - 1) {
         /* Didn't fit; use a minimal format. */
         BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, f, r);
@@ -654,18 +615,9 @@ const char *ERR_lib_error_string(unsigned long e)
 
 const char *ERR_func_error_string(unsigned long e)
 {
-    ERR_STRING_DATA d, *p;
-    unsigned long l, f;
-
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return NULL;
-    }
-
-    l = ERR_GET_LIB(e);
-    f = ERR_GET_FUNC(e);
-    d.error = ERR_PACK(l, f, 0);
-    p = int_err_get_item(&d);
-    return ((p == NULL) ? NULL : p->string);
+    return ERR_GET_LIB(e) == ERR_LIB_SYS ? "system library" : NULL;
 }
 
 const char *ERR_reason_error_string(unsigned long e)
