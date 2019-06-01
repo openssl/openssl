@@ -539,7 +539,7 @@ reconfigure reconf:
               $args{generator}->[1] || platform->dsoname($args{product});
           return <<"EOF";
 $target: $args{generator}->[0] $deps $mkdef
-	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name --OS windows > $target
+	"\$(PERL)" $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name --OS windows > $target
 EOF
       } elsif (!platform->isasm($args{src})) {
           my $target = $args{src};
