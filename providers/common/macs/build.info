@@ -1,4 +1,4 @@
-$COMMON=cmac_prov.c gmac_prov.c
+$COMMON=cmac_prov.c gmac_prov.c hmac_prov.c
 
 LIBS=../../../libcrypto
 SOURCE[../../../libcrypto]=$COMMON
