@@ -131,6 +131,7 @@ static const OSSL_ALGORITHM deflt_macs[] = {
 #ifndef OPENSSL_NO_CMAC
     { "CMAC", "default=yes", cmac_functions },
 #endif
+    { "GMAC", "default=yes", gmac_functions },
     { NULL, NULL, NULL }
 };
 
