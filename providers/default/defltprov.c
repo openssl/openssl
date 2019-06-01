@@ -128,6 +128,9 @@ static const OSSL_ALGORITHM deflt_macs[] = {
     { "BLAKE2BMAC", "default=yes", blake2bmac_functions },
     { "BLAKE2SMAC", "default=yes", blake2smac_functions },
 #endif
+#ifndef OPENSSL_NO_CMAC
+    { "CMAC", "default=yes", cmac_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

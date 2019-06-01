@@ -1,0 +1,11 @@
+$COMMON=cmac_prov.c
+
+LIBS=../../../libcrypto
+SOURCE[../../../libcrypto]=$COMMON
+INCLUDE[../../../libcrypto]=. ../../../crypto
+
+IF[{- !$disabled{fips} -}]
+  MODULES=../../fips
+  SOURCE[../../fips]=$COMMON
+  INCLUDE[../../fips]=. ../../../crypto
+ENDIF
