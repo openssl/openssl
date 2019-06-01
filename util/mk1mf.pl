@@ -446,6 +446,14 @@ EOF
 		}
 	}
 
+if (($platform eq "VC-WIN32") || ($platfrom eq "VC-WIN64I") || ($platform eq "VC-WIN64A") || ($platform eq "VC-NT"))
+	{
+	$extra_install .= <<"EOF"
+	IF EXIST "\$(OUT_D)\\\$(CRYPTO).pdb" \$(CP) "\$(OUT_D)\\\$(CRYPTO).pdb" "\$(INSTALLTOP)\\lib"
+	IF EXIST "\$(OUT_D)\\\$(SSL).pdb" \$(CP) "\$(OUT_D)\\\$(SSL).pdb" "\$(INSTALLTOP)\\lib"
+EOF
+	}
+
 $defs= <<"EOF";
 # N.B. You MUST use -j on FreeBSD.
 # This makefile has been automatically generated from the OpenSSL distribution.
@@ -475,7 +483,11 @@ CC=$bin_dir${cc}
 CFLAG=$cflags
 APP_CFLAG=$app_cflag
 LIB_CFLAG=$lib_cflag
-SHLIB_CFLAG=$shl_cflag
+SHLIB_CFLAG=$shlib_cflag
+SHLIBCRYPTO_CFLAG=$shlcrypto_cflag
+SHLIBSSL_CFLAG=$shlssl_cflag
+LIBCRYPTO_CFLAG=$libcrypto_cflag
+LIBSSL_CFLAG=$libssl_cflag
 APP_EX_OBJ=$app_ex_obj
 SHLIB_EX_OBJ=$shlib_ex_obj
 # add extra libraries to this define, for solaris -lsocket -lnsl would
@@ -561,6 +573,11 @@ INC=-I\$(INC_D) -I\$(INCL_D)
 APP_CFLAGS=\$(INC) \$(CFLAG) \$(APP_CFLAG)
 LIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG)
 SHLIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG) \$(SHLIB_CFLAG)
+SHLIBCRYPTO_CFLAGS=\$(INC) \$(CFLAG) \$(SHLIBCRYPTO_CFLAG)
+SHLIBSSL_CFLAGS=\$(INC) \$(CFLAG) \$(SHLIBSSL_CFLAG)
+LIBCRYPTO_CFLAGS=\$(INC) \$(CFLAG) \$(LIBCRYPTO_CFLAG)
+LIBSSL_CFLAGS=\$(INC) \$(CFLAG) \$(LIBSSL_CFLAG)
+
 LIBS_DEP=\$(O_CRYPTO) \$(O_SSL)
 
 #############################################
@@ -744,6 +761,16 @@ foreach (values %lib_nam)
 
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
 	$lib=($slib)?" \$(SHLIB_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIB_CFLAGS)";
+
+	if (($platform eq "VC-WIN32") || ($platform eq "VC-WIN64A")
+		|| ($platform eq "VC-WIN64I") || ($platform eq "VC-NT")) {
+			if($_ =~ /CRYPTO/){
+				$lib=($slib)?" \$(SHLIBCRYPTO_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIBCRYPTO_CFLAGS)";
+			}elsif($_ =~ /SSL/){
+				$lib=($slib)?" \$(SHLIBSSL_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIBSSL_CFLAGS)";
+			}
+	}
+	
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
 	}
 

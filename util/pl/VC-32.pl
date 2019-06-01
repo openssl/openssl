@@ -136,7 +136,10 @@ else	# Win32
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
     }
-$lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+$lib_cflag=' /Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+$shlcrypto_cflag=' /Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+$shlssl_cflag=' /Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+
 $mlflags='';
 
 $out_def ="out32";	$out_def.="dll"			if ($shlib);
@@ -157,6 +160,16 @@ else
 # generate symbols.pdb unconditionally
 $app_cflag.=" /Zi /Fd\$(TMP_D)/app";
 $lib_cflag.=" /Zi /Fd\$(TMP_D)/lib";
+$shlib_cflag.=" /Zi /Fd\$(TMP_D)/lib";
+$shlcrypto_cflag.=" /Zi /Fd\$(TMP_D)/\$(CRYPTO)";
+$shlssl_cflag.=" /Zi /Fd\$(TMP_D)/\$(SSL)";
+
+# lib tool can't produce pdb 
+# (https://developercommunity.visualstudio.com/idea/355400/lib-should-allow-you-to-produce-a-pdb-of-all-input.html)
+# so debug symbol must be embedded for static library
+$libcrypto_cflag.=" /Z7"; # for static lib include debug symbol
+$libssl_cflag.=" /Z7"; # for static lib include debug symbol
+
 $lflags.=" /debug";
 
 $obj='.obj';
@@ -291,6 +304,7 @@ elsif ($shlib && $FLAVOR =~ /CE/)
 	$mlflags.=" $lflags /dll";
 	$lflags.=' /entry:mainCRTstartup' if(defined($ENV{'PORTSDK_LIBPATH'}));
 	$lib_cflag.=" -D_WINDLL -D_DLL";
+	$shlib_cflag.=" -D_WINDLL -D_DLL";
 	}
 
 sub do_lib_rule
