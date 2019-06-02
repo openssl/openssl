@@ -139,6 +139,9 @@ static const OSSL_ALGORITHM deflt_macs[] = {
     { "HMAC", "default=yes", hmac_functions },
     { "KMAC128", "default=yes", kmac128_functions },
     { "KMAC256", "default=yes", kmac256_functions },
+#ifndef OPENSSL_NO_SIPHASH
+    { "SipHash", "default=yes", siphash_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
