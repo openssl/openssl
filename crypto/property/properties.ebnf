@@ -3,7 +3,7 @@
 Definition
       ::= PropertyName ( '=' Value )? ( ',' PropertyName ( '=' Value )? )*
 Query ::= PropertyQuery ( ',' PropertyQuery )*
-PropertyQuery ::= '-'? PropertyName
+PropertyQuery ::= '-' PropertyName
         | '?'? ( PropertyName (( '=' | '!=' ) Value)?)
 Value    ::= NumberLiteral
         | StringLiteral
