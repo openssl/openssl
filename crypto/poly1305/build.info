@@ -29,7 +29,7 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-SOURCE[../../libcrypto]=poly1305_ameth.c poly1305_meth.c poly1305.c $POLY1305ASM
+SOURCE[../../libcrypto]=poly1305_ameth.c poly1305.c $POLY1305ASM
 DEFINE[../../libcrypto]=$POLY1305DEF
 
 GENERATE[poly1305-sparcv9.S]=asm/poly1305-sparcv9.pl $(PERLASM_SCHEME)

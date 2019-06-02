@@ -142,6 +142,9 @@ static const OSSL_ALGORITHM deflt_macs[] = {
 #ifndef OPENSSL_NO_SIPHASH
     { "SipHash", "default=yes", siphash_functions },
 #endif
+#ifndef OPENSSL_NO_POLY1305
+    { "Poly1305", "default=yes", poly1305_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
