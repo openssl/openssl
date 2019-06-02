@@ -5,7 +5,7 @@ SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 conf \
         md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 blake2 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
-        err comp ocsp cms ts srp cmac ct async kmac ess crmf cmp
+        err comp ocsp cms ts srp cmac ct async ess crmf cmp
 
 LIBS=../libcrypto
 
