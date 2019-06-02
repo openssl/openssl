@@ -16,7 +16,7 @@ SOURCE[../../libcrypto]=$COMMON\
         e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c \
         e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
         e_chacha20_poly1305.c \
-        mac_lib.c mac_meth.c c_allm.c pkey_mac.c exchange.c
+        mac_lib.c mac_meth.c pkey_mac.c exchange.c
 SOURCE[../../providers/fips]=$COMMON
 
 INCLUDE[e_aes.o]=.. ../modes

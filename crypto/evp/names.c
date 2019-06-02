@@ -56,22 +56,6 @@ int EVP_add_digest(const EVP_MD *md)
     return r;
 }
 
-int EVP_add_mac(const EVP_MAC *m)
-{
-    int r;
-
-    if (m == NULL)
-        return 0;
-
-    r = OBJ_NAME_add(OBJ_nid2sn(m->type), OBJ_NAME_TYPE_MAC_METH,
-                     (const char *)m);
-    if (r == 0)
-        return 0;
-    r = OBJ_NAME_add(OBJ_nid2ln(m->type), OBJ_NAME_TYPE_MAC_METH,
-                     (const char *)m);
-    return r;
-}
-
 /* TODO(3.0) Is this needed after changing to providers? */
 int EVP_add_kdf(const EVP_KDF *k)
 {
@@ -111,17 +95,6 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
     return cp;
 }
 
-const EVP_MAC *EVP_get_macbyname(const char *name)
-{
-    const EVP_MAC *mp;
-
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL))
-        return NULL;
-
-    mp = (const EVP_MAC *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MAC_METH);
-    return mp;
-}
-
 /* TODO(3.0) Is this API needed after implementing providers? */
 const EVP_KDF *EVP_get_kdfbyname(const char *name)
 {
@@ -136,7 +109,6 @@ const EVP_KDF *EVP_get_kdfbyname(const char *name)
 
 void evp_cleanup_int(void)
 {
-    OBJ_NAME_cleanup(OBJ_NAME_TYPE_MAC_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_KDF_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
@@ -236,49 +208,4 @@ void EVP_MD_do_all_sorted(void (*fn) (const EVP_MD *md,
     dc.fn = fn;
     dc.arg = arg;
     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
-}
-
-/* TODO(3.0) Are these do_all API's needed for MAC? */
-struct doall_mac {
-    void *arg;
-    void (*fn) (const EVP_MAC *ciph,
-                const char *from, const char *to, void *arg);
-};
-
-static void do_all_mac_fn(const OBJ_NAME *nm, void *arg)
-{
-    struct doall_mac *dc = arg;
-
-    if (nm->alias)
-        dc->fn(NULL, nm->name, nm->data, dc->arg);
-    else
-        dc->fn((const EVP_MAC *)nm->data, nm->name, NULL, dc->arg);
-}
-
-void EVP_MAC_do_all(void (*fn)
-                    (const EVP_MAC *ciph, const char *from, const char *to,
-                     void *x), void *arg)
-{
-    struct doall_mac dc;
-
-    /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL);
-
-    dc.fn = fn;
-    dc.arg = arg;
-    OBJ_NAME_do_all(OBJ_NAME_TYPE_MAC_METH, do_all_mac_fn, &dc);
-}
-
-void EVP_MAC_do_all_sorted(void (*fn)
-                           (const EVP_MAC *ciph, const char *from,
-                            const char *to, void *x), void *arg)
-{
-    struct doall_mac dc;
-
-    /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL);
-
-    dc.fn = fn;
-    dc.arg = arg;
-    OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MAC_METH, do_all_mac_fn, &dc);
 }
