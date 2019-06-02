@@ -74,6 +74,7 @@ extern const OSSL_DISPATCH gmac_functions[];
 extern const OSSL_DISPATCH hmac_functions[];
 extern const OSSL_DISPATCH kmac128_functions[];
 extern const OSSL_DISPATCH kmac256_functions[];
+extern const OSSL_DISPATCH siphash_functions[];
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
