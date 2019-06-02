@@ -65,6 +65,10 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { "SHA3-384", "default=yes", sha3_384_functions },
     { "SHA3-512", "default=yes", sha3_512_functions },
 
+    /*
+     * KMAC128 and KMAC256 as hashes are mostly useful for the MACs with the
+     * same names
+     */
     { "KMAC128", "default=yes", keccak_kmac_128_functions },
     { "KMAC256", "default=yes", keccak_kmac_256_functions },
 
@@ -133,6 +137,8 @@ static const OSSL_ALGORITHM deflt_macs[] = {
 #endif
     { "GMAC", "default=yes", gmac_functions },
     { "HMAC", "default=yes", hmac_functions },
+    { "KMAC128", "default=yes", kmac128_functions },
+    { "KMAC256", "default=yes", kmac256_functions },
     { NULL, NULL, NULL }
 };
 
