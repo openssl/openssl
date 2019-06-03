@@ -238,7 +238,7 @@ static void build_SYS_str_reasons(void)
                  * VMS has an unusual quirk of adding spaces at the end of
                  * some (most? all?) messages. Lets trim them off.
                  */
-                if (cur > strerror_pool && ossl_isspace(cur[-1])) {
+                if (ossl_isspace(cur[-1])) {
                     while (cur > strerror_pool && ossl_isspace(cur[-1])) {
                         cur--;
                         cnt--;
