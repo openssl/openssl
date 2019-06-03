@@ -13,13 +13,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
-
-ASN1_SEQUENCE(DSA_SIG) = {
-        ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
-        ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
-} static_ASN1_SEQUENCE_END(DSA_SIG)
-
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(DSA_SIG, DSA_SIG, DSA_SIG)
+#include "internal/asn1_dsa.h"
 
 DSA_SIG *DSA_SIG_new(void)
 {
@@ -36,6 +30,62 @@ void DSA_SIG_free(DSA_SIG *sig)
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
     OPENSSL_free(sig);
+}
+
+DSA_SIG *d2i_DSA_SIG(DSA_SIG **psig, const unsigned char **ppin, long len)
+{
+    DSA_SIG *sig;
+
+    if (len < 0)
+        return NULL;
+    if (psig != NULL && *psig != NULL) {
+        sig = *psig;
+    } else {
+        sig = DSA_SIG_new();
+        if (sig == NULL)
+            return NULL;
+    }
+    if (sig->r == NULL)
+        sig->r = BN_new();
+    if (sig->s == NULL)
+        sig->s = BN_new();
+    if (decode_der_dsa_sig(sig->r, sig->s, ppin, (size_t)len) == 0) {
+        if (psig == NULL || *psig == NULL)
+            DSA_SIG_free(sig);
+        return NULL;
+    }
+    if (psig != NULL && *psig == NULL)
+        *psig = sig;
+    return sig;
+}
+
+int i2d_DSA_SIG(const DSA_SIG *sig, unsigned char **ppout)
+{
+    unsigned char *buf = NULL;
+    unsigned char *tmp;
+    unsigned char **pp = NULL;
+    size_t len;
+    size_t encoded_len;
+
+    if (ppout != NULL && *ppout == NULL) {
+        if ((len = encode_der_dsa_sig(sig->r, sig->s, NULL, SIZE_MAX)) == 0)
+            return -1;
+        buf = OPENSSL_malloc(len);
+        if (buf == NULL)
+            return -1;
+        tmp = buf;
+        pp = &tmp;
+    } else {
+        len = SIZE_MAX;
+        pp = ppout;
+    }
+    if ((encoded_len = encode_der_dsa_sig(sig->r, sig->s, pp, len)) == 0) {
+        OPENSSL_free(buf);
+        return -1;
+    }
+    if (buf != NULL)
+        *ppout = buf;
+    return (int)encoded_len;
 }
 
 void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
