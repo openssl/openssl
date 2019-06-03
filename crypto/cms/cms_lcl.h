@@ -416,6 +416,8 @@ int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms,
 /* PWRI routines */
 int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
                                  int en_de);
+/* SignerInfo routines */
+int CMS_si_check_attributes(const CMS_SignerInfo *si);
 
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)
 DECLARE_ASN1_ITEM(CMS_DigestedData)

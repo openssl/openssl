@@ -101,6 +101,7 @@ int ERR_load_CMS_strings(void);
 #  define CMS_F_CMS_SIGNERINFO_VERIFY_CERT                 153
 #  define CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT              154
 #  define CMS_F_CMS_SIGN_RECEIPT                           163
+#  define CMS_F_CMS_SI_CHECK_ATTRIBUTES                    183
 #  define CMS_F_CMS_STREAM                                 155
 #  define CMS_F_CMS_UNCOMPRESS                             156
 #  define CMS_F_CMS_VERIFY                                 157
@@ -110,6 +111,7 @@ int ERR_load_CMS_strings(void);
  * CMS reason codes.
  */
 #  define CMS_R_ADD_SIGNER_ERROR                           99
+#  define CMS_R_ATTRIBUTE_ERROR                            161
 #  define CMS_R_CERTIFICATE_ALREADY_PRESENT                175
 #  define CMS_R_CERTIFICATE_HAS_NO_KEYID                   160
 #  define CMS_R_CERTIFICATE_VERIFY_ERROR                   100
