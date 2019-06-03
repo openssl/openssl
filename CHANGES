@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Join the directories crypto/x509 and crypto/x509v3
+     [Richard Levitte]
+
   *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
      This changes the size when using the genpkey app when no size is given. It
      fixes an omission in earlier changes that changed all RSA, DSA and DH

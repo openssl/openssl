@@ -3,8 +3,8 @@
 Definition
       ::= PropertyName ( '=' Value )? ( ',' PropertyName ( '=' Value )? )*
 Query ::= PropertyQuery ( ',' PropertyQuery )*
-PropertyQuery ::= '-'? PropertyName
-        | '?' ( PropertyName (( '=' | '!=' ) Value)?)
+PropertyQuery ::= '-' PropertyName
+        | '?'? ( PropertyName (( '=' | '!=' ) Value)?)
 Value    ::= NumberLiteral
         | StringLiteral
 StringLiteral ::= QuotedString | UnquotedString

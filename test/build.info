@@ -50,7 +50,7 @@ IF[{- !$disabled{tests} -}]
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
           sysdefaulttest errtest gosttest \
-          context_internal_test aesgcmtest params_test
+          context_internal_test aesgcmtest params_test evp_pkey_dparams_test
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include ../apps/include
@@ -349,6 +349,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_kdf_test]=evp_kdf_test.c
   INCLUDE[evp_kdf_test]=../include ../apps/include
   DEPEND[evp_kdf_test]=../libcrypto libtestutil.a
+
+  SOURCE[evp_pkey_dparams_test]=evp_pkey_dparams_test.c
+  INCLUDE[evp_pkey_dparams_test]=../include ../apps/include
+  DEPEND[evp_pkey_dparams_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_time_test]=x509_time_test.c
   INCLUDE[x509_time_test]=../include ../apps/include

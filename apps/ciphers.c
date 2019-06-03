@@ -247,7 +247,7 @@ int ciphers_main(int argc, char **argv)
                 const char *nm = SSL_CIPHER_standard_name(c);
                 if (nm == NULL)
                     nm = "UNKNOWN";
-                BIO_printf(bio_out, "%s - ", nm);
+                BIO_printf(bio_out, "%-45s - ", nm);
             }
             BIO_puts(bio_out, SSL_CIPHER_description(c, buf, sizeof(buf)));
         }

@@ -575,17 +575,17 @@ int ossl_provider_set_fallback(OSSL_PROVIDER *prov)
 }
 
 /* Getters of Provider Object data */
-const char *ossl_provider_name(OSSL_PROVIDER *prov)
+const char *ossl_provider_name(const OSSL_PROVIDER *prov)
 {
     return prov->name;
 }
 
-const DSO *ossl_provider_dso(OSSL_PROVIDER *prov)
+const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov)
 {
     return prov->module;
 }
 
-const char *ossl_provider_module_name(OSSL_PROVIDER *prov)
+const char *ossl_provider_module_name(const OSSL_PROVIDER *prov)
 {
 #ifdef FIPS_MODE
     return NULL;
@@ -594,7 +594,7 @@ const char *ossl_provider_module_name(OSSL_PROVIDER *prov)
 #endif
 }
 
-const char *ossl_provider_module_path(OSSL_PROVIDER *prov)
+const char *ossl_provider_module_path(const OSSL_PROVIDER *prov)
 {
 #ifdef FIPS_MODE
     return NULL;
