@@ -13,6 +13,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 #include "internal/nelem.h"
+#include "internal/asn1_dsa.h"
 
 int EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
@@ -1137,14 +1138,8 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
     return buf_len;
 }
 
-ASN1_SEQUENCE(ECDSA_SIG) = {
-        ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
-        ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
-} static_ASN1_SEQUENCE_END(ECDSA_SIG)
-
 DECLARE_ASN1_FUNCTIONS(ECDSA_SIG)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECDSA_SIG, ECDSA_SIG)
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(ECDSA_SIG, ECDSA_SIG, ECDSA_SIG)
 
 ECDSA_SIG *ECDSA_SIG_new(void)
 {
@@ -1161,6 +1156,62 @@ void ECDSA_SIG_free(ECDSA_SIG *sig)
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
     OPENSSL_free(sig);
+}
+
+ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **psig, const unsigned char **ppin, long len)
+{
+    ECDSA_SIG *sig;
+
+    if (len < 0)
+        return NULL;
+    if (psig != NULL && *psig != NULL) {
+        sig = *psig;
+    } else {
+        sig = ECDSA_SIG_new();
+        if (sig == NULL)
+            return NULL;
+    }
+    if (sig->r == NULL)
+        sig->r = BN_new();
+    if (sig->s == NULL)
+        sig->s = BN_new();
+    if (decode_der_dsa_sig(sig->r, sig->s, ppin, (size_t)len) == 0) {
+        if (psig == NULL || *psig == NULL)
+            ECDSA_SIG_free(sig);
+        return NULL;
+    }
+    if (psig != NULL && *psig == NULL)
+        *psig = sig;
+    return sig;
+}
+
+int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **ppout)
+{
+    unsigned char *buf = NULL;
+    unsigned char *tmp;
+    unsigned char **pp = NULL;
+    size_t len;
+    size_t encoded_len;
+
+    if (ppout != NULL && *ppout == NULL) {
+        if ((len = encode_der_dsa_sig(sig->r, sig->s, NULL, SIZE_MAX)) == 0)
+            return -1;
+        buf = OPENSSL_malloc(len);
+        if (buf == NULL)
+            return -1;
+        tmp = buf;
+        pp = &tmp;
+    } else {
+        len = SIZE_MAX;
+        pp = ppout;
+    }
+    if ((encoded_len = encode_der_dsa_sig(sig->r, sig->s, pp, len)) == 0) {
+        OPENSSL_free(buf);
+        return -1;
+    }
+    if (buf != NULL)
+        *ppout = buf;
+    return (int)encoded_len;
 }
 
 void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
