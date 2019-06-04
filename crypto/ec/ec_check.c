@@ -22,6 +22,13 @@ int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only)
 
 int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
 {
+#ifdef FIPS_MODE
+    /*
+    * ECC domain parameter validation.
+    * See SP800-56A R3 5.5.2 "Assurances of Domain-Parameter Validity" Part 1b.
+    */
+    return EC_GROUP_check_named_curve(group, 1) >= 0 ? 1 : 0;
+#else
     int ret = 0;
     const BIGNUM *order;
     BN_CTX *new_ctx = NULL;
@@ -84,4 +91,5 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
     BN_CTX_free(new_ctx);
     EC_POINT_free(point);
     return ret;
+#endif /* FIPS_MODE */
 }

@@ -1820,7 +1820,7 @@ static int parameter_test(void)
     unsigned char *buf = NULL;
     int r = 0, len;
 
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_secp112r1))
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_secp224r1))
         || !TEST_ptr(ecparameters = EC_GROUP_get_ecparameters(group, NULL))
         || !TEST_ptr(group2 = EC_GROUP_new_from_ecparameters(ecparameters))
         || !TEST_int_eq(EC_GROUP_cmp(group, group2, NULL), 0))
