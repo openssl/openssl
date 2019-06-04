@@ -7,44 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_NO_BLAKE2
 
-# include <stddef.h>
 # include <openssl/obj_mac.h>
 # include "crypto/evp.h"
-# include "prov/blake2.h"
 
-static int init(EVP_MD_CTX *ctx)
-{
-    return blake2s256_init(EVP_MD_CTX_md_data(ctx));
-}
+static const EVP_MD blake2b_md = {
+    NID_blake2b512,
+};
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+const EVP_MD *EVP_blake2b512(void)
 {
-    return blake2s_update(EVP_MD_CTX_md_data(ctx), data, count);
-}
-
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
-{
-    return blake2s_final(md, EVP_MD_CTX_md_data(ctx));
+    return &blake2b_md;
 }
 
 static const EVP_MD blake2s_md = {
     NID_blake2s256,
-    0,
-    BLAKE2S_DIGEST_LENGTH,
-    0,
-    init,
-    update,
-    final,
-    NULL,
-    NULL,
-    BLAKE2S_BLOCKBYTES,
-    sizeof(BLAKE2S_CTX),
 };
 
 const EVP_MD *EVP_blake2s256(void)
 {
     return &blake2s_md;
 }
+
 #endif /* OPENSSL_NO_BLAKE2 */
