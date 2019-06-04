@@ -12,6 +12,8 @@
  */
 
 
+#include <string.h>
+
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 
@@ -22,6 +24,8 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
 
 /*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)
@@ -120,9 +124,10 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
 int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
                       const unsigned char *sec, size_t seclen,
-                      unsigned char **mac, size_t *maclen)
+                      unsigned char **out, size_t *outlen)
 {
     int mac_nid, hmac_md_nid = NID_undef;
+    const char *mdname = NULL;
     const EVP_MD *m = NULL;
     EVP_MD_CTX *ctx = NULL;
     unsigned char basekey[EVP_MAX_MD_SIZE];
@@ -130,9 +135,12 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     int64_t iterations;
     unsigned char *mac_res = 0;
     int ok = 0;
+    EVP_MAC *mac = NULL;
     EVP_MAC_CTX *mctx = NULL;
+    OSSL_PARAM macparams[3] =
+        { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
-    if (mac == NULL || pbmp == NULL || pbmp->mac == NULL
+    if (out == NULL || pbmp == NULL || pbmp->mac == NULL
             || pbmp->mac->algorithm == NULL || msg == NULL || sec == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_NULL_ARGUMENT);
         goto err;
@@ -193,17 +201,22 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     mac_nid = OBJ_obj2nid(pbmp->mac->algorithm);
 
     if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
-            || ((m = EVP_get_digestbynid(hmac_md_nid)) == NULL)) {
+        || ((mdname = OBJ_nid2sn(hmac_md_nid)) == NULL)) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
 
-    if ((mctx = EVP_MAC_CTX_new(EVP_get_macbyname("HMAC"))) == NULL
-            || EVP_MAC_ctrl(mctx, EVP_MAC_CTRL_SET_MD, m) <= 0
-            || EVP_MAC_ctrl(mctx, EVP_MAC_CTRL_SET_KEY, basekey, bklen) <= 0
+    macparams[0] =
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                                         (char *)mdname, strlen(mdname) + 1);
+    macparams[1] =
+        OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, basekey, bklen);
+    if ((mac = EVP_MAC_fetch(NULL, "HMAC", NULL)) == NULL
+            || (mctx = EVP_MAC_CTX_new(mac)) == NULL
+            || !EVP_MAC_CTX_set_params(mctx, macparams)
             || !EVP_MAC_init(mctx)
             || !EVP_MAC_update(mctx, msg, msglen)
-            || !EVP_MAC_final(mctx, mac_res, maclen))
+            || !EVP_MAC_final(mctx, mac_res, outlen, EVP_MAX_MD_SIZE))
         goto err;
 
     ok = 1;
@@ -212,10 +225,11 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     /* cleanup */
     OPENSSL_cleanse(basekey, bklen);
     EVP_MAC_CTX_free(mctx);
+    EVP_MAC_free(mac);
     EVP_MD_CTX_free(ctx);
 
     if (ok == 1) {
-        *mac = mac_res;
+        *out = mac_res;
         return 1;
     }
 
