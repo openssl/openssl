@@ -7,8 +7,8 @@ EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
 EVP_MAC_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
-EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params
-- EVP MAC routines
+EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
+EVP_MAC_do_all_ex - EVP MAC routines
 
 =head1 SYNOPSIS
 
@@ -41,6 +41,10 @@ EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params
  const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_CTX_gettable_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_CTX_settable_params(const EVP_MAC *mac);
+
+ void EVP_MAC_do_all_ex(OPENSSL_CTX *libctx,
+                        void (*fn)(EVP_MAC *mac, void *arg),
+                        void *arg);
 
 =head1 DESCRIPTION
 
@@ -156,6 +160,11 @@ EVP_MAC_name() returns the name of the given MAC implementation.
 EVP_MAC_provider() returns the provider that holds the implementation
 of the given I<mac>.
 
+EVP_MAC_do_all_ex() traverses all MAC implemented by all activated
+providers in the given library context I<libctx>, and for each of the
+implementations, calls the given function I<fn> with the implementation method
+and the given I<arg> as argument.
+
 =head1 PARAMETER NAMES
 
 The standard parameter names are:
@@ -261,6 +270,7 @@ EVP_MAC_size() returns the expected output size, or 0 if it isn't
 set.
 If it isn't set, a call to EVP_MAC_init() should get it set.
 
+EVP_MAC_do_all_ex() returns nothing at all.
 
 =head1 EXAMPLE
 
