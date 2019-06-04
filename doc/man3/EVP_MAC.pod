@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free, EVP_MAC_name,
-EVP_MAC_get_params, EVP_MAC_gettable_params,
+EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
 EVP_MAC_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
@@ -22,6 +22,7 @@ EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params
  int EVP_MAC_up_ref(EVP_MAC *mac);
  void EVP_MAC_free(EVP_MAC *mac);
  const char *EVP_MAC_name(const EVP_MAC *mac);
+ const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac);
  int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[]);
 
  EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac);
@@ -152,6 +153,9 @@ EVP_MAC_size() returns the MAC output size for the given context.
 
 EVP_MAC_name() returns the name of the given MAC implementation.
 
+EVP_MAC_provider() returns the provider that holds the implementation
+of the given I<mac>.
+
 =head1 PARAMETER NAMES
 
 The standard parameter names are:
@@ -238,6 +242,9 @@ EVP_MAC_free() returns nothing at all.
 
 EVP_MAC_name() returns the name of the MAC, or NULL if NULL was
 passed.
+
+EVP_MAC_provider() returns a pointer to the provider for the MAC, or
+NULL on error.
 
 EVP_MAC_CTX_new() and EVP_MAC_CTX_dup() return a pointer to a newly
 created EVP_MAC_CTX, or NULL if allocation failed.

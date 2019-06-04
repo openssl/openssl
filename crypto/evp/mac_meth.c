@@ -173,6 +173,11 @@ const char *EVP_MAC_name(const EVP_MAC *mac)
     return mac->name;
 }
 
+const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac)
+{
+    return mac->prov;
+}
+
 const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac)
 {
     if (mac->gettable_params == NULL)
