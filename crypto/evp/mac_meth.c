@@ -198,3 +198,12 @@ const OSSL_PARAM *EVP_MAC_CTX_settable_params(const EVP_MAC *mac)
         return NULL;
     return mac->settable_ctx_params();
 }
+
+void EVP_MAC_do_all_ex(OPENSSL_CTX *libctx,
+                       void (*fn)(EVP_MAC *mac, void *arg),
+                       void *arg)
+{
+    evp_generic_do_all(libctx, OSSL_OP_MAC,
+                       (void (*)(void *, void *))fn, arg,
+                       evp_mac_from_dispatch, evp_mac_free);
+}

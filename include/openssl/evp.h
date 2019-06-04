@@ -1050,6 +1050,10 @@ const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
 const OSSL_PARAM *EVP_MAC_CTX_gettable_params(const EVP_MAC *mac);
 const OSSL_PARAM *EVP_MAC_CTX_settable_params(const EVP_MAC *mac);
 
+void EVP_MAC_do_all_ex(OPENSSL_CTX *libctx,
+                       void (*fn)(EVP_MAC *mac, void *arg),
+                       void *arg);
+
 /* PKEY stuff */
 int EVP_PKEY_decrypt_old(unsigned char *dec_key,
                          const unsigned char *enc_key, int enc_key_len,
