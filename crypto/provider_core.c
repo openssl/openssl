@@ -194,7 +194,8 @@ int ossl_provider_upref(OSSL_PROVIDER *prov)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock);
+    if (CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock) <= 0)
+        return 0;
     return ref;
 }
 
