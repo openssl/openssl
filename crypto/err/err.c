@@ -228,7 +228,7 @@ static void build_SYS_str_reasons(void)
          */
         if (str->string == NULL && cnt < sizeof(strerror_pool)) {
             if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
-                size_t l = strlen(cur) + 1;
+                size_t l = strlen(cur);
 
                 str->string = cur;
                 cnt += l;
@@ -238,14 +238,12 @@ static void build_SYS_str_reasons(void)
                  * VMS has an unusual quirk of adding spaces at the end of
                  * some (most? all?) messages. Lets trim them off.
                  */
-                if (ossl_isspace(cur[-1])) {
-                    while (cur > strerror_pool && ossl_isspace(cur[-1])) {
-                        cur--;
-                        cnt--;
-                    }
-                    *cur++ = '\0';
-                    cnt++;
+                while (cur > strerror_pool && ossl_isspace(cur[-1])) {
+                    cur--;
+                    cnt--;
                 }
+                *cur++ = '\0';
+                cnt++;
             }
         }
         if (str->string == NULL)
