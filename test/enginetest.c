@@ -279,7 +279,7 @@ static int test_redirect(void)
      * Try setting test key engine. Both should fail because the
      * engine has no public key methods.
      */
-    if (!TEST_ptr_null(EVP_PKEY_CTX_new(pkey, e))
+    if (!TEST_ptr_null(ctx = EVP_PKEY_CTX_new(pkey, e))
             || !TEST_int_le(EVP_PKEY_set1_engine(pkey, e), 0))
         goto err;
 
