@@ -40,12 +40,14 @@
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 #include "internal/cryptlib.h"
 #include "internal/evp_int.h"
 #include "kdf_local.h"
 
 struct evp_kdf_impl_st {
-    const EVP_MAC *mac; /* H(x) = HMAC_hash OR H(x) = KMAC */
+    EVP_MAC *mac;       /* H(x) = HMAC_hash OR H(x) = KMAC */
     const EVP_MD *md;   /* H(x) = hash OR when H(x) = HMAC_hash */
     unsigned char *secret;
     size_t secret_len;
@@ -141,11 +143,17 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
                      size_t custom_len, size_t kmac_out_len,
                      size_t derived_key_len, unsigned char **out)
 {
+    OSSL_PARAM params[2];
+
     /* Only KMAC has custom data - so return if not KMAC */
     if (custom == NULL)
         return 1;
 
-    if (EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_CUSTOM, custom, custom_len) <= 0)
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+                                                  (void *)custom, custom_len);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!EVP_MAC_CTX_set_params(ctx, params))
         return 0;
 
     /* By default only do one iteration if kmac_out_len is not specified */
@@ -160,7 +168,10 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
             || kmac_out_len == 64))
         return 0;
 
-    if (EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_SIZE, kmac_out_len) <= 0)
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN,
+                                            &kmac_out_len);
+
+    if (EVP_MAC_CTX_set_params(ctx, params) <= 0)
         return 0;
 
     /*
@@ -181,7 +192,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
  *     H(x) = HMAC-hash(salt, x) OR
  *     H(x) = KMAC#(salt, x, outbits, CustomString='KDF')
  */
-static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
+static int SSKDF_mac_kdm(EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
                          const unsigned char *kmac_custom,
                          size_t kmac_custom_len, size_t kmac_out_len,
                          const unsigned char *salt, size_t salt_len,
@@ -196,6 +207,8 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
     unsigned char *out = derived_key;
     EVP_MAC_CTX *ctx = NULL, *ctx_init = NULL;
     unsigned char *mac = mac_buf, *kmac_buffer = NULL;
+    OSSL_PARAM params[3];
+    size_t params_n = 0;
 
     if (z_len > SSKDF_MAX_INLEN || info_len > SSKDF_MAX_INLEN
             || derived_key_len > SSKDF_MAX_INLEN
@@ -205,11 +218,20 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
     ctx_init = EVP_MAC_CTX_new(kdf_mac);
     if (ctx_init == NULL)
         goto end;
-    if (hmac_md != NULL &&
-            EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_MD, hmac_md) <= 0)
-        goto end;
 
-    if (EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_KEY, salt, salt_len) <= 0)
+    if (hmac_md != NULL) {
+        const char *mdname = EVP_MD_name(hmac_md);
+        params[params_n++] =
+            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                                             (char *)mdname,
+                                             strlen(mdname) + 1);
+    }
+    params[params_n++] =
+        OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, (void *)salt,
+                                          salt_len);
+    params[params_n] = OSSL_PARAM_construct_end();
+
+    if (!EVP_MAC_CTX_set_params(ctx_init, params))
         goto end;
 
     if (!kmac_init(ctx_init, kmac_custom, kmac_custom_len, kmac_out_len,
@@ -239,14 +261,14 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
                 && EVP_MAC_update(ctx, info, info_len)))
             goto end;
         if (len >= out_len) {
-            if (!EVP_MAC_final(ctx, out, NULL))
+            if (!EVP_MAC_final(ctx, out, NULL, len))
                 goto end;
             out += out_len;
             len -= out_len;
             if (len == 0)
                 break;
         } else {
-            if (!EVP_MAC_final(ctx, mac, NULL))
+            if (!EVP_MAC_final(ctx, mac, NULL, len))
                 goto end;
             memcpy(out, mac, len);
             break;
@@ -280,6 +302,10 @@ static void sskdf_reset(EVP_KDF_IMPL *impl)
     OPENSSL_clear_free(impl->secret, impl->secret_len);
     OPENSSL_clear_free(impl->info, impl->info_len);
     OPENSSL_clear_free(impl->salt, impl->salt_len);
+    EVP_MAC_free(impl->mac);
+#if 0                    /* TODO(3.0) When we switch to fetched MDs */
+    EVP_MD_meth_free(impl->md);
+#endif
     memset(impl, 0, sizeof(*impl));
 }
 
@@ -311,7 +337,6 @@ static int sskdf_set_buffer(va_list args, unsigned char **out, size_t *out_len)
 static int sskdf_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
 {
     const EVP_MD *md;
-    const EVP_MAC *mac;
 
     switch (cmd) {
     case EVP_KDF_CTRL_SET_KEY:
@@ -325,17 +350,34 @@ static int sskdf_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
         if (md == NULL)
             return 0;
 
+#if 0                    /* TODO(3.0) When we switch to fetched MDs */
+        EVP_MD_meth_free(impl->md);
+#endif
         impl->md = md;
         return 1;
 
     case EVP_KDF_CTRL_SET_MAC:
-        mac = va_arg(args, const EVP_MAC *);
-        if (mac == NULL)
-            return 0;
+        {
+            const char *name;
+            EVP_MAC *mac;
 
-        impl->mac = mac;
-        return 1;
+            name = va_arg(args, const char *);
+            if (name == NULL)
+                return 0;
 
+            EVP_MAC_free(impl->mac);
+            impl->mac = NULL;
+
+            /*
+             * TODO(3.0) add support for OPENSSL_CTX and properties in KDFs
+             */
+            mac = EVP_MAC_fetch(NULL, name, NULL);
+            if (mac == NULL)
+                return 0;
+
+            impl->mac = mac;
+            return 1;
+        }
     case EVP_KDF_CTRL_SET_SALT:
         return sskdf_set_buffer(args, &impl->salt, &impl->salt_len);
 
@@ -346,20 +388,6 @@ static int sskdf_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
     default:
         return -2;
     }
-}
-
-/* Pass a mac to a ctrl */
-static int sskdf_mac2ctrl(EVP_KDF_IMPL *impl,
-                          int (*ctrl)(EVP_KDF_IMPL *impl, int cmd, va_list args),
-                          int cmd, const char *mac_name)
-{
-    const EVP_MAC *mac;
-
-    if (mac_name == NULL || (mac = EVP_get_macbyname(mac_name)) == NULL) {
-        KDFerr(KDF_F_SSKDF_MAC2CTRL, KDF_R_INVALID_MAC_TYPE);
-        return 0;
-    }
-    return call_ctrl(ctrl, impl, cmd, mac);
 }
 
 static int sskdf_ctrl_str(EVP_KDF_IMPL *impl, const char *type,
@@ -385,7 +413,7 @@ static int sskdf_ctrl_str(EVP_KDF_IMPL *impl, const char *type,
         return kdf_md2ctrl(impl, sskdf_ctrl, EVP_KDF_CTRL_SET_MD, value);
 
     if (strcmp(type, "mac") == 0)
-        return sskdf_mac2ctrl(impl, sskdf_ctrl, EVP_KDF_CTRL_SET_MAC, value);
+        return kdf_str2ctrl(impl, sskdf_ctrl, EVP_KDF_CTRL_SET_MAC, value);
 
     if (strcmp(type, "salt") == 0)
         return kdf_str2ctrl(impl, sskdf_ctrl, EVP_KDF_CTRL_SET_SALT, value);
@@ -430,11 +458,16 @@ static int sskdf_derive(EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen)
         int ret;
         const unsigned char *custom = NULL;
         size_t custom_len = 0;
-        int nid;
+        const char *macname;
         int default_salt_len;
 
-        nid = EVP_MAC_nid(impl->mac);
-        if (nid == EVP_MAC_HMAC) {
+        /*
+         * TODO(3.0) investigate the necessity to have all these controls.
+         * Why does KMAC require a salt length that's shorter than the MD
+         * block size?
+         */
+        macname = EVP_MAC_name(impl->mac);
+        if (strcmp(macname, "HMAC") == 0) {
             /* H(x) = HMAC(x, salt, hash) */
             if (impl->md == NULL) {
                 KDFerr(KDF_F_SSKDF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
@@ -443,11 +476,12 @@ static int sskdf_derive(EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen)
             default_salt_len = EVP_MD_block_size(impl->md);
             if (default_salt_len <= 0)
                 return 0;
-        } else if (nid == EVP_MAC_KMAC128 || nid == EVP_MAC_KMAC256) {
+        } else if (strcmp(macname, "KMAC128") == 0
+                   || strcmp(macname, "KMAC256") == 0) {
             /* H(x) = KMACzzz(x, salt, custom) */
             custom = kmac_custom_str;
             custom_len = sizeof(kmac_custom_str);
-            if (nid == EVP_MAC_KMAC128)
+            if (strcmp(macname, "KMAC128") == 0)
                 default_salt_len = SSKDF_KMAC128_DEFAULT_SALT_SIZE;
             else
                 default_salt_len = SSKDF_KMAC256_DEFAULT_SALT_SIZE;
