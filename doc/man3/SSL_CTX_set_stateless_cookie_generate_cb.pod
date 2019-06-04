@@ -3,8 +3,10 @@
 =head1 NAME
 
 SSL_CTX_set_stateless_cookie_generate_cb,
-SSL_CTX_set_stateless_cookie_verify_cb
-- Callback functions for stateless TLS1.3 cookies
+SSL_CTX_set_stateless_cookie_verify_cb,
+SSL_CTX_set_cookie_generate_cb,
+SSL_CTX_set_cookie_verify_cb
+- Callback functions for stateless TLS1.3 cookies and for DTLS cookies
 
 =head1 SYNOPSIS
 
@@ -20,10 +22,20 @@ SSL_CTX_set_stateless_cookie_verify_cb
      int (*verify_stateless_cookie_cb) (SSL *ssl,
                                         const unsigned char *cookie,
                                         size_t cookie_len));
+ void SSL_CTX_set_cookie_generate_cb(
+     SSL_CTX *ctx,
+     int (*app_gen_cookie_cb)(SSL *ssl,
+                              unsigned char *cookie,
+                              unsigned int *cookie_len));
+ void SSL_CTX_set_cookie_verify_cb(
+     SSL_CTX *ctx,
+     int (*app_verify_cookie_cb)(SSL *ssl,
+                                 const unsigned char *cookie,
+                                 unsigned int cookie_len));
 
 =head1 DESCRIPTION
 
-SSL_CTX_set_cookie_generate_cb() sets the callback used by L<SSL_stateless(3)>
+SSL_CTX_set_stateless_cookie_generate_cb() sets the callback used by L<SSL_stateless(3)>
 to generate the application-controlled portion of the cookie provided to clients
 in the HelloRetryRequest transmitted as a response to a ClientHello with a
 missing or invalid cookie. gen_stateless_cookie_cb() must write at most
@@ -31,12 +43,29 @@ SSL_COOKIE_LENGTH bytes into B<cookie>, and must write the number of bytes
 written to B<cookie_len>. If a cookie cannot be generated, a zero return value
 can be used to abort the handshake.
 
-SSL_CTX_set_cookie_verify_cb() sets the callback used by L<SSL_stateless(3)> to
+SSL_CTX_set_stateless_cookie_verify_cb() sets the callback used by L<SSL_stateless(3)> to
 determine whether the application-controlled portion of a ClientHello cookie is
-valid. A nonzero return value from app_verify_cookie_cb() communicates that the
+valid. A nonzero return value from verify_stateless_cookie_cb() communicates that the
 cookie is valid. The integrity of the entire cookie, including the
 application-controlled portion, is automatically verified by HMAC before
 verify_stateless_cookie_cb() is called.
+
+If you want to do cookies in DTLS, you have to use the older functions SSL_CTX_set_cookie_generate_cb()
+and SSL_CTX_set_cookie_verify_cb(). These are only for use in DTLS applications (not TLS1.2).
+See the DTLSv1_listen() documents for some discussion of that.
+
+The L<DTLSv1_listen(3)> function uses the callback method set by SSL_CTX_set_cookie_generate_cb()
+to generate the application-controlled portion of the cookie provided to clients in the HelloVerifyRequest
+transmitted as a response to a ClientHello with a missing or invalid cookie.
+
+app_gen_cookie_cb() must write at most DTLS1_COOKIE_LENGTH bytes into B<cookie>,
+and must write the number of bytes written to B<cookie_len>.
+If a cookie cannot be generated, a zero return value can be used to abort the handshake.
+
+SSL_CTX_set_cookie_verify_cb() sets the callback used by L<DTLSv1_listen(3)> to determine
+whether the cookie in the ClientHello is valid.
+A nonzero return value from app_verify_cookie_cb() communicates that the cookie is valid.
+No integrity checking of the cookie is verified before this function is called.
 
 =head1 RETURN VALUES
 
@@ -45,6 +74,12 @@ Neither function returns a value.
 =head1 SEE ALSO
 
 L<SSL_stateless(3)>
+
+=head1 HISTORY
+
+SSL_CTX_set_stateless_cookie_generate_cb() and SSL_CTX_set_stateless_cookie_verify_cb() were added in OpenSSL 1.1.1.
+
+SSL_CTX_set_cookie_generate_cb() and SSL_CTX_set_cookie_verify_cb() were added in OpenSSL 0.9.8 (Apr 2005).
 
 =head1 COPYRIGHT
 
