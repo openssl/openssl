@@ -129,6 +129,16 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         (type == NULL || (type->type == ctx->digest->type)))
         goto skip_to_init;
 
+    if (type != NULL) {
+        /*
+         * Ensure an ENGINE left lying around from last time is cleared (the
+         * previous check attempted to avoid this if the same ENGINE and
+         * EVP_MD could be used).
+         */
+        ENGINE_finish(ctx->engine);
+        ctx->engine = NULL;
+    }
+
     if (type != NULL && impl == NULL)
         tmpimpl = ENGINE_get_digest_engine(type->type);
 #endif
@@ -202,12 +212,6 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     if (type) {
-        /*
-         * Ensure an ENGINE left lying around from last time is cleared (the
-         * previous check attempted to avoid this if the same ENGINE and
-         * EVP_MD could be used).
-         */
-        ENGINE_finish(ctx->engine);
         if (impl != NULL) {
             if (!ENGINE_init(impl)) {
                 EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
