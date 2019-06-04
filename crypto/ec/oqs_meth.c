@@ -675,7 +675,8 @@ static int oqs_bits(const EVP_PKEY *pkey)
   if (is_oqs_hybrid_alg(oqs_key->nid)) {
     pubkey_len += (SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(oqs_key->nid)));
   }
-  return pubkey_len;
+  /* return size in bits */
+  return 8 * pubkey_len;
 }
 
 static int oqs_security_bits(const EVP_PKEY *pkey)
