@@ -11,7 +11,7 @@ use strict;
 use warnings;
 
 use File::Spec::Functions qw/canonpath/;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips/;
 use OpenSSL::Test::Utils;
 
 setup("test_verify");
@@ -379,9 +379,9 @@ SKIP: {
 	      if disabled("sm2");
 
    # Test '-sm2-id' and '-sm2-hex-id'  option
-   ok(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-id", "1234567812345678"),
+   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-id", "1234567812345678"),
        "SM2 ID test");
-   ok(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-hex-id",
+   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-hex-id",
              "31323334353637383132333435363738"),
        "SM2 hex ID test");
 }
