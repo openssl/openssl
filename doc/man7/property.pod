@@ -71,7 +71,7 @@ A I<property query> is a sequence of comma separated property query clauses.
 The full syntax for property queries appears below, but the available syntatic
 features are:
 
-=over
+=over 4
 
 =item *
 
