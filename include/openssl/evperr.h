@@ -145,7 +145,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN                   164
 # define EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN                   180
 # define EVP_F_PKEY_KDF_CTRL                              227
-# define EVP_F_PKEY_MAC_COPY                              229
+# define EVP_F_PKEY_MAC_COPY                              241
 # define EVP_F_PKEY_MAC_INIT                              214
 # define EVP_F_PKEY_SET_TYPE                              158
 # define EVP_F_POLY1305_CTRL                              216
