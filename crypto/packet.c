@@ -500,6 +500,19 @@ int WPACKET_is_null_buf(WPACKET *pkt)
     return pkt->buf == NULL && pkt->staticbuf == NULL;
 }
 
+/* intended to be used after WPACKET_reserve_bytes() */
+int WPACKET_advance_write(WPACKET *pkt, size_t len)
+{
+    if (pkt->maxsize - pkt->written < len)
+        return 0;
+    if (pkt->staticbuf == NULL && (pkt->buf->length - pkt->written < len))
+        return 0;
+
+    pkt->written += len;
+    pkt->curr += len;
+    return 1;
+}
+
 void WPACKET_cleanup(WPACKET *pkt)
 {
     WPACKET_SUB *sub, *parent;

@@ -97,6 +97,7 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
     {SSL3_MT_SUPPLEMENTAL_DATA, "SupplementalData"},
     {SSL3_MT_KEY_UPDATE, "KeyUpdate"},
+    {SSL3_MT_COMPRESSED_CERTIFICATE, "CompressedCertificate"},
 # ifndef OPENSSL_NO_NEXTPROTONEG
     {SSL3_MT_NEXT_PROTO, "NextProto"},
 # endif
@@ -478,6 +479,7 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
+    {TLSEXT_TYPE_compress_certificate, "compress_certificate"},
     {TLSEXT_TYPE_session_ticket, "session_ticket"},
     {TLSEXT_TYPE_psk, "psk"},
     {TLSEXT_TYPE_early_data, "early_data"},

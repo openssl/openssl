@@ -30,6 +30,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Added support for certificate compression (RFC8879), including
+   library support for Brotli and Zstandard compression.
+
+   *Todd Short*
+
  * Add a configurable flag to output date formats as ISO 8601. Does not
    change the default date format.
 
