@@ -184,9 +184,14 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
             goto err;
         }
-        if (!OBJ_find_sigid_by_algs(&signid,
-                                    EVP_MD_nid(type),
-                                    pkey->ameth->pkey_id)) {
+
+        int pkey_id =
+#ifndef OPENSSL_NO_SM2
+            EVP_PKEY_id(pkey) == NID_sm2 ? NID_sm2 :
+#endif
+        pkey->ameth->pkey_id;
+
+        if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(type), pkey_id)) {
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
                     ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
             goto err;

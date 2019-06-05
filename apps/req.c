@@ -1600,10 +1600,39 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
                         const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
 {
     EVP_PKEY_CTX *pkctx = NULL;
-    int i, def_nid;
+#ifndef OPENSSL_NO_SM2
+    EVP_PKEY_CTX *pctx = NULL;
+    EC_KEY *eckey = NULL;
+    const EC_GROUP *group = NULL;
+#endif
+    int i, def_nid, ret = 0;
 
     if (ctx == NULL)
-        return 0;
+        goto err;
+#ifndef OPENSSL_NO_SM2
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC
+            && (eckey = EVP_PKEY_get0_EC_KEY(pkey)) != NULL
+            && (group = EC_KEY_get0_group(eckey)) != NULL
+            && EC_GROUP_get_curve_name(group) == NID_sm2) {
+        /* initialize some SM2-specific stuffs */
+        EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+        pctx = EVP_PKEY_CTX_new(pkey, NULL);
+        if (pctx == NULL) {
+            BIO_printf(bio_err, "memory allocation failure.\n");
+            goto err;
+        }
+        /* set SM2 ID from sig options before calling the real init routine */
+        for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
+            char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+            if (pkey_ctrl_string(pctx, sigopt) <= 0) {
+                BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
+                ERR_print_errors(bio_err);
+                goto err;
+            }
+        }
+        EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
+    }
+#endif
     /*
      * EVP_PKEY_get_default_digest_nid() returns 2 if the digest is mandatory
      * for this algorithm.
@@ -1614,16 +1643,23 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         md = NULL;
     }
     if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
-        return 0;
+        goto err;
     for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
         char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
         if (pkey_ctrl_string(pkctx, sigopt) <= 0) {
             BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
             ERR_print_errors(bio_err);
-            return 0;
+            goto err;
         }
     }
-    return 1;
+
+    ret = 1;
+ err:
+#ifndef OPENSSL_NO_SM2
+    if (!ret)
+        EVP_PKEY_CTX_free(pctx);
+#endif
+    return ret;
 }
 
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
@@ -1635,6 +1671,8 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0)
         rv = X509_sign_ctx(x, mctx);
+    /* set PKEY_CTX to null to free it */
+    EVP_MD_CTX_set_pkey_ctx(mctx, NULL);
     EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
@@ -1647,6 +1685,8 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0)
         rv = X509_REQ_sign_ctx(x, mctx);
+    /* set PKEY_CTX to null to free it */
+    EVP_MD_CTX_set_pkey_ctx(mctx, NULL);
     EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
@@ -1659,6 +1699,8 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0)
         rv = X509_CRL_sign_ctx(x, mctx);
+    /* set PKEY_CTX to null to free it */
+    EVP_MD_CTX_set_pkey_ctx(mctx, NULL);
     EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }

@@ -569,6 +569,8 @@ int X509_get_signature_nid(const X509 *x);
 # ifndef OPENSSL_NO_SM2
 void X509_set0_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id);
 ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x);
+void X509_REQ_set0_sm2_id(X509_REQ *x, ASN1_OCTET_STRING *sm2_id);
+ASN1_OCTET_STRING *X509_REQ_get0_sm2_id(X509_REQ *x);
 # endif
 
 int X509_trusted(const X509 *x);

@@ -45,6 +45,33 @@ static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     return 1;
 }
 
+static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                  void *exarg)
+{
+    X509_REQ *ret = (X509_REQ *)*pval;
+
+    switch (operation) {
+    case ASN1_OP_D2I_PRE:
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING_free(ret->sm2_id);
+#endif
+        /* fall thru */
+    case ASN1_OP_NEW_POST:
+#ifndef OPENSSL_NO_SM2
+        ret->sm2_id = NULL;
+#endif
+        break;
+
+    case ASN1_OP_FREE_POST:
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING_free(ret->sm2_id);
+#endif
+        break;
+    }
+
+    return 1;
+}
+
 ASN1_SEQUENCE_enc(X509_REQ_INFO, enc, rinf_cb) = {
         ASN1_SIMPLE(X509_REQ_INFO, version, ASN1_INTEGER),
         ASN1_SIMPLE(X509_REQ_INFO, subject, X509_NAME),
@@ -57,7 +84,7 @@ ASN1_SEQUENCE_enc(X509_REQ_INFO, enc, rinf_cb) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_REQ_INFO)
 
-ASN1_SEQUENCE_ref(X509_REQ, 0) = {
+ASN1_SEQUENCE_ref(X509_REQ, req_cb) = {
         ASN1_EMBED(X509_REQ, req_info, X509_REQ_INFO),
         ASN1_EMBED(X509_REQ, sig_alg, X509_ALGOR),
         ASN1_SIMPLE(X509_REQ, signature, ASN1_BIT_STRING)
@@ -66,3 +93,16 @@ ASN1_SEQUENCE_ref(X509_REQ, 0) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509_REQ)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_REQ)
+
+#ifndef OPENSSL_NO_SM2
+void X509_REQ_set0_sm2_id(X509_REQ *x, ASN1_OCTET_STRING *sm2_id)
+{
+    ASN1_OCTET_STRING_free(x->sm2_id);
+    x->sm2_id = sm2_id;
+}
+
+ASN1_OCTET_STRING *X509_REQ_get0_sm2_id(X509_REQ *x)
+{
+    return x->sm2_id;
+}
+#endif
