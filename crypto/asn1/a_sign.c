@@ -145,7 +145,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     unsigned char *buf_in = NULL, *buf_out = NULL;
     size_t inl = 0, outl = 0, outll = 0;
     int signid, paramtype, buf_len = 0;
-    int rv;
+    int rv, pkey_id;
 
     type = EVP_MD_CTX_md(ctx);
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
@@ -185,7 +185,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
             goto err;
         }
 
-        int pkey_id =
+        pkey_id =
 #ifndef OPENSSL_NO_SM2
             EVP_PKEY_id(pkey) == NID_sm2 ? NID_sm2 :
 #endif
