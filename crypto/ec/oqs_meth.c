@@ -958,7 +958,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     }
 
     if (is_hybrid) {
-      const EVP_MD* classical_md;
+      const EVP_MD *classical_md;
       int digest_len;
       unsigned char digest[SHA512_DIGEST_LENGTH]; /* init with max length */
 
@@ -1050,7 +1050,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 
     if (is_hybrid) {
       EVP_PKEY_CTX *ctx_verify = NULL;
-      const EVP_MD* classical_md;
+      const EVP_MD *classical_md;
       size_t actual_classical_sig_len = 0;
       int digest_len;
       unsigned char digest[SHA512_DIGEST_LENGTH]; /* init with max length */
