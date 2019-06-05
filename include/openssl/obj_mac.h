@@ -5432,6 +5432,10 @@
 #define LN_aes_256_siv          "aes-256-siv"
 #define NID_aes_256_siv         1200
 
+#define SN_brotli               "brotli"
+#define LN_brotli               "Brotli compression"
+#define NID_brotli              1248
+
 #endif /* OPENSSL_OBJ_MAC_H */
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
