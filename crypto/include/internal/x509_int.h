@@ -71,6 +71,9 @@ struct X509_req_st {
     ASN1_BIT_STRING *signature; /* signature */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
+# ifndef OPENSSL_NO_SM2
+    ASN1_OCTET_STRING *sm2_id;
+# endif
 };
 
 struct X509_crl_info_st {

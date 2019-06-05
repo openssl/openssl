@@ -23,7 +23,7 @@ my $std_openssl_cnf =
 
 rmtree("demoCA", { safe => 0 });
 
-plan tests => 5;
+plan tests => 6;
  SKIP: {
      $ENV{OPENSSL_CONFIG} = '-config "'.srctop_file("test", "CAss.cnf").'"';
      skip "failed creating CA structure", 4
@@ -51,9 +51,25 @@ plan tests => 5;
         'creating new pre-certificate');
 }
 
+SKIP: {
+    skip "SM2 is not supported by this OpenSSL build", 1
+	      if disabled("sm2");
+
+    is(yes(cmdstr(app(["openssl", "ca", "-config",
+                       srctop_file("test", "CAss.cnf"),
+                       "-in", srctop_file("test", "certs", "sm2-csr.pem"),
+                       "-out", "sm2-test.crt",
+                       "-sigopt", "sm2_id:1234567812345678",
+                       "-sm2-id", "1234567812345678",
+                       "-md", "sm3",
+                       "-cert", srctop_file("test", "certs", "sm2-root.crt"),
+                       "-keyfile", srctop_file("test", "certs", "sm2-root.key")]))),
+       0,
+       "Signing SM2 certificate request");
+}
 
 rmtree("demoCA", { safe => 0 });
-unlink "newcert.pem", "newreq.pem", "newkey.pem";
+unlink "newcert.pem", "newreq.pem", "newkey.pem", "sm2-test.crt";
 
 
 sub yes {

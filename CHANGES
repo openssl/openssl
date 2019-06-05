@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Support SM2 signing and verification schemes with X509 certificate.
+     [Paul Yang]
+
   *) Use SHA256 as the default digest for TS query in the ts app.
      [Tomas Mraz]
 

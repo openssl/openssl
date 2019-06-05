@@ -53,6 +53,9 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING_free(ret->sm2_id);
+#endif
 
         /* fall thru */
 

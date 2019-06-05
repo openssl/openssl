@@ -24,86 +24,105 @@
 # include "internal/asn1_int.h"
 # include "internal/evp_int.h"
 
-static int x509_verify_sm2(X509 *x, EVP_PKEY *pkey, int mdnid, int pknid)
+static int common_verify_sm2(void *data, EVP_PKEY *pkey,
+                             int mdnid, int pknid, int req)
 {
+    X509 *x = NULL;
+    X509_REQ *r = NULL;
     EVP_MD_CTX *ctx = NULL;
     unsigned char *buf_in = NULL;
     int ret = -1, inl = 0;
     size_t inll = 0;
     EVP_PKEY_CTX *pctx = NULL;
     const EVP_MD *type = EVP_get_digestbynid(mdnid);
+    ASN1_BIT_STRING *signature = NULL;
+    ASN1_OCTET_STRING *sm2_id = NULL;
+    ASN1_VALUE *tbv = NULL;
 
     if (type == NULL) {
-        X509err(X509_F_X509_VERIFY_SM2,
+        X509err(X509_F_COMMON_VERIFY_SM2,
                 ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
         goto err;
     }
 
     if (pkey == NULL) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_PASSED_NULL_PARAMETER);
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
 
-    if (x->signature.type == V_ASN1_BIT_STRING && x->signature.flags & 0x7) {
-        X509err(X509_F_X509_VERIFY_SM2, ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
+    if (req == 1) {
+        r = (X509_REQ *)data;
+        signature = r->signature;
+        sm2_id = r->sm2_id;
+        tbv = (ASN1_VALUE *)&r->req_info;
+    } else {
+        x = (X509 *)data;
+        signature = &x->signature;
+        sm2_id = x->sm2_id;
+        tbv = (ASN1_VALUE *)&x->cert_info;
+    }
+
+    if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7) {
+        X509err(X509_F_COMMON_VERIFY_SM2, ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
         return -1;
     }
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     /* Check public key OID matches public key type */
     if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
-        X509err(X509_F_X509_VERIFY_SM2, ASN1_R_WRONG_PUBLIC_KEY_TYPE);
+        X509err(X509_F_COMMON_VERIFY_SM2, ASN1_R_WRONG_PUBLIC_KEY_TYPE);
         goto err;
     }
 
     if (!EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
         ret = 0;
         goto err;
     }
     pctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (pctx == NULL) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
         ret = 0;
         goto err;
     }
     /* NOTE: we tolerate no actual ID, to provide maximum flexibility */
-    if (x->sm2_id != NULL
-            && EVP_PKEY_CTX_set1_id(pctx, x->sm2_id->data,
-                                    x->sm2_id->length) != 1) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+    if (sm2_id != NULL
+            && EVP_PKEY_CTX_set1_id(pctx, sm2_id->data, sm2_id->length) != 1) {
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
         ret = 0;
         goto err;
     }
     EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
 
     if (!EVP_DigestVerifyInit(ctx, NULL, type, NULL, pkey)) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
         ret = 0;
         goto err;
     }
 
-    inl = ASN1_item_i2d((ASN1_VALUE *)&x->cert_info, &buf_in,
+    inl = ASN1_item_i2d(tbv, &buf_in,
+                        req == 1 ?
+                        ASN1_ITEM_rptr(X509_REQ_INFO) :
                         ASN1_ITEM_rptr(X509_CINF));
     if (inl <= 0) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_INTERNAL_ERROR);
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     if (buf_in == NULL) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     inll = inl;
 
-    ret = EVP_DigestVerify(ctx, x->signature.data,
-                           (size_t)x->signature.length, buf_in, inl);
+    ret = EVP_DigestVerify(ctx, signature->data,
+                           (size_t)signature->length, buf_in, inl);
     if (ret <= 0) {
-        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
         goto err;
     }
     ret = 1;
@@ -113,6 +132,18 @@ static int x509_verify_sm2(X509 *x, EVP_PKEY *pkey, int mdnid, int pknid)
     EVP_PKEY_CTX_free(pctx);
     return ret;
 }
+
+static int x509_verify_sm2(X509 *x, EVP_PKEY *pkey, int mdnid, int pknid)
+{
+    return common_verify_sm2(x, pkey, mdnid, pknid, 0);
+}
+
+static int x509_req_verify_sm2(X509_REQ *x, EVP_PKEY *pkey,
+                               int mdnid, int pknid)
+{
+    return common_verify_sm2(x, pkey, mdnid, pknid, 1);
+}
+
 #endif
 
 int X509_verify(X509 *a, EVP_PKEY *r)
@@ -142,6 +173,20 @@ int X509_verify(X509 *a, EVP_PKEY *r)
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
+#ifndef OPENSSL_NO_SM2
+    int mdnid, pknid;
+
+    /* Convert signature OID into digest and public key OIDs */
+    if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->sig_alg.algorithm),
+                             &mdnid, &pknid)) {
+        X509err(X509_F_X509_REQ_VERIFY, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+        return 0;
+    }
+
+    if (pknid == NID_sm2)
+        return x509_req_verify_sm2(a, r, mdnid, pknid);
+#endif
+
     return (ASN1_item_verify(ASN1_ITEM_rptr(X509_REQ_INFO),
                              &a->sig_alg, a->signature, &a->req_info, r));
 }
