@@ -36,19 +36,6 @@ extern "C" {
 # define ERR_TXT_MALLOCED        0x01
 # define ERR_TXT_STRING          0x02
 
-# define ERR_FLAG_MARK           0x01
-# define ERR_FLAG_CLEAR          0x02
-
-# define ERR_NUM_ERRORS  16
-typedef struct err_state_st {
-    int err_flags[ERR_NUM_ERRORS];
-    unsigned long err_buffer[ERR_NUM_ERRORS];
-    char *err_data[ERR_NUM_ERRORS];
-    int err_data_flags[ERR_NUM_ERRORS];
-    const char *err_file[ERR_NUM_ERRORS];
-    int err_line[ERR_NUM_ERRORS];
-    int top, bottom;
-} ERR_STATE;
 
 /* library */
 # define ERR_LIB_NONE            1
@@ -270,6 +257,8 @@ int ERR_load_ERR_strings(void);
 
 DEPRECATEDIN_1_1_0(void ERR_remove_thread_state(void *))
 DEPRECATEDIN_1_0_0(void ERR_remove_state(unsigned long pid))
+
+typedef struct err_state_st ERR_STATE;
 ERR_STATE *ERR_get_state(void);
 
 int ERR_get_next_error_library(void);
