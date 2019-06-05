@@ -238,10 +238,7 @@ static DRBG_GLOBAL *drbg_get_global(OPENSSL_CTX *libctx)
                                 &drbg_ossl_ctx_method);
 }
 
-/*
- * Implements the get_nonce() callback (see RAND_DRBG_set_callbacks())
- *
- */
+/* Implements the get_nonce() callback (see RAND_DRBG_set_callbacks()) */
 size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
                            unsigned char **pout,
                            int entropy, size_t min_len, size_t max_len)
@@ -252,7 +249,7 @@ size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
         = openssl_ctx_get_data(drbg->libctx, OPENSSL_CTX_DRBG_NONCE_INDEX,
                                &drbg_nonce_ossl_ctx_method);
     struct {
-        void * instance;
+        void *instance;
         int count;
     } data;
 
