@@ -55,7 +55,7 @@ and SSL_CTX_set_cookie_verify_cb(). These are only for use in DTLS applications 
 See the DTLSv1_listen() documents for some discussion of that.
 
 The L<DTLSv1_listen(3)> function uses the callback method set by SSL_CTX_set_cookie_generate_cb()
-to generate the application-controlled portion of the cookie provided to clients in the HelloVerifyRequest
+to generate a DTLS cookie which would be provided to clients in the HelloVerifyRequest
 transmitted as a response to a ClientHello with a missing or invalid cookie.
 
 app_gen_cookie_cb() must write at most DTLS1_COOKIE_LENGTH bytes into B<cookie>,
