@@ -20,11 +20,14 @@ use OpenSSL::Util::Pod;
 
 # Options.
 our($opt_d);
+our($opt_e);
+our($opt_s);
 our($opt_h);
 our($opt_l);
 our($opt_n);
 our($opt_p);
 our($opt_u);
+our($opt_v);
 our($opt_c);
 
 sub help()
@@ -32,10 +35,13 @@ sub help()
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
     -d Detailed list of undocumented (implies -u)
+    -e Detailed list of new undocumented (implies -v)
+    -s Same as -e except no output is generated if nothing is undocumented
     -l Print bogus links
     -n Print nits in POD pages
     -p Warn if non-public name documented (implies -n)
     -u Count undocumented functions
+    -v Count new undocumented functions
     -h Print this help message
     -c List undocumented commands and options
 EOF
@@ -291,12 +297,31 @@ sub getdocced
 
 my %docced;
 
+sub loadmissing($)
+{
+    my $missingfile = shift;
+    my @missing;
+
+    open FH, $missingfile
+        || die "Can't open $missingfile";
+    while ( <FH> ) {
+        chomp;
+        next if /^#/;
+        push @missing, $_;
+    }
+    close FH;
+
+    return @missing;
+}
+
 sub checkmacros()
 {
     my $count = 0;
     my %seen;
 
-    print "# Checking macros (approximate)\n";
+    my @missing = loadmissing('util/missingmacro.txt') if ($opt_v);
+
+    print "# Checking macros (approximate)\n" if !$opt_s;
     foreach my $f ( glob('include/openssl/*.h') ) {
         # Skip some internals we don't want to document yet.
         next if $f eq 'include/openssl/asn1.h';
@@ -312,21 +337,28 @@ sub checkmacros()
                 || $macro =~ /DEPRECATEDIN/
                 || $macro =~ /IMPLEMENT_/
                 || $macro =~ /DECLARE_/;
-            print "$f:$macro\n" if $opt_d;
+
+            # Skip macros known to be missing
+            next if $opt_v && grep( /^$macro$/, @missing);
+    
+            print "$f:$macro\n" if $opt_d || $opt_e;
             $count++;
             $seen{$macro} = 1;
         }
         close(IN);
     }
-    print "# Found $count macros missing (not all should be documented)\n"
+    print "# Found $count macros missing\n" if !$opt_s || $count > 0;
 }
 
 sub printem()
 {
     my $libname = shift;
     my $numfile = shift;
+    my $missingfile = shift;
     my $count = 0;
     my %seen;
+
+    my @missing = loadmissing($missingfile) if ($opt_v);
 
     foreach my $func ( &parsenum($numfile) ) {
         next if $docced{$func} || defined $seen{$func};
@@ -334,11 +366,14 @@ sub printem()
         # Skip ASN1 utilities
         next if $func =~ /^ASN1_/;
 
-        print "$libname:$func\n" if $opt_d;
+        # Skip functions known to be missing
+        next if $opt_v && grep( /^$func$/, @missing);
+
+        print "$libname:$func\n" if $opt_d || $opt_e;
         $count++;
         $seen{$func} = 1;
     }
-    print "# Found $count missing from $numfile\n\n";
+    print "# Found $count missing from $numfile\n\n" if !$opt_s || $count > 0;
 }
 
 
@@ -503,14 +538,20 @@ sub checkflags() {
     return $ok;
 }
 
-getopts('cdlnphu');
+getopts('cdeslnphuv');
 
 &help() if $opt_h;
+
 $opt_n = 1 if $opt_p;
 $opt_u = 1 if $opt_d;
+$opt_e = 1 if $opt_s;
+$opt_v = 1 if $opt_e;
 
-die "Need one of -[cdlnpu] flags.\n"
-    unless $opt_c or $opt_l or $opt_n or $opt_u;
+die "Cannot use both -u and -v" if $opt_u && $opt_v;
+die "Cannot use both -d and -e" if $opt_d && $opt_e;
+
+die "Need one of -[cdelnpuv] flags.\n"
+    unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
 
 if ( $opt_c ) {
     my $ok = 1;
@@ -571,13 +612,13 @@ if ( $opt_n ) {
     }
 }
 
-if ( $opt_u ) {
+if ( $opt_u || $opt_v) {
     my %temp = getdocced('doc/man3');
     foreach ( keys %temp ) {
         $docced{$_} = $temp{$_};
     }
-    &printem('crypto', 'util/libcrypto.num');
-    &printem('ssl', 'util/libssl.num');
+    &printem('crypto', 'util/libcrypto.num', 'util/missingcrypto.txt');
+    &printem('ssl', 'util/libssl.num', 'util/missingssl.txt');
     &checkmacros();
 }
 
