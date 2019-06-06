@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1057,7 +1057,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
     int dores = 0;
 
-    s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
+    s->ext.tick_identity = 0;
 
     /*
      * Note: At this stage of the code we only support adding a single
@@ -1147,6 +1147,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
         agems += s->session->ext.tick_age_add;
 
         reshashsize = EVP_MD_size(mdres);
+        s->ext.tick_identity++;
         dores = 1;
     }
 
@@ -1206,6 +1207,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
                      ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
         }
+        s->ext.tick_identity++;
     }
 
     if (!WPACKET_close(pkt)
@@ -1243,11 +1245,6 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }
-
-    if (dores)
-        s->session->ext.tick_identity = 0;
-    if (s->psksession != NULL)
-        s->psksession->ext.tick_identity = (dores ? 1 : 0);
 
     return EXT_RETURN_SENT;
 #else
@@ -2091,8 +2088,7 @@ int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     if (!s->ext.early_data_ok
-            || !s->hit
-            || s->session->ext.tick_identity != 0) {
+            || !s->hit) {
         /*
          * If we get here then we didn't send early data, or we didn't resume
          * using the first identity, or the SNI/ALPN is not consistent so the
@@ -2120,17 +2116,28 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    if (s->session->ext.tick_identity == (int)identity) {
+    if (identity >= (unsigned int)s->ext.tick_identity) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_PSK,
+                 SSL_R_BAD_PSK_IDENTITY);
+        return 0;
+    }
+
+    /*
+     * Session resumption tickets are always sent before PSK tickets. If the
+     * ticket index is 0 then it must be for a session resumption ticket if we
+     * sent two tickets, or if we didn't send a PSK ticket.
+     */
+    if (identity == 0 && (s->psksession == NULL || s->ext.tick_identity == 2)) {
         s->hit = 1;
         SSL_SESSION_free(s->psksession);
         s->psksession = NULL;
         return 1;
     }
 
-    if (s->psksession == NULL
-            || s->psksession->ext.tick_identity != (int)identity) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_PSK,
-                 SSL_R_BAD_PSK_IDENTITY);
+    if (s->psksession == NULL) {
+        /* Should never happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_PSK,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -2149,6 +2156,9 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     s->session = s->psksession;
     s->psksession = NULL;
     s->hit = 1;
+    /* Early data is only allowed if we used the first ticket */
+    if (identity != 0)
+        s->ext.early_data_ok = 0;
 #endif
 
     return 1;
