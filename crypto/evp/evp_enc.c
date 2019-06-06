@@ -51,7 +51,7 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
             OPENSSL_cleanse(ctx->cipher_data, ctx->cipher->ctx_size);
     }
     OPENSSL_free(ctx->cipher_data);
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(ctx->engine);
 #endif
     memset(ctx, 0, sizeof(*ctx));
@@ -81,8 +81,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                       ENGINE *impl, const unsigned char *key,
                       const unsigned char *iv, int enc)
 {
-    EVP_CIPHER *provciph = NULL;
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE *tmpimpl = NULL;
+#endif
     const EVP_CIPHER *tmpcipher;
 
     /*
@@ -105,7 +106,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     /* TODO(3.0): Legacy work around code below. Remove this */
 
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
      * this context may already have an ENGINE! Try to avoid releasing the
@@ -126,8 +127,10 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
      * If there are engines involved then we should use legacy handling for now.
      */
     if (ctx->engine != NULL
-            || impl != NULL
-            || tmpimpl != NULL) {
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+            || tmpimpl != NULL
+#endif
+            || impl != NULL) {
         if (ctx->cipher == ctx->fetched_cipher)
             ctx->cipher = NULL;
         EVP_CIPHER_meth_free(ctx->fetched_cipher);
@@ -194,7 +197,14 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         cipher = ctx->cipher;
 
     if (cipher->prov == NULL) {
-        provciph = EVP_CIPHER_fetch(NULL, OBJ_nid2sn(cipher->nid), "");
+#ifdef FIPS_MODE
+        /* We only do explict fetches inside the FIPS module */
+        EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+#else
+        EVP_CIPHER *provciph =
+            EVP_CIPHER_fetch(NULL, OBJ_nid2sn(cipher->nid), "");
+
         if (provciph == NULL) {
             EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
             return 0;
@@ -202,6 +212,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         cipher = provciph;
         EVP_CIPHER_meth_free(ctx->fetched_cipher);
         ctx->fetched_cipher = provciph;
+#endif
     }
 
     ctx->cipher = cipher;
@@ -279,7 +290,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             ctx->encrypt = enc;
             ctx->flags = flags;
         }
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
         if (impl != NULL) {
             if (!ENGINE_init(impl)) {
                 EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
@@ -335,7 +346,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             }
         }
     }
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
  skip_to_init:
 #endif
     if (ctx->cipher == NULL)
@@ -495,11 +506,6 @@ static int evp_EncryptDecryptUpdate(EVP_CIPHER_CTX *ctx,
 
     bl = ctx->cipher->block_size;
 
-    if (inl <= 0) {
-        *outl = 0;
-        return inl == 0;
-    }
-
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         /* If block size > 1 then the cipher will have to do this check */
         if (bl == 1 && is_partially_overlapping(out, in, cmpl)) {
@@ -515,6 +521,10 @@ static int evp_EncryptDecryptUpdate(EVP_CIPHER_CTX *ctx,
         return 1;
     }
 
+    if (inl <= 0) {
+        *outl = 0;
+        return inl == 0;
+    }
     if (is_partially_overlapping(out + ctx->buf_len, in, cmpl)) {
         EVPerr(EVP_F_EVP_ENCRYPTDECRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
         return 0;
@@ -577,7 +587,12 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         return 0;
     }
 
-    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+    if (ctx->cipher == NULL) {
+        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ctx->cipher->prov == NULL)
         goto legacy;
 
     blocksize = EVP_CIPHER_CTX_block_size(ctx);
@@ -742,11 +757,6 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS))
         cmpl = (cmpl + 7) / 8;
 
-    if (inl <= 0) {
-        *outl = 0;
-        return inl == 0;
-    }
-
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         if (b == 1 && is_partially_overlapping(out, in, cmpl)) {
             EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
@@ -760,6 +770,11 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         } else
             *outl = fix_len;
         return 1;
+    }
+
+    if (inl <= 0) {
+        *outl = 0;
+        return inl == 0;
     }
 
     if (ctx->flags & EVP_CIPH_NO_PADDING)
@@ -821,7 +836,12 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         return 0;
     }
 
-    if (ctx->cipher == NULL || ctx->cipher->prov == NULL)
+    if (ctx->cipher == NULL) {
+        EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ctx->cipher->prov == NULL)
         goto legacy;
 
     blocksize = EVP_CIPHER_CTX_block_size(ctx);
@@ -848,11 +868,6 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
  legacy:
 
     *outl = 0;
-    if (ctx->cipher == NULL) {
-        EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_NO_CIPHER_SET);
-        return 0;
-    }
-
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         i = ctx->cipher->do_cipher(ctx, out, NULL, 0);
         if (i < 0)
@@ -967,6 +982,8 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     return ret;
 }
 
+#if !defined(FIPS_MODE)
+/* TODO(3.0): No support for RAND yet in the FIPS module */
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 {
     int kl;
@@ -977,6 +994,7 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
         return 0;
     return 1;
 }
+#endif
 
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 {
@@ -1014,7 +1032,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
     /* TODO(3.0): Remove legacy code below */
  legacy:
 
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     /* Make sure it's safe to copy a cipher context using an ENGINE */
     if (in->engine && !ENGINE_init(in->engine)) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, ERR_R_ENGINE_LIB);
@@ -1044,13 +1062,17 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
     return 1;
 }
 
-static void *evp_cipher_from_dispatch(int nid, const OSSL_DISPATCH *fns,
+static void *evp_cipher_from_dispatch(const OSSL_DISPATCH *fns,
                                       OSSL_PROVIDER *prov)
 {
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
 
-    if ((cipher = EVP_CIPHER_meth_new(nid, 0, 0)) == NULL)
+    /*
+     * The legacy NID is set by EVP_CIPHER_fetch() if the name exists in
+     * the object database.
+     */
+    if ((cipher = EVP_CIPHER_meth_new(0, 0, 0)) == NULL)
         return NULL;
 
     for (; fns->function_id != 0; fns++) {
@@ -1167,17 +1189,25 @@ static void evp_cipher_free(void *cipher)
     EVP_CIPHER_meth_free(cipher);
 }
 
-static int evp_cipher_nid(void *vcipher)
-{
-    EVP_CIPHER *cipher = vcipher;
-
-    return cipher->nid;
-}
-
 EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                              const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
-                             evp_cipher_from_dispatch, evp_cipher_upref,
-                             evp_cipher_free, evp_cipher_nid);
+    EVP_CIPHER *cipher =
+        evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
+                          evp_cipher_from_dispatch, evp_cipher_upref,
+                          evp_cipher_free);
+
+#ifndef FIPS_MODE
+    /* TODO(3.x) get rid of the need for legacy NIDs */
+    if (cipher != NULL) {
+        /*
+         * FIPS module note: since internal fetches will be entirely
+         * provider based, we know that none of its code depends on legacy
+         * NIDs or any functionality that use them.
+         */
+        cipher->nid = OBJ_sn2nid(algorithm);
+    }
+#endif
+
+    return cipher;
 }

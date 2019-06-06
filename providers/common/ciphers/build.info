@@ -2,3 +2,7 @@ LIBS=../../../libcrypto
 SOURCE[../../../libcrypto]=\
         block.c aes.c aes_basic.c
 INCLUDE[../../../libcrypto]=. ../../../crypto
+
+SOURCE[../../fips]=\
+        block.c aes.c aes_basic.c
+INCLUDE[../../fips]=. ../../../crypto

@@ -1,3 +1,4 @@
+SUBDIRS=digests
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         defltprov.c

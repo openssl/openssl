@@ -14,6 +14,15 @@
      for Windows Store apps easier. Also, the "no-uplink" option has been added.
      [Kenji Mouri]
 
+  *) Join the directories crypto/x509 and crypto/x509v3
+     [Richard Levitte]
+
+  *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
+     This changes the size when using the genpkey app when no size is given. It
+     fixes an omission in earlier changes that changed all RSA, DSA and DH
+     generation apps to use 2048 bits by default.
+     [Kurt Roeckx]
+
   *) Added command 'openssl kdf' that uses the EVP_KDF API.
      [Shane Lontis]
 

@@ -17,6 +17,7 @@
 #include "internal/provider.h"
 #include "evp_locl.h"
 
+#if !defined(FIPS_MODE)
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     int ret;
@@ -146,12 +147,12 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     }
     return i;
 }
+#endif /* !defined(FIPS_MODE) */
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
 int EVP_CIPHER_type(const EVP_CIPHER *ctx)
 {
     int nid;
-    ASN1_OBJECT *otmp;
     nid = EVP_CIPHER_nid(ctx);
 
     switch (nid) {
@@ -198,12 +199,19 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
         return NID_des_cfb64;
 
     default:
-        /* Check it has an OID and it is valid */
-        otmp = OBJ_nid2obj(nid);
-        if (OBJ_get0_data(otmp) == NULL)
-            nid = NID_undef;
-        ASN1_OBJECT_free(otmp);
-        return nid;
+#ifdef FIPS_MODE
+        return NID_undef;
+#else
+        {
+            /* Check it has an OID and it is valid */
+            ASN1_OBJECT *otmp = OBJ_nid2obj(nid);
+
+            if (OBJ_get0_data(otmp) == NULL)
+                nid = NID_undef;
+            ASN1_OBJECT_free(otmp);
+            return nid;
+        }
+#endif
     }
 }
 
@@ -596,6 +604,8 @@ EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
     return ctx->pctx;
 }
 
+#if !defined(FIPS_MODE)
+/* TODO(3.0): EVP_DigestSign* not yet supported in FIPS module */
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 {
     /*
@@ -614,6 +624,7 @@ void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
         EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
     }
 }
+#endif /* !defined(FIPS_MODE) */
 
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
 {

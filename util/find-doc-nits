@@ -66,6 +66,7 @@ sub name_synopsis()
     $tmp =~ tr/\n/ /;
     print "$id trailing comma before - in NAME\n" if $tmp =~ /, *-/;
     $tmp =~ s/ -.*//g;
+    print "$id POD markup among the names in NAME\n" if $tmp =~ /[<>]/;
     $tmp =~ s/  */ /g;
     print "$id missing comma in NAME\n" if $tmp =~ /[^,] /;
 
@@ -198,8 +199,6 @@ sub check()
         if $contents =~ /=head\d\s\s+/;
     print "$id period in NAME section\n"
         if $contents =~ /=head1 NAME.*\.\n.*=head1 SYNOPSIS/ms;
-    print "$id POD markup in NAME section\n"
-        if $contents =~ /=head1 NAME.*[<>].*=head1 SYNOPSIS/ms;
     print "$id Duplicate $1 in L<>\n"
         if $contents =~ /L<([^>]*)\|([^>]*)>/ && $1 eq $2;
     print "$id Bad =over $1\n"

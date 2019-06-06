@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* TODO(3.0) Move this header into provider when dependencies are removed */
 #ifndef HEADER_SM3_H
 # define HEADER_SM3_H
 
@@ -34,6 +35,4 @@ int sm3_init(SM3_CTX *c);
 int sm3_update(SM3_CTX *c, const void *data, size_t len);
 int sm3_final(unsigned char *md, SM3_CTX *c);
 
-void sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
-
-#endif
+#endif /* HEADER_SM3_H */

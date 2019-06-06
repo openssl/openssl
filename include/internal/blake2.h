@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,26 +7,26 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * Derived from the BLAKE2 reference implementation written by Samuel Neves.
- * Copyright 2012, Samuel Neves <sneves@dei.uc.pt>
- * More information about the BLAKE2 hash function and its implementations
- * can be found at https://blake2.net.
- */
+/* TODO(3.0) Move this header into provider when dependencies are removed */
+#ifndef HEADER_BLAKE2_H
+# define HEADER_BLAKE2_H
 
-#include <stddef.h>
+# include <openssl/opensslconf.h>
 
-#define BLAKE2S_BLOCKBYTES    64
-#define BLAKE2S_OUTBYTES      32
-#define BLAKE2S_KEYBYTES      32
-#define BLAKE2S_SALTBYTES     8
-#define BLAKE2S_PERSONALBYTES 8
+# include <openssl/e_os2.h>
+# include <stddef.h>
 
-#define BLAKE2B_BLOCKBYTES    128
-#define BLAKE2B_OUTBYTES      64
-#define BLAKE2B_KEYBYTES      64
-#define BLAKE2B_SALTBYTES     16
-#define BLAKE2B_PERSONALBYTES 16
+# define BLAKE2S_BLOCKBYTES    64
+# define BLAKE2S_OUTBYTES      32
+# define BLAKE2S_KEYBYTES      32
+# define BLAKE2S_SALTBYTES     8
+# define BLAKE2S_PERSONALBYTES 8
+
+# define BLAKE2B_BLOCKBYTES    128
+# define BLAKE2B_OUTBYTES      64
+# define BLAKE2B_KEYBYTES      64
+# define BLAKE2B_SALTBYTES     16
+# define BLAKE2B_PERSONALBYTES 16
 
 struct blake2s_param_st {
     uint8_t  digest_length; /* 1 */
@@ -83,10 +83,13 @@ struct blake2b_ctx_st {
 typedef struct blake2s_ctx_st BLAKE2S_CTX;
 typedef struct blake2b_ctx_st BLAKE2B_CTX;
 
-int BLAKE2b_Init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
-int BLAKE2b_Init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P, const void *key);
-int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen);
-int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c);
+int blake2s256_init(void *ctx);
+int blake2b512_init(void *ctx);
+
+int blake2b_init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
+int blake2b_init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P, const void *key);
+int blake2b_update(BLAKE2B_CTX *c, const void *data, size_t datalen);
+int blake2b_final(unsigned char *md, BLAKE2B_CTX *c);
 
 /*
  * These setters are internal and do not check the validity of their parameters.
@@ -99,13 +102,15 @@ void blake2b_param_set_key_length(BLAKE2B_PARAM *P, uint8_t keylen);
 void blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal, size_t length);
 void blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt, size_t length);
 
-int BLAKE2s_Init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P);
-int BLAKE2s_Init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P, const void *key);
-int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen);
-int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c);
+int blake2s_init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P);
+int blake2s_init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P, const void *key);
+int blake2s_update(BLAKE2S_CTX *c, const void *data, size_t datalen);
+int blake2s_final(unsigned char *md, BLAKE2S_CTX *c);
 
 void blake2s_param_init(BLAKE2S_PARAM *P);
 void blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen);
 void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen);
 void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t length);
 void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t length);
+
+#endif /* HEADER_BLAKE2_H */

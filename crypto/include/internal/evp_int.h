@@ -172,6 +172,7 @@ extern const EVP_KDF tls1_prf_kdf_meth;
 extern const EVP_KDF hkdf_kdf_meth;
 extern const EVP_KDF sshkdf_kdf_meth;
 extern const EVP_KDF ss_kdf_meth;
+extern const EVP_KDF x963_kdf_meth;
 
 struct evp_md_st {
     /* nid */
@@ -206,6 +207,8 @@ struct evp_md_st {
     OSSL_OP_digest_dupctx_fn *dupctx;
     OSSL_OP_digest_size_fn *size;
     OSSL_OP_digest_block_size_fn *dblock_size;
+    OSSL_OP_digest_set_params_fn *set_params;
+    OSSL_OP_digest_get_params_fn *get_params;
 
 } /* EVP_MD */ ;
 

@@ -32,6 +32,7 @@ typedef struct {
     OSSL_PROPERTY_IDX name_idx;
     PROPERTY_TYPE type;
     PROPERTY_OPER oper;
+    unsigned int optional : 1;
     union {
         int64_t             int_val;     /* Signed integer */
         OSSL_PROPERTY_IDX   str_val;     /* String */
@@ -40,6 +41,7 @@ typedef struct {
 
 struct ossl_property_list_st {
     int n;
+    unsigned int has_optional : 1;
     PROPERTY_DEFINITION properties[1];
 };
 
@@ -307,8 +309,11 @@ static OSSL_PROPERTY_LIST *stack_to_property_list(STACK_OF(PROPERTY_DEFINITION)
     if (r != NULL) {
         sk_PROPERTY_DEFINITION_sort(sk);
 
-        for (i = 0; i < n; i++)
+        r->has_optional = 0;
+        for (i = 0; i < n; i++) {
             r->properties[i] = *sk_PROPERTY_DEFINITION_value(sk, i);
+            r->has_optional |= r->properties[i].optional;
+        }
         r->n = n;
     }
     return r;
@@ -332,6 +337,7 @@ OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *defn)
         if (prop == NULL)
             goto err;
         memset(&prop->v, 0, sizeof(prop->v));
+        prop->optional = 0;
         if (!parse_name(ctx, &s, 1, &prop->name_idx))
             goto err;
         prop->oper = PROPERTY_OPER_EQ;
@@ -387,10 +393,12 @@ OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s)
 
         if (match_ch(&s, '-')) {
             prop->oper = PROPERTY_OVERRIDE;
+            prop->optional = 0;
             if (!parse_name(ctx, &s, 0, &prop->name_idx))
                 goto err;
             goto skip_value;
         }
+        prop->optional = match_ch(&s, '?');
         if (!parse_name(ctx, &s, 0, &prop->name_idx))
             goto err;
 
@@ -426,12 +434,22 @@ err:
     return res;
 }
 
-int ossl_property_match(const OSSL_PROPERTY_LIST *query,
-                        const OSSL_PROPERTY_LIST *defn)
+/* Does a property query have any optional clauses */
+int ossl_property_has_optional(const OSSL_PROPERTY_LIST *query)
+{
+    return query->has_optional ? 1 : 0;
+}
+
+/*
+ * Compare a query against a definition.
+ * Return the number of clauses matched or -1 if a mandatory clause is false.
+ */
+int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
+                              const OSSL_PROPERTY_LIST *defn)
 {
     const PROPERTY_DEFINITION *const q = query->properties;
     const PROPERTY_DEFINITION *const d = defn->properties;
-    int i = 0, j = 0;
+    int i = 0, j = 0, matches = 0;
     PROPERTY_OPER oper;
 
     while (i < query->n) {
@@ -448,9 +466,11 @@ int ossl_property_match(const OSSL_PROPERTY_LIST *query,
                 const int eq = q[i].type == d[j].type
                                && memcmp(&q[i].v, &d[j].v, sizeof(q[i].v)) == 0;
 
-                if ((eq && oper != PROPERTY_OPER_EQ)
-                    || (!eq && oper != PROPERTY_OPER_NE))
-                    return 0;
+                if ((eq && oper == PROPERTY_OPER_EQ)
+                    || (!eq && oper == PROPERTY_OPER_NE))
+                    matches++;
+                else if (!q[i].optional)
+                    return -1;
                 i++;
                 j++;
                 continue;
@@ -463,18 +483,23 @@ int ossl_property_match(const OSSL_PROPERTY_LIST *query,
          * the latter is treated as a comparison against the Boolean false.
          */
         if (q[i].type == PROPERTY_TYPE_VALUE_UNDEFINED) {
-            if (oper != PROPERTY_OPER_NE)
-                return 0;
+            if (oper == PROPERTY_OPER_NE)
+                matches++;
+            else if (!q[i].optional)
+                return -1;
         } else if (q[i].type != PROPERTY_TYPE_STRING
                    || (oper == PROPERTY_OPER_EQ
                        && q[i].v.str_val != ossl_property_false)
                    || (oper == PROPERTY_OPER_NE
                        && q[i].v.str_val == ossl_property_false)) {
-            return 0;
+            if (!q[i].optional)
+                return -1;
+        } else {
+            matches++;
         }
         i++;
     }
-    return 1;
+    return matches;
 }
 
 void ossl_property_free(OSSL_PROPERTY_LIST *p)

@@ -12,6 +12,7 @@
 #include "ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 
 static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
@@ -410,6 +411,21 @@ int ssl3_digest_cached_records(SSL *s, int keep)
     return 1;
 }
 
+void ssl3_digest_master_key_set_params(const SSL_SESSION *session,
+                                       OSSL_PARAM params[])
+{
+    int n = 0;
+    int cmd = EVP_CTRL_SSL3_MASTER_SECRET;
+
+    params[n++] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_CMD, &cmd,
+                                           NULL);
+    params[n++] = OSSL_PARAM_construct_octet_ptr(OSSL_DIGEST_PARAM_MSG,
+                                                (void **)&session->master_key,
+                                                 session->master_key_length,
+                                                 NULL);
+    params[n++] = OSSL_PARAM_construct_end();
+}
+
 size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
                              unsigned char *p)
 {
@@ -448,14 +464,17 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
         goto err;
     }
 
-    if ((sender != NULL && EVP_DigestUpdate(ctx, sender, len) <= 0)
-        || EVP_MD_CTX_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                           (int)s->session->master_key_length,
-                           s->session->master_key) <= 0
-        || EVP_DigestFinal_ex(ctx, p, NULL) <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
-                 ERR_R_INTERNAL_ERROR);
-        ret = 0;
+    if (sender != NULL) {
+        OSSL_PARAM digest_cmd_params[3];
+
+        ssl3_digest_master_key_set_params(s->session, digest_cmd_params);
+        if (EVP_DigestUpdate(ctx, sender, len) <= 0
+            || EVP_MD_CTX_set_params(ctx, digest_cmd_params) <= 0
+            || EVP_DigestFinal_ex(ctx, p, NULL) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
+                         ERR_R_INTERNAL_ERROR);
+                ret = 0;
+        }
     }
 
  err:

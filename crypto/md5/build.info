@@ -1,6 +1,6 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
-        md5_dgst.c md5_one.c {- $target{md5_asm_src} -}
+        md5_dgst.c md5_one.c md5_sha1.c {- $target{md5_asm_src} -}
 
 GENERATE[md5-586.s]=asm/md5-586.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS)

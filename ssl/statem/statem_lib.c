@@ -285,10 +285,11 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
+        OSSL_PARAM digest_cmd_params[3];
+
+        ssl3_digest_master_key_set_params(s->session, digest_cmd_params);
         if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
-            || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                (int)s->session->master_key_length,
-                                s->session->master_key)
+            || EVP_MD_CTX_set_params(mctx, digest_cmd_params) <= 0
             || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
 
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
@@ -473,10 +474,11 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
+        OSSL_PARAM digest_cmd_params[3];
+
+        ssl3_digest_master_key_set_params(s->session, digest_cmd_params);
         if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
-                || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                    (int)s->session->master_key_length,
-                                    s->session->master_key)) {
+                || EVP_MD_CTX_set_params(mctx, digest_cmd_params) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                      ERR_R_EVP_LIB);
             goto err;
@@ -643,12 +645,9 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
     /*
      * If we get a request for us to update our sending keys too then, we need
      * to additionally send a KeyUpdate message. However that message should
-     * not also request an update (otherwise we get into an infinite loop). We
-     * ignore a request for us to update our sending keys too if we already
-     * sent close_notify.
+     * not also request an update (otherwise we get into an infinite loop).
      */
-    if (updatetype == SSL_KEY_UPDATE_REQUESTED
-            && (s->shutdown & SSL_SENT_SHUTDOWN) == 0)
+    if (updatetype == SSL_KEY_UPDATE_REQUESTED)
         s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
 
     if (!tls13_update_key(s, 0)) {

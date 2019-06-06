@@ -23,8 +23,9 @@ OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
 /* Property list functions */
 int ossl_property_parse_init(OPENSSL_CTX *ctx);
 void ossl_property_free(OSSL_PROPERTY_LIST *p);
-int ossl_property_match(const OSSL_PROPERTY_LIST *query,
-                        const OSSL_PROPERTY_LIST *defn);
+int ossl_property_has_optional(const OSSL_PROPERTY_LIST *query);
+int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
+                              const OSSL_PROPERTY_LIST *defn);
 OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
                                         const OSSL_PROPERTY_LIST *b);
 

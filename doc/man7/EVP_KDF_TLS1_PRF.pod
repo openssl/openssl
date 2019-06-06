@@ -121,6 +121,10 @@ and seed value "seed":
  }
  EVP_KDF_CTX_free(kctx);
 
+=head1 CONFORMING TO
+
+RFC 2246, RFC 5246 and NIST SP 800-135 r1
+
 =head1 SEE ALSO
 
 L<EVP_KDF_CTX>,

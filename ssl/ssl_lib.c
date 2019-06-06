@@ -4606,7 +4606,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
     return ret;
 }
 
-int SSL_session_reused(SSL *s)
+int SSL_session_reused(const SSL *s)
 {
     return s->hit;
 }

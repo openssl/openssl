@@ -422,7 +422,7 @@ uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 install_docs: install_man_docs install_html_docs
 
 uninstall_docs: uninstall_man_docs uninstall_html_docs
-	$(RM) -r -v $(DESTDIR)$(DOCDIR)
+	$(RM) -r $(DESTDIR)$(DOCDIR)
 
 install_ssldirs:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs

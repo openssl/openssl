@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,10 +8,12 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/engine.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
+#include "internal/cryptlib.h"
 #include "internal/evp_int.h"
 #include "internal/provider.h"
 #include "evp_locl.h"
@@ -55,10 +57,14 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
      * pctx should be freed by the user of EVP_MD_CTX
      * if EVP_MD_CTX_FLAG_KEEP_PKEY_CTX is set
      */
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
         EVP_PKEY_CTX_free(ctx->pctx);
-#ifndef OPENSSL_NO_ENGINE
+
+# ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(ctx->engine);
+# endif
 #endif
     OPENSSL_cleanse(ctx, sizeof(*ctx));
 
@@ -102,8 +108,9 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 {
-    EVP_MD *provmd;
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE *tmpimpl = NULL;
+#endif
 
     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
 
@@ -111,7 +118,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         ctx->reqdigest = type;
 
     /* TODO(3.0): Legacy work around code below. Remove this */
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
      * this context may already have an ENGINE! Try to avoid releasing the
@@ -121,6 +128,16 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     if (ctx->engine && ctx->digest &&
         (type == NULL || (type->type == ctx->digest->type)))
         goto skip_to_init;
+
+    if (type != NULL) {
+        /*
+         * Ensure an ENGINE left lying around from last time is cleared (the
+         * previous check attempted to avoid this if the same ENGINE and
+         * EVP_MD could be used).
+         */
+        ENGINE_finish(ctx->engine);
+        ctx->engine = NULL;
+    }
 
     if (type != NULL && impl == NULL)
         tmpimpl = ENGINE_get_digest_engine(type->type);
@@ -132,7 +149,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
      */
     if (ctx->engine != NULL
             || impl != NULL
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
             || tmpimpl != NULL
+#endif
             || ctx->pctx != NULL
             || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0) {
         if (ctx->digest == ctx->fetched_digest)
@@ -140,16 +159,6 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         EVP_MD_meth_free(ctx->fetched_digest);
         ctx->fetched_digest = NULL;
         goto legacy;
-    }
-
-    if (type->prov == NULL) {
-        switch(type->type) {
-        case NID_sha256:
-        case NID_md2:
-            break;
-        default:
-            goto legacy;
-        }
     }
 
     if (ctx->digest != NULL && ctx->digest->ctx_size > 0) {
@@ -160,7 +169,13 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     /* TODO(3.0): Start of non-legacy code below */
 
     if (type->prov == NULL) {
-        provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
+#ifdef FIPS_MODE
+        /* We only do explict fetches inside the FIPS module */
+        EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+#else
+        EVP_MD *provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
+
         if (provmd == NULL) {
             EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
             return 0;
@@ -168,8 +183,14 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         type = provmd;
         EVP_MD_meth_free(ctx->fetched_digest);
         ctx->fetched_digest = provmd;
+#endif
     }
 
+    if (ctx->provctx != NULL && ctx->digest != NULL && ctx->digest != type) {
+        if (ctx->digest->freectx != NULL)
+            ctx->digest->freectx(ctx->provctx);
+        ctx->provctx = NULL;
+    }
     ctx->digest = type;
     if (ctx->provctx == NULL) {
         ctx->provctx = ctx->digest->newctx(ossl_provider_ctx(type->prov));
@@ -189,14 +210,8 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     /* TODO(3.0): Remove legacy code below */
  legacy:
 
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     if (type) {
-        /*
-         * Ensure an ENGINE left lying around from last time is cleared (the
-         * previous check attempted to avoid this if the same ENGINE and
-         * EVP_MD could be used).
-         */
-        ENGINE_finish(ctx->engine);
         if (impl != NULL) {
             if (!ENGINE_init(impl)) {
                 EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
@@ -247,16 +262,19 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             }
         }
     }
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
  skip_to_init:
 #endif
-    if (ctx->pctx) {
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
+    if (ctx->pctx != NULL) {
         int r;
         r = EVP_PKEY_CTX_ctrl(ctx->pctx, -1, EVP_PKEY_OP_TYPE_SIG,
                               EVP_PKEY_CTRL_DIGESTINIT, 0, ctx);
         if (r <= 0 && (r != -2))
             return 0;
     }
+#endif
     if (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT)
         return 1;
     return ctx->digest->init(ctx);
@@ -317,7 +335,6 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     }
 
     EVP_MD_CTX_reset(ctx);
-
     return ret;
 
     /* TODO(3.0): Remove legacy code below */
@@ -337,12 +354,31 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
 int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 {
     int ret = 0;
+    OSSL_PARAM params[2];
+    size_t i = 0;
 
+    if (ctx->digest == NULL || ctx->digest->prov == NULL)
+        goto legacy;
+
+    if (ctx->digest->dfinal == NULL) {
+        EVPerr(EVP_F_EVP_DIGESTFINALXOF, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
+    params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
+                                              &size, NULL);
+    params[i++] = OSSL_PARAM_construct_end();
+
+    if (EVP_MD_CTX_set_params(ctx, params) > 0)
+        ret = ctx->digest->dfinal(ctx->provctx, md, &size, size);
+    EVP_MD_CTX_reset(ctx);
+    return ret;
+
+legacy:
     if (ctx->digest->flags & EVP_MD_FLAG_XOF
         && size <= INT_MAX
         && ctx->digest->md_ctrl(ctx, EVP_MD_CTRL_XOF_LEN, (int)size, NULL)) {
         ret = ctx->digest->final(ctx, md);
-
         if (ctx->digest->cleanup != NULL) {
             ctx->digest->cleanup(ctx);
             EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
@@ -397,6 +433,8 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
     EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     if (in->pctx != NULL) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
         if (out->pctx == NULL) {
@@ -405,12 +443,13 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
             return 0;
         }
     }
+#endif
 
     return 1;
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     /* Make sure it's safe to copy a digest context using an ENGINE */
     if (in->engine && !ENGINE_init(in->engine)) {
         EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, ERR_R_ENGINE_LIB);
@@ -451,6 +490,8 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     out->update = in->update;
 
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     if (in->pctx) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
         if (!out->pctx) {
@@ -458,6 +499,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
             return 0;
         }
     }
+#endif
 
     if (out->digest->copy)
         return out->digest->copy(out, in);
@@ -483,78 +525,123 @@ int EVP_Digest(const void *data, size_t count,
     return ret;
 }
 
-int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
+int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
 {
-    if (ctx->digest && ctx->digest->md_ctrl) {
-        int ret = ctx->digest->md_ctrl(ctx, cmd, p1, p2);
-        if (ret <= 0)
-            return 0;
-        return 1;
-    }
+    if (ctx->digest != NULL && ctx->digest->set_params != NULL)
+        return ctx->digest->set_params(ctx->provctx, params);
     return 0;
 }
 
-static void *evp_md_from_dispatch(int mdtype, const OSSL_DISPATCH *fns,
-                                    OSSL_PROVIDER *prov)
+int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
+{
+    if (ctx->digest != NULL && ctx->digest->get_params != NULL)
+        return ctx->digest->get_params(ctx->provctx, params);
+    return 0;
+}
+
+#if !OPENSSL_API_3
+int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
+{
+    if (ctx->digest != NULL) {
+        OSSL_PARAM params[2];
+        size_t i, sz, n = 0;
+
+        switch (cmd) {
+        case EVP_MD_CTRL_XOF_LEN:
+            if (ctx->digest->set_params == NULL)
+                break;
+            i = (size_t)p1;
+            params[n++] = OSSL_PARAM_construct_size_t(
+                              OSSL_DIGEST_PARAM_XOFLEN, &i, &sz);
+            params[n++] = OSSL_PARAM_construct_end();
+            return ctx->digest->set_params(ctx->provctx, params) > 0;
+        case EVP_MD_CTRL_MICALG:
+            if (ctx->digest->get_params == NULL)
+                break;
+            params[n++] = OSSL_PARAM_construct_utf8_string(
+                              OSSL_DIGEST_PARAM_MICALG, p2, p1 ? p1 : 9999,
+                              &sz);
+            params[n++] = OSSL_PARAM_construct_end();
+            return ctx->digest->get_params(ctx->provctx, params);
+        }
+        /* legacy code */
+        if (ctx->digest->md_ctrl != NULL) {
+            int ret = ctx->digest->md_ctrl(ctx, cmd, p1, p2);
+            if (ret <= 0)
+                return 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+#endif
+
+static void *evp_md_from_dispatch(const OSSL_DISPATCH *fns,
+                                  OSSL_PROVIDER *prov)
 {
     EVP_MD *md = NULL;
     int fncnt = 0;
 
-    if ((md = EVP_MD_meth_new(mdtype, NID_undef)) == NULL)
+    /* EVP_MD_fetch() will set the legacy NID if available */
+    if ((md = EVP_MD_meth_new(NID_undef, NID_undef)) == NULL)
         return NULL;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
         case OSSL_FUNC_DIGEST_NEWCTX:
-            if (md->newctx != NULL)
-                break;
-            md->newctx = OSSL_get_OP_digest_newctx(fns);
-            fncnt++;
+            if (md->newctx == NULL) {
+                md->newctx = OSSL_get_OP_digest_newctx(fns);
+                fncnt++;
+            }
             break;
         case OSSL_FUNC_DIGEST_INIT:
-            if (md->dinit != NULL)
-                break;
-            md->dinit = OSSL_get_OP_digest_init(fns);
-            fncnt++;
+            if (md->dinit == NULL) {
+                md->dinit = OSSL_get_OP_digest_init(fns);
+                fncnt++;
+            }
             break;
         case OSSL_FUNC_DIGEST_UPDATE:
-            if (md->dupdate != NULL)
-                break;
-            md->dupdate = OSSL_get_OP_digest_update(fns);
-            fncnt++;
+            if (md->dupdate == NULL) {
+                md->dupdate = OSSL_get_OP_digest_update(fns);
+                fncnt++;
+            }
             break;
         case OSSL_FUNC_DIGEST_FINAL:
-            if (md->dfinal != NULL)
-                break;
-            md->dfinal = OSSL_get_OP_digest_final(fns);
-            fncnt++;
+            if (md->dfinal == NULL) {
+                md->dfinal = OSSL_get_OP_digest_final(fns);
+                fncnt++;
+            }
             break;
         case OSSL_FUNC_DIGEST_DIGEST:
-            if (md->digest != NULL)
-                break;
-            md->digest = OSSL_get_OP_digest_digest(fns);
+            if (md->digest == NULL)
+                md->digest = OSSL_get_OP_digest_digest(fns);
             /* We don't increment fnct for this as it is stand alone */
             break;
         case OSSL_FUNC_DIGEST_FREECTX:
-            if (md->freectx != NULL)
-                break;
-            md->freectx = OSSL_get_OP_digest_freectx(fns);
-            fncnt++;
+            if (md->freectx == NULL) {
+                md->freectx = OSSL_get_OP_digest_freectx(fns);
+                fncnt++;
+            }
             break;
         case OSSL_FUNC_DIGEST_DUPCTX:
-            if (md->dupctx != NULL)
-                break;
-            md->dupctx = OSSL_get_OP_digest_dupctx(fns);
+            if (md->dupctx == NULL)
+                md->dupctx = OSSL_get_OP_digest_dupctx(fns);
             break;
         case OSSL_FUNC_DIGEST_SIZE:
-            if (md->size != NULL)
-                break;
-            md->size = OSSL_get_OP_digest_size(fns);
+            if (md->size == NULL)
+                md->size = OSSL_get_OP_digest_size(fns);
             break;
         case OSSL_FUNC_DIGEST_BLOCK_SIZE:
-            if (md->dblock_size != NULL)
-                break;
-            md->dblock_size = OSSL_get_OP_digest_block_size(fns);
+            if (md->dblock_size == NULL)
+                md->dblock_size = OSSL_get_OP_digest_block_size(fns);
+            break;
+        case OSSL_FUNC_DIGEST_SET_PARAMS:
+            if (md->set_params == NULL)
+                md->set_params = OSSL_get_OP_digest_set_params(fns);
+            break;
+        case OSSL_FUNC_DIGEST_GET_PARAMS:
+            if (md->get_params == NULL)
+                md->get_params = OSSL_get_OP_digest_get_params(fns);
             break;
         }
     }
@@ -587,17 +674,25 @@ static void evp_md_free(void *md)
     EVP_MD_meth_free(md);
 }
 
-static int evp_md_nid(void *vmd)
-{
-    EVP_MD *md = vmd;
-
-    return md->type;
-}
-
 EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-                             evp_md_from_dispatch, evp_md_upref,
-                             evp_md_free, evp_md_nid);
+    EVP_MD *md =
+        evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+                          evp_md_from_dispatch, evp_md_upref,
+                          evp_md_free);
+
+#ifndef FIPS_MODE
+    /* TODO(3.x) get rid of the need for legacy NIDs */
+    if (md != NULL) {
+        /*
+         * FIPS module note: since internal fetches will be entirely
+         * provider based, we know that none of its code depends on legacy
+         * NIDs or any functionality that use them.
+         */
+        md->type = OBJ_sn2nid(algorithm);
+    }
+#endif
+
+    return md;
 }

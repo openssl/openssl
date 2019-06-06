@@ -62,31 +62,36 @@ static const struct {
     const char *query;
     int e;
 } parser_tests[] = {
-    { "", "sky=blue", 0 },
+    { "", "sky=blue", -1 },
     { "", "sky!=blue", 1 },
-    { "groan", "", 1 },
+    { "groan", "", 0 },
     { "cold=yes", "cold=yes", 1 },
     { "cold=yes", "cold", 1 },
     { "cold=yes", "cold!=no", 1 },
     { "groan", "groan=yes", 1 },
-    { "groan", "groan=no", 0 },
-    { "groan", "groan!=yes", 0 },
-    { "cold=no", "cold", 0 },
+    { "groan", "groan=no", -1 },
+    { "groan", "groan!=yes", -1 },
+    { "cold=no", "cold", -1 },
+    { "cold=no", "?cold", 0 },
     { "cold=no", "cold=no", 1 },
-    { "groan", "cold", 0 },
+    { "groan", "cold", -1 },
     { "groan", "cold=no", 1 },
     { "groan", "cold!=yes", 1 },
-    { "groan=blue", "groan=yellow", 0 },
+    { "groan=blue", "groan=yellow", -1 },
+    { "groan=blue", "?groan=yellow", 0 },
     { "groan=blue", "groan!=yellow", 1 },
+    { "groan=blue", "?groan!=yellow", 1 },
     { "today=monday, tomorrow=3", "today!=2", 1 },
-    { "today=monday, tomorrow=3", "today!='monday'", 0 },
+    { "today=monday, tomorrow=3", "today!='monday'", -1 },
     { "today=monday, tomorrow=3", "tomorrow=3", 1 },
     { "n=0x3", "n=3", 1 },
-    { "n=0x3", "n=-3", 0 },
+    { "n=0x3", "n=-3", -1 },
     { "n=0x33", "n=51", 1 },
     { "n=033", "n=27", 1 },
     { "n=0", "n=00", 1 },
     { "n=0x0", "n=0", 1 },
+    { "n=0, sky=blue", "?n=0, sky=blue", 2 },
+    { "n=1, sky=blue", "?n=0, sky=blue", 1 },
 };
 
 static int test_property_parse(int n)
@@ -100,7 +105,7 @@ static int test_property_parse(int n)
                               NULL)
         && TEST_ptr(p = ossl_parse_property(NULL, parser_tests[n].defn))
         && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query))
-        && TEST_int_eq(ossl_property_match(q, p), parser_tests[n].e))
+        && TEST_int_eq(ossl_property_match_count(q, p), parser_tests[n].e))
         r = 1;
     ossl_property_free(p);
     ossl_property_free(q);
@@ -148,7 +153,7 @@ static int test_property_merge(int n)
         && TEST_ptr(q_global = ossl_parse_query(NULL, merge_tests[n].q_global))
         && TEST_ptr(q_local = ossl_parse_query(NULL, merge_tests[n].q_local))
         && TEST_ptr(q_combined = ossl_property_merge(q_local, q_global))
-        && TEST_true(ossl_property_match(q_combined, prop)))
+        && TEST_int_ge(ossl_property_match_count(q_combined, prop), 0))
         r = 1;
     ossl_property_free(q_global);
     ossl_property_free(q_local);
@@ -184,10 +189,16 @@ static const struct {
     int e;
 } definition_tests[] = {
     { "alpha", "alpha=yes", 1 },
-    { "alpha=no", "alpha", 0 },
+    { "alpha=no", "alpha", -1 },
     { "alpha=1", "alpha=1", 1 },
-    { "alpha=2", "alpha=1", 0 },
-    { "alpha", "omega", 0 }
+    { "alpha=2", "alpha=1",-1 },
+    { "alpha", "omega", -1 },
+    { "alpha", "?omega", 0 },
+    { "alpha", "?omega=1", 0 },
+    { "alpha", "?omega=no", 1 },
+    { "alpha", "?omega=yes", 0 },
+    { "alpha, omega", "?omega=yes", 1 },
+    { "alpha, omega", "?omega=no", 0 }
 };
 
 static int test_definition_compares(int n)
@@ -200,7 +211,7 @@ static int test_definition_compares(int n)
         && add_property_names("alpha", "omega", NULL)
         && TEST_ptr(d = ossl_parse_property(NULL, definition_tests[n].defn))
         && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query))
-        && TEST_int_eq(ossl_property_match(q, d), definition_tests[n].e);
+        && TEST_int_eq(ossl_property_match_count(q, d), definition_tests[n].e);
 
     ossl_property_free(d);
     ossl_property_free(q);

@@ -10,6 +10,7 @@
 #ifndef OSSL_CORE_NUMBERS_H
 # define OSSL_CORE_NUMBERS_H
 
+# include <stdarg.h>
 # include <openssl/core.h>
 
 # ifdef __cplusplus
@@ -57,6 +58,12 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
 # define OSSL_FUNC_CORE_GET_PARAMS             2
 OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
                                          const OSSL_PARAM params[]))
+# define OSSL_FUNC_CORE_PUT_ERROR              3
+OSSL_CORE_MAKE_FUNC(void,core_put_error,(int lib, int func, int reason,
+                                         const char *file, int line))
+# define OSSL_FUNC_CORE_ADD_ERROR_VDATA        4
+OSSL_CORE_MAKE_FUNC(void,core_add_error_vdata,(int num, va_list args))
+
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
@@ -84,7 +91,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
 # define OSSL_FUNC_DIGEST_DUPCTX            7
 # define OSSL_FUNC_DIGEST_SIZE              8
 # define OSSL_FUNC_DIGEST_BLOCK_SIZE        9
-
+# define OSSL_FUNC_DIGEST_SET_PARAMS        10
+# define OSSL_FUNC_DIGEST_GET_PARAMS        11
 
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *dctx))
@@ -100,9 +108,13 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
 OSSL_CORE_MAKE_FUNC(void, OP_digest_cleanctx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(void, OP_digest_freectx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *dctx))
+
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
-
+OSSL_CORE_MAKE_FUNC(int, OP_digest_set_params,
+                    (void *vctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params,
+                    (void *vctx, const OSSL_PARAM params[]))
 
 /* Symmetric Ciphers */
 
@@ -155,7 +167,6 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
-
 
 # ifdef __cplusplus
 }

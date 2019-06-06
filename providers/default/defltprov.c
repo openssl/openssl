@@ -51,7 +51,42 @@ static int deflt_get_params(const OSSL_PROVIDER *prov,
 }
 
 static const OSSL_ALGORITHM deflt_digests[] = {
+    { "SHA1", "default=yes", sha1_functions },
+
+    { "SHA224", "default=yes", sha224_functions },
     { "SHA256", "default=yes", sha256_functions },
+    { "SHA384", "default=yes", sha384_functions },
+    { "SHA512", "default=yes", sha512_functions },
+    { "SHA512-224", "default=yes", sha512_224_functions },
+    { "SHA512-256", "default=yes", sha512_256_functions },
+
+    { "SHA3-224", "default=yes", sha3_224_functions },
+    { "SHA3-256", "default=yes", sha3_256_functions },
+    { "SHA3-384", "default=yes", sha3_384_functions },
+    { "SHA3-512", "default=yes", sha3_512_functions },
+
+    { "KMAC128", "default=yes", keccak_kmac_128_functions },
+    { "KMAC256", "default=yes", keccak_kmac_256_functions },
+
+    { "SHAKE128", "default=yes", shake_128_functions },
+    { "SHAKE256", "default=yes", shake_256_functions },
+
+#ifndef OPENSSL_NO_BLAKE2
+    { "BLAKE2s256", "default=yes", blake2s256_functions },
+    { "BLAKE2b512", "default=yes", blake2b512_functions },
+#endif /* OPENSSL_NO_BLAKE2 */
+
+#ifndef OPENSSL_NO_SM3
+    { "SM3", "default=yes", sm3_functions },
+#endif /* OPENSSL_NO_SM3 */
+
+#ifndef OPENSSL_NO_MD5
+    { "MD5", "default=yes", md5_functions },
+    { "MD5-SHA1", "default=yes", md5_sha1_functions },
+#endif /* OPENSSL_NO_MD5 */
+
+    /*{ "UNDEF", "default=yes", nullmd_functions }, */
+
     { NULL, NULL, NULL }
 };
 

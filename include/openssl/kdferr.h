@@ -62,6 +62,7 @@ int ERR_load_KDF_strings(void);
 # define KDF_F_SSKDF_NEW                                  137
 # define KDF_F_SSKDF_SIZE                                 138
 # define KDF_F_TLS1_PRF_ALG                               111
+# define KDF_F_X963KDF_DERIVE                             139
 
 /*
  * KDF reason codes.
@@ -79,6 +80,7 @@ int ERR_load_KDF_strings(void);
 # define KDF_R_MISSING_SESSION_ID                         113
 # define KDF_R_MISSING_TYPE                               114
 # define KDF_R_MISSING_XCGHASH                            115
+# define KDF_R_NOT_SUPPORTED                              118
 # define KDF_R_UNKNOWN_PARAMETER_TYPE                     103
 # define KDF_R_UNSUPPORTED_MAC_TYPE                       117
 # define KDF_R_VALUE_ERROR                                108

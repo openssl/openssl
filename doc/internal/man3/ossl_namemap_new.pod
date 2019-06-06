@@ -1,0 +1,74 @@
+=pod
+
+=head1 NAME
+
+ossl_namemap_new, ossl_namemap_free, ossl_namemap_stored,
+ossl_namemap_add, ossl_namemap_name, ossl_namemap_number
+- internal number E<lt>-E<gt> name map
+
+=head1 SYNOPSIS
+
+ #include "internal/cryptlib.h"
+
+ OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx);
+
+ OSSL_NAMEMAP *ossl_namemap_new(void);
+ void ossl_namemap_free(OSSL_NAMEMAP *namemap);
+
+ int ossl_namemap_add(OSSL_NAMEMAP *namemap, const char *name);
+ const char *ossl_namemap_name(const OSSL_NAMEMAP *namemap, int number);
+ int ossl_namemap_number(const OSSL_NAMEMAP *namemap, const char *name);
+
+=head1 DESCRIPTION
+
+A B<OSSL_NAMEMAP> is a simple number E<lt>-E<gt> name map, which can
+be used to give any arbitrary name (any string) a unique dynamic
+identity that is valid throughout the lifetime of the associated
+library context.
+
+ossl_namemap_new() and ossl_namemap_free() construct and destruct a
+new B<OSSL_NAMEMAP>.
+This is suitable to use when the B<OSSL_NAMEMAP> is embedded in other
+structures, or should be independent for any reason.
+
+ossl_namemap_stored() finds or auto-creates the default namemap in the
+given library context.
+The returned B<OSSL_NAMEMAP> can't be destructed using
+ossl_namemap_free().
+
+ossl_namemap_add() adds a new name to the namemap if it's not already
+present.
+
+ossl_namemap_name() finds the name corresponding to the given number.
+
+ossl_namemap_number() finds the number corresponding to the given
+name.
+
+=head1 RETURN VALUES
+
+ossl_namemap_new() and ossl_namemap_stored() return the pointer to a
+B<OSSL_NAMEMAP>, or NULL on error.
+
+ossl_namemap_add() returns the number associated with the added
+string, or zero on error.
+
+ossl_namemap_name() returns a pointer to the name corresponding to the
+given number, or NULL if it's undefined in the given B<OSSL_NAMEMAP>.
+
+ossl_namemap_number() returns the number corresponding to the given
+name, or 0 if it's undefined in the given B<OSSL_NAMEMAP>.
+
+=head1 HISTORY
+
+The functions described here were all added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

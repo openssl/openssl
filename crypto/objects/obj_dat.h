@@ -1070,7 +1070,7 @@ static const unsigned char so[7775] = {
     0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,       /* [ 7684] OBJ_id_tc26_wrap_gostr3412_2015_magma */
     0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,0x01,  /* [ 7692] OBJ_id_tc26_wrap_gostr3412_2015_magma_kexp15 */
     0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x02,       /* [ 7701] OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,0x01,  /* [ 7709] OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15 */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x02,0x01,  /* [ 7709] OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15 */
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x02,  /* [ 7718] OBJ_id_tc26_gost_3410_2012_256_paramSetB */
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x03,  /* [ 7727] OBJ_id_tc26_gost_3410_2012_256_paramSetC */
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x04,  /* [ 7736] OBJ_id_tc26_gost_3410_2012_256_paramSetD */
@@ -1080,7 +1080,7 @@ static const unsigned char so[7775] = {
     0x2A,0x81,0x1C,0xCF,0x55,0x01,0x83,0x75,       /* [ 7766] OBJ_SM2_with_SM3 */
 };
 
-#define NUM_NID 1206
+#define NUM_NID 1207
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2288,9 +2288,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"SSHKDF", "sshkdf", NID_sshkdf},
     {"SM2-SM3", "SM2-with-SM3", NID_SM2_with_SM3, 8, &so[7766]},
     {"SSKDF", "sskdf", NID_sskdf},
+    {"X963KDF", "x963kdf", NID_x963kdf},
 };
 
-#define NUM_SN 1197
+#define NUM_SN 1198
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2591,6 +2592,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      378,    /* "X500algorithms" */
       12,    /* "X509" */
      184,    /* "X9-57" */
+    1206,    /* "X963KDF" */
      185,    /* "X9cm" */
      125,    /* "ZLIB" */
      478,    /* "aRecord" */
@@ -3491,7 +3493,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1197
+#define NUM_LN 1198
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4689,6 +4691,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      503,    /* "x500UniqueIdentifier" */
      158,    /* "x509Certificate" */
      160,    /* "x509Crl" */
+    1206,    /* "x963kdf" */
      125,    /* "zlib compression" */
 };
 
@@ -5401,7 +5404,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1177,    /* OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm 1 2 643 7 1 1 5 2 1 */
     1178,    /* OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac 1 2 643 7 1 1 5 2 2 */
     1181,    /* OBJ_id_tc26_wrap_gostr3412_2015_magma_kexp15 1 2 643 7 1 1 7 1 1 */
-    1183,    /* OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15 1 2 643 7 1 1 7 1 1 */
+    1183,    /* OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15 1 2 643 7 1 1 7 2 1 */
     1148,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetA 1 2 643 7 1 2 1 1 1 */
     1184,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetB 1 2 643 7 1 2 1 1 2 */
     1185,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetC 1 2 643 7 1 2 1 1 3 */

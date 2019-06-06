@@ -1369,7 +1369,7 @@ id-tc26-algorithms 7	:	id-tc26-wrap
 id-tc26-wrap 1	: id-tc26-wrap-gostr3412-2015-magma
 id-tc26-wrap-gostr3412-2015-magma 1	: id-tc26-wrap-gostr3412-2015-magma-kexp15
 id-tc26-wrap 2	: id-tc26-wrap-gostr3412-2015-kuznyechik
-id-tc26-wrap-gostr3412-2015-magma 1	: id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15
+id-tc26-wrap-gostr3412-2015-kuznyechik 1	: id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15
 
 id-tc26 2 		: id-tc26-constants
 
@@ -1616,6 +1616,9 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 
 # NID for SSKDF
                             : SSKDF              : sskdf
+
+# NID for X963-2001 KDF
+                            : X963KDF            : x963kdf
 
 # RFC 4556
 1 3 6 1 5 2 3 : id-pkinit

@@ -31,6 +31,9 @@ static int ossl_method_construct_this(OSSL_PROVIDER *provider, void *cbdata)
     const OSSL_ALGORITHM *map =
         ossl_provider_query_operation(provider, data->operation_id, &no_store);
 
+    if (map == NULL)
+        return 0;
+
     while (map->algorithm_name != NULL) {
         const OSSL_ALGORITHM *thismap = map++;
         void *method = NULL;
@@ -56,14 +59,14 @@ static int ossl_method_construct_this(OSSL_PROVIDER *provider, void *cbdata)
              * If we haven't been told not to store,
              * add to the global store
              */
-            data->mcm->put(data->libctx, NULL,
-                           thismap->property_definition,
-                           method, data->mcm_data);
+            data->mcm->put(data->libctx, NULL, method,
+                           thismap->algorithm_name,
+                           thismap->property_definition, data->mcm_data);
         }
 
-        data->mcm->put(data->libctx, data->store,
-                       thismap->property_definition,
-                       method, data->mcm_data);
+        data->mcm->put(data->libctx, data->store, method,
+                       thismap->algorithm_name, thismap->property_definition,
+                       data->mcm_data);
 
         /* refcnt-- because we're dropping the reference */
         data->mcm->destruct(method, data->mcm_data);
@@ -79,7 +82,8 @@ void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
 {
     void *method = NULL;
 
-    if ((method = mcm->get(libctx, NULL, propquery, mcm_data)) == NULL) {
+    if ((method =
+         mcm->get(libctx, NULL, name, propquery, mcm_data)) == NULL) {
         struct construct_data_st cbdata;
 
         /*
@@ -97,7 +101,7 @@ void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
         ossl_provider_forall_loaded(libctx, ossl_method_construct_this,
                                     &cbdata);
 
-        method = mcm->get(libctx, cbdata.store, propquery, mcm_data);
+        method = mcm->get(libctx, cbdata.store, name, propquery, mcm_data);
         mcm->dealloc_tmp_store(cbdata.store);
     }
 
