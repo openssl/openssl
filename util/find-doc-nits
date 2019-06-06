@@ -22,6 +22,7 @@ use OpenSSL::Util::Pod;
 our($opt_d);
 our($opt_e);
 our($opt_s);
+our($opt_o);
 our($opt_h);
 our($opt_l);
 our($opt_n);
@@ -37,6 +38,7 @@ Find small errors (nits) in documentation.  Options:
     -d Detailed list of undocumented (implies -u)
     -e Detailed list of new undocumented (implies -v)
     -s Same as -e except no output is generated if nothing is undocumented
+    -o Causes -e/-v to count symbols added since 1.1.1 as new (implies -v)
     -l Print bogus links
     -n Print nits in POD pages
     -p Warn if non-public name documented (implies -n)
@@ -318,8 +320,13 @@ sub checkmacros()
 {
     my $count = 0;
     my %seen;
+    my @missing;
 
-    my @missing = loadmissing('util/missingmacro.txt') if ($opt_v);
+    if ($opt_o) {
+        @missing = loadmissing('util/missingmacro111.txt');
+    } elsif ($opt_v) {
+        @missing = loadmissing('util/missingmacro.txt');
+    }
 
     print "# Checking macros (approximate)\n" if !$opt_s;
     foreach my $f ( glob('include/openssl/*.h') ) {
@@ -538,14 +545,14 @@ sub checkflags() {
     return $ok;
 }
 
-getopts('cdeslnphuv');
+getopts('cdesolnphuv');
 
 &help() if $opt_h;
 
 $opt_n = 1 if $opt_p;
 $opt_u = 1 if $opt_d;
 $opt_e = 1 if $opt_s;
-$opt_v = 1 if $opt_e;
+$opt_v = 1 if $opt_o || $opt_e;
 
 die "Cannot use both -u and -v" if $opt_u && $opt_v;
 die "Cannot use both -d and -e" if $opt_d && $opt_e;
@@ -617,8 +624,13 @@ if ( $opt_u || $opt_v) {
     foreach ( keys %temp ) {
         $docced{$_} = $temp{$_};
     }
-    &printem('crypto', 'util/libcrypto.num', 'util/missingcrypto.txt');
-    &printem('ssl', 'util/libssl.num', 'util/missingssl.txt');
+    if ($opt_o) {
+        &printem('crypto', 'util/libcrypto.num', 'util/missingcrypto111.txt');
+        &printem('ssl', 'util/libssl.num', 'util/missingssl111.txt');
+    } else {
+        &printem('crypto', 'util/libcrypto.num', 'util/missingcrypto.txt');
+        &printem('ssl', 'util/libssl.num', 'util/missingssl.txt');
+    }
     &checkmacros();
 }
 
