@@ -285,11 +285,24 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
+#if 0
+        /* TODO(3.0): Re-enable this code when EVP_MD_CTX_ctrl is deprecated */
         OSSL_PARAM digest_cmd_params[3];
+        int cmd;
+        void *msg;
 
-        ssl3_digest_master_key_set_params(s->session, digest_cmd_params);
+        ssl3_digest_master_key_set_params(s->session, digest_cmd_params, &cmd,
+                                          &msg);
+
+        /*
+         * TODO(3.0): Replace EVP_MD_CTX_ctrl call below with
+         * EVP_MD_CTX_set_params
+         */
+#endif
         if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
-            || EVP_MD_CTX_set_params(mctx, digest_cmd_params) <= 0
+            || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                (int)s->session->master_key_length,
+                                s->session->master_key)
             || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
 
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
@@ -474,11 +487,24 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
+#if 0
+        /* TODO(3.0): Re-enable this code when EVP_MD_CTX_ctrl is deprecated */
         OSSL_PARAM digest_cmd_params[3];
+        int cmd;
+        void *msg;
 
-        ssl3_digest_master_key_set_params(s->session, digest_cmd_params);
+        ssl3_digest_master_key_set_params(s->session, digest_cmd_params, &cmd,
+                                          &msg);
+
+        /*
+         * TODO(3.0): Replace EVP_MD_CTX_ctrl call below with
+         * EVP_MD_CTX_set_params
+         */
+#endif
         if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
-                || EVP_MD_CTX_set_params(mctx, digest_cmd_params) <= 0) {
+                || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                    (int)s->session->master_key_length,
+                                    s->session->master_key)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                      ERR_R_EVP_LIB);
             goto err;
