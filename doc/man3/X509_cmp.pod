@@ -61,7 +61,7 @@ comparison job. Data to be compared varies from DER encoding data, SHA-1 hash
 value or B<ASN1_STRING>. The sign of the comparison can be used to order the
 objects but it does not have a special meaning in some cases.
 
-X509_NAME_cmp() and wrappers utilize B<-2> value to indicate errors in some
+X509_NAME_cmp() and wrappers utilize the value B<-2> to indicate errors in some
 circumstances, which could cause confusion for the applications.
 
 =head1 SEE ALSO
