@@ -48,8 +48,8 @@ whole CRL content indicated by parameter B<a> and B<b>.
 =head1 RETURN VALUES
 
 Like common memory comparison functions, the B<X509> comparison functions return
-an integer less than, equal to, or greater than zero if object B<a> is found,
-respectively, to be less than, to match, or be greater than object B<b>.
+an integer less than, equal to, or greater than zero if object B<a> is found to
+be less than, to match, or be greater than object B<b>, respectively.
 
 X509_NAME_cmp(), X509_issuer_and_serial_cmp(), X509_issuer_name_cmp(),
 X509_subject_name_cmp() and X509_CRL_cmp() may return B<-2> to indicate an error.
@@ -58,9 +58,10 @@ X509_subject_name_cmp() and X509_CRL_cmp() may return B<-2> to indicate an error
 
 These functions in fact utilize the underlying B<memcmp> of C library to do the
 comparison job. Data to be compared varies from DER encoding data, SHA-1 hash
-value or B<ASN1_STRING>.
+value or B<ASN1_STRING>. The sign of the comparison can be used to order the
+objects but it does not have a special meaning in some cases.
 
-X509_NAME_cmp() and wrappers utilize B<-2> value to indicated errors in some
+X509_NAME_cmp() and wrappers utilize B<-2> value to indicate errors in some
 circumstances, which could cause confusion for the applications.
 
 =head1 SEE ALSO
