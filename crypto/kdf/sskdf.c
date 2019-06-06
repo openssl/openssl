@@ -251,6 +251,8 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
             memcpy(out, mac, len);
             break;
         }
+        EVP_MAC_CTX_free(ctx);
+        ctx = NULL;
     }
     ret = 1;
 end:
