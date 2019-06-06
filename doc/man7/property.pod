@@ -126,16 +126,13 @@ Two levels of property query are supported.
 A context based property query that applies to all fetch operations and a local
 property query.
 Where both the context and local queries include a clause with the same name,
-the local clause is used and the context one ignored.
-For example, a context property query of "fips=yes" and a local property query
-of "fips=no" would result in algorithms that have the "fips" property set t
-"no".
+the local clause overrides the context clause.
 
 =head2 Override
 
-It is possible for a local property query to override a clause in the context
+It is possible for a local property query to remove a clause in the context
 property query by preceeding the property name with a '-'.
-For example, a conxtet property query that contains "fips=yes" would normally
+For example, a context property query that contains "fips=yes" would normally
 result in implementations that have "fips=yes".
 However, if the setting of
 the "fips" property is irrelevant to the operations being performed, the local
