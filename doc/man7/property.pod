@@ -128,15 +128,14 @@ property query.
 Where both the context and local queries include a clause with the same name,
 the local clause overrides the context clause.
 
-=head2 Override
-
 It is possible for a local property query to remove a clause in the context
 property query by preceeding the property name with a '-'.
 For example, a context property query that contains "fips=yes" would normally
 result in implementations that have "fips=yes".
-However, if the setting of
-the "fips" property is irrelevant to the operations being performed, the local
-property query can include the clause "-fips".
+
+However, if the setting of the "fips" property is irrelevant to the
+operations being performed, the local property query can include the
+clause "-fips".
 Note that the local property query could not use "fips=no" because that would
 disallow any implementations with "fips=yes" rather than not caring about the
 setting.
