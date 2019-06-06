@@ -346,10 +346,6 @@ look like this:
 (in this example, that program was stored in F<foo.c> and compiled to
 F<./foo>)
 
-=head1 HISTORY
-
-These functions were added in OpenSSL 3.0.0.
-
 =head1 SEE ALSO
 
 L<EVP_MAC_BLAKE2(7)>,
@@ -359,6 +355,10 @@ L<EVP_MAC_HMAC(7)>,
 L<EVP_MAC_KMAC(7)>,
 L<EVP_MAC_SIPHASH(7)>,
 L<EVP_MAC_POLY1305(7)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
