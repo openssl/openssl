@@ -542,7 +542,7 @@ void BIO_set_md(BIO *, const EVP_MD *md);
 
 int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
 int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
-DEPRECATEDIN_3(int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2))
+int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 EVP_MD_CTX *EVP_MD_CTX_new(void);
 int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx);

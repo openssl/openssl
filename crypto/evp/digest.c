@@ -539,30 +539,34 @@ int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
     return 0;
 }
 
-#if !OPENSSL_API_3
+/* TODO(3.0): Remove legacy code below - only used by engines & DigestSign */
 int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 {
     if (ctx->digest != NULL) {
-        OSSL_PARAM params[2];
-        size_t i, sz, n = 0;
+        if (ctx->digest->prov != NULL) {
+            OSSL_PARAM params[2];
+            size_t i, sz, n = 0;
 
-        switch (cmd) {
-        case EVP_MD_CTRL_XOF_LEN:
-            if (ctx->digest->set_params == NULL)
-                break;
-            i = (size_t)p1;
-            params[n++] = OSSL_PARAM_construct_size_t(
-                              OSSL_DIGEST_PARAM_XOFLEN, &i, &sz);
-            params[n++] = OSSL_PARAM_construct_end();
-            return ctx->digest->set_params(ctx->provctx, params) > 0;
-        case EVP_MD_CTRL_MICALG:
-            if (ctx->digest->get_params == NULL)
-                break;
-            params[n++] = OSSL_PARAM_construct_utf8_string(
-                              OSSL_DIGEST_PARAM_MICALG, p2, p1 ? p1 : 9999,
-                              &sz);
-            params[n++] = OSSL_PARAM_construct_end();
-            return ctx->digest->get_params(ctx->provctx, params);
+            switch (cmd) {
+            case EVP_MD_CTRL_XOF_LEN:
+                if (ctx->digest->set_params == NULL)
+                    break;
+                i = (size_t)p1;
+                params[n++] =
+                    OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &i,
+                                                &sz);
+                params[n++] = OSSL_PARAM_construct_end();
+                return ctx->digest->set_params(ctx->provctx, params);
+            case EVP_MD_CTRL_MICALG:
+                if (ctx->digest->get_params == NULL)
+                    break;
+                params[n++] =
+                    OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
+                                                     p2, p1 ? p1 : 9999, &sz);
+                params[n++] = OSSL_PARAM_construct_end();
+                return ctx->digest->get_params(ctx->provctx, params);
+            }
+            return 0;
         }
         /* legacy code */
         if (ctx->digest->md_ctrl != NULL) {
@@ -574,7 +578,6 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     }
     return 0;
 }
-#endif
 
 static void *evp_md_from_dispatch(const OSSL_DISPATCH *fns,
                                   OSSL_PROVIDER *prov)

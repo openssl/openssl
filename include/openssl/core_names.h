@@ -42,8 +42,7 @@ extern "C" {
 
 /* digest parameters */
 #define OSSL_DIGEST_PARAM_XOFLEN    "xoflen"
-#define OSSL_DIGEST_PARAM_CMD       "cmd"
-#define OSSL_DIGEST_PARAM_MSG       "msg"
+#define OSSL_DIGEST_PARAM_SSL3_MS   "ssl3-ms"
 #define OSSL_DIGEST_PARAM_PAD_TYPE  "pad_type"
 #define OSSL_DIGEST_PARAM_MICALG    "micalg"
 
