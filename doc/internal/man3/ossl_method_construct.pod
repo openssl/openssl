@@ -58,10 +58,10 @@ It's important to keep in mind that a method is identified by three things:
 =head2 Functions
 
 ossl_method_construct() creates a method by asking all available
-providers for a dispatch table given an C<operation_id>, an algorithm
-C<name> and a set of C<properties>, and then calling appropriate
+providers for a dispatch table given an I<operation_id>, an algorithm
+I<name> and a set of I<properties>, and then calling appropriate
 functions given by the sub-system specific method creator through
-C<mcm> and the data in C<mcm_data> (which is passed by
+I<mcm> and the data in I<mcm_data> (which is passed by
 ossl_method_construct()).
 
 This function assumes that the sub-system method creator implements
@@ -73,14 +73,14 @@ appropriate).
 
 A central part of constructing a sub-system specific method is to give
 ossl_method_construct a set of functions, all in the
-C<OSSL_METHOD_CONSTRUCT_METHOD> structure, which holds the following
+B<OSSL_METHOD_CONSTRUCT_METHOD> structure, which holds the following
 function pointers:
 
 =over 4
 
 =item alloc_tmp_store()
 
-Create a temporary method store in the scope of the library context C<ctx>.
+Create a temporary method store in the scope of the library context I<ctx>.
 This store is used to temporarily store methods for easier lookup, for
 when the provider doesn't want its dispatch table stored in a longer
 term cache.
@@ -93,41 +93,41 @@ Remove a temporary store.
 
 Look up an already existing method from a store by name.
 
-The store may be given with C<store>.
+The store may be given with I<store>.
 B<NULL> is a valid value and means that a sub-system default store
 must be used.
-This default store should be stored in the library context C<libctx>.
+This default store should be stored in the library context I<libctx>.
 
 The method to be looked up should be identified with the given
-C<operation_id>, C<name>, the provided property query C<propquery>
-and data from C<data> (which is the C<mcm_data> that was passed to
+I<operation_id>, I<name>, the provided property query I<propquery>
+and data from I<data> (which is the I<mcm_data> that was passed to
 ossl_construct_method()).
 
 This function is expected to increment the method's reference count.
 
 =item put()
 
-Places the C<method> created by the construct() function (see below)
+Places the I<method> created by the construct() function (see below)
 in a store.
 
-The store may be given with C<store>.
+The store may be given with I<store>.
 B<NULL> is a valid value and means that a sub-system default store
 must be used.
-This default store should be stored in the library context C<libctx>.
+This default store should be stored in the library context I<libctx>.
 
-The method should be associated with the given C<operation_id>,
-C<name> and property definition C<propdef> as well as any
-identification data given through C<data> (which is the C<mcm_data>
+The method should be associated with the given I<operation_id>,
+I<name> and property definition I<propdef> as well as any
+identification data given through I<data> (which is the I<mcm_data>
 that was passed to ossl_construct_method()).
 
-This function is expected to increment the C<method>'s reference count.
+This function is expected to increment the I<method>'s reference count.
 
 =item construct()
 
-Constructs a sub-system method for the given C<name> and the given
-dispatch table C<fns>.
+Constructs a sub-system method for the given I<name> and the given
+dispatch table I<fns>.
 
-The associated I<provider object> C<prov> is passed as well, to make
+The associated provider object I<prov> is passed as well, to make
 it possible for the sub-system constructor to keep a reference, which
 is recommended.
 If such a reference is kept, the I<provider object> reference counter
@@ -137,7 +137,7 @@ This function is expected to set the method's reference count to 1.
 
 =item desctruct()
 
-Decrement the C<method>'s reference count, and destruct it when
+Decrement the I<method>'s reference count, and destruct it when
 the reference count reaches zero.
 
 =back
