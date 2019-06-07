@@ -75,7 +75,7 @@ SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c mem_str.c mem_dbg.c \
         cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
         o_fopen.c getenv.c o_init.c o_fips.c init.c trace.c provider.c \
-        asn1_dsa.c $UPLINKSRC
+        asn1_dsa.c packet.c $UPLINKSRC
 DEFINE[../libcrypto]=$UTIL_DEFINE $UPLINKDEF
 SOURCE[../providers/fips]=$UTIL_COMMON
 DEFINE[../providers/fips]=$UTIL_DEFINE
