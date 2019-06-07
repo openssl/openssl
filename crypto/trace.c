@@ -159,11 +159,12 @@ int OSSL_trace_get_category_num(const char *name)
 /* We use one trace channel for each trace category */
 static struct {
     enum { SIMPLE_CHANNEL, CALLBACK_CHANNEL } type;
+    int verbosity;
     BIO *bio;
     char *prefix;
     char *suffix;
 } trace_channels[OSSL_TRACE_CATEGORY_NUM] = {
-    { 0, NULL, NULL, NULL },
+    { 0, OSSL_TRACE_LEVEL_UNDEFINED, NULL, NULL, NULL },
 };
 
 #endif
@@ -325,6 +326,44 @@ void ossl_trace_cleanup(void)
 #endif
 }
 
+const char *OSSL_trace_get_verbosity_name(int level)
+{
+    switch (level) {
+    case OSSL_TRACE_LEVEL_ALERT: return "ALERT";
+    case OSSL_TRACE_LEVEL_ERROR: return "ERROR";
+    case OSSL_TRACE_LEVEL_WARN: return "WARN";
+    case OSSL_TRACE_LEVEL_INFO: return "INFO";
+    case OSSL_TRACE_LEVEL_DEBUG: return "DEBUG";
+    case OSSL_TRACE_LEVEL_TRACE: return "TRACE";
+    default: return "";
+    }
+}
+
+int OSSL_trace_get_verbosity(int category)
+{
+#ifndef OPENSSL_NO_TRACE
+    if (category < 0 || category >= OSSL_TRACE_CATEGORY_NUM)
+        return OSSL_TRACE_LEVEL_UNDEFINED;
+    if (trace_channels[category].verbosity == OSSL_TRACE_LEVEL_UNDEFINED)
+        return OSSL_TRACE_LEVEL_DEFAULT;
+    return trace_channels[category].verbosity;
+#else
+    return OSSL_TRACE_LEVEL_UNDEFINED;
+#endif
+}
+
+int OSSL_trace_set_verbosity(int category, int level)
+{
+#ifndef OPENSSL_NO_TRACE
+    if (category < 0 || category >= OSSL_TRACE_CATEGORY_NUM)
+        return 0;
+    if (level <= OSSL_TRACE_LEVEL_UNDEFINED || OSSL_TRACE_LEVEL_TRACE < level)
+        return 0;
+    trace_channels[category].verbosity = level;
+#endif
+    return 1;
+}
+
 int OSSL_trace_set_channel(int category, BIO *channel)
 {
 #ifndef OPENSSL_NO_TRACE
@@ -437,7 +476,7 @@ int OSSL_trace_enabled(int category)
     return ret;
 }
 
-BIO *OSSL_trace_begin(int category)
+BIO *OSSL_trace_begin(int category, int level)
 {
     BIO *channel = NULL;
 #ifndef OPENSSL_NO_TRACE
@@ -445,6 +484,10 @@ BIO *OSSL_trace_begin(int category)
 
     category = ossl_trace_get_category(category);
     if (category < 0)
+        return NULL;
+
+    if (level != OSSL_TRACE_LEVEL_UNDEFINED
+            && level > OSSL_trace_get_verbosity(category))
         return NULL;
 
     channel = trace_channels[category].bio;

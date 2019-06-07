@@ -49,13 +49,35 @@ extern "C" {
 # define OSSL_TRACE_CATEGORY_PKCS12_DECRYPT     10
 # define OSSL_TRACE_CATEGORY_X509V3_POLICY      11
 # define OSSL_TRACE_CATEGORY_BN_CTX             12
-# define OSSL_TRACE_CATEGORY_NUM                13
+# define OSSL_TRACE_CATEGORY_CMP                13
+# define OSSL_TRACE_CATEGORY_NUM                14
 
 /* Returns the trace category number for the given |name| */
 int OSSL_trace_get_category_num(const char *name);
 
 /* Returns the trace category name for the given |num| */
 const char *OSSL_trace_get_category_name(int num);
+
+/*
+ * TRACE LEVEL AND VERBOSITY
+ */
+
+# define OSSL_TRACE_LEVEL_UNDEFINED     0
+# define OSSL_TRACE_LEVEL_ALERT         1
+# define OSSL_TRACE_LEVEL_ERROR         2
+# define OSSL_TRACE_LEVEL_WARN          3
+# define OSSL_TRACE_LEVEL_INFO          4
+# define OSSL_TRACE_LEVEL_DEBUG         5
+# define OSSL_TRACE_LEVEL_TRACE         6
+# if defined DEBUG && !defined NDEBUG
+#  define OSSL_TRACE_LEVEL_DEFAULT      OSSL_TRACE_LEVEL_DEBUG
+# else
+#  define OSSL_TRACE_LEVEL_DEFAULT      OSSL_TRACE_LEVEL_INFO
+# endif
+
+const char *OSSL_trace_get_verbosity_name(int level);
+int OSSL_trace_get_verbosity(int category);
+int OSSL_trace_set_verbosity(int category, int level);
 
 /*
  * TRACE CONSUMERS
@@ -127,12 +149,13 @@ int OSSL_trace_enabled(int category);
 /*
  * Wrap a group of tracing output calls.  OSSL_trace_begin() locks tracing and
  * returns the trace channel associated with the given category, or NULL if no
- * channel is associated with the category.  OSSL_trace_end() unlocks tracing.
+ * channel is associated with the category or the given level is above the
+ * verbosity currently set for the category. OSSL_trace_end() unlocks tracing.
  *
  * Usage:
  *
  *    BIO *out;
- *    if ((out = OSSL_trace_begin(category)) != NULL) {
+ *    if ((out = OSSL_trace_begin(category, level)) != NULL) {
  *        ...
  *        BIO_fprintf(out, ...);
  *        ...
@@ -141,7 +164,7 @@ int OSSL_trace_enabled(int category);
  *
  * See also the convenience macros OSSL_TRACE_BEGIN and OSSL_TRACE_END below.
  */
-BIO *OSSL_trace_begin(int category);
+BIO *OSSL_trace_begin(int category, int level);
 void OSSL_trace_end(int category, BIO *channel);
 
 /*
@@ -193,7 +216,8 @@ void OSSL_trace_end(int category, BIO *channel);
 
 #  define OSSL_TRACE_BEGIN(category) \
     do { \
-        BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_##category); \
+        BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_##category, \
+                                        OSSL_TRACE_LEVEL_UNDEFINED); \
  \
         if (trc_out != NULL)
 
@@ -246,7 +270,7 @@ void OSSL_trace_end(int category, BIO *channel);
  * Unfortunately, C90 macros don't support variable arguments, so the
  * "vararg" OSSL_TRACEV() macro has a rather weird usage pattern:
  *
- *    OSSL_TRACEV(category, (trc_out, "format string", ...args...));
+ *    OSSL_TRACEV(category, level, (trc_out, "format string", ...args...));
  *
  * Where 'channel' is the literal symbol of this name, not a variable.
  * For that reason, it is currently not intended to be used directly,
@@ -261,32 +285,51 @@ void OSSL_trace_end(int category, BIO *channel);
  *                42, "What do you get when you multiply six by nine?");
  */
 
-# define OSSL_TRACEV(category, args) \
-    OSSL_TRACE_BEGIN(category) \
-        BIO_printf args; \
-    OSSL_TRACE_END(category)
+# if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+#  define OSSL_FUNC __func__
+# elif defined(__STDC__) && defined(PEDANTIC)
+#  define OSSL_FUNC "(no function name due to PEDANTIC)"
+# elif defined(WIN32) || defined(__GNUC__) || defined(__GNUG__)
+#  define OSSL_FUNC __FUNCTION__
+# elif defined(__FUNCSIG__)
+#  define OSSL_FUNC __FUNCSIG__
+# else
+#  define OSSL_FUNC "(unknown function)"
+# endif
+# define OSSL_TRACEV(category, level, args) \
+    do { \
+        BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_##category, \
+                                        OSSL_TRACE_LEVEL_##level); \
+ \
+        if (trc_out != NULL) { \
+            BIO_printf(trc_out, "%s:%s:%d:%s:", OSSL_FUNC, OPENSSL_FILE, \
+                       OPENSSL_LINE, \
+                       OSSL_trace_get_verbosity_name(OSSL_TRACE_LEVEL_##level)); \
+            BIO_printf args; \
+        } \
+    OSSL_TRACE_END(category) \
 
 # define OSSL_TRACE(category, text) \
-    OSSL_TRACEV(category, (trc_out, "%s", text))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, "%s", text))
 
 # define OSSL_TRACE1(category, format, arg1) \
-    OSSL_TRACEV(category, (trc_out, format, arg1))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1))
 # define OSSL_TRACE2(category, format, arg1, arg2) \
-    OSSL_TRACEV(category, (trc_out, format, arg1, arg2))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1, arg2))
 # define OSSL_TRACE3(category, format, arg1, arg2, arg3) \
-    OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1, arg2, arg3))
 # define OSSL_TRACE4(category, format, arg1, arg2, arg3, arg4) \
-    OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1, arg2, arg3, arg4))
 # define OSSL_TRACE5(category, format, arg1, arg2, arg3, arg4, arg5) \
-    OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1, arg2, arg3, arg4, arg5))
 # define OSSL_TRACE6(category, format, arg1, arg2, arg3, arg4, arg5, arg6) \
-    OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6))
 # define OSSL_TRACE7(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7) \
-    OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7))
 # define OSSL_TRACE8(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) \
-    OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8))
 # define OSSL_TRACE9(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) \
-    OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9))
+    OSSL_TRACEV(category, UNDEFINED, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9))
 
 # ifdef  __cplusplus
 }
