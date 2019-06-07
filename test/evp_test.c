@@ -325,6 +325,7 @@ static int parse_bin(const char *value, unsigned char **buf, size_t *buflen)
 typedef struct digest_data_st {
     /* Digest this test is for */
     const EVP_MD *digest;
+    EVP_MD *fetched_digest;
     /* Input to digest */
     STACK_OF(EVP_TEST_BUFFER) *input;
     /* Expected output */
@@ -336,8 +337,10 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
 {
     DIGEST_DATA *mdat;
     const EVP_MD *digest;
+    EVP_MD *fetched_digest;
 
-    if ((digest = EVP_get_digestbyname(alg)) == NULL) {
+    if ((digest = fetched_digest = EVP_MD_fetch(NULL, alg, NULL)) == NULL
+        && (digest = EVP_get_digestbyname(alg)) == NULL) {
         /* If alg has an OID assume disabled algorithm */
         if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
             t->skip = 1;
@@ -349,6 +352,9 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
         return 0;
     t->data = mdat;
     mdat->digest = digest;
+    mdat->fetched_digest = fetched_digest;
+    if (fetched_digest != NULL)
+        TEST_info("%s is fetched", alg);
     return 1;
 }
 
@@ -358,6 +364,7 @@ static void digest_test_cleanup(EVP_TEST *t)
 
     sk_EVP_TEST_BUFFER_pop_free(mdat->input, evp_test_buffer_free);
     OPENSSL_free(mdat->output);
+    EVP_MD_meth_free(mdat->fetched_digest);
 }
 
 static int digest_test_parse(EVP_TEST *t,
@@ -450,6 +457,7 @@ static const EVP_TEST_METHOD digest_test_method = {
 
 typedef struct cipher_data_st {
     const EVP_CIPHER *cipher;
+    EVP_CIPHER *fetched_cipher;
     int enc;
     /* EVP_CIPH_GCM_MODE, EVP_CIPH_CCM_MODE or EVP_CIPH_OCB_MODE if AEAD */
     int aead;
@@ -472,10 +480,12 @@ typedef struct cipher_data_st {
 static int cipher_test_init(EVP_TEST *t, const char *alg)
 {
     const EVP_CIPHER *cipher;
+    EVP_CIPHER *fetched_cipher;
     CIPHER_DATA *cdat;
     int m;
 
-    if ((cipher = EVP_get_cipherbyname(alg)) == NULL) {
+    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(NULL, alg, NULL)) == NULL
+        && (cipher = EVP_get_cipherbyname(alg)) == NULL) {
         /* If alg has an OID assume disabled algorithm */
         if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
             t->skip = 1;
@@ -485,6 +495,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     }
     cdat = OPENSSL_zalloc(sizeof(*cdat));
     cdat->cipher = cipher;
+    cdat->fetched_cipher = fetched_cipher;
     cdat->enc = -1;
     m = EVP_CIPHER_mode(cipher);
     if (m == EVP_CIPH_GCM_MODE
@@ -498,6 +509,8 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         cdat->aead = 0;
 
     t->data = cdat;
+    if (fetched_cipher != NULL)
+        TEST_info("%s is fetched", alg);
     return 1;
 }
 
@@ -513,6 +526,7 @@ static void cipher_test_cleanup(EVP_TEST *t)
     for (i = 0; i < AAD_NUM; i++)
         OPENSSL_free(cdat->aad[i]);
     OPENSSL_free(cdat->tag);
+    EVP_CIPHER_meth_free(cdat->fetched_cipher);
 }
 
 static int cipher_test_parse(EVP_TEST *t, const char *keyword,
@@ -872,6 +886,9 @@ typedef struct mac_data_st {
     int type;                    /* for mac_test_run_pkey */
     /* Algorithm string for this MAC */
     char *alg;
+    /* Underlying algorithm if it was explicitly fetched */
+    void *fetched_md;
+    void *fetched_cipher;
     /* MAC key */
     unsigned char *key;
     size_t key_len;
@@ -976,6 +993,8 @@ static void mac_test_cleanup(EVP_TEST *t)
     OPENSSL_free(mdat->salt);
     OPENSSL_free(mdat->input);
     OPENSSL_free(mdat->output);
+    EVP_MD_meth_free(mdat->fetched_md);
+    EVP_CIPHER_meth_free(mdat->fetched_cipher);
 }
 
 static int mac_test_parse(EVP_TEST *t,
