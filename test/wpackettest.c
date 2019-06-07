@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/buffer.h>
-#include "../ssl/packet_locl.h"
+#include "internal/packet.h"
 #include "testutil.h"
 
 static const unsigned char simple1[] = { 0xff };

@@ -8,7 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
-#include "packet_locl.h"
+#include "internal/packet.h"
 #include <openssl/sslerr.h>
 
 #define DEFAULT_BUF_SIZE    256

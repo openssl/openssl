@@ -15,7 +15,7 @@
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include "record_locl.h"
-#include "../packet_locl.h"
+#include "internal/packet.h"
 
 #if     defined(OPENSSL_SMALL_FOOTPRINT) || \
         !(      defined(AES_ASM) &&     ( \
