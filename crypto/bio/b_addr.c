@@ -696,6 +696,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
          * macro magic in bio_lcl.h
          */
+      retry:
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
@@ -706,6 +707,19 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         case 0:
             ret = 1;             /* Success */
             break;
+# if (defined(EAI_FAMILY) || defined(EAI_ADDRFAMILY)) && defined(AI_ADDRCONFIG)
+#  ifdef EAI_FAMILY
+        case EAI_FAMILY:
+#  endif
+#  ifdef EAI_ADDRFAMILY
+        case EAI_ADDRFAMILY:
+#  endif
+            if (hints.ai_flags & AI_ADDRCONFIG) {
+                hints.ai_flags &= ~AI_ADDRCONFIG;
+                goto retry;
+            }
+            /* fall through */
+# endif
         default:
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
             ERR_add_error_data(1, gai_strerror(gai_ret));
