@@ -24,6 +24,7 @@
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
 #include "internal/asn1_dsa.h"
+#include "internal/packet.h"
 
 #define ID_SEQUENCE 0x30
 #define ID_INTEGER 0x02
@@ -184,101 +185,72 @@ size_t encode_der_dsa_sig(const BIGNUM *r, const BIGNUM *s,
 }
 
 /*
- * Decodes the DER length octets at *ppin, stores the decoded length to
- * *pcont_len and, if successful, increments *ppin past the data that was
- * consumed.
- *
- * pcont_len, ppin and *ppin must not be NULL.
- *
- * An attempt to consume more than len bytes results in an error.
- * Returns the number of bytes of input consumed or 0 if an error occurs.
+ * Decodes the DER length octets in pkt and initialises subpkt with the
+ * following bytes of that length.
+ * 
+ * Returns 1 on success or 0 on failure.
  */
-size_t decode_der_length(size_t *pcont_len, const unsigned char **ppin,
-                         size_t len)
+int decode_der_length(PACKET *pkt, PACKET *subpkt)
 {
-    const unsigned char *in = *ppin;
-    size_t consumed;
-    size_t n;
+    unsigned int byte;
 
-    if (len < 1)
+    if (!PACKET_get_1(pkt, &byte))
         return 0;
-    n = *in++;
-    consumed = 1;
-    if (n > 0x7f) {
-        if (n == 0x81 && len - consumed >= 1) {
-            n = *in++;
-            if (n <= 0x7f)
-                return 0; /* Not DER. */
-            ++consumed;
-        } else if (n == 0x82 && len - consumed >= 2) {
-            n = *in++ << 8;
-            n |= *in++;
-            if (n <= 0xff)
-                return 0; /* Not DER. */
-            consumed += 2;
-        } else {
-            return 0; /* Too large, invalid, or not DER. */
-        }
-    }
-    *pcont_len = n;
-    *ppin = in;
-    return consumed;
+
+    if (byte < 0x80)
+        return PACKET_get_sub_packet(pkt, subpkt, (size_t)byte);
+    if (byte == 0x81)
+        return PACKET_get_length_prefixed_1(pkt, subpkt);
+    if (byte == 0x82)
+        return PACKET_get_length_prefixed_2(pkt, subpkt);
+
+    /* Too large, invalid, or not DER. */
+    return 0;
 }
 
 /*
- * Decodes a single ASN.1 INTEGER value from *ppin, which must be DER encoded,
- * updates n with the decoded value, and, if successful, increments *ppin past
- * the data that was consumed.
+ * Decodes a single ASN.1 INTEGER value from pkt, which must be DER encoded,
+ * and updates n with the decoded value.
  *
  * The BIGNUM, n, must have already been allocated by calling BN_new().
- * ppin and *ppin must not be NULL.
+ * pkt must not be NULL.
  *
  * An attempt to consume more than len bytes results in an error.
- * Returns the number of bytes of input consumed or 0 if an error occurs.
+ * Returns 1 on success or 0 on error.
  *
- * If the buffer is supposed to only contain a single INTEGER value with no
+ * If the PACKET is supposed to only contain a single INTEGER value with no
  * trailing garbage then it is up to the caller to verify that all bytes
  * were consumed.
  */
-size_t decode_der_integer(BIGNUM *n, const unsigned char **ppin, size_t len)
+int decode_der_integer(PACKET *pkt, BIGNUM *n)
 {
-    const unsigned char *in = *ppin;
-    size_t consumed;
-    size_t c;
-    size_t cont_len;
+    PACKET contpkt, tmppkt;
+    unsigned int tag, tmp;
 
-    if (len < 1 || n == NULL || *in++ != ID_INTEGER)
+    /* Check we have an integer and get the content bytes */
+    if (!PACKET_get_1(pkt, &tag)
+            || tag != ID_INTEGER
+            || !decode_der_length(pkt, &contpkt))
         return 0;
-    consumed = 1;
-    if ((c = decode_der_length(&cont_len, &in, len - consumed)) == 0)
-        return 0;
-    consumed += c;
-    /* Check for a positive INTEGER with valid content encoding and decode. */
-    if (cont_len > len - consumed || cont_len < 1 || (in[0] & 0x80) != 0
-            || (cont_len >= 2 && in[0] == 0 && (in[1] & 0x80) == 0)
-            || BN_bin2bn(in, (int)cont_len, n) == NULL)
-        return 0;
-    in += cont_len;
-    consumed += cont_len;
-    *ppin = in;
-    return consumed;
-}
 
-static size_t decode_dsa_sig_content(BIGNUM *r, BIGNUM *s,
-                                     const unsigned char **ppin, size_t len)
-{
-    const unsigned char *in = *ppin;
-    size_t consumed = 0;
-    size_t c;
+    /* Peek ahead at the first bytes to check for proper encoding */
+    tmppkt = contpkt;
+    /* The INTEGER must be positive */
+    if (!PACKET_get_1(&tmppkt, &tmp)
+            || (tmp & 0x80) != 0)
+        return 0;
+    /* If there a zero padding byte the next byte must have the msb set */
+    if (PACKET_remaining(&tmppkt) > 0 && tmp == 0) {
+        if (!PACKET_get_1(&tmppkt, &tmp)
+                || (tmp & 0x80) == 0)
+            return 0;
+    }
 
-    if ((c = decode_der_integer(r, &in, len - consumed)) == 0)
+    if (BN_bin2bn(PACKET_data(&contpkt),
+                  (int)PACKET_remaining(&contpkt), n) == NULL)
         return 0;
-    consumed += c;
-    if ((c = decode_der_integer(s, &in, len - consumed)) == 0)
-        return 0;
-    consumed += c;
-    *ppin = in;
-    return consumed;
+
+    return 1;
 }
 
 /*
@@ -299,23 +271,21 @@ static size_t decode_dsa_sig_content(BIGNUM *r, BIGNUM *s,
 size_t decode_der_dsa_sig(BIGNUM *r, BIGNUM *s, const unsigned char **ppin,
                           size_t len)
 {
-    const unsigned char *in = *ppin;
     size_t consumed;
-    size_t c;
-    size_t cont_len;
+    PACKET pkt, contpkt;
+    unsigned int tag;
 
-    if (len < 1 || *in++ != ID_SEQUENCE)
+    if (!PACKET_buf_init(&pkt, *ppin, len)
+            || !PACKET_get_1(&pkt, &tag)
+            || tag != ID_SEQUENCE
+            || !decode_der_length(&pkt, &contpkt)
+            || !decode_der_integer(&contpkt, r)
+            || !decode_der_integer(&contpkt, s)
+            || PACKET_remaining(&contpkt) != 0)
         return 0;
-    consumed = 1;
-    if ((c = decode_der_length(&cont_len, &in, len - consumed)) == 0)
-        return 0;
-    consumed += c;
-    if (cont_len > len - consumed
-            || (c = decode_dsa_sig_content(r, s, &in, cont_len)) == 0
-            || c != cont_len)
-        return 0;
-    consumed += c;
-    *ppin = in;
+
+    consumed = PACKET_data(&pkt) - *ppin;
+    *ppin += consumed;
     return consumed;
 }
 

@@ -10,13 +10,14 @@
 #ifndef HEADER_ASN1_DSA_H
 # define HEADER_ASN1_DSA_H
 
+#include "internal/packet.h"
+
 size_t encode_der_length(size_t cont_len, unsigned char **ppout, size_t len);
 size_t encode_der_integer(const BIGNUM *n, unsigned char **ppout, size_t len);
 size_t encode_der_dsa_sig(const BIGNUM *r, const BIGNUM *s,
                           unsigned char **ppout, size_t len);
-size_t decode_der_length(size_t *pcont_len, const unsigned char **ppin,
-                         size_t len);
-size_t decode_der_integer(BIGNUM *n, const unsigned char **ppin, size_t len);
+int decode_der_length(PACKET *pkt, PACKET *subpkt);
+int decode_der_integer(PACKET *pkt, BIGNUM *n);
 size_t decode_der_dsa_sig(BIGNUM *r, BIGNUM *s, const unsigned char **ppin,
                           size_t len);
 
