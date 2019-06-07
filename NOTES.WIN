@@ -89,6 +89,8 @@
 
  - UWP targets only support building the static and dynamic libraries.
 
+ - The "no-uplink" must be given in the "Configure" script.
+
  - You should define the platform type to "uwp" and the target arch via
    "vcvarsall.bat" before you compile. For example, if you want to build
    "arm64" builds, you should type "vcvarsall.bat x86_arm64 uwp".
