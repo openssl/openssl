@@ -90,7 +90,7 @@ Cleans up digest context B<ctx> and frees up the space allocated to it.
 
 =item EVP_MD_CTX_ctrl()
 
-This is a deprecated function. EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params()
+This is a legacy method. EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params()
 is the mechanism that should be used to set and get parameters that are used by
 providers.
 Performs digest-specific control actions on context B<ctx>. The control command

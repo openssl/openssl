@@ -415,14 +415,10 @@ void ssl3_digest_master_key_set_params(const SSL_SESSION *session,
                                        OSSL_PARAM params[])
 {
     int n = 0;
-    int cmd = EVP_CTRL_SSL3_MASTER_SECRET;
-
-    params[n++] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_CMD, &cmd,
-                                           NULL);
-    params[n++] = OSSL_PARAM_construct_octet_ptr(OSSL_DIGEST_PARAM_MSG,
-                                                (void **)&session->master_key,
-                                                 session->master_key_length,
-                                                 NULL);
+    params[n++] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
+                                                    (void *)session->master_key,
+                                                    session->master_key_length,
+                                                    NULL);
     params[n++] = OSSL_PARAM_construct_end();
 }
 
@@ -468,6 +464,7 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
         OSSL_PARAM digest_cmd_params[3];
 
         ssl3_digest_master_key_set_params(s->session, digest_cmd_params);
+
         if (EVP_DigestUpdate(ctx, sender, len) <= 0
             || EVP_MD_CTX_set_params(ctx, digest_cmd_params) <= 0
             || EVP_DigestFinal_ex(ctx, p, NULL) <= 0) {
