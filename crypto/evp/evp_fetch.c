@@ -99,10 +99,10 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
         return NULL;
 
     if ((namemap = ossl_namemap_stored(libctx)) == NULL
-        || (nameid = ossl_namemap_add(namemap, name)) == 0)
+        || (nameid = ossl_namemap_add(namemap, name)) == 0
+        || (methid = method_id(operation_id, nameid)) == 0)
         return NULL;
 
-    methid = method_id(operation_id, nameid);
     (void)ossl_method_store_fetch(store, methid, propquery, &method);
 
     if (method != NULL
@@ -123,14 +123,14 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
     uint32_t methid;
 
     if ((namemap = ossl_namemap_stored(methdata->libctx)) == NULL
-        || (nameid = ossl_namemap_add(namemap, name)) == 0)
+        || (nameid = ossl_namemap_add(namemap, name)) == 0
+        || (methid = method_id(operation_id, nameid)) == 0)
         return 0;
 
     if (store == NULL
         && (store = get_default_method_store(libctx)) == NULL)
         return 0;
 
-    methid = method_id(operation_id, nameid);
     if (methdata->refcnt_up_method(method)
         && ossl_method_store_add(store, methid, propdef, method,
                                  methdata->destruct_method))
