@@ -169,10 +169,16 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     if (store == NULL || namemap == NULL)
         return NULL;
 
-    if ((nameid = ossl_namemap_number(namemap, name)) == 0
-        || !ossl_method_store_cache_get(store,
-                                        method_id(operation_id, nameid),
-                                        properties, &method)) {
+    nameid = ossl_namemap_number(namemap, name);
+    methid = method_id(operation_id, nameid);
+
+    /* This should never happen, but we check for it to be safe */
+    if (methid == 0)
+        return NULL;
+
+    if (nameid == 0
+        || !ossl_method_store_cache_get(store, methid, properties,
+                                        &method)) {
         OSSL_METHOD_CONSTRUCT_METHOD mcm = {
             alloc_tmp_method_store,
             dealloc_tmp_method_store,
@@ -190,12 +196,19 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.destruct_method = free_method;
         mcmdata.refcnt_up_method = upref_method;
         mcmdata.destruct_method = free_method;
-        method = ossl_method_construct(libctx, operation_id, name,
-                                       properties, 0 /* !force_cache */,
-                                       &mcm, &mcmdata);
-        nameid = ossl_namemap_number(namemap, name);
-        methid = method_id(operation_id, nameid);
-        ossl_method_store_cache_set(store, methid, properties, method);
+        if ((method = ossl_method_construct(libctx, operation_id, name,
+                                            properties, 0 /* !force_cache */,
+                                            &mcm, &mcmdata)) == NULL) {
+            /*
+             * If construction did create a method for us, we know that
+             * there is a correct nameid and methodid, since those have
+             * already been calculated in get_method_from_store() and
+             * put_method_in_store() above.
+             */
+            nameid = ossl_namemap_number(namemap, name);
+            methid = method_id(operation_id, nameid);
+            ossl_method_store_cache_set(store, methid, properties, method);
+        }
     } else {
         upref_method(method);
     }
