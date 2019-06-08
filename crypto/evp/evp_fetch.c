@@ -162,8 +162,8 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
 {
     OSSL_METHOD_STORE *store = get_default_method_store(libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    int nameid;
-    uint32_t methid;
+    int nameid = 0;
+    uint32_t methid = 0;
     void *method = NULL;
 
     if (store == NULL || namemap == NULL)
