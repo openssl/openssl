@@ -857,8 +857,6 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
             GENERAL_NAME *gen;
             ASN1_STRING *cstr;
             gen = sk_GENERAL_NAME_value(gens, i);
-            if ((gen->type != check_type) && gen->type != GEN_OTHERNAME)
-                continue;
             if ((gen->type == GEN_OTHERNAME) && (check_type == GEN_EMAIL)) {
                 if (OBJ_obj2nid(gen->d.otherName->type_id) ==
                     NID_id_on_SmtpUTF8Mailbox) {
@@ -871,8 +869,10 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                         break;
                 } else
                     continue;
-            } else
-                continue;
+            } else {
+                if ((gen->type != check_type) && (gen->type != GEN_OTHERNAME))
+                    continue;
+            }
             san_present = 1;
             if (check_type == GEN_EMAIL)
                 cstr = gen->d.rfc822Name;
