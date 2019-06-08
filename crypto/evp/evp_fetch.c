@@ -169,11 +169,20 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     if (store == NULL || namemap == NULL)
         return NULL;
 
-    nameid = ossl_namemap_number(namemap, name);
-    methid = method_id(operation_id, nameid);
+    /*
+     * If there's ever an operation_id == 0 passed, we have an internal
+     * programming error.
+     */
+    if (!ossl_assert(operation_id > 0))
+        return NULL;
 
-    /* This should never happen, but we check for it to be safe */
-    if (methid == 0)
+    /*
+     * method_id returns 0 if we have too many operations (more than
+     * about 2^8) or too many names (more than about 2^24).  In that
+     * case, we can't create any new method.
+     */
+    if ((nameid = ossl_namemap_number(namemap, name)) != 0
+        && (methid = method_id(operation_id, nameid)) == 0)
         return NULL;
 
     if (nameid == 0
