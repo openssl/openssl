@@ -61,6 +61,7 @@ typedef struct {
                     unsigned char *out, size_t length,
                     const AES_KEY *key1, const AES_KEY *key2,
                     const unsigned char iv[16]);
+    int allow_insecure_decrypt;
 } EVP_AES_XTS_CTX;
 
 typedef struct {
@@ -387,6 +388,7 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                               const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
@@ -401,7 +403,8 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * This addresses Rogaway's vulnerability.
          * See comment in aes_xts_init_key() below.
          */
-        if (memcmp(key, key + bytes, bytes) == 0) {
+        if ((!xctx->allow_insecure_decrypt || enc)
+                && memcmp(key, key + bytes, bytes) == 0) {
             EVPerr(EVP_F_AESNI_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
@@ -804,6 +807,7 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
@@ -818,7 +822,8 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * This addresses Rogaway's vulnerability.
          * See comment in aes_xts_init_key() below.
          */
-        if (memcmp(key, key + bytes, bytes) == 0) {
+        if ((!xctx->allow_insecure_decrypt || enc)
+                && memcmp(key, key + bytes, bytes) == 0) {
             EVPerr(EVP_F_AES_T4_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
@@ -3408,10 +3413,14 @@ BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
 
 static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
-    EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,c);
-    if (type == EVP_CTRL_COPY) {
+    EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX, c);
+
+    if (type == EVP_CTRL_XTS_ALLOW_INSECURE_DECRYPT) {
+        xctx->allow_insecure_decrypt = arg != 0 ? 1 : 0;
+    } else if (type == EVP_CTRL_COPY) {
         EVP_CIPHER_CTX *out = ptr;
         EVP_AES_XTS_CTX *xctx_out = EVP_C_DATA(EVP_AES_XTS_CTX,out);
+
         if (xctx->xts.key1) {
             if (xctx->xts.key1 != &xctx->ks1)
                 return 0;
@@ -3435,6 +3444,7 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
@@ -3460,7 +3470,8 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              *       BEFORE using the keys in the XTS-AES algorithm to process
              *       data with them."
              */
-            if (memcmp(key, key + bytes, bytes) == 0) {
+            if ((!xctx->allow_insecure_decrypt || enc)
+                    && memcmp(key, key + bytes, bytes) == 0) {
                 EVPerr(EVP_F_AES_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
                 return 0;
             }
