@@ -69,11 +69,8 @@ const char *OSSL_trace_get_category_name(int num);
 # define OSSL_TRACE_LEVEL_INFO          4
 # define OSSL_TRACE_LEVEL_DEBUG         5
 # define OSSL_TRACE_LEVEL_TRACE         6
-# if defined DEBUG && !defined NDEBUG
-#  define OSSL_TRACE_LEVEL_DEFAULT      OSSL_TRACE_LEVEL_DEBUG
-# else
-#  define OSSL_TRACE_LEVEL_DEFAULT      OSSL_TRACE_LEVEL_INFO
-# endif
+# define OSSL_TRACE_LEVEL_DEFAULT       OSSL_TRACE_LEVEL_INFO
+/* could be OSSL_TRACE_LEVEL_DEBUG if defined DEBUG && !defined NDEBUG */
 
 const char *OSSL_trace_get_verbosity_name(int level);
 int OSSL_trace_get_verbosity(int category);
