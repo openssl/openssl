@@ -462,6 +462,7 @@ our %disabled = ( # "what"         => "comment"
                   "ssl-trace"           => "default",
                   "ssl3"                => "default",
                   "ssl3-method"         => "default",
+                  "trace"               => "default",
                   "ubsan"               => "default",
                   "unit-test"           => "default",
                   "weak-ssl-ciphers"    => "default",
