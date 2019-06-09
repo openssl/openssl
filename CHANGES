@@ -9,7 +9,17 @@
 
  Changes between 1.1.1c and 1.1.1d [xx XXX xxxx]
 
-  *)
+  *) Revert the DEVRANDOM_WAIT feature for Linux systems
+
+     The DEVRANDOM_WAIT feature added a select() call to wait for the
+     /dev/random device to become readable before reading from the
+     /dev/urandom device.
+
+     It turned out that this change had negative side effects on the
+     performance which were not acceptable. After some discussion it
+     was decided to revert this feature and leave it up to the OS
+     resp. the platform maintainer to ensure a proper initialization
+     during early boot time.
 
  Changes between 1.1.1b and 1.1.1c [28 May 2019]
 
@@ -78,6 +88,16 @@
      Greef of Ronomon.
      (CVE-2019-1543)
      [Matt Caswell]
+
+  *) Add DEVRANDOM_WAIT feature for Linux systems
+
+     On older Linux systems where the getrandom() system call is not available,
+     OpenSSL normally uses the /dev/urandom device for seeding its CSPRNG.
+     Contrary to getrandom(), the /dev/urandom device will not block during
+     early boot when the kernel CSPRNG has not been initially seeded yet.
+
+     To mitigate this known weakness, use select() to wait for /dev/random to
+     become readable before reading from /dev/urandom.
 
   *) Ensure that SM2 only uses SM3 as digest algorithm
      [Paul Yang]
