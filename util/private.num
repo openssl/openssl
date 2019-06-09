@@ -328,33 +328,15 @@ OpenSSL_add_all_algorithms              define deprecated 1.1.0
 OpenSSL_add_all_ciphers                 define deprecated 1.1.0
 OpenSSL_add_all_digests                 define deprecated 1.1.0
 OpenSSL_add_ssl_algorithms              define
-OSSL_PARAM_double                       define
-OSSL_PARAM_int                          define
-OSSL_PARAM_int32                        define
-OSSL_PARAM_int64                        define
-OSSL_PARAM_long                         define
+OSSL_PARAM_TYPE                         define
 OSSL_PARAM_octet_ptr                    define
 OSSL_PARAM_octet_string                 define
-OSSL_PARAM_size_t                       define
-OSSL_PARAM_uint                         define
-OSSL_PARAM_uint32                       define
-OSSL_PARAM_uint64                       define
-OSSL_PARAM_ulong                        define
 OSSL_PARAM_utf8_ptr                     define
 OSSL_PARAM_utf8_string                  define
 OSSL_PARAM_SIZED_BN                     define
-OSSL_PARAM_SIZED_double                 define
-OSSL_PARAM_SIZED_int                    define
-OSSL_PARAM_SIZED_int32                  define
-OSSL_PARAM_SIZED_int64                  define
-OSSL_PARAM_SIZED_long                   define
+OSSL_PARAM_SIZED_TYPE                   define
 OSSL_PARAM_SIZED_octet_ptr              define
 OSSL_PARAM_SIZED_octet_string           define
-OSSL_PARAM_SIZED_size_t                 define
-OSSL_PARAM_SIZED_uint                   define
-OSSL_PARAM_SIZED_uint32                 define
-OSSL_PARAM_SIZED_uint64                 define
-OSSL_PARAM_SIZED_ulong                  define
 OSSL_PARAM_SIZED_utf8_ptr               define
 OSSL_PARAM_SIZED_utf8_string            define
 OSSL_PARAM_END                          define
