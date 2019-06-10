@@ -28,9 +28,9 @@ static int md5_sha1_set_params(void *vctx, const OSSL_PARAM params[])
     if (ctx != NULL && params != NULL) {
         p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SSL3_MS);
         /*
-         * We don't use OSSL_PARAM_get_octet_ptr(), because it assumes it
-         * should copy the data.  However, we know that sha1_ctrl() will
-         * consume the data anyway, making an extra copy unnecessary.
+         * Since we know that md5_sha1_ctrl() uses the data right away, we
+         * don't use OSSL_PARAM_get_octet_ptr(), since it assumes it should
+         * copy the data.  That extra copy isn't necessary here.
          */
         if (p != NULL && p->data_type == OSSL_PARAM_OCTET_STRING)
             return md5_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
