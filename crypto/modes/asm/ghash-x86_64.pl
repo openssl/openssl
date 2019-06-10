@@ -239,7 +239,6 @@ $code=<<___;
 .align	16
 gcm_gmult_4bit:
 .cfi_startproc
-	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp		# %rbp and others are pushed exclusively in
@@ -287,7 +286,6 @@ $code.=<<___;
 .align	16
 gcm_ghash_4bit:
 .cfi_startproc
-	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -532,7 +530,6 @@ $code.=<<___;
 .align	16
 gcm_init_clmul:
 .cfi_startproc
-	endbr64
 .L_init_clmul:
 ___
 $code.=<<___ if ($win64);
@@ -615,7 +612,6 @@ $code.=<<___;
 .align	16
 gcm_gmult_clmul:
 .cfi_startproc
-	endbr64
 .L_gmult_clmul:
 	movdqu		($Xip),$Xi
 	movdqa		.Lbswap_mask(%rip),$T3
@@ -667,7 +663,6 @@ $code.=<<___;
 .align	32
 gcm_ghash_clmul:
 .cfi_startproc
-	endbr64
 .L_ghash_clmul:
 ___
 $code.=<<___ if ($win64);
@@ -1026,7 +1021,6 @@ $code.=<<___;
 .align	32
 gcm_init_avx:
 .cfi_startproc
-	endbr64
 ___
 if ($avx) {
 my ($Htbl,$Xip)=@_4args;
@@ -1172,7 +1166,6 @@ $code.=<<___;
 .align	32
 gcm_gmult_avx:
 .cfi_startproc
-	endbr64
 	jmp	.L_gmult_clmul
 .cfi_endproc
 .size	gcm_gmult_avx,.-gcm_gmult_avx
@@ -1184,7 +1177,6 @@ $code.=<<___;
 .align	32
 gcm_ghash_avx:
 .cfi_startproc
-	endbr64
 ___
 if ($avx) {
 my ($Xip,$Htbl,$inp,$len)=@_4args;
@@ -1677,7 +1669,6 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

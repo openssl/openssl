@@ -55,7 +55,6 @@ $code.=<<___;
 .align	16
 _mul_1x1:
 .cfi_startproc
-	endbr64
 	sub	\$128+8,%rsp
 .cfi_adjust_cfa_offset	128+8
 	mov	\$-1,$a1
@@ -180,7 +179,6 @@ $code.=<<___;
 .align	16
 bn_GF2m_mul_2x2:
 .cfi_startproc
-	endbr64
 	mov	%rsp,%rax
 	mov	OPENSSL_ia32cap_P(%rip),%r10
 	bt	\$33,%r10
@@ -323,7 +321,6 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

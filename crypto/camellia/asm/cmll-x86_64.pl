@@ -138,7 +138,6 @@ Camellia_EncryptBlock:
 .Lenc_rounds:
 Camellia_EncryptBlock_Rounds:
 .cfi_startproc
-	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -262,7 +261,6 @@ Camellia_DecryptBlock:
 .Ldec_rounds:
 Camellia_DecryptBlock_Rounds:
 .cfi_startproc
-	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -438,7 +436,6 @@ $code.=<<___;
 .align	16
 Camellia_Ekeygen:
 .cfi_startproc
-	endbr64
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -680,7 +677,6 @@ $code.=<<___;
 .align	16
 Camellia_cbc_encrypt:
 .cfi_startproc
-	endbr64
 	cmp	\$0,%rdx
 	je	.Lcbc_abort
 	push	%rbx
@@ -945,7 +941,6 @@ $code.=<<___;
 .type	common_se_handler,\@abi-omnipotent
 .align	16
 common_se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -1000,7 +995,6 @@ common_se_handler:
 .type	cbc_se_handler,\@abi-omnipotent
 .align	16
 cbc_se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

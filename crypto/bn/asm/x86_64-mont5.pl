@@ -94,7 +94,6 @@ $code=<<___;
 .align	64
 bn_mul_mont_gather5:
 .cfi_startproc
-	endbr64
 	mov	${num}d,${num}d
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -472,7 +471,6 @@ $code.=<<___;
 .align	32
 bn_mul4x_mont_gather5:
 .cfi_startproc
-	endbr64
 	.byte	0x67
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -1101,7 +1099,6 @@ $code.=<<___;
 .align	32
 bn_power5:
 .cfi_startproc
-	endbr64
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 ___
@@ -2114,7 +2111,6 @@ bn_from_montgomery:
 .align	32
 bn_from_mont8x:
 .cfi_startproc
-	endbr64
 	.byte	0x67
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -2294,7 +2290,6 @@ $code.=<<___;
 .align	32
 bn_mulx4x_mont_gather5:
 .cfi_startproc
-	endbr64
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 .Lmulx4x_enter:
@@ -2778,7 +2773,6 @@ $code.=<<___;
 .align	32
 bn_powerx5:
 .cfi_startproc
-	endbr64
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 .Lpowerx5_enter:
@@ -2917,7 +2911,6 @@ bn_powerx5:
 bn_sqrx8x_internal:
 __bn_sqrx8x_internal:
 .cfi_startproc
-	endbr64
 	##################################################################
 	# Squaring part:
 	#
@@ -3771,7 +3764,6 @@ $code.=<<___;
 .type	mul_handler,\@abi-omnipotent
 .align	16
 mul_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

@@ -125,7 +125,6 @@ $code.=<<___;
 .type	$func,\@function,$nargs
 $func:
 .cfi_startproc
-	endbr64
 	cmp	\$0,$len
 	je	.Labort
 	push	%rbx
@@ -548,7 +547,6 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

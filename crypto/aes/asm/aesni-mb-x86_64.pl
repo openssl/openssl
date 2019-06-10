@@ -106,7 +106,6 @@ $code.=<<___;
 .align	32
 aesni_multi_cbc_encrypt:
 .cfi_startproc
-        endbr64
 ___
 $code.=<<___ if ($avx);
 	cmp	\$2,$num
@@ -384,7 +383,6 @@ $code.=<<___;
 .align	32
 aesni_multi_cbc_decrypt:
 .cfi_startproc
-        endbr64
 ___
 $code.=<<___ if ($avx);
 	cmp	\$2,$num
@@ -662,7 +660,6 @@ $code.=<<___;
 .align	32
 aesni_multi_cbc_encrypt_avx:
 .cfi_startproc
-        endbr64
 _avx_cbc_enc_shortcut:
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -954,7 +951,6 @@ $code.=<<___;
 .align	32
 aesni_multi_cbc_decrypt_avx:
 .cfi_startproc
-        endbr64
 _avx_cbc_dec_shortcut:
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
@@ -1290,7 +1286,6 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

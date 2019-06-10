@@ -26,7 +26,6 @@ print <<___;
 .type	$prefix${i},\@abi-omnipotent
 .align	16
 $prefix${i}:
-	endbr64
 	.byte	0x48,0x83,0xEC,0x28	# sub rsp,40
 	mov	%rcx,48(%rsp)
 	mov	%rdx,56(%rsp)

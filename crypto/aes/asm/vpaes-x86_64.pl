@@ -92,7 +92,6 @@ $code.=<<___;
 .align 16
 _vpaes_encrypt_core:
 .cfi_startproc
-	endbr64
 	mov	%rdx,	%r9
 	mov	\$16,	%r11
 	mov	240(%rdx),%eax
@@ -185,7 +184,6 @@ _vpaes_encrypt_core:
 .align	16
 _vpaes_decrypt_core:
 .cfi_startproc
-	endbr64
 	mov	%rdx,	%r9		# load key
 	mov	240(%rdx),%eax
 	movdqa	%xmm9,	%xmm1
@@ -294,7 +292,6 @@ _vpaes_decrypt_core:
 .align	16
 _vpaes_schedule_core:
 .cfi_startproc
-	endbr64
 	# rdi = key
 	# rsi = size in bits
 	# rdx = buffer
@@ -482,7 +479,6 @@ _vpaes_schedule_core:
 .align	16
 _vpaes_schedule_192_smear:
 .cfi_startproc
-	endbr64
 	pshufd	\$0x80,	%xmm6,	%xmm1	# d c 0 0 -> c 0 0 0
 	pshufd	\$0xFE,	%xmm7,	%xmm0	# b a _ _ -> b b b a
 	pxor	%xmm1,	%xmm6		# -> c+d c 0 0
@@ -516,7 +512,6 @@ _vpaes_schedule_192_smear:
 .align	16
 _vpaes_schedule_round:
 .cfi_startproc
-	endbr64
 	# extract rcon from xmm8
 	pxor	%xmm1,	%xmm1
 	palignr	\$15,	%xmm8,	%xmm1
@@ -586,7 +581,6 @@ _vpaes_schedule_low_round:
 .align	16
 _vpaes_schedule_transform:
 .cfi_startproc
-	endbr64
 	movdqa	%xmm9,	%xmm1
 	pandn	%xmm0,	%xmm1
 	psrld	\$4,	%xmm1
@@ -627,7 +621,6 @@ _vpaes_schedule_transform:
 .align	16
 _vpaes_schedule_mangle:
 .cfi_startproc
-	endbr64
 	movdqa	%xmm0,	%xmm4	# save xmm0 for later
 	movdqa	.Lk_mc_forward(%rip),%xmm5
 	test	%rcx, 	%rcx
@@ -703,7 +696,6 @@ _vpaes_schedule_mangle:
 .align	16
 ${PREFIX}_set_encrypt_key:
 .cfi_startproc
-	endbr64
 ___
 $code.=<<___ if ($win64);
 	lea	-0xb8(%rsp),%rsp
@@ -754,7 +746,6 @@ $code.=<<___;
 .align	16
 ${PREFIX}_set_decrypt_key:
 .cfi_startproc
-	endbr64
 ___
 $code.=<<___ if ($win64);
 	lea	-0xb8(%rsp),%rsp
@@ -810,7 +801,6 @@ $code.=<<___;
 .align	16
 ${PREFIX}_encrypt:
 .cfi_startproc
-	endbr64
 ___
 $code.=<<___ if ($win64);
 	lea	-0xb8(%rsp),%rsp
@@ -856,7 +846,6 @@ $code.=<<___;
 .align	16
 ${PREFIX}_decrypt:
 .cfi_startproc
-	endbr64
 ___
 $code.=<<___ if ($win64);
 	lea	-0xb8(%rsp),%rsp
@@ -908,7 +897,6 @@ $code.=<<___;
 .align	16
 ${PREFIX}_cbc_encrypt:
 .cfi_startproc
-	endbr64
 	xchg	$key,$len
 ___
 ($len,$key)=($key,$len);
@@ -994,7 +982,6 @@ $code.=<<___;
 .align	16
 _vpaes_preheat:
 .cfi_startproc
-	endbr64
 	lea	.Lk_s0F(%rip), %r10
 	movdqa	-0x20(%r10), %xmm10	# .Lk_inv
 	movdqa	-0x10(%r10), %xmm11	# .Lk_inv+16
@@ -1125,7 +1112,6 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

@@ -52,7 +52,6 @@ $code.=<<___;
 .type	padlock_capability,\@abi-omnipotent
 .align	16
 padlock_capability:
-	endbr64
 	mov	%rbx,%r8
 	xor	%eax,%eax
 	cpuid

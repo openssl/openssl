@@ -275,7 +275,6 @@ $code.=<<___;
 .align	16
 ${PREFIX}_encrypt:
 .cfi_startproc
-	endbr64
 	movups	($inp),$inout0		# load input
 	mov	240($key),$rounds	# key->rounds
 ___
@@ -294,7 +293,6 @@ $code.=<<___;
 .align	16
 ${PREFIX}_decrypt:
 .cfi_startproc
-	endbr64
 	movups	($inp),$inout0		# load input
 	mov	240($key),$rounds	# key->rounds
 ___
@@ -332,7 +330,6 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt2:
 .cfi_startproc
-	endbr64
 	$movkey	($key),$rndkey0
 	shl	\$4,$rounds
 	$movkey	16($key),$rndkey1
@@ -371,7 +368,6 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt3:
 .cfi_startproc
-	endbr64
 	$movkey	($key),$rndkey0
 	shl	\$4,$rounds
 	$movkey	16($key),$rndkey1
@@ -419,7 +415,6 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt4:
 .cfi_startproc
-	endbr64
 	$movkey	($key),$rndkey0
 	shl	\$4,$rounds
 	$movkey	16($key),$rndkey1
@@ -469,7 +464,6 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt6:
 .cfi_startproc
-	endbr64
 	$movkey		($key),$rndkey0
 	shl		\$4,$rounds
 	$movkey		16($key),$rndkey1
@@ -533,7 +527,6 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt8:
 .cfi_startproc
-	endbr64
 	$movkey		($key),$rndkey0
 	shl		\$4,$rounds
 	$movkey		16($key),$rndkey1
@@ -620,7 +613,6 @@ $code.=<<___;
 .align	16
 aesni_ecb_encrypt:
 .cfi_startproc
-	endbr64
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
@@ -1207,7 +1199,6 @@ $code.=<<___;
 .align	16
 aesni_ctr32_encrypt_blocks:
 .cfi_startproc
-	endbr64
 	cmp	\$1,$len
 	jne	.Lctr32_bulk
 
@@ -1780,7 +1771,6 @@ $code.=<<___;
 .align	16
 aesni_xts_encrypt:
 .cfi_startproc
-	endbr64
 	lea	(%rsp),%r11			# frame pointer
 .cfi_def_cfa_register	%r11
 	push	%rbp
@@ -2264,7 +2254,6 @@ $code.=<<___;
 .align	16
 aesni_xts_decrypt:
 .cfi_startproc
-	endbr64
 	lea	(%rsp),%r11			# frame pointer
 .cfi_def_cfa_register	%r11
 	push	%rbp
@@ -2790,7 +2779,6 @@ $code.=<<___;
 .align	32
 aesni_ocb_encrypt:
 .cfi_startproc
-	endbr64
 	lea	(%rsp),%rax
 	push	%rbx
 .cfi_push	%rbx
@@ -3251,7 +3239,6 @@ __ocb_encrypt1:
 .align	32
 aesni_ocb_decrypt:
 .cfi_startproc
-	endbr64
 	lea	(%rsp),%rax
 	push	%rbx
 .cfi_push	%rbx
@@ -3734,7 +3721,6 @@ $code.=<<___;
 .align	16
 ${PREFIX}_cbc_encrypt:
 .cfi_startproc
-	endbr64
 	test	$len,$len		# check length
 	jz	.Lcbc_ret
 
@@ -4283,7 +4269,6 @@ $code.=<<___;
 .align	16
 ${PREFIX}_set_decrypt_key:
 .cfi_startproc
-	endbr64
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
 .cfi_adjust_cfa_offset	8
 	call	__aesni_set_encrypt_key
@@ -4356,7 +4341,6 @@ $code.=<<___;
 ${PREFIX}_set_encrypt_key:
 __aesni_set_encrypt_key:
 .cfi_startproc
-	endbr64
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
 .cfi_adjust_cfa_offset	8
 	mov	\$-1,%rax
@@ -4769,7 +4753,6 @@ $code.=<<___ if ($PREFIX eq "aesni");
 .type	ecb_ccm64_se_handler,\@abi-omnipotent
 .align	16
 ecb_ccm64_se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -4811,7 +4794,6 @@ ecb_ccm64_se_handler:
 .type	ctr_xts_se_handler,\@abi-omnipotent
 .align	16
 ctr_xts_se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -4856,7 +4838,6 @@ ctr_xts_se_handler:
 .type	ocb_se_handler,\@abi-omnipotent
 .align	16
 ocb_se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -4917,7 +4898,6 @@ $code.=<<___;
 .type	cbc_se_handler,\@abi-omnipotent
 .align	16
 cbc_se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

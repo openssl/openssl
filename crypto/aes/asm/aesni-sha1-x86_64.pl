@@ -133,7 +133,6 @@ $code.=<<___;
 .type	aesni_cbc_sha1_enc,\@abi-omnipotent
 .align	32
 aesni_cbc_sha1_enc:
-	endbr64
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11
@@ -193,7 +192,6 @@ $code.=<<___;
 .align	32
 aesni_cbc_sha1_enc_ssse3:
 .cfi_startproc
-	endbr64
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	#shr	\$6,$len			# debugging artefact
 	#jz	.Lepilogue_ssse3		# debugging artefact
@@ -862,7 +860,6 @@ $code.=<<___;
 .align	32
 aesni256_cbc_sha1_dec_ssse3:
 .cfi_startproc
-	endbr64
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	push	%rbx
 .cfi_push	%rbx
@@ -1069,7 +1066,6 @@ $code.=<<___;
 .align	32
 aesni_cbc_sha1_enc_avx:
 .cfi_startproc
-	endbr64
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	#shr	\$6,$len			# debugging artefact
 	#jz	.Lepilogue_avx			# debugging artefact
@@ -1552,7 +1548,6 @@ $code.=<<___;
 .align	32
 aesni256_cbc_sha1_dec_avx:
 .cfi_startproc
-	endbr64
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	push	%rbx
 .cfi_push	%rbx
@@ -1932,7 +1927,6 @@ $code.=<<___;
 .type	ssse3_handler,\@abi-omnipotent
 .align	16
 ssse3_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

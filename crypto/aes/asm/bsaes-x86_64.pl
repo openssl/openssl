@@ -817,7 +817,6 @@ $code.=<<___;
 .align	64
 _bsaes_encrypt8:
 .cfi_startproc
-	endbr64
 	lea	.LBS0(%rip), $const	# constants table
 
 	movdqa	($key), @XMM[9]		# round 0 key
@@ -884,7 +883,6 @@ $code.=<<___;
 .align	64
 _bsaes_decrypt8:
 .cfi_startproc
-	endbr64
 	lea	.LBS0(%rip), $const	# constants table
 
 	movdqa	($key), @XMM[9]		# round 0 key
@@ -978,7 +976,6 @@ $code.=<<___;
 .align	16
 _bsaes_key_convert:
 .cfi_startproc
-	endbr64
 	lea	.Lmasks(%rip), $const
 	movdqu	($inp), %xmm7		# load round 0 key
 	lea	0x10($inp), $inp
@@ -1175,7 +1172,6 @@ $code.=<<___;
 .align	16
 bsaes_ecb_encrypt_blocks:
 .cfi_startproc
-	endbr64
 	mov	%rsp, %rax
 .Lecb_enc_prologue:
 	push	%rbp
@@ -1395,7 +1391,6 @@ $code.=<<___;
 .align	16
 bsaes_ecb_decrypt_blocks:
 .cfi_startproc
-	endbr64
 	mov	%rsp, %rax
 .Lecb_dec_prologue:
 	push	%rbp
@@ -1619,7 +1614,6 @@ $code.=<<___;
 .align	16
 bsaes_cbc_encrypt:
 .cfi_startproc
-	endbr64
 ___
 $code.=<<___ if ($win64);
 	mov	48(%rsp),$arg6		# pull direction flag
@@ -1925,7 +1919,6 @@ $code.=<<___;
 .align	16
 bsaes_ctr32_encrypt_blocks:
 .cfi_startproc
-	endbr64
 	mov	%rsp, %rax
 .Lctr_enc_prologue:
 	push	%rbp
@@ -2185,7 +2178,6 @@ $code.=<<___;
 .align	16
 bsaes_xts_encrypt:
 .cfi_startproc
-	endbr64
 	mov	%rsp, %rax
 .Lxts_enc_prologue:
 	push	%rbp
@@ -2585,7 +2577,6 @@ $code.=<<___;
 .align	16
 bsaes_xts_decrypt:
 .cfi_startproc
-	endbr64
 	mov	%rsp, %rax
 .Lxts_dec_prologue:
 	push	%rbp
@@ -3077,7 +3068,6 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

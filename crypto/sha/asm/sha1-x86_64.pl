@@ -260,7 +260,6 @@ $code.=<<___;
 .align	16
 sha1_block_data_order:
 .cfi_startproc
-	endbr64
 	mov	OPENSSL_ia32cap_P+0(%rip),%r9d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r8d
 	mov	OPENSSL_ia32cap_P+8(%rip),%r10d
@@ -372,7 +371,6 @@ $code.=<<___;
 sha1_block_data_order_shaext:
 _shaext_shortcut:
 .cfi_startproc
-	endbr64
 ___
 $code.=<<___ if ($win64);
 	lea	`-8-4*16`(%rsp),%rsp
@@ -507,7 +505,6 @@ $code.=<<___;
 sha1_block_data_order_ssse3:
 _ssse3_shortcut:
 .cfi_startproc
-	endbr64
 	mov	%rsp,$fp	# frame pointer
 .cfi_def_cfa_register	$fp
 	push	%rbx
@@ -982,7 +979,6 @@ $code.=<<___;
 sha1_block_data_order_avx:
 _avx_shortcut:
 .cfi_startproc
-	endbr64
 	mov	%rsp,$fp
 .cfi_def_cfa_register	$fp
 	push	%rbx
@@ -1362,7 +1358,6 @@ $code.=<<___;
 sha1_block_data_order_avx2:
 _avx2_shortcut:
 .cfi_startproc
-	endbr64
 	mov	%rsp,$fp
 .cfi_def_cfa_register	$fp
 	push	%rbx
@@ -1868,7 +1863,6 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -1914,7 +1908,6 @@ $code.=<<___ if ($shaext);
 .type	shaext_handler,\@abi-omnipotent
 .align	16
 shaext_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -1950,7 +1943,6 @@ $code.=<<___;
 .type	ssse3_handler,\@abi-omnipotent
 .align	16
 ssse3_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

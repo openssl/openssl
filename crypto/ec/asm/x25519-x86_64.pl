@@ -103,7 +103,6 @@ $code.=<<___;
 .align	32
 x25519_fe51_mul:
 .cfi_startproc
-	endbr64
 	push	%rbp
 .cfi_push	%rbp
 	push	%rbx
@@ -255,7 +254,6 @@ x25519_fe51_mul:
 .align	32
 x25519_fe51_sqr:
 .cfi_startproc
-	endbr64
 	push	%rbp
 .cfi_push	%rbp
 	push	%rbx
@@ -436,7 +434,6 @@ x25519_fe51_sqr:
 .align	32
 x25519_fe51_mul121666:
 .cfi_startproc
-	endbr64
 	push	%rbp
 .cfi_push	%rbp
 	push	%rbx
@@ -504,7 +501,6 @@ x25519_fe64_eligible:
 .align	32
 x25519_fe64_mul:
 .cfi_startproc
-	endbr64
 	push	%rbp
 .cfi_push	%rbp
 	push	%rbx
@@ -597,7 +593,6 @@ x25519_fe64_mul:
 .align	32
 x25519_fe64_sqr:
 .cfi_startproc
-	endbr64
 	push	%rbp
 .cfi_push	%rbp
 	push	%rbx
@@ -915,7 +910,6 @@ $code.=<<___;
 .type	short_handler,\@abi-omnipotent
 .align	16
 short_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -945,7 +939,6 @@ short_handler:
 .type	full_handler,\@abi-omnipotent
 .align	16
 full_handler:
-	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
