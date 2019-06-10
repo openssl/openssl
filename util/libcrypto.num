@@ -4824,3 +4824,6 @@ OSSL_CMP_MSG_dup                        4768	3_0_0	EXIST::FUNCTION:CMP
 ERR_load_CMP_strings                    4769	3_0_0	EXIST::FUNCTION:CMP
 EVP_MD_CTX_set_params                   4770	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get_params                   4771	3_0_0	EXIST::FUNCTION:
+OSSL_trace_get_level_name               4772	3_0_0	EXIST::FUNCTION:
+OSSL_trace_get_level                    4773	3_0_0	EXIST::FUNCTION:
+OSSL_trace_set_level                    4774	3_0_0	EXIST::FUNCTION:

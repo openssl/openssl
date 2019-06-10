@@ -59,7 +59,7 @@ int OSSL_trace_get_category_num(const char *name);
 const char *OSSL_trace_get_category_name(int num);
 
 /*
- * TRACE LEVEL AND VERBOSITY
+ * TRACE LEVEL
  */
 
 # define OSSL_TRACE_LEVEL_UNDEFINED     0
@@ -72,9 +72,9 @@ const char *OSSL_trace_get_category_name(int num);
 # define OSSL_TRACE_LEVEL_DEFAULT       OSSL_TRACE_LEVEL_INFO
 /* could be OSSL_TRACE_LEVEL_DEBUG if defined DEBUG && !defined NDEBUG */
 
-const char *OSSL_trace_get_verbosity_name(int level);
-int OSSL_trace_get_verbosity(int category);
-int OSSL_trace_set_verbosity(int category, int level);
+const char *OSSL_trace_get_level_name(int level);
+int OSSL_trace_get_level(int category);
+int OSSL_trace_set_level(int category, int level);
 
 /*
  * TRACE CONSUMERS
@@ -301,7 +301,7 @@ void OSSL_trace_end(int category, BIO *channel);
         if (trc_out != NULL) { \
             BIO_printf(trc_out, "%s:%s:%d:%s:", OSSL_FUNC, OPENSSL_FILE, \
                        OPENSSL_LINE, \
-                       OSSL_trace_get_verbosity_name(OSSL_TRACE_LEVEL_##level)); \
+                       OSSL_trace_get_level_name(OSSL_TRACE_LEVEL_##level)); \
             BIO_printf args; \
         } \
     OSSL_TRACE_END(category) \
