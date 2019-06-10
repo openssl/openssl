@@ -12,10 +12,9 @@
 
 #include "internal/packet.h"
 
-size_t encode_der_length(size_t cont_len, unsigned char **ppout, size_t len);
-size_t encode_der_integer(const BIGNUM *n, unsigned char **ppout, size_t len);
-size_t encode_der_dsa_sig(const BIGNUM *r, const BIGNUM *s,
-                          unsigned char **ppout, size_t len);
+int encode_der_length(WPACKET *pkt, size_t cont_len);
+int encode_der_integer(WPACKET *pkt, const BIGNUM *n);
+int encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s);
 int decode_der_length(PACKET *pkt, PACKET *subpkt);
 int decode_der_integer(PACKET *pkt, BIGNUM *n);
 size_t decode_der_dsa_sig(BIGNUM *r, BIGNUM *s, const unsigned char **ppin,
