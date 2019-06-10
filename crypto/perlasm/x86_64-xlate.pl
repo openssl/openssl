@@ -1134,6 +1134,30 @@ my $endbranch = sub {
     (0xf3,0x0f,0x1e,0xfa);
 };
 
+sub gnusectionnote {
+    my $sec="";
+    if ($elf) {
+        $sec = ".pushsection .note.gnu.property,\"a\"\n";
+        $sec .= ".align 8\n";
+        $sec .= ".long 1f - 0f\n";
+        $sec .= ".long 4f - 1f\n";
+        $sec .= ".long 5\n";
+        $sec .= "0:\n";
+        $sec .= ".string \"GNU\"\n";
+        $sec .= "1:\n";
+        $sec .= ".align 8\n";
+        $sec .= ".long 0xc0000002\n";
+        $sec .= ".long 3f - 2f\n";
+        $sec .= "2:\n";
+        $sec .= ".long 3\n";
+        $sec .= "3:\n";
+        $sec .= ".align 8\n";
+        $sec .= "4:\n";
+        $sec .= ".popsection\n";
+    }
+    $sec;
+}
+
 ########################################################################
 
 if ($nasm) {
@@ -1218,6 +1242,8 @@ while(defined(my $line=<>)) {
 
 print "\n$current_segment\tENDS\n"	if ($current_segment && $masm);
 print "END\n"				if ($masm);
+
+print gnusectionnote();
 
 close STDOUT;
 
