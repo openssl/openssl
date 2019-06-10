@@ -25,8 +25,8 @@ This set of functions are used to compare X509 objects, including X509
 certificates, X509 CRL objects and various values in an X509 certificate.
 
 The X509_cmp() function compares two B<X509> objects indicated by parameters
-B<a> and B<b>. The comparison is based on the B<memcmp> result of the SHA-1
-hash values of two B<X509> objects and the canonical (DER) encoding values.
+B<a> and B<b>. The comparison is based on the B<memcmp> result of the hash
+values of two B<X509> objects and the canonical (DER) encoding values.
 
 The X509_NAME_cmp() function compares two B<X509_NAME> objects indicated by
 parameters B<a> and B<b>. The comparison is based on the B<memcmp> result of
@@ -42,8 +42,8 @@ issuer names and subject names of the X<509> objects, or issuers of B<X509_CRL>
 objects, respectively.
 
 The X509_CRL_match() function compares two B<X509_CRL> objects. Unlike the
-X509_CRL_cmp() function, this function compares the SHA-1 hash values of the
-whole CRL content indicated by parameter B<a> and B<b>.
+X509_CRL_cmp() function, this function compares the the whole CRL content
+instead of just the issuer name.
 
 =head1 RETURN VALUES
 
