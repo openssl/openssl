@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <openssl/evp.h>
 #include <openssl/core_numbers.h>
 #include <openssl/sha.h>
 #include <openssl/params.h>
@@ -21,20 +22,17 @@ static OSSL_OP_digest_set_params_fn sha1_set_params;
 /* Special set_params method for SSL3 */
 static int sha1_set_params(void *vctx, const OSSL_PARAM params[])
 {
-    int cmd = 0;
     size_t msg_len = 0;
     const void *msg = NULL;
     const OSSL_PARAM *p;
     SHA_CTX *ctx = (SHA_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_CMD);
-        if (p != NULL && !OSSL_PARAM_get_int(p, &cmd))
-            return 0;
-        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_MSG);
+        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SSL3_MS);
         if (p != NULL && !OSSL_PARAM_get_octet_ptr(p, &msg, &msg_len))
             return 0;
-        return sha1_ctrl(ctx, cmd, msg_len, (void *)msg);
+        return sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                         msg_len, (void *)msg);
     }
     return 0;
 }

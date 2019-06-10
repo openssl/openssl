@@ -415,11 +415,8 @@ void ssl3_digest_master_key_set_params(const SSL_SESSION *session,
                                        OSSL_PARAM params[])
 {
     int n = 0;
-    int cmd = EVP_CTRL_SSL3_MASTER_SECRET;
 
-    params[n++] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_CMD, &cmd,
-                                           NULL);
-    params[n++] = OSSL_PARAM_construct_octet_ptr(OSSL_DIGEST_PARAM_MSG,
+    params[n++] = OSSL_PARAM_construct_octet_ptr(OSSL_DIGEST_PARAM_SSL3_MS,
                                                 (void **)&session->master_key,
                                                  session->master_key_length,
                                                  NULL);
