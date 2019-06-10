@@ -1187,30 +1187,42 @@ ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **psig, const unsigned char **ppin, long len)
 
 int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **ppout)
 {
-    unsigned char *buf = NULL;
-    unsigned char *tmp;
-    unsigned char **pp = NULL;
-    size_t len;
+    BUF_MEM *buf = NULL;
     size_t encoded_len;
+    WPACKET pkt;
 
-    if (ppout != NULL && *ppout == NULL) {
-        if ((len = encode_der_dsa_sig(sig->r, sig->s, NULL, SIZE_MAX)) == 0)
+    if (ppout == NULL) {
+        if (!WPACKET_init_null(&pkt, 0))
             return -1;
-        buf = OPENSSL_malloc(len);
-        if (buf == NULL)
+    } else if (*ppout == NULL) {
+        if ((buf = BUF_MEM_new()) == NULL
+                || !WPACKET_init_len(&pkt, buf, 0)) {
+            BUF_MEM_free(buf);
             return -1;
-        tmp = buf;
-        pp = &tmp;
+        }
     } else {
-        len = SIZE_MAX;
-        pp = ppout;
+        if (!WPACKET_init_static_len(&pkt, *ppout, SIZE_MAX, 0))
+            return -1;
     }
-    if ((encoded_len = encode_der_dsa_sig(sig->r, sig->s, pp, len)) == 0) {
-        OPENSSL_free(buf);
+
+    if (!encode_der_dsa_sig(&pkt, sig->r, sig->s)
+            || !WPACKET_get_total_written(&pkt, &encoded_len)
+            || !WPACKET_finish(&pkt)) {
+        BUF_MEM_free(buf);
+        WPACKET_cleanup(&pkt);
         return -1;
     }
-    if (buf != NULL)
-        *ppout = buf;
+
+    if (ppout != NULL) {
+        if (*ppout == NULL) {
+            *ppout = (unsigned char *)buf->data;
+            buf->data = NULL;
+            BUF_MEM_free(buf);
+        } else {
+            *ppout += encoded_len;
+        }
+    }
+
     return (int)encoded_len;
 }
 

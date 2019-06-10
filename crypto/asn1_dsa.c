@@ -31,75 +31,44 @@
 
 /*
  * Outputs the encoding of the length octets for a DER value with a content
- * length of cont_len bytes to *ppout and, if successful, increments *ppout
- * past the data just written.
+ * length of cont_len bytes to pkt. The maximum supported content length is
+ * 65535 (0xffff) bytes.
  *
- * The maximum supported content length is 65535 (0xffff) bytes.
- * The maximum returned length in bytes of the encoded output is 3.
- *
- * If ppout is NULL then the output size is calculated and returned but no
- * output is produced.
- * If ppout is not NULL then *ppout must not be NULL.
- *
- * An attempt to produce more than len bytes results in an error.
- * Returns the number of bytes of output produced (or that would be produced)
- * or 0 if an error occurs.
+ * Returns 1 on success or 0 on error.
  */
-size_t encode_der_length(size_t cont_len, unsigned char **ppout, size_t len)
+int encode_der_length(WPACKET *pkt, size_t cont_len)
 {
-    size_t encoded_len;
+    if (cont_len > 0xffff)
+        return 0; /* Too large for supported length encodings */
 
-    if (cont_len <= 0x7f) {
-        encoded_len = 1;
-    } else if (cont_len <= 0xff) {
-        encoded_len = 2;
-    } else if (cont_len <= 0xffff) {
-        encoded_len = 3;
+    if (cont_len > 0xff) {
+        if (!WPACKET_put_bytes_u8(pkt, 0x82)
+                || !WPACKET_put_bytes_u16(pkt, cont_len))
+            return 0;
     } else {
-        /* Too large for supported length encodings */
-        return 0;
+        if (cont_len > 0x7f
+                && !WPACKET_put_bytes_u8(pkt, 0x81))
+            return 0;
+        if (!WPACKET_put_bytes_u8(pkt, cont_len))
+            return 0;
     }
-    if (encoded_len > len)
-        return 0;
-    if (ppout != NULL) {
-        unsigned char *out = *ppout;
-        switch (encoded_len) {
-        case 2:
-            *out++ = 0x81;
-            break;
-        case 3:
-            *out++ = 0x82;
-            *out++ = (unsigned char)(cont_len >> 8);
-            break;
-        }
-        *out++ = (unsigned char)cont_len;
-        *ppout = out;
-    }
-    return encoded_len;
+
+    return 1;
 }
 
 /*
- * Outputs the DER encoding of a positive ASN.1 INTEGER to *ppout and, if
- * successful, increments *ppout past the data just written.
+ * Outputs the DER encoding of a positive ASN.1 INTEGER to pkt.
  *
- * If n is negative then an error results.
- * If ppout is NULL then the output size is calculated and returned but no
- * output is produced.
- * If ppout is not NULL then *ppout must not be NULL.
+ * Results in an error if n is negative or too large.
  *
- * An attempt to produce more than len bytes results in an error.
- * Returns the number of bytes of output produced (or that would be produced)
- * or 0 if an error occurs.
+ * Returns 1 on success or 0 on error.
  */
-size_t encode_der_integer(const BIGNUM *n, unsigned char **ppout, size_t len)
+int encode_der_integer(WPACKET *pkt, const BIGNUM *n)
 {
-    unsigned char *out = NULL;
-    unsigned char **pp = NULL;
-    size_t produced;
-    size_t c;
+    unsigned char *bnbytes;
     size_t cont_len;
 
-    if (len < 1 || BN_is_negative(n))
+    if (BN_is_negative(n))
         return 0;
 
     /*
@@ -113,75 +82,68 @@ size_t encode_der_integer(const BIGNUM *n, unsigned char **ppout, size_t len)
      */
     cont_len = BN_num_bits(n) / 8 + 1;
 
-    if (ppout != NULL) {
-        out = *ppout;
-        pp = &out;
-        *out++ = ID_INTEGER;
-    }
-    produced = 1;
-    if ((c = encode_der_length(cont_len, pp, len - produced)) == 0)
+    if (!WPACKET_start_sub_packet(pkt)
+            || !WPACKET_put_bytes_u8(pkt, ID_INTEGER)
+            || !encode_der_length(pkt, cont_len)
+            || !WPACKET_allocate_bytes(pkt, cont_len, &bnbytes)
+            || !WPACKET_close(pkt))
         return 0;
-    produced += c;
-    if (cont_len > len - produced)
+
+    if (bnbytes != NULL
+            && BN_bn2binpad(n, bnbytes, (int)cont_len) != (int)cont_len)
         return 0;
-    if (pp != NULL) {
-        if (BN_bn2binpad(n, out, (int)cont_len) != (int)cont_len)
-            return 0;
-        out += cont_len;
-        *ppout = out;
-    }
-    produced += cont_len;
-    return produced;
+
+    return 1;
 }
 
 /*
- * Outputs the DER encoding of a DSA-Sig-Value or ECDSA-Sig-Value to *ppout
- * and increments *ppout past the data just written.
+ * Outputs the DER encoding of a DSA-Sig-Value or ECDSA-Sig-Value to pkt. pkt
+ * may be initialised with a NULL buffer which enables pkt to be used to
+ * calulate how many bytes would be needed.
  *
- * If ppout is NULL then the output size is calculated and returned but no
- * output is produced.
- * If ppout is not NULL then *ppout must not be NULL.
- *
- * An attempt to produce more than len bytes results in an error.
- * Returns the number of bytes of output produced (or that would be produced)
- * or 0 if an error occurs.
+ * Returns 1 on success or 0 on error.
  */
-size_t encode_der_dsa_sig(const BIGNUM *r, const BIGNUM *s,
-                          unsigned char **ppout, size_t len)
+int encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s)
 {
-    unsigned char *out = NULL;
-    unsigned char **pp = NULL;
-    size_t produced;
-    size_t c;
-    size_t r_der_len;
-    size_t s_der_len;
+    WPACKET tmppkt, *dummypkt;
     size_t cont_len;
+    int isnull = WPACKET_is_null_buf(pkt);
 
-    if (len < 1
-            || (r_der_len = encode_der_integer(r, NULL, SIZE_MAX)) == 0
-            || (s_der_len = encode_der_integer(s, NULL, SIZE_MAX)) == 0)
+    if (!WPACKET_start_sub_packet(pkt))
         return 0;
 
-    cont_len = r_der_len + s_der_len;
-
-    if (ppout != NULL) {
-        out = *ppout;
-        pp = &out;
-        *out++ = ID_SEQUENCE;
+    if (!isnull) {
+        if (!WPACKET_init_null(&tmppkt, 0))
+            return 0;
+        dummypkt = &tmppkt;
+    } else {
+        /* If the input packet has a NULL buffer, we don't need a dummy packet */
+        dummypkt = pkt;
     }
-    produced = 1;
-    if ((c = encode_der_length(cont_len, pp, len - produced)) == 0)
+
+    /* Calculate the content length */
+    if (!encode_der_integer(dummypkt, r)
+            || !encode_der_integer(dummypkt, s)
+            || !WPACKET_get_length(dummypkt, &cont_len)
+            || (!isnull && !WPACKET_finish(dummypkt))) {
+        if (!isnull)
+            WPACKET_cleanup(dummypkt);
         return 0;
-    produced += c;
-    if ((c = encode_der_integer(r, pp, len - produced)) == 0)
+    }
+
+    /* Add the tag and length bytes */
+    if (!WPACKET_put_bytes_u8(pkt, ID_SEQUENCE)
+            || !encode_der_length(pkt, cont_len)
+               /*
+                * Really encode the integers. We already wrote to the main pkt
+                * if it had a NULL buffer, so don't do it again
+                */
+            || (!isnull && !encode_der_integer(pkt, r))
+            || (!isnull && !encode_der_integer(pkt, s))
+            || !WPACKET_close(pkt))
         return 0;
-    produced += c;
-    if ((c = encode_der_integer(s, pp, len - produced)) == 0)
-        return 0;
-    produced += c;
-    if (pp != NULL)
-        *ppout = out;
-    return produced;
+
+    return 1;
 }
 
 /*
