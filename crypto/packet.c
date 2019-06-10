@@ -35,7 +35,10 @@ int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
 }
 
 #define GETBUF(p)   (((p)->staticbuf != NULL) \
-                     ? (p)->staticbuf : (unsigned char *)(p)->buf->data)
+                     ? (p)->staticbuf \
+                     : ((p)->buf != NULL \
+                        ? (unsigned char *)(p)->buf->data \
+                        : NULL))
 
 int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
@@ -46,7 +49,7 @@ int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     if (pkt->maxsize - pkt->written < len)
         return 0;
 
-    if (pkt->staticbuf == NULL && (pkt->buf->length - pkt->written < len)) {
+    if (pkt->buf != NULL && (pkt->buf->length - pkt->written < len)) {
         size_t newlen;
         size_t reflen;
 
@@ -74,7 +77,8 @@ int WPACKET_sub_reserve_bytes__(WPACKET *pkt, size_t len,
     if (!WPACKET_reserve_bytes(pkt, lenbytes + len, allocbytes))
         return 0;
 
-    *allocbytes += lenbytes;
+    if (*allocbytes != NULL)
+        *allocbytes += lenbytes;
 
     return 1;
 }
@@ -110,7 +114,7 @@ static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
         pkt->subs = NULL;
         return 0;
     }
-    pkt->subs->packet_len = lenchars - GETBUF(pkt);
+    pkt->subs->packet_len = 0;
 
     return 1;
 }
@@ -149,6 +153,15 @@ int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
     return WPACKET_init_len(pkt, buf, 0);
 }
 
+int WPACKET_init_null(WPACKET *pkt, size_t lenbytes)
+{
+    pkt->staticbuf = NULL;
+    pkt->buf = NULL;
+    pkt->maxsize = maxmaxsize(lenbytes);
+
+    return wpacket_intern_init_len(pkt, 0);
+}
+
 int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 {
     /* Internal API, so should not fail */
@@ -163,6 +176,9 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 /* Store the |value| of length |len| at location |data| */
 static int put_value(unsigned char *data, size_t value, size_t len)
 {
+    if (data == NULL)
+        return 1;
+
     for (data += len - 1; len > 0; len--) {
         *data = (unsigned char)(value & 0xff);
         data--;
@@ -209,10 +225,14 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
     }
 
     /* Write out the WPACKET length if needed */
-    if (sub->lenbytes > 0
-                && !put_value(&GETBUF(pkt)[sub->packet_len], packlen,
+    if (sub->lenbytes > 0) {
+        unsigned char *buf = GETBUF(pkt);
+
+        if (buf != NULL
+                && !put_value(&buf[sub->packet_len], packlen,
                               sub->lenbytes))
             return 0;
+    }
 
     if (doclose) {
         pkt->subs = sub->parent;
@@ -293,10 +313,10 @@ int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes)
         return 1;
     }
 
+    sub->packet_len = pkt->written;
+
     if (!WPACKET_allocate_bytes(pkt, lenbytes, &lenchars))
         return 0;
-    /* Convert to an offset in case the underlying BUF_MEM gets realloc'd */
-    sub->packet_len = lenchars - GETBUF(pkt);
 
     return 1;
 }
@@ -354,7 +374,8 @@ int WPACKET_memset(WPACKET *pkt, int ch, size_t len)
     if (!WPACKET_allocate_bytes(pkt, len, &dest))
         return 0;
 
-    memset(dest, ch, len);
+    if (dest != NULL)
+        memset(dest, ch, len);
 
     return 1;
 }
@@ -369,7 +390,8 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
     if (!WPACKET_allocate_bytes(pkt, len, &dest))
         return 0;
 
-    memcpy(dest, src, len);
+    if (dest != NULL)
+        memcpy(dest, src, len);
 
     return 1;
 }
@@ -409,7 +431,17 @@ int WPACKET_get_length(WPACKET *pkt, size_t *len)
 
 unsigned char *WPACKET_get_curr(WPACKET *pkt)
 {
-    return GETBUF(pkt) + pkt->curr;
+    unsigned char *buf = GETBUF(pkt);
+
+    if (buf == NULL)
+        return NULL;
+
+    return buf + pkt->curr;
+}
+
+int WPACKET_is_null_buf(WPACKET *pkt)
+{
+    return pkt->buf == NULL && pkt->staticbuf == NULL;
 }
 
 void WPACKET_cleanup(WPACKET *pkt)
