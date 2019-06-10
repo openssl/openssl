@@ -118,7 +118,7 @@ static int s390x_sha3_init(EVP_MD_CTX *evp_ctx)
     }
 
     memset(ctx->A, 0, sizeof(ctx->A));
-    ctx->num = 0;
+    ctx->bufsz = 0;
     ctx->block_size = bsz;
     ctx->md_size = evp_ctx->digest->md_size;
     return 1;
@@ -145,7 +145,7 @@ static int s390x_shake_init(EVP_MD_CTX *evp_ctx)
     }
 
     memset(ctx->A, 0, sizeof(ctx->A));
-    ctx->num = 0;
+    ctx->bufsz = 0;
     ctx->block_size = bsz;
     ctx->md_size = evp_ctx->digest->md_size;
     return 1;
@@ -161,19 +161,19 @@ static int s390x_sha3_update(EVP_MD_CTX *evp_ctx, const void *_inp, size_t len)
     if (len == 0)
         return 1;
 
-    if ((num = ctx->num) != 0) {
+    if ((num = ctx->bufsz) != 0) {
         rem = bsz - num;
 
         if (len < rem) {
             memcpy(ctx->buf + num, inp, len);
-            ctx->num += len;
+            ctx->bufsz += len;
             return 1;
         }
         memcpy(ctx->buf + num, inp, rem);
         inp += rem;
         len -= rem;
         s390x_kimd(ctx->buf, bsz, ctx->pad, ctx->A);
-        ctx->num = 0;
+        ctx->bufsz = 0;
     }
     rem = len % bsz;
 
@@ -181,7 +181,7 @@ static int s390x_sha3_update(EVP_MD_CTX *evp_ctx, const void *_inp, size_t len)
 
     if (rem) {
         memcpy(ctx->buf, inp + len - rem, rem);
-        ctx->num = rem;
+        ctx->bufsz = rem;
     }
     return 1;
 }
@@ -190,7 +190,7 @@ static int s390x_sha3_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
 {
     KECCAK1600_CTX *ctx = evp_ctx->md_data;
 
-    s390x_klmd(ctx->buf, ctx->num, NULL, 0, ctx->pad, ctx->A);
+    s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, ctx->pad, ctx->A);
     memcpy(md, ctx->A, ctx->md_size);
     return 1;
 }
@@ -199,7 +199,7 @@ static int s390x_shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
 {
     KECCAK1600_CTX *ctx = evp_ctx->md_data;
 
-    s390x_klmd(ctx->buf, ctx->num, md, ctx->md_size, ctx->pad, ctx->A);
+    s390x_klmd(ctx->buf, ctx->bufsz, md, ctx->md_size, ctx->pad, ctx->A);
     return 1;
 }
 
