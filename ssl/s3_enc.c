@@ -416,10 +416,11 @@ void ssl3_digest_master_key_set_params(const SSL_SESSION *session,
 {
     int n = 0;
 
-    params[n++] = OSSL_PARAM_construct_octet_ptr(OSSL_DIGEST_PARAM_SSL3_MS,
-                                                (void **)&session->master_key,
-                                                 session->master_key_length,
-                                                 NULL);
+    params[n++] =
+        OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
+                                          (void *)session->master_key,
+                                          session->master_key_length,
+                                          NULL);
     params[n++] = OSSL_PARAM_construct_end();
 }
 

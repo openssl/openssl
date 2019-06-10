@@ -22,17 +22,19 @@ static OSSL_OP_digest_set_params_fn md5_sha1_set_params;
 /* Special set_params method for SSL3 */
 static int md5_sha1_set_params(void *vctx, const OSSL_PARAM params[])
 {
-    size_t msg_len = 0;
-    const void *msg = NULL;
     const OSSL_PARAM *p;
     MD5_SHA1_CTX *ctx = (MD5_SHA1_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {
         p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SSL3_MS);
-        if (p != NULL && !OSSL_PARAM_get_octet_ptr(p, &msg, &msg_len))
-            return 0;
-        return md5_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                             msg_len, (void *)msg);
+        /*
+         * We don't use OSSL_PARAM_get_octet_ptr(), because it assumes it
+         * should copy the data.  However, we know that sha1_ctrl() will
+         * consume the data anyway, making an extra copy unnecessary.
+         */
+        if (p != NULL && p->data_type == OSSL_PARAM_OCTET_STRING)
+            return md5_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                 p->data_size, p->data);
     }
     return 0;
 }
