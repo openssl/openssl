@@ -16,7 +16,6 @@
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 # include <openssl/cmserr.h>
-# include <openssl/ess.h>
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -285,8 +284,6 @@ int CMS_unsigned_add1_attr_by_txt(CMS_SignerInfo *si,
                                   const void *bytes, int len);
 void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
                                     int lastpos, int type);
-int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
-int CMS_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc);
 
 # ifdef HEADER_X509V3_H
 
