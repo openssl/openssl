@@ -670,6 +670,13 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes);
 int WPACKET_init(WPACKET *pkt, BUF_MEM *buf);
 
 /*
+ * Same as WPACKET_init_len except there is no underlying buffer. No data is
+ * ever actually written. We just keep track of how much data would have been
+ * written if a buffer was there.
+ */
+int WPACKET_init_null(WPACKET *pkt, size_t lenbytes);
+
+/*
  * Same as WPACKET_init_len except we do not use a growable BUF_MEM structure.
  * A fixed buffer of memory |buf| of size |len| is used instead. A failure will
  * occur if you attempt to write beyond the end of the buffer
@@ -867,6 +874,9 @@ int WPACKET_get_length(WPACKET *pkt, size_t *len);
  * bytes.
  */
 unsigned char *WPACKET_get_curr(WPACKET *pkt);
+
+/* Returns true if the underlying buffer is actually NULL */
+int WPACKET_is_null_buf(WPACKET *pkt);
 
 /* Release resources in a WPACKET if a failure has occurred. */
 void WPACKET_cleanup(WPACKET *pkt);
