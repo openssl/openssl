@@ -48,26 +48,22 @@ static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
+#ifndef OPENSSL_NO_SM2
     X509_REQ *ret = (X509_REQ *)*pval;
 
     switch (operation) {
     case ASN1_OP_D2I_PRE:
-#ifndef OPENSSL_NO_SM2
         ASN1_OCTET_STRING_free(ret->sm2_id);
-#endif
         /* fall thru */
     case ASN1_OP_NEW_POST:
-#ifndef OPENSSL_NO_SM2
         ret->sm2_id = NULL;
-#endif
         break;
 
     case ASN1_OP_FREE_POST:
-#ifndef OPENSSL_NO_SM2
         ASN1_OCTET_STRING_free(ret->sm2_id);
-#endif
         break;
     }
+#endif
 
     return 1;
 }
