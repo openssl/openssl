@@ -2189,6 +2189,34 @@ They are ignored and should be replaced with a combination of GENERATE,
 DEPEND and SHARED_SOURCE.
 EOF
 
+
+    # Go through the sources of all libraries and check that the same basename
+    # doesn't appear more than once.  Some static library archivers depend on
+    # them being unique.
+    {
+        my $err = 0;
+        foreach my $prod (keys %{$unified_info{libraries}}) {
+            my @prod_sources =
+                map { keys %{$unified_info{sources}->{$_}} }
+                keys %{$unified_info{sources}->{$prod}};
+            my %srccnt = ();
+
+            # Count how many times a given each source basename
+            # appears for each product.
+            foreach my $src (@prod_sources) {
+                $srccnt{basename $src}++;
+            }
+
+            foreach my $src (keys %srccnt) {
+                if ((my $cnt = $srccnt{$src}) > 1) {
+                    print STDERR "$src appears $cnt times for the product $prod\n";
+                    $err++
+                }
+            }
+        }
+        die if $err > 0;
+    }
+
     # Massage the result
 
     # If we depend on a header file or a perl module, add an inclusion of
@@ -2299,6 +2327,7 @@ EOF
             }
         }
     }
+
     # At this point, we have a number of sources with the value -1.  They
     # aren't part of the local build and are probably meant for a different
     # platform, and can therefore be cleaned away.  That happens when making
