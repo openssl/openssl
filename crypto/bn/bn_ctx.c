@@ -124,8 +124,9 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
         ctxdbg(trc_out, str, ctx);  \
     } OSSL_TRACE_END(BN_CTX)
 #else
-# define CTXDBG(str, ctx) do {}  while(0)
-#endif
+/* TODO(3.0): Consider if we want to do this in FIPS mode */
+# define CTXDBG(str, ctx) do {} while(0)
+#endif /* FIPS_MODE */
 
 BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
 {
