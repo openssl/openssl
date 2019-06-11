@@ -276,8 +276,8 @@ could fill in the parameters like this:
             *(char **)params[i].data = "foo value";
             *params[i].return_size = 10; /* size of "foo value" */
         } else if (strcmp(params[i].key, "bar") == 0) {
-            memcpy(params[1].data, "bar value", 10);
-            *params[1].return_size = 10; /* size of "bar value" */
+            memcpy(params[i].data, "bar value", 10);
+            *params[i].return_size = 10; /* size of "bar value" */
         }
         /* Ignore stuff we don't know */
     }
