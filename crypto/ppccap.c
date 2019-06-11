@@ -38,12 +38,8 @@ unsigned int OPENSSL_ppccap_P = 0;
 
 static sigset_t all_masked;
 
-/*
- * TODO(3.0): Temporarily disabled some assembler that hasn't been brought into
- * the FIPS module yet.
- */
-#ifndef FIPS_MODE
-# ifdef OPENSSL_BN_ASM_MONT
+
+#ifdef OPENSSL_BN_ASM_MONT
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                 const BN_ULONG *np, const BN_ULONG *n0, int num)
 {
@@ -68,8 +64,12 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 
     return bn_mul_mont_int(rp, ap, bp, np, n0, num);
 }
-# endif
-
+#endif
+/*
+ * TODO(3.0): Temporarily disabled some assembler that hasn't been brought into
+ * the FIPS module yet.
+ */
+#ifndef FIPS_MODE
 void sha256_block_p8(void *ctx, const void *inp, size_t len);
 void sha256_block_ppc(void *ctx, const void *inp, size_t len);
 void sha256_block_data_order(void *ctx, const void *inp, size_t len);
