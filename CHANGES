@@ -45,6 +45,10 @@
   *) Support SM2 signing and verification schemes with X509 certificate.
      [Paul Yang]
 
+  *) The macro SYSerr() was changed to take a function name, not
+     a numeric value; the SYS_F_xxx defines were removed.
+     [Rich Salz]
+
   *) Use SHA256 as the default digest for TS query in the ts app.
      [Tomas Mraz]
 

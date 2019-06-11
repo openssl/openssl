@@ -69,7 +69,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
         fp_flags |= BIO_FP_TEXT;
 
     if (file == NULL) {
-        SYSerr(SYS_F_FOPEN, get_last_sys_error());
+        SYSerr("fopen", get_last_sys_error());
         ERR_add_error_data(5, "fopen('", filename, "','", mode, "')");
         if (errno == ENOENT
 # ifdef ENXIO
@@ -149,7 +149,7 @@ static int file_read(BIO *b, char *out, int outl)
         if (ret == 0
             && (b->flags & BIO_FLAGS_UPLINK_INTERNAL
                 ? UP_ferror((FILE *)b->ptr) : ferror((FILE *)b->ptr))) {
-            SYSerr(SYS_F_FREAD, get_last_sys_error());
+            SYSerr("fread", get_last_sys_error());
             BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
             ret = -1;
         }
@@ -288,7 +288,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
 #  endif
         fp = openssl_fopen(ptr, p);
         if (fp == NULL) {
-            SYSerr(SYS_F_FOPEN, get_last_sys_error());
+            SYSerr("fopen", get_last_sys_error());
             ERR_add_error_data(5, "fopen('", ptr, "','", p, "')");
             BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
             ret = 0;
@@ -316,7 +316,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         st = b->flags & BIO_FLAGS_UPLINK_INTERNAL
                 ? UP_fflush(b->ptr) : fflush((FILE *)b->ptr);
         if (st == EOF) {
-            SYSerr(SYS_F_FFLUSH, get_last_sys_error());
+            SYSerr("fflush", get_last_sys_error());
             ERR_add_error_data(1, "fflush()");
             BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
             ret = 0;

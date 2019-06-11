@@ -138,7 +138,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                              BIO_ADDRINFO_socktype(c->addr_iter),
                              BIO_ADDRINFO_protocol(c->addr_iter), 0);
             if (ret == (int)INVALID_SOCKET) {
-                SYSerr(SYS_F_SOCKET, get_last_socket_error());
+                SYSerr("socket", get_last_socket_error());
                 ERR_add_error_data(4,
                                    "hostname=", c->param_hostname,
                                    " service=", c->param_service);
@@ -170,7 +170,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     ERR_clear_error();
                     break;
                 } else {
-                    SYSerr(SYS_F_CONNECT, get_last_socket_error());
+                    SYSerr("connect", get_last_socket_error());
                     ERR_add_error_data(4,
                                        "hostname=", c->param_hostname,
                                        " service=", c->param_service);
@@ -186,7 +186,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             i = BIO_sock_error(b->num);
             if (i) {
                 BIO_clear_retry_flags(b);
-                SYSerr(SYS_F_CONNECT, i);
+                SYSerr("connect", i);
                 ERR_add_error_data(4,
                                    "hostname=", c->param_hostname,
                                    " service=", c->param_service);

@@ -226,7 +226,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                              BIO_ADDRINFO_socktype(c->addr_iter),
                              BIO_ADDRINFO_protocol(c->addr_iter), 0);
             if (ret == (int)INVALID_SOCKET) {
-                SYSerr(SYS_F_SOCKET, get_last_socket_error());
+                SYSerr("socket", get_last_socket_error());
                 ERR_add_error_data(4,
                                    "hostname=", c->param_addr,
                                    " service=", c->param_serv);

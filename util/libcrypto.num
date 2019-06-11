@@ -4685,3 +4685,4 @@ EVP_KEYEXCH_up_ref                      4790	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_fetch                       4791	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_dh_pad                 4792	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_set_params                 4793	3_0_0	EXIST::FUNCTION:
+ERR_put_func_error                      4794	3_0_0	EXIST::FUNCTION:
