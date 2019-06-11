@@ -15,10 +15,9 @@
 extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
-static size_t buf_l = 0;
 static OSSL_PARAM greeting_request[] = {
-    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf), &buf_l },
-    { NULL, 0, NULL, 0, NULL }
+    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf), 0 },
+    { NULL, 0, NULL, 0, 0 }
 };
 
 static int test_provider(OSSL_PROVIDER *prov, const char *expected_greeting)

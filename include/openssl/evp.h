@@ -540,8 +540,8 @@ void BIO_set_md(BIO *, const EVP_MD *md);
 # define EVP_delete_digest_alias(alias) \
         OBJ_NAME_remove(alias,OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS);
 
-int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
-int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
+int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
+int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
 int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 EVP_MD_CTX *EVP_MD_CTX_new(void);
 int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);

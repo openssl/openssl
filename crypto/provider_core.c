@@ -600,8 +600,7 @@ const OSSL_ITEM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov)
         ? NULL : prov->get_param_types(prov->provctx);
 }
 
-int ossl_provider_get_params(const OSSL_PROVIDER *prov,
-                             const OSSL_PARAM params[])
+int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
     return prov->get_params == NULL
         ? 0 : prov->get_params(prov->provctx, params);
@@ -638,10 +637,10 @@ static const OSSL_ITEM *core_get_param_types(const OSSL_PROVIDER *prov)
     return param_types;
 }
 
-static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
+static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
     int i;
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, "openssl-version")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);

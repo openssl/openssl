@@ -17,9 +17,9 @@
 
 static OSSL_OP_digest_set_params_fn mdc2_set_params;
 
-static int mdc2_set_params(void *vctx, const OSSL_PARAM params[])
+static int mdc2_set_params(void *vctx, OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
     MDC2_CTX *ctx = (MDC2_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {

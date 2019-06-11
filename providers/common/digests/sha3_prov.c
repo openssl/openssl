@@ -240,9 +240,9 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
-static int shake_set_params(void *vctx, const OSSL_PARAM params[])
+static int shake_set_params(void *vctx, OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {

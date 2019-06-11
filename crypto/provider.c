@@ -40,8 +40,7 @@ const OSSL_ITEM *OSSL_PROVIDER_get_param_types(const OSSL_PROVIDER *prov)
     return ossl_provider_get_param_types(prov);
 }
 
-int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov,
-                             const OSSL_PARAM params[])
+int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
     return ossl_provider_get_params(prov, params);
 }

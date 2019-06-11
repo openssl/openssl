@@ -16,7 +16,7 @@ OSSL_PROVIDER_add_builtin - provider routines
  int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
 
  const OSSL_ITEM *OSSL_PROVIDER_get_param_types(OSSL_PROVIDER *prov);
- int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[]);
+ int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, OSSL_PARAM params[]);
 
  int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
                                ossl_provider_init_fn *init_fn);
@@ -81,7 +81,7 @@ its build number.
  OSSL_PROVIDER *prov = NULL;
  const char *build = NULL;
  size_t built_l = 0;
- const OSSL_PARAM request[] = {
+ OSSL_PARAM request[] = {
      { "build", OSSL_PARAM_UTF8_STRING_PTR, &build, 0, &build_l },
      { NULL, 0, NULL, 0, NULL }
  };

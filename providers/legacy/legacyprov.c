@@ -32,10 +32,9 @@ static const OSSL_ITEM *legacy_get_param_types(const OSSL_PROVIDER *prov)
     return legacy_param_types;
 }
 
-static int legacy_get_params(const OSSL_PROVIDER *prov,
-                            const OSSL_PARAM params[])
+static int legacy_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL Legacy Provider"))

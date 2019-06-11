@@ -20,9 +20,9 @@
 static OSSL_OP_digest_set_params_fn sha1_set_params;
 
 /* Special set_params method for SSL3 */
-static int sha1_set_params(void *vctx, const OSSL_PARAM params[])
+static int sha1_set_params(void *vctx, OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
     SHA_CTX *ctx = (SHA_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {

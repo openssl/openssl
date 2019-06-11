@@ -365,8 +365,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         return 0;
     }
 
-    params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
-                                              &size, NULL);
+    params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &size);
     params[i++] = OSSL_PARAM_construct_end();
 
     if (EVP_MD_CTX_set_params(ctx, params) > 0)
@@ -525,14 +524,14 @@ int EVP_Digest(const void *data, size_t count,
     return ret;
 }
 
-int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
+int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
 {
     if (ctx->digest != NULL && ctx->digest->set_params != NULL)
         return ctx->digest->set_params(ctx->provctx, params);
     return 0;
 }
 
-int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
+int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
 {
     if (ctx->digest != NULL && ctx->digest->get_params != NULL)
         return ctx->digest->get_params(ctx->provctx, params);
@@ -545,7 +544,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     if (ctx->digest != NULL) {
         if (ctx->digest->prov != NULL) {
             OSSL_PARAM params[2];
-            size_t i, sz, n = 0;
+            size_t i, n = 0;
 
             switch (cmd) {
             case EVP_MD_CTRL_XOF_LEN:
@@ -553,8 +552,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
                     break;
                 i = (size_t)p1;
                 params[n++] =
-                    OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &i,
-                                                &sz);
+                    OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &i);
                 params[n++] = OSSL_PARAM_construct_end();
                 return ctx->digest->set_params(ctx->provctx, params);
             case EVP_MD_CTRL_MICALG:
@@ -562,7 +560,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
                     break;
                 params[n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
-                                                     p2, p1 ? p1 : 9999, &sz);
+                                                     p2, p1 ? p1 : 9999);
                 params[n++] = OSSL_PARAM_construct_end();
                 return ctx->digest->get_params(ctx->provctx, params);
             }

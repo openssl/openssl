@@ -4,14 +4,9 @@
 
 OSSL_PARAM_double, OSSL_PARAM_int, OSSL_PARAM_int32, OSSL_PARAM_int64,
 OSSL_PARAM_long, OSSL_PARAM_size_t, OSSL_PARAM_uint, OSSL_PARAM_uint32,
-OSSL_PARAM_uint64, OSSL_PARAM_ulong, OSSL_PARAM_utf8_string,
+OSSL_PARAM_uint64, OSSL_PARAM_ulong, OSSL_PARAM_BN, OSSL_PARAM_utf8_string,
 OSSL_PARAM_octet_string, OSSL_PARAM_utf8_ptr, OSSL_PARAM_octet_ptr,
-OSSL_PARAM_SIZED_double, OSSL_PARAM_SIZED_int, OSSL_PARAM_SIZED_int32,
-OSSL_PARAM_SIZED_int64, OSSL_PARAM_SIZED_long, OSSL_PARAM_SIZED_size_t,
-OSSL_PARAM_SIZED_uint, OSSL_PARAM_SIZED_uint32, OSSL_PARAM_SIZED_uint64,
-OSSL_PARAM_SIZED_ulong, OSSL_PARAM_SIZED_BN, OSSL_PARAM_SIZED_utf8_string,
-OSSL_PARAM_SIZED_octet_string, OSSL_PARAM_SIZED_utf8_ptr,
-OSSL_PARAM_SIZED_octet_ptr, OSSL_PARAM_END, OSSL_PARAM_construct_double,
+OSSL_PARAM_END, OSSL_PARAM_construct_BN, OSSL_PARAM_construct_double,
 OSSL_PARAM_construct_int, OSSL_PARAM_construct_int32,
 OSSL_PARAM_construct_int64, OSSL_PARAM_construct_long,
 OSSL_PARAM_construct_size_t, OSSL_PARAM_construct_uint,
@@ -44,52 +39,44 @@ OSSL_PARAM_set_octet_ptr
  #define OSSL_PARAM_octet_string(key, address, size)
  #define OSSL_PARAM_utf8_ptr(key, address, size)
  #define OSSL_PARAM_octet_ptr(key, address, size)
-
- #define OSSL_PARAM_SIZED_TYPE(key, address, return_size)
- #define OSSL_PARAM_SIZED_BN(key, address, size, return_size)
- #define OSSL_PARAM_SIZED_utf8_string(key, address, size, return_size)
- #define OSSL_PARAM_SIZED_octet_string(key, address, size, return_size)
- #define OSSL_PARAM_SIZED_utf8_ptr(key, address, size, return_size)
- #define OSSL_PARAM_SIZED_octet_ptr(key, address, size, return_size)
-
+ #define OSSL_PARAM_BN(key, address, size)
  #define OSSL_PARAM_END
 
  OSSL_PARAM OSSL_PARAM_construct_TYPE(const char *key, TYPE *buf, size_t *ret);
  OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
-                                    size_t bsize, size_t *rsize);
+                                    size_t bsize);
  OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
-                                             size_t bsize, size_t *rsize);
+                                             size_t bsize);
  OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
-                                              size_t bsize, size_t *rsize);
+                                              size_t bsize);
  OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
-                                          size_t bsize, size_t *rsize);
+                                          size_t bsize);
  OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
-                                           size_t bsize, size_t *rsize);
+                                           size_t bsize);
  OSSL_PARAM OSSL_PARAM_construct_end(void);
 
  OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *array, const char *key);
 
  int OSSL_PARAM_get_TYPE(const OSSL_PARAM *p, const char *key, TYPE *val);
- int OSSL_PARAM_set_TYPE(const OSSL_PARAM *p, const char *key, TYPE val);
+ int OSSL_PARAM_set_TYPE(OSSL_PARAM *p, const char *key, TYPE val);
 
  int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val);
- int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val);
+ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const char *key, const BIGNUM *val);
 
  int OSSL_PARAM_get_utf8_string(const OSSL_PARAM *p, char **val,
                                 size_t max_len);
- int OSSL_PARAM_set_utf8_string(const OSSL_PARAM *p, const char *val);
+ int OSSL_PARAM_set_utf8_string(OSSL_PARAM *p, const char *val);
 
  int OSSL_PARAM_get_octet_string(const OSSL_PARAM *p, void **val,
                                  size_t max_len, size_t *used_len);
- int OSSL_PARAM_set_octet_string(const OSSL_PARAM *p, const void *val,
-                                 size_t len);
+ int OSSL_PARAM_set_octet_string(OSSL_PARAM *p, const void *val, size_t len);
 
  int OSSL_PARAM_get_utf8_ptr(const OSSL_PARAM *p, char **val);
- int OSSL_PARAM_set_utf8_ptr(const OSSL_PARAM *p, char *val);
+ int OSSL_PARAM_set_utf8_ptr(OSSL_PARAM *p, char *val);
 
  int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, void **val,
                               size_t *used_len);
- int OSSL_PARAM_set_octet_ptr(const OSSL_PARAM *p, void *val, size_t used_len);
+ int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, void *val, size_t used_len);
 
 =head1 DESCRIPTION
 
@@ -146,25 +133,10 @@ Each of these macros defines a parameter of the specified B<TYPE> with the
 provided B<key> and parameter variable B<address>.
 
 OSSL_PARAM_utf8_string(), OSSL_PARAM_octet_string(), OSSL_PARAM_utf8_ptr(),
-OSSL_PARAM_octet_ptr() are macros that provide support for defining UTF8
-strings and OCTET strings.
+OSSL_PARAM_octet_ptr(), OSSL_PARAM_BN() are macros that provide support
+for defining UTF8 strings, OCTET strings and big numbers.
 A parameter with name B<key> is defined.
 The storage for this parameter is at B<address> and is of B<size> bytes.
-
-OSSL_PARAM_SIZED_TYPE() are a second series of macros designed to assist with
-the initialisation of OSSL_PARAM structures.
-They are similar to the OSSL_PARAM_TYPE() macros but also include a
-B<return_size> argument which contains the address of a size_t variable which
-will be populated with the actual size of the parameter upon return from a
-OSSL_PARAM_set_TYPE() call.
-
-OSSL_PARAM_SIZED_BN(), OSSL_PARAM_SIZED_utf8_string(),
-OSSL_PARAM_SIZED_octet_string(), OSSL_PARAM_SIZED_utf8_ptr(),
-OSSL_PARAM_SIZED_octet_ptr() are macros that provide support for defining large
-integers, UTF8 string and OCTET strings in an OSSL_PARAM array.
-A parameter with name B<key> is defined.
-The storage for this parameter is at B<address> and is of B<size> bytes.
-The size used by the parameter value, in bytes, is written to B<return_size>.
 
 OSSL_PARAM_END provides an end of parameter list marker.
 This should terminate all OSSL_PARAM arrays.
@@ -295,7 +267,7 @@ This example is for setting parameters on some object:
     const char *foo = "some string";
     size_t foo_l = strlen(foo) + 1;
     const char bar[] = "some other string";
-    const OSSL_PARAM set[] = {
+    OSSL_PARAM set[] = {
         OSSL_PARAM_utf8_ptr("foo", foo, foo_l),
         OSSL_PARAM_utf8_string("bar", bar, sizeof(bar)),
         OSSL_PARAM_END
@@ -311,7 +283,7 @@ available parameters:
     size_t foo_l;
     char bar[1024];
     size_t bar_l;
-    const OSSL_PARAM request[] = {
+    OSSL_PARAM request[] = {
         OSSL_PARAM_UTF8_PTR("foo", foo, 0, foo_l),
         OSSL_PARAM_UTF8_STRING("bar", bar, sizeof(bar), bar_l),
         OSSL_PARAM_END
@@ -320,9 +292,9 @@ available parameters:
 A I<responder> that receives this array (as C<params> in this example)
 could fill in the parameters like this:
 
-    /* const OSSL_PARAM *params */
+    /* OSSL_PARAM *params */
 
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, "foo")) == NULL)
         OSSL_PARAM_set_utf8_ptr(p, "foo value");
