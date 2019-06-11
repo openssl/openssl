@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-BN_CTX_new, BN_CTX_secure_new, BN_CTX_free - allocate and free BN_CTX structures
+BN_CTX_new_ex, BN_CTX_new, BN_CTX_secure_new_ex, BN_CTX_secure_new, BN_CTX_free
+- allocate and free BN_CTX structures
 
 =head1 SYNOPSIS
 
