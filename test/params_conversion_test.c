@@ -9,13 +9,15 @@
  */
 
 #include <string.h>
-#include <inttypes.h>
 #include <openssl/params.h>
 #include "testutil.h"
 
-#ifdef OPENSSL_SYS_WINDOWS
-# define strcasecmp _stricmp
-#endif
+/* On machines that dont support <inttypes.h> just disable the tests */
+#if !defined(OPENSSL_NO_INTTYPES_H)
+
+# ifdef OPENSSL_SYS_WINDOWS
+#  define strcasecmp _stricmp
+# endif
 
 typedef struct {
     const OSSL_PARAM *param;
@@ -320,6 +322,8 @@ end:
     return res;
 }
 
+#endif /* OPENSSL_NO_INTTYPES_H */
+
 OPT_TEST_DECLARE_USAGE("file...\n")
 
 int setup_tests(void)
@@ -329,6 +333,9 @@ int setup_tests(void)
     if (n == 0)
         return 0;
 
+#if !defined(OPENSSL_NO_INTTYPES_H)
     ADD_ALL_TESTS(run_param_file_tests, n);
+#endif /* OPENSSL_NO_INTTYPES_H */
+
     return 1;
 }
