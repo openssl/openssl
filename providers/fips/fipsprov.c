@@ -50,6 +50,8 @@ static int dummy_evp_call(OPENSSL_CTX *libctx)
     unsigned int dgstlen = 0;
     unsigned char dgst[SHA256_DIGEST_LENGTH];
     int ret = 0;
+    BN_CTX *bnctx = NULL;
+    BIGNUM *a = NULL, *b = NULL;
 
     if (ctx == NULL || sha256 == NULL)
         goto err;
@@ -63,8 +65,25 @@ static int dummy_evp_call(OPENSSL_CTX *libctx)
     if (dgstlen != sizeof(exptd) || memcmp(dgst, exptd, sizeof(exptd)) != 0)
         goto err;
 
+    bnctx = BN_CTX_new_ex(libctx);
+    if (bnctx == NULL)
+        goto err;
+    BN_CTX_start(bnctx);
+    a = BN_CTX_get(bnctx);
+    b = BN_CTX_get(bnctx);
+    if (b == NULL)
+        goto err;
+    BN_zero(a);
+    if (!BN_one(b)
+        || !BN_add(a, a, b)
+        || BN_cmp(a, b) != 0)
+        goto err;
+    
     ret = 1;
  err:
+    BN_CTX_end(bnctx);
+    BN_CTX_free(bnctx);
+    
     EVP_MD_CTX_free(ctx);
     EVP_MD_meth_free(sha256);
     return ret;
