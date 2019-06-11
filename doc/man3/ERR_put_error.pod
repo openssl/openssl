@@ -2,13 +2,16 @@
 
 =head1 NAME
 
-ERR_put_error, ERR_add_error_data, ERR_add_error_vdata - record an error
+ERR_put_error, ERR_put_func_error,
+ERR_add_error_data, ERR_add_error_vdata - record an error
 
 =head1 SYNOPSIS
 
  #include <openssl/err.h>
 
  void ERR_put_error(int lib, int func, int reason, const char *file, int line);
+ void ERR_put_func_error(int lib, const char *func, int reason,
+                         const char *file, int line);
 
  void ERR_add_error_data(int num, ...);
  void ERR_add_error_vdata(int num, va_list arg);
@@ -19,6 +22,10 @@ ERR_put_error() adds an error code to the thread's error queue. It
 signals that the error of reason code B<reason> occurred in function
 B<func> of library B<lib>, in line number B<line> of B<file>.
 This function is usually called by a macro.
+
+ERR_put_func_err() is similar except that the B<func> is a string naming
+a function external to OpenSSL, usually provided by the platform on which
+OpenSSL and the application is running.
 
 ERR_add_error_data() associates the concatenation of its B<num> string
 arguments with the error code added last.

@@ -26,9 +26,11 @@ extern "C" {
 #endif
 
 # ifndef OPENSSL_NO_ERR
-#  define ERR_PUT_error(a,b,c,d,e)        ERR_put_error(a,b,c,d,e)
+#  define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,fn,ln)
+#  define ERR_PUT_func_error(l,f,r,fn,ln) ERR_put_func_error(l,f,r,fn,ln)
 # else
-#  define ERR_PUT_error(a,b,c,d,e)        ERR_put_error(a,b,c,NULL,0)
+#  define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,NULL,0)
+#  define ERR_PUT_func_error(l,f,r,fn,ln) ERR_put_func_error(l,f,r,NULL,0)
 # endif
 
 # include <errno.h>
@@ -103,7 +105,7 @@ typedef struct err_state_st {
 
 # define ERR_LIB_USER            128
 
-# define SYSerr(f,r)  ERR_PUT_error(ERR_LIB_SYS,0,(r),OPENSSL_FILE,OPENSSL_LINE)
+# define SYSerr(f,r)  ERR_PUT_func_error(ERR_LIB_SYS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define BNerr(f,r)   ERR_PUT_error(ERR_LIB_BN,0,(r),OPENSSL_FILE,OPENSSL_LINE)
 # define RSAerr(f,r)  ERR_PUT_error(ERR_LIB_RSA,0,(r),OPENSSL_FILE,OPENSSL_LINE)
 # define DHerr(f,r)   ERR_PUT_error(ERR_LIB_DH,0,(r),OPENSSL_FILE,OPENSSL_LINE)
@@ -154,33 +156,6 @@ typedef struct err_state_st {
 # define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
 # define ERR_FATAL_ERROR(l)      (int)( (l)         & ERR_R_FATAL)
 
-/* OS functions */
-# define SYS_F_FOPEN             1
-# define SYS_F_CONNECT           2
-# define SYS_F_GETSERVBYNAME     3
-# define SYS_F_SOCKET            4
-# define SYS_F_IOCTLSOCKET       5
-# define SYS_F_BIND              6
-# define SYS_F_LISTEN            7
-# define SYS_F_ACCEPT            8
-# define SYS_F_WSASTARTUP        9/* Winsock stuff */
-# define SYS_F_OPENDIR           10
-# define SYS_F_FREAD             11
-# define SYS_F_GETADDRINFO       12
-# define SYS_F_GETNAMEINFO       13
-# define SYS_F_SETSOCKOPT        14
-# define SYS_F_GETSOCKOPT        15
-# define SYS_F_GETSOCKNAME       16
-# define SYS_F_GETHOSTBYNAME     17
-# define SYS_F_FFLUSH            18
-# define SYS_F_OPEN              19
-# define SYS_F_CLOSE             20
-# define SYS_F_IOCTL             21
-# define SYS_F_STAT              22
-# define SYS_F_FCNTL             23
-# define SYS_F_FSTAT             24
-# define SYS_F_SENDFILE          25
-
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
 # define ERR_R_BN_LIB    ERR_LIB_BN/* 3 */
@@ -229,6 +204,8 @@ typedef struct ERR_string_data_st {
 DEFINE_LHASH_OF(ERR_STRING_DATA);
 
 void ERR_put_error(int lib, int func, int reason, const char *file, int line);
+void ERR_put_func_error(int lib, const char *func, int reason,
+                        const char *file, int line);
 void ERR_set_error_data(char *data, int flags);
 
 unsigned long ERR_get_error(void);

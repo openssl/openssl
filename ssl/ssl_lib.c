@@ -2075,7 +2075,7 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
         else
 #endif
 #ifdef OPENSSL_NO_KTLS
-            SYSerr(SYS_F_SENDFILE, get_last_sys_error());
+            SYSerr("sendfile", get_last_sys_error());
 #else
             SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
 #endif

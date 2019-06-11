@@ -372,6 +372,13 @@ void err_free_strings_int(void)
 
 /********************************************************/
 
+void ERR_put_func_error(int lib, const char *func, int reason,
+                        const char *file, int line)
+{
+    ERR_put_error(lib, 0, reason, file, line);
+    ERR_add_error_data(2, "calling function ", func);
+}
+
 void ERR_put_error(int lib, int func, int reason, const char *file, int line)
 {
     ERR_STATE *es;
