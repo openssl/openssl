@@ -228,6 +228,8 @@ extern "C" {
 # endif
 
 /* Standard integer types */
+# define OPENSSL_NO_INTTYPES_H
+# define OPENSSL_NO_STDINT_H
 # if defined(OPENSSL_SYS_UEFI)
 typedef INT8 int8_t;
 typedef UINT8 uint8_t;
@@ -241,6 +243,9 @@ typedef UINT64 uint64_t;
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
      defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
 #  include <inttypes.h>
+#  undef OPENSSL_NO_INTTYPES_H
+/* Because the specs say that inttypes.h includes stdint.h if present */
+#  undef OPENSSL_NO_STDINT_H
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
  * minimally required typdefs for systems not supporting inttypes.h or
@@ -256,6 +261,7 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 # else
 #  include <stdint.h>
+#  undef OPENSSL_NO_STDINT_H
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */
