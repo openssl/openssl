@@ -718,8 +718,8 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 hints.ai_flags &= ~AI_ADDRCONFIG;
                 goto retry;
             }
-            /* fall through */
 # endif
+            /* fall through */
         default:
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
             ERR_add_error_data(1, gai_strerror(gai_ret));
