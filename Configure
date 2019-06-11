@@ -1407,13 +1407,31 @@ unless ($disabled{asm}) {
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
-    push @{$config{lib_defines}}, "OPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
-    push @{$config{lib_defines}}, "OPENSSL_IA32_SSE2" if (!$disabled{sse2} && $target{bn_asm_src} =~ /86/);
+    if ($target{bn_asm_src} =~ /bn-586/) {
+        push @{$config{lib_defines}}, "OPENSSL_BN_ASM_PART_WORDS";
+        push @{$config{module_defines}}, "OPENSSL_BN_ASM_PART_WORDS";
+    }
+    if (!$disabled{sse2} && $target{bn_asm_src} =~ /86/) {
+        push @{$config{lib_defines}}, "OPENSSL_IA32_SSE2";
+        push @{$config{module_defines}}, "OPENSSL_IA32_SSE2";
+    }
 
-    push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
-    push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
-    push @{$config{lib_defines}}, "OPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
-    push @{$config{lib_defines}}, "BN_DIV3W" if ($target{bn_asm_src} =~ /-div3w/);
+    if ($target{bn_asm_src} =~ /-mont/) {
+        push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT";
+        push @{$config{module_defines}}, "OPENSSL_BN_ASM_MONT";
+    }
+    if ($target{bn_asm_src} =~ /-mont5/) {
+        push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT5";
+        push @{$config{module_defines}}, "OPENSSL_BN_ASM_MONT5";
+    }
+    if ($target{bn_asm_src} =~ /-gf2m/) {
+        push @{$config{lib_defines}}, "OPENSSL_BN_ASM_GF2m";
+        push @{$config{module_defines}}, "OPENSSL_BN_ASM_GF2m";
+    }
+    if ($target{bn_asm_src} =~ /-div3w/) {
+        push @{$config{lib_defines}}, "BN_DIV3W";
+        push @{$config{module_defines}}, "BN_DIV3W";
+    }
 
     if ($target{sha1_asm_src}) {
         push @{$config{lib_defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
