@@ -1826,6 +1826,24 @@ if ($builder eq "unified") {
         my %depends = ();
         my %generate = ();
 
+        # Support for $variablename in build.info files.
+        # Embedded perl code is the ultimate master, still.  If its output
+        # contains a dollar sign, it had better be escaped, or it will be
+        # taken for a variable name prefix.
+        my %variables = ();
+        my $variable_re = qr/\$([[:alpha:]][[:alnum:]_]*)/;
+        my $expand_variables = sub {
+            my $value = '';
+            my $value_rest = shift;
+
+            while ($value_rest =~ /(?<!\\)${variable_re}/) {
+                $value .= $`;
+                $value .= $variables{$1};
+                $value_rest = $';
+            }
+            return $value . $value_rest;
+        };
+
         # We want to detect configdata.pm in the source tree, so we
         # don't use it if the build tree is different.
         my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
@@ -1881,10 +1899,16 @@ if ($builder eq "unified") {
             qr/^\s*ENDIF\s*$/
             => sub { die "ENDIF out of scope" if ! @skip;
                      pop @skip; },
+            qr/^\s*${variable_re}\s*=\s*(.*?)\s*$/
+            => sub {
+                if (!@skip || $skip[$#skip] > 0) {
+                    $variables{$1} = $2;
+                }
+            },
             qr/^\s*SUBDIRS\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    foreach (tokenize($1)) {
+                    foreach (tokenize($expand_variables->($1))) {
                         push @build_dirs, [ @curd, splitdir($_, 1) ];
                     }
                 }
@@ -1893,7 +1917,7 @@ if ($builder eq "unified") {
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     my @a = tokenize($1, qr|\s*,\s*|);
-                    my @p = tokenize($2);
+                    my @p = tokenize($expand_variables->($2));
                     push @programs, @p;
                     foreach my $a (@a) {
                         my $ak = $a;
@@ -1912,7 +1936,7 @@ if ($builder eq "unified") {
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     my @a = tokenize($1, qr|\s*,\s*|);
-                    my @l = tokenize($2);
+                    my @l = tokenize($expand_variables->($2));
                     push @libraries, @l;
                     foreach my $a (@a) {
                         my $ak = $a;
@@ -1931,7 +1955,7 @@ if ($builder eq "unified") {
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     my @a = tokenize($1, qr|\s*,\s*|);
-                    my @m = tokenize($2);
+                    my @m = tokenize($expand_variables->($2));
                     push @modules, @m;
                     foreach my $a (@a) {
                         my $ak = $a;
@@ -1950,7 +1974,7 @@ if ($builder eq "unified") {
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     my @a = tokenize($1, qr|\s*,\s*|);
-                    my @s = tokenize($2);
+                    my @s = tokenize($expand_variables->($2));
                     push @scripts, @s;
                     foreach my $a (@a) {
                         my $ak = $a;
@@ -1967,22 +1991,23 @@ if ($builder eq "unified") {
             },
 
             qr/^\s*ORDINALS\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/,
-            => sub { push @{$ordinals{$1}}, tokenize($2)
+            => sub { push @{$ordinals{$1}}, tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$sources{$1}}, tokenize($2)
+            => sub { push @{$sources{$1}}, tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SHARED_SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$shared_sources{$1}}, tokenize($2)
+            => sub { push @{$shared_sources{$1}},
+                         tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$includes{$1}}, tokenize($2)
+            => sub { push @{$includes{$1}}, tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*DEFINE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$defines{$1}}, tokenize($2)
+            => sub { push @{$defines{$1}}, tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*DEPEND\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$depends{$1}}, tokenize($2)
+            => sub { push @{$depends{$1}}, tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*GENERATE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$generate{$1}}, $2
