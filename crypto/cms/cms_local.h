@@ -421,6 +421,9 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *
 /* SignerInfo routines */
 int CMS_si_check_attributes(const CMS_SignerInfo *si);
 
+/* ESS routines */
+int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain);
+
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)
 DECLARE_ASN1_ITEM(CMS_DigestedData)
 DECLARE_ASN1_ITEM(CMS_EncryptedData)

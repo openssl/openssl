@@ -670,10 +670,16 @@ int cms_main(int argc, char **argv)
         goto opthelp;
     }
 
-    if (flags & CMS_CADES) {
-        if (flags & CMS_NOATTR) {
+    if ((flags & CMS_CADES) != 0) {
+        if ((flags & CMS_NOATTR) != 0) {
             BIO_puts(bio_err, "Incompatible options: "
                      "CAdES required signed attributes\n");
+            goto opthelp;
+        }
+        if (operation == SMIME_VERIFY
+                && (flags & (CMS_NO_SIGNER_CERT_VERIFY | CMS_NO_ATTR_VERIFY)) != 0) {
+            BIO_puts(bio_err, "Incompatible options: CAdES validation require"
+                     " certs and signed attributes validations\n");
             goto opthelp;
         }
     }
@@ -1115,7 +1121,8 @@ int cms_main(int argc, char **argv)
             goto end;
     } else if (operation == SMIME_VERIFY) {
         if (CMS_verify(cms, other, store, indata, out, flags) > 0) {
-            BIO_printf(bio_err, "Verification successful\n");
+            BIO_printf(bio_err, "%s Verification successful\n",
+                       (flags & CMS_CADES) ? "CAdES" : "CMS");
         } else {
             BIO_printf(bio_err, "Verification failure\n");
             if (verify_retcode)

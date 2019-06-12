@@ -21,6 +21,9 @@
 
 DEFINE_STACK_OF(GENERAL_NAMES)
 DEFINE_STACK_OF(CMS_SignerInfo)
+DEFINE_STACK_OF(ESS_CERT_ID)
+DEFINE_STACK_OF(ESS_CERT_ID_V2)
+DEFINE_STACK_OF(X509)
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
@@ -47,6 +50,73 @@ int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr)
     else
         CMS_ReceiptRequest_free(rr);
     return 1;
+}
+
+/*
+    First, get the ESS_SIGNING_CERT(V2) signed attribute from |si|.
+    Then check matching of each cert of trust |chain| with one of 
+    the |cert_ids|(Hash+IssuerID) list from this ESS_SIGNING_CERT.
+    Derived from ts_check_signing_certs()
+*/
+int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
+{
+    ESS_SIGNING_CERT *ss = NULL;
+    ESS_SIGNING_CERT_V2 *ssv2 = NULL;
+    X509 *cert;
+    int i = 0, ret = 0;
+
+    if (cms_signerinfo_get_signing_cert(si, &ss) > 0) {
+        STACK_OF(ESS_CERT_ID) *cert_ids = ss->cert_ids;
+
+        cert = sk_X509_value(chain, 0);
+        if (ess_find_cert(cert_ids, cert) != 0)
+            goto err;
+
+        /*
+         * Check the other certificates of the chain.
+         * Fail if no signing certificate ids found for each certificate.
+         */
+        if (sk_ESS_CERT_ID_num(cert_ids) > 1) {
+            /* for each chain cert, try to find its cert id */
+            for (i = 1; i < sk_X509_num(chain); ++i) {
+                cert = sk_X509_value(chain, i);
+                if (ess_find_cert(cert_ids, cert) < 0)
+                    goto err;
+            }
+        }
+    } else if (cms_signerinfo_get_signing_cert_v2(si, &ssv2) > 0) {
+        STACK_OF(ESS_CERT_ID_V2) *cert_ids_v2 = ssv2->cert_ids;
+
+        cert = sk_X509_value(chain, 0);
+        if (ess_find_cert_v2(cert_ids_v2, cert) != 0)
+            goto err;
+
+        /*
+         * Check the other certificates of the chain.
+         * Fail if no signing certificate ids found for each certificate.
+         */
+        if (sk_ESS_CERT_ID_V2_num(cert_ids_v2) > 1) {
+            /* for each chain cert, try to find its cert id */
+            for (i = 1; i < sk_X509_num(chain); ++i) {
+                cert = sk_X509_value(chain, i);
+                if (ess_find_cert_v2(cert_ids_v2, cert) < 0)
+                    goto err;
+            }
+        }
+    } else {
+        CMSerr(CMS_F_ESS_CHECK_SIGNING_CERTS,
+               CMS_R_ESS_NO_SIGNING_CERTID_ATTRIBUTE);
+        return 0;
+    }
+    ret = 1;
+ err:
+    if (!ret)
+        CMSerr(CMS_F_ESS_CHECK_SIGNING_CERTS,
+               CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR);
+
+    ESS_SIGNING_CERT_free(ss);
+    ESS_SIGNING_CERT_V2_free(ssv2);
+    return ret;
 }
 
 CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
