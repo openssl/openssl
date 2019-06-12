@@ -21,7 +21,7 @@
 #if defined(__linux)
 # include <asm/unistd.h>
 #endif
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) && !defined(OPENSSL_SYS_UEFI)
 # include <sys/types.h>
 # include <sys/sysctl.h>
 # include <sys/param.h>
