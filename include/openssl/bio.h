@@ -20,10 +20,6 @@
 # include <openssl/crypto.h>
 # include <openssl/bioerr.h>
 
-# ifndef OPENSSL_NO_SCTP
-#  include <openssl/e_os2.h>
-# endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
