@@ -557,7 +557,9 @@ $opt_v = 1 if $opt_o || $opt_e;
 die "Cannot use both -u and -v" if $opt_u && $opt_v;
 die "Cannot use both -d and -e" if $opt_d && $opt_e;
 
-die "Need one of -[cdelnpuv] flags.\n"
+# We only need to check c, l, n, u and v.
+# Options d, e, s, o and p imply one of the above.
+die "Need one of -[cdesolnpuv] flags.\n"
     unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
 
 if ( $opt_c ) {
