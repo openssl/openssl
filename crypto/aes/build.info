@@ -1,11 +1,9 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c \
-        aes_ige.c aes_wrap.c {- $target{aes_asm_src} -}
 
-SOURCE[../../providers/fips]=\
-        aes_misc.c aes_ecb.c \
-        {- $target{aes_asm_src} -}
+$COMMON=aes_misc.c aes_ecb.c {- $target{aes_asm_src} -}
+SOURCE[../../libcrypto]=$COMMON \
+        aes_cfb.c aes_ofb.c aes_ige.c aes_wrap.c
+SOURCE[../../providers/fips]=$COMMON
 
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
 
