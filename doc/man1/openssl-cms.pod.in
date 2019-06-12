@@ -569,7 +569,8 @@ Message-digest of the eContent OCTET STRING within encapContentInfo being signed
 
 =item *
 
-An ESS signing-certificate or ESS signing-certificate-v2 attribute, as defined in Enhanced Security Services (ESS), RFC 2634 and RFC 5035.
+An ESS signing-certificate or ESS signing-certificate-v2 attribute, as defined 
+in Enhanced Security Services (ESS), RFC 2634 and RFC 5035.
 An ESS signing-certificate attribute only allows for the use of SHA-1 as a digest algorithm.
 An ESS signing-certificate-v2 attribute allows for the use of any digest algorithm.
 
@@ -577,9 +578,10 @@ An ESS signing-certificate-v2 attribute allows for the use of any digest algorit
 
 The digital signature value computed on the user data and, when present, on the signed attributes.
 
-Note that currently the B<-cades> option applies only to the B<-sign> operation and is ignored during
-the B<-verify> operation, i.e. the signing certification is not checked during the verification process.
-This feature might be added in a future version.
+NOTE that the B<-cades> option applies to the B<-sign> or B<-verify> operations.
+With this option, the B<-verify> operation also checks that the signing-certificates
+attribute is present, and its value matches the verification trust chain built
+during the verification process.
 
 =back
 

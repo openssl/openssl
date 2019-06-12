@@ -30,7 +30,7 @@ my $smcont   = srctop_file("test", "smcont.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
     = disabled qw/des dh dsa ec ec2m rc2 zlib/;
 
-plan tests => 7;
+plan tests => 10;
 
 my @smime_pkcs7_tests = (
 
@@ -251,26 +251,6 @@ my @smime_cms_tests = (
         "-CAfile", catfile($smdir, "smroot.pem") ]
     ],
 
-    [ "signed content DER format, RSA key, CAdES-BES compatible",
-      [ "{cmd1}", "-sign", "-cades", "-in", $smcont, "-outform", "DER",
-        "-nodetach",
-        "-certfile", catfile($smdir, "smroot.pem"),
-        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
-      [ "{cmd2}", "-verify", "-in", "{output}.cms", "-inform", "DER",
-        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
-      \&final_compare
-    ],
-
-    [ "signed content DER format, RSA key, SHA256 md, CAdES-BES compatible",
-      [ "{cmd1}", "-sign", "-cades", "-md", "sha256", "-in", $smcont,
-        "-outform", "DER", "-nodetach",
-        "-certfile", catfile($smdir, "smroot.pem"),
-        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
-      [ "{cmd2}", "-verify", "-in", "{output}.cms", "-inform", "DER",
-        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
-      \&final_compare
-    ],
-
     [ "enveloped content test streaming S/MIME format, DES, 3 recipients, keyid",
       [ "{cmd1}", "-encrypt", "-in", $smcont,
         "-stream", "-out", "{output}.cms", "-keyid",
@@ -358,6 +338,87 @@ my @smime_cms_tests = (
       \&final_compare
     ],
 
+);
+
+my @smime_cms_cades_tests = (
+
+    [ "signed content DER format, RSA key, CAdES-BES compatible",
+      [ "{cmd1}", "-sign", "-cades", "-in", $smcont, "-outform", "DER",
+         "-nodetach",
+        "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
+      [ "{cmd2}", "-verify", "-cades", "-in", "{output}.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+
+    [ "signed content DER format, RSA key, SHA256 md, CAdES-BES compatible",
+      [ "{cmd1}", "-sign", "-cades", "-md", "sha256", "-in", $smcont, "-outform",
+        "DER", "-nodetach", "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
+      [ "{cmd2}", "-verify", "-cades", "-in", "{output}.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+
+    [ "signed content DER format, RSA key, SHA512 md, CAdES-BES compatible",
+      [ "{cmd1}", "-sign", "-cades", "-md", "sha512", "-in", $smcont, "-outform",
+        "DER", "-nodetach", "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
+      [ "{cmd2}", "-verify", "-cades", "-in", "{output}.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+
+    [ "signed content DER format, RSA key, SHA256 md, CAdES-BES compatible",
+      [ "{cmd1}", "-sign", "-cades", "-binary",  "-nodetach", "-nosmimecap", "-md", "sha256",
+        "-in", $smcont, "-outform", "DER", 
+        "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"),
+        "-outform", "DER", "-out", "{output}.cms"  ],
+      [ "{cmd2}", "-verify", "-cades", "-in", "{output}.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+
+    [ "resigned content DER format, RSA key, SHA256 md, CAdES-BES compatible",
+      [ "{cmd1}", "-sign", "-cades", "-binary",  "-nodetach", "-nosmimecap", "-md", "sha256",
+        "-in", $smcont, "-outform", "DER", 
+        "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"),
+        "-outform", "DER", "-out", "{output}.cms"  ],
+      [ "{cmd1}", "-resign", "-cades", "-binary", "-nodetach", "-nosmimecap", "-md", "sha256",
+        "-inform", "DER", "-in", "{output}.cms",
+        "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa2.pem"),
+        "-outform", "DER", "-out", "{output}2.cms" ],
+
+      [ "{cmd2}", "-verify", "-cades", "-in", "{output}2.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+);
+
+my @smime_cms_cades_ko_tests = (
+    [ "signed content DER format, RSA key, but verified as CAdES-BES compatible",
+      [ "-sign", "-in", $smcont, "-outform", "DER", "-nodetach",
+        "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
+      [ "-verify", "-cades", "-in", "{output}.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
+      \&final_compare
+    ]
+);
+
+# cades options test - check that some combinations are rejected
+my @smime_cms_cades_invalid_option_tests = (
+    [
+        [ "-cades", "-noattr" ],
+    ],[
+        [ "-verify", "-cades", "-noattr" ],
+    ],[
+        [ "-verify", "-cades", "-noverify" ],
+    ],
 );
 
 my @smime_cms_comp_tests = (
@@ -491,7 +552,7 @@ my @smime_cms_param_tests = (
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
     ]
-    );
+);
 
 my @contenttype_cms_test = (
     [ "signed content test - check that content type is added to additional signerinfo, RSA keys",
@@ -542,7 +603,7 @@ sub runner_loop {
                       $x;
                   } @$_;
 
-                  diag "CMD: openssl", join(" ", @cmd);
+                  diag "CMD: openssl ", join(" ", @cmd);
                   $ok &&= run(app(["openssl", @cmd]));
                   $opts{input} = $opts{output};
               }
@@ -651,6 +712,36 @@ subtest "CMS Decrypt message encrypted with OpenSSL 1.1.1\n" => sub {
                     "-out", $out ]))
            && compare_text($smcont, $out) == 0,
            "Decrypt message from OpenSSL 1.1.1");
+    }
+};
+
+subtest "CAdES <=> CAdES consistency tests\n" => sub {
+    plan tests => (scalar @smime_cms_cades_tests);
+
+    runner_loop(prefix => 'cms-cades', cmd1 => 'cms', cmd2 => 'cms',
+                tests => [ @smime_cms_cades_tests ]);
+};
+
+subtest "CAdES; cms incompatible arguments tests\n" => sub {
+    plan tests => (scalar @smime_cms_cades_invalid_option_tests);
+
+    foreach (@smime_cms_cades_invalid_option_tests) {
+        ok(!run(app(["openssl", "cms", @{$$_[0]} ] )));
+    }
+};
+
+subtest "CAdES ko tests\n" => sub {
+    plan tests => (scalar @smime_cms_cades_ko_tests);
+
+    foreach (@smime_cms_cades_ko_tests) {
+      SKIP: {
+        my $skip_reason = check_availability($$_[0]);
+        skip $skip_reason, 1 if $skip_reason;
+
+        ok(run(app(["openssl", "cms", @{$$_[1]}]))
+            && !run(app(["openssl", "cms", @{$$_[2]}])),
+            $$_[0]);
+        }
     }
 };
 

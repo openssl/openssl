@@ -23,6 +23,15 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Add CAdES-BES signature verification support, mostly derived
+   from ESSCertIDv2 TS (RFC 5816) contribution by Marek Klein.
+
+   *Filipe Raimundo da Silva*
+
+ * Add CAdES-BES signature scheme and attributes support (RFC 5126) to CMS API.
+
+   *Antonio Iacono*
+
  * Deprecated EC_POINT_make_affine() and EC_POINTs_make_affine(). These
    functions are not widely used and now OpenSSL automatically perform this
    conversion when needed.

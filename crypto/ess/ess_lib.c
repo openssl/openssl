@@ -15,8 +15,8 @@
 
 DEFINE_STACK_OF(ESS_CERT_ID)
 DEFINE_STACK_OF(ESS_CERT_ID_V2)
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(GENERAL_NAME)
+DEFINE_STACK_OF(X509)
 
 static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed);
 static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
@@ -61,9 +61,12 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
     unsigned char cert_sha1[SHA_DIGEST_LENGTH];
 
     /* Call for side-effect of computing hash and caching extensions */
-    X509_check_purpose(cert, -1, 0);
+    if (!X509v3_cache_extensions(cert, NULL, NULL))
+        return NULL;
+
     if ((cid = ESS_CERT_ID_new()) == NULL)
         goto err;
+    /* TODO(3.0): fetch sha1 algorithm from providers */
     if (!X509_digest(cert, EVP_sha1(), cert_sha1, NULL))
         goto err;
     if (!ASN1_OCTET_STRING_set(cid->hash, cert_sha1, SHA_DIGEST_LENGTH))
@@ -85,8 +88,8 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
         goto err;
     name = NULL;            /* Ownership is lost. */
     ASN1_INTEGER_free(cid->issuer_serial->serial);
-    if (!(cid->issuer_serial->serial =
-          ASN1_INTEGER_dup(X509_get_serialNumber(cert))))
+    if ((cid->issuer_serial->serial =
+          ASN1_INTEGER_dup(X509_get_serialNumber(cert))) == NULL)
         goto err;
 
     return cid;
@@ -159,6 +162,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
         cid->hash_alg = NULL;
     }
 
+    /* TODO(3.0): fetch sha1 algorithm from providers */
     if (!X509_digest(cert, hash_alg, hash, &hash_len))
         goto err;
 
@@ -196,8 +200,9 @@ ESS_SIGNING_CERT *ESS_SIGNING_CERT_get(PKCS7_SIGNER_INFO *si)
 {
     ASN1_TYPE *attr;
     const unsigned char *p;
+
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificate);
-    if (!attr)
+    if (attr == NULL)
         return NULL;
     p = attr->value.sequence->data;
     return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);
@@ -272,4 +277,87 @@ int ESS_SIGNING_CERT_V2_add(PKCS7_SIGNER_INFO *si,
     ASN1_STRING_free(seq);
     OPENSSL_free(pp);
     return 0;
+}
+
+static int ess_issuer_serial_cmp(const ESS_ISSUER_SERIAL *is, const X509 *cert)
+{
+    GENERAL_NAME *issuer;
+
+    if (is == NULL || cert == NULL || sk_GENERAL_NAME_num(is->issuer) != 1)
+        return -1;
+
+    issuer = sk_GENERAL_NAME_value(is->issuer, 0);
+    if (issuer->type != GEN_DIRNAME
+        || X509_NAME_cmp(issuer->d.dirn, X509_get_issuer_name(cert)) != 0)
+        return -1;
+
+    return ASN1_INTEGER_cmp(is->serial, X509_get0_serialNumber(cert));
+}
+
+/* Returns < 0 if certificate is not found, certificate index otherwise. */
+int ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
+{
+    int i;
+    unsigned char cert_sha1[SHA_DIGEST_LENGTH];
+
+    if (cert_ids == NULL || cert == NULL)
+        return -1;
+
+    /* Recompute SHA1 hash of certificate if necessary (side effect). */
+    if (!X509v3_cache_extensions(cert, NULL, NULL))
+        return -1;
+
+    /* TODO(3.0): fetch sha1 algorithm from providers */
+    if (!X509_digest(cert, EVP_sha1(), cert_sha1, NULL))
+        return -1;
+
+    /* Look for cert in the cert_ids vector. */
+    for (i = 0; i < sk_ESS_CERT_ID_num(cert_ids); ++i) {
+        const ESS_CERT_ID *cid = sk_ESS_CERT_ID_value(cert_ids, i);
+
+        if (cid->hash->length == SHA_DIGEST_LENGTH
+            && memcmp(cid->hash->data, cert_sha1, SHA_DIGEST_LENGTH) == 0) {
+            const ESS_ISSUER_SERIAL *is = cid->issuer_serial;
+
+            if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0)
+                return i;
+        }
+    }
+
+    return -1;
+}
+
+/* Returns < 0 if certificate is not found, certificate index otherwise. */
+int ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids, const X509 *cert)
+{
+    int i;
+    unsigned char cert_digest[EVP_MAX_MD_SIZE];
+    unsigned int len;
+
+    /* Look for cert in the cert_ids vector. */
+    for (i = 0; i < sk_ESS_CERT_ID_V2_num(cert_ids); ++i) {
+        const ESS_CERT_ID_V2 *cid = sk_ESS_CERT_ID_V2_value(cert_ids, i);
+        const EVP_MD *md;
+
+        if (cid != NULL && cid->hash_alg != NULL)
+            md = EVP_get_digestbyobj(cid->hash_alg->algorithm);
+        else
+            md = EVP_sha256();
+
+        /* TODO(3.0): fetch sha1 algorithm from providers */
+        if (!X509_digest(cert, md, cert_digest, &len))
+            return -1;
+
+        if (cid->hash->length != (int)len)
+            return -1;
+
+        if (memcmp(cid->hash->data, cert_digest, cid->hash->length) == 0) {
+            const ESS_ISSUER_SERIAL *is = cid->issuer_serial;
+
+            if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0)
+                return i;
+        }
+    }
+
+    return -1;
 }
