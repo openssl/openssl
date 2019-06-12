@@ -9,5 +9,5 @@
 
 /* internal CMS-ESS related stuff */
 
-int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
-int CMS_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc);
+int cms_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
+int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc);
