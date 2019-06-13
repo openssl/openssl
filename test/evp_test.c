@@ -473,9 +473,6 @@ typedef struct cipher_data_st {
     unsigned char *tag;
     size_t tag_len;
     int tag_late;
-    /* XTS only */
-    int xts_mode;
-    int xts_allow_insecure_decrypt;
 } CIPHER_DATA;
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
@@ -501,8 +498,6 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
             || m == EVP_CIPH_SIV_MODE
             || m == EVP_CIPH_CCM_MODE)
         cdat->aead = m;
-    else if (m == EVP_CIPH_XTS_MODE)
-        cdat->xts_mode = 1;
     else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = -1;
     else
@@ -555,16 +550,6 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
                 cdat->tag_late = 1;
             else if (strcmp(value, "FALSE") == 0)
                 cdat->tag_late = 0;
-            else
-                return 0;
-            return 1;
-        }
-    } else if (cdat->xts_mode) {
-        if (strcmp(keyword, "Insecure") == 0) {
-            if (strcmp(value, "TRUE") == 0)
-                cdat->xts_allow_insecure_decrypt = 1;
-            else if (strcmp(value, "FALSE") == 0)
-                cdat->xts_allow_insecure_decrypt = 0;
             else
                 return 0;
             return 1;
@@ -666,13 +651,6 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
                                      expected->tag_len, tag))
                 goto err;
         }
-    }
-
-    if (expected->xts_mode
-        && !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_XTS_ALLOW_INSECURE_DECRYPT,
-                                expected->xts_allow_insecure_decrypt, NULL)) {
-        t->err = "XTS_KEY_CTRL_ERROR";
-        goto err;
     }
 
     if (!EVP_CIPHER_CTX_set_key_length(ctx, expected->key_len)) {

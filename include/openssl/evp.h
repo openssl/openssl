@@ -360,8 +360,6 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_GET_IV                         0x25
 /* Tell the cipher it's doing a speed test (SIV disallows multiple ops) */
 # define         EVP_CTRL_SET_SPEED                      0x26
-/* Allow the use of the same key for both halves of XTS mode */
-# define         EVP_CTRL_XTS_ALLOW_INSECURE_DECRYPT     0x27
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
