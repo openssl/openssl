@@ -3578,6 +3578,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
         return ssl_cert_set_current(s->cert, larg);
 
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     case SSL_CTRL_GET_GROUPS:
         {
             uint16_t *clist;
@@ -3622,6 +3623,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             }
             return id;
         }
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(s->cert, parg, larg, 0);
@@ -3898,6 +3900,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         break;
 #endif
 
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     case SSL_CTRL_SET_GROUPS:
         return tls1_set_groups(&ctx->ext.supportedgroups,
                                &ctx->ext.supportedgroups_len,
@@ -3907,6 +3910,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return tls1_set_groups_list(&ctx->ext.supportedgroups,
                                     &ctx->ext.supportedgroups_len,
                                     parg);
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
@@ -4678,6 +4682,7 @@ EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm)
 }
 
 /* Generate a private key from a group ID */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id)
 {
     const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(id);
@@ -4764,6 +4769,7 @@ EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id)
     EVP_PKEY_CTX_free(pctx);
     return pkey;
 }
+#endif
 
 /*
  * Generate parameters from a group ID

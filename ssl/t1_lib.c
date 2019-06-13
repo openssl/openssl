@@ -131,8 +131,9 @@ int tls1_clear(SSL *s)
 /*
  * Table of group information.
  */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static const TLS_GROUP_INFO nid_list[] = {
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     {NID_sect163k1, 80, TLS_GROUP_CURVE_CHAR2, 0x0001}, /* sect163k1 (1) */
     {NID_sect163r1, 80, TLS_GROUP_CURVE_CHAR2, 0x0002}, /* sect163r1 (2) */
     {NID_sect163r2, 80, TLS_GROUP_CURVE_CHAR2, 0x0003}, /* sect163r2 (3) */
@@ -163,16 +164,17 @@ static const TLS_GROUP_INFO nid_list[] = {
     {NID_brainpoolP512r1, 256, TLS_GROUP_CURVE_PRIME, 0x001C}, /* brainpool512r1 (28) */
     {EVP_PKEY_X25519, 128, TLS_GROUP_CURVE_CUSTOM, 0x001D}, /* X25519 (29) */
     {EVP_PKEY_X448, 224, TLS_GROUP_CURVE_CUSTOM, 0x001E}, /* X448 (30) */
-#endif /* OPENSSL_NO_EC */
-#ifndef OPENSSL_NO_DH
+# endif /* OPENSSL_NO_EC */
+# ifndef OPENSSL_NO_DH
     /* Security bit values for FFDHE groups are updated as per RFC 7919 */
     {NID_ffdhe2048, 103, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0100}, /* ffdhe2048 (0x0100) */
     {NID_ffdhe3072, 125, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0101}, /* ffdhe3072 (0x0101) */
     {NID_ffdhe4096, 150, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0102}, /* ffdhe4096 (0x0102) */
     {NID_ffdhe6144, 175, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0103}, /* ffdhe6144 (0x0103) */
     {NID_ffdhe8192, 192, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0104}, /* ffdhe8192 (0x0104) */
-#endif /* OPENSSL_NO_DH */
+# endif /* OPENSSL_NO_DH */
 };
+#endif
 
 #ifndef OPENSSL_NO_EC
 static const unsigned char ecformats_default[] = {
@@ -180,25 +182,27 @@ static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
-#endif
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
 /* The default curves */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static const uint16_t supported_groups_default[] = {
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     29,                      /* X25519 (29) */
     23,                      /* secp256r1 (23) */
     30,                      /* X448 (30) */
     25,                      /* secp521r1 (25) */
     24,                      /* secp384r1 (24) */
-#endif
-#ifndef OPENSSL_NO_DH
+# endif
+# ifndef OPENSSL_NO_DH
     0x100,                   /* ffdhe2048 (0x100) */
     0x101,                   /* ffdhe3072 (0x101) */
     0x102,                   /* ffdhe4096 (0x102) */
     0x103,                   /* ffdhe6144 (0x103) */
     0x104,                   /* ffdhe8192 (0x104) */
-#endif
+# endif
 };
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
 #ifndef OPENSSL_NO_EC
 static const uint16_t suiteb_curves[] = {
@@ -209,6 +213,7 @@ static const uint16_t suiteb_curves[] = {
 
 const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 {
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
     size_t i;
 
     /* ECC curves from RFC 4492 and RFC 7027 FFDHE group from RFC 8446 */
@@ -216,9 +221,11 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
         if (nid_list[i].group_id == group_id)
             return &nid_list[i];
     }
+#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
     return NULL;
 }
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static uint16_t tls1_nid2group_id(int nid)
 {
     size_t i;
@@ -229,6 +236,7 @@ static uint16_t tls1_nid2group_id(int nid)
     }
     return 0;
 }
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
 /*
  * Set *pgroups to the supported groups list and *pgroupslen to
@@ -237,10 +245,10 @@ static uint16_t tls1_nid2group_id(int nid)
 void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
                                size_t *pgroupslen)
 {
-
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     /* For Suite B mode only include P-256, P-384 */
     switch (tls1_suiteb(s)) {
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         *pgroups = suiteb_curves;
         *pgroupslen = OSSL_NELEM(suiteb_curves);
@@ -255,7 +263,7 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
         *pgroups = suiteb_curves + 1;
         *pgroupslen = 1;
         break;
-#endif
+# endif
 
     default:
         if (s->ext.supportedgroups == NULL) {
@@ -267,6 +275,10 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
         }
         break;
     }
+#else
+    *pgroups = NULL;
+    *pgroupslen = 0;
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
 int tls_valid_group(SSL *s, uint16_t group_id, int version)
@@ -376,6 +388,7 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
 int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                     int *groups, size_t ngroups)
 {
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     uint16_t *glist;
     size_t i;
     /*
@@ -414,9 +427,13 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
 err:
     OPENSSL_free(glist);
     return 0;
+#else
+    return 0;
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
-#define MAX_GROUPLIST   OSSL_NELEM(nid_list)
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+# define MAX_GROUPLIST   OSSL_NELEM(nid_list)
 
 typedef struct {
     size_t nidcnt;
@@ -437,9 +454,9 @@ static int nid_cb(const char *elem, int len, void *arg)
         return 0;
     memcpy(etmp, elem, len);
     etmp[len] = 0;
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     nid = EC_curve_nist2nid(etmp);
-#endif
+# endif
     if (nid == NID_undef)
         nid = OBJ_sn2nid(etmp);
     if (nid == NID_undef)
@@ -452,10 +469,12 @@ static int nid_cb(const char *elem, int len, void *arg)
     narg->nid_arr[narg->nidcnt++] = nid;
     return 1;
 }
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
 /* Set groups based on a colon separate list */
 int tls1_set_groups_list(uint16_t **pext, size_t *pextlen, const char *str)
 {
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     nid_cb_st ncb;
     ncb.nidcnt = 0;
     if (!CONF_parse_list(str, ':', 1, nid_cb, &ncb))
@@ -463,6 +482,9 @@ int tls1_set_groups_list(uint16_t **pext, size_t *pextlen, const char *str)
     if (pext == NULL)
         return 1;
     return tls1_set_groups(pext, pextlen, ncb.nid_arr, ncb.nidcnt);
+#else
+    return 0;
+#endif
 }
 
 /* Check a group id matches preferences */
