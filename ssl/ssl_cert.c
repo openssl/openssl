@@ -154,8 +154,6 @@ CERT *ssl_cert_dup(CERT *cert)
         ret->client_sigalgslen = cert->client_sigalgslen;
     } else
         ret->client_sigalgs = NULL;
-    /* Shared sigalgs also NULL */
-    ret->shared_sigalgs = NULL;
     /* Copy any custom client certificate types */
     if (cert->ctype) {
         ret->ctype = OPENSSL_memdup(cert->ctype, cert->ctype_len);
@@ -240,7 +238,6 @@ void ssl_cert_free(CERT *c)
     ssl_cert_clear_certs(c);
     OPENSSL_free(c->conf_sigalgs);
     OPENSSL_free(c->client_sigalgs);
-    OPENSSL_free(c->shared_sigalgs);
     OPENSSL_free(c->ctype);
     X509_STORE_free(c->verify_store);
     X509_STORE_free(c->chain_store);
