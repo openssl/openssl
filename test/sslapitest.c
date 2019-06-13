@@ -3749,8 +3749,10 @@ static int test_tls13_key_exchange(int idx)
     int testresult = 0;
     int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
                                 NID_X25519, NID_X448};
+#ifndef OPENSSL_NO_DH
     int ffdhe_kexch_groups[] = {NID_ffdhe2048, NID_ffdhe3072, NID_ffdhe4096,
                                 NID_ffdhe6144, NID_ffdhe8192};
+#endif
     int *kexch_groups = NULL;
     int kexch_groups_size = 0;
     int max_version = TLS1_3_VERSION;
@@ -3763,10 +3765,12 @@ static int test_tls13_key_exchange(int idx)
             kexch_groups = ecdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ecdhe_kexch_groups);
             break;
+#ifndef OPENSSL_NO_DH
         case 1:
             kexch_groups = ffdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ffdhe_kexch_groups);
             break;
+#endif
         case 2:
             kexch_groups = ecdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ecdhe_kexch_groups);
@@ -3775,6 +3779,7 @@ static int test_tls13_key_exchange(int idx)
             expected_err_reason = SSL_R_NO_SHARED_CIPHER;
             want_err = SSL_ERROR_SSL;
             break;
+#ifndef OPENSSL_NO_DH
         case 3:
             kexch_groups = ffdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ffdhe_kexch_groups);
@@ -3783,6 +3788,10 @@ static int test_tls13_key_exchange(int idx)
             expected_err_func = SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS;
             expected_err_reason = ERR_R_INTERNAL_ERROR;
             break;
+#endif
+        default:
+            /* We're skipping this test */
+            return 1;
     }
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
