@@ -37,6 +37,7 @@
 # include <fcntl.h>
 # include <unistd.h>
 # include <sys/time.h>
+# include <sys/file.h>
 
 static uint64_t get_time_stamp(void);
 static uint64_t get_timer_bits(void);
