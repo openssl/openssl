@@ -326,6 +326,44 @@ static struct random_device {
 static int keep_random_devices_open = 1;
 
 /*
+ * Ensure that the system randomness source has been adequately seeded.
+ * This is done by having the first start of libcrypto, read one bytes from
+ * /dev/random.  Subsequent starts of the library and later reseedings do not
+ * need to do this.
+ */
+static void wait_random_seeded(void)
+{
+    static const char random_path[] = "/dev/random";
+    static const char seeded_file[] = "/tmp/.openssl_seeded";
+    static int seeded = 0;
+    struct stat st;
+    int fd = -1, rfd = -1;
+    char c;
+
+    if (!seeded && (stat(seeded_file, &st) == -1 || st.st_size == 0)) {
+        fd = open(seeded_file, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        if (fd == -1 || flock(fd, LOCK_EX) == -1 || fstat(fd, &st) == -1)
+            goto err;
+        if (st.st_size == 0) {
+            rfd = open(random_path, O_RDONLY);
+            if (rfd == -1 || read(rfd, &c, 1) != 1 || write(fd, &c, 1) != 1)
+                goto err;
+            close(rfd);
+            close(fd);
+            seeded = 1;
+        }
+    }
+    return;
+
+err:
+    unlink(seeded_file);
+    if (fd >= 0)
+        close(fd);
+    if (rfd >= 0)
+        close(rfd);
+}
+
+/*
  * Verify that the file descriptor associated with the random source is
  * still valid. The rationale for doing this is the fact that it is not
  * uncommon for daemons to close all open file handles when daemonizing.
@@ -486,6 +524,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_DEVRANDOM)
+    wait_random_seeded();
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     {
         size_t i;
