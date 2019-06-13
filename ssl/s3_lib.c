@@ -4795,7 +4795,7 @@ EVP_PKEY *ssl_generate_param_group(uint16_t id)
         goto err;
     if (EVP_PKEY_paramgen_init(pctx) <= 0)
         goto err;
-# ifndef OPENSSl_NO_DH
+# ifndef OPENSSL_NO_DH
     if (ginf->flags & TLS_GROUP_FFDHE) {
         if (EVP_PKEY_CTX_set_dh_nid(pctx, ginf->nid) <= 0)
             goto err;
@@ -4844,8 +4844,10 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
         goto err;
     }
 
+#ifndef OPENSSL_NO_DH
     if (SSL_IS_TLS13(s) &&  EVP_PKEY_id(privkey) == EVP_PKEY_DH)
         EVP_PKEY_CTX_set_dh_pad(pctx, 1);
+#endif
 
     pms = OPENSSL_malloc(pmslen);
     if (pms == NULL) {
