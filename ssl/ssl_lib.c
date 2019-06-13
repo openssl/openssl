@@ -628,6 +628,11 @@ int SSL_clear(SSL *s)
     /* Clear the verification result peername */
     X509_VERIFY_PARAM_move_peername(s->param, NULL);
 
+    /* Clear any shared connection state */
+    OPENSSL_free(s->shared_sigalgs);
+    s->shared_sigalgs = NULL;
+    s->shared_sigalgslen = 0;
+
     /*
      * Check to see if we were changed into a different method, if so, revert
      * back.
@@ -1173,6 +1178,7 @@ void SSL_free(SSL *s)
     clear_ciphers(s);
 
     ssl_cert_free(s->cert);
+    OPENSSL_free(s->shared_sigalgs);
     /* Free up if allocated */
 
     OPENSSL_free(s->ext.hostname);
