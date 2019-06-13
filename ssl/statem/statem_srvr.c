@@ -2062,6 +2062,10 @@ static int tls_early_post_process_client_hello(SSL *s)
 #else
         s->session->compress_meth = (comp == NULL) ? 0 : comp->id;
 #endif
+        if (!tls1_set_server_sigalgs(s)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
     }
 
     sk_SSL_CIPHER_free(ciphers);
@@ -2229,25 +2233,19 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
     if (wst == WORK_MORE_B) {
         if (!s->hit || SSL_IS_TLS13(s)) {
             /* Let cert callback update server certificates if required */
-            if (!s->hit) {
-                if (s->cert->cert_cb != NULL) {
-                    int rv = s->cert->cert_cb(s, s->cert->cert_cb_arg);
-                    if (rv == 0) {
-                        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                                 SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
-                                 SSL_R_CERT_CB_ERROR);
-                        goto err;
-                    }
-                    if (rv < 0) {
-                        s->rwstate = SSL_X509_LOOKUP;
-                        return WORK_MORE_B;
-                    }
-                    s->rwstate = SSL_NOTHING;
-                }
-                if (!tls1_set_server_sigalgs(s)) {
-                    /* SSLfatal already called */
+            if (!s->hit && s->cert->cert_cb != NULL) {
+                int rv = s->cert->cert_cb(s, s->cert->cert_cb_arg);
+                if (rv == 0) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                             SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
+                             SSL_R_CERT_CB_ERROR);
                     goto err;
                 }
+                if (rv < 0) {
+                    s->rwstate = SSL_X509_LOOKUP;
+                    return WORK_MORE_B;
+                }
+                s->rwstate = SSL_NOTHING;
             }
 
             /* In TLSv1.3 we selected the ciphersuite before resumption */
