@@ -5662,6 +5662,9 @@ static int cert_cb_cnt;
 static int cert_cb(SSL *s, void *arg)
 {
     SSL_CTX *ctx = (SSL_CTX *)arg;
+    BIO *in = NULL;
+    EVP_PKEY *pkey = NULL;
+    X509 *x509 = NULL;
 
     if (cert_cb_cnt == 0) {
         /* Suspend the handshake */
@@ -5682,9 +5685,39 @@ static int cert_cb(SSL *s, void *arg)
             return 0;
         cert_cb_cnt++;
         return 1;
+    } else if (cert_cb_cnt == 3) {
+        int rv;
+        if (!TEST_ptr(in = BIO_new(BIO_s_file()))
+                || !TEST_int_ge(BIO_read_filename(in, cert), 0)
+                || !TEST_ptr(x509 = PEM_read_bio_X509(in, NULL, NULL, NULL)))
+            goto out;
+        BIO_free(in);
+        if (!TEST_ptr(in = BIO_new(BIO_s_file()))
+                || !TEST_int_ge(BIO_read_filename(in, privkey), 0)
+                || !TEST_ptr(pkey = PEM_read_bio_PrivateKey(in, NULL, NULL, NULL)))
+            goto out;
+        rv = SSL_check_chain(s, x509, pkey, NULL);
+        /*
+         * If the cert doesn't show as valid here (e.g., because we don't
+         * have any shared sigalgs), then we will not set it, and there will
+         * be no certificate at all on the SSL or SSL_CTX.  This, in turn,
+         * will cause tls_choose_sigalgs() to fail the connection.
+         */
+        if ((rv & CERT_PKEY_VALID)) {
+            if (!SSL_use_cert_and_key(s, x509, pkey, NULL, 1))
+                goto out;
+        }
+        BIO_free(in);
+        EVP_PKEY_free(pkey);
+        X509_free(x509);
+        return 1;
     }
 
     /* Abort the handshake */
+ out:
+    BIO_free(in);
+    EVP_PKEY_free(pkey);
+    X509_free(x509);
     return 0;
 }
 
@@ -5709,6 +5742,8 @@ static int test_cert_cb_int(int prot, int tst)
 
     if (tst == 0)
         cert_cb_cnt = -1;
+    else if (tst == 3)
+        cert_cb_cnt = 3;
     else
         cert_cb_cnt = 0;
     if (tst == 2)
@@ -5721,7 +5756,8 @@ static int test_cert_cb_int(int prot, int tst)
 
     ret = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
     if (!TEST_true(tst == 0 ? !ret : ret)
-            || (tst > 0 && !TEST_int_eq(cert_cb_cnt, 2))) {
+            || (tst > 0
+                && !TEST_int_eq((cert_cb_cnt - 2) * (cert_cb_cnt - 3), 0))) {
         goto end;
     }
 
@@ -6084,7 +6120,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 12);
     ADD_ALL_TESTS(test_shutdown, 7);
-    ADD_ALL_TESTS(test_cert_cb, 3);
+    ADD_ALL_TESTS(test_cert_cb, 4);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
     ADD_ALL_TESTS(test_ca_names, 3);
     return 1;
