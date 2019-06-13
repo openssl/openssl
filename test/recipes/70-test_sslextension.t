@@ -217,7 +217,10 @@ SKIP: {
     $proxy->clientflags("-no_tls1_3 -noservername");
     $proxy->start();
     ok($fatal_alert, "Unsolicited server name extension");
-
+}
+SKIP: {
+    skip "TLS <= 1.2 disabled or EC disabled", 1
+        if $no_below_tls13 || disabled("ec");
     #Test 5: Inject a noncompliant supported_groups extension (<= TLSv1.2)
     $proxy->clear();
     $proxy->filter(\&inject_unsolicited_extension);

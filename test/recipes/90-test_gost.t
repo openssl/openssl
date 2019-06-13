@@ -21,6 +21,10 @@ plan skip_all => "GOST support is disabled in this OpenSSL build"
 plan skip_all => "TLSv1.3 or TLSv1.2 are disabled in this OpenSSL build"
     if disabled("tls1_3") || disabled("tls1_2");
 
+plan skip_all => "EC is disabled in this OpenSSL build"
+    if disabled("ec");
+
+
 plan skip_all => "No test GOST engine found"
     if !$ENV{OPENSSL_GOST_ENGINE_SO};
 

@@ -3578,7 +3578,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
         return ssl_cert_set_current(s->cert, larg);
 
-#ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_GROUPS:
         {
             uint16_t *clist;
@@ -3623,7 +3622,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             }
             return id;
         }
-#endif
+
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(s->cert, parg, larg, 0);
 
@@ -3899,7 +3898,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         break;
 #endif
 
-#ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_GROUPS:
         return tls1_set_groups(&ctx->ext.supportedgroups,
                                &ctx->ext.supportedgroups_len,
@@ -3909,7 +3907,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return tls1_set_groups_list(&ctx->ext.supportedgroups,
                                     &ctx->ext.supportedgroups_len,
                                     parg);
-#endif
+
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
 

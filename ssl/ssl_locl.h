@@ -959,9 +959,10 @@ struct ssl_ctx_st {
         /* EC extension values inherited by SSL structure */
         size_t ecpointformats_len;
         unsigned char *ecpointformats;
+# endif                         /* OPENSSL_NO_EC */
+
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
-# endif                         /* OPENSSL_NO_EC */
 
         /*
          * ALPN information (we are in the process of transitioning from NPN to
@@ -2525,8 +2526,6 @@ __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
-#  ifndef OPENSSL_NO_EC
-
 __owur const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t curve_id);
 __owur int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_curves);
 __owur uint16_t tls1_shared_group(SSL *s, int nmatch);
@@ -2534,15 +2533,16 @@ __owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                            int *curves, size_t ncurves);
 __owur int tls1_set_groups_list(uint16_t **pext, size_t *pextlen,
                                 const char *str);
-void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
-                         size_t *num_formats);
-__owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id);
 __owur int tls_valid_group(SSL *s, uint16_t group_id, int version);
 __owur EVP_PKEY *ssl_generate_param_group(uint16_t id);
+#  ifndef OPENSSL_NO_EC
+void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
+                         size_t *num_formats);
+__owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 #  endif                        /* OPENSSL_NO_EC */
 
-__owur int tls_curve_allowed(SSL *s, uint16_t curve, int op);
+__owur int tls_group_allowed(SSL *s, uint16_t curve, int op);
 void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
                                size_t *pgroupslen);
 
