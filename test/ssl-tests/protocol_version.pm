@@ -252,7 +252,7 @@ sub generate_resumption_tests {
             "client" => {
             },
             "server" => {
-                "Curves" => "P-256"
+                "Curves" => disabled("ec") ? "ffdhe3072" : "P-256"
             },
             "resume_client" => {
             },

@@ -113,11 +113,13 @@ EXT_RETURN tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context,
 #endif
 
 #ifndef OPENSSL_NO_EC
-static int use_ecc(SSL *s)
+static int use_ecc(SSL *s, int max_version)
 {
     int i, end, ret = 0;
     unsigned long alg_k, alg_a;
     STACK_OF(SSL_CIPHER) *cipher_stack = NULL;
+    const uint16_t *pgroups = NULL;
+    size_t num_groups, j;
 
     /* See if we support any ECC ciphersuites */
     if (s->version == SSL3_VERSION)
@@ -137,9 +139,21 @@ static int use_ecc(SSL *s)
             break;
         }
     }
-
     sk_SSL_CIPHER_free(cipher_stack);
-    return ret;
+    if (!ret)
+        return 0;
+
+    /* Check we have at least one EC supported group */
+    tls1_get_supported_groups(s, &pgroups, &num_groups);
+    for (j = 0; j < num_groups; j++) {
+        uint16_t ctmp = pgroups[j];
+
+        if (tls_valid_group(s, ctmp, max_version)
+                && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED))
+            return 1;
+    }
+
+    return 0;
 }
 
 EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
@@ -148,8 +162,15 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
 {
     const unsigned char *pformats;
     size_t num_formats;
+    int reason, min_version, max_version;
 
-    if (!use_ecc(s))
+    reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
+    if (reason != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS, reason);
+        return EXT_RETURN_FAIL;
+    }
+    if (!use_ecc(s, max_version))
         return EXT_RETURN_NOT_SENT;
 
     /* Add TLS extension ECPointFormats to the ClientHello message */
@@ -167,7 +188,9 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
 
     return EXT_RETURN_SENT;
 }
+#endif
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx)
@@ -176,15 +199,20 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
     size_t num_groups = 0, i;
     int min_version, max_version, reason;
 
-    if (!use_ecc(s))
-        return EXT_RETURN_NOT_SENT;
-
     reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
     if (reason != 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS, reason);
         return EXT_RETURN_FAIL;
     }
+
+#if defined(OPENSSL_NO_EC)
+    if (max_version < TLS1_3_VERSION)
+        return EXT_RETURN_NOT_SENT;
+#else
+    if (!use_ecc(s, max_version) && max_version < TLS1_3_VERSION)
+        return EXT_RETURN_NOT_SENT;
+#endif
 
     /*
      * Add TLS extension supported_groups to the ClientHello message
@@ -206,7 +234,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
         uint16_t ctmp = pgroups[i];
 
         if (tls_valid_group(s, ctmp, max_version)
-                && tls_curve_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
+                && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
             if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
@@ -683,7 +711,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
     } else {
         for (i = 0; i < num_groups; i++) {
 
-            if (!tls_curve_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
+            if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 
             curve_id = pgroups[i];
@@ -1843,7 +1871,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                 break;
         }
         if (i >= num_groups
-                || !tls_curve_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)) {
+                || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                      SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
             return 0;

@@ -2960,8 +2960,13 @@ static int early_data_skip_helper(int testtype, int idx)
 
     if (testtype == 1 || testtype == 2) {
         /* Force an HRR to occur */
+#if defined(OPENSSL_NO_EC)
+        if (!TEST_true(SSL_set1_groups_list(serverssl, "ffdhe3072")))
+            goto end;
+#else
         if (!TEST_true(SSL_set1_groups_list(serverssl, "P-256")))
             goto end;
+#endif
     } else if (idx == 2) {
         /*
          * We force early_data rejection by ensuring the PSK identity is
@@ -3738,8 +3743,8 @@ static int test_ciphersuite_change(void)
 /*
  * Test TLSv1.3 Key exchange
  * Test 0 = Test ECDHE Key exchange
- * Test 1 = Test FFDHE Key exchange
- * Test 2 = Test ECDHE with TLSv1.2 client and TLSv1.2 server
+ * Test 1 = Test ECDHE with TLSv1.2 client and TLSv1.2 server
+ * Test 2 = Test FFDHE Key exchange
  * Test 3 = Test FFDHE with TLSv1.2 client and TLSv1.2 server
  */
 static int test_tls13_key_exchange(int idx)
@@ -3747,8 +3752,10 @@ static int test_tls13_key_exchange(int idx)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
+#ifndef OPENSSL_NO_EC
     int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
                                 NID_X25519, NID_X448};
+#endif
 #ifndef OPENSSL_NO_DH
     int ffdhe_kexch_groups[] = {NID_ffdhe2048, NID_ffdhe3072, NID_ffdhe4096,
                                 NID_ffdhe6144, NID_ffdhe8192};
@@ -3761,32 +3768,22 @@ static int test_tls13_key_exchange(int idx)
     int expected_err_reason = 0;
 
     switch (idx) {
-        case 0:
-            kexch_groups = ecdhe_kexch_groups;
-            kexch_groups_size = OSSL_NELEM(ecdhe_kexch_groups);
-            break;
 #ifndef OPENSSL_NO_DH
-        case 1:
+        case 3:
+            max_version = TLS1_2_VERSION;
+            /* Fall through */
+        case 2:
             kexch_groups = ffdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ffdhe_kexch_groups);
             break;
 #endif
-        case 2:
+#ifndef OPENSSL_NO_EC
+        case 1:
+            max_version = TLS1_2_VERSION;
+            /* Fall through */
+        case 0:
             kexch_groups = ecdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ecdhe_kexch_groups);
-            max_version = TLS1_2_VERSION;
-            expected_err_func = SSL_F_TLS_POST_PROCESS_CLIENT_HELLO;
-            expected_err_reason = SSL_R_NO_SHARED_CIPHER;
-            want_err = SSL_ERROR_SSL;
-            break;
-#ifndef OPENSSL_NO_DH
-        case 3:
-            kexch_groups = ffdhe_kexch_groups;
-            kexch_groups_size = OSSL_NELEM(ffdhe_kexch_groups);
-            max_version = TLS1_2_VERSION;
-            want_err = SSL_ERROR_SSL;
-            expected_err_func = SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS;
-            expected_err_reason = ERR_R_INTERNAL_ERROR;
             break;
 #endif
         default:
@@ -3805,10 +3802,16 @@ static int test_tls13_key_exchange(int idx)
     if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, TLS1_3_RFC_AES_128_GCM_SHA256)))
         goto end;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM)))
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, TLS1_TXT_RSA_WITH_AES_128_SHA)))
         goto end;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM)))
+    /*
+     * Must include an EC ciphersuite so that we send supported groups in
+     * TLSv1.2
+     */
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                   TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM ":"
+                   TLS1_TXT_RSA_WITH_AES_128_SHA)))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
@@ -3828,14 +3831,20 @@ static int test_tls13_key_exchange(int idx)
     /* Fail if expected error is not happening for failure testcases */
     if (expected_err_func) {
         unsigned long err_code = ERR_get_error();
+        ERR_print_errors_fp(stdout);
         if (TEST_int_eq(ERR_GET_FUNC(err_code), expected_err_func)
                 && TEST_int_eq(ERR_GET_REASON(err_code), expected_err_reason))
             testresult = 1;
         goto end;
     }
 
-    /* If Handshake succeeds the negotiated kexch alg should the first one in configured */
-    if (!TEST_int_eq(SSL_get_shared_group(serverssl, 0), kexch_groups[0]))
+    /*
+     * If Handshake succeeds the negotiated kexch alg should the first one in
+     * configured, except in the case of FFDHE groups which are TLSv1.3 only
+     * so we expect no shared group to exist.
+     */
+    if (!TEST_int_eq(SSL_get_shared_group(serverssl, 0),
+                     idx == 3 ? 0 : kexch_groups[0]))
         goto end;
 
     testresult = 1;
@@ -3990,8 +3999,13 @@ static int test_tls13_psk(int idx)
         goto end;
 
     /* Force an HRR */
+#if defined(OPENSSL_NO_EC)
+    if (!TEST_true(SSL_set1_groups_list(serverssl, "ffdhe3072")))
+        goto end;
+#else
     if (!TEST_true(SSL_set1_groups_list(serverssl, "P-256")))
         goto end;
+#endif
 
     /*
      * Check we can create a connection, the PSK is used and the callbacks are
