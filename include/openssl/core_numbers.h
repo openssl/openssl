@@ -63,6 +63,9 @@ OSSL_CORE_MAKE_FUNC(void,core_put_error,(int lib, int func, int reason,
                                          const char *file, int line))
 # define OSSL_FUNC_CORE_ADD_ERROR_VDATA        4
 OSSL_CORE_MAKE_FUNC(void,core_add_error_vdata,(int num, va_list args))
+# define OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT    5
+OSSL_CORE_MAKE_FUNC(OPENSSL_CTX *,core_get_library_context,
+                    (const OSSL_PROVIDER *prov))
 
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */

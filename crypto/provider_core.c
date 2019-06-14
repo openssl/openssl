@@ -47,6 +47,7 @@ struct ossl_provider_st {
     DSO *module;
     OSSL_provider_init_fn *init_function;
     STACK_OF(INFOPAIR) *parameters;
+    OPENSSL_CTX *libctx; /* The library context this instance is in */
     struct provider_store_st *store; /* The store this instance belongs to */
 
     /* Provider side functions */
@@ -120,6 +121,7 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
             CRYPTOerr(CRYPTO_F_PROVIDER_STORE_NEW, ERR_R_INTERNAL_ERROR);
             return NULL;
         }
+        prov->libctx = ctx;
         prov->store = store;
         if(p->is_fallback)
             ossl_provider_set_fallback(prov);
@@ -229,6 +231,7 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
         ossl_provider_free(prov); /* -1 Reference that was to be returned */
         prov = NULL;
     } else {
+        prov->libctx = libctx;
         prov->store = store;
     }
     CRYPTO_THREAD_unlock(store->lock);
@@ -341,11 +344,9 @@ static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 /*
  * Internal version that doesn't affect the store flags, and thereby avoid
  * locking.  Direct callers must remember to set the store flags when
- * appropriate. The libctx parameter is only necessary when FIPS_MODE is set
- * (i.e. we are being called from inside the FIPS module) - it is ignored for
- * other uses.
+ * appropriate.
  */
-static int provider_activate(OSSL_PROVIDER *prov, OPENSSL_CTX *libctx)
+static int provider_activate(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
 
@@ -400,26 +401,7 @@ static int provider_activate(OSSL_PROVIDER *prov, OPENSSL_CTX *libctx)
 #endif
     }
 
-    /*
-     * We call the initialise function for the provider.
-     *
-     * If FIPS_MODE is defined then we are inside the FIPS module and are about
-     * to recursively initialise ourselves. We need to do this so that we can
-     * get all the provider callback functions set up in order for us to be able
-     * to make EVP calls from within the FIPS module itself. Only algorithms
-     * from the FIPS module itself are available via the FIPS module EVP
-     * interface, i.e. we only ever have one provider available inside the FIPS
-     * module - the FIPS provider itself.
-     *
-     * For modules in general we cannot know what value will be used for the
-     * provctx - it is a "black box". But for the FIPS module we know that the
-     * provctx is really a library context. We default the provctx value to the
-     * same library context as was used for the EVP call that caused this call
-     * to "provider_activate".
-     */
-#ifdef FIPS_MODE
-    prov->provctx = libctx;
-#endif
+    /* Call the initialise function for the provider. */
     if (prov->init_function == NULL
         || !prov->init_function(prov, core_dispatch, &provider_dispatch,
                                 &prov->provctx)) {
@@ -461,7 +443,7 @@ static int provider_activate(OSSL_PROVIDER *prov, OPENSSL_CTX *libctx)
 
 int ossl_provider_activate(OSSL_PROVIDER *prov)
 {
-    if (provider_activate(prov, NULL)) {
+    if (provider_activate(prov)) {
         CRYPTO_THREAD_write_lock(prov->store->lock);
         prov->store->use_fallbacks = 0;
         CRYPTO_THREAD_unlock(prov->store->lock);
@@ -538,7 +520,7 @@ int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
                  */
                 if (prov->flag_fallback) {
                     activated_fallback_count++;
-                    provider_activate(prov, ctx);
+                    provider_activate(prov);
                 }
             }
 
@@ -679,9 +661,16 @@ static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
     return 1;
 }
 
+static OSSL_core_get_library_context_fn core_get_libctx; /* Check */
+static OPENSSL_CTX *core_get_libctx(const OSSL_PROVIDER *prov)
+{
+    return prov->libctx;
+}
+
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
+    { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))ERR_put_error },
     { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))ERR_add_error_vdata },
     { 0, NULL }
