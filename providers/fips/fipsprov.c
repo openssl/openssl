@@ -21,6 +21,7 @@
 #include "internal/property.h"
 #include "internal/evp_int.h"
 #include "internal/provider_algs.h"
+#include "internal/provider_ctx.h"
 
 /* Functions provided by the core */
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
@@ -37,8 +38,9 @@ static const OSSL_ITEM fips_param_types[] = {
 };
 
 /* TODO(3.0): To be removed */
-static int dummy_evp_call(OPENSSL_CTX *libctx)
+static int dummy_evp_call(void *provctx)
 {
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
     char msg[] = "Hello World!";
@@ -208,30 +210,28 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     if (ctx == NULL)
         return 0;
 
+    *out = fips_dispatch_table;
+    *provctx = ctx;
+
     /*
      * TODO(3.0): Remove me. This is just a dummy call to demonstrate making
      * EVP calls from within the FIPS module.
      */
-    if (!dummy_evp_call(ctx)) {
-        OPENSSL_CTX_free(ctx);
+    if (!dummy_evp_call(*provctx)) {
+        OPENSSL_CTX_free(*provctx);
+        *provctx = NULL;
         return 0;
     }
 
-    *out = fips_dispatch_table;
-    *provctx = ctx;
     return 1;
 }
 
 /*
  * The internal init function used when the FIPS module uses EVP to call
  * another algorithm also in the FIPS module. This is a recursive call that has
- * been made from within the FIPS module itself. Normally we are responsible for
- * providing our own provctx value, but in this recursive case it has been
- * pre-populated for us with the same library context that was used in the EVP
- * call that initiated this recursive call - so we don't need to do anything
- * further with that parameter. This only works because we *know* in the core
- * code that the FIPS module uses a library context for its provctx. This is
- * not generally true for all providers.
+ * been made from within the FIPS module itself. To make this work, we populate
+ * the provider context of this inner instance with the same library context
+ * that was used in the EVP call that initiated this recursive call.
  */
 OSSL_provider_init_fn fips_intern_provider_init;
 int fips_intern_provider_init(const OSSL_PROVIDER *provider,
@@ -239,6 +239,30 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
                               const OSSL_DISPATCH **out,
                               void **provctx)
 {
+    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+
+    for (; in->function_id != 0; in++) {
+        switch (in->function_id) {
+        case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
+            c_get_libctx = OSSL_get_core_get_library_context(in);
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (c_get_libctx == NULL)
+        return 0;
+
+    *provctx = c_get_libctx(provider);
+
+    /*
+     * Safety measure...  we should get the library context that was
+     * created up in OSSL_provider_init().
+     */
+    if (*provctx == NULL)
+        return 0;
+
     *out = intern_dispatch_table;
     return 1;
 }
