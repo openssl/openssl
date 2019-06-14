@@ -163,11 +163,11 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
     const unsigned char *pformats;
     size_t num_formats;
     int reason, min_version, max_version;
-    
+
     reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
     if (reason != 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS, reason);
+                 SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS, reason);
         return EXT_RETURN_FAIL;
     }
     if (!use_ecc(s, max_version))
