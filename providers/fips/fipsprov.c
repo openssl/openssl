@@ -21,6 +21,7 @@
 #include "internal/property.h"
 #include "internal/evp_int.h"
 #include "internal/provider_algs.h"
+#include "internal/provider_ctx.h"
 
 /* Functions provided by the core */
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
@@ -37,8 +38,9 @@ static const OSSL_ITEM fips_param_types[] = {
 };
 
 /* TODO(3.0): To be removed */
-static int dummy_evp_call(OPENSSL_CTX *libctx)
+static int dummy_evp_call(void *provctx)
 {
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
     char msg[] = "Hello World!";
@@ -208,17 +210,19 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     if (ctx == NULL)
         return 0;
 
+    *out = fips_dispatch_table;
+    *provctx = ctx;
+
     /*
      * TODO(3.0): Remove me. This is just a dummy call to demonstrate making
      * EVP calls from within the FIPS module.
      */
-    if (!dummy_evp_call(ctx)) {
-        OPENSSL_CTX_free(ctx);
+    if (!dummy_evp_call(*provctx)) {
+        OPENSSL_CTX_free(*provctx);
+        *provctx = NULL;
         return 0;
     }
 
-    *out = fips_dispatch_table;
-    *provctx = ctx;
     return 1;
 }
 
