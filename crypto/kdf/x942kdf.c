@@ -201,9 +201,9 @@ static int x942kdf_hash_kdm(const EVP_MD *kdf_md,
         ctr[2] = (unsigned char)((counter >> 8) & 0xff);
         ctr[3] = (unsigned char)(counter & 0xff);
 
-        if (!(EVP_MD_CTX_copy_ex(ctx, ctx_init)
-                && EVP_DigestUpdate(ctx, z, z_len)
-                && EVP_DigestUpdate(ctx, other, other_len)))
+        if (!EVP_MD_CTX_copy_ex(ctx, ctx_init)
+            || !EVP_DigestUpdate(ctx, z, z_len)
+            || !EVP_DigestUpdate(ctx, other, other_len))
             goto end;
         if (len >= out_len) {
             if (!EVP_DigestFinal_ex(ctx, out, NULL))
