@@ -617,9 +617,6 @@ int tls13_change_cipher_state(SSL *s, int which)
                 goto err;
             }
             hashlen = hashlenui;
-#ifndef OPENSSL_NO_QUIC
-            s->quic_len = hashlen;
-#endif
             EVP_MD_CTX_free(mdctx);
 
             if (!tls13_hkdf_expand(s, md, insecret,

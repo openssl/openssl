@@ -181,6 +181,8 @@ int quic_set_encryption_secrets(SSL *ssl, OSSL_ENCRYPTION_LEVEL level)
 {
     uint8_t *read_secret = NULL;
     uint8_t *write_secret = NULL;
+    size_t len;
+    const EVP_MD *md;
     static const unsigned char zeros[EVP_MAX_MD_SIZE];
 
     if (!SSL_IS_QUIC(ssl))
@@ -202,21 +204,41 @@ int quic_set_encryption_secrets(SSL *ssl, OSSL_ENCRYPTION_LEVEL level)
     default:
         return 1;
     }
+
+    md = ssl_handshake_md(ssl);
+    if (md == NULL) {
+        /* May not have selected cipher, yet */
+        const SSL_CIPHER *c = NULL;
+
+        if (ssl->session != NULL)
+            c = SSL_SESSION_get0_cipher(ssl->session);
+        else if (ssl->psksession != NULL)
+            c = SSL_SESSION_get0_cipher(ssl->psksession);
+
+        if (c != NULL)
+            md = SSL_CIPHER_get_handshake_digest(c);
+    }
+
+    if ((len = EVP_MD_size(md)) <= 0) {
+        SSLfatal(ssl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     /* In some cases, we want to set the secret only when BOTH are non-zero */
     if (read_secret != NULL && write_secret != NULL
-            && !memcmp(read_secret, zeros, ssl->quic_len)
-            && !memcmp(write_secret, zeros, ssl->quic_len))
+            && !memcmp(read_secret, zeros, len)
+            && !memcmp(write_secret, zeros, len))
         return 1;
 
     if (ssl->server) {
         if (!ssl->quic_method->set_encryption_secrets(ssl, level, read_secret,
-                                                      write_secret, ssl->quic_len)) {
+                                                      write_secret, len)) {
             SSLfatal(ssl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
     } else {
         if (!ssl->quic_method->set_encryption_secrets(ssl, level, write_secret,
-                                                      read_secret, ssl->quic_len)) {
+                                                      read_secret, len)) {
             SSLfatal(ssl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
