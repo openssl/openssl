@@ -99,6 +99,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        const OSSL_DISPATCH **out,
                        void **provctx)
 {
+    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_PARAM_TYPES:
@@ -107,12 +109,25 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_get_core_get_params(in);
             break;
+        case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
+            c_get_libctx = OSSL_get_core_get_library_context(in);
+            break;
         /* Just ignore anything we don't understand */
         default:
             break;
         }
     }
 
+    if (c_get_libctx == NULL)
+        return 0;
+
     *out = legacy_dispatch_table;
+
+    /*
+     * We want to make sure that all calls from this provider that requires
+     * a library context use the same context as the one used to call our
+     * functions.  We do that by passing it along as the provider context.
+     */
+    *provctx = c_get_libctx(provider);
     return 1;
 }
