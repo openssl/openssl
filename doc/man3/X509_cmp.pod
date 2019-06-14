@@ -31,19 +31,19 @@ values of two B<X509> objects and the canonical (DER) encoding values.
 The X509_NAME_cmp() function compares two B<X509_NAME> objects indicated by
 parameters B<a> and B<b>. The comparison is based on the B<memcmp> result of
 the canonical (DER) encoding values of the two objects. L<i2d_X509_NAME(3)>
-has a more detailed description on the DER encoding of B<X509_NAME> structure.
+has a more detailed description of the DER encoding of the B<X509_NAME> structure.
 
 The X509_issuer_and_serial_cmp() function compares the serial number and issuer
 values in the given B<X509> objects B<a> and B<b>.
 
 The X509_issuer_name_cmp(), X509_subject_name_cmp() and X509_CRL_cmp() functions
-are effectively wrappers of X509_NAME_cmp() function. These functions compare 
+are effectively wrappers of the X509_NAME_cmp() function. These functions compare
 issuer names and subject names of the X<509> objects, or issuers of B<X509_CRL>
 objects, respectively.
 
 The X509_CRL_match() function compares two B<X509_CRL> objects. Unlike the
-X509_CRL_cmp() function, this function compares the the whole CRL content
-instead of just the issuer name.
+X509_CRL_cmp() function, this function compares the whole CRL content instead
+of just the issuer name.
 
 =head1 RETURN VALUES
 
@@ -56,8 +56,8 @@ X509_subject_name_cmp() and X509_CRL_cmp() may return B<-2> to indicate an error
 
 =head1 NOTES
 
-These functions in fact utilize the underlying B<memcmp> of C library to do the
-comparison job. Data to be compared varies from DER encoding data, SHA-1 hash
+These functions in fact utilize the underlying B<memcmp> of the C library to do
+the comparison job. Data to be compared varies from DER encoding data, hash
 value or B<ASN1_STRING>. The sign of the comparison can be used to order the
 objects but it does not have a special meaning in some cases.
 
