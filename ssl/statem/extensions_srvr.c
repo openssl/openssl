@@ -962,12 +962,12 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     if (!s->hit || SSL_IS_TLS13(s)) {
-        OPENSSL_free(s->session->ext.supportedgroups);
-        s->session->ext.supportedgroups = NULL;
-        s->session->ext.supportedgroups_len = 0;
+        OPENSSL_free(s->ext.peer_supportedgroups);
+        s->ext.peer_supportedgroups = NULL;
+        s->ext.peer_supportedgroups_len = 0;
         if (!tls1_save_u16(&supported_groups_list,
-                           &s->session->ext.supportedgroups,
-                           &s->session->ext.supportedgroups_len)) {
+                           &s->ext.peer_supportedgroups,
+                           &s->ext.peer_supportedgroups_len)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_PARSE_CTOS_SUPPORTED_GROUPS,
                      ERR_R_INTERNAL_ERROR);
