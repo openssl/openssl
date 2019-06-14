@@ -556,7 +556,6 @@ struct ssl_session_st {
     const SSL_CIPHER *cipher;
     unsigned long cipher_id;    /* when ASN.1 loaded, this needs to be used to
                                  * load the 'cipher' structure */
-    STACK_OF(SSL_CIPHER) *ciphers; /* ciphers offered by the client */
     CRYPTO_EX_DATA ex_data;     /* application specific data */
     /*
      * These are used to make removal of session-ids more efficient and to
@@ -1318,6 +1317,7 @@ struct ssl_st {
     /* Per connection DANE state */
     SSL_DANE dane;
     /* crypto */
+    STACK_OF(SSL_CIPHER) *peer_ciphers;
     STACK_OF(SSL_CIPHER) *cipher_list;
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
     /* TLSv1.3 specific ciphersuites */
