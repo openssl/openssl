@@ -5004,6 +5004,10 @@
 #define LN_sskdf                "sskdf"
 #define NID_sskdf               1205
 
+#define SN_x942kdf              "X942KDF"
+#define LN_x942kdf              "x942kdf"
+#define NID_x942kdf             1207
+
 #define SN_x963kdf              "X963KDF"
 #define LN_x963kdf              "x963kdf"
 #define NID_x963kdf             1206

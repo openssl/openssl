@@ -408,7 +408,6 @@ static int test_kdf_get_kdf(void)
 }
 
 #ifndef OPENSSL_NO_CMS
-
 static int test_kdf_x942_asn1(void)
 {
     int ret;
@@ -430,7 +429,7 @@ static int test_kdf_x942_asn1(void)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, EVP_sha1()), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z, sizeof(z)), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_CEK_ALG,
-                                    SN_id_smime_alg_3DESwrap), 0)
+                                    SN_id_smime_alg_CMS3DESwrap), 0)
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
 
