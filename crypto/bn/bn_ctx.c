@@ -166,6 +166,7 @@ void BN_CTX_free(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return;
+#ifndef FIPS_MODE
     OSSL_TRACE_BEGIN(BN_CTX) {
         BN_POOL_ITEM *pool = ctx->pool.head;
         BIO_printf(trc_out,
@@ -180,6 +181,7 @@ void BN_CTX_free(BN_CTX *ctx)
         }
         BIO_printf(trc_out, "\n");
     } OSSL_TRACE_END(BN_CTX);
+#endif
     BN_STACK_finish(&ctx->stack);
     BN_POOL_finish(&ctx->pool);
     OPENSSL_free(ctx);
