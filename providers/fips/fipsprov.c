@@ -239,6 +239,30 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
                               const OSSL_DISPATCH **out,
                               void **provctx)
 {
+    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+
+    for (; in->function_id != 0; in++) {
+        switch (in->function_id) {
+        case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
+            c_get_libctx = OSSL_get_core_get_library_context(in);
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (c_get_libctx == NULL)
+        return 0;
+
+    *provctx = c_get_libctx(provider);
+
+    /*
+     * Safety measure...  we should get the library context that was
+     * created up in OSSL_provider_init().
+     */
+    if (*provctx == NULL)
+        return 0;
+
     *out = intern_dispatch_table;
     return 1;
 }
