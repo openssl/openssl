@@ -3601,8 +3601,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
             if (!s->session)
                 return 0;
-            clist = s->session->ext.supportedgroups;
-            clistlen = s->session->ext.supportedgroups_len;
+            clist = s->ext.peer_supportedgroups;
+            clistlen = s->ext.peer_supportedgroups_len;
             if (parg) {
                 size_t i;
                 int *cptr = parg;

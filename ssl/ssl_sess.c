@@ -125,7 +125,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->ext.hostname = NULL;
 #ifndef OPENSSL_NO_EC
     dest->ext.ecpointformats = NULL;
-    dest->ext.supportedgroups = NULL;
 #endif
     dest->ext.tick = NULL;
     dest->ext.alpn_selected = NULL;
@@ -199,14 +198,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
             OPENSSL_memdup(src->ext.ecpointformats,
                            src->ext.ecpointformats_len);
         if (dest->ext.ecpointformats == NULL)
-            goto err;
-    }
-    if (src->ext.supportedgroups) {
-        dest->ext.supportedgroups =
-            OPENSSL_memdup(src->ext.supportedgroups,
-                           src->ext.supportedgroups_len
-                                * sizeof(*src->ext.supportedgroups));
-        if (dest->ext.supportedgroups == NULL)
             goto err;
     }
 #endif
@@ -797,9 +788,6 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_free(ss->ext.ecpointformats);
     ss->ext.ecpointformats = NULL;
     ss->ext.ecpointformats_len = 0;
-    OPENSSL_free(ss->ext.supportedgroups);
-    ss->ext.supportedgroups = NULL;
-    ss->ext.supportedgroups_len = 0;
 #endif                          /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(ss->psk_identity_hint);
