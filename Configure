@@ -1433,13 +1433,21 @@ unless ($disabled{asm}) {
         push @{$config{module_defines}}, "BN_DIV3W";
     }
 
-    if ($target{sha1_asm_src}) {
-        push @{$config{lib_defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
-        push @{$config{lib_defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
-        push @{$config{lib_defines}}, "SHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
+    if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/) {
+        push @{$config{lib_defines}}, "SHA1_ASM";
+        push @{$config{module_defines}}, "SHA1_ASM";
+    }
+    if ($target{sha1_asm_src} =~ /sha256/) {
+        push @{$config{lib_defines}}, "SHA256_ASM";
+        push @{$config{module_defines}}, "SHA256_ASM";
+    }
+    if ($target{sha1_asm_src} =~ /sha512/) {
+        push @{$config{lib_defines}}, "SHA512_ASM";
+        push @{$config{module_defines}}, "SHA512_ASM";
     }
     if ($target{keccak1600_asm_src} ne $table{DEFAULTS}->{keccak1600_asm_src}) {
         push @{$config{lib_defines}}, "KECCAK1600_ASM";
+        push @{$config{module_defines}}, "KECCAK1600_ASM";
     }
     if ($target{rc4_asm_src} ne $table{DEFAULTS}->{rc4_asm_src}) {
         push @{$config{lib_defines}}, "RC4_ASM";
