@@ -401,23 +401,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
 #endif
     }
 
-    /*
-     * We call the initialise function for the provider.
-     *
-     * If FIPS_MODE is defined then we are inside the FIPS module and are about
-     * to recursively initialise ourselves. We need to do this so that we can
-     * get all the provider callback functions set up in order for us to be able
-     * to make EVP calls from within the FIPS module itself. Only algorithms
-     * from the FIPS module itself are available via the FIPS module EVP
-     * interface, i.e. we only ever have one provider available inside the FIPS
-     * module - the FIPS provider itself.
-     *
-     * For modules in general we cannot know what value will be used for the
-     * provctx - it is a "black box". But for the FIPS module we know that the
-     * provctx is really a library context. We default the provctx value to the
-     * same library context as was used for the EVP call that caused this call
-     * to "provider_activate".
-     */
+    /* Call the initialise function for the provider. */
     if (prov->init_function == NULL
         || !prov->init_function(prov, core_dispatch, &provider_dispatch,
                                 &prov->provctx)) {
