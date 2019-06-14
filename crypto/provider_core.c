@@ -121,6 +121,7 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
             CRYPTOerr(CRYPTO_F_PROVIDER_STORE_NEW, ERR_R_INTERNAL_ERROR);
             return NULL;
         }
+        prov->libctx = ctx;
         prov->store = store;
         if(p->is_fallback)
             ossl_provider_set_fallback(prov);
