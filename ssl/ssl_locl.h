@@ -570,9 +570,7 @@ struct ssl_session_st {
         size_t ecpointformats_len;
         unsigned char *ecpointformats; /* peer's list */
 # endif                         /* OPENSSL_NO_EC */
-        size_t supportedgroups_len;
-        uint16_t *supportedgroups; /* peer's list */
-    /* RFC4507 info */
+        /* RFC4507 info */
         unsigned char *tick; /* Session ticket */
         size_t ticklen;      /* Session ticket length */
         /* Session lifetime hint in seconds */
@@ -1487,6 +1485,11 @@ struct ssl_st {
         size_t supportedgroups_len;
         /* our list */
         uint16_t *supportedgroups;
+
+        size_t peer_supportedgroups_len;
+         /* peer's list */
+        uint16_t *peer_supportedgroups;
+
         /* TLS Session Ticket extension override */
         TLS_SESSION_TICKET_EXT *session_ticket;
         /* TLS Session Ticket extension callback */
@@ -2258,8 +2261,8 @@ static ossl_inline int ssl_has_cert(const SSL *s, int idx)
 static ossl_inline void tls1_get_peer_groups(SSL *s, const uint16_t **pgroups,
                                              size_t *pgroupslen)
 {
-    *pgroups = s->session->ext.supportedgroups;
-    *pgroupslen = s->session->ext.supportedgroups_len;
+    *pgroups = s->ext.peer_supportedgroups;
+    *pgroupslen = s->ext.peer_supportedgroups_len;
 }
 
 # ifndef OPENSSL_UNIT_TEST
