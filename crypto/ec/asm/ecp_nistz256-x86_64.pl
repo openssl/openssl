@@ -3628,17 +3628,26 @@ $code.=<<___;
 
 	or	$acc5, $acc4			# see if result is zero
 	or	$acc0, $acc4
-	or	$acc1, $acc4
+	or	$acc1, $acc4			# !is_equal(U1, U2)
 
-	.byte	0x3e				# predict taken
-	jnz	.Ladd_proceed$x			# is_equal(U1,U2)?
 	movq	%xmm2, $acc0
 	movq	%xmm3, $acc1
-	test	$acc0, $acc0
-	jnz	.Ladd_proceed$x			# (in1infty || in2infty)?
-	test	$acc1, $acc1
-	jz	.Ladd_double$x			# is_equal(S1,S2)?
 
+	or	$acc0, $acc4
+	.byte	0x3e				# predict taken
+	jnz	.Ladd_proceed$x			# !is_equal(U1, U2) || in1infty || in2infty
+
+	# We now know A = B or A = -B and neither is infinity. Compare the
+	# y-coordinates via S1 and S2.
+	test	$acc1, $acc1
+	jz	.Ladd_double$x			# is_equal(S1, S2)
+
+	# A = -B, so the result is infinity.
+	#
+	# TODO: see https://github.com/google/boringssl/blob/12d9ed670da3edd64ce8175cfe0e091982989c18/crypto/fipsmodule/ec/asm/p256-x86_64-asm.pl#L3128-L3132
+	# Does .Ladd_proceed handle this case? It seems to, in
+	# which case we should eliminate this special-case and simplify the
+	# timing analysis.
 	movq	%xmm0, $r_ptr			# restore $r_ptr
 	pxor	%xmm0, %xmm0
 	movdqu	%xmm0, 0x00($r_ptr)
