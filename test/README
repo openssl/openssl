@@ -101,7 +101,7 @@ to modify the include paths and source files if you don't want to use the
 basic test framework:
 
     SOURCE[{name}]={name}.c
-    INCLUDE[{name}]=.. ../include
+    INCLUDE[{name}]=.. ../include ../apps/include
     DEPEND[{name}]=../libcrypto libtestutil.a
 
 Generic form of C test executables
