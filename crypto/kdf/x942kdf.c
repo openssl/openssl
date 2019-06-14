@@ -221,8 +221,8 @@ static int x942kdf_hash_kdm(const EVP_MD *kdf_md,
     }
     ret = 1;
 end:
-    EVP_MD_CTX_destroy(ctx);
-    EVP_MD_CTX_destroy(ctx_init);
+    EVP_MD_CTX_free(ctx);
+    EVP_MD_CTX_free(ctx_init);
     OPENSSL_cleanse(mac, sizeof(mac));
     return ret;
 }
