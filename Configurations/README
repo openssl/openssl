@@ -240,9 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        modes_asm_src   => Assembler implementation of cipher modes,
-                           currently the functions gcm_gmult_4bit and
-                           gcm_ghash_4bit.
         padlock_asm_src => Assembler implementation of core parts of
                            the padlock engine.  This is mandatory on
                            any platform where the padlock engine might
