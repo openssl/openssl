@@ -8,6 +8,21 @@ SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 conf \
         err comp ocsp cms ts srp cmac ct async kmac ess crmf cmp
 
 LIBS=../libcrypto
+
+$UPLINKSRC=
+$UPLINKDEF=
+IF[{- !$disabled{uplink} -}]
+  $UPLINKSRC_common=../ms/uplink.c
+  $UPLINKSRC_x86=$UPLINKSRC_common uplink-x86.s
+  $UPLINKSRC_x86_64=$UPLINKSRC_common uplink-x86_64.s
+  $UPLINKSRC_ia64=$UPLINKSRC_common uplink-ia64.s
+
+  IF[$UPLINKSRC_{- $target{uplink_arch} -}]
+    $UPLINKSRC=$UPLINKSRC_{- $target{uplink_arch} -}
+    $UPLINKDEF=OPENSSL_USE_APPLINK
+  ENDIF
+ENDIF
+
 # The Core
 $CORE_COMMON=provider_core.c provider_predefined.c core_fetch.c core_namemap.c
 
@@ -23,7 +38,8 @@ $UTIL_COMMON=\
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem_dbg.c cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
         o_fopen.c getenv.c o_init.c o_fips.c init.c trace.c provider.c \
-        {- $target{uplink_aux_src} -}
+        $UPLINKSRC
+DEFINE[../libcrypto]=$UPLINKDEF
 SOURCE[../providers/fips]=$UTIL_COMMON
         
 
