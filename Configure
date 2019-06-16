@@ -1410,9 +1410,6 @@ unless ($disabled{asm}) {
     if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
         push @{$config{dso_defines}}, "PADLOCK_ASM";
     }
-    if ($target{poly1305_asm_src} ne "") {
-        push @{$config{lib_defines}}, "POLY1305_ASM";
-    }
 }
 
 my %predefined_C = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
