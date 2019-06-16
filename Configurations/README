@@ -240,9 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        rc5_asm_src     => Assembler implementation of core RC5
-                           functions.
-                           Defaults to 'rc5_enc.c'
         wp_asm_src      => Assembler implementation of core WHIRLPOOL
                            functions.
         cmll_asm_src    => Assembler implementation of core CAMELLIA

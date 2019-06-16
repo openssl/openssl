@@ -3351,7 +3351,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "rc5_asm_src",
         "wp_asm_src",
         "cmll_asm_src",
         "modes_asm_src",
