@@ -3342,7 +3342,6 @@ sub print_table_entry
         "ex_libs",
         "bn_ops",
         "padlock_asm_src",
-        "chacha_asm_src",
         "poly1035_asm_src",
         "thread_scheme",
         "perlasm_scheme",
