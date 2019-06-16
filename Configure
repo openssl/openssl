@@ -1135,6 +1135,10 @@ foreach my $feature (@{$target{enable}}) {
         delete $disabled{$feature};
     }
 }
+
+# If uplink_arch isn't defined, disable uplink
+$disabled{uplink} = 'no uplink_arch' unless (defined $target{uplink_arch});
+
 disable();                      # Run a cascade now
 
 $target{CXXFLAGS}//=$target{CFLAGS} if $target{CXX};
