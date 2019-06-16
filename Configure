@@ -1415,9 +1415,6 @@ unless ($disabled{asm}) {
     if ($target{rc4_asm_src} ne $table{DEFAULTS}->{rc4_asm_src}) {
         push @{$config{lib_defines}}, "RC4_ASM";
     }
-    if ($target{md5_asm_src}) {
-        push @{$config{lib_defines}}, "MD5_ASM";
-    }
     $target{cast_asm_src}=$table{DEFAULTS}->{cast_asm_src} unless $disabled{pic}; # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
         push @{$config{lib_defines}}, "RMD160_ASM";
@@ -3366,7 +3363,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "md5_asm_src",
         "cast_asm_src",
         "sha1_asm_src",
         "rc4_asm_src",
