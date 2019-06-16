@@ -1,15 +1,20 @@
 SUBDIRS=ossl_shim
-{-
-     use File::Spec::Functions;
-     sub rebase_files
-     {
-         my ($base, $files) = @_;
-         return join(" ", map { "$base/$_" } split(/\s+/, $files));
-     }
-     our $apps_aux_src =
-         join(' ', map { "../apps/$_" } split(/\s+/, $target{apps_aux_src}));
-     ""
--}
+
+# TODO: use ../apps/libapps.a instead of direct ../apps source.
+# This can't currently be done, because some of its units drag in too many
+# unresolved references that don't apply here.  Most of all, ../apps/apps.c
+# needs to be divided in smaller pieces to be useful here.
+#
+# Auxilliary program source (copied from ../apps/build.info)
+IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
+  # It's called 'init', but doesn't have much 'init' in it...
+  $AUXLIBAPPSSRC=../apps/win32_init.c
+ENDIF
+IF[{- $config{target} =~ /^vms-/ -}]
+  $AUXLIBAPPSSRC=../apps/vms_term_sock.c ../apps/vms_decc_argv.c
+ENDIF
+$LIBAPPSSRC=../apps/opt.c $AUXLIBAPPSSRC
+
 IF[{- !$disabled{tests} -}]
   LIBS{noinst,has_main}=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output_helpers.c \
@@ -17,7 +22,7 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/tap_bio.c \
           testutil/test_cleanup.c testutil/main.c testutil/init.c \
           testutil/options.c testutil/test_options.c \
-          testutil/apps_mem.c ../apps/opt.c {- $apps_aux_src; -}
+          testutil/apps_mem.c $LIBAPPSSRC
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
