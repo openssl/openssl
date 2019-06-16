@@ -1422,32 +1422,6 @@ unless ($disabled{asm}) {
     if ($target{rmd160_asm_src}) {
         push @{$config{lib_defines}}, "RMD160_ASM";
     }
-    if ($target{aes_asm_src}) {
-        if ($target{aes_asm_src} =~ m/\baes-/) {
-            push @{$config{lib_defines}}, "AES_ASM";
-            push @{$config{module_defines}}, "AES_ASM";
-        }
-        # aes-ctr.fake is not a real file, only indication that assembler
-        # module implements AES_ctr32_encrypt...
-        if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//) {
-            push @{$config{lib_defines}}, "AES_CTR_ASM";
-            push @{$config{module_defines}}, "AES_CTR_ASM";
-        }
-        # aes-xts.fake indicates presence of AES_xts_[en|de]crypt...
-        if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//) {
-            push @{$config{lib_defines}}, "AES_XTS_ASM";
-            push @{$config{module_defines}}, "AES_XTS_ASM";
-        }
-        $target{aes_asm_src} =~ s/\s*(vpaes|aesni)-x86\.s//g if ($disabled{sse2});
-        if ($target{aes_asm_src} =~ m/vpaes/) {
-            push @{$config{lib_defines}}, "VPAES_ASM";
-            push @{$config{module_defines}}, "VPAES_ASM";
-        }
-        if ($target{aes_asm_src} =~ m/bsaes/) {
-            push @{$config{lib_defines}}, "BSAES_ASM";
-            push @{$config{module_defines}}, "BSAES_ASM";
-        }
-    }
     if ($target{wp_asm_src} =~ /mmx/) {
         if ($config{processor} eq "386") {
             $target{wp_asm_src}=$table{DEFAULTS}->{wp_asm_src};
@@ -3392,7 +3366,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "aes_asm_src",
         "bf_asm_src",
         "md5_asm_src",
         "cast_asm_src",
