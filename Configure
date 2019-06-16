@@ -1404,11 +1404,6 @@ if ($target{sys_id} ne "")
         }
 
 unless ($disabled{asm}) {
-    if ($target{sha1_asm_src}) {
-        push @{$config{lib_defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
-        push @{$config{lib_defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
-        push @{$config{lib_defines}}, "SHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
-    }
     if ($target{keccak1600_asm_src} ne $table{DEFAULTS}->{keccak1600_asm_src}) {
         push @{$config{lib_defines}}, "KECCAK1600_ASM";
     }
@@ -3364,7 +3359,6 @@ sub print_table_entry
         "ex_libs",
         "bn_ops",
         "cast_asm_src",
-        "sha1_asm_src",
         "rc4_asm_src",
         "rmd160_asm_src",
         "rc5_asm_src",
