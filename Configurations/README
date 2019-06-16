@@ -240,9 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        bf_asm_src      => Assembler implementation of core BlowFish
-                           functions.
-                           Defaults to 'bf_enc.c'
         md5_asm_src     => Assembler implementation of core MD5
                            functions.
         sha1_asm_src    => Assembler implementation of core SHA1,
