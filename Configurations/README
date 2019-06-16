@@ -165,6 +165,11 @@ In each table entry, the following keys are significant:
                            that use dlopen() et al but do not have
                            fcntl.h), "DL" (shl_load() et al), "WIN32"
                            and "VMS".
+        uplink_arch     => The architecture to be used for compiling uplink
+                           source.  This acts as a selector in build.info files.
+                           This is separate from asm_arch because it's compiled
+                           even when 'no-asm' is given, even though it contains
+                           assembler source.
         perlasm_scheme  => The perlasm method used to create the
                            assembler files used when compiling with
                            assembler implementations.
