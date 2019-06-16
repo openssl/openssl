@@ -2894,18 +2894,6 @@ _____
 # Thus, whenever there's mention of a returned value, it's about that
 # intended value.
 
-# Helper function to implement conditional inheritance depending on the
-# value of $disabled{asm}.  Used in inherit_from values as follows:
-#
-#      inherit_from => [ "template", asm("asm_tmpl") ]
-#
-sub asm {
-    my @x = @_;
-    sub {
-        $disabled{asm} ? () : @x;
-    }
-}
-
 # Helper function to implement conditional value variants, with a default
 # plus additional values based on the value of $config{build_type}.
 # Arguments are given in hash table form:
