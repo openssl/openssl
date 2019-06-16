@@ -1404,9 +1404,6 @@ if ($target{sys_id} ne "")
         }
 
 unless ($disabled{asm}) {
-    if ($target{keccak1600_asm_src} ne $table{DEFAULTS}->{keccak1600_asm_src}) {
-        push @{$config{lib_defines}}, "KECCAK1600_ASM";
-    }
     if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
         push @{$config{dso_defines}}, "PADLOCK_ASM";
     }
