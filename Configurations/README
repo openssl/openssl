@@ -240,8 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        wp_asm_src      => Assembler implementation of core WHIRLPOOL
-                           functions.
         cmll_asm_src    => Assembler implementation of core CAMELLIA
                            functions.
                            Defaults to 'camellia.c cmll_misc.c cmll_cbc.c'

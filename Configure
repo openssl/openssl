@@ -1407,13 +1407,6 @@ unless ($disabled{asm}) {
     if ($target{keccak1600_asm_src} ne $table{DEFAULTS}->{keccak1600_asm_src}) {
         push @{$config{lib_defines}}, "KECCAK1600_ASM";
     }
-    if ($target{wp_asm_src} =~ /mmx/) {
-        if ($config{processor} eq "386") {
-            $target{wp_asm_src}=$table{DEFAULTS}->{wp_asm_src};
-        } elsif (!$disabled{"whirlpool"}) {
-            push @{$config{lib_defines}}, "WHIRLPOOL_ASM";
-        }
-    }
     if ($target{modes_asm_src} =~ /ghash-/) {
         push @{$config{lib_defines}}, "GHASH_ASM";
     }
@@ -3351,7 +3344,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "wp_asm_src",
         "cmll_asm_src",
         "modes_asm_src",
         "padlock_asm_src",

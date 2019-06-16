@@ -1,5 +1,24 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=wp_dgst.c {- $target{wp_asm_src} -}
+
+$WPASM=wp_block.c
+IF[{- !$disabled{asm} -}]
+  IF[{- $config{processor} ne "386" -}]
+    $WPASM_x86=wp_block.c wp-mmx.s
+    $WPDEF_x86=WHIRLPOOL_ASM
+  ENDIF
+  $WPASM_x86_64=wp-x86_64.s
+  $WPDEF_x86_64=WHIRLPOOL_ASM
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+  IF[$WPASM_{- $target{asm_arch} -}]
+    $WPASM=$WPASM_{- $target{asm_arch} -}
+    $WPDEF=$WPDEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
+SOURCE[../../libcrypto]=wp_dgst.c $WPASM
+DEFINE[../../libcrypto]=$WPDEF
 
 GENERATE[wp-mmx.s]=asm/wp-mmx.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
