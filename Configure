@@ -1881,7 +1881,7 @@ if ($builder eq "unified") {
             qr/^\s*IF\[((?:\\.|[^\\\]])*)\]\s*$/
             => sub {
                 if (! @skip || $skip[$#skip] > 0) {
-                    push @skip, !! $1;
+                    push @skip, !! $expand_variables->($1);
                 } else {
                     push @skip, -1;
                 }
@@ -1890,7 +1890,7 @@ if ($builder eq "unified") {
             => sub { die "ELSIF out of scope" if ! @skip;
                      die "ELSIF following ELSE" if abs($skip[$#skip]) == 2;
                      $skip[$#skip] = -1 if $skip[$#skip] != 0;
-                     $skip[$#skip] = !! $1
+                     $skip[$#skip] = !! $expand_variables->($1)
                          if $skip[$#skip] == 0; },
             qr/^\s*ELSE\s*$/
             => sub { die "ELSE out of scope" if ! @skip;
@@ -1902,7 +1902,9 @@ if ($builder eq "unified") {
             qr/^\s*${variable_re}\s*=\s*(.*?)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    $variables{$1} = $2;
+                    my $n = $1;
+                    my $v = $2;
+                    $variables{$n} = $expand_variables->($v);
                 }
             },
             qr/^\s*SUBDIRS\s*=\s*(.*)\s*$/
