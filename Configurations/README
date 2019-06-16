@@ -240,9 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        cast_asm_src    => Assembler implementation of core CAST
-                           functions.
-                           Defaults to 'c_enc.c'
         rc4_asm_src     => Assembler implementation of core RC4
                            functions.
                            Defaults to 'rc4_enc.c rc4_skey.c'
