@@ -1138,6 +1138,8 @@ foreach my $feature (@{$target{enable}}) {
 
 # If uplink_arch isn't defined, disable uplink
 $disabled{uplink} = 'no uplink_arch' unless (defined $target{uplink_arch});
+# If asm_arch isn't defined, disable asm
+$disabled{asm} = 'no asm_arch' unless (defined $target{asm_arch});
 
 disable();                      # Run a cascade now
 
