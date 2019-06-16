@@ -3366,7 +3366,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "bf_asm_src",
         "md5_asm_src",
         "cast_asm_src",
         "sha1_asm_src",
