@@ -1407,9 +1407,6 @@ unless ($disabled{asm}) {
     if ($target{keccak1600_asm_src} ne $table{DEFAULTS}->{keccak1600_asm_src}) {
         push @{$config{lib_defines}}, "KECCAK1600_ASM";
     }
-    if ($target{rc4_asm_src} ne $table{DEFAULTS}->{rc4_asm_src}) {
-        push @{$config{lib_defines}}, "RC4_ASM";
-    }
     if ($target{rmd160_asm_src}) {
         push @{$config{lib_defines}}, "RMD160_ASM";
     }
@@ -3357,7 +3354,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "rc4_asm_src",
         "rmd160_asm_src",
         "rc5_asm_src",
         "wp_asm_src",

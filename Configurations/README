@@ -240,9 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        rc4_asm_src     => Assembler implementation of core RC4
-                           functions.
-                           Defaults to 'rc4_enc.c rc4_skey.c'
         rmd160_asm_src  => Assembler implementation of core RMD160
                            functions.
         rc5_asm_src     => Assembler implementation of core RC5
