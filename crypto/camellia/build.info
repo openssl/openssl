@@ -1,7 +1,19 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        cmll_ecb.c cmll_ofb.c cmll_cfb.c cmll_ctr.c \
-        {- $target{cmll_asm_src} -}
+
+$CMLLASM=camellia.c cmll_misc.c cmll_cbc.c
+IF[{- !$disabled{asm} -}]
+  $CMLLASM_x86=cmll-x86.s
+  $CMLLASM_x86_64=cmll-x86_64.s cmll_misc.c
+  $CMLLASM_sparcv9=camellia.c cmll_misc.c cmll_cbc.c cmllt4-sparcv9.S
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one
+  IF[$CMLLASM_{- $target{asm_arch} -}]
+    $CMLLASM=$CMLLASM_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
+SOURCE[../../libcrypto]=cmll_ecb.c cmll_ofb.c cmll_cfb.c cmll_ctr.c $CMLLASM
 
 GENERATE[cmll-x86.s]=asm/cmll-x86.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) \

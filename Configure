@@ -3344,7 +3344,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "cmll_asm_src",
         "modes_asm_src",
         "padlock_asm_src",
         "chacha_asm_src",
