@@ -240,8 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        md5_asm_src     => Assembler implementation of core MD5
-                           functions.
         sha1_asm_src    => Assembler implementation of core SHA1,
                            functions, and also possibly SHA256 and
                            SHA512 ones.

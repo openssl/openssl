@@ -1,6 +1,21 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        md5_dgst.c md5_one.c md5_sha1.c {- $target{md5_asm_src} -}
+
+$MD5ASM=
+IF[{- !$disabled{asm} -}]
+  $MD5ASM_x86=md5-586.s
+  $MD5ASM_x86_64=md5-x86_64.s
+  $MD5ASM_sparcv9=md5-sparcv9.S
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+  IF[$MD5ASM_{- $target{asm_arch} -}]
+    $MD5ASM=$MD5ASM_{- $target{asm_arch} -}
+    $MD5DEF=MD5_ASM
+  ENDIF
+ENDIF
+
+SOURCE[../../libcrypto]=md5_dgst.c md5_one.c md5_sha1.c $MD5ASM
+DEFINE[../../libcrypto]=$MD5DEF
 
 GENERATE[md5-586.s]=asm/md5-586.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS)
