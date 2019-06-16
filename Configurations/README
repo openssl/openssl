@@ -240,11 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        padlock_asm_src => Assembler implementation of core parts of
-                           the padlock engine.  This is mandatory on
-                           any platform where the padlock engine might
-                           actually be built.
-
 
 [1] as part of the target configuration, one can have a key called
     'inherit_from' that indicate what other configurations to inherit
