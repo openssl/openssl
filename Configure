@@ -1458,12 +1458,6 @@ unless ($disabled{asm}) {
     if ($target{modes_asm_src} =~ /ghash-/) {
         push @{$config{lib_defines}}, "GHASH_ASM";
     }
-    if ($target{ec_asm_src} =~ /ecp_nistz256/) {
-        push @{$config{lib_defines}}, "ECP_NISTZ256_ASM";
-    }
-    if ($target{ec_asm_src} =~ /x25519/) {
-        push @{$config{lib_defines}}, "X25519_ASM";
-    }
     if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
         push @{$config{dso_defines}}, "PADLOCK_ASM";
     }
@@ -3398,7 +3392,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "ec_asm_src",
         "des_asm_src",
         "aes_asm_src",
         "bf_asm_src",

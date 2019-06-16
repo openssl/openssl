@@ -240,8 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        ec_asm_src      => Assembler implementation of core EC
-                           functions.
         des_asm_src     => Assembler implementation of core DES
                            encryption functions.
                            Defaults to 'des_enc.c fcrypt_b.c'
