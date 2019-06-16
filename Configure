@@ -1404,9 +1404,6 @@ if ($target{sys_id} ne "")
         }
 
 unless ($disabled{asm}) {
-    if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
-        push @{$config{dso_defines}}, "PADLOCK_ASM";
-    }
 }
 
 my %predefined_C = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
@@ -3335,7 +3332,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "padlock_asm_src",
         "poly1035_asm_src",
         "thread_scheme",
         "perlasm_scheme",
