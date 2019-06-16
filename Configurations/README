@@ -240,9 +240,6 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        cpuid_asm_src   => assembler implementation of cpuid code as
-                           well as OPENSSL_cleanse().
-                           Default to mem_clr.c
         ec_asm_src      => Assembler implementation of core EC
                            functions.
         des_asm_src     => Assembler implementation of core DES

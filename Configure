@@ -1404,12 +1404,6 @@ if ($target{sys_id} ne "")
         }
 
 unless ($disabled{asm}) {
-    $target{cpuid_asm_src}=$table{DEFAULTS}->{cpuid_asm_src} if ($config{processor} eq "386");
-    if ($target{cpuid_asm_src} ne "mem_clr.c") {
-        push @{$config{lib_defines}}, "OPENSSL_CPUID_OBJ";
-        push @{$config{module_defines}}, "OPENSSL_CPUID_OBJ";
-    }
-
     if ($target{sha1_asm_src}) {
         push @{$config{lib_defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
         push @{$config{lib_defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
@@ -3404,7 +3398,6 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
-        "cpuid_asm_src",
         "ec_asm_src",
         "des_asm_src",
         "aes_asm_src",
