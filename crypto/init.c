@@ -56,7 +56,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
         goto err;
     OPENSSL_cpuid_setup();
 
-    if (!init_thread())
+    if (!ossl_init_thread())
         return 0;
 
     base_inited = 1;
@@ -428,7 +428,7 @@ void OPENSSL_cleanup(void)
         err_free_strings_int();
     }
 
-    cleanup_thread();
+    ossl_cleanup_thread();
 
     /*
      * Note that cleanup order is important:

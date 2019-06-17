@@ -14,8 +14,8 @@
 
 int ossl_init_thread_start(void *arg,
                            OSSL_thread_stop_handler_fn handfn);
-int init_thread(void);
-void cleanup_thread(void);
+int ossl_init_thread(void);
+void ossl_cleanup_thread(void);
 void ossl_ctx_thread_stop(void *arg);
 
 /*
