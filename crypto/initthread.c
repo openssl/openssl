@@ -35,10 +35,10 @@ struct thread_event_handler_st {
     THREAD_EVENT_HANDLER *next;
 };
 
-static void ossl_init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands);
+static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands);
 
 static THREAD_EVENT_HANDLER **
-ossl_init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
+init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
 {
     THREAD_EVENT_HANDLER **hands = CRYPTO_THREAD_get_local(local);
 
@@ -76,22 +76,22 @@ static union {
     CRYPTO_THREAD_LOCAL value;
 } destructor_key = { -1 };
 
-static void ossl_init_thread_destructor(void *hands)
+static void init_thread_destructor(void *hands)
 {
-    ossl_init_thread_stop(NULL, (THREAD_EVENT_HANDLER **)hands);
+    init_thread_stop(NULL, (THREAD_EVENT_HANDLER **)hands);
     OPENSSL_free(hands);
 }
 
-int init_thread(void)
+int ossl_init_thread(void)
 {
     if (!CRYPTO_THREAD_init_local(&destructor_key.value,
-                                  ossl_init_thread_destructor))
+                                  init_thread_destructor))
         return 0;
 
     return 1;
 }
 
-void cleanup_thread(void)
+void ossl_cleanup_thread(void)
 {
     CRYPTO_THREAD_cleanup_local(&destructor_key.value);
     destructor_key.sane = -1;
@@ -112,8 +112,8 @@ void OPENSSL_thread_stop(void)
 {
     if (destructor_key.sane != -1) {
         THREAD_EVENT_HANDLER **hands
-            = ossl_init_get_thread_local(&destructor_key.value, 0, 0);
-        ossl_init_thread_stop(NULL, hands);
+            = init_get_thread_local(&destructor_key.value, 0, 0);
+        init_thread_stop(NULL, hands);
         OPENSSL_free(hands);
     }
 }
@@ -122,8 +122,8 @@ void ossl_ctx_thread_stop(void *arg)
 {
     if (destructor_key.sane != -1) {
         THREAD_EVENT_HANDLER **hands
-            = ossl_init_get_thread_local(&destructor_key.value, 0, 1);
-        ossl_init_thread_stop(arg, hands);
+            = init_get_thread_local(&destructor_key.value, 0, 1);
+        init_thread_stop(arg, hands);
     }
 }
 
@@ -175,14 +175,14 @@ void ossl_ctx_thread_stop(void *arg)
 
     if (local == NULL)
         return;
-    hands = ossl_init_get_thread_local(local, 0, 0);
-    ossl_init_thread_stop(arg, hands);
+    hands = init_get_thread_local(local, 0, 0);
+    init_thread_stop(arg, hands);
     OPENSSL_free(hands);
 }
 #endif /* FIPS_MODE */
 
 
-static void ossl_init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
+static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 {
     THREAD_EVENT_HANDLER *curr, *prev = NULL;
 
@@ -230,7 +230,7 @@ int ossl_init_thread_start(void *arg, OSSL_thread_stop_handler_fn handfn)
     CRYPTO_THREAD_LOCAL *local = &destructor_key.value;
 #endif
 
-    hands = ossl_init_get_thread_local(local, 1, 0);
+    hands = init_get_thread_local(local, 1, 0);
     if (hands == NULL)
         return 0;
 
