@@ -143,7 +143,16 @@ struct ossl_param_st {
  */
 # define OSSL_PARAM_OCTET_PTR            7
 
-/* Typedef for thread stop handling callback */
+/*
+ * Typedef for the thread stop handling callback. Used both internally and by
+ * providers.
+ * 
+ * Providers may register for notifications about threads stopping by
+ * registering a callback to hear about such events. Providers register the
+ * callback using the OSSL_FUNC_CORE_THREAD_START function in the |in| dispatch
+ * table passed to OSSL_provider_init(). The arg passed back to a provider will
+ * be the provider side context object.
+ */
 typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
 
 
