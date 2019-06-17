@@ -76,7 +76,6 @@ static int ossl_provider_cmp(const OSSL_PROVIDER * const *a,
  */
 
 struct provider_store_st {
-    OPENSSL_CTX *libctx;
     STACK_OF(OSSL_PROVIDER) *providers;
     CRYPTO_RWLOCK *lock;
     unsigned int use_fallbacks:1;
@@ -104,7 +103,6 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
         provider_store_free(store);
         return NULL;
     }
-    store->libctx = ctx;
     store->use_fallbacks = 1;
 
     for (p = predefined_providers; p->name != NULL; p++) {
