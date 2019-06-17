@@ -184,7 +184,7 @@ static void *name##_newctx(void *provctx) \
     if (ctx == NULL) \
         return NULL; \
     sha3_init(ctx, pad, bitlen); \
-    SHA3_SET_MD(name, typ) \
+    SHA3_SET_MD(uname, typ) \
     return ctx; \
 }
 
