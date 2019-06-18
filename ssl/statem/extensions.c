@@ -1040,18 +1040,18 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent)
      */
     if (s->ext.ecpointformats != NULL
             && s->ext.ecpointformats_len > 0
-            && s->session->ext.ecpointformats != NULL
-            && s->session->ext.ecpointformats_len > 0
+            && s->ext.peer_ecpointformats != NULL
+            && s->ext.peer_ecpointformats_len > 0
             && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
         /* we are using an ECC cipher */
         size_t i;
-        unsigned char *list = s->session->ext.ecpointformats;
+        unsigned char *list = s->ext.peer_ecpointformats;
 
-        for (i = 0; i < s->session->ext.ecpointformats_len; i++) {
+        for (i = 0; i < s->ext.peer_ecpointformats_len; i++) {
             if (*list++ == TLSEXT_ECPOINTFORMAT_uncompressed)
                 break;
         }
-        if (i == s->session->ext.ecpointformats_len) {
+        if (i == s->ext.peer_ecpointformats_len) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_FINAL_EC_PT_FORMATS,
                      SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
             return 0;
