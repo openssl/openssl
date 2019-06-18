@@ -1411,19 +1411,19 @@ int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
             return 0;
         }
 
-        s->session->ext.ecpointformats_len = 0;
-        OPENSSL_free(s->session->ext.ecpointformats);
-        s->session->ext.ecpointformats = OPENSSL_malloc(ecpointformats_len);
-        if (s->session->ext.ecpointformats == NULL) {
+        s->ext.peer_ecpointformats_len = 0;
+        OPENSSL_free(s->ext.peer_ecpointformats);
+        s->ext.peer_ecpointformats = OPENSSL_malloc(ecpointformats_len);
+        if (s->ext.peer_ecpointformats == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_PARSE_STOC_EC_PT_FORMATS, ERR_R_INTERNAL_ERROR);
             return 0;
         }
 
-        s->session->ext.ecpointformats_len = ecpointformats_len;
+        s->ext.peer_ecpointformats_len = ecpointformats_len;
 
         if (!PACKET_copy_bytes(&ecptformatlist,
-                               s->session->ext.ecpointformats,
+                               s->ext.peer_ecpointformats,
                                ecpointformats_len)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_PARSE_STOC_EC_PT_FORMATS, ERR_R_INTERNAL_ERROR);

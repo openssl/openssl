@@ -565,10 +565,6 @@ struct ssl_session_st {
 
     struct {
         char *hostname;
-# ifndef OPENSSL_NO_EC
-        size_t ecpointformats_len;
-        unsigned char *ecpointformats; /* peer's list */
-# endif                         /* OPENSSL_NO_EC */
         /* RFC4507 info */
         unsigned char *tick; /* Session ticket */
         size_t ticklen;      /* Session ticket length */
@@ -1481,6 +1477,10 @@ struct ssl_st {
         size_t ecpointformats_len;
         /* our list */
         unsigned char *ecpointformats;
+
+        size_t peer_ecpointformats_len;
+        /* peer's list */
+        unsigned char *peer_ecpointformats;
 # endif                         /* OPENSSL_NO_EC */
         size_t supportedgroups_len;
         /* our list */
