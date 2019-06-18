@@ -742,10 +742,16 @@ static void core_put_error(const OSSL_PROVIDER *prov,
     }
 }
 
+/*
+ * TODO(3.0) This, as well as core_put_error above, should use |prov|
+ * to select the proper library context to report in the correct error
+ * stack, at least if error stacks become tied to the library context.
+ * We cannot currently do that since there's no support for it in the
+ * ERR subsystem.
+ */
 static void core_add_error_vdata(const OSSL_PROVIDER *prov,
                                  int num, va_list args)
 {
-    /* prov currently unused */
     ERR_add_error_vdata(num, args);
 }
 
