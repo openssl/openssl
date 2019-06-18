@@ -282,6 +282,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
                 prov->teardown(prov->provctx);
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODE
+            ERR_unload_strings(prov->error_lib, prov->error_strings);
             OPENSSL_free(prov->error_strings);
             prov->error_strings = NULL;
 # endif
@@ -462,7 +463,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
 #ifndef OPENSSL_NO_ERR
     if (p_get_reason_strings != NULL) {
         const OSSL_ITEM *reasonstrings = p_get_reason_strings(prov->provctx);
-        size_t cnt;
+        size_t cnt, cnt2;
 
         /*
          * ERR_load_strings() handles ERR_STRING_DATA rather than OSSL_ITEM,
@@ -474,13 +475,29 @@ static int provider_activate(OSSL_PROVIDER *prov)
         cnt = 1;                 /* One for the terminating item */
         while (reasonstrings[cnt].id != 0)
             cnt++;
-        prov->error_strings = OPENSSL_zalloc(sizeof(ERR_STRING_DATA) * cnt);
+
+        /* Allocate one extra item for the "library" name */
+        prov->error_strings =
+            OPENSSL_zalloc(sizeof(ERR_STRING_DATA) * (cnt + 1));
         if (prov->error_strings == NULL)
             return 0;
-        while (cnt-- > 0) {
-            prov->error_strings[cnt].error = (int)reasonstrings[cnt].id;
-            prov->error_strings[cnt].string = reasonstrings[cnt].ptr;
+
+        /*
+         * We copy reasonstrings item 0..cnt-1 to prov->error_trings
+         * positions 1..cnt.  To do that effectively, we decrement cnt
+         * but save it's previous value, and getting a correct mapping
+         * of indexes.
+         */
+        while ((cnt2 = cnt--) > 0) {
+            prov->error_strings[cnt2].error = (int)reasonstrings[cnt].id;
+            prov->error_strings[cnt2].string = reasonstrings[cnt].ptr;
         }
+        /*
+         * cnt2 should be zero here, which is the position we reserved for
+         * the "library" name.
+         */
+        prov->error_strings[cnt2].error = ERR_PACK(prov->error_lib, 0, 0);
+        prov->error_strings[cnt2].string = prov->name;
 
         ERR_load_strings(prov->error_lib, prov->error_strings);
     }
