@@ -322,7 +322,7 @@ void ERR_put_error(int lib, int func, int reason, const char *file, int line)
      * won't work for third party providers that have their own error mechanisms,
      * so we'll need to come up with something else for them.
      */
-    c_put_error(lib, func, reason, file, line);
+    c_put_error(NULL, ERR_PACK(lib, func, reason), file, line);
     ERR_add_error_data(1, "(in the FIPS module)");
 }
 
@@ -337,7 +337,7 @@ void ERR_add_error_data(int num, ...)
 
 void ERR_add_error_vdata(int num, va_list args)
 {
-    c_add_error_vdata(num, args);
+    c_add_error_vdata(NULL, num, args);
 }
 
 const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx)

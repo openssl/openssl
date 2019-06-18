@@ -49,9 +49,15 @@ struct ossl_provider_st {
     STACK_OF(INFOPAIR) *parameters;
     OPENSSL_CTX *libctx; /* The library context this instance is in */
     struct provider_store_st *store; /* The store this instance belongs to */
+#ifndef FIPS_MODE
+    /*
+     * In the FIPS module inner provider, this isn't needed, since the
+     * error upcalls are always direct calls to the outer provider.
+     */
     int error_lib;     /* ERR library number, one for each provider */
-#ifndef OPENSSL_NO_ERR
+# ifndef OPENSSL_NO_ERR
     ERR_STRING_DATA *error_strings; /* Copy of what the provider gives us */
+# endif
 #endif
 
     /* Provider side functions */
@@ -127,7 +133,9 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
         }
         prov->libctx = ctx;
         prov->store = store;
+#ifndef FIPS_MODE
         prov->error_lib = ERR_get_next_error_library();
+#endif
         if(p->is_fallback)
             ossl_provider_set_fallback(prov);
     }
@@ -238,7 +246,9 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
     } else {
         prov->libctx = libctx;
         prov->store = store;
+#ifndef FIPS_MODE
         prov->error_lib = ERR_get_next_error_library();
+#endif
     }
     CRYPTO_THREAD_unlock(store->lock);
 
@@ -368,7 +378,9 @@ static int provider_activate(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
 #ifndef OPENSSL_NO_ERR
+# ifndef FIPS_MODE
     OSSL_provider_get_reason_strings_fn *p_get_reason_strings = NULL;
+# endif
 #endif
 
     if (prov->flag_initialized)
@@ -454,15 +466,18 @@ static int provider_activate(OSSL_PROVIDER *prov)
                 OSSL_get_provider_query_operation(provider_dispatch);
             break;
 #ifndef OPENSSL_NO_ERR
+# ifndef FIPS_MODE
         case OSSL_FUNC_PROVIDER_GET_REASON_STRINGS:
             p_get_reason_strings =
                 OSSL_get_provider_get_reason_strings(provider_dispatch);
             break;
+# endif
 #endif
         }
     }
 
 #ifndef OPENSSL_NO_ERR
+# ifndef FIPS_MODE
     if (p_get_reason_strings != NULL) {
         const OSSL_ITEM *reasonstrings = p_get_reason_strings(prov->provctx);
         size_t cnt, cnt2;
@@ -500,6 +515,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
 
         ERR_load_strings(prov->error_lib, prov->error_strings);
     }
+# endif
 #endif
 
     /* With this flag set, this provider has become fully "loaded". */
@@ -740,6 +756,12 @@ static int core_thread_start(const OSSL_PROVIDER *prov,
     return ossl_init_thread_start(prov, prov->provctx, handfn);
 }
 
+/*
+ * The FIPS module inner provider doesn't implement these.  They aren't
+ * needed there, since the FIPS module upcalls are always the outer provider
+ * ones.
+ */
+#ifndef FIPS_MODE
 static void core_put_error(const OSSL_PROVIDER *prov,
                            uint32_t reason, const char *file, int line)
 {
@@ -770,14 +792,17 @@ static void core_add_error_vdata(const OSSL_PROVIDER *prov,
 {
     ERR_add_error_vdata(num, args);
 }
+#endif
 
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
     { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
+#ifndef FIPS_MODE
     { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))core_put_error },
     { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))core_add_error_vdata },
+#endif
     { 0, NULL }
 };
 static const OSSL_DISPATCH *core_dispatch = core_dispatch_;
