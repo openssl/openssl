@@ -282,9 +282,11 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
                 prov->teardown(prov->provctx);
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODE
-            ERR_unload_strings(prov->error_lib, prov->error_strings);
-            OPENSSL_free(prov->error_strings);
-            prov->error_strings = NULL;
+            if (prov->error_strings != NULL) {
+                ERR_unload_strings(prov->error_lib, prov->error_strings);
+                OPENSSL_free(prov->error_strings);
+                prov->error_strings = NULL;
+            }
 # endif
 #endif
             prov->flag_initialized = 0;
