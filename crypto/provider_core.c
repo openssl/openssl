@@ -455,24 +455,25 @@ static int provider_activate(OSSL_PROVIDER *prov)
 
 #ifndef OPENSSL_NO_ERR
     if (p_get_reason_strings != NULL) {
-        const ERR_STRING_DATA *reasonstrings =
-            p_get_reason_strings(prov->provctx);
+        const OSSL_ITEM *reasonstrings = p_get_reason_strings(prov->provctx);
         size_t cnt;
 
         /*
-         * Because ERR_load_strings() patches the array's error number
-         * with the error library number, we need to make a copy of that
-         * array.
+         * ERR_load_strings() handles ERR_STRING_DATA rather than OSSL_ITEM,
+         * although they are essentially the same type.
+         * Furthermore, ERR_load_strings() patches the array's error number
+         * with the error library number, so we need to make a copy of that
+         * array either way.
          */
         cnt = 1;                 /* One for the terminating item */
-        while (reasonstrings[cnt].error != 0)
+        while (reasonstrings[cnt].id != 0)
             cnt++;
         prov->error_strings = OPENSSL_zalloc(sizeof(ERR_STRING_DATA) * cnt);
         if (prov->error_strings == NULL)
             return 0;
         while (cnt-- > 0) {
-            prov->error_strings[cnt].error = reasonstrings[cnt].error;
-            prov->error_strings[cnt].string = reasonstrings[cnt].string;
+            prov->error_strings[cnt].error = (int)reasonstrings[cnt].id;
+            prov->error_strings[cnt].string = reasonstrings[cnt].ptr;
         }
 
         ERR_load_strings(prov->error_lib, prov->error_strings);

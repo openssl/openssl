@@ -12,7 +12,6 @@
 
 # include <stdarg.h>
 # include <openssl/core.h>
-# include <openssl/err.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -87,7 +86,7 @@ OSSL_CORE_MAKE_FUNC(int,provider_get_params,(void *provctx,
 OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
                     (void *provctx, int operation_id, const int *no_store))
 # define OSSL_FUNC_PROVIDER_GET_REASON_STRINGS 1028
-OSSL_CORE_MAKE_FUNC(const ERR_STRING_DATA *,provider_get_reason_strings,
+OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
                     (void *provctx))
 
 /* Digests */
