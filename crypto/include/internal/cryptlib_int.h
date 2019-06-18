@@ -12,8 +12,9 @@
 
 /* This file is not scanned by mkdef.pl, whereas cryptlib.h is */
 
-int ossl_init_thread_start(void *arg,
+int ossl_init_thread_start(const void *index, void *arg,
                            OSSL_thread_stop_handler_fn handfn);
+int ossl_init_thread_deregister(void *index);
 int ossl_init_thread(void);
 void ossl_cleanup_thread(void);
 void ossl_ctx_thread_stop(void *arg);

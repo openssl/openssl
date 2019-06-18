@@ -428,8 +428,6 @@ void OPENSSL_cleanup(void)
         err_free_strings_int();
     }
 
-    ossl_cleanup_thread();
-
     /*
      * Note that cleanup order is important:
      * - rand_cleanup_int could call an ENGINE's RAND cleanup function so
@@ -456,6 +454,8 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: openssl_ctx_default_deinit()\n");
     openssl_ctx_default_deinit();
+
+    ossl_cleanup_thread();
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: bio_cleanup()\n");
     bio_cleanup();
