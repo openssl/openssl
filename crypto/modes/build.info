@@ -25,7 +25,7 @@ IF[{- !$disabled{asm} -}]
   $MODESASM_armv4=ghash-armv4.S ghashv8-armx.S
   $MODESDEF_armv4=GHASH_ASM
   $MODESASM_aarch64=ghashv8-armx.S
-  $MODESDEF_aarch64=GHASH_ASM
+  $MODESDEF_aarch64=
 
   $MODESASM_parisc11=ghash-parisc.s
   $MODESDEF_parisc11=GHASH_ASM
