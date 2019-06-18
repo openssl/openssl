@@ -49,6 +49,10 @@ struct ossl_provider_st {
     STACK_OF(INFOPAIR) *parameters;
     OPENSSL_CTX *libctx; /* The library context this instance is in */
     struct provider_store_st *store; /* The store this instance belongs to */
+    int error_lib;     /* ERR library number, one for each provider */
+#ifndef OPENSSL_NO_ERR
+    ERR_STRING_DATA *error_strings; /* Copy of what the provider gives us */
+#endif
 
     /* Provider side functions */
     OSSL_provider_teardown_fn *teardown;
@@ -123,6 +127,7 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
         }
         prov->libctx = ctx;
         prov->store = store;
+        prov->error_lib = ERR_get_next_error_library();
         if(p->is_fallback)
             ossl_provider_set_fallback(prov);
     }
@@ -233,6 +238,7 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
     } else {
         prov->libctx = libctx;
         prov->store = store;
+        prov->error_lib = ERR_get_next_error_library();
     }
     CRYPTO_THREAD_unlock(store->lock);
 
@@ -352,6 +358,9 @@ static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 static int provider_activate(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
+#ifndef OPENSSL_NO_ERR
+    OSSL_provider_get_reason_strings_fn *p_get_reason_strings = NULL;
+#endif
 
     if (prov->flag_initialized)
         return 1;
@@ -435,8 +444,40 @@ static int provider_activate(OSSL_PROVIDER *prov)
             prov->query_operation =
                 OSSL_get_provider_query_operation(provider_dispatch);
             break;
+#ifndef OPENSSL_NO_ERR
+        case OSSL_FUNC_PROVIDER_GET_REASON_STRINGS:
+            p_get_reason_strings =
+                OSSL_get_provider_get_reason_strings(provider_dispatch);
+            break;
+#endif
         }
     }
+
+#ifndef OPENSSL_NO_ERR
+    if (p_get_reason_strings != NULL) {
+        const ERR_STRING_DATA *reasonstrings =
+            p_get_reason_strings(prov->provctx);
+        size_t cnt;
+
+        /*
+         * Because ERR_load_strings() patches the array's error number
+         * with the error library number, we need to make a copy of that
+         * array.
+         */
+        cnt = 1;                 /* One for the terminating item */
+        while (reasonstrings[cnt].error != 0)
+            cnt++;
+        prov->error_strings = OPENSSL_zalloc(sizeof(ERR_STRING_DATA) * cnt);
+        if (prov->error_strings == NULL)
+            return 0;
+        while (cnt-- > 0) {
+            prov->error_strings[cnt].error = reasonstrings[cnt].error;
+            prov->error_strings[cnt].string = reasonstrings[cnt].string;
+        }
+
+        ERR_load_strings(prov->error_lib, prov->error_strings);
+    }
+#endif
 
     /* With this flag set, this provider has become fully "loaded". */
     prov->flag_initialized = 1;
@@ -676,13 +717,38 @@ static int core_thread_start(const OSSL_PROVIDER *prov,
     return ossl_init_thread_start(prov, prov->provctx, handfn);
 }
 
+static void core_put_error(const OSSL_PROVIDER *prov,
+                           uint32_t reason, const char *file, int line)
+{
+    /*
+     * If the uppermost 8 bits are non-zero, it's an OpenSSL library
+     * error and will be treated as such.  Otherwise, it's a new style
+     * provider error and will be treated as such.
+     */
+    if ((reason & 0xFF000000U) != 0) {
+        ERR_PUT_error(ERR_GET_LIB(reason),
+                      ERR_GET_FUNC(reason),
+                      ERR_GET_REASON(reason),
+                      file, line);
+    } else {
+        ERR_PUT_error(prov->error_lib, 0, (int)reason, file, line);
+    }
+}
+
+static void core_add_error_vdata(const OSSL_PROVIDER *prov,
+                                 int num, va_list args)
+{
+    /* prov currently unused */
+    ERR_add_error_vdata(num, args);
+}
+
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
     { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
-    { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))ERR_put_error },
-    { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))ERR_add_error_vdata },
+    { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))core_put_error },
+    { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))core_add_error_vdata },
     { 0, NULL }
 };
 static const OSSL_DISPATCH *core_dispatch = core_dispatch_;

@@ -12,6 +12,7 @@
 
 # include <stdarg.h>
 # include <openssl/core.h>
+# include <openssl/err.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -62,10 +63,12 @@ OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
 OSSL_CORE_MAKE_FUNC(int,core_thread_start,(const OSSL_PROVIDER *prov,
                                            OSSL_thread_stop_handler_fn handfn))
 # define OSSL_FUNC_CORE_PUT_ERROR              4
-OSSL_CORE_MAKE_FUNC(void,core_put_error,(int lib, int func, int reason,
-                                         const char *file, int line))
+OSSL_CORE_MAKE_FUNC(void,core_put_error,
+                    (const OSSL_PROVIDER *prov,
+                     uint32_t reason, const char *file, int line))
 # define OSSL_FUNC_CORE_ADD_ERROR_VDATA        5
-OSSL_CORE_MAKE_FUNC(void,core_add_error_vdata,(int num, va_list args))
+OSSL_CORE_MAKE_FUNC(void,core_add_error_vdata,(const OSSL_PROVIDER *prov,
+                                               int num, va_list args))
 # define OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT    6
 OSSL_CORE_MAKE_FUNC(OPENSSL_CTX *,core_get_library_context,
                     (const OSSL_PROVIDER *prov))
@@ -83,6 +86,9 @@ OSSL_CORE_MAKE_FUNC(int,provider_get_params,(void *provctx,
 # define OSSL_FUNC_PROVIDER_QUERY_OPERATION  1027
 OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
                     (void *provctx, int operation_id, const int *no_store))
+# define OSSL_FUNC_PROVIDER_GET_REASON_STRINGS 1028
+OSSL_CORE_MAKE_FUNC(const ERR_STRING_DATA *,provider_get_reason_strings,
+                    (void *provctx))
 
 /* Digests */
 
