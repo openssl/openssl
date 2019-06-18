@@ -179,8 +179,8 @@ OSSL_PARAM structure.
 OSSL_PARAM_locate() is a function that searches an B<array> of parameters for
 the one matching the B<key> name.
 
-OSSL_PARAM_locate_const() behaves exactly like OSSL_PARAM_locate() but accepts
-and returns a constant array of parameters.
+OSSL_PARAM_locate_const() behaves exactly like OSSL_PARAM_locate() except for
+the presence of I<const> for the B<array> argument and its return value.
 
 OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter B<p>.
 The value is copied to the address B<val>.
