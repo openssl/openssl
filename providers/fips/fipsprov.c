@@ -216,18 +216,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        void **provctx)
 {
     FIPS_GLOBAL *fgbl;
-    OPENSSL_CTX *ctx = OPENSSL_CTX_new();
-
-    if (ctx == NULL)
-        return 0;
-
-    fgbl = openssl_ctx_get_data(ctx, OPENSSL_CTX_FIPS_PROV_INDEX,
-                                &fips_prov_ossl_ctx_method);
-
-    if (fgbl == NULL)
-        goto err;
-
-    fgbl->prov = provider;
+    OPENSSL_CTX *ctx;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -255,6 +244,14 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     ctx = OPENSSL_CTX_new();
     if (ctx == NULL)
         return 0;
+
+    fgbl = openssl_ctx_get_data(ctx, OPENSSL_CTX_FIPS_PROV_INDEX,
+                                &fips_prov_ossl_ctx_method);
+
+    if (fgbl == NULL)
+        goto err;
+
+    fgbl->prov = provider;
 
     *out = fips_dispatch_table;
     *provctx = ctx;
