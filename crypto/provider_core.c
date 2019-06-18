@@ -483,21 +483,18 @@ static int provider_activate(OSSL_PROVIDER *prov)
             return 0;
 
         /*
-         * We copy reasonstrings item 0..cnt-1 to prov->error_trings
-         * positions 1..cnt.  To do that effectively, we decrement cnt
-         * but save it's previous value, and getting a correct mapping
-         * of indexes.
+         * Set the "library" name.
          */
-        while ((cnt2 = cnt--) > 0) {
-            prov->error_strings[cnt2].error = (int)reasonstrings[cnt].id;
-            prov->error_strings[cnt2].string = reasonstrings[cnt].ptr;
-        }
+        prov->error_strings[0].error = ERR_PACK(prov->error_lib, 0, 0);
+        prov->error_strings[0].string = prov->name;
         /*
-         * cnt2 should be zero here, which is the position we reserved for
-         * the "library" name.
+         * Copy reasonstrings item 0..cnt-1 to prov->error_trings positions
+         * 1..cnt.
          */
-        prov->error_strings[cnt2].error = ERR_PACK(prov->error_lib, 0, 0);
-        prov->error_strings[cnt2].string = prov->name;
+        for (cnt2 = 1; cnt2 <= cnt; cnt2++) {
+            prov->error_strings[cnt2].error = (int)reasonstrings[cnt2-1].id;
+            prov->error_strings[cnt2].string = reasonstrings[cnt2-1].ptr;
+        }
 
         ERR_load_strings(prov->error_lib, prov->error_strings);
     }
