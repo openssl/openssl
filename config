@@ -732,7 +732,6 @@ case "$GUESSOS" in
 	options="$options no-threads no-shared no-asm no-dso"
 	EXE=".pm"
 	OUT="vos-$CC" ;;
-  BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   *-hpux1*)
 	if [ $CC = "gcc" -a $GCC_BITS = "64" ]; then
 	    OUT="hpux64-parisc2-gcc"
