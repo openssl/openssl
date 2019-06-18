@@ -23,7 +23,7 @@ This function is usually called by a macro.
 ERR_add_error_data() associates the concatenation of its B<num> string
 arguments with the error code added last.
 ERR_add_error_vdata() is similar except the argument is a B<va_list>.
-+Multiple calls to these functions append to the current top of the error queue.
+Multiple calls to these functions append to the current top of the error queue.
 
 L<ERR_load_strings(3)> can be used to register
 error strings so that the application can a generate human-readable
