@@ -280,6 +280,12 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
 #endif
             if (prov->teardown != NULL)
                 prov->teardown(prov->provctx);
+#ifndef OPENSSL_NO_ERR
+# ifndef FIPS_MODE
+            OPENSSL_free(prov->error_strings);
+            prov->error_strings = NULL;
+# endif
+#endif
             prov->flag_initialized = 0;
         }
 
@@ -726,7 +732,7 @@ static void core_put_error(const OSSL_PROVIDER *prov,
      * error and will be treated as such.  Otherwise, it's a new style
      * provider error and will be treated as such.
      */
-    if ((reason & 0xFF000000U) != 0) {
+    if (ERR_GET_LIB(reason) != 0) {
         ERR_PUT_error(ERR_GET_LIB(reason),
                       ERR_GET_FUNC(reason),
                       ERR_GET_REASON(reason),
