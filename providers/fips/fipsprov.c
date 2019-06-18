@@ -378,12 +378,11 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
 void ERR_put_error(int lib, int func, int reason, const char *file, int line)
 {
     /*
-     * TODO(3.0): This works for the FIPS module because we're going to be
-     * using lib/func/reason codes that libcrypto already knows about. This
-     * won't work for third party providers that have their own error mechanisms,
-     * so we'll need to come up with something else for them.
+     * TODO(3.0) the first argument is currently NULL but is expected to
+     * be passed something else in the future, either an OSSL_PROVIDER or
+     * a OPENSSL_CTX pointer.
      */
-    c_put_error(lib, func, reason, file, line);
+    c_put_error(NULL, ERR_PACK(lib, func, reason), file, line);
     ERR_add_error_data(1, "(in the FIPS module)");
 }
 
@@ -398,7 +397,7 @@ void ERR_add_error_data(int num, ...)
 
 void ERR_add_error_vdata(int num, va_list args)
 {
-    c_add_error_vdata(num, args);
+    c_add_error_vdata(NULL, num, args);
 }
 
 const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx)
