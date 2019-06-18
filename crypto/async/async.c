@@ -36,7 +36,7 @@ static async_ctx *async_ctx_new(void)
 {
     async_ctx *nctx;
 
-    if (!ossl_init_thread_start(NULL, async_delete_thread_state))
+    if (!ossl_init_thread_start(NULL, NULL, async_delete_thread_state))
         return NULL;
 
     nctx = OPENSSL_malloc(sizeof(*nctx));
@@ -328,7 +328,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
         return 0;
 
-    if (!ossl_init_thread_start(NULL, async_delete_thread_state))
+    if (!ossl_init_thread_start(NULL, NULL, async_delete_thread_state))
         return 0;
 
     pool = OPENSSL_zalloc(sizeof(*pool));

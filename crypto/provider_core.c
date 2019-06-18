@@ -269,6 +269,9 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          * When that happens, the provider is inactivated.
          */
         if (ref < 2 && prov->flag_initialized) {
+#ifndef FIPS_MODE
+            ossl_init_thread_deregister(prov);
+#endif
             if (prov->teardown != NULL)
                 prov->teardown(prov->provctx);
             prov->flag_initialized = 0;
@@ -670,7 +673,7 @@ static OPENSSL_CTX *core_get_libctx(const OSSL_PROVIDER *prov)
 static int core_thread_start(const OSSL_PROVIDER *prov,
                              OSSL_thread_stop_handler_fn handfn)
 {
-    return ossl_init_thread_start(prov->provctx, handfn);
+    return ossl_init_thread_start(prov, prov->provctx, handfn);
 }
 
 static const OSSL_DISPATCH core_dispatch_[] = {
