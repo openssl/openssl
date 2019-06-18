@@ -23,7 +23,7 @@ EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
  void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void* p2);
  int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
- int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
+ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
  void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
  void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
  int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
