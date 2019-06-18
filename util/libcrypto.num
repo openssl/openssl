@@ -4832,3 +4832,4 @@ OPENSSL_CTX_get0_private_drbg           4776	3_0_0	EXIST::FUNCTION:
 BN_CTX_new_ex                           4777	3_0_0	EXIST::FUNCTION:
 BN_CTX_secure_new_ex                    4778	3_0_0	EXIST::FUNCTION:
 OPENSSL_thread_stop_ex                  4779	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_locate_const                 4780	3_0_0	EXIST::FUNCTION:
