@@ -3716,13 +3716,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_EC_POINT_FORMATS:
         {
-            SSL_SESSION *sess = s->session;
             const unsigned char **pformat = parg;
 
-            if (sess == NULL || sess->ext.ecpointformats == NULL)
+            if (s->ext.peer_ecpointformats == NULL)
                 return 0;
-            *pformat = sess->ext.ecpointformats;
-            return (int)sess->ext.ecpointformats_len;
+            *pformat = s->ext.peer_ecpointformats;
+            return (int)s->ext.peer_ecpointformats_len;
         }
 #endif
 

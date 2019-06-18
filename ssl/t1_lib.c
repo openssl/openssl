@@ -465,11 +465,11 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
      * If point formats extension present check it, otherwise everything is
      * supported (see RFC4492).
      */
-    if (s->session->ext.ecpointformats == NULL)
+    if (s->ext.peer_ecpointformats == NULL)
         return 1;
 
-    for (i = 0; i < s->session->ext.ecpointformats_len; i++) {
-        if (s->session->ext.ecpointformats[i] == comp_id)
+    for (i = 0; i < s->ext.peer_ecpointformats_len; i++) {
+        if (s->ext.peer_ecpointformats[i] == comp_id)
             return 1;
     }
     return 0;

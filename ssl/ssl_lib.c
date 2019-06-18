@@ -1179,6 +1179,7 @@ void SSL_free(SSL *s)
     SSL_CTX_free(s->session_ctx);
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(s->ext.ecpointformats);
+    OPENSSL_free(s->ext.peer_ecpointformats);
     OPENSSL_free(s->ext.supportedgroups);
     OPENSSL_free(s->ext.peer_supportedgroups);
 #endif                          /* OPENSSL_NO_EC */

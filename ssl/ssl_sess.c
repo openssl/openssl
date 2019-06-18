@@ -122,9 +122,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->psk_identity = NULL;
 #endif
     dest->ext.hostname = NULL;
-#ifndef OPENSSL_NO_EC
-    dest->ext.ecpointformats = NULL;
-#endif
     dest->ext.tick = NULL;
     dest->ext.alpn_selected = NULL;
 #ifndef OPENSSL_NO_SRP
@@ -185,15 +182,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
             goto err;
         }
     }
-#ifndef OPENSSL_NO_EC
-    if (src->ext.ecpointformats) {
-        dest->ext.ecpointformats =
-            OPENSSL_memdup(src->ext.ecpointformats,
-                           src->ext.ecpointformats_len);
-        if (dest->ext.ecpointformats == NULL)
-            goto err;
-    }
-#endif
 
     if (ticket != 0 && src->ext.tick != NULL) {
         dest->ext.tick =
@@ -776,11 +764,6 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     sk_X509_pop_free(ss->peer_chain, X509_free);
     OPENSSL_free(ss->ext.hostname);
     OPENSSL_free(ss->ext.tick);
-#ifndef OPENSSL_NO_EC
-    OPENSSL_free(ss->ext.ecpointformats);
-    ss->ext.ecpointformats = NULL;
-    ss->ext.ecpointformats_len = 0;
-#endif                          /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(ss->psk_identity_hint);
     OPENSSL_free(ss->psk_identity);
