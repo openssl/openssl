@@ -240,13 +240,13 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
-static int shake_set_params(void *vctx, OSSL_PARAM params[])
+static int shake_set_params(void *vctx, const OSSL_PARAM params[])
 {
-    OSSL_PARAM *p;
+    const OSSL_PARAM *p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_XOFLEN);
+        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
         if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size))
             return 0;
         return 1;

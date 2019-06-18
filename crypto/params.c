@@ -21,6 +21,11 @@ OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
     return NULL;
 }
 
+const OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *p, const char *key)
+{
+    return OSSL_PARAM_locate((OSSL_PARAM *)p, key);
+}
+
 static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
                                        void *data, size_t data_size)
 {

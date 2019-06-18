@@ -64,6 +64,7 @@ extern "C" {
 
 /* Search an OSSL_PARAM array for a matching name */
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key);
+const OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *p, const char *key);
 
 /* Basic parameter type run-time construction */
 OSSL_PARAM OSSL_PARAM_construct_int(const char *key, int *buf);

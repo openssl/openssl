@@ -17,13 +17,13 @@
 
 static OSSL_OP_digest_set_params_fn mdc2_set_params;
 
-static int mdc2_set_params(void *vctx, OSSL_PARAM params[])
+static int mdc2_set_params(void *vctx, const OSSL_PARAM params[])
 {
-    OSSL_PARAM *p;
+    const OSSL_PARAM *p;
     MDC2_CTX *ctx = (MDC2_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_PAD_TYPE);
+        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_PAD_TYPE);
         if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->pad_type))
             return 0;
         return 1;

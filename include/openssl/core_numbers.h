@@ -118,7 +118,7 @@ OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_set_params,
-                    (void *vctx, OSSL_PARAM params[]))
+                    (void *vctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params,
                     (void *vctx, OSSL_PARAM params[]))
 
@@ -172,7 +172,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
                                                     OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
-                                                    OSSL_PARAM params[]))
+                                                    const OSSL_PARAM params[]))
 
 # ifdef __cplusplus
 }

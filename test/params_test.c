@@ -122,7 +122,7 @@ static void *init_object(void)
  * array right.
  */
 
-static int raw_set_params(void *vobj, OSSL_PARAM *params)
+static int raw_set_params(void *vobj, const OSSL_PARAM *params)
 {
     struct object_st *obj = vobj;
 
@@ -204,34 +204,34 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
  * API provider, which handles the parameters using the API from params.h
  */
 
-static int api_set_params(void *vobj, OSSL_PARAM *params)
+static int api_set_params(void *vobj, const OSSL_PARAM *params)
 {
     struct object_st *obj = vobj;
-    OSSL_PARAM *p = NULL;
+    const OSSL_PARAM *p = NULL;
 
-    if ((p = OSSL_PARAM_locate(params, "p1")) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, "p1")) != NULL
         && !TEST_true(OSSL_PARAM_get_int(p, &obj->p1)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p2")) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, "p2")) != NULL
         && !TEST_true(OSSL_PARAM_get_double(p, &obj->p2)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p3")) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, "p3")) != NULL
         && !TEST_true(OSSL_PARAM_get_BN(p, &obj->p3)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p4")) != NULL) {
+    if ((p = OSSL_PARAM_locate_const(params, "p4")) != NULL) {
         OPENSSL_free(obj->p4);
         obj->p4 = NULL;
         /* If the value pointer is NULL, we get it automatically allocated */
         if (!TEST_true(OSSL_PARAM_get_utf8_string(p, &obj->p4, 0)))
             return 0;
     }
-    if ((p = OSSL_PARAM_locate(params, "p5")) != NULL) {
+    if ((p = OSSL_PARAM_locate_const(params, "p5")) != NULL) {
         char *p5_ptr = obj->p5;
         if (!TEST_true(OSSL_PARAM_get_utf8_string(p, &p5_ptr, sizeof(obj->p5))))
             return 0;
         obj->p5_l = strlen(obj->p5) + 1;
     }
-    if ((p = OSSL_PARAM_locate(params, "p6")) != NULL) {
+    if ((p = OSSL_PARAM_locate_const(params, "p6")) != NULL) {
         if (!TEST_true(OSSL_PARAM_get_utf8_ptr(p, &obj->p6)))
             return 0;
         obj->p6_l = strlen(obj->p6) + 1;
@@ -272,7 +272,7 @@ static int api_get_params(void *vobj, OSSL_PARAM *params)
  * a bit more code that's not necessary in these tests.
  */
 struct provider_dispatch_st {
-    int (*set_params)(void *obj, OSSL_PARAM *params);
+    int (*set_params)(void *obj, const OSSL_PARAM *params);
     int (*get_params)(void *obj, OSSL_PARAM *params);
 };
 

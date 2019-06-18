@@ -389,12 +389,12 @@ static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-static int aes_ctx_set_params(void *vctx, OSSL_PARAM params[])
+static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
-    OSSL_PARAM *p;
+    const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL) {
         int pad;
 
