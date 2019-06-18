@@ -408,6 +408,25 @@ void ERR_put_error(int lib, int func, int reason, const char *file, int line)
 {
     ERR_STATE *es;
 
+#ifdef _OSD_POSIX
+    /*
+     * In the BS2000-OSD POSIX subsystem, the compiler generates path names
+     * in the form "*POSIX(/etc/passwd)". This dirty hack strips them to
+     * something sensible. @@@ We shouldn't modify a const string, though.
+     */
+    if (strncmp(file, "*POSIX(", sizeof("*POSIX(") - 1) == 0) {
+        char *end;
+
+        /* Skip the "*POSIX(" prefix */
+        file += sizeof("*POSIX(") - 1;
+        end = &file[strlen(file) - 1];
+        if (*end == ')')
+            *end = '\0';
+        /* Optional: use the basename of the path only. */
+        if ((end = strrchr(file, '/')) != NULL)
+            file = &end[1];
+    }
+#endif
     es = ERR_get_state();
     if (es == NULL)
         return;
