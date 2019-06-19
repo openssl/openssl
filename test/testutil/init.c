@@ -49,7 +49,6 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         trace_data->ingroup = 0;
 
         BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX, 0, NULL);
-
         break;
     }
 
