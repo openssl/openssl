@@ -196,9 +196,10 @@ enough set of data, that call should succeed.
 
 =item *
 
-A I<responder> must never change the fields of an C<OSSL_PARAM>, it
-may only change the contents of the memory that C<data> points at and
-the C<return_size>.
+Apart from the C<return_size>, a I<responder> must never change the fields
+of an C<OSSL_PARAM>.
+To return a value, it should change the contents of the memory that
+C<data> points at.
 
 =item *
 
