@@ -46,7 +46,7 @@ struct global_tevent_register_st {
     CRYPTO_RWLOCK *lock;
 };
 
-GLOBAL_TEVENT_REGISTER *glob_tevent_reg = NULL;
+static GLOBAL_TEVENT_REGISTER *glob_tevent_reg = NULL;
 
 static CRYPTO_ONCE tevent_register_runonce = CRYPTO_ONCE_STATIC_INIT;
 
@@ -148,7 +148,7 @@ static union {
     CRYPTO_THREAD_LOCAL value;
 } destructor_key = { -1 };
 
-static void ossl_init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
+static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
 {
     GLOBAL_TEVENT_REGISTER *gtr;
     int i;
@@ -174,7 +174,7 @@ static void ossl_init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
 static void init_thread_destructor(void *hands)
 {
     init_thread_stop(NULL, (THREAD_EVENT_HANDLER **)hands);
-    ossl_init_thread_remove_handlers(hands);
+    init_thread_remove_handlers(hands);
     OPENSSL_free(hands);
 }
 
@@ -187,11 +187,11 @@ int ossl_init_thread(void)
     return 1;
 }
 
-static int ossl_init_thread_deregister_intern(void *arg, int all);
+static int init_thread_deregister(void *arg, int all);
 
 void ossl_cleanup_thread(void)
 {
-    ossl_init_thread_deregister_intern(NULL, 1);
+    init_thread_deregister(NULL, 1);
     CRYPTO_THREAD_cleanup_local(&destructor_key.value);
     destructor_key.sane = -1;
 }
@@ -214,7 +214,7 @@ void OPENSSL_thread_stop(void)
             = init_get_thread_local(&destructor_key.value, 0, 0);
         init_thread_stop(NULL, hands);
 
-        ossl_init_thread_remove_handlers(hands);
+        init_thread_remove_handlers(hands);
         OPENSSL_free(hands);
     }
 }
@@ -362,7 +362,7 @@ int ossl_init_thread_start(const void *index, void *arg,
 }
 
 #ifndef FIPS_MODE
-static int ossl_init_thread_deregister_intern(void *index, int all)
+static int init_thread_deregister(void *index, int all)
 {
     GLOBAL_TEVENT_REGISTER *gtr;
     int i;
@@ -409,6 +409,6 @@ static int ossl_init_thread_deregister_intern(void *index, int all)
 
 int ossl_init_thread_deregister(void *index)
 {
-    return ossl_init_thread_deregister_intern(index, 0);
+    return init_thread_deregister(index, 0);
 }
 #endif
