@@ -111,6 +111,9 @@ BIO are intertwined. As documented above the BIO will be reset to the
 state after the last completed write operation. The effects of reads
 preceeding that write operation cannot be undone.
 
+Calling BIO_get_mem_ptr() prior to a BIO_reset() call with
+BIO_FLAGS_NONCLEAR_RST set has the same effect as a write operation.
+
 =head1 BUGS
 
 There should be an option to set the maximum size of a memory BIO.
