@@ -1,10 +1,12 @@
 =pod
 
 =head1 NAME
+
 OSSL_thread_stop_handler_fn,
 ossl_init_thread_start,
 ossl_init_thread_deregister
 - internal thread routines
+
 =head1 SYNOPSIS
 
  #include "internal/cryptlib_int.h"
