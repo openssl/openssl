@@ -120,6 +120,9 @@ static int dummy_evp_call(void *provctx)
     if (RAND_DRBG_bytes(drbg, randbuf, sizeof(randbuf)) <= 0)
         goto err;
 
+    if (!BN_rand_ex(a, 256, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, bnctx))
+        goto err;
+
     ret = 1;
  err:
     BN_CTX_end(bnctx);
