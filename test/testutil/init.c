@@ -102,6 +102,13 @@ static void setup_trace(const char *str)
 {
     char *val;
 
+    /*
+     * We add this handler as early as possible to ensure it's executed
+     * as late as possible, i.e. after the TRACE code has done its cleanup
+     * (which happens last in OPENSSL_cleanup).
+     */
+    atexit(cleanup_trace);
+
     trace_data_stack = sk_tracedata_new_null();
     val = OPENSSL_strdup(str);
 
@@ -126,7 +133,6 @@ static void setup_trace(const char *str)
     }
 
     OPENSSL_free(val);
-    atexit(cleanup_trace);
 }
 #endif /* OPENSSL_NO_TRACE */
 
