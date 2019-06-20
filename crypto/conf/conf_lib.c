@@ -11,11 +11,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "internal/conf.h"
+#include "conf_lcl.h"
 #include "internal/ctype.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
-#include <openssl/conf_api.h>
 #include <openssl/lhash.h>
 
 static CONF_METHOD *default_CONF_method = NULL;
@@ -251,12 +251,12 @@ STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf, const char *section)
         return NULL;
     }
 
-    return _CONF_get_section_values(conf, section);
+    return conf_get_section_values(conf, section);
 }
 
 char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
 {
-    char *s = _CONF_get_string(conf, group, name);
+    char *s = conf_get_string(conf, group, name);
 
     /*
      * Since we may get a value from an environment variable even if conf is

@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-typedef struct {
+typedef struct conf_value_st {
     char *section;
     char *name;
     char *value;
@@ -29,29 +29,6 @@ typedef struct {
 
 DEFINE_STACK_OF(CONF_VALUE)
 DEFINE_LHASH_OF(CONF_VALUE);
-
-struct conf_st;
-struct conf_method_st;
-typedef struct conf_method_st CONF_METHOD;
-
-struct conf_method_st {
-    const char *name;
-    CONF *(*create) (CONF_METHOD *meth);
-    int (*init) (CONF *conf);
-    int (*destroy) (CONF *conf);
-    int (*destroy_data) (CONF *conf);
-    int (*load_bio) (CONF *conf, BIO *bp, long *eline);
-    int (*dump) (const CONF *conf, BIO *bp);
-    int (*is_number) (const CONF *conf, char c);
-    int (*to_int) (const CONF *conf, char c);
-    int (*load) (CONF *conf, const char *name, long *eline);
-};
-
-/* Module definitions */
-
-typedef struct conf_imodule_st CONF_IMODULE;
-typedef struct conf_module_st CONF_MODULE;
-
 DEFINE_STACK_OF(CONF_MODULE)
 DEFINE_STACK_OF(CONF_IMODULE)
 

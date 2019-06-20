@@ -15,8 +15,8 @@
 #include "internal/o_dir.h"
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
-#include <openssl/conf_api.h>
 #include "conf_def.h"
+#include "conf_lcl.h"
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #ifndef OPENSSL_NO_POSIX_IO
@@ -149,7 +149,7 @@ static int def_destroy_data(CONF *conf)
 {
     if (conf == NULL)
         return 0;
-    _CONF_free_data(conf);
+    conf_free_data(conf);
     return 1;
 }
 
@@ -209,12 +209,12 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         goto err;
     }
 
-    if (_CONF_new_data(conf) == 0) {
+    if (conf_new_data(conf) == 0) {
         CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    sv = _CONF_new_section(conf, section);
+    sv = conf_new_section(conf, section);
     if (sv == NULL) {
         CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
         goto err;
@@ -327,8 +327,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             *end = '\0';
             if (!str_copy(conf, NULL, &section, start))
                 goto err;
-            if ((sv = _CONF_get_section(conf, section)) == NULL)
-                sv = _CONF_new_section(conf, section);
+            if ((sv = conf_get_section(conf, section)) == NULL)
+                sv = conf_new_section(conf, section);
             if (sv == NULL) {
                 CONFerr(CONF_F_DEF_LOAD_BIO,
                         CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
@@ -410,9 +410,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 goto err;
 
             if (strcmp(psection, section) != 0) {
-                if ((tv = _CONF_get_section(conf, psection))
+                if ((tv = conf_get_section(conf, psection))
                     == NULL)
-                    tv = _CONF_new_section(conf, psection);
+                    tv = conf_new_section(conf, psection);
                 if (tv == NULL) {
                     CONFerr(CONF_F_DEF_LOAD_BIO,
                             CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
@@ -420,7 +420,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 }
             } else
                 tv = sv;
-            if (_CONF_add_string(conf, tv, v) == 0) {
+            if (conf_add_string(conf, tv, v) == 0) {
                 CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -614,7 +614,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
              * r and rr are the chars replaced by the '\0'
              * rp and rrp is where 'r' and 'rr' came from.
              */
-            p = _CONF_get_string(conf, cp, np);
+            p = conf_get_string(conf, cp, np);
             if (rrp != NULL)
                 *rrp = rr;
             *rp = r;

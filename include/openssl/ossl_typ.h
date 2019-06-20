@@ -88,6 +88,11 @@ typedef struct bn_gencb_st BN_GENCB;
 
 typedef struct buf_mem_st BUF_MEM;
 
+typedef struct conf_st CONF;
+typedef struct conf_method_st CONF_METHOD;
+typedef struct conf_imodule_st CONF_IMODULE;
+typedef struct conf_module_st CONF_MODULE;
+
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 typedef struct evp_md_st EVP_MD;
@@ -148,7 +153,6 @@ typedef struct x509_sig_info_st X509_SIG_INFO;
 typedef struct pkcs8_priv_key_info_st PKCS8_PRIV_KEY_INFO;
 
 typedef struct v3_ext_ctx X509V3_CTX;
-typedef struct conf_st CONF;
 typedef struct ossl_init_settings_st OPENSSL_INIT_SETTINGS;
 
 typedef struct ui_st UI;

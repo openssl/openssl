@@ -13,6 +13,10 @@
      The macro SYSerr() is deprecated.
      [Rich Salz]
 
+  *) The old _CONF_xxx API has been removed and the CONF_METHOD type has
+     been made opaque.
+     [Rich Salz]
+
   *) {CRYPTO,OPENSSL}_mem_debug_{push,pop} are now no-ops and have been
      deprecated.
      [Rich Salz]
