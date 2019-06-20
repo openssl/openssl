@@ -20,11 +20,7 @@ enum punycode_status {
     punycode_overflow           /* Input needs wider integers to process.  */
 };
 
-#if UINT_MAX >= (1 << 26) - 1
 typedef unsigned int punycode_uint;
-#else
-typedef unsigned long punycode_uint;
-#endif
 
 enum punycode_status punycode_encode(punycode_uint input_length,
                                      const punycode_uint input[],

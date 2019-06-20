@@ -591,7 +591,7 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 
 }
 
-/* FIXME beldmit
+/*
  * This function implements comparison between ASCII/U-label in eml
  * and A-label in base according to RFC 8398, section 6.
  * Convert base to U-label and ASCII-parts of domain names, for base
@@ -609,7 +609,7 @@ static int nc_email_eai(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
 
     emlat = strchr(emlptr, '@');
 
-    if (!emlat)
+    if (emlat == NULL)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 
     memset(ulabel, 0, sizeof(ulabel));

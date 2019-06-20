@@ -74,8 +74,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         if (OBJ_cmp(gen->d.otherName->type_id, OBJ_nid2obj(NID_id_on_SmtpUTF8Mailbox)) != 0) {
             if (!X509V3_add_value("othername", "<unsupported>", &ret))
                 return NULL;
-        }
-        else {
+        } else {
             if (!X509V3_add_value_uchar("othername: SmtpUTF8Mailbox:", gen->d.otherName->value->value.utf8string->data, &ret))
                 return NULL;
         }
