@@ -409,7 +409,7 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * See comment in aes_xts_init_key() below.
          */
         if ((!allow_insecure_decrypt || enc)
-                && memcmp(key, key + bytes, bytes) == 0) {
+                && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
             EVPerr(EVP_F_AESNI_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
@@ -828,7 +828,7 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * See comment in aes_xts_init_key() below.
          */
         if ((!allow_insecure_decrypt || enc)
-                && memcmp(key, key + bytes, bytes) == 0) {
+                && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
             EVPerr(EVP_F_AES_T4_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
@@ -3474,7 +3474,7 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              *       data with them."
              */
             if ((!allow_insecure_decrypt || enc)
-                    && memcmp(key, key + bytes, bytes) == 0) {
+                    && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
                 EVPerr(EVP_F_AES_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
                 return 0;
             }
