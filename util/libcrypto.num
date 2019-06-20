@@ -2214,7 +2214,7 @@ EVP_PKEY_missing_parameters             2261	3_0_0	EXIST::FUNCTION:
 X509_REQ_INFO_new                       2262	3_0_0	EXIST::FUNCTION:
 EVP_rc2_cfb64                           2263	3_0_0	EXIST::FUNCTION:RC2
 PKCS7_get_smimecap                      2264	3_0_0	EXIST::FUNCTION:
-ERR_get_state                           2265	3_0_0	EXIST::FUNCTION:
+ERR_get_state                           2265	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 d2i_DSAPrivateKey_bio                   2266	3_0_0	EXIST::FUNCTION:DSA
 X509_PURPOSE_get_trust                  2267	3_0_0	EXIST::FUNCTION:
 EC_GROUP_get_point_conversion_form      2268	3_0_0	EXIST::FUNCTION:EC

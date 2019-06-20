@@ -135,6 +135,7 @@ static CRYPTO_RWLOCK *err_string_lock;
 static ERR_STRING_DATA *get_item(const ERR_STRING_DATA *);
 static int load_strings(const ERR_STRING_DATA *str);
 static void free_state(ERR_STATE *s);
+static ERR_STATE *get_state(void);
 
 /*
  * The internal state
@@ -143,6 +144,7 @@ static void free_state(ERR_STATE *s);
 static LHASH_OF(ERR_STRING_DATA) *int_error_hash = NULL;
 static int int_err_library_number = ERR_LIB_USER;
 
+/* |inc| and |top| should be merged into a single enum. */
 static unsigned long get_error_values(int inc, int top, const char **file,
                                       int *line, const char **data,
                                       int *flags);
@@ -411,7 +413,7 @@ void ERR_put_error(int lib, int func, int reason, const char *file, int line)
             file = &end[1];
     }
 #endif
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return;
 
@@ -432,7 +434,7 @@ void ERR_clear_error(void)
     ERR_STATE *es;
     ERR_ENTRY *p;
 
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return;
 
@@ -498,7 +500,7 @@ static unsigned long get_error_values(int inc, int top, const char **file,
     ERR_ENTRY *p;
     unsigned long ret;
 
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return 0;
 
@@ -633,23 +635,9 @@ const char *ERR_lib_error_string(unsigned long e)
 
 const char *ERR_func_error_string(unsigned long e)
 {
-<<<<<<< e3a0d367299ee9f384ef912c644dbb5ef195798d
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return NULL;
     return ERR_GET_LIB(e) == ERR_LIB_SYS ? "system library" : NULL;
-=======
-    ERR_STRING_DATA d, *p;
-    unsigned long l, f;
-
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
-        return NULL;
-
-    l = ERR_GET_LIB(e);
-    f = ERR_GET_FUNC(e);
-    d.error = ERR_PACK(l, f, 0);
-    p = get_item(&d);
-    return ((p == NULL) ? NULL : p->string);
->>>>>>> Make ERR_STATE opaque
 }
 
 const char *ERR_reason_error_string(unsigned long e)
@@ -694,13 +682,21 @@ void ERR_remove_state(unsigned long pid)
 }
 #endif
 
+#if !OPENSSL_API_3
+ERR_STATE *ERR_get_state(void)
+{
+    (void)get_state();
+    return NULL;
+}
+#endif
+
 DEFINE_RUN_ONCE_STATIC(err_do_init)
 {
     set_err_thread_local = 1;
     return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
 }
 
-ERR_STATE *ERR_get_state(void)
+static ERR_STATE *get_state(void)
 {
     ERR_STATE *state;
     int saveerrno = get_last_sys_error();
@@ -811,7 +807,7 @@ void ERR_set_error_data(char *data, int flags)
      * This function is void so we cannot propagate the error return. Since it
      * is also in the public API we can't change the return type.
      */
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return;
     set_data(&es->entries[es->top], data, flags);
@@ -833,7 +829,7 @@ void ERR_add_error_vdata(int num, va_list args)
     ERR_ENTRY *ep;
 
     /* Get the current error data; if an allocated string get it. */
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return;
     ep = &es->entries[es->top];
@@ -871,7 +867,7 @@ int ERR_set_mark(void)
 {
     ERR_STATE *es;
 
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return 0;
 
@@ -885,7 +881,7 @@ int ERR_pop_to_mark(void)
 {
     ERR_STATE *es;
 
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return 0;
 
@@ -906,7 +902,7 @@ int ERR_clear_last_mark(void)
     ERR_STATE *es;
     int top;
 
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return 0;
 
@@ -927,7 +923,7 @@ void err_clear_last_constant_time(int clear)
     ERR_STATE *es;
     int top;
 
-    es = ERR_get_state();
+    es = get_state();
     if (es == NULL)
         return;
 

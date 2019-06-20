@@ -257,9 +257,8 @@ int ERR_load_ERR_strings(void);
 
 DEPRECATEDIN_1_1_0(void ERR_remove_thread_state(void *))
 DEPRECATEDIN_1_0_0(void ERR_remove_state(unsigned long pid))
-
 typedef struct err_state_st ERR_STATE;
-ERR_STATE *ERR_get_state(void);
+DEPRECATEDIN_3(ERR_STATE *ERR_get_state(void))
 
 int ERR_get_next_error_library(void);
 
