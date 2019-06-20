@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Removed NextStep support and the macro OPENSSL_UNISTD
+     [Rich Salz]
+
   *) RC5_32_set_key has been changed to return an int type, with 0 indicating
      an error and 1 indicating success. In previous versions of OpenSSL this
      was a void type. If a key was set longer than the maximum possible this

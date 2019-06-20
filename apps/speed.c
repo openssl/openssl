@@ -29,7 +29,7 @@
 #include <openssl/objects.h>
 #include <openssl/async.h>
 #if !defined(OPENSSL_SYS_MSDOS)
-# include OPENSSL_UNISTD
+# include <unistd.h>
 #endif
 
 #if defined(_WIN32)
