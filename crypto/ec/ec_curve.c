@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -14,7 +14,6 @@
 #include <openssl/obj_mac.h>
 #include <openssl/opensslconf.h>
 #include "internal/nelem.h"
-#include "internal/o_str.h"
 
 typedef struct {
     int field_type,             /* either NID_X9_62_prime_field or
@@ -3302,10 +3301,10 @@ int ec_curve_nid_from_params(const EC_GROUP *group)
             /* Check the optional seed (ignore if its not set) */
             && (data->seed_len == 0 || seed_len == 0
                 || ((size_t)data->seed_len == seed_len
-                     && OPENSSL_memcmp(params_seed, seed, seed_len) == 0))
+                     && memcmp(params_seed, seed, seed_len) == 0))
             /* Check that the groups params match the built-in curve params */
-            && OPENSSL_memcmp(param_bytes, params, param_len * NUM_BN_FIELDS)
-                              == 0) {
+            && memcmp(param_bytes, params, param_len * NUM_BN_FIELDS)
+                             == 0) {
             ret = curve.nid;
             goto end;
         }

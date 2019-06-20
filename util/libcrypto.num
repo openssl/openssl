@@ -462,7 +462,7 @@ X509v3_asid_add_id_or_range             462	3_0_0	EXIST::FUNCTION:RFC3779
 X509_NAME_ENTRY_create_by_NID           463	3_0_0	EXIST::FUNCTION:
 EC_KEY_METHOD_get_init                  464	3_0_0	EXIST::FUNCTION:EC
 ASN1_INTEGER_to_BN                      465	3_0_0	EXIST::FUNCTION:
-OPENSSL_memcmp                          466	3_0_0	EXIST::FUNCTION:
+OPENSSL_memcmp                          466	3_0_0	NOEXIST::FUNCTION:
 BUF_MEM_new                             467	3_0_0	EXIST::FUNCTION:
 DSO_set_filename                        468	3_0_0	EXIST::FUNCTION:
 DH_new                                  469	3_0_0	EXIST::FUNCTION:DH

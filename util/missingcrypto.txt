@@ -729,7 +729,6 @@ OPENSSL_gmtime_diff
 OPENSSL_init
 OPENSSL_isservice
 OPENSSL_issetugid
-OPENSSL_memcmp
 OPENSSL_sk_deep_copy
 OPENSSL_sk_delete
 OPENSSL_sk_delete_ptr
