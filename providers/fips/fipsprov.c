@@ -152,6 +152,60 @@ static int fips_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     return 1;
 }
 
+/* FIPS specific version of the function of the same name in provlib.c */
+const char *ossl_prov_util_nid_to_name(int nid)
+{
+    /* We don't have OBJ_nid2n() in FIPS_MODE so we have an explicit list */
+
+    switch (nid) {
+    /* Digests */
+    case NID_sha1:
+        return "SHA224";
+    case NID_sha224:
+        return "SHA224";
+    case NID_sha256:
+        return "SHA256";
+    case NID_sha384:
+        return "SHA384";
+    case NID_sha512:
+        return "SHA512";
+    case NID_sha512_224:
+        return "SHA512-224";
+    case NID_sha512_256:
+        return "SHA512-256";
+    case NID_sha3_224:
+        return "SHA3-224";
+    case NID_sha3_256:
+        return "SHA3-256";
+    case NID_sha3_384:
+        return "SHA3-384";
+    case NID_sha3_512:
+        return "SHA3-512";
+
+    /* Ciphers */
+    case NID_aes_256_ecb:
+        return "AES-256-ECB";
+    case NID_aes_192_ecb:
+        return "AES-192-ECB";
+    case NID_aes_128_ecb:
+        return "AES-128-ECB";
+    case NID_aes_256_cbc:
+        return "AES-256-CBC";
+    case NID_aes_192_cbc:
+        return "AES-192-CBC";
+    case NID_aes_128_cbc:
+        return "AES-128-CBC";
+    case NID_aes_256_ctr:
+        return "AES-256-CTR";
+    case NID_aes_192_ctr:
+        return "AES-192-CTR";
+    case NID_aes_128_ctr:
+        return "AES-128-CTR";
+    }
+
+    return NULL;
+}
+
 static const OSSL_ALGORITHM fips_digests[] = {
     { "SHA1", "fips=yes", sha1_functions },
     { "SHA224", "fips=yes", sha224_functions },
