@@ -153,7 +153,14 @@ static int hmac_ctrl_str(EVP_MAC_IMPL *hctx, const char *type,
     if (!value)
         return 0;
 #ifndef FIPS_MODE
-    /* Not supported in FIPS mode due to the implict fetch of the md */
+    /*
+     * We don't have EVP_get_digestbyname() in FIPS_MODE. That function returns
+     * an EVP_MD without an associated provider implementation (i.e. it is
+     * using "implict fetch"). We could replace it with an "explicit" fetch
+     * using EVP_MD_fetch(), but we'd then be required to free the returned
+     * EVP_MD somewhere. Probably the complexity isn't worth it as we are
+     * unlikely to need this ctrl in FIPS_MODE anyway.
+     */
     if (strcmp(type, "digest") == 0) {
         const EVP_MD *d = EVP_get_digestbyname(value);
 
