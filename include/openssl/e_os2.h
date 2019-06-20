@@ -136,15 +136,6 @@ extern "C" {
  * That's it for OS-specific stuff
  *****************************************************************************/
 
-/* Specials for I/O an exit */
-# ifdef OPENSSL_SYS_MSDOS
-#  define OPENSSL_UNISTD_IO <io.h>
-#  define OPENSSL_DECLARE_EXIT extern void exit(int);
-# else
-#  define OPENSSL_UNISTD_IO OPENSSL_UNISTD
-#  define OPENSSL_DECLARE_EXIT  /* declared in unistd.h */
-# endif
-
 /*-
  * OPENSSL_EXTERN is normally used to declare a symbol with possible extra
  * attributes to handle its presence in a shared library.

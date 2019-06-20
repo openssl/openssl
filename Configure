@@ -3314,7 +3314,6 @@ sub print_table_entry
         "includes",
         "cc",
         "cflags",
-        "unistd",
         "ld",
         "lflags",
         "loutflag",

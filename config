@@ -349,17 +349,6 @@ if [ -d /usr/apollo ]; then
     exit 0
 fi
 
-# Now NeXT
-ISNEXT=`hostinfo 2>/dev/null`
-case "$ISNEXT" in
-    *'NeXT Mach 3.3'*)
-	echo "whatever-next-nextstep3.3"; exit 0
-	;;
-    *NeXT*)
-	echo "whatever-next-nextstep"; exit 0
-	;;
-esac
-
 # At this point we gone through all the one's
 # we know of: Punt
 
