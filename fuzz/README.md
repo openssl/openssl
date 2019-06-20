@@ -40,7 +40,7 @@ Configure for fuzzing:
             --with-fuzzer-lib=../../svn-work/Fuzzer/libFuzzer.a \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
             -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
-            -fsanitize-coverage=trace-pc-guard,indirect-calls,trace-cmp \
+            -fsanitize-coverage=indirect-calls,trace-cmp \
             enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment enable-tls1_3 \
             enable-weak-ssl-ciphers enable-rc5 enable-md2 \
             enable-ssl3 enable-ssl3-method enable-nextprotoneg \
