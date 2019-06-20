@@ -1874,7 +1874,7 @@
 
 #define SN_id_on_SmtpUTF8Mailbox                "id-on-SmtpUTF8Mailbox"
 #define LN_id_on_SmtpUTF8Mailbox                "Smtp UTF8 Mailbox"
-#define NID_id_on_SmtpUTF8Mailbox               1195
+#define NID_id_on_SmtpUTF8Mailbox               1207
 #define OBJ_id_on_SmtpUTF8Mailbox               OBJ_id_on,9L
 
 #define SN_id_pda_dateOfBirth           "id-pda-dateOfBirth"

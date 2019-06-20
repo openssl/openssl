@@ -1204,3 +1204,4 @@ sshkdf		1203
 SM2_with_SM3		1204
 sskdf		1205
 x963kdf		1206
+id_on_SmtpUTF8Mailbox		1207
