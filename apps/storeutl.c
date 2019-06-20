@@ -8,6 +8,9 @@
  */
 
 #include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_STORE
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 #include "apps.h"
 #include "progs.h"
@@ -471,3 +474,4 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
 
     return ret;
 }
+#endif /* OPENSSL_NO_STORE */

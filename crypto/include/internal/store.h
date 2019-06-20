@@ -7,4 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OPENSSL_NO_STORE
 void ossl_store_cleanup_int(void);
+#endif

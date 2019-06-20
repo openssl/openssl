@@ -270,6 +270,7 @@ static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
     }
 }
 
+#ifndef OPENSSL_NO_STORE
 struct util_store_cap_data {
     ENGINE *engine;
     char **cap_buf;
@@ -288,6 +289,7 @@ static void util_store_cap(const OSSL_STORE_LOADER *loader, void *arg)
             ctx->ok = 0;
     }
 }
+#endif
 
 int engine_main(int argc, char **argv)
 {
@@ -436,6 +438,7 @@ int engine_main(int argc, char **argv)
                     if (!append_buf(&cap_buf, &cap_size, OBJ_nid2sn(nids[k])))
                         goto end;
  skip_pmeths:
+#ifndef OPENSSL_NO_STORE
                 {
                     struct util_store_cap_data store_ctx;
 
@@ -448,6 +451,7 @@ int engine_main(int argc, char **argv)
                     if (!store_ctx.ok)
                         goto end;
                 }
+#endif
                 if (cap_buf != NULL && (*cap_buf != '\0'))
                     BIO_printf(out, " [%s]\n", cap_buf);
 

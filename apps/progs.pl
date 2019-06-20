@@ -90,6 +90,7 @@ my %cmd_disabler = (
     dhparam  => "dh",
     ecparam  => "ec",
     pkcs12   => "des",
+    storeutl => "store",
 );
 
 print "#ifdef INCLUDE_FUNCTION_TABLE\n";

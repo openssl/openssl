@@ -520,6 +520,8 @@
                    building the command line applications. Additionally since
                    the OpenSSL tests also use the command line applications the
                    tests will also be skipped.
+  no-store
+                   Don't use support for OSSL_STORE.
 
   no-tests
                    Don't build test programs or run any test.

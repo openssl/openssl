@@ -15,6 +15,9 @@ use OpenSSL::Test::Utils;
 my $test_name = "test_store";
 setup($test_name);
 
+plan skip_all => "STORE is not supported by this OpenSSL build"
+    if disabled("store");
+
 my $mingw = config('target') =~ m|^mingw|;
 
 my @noexist_files =

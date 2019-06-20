@@ -10,6 +10,9 @@
 #ifndef HEADER_OSSL_STORE_H
 # define HEADER_OSSL_STORE_H
 
+# include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_STORE
 # include <stdarg.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/pem.h>
@@ -263,4 +266,5 @@ int OSSL_STORE_do_all_loaders(void (*do_function) (const OSSL_STORE_LOADER
 # ifdef  __cplusplus
 }
 # endif
+# endif /* OPENSSL_NO_STORE */
 #endif

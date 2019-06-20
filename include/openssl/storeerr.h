@@ -11,6 +11,7 @@
 #ifndef HEADER_OSSL_STOREERR_H
 # define HEADER_OSSL_STOREERR_H
 
+# ifndef OPENSSL_NO_STORE
 # ifndef HEADER_SYMHACKS_H
 #  include <openssl/symhacks.h>
 # endif
@@ -87,5 +88,7 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_R_UNSUPPORTED_OPERATION               118
 # define OSSL_STORE_R_UNSUPPORTED_SEARCH_TYPE             120
 # define OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED           111
+
+# endif /* OPENSSL_NO_STORE */
 
 #endif

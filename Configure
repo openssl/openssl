@@ -405,6 +405,7 @@ my @disablables = (
     "ssl-trace",
     "static-engine",
     "stdio",
+    "store",
     "tests",
     "threads",
     "tls",
