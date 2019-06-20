@@ -62,7 +62,7 @@ I<OSSL_PROVIDER> is a type that holds all the necessary information
 to handle a provider, regardless of if it's built in to the
 application or the OpenSSL libraries, or if it's a loadable provider
 module.
-Instances of this type are commonly refered to as "provider objects".
+Instances of this type are commonly referred to as "provider objects".
 
 A provider object is always stored in a set of provider objects
 in the library context.
@@ -84,17 +84,17 @@ The provider object it finds gets its reference count incremented.
 ossl_provider_new() creates a new provider object named I<name> and
 stores it in the provider object store, unless there already is one
 there with the same name.
-The reference counter of a newly created provider object will always
+The reference count of a newly created provider object will always
 be 2; one for being added to the store, and one for the returned
 reference.
 To indicate a built-in provider, the I<init_function> argument must
 point at the provider initialization function for that provider.
 
 ossl_provider_upref() increments the provider object I<prov>'s
-reference counter.
+reference count.
 
 ossl_provider_free() decrements the provider object I<prov>'s
-reference counter; if it drops below 2, the provider object is assumed
+reference count; if it drops below 2, the provider object is assumed
 to have fallen out of use and will be inactivated (its I<teardown>
 function is called); if it drops down to zero, I<prov> is assumed to
 have been taken out of the store, and the associated module will be
@@ -187,7 +187,7 @@ Locating a provider module happens as follows:
 =item 1.
 
 Use the provider object's name as module path, with platform specific
-standard extentions added.
+standard extensions added.
 
 =item 2.
 
@@ -215,7 +215,7 @@ provider module.
 ossl_provider_find() and ossl_provider_new() return a pointer to a
 provider object (I<OSSL_PROVIDER>) on success, or B<NULL> on error.
 
-ossl_provider_upref() returns the value of the reference counter after
+ossl_provider_upref() returns the value of the reference count after
 it has been incremented.
 
 ossl_provider_free() doesn't return any value.
