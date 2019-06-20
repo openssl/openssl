@@ -97,108 +97,28 @@ static uint64_t get_timer_bits(void);
     || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_VXWORKS) \
     || defined(OPENSSL_SYS_UEFI))
 
-# if defined(OPENSSL_SYS_VOS)
-
-#  ifndef OPENSSL_RAND_SEED_OS
-#   error "Unsupported seeding method configured; must be os"
-#  endif
-
-#  if defined(OPENSSL_SYS_VOS_HPPA) && defined(OPENSSL_SYS_VOS_IA32)
-#   error "Unsupported HP-PA and IA32 at the same time."
-#  endif
-#  if !defined(OPENSSL_SYS_VOS_HPPA) && !defined(OPENSSL_SYS_VOS_IA32)
-#   error "Must have one of HP-PA or IA32"
-#  endif
-
-/*
- * The following algorithm repeatedly samples the real-time clock (RTC) to
- * generate a sequence of unpredictable data.  The algorithm relies upon the
- * uneven execution speed of the code (due to factors such as cache misses,
- * interrupts, bus activity, and scheduling) and upon the rather large
- * relative difference between the speed of the clock and the rate at which
- * it can be read.  If it is ported to an environment where execution speed
- * is more constant or where the RTC ticks at a much slower rate, or the
- * clock can be read with fewer instructions, it is likely that the results
- * would be far more predictable.  This should only be used for legacy
- * platforms.
- *
- * As a precaution, we assume only 2 bits of entropy per byte.
- */
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
-{
-    short int code;
-    int i, k;
-    size_t bytes_needed;
-    struct timespec ts;
-    unsigned char v;
-#  ifdef OPENSSL_SYS_VOS_HPPA
-    long duration;
-    extern void s$sleep(long *_duration, short int *_code);
-#  else
-    long long duration;
-    extern void s$sleep2(long long *_duration, short int *_code);
-#  endif
-
-    bytes_needed = rand_pool_bytes_needed(pool, 4 /*entropy_factor*/);
-
-    for (i = 0; i < bytes_needed; i++) {
-        /*
-         * burn some cpu; hope for interrupts, cache collisions, bus
-         * interference, etc.
-         */
-        for (k = 0; k < 99; k++)
-            ts.tv_nsec = random();
-
-#  ifdef OPENSSL_SYS_VOS_HPPA
-        /* sleep for 1/1024 of a second (976 us).  */
-        duration = 1;
-        s$sleep(&duration, &code);
-#  else
-        /* sleep for 1/65536 of a second (15 us).  */
-        duration = 1;
-        s$sleep2(&duration, &code);
-#  endif
-
-        /* Get wall clock time, take 8 bits. */
-        clock_gettime(CLOCK_REALTIME, &ts);
-        v = (unsigned char)(ts.tv_nsec & 0xFF);
-        rand_pool_add(pool, arg, &v, sizeof(v) , 2);
-    }
-    return rand_pool_entropy_available(pool);
-}
-
-void rand_pool_cleanup(void)
-{
-}
-
-void rand_pool_keep_random_devices_open(int keep)
-{
-}
-
-# else
-
-#  if defined(OPENSSL_RAND_SEED_EGD) && \
+# if defined(OPENSSL_RAND_SEED_EGD) && \
         (defined(OPENSSL_NO_EGD) || !defined(DEVRANDOM_EGD))
-#   error "Seeding uses EGD but EGD is turned off or no device given"
-#  endif
+#  error "Seeding uses EGD but EGD is turned off or no device given"
+# endif
 
-#  if defined(OPENSSL_RAND_SEED_DEVRANDOM) && !defined(DEVRANDOM)
-#   error "Seeding uses urandom but DEVRANDOM is not configured"
-#  endif
+# if defined(OPENSSL_RAND_SEED_DEVRANDOM) && !defined(DEVRANDOM)
+#  error "Seeding uses urandom but DEVRANDOM is not configured"
+# endif
 
-#  if defined(OPENSSL_RAND_SEED_OS)
-#   if !defined(DEVRANDOM)
-#    error "OS seeding requires DEVRANDOM to be configured"
-#   endif
-#   define OPENSSL_RAND_SEED_GETRANDOM
-#   define OPENSSL_RAND_SEED_DEVRANDOM
+# if defined(OPENSSL_RAND_SEED_OS)
+#  if !defined(DEVRANDOM)
+#   error "OS seeding requires DEVRANDOM to be configured"
 #  endif
+#  define OPENSSL_RAND_SEED_GETRANDOM
+#  define OPENSSL_RAND_SEED_DEVRANDOM
+# endif
 
-#  if defined(OPENSSL_RAND_SEED_LIBRANDOM)
-#   error "librandom not (yet) supported"
-#  endif
+# if defined(OPENSSL_RAND_SEED_LIBRANDOM)
+#  error "librandom not (yet) supported"
+# endif
 
-#  if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
+# if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
 /*
  * sysctl_random(): Use sysctl() to read a random number from the kernel
  * Returns the number of bytes returned in buf on success, -1 on failure.
@@ -232,10 +152,10 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
      * up to 256 bytes.
      * Just return an error on older NetBSD versions.
      */
-#if   defined(__NetBSD__) && __NetBSD_Version__ < 400000000
+#  if defined(__NetBSD__) && __NetBSD_Version__ < 400000000
     errno = ENOSYS;
     return -1;
-#endif
+#  endif
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_ARND;
@@ -251,9 +171,9 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 
     return done;
 }
-#  endif
+# endif
 
-#  if defined(OPENSSL_RAND_SEED_GETRANDOM)
+# if defined(OPENSSL_RAND_SEED_GETRANDOM)
 /*
  * syscall_random(): Try to get random data using a system call
  * returns the number of bytes returned in buf, or < 0 on error.
@@ -280,7 +200,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * - Linux since 3.17 with glibc 2.25
      * - FreeBSD since 12.0 (1200061)
      */
-#  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
+# if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
     if (getentropy != NULL)
@@ -300,21 +220,21 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     ERR_pop_to_mark();
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  endif
+# endif
 
     /* Linux supports this since version 3.17 */
-#  if defined(__linux) && defined(__NR_getrandom)
+# if defined(__linux) && defined(__NR_getrandom)
     return syscall(__NR_getrandom, buf, buflen, 0);
-#  elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
+# elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return sysctl_random(buf, buflen);
-#  else
+# else
     errno = ENOSYS;
     return -1;
-#  endif
+# endif
 }
-#  endif    /* defined(OPENSSL_RAND_SEED_GETRANDOM) */
+# endif    /* defined(OPENSSL_RAND_SEED_GETRANDOM) */
 
-#  if defined(OPENSSL_RAND_SEED_DEVRANDOM)
+# if defined(OPENSSL_RAND_SEED_DEVRANDOM)
 static const char *random_device_paths[] = { DEVRANDOM };
 static struct random_device {
     int fd;
@@ -412,7 +332,7 @@ void rand_pool_keep_random_devices_open(int keep)
     keep_random_devices_open = keep;
 }
 
-#  else     /* !defined(OPENSSL_RAND_SEED_DEVRANDOM) */
+# else     /* !defined(OPENSSL_RAND_SEED_DEVRANDOM) */
 
 int rand_pool_init(void)
 {
@@ -427,7 +347,7 @@ void rand_pool_keep_random_devices_open(int keep)
 {
 }
 
-#  endif    /* defined(OPENSSL_RAND_SEED_DEVRANDOM) */
+# endif    /* defined(OPENSSL_RAND_SEED_DEVRANDOM) */
 
 /*
  * Try the various seeding methods in turn, exit when successful.
@@ -448,14 +368,14 @@ void rand_pool_keep_random_devices_open(int keep)
  */
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
-#  if defined(OPENSSL_RAND_SEED_NONE)
+# if defined(OPENSSL_RAND_SEED_NONE)
     return rand_pool_entropy_available(pool);
-#  else
+# else
     size_t bytes_needed;
     size_t entropy_available = 0;
     unsigned char *buffer;
 
-#   if defined(OPENSSL_RAND_SEED_GETRANDOM)
+#  if defined(OPENSSL_RAND_SEED_GETRANDOM)
     {
         ssize_t bytes;
         /* Maximum allowed number of consecutive unsuccessful attempts */
@@ -477,15 +397,15 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     entropy_available = rand_pool_entropy_available(pool);
     if (entropy_available > 0)
         return entropy_available;
-#   endif
+#  endif
 
-#   if defined(OPENSSL_RAND_SEED_LIBRANDOM)
+#  if defined(OPENSSL_RAND_SEED_LIBRANDOM)
     {
         /* Not yet implemented. */
     }
-#   endif
+#  endif
 
-#   if defined(OPENSSL_RAND_SEED_DEVRANDOM)
+#  if defined(OPENSSL_RAND_SEED_DEVRANDOM)
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     {
         size_t i;
@@ -520,21 +440,21 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         if (entropy_available > 0)
             return entropy_available;
     }
-#   endif
+#  endif
 
-#   if defined(OPENSSL_RAND_SEED_RDTSC)
+#  if defined(OPENSSL_RAND_SEED_RDTSC)
     entropy_available = rand_acquire_entropy_from_tsc(pool);
     if (entropy_available > 0)
         return entropy_available;
-#   endif
+#  endif
 
-#   if defined(OPENSSL_RAND_SEED_RDCPU)
+#  if defined(OPENSSL_RAND_SEED_RDCPU)
     entropy_available = rand_acquire_entropy_from_cpu(pool);
     if (entropy_available > 0)
         return entropy_available;
-#   endif
+#  endif
 
-#   if defined(OPENSSL_RAND_SEED_EGD)
+#  if defined(OPENSSL_RAND_SEED_EGD)
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     if (bytes_needed > 0) {
         static const char *paths[] = { DEVRANDOM_EGD, NULL };
@@ -556,12 +476,11 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
                 return entropy_available;
         }
     }
-#   endif
+#  endif
 
     return rand_pool_entropy_available(pool);
-#  endif
-}
 # endif
+}
 #endif
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \

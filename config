@@ -275,14 +275,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-sysv4"; exit 0
 	;;
 
-    VOS:*:*:i786)
-     echo "i386-stratus-vos"; exit 0
-     ;;
-
-    VOS:*:*:*)
-     echo "hppa1.1-stratus-vos"; exit 0
-     ;;
-
     *:4*:R4*:m88k)
 	echo "${MACHINE}-whatever-sysv4"; exit 0
 	;;

@@ -121,17 +121,6 @@ extern "C" {
 #  endif
 # endif
 
-/* -------------------------------- VOS ----------------------------------- */
-# if defined(__VOS__) && !defined(OPENSSL_SYS_VOS)
-#  define OPENSSL_SYS_VOS
-#  ifdef __HPPA__
-#   define OPENSSL_SYS_VOS_HPPA
-#  endif
-#  ifdef __IA32__
-#   define OPENSSL_SYS_VOS_IA32
-#  endif
-# endif
-
 /**
  * That's it for OS-specific stuff
  *****************************************************************************/

@@ -20,7 +20,7 @@ NON_EMPTY_TRANSLATION_UNIT
  * Query an EGD
  */
 
-# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_VOS) || defined(OPENSSL_SYS_UEFI)
+# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
     return -1;
