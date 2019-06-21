@@ -22,13 +22,9 @@
 #ifdef DSO_DLFCN
 
 # ifdef HAVE_DLFCN_H
-#  ifdef __osf__
-#   define __EXTENSIONS__
-#  endif
 #  include <dlfcn.h>
 #  define HAVE_DLINFO 1
 #  if defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
-     (defined(__osf__) && !defined(RTLD_NEXT))     || \
      (defined(__OpenBSD__) && !defined(RTLD_SELF)) || \
         defined(__ANDROID__)
 #   undef HAVE_DLINFO

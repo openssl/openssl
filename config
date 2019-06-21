@@ -225,21 +225,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
 	;;
 
-    OSF1:*:*:*alpha*)
-	OSFMAJOR=`echo ${RELEASE}| sed -e 's/^V\([0-9]*\)\..*$/\1/'`
-	case "$OSFMAJOR" in
-	    4|5)
-		echo "${MACHINE}-dec-tru64"; exit 0
-		;;
-	    1|2|3)
-		echo "${MACHINE}-dec-osf"; exit 0
-		;;
-	    *)
-		echo "${MACHINE}-dec-osf"; exit 0
-		;;
-	esac
-	;;
-
     Paragon*:*:*:*)
 	echo "i860-intel-osf1"; exit 0
 	;;
