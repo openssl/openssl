@@ -466,6 +466,11 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
     GENERAL_SUBTREE *sub;
     int i, r, match = 0;
+    /*
+     * We need to compare not gen->type field but an "effective" type because
+     * the otherName field may contain EAI email address treated specially
+     * according to RFC 8398, section 6
+     */
     int effective_type = ((gen->type == GEN_OTHERNAME) &&
                           (OBJ_obj2nid(gen->d.otherName->type_id) ==
                            NID_id_on_SmtpUTF8Mailbox)) ? GEN_EMAIL : gen->type;
@@ -606,8 +611,6 @@ static int nc_email_eai(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
     char ulabel[256];
     size_t size = sizeof(ulabel) - 1;
 
-    emlat = strchr(emlptr, '@');
-
     if (emlat == NULL)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 
@@ -619,7 +622,7 @@ static int nc_email_eai(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
         if (a2ulabel(baseptr, ulabel + 1, &size) <= 0)
             return X509_V_ERR_UNSPECIFIED;
 
-        if (size + 1 > base->length) {
+        if (size + 1 > eml->length) {
             emlptr += size + 1 - base->length;
             if (ia5casecmp(ulabel, emlptr) == 0)
                 return X509_V_OK;
