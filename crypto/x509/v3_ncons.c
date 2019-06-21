@@ -17,6 +17,7 @@
 #include <openssl/bn.h>
 
 #include "internal/x509_int.h"
+#include "internal/punycode.h"
 #include "ext_dat.h"
 
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
@@ -37,8 +38,6 @@ static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_email_eai(ASN1_UTF8STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base);
-
-int a2ulabel(const char *in, char *out, size_t *outlen); /* FIXME beldmit */
 
 const X509V3_EXT_METHOD v3_name_constraints = {
     NID_name_constraints, 0,
