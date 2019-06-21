@@ -72,5 +72,8 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
     &p384_qteslaIIIsize_asn1_meth,
     &qteslaIIIspeed_asn1_meth,
     &p384_qteslaIIIspeed_asn1_meth,
+    &dilithium2_asn1_meth,
+    &dilithium3_asn1_meth,
+    &dilithium4_asn1_meth,
 #endif
 };

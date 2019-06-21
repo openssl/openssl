@@ -811,6 +811,9 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_qteslaI,
     TLSEXT_SIGALG_qteslaIIIsize,
     TLSEXT_SIGALG_qteslaIIIspeed,
+    TLSEXT_SIGALG_dilithium2,
+    TLSEXT_SIGALG_dilithium3,
+    TLSEXT_SIGALG_dilithium4,
     /* ADD_MORE_OQS_SIG_HERE */
     /* OQS hybrid schemes*/
     TLSEXT_SIGALG_p256_picnicL1FS,
@@ -963,6 +966,15 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {"qteslaIIIspeed", TLSEXT_SIGALG_qteslaIIIspeed,
      NID_undef, -1, EVP_PKEY_QTESLAIIISPEED, SSL_PKEY_QTESLAIIISPEED,
      NID_undef, NID_undef},
+    {"dilithium2", TLSEXT_SIGALG_dilithium2,
+     NID_undef, -1, EVP_PKEY_DILITHIUM2, SSL_PKEY_DILITHIUM2,
+     NID_undef, NID_undef},
+    {"dilithium3", TLSEXT_SIGALG_dilithium3,
+     NID_undef, -1, EVP_PKEY_DILITHIUM3, SSL_PKEY_DILITHIUM3,
+     NID_undef, NID_undef},
+    {"dilithium4", TLSEXT_SIGALG_dilithium4,
+     NID_undef, -1, EVP_PKEY_DILITHIUM4, SSL_PKEY_DILITHIUM4,
+     NID_undef, NID_undef},  
     /* ADD_MORE_OQS_SIG_HERE */
     /* OQS hybrid schemes */
     {"p256_picnicL1FS", TLSEXT_SIGALG_p256_picnicL1FS,
@@ -2594,6 +2606,9 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAI);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISIZE);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISPEED);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM2);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM3);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM4);
     /* ADD_MORE_OQS_SIG_HERE */
     /* OQS hybrid schemes */
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_PICNICL1FS);

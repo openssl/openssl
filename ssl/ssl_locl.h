@@ -212,6 +212,12 @@
 # define SSL_aQTESLAIIISIZE      0x00000400U
 /* qTESLA III speed auth */
 # define SSL_aQTESLAIIISPEED     0x00000800U
+/* Dilithium 2 auth */
+# define SSL_aDILITHIUM2         0x00100000U
+/* Dilithium 3 auth */
+# define SSL_aDILITHIUM3         0x00200000U
+/* Dilithium 4 auth */
+# define SSL_aDILITHIUM4         0x00400000U
 /* ADD_MORE_OQS_SIG_HERE */
 /* OQS hybrid schemes */
 /* ECDSA P256 - Picnic L1 FS auth */
@@ -416,6 +422,9 @@
 # define SSL_PKEY_QTESLAI        10
 # define SSL_PKEY_QTESLAIIISIZE  11
 # define SSL_PKEY_QTESLAIIISPEED 12
+# define SSL_PKEY_DILITHIUM2     19
+# define SSL_PKEY_DILITHIUM3     20
+# define SSL_PKEY_DILITHIUM4     21
 /* ADD_MORE_OQS_SIG_HERE */
 /* OQS hybrid schemes */
 # define SSL_PKEY_P256_PICNICL1FS     13
@@ -425,7 +434,7 @@
 # define SSL_PKEY_P384_QTESLAIIISIZE  17
 # define SSL_PKEY_P384_QTESLAIIISPEED 18
 /* ADD_MORE_OQS_SIG_HERE */
-# define SSL_PKEY_NUM            19
+# define SSL_PKEY_NUM            22
 #else
 # define SSL_PKEY_NUM            9
 #endif
@@ -709,8 +718,8 @@
   (nid == NID_OQS_BIKE3_L1        ? OQS_KEM_alg_bike3_l1 : \
   (nid == NID_OQS_BIKE3_L3        ? OQS_KEM_alg_bike3_l3 : \
   (nid == NID_OQS_BIKE3_L5        ? OQS_KEM_alg_bike3_l5 : \
-  (nid == NID_OQS_NEWHOPE_512_CCA ? OQS_KEM_alg_newhope_512_cca_kem : \
-  (nid == NID_OQS_NEWHOPE_1024_CCA? OQS_KEM_alg_newhope_1024_cca_kem : \
+  (nid == NID_OQS_NEWHOPE_512_CCA ? OQS_KEM_alg_newhope_512cca : \
+  (nid == NID_OQS_NEWHOPE_1024_CCA? OQS_KEM_alg_newhope_1024cca : \
    OQS_ALG_NAME_NIST_BRANCH(nid) \
    ))))))))))))))))))
    /* ADD_MORE_OQS_KEM_HERE */
@@ -2379,6 +2388,9 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_qteslaI                                   0xfe01 /* private use code point */
 #define TLSEXT_SIGALG_qteslaIIIsize                             0xfe02 /* private use code point */
 #define TLSEXT_SIGALG_qteslaIIIspeed                            0xfe03 /* private use code point */
+#define TLSEXT_SIGALG_dilithium2                                0xfe10 /* private use code point */
+#define TLSEXT_SIGALG_dilithium3                                0xfe11 /* private use code point */
+#define TLSEXT_SIGALG_dilithium4                                0xfe12 /* private use code point */
 /* ADD_MORE_OQS_SIG_HERE */
 /* OQS hybrid schemes */
 #define TLSEXT_SIGALG_p256_picnicL1FS                           0xfe04 /* private use code point */

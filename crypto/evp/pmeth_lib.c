@@ -81,6 +81,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &p384_qteslaIIIsize_pkey_meth,
     &qteslaIIIspeed_pkey_meth,
     &p384_qteslaIIIspeed_pkey_meth,
+    &dilithium2_pkey_meth,
+    &dilithium3_pkey_meth,
+    &dilithium4_pkey_meth,
 #endif
 };
 
