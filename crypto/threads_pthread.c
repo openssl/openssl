@@ -166,7 +166,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
         *ret = __atomic_add_fetch(val, amount, __ATOMIC_ACQ_REL);
         return 1;
     }
-# elif defined(__sun)
+# elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
     if (ret != NULL) {
         *ret = atomic_add_int_nv((volatile unsigned int *)val, amount);
         return 1;
