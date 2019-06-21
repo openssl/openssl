@@ -10,6 +10,10 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 
+# if defined(__sun)
+#include <atomic.h>
+# endif
+
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_SYS_WINDOWS)
 
 # ifdef PTHREAD_RWLOCK_INITIALIZER
@@ -160,6 +164,11 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 # if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         *ret = __atomic_add_fetch(val, amount, __ATOMIC_ACQ_REL);
+        return 1;
+    }
+# elif defined(__sun)
+    if (ret != NULL) {
+        *ret = atomic_add_int_nv((volatile unsigned int *)val, amount);
         return 1;
     }
 # endif
