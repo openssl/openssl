@@ -132,6 +132,8 @@ static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(PKCS12_DECRYPT),
     TRACE_CATEGORY_(X509V3_POLICY),
     TRACE_CATEGORY_(BN_CTX),
+    TRACE_CATEGORY_(PROV),
+    TRACE_CATEGORY_(FETCH),
 };
 
 const char *OSSL_trace_get_category_name(int num)
@@ -223,9 +225,16 @@ static int set_trace_data(int category, int type, BIO **channel,
                           int (*attach_cb)(int, int, const void *),
                           int (*detach_cb)(int, int, const void *))
 {
-    BIO *curr_channel = trace_channels[category].bio;
-    char *curr_prefix = trace_channels[category].prefix;
-    char *curr_suffix = trace_channels[category].suffix;
+    BIO *curr_channel = NULL;
+    char *curr_prefix = NULL;
+    char *curr_suffix = NULL;
+
+    /* Ensure ossl_trace_init() is called */
+    OPENSSL_init_crypto(0, NULL);
+
+    curr_channel = trace_channels[category].bio;
+    curr_prefix = trace_channels[category].prefix;
+    curr_suffix = trace_channels[category].suffix;
 
     /* Make sure to run the detach callback first on all data */
     if (prefix != NULL && curr_prefix != NULL) {
