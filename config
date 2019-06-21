@@ -570,30 +570,6 @@ case "$GUESSOS" in
 	*)	OUT="linux-generic32";
 		__CNF_CPPFLAGS="$__CNF_CPPFLAGS -DB_ENDIAN" ;;
 	esac ;;
-  parisc*-*-linux2)
-	# 64-bit builds under parisc64 linux are not supported and
-	# compiler is expected to generate 32-bit objects...
-	CPUARCH=`awk '/cpu family/{print substr($5,1,3); exit(0);}' /proc/cpuinfo`
-	CPUSCHEDULE=`awk '/^cpu.[ 	]*: PA/{print substr($3,3); exit(0);}' /proc/cpuinfo`
-
-	# ??TODO ??  Model transformations
-	# 0. CPU Architecture for the 1.1 processor has letter suffixes. We strip that off
-	#    assuming no further arch. identification will ever be used by GCC.
-	# 1. I'm most concerned about whether is a 7300LC is closer to a 7100 versus a 7100LC.
-	# 2. The variant 64-bit processors cause concern should GCC support explicit schedulers
-	#    for these chips in the future.
-	#         PA7300LC -> 7100LC (1.1)
-	#         PA8200   -> 8000   (2.0)
-	#         PA8500   -> 8000   (2.0)
-	#         PA8600   -> 8000   (2.0)
-
-	CPUSCHEDULE=`echo $CPUSCHEDULE|sed -e 's/7300LC/7100LC/' -e 's/8.00/8000/'`
-	# Finish Model transformations
-
-	__CNF_CPPFLAGS="$__CNF_CPPFLAGS -DB_ENDIAN"
-	__CNF_CFLAGS="$__CNF_CFLAGS -mschedule=$CPUSCHEDULE -march=$CPUARCH"
-	__CNF_CXXFLAGS="$__CNF_CXXFLAGS -mschedule=$CPUSCHEDULE -march=$CPUARCH"
-	OUT="linux-generic32" ;;
   armv[1-3]*-*-linux2) OUT="linux-generic32" ;;
   armv[7-9]*-*-linux2) OUT="linux-armv4"
 		       __CNF_CFLAGS="$__CNF_CFLAGS -march=armv7-a"
@@ -734,9 +710,6 @@ case "$GUESSOS" in
 	OUT="vos-$CC" ;;
   BS2000-siemens-sysv4) OUT="BS2000-OSD" ;;
   *-hpux1*)
-	if [ $CC = "gcc" -a $GCC_BITS = "64" ]; then
-	    OUT="hpux64-parisc2-gcc"
-	fi
 	[ "$KERNEL_BITS" ] || KERNEL_BITS=`(getconf KERNEL_BITS) 2>/dev/null`
 	KERNEL_BITS=${KERNEL_BITS:-32}
 	CPU_VERSION=`(getconf CPU_VERSION) 2>/dev/null`
@@ -748,29 +721,10 @@ case "$GUESSOS" in
              else
 	        OUT="hpux-ia64-cc"
              fi
-	elif [ $CPU_VERSION -ge 532 ]; then	# PA-RISC 2.x CPU
-	     # PA-RISC 2.0 is no longer supported as separate 32-bit
-	     # target. This is compensated for by run-time detection
-	     # in most critical assembly modules and taking advantage
-	     # of 2.0 architecture in PA-RISC 1.1 build.
-	     OUT=${OUT:-"hpux-parisc1_1-${CC}"}
-	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
-		echo "WARNING! If you wish to build 64-bit library then you have to"
-		echo "         invoke '$THERE/Configure hpux64-parisc2-cc' *manually*."
-		if [ "$DRYRUN" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
-	     fi
-	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
-	     OUT="hpux-parisc1_1-${CC}"
-	elif [ $CPU_VERSION -ge 523 ]; then	# PA-RISC 1.0 CPU
-	     OUT="hpux-parisc-${CC}"
 	else					# Motorola(?) CPU
 	     OUT="hpux-$CC"
 	fi
 	__CNF_CPPFLAGS="$__CNF_CPPFLAGS -D_REENTRANT" ;;
-  *-hpux)	OUT="hpux-parisc-$CC" ;;
   *-aix)
 	[ "$KERNEL_BITS" ] || KERNEL_BITS=`(getconf KERNEL_BITMODE) 2>/dev/null`
 	KERNEL_BITS=${KERNEL_BITS:-32}

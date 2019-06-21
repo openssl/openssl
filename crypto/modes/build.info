@@ -27,11 +27,6 @@ IF[{- !$disabled{asm} -}]
   $MODESASM_aarch64=ghashv8-armx.S
   $MODESDEF_aarch64=
 
-  $MODESASM_parisc11=ghash-parisc.s
-  $MODESDEF_parisc11=GHASH_ASM
-  $MODESASM_parisc20_64=$MODESASM_parisc11
-  $MODESDEF_parisc20_64=$MODESDEF_parisc11
-
   $MODESASM_ppc32=ghashp8-ppc.s
   $MODESDEF_ppc32=
   $MODESASM_ppc64=$MODESASM_ppc32
@@ -65,7 +60,6 @@ GENERATE[aesni-gcm-x86_64.s]=asm/aesni-gcm-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[ghash-sparcv9.S]=asm/ghash-sparcv9.pl $(PERLASM_SCHEME)
 INCLUDE[ghash-sparcv9.o]=..
 GENERATE[ghash-alpha.S]=asm/ghash-alpha.pl $(PERLASM_SCHEME)
-GENERATE[ghash-parisc.s]=asm/ghash-parisc.pl $(PERLASM_SCHEME)
 GENERATE[ghashp8-ppc.s]=asm/ghashp8-ppc.pl $(PERLASM_SCHEME)
 GENERATE[ghash-armv4.S]=asm/ghash-armv4.pl $(PERLASM_SCHEME)
 INCLUDE[ghash-armv4.o]=..

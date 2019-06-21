@@ -33,11 +33,6 @@ IF[{- !$disabled{asm} -}]
   $AESASM_aarch64=aes_core.c aes_cbc.c aesv8-armx.S vpaes-armv8.S
   $AESDEF_aarch64=VPAES_ASM
 
-  $AESASM_parisc11=aes_core.c aes_cbc.c aes-parisc.s
-  $AESDEF_parisc11=AES_ASM
-  $AESASM_parisc20_64=$AESASM_parisc11
-  $AESDEF_parisc20_64=$AESDEF_parisc11
-
   $AESASM_ppc32=aes_core.c aes_cbc.c aes-ppc.s vpaes-ppc.s aesp8-ppc.s
   $AESDEF_ppc32=AES_ASM VPAES_ASM
   $AESASM_ppc64=$AESASM_ppc32
@@ -96,8 +91,6 @@ INCLUDE[aesfx-sparcv9.o]=..
 GENERATE[aes-ppc.s]=asm/aes-ppc.pl $(PERLASM_SCHEME)
 GENERATE[vpaes-ppc.s]=asm/vpaes-ppc.pl $(PERLASM_SCHEME)
 GENERATE[aesp8-ppc.s]=asm/aesp8-ppc.pl $(PERLASM_SCHEME)
-
-GENERATE[aes-parisc.s]=asm/aes-parisc.pl $(PERLASM_SCHEME)
 
 GENERATE[aes-mips.S]=asm/aes-mips.pl $(PERLASM_SCHEME)
 INCLUDE[aes-mips.o]=..

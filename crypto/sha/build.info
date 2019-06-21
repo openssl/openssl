@@ -31,11 +31,6 @@ IF[{- !$disabled{asm} -}]
   $SHA1ASM_aarch64=sha1-armv8.S sha256-armv8.S sha512-armv8.S
   $SHA1DEF_aarch64=SHA1_ASM SHA256_ASM SHA512_ASM
 
-  $SHA1ASM_parisc11=sha1-parisc.s sha256-parisc.s sha512-parisc.s
-  $SHA1DEF_parisc11=SHA1_ASM SHA256_ASM SHA512_ASM
-  $SHA1ASM_parisc20_64=$SHA1ASM_parisc11
-  $SHA1DEF_parisc20_64=$SHA1DEF_parisc11
-
   $SHA1ASM_ppc32=\
         sha1-ppc.s sha256-ppc.s sha512-ppc.s sha256p8-ppc.s sha512p8-ppc.s
   $SHA1DEF_ppc32=SHA1_ASM SHA256_ASM SHA512_ASM
@@ -116,10 +111,6 @@ GENERATE[sha512-ppc.s]=asm/sha512-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha256p8-ppc.s]=asm/sha512p8-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha512p8-ppc.s]=asm/sha512p8-ppc.pl $(PERLASM_SCHEME)
 GENERATE[keccak1600-ppc64.s]=asm/keccak1600-ppc64.pl $(PERLASM_SCHEME)
-
-GENERATE[sha1-parisc.s]=asm/sha1-parisc.pl $(PERLASM_SCHEME)
-GENERATE[sha256-parisc.s]=asm/sha512-parisc.pl $(PERLASM_SCHEME)
-GENERATE[sha512-parisc.s]=asm/sha512-parisc.pl $(PERLASM_SCHEME)
 
 GENERATE[sha1-mips.S]=asm/sha1-mips.pl $(PERLASM_SCHEME)
 INCLUDE[sha1-mips.o]=..

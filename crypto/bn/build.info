@@ -72,11 +72,6 @@ IF[{- !$disabled{asm} -}]
   $BNASM_aarch64=bn_asm.c armv8-mont.S
   $BNDEF_aarch64=OPENSSL_BN_ASM_MONT
 
-  $BNASM_parisc11=bn_asm.c parisc-mont.s
-  $BNDEF_parisc11=OPENSSL_BN_ASM_MONT
-  $BNASM_parisc20_64=$BNASM_parisc11
-  $BNDEF_parisc20_64=$BNDEF_parisc11
-
   $BNASM_ppc32=bn-ppc.s ppc-mont.s
   $BNDEF_ppc32=OPENSSL_BN_ASM_MONT
   $BNASM_ppc64=$BNASM_ppc32
@@ -156,8 +151,6 @@ GENERATE[rsaz-avx2.s]=asm/rsaz-avx2.pl $(PERLASM_SCHEME)
 
 GENERATE[bn-ia64.s]=asm/ia64.S
 GENERATE[ia64-mont.s]=asm/ia64-mont.pl $(LIB_CFLAGS) $(LIB_CPPFLAGS)
-
-GENERATE[parisc-mont.s]=asm/parisc-mont.pl $(PERLASM_SCHEME)
 
 # ppc - AIX, Linux, MacOS X...
 GENERATE[bn-ppc.s]=asm/ppc.pl $(PERLASM_SCHEME)
