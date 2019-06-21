@@ -223,9 +223,16 @@ static int set_trace_data(int category, int type, BIO **channel,
                           int (*attach_cb)(int, int, const void *),
                           int (*detach_cb)(int, int, const void *))
 {
-    BIO *curr_channel = trace_channels[category].bio;
-    char *curr_prefix = trace_channels[category].prefix;
-    char *curr_suffix = trace_channels[category].suffix;
+    BIO *curr_channel = NULL;
+    char *curr_prefix = NULL;
+    char *curr_suffix = NULL;
+
+    /* Ensure ossl_traace_init() is called */
+    OPENSSL_init_crypto(0, NULL);
+
+    curr_channel = trace_channels[category].bio;
+    curr_prefix = trace_channels[category].prefix;
+    curr_suffix = trace_channels[category].suffix;
 
     /* Make sure to run the detach callback first on all data */
     if (prefix != NULL && curr_prefix != NULL) {
