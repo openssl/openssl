@@ -197,7 +197,7 @@ Examples:
 Non-ASCII Email Address conforming the syntax defined in Section 3.3 of RFC 6531
 are provided as otherName.SmtpUTF8Mailbox. According to RFC 8398, the email
 adddress should be provided as UTF8String. To enforce the valid representation int
-the certificate, the SmtpUTF8Mailbox should be provided like
+the certificate, the SmtpUTF8Mailbox should be provided as follows
 
  subjectAltName=@alts
  [alts]
