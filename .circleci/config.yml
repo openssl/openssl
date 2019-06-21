@@ -57,3 +57,14 @@ workflows:
     jobs:
       - ssl-amd64-buster-liboqs-master-openssl-111
       - ssl-x86_64-xenial-liboqs-master-openssl-111
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - OQS-OpenSSL_1_1_1-stable
+    jobs:
+      - ssl-amd64-buster-liboqs-master-openssl-111
+      - ssl-x86_64-xenial-liboqs-master-openssl-111
