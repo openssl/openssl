@@ -1693,6 +1693,6 @@ MSRPQC 2 7                          : p384_qteslaIIIspeed : p384_qteslaIIIspeed
 
 # 1.3.6.1.4.1.772.1.2
 # iso(1) identified-organization(3) dod(6) internet(1) private(4) enterprise(1) 772 safecrypto(1) dilithium(2)
-1.3.6.1.4.1.772.1.2.2.2             : dilithium2 : dilithium2
-1.3.6.1.4.1.772.1.2.2.3             : dilithium3 : dilithium3
-1.3.6.1.4.1.772.1.2.2.4             : dilithium4 : dilithium4
+1 3 6 1 4 1 772 1 2 2 2             : dilithium2 : dilithium2
+1 3 6 1 4 1 772 1 2 2 3             : dilithium3 : dilithium3
+1 3 6 1 4 1 772 1 2 2 4             : dilithium4 : dilithium4

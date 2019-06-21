@@ -1090,7 +1090,7 @@ static const unsigned char so[7921] = {
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x07,  /* [ 7876] OBJ_p384_qteslaIIIspeed */
     0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x02,  /* [ 7887] OBJ_dilithium2 */
     0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x03,  /* [ 7898] OBJ_dilithium3 */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x04,  /* [ 7909] OBJ_dilithium4 */   
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x04,  /* [ 7909] OBJ_dilithium4 */
 };
 
 #define NUM_NID 1210
@@ -2714,6 +2714,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      939,    /* "dhSinglePass-stdDH-sha384kdf-scheme" */
      940,    /* "dhSinglePass-stdDH-sha512kdf-scheme" */
      920,    /* "dhpublicnumber" */
+    1207,    /* "dilithium2" */
+    1208,    /* "dilithium3" */
+    1209,    /* "dilithium4" */
      382,    /* "directory" */
      887,    /* "distinguishedName" */
      892,    /* "dmdName" */
@@ -3247,9 +3250,6 @@ static const unsigned int sn_objs[NUM_SN] = {
     1200,    /* "qteslaI" */
     1203,    /* "qteslaIIIsize" */
     1205,    /* "qteslaIIIspeed" */
-    1207,    /* "dilithium2" */
-    1208,    /* "dilithium3" */
-    1209,    /* "dilithium4" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
      870,    /* "registeredAddress" */
@@ -3948,6 +3948,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      938,    /* "dhSinglePass-stdDH-sha256kdf-scheme" */
      939,    /* "dhSinglePass-stdDH-sha384kdf-scheme" */
      940,    /* "dhSinglePass-stdDH-sha512kdf-scheme" */
+    1207,    /* "dilithium2" */
+    1208,    /* "dilithium3" */
+    1209,    /* "dilithium4" */
       11,    /* "directory services (X.500)" */
      378,    /* "directory services - algorithms" */
      887,    /* "distinguishedName" */
@@ -4432,9 +4435,6 @@ static const unsigned int ln_objs[NUM_LN] = {
     1200,    /* "qteslaI" */
     1203,    /* "qteslaIIIsize" */
     1205,    /* "qteslaIIIspeed" */
-    1207,    /* "dilithium2" */
-    1208,    /* "dilithium3" */
-    1209,    /* "dilithium4" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
       98,    /* "rc2-40-cbc" */
@@ -5789,9 +5789,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1204,    /* OBJ_p384_qteslaIIIsize           1 3 6 1 4 1 311 89 2 2 5 */
     1205,    /* OBJ_qteslaIIIspeed               1 3 6 1 4 1 311 89 2 2 6 */
     1206,    /* OBJ_p384_qteslaIIIspeed          1 3 6 1 4 1 311 89 2 2 7 */
-    1207,    /* OBJ_dilithium2                   1 3 6 1 4 1 772  1 2 2 2 */
-    1208,    /* OBJ_dilithium3                   1 3 6 1 4 1 772  1 2 2 3 */
-    1209,    /* OBJ_dilithium4                   1 3 6 1 4 1 772  1 2 2 4 */    
+    1207,    /* OBJ_dilithium2                   1 3 6 1 4 1 772 1 2 2 2 */
+    1208,    /* OBJ_dilithium3                   1 3 6 1 4 1 772 1 2 2 3 */
+    1209,    /* OBJ_dilithium4                   1 3 6 1 4 1 772 1 2 2 4 */
     1056,    /* OBJ_blake2b512                   1 3 6 1 4 1 1722 12 2 1 16 */
     1057,    /* OBJ_blake2s256                   1 3 6 1 4 1 1722 12 2 2 8 */
     1159,    /* OBJ_dstu4145be                   1 2 804 2 1 1 1 1 3 1 1 1 1 */
