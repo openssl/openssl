@@ -219,7 +219,7 @@ of the built in macro B<MODULESDIR>.
 =head1 RETURN VALUES
 
 ossl_provider_find() and ossl_provider_new() return a pointer to a
-provider object (I<OSSL_PROVIDER>) on success, or B<NULL> on error.
+provider object (I<OSSL_PROVIDER>) on success, or NULL on error.
 
 ossl_provider_upref() returns the value of the reference count after
 it has been incremented.
@@ -231,14 +231,14 @@ ossl_provider_activate() return 1 on success, or 0 on error.
 
 ossl_provider_name(), ossl_provider_dso(),
 ossl_provider_module_name(), and ossl_provider_module_path() return a
-pointer to their respective data if it's available, otherwise B<NULL>
+pointer to their respective data if it's available, otherwise NULL
 is returned.
 
 ossl_provider_teardown() doesnt't return any value.
 
 ossl_provider_get_param_types() returns a pointer to an I<OSSL_ITEM>
 array if this function is available in the provider, otherwise
-B<NULL>.
+NULL.
 
 ossl_provider_get_params() returns 1 on success, or 0 on error.
 If this function isn't available in the provider, 0 is returned.
