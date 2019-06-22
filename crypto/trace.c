@@ -132,8 +132,6 @@ static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(PKCS12_DECRYPT),
     TRACE_CATEGORY_(X509V3_POLICY),
     TRACE_CATEGORY_(BN_CTX),
-    TRACE_CATEGORY_(PROV),
-    TRACE_CATEGORY_(FETCH),
 };
 
 const char *OSSL_trace_get_category_name(int num)
