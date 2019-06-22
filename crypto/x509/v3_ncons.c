@@ -606,7 +606,7 @@ static int nc_email_eai(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
 {
     const char *baseptr = (char *)base->data;
     const char *emlptr = (char *)eml->data;
-    const char *emlat = strchr(emlptr, '@');
+    const char *emlat = strrchr(emlptr, '@');
 
     char ulabel[256];
     size_t size = sizeof(ulabel) - 1;
@@ -622,8 +622,8 @@ static int nc_email_eai(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
         if (a2ulabel(baseptr, ulabel + 1, &size) <= 0)
             return X509_V_ERR_UNSPECIFIED;
 
-        if (size + 1 > eml->length) {
-            emlptr += size + 1 - base->length;
+        if (eml->length > size + 1) {
+            emlptr += eml->length - (size + 1);
             if (ia5casecmp(ulabel, emlptr) == 0)
                 return X509_V_OK;
         }
@@ -646,8 +646,8 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
     const char *baseptr = (char *)base->data;
     const char *emlptr = (char *)eml->data;
 
-    const char *baseat = strchr(baseptr, '@');
-    const char *emlat = strchr(emlptr, '@');
+    const char *baseat = strrchr(baseptr, '@');
+    const char *emlat = strrchr(emlptr, '@');
     if (!emlat)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
     /* Special case: initial '.' is RHS match */
