@@ -127,13 +127,14 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                 if ((j = i2a_ASN1_OBJECT(bp, aobj)) > 0) {
                     ii = 0;
                     count = X509_ATTRIBUTE_count(a);
+                    if (count == 0) {
+                      X509err(X509_F_X509_REQ_PRINT_EX, X509_R_INVALID_ATTRIBUTES);
+                      return 0;
+                    }
  get_next:
                     at = X509_ATTRIBUTE_get0_type(a, ii);
-                    if (at != NULL) {
-                        type = at->type;
-                        bs = at->value.asn1_string;
-                    } else
-                        type = 0;
+                    type = at->type;
+                    bs = at->value.asn1_string;
                 }
                 for (j = 25 - j; j > 0; j--)
                     if (BIO_write(bp, " ", 1) != 1)
