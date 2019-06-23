@@ -3,10 +3,16 @@
 =head1 NAME
 
 OSSL_trace_enabled, OSSL_trace_begin, OSSL_trace_end,
-OSSL_TRACE_BEGIN, OSSL_TRACE_END, OSSL_TRACE1, OSSL_TRACE2, OSSL_TRACE9
+OSSL_TRACE_BEGIN, OSSL_TRACE_END, OSSL_TRACE_CANCEL,
+OSSL_TRACE, OSSL_TRACE1, OSSL_TRACE2, OSSL_TRACE3, OSSL_TRACE4,
+OSSL_TRACE5, OSSL_TRACE6, OSSL_TRACE7, OSSL_TRACE8, OSSL_TRACE9,
+OSSL_TRACEV,
+OSSL_TRACE_ENABLED
 - OpenSSL Tracing API
 
 =head1 SYNOPSIS
+
+=for comment generic
 
  #include <openssl/trace.h>
 
@@ -17,7 +23,13 @@ OSSL_TRACE_BEGIN, OSSL_TRACE_END, OSSL_TRACE1, OSSL_TRACE2, OSSL_TRACE9
 
  /* trace group macros */
  OSSL_TRACE_BEGIN(category) {
-    ...
+     ...
+     if (some_error) {
+         /* Leave trace group prematurely in case of an error */
+         OSSL_TRACE_CANCEL(category);
+         goto err;
+     }
+     ...
  } OSSL_TRACE_END(category);
 
  /* one-shot trace macros */
@@ -26,6 +38,10 @@ OSSL_TRACE_BEGIN, OSSL_TRACE_END, OSSL_TRACE1, OSSL_TRACE2, OSSL_TRACE9
  ...
  OSSL_TRACE9(category, format, arg1, ..., arg9)
 
+ /* check whether a trace category is enabled */
+ if (OSSL_TRACE_ENABLED(category)) {
+     ...
+ }
 
 =head1 DESCRIPTION
 
@@ -113,7 +129,7 @@ jumping out of a trace section:
 
  OSSL_TRACE_BEGIN(TLS) {
 
-     if (condition) {
+     if (some_error) {
          OSSL_TRACE_CANCEL(TLS);
          goto err;
      }
@@ -126,7 +142,7 @@ This will normally expand to:
  do {
      BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_TLS);
      if (trc_out != NULL) {
-         if (condition) {
+         if (some_error) {
              OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trc_out);
              goto err;
          }
@@ -136,26 +152,71 @@ This will normally expand to:
  } while (0);
 
 
-C<OSSL_TRACE1()>, ... C<OSSL_TRACE9()> are one-shot macros which essentially wrap
-a single BIO_printf() into a tracing group.
+C<OSSL_TRACE()> and C<OSSL_TRACE1()>, C<OSSL_TRACE1()>, ... C<OSSL_TRACE9()> are
+so-called one-shot macros:
 
-The call OSSL_TRACEn(category, format, arg1, ..., argN) expands to:
+The macro call C<OSSL_TRACE(category, text)>, produces literal text trace output.
 
-  OSSL_TRACE_BEGIN(category) {
-    BIO_printf(trc_out, format, arg1, ..., argN)
-  } OSSL_TRACE_END(category)
+The macro call C<OSSL_TRACEn(category, format, ...arg1, ..., argn)> produces
+printf-style trace output with n format field arguments (n=1,...9).
+It expands to:
+
+ OSSL_TRACE_BEGIN(category) {
+     BIO_printf(trc_out, format, arg1, ..., argN)
+ } OSSL_TRACE_END(category)
+
+Internally, all one-shot macros are implemented using a generic C<OSSL_TRACEV()>
+macro, since C90 does not support variadic macros. This helper macro has a rather
+weird synopsis and is not intended to be used directly.
+
+The C<OSSL_TRACE_ENABLED(category)> macro can be used to conditionally execute
+some code only if a specific trace category is enabled.
+In some situations this is simpler than entering a trace section using
+C<OSSL_TRACE_BEGIN(category)> and C<OSSL_TRACE_END(category)>.
+For example, the code
+
+ if (OSSL_TRACE_ENABLED(TLS)) {
+     ...
+ }
+
+expands to
+
+ if (OSSL_trace_enabled(OSSL_TRACE_CATEGORY_TLS) {
+     ...
+ }
 
 =head1 NOTES
 
-It is advisable to always check that a trace type is enabled with
-OSSL_trace_enabled() before generating any output, for example:
+If producing the trace output requires carrying out auxiliary calculations,
+this auxiliary code should be placed inside a conditional block which is
+executed only if the trace category is enabled.
 
-    if (OSSL_trace_enabled(OSSL_TRACE_CATEGORY_TLS)) {
-        BIO *trace = OSSL_trace_begin(OSSL_TRACE_CATEGORY_TLS);
-        BIO_printf(trace, "FOO %d\n", somevalue);
-        BIO_dump(trace, somememory, somememory_l);
-        OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trace);
-    }
+The most natural way to do this is to place the code inside the trace section
+itself because it already introduces such a conditional block.
+
+ OSSL_TRACE_BEGIN(TLS) {
+     int var = do_some_auxiliary_calculation();
+
+     BIO_printf(trc_out, "var = %d\n", var);
+
+ } OSSL_TRACE_END(TLS);
+
+In some cases it is more advantageous to use a simple conditional group instead
+of a trace section. This is the case if calculations and tracing happen in
+different locations of the code, or if the calculations are so time consuming
+that placing them inside a (critical) trace section would create too much
+contention.
+
+ if (OSSL_TRACE_ENABLED(TLS)) {
+     int var = do_some_auxiliary_calculation();
+
+     OSSL_TRACE1("var = %d\n", var);
+ }
+
+Note however that premature optimization of tracing code is in general futile
+and it's better to keep the tracing code as simple as possible.
+Because most often the limiting factor for the application's speed is the time
+it takes to print the trace output, not to calculate it.
 
 =head2 Configure Tracing
 
