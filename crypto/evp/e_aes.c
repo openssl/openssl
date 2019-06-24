@@ -59,12 +59,6 @@ typedef struct {
                     const unsigned char iv[16]);
 } EVP_AES_XTS_CTX;
 
-#ifdef FIPS_MODE
-static const int allow_insecure_decrypt = 0;
-#else
-static const int allow_insecure_decrypt = 1;
-#endif
-
 typedef struct {
     union {
         double align;
@@ -396,7 +390,6 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     if (key) {
         /* The key is two half length keys in reality */
         const int bytes = EVP_CIPHER_CTX_key_length(ctx) / 2;
-        const int bits = bytes * 8;
 
         /*
          * Verify that the two keys are different.
@@ -404,8 +397,7 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * This addresses Rogaway's vulnerability.
          * See comment in aes_xts_init_key() below.
          */
-        if ((!allow_insecure_decrypt || enc)
-                && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
+        if (enc && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
             EVPerr(EVP_F_AESNI_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
@@ -825,8 +817,7 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * This addresses Rogaway's vulnerability.
          * See comment in aes_xts_init_key() below.
          */
-        if ((!allow_insecure_decrypt || enc)
-                && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
+        if (enc && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
             EVPerr(EVP_F_AES_T4_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
@@ -3360,7 +3351,6 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         do {
             /* The key is two half length keys in reality */
             const int bytes = EVP_CIPHER_CTX_key_length(ctx) / 2;
-            const int bits = bytes * 8;
 
             /*
              * Verify that the two keys are different.
@@ -3378,8 +3368,7 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              *       BEFORE using the keys in the XTS-AES algorithm to process
              *       data with them."
              */
-            if ((!allow_insecure_decrypt || enc)
-                    && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
+            if (enc && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
                 EVPerr(EVP_F_AES_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
                 return 0;
             }
