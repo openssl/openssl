@@ -162,7 +162,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-# if !OPENSSL_API_1_1_0 || defined(FIPS_MODE)
+# if !OPENSSL_API_1_1_0 && !defined(FIPS_MODE)
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     RAND_poll();
