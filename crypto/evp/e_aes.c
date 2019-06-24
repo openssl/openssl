@@ -7,18 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+#include <assert.h>
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <string.h>
-#include <assert.h>
 #include <openssl/aes.h>
-#include "internal/evp_int.h"
-#include "internal/cryptlib.h"
-#include "modes_lcl.h"
 #include <openssl/rand.h>
 #include <openssl/cmac.h>
+#include "internal/evp_int.h"
+#include "internal/cryptlib.h"
+#include "internal/modes_int.h"
+#include "modes_lcl.h"
 #include "evp_locl.h"
 
 typedef struct {
