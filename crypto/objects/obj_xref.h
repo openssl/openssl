@@ -89,6 +89,9 @@ static const nid_triple sigoid_srt[] = {
     {NID_p384_qteslaIIIsize, NID_undef, NID_p384_qteslaIIIsize},
     {NID_qteslaIIIspeed, NID_undef, NID_qteslaIIIspeed},
     {NID_p384_qteslaIIIspeed, NID_undef, NID_p384_qteslaIIIspeed},
+    {NID_dilithium2, NID_undef, NID_dilithium2},
+    {NID_dilithium3, NID_undef, NID_dilithium3},
+    {NID_dilithium4, NID_undef, NID_dilithium4},
 };
 
 static const nid_triple *const sigoid_srt_xref[] = {

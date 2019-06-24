@@ -244,7 +244,7 @@ The TLS 1.3 key exchange integration is done at the TLS layer (start looking in 
 
 To add a new algorithm <NEWALG> with OID <NEWOID>:
 
-1. Define `<NEWOID>` in `crypto/objects/objects.txt`, add `<NEWALG>` to `crypto/objects/obj_mac.num`, incrementing the last NID value, and run `make generate_crypto_objects` to re-generate objects-related files (`obj_dat.h`, `obj_mac.num`, `obj_mac.h`)
+1. Define `<NEWOID>` in `crypto/objects/objects.txt` and `crypto/objects/obj_xref.txt`, add `<NEWALG>` to `crypto/objects/obj_mac.num`, incrementing the last NID value, and run `make generate_crypto_objects` to re-generate objects-related files (`obj_dat.h`, `obj_mac.num`, `obj_mac.h`)
 2. Run `grep -r ADD_MORE_OQS_SIG_HERE` and add new code following the example of other OQS schemes.
 
 License
