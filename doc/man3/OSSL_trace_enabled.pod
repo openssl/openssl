@@ -152,7 +152,7 @@ This will normally expand to:
  } while (0);
 
 
-C<OSSL_TRACE()> and C<OSSL_TRACE1()>, C<OSSL_TRACE1()>, ... C<OSSL_TRACE9()> are
+C<OSSL_TRACE()> and C<OSSL_TRACE1()>, C<OSSL_TRACE2()>, ... C<OSSL_TRACE9()> are
 so-called one-shot macros:
 
 The macro call C<OSSL_TRACE(category, text)>, produces literal text trace output.
@@ -167,7 +167,7 @@ It expands to:
 
 Internally, all one-shot macros are implemented using a generic C<OSSL_TRACEV()>
 macro, since C90 does not support variadic macros. This helper macro has a rather
-weird synopsis and is not intended to be used directly.
+weird synopsis and should not be used directly.
 
 The C<OSSL_TRACE_ENABLED(category)> macro can be used to conditionally execute
 some code only if a specific trace category is enabled.
