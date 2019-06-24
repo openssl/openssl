@@ -131,7 +131,7 @@ Individual OSSL_PARAM structures must be looked up by name.
 
 =back
 
-=head1 EXAMPLES
+=head1 EXAMPLE
 
 This example creates an array of OSSL_PARAM containing two structures.
 One is a UTF8 string of length 32 which is named I<foo>.
