@@ -23,7 +23,7 @@ static int mdc2_set_params(void *vctx, const OSSL_PARAM params[])
     MDC2_CTX *ctx = (MDC2_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_PAD_TYPE);
+        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_PAD_TYPE);
         if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->pad_type))
             return 0;
         return 1;

@@ -48,7 +48,7 @@ static int test_mdc2(void)
     OSSL_PARAM params[2];
 
     params[i++] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
-                                           &pad_type, NULL),
+                                           &pad_type),
     params[i++] = OSSL_PARAM_construct_end();
 
     prov = OSSL_PROVIDER_load(NULL, "legacy");
