@@ -4783,12 +4783,12 @@ OSSL_PARAM_set_octet_ptr                4730	3_0_0	EXIST::FUNCTION:
 X509_set0_sm2_id                        4731	3_0_0	EXIST::FUNCTION:SM2
 X509_get0_sm2_id                        4732	3_0_0	EXIST::FUNCTION:SM2
 EVP_PKEY_get0_engine                    4733	3_0_0	EXIST::FUNCTION:ENGINE
-EVP_MD_upref                            4734	3_0_0	EXIST::FUNCTION:
+EVP_MD_up_ref                           4734	3_0_0	EXIST::FUNCTION:
 EVP_MD_fetch                            4735	3_0_0	EXIST::FUNCTION:
 EVP_set_default_properties              4736	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_construct_end                4737	3_0_0	EXIST::FUNCTION:
 EC_GROUP_check_named_curve              4738	3_0_0	EXIST::FUNCTION:EC
-EVP_CIPHER_upref                        4739	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_up_ref                       4739	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_fetch                        4740	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_mode                         4741	3_0_0	EXIST::FUNCTION:
 OPENSSL_info                            4742	3_0_0	EXIST::FUNCTION:

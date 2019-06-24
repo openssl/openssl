@@ -499,7 +499,7 @@ EVP_CIPHER_do_all_sorted
 EVP_CIPHER_get_asn1_iv
 EVP_CIPHER_impl_ctx_size
 EVP_CIPHER_set_asn1_iv
-EVP_CIPHER_upref
+EVP_CIPHER_up_ref
 EVP_Cipher
 EVP_MAC_do_all
 EVP_MAC_do_all_sorted
