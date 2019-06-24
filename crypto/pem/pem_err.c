@@ -42,8 +42,6 @@ static const ERR_STRING_DATA PEM_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PEM, 0, PEM_R_NO_START_LINE), "no start line"},
     {ERR_PACK(ERR_LIB_PEM, 0, PEM_R_PROBLEMS_GETTING_PASSWORD),
     "problems getting password"},
-    {ERR_PACK(ERR_LIB_PEM, 0, PEM_R_PVK_DATA_TOO_SHORT), "pvk data too short"},
-    {ERR_PACK(ERR_LIB_PEM, 0, PEM_R_PVK_TOO_SHORT), "pvk too short"},
     {ERR_PACK(ERR_LIB_PEM, 0, PEM_R_READ_KEY), "read key"},
     {ERR_PACK(ERR_LIB_PEM, 0, PEM_R_SHORT_HEADER), "short header"},
     {ERR_PACK(ERR_LIB_PEM, 0, PEM_R_UNEXPECTED_DEK_IV), "unexpected dek iv"},

@@ -35,7 +35,6 @@
 # define FORMAT_PEMRSA  (9 | B_FORMAT_TEXT)     /* PEM RSAPublicKey format */
 # define FORMAT_ASN1RSA  10                     /* DER RSAPublicKey format */
 # define FORMAT_MSBLOB   11                     /* MS Key blob format */
-# define FORMAT_PVK      12                     /* MS PVK file format */
 # define FORMAT_HTTP     13                     /* Download using HTTP */
 # define FORMAT_NSS      14                     /* NSS keylog format */
 

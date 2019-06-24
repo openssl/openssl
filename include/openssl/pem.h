@@ -366,9 +366,9 @@ EVP_PKEY *b2i_PublicKey_bio(BIO *in);
 int i2b_PrivateKey_bio(BIO *out, EVP_PKEY *pk);
 int i2b_PublicKey_bio(BIO *out, EVP_PKEY *pk);
 #  ifndef OPENSSL_NO_RC4
-EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u);
-int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
-                pem_password_cb *cb, void *u);
+DEPRECATEDIN_3(EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u))
+DEPRECATEDIN_3(int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
+                               pem_password_cb *cb, void *u))
 #  endif
 # endif
 

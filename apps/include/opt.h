@@ -299,13 +299,12 @@ typedef struct string_int_pair_st {
 # define OPT_FMT_NSS             (1L <<  7)
 # define OPT_FMT_TEXT            (1L <<  8)
 # define OPT_FMT_HTTP            (1L <<  9)
-# define OPT_FMT_PVK             (1L << 10)
 # define OPT_FMT_PDE     (OPT_FMT_PEMDER | OPT_FMT_ENGINE)
 # define OPT_FMT_PDS     (OPT_FMT_PEMDER | OPT_FMT_SMIME)
 # define OPT_FMT_ANY     ( \
         OPT_FMT_PEMDER | OPT_FMT_PKCS12 | OPT_FMT_SMIME | \
         OPT_FMT_ENGINE | OPT_FMT_MSBLOB | OPT_FMT_NSS   | \
-        OPT_FMT_TEXT   | OPT_FMT_HTTP   | OPT_FMT_PVK)
+        OPT_FMT_TEXT   | OPT_FMT_HTTP   )
 
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);

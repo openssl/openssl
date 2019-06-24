@@ -608,8 +608,6 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA) && !defined (OPENSSL_NO_RC4)
     } else if (format == FORMAT_MSBLOB) {
         pkey = b2i_PrivateKey_bio(key);
-    } else if (format == FORMAT_PVK) {
-        pkey = b2i_PVK_bio(key, wrap_password_callback, &cb_data);
 #endif
     } else {
         BIO_printf(bio_err, "bad input format specified for key file\n");

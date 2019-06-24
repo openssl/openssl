@@ -177,7 +177,6 @@ static OPT_PAIR formats[] = {
     {"nss", OPT_FMT_NSS},
     {"text", OPT_FMT_TEXT},
     {"http", OPT_FMT_HTTP},
-    {"pvk", OPT_FMT_PVK},
     {NULL}
 };
 
@@ -260,10 +259,6 @@ int opt_format(const char *s, unsigned long flags, int *result)
             if ((flags & OPT_FMT_PEMDER) == 0)
                 return opt_format_error(s, flags);
             *result = FORMAT_PEM;
-        } else if (strcmp(s, "PVK") == 0 || strcmp(s, "pvk") == 0) {
-            if ((flags & OPT_FMT_PVK) == 0)
-                return opt_format_error(s, flags);
-            *result = FORMAT_PVK;
         } else if (strcmp(s, "P12") == 0 || strcmp(s, "p12") == 0
                    || strcmp(s, "PKCS12") == 0 || strcmp(s, "pkcs12") == 0) {
             if ((flags & OPT_FMT_PKCS12) == 0)

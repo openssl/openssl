@@ -93,8 +93,6 @@ int ERR_load_PEM_strings(void);
 # define PEM_R_NOT_PROC_TYPE                              107
 # define PEM_R_NO_START_LINE                              108
 # define PEM_R_PROBLEMS_GETTING_PASSWORD                  109
-# define PEM_R_PVK_DATA_TOO_SHORT                         124
-# define PEM_R_PVK_TOO_SHORT                              125
 # define PEM_R_READ_KEY                                   111
 # define PEM_R_SHORT_HEADER                               112
 # define PEM_R_UNEXPECTED_DEK_IV                          130

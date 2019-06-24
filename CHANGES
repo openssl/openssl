@@ -57,6 +57,11 @@
      variables, only functions.
      [Rich Salz]
 
+  *) Remove support for PVK files.  At the time of this change, Microsoft had
+     a free PVK to PFX conversion tool available at
+     https://docs.microsoft.com/en-us/windows-hardware/drivers/devtest/pvk2pfx
+     [Rich Salz]
+
   *) RC5_32_set_key has been changed to return an int type, with 0 indicating
      an error and 1 indicating success. In previous versions of OpenSSL this
      was a void type. If a key was set longer than the maximum possible this

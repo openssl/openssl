@@ -29,16 +29,14 @@ NON_EMPTY_TRANSLATION_UNIT
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENGINE,
-    /* Do not change the order here; see case statements below */
-    OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
     OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_PUBIN,
     OPT_PUBOUT, OPT_CIPHER, OPT_PASSIN, OPT_PASSOUT
 } OPTION_CHOICE;
 
 const OPTIONS dsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
-    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
+    {"inform", OPT_INFORM, 'f', "Input format, DER PEM"},
+    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM"},
     {"in", OPT_IN, 's', "Input key"},
     {"out", OPT_OUT, '>', "Output file"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
@@ -49,11 +47,6 @@ const OPTIONS dsa_options[] = {
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
-# ifndef OPENSSL_NO_RC4
-    {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
-    {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
-    {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
-# endif
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
@@ -71,9 +64,6 @@ int dsa_main(int argc, char **argv)
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
     int i, modulus = 0, pubin = 0, pubout = 0, ret = 1;
-# ifndef OPENSSL_NO_RC4
-    int pvk_encr = 2;
-# endif
     int private = 0;
 
     prog = opt_init(argc, argv, dsa_options);
@@ -111,13 +101,6 @@ int dsa_main(int argc, char **argv)
             break;
         case OPT_PASSOUT:
             passoutarg = opt_arg();
-            break;
-        case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
-        case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
-        case OPT_PVK_NONE:      /* pvk_encr:= 0 */
-#ifndef OPENSSL_NO_RC4
-            pvk_encr = (o - OPT_PVK_NONE);
-#endif
             break;
         case OPT_NOOUT:
             noout = 1;
@@ -215,28 +198,14 @@ int dsa_main(int argc, char **argv)
                                             NULL, 0, NULL, passout);
         }
 # ifndef OPENSSL_NO_RSA
-    } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
+    } else if (outformat == FORMAT_MSBLOB) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
         if (pk == NULL)
            goto end;
 
         EVP_PKEY_set1_DSA(pk, dsa);
-        if (outformat == FORMAT_PVK) {
-            if (pubin) {
-                BIO_printf(bio_err, "PVK form impossible with public key input\n");
-                EVP_PKEY_free(pk);
-                goto end;
-            }
-            assert(private);
-#  ifdef OPENSSL_NO_RC4
-            BIO_printf(bio_err, "PVK format not supported\n");
-            EVP_PKEY_free(pk);
-            goto end;
-#  else
-            i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
-#  endif
-        } else if (pubin || pubout) {
+        if (pubin || pubout) {
             i = i2b_PublicKey_bio(out, pk);
         } else {
             assert(private);

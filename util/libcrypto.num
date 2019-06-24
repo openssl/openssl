@@ -1,5 +1,5 @@
 d2i_EC_PUBKEY                           1	3_0_0	EXIST::FUNCTION:EC
-b2i_PVK_bio                             2	3_0_0	EXIST::FUNCTION:DSA,RC4
+b2i_PVK_bio                             2	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3,DSA,RC4
 PEM_read_bio_NETSCAPE_CERT_SEQUENCE     3	3_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_chain               4	3_0_0	EXIST::FUNCTION:
 COMP_expand_block                       5	3_0_0	EXIST::FUNCTION:COMP
@@ -2750,7 +2750,7 @@ ENGINE_register_all_DH                  2809	3_0_0	EXIST::FUNCTION:ENGINE
 ERR_clear_error                         2810	3_0_0	EXIST::FUNCTION:
 EC_KEY_dup                              2811	3_0_0	EXIST::FUNCTION:EC
 X509_LOOKUP_init                        2812	3_0_0	EXIST::FUNCTION:
-i2b_PVK_bio                             2813	3_0_0	EXIST::FUNCTION:DSA,RC4
+i2b_PVK_bio                             2813	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3,DSA,RC4
 OCSP_ONEREQ_free                        2814	3_0_0	EXIST::FUNCTION:OCSP
 X509V3_EXT_print_fp                     2815	3_0_0	EXIST::FUNCTION:STDIO
 OBJ_bsearch_ex_                         2816	3_0_0	EXIST::FUNCTION:
