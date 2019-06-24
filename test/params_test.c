@@ -304,7 +304,6 @@ static int app_p1;                    /* "p1" */
 static double app_p2;                 /* "p2" is ignored */
 static BIGNUM *app_p3 = NULL;         /* "p3" */
 static unsigned char bignumbin[4096]; /* "p3" */
-static size_t bignumbin_l;            /* "p3" */
 static char app_p4[256];              /* "p4" */
 static char app_p5[256];              /* "p5" */
 static const char *app_p6 = NULL;     /* "p6" */
@@ -336,7 +335,6 @@ static int init_app_variables(void)
     if (!BN_hex2bn(&app_p3, app_p3_init)
         || (l = BN_bn2nativepad(app_p3, bignumbin, sizeof(bignumbin))) < 0)
         return 0;
-    bignumbin_l = (size_t)l;
     strcpy(app_p4, app_p4_init);
     strcpy(app_p5, app_p5_init);
     app_p6 = app_p6_init;
@@ -458,7 +456,8 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
     if (!TEST_true(prov->get_params(obj, params))
         || !TEST_int_eq(app_p1, p1_init)        /* "provider" value */
         || !TEST_double_eq(app_p2, app_p2_init) /* Should remain untouched */
-        || !TEST_ptr(BN_native2bn(bignumbin, bignumbin_l, app_p3))
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "p3"))
+        || !TEST_ptr(BN_native2bn(bignumbin, p->return_size, app_p3))
         || !TEST_BN_eq(app_p3, verify_p3)       /* "provider" value */
         || !TEST_str_eq(app_p4, p4_init)        /* "provider" value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p5"))
@@ -507,7 +506,8 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
     if (!TEST_true(prov->get_params(obj, params))
         || !TEST_int_eq(app_p1, app_p1_init)    /* app value */
         || !TEST_double_eq(app_p2, app_p2_init) /* Should remain untouched */
-        || !TEST_ptr(BN_native2bn(bignumbin, bignumbin_l, app_p3))
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "p3"))
+        || !TEST_ptr(BN_native2bn(bignumbin, p->return_size, app_p3))
         || !TEST_BN_eq(app_p3, verify_p3)       /* app value */
         || !TEST_str_eq(app_p4, app_p4_init)    /* app value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p5"))
