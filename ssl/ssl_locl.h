@@ -709,8 +709,8 @@
   (nid == NID_OQS_BIKE3_L1        ? OQS_KEM_alg_bike3_l1 : \
   (nid == NID_OQS_BIKE3_L3        ? OQS_KEM_alg_bike3_l3 : \
   (nid == NID_OQS_BIKE3_L5        ? OQS_KEM_alg_bike3_l5 : \
-  (nid == NID_OQS_NEWHOPE_512_CCA ? OQS_KEM_alg_newhope_512_cca_kem : \
-  (nid == NID_OQS_NEWHOPE_1024_CCA? OQS_KEM_alg_newhope_1024_cca_kem : \
+  (nid == NID_OQS_NEWHOPE_512_CCA ? OQS_KEM_alg_newhope_512cca : \
+  (nid == NID_OQS_NEWHOPE_1024_CCA? OQS_KEM_alg_newhope_1024cca : \
    OQS_ALG_NAME_NIST_BRANCH(nid) \
    ))))))))))))))))))
    /* ADD_MORE_OQS_KEM_HERE */
