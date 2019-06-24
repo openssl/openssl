@@ -167,6 +167,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
         return 1;
     }
 # elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
+    /* This will work for all future Solaris versions. */
     if (ret != NULL) {
         *ret = atomic_add_int_nv((volatile unsigned int *)val, amount);
         return 1;
