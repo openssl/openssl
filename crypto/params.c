@@ -907,7 +907,7 @@ static void param_process(va_list ap, const char *name,
 
     for (; name != NULL; name = va_arg(ap, const char *)) {
         type = va_arg(ap, int);
-#define T(type, type_name, param_type) \
+#define T(param_type, type, type_name) \
     case OSSL_PARAM_TYPE_ ## type_name: { \
             type val = va_arg(ap, type); \
             \
@@ -915,16 +915,16 @@ static void param_process(va_list ap, const char *name,
             break; \
         }
         switch (type) {
-        T(int, int, INTEGER);
-        T(unsigned int, uint, UNSIGNED_INTEGER);
-        T(long, long, INTEGER);
-        T(unsigned long, ulong, UNSIGNED_INTEGER);
-        T(int32_t, int32, INTEGER);
-        T(uint32_t, uint32, UNSIGNED_INTEGER);
-        T(int64_t, int64, INTEGER);
-        T(uint64_t, uint64, UNSIGNED_INTEGER);
-        T(size_t, size_t, UNSIGNED_INTEGER);
-        T(double, double, REAL);
+        T(INTEGER, int, int);
+        T(UNSIGNED_INTEGER, unsigned int, uint);
+        T(INTEGER, long, long);
+        T(UNSIGNED_INTEGER, unsigned long, ulong);
+        T(INTEGER, int32_t, int32);
+        T(UNSIGNED_INTEGER, uint32_t, uint32);
+        T(INTEGER, int64_t, int64);
+        T(UNSIGNED_INTEGER, uint64_t, uint64);
+        T(UNSIGNED_INTEGER, size_t, size_t);
+        T(REAL, double, double);
 #undef T
         case OSSL_PARAM_TYPE_BN: {
             size_t len = va_arg(ap, size_t);
