@@ -1016,7 +1016,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
     *out = *in;
     out->provctx = NULL;
 
-    if (in->fetched_cipher != NULL && !EVP_CIPHER_upref(in->fetched_cipher)) {
+    if (in->fetched_cipher != NULL && !EVP_CIPHER_up_ref(in->fetched_cipher)) {
         out->fetched_cipher = NULL;
         return 0;
     }
@@ -1179,9 +1179,9 @@ static void *evp_cipher_from_dispatch(const OSSL_DISPATCH *fns,
     return cipher;
 }
 
-static int evp_cipher_upref(void *cipher)
+static int evp_cipher_up_ref(void *cipher)
 {
-    return EVP_CIPHER_upref(cipher);
+    return EVP_CIPHER_up_ref(cipher);
 }
 
 static void evp_cipher_free(void *cipher)
@@ -1194,7 +1194,7 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_CIPHER *cipher =
         evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
-                          evp_cipher_from_dispatch, evp_cipher_upref,
+                          evp_cipher_from_dispatch, evp_cipher_up_ref,
                           evp_cipher_free);
 
 #ifndef FIPS_MODE

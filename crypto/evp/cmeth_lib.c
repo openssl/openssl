@@ -60,7 +60,7 @@ void EVP_CIPHER_meth_free(EVP_CIPHER *cipher)
     }
 }
 
-int EVP_CIPHER_upref(EVP_CIPHER *cipher)
+int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 {
     int ref = 0;
 

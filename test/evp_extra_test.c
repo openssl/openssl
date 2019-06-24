@@ -1150,8 +1150,8 @@ static int test_EVP_MD_fetch(int tst)
             || !TEST_int_eq(EVP_MD_block_size(md), SHA256_CBLOCK))
         goto err;
 
-    /* Also test EVP_MD_upref() while we're doing this */
-    if (!TEST_true(EVP_MD_upref(md)))
+    /* Also test EVP_MD_up_ref() while we're doing this */
+    if (!TEST_true(EVP_MD_up_ref(md)))
         goto err;
     /* Ref count should now be 2. Release both */
     EVP_MD_meth_free(md);

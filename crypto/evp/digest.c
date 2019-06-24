@@ -422,7 +422,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     out->provctx = NULL;
 
     if (in->fetched_digest != NULL)
-        EVP_MD_upref(in->fetched_digest);
+        EVP_MD_up_ref(in->fetched_digest);
 
     out->provctx = in->digest->dupctx(in->provctx);
     if (out->provctx == NULL) {
@@ -665,9 +665,9 @@ static void *evp_md_from_dispatch(const OSSL_DISPATCH *fns,
     return md;
 }
 
-static int evp_md_upref(void *md)
+static int evp_md_up_ref(void *md)
 {
-    return EVP_MD_upref(md);
+    return EVP_MD_up_ref(md);
 }
 
 static void evp_md_free(void *md)
@@ -680,7 +680,7 @@ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_MD *md =
         evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-                          evp_md_from_dispatch, evp_md_upref,
+                          evp_md_from_dispatch, evp_md_up_ref,
                           evp_md_free);
 
 #ifndef FIPS_MODE

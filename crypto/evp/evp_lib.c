@@ -469,7 +469,7 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
     return to;
 }
 
-int EVP_MD_upref(EVP_MD *md)
+int EVP_MD_up_ref(EVP_MD *md)
 {
     int ref = 0;
 
