@@ -89,6 +89,20 @@ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
                                           size_t bsize);
 OSSL_PARAM OSSL_PARAM_construct_end(void);
 
+/* Run time construction including storage allocation */
+OSSL_PARAM OSSL_PARAM_allocate_int(const char *key, int value);
+OSSL_PARAM OSSL_PARAM_allocate_uint(const char *key, unsigned int value);
+OSSL_PARAM OSSL_PARAM_allocate_long(const char *key, long int value);
+OSSL_PARAM OSSL_PARAM_allocate_ulong(const char *key, unsigned long int value);
+OSSL_PARAM OSSL_PARAM_allocate_int32(const char *key, int32_t value);
+OSSL_PARAM OSSL_PARAM_allocate_uint32(const char *key, uint32_t value);
+OSSL_PARAM OSSL_PARAM_allocate_int64(const char *key, int64_t value);
+OSSL_PARAM OSSL_PARAM_allocate_uint64(const char *key, uint64_t value);
+OSSL_PARAM OSSL_PARAM_allocate_size_t(const char *key, size_t value);
+OSSL_PARAM OSSL_PARAM_allocate_double(const char *key, double value);
+
+int OSSL_PARAM_allocate_failed(const OSSL_PARAM *p);
+
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val);
 int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val);
 int OSSL_PARAM_get_long(const OSSL_PARAM *p, long int *val);
@@ -129,6 +143,7 @@ int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, const void **val,
                              size_t *used_len);
 int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                              size_t used_len);
+
 
 # ifdef  __cplusplus
 }
