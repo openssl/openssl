@@ -543,8 +543,36 @@ static int test_case(int i)
                                  test_cases[i].prov));
 }
 
+static int test_build(void) {
+    int i, res;
+    char buf[1024], *cp = buf;
+    OSSL_PARAM *p, *params =
+        OSSL_PARAM_build(
+            OSSL_PARAM_BUILD_int("p1", p1_init),
+            OSSL_PARAM_BUILD_BN("p3", NULL, sizeof(bignumbin)),
+            OSSL_PARAM_BUILD_utf8_string("p4", NULL, sizeof(app_p4)),
+            OSSL_PARAM_BUILD_utf8_string("p5", p5_init, 0),
+            OSSL_PARAM_BUILD_utf8_string("p6", p6_init, sizeof(app_p6_init)),
+            OSSL_PARAM_BUILD_octet_string("foo", &foo, sizeof(foo)),
+            NULL);
+
+    res = TEST_ptr(params)
+        && TEST_ptr(p = OSSL_PARAM_locate(params, "p1"))
+        && TEST_true(OSSL_PARAM_get_int(p, &i))
+        && TEST_int_eq(i, p1_init)
+        && TEST_ptr(p = OSSL_PARAM_locate(params, "p4"))
+        && TEST_true(OSSL_PARAM_get_utf8_string(p, &cp, sizeof(buf)))
+        && TEST_str_eq(buf, "")
+        && TEST_ptr(p = OSSL_PARAM_locate(params, "p5"))
+        && TEST_true(OSSL_PARAM_get_utf8_string(p, &cp, sizeof(buf)))
+        && TEST_str_eq(buf, p5_init);
+    OSSL_PARAM_build_free(params);
+    return res;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_case, OSSL_NELEM(test_cases));
+    ADD_TEST(test_build);
     return 1;
 }

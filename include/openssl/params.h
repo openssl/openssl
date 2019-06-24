@@ -130,6 +130,51 @@ int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, const void **val,
 int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                              size_t used_len);
 
+#define OSSL_PARAM_TYPE_int 1
+#define OSSL_PARAM_TYPE_uint 2
+#define OSSL_PARAM_TYPE_long 3
+#define OSSL_PARAM_TYPE_ulong 4
+#define OSSL_PARAM_TYPE_int32 5
+#define OSSL_PARAM_TYPE_uint32 6
+#define OSSL_PARAM_TYPE_int64 7
+#define OSSL_PARAM_TYPE_uint64 8
+#define OSSL_PARAM_TYPE_size_t 9
+#define OSSL_PARAM_TYPE_double 10
+#define OSSL_PARAM_TYPE_BN 11
+#define OSSL_PARAM_TYPE_utf8 12
+#define OSSL_PARAM_TYPE_octet 13
+
+OSSL_PARAM *OSSL_PARAM_build(const char *name, ...);
+void OSSL_PARAM_build_free(OSSL_PARAM *params);
+
+#define OSSL_PARAM_BUILD_int(name, value) \
+    (name), OSSL_PARAM_TYPE_int, (int)(value)
+#define OSSL_PARAM_BUILD_uint(name, value) \
+    (name), OSSL_PARAM_TYPE_uint, (unsigned int)(value)
+#define OSSL_PARAM_BUILD_long(name, value) \
+    (name), OSSL_PARAM_TYPE_long, (long int)(value)
+#define OSSL_PARAM_BUILD_ulong(name, value) \
+    (name), OSSL_PARAM_TYPE_ulong, (unsigned long int)(value)
+#define OSSL_PARAM_BUILD_int32(name, value) \
+    (name), OSSL_PARAM_TYPE_int32, (int32_t)(value)
+#define OSSL_PARAM_BUILD_uint32(name, value) \
+    (name), OSSL_PARAM_TYPE_uint32, (uint32_t)(value)
+#define OSSL_PARAM_BUILD_int64(name, value) \
+    (name), OSSL_PARAM_TYPE_int64, (int64_t)(value)
+#define OSSL_PARAM_BUILD_uint64(name, value) \
+    (name), OSSL_PARAM_TYPE_uint64, (uint64_t)(value)
+#define OSSL_PARAM_BUILD_size_t(name, value) \
+    (name), OSSL_PARAM_TYPE_size_t, (size_t)(value)
+#define OSSL_PARAM_BUILD_double(name, value) \
+    (name), OSSL_PARAM_TYPE_double, (double)(value)
+#define OSSL_PARAM_BUILD_BN(name, value, len) \
+    (name), OSSL_PARAM_TYPE_BN, (size_t)(len), (value)
+#define OSSL_PARAM_BUILD_utf8_string(name, value, len) \
+    (name), OSSL_PARAM_TYPE_utf8, (size_t)(len), (value)
+#define OSSL_PARAM_BUILD_octet_string(name, value, len) \
+    (name), OSSL_PARAM_TYPE_utf8, (size_t)(len), (value)
+
+
 # ifdef  __cplusplus
 }
 # endif

@@ -1,0 +1,191 @@
+=pod
+
+=head1 NAME
+
+OSSL_PARAM_build, OSSL_PARAM_build_free,
+OSSL_PARAM_BUILD_BN, OSSL_PARAM_BUILD_double,
+OSSL_PARAM_BUILD_int, OSSL_PARAM_BUILD_int32,
+OSSL_PARAM_BUILD_int64, OSSL_PARAM_BUILD_long,
+OSSL_PARAM_BUILD_size_t, OSSL_PARAM_BUILD_uint,
+OSSL_PARAM_BUILD_uint32, OSSL_PARAM_BUILD_uint64,
+OSSL_PARAM_BUILD_ulong, OSSL_PARAM_BUILD_BN,
+OSSL_PARAM_BUILD_utf8_string,
+OSSL_PARAM_BUILD_octet_string,
+- OSSL_PARAM array helpers
+
+=head1 SYNOPSIS
+
+=for comment generic
+
+ #include <openssl/params.h>
+
+ #define OSSL_PARAM_BUILD_TYPE(key, address)
+ #define OSSL_PARAM_BUILD_utf8_string(key, address, size)
+ #define OSSL_PARAM_BUILD_octet_string(key, address, size)
+ #define OSSL_PARAM_BUILD_BN(key, address, size)
+
+ OSSL_PARAM *OSSL_PARAM_build(const char *name, ..., NULL);
+ void OSSL_PARAM_build_free(OSSL_PARAM *params);
+
+=head1 DESCRIPTION
+
+A collection of utility functions that simplify building arrays of
+OSSL_PARAM structures.  The following B<TYPE> names are supported:
+
+=over 1
+
+=item *
+
+double
+
+=item *
+
+int
+
+=item *
+
+int32 (int32_t)
+
+=item *
+
+int64 (int64_t)
+
+=item *
+
+long int (long)
+
+=item *
+
+size_t
+
+=item *
+
+uint32 (uint32_t)
+
+=item *
+
+uint64 (uint64_t)
+
+=item *
+
+unsigned int (uint)
+
+=item *
+
+unsigned long int (ulong)
+
+=back
+
+OSSL_PARAM_BUILD_TYPE() are a series of macros designed to assist calling the
+OSSL_PARAM_build() function.
+In each case a parameter record is defined with the specified B<name> and
+B<value>.
+Each of these macros expands into a series of arguments appropriate for passing
+to the OSSL_PARAM_build() function which reduces the chance of parameters
+mistakes.
+Casts are also inserted to again reduce typing mistakes.
+
+OSSL_PARAM_BUILD_utf8_string(), OSSL_PARAM_BUILD_octet_string(),
+OSSL_PARAM_BUILD_BN() are macros that provide support
+for defining UTF8 strings, OCTET strings and big numbers.
+A parameter with B<name> is defined, storage of length B<len> is allocated and
+the B<value> copied.
+If the B<value> is NULL, the allocated memory will be zeroed.
+If B<len> is zero, the length will be calculated for
+OSSL_PARAM_BUILD_utf8_string() and OSSL_PARAM_BUILD_BN().
+For OSSL_PARAM_BUILD_octet_string() the length must be specified.
+
+OSSL_PARAM_build() allocates storage for and creates an array of OSSL_PARAM
+structures and their associated values.
+The parameter list must be terminated with a NULL.
+The order of the elements in the allocated OSSL_PARAM array are undefined.
+
+OSSL_PARAM_build_free() frees storage allocated for the B<params> array and
+the values the OSSL_PARAM structures reference.
+Only B<params> pointers returned from OSSL_PARAM_build() should be freed using
+this function.
+
+=head1 RETURN VALUES
+
+OSSL_PARAM_build() returns a populated OSSL_PARAM array, or NULL on failure.
+
+=head1 NOTES
+
+Using these functions introduces additional overhead when compared to raw
+OSSL_PARAM operations.
+
+=over 1
+
+=item *
+
+Memory for the array of OSSL_PARAM structures and the values referenced is
+dynamically allocated.
+
+=item *
+
+An extra copy is introduced for each value passed.
+
+=item *
+
+Individual OSSL_PARAM structures must be looked up by name.
+
+=back
+
+=head1 EXAMPLES
+
+This example creates an array of OSSL_PARAM containing two structures.
+One is a UTF8 string of length 32 which is named I<foo>.
+The other is an integer with the value 42.
+
+    #include <openssl/params.h>
+
+    OSSL_PARAM *params;
+    int bar_int;
+    char foo_buffer[1024];
+    char *foo_pointer = foo_buffer;
+    OSSL_PARAM *p;
+
+    /*
+     * Create the array containing the two parameter structures.
+     * It is automatically terminated with a third OSSL_PARAM_END structure.
+     */
+    params = OSSL_PARAM_build(
+        OSSL_PARAM_utf8_string("foo", NULL, 32),
+        OSSL_PARAM_int("bar", 42),
+        NULL
+    );
+
+    /*
+     * Read the values of the elements in the array.
+     */
+    p = OSSL_PARAM_locate(params, "bar");
+    if (p != NULL)
+        OSSL_PARAM_get_int(p, &bar_int);
+
+    p = OSSL_PARAM_locate(params, "foo");
+    if (p != NULL)
+        OSSL_PARAM_get_utf8_string("foo", &foo_pointer, sizeof(foo_buffer));
+
+    /*
+     * Clean up allocated memory.
+     */
+    OSSL_PARAM_build_free(params);
+
+=head1 SEE ALSO
+
+L<openssl-core.h(7)>, L<OSSL_PARAM(3)>, L<OSSL_PARAM_build(3)>
+
+=head1 HISTORY
+
+These APIs were introduced in OpenSSL 3.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

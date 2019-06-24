@@ -9,8 +9,10 @@
  */
 
 #include <string.h>
+#include <stdarg.h>
 #include <openssl/params.h>
 #include "internal/thread_once.h"
+#include "internal/cryptlib.h"
 
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
@@ -894,4 +896,153 @@ OSSL_PARAM OSSL_PARAM_construct_end(void)
     OSSL_PARAM end = OSSL_PARAM_END;
 
     return end;
+}
+
+static void param_process(va_list ap, const char *name,
+                          void (*f)(const char *name, int type, size_t len,
+                                    const void *value, void *arg, int bignum),
+                          void *arg)
+{
+    int type;
+
+    for (; name != NULL; name = va_arg(ap, const char *)) {
+        type = va_arg(ap, int);
+#define T(type, type_name, param_type) \
+    case OSSL_PARAM_TYPE_ ## type_name: { \
+            type val = va_arg(ap, type); \
+            \
+            f(name, OSSL_PARAM_ ## param_type, sizeof(val), &val, arg, 0); \
+            break; \
+        }
+        switch (type) {
+        T(int, int, INTEGER);
+        T(unsigned int, uint, UNSIGNED_INTEGER);
+        T(long, long, INTEGER);
+        T(unsigned long, ulong, UNSIGNED_INTEGER);
+        T(int32_t, int32, INTEGER);
+        T(uint32_t, uint32, UNSIGNED_INTEGER);
+        T(int64_t, int64, INTEGER);
+        T(uint64_t, uint64, UNSIGNED_INTEGER);
+        T(size_t, size_t, UNSIGNED_INTEGER);
+        T(double, double, REAL);
+#undef T
+        case OSSL_PARAM_TYPE_BN: {
+            size_t len = va_arg(ap, size_t);
+            BIGNUM *bn = va_arg(ap, BIGNUM *);
+
+            if (len == 0)
+                len = BN_num_bytes(bn);
+            f(name, OSSL_PARAM_UNSIGNED_INTEGER, len, bn, arg, 1);
+            break;           
+        }
+        case OSSL_PARAM_TYPE_utf8: {
+            size_t len = va_arg(ap, size_t);
+            char *s = va_arg(ap, char *);
+
+            if (len == 0)
+                len = strlen(s);
+            f(name, OSSL_PARAM_UTF8_STRING, len, s, arg, 0);
+            break;
+        }
+        case OSSL_PARAM_TYPE_octet: {
+            size_t len = va_arg(ap, size_t);
+            unsigned char *s = va_arg(ap, unsigned char *);
+
+            f(name, OSSL_PARAM_OCTET_STRING, len, s, arg, 0);
+            break;
+        }
+        }
+    }
+}
+
+union param_value_un {
+    OSSL_UNION_ALIGN;
+};
+
+#define ALIGN_SIZE sizeof(union param_value_un)
+
+struct param_size_st {
+    size_t n;
+    size_t names;
+    size_t blocks;
+};
+
+static void param_size(const char *name, int type, size_t len,
+                       const void *value, void *arg, int bignum)
+{
+    struct param_size_st *s = (struct param_size_st *)arg;
+
+    s->n++;
+    s->names += strlen(name) + 1;
+    s->blocks += (len + ALIGN_SIZE - 1) / ALIGN_SIZE;
+}
+
+struct param_build_st {
+    OSSL_PARAM *param;
+    union param_value_un *values;
+    char *names;
+};
+
+static void param_build(const char *name, int type, size_t len,
+                        const void *value, void *arg, int bignum)
+{
+    struct param_build_st *s = (struct param_build_st *)arg;
+    OSSL_PARAM *p = s->param++;
+    size_t l;
+
+    p->key = s->names;
+    p->data_type = type;
+    p->data = s->values;
+    p->data_size = len;
+
+    l = strlen(name) + 1;
+    memcpy(s->names, name, l);
+    s->names += l;
+
+    if (value == NULL)
+        memset(s->values, 0, len);
+    else if (bignum)
+        BN_bn2nativepad((const BIGNUM *)value, (unsigned char *)s->values, len);
+    else
+        memcpy(s->values, value, len);
+    s->values += (len + ALIGN_SIZE - 1) / ALIGN_SIZE;
+}
+
+OSSL_PARAM *OSSL_PARAM_build(const char *name, ...)
+{
+    va_list ap;
+    struct param_size_st size;
+    struct param_build_st build;
+    OSSL_PARAM *res;
+    size_t s;
+
+    memset(&size, 0, sizeof(size));
+    size.n = 1; /* For the end */
+
+    va_start(ap, name);
+    param_process(ap, name, &param_size, &size);
+    va_end(ap);
+
+    s = size.n * sizeof(OSSL_PARAM);
+    s = ((s + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
+    res = OPENSSL_malloc(s
+                         + size.blocks * ALIGN_SIZE
+                         + size.names);
+    if (res != NULL) {
+        memset(&build, 0, sizeof(build));
+        build.param = res;
+        build.values = (union param_value_un *)(((unsigned char *)res) + s);
+        build.names = (char *)(build.values + size.blocks);
+
+        va_start(ap, name);
+        param_process(ap, name, &param_build, &build);
+        va_end(ap);
+        *build.param = OSSL_PARAM_construct_end();
+    }
+    return res;
+}
+
+void OSSL_PARAM_build_free(OSSL_PARAM *params)
+{
+    OPENSSL_free(params);
 }
