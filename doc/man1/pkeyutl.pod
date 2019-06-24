@@ -395,7 +395,8 @@ Verify some data using an L<SM2(7)> certificate and a specific ID:
 
 L<genpkey(1)>, L<pkey(1)>, L<rsautl(1)>
 L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>,
-L<EVP_PKEY_CTX_set_hkdf_md(3)>, L<EVP_PKEY_CTX_set_tls1_prf_md(3)>
+L<EVP_PKEY_CTX_set_hkdf_md(3)>, L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
+L<kdf(1)>
 
 =head1 COPYRIGHT
 

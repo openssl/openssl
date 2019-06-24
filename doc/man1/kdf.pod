@@ -150,6 +150,7 @@ L<EVP_KDF_PBKDF2(7)>
 L<EVP_KDF_HKDF(7)>
 L<EVP_KDF_SS(7)>
 L<EVP_KDF_SSHKDF(7)>
+L<pkeyutl(1)>
 
 =head1 HISTORY
 
