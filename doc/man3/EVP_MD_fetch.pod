@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_MD_fetch
+EVP_MD_fetch, EVP_CIPHER_fetch
 - Functions to explicitly fetch algorithm implementations
 
 =head1 SYNOPSIS
@@ -11,60 +11,106 @@ EVP_MD_fetch
 
  EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                       const char *properties);
+ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                              const char *properties);
 
 =head1 DESCRIPTION
 
-The B<EVP_MD> object is used for representing a digest method implementation.
+Cryptographic algorithms are represented by different OpenSSL objects depending
+on what type of algorithm it is. The following cryptographic algorithm types are
+supported.
 
-Having obtained a digest implementation as an B<EVP_MD> type it can be used to
-calculate the digest of input data using functions such as
-L<EVP_DigestInit_ex(3)>, L<EVP_DigestUpdate(3)> and L<EVP_DigestFinal_ex(3)>.
+=over 4
 
-Digest implementations may be obtained in one of three ways, i.e. implicit
-fetch, explicit fetch or user defined.
+=item B<EVP_MD>
+
+Represents a digest algorithm.
+
+=item B<EVP_CIPHER>
+
+Represents a symmetric cipher algorithm.
+
+=item B<EVP_MAC>
+
+Represents a Message Authentication Code algorithm.
+
+=item B<EVP_KDF>
+
+Represents a Key Derivation Function algorithm.
+
+=back
+
+The algorithm objects may or may not have an associated algorithm
+implementation.
+Cryptographic algorithms are implemented by providers.
+Any algorithm may be supported by zero or more providers.
+In order to use an algorithm an implementation must first be obtained.
+This can happen in one of three ways, i.e. implicit fetch, explicit fetch or
+user defined.
 
 =over 4
 
 =item Implicit Fetch
 
 With implicit fetch an application can use functions such as L<EVP_sha256(3)>,
-L<EVP_sha512(3)> or L<EVP_blake2b512(3)> to obtain an B<EVP_MD> object. When
-used in a function like L<EVP_DigestInit_ex(3)> the actual implementation to
-be used will be fetched implicitly using default search criteria. Typically,
-(unless the default search criteria have been changed and/or different providers
-have been loaded), this will return an implementation of the appropriate
-algorithm from the default provider.
+L<EVP_blake2b512(3)> or L<EVP_aes_128_cbc(3)> to obtain an algorithm object with
+no associated implementation.
+When used in a function like L<EVP_DigestInit_ex(3)> or L<EVP_CipherInit_ex(3)>
+the actual implementation to be used will be fetched implicitly using default
+search criteria.
+Typically, this will return an implementation of the appropriate algorithm from
+the default provider unless the default search criteria have been changed and/or
+different providers have been loaded.
 
 =item Explicit Fetch
 
-With explicit fetch an application uses the EVP_MD_fetch() function to obtain
-an algorithm implementation. An implementation with the given name and
-satisfying the search criteria specified in the B<properties> parameter
-combined with the default search criteria will be looked for within the
-available providers and returned.
+With explicit fetch an application uses one of the "fetch" functions to obtain
+an algorithm object with an associated implementation.
+An implementation with the given name that satisfies the search criteria
+specified in the B<properties> parameter combined with the default search
+criteria will be looked for within the available providers and returned.
 See L<EVP_set_default_properties(3)> for information on default search criteria
 and L<OSSL_PROVIDER(3)> for information about providers.
 
 =item User defined
 
-Using the user defined approach an application constructs its own EVP_MD object.
-See L<EVP_MD_meth_new(3)> for details.
+Using the user defined approach an application constructs its own algorithm
+object.
+See L<EVP_MD_meth_new(3)> and L<EVP_CIPHER_meth_new(3)> for details.
 
 =back
 
-The EVP_MD_fetch() function will look for an algorithm within the providers that
-have been loaded into the B<OPENSSL_CTX> given in the B<ctx> parameter. This
-parameter may be NULL in which case the default B<OPENSSL_CTX> will be used. See
-L<OPENSSL_CTX_new(3)> and L<OSSL_PROVIDER_load(3)> for further details.
+Having obtained an algorithm implementation as an algorithm object it can then
+be used to perform cryptographic operations.
+For example to calculate the digest of input data with an B<EVP_MD> algorithm
+object you can use functions such as L<EVP_DigestInit_ex(3)>,
+L<EVP_DigestUpdate(3)> and L<EVP_DigestFinal_ex(3)>.
+
+The fetch functions will look for an algorithm within the providers that
+have been loaded into the B<OPENSSL_CTX> given in the B<ctx> parameter.
+This parameter may be NULL in which case the default B<OPENSSL_CTX> will be
+used.
+See L<OPENSSL_CTX_new(3)> and L<OSSL_PROVIDER_load(3)> for further details.
 
 The B<algorithm> parameter gives the name of the algorithm to be looked up.
-Different algorithms can be made available by loading different providers. The
-built-in default provider algorithm implementation names are: SHA1, SHA224,
-SHA256, SHA384, SHA512, SHA512-224, SHA512-256,SHA3-224, SHA3-256, SHA3-384,
-SHA3-512, SHAKE128, SHAKE256, SM3, BLAKE2b512, BLAKE2s256 and MD5-SHA1.
+Different algorithms can be made available by loading different providers.
+
+The built-in default provider digest algorithm implementation names are: SHA1,
+SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256, SHA3-224, SHA3-256,
+SHA3-384, SHA3-512, SHAKE128, SHAKE256, SM3, BLAKE2b512, BLAKE2s256 and
+MD5-SHA1.
+
+The built-in default provider cipher algorithm implementation names are:
+AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC, AES-128-CBC,
+AES-256-OFB, AES-192-OFB, AES-128-OFB, AES-256-CFB, AES-192-CFB, AES-128-CFB,
+AES-256-CFB1, AES-192-CFB1, AES-128-CFB1, AES-256-CFB8, AES-192-CFB8,
+AES-128-CFB8, AES-256-CTR, AES-192-CTR, AES-128-CTR, id-aes256-GCM,
+id-aes192-GCM and id-aes128-GCM.
 
 Additional algorithm implementations may be obtained by loading the "legacy"
-provider. The names of these algorithms are: RIPEMD160, MD2, MD4, MD5, MDC2 and
+provider.
+
+The legacy provider digest algorithms are: RIPEMD160, MD2, MD4, MD5, MDC2 and
 whirlpool.
 
 The B<properties> parameter specifies the search criteria that will be used to
@@ -82,8 +128,13 @@ NULL in which case any implementation from the available providers with the
 given algorithm name will be returned.
 
 The return value from a call to EVP_MD_fetch() must be freed by the caller using
-L<EVP_MD_meth_free(3)>. Note that EVP_MD objects are reference counted. See
-L<EVP_MD_upref(3)>.
+L<EVP_MD_meth_free(3)>.
+Note that EVP_MD objects are reference counted. See L<EVP_MD_up_ref(3)>.
+
+The return value from a call to EVP_CIPHER_fetch() must be freed by the caller
+using L<EVP_CIPHER_meth_free(3)>.
+Note that EVP_CIPHER objects are reference counted.
+See L<EVP_CIPHER_up_ref(3)>.
 
 =head1 NOTES
 
@@ -107,6 +158,14 @@ an EVP_MD object, or NULL on error.
 Fetch any available implementation of SHA256 in the default context:
 
  EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", NULL);
+ ...
+ EVP_MD_meth_free(md);
+
+Fetch any available implementation of AES-128-CBC in the default context:
+
+ EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
+ ...
+ EVP_CIPHER_meth_free(cipher);
 
 Fetch an implementation of SHA256 from the default provider in the default
 context:
@@ -157,9 +216,10 @@ other providers:
 
 =head1 SEE ALSO
 
-L<EVP_DigestInit(3)>, L<EVP_MD_meth_new(3)>, L<EVP_MD_meth_free(3)>,
-L<EVP_MD_upref(3)>, L<OSSL_PROVIDER_load(3)>, L<OPENSSL_CTX(3)>,
-L<EVP_set_default_properties(3)>
+L<EVP_DigestInit_ex(3)>, L<EVP_EncryptInit_ex(3)>, L<EVP_MD_meth_new(3)>,
+L<EVP_MD_meth_free(3)>, L<EVP_CIPHER_meth_new(3)>, L<EVP_CIPHER_meth_free(3)>,
+L<EVP_MD_up_ref(3)>, L<EVP_CIPHER_up_ref(3)>, L<OSSL_PROVIDER_load(3)>,
+L<OPENSSL_CTX(3)>, L<EVP_set_default_properties(3)>
 
 =head1 HISTORY
 

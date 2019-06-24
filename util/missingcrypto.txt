@@ -496,7 +496,6 @@ EVP_CIPHER_CTX_set_num
 EVP_CIPHER_CTX_test_flags
 EVP_CIPHER_do_all
 EVP_CIPHER_do_all_sorted
-EVP_CIPHER_fetch
 EVP_CIPHER_get_asn1_iv
 EVP_CIPHER_impl_ctx_size
 EVP_CIPHER_set_asn1_iv
