@@ -147,7 +147,7 @@ The other is an integer with the value 42.
 
     /*
      * Create the array containing the two parameter structures.
-     * It is automatically terminated with a third OSSL_PARAM_END structure.
+     * The function argument list is terminated using a NULL entry.
      */
     params = OSSL_PARAM_build(
         OSSL_PARAM_utf8_string("foo", NULL, 32),
