@@ -157,8 +157,8 @@ so-called one-shot macros:
 
 The macro call C<OSSL_TRACE(category, text)>, produces literal text trace output.
 
-The macro call C<OSSL_TRACEn(category, format, ...arg1, ..., argn)> produces
-printf-style trace output with n format field arguments (n=1,...9).
+The macro call C<OSSL_TRACEn(category, format, arg1, ..., argn)> produces
+printf-style trace output with n format field arguments (n=1,...,9).
 It expands to:
 
  OSSL_TRACE_BEGIN(category) {
