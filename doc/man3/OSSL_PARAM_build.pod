@@ -19,7 +19,7 @@ OSSL_PARAM_BUILD_octet_string,
 
  #include <openssl/params.h>
 
- #define OSSL_PARAM_BUILD_TYPE(key, address)
+ #define OSSL_PARAM_BUILD_TYPE(key, value)
  #define OSSL_PARAM_BUILD_utf8_string(key, address, size)
  #define OSSL_PARAM_BUILD_octet_string(key, address, size)
  #define OSSL_PARAM_BUILD_BN(key, address, size)
@@ -29,7 +29,7 @@ OSSL_PARAM_BUILD_octet_string,
 
 =head1 DESCRIPTION
 
-A collection of utility functions that simplify building arrays of
+This is a collection of utility functions that simplify building arrays of
 OSSL_PARAM structures.  The following B<TYPE> names are supported:
 
 =over 1
@@ -89,8 +89,8 @@ OSSL_PARAM_BUILD_utf8_string(), OSSL_PARAM_BUILD_octet_string(),
 OSSL_PARAM_BUILD_BN() are macros that provide support
 for defining UTF8 strings, OCTET strings and big numbers.
 A parameter with B<name> is defined, storage of length B<len> is allocated and
-the B<value> copied.
-If the B<value> is NULL, the allocated memory will be zeroed.
+the value at the specified B<address> is copied.
+If the B<address> is NULL, the allocated memory will be zeroed.
 If B<len> is zero, the length will be calculated for
 OSSL_PARAM_BUILD_utf8_string() and OSSL_PARAM_BUILD_BN().
 For OSSL_PARAM_BUILD_octet_string() the length must be specified.
@@ -98,7 +98,7 @@ For OSSL_PARAM_BUILD_octet_string() the length must be specified.
 OSSL_PARAM_build() allocates storage for and creates an array of OSSL_PARAM
 structures and their associated values.
 The parameter list must be terminated with a NULL.
-The order of the elements in the allocated OSSL_PARAM array are undefined.
+The order of the elements in the allocated OSSL_PARAM array is undefined.
 
 OSSL_PARAM_build_free() frees storage allocated for the B<params> array and
 the values the OSSL_PARAM structures reference.
@@ -177,7 +177,7 @@ L<openssl-core.h(7)>, L<OSSL_PARAM(3)>, L<OSSL_PARAM_build(3)>
 
 =head1 HISTORY
 
-These APIs were introduced in OpenSSL 3.0.0.
+This API was introduced in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 

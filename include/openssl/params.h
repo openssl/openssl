@@ -167,12 +167,12 @@ void OSSL_PARAM_build_free(OSSL_PARAM *params);
     (name), OSSL_PARAM_TYPE_size_t, (size_t)(value)
 #define OSSL_PARAM_BUILD_double(name, value) \
     (name), OSSL_PARAM_TYPE_double, (double)(value)
-#define OSSL_PARAM_BUILD_BN(name, value, len) \
-    (name), OSSL_PARAM_TYPE_BN, (size_t)(len), (value)
-#define OSSL_PARAM_BUILD_utf8_string(name, value, len) \
-    (name), OSSL_PARAM_TYPE_utf8, (size_t)(len), (value)
-#define OSSL_PARAM_BUILD_octet_string(name, value, len) \
-    (name), OSSL_PARAM_TYPE_utf8, (size_t)(len), (value)
+#define OSSL_PARAM_BUILD_BN(name, address, len) \
+    (name), OSSL_PARAM_TYPE_BN, (size_t)(len), (address)
+#define OSSL_PARAM_BUILD_utf8_string(name, address, len) \
+    (name), OSSL_PARAM_TYPE_utf8, (size_t)(len), (address)
+#define OSSL_PARAM_BUILD_octet_string(name, address, len) \
+    (name), OSSL_PARAM_TYPE_utf8, (size_t)(len), (address)
 
 
 # ifdef  __cplusplus
