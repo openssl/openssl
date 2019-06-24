@@ -10,9 +10,9 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 
-# if defined(__sun)
-#include <atomic.h>
-# endif
+#if defined(__sun)
+# include <atomic.h>
+#endif
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_SYS_WINDOWS)
 
