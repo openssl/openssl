@@ -74,6 +74,11 @@ int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
     return X509_NAME_cmp(a->crl.issuer, b->crl.issuer);
 }
 
+int X509_CRL_is_equal(const X509_CRL *a, const X509_CRL *b)
+{
+    return X509_NAME_is_equal(a->crl.issuer, b->crl.issuer);
+}
+
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 {
     return memcmp(a->sha1_hash, b->sha1_hash, 20);
@@ -153,6 +158,26 @@ int X509_cmp(const X509 *a, const X509 *b)
     return rv;
 }
 
+int X509_is_equal(const X509 *a, const X509 *b)
+{
+    int rv;
+    /* ensure hash is valid */
+    X509_check_purpose((X509 *)a, -1, 0);
+    X509_check_purpose((X509 *)b, -1, 0);
+
+    rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
+    if (rv == 0)
+        return 1;
+    /* Check for match against stored encoding too */
+    if (!a->cert_info.enc.modified && !b->cert_info.enc.modified) {
+        if (a->cert_info.enc.len != b->cert_info.enc.len)
+            return 0;
+        return memcmp(a->cert_info.enc.enc, b->cert_info.enc.enc,
+                      a->cert_info.enc.len) == 0 ? 1 : 0;
+    }
+    return 0;
+}
+
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 {
     int ret;
@@ -178,6 +203,32 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 
     return memcmp(a->canon_enc, b->canon_enc, a->canon_enclen);
 
+}
+
+int X509_NAME_is_equal(const X509_NAME *a, const X509_NAME *b)
+{
+    int ret;
+
+    /* Ensure canonical encoding is present and up to date */
+
+    if (!a->canon_enc || a->modified) {
+        ret = i2d_X509_NAME((X509_NAME *)a, NULL);
+        if (ret < 0)
+            return -1;
+    }
+
+    if (!b->canon_enc || b->modified) {
+        ret = i2d_X509_NAME((X509_NAME *)b, NULL);
+        if (ret < 0)
+            return -1;
+    }
+
+    ret = a->canon_enclen - b->canon_enclen;
+
+    if (ret != 0 || a->canon_enclen == 0)
+        return 0;
+
+    return memcmp(a->canon_enc, b->canon_enc, a->canon_enclen) == 0 ? 1 : 0;
 }
 
 unsigned long X509_NAME_hash(X509_NAME *x)
