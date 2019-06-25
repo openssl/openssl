@@ -13,18 +13,7 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-static BIT_STRING_BITNAME ns_cert_type_table[] = {
-    {0, "SSL Client", "client"},
-    {1, "SSL Server", "server"},
-    {2, "S/MIME", "email"},
-    {3, "Object Signing", "objsign"},
-    {4, "Unused", "reserved"},
-    {5, "SSL CA", "sslCA"},
-    {6, "S/MIME CA", "emailCA"},
-    {7, "Object Signing CA", "objCA"},
-    {-1, NULL, NULL}
-};
-
+/* Can't make this const because it's used in EXT_BITSTRING :( */
 static BIT_STRING_BITNAME key_usage_type_table[] = {
     {0, "Digital Signature", "digitalSignature"},
     {1, "Non Repudiation", "nonRepudiation"},
@@ -38,8 +27,6 @@ static BIT_STRING_BITNAME key_usage_type_table[] = {
     {-1, NULL, NULL}
 };
 
-const X509V3_EXT_METHOD v3_nscert =
-EXT_BITSTRING(NID_netscape_cert_type, ns_cert_type_table);
 const X509V3_EXT_METHOD v3_key_usage =
 EXT_BITSTRING(NID_key_usage, key_usage_type_table);
 

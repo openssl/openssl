@@ -350,7 +350,7 @@ struct ISSUING_DIST_POINT_st {
 # define EXFLAG_BCONS            0x1
 # define EXFLAG_KUSAGE           0x2
 # define EXFLAG_XKUSAGE          0x4
-# define EXFLAG_NSCERT           0x8
+# define EXFLAG_NSCERT           0x0 /* Do not re-use the old value 0x8 */
 
 # define EXFLAG_CA               0x10
 /* Really self issued not necessarily self signed */

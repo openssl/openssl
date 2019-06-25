@@ -41,3 +41,42 @@ const X509V3_EXT_METHOD v3_inhibit_anyp = {
     (X509V3_EXT_S2I)s2i_asn1_int,
     0, 0, 0, 0, NULL
 };
+
+char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
+{
+    char *tmp;
+
+    if (ia5 == NULL || ia5->length == 0)
+        return NULL;
+    if ((tmp = OPENSSL_malloc(ia5->length + 1)) == NULL) {
+        X509V3err(X509V3_F_I2S_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    memcpy(tmp, ia5->data, ia5->length);
+    tmp[ia5->length] = 0;
+    return tmp;
+}
+
+ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
+                                   X509V3_CTX *ctx, const char *str)
+{
+    ASN1_IA5STRING *ia5;
+
+    if (str == NULL) {
+        X509V3err(X509V3_F_S2I_ASN1_IA5STRING,
+                  X509V3_R_INVALID_NULL_ARGUMENT);
+        return NULL;
+    }
+    if ((ia5 = ASN1_IA5STRING_new()) == NULL) {
+        X509V3err(X509V3_F_S2I_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    if (!ASN1_STRING_set((ASN1_STRING *)ia5, str, strlen(str))) {
+        ASN1_IA5STRING_free(ia5);
+        return NULL;
+    }
+#ifdef CHARSET_EBCDIC
+    ebcdic2ascii(ia5->data, ia5->data, ia5->length);
+#endif                          /* CHARSET_EBCDIC */
+    return ia5;
+}

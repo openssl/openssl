@@ -17,7 +17,6 @@
 
 static void x509v3_cache_extensions(X509 *x);
 
-static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
                                     int ca);
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
@@ -341,15 +340,12 @@ static void setup_crldp(X509 *x)
         (((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
 #define xku_reject(x, usage) \
         (((x)->ex_flags & EXFLAG_XKUSAGE) && !((x)->ex_xkusage & (usage)))
-#define ns_reject(x, usage) \
-        (((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
 static void x509v3_cache_extensions(X509 *x)
 {
     BASIC_CONSTRAINTS *bs;
     PROXY_CERT_INFO_EXTENSION *pci;
     ASN1_BIT_STRING *usage;
-    ASN1_BIT_STRING *ns;
     EXTENDED_KEY_USAGE *extusage;
     X509_EXTENSION *ex;
     int i;
@@ -457,14 +453,6 @@ static void x509v3_cache_extensions(X509 *x)
         sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);
     }
 
-    if ((ns = X509_get_ext_d2i(x, NID_netscape_cert_type, NULL, NULL))) {
-        if (ns->length > 0)
-            x->ex_nscert = ns->data[0];
-        else
-            x->ex_nscert = 0;
-        x->ex_flags |= EXFLAG_NSCERT;
-        ASN1_BIT_STRING_free(ns);
-    }
     x->skid = X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
     x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
     /* Does subject name match issuer ? */
@@ -530,23 +518,16 @@ static int check_ca(const X509 *x)
         if (x->ex_flags & EXFLAG_CA)
             return 1;
         /* If basicConstraints says not a CA then say so */
-        else
-            return 0;
     } else {
         /* we support V1 roots for...  uh, I don't really know why. */
         if ((x->ex_flags & V1_ROOT) == V1_ROOT)
             return 3;
-        /*
-         * If key usage present it must have certSign so tolerate it
-         */
-        else if (x->ex_flags & EXFLAG_KUSAGE)
+        /* If key usage present it must have certSign so tolerate it */
+        if (x->ex_flags & EXFLAG_KUSAGE)
             return 4;
-        /* Older certificates could have Netscape-specific CA types */
-        else if (x->ex_flags & EXFLAG_NSCERT && x->ex_nscert & NS_ANY_CA)
-            return 5;
         /* can this still be regarded a CA certificate?  I doubt it */
-        return 0;
     }
+    return 0;
 }
 
 void X509_set_proxy_flag(X509 *x)
@@ -566,32 +547,15 @@ int X509_check_ca(X509 *x)
     return check_ca(x);
 }
 
-/* Check SSL CA: common checks for SSL client and server */
-static int check_ssl_ca(const X509 *x)
-{
-    int ca_ret;
-    ca_ret = check_ca(x);
-    if (!ca_ret)
-        return 0;
-    /* check nsCertType if present */
-    if (ca_ret != 5 || x->ex_nscert & NS_SSL_CA)
-        return ca_ret;
-    else
-        return 0;
-}
-
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
     if (xku_reject(x, XKU_SSL_CLIENT))
         return 0;
     if (ca)
-        return check_ssl_ca(x);
+        return check_ca(x);
     /* We need to do digital signatures or key agreement */
     if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_KEY_AGREEMENT))
-        return 0;
-    /* nsCertType if present should allow SSL client use */
-    if (ns_reject(x, NS_SSL_CLIENT))
         return 0;
     return 1;
 }
@@ -610,10 +574,8 @@ static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
     if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
         return 0;
     if (ca)
-        return check_ssl_ca(x);
+        return check_ca(x);
 
-    if (ns_reject(x, NS_SSL_SERVER))
-        return 0;
     if (ku_reject(x, KU_TLS))
         return 0;
 
@@ -625,6 +587,7 @@ static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
                                        int ca)
 {
     int ret;
+
     ret = check_purpose_ssl_server(xp, x, ca);
     if (!ret || ca)
         return ret;
@@ -639,25 +602,8 @@ static int purpose_smime(const X509 *x, int ca)
 {
     if (xku_reject(x, XKU_SMIME))
         return 0;
-    if (ca) {
-        int ca_ret;
-        ca_ret = check_ca(x);
-        if (!ca_ret)
-            return 0;
-        /* check nsCertType if present */
-        if (ca_ret != 5 || x->ex_nscert & NS_SMIME_CA)
-            return ca_ret;
-        else
-            return 0;
-    }
-    if (x->ex_flags & EXFLAG_NSCERT) {
-        if (x->ex_nscert & NS_SMIME)
-            return 1;
-        /* Workaround for some buggy certificates */
-        if (x->ex_nscert & NS_SSL_CLIENT)
-            return 2;
-        return 0;
-    }
+    if (ca)
+        return check_ca(x);
     return 1;
 }
 
@@ -665,6 +611,7 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
     int ret;
+
     ret = purpose_smime(x, ca);
     if (!ret || ca)
         return ret;
@@ -677,6 +624,7 @@ static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
                                        int ca)
 {
     int ret;
+
     ret = purpose_smime(x, ca);
     if (!ret || ca)
         return ret;
@@ -692,8 +640,7 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
         int ca_ret;
         if ((ca_ret = check_ca(x)) != 2)
             return ca_ret;
-        else
-            return 0;
+        return 0;
     }
     if (ku_reject(x, KU_CRL_SIGN))
         return 0;

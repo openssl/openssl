@@ -24,10 +24,6 @@ extensions, I<raw> and I<arbitrary> extensions.
 String extensions simply have a string which contains either the value itself
 or how it is obtained.
 
-For example:
-
- nsComment="This is a Comment"
-
 Multi-valued extensions have a short form and a long form. The short form
 is a list of names and values:
 
@@ -417,37 +413,6 @@ The supported names are: B<status_request> and B<status_request_v2>.
 Example:
 
  tlsfeature = status_request
-
-
-=head1 DEPRECATED EXTENSIONS
-
-The following extensions are non standard, Netscape specific and largely
-obsolete. Their use in new applications is discouraged.
-
-=head2 Netscape String extensions.
-
-Netscape Comment (B<nsComment>) is a string extension containing a comment
-which will be displayed when the certificate is viewed in some browsers.
-
-Example:
-
- nsComment = "Some Random Comment"
-
-Other supported extensions in this category are: B<nsBaseUrl>,
-B<nsRevocationUrl>, B<nsCaRevocationUrl>, B<nsRenewalUrl>, B<nsCaPolicyUrl>
-and B<nsSslServerName>.
-
-
-=head2 Netscape Certificate Type
-
-This is a multi-valued extensions which consists of a list of flags to be
-included. It was used to indicate the purposes for which a certificate could
-be used. The basicConstraints, keyUsage and extended key usage extensions are
-now used instead.
-
-Acceptable values for nsCertType are: B<client>, B<server>, B<email>,
-B<objsign>, B<reserved>, B<sslCA>, B<emailCA>, B<objCA>.
-
 
 =head1 ARBITRARY EXTENSIONS
 
