@@ -22,6 +22,9 @@ The key is inherited by all B<ssl> objects created from B<ctx>.
 
 SSL_set_tmp_ecdh() sets the parameters only for B<ssl>.
 
+SSL_set_tmp_ecdh() and SSL_CTX_set_tmp_ecdh() will be deprecated in
+OpenSSL version 3.0.0 and later releases.
+
 SSL_CTX_set_ecdh_auto() and SSL_set_ecdh_auto() are deprecated and
 have no effect.
 
