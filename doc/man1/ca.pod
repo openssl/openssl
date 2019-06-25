@@ -40,7 +40,6 @@ B<openssl> B<ca>
 [B<-notext>]
 [B<-outdir dir>]
 [B<-infiles>]
-[B<-spkac file>]
 [B<-ss_cert file>]
 [B<-preserveDN>]
 [B<-noemailDN>]
@@ -101,12 +100,6 @@ signed by the CA.
 
 A single self-signed certificate to be signed by the CA.
 
-=item B<-spkac filename>
-
-A file containing a single Netscape signed public key and challenge
-and additional field values to be signed by the CA. See the B<SPKAC FORMAT>
-section for information on the required input and output format.
-
 =item B<-infiles>
 
 If present this should be the last option, all subsequent arguments
@@ -116,7 +109,7 @@ are taken as the names of files containing certificate requests.
 
 The output file to output certificates to. The default is standard
 output. The certificate details will also be printed out to this
-file in PEM format (except that B<-spkac> outputs DER format).
+file in PEM format.
 
 =item B<-outdir directory>
 
@@ -153,7 +146,7 @@ the 'ps' utility) this option should be used with caution.
 Indicates the issued certificates are to be signed with the key
 the certificate requests were signed with (given with B<-keyfile>).
 Certificate requests signed with a different key are ignored.  If
-B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is
+B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is
 ignored.
 
 A consequence of using B<-selfsign> is that the self-signed
@@ -576,22 +569,6 @@ it may be present. Any fields not mentioned in the policy section
 are silently deleted, unless the B<-preserveDN> option is set but
 this can be regarded more of a quirk than intended behaviour.
 
-=head1 SPKAC FORMAT
-
-The input to the B<-spkac> command line option is a Netscape
-signed public key and challenge. This will usually come from
-the B<KEYGEN> tag in an HTML form to create a new private key.
-It is however possible to create SPKACs using the B<spkac> utility.
-
-The file should contain the variable SPKAC set to the value of
-the SPKAC and also the required DN components as name value pairs.
-If you need to include the same component twice then it can be
-preceded by a number and a '.'.
-
-When processing SPKAC format, the output is DER if the B<-out>
-flag is used, but PEM format if sending to stdout or the B<-outdir>
-flag is used.
-
 =head1 EXAMPLES
 
 Note: these examples assume that the B<ca> directory structure is
@@ -627,18 +604,6 @@ Generate a CRL
 Sign several requests:
 
  openssl ca -infiles req1.pem req2.pem req3.pem
-
-Certify a Netscape SPKAC:
-
- openssl ca -spkac spkac.txt
-
-A sample SPKAC file (the SPKAC line has been truncated for clarity):
-
- SPKAC=MIG0MGAwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAn7PDhCeV/xIxUg8V70YRxK2A5
- CN=Steve Test
- emailAddress=steve@openssl.org
- 0.OU=OpenSSL Group
- 1.OU=Another Group
 
 A sample configuration file with the relevant sections for B<ca>:
 
@@ -703,7 +668,7 @@ CRL: however there is no option to do this.
 V2 CRL features like delta CRLs are not currently supported.
 
 Although several requests can be input and handled at once it is only
-possible to include one SPKAC or self-signed certificate.
+possible to include one self-signed certificate.
 
 =head1 BUGS
 
@@ -770,7 +735,7 @@ are in year 2050 or later.
 
 =head1 SEE ALSO
 
-L<req(1)>, L<spkac(1)>, L<x509(1)>, L<CA.pl(1)>,
+L<req(1)>, L<x509(1)>, L<CA.pl(1)>,
 L<config(5)>, L<x509v3_config(5)>
 
 =head1 COPYRIGHT

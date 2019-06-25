@@ -601,7 +601,9 @@ NCONF_load_bio
 NCONF_load_fp
 NCONF_new
 NETSCAPE_CERT_SEQUENCE_it
+NETSCAPE_SPKAC_free
 NETSCAPE_SPKAC_it
+NETSCAPE_SPKAC_new
 NETSCAPE_SPKI_b64_decode
 NETSCAPE_SPKI_b64_encode
 NETSCAPE_SPKI_get_pubkey
@@ -1458,6 +1460,7 @@ conf_ssl_get_cmd
 conf_ssl_name_find
 d2i_ESS_CERT_ID_V2
 d2i_ESS_SIGNING_CERT_V2
+d2i_NETSCAPE_SPKAC
 d2i_X509_bio
 d2i_X509_fp
 err_free_strings_int
@@ -1471,6 +1474,7 @@ i2b_PrivateKey_bio
 i2b_PublicKey_bio
 i2d_ESS_CERT_ID_V2
 i2d_ESS_SIGNING_CERT_V2
+i2d_NETSCAPE_SPKAC
 i2d_PrivateKey_bio
 i2d_PrivateKey_fp
 i2d_X509_bio

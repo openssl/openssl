@@ -8,7 +8,7 @@ config - OpenSSL CONF library configuration files
 
 The OpenSSL CONF library can be used to read configuration files.
 It is used for the OpenSSL master configuration file B<openssl.cnf>
-and in a few other places like B<SPKAC> files and certificate extension
+and in a few other places like certificate extension
 files for the B<x509> utility. OpenSSL applications can also use the
 CONF library for their own purposes.
 
