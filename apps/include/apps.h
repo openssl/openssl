@@ -231,8 +231,6 @@ void store_setup_crl_download(X509_STORE *st);
 # define EXT_COPY_ADD    1
 # define EXT_COPY_ALL    2
 
-# define NETSCAPE_CERT_HDR       "certificate"
-
 # define APP_PASS_LEN    1024
 
 /*

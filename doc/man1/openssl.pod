@@ -179,10 +179,6 @@ Key Derivation Functions.
 
 Message Authentication Code Calculation.
 
-=item B<nseq>
-
-Create or examine a Netscape certificate sequence.
-
 =item B<ocsp>
 
 Online Certificate Status Protocol utility.
@@ -620,7 +616,7 @@ L<crl(1)>, L<crl2pkcs7(1)>, L<dgst(1)>,
 L<dhparam(1)>, L<dsa(1)>, L<dsaparam(1)>,
 L<ec(1)>, L<ecparam(1)>,
 L<enc(1)>, L<engine(1)>, L<errstr(1)>, L<gendsa(1)>, L<genpkey(1)>,
-L<genrsa(1)>, L<kdf(1)>, L<mac(1)>, L<nseq(1)>, L<ocsp(1)>,
+L<genrsa(1)>, L<kdf(1)>, L<mac(1)>, L<ocsp(1)>,
 L<passwd(1)>,
 L<pkcs12(1)>, L<pkcs7(1)>, L<pkcs8(1)>,
 L<pkey(1)>, L<pkeyparam(1)>, L<pkeyutl(1)>, L<prime(1)>,

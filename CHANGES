@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Support for Netscape cert sequences has been removed.
+     [Rich Salz]
+
   *) Introduced a new function, OSSL_PROVIDER_available(), which can be used
      to check if a named provider is loaded and available.  When called, it
      will also activate all fallback providers if such are still present.

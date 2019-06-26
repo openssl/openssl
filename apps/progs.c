@@ -56,7 +56,6 @@ FUNCTION functions[] = {
     {FT_general, "kdf", kdf_main, kdf_options},
     {FT_general, "list", list_main, list_options},
     {FT_general, "mac", mac_main, mac_options},
-    {FT_general, "nseq", nseq_main, nseq_options},
 #ifndef OPENSSL_NO_OCSP
     {FT_general, "ocsp", ocsp_main, ocsp_options},
 #endif
