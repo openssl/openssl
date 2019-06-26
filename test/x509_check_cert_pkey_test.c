@@ -110,10 +110,11 @@ const OPTIONS *test_get_options(void)
 {
     enum { OPT_TEST_ENUM };
     static const OPTIONS test_options[] = {
-        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("certname key.pem type expected\n"),
-        { OPT_HELP_STR, 1, '-', "certname\tCertificate filename .pem/.req\n" },
-        { OPT_HELP_STR, 1, '-', "type\t\tvalue must be 'pem' or 'req'\n" },
-        { OPT_HELP_STR, 1, '-', "expected\tthe expected return value\n" },
+        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("cert key type expected\n"),
+        { OPT_HELP_STR, 1, '-', "cert\tcertificate or CSR filename in PEM\n" },
+        { OPT_HELP_STR, 1, '-', "key\tprivate key filename in PEM\n" },
+        { OPT_HELP_STR, 1, '-', "type\t\tvalue must be 'cert' or 'req'\n" },
+        { OPT_HELP_STR, 1, '-', "expected\tthe expected return value, either 'ok' or 'failed'\n" },
         { NULL }
     };
     return test_options;
