@@ -34,14 +34,14 @@ There are three types of tokens:
 The name of a processor generation. A bit in the environment variable's
 mask is set to one if and only if the specified processor generation
 implements the corresponding instruction set extension. Possible values
-are z900, z990, z9, z10, z196, zEC12, z13 and z14.
+are z900, z990, z9, z10, z196, zEC12, z13, z14 and z15.
 
 =item <string>:<mask>:<mask>
 
 The name of an instruction followed by two 64-bit masks. The part of the
 environment variable's mask corresponding to the specified instruction is
 set to the specified 128-bit mask. Possible values are kimd, klmd, km, kmc,
-kmac, kmctr, kmo, kmf, prno and kma.
+kmac, kmctr, kmo, kmf, prno, kma, pcc and kdsa.
 
 =item stfle:<mask>:<mask>:<mask>
 
@@ -139,6 +139,21 @@ the numbering is continuous across 64-bit mask boundaries.
       # 20    1<<43    KMA-GCM-AES-256
       :
 
+ pcc  :
+      :
+      # 64    1<<63    PCC-Scalar-Multiply-P256
+      # 65    1<<62    PCC-Scalar-Multiply-P384
+      # 66    1<<61    PCC-Scalar-Multiply-P521
+
+ kdsa :
+      #  1    1<<62    KDSA-ECDSA-Verify-P256
+      #  2    1<<61    KDSA-ECDSA-Verify-P384
+      #  3    1<<60    KDSA-ECDSA-Verify-P521
+      #  9    1<<54    KDSA-ECDSA-Sign-P256
+      # 10    1<<53    KDSA-ECDSA-Sign-P384
+      # 11    1<<52    KDSA-ECDSA-Sign-P521
+      :
+
 =head1 RETURN VALUES
 
 Not available.
@@ -159,7 +174,7 @@ Disables the KM-XTS-AES and and the KIMD-SHAKE function codes:
 
 =head1 SEE ALSO
 
-[1] z/Architecture Principles of Operation, SA22-7832-11
+[1] z/Architecture Principles of Operation, SA22-7832-12
 
 =head1 COPYRIGHT
 
