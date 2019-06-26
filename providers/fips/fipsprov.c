@@ -265,6 +265,21 @@ const char *ossl_prov_util_nid_to_name(int nid)
         return "AES-192-CTR";
     case NID_aes_128_ctr:
         return "AES-128-CTR";
+    /* TODO(3.0) Change these when we have aliases */
+    case NID_aes_256_gcm:
+        return "id-aes256-GCM";
+    case NID_aes_192_gcm:
+        return "id-aes192-GCM";
+    case NID_aes_128_gcm:
+        return "id-aes128-GCM";
+    case NID_aes_256_ccm:
+        return "id-aes256-CCM";
+    case NID_aes_192_ccm:
+        return "id-aes192-CCM";
+    case NID_aes_128_ccm:
+        return "id-aes128-CCM";
+    default:
+        break;
     }
 
     return NULL;
@@ -302,9 +317,13 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
     { "AES-256-CTR", "fips=yes", aes256ctr_functions },
     { "AES-192-CTR", "fips=yes", aes192ctr_functions },
     { "AES-128-CTR", "fips=yes", aes128ctr_functions },
+    /* TODO(3.0) Add aliases for these ciphers */
     { "id-aes256-GCM", "fips=yes", aes256gcm_functions },
     { "id-aes192-GCM", "fips=yes", aes192gcm_functions },
     { "id-aes128-GCM", "fips=yes", aes128gcm_functions },
+    { "id-aes256-CCM", "fips=yes", aes256ccm_functions },
+    { "id-aes192-CCM", "fips=yes", aes192ccm_functions },
+    { "id-aes128-CCM", "fips=yes", aes128ccm_functions },
     { NULL, NULL, NULL }
 };
 

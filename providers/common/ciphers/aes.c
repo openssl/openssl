@@ -401,7 +401,6 @@ IMPLEMENT_cipher(ctr, CTR, 0, 256, 8, 128)
 IMPLEMENT_cipher(ctr, CTR, 0, 192, 8, 128)
 IMPLEMENT_cipher(ctr, CTR, 0, 128, 8, 128)
 
-
 #define IMPLEMENT_funcs(mode, kbits, type)                                     \
 const OSSL_DISPATCH aes##kbits##mode##_functions[] = {                         \
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_##kbits##_##mode##_newctx },\

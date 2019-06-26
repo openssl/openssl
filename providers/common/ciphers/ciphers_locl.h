@@ -14,39 +14,14 @@
 #include "internal/cryptlib.h"
 #include "internal/modes_int.h"
 
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
-/*-
- * KMA-GCM-AES parameter block - begin
- * (see z/Architecture Principles of Operation >= SA22-7832-11)
- */
-typedef struct S390X_kma_params_st {
-    unsigned char reserved[12];
-    union {
-        unsigned int w;
-        unsigned char b[4];
-    } cv; /* 32 bit counter value */
-    union {
-        unsigned long long g[2];
-        unsigned char b[16];
-    } t; /* tag */
-    unsigned char h[16]; /* hash subkey */
-    unsigned long long taadl; /* total AAD length */
-    unsigned long long tpcl; /* total plaintxt/ciphertxt len */
-    union {
-        unsigned long long g[2];
-        unsigned int w[4];
-    } j0;                   /* initial counter value */
-    unsigned char k[32];    /* key */
-} S390X_KMA_PARAMS;
-
-#endif
-
-typedef struct prov_aes_cipher_st PROV_AES_CIPHER;
-
 #define IV_STATE_UNINITIALISED 0  /* initial state is not initialized */
 #define IV_STATE_BUFFERED      1  /* iv has been copied to the iv buffer */
 #define IV_STATE_COPIED        2  /* iv has been copied from the iv buffer */
 #define IV_STATE_FINISHED      3  /* the iv has been used - so don't reuse it */
+
+#define PROV_CIPHER_FUNC(type, name, args) typedef type (* OSSL_##name##_fn)args
+
+typedef struct prov_aes_cipher_st PROV_AES_CIPHER;
 
 typedef struct prov_aes_key_st {
     union {
@@ -122,14 +97,13 @@ typedef struct prov_aes_key_st {
 } PROV_AES_KEY;
 
 struct prov_aes_cipher_st {
-  int (*init)(PROV_AES_KEY *dat, const uint8_t *key, size_t keylen);
-  int (*cipher)(PROV_AES_KEY *dat, uint8_t *out, const uint8_t *in,
+    int (*init)(PROV_AES_KEY *dat, const uint8_t *key, size_t keylen);
+    int (*cipher)(PROV_AES_KEY *dat, uint8_t *out, const uint8_t *in,
                 size_t inl);
 };
 
-#define OSSL_CIPHER_FUNC(type, name, args) typedef type (* OSSL_##name##_fn)args
-
 #include "ciphers_gcm.h"
+#include "ciphers_ccm.h"
 
 const PROV_AES_CIPHER *PROV_AES_CIPHER_ecb(size_t keylen);
 const PROV_AES_CIPHER *PROV_AES_CIPHER_cbc(size_t keylen);
@@ -155,3 +129,37 @@ OSSL_OP_cipher_settable_ctx_params_fn cipher_aead_settable_ctx_params;
 int cipher_default_get_params(OSSL_PARAM params[], int md, unsigned long flags,
                               int kbits, int blkbits, int ivbits);
 
+#define IMPLEMENT_aead_cipher(alg, lc, UCMODE, flags, kbits, blkbits, ivbits)  \
+    static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lc##_get_params;     \
+    static int alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])          \
+    {                                                                          \
+        return cipher_default_get_params(params, EVP_CIPH_##UCMODE##_MODE,     \
+                                         flags, kbits, blkbits, ivbits);       \
+    }                                                                          \
+    static OSSL_OP_cipher_newctx_fn alg##kbits##lc##_newctx;                   \
+    static void * alg##kbits##lc##_newctx(void *provctx)                       \
+    {                                                                          \
+        return alg##_##lc##_newctx(provctx, kbits);                            \
+    }                                                                          \
+    const OSSL_DISPATCH alg##kbits##lc##_functions[] = {                       \
+        { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))alg##kbits##lc##_newctx },  \
+        { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))alg##_##lc##_freectx },    \
+        { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void)) lc##_einit },        \
+        { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void)) lc##_dinit },        \
+        { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void)) lc##_stream_update },      \
+        { OSSL_FUNC_CIPHER_FINAL, (void (*)(void)) lc##_stream_final },        \
+        { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void)) lc##_cipher },             \
+        { OSSL_FUNC_CIPHER_GET_PARAMS,                                         \
+            (void (*)(void)) alg##_##kbits##_##lc##_get_params },              \
+        { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                     \
+            (void (*)(void)) lc##_get_ctx_params },                            \
+        { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                     \
+            (void (*)(void)) lc##_set_ctx_params },                            \
+        { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                    \
+                (void (*)(void))cipher_default_gettable_params },              \
+        { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                \
+                (void (*)(void))cipher_aead_gettable_ctx_params },             \
+        { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                \
+                (void (*)(void))cipher_aead_settable_ctx_params },             \
+        { 0, NULL }                                                            \
+    }
