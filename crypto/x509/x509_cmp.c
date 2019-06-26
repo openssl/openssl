@@ -160,22 +160,7 @@ int X509_cmp(const X509 *a, const X509 *b)
 
 int X509_is_equal(const X509 *a, const X509 *b)
 {
-    int rv;
-    /* ensure hash is valid */
-    X509_check_purpose((X509 *)a, -1, 0);
-    X509_check_purpose((X509 *)b, -1, 0);
-
-    rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
-    if (rv == 0)
-        return 1;
-    /* Check for match against stored encoding too */
-    if (!a->cert_info.enc.modified && !b->cert_info.enc.modified) {
-        if (a->cert_info.enc.len != b->cert_info.enc.len)
-            return 0;
-        return memcmp(a->cert_info.enc.enc, b->cert_info.enc.enc,
-                      a->cert_info.enc.len) == 0 ? 1 : 0;
-    }
-    return 0;
+    return X509_cmp(a, b) == 0 ? 1 : 0;
 }
 
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
