@@ -437,11 +437,21 @@ opthelp:
             break;
         case OPT_SM2ID:
             /* we assume the input is not a hex string */
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
             sm2_id = (unsigned char *)opt_arg();
             sm2_idlen = strlen((const char *)sm2_id);
             break;
         case OPT_SM2HEXID:
             /* try to parse the input as hex string first */
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
             sm2_free = 1;
             sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
             if (sm2_id == NULL) {

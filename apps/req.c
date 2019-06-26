@@ -426,7 +426,7 @@ int req_main(int argc, char **argv)
         case OPT_SM2ID:
             if (sm2_id != NULL) {
                 BIO_printf(bio_err,
-                           "Use one of the options 'sm2-hex-id' or 'sm2-id' \n");
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
                 goto end;
             }
             sm2_id = (unsigned char *)opt_arg();
@@ -435,7 +435,7 @@ int req_main(int argc, char **argv)
         case OPT_SM2HEXID:
             if (sm2_id != NULL) {
                 BIO_printf(bio_err,
-                           "Use one of the options 'sm2-hex-id' or 'sm2-id' \n");
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
                 goto end;
             }
             /* try to parse the input as hex string first */
