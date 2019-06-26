@@ -17,16 +17,33 @@ EVP_MD_fetch, EVP_CIPHER_fetch
 =head1 DESCRIPTION
 
 Cryptographic algorithms are represented by different OpenSSL objects depending
-on what type of algorithm it is.
+on what type of algorithm it is. The following cryptographic algorithm types are
+supported.
 
-The B<EVP_MD> object is used for representing a digest algorithm.
+=over 4
 
-B<EVP_CIPHER> objects are used to represent symmetric cipher algorithms.
+=item B<EVP_MD>
+
+Represents a digest algorithm.
+
+=item B<EVP_CIPHER>
+
+Represents a symmetric cipher algorithm.
+
+=item B<EVP_MAC>
+
+Represents a Message Authentication Code algorithm.
+
+=item B<EVP_KDF>
+
+Represents a Key Derivation Function algorithm.
+
+=back
 
 The algorithm objects may or may not have an associated algorithm
 implementation.
-Algorithms are implemented by providers and any one algorithm could have an
-implementation available from more than one provider.
+Cryptographic algorithms are implemented by providers.
+Any algorithm may be supported by zero or more providers.
 In order to use an algorithm an implementation must first be obtained.
 This can happen in one of three ways, i.e. implicit fetch, explicit fetch or
 user defined.
@@ -41,15 +58,15 @@ no associated implementation.
 When used in a function like L<EVP_DigestInit_ex(3)> or L<EVP_CipherInit_ex(3)>
 the actual implementation to be used will be fetched implicitly using default
 search criteria.
-Typically, (unless the default search criteria have been changed and/or
-different providers have been loaded), this will return an implementation of the
-appropriate algorithm from the default provider.
+Typically, this will return an implementation of the appropriate algorithm from
+the default provider unless the default search criteria have been changed and/or
+different providers have been loaded.
 
 =item Explicit Fetch
 
 With explicit fetch an application uses one of the "fetch" functions to obtain
 an algorithm object with an associated implementation.
-An implementation with the given name and satisfying the search criteria
+An implementation with the given name that satisfies the search criteria
 specified in the B<properties> parameter combined with the default search
 criteria will be looked for within the available providers and returned.
 See L<EVP_set_default_properties(3)> for information on default search criteria
@@ -63,8 +80,8 @@ See L<EVP_MD_meth_new(3)> and L<EVP_CIPHER_meth_new(3)> for details.
 
 =back
 
-Having obtained an algorithm implementation as an algorithm object it can be
-used to perform cryptographic operations.
+Having obtained an algorithm implementation as an algorithm object it can then
+be used to perform cryptographic operations.
 For example to calculate the digest of input data with an B<EVP_MD> algorithm
 object you can use functions such as L<EVP_DigestInit_ex(3)>,
 L<EVP_DigestUpdate(3)> and L<EVP_DigestFinal_ex(3)>.
@@ -79,7 +96,7 @@ The B<algorithm> parameter gives the name of the algorithm to be looked up.
 Different algorithms can be made available by loading different providers.
 
 The built-in default provider digest algorithm implementation names are: SHA1,
-SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256,SHA3-224, SHA3-256,
+SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256, SHA3-224, SHA3-256,
 SHA3-384, SHA3-512, SHAKE128, SHAKE256, SM3, BLAKE2b512, BLAKE2s256 and
 MD5-SHA1.
 
@@ -87,7 +104,8 @@ The built-in default provider cipher algorithm implementation names are:
 AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC, AES-128-CBC,
 AES-256-OFB, AES-192-OFB, AES-128-OFB, AES-256-CFB, AES-192-CFB, AES-128-CFB,
 AES-256-CFB1, AES-192-CFB1, AES-128-CFB1, AES-256-CFB8, AES-192-CFB8,
-AES-128-CFB8, AES-256-CTR, AES-192-CTR and AES-128-CTR.
+AES-128-CFB8, AES-256-CTR, AES-192-CTR, AES-128-CTR, id-aes256-GCM,
+id-aes192-GCM and id-aes128-GCM.
 
 Additional algorithm implementations may be obtained by loading the "legacy"
 provider.
@@ -140,10 +158,14 @@ an EVP_MD object, or NULL on error.
 Fetch any available implementation of SHA256 in the default context:
 
  EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", NULL);
+ ...
+ EVP_MD_meth_free(md);
 
 Fetch any available implementation of AES-128-CBC in the default context:
 
  EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
+ ...
+ EVP_CIPHER_meth_free(cipher);
 
 Fetch an implementation of SHA256 from the default provider in the default
 context:
