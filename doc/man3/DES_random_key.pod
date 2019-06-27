@@ -108,7 +108,7 @@ DES_random_key() generates a random key.  The random generator must be
 seeded, otherwise the operation will fail.
 (The OpenSSL CSPRNG is seeded automatically on first use, but seeding can
 fail due to external circumstances, see L<RAND(7)>.)
-If the function could not generate a secure key, 0 is returned.
+If the function fails, 0 is returned.
 
 Before a DES key can be used, it must be converted into the
 architecture dependent I<DES_key_schedule> via the
