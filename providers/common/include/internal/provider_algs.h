@@ -57,3 +57,6 @@ extern const OSSL_DISPATCH aes128cfb8_functions[];
 extern const OSSL_DISPATCH aes256ctr_functions[];
 extern const OSSL_DISPATCH aes192ctr_functions[];
 extern const OSSL_DISPATCH aes128ctr_functions[];
+
+/* Key Exchange */
+extern const OSSL_DISPATCH dh_functions[];
