@@ -4679,3 +4679,7 @@ BN_priv_rand_ex                         4784	3_0_0	EXIST::FUNCTION:
 BN_rand_range_ex                        4785	3_0_0	EXIST::FUNCTION:
 BN_priv_rand_range_ex                   4786	3_0_0	EXIST::FUNCTION:
 BN_generate_prime_ex2                   4787	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_derive_init_ex                 4788	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_free                        4789	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_up_ref                      4790	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_fetch                       4791	3_0_0	EXIST::FUNCTION:

@@ -104,6 +104,8 @@ typedef struct evp_pkey_ctx_st EVP_PKEY_CTX;
 typedef struct evp_kdf_st EVP_KDF;
 typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
 
+typedef struct evp_keyexch_st EVP_KEYEXCH;
+
 typedef struct evp_Encode_Ctx_st EVP_ENCODE_CTX;
 
 typedef struct hmac_ctx_st HMAC_CTX;

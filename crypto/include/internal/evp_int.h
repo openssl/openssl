@@ -18,6 +18,11 @@
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
 struct evp_pkey_ctx_st {
+    EVP_KEYEXCH *exchange;
+    void *exchprovctx;
+
+    /* Legacy fields below */
+
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
     /* Engine that implements this method or NULL if builtin */

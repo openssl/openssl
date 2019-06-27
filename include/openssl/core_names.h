@@ -56,6 +56,15 @@ extern "C" {
 #define OSSL_DIGEST_PARAM_PAD_TYPE  "pad_type"
 #define OSSL_DIGEST_PARAM_MICALG    "micalg"
 
+/* PKEY parameters */
+/* Diffie-Hellman Parameters */
+#define OSSL_PKEY_PARAM_DH_P         "dh-p"
+#define OSSL_PKEY_PARAM_DH_G         "dh-g"
+#define OSSL_PKEY_PARAM_DH_Q         "dh-q"
+/* Diffie-Hellman Keys */
+#define OSSL_PKEY_PARAM_DH_PUB_KEY   "dh-pub"
+#define OSSL_PKEY_PARAM_DH_PRIV_KEY  "dh-priv"
+
 # ifdef __cplusplus
 }
 # endif
