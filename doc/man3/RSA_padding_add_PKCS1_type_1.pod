@@ -99,7 +99,9 @@ simply copy the data
 =back
 
 The random number generator must be seeded prior to calling
-RSA_padding_add_xxx().
+RSA_padding_add_xxx(), otherwise the operation will fail.
+(Seeding happens automatically at startup, but it might fail due to
+external circumstances, see L<RAND(7)> for more details.)
 
 RSA_padding_check_xxx() verifies that the B<fl> bytes at B<f> contain
 a valid encoding for a B<rsa_len> byte RSA key in the respective
@@ -143,7 +145,8 @@ including PKCS1_OAEP.
 
 L<RSA_public_encrypt(3)>,
 L<RSA_private_decrypt(3)>,
-L<RSA_sign(3)>, L<RSA_verify(3)>
+L<RSA_sign(3)>, L<RSA_verify(3)>,
+L<RAND(7)>
 
 =head1 COPYRIGHT
 
