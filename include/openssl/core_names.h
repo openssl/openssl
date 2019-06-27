@@ -65,6 +65,10 @@ extern "C" {
 #define OSSL_PKEY_PARAM_DH_PUB_KEY   "dh-pub"
 #define OSSL_PKEY_PARAM_DH_PRIV_KEY  "dh-priv"
 
+/* Key Exchange parameters */
+
+#define OSSL_EXCHANGE_PARAM_PAD           "exchange-pad"
+
 # ifdef __cplusplus
 }
 # endif

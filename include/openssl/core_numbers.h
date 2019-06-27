@@ -239,6 +239,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
 # define OSSL_FUNC_KEYEXCH_SET_PEER                    4
 # define OSSL_FUNC_KEYEXCH_FREECTX                     5
 # define OSSL_FUNC_KEYEXCH_DUPCTX                      6
+# define OSSL_FUNC_KEYEXCH_SET_PARAMS                  7
 
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_init, (void *ctx,
@@ -249,6 +250,8 @@ OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_peer, (void *ctx,
                                                OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(void, OP_keyexch_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_dupctx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_params, (void *ctx,
+                                                 OSSL_PARAM params[]))
 
 # ifdef __cplusplus
 }
