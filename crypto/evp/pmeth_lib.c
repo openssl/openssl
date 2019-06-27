@@ -16,6 +16,7 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 #include "internal/numbers.h"
+#include "evp_locl.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
@@ -253,7 +254,9 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 {
     EVP_PKEY_CTX *rctx;
-    if (!pctx->pmeth || !pctx->pmeth->copy)
+
+    if (((pctx->pmeth == NULL) || (pctx->pmeth->copy == NULL))
+            && pctx->exchprovctx == NULL)
         return NULL;
 #ifndef OPENSSL_NO_ENGINE
     /* Make sure it's safe to copy a pkey context using an ENGINE */
@@ -262,10 +265,32 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         return 0;
     }
 #endif
-    rctx = OPENSSL_malloc(sizeof(*rctx));
+    rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
+
+    if (pctx->pkey != NULL)
+        EVP_PKEY_up_ref(pctx->pkey);
+    rctx->pkey = pctx->pkey;
+    rctx->operation = pctx->operation;
+
+    if (pctx->exchprovctx != NULL) {
+        if (!ossl_assert(pctx->exchange != NULL))
+            return NULL;
+        rctx->exchange = pctx->exchange;
+        if (!EVP_KEYEXCH_up_ref(rctx->exchange)) {
+            OPENSSL_free(rctx);
+            return NULL;
+        }
+        rctx->exchprovctx = pctx->exchange->dupctx(pctx->exchprovctx);
+        if (rctx->exchprovctx == NULL) {
+            EVP_KEYEXCH_free(rctx->exchange);
+            OPENSSL_free(rctx);
+            return NULL;
+        }
+        return rctx;
     }
 
     rctx->pmeth = pctx->pmeth;
@@ -273,19 +298,9 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     rctx->engine = pctx->engine;
 #endif
 
-    if (pctx->pkey)
-        EVP_PKEY_up_ref(pctx->pkey);
-
-    rctx->pkey = pctx->pkey;
-
     if (pctx->peerkey)
         EVP_PKEY_up_ref(pctx->peerkey);
-
     rctx->peerkey = pctx->peerkey;
-
-    rctx->data = NULL;
-    rctx->app_data = NULL;
-    rctx->operation = pctx->operation;
 
     if (pctx->pmeth->copy(rctx, pctx) > 0)
         return rctx;
@@ -355,6 +370,12 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
         return;
     if (ctx->pmeth && ctx->pmeth->cleanup)
         ctx->pmeth->cleanup(ctx);
+
+    if (ctx->exchprovctx != NULL && ctx->exchange != NULL)
+        ctx->exchange->freectx(ctx->exchprovctx);
+
+    EVP_KEYEXCH_free(ctx->exchange);
+
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
 #ifndef OPENSSL_NO_ENGINE
