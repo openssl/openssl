@@ -125,10 +125,9 @@ and public key algorithms. This meant that "clone" digests such as EVP_dss1()
 needed to be used to sign using SHA1 and DSA. This is no longer necessary and
 the use of clone digest is now discouraged.
 
-For some key types and parameters the random number generator must be seeded,
-otherwise the operation will fail.
-(The OpenSSL CSPRNG is seeded automatically on first use, but seeding can
-fail due to external circumstances, see L<RAND(7)>.)
+For some key types and parameters the random number generator must be seeded.
+If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+external circumstances (see L<RAND(7)>), the operation will fail.
 
 The call to EVP_DigestSignFinal() internally finalizes a copy of the digest
 context. This means that calls to EVP_DigestSignUpdate() and

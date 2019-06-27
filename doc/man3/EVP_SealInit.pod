@@ -55,9 +55,9 @@ failure.
 =head1 NOTES
 
 Because a random secret key is generated the random number generator
-must be seeded before calling EVP_SealInit().
-(The OpenSSL CSPRNG is seeded automatically on first use, but seeding can
-fail due to external circumstances, see L<RAND(7)>.)
+must be seeded when EVP_SealInit() is called.
+If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+external circumstances (see L<RAND(7)>), the operation will fail.
 
 The public key must be RSA because it is the only OpenSSL public key
 algorithm that supports key transport.

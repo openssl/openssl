@@ -15,10 +15,9 @@ DSA_generate_key - generate DSA key pair
 DSA_generate_key() expects B<a> to contain DSA parameters. It generates
 a new key pair and stores it in B<a-E<gt>pub_key> and B<a-E<gt>priv_key>.
 
-The random generator must be seeded prior to calling DSA_generate_key(),
-otherwise the operation will fail.
-(The OpenSSL CSPRNG is seeded automatically on first use, but seeding can
-fail due to external circumstances, see L<RAND(7)>.)
+The random generator must be seeded prior to calling DSA_generate_key().
+If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+external circumstances (see L<RAND(7)>), the operation will fail.
 
 =head1 RETURN VALUES
 

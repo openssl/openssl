@@ -26,10 +26,10 @@ memory.
 
 B<dummy> is ignored.
 
-The random number generator must be seeded prior to calling
-RSA_sign_ASN1_OCTET_STRING(), otherwise the operation will fail.
-(The OpenSSL CSPRNG is seeded automatically on first use, but seeding can
-fail due to external circumstances, see L<RAND(7)>.)
+The random number generator must be seeded when calling
+RSA_sign_ASN1_OCTET_STRING().
+If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+external circumstances (see L<RAND(7)>), the operation will fail.
 
 RSA_verify_ASN1_OCTET_STRING() verifies that the signature B<sigbuf>
 of size B<siglen> is the DER representation of a given octet string

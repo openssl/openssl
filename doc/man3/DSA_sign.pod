@@ -36,10 +36,10 @@ B<dsa> is the signer's public key.
 
 The B<type> parameter is ignored.
 
-The random generator must be seeded before DSA_sign() (or DSA_sign_setup())
-is called, otherwise the operation will fail.
-(The OpenSSL CSPRNG is seeded automatically on first use, but seeding can
-fail due to external circumstances, see L<RAND(7)>.)
+The random generator must be seeded when DSA_sign() (or DSA_sign_setup())
+is called.
+If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+external circumstances (see L<RAND(7)>), the operation will fail.
 
 =head1 RETURN VALUES
 

@@ -105,9 +105,9 @@ each byte is the parity bit.  The key schedule is an expanded form of
 the key; it is used to speed the encryption process.
 
 DES_random_key() generates a random key.  The random generator must be
-seeded, otherwise the operation will fail.
-(The OpenSSL CSPRNG is seeded automatically on first use, but seeding can
-fail due to external circumstances, see L<RAND(7)>.)
+seeded when calling this function.
+If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+external circumstances (see L<RAND(7)>), the operation will fail.
 If the function fails, 0 is returned.
 
 Before a DES key can be used, it must be converted into the
