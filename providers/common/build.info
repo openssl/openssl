@@ -1,4 +1,4 @@
-SUBDIRS=digests ciphers
+SUBDIRS=digests ciphers exchange
 
 SOURCE[../../libcrypto]=\
         provider_err.c provlib.c
