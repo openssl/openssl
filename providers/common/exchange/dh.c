@@ -25,6 +25,7 @@ static OSSL_OP_keyexch_dupctx_fn dh_dupctx;
 typedef struct {
     DH *dh;
     DH *dhpeer;
+    int pad;
 } PROV_DH_CTX;
 
 static void *dh_newctx(void *provctx)
@@ -122,7 +123,8 @@ static int dh_derive(void *vpdhctx, unsigned char *key, size_t *keylen,
         return 0;
 
     DH_get0_key(pdhctx->dhpeer, &pub_key, NULL);
-    ret = DH_compute_key(key, pub_key, pdhctx->dh);
+    ret = (pdhctx->pad) ? DH_compute_key_padded(key, pub_key, pdhctx->dh)
+                        : DH_compute_key(key, pub_key, pdhctx->dh);
     if (ret <= 0)
         return 0;
 
@@ -162,6 +164,24 @@ static void *dh_dupctx(void *vpdhctx)
     return dstctx;
 }
 
+static int dh_set_params(void *vpdhctx, OSSL_PARAM params[])
+{
+    PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
+    const OSSL_PARAM *p;
+    int pad;
+
+    if (pdhctx == NULL || params == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_PAD);
+    if (p == NULL || !OSSL_PARAM_get_int(p, &pad))
+        return 0;
+
+    pdhctx->pad = pad;
+
+    return 1;
+}
+
 const OSSL_DISPATCH dh_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))dh_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))dh_init },
@@ -169,5 +189,6 @@ const OSSL_DISPATCH dh_functions[] = {
     { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))dh_set_peer },
     { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))dh_freectx },
     { OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))dh_dupctx },
+    { OSSL_FUNC_KEYEXCH_SET_PARAMS, (void (*)(void))dh_set_params },
     { 0, NULL }
 };

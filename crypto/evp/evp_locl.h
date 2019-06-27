@@ -73,6 +73,7 @@ struct evp_keyexch_st {
     OSSL_OP_keyexch_derive_fn *derive;
     OSSL_OP_keyexch_freectx_fn *freectx;
     OSSL_OP_keyexch_dupctx_fn *dupctx;
+    OSSL_OP_keyexch_set_params_fn *set_params;
 } /* EVP_KEYEXCH */;
 
 

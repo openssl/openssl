@@ -76,13 +76,19 @@ static void *evp_keyexch_from_dispatch(const OSSL_DISPATCH *fns,
                 break;
             exchange->dupctx = OSSL_get_OP_keyexch_dupctx(fns);
             break;
+        case OSSL_FUNC_KEYEXCH_SET_PARAMS:
+            if (exchange->set_params != NULL)
+                break;
+            exchange->set_params = OSSL_get_OP_keyexch_set_params(fns);
+            break;
         }
     }
     if (fncnt != 4) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "exchange" functions: init, derive, newctx,
-         * and freectx. The dupctx and set_peer functions are optional.
+         * and freectx. The dupctx, set_peer and set_params functions are
+         * optional.
          */
         EVP_KEYEXCH_free(exchange);
         EVPerr(EVP_F_EVP_KEYEXCH_FROM_DISPATCH,
