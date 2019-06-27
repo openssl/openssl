@@ -52,7 +52,7 @@ L<openssl_user_macros(7)>:
 
 BN_generate_prime_ex() generates a pseudo-random prime number of
 at least bit length B<bits>. The returned number is probably prime
-with a negligible error probability.
+with a negligible error.
 
 If B<ret> is not B<NULL>, it will be used to store the number.
 
