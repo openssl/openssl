@@ -19,8 +19,16 @@ guidelines:
     1. Anything other than a trivial contribution requires a Contributor
     License Agreement (CLA), giving us permission to use your code. See
     https://www.openssl.org/policies/cla.html for details.  If your
-    contribution is too small to require a CLA, put "CLA: trivial" on a
-    line by itself in your commit message body.
+    contribution is too small to require a CLA (e.g. fixing a spelling
+    mistake), place the text "CLA: trivial" on a line by itself separated by
+    an empty line from the rest of the commit message. It is not sufficient to
+    only place the text in the GitHub pull request description.
+
+    To amend a missing "CLA: trivial" line after submission, do the following:
+
+        git commit --amend
+        [add the line, save and quit the editor]
+        git push -f
 
     2.  All source files should start with the following text (with
     appropriate comment characters at the start of each line and the
