@@ -15,7 +15,7 @@ RSA_generate_multi_prime_key - generate RSA key pair
 Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x00908000L
- RSA *RSA_generate_key(int num, unsigned long e,
+ RSA *RSA_generate_key(int bits, unsigned long e,
                        void (*callback)(int, int, void *), void *cb_arg);
  #endif
 
@@ -47,7 +47,7 @@ progress of the key generation. If B<cb> is not B<NULL>, it
 will be called as follows using the BN_GENCB_call() function
 described on the L<BN_generate_prime(3)> page.
 
-RSA_generate_prime() is similar to RSA_generate_prime_ex() but
+RSA_generate_key() is similar to RSA_generate_key_ex() but
 expects an old-style callback function; see
 L<BN_generate_prime(3)> for information on the old-style callback.
 
