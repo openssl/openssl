@@ -13,3 +13,8 @@
  make
  
  “make update” ensures that your functions declarations are added to util/libcrypto.num or util/libssl.num
+ If you plan to submit the changes you made to OpenSSL (see CONTRIBUTING), it's worth running 
+
+ make doc-nits
+
+ after make update to ensure that documentation has correct format.
