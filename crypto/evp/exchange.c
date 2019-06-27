@@ -147,10 +147,8 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
          */
         if (ctx->pkey != NULL) {
             switch (ctx->pkey->type) {
-#if 0
             case EVP_PKEY_DH:
                 break;
-#endif
             default:
                 goto legacy;
             }
