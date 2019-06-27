@@ -28,10 +28,10 @@ As a normal application developer, you do not have to worry about any details,
 just use L<RAND_bytes(3)> to obtain random data.
 Having said that, there is one important rule to obey: Always check the error
 return value of L<RAND_bytes(3)> and do not take randomness for granted.
-Although (re-)seeding is done automatically, it can happen that it fails,
-because no trusted random source is available or it (temporarily) fails
-to provide the requested random seed.
-In this case the CSPRNG enters an error state and refuses to provide output,
+Although (re-)seeding is automatic, it can fail because no trusted random source
+is available or the trusted source(s) temporarily fail to provide sufficient
+random seed material.
+In this case the CSPRNG enters an error state and ceases to provide output,
 until it is able to recover from the error by reseeding itself.
 For more details on reseeding and error recovery, see L<RAND_DRBG(7)>.
 
