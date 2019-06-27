@@ -27,8 +27,10 @@ be seeded prior to calling RSA_generate_key_ex().
 
 RSA_generate_multi_prime_key() generates a multi-prime RSA key pair and stores
 it in the B<RSA> structure provided in B<rsa>. The number of primes is given by
-the B<primes> parameter. The pseudo-random number generator must be seeded prior
-to calling RSA_generate_multi_prime_key().
+the B<primes> parameter. The random number generator must be seeded when
+calling RSA_generate_multi_prime_key().
+If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+external circumstances (see L<RAND(7)>), the operation will fail.
 
 The modulus size will be of length B<bits>, the number of primes to form the
 modulus will be B<primes>, and the public exponent will be B<e>. Key sizes
@@ -88,7 +90,8 @@ B<BN_GENCB_call(cb, 2, x)> is used with two different meanings.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<RAND_bytes(3)>, L<BN_generate_prime(3)>
+L<ERR_get_error(3)>, L<RAND_bytes(3)>, L<BN_generate_prime(3)>,
+L<RAND(7)>
 
 =head1 HISTORY
 
