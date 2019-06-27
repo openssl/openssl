@@ -14,12 +14,6 @@ iso 3			: identified-organization
 # GMAC OID
 iso 0 9797 3 4                          : GMAC          : gmac
 
-# There are no OIDs for these yet...
-            : KMAC128   : kmac128
-            : KMAC256   : kmac256
-            : BLAKE2BMAC	: blake2bmac
-            : BLAKE2SMAC   	: blake2smac
-
 # HMAC OIDs
 identified-organization 6 1 5 5 8 1 1	: HMAC-MD5	: hmac-md5
 identified-organization 6 1 5 5 8 1 2	: HMAC-SHA1	: hmac-sha1
@@ -709,8 +703,10 @@ algorithm 29		: RSA-SHA1-2		: sha1WithRSA
 1 3 36 3 2 1		: RIPEMD160		: ripemd160
 1 3 36 3 3 1 2		: RSA-RIPEMD160		: ripemd160WithRSA
 
-1 3 6 1 4 1 1722 12 2 1 16 : BLAKE2b512        : blake2b512
-1 3 6 1 4 1 1722 12 2 2 8  : BLAKE2s256        : blake2s256
+1 3 6 1 4 1 1722 12 2 1 : BLAKE2BMAC	        : blake2bmac
+1 3 6 1 4 1 1722 12 2 2 : BLAKE2SMAC   	        : blake2smac
+blake2bmac 16           : BLAKE2b512            : blake2b512
+blake2smac 8            : BLAKE2s256            : blake2s256
 
 !Cname sxnet
 1 3 101 1 4 1		: SXNetID		: Strong Extranet ID
@@ -987,6 +983,10 @@ nist_hashalgs 16	: id-hmacWithSHA3-512	: hmac-sha3-512
 # how to handle them...
 # nist_hashalgs 17	: id-shake128-len	: shake128-len
 # nist_hashalgs 18	: id-shake256-len	: shake256-len
+nist_hashalgs 19        : KMAC128               : kmac128
+nist_hashalgs 20        : KMAC256               : kmac256
+# nist_hashalgs 21      : KMAC128-XOF           : kmac128-xof
+# nist_hashalgs 22      : KMAC256-XOF           : kmac256-xof
 
 # OIDs for dsa-with-sha224 and dsa-with-sha256
 !Alias dsa_with_sha2 nistAlgorithms 3
