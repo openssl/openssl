@@ -749,16 +749,42 @@ void RAND_add(const void *buf, int num, double randomness)
  * the default method, then just call RAND_bytes().  Otherwise make
  * sure we're instantiated and use the private DRBG.
  */
-int RAND_priv_bytes(unsigned char *buf, int num)
+int rand_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 {
     RAND_DRBG *drbg;
     int ret;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != RAND_OpenSSL())
-        return RAND_bytes(buf, num);
+        return meth->bytes(buf, num);
 
-    drbg = RAND_DRBG_get0_private();
+    drbg = OPENSSL_CTX_get0_private_drbg(ctx);
+    if (drbg == NULL)
+        return 0;
+
+    ret = RAND_DRBG_bytes(drbg, buf, num);
+    return ret;
+}
+
+int RAND_priv_bytes(unsigned char *buf, int num)
+{
+    return rand_priv_bytes_ex(NULL, buf, num);
+}
+
+int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+{
+    RAND_DRBG *drbg;
+    int ret;
+    const RAND_METHOD *meth = RAND_get_rand_method();
+
+    if (meth != RAND_OpenSSL()) {
+        if (meth->bytes != NULL)
+            return meth->bytes(buf, num);
+        RANDerr(RAND_F_RAND_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
+        return -1;
+    }
+
+    drbg = OPENSSL_CTX_get0_public_drbg(ctx);
     if (drbg == NULL)
         return 0;
 
@@ -768,12 +794,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 
 int RAND_bytes(unsigned char *buf, int num)
 {
-    const RAND_METHOD *meth = RAND_get_rand_method();
-
-    if (meth->bytes != NULL)
-        return meth->bytes(buf, num);
-    RANDerr(RAND_F_RAND_BYTES, RAND_R_FUNC_NOT_IMPLEMENTED);
-    return -1;
+    return rand_bytes_ex(NULL, buf, num);
 }
 
 #if !OPENSSL_API_1_1_0 && !defined(FIPS_MODE)

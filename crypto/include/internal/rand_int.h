@@ -137,4 +137,10 @@ void rand_pool_cleanup(void);
  */
 void rand_pool_keep_random_devices_open(int keep);
 
+/* Equivalent of RAND_priv_bytes() but additionally taking an OPENSSL_CTX */
+int rand_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+
+/* Equivalent of RAND_bytes() but additionally taking an OPENSSL_CTX */
+int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+
 #endif
