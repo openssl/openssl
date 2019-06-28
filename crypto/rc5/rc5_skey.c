@@ -10,11 +10,14 @@
 #include <openssl/rc5.h>
 #include "rc5_locl.h"
 
-void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
-                    int rounds)
+int RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
+                   int rounds)
 {
     RC5_32_INT L[64], l, ll, A, B, *S, k;
     int i, j, m, c, t, ii, jj;
+
+    if (len > 255)
+        return 0;
 
     if ((rounds != RC5_16_ROUNDS) &&
         (rounds != RC5_12_ROUNDS) && (rounds != RC5_8_ROUNDS))
@@ -58,4 +61,6 @@ void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
         if (++jj >= c)
             jj = 0;
     }
+
+    return 1;
 }
