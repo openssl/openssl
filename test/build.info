@@ -44,7 +44,7 @@ IF[{- !$disabled{tests} -}]
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
-          bio_callback_test bio_memleak_test \
+          bio_callback_test bio_memleak_test param_build_test \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test \
@@ -325,6 +325,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[params_conversion_test]=params_conversion_test.c
   INCLUDE[params_conversion_test]=../include ../apps/include
   DEPEND[params_conversion_test]=../libcrypto libtestutil.a
+
+  SOURCE[param_build_test]=param_build_test.c
+  INCLUDE[param_build_test]=../include ../apps/include
+  DEPEND[param_build_test]=../libcrypto.a libtestutil.a
 
   SOURCE[sslapitest]=sslapitest.c ssltestlib.c
   INCLUDE[sslapitest]=../include ../apps/include ..
