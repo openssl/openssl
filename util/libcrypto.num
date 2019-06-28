@@ -4833,3 +4833,6 @@ BN_CTX_new_ex                           4777	3_0_0	EXIST::FUNCTION:
 BN_CTX_secure_new_ex                    4778	3_0_0	EXIST::FUNCTION:
 OPENSSL_thread_stop_ex                  4779	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_locate_const                 4780	3_0_0	EXIST::FUNCTION:
+X509_is_equal                           4781	3_0_0	EXIST::FUNCTION:
+X509_NAME_is_equal                      4782	3_0_0	EXIST::FUNCTION:
+X509_CRL_is_equal                       4783	3_0_0	EXIST::FUNCTION:
