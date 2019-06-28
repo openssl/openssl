@@ -4835,3 +4835,7 @@ OPENSSL_thread_stop_ex                  4779	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_locate_const                 4780	3_0_0	EXIST::FUNCTION:
 X509_REQ_set0_sm2_id                    4781	3_0_0	EXIST::FUNCTION:SM2
 X509_REQ_get0_sm2_id                    4782	3_0_0	EXIST::FUNCTION:SM2
+BN_rand_ex                              4783	3_0_0	EXIST::FUNCTION:
+BN_priv_rand_ex                         4784	3_0_0	EXIST::FUNCTION:
+BN_rand_range_ex                        4785	3_0_0	EXIST::FUNCTION:
+BN_priv_rand_range_ex                   4786	3_0_0	EXIST::FUNCTION:
