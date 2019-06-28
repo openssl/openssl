@@ -11,7 +11,7 @@
     ./configure '-Werror --strict-warnings' [your-options]
     make update
     make
-		make test
+    make test
  
  “make update” ensures that your functions declarations are added to util/libcrypto.num or util/libssl.num
  If you plan to submit the changes you made to OpenSSL (see CONTRIBUTING), it's worth running:
