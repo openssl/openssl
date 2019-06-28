@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_MD_fetch, EVP_CIPHER_fetch
+EVP_MD_fetch, EVP_CIPHER_fetch, EVP_KEYEXCH_fetch
 - Functions to explicitly fetch algorithm implementations
 
 =head1 SYNOPSIS
@@ -13,6 +13,8 @@ EVP_MD_fetch, EVP_CIPHER_fetch
                       const char *properties);
  EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                               const char *properties);
+ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                                const char *properties);
 
 =head1 DESCRIPTION
 
@@ -38,6 +40,10 @@ Represents a Message Authentication Code algorithm.
 
 Represents a Key Derivation Function algorithm.
 
+=item B<EVP_KEYEXCH>
+
+Represents a Key Exchange algorithm.
+
 =back
 
 The algorithm objects may or may not have an associated algorithm
@@ -61,6 +67,12 @@ search criteria.
 Typically, this will return an implementation of the appropriate algorithm from
 the default provider unless the default search criteria have been changed and/or
 different providers have been loaded.
+
+Implicit fetching can also occur with functions such as
+L<EVP_PKEY_CTX_derive_init_ex(3)> where a NULL algorithm parameter is supplied.
+In this case an algorithm implementation is implicitly fetched using default
+search criteria and an algorithm name that is consistent with the type of
+EVP_PKEY being used.
 
 =item Explicit Fetch
 
