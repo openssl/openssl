@@ -11,13 +11,14 @@
     ./configure '-Werror --strict-warnings' [your-options]
     make update
     make
+		make test
  
  “make update” ensures that your functions declarations are added to util/libcrypto.num or util/libssl.num
  If you plan to submit the changes you made to OpenSSL (see CONTRIBUTING), it's worth running:
 
     make doc-nits
 
- after make update to ensure that documentation has correct format.
+ after running "make update" to ensure that documentation has correct format.
 
  "make update" also generates files related to OIDs (in the crypto/objects/ folder) and errors.
  If a merge error occurs in one of these generated files then the generated files need to be removed
