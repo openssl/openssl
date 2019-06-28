@@ -9,6 +9,17 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) A new type, EVP_KEYEXCH, has been introduced to represent key exchange
+     algorithms. An implementation of a key exchange algorithm can be obtained
+     by using the function EVP_KEYEXCH_fetch(). An EVP_KEYEXCH algorithm can be
+     used in a call to EVP_PKEY_derive_init_ex() which works in a similar way to
+     the older EVP_PKEY_derive_init() function. See the man pages for the new
+     functions for further details.
+     [Matt Caswell]
+
+  *) The EVP_PKEY_CTX_set_dh_pad() macro has now been converted to a function.
+     [Matt Caswell]
+
   *) Removed the function names from error messages and deprecated the
      xxx_F_xxx define's.
      [Rich Salz]
