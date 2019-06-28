@@ -1680,8 +1680,11 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         goto err;
 #ifndef OPENSSL_NO_SM2
     if (ec_pkey_is_sm2(pkey)) {
-        /* initialize some SM2-specific stuffs */
-        EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+        /* initialize some SM2-specific code */
+        if (!EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)) {
+            BIO_printf(bio_err, "Internal error.\n");
+            goto err;
+        }
         pctx = EVP_PKEY_CTX_new(pkey, NULL);
         if (pctx == NULL) {
             BIO_printf(bio_err, "memory allocation failure.\n");
