@@ -3096,8 +3096,10 @@ int setup_tests(void)
         return 0;
 #ifndef NO_LEGACY_MODULE
     legacyprov = OSSL_PROVIDER_load(NULL, "legacy");
-    if (!TEST_ptr(legacyprov))
+    if (!TEST_ptr(legacyprov)) {
+        OSSL_PROVIDER_unload(defltprov);
         return 0;
+    }
 #endif /* NO_LEGACY_MODULE */
 
     ADD_ALL_TESTS(run_file_tests, n);
