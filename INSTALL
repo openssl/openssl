@@ -99,6 +99,15 @@
     $ nmake test
     $ nmake install
 
+ Note that in order to perform the install step above you need to have
+ appropriate permissions to write to the installation directory. For example,
+ in many cases on Unix, you may need to instead run the command like this:
+
+    $ sudo make install
+
+ On Windows you may need to run the command from an administrator command
+ prompt.
+
  If any of these steps fails, see section Installation in Detail below.
 
  This will build and install OpenSSL in the default location, which is:
@@ -941,8 +950,18 @@
        $ mms install                                    ! OpenVMS
        $ nmake install                                  # Windows
 
-     This will install all the software components in this directory
-     tree under PREFIX (the directory given with --prefix or its
+     Note that in order to perform the install step above you need to have
+     appropriate permissions to write to the installation directory. For
+     example, in many cases on Unix, you may need to instead run the command
+     like this:
+
+       $ sudo make install
+
+     On Windows you may need to run the command from an administrator command
+     prompt.
+
+     The above commands will install all the software components in this
+     directory tree under PREFIX (the directory given with --prefix or its
      default):
 
        Unix:
