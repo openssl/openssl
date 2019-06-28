@@ -1985,7 +1985,10 @@ int speed_main(int argc, char **argv)
     RC2_set_key(&rc2_ks, 16, key16, 128);
 #endif
 #ifndef OPENSSL_NO_RC5
-    RC5_32_set_key(&rc5_ks, 16, key16, 12);
+    if (!RC5_32_set_key(&rc5_ks, 16, key16, 12)) {
+        BIO_printf(bio_err, "Failed setting RC5 key\n");
+        goto end;
+    }
 #endif
 #ifndef OPENSSL_NO_BF
     BF_set_key(&bf_ks, 16, key16);
