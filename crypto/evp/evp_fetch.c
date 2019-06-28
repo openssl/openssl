@@ -207,7 +207,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.destruct_method = free_method;
         if ((method = ossl_method_construct(libctx, operation_id, name,
                                             properties, 0 /* !force_cache */,
-                                            &mcm, &mcmdata)) == NULL) {
+                                            &mcm, &mcmdata)) != NULL) {
             /*
              * If construction did create a method for us, we know that
              * there is a correct nameid and methodid, since those have
