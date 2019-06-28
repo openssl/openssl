@@ -112,7 +112,7 @@ enum punycode_status punycode_encode(punycode_uint input_length,
             if (max_out - out < 2)
                 return punycode_big_output;
             output[out++] =
-                case_flags ? encode_basic(input[j], case_flags[j]) : input[j];
+                case_flags ? encode_basic(input[j], case_flags[j]) : (char)(input[j]);
         }
         /* else if (input[j] < n) return punycode_bad_input; */
         /* (not needed for Punycode with unsigned code points) */
@@ -350,7 +350,7 @@ int a2ulabel(const char *in, char *out, size_t *outlen)
 
     while (1) {
         char *tmpptr = strchr(inptr, '.');
-        size_t delta = (tmpptr) ? tmpptr - inptr : strlen(inptr);
+        size_t delta = (tmpptr) ? (size_t)(tmpptr - inptr) : strlen(inptr);
 
         if (strncmp(inptr, "xn--", 4) != 0) {
             size += delta + 1;
@@ -364,7 +364,7 @@ int a2ulabel(const char *in, char *out, size_t *outlen)
             }
         } else {
             punycode_uint bufsize = 256;
-            int i;
+            punycode_uint i;
 
             if (punycode_decode(delta - 4, inptr + 4, &bufsize, buf, NULL) !=
                 punycode_success)

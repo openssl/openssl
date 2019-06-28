@@ -86,4 +86,5 @@ enum punycode_status punycode_decode(punycode_uint input_length,
 /* End of the RFC 3492 code */
 int a2ulabel(const char *in, char *out, size_t *outlen);
 
+int a2ucompare(const char *a, const char *u);
 #endif

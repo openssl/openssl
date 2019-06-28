@@ -622,7 +622,7 @@ static int nc_email_eai(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
         if (a2ulabel(baseptr, ulabel + 1, &size) <= 0)
             return X509_V_ERR_UNSPECIFIED;
 
-        if (eml->length > size + 1) {
+        if ((size_t)eml->length > size + 1) {
             emlptr += eml->length - (size + 1);
             if (ia5casecmp(ulabel, emlptr) == 0)
                 return X509_V_OK;
