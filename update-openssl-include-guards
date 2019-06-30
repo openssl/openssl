@@ -1,0 +1,9 @@
+#!/bin/bash
+
+find \( -name '*.h' -o -name '*.h.in' -o -name '*.c' -o -name README \) -exec sed -E -i \
+	 -e 's/(HEADER_INTERNAL_SOCKETS|HEADER_INTERNAL_KTLS|HEADER_PACKETED_BIO|HEADER_TEST_CONFIG|HEADER_ASYNC_BIO)/\1_H/g' \
+	 -e 's/(OSSL_)?HEADER_(OSSL_)?([A-Z0-9_]+_[CH]_?\>)/OPENSSL_\3/g' \
+	 -e 's/RSA_LOCAL_HEADER_H/OPENSSL_RSA_LOCL_H/g' \
+	 -e 's/__([A-Z0-9_]+_H)__/OPENSSL_\1/g' \
+	 -e 's/__C448_COMMON_H__/OPENSSL_CURVE448UTILS_H/g' \
+	 {} \;
