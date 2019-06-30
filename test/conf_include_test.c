@@ -141,7 +141,7 @@ static int test_check_null_numbers(void)
     }
 
     /*
-     * Verify that a NULL config with a missing envrionment variable returns
+     * Verify that a NULL config with a missing environment variable returns
      * a failure code.
      */
     if (!TEST_int_eq(unsetenv("FNORD"), 0)
