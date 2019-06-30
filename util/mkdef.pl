@@ -360,7 +360,7 @@ sub do_defs
 
 		# params: symbol, alias, platforms, kind
 		# The reason to put this subroutine in a variable is that
-		# it will otherwise create it's own, unshared, version of
+		# it will otherwise create its own, unshared, version of
 		# %tag and %variant...
 		my $make_variant = sub
 		{
