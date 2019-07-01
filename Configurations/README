@@ -236,9 +236,6 @@ In each table entry, the following keys are significant:
                                                 up of 'unsigned char's;
                            RC4_INT              RC4 key schedule is made
                                                 up of 'unsigned int's;
-                           EXPORT_VAR_AS_FN     for shared libraries,
-                                                export vars as
-                                                accessor functions.
 
 
 [1] as part of the target configuration, one can have a key called
