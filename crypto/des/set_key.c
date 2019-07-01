@@ -18,9 +18,6 @@
 #include <openssl/crypto.h>
 #include "des_locl.h"
 
-/* defaults to false */
-OPENSSL_IMPLEMENT_GLOBAL(int, DES_check_key, 0)
-
 static const unsigned char odd_parity[256] = {
     1, 1, 2, 2, 4, 4, 7, 7, 8, 8, 11, 11, 13, 13, 14, 14,
     16, 16, 19, 19, 21, 21, 22, 22, 25, 25, 26, 26, 28, 28, 31, 31,
@@ -277,12 +274,7 @@ static const DES_LONG des_skb[8][64] = {
 
 int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule)
 {
-    if (DES_check_key) {
-        return DES_set_key_checked(key, schedule);
-    } else {
-        DES_set_key_unchecked(key, schedule);
-        return 0;
-    }
+    return DES_set_key_checked(key, schedule);
 }
 
 /*-
