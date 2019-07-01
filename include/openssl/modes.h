@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_MODES_H
-# define HEADER_MODES_H
+#ifndef OPENSSL_MODES_H
+# define OPENSSL_MODES_H
 
 # include <stddef.h>
 

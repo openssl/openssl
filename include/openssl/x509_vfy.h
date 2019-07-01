@@ -7,13 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_X509_VFY_H
-# define HEADER_X509_VFY_H
+#ifndef OPENSSL_X509_VFY_H
+# define OPENSSL_X509_VFY_H
 
 /*
  * Protect against recursion, x509.h and x509_vfy.h each include the other.
  */
-# ifndef HEADER_X509_H
+# ifndef OPENSSL_X509_H
 #  include <openssl/x509.h>
 # endif
 

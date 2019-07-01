@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DES_LOCL_H
-# define HEADER_DES_LOCL_H
+#ifndef OPENSSL_DES_LOCL_H
+# define OPENSSL_DES_LOCL_H
 
 # include <openssl/e_os2.h>
 

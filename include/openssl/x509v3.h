@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_X509V3_H
-# define HEADER_X509V3_H
+#ifndef OPENSSL_X509V3_H
+# define OPENSSL_X509V3_H
 
 # include <openssl/bio.h>
 # include <openssl/x509.h>
@@ -550,7 +550,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
                                X509V3_CTX *ctx, int gen_type,
                                const char *value, int is_nc);
 
-# ifdef HEADER_CONF_H
+# ifdef OPENSSL_CONF_H
 GENERAL_NAME *v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method,
                                X509V3_CTX *ctx, CONF_VALUE *cnf);
 GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,

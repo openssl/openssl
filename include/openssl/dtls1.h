@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DTLS1_H
-# define HEADER_DTLS1_H
+#ifndef OPENSSL_DTLS1_H
+# define OPENSSL_DTLS1_H
 
 #ifdef  __cplusplus
 extern "C" {

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SSLCONF_H
-# define HEADER_SSLCONF_H
+#ifndef OPENSSL_SSLCONF_H
+# define OPENSSL_SSLCONF_H
 
 typedef struct ssl_conf_cmd_st SSL_CONF_CMD;
 

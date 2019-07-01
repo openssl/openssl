@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef __ARM_ARCH_H__
-# define __ARM_ARCH_H__
+#ifndef OPENSSL_ARM_ARCH_H
+# define OPENSSL_ARM_ARCH_H
 
 # if !defined(__ARM_ARCH__)
 #  if defined(__CC_ARM)

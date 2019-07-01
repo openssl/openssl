@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OPENSSLV_H
-# define HEADER_OPENSSLV_H
+#ifndef OPENSSL_OPENSSLV_H
+# define OPENSSL_OPENSSLV_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -98,4 +98,4 @@ extern "C" {
 #ifdef  __cplusplus
 }
 #endif
-#endif                          /* HEADER_OPENSSLV_H */
+#endif                          /* OPENSSL_OPENSSLV_H */

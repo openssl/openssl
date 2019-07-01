@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PEM_H
-# define HEADER_PEM_H
+#ifndef OPENSSL_PEM_H
+# define OPENSSL_PEM_H
 
 # include <openssl/e_os2.h>
 # include <openssl/bio.h>

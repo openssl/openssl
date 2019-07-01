@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DRBG_RAND_H
-# define HEADER_DRBG_RAND_H
+#ifndef OPENSSL_DRBG_RAND_H
+# define OPENSSL_DRBG_RAND_H
 
 # include <time.h>
 # include <openssl/ossl_typ.h>

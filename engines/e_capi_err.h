@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CAPIERR_H
-# define HEADER_CAPIERR_H
+#ifndef OPENSSL_CAPIERR_H
+# define OPENSSL_CAPIERR_H
 
 # define CAPIerr(f, r) ERR_CAPI_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
 

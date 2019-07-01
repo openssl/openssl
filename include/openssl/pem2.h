@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PEM2_H
-# define HEADER_PEM2_H
+#ifndef OPENSSL_PEM2_H
+# define OPENSSL_PEM2_H
 # include <openssl/pemerr.h>
 #endif

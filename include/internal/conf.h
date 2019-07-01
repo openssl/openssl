@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_INTERNAL_CONF_H
-# define HEADER_INTERNAL_CONF_H
+#ifndef OPENSSL_INTERNAL_CONF_H
+# define OPENSSL_INTERNAL_CONF_H
 
 #include <openssl/conf.h>
 

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SYMHACKS_H
-# define HEADER_SYMHACKS_H
+#ifndef OPENSSL_SYMHACKS_H
+# define OPENSSL_SYMHACKS_H
 
 # include <openssl/e_os2.h>
 
@@ -34,4 +34,4 @@
 
 # endif
 
-#endif                          /* ! defined HEADER_VMS_IDHACKS_H */
+#endif                          /* ! defined OPENSSL_VMS_IDHACKS_H */

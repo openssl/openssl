@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TEST_CONFIG
-#define HEADER_TEST_CONFIG
+#ifndef OPENSSL_TEST_CONFIG_H
+#define OPENSSL_TEST_CONFIG_H
 
 #include <string>
 #include <vector>
@@ -85,4 +85,4 @@ struct TestConfig {
 bool ParseConfig(int argc, char **argv, TestConfig *out_config);
 
 
-#endif  // HEADER_TEST_CONFIG
+#endif  // OPENSSL_TEST_CONFIG_H

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_APPS_H
-# define HEADER_APPS_H
+#ifndef OPENSSL_APPS_H
+# define OPENSSL_APPS_H
 
 # include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
@@ -444,7 +444,7 @@ void destroy_ui_method(void);
 const UI_METHOD *get_ui_method(void);
 
 int chopup_args(ARGS *arg, char *buf);
-# ifdef HEADER_X509_H
+# ifdef OPENSSL_X509_H
 int dump_cert_text(BIO *out, X509 *x);
 void print_name(BIO *out, const char *title, X509_NAME *nm,
                 unsigned long lflags);

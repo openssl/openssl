@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SSLTESTLIB_H
-# define HEADER_SSLTESTLIB_H
+#ifndef OPENSSL_SSLTESTLIB_H
+# define OPENSSL_SSLTESTLIB_H
 
 # include <openssl/ssl.h>
 
@@ -53,4 +53,4 @@ typedef struct mempacket_st MEMPACKET;
 
 DEFINE_STACK_OF(MEMPACKET)
 
-#endif /* HEADER_SSLTESTLIB_H */
+#endif /* OPENSSL_SSLTESTLIB_H */

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_AES_H
-# define HEADER_AES_H
+#ifndef OPENSSL_AES_H
+# define OPENSSL_AES_H
 
 # include <openssl/opensslconf.h>
 

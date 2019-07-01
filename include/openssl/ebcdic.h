@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_EBCDIC_H
-# define HEADER_EBCDIC_H
+#ifndef OPENSSL_EBCDIC_H
+# define OPENSSL_EBCDIC_H
 
 # include <stdlib.h>
 
