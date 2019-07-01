@@ -8,8 +8,8 @@
  */
 
 /* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef HEADER_INTERNAL_SHA3_H
-# define HEADER_INTERNAL_SHA3_H
+#ifndef OPENSSL_INTERNAL_SHA3_H
+# define OPENSSL_INTERNAL_SHA3_H
 
 # include <openssl/e_os2.h>
 # include <stddef.h>
@@ -49,4 +49,4 @@ int sha3_final(unsigned char *md, KECCAK1600_CTX *ctx);
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);
 
-#endif /* HEADER_INTERNAL_SHA3_H */
+#endif /* OPENSSL_INTERNAL_SHA3_H */

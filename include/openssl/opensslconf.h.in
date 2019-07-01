@@ -11,8 +11,8 @@
 
 #include <openssl/opensslv.h>
 
-#ifndef HEADER_OPENSSLCONF_H
-# define HEADER_OPENSSLCONF_H
+#ifndef OPENSSL_OPENSSLCONF_H
+# define OPENSSL_OPENSSLCONF_H
 
 # ifdef  __cplusplus
 extern "C" {
@@ -181,4 +181,4 @@ extern "C" {
 # ifdef  __cplusplus
 }
 # endif
-#endif                          /* HEADER_OPENSSLCONF_H */
+#endif                          /* OPENSSL_OPENSSLCONF_H */

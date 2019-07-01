@@ -11,8 +11,8 @@
  * CMP implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
-#ifndef OSSL_HEADER_CMP_INT_H
-# define OSSL_HEADER_CMP_INT_H
+#ifndef OPENSSL_CMP_INT_H
+# define OPENSSL_CMP_INT_H
 
 # include "internal/cryptlib.h"
 
@@ -586,4 +586,4 @@ DECLARE_ASN1_FUNCTIONS(CMP_PROTECTEDPART)
  *   }
  */
 
-#endif /* !defined OSSL_HEADER_CMP_INT_H */
+#endif /* !defined OPENSSL_CMP_INT_H */

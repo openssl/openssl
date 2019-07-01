@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_INTERNAL_BIO_H
-# define HEADER_INTERNAL_BIO_H
+#ifndef OPENSSL_INTERNAL_BIO_H
+# define OPENSSL_INTERNAL_BIO_H
 
 #include <openssl/bio.h>
 

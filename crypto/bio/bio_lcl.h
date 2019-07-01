@@ -27,10 +27,10 @@
  * For clarity, we check for internal/cryptlib.h since it's a common header
  * that also includes bio.h.
  */
-# ifdef HEADER_CRYPTLIB_H
+# ifdef OPENSSL_CRYPTLIB_H
 #  error internal/cryptlib.h included before bio_lcl.h
 # endif
-# ifdef HEADER_BIO_H
+# ifdef OPENSSL_BIO_H
 #  error openssl/bio.h included before bio_lcl.h
 # endif
 

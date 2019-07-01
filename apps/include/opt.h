@@ -6,8 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#ifndef HEADER_OPT_H
-#define HEADER_OPT_H
+#ifndef OPENSSL_OPT_H
+#define OPENSSL_OPT_H
 
 #include <sys/types.h>
 #include <openssl/e_os2.h>
@@ -342,4 +342,4 @@ int opt_format_error(const char *s, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);
 
-#endif /* HEADER_OPT_H */
+#endif /* OPENSSL_OPT_H */

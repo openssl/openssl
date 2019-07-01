@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_NUMBERS_H
-# define HEADER_NUMBERS_H
+#ifndef OPENSSL_NUMBERS_H
+# define OPENSSL_NUMBERS_H
 
 # include <limits.h>
 

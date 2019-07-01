@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_RIPEMD_H
-# define HEADER_RIPEMD_H
+#ifndef OPENSSL_RIPEMD_H
+# define OPENSSL_RIPEMD_H
 
 # include <openssl/opensslconf.h>
 

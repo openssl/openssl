@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_AFALGERR_H
-# define HEADER_AFALGERR_H
+#ifndef OPENSSL_AFALGERR_H
+# define OPENSSL_AFALGERR_H
 
 # define AFALGerr(f, r) ERR_AFALG_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
 

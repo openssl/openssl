@@ -11,8 +11,8 @@
  * CMP (RFC 4210) implementation by M. Peylo, M. Viljanen, and D. von Oheimb.
  */
 
-#ifndef OSSL_HEADER_CMP_H
-# define OSSL_HEADER_CMP_H
+#ifndef OPENSSL_CMP_H
+# define OPENSSL_CMP_H
 
 # include <openssl/opensslconf.h>
 # ifndef OPENSSL_NO_CMP
@@ -240,4 +240,4 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 }
 #   endif
 # endif /* !defined OPENSSL_NO_CMP */
-#endif /* !defined OSSL_HEADER_CMP_H */
+#endif /* !defined OPENSSL_CMP_H */

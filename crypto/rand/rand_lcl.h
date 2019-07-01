@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_RAND_LCL_H
-# define HEADER_RAND_LCL_H
+#ifndef OPENSSL_RAND_LCL_H
+# define OPENSSL_RAND_LCL_H
 
 # include <openssl/aes.h>
 # include <openssl/evp.h>

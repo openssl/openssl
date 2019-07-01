@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BF_LOCL_H
-# define HEADER_BF_LOCL_H
+#ifndef OPENSSL_BF_LOCL_H
+# define OPENSSL_BF_LOCL_H
 # include <openssl/opensslconf.h>
 
 /* NOTE - c is not incremented as per n2l */

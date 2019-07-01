@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_KDF_H
-# define HEADER_KDF_H
+#ifndef OPENSSL_KDF_H
+# define OPENSSL_KDF_H
 
 # include <stdarg.h>
 # include <stddef.h>

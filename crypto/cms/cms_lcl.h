@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMS_LCL_H
-# define HEADER_CMS_LCL_H
+#ifndef OPENSSL_CMS_LCL_H
+# define OPENSSL_CMS_LCL_H
 
 # include <openssl/x509.h>
 
@@ -317,7 +317,7 @@ struct CMS_OtherKeyAttribute_st {
 
 /* ESS structures */
 
-# ifdef HEADER_X509V3_H
+# ifdef OPENSSL_X509V3_H
 
 struct CMS_ReceiptRequest_st {
     ASN1_OCTET_STRING *signedContentIdentifier;

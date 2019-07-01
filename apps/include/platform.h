@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PLATFORM_H
-# define HEADER_PLATFORM_H
+#ifndef OPENSSL_PLATFORM_H
+# define OPENSSL_PLATFORM_H
 
 # include <openssl/e_os2.h>
 

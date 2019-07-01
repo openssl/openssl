@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef HEADER_FIELD_H
-# define HEADER_FIELD_H
+#ifndef OPENSSL_FIELD_H
+# define OPENSSL_FIELD_H
 
 # include "internal/constant_time_locl.h"
 # include <string.h>
@@ -165,4 +165,4 @@ static ossl_inline void gf_cond_swap(gf x, gf_s * RESTRICT y, mask_t swap)
     }
 }
 
-#endif                          /* HEADER_FIELD_H */
+#endif                          /* OPENSSL_FIELD_H */

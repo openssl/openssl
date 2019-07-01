@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_HMAC_LCL_H
-# define HEADER_HMAC_LCL_H
+#ifndef OPENSSL_HMAC_LCL_H
+# define OPENSSL_HMAC_LCL_H
 
 /* The current largest case is for SHA3-224 */
 #define HMAC_MAX_MD_CBLOCK_SIZE     144

@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef HEADER_CURVE448UTILS_H
-# define HEADER_CURVE448UTILS_H
+#ifndef OPENSSL_CURVE448UTILS_H
+# define OPENSSL_CURVE448UTILS_H
 
 # include <openssl/e_os2.h>
 
@@ -77,4 +77,4 @@ static ossl_inline c448_error_t c448_succeed_if(c448_bool_t x)
     return (c448_error_t) x;
 }
 
-#endif                          /* __C448_COMMON_H__ */
+#endif                          /* OPENSSL_CURVE448UTILS_H */

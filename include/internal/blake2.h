@@ -8,8 +8,8 @@
  */
 
 /* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef HEADER_BLAKE2_H
-# define HEADER_BLAKE2_H
+#ifndef OPENSSL_BLAKE2_H
+# define OPENSSL_BLAKE2_H
 
 # include <openssl/opensslconf.h>
 
@@ -113,4 +113,4 @@ void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen);
 void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t length);
 void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t length);
 
-#endif /* HEADER_BLAKE2_H */
+#endif /* OPENSSL_BLAKE2_H */

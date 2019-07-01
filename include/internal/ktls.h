@@ -8,8 +8,8 @@
  */
 
 #ifndef OPENSSL_NO_KTLS
-# ifndef HEADER_INTERNAL_KTLS
-#  define HEADER_INTERNAL_KTLS
+# ifndef OPENSSL_INTERNAL_KTLS_H
+#  define OPENSSL_INTERNAL_KTLS_H
 
 #  if defined(OPENSSL_SYS_LINUX)
 #   include <linux/version.h>

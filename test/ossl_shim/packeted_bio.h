@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PACKETED_BIO
-#define HEADER_PACKETED_BIO
+#ifndef OPENSSL_PACKETED_BIO_H
+#define OPENSSL_PACKETED_BIO_H
 
 #include <openssl/base.h>
 #include <openssl/bio.h>
@@ -32,4 +32,4 @@ timeval PacketedBioGetClock(const BIO *bio);
 bool PacketedBioAdvanceClock(BIO *bio);
 
 
-#endif  // HEADER_PACKETED_BIO
+#endif  // OPENSSL_PACKETED_BIO_H

@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DSO_CONF_H
-# define HEADER_DSO_CONF_H
+#ifndef OPENSSL_DSO_CONF_H
+# define OPENSSL_DSO_CONF_H
 {-  # The DSO code currently always implements all functions so that no
     # applications will have to worry about that from a compilation point
     # of view. However, the "method"s may return zero unless that platform

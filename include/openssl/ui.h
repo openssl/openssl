@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_UI_H
-# define HEADER_UI_H
+#ifndef OPENSSL_UI_H
+# define OPENSSL_UI_H
 
 # include <openssl/opensslconf.h>
 

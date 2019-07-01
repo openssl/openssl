@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PARAMS_H
-# define HEADER_PARAMS_H
+#ifndef OPENSSL_PARAMS_H
+# define OPENSSL_PARAMS_H
 
 # include <openssl/core.h>
 # include <openssl/bn.h>

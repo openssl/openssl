@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_STACK_H
-# define HEADER_STACK_H
+#ifndef OPENSSL_STACK_H
+# define OPENSSL_STACK_H
 
 #ifdef  __cplusplus
 extern "C" {

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TU_OUTPUT_H
-# define HEADER_TU_OUTPUT_H
+#ifndef OPENSSL_TU_OUTPUT_H
+# define OPENSSL_TU_OUTPUT_H
 
 # include <stdarg.h>
 
@@ -53,4 +53,4 @@ int test_printf_stderr(const char *fmt, ...)
 # undef ossl_test__printf__
 # undef ossl_test__attr__
 
-#endif                          /* HEADER_TU_OUTPUT_H */
+#endif                          /* OPENSSL_TU_OUTPUT_H */

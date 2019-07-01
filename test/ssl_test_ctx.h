@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SSL_TEST_CTX_H
-#define HEADER_SSL_TEST_CTX_H
+#ifndef OPENSSL_SSL_TEST_CTX_H
+#define OPENSSL_SSL_TEST_CTX_H
 
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
@@ -250,4 +250,4 @@ SSL_TEST_CTX *SSL_TEST_CTX_new(void);
 
 void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx);
 
-#endif  /* HEADER_SSL_TEST_CTX_H */
+#endif  /* OPENSSL_SSL_TEST_CTX_H */

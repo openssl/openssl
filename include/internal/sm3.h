@@ -9,8 +9,8 @@
  */
 
 /* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef HEADER_SM3_H
-# define HEADER_SM3_H
+#ifndef OPENSSL_SM3_H
+# define OPENSSL_SM3_H
 
 # include <openssl/opensslconf.h>
 
@@ -35,4 +35,4 @@ int sm3_init(SM3_CTX *c);
 int sm3_update(SM3_CTX *c, const void *data, size_t len);
 int sm3_final(unsigned char *md, SM3_CTX *c);
 
-#endif /* HEADER_SM3_H */
+#endif /* OPENSSL_SM3_H */

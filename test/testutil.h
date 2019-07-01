@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TESTUTIL_H
-# define HEADER_TESTUTIL_H
+#ifndef OPENSSL_TESTUTIL_H
+# define OPENSSL_TESTUTIL_H
 
 #include <stdarg.h>
 
@@ -537,4 +537,4 @@ void test_clearstanza(STANZA *s);
  */
 char *glue_strings(const char *list[], size_t *out_len);
 
-#endif                          /* HEADER_TESTUTIL_H */
+#endif                          /* OPENSSL_TESTUTIL_H */

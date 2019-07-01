@@ -16,8 +16,8 @@ add all error codes used in the library to xxx.h.
 Additionally the library include file must have a certain form.
 Typically it will initially look like this:
 
-    #ifndef HEADER_XXX_H
-    #define HEADER_XXX_H
+    #ifndef OPENSSL_XXX_H
+    #define OPENSSL_XXX_H
 
     #ifdef __cplusplus
     extern "C" {

@@ -8,10 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMSERR_H
-# define HEADER_CMSERR_H
+#ifndef OPENSSL_CMSERR_H
+# define OPENSSL_CMSERR_H
 
-# ifndef HEADER_SYMHACKS_H
+# ifndef OPENSSL_SYMHACKS_H
 #  include <openssl/symhacks.h>
 # endif
 

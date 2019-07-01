@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef HEADER_ARCH_32_ARCH_INTRINSICS_H
-# define HEADER_ARCH_32_ARCH_INTRINSICS_H
+#ifndef OPENSSL_ARCH_32_ARCH_INTRINSICS_H
+# define OPENSSL_ARCH_32_ARCH_INTRINSICS_H
 
 #include "internal/constant_time_locl.h"
 
@@ -24,4 +24,4 @@ static ossl_inline uint64_t widemul(uint32_t a, uint32_t b)
     return ((uint64_t)a) * b;
 }
 
-#endif                          /* HEADER_ARCH_32_ARCH_INTRINSICS_H */
+#endif                          /* OPENSSL_ARCH_32_ARCH_INTRINSICS_H */
