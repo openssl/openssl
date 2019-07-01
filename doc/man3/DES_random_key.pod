@@ -119,11 +119,8 @@ and is not a weak or semi-weak key.  If the parity is wrong, then -1
 is returned.  If the key is a weak key, then -2 is returned.  If an
 error is returned, the key schedule is not generated.
 
-DES_set_key() works like
-DES_set_key_checked() if the I<DES_check_key> flag is non-zero,
-otherwise like DES_set_key_unchecked().  These functions are available
-for compatibility; it is recommended to use a function that does not
-depend on a global variable.
+DES_set_key() works like DES_set_key_checked() and remains for
+backward compatibility.
 
 DES_set_odd_parity() sets the parity of the passed I<key> to odd.
 
