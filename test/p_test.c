@@ -92,7 +92,7 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
 
             p->return_size = buf_l = strlen(buf) + 1;
             if (p->data_size >= buf_l)
-                strncpy(p->data, buf, buf_l);
+                strcpy(p->data, buf);
             else
                 ok = 0;
         }
