@@ -266,7 +266,6 @@ sub parsenum()
     while ( <$IN> ) {
         next if /^#/;
         next if /\bNOEXIST\b/;
-        next if /\bEXPORT_VAR_AS_FUNC\b/;
         my @fields = split();
         die "Malformed line $_"
             if scalar @fields != 2 && scalar @fields != 4;

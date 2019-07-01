@@ -165,8 +165,6 @@ extern "C" {
 /* Generate 80386 code? */
 {- $config{processor} eq "386" ? "# define" : "# undef" -} I386_ONLY
 
-{- $config{export_var_as_fn} ? "# define" : "# undef" -} OPENSSL_EXPORT_VAR_AS_FUNCTION
-
 /*
  * The following are cipher-specific, but are part of the public API.
  */

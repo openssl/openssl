@@ -14,6 +14,8 @@
 
   *) Removed DES_check_key.  Also removed OPENSSL_IMPLEMENT_GLOBAL,
      OPENSSL_GLOBAL_REF, OPENSSL_DECLARE_GLOBAL.
+     Also removed "export var as function" capability; we do not export
+     variables, only functions.
      [Rich Salz]
 
   *) RC5_32_set_key has been changed to return an int type, with 0 indicating

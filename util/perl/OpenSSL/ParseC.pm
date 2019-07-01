@@ -400,11 +400,7 @@ EOF
     { regexp   => qr/DECLARE_ASN1_ITEM<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
-#ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
-OPENSSL_EXTERN const ASN1_ITEM *$1_it;
-#else
 const ASN1_ITEM *$1_it(void);
-#endif
 EOF
       },
     },
