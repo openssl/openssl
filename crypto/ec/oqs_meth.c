@@ -165,7 +165,7 @@ static int get_classical_key_len(oqs_key_type_t keytype, int classical_id) {
     case NID_secp384r1:
       return (keytype == KEY_TYPE_PRIVATE) ? 167 : 97;
     default:
-      return -1;
+      return 0;
     }
 }
 
@@ -180,7 +180,7 @@ static int get_classical_sig_len(int classical_id)
     case NID_secp384r1:
       return 104;
     default:
-      return -1;
+      return 0;
     }
 }
 
@@ -214,7 +214,7 @@ static int get_oqs_security_bits(int openssl_nid)
       return 192;
     /* ADD_MORE_OQS_SIG_HERE */
     default:
-      return -1;
+      return 0;
     }
 }
 
