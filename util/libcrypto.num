@@ -2052,8 +2052,6 @@ ENGINE_unregister_RSA                   2033	3_0_0	EXIST::FUNCTION:ENGINE
 EC_GROUP_order_bits                     2034	3_0_0	EXIST::FUNCTION:EC
 d2i_CMS_bio                             2035	3_0_0	EXIST::FUNCTION:CMS
 OPENSSL_sk_num                          2036	3_0_0	EXIST::FUNCTION:
-_shadow_DES_check_key                   2037	3_0_0	NOEXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:DES
-_shadow_DES_check_key                   2037	3_0_0	NOEXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:DES
 CMS_RecipientInfo_set0_pkey             2038	3_0_0	EXIST::FUNCTION:CMS
 X509_STORE_CTX_set_default              2039	3_0_0	EXIST::FUNCTION:
 AES_wrap_key                            2040	3_0_0	EXIST::FUNCTION:
