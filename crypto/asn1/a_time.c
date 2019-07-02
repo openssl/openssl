@@ -67,7 +67,7 @@ static void determine_days(struct tm *tm)
     }
     c = y / 100;
     y %= 100;
-    /* Zeller's congruance */
+    /* Zeller's congruence */
     tm->tm_wday = (d + (13 * m) / 5 + y + y / 4 + c / 4 + 5 * c + 6) % 7;
 }
 

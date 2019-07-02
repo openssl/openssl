@@ -27,7 +27,7 @@
 # over 2x than 32-bit code. X[16] resides on stack, but access to it
 # is scheduled for L2 latency and staged through 32 least significant
 # bits of %l0-%l7. The latter is done to achieve 32-/64-bit ABI
-# duality. Nevetheless it's ~40% faster than SHA256, which is pretty
+# duality. Nevertheless it's ~40% faster than SHA256, which is pretty
 # good [optimal coefficient is 50%].
 #
 # SHA512 on UltraSPARC T1.

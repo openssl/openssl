@@ -248,7 +248,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
      * one bit longer than the modulus.
      *
      * There are some concerns about the efficacy of doing this.  More
-     * specificly refer to the discussion starting with:
+     * specifically refer to the discussion starting with:
      *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
      * The fix is to rework BN so these gymnastics aren't required.
      */

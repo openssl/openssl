@@ -164,13 +164,13 @@ C<indir> takes some additional options OPTS that affect the subdirectory:
 
 =item B<create =E<gt> 0|1>
 
-When set to 1 (or any value that perl preceives as true), the subdirectory
+When set to 1 (or any value that perl perceives as true), the subdirectory
 will be created if it doesn't already exist.  This happens before BLOCK
 is executed.
 
 =item B<cleanup =E<gt> 0|1>
 
-When set to 1 (or any value that perl preceives as true), the subdirectory
+When set to 1 (or any value that perl perceives as true), the subdirectory
 will be cleaned out and removed.  This happens both before and after BLOCK
 is executed.
 
