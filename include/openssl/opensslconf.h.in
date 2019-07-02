@@ -85,7 +85,7 @@ extern "C" {
 
 /* In case someone defined both */
 # if defined(OPENSSL_API_COMPAT) && defined(OPENSSL_API_LEVEL)
-#  error "Disallowed to defined both OPENSSL_API_COMPAT and OPENSSL_API_LEVEL"
+#  error "Disallowed to define both OPENSSL_API_COMPAT and OPENSSL_API_LEVEL"
 # endif
 
 # ifndef OPENSSL_API_COMPAT
@@ -100,7 +100,7 @@ extern "C" {
 #  elif (OPENSSL_API_COMPAT & 0xFFF00000L) == 0x10100000L
 #   define OPENSSL_API_LEVEL 2
 #  else
-/ * Major number 3 to 15 */
+    /* Major number 3 to 15 */
 #   define OPENSSL_API_LEVEL ((OPENSSL_API_COMPAT >> 28) & 0xF)
 #  endif
 # endif
