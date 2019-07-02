@@ -1174,7 +1174,7 @@ static void *evp_cipher_from_dispatch(const OSSL_DISPATCH *fns,
     }
     cipher->prov = prov;
     if (prov != NULL)
-        ossl_provider_upref(prov);
+        ossl_provider_up_ref(prov);
 
     return cipher;
 }

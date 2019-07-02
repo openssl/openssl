@@ -660,7 +660,7 @@ static void *evp_md_from_dispatch(const OSSL_DISPATCH *fns,
     }
     md->prov = prov;
     if (prov != NULL)
-        ossl_provider_upref(prov);
+        ossl_provider_up_ref(prov);
 
     return md;
 }

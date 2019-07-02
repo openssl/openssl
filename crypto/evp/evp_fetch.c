@@ -157,7 +157,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         const char *name, const char *properties,
                         void *(*new_method)(const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
-                        int (*upref_method)(void *),
+                        int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
     OSSL_METHOD_STORE *store = get_default_method_store(libctx);
@@ -203,7 +203,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.name = name;
         mcmdata.method_from_dispatch = new_method;
         mcmdata.destruct_method = free_method;
-        mcmdata.refcnt_up_method = upref_method;
+        mcmdata.refcnt_up_method = up_ref_method;
         mcmdata.destruct_method = free_method;
         if ((method = ossl_method_construct(libctx, operation_id, name,
                                             properties, 0 /* !force_cache */,
@@ -219,7 +219,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
             ossl_method_store_cache_set(store, methid, properties, method);
         }
     } else {
-        upref_method(method);
+        up_ref_method(method);
     }
 
     return method;

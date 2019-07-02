@@ -13,7 +13,7 @@ evp_generic_fetch - generic algorithm fetcher and method creator for EVP
                          const char *name, const char *properties,
                          void *(*new_method)(const OSSL_DISPATCH *fns,
                                              OSSL_PROVIDER *prov),
-                         int (*upref_method)(void *),
+                         int (*up_ref_method)(void *),
                          void (*free_method)(void *));
 
 =head1 DESCRIPTION
@@ -21,7 +21,7 @@ evp_generic_fetch - generic algorithm fetcher and method creator for EVP
 evp_generic_fetch() calls ossl_method_construct() with the given
 C<libctx>, C<operation_id>, C<name>, and C<properties> and uses
 it to create an EVP method with the help of the functions
-C<new_method>, C<upref_method>, and C<free_method>.
+C<new_method>, C<up_ref_method>, and C<free_method>.
 
 The three functions are supposed to:
 
@@ -32,7 +32,7 @@ The three functions are supposed to:
 creates an internal method from function pointers found in the
 dispatch table C<fns>.
 
-=item upref_method()
+=item up_ref_method()
 
 increments the reference counter for the given method, if there is
 one.
@@ -116,7 +116,7 @@ And here's the implementation of the FOO method fetcher:
         }
         foo->prov = prov;
         if (prov)
-            ossl_provider_upref(prov);
+            ossl_provider_up_ref(prov);
 
         return foo;
     }
@@ -137,7 +137,7 @@ And here's the implementation of the FOO method fetcher:
         return EVP_FOO_meth_from_dispatch(fns, prov);
     }
 
-    static int foo_upref(void *vfoo)
+    static int foo_up_ref(void *vfoo)
     {
         EVP_FOO *foo = vfoo;
         int ref = 0;
@@ -157,7 +157,7 @@ And here's the implementation of the FOO method fetcher:
     {
         EVP_FOO *foo =
             evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
-                              foo_from_dispatch, foo_upref, foo_free);
+                              foo_from_dispatch, foo_up_ref, foo_free);
 
         /*
          * If this method exists in legacy form, with a constant NID for the
