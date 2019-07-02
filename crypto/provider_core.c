@@ -490,8 +490,11 @@ static int provider_activate(OSSL_PROVIDER *prov)
          * array either way.
          */
         cnt = 1;                 /* One for the terminating item */
-        while (reasonstrings[cnt].id != 0)
+        while (reasonstrings[cnt].id != 0) {
+            if (ERR_GET_LIB(reasonstrings[cnt].id) != 0)
+                return 0;
             cnt++;
+        }
 
         /* Allocate one extra item for the "library" name */
         prov->error_strings =
