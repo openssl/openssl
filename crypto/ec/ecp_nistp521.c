@@ -1269,7 +1269,7 @@ static void point_add(felem x3, felem y3, felem z3,
          * ffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb
          * 71e913863f7, in that case the penultimate intermediate is -9G and
          * the final digit is also -9G. Since this only happens for a single
-         * scalar, the timing leak is irrelevent. (Any attacker who wanted to
+         * scalar, the timing leak is irrelevant. (Any attacker who wanted to
          * check whether a secret scalar was that exact value, can already do
          * so.)
          */

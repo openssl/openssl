@@ -367,7 +367,7 @@ void rand_cleanup_int(void)
 }
 
 /*
- * RAND_close_seed_files() ensures that any seed file decriptors are
+ * RAND_close_seed_files() ensures that any seed file descriptors are
  * closed after use.
  */
 void RAND_keep_random_devices_open(int keep)

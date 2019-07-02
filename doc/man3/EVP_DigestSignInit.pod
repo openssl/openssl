@@ -35,7 +35,7 @@ EVP_MD_CTX is freed).
 
 The digest B<type> may be NULL if the signing algorithm supports it.
 
-No B<EVP_PKEY_CTX> will be created by EVP_DigsetSignInit() if the passed B<ctx>
+No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit() if the passed B<ctx>
 has already been assigned one via L<EVP_MD_CTX_set_ctx(3)>. See also L<SM2(7)>.
 
 Only EVP_PKEY types that support signing can be used with these functions. This

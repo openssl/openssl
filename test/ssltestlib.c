@@ -920,7 +920,7 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
     /*
      * We attempt to read some data on the client side which we expect to fail.
      * This will ensure we have received the NewSessionTicket in TLSv1.3 where
-     * appropriate. We do this twice because there are 2 NewSesionTickets.
+     * appropriate. We do this twice because there are 2 NewSessionTickets.
      */
     for (i = 0; i < 2; i++) {
         if (SSL_read_ex(clientssl, &buf, sizeof(buf), &readbytes) > 0) {

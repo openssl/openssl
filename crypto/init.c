@@ -40,7 +40,7 @@ static int stopped = 0;
  * destructor for threads terminating before libcrypto is initialized or
  * after it's de-initialized. Access to the key doesn't have to be
  * serialized for the said threads, because they didn't use libcrypto
- * and it doesn't matter if they pick "impossible" or derefernce real
+ * and it doesn't matter if they pick "impossible" or dereference real
  * key value and pull NULL past initialization in the first thread that
  * intends to use libcrypto.
  */
