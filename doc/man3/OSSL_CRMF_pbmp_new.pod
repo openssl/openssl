@@ -22,7 +22,7 @@ OSSL_CRMF_pbmp_new
 
 OSSL_CRMF_pbm_new() generates a PBM (Password-Based MAC) based on given PBM
 parameters B<pbmp>, message B<msg>, and secret B<sec>, along with the respective
-lengths B<msglen> and B<seclen>. On success writes the adddress of the newly
+lengths B<msglen> and B<seclen>. On success writes the address of the newly
 allocated MAC via the B<mac> reference parameter and writes the length via the
 B<maclen> reference parameter unless it its NULL.
 

@@ -141,7 +141,7 @@ function will get called.
 
 =item *
 
-If no intialization function was given with ossl_provider_new(), a
+If no initialization function was given with ossl_provider_new(), a
 loadable module with the I<name> that was given to ossl_provider_new()
 will be located and loaded, then the symbol B<OSSL_provider_init> will
 be located in that module, and called.

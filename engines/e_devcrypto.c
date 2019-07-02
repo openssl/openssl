@@ -59,7 +59,7 @@ struct driver_info_st {
 
     enum devcrypto_accelerated_t {
         DEVCRYPTO_NOT_ACCELERATED        = -1, /* software implemented */
-        DEVCRYPTO_ACCELERATION_UNKNOWN   =  0, /* acceleration support unkown */
+        DEVCRYPTO_ACCELERATION_UNKNOWN   =  0, /* acceleration support unknown */
         DEVCRYPTO_ACCELERATED            =  1  /* hardware accelerated */
     } accelerated;
 

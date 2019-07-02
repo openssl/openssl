@@ -135,7 +135,7 @@ must be incremented, using ossl_provider_upref().
 
 This function is expected to set the method's reference count to 1.
 
-=item desctruct()
+=item destruct()
 
 Decrement the I<method>'s reference count, and destruct it when
 the reference count reaches zero.

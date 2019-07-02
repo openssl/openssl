@@ -28,7 +28,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
 int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
                                             const char *prop_query);
 
-/* proeprty query cache functions */
+/* property query cache functions */
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
                                 const char *prop_query, void **result);
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,

@@ -284,7 +284,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),
     "operation not supported for this keytype"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_OPERATON_NOT_INITIALIZED),
-    "operaton not initialized"},
+    "operation not initialized"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_PARAMETER_TOO_LARGE),
     "parameter too large"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_PARTIALLY_OVERLAPPING),

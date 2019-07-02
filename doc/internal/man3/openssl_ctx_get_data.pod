@@ -29,7 +29,7 @@ as a C<CRYPTO_EX_DATA>, which allows data from diverse parts of the
 library to be added and removed dynamically.
 Each such data item must have a corresponding CRYPTO_EX_DATA index
 associated with it. Unlike normal CRYPTO_EX_DATA objects we use static indexes
-to identify data items. These are mapped transparetnly to CRYPTO_EX_DATA dynamic
+to identify data items. These are mapped transparently to CRYPTO_EX_DATA dynamic
 indexes internally to the implementation.
 See the example further down to see how that's done.
 

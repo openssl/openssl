@@ -76,7 +76,7 @@ To see the list of supported digests, use the command I<list -digest-commands>.
 
 =item B<cipher:string>
 
-Used by CMAC and GMAC to specifiy the cipher algorithm.
+Used by CMAC and GMAC to specify the cipher algorithm.
 For CMAC it must be one of AES-128-CBC, AES-192-CBC, AES-256-CBC or
 DES-EDE3-CBC.
 For GMAC it should be a GCM mode cipher e.g. AES-128-GCM.
