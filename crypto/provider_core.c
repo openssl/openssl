@@ -159,7 +159,7 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
         CRYPTO_THREAD_write_lock(store->lock);
         if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) == -1
             || (prov = sk_OSSL_PROVIDER_value(store->providers, i)) == NULL
-            || !ossl_provider_upref(prov))
+            || !ossl_provider_up_ref(prov))
             prov = NULL;
         CRYPTO_THREAD_unlock(store->lock);
     }
@@ -181,7 +181,7 @@ static OSSL_PROVIDER *provider_new(const char *name,
 #ifndef HAVE_ATOMICS
         || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
 #endif
-        || !ossl_provider_upref(prov) /* +1 One reference to be returned */
+        || !ossl_provider_up_ref(prov) /* +1 One reference to be returned */
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
         ossl_provider_free(prov);
         CRYPTOerr(CRYPTO_F_PROVIDER_NEW, ERR_R_MALLOC_FAILURE);
@@ -192,7 +192,7 @@ static OSSL_PROVIDER *provider_new(const char *name,
     return prov;
 }
 
-int ossl_provider_upref(OSSL_PROVIDER *prov)
+int ossl_provider_up_ref(OSSL_PROVIDER *prov)
 {
     int ref = 0;
 
@@ -223,7 +223,7 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
         return NULL;
 
     CRYPTO_THREAD_write_lock(store->lock);
-    if (!ossl_provider_upref(prov)) { /* +1 One reference for the store */
+    if (!ossl_provider_up_ref(prov)) { /* +1 One reference for the store */
         ossl_provider_free(prov); /* -1 Reference that was to be returned */
         prov = NULL;
     } else if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {

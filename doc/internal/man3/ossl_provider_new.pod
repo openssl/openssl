@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ossl_provider_find, ossl_provider_new, ossl_provider_upref,
+ossl_provider_find, ossl_provider_new, ossl_provider_up_ref,
 ossl_provider_free,
 ossl_provider_set_fallback, ossl_provider_set_module_path,
 ossl_provider_add_parameter,
@@ -22,7 +22,7 @@ ossl_provider_get_params, ossl_provider_query_operation
  OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name);
  OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
                                   ossl_provider_init_fn *init_function);
- int ossl_provider_upref(OSSL_PROVIDER *prov);
+ int ossl_provider_up_ref(OSSL_PROVIDER *prov);
  void ossl_provider_free(OSSL_PROVIDER *prov);
 
  /* Setters */
@@ -99,7 +99,7 @@ function.
 For further description of the initialisation function, see the
 description of ossl_provider_activate() below.
 
-ossl_provider_upref() increments the provider object I<prov>'s
+ossl_provider_up_ref() increments the provider object I<prov>'s
 reference count.
 
 ossl_provider_free() decrements the provider object I<prov>'s
@@ -220,7 +220,7 @@ of the built in macro B<MODULESDIR>.
 ossl_provider_find() and ossl_provider_new() return a pointer to a
 provider object (I<OSSL_PROVIDER>) on success, or NULL on error.
 
-ossl_provider_upref() returns the value of the reference count after
+ossl_provider_up_ref() returns the value of the reference count after
 it has been incremented.
 
 ossl_provider_free() doesn't return any value.
