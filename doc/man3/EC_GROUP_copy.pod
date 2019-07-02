@@ -181,17 +181,17 @@ EC_GROUP_method_of returns the EC_METHOD implementation in use for the given cur
 
 EC_GROUP_get0_generator returns the generator for the given curve or NULL on error.
 
-EC_GROUP_get_order() return the order as outparams from the given GROUP.
+EC_GROUP_get_order() returns 0 if the order is not set (or set to zero) and 1 otherwise.
 
-EC_GROUP_get_cofactor() returns the cofactor as outparams from the given GROUP.
+EC_GROUP_get_cofactor() returns 0 if the cofactor is not set (or is set to zero) and 1 otherwise.
 
 EC_GROUP_get_curve_name() returns the curve name (NID) for the specified curve or will return 0 if no curve name is associated.
 
-EC_GROUP_get_asn1_flag() returns the ASN1 flag for the specified curve.
+EC_GROUP_get_asn1_flag() returns the ASN1 flag for the specified B<curve> .
 
-EC_GROUP_get_point_conversion_form() returns the point_conversion_form for the specified curve.
+EC_GROUP_get_point_conversion_form() returns the point_conversion_form for the specified B<curve>.
 
-EC_GROUP_get_degree() returns the degree for the specified curve.
+EC_GROUP_get_degree() returns the degree for the specified B<curve> or 0 if group_get_degree method is not populated.
 
 EC_GROUP_check_named_curve() returns the nid of the matching named curve, otherwise it returns 0 for no match, or -1 on error.
 
