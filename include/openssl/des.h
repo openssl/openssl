@@ -145,7 +145,7 @@ int DES_check_key_parity(const_DES_cblock *key);
 int DES_is_weak_key(const_DES_cblock *key);
 /*
  * DES_set_key (= set_key = DES_key_sched = key_sched) calls
- * DES_set_key_unchecked
+ * DES_set_key_checked
  */
 int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule);
 int DES_key_sched(const_DES_cblock *key, DES_key_schedule *schedule);
