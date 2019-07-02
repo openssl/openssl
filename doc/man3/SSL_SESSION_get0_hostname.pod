@@ -6,7 +6,7 @@ SSL_SESSION_get0_hostname,
 SSL_SESSION_set1_hostname,
 SSL_SESSION_get0_alpn_selected,
 SSL_SESSION_set1_alpn_selected
-- get and set SNI and ALPN data ssociated with a session
+- get and set SNI and ALPN data associated with a session
 
 =head1 SYNOPSIS
 

@@ -140,7 +140,7 @@ See L<EVP_CIPHER_up_ref(3)>.
 
 Where an application that previously used implicit fetch is converted to use
 explicit fetch care should be taken with the L<EVP_MD_CTX_md(3)> function.
-Specifically, this function returns the EVP_MD object orginally passed to
+Specifically, this function returns the EVP_MD object originally passed to
 EVP_DigestInit_ex() (or other similar function). With implicit fetch the
 returned EVP_MD object is guaranteed to be available throughout the application
 lifetime. However, with explicit fetch EVP_MD objects are reference counted.
@@ -199,7 +199,7 @@ implementation of whirlpool from it:
  EVP_MD_meth_free(md);
 
 Note that in the above example the property string "legacy=yes" is optional
-since, assuming no other providers have been loaded, the only implmentation of
+since, assuming no other providers have been loaded, the only implementation of
 the "whirlpool" algorithm is in the "legacy" provider. Also note that the
 default provider should be explicitly loaded if it is required in addition to
 other providers:

@@ -46,13 +46,13 @@ struct object_st {
     double p2;
     /*
      * Documented as an arbitrarly large unsigned integer.
-     * The data size must be large enough to accomodate.
+     * The data size must be large enough to accommodate.
      * Assumed data type OSSL_PARAM_UNSIGNED_INTEGER
      */
     BIGNUM *p3;
     /*
      * Documented as a C string.
-     * The data size must be large enough to accomodate.
+     * The data size must be large enough to accommodate.
      * Assumed data type OSSL_PARAM_UTF8_STRING
      */
     char *p4;
@@ -293,7 +293,7 @@ static const struct provider_dispatch_st provider_api = {
 
 /* In all our tests, these are variables that get manipulated as parameters
  *
- * These arrays consistenly do nothing with the "p2" parameter, and
+ * These arrays consistently do nothing with the "p2" parameter, and
  * always include a "foo" parameter.  This is to check that the
  * set_params and get_params calls ignore the lack of parameters that
  * the application isn't interested in, as well as ignore parameters

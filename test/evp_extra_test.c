@@ -1178,7 +1178,7 @@ static int test_EVP_MD_fetch(int tst)
     md = NULL;
 
     /*
-     * Explicitly asking for the default implementation should succeeed except
+     * Explicitly asking for the default implementation should succeed except
      * in test 4 where the default provider is not loaded.
      */
     md = EVP_MD_fetch(ctx, "SHA256", "default=yes");

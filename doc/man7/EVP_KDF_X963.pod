@@ -71,7 +71,7 @@ decoded before being passed on as the control value.
 
 =head1 NOTES
 
-X963KDF is very similar to the SSKDF that uses a digest as the auxilary function,
+X963KDF is very similar to the SSKDF that uses a digest as the auxiliary function,
 X963KDF appends the counter to the secret, whereas SSKDF prepends the counter.
 
 A context for X963KDF can be obtained by calling:

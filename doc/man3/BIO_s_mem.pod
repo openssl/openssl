@@ -109,7 +109,7 @@ Calling BIO_reset() on a read write memory BIO with BIO_FLAGS_NONCLEAR_RST
 flag set can have unexpected outcome when the reads and writes to the
 BIO are intertwined. As documented above the BIO will be reset to the
 state after the last completed write operation. The effects of reads
-preceeding that write operation cannot be undone.
+preceding that write operation cannot be undone.
 
 Calling BIO_get_mem_ptr() prior to a BIO_reset() call with
 BIO_FLAGS_NONCLEAR_RST set has the same effect as a write operation.

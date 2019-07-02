@@ -2439,7 +2439,7 @@ EVP_R_NO_OPERATION_SET:149:no operation set
 EVP_R_ONLY_ONESHOT_SUPPORTED:177:only oneshot supported
 EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:150:\
 	operation not supported for this keytype
-EVP_R_OPERATON_NOT_INITIALIZED:151:operaton not initialized
+EVP_R_OPERATON_NOT_INITIALIZED:151:operation not initialized
 EVP_R_PARAMETER_TOO_LARGE:187:parameter too large
 EVP_R_PARTIALLY_OVERLAPPING:162:partially overlapping buffers
 EVP_R_PBKDF2_ERROR:181:pbkdf2 error

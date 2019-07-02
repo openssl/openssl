@@ -68,7 +68,7 @@ Matching such clauses is not a requirement, but any additional optional
 match counts in favor of the algorithm.
 More details about that in the B<Lookups> section.
 A I<property query> is a sequence of comma separated property query clauses.
-The full syntax for property queries appears below, but the available syntatic
+The full syntax for property queries appears below, but the available syntactic
 features are:
 
 =over 4
@@ -129,7 +129,7 @@ Where both the context and local queries include a clause with the same name,
 the local clause overrides the context clause.
 
 It is possible for a local property query to remove a clause in the context
-property query by preceeding the property name with a '-'.
+property query by preceding the property name with a '-'.
 For example, a context property query that contains "fips=yes" would normally
 result in implementations that have "fips=yes".
 

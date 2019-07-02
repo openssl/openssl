@@ -186,7 +186,7 @@ OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter B<p>.
 The value is copied to the address B<val>.
 Type coercion takes place as discussed in the NOTES section.
 
-OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the paramter
+OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the parameter
 B<p>.
 Type coercion takes place as discussed in the NOTES section.
 
@@ -194,7 +194,7 @@ OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter pointed to by B<p>.
 The BIGNUM referenced by B<val> is updated and is allocated if B<*val> is
 B<NULL>.
 
-OSSL_PARAM_set_BN() stores the BIGNUM B<val> into the paramater B<p>.
+OSSL_PARAM_set_BN() stores the BIGNUM B<val> into the parameter B<p>.
 
 OSSL_PARAM_get_utf8_string() retrieves a UTF8 string from the parameter
 pointed to by B<p>.

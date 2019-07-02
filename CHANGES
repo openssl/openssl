@@ -39,7 +39,7 @@
      EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE.
      [Shane Lontis]
 
-  *) Default cipher lists/suites are now avaialble via a function, the
+  *) Default cipher lists/suites are now available via a function, the
      #defines are deprecated.
      [Todd Short]
 
@@ -462,7 +462,7 @@
         SSL_set_ciphersuites()
      [Matt Caswell]
 
-  *) Memory allocation failures consistenly add an error to the error
+  *) Memory allocation failures consistently add an error to the error
      stack.
      [Rich Salz]
 
