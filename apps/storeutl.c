@@ -125,7 +125,7 @@ int storeutl_main(int argc, char *argv[])
                 }
                 /*
                  * If expected wasn't set at this point, it means the map
-                 * isn't syncronised with the possible options leading here.
+                 * isn't synchronised with the possible options leading here.
                  */
                 OPENSSL_assert(expected != 0);
             }

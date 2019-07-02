@@ -57,6 +57,8 @@ B<openssl> B<ca>
 [B<-multivalue-rdn>]
 [B<-rand file...>]
 [B<-writerand file>]
+[B<-sm2-id string>]
+[B<-sm2-hex-id hex-string>]
 
 =head1 DESCRIPTION
 
@@ -302,6 +304,16 @@ all others.
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
+
+=item B<-sm2-id>
+
+Specify the ID string to use when verifying an SM2 certificate. The ID string is
+required by the SM2 signature algorithm for signing and verification.
+
+=item B<-sm2-hex-id>
+
+Specify a binary ID string to use when signing or verifying using an SM2
+certificate. The argument for this option is string of hexadecimal digits.
 
 =back
 
@@ -599,6 +611,10 @@ demoCA/index.txt.
 Sign a certificate request:
 
  openssl ca -in req.pem -out newcert.pem
+
+Sign an SM2 certificate request:
+
+ openssl ca -in sm2.csr -out sm2.crt -md sm3 -sigopt "sm2_id:1234567812345678" -sm2-id "1234567812345678"
 
 Sign a certificate request, using CA extensions:
 

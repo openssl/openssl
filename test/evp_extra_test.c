@@ -599,7 +599,7 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
-#ifndef OPENSSL_NO_SM2
+#if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODE)
 
 static int test_EVP_SM2_verify(void)
 {
@@ -1150,8 +1150,8 @@ static int test_EVP_MD_fetch(int tst)
             || !TEST_int_eq(EVP_MD_block_size(md), SHA256_CBLOCK))
         goto err;
 
-    /* Also test EVP_MD_upref() while we're doing this */
-    if (!TEST_true(EVP_MD_upref(md)))
+    /* Also test EVP_MD_up_ref() while we're doing this */
+    if (!TEST_true(EVP_MD_up_ref(md)))
         goto err;
     /* Ref count should now be 2. Release both */
     EVP_MD_meth_free(md);
@@ -1178,7 +1178,7 @@ static int test_EVP_MD_fetch(int tst)
     md = NULL;
 
     /*
-     * Explicitly asking for the default implementation should succeeed except
+     * Explicitly asking for the default implementation should succeed except
      * in test 4 where the default provider is not loaded.
      */
     md = EVP_MD_fetch(ctx, "SHA256", "default=yes");
@@ -1238,7 +1238,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
-#ifndef OPENSSL_NO_SM2
+#if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODE)
     ADD_TEST(test_EVP_SM2);
     ADD_TEST(test_EVP_SM2_verify);
 #endif

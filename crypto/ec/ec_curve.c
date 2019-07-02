@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -14,7 +14,6 @@
 #include <openssl/obj_mac.h>
 #include <openssl/opensslconf.h>
 #include "internal/nelem.h"
-#include "internal/o_str.h"
 
 typedef struct {
     int field_type,             /* either NID_X9_62_prime_field or
@@ -2801,6 +2800,70 @@ typedef struct _ec_list_element_st {
     const char *comment;
 } ec_list_element;
 
+#ifdef FIPS_MODE
+static const ec_list_element curve_list[] = {
+    /* prime field curves */
+    /* secg curves */
+# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+    {NID_secp224r1, &_EC_NIST_PRIME_224.h, EC_GFp_nistp224_method,
+     "NIST/SECG curve over a 224 bit prime field"},
+# else
+    {NID_secp224r1, &_EC_NIST_PRIME_224.h, 0,
+     "NIST/SECG curve over a 224 bit prime field"},
+# endif
+    /* SECG secp256r1 is the same as X9.62 prime256v1 and hence omitted */
+    {NID_secp384r1, &_EC_NIST_PRIME_384.h, 0,
+     "NIST/SECG curve over a 384 bit prime field"},
+
+# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+    {NID_secp521r1, &_EC_NIST_PRIME_521.h, EC_GFp_nistp521_method,
+     "NIST/SECG curve over a 521 bit prime field"},
+# else
+    {NID_secp521r1, &_EC_NIST_PRIME_521.h, 0,
+     "NIST/SECG curve over a 521 bit prime field"},
+# endif
+
+    /* X9.62 curves */
+    {NID_X9_62_prime192v1, &_EC_NIST_PRIME_192.h, 0,
+     "NIST/X9.62/SECG curve over a 192 bit prime field"},
+    {NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h,
+# if defined(ECP_NISTZ256_ASM)
+     EC_GFp_nistz256_method,
+# elif !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+     EC_GFp_nistp256_method,
+# else
+     0,
+# endif
+     "X9.62/SECG curve over a 256 bit prime field"},
+
+# ifndef OPENSSL_NO_EC2M
+    /* characteristic two field curves */
+    /* NIST/SECG curves */
+    {NID_sect163k1, &_EC_NIST_CHAR2_163K.h, 0,
+     "NIST/SECG/WTLS curve over a 163 bit binary field"},
+    {NID_sect163r2, &_EC_NIST_CHAR2_163B.h, 0,
+     "NIST/SECG curve over a 163 bit binary field"},
+    {NID_sect233k1, &_EC_NIST_CHAR2_233K.h, 0,
+     "NIST/SECG/WTLS curve over a 233 bit binary field"},
+    {NID_sect233r1, &_EC_NIST_CHAR2_233B.h, 0,
+     "NIST/SECG/WTLS curve over a 233 bit binary field"},
+    {NID_sect283k1, &_EC_NIST_CHAR2_283K.h, 0,
+     "NIST/SECG curve over a 283 bit binary field"},
+    {NID_sect283r1, &_EC_NIST_CHAR2_283B.h, 0,
+     "NIST/SECG curve over a 283 bit binary field"},
+    {NID_sect409k1, &_EC_NIST_CHAR2_409K.h, 0,
+     "NIST/SECG curve over a 409 bit binary field"},
+    {NID_sect409r1, &_EC_NIST_CHAR2_409B.h, 0,
+     "NIST/SECG curve over a 409 bit binary field"},
+    {NID_sect571k1, &_EC_NIST_CHAR2_571K.h, 0,
+     "NIST/SECG curve over a 571 bit binary field"},
+    {NID_sect571r1, &_EC_NIST_CHAR2_571B.h, 0,
+     "NIST/SECG curve over a 571 bit binary field"},
+# endif
+};
+
+#else
+
 static const ec_list_element curve_list[] = {
     /* prime field curves */
     /* secg curves */
@@ -2823,25 +2886,25 @@ static const ec_list_element curve_list[] = {
      "SECG curve over a 192 bit prime field"},
     {NID_secp224k1, &_EC_SECG_PRIME_224K1.h, 0,
      "SECG curve over a 224 bit prime field"},
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     {NID_secp224r1, &_EC_NIST_PRIME_224.h, EC_GFp_nistp224_method,
      "NIST/SECG curve over a 224 bit prime field"},
-#else
+# else
     {NID_secp224r1, &_EC_NIST_PRIME_224.h, 0,
      "NIST/SECG curve over a 224 bit prime field"},
-#endif
+# endif
     {NID_secp256k1, &_EC_SECG_PRIME_256K1.h, 0,
      "SECG curve over a 256 bit prime field"},
     /* SECG secp256r1 is the same as X9.62 prime256v1 and hence omitted */
     {NID_secp384r1, &_EC_NIST_PRIME_384.h, 0,
      "NIST/SECG curve over a 384 bit prime field"},
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     {NID_secp521r1, &_EC_NIST_PRIME_521.h, EC_GFp_nistp521_method,
      "NIST/SECG curve over a 521 bit prime field"},
-#else
+# else
     {NID_secp521r1, &_EC_NIST_PRIME_521.h, 0,
      "NIST/SECG curve over a 521 bit prime field"},
-#endif
+# endif
     /* X9.62 curves */
     {NID_X9_62_prime192v1, &_EC_NIST_PRIME_192.h, 0,
      "NIST/X9.62/SECG curve over a 192 bit prime field"},
@@ -2856,15 +2919,15 @@ static const ec_list_element curve_list[] = {
     {NID_X9_62_prime239v3, &_EC_X9_62_PRIME_239V3.h, 0,
      "X9.62 curve over a 239 bit prime field"},
     {NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h,
-#if defined(ECP_NISTZ256_ASM)
+# if defined(ECP_NISTZ256_ASM)
      EC_GFp_nistz256_method,
-#elif !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+# elif !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
      EC_GFp_nistp256_method,
-#else
+# else
      0,
-#endif
+# endif
      "X9.62/SECG curve over a 256 bit prime field"},
-#ifndef OPENSSL_NO_EC2M
+# ifndef OPENSSL_NO_EC2M
     /* characteristic two field curves */
     /* NIST/SECG curves */
     {NID_sect113r1, &_EC_SECG_CHAR2_113R1.h, 0,
@@ -2948,7 +3011,7 @@ static const ec_list_element curve_list[] = {
      "SECG curve over a 113 bit binary field"},
     {NID_wap_wsg_idm_ecid_wtls5, &_EC_X9_62_CHAR2_163V1.h, 0,
      "X9.62 curve over a 163 bit binary field"},
-#endif
+# endif
     {NID_wap_wsg_idm_ecid_wtls6, &_EC_SECG_PRIME_112R1.h, 0,
      "SECG/WTLS curve over a 112 bit prime field"},
     {NID_wap_wsg_idm_ecid_wtls7, &_EC_SECG_PRIME_160R2.h, 0,
@@ -2957,15 +3020,15 @@ static const ec_list_element curve_list[] = {
      "WTLS curve over a 112 bit prime field"},
     {NID_wap_wsg_idm_ecid_wtls9, &_EC_WTLS_9.h, 0,
      "WTLS curve over a 160 bit prime field"},
-#ifndef OPENSSL_NO_EC2M
+# ifndef OPENSSL_NO_EC2M
     {NID_wap_wsg_idm_ecid_wtls10, &_EC_NIST_CHAR2_233K.h, 0,
      "NIST/SECG/WTLS curve over a 233 bit binary field"},
     {NID_wap_wsg_idm_ecid_wtls11, &_EC_NIST_CHAR2_233B.h, 0,
      "NIST/SECG/WTLS curve over a 233 bit binary field"},
-#endif
+# endif
     {NID_wap_wsg_idm_ecid_wtls12, &_EC_WTLS_12.h, 0,
      "WTLS curve over a 224 bit prime field"},
-#ifndef OPENSSL_NO_EC2M
+# ifndef OPENSSL_NO_EC2M
     /* IPSec curves */
     {NID_ipsec3, &_EC_IPSEC_155_ID3.h, 0,
      "\n\tIPSec/IKE/Oakley curve #3 over a 155 bit binary field.\n"
@@ -2973,7 +3036,7 @@ static const ec_list_element curve_list[] = {
     {NID_ipsec4, &_EC_IPSEC_185_ID4.h, 0,
      "\n\tIPSec/IKE/Oakley curve #4 over a 185 bit binary field.\n"
      "\tNot suitable for ECDSA.\n\tQuestionable extension field!"},
-#endif
+# endif
     /* brainpool curves */
     {NID_brainpoolP160r1, &_EC_brainpoolP160r1.h, 0,
      "RFC 5639 curve over a 160 bit prime field"},
@@ -3003,11 +3066,12 @@ static const ec_list_element curve_list[] = {
      "RFC 5639 curve over a 512 bit prime field"},
     {NID_brainpoolP512t1, &_EC_brainpoolP512t1.h, 0,
      "RFC 5639 curve over a 512 bit prime field"},
-#ifndef OPENSSL_NO_SM2
+# ifndef OPENSSL_NO_SM2
     {NID_sm2, &_EC_sm2p256v1.h, 0,
      "SM2 curve over a 256 bit prime field"},
-#endif
+# endif
 };
+#endif /* FIPS_MODE */
 
 #define curve_list_length OSSL_NELEM(curve_list)
 
@@ -3126,6 +3190,15 @@ EC_GROUP *EC_GROUP_new_by_curve_name(int nid)
     if (nid <= 0)
         return NULL;
 
+#ifdef FIPS_MODE
+    /*
+     * Only use approved NIST curves in FIPS.
+     * NOTE: "B-163", "K-163" & "P-192" can only be used for legacy use
+     * (i.e- ECDSA signature verification).
+     */
+    if (EC_curve_nid2nist(nid) == NULL)
+        return NULL;
+#endif /* FIPS_MODE */
     for (i = 0; i < curve_list_length; i++)
         if (curve_list[i].nid == nid) {
             ret = ec_group_new_from_data(curve_list[i]);
@@ -3302,10 +3375,10 @@ int ec_curve_nid_from_params(const EC_GROUP *group)
             /* Check the optional seed (ignore if its not set) */
             && (data->seed_len == 0 || seed_len == 0
                 || ((size_t)data->seed_len == seed_len
-                     && OPENSSL_memcmp(params_seed, seed, seed_len) == 0))
+                     && memcmp(params_seed, seed, seed_len) == 0))
             /* Check that the groups params match the built-in curve params */
-            && OPENSSL_memcmp(param_bytes, params, param_len * NUM_BN_FIELDS)
-                              == 0) {
+            && memcmp(param_bytes, params, param_len * NUM_BN_FIELDS)
+                             == 0) {
             ret = curve.nid;
             goto end;
         }

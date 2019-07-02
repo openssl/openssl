@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7783] = {
+static const unsigned char so[7813] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1077,8 +1077,11 @@ static const unsigned char so[7783] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0C,       /* [ 7745] OBJ_hmacWithSHA512_224 */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0D,       /* [ 7753] OBJ_hmacWithSHA512_256 */
     0x28,0xCC,0x45,0x03,0x04,                      /* [ 7761] OBJ_gmac */
-    0x2A,0x81,0x1C,0xCF,0x55,0x01,0x83,0x75,       /* [ 7766] OBJ_SM2_with_SM3 */
-    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x09,       /* [ 7774] OBJ_id_on_SmtpUTF8Mailbox */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x13,  /* [ 7766] OBJ_kmac128 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x14,  /* [ 7775] OBJ_kmac256 */
+    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,  /* [ 7784] OBJ_blake2bmac */
+    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,  /* [ 7794] OBJ_blake2smac */
+    0x2A,0x81,0x1C,0xCF,0x55,0x01,0x83,0x75,       /* [ 7804] OBJ_SM2_with_SM3 */
 };
 
 #define NUM_NID 1208
@@ -2279,15 +2282,15 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"hmacWithSHA512-224", "hmacWithSHA512-224", NID_hmacWithSHA512_224, 8, &so[7745]},
     {"hmacWithSHA512-256", "hmacWithSHA512-256", NID_hmacWithSHA512_256, 8, &so[7753]},
     {"GMAC", "gmac", NID_gmac, 5, &so[7761]},
-    {"KMAC128", "kmac128", NID_kmac128},
-    {"KMAC256", "kmac256", NID_kmac256},
+    {"KMAC128", "kmac128", NID_kmac128, 9, &so[7766]},
+    {"KMAC256", "kmac256", NID_kmac256, 9, &so[7775]},
     {"AES-128-SIV", "aes-128-siv", NID_aes_128_siv},
     {"AES-192-SIV", "aes-192-siv", NID_aes_192_siv},
     {"AES-256-SIV", "aes-256-siv", NID_aes_256_siv},
-    {"BLAKE2BMAC", "blake2bmac", NID_blake2bmac},
-    {"BLAKE2SMAC", "blake2smac", NID_blake2smac},
+    {"BLAKE2BMAC", "blake2bmac", NID_blake2bmac, 10, &so[7784]},
+    {"BLAKE2SMAC", "blake2smac", NID_blake2smac, 10, &so[7794]},
     {"SSHKDF", "sshkdf", NID_sshkdf},
-    {"SM2-SM3", "SM2-with-SM3", NID_SM2_with_SM3, 8, &so[7766]},
+    {"SM2-SM3", "SM2-with-SM3", NID_SM2_with_SM3, 8, &so[7804]},
     {"SSKDF", "sskdf", NID_sskdf},
     {"X963KDF", "x963kdf", NID_x963kdf},
     {"id-on-SmtpUTF8Mailbox", "Smtp UTF8 Mailbox", NID_id_on_SmtpUTF8Mailbox, 8, &so[7774]},
@@ -4699,7 +4702,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1074
+#define NUM_OBJ 1077
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5552,6 +5555,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1103,    /* OBJ_hmac_sha3_256                2 16 840 1 101 3 4 2 14 */
     1104,    /* OBJ_hmac_sha3_384                2 16 840 1 101 3 4 2 15 */
     1105,    /* OBJ_hmac_sha3_512                2 16 840 1 101 3 4 2 16 */
+    1196,    /* OBJ_kmac128                      2 16 840 1 101 3 4 2 19 */
+    1197,    /* OBJ_kmac256                      2 16 840 1 101 3 4 2 20 */
      802,    /* OBJ_dsa_with_SHA224              2 16 840 1 101 3 4 3 1 */
      803,    /* OBJ_dsa_with_SHA256              2 16 840 1 101 3 4 3 2 */
     1106,    /* OBJ_dsa_with_SHA384              2 16 840 1 101 3 4 3 3 */
@@ -5669,6 +5674,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      138,    /* OBJ_ms_efs                       1 3 6 1 4 1 311 10 3 4 */
      648,    /* OBJ_ms_smartcard_login           1 3 6 1 4 1 311 20 2 2 */
      649,    /* OBJ_ms_upn                       1 3 6 1 4 1 311 20 2 3 */
+    1201,    /* OBJ_blake2bmac                   1 3 6 1 4 1 1722 12 2 1 */
+    1202,    /* OBJ_blake2smac                   1 3 6 1 4 1 1722 12 2 2 */
      951,    /* OBJ_ct_precert_scts              1 3 6 1 4 1 11129 2 4 2 */
      952,    /* OBJ_ct_precert_poison            1 3 6 1 4 1 11129 2 4 3 */
      953,    /* OBJ_ct_precert_signer            1 3 6 1 4 1 11129 2 4 4 */

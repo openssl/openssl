@@ -20,6 +20,7 @@ static const ERR_STRING_DATA RAND_str_functs[] = {
     {ERR_PACK(ERR_LIB_RAND, RAND_F_DRBG_SETUP, 0), "drbg_setup"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_GET_ENTROPY, 0), "get_entropy"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_BYTES, 0), "RAND_bytes"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_BYTES_EX, 0), "rand_bytes_ex"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_ENABLE_LOCKING, 0),
      "rand_drbg_enable_locking"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_GENERATE, 0),

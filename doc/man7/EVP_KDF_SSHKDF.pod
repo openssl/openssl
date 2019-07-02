@@ -68,12 +68,12 @@ Sets the type for the SSHHKDF operation. There are six supported types:
 
 =over 4
 
-=item EVP_KDF_SSHKDF_TYPE_ININITAL_IV_CLI_TO_SRV
+=item EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV
 
 The Initial IV from client to server.
 A single char of value 65 (ASCII char 'A').
 
-=item EVP_KDF_SSHKDF_TYPE_ININITAL_IV_SRV_TO_CLI
+=item EVP_KDF_SSHKDF_TYPE_INITIAL_IV_SRV_TO_CLI
 
 The Initial IV from server to client
 A single char of value 66 (ASCII char 'B').
@@ -103,7 +103,7 @@ A single char of value 70 (ASCII char 'F').
 EVP_KDF_ctrl_str() type string: "type"
 
 The value is a string of length one character. The only valid values
-are the numerical values of the ASCII caracters: "A" (65) to "F" (70).
+are the numerical values of the ASCII characters: "A" (65) to "F" (70).
 
 =back
 
@@ -142,7 +142,7 @@ This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
  if (EVP_KDF_CTX_set1_sshkdf_session_id(kctx, session_id, 32) <= 0)
      /* Error */
  if (EVP_KDF_CTX_set_sshkdf_type(kctx,
-                    EVP_KDF_SSHKDF_TYPE_ININITAL_IV_CLI_TO_SRV) <= 0)
+                    EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV) <= 0)
      /* Error */
  if (EVP_KDF_derive(kctx, out, &outlen) <= 0)
      /* Error */

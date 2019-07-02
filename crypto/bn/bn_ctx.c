@@ -247,6 +247,8 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
 
 OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx)
 {
+    if (ctx == NULL)
+        return NULL;
     return ctx->libctx;
 }
 

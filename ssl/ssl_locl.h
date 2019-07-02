@@ -1661,6 +1661,13 @@ struct ssl_st {
     /* Callback for SSL async handling */
     SSL_async_callback_fn async_cb;
     void *async_cb_arg;
+
+    /*
+     * Signature algorithms shared by client and server: cached because these
+     * are used most often.
+     */
+    const struct sigalg_lookup_st **shared_sigalgs;
+    size_t shared_sigalgslen;
 };
 
 /*
@@ -1925,12 +1932,6 @@ typedef struct cert_st {
     uint16_t *client_sigalgs;
     /* Size of above array */
     size_t client_sigalgslen;
-    /*
-     * Signature algorithms shared by client and server: cached because these
-     * are used most often.
-     */
-    const SIGALG_LOOKUP **shared_sigalgs;
-    size_t shared_sigalgslen;
     /*
      * Certificate setup callback: if set is called whenever a certificate
      * may be required (client or server). the callback can then examine any

@@ -66,6 +66,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              rel2abs/;
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
+use Cwd qw/abs_path/;
 
 my $level = 0;
 
@@ -165,13 +166,13 @@ C<indir> takes some additional options OPTS that affect the subdirectory:
 
 =item B<create =E<gt> 0|1>
 
-When set to 1 (or any value that perl preceives as true), the subdirectory
+When set to 1 (or any value that perl perceives as true), the subdirectory
 will be created if it doesn't already exist.  This happens before BLOCK
 is executed.
 
 =item B<cleanup =E<gt> 0|1>
 
-When set to 1 (or any value that perl preceives as true), the subdirectory
+When set to 1 (or any value that perl perceives as true), the subdirectory
 will be cleaned out and removed.  This happens both before and after BLOCK
 is executed.
 
@@ -932,8 +933,8 @@ i.e. Some tests may only work in non FIPS mode.
 sub __env {
     (my $recipe_datadir = basename($0)) =~ s/\.t$/_data/i;
 
-    $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
-    $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
+    $directories{SRCTOP}  = abs_path($ENV{SRCTOP} || $ENV{TOP});
+    $directories{BLDTOP}  = abs_path($ENV{BLDTOP} || $ENV{TOP});
     $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
     $directories{SRCAPPS} =                 __srctop_dir("apps");
     $directories{BLDFUZZ} =                 __bldtop_dir("fuzz");

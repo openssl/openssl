@@ -546,7 +546,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     /*
      * NIST SP800-90Ar1 section 9.1 says you can combine getting the entropy
      * and nonce in 1 call by increasing the entropy with 50% and increasing
-     * the minimum length to accomadate the length of the nonce.
+     * the minimum length to accommodate the length of the nonce.
      * We do this in case a nonce is require and get_nonce is NULL.
      */
     if (drbg->min_noncelen > 0 && drbg->get_nonce == NULL) {
@@ -1339,7 +1339,8 @@ RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
 
     drbg = CRYPTO_THREAD_get_local(&dgbl->public_drbg);
     if (drbg == NULL) {
-        if (!ossl_init_thread_start(NULL, NULL, drbg_delete_thread_state))
+        ctx = openssl_ctx_get_concrete(ctx);
+        if (!ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PUBLIC);
         CRYPTO_THREAD_set_local(&dgbl->public_drbg, drbg);
@@ -1366,7 +1367,8 @@ RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
 
     drbg = CRYPTO_THREAD_get_local(&dgbl->private_drbg);
     if (drbg == NULL) {
-        if (!ossl_init_thread_start(NULL, NULL, drbg_delete_thread_state))
+        ctx = openssl_ctx_get_concrete(ctx);
+        if (!ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PRIVATE);
         CRYPTO_THREAD_set_local(&dgbl->private_drbg, drbg);

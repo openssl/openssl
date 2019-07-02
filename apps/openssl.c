@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -130,11 +130,8 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
 {
     int ret = 0;
     tracedata *trace_data = vdata;
-    union {
-        CRYPTO_THREAD_ID tid;
-        unsigned long ltid;
-    } tid;
-    char buffer[256];
+    char buffer[256], *hex;
+    CRYPTO_THREAD_ID tid;
 
     switch (cmd) {
     case OSSL_TRACE_CTRL_BEGIN:
@@ -142,11 +139,11 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
             return 0;
         trace_data->ingroup = 1;
 
-        tid.ltid = 0;
-        tid.tid = CRYPTO_THREAD_get_current_id();
-
-        BIO_snprintf(buffer, sizeof(buffer), "TRACE[%lx]:%s: ", tid.ltid,
-                     OSSL_trace_get_category_name(category));
+        tid = CRYPTO_THREAD_get_current_id();
+        hex = OPENSSL_buf2hexstr((const unsigned char *)&tid, sizeof(tid));
+        BIO_snprintf(buffer, sizeof(buffer), "TRACE[%s]:%s: ",
+                     hex, OSSL_trace_get_category_name(category));
+        OPENSSL_free(hex);
         BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX,
                  strlen(buffer), buffer);
         break;
@@ -216,6 +213,13 @@ static void setup_trace(const char *str)
 {
     char *val;
 
+    /*
+     * We add this handler as early as possible to ensure it's executed
+     * as late as possible, i.e. after the TRACE code has done its cleanup
+     * (which happens last in OPENSSL_cleanup).
+     */
+    atexit(cleanup_trace);
+
     trace_data_stack = sk_tracedata_new_null();
     val = OPENSSL_strdup(str);
 
@@ -240,7 +244,6 @@ static void setup_trace(const char *str)
     }
 
     OPENSSL_free(val);
-    atexit(cleanup_trace);
 }
 #endif /* OPENSSL_NO_TRACE */
 

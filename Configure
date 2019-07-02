@@ -1456,7 +1456,6 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS') {
 # Deal with bn_ops ###################################################
 
 $config{bn_ll}                  =0;
-$config{export_var_as_fn}       =0;
 my $def_int="unsigned int";
 $config{rc4_int}                =$def_int;
 ($config{b64l},$config{b64},$config{b32})=(0,0,1);
@@ -1464,7 +1463,6 @@ $config{rc4_int}                =$def_int;
 my $count = 0;
 foreach (sort split(/\s+/,$target{bn_ops})) {
     $count++ if /SIXTY_FOUR_BIT|SIXTY_FOUR_BIT_LONG|THIRTY_TWO_BIT/;
-    $config{export_var_as_fn}=1                 if $_ eq 'EXPORT_VAR_AS_FN';
     $config{bn_ll}=1                            if $_ eq 'BN_LLONG';
     $config{rc4_int}="unsigned char"            if $_ eq 'RC4_CHAR';
     ($config{b64l},$config{b64},$config{b32})
@@ -3314,7 +3312,6 @@ sub print_table_entry
         "includes",
         "cc",
         "cflags",
-        "unistd",
         "ld",
         "lflags",
         "loutflag",

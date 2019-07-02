@@ -257,9 +257,9 @@ static int aes_cipher(void *vctx,
 
 #define IMPLEMENT_new_params(lcmode, UCMODE) \
     static OSSL_OP_cipher_get_params_fn aes_##lcmode##_get_params; \
-    static int aes_##lcmode##_get_params(const OSSL_PARAM params[]) \
+    static int aes_##lcmode##_get_params(OSSL_PARAM params[]) \
     { \
-        const OSSL_PARAM *p; \
+        OSSL_PARAM *p; \
     \
         p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE); \
         if (p != NULL && !OSSL_PARAM_set_int(p, EVP_CIPH_##UCMODE##_MODE)) \
@@ -375,10 +375,10 @@ static size_t block_size_1(void)
     return 1;
 }
 
-static int aes_ctx_get_params(void *vctx, const OSSL_PARAM params[])
+static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->pad)) {
@@ -394,7 +394,7 @@ static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[])
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL) {
         int pad;
 

@@ -151,6 +151,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_POLY1305_CTRL                              216
 # define EVP_F_RC2_MAGIC_TO_METH                          109
 # define EVP_F_RC5_CTRL                                   125
+# define EVP_F_R_32_12_16_INIT_KEY                        242
 # define EVP_F_S390X_AES_GCM_CTRL                         201
 # define EVP_F_S390X_AES_GCM_TLS_CIPHER                   208
 # define EVP_F_SCRYPT_ALG                                 228
@@ -162,6 +163,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_AES_KEY_SETUP_FAILED                       143
 # define EVP_R_ARIA_KEY_SETUP_FAILED                      176
 # define EVP_R_BAD_DECRYPT                                100
+# define EVP_R_BAD_KEY_LENGTH                             195
 # define EVP_R_BUFFER_TOO_SMALL                           155
 # define EVP_R_CAMELLIA_KEY_SETUP_FAILED                  157
 # define EVP_R_CIPHER_NOT_GCM_MODE                        184

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -455,20 +455,11 @@ typedef struct mem_leak_st {
 static void print_leak(const MEM *m, MEM_LEAK *l)
 {
     char buf[1024];
-    char *bufp = buf;
+    char *bufp = buf, *hex;
     size_t len = sizeof(buf), ami_cnt;
     APP_INFO *amip;
     int n;
     struct tm *lcl = NULL;
-    /*
-     * Convert between CRYPTO_THREAD_ID (which could be anything at all) and
-     * a long. This may not be meaningful depending on what CRYPTO_THREAD_ID is
-     * but hopefully should give something sensible on most platforms
-     */
-    union {
-        CRYPTO_THREAD_ID tid;
-        unsigned long ltid;
-    } tid;
     CRYPTO_THREAD_ID ti;
 
     lcl = localtime(&m->time);
@@ -488,15 +479,11 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
     bufp += n;
     len -= n;
 
-    tid.ltid = 0;
-    tid.tid = m->threadid;
-    n = BIO_snprintf(bufp, len, "thread=%lu, ", tid.ltid);
-    if (n <= 0)
-        return;
-    bufp += n;
-    len -= n;
-
-    n = BIO_snprintf(bufp, len, "number=%d, address=%p\n", m->num, m->addr);
+    hex = OPENSSL_buf2hexstr((const unsigned char *)&m->threadid,
+                             sizeof(m->threadid));
+    n = BIO_snprintf(bufp, len, "thread=%s, number=%d, address=%p\n", hex,
+                     m->num, m->addr);
+    OPENSSL_free(hex);
     if (n <= 0)
         return;
     bufp += n;
@@ -522,11 +509,12 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
                 break;
             memset(buf, '>', ami_cnt);
             buf[ami_cnt] = '\0';
-            tid.ltid = 0;
-            tid.tid = amip->threadid;
+            hex = OPENSSL_buf2hexstr((const unsigned char *)&amip->threadid,
+                                     sizeof(amip->threadid));
             n = BIO_snprintf(buf + ami_cnt, sizeof(buf) - ami_cnt,
-                             " thread=%lu, file=%s, line=%d, info=\"",
-                             tid.ltid, amip->file, amip->line);
+                             "thread=%s, file=%s, line=%d, info=\"",
+                             hex, amip->file, amip->line);
+            OPENSSL_free(hex);
             if (n <= 0)
                 break;
             buf_len = ami_cnt + n;

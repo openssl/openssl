@@ -15,8 +15,11 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+
 /* TODO(3.0): Needed for dummy_evp_call(). To be removed */
 #include <openssl/sha.h>
+#include <openssl/rand_drbg.h>
+
 #include "internal/cryptlib.h"
 #include "internal/property.h"
 #include "internal/evp_int.h"
@@ -85,8 +88,10 @@ static int dummy_evp_call(void *provctx)
     int ret = 0;
     BN_CTX *bnctx = NULL;
     BIGNUM *a = NULL, *b = NULL;
+    unsigned char randbuf[128];
+    RAND_DRBG *drbg = OPENSSL_CTX_get0_public_drbg(libctx);
 
-    if (ctx == NULL || sha256 == NULL)
+    if (ctx == NULL || sha256 == NULL || drbg == NULL)
         goto err;
 
     if (!EVP_DigestInit_ex(ctx, sha256, NULL))
@@ -112,6 +117,12 @@ static int dummy_evp_call(void *provctx)
         || BN_cmp(a, b) != 0)
         goto err;
     
+    if (RAND_DRBG_bytes(drbg, randbuf, sizeof(randbuf)) <= 0)
+        goto err;
+
+    if (!BN_rand_ex(a, 256, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, bnctx))
+        goto err;
+
     ret = 1;
  err:
     BN_CTX_end(bnctx);
@@ -127,10 +138,9 @@ static const OSSL_ITEM *fips_get_param_types(const OSSL_PROVIDER *prov)
     return fips_param_types;
 }
 
-static int fips_get_params(const OSSL_PROVIDER *prov,
-                            const OSSL_PARAM params[])
+static int fips_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL FIPS Provider"))
@@ -143,6 +153,60 @@ static int fips_get_params(const OSSL_PROVIDER *prov,
         return 0;
 
     return 1;
+}
+
+/* FIPS specific version of the function of the same name in provlib.c */
+const char *ossl_prov_util_nid_to_name(int nid)
+{
+    /* We don't have OBJ_nid2n() in FIPS_MODE so we have an explicit list */
+
+    switch (nid) {
+    /* Digests */
+    case NID_sha1:
+        return "SHA224";
+    case NID_sha224:
+        return "SHA224";
+    case NID_sha256:
+        return "SHA256";
+    case NID_sha384:
+        return "SHA384";
+    case NID_sha512:
+        return "SHA512";
+    case NID_sha512_224:
+        return "SHA512-224";
+    case NID_sha512_256:
+        return "SHA512-256";
+    case NID_sha3_224:
+        return "SHA3-224";
+    case NID_sha3_256:
+        return "SHA3-256";
+    case NID_sha3_384:
+        return "SHA3-384";
+    case NID_sha3_512:
+        return "SHA3-512";
+
+    /* Ciphers */
+    case NID_aes_256_ecb:
+        return "AES-256-ECB";
+    case NID_aes_192_ecb:
+        return "AES-192-ECB";
+    case NID_aes_128_ecb:
+        return "AES-128-ECB";
+    case NID_aes_256_cbc:
+        return "AES-256-CBC";
+    case NID_aes_192_cbc:
+        return "AES-192-CBC";
+    case NID_aes_128_cbc:
+        return "AES-128-CBC";
+    case NID_aes_256_ctr:
+        return "AES-256-CTR";
+    case NID_aes_192_ctr:
+        return "AES-192-CTR";
+    case NID_aes_128_ctr:
+        return "AES-128-CTR";
+    }
+
+    return NULL;
 }
 
 static const OSSL_ALGORITHM fips_digests[] = {
@@ -317,12 +381,11 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
 void ERR_put_error(int lib, int func, int reason, const char *file, int line)
 {
     /*
-     * TODO(3.0): This works for the FIPS module because we're going to be
-     * using lib/func/reason codes that libcrypto already knows about. This
-     * won't work for third party providers that have their own error mechanisms,
-     * so we'll need to come up with something else for them.
+     * TODO(3.0) the first argument is currently NULL but is expected to
+     * be passed something else in the future, either an OSSL_PROVIDER or
+     * a OPENSSL_CTX pointer.
      */
-    c_put_error(lib, func, reason, file, line);
+    c_put_error(NULL, ERR_PACK(lib, func, reason), file, line);
     ERR_add_error_data(1, "(in the FIPS module)");
 }
 
@@ -337,7 +400,7 @@ void ERR_add_error_data(int num, ...)
 
 void ERR_add_error_vdata(int num, va_list args)
 {
-    c_add_error_vdata(num, args);
+    c_add_error_vdata(NULL, num, args);
 }
 
 const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx)

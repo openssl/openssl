@@ -71,7 +71,7 @@
 #ifdef OPENSSL_SYS_WINDOWS
 # include <winsock.h>
 #else
-# include OPENSSL_UNISTD
+# include <unistd.h>
 #endif
 
 static SSL_CTX *s_ctx = NULL;

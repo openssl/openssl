@@ -34,11 +34,7 @@
 # include <errno.h>
 
 # if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
-#  ifdef OPENSSL_UNISTD
-#   include OPENSSL_UNISTD
-#  else
-#   include <unistd.h>
-#  endif
+#  include <unistd.h>
 /*
  * If unistd.h defines _POSIX_VERSION, we conclude that we are on a POSIX
  * system and have sigaction and termios.
@@ -79,7 +75,7 @@
  * systems that require something different.
  *
  * Note: we do not use SGTTY unless it's defined by the configuration.  We
- * may eventually opt to remove it's use entirely.
+ * may eventually opt to remove its use entirely.
  */
 
 # if !defined(TERMIOS) && !defined(TERMIO) && !defined(SGTTY)

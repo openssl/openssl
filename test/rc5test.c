@@ -181,7 +181,8 @@ static int test_rc5_ecb(int n)
     RC5_32_KEY key;
     unsigned char buf[8], buf2[8];
 
-    RC5_32_set_key(&key, 16, &RC5key[n][0], 12);
+    if (!TEST_true(RC5_32_set_key(&key, 16, &RC5key[n][0], 12)))
+        return 0;
 
     RC5_32_ecb_encrypt(&RC5plain[n][0], buf, &key, RC5_ENCRYPT);
     if (!TEST_mem_eq(&RC5cipher[n][0], sizeof(RC5cipher[0]), buf, sizeof(buf)))
@@ -203,7 +204,9 @@ static int test_rc5_cbc(int n)
 
     i = rc5_cbc_rounds[n];
     if (i >= 8) {
-        RC5_32_set_key(&key, rc5_cbc_key[n][0], &rc5_cbc_key[n][1], i);
+        if (!TEST_true(RC5_32_set_key(&key, rc5_cbc_key[n][0],
+                                      &rc5_cbc_key[n][1], i)))
+            return 0;
 
         memcpy(ivb, &rc5_cbc_iv[n][0], 8);
         RC5_32_cbc_encrypt(&rc5_cbc_plain[n][0], buf, 8,

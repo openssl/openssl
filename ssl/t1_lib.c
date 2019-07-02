@@ -650,7 +650,6 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
     if (check_ee_md && tls1_suiteb(s)) {
         int check_md;
         size_t i;
-        CERT *c = s->cert;
 
         /* Check to see we have necessary signing algorithm */
         if (group_id == TLSEXT_curve_P_256)
@@ -659,8 +658,8 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
             check_md = NID_ecdsa_with_SHA384;
         else
             return 0;           /* Should never happen */
-        for (i = 0; i < c->shared_sigalgslen; i++) {
-            if (check_md == c->shared_sigalgs[i]->sigandhash)
+        for (i = 0; i < s->shared_sigalgslen; i++) {
+            if (check_md == s->shared_sigalgs[i]->sigandhash)
                 return 1;;
         }
         return 0;
@@ -1287,9 +1286,9 @@ int tls1_set_server_sigalgs(SSL *s)
     size_t i;
 
     /* Clear any shared signature algorithms */
-    OPENSSL_free(s->cert->shared_sigalgs);
-    s->cert->shared_sigalgs = NULL;
-    s->cert->shared_sigalgslen = 0;
+    OPENSSL_free(s->shared_sigalgs);
+    s->shared_sigalgs = NULL;
+    s->shared_sigalgslen = 0;
     /* Clear certificate validity flags */
     for (i = 0; i < SSL_PKEY_NUM; i++)
         s->s3.tmp.valid_flags[i] = 0;
@@ -1324,7 +1323,7 @@ int tls1_set_server_sigalgs(SSL *s)
                  SSL_F_TLS1_SET_SERVER_SIGALGS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (s->cert->shared_sigalgs != NULL)
+    if (s->shared_sigalgs != NULL)
         return 1;
 
     /* Fatal error if no shared signature algorithms */
@@ -1796,9 +1795,9 @@ static int tls1_set_shared_sigalgs(SSL *s)
     CERT *c = s->cert;
     unsigned int is_suiteb = tls1_suiteb(s);
 
-    OPENSSL_free(c->shared_sigalgs);
-    c->shared_sigalgs = NULL;
-    c->shared_sigalgslen = 0;
+    OPENSSL_free(s->shared_sigalgs);
+    s->shared_sigalgs = NULL;
+    s->shared_sigalgslen = 0;
     /* If client use client signature algorithms if not NULL */
     if (!s->server && c->client_sigalgs && !is_suiteb) {
         conf = c->client_sigalgs;
@@ -1829,8 +1828,8 @@ static int tls1_set_shared_sigalgs(SSL *s)
     } else {
         salgs = NULL;
     }
-    c->shared_sigalgs = salgs;
-    c->shared_sigalgslen = nmatch;
+    s->shared_sigalgs = salgs;
+    s->shared_sigalgslen = nmatch;
     return 1;
 }
 
@@ -1891,7 +1890,6 @@ int tls1_process_sigalgs(SSL *s)
 {
     size_t i;
     uint32_t *pvalid = s->s3.tmp.valid_flags;
-    CERT *c = s->cert;
 
     if (!tls1_set_shared_sigalgs(s))
         return 0;
@@ -1899,8 +1897,8 @@ int tls1_process_sigalgs(SSL *s)
     for (i = 0; i < SSL_PKEY_NUM; i++)
         pvalid[i] = 0;
 
-    for (i = 0; i < c->shared_sigalgslen; i++) {
-        const SIGALG_LOOKUP *sigptr = c->shared_sigalgs[i];
+    for (i = 0; i < s->shared_sigalgslen; i++) {
+        const SIGALG_LOOKUP *sigptr = s->shared_sigalgs[i];
         int idx = sigptr->sig_idx;
 
         /* Ignore PKCS1 based sig algs in TLSv1.3 */
@@ -1947,12 +1945,12 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
                            unsigned char *rsig, unsigned char *rhash)
 {
     const SIGALG_LOOKUP *shsigalgs;
-    if (s->cert->shared_sigalgs == NULL
+    if (s->shared_sigalgs == NULL
         || idx < 0
-        || idx >= (int)s->cert->shared_sigalgslen
-        || s->cert->shared_sigalgslen > INT_MAX)
+        || idx >= (int)s->shared_sigalgslen
+        || s->shared_sigalgslen > INT_MAX)
         return 0;
-    shsigalgs = s->cert->shared_sigalgs[idx];
+    shsigalgs = s->shared_sigalgs[idx];
     if (phash != NULL)
         *phash = shsigalgs->hash;
     if (psign != NULL)
@@ -1963,7 +1961,7 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
         *rsig = (unsigned char)(shsigalgs->sigalg & 0xff);
     if (rhash != NULL)
         *rhash = (unsigned char)((shsigalgs->sigalg >> 8) & 0xff);
-    return (int)s->cert->shared_sigalgslen;
+    return (int)s->shared_sigalgslen;
 }
 
 /* Maximum possible number of unique entries in sigalgs array */
@@ -2144,7 +2142,7 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
     return 0;
 }
 
-static int tls1_check_sig_alg(CERT *c, X509 *x, int default_nid)
+static int tls1_check_sig_alg(SSL *s, X509 *x, int default_nid)
 {
     int sig_nid;
     size_t i;
@@ -2153,8 +2151,8 @@ static int tls1_check_sig_alg(CERT *c, X509 *x, int default_nid)
     sig_nid = X509_get_signature_nid(x);
     if (default_nid)
         return sig_nid == default_nid ? 1 : 0;
-    for (i = 0; i < c->shared_sigalgslen; i++)
-        if (sig_nid == c->shared_sigalgs[i]->sigandhash)
+    for (i = 0; i < s->shared_sigalgslen; i++)
+        if (sig_nid == s->shared_sigalgs[i]->sigandhash)
             return 1;
     return 0;
 }
@@ -2312,14 +2310,14 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             }
         }
         /* Check signature algorithm of each cert in chain */
-        if (!tls1_check_sig_alg(c, x, default_nid)) {
+        if (!tls1_check_sig_alg(s, x, default_nid)) {
             if (!check_flags)
                 goto end;
         } else
             rv |= CERT_PKEY_EE_SIGNATURE;
         rv |= CERT_PKEY_CA_SIGNATURE;
         for (i = 0; i < sk_X509_num(chain); i++) {
-            if (!tls1_check_sig_alg(c, sk_X509_value(chain, i), default_nid)) {
+            if (!tls1_check_sig_alg(s, sk_X509_value(chain, i), default_nid)) {
                 if (check_flags) {
                     rv &= ~CERT_PKEY_CA_SIGNATURE;
                     break;
@@ -2684,8 +2682,8 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
 #endif
 
         /* Look for a certificate matching shared sigalgs */
-        for (i = 0; i < s->cert->shared_sigalgslen; i++) {
-            lu = s->cert->shared_sigalgs[i];
+        for (i = 0; i < s->shared_sigalgslen; i++) {
+            lu = s->shared_sigalgs[i];
             sig_idx = -1;
 
             /* Skip SHA1, SHA224, DSA and RSA if not PSS */
@@ -2719,7 +2717,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
             }
             break;
         }
-        if (i == s->cert->shared_sigalgslen) {
+        if (i == s->shared_sigalgslen) {
             if (!fatalerrs)
                 return 1;
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_CHOOSE_SIGALG,
@@ -2752,8 +2750,8 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                  * Find highest preference signature algorithm matching
                  * cert type
                  */
-                for (i = 0; i < s->cert->shared_sigalgslen; i++) {
-                    lu = s->cert->shared_sigalgs[i];
+                for (i = 0; i < s->shared_sigalgslen; i++) {
+                    lu = s->shared_sigalgs[i];
 
                     if (s->server) {
                         if ((sig_idx = tls12_get_cert_sigalg_idx(s, lu)) == -1)
@@ -2780,7 +2778,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
 #endif
                         break;
                 }
-                if (i == s->cert->shared_sigalgslen) {
+                if (i == s->shared_sigalgslen) {
                     if (!fatalerrs)
                         return 1;
                     SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,

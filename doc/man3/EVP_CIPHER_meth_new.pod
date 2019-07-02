@@ -10,7 +10,8 @@ EVP_CIPHER_meth_set_set_asn1_params, EVP_CIPHER_meth_set_get_asn1_params,
 EVP_CIPHER_meth_set_ctrl, EVP_CIPHER_meth_get_init,
 EVP_CIPHER_meth_get_do_cipher, EVP_CIPHER_meth_get_cleanup,
 EVP_CIPHER_meth_get_set_asn1_params, EVP_CIPHER_meth_get_get_asn1_params,
-EVP_CIPHER_meth_get_ctrl - Routines to build up EVP_CIPHER methods
+EVP_CIPHER_meth_get_ctrl, EVP_CIPHER_up_ref
+- Routines to build up EVP_CIPHER methods
 
 =head1 SYNOPSIS
 
@@ -61,6 +62,8 @@ EVP_CIPHER_meth_get_ctrl - Routines to build up EVP_CIPHER methods
  int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
                                                            int type, int arg,
                                                            void *ptr);
+
+ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
 
 =head1 DESCRIPTION
 
@@ -223,6 +226,8 @@ EVP_CIPHER_meth_get_get_asn1_params() and EVP_CIPHER_meth_get_ctrl()
 are all used to retrieve the method data given with the
 EVP_CIPHER_meth_set_*() functions above.
 
+EVP_CIPHER_up_ref() increments the reference count for an EVP_CIPHER structure.
+
 =head1 RETURN VALUES
 
 EVP_CIPHER_meth_new() and EVP_CIPHER_meth_dup() return a pointer to a
@@ -230,6 +235,8 @@ newly created B<EVP_CIPHER>, or NULL on failure.
 All EVP_CIPHER_meth_set_*() functions return 1.
 All EVP_CIPHER_meth_get_*() functions return pointers to their
 respective B<cipher> function.
+
+EVP_CIPHER_up_ref() returns 1 for success or 0 otherwise.
 
 =head1 SEE ALSO
 

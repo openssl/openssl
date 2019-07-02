@@ -29,7 +29,7 @@
 #include <openssl/objects.h>
 #include <openssl/async.h>
 #if !defined(OPENSSL_SYS_MSDOS)
-# include OPENSSL_UNISTD
+# include <unistd.h>
 #endif
 
 #if defined(_WIN32)
@@ -1876,7 +1876,7 @@ int speed_main(int argc, char **argv)
         }
 
         buflen = lengths[size_num - 1];
-        if (buflen < 36)    /* size of random vector in RSA bencmark */
+        if (buflen < 36)    /* size of random vector in RSA benchmark */
             buflen = 36;
         buflen += MAX_MISALIGNMENT + 1;
         loopargs[i].buf_malloc = app_malloc(buflen, "input buffer");
@@ -1985,7 +1985,10 @@ int speed_main(int argc, char **argv)
     RC2_set_key(&rc2_ks, 16, key16, 128);
 #endif
 #ifndef OPENSSL_NO_RC5
-    RC5_32_set_key(&rc5_ks, 16, key16, 12);
+    if (!RC5_32_set_key(&rc5_ks, 16, key16, 12)) {
+        BIO_printf(bio_err, "Failed setting RC5 key\n");
+        goto end;
+    }
 #endif
 #ifndef OPENSSL_NO_BF
     BF_set_key(&bf_ks, 16, key16);

@@ -24,8 +24,8 @@ struct testdata {
     int expected_type;      /* expected type after set/set_string_gmt */
     int check_result;       /* check result */
     time_t t;               /* expected time_t*/
-    int cmp_result;         /* compariston to baseline result */
-    int convert_result;     /* convertion result */
+    int cmp_result;         /* comparison to baseline result */
+    int convert_result;     /* conversion result */
 };
 
 static struct testdata tbl_testdata_pos[] = {

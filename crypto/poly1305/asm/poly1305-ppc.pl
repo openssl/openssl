@@ -969,15 +969,15 @@ __poly1305_blocks_vsx:
 	addi	$t1,$ctx,`48+(12^$BIG_ENDIAN)`
 	bl	__poly1305_splat
 
-	bl	__poly1305_mul		# caclulate r^2
+	bl	__poly1305_mul		# calculate r^2
 	addi	$t1,$ctx,`48+(4^$BIG_ENDIAN)`
 	bl	__poly1305_splat
 
-	bl	__poly1305_mul		# caclulate r^3
+	bl	__poly1305_mul		# calculate r^3
 	addi	$t1,$ctx,`48+(8^$BIG_ENDIAN)`
 	bl	__poly1305_splat
 
-	bl	__poly1305_mul		# caclulate r^4
+	bl	__poly1305_mul		# calculate r^4
 	addi	$t1,$ctx,`48+(0^$BIG_ENDIAN)`
 	bl	__poly1305_splat
 

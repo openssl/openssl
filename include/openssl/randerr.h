@@ -29,6 +29,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_F_DRBG_SETUP                                117
 # define RAND_F_GET_ENTROPY                               106
 # define RAND_F_RAND_BYTES                                100
+# define RAND_F_RAND_BYTES_EX                             126
 # define RAND_F_RAND_DRBG_ENABLE_LOCKING                  119
 # define RAND_F_RAND_DRBG_GENERATE                        107
 # define RAND_F_RAND_DRBG_GET_ENTROPY                     120

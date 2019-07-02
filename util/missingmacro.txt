@@ -63,7 +63,6 @@ CRYPTO_get_dynlock_destroy_callback
 OpenSSLDie
 OPENSSL_assert
 DSA_is_prime
-OPENSSL_GLOBAL_REF
 ECParameters_dup
 ENGINE_load_openssl
 ENGINE_load_dynamic

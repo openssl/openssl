@@ -96,7 +96,8 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                    const char *enddate,
                    long days, int batch, const char *ext_sect, CONF *conf,
                    int verbose, unsigned long certopt, unsigned long nameopt,
-                   int default_op, int ext_copy, int selfsign);
+                   int default_op, int ext_copy, int selfsign,
+                   unsigned char *sm2_id, size_t sm2idlen);
 static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                         const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                         STACK_OF(CONF_VALUE) *policy, CA_DB *db,
@@ -147,7 +148,7 @@ typedef enum OPTION_choice {
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
     OPT_RAND_SERIAL,
-    OPT_R_ENUM,
+    OPT_R_ENUM, OPT_SM2ID, OPT_SM2HEXID,
     /* Do not change the order here; see related case statements below */
     OPT_CRL_REASON, OPT_CRL_HOLD, OPT_CRL_COMPROMISE, OPT_CRL_CA_COMPROMISE
 } OPTION_CHOICE;
@@ -218,6 +219,12 @@ const OPTIONS ca_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+#ifndef OPENSSL_NO_SM2
+    {"sm2-id", OPT_SM2ID, 's',
+     "Specify an ID string to verify an SM2 certificate request"},
+    {"sm2-hex-id", OPT_SM2HEXID, 's',
+     "Specify a hex ID string to verify an SM2 certificate request"},
+#endif
     {NULL}
 };
 
@@ -262,6 +269,9 @@ int ca_main(int argc, char **argv)
     REVINFO_TYPE rev_type = REV_NONE;
     X509_REVOKED *r = NULL;
     OPTION_CHOICE o;
+    unsigned char *sm2_id = NULL;
+    size_t sm2_idlen = 0;
+    int sm2_free = 0;
 
     prog = opt_init(argc, argv, ca_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -424,6 +434,30 @@ opthelp:
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
+            break;
+        case OPT_SM2ID:
+            /* we assume the input is not a hex string */
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
+            sm2_id = (unsigned char *)opt_arg();
+            sm2_idlen = strlen((const char *)sm2_id);
+            break;
+        case OPT_SM2HEXID:
+            /* try to parse the input as hex string first */
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
+            sm2_free = 1;
+            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            if (sm2_id == NULL) {
+                BIO_printf(bio_err, "Invalid hex string input\n");
+                goto end;
+            }
             break;
         }
     }
@@ -913,7 +947,8 @@ end_of_options:
             j = certify(&x, infile, pkey, x509p, dgst, sigopts, attribs, db,
                         serial, subj, chtype, multirdn, email_dn, startdate,
                         enddate, days, batch, extensions, conf, verbose,
-                        certopt, get_nameopt(), default_op, ext_copy, selfsign);
+                        certopt, get_nameopt(), default_op, ext_copy, selfsign,
+                        sm2_id, sm2_idlen);
             if (j < 0)
                 goto end;
             if (j > 0) {
@@ -932,7 +967,8 @@ end_of_options:
             j = certify(&x, argv[i], pkey, x509p, dgst, sigopts, attribs, db,
                         serial, subj, chtype, multirdn, email_dn, startdate,
                         enddate, days, batch, extensions, conf, verbose,
-                        certopt, get_nameopt(), default_op, ext_copy, selfsign);
+                        certopt, get_nameopt(), default_op, ext_copy, selfsign,
+                        sm2_id, sm2_idlen);
             if (j < 0)
                 goto end;
             if (j > 0) {
@@ -1230,6 +1266,8 @@ end_of_options:
     ret = 0;
 
  end:
+    if (sm2_free)
+        OPENSSL_free(sm2_id);
     if (ret)
         ERR_print_errors(bio_err);
     BIO_free_all(Sout);
@@ -1268,7 +1306,8 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                    const char *enddate,
                    long days, int batch, const char *ext_sect, CONF *lconf,
                    int verbose, unsigned long certopt, unsigned long nameopt,
-                   int default_op, int ext_copy, int selfsign)
+                   int default_op, int ext_copy, int selfsign,
+                   unsigned char *sm2id, size_t sm2idlen)
 {
     X509_REQ *req = NULL;
     BIO *in = NULL;
@@ -1299,6 +1338,25 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
     if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {
         BIO_printf(bio_err, "error unpacking public key\n");
         goto end;
+    }
+    if (sm2id != NULL) {
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING *v;
+
+        v = ASN1_OCTET_STRING_new();
+        if (v == NULL) {
+            BIO_printf(bio_err, "error: SM2 ID allocation failed\n");
+            goto end;
+        }
+
+        if (!ASN1_OCTET_STRING_set(v, sm2id, sm2idlen)) {
+            BIO_printf(bio_err, "error: setting SM2 ID failed\n");
+            ASN1_OCTET_STRING_free(v);
+            goto end;
+        }
+
+        X509_REQ_set0_sm2_id(req, v);
+#endif
     }
     i = X509_REQ_verify(req, pktmp);
     pktmp = NULL;

@@ -131,11 +131,11 @@ The associated provider object I<prov> is passed as well, to make
 it possible for the sub-system constructor to keep a reference, which
 is recommended.
 If such a reference is kept, the I<provider object> reference counter
-must be incremented, using ossl_provider_upref().
+must be incremented, using ossl_provider_up_ref().
 
 This function is expected to set the method's reference count to 1.
 
-=item desctruct()
+=item destruct()
 
 Decrement the I<method>'s reference count, and destruct it when
 the reference count reaches zero.

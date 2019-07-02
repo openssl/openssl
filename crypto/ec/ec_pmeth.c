@@ -327,7 +327,8 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             EVP_MD_type((const EVP_MD *)p2) != NID_sha3_224 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha3_256 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha3_384 &&
-            EVP_MD_type((const EVP_MD *)p2) != NID_sha3_512) {
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha3_512 &&
+            EVP_MD_type((const EVP_MD *)p2) != NID_sm3) {
             ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_DIGEST_TYPE);
             return 0;
         }

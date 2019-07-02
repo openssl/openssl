@@ -19,7 +19,7 @@ int OPENSSL_issetugid(void)
 
 #elif defined(__OpenBSD__) || (defined(__FreeBSD__) && __FreeBSD__ > 2) || defined(__DragonFly__)
 
-# include OPENSSL_UNISTD
+# include <unistd.h>
 
 int OPENSSL_issetugid(void)
 {
@@ -28,7 +28,7 @@ int OPENSSL_issetugid(void)
 
 #else
 
-# include OPENSSL_UNISTD
+# include <unistd.h>
 # include <sys/types.h>
 
 # if defined(__GLIBC__) && defined(__GLIBC_PREREQ)

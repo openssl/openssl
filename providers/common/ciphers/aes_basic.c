@@ -606,9 +606,9 @@ static const PROV_AES_CIPHER aes_##mode = { \
 }; \
 const PROV_AES_CIPHER *PROV_AES_CIPHER_##mode(size_t keylen) \
 {   \
-    if ((keylen == 128 && S390X_aes_128_##mode##_CAPABLE)           \
-            || (keylen == 192 && S390X_aes_192_##mode##_CAPABLE)    \
-            || (keylen == 256 && S390X_aes_256_##mode##_CAPABLE))   \
+    if ((keylen == 16 && S390X_aes_128_##mode##_CAPABLE)           \
+            || (keylen == 24 && S390X_aes_192_##mode##_CAPABLE)    \
+            || (keylen == 32 && S390X_aes_256_##mode##_CAPABLE))   \
         return &s390x_aes_##mode;   \
     \
     return &aes_##mode; \

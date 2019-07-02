@@ -26,6 +26,9 @@ void s390x_kmf(const unsigned char *in, size_t len, unsigned char *out,
                unsigned int fc, void *param);
 void s390x_kma(const unsigned char *aad, size_t alen, const unsigned char *in,
                size_t len, unsigned char *out, unsigned int fc, void *param);
+int s390x_pcc(unsigned int fc, void *param);
+int s390x_kdsa(unsigned int fc, void *param, const unsigned char *in,
+               size_t len);
 
 /*
  * The field elements of OPENSSL_s390xcap_P are the 64-bit words returned by
@@ -45,6 +48,8 @@ struct OPENSSL_s390xcap_st {
     unsigned long long kmf[2];
     unsigned long long prno[2];
     unsigned long long kma[2];
+    unsigned long long pcc[2];
+    unsigned long long kdsa[2];
 };
 
 extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
@@ -69,6 +74,8 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_KMF		0x90
 # define S390X_PRNO		0xa0
 # define S390X_KMA		0xb0
+# define S390X_PCC		0xc0
+# define S390X_KDSA		0xd0
 
 /* Facility Bit Numbers */
 # define S390X_MSA		17	/* message-security-assist */
@@ -80,6 +87,7 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_VXD		134	/* vector packed decimal */
 # define S390X_VXE		135	/* vector enhancements 1 */
 # define S390X_MSA8		146	/* message-security-assist-ext. 8 */
+# define S390X_MSA9		155	/* message-security-assist-ext. 9 */
 
 /* Function Codes */
 
@@ -111,10 +119,24 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_SHA_512_DRNG	3
 # define S390X_TRNG		114
 
+/* pcc */
+# define S390X_SCALAR_MULTIPLY_P256	64
+# define S390X_SCALAR_MULTIPLY_P384	65
+# define S390X_SCALAR_MULTIPLY_P521	66
+
+/* kdsa */
+# define S390X_ECDSA_VERIFY_P256	1
+# define S390X_ECDSA_VERIFY_P384	2
+# define S390X_ECDSA_VERIFY_P521	3
+# define S390X_ECDSA_SIGN_P256		9
+# define S390X_ECDSA_SIGN_P384		10
+# define S390X_ECDSA_SIGN_P521		11
+
 /* Register 0 Flags */
 # define S390X_DECRYPT		0x80
 # define S390X_KMA_LPC		0x100
 # define S390X_KMA_LAAD		0x200
 # define S390X_KMA_HS		0x400
+# define S390X_KDSA_D		0x80
 
 #endif

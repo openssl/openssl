@@ -193,7 +193,7 @@ static int dh_test(void)
     BN_free(q);
     BN_free(g);
  err2:
-    /* an error occured before priv_key was assigned to dh */
+    /* an error occurred before priv_key was assigned to dh */
     BN_free(priv_key);
  err3:
  success:

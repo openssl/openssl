@@ -84,7 +84,7 @@ void aes_gcm_decrypt(void)
     EVP_CIPHER_CTX *ctx;
     int outlen, tmplen, rv;
     unsigned char outbuf[1024];
-    printf("AES GCM Derypt:\n");
+    printf("AES GCM Decrypt:\n");
     printf("Ciphertext:\n");
     BIO_dump_fp(stdout, gcm_ct, sizeof(gcm_ct));
     ctx = EVP_CIPHER_CTX_new();

@@ -295,7 +295,7 @@ struct bn_gencb_st {
                  (b) >  23 ? 3 : 1)
 
 /*
- * BN_mod_exp_mont_conttime is based on the assumption that the L1 data cache
+ * BN_mod_exp_mont_consttime is based on the assumption that the L1 data cache
  * line width of the target processor is at least the following value.
  */
 # define MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH      ( 64 )

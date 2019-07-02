@@ -14,7 +14,7 @@ OSSL_PARAM - a structure to pass or request object parameters
      unsigned char data_type;     /* declare what kind of content is in data */
      void *data;                  /* value being passed in or out */
      size_t data_size;            /* data size */
-     size_t *return_size;         /* OPTIONAL: address to content size */
+     size_t return_size;          /* returned size */
  };
 
 =head1 DESCRIPTION
@@ -143,7 +143,7 @@ C<data_size> must be set to the size of the data, not the size of the
 pointer to the data.
 If this is used in a parameter request,
 C<data_size> is not relevant.  However, the I<responder> will set
-C<*return_size> to the size of the data.
+C<return_size> to the size of the data.
 
 Note that the use of this type is B<fragile> and can only be safely
 used for data that remains constant and in a constant location for a
@@ -166,7 +166,7 @@ C<data_size> must be set to the size of the data, not the size of the
 pointer to the data.
 If this is used in a parameter request,
 C<data_size> is not relevant.  However, the I<responder> will set
-C<*return_size> to the size of the data.
+C<return_size> to the size of the data.
 
 Note that the use of this type is B<fragile> and can only be safely
 used for data that remains constant and in a constant location for a
@@ -196,9 +196,10 @@ enough set of data, that call should succeed.
 
 =item *
 
-A I<responder> must never change the fields of an C<OSSL_PARAM>, it
-may only change the contents of the memory that C<data> and
-C<return_size> point at.
+Apart from the C<return_size>, a I<responder> must never change the fields
+of an C<OSSL_PARAM>.
+To return a value, it should change the contents of the memory that
+C<data> points at.
 
 =item *
 
@@ -214,7 +215,7 @@ C<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
 =item *
 
 If a I<responder> finds that some data sizes are too small for the
-requested data, it must set C<*return_size> for each such
+requested data, it must set C<return_size> for each such
 C<OSSL_PARAM> item to the required size, and eventually return an
 error.
 
@@ -244,9 +245,9 @@ This example is for setting parameters on some object:
     const char *foo = "some string";
     size_t foo_l = strlen(foo) + 1;
     const char bar[] = "some other string";
-    const OSSL_PARAM set[] = {
-        { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, foo_l, NULL },
-        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), NULL },
+    OSSL_PARAM set[] = {
+        { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, foo_l, 0 },
+        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
         { NULL, 0, NULL, 0, NULL }
     };
 
@@ -258,26 +259,26 @@ This example is for requesting parameters on some object:
     size_t foo_l;
     char bar[1024];
     size_t bar_l;
-    const OSSL_PARAM request[] = {
-        { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, 0 /*irrelevant*/, &foo_l },
-        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), &bar_l },
+    OSSL_PARAM request[] = {
+        { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, 0 /*irrelevant*/, 0 },
+        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
         { NULL, 0, NULL, 0, NULL }
     };
 
 A I<responder> that receives this array (as C<params> in this example)
 could fill in the parameters like this:
 
-    /* const OSSL_PARAM *params */
+    /* OSSL_PARAM *params */
 
     int i;
 
     for (i = 0; params[i].key != NULL; i++) {
         if (strcmp(params[i].key, "foo") == 0) {
             *(char **)params[i].data = "foo value";
-            *params[i].return_size = 10; /* size of "foo value" */
+            params[i].return_size = 10; /* size of "foo value" */
         } else if (strcmp(params[i].key, "bar") == 0) {
             memcpy(params[i].data, "bar value", 10);
-            *params[i].return_size = 10; /* size of "bar value" */
+            params[i].return_size = 10; /* size of "bar value" */
         }
         /* Ignore stuff we don't know */
     }

@@ -154,7 +154,7 @@ struct ec_method_st {
     int (*field_div) (const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                       const BIGNUM *b, BN_CTX *);
     /*-
-     * 'field_inv' computes the multipicative inverse of a in the field,
+     * 'field_inv' computes the multiplicative inverse of a in the field,
      * storing the result in r.
      *
      * If 'a' is zero (or equivalent), you'll get an EC_R_CANNOT_INVERT error.

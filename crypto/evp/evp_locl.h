@@ -93,5 +93,5 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
                         const char *algorithm, const char *properties,
                         void *(*new_method)(const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
-                        int (*upref_method)(void *),
+                        int (*up_ref_method)(void *),
                         void (*free_method)(void *));

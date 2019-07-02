@@ -7,18 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+#include <assert.h>
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <string.h>
-#include <assert.h>
 #include <openssl/aes.h>
-#include "internal/evp_int.h"
-#include "internal/cryptlib.h"
-#include "modes_lcl.h"
 #include <openssl/rand.h>
 #include <openssl/cmac.h>
+#include "internal/evp_int.h"
+#include "internal/cryptlib.h"
+#include "internal/modes_int.h"
+#include "modes_lcl.h"
 #include "evp_locl.h"
 
 typedef struct {
@@ -62,6 +63,12 @@ typedef struct {
                     const AES_KEY *key1, const AES_KEY *key2,
                     const unsigned char iv[16]);
 } EVP_AES_XTS_CTX;
+
+#ifdef FIPS_MODE
+static const int allow_insecure_decrypt = 0;
+#else
+static const int allow_insecure_decrypt = 1;
+#endif
 
 typedef struct {
     union {
@@ -387,6 +394,7 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                               const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
@@ -401,7 +409,8 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * This addresses Rogaway's vulnerability.
          * See comment in aes_xts_init_key() below.
          */
-        if (memcmp(key, key + bytes, bytes) == 0) {
+        if ((!allow_insecure_decrypt || enc)
+                && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
             EVPerr(EVP_F_AESNI_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
@@ -804,6 +813,7 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
@@ -818,7 +828,8 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * This addresses Rogaway's vulnerability.
          * See comment in aes_xts_init_key() below.
          */
-        if (memcmp(key, key + bytes, bytes) == 0) {
+        if ((!allow_insecure_decrypt || enc)
+                && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
             EVPerr(EVP_F_AES_T4_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
@@ -3408,10 +3419,12 @@ BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
 
 static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
-    EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,c);
+    EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX, c);
+
     if (type == EVP_CTRL_COPY) {
         EVP_CIPHER_CTX *out = ptr;
         EVP_AES_XTS_CTX *xctx_out = EVP_C_DATA(EVP_AES_XTS_CTX,out);
+
         if (xctx->xts.key1) {
             if (xctx->xts.key1 != &xctx->ks1)
                 return 0;
@@ -3435,6 +3448,7 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
@@ -3460,7 +3474,8 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              *       BEFORE using the keys in the XTS-AES algorithm to process
              *       data with them."
              */
-            if (memcmp(key, key + bytes, bytes) == 0) {
+            if ((!allow_insecure_decrypt || enc)
+                    && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
                 EVPerr(EVP_F_AES_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
                 return 0;
             }

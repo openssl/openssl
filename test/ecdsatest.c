@@ -118,6 +118,11 @@ static int x9_62_tests(int n)
 
     TEST_info("ECDSA KATs for curve %s", OBJ_nid2sn(nid));
 
+#ifdef FIPS_MODE
+    if (EC_curve_nid2nist(nid) == NULL)
+        return TEST_skip("skip non approved curves");
+#endif /* FIPS_MODE */
+
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get the message digest */
         || !TEST_ptr(message = OPENSSL_hexstr2buf(tbs, &msg_len))

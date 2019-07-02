@@ -142,6 +142,7 @@ static int s390x_sha3_final(unsigned char *md, void *vctx)
 
     s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, ctx->pad, ctx->A);
     memcpy(md, ctx->A, ctx->md_size);
+    return 1;
 }
 
 static int s390x_shake_final(unsigned char *md, void *vctx)
@@ -184,7 +185,7 @@ static void *name##_newctx(void *provctx) \
     if (ctx == NULL) \
         return NULL; \
     sha3_init(ctx, pad, bitlen); \
-    SHA3_SET_MD(name, typ) \
+    SHA3_SET_MD(uname, typ) \
     return ctx; \
 }
 
@@ -246,7 +247,7 @@ static int shake_set_params(void *vctx, const OSSL_PARAM params[])
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_XOFLEN);
+        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
         if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size))
             return 0;
         return 1;
