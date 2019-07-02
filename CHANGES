@@ -9,6 +9,18 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Use 'OPENSSL_' as common #include guard prefix
+
+     Most of the OpenSSL #include guards followed the unspecific naming
+     pattern 'HEADER_XXX_H'. To make the guards more OpenSSL-specific
+     and avoid name collisions with applications and other libraries,
+     they are renamed from 'HEADER_XXX_H' to 'OPENSSL_XXX_H'.
+
+     The majority of programs and libraries will be unaffected by this
+     change. Only code which explicitly references include guard names
+     (like '#ifdef HEADER_XXX') needs to be adapted.
+     [Matthias St. Pierre]
+
   *) Removed NextStep support and the macro OPENSSL_UNISTD
      [Rich Salz]
 
