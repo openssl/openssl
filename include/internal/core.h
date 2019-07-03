@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_INTERNAL_CORE_H
-# define OSSL_INTERNAL_CORE_H
+#ifndef OPENSSL_INTERNAL_CORE_H
+# define OPENSSL_INTERNAL_CORE_H
 
 /*
  * namespaces:

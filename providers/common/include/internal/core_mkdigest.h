@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_CORE_MKDIGEST_H
-# define OSSL_CORE_MKDIGEST_H
+#ifndef OPENSSL_CORE_MKDIGEST_H
+# define OPENSSL_CORE_MKDIGEST_H
 
 # include <openssl/core_numbers.h>
 
@@ -92,4 +92,4 @@ OSSL_FUNC_DIGEST_CONSTRUCT_END
 }
 # endif
 
-#endif /* OSSL_CORE_MKDIGEST_H */
+#endif /* OPENSSL_CORE_MKDIGEST_H */

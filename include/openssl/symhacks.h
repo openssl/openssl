@@ -34,4 +34,4 @@
 
 # endif
 
-#endif                          /* ! defined OPENSSL_VMS_IDHACKS_H */
+#endif                          /* ! defined OPENSSL_SYMHACKS_H*/

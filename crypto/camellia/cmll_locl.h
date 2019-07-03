@@ -22,8 +22,8 @@
  * to the OpenSSL project.
  */
 
-#ifndef OPENSSL_CAMELLIA_LOCL_H
-# define OPENSSL_CAMELLIA_LOCL_H
+#ifndef OPENSSL_CMLL_LOCL_H
+# define OPENSSL_CMLL_LOCL_H
 
 typedef unsigned int u32;
 typedef unsigned char u8;
@@ -40,4 +40,4 @@ void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[],
                            const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
 void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[],
                            const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
-#endif                          /* #ifndef OPENSSL_CAMELLIA_LOCL_H */
+#endif                          /* #ifndef OPENSSL_CMLL_LOCL_H */

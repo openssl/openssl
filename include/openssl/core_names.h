@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_CORE_NAMES_H
-# define OSSL_CORE_NAMES_H
+#ifndef OPENSSL_CORE_NAMES_H
+# define OPENSSL_CORE_NAMES_H
 
 # ifdef __cplusplus
 extern "C" {

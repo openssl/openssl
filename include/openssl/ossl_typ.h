@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_OPENSSL_TYPES_H
-# define OPENSSL_OPENSSL_TYPES_H
+#ifndef OPENSSL_TYPES_H
+# define OPENSSL_TYPES_H
 
 #include <limits.h>
 
@@ -207,4 +207,4 @@ typedef unsigned long ossl_uintmax_t;
 #ifdef  __cplusplus
 }
 #endif
-#endif                          /* def OPENSSL_OPENSSL_TYPES_H */
+#endif                          /* def OPENSSL_TYPES_H */

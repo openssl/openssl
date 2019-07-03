@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_INTERNAL_SYMHACKS_H
-# define OSSL_INTERNAL_SYMHACKS_H
+#ifndef OPENSSL_INTERNAL_SYMHACKS_H
+# define OPENSSL_INTERNAL_SYMHACKS_H
 
 # include <openssl/e_os2.h>
 
@@ -23,4 +23,4 @@
 
 # endif
 
-#endif                          /* ! defined OPENSSL_VMS_IDHACKS_H */
+#endif                          /* ! defined OPENSSL_INTERNAL_SYMHACKS_H*/
