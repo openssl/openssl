@@ -443,7 +443,7 @@ ___
 }
 
 ################
-# void s390x_pcc(unsigned int fc, void *param)
+# int s390x_pcc(unsigned int fc, void *param)
 {
 my ($fc,$param) = map("%r$_",(2..3));
 $code.=<<___;
@@ -468,8 +468,8 @@ ___
 }
 
 ################
-# void s390x_kdsa(unsigned int fc, void *param,
-#                 const unsigned char *in, size_t len)
+# int s390x_kdsa(unsigned int fc, void *param,
+#                const unsigned char *in, size_t len)
 {
 my ($fc,$param,$in,$len) = map("%r$_",(2..5));
 $code.=<<___;
