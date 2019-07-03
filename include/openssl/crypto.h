@@ -148,8 +148,12 @@ int CRYPTO_mem_ctrl(int mode);
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
-char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len);
-unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
+int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
+                          const unsigned char *buf, size_t buflen);
+char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen);
+int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
+                          const char *str);
+unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
 int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
