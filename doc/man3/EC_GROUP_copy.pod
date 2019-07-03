@@ -51,7 +51,8 @@ EC_GROUP_get_pentanomial_basis, EC_GROUP_get0_field
  int EC_GROUP_get_degree(const EC_GROUP *group);
 
  int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx);
- int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only);
+ int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
+                                BN_CTX *ctx);
 
  int EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx);
 
@@ -152,6 +153,8 @@ then this method can be used to lookup the name of the curve that matches the gr
 aliases, so that multiple NID's can map to the same domain parameters. For such curves it is unspecified which of the aliases will be
 returned if the curve name of the given group is NID_undef.
 If B<nist_only> is 1 it will only look for NIST approved curves, otherwise it searches all built-in curves.
+This function may be passed a BN_CTX object in the B<ctx> parameter.
+The B<ctx> parameter may be NULL.
 
 EC_GROUP_cmp compares B<a> and B<b> to determine whether they represent the same curve or not.
 

@@ -100,8 +100,21 @@ const EC_METHOD *EC_GF2m_simple_method(void);
 /*                   EC_GROUP functions                             */
 /********************************************************************/
 
-/** Creates a new EC_GROUP object
- *  \param   meth  EC_METHOD to use
+/**
+ *  Creates a new EC_GROUP object
+ *  \param   libctx The associated library context or NULL for the default
+ *                  library context
+ *  \param   meth   EC_METHOD to use
+ *  \return  newly created EC_GROUP object or NULL in case of an error.
+ */
+EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth);
+
+/**
+ *  Creates a new EC_GROUP object. Same as EC_GROUP_new_ex with NULL for the
+ *  library context.
+ *  \param   libctx The associated library context or NULL for the default
+ *                  library context
+ *  \param   meth   EC_METHOD to use
  *  \return  newly created EC_GROUP object or NULL in case of an error.
  */
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth);
@@ -364,8 +377,20 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
                                   const BIGNUM *b, BN_CTX *ctx);
 # endif
 
-/** Creates a EC_GROUP object with a curve specified by a NID
- *  \param  nid  NID of the OID of the curve name
+/**
+ * Creates a EC_GROUP object with a curve specified by a NID
+ *  \param  libctx The associated library context or NULL for the default
+ *                 context
+ *  \param  nid    NID of the OID of the curve name
+ *  \return newly created EC_GROUP object with specified curve or NULL
+ *          if an error occurred
+ */
+EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid);
+
+/**
+ * Creates a EC_GROUP object with a curve specified by a NID. Same as
+ * EC_GROUP_new_by_curve_name_ex but the libctx is always NULL.
+ *  \param  nid    NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
  */
@@ -422,7 +447,8 @@ size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
 
 const char *EC_curve_nid2nist(int nid);
 int EC_curve_nist2nid(const char *name);
-int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only);
+int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
+                               BN_CTX *ctx);
 
 /********************************************************************/
 /*                    EC_POINT functions                            */
@@ -825,7 +851,17 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 # define EC_FLAG_FIPS_CHECKED    0x2
 # define EC_FLAG_COFACTOR_ECDH   0x1000
 
-/** Creates a new EC_KEY object.
+/**
+ *  Creates a new EC_KEY object.
+ *  \param  ctx  The library context for to use for this EC_KEY. May be NULL in
+ *               which case the default library context is used.
+ *  \return EC_KEY object or NULL if an error occurred.
+ */
+EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx);
+
+/**
+ *  Creates a new EC_KEY object. Same as calling EC_KEY_new_ex with a NULL
+ *  library context
  *  \return EC_KEY object or NULL if an error occurred.
  */
 EC_KEY *EC_KEY_new(void);
@@ -836,12 +872,25 @@ void EC_KEY_set_flags(EC_KEY *key, int flags);
 
 void EC_KEY_clear_flags(EC_KEY *key, int flags);
 
-/** Creates a new EC_KEY object using a named curve as underlying
+/**
+ *  Creates a new EC_KEY object using a named curve as underlying
  *  EC_GROUP object.
+ *  \param  ctx  The library context for to use for this EC_KEY. May be NULL in
+ *               which case the default library context is used.
+ *  \param  nid  NID of the named curve.
+ *  \return EC_KEY object or NULL if an error occurred.
+ */
+EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid);
+
+/**
+ *  Creates a new EC_KEY object using a named curve as underlying
+ *  EC_GROUP object. Same as calling EC_KEY_new_by_curve_name_ex with a NULL
+ *  library context.
  *  \param  nid  NID of the named curve.
  *  \return EC_KEY object or NULL if an error occurred.
  */
 EC_KEY *EC_KEY_new_by_curve_name(int nid);
+
 
 /** Frees a EC_KEY object.
  *  \param  key  EC_KEY object to be freed.

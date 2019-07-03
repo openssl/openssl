@@ -273,7 +273,7 @@ int ecparam_main(int argc, char **argv)
 
     if (check_named) {
         BIO_printf(bio_err, "validating named elliptic curve parameters: ");
-        if (EC_GROUP_check_named_curve(group, 0) <= 0) {
+        if (EC_GROUP_check_named_curve(group, 0, NULL) <= 0) {
             BIO_printf(bio_err, "failed\n");
             ERR_print_errors(bio_err);
             goto end;

@@ -69,14 +69,14 @@ SOURCE[../providers/fips]=$CORE_COMMON
 $UTIL_COMMON=\
         cryptlib.c params.c bsearch.c ex_data.c o_str.c \
         ctype.c threads_pthread.c threads_win.c threads_none.c initthread.c \
-        context.c sparse_array.c param_build.c $CPUIDASM
+        context.c sparse_array.c asn1_dsa.c packet.c param_build.c $CPUIDASM
 $UTIL_DEFINE=$CPUIDDEF
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c mem_dbg.c \
         cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
         o_fopen.c getenv.c o_init.c o_fips.c init.c trace.c provider.c \
-        asn1_dsa.c packet.c $UPLINKSRC
+        $UPLINKSRC
 DEFINE[../libcrypto]=$UTIL_DEFINE $UPLINKDEF
 SOURCE[../providers/fips]=$UTIL_COMMON
 DEFINE[../providers/fips]=$UTIL_DEFINE

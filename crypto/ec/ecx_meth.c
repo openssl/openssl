@@ -110,7 +110,11 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
             X448_public_from_private(pubkey, privkey);
             break;
         case EVP_PKEY_ED448:
-            ED448_public_from_private(pubkey, privkey);
+            /*
+             * TODO(3.0): We set the library context to NULL for now. This will
+             * need to change.
+             */
+            ED448_public_from_private(NULL, pubkey, privkey);
             break;
         }
     }
@@ -771,8 +775,12 @@ static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
         return 0;
     }
 
-    if (ED448_sign(sig, tbs, tbslen, edkey->pubkey, edkey->privkey, NULL,
-                   0) == 0)
+    /*
+     * TODO(3.0): We use NULL for the library context for now. Will need to
+     * change later.
+     */
+    if (ED448_sign(NULL, sig, tbs, tbslen, edkey->pubkey, edkey->privkey,
+                   NULL, 0) == 0)
         return 0;
     *siglen = ED448_SIGSIZE;
     return 1;
@@ -799,7 +807,11 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
     if (siglen != ED448_SIGSIZE)
         return 0;
 
-    return ED448_verify(tbs, tbslen, sig, edkey->pubkey, NULL, 0);
+    /*
+     * TODO(3.0): We send NULL for the OPENSSL_CTX for now. This will need to
+     * change.
+     */
+    return ED448_verify(NULL, tbs, tbslen, sig, edkey->pubkey, NULL, 0);
 }
 
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)

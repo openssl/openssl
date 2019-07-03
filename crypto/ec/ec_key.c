@@ -15,17 +15,24 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 
+#ifndef FIPS_MODE
 EC_KEY *EC_KEY_new(void)
 {
-    return EC_KEY_new_method(NULL);
+    return ec_key_new_method_int(NULL, NULL);
+}
+#endif
+
+EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx)
+{
+    return ec_key_new_method_int(ctx, NULL);
 }
 
-EC_KEY *EC_KEY_new_by_curve_name(int nid)
+EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid)
 {
-    EC_KEY *ret = EC_KEY_new();
+    EC_KEY *ret = EC_KEY_new_ex(ctx);
     if (ret == NULL)
         return NULL;
-    ret->group = EC_GROUP_new_by_curve_name(nid);
+    ret->group = EC_GROUP_new_by_curve_name_ex(ctx, nid);
     if (ret->group == NULL) {
         EC_KEY_free(ret);
         return NULL;
@@ -37,6 +44,13 @@ EC_KEY *EC_KEY_new_by_curve_name(int nid)
     }
     return ret;
 }
+
+#ifndef FIPS_MODE
+EC_KEY *EC_KEY_new_by_curve_name(int nid)
+{
+    return EC_KEY_new_by_curve_name_ex(NULL, nid);
+}
+#endif
 
 void EC_KEY_free(EC_KEY *r)
 {
@@ -54,14 +68,16 @@ void EC_KEY_free(EC_KEY *r)
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(r->engine);
 #endif
 
     if (r->group && r->group->meth->keyfinish)
         r->group->meth->keyfinish(r);
 
+#ifndef FIPS_MODE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
+#endif
     CRYPTO_THREAD_lock_free(r->lock);
     EC_GROUP_free(r->group);
     EC_POINT_free(r->pub_key);
@@ -81,18 +97,19 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
             dest->meth->finish(dest);
         if (dest->group && dest->group->meth->keyfinish)
             dest->group->meth->keyfinish(dest);
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
         if (ENGINE_finish(dest->engine) == 0)
             return 0;
         dest->engine = NULL;
 #endif
     }
+    dest->libctx = src->libctx;
     /* copy the parameters */
     if (src->group != NULL) {
         const EC_METHOD *meth = EC_GROUP_method_of(src->group);
         /* clear the old group */
         EC_GROUP_free(dest->group);
-        dest->group = EC_GROUP_new(meth);
+        dest->group = EC_GROUP_new_ex(src->libctx, meth);
         if (dest->group == NULL)
             return NULL;
         if (!EC_GROUP_copy(dest->group, src->group))
@@ -128,12 +145,14 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     dest->conv_form = src->conv_form;
     dest->version = src->version;
     dest->flags = src->flags;
+#ifndef FIPS_MODE
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EC_KEY,
                             &dest->ex_data, &src->ex_data))
         return NULL;
+#endif
 
     if (src->meth != dest->meth) {
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
         if (src->engine != NULL && ENGINE_init(src->engine) == 0)
             return NULL;
         dest->engine = src->engine;
@@ -149,7 +168,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
 EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 {
-    EC_KEY *ret = EC_KEY_new_method(ec_key->engine);
+    EC_KEY *ret = ec_key_new_method_int(ec_key->libctx, ec_key->engine);
 
     if (ret == NULL)
         return NULL;
@@ -211,6 +230,10 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
     const BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
     const EC_GROUP *group = eckey->group;
+    BN_CTX *ctx = BN_CTX_secure_new_ex(eckey->libctx);
+
+    if (ctx == NULL)
+        goto err;
 
     if (eckey->priv_key == NULL) {
         priv_key = BN_secure_new();
@@ -238,7 +261,7 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
      * rand so the simpler backward compatible method has been used here.
      */
     do
-        if (!BN_priv_rand_range(priv_key, order))
+        if (!BN_priv_rand_range_ex(priv_key, order, ctx))
             goto err;
     while (BN_is_zero(priv_key)) ;
 
@@ -250,7 +273,7 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
         pub_key = eckey->pub_key;
 
     /* Step (8) : pub_key = priv_key * G (where G is a point on the curve) */
-    if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, NULL))
+    if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, ctx))
         goto err;
 
     eckey->priv_key = priv_key;
@@ -270,6 +293,7 @@ err:
 
     EC_POINT_free(pub_key);
     BN_clear_free(priv_key);
+    BN_CTX_free(ctx);
     return ok;
 }
 
@@ -368,7 +392,7 @@ int ec_key_simple_check_key(const EC_KEY *eckey)
         goto err;
     }
 
-    if ((ctx = BN_CTX_new()) == NULL)
+    if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL)
         goto err;
 
     if ((point = EC_POINT_new(eckey->group)) == NULL)
@@ -445,7 +469,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
               ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(key->libctx);
     if (ctx == NULL)
         return 0;
 

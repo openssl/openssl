@@ -600,38 +600,38 @@ static int test_ed448(void)
     EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
 
     if (!TEST_ptr(hashctx)
-            || !TEST_true(ED448_sign(outsig, NULL, 0, pubkey1, privkey1, NULL,
-                                     0))
+            || !TEST_true(ED448_sign(NULL, outsig, NULL, 0, pubkey1, privkey1,
+                                     NULL, 0))
             || !TEST_int_eq(memcmp(sig1, outsig, sizeof(sig1)), 0)
-            || !TEST_true(ED448_sign(outsig, msg2, sizeof(msg2), pubkey2,
+            || !TEST_true(ED448_sign(NULL, outsig, msg2, sizeof(msg2), pubkey2,
                                      privkey2, NULL, 0))
             || !TEST_int_eq(memcmp(sig2, outsig, sizeof(sig2)), 0)
-            || !TEST_true(ED448_sign(outsig, msg3, sizeof(msg3), pubkey3,
+            || !TEST_true(ED448_sign(NULL, outsig, msg3, sizeof(msg3), pubkey3,
                                      privkey3, context3, sizeof(context3)))
             || !TEST_int_eq(memcmp(sig3, outsig, sizeof(sig3)), 0)
-            || !TEST_true(ED448_sign(outsig, msg4, sizeof(msg4), pubkey4,
+            || !TEST_true(ED448_sign(NULL, outsig, msg4, sizeof(msg4), pubkey4,
                                      privkey4, NULL, 0))
             || !TEST_int_eq(memcmp(sig4, outsig, sizeof(sig4)), 0)
-            || !TEST_true(ED448_sign(outsig, msg5, sizeof(msg5), pubkey5,
+            || !TEST_true(ED448_sign(NULL, outsig, msg5, sizeof(msg5), pubkey5,
                                      privkey5, NULL, 0))
             || !TEST_int_eq(memcmp(sig5, outsig, sizeof(sig5)), 0)
-            || !TEST_true(ED448_sign(outsig, msg6, sizeof(msg6), pubkey6,
+            || !TEST_true(ED448_sign(NULL, outsig, msg6, sizeof(msg6), pubkey6,
                                      privkey6, NULL, 0))
             || !TEST_int_eq(memcmp(sig6, outsig, sizeof(sig6)), 0)
-            || !TEST_true(ED448_sign(outsig, msg7, sizeof(msg7), pubkey7,
+            || !TEST_true(ED448_sign(NULL, outsig, msg7, sizeof(msg7), pubkey7,
                                      privkey7, NULL, 0))
             || !TEST_int_eq(memcmp(sig7, outsig, sizeof(sig7)), 0)
-            || !TEST_true(ED448_sign(outsig, msg8, sizeof(msg8), pubkey8,
+            || !TEST_true(ED448_sign(NULL, outsig, msg8, sizeof(msg8), pubkey8,
                                      privkey8, NULL, 0))
             || !TEST_int_eq(memcmp(sig8, outsig, sizeof(sig8)), 0)
-            || !TEST_true(ED448_sign(outsig, msg9, sizeof(msg9), pubkey9,
+            || !TEST_true(ED448_sign(NULL, outsig, msg9, sizeof(msg9), pubkey9,
                                      privkey9, NULL, 0))
             || !TEST_int_eq(memcmp(sig9, outsig, sizeof(sig9)), 0)
-            || !TEST_true(ED448ph_sign(outsig, dohash(hashctx, phmsg1,
+            || !TEST_true(ED448ph_sign(NULL, outsig, dohash(hashctx, phmsg1,
                                        sizeof(phmsg1)), phpubkey1, phprivkey1,
                                        NULL, 0))
             || !TEST_int_eq(memcmp(phsig1, outsig, sizeof(phsig1)), 0)
-            || !TEST_true(ED448ph_sign(outsig, dohash(hashctx, phmsg2,
+            || !TEST_true(ED448ph_sign(NULL, outsig, dohash(hashctx, phmsg2,
                                        sizeof(phmsg2)), phpubkey2, phprivkey2,
                                        phcontext2, sizeof(phcontext2)))
             || !TEST_int_eq(memcmp(phsig2, outsig, sizeof(phsig2)), 0)) {

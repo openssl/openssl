@@ -268,6 +268,8 @@ struct ec_group_st {
         NISTZ256_PRE_COMP *nistz256;
         EC_PRE_COMP *ec;
     } pre_comp;
+
+    OPENSSL_CTX *libctx;
 };
 
 #define SETPRECOMP(g, type, pre) \
@@ -286,8 +288,11 @@ struct ec_key_st {
     point_conversion_form_t conv_form;
     CRYPTO_REF_COUNT references;
     int flags;
+#ifndef FIPS_MODE
     CRYPTO_EX_DATA ex_data;
+#endif
     CRYPTO_RWLOCK *lock;
+    OPENSSL_CTX *libctx;
 };
 
 struct ec_point_st {
@@ -592,7 +597,7 @@ int ec_key_simple_generate_key(EC_KEY *eckey);
 int ec_key_simple_generate_public_key(EC_KEY *eckey);
 int ec_key_simple_check_key(const EC_KEY *eckey);
 
-int ec_curve_nid_from_params(const EC_GROUP *group);
+int ec_curve_nid_from_params(const EC_GROUP *group, BN_CTX *ctx);
 
 /* EC_METHOD definitions */
 
@@ -624,6 +629,8 @@ struct ec_key_method_st {
 };
 
 #define EC_KEY_METHOD_DYNAMIC   1
+
+EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine);
 
 int ossl_ec_key_gen(EC_KEY *eckey);
 int ossl_ecdh_compute_key(unsigned char **pout, size_t *poutlen,
