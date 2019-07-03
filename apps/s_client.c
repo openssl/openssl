@@ -2737,6 +2737,7 @@ int s_client_main(int argc, char **argv)
         BIO_free(edfile);
     }
 
+
     for (;;) {
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
@@ -2986,6 +2987,8 @@ int s_client_main(int argc, char **argv)
                 read_ssl = 1;
                 if ((read_tty == 0) && (write_ssl == 0))
                     write_ssl = 1;
+//PANOS
+goto shut;
                 break;
             case SSL_ERROR_WANT_X509_LOOKUP:
                 BIO_printf(bio_c_out, "read X BLOCK\n");
