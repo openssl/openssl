@@ -18,7 +18,7 @@ long SSL_set_ecdh_auto(SSL *ssl, int state);
 =head1 DESCRIPTION
 
 SSL_CTX_set_tmp_ecdh() sets ECDH parameters to be used to be B<ecdh>.
-The key is inherited by all B<ssl> objects created from B<ctx>.
+The parameters are inherited by all B<ssl> objects created from B<ctx>.
 
 SSL_set_tmp_ecdh() sets the parameters only for B<ssl>.
 
