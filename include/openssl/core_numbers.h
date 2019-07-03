@@ -118,10 +118,13 @@ OSSL_CORE_MAKE_FUNC(void,
 #define OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE    22
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_secure_clear_free, (void *ptr, size_t num, const char *file, int line))
-#define OSSL_FUNC_OPENSSL_CLEANSE             23
+#define OSSL_FUNC_CRYPTO_SECURE_ALLOCATED     23
+OSSL_CORE_MAKE_FUNC(int,
+        CRYPTO_secure_allocated, (const void *ptr))
+#define OSSL_FUNC_OPENSSL_CLEANSE             24
 OSSL_CORE_MAKE_FUNC(void,
         OPENSSL_cleanse, (void *ptr, size_t len))
-# define OSSL_FUNC_OPENSSL_HEXSTR2BUF         24
+# define OSSL_FUNC_OPENSSL_HEXSTR2BUF         25
 OSSL_CORE_MAKE_FUNC(unsigned char *,
         OPENSSL_hexstr2buf, (const char *str, long *len))
 

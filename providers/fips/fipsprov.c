@@ -54,6 +54,7 @@ static OSSL_CRYPTO_secure_malloc_fn *c_CRYPTO_secure_malloc;
 static OSSL_CRYPTO_secure_zalloc_fn *c_CRYPTO_secure_zalloc;
 static OSSL_CRYPTO_secure_free_fn *c_CRYPTO_secure_free;
 static OSSL_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
+static OSSL_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
 static OSSL_OPENSSL_hexstr2buf_fn *c_OPENSSL_hexstr2buf;
 
 typedef struct fips_global_st {
@@ -353,6 +354,9 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE:
             c_CRYPTO_secure_clear_free = OSSL_get_CRYPTO_secure_clear_free(in);
             break;
+        case OSSL_FUNC_CRYPTO_SECURE_ALLOCATED:
+            c_CRYPTO_secure_allocated = OSSL_get_CRYPTO_secure_allocated(in);
+            break;
         case OSSL_FUNC_OPENSSL_HEXSTR2BUF:
             c_OPENSSL_hexstr2buf = OSSL_get_OPENSSL_hexstr2buf(in);
             break;
@@ -533,4 +537,9 @@ void CRYPTO_secure_clear_free(void *ptr, size_t num, const char *file, int line)
 unsigned char *OPENSSL_hexstr2buf(const char *str, long *len)
 {
     return c_OPENSSL_hexstr2buf(str, len);
+}
+
+int CRYPTO_secure_allocated(const void *ptr)
+{
+    return c_CRYPTO_secure_allocated(ptr);
 }
