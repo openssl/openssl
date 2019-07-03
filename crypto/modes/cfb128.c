@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include "modes_lcl.h"
 #include <string.h>
+#include <openssl/crypto.h>
+#include "internal/modes_int.h"
 
 /*
  * The input and output encrypted as though 128bit cfb mode is being used.

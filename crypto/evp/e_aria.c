@@ -16,7 +16,7 @@
 # include <openssl/rand_drbg.h>
 # include "internal/aria.h"
 # include "internal/evp_int.h"
-# include "modes_lcl.h"
+# include "internal/modes_int.h"
 # include "evp_locl.h"
 
 /* ARIA subkey Structure */
