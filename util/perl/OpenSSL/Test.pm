@@ -65,6 +65,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              rel2abs/;
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
+use Cwd qw/abs_path/;
 
 my $level = 0;
 
@@ -869,8 +870,8 @@ failures will result in a C<BAIL_OUT> at the end of its run.
 sub __env {
     (my $recipe_datadir = basename($0)) =~ s/\.t$/_data/i;
 
-    $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
-    $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
+    $directories{SRCTOP}  = abs_path($ENV{SRCTOP} || $ENV{TOP});
+    $directories{BLDTOP}  = abs_path($ENV{BLDTOP} || $ENV{TOP});
     $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
     $directories{SRCAPPS} =                 __srctop_dir("apps");
     $directories{BLDFUZZ} =                 __bldtop_dir("fuzz");

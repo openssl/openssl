@@ -860,10 +860,10 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         if (ctx->_.dir.last_entry == NULL) {
             if (ctx->_.dir.last_errno != 0) {
                 char errbuf[256];
-                errno = ctx->_.dir.last_errno;
-                openssl_strerror_r(errno, errbuf, sizeof(errbuf));
                 OSSL_STOREerr(OSSL_STORE_F_FILE_OPEN, ERR_R_SYS_LIB);
-                ERR_add_error_data(1, errbuf);
+                errno = ctx->_.dir.last_errno;
+                if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
+                    ERR_add_error_data(1, errbuf);
                 goto err;
             }
             ctx->_.dir.end_reached = 1;
@@ -1260,11 +1260,11 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
                 if (!ctx->_.dir.end_reached) {
                     char errbuf[256];
                     assert(ctx->_.dir.last_errno != 0);
+                    OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD, ERR_R_SYS_LIB);
                     errno = ctx->_.dir.last_errno;
                     ctx->errcnt++;
-                    openssl_strerror_r(errno, errbuf, sizeof(errbuf));
-                    OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD, ERR_R_SYS_LIB);
-                    ERR_add_error_data(1, errbuf);
+                    if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
+                        ERR_add_error_data(1, errbuf);
                 }
                 return NULL;
             }

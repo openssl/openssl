@@ -417,9 +417,7 @@ print STDERR "\n" if $debug;
 &phase("Writing files");
 my $newstate = 0;
 foreach my $lib ( keys %errorfile ) {
-    if ( ! $fnew{$lib} && ! $rnew{$lib} ) {
-        next unless $rebuild;
-    }
+    next if ! $fnew{$lib} && ! $rnew{$lib} && ! $rebuild;
     next if scalar keys %modules > 0 && !$modules{$lib};
     next if $nowrite;
     print STDERR "$lib: $fnew{$lib} new functions\n" if $fnew{$lib};
@@ -454,6 +452,10 @@ foreach my $lib ( keys %errorfile ) {
 
 #ifndef HEADER_${lib}ERR_H
 # define HEADER_${lib}ERR_H
+
+# ifndef HEADER_SYMHACKS_H
+#  include <openssl/symhacks.h>
+# endif
 
 EOF
     if ( $internal ) {

@@ -383,10 +383,25 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                               const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
     if (key) {
+        /* The key is two half length keys in reality */
+        const int bytes = EVP_CIPHER_CTX_key_length(ctx) / 2;
+
+        /*
+         * Verify that the two keys are different.
+         * 
+         * This addresses Rogaway's vulnerability.
+         * See comment in aes_xts_init_key() below.
+         */
+        if (enc && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
+            EVPerr(EVP_F_AESNI_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
+            return 0;
+        }
+
         /* key_len is two AES keys */
         if (enc) {
             aesni_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 4,
@@ -787,11 +802,26 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
     if (key) {
-        int bits = EVP_CIPHER_CTX_key_length(ctx) * 4;
+        /* The key is two half length keys in reality */
+        const int bytes = EVP_CIPHER_CTX_key_length(ctx) / 2;
+        const int bits = bytes * 8;
+
+        /*
+         * Verify that the two keys are different.
+         * 
+         * This addresses Rogaway's vulnerability.
+         * See comment in aes_xts_init_key() below.
+         */
+        if (enc && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
+            EVPerr(EVP_F_AES_T4_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
+            return 0;
+        }
+
         xctx->stream = NULL;
         /* key_len is two AES keys */
         if (enc) {
@@ -3284,10 +3314,12 @@ BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
 
 static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
-    EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,c);
+    EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX, c);
+
     if (type == EVP_CTRL_COPY) {
         EVP_CIPHER_CTX *out = ptr;
         EVP_AES_XTS_CTX *xctx_out = EVP_C_DATA(EVP_AES_XTS_CTX,out);
+
         if (xctx->xts.key1) {
             if (xctx->xts.key1 != &xctx->ks1)
                 return 0;
@@ -3311,11 +3343,36 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
+
     if (!iv && !key)
         return 1;
 
     if (key)
         do {
+            /* The key is two half length keys in reality */
+            const int bytes = EVP_CIPHER_CTX_key_length(ctx) / 2;
+
+            /*
+             * Verify that the two keys are different.
+             *
+             * This addresses the vulnerability described in Rogaway's
+             * September 2004 paper:
+             *
+             *      "Efficient Instantiations of Tweakable Blockciphers and
+             *       Refinements to Modes OCB and PMAC".
+             *      (http://web.cs.ucdavis.edu/~rogaway/papers/offsets.pdf)
+             *
+             * FIPS 140-2 IG A.9 XTS-AES Key Generation Requirements states
+             * that:
+             *      "The check for Key_1 != Key_2 shall be done at any place
+             *       BEFORE using the keys in the XTS-AES algorithm to process
+             *       data with them."
+             */
+            if (enc && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
+                EVPerr(EVP_F_AES_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
+                return 0;
+            }
+
 #ifdef AES_XTS_ASM
             xctx->stream = enc ? AES_xts_encrypt : AES_xts_decrypt;
 #else
