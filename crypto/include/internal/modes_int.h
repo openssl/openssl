@@ -197,8 +197,6 @@ struct ocb128_context {
 
 #ifndef OPENSSL_NO_SIV
 
-#include <openssl/cmac.h>
-
 #define SIV_LEN 16
 
 typedef union siv_block_u {
