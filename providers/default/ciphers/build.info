@@ -44,4 +44,9 @@ IF[{- !$disabled{sm4} -}]
       cipher_sm4.c cipher_sm4_hw.c
 ENDIF
 
+IF[{- !$disabled{ocb} -}]
+  SOURCE[../../../libcrypto]=\
+       cipher_aes_ocb.c cipher_aes_ocb_hw.c
+ENDIF
+
 INCLUDE[../../../libcrypto]=. ../../../crypto

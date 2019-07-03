@@ -165,6 +165,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_aes_128_ctr:
         case NID_aes_128_xts:
         case NID_aes_256_xts:
+        case NID_aes_256_ocb:
+        case NID_aes_192_ocb:
+        case NID_aes_128_ocb:
         case NID_aes_256_gcm:
         case NID_aes_192_gcm:
         case NID_aes_128_gcm:

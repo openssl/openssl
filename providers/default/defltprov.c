@@ -116,6 +116,11 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-128-CTR", "default=yes", aes128ctr_functions },
     { "AES-256-XTS", "default=yes", aes256xts_functions },
     { "AES-128-XTS", "default=yes", aes128xts_functions },
+#ifndef OPENSSL_NO_OCB
+    { "AES-256-OCB", "default=yes", aes256ocb_functions },
+    { "AES-192-OCB", "default=yes", aes192ocb_functions },
+    { "AES-128-OCB", "default=yes", aes128ocb_functions },
+#endif /* OPENSSL_NO_OCB */
 /* TODO(3.0) Add aliases when they are supported */
     { "id-aes256-GCM", "default=yes", aes256gcm_functions },
     { "id-aes192-GCM", "default=yes", aes192gcm_functions },

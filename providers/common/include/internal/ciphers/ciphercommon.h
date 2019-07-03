@@ -224,3 +224,9 @@ static int cipher_hw_##NAME##_##MODE##_cipher(PROV_CIPHER_CTX *ctx,            \
     ctx->num = num;                                                            \
     return 1;                                                                  \
 }
+
+size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
+                 const unsigned char **in, size_t *inlen);
+int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
+                 const unsigned char **in, size_t *inlen);
+
