@@ -145,8 +145,9 @@ int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
     return 1;
 }
 # endif
+#endif /* FIPS_MODE */
 
-# ifdef ECP_NISTZ256_ASM
+#ifdef ECP_NISTZ256_ASM
 void ecp_nistz256_mul_mont(unsigned long res[4], const unsigned long a[4],
                            const unsigned long b[4]);
 
@@ -168,8 +169,7 @@ void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4])
 
     ecp_nistz256_mul_mont(res, in, one);
 }
-# endif
-#endif /* FIPS_MODE */
+#endif
 
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)

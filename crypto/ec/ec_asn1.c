@@ -15,6 +15,8 @@
 #include "internal/nelem.h"
 #include "internal/asn1_dsa.h"
 
+#ifndef FIPS_MODE
+
 int EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
     int i;
@@ -1141,6 +1143,8 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 DECLARE_ASN1_FUNCTIONS(ECDSA_SIG)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECDSA_SIG, ECDSA_SIG)
 
+#endif /* FIPS_MODE */
+
 ECDSA_SIG *ECDSA_SIG_new(void)
 {
     ECDSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
@@ -1255,6 +1259,7 @@ int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
+#ifndef FIPS_MODE
 int ECDSA_size(const EC_KEY *r)
 {
     int ret, i;
@@ -1282,3 +1287,4 @@ int ECDSA_size(const EC_KEY *r)
     ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
     return ret;
 }
+#endif

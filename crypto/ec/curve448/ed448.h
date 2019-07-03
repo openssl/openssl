@@ -38,6 +38,7 @@
  * privkey (in): The private key.
  */
 c448_error_t c448_ed448_derive_public_key(
+                        OPENSSL_CTX *ctx,
                         uint8_t pubkey [EDDSA_448_PUBLIC_BYTES],
                         const uint8_t privkey [EDDSA_448_PRIVATE_BYTES]);
 
@@ -59,6 +60,7 @@ c448_error_t c448_ed448_derive_public_key(
  * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_sign(
+                        OPENSSL_CTX *ctx,
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
@@ -83,6 +85,7 @@ c448_error_t c448_ed448_sign(
  * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_sign_prehash(
+                        OPENSSL_CTX *ctx,
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
@@ -108,13 +111,14 @@ c448_error_t c448_ed448_sign_prehash(
  * non-prehashed messages, at least without some very careful protocol-level
  * disambiguation.  For Ed448 it is safe.
  */
-c448_error_t c448_ed448_verify(const uint8_t
-                                 signature[EDDSA_448_SIGNATURE_BYTES],
-                                 const uint8_t
-                                 pubkey[EDDSA_448_PUBLIC_BYTES],
-                                 const uint8_t *message, size_t message_len,
-                                 uint8_t prehashed, const uint8_t *context,
-                                 uint8_t context_len);
+c448_error_t c448_ed448_verify(OPENSSL_CTX *ctx,
+                               const uint8_t
+                               signature[EDDSA_448_SIGNATURE_BYTES],
+                               const uint8_t
+                               pubkey[EDDSA_448_PUBLIC_BYTES],
+                               const uint8_t *message, size_t message_len,
+                               uint8_t prehashed, const uint8_t *context,
+                               uint8_t context_len);
 
 /*
  * EdDSA signature verification.
@@ -134,6 +138,7 @@ c448_error_t c448_ed448_verify(const uint8_t
  * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_verify_prehash(
+                    OPENSSL_CTX *ctx,
                     const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                     const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t hash[64],
@@ -189,6 +194,7 @@ c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
  * ed (in): The EdDSA private key
  */
 c448_error_t c448_ed448_convert_private_key_to_x448(
+                            OPENSSL_CTX *ctx,
                             uint8_t x[X448_PRIVATE_BYTES],
                             const uint8_t ed[EDDSA_448_PRIVATE_BYTES]);
 

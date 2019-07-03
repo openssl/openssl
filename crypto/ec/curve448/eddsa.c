@@ -19,23 +19,30 @@
 
 #define COFACTOR 4
 
-static c448_error_t oneshot_hash(uint8_t *out, size_t outlen,
+static c448_error_t oneshot_hash(OPENSSL_CTX *ctx, uint8_t *out, size_t outlen,
                                  const uint8_t *in, size_t inlen)
 {
     EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
+    EVP_MD *shake256 = NULL;
+    c448_error_t ret = C448_FAILURE;
 
     if (hashctx == NULL)
         return C448_FAILURE;
 
-    if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
-            || !EVP_DigestUpdate(hashctx, in, inlen)
-            || !EVP_DigestFinalXOF(hashctx, out, outlen)) {
-        EVP_MD_CTX_free(hashctx);
-        return C448_FAILURE;
-    }
+    shake256 = EVP_MD_fetch(ctx, "SHAKE256", NULL);
+    if (shake256 == NULL)
+        goto err;
 
+    if (!EVP_DigestInit_ex(hashctx, shake256, NULL)
+            || !EVP_DigestUpdate(hashctx, in, inlen)
+            || !EVP_DigestFinalXOF(hashctx, out, outlen))
+        goto err;
+
+    ret = C448_SUCCESS;
+ err:
     EVP_MD_CTX_free(hashctx);
-    return C448_SUCCESS;
+    EVP_MD_meth_free(shake256);
+    return ret;
 }
 
 static void clamp(uint8_t secret_scalar_ser[EDDSA_448_PRIVATE_BYTES])
@@ -45,13 +52,15 @@ static void clamp(uint8_t secret_scalar_ser[EDDSA_448_PRIVATE_BYTES])
     secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
 }
 
-static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
+static c448_error_t hash_init_with_dom(OPENSSL_CTX *ctx, EVP_MD_CTX *hashctx,
+                                       uint8_t prehashed,
                                        uint8_t for_prehash,
                                        const uint8_t *context,
                                        size_t context_len)
 {
     const char *dom_s = "SigEd448";
     uint8_t dom[2];
+    EVP_MD *shake256 = NULL;
 
     if (context_len > UINT8_MAX)
         return C448_FAILURE;
@@ -60,27 +69,36 @@ static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
                        - (for_prehash == 0 ? 1 : 0));
     dom[1] = (uint8_t)context_len;
 
-    if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
-            || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
-            || !EVP_DigestUpdate(hashctx, dom, sizeof(dom))
-            || !EVP_DigestUpdate(hashctx, context, context_len))
+    shake256 = EVP_MD_fetch(ctx, "SHAKE256", NULL);
+    if (shake256 == NULL)
         return C448_FAILURE;
 
+    if (!EVP_DigestInit_ex(hashctx, shake256, NULL)
+            || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
+            || !EVP_DigestUpdate(hashctx, dom, sizeof(dom))
+            || !EVP_DigestUpdate(hashctx, context, context_len)) {
+        EVP_MD_meth_free(shake256);
+        return C448_FAILURE;
+    }
+
+    EVP_MD_meth_free(shake256);
     return C448_SUCCESS;
 }
 
 /* In this file because it uses the hash */
 c448_error_t c448_ed448_convert_private_key_to_x448(
+                            OPENSSL_CTX *ctx,
                             uint8_t x[X448_PRIVATE_BYTES],
                             const uint8_t ed [EDDSA_448_PRIVATE_BYTES])
 {
     /* pass the private key through oneshot_hash function */
     /* and keep the first X448_PRIVATE_BYTES bytes */
-    return oneshot_hash(x, X448_PRIVATE_BYTES, ed,
+    return oneshot_hash(ctx, x, X448_PRIVATE_BYTES, ed,
                         EDDSA_448_PRIVATE_BYTES);
 }
 
 c448_error_t c448_ed448_derive_public_key(
+                        OPENSSL_CTX *ctx,
                         uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES])
 {
@@ -90,7 +108,8 @@ c448_error_t c448_ed448_derive_public_key(
     unsigned int c;
     curve448_point_t p;
 
-    if (!oneshot_hash(secret_scalar_ser, sizeof(secret_scalar_ser), privkey,
+    if (!oneshot_hash(ctx, secret_scalar_ser, sizeof(secret_scalar_ser),
+                      privkey,
                       EDDSA_448_PRIVATE_BYTES))
         return C448_FAILURE;
 
@@ -123,6 +142,7 @@ c448_error_t c448_ed448_derive_public_key(
 }
 
 c448_error_t c448_ed448_sign(
+                        OPENSSL_CTX *ctx,
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
@@ -148,7 +168,7 @@ c448_error_t c448_ed448_sign(
          */
         uint8_t expanded[EDDSA_448_PRIVATE_BYTES * 2];
 
-        if (!oneshot_hash(expanded, sizeof(expanded), privkey,
+        if (!oneshot_hash(ctx, expanded, sizeof(expanded), privkey,
                           EDDSA_448_PRIVATE_BYTES))
             goto err;
         clamp(expanded);
@@ -156,7 +176,8 @@ c448_error_t c448_ed448_sign(
                                     EDDSA_448_PRIVATE_BYTES);
 
         /* Hash to create the nonce */
-        if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
+        if (!hash_init_with_dom(ctx, hashctx, prehashed, 0, context,
+                                context_len)
                 || !EVP_DigestUpdate(hashctx,
                                      expanded + EDDSA_448_PRIVATE_BYTES,
                                      EDDSA_448_PRIVATE_BYTES)
@@ -197,7 +218,7 @@ c448_error_t c448_ed448_sign(
         uint8_t challenge[2 * EDDSA_448_PRIVATE_BYTES];
 
         /* Compute the challenge */
-        if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
+        if (!hash_init_with_dom(ctx, hashctx, prehashed, 0, context, context_len)
                 || !EVP_DigestUpdate(hashctx, nonce_point, sizeof(nonce_point))
                 || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
                 || !EVP_DigestUpdate(hashctx, message, message_len)
@@ -228,17 +249,19 @@ c448_error_t c448_ed448_sign(
 }
 
 c448_error_t c448_ed448_sign_prehash(
+                        OPENSSL_CTX *ctx,
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t hash[64], const uint8_t *context,
                         size_t context_len)
 {
-    return c448_ed448_sign(signature, privkey, pubkey, hash, 64, 1, context,
-                           context_len);
+    return c448_ed448_sign(ctx, signature, privkey, pubkey, hash, 64, 1,
+                           context, context_len);
 }
 
 c448_error_t c448_ed448_verify(
+                    OPENSSL_CTX *ctx,
                     const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                     const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t *message, size_t message_len,
@@ -291,7 +314,7 @@ c448_error_t c448_ed448_verify(
         uint8_t challenge[2 * EDDSA_448_PRIVATE_BYTES];
 
         if (hashctx == NULL
-                || !hash_init_with_dom(hashctx, prehashed, 0, context,
+                || !hash_init_with_dom(ctx, hashctx, prehashed, 0, context,
                                        context_len)
                 || !EVP_DigestUpdate(hashctx, signature, EDDSA_448_PUBLIC_BYTES)
                 || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
@@ -321,52 +344,54 @@ c448_error_t c448_ed448_verify(
 }
 
 c448_error_t c448_ed448_verify_prehash(
+                    OPENSSL_CTX *ctx,
                     const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                     const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t hash[64], const uint8_t *context,
                     uint8_t context_len)
 {
-    return c448_ed448_verify(signature, pubkey, hash, 64, 1, context,
+    return c448_ed448_verify(ctx, signature, pubkey, hash, 64, 1, context,
                              context_len);
 }
 
-int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-               const uint8_t public_key[57], const uint8_t private_key[57],
-               const uint8_t *context, size_t context_len)
+int ED448_sign(OPENSSL_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
+               size_t message_len, const uint8_t public_key[57],
+               const uint8_t private_key[57], const uint8_t *context,
+               size_t context_len)
 {
-    return c448_ed448_sign(out_sig, private_key, public_key, message,
+    return c448_ed448_sign(ctx, out_sig, private_key, public_key, message,
                            message_len, 0, context, context_len)
         == C448_SUCCESS;
 }
 
-int ED448_verify(const uint8_t *message, size_t message_len,
+int ED448_verify(OPENSSL_CTX *ctx, const uint8_t *message, size_t message_len,
                  const uint8_t signature[114], const uint8_t public_key[57],
                  const uint8_t *context, size_t context_len)
 {
-    return c448_ed448_verify(signature, public_key, message, message_len, 0,
-                             context, (uint8_t)context_len) == C448_SUCCESS;
+    return c448_ed448_verify(ctx, signature, public_key, message, message_len,
+                             0, context, (uint8_t)context_len) == C448_SUCCESS;
 }
 
-int ED448ph_sign(uint8_t *out_sig, const uint8_t hash[64],
+int ED448ph_sign(OPENSSL_CTX *ctx, uint8_t *out_sig, const uint8_t hash[64],
                  const uint8_t public_key[57], const uint8_t private_key[57],
                  const uint8_t *context, size_t context_len)
 {
-    return c448_ed448_sign_prehash(out_sig, private_key, public_key, hash,
+    return c448_ed448_sign_prehash(ctx, out_sig, private_key, public_key, hash,
                                    context, context_len) == C448_SUCCESS;
 
 }
 
-int ED448ph_verify(const uint8_t hash[64], const uint8_t signature[114],
-                   const uint8_t public_key[57], const uint8_t *context,
-                   size_t context_len)
+int ED448ph_verify(OPENSSL_CTX *ctx, const uint8_t hash[64],
+                   const uint8_t signature[114], const uint8_t public_key[57],
+                   const uint8_t *context, size_t context_len)
 {
-    return c448_ed448_verify_prehash(signature, public_key, hash, context,
+    return c448_ed448_verify_prehash(ctx, signature, public_key, hash, context,
                                      (uint8_t)context_len) == C448_SUCCESS;
 }
 
-int ED448_public_from_private(uint8_t out_public_key[57],
+int ED448_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[57],
                               const uint8_t private_key[57])
 {
-    return c448_ed448_derive_public_key(out_public_key, private_key)
+    return c448_ed448_derive_public_key(ctx, out_public_key, private_key)
         == C448_SUCCESS;
 }
