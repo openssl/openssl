@@ -40,8 +40,10 @@ int ERR_load_CRYPTO_strings(void);
 #  define CRYPTO_F_GET_PROVIDER_STORE                      0
 #  define CRYPTO_F_OPENSSL_ATEXIT                          0
 #  define CRYPTO_F_OPENSSL_BUF2HEXSTR                      0
+#  define CRYPTO_F_OPENSSL_BUF2HEXSTR_EX                   0
 #  define CRYPTO_F_OPENSSL_FOPEN                           0
 #  define CRYPTO_F_OPENSSL_HEXSTR2BUF                      0
+#  define CRYPTO_F_OPENSSL_HEXSTR2BUF_EX                   0
 #  define CRYPTO_F_OPENSSL_INIT_CRYPTO                     0
 #  define CRYPTO_F_OPENSSL_LH_NEW                          0
 #  define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    0
@@ -89,6 +91,7 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_R_STRING_TOO_LONG                         112
 # define CRYPTO_R_TOO_MANY_BYTES                          113
 # define CRYPTO_R_TOO_MANY_RECORDS                        114
+# define CRYPTO_R_TOO_SMALL_BUFFER                        116
 # define CRYPTO_R_ZERO_LENGTH_NUMBER                      115
 
 #endif

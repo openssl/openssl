@@ -40,6 +40,8 @@ static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_TOO_MANY_BYTES), "too many bytes"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_TOO_MANY_RECORDS),
     "too many records"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_TOO_SMALL_BUFFER),
+    "too small buffer"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ZERO_LENGTH_NUMBER),
     "zero length number"},
     {0, NULL}

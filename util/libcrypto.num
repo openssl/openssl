@@ -4706,3 +4706,5 @@ EC_GROUP_new_ex                         4815	3_0_0	EXIST::FUNCTION:EC
 EC_GROUP_new_by_curve_name_ex           4816	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_ex                           4817	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_by_curve_name_ex             4818	3_0_0	EXIST::FUNCTION:EC
+OPENSSL_hexstr2buf_ex                   4819	3_0_0	EXIST::FUNCTION:
+OPENSSL_buf2hexstr_ex                   4820	3_0_0	EXIST::FUNCTION:

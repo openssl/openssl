@@ -8,7 +8,6 @@ OPENSSL_clear_realloc, OPENSSL_clear_free, OPENSSL_cleanse,
 CRYPTO_malloc, CRYPTO_zalloc, CRYPTO_realloc, CRYPTO_free,
 OPENSSL_strdup, OPENSSL_strndup,
 OPENSSL_memdup, OPENSSL_strlcpy, OPENSSL_strlcat,
-OPENSSL_hexstr2buf, OPENSSL_buf2hexstr, OPENSSL_hexchar2int,
 CRYPTO_strdup, CRYPTO_strndup,
 OPENSSL_mem_debug_push, OPENSSL_mem_debug_pop,
 CRYPTO_mem_debug_push, CRYPTO_mem_debug_pop,
@@ -39,10 +38,6 @@ OPENSSL_MALLOC_FD
  void *OPENSSL_clear_realloc(void *p, size_t old_len, size_t num)
  void OPENSSL_clear_free(void *str, size_t num)
  void OPENSSL_cleanse(void *ptr, size_t len);
-
- unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
- char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len);
- int OPENSSL_hexchar2int(unsigned char c);
 
  void *CRYPTO_malloc(size_t num, const char *file, int line)
  void *CRYPTO_zalloc(size_t num, const char *file, int line)
@@ -118,20 +113,6 @@ OPENSSL_malloc() and should be released by calling OPENSSL_free().
 OPENSSL_strlcpy(),
 OPENSSL_strlcat() and OPENSSL_strnlen() are equivalents of the common C
 library functions and are provided for portability.
-
-OPENSSL_hexstr2buf() parses B<str> as a hex string and returns a
-pointer to the parsed value. The memory is allocated by calling
-OPENSSL_malloc() and should be released by calling OPENSSL_free().
-If B<len> is not NULL, it is filled in with the output length.
-Colons between two-character hex "bytes" are ignored.
-An odd number of hex digits is an error.
-
-OPENSSL_buf2hexstr() takes the specified buffer and length, and returns
-a hex string for value, or NULL on error.
-B<Buffer> cannot be NULL; if B<len> is 0 an empty string is returned.
-
-OPENSSL_hexchar2int() converts a character to the hexadecimal equivalent,
-or returns -1 on error.
 
 If no allocations have been done, it is possible to "swap out" the default
 implementations for OPENSSL_malloc(), OPENSSL_realloc and OPENSSL_free()
@@ -216,7 +197,6 @@ OPENSSL_malloc(), OPENSSL_zalloc(), OPENSSL_realloc(),
 OPENSSL_clear_realloc(),
 CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_realloc(),
 CRYPTO_clear_realloc(),
-OPENSSL_buf2hexstr(), OPENSSL_hexstr2buf(),
 OPENSSL_strdup(), and OPENSSL_strndup()
 return a pointer to allocated memory or NULL on error.
 
