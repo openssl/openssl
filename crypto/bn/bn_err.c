@@ -40,6 +40,8 @@ static const ERR_STRING_DATA BN_str_functs[] = {
      "BN_generate_dsa_nonce"},
     {ERR_PACK(ERR_LIB_BN, BN_F_BN_GENERATE_PRIME_EX, 0),
      "BN_generate_prime_ex"},
+    {ERR_PACK(ERR_LIB_BN, BN_F_BN_GENERATE_PRIME_EX2, 0),
+     "BN_generate_prime_ex2"},
     {ERR_PACK(ERR_LIB_BN, BN_F_BN_GF2M_MOD, 0), "BN_GF2m_mod"},
     {ERR_PACK(ERR_LIB_BN, BN_F_BN_GF2M_MOD_EXP, 0), "BN_GF2m_mod_exp"},
     {ERR_PACK(ERR_LIB_BN, BN_F_BN_GF2M_MOD_MUL, 0), "BN_GF2m_mod_mul"},

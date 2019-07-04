@@ -193,13 +193,15 @@ int bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
     /* (Steps 4.1/5.1): Randomly generate Xp1 if it is not passed in */
     if (Xp1 == NULL) {
         /* Set the top and bottom bits to make it odd and the correct size */
-        if (!BN_priv_rand(Xp1i, bitlen, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+        if (!BN_priv_rand_ex(Xp1i, bitlen, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD,
+                             ctx))
             goto err;
     }
     /* (Steps 4.1/5.1): Randomly generate Xp2 if it is not passed in */
     if (Xp2 == NULL) {
         /* Set the top and bottom bits to make it odd and the correct size */
-        if (!BN_priv_rand(Xp2i, bitlen, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+        if (!BN_priv_rand_ex(Xp2i, bitlen, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD,
+                             ctx))
             goto err;
     }
 
@@ -305,7 +307,8 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
              *   so largest number will have B5... as the top byte
              *   Setting the top 2 bits gives 0xC0.
              */
-            if (!BN_priv_rand(X, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY))
+            if (!BN_priv_rand_ex(X, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY,
+                                 ctx))
                 goto end;
         }
         /* (Step 4) Y = X + ((R - X) mod 2r1r2) */

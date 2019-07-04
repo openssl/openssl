@@ -143,10 +143,12 @@ BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
     return ret;
 }
 
+#ifndef FIPS_MODE
 BN_CTX *BN_CTX_new(void)
 {
     return BN_CTX_new_ex(NULL);
 }
+#endif
 
 BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx)
 {
@@ -157,10 +159,12 @@ BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx)
     return ret;
 }
 
+#ifndef FIPS_MODE
 BN_CTX *BN_CTX_secure_new(void)
 {
     return BN_CTX_secure_new_ex(NULL);
 }
+#endif
 
 void BN_CTX_free(BN_CTX *ctx)
 {

@@ -103,6 +103,7 @@ int BN_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx)
 {
     return bnrand(NORMAL, rnd, bits, top, bottom, ctx);
 }
+#ifndef FIPS_MODE
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return bnrand(NORMAL, rnd, bits, top, bottom, NULL);
@@ -112,16 +113,19 @@ int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return bnrand(TESTING, rnd, bits, top, bottom, NULL);
 }
+#endif
 
 int BN_priv_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx)
 {
     return bnrand(PRIVATE, rnd, bits, top, bottom, ctx);
 }
 
+#ifndef FIPS_MODE
 int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return bnrand(PRIVATE, rnd, bits, top, bottom, NULL);
 }
+#endif
 
 /* random number r:  0 <= r < range */
 static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
@@ -195,16 +199,19 @@ int BN_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx)
     return bnrand_range(NORMAL, r, range, ctx);
 }
 
+#ifndef FIPS_MODE
 int BN_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return bnrand_range(NORMAL, r, range, NULL);
 }
+#endif
 
 int BN_priv_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx)
 {
     return bnrand_range(PRIVATE, r, range, ctx);
 }
 
+#ifndef FIPS_MODE
 int BN_priv_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return bnrand_range(PRIVATE, r, range, NULL);
@@ -219,6 +226,7 @@ int BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return BN_rand_range(r, range);
 }
+#endif
 
 /*
  * BN_generate_dsa_nonce generates a random number 0 <= out < range. Unlike
