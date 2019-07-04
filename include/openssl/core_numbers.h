@@ -229,9 +229,94 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
 
+/*-
+ * Key management
+ *
+ * Key domain parameter references can be created in several manners:
+ * - by importing the domain parameter material via an OSSL_PARAM array.
+ * - by generating key domain parameters, given input via an OSSL_PARAM
+ *   array.
+ *
+ * Key references can be created in several manners:
+ * - by importing the key material via an OSSL_PARAM array.
+ * - by generating a key, given optional domain parameters and
+ *   additional keygen parameters.
+ *   If domain parameters are given, they must have been generated using
+ *   the domain parameter generator functions.
+ *   If the domain parameters comes from a different provider, results
+ *   are undefined.
+ *   THE CALLER MUST ENSURE THAT CORRECT DOMAIN PARAMETERS ARE USED.
+ * - by loading an internal key, given a binary blob that forms an identity.
+ *   THE CALLER MUST ENSURE THAT A CORRECT IDENTITY IS USED.
+ */
+
+# define OSSL_OP_KEYMGMT                           10
+
+/* Key domain parameter creation and destruction */
+# define OSSL_FUNC_KEYMGMT_IMPORTDOMAIN             1
+# define OSSL_FUNC_KEYMGMT_GENDOMAIN                2
+# define OSSL_FUNC_KEYMGMT_FREEDOMAIN               3
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importdomain,
+                    (void *provctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gendomain,
+                    (void *provctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freedomain, (void *domain))
+
+/* Key domain parameter export */
+# define OSSL_FUNC_KEYMGMT_EXPORTDOMAIN             4
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportdomain,
+                    (void *domain, OSSL_PARAM params[]))
+
+/* Key domain parameter discovery */
+# define OSSL_FUNC_KEYMGMT_IMPORTDOMAIN_TYPES       5
+# define OSSL_FUNC_KEYMGMT_EXPORTDOMAIN_TYPES       6
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importdomain_types,
+                    (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportdomain_types,
+                    (void))
+
+/* Key creation and destruction */
+# define OSSL_FUNC_KEYMGMT_IMPORTKEY_PRIV          10
+# define OSSL_FUNC_KEYMGMT_IMPORTKEY_PUB           11
+# define OSSL_FUNC_KEYMGMT_GENKEY                  12
+# define OSSL_FUNC_KEYMGMT_LOADKEY                 13
+# define OSSL_FUNC_KEYMGMT_FREEKEY                 14
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importkey_priv,
+                    (void *provctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importkey_pub,
+                    (void *provctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_genkey,
+                    (void *provctx,
+                     void *domainparams, const OSSL_PARAM genkeyparams[]))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_loadkey,
+                    (void *provctx, void *id, size_t idlen))
+OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freekey, (void *key))
+
+/* Key export */
+# define OSSL_FUNC_KEYMGMT_EXPORTKEY_PRIV          15
+# define OSSL_FUNC_KEYMGMT_EXPORTKEY_PUB           16
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey_priv,
+                    (void *key, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey_pub,
+                    (void *key, OSSL_PARAM params[]))
+
+/* Key discovery */
+# define OSSL_FUNC_KEYMGMT_IMPORTKEY_PRIV_TYPES    17
+# define OSSL_FUNC_KEYMGMT_IMPORTKEY_PUB_TYPES     18
+# define OSSL_FUNC_KEYMGMT_EXPORTKEY_PRIV_TYPES    19
+# define OSSL_FUNC_KEYMGMT_EXPORTKEY_PUB_TYPES     20
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_priv_types,
+                    (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_pub_types,
+                    (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_priv_types,
+                    (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_pub_types,
+                    (void))
+
 /* Key Exchange */
 
-# define OSSL_OP_KEYEXCH                               3
+# define OSSL_OP_KEYEXCH                              11
 
 # define OSSL_FUNC_KEYEXCH_NEWCTX                      1
 # define OSSL_FUNC_KEYEXCH_INIT                        2

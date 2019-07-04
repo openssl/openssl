@@ -504,9 +504,9 @@ typedef struct {
  * method, as in, can it do arbitrary encryption....
  */
 struct evp_pkey_st {
+    /* == Legacy attributes == */
     int type;
     int save_type;
-    CRYPTO_REF_COUNT references;
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
     ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
@@ -526,9 +526,25 @@ struct evp_pkey_st {
         ECX_KEY *ecx;           /* X25519, X448, Ed25519, Ed448 */
 # endif
     } pkey;
-    int save_parameters;
-    STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
+
+    /* == Common attributes == */
+    CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
+    STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
+    int save_parameters;
+
+    /* == Provider attributes == */
+    /*
+     * To support transparent export/import between providers that
+     * support the methods for it, and still not having to do the
+     * export/import every time a key is used, we maintain a cache
+     * of imported key, indexed by provider address.
+     * pkeys[0] is *always* the "original" key.
+     */
+    struct {
+        EVP_KEYMGMT *keymgmt;
+        void *provkey;
+    } pkeys[10];
 } /* EVP_PKEY */ ;
 
 

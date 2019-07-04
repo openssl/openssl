@@ -62,6 +62,36 @@ struct evp_kdf_ctx_st {
     EVP_KDF_IMPL *impl;          /* Algorithm-specific data */
 } /* EVP_KDF_CTX */ ;
 
+struct evp_keymgmt_st {
+    int id;                      /* libcrypto internal */
+
+    const char *name;
+    OSSL_PROVIDER *prov;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+
+    /* Domain parameter routines */
+    OSSL_OP_keymgmt_importdomain_fn *importdomain;
+    OSSL_OP_keymgmt_gendomain_fn *gendomain;
+    OSSL_OP_keymgmt_freedomain_fn *freedomain;
+    OSSL_OP_keymgmt_exportdomain_fn *exportdomain;
+    OSSL_OP_keymgmt_importdomain_types_fn *importdomain_types;
+    OSSL_OP_keymgmt_exportdomain_types_fn *exportdomain_types;
+
+    /* Key routines */
+    OSSL_OP_keymgmt_importkey_priv_fn *importkey_priv;
+    OSSL_OP_keymgmt_importkey_pub_fn *importkey_pub;
+    OSSL_OP_keymgmt_genkey_fn *genkey;
+    OSSL_OP_keymgmt_loadkey_fn *loadkey;
+    OSSL_OP_keymgmt_freekey_fn *freekey;
+    OSSL_OP_keymgmt_exportkey_priv_fn *exportkey_priv;
+    OSSL_OP_keymgmt_exportkey_pub_fn *exportkey_pub;
+    OSSL_OP_keymgmt_importkey_priv_types_fn *importkey_priv_types;
+    OSSL_OP_keymgmt_importkey_pub_types_fn *importkey_pub_types;
+    OSSL_OP_keymgmt_exportkey_priv_types_fn *exportkey_priv_types;
+    OSSL_OP_keymgmt_exportkey_pub_types_fn *exportkey_pub_types;
+} /* EVP_KEYMGMT */ ;
+
 struct evp_keyexch_st {
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
@@ -75,7 +105,6 @@ struct evp_keyexch_st {
     OSSL_OP_keyexch_dupctx_fn *dupctx;
     OSSL_OP_keyexch_set_params_fn *set_params;
 } /* EVP_KEYEXCH */;
-
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
