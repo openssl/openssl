@@ -630,8 +630,8 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
  * never knows.
  */
 static const OSSL_ITEM param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, "openssl-version" },
-    { OSSL_PARAM_UTF8_PTR, "provider-name" },
+    { OSSL_PARAM_UTF8_CONST, "openssl-version" },
+    { OSSL_PARAM_UTF8_CONST, "provider-name" },
     { 0, NULL }
 };
 
@@ -646,9 +646,9 @@ static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, "openssl-version")) != NULL)
-        OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
+        OSSL_PARAM_set_utf8_const(p, OPENSSL_VERSION_STR);
     if ((p = OSSL_PARAM_locate(params, "provider-name")) != NULL)
-        OSSL_PARAM_set_utf8_ptr(p, prov->name);
+        OSSL_PARAM_set_utf8_const(p, prov->name);
 
     if (prov->parameters == NULL)
         return 1;
@@ -657,7 +657,7 @@ static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
         INFOPAIR *pair = sk_INFOPAIR_value(prov->parameters, i);
 
         if ((p = OSSL_PARAM_locate(params, pair->name)) != NULL)
-            OSSL_PARAM_set_utf8_ptr(p, pair->value);
+            OSSL_PARAM_set_utf8_const(p, pair->value);
     }
 
     return 1;

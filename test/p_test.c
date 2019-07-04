@@ -55,33 +55,26 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
 
     for (; ok && p->key != NULL; p++) {
         if (strcmp(p->key, "greeting") == 0) {
-            static char *opensslv;
-            static char *provname;
-            static char *greeting;
             static OSSL_PARAM counter_request[] = {
                 /* Known libcrypto provided parameters */
-                { "openssl-version", OSSL_PARAM_UTF8_PTR,
-                  &opensslv, sizeof(&opensslv), 0 },
-                { "provider-name", OSSL_PARAM_UTF8_PTR,
-                  &provname, sizeof(&provname), 0},
+                { "openssl-version", OSSL_PARAM_UTF8_CONST, NULL, 0, 0 },
+                { "provider-name", OSSL_PARAM_UTF8_CONST, NULL, 0, 0},
 
                 /* This might be present, if there's such a configuration */
-                { "greeting", OSSL_PARAM_UTF8_PTR,
-                  &greeting, sizeof(&greeting), 0 },
-
+                { "greeting", OSSL_PARAM_UTF8_CONST, NULL, 0, 0 },
                 { NULL, 0, NULL, 0, 0 }
             };
             char buf[256];
             size_t buf_l;
 
-            opensslv = provname = greeting = NULL;
-
             if (c_get_params(prov, counter_request)) {
+                const char *greeting = counter_request[2].data;
+
                 if (greeting) {
                     strcpy(buf, greeting);
                 } else {
-                    const char *versionp = *(void **)counter_request[0].data;
-                    const char *namep = *(void **)counter_request[1].data;
+                    const char *versionp = counter_request[0].data;
+                    const char *namep = counter_request[1].data;
 
                     sprintf(buf, "Hello OpenSSL %.20s, greetings from %s!",
                             versionp, namep);

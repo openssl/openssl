@@ -112,7 +112,7 @@ struct ossl_param_st {
  */
 # define OSSL_PARAM_OCTET_STRING         5
 /*-
- * OSSL_PARAM_UTF8_PTR
+ * OSSL_PARAM_UTF8_CONST
  * is a pointer to a printable string.  Is expteced to be printed as it is.
  *
  * The difference between this and OSSL_PARAM_UTF8_STRING is that only pointers
@@ -120,14 +120,14 @@ struct ossl_param_st {
  *
  * This is more relevant for parameter requests, where the responding
  * function doesn't need to copy the data to the provided buffer, but
- * sets the provided buffer to point at the actual data instead.
+ * sets the data pointer to point at the actual data instead.
  *
  * WARNING!  Using these is FRAGILE, as it assumes that the actual
  * data and its location are constant.
  */
-# define OSSL_PARAM_UTF8_PTR             6
+# define OSSL_PARAM_UTF8_CONST           6
 /*-
- * OSSL_PARAM_OCTET_PTR
+ * OSSL_PARAM_OCTET_CONST
  * is a pointer to a string of bytes with no further specification.  It is
  * expected to be printed as a hexdump.
  *
@@ -136,12 +136,12 @@ struct ossl_param_st {
  *
  * This is more relevant for parameter requests, where the responding
  * function doesn't need to copy the data to the provided buffer, but
- * sets the provided buffer to point at the actual data instead.
+ * sets the data pointer to point at the actual data instead.
  *
  * WARNING!  Using these is FRAGILE, as it assumes that the actual
  * data and its location are constant.
  */
-# define OSSL_PARAM_OCTET_PTR            7
+# define OSSL_PARAM_OCTET_CONST          7
 
 /*
  * Typedef for the thread stop handling callback. Used both internally and by

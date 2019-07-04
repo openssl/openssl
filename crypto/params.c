@@ -824,69 +824,70 @@ OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
     return ossl_param_construct(key, OSSL_PARAM_OCTET_STRING, buf, bsize);
 }
 
-static int get_ptr_internal(const OSSL_PARAM *p, const void **val,
-                            size_t *used_len, unsigned int type)
+static int get_const_internal(const OSSL_PARAM *p, const void **val,
+                              size_t *used_len, unsigned int type)
 {
     if (val == NULL || p == NULL || p->data_type != type)
         return 0;
     if (used_len != NULL)
         *used_len = p->data_size;
-    *val = *(const void **)p->data;
+    *val = p->data;
     return 1;
 }
 
-int OSSL_PARAM_get_utf8_ptr(const OSSL_PARAM *p, const char **val)
+int OSSL_PARAM_get_utf8_const(const OSSL_PARAM *p, const char **val)
 {
-    return get_ptr_internal(p, (const void **)val, NULL, OSSL_PARAM_UTF8_PTR);
+    return get_const_internal(p, (const void **)val, NULL,
+                              OSSL_PARAM_UTF8_CONST);
 }
 
-int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, const void **val,
-                             size_t *used_len)
+int OSSL_PARAM_get_octet_const(const OSSL_PARAM *p, const void **val,
+                               size_t *used_len)
 {
-    return get_ptr_internal(p, val, used_len, OSSL_PARAM_OCTET_PTR);
+    return get_const_internal(p, val, used_len, OSSL_PARAM_OCTET_CONST);
 }
 
-static int set_ptr_internal(OSSL_PARAM *p, const void *val,
-                            unsigned int type, size_t len)
+static int set_const_internal(OSSL_PARAM *p, const void *val,
+                              unsigned int type, size_t len)
 {
     p->return_size = len;
     if (p->data_type != type)
         return 0;
-    *(const void **)p->data = val;
+    p->data = (void *)val;
     return 1;
 }
 
-int OSSL_PARAM_set_utf8_ptr(OSSL_PARAM *p, const char *val)
+int OSSL_PARAM_set_utf8_const(OSSL_PARAM *p, const char *val)
 {
     if (p == NULL)
         return 0;
     p->return_size = 0;
     if (val == NULL)
         return 0;
-    return set_ptr_internal(p, val, OSSL_PARAM_UTF8_PTR, strlen(val) + 1);
+    return set_const_internal(p, val, OSSL_PARAM_UTF8_CONST, strlen(val) + 1);
 }
 
-int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
-                             size_t used_len)
+int OSSL_PARAM_set_octet_const(OSSL_PARAM *p, const void *val,
+                               size_t used_len)
 {
     if (p == NULL)
         return 0;
     p->return_size = 0;
     if (val == NULL)
         return 0;
-    return set_ptr_internal(p, val, OSSL_PARAM_OCTET_PTR, used_len);
+    return set_const_internal(p, val, OSSL_PARAM_OCTET_CONST, used_len);
 }
 
-OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
-                                         size_t bsize)
+OSSL_PARAM OSSL_PARAM_construct_utf8_const(const char *key, char *buf,
+                                           size_t bsize)
 {
-    return ossl_param_construct(key, OSSL_PARAM_UTF8_PTR, buf, bsize);
+    return ossl_param_construct(key, OSSL_PARAM_UTF8_CONST, buf, bsize);
 }
 
-OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
-                                          size_t bsize)
+OSSL_PARAM OSSL_PARAM_construct_octet_const(const char *key, void *buf,
+                                            size_t bsize)
 {
-    return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, bsize);
+    return ossl_param_construct(key, OSSL_PARAM_OCTET_CONST, buf, bsize);
 }
 
 OSSL_PARAM OSSL_PARAM_construct_end(void)

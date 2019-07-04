@@ -4745,9 +4745,9 @@ OSSL_PARAM_construct_size_t             4694	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_construct_BN                 4695	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_construct_double             4696	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_construct_utf8_string        4697	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_construct_utf8_ptr           4698	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_construct_utf8_const         4698	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_construct_octet_string       4699	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_construct_octet_ptr          4700	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_construct_octet_const        4700	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_int                      4701	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_uint                     4702	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_long                     4703	3_0_0	EXIST::FUNCTION:
@@ -4774,10 +4774,10 @@ OSSL_PARAM_get_utf8_string              4723	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_set_utf8_string              4724	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_octet_string             4725	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_set_octet_string             4726	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_get_utf8_ptr                 4727	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_set_utf8_ptr                 4728	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_get_octet_ptr                4729	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_set_octet_ptr                4730	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_get_utf8_const               4727	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_set_utf8_const               4728	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_get_octet_const              4729	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_set_octet_const              4730	3_0_0	EXIST::FUNCTION:
 X509_set0_sm2_id                        4731	3_0_0	EXIST::FUNCTION:SM2
 X509_get0_sm2_id                        4732	3_0_0	EXIST::FUNCTION:SM2
 EVP_PKEY_get0_engine                    4733	3_0_0	EXIST::FUNCTION:ENGINE

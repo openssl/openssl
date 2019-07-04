@@ -65,10 +65,9 @@ struct object_st {
     size_t p5_l;
     /*
      * Documented as a pointer to a constant C string.
-     * Assumed data type OSSL_PARAM_UTF8_PTR
+     * Assumed data type OSSL_PARAM_UTF8_CONST
      */
     const char *p6;
-    size_t p6_l;
 };
 
 #define p1_init 42                              /* The ultimate answer */
@@ -145,8 +144,7 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
             strncpy(obj->p5, params->data, params->data_size);
             obj->p5_l = strlen(obj->p5) + 1;
         } else if (strcmp(params->key, "p6") == 0) {
-            obj->p6 = *(const char **)params->data;
-            obj->p6_l = params->data_size;
+            obj->p6 = (const char *)params->data;
         }
 
     return 1;
@@ -191,10 +189,8 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
              * strlen().
              * The caller wouldn't know the difference.
              */
-            size_t bytes = strlen(obj->p6) + 1;
-
-            params->return_size = bytes;
-            *(const char **)params->data = obj->p6;
+            params->return_size = strlen(obj->p6) + 1;
+            params->data = (void *)obj->p6;
         }
 
     return 1;
@@ -232,9 +228,8 @@ static int api_set_params(void *vobj, const OSSL_PARAM *params)
         obj->p5_l = strlen(obj->p5) + 1;
     }
     if ((p = OSSL_PARAM_locate_const(params, "p6")) != NULL) {
-        if (!TEST_true(OSSL_PARAM_get_utf8_ptr(p, &obj->p6)))
+        if (!TEST_true(OSSL_PARAM_get_utf8_const(p, &obj->p6)))
             return 0;
-        obj->p6_l = strlen(obj->p6) + 1;
     }
 
     return 1;
@@ -261,7 +256,7 @@ static int api_get_params(void *vobj, OSSL_PARAM *params)
         && !TEST_true(OSSL_PARAM_set_utf8_string(p, obj->p5)))
         return 0;
     if ((p = OSSL_PARAM_locate(params, "p6")) != NULL
-        && !TEST_true(OSSL_PARAM_set_utf8_ptr(p, obj->p6)))
+        && !TEST_true(OSSL_PARAM_set_utf8_const(p, obj->p6)))
         return 0;
 
     return 1;
@@ -306,7 +301,6 @@ static BIGNUM *app_p3 = NULL;         /* "p3" */
 static unsigned char bignumbin[4096]; /* "p3" */
 static char app_p4[256];              /* "p4" */
 static char app_p5[256];              /* "p5" */
-static const char *app_p6 = NULL;     /* "p6" */
 static unsigned char foo[1];          /* "foo" */
 
 #define app_p1_init 17           /* A random number */
@@ -337,7 +331,6 @@ static int init_app_variables(void)
         return 0;
     strcpy(app_p4, app_p4_init);
     strcpy(app_p5, app_p5_init);
-    app_p6 = app_p6_init;
     foo[0] = app_foo_init;
 
     return 1;
@@ -353,8 +346,7 @@ static OSSL_PARAM static_raw_params[] = {
     { "p3", OSSL_PARAM_UNSIGNED_INTEGER, &bignumbin, sizeof(bignumbin), 0 },
     { "p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), 0 },
     { "p5", OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5), 0 },
-    /* sizeof(app_p6_init), because we know that's what we're using */
-    { "p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init), 0 },
+    { "p6", OSSL_PARAM_UTF8_CONST, app_p6_init, sizeof(app_p6_init), 0 },
     { "foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), 0 },
     { NULL, 0, NULL, 0, 0 }
 };
@@ -365,8 +357,8 @@ static OSSL_PARAM static_api_params[] = {
     OSSL_PARAM_BN("p3", &bignumbin, sizeof(bignumbin)),
     OSSL_PARAM_DEFN("p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4)),
     OSSL_PARAM_DEFN("p5", OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5)),
-    /* sizeof(app_p6_init), because we know that's what we're using */
-    OSSL_PARAM_DEFN("p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init)),
+    OSSL_PARAM_DEFN("p6", OSSL_PARAM_UTF8_CONST, app_p6_init,
+                    sizeof(app_p6_init)),
     OSSL_PARAM_DEFN("foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo)),
     OSSL_PARAM_END
 };
@@ -386,9 +378,8 @@ static OSSL_PARAM *construct_api_params(void)
                                                    sizeof(app_p4));
     params[n++] = OSSL_PARAM_construct_utf8_string("p5", app_p5,
                                                    sizeof(app_p5));
-    /* sizeof(app_p6_init), because we know that's what we're using */
-    params[n++] = OSSL_PARAM_construct_utf8_ptr("p6", (char **)&app_p6,
-                                                sizeof(app_p6_init));
+    params[n++] = OSSL_PARAM_construct_utf8_const("p6", app_p6_init,
+                                                  sizeof(app_p6_init));
     params[n++] = OSSL_PARAM_construct_octet_string("foo", &foo, sizeof(foo));
     params[n++] = OSSL_PARAM_construct_end();
 
@@ -435,6 +426,7 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
 {
     BIGNUM *verify_p3 = NULL;
     void *obj = NULL;
+    struct object_st *sneakpeek;
     int errcnt = 0;
     OSSL_PARAM *p;
 
@@ -446,6 +438,7 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
         errcnt++;
         goto fin;
     }
+    sneakpeek = obj;
 
     /*
      * Get parameters a first time, just to see that getting works and
@@ -465,7 +458,7 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
         || !TEST_str_eq(app_p5, p5_init)        /* "provider" value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p6"))
         || !TEST_size_t_eq(p->return_size, sizeof(p6_init)) /* "provider" value */
-        || !TEST_str_eq(app_p6, p6_init)        /* "provider" value */
+        || !TEST_str_eq(p->data, p6_init)        /* "provider" value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo"))
         || !TEST_int_eq(p->return_size, 0))
@@ -480,15 +473,16 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
     if (!TEST_true(prov->set_params(obj, params))) {
         errcnt++;
     } else {
-        struct object_st *sneakpeek = obj;
 
         if (!TEST_int_eq(sneakpeek->p1, app_p1)         /* app value set */
             || !TEST_double_eq(sneakpeek->p2, p2_init)  /* Should remain untouched */
             || !TEST_BN_eq(sneakpeek->p3, app_p3)       /* app value set */
             || !TEST_str_eq(sneakpeek->p4, app_p4)      /* app value set */
             || !TEST_str_eq(sneakpeek->p5, app_p5)      /* app value set */
-            || !TEST_str_eq(sneakpeek->p6, app_p6))     /* app value set */
+            || !TEST_ptr(p = OSSL_PARAM_locate(params, "p6"))
+            || !TEST_str_eq(sneakpeek->p6, p->data))     /* app value set */
             errcnt++;
+        printf("sneak %s\n", sneakpeek->p6);
     }
 
     /*
@@ -502,6 +496,9 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
         errcnt++;
         goto fin;
     }
+    if (!TEST_true(p = OSSL_PARAM_locate(params, "p6")))
+        goto fin;
+    sneakpeek->p6 = app_p6_init;
 
     if (!TEST_true(prov->get_params(obj, params))
         || !TEST_int_eq(app_p1, app_p1_init)    /* app value */
@@ -511,13 +508,11 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
         || !TEST_BN_eq(app_p3, verify_p3)       /* app value */
         || !TEST_str_eq(app_p4, app_p4_init)    /* app value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p5"))
-        || !TEST_size_t_eq(p->return_size,
-                           sizeof(app_p5_init)) /* app value */
+        || !TEST_size_t_eq(p->return_size, sizeof(app_p5_init)) /* app value */
         || !TEST_str_eq(app_p5, app_p5_init)    /* app value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p6"))
-        || !TEST_size_t_eq(p->return_size,
-                           sizeof(app_p6_init)) /* app value */
-        || !TEST_str_eq(app_p6, app_p6_init)    /* app value */
+        || !TEST_size_t_eq(p->return_size, sizeof(app_p6_init)) /* app value */
+        || !TEST_ptr_eq(p->data, app_p6_init)    /* app value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo"))
         || !TEST_int_eq(p->return_size, 0))

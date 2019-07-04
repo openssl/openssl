@@ -65,9 +65,9 @@ static const OPENSSL_CTX_METHOD fips_prov_ossl_ctx_method = {
 
 /* Parameters we provide to the core */
 static const OSSL_ITEM fips_param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_NAME },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_VERSION },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_BUILDINFO },
+    { OSSL_PARAM_UTF8_CONST, OSSL_PROV_PARAM_NAME },
+    { OSSL_PARAM_UTF8_CONST, OSSL_PROV_PARAM_VERSION },
+    { OSSL_PARAM_UTF8_CONST, OSSL_PROV_PARAM_BUILDINFO },
     { 0, NULL }
 };
 
@@ -140,13 +140,13 @@ static int fips_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL FIPS Provider"))
+    if (p != NULL && !OSSL_PARAM_set_utf8_const(p, "OpenSSL FIPS Provider"))
         return 0;
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_VERSION);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR))
+    if (p != NULL && !OSSL_PARAM_set_utf8_const(p, OPENSSL_VERSION_STR))
         return 0;
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_BUILDINFO);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_FULL_VERSION_STR))
+    if (p != NULL && !OSSL_PARAM_set_utf8_const(p, OPENSSL_FULL_VERSION_STR))
         return 0;
 
     return 1;

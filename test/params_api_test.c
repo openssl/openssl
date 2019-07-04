@@ -453,8 +453,8 @@ static int test_param_construct(void)
     params[n++] = OSSL_PARAM_construct_BN("bignum", ubuf, sizeof(ubuf));
     params[n++] = OSSL_PARAM_construct_utf8_string("utf8str", buf, sizeof(buf));
     params[n++] = OSSL_PARAM_construct_octet_string("octstr", buf, sizeof(buf));
-    params[n++] = OSSL_PARAM_construct_utf8_ptr("utf8ptr", &bufp, 0);
-    params[n++] = OSSL_PARAM_construct_octet_ptr("octptr", &vp, 0);
+    params[n++] = OSSL_PARAM_construct_utf8_const("utf8const", NULL, 0);
+    params[n++] = OSSL_PARAM_construct_octet_const("octconst", NULL, 0);
     params[n] = OSSL_PARAM_construct_end();
 
     /* Search failure */
@@ -505,12 +505,12 @@ static int test_param_construct(void)
         goto err;
     /* UTF8 pointer */
     bufp = buf;
-    if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "utf8ptr"))
-        || !TEST_true(OSSL_PARAM_set_utf8_ptr(cp, "tuvwxyz"))
+    if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "utf8const"))
+        || !TEST_true(OSSL_PARAM_set_utf8_const(cp, "tuvwxyz"))
         || !TEST_size_t_eq(cp->return_size, sizeof("tuvwxyz"))
-        || !TEST_str_eq(bufp, "tuvwxyz")
-        || !TEST_true(OSSL_PARAM_get_utf8_ptr(cp, (const char **)&bufp2))
-        || !TEST_ptr_eq(bufp2, bufp))
+        || !TEST_str_eq(cp->data, "tuvwxyz")
+        || !TEST_true(OSSL_PARAM_get_utf8_const(cp, (const char **)&bufp2))
+        || !TEST_str_eq(bufp2, "tuvwxyz"))
         goto err;
     /* OCTET string */
     if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "octstr"))
@@ -533,16 +533,16 @@ static int test_param_construct(void)
         goto err;
     /* OCTET pointer */
     vp = &l;
-    if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "octptr"))
-        || !TEST_true(OSSL_PARAM_set_octet_ptr(cp, &ul, sizeof(ul)))
-        || !TEST_size_t_eq(cp->return_size, sizeof(ul))
-        || !TEST_ptr_eq(vp, &ul))
+    if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "octconst"))
+        || !TEST_true(OSSL_PARAM_set_octet_const(cp, bn_val, sizeof(bn_val)))
+        || !TEST_size_t_eq(cp->return_size, sizeof(bn_val))
+        || !TEST_ptr_eq(cp->data, bn_val))
         goto err;
     /* Match the return size to avoid trailing garbage bytes */
     cp->data_size = cp->return_size;
-    if (!TEST_true(OSSL_PARAM_get_octet_ptr(cp, (const void **)&vp2, &k))
-        || !TEST_size_t_eq(k, sizeof(ul))
-        || !TEST_ptr_eq(vp2, vp))
+    if (!TEST_true(OSSL_PARAM_get_octet_const(cp, (const void **)&vp2, &k))
+        || !TEST_size_t_eq(k, sizeof(bn_val))
+        || !TEST_ptr_eq(vp2, bn_val))
         goto err;
     /* BIGNUM */
     if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "bignum"))
