@@ -125,7 +125,7 @@ ok($zero[3] eq "system library", "(0) '$zero[3]' == 'system library'");
 # ( "xxxxxxxx", "lib", "func", "reason" )
 sub split_error {
     # Limit to 5 items, in case the reason contains a colon
-    my @erritems = shift split /:/, $_[0], 5;
+    my @erritems = split /:/, $_[0], 5;
 
     # Remove the first item, which is always "error"
     shift @erritems;
