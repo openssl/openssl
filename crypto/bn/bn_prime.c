@@ -19,10 +19,13 @@
  */
 #include "bn_prime.h"
 
-static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods, BN_CTX *ctx);
+static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
+                          BN_CTX *ctx);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
                                   const BIGNUM *add, const BIGNUM *rem,
                                   BN_CTX *ctx);
+
+#define square(x) ((BN_ULONG)(x) * (BN_ULONG)(x))
 
 #if BN_BITS2 == 64
 # define BN_DEF(lo, hi) (BN_ULONG)hi<<32|lo
@@ -119,7 +122,7 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
  loop:
     /* make a random number and set the top and bottom bits */
     if (add == NULL) {
-        if (!probable_prime(ret, bits, mods, ctx))
+        if (!probable_prime(ret, bits, safe, mods, ctx))
             goto err;
     } else {
         if (safe) {
@@ -400,16 +403,18 @@ err:
     return ret;
 }
 
-static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods, BN_CTX *ctx)
+static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
+                          BN_CTX *ctx)
 {
     int i;
     BN_ULONG delta;
     BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
-    char is_single_word = bits <= BN_BITS2;
 
  again:
     /* TODO: Not all primes are private */
     if (!BN_priv_rand_ex(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD, ctx))
+        return 0;
+    if (safe && !BN_set_bit(rnd, 1))
         return 0;
     /* we now have a random number 'rnd' to test. */
     for (i = 1; i < NUMPRIMES; i++) {
@@ -418,61 +423,25 @@ static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods, BN_CTX *ctx)
             return 0;
         mods[i] = (prime_t) mod;
     }
-    /*
-     * If bits is so small that it fits into a single word then we
-     * additionally don't want to exceed that many bits.
-     */
-    if (is_single_word) {
-        BN_ULONG size_limit;
-
-        if (bits == BN_BITS2) {
-            /*
-             * Shifting by this much has undefined behaviour so we do it a
-             * different way
-             */
-            size_limit = ~((BN_ULONG)0) - BN_get_word(rnd);
-        } else {
-            size_limit = (((BN_ULONG)1) << bits) - BN_get_word(rnd) - 1;
-        }
-        if (size_limit < maxdelta)
-            maxdelta = size_limit;
-    }
     delta = 0;
  loop:
-    if (is_single_word) {
-        BN_ULONG rnd_word = BN_get_word(rnd);
-
-        /*-
-         * In the case that the candidate prime is a single word then
-         * we check that:
-         *   1) It's greater than primes[i] because we shouldn't reject
-         *      3 as being a prime number because it's a multiple of
-         *      three.
-         *   2) That it's not a multiple of a known prime. We don't
-         *      check that rnd-1 is also coprime to all the known
-         *      primes because there aren't many small primes where
-         *      that's true.
+    for (i = 1; i < NUMPRIMES; i++) {
+        /*
+         * check that rnd is a prime and also that
+         * gcd(rnd-1,primes) == 1 (except for 2)
+         * do the second check only if we are interested in safe primes
+         * in the case that the candidate prime is a single word then
+         * we check only the primes up to sqrt(rnd)
          */
-        for (i = 1; i < NUMPRIMES && primes[i] < rnd_word; i++) {
-            if ((mods[i] + delta) % primes[i] == 0) {
-                delta += 2;
-                if (delta > maxdelta)
-                    goto again;
-                goto loop;
-            }
-        }
-    } else {
-        for (i = 1; i < NUMPRIMES; i++) {
-            /*
-             * check that rnd is not a prime and also that gcd(rnd-1,primes)
-             * == 1 (except for 2)
-             */
-            if (((mods[i] + delta) % primes[i]) <= 1) {
-                delta += 2;
-                if (delta > maxdelta)
-                    goto again;
-                goto loop;
-            }
+        if (bits <= 31 && delta <= 0x7fffffff
+                && square(primes[i]) > BN_get_word(rnd) + delta)
+            break;
+        if (safe ? (mods[i] + delta) % primes[i] <= 1
+                 : (mods[i] + delta) % primes[i] == 0) {
+            delta += safe ? 4 : 2;
+            if (delta > maxdelta)
+                goto again;
+            goto loop;
         }
     }
     if (!BN_add_word(rnd, delta))
