@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BSS_FILE_C
-# define HEADER_BSS_FILE_C
-
 # if defined(__linux) || defined(__sun) || defined(__hpux)
 /*
  * Following definition aliases fopen to fopen64 on above mentioned
@@ -423,5 +420,3 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 }
 
 # endif                         /* OPENSSL_NO_STDIO */
-
-#endif                          /* HEADER_BSS_FILE_C */
