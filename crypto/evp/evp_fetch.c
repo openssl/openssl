@@ -8,7 +8,7 @@
  */
 
 #include <stddef.h>
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include <openssl/evp.h>
 #include <openssl/core.h>
 #include "internal/cryptlib.h"

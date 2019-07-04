@@ -17,7 +17,7 @@
 #  include <stdlib.h>
 # endif
 
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/bio.h>
 # include <openssl/lhash.h>
 

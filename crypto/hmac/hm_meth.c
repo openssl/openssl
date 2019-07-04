@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/err.h>
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include <openssl/asn1.h>
 #include <openssl/hmac.h>
 #include "internal/evp_int.h"

@@ -15,7 +15,7 @@
 # include <openssl/e_os2.h>
 
 # include <openssl/symhacks.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/pkcs7err.h>
 
 #ifdef  __cplusplus

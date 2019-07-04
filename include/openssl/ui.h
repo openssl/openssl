@@ -17,7 +17,7 @@
 # endif
 # include <openssl/safestack.h>
 # include <openssl/pem.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/uierr.h>
 
 /* For compatibility reasons, the macro OPENSSL_NO_UI is currently retained */

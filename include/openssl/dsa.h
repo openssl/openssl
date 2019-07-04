@@ -20,7 +20,7 @@ extern "C" {
 # include <openssl/asn1.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/bn.h>
 # if !OPENSSL_API_1_1_0
 #  include <openssl/dh.h>
@@ -59,7 +59,7 @@ extern "C" {
 # define DSA_FLAG_NON_FIPS_ALLOW                 0x0400
 # define DSA_FLAG_FIPS_CHECKED                   0x0800
 
-/* Already defined in ossl_typ.h */
+/* Already defined in <openssl/types.h> */
 /* typedef struct dsa_st DSA; */
 /* typedef struct dsa_method DSA_METHOD; */
 

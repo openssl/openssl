@@ -11,7 +11,7 @@
 #include <stdarg.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include "internal/nelem.h"
 #include "internal/evp_int.h"
 #include "evp_locl.h"

@@ -22,7 +22,7 @@
 
 # include <openssl/safestack.h>
 # include <openssl/opensslv.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/opensslconf.h>
 # include <openssl/cryptoerr.h>
 

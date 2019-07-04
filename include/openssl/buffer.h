@@ -10,7 +10,7 @@
 #ifndef OPENSSL_BUFFER_H
 # define OPENSSL_BUFFER_H
 
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # ifndef OPENSSL_CRYPTO_H
 #  include <openssl/crypto.h>
 # endif

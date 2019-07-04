@@ -86,7 +86,7 @@ DEFINE_STACK_OF(EVP_PBE_CTL)
 
 int is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include <openssl/core.h>
 
 void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,

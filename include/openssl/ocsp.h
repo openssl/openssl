@@ -41,7 +41,7 @@
 
 # ifndef OPENSSL_NO_OCSP
 
-#  include <openssl/ossl_typ.h>
+#  include <openssl/types.h>
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 #  include <openssl/safestack.h>

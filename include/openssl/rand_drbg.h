@@ -11,7 +11,7 @@
 # define OPENSSL_DRBG_RAND_H
 
 # include <time.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/obj_mac.h>
 
 /*

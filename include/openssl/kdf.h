@@ -12,7 +12,7 @@
 
 # include <stdarg.h>
 # include <stddef.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/kdferr.h>
 # ifdef __cplusplus
 extern "C" {

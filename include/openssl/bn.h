@@ -16,7 +16,7 @@
 #  include <stdio.h>
 # endif
 # include <openssl/opensslconf.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/crypto.h>
 # include <openssl/bnerr.h>
 

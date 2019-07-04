@@ -16,7 +16,7 @@
 # include <openssl/e_os2.h>
 # include <openssl/bio.h>
 # include <openssl/asn1.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # if !OPENSSL_API_1_1_0
 #  include <openssl/bn.h>
 # endif
@@ -58,7 +58,7 @@ extern "C" {
 
 # define DH_FLAG_NON_FIPS_ALLOW                  0x0400
 
-/* Already defined in ossl_typ.h */
+/* Already defined in <openssl/types.h> */
 /* typedef struct dh_st DH; */
 /* typedef struct dh_method DH_METHOD; */
 

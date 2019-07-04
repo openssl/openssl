@@ -7,7 +7,7 @@ openssl_ctx_get_data, openssl_ctx_run_once, openssl_ctx_onfree
 
 =head1 SYNOPSIS
 
- #include <openssl/ossl_typ.h>
+ #include <openssl/types.h>
  #include "internal/cryptlib.h"
 
  typedef struct openssl_ctx_method {

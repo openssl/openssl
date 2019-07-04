@@ -21,7 +21,7 @@
 #  include <openssl/cmperr.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
-#  include <openssl/ossl_typ.h>
+#  include <openssl/types.h>
 #  include <openssl/safestack.h>
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>

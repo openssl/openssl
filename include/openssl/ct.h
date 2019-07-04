@@ -13,7 +13,7 @@
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_CT
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/safestack.h>
 # include <openssl/x509.h>
 # include <openssl/cterr.h>
