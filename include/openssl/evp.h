@@ -1411,6 +1411,12 @@ int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth);
 size_t EVP_PKEY_meth_get_count(void);
 const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx);
 
+EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                               const char *properties);
+int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt);
+void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt);
+const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt);
+
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);

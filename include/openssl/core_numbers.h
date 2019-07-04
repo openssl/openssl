@@ -229,9 +229,80 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
 
+/*-
+ * Key management
+ *
+ * Key domain parameter references can be created in several manners:
+ * - by importing the domain parameter material via an OSSL_PARAM array.
+ * - by generating key domain parameters, given input via an OSSL_PARAM
+ *   array.
+ *
+ * Key references can be created in several manners:
+ * - by importing the key material via an OSSL_PARAM array.
+ * - by generating a key, given optional domain parameters and
+ *   additional keygen parameters.
+ *   If domain parameters are given, they must have been generated using
+ *   the domain parameter generator functions.
+ *   If the domain parameters comes from a different provider, results
+ *   are undefined.
+ *   THE CALLER MUST ENSURE THAT CORRECT DOMAIN PARAMETERS ARE USED.
+ * - by loading an internal key, given a binary blob that forms an identity.
+ *   THE CALLER MUST ENSURE THAT A CORRECT IDENTITY IS USED.
+ */
+
+# define OSSL_OP_KEYMGMT                           10
+
+/* Key domain parameter creation and destruction */
+# define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS          1
+# define OSSL_FUNC_KEYMGMT_GENDOMPARAMS             2
+# define OSSL_FUNC_KEYMGMT_FREEDOMPARAMS            3
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importdomparams,
+                    (void *provctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gendomparams,
+                    (void *provctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freedomparams, (void *domparams))
+
+/* Key domain parameter export */
+# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS          4
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportdomparams,
+                    (void *domparams, OSSL_PARAM params[]))
+
+/* Key domain parameter discovery */
+# define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES     5
+# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES     6
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importdomparam_types,
+                    (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportdomparam_types,
+                    (void))
+
+/* Key creation and destruction */
+# define OSSL_FUNC_KEYMGMT_IMPORTKEY               10
+# define OSSL_FUNC_KEYMGMT_GENKEY                  11
+# define OSSL_FUNC_KEYMGMT_LOADKEY                 12
+# define OSSL_FUNC_KEYMGMT_FREEKEY                 13
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importkey,
+                    (void *provctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_genkey,
+                    (void *provctx,
+                     void *domparams, const OSSL_PARAM genkeyparams[]))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_loadkey,
+                    (void *provctx, void *id, size_t idlen))
+OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freekey, (void *key))
+
+/* Key export */
+# define OSSL_FUNC_KEYMGMT_EXPORTKEY               14
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey,
+                    (void *key, OSSL_PARAM params[]))
+
+/* Key discovery */
+# define OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES         15
+# define OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES         16
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_types, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
+
 /* Key Exchange */
 
-# define OSSL_OP_KEYEXCH                               3
+# define OSSL_OP_KEYEXCH                              11
 
 # define OSSL_FUNC_KEYEXCH_NEWCTX                      1
 # define OSSL_FUNC_KEYEXCH_INIT                        2

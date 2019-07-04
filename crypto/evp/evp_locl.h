@@ -62,6 +62,32 @@ struct evp_kdf_ctx_st {
     EVP_KDF_IMPL *impl;          /* Algorithm-specific data */
 } /* EVP_KDF_CTX */ ;
 
+struct evp_keymgmt_st {
+    int id;                      /* libcrypto internal */
+
+    const char *name;
+    OSSL_PROVIDER *prov;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+
+    /* Domain parameter routines */
+    OSSL_OP_keymgmt_importdomparams_fn *importdomparams;
+    OSSL_OP_keymgmt_gendomparams_fn *gendomparams;
+    OSSL_OP_keymgmt_freedomparams_fn *freedomparams;
+    OSSL_OP_keymgmt_exportdomparams_fn *exportdomparams;
+    OSSL_OP_keymgmt_importdomparam_types_fn *importdomparam_types;
+    OSSL_OP_keymgmt_exportdomparam_types_fn *exportdomparam_types;
+
+    /* Key routines */
+    OSSL_OP_keymgmt_importkey_fn *importkey;
+    OSSL_OP_keymgmt_genkey_fn *genkey;
+    OSSL_OP_keymgmt_loadkey_fn *loadkey;
+    OSSL_OP_keymgmt_freekey_fn *freekey;
+    OSSL_OP_keymgmt_exportkey_fn *exportkey;
+    OSSL_OP_keymgmt_importkey_types_fn *importkey_types;
+    OSSL_OP_keymgmt_exportkey_types_fn *exportkey_types;
+} /* EVP_KEYMGMT */ ;
+
 struct evp_keyexch_st {
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
@@ -75,7 +101,6 @@ struct evp_keyexch_st {
     OSSL_OP_keyexch_dupctx_fn *dupctx;
     OSSL_OP_keyexch_set_params_fn *set_params;
 } /* EVP_KEYEXCH */;
-
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,

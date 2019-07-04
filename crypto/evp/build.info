@@ -1,5 +1,6 @@
 LIBS=../../libcrypto
-$COMMON=digest.c evp_enc.c evp_lib.c evp_fetch.c cmeth_lib.c evp_utils.c
+$COMMON=digest.c evp_enc.c evp_lib.c evp_fetch.c cmeth_lib.c keymgmt_meth.c \
+        evp_utils.c
 SOURCE[../../libcrypto]=$COMMON\
         encode.c evp_key.c evp_cnf.c \
         e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c\
