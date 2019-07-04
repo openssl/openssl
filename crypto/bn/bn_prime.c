@@ -19,7 +19,7 @@
  */
 #include "bn_prime.h"
 
-static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods);
+static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods, BN_CTX *ctx);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
                                   const BIGNUM *add, const BIGNUM *rem,
                                   BN_CTX *ctx);
@@ -84,19 +84,19 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b)
     return 0;
 }
 
-int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
-                         const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb)
+int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
+                          const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb,
+                          BN_CTX *ctx)
 {
     BIGNUM *t;
     int found = 0;
     int i, j, c1 = 0;
-    BN_CTX *ctx = NULL;
     prime_t *mods = NULL;
     int checks = BN_prime_checks_for_size(bits);
 
     if (bits < 2) {
         /* There are no prime numbers this small. */
-        BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
+        BNerr(BN_F_BN_GENERATE_PRIME_EX2, BN_R_BITS_TOO_SMALL);
         return 0;
     } else if (add == NULL && safe && bits < 6 && bits != 3) {
         /*
@@ -104,7 +104,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
          * But the following two safe primes with less than 6 bits (11, 23)
          * are unreachable for BN_rand with BN_RAND_TOP_TWO.
          */
-        BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
+        BNerr(BN_F_BN_GENERATE_PRIME_EX2, BN_R_BITS_TOO_SMALL);
         return 0;
     }
 
@@ -112,9 +112,6 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     if (mods == NULL)
         goto err;
 
-    ctx = BN_CTX_new();
-    if (ctx == NULL)
-        goto err;
     BN_CTX_start(ctx);
     t = BN_CTX_get(ctx);
     if (t == NULL)
@@ -122,7 +119,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
  loop:
     /* make a random number and set the top and bottom bits */
     if (add == NULL) {
-        if (!probable_prime(ret, bits, mods))
+        if (!probable_prime(ret, bits, mods, ctx))
             goto err;
     } else {
         if (safe) {
@@ -175,10 +172,26 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
  err:
     OPENSSL_free(mods);
     BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
     bn_check_top(ret);
     return found;
 }
+
+#ifndef FIPS_MODE
+int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
+                         const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb)
+{
+    BN_CTX *ctx = BN_CTX_new();
+    int retval;
+
+    if (ctx == NULL)
+        return 0;
+
+    retval = BN_generate_prime_ex2(ret, bits, safe, add, rem, cb, ctx);
+
+    BN_CTX_free(ctx);
+    return retval;
+}
+#endif
 
 int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
                    BN_GENCB *cb)
@@ -187,11 +200,17 @@ int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 }
 
 /* See FIPS 186-4 C.3.1 Miller Rabin Probabilistic Primality Test. */
-int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx_passed,
+int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx,
                             int do_trial_division, BN_GENCB *cb)
 {
     int i, status, ret = -1;
-    BN_CTX *ctx = NULL;
+#ifndef FIPS_MODE
+    BN_CTX *ctxlocal = NULL;
+#else
+
+    if (ctx == NULL)
+        return -1;
+#endif
 
     /* w must be bigger than 1 */
     if (BN_cmp(w, BN_value_one()) <= 0)
@@ -219,18 +238,19 @@ int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx_passed,
         if (!BN_GENCB_call(cb, 1, -1))
             return -1;
     }
-    if (ctx_passed != NULL)
-        ctx = ctx_passed;
-    else if ((ctx = BN_CTX_new()) == NULL)
+#ifndef FIPS_MODE
+    if (ctx == NULL && (ctxlocal = ctx = BN_CTX_new()) == NULL)
         goto err;
+#endif
 
     ret = bn_miller_rabin_is_prime(w, checks, ctx, cb, 0, &status);
     if (!ret)
         goto err;
     ret = (status == BN_PRIMETEST_PROBABLY_PRIME);
 err:
-    if (ctx_passed == NULL)
-        BN_CTX_free(ctx);
+#ifndef FIPS_MODE
+    BN_CTX_free(ctxlocal);
+#endif
     return ret;
 }
 
@@ -301,7 +321,8 @@ int bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
     /* (Step 4) */
     for (i = 0; i < iterations; ++i) {
         /* (Step 4.1) obtain a Random string of bits b where 1 < b < w-1 */
-        if (!BN_priv_rand_range(b, w3) || !BN_add_word(b, 2)) /* 1 < b < w-1 */
+        if (!BN_priv_rand_range_ex(b, w3, ctx)
+                || !BN_add_word(b, 2)) /* 1 < b < w-1 */
             goto err;
 
         if (enhanced) {
@@ -379,7 +400,7 @@ err:
     return ret;
 }
 
-static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
+static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods, BN_CTX *ctx)
 {
     int i;
     BN_ULONG delta;
@@ -388,7 +409,7 @@ static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
 
  again:
     /* TODO: Not all primes are private */
-    if (!BN_priv_rand(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD))
+    if (!BN_priv_rand_ex(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD, ctx))
         return 0;
     /* we now have a random number 'rnd' to test. */
     for (i = 1; i < NUMPRIMES; i++) {
@@ -472,7 +493,7 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
     if ((t1 = BN_CTX_get(ctx)) == NULL)
         goto err;
 
-    if (!BN_rand(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+    if (!BN_rand_ex(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD, ctx))
         goto err;
 
     /* we need ((rnd-rem) % add) == 0 */
@@ -528,7 +549,7 @@ static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
     if (!BN_rshift1(qadd, padd))
         goto err;
 
-    if (!BN_rand(q, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+    if (!BN_rand_ex(q, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD, ctx))
         goto err;
 
     /* we need ((rnd-rem) % add) == 0 */
