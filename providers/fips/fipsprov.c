@@ -19,6 +19,7 @@
 /* TODO(3.0): Needed for dummy_evp_call(). To be removed */
 #include <openssl/sha.h>
 #include <openssl/rand_drbg.h>
+#include <openssl/ec.h>
 
 #include "internal/cryptlib.h"
 #include "internal/property.h"
@@ -103,6 +104,7 @@ static int dummy_evp_call(void *provctx)
     BIGNUM *a = NULL, *b = NULL;
     unsigned char randbuf[128];
     RAND_DRBG *drbg = OPENSSL_CTX_get0_public_drbg(libctx);
+    EC_KEY *key = NULL;
 
     if (ctx == NULL || sha256 == NULL || drbg == NULL)
         goto err;
@@ -136,6 +138,14 @@ static int dummy_evp_call(void *provctx)
     if (!BN_rand_ex(a, 256, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, bnctx))
         goto err;
 
+    /* Do some dummy EC calls */
+    key = EC_KEY_new_by_curve_name_ex(libctx, NID_X9_62_prime256v1);
+    if (key == NULL)
+        goto err;
+
+    if (!EC_KEY_generate_key(key))
+        goto err;
+
     ret = 1;
  err:
     BN_CTX_end(bnctx);
@@ -143,6 +153,8 @@ static int dummy_evp_call(void *provctx)
 
     EVP_MD_CTX_free(ctx);
     EVP_MD_meth_free(sha256);
+
+    EC_KEY_free(key);
     return ret;
 }
 
