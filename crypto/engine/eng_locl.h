@@ -8,9 +8,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_ENGINE_INT_H
-# define OPENSSL_ENGINE_INT_H
-
 # include <openssl/trace.h>
 # include "internal/cryptlib.h"
 # include "internal/engine.h"
@@ -150,5 +147,3 @@ struct engine_st {
 typedef struct st_engine_pile ENGINE_PILE;
 
 DEFINE_LHASH_OF(ENGINE_PILE);
-
-#endif                          /* OPENSSL_ENGINE_INT_H */

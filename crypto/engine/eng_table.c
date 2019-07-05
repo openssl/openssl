@@ -11,7 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include <openssl/trace.h>
-#include "eng_int.h"
+#include "eng_locl.h"
 
 /* The type of the items in the table */
 struct st_engine_pile {
@@ -27,7 +27,7 @@ struct st_engine_pile {
     int uptodate;
 };
 
-/* The type exposed in eng_int.h */
+/* The type exposed in eng_locl.h */
 struct st_engine_table {
     LHASH_OF(ENGINE_PILE) piles;
 };                              /* ENGINE_TABLE */
@@ -77,7 +77,7 @@ static int int_table_check(ENGINE_TABLE **t, int create)
 }
 
 /*
- * Privately exposed (via eng_int.h) functions for adding and/or removing
+ * Privately exposed (via eng_locl.h) functions for adding and/or removing
  * ENGINEs from the implementation table
  */
 int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,

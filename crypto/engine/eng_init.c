@@ -8,7 +8,7 @@
  */
 
 #include "e_os.h"
-#include "eng_int.h"
+#include "eng_locl.h"
 
 /*
  * Initialise a engine type for use (or up its functional reference count if
