@@ -21,9 +21,9 @@
 
 static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
                           BN_CTX *ctx);
-static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
-                                  const BIGNUM *add, const BIGNUM *rem,
-                                  BN_CTX *ctx);
+static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
+                             const BIGNUM *add, const BIGNUM *rem,
+                             BN_CTX *ctx);
 
 #define square(x) ((BN_ULONG)(x) * (BN_ULONG)(x))
 
@@ -125,13 +125,8 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
         if (!probable_prime(ret, bits, safe, mods, ctx))
             goto err;
     } else {
-        if (safe) {
-            if (!probable_prime_dh_safe(ret, bits, add, rem, ctx))
-                goto err;
-        } else {
-            if (!bn_probable_prime_dh(ret, bits, add, rem, ctx))
-                goto err;
-        }
+        if (!probable_prime_dh(ret, bits, safe, mods, add, rem, ctx))
+            goto err;
     }
 
     if (!BN_GENCB_call(cb, 0, c1++))
@@ -452,16 +447,23 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     return 1;
 }
 
-int bn_probable_prime_dh(BIGNUM *rnd, int bits,
-                         const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
+static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
+                             const BIGNUM *add, const BIGNUM *rem,
+                             BN_CTX *ctx)
 {
     int i, ret = 0;
     BIGNUM *t1;
+    BN_ULONG delta;
+    BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
 
     BN_CTX_start(ctx);
     if ((t1 = BN_CTX_get(ctx)) == NULL)
         goto err;
 
+    if (maxdelta > BN_MASK2 - BN_get_word(add))
+        maxdelta = BN_MASK2 - BN_get_word(add);
+
+ again:
     if (!BN_rand_ex(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD, ctx))
         goto err;
 
@@ -472,98 +474,48 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
     if (!BN_sub(rnd, rnd, t1))
         goto err;
     if (rem == NULL) {
-        if (!BN_add_word(rnd, 1))
+        if (!BN_add_word(rnd, safe ? 3u : 1u))
             goto err;
     } else {
         if (!BN_add(rnd, rnd, rem))
             goto err;
     }
 
-    /* we now have a random number 'rand' to test. */
+    if (BN_num_bits(rnd) < bits
+            || BN_get_word(rnd) < (safe ? 5u : 3u)) {
+        if (!BN_add(rnd, rnd, add))
+            goto err;
+    }
 
- loop:
+    /* we now have a random number 'rnd' to test. */
     for (i = 1; i < NUMPRIMES; i++) {
-        /* check that rnd is a prime */
         BN_ULONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
         if (mod == (BN_ULONG)-1)
             goto err;
-        if (mod <= 1) {
-            if (!BN_add(rnd, rnd, add))
-                goto err;
+        mods[i] = (prime_t) mod;
+    }
+    delta = 0;
+ loop:
+    for (i = 1; i < NUMPRIMES; i++) {
+        /* check that rnd is a prime */
+        if (bits <= 31 && delta <= 0x7fffffff
+                && square(primes[i]) > BN_get_word(rnd) + delta)
+            break;
+        /* rnd mod p == 1 implies q = (rnd-1)/2 is divisible by p */
+        if (safe ? (mods[i] + delta) % primes[i] <= 1
+                 : (mods[i] + delta) % primes[i] == 0) {
+            delta += BN_get_word(add);
+            if (delta > maxdelta)
+                goto again;
             goto loop;
         }
     }
+    if (!BN_add_word(rnd, delta))
+        goto err;
     ret = 1;
 
  err:
     BN_CTX_end(ctx);
     bn_check_top(rnd);
-    return ret;
-}
-
-static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
-                                  const BIGNUM *rem, BN_CTX *ctx)
-{
-    int i, ret = 0;
-    BIGNUM *t1, *qadd, *q;
-
-    bits--;
-    BN_CTX_start(ctx);
-    t1 = BN_CTX_get(ctx);
-    q = BN_CTX_get(ctx);
-    qadd = BN_CTX_get(ctx);
-    if (qadd == NULL)
-        goto err;
-
-    if (!BN_rshift1(qadd, padd))
-        goto err;
-
-    if (!BN_rand_ex(q, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD, ctx))
-        goto err;
-
-    /* we need ((rnd-rem) % add) == 0 */
-    if (!BN_mod(t1, q, qadd, ctx))
-        goto err;
-    if (!BN_sub(q, q, t1))
-        goto err;
-    if (rem == NULL) {
-        if (!BN_add_word(q, 1))
-            goto err;
-    } else {
-        if (!BN_rshift1(t1, rem))
-            goto err;
-        if (!BN_add(q, q, t1))
-            goto err;
-    }
-
-    /* we now have a random number 'rand' to test. */
-    if (!BN_lshift1(p, q))
-        goto err;
-    if (!BN_add_word(p, 1))
-        goto err;
-
- loop:
-    for (i = 1; i < NUMPRIMES; i++) {
-        /* check that p and q are prime */
-        /*
-         * check that for p and q gcd(p-1,primes) == 1 (except for 2)
-         */
-        BN_ULONG pmod = BN_mod_word(p, (BN_ULONG)primes[i]);
-        BN_ULONG qmod = BN_mod_word(q, (BN_ULONG)primes[i]);
-        if (pmod == (BN_ULONG)-1 || qmod == (BN_ULONG)-1)
-            goto err;
-        if (pmod == 0 || qmod == 0) {
-            if (!BN_add(p, p, padd))
-                goto err;
-            if (!BN_add(q, q, qadd))
-                goto err;
-            goto loop;
-        }
-    }
-    ret = 1;
-
- err:
-    BN_CTX_end(ctx);
-    bn_check_top(p);
     return ret;
 }
