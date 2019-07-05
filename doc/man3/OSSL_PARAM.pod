@@ -130,20 +130,12 @@ The parameter data is an arbitrary string of bytes.
 
 =item C<OSSL_PARAM_UTF8_CONST>
 
-The parameter data is a pointer to a printable string.
+The parameter is a pointer to a printable string.
 
 The difference between this and C<OSSL_PARAM_UTF8_STRING> is that C<data>
-doesn't point directly at the data, but to a pointer that points to the data.
-
-This is used to indicate that constant data is or will be passed,
-and there is therefore no need to copy the data that is passed, just
+is expected to remain unmodified.
+There is therefore no need to copy the data that is passed, just
 the pointer to it.
-
-C<data_size> must be set to the size of the data, not the size of the
-pointer to the data.
-If this is used in a parameter request,
-C<data_size> is not relevant.  However, the I<responder> will set
-C<return_size> to the size of the data.
 
 Note that the use of this type is B<fragile> and can only be safely
 used for data that remains constant and in a constant location for a
@@ -154,24 +146,16 @@ offers these parameters).
 
 The parameter data is a pointer to an arbitrary string of bytes.
 
-The difference between this and C<OSSL_PARAM_OCTET_STRING> is that
-C<data> doesn't point directly at the data, but to a pointer that
-points to the data.
-
-This is used to indicate that constant data is or will be passed, and
-there is therefore no need to copy the data that is passed, just the
-pointer to it.
-
-C<data_size> must be set to the size of the data, not the size of the
-pointer to the data.
-If this is used in a parameter request,
-C<data_size> is not relevant.  However, the I<responder> will set
-C<return_size> to the size of the data.
+The difference between this and C<OSSL_PARAM_OCTET_STRING> is that C<data>
+is expected to remain unmodified.
+There is therefore no need to copy the data that is passed, just
+the pointer to it.
 
 Note that the use of this type is B<fragile> and can only be safely
 used for data that remains constant and in a constant location for a
 long enough duration (such as the life-time of the entity that
 offers these parameters).
+
 
 =back
 
