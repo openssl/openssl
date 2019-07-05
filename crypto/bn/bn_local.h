@@ -654,9 +654,6 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                            const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
                            int *noinv);
 
-int bn_probable_prime_dh(BIGNUM *rnd, int bits,
-                         const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
-
 static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 {
     if (bits > (INT_MAX - BN_BITS2 + 1))
