@@ -288,8 +288,6 @@ void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
 int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
 int CMS_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc);
 
-# ifdef HEADER_X509V3_H
-
 int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr);
 CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
                                                int allorfirst,
@@ -302,7 +300,6 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
                                     int *pallorfirst,
                                     STACK_OF(GENERAL_NAMES) **plist,
                                     STACK_OF(GENERAL_NAMES) **prto);
-# endif
 int CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri,
                                     X509_ALGOR **palg,
                                     ASN1_OCTET_STRING **pukm);
