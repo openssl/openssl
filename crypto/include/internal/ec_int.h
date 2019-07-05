@@ -9,8 +9,8 @@
 
 /* Internal EC functions for other submodules: not for application use */
 
-#ifndef OPENSSL_EC_INTERNAL_H
-# define OPENSSL_EC_INTERNAL_H
+#ifndef OPENSSL_INTERNAL_EC_INT_H
+# define OPENSSL_INTERNAL_EC_INT_H
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_EC
