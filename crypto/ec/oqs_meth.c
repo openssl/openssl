@@ -165,7 +165,7 @@ static int get_classical_key_len(oqs_key_type_t keytype, int classical_id) {
     case NID_secp384r1:
       return (keytype == KEY_TYPE_PRIVATE) ? 167 : 97;
     default:
-      return -1;
+      return 0;
     }
 }
 
@@ -180,7 +180,7 @@ static int get_classical_sig_len(int classical_id)
     case NID_secp384r1:
       return 104;
     default:
-      return -1;
+      return 0;
     }
 }
 
@@ -214,7 +214,7 @@ static int get_oqs_security_bits(int openssl_nid)
       return 192;
     /* ADD_MORE_OQS_SIG_HERE */
     default:
-      return -1;
+      return 0;
     }
 }
 
@@ -608,7 +608,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     if (is_hybrid) {
       unsigned char *classical_privkey = buf + SIZE_OF_UINT32; /* i2d moves the target pointer, so we copy into a temp var (leaving space for key len) */
       int actual_classical_privkey_len = i2d_PrivateKey(oqs_key->classical_pkey, &classical_privkey);
-      if (actual_classical_privkey_len < 0 || actual_classical_privkey_len > max_classical_privkey_len) {
+      if (actual_classical_privkey_len < 0 || (uint32_t) actual_classical_privkey_len > max_classical_privkey_len) {
 	/* something went wrong, or we didn't allocate enough space */
 	OPENSSL_free(buf);
         ECerr(EC_F_OQS_PRIV_ENCODE, ERR_R_FATAL);
@@ -1003,7 +1003,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
         ECerr(EC_F_PKEY_OQS_DIGESTSIGN, EC_R_SIGNING_FAILED);
         goto end;
       }
-      if (actual_classical_sig_len > get_classical_sig_len(classical_id)) {
+      if (actual_classical_sig_len > (size_t) get_classical_sig_len(classical_id)) {
 	/* sig is bigger than expected! */
         ECerr(EC_F_PKEY_OQS_DIGESTSIGN, EC_R_BUFFER_LENGTH_WRONG);
         goto end;
