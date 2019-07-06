@@ -545,6 +545,11 @@ struct evp_pkey_st {
         EVP_KEYMGMT *keymgmt;
         void *provkey;
     } pkeys[10];
+    /*
+     * If there is a legacy key assigned to this structure, we keep
+     * a copy of that key's dirty count.
+     */
+    size_t dirty_cnt_copy;
 } /* EVP_PKEY */ ;
 
 
@@ -554,6 +559,9 @@ void openssl_add_all_macs_int(void);
 void openssl_add_all_kdfs_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
+
+void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
+
 
 /* Pulling defines out of C source files */
 
