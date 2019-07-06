@@ -63,6 +63,11 @@ struct evp_pkey_asn1_method_st {
     int (*set_pub_key) (EVP_PKEY *pk, const unsigned char *pub, size_t len);
     int (*get_priv_key) (const EVP_PKEY *pk, unsigned char *priv, size_t *len);
     int (*get_pub_key) (const EVP_PKEY *pk, unsigned char *pub, size_t *len);
+
+    /* Exports to providers */
+    int (*is_dirty) (const EVP_PKEY *pk);
+    void (*clear_dirty) (EVP_PKEY *pk);
+    void *(*export_to) (const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
 } /* EVP_PKEY_ASN1_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)

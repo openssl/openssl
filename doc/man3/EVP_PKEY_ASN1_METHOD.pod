@@ -361,6 +361,21 @@ public key data for an EVP_PKEY. They MUST return 0 on error, or 1 on success.
 They are called by L<EVP_PKEY_new_raw_private_key(3)>, and
 L<EVP_PKEY_new_raw_public_key(3)> respectively.
 
+ int (*is_dirty) (const EVP_PKEY *pk);
+ void (*clear_dirty) (EVP_PKEY *pk);
+ void *(*export_to) (const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
+
+is_dirty() checks if the internal key's I<dirty> flag is set or not.
+Changing any of the internal key's key meterial will set that flag.
+
+clear_dirty() clears the internal key's I<dirty> flag.
+External callers are responsible for calling this after having called
+the export_to() function.
+
+The export_to() method exports the key material from the given key to
+a provider, through the L<EVP_KEYMGMT(3)> interface, if that provider
+supports importing key material.
+
 =head2 Functions
 
 EVP_PKEY_asn1_new() creates and returns a new B<EVP_PKEY_ASN1_METHOD>
