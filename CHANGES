@@ -9,7 +9,13 @@
 
  Changes between 1.1.0k and 1.1.0l [xx XXX xxxx]
 
-  *)
+  *) Use Windows installation paths in the mingw builds
+
+     Mingw isn't a POSIX environment per se, which means that Windows
+     paths should be used for installation.
+     (CVE-2019-1552)
+     [Richard Levitte]
+
 
  Changes between 1.1.0j and 1.1.0k [28 May 2019]
 
