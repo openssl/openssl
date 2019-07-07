@@ -16,6 +16,8 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 #include <openssl/cms.h>
+#include <openssl/core_names.h>
+#include "internal/param_build.h"
 
 /*
  * i2d/d2i like DH parameter functions which use the appropriate routine for
@@ -181,7 +183,7 @@ static int dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         DHerr(DH_F_DH_PRIV_DECODE, DH_R_BN_ERROR);
         goto dherr;
     }
-    /* Calculate public key */
+    /* Calculate public key, increments dirty_cnt */
     if (!DH_generate_key(dh))
         goto dherr;
 
@@ -255,6 +257,7 @@ static int dh_param_decode(EVP_PKEY *pkey,
         DHerr(DH_F_DH_PARAM_DECODE, ERR_R_DH_LIB);
         return 0;
     }
+    dh->dirty_cnt++;
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, dh);
     return 1;
 }
@@ -415,6 +418,7 @@ static int int_dh_param_copy(DH *to, const DH *from, int is_x942)
         }
     } else
         to->length = from->length;
+    to->dirty_cnt++;
     return 1;
 }
 
@@ -540,6 +544,50 @@ static int dh_pkey_param_check(const EVP_PKEY *pkey)
     return DH_check_ex(dh);
 }
 
+static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
+{
+    return pkey->pkey.dh->dirty_cnt;
+}
+
+static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
+{
+    DH *dh = pk->pkey.dh;
+    OSSL_PARAM_BLD tmpl;
+    const BIGNUM *p = DH_get0_p(dh), *g = DH_get0_g(dh), *q = DH_get0_q(dh);
+    const BIGNUM *pub_key = DH_get0_pub_key(dh);
+    const BIGNUM *priv_key = DH_get0_priv_key(dh);
+    OSSL_PARAM *params;
+    void *provkey = NULL;
+
+    if (p == NULL || g == NULL || pub_key == NULL)
+        return NULL;
+
+    ossl_param_bld_init(&tmpl);
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_P, p)
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_G, g)
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_key))
+        return NULL;
+
+    if (q != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_Q, q))
+            return NULL;
+    }
+
+    if (priv_key != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PRIV_KEY,
+                                    priv_key))
+            return NULL;
+    }
+
+    params = ossl_param_bld_to_param(&tmpl);
+
+    /* We export, the provider imports */
+    provkey = evp_keymgmt_importkey(keymgmt, params);
+
+    ossl_param_bld_free(params);
+    return provkey;
+}
+
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     EVP_PKEY_DH,
     EVP_PKEY_DH,
@@ -576,7 +624,12 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
 
     0,
     dh_pkey_public_check,
-    dh_pkey_param_check
+    dh_pkey_param_check,
+
+    0, 0, 0, 0,
+
+    dh_pkey_dirty_cnt,
+    dh_pkey_export_to,
 };
 
 const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {

@@ -35,6 +35,9 @@ struct dh_st {
     const DH_METHOD *meth;
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
+
+    /* Provider data */
+    size_t dirty_cnt; /* If any key material changes, increment this */
 };
 
 struct dh_method {

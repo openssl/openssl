@@ -171,7 +171,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     if (pkey != NULL)
         EVP_PKEY_up_ref(pkey);
 
-    if (pmeth != NULL && pmeth->init) {
+    if (pmeth != NULL && pmeth->init != NULL) {
         if (pmeth->init(ret) <= 0) {
             ret->pmeth = NULL;
             EVP_PKEY_CTX_free(ret);

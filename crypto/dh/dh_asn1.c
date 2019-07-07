@@ -27,6 +27,8 @@ static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         DH_free((DH *)*pval);
         *pval = NULL;
         return 2;
+    } else if (operation == ASN1_OP_D2I_POST) {
+        ((DH *)*pval)->dirty_cnt++;
     }
     return 1;
 }

@@ -111,6 +111,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         goto err;
     if (!BN_set_word(ret->g, g))
         goto err;
+    ret->dirty_cnt++;
     ok = 1;
  err:
     if (ok == -1) {

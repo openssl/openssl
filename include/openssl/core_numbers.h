@@ -301,16 +301,14 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
 # define OSSL_FUNC_KEYEXCH_SET_PARAMS                  7
 
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_newctx, (void *provctx))
-OSSL_CORE_MAKE_FUNC(int, OP_keyexch_init, (void *ctx,
-                                           OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_keyexch_init, (void *ctx, void *provkey))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_derive, (void *ctx,  unsigned char *key,
                                              size_t *keylen, size_t outlen))
-OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_peer, (void *ctx,
-                                               OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_peer, (void *ctx, void *provkey))
 OSSL_CORE_MAKE_FUNC(void, OP_keyexch_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_dupctx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_params, (void *ctx,
-                                                 OSSL_PARAM params[]))
+                                                 const OSSL_PARAM params[]))
 
 /* Highest known operation number */
 # define OSSL_OP__HIGHEST                            3

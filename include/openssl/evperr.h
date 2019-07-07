@@ -213,6 +213,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_NO_CIPHER_SET                              131
 # define EVP_R_NO_DEFAULT_DIGEST                          158
 # define EVP_R_NO_DIGEST_SET                              139
+# define EVP_R_NO_KEYMGMT_PRESENT                         196
 # define EVP_R_NO_KEY_SET                                 154
 # define EVP_R_NO_OPERATION_SET                           149
 # define EVP_R_ONLY_ONESHOT_SUPPORTED                     177
