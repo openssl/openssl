@@ -1,5 +1,6 @@
 ---
 name: Bug report
+labels: bug
 about: Report a defect in the software
 
 ---
