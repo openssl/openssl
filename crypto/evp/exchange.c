@@ -112,6 +112,7 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
         CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock);
         if (i > 0)
             return;
+        EVP_KEYMGMT_free(exchange->keymgmt);
         ossl_provider_free(exchange->prov);
         OPENSSL_free(exchange->name);
         CRYPTO_THREAD_lock_free(exchange->lock);
@@ -127,20 +128,46 @@ int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
     return 1;
 }
 
+OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
+{
+    return exchange->prov;
+}
+
 EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
-                             evp_keyexch_from_dispatch,
-                             (int (*)(void *))EVP_KEYEXCH_up_ref,
-                             (void (*)(void *))EVP_KEYEXCH_free);
+    /*
+     * Key exchange cannot work without a key, and we key management
+     * from the same provider to manage its keys.
+     */
+    EVP_KEYEXCH *keyexch =
+        evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
+                          evp_keyexch_from_dispatch,
+                          (int (*)(void *))EVP_KEYEXCH_up_ref,
+                          (void (*)(void *))EVP_KEYEXCH_free);
+
+    /* If the method is newly created, there's no keymgmt attached */
+    if (keyexch->keymgmt == NULL) {
+        EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(ctx, algorithm, properties);
+
+        if (keymgmt == NULL
+            || (EVP_KEYEXCH_provider(keyexch)
+                != EVP_KEYMGMT_provider(keymgmt))) {
+            EVP_KEYEXCH_free(keyexch);
+            EVP_KEYMGMT_free(keymgmt);
+            EVPerr(EVP_F_EVP_KEYEXCH_FETCH, EVP_R_NO_KEYMGMT_PRESENT);
+            return NULL;
+        }
+
+        keyexch->keymgmt = keymgmt;
+    }
+    return keyexch;
 }
 
 int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
 {
     int ret;
-    OSSL_PARAM *param = NULL;
-    size_t paramsz = 0;
+    void *provkey = NULL;
 
     ctx->operation = EVP_PKEY_OP_DERIVE;
 
@@ -180,26 +207,19 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
     EVP_KEYEXCH_free(ctx->exchange);
     ctx->exchange = exchange;
     if (ctx->pkey != NULL) {
-        param = evp_pkey_to_param(ctx->pkey, &paramsz);
-        if (param == NULL) {
+        provkey = evp_keymgmt_export_to_provider(ctx->pkey, exchange->keymgmt);
+        if (provkey == NULL) {
             EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT_EX, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
     }
     ctx->exchprovctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
     if (ctx->exchprovctx == NULL) {
-        OPENSSL_secure_clear_free(param, paramsz);
+        /* The provider key can stay in the cache */
         EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT_EX, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    ret = exchange->init(ctx->exchprovctx, param);
-    /*
-     * TODO(3.0): Really we should detect whether to call OPENSSL_free or
-     * OPENSSL_secure_clear_free based on the presence of a private key or not.
-     * Since we always expect a private key to be present we just call
-     * OPENSSL_secure_clear_free for now.
-     */
-    OPENSSL_secure_clear_free(param, paramsz);
+    ret = exchange->init(ctx->exchprovctx, provkey);
 
     return ret ? 1 : 0;
  err:
@@ -229,7 +249,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 {
     int ret;
-    OSSL_PARAM *param = NULL;
+    void *provkey = NULL;
 
     if (ctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
@@ -252,21 +272,12 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return -2;
     }
 
-    param = evp_pkey_to_param(peer, NULL);
-    if (param == NULL) {
+    provkey = evp_keymgmt_export_to_provider(peer, ctx->exchange->keymgmt);
+    if (provkey == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    ret = ctx->exchange->set_peer(ctx->exchprovctx, param);
-    /*
-     * TODO(3.0): Really we should detect whether to call OPENSSL_free or
-     * OPENSSL_secure_clear_free based on the presence of a private key or not.
-     * Since we always expect a public key to be present we just call
-     * OPENSSL_free for now.
-     */
-    OPENSSL_free(param);
-
-    return ret;
+    return ctx->exchange->set_peer(ctx->exchprovctx, provkey);
 
  legacy:
     if (ctx->pmeth == NULL

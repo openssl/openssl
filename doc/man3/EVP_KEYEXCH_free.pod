@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref
+EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref, EVP_KEYEXCH_provider
 - Functions to manage EVP_KEYEXCH algorithm objects
 
 =head1 SYNOPSIS
@@ -13,6 +13,7 @@ EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref
                                 const char *properties);
  void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange);
  int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange);
+ OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange);
 
 =head1 DESCRIPTION
 
@@ -31,6 +32,8 @@ structure is freed.
 EVP_KEYEXCH_up_ref() increments the reference count for an B<EVP_KEYEXCH>
 structure.
 
+EVP_KEYEXCH_provider() returns the provider that I<exchange> was fetched from.
+
 =head1 RETURN VALUES
 
 EVP_KEYEXCH_fetch() returns a pointer to a B<EVP_KEYEXCH> for success
@@ -40,7 +43,7 @@ EVP_KEYEXCH_up_ref() returns 1 for success or 0 otherwise.
 
 =head1 SEE ALSO
 
-L<provider(7)/Fetching algorithms>
+L<provider(7)/Fetching algorithms>, L<OSSL_PROVIDER(3)>
 
 =head1 HISTORY
 

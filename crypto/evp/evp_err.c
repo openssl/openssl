@@ -95,6 +95,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_CIPHER_SET), "no cipher set"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_DEFAULT_DIGEST), "no default digest"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_DIGEST_SET), "no digest set"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_KEYMGMT_PRESENT), "no keymgmt present"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_KEY_SET), "no key set"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_OPERATION_SET), "no operation set"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ONLY_ONESHOT_SUPPORTED),

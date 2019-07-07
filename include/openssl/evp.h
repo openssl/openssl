@@ -1728,6 +1728,7 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange);
 int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange);
 EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties);
+OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange);
 
 void EVP_add_alg_module(void);
 

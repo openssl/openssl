@@ -154,6 +154,7 @@ static int generate_key(DH *dh)
 
     dh->pub_key = pub_key;
     dh->priv_key = priv_key;
+    dh->dirty_cnt++;
     ok = 1;
  err:
     if (ok != 1)

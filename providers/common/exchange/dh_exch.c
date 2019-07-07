@@ -21,6 +21,11 @@ static OSSL_OP_keyexch_derive_fn dh_derive;
 static OSSL_OP_keyexch_freectx_fn dh_freectx;
 static OSSL_OP_keyexch_dupctx_fn dh_dupctx;
 
+/*
+ * What's passed as an actual key is defined by the KEYMGMT interface.
+ * We happen to know that our KEYMGMT simply passes DH structures, so
+ * we use that here too.
+ */
 
 typedef struct {
     DH *dh;
@@ -33,71 +38,24 @@ static void *dh_newctx(void *provctx)
     return OPENSSL_zalloc(sizeof(PROV_DH_CTX));
 }
 
-static DH *param_to_dh(OSSL_PARAM params[], int priv)
-{
-    DH *dh = DH_new();
-    OSSL_PARAM *paramptr;
-    BIGNUM *p = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
-
-    if (dh == NULL)
-        return NULL;
-
-    paramptr = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DH_P);
-    if (paramptr == NULL
-            || !OSSL_PARAM_get_BN(paramptr, &p))
-        goto err;
-
-    paramptr = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DH_G);
-    if (paramptr == NULL || !OSSL_PARAM_get_BN(paramptr, &g))
-        goto err;
-
-    if (!DH_set0_pqg(dh, p, NULL, g))
-        goto err;
-    p = g = NULL;
-
-    paramptr = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DH_PUB_KEY);
-    if (paramptr == NULL || !OSSL_PARAM_get_BN(paramptr, &pub_key))
-        goto err;
-
-    /* Private key is optional */
-    if (priv) {
-        paramptr = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DH_PRIV_KEY);
-        if (paramptr == NULL
-                || (priv_key = BN_secure_new()) == NULL
-                || !OSSL_PARAM_get_BN(paramptr, &priv_key))
-            goto err;
-    }
-
-    if (!DH_set0_key(dh, pub_key, priv_key))
-        goto err;
-
-    return dh;
-
- err:
-    BN_free(p);
-    BN_free(g);
-    BN_free(pub_key);
-    BN_free(priv_key);
-    DH_free(dh);
-    return NULL;
-}
-
-static int dh_init(void *vpdhctx, OSSL_PARAM params[])
+static int dh_init(void *vpdhctx, void *vdh)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
 
     DH_free(pdhctx->dh);
-    pdhctx->dh = param_to_dh(params, 1);
+    pdhctx->dh = vdh;
+    DH_up_ref(pdhctx->dh);
 
     return pdhctx->dh != NULL;
 }
 
-static int dh_set_peer(void *vpdhctx, OSSL_PARAM params[])
+static int dh_set_peer(void *vpdhctx, void *vdh)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
 
     DH_free(pdhctx->dhpeer);
-    pdhctx->dhpeer = param_to_dh(params, 0);
+    pdhctx->dhpeer = vdh;
+    DH_up_ref(pdhctx->dhpeer);
 
     return pdhctx->dhpeer != NULL;
 }
@@ -164,7 +122,7 @@ static void *dh_dupctx(void *vpdhctx)
     return dstctx;
 }
 
-static int dh_set_params(void *vpdhctx, OSSL_PARAM params[])
+static int dh_set_params(void *vpdhctx, const OSSL_PARAM params[])
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
     const OSSL_PARAM *p;
@@ -173,7 +131,7 @@ static int dh_set_params(void *vpdhctx, OSSL_PARAM params[])
     if (pdhctx == NULL || params == NULL)
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_PAD);
+    p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_PAD);
     if (p == NULL || !OSSL_PARAM_get_int(p, &pad))
         return 0;
 
@@ -182,7 +140,7 @@ static int dh_set_params(void *vpdhctx, OSSL_PARAM params[])
     return 1;
 }
 
-const OSSL_DISPATCH dh_functions[] = {
+const OSSL_DISPATCH dh_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))dh_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))dh_init },
     { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))dh_derive },
