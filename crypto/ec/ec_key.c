@@ -303,7 +303,7 @@ int EC_KEY_check_key(const EC_KEY *eckey)
  * See SP800-56A R3 Section 5.6.2.3.3 (Part 2)
  * i.e.
  *  - If q = odd prime p: Verify that xQ and yQ are integers in the
- *    interval[0, p − 1], OR
+ *    interval[0, p - 1], OR
  *  - If q = 2m: Verify that xQ and yQ are bit strings of length m bits.
  * Returns 1 if the public key has a valid range, otherwise it returns 0.
  */
