@@ -102,6 +102,7 @@ int ERR_load_X509_strings(void);
 # define X509_R_CRL_ALREADY_DELTA                         127
 # define X509_R_CRL_VERIFY_FAILURE                        131
 # define X509_R_IDP_MISMATCH                              128
+# define X509_R_INVALID_ATTRIBUTES                        138
 # define X509_R_INVALID_DIRECTORY                         113
 # define X509_R_INVALID_FIELD_NAME                        119
 # define X509_R_INVALID_TRUST                             123
