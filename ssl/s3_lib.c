@@ -3616,13 +3616,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         {
             uint16_t id = tls1_shared_group(s, larg);
 
-            if (larg != -1) {
-                const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(id);
-
-                return ginf == NULL ? 0 : ginf->nid;
-            }
+            if (larg != -1)
+                return tls1_group_id2nid(id);
             return id;
         }
+    case SSL_CTRL_GET_NEGOTIATED_GROUP:
+        ret = tls1_group_id2nid(s->s3.group_id);
+        break;
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
     case SSL_CTRL_SET_SIGALGS:

@@ -445,6 +445,7 @@ SSL_get_secure_renegotiation_support    define
 SSL_get_server_tmp_key                  define
 SSL_get_shared_curve                    define
 SSL_get_shared_group                    define
+SSL_get_negotiated_group                define
 SSL_get_signature_nid                   define
 SSL_get_time                            define
 SSL_get_timeout                         define
