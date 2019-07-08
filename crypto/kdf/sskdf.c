@@ -17,7 +17,7 @@
  * Result(0) = empty bit string (i.e., the null string).
  * For i = 1 to reps, do the following:
  *   Increment counter by 1.
- *   Result(i) = Result(i – 1) || H(counter || Z || FixedInfo).
+ *   Result(i) = Result(i - 1) || H(counter || Z || FixedInfo).
  * DKM = LeftmostBits(Result(reps), L))
  *
  * NOTES:
