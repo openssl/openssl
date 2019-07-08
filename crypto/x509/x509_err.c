@@ -123,6 +123,8 @@ static const ERR_STRING_DATA X509_str_reasons[] = {
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_CRL_VERIFY_FAILURE),
     "crl verify failure"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_IDP_MISMATCH), "idp mismatch"},
+    {ERR_PACK(ERR_LIB_X509, 0, X509_R_INVALID_ATTRIBUTES),
+    "invalid attributes"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_INVALID_DIRECTORY), "invalid directory"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_INVALID_FIELD_NAME),
     "invalid field name"},
