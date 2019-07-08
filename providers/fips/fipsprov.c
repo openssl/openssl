@@ -268,6 +268,10 @@ const char *ossl_prov_util_nid_to_name(int nid)
         return "AES-192-CTR";
     case NID_aes_128_ctr:
         return "AES-128-CTR";
+    case NID_aes_256_xts:
+        return "AES-256-XTS";
+    case NID_aes_128_xts:
+        return "AES-128-XTS";
     /* TODO(3.0) Change these when we have aliases */
     case NID_aes_256_gcm:
         return "id-aes256-GCM";
@@ -320,6 +324,8 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
     { "AES-256-CTR", "fips=yes", aes256ctr_functions },
     { "AES-192-CTR", "fips=yes", aes192ctr_functions },
     { "AES-128-CTR", "fips=yes", aes128ctr_functions },
+    { "AES-256-XTS", "fips=yes", aes256xts_functions },
+    { "AES-128-XTS", "fips=yes", aes128xts_functions },
     /* TODO(3.0) Add aliases for these ciphers */
     { "id-aes256-GCM", "fips=yes", aes256gcm_functions },
     { "id-aes192-GCM", "fips=yes", aes192gcm_functions },
