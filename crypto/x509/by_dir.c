@@ -322,13 +322,13 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         /*
          * we have added it to the cache so now pull it out again
          */
-        CRYPTO_THREAD_write_lock(ctx->lock);
+        X509_STORE_lock(xl->store_ctx);
         j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
         if (j != -1)
             tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
         else
             tmp = NULL;
-        CRYPTO_THREAD_unlock(ctx->lock);
+        X509_STORE_unlock(xl->store_ctx);
 
         /* If a CRL, update the last file suffix added for this */
 
