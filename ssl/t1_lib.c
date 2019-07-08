@@ -226,6 +226,13 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 }
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+int tls1_group_id2nid(uint16_t group_id)
+{
+    const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(group_id);
+
+    return ginf == NULL ? NID_undef : ginf->nid;
+}
+
 static uint16_t tls1_nid2group_id(int nid)
 {
     size_t i;
