@@ -3742,10 +3742,20 @@ static int test_ciphersuite_change(void)
 
 /*
  * Test TLSv1.3 Key exchange
- * Test 0 = Test ECDHE Key exchange
- * Test 1 = Test ECDHE with TLSv1.2 client and TLSv1.2 server
- * Test 2 = Test FFDHE Key exchange
- * Test 3 = Test FFDHE with TLSv1.2 client and TLSv1.2 server
+ * Test 0 = Test ECDHE Key exchange with TLSv1.3 client and server
+ * Test 1 = Test ECDHE with TLSv1.2 client and server
+ * Test 2 = Test FFDHE Key exchange with TLSv1.3 client and server
+ * Test 3 = Test FFDHE with TLSv1.2 client and server
+ * Test 4 = Test NID_X9_62_prime256v1 with TLSv1.3 client and server
+ * Test 5 = Test NID_secp384r1 with TLSv1.3 client and server
+ * Test 6 = Test NID_secp521r1 with TLSv1.3 client and server
+ * Test 7 = Test NID_X25519 with TLSv1.3 client and server
+ * Test 8 = Test NID_X448 with TLSv1.3 client and server
+ * Test 9 = Test NID_ffdhe2048 with TLSv1.3 client and server
+ * Test 10 = Test NID_ffdhe3072 with TLSv1.3 client and server
+ * Test 11 = Test NID_ffdhe4096 with TLSv1.3 client and server
+ * Test 12 = Test NID_ffdhe6144 with TLSv1.3 client and server
+ * Test 13 = Test NID_ffdhe8192 with TLSv1.3 client and server
  */
 static int test_tls13_key_exchange(int idx)
 {
@@ -3760,14 +3770,39 @@ static int test_tls13_key_exchange(int idx)
     int ffdhe_kexch_groups[] = {NID_ffdhe2048, NID_ffdhe3072, NID_ffdhe4096,
                                 NID_ffdhe6144, NID_ffdhe8192};
 #endif
-    int *kexch_groups = NULL;
-    int kexch_groups_size = 0;
+    int kexch_alg;
+    int *kexch_groups = &kexch_alg;
+    int kexch_groups_size = 1;
     int max_version = TLS1_3_VERSION;
     int want_err = SSL_ERROR_NONE;
     int expected_err_func = 0;
     int expected_err_reason = 0;
 
     switch (idx) {
+#ifndef OPENSSL_NO_EC
+        case 1:
+            max_version = TLS1_2_VERSION;
+            /* Fall through */
+        case 0:
+            kexch_groups = ecdhe_kexch_groups;
+            kexch_groups_size = OSSL_NELEM(ecdhe_kexch_groups);
+            break;
+        case 4:
+            kexch_alg = NID_X9_62_prime256v1;
+            break;
+        case 5:
+            kexch_alg = NID_secp384r1;
+            break;
+        case 6:
+            kexch_alg = NID_secp521r1;
+            break;
+        case 7:
+            kexch_alg = NID_X25519;
+            break;
+        case 8:
+            kexch_alg = NID_X448;
+            break;
+#endif
 #ifndef OPENSSL_NO_DH
         case 3:
             max_version = TLS1_2_VERSION;
@@ -3776,14 +3811,20 @@ static int test_tls13_key_exchange(int idx)
             kexch_groups = ffdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ffdhe_kexch_groups);
             break;
-#endif
-#ifndef OPENSSL_NO_EC
-        case 1:
-            max_version = TLS1_2_VERSION;
-            /* Fall through */
-        case 0:
-            kexch_groups = ecdhe_kexch_groups;
-            kexch_groups_size = OSSL_NELEM(ecdhe_kexch_groups);
+        case 9:
+            kexch_alg = NID_ffdhe2048;
+            break;
+        case 10:
+            kexch_alg = NID_ffdhe3072;
+            break;
+        case 11:
+            kexch_alg = NID_ffdhe4096;
+            break;
+        case 12:
+            kexch_alg = NID_ffdhe6144;
+            break;
+        case 13:
+            kexch_alg = NID_ffdhe8192;
             break;
 #endif
         default:
@@ -3846,6 +3887,12 @@ static int test_tls13_key_exchange(int idx)
     if (!TEST_int_eq(SSL_get_shared_group(serverssl, 0),
                      idx == 3 ? 0 : kexch_groups[0]))
         goto end;
+    if (max_version == TLS1_3_VERSION) {
+        if (!TEST_int_eq(SSL_get_negotiated_group(serverssl), kexch_groups[0]))
+            goto end;
+        if (!TEST_int_eq(SSL_get_negotiated_group(clientssl), kexch_groups[0]))
+            goto end;
+    }
 
     testresult = 1;
  end:
@@ -6698,7 +6745,7 @@ int setup_tests(void)
 #else
     ADD_ALL_TESTS(test_tls13_psk, 4);
 #endif  /* OPENSSL_NO_PSK */
-    ADD_ALL_TESTS(test_tls13_key_exchange, 4);
+    ADD_ALL_TESTS(test_tls13_key_exchange, 14);
     ADD_ALL_TESTS(test_custom_exts, 5);
     ADD_TEST(test_stateless);
     ADD_TEST(test_pha_key_update);
