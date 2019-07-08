@@ -661,6 +661,13 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         t->err = "KEY_SET_ERROR";
         goto err;
     }
+    /* Check that we get the same IV back */
+    if (expected->iv != NULL
+        && !TEST_mem_eq(expected->iv, expected->iv_len,
+                        EVP_CIPHER_CTX_iv(ctx), expected->iv_len)) {
+        t->err = "INVALID_IV";
+        goto err;
+    }
 
     if (expected->aead == EVP_CIPH_CCM_MODE) {
         if (!EVP_CipherUpdate(ctx, NULL, &tmplen, NULL, out_len)) {
