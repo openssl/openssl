@@ -64,16 +64,25 @@ int ERR_load_KDF_strings(void);
 # define KDF_F_SSKDF_NEW                                  137
 # define KDF_F_SSKDF_SIZE                                 138
 # define KDF_F_TLS1_PRF_ALG                               111
+# define KDF_F_X942KDF_CTRL                               142
+# define KDF_F_X942KDF_DERIVE                             143
+# define KDF_F_X942KDF_HASH_KDM                           144
+# define KDF_F_X942KDF_NEW                                145
+# define KDF_F_X942KDF_SIZE                               146
 # define KDF_F_X963KDF_DERIVE                             139
 
 /*
  * KDF reason codes.
  */
+# define KDF_R_BAD_ENCODING                               122
+# define KDF_R_BAD_LENGTH                                 123
+# define KDF_R_INAVLID_UKM_LEN                            124
 # define KDF_R_INVALID_DIGEST                             100
 # define KDF_R_INVALID_ITERATION_COUNT                    119
 # define KDF_R_INVALID_KEY_LEN                            120
 # define KDF_R_INVALID_MAC_TYPE                           116
 # define KDF_R_INVALID_SALT_LEN                           121
+# define KDF_R_MISSING_CEK_ALG                            125
 # define KDF_R_MISSING_ITERATION_COUNT                    109
 # define KDF_R_MISSING_KEY                                104
 # define KDF_R_MISSING_MESSAGE_DIGEST                     105
@@ -87,6 +96,7 @@ int ERR_load_KDF_strings(void);
 # define KDF_R_MISSING_XCGHASH                            115
 # define KDF_R_NOT_SUPPORTED                              118
 # define KDF_R_UNKNOWN_PARAMETER_TYPE                     103
+# define KDF_R_UNSUPPORTED_CEK_ALG                        126
 # define KDF_R_UNSUPPORTED_MAC_TYPE                       117
 # define KDF_R_VALUE_ERROR                                108
 # define KDF_R_VALUE_MISSING                              102

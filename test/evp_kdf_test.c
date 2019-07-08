@@ -407,6 +407,37 @@ static int test_kdf_get_kdf(void)
         && TEST_ptr_eq(kdf1, kdf2);
 }
 
+#ifndef OPENSSL_NO_CMS
+static int test_kdf_x942_asn1(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char out[24];
+    /* RFC2631 Section 2.1.6 Test data */
+    static const unsigned char z[] = {
+        0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,
+        0x0e,0x0f,0x10,0x11,0x12,0x13
+    };
+    static const unsigned char expected[sizeof(out)] = {
+        0xa0,0x96,0x61,0x39,0x23,0x76,0xf7,0x04,
+        0x4d,0x90,0x52,0xa3,0x97,0x88,0x32,0x46,
+        0xb6,0x7f,0x5f,0x1e,0xf6,0x3e,0xb5,0xfb
+    };
+
+    ret =
+        TEST_ptr(kctx = EVP_KDF_CTX_new_id(EVP_KDF_X942))
+        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, EVP_sha1()), 0)
+        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z, sizeof(z)), 0)
+        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_CEK_ALG,
+                                    SN_id_smime_alg_CMS3DESwrap), 0)
+        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
+        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_CMS */
+
 int setup_tests(void)
 {
     ADD_TEST(test_kdf_get_kdf);
@@ -421,5 +452,8 @@ int setup_tests(void)
     ADD_TEST(test_kdf_ss_kmac);
     ADD_TEST(test_kdf_sshkdf);
     ADD_TEST(test_kdf_x963);
+#ifndef OPENSSL_NO_CMS
+    ADD_TEST(test_kdf_x942_asn1);
+#endif
     return 1;
 }

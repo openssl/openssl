@@ -1965,7 +1965,14 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
         t->skip = 1;
         return 1;
     }
-#endif
+#endif /* OPENSSL_NO_SCRYPT */
+
+#ifdef OPENSSL_NO_CMS
+    if (strcmp(name, "X942KDF") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif /* OPENSSL_NO_CMS */
 
     kdf = EVP_get_kdfbyname(name);
     if (kdf == NULL)
@@ -2097,7 +2104,14 @@ static int pkey_kdf_test_init(EVP_TEST *t, const char *name)
         t->skip = 1;
         return 1;
     }
-#endif
+#endif /* OPENSSL_NO_SCRYPT */
+
+#ifdef OPENSSL_NO_CMS
+    if (strcmp(name, "X942KDF") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif /* OPENSSL_NO_CMS */
 
     if (kdf_nid == NID_undef)
         kdf_nid = OBJ_ln2nid(name);
