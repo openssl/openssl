@@ -95,3 +95,67 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
                                             OSSL_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *));
+
+/* Helper macros to avoid duplicating code */
+#define getparams(_ciph,_ptr,_sz,_key,_datatype,_statvar,_fn,_args)     \
+    do {                                                                \
+        _statvar = -2;                                                  \
+        if ((_ciph) != NULL && (_ciph)->prov != NULL) {                 \
+            OSSL_PARAM params[2] = {                                    \
+                { _key, OSSL_PARAM_##_datatype, NULL, 0, 0 },           \
+                OSSL_PARAM_END                                          \
+            };                                                          \
+                                                                        \
+            params[0].data = _ptr;                                      \
+            params[0].data_size = _sz;                                  \
+                                                                        \
+            if (_fn == NULL) {                                          \
+                EVPerr(0, EVP_R_CTRL_NOT_IMPLEMENTED);                  \
+                _statvar = 0;                                           \
+                break;                                                  \
+            }                                                           \
+                                                                        \
+            if (!_fn _args) {                                           \
+                /* fn is expected to set errors */                      \
+                _statvar = 0;                                           \
+                break;                                                  \
+            }                                                           \
+        }                                                               \
+    } while(0)
+
+#define ciph_getparams(ciph,ptr,sz,key,datatype,statvar)                \
+    getparams(ciph,ptr,sz,key,datatype,statvar,ciph->get_params,(params))
+#define ctx_getparams(ctx,ptr,sz,key,datatype,statvar)                  \
+    getparams(ctx->cipher,ptr,sz,key,datatype,statvar,                  \
+              ctx->cipher->ctx_get_params,(ctx->provctx, params))
+
+#define setparams(_ciph,_ptr,_sz,_key,_datatype,_statvar,_fn,_args)     \
+    do {                                                                \
+        _statvar = -2;                                                  \
+        if ((_ciph) != NULL && (_ciph)->prov != NULL) {                 \
+            OSSL_PARAM params[2] = {                                    \
+                { _key, OSSL_PARAM_##_datatype, NULL, 0, 0 },            \
+                OSSL_PARAM_END                                          \
+            };                                                          \
+                                                                        \
+            params[0].data = _ptr;                                      \
+            params[0].data_size = _sz;                                  \
+                                                                        \
+            if (_fn == NULL) {                                          \
+                EVPerr(0, EVP_R_CTRL_NOT_IMPLEMENTED);                  \
+                _statvar = 0;                                           \
+                break;                                                  \
+            }                                                           \
+                                                                        \
+            if (!_fn _args) {                                           \
+                /* fn is expected to set errors */                      \
+                _statvar = 0;                                           \
+                break;                                                  \
+            }                                                           \
+            _statvar = 1;                                               \
+        }                                                               \
+    } while(0)
+
+#define ctx_setparams(ctx,ptr,sz,key,datatype,statvar)                  \
+    setparams(ctx->cipher,ptr,sz,key,datatype,statvar,                  \
+              ctx->cipher->ctx_set_params,(ctx->provctx, params))
