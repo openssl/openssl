@@ -257,9 +257,6 @@ struct evp_cipher_st {
     OSSL_OP_cipher_cipher_fn *ccipher;
     OSSL_OP_cipher_freectx_fn *freectx;
     OSSL_OP_cipher_dupctx_fn *dupctx;
-    OSSL_OP_cipher_key_length_fn *key_length;
-    OSSL_OP_cipher_iv_length_fn *iv_length;
-    OSSL_OP_cipher_block_size_fn *blocksize;
     OSSL_OP_cipher_get_params_fn *get_params;
     OSSL_OP_cipher_ctx_get_params_fn *ctx_get_params;
     OSSL_OP_cipher_ctx_set_params_fn *ctx_set_params;

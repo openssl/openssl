@@ -139,12 +139,9 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params,
 # define OSSL_FUNC_CIPHER_CIPHER                     6
 # define OSSL_FUNC_CIPHER_FREECTX                    7
 # define OSSL_FUNC_CIPHER_DUPCTX                     8
-# define OSSL_FUNC_CIPHER_KEY_LENGTH                 9
-# define OSSL_FUNC_CIPHER_IV_LENGTH                 10
-# define OSSL_FUNC_CIPHER_BLOCK_SIZE                11
-# define OSSL_FUNC_CIPHER_GET_PARAMS                12
-# define OSSL_FUNC_CIPHER_CTX_GET_PARAMS            13
-# define OSSL_FUNC_CIPHER_CTX_SET_PARAMS            14
+# define OSSL_FUNC_CIPHER_GET_PARAMS                 9
+# define OSSL_FUNC_CIPHER_CTX_GET_PARAMS            10
+# define OSSL_FUNC_CIPHER_CTX_SET_PARAMS            11
 
 OSSL_CORE_MAKE_FUNC(void *, OP_cipher_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_encrypt_init, (void *cctx,
@@ -170,9 +167,6 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_cipher,
                      const unsigned char *in, size_t inl))
 OSSL_CORE_MAKE_FUNC(void, OP_cipher_freectx, (void *cctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_cipher_dupctx, (void *cctx))
-OSSL_CORE_MAKE_FUNC(size_t, OP_cipher_key_length, (void))
-OSSL_CORE_MAKE_FUNC(size_t, OP_cipher_iv_length, (void))
-OSSL_CORE_MAKE_FUNC(size_t, OP_cipher_block_size, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
                                                     OSSL_PARAM params[]))
