@@ -954,7 +954,7 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
-    int ret;
+    int ret = -2;                /* Unsupported */
 
     if (!ctx->cipher) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
