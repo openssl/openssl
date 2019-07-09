@@ -663,6 +663,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     }
     /* Check that we get the same IV back */
     if (expected->iv != NULL
+        && (EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV) == 0
         && !TEST_mem_eq(expected->iv, expected->iv_len,
                         EVP_CIPHER_CTX_iv(ctx), expected->iv_len)) {
         t->err = "INVALID_IV";
