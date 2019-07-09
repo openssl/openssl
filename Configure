@@ -1391,6 +1391,9 @@ unless ($disabled{asm}) {
     if ($target{ec_asm_src} =~ /ecp_nistz256/) {
         push @{$config{lib_defines}}, "ECP_NISTZ256_ASM";
     }
+    if ($target{ec_asm_src} =~ /ecp_s390x_nistp/) {
+        push @{$config{lib_defines}}, "S390X_NISTP_ASM";
+    }
     if ($target{ec_asm_src} =~ /x25519/) {
         push @{$config{lib_defines}}, "X25519_ASM";
     }

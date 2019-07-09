@@ -587,6 +587,11 @@ int ec_group_simple_order_bits(const EC_GROUP *group);
  */
 const EC_METHOD *EC_GFp_nistz256_method(void);
 #endif
+#ifdef S390X_NISTP_ASM
+const EC_METHOD *EC_GFp_s390x_nistp256_method(void);
+const EC_METHOD *EC_GFp_s390x_nistp384_method(void);
+const EC_METHOD *EC_GFp_s390x_nistp521_method(void);
+#endif
 
 size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
                               unsigned char *buf, size_t len);
