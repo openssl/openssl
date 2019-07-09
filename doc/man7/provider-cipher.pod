@@ -342,6 +342,13 @@ This is used by the RC5 cipher.
 Gets or sets the effective keybits used for a RC2 cipher.
 The length of the "keybits" parameter should not exceed that of a B<size_t>.
 
+=item "speed" (B<OSSL_CIPHER_PARAM_SPEED>) <unsigned integer>
+
+Sets the speed option for the associated cipher ctx. This is only supported
+by AES SIV ciphers which disallow multiple operations by default.
+Setting "speed" to 1 allows another encrypt or decrypt operation to be
+performed. This is used for performance testing.
+
 =back
 
 =head1 RETURN VALUES

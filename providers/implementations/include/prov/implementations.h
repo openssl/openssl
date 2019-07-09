@@ -211,6 +211,12 @@ extern const OSSL_DISPATCH chacha20_poly1305_functions[];
 #endif /* OPENSSL_NO_CHACHA */
 
 
+#ifndef OPENSSL_NO_SIV
+extern const OSSL_DISPATCH aes128siv_functions[];
+extern const OSSL_DISPATCH aes192siv_functions[];
+extern const OSSL_DISPATCH aes256siv_functions[];
+#endif /* OPENSSL_NO_SIV */
+
 /* MACs */
 extern const OSSL_DISPATCH blake2bmac_functions[];
 extern const OSSL_DISPATCH blake2smac_functions[];
