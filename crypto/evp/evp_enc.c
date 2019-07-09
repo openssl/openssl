@@ -920,6 +920,14 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
+    int ok = evp_do_param(c->cipher, &keylen, sizeof(keylen),
+                          OSSL_CIPHER_PARAM_KEYLEN, OSSL_PARAM_INTEGER,
+                          evp_do_ciph_ctx_setparams, c->provctx);
+
+    if (ok != -2)
+        return ok;
+
+    /* TODO(3.0) legacy code follows */
     if (c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
         return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
     if (EVP_CIPHER_CTX_key_length(c) == keylen)
@@ -934,40 +942,51 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 {
+    int ok;
+
     if (pad)
         ctx->flags &= ~EVP_CIPH_NO_PADDING;
     else
         ctx->flags |= EVP_CIPH_NO_PADDING;
 
-    if (ctx->cipher != NULL && ctx->cipher->prov != NULL) {
-        OSSL_PARAM params[] = {
-            OSSL_PARAM_int(OSSL_CIPHER_PARAM_PADDING, NULL),
-            OSSL_PARAM_END
-        };
-
-        params[0].data = &pad;
-
-        if (ctx->cipher->ctx_set_params == NULL) {
-            EVPerr(EVP_F_EVP_CIPHER_CTX_SET_PADDING, EVP_R_CTRL_NOT_IMPLEMENTED);
-            return 0;
-        }
-
-        if (!ctx->cipher->ctx_set_params(ctx->provctx, params))
-            return 0;
-    }
-
-    return 1;
+    ok = evp_do_param(ctx->cipher, &pad, sizeof(pad),
+                      OSSL_CIPHER_PARAM_PADDING, OSSL_PARAM_INTEGER,
+                      evp_do_ciph_ctx_setparams, ctx->provctx);
+    return ok != 0;
 }
 
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
-    int ret;
+    int ret = -2;                /* Unsupported */
 
     if (!ctx->cipher) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
         return 0;
     }
 
+    if (ctx->cipher->prov == NULL)
+        goto legacy;
+
+    switch (type) {
+    case EVP_CTRL_SET_KEY_LENGTH:
+        ret = evp_do_param(ctx->cipher, &arg, sizeof(arg),
+                           OSSL_CIPHER_PARAM_KEYLEN, OSSL_PARAM_INTEGER,
+                           evp_do_ciph_ctx_setparams, ctx->provctx);
+        break;
+    case EVP_CTRL_GET_IV:
+        ret = evp_do_param(ctx->cipher, ptr, arg,
+                           OSSL_CIPHER_PARAM_IV, OSSL_PARAM_OCTET_STRING,
+                           evp_do_ciph_ctx_getparams, ctx->provctx);
+        break;
+    case EVP_CTRL_RAND_KEY:      /* Used by DES */
+    case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
+    case EVP_CTRL_INIT: /* TODO(3.0) Purely legacy, no provider counterpart */
+        ret = -2;                /* Unsupported */
+        break;
+    }
+    return ret;
+
+ legacy:
     if (!ctx->cipher->ctrl) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
         return 0;
@@ -1123,21 +1142,6 @@ static void *evp_cipher_from_dispatch(const OSSL_DISPATCH *fns,
                 break;
             cipher->dupctx = OSSL_get_OP_cipher_dupctx(fns);
             break;
-        case OSSL_FUNC_CIPHER_KEY_LENGTH:
-            if (cipher->key_length != NULL)
-                break;
-            cipher->key_length = OSSL_get_OP_cipher_key_length(fns);
-            break;
-        case OSSL_FUNC_CIPHER_IV_LENGTH:
-            if (cipher->iv_length != NULL)
-                break;
-            cipher->iv_length = OSSL_get_OP_cipher_iv_length(fns);
-            break;
-        case OSSL_FUNC_CIPHER_BLOCK_SIZE:
-            if (cipher->blocksize != NULL)
-                break;
-            cipher->blocksize = OSSL_get_OP_cipher_block_size(fns);
-            break;
         case OSSL_FUNC_CIPHER_GET_PARAMS:
             if (cipher->get_params != NULL)
                 break;
@@ -1157,10 +1161,7 @@ static void *evp_cipher_from_dispatch(const OSSL_DISPATCH *fns,
     }
     if ((fnciphcnt != 0 && fnciphcnt != 3 && fnciphcnt != 4)
             || (fnciphcnt == 0 && cipher->ccipher == NULL)
-            || fnctxcnt != 2
-            || cipher->blocksize == NULL
-            || cipher->iv_length == NULL
-            || cipher->key_length == NULL) {
+            || fnctxcnt != 2) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "encrypt" functions, or a complete set of "decrypt"
