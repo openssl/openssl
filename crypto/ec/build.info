@@ -18,7 +18,8 @@ IF[{- !$disabled{asm} -}]
   $ECASM_mips32=
   $ECASM_mips64=
 
-  $ECASM_s390x=
+  $ECASM_s390x=ecp_s390x_nistp.c
+  $ECDEF_s390x=S390X_NISTP_ASM
 
   $ECASM_armv4=ecp_nistz256.c ecp_nistz256-armv4.S
   $ECDEF_armv4=ECP_NISTZ256_ASM
