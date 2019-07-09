@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -106,8 +107,17 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
 static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 {
     EVP_PKEY_CTX *ret;
-    const EVP_PKEY_METHOD *pmeth;
+    const EVP_PKEY_METHOD *pmeth = NULL;
 
+    /*
+     * When using providers, the context is bound to the algo implementation
+     * later.
+     */
+    if (pkey == NULL && e == NULL && id == -1)
+        goto common;
+
+    /* TODO(3.0) Legacy code should be removed when all is provider based */
+    /* BEGIN legacy */
     if (id == -1) {
         if (pkey == NULL)
             return 0;
@@ -143,7 +153,9 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
         EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }
+    /* END legacy */
 
+ common:
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
 #ifndef OPENSSL_NO_ENGINE
@@ -159,7 +171,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     if (pkey != NULL)
         EVP_PKEY_up_ref(pkey);
 
-    if (pmeth->init) {
+    if (pmeth != NULL && pmeth->init) {
         if (pmeth->init(ret) <= 0) {
             ret->pmeth = NULL;
             EVP_PKEY_CTX_free(ret);
