@@ -21,12 +21,15 @@ struct conf_method_st {
     int (*load) (CONF *conf, const char *name, long *eline);
 };
 
-void conf_add_ssl_module(void);
-void conf_free_data(CONF *conf);
+/* Functions implementing the internal CONF/NCONF functionality. */
 int conf_new_data(CONF *conf);
+void conf_free_data(CONF *conf);
 CONF_VALUE *conf_new_section(CONF *conf, const char *section);
 CONF_VALUE *conf_get_section(const CONF *conf, const char *section);
 STACK_OF(CONF_VALUE) *conf_get_section_values(const CONF *conf,
                                               const char *section);
 int conf_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value);
 char *conf_get_string(const CONF *conf, const char *section, const char *name);
+
+/* Functions to load modules. */
+void conf_add_ssl_module(void);
