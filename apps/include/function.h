@@ -26,4 +26,15 @@ typedef struct function_st {
 } FUNCTION;
 
 DEFINE_LHASH_OF(FUNCTION);
+
+/* Structure to hold the number of columns to be displayed and the
+ * field width used to display them.
+ */
+typedef struct {
+    int columns;
+    int width;
+} DISPLAY_COLUMNS;
+
+void calculate_columns(FUNCTION *functions, DISPLAY_COLUMNS *dc);
+
 #endif
