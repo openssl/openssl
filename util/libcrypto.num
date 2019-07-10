@@ -1157,7 +1157,7 @@ EVP_PKEY_CTX_set0_keygen_info           1183	3_0_0	EXIST::FUNCTION:
 ENGINE_unregister_digests               1184	3_0_0	EXIST::FUNCTION:ENGINE
 IPAddressOrRange_new                    1185	3_0_0	EXIST::FUNCTION:RFC3779
 EVP_aes_256_ofb                         1186	3_0_0	EXIST::FUNCTION:
-CRYPTO_mem_debug_push                   1187	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG
+CRYPTO_mem_debug_push                   1187	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG,DEPRECATEDIN_3
 X509_PKEY_new                           1188	3_0_0	EXIST::FUNCTION:
 X509_get_key_usage                      1189	3_0_0	EXIST::FUNCTION:
 X509_ATTRIBUTE_create_by_txt            1190	3_0_0	EXIST::FUNCTION:
@@ -1848,7 +1848,7 @@ IDEA_cbc_encrypt                        1890	3_0_0	EXIST::FUNCTION:IDEA
 BN_CTX_secure_new                       1891	3_0_0	EXIST::FUNCTION:
 OCSP_ONEREQ_add_ext                     1892	3_0_0	EXIST::FUNCTION:OCSP
 CMS_uncompress                          1893	3_0_0	EXIST::FUNCTION:CMS
-CRYPTO_mem_debug_pop                    1895	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG
+CRYPTO_mem_debug_pop                    1895	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG,DEPRECATEDIN_3
 EVP_aes_192_cfb128                      1896	3_0_0	EXIST::FUNCTION:
 OCSP_REQ_CTX_nbio                       1897	3_0_0	EXIST::FUNCTION:OCSP
 EVP_CIPHER_CTX_copy                     1898	3_0_0	EXIST::FUNCTION:

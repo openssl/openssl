@@ -311,8 +311,8 @@ OPENSSL_clear_realloc                   define
 OPENSSL_free                            define
 OPENSSL_malloc                          define
 OPENSSL_malloc_init                     define
-OPENSSL_mem_debug_pop                   define
-OPENSSL_mem_debug_push                  define
+OPENSSL_mem_debug_pop                   define deprecated 3.0.0
+OPENSSL_mem_debug_push                  define deprecated 3.0.0
 OPENSSL_memdup                          define
 OPENSSL_no_config                       define deprecated 1.1.0
 OPENSSL_realloc                         define
