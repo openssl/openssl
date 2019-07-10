@@ -42,7 +42,11 @@ sub run_shlibloadtest {
 run_shlibloadtest(1, "-crypto_first");
 run_shlibloadtest(1, "-ssl_first");
 run_shlibloadtest(1, "-just_crypto");
-run_shlibloadtest(1, "-dso_ref");
+ SKIP: {
+     skip "Skipping -dso_ref, not supported on this platform", 2
+         if config('target') =~ m|^Cygwin|;
+     run_shlibloadtest(1, "-dso_ref");
+}
 run_shlibloadtest(0, "-no_atexit");
 
 sub check_atexit {
