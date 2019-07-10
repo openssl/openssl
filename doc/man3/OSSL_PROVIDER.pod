@@ -4,7 +4,7 @@
 
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
 OSSL_PROVIDER_get_param_types, OSSL_PROVIDER_get_params,
-OSSL_PROVIDER_add_builtin - provider routines
+OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,8 @@ OSSL_PROVIDER_add_builtin - provider routines
 
  int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
                                ossl_provider_init_fn *init_fn);
+
+ const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov);
 
 =head1 DESCRIPTION
 
@@ -58,6 +60,8 @@ OSSL_PROVIDER_get_params() is used to get provider parameter values.
 The caller must prepare the B<OSSL_PARAM> array before calling this
 function, and the variables acting as buffers for this parameter array
 should be filled with data when it returns successfully.
+
+OSSL_PROVIDER_name() returns the name of the given provider.
 
 =head1 RETURN VALUES
 
