@@ -943,6 +943,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 {
     int ok;
+
     if (pad)
         ctx->flags &= ~EVP_CIPH_NO_PADDING;
     else
@@ -973,7 +974,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
                            evp_do_ciph_ctx_setparams, ctx->provctx);
         break;
     case EVP_CTRL_GET_IV:
-        ret = evp_do_param(ctx->cipher, &ptr, arg,
+        ret = evp_do_param(ctx->cipher, ptr, arg,
                            OSSL_CIPHER_PARAM_IV, OSSL_PARAM_OCTET_STRING,
                            evp_do_ciph_ctx_getparams, ctx->provctx);
         break;

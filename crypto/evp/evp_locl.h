@@ -115,16 +115,18 @@ int evp_do_ciph_ctx_getparams(const void *vciph, void *provctx,
                               OSSL_PARAM params[]);
 int evp_do_ciph_ctx_setparams(const void *vciph, void *provctx,
                               OSSL_PARAM params[]);
-/*
+
+/*-
  * prepares a singular parameter, then calls the callback to execute.
  *
- * method points to the method used by the callback.  EVP_CIPHER, EVP_MD, ...
- * ptr points at the data to transfer.
- * sz is the size of the data to transfer.
- * key is the name of the parameter to pass.
- * datatype is the data type of the parameter to pass.
- * cb is the callback that actually performs the parameter passing
- * cb_ctx is the cipher context
+ * |method|   points to the method used by the callback.
+ *            EVP_CIPHER, EVP_MD, ...
+ * |ptr|      points at the data to transfer.
+ * |sz|       is the size of the data to transfer.
+ * |key|      is the name of the parameter to pass.
+ * |datatype| is the data type of the parameter to pass.
+ * |cb|       is the callback that actually performs the parameter passing
+ * |cb_ctx|   is the cipher context
  */
 int evp_do_param(const void *method, void *ptr, size_t sz, const char *key,
                  int datatype,
