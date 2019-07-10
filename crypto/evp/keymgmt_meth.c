@@ -24,6 +24,7 @@ static void *keymgmt_new(void)
     if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL
         || (keymgmt->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -32,13 +33,16 @@ static void *keymgmt_new(void)
     return keymgmt;
 }
 
-static void *keymgmt_from_dispatch(const OSSL_DISPATCH *fns,
+static void *keymgmt_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
                                    OSSL_PROVIDER *prov)
 {
     EVP_KEYMGMT *keymgmt = NULL;
 
-    if ((keymgmt = keymgmt_new()) == NULL)
+    if ((keymgmt = keymgmt_new()) == NULL
+        || (keymgmt->name = OPENSSL_strdup(name)) == NULL) {
+        EVP_KEYMGMT_free(keymgmt);
         return NULL;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -178,6 +182,7 @@ void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
     if (ref > 0)
         return;
     ossl_provider_free(keymgmt->prov);
+    OPENSSL_free(keymgmt->name);
     CRYPTO_THREAD_lock_free(keymgmt->lock);
     OPENSSL_free(keymgmt);
 }

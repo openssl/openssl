@@ -40,7 +40,8 @@ struct method_data_st {
     OPENSSL_CTX *libctx;
     const char *name;
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
-    void *(*method_from_dispatch)(const OSSL_DISPATCH *, OSSL_PROVIDER *);
+    void *(*method_from_dispatch)(const char *, const OSSL_DISPATCH *,
+                                  OSSL_PROVIDER *);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
@@ -143,7 +144,7 @@ static void *construct_method(const char *name, const OSSL_DISPATCH *fns,
 {
     struct method_data_st *methdata = data;
 
-    return methdata->method_from_dispatch(fns, prov);
+    return methdata->method_from_dispatch(name, fns, prov);
 }
 
 static void destruct_method(void *method, void *data)
@@ -155,7 +156,8 @@ static void destruct_method(void *method, void *data)
 
 void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         const char *name, const char *properties,
-                        void *(*new_method)(const OSSL_DISPATCH *fns,
+                        void *(*new_method)(const char *name,
+                                            const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))

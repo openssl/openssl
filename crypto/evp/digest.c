@@ -577,15 +577,19 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     return 0;
 }
 
-static void *evp_md_from_dispatch(const OSSL_DISPATCH *fns,
+static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
                                   OSSL_PROVIDER *prov)
 {
     EVP_MD *md = NULL;
     int fncnt = 0;
 
     /* EVP_MD_fetch() will set the legacy NID if available */
-    if ((md = EVP_MD_meth_new(NID_undef, NID_undef)) == NULL)
+    if ((md = EVP_MD_meth_new(NID_undef, NID_undef)) == NULL
+        || (md->name = OPENSSL_strdup(name)) == NULL) {
+        EVP_MD_meth_free(md);
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
