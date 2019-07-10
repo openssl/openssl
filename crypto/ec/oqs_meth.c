@@ -92,6 +92,12 @@ static char* get_oqs_alg_name(int openssl_nid)
     case NID_qteslaIIIspeed:
     case NID_p384_qteslaIIIspeed:
       return OQS_SIG_alg_qTESLA_III_speed;
+    case NID_dilithium2:
+      return OQS_SIG_alg_dilithium_2;
+    case NID_dilithium3:
+      return OQS_SIG_alg_dilithium_3;
+    case NID_dilithium4:
+      return OQS_SIG_alg_dilithium_4;
     /* ADD_MORE_OQS_SIG_HERE */
     default:
       return NULL;
@@ -198,6 +204,12 @@ static int get_oqs_security_bits(int openssl_nid)
     case NID_qteslaIIIsize:
       return 192;
     case NID_qteslaIIIspeed:
+      return 192;
+    case NID_dilithium2:
+      return 128;
+    case NID_dilithium3:
+      return 128;
+    case NID_dilithium4:
       return 192;
     /* hybrid schemes */
     case NID_p256_picnicL1FS:
@@ -789,7 +801,10 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 	 nid != NID_qteslaIIIsize &&
 	 nid != NID_p384_qteslaIIIsize &&
 	 nid != NID_qteslaIIIspeed &&
-	 nid != NID_p384_qteslaIIIspeed
+	 nid != NID_p384_qteslaIIIspeed &&
+   nid != NID_dilithium2 &&
+   nid != NID_dilithium3 &&
+   nid != NID_dilithium4
 	 /* ADD_MORE_OQS_SIG_HERE */
 	 ) || ptype != V_ASN1_UNDEF) {
         ECerr(EC_F_OQS_ITEM_VERIFY, EC_R_UNKNOWN_NID);
@@ -1149,6 +1164,9 @@ DEFINE_OQS_EVP_METHODS(picnicL1FS, NID_picnicL1FS, "picnicL1FS", "OpenSSL Picnic
 DEFINE_OQS_EVP_METHODS(qteslaI, NID_qteslaI, "qteslaI", "OpenSSL qTESLA-I algorithm")
 DEFINE_OQS_EVP_METHODS(qteslaIIIsize, NID_qteslaIIIsize, "qteslaIIIsize", "OpenSSL qTESLA-III-size algorithm")
 DEFINE_OQS_EVP_METHODS(qteslaIIIspeed, NID_qteslaIIIspeed, "qteslaIIIspeed", "OpenSSL qTESLA-III-speed algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium2, NID_dilithium2, "dilithium2", "OpenSSL Dilithium-2 algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium3, NID_dilithium3, "dilithium3", "OpenSSL Dilithium-3 algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium4, NID_dilithium4, "dilithium4", "OpenSSL Dilithium-4 algorithm")
 /* ADD_MORE_OQS_SIG_HERE */
 /* hybrid schemes */
 DEFINE_OQS_EVP_METHODS(p256_picnicL1FS, NID_p256_picnicL1FS, "p256_picnicL1FS", "OpenSSL hybrid p256 Picnic L1 FS algorithm")

@@ -34,6 +34,9 @@ qteslaIIIsize       undef     qteslaIIIsize
 p384_qteslaIIIsize  undef     p384_qteslaIIIsize
 qteslaIIIspeed      undef     qteslaIIIspeed
 p384_qteslaIIIspeed undef     p384_qteslaIIIspeed
+dilithium2         undef     dilithium2
+dilithium3         undef     dilithium3
+dilithium4         undef     dilithium4
 # ADD_MORE_OQS_SIG_HERE
 
 

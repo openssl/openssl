@@ -5254,3 +5254,18 @@
 #define LN_p384_qteslaIIIspeed          "p384_qteslaIIIspeed"
 #define NID_p384_qteslaIIIspeed         1206
 #define OBJ_p384_qteslaIIIspeed         OBJ_MSRPQC,2L,7L
+
+#define SN_dilithium2           "dilithium2"
+#define LN_dilithium2           "dilithium2"
+#define NID_dilithium2          1207
+#define OBJ_dilithium2          1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,2L
+
+#define SN_dilithium3           "dilithium3"
+#define LN_dilithium3           "dilithium3"
+#define NID_dilithium3          1208
+#define OBJ_dilithium3          1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,3L
+
+#define SN_dilithium4           "dilithium4"
+#define LN_dilithium4           "dilithium4"
+#define NID_dilithium4          1209
+#define OBJ_dilithium4          1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,4L

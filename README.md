@@ -56,7 +56,7 @@ Note that some mechanisms from the nist-branch have been disabled in OpenSSL bec
 Authentication mechanisms are currently only enabled when using liboqs's master branch (due to the nist-branch's incompatible signature API). The following signature schemes from liboqs are supported (assuming they have been enabled in liboqs):
 
 - `picnicL1FS`
-- `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed` (not currently on Windows)
+- `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`, `dilithium2`, `dilithium3`, `dilithium4` (not currently on Windows) 
 
 The following hybrid schemes are supported, using either the NIST P-256 curve or 3072-bit RSA for L1 schemes, or the NIST P-384 curve for L3 schemes:
 
@@ -194,7 +194,7 @@ See the [liboqs documentation](https://github.com/open-quantum-safe/liboqs/) for
 
 OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) which can be used to demonstrate and test SSL/TLS connections.
 
-To run a server, you first need to generate a X.509 certificate, using either a classical (`rsa`), post-quantum (`picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`), or hybrid (`p256_picnicl1fs`, `rsa3072_picnicl1fs`, `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed`) algorithm. The server certificate can either be self-signed or part of a chain. In either case, you need to generate a self-signed root CA certificate using the following command, replacing `<SIGALG>` with one supported algorithm:
+To run a server, you first need to generate a X.509 certificate, using either a classical (`rsa`), post-quantum (`picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`, `dilithium2`, `dilithium3`, `dilithium4`), or hybrid (`p256_picnicl1fs`, `rsa3072_picnicl1fs`, `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed`) algorithm. The server certificate can either be self-signed or part of a chain. In either case, you need to generate a self-signed root CA certificate using the following command, replacing `<SIGALG>` with one supported algorithm:
 
 	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest CA" -days 365 -config apps/openssl.cnf
 
@@ -244,7 +244,7 @@ The TLS 1.3 key exchange integration is done at the TLS layer (start looking in 
 
 To add a new algorithm <NEWALG> with OID <NEWOID>:
 
-1. Define `<NEWOID>` in `crypto/objects/objects.txt`, add `<NEWALG>` to `crypto/objects/obj_mac.num`, incrementing the last NID value, and run `make generate_crypto_objects` to re-generate objects-related files (`obj_dat.h`, `obj_mac.num`, `obj_mac.h`)
+1. Define `<NEWOID>` in `crypto/objects/objects.txt` and `crypto/objects/obj_xref.txt`, add `<NEWALG>` to `crypto/objects/obj_mac.num`, incrementing the last NID value, and run `make generate_crypto_objects` to re-generate objects-related files (`obj_dat.h`, `obj_mac.num`, `obj_mac.h`)
 2. Run `grep -r ADD_MORE_OQS_SIG_HERE` and add new code following the example of other OQS schemes.
 
 License
@@ -262,12 +262,13 @@ The Open Quantum Safe project is led by [Douglas Stebila](https://www.douglas.st
 Contributors to open-quantum-safe/openssl branch OQS-OpenSSL\_1\_1\_1-stable include:
 
 - Christian Paquin (Microsoft Research)
+- Dimitris Sikeridis (University of New Mexico / Cisco Systems)
 - Douglas Stebila (University of Waterloo)
 
 ### Support
 
 Financial support for the development of Open Quantum Safe has been provided by Amazon Web Services and the Tutte Institute for Mathematics and Computing.  
 
-We'd like to make a special acknowledgement to the companies who have dedicated programmer time to contribute source code to OQS, including Amazon Web Services, evolutionQ, and Microsoft Research.  
+We'd like to make a special acknowledgement to the companies who have dedicated programmer time to contribute source code to OQS, including Amazon Web Services, Cisco Systems, evolutionQ, and Microsoft Research.  
 
 Research projects which developed specific components of OQS have been supported by various research grants, including funding from the Natural Sciences and Engineering Research Council of Canada (NSERC); see the source papers for funding acknowledgments.

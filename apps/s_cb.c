@@ -254,6 +254,12 @@ static const char *get_sigtype(int nid)
         return "qTESLA-III-size";
      case NID_qteslaIIIspeed:
         return "qTESLA-III-speed";
+     case NID_dilithium2:
+        return "Dilithium-2";
+     case NID_dilithium3:
+        return "Dilithium-3";
+     case NID_dilithium4:
+        return "Dilithium-4"; 
      /* ADD_MORE_OQS_SIG_HERE */
      case NID_p256_picnicL1FS:
         return "ECDSA p256 - Picnic L1 FS";

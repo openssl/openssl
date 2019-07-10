@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7888] = {
+static const unsigned char so[7921] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1088,9 +1088,12 @@ static const unsigned char so[7888] = {
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x05,  /* [ 7854] OBJ_p384_qteslaIIIsize */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x06,  /* [ 7865] OBJ_qteslaIIIspeed */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x07,  /* [ 7876] OBJ_p384_qteslaIIIspeed */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x02,  /* [ 7887] OBJ_dilithium2 */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x03,  /* [ 7898] OBJ_dilithium3 */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x04,  /* [ 7909] OBJ_dilithium4 */
 };
 
-#define NUM_NID 1207
+#define NUM_NID 1210
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2299,9 +2302,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"p384_qteslaIIIsize", "p384_qteslaIIIsize", NID_p384_qteslaIIIsize, 11, &so[7854]},
     {"qteslaIIIspeed", "qteslaIIIspeed", NID_qteslaIIIspeed, 11, &so[7865]},
     {"p384_qteslaIIIspeed", "p384_qteslaIIIspeed", NID_p384_qteslaIIIspeed, 11, &so[7876]},
+    {"dilithium2", "dilithium2", NID_dilithium2, 11, &so[7887]},
+    {"dilithium3", "dilithium3", NID_dilithium3, 11, &so[7898]},
+    {"dilithium4", "dilithium4", NID_dilithium4, 11, &so[7909]},
 };
 
-#define NUM_SN 1198
+#define NUM_SN 1201
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2708,6 +2714,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      939,    /* "dhSinglePass-stdDH-sha384kdf-scheme" */
      940,    /* "dhSinglePass-stdDH-sha512kdf-scheme" */
      920,    /* "dhpublicnumber" */
+    1207,    /* "dilithium2" */
+    1208,    /* "dilithium3" */
+    1209,    /* "dilithium4" */
      382,    /* "directory" */
      887,    /* "distinguishedName" */
      892,    /* "dmdName" */
@@ -3503,7 +3512,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1198
+#define NUM_LN 1201
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3939,6 +3948,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      938,    /* "dhSinglePass-stdDH-sha256kdf-scheme" */
      939,    /* "dhSinglePass-stdDH-sha384kdf-scheme" */
      940,    /* "dhSinglePass-stdDH-sha512kdf-scheme" */
+    1207,    /* "dilithium2" */
+    1208,    /* "dilithium3" */
+    1209,    /* "dilithium4" */
       11,    /* "directory services (X.500)" */
      378,    /* "directory services - algorithms" */
      887,    /* "distinguishedName" */
@@ -4705,7 +4717,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1083
+#define NUM_OBJ 1086
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5777,6 +5789,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1204,    /* OBJ_p384_qteslaIIIsize           1 3 6 1 4 1 311 89 2 2 5 */
     1205,    /* OBJ_qteslaIIIspeed               1 3 6 1 4 1 311 89 2 2 6 */
     1206,    /* OBJ_p384_qteslaIIIspeed          1 3 6 1 4 1 311 89 2 2 7 */
+    1207,    /* OBJ_dilithium2                   1 3 6 1 4 1 772 1 2 2 2 */
+    1208,    /* OBJ_dilithium3                   1 3 6 1 4 1 772 1 2 2 3 */
+    1209,    /* OBJ_dilithium4                   1 3 6 1 4 1 772 1 2 2 4 */
     1056,    /* OBJ_blake2b512                   1 3 6 1 4 1 1722 12 2 1 16 */
     1057,    /* OBJ_blake2s256                   1 3 6 1 4 1 1722 12 2 2 8 */
     1159,    /* OBJ_dstu4145be                   1 2 804 2 1 1 1 1 3 1 1 1 1 */

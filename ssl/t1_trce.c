@@ -644,6 +644,9 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_qteslaI, "qteslaI"},
     {TLSEXT_SIGALG_qteslaIIIsize, "qteslaIIIsize"},
     {TLSEXT_SIGALG_qteslaIIIspeed, "qteslaIIIspeed"},
+    {TLSEXT_SIGALG_dilithium2, "dilithium2"},
+    {TLSEXT_SIGALG_dilithium3, "dilithium3"},
+    {TLSEXT_SIGALG_dilithium4, "dilithium4"},
     /* ADD_MORE_OQS_SIG_HERE */
     /* OQS hybrid schemes */
     {TLSEXT_SIGALG_p256_picnicL1FS, "p256_picnicL1FS"},
