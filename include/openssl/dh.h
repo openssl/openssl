@@ -65,7 +65,7 @@ extern "C" {
 DECLARE_ASN1_ITEM(DHparams)
 
 # define DH_GENERATOR_2          2
-/* #define DH_GENERATOR_3       3 */
+# define DH_GENERATOR_3          3
 # define DH_GENERATOR_5          5
 
 /* DH_check error codes */

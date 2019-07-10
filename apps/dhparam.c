@@ -37,7 +37,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
-    OPT_DSAPARAM, OPT_C, OPT_2, OPT_5,
+    OPT_DSAPARAM, OPT_C, OPT_2, OPT_3, OPT_5,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -55,6 +55,7 @@ const OPTIONS dhparam_options[] = {
     OPT_R_OPTIONS,
     {"C", OPT_C, '-', "Print C code"},
     {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
+    {"3", OPT_3, '-', "Generate parameters using 3 as the generator value"},
     {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
 # ifndef OPENSSL_NO_DSA
     {"dsaparam", OPT_DSAPARAM, '-',
@@ -124,6 +125,9 @@ int dhparam_main(int argc, char **argv)
             break;
         case OPT_2:
             g = 2;
+            break;
+        case OPT_3:
+            g = 3;
             break;
         case OPT_5:
             g = 5;
