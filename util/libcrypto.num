@@ -4695,3 +4695,4 @@ EVP_MD_name                             4800	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_name                         4801	3_0_0	EXIST::FUNCTION:
 EVP_MD_provider                         4802	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_provider                     4803	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_name                      4804	3_0_0	EXIST::FUNCTION:

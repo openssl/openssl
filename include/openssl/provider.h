@@ -27,6 +27,9 @@ int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
 int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
                               OSSL_provider_init_fn *init_fn);
 
+/* Information */
+const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov);
+
 # ifdef __cplusplus
 }
 # endif
