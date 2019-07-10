@@ -59,7 +59,8 @@ IF[{- !$disabled{asm} && $config{processor} ne '386' -}]
 ENDIF
 
 # The Core
-$CORE_COMMON=provider_core.c provider_predefined.c core_fetch.c core_namemap.c
+$CORE_COMMON=provider_core.c provider_predefined.c \
+        core_fetch.c core_algorithm.c core_namemap.c
 
 SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c
 SOURCE[../providers/fips]=$CORE_COMMON

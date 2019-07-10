@@ -324,6 +324,9 @@ OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_dupctx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_params, (void *ctx,
                                                  OSSL_PARAM params[]))
 
+/* Highest known operation number */
+# define OSSL_OP__HIGHEST                            3
+
 # ifdef __cplusplus
 }
 # endif
