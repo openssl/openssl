@@ -2,13 +2,16 @@
 
 =head1 NAME
 
-evp_keymgmt_export_to_provider - key material exporter to providers for EVP
+evp_keymgmt_export_to_provider,
+evp_keymgmt_clear_pkey_cache
+- key material provider export for EVP
 
 =head1 SYNOPSIS
 
  #include "internal/evp_int.h"
 
  void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
+ void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
 
 =head1 DESCRIPTION
 
@@ -24,10 +27,13 @@ is_dirty() method returns 1.
 If it has, the cache of already exported keys is cleared, and a new
 export is made with the new key material.
 
+evp_keymgmt_clear_pkey_cache() can be used to explicitly clear the
+cache of provider key references.
+
 =head1 RETURN VALUES
 
-evp_keymgmt_export_to_provider() returns a pointer to the newly
-created provider side key, or NULL on error.
+evp_keymgmt_export_to_provider() returns a pointer to the appropriate
+provider side key (created or found again), or NULL on error.
 
 =head1 NOTES
 

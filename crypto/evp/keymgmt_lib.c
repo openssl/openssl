@@ -81,13 +81,7 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
             return NULL;
 
         if (pk->ameth->is_dirty(pk))
-            for (i = 0;
-                 i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
-                 i++) {
-                pk->pkeys[i].keymgmt->freekey(pk->pkeys[i].provkey);
-                pk->pkeys[i].keymgmt = NULL;
-                pk->pkeys[i].provkey = NULL;
-            }
+            evp_keymgmt_clear_pkey_cache(pk);
     }
 
     /*
@@ -188,4 +182,20 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         pk->pkeys[i].provkey = provkey;
     }
     return provkey;
+}
+
+void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
+{
+    size_t i;
+
+    if (pk != NULL) {
+        for (i = 0;
+             i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
+             i++) {
+            pk->pkeys[i].keymgmt->freekey(pk->pkeys[i].provkey);
+            EVP_KEYMGMT_free(pk->pkeys[i].keymgmt);
+            pk->pkeys[i].keymgmt = NULL;
+            pk->pkeys[i].provkey = NULL;
+        }
+    }
 }

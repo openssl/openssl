@@ -555,8 +555,9 @@ void openssl_add_all_kdfs_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 
+/* KEYMGMT helper functions */
 void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
-
+void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
 
 /* Pulling defines out of C source files */
 
