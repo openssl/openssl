@@ -96,66 +96,37 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *));
 
-/* Helper macros to avoid duplicating code */
-#define getparams(_ciph,_ptr,_sz,_key,_datatype,_statvar,_fn,_args)     \
-    do {                                                                \
-        _statvar = -2;                                                  \
-        if ((_ciph) != NULL && (_ciph)->prov != NULL) {                 \
-            OSSL_PARAM params[2] = {                                    \
-                { _key, OSSL_PARAM_##_datatype, NULL, 0, 0 },           \
-                OSSL_PARAM_END                                          \
-            };                                                          \
-                                                                        \
-            params[0].data = _ptr;                                      \
-            params[0].data_size = _sz;                                  \
-                                                                        \
-            if (_fn == NULL) {                                          \
-                EVPerr(0, EVP_R_CTRL_NOT_IMPLEMENTED);                  \
-                _statvar = 0;                                           \
-                break;                                                  \
-            }                                                           \
-                                                                        \
-            if (!_fn _args) {                                           \
-                /* fn is expected to set errors */                      \
-                _statvar = 0;                                           \
-                break;                                                  \
-            }                                                           \
-        }                                                               \
-    } while(0)
+/* Helper functions to avoid duplicating code */
 
-#define ciph_getparams(ciph,ptr,sz,key,datatype,statvar)                \
-    getparams(ciph,ptr,sz,key,datatype,statvar,ciph->get_params,(params))
-#define ctx_getparams(ctx,ptr,sz,key,datatype,statvar)                  \
-    getparams(ctx->cipher,ptr,sz,key,datatype,statvar,                  \
-              ctx->cipher->ctx_get_params,(ctx->provctx, params))
-
-#define setparams(_ciph,_ptr,_sz,_key,_datatype,_statvar,_fn,_args)     \
-    do {                                                                \
-        _statvar = -2;                                                  \
-        if ((_ciph) != NULL && (_ciph)->prov != NULL) {                 \
-            OSSL_PARAM params[2] = {                                    \
-                { _key, OSSL_PARAM_##_datatype, NULL, 0, 0 },            \
-                OSSL_PARAM_END                                          \
-            };                                                          \
-                                                                        \
-            params[0].data = _ptr;                                      \
-            params[0].data_size = _sz;                                  \
-                                                                        \
-            if (_fn == NULL) {                                          \
-                EVPerr(0, EVP_R_CTRL_NOT_IMPLEMENTED);                  \
-                _statvar = 0;                                           \
-                break;                                                  \
-            }                                                           \
-                                                                        \
-            if (!_fn _args) {                                           \
-                /* fn is expected to set errors */                      \
-                _statvar = 0;                                           \
-                break;                                                  \
-            }                                                           \
-            _statvar = 1;                                               \
-        }                                                               \
-    } while(0)
-
-#define ctx_setparams(ctx,ptr,sz,key,datatype,statvar)                  \
-    setparams(ctx->cipher,ptr,sz,key,datatype,statvar,                  \
-              ctx->cipher->ctx_set_params,(ctx->provctx, params))
+/*
+ * The callbacks implement different ways to pass a params array to the
+ * provider.  They will return one of these values:
+ *
+ * -2 if the method doesn't come from a provider
+ *    (evp_do_param will return this to the called)
+ * -1 if the provider doesn't offer the desired function
+ *    (evp_do_param will raise an error and return 0)
+ * or the return value from the desired function
+ *    (evp_do_param will return it to the caller)
+ */
+int evp_do_ciph_getparams(const void *vciph, void *ignored,
+                          OSSL_PARAM params[]);
+int evp_do_ciph_ctx_getparams(const void *vciph, void *provctx,
+                              OSSL_PARAM params[]);
+int evp_do_ciph_ctx_setparams(const void *vciph, void *provctx,
+                              OSSL_PARAM params[]);
+/*
+ * prepares a singular parameter, then calls the callback to execute.
+ *
+ * method points to the method used by the callback.  EVP_CIPHER, EVP_MD, ...
+ * ptr points at the data to transfer.
+ * sz is the size of the data to transfer.
+ * key is the name of the parameter to pass.
+ * datatype is the data type of the parameter to pass.
+ * cb is the callback that actually performs the parameter passing
+ * cb_ctx is the cipher context
+ */
+int evp_do_param(const void *method, void *ptr, size_t sz, const char *key,
+                 int datatype,
+                 int (*cb)(const void *method, void *ctx, OSSL_PARAM params[]),
+                 void *cb_ctx);

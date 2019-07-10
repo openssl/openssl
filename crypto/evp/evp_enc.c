@@ -920,9 +920,10 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
-    int ok;
-    ctx_setparams(c, &keylen, sizeof(keylen), OSSL_CIPHER_PARAM_KEYLEN,
-                  INTEGER, ok);
+    int ok = evp_do_param(c->cipher, &keylen, sizeof(keylen),
+                          OSSL_CIPHER_PARAM_KEYLEN, OSSL_PARAM_INTEGER,
+                          evp_do_ciph_ctx_setparams, c->provctx);
+
     if (ok != -2)
         return ok;
 
@@ -947,9 +948,10 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
     else
         ctx->flags |= EVP_CIPH_NO_PADDING;
 
-    ctx_setparams(ctx, &pad, sizeof(pad), OSSL_CIPHER_PARAM_PADDING,
-                  INTEGER, ok);
-    return ok == 1 ? 1 : 0;
+    ok = evp_do_param(ctx->cipher, &pad, sizeof(pad),
+                      OSSL_CIPHER_PARAM_PADDING, OSSL_PARAM_INTEGER,
+                      evp_do_ciph_ctx_setparams, ctx->provctx);
+    return ok != 0 ? 1 : 0;
 }
 
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
@@ -966,11 +968,14 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_SET_KEY_LENGTH:
-        ctx_setparams(ctx, &arg, sizeof(arg), OSSL_CIPHER_PARAM_KEYLEN,
-                      INTEGER, ret);
+        ret = evp_do_param(ctx->cipher, &arg, sizeof(arg),
+                           OSSL_CIPHER_PARAM_KEYLEN, OSSL_PARAM_INTEGER,
+                           evp_do_ciph_ctx_setparams, ctx->provctx);
         break;
     case EVP_CTRL_GET_IV:
-        ctx_getparams(ctx, ptr, arg, OSSL_CIPHER_PARAM_IV, OCTET_STRING, ret);
+        ret = evp_do_param(ctx->cipher, &ptr, arg,
+                           OSSL_CIPHER_PARAM_IV, OSSL_PARAM_OCTET_STRING,
+                           evp_do_ciph_ctx_getparams, ctx->provctx);
         break;
     case EVP_CTRL_RAND_KEY:      /* Used by DES */
     case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
