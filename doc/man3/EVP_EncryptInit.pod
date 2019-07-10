@@ -27,6 +27,7 @@ EVP_get_cipherbyname,
 EVP_get_cipherbynid,
 EVP_get_cipherbyobj,
 EVP_CIPHER_name,
+EVP_CIPHER_provider,
 EVP_CIPHER_nid,
 EVP_CIPHER_block_size,
 EVP_CIPHER_key_length,
@@ -104,6 +105,7 @@ EVP_enc_null
 
  int EVP_CIPHER_nid(const EVP_CIPHER *e);
  const char *EVP_CIPHER_name(const EVP_CIPHER *cipher);
+ const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
  int EVP_CIPHER_block_size(const EVP_CIPHER *e);
  int EVP_CIPHER_key_length(const EVP_CIPHER *e);
  int EVP_CIPHER_iv_length(const EVP_CIPHER *e);
@@ -261,6 +263,9 @@ B<NID_undef>.
 
 EVP_CIPHER_name() and EVP_CIPHER_CTX_name() return the name of the passed
 cipher or context.
+
+EVP_CIPHER_provider() returns an B<OSSL_PROVIDER> pointer to the provider
+that implements the given B<EVP_CIPHER>.
 
 EVP_CIPHER_CTX_cipher() returns the B<EVP_CIPHER> structure when passed
 an B<EVP_CIPHER_CTX> structure.

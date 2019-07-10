@@ -450,6 +450,7 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 int EVP_MD_type(const EVP_MD *md);
 # define EVP_MD_nid(e)                   EVP_MD_type(e)
 const char *EVP_MD_name(const EVP_MD *md);
+const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md);
 int EVP_MD_pkey_type(const EVP_MD *md);
 int EVP_MD_size(const EVP_MD *md);
 int EVP_MD_block_size(const EVP_MD *md);
@@ -471,6 +472,7 @@ void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
 
 int EVP_CIPHER_nid(const EVP_CIPHER *cipher);
 const char *EVP_CIPHER_name(const EVP_CIPHER *cipher);
+const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
 int EVP_CIPHER_block_size(const EVP_CIPHER *cipher);
 int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *cipher);
 int EVP_CIPHER_key_length(const EVP_CIPHER *cipher);
