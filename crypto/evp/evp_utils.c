@@ -59,11 +59,13 @@ int evp_do_param(const void *method, void *ptr, size_t sz, const char *key,
                  void *cb_ctx)
 {
     OSSL_PARAM params[2] = {
-        { key, datatype, NULL, 0, 0 },
+        OSSL_PARAM_END,
         OSSL_PARAM_END
     };
     int ret;
 
+    params[0].key = key;
+    params[0].data_type = datatype;
     params[0].data = ptr;
     params[0].data_size = sz;
 
