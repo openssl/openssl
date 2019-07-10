@@ -4691,3 +4691,5 @@ EVP_KEYMGMT_free                        4796	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_provider                    4797	3_0_0	EXIST::FUNCTION:
 X509_PUBKEY_dup                         4798	3_0_0	EXIST::FUNCTION:
 ERR_put_func_error                      4799	3_0_0	EXIST::FUNCTION:
+EVP_MD_name                             4800	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_name                         4801	3_0_0	EXIST::FUNCTION:

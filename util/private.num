@@ -201,6 +201,7 @@ EVP_DigestVerifyUpdate                  define
 EVP_KDF_name                            define
 EVP_MAC_name                            define
 EVP_MD_CTX_block_size                   define
+EVP_MD_CTX_name                         define
 EVP_MD_CTX_size                         define
 EVP_MD_CTX_type                         define
 EVP_OpenUpdate                          define
