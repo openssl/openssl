@@ -27,11 +27,11 @@ $OPENSSLSRC={-
           pkcs8.c pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c rsa.c
           rsautl.c s_client.c s_server.c s_time.c sess_id.c smime.c speed.c
           spkac.c srp.c ts.c verify.c version.c x509.c rehash.c storeutl.c
-          info.c);
+          list.c info.c);
    join(' ', @opensslsrc); -}
 # Source for libapps
 $LIBAPPSSRC=apps.c apps_ui.c opt.c fmt.c s_cb.c s_socket.c app_rand.c \
-        bf_prefix.c
+        bf_prefix.c columns.c
 
 IF[{- !$disabled{apps} -}]
   LIBS{noinst}=libapps.a
