@@ -28,31 +28,20 @@ plan tests => 10;
 my $libcrypto = platform->sharedlib('libcrypto');
 my $libssl = platform->sharedlib('libssl');
 
-(my $fh, my $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -crypto_first $filename");
-ok(check_atexit($fh));
-unlink $filename;
-($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-ssl_first", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -ssl_first $filename");
-ok(check_atexit($fh));
-unlink $filename;
-($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -just_crypto $filename");
-ok(check_atexit($fh));
-unlink $filename;
-($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -dso_ref $filename");
-ok(check_atexit($fh));
-unlink $filename;
-($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-no_atexit", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -no_atexit $filename");
-ok(!check_atexit($fh));
-unlink $filename;
+sub run_shlibloadtest {
+    (my $fh, my $filename) = tempfile();
+    ok(run(test(["shlibloadtest", @_, $libcrypto, $libssl, $filename])),
+       join(' ', ("running shlibloadtest", @_,"$filename")));
+    ok(check_atexit($fh));
+    unlink $filename;
+}
+
+# Each run_shlibloadtest runs two tests
+run_shlibloadtest("-crypto_first");
+run_shlibloadtest("-ssl_first");
+run_shlibloadtest("-just_crypto");
+run_shlibloadtest("-dso_ref");
+run_shlibloadtest("-no_atexit");
 
 sub check_atexit {
     my $fh = shift;
