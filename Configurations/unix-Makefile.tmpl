@@ -742,6 +742,10 @@ lint:
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
+	( b=`pwd`; cd $(SRCDIR); \
+	  $(PERL) -I$$b apps/progs.pl -H $(APPS_OPENSSL) > apps/progs.h )
+	( b=`pwd`; cd $(SRCDIR); \
+	  $(PERL) -I$$b apps/progs.pl -C $(APPS_OPENSSL) > apps/progs.c )
 
 generate_crypto_bn:
 	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )

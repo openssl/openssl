@@ -20,7 +20,7 @@ ENDIF
 # We need the perl variable for the DEPEND generator further down.
 $OPENSSLSRC={-
    our @opensslsrc =
-       qw(openssl.c
+       qw(openssl.c progs.c
           asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c
           dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c gendsa.c
           genpkey.c genrsa.c kdf.c mac.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c
@@ -47,11 +47,6 @@ IF[{- !$disabled{apps} -}]
     GENERATE[openssl.rc]=../util/mkrc.pl openssl
     SOURCE[openssl]=openssl.rc
   ENDIF
-
-  {- join("\n  ", map { (my $x = $_) =~ s|\.c$|.o|; "DEPEND[$x]=progs.h" }
-                  @opensslsrc) -}
-  GENERATE[progs.h]=progs.pl $(APPS_OPENSSL)
-  DEPEND[progs.h]=../configdata.pm
 
   SCRIPTS{misc}=CA.pl
   SOURCE[CA.pl]=CA.pl.in

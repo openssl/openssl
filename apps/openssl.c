@@ -29,7 +29,6 @@
 # include <unixio.h>
 #endif
 #include "apps.h"
-#define INCLUDE_FUNCTION_TABLE
 #include "progs.h"
 
 /* Structure to hold the number of columns to be displayed and the
