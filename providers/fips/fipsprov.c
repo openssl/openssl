@@ -285,6 +285,22 @@ const char *ossl_prov_util_nid_to_name(int nid)
         return "id-aes192-CCM";
     case NID_aes_128_ccm:
         return "id-aes128-CCM";
+    case NID_id_aes256_wrap:
+        return "id-aes256-wrap";
+    case NID_id_aes192_wrap:
+        return "id-aes192-wrap";
+    case NID_id_aes128_wrap:
+        return "id-aes128-wrap";
+    case NID_id_aes256_wrap_pad:
+        return "id-aes256-wrap-pad";
+    case NID_id_aes192_wrap_pad:
+        return "id-aes192-wrap-pad";
+    case NID_id_aes128_wrap_pad:
+        return "id-aes128-wrap-pad";
+    case NID_des_ede3_ecb:
+        return "DES-EDE3";
+    case NID_des_ede3_cbc:
+        return "DES-EDE3-CBC";
     default:
         break;
     }
@@ -306,7 +322,7 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { "SHA3-512", "fips=yes", sha3_512_functions },
     /*
      * KECCAK_KMAC128 and KECCAK_KMAC256 as hashes are mostly useful for
-     * the KMAC128 and KMAC256.
+     * KMAC128 and KMAC256.
      */
     { "KECCAK_KMAC128", "fips=yes", keccak_kmac_128_functions },
     { "KECCAK_KMAC256", "fips=yes", keccak_kmac_256_functions },
@@ -333,6 +349,12 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
     { "id-aes256-CCM", "fips=yes", aes256ccm_functions },
     { "id-aes192-CCM", "fips=yes", aes192ccm_functions },
     { "id-aes128-CCM", "fips=yes", aes128ccm_functions },
+    { "id-aes256-wrap", "fips=yes", aes256wrap_functions },
+    { "id-aes192-wrap", "fips=yes", aes192wrap_functions },
+    { "id-aes128-wrap", "fips=yes", aes128wrap_functions },
+    { "id-aes256-wrap-pad", "fips=yes", aes256wrappad_functions },
+    { "id-aes192-wrap-pad", "fips=yes", aes192wrappad_functions },
+    { "id-aes128-wrap-pad", "fips=yes", aes128wrappad_functions },
 #ifndef OPENSSL_NO_DES
     { "DES-EDE3", "fips=yes", tdes_ede3_ecb_functions },
     { "DES-EDE3-CBC", "fips=yes", tdes_ede3_cbc_functions },
