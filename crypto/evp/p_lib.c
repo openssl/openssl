@@ -613,6 +613,9 @@ void EVP_PKEY_free(EVP_PKEY *x)
 static void EVP_PKEY_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
+
+    evp_keymgmt_clear_pkey_cache(x);
+
     if (x->ameth && x->ameth->pkey_free) {
         x->ameth->pkey_free(x);
         x->pkey.ptr = NULL;
