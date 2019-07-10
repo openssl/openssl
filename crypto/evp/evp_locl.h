@@ -65,7 +65,7 @@ struct evp_kdf_ctx_st {
 struct evp_keymgmt_st {
     int id;                      /* libcrypto internal */
 
-    const char *name;
+    char *name;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -89,6 +89,7 @@ struct evp_keymgmt_st {
 } /* EVP_KEYMGMT */ ;
 
 struct evp_keyexch_st {
+    char *name;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -133,7 +134,8 @@ int is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 
 void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
                         const char *algorithm, const char *properties,
-                        void *(*new_method)(const OSSL_DISPATCH *fns,
+                        void *(*new_method)(const char *name,
+                                            const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *));

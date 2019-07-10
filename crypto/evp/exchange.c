@@ -31,7 +31,8 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     return exchange;
 }
 
-static void *evp_keyexch_from_dispatch(const OSSL_DISPATCH *fns,
+static void *evp_keyexch_from_dispatch(const char *name,
+                                       const OSSL_DISPATCH *fns,
                                        OSSL_PROVIDER *prov)
 {
     EVP_KEYEXCH *exchange = NULL;
@@ -39,6 +40,8 @@ static void *evp_keyexch_from_dispatch(const OSSL_DISPATCH *fns,
 
     if ((exchange = evp_keyexch_new(prov)) == NULL)
         return NULL;
+
+    exchange->name = OPENSSL_strdup(name);
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -108,6 +111,7 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
         if (i > 0)
             return;
         ossl_provider_free(exchange->prov);
+        OPENSSL_free(exchange->name);
         CRYPTO_THREAD_lock_free(exchange->lock);
         OPENSSL_free(exchange);
     }

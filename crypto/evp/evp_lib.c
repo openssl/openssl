@@ -513,6 +513,7 @@ void EVP_MD_meth_free(EVP_MD *md)
         if (i > 0)
             return;
         ossl_provider_free(md->prov);
+        OPENSSL_free(md->name);
         CRYPTO_THREAD_lock_free(md->lock);
         OPENSSL_free(md);
     }

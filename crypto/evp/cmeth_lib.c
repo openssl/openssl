@@ -55,6 +55,7 @@ void EVP_CIPHER_meth_free(EVP_CIPHER *cipher)
         if (i > 0)
             return;
         ossl_provider_free(cipher->prov);
+        OPENSSL_free(cipher->name);
         CRYPTO_THREAD_lock_free(cipher->lock);
         OPENSSL_free(cipher);
     }
