@@ -952,7 +952,7 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
     ok = evp_do_param(ctx->cipher, &pad, sizeof(pad),
                       OSSL_CIPHER_PARAM_PADDING, OSSL_PARAM_INTEGER,
                       evp_do_ciph_ctx_setparams, ctx->provctx);
-    return ok != 0 ? 1 : 0;
+    return ok != 0;
 }
 
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
