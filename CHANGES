@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) {CRYPTO,OPENSSL}_mem_debug_{push,pop} are now no-ops and have been
+     deprecated.
+     [Rich Salz]
+
   *) A new type, EVP_KEYEXCH, has been introduced to represent key exchange
      algorithms. An implementation of a key exchange algorithm can be obtained
      by using the function EVP_KEYEXCH_fetch(). An EVP_KEYEXCH algorithm can be
@@ -22,7 +26,6 @@
 
   *) Removed the function names from error messages and deprecated the
      xxx_F_xxx define's.
-     [Rich Salz]
 
   *) Removed NextStep support and the macro OPENSSL_UNISTD
      [Rich Salz]

@@ -310,12 +310,14 @@ size_t CRYPTO_secure_used(void);
 void OPENSSL_cleanse(void *ptr, size_t len);
 
 # ifndef OPENSSL_NO_CRYPTO_MDEBUG
-#  define OPENSSL_mem_debug_push(info) \
+#  if !OPENSSL_API_3
+#   define OPENSSL_mem_debug_push(info) \
         CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
-#  define OPENSSL_mem_debug_pop() \
+#   define OPENSSL_mem_debug_pop() \
         CRYPTO_mem_debug_pop()
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
 int CRYPTO_mem_debug_pop(void);
+#  endif 
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 
 /*-

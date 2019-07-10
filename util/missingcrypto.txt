@@ -300,6 +300,8 @@ CRYPTO_gcm128_tag
 CRYPTO_mem_debug_free
 CRYPTO_mem_debug_malloc
 CRYPTO_mem_debug_realloc
+CRYPTO_mem_debug_pop
+CRYPTO_mem_debug_push
 CRYPTO_memdup
 CRYPTO_nistcts128_decrypt
 CRYPTO_nistcts128_decrypt_block
