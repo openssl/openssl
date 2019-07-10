@@ -352,37 +352,29 @@ static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[])
     OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
-    if (p != NULL) {
-        if (!OSSL_PARAM_set_int(p, ctx->pad)) {
-            PROVerr(PROV_F_AES_CTX_GET_PARAMS,
-                    PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
+    if (p != NULL && !OSSL_PARAM_set_int(p, ctx->pad)) {
+        PROVerr(PROV_F_AES_CTX_GET_PARAMS, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
-    if (p != NULL) {
-        if (!OSSL_PARAM_set_octet_ptr(p, &ctx->iv, AES_BLOCK_SIZE)
-            && !OSSL_PARAM_set_octet_string(p, &ctx->iv, AES_BLOCK_SIZE)) {
-            PROVerr(PROV_F_AES_CTX_GET_PARAMS,
-                    PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, AES_BLOCK_SIZE)
+        && !OSSL_PARAM_set_octet_string(p, &ctx->iv, AES_BLOCK_SIZE)) {
+        PROVerr(PROV_F_AES_CTX_GET_PARAMS,
+                PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_NUM);
-    if (p != NULL) {
-        if (!OSSL_PARAM_set_size_t(p, ctx->num)) {
-            PROVerr(PROV_F_AES_CTX_GET_PARAMS,
-                    PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->num)) {
+        PROVerr(PROV_F_AES_CTX_GET_PARAMS,
+                PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL) {
-        if (!OSSL_PARAM_set_int(p, ctx->keylen)) {
-            PROVerr(PROV_F_AES_CTX_GET_PARAMS,
-                    PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
+    if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
+        PROVerr(PROV_F_AES_CTX_GET_PARAMS,
+                PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
     }
 
     return 1;
