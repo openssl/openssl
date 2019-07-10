@@ -9,6 +9,12 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Changed DH parameters to generate the order q subgroup instead of 2q.
+     Previously generated DH parameters are still accepted by DH_check
+     but DH_generate_key works around that by clearing bit 0 of the
+     private key for those. This avoids leaking bit 0 of the private key.
+     [Bernd Edlinger]
+
   *) Added a new FUNCerr() macro that takes a function name.
      The macro SYSerr() is deprecated.
      [Rich Salz]
