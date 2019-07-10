@@ -426,6 +426,11 @@ const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 #endif
 }
 
+const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher)
+{
+    return cipher->prov;
+}
+
 int EVP_CIPHER_mode(const EVP_CIPHER *cipher)
 {
     int ok, v = EVP_CIPHER_flags(cipher) & EVP_CIPH_MODE;
@@ -446,6 +451,11 @@ const char *EVP_MD_name(const EVP_MD *md)
 #else
     return NULL;
 #endif
+}
+
+const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md)
+{
+    return md->prov;
 }
 
 int EVP_MD_block_size(const EVP_MD *md)
