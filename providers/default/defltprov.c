@@ -128,6 +128,12 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "id-aes256-CCM", "default=yes", aes256ccm_functions },
     { "id-aes192-CCM", "default=yes", aes192ccm_functions },
     { "id-aes128-CCM", "default=yes", aes128ccm_functions },
+    { "id-aes256-wrap", "default=yes", aes256wrap_functions },
+    { "id-aes192-wrap", "default=yes", aes192wrap_functions },
+    { "id-aes128-wrap", "default=yes", aes128wrap_functions },
+    { "id-aes256-wrap-pad", "default=yes", aes256wrappad_functions },
+    { "id-aes192-wrap-pad", "default=yes", aes192wrappad_functions },
+    { "id-aes128-wrap-pad", "default=yes", aes128wrappad_functions },
 #ifndef OPENSSL_NO_ARIA
     { "ARIA-256-GCM", "default=yes", aria256gcm_functions },
     { "ARIA-192-GCM", "default=yes", aria192gcm_functions },
