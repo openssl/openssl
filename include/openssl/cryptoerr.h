@@ -11,9 +11,9 @@
 #ifndef HEADER_CRYPTOERR_H
 # define HEADER_CRYPTOERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,42 +23,44 @@ int ERR_load_CRYPTO_strings(void);
 /*
  * CRYPTO function codes.
  */
-# define CRYPTO_F_CMAC_CTX_NEW                            120
-# define CRYPTO_F_CRYPTO_DUP_EX_DATA                      110
-# define CRYPTO_F_CRYPTO_FREE_EX_DATA                     111
-# define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 100
-# define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX              141
-# define CRYPTO_F_CRYPTO_MEMDUP                           115
-# define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112
-# define CRYPTO_F_CRYPTO_NEW_EX_DATA_EX                   142
-# define CRYPTO_F_CRYPTO_OCB128_COPY_CTX                  121
-# define CRYPTO_F_CRYPTO_OCB128_INIT                      122
-# define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
-# define CRYPTO_F_FIPS_MODE_SET                           109
-# define CRYPTO_F_GET_AND_LOCK                            113
-# define CRYPTO_F_GET_PROVIDER_STORE                      133
-# define CRYPTO_F_OPENSSL_ATEXIT                          114
-# define CRYPTO_F_OPENSSL_BUF2HEXSTR                      117
-# define CRYPTO_F_OPENSSL_FOPEN                           119
-# define CRYPTO_F_OPENSSL_HEXSTR2BUF                      118
-# define CRYPTO_F_OPENSSL_INIT_CRYPTO                     116
-# define CRYPTO_F_OPENSSL_LH_NEW                          126
-# define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    127
-# define CRYPTO_F_OPENSSL_SK_DUP                          128
-# define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  130
-# define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               132
-# define CRYPTO_F_OSSL_PROVIDER_ADD_PARAMETER             139
-# define CRYPTO_F_OSSL_PROVIDER_NEW                       131
-# define CRYPTO_F_OSSL_PROVIDER_SET_MODULE_PATH           140
-# define CRYPTO_F_PKEY_HMAC_INIT                          123
-# define CRYPTO_F_PKEY_POLY1305_INIT                      124
-# define CRYPTO_F_PKEY_SIPHASH_INIT                       125
-# define CRYPTO_F_PROVIDER_ACTIVATE                       134
-# define CRYPTO_F_PROVIDER_CONF_INIT                      137
-# define CRYPTO_F_PROVIDER_CONF_LOAD                      138
-# define CRYPTO_F_PROVIDER_NEW                            135
-# define CRYPTO_F_PROVIDER_STORE_NEW                      136
-# define CRYPTO_F_SK_RESERVE                              129
+# if !OPENSSL_API_3
+#  define CRYPTO_F_CMAC_CTX_NEW                            0
+#  define CRYPTO_F_CRYPTO_DUP_EX_DATA                      0
+#  define CRYPTO_F_CRYPTO_FREE_EX_DATA                     0
+#  define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 0
+#  define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX              0
+#  define CRYPTO_F_CRYPTO_MEMDUP                           0
+#  define CRYPTO_F_CRYPTO_NEW_EX_DATA                      0
+#  define CRYPTO_F_CRYPTO_NEW_EX_DATA_EX                   0
+#  define CRYPTO_F_CRYPTO_OCB128_COPY_CTX                  0
+#  define CRYPTO_F_CRYPTO_OCB128_INIT                      0
+#  define CRYPTO_F_CRYPTO_SET_EX_DATA                      0
+#  define CRYPTO_F_FIPS_MODE_SET                           0
+#  define CRYPTO_F_GET_AND_LOCK                            0
+#  define CRYPTO_F_GET_PROVIDER_STORE                      0
+#  define CRYPTO_F_OPENSSL_ATEXIT                          0
+#  define CRYPTO_F_OPENSSL_BUF2HEXSTR                      0
+#  define CRYPTO_F_OPENSSL_FOPEN                           0
+#  define CRYPTO_F_OPENSSL_HEXSTR2BUF                      0
+#  define CRYPTO_F_OPENSSL_INIT_CRYPTO                     0
+#  define CRYPTO_F_OPENSSL_LH_NEW                          0
+#  define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    0
+#  define CRYPTO_F_OPENSSL_SK_DUP                          0
+#  define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  0
+#  define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               0
+#  define CRYPTO_F_OSSL_PROVIDER_ADD_PARAMETER             0
+#  define CRYPTO_F_OSSL_PROVIDER_NEW                       0
+#  define CRYPTO_F_OSSL_PROVIDER_SET_MODULE_PATH           0
+#  define CRYPTO_F_PKEY_HMAC_INIT                          0
+#  define CRYPTO_F_PKEY_POLY1305_INIT                      0
+#  define CRYPTO_F_PKEY_SIPHASH_INIT                       0
+#  define CRYPTO_F_PROVIDER_ACTIVATE                       0
+#  define CRYPTO_F_PROVIDER_CONF_INIT                      0
+#  define CRYPTO_F_PROVIDER_CONF_LOAD                      0
+#  define CRYPTO_F_PROVIDER_NEW                            0
+#  define CRYPTO_F_PROVIDER_STORE_NEW                      0
+#  define CRYPTO_F_SK_RESERVE                              0
+# endif
 
 /*
  * CRYPTO reason codes.

@@ -13,10 +13,6 @@
 
 #ifndef OPENSSL_NO_ERR
 
-static const ERR_STRING_DATA CMP_str_functs[] = {
-    {0, NULL}
-};
-
 static const ERR_STRING_DATA CMP_str_reasons[] = {
     {0, NULL}
 };
@@ -26,10 +22,8 @@ static const ERR_STRING_DATA CMP_str_reasons[] = {
 int ERR_load_CMP_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(CMP_str_functs[0].error) == NULL) {
-        ERR_load_strings_const(CMP_str_functs);
+    if (ERR_func_error_string(CMP_str_reasons[0].error) == NULL)
         ERR_load_strings_const(CMP_str_reasons);
-    }
 #endif
     return 1;
 }

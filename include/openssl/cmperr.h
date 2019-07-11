@@ -12,6 +12,10 @@
 # define HEADER_CMPERR_H
 
 # include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
+
+# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_CMP
 
@@ -23,6 +27,8 @@ int ERR_load_CMP_strings(void);
 /*
  * CMP function codes.
  */
+# if !OPENSSL_API_3
+# endif
 
 /*
  * CMP reason codes.

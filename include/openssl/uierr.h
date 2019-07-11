@@ -11,9 +11,9 @@
 #ifndef HEADER_UIERR_H
 # define HEADER_UIERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,27 +23,29 @@ int ERR_load_UI_strings(void);
 /*
  * UI function codes.
  */
-# define UI_F_CLOSE_CONSOLE                               115
-# define UI_F_ECHO_CONSOLE                                116
-# define UI_F_GENERAL_ALLOCATE_BOOLEAN                    108
-# define UI_F_GENERAL_ALLOCATE_PROMPT                     109
-# define UI_F_NOECHO_CONSOLE                              117
-# define UI_F_OPEN_CONSOLE                                114
-# define UI_F_UI_CONSTRUCT_PROMPT                         121
-# define UI_F_UI_CREATE_METHOD                            112
-# define UI_F_UI_CTRL                                     111
-# define UI_F_UI_DUP_ERROR_STRING                         101
-# define UI_F_UI_DUP_INFO_STRING                          102
-# define UI_F_UI_DUP_INPUT_BOOLEAN                        110
-# define UI_F_UI_DUP_INPUT_STRING                         103
-# define UI_F_UI_DUP_USER_DATA                            118
-# define UI_F_UI_DUP_VERIFY_STRING                        106
-# define UI_F_UI_GET0_RESULT                              107
-# define UI_F_UI_GET_RESULT_LENGTH                        119
-# define UI_F_UI_NEW_METHOD                               104
-# define UI_F_UI_PROCESS                                  113
-# define UI_F_UI_SET_RESULT                               105
-# define UI_F_UI_SET_RESULT_EX                            120
+# if !OPENSSL_API_3
+#  define UI_F_CLOSE_CONSOLE                               0
+#  define UI_F_ECHO_CONSOLE                                0
+#  define UI_F_GENERAL_ALLOCATE_BOOLEAN                    0
+#  define UI_F_GENERAL_ALLOCATE_PROMPT                     0
+#  define UI_F_NOECHO_CONSOLE                              0
+#  define UI_F_OPEN_CONSOLE                                0
+#  define UI_F_UI_CONSTRUCT_PROMPT                         0
+#  define UI_F_UI_CREATE_METHOD                            0
+#  define UI_F_UI_CTRL                                     0
+#  define UI_F_UI_DUP_ERROR_STRING                         0
+#  define UI_F_UI_DUP_INFO_STRING                          0
+#  define UI_F_UI_DUP_INPUT_BOOLEAN                        0
+#  define UI_F_UI_DUP_INPUT_STRING                         0
+#  define UI_F_UI_DUP_USER_DATA                            0
+#  define UI_F_UI_DUP_VERIFY_STRING                        0
+#  define UI_F_UI_GET0_RESULT                              0
+#  define UI_F_UI_GET_RESULT_LENGTH                        0
+#  define UI_F_UI_NEW_METHOD                               0
+#  define UI_F_UI_PROCESS                                  0
+#  define UI_F_UI_SET_RESULT                               0
+#  define UI_F_UI_SET_RESULT_EX                            0
+# endif
 
 /*
  * UI reason codes.

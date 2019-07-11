@@ -13,47 +13,6 @@
 
 #ifndef OPENSSL_NO_ERR
 
-static const ERR_STRING_DATA CRMF_str_functs[] = {
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_CRMF_POPOSIGNINGKEY_INIT, 0),
-     "CRMF_poposigningkey_init"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_CERTID_GEN, 0),
-     "OSSL_CRMF_CERTID_gen"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL, 0),
-     "OSSL_CRMF_CERTTEMPLATE_fill"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT, 0),
-     "OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO, 0),
-     "OSSL_CRMF_MSGS_verify_popo"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_CREATE_POPO, 0),
-     "OSSL_CRMF_MSG_create_popo"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_GET0_TMPL, 0),
-     "OSSL_CRMF_MSG_get0_tmpl"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID, 0),
-     "OSSL_CRMF_MSG_get_certReqId"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO, 0),
-     "OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_PUSH0_EXTENSION, 0),
-     "OSSL_CRMF_MSG_push0_extension"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_PUSH0_REGCTRL, 0),
-     "OSSL_CRMF_MSG_push0_regCtrl"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO, 0),
-     "OSSL_CRMF_MSG_push0_regInfo"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS, 0),
-     "OSSL_CRMF_MSG_set0_extensions"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO, 0),
-     "OSSL_CRMF_MSG_set0_SinglePubInfo"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID, 0),
-     "OSSL_CRMF_MSG_set_certReqId"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION, 0),
-     "OSSL_CRMF_MSG_set_PKIPublicationInfo_action"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_SET_VALIDITY, 0),
-     "OSSL_CRMF_MSG_set_validity"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_PBMP_NEW, 0),
-     "OSSL_CRMF_pbmp_new"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_PBM_NEW, 0), "OSSL_CRMF_pbm_new"},
-    {0, NULL}
-};
-
 static const ERR_STRING_DATA CRMF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_BAD_PBM_ITERATIONCOUNT),
     "bad pbm iterationcount"},
@@ -95,10 +54,8 @@ static const ERR_STRING_DATA CRMF_str_reasons[] = {
 int ERR_load_CRMF_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(CRMF_str_functs[0].error) == NULL) {
-        ERR_load_strings_const(CRMF_str_functs);
+    if (ERR_func_error_string(CRMF_str_reasons[0].error) == NULL)
         ERR_load_strings_const(CRMF_str_reasons);
-    }
 #endif
     return 1;
 }

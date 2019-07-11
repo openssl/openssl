@@ -13,19 +13,6 @@
 
 #ifndef OPENSSL_NO_ERR
 
-static const ERR_STRING_DATA PROP_str_functs[] = {
-    {ERR_PACK(ERR_LIB_PROP, PROP_F_OSSL_PARSE_PROPERTY, 0),
-     "ossl_parse_property"},
-    {ERR_PACK(ERR_LIB_PROP, PROP_F_OSSL_PARSE_QUERY, 0), "ossl_parse_query"},
-    {ERR_PACK(ERR_LIB_PROP, PROP_F_PARSE_HEX, 0), "parse_hex"},
-    {ERR_PACK(ERR_LIB_PROP, PROP_F_PARSE_NAME, 0), "parse_name"},
-    {ERR_PACK(ERR_LIB_PROP, PROP_F_PARSE_NUMBER, 0), "parse_number"},
-    {ERR_PACK(ERR_LIB_PROP, PROP_F_PARSE_OCT, 0), "parse_oct"},
-    {ERR_PACK(ERR_LIB_PROP, PROP_F_PARSE_STRING, 0), "parse_string"},
-    {ERR_PACK(ERR_LIB_PROP, PROP_F_PARSE_UNQUOTED, 0), "parse_unquoted"},
-    {0, NULL}
-};
-
 static const ERR_STRING_DATA PROP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROP, 0, PROP_R_NAME_TOO_LONG), "name too long"},
     {ERR_PACK(ERR_LIB_PROP, 0, PROP_R_NOT_AN_ASCII_CHARACTER),
@@ -52,10 +39,8 @@ static const ERR_STRING_DATA PROP_str_reasons[] = {
 int ERR_load_PROP_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(PROP_str_functs[0].error) == NULL) {
-        ERR_load_strings_const(PROP_str_functs);
+    if (ERR_func_error_string(PROP_str_reasons[0].error) == NULL)
         ERR_load_strings_const(PROP_str_reasons);
-    }
 #endif
     return 1;
 }

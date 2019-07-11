@@ -11,9 +11,9 @@
 #ifndef HEADER_RANDERR_H
 # define HEADER_RANDERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,33 +23,35 @@ int ERR_load_RAND_strings(void);
 /*
  * RAND function codes.
  */
-# define RAND_F_DRBG_BYTES                                101
-# define RAND_F_DRBG_CTR_INIT                             125
-# define RAND_F_DRBG_GET_ENTROPY                          105
-# define RAND_F_DRBG_SETUP                                117
-# define RAND_F_GET_ENTROPY                               106
-# define RAND_F_RAND_BYTES                                100
-# define RAND_F_RAND_BYTES_EX                             126
-# define RAND_F_RAND_DRBG_ENABLE_LOCKING                  119
-# define RAND_F_RAND_DRBG_GENERATE                        107
-# define RAND_F_RAND_DRBG_GET_ENTROPY                     120
-# define RAND_F_RAND_DRBG_GET_NONCE                       123
-# define RAND_F_RAND_DRBG_INSTANTIATE                     108
-# define RAND_F_RAND_DRBG_NEW                             109
-# define RAND_F_RAND_DRBG_RESEED                          110
-# define RAND_F_RAND_DRBG_RESTART                         102
-# define RAND_F_RAND_DRBG_SET                             104
-# define RAND_F_RAND_DRBG_SET_DEFAULTS                    121
-# define RAND_F_RAND_DRBG_UNINSTANTIATE                   118
-# define RAND_F_RAND_LOAD_FILE                            111
-# define RAND_F_RAND_POOL_ACQUIRE_ENTROPY                 122
-# define RAND_F_RAND_POOL_ADD                             103
-# define RAND_F_RAND_POOL_ADD_BEGIN                       113
-# define RAND_F_RAND_POOL_ADD_END                         114
-# define RAND_F_RAND_POOL_ATTACH                          124
-# define RAND_F_RAND_POOL_BYTES_NEEDED                    115
-# define RAND_F_RAND_POOL_NEW                             116
-# define RAND_F_RAND_WRITE_FILE                           112
+# if !OPENSSL_API_3
+#  define RAND_F_DRBG_BYTES                                0
+#  define RAND_F_DRBG_CTR_INIT                             0
+#  define RAND_F_DRBG_GET_ENTROPY                          0
+#  define RAND_F_DRBG_SETUP                                0
+#  define RAND_F_GET_ENTROPY                               0
+#  define RAND_F_RAND_BYTES                                0
+#  define RAND_F_RAND_BYTES_EX                             0
+#  define RAND_F_RAND_DRBG_ENABLE_LOCKING                  0
+#  define RAND_F_RAND_DRBG_GENERATE                        0
+#  define RAND_F_RAND_DRBG_GET_ENTROPY                     0
+#  define RAND_F_RAND_DRBG_GET_NONCE                       0
+#  define RAND_F_RAND_DRBG_INSTANTIATE                     0
+#  define RAND_F_RAND_DRBG_NEW                             0
+#  define RAND_F_RAND_DRBG_RESEED                          0
+#  define RAND_F_RAND_DRBG_RESTART                         0
+#  define RAND_F_RAND_DRBG_SET                             0
+#  define RAND_F_RAND_DRBG_SET_DEFAULTS                    0
+#  define RAND_F_RAND_DRBG_UNINSTANTIATE                   0
+#  define RAND_F_RAND_LOAD_FILE                            0
+#  define RAND_F_RAND_POOL_ACQUIRE_ENTROPY                 0
+#  define RAND_F_RAND_POOL_ADD                             0
+#  define RAND_F_RAND_POOL_ADD_BEGIN                       0
+#  define RAND_F_RAND_POOL_ADD_END                         0
+#  define RAND_F_RAND_POOL_ATTACH                          0
+#  define RAND_F_RAND_POOL_BYTES_NEEDED                    0
+#  define RAND_F_RAND_POOL_NEW                             0
+#  define RAND_F_RAND_WRITE_FILE                           0
+# endif
 
 /*
  * RAND reason codes.

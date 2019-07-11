@@ -13,41 +13,6 @@
 
 #ifndef OPENSSL_NO_ERR
 
-static const ERR_STRING_DATA DH_str_functs[] = {
-    {ERR_PACK(ERR_LIB_DH, DH_F_COMPUTE_KEY, 0), "compute_key"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DHPARAMS_PRINT_FP, 0), "DHparams_print_fp"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_BUF2KEY, 0), "dh_buf2key"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_BUILTIN_GENPARAMS, 0),
-     "dh_builtin_genparams"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_CHECK_EX, 0), "DH_check_ex"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_CHECK_PARAMS_EX, 0), "DH_check_params_ex"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_CHECK_PUB_KEY_EX, 0), "DH_check_pub_key_ex"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_CMS_DECRYPT, 0), "dh_cms_decrypt"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_CMS_SET_PEERKEY, 0), "dh_cms_set_peerkey"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_CMS_SET_SHARED_INFO, 0),
-     "dh_cms_set_shared_info"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_KEY2BUF, 0), "dh_key2buf"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_METH_DUP, 0), "DH_meth_dup"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_METH_NEW, 0), "DH_meth_new"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_METH_SET1_NAME, 0), "DH_meth_set1_name"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_NEW_BY_NID, 0), "DH_new_by_nid"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_NEW_METHOD, 0), "DH_new_method"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_PARAM_DECODE, 0), "dh_param_decode"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_PKEY_PUBLIC_CHECK, 0),
-     "dh_pkey_public_check"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_PRIV_DECODE, 0), "dh_priv_decode"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_PRIV_ENCODE, 0), "dh_priv_encode"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_PUB_DECODE, 0), "dh_pub_decode"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DH_PUB_ENCODE, 0), "dh_pub_encode"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_DO_DH_PRINT, 0), "do_dh_print"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_GENERATE_KEY, 0), "generate_key"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_PKEY_DH_CTRL_STR, 0), "pkey_dh_ctrl_str"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_PKEY_DH_DERIVE, 0), "pkey_dh_derive"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_PKEY_DH_INIT, 0), "pkey_dh_init"},
-    {ERR_PACK(ERR_LIB_DH, DH_F_PKEY_DH_KEYGEN, 0), "pkey_dh_keygen"},
-    {0, NULL}
-};
-
 static const ERR_STRING_DATA DH_str_reasons[] = {
     {ERR_PACK(ERR_LIB_DH, 0, DH_R_BAD_GENERATOR), "bad generator"},
     {ERR_PACK(ERR_LIB_DH, 0, DH_R_BN_DECODE_ERROR), "bn decode error"},
@@ -94,10 +59,8 @@ static const ERR_STRING_DATA DH_str_reasons[] = {
 int ERR_load_DH_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(DH_str_functs[0].error) == NULL) {
-        ERR_load_strings_const(DH_str_functs);
+    if (ERR_func_error_string(DH_str_reasons[0].error) == NULL)
         ERR_load_strings_const(DH_str_reasons);
-    }
 #endif
     return 1;
 }

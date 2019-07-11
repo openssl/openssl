@@ -11,9 +11,9 @@
 #ifndef HEADER_PROVERR_H
 # define HEADER_PROVERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,21 +23,23 @@ int ERR_load_PROV_strings(void);
 /*
  * PROV function codes.
  */
-# define PROV_F_AESNI_INIT_KEY                            101
-# define PROV_F_AES_BLOCK_FINAL                           102
-# define PROV_F_AES_BLOCK_UPDATE                          103
-# define PROV_F_AES_CIPHER                                104
-# define PROV_F_AES_CTX_GET_PARAMS                        105
-# define PROV_F_AES_CTX_SET_PARAMS                        106
-# define PROV_F_AES_DINIT                                 107
-# define PROV_F_AES_DUPCTX                                108
-# define PROV_F_AES_EINIT                                 109
-# define PROV_F_AES_INIT_KEY                              110
-# define PROV_F_AES_STREAM_UPDATE                         111
-# define PROV_F_AES_T4_INIT_KEY                           112
-# define PROV_F_PROV_AES_KEY_GENERIC_INIT                 113
-# define PROV_F_TRAILINGDATA                              114
-# define PROV_F_UNPADBLOCK                                100
+# if !OPENSSL_API_3
+#  define PROV_F_AESNI_INIT_KEY                            0
+#  define PROV_F_AES_BLOCK_FINAL                           0
+#  define PROV_F_AES_BLOCK_UPDATE                          0
+#  define PROV_F_AES_CIPHER                                0
+#  define PROV_F_AES_CTX_GET_PARAMS                        0
+#  define PROV_F_AES_CTX_SET_PARAMS                        0
+#  define PROV_F_AES_DINIT                                 0
+#  define PROV_F_AES_DUPCTX                                0
+#  define PROV_F_AES_EINIT                                 0
+#  define PROV_F_AES_INIT_KEY                              0
+#  define PROV_F_AES_STREAM_UPDATE                         0
+#  define PROV_F_AES_T4_INIT_KEY                           0
+#  define PROV_F_PROV_AES_KEY_GENERIC_INIT                 0
+#  define PROV_F_TRAILINGDATA                              0
+#  define PROV_F_UNPADBLOCK                                0
+# endif
 
 /*
  * PROV reason codes.

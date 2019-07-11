@@ -11,9 +11,9 @@
 #ifndef HEADER_KDFERR_H
 # define HEADER_KDFERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,53 +23,55 @@ int ERR_load_KDF_strings(void);
 /*
  * KDF function codes.
  */
-# define KDF_F_HKDF_EXTRACT                               112
-# define KDF_F_KDF_HKDF_DERIVE                            113
-# define KDF_F_KDF_HKDF_NEW                               114
-# define KDF_F_KDF_HKDF_SIZE                              115
-# define KDF_F_KDF_MD2CTRL                                116
-# define KDF_F_KDF_PBKDF2_CTRL                            140
-# define KDF_F_KDF_PBKDF2_CTRL_STR                        117
-# define KDF_F_KDF_PBKDF2_DERIVE                          118
-# define KDF_F_KDF_PBKDF2_NEW                             119
-# define KDF_F_KDF_SCRYPT_CTRL_STR                        120
-# define KDF_F_KDF_SCRYPT_CTRL_UINT32                     121
-# define KDF_F_KDF_SCRYPT_CTRL_UINT64                     122
-# define KDF_F_KDF_SCRYPT_DERIVE                          123
-# define KDF_F_KDF_SCRYPT_NEW                             124
-# define KDF_F_KDF_SSHKDF_CTRL                            130
-# define KDF_F_KDF_SSHKDF_CTRL_STR                        131
-# define KDF_F_KDF_SSHKDF_DERIVE                          132
-# define KDF_F_KDF_SSHKDF_NEW                             133
-# define KDF_F_KDF_TLS1_PRF_CTRL_STR                      125
-# define KDF_F_KDF_TLS1_PRF_DERIVE                        126
-# define KDF_F_KDF_TLS1_PRF_NEW                           127
-# define KDF_F_PBKDF2_DERIVE                              141
-# define KDF_F_PBKDF2_SET_MEMBUF                          128
-# define KDF_F_PKEY_HKDF_CTRL_STR                         103
-# define KDF_F_PKEY_HKDF_DERIVE                           102
-# define KDF_F_PKEY_HKDF_INIT                             108
-# define KDF_F_PKEY_SCRYPT_CTRL_STR                       104
-# define KDF_F_PKEY_SCRYPT_CTRL_UINT64                    105
-# define KDF_F_PKEY_SCRYPT_DERIVE                         109
-# define KDF_F_PKEY_SCRYPT_INIT                           106
-# define KDF_F_PKEY_SCRYPT_SET_MEMBUF                     107
-# define KDF_F_PKEY_TLS1_PRF_CTRL_STR                     100
-# define KDF_F_PKEY_TLS1_PRF_DERIVE                       101
-# define KDF_F_PKEY_TLS1_PRF_INIT                         110
-# define KDF_F_SCRYPT_SET_MEMBUF                          129
-# define KDF_F_SSKDF_CTRL_STR                             134
-# define KDF_F_SSKDF_DERIVE                               135
-# define KDF_F_SSKDF_MAC2CTRL                             136
-# define KDF_F_SSKDF_NEW                                  137
-# define KDF_F_SSKDF_SIZE                                 138
-# define KDF_F_TLS1_PRF_ALG                               111
-# define KDF_F_X942KDF_CTRL                               142
-# define KDF_F_X942KDF_DERIVE                             143
-# define KDF_F_X942KDF_HASH_KDM                           144
-# define KDF_F_X942KDF_NEW                                145
-# define KDF_F_X942KDF_SIZE                               146
-# define KDF_F_X963KDF_DERIVE                             139
+# if !OPENSSL_API_3
+#  define KDF_F_HKDF_EXTRACT                               0
+#  define KDF_F_KDF_HKDF_DERIVE                            0
+#  define KDF_F_KDF_HKDF_NEW                               0
+#  define KDF_F_KDF_HKDF_SIZE                              0
+#  define KDF_F_KDF_MD2CTRL                                0
+#  define KDF_F_KDF_PBKDF2_CTRL                            0
+#  define KDF_F_KDF_PBKDF2_CTRL_STR                        0
+#  define KDF_F_KDF_PBKDF2_DERIVE                          0
+#  define KDF_F_KDF_PBKDF2_NEW                             0
+#  define KDF_F_KDF_SCRYPT_CTRL_STR                        0
+#  define KDF_F_KDF_SCRYPT_CTRL_UINT32                     0
+#  define KDF_F_KDF_SCRYPT_CTRL_UINT64                     0
+#  define KDF_F_KDF_SCRYPT_DERIVE                          0
+#  define KDF_F_KDF_SCRYPT_NEW                             0
+#  define KDF_F_KDF_SSHKDF_CTRL                            0
+#  define KDF_F_KDF_SSHKDF_CTRL_STR                        0
+#  define KDF_F_KDF_SSHKDF_DERIVE                          0
+#  define KDF_F_KDF_SSHKDF_NEW                             0
+#  define KDF_F_KDF_TLS1_PRF_CTRL_STR                      0
+#  define KDF_F_KDF_TLS1_PRF_DERIVE                        0
+#  define KDF_F_KDF_TLS1_PRF_NEW                           0
+#  define KDF_F_PBKDF2_DERIVE                              0
+#  define KDF_F_PBKDF2_SET_MEMBUF                          0
+#  define KDF_F_PKEY_HKDF_CTRL_STR                         0
+#  define KDF_F_PKEY_HKDF_DERIVE                           0
+#  define KDF_F_PKEY_HKDF_INIT                             0
+#  define KDF_F_PKEY_SCRYPT_CTRL_STR                       0
+#  define KDF_F_PKEY_SCRYPT_CTRL_UINT64                    0
+#  define KDF_F_PKEY_SCRYPT_DERIVE                         0
+#  define KDF_F_PKEY_SCRYPT_INIT                           0
+#  define KDF_F_PKEY_SCRYPT_SET_MEMBUF                     0
+#  define KDF_F_PKEY_TLS1_PRF_CTRL_STR                     0
+#  define KDF_F_PKEY_TLS1_PRF_DERIVE                       0
+#  define KDF_F_PKEY_TLS1_PRF_INIT                         0
+#  define KDF_F_SCRYPT_SET_MEMBUF                          0
+#  define KDF_F_SSKDF_CTRL_STR                             0
+#  define KDF_F_SSKDF_DERIVE                               0
+#  define KDF_F_SSKDF_MAC2CTRL                             0
+#  define KDF_F_SSKDF_NEW                                  0
+#  define KDF_F_SSKDF_SIZE                                 0
+#  define KDF_F_TLS1_PRF_ALG                               0
+#  define KDF_F_X942KDF_CTRL                               0
+#  define KDF_F_X942KDF_DERIVE                             0
+#  define KDF_F_X942KDF_HASH_KDM                           0
+#  define KDF_F_X942KDF_NEW                                0
+#  define KDF_F_X942KDF_SIZE                               0
+#  define KDF_F_X963KDF_DERIVE                             0
+# endif
 
 /*
  * KDF reason codes.
