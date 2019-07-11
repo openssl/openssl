@@ -64,11 +64,11 @@ static const OPENSSL_CTX_METHOD fips_prov_ossl_ctx_method = {
 
 
 /* Parameters we provide to the core */
-static const OSSL_ITEM fips_param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_NAME },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_VERSION },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_BUILDINFO },
-    { 0, NULL }
+static const OSSL_PARAM fips_param_types[] = {
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_END
 };
 
 /* TODO(3.0): To be removed */
@@ -133,7 +133,7 @@ static int dummy_evp_call(void *provctx)
     return ret;
 }
 
-static const OSSL_ITEM *fips_get_param_types(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *fips_get_param_types(const OSSL_PROVIDER *prov)
 {
     return fips_param_types;
 }

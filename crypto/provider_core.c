@@ -680,7 +680,7 @@ void ossl_provider_teardown(const OSSL_PROVIDER *prov)
         prov->teardown(prov->provctx);
 }
 
-const OSSL_ITEM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov)
+const OSSL_PARAM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov)
 {
     return prov->get_param_types == NULL
         ? NULL : prov->get_param_types(prov->provctx);
@@ -712,13 +712,13 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
  * discovery.  We do not expect that many providers will use this, but one
  * never knows.
  */
-static const OSSL_ITEM param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, "openssl-version" },
-    { OSSL_PARAM_UTF8_PTR, "provider-name" },
-    { 0, NULL }
+static const OSSL_PARAM param_types[] = {
+    OSSL_PARAM_DEFN("openssl-verstion", OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN("provider-name", OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_END
 };
 
-static const OSSL_ITEM *core_get_param_types(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *core_get_param_types(const OSSL_PROVIDER *prov)
 {
     return param_types;
 }
