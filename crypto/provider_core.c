@@ -796,6 +796,10 @@ static void core_add_error_vdata(const OSSL_PROVIDER *prov,
 }
 #endif
 
+/*
+ * Functions provided by the core.  Blank line separates "families" of related
+ * functions.
+ */
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
@@ -805,6 +809,26 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))core_put_error },
     { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))core_add_error_vdata },
 #endif
+
+    { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },
+    { OSSL_FUNC_CRYPTO_ZALLOC, (void (*)(void))CRYPTO_zalloc },
+    { OSSL_FUNC_CRYPTO_MEMDUP, (void (*)(void))CRYPTO_memdup },
+    { OSSL_FUNC_CRYPTO_STRDUP, (void (*)(void))CRYPTO_strdup },
+    { OSSL_FUNC_CRYPTO_STRNDUP, (void (*)(void))CRYPTO_strndup },
+    { OSSL_FUNC_CRYPTO_FREE, (void (*)(void))CRYPTO_free },
+    { OSSL_FUNC_CRYPTO_CLEAR_FREE, (void (*)(void))CRYPTO_clear_free },
+    { OSSL_FUNC_CRYPTO_REALLOC, (void (*)(void))CRYPTO_realloc },
+    { OSSL_FUNC_CRYPTO_CLEAR_REALLOC, (void (*)(void))CRYPTO_clear_realloc },
+    { OSSL_FUNC_CRYPTO_SECURE_MALLOC, (void (*)(void))CRYPTO_secure_malloc },
+    { OSSL_FUNC_CRYPTO_SECURE_ZALLOC, (void (*)(void))CRYPTO_secure_zalloc },
+    { OSSL_FUNC_CRYPTO_SECURE_FREE, (void (*)(void))CRYPTO_secure_free },
+    { OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE,
+        (void (*)(void))CRYPTO_secure_clear_free },
+    { OSSL_FUNC_CRYPTO_SECURE_ALLOCATED,
+        (void (*)(void))CRYPTO_secure_allocated },
+    { OSSL_FUNC_OPENSSL_CLEANSE, (void (*)(void))OPENSSL_cleanse },
+    { OSSL_FUNC_OPENSSL_HEXSTR2BUF, (void (*)(void))OPENSSL_hexstr2buf },
+
     { 0, NULL }
 };
 static const OSSL_DISPATCH *core_dispatch = core_dispatch_;
