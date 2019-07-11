@@ -11,7 +11,8 @@ OSSL_PARAM - a structure to pass or request object parameters
  typedef struct ossl_param_st OSSL_PARAM;
  struct ossl_param_st {
      const char *key;             /* the name of the parameter */
-     unsigned char data_type;     /* declare what kind of content is in data */
+     unsigned short data_type;    /* declare what kind of content is in data */
+     unsigned short owner_data;   /* owner's unspecified use */
      void *data;                  /* value being passed in or out */
      size_t data_size;            /* data size */
      size_t return_size;          /* returned size */
@@ -68,6 +69,12 @@ names as an array of OSSL_ITEM, for discovery purposes.
 The C<data_type> is a value that describes the type and organization of
 the data.
 See L</Supported types> below for a description of the types.
+
+=item C<owner_data>
+
+The C<owner_data> is an opaque value set by the creator of the OSSL_PARAM.
+The use of this value is undefined and reservde for the owner.
+It should not be used a receiver of parameters.
 
 =item C<data>
 

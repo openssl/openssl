@@ -349,14 +349,14 @@ static int init_app_variables(void)
 
 /* An array of OSSL_PARAM, specific in the most raw manner possible */
 static OSSL_PARAM static_raw_params[] = {
-    { "p1", OSSL_PARAM_INTEGER, &app_p1, sizeof(app_p1), 0 },
-    { "p3", OSSL_PARAM_UNSIGNED_INTEGER, &bignumbin, sizeof(bignumbin), 0 },
-    { "p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), 0 },
-    { "p5", OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5), 0 },
+    { "p1", OSSL_PARAM_INTEGER, 0, &app_p1, sizeof(app_p1), 0 },
+    { "p3", OSSL_PARAM_UNSIGNED_INTEGER, 0, &bignumbin, sizeof(bignumbin), 0 },
+    { "p4", OSSL_PARAM_UTF8_STRING, 0, &app_p4, sizeof(app_p4), 0 },
+    { "p5", OSSL_PARAM_UTF8_STRING, 0, &app_p5, sizeof(app_p5), 0 },
     /* sizeof(app_p6_init), because we know that's what we're using */
-    { "p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init), 0 },
-    { "foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), 0 },
-    { NULL, 0, NULL, 0, 0 }
+    { "p6", OSSL_PARAM_UTF8_PTR, 0, &app_p6, sizeof(app_p6_init), 0 },
+    { "foo", OSSL_PARAM_OCTET_STRING, 0, &foo, sizeof(foo), 0 },
+    { NULL, 0, 0, NULL, 0, 0 }
 };
 
 /* The same array of OSSL_PARAM, specified with the macros from params.h */

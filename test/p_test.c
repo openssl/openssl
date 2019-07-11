@@ -60,16 +60,16 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
             static char *greeting;
             static OSSL_PARAM counter_request[] = {
                 /* Known libcrypto provided parameters */
-                { "openssl-version", OSSL_PARAM_UTF8_PTR,
+                { "openssl-version", OSSL_PARAM_UTF8_PTR, 0,
                   &opensslv, sizeof(&opensslv), 0 },
-                { "provider-name", OSSL_PARAM_UTF8_PTR,
+                { "provider-name", OSSL_PARAM_UTF8_PTR, 0,
                   &provname, sizeof(&provname), 0},
 
                 /* This might be present, if there's such a configuration */
-                { "greeting", OSSL_PARAM_UTF8_PTR,
+                { "greeting", OSSL_PARAM_UTF8_PTR, 0,
                   &greeting, sizeof(&greeting), 0 },
 
-                { NULL, 0, NULL, 0, 0 }
+                { NULL, 0, 0, NULL, 0, 0 }
             };
             char buf[256];
             size_t buf_l;

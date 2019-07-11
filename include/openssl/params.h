@@ -19,10 +19,10 @@ extern "C" {
 # endif
 
 # define OSSL_PARAM_END \
-    { NULL, 0, NULL, 0, 0 }
+    { NULL, 0, 0, NULL, 0, 0 }
 
 # define OSSL_PARAM_DEFN(key, type, addr, sz)    \
-    { (key), (type), (addr), (sz), 0 }
+    { (key), (type), 0, (addr), (sz), 0 }
 
 /* Basic parameter types without return sizes */
 # define OSSL_PARAM_int(key, addr) \
@@ -100,8 +100,18 @@ OSSL_PARAM OSSL_PARAM_allocate_int64(const char *key, int64_t value);
 OSSL_PARAM OSSL_PARAM_allocate_uint64(const char *key, uint64_t value);
 OSSL_PARAM OSSL_PARAM_allocate_size_t(const char *key, size_t value);
 OSSL_PARAM OSSL_PARAM_allocate_double(const char *key, double value);
+OSSL_PARAM OSSL_PARAM_allocate_BN(const char *key, BIGNUM *bn, size_t bsize);
+OSSL_PARAM OSSL_PARAM_allocate_utf8_string(const char *key, char *buf,
+                                           size_t bsize);
+OSSL_PARAM OSSL_PARAM_allocate_utf8_ptr(const char *key, char *buf,
+                                        size_t bsize);
+OSSL_PARAM OSSL_PARAM_allocate_octet_string(const char *key, void *buf,
+                                            size_t bsize);
+OSSL_PARAM OSSL_PARAM_allocate_octet_ptr(const char *key, void *buf,
+                                         size_t bsize);
 
 int OSSL_PARAM_allocate_failed(const OSSL_PARAM *p);
+void OSSL_PARAM_free(OSSL_PARAM *p);
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val);
 int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val);

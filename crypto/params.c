@@ -14,6 +14,10 @@
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 
+#define OWNER_FLAG_error        0x0001
+#define OWNER_FLAG_allocated    0x0002
+#define OWNER_FLAG_secure       0x0004
+
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
     if (p != NULL && key != NULL)
@@ -35,6 +39,7 @@ static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
 
     res.key = key;
     res.data_type = data_type;
+    res.owner_data = 0;
     res.data = data;
     res.data_size = data_size;
     res.return_size = 0;
@@ -42,9 +47,10 @@ static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
 }
 
 static OSSL_PARAM ossl_param_allocate(const char *key, unsigned int data_type,
-                                      void *data, size_t data_size,
-                                      size_t *return_size)
+                                      void *data, size_t data_size)
 {
+    OSSL_PARAM res;
+    int flag = OWNER_FLAG_allocated;
     void *p = OPENSSL_malloc(data_size);
 
     if (p != NULL) {
@@ -53,9 +59,15 @@ static OSSL_PARAM ossl_param_allocate(const char *key, unsigned int data_type,
         else
             memcpy(p, data, data_size);
     } else {
-        data_type = 0;
+        flag = OWNER_FLAG_error;
     }   
-    return ossl_param_construct(key, data_type, p, data_size);
+    res.key = key;
+    res.data_type = data_type;
+    res.owner_data = flag;
+    res.data = p;
+    res.data_size = data_size;
+    res.return_size = 0;
+    return res;
 }
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val)
@@ -87,8 +99,7 @@ OSSL_PARAM OSSL_PARAM_construct_int(const char *key, int *buf)
 
 OSSL_PARAM OSSL_PARAM_allocate_int(const char *key, int value)
 {
-    return ossl_param_allocate(key, OSSL_PARAM_INTEGER, &value, sizeof(int),
-                               NULL);
+    return ossl_param_allocate(key, OSSL_PARAM_INTEGER, &value, sizeof(int));
 }
 
 int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val)
@@ -122,7 +133,7 @@ OSSL_PARAM OSSL_PARAM_construct_uint(const char *key, unsigned int *buf)
 OSSL_PARAM OSSL_PARAM_allocate_uint(const char *key, unsigned int value)
 {
     return ossl_param_allocate(key, OSSL_PARAM_UNSIGNED_INTEGER, &value,
-                               sizeof(unsigned int), NULL);
+                               sizeof(unsigned int));
 }
 
 int OSSL_PARAM_get_long(const OSSL_PARAM *p, long int *val)
@@ -155,7 +166,7 @@ OSSL_PARAM OSSL_PARAM_construct_long(const char *key, long int *buf)
 OSSL_PARAM OSSL_PARAM_allocate_long(const char *key, long int value)
 {
     return ossl_param_allocate(key, OSSL_PARAM_INTEGER, &value,
-                               sizeof(long int), NULL);
+                               sizeof(long int));
 }
 
 int OSSL_PARAM_get_ulong(const OSSL_PARAM *p, unsigned long int *val)
@@ -189,7 +200,7 @@ OSSL_PARAM OSSL_PARAM_construct_ulong(const char *key, unsigned long int *buf)
 OSSL_PARAM OSSL_PARAM_allocate_ulong(const char *key, unsigned long int value)
 {
     return ossl_param_allocate(key, OSSL_PARAM_UNSIGNED_INTEGER, &value,
-                               sizeof(unsigned long int), NULL);
+                               sizeof(unsigned long int));
 }
 
 int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
@@ -292,8 +303,8 @@ OSSL_PARAM OSSL_PARAM_construct_int32(const char *key, int32_t *buf)
 
 OSSL_PARAM OSSL_PARAM_allocate_int32(const char *key, int32_t value)
 {
-    return ossl_param_allocate(key, OSSL_PARAM_INTEGER, &value, sizeof(int32_t),
-                               NULL);
+    return ossl_param_allocate(key, OSSL_PARAM_INTEGER, &value,
+                               sizeof(int32_t));
 }
 
 int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
@@ -401,7 +412,7 @@ OSSL_PARAM OSSL_PARAM_construct_uint32(const char *key, uint32_t *buf)
 OSSL_PARAM OSSL_PARAM_allocate_uint32(const char *key, uint32_t value)
 {
     return ossl_param_allocate(key, OSSL_PARAM_UNSIGNED_INTEGER, &value,
-                               sizeof(uint32_t), NULL);
+                               sizeof(uint32_t));
 }
 
 int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
@@ -505,8 +516,8 @@ OSSL_PARAM OSSL_PARAM_construct_int64(const char *key, int64_t *buf)
 
 OSSL_PARAM OSSL_PARAM_allocate_int64(const char *key, int64_t value)
 {
-    return ossl_param_allocate(key, OSSL_PARAM_INTEGER, &value, sizeof(int64_t),
-                               NULL);
+    return ossl_param_allocate(key, OSSL_PARAM_INTEGER, &value,
+                               sizeof(int64_t));
 }
 
 int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
@@ -618,7 +629,7 @@ OSSL_PARAM OSSL_PARAM_construct_uint64(const char *key, uint64_t *buf)
 OSSL_PARAM OSSL_PARAM_allocate_uint64(const char *key, uint64_t value)
 {
     return ossl_param_allocate(key, OSSL_PARAM_UNSIGNED_INTEGER, &value,
-                               sizeof(uint64_t), NULL);
+                               sizeof(uint64_t));
 }
 
 int OSSL_PARAM_get_size_t(const OSSL_PARAM *p, size_t *val)
@@ -652,7 +663,7 @@ OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf)
 OSSL_PARAM OSSL_PARAM_allocate_size_t(const char *key, size_t value)
 {
     return ossl_param_allocate(key, OSSL_PARAM_UNSIGNED_INTEGER, &value,
-                               sizeof(size_t), NULL);
+                               sizeof(size_t));
 }
 
 #ifndef FIPS_MODE
@@ -704,6 +715,49 @@ OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
 {
     return ossl_param_construct(key, OSSL_PARAM_UNSIGNED_INTEGER,
                                 buf, bsize);
+}
+
+OSSL_PARAM OSSL_PARAM_allocate_BN(const char *key, BIGNUM *bn, size_t bsize)
+{
+    OSSL_PARAM res;
+    int flag = OWNER_FLAG_allocated;
+    int secure = 0;
+    void *p;
+
+    if (bn != NULL) {
+        if (bsize == 0)
+            bsize = (size_t)BN_num_bytes(bn);
+
+        if (BN_get_flags(bn, BN_FLG_SECURE)) {
+            secure = 1;
+            flag |= OWNER_FLAG_secure;
+        }
+    }
+    if (secure)
+        p = OPENSSL_secure_malloc(bsize);
+    else
+        p = OPENSSL_malloc(bsize);
+    if (p != NULL) {
+        if (bn == NULL)
+            memset(p, 0, bsize);
+        else if (BN_bn2nativepad(bn, p, bsize) < 0) {
+            if (secure)
+                OPENSSL_secure_free(p);
+            else
+                OPENSSL_free(p);
+            p = NULL;
+            flag = OWNER_FLAG_error;
+        }
+    } else {
+        flag = OWNER_FLAG_error;
+    }   
+    res.key = key;
+    res.data_type = OSSL_PARAM_UNSIGNED_INTEGER;
+    res.owner_data = flag;
+    res.data = p;
+    res.data_size = bsize;
+    res.return_size = 0;
+    return res;
 }
 #endif
 
@@ -812,8 +866,7 @@ OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf)
 
 OSSL_PARAM OSSL_PARAM_allocate_double(const char *key, double value)
 {
-    return ossl_param_allocate(key, OSSL_PARAM_REAL, &value, sizeof(double),
-                               NULL);
+    return ossl_param_allocate(key, OSSL_PARAM_REAL, &value, sizeof(double));
 }
 
 static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
@@ -903,6 +956,20 @@ OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
     return ossl_param_construct(key, OSSL_PARAM_OCTET_STRING, buf, bsize);
 }
 
+OSSL_PARAM OSSL_PARAM_allocate_utf8_string(const char *key, char *buf,
+                                           size_t bsize)
+{
+    if (buf != NULL && bsize == 0)
+        bsize = strlen(buf) + 1;
+    return ossl_param_allocate(key, OSSL_PARAM_UTF8_STRING, buf, bsize);
+}
+
+OSSL_PARAM OSSL_PARAM_allocate_octet_string(const char *key, void *buf,
+                                            size_t bsize)
+{
+    return ossl_param_allocate(key, OSSL_PARAM_OCTET_STRING, buf, bsize);
+}
+
 static int get_ptr_internal(const OSSL_PARAM *p, const void **val,
                             size_t *used_len, unsigned int type)
 {
@@ -968,6 +1035,29 @@ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
     return ossl_param_construct(key, OSSL_PARAM_OCTET_PTR, buf, bsize);
 }
 
+OSSL_PARAM OSSL_PARAM_allocate_utf8_ptr(const char *key, char *buf,
+                                        size_t bsize)
+{
+    OSSL_PARAM res;
+
+    if (buf != NULL && bsize == 0)
+        bsize = strlen(buf) + 1;
+    res = ossl_param_allocate(key, OSSL_PARAM_UTF8_PTR, buf, sizeof(char *));
+    if ((res.owner_data & OWNER_FLAG_error) == 0)
+        res.data_size = bsize;
+    return res;
+}
+
+OSSL_PARAM OSSL_PARAM_allocate_octet_ptr(const char *key, void *buf,
+                                         size_t bsize)
+{
+    OSSL_PARAM res = ossl_param_allocate(key, OSSL_PARAM_UTF8_PTR, buf,
+                                         sizeof(void *));
+    if ((res.owner_data & OWNER_FLAG_error) == 0)
+        res.data_size = bsize;
+    return res;
+}
+
 OSSL_PARAM OSSL_PARAM_construct_end(void)
 {
     OSSL_PARAM end = OSSL_PARAM_END;
@@ -978,8 +1068,19 @@ OSSL_PARAM OSSL_PARAM_construct_end(void)
 int OSSL_PARAM_allocate_failed(const OSSL_PARAM *p)
 {
     if (p != NULL)
-        while (p->key != NULL)
-            if (!p++->data_type)
+        for (; p->key != NULL; p++)
+            if ((p->owner_data & OWNER_FLAG_error) != 0)
                 return 1;
     return 0;
+}
+
+void OSSL_PARAM_free(OSSL_PARAM *p)
+{
+    if (p != NULL) {
+        for (; p->key != NULL; p++)
+            if ((p->owner_data & OWNER_FLAG_secure) != 0)
+                OPENSSL_secure_free(p->data);
+            else if ((p->owner_data & OWNER_FLAG_allocated) != 0)
+                OPENSSL_free(p->data);
+    }
 }
