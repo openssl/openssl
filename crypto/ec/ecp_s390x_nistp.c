@@ -175,6 +175,9 @@ const EC_METHOD *EC_GFp_s390x_nistp##bits##_method(void)                \
         NULL, /* keycopy */                                             \
         NULL, /* keyfinish */                                           \
         ecdh_simple_compute_key,                                        \
+        ecdsa_simple_sign_setup,                                        \
+        ecdsa_simple_sign_sig,                                          \
+        ecdsa_simple_verify_sig,                                        \
         NULL, /* field_inverse_mod_ord */                               \
         ec_GFp_simple_blind_coordinates,                                \
         ec_GFp_simple_ladder_pre,                                       \
