@@ -11,9 +11,9 @@
 #ifndef HEADER_PEMERR_H
 # define HEADER_PEMERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,48 +23,50 @@ int ERR_load_PEM_strings(void);
 /*
  * PEM function codes.
  */
-# define PEM_F_B2I_DSS                                    127
-# define PEM_F_B2I_PVK_BIO                                128
-# define PEM_F_B2I_RSA                                    129
-# define PEM_F_CHECK_BITLEN_DSA                           130
-# define PEM_F_CHECK_BITLEN_RSA                           131
-# define PEM_F_D2I_PKCS8PRIVATEKEY_BIO                    120
-# define PEM_F_D2I_PKCS8PRIVATEKEY_FP                     121
-# define PEM_F_DO_B2I                                     132
-# define PEM_F_DO_B2I_BIO                                 133
-# define PEM_F_DO_BLOB_HEADER                             134
-# define PEM_F_DO_I2B                                     146
-# define PEM_F_DO_PK8PKEY                                 126
-# define PEM_F_DO_PK8PKEY_FP                              125
-# define PEM_F_DO_PVK_BODY                                135
-# define PEM_F_DO_PVK_HEADER                              136
-# define PEM_F_GET_HEADER_AND_DATA                        143
-# define PEM_F_GET_NAME                                   144
-# define PEM_F_I2B_PVK                                    137
-# define PEM_F_I2B_PVK_BIO                                138
-# define PEM_F_LOAD_IV                                    101
-# define PEM_F_PEM_ASN1_READ                              102
-# define PEM_F_PEM_ASN1_READ_BIO                          103
-# define PEM_F_PEM_ASN1_WRITE                             104
-# define PEM_F_PEM_ASN1_WRITE_BIO                         105
-# define PEM_F_PEM_DEF_CALLBACK                           100
-# define PEM_F_PEM_DO_HEADER                              106
-# define PEM_F_PEM_GET_EVP_CIPHER_INFO                    107
-# define PEM_F_PEM_READ                                   108
-# define PEM_F_PEM_READ_BIO                               109
-# define PEM_F_PEM_READ_BIO_DHPARAMS                      141
-# define PEM_F_PEM_READ_BIO_EX                            145
-# define PEM_F_PEM_READ_BIO_PARAMETERS                    140
-# define PEM_F_PEM_READ_BIO_PRIVATEKEY                    123
-# define PEM_F_PEM_READ_DHPARAMS                          142
-# define PEM_F_PEM_READ_PRIVATEKEY                        124
-# define PEM_F_PEM_SIGNFINAL                              112
-# define PEM_F_PEM_WRITE                                  113
-# define PEM_F_PEM_WRITE_BIO                              114
-# define PEM_F_PEM_WRITE_PRIVATEKEY                       139
-# define PEM_F_PEM_X509_INFO_READ                         115
-# define PEM_F_PEM_X509_INFO_READ_BIO                     116
-# define PEM_F_PEM_X509_INFO_WRITE_BIO                    117
+# if !OPENSSL_API_3
+#  define PEM_F_B2I_DSS                                    0
+#  define PEM_F_B2I_PVK_BIO                                0
+#  define PEM_F_B2I_RSA                                    0
+#  define PEM_F_CHECK_BITLEN_DSA                           0
+#  define PEM_F_CHECK_BITLEN_RSA                           0
+#  define PEM_F_D2I_PKCS8PRIVATEKEY_BIO                    0
+#  define PEM_F_D2I_PKCS8PRIVATEKEY_FP                     0
+#  define PEM_F_DO_B2I                                     0
+#  define PEM_F_DO_B2I_BIO                                 0
+#  define PEM_F_DO_BLOB_HEADER                             0
+#  define PEM_F_DO_I2B                                     0
+#  define PEM_F_DO_PK8PKEY                                 0
+#  define PEM_F_DO_PK8PKEY_FP                              0
+#  define PEM_F_DO_PVK_BODY                                0
+#  define PEM_F_DO_PVK_HEADER                              0
+#  define PEM_F_GET_HEADER_AND_DATA                        0
+#  define PEM_F_GET_NAME                                   0
+#  define PEM_F_I2B_PVK                                    0
+#  define PEM_F_I2B_PVK_BIO                                0
+#  define PEM_F_LOAD_IV                                    0
+#  define PEM_F_PEM_ASN1_READ                              0
+#  define PEM_F_PEM_ASN1_READ_BIO                          0
+#  define PEM_F_PEM_ASN1_WRITE                             0
+#  define PEM_F_PEM_ASN1_WRITE_BIO                         0
+#  define PEM_F_PEM_DEF_CALLBACK                           0
+#  define PEM_F_PEM_DO_HEADER                              0
+#  define PEM_F_PEM_GET_EVP_CIPHER_INFO                    0
+#  define PEM_F_PEM_READ                                   0
+#  define PEM_F_PEM_READ_BIO                               0
+#  define PEM_F_PEM_READ_BIO_DHPARAMS                      0
+#  define PEM_F_PEM_READ_BIO_EX                            0
+#  define PEM_F_PEM_READ_BIO_PARAMETERS                    0
+#  define PEM_F_PEM_READ_BIO_PRIVATEKEY                    0
+#  define PEM_F_PEM_READ_DHPARAMS                          0
+#  define PEM_F_PEM_READ_PRIVATEKEY                        0
+#  define PEM_F_PEM_SIGNFINAL                              0
+#  define PEM_F_PEM_WRITE                                  0
+#  define PEM_F_PEM_WRITE_BIO                              0
+#  define PEM_F_PEM_WRITE_PRIVATEKEY                       0
+#  define PEM_F_PEM_X509_INFO_READ                         0
+#  define PEM_F_PEM_X509_INFO_READ_BIO                     0
+#  define PEM_F_PEM_X509_INFO_WRITE_BIO                    0
+# endif
 
 /*
  * PEM reason codes.

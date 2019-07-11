@@ -11,9 +11,9 @@
 #ifndef HEADER_OCSPERR_H
 # define HEADER_OCSPERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # include <openssl/opensslconf.h>
 
@@ -27,22 +27,24 @@ int ERR_load_OCSP_strings(void);
 /*
  * OCSP function codes.
  */
-#  define OCSP_F_D2I_OCSP_NONCE                            102
-#  define OCSP_F_OCSP_BASIC_ADD1_STATUS                    103
-#  define OCSP_F_OCSP_BASIC_SIGN                           104
-#  define OCSP_F_OCSP_BASIC_SIGN_CTX                       119
-#  define OCSP_F_OCSP_BASIC_VERIFY                         105
-#  define OCSP_F_OCSP_CERT_ID_NEW                          101
-#  define OCSP_F_OCSP_CHECK_DELEGATED                      106
-#  define OCSP_F_OCSP_CHECK_IDS                            107
-#  define OCSP_F_OCSP_CHECK_ISSUER                         108
-#  define OCSP_F_OCSP_CHECK_VALIDITY                       115
-#  define OCSP_F_OCSP_MATCH_ISSUERID                       109
-#  define OCSP_F_OCSP_PARSE_URL                            114
-#  define OCSP_F_OCSP_REQUEST_SIGN                         110
-#  define OCSP_F_OCSP_REQUEST_VERIFY                       116
-#  define OCSP_F_OCSP_RESPONSE_GET1_BASIC                  111
-#  define OCSP_F_PARSE_HTTP_LINE1                          118
+# if !OPENSSL_API_3
+#   define OCSP_F_D2I_OCSP_NONCE                            0
+#   define OCSP_F_OCSP_BASIC_ADD1_STATUS                    0
+#   define OCSP_F_OCSP_BASIC_SIGN                           0
+#   define OCSP_F_OCSP_BASIC_SIGN_CTX                       0
+#   define OCSP_F_OCSP_BASIC_VERIFY                         0
+#   define OCSP_F_OCSP_CERT_ID_NEW                          0
+#   define OCSP_F_OCSP_CHECK_DELEGATED                      0
+#   define OCSP_F_OCSP_CHECK_IDS                            0
+#   define OCSP_F_OCSP_CHECK_ISSUER                         0
+#   define OCSP_F_OCSP_CHECK_VALIDITY                       0
+#   define OCSP_F_OCSP_MATCH_ISSUERID                       0
+#   define OCSP_F_OCSP_PARSE_URL                            0
+#   define OCSP_F_OCSP_REQUEST_SIGN                         0
+#   define OCSP_F_OCSP_REQUEST_VERIFY                       0
+#   define OCSP_F_OCSP_RESPONSE_GET1_BASIC                  0
+#   define OCSP_F_PARSE_HTTP_LINE1                          0
+# endif
 
 /*
  * OCSP reason codes.

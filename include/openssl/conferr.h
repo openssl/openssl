@@ -11,9 +11,9 @@
 #ifndef HEADER_CONFERR_H
 # define HEADER_CONFERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,29 +23,31 @@ int ERR_load_CONF_strings(void);
 /*
  * CONF function codes.
  */
-# define CONF_F_CONF_DUMP_FP                              104
-# define CONF_F_CONF_LOAD                                 100
-# define CONF_F_CONF_LOAD_FP                              103
-# define CONF_F_CONF_PARSE_LIST                           119
-# define CONF_F_DEF_LOAD                                  120
-# define CONF_F_DEF_LOAD_BIO                              121
-# define CONF_F_GET_NEXT_FILE                             107
-# define CONF_F_MODULE_ADD                                122
-# define CONF_F_MODULE_INIT                               115
-# define CONF_F_MODULE_LOAD_DSO                           117
-# define CONF_F_MODULE_RUN                                118
-# define CONF_F_NCONF_DUMP_BIO                            105
-# define CONF_F_NCONF_DUMP_FP                             106
-# define CONF_F_NCONF_GET_NUMBER_E                        112
-# define CONF_F_NCONF_GET_SECTION                         108
-# define CONF_F_NCONF_GET_STRING                          109
-# define CONF_F_NCONF_LOAD                                113
-# define CONF_F_NCONF_LOAD_BIO                            110
-# define CONF_F_NCONF_LOAD_FP                             114
-# define CONF_F_NCONF_NEW                                 111
-# define CONF_F_PROCESS_INCLUDE                           116
-# define CONF_F_SSL_MODULE_INIT                           123
-# define CONF_F_STR_COPY                                  101
+# if !OPENSSL_API_3
+#  define CONF_F_CONF_DUMP_FP                              0
+#  define CONF_F_CONF_LOAD                                 0
+#  define CONF_F_CONF_LOAD_FP                              0
+#  define CONF_F_CONF_PARSE_LIST                           0
+#  define CONF_F_DEF_LOAD                                  0
+#  define CONF_F_DEF_LOAD_BIO                              0
+#  define CONF_F_GET_NEXT_FILE                             0
+#  define CONF_F_MODULE_ADD                                0
+#  define CONF_F_MODULE_INIT                               0
+#  define CONF_F_MODULE_LOAD_DSO                           0
+#  define CONF_F_MODULE_RUN                                0
+#  define CONF_F_NCONF_DUMP_BIO                            0
+#  define CONF_F_NCONF_DUMP_FP                             0
+#  define CONF_F_NCONF_GET_NUMBER_E                        0
+#  define CONF_F_NCONF_GET_SECTION                         0
+#  define CONF_F_NCONF_GET_STRING                          0
+#  define CONF_F_NCONF_LOAD                                0
+#  define CONF_F_NCONF_LOAD_BIO                            0
+#  define CONF_F_NCONF_LOAD_FP                             0
+#  define CONF_F_NCONF_NEW                                 0
+#  define CONF_F_PROCESS_INCLUDE                           0
+#  define CONF_F_SSL_MODULE_INIT                           0
+#  define CONF_F_STR_COPY                                  0
+# endif
 
 /*
  * CONF reason codes.

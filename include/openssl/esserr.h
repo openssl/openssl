@@ -11,9 +11,9 @@
 #ifndef HEADER_ESSERR_H
 # define HEADER_ESSERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,12 +23,14 @@ int ERR_load_ESS_strings(void);
 /*
  * ESS function codes.
  */
-# define ESS_F_ESS_CERT_ID_NEW_INIT                       100
-# define ESS_F_ESS_CERT_ID_V2_NEW_INIT                    101
-# define ESS_F_ESS_SIGNING_CERT_ADD                       104
-# define ESS_F_ESS_SIGNING_CERT_NEW_INIT                  102
-# define ESS_F_ESS_SIGNING_CERT_V2_ADD                    105
-# define ESS_F_ESS_SIGNING_CERT_V2_NEW_INIT               103
+# if !OPENSSL_API_3
+#  define ESS_F_ESS_CERT_ID_NEW_INIT                       0
+#  define ESS_F_ESS_CERT_ID_V2_NEW_INIT                    0
+#  define ESS_F_ESS_SIGNING_CERT_ADD                       0
+#  define ESS_F_ESS_SIGNING_CERT_NEW_INIT                  0
+#  define ESS_F_ESS_SIGNING_CERT_V2_ADD                    0
+#  define ESS_F_ESS_SIGNING_CERT_V2_NEW_INIT               0
+# endif
 
 /*
  * ESS reason codes.

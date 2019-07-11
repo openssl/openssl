@@ -13,28 +13,6 @@
 
 #ifndef OPENSSL_NO_ERR
 
-static const ERR_STRING_DATA PROV_str_functs[] = {
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AESNI_INIT_KEY, 0), "aesni_init_key"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_BLOCK_FINAL, 0), "aes_block_final"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_BLOCK_UPDATE, 0), "aes_block_update"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_CIPHER, 0), "aes_cipher"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_CTX_GET_PARAMS, 0),
-     "aes_ctx_get_params"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_CTX_SET_PARAMS, 0),
-     "aes_ctx_set_params"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_DINIT, 0), "aes_dinit"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_DUPCTX, 0), "aes_dupctx"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_EINIT, 0), "aes_einit"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_INIT_KEY, 0), "aes_init_key"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_STREAM_UPDATE, 0), "aes_stream_update"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_AES_T4_INIT_KEY, 0), "aes_t4_init_key"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_PROV_AES_KEY_GENERIC_INIT, 0),
-     "PROV_AES_KEY_generic_init"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_TRAILINGDATA, 0), "trailingdata"},
-    {ERR_PACK(ERR_LIB_PROV, PROV_F_UNPADBLOCK, 0), "unpadblock"},
-    {0, NULL}
-};
-
 static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_AES_KEY_SETUP_FAILED),
     "aes key setup failed"},
@@ -58,10 +36,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
 int ERR_load_PROV_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(PROV_str_functs[0].error) == NULL) {
-        ERR_load_strings_const(PROV_str_functs);
+    if (ERR_func_error_string(PROV_str_reasons[0].error) == NULL)
         ERR_load_strings_const(PROV_str_reasons);
-    }
 #endif
     return 1;
 }

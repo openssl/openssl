@@ -11,9 +11,9 @@
 #ifndef HEADER_DSAERR_H
 # define HEADER_DSAERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # include <openssl/opensslconf.h>
 
@@ -27,29 +27,31 @@ int ERR_load_DSA_strings(void);
 /*
  * DSA function codes.
  */
-#  define DSA_F_DSAPARAMS_PRINT                            100
-#  define DSA_F_DSAPARAMS_PRINT_FP                         101
-#  define DSA_F_DSA_BUILTIN_PARAMGEN                       125
-#  define DSA_F_DSA_BUILTIN_PARAMGEN2                      126
-#  define DSA_F_DSA_DO_SIGN                                112
-#  define DSA_F_DSA_DO_VERIFY                              113
-#  define DSA_F_DSA_METH_DUP                               127
-#  define DSA_F_DSA_METH_NEW                               128
-#  define DSA_F_DSA_METH_SET1_NAME                         129
-#  define DSA_F_DSA_NEW_METHOD                             103
-#  define DSA_F_DSA_PARAM_DECODE                           119
-#  define DSA_F_DSA_PRINT_FP                               105
-#  define DSA_F_DSA_PRIV_DECODE                            115
-#  define DSA_F_DSA_PRIV_ENCODE                            116
-#  define DSA_F_DSA_PUB_DECODE                             117
-#  define DSA_F_DSA_PUB_ENCODE                             118
-#  define DSA_F_DSA_SIGN                                   106
-#  define DSA_F_DSA_SIGN_SETUP                             107
-#  define DSA_F_DSA_SIG_NEW                                102
-#  define DSA_F_OLD_DSA_PRIV_DECODE                        122
-#  define DSA_F_PKEY_DSA_CTRL                              120
-#  define DSA_F_PKEY_DSA_CTRL_STR                          104
-#  define DSA_F_PKEY_DSA_KEYGEN                            121
+# if !OPENSSL_API_3
+#   define DSA_F_DSAPARAMS_PRINT                            0
+#   define DSA_F_DSAPARAMS_PRINT_FP                         0
+#   define DSA_F_DSA_BUILTIN_PARAMGEN                       0
+#   define DSA_F_DSA_BUILTIN_PARAMGEN2                      0
+#   define DSA_F_DSA_DO_SIGN                                0
+#   define DSA_F_DSA_DO_VERIFY                              0
+#   define DSA_F_DSA_METH_DUP                               0
+#   define DSA_F_DSA_METH_NEW                               0
+#   define DSA_F_DSA_METH_SET1_NAME                         0
+#   define DSA_F_DSA_NEW_METHOD                             0
+#   define DSA_F_DSA_PARAM_DECODE                           0
+#   define DSA_F_DSA_PRINT_FP                               0
+#   define DSA_F_DSA_PRIV_DECODE                            0
+#   define DSA_F_DSA_PRIV_ENCODE                            0
+#   define DSA_F_DSA_PUB_DECODE                             0
+#   define DSA_F_DSA_PUB_ENCODE                             0
+#   define DSA_F_DSA_SIGN                                   0
+#   define DSA_F_DSA_SIGN_SETUP                             0
+#   define DSA_F_DSA_SIG_NEW                                0
+#   define DSA_F_OLD_DSA_PRIV_DECODE                        0
+#   define DSA_F_PKEY_DSA_CTRL                              0
+#   define DSA_F_PKEY_DSA_CTRL_STR                          0
+#   define DSA_F_PKEY_DSA_KEYGEN                            0
+# endif
 
 /*
  * DSA reason codes.
