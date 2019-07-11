@@ -149,7 +149,7 @@ int encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s)
 /*
  * Decodes the DER length octets in pkt and initialises subpkt with the
  * following bytes of that length.
- * 
+ *
  * Returns 1 on success or 0 on failure.
  */
 int decode_der_length(PACKET *pkt, PACKET *subpkt)
