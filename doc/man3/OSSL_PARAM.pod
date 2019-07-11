@@ -27,26 +27,36 @@ A typical usage example could be an application that wants to set some
 parameters for an object, or wants to find out some parameters of an
 object.
 
-Arrays of this type can be used for two purposes:
+Arrays of this type can be used for the following purposes:
 
 =over 4
 
-=item *
+=item * Setting parameters for some object
 
-Setting parameters for some object.
 The caller sets up the C<OSSL_PARAM> array and calls some function
 (the I<setter>) that has intimate knowledge about the object that can
 take the data from the C<OSSL_PARAM> array and assign them in a
 suitable form for the internal structure of the object.
 
-=item *
+=item * Request parameters of some object
 
-Request parameters of some object.
 The caller (the I<requestor>) sets up the C<OSSL_PARAM> array and
 calls some function (the I<responder>) that has intimate knowledge
 about the object, which can take the internal data of the object and
 copy (possibly convert) that to the memory prepared by the
 I<requestor> and pointed at with the C<OSSL_PARAM> C<data>.
+
+=item * Request parameter descriptors
+
+The caller gets an array of constant C<OSSL_PARAM>, which describe
+available parameters and some of their properties; name, data type and
+expected data size.
+For a detailed description of each field for this use, see the field
+descriptions below.
+
+The caller may then use the information from this descriptor array to
+build up its own C<OSSL_PARAM> array to pass down to a I<setter> or
+I<responder>.
 
 =back
 
@@ -78,6 +88,11 @@ setting parameters) or shall (when requesting parameters) be stored,
 and C<data_size> is its size in bytes.
 The organization of the data depends on the parameter type and flag.
 
+When the C<OSSL_PARAM> is used as a parameter descriptor, C<data>
+should be ignored.
+If C<data_size> may be zero, it means that an arbitrary data size is
+accepted, otherwise it specifies the maximum size allowed.
+
 =item C<return_size>
 
 When an array of C<OSSL_PARAM> is used to request data, the
@@ -85,6 +100,9 @@ I<responder> must set this field to indicate the actual size of the
 parameter data.
 In case the C<data_size> is too small for the data, the I<responder>
 must still set this field to indicate the minimum data size required.
+
+When the C<OSSL_PARAM> is used as a parameter descriptor,
+C<return_size> should be ignored.
 
 =back
 
@@ -218,6 +236,14 @@ If a I<responder> finds that some data sizes are too small for the
 requested data, it must set C<return_size> for each such
 C<OSSL_PARAM> item to the required size, and eventually return an
 error.
+
+=item *
+
+Functions returning a constant C<OSSL_PARAM> array as a parameter
+descriptor may set C<data> and C<return_size> for their own purposes.
+And example would be to have C<data> point at handler functions for
+each parameter, which would be used by a I<setter> or I<responder> of
+those same parameters.
 
 =back
 

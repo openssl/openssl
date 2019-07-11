@@ -69,8 +69,8 @@ It's normally passed in arrays, where the array is terminated with an
 element where all fields are zero (for non-pointers) or C<NULL> (for
 pointers).
 
-These arrays can be used both to set parameters for some object, and
-to request parameters.
+These arrays can be used to set parameters for some object, to request
+parameters, and to describe parameters.
 
 C<OSSL_PARAM> is further described in L<OSSL_PARAM(3)>
 
