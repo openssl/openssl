@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include "apps.h"
 #include "progs.h"
 #include "opt.h"
