@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <openssl/params.h>
+#include <openssl/crypto.h>
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 
@@ -727,16 +728,12 @@ OSSL_PARAM OSSL_PARAM_allocate_BN(const char *key, BIGNUM *bn, size_t bsize)
     if (bn != NULL) {
         if (bsize == 0)
             bsize = (size_t)BN_num_bytes(bn);
-
-        if (BN_get_flags(bn, BN_FLG_SECURE)) {
+        if (BN_get_flags(bn, BN_FLG_SECURE) == BN_FLG_SECURE) {
             secure = 1;
             flag |= OWNER_FLAG_secure;
         }
     }
-    if (secure)
-        p = OPENSSL_secure_malloc(bsize);
-    else
-        p = OPENSSL_malloc(bsize);
+    p = secure ? OPENSSL_secure_malloc(bsize) : OPENSSL_malloc(bsize);
     if (p != NULL) {
         if (bn == NULL)
             memset(p, 0, bsize);
