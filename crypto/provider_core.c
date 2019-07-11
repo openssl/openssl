@@ -367,7 +367,7 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
  * Built in modules are distinguished from dynamically loaded modules
  * with an already assigned init function.
  */
-static const OSSL_DISPATCH *core_dispatch; /* Define further down */
+static OSSL_DISPATCH *core_dispatch; /* Define further down */
 
 /*
  * Internal version that doesn't affect the store flags, and thereby avoid
@@ -376,7 +376,11 @@ static const OSSL_DISPATCH *core_dispatch; /* Define further down */
  */
 static int provider_activate(OSSL_PROVIDER *prov)
 {
+    void *(*m)(size_t, const char *, int) = NULL;
+    void *(*r)(void *, size_t, const char *, int) = NULL;
+    void (*f)(void *, const char *, int) = NULL;
     const OSSL_DISPATCH *provider_dispatch = NULL;
+    OSSL_DISPATCH *dp;
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODE
     OSSL_provider_get_reason_strings_fn *p_get_reason_strings = NULL;
@@ -432,6 +436,24 @@ static int provider_activate(OSSL_PROVIDER *prov)
             prov->init_function = (OSSL_provider_init_fn *)
                 DSO_bind_func(prov->module, "OSSL_provider_init");
 #endif
+    }
+
+    /* In case application has swapped allocation functions. */
+    CRYPTO_get_mem_functions(&m, &r, &f);
+    for (dp = core_dispatch; dp->function != NULL; dp++) {
+        switch (dp->function_id) {
+        default:
+            break;
+        case OSSL_FUNC_CRYPTO_MALLOC:
+            dp->function = (void (*)(void))m;
+            break;
+        case OSSL_FUNC_CRYPTO_FREE:
+            dp->function = (void (*)(void))f;
+            break;
+        case OSSL_FUNC_CRYPTO_REALLOC:
+            dp->function = (void (*)(void))r;
+            break;
+        }
     }
 
     /* Call the initialise function for the provider. */
@@ -800,7 +822,7 @@ static void core_add_error_vdata(const OSSL_PROVIDER *prov,
  * Functions provided by the core.  Blank line separates "families" of related
  * functions.
  */
-static const OSSL_DISPATCH core_dispatch_[] = {
+static OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
     { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
@@ -831,4 +853,4 @@ static const OSSL_DISPATCH core_dispatch_[] = {
 
     { 0, NULL }
 };
-static const OSSL_DISPATCH *core_dispatch = core_dispatch_;
+static OSSL_DISPATCH *core_dispatch = core_dispatch_;
