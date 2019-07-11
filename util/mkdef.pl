@@ -620,33 +620,13 @@ sub do_defs
 				if (/^\s*DEFINE_STACK_OF\s*\(\s*(\w*)\s*\)/
 						|| /^\s*DEFINE_STACK_OF_CONST\s*\(\s*(\w*)\s*\)/) {
 					next;
+				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS_only\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+					$def .= "int d2i_$2(void);";
+					$def .= "int i2d_$2(void);";
+					next
 				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					$def .= "int d2i_$3(void);";
 					$def .= "int i2d_$3(void);";
-					# Variant for platforms that do not
-					# have to access global variables
-					# in shared libraries through functions
-					$def .=
-					    "#INFO:"
-						.join(',',"!EXPORT_VAR_AS_FUNCTION",@current_platforms).":"
-						    .join(',',@current_algorithms).";";
-					$def .= "OPENSSL_EXTERN int $2_it;";
-					$def .=
-					    "#INFO:"
-						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
-					# Variant for platforms that have to
-					# access global variables in shared
-					# libraries through functions
-					&$make_variant("$2_it","$2_it",
-						      "EXPORT_VAR_AS_FUNCTION",
-						      "FUNCTION");
-					next;
-				} elsif (/^\s*DECLARE_ASN1_FUNCTIONS_fname\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
-					$def .= "int d2i_$3(void);";
-					$def .= "int i2d_$3(void);";
-					$def .= "int $3_free(void);";
-					$def .= "int $3_new(void);";
 					# Variant for platforms that do not
 					# have to access global variables
 					# in shared libraries through functions
@@ -691,7 +671,7 @@ sub do_defs
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
 					next;
-				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS_const\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					$def .= "int d2i_$2(void);";
 					$def .= "int i2d_$2(void);";
 					# Variant for platforms that do not
@@ -712,6 +692,10 @@ sub do_defs
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
+					next;
+				} elsif (/^\s*DECLARE_ASN1_ALLOC_FUNCTIONS_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+					$def .= "int $2_free(void);";
+					$def .= "int $2_new(void);";
 					next;
 				} elsif (/^\s*DECLARE_ASN1_ALLOC_FUNCTIONS\s*\(\s*(\w*)\s*\)/) {
 					$def .= "int $1_free(void);";
@@ -770,6 +754,12 @@ sub do_defs
 					next;
 				} elsif (/^\s*DECLARE_ASN1_PRINT_FUNCTION_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					$def .= "int $2_print_ctx(void);";
+					next;
+				} elsif (/^\s*DECLARE_ASN1_DUP_FUNCTION\s*\(\s*(\w*)\s*\)/) {
+					$def .= "int $1_dup(void);";
+					next;
+				} elsif (/^\s*DECLARE_ASN1_DUP_FUNCTION_name\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
+					$def .= "int $2_dup(void);";
 					next;
 				} elsif (/^\s*DECLARE_PKCS12_STACK_OF\s*\(\s*(\w*)\s*\)/) {
 					next;
