@@ -26,7 +26,7 @@ static int pkey_cmac_init(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
-static int pkey_cmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+static int pkey_cmac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     if (!pkey_cmac_init(dst))
         return 0;

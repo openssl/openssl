@@ -50,7 +50,7 @@ static void pkey_poly1305_cleanup(EVP_PKEY_CTX *ctx)
     }
 }
 
-static int pkey_poly1305_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+static int pkey_poly1305_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     POLY1305_PKEY_CTX *sctx, *dctx;
 

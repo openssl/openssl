@@ -47,7 +47,7 @@ static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
 
 static void pkey_hmac_cleanup(EVP_PKEY_CTX *ctx);
 
-static int pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+static int pkey_hmac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     HMAC_PKEY_CTX *sctx, *dctx;
 

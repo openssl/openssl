@@ -50,7 +50,7 @@ static void pkey_siphash_cleanup(EVP_PKEY_CTX *ctx)
     }
 }
 
-static int pkey_siphash_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+static int pkey_siphash_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     SIPHASH_PKEY_CTX *sctx, *dctx;
 
