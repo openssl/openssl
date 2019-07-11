@@ -29,19 +29,21 @@ my $libcrypto = platform->sharedlib('libcrypto');
 my $libssl = platform->sharedlib('libssl');
 
 sub run_shlibloadtest {
+    my $atexit = shift;
     (my $fh, my $filename) = tempfile();
     ok(run(test(["shlibloadtest", @_, $libcrypto, $libssl, $filename])),
        join(' ', ("running shlibloadtest", @_,"$filename")));
-    ok(check_atexit($fh));
+    cmp_ok(check_atexit($fh), '==', $atexit,
+           "checking that 'atexit()' ".($atexit ? "was" : "wasn't")." run");
     unlink $filename;
 }
 
 # Each run_shlibloadtest runs two tests
-run_shlibloadtest("-crypto_first");
-run_shlibloadtest("-ssl_first");
-run_shlibloadtest("-just_crypto");
-run_shlibloadtest("-dso_ref");
-run_shlibloadtest("-no_atexit");
+run_shlibloadtest(1, "-crypto_first");
+run_shlibloadtest(1, "-ssl_first");
+run_shlibloadtest(1, "-just_crypto");
+run_shlibloadtest(1, "-dso_ref");
+run_shlibloadtest(0, "-no_atexit");
 
 sub check_atexit {
     my $fh = shift;
