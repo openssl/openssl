@@ -291,6 +291,9 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
         ec_key_simple_generate_public_key,
         0, /* keycopy */
         0, /* keyfinish */
+        ecdsa_simple_sign_setup,
+        ecdsa_simple_sign_sig,
+        ecdsa_simple_verify_sig,
         ecdh_simple_compute_key,
         0, /* field_inverse_mod_ord */
         0, /* blind_coordinates */

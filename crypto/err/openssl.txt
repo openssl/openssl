@@ -549,6 +549,9 @@ EC_F_ECDSA_SIGN_EX:254:ECDSA_sign_ex
 EC_F_ECDSA_SIGN_SETUP:248:ECDSA_sign_setup
 EC_F_ECDSA_SIG_NEW:265:ECDSA_SIG_new
 EC_F_ECDSA_VERIFY:253:ECDSA_verify
+EC_F_ECDSA_SIMPLE_SIGN_SETUP:310:ecdsa_simple_sign_setup
+EC_F_ECDSA_SIMPLE_SIGN_SIG:311:ecdsa_simple_sign_sig
+EC_F_ECDSA_SIMPLE_VERIFY_SIG:312:ecdsa_simple_verify_sig
 EC_F_ECD_ITEM_VERIFY:270:ecd_item_verify
 EC_F_ECKEY_PARAM2TYPE:223:eckey_param2type
 EC_F_ECKEY_PARAM_DECODE:212:eckey_param_decode
@@ -710,6 +713,7 @@ EC_F_NISTP521_PRE_COMP_NEW:237:nistp521_pre_comp_new
 EC_F_O2I_ECPUBLICKEY:152:o2i_ECPublicKey
 EC_F_OLD_EC_PRIV_DECODE:222:old_ec_priv_decode
 EC_F_OSSL_ECDH_COMPUTE_KEY:247:ossl_ecdh_compute_key
+EC_F_OSSL_ECDSA_SIGN_SETUP:300:ossl_ecdsa_sign_setup
 EC_F_OSSL_ECDSA_SIGN_SIG:249:ossl_ecdsa_sign_sig
 EC_F_OSSL_ECDSA_VERIFY_SIG:250:ossl_ecdsa_verify_sig
 EC_F_PKEY_ECD_CTRL:271:pkey_ecd_ctrl
@@ -2320,6 +2324,7 @@ EC_R_BUFFER_TOO_SMALL:100:buffer too small
 EC_R_CANNOT_INVERT:165:cannot invert
 EC_R_COORDINATES_OUT_OF_RANGE:146:coordinates out of range
 EC_R_CURVE_DOES_NOT_SUPPORT_ECDH:160:curve does not support ecdh
+EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA:170:curve does not support ecdsa
 EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING:159:curve does not support signing
 EC_R_D2I_ECPKPARAMETERS_FAILURE:117:d2i ecpkparameters failure
 EC_R_DECODE_ERROR:142:decode error
