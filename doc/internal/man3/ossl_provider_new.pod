@@ -51,7 +51,7 @@ ossl_provider_get_params, ossl_provider_query_operation
 
  /* Thin wrappers around calls to the provider */
  void ossl_provider_teardown(const OSSL_PROVIDER *prov);
- const OSSL_ITEM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov);
+ const OSSL_PARAM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov);
  int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
  const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                      int operation_id,
@@ -174,7 +174,7 @@ the provider has one.
 
 ossl_provider_get_param_types() calls the provider's I<get_param_types>
 function, if the provider has one.
-It should return an array of I<OSSL_ITEM> to describe all the
+It should return an array of I<OSSL_PARAM> to describe all the
 parameters that the provider has for the provider object.
 
 ossl_provider_get_params() calls the provider's parameter request
@@ -235,9 +235,9 @@ is returned.
 
 ossl_provider_teardown() doesnt't return any value.
 
-ossl_provider_get_param_types() returns a pointer to an I<OSSL_ITEM>
-array if this function is available in the provider, otherwise
-NULL.
+ossl_provider_get_param_types() returns a pointer to a constant
+I<OSSL_PARAM> array if this function is available in the provider,
+otherwise NULL.
 
 ossl_provider_get_params() returns 1 on success, or 0 on error.
 If this function isn't available in the provider, 0 is returned.

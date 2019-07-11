@@ -43,7 +43,7 @@ struct ossl_dispatch_st {
  * tables remain tables with function pointers only.
  *
  * This is used whenever we need to pass things like a table of error reason
- * codes <-> reason string maps, parameter name <-> parameter type maps, ...
+ * codes <-> reason string maps, ...
  *
  * Usage determines which field works as key if any, rather than field order.
  *

@@ -35,7 +35,7 @@ int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov)
     return 1;
 }
 
-const OSSL_ITEM *OSSL_PROVIDER_get_param_types(const OSSL_PROVIDER *prov)
+const OSSL_PARAM *OSSL_PROVIDER_get_param_types(const OSSL_PROVIDER *prov)
 {
     return ossl_provider_get_param_types(prov);
 }

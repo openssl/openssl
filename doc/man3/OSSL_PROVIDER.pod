@@ -15,7 +15,7 @@ OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
  OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
  int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
 
- const OSSL_ITEM *OSSL_PROVIDER_get_param_types(OSSL_PROVIDER *prov);
+ const OSSL_PARAM *OSSL_PROVIDER_get_param_types(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, OSSL_PARAM params[]);
 
  int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
@@ -50,11 +50,8 @@ For a provider added with OSSL_PROVIDER_add_builtin(), this simply
 runs its teardown function.
 
 OSSL_PROVIDER_get_param_types() is used to get a provider parameter
-descriptor set as an B<OSSL_ITEM> array.
-Each element is a tuple of an B<OSSL_PARAM> parameter type and a name
-in form of a C string.
-See L<openssl-core.h(7)> for more information on B<OSSL_ITEM> and
-parameter types.
+descriptor set as a constant B<OSSL_PARAM> array.
+See L<OSSL_PARAM(3)> for more information.
 
 OSSL_PROVIDER_get_params() is used to get provider parameter values.
 The caller must prepare the B<OSSL_PARAM> array before calling this
@@ -72,8 +69,8 @@ success, or B<NULL> on error.
 
 OSSL_PROVIDER_unload() returns 1 on success, or 0 on error.
 
-OSSL_PROVIDER_get_param_types() returns a pointer to a constant array
-of B<OSSL_ITEM>, or NULL if none is provided.
+OSSL_PROVIDER_get_param_types() returns a pointer to an array
+of constant B<OSSL_PARAM>, or NULL if none is provided.
 
 OSSL_PROVIDER_get_params() returns 1 on success, or 0 on error.
 

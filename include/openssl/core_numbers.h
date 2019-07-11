@@ -58,7 +58,7 @@ extern "C" {
  */
 /* Functions provided by the Core to the provider, reserved numbers 1-1023 */
 # define OSSL_FUNC_CORE_GET_PARAM_TYPES        1
-OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
                     core_get_param_types,(const OSSL_PROVIDER *prov))
 # define OSSL_FUNC_CORE_GET_PARAMS             2
 OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
@@ -132,7 +132,7 @@ OSSL_CORE_MAKE_FUNC(unsigned char *,
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
 OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void *provctx))
 # define OSSL_FUNC_PROVIDER_GET_PARAM_TYPES  1025
-OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
                     provider_get_param_types,(void *provctx))
 # define OSSL_FUNC_PROVIDER_GET_PARAMS       1026
 OSSL_CORE_MAKE_FUNC(int,provider_get_params,(void *provctx,

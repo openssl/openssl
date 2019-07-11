@@ -33,16 +33,16 @@ static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Tell the core what params we provide and what type they are */
-static const OSSL_ITEM p_param_types[] = {
-    { OSSL_PARAM_UTF8_STRING, "greeting" },
-    { 0, NULL }
+static const OSSL_PARAM p_param_types[] = {
+    { "greeting", OSSL_PARAM_UTF8_STRING, NULL, 0, 0 },
+    { NULL, 0, NULL, 0, 0 }
 };
 
 /* This is a trick to ensure we define the provider functions correctly */
 static OSSL_provider_get_param_types_fn p_get_param_types;
 static OSSL_provider_get_params_fn p_get_params;
 
-static const OSSL_ITEM *p_get_param_types(void *_)
+static const OSSL_PARAM *p_get_param_types(void *_)
 {
     return p_param_types;
 }
