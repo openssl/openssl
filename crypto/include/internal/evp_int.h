@@ -559,6 +559,39 @@ void evp_app_cleanup_int(void);
 void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
 void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
 
+/* KEYMGMT provider interface functions */
+void *evp_keymgmt_importdomain(const EVP_KEYMGMT *keymgmt,
+                               const OSSL_PARAM params[]);
+void *evp_keymgmt_gendomain(const EVP_KEYMGMT *keymgmt,
+                            const OSSL_PARAM params[]);
+void evp_keymgmt_freedomain(const EVP_KEYMGMT *keymgmt, void *provdomain);
+int evp_keymgmt_exportdomain(const EVP_KEYMGMT *keymgmt,
+                             void *provdomain, OSSL_PARAM params[]);
+const OSSL_PARAM *evp_keymgmt_importdomain_types(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *evp_keymgmt_exportdomain_types(const EVP_KEYMGMT *keymgmt);
+
+void *evp_keymgmt_importkey_priv(const EVP_KEYMGMT *keymgmt,
+                                 const OSSL_PARAM params[]);
+void *evp_keymgmt_importkey_pub(const EVP_KEYMGMT *keymgmt,
+                               const OSSL_PARAM params[]);
+void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domain,
+                         const OSSL_PARAM params[]);
+void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
+                          void *id, size_t idlen);
+void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
+int evp_keymgmt_exportkey_priv(const EVP_KEYMGMT *keymgmt,
+                               void *provkey, OSSL_PARAM params[]);
+int evp_keymgmt_exportkey_pub(const EVP_KEYMGMT *keymgmt,
+                              void *provkey, OSSL_PARAM params[]);
+const OSSL_PARAM *
+evp_keymgmt_importkey_priv_types(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *
+evp_keymgmt_importkey_pub_types(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *
+evp_keymgmt_exportkey_priv_types(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *
+evp_keymgmt_exportkey_pub_types(const EVP_KEYMGMT *keymgmt);
+
 /* Pulling defines out of C source files */
 
 #define EVP_RC4_KEY_SIZE 16
