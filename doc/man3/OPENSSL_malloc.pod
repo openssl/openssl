@@ -72,16 +72,17 @@ OPENSSL_MALLOC_FD
 
  int CRYPTO_mem_ctrl(int mode);
 
- int OPENSSL_mem_debug_push(const char *info)
- int OPENSSL_mem_debug_pop(void);
-
- int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
- int CRYPTO_mem_debug_pop(void);
-
  int CRYPTO_mem_leaks(BIO *b);
  int CRYPTO_mem_leaks_fp(FILE *fp);
  int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
                          void *u);
+
+Deprecated:
+
+ int OPENSSL_mem_debug_push(const char *info)
+ int OPENSSL_mem_debug_pop(void);
+ int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
+ int CRYPTO_mem_debug_pop(void);
 
 =head1 DESCRIPTION
 
@@ -227,9 +228,8 @@ previous value of the mode.
 
 While it's permitted to swap out only a few and not all the functions
 with CRYPTO_set_mem_functions(), it's recommended to swap them all out
-at once.  I<This applies specially if OpenSSL was built with the
-configuration option> C<crypto-mdebug> I<enabled.  In case, swapping out
-only, say, the malloc() implementation is outright dangerous.>
+at once, especially if OpenSSL was built with the
+configuration option> C<crypto-mdebug>.
 
 =head1 HISTORY
 
