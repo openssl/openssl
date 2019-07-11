@@ -199,3 +199,90 @@ void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
         }
     }
 }
+
+
+/* internal functions */
+/* TODO(3.0) decide if these should be public or internal */
+void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
+                                  const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->importdomparams(provctx, params);
+}
+
+void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
+                               const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->gendomparams(provctx, params);
+}
+
+void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
+                               void *provdomparams)
+{
+    keymgmt->freedomparams(provdomparams);
+}
+
+int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
+                                void *provdomparams, OSSL_PARAM params[])
+{
+    return keymgmt->exportdomparams(provdomparams, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->importdomparam_types();
+}
+
+const OSSL_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->exportdomparam_types();
+}
+
+
+void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
+                            const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->importkey(provctx, params);
+}
+
+void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
+                         const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->genkey(provctx, domparams, params);
+}
+
+void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
+                          void *id, size_t idlen)
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->loadkey(provctx, id, idlen);
+}
+
+void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    keymgmt->freekey(provkey);
+}
+
+int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
+                          OSSL_PARAM params[])
+{
+    return keymgmt->exportkey(provkey, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->importkey_types();
+}
+
+const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->exportkey_types();
+}
