@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include "ec_local.h"
 #include "s390x_arch.h"
 
@@ -27,6 +28,15 @@
 #define S390X_OFF_SRC_X(n)              (2 * n)
 #define S390X_OFF_SRC_Y(n)              (3 * n)
 #define S390X_OFF_SCALAR(n)             (4 * n)
+
+/* Offsets of fields in KDSA parameter blocks */
+#define S390X_OFF_R(n)                  (0 * n)
+#define S390X_OFF_S(n)                  (1 * n)
+#define S390X_OFF_H(n)                  (2 * n)
+#define S390X_OFF_K(n)                  (3 * n)
+#define S390X_OFF_X(n)                  (3 * n)
+#define S390X_OFF_RN(n)                 (4 * n)
+#define S390X_OFF_Y(n)                  (4 * n)
 
 static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
                                   const BIGNUM *scalar,
@@ -100,9 +110,166 @@ ret:
     /* Otherwise use default. */
     if (rc == -1)
         rc = ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
-    OPENSSL_cleanse(param, sizeof(param));
+    OPENSSL_cleanse(param + S390X_OFF_SCALAR(len), len);
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
+    return rc;
+}
+
+static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
+                                             int dgstlen,
+                                             const BIGNUM *kinv,
+                                             const BIGNUM *r,
+                                             EC_KEY *eckey,
+                                             unsigned int fc, int len)
+{
+    unsigned char param[S390X_SIZE_PARAM];
+    int ok = 0;
+    BIGNUM *k;
+    ECDSA_SIG *sig;
+    const EC_GROUP *group;
+    const BIGNUM *privkey;
+    int off;
+
+    group = EC_KEY_get0_group(eckey);
+    privkey = EC_KEY_get0_private_key(eckey);
+    if (group == NULL || privkey == NULL) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, EC_R_MISSING_PARAMETERS);
+        return NULL;
+    }
+
+    if (!EC_KEY_can_sign(eckey)) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
+              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        return NULL;
+    }
+
+    k = BN_secure_new();
+    sig = ECDSA_SIG_new();
+    if (k == NULL || sig == NULL) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        goto ret;
+    }
+
+    sig->r = BN_new();
+    sig->s = BN_new();
+    if (sig->r == NULL || sig->s == NULL) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        goto ret;
+    }
+
+    memset(param, 0, sizeof(param));
+    off = len - (dgstlen > len ? len : dgstlen);
+    memcpy(param + S390X_OFF_H(len) + off, dgst, len - off);
+
+    if (BN_bn2binpad(privkey, param + S390X_OFF_K(len), len) == -1) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+        goto ret;
+    }
+
+    if (r == NULL || kinv == NULL) {
+        /*
+         * Generate random k and copy to param param block. RAND_priv_bytes
+         * is used instead of BN_priv_rand_range or BN_generate_dsa_nonce
+         * because kdsa instruction constructs an in-range, invertible nonce
+         * internally implementing counter-measures for RNG weakness.
+         */
+         if (RAND_priv_bytes(param + S390X_OFF_RN(len), len) != 1) {
+             ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
+                   EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+             goto ret;
+         }
+    } else {
+        /* Reconstruct k = (k^-1)^-1. */
+        if (ec_group_do_inverse_ord(group, k, kinv, NULL) == 0
+            || BN_bn2binpad(k, param + S390X_OFF_RN(len), len) == -1) {
+            ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+            goto ret;
+        }
+        /* Turns KDSA internal nonce-generation off. */
+        fc |= S390X_KDSA_D;
+    }
+
+    if (s390x_kdsa(fc, param, NULL, 0) != 0) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_ECDSA_LIB);
+        goto ret;
+    }
+
+    if (BN_bin2bn(param + S390X_OFF_R(len), len, sig->r) == NULL
+        || BN_bin2bn(param + S390X_OFF_S(len), len, sig->s) == NULL) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+        goto ret;
+    }
+
+    ok = 1;
+ret:
+    OPENSSL_cleanse(param + S390X_OFF_K(len), 2 * len);
+    if (ok != 1) {
+        ECDSA_SIG_free(sig);
+        sig = NULL;
+    }
+    BN_clear_free(k);
+    return sig;
+}
+
+static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
+                                        const ECDSA_SIG *sig, EC_KEY *eckey,
+                                        unsigned int fc, int len)
+{
+    unsigned char param[S390X_SIZE_PARAM];
+    int rc = -1;
+    BN_CTX *ctx;
+    BIGNUM *x, *y;
+    const EC_GROUP *group;
+    const EC_POINT *pubkey;
+    int off;
+
+    group = EC_KEY_get0_group(eckey);
+    pubkey = EC_KEY_get0_public_key(eckey);
+    if (eckey == NULL || group == NULL || pubkey == NULL || sig == NULL) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, EC_R_MISSING_PARAMETERS);
+        return -1;
+    }
+
+    if (!EC_KEY_can_sign(eckey)) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG,
+              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        return -1;
+    }
+
+    ctx = BN_CTX_new();
+    if (ctx == NULL) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+
+    BN_CTX_start(ctx);
+
+    x = BN_CTX_get(ctx);
+    y = BN_CTX_get(ctx);
+    if (x == NULL || y == NULL) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
+        goto ret;
+    }
+
+    memset(param, 0, sizeof(param));
+    off = len - (dgstlen > len ? len : dgstlen);
+    memcpy(param + S390X_OFF_H(len) + off, dgst, len - off);
+
+    if (group->meth->point_get_affine_coordinates(group, pubkey,
+                                                  x, y, ctx) != 1
+        || BN_bn2binpad(sig->r, param + S390X_OFF_R(len), len) == -1
+        || BN_bn2binpad(sig->s, param + S390X_OFF_S(len), len) == -1
+        || BN_bn2binpad(x, param + S390X_OFF_X(len), len) == -1
+        || BN_bn2binpad(y, param + S390X_OFF_Y(len), len) == -1) {
+        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_BN_LIB);
+        goto ret;
+    }
+
+    rc = s390x_kdsa(fc, param, NULL, 0) == 0 ? 1 : 0;
+ret:
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
     return rc;
 }
 
@@ -120,6 +287,29 @@ static int ec_GFp_s390x_nistp##bits##_mul(const EC_GROUP *group,        \
                                   scalars, ctx,                         \
                                   S390X_SCALAR_MULTIPLY_P##bits,        \
                                   S390X_SIZE_P##bits);                  \
+}                                                                       \
+                                                                        \
+static ECDSA_SIG *ecdsa_s390x_nistp##bits##_sign_sig(const unsigned     \
+                                                     char *dgst,        \
+                                                     int dgstlen,       \
+                                                     const BIGNUM *kinv,\
+                                                     const BIGNUM *r,   \
+                                                     EC_KEY *eckey)     \
+{                                                                       \
+    return ecdsa_s390x_nistp_sign_sig(dgst, dgstlen, kinv, r, eckey,    \
+                                      S390X_ECDSA_SIGN_P##bits,         \
+                                      S390X_SIZE_P##bits);              \
+}                                                                       \
+                                                                        \
+static int ecdsa_s390x_nistp##bits##_verify_sig(const                   \
+                                                unsigned char *dgst,    \
+                                                int dgstlen,            \
+                                                const ECDSA_SIG *sig,   \
+                                                EC_KEY *eckey)          \
+{                                                                       \
+    return ecdsa_s390x_nistp_verify_sig(dgst, dgstlen, sig, eckey,      \
+                                        S390X_ECDSA_VERIFY_P##bits,     \
+                                        S390X_SIZE_P##bits);            \
 }                                                                       \
                                                                         \
 const EC_METHOD *EC_GFp_s390x_nistp##bits##_method(void)                \
@@ -176,8 +366,8 @@ const EC_METHOD *EC_GFp_s390x_nistp##bits##_method(void)                \
         NULL, /* keyfinish */                                           \
         ecdh_simple_compute_key,                                        \
         ecdsa_simple_sign_setup,                                        \
-        ecdsa_simple_sign_sig,                                          \
-        ecdsa_simple_verify_sig,                                        \
+        ecdsa_s390x_nistp##bits##_sign_sig,                             \
+        ecdsa_s390x_nistp##bits##_verify_sig,                           \
         NULL, /* field_inverse_mod_ord */                               \
         ec_GFp_simple_blind_coordinates,                                \
         ec_GFp_simple_ladder_pre,                                       \
@@ -186,8 +376,12 @@ const EC_METHOD *EC_GFp_s390x_nistp##bits##_method(void)                \
     };                                                                  \
     static const EC_METHOD *ret;                                        \
                                                                         \
-    if (OPENSSL_s390xcap_P.pcc[1]                                       \
-        & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P##bits))                  \
+    if ((OPENSSL_s390xcap_P.pcc[1]                                      \
+         & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P##bits))                 \
+        && (OPENSSL_s390xcap_P.kdsa[0]                                  \
+            & S390X_CAPBIT(S390X_ECDSA_VERIFY_P##bits))                 \
+        && (OPENSSL_s390xcap_P.kdsa[0]                                  \
+            & S390X_CAPBIT(S390X_ECDSA_SIGN_P##bits)))                  \
         ret = &EC_GFp_s390x_nistp##bits##_meth;                         \
     else                                                                \
         ret = EC_GFp_mont_method();                                     \
