@@ -179,6 +179,14 @@ struct ec_method_st {
     /* custom ECDH operation */
     int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
+    /* custom ECDSA */
+    int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinvp,
+                            BIGNUM **rp);
+    ECDSA_SIG *(*ecdsa_sign_sig)(const unsigned char *dgst, int dgstlen,
+                                 const BIGNUM *kinv, const BIGNUM *r,
+                                 EC_KEY *eckey);
+    int (*ecdsa_verify_sig)(const unsigned char *dgst, int dgstlen,
+                            const ECDSA_SIG *sig, EC_KEY *eckey);
     /* Inverse modulo order */
     int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r,
                                  const BIGNUM *x, BN_CTX *);
@@ -656,6 +664,13 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
                           const ECDSA_SIG *sig, EC_KEY *eckey);
+int ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+                            BIGNUM **rp);
+ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
+                                 const BIGNUM *in_kinv, const BIGNUM *in_r,
+                                 EC_KEY *eckey);
+int ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
+                            const ECDSA_SIG *sig, EC_KEY *eckey);
 
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
                  const uint8_t public_key[32], const uint8_t private_key[32]);

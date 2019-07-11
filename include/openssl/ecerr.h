@@ -212,6 +212,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_CANNOT_INVERT                               165
 #  define EC_R_COORDINATES_OUT_OF_RANGE                    146
 #  define EC_R_CURVE_DOES_NOT_SUPPORT_ECDH                 160
+#  define EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA                170
 #  define EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING              159
 #  define EC_R_D2I_ECPKPARAMETERS_FAILURE                  117
 #  define EC_R_DECODE_ERROR                                142
