@@ -88,8 +88,6 @@ EVP_CIPHER_CTX_init
 EVP_CIPHER_CTX_cleanup
 OPENSSL_add_all_algorithms_conf
 OPENSSL_add_all_algorithms_noconf
-OPENSSL_mem_debug_pop
-OPENSSL_mem_debug_push
 LHASH_HASH_FN
 LHASH_COMP_FN
 LHASH_DOALL_ARG_FN
