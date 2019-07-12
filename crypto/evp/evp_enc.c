@@ -963,7 +963,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     int ret = -2;                /* Unsupported */
     int set_params = 1;
     size_t sz;
-    OSSL_PARAM params[2];
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (ctx == NULL || ctx->cipher == NULL) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
@@ -972,9 +972,6 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
     if (ctx->cipher->prov == NULL)
         goto legacy;
-
-    /* The Controls all just set one parameter - so setup the terminator once */
-    params[1] = OSSL_PARAM_construct_end();
 
     switch (type) {
     case EVP_CTRL_SET_KEY_LENGTH:

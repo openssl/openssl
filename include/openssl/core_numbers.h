@@ -199,7 +199,6 @@ OSSL_CORE_MAKE_FUNC(unsigned long, OP_cipher_get_flags, (void))
 # define OSSL_FUNC_CIPHER_CTX_GET_PARAMS            10
 # define OSSL_FUNC_CIPHER_CTX_SET_PARAMS            11
 
-
 OSSL_CORE_MAKE_FUNC(void *, OP_cipher_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_encrypt_init, (void *cctx,
                                                   const unsigned char *key,
