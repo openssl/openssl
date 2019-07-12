@@ -444,11 +444,9 @@ void destroy_ui_method(void);
 const UI_METHOD *get_ui_method(void);
 
 int chopup_args(ARGS *arg, char *buf);
-# ifdef HEADER_X509_H
 int dump_cert_text(BIO *out, X509 *x);
 void print_name(BIO *out, const char *title, X509_NAME *nm,
                 unsigned long lflags);
-# endif
 void print_bignum_var(BIO *, const BIGNUM *, const char*,
                       int, unsigned char *);
 void print_array(BIO *, const char *, int, const unsigned char *);
