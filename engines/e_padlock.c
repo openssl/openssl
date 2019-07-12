@@ -637,8 +637,8 @@ gmi_sm4_ofb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
     
     if (f_zxc == 1) {
         int num = EVP_CIPHER_CTX_num(ctx);
-        CRYPTO_cfb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
-                              EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx),
+        CRYPTO_ofb128_encrypt(in_arg, out_arg, nbytes, cdata->ks.rd_key,
+                              EVP_CIPHER_CTX_iv_noconst(ctx), &num, 
                               (block128_f)gmi_sm4_ecb_enc);
     } else {
         memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), SM4_BLOCK_SIZE);
