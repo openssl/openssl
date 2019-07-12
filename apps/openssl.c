@@ -23,7 +23,6 @@
 # include <openssl/engine.h>
 #endif
 #include <openssl/err.h>
-#include "s_apps.h"
 /* Needed to get the other O_xxx flags. */
 #ifdef OPENSSL_SYS_VMS
 # include <unixio.h>
