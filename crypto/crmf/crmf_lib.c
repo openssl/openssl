@@ -200,10 +200,7 @@ OSSL_CRMF_CERTID *OSSL_CRMF_CERTID_gen(const X509_NAME *issuer,
  /*
   * id-regCtrl-protocolEncrKey Control (section 6.6)
   *
-  * For some reason X509_PUBKEY_dup() is not implemented in OpenSSL X509
-  * TODO: check whether that should go elsewhere
   */
-static IMPLEMENT_ASN1_DUP_FUNCTION(X509_PUBKEY)
 IMPLEMENT_CRMF_CTRL_FUNC(protocolEncrKey, X509_PUBKEY, regCtrl)
 
 /*-
