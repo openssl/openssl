@@ -499,6 +499,14 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     if (!RUN_ONCE(&base, ossl_init_base))
         return 0;
 
+    if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
+        if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
+                          ossl_init_register_atexit))
+            return 0;
+    } else if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit)) {
+        return 0;
+    }
+
     /*
      * Many internals only need the basic init too function properly.
      * Doing more risks creating nasty init loops.  One example would
