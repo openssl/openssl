@@ -267,6 +267,14 @@ static int padlock_available(void)
 
 static unsigned char f_zxc = 0; /* 1 is for zx-c */ 
 
+#    define get_cpu_fms(eax, leaf)                \
+        ({  asm volatile (                       \
+                "cpuid"                           \
+                : "=a"(eax)                       \
+                : "0"(leaf)                       \
+                : "ebx","ecx");                   \
+        })
+        
 /*
  * Load supported features of the CPU to see if the GMI is available.
  */
@@ -278,16 +286,16 @@ static int gmi_available(void)
    
     /* Diff ZXC with ZXD */ 
     unsigned int leaf = 0x1;
-    asm volatile("cpuid":"=a"(eax):"0"(leaf):"ebx","ecx");
+    get_cpu_fms(eax, leaf);
     family = (eax & 0xf00) >> 8;  /* bit 11-08 */ 
     model = (eax & 0xf0) >> 4; /* bit 7-4 */ 
 
-    if ((family == 7)&(model == 0xb)) {
+    if ((family == 7)&&(model == 0xb)) {
         f_zxc = 0;
         edx = padlock_capability();
         padlock_use_ccs = ((edx & (0x3 << 4)) == (0x3 << 4));  
-    } else if (((family == 6)&(model == 0xf)) ||
-              ((family == 6)&(model == 9))) {
+    } else if (((family == 6)&&(model == 0xf)) ||
+              ((family == 6)&&(model == 9))) {
         f_zxc = 1;
         edx = padlock_capability();
         padlock_use_ccs = ((edx & (0x3 << 4)) == (0x3 << 4));  
@@ -452,7 +460,7 @@ padlock_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
         out_arg += chunk;
         in_arg += chunk;
-        EVP_CIPHER_CTX_set_num(ctx, nbytes);
+        EVP_CIPHER_CTX_set_num(ctx, (int)nbytes);
         if (cdata->cword.b.encdec) {
             cdata->cword.b.encdec = 0;
             padlock_reload_key();
@@ -520,7 +528,7 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
         out_arg += chunk;
         in_arg += chunk;
-        EVP_CIPHER_CTX_set_num(ctx, nbytes);
+        EVP_CIPHER_CTX_set_num(ctx, (int)nbytes);
         padlock_reload_key();   /* empirically found */
         padlock_aes_block(ivp, ivp, cdata);
         padlock_reload_key();   /* empirically found */
