@@ -57,7 +57,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     OPENSSL_cpuid_setup();
 
     if (!ossl_init_thread())
-        return 0;
+        goto err;
 
     base_inited = 1;
     return 1;
@@ -496,37 +496,19 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
     }
 
-    /*
-     * When the caller specifies OPENSSL_INIT_BASE_ONLY, that should be the
-     * *only* option specified.  With that option we return immediately after
-     * doing the requested limited initialization.  Note that
-     * err_shelve_state() called by us via ossl_init_load_crypto_nodelete()
-     * re-enters OPENSSL_init_crypto() with OPENSSL_INIT_BASE_ONLY, but with
-     * base already initialized this is a harmless NOOP.
-     *
-     * If we remain the only caller of err_shelve_state() the recursion should
-     * perhaps be removed, but if in doubt, it can be left in place.
-     */
     if (!RUN_ONCE(&base, ossl_init_base))
         return 0;
 
+    /*
+     * Many internals only need the basic init too function properly.
+     * Doing more risks creating nasty init loops.  One example would
+     * be if anything down the line causes the error sub-system to be
+     * called...
+     */
     if (opts & OPENSSL_INIT_BASE_ONLY)
         return 1;
 
-    /*
-     * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
-     * should not have the side-effect of setting up exit handlers, and
-     * therefore, this code block is below the INIT_BASE_ONLY-conditioned early
-     * return above.
-     */
-    if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
-        if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
-                          ossl_init_register_atexit))
-            return 0;
-    } else if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit)) {
-        return 0;
-    }
-
+    /* Anything below is optional, at user discretion */
     if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
         return 0;
 

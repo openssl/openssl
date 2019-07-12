@@ -139,7 +139,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
 };
 #endif
 
-static CRYPTO_ONCE err_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_ONCE err_init_thread_local = CRYPTO_ONCE_STATIC_INIT;
 static int set_err_thread_local;
 static CRYPTO_THREAD_LOCAL err_thread_local;
 
@@ -176,9 +176,30 @@ static int err_string_data_cmp(const ERR_STRING_DATA *a,
     return a->error > b->error ? 1 : -1;
 }
 
+DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
+{
+    err_string_lock = CRYPTO_THREAD_lock_new();
+    int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
+                                            err_string_data_cmp);
+    return err_string_lock != NULL && int_error_hash != NULL;
+}
+
+void err_cleanup(void)
+{
+    if (set_err_thread_local != 0)
+        CRYPTO_THREAD_cleanup_local(&err_thread_local);
+    CRYPTO_THREAD_lock_free(err_string_lock);
+    err_string_lock = NULL;
+    lh_ERR_STRING_DATA_free(int_error_hash);
+    int_error_hash = NULL;
+}
+
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 {
     ERR_STRING_DATA *p = NULL;
+
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return NULL;
 
     CRYPTO_THREAD_read_lock(err_string_lock);
     p = lh_ERR_STRING_DATA_retrieve(int_error_hash, d);
@@ -212,6 +233,9 @@ static void build_SYS_str_reasons(void)
     static int init = 1;
     int i;
     int saveerrno = get_last_sys_error();
+
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return;
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     if (!init) {
@@ -295,33 +319,6 @@ static void ERR_STATE_free(ERR_STATE *s)
     OPENSSL_free(s);
 }
 
-DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
-{
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
-    err_string_lock = CRYPTO_THREAD_lock_new();
-    if (err_string_lock == NULL)
-        return 0;
-    int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
-                                            err_string_data_cmp);
-    if (int_error_hash == NULL) {
-        CRYPTO_THREAD_lock_free(err_string_lock);
-        err_string_lock = NULL;
-        return 0;
-    }
-    return 1;
-}
-
-void err_cleanup(void)
-{
-    if (set_err_thread_local != 0)
-        CRYPTO_THREAD_cleanup_local(&err_thread_local);
-    CRYPTO_THREAD_lock_free(err_string_lock);
-    err_string_lock = NULL;
-    lh_ERR_STRING_DATA_free(int_error_hash);
-    int_error_hash = NULL;
-}
-
 /*
  * Legacy; pack in the library.
  */
@@ -338,10 +335,13 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return 0;
+
     CRYPTO_THREAD_write_lock(err_string_lock);
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_insert(int_error_hash,
-                                       (ERR_STRING_DATA *)str);
+                                        (ERR_STRING_DATA *)str);
     CRYPTO_THREAD_unlock(err_string_lock);
     return 1;
 }
@@ -349,6 +349,7 @@ static int err_load_strings(const ERR_STRING_DATA *str)
 int ERR_load_ERR_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
+    /* Ignore failures from these */
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
@@ -711,10 +712,25 @@ void ERR_remove_state(unsigned long pid)
 }
 #endif
 
-DEFINE_RUN_ONCE_STATIC(err_do_init)
+DEFINE_RUN_ONCE_STATIC(err_do_init_thread_local)
 {
     set_err_thread_local = 1;
     return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
+}
+
+static ERR_STATE *err_get_local_state(void)
+{
+    /*
+     * OPENSSL_INIT_BASE_ONLY allows us to get the absolute basics without
+     * risking getting a loop back here.
+     */
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        return 0;
+
+    if (!RUN_ONCE(&err_init_thread_local, err_do_init_thread_local))
+        return 0;
+
+    return CRYPTO_THREAD_get_local(&err_thread_local);
 }
 
 ERR_STATE *ERR_get_state(void)
@@ -722,13 +738,7 @@ ERR_STATE *ERR_get_state(void)
     ERR_STATE *state;
     int saveerrno = get_last_sys_error();
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
-        return NULL;
-
-    if (!RUN_ONCE(&err_init, err_do_init))
-        return NULL;
-
-    state = CRYPTO_THREAD_get_local(&err_thread_local);
+    state = err_get_local_state();
     if (state == (ERR_STATE*)-1)
         return NULL;
 
@@ -748,8 +758,6 @@ ERR_STATE *ERR_get_state(void)
             return NULL;
         }
 
-        /* Ignore failures from these */
-        OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     }
 
     set_sys_error(saveerrno);
@@ -764,25 +772,7 @@ int err_shelve_state(void **state)
 {
     int saveerrno = get_last_sys_error();
 
-    /*
-     * Note, at present our only caller is OPENSSL_init_crypto(), indirectly
-     * via ossl_init_load_crypto_nodelete(), by which point the requested
-     * "base" initialization has already been performed, so the below call is a
-     * NOOP, that re-enters OPENSSL_init_crypto() only to quickly return.
-     *
-     * If are no other valid callers of this function, the call below can be
-     * removed, avoiding the re-entry into OPENSSL_init_crypto().  If there are
-     * potential uses that are not from inside OPENSSL_init_crypto(), then this
-     * call is needed, but some care is required to make sure that the re-entry
-     * remains a NOOP.
-     */
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
-        return 0;
-
-    if (!RUN_ONCE(&err_init, err_do_init))
-        return 0;
-
-    *state = CRYPTO_THREAD_get_local(&err_thread_local);
+    *state = err_get_local_state();
     if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
         return 0;
 
