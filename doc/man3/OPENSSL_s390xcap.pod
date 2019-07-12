@@ -72,6 +72,7 @@ the numbering is continuous across 64-bit mask boundaries.
       #134    1<<57    vector packed decimal facility
       #135    1<<56    vector enhancements facility 1
       #146    1<<45    message-security assist extension 8
+      #155    1<<36    message-security assist extension 9
 
  kimd :
       #  1    1<<62    KIMD-SHA-1
