@@ -10,7 +10,7 @@ RAND_set_rand_method, RAND_get_rand_method, RAND_OpenSSL - select RAND method
 
  RAND_METHOD *RAND_OpenSSL(void);
 
- void RAND_set_rand_method(const RAND_METHOD *meth);
+ int RAND_set_rand_method(const RAND_METHOD *meth);
 
  const RAND_METHOD *RAND_get_rand_method(void);
 
@@ -48,8 +48,9 @@ Each pointer may be NULL if the function is not implemented.
 
 =head1 RETURN VALUES
 
-RAND_set_rand_method() returns no value. RAND_get_rand_method() and
-RAND_OpenSSL() return pointers to the respective methods.
+RAND_set_rand_method() returns 1 on success and 0 on failue.
+RAND_get_rand_method() and RAND_OpenSSL() return pointers to the respective
+methods.
 
 =head1 SEE ALSO
 
