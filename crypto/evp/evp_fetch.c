@@ -236,3 +236,41 @@ int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
     EVPerr(EVP_F_EVP_SET_DEFAULT_PROPERTIES, ERR_R_INTERNAL_ERROR);
     return 0;
 }
+
+struct do_all_data_st {
+    void (*user_fn)(void *method, void *arg);
+    void *user_arg;
+    void *(*new_method)(const char *name, const OSSL_DISPATCH *fns,
+                        OSSL_PROVIDER *prov);
+    void (*free_method)(void *);
+};
+
+static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
+                   int no_store, void *vdata)
+{
+    struct do_all_data_st *data = vdata;
+    void *method = data->new_method(algo->algorithm_name,
+                                    algo->implementation, provider);
+
+    if (method != NULL) {
+        data->user_fn(method, data->user_arg);
+        data->free_method(method);
+    }
+}
+
+void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
+                        void (*user_fn)(void *method, void *arg),
+                        void *user_arg,
+                        void *(*new_method)(const char *name,
+                                            const OSSL_DISPATCH *fns,
+                                            OSSL_PROVIDER *prov),
+                        void (*free_method)(void *))
+{
+    struct do_all_data_st data;
+
+    data.new_method = new_method;
+    data.free_method = free_method;
+    data.user_fn = user_fn;
+    data.user_arg = user_arg;
+    ossl_algorithm_do_all(libctx, operation_id, NULL, do_one, &data);
+}
