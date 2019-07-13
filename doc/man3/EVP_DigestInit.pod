@@ -15,7 +15,9 @@ EVP_MD_CTX_md, EVP_MD_CTX_type, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
 EVP_MD_CTX_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
-EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
+EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
+EVP_MD_do_all_ex
+- EVP digest routines
 
 =head1 SYNOPSIS
 
@@ -75,6 +77,10 @@ EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
 
  EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
  void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
+
+ void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
+                       void (*fn)(EVP_MD *mac, void *arg),
+                       void *arg);
 
 =head1 DESCRIPTION
 
@@ -280,6 +286,13 @@ L<EVP_DigestVerifyInit(3)>. The B<pctx> passed to this function should be freed
 by the caller. A NULL B<pctx> pointer is also allowed to clear the B<EVP_PKEY_CTX>
 assigned to B<ctx>. In such case, freeing the cleared B<EVP_PKEY_CTX> or not
 depends on how the B<EVP_PKEY_CTX> is created.
+
+=item EVP_MD_do_all_ex()
+
+Traverses all messages digests implemented by all activated providers
+in the given library context I<libctx>, and for each of the implementations,
+calls the given function I<fn> with the implementation method and the given
+I<arg> as argument.
 
 =back
 

@@ -995,6 +995,9 @@ void EVP_CIPHER_do_all(void (*fn) (const EVP_CIPHER *ciph,
 void EVP_CIPHER_do_all_sorted(void (*fn)
                                (const EVP_CIPHER *ciph, const char *from,
                                 const char *to, void *x), void *arg);
+void EVP_CIPHER_do_all_ex(OPENSSL_CTX *libctx,
+                          void (*fn)(EVP_CIPHER *cipher, void *arg),
+                          void *arg);
 
 void EVP_MD_do_all(void (*fn) (const EVP_MD *ciph,
                                const char *from, const char *to, void *x),
@@ -1002,6 +1005,9 @@ void EVP_MD_do_all(void (*fn) (const EVP_MD *ciph,
 void EVP_MD_do_all_sorted(void (*fn)
                            (const EVP_MD *ciph, const char *from,
                             const char *to, void *x), void *arg);
+void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
+                      void (*fn)(EVP_MD *md, void *arg),
+                      void *arg);
 
 /* MAC stuff */
 

@@ -49,7 +49,8 @@ EVP_CIPHER_CTX_mode,
 EVP_CIPHER_param_to_asn1,
 EVP_CIPHER_asn1_to_param,
 EVP_CIPHER_CTX_set_padding,
-EVP_enc_null
+EVP_enc_null,
+EVP_CIPHER_do_all_ex
 - EVP cipher routines
 
 =head1 SYNOPSIS
@@ -126,6 +127,10 @@ EVP_enc_null
 
  int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
  int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+
+ void EVP_CIPHER_do_all_ex(OPENSSL_CTX *libctx,
+                           void (*fn)(EVP_CIPHER *cipher, void *arg),
+                           void *arg);
 
 =head1 DESCRIPTION
 
@@ -301,6 +306,11 @@ EVP_CIPHER_CTX_rand_key() generates a random key of the appropriate length
 based on the cipher context. The EVP_CIPHER can provide its own random key
 generation routine to support keys of a specific form. B<Key> must point to a
 buffer at least as big as the value returned by EVP_CIPHER_CTX_key_length().
+
+EVP_CIPHER_do_all_ex() traverses all ciphers implemented by all activated
+providers in the given library context I<libctx>, and for each of the
+implementations, calls the given function I<fn> with the implementation method
+and the given I<arg> as argument.
 
 =head1 RETURN VALUES
 
