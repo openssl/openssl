@@ -53,6 +53,8 @@ as input to the L<dgst(1)> or L<speed(1)> commands.
 Display a list of message digest algorithms.
 If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
 official algorithm name, B<bar>.
+If a line is of the form C<foo @ bar>, then B<foo> is provided by the provider
+B<bar>.
 
 =item B<-mac-algorithms>
 
@@ -70,6 +72,8 @@ to the L<dgst(1)> or L<speed(1)> commands.
 Display a list of cipher algorithms.
 If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
 official algorithm name, B<bar>.
+If a line is of the form C<foo @ bar>, then B<foo> is provided by the provider
+B<bar>.
 
 =item B<-public-key-algorithms>
 
