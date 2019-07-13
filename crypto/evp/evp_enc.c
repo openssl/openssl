@@ -1262,3 +1262,12 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 
     return cipher;
 }
+
+void EVP_CIPHER_do_all_ex(OPENSSL_CTX *libctx,
+                          void (*fn)(EVP_CIPHER *mac, void *arg),
+                          void *arg)
+{
+    evp_generic_do_all(libctx, OSSL_OP_CIPHER,
+                       (void (*)(void *, void *))fn, arg,
+                       evp_cipher_from_dispatch, evp_cipher_free);
+}

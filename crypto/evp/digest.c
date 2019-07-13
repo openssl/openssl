@@ -699,3 +699,12 @@ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 
     return md;
 }
+
+void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
+                          void (*fn)(EVP_MD *mac, void *arg),
+                          void *arg)
+{
+    evp_generic_do_all(libctx, OSSL_OP_DIGEST,
+                       (void (*)(void *, void *))fn, arg,
+                       evp_md_from_dispatch, evp_md_free);
+}
