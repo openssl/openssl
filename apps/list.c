@@ -10,6 +10,8 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/provider.h>
+#include <openssl/safestack.h>
 #include "apps.h"
 #include "progs.h"
 #include "opt.h"
@@ -18,28 +20,108 @@ static void list_cipher_fn(const EVP_CIPHER *c,
                            const char *from, const char *to, void *arg)
 {
     if (c != NULL) {
-        BIO_printf(arg, "%s\n", EVP_CIPHER_name(c));
+        BIO_printf(arg, "  %s\n", EVP_CIPHER_name(c));
     } else {
         if (from == NULL)
             from = "<undefined>";
         if (to == NULL)
             to = "<undefined>";
-        BIO_printf(arg, "%s => %s\n", from, to);
+        BIO_printf(arg, "  %s => %s\n", from, to);
     }
+}
+
+DEFINE_STACK_OF(EVP_CIPHER)
+static int cipher_cmp(const EVP_CIPHER * const *a,
+                      const EVP_CIPHER * const *b)
+{
+    int ret = strcasecmp(EVP_CIPHER_name(*a), EVP_CIPHER_name(*b));
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_CIPHER_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_CIPHER_provider(*b)));
+
+    return ret;
+}
+
+static void collect_ciphers(EVP_CIPHER *cipher, void *stack)
+{
+    STACK_OF(EVP_CIPHER) *cipher_stack = stack;
+
+    sk_EVP_CIPHER_push(cipher_stack, cipher);
+    EVP_CIPHER_up_ref(cipher);
+}
+
+static void list_ciphers(void)
+{
+    STACK_OF(EVP_CIPHER) *ciphers = sk_EVP_CIPHER_new(cipher_cmp);
+    int i;
+
+    BIO_printf(bio_out, "Legacy:\n");
+    EVP_CIPHER_do_all_sorted(list_cipher_fn, bio_out);
+
+    BIO_printf(bio_out, "Provided:\n");
+    EVP_CIPHER_do_all_ex(NULL, collect_ciphers, ciphers);
+    sk_EVP_CIPHER_sort(ciphers);
+    for (i = 0; i < sk_EVP_CIPHER_num(ciphers); i++) {
+        const EVP_CIPHER *c = sk_EVP_CIPHER_value(ciphers, i);
+        BIO_printf(bio_out, "  %s", EVP_CIPHER_name(c));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
+    }
+    sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_meth_free);
 }
 
 static void list_md_fn(const EVP_MD *m,
                        const char *from, const char *to, void *arg)
 {
     if (m != NULL) {
-        BIO_printf(arg, "%s\n", EVP_MD_name(m));
+        BIO_printf(arg, "  %s\n", EVP_MD_name(m));
     } else {
         if (from == NULL)
             from = "<undefined>";
         if (to == NULL)
             to = "<undefined>";
-        BIO_printf((BIO *)arg, "%s => %s\n", from, to);
+        BIO_printf((BIO *)arg, "  %s => %s\n", from, to);
     }
+}
+
+DEFINE_STACK_OF(EVP_MD)
+static int md_cmp(const EVP_MD * const *a, const EVP_MD * const *b)
+{
+    int ret = strcasecmp(EVP_MD_name(*a), EVP_MD_name(*b));
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_MD_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_MD_provider(*b)));
+
+    return ret;
+}
+
+static void collect_digests(EVP_MD *md, void *stack)
+{
+    STACK_OF(EVP_MD) *digest_stack = stack;
+    sk_EVP_MD_push(digest_stack, md);
+    EVP_MD_up_ref(md);
+}
+
+static void list_digests(void)
+{
+    STACK_OF(EVP_MD) *digests = sk_EVP_MD_new(md_cmp);
+    int i;
+
+    BIO_printf(bio_out, "Legacy:\n");
+    EVP_MD_do_all_sorted(list_md_fn, bio_out);
+
+    BIO_printf(bio_out, "Provided:\n");
+    EVP_MD_do_all_ex(NULL, collect_digests, digests);
+    sk_EVP_MD_sort(digests);
+    for (i = 0; i < sk_EVP_MD_num(digests); i++) {
+        const EVP_MD *c = sk_EVP_MD_value(digests, i);
+        BIO_printf(bio_out, "  %s", EVP_MD_name(c));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_MD_provider(c)));
+    }
+    sk_EVP_MD_pop_free(digests, EVP_MD_meth_free);
 }
 
 static void list_mac_fn(const EVP_MAC *m,
@@ -450,7 +532,7 @@ opthelp:
             list_type(FT_md, one);
             break;
         case OPT_DIGEST_ALGORITHMS:
-            EVP_MD_do_all_sorted(list_md_fn, bio_out);
+            list_digests();
             break;
         case OPT_MAC_ALGORITHMS:
             EVP_MAC_do_all_sorted(list_mac_fn, bio_out);
@@ -459,7 +541,7 @@ opthelp:
             list_type(FT_cipher, one);
             break;
         case OPT_CIPHER_ALGORITHMS:
-            EVP_CIPHER_do_all_sorted(list_cipher_fn, bio_out);
+            list_ciphers();
             break;
         case OPT_PK_ALGORITHMS:
             list_pkey();
