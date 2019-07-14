@@ -260,7 +260,6 @@ struct evp_cipher_st {
     OSSL_OP_cipher_get_params_fn *get_params;
     OSSL_OP_cipher_ctx_get_params_fn *ctx_get_params;
     OSSL_OP_cipher_ctx_set_params_fn *ctx_set_params;
-    OSSL_OP_cipher_get_flags_fn *get_flags;
 } /* EVP_CIPHER */ ;
 
 /* Macros to code block cipher wrappers */

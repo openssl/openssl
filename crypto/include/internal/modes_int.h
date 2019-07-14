@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* TODO(3.0) Move this header into provider when dependencies are removed */
 #include <openssl/modes.h>
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
@@ -214,27 +215,5 @@ struct siv128_context {
     int final_ret;
     int crypto_ok;
 };
-
-typedef struct siv128_context SIV128_CONTEXT;
-
-SIV128_CONTEXT *CRYPTO_siv128_new(const unsigned char *key, int klen,
-                                  EVP_CIPHER* cbc, EVP_CIPHER* ctr);
-int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
-                       const EVP_CIPHER* cbc, const EVP_CIPHER* ctr);
-int CRYPTO_siv128_copy_ctx(SIV128_CONTEXT *dest, SIV128_CONTEXT *src);
-int CRYPTO_siv128_aad(SIV128_CONTEXT *ctx, const unsigned char *aad,
-                      size_t len);
-int CRYPTO_siv128_encrypt(SIV128_CONTEXT *ctx,
-                          const unsigned char *in, unsigned char *out,
-                          size_t len);
-int CRYPTO_siv128_decrypt(SIV128_CONTEXT *ctx,
-                          const unsigned char *in, unsigned char *out,
-                          size_t len);
-int CRYPTO_siv128_finish(SIV128_CONTEXT *ctx);
-int CRYPTO_siv128_set_tag(SIV128_CONTEXT *ctx, const unsigned char *tag,
-                          size_t len);
-int CRYPTO_siv128_get_tag(SIV128_CONTEXT *ctx, unsigned char *tag, size_t len);
-int CRYPTO_siv128_cleanup(SIV128_CONTEXT *ctx);
-int CRYPTO_siv128_speed(SIV128_CONTEXT *ctx, int arg);
 
 #endif /* OPENSSL_NO_SIV */
