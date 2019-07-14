@@ -1,0 +1,25 @@
+
+#define OQS_ALG_NAME(nid) \
+  (nid == NID_OQS_KEM_DEFAULT     ? OQS_KEM_alg_default : \
+  (nid == NID_OQS_SIKE_503        ? OQS_KEM_alg_sike_p503 : \
+  (nid == NID_OQS_SIKE_751        ? OQS_KEM_alg_sike_p751 : \
+{%- for kem in config['kems'] %}
+  (nid == NID_OQS_{{ kem['name_group'] }} ? {{ kem['oqs_alg'] }} : \
+{% endfor %}  (nid == NID_OQS_Frodo_640_cshake? OQS_KEM_alg_frodokem_640_shake : \
+  (nid == NID_OQS_Frodo_976_AES   ? OQS_KEM_alg_frodokem_976_aes : \
+  (nid == NID_OQS_Frodo_976_cshake? OQS_KEM_alg_frodokem_976_shake : \
+  (nid == NID_OQS_BIKE1_L1        ? OQS_KEM_alg_bike1_l1 : \
+  (nid == NID_OQS_BIKE1_L3        ? OQS_KEM_alg_bike1_l3 : \
+  (nid == NID_OQS_BIKE1_L5        ? OQS_KEM_alg_bike1_l5 : \
+  (nid == NID_OQS_BIKE2_L1        ? OQS_KEM_alg_bike2_l1 : \
+  (nid == NID_OQS_BIKE2_L3        ? OQS_KEM_alg_bike2_l3 : \
+  (nid == NID_OQS_BIKE2_L5        ? OQS_KEM_alg_bike2_l5 : \
+  (nid == NID_OQS_BIKE3_L1        ? OQS_KEM_alg_bike3_l1 : \
+  (nid == NID_OQS_BIKE3_L3        ? OQS_KEM_alg_bike3_l3 : \
+  (nid == NID_OQS_BIKE3_L5        ? OQS_KEM_alg_bike3_l5 : \
+  (nid == NID_OQS_NEWHOPE_512_CCA ? OQS_KEM_alg_newhope_512cca : \
+  (nid == NID_OQS_NEWHOPE_1024_CCA? OQS_KEM_alg_newhope_1024cca : \
+   OQS_ALG_NAME_NIST_BRANCH(nid) \
+   ))))))))))))))))){% for kem in config['kems'] %}){% endfor %}
+   /* ADD_MORE_OQS_KEM_HERE */
+

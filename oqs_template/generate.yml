@@ -1,0 +1,6 @@
+kems:
+  -
+    name_group: "frodo640aes"
+    nid: "0x0204"
+    nid_hybrid_p256: "0x0302"
+    oqs_alg: "OQS_KEM_alg_frodokem_640_aes"

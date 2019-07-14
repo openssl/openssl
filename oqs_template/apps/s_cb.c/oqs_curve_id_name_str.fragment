@@ -1,0 +1,3 @@
+{% for kem in config['kems'] %}
+  case {{ kem['nid'] }}: return "{{ kem['name_group'] }}";
+{% endfor %}  

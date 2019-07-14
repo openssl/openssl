@@ -1,0 +1,25 @@
+
+#define OQS_KEM_NID(curveID) \
+  (curveID == 0x01FF || curveID == 0x02FF ? NID_OQS_KEM_DEFAULT : \
+  (curveID == 0x0200 || curveID == 0x0300 ? NID_OQS_SIKE_503 : \
+  (curveID == 0x0201 ? NID_OQS_SIKE_751 : \
+{%- for kem in config['kems'] %}
+  (curveID == {{ kem['nid'] }} || curveID == {{ kem['nid_hybrid_p256'] }} ? NID_OQS_{{ kem['name_group'] }} \
+{% endfor %}  (curveID == 0x0205 || curveID == 0x0303 ? NID_OQS_Frodo_640_cshake : \
+  (curveID == 0x0206 ? NID_OQS_Frodo_976_AES : \
+  (curveID == 0x0207 ? NID_OQS_Frodo_976_cshake : \
+  (curveID == 0x0208 || curveID == 0x0304 ? NID_OQS_BIKE1_L1 : \
+  (curveID == 0x0209 ? NID_OQS_BIKE1_L3 : \
+  (curveID == 0x020a ? NID_OQS_BIKE1_L5 : \
+  (curveID == 0x020b || curveID == 0x0305 ? NID_OQS_BIKE2_L1 : \
+  (curveID == 0x020c ? NID_OQS_BIKE2_L3 : \
+  (curveID == 0x020d ? NID_OQS_BIKE2_L5 : \
+  (curveID == 0x020e || curveID == 0x0306 ? NID_OQS_BIKE3_L1 : \
+  (curveID == 0x020f ? NID_OQS_BIKE3_L3 : \
+  (curveID == 0x0210 ? NID_OQS_BIKE3_L5 : \
+  (curveID == 0x0211 || curveID == 0x0307 ? NID_OQS_NEWHOPE_512_CCA : \
+  (curveID == 0x0212 ? NID_OQS_NEWHOPE_1024_CCA : \
+   OQS_KEM_NID_NIST_BRANCH(curveID) \
+   ))))))))))))))))){% for kem in config['kems'] %}){% endfor %}
+  /* ADD_MORE_OQS_KEM_HERE */
+

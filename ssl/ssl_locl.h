@@ -469,7 +469,9 @@
 #define NID_OQS_SIKE_751         0x0201
 #define NID_OQS_SIDH_503         0x0202
 #define NID_OQS_SIDH_751         0x0203
-#define NID_OQS_Frodo_640_AES    0x0204
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_NIDS_START
+#define NID_OQS_frodo640aes 0x0204
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_NIDS_END
 #define NID_OQS_Frodo_640_cshake 0x0205
 #define NID_OQS_Frodo_976_AES    0x0206
 #define NID_OQS_Frodo_976_cshake 0x0207
@@ -511,7 +513,9 @@
 #define NID_OQS_p256_KEM_DEFAULT   0x02FF
 #define NID_OQS_p256_SIKE_503      0x0300
 #define NID_OQS_p256_SIDH_503      0x0301
-#define NID_OQS_p256_Frodo_640_AES    0x0302
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_HYBRID_NIDS_START
+#define NID_OQS_p256_frodo640aes 0x0302
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_HYBRID_NIDS_END
 #define NID_OQS_p256_Frodo_640_cshake 0x0303
 #define NID_OQS_p256_BIKE1_L1         0x0304
 #define NID_OQS_p256_BIKE2_L1         0x0305
@@ -563,11 +567,12 @@
   (nid == NID_OQS_SIDH_751 ? 0x0203 : \
    0))
 #endif
+///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_START
 #define OQS_KEM_CURVEID(nid) \
   (nid == NID_OQS_KEM_DEFAULT ? 0x01FF : \
   (nid == NID_OQS_SIKE_503 ? 0x0200 : \
   (nid == NID_OQS_SIKE_751 ? 0x0201 : \
-  (nid == NID_OQS_Frodo_640_AES ? 0x0204 : \
+  (nid == NID_OQS_frodo640aes ? 0x0204 : \
   (nid == NID_OQS_Frodo_640_cshake ? 0x0205 : \
   (nid == NID_OQS_Frodo_976_AES ? 0x0206 : \
   (nid == NID_OQS_Frodo_976_cshake ? 0x0207 : \
@@ -585,6 +590,7 @@
    OQS_KEM_CURVEID_NIST_BRANCH(nid) \
    ))))))))))))))))))
   /* ADD_MORE_OQS_KEM_HERE */
+///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_END
 
 /* Returns the curve ID for an OQS hybrid KEM NID */
 #if defined(OQS_NIST_BRANCH)
@@ -603,10 +609,11 @@
   (nid == NID_OQS_p256_SIDH_503 ? 0x0301 : \
    0)
 #endif
+///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_START
 #define OQS_KEM_HYBRID_CURVEID(nid) \
   (nid == NID_OQS_p256_KEM_DEFAULT      ? 0x02FF : \
   (nid == NID_OQS_p256_SIKE_503         ? 0x0300 : \
-  (nid == NID_OQS_p256_Frodo_640_AES    ? 0x0302 : \
+  (nid == NID_OQS_p256_frodo640aes ? 0x0302 : \
   (nid == NID_OQS_p256_Frodo_640_cshake ? 0x0303 : \
   (nid == NID_OQS_p256_BIKE1_L1         ? 0x0304 : \
   (nid == NID_OQS_p256_BIKE2_L1         ? 0x0305 : \
@@ -615,6 +622,7 @@
    OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
    ))))))))
   /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
+///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_END
 
   /* Returns the OQS KEM NID for a curve ID */
 #if defined(OQS_NIST_BRANCH)
@@ -644,11 +652,12 @@
   (curveID == 0x0203 ? NID_OQS_SIDH_751 : \
    0))
 #endif
+///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_NID_START
 #define OQS_KEM_NID(curveID) \
   (curveID == 0x01FF || curveID == 0x02FF ? NID_OQS_KEM_DEFAULT : \
   (curveID == 0x0200 || curveID == 0x0300 ? NID_OQS_SIKE_503 : \
   (curveID == 0x0201 ? NID_OQS_SIKE_751 : \
-  (curveID == 0x0204 || curveID == 0x0302 ? NID_OQS_Frodo_640_AES : \
+  (curveID == 0x0204 || curveID == 0x0302 ? NID_OQS_frodo640aes \
   (curveID == 0x0205 || curveID == 0x0303 ? NID_OQS_Frodo_640_cshake : \
   (curveID == 0x0206 ? NID_OQS_Frodo_976_AES : \
   (curveID == 0x0207 ? NID_OQS_Frodo_976_cshake : \
@@ -666,6 +675,7 @@
    OQS_KEM_NID_NIST_BRANCH(curveID) \
    ))))))))))))))))))
   /* ADD_MORE_OQS_KEM_HERE */
+///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_NID_END
 
 /* Returns true if the curve ID is for an OQS KEM */
 #define IS_OQS_KEM_CURVEID(id) (id >= 0x01FF && id <= 0x022e) /* ADD_MORE_OQS_KEM_HERE (update value)*/
@@ -701,11 +711,12 @@
   (nid == NID_OQS_SIDH_751        ? OQS_KEM_alg_sidh_p751 : \
    0 ))
 #endif
+///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_START
 #define OQS_ALG_NAME(nid) \
   (nid == NID_OQS_KEM_DEFAULT     ? OQS_KEM_alg_default : \
   (nid == NID_OQS_SIKE_503        ? OQS_KEM_alg_sike_p503 : \
   (nid == NID_OQS_SIKE_751        ? OQS_KEM_alg_sike_p751 : \
-  (nid == NID_OQS_Frodo_640_AES   ? OQS_KEM_alg_frodokem_640_aes : \
+  (nid == NID_OQS_frodo640aes ? OQS_KEM_alg_frodokem_640_aes : \
   (nid == NID_OQS_Frodo_640_cshake? OQS_KEM_alg_frodokem_640_shake : \
   (nid == NID_OQS_Frodo_976_AES   ? OQS_KEM_alg_frodokem_976_aes : \
   (nid == NID_OQS_Frodo_976_cshake? OQS_KEM_alg_frodokem_976_shake : \
@@ -723,6 +734,7 @@
    OQS_ALG_NAME_NIST_BRANCH(nid) \
    ))))))))))))))))))
    /* ADD_MORE_OQS_KEM_HERE */
+///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_END
 
 /* Returns the classical nid for an hybrid alg (FIXMEOQS: only secp256r1 (23) is supported for now) */
 #define OQS_KEM_CLASSICAL_CURVEID(curveID) (IS_OQS_KEM_HYBRID_CURVEID(curveID) ? 23 : 0)

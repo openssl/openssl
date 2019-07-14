@@ -433,7 +433,9 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0202: return "sidh503";
   case 0x0203: return "sidh751";
 #endif
+  ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_START
   case 0x0204: return "frodo640aes";
+  ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
   case 0x0205: return "frodo640cshake";
   case 0x0206: return "frodo976aes";
   case 0x0207: return "frodo976cshake";
