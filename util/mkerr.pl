@@ -453,9 +453,7 @@ foreach my $lib ( keys %errorfile ) {
 #ifndef HEADER_${lib}ERR_H
 # define HEADER_${lib}ERR_H
 
-# ifndef HEADER_SYMHACKS_H
 #  include <openssl/symhacks.h>
-# endif
 
 EOF
     if ( $internal ) {
