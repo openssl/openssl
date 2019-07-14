@@ -3638,7 +3638,7 @@ static int do_multi(int multi, int size_num)
             close(fd[1]);
             mr = 1;
             usertime = 0;
-            free(fds);
+            OPENSSL_free(fds);
             return 0;
         }
         printf("Forked child %d\n", n);
@@ -3750,7 +3750,7 @@ static int do_multi(int multi, int size_num)
 
         fclose(f);
     }
-    free(fds);
+    OPENSSL_free(fds);
     return 1;
 }
 #endif
