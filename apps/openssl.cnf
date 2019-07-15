@@ -22,6 +22,9 @@ oid_section		= new_oids
 # (Alternatively, use a configuration file that has only
 # X.509v3 extensions in its main [= default] section.)
 
+# See further down
+openssl_conf = openssl_init
+
 [ new_oids ]
 
 # We can add new OIDs in here for use by 'ca', 'req' and 'ts'.
@@ -348,3 +351,18 @@ ess_cert_id_chain	= no	# Must the ESS cert id chain be included?
 				# (optional, default: no)
 ess_cert_id_alg		= sha1	# algorithm to compute certificate
 				# identifier (optional, default: sha1)
+
+[openssl_init]
+
+providers = providers
+
+[providers]
+
+legacy = legacy_prov
+default = default_prov
+
+[legacy_prov]
+activate = 1
+
+[default_prov]
+activate = 1
