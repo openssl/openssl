@@ -215,6 +215,67 @@ extern "C" {
 /* Passphrase callback parameters */
 #define OSSL_PASSPHRASE_PARAM_INFO              "info"
 
+/*-
+ * storemgmt parameters
+ */
+
+/*
+ * Used by OP_storemgmt_ctx_set_params:
+ *
+ * - OSSL_STORE_PARAM_EXPECT is an INTEGER, and the value is any of the
+ *   OSSL_STORE_INFO numbers.  This is used to set the expected type of
+ *   object loaded.
+ *
+ * - OSSL_STORE_PARAM_SUBJECT, OSSL_STORE_PARAM_ISSUER,
+ *   OSSL_STORE_PARAM_SERIAL, OSSL_STORE_PARAM_FINGERPRINT,
+ *   OSSL_STORE_PARAM_DIGEST, OSSL_STORE_PARAM_ALIAS
+ *   are used as search criteria.
+ *   (OSSL_STORE_PARAM_DIGEST is used with OSSL_STORE_PARAM_FINGERPRINT)
+ *
+ * - OSSL_STORE_PARAM_RAWENC, to tell the implementation what raw encoding
+ *   is supported.  OSSL_STORE_PARAM_RAWENC is defined further down.
+ */
+#define OSSL_STORE_PARAM_EXPECT     "expect"       /* INTEGER */
+#define OSSL_STORE_PARAM_SUBJECT    "subject" /* DER blob => OCTET_STRING */
+#define OSSL_STORE_PARAM_ISSUER     "name" /* DER blob => OCTET_STRING */
+#define OSSL_STORE_PARAM_SERIAL     "serial"       /* INTEGER */
+#define OSSL_STORE_PARAM_DIGEST     "digest"       /* UTF8_STRING */
+#define OSSL_STORE_PARAM_FINGERPRINT "fingerprint" /* OCTET_STRING */
+#define OSSL_STORE_PARAM_ALIAS      "alias"        /* UTF8_STRING */
+
+/*
+ * Used by OP_storemgmt_load to return information.
+ *
+ * OSSL_STORE_PARAM_TYPE is an integer holding the type of the object,
+ * i.e. any of the OSSL_STORE_INFO numbers.
+ *
+ * If the type number is OSSL_STORE_INFO_NAME, the following parameters
+ * will also be filled in:
+ * - OSSL_STORE_PARAM_NAME, holding the exact URI of an object
+ * - OSSL_STORE_PARAM_DESC, holding a description of the object
+ *
+ * If the type number is OSSL_STORE_INFO_PARAMS, OSSL_STORE_INFO_PKEY,
+ * OSSL_STORE_INFO_CERT, or OSSL_STORE_INFO_CRL, the following parameters
+ * may also be filled in, depending on what's supported by the provider:
+ * - OSSL_STORE_PARAM_ALGORITHM (only for OSSL_STORE_INFO_PARAMS and
+ *   OSSL_STORE_INFO_PKEY), holding the name of the algorithm the data
+ *   is valid for.
+ * - OSSL_STORE_PARAM_REFERENCE, holding an internal reference to the
+ *   provider data.  This can be used to load the object, for example
+ *   with OP_keymgmt_loadkey, where the reference would work as an id.
+ * - OSSL_STORE_PARAM_RAWDATA and OSSL_STORE_PARAM_RAWENC, which may
+ *   be used to get the actual object data, as an alternative to the
+ *   object reference.  OSSL_STORE_PARAM_RAWENC holds a simple name,
+ *   such as "DER".
+ */
+#define OSSL_STORE_PARAM_TYPE       "type"         /* INTEGER */
+#define OSSL_STORE_PARAM_NAME       "name"         /* UTF8_STRING */
+#define OSSL_STORE_PARAM_DESC       "desc"         /* UTF8_STRING */
+#define OSSL_STORE_PARAM_ALGORITHM  "algorithm"    /* UTF8_STRING */
+#define OSSL_STORE_PARAM_REFERENCE  "reference"    /* OCTET_STRING */
+#define OSSL_STORE_PARAM_RAWDATA    "rawdata"      /* OCTET_STRING */
+#define OSSL_STORE_PARAM_RAWENC     "rawencoding"  /* UTF8_STRING */
+
 # ifdef __cplusplus
 }
 # endif

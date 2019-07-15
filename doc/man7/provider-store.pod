@@ -1,0 +1,225 @@
+=pod
+
+=head1 NAME
+
+provider-store - The OSSL_STORE library E<lt>-E<gt> provider functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/core_numbers.h>
+
+ /*
+  * None of these are actual functions, but are displayed like this for
+  * the function signatures for functions that are offered as function
+  * pointers in OSSL_DISPATCH arrays.
+  */
+
+ void * OP_store_open (const char *uri);
+ int OP_store_set_params(void *ctx, const OSSL_PARAM[]);
+ int OP_store_load(void *ctx, OSSL_CALLBACK *cb, void *cbarg);
+ int OP_store_eof (void *ctx);
+ int OP_store_close (void *ctx);
+
+=head1 DESCRIPTION
+
+The STORE operation is the provider side of the L<ossl_store(7)> API.
+It's designed to work in tandem with L<openssl-keymgmt(7)>
+implementations (in the same provider) or independently.
+
+The primary responsibility of the STORE operation is to load all sorts
+of objects from a database indicated by URI.  These objects are given
+to the OpenSSL library in one of three forms:
+
+=over 4
+
+=item 1.
+
+Reference to an object in another operation.  Currently, the only
+object type for which this is supported are keys and their domain
+parameters, with support from the L<openssl-keymgmt(7)> interface.
+
+=item 2.
+
+Object data in parameter form.  Currently, this is only supported for
+keys and their domain parameters, just as objects by reference.
+
+=item 3.
+
+Raw data, encoded in a form that the OpenSSL library knows how to
+unpack.
+
+=for comment Currently, only DER is supported.
+
+=back
+
+All "functions" mentioned here are passed as function pointers between
+F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
+B<OSSL_ALGORITHM> arrays that are returned by the provider's
+provider_query_operation() function
+(see L<provider-base(7)/Provider Functions>).
+
+All these "functions" have a corresponding function type definition
+named B<OSSL_{name}_fn>, and a helper function to retrieve the
+function pointer from a B<OSSL_DISPATCH> element named
+B<OSSL_get_{name}>.
+For example, the "function" OP_store_load() has these:
+
+ typedef void *
+     (OSSL_OP_store_load_fn)(void *provctx,
+                                          const OSSL_PARAM params[]);
+ static ossl_inline OSSL_OP_store_load_fn
+     OSSL_get_OP_store_load(const OSSL_DISPATCH *opf);
+
+B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
+macros in L<openssl-core_numbers.h(7)>, as follows:
+
+ OP_store_open          OSSL_FUNC_STORE_OPEN
+ OP_store_set_params    OSSL_FUNC_STORE_SET_PARAMS
+ OP_store_load          OSSL_FUNC_STORE_LOAD
+ OP_store_eof           OSSL_FUNC_STORE_EOF
+ OP_store_close         OSSL_FUNC_STORE_CLOSE
+
+=head2 Functions
+
+OP_store_open() should create a provider side context with data base
+on the input I<uri>.  The implementation is entirely responsible for
+the interpretation of the URI.
+
+OP_store_set_params() should set additional parameters, such as what
+kind of data to expect, search criteria, and so on.  More on those
+below, in L</Load Parameters>.  Whether unrecognised parameters are an
+error or simply ignored is at the implementation's discression.
+
+OP_store_load() loads the next object from the URI opened by
+OP_store_open(), makes a set of parameters with the object data, and
+calls the library callback I<cb> with that set of parameters as well
+as I<cbarg>.  The library callback will then interpret those
+parameters and use them as well as possible.  More on the passed
+parameters below, in L</Object Parameters>.
+
+OP_store_eof() indicates if the end of the set of objects from the
+URI has been reached.  When that happens, there's no point trying to
+do any further loading.
+
+OP_store_close() frees the provider side context I<ctx>.
+
+=head2 Load Parameters
+
+=over 4
+
+=item "expect" (B<OSSL_STORE_PARAM_EXPECT>) <integer>
+
+Indicates what type of data the OpenSSL library expects to get.  This
+is only useful for optimization, as the library will check that the
+object types match the expectation too.
+
+The number that can be given through this parameter is found in
+F<< <openssl/store.h> >>, with the macros having names starting with
+C<OSSL_STORE_INFO_>.  These are further described in
+L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS>.
+
+=item "subject" (B<OSSL_STORE_PARAM_SUBJECT>) <octet string>
+
+Indicates that the caller wants to search for an object with the given
+subject associated.  This can be used to select specific certificates
+by subject.
+
+The contents of the octet string is expected to be in DER form.
+
+=item "issuer" (B<OSSL_STORE_PARAM_ISSUER>) <octet string>
+
+Indicates that the caller wants to search for an object with the given
+issuer associated.  This can be used to select specific certificates
+by issuer.
+
+The contents of the octet string is expected to be in DER form.
+
+=item "serial" (B<OSSL_STORE_PARAM_SERIAL>) <integer>
+
+Indicates that the caller wants to search for an object with the given
+serial number associated.
+
+=item "digest" (B<OSSL_STORE_PARAM_DIGEST>) <utf8 string>
+
+=item "fingerprint" (B<OSSL_STORE_PARAM_FINGERPRINT>) <octet string>
+
+Indicates that the caller wants to search for an object with the given
+fingerprint, computed with the given digest.
+
+=item "alias" (B<OSSL_STORE_PARAM_ALIAS>) <utf8 string>
+
+Indicates that the caller wants to search for an object with the given
+alias (some call it a "friendly name").
+
+=back
+
+Several of these search criteria may be combined.  For example, to
+search for a certificate by issuer+serial, both the "issuer" and the
+"serial" parameters will be given.
+
+=head2 Object Parameters
+
+The callback that's called by OP_store_load() should receive some of
+these parameters:
+
+=over 4
+
+=item "type" (B<OSSL_STORE_PARAM_TYPE>) <integer>
+
+The number is one of the object types described in
+L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS>.
+
+=item "name" (B<OSSL_STORE_PARAM_NAME>) <utf8 string>
+
+=item "desc" (B<OSSL_STORE_PARAM_DESC>) <utf8 string>
+
+If the type given by the "type" parameter is B<OSSL_STORE_INFO_NAME>,
+"name" and "desc" contain the full URI of an object container and the
+extra description.  For the B<OSSL_STORE_INFO_NAME> type, the "name"
+parameter must be given, while the "desc" parameter is optional.
+
+=item "algorithm" (B<OSSL_STORE_PARAM_ALGORITHM>) <utf8 string>
+
+if the type given by the "type" parameter is B<OSSL_STORE_INFO_PARAMS>
+or B<OSSL_STORE_INFO_PKEY>, this parameter must also be given, to
+inform the OpenSSL library what sort of key it's being passed.
+
+=item "reference" (B<OSSL_STORE_PARAM_REFERENCE>) <octet string>
+
+For a STORE implementation that exists in the same provider as a
+L<openssl-keymgmt(7)> implementation and works in tandem with it, this
+parameter can be used as an identity to be passed to
+OP_keymgmt_loaddomparams() or OP_keymgmt_loadkey().
+
+=item "rawdata" (B<OSSL_STORE_PARAM_RAWDATA>) <octet string>
+
+=item "rawencoding" (B<OSSL_STORE_PARAM_RAWENC>) <utf8 string>
+
+A STORE implementation may pass an object in raw encoded form in the
+"rawdata" form, and indicate the encoding with "rawencoding".
+Currently, the only supported encoding is "DER".
+
+=item key parameters understood by OP_keymgmt_importdomparams() and
+OP_keymgmt_importdomparams() and OP_keymgmt_importkey()
+
+This is a possibility for generic STORE implementations, that aren't
+working in tandem with any L<openssl-keymgmt(7)> implementation.
+
+=head1 SEE ALSO
+
+L<provider(7)>
+
+=head1 HISTORY
+
+The STORE interface was introduced in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -558,6 +558,28 @@ OSSL_CORE_MAKE_FUNC(int, OP_serializer_serialize_object,
                     (void *ctx, void *obj, BIO *out,
                      OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg))
 
+/*-
+ * Store
+ *
+ * Objects are scanned by using the 'open', 'load', 'eof' and 'close'
+ * functions, which implement an OSSL_STORE loader.
+ */
+
+#define OSSL_OP_STORE                              20
+
+#define OSSL_FUNC_STORE_OPEN                        1
+#define OSSL_FUNC_STORE_SET_PARAMS                  2
+#define OSSL_FUNC_STORE_LOAD                        3
+#define OSSL_FUNC_STORE_EOF                         4
+#define OSSL_FUNC_STORE_CLOSE                       5
+OSSL_CORE_MAKE_FUNC(void *, OP_store_open, (const char *uri))
+OSSL_CORE_MAKE_FUNC(int, OP_store_set_params,
+                    (void *ctx, const OSSL_PARAM[]))
+OSSL_CORE_MAKE_FUNC(int, OP_store_load,
+                    (void *ctx, OSSL_CALLBACK *cb, void *cbarg))
+OSSL_CORE_MAKE_FUNC(int, OP_store_eof, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, OP_store_close, (void *ctx))
+
 # ifdef __cplusplus
 }
 # endif
