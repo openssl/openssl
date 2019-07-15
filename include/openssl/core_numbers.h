@@ -181,6 +181,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_set_params,
                     (void *vctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params,
                     (void *vctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(unsigned long, OP_cipher_get_flags, (void))
 
 /* Symmetric Ciphers */
 

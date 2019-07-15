@@ -35,16 +35,20 @@ extern "C" {
 #define OSSL_PROV_PARAM_BUILDINFO   "buildinfo"
 
 
-/* Well known cipher parameters */
-
-#define OSSL_CIPHER_PARAM_PADDING   "padding"
-#define OSSL_CIPHER_PARAM_MODE      "mode"
-#define OSSL_CIPHER_PARAM_BLOCK_SIZE "blocksize" /* OSSL_PARAM_INTEGER */
-#define OSSL_CIPHER_PARAM_FLAGS     "flags" /* OSSL_PARAM_UNSIGNED_INTEGER */
-#define OSSL_CIPHER_PARAM_KEYLEN    "keylen" /* OSSL_PARAM_INTEGER */
-#define OSSL_CIPHER_PARAM_IVLEN     "ivlen"  /* OSSL_PARAM_INTEGER */
-#define OSSL_CIPHER_PARAM_IV        "iv"  /* OSSL_PARAM_OCTET_PTR */
-#define OSSL_CIPHER_PARAM_NUM       "num" /* OSSL_PARAM_INTEGER */
+/* cipher parameters */
+#define OSSL_CIPHER_PARAM_PADDING   "padding"    /* int */
+#define OSSL_CIPHER_PARAM_MODE      "mode"       /* int */
+#define OSSL_CIPHER_PARAM_BLOCK_SIZE "blocksize" /* int */
+#define OSSL_CIPHER_PARAM_FLAGS     "flags"      /* ulong */
+#define OSSL_CIPHER_PARAM_KEYLEN    "keylen"     /* int */
+#define OSSL_CIPHER_PARAM_IVLEN     "ivlen"      /* int */
+#define OSSL_CIPHER_PARAM_IV        "iv"         /* octet_string OR octet_ptr */
+#define OSSL_CIPHER_PARAM_NUM       "num"        /* int */
+#define OSSL_CIPHER_PARAM_AEAD_TAG           "tag"        /* octet_string */
+#define OSSL_CIPHER_PARAM_AEAD_TLS1_AAD      "tlsaad"     /* octet_string */
+#define OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD  "tlsaadpad"  /* size_t */
+#define OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED "tlsivfixed" /* octet_string */
+#define OSSL_CIPHER_PARAM_AEAD_IVLEN         "aeadivlen"  /* size_t */
 
 /* digest parameters */
 #define OSSL_DIGEST_PARAM_XOFLEN    "xoflen"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,102 +13,19 @@
 #include <string.h>
 #include <assert.h>
 #include <openssl/aes.h>
+#include "internal/modes_int.h"
 #include "internal/evp_int.h"
 #include <openssl/rand.h>
 #include <openssl/cmac.h>
 #include "ciphers_locl.h"
 #include "internal/providercommonerr.h"
+#include "internal/aes_platform.h"
 
 #define MAXBITCHUNK     ((size_t)1 << (sizeof(size_t) * 8 - 4))
 
-#ifdef VPAES_ASM
-int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
-                          AES_KEY *key);
-int vpaes_set_decrypt_key(const unsigned char *userKey, int bits,
-                          AES_KEY *key);
+#if defined(AESNI_CAPABLE)
 
-void vpaes_encrypt(const unsigned char *in, unsigned char *out,
-                   const AES_KEY *key);
-void vpaes_decrypt(const unsigned char *in, unsigned char *out,
-                   const AES_KEY *key);
-
-void vpaes_cbc_encrypt(const unsigned char *in,
-                       unsigned char *out,
-                       size_t length,
-                       const AES_KEY *key, unsigned char *ivec, int enc);
-#endif
-#ifdef BSAES_ASM
-void bsaes_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                       size_t length, const AES_KEY *key,
-                       unsigned char ivec[16], int enc);
-void bsaes_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
-                                size_t len, const AES_KEY *key,
-                                const unsigned char ivec[16]);
-#endif
-#ifdef AES_CTR_ASM
-void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-                       size_t blocks, const AES_KEY *key,
-                       const unsigned char ivec[AES_BLOCK_SIZE]);
-#endif
-
-
-#if defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
-# include "ppc_arch.h"
-# ifdef VPAES_ASM
-#  define VPAES_CAPABLE (OPENSSL_ppccap_P & PPC_ALTIVEC)
-# endif
-# define HWAES_CAPABLE  (OPENSSL_ppccap_P & PPC_CRYPTO207)
-# define HWAES_set_encrypt_key aes_p8_set_encrypt_key
-# define HWAES_set_decrypt_key aes_p8_set_decrypt_key
-# define HWAES_encrypt aes_p8_encrypt
-# define HWAES_decrypt aes_p8_decrypt
-# define HWAES_cbc_encrypt aes_p8_cbc_encrypt
-# define HWAES_ctr32_encrypt_blocks aes_p8_ctr32_encrypt_blocks
-# define HWAES_xts_encrypt aes_p8_xts_encrypt
-# define HWAES_xts_decrypt aes_p8_xts_decrypt
-#endif
-
-#if     defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
-        ((defined(__i386)       || defined(__i386__)    || \
-          defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
-        defined(__x86_64)       || defined(__x86_64__)  || \
-        defined(_M_AMD64)       || defined(_M_X64)      )
-
-extern unsigned int OPENSSL_ia32cap_P[];
-
-# ifdef VPAES_ASM
-#  define VPAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
-# endif
-# ifdef BSAES_ASM
-#  define BSAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
-# endif
-/*
- * AES-NI section
- */
-# define AESNI_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
-
-int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
-                          AES_KEY *key);
-int aesni_set_decrypt_key(const unsigned char *userKey, int bits,
-                          AES_KEY *key);
-
-void aesni_encrypt(const unsigned char *in, unsigned char *out,
-                   const AES_KEY *key);
-void aesni_decrypt(const unsigned char *in, unsigned char *out,
-                   const AES_KEY *key);
-
-void aesni_ecb_encrypt(const unsigned char *in,
-                       unsigned char *out,
-                       size_t length, const AES_KEY *key, int enc);
-void aesni_cbc_encrypt(const unsigned char *in,
-                       unsigned char *out,
-                       size_t length,
-                       const AES_KEY *key, unsigned char *ivec, int enc);
-
-void aesni_ctr32_encrypt_blocks(const unsigned char *in,
-                                unsigned char *out,
-                                size_t blocks,
-                                const void *key, const unsigned char *ivec);
+/* AES-NI section. */
 
 static int aesni_init_key(PROV_AES_KEY *dat, const unsigned char *key,
                           size_t keylen)
@@ -190,69 +107,7 @@ const PROV_AES_CIPHER *PROV_AES_CIPHER_##mode(size_t keylen) \
 { return AESNI_CAPABLE?&aesni_##mode:&aes_##mode; }
 
 
-#elif   defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
-
-# include "sparc_arch.h"
-
-extern unsigned int OPENSSL_sparcv9cap_P[];
-
-/*
- * Fujitsu SPARC64 X support
- */
-# define HWAES_CAPABLE           (OPENSSL_sparcv9cap_P[0] & SPARCV9_FJAESX)
-# define HWAES_set_encrypt_key aes_fx_set_encrypt_key
-# define HWAES_set_decrypt_key aes_fx_set_decrypt_key
-# define HWAES_encrypt aes_fx_encrypt
-# define HWAES_decrypt aes_fx_decrypt
-# define HWAES_cbc_encrypt aes_fx_cbc_encrypt
-# define HWAES_ctr32_encrypt_blocks aes_fx_ctr32_encrypt_blocks
-
-# define SPARC_AES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_AES)
-
-void aes_t4_set_encrypt_key(const unsigned char *key, int bits, AES_KEY *ks);
-void aes_t4_set_decrypt_key(const unsigned char *key, int bits, AES_KEY *ks);
-void aes_t4_encrypt(const unsigned char *in, unsigned char *out,
-                    const AES_KEY *key);
-void aes_t4_decrypt(const unsigned char *in, unsigned char *out,
-                    const AES_KEY *key);
-/*
- * Key-length specific subroutines were chosen for following reason.
- * Each SPARC T4 core can execute up to 8 threads which share core's
- * resources. Loading as much key material to registers allows to
- * minimize references to shared memory interface, as well as amount
- * of instructions in inner loops [much needed on T4]. But then having
- * non-key-length specific routines would require conditional branches
- * either in inner loops or on subroutines' entries. Former is hardly
- * acceptable, while latter means code size increase to size occupied
- * by multiple key-length specific subroutines, so why fight?
- */
-void aes128_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                           size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
-void aes128_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
-                           size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
-void aes192_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                           size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
-void aes192_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
-                           size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
-void aes256_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                           size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
-void aes256_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
-                           size_t len, const AES_KEY *key,
-                           unsigned char *ivec);
-void aes128_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-                             size_t blocks, const AES_KEY *key,
-                             unsigned char *ivec);
-void aes192_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-                             size_t blocks, const AES_KEY *key,
-                             unsigned char *ivec);
-void aes256_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-                             size_t blocks, const AES_KEY *key,
-                             unsigned char *ivec);
+#elif defined(SPARC_AES_CAPABLE)
 
 static int aes_t4_init_key(PROV_AES_KEY *dat, const unsigned char *key,
                            size_t keylen)
@@ -362,30 +217,15 @@ const PROV_AES_CIPHER *PROV_AES_CIPHER_##mode(size_t keylen) \
 { return SPARC_AES_CAPABLE?&aes_t4_##mode:&aes_##mode; }
 
 
-#elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
+#elif defined(S390X_aes_128_CAPABLE)
 /*
  * IBM S390X support
  */
 # include "s390x_arch.h"
 
-/* Convert key size to function code: [16,24,32] -> [18,19,20]. */
-# define S390X_AES_FC(keylen)  (S390X_AES_128 + ((((keylen) << 3) - 128) >> 6))
-
-/* Most modes of operation need km for partial block processing. */
-# define S390X_aes_128_CAPABLE (OPENSSL_s390xcap_P.km[0] &	\
-                                S390X_CAPBIT(S390X_AES_128))
-# define S390X_aes_192_CAPABLE (OPENSSL_s390xcap_P.km[0] &	\
-                                S390X_CAPBIT(S390X_AES_192))
-# define S390X_aes_256_CAPABLE (OPENSSL_s390xcap_P.km[0] &	\
-                                S390X_CAPBIT(S390X_AES_256))
-
 # define s390x_aes_init_key aes_init_key
 static int s390x_aes_init_key(PROV_AES_KEY *dat, const unsigned char *key,
                               size_t keylen);
-
-# define S390X_aes_128_cbc_CAPABLE  1	/* checked by callee */
-# define S390X_aes_192_cbc_CAPABLE  1
-# define S390X_aes_256_cbc_CAPABLE  1
 # define S390X_AES_CBC_CTX          PROV_AES_KEY
 
 # define s390x_aes_cbc_init_key aes_init_key
@@ -393,10 +233,6 @@ static int s390x_aes_init_key(PROV_AES_KEY *dat, const unsigned char *key,
 # define s390x_aes_cbc_cipher aes_cbc_cipher
 static int s390x_aes_cbc_cipher(PROV_AES_KEY *dat, unsigned char *out,
                                 const unsigned char *in, size_t len);
-
-# define S390X_aes_128_ecb_CAPABLE  S390X_aes_128_CAPABLE
-# define S390X_aes_192_ecb_CAPABLE  S390X_aes_192_CAPABLE
-# define S390X_aes_256_ecb_CAPABLE  S390X_aes_256_CAPABLE
 
 static int s390x_aes_ecb_init_key(PROV_AES_KEY *dat, const unsigned char *key,
                                   size_t keylen)
@@ -416,16 +252,6 @@ static int s390x_aes_ecb_cipher(PROV_AES_KEY *dat, unsigned char *out,
              &dat->plat.s390x.param.km);
     return 1;
 }
-
-# define S390X_aes_128_ofb_CAPABLE (S390X_aes_128_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kmo[0] &    \
-                                     S390X_CAPBIT(S390X_AES_128)))
-# define S390X_aes_192_ofb_CAPABLE (S390X_aes_192_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kmo[0] &    \
-                                     S390X_CAPBIT(S390X_AES_192)))
-# define S390X_aes_256_ofb_CAPABLE (S390X_aes_256_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kmo[0] &    \
-                                     S390X_CAPBIT(S390X_AES_256)))
 
 static int s390x_aes_ofb_init_key(PROV_AES_KEY *dat, const unsigned char *key,
                                   size_t keylen)
@@ -476,16 +302,6 @@ static int s390x_aes_ofb_cipher(PROV_AES_KEY *dat, unsigned char *out,
     dat->plat.s390x.res = n;
     return 1;
 }
-
-# define S390X_aes_128_cfb_CAPABLE (S390X_aes_128_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kmf[0] &    \
-                                     S390X_CAPBIT(S390X_AES_128)))
-# define S390X_aes_192_cfb_CAPABLE (S390X_aes_192_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kmf[0] &    \
-                                     S390X_CAPBIT(S390X_AES_192)))
-# define S390X_aes_256_cfb_CAPABLE (S390X_aes_256_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kmf[0] &    \
-                                     S390X_CAPBIT(S390X_AES_256)))
 
 static int s390x_aes_cfb_init_key(PROV_AES_KEY *dat, const unsigned char *key,
                                   size_t keylen)
@@ -546,13 +362,6 @@ static int s390x_aes_cfb_cipher(PROV_AES_KEY *dat, unsigned char *out,
     return 1;
 }
 
-# define S390X_aes_128_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &    \
-                                     S390X_CAPBIT(S390X_AES_128))
-# define S390X_aes_192_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &    \
-                                     S390X_CAPBIT(S390X_AES_192))
-# define S390X_aes_256_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &    \
-                                     S390X_CAPBIT(S390X_AES_256))
-
 static int s390x_aes_cfb8_init_key(PROV_AES_KEY *dat, const unsigned char *key,
                                   size_t keylen)
 {
@@ -574,19 +383,11 @@ static int s390x_aes_cfb8_cipher(PROV_AES_KEY *dat, unsigned char *out,
     return 1;
 }
 
-# define S390X_aes_128_cfb1_CAPABLE 0
-# define S390X_aes_192_cfb1_CAPABLE 0
-# define S390X_aes_256_cfb1_CAPABLE 0
-
 # define s390x_aes_cfb1_init_key aes_init_key
 
 # define s390x_aes_cfb1_cipher aes_cfb1_cipher
 static int s390x_aes_cfb1_cipher(PROV_AES_KEY *dat, unsigned char *out,
                                  const unsigned char *in, size_t len);
-
-# define S390X_aes_128_ctr_CAPABLE  1	/* checked by callee */
-# define S390X_aes_192_ctr_CAPABLE  1
-# define S390X_aes_256_ctr_CAPABLE  1
 # define S390X_AES_CTR_CTX          PROV_AES_KEY
 
 # define s390x_aes_ctr_init_key aes_init_key
@@ -615,7 +416,7 @@ const PROV_AES_CIPHER *PROV_AES_CIPHER_##mode(size_t keylen) \
 }
 
 #else
-
+/* The generic case */
 # define BLOCK_CIPHER_generic_prov(mode) \
 static const PROV_AES_CIPHER aes_##mode = { \
         aes_init_key,                   \
@@ -623,42 +424,6 @@ static const PROV_AES_CIPHER aes_##mode = { \
 const PROV_AES_CIPHER *PROV_AES_CIPHER_##mode(size_t keylen) \
 { return &aes_##mode; }
 
-#endif
-
-#if defined(OPENSSL_CPUID_OBJ) && (defined(__arm__) || defined(__arm) || defined(__aarch64__))
-# include "arm_arch.h"
-# if __ARM_MAX_ARCH__>=7
-#  if defined(BSAES_ASM)
-#   define BSAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
-#  endif
-#  if defined(VPAES_ASM)
-#   define VPAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
-#  endif
-#  define HWAES_CAPABLE (OPENSSL_armcap_P & ARMV8_AES)
-#  define HWAES_set_encrypt_key aes_v8_set_encrypt_key
-#  define HWAES_set_decrypt_key aes_v8_set_decrypt_key
-#  define HWAES_encrypt aes_v8_encrypt
-#  define HWAES_decrypt aes_v8_decrypt
-#  define HWAES_cbc_encrypt aes_v8_cbc_encrypt
-#  define HWAES_ctr32_encrypt_blocks aes_v8_ctr32_encrypt_blocks
-# endif
-#endif
-
-#if defined(HWAES_CAPABLE)
-int HWAES_set_encrypt_key(const unsigned char *userKey, const int bits,
-                          AES_KEY *key);
-int HWAES_set_decrypt_key(const unsigned char *userKey, const int bits,
-                          AES_KEY *key);
-void HWAES_encrypt(const unsigned char *in, unsigned char *out,
-                   const AES_KEY *key);
-void HWAES_decrypt(const unsigned char *in, unsigned char *out,
-                   const AES_KEY *key);
-void HWAES_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                       size_t length, const AES_KEY *key,
-                       unsigned char *ivec, const int enc);
-void HWAES_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
-                                size_t len, const AES_KEY *key,
-                                const unsigned char ivec[16]);
 #endif
 
 static int aes_init_key(PROV_AES_KEY *dat, const unsigned char *key,

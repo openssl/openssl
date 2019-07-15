@@ -504,7 +504,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[asn1_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[modes_internal_test]=modes_internal_test.c
-    INCLUDE[modes_internal_test]=.. ../include ../apps/include
+    INCLUDE[modes_internal_test]=.. ../include ../apps/include ../crypto/include
     DEPEND[modes_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[x509_internal_test]=x509_internal_test.c

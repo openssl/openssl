@@ -99,7 +99,7 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
 /* Helper functions to avoid duplicating code */
 
 /*
- * The callbacks implement different ways to pass a params array to the
+ * These methods implement different ways to pass a params array to the
  * provider.  They will return one of these values:
  *
  * -2 if the method doesn't come from a provider
@@ -109,26 +109,8 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
  * or the return value from the desired function
  *    (evp_do_param will return it to the caller)
  */
-int evp_do_ciph_getparams(const void *vciph, void *ignored,
-                          OSSL_PARAM params[]);
-int evp_do_ciph_ctx_getparams(const void *vciph, void *provctx,
+int evp_do_ciph_getparams(const EVP_CIPHER *ciph, OSSL_PARAM params[]);
+int evp_do_ciph_ctx_getparams(const EVP_CIPHER *ciph, void *provctx,
                               OSSL_PARAM params[]);
-int evp_do_ciph_ctx_setparams(const void *vciph, void *provctx,
+int evp_do_ciph_ctx_setparams(const EVP_CIPHER *ciph, void *provctx,
                               OSSL_PARAM params[]);
-
-/*-
- * prepares a singular parameter, then calls the callback to execute.
- *
- * |method|   points to the method used by the callback.
- *            EVP_CIPHER, EVP_MD, ...
- * |ptr|      points at the data to transfer.
- * |sz|       is the size of the data to transfer.
- * |key|      is the name of the parameter to pass.
- * |datatype| is the data type of the parameter to pass.
- * |cb|       is the callback that actually performs the parameter passing
- * |cb_ctx|   is the cipher context
- */
-int evp_do_param(const void *method, void *ptr, size_t sz, const char *key,
-                 int datatype,
-                 int (*cb)(const void *method, void *ctx, OSSL_PARAM params[]),
-                 void *cb_ctx);
