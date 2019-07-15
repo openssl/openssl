@@ -504,6 +504,7 @@
   (nid == NID_OQS_frodo976shake ? 0x0203 : \
   (nid == NID_OQS_frodo1344aes ? 0x0204 : \
   (nid == NID_OQS_frodo1344shake ? 0x0205 : \
+  0 \
   )))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_END
 
@@ -516,6 +517,7 @@
   (nid == NID_OQS_p256_frodo976shake ? 0x0303 : \
   (nid == NID_OQS_p256_frodo1344aes ? 0x0304 : \
   (nid == NID_OQS_p256_frodo1344shake ? 0x0305 : \
+  0 \
   )))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_END
 
@@ -529,6 +531,7 @@
   (curveID == 0x0203 || curveID == 0x0303 ? NID_OQS_frodo976shake : \
   (curveID == 0x0204 || curveID == 0x0304 ? NID_OQS_frodo1344aes : \
   (curveID == 0x0205 || curveID == 0x0305 ? NID_OQS_frodo1344shake : \
+  0 \
   )))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_NID_END
 
@@ -548,6 +551,7 @@
   (nid == NID_OQS_frodo976shake ? OQS_KEM_alg_frodokem_976_shake : \
   (nid == NID_OQS_frodo1344aes ? OQS_KEM_alg_frodokem_1344_aes : \
   (nid == NID_OQS_frodo1344shake ? OQS_KEM_alg_frodokem_1344_shake : \
+  0 \
   )))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_END
 

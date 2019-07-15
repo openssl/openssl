@@ -4,5 +4,6 @@
 {%- for kem in config['kems'] %}
   (nid == NID_OQS_{{ kem['name_group'] }} ? {{ kem['oqs_alg'] }} : \
 {%- endfor %}
+  0 \
   {% for kem in config['kems'] %}){% endfor %})
 

@@ -4,5 +4,6 @@
 {%- for kem in config['kems'] %}
   (curveID == {{ kem['nid'] }} || curveID == {{ kem['nid_hybrid_p256'] }} ? NID_OQS_{{ kem['name_group'] }} : \
 {%- endfor %}
+  0 \
   {% for kem in config['kems'] %}){% endfor %})
 
