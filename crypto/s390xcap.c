@@ -65,7 +65,7 @@ struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 void OPENSSL_cpuid_setup(void)
 {
     sigset_t oset;
-    struct sigaction ill_act, oact;
+    struct sigaction ill_act, oact_ill, oact_fpe;
     struct OPENSSL_s390xcap_st cap;
 
     if (OPENSSL_s390xcap_P.stfle[0])
@@ -87,8 +87,8 @@ void OPENSSL_cpuid_setup(void)
     sigdelset(&ill_act.sa_mask, SIGFPE);
     sigdelset(&ill_act.sa_mask, SIGTRAP);
     sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
-    sigaction(SIGILL, &ill_act, &oact);
-    sigaction(SIGFPE, &ill_act, &oact);
+    sigaction(SIGILL, &ill_act, &oact_ill);
+    sigaction(SIGFPE, &ill_act, &oact_fpe);
 
     /* protection against missing store-facility-list-extended */
     if (sigsetjmp(ill_jmp, 1) == 0)
@@ -110,8 +110,8 @@ void OPENSSL_cpuid_setup(void)
                                          | S390X_CAPBIT(S390X_VXE));
     }
 
-    sigaction(SIGFPE, &oact, NULL);
-    sigaction(SIGILL, &oact, NULL);
+    sigaction(SIGFPE, &oact_fpe, NULL);
+    sigaction(SIGILL, &oact_ill, NULL);
     sigprocmask(SIG_SETMASK, &oset, NULL);
 
     OPENSSL_s390x_functions();
