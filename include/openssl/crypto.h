@@ -306,7 +306,6 @@ int CRYPTO_secure_allocated(const void *ptr);
 int CRYPTO_secure_malloc_initialized(void);
 size_t CRYPTO_secure_actual_size(void *ptr);
 size_t CRYPTO_secure_used(void);
-void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 
 void OPENSSL_cleanse(void *ptr, size_t len);
 
@@ -320,6 +319,8 @@ void OPENSSL_cleanse(void *ptr, size_t len);
 DEPRECATEDIN_3(int CRYPTO_mem_debug_push(const char *info,
                                          const char *file, int line))
 DEPRECATEDIN_3(int CRYPTO_mem_debug_pop(void))
+
+void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 
 /*-
  * Debugging functions (enabled by CRYPTO_set_mem_debug(1))

@@ -238,7 +238,7 @@ configuration option> C<crypto-mdebug>.
 
 OPENSSL_mem_debug_push(), OPENSSL_mem_debug_pop(),
 CRYPTO_mem_debug_push(), and CRYPTO_mem_debug_pop()
-were deprecated in OpenSSL 3.0.0.
+were deprecated in OpenSSL 3.0.
 
 
 =head1 COPYRIGHT
