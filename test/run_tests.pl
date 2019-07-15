@@ -28,7 +28,11 @@ my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
 my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 
-$ENV{OPENSSL_CONF} = catdir($srctop, "apps", "openssl.cnf");
+$ENV{OPENSSL_CONF} = ($ENV{TEST_FIPS} // 0)
+    ? catdir($srctop, "test", "fips.cnf")
+    : catdir($srctop, "apps", "openssl.cnf");
+
+print STDERR "Default configuration file: $ENV{OPENSSL_CONF}\n";
 
 my %tapargs =
     ( verbosity => $ENV{VERBOSE} || $ENV{V} || $ENV{HARNESS_VERBOSE} ? 1 : 0,
