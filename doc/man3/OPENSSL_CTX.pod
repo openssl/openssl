@@ -38,7 +38,7 @@ OPENSSL_CTX_free() doesn't return any value.
 =head1 HISTORY
 
 OPENSSL_CTX, OPENSSL_CTX_new() and OPENSSL_CTX_free()
-were added in OpenSSL 3.0.0.
+were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

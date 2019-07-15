@@ -82,7 +82,7 @@ SSL_get_async_status() return 1 on success or 0 on error.
 
 SSL_CTX_set_async_callback(), SSL_CTX_set_async_callback_arg(),
 SSL_set_async_callback(), SSL_set_async_callback_arg() and
-SSL_get_async_status() were first added to OpenSSL 3.0.0.
+SSL_get_async_status() were first added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

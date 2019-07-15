@@ -219,7 +219,7 @@ L<crypto(7)>
 
 =head1 HISTORY
 
-The macros and functions described here were added in OpenSSL 3.0.0,
+The macros and functions described here were added in OpenSSL 3.0,
 with the exception of the L</BACKWARD COMPATIBILITY> ones.
 
 =head1 COPYRIGHT

@@ -358,7 +358,7 @@ L<EVP_MAC_POLY1305(7)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 3.0.0.
+These functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

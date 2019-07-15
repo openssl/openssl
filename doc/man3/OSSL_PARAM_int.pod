@@ -312,7 +312,7 @@ L<openssl-core.h(7)>, L<OSSL_PARAM(3)>
 
 =head1 HISTORY
 
-These APIs were introduced in OpenSSL 3.0.0.
+These APIs were introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

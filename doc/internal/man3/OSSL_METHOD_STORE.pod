@@ -103,7 +103,7 @@ ossl_method_store_free() and ossl_method_store_cleanup() do not return values.
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.0.
+This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
