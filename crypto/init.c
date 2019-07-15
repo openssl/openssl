@@ -512,6 +512,10 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     /* Base init by default, always */
     opts |= OPENSSL_INIT_BASE;
 
+    /* Default to reading the config file unless the caller says not to */
+    if (!(opts & OPENSSL_INIT_NO_LOAD_CONFIG))
+        opts |= OPENSSL_INIT_LOAD_CONFIG;
+
     /*
      * We want two be able to pass the settings to RUN_ONCE functions; this
      * requires a lock, since RUN_ONCE doesn't pass an extra argument.
