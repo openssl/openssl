@@ -4,7 +4,7 @@
   (curveID == 0x0200 || curveID == 0x0300 ? NID_OQS_SIKE_503 : \
   (curveID == 0x0201 ? NID_OQS_SIKE_751 : \
 {%- for kem in config['kems'] %}
-  (curveID == {{ kem['nid'] }} || curveID == {{ kem['nid_hybrid_p256'] }} ? NID_OQS_{{ kem['name_group'] }} \
+  (curveID == {{ kem['nid'] }} || curveID == {{ kem['nid_hybrid_p256'] }} ? NID_OQS_{{ kem['name_group'] }} : \
 {% endfor %}  (curveID == 0x0205 || curveID == 0x0303 ? NID_OQS_Frodo_640_cshake : \
   (curveID == 0x0206 ? NID_OQS_Frodo_976_AES : \
   (curveID == 0x0207 ? NID_OQS_Frodo_976_cshake : \

@@ -657,7 +657,7 @@
   (curveID == 0x01FF || curveID == 0x02FF ? NID_OQS_KEM_DEFAULT : \
   (curveID == 0x0200 || curveID == 0x0300 ? NID_OQS_SIKE_503 : \
   (curveID == 0x0201 ? NID_OQS_SIKE_751 : \
-  (curveID == 0x0204 || curveID == 0x0302 ? NID_OQS_frodo640aes \
+  (curveID == 0x0204 || curveID == 0x0302 ? NID_OQS_frodo640aes : \
   (curveID == 0x0205 || curveID == 0x0303 ? NID_OQS_Frodo_640_cshake : \
   (curveID == 0x0206 ? NID_OQS_Frodo_976_AES : \
   (curveID == 0x0207 ? NID_OQS_Frodo_976_cshake : \
