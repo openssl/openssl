@@ -1,0 +1,3 @@
+{% for kem in config['kems'] %}
+    {OQS_KEM_CURVEID(NID_OQS_p256_{{ kem['name_group'] }}), "p256 - {{ kem['name_group'] }} hybrid"},
+{% endfor %}

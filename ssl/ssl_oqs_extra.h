@@ -16,8 +16,10 @@ static int OQS_nid_from_string(const char *value) {
   } else if (strncmp(value,"sidh751", len) == 0) {
     nid = NID_OQS_SIDH_751;
 #endif
-  } else if (strncmp(value,"frodo640aes", len) == 0) {
-    nid = NID_OQS_Frodo_640_AES;
+///// OQS_TEMPLATE_FRAGMENT_NID_FROM_STRING_START
+  } else if (strncmp(value, "frodo640aes", len) == 0) {
+    nid = NID_OQS_frodo640aes;
+///// OQS_TEMPLATE_FRAGMENT_NID_FROM_STRING_END
   } else if (strncmp(value,"frodo640cshake", len) == 0) {
     nid = NID_OQS_Frodo_640_cshake;
   } else if (strncmp(value,"frodo976aes", len) == 0) {
@@ -91,8 +93,10 @@ static int OQS_nid_from_string(const char *value) {
   } else if (strncmp(value,"p256-sidh503", len) == 0) {
     nid = NID_OQS_p256_SIDH_503;
 #endif
-  } else if (strncmp(value,"p256-frodo640aes", len) == 0) {
-    nid = NID_OQS_p256_Frodo_640_AES;
+///// OQS_TEMPLATE_FRAGMENT_NID_FROM_STRING_HYBRID_START
+  } else if (strncmp(value, "p256-frodo640aes", len) == 0) {
+    nid = NID_OQS_p256_frodo640aes;
+///// OQS_TEMPLATE_FRAGMENT_NID_FROM_STRING_HYBRID_END
   } else if (strncmp(value,"p256-frodo640cshake", len) == 0) {
     nid = NID_OQS_p256_Frodo_640_cshake;
   } else if (strncmp(value,"p256-bike1l1", len) == 0) {

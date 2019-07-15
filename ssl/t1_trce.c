@@ -537,7 +537,9 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_SIDH_503), "sidh503"},
     {OQS_KEM_CURVEID(NID_OQS_SIDH_751), "sidh751"},
 #endif
-    {OQS_KEM_CURVEID(NID_OQS_Frodo_640_AES), "frodo640aes"},
+///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_START
+    {OQS_KEM_CURVEID(NID_OQS_frodo640aes), "frodo640aes"},
+///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_END
     {OQS_KEM_CURVEID(NID_OQS_Frodo_640_cshake), "frodo640cshake"},
     {OQS_KEM_CURVEID(NID_OQS_Frodo_976_AES), "frodo976aes"},
     {OQS_KEM_CURVEID(NID_OQS_Frodo_976_cshake), "frodo976cshake"},
@@ -578,7 +580,9 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
 #ifndef OQS_NIST_BRANCH
     {OQS_KEM_CURVEID(NID_OQS_p256_SIDH_503), "p256 - sidh503 hybrid"},
 #endif
-    {OQS_KEM_CURVEID(NID_OQS_p256_Frodo_640_AES), "p256 - frodo640aes hybrid"},
+///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_HYBRID_START
+    {OQS_KEM_CURVEID(NID_OQS_p256_frodo640aes), "p256 - frodo640aes hybrid"},
+///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_HYBRID_END
     {OQS_KEM_CURVEID(NID_OQS_p256_Frodo_640_cshake), "p256 - frodo640cshake hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE1_L1), "p256 - bike1l1 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE2_L1), "p256 - bike2l1 hybrid"},

@@ -183,7 +183,9 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_SIKE_751, 192, TLS_CURVE_CUSTOM}, /* sike751 (0x0201) */
     {NID_OQS_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* sidh503 (0x0202) */
     {NID_OQS_SIDH_751, 192, TLS_CURVE_CUSTOM}, /* sidh751 (0x0203) */
-    {NID_OQS_Frodo_640_AES, 128, TLS_CURVE_CUSTOM}, /* frodo640aes (0x0204) */
+///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_START
+    {NID_OQS_frodo640aes, 128, TLS_CURVE_CUSTOM}, /* frodo640aes (0x0204) */
+///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_END
     {NID_OQS_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* frodo640cshake (0x0205) */
     {NID_OQS_Frodo_976_AES, 192, TLS_CURVE_CUSTOM}, /* frodo976aes (0x0206) */
     {NID_OQS_Frodo_976_cshake, 192, TLS_CURVE_CUSTOM}, /* frodo976cshake (0x0207) */
@@ -230,7 +232,9 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_OQS_p256_KEM_DEFAULT, 128, TLS_CURVE_CUSTOM}, /* p256 + OQS KEM default hybrid (0x02FF) */
     {NID_OQS_p256_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sike503 hybrid (0x0300) */
     {NID_OQS_p256_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sidh503 hybrid (0x0301) */
-    {NID_OQS_p256_Frodo_640_AES, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640aes hybrid (0x0302) */
+///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_START
+    {NID_OQS_p256_frodo640aes, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640aes hybrid (0x0204) */
+///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_END
     {NID_OQS_p256_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640cshake hybrid (0x0303) */
     {NID_OQS_p256_BIKE1_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike1l1 hybrid (0x0304) */
     {NID_OQS_p256_BIKE2_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike2l1 hybrid (0x0305) */
@@ -269,7 +273,9 @@ static const uint16_t eccurves_default[] = {
     0x0202, /* OQS sidh503 */
     0x0203, /* OQS sidh751 */
 #endif
+///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_START
     0x0204, /* OQS frodo640aes */
+///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_END
     0x0205, /* OQS frodo640cshake */
     0x0206, /* OQS frodo976aes */
     0x0207, /* OQS frodo976cshake */
@@ -308,7 +314,9 @@ static const uint16_t eccurves_default[] = {
 #if !defined(OQS_NIST_BRANCH)
     0x0301, /* p256 - OQS sidh503 hybrid */
 #endif
+///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_START
     0x0302, /* p256 - OQS frodo640aes hybrid */
+///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
     0x0303, /* p256 - OQS frodo640cshake hybrid */
     0x0304, /* p256 - OQS bike1l1 hybrid */
     0x0305, /* p256 - OQS bike2l1 hybrid */

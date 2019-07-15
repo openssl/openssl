@@ -38,3 +38,6 @@ config = load_config()
 
 replacer('apps/s_cb.c', config, '/////')
 replacer('ssl/ssl_locl.h', config, '/////')
+replacer('ssl/ssl_oqs_extra.h', config, '/////')
+replacer('ssl/t1_lib.c', config, '/////')
+replacer('ssl/t1_trce.c', config, '/////')
