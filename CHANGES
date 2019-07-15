@@ -9,6 +9,15 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Revised BN_generate_prime_ex to not avoid factors 2..17863 in p-1
+     when primes for RSA keys are computed.
+     Since we previously always generated primes == 2 (mod 3) for RSA keys,
+     the 2-prime and 3-prime RSA modules were easy to distinguish, since
+     N = p*q = 1 (mod 3), but N = p*q*r = 2 (mod 3). Therefore fingerprinting
+     2-prime vs. 3-prime RSA keys was possible by computing N mod 3.
+     This avoids possible fingerprinting of newly generated RSA modules.
+     [Bernd Edlinger]
+
   *) Correct the extended master secret constant on EBCDIC systems. Without this
      fix TLS connections between an EBCDIC system and a non-EBCDIC system that
      negotiate EMS will fail. Unfortunately this also means that TLS connections
