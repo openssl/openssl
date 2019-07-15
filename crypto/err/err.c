@@ -674,7 +674,7 @@ ERR_STATE *ERR_get_state(void)
     ERR_STATE *state;
     int saveerrno = get_last_sys_error();
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+    if (!OPENSSL_init_crypto(0, NULL))
         return NULL;
 
     if (!RUN_ONCE(&err_init, err_do_init))
@@ -728,7 +728,7 @@ int err_shelve_state(void **state)
      * call is needed, but some care is required to make sure that the re-entry
      * remains a NOOP.
      */
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+    if (!OPENSSL_init_crypto(0, NULL))
         return 0;
 
     if (!RUN_ONCE(&err_init, err_do_init))

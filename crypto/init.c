@@ -37,34 +37,36 @@ struct ossl_init_stop_st {
     OPENSSL_INIT_STOP *next;
 };
 
-static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_RWLOCK *init_lock = NULL;
+static CRYPTO_ONCE init_lock_once = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_init_lock)
+{
+    return (init_lock = CRYPTO_THREAD_lock_new()) != NULL;
+}
 
+static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 {
     if (ossl_trace_init() == 0)
-        return 0;
+        goto err;
 
     OSSL_TRACE(INIT, "ossl_init_base: setting up stop handlers\n");
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     ossl_malloc_setup_failures();
 #endif
 
-    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
-        goto err;
     OPENSSL_cpuid_setup();
 
     if (!ossl_init_thread())
-        return 0;
+        goto err;
 
     base_inited = 1;
     return 1;
 
 err:
     OSSL_TRACE(INIT, "ossl_init_base failed!\n");
-    CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
 
     return 0;
@@ -478,6 +480,8 @@ void OPENSSL_cleanup(void)
     base_inited = 0;
 }
 
+int last_opts = 0;
+
 /*
  * If this function is called with a non NULL settings value then it must be
  * called prior to any threads making calls to any OpenSSL functions,
@@ -490,44 +494,61 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
      * of this into OPENSSL_CTX.
      */
 
-    if (stopped) {
-        if (!(opts & OPENSSL_INIT_BASE_ONLY))
-            CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
+    if (stopped && opts != 0) {
+        CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
         return 0;
     }
 
-    /*
-     * When the caller specifies OPENSSL_INIT_BASE_ONLY, that should be the
-     * *only* option specified.  With that option we return immediately after
-     * doing the requested limited initialization.  Note that
-     * err_shelve_state() called by us via ossl_init_load_crypto_nodelete()
-     * re-enters OPENSSL_init_crypto() with OPENSSL_INIT_BASE_ONLY, but with
-     * base already initialized this is a harmless NOOP.
-     *
-     * If we remain the only caller of err_shelve_state() the recursion should
-     * perhaps be removed, but if in doubt, it can be left in place.
-     */
-    if (!RUN_ONCE(&base, ossl_init_base))
+    if (!RUN_ONCE(&init_lock_once, do_init_lock)) {
+        CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
         return 0;
+    }
 
-    if (opts & OPENSSL_INIT_BASE_ONLY)
-        return 1;
+    /* Base init by default, always */
+    opts |= OPENSSL_INIT_BASE;
 
     /*
-     * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
-     * should not have the side-effect of setting up exit handlers, and
-     * therefore, this code block is below the INIT_BASE_ONLY-conditioned early
-     * return above.
+     * We want two be able to pass the settings to RUN_ONCE functions; this
+     * requires a lock, since RUN_ONCE doesn't pass an extra argument.
+     * We want to be able to have certain things happen by default (loading
+     * the config file, for example).
+     * We want to be able to call OPENSSL_init_crypto() recursively (or at
+     * least let it happen because some functions called down the line from
+     * here may as well be called directly from the application, so we want
+     * to ensure initialization in both cases).
+     *
+     * Unfortunately, combining all three may lead to nasty lock ups,
+     * because a recursive call may try to lock the same lock that was
+     * already locked.
+     *
+     * Our solution for this problem is to keep track of what things are
+     * already being initialized and should therefore not be initialized
+     * again.  We do this by saving away what options have already been
+     * chosen in an earlier call, and making opts only hold the bits that
+     * weren't already there.
+     *
+     * Note that this really makes any init option a one chance only, even
+     * if one of the initializations fail.
      */
+    {
+        CRYPTO_THREAD_write_lock(init_lock);
+        opts &= ~last_opts;      /* Mask away what's already been done */
+        last_opts |= opts;       /* Add what we're currently going to do */
+        CRYPTO_THREAD_unlock(init_lock);
+    }
+
+    /* Because this affects the BASE init, we need to check this first */
     if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
         if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
                           ossl_init_register_atexit))
             return 0;
-    } else if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit)) {
-        return 0;
     }
 
-    if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
+    if ((opts & OPENSSL_INIT_BASE)
+        && (!RUN_ONCE(&base, ossl_init_base)
+            || !RUN_ONCE(&load_crypto_nodelete,
+                         ossl_init_load_crypto_nodelete)
+            || !RUN_ONCE(&register_atexit, ossl_init_register_atexit)))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
@@ -586,11 +607,9 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         int ret;
-        CRYPTO_THREAD_write_lock(init_lock);
         conf_settings = settings;
         ret = RUN_ONCE(&config, ossl_init_config);
         conf_settings = NULL;
-        CRYPTO_THREAD_unlock(init_lock);
         if (ret <= 0)
             return 0;
     }
