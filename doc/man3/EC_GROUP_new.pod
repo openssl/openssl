@@ -4,6 +4,7 @@
 
 EC_GROUP_get_ecparameters,
 EC_GROUP_get_ecpkparameters,
+EC_GROUP_new_ex,
 EC_GROUP_new,
 EC_GROUP_new_from_ecparameters,
 EC_GROUP_new_from_ecpkparameters,
@@ -11,6 +12,7 @@ EC_GROUP_free,
 EC_GROUP_clear_free,
 EC_GROUP_new_curve_GFp,
 EC_GROUP_new_curve_GF2m,
+EC_GROUP_new_by_curve_name_ex,
 EC_GROUP_new_by_curve_name,
 EC_GROUP_set_curve,
 EC_GROUP_get_curve,
@@ -25,6 +27,7 @@ objects
 
  #include <openssl/ec.h>
 
+ EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth);
  EC_GROUP *EC_GROUP_new(const EC_METHOD *meth);
  EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
  EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
@@ -35,6 +38,7 @@ objects
                                   const BIGNUM *b, BN_CTX *ctx);
  EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
                                    const BIGNUM *b, BN_CTX *ctx);
+ EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid);
  EC_GROUP *EC_GROUP_new_by_curve_name(int nid);
 
  int EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
@@ -71,11 +75,17 @@ y^2 + xy = x^3 + ax^2 + b (where b != 0)
 Operations in a binary field are performed relative to an B<irreducible polynomial>. All such curves with OpenSSL
 use a trinomial or a pentanomial for this parameter.
 
-A new curve can be constructed by calling EC_GROUP_new, using the implementation provided by B<meth> (see
-L<EC_GFp_simple_method(3)>). It is then necessary to call EC_GROUP_set_curve() to set the curve parameters.
+A new curve can be constructed by calling EC_GROUP_new_ex, using the implementation provided by B<meth> (see
+L<EC_GFp_simple_method(3)>) and associated with the library context B<ctx>
+(see L<OPENSSL_CTX(3)>).
+The B<ctx> parameter may be NULL in which case the default library context is used.
+It is then necessary to call EC_GROUP_set_curve() to set the curve parameters.
 EC_GROUP_new_from_ecparameters() will create a group from the
 specified B<params> and
 EC_GROUP_new_from_ecpkparameters() will create a group from the specific PK B<params>.
+
+EC_GROUP_new is the same as EC_GROUP_new_ex() except that the library context
+used is always the default library context.
 
 EC_GROUP_set_curve() sets the curve parameters B<p>, B<a> and B<b>. For a curve over Fp B<b>
 is the prime for the field. For a curve over F2^m B<p> represents the irreducible polynomial - each bit
@@ -109,8 +119,12 @@ The EC_builtin_curve structure is defined as follows:
 
 Each EC_builtin_curve item has a unique integer id (B<nid>), and a human readable comment string describing the curve.
 
-In order to construct a builtin curve use the function EC_GROUP_new_by_curve_name and provide the B<nid> of the curve to
-be constructed.
+In order to construct a builtin curve use the function EC_GROUP_new_by_curve_name_ex and provide the B<nid> of the curve to
+be constructed and the associated library context to be used in B<ctx> (see L<OPENSSL_CTX(3)>).
+The B<ctx> value may be NULL in which case the default library context is used.
+
+EC_GROUP_new_by_curve_name is the same as EC_GROUP_new_by_curve_name_ex except
+that the default library context is always used.
 
 EC_GROUP_free frees the memory associated with the EC_GROUP.
 If B<group> is NULL nothing is done.
@@ -130,7 +144,12 @@ EC_GROUP_set_curve_GFp, EC_GROUP_get_curve_GFp, EC_GROUP_set_curve_GF2m, EC_GROU
 
 L<crypto(7)>, L<EC_GROUP_copy(3)>,
 L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
-L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
+L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>,
+L<OPENSSL_CTX(3)>
+
+=head1 HISTORY
+
+EC_GROUP_new_ex and EC_GROUP_new_by_curve_name_ex were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
