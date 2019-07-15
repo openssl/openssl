@@ -1030,6 +1030,15 @@ gmi_sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         {   ll=(c)->h[nn]; (void)HOST_l2c(ll,(&s));   } \
         } while (0)
 
+static unsigned int HOST_l2c(unsigned long l, unsigned char **c)
+{
+    unsigned int r = l;
+    asm ("bswapl %0":"=r"(r):"0"(r));
+    *((unsigned int *)(*c))=r;
+    (*c)+=4;
+    return r;
+}
+
 static int gmi_sm3_init(EVP_MD_CTX *ctx)
 {
     SM3_CTX *c = (SM3_CTX *)EVP_MD_CTX_md_data(ctx);
