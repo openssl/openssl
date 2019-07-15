@@ -480,7 +480,11 @@ void OPENSSL_cleanup(void)
     base_inited = 0;
 }
 
-int last_opts = 0;
+/*
+ * We keep track of all the init options that have been attempted so far.
+ * See further comments inside OPENSSL_init_crypto().
+ */
+static int last_opts = 0;
 
 /*
  * If this function is called with a non NULL settings value then it must be
