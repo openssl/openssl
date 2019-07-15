@@ -18,6 +18,11 @@ const struct predefined_providers_st predefined_providers[] = {
     { "fips", fips_intern_provider_init, 1 },
 #else
     { "default", ossl_default_provider_init, 1 },
+    /*
+     * TODO(4.0) Revisit this.  This is primarly to avoid surprise failures
+     * for OpenSSL 3.0 users.
+     */
+    { "legacy", NULL, 1 },
 #endif
     { NULL, NULL, 0 }
 };
