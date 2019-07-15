@@ -513,8 +513,33 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     opts |= OPENSSL_INIT_BASE;
 
     /* Default to reading the config file unless the caller says not to */
-    if (!(opts & OPENSSL_INIT_NO_LOAD_CONFIG))
+    if (!(opts & OPENSSL_INIT_NO_LOAD_CONFIG)) {
+        /*
+         * If no settings are set, we add our own, which are the defaults
+         * apart from the return code ignoring flag.
+         */
+        if (settings != NULL) {
+            static const OPENSSL_INIT_SETTINGS verbose = {
+                NULL, NULL,
+                DEFAULT_CONF_MFLAGS & ~CONF_MFLAGS_IGNORE_RETURN_CODES
+            };
+            static const OPENSSL_INIT_SETTINGS noverbose = {
+                NULL, NULL,
+                DEFAULT_CONF_MFLAGS | CONF_MFLAGS_IGNORE_RETURN_CODES
+            };
+
+            switch (opts & OPENSSL_INIT_LOAD_CONFIG) {
+            case 0:              /* added default, we ignore errors */
+                settings = &noverbose;
+                break;
+            default:             /* explicitly given, don't ignore errors */
+                settings = &verbose;
+                break;
+            }
+        }
+
         opts |= OPENSSL_INIT_LOAD_CONFIG;
+    }
 
     /*
      * We want two be able to pass the settings to RUN_ONCE functions; this
