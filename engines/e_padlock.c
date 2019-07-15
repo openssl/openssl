@@ -268,12 +268,12 @@ static int padlock_available(void)
 static unsigned char f_zxc = 0; /* 1 is for zx-c */ 
 
 #    define get_cpu_fms(eax, leaf)                \
-        ({  asm volatile (                       \
+             asm volatile (                       \
                 "cpuid"                           \
                 : "=a"(eax)                       \
                 : "0"(leaf)                       \
-                : "ebx","ecx");                   \
-        })
+                : "ebx","ecx");                   
+        
         
 /*
  * Load supported features of the CPU to see if the GMI is available.
@@ -282,7 +282,7 @@ static int gmi_available(void)
 {
     unsigned int eax = 0;
     unsigned int edx = 0;
-    unsigned char family,model;
+    unsigned char family, model;
    
     /* Diff ZXC with ZXD */ 
     unsigned int leaf = 0x1;
@@ -1029,15 +1029,6 @@ gmi_sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         for (nn=0; nn<SM3_DIGEST_LENGTH/4; nn++)       \
         {   ll=(c)->h[nn]; (void)HOST_l2c(ll,(&s));   } \
         } while (0)
-
-static unsigned int HOST_l2c(unsigned long l, unsigned char **c)
-{
-    unsigned int r = l;
-    asm ("bswapl %0":"=r"(r):"0"(r));
-    *((unsigned int *)(*c))=r;
-    (*c)+=4;
-    return r;
-}
 
 static int gmi_sm3_init(EVP_MD_CTX *ctx)
 {
