@@ -1,3 +1,5 @@
 {% for kem in config['kems'] %}
 #define NID_OQS_{{ kem['name_group'] }} {{ kem['nid'] }}
-{% endfor %}
+{%- endfor %}
+#define NID_OQS_END {{ config['kem_nid_end'] }}
+

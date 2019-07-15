@@ -1,3 +1,4 @@
 {% for kem in config['kems'] %}
     {{ kem['nid'] }}, /* OQS {{ kem['name_group'] }} */
-{% endfor %}
+{%- endfor %}
+

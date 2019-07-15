@@ -1,15 +1,8 @@
 
 #define OQS_KEM_HYBRID_CURVEID(nid) \
   (nid == NID_OQS_p256_KEM_DEFAULT      ? 0x02FF : \
-  (nid == NID_OQS_p256_SIKE_503         ? 0x0300 : \
 {%- for kem in config['kems'] %}
   (nid == NID_OQS_p256_{{ kem['name_group'] }} ? {{ kem['nid_hybrid_p256'] }} : \
-{% endfor %}  (nid == NID_OQS_p256_Frodo_640_cshake ? 0x0303 : \
-  (nid == NID_OQS_p256_BIKE1_L1         ? 0x0304 : \
-  (nid == NID_OQS_p256_BIKE2_L1         ? 0x0305 : \
-  (nid == NID_OQS_p256_BIKE3_L1         ? 0x0306 : \
-  (nid == NID_OQS_p256_NEWHOPE_512_CCA  ? 0x0307 : \
-   OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
-   ))))))){% for kem in config['kems'] %}){% endfor %}
-  /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
+{%- endfor %}
+  {% for kem in config['kems'] %}){% endfor %})
 

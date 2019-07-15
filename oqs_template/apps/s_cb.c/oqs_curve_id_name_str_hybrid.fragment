@@ -1,0 +1,4 @@
+{% for kem in config['kems'] %}
+  case {{ kem['nid_hybrid_p256'] }}: return "p256-{{ kem['name_group'] }} hybrid";
+{%- endfor %}
+  

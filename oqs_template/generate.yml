@@ -1,7 +1,39 @@
 kems:
   -
     name_group: "frodo640aes"
-    nid: "0x0204"
-    nid_hybrid_p256: "0x0302"
+    nid: "0x0200"
+    nid_hybrid_p256: "0x0300"
     oqs_alg: "OQS_KEM_alg_frodokem_640_aes"
     bit_security: 128
+  -
+    name_group: "frodo640shake"
+    nid: "0x0201"
+    nid_hybrid_p256: "0x0301"
+    oqs_alg: "OQS_KEM_alg_frodokem_640_shake"
+    bit_security: 128
+  -
+    name_group: "frodo976aes"
+    nid: "0x0202"
+    nid_hybrid_p256: "0x0302"
+    oqs_alg: "OQS_KEM_alg_frodokem_976_aes"
+    bit_security: 192
+  -
+    name_group: "frodo976shake"
+    nid: "0x0203"
+    nid_hybrid_p256: "0x0303"
+    oqs_alg: "OQS_KEM_alg_frodokem_976_shake"
+    bit_security: 192
+  -
+    name_group: "frodo1344aes"
+    nid: "0x0204"
+    nid_hybrid_p256: "0x0304"
+    oqs_alg: "OQS_KEM_alg_frodokem_1344_aes"
+    bit_security: 256
+  -
+    name_group: "frodo1344shake"
+    nid: "0x0205"
+    nid_hybrid_p256: "0x0305"
+    oqs_alg: "OQS_KEM_alg_frodokem_1344_shake"
+    bit_security: 256
+kem_nid_end: "0x0205"
+kem_nid_hybrid_end: "0x0305"

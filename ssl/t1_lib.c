@@ -179,76 +179,26 @@ static const TLS_GROUP_INFO nid_list[] = {
      */
 static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_KEM_DEFAULT, 128, TLS_CURVE_CUSTOM}, /* OQS KEM default (0x01FF) */
-    {NID_OQS_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* sike503 (0x0200) */
-    {NID_OQS_SIKE_751, 192, TLS_CURVE_CUSTOM}, /* sike751 (0x0201) */
-    {NID_OQS_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* sidh503 (0x0202) */
-    {NID_OQS_SIDH_751, 192, TLS_CURVE_CUSTOM}, /* sidh751 (0x0203) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_START
-    {NID_OQS_frodo640aes, 128, TLS_CURVE_CUSTOM}, /* frodo640aes (0x0204) */
+    {NID_OQS_frodo640aes, 128, TLS_CURVE_CUSTOM}, /* frodo640aes (0x0200) */
+    {NID_OQS_frodo640shake, 128, TLS_CURVE_CUSTOM}, /* frodo640shake (0x0201) */
+    {NID_OQS_frodo976aes, 192, TLS_CURVE_CUSTOM}, /* frodo976aes (0x0202) */
+    {NID_OQS_frodo976shake, 192, TLS_CURVE_CUSTOM}, /* frodo976shake (0x0203) */
+    {NID_OQS_frodo1344aes, 256, TLS_CURVE_CUSTOM}, /* frodo1344aes (0x0204) */
+    {NID_OQS_frodo1344shake, 256, TLS_CURVE_CUSTOM}, /* frodo1344shake (0x0205) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_END
-    {NID_OQS_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* frodo640cshake (0x0205) */
-    {NID_OQS_Frodo_976_AES, 192, TLS_CURVE_CUSTOM}, /* frodo976aes (0x0206) */
-    {NID_OQS_Frodo_976_cshake, 192, TLS_CURVE_CUSTOM}, /* frodo976cshake (0x0207) */
-    {NID_OQS_BIKE1_L1, 128, TLS_CURVE_CUSTOM}, /* bike1l1 (0x0208) */
-    {NID_OQS_BIKE1_L3, 192, TLS_CURVE_CUSTOM}, /* bike1l3 (0x0209) */
-    {NID_OQS_BIKE1_L5, 256, TLS_CURVE_CUSTOM}, /* bike1l5 (0x020a) */
-    {NID_OQS_BIKE2_L1, 128, TLS_CURVE_CUSTOM}, /* bike2l1 (0x020b) */
-    {NID_OQS_BIKE2_L3, 192, TLS_CURVE_CUSTOM}, /* bike2l3 (0x020c) */
-    {NID_OQS_BIKE2_L5, 256, TLS_CURVE_CUSTOM}, /* bike2l5 (0x020d) */
-    {NID_OQS_BIKE3_L1, 128, TLS_CURVE_CUSTOM}, /* bike3l1 (0x020e) */
-    {NID_OQS_BIKE3_L3, 192, TLS_CURVE_CUSTOM}, /* bike3l3 (0x020f) */
-    {NID_OQS_BIKE3_L5, 256, TLS_CURVE_CUSTOM}, /* bike3l5 (0x0210) */
-    {NID_OQS_NEWHOPE_512_CCA, 128, TLS_CURVE_CUSTOM}, /* newhope512cca (0x0211) */
-    {NID_OQS_NEWHOPE_1024_CCA, 256, TLS_CURVE_CUSTOM}, /* newhope1024cca (0x0212) */
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    {0, 0, 0}, /* empty (0x0213) */
-    {0, 0, 0}, /* empty (0x0214) */
-    {0, 0, 0}, /* empty (0x0215) */
-    {NID_OQS_kyber512, 128, TLS_CURVE_CUSTOM}, /* kyber512 (0x0216) */
-    {NID_OQS_kyber768, 192, TLS_CURVE_CUSTOM}, /* kyber768 (0x0217) */
-    {NID_OQS_kyber1024, 256, TLS_CURVE_CUSTOM}, /* kyber1024 (0x0218) */
-    {NID_OQS_ledakem_C1_N02, 128, TLS_CURVE_CUSTOM}, /* ledakem_C1_N02 (0x0219) */
-    {NID_OQS_ledakem_C1_N03, 128, TLS_CURVE_CUSTOM}, /* ledakem_C1_N03 (0x021a) */
-    {NID_OQS_ledakem_C1_N04, 128, TLS_CURVE_CUSTOM}, /* ledakem_C1_N04 (0x021b) */
-    {NID_OQS_ledakem_C3_N02, 192, TLS_CURVE_CUSTOM}, /* ledakem_C3_N02 (0x021c) */
-    {NID_OQS_ledakem_C3_N03, 192, TLS_CURVE_CUSTOM}, /* ledakem_C3_N03 (0x021d) */
-    {NID_OQS_ledakem_C3_N04, 192, TLS_CURVE_CUSTOM}, /* ledakem_C3_N04 (0x021e) */
-    {NID_OQS_ledakem_C5_N02, 256, TLS_CURVE_CUSTOM}, /* ledakem_C5_N02 (0x021f) */
-    {0, 0, 0}, /* {NID_OQS_ledakem_C5_N03, 256, TLS_CURVE_CUSTOM}, */ /* ledakem_C5_N03 (0x0220) */
-    {0, 0, 0}, /* {NID_OQS_ledakem_C5_N04, 256, TLS_CURVE_CUSTOM}, */ /* ledakem_C5_N04 (0x0221) */
-    {0, 0, 0}, /* empty (0x0222) */
-    {0, 0, 0}, /* empty (0x0223) */
-    {0, 0, 0}, /* empty (0x0224) */
-    {0, 0, 0}, /* empty (0x0225) */
-    {0, 0, 0}, /* empty (0x0226) */
-    {0, 0, 0}, /* empty (0x0227) */
-    {NID_OQS_saber_light_saber, 128, TLS_CURVE_CUSTOM}, /* saber_light_saber (0x0228) */
-    {NID_OQS_saber_saber, 192, TLS_CURVE_CUSTOM}, /* saber_saber (0x0229) */
-    {NID_OQS_saber_fire_saber, 256, TLS_CURVE_CUSTOM}, /* saber_fire_saber (0x022a) */
-    /* ADD_MORE_OQS_KEM_HERE */
 };
     /* Hybrid OQS groups. Security level is classical. */
 static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_OQS_p256_KEM_DEFAULT, 128, TLS_CURVE_CUSTOM}, /* p256 + OQS KEM default hybrid (0x02FF) */
-    {NID_OQS_p256_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sike503 hybrid (0x0300) */
-    {NID_OQS_p256_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sidh503 hybrid (0x0301) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_START
-    {NID_OQS_p256_frodo640aes, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640aes hybrid (0x0204) */
+    {NID_OQS_p256_frodo640aes, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640aes hybrid (0x0200) */
+    {NID_OQS_p256_frodo640shake, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640shake hybrid (0x0201) */
+    {NID_OQS_p256_frodo976aes, 192, TLS_CURVE_CUSTOM}, /* p256 + frodo976aes hybrid (0x0202) */
+    {NID_OQS_p256_frodo976shake, 192, TLS_CURVE_CUSTOM}, /* p256 + frodo976shake hybrid (0x0203) */
+    {NID_OQS_p256_frodo1344aes, 256, TLS_CURVE_CUSTOM}, /* p256 + frodo1344aes hybrid (0x0204) */
+    {NID_OQS_p256_frodo1344shake, 256, TLS_CURVE_CUSTOM}, /* p256 + frodo1344shake hybrid (0x0205) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_END
-    {NID_OQS_p256_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640cshake hybrid (0x0303) */
-    {NID_OQS_p256_BIKE1_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike1l1 hybrid (0x0304) */
-    {NID_OQS_p256_BIKE2_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike2l1 hybrid (0x0305) */
-    {NID_OQS_p256_BIKE3_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike3l1 hybrid (0x0306) */
-    {NID_OQS_p256_NEWHOPE_512_CCA, 128, TLS_CURVE_CUSTOM}, /* p256 + newhope512cca hybrid (0x0307) */
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    {0, 0, 0}, /* empty (0x0308) */
-    {NID_OQS_p256_kyber512, 128, TLS_CURVE_CUSTOM}, /* p256 + kyber512 hybrid (0x0309) */
-    {NID_OQS_p256_ledakem_C1_N02, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N02 hybrid (0x030a) */
-    {NID_OQS_p256_ledakem_C1_N03, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N03 hybrid (0x030b) */
-    {NID_OQS_p256_ledakem_C1_N04, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N04 hybrid (0x030c) */
-    {0, 0, 0}, /* empty (0x030d) */
-    {0, 0, 0}, /* {NID_OQS_p256_saber_light_saber, 128, TLS_CURVE_CUSTOM}, */ /* p256 + saber_light_saber hybrid (0x030e) */
-    /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -267,69 +217,23 @@ static const uint16_t eccurves_default[] = {
     /* FIXMEOQS: what should the code points be? TLS1.3 only specify DH and EC groups.
        Also, shouldn't be in the default list; need to be added to s->ext.supportedgroups */
     0x01FF, /* OQS default KEM */
-    0x0200, /* OQS sike503 */
-    0x0201, /* OQS sike751 */
-#if !defined(OQS_NIST_BRANCH)
-    0x0202, /* OQS sidh503 */
-    0x0203, /* OQS sidh751 */
-#endif
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_START
-    0x0204, /* OQS frodo640aes */
+    0x0200, /* OQS frodo640aes */
+    0x0201, /* OQS frodo640shake */
+    0x0202, /* OQS frodo976aes */
+    0x0203, /* OQS frodo976shake */
+    0x0204, /* OQS frodo1344aes */
+    0x0205, /* OQS frodo1344shake */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_END
-    0x0205, /* OQS frodo640cshake */
-    0x0206, /* OQS frodo976aes */
-    0x0207, /* OQS frodo976cshake */
-    0x0208, /* OQS bike1l1 */
-    0x0209, /* OQS bike1l3 */
-    0x020a, /* OQS bike1l5 */
-    0x020b, /* OQS bike2l1 */
-    0x020c, /* OQS bike2l3 */
-    0x020d, /* OQS bike2l5 */
-    0x020e, /* OQS bike3l1 */
-    0x020f, /* OQS bike3l3 */
-    0x0210, /* OQS bike3l5 */
-    0x0211, /* OQS newhope512cca */
-    0x0212, /* OQS newhope1024cca */
-#if defined(OQS_NIST_BRANCH)
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    0x0216, /* OQS kyber512 */
-    0x0217, /* OQS kyber768 */
-    0x0218, /* OQS kyber1024 */
-    0x0219, /* OQS ledakem_C1_N02 */
-    0x021a, /* OQS ledakem_C1_N03 */
-    0x021b, /* OQS ledakem_C1_N04 */
-    0x021c, /* OQS ledakem_C3_N02 */
-    0x021d, /* OQS ledakem_C3_N03 */
-    0x021e, /* OQS ledakem_C3_N04 */
-    0x021f, /* OQS ledakem_C5_N02 */
-    /* 0x0220, */ /* OQS ledakem_C5_N03 */
-    /* 0x0221, */ /* OQS ledakem_C5_N04 */
-    0x0228, /* OQS saber_light_saber */
-    0x0229, /* OQS saber_saber */
-    0x022a, /* OQS saber_fire_saber */
-#endif
-    /* ADD_MORE_OQS_KEM_HERE */
     0x02FF, /* p256 - OQS default KEM hybrid */
-    0x0300, /* p256 - OQS sike503 hybrid */
-#if !defined(OQS_NIST_BRANCH)
-    0x0301, /* p256 - OQS sidh503 hybrid */
-#endif
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_START
-    0x0302, /* p256 - OQS frodo640aes hybrid */
+    0x0300, /* p256 - OQS frodo640aes hybrid */
+    0x0301, /* p256 - OQS frodo640shake hybrid */
+    0x0302, /* p256 - OQS frodo976aes hybrid */
+    0x0303, /* p256 - OQS frodo976shake hybrid */
+    0x0304, /* p256 - OQS frodo1344aes hybrid */
+    0x0305, /* p256 - OQS frodo1344shake hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
-    0x0303, /* p256 - OQS frodo640cshake hybrid */
-    0x0304, /* p256 - OQS bike1l1 hybrid */
-    0x0305, /* p256 - OQS bike2l1 hybrid */
-    0x0306, /* p256 - OQS bike3l1 hybrid */
-    0x0307, /* p256 - OQS newhope512cca hybrid */
-#if defined(OQS_NIST_BRANCH)
-    0x0309, /* p256 - OQS kyber512 hybrid */
-    0x030a, /* p256 - OQS ledakem_C1_N02 hybrid */
-    0x030b, /* p256 - OQS ledakem_C1_N03 hybrid */
-    0x030c, /* p256 - OQS ledakem_C1_N04 hybrid */
-    /* 0x030e, */ /* p256 - OQS saber_light_saber hybrid */
-#endif
-    /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
 };
 
 static const uint16_t suiteb_curves[] = {

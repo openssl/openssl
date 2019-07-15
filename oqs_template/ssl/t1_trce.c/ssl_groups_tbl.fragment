@@ -1,3 +1,4 @@
 {% for kem in config['kems'] %}
     {OQS_KEM_CURVEID(NID_OQS_{{ kem['name_group'] }}), "{{ kem['name_group'] }}"},
-{% endfor %}
+{%- endfor %}
+

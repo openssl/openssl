@@ -1,3 +1,5 @@
 {% for kem in config['kems'] %}
 #define NID_OQS_p256_{{ kem['name_group'] }} {{ kem['nid_hybrid_p256'] }}
-{% endfor %}
+{%- endfor %}
+#define NID_HYBRID_END {{ config['kem_nid_hybrid_end'] }}
+

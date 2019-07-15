@@ -1,4 +1,5 @@
 {% for kem in config['kems'] %}
   } else if (strncmp(value, "p256-{{ kem['name_group'] }}", len) == 0) {
     nid = NID_OQS_p256_{{ kem['name_group'] }};
-{% endfor %}
+{%- endfor %}
+

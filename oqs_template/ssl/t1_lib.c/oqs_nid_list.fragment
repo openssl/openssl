@@ -1,3 +1,4 @@
 {% for kem in config['kems'] %}
     {NID_OQS_{{ kem['name_group'] }}, {{ kem['bit_security'] }}, TLS_CURVE_CUSTOM}, /* {{ kem['name_group'] }} ({{ kem['nid'] }}) */
-{% endfor %}
+{%- endfor %}
+
