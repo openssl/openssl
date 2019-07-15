@@ -60,7 +60,7 @@ However, it is recommended to start using the second form instead:
 =item C<m>
 
 This form is a simple number that represents the major version number
-and is supported for version 3.0.0 and up.  For extra convenience,
+and is supported for version 3.0 and up.  For extra convenience,
 these numbers are also available:
 
 =over 4

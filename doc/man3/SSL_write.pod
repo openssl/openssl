@@ -141,7 +141,7 @@ L<ssl(7)>, L<bio(7)>
 =head1 HISTORY
 
 The SSL_write_ex() function was added in OpenSSL 1.1.1.
-The SSL_sendfile() function was added in OpenSSL 3.0.0.
+The SSL_sendfile() function was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

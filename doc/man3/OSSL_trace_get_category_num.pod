@@ -30,7 +30,7 @@ C<num> is a recognised category number, otherwise NULL.
 
 =head1 HISTORY
 
-The OpenSSL Tracing API was added ino OpenSSL 3.0.0.
+The OpenSSL Tracing API was added ino OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

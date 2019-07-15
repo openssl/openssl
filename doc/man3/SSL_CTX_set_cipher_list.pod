@@ -96,7 +96,7 @@ and the handshake will fail.
 
 OSSL_default_cipher_list() and OSSL_default_ciphersuites() replace
 SSL_DEFAULT_CIPHER_LIST and TLS_DEFAULT_CIPHERSUITES, respectively. The
-cipher list defines are deprecated as of 3.0.0.
+cipher list defines are deprecated as of 3.0.
 
 =head1 RETURN VALUES
 
@@ -115,7 +115,7 @@ L<ciphers(1)>
 
 =head1 HISTORY
 
-OSSL_default_cipher_list() and OSSL_default_ciphersites() are new in 3.0.0.
+OSSL_default_cipher_list() and OSSL_default_ciphersites() are new in 3.0.
 
 =head1 COPYRIGHT
 

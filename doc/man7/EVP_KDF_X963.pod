@@ -122,7 +122,7 @@ L<EVP_KDF_CTX(3)/CONTROLS>
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.0.
+This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
