@@ -113,7 +113,9 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
             activate = 1;
     }
 
-    prov = ossl_provider_new(libctx, name, NULL);
+    prov = ossl_provider_find(libctx, name);
+    if (prov == NULL)
+        prov = ossl_provider_new(libctx, name, NULL);
     if (prov == NULL) {
         if (soft)
             ERR_clear_error();
