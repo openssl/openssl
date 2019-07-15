@@ -199,6 +199,9 @@ to use this (will not work on all platforms):
   export OPENSSL_MALLOC_FD
   ...app invocation... 3>/tmp/log$$
 
+OPENSSL_mem_debug_push(), OPENSSL_mem_debug_pop(),
+CRYPTO_mem_debug_push(), and CRYPTO_mem_debug_pop()
+have been deprecated and replaced with functions that only return zero.
 
 =head1 RETURN VALUES
 
