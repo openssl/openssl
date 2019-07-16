@@ -121,8 +121,10 @@ static int test_engines(void)
     display_engine_list();
 
     /*
-     * Depending on whether there's any hardware support compiled in, this
-     * remove may be destined to fail.
+     * This supposedly removes |new_h1|, but that only works if no extra
+     * engines have been loaded, such as the dynamic engine that gets
+     * loaded when dealing with a config file.
+     * See global_init() below for how we deal with the issue.
      */
     if ((ptr = ENGINE_get_first()) != NULL) {
         if (!ENGINE_remove(ptr))
@@ -346,6 +348,15 @@ static int test_redirect(void)
     return to_return;
 }
 #endif
+
+int global_init(void)
+{
+    /*
+     * If the config file gets loaded, the dynamic engine will be loaded,
+     * and that interferes with our test above.
+     */
+    return OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL);
+}
 
 int setup_tests(void)
 {
