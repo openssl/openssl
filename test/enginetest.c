@@ -121,10 +121,10 @@ static int test_engines(void)
     display_engine_list();
 
     /*
-     * This supposedly removes |new_h1|, but that only works if no extra
-     * engines have been loaded, such as the dynamic engine that gets
-     * loaded when dealing with a config file.
-     * See global_init() below for how we deal with the issue.
+     * At this point, only |new_h1| should remain in the list of engines,
+     * so this removal should empty the list of available engines.
+     * If not, some engine got loaded by other means that our additions
+     * above, and adding |new_h1| again below may fail...
      */
     if ((ptr = ENGINE_get_first()) != NULL) {
         if (!ENGINE_remove(ptr))
