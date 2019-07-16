@@ -31,10 +31,11 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
                       unsigned char *out, size_t *outl, size_t outsz);
 
  /* Digest parameters */
- size_t OP_digest_size(void);
- size_t OP_digest_block_size(void);
- int OP_digest_set_params(void *dctx, const OSSL_PARAM params[]);
- int OP_digest_get_params(void *dctx, OSSL_PARAM params[]);
+ int OP_digest_get_params(OSSL_PARAM params[]);
+
+ /* Digest context parameters */
+ int OP_digest_ctx_set_params(void *dctx, const OSSL_PARAM params[]);
+ int OP_digest_ctx_get_params(void *dctx, OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -129,18 +130,72 @@ exceed B<outsz> bytes.
 
 =head2 Digest Parameters
 
-OP_digest_size() should return the size of the digest.
+OP_digest_get_params() gets details of the algorithm implementation
+and stores them in B<params>.
+See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-OP_digest_block_size() should return the size of the block size of the
-underlying digest algorithm.
+Parameters currently recognised by built-in digests with this function
+are as follows. Not all parametes are relevant to, or are understood
+by all digests:
 
-OP_digest_set_params() set digest parameters associated with the given provider
-side digest context B<dctx> to B<params>.
+=over 4
+
+=item B<OSSL_DIGEST_PARAM_BLOCK_SIZE> (int)
+
+The digest block size.
+
+=item B<OSSL_DIGEST_PARAM_SIZE> (int)
+
+The digest output size.
+
+=item B<OSSL_DIGEST_PARAM_FLAGS> (unsigned long)
+
+Diverse flags that describe exceptional behaviour for the digest:
+
+=over 4
+
+=item B<EVP_MD_FLAG_ONESHOT>
+
+This digest method can only handle one block of input.
+
+=item B<EVP_MD_FLAG_XOF>
+
+This digest method is an extensible-output function (XOF) and supports
+setting the B<OSSL_DIGEST_PARAM_XOFLEN> parameter.
+
+=item B<EVP_MD_FLAG_DIGALGID_NULL>
+
+When setting up a DigestAlgorithmIdentifier, this flag will have the
+parameter set to NULL by default.  Use this for PKCS#1.  I<Note: if
+combined with EVP_MD_FLAG_DIGALGID_ABSENT, the latter will override.>
+
+=item B<EVP_MD_FLAG_DIGALGID_ABSENT>
+
+When setting up a DigestAlgorithmIdentifier, this flag will have the
+parameter be left absent by default.  I<Note: if combined with
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
+
+=item B<EVP_MD_FLAG_DIGALGID_CUSTOM>
+
+Custom DigestAlgorithmIdentifier handling via ctrl, with
+B<EVP_MD_FLAG_DIGALGID_ABSENT> as default.  I<Note: if combined with
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
+Currently unused.
+
+=back
+
+=back
+
+=head2 Digest Context Parameters
+
+OP_digest_ctx_set_params() sets digest parameters associated with the
+given provider side digest context B<dctx> to B<params>.
 Any parameter settings are additional to any that were previously set.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-OP_digest_get_params() gets details of currently set parameters values associated
-with the give provider side digest context B<dctx> and stores them in B<params>.
+OP_digest_ctx_get_params() gets details of currently set parameters
+values associated with the give provider side digest context B<dctx>
+and stores them in B<params>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
 Parameters currently recognised by built-in digests are as follows. Not all

@@ -136,19 +136,18 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 
 /* Digests */
 
-# define OSSL_OP_DIGEST                     1
+# define OSSL_OP_DIGEST                              1
 
-# define OSSL_FUNC_DIGEST_NEWCTX            1
-# define OSSL_FUNC_DIGEST_INIT              2
-# define OSSL_FUNC_DIGEST_UPDATE            3
-# define OSSL_FUNC_DIGEST_FINAL             4
-# define OSSL_FUNC_DIGEST_DIGEST            5
-# define OSSL_FUNC_DIGEST_FREECTX           6
-# define OSSL_FUNC_DIGEST_DUPCTX            7
-# define OSSL_FUNC_DIGEST_SIZE              8
-# define OSSL_FUNC_DIGEST_BLOCK_SIZE        9
-# define OSSL_FUNC_DIGEST_SET_PARAMS        10
-# define OSSL_FUNC_DIGEST_GET_PARAMS        11
+# define OSSL_FUNC_DIGEST_NEWCTX                     1
+# define OSSL_FUNC_DIGEST_INIT                       2
+# define OSSL_FUNC_DIGEST_UPDATE                     3
+# define OSSL_FUNC_DIGEST_FINAL                      4
+# define OSSL_FUNC_DIGEST_DIGEST                     5
+# define OSSL_FUNC_DIGEST_FREECTX                    6
+# define OSSL_FUNC_DIGEST_DUPCTX                     7
+# define OSSL_FUNC_DIGEST_GET_PARAMS                 8
+# define OSSL_FUNC_DIGEST_CTX_SET_PARAMS             9
+# define OSSL_FUNC_DIGEST_CTX_GET_PARAMS            10
 
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *dctx))
@@ -164,12 +163,11 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
 OSSL_CORE_MAKE_FUNC(void, OP_digest_freectx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *dctx))
 
-OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
-OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
-OSSL_CORE_MAKE_FUNC(int, OP_digest_set_params,
-                    (void *dctx, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params,
-                    (void *dctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params, (OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_ctx_set_params,
+                    (void *vctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_digest_ctx_get_params,
+                    (void *vctx, OSSL_PARAM params[]))
 
 /* Symmetric Ciphers */
 

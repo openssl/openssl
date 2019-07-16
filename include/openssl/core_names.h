@@ -55,6 +55,9 @@ extern "C" {
 #define OSSL_DIGEST_PARAM_SSL3_MS   "ssl3-ms"
 #define OSSL_DIGEST_PARAM_PAD_TYPE  "pad_type"
 #define OSSL_DIGEST_PARAM_MICALG    "micalg"
+#define OSSL_DIGEST_PARAM_BLOCK_SIZE "blocksize" /* OSSL_PARAM_INTEGER */
+#define OSSL_DIGEST_PARAM_SIZE      "size" /* OSSL_PARAM_INTEGER */
+#define OSSL_DIGEST_PARAM_FLAGS     "flags" /* OSSL_PARAM_UNSIGNED_INTEGER */
 
 /* PKEY parameters */
 /* Diffie-Hellman Parameters */
