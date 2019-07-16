@@ -14,5 +14,5 @@
 #include "internal/provider_algs.h"
 
 OSSL_FUNC_DIGEST_CONSTRUCT(md2, MD2_CTX,
-                           MD2_BLOCK, MD2_DIGEST_LENGTH,
+                           MD2_BLOCK, MD2_DIGEST_LENGTH, 0,
                            MD2_Init, MD2_Update, MD2_Final)

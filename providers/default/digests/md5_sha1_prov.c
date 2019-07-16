@@ -17,7 +17,7 @@
 #include "internal/md5_sha1.h"
 #include "internal/provider_algs.h"
 
-static OSSL_OP_digest_set_params_fn md5_sha1_set_params;
+static OSSL_OP_digest_ctx_set_params_fn md5_sha1_set_params;
 
 /* Special set_params method for SSL3 */
 static int md5_sha1_set_params(void *vctx, const OSSL_PARAM params[])
@@ -35,6 +35,6 @@ static int md5_sha1_set_params(void *vctx, const OSSL_PARAM params[])
 }
 
 OSSL_FUNC_DIGEST_CONSTRUCT_PARAMS(md5_sha1, MD5_SHA1_CTX,
-                                  MD5_SHA1_CBLOCK, MD5_SHA1_DIGEST_LENGTH,
+                                  MD5_SHA1_CBLOCK, MD5_SHA1_DIGEST_LENGTH, 0,
                                   md5_sha1_init, md5_sha1_update, md5_sha1_final,
                                   md5_sha1_set_params)
