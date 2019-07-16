@@ -114,15 +114,18 @@ init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
                 CRYPTO_THREAD_unlock(gtr->lock);
                 return NULL;
             }
-            CRYPTO_THREAD_unlock(gtr->lock);
 #endif
             if (!CRYPTO_THREAD_set_local(local, hands)) {
 #ifndef FIPS_MODE
                 sk_THREAD_EVENT_HANDLER_PTR_pop(gtr->skhands);
+                CRYPTO_THREAD_unlock(gtr->lock);
 #endif
                 OPENSSL_free(hands);
                 return NULL;
             }
+#ifndef FIPS_MODE
+            CRYPTO_THREAD_unlock(gtr->lock);
+#endif
         }
     } else if (!keep) {
         CRYPTO_THREAD_set_local(local, NULL);
