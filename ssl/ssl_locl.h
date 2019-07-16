@@ -501,7 +501,10 @@
 #define NID_OQS_sikep503 0x0220
 #define NID_OQS_sikep610 0x0221
 #define NID_OQS_sikep751 0x0222
-#define NID_OQS_END 0x0222
+#define NID_OQS_ledacryptkemlt12 0x0223
+#define NID_OQS_ledacryptkemlt32 0x0224
+#define NID_OQS_ledacryptkemlt52 0x0225
+#define NID_OQS_END 0x0225
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_NIDS_END
 
 #define NID_HYBRID_START           0x02FF
@@ -542,7 +545,10 @@
 #define NID_OQS_p256_sikep503 0x0320
 #define NID_OQS_p256_sikep610 0x0321
 #define NID_OQS_p256_sikep751 0x0322
-#define NID_HYBRID_END 0x0322
+#define NID_OQS_p256_ledacryptkemlt12 0x0323
+#define NID_OQS_p256_ledacryptkemlt32 0x0324
+#define NID_OQS_p256_ledacryptkemlt52 0x0325
+#define NID_HYBRID_END 0x0325
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_HYBRID_NIDS_END
 
 /* OQS TODO: add L3 algs with p384 curve */
@@ -591,8 +597,11 @@
   (nid == NID_OQS_sikep503 ? 0x0220 : \
   (nid == NID_OQS_sikep610 ? 0x0221 : \
   (nid == NID_OQS_sikep751 ? 0x0222 : \
+  (nid == NID_OQS_ledacryptkemlt12 ? 0x0223 : \
+  (nid == NID_OQS_ledacryptkemlt32 ? 0x0224 : \
+  (nid == NID_OQS_ledacryptkemlt52 ? 0x0225 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))
+  )))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_END
 
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_START
@@ -633,8 +642,11 @@
   (nid == NID_OQS_p256_sikep503 ? 0x0320 : \
   (nid == NID_OQS_p256_sikep610 ? 0x0321 : \
   (nid == NID_OQS_p256_sikep751 ? 0x0322 : \
+  (nid == NID_OQS_p256_ledacryptkemlt12 ? 0x0323 : \
+  (nid == NID_OQS_p256_ledacryptkemlt32 ? 0x0324 : \
+  (nid == NID_OQS_p256_ledacryptkemlt52 ? 0x0325 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))
+  )))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_END
 
   /* Returns the OQS KEM NID for a curve ID */
@@ -676,8 +688,11 @@
   (curveID == 0x0220 || curveID == 0x0320 ? NID_OQS_sikep503 : \
   (curveID == 0x0221 || curveID == 0x0321 ? NID_OQS_sikep610 : \
   (curveID == 0x0222 || curveID == 0x0322 ? NID_OQS_sikep751 : \
+  (curveID == 0x0223 || curveID == 0x0323 ? NID_OQS_ledacryptkemlt12 : \
+  (curveID == 0x0224 || curveID == 0x0324 ? NID_OQS_ledacryptkemlt32 : \
+  (curveID == 0x0225 || curveID == 0x0325 ? NID_OQS_ledacryptkemlt52 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))
+  )))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_NID_END
 
 /* Returns true if the curve ID is for an OQS KEM */
@@ -725,8 +740,11 @@
   (nid == NID_OQS_sikep503 ? OQS_KEM_alg_sike_p503 : \
   (nid == NID_OQS_sikep610 ? OQS_KEM_alg_sike_p610 : \
   (nid == NID_OQS_sikep751 ? OQS_KEM_alg_sike_p751 : \
+  (nid == NID_OQS_ledacryptkemlt12 ? OQS_KEM_alg_ledacrypt_kem_lt_12 : \
+  (nid == NID_OQS_ledacryptkemlt32 ? OQS_KEM_alg_ledacrypt_kem_lt_32 : \
+  (nid == NID_OQS_ledacryptkemlt52 ? OQS_KEM_alg_ledacrypt_kem_lt_52 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))
+  )))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_END
 
 /* Returns the classical nid for an hybrid alg (FIXMEOQS: only secp256r1 (23) is supported for now) */

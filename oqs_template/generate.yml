@@ -209,5 +209,23 @@ kems:
     nid_hybrid_p256: "0x0322"
     oqs_alg: "OQS_KEM_alg_sike_p751"
     bit_security: 256
-kem_nid_end: "0x0222"
-kem_nid_hybrid_end: "0x0322"
+  -
+    name_group: "ledacryptkemlt12"
+    nid: "0x0223"
+    nid_hybrid_p256: "0x0323"
+    oqs_alg: "OQS_KEM_alg_ledacrypt_kem_lt_12"
+    bit_security: 128
+  -
+    name_group: "ledacryptkemlt32"
+    nid: "0x0224"
+    nid_hybrid_p256: "0x0324"
+    oqs_alg: "OQS_KEM_alg_ledacrypt_kem_lt_32"
+    bit_security: 192
+  -
+    name_group: "ledacryptkemlt52"
+    nid: "0x0225"
+    nid_hybrid_p256: "0x0325"
+    oqs_alg: "OQS_KEM_alg_ledacrypt_kem_lt_52"
+    bit_security: 256
+kem_nid_end: "0x0225"
+kem_nid_hybrid_end: "0x0325"
