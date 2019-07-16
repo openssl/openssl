@@ -405,9 +405,6 @@ void OPENSSL_cleanup(void)
     }
     stop_handlers = NULL;
 
-    CRYPTO_THREAD_lock_free(init_lock);
-    init_lock = NULL;
-
     /*
      * We assume we are single-threaded for this function, i.e. no race
      * conditions for the various "*_inited" vars below.
@@ -477,6 +474,9 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
 
+    CRYPTO_THREAD_lock_free(init_lock);
+    init_lock = NULL;
+
     base_inited = 0;
 }
 
@@ -498,8 +498,9 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
      * of this into OPENSSL_CTX.
      */
 
-    if (stopped && opts != 0) {
-        CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
+    if (stopped) {
+        if (opts != 0)
+            CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
         return 0;
     }
 
