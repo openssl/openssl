@@ -85,17 +85,12 @@ init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
     THREAD_EVENT_HANDLER **hands = CRYPTO_THREAD_get_local(local);
 
     if (alloc) {
-        if (hands == NULL) {
+        if (hands == NULL
+            && (hands = OPENSSL_zalloc(sizeof(*hands))) == NULL) {
 #ifndef FIPS_MODE
             GLOBAL_TEVENT_REGISTER *gtr;
-#endif
+            int push_val = 0;
 
-            if ((hands = OPENSSL_zalloc(sizeof(*hands))) == NULL) {
-                OPENSSL_free(hands);
-                return NULL;
-            }
-
-#ifndef FIPS_MODE
             /*
              * The thread event handler is thread specific and is a linked
              * list of all handler functions that should be called for the
@@ -104,27 +99,29 @@ init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
              * the threads are stopped.
              */
             gtr = get_global_tevent_register();
-            if (gtr == NULL) {
+            if (gtr == NULL
+                || !CRYPTO_THREAD_write_lock(gtr->lock)
+                || (push_val =
+                    sk_THREAD_EVENT_HANDLER_PTR_push(gtr->skhands,
+                                                     hands)) != 0) {
                 OPENSSL_free(hands);
-                return NULL;
-            }
-            CRYPTO_THREAD_write_lock(gtr->lock);
-            if (!sk_THREAD_EVENT_HANDLER_PTR_push(gtr->skhands, hands)) {
-                OPENSSL_free(hands);
-                CRYPTO_THREAD_unlock(gtr->lock);
-                return NULL;
+                hands = NULL;
             }
 #endif
-            if (!CRYPTO_THREAD_set_local(local, hands)) {
-#ifndef FIPS_MODE
-                sk_THREAD_EVENT_HANDLER_PTR_pop(gtr->skhands);
-                CRYPTO_THREAD_unlock(gtr->lock);
-#endif
+
+            /* Common code for FIPS_MODE and non FIPS_MODE */
+            if (hands != NULL
+                && !CRYPTO_THREAD_set_local(local, hands)) {
                 OPENSSL_free(hands);
-                return NULL;
+                hands = NULL;
             }
+
 #ifndef FIPS_MODE
-            CRYPTO_THREAD_unlock(gtr->lock);
+            if (gtr != NULL) {
+                if (hands == NULL && push_val != 0)
+                    sk_THREAD_EVENT_HANDLER_PTR_pop(gtr->skhands);
+                CRYPTO_THREAD_unlock(gtr->lock);
+            }
 #endif
         }
     } else if (!keep) {
