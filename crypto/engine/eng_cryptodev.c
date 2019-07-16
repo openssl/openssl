@@ -799,19 +799,20 @@ static int cryptodev_digest_update(EVP_MD_CTX *ctx, const void *data,
     struct dev_crypto_state *state = ctx->md_data;
     struct session_op *sess = &state->d_sess;
 
-    if (!data || state->d_fd < 0) {
+    if ((count && !data) || state->d_fd < 0) {
         printf("cryptodev_digest_update: illegal inputs \n");
-        return (0);
-    }
-
-    if (!count) {
         return (0);
     }
 
     if (!(ctx->flags & EVP_MD_CTX_FLAG_ONESHOT)) {
         /* if application doesn't support one buffer */
-        char *mac_data =
-            OPENSSL_realloc(state->mac_data, state->mac_len + count);
+        char *mac_data;
+
+        if (!count) {
+            return (1);
+        }
+
+        mac_data = OPENSSL_realloc(state->mac_data, state->mac_len + count);
 
         if (mac_data == NULL) {
             printf("cryptodev_digest_update: realloc failed\n");
