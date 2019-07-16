@@ -29,19 +29,29 @@ def run_subprocess(command, working_dir='.', env=None, expected_returncode=0, ti
     )
 
     recorded_stdout = ""
+    stop_recording = False
 
     def output_capture_function():
         nonlocal recorded_stdout
-        while proc.poll() is None:
-            nextline = proc.stdout.readline()
-            recorded_stdout += nextline.decode('ascii')
+        nonlocal stop_recording
+        try:
+            while proc.poll() is None and not(stop_recording):
+                nextline = proc.stdout.readline()
+                recorded_stdout += nextline.decode('ascii')
+        finally:
+            print("closing output thread")
+            return
 
     output_capture = threading.Thread(target=output_capture_function)
     output_capture.start()
 
     def run_function(command):
-        cmd = command.encode('ascii') + b"\nexit\n"
-        return proc.communicate(input = cmd)
+        try:
+            cmd = command.encode('ascii') + b"\nexit\n"
+            return proc.communicate(input = cmd)
+        finally:
+            print("closing run thread")
+            return
 
     run_thread = threading.Thread(target=run_function, kwargs={"command": " ".join(command)})
     run_thread.daemon = True
@@ -49,10 +59,15 @@ def run_subprocess(command, working_dir='.', env=None, expected_returncode=0, ti
     run_thread.join(timeout)
     
     if run_thread.is_alive():
+        stop_recording = True
         print(recorded_stdout)
-        os.killpg(proc.pid, 15)
+        try:
+            os.killpg(proc.pid, 15)
+        finally:
+            pass
         assert False, "Process hung"
     else:
+        stop_recording = True
         print(recorded_stdout)
         assert proc.returncode == expected_returncode, \
             "Got unexpected return code {}".format(proc.returncode)
