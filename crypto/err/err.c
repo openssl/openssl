@@ -109,7 +109,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
 };
 #endif
 
-static CRYPTO_ONCE err_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_ONCE err_init_flag = CRYPTO_ONCE_STATIC_INIT;
 static int set_err_thread_local;
 static CRYPTO_THREAD_LOCAL err_thread_local;
 
@@ -163,6 +163,12 @@ DEFINE_RUN_ONCE_STATIC(do_err_local_init)
 {
     set_err_thread_local = 1;
     return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
+}
+
+static int err_local_init(void)
+{
+    return OPENSSL_init_crypto(0, NULL)
+        && RUN_ONCE(&err_init_flag, do_err_local_init);
 }
 
 void err_cleanup(void)
@@ -666,9 +672,7 @@ void ERR_remove_state(unsigned long pid)
 
 static ERR_STATE *get_local_state(void)
 {
-    if (!OPENSSL_init_crypto(0, NULL))
-        return NULL;
-    if (!RUN_ONCE(&err_init, do_err_local_init))
+    if (!err_local_init())
         return NULL;
 
     return CRYPTO_THREAD_get_local(&err_thread_local);
