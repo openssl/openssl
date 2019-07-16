@@ -3552,6 +3552,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_CHAIN_CERTS:
         *(STACK_OF(X509) **)parg = s->cert->key->chain;
+        ret = 1;
         break;
 
     case SSL_CTRL_SELECT_CURRENT_CERT:
