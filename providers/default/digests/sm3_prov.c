@@ -13,5 +13,5 @@
 #include "internal/provider_algs.h"
 
 OSSL_FUNC_DIGEST_CONSTRUCT(sm3, SM3_CTX,
-                           SM3_CBLOCK, SM3_DIGEST_LENGTH,
+                           SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
                            sm3_init, sm3_update, sm3_final)

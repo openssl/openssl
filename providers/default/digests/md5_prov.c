@@ -13,5 +13,5 @@
 #include "internal/provider_algs.h"
 
 OSSL_FUNC_DIGEST_CONSTRUCT(md5, MD5_CTX,
-                           MD5_CBLOCK, MD5_DIGEST_LENGTH,
+                           MD5_CBLOCK, MD5_DIGEST_LENGTH, 0,
                            MD5_Init, MD5_Update, MD5_Final)
