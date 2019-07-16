@@ -19,7 +19,7 @@
 #include "internal/thread_once.h"
 
 CRYPTO_RWLOCK *bio_lookup_lock;
-static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_ONCE bio_lookup_init_flag = CRYPTO_ONCE_STATIC_INIT;
 
 /*
  * Throughout this file and bio_lcl.h, the existence of the macro
@@ -603,10 +603,14 @@ static int addrinfo_wrap(int family, int socktype,
 
 DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
 {
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
     bio_lookup_lock = CRYPTO_THREAD_lock_new();
     return bio_lookup_lock != NULL;
+}
+
+static int bio_lookup_init(void)
+{
+    return OPENSSL_init_crypto(0, NULL)
+        && RUN_ONCE(&bio_lookup_init_flag, do_bio_lookup_init);
 }
 
 int BIO_lookup(const char *host, const char *service,
@@ -762,7 +766,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         struct servent se_fallback = { NULL, NULL, 0, NULL };
 #endif
 
-        if (!RUN_ONCE(&bio_lookup_init, do_bio_lookup_init)) {
+        if (!bio_lookup_init()) {
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
             ret = 0;
             goto err;

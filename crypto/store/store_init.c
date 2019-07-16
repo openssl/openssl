@@ -14,13 +14,13 @@
 static CRYPTO_ONCE store_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_store_init)
 {
-    return OPENSSL_init_crypto(0, NULL)
-        && ossl_store_file_loader_init();
+    return ossl_store_file_loader_init();
 }
 
 int ossl_store_init_once(void)
 {
-    if (!RUN_ONCE(&store_init, do_store_init)) {
+    if (!OPENSSL_init_crypto(0, NULL)
+        || !RUN_ONCE(&store_init, do_store_init)) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INIT_ONCE, ERR_R_MALLOC_FAILURE);
         return 0;
     }

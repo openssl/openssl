@@ -131,7 +131,7 @@ ENGINE *ENGINE_get_first(void)
 {
     ENGINE *ret;
 
-    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+    if (!engine_lock_init()) {
         ENGINEerr(ENGINE_F_ENGINE_GET_FIRST, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -150,7 +150,7 @@ ENGINE *ENGINE_get_last(void)
 {
     ENGINE *ret;
 
-    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+    if (!engine_lock_init()) {
         ENGINEerr(ENGINE_F_ENGINE_GET_LAST, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -282,7 +282,7 @@ ENGINE *ENGINE_by_id(const char *id)
         ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+    if (!engine_lock_init()) {
         ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

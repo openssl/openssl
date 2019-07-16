@@ -81,7 +81,7 @@ int ENGINE_init(ENGINE *e)
         ENGINEerr(ENGINE_F_ENGINE_INIT, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+    if (!engine_lock_init()) {
         ENGINEerr(ENGINE_F_ENGINE_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }

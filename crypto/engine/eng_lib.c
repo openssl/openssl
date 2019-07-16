@@ -14,23 +14,27 @@
 
 CRYPTO_RWLOCK *global_engine_lock;
 
-CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_ONCE engine_lock_init_flag = CRYPTO_ONCE_STATIC_INIT;
 
 /* The "new"/"free" stuff first */
 
-DEFINE_RUN_ONCE(do_engine_lock_init)
+DEFINE_RUN_ONCE_STATIC(do_engine_lock_init)
 {
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
     global_engine_lock = CRYPTO_THREAD_lock_new();
     return global_engine_lock != NULL;
+}
+
+int engine_lock_init(void)
+{
+    return OPENSSL_init_crypto(0, NULL)
+        && RUN_ONCE(&engine_lock_init_flag, do_engine_lock_init);
 }
 
 ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
 
-    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)
+    if (!engine_lock_init()
         || (ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

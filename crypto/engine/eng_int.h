@@ -98,8 +98,7 @@ void engine_pkey_meths_free(ENGINE *e);
 void engine_pkey_asn1_meths_free(ENGINE *e);
 
 /* Once initialisation function */
-extern CRYPTO_ONCE engine_lock_init;
-DECLARE_RUN_ONCE(do_engine_lock_init)
+int engine_lock_init(void);
 
 /*
  * This is a structure for storing implementations of various crypto
