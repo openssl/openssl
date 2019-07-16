@@ -207,7 +207,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
                                flags)) != 0) {
 # ifdef EAI_SYSTEM
             if (ret == EAI_SYSTEM) {
-                SYSerr("getnameinfo", get_last_socket_error());
+                FUNCerr("getnameinfo", get_last_socket_error());
                 BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
             } else
 # endif
@@ -700,7 +700,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
-            SYSerr("getaddrinfo", get_last_socket_error());
+            FUNCerr("getaddrinfo", get_last_socket_error());
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
             break;
 # endif
@@ -804,12 +804,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  */
 # if defined(OPENSSL_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
-                SYSerr("gethostbyname", 1000 );
+                FUNCerr("gethostbyname", 1000 );
 # else
-                SYSerr("gethostbyname", 1000 + h_errno);
+                FUNCerr("gethostbyname", 1000 + h_errno);
 # endif
 #else
-                SYSerr("gethostbyname", get_last_socket_error());
+                FUNCerr("gethostbyname", get_last_socket_error());
 #endif
                 ret = 0;
                 goto err;
@@ -855,7 +855,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
-                    SYSerr("getservbyname", get_last_socket_error());
+                    FUNCerr("getservbyname", get_last_socket_error());
                     goto err;
                 }
             } else {

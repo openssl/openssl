@@ -129,7 +129,7 @@ int BIO_sock_init(void)
          * probed at run-time with DSO_global_lookup.
          */
         if (WSAStartup(0x0202, &wsa_state) != 0) {
-            SYSerr("wsastartup", get_last_socket_error());
+            FUNCerr("wsastartup", get_last_socket_error());
             BIOerr(BIO_F_BIO_SOCK_INIT, BIO_R_WSASTARTUP);
             return -1;
         }
@@ -189,7 +189,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
     i = ioctlsocket(fd, type, ARG);
 #  endif                        /* __DJGPP__ */
     if (i < 0)
-        SYSerr("ioctlsocket", get_last_socket_error());
+        FUNCerr("ioctlsocket", get_last_socket_error());
     return i;
 }
 
@@ -240,7 +240,7 @@ int BIO_accept(int sock, char **ip_port)
             ret = -2;
             goto end;
         }
-        SYSerr("accept", get_last_socket_error());
+        FUNCerr("accept", get_last_socket_error());
         BIOerr(BIO_F_BIO_ACCEPT, BIO_R_ACCEPT_ERROR);
         goto end;
     }
@@ -305,7 +305,7 @@ int BIO_socket_nbio(int s, int mode)
 
     l = fcntl(s, F_GETFL, 0);
     if (l == -1) {
-        SYSerr("fcntl", get_last_sys_error());
+        FUNCerr("fcntl", get_last_sys_error());
         ret = -1;
     } else {
 #  if defined(O_NONBLOCK)
@@ -323,7 +323,7 @@ int BIO_socket_nbio(int s, int mode)
         ret = fcntl(s, F_SETFL, l);
 
         if (ret < 0) {
-            SYSerr("fcntl", get_last_sys_error());
+            FUNCerr("fcntl", get_last_sys_error());
         }
     }
 # else
@@ -346,7 +346,7 @@ int BIO_sock_info(int sock,
             ret = getsockname(sock, BIO_ADDR_sockaddr_noconst(info->addr),
                               &addr_len);
             if (ret == -1) {
-                SYSerr("getsockname", get_last_socket_error());
+                FUNCerr("getsockname", get_last_socket_error());
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
                 return 0;
             }
