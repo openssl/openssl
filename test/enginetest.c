@@ -121,10 +121,12 @@ static int test_engines(void)
     display_engine_list();
 
     /*
-     * At this point, only |new_h1| should remain in the list of engines,
-     * so this removal should empty the list of available engines.
-     * If not, some engine got loaded by other means that our additions
-     * above, and adding |new_h1| again below may fail...
+     * At this point, we should have an empty list, unless some hardware
+     * support engine got added.  However, since we don't allow the config
+     * file to be loaded and don't otherwise load any built in engines,
+     * that is unlikely.  Still, we check, if for nothing else, then to
+     * notify that something is a little off (and might mean that |new_h1|
+     * wasn't unloaded when it should have)
      */
     if ((ptr = ENGINE_get_first()) != NULL) {
         if (!ENGINE_remove(ptr))
