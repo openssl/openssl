@@ -673,7 +673,7 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
     BIO *next;
 
     if (stat(include, &st) < 0) {
-        SYSerr("stat", errno);
+        FUNCerr("stat", errno);
         ERR_add_error_data(1, include);
         /* missing include file is not fatal error */
         return NULL;

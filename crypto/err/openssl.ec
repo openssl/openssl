@@ -3,6 +3,7 @@
 # The INPUT HEADER is scanned for declarations
 # LIBNAME       INPUT HEADER                    ERROR-TABLE FILE
 L ERR           NONE                            NONE
+L FUNC          NONE                            NONE
 L BN            include/openssl/bn.h            crypto/bn/bn_err.c
 L RSA           include/openssl/rsa.h           crypto/rsa/rsa_err.c
 L DH            include/openssl/dh.h            crypto/dh/dh_err.c

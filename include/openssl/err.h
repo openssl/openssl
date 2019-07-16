@@ -105,7 +105,10 @@ typedef struct err_state_st {
 
 # define ERR_LIB_USER            128
 
-# define SYSerr(f,r)  ERR_PUT_func_error(ERR_LIB_SYS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
+# if ! OPENSSL_API_3
+#  define SYSerr(f,r)  ERR_PUT_error(ERR_LIB_SYS,0,(r),OPENSSL_FILE,OPENSSL_LINE)
+#endif
+# define FUNCerr(f,r)  ERR_PUT_func_error(ERR_LIB_SYS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define BNerr(f,r)   ERR_PUT_error(ERR_LIB_BN,0,(r),OPENSSL_FILE,OPENSSL_LINE)
 # define RSAerr(f,r)  ERR_PUT_error(ERR_LIB_RSA,0,(r),OPENSSL_FILE,OPENSSL_LINE)
 # define DHerr(f,r)   ERR_PUT_error(ERR_LIB_DH,0,(r),OPENSSL_FILE,OPENSSL_LINE)
