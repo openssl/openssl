@@ -28,7 +28,7 @@ my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
 my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 
-$ENV{OPENSSL_CONF} = ($ENV{TEST_FIPS} // 0)
+$ENV{OPENSSL_CONF} = ($ENV{FIPS_MODE} // 0)
     ? catdir($srctop, "test", "fips.cnf")
     : catdir($srctop, "apps", "openssl.cnf");
 
