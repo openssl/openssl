@@ -132,7 +132,7 @@ static int dummy_evp_call(void *provctx)
         || !BN_add(a, a, b)
         || BN_cmp(a, b) != 0)
         goto err;
-    
+
     if (RAND_DRBG_bytes(drbg, randbuf, sizeof(randbuf)) <= 0)
         goto err;
 
@@ -143,7 +143,7 @@ static int dummy_evp_call(void *provctx)
  err:
     BN_CTX_end(bnctx);
     BN_CTX_free(bnctx);
-    
+
     EVP_MD_CTX_free(ctx);
     EVP_MD_meth_free(sha256);
     return ret;
