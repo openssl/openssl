@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added X509_to_X509_REQ_ex function. It is allows to copy extensions
+     from certificate to request.
+     [Kirill Stefanenkov <kirill_stefanenkov@rambler.ru>]
+
   *) Introduced a new function, OSSL_PROVIDER_available(), which can be used
      to check if a named provider is loaded and available.  When called, it
      will also activate all fallback providers if such are still present.

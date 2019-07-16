@@ -144,6 +144,11 @@ DEFINE_STACK_OF(X509_TRUST)
 # define X509_TRUST_REJECTED     2
 # define X509_TRUST_UNTRUSTED    3
 
+/* Flags for X509_to_X509_REQ_ex() */
+
+#define XTXR_FLAG_COMPAT             0
+#define XTXR_FLAG_COPY_EXTENSIONS    1L
+
 /* Flags for X509_print_ex() */
 
 # define X509_FLAG_COMPAT                0
@@ -497,6 +502,7 @@ const char *X509_get_default_cert_dir_env(void);
 const char *X509_get_default_cert_file_env(void);
 const char *X509_get_default_private_dir(void);
 
+X509_REQ *X509_to_X509_REQ_ex(X509 *x, EVP_PKEY *pkey, const EVP_MD *md, unsigned long flags);
 X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey);
 

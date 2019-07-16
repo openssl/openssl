@@ -19,7 +19,7 @@
 #include <openssl/buffer.h>
 #include <openssl/pem.h>
 
-X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
+X509_REQ *X509_to_X509_REQ_ex(X509 *x, EVP_PKEY *pkey, const EVP_MD *md, unsigned long flags)
 {
     X509_REQ *ret;
     X509_REQ_INFO *ri;
@@ -28,7 +28,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 
     ret = X509_REQ_new();
     if (ret == NULL) {
-        X509err(X509_F_X509_TO_X509_REQ, ERR_R_MALLOC_FAILURE);
+        X509err(X509_F_X509_TO_X509_REQ_EX, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -50,6 +50,12 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
     if (!i)
         goto err;
 
+    if (flags == XTXR_FLAG_COPY_EXTENSIONS) {
+        const STACK_OF(X509_EXTENSION) *extlist = X509_get0_extensions(x);
+        if (!X509_REQ_add_extensions(ret, (STACK_OF(X509_EXTENSION)*)extlist) && X509v3_get_ext_count(extlist) > 0)
+            goto err;
+    }
+
     if (pkey != NULL) {
         if (!X509_REQ_sign(ret, pkey, md))
             goto err;
@@ -58,6 +64,11 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
  err:
     X509_REQ_free(ret);
     return NULL;
+}
+
+X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
+{
+    return X509_to_X509_REQ_ex(x, pkey, md, XTXR_FLAG_COMPAT);
 }
 
 EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)

@@ -68,6 +68,7 @@ B<openssl> B<x509>
 [B<-writerand file>]
 [B<-engine id>]
 [B<-preserve_dates>]
+[B<-copy_extensions val>]
 
 =head1 DESCRIPTION
 
@@ -494,6 +495,20 @@ Unless the B<-CA> option is given the issuer is set to the same value.
 This option can be used in conjunction with the B<-force_pubkey> option
 to create a certificate even without providing an input certificate
 or certificate request.
+
+=item B<-copy_extensions val>
+
+Option specifies how extensions from SOURCE -- certificate request (if B<-req>
+option present) or certificate (if B<-x509toreq> option present) -- should be
+handled when transferred to TARGET -- certificate or certificate request, 
+accordingly. 
+If set to B<none> or if the option is not present then extensions are ignored 
+and not copied from SOURCE to TARGET.
+If set to B<copy> then any extension present in the SOURCE but not yet present 
+in TARGET is copied from SOURCE to TARGET.
+If set to B<copyall> then all extensions in the SOURCE are copied to TARGET;
+if the extension is already present in TARGET (e.g. as a result of B<-extfile>
+option being specified), it is overwritten.
 
 =back
 
