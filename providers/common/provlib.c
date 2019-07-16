@@ -16,6 +16,6 @@
  */
 const char *ossl_prov_util_nid_to_name(int nid)
 {
-   return OBJ_nid2sn(nid); 
+   return OBJ_nid2sn(nid);
 }
 

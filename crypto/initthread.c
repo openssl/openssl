@@ -21,7 +21,7 @@
  * we have our own copy of ossl_init_thread_start, which cascades notifications
  * about threads stopping from libcrypto to all the code in the FIPS provider
  * that needs to know about it.
- * 
+ *
  * The FIPS provider tells libcrypto about which threads it is interested in
  * by calling "c_thread_start" which is a function pointer created during
  * provider initialisation (i.e. OSSL_init_provider).
