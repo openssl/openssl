@@ -73,14 +73,13 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
      */
     if (pk->pkey.ptr != NULL) {
         /*
-         * If there is no dirty checker or dirty clearer, this key can't be
-         * used with providers
+         * If there is no dirty counter, this key can't be used with
+         * providers.
          */
-        if (pk->ameth->is_dirty == NULL
-            || pk->ameth->clear_dirty == NULL)
+        if (pk->ameth->dirty_cnt == NULL)
             return NULL;
 
-        if (pk->ameth->is_dirty(pk))
+        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy)
             evp_keymgmt_clear_pkey_cache(pk);
     }
 
@@ -105,9 +104,9 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         /* Otherwise, simply use it */
         provkey = pk->ameth->export_to(pk, keymgmt);
 
-        /* Make it clean, but only if we exported successfully */
+        /* Synchronize the dirty count, but only if we exported successfully */
         if (provkey != NULL)
-            pk->ameth->clear_dirty(pk);
+            pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
 
     } else {
         /*

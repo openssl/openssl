@@ -545,6 +545,11 @@ struct evp_pkey_st {
         EVP_KEYMGMT *keymgmt;
         void *provkey;
     } pkeys[10];
+    /*
+     * If there is a legacy key assigned to this structure, we keep
+     * a copy of that key's dirty count.
+     */
+    size_t dirty_cnt_copy;
 } /* EVP_PKEY */ ;
 
 
