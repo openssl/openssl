@@ -238,8 +238,8 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
         }
 
         /*
-	** Deassign the terminal channel
-	*/
+        ** Deassign the terminal channel
+        */
         status = sys$dassgn (TerminalDeviceChan);
         if (! (status & 1)) {
             LogMessage ("TerminalSocket: SYS$DASSGN () - %08X", status);
@@ -255,15 +255,15 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
         close (TerminalSocketPair[1]);
 
         /*
-	** Return the initialized socket
-	*/
+        ** Return the initialized socket
+        */
         *ReturnSocket = 0;
         break;
 
     default:
         /*
-	** Invalid function code
-	*/
+        ** Invalid function code
+        */
         LogMessage ("TerminalSocket: Invalid Function Code - %d", FunctionCode);
         return TERM_SOCK_FAILURE;
         break;

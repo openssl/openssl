@@ -162,10 +162,10 @@ static int check_single_test_params(char *name, char *testname, char *itname)
             if (strcmp(name, all_tests[i].test_case_name) == 0) {
                 single_test = 1 + i;
                 break;
-	    } 
+            } 
         }
         if (i >= num_tests) 
-	    single_test = atoi(name);
+            single_test = atoi(name);
     }
 
 

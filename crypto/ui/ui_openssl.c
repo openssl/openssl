@@ -88,8 +88,8 @@
  * We know that VMS, MSDOS, VXWORKS, use entirely other mechanisms.
  */
 #  elif !defined(OPENSSL_SYS_VMS) \
-	&& !defined(OPENSSL_SYS_MSDOS) \
-	&& !defined(OPENSSL_SYS_VXWORKS)
+        && !defined(OPENSSL_SYS_MSDOS) \
+        && !defined(OPENSSL_SYS_VXWORKS)
 #   define TERMIOS
 #   undef  TERMIO
 #   undef  SGTTY

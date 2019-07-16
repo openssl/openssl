@@ -3104,7 +3104,7 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
                 cbuf_len = 0;
-	    } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k' )
+            } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k' )
                     && cmdletters) {
                 BIO_printf(bio_err, "KEYUPDATE\n");
                 SSL_key_update(con,

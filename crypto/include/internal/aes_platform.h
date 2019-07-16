@@ -271,65 +271,65 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 #  define S390X_aes_256_CAPABLE (OPENSSL_s390xcap_P.km[0] &  \
                                 S390X_CAPBIT(S390X_AES_256))
 
-#  define S390X_aes_128_cbc_CAPABLE	1	/* checked by callee */
-#  define S390X_aes_192_cbc_CAPABLE	1
-#  define S390X_aes_256_cbc_CAPABLE	1
+#  define S390X_aes_128_cbc_CAPABLE     1       /* checked by callee */
+#  define S390X_aes_192_cbc_CAPABLE     1
+#  define S390X_aes_256_cbc_CAPABLE     1
 
-#  define S390X_aes_128_ecb_CAPABLE	S390X_aes_128_CAPABLE
-#  define S390X_aes_192_ecb_CAPABLE	S390X_aes_192_CAPABLE
-#  define S390X_aes_256_ecb_CAPABLE	S390X_aes_256_CAPABLE
+#  define S390X_aes_128_ecb_CAPABLE     S390X_aes_128_CAPABLE
+#  define S390X_aes_192_ecb_CAPABLE     S390X_aes_192_CAPABLE
+#  define S390X_aes_256_ecb_CAPABLE     S390X_aes_256_CAPABLE
 
-#  define S390X_aes_128_ofb_CAPABLE (S390X_aes_128_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmo[0] &	\
+#  define S390X_aes_128_ofb_CAPABLE (S390X_aes_128_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmo[0] &        \
                                      S390X_CAPBIT(S390X_AES_128)))
-#  define S390X_aes_192_ofb_CAPABLE (S390X_aes_192_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmo[0] &	\
+#  define S390X_aes_192_ofb_CAPABLE (S390X_aes_192_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmo[0] &        \
                                      S390X_CAPBIT(S390X_AES_192)))
-#  define S390X_aes_256_ofb_CAPABLE (S390X_aes_256_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmo[0] &	\
+#  define S390X_aes_256_ofb_CAPABLE (S390X_aes_256_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmo[0] &        \
                                      S390X_CAPBIT(S390X_AES_256)))
 
-#  define S390X_aes_128_cfb_CAPABLE (S390X_aes_128_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmf[0] &	\
+#  define S390X_aes_128_cfb_CAPABLE (S390X_aes_128_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmf[0] &        \
                                      S390X_CAPBIT(S390X_AES_128)))
-#  define S390X_aes_192_cfb_CAPABLE (S390X_aes_192_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmf[0] &	\
+#  define S390X_aes_192_cfb_CAPABLE (S390X_aes_192_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmf[0] &        \
                                      S390X_CAPBIT(S390X_AES_192)))
-#  define S390X_aes_256_cfb_CAPABLE (S390X_aes_256_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmf[0] &	\
+#  define S390X_aes_256_cfb_CAPABLE (S390X_aes_256_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmf[0] &        \
                                      S390X_CAPBIT(S390X_AES_256)))
-#  define S390X_aes_128_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &	\
+#  define S390X_aes_128_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &       \
                                      S390X_CAPBIT(S390X_AES_128))
-#  define S390X_aes_192_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &	\
+#  define S390X_aes_192_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &       \
                                      S390X_CAPBIT(S390X_AES_192))
-#  define S390X_aes_256_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &	\
+#  define S390X_aes_256_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &       \
                                      S390X_CAPBIT(S390X_AES_256))
-#  define S390X_aes_128_cfb1_CAPABLE	0
-#  define S390X_aes_192_cfb1_CAPABLE	0
-#  define S390X_aes_256_cfb1_CAPABLE	0
+#  define S390X_aes_128_cfb1_CAPABLE    0
+#  define S390X_aes_192_cfb1_CAPABLE    0
+#  define S390X_aes_256_cfb1_CAPABLE    0
 
-#  define S390X_aes_128_ctr_CAPABLE	1	/* checked by callee */
-#  define S390X_aes_192_ctr_CAPABLE	1
-#  define S390X_aes_256_ctr_CAPABLE	1
+#  define S390X_aes_128_ctr_CAPABLE     1       /* checked by callee */
+#  define S390X_aes_192_ctr_CAPABLE     1
+#  define S390X_aes_256_ctr_CAPABLE     1
 
-#  define S390X_aes_128_xts_CAPABLE	1	/* checked by callee */
-#  define S390X_aes_256_xts_CAPABLE	1
+#  define S390X_aes_128_xts_CAPABLE     1       /* checked by callee */
+#  define S390X_aes_256_xts_CAPABLE     1
 
-#  define S390X_aes_128_ccm_CAPABLE (S390X_aes_128_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmac[0] &	\
+#  define S390X_aes_128_ccm_CAPABLE (S390X_aes_128_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmac[0] &       \
                                      S390X_CAPBIT(S390X_AES_128)))
-#  define S390X_aes_192_ccm_CAPABLE (S390X_aes_192_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmac[0] &	\
+#  define S390X_aes_192_ccm_CAPABLE (S390X_aes_192_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmac[0] &       \
                                      S390X_CAPBIT(S390X_AES_192)))
-#  define S390X_aes_256_ccm_CAPABLE (S390X_aes_256_CAPABLE &&		\
-                                    (OPENSSL_s390xcap_P.kmac[0] &	\
+#  define S390X_aes_256_ccm_CAPABLE (S390X_aes_256_CAPABLE &&           \
+                                    (OPENSSL_s390xcap_P.kmac[0] &       \
                                      S390X_CAPBIT(S390X_AES_256)))
-#  define S390X_CCM_AAD_FLAG	0x40
+#  define S390X_CCM_AAD_FLAG    0x40
 
 #  ifndef OPENSSL_NO_OCB
-#   define S390X_aes_128_ocb_CAPABLE	0
-#   define S390X_aes_192_ocb_CAPABLE	0
-#   define S390X_aes_256_ocb_CAPABLE	0
+#   define S390X_aes_128_ocb_CAPABLE    0
+#   define S390X_aes_192_ocb_CAPABLE    0
+#   define S390X_aes_256_ocb_CAPABLE    0
 #  endif /* OPENSSL_NO_OCB */
 
 #  ifndef OPENSSL_NO_SIV
