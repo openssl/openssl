@@ -46,11 +46,21 @@ int ERR_load_CRYPTO_strings(void);
 #  define CRYPTO_F_OPENSSL_LH_NEW                          0
 #  define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    0
 #  define CRYPTO_F_OPENSSL_SK_DUP                          0
+#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_BN                  0
+#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_OCTET_PTR           0
+#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_OCTET_STRING        0
+#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_UTF8_PTR            0
+#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_UTF8_STRING         0
+#  define CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM                 0
+#  define CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM_EX              0
+#  define CRYPTO_F_OSSL_PARAM_TYPE_TO_PARAM                0
 #  define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  0
 #  define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               0
 #  define CRYPTO_F_OSSL_PROVIDER_ADD_PARAMETER             0
 #  define CRYPTO_F_OSSL_PROVIDER_NEW                       0
 #  define CRYPTO_F_OSSL_PROVIDER_SET_MODULE_PATH           0
+#  define CRYPTO_F_PARAM_PUSH                              0
+#  define CRYPTO_F_PARAM_PUSH_NUM                          0
 #  define CRYPTO_F_PKEY_HMAC_INIT                          0
 #  define CRYPTO_F_PKEY_POLY1305_INIT                      0
 #  define CRYPTO_F_PKEY_SIPHASH_INIT                       0
@@ -67,8 +77,18 @@ int ERR_load_CRYPTO_strings(void);
  */
 # define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
 # define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
+# define CRYPTO_R_INSUFFICIENT_DATA_SPACE                 106
+# define CRYPTO_R_INSUFFICIENT_PARAM_SIZE                 107
+# define CRYPTO_R_INSUFFICIENT_SECURE_DATA_SPACE          108
+# define CRYPTO_R_INVALID_NULL_ARGUMENT                   109
+# define CRYPTO_R_INVALID_OSSL_PARAM_TYPE                 110
 # define CRYPTO_R_ODD_NUMBER_OF_DIGITS                    103
 # define CRYPTO_R_PROVIDER_ALREADY_EXISTS                 104
 # define CRYPTO_R_PROVIDER_SECTION_ERROR                  105
+# define CRYPTO_R_SECURE_MALLOC_FAILURE                   111
+# define CRYPTO_R_STRING_TOO_LONG                         112
+# define CRYPTO_R_TOO_MANY_BYTES                          113
+# define CRYPTO_R_TOO_MANY_RECORDS                        114
+# define CRYPTO_R_ZERO_LENGTH_NUMBER                      115
 
 #endif
