@@ -24,6 +24,9 @@ rm -f get_command.tmp
 
 kill -9 ${SERVER_PID} > /dev/null 2> /dev/null
 
+cat s_client_${PORT}.out | grep "Server Temp Key" | grep "${KEXALG}" > /dev/null
+GREP_STATUS=$?
+
 echo "Client output"
 cat s_client_${PORT}.out
 echo ""
@@ -38,6 +41,4 @@ if [ ${CLIENT_STATUS} -ne 0 ] ; then
     exit ${CLIENT_STATUS}
 fi
 
-cat s_client_${PORT}.out | grep "Server Temp Key" | grep "${KEXALG}" > /dev/null
-GREP_STATUS=$?
 exit ${GREP_STATUS}
