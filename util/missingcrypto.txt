@@ -1398,6 +1398,7 @@ X509_subject_name_hash
 X509_subject_name_hash_old
 X509_supported_extension
 X509_to_X509_REQ
+X509_to_X509_REQ_ex
 X509_trust_clear
 X509_trusted
 X509at_add1_attr

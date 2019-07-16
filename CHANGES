@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added X509_to_X509_REQ_ex function. It allows copy of extensions
+     from certificate to request.
+     [Kirill Stefanenkov <kirill_stefanenkov@rambler.ru>]
+
   *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
      used even when parsing explicit parameters, when loading a serialized key
      or calling `EC_GROUP_new_from_ecpkparameters()`/
