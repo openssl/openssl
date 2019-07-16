@@ -268,7 +268,7 @@ static int padlock_available(void)
 static unsigned char f_zxc = 0; /* 1 is for zx-c */ 
 
 #    define get_cpu_fms(eax, leaf)                \
-             asm volatile (                       \
+             __asm__ __volatile__ (                       \
                 "cpuid"                           \
                 : "=a"(eax)                       \
                 : "0"(leaf)                       \
@@ -1033,7 +1033,7 @@ gmi_sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static unsigned int HOST_l2c(unsigned long l, unsigned char **c)
 {
     unsigned int r = l;
-    asm ("bswapl %0":"=r"(r):"0"(r));
+    __asm__ ("bswapl %0":"=r"(r):"0"(r));
     *((unsigned int *)(*c))=r;
     (*c)+=4;
     return r;
