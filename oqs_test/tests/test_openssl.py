@@ -43,7 +43,7 @@ def gen_keys(sig_alg):
                 '-keyout', '{}_CA.key'.format(sig_alg),
                 '-out', '{}_CA.crt'.format(sig_alg),
                 '-nodes',
-                '-subj', '/CN=oqstest CA',
+                '-subj', '/CN=oqstest_CA',
                 '-days', '365',
                 '-config', 'apps/openssl.cnf'
             ],
@@ -57,7 +57,7 @@ def gen_keys(sig_alg):
                 '-keyout', '{}_srv.key'.format(sig_alg),
                 '-out', '{}_srv.csr'.format(sig_alg),
                 '-nodes',
-                '-subj', '/CN=oqstest server',
+                '-subj', '/CN=oqstest_server',
                 '-config', 'apps/openssl.cnf'
             ],
             os.path.join('..')
@@ -73,7 +73,7 @@ def gen_keys(sig_alg):
                 '-keyout', '{}_CA.key'.format(sig_alg),
                 '-out', '{}_CA.crt'.format(sig_alg),
                 '-nodes',
-                '-subj', '/CN=oqstest CA',
+                '-subj', '/CN=oqstest_CA',
                 '-days', '365',
                 '-config', 'apps/openssl.cnf'
             ],
@@ -87,7 +87,7 @@ def gen_keys(sig_alg):
                 '-keyout', '{}_srv.key'.format(sig_alg),
                 '-out', '{}_srv.csr'.format(sig_alg),
                 '-nodes',
-                '-subj', '/CN=oqstest server',
+                '-subj', '/CN=oqstest_server',
                 '-config', 'apps/openssl.cnf'
             ],
             os.path.join('..')
