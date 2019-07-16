@@ -159,6 +159,34 @@ typedef struct err_state_st {
 # define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
 # define ERR_FATAL_ERROR(l)      (int)( (l)         & ERR_R_FATAL)
 
+# if !OPENSSL_API_3
+#  define SYS_F_FOPEN             0
+#  define SYS_F_CONNECT           0
+#  define SYS_F_GETSERVBYNAME     0
+#  define SYS_F_SOCKET            0
+#  define SYS_F_IOCTLSOCKET       0
+#  define SYS_F_BIND              0
+#  define SYS_F_LISTEN            0
+#  define SYS_F_ACCEPT            0
+#  define SYS_F_WSASTARTUP        0
+#  define SYS_F_OPENDIR           0
+#  define SYS_F_FREAD             0
+#  define SYS_F_GETADDRINFO       0
+#  define SYS_F_GETNAMEINFO       0
+#  define SYS_F_SETSOCKOPT        0
+#  define SYS_F_GETSOCKOPT        0
+#  define SYS_F_GETSOCKNAME       0
+#  define SYS_F_GETHOSTBYNAME     0
+#  define SYS_F_FFLUSH            0
+#  define SYS_F_OPEN              0
+#  define SYS_F_CLOSE             0
+#  define SYS_F_IOCTL             0
+#  define SYS_F_STAT              0
+#  define SYS_F_FCNTL             0
+#  define SYS_F_FSTAT             0
+#  define SYS_F_SENDFILE          0
+# endif
+
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
 # define ERR_R_BN_LIB    ERR_LIB_BN/* 3 */
