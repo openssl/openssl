@@ -945,7 +945,7 @@ typedef struct {
 static int s390x_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                               const unsigned char *iv, int enc);
 
-# define S390X_AES_CBC_CTX		EVP_AES_KEY
+# define S390X_AES_CBC_CTX              EVP_AES_KEY
 
 # define s390x_aes_cbc_init_key aes_init_key
 
@@ -1132,7 +1132,7 @@ static int s390x_aes_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int s390x_aes_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                  const unsigned char *in, size_t len);
 
-# define S390X_AES_CTR_CTX		EVP_AES_KEY
+# define S390X_AES_CTR_CTX              EVP_AES_KEY
 
 # define s390x_aes_ctr_init_key aes_init_key
 
@@ -1141,7 +1141,7 @@ static int s390x_aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 const unsigned char *in, size_t len);
 
 /* iv + padding length for iv lengths != 12 */
-# define S390X_gcm_ivpadlen(i)	((((i) + 15) >> 4 << 4) + 16)
+# define S390X_gcm_ivpadlen(i)  ((((i) + 15) >> 4 << 4) + 16)
 
 /*-
  * Process additional authenticated data. Returns 0 on success. Code is
@@ -1662,7 +1662,7 @@ static int s390x_aes_gcm_cleanup(EVP_CIPHER_CTX *c)
     return 1;
 }
 
-# define S390X_AES_XTS_CTX		EVP_AES_XTS_CTX
+# define S390X_AES_XTS_CTX              EVP_AES_XTS_CTX
 
 # define s390x_aes_xts_init_key aes_xts_init_key
 static int s390x_aes_xts_init_key(EVP_CIPHER_CTX *ctx,
@@ -1787,13 +1787,13 @@ static int s390x_aes_ccm(S390X_AES_CCM_CTX *ctx, const unsigned char *in,
     ctx->aes.ccm.nonce.b[15] = 1;
 
     if (n != len)
-        return -1;		/* length mismatch */
+        return -1;              /* length mismatch */
 
     if (enc) {
         /* Two operations per block plus one for tag encryption */
         ctx->aes.ccm.blocks += (((len + 15) >> 4) << 1) + 1;
         if (ctx->aes.ccm.blocks > (1ULL << 61))
-            return -2;		/* too much data */
+            return -2;          /* too much data */
     }
 
     num = 0;
@@ -1842,7 +1842,7 @@ static int s390x_aes_ccm(S390X_AES_CCM_CTX *ctx, const unsigned char *in,
     ctx->aes.ccm.kmac_param.icv.g[0] ^= ctx->aes.ccm.buf.g[0];
     ctx->aes.ccm.kmac_param.icv.g[1] ^= ctx->aes.ccm.buf.g[1];
 
-    ctx->aes.ccm.nonce.b[0] = flags;	/* restore flags field */
+    ctx->aes.ccm.nonce.b[0] = flags;    /* restore flags field */
     return 0;
 }
 
@@ -2146,7 +2146,7 @@ static int s390x_aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 # define s390x_aes_ccm_cleanup aes_ccm_cleanup
 
 # ifndef OPENSSL_NO_OCB
-#  define S390X_AES_OCB_CTX		EVP_AES_OCB_CTX
+#  define S390X_AES_OCB_CTX             EVP_AES_OCB_CTX
 
 #  define s390x_aes_ocb_init_key aes_ocb_init_key
 static int s390x_aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -2169,77 +2169,77 @@ static int s390x_aes_ocb_ctrl(EVP_CIPHER_CTX *, int type, int arg, void *ptr);
 #  define s390x_aes_siv_ctrl aes_siv_ctrl
 # endif
 
-# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,	\
-                              MODE,flags)				\
-static const EVP_CIPHER s390x_aes_##keylen##_##mode = {			\
-    nid##_##keylen##_##nmode,blocksize,					\
-    keylen / 8,								\
-    ivlen,								\
-    flags | EVP_CIPH_##MODE##_MODE,					\
-    s390x_aes_##mode##_init_key,					\
-    s390x_aes_##mode##_cipher,						\
-    NULL,								\
-    sizeof(S390X_AES_##MODE##_CTX),					\
-    NULL,								\
-    NULL,								\
-    NULL,								\
-    NULL								\
-};									\
-static const EVP_CIPHER aes_##keylen##_##mode = {			\
-    nid##_##keylen##_##nmode,						\
-    blocksize,								\
-    keylen / 8,								\
-    ivlen,								\
-    flags | EVP_CIPH_##MODE##_MODE,					\
-    aes_init_key,							\
-    aes_##mode##_cipher,						\
-    NULL,								\
-    sizeof(EVP_AES_KEY),						\
-    NULL,								\
-    NULL,								\
-    NULL,								\
-    NULL								\
-};									\
-const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)			\
-{									\
-    return S390X_aes_##keylen##_##mode##_CAPABLE ?			\
-           &s390x_aes_##keylen##_##mode : &aes_##keylen##_##mode;	\
+# define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,    \
+                              MODE,flags)                               \
+static const EVP_CIPHER s390x_aes_##keylen##_##mode = {                 \
+    nid##_##keylen##_##nmode,blocksize,                                 \
+    keylen / 8,                                                         \
+    ivlen,                                                              \
+    flags | EVP_CIPH_##MODE##_MODE,                                     \
+    s390x_aes_##mode##_init_key,                                        \
+    s390x_aes_##mode##_cipher,                                          \
+    NULL,                                                               \
+    sizeof(S390X_AES_##MODE##_CTX),                                     \
+    NULL,                                                               \
+    NULL,                                                               \
+    NULL,                                                               \
+    NULL                                                                \
+};                                                                      \
+static const EVP_CIPHER aes_##keylen##_##mode = {                       \
+    nid##_##keylen##_##nmode,                                           \
+    blocksize,                                                          \
+    keylen / 8,                                                         \
+    ivlen,                                                              \
+    flags | EVP_CIPH_##MODE##_MODE,                                     \
+    aes_init_key,                                                       \
+    aes_##mode##_cipher,                                                \
+    NULL,                                                               \
+    sizeof(EVP_AES_KEY),                                                \
+    NULL,                                                               \
+    NULL,                                                               \
+    NULL,                                                               \
+    NULL                                                                \
+};                                                                      \
+const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)                       \
+{                                                                       \
+    return S390X_aes_##keylen##_##mode##_CAPABLE ?                      \
+           &s390x_aes_##keylen##_##mode : &aes_##keylen##_##mode;       \
 }
 
 # define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags)\
-static const EVP_CIPHER s390x_aes_##keylen##_##mode = {			\
-    nid##_##keylen##_##mode,						\
-    blocksize,								\
-    (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8,	\
-    ivlen,								\
-    flags | EVP_CIPH_##MODE##_MODE,					\
-    s390x_aes_##mode##_init_key,					\
-    s390x_aes_##mode##_cipher,						\
-    s390x_aes_##mode##_cleanup,						\
-    sizeof(S390X_AES_##MODE##_CTX),					\
-    NULL,								\
-    NULL,								\
-    s390x_aes_##mode##_ctrl,						\
-    NULL								\
-};									\
-static const EVP_CIPHER aes_##keylen##_##mode = {			\
-    nid##_##keylen##_##mode,blocksize,					\
-    (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8,	\
-    ivlen,								\
-    flags | EVP_CIPH_##MODE##_MODE,					\
-    aes_##mode##_init_key,						\
-    aes_##mode##_cipher,						\
-    aes_##mode##_cleanup,						\
-    sizeof(EVP_AES_##MODE##_CTX),					\
-    NULL,								\
-    NULL,								\
-    aes_##mode##_ctrl,							\
-    NULL								\
-};									\
-const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)			\
-{									\
-    return S390X_aes_##keylen##_##mode##_CAPABLE ?			\
-           &s390x_aes_##keylen##_##mode : &aes_##keylen##_##mode;	\
+static const EVP_CIPHER s390x_aes_##keylen##_##mode = {                 \
+    nid##_##keylen##_##mode,                                            \
+    blocksize,                                                          \
+    (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8,        \
+    ivlen,                                                              \
+    flags | EVP_CIPH_##MODE##_MODE,                                     \
+    s390x_aes_##mode##_init_key,                                        \
+    s390x_aes_##mode##_cipher,                                          \
+    s390x_aes_##mode##_cleanup,                                         \
+    sizeof(S390X_AES_##MODE##_CTX),                                     \
+    NULL,                                                               \
+    NULL,                                                               \
+    s390x_aes_##mode##_ctrl,                                            \
+    NULL                                                                \
+};                                                                      \
+static const EVP_CIPHER aes_##keylen##_##mode = {                       \
+    nid##_##keylen##_##mode,blocksize,                                  \
+    (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8,        \
+    ivlen,                                                              \
+    flags | EVP_CIPH_##MODE##_MODE,                                     \
+    aes_##mode##_init_key,                                              \
+    aes_##mode##_cipher,                                                \
+    aes_##mode##_cleanup,                                               \
+    sizeof(EVP_AES_##MODE##_CTX),                                       \
+    NULL,                                                               \
+    NULL,                                                               \
+    aes_##mode##_ctrl,                                                  \
+    NULL                                                                \
+};                                                                      \
+const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)                       \
+{                                                                       \
+    return S390X_aes_##keylen##_##mode##_CAPABLE ?                      \
+           &s390x_aes_##keylen##_##mode : &aes_##keylen##_##mode;       \
 }
 
 #else

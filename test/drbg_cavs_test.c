@@ -273,7 +273,7 @@ static int test_cavs_kats(const struct drbg_kat *test[], int i)
         if (!single_kat_pr_true(td))
             goto err;
         break;
-    default:	/* cant happen */
+    default:    /* cant happen */
         goto err;
     }
     rv = 1;

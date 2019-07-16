@@ -16,35 +16,35 @@
 #include "internal/ctype.h"
 #include "s390x_arch.h"
 
-#define LEN	128
-#define STR_(S)	#S
-#define STR(S)	STR_(S)
+#define LEN     128
+#define STR_(S) #S
+#define STR(S)  STR_(S)
 
-#define TOK_FUNC(NAME)							\
-    (sscanf(tok_begin,							\
-            " " STR(NAME) " : %" STR(LEN) "[^:] : "			\
-            "%" STR(LEN) "s %" STR(LEN) "s ",				\
-            tok[0], tok[1], tok[2]) == 2) {				\
-									\
-        off = (tok[0][0] == '~') ? 1 : 0;				\
-        if (sscanf(tok[0] + off, "%llx", &cap->NAME[0]) != 1)		\
-            goto ret;							\
-        if (off)							\
-            cap->NAME[0] = ~cap->NAME[0];				\
-									\
-        off = (tok[1][0] == '~') ? 1 : 0;				\
-        if (sscanf(tok[1] + off, "%llx", &cap->NAME[1]) != 1)		\
-            goto ret;							\
-        if (off)							\
-            cap->NAME[1] = ~cap->NAME[1];				\
+#define TOK_FUNC(NAME)                                                  \
+    (sscanf(tok_begin,                                                  \
+            " " STR(NAME) " : %" STR(LEN) "[^:] : "                     \
+            "%" STR(LEN) "s %" STR(LEN) "s ",                           \
+            tok[0], tok[1], tok[2]) == 2) {                             \
+                                                                        \
+        off = (tok[0][0] == '~') ? 1 : 0;                               \
+        if (sscanf(tok[0] + off, "%llx", &cap->NAME[0]) != 1)           \
+            goto ret;                                                   \
+        if (off)                                                        \
+            cap->NAME[0] = ~cap->NAME[0];                               \
+                                                                        \
+        off = (tok[1][0] == '~') ? 1 : 0;                               \
+        if (sscanf(tok[1] + off, "%llx", &cap->NAME[1]) != 1)           \
+            goto ret;                                                   \
+        if (off)                                                        \
+            cap->NAME[1] = ~cap->NAME[1];                               \
     }
 
-#define TOK_CPU(NAME)							\
-    (sscanf(tok_begin,							\
-            " %" STR(LEN) "s %" STR(LEN) "s ",				\
-            tok[0], tok[1]) == 1					\
-     && !strcmp(tok[0], #NAME)) {					\
-            memcpy(cap, &NAME, sizeof(*cap));				\
+#define TOK_CPU(NAME)                                                   \
+    (sscanf(tok_begin,                                                  \
+            " %" STR(LEN) "s %" STR(LEN) "s ",                          \
+            tok[0], tok[1]) == 1                                        \
+     && !strcmp(tok[0], #NAME)) {                                       \
+            memcpy(cap, &NAME, sizeof(*cap));                           \
     }
 
 static sigjmp_buf ill_jmp;
