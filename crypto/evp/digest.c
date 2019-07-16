@@ -526,55 +526,66 @@ int EVP_Digest(const void *data, size_t count,
 
 int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
 {
-    if (ctx->digest != NULL && ctx->digest->set_params != NULL)
-        return ctx->digest->set_params(ctx->provctx, params);
+    if (ctx->digest != NULL && ctx->digest->ctx_set_params != NULL)
+        return ctx->digest->ctx_set_params(ctx->provctx, params);
     return 0;
 }
 
 int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
 {
     if (ctx->digest != NULL && ctx->digest->get_params != NULL)
-        return ctx->digest->get_params(ctx->provctx, params);
+        return ctx->digest->ctx_get_params(ctx->provctx, params);
     return 0;
 }
 
 /* TODO(3.0): Remove legacy code below - only used by engines & DigestSign */
 int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 {
-    if (ctx->digest != NULL) {
-        if (ctx->digest->prov != NULL) {
-            OSSL_PARAM params[2];
-            size_t i, n = 0;
+    int ret = EVP_CTRL_RET_UNSUPPORTED;
+    int set_params = 1;
+    size_t sz;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-            switch (cmd) {
-            case EVP_MD_CTRL_XOF_LEN:
-                if (ctx->digest->set_params == NULL)
-                    break;
-                i = (size_t)p1;
-                params[n++] =
-                    OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &i);
-                params[n++] = OSSL_PARAM_construct_end();
-                return ctx->digest->set_params(ctx->provctx, params);
-            case EVP_MD_CTRL_MICALG:
-                if (ctx->digest->get_params == NULL)
-                    break;
-                params[n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
-                                                     p2, p1 ? p1 : 9999);
-                params[n++] = OSSL_PARAM_construct_end();
-                return ctx->digest->get_params(ctx->provctx, params);
-            }
-            return 0;
-        }
-        /* legacy code */
-        if (ctx->digest->md_ctrl != NULL) {
-            int ret = ctx->digest->md_ctrl(ctx, cmd, p1, p2);
-            if (ret <= 0)
-                return 0;
-            return 1;
-        }
+    if (ctx == NULL || ctx->digest == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return 0;
     }
-    return 0;
+
+    if (ctx->digest->prov == NULL)
+        goto legacy;
+
+    switch (cmd) {
+    case EVP_MD_CTRL_XOF_LEN:
+        sz = (size_t)p1;
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
+        break;
+    case EVP_MD_CTRL_MICALG:
+        set_params = 0;
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
+                                                     p2, p1 ? p1 : 9999);
+        break;
+    default:
+        return EVP_CTRL_RET_UNSUPPORTED;
+    }
+
+    if (set_params)
+        ret = evp_do_md_ctx_setparams(ctx->digest, ctx->provctx, params);
+    else
+        ret = evp_do_md_ctx_getparams(ctx->digest, ctx->provctx, params);
+    return ret;
+
+
+/* TODO(3.0): Remove legacy code below */
+ legacy:
+    if (ctx->digest->md_ctrl == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CTRL_NOT_IMPLEMENTED);
+        return 0;
+    }
+
+    ret = ctx->digest->md_ctrl(ctx, cmd, p1, p2);
+    if (ret <= 0)
+        return 0;
+    return ret;
 }
 
 static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
@@ -632,27 +643,22 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
             if (md->dupctx == NULL)
                 md->dupctx = OSSL_get_OP_digest_dupctx(fns);
             break;
-        case OSSL_FUNC_DIGEST_SIZE:
-            if (md->size == NULL)
-                md->size = OSSL_get_OP_digest_size(fns);
-            break;
-        case OSSL_FUNC_DIGEST_BLOCK_SIZE:
-            if (md->dblock_size == NULL)
-                md->dblock_size = OSSL_get_OP_digest_block_size(fns);
-            break;
-        case OSSL_FUNC_DIGEST_SET_PARAMS:
-            if (md->set_params == NULL)
-                md->set_params = OSSL_get_OP_digest_set_params(fns);
-            break;
         case OSSL_FUNC_DIGEST_GET_PARAMS:
             if (md->get_params == NULL)
                 md->get_params = OSSL_get_OP_digest_get_params(fns);
             break;
+        case OSSL_FUNC_DIGEST_CTX_SET_PARAMS:
+            if (md->ctx_set_params == NULL)
+                md->ctx_set_params = OSSL_get_OP_digest_ctx_set_params(fns);
+            break;
+        case OSSL_FUNC_DIGEST_CTX_GET_PARAMS:
+            if (md->ctx_get_params == NULL)
+                md->ctx_get_params = OSSL_get_OP_digest_ctx_get_params(fns);
+            break;
         }
     }
     if ((fncnt != 0 && fncnt != 5)
-        || (fncnt == 0 && md->digest == NULL)
-        || md->size == NULL) {
+        || (fncnt == 0 && md->digest == NULL)) {
         /*
          * In order to be a consistent set of functions we either need the
          * whole set of init/update/final etc functions or none of them.
@@ -660,6 +666,7 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
          * generate digests.
          */
         EVP_MD_meth_free(md);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
     md->prov = prov;

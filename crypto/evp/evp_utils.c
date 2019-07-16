@@ -73,9 +73,7 @@ PARAM_FUNCTIONS(EVP_CIPHER,
                 evp_do_ciph_ctx_getparams, ctx_get_params,
                 evp_do_ciph_ctx_setparams, ctx_set_params)
 
-#if 0
 PARAM_FUNCTIONS(EVP_MD,
                 evp_do_md_getparams, get_params,
                 evp_do_md_ctx_getparams, ctx_get_params,
                 evp_do_md_ctx_setparams, ctx_set_params)
-#endif
