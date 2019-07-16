@@ -1645,7 +1645,6 @@ struct ssl_st {
     size_t block_padding;
 
     CRYPTO_RWLOCK *lock;
-    RAND_DRBG *drbg;
 
     /* The number of TLS1.3 tickets to automatically send */
     size_t num_tickets;
