@@ -114,7 +114,8 @@ static int set_err_thread_local;
 static CRYPTO_THREAD_LOCAL err_thread_local;
 
 static CRYPTO_ONCE err_string_init = CRYPTO_ONCE_STATIC_INIT;
-static CRYPTO_RWLOCK *err_string_lock;
+static CRYPTO_ONCE err_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *err_lock;
 
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *);
 
@@ -146,13 +147,45 @@ static int err_string_data_cmp(const ERR_STRING_DATA *a,
     return a->error > b->error ? 1 : -1;
 }
 
+DEFINE_RUN_ONCE_STATIC(do_err_lock_init)
+{
+    return (err_lock = CRYPTO_THREAD_lock_new()) != NULL;
+}
+
+DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
+{
+    int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
+                                            err_string_data_cmp);
+    return int_error_hash != NULL;
+}
+
+DEFINE_RUN_ONCE_STATIC(do_err_local_init)
+{
+    set_err_thread_local = 1;
+    return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
+}
+
+void err_cleanup(void)
+{
+    if (set_err_thread_local != 0)
+        CRYPTO_THREAD_cleanup_local(&err_thread_local);
+    CRYPTO_THREAD_lock_free(err_lock);
+    err_lock = NULL;
+    lh_ERR_STRING_DATA_free(int_error_hash);
+    int_error_hash = NULL;
+}
+
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 {
     ERR_STRING_DATA *p = NULL;
 
-    CRYPTO_THREAD_read_lock(err_string_lock);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return NULL;
+    }
+
+    CRYPTO_THREAD_read_lock(err_lock);
     p = lh_ERR_STRING_DATA_retrieve(int_error_hash, d);
-    CRYPTO_THREAD_unlock(err_string_lock);
+    CRYPTO_THREAD_unlock(err_lock);
 
     return p;
 }
@@ -183,9 +216,9 @@ static void build_SYS_str_reasons(void)
     int i;
     int saveerrno = get_last_sys_error();
 
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    CRYPTO_THREAD_write_lock(err_lock);
     if (!init) {
-        CRYPTO_THREAD_unlock(err_string_lock);
+        CRYPTO_THREAD_unlock(err_lock);
         return;
     }
 
@@ -228,7 +261,7 @@ static void build_SYS_str_reasons(void)
 
     init = 0;
 
-    CRYPTO_THREAD_unlock(err_string_lock);
+    CRYPTO_THREAD_unlock(err_lock);
     /* openssl_strerror_r could change errno, but we want to preserve it */
     set_sys_error(saveerrno);
     err_load_strings(SYS_str_reasons);
@@ -265,33 +298,6 @@ static void ERR_STATE_free(ERR_STATE *s)
     OPENSSL_free(s);
 }
 
-DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
-{
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
-    err_string_lock = CRYPTO_THREAD_lock_new();
-    if (err_string_lock == NULL)
-        return 0;
-    int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
-                                            err_string_data_cmp);
-    if (int_error_hash == NULL) {
-        CRYPTO_THREAD_lock_free(err_string_lock);
-        err_string_lock = NULL;
-        return 0;
-    }
-    return 1;
-}
-
-void err_cleanup(void)
-{
-    if (set_err_thread_local != 0)
-        CRYPTO_THREAD_cleanup_local(&err_thread_local);
-    CRYPTO_THREAD_lock_free(err_string_lock);
-    err_string_lock = NULL;
-    lh_ERR_STRING_DATA_free(int_error_hash);
-    int_error_hash = NULL;
-}
-
 /*
  * Legacy; pack in the library.
  */
@@ -308,11 +314,15 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    if (!RUN_ONCE(&err_lock_init, do_err_lock_init)
+        || !RUN_ONCE(&err_string_init, do_err_strings_init))
+        return 0;
+
+    CRYPTO_THREAD_write_lock(err_lock);
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_insert(int_error_hash,
-                                       (ERR_STRING_DATA *)str);
-    CRYPTO_THREAD_unlock(err_string_lock);
+                                        (ERR_STRING_DATA *)str);
+    CRYPTO_THREAD_unlock(err_lock);
     return 1;
 }
 
@@ -349,17 +359,18 @@ int ERR_load_strings_const(const ERR_STRING_DATA *str)
 
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+    if (!RUN_ONCE(&err_lock_init, do_err_lock_init)
+        || !RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    CRYPTO_THREAD_write_lock(err_lock);
     /*
      * We don't need to ERR_PACK the lib, since that was done (to
      * the table) when it was loaded.
      */
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_delete(int_error_hash, str);
-    CRYPTO_THREAD_unlock(err_string_lock);
+    CRYPTO_THREAD_unlock(err_lock);
 
     return 1;
 }
@@ -603,10 +614,6 @@ const char *ERR_lib_error_string(unsigned long e)
     ERR_STRING_DATA d, *p;
     unsigned long l;
 
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
-        return NULL;
-    }
-
     l = ERR_GET_LIB(e);
     d.error = ERR_PACK(l, 0, 0);
     p = int_err_get_item(&d);
@@ -615,19 +622,13 @@ const char *ERR_lib_error_string(unsigned long e)
 
 const char *ERR_func_error_string(unsigned long e)
 {
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
-        return NULL;
-    return ERR_GET_LIB(e) == ERR_LIB_SYS ? "system library" : NULL;
+    return NULL;
 }
 
 const char *ERR_reason_error_string(unsigned long e)
 {
     ERR_STRING_DATA d, *p = NULL;
     unsigned long l, r;
-
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
-        return NULL;
-    }
 
     l = ERR_GET_LIB(e);
     r = ERR_GET_REASON(e);
@@ -663,10 +664,14 @@ void ERR_remove_state(unsigned long pid)
 }
 #endif
 
-DEFINE_RUN_ONCE_STATIC(err_do_init)
+static ERR_STATE *get_local_state(void)
 {
-    set_err_thread_local = 1;
-    return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
+    if (!OPENSSL_init_crypto(0, NULL))
+        return NULL;
+    if (!RUN_ONCE(&err_init, do_err_local_init))
+        return NULL;
+
+    return CRYPTO_THREAD_get_local(&err_thread_local);
 }
 
 ERR_STATE *ERR_get_state(void)
@@ -674,13 +679,8 @@ ERR_STATE *ERR_get_state(void)
     ERR_STATE *state;
     int saveerrno = get_last_sys_error();
 
-    if (!OPENSSL_init_crypto(0, NULL))
-        return NULL;
+    state = get_local_state();
 
-    if (!RUN_ONCE(&err_init, err_do_init))
-        return NULL;
-
-    state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == (ERR_STATE*)-1)
         return NULL;
 
@@ -716,25 +716,8 @@ int err_shelve_state(void **state)
 {
     int saveerrno = get_last_sys_error();
 
-    /*
-     * Note, at present our only caller is OPENSSL_init_crypto(), indirectly
-     * via ossl_init_load_crypto_nodelete(), by which point the requested
-     * "base" initialization has already been performed, so the below call is a
-     * NOOP, that re-enters OPENSSL_init_crypto() only to quickly return.
-     *
-     * If are no other valid callers of this function, the call below can be
-     * removed, avoiding the re-entry into OPENSSL_init_crypto().  If there are
-     * potential uses that are not from inside OPENSSL_init_crypto(), then this
-     * call is needed, but some care is required to make sure that the re-entry
-     * remains a NOOP.
-     */
-    if (!OPENSSL_init_crypto(0, NULL))
-        return 0;
+    *state = get_local_state();
 
-    if (!RUN_ONCE(&err_init, err_do_init))
-        return 0;
-
-    *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
         return 0;
 
@@ -756,12 +739,12 @@ int ERR_get_next_error_library(void)
 {
     int ret;
 
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+    if (!RUN_ONCE(&err_lock_init, do_err_lock_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    CRYPTO_THREAD_write_lock(err_lock);
     ret = int_err_library_number++;
-    CRYPTO_THREAD_unlock(err_string_lock);
+    CRYPTO_THREAD_unlock(err_lock);
     return ret;
 }
 
