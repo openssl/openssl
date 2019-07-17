@@ -222,6 +222,7 @@ struct gmi_cipher_data {
 };
 
 /* Interface to assembler module */
+unsigned int get_cpu_fms();
 unsigned int padlock_capability(void);
 void padlock_key_bswap(AES_KEY *key);
 void padlock_verify_context(struct padlock_cipher_data *ctx);
@@ -267,14 +268,6 @@ static int padlock_available(void)
 
 static unsigned char f_zxc = 0; /* 1 is for zx-c */ 
 
-#    define get_cpu_fms(eax, leaf)                \
-             __asm__ __volatile__ (                       \
-                "cpuid"                           \
-                : "=a"(eax)                       \
-                : "0"(leaf)                       \
-                : "ebx","ecx");                   
-        
-        
 /*
  * Load supported features of the CPU to see if the GMI is available.
  */
@@ -285,8 +278,7 @@ static int gmi_available(void)
     unsigned char family, model;
    
     /* Diff ZXC with ZXD */ 
-    unsigned int leaf = 0x1;
-    get_cpu_fms(eax, leaf);
+    eax = get_cpu_fms();
     family = (eax & 0xf00) >> 8;  /* bit 11-08 */ 
     model = (eax & 0xf0) >> 4; /* bit 7-4 */ 
 
@@ -1023,22 +1015,12 @@ gmi_sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 }
 
 /* ===== GMI SM3 digest ===== */
-#define SM3_MAKE_STRING(c, s) do {                     \
-        unsigned long ll;                              \
-        unsigned int  nn;                              \
-        for (nn=0; nn<SM3_DIGEST_LENGTH/4; nn++)       \
-        {   ll=(c)->h[nn]; (void)HOST_l2c(ll,(&s));   } \
-        } while (0)
-
-static unsigned int HOST_l2c(unsigned long l, unsigned char **c)
-{
-    unsigned int r = l;
-    __asm__ ("bswapl %0":"=r"(r):"0"(r));
-    *((unsigned int *)(*c))=r;
-    (*c)+=4;
-    return r;
-}
-
+# define HOST_l2c(l,c)  (*((c)++)=(unsigned char)(((l)>>24)&0xff),      \
+                         *((c)++)=(unsigned char)(((l)>>16)&0xff),      \
+                         *((c)++)=(unsigned char)(((l)>> 8)&0xff),      \
+                         *((c)++)=(unsigned char)(((l)    )&0xff),      \
+                         l)
+                         
 static int gmi_sm3_init(EVP_MD_CTX *ctx)
 {
     SM3_CTX *c = (SM3_CTX *)EVP_MD_CTX_md_data(ctx);
@@ -1130,8 +1112,8 @@ static int gmi_sm3_final(EVP_MD_CTX *ctx, unsigned char *md)
 
     p += SM3_CBLOCK - 8;
 
-    (void)HOST_l2c(c->Nh, &p);
-    (void)HOST_l2c(c->Nl, &p);
+    (void)HOST_l2c(c->Nh, p);
+    (void)HOST_l2c(c->Nl, p);
 
     p -= SM3_CBLOCK;
     gmi_sm3_blocks(c->h, p, 1);

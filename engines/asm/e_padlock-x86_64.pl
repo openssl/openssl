@@ -93,6 +93,18 @@ padlock_capability:
 	ret
 .size	padlock_capability,.-padlock_capability
 
+.globl  get_cpu_fms
+.type   get_cpu_fms,\@abi-omnipotent
+.align  16
+get_cpu_fms:
+    mov %rbx,%r8
+    xor %eax,%eax
+    mov \$0x01,%eax 
+    cpuid   # FMS->EAX
+    mov %r8,%rbx
+    ret
+.size   get_cpu_fms,.-get_cpu_fms
+
 .globl	padlock_key_bswap
 .type	padlock_key_bswap,\@abi-omnipotent,0
 .align	16

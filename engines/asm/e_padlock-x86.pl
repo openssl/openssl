@@ -119,6 +119,27 @@ $chunk="ebx";
 	&ret	();
 &function_end_B("padlock_capability")
 
+&function_begin_B("get_cpu_fms");
+    &push   ("ebx");
+    &pushf  ();
+    &pop    ("eax");
+    &mov    ("ecx","eax");
+    &xor    ("eax",1<<21);
+    &push   ("eax");
+    &popf   ();
+    &pushf  ();
+    &pop    ("eax");
+    &xor    ("ecx","eax");
+    &xor    ("eax","eax");
+    &bt ("ecx",21);
+    &jnc    (&label("noluck"));
+    &mov    ("eax",0x01);
+    &cpuid  (); # FMS->EAX
+&set_label("noluck");
+    &pop    ("ebx");
+    &ret    ();
+&function_end_B("get_cpu_fms")
+
 &function_begin_B("padlock_key_bswap");
 	&mov	("edx",&wparam(0));
 	&mov	("ecx",&DWP(240,"edx"));
