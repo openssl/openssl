@@ -17,38 +17,13 @@
 #include "evp_locl.h"
 
 
-static int keymgmt_up_ref(void *vkeymgmt)
-{
-    EVP_KEYMGMT *keymgmt = vkeymgmt;
-    int ref = 0;
-
-    CRYPTO_UP_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
-    return 1;
-}
-
-static void keymgmt_free(void *vkeymgmt)
-{
-    EVP_KEYMGMT *keymgmt = vkeymgmt;
-    int ref = 0;
-
-    if (keymgmt == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
-    if (ref > 0)
-        return;
-    ossl_provider_free(keymgmt->prov);
-    CRYPTO_THREAD_lock_free(keymgmt->lock);
-    OPENSSL_free(keymgmt);
-}
-
 static void *keymgmt_new(void)
 {
     EVP_KEYMGMT *keymgmt = NULL;
 
     if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL
         || (keymgmt->lock = CRYPTO_THREAD_lock_new()) == NULL) {
-        keymgmt_free(keymgmt);
+        EVP_KEYMGMT_free(keymgmt);
         return NULL;
     }
 
@@ -204,20 +179,34 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_KEYMGMT *keymgmt =
         evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
-                          keymgmt_from_dispatch, keymgmt_up_ref,
-                          keymgmt_free);
+                          keymgmt_from_dispatch,
+                          (int (*)(void *))EVP_KEYMGMT_up_ref,
+                          (void (*)(void *))EVP_KEYMGMT_free);
 
     return keymgmt;
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
-    return keymgmt_up_ref(keymgmt);
+    int ref = 0;
+
+    CRYPTO_UP_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
+    return 1;
 }
 
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
 {
-    keymgmt_free(keymgmt);
+    int ref = 0;
+
+    if (keymgmt == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
+    if (ref > 0)
+        return;
+    ossl_provider_free(keymgmt->prov);
+    CRYPTO_THREAD_lock_free(keymgmt->lock);
+    OPENSSL_free(keymgmt);
 }
 
 const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt)
