@@ -205,66 +205,59 @@ void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
 
 /* internal functions */
 /* TODO(3.0) decide if these should be public or internal */
-void *evp_keymgmt_importdomain(const EVP_KEYMGMT *keymgmt,
+void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
+                                  const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->importdomparams(provctx, params);
+}
+
+void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
                                const OSSL_PARAM params[])
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
-    return keymgmt->importdomain(provctx, params);
+    return keymgmt->gendomparams(provctx, params);
 }
 
-void *evp_keymgmt_gendomain(const EVP_KEYMGMT *keymgmt,
+void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
+                               void *provdomparams)
+{
+    keymgmt->freedomparams(provdomparams);
+}
+
+int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
+                                void *provdomparams, OSSL_PARAM params[])
+{
+    return keymgmt->exportdomparams(provdomparams, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->importdomparam_types();
+}
+
+const OSSL_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->exportdomparam_types();
+}
+
+
+void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
                             const OSSL_PARAM params[])
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
-    return keymgmt->gendomain(provctx, params);
+    return keymgmt->importkey(provctx, params);
 }
 
-void evp_keymgmt_freedomain(const EVP_KEYMGMT *keymgmt, void *provdomain)
-{
-    keymgmt->freedomain(provdomain);
-}
-
-int evp_keymgmt_exportdomain(const EVP_KEYMGMT *keymgmt,
-                             void *provdomain, OSSL_PARAM params[])
-{
-    return keymgmt->exportdomain(provdomain, params);
-}
-
-const OSSL_PARAM *evp_keymgmt_importdomain_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->importdomain_types();
-}
-
-const OSSL_PARAM *evp_keymgmt_exportdomain_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->exportdomain_types();
-}
-
-
-void *evp_keymgmt_importkey_priv(const EVP_KEYMGMT *keymgmt,
-                                 const OSSL_PARAM params[])
-{
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
-
-    return keymgmt->importkey_priv(provctx, params);
-}
-
-void *evp_keymgmt_importkey_pub(const EVP_KEYMGMT *keymgmt,
-                                const OSSL_PARAM params[])
-{
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
-
-    return keymgmt->importkey_pub(provctx, params);
-}
-
-void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domain,
+void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
                          const OSSL_PARAM params[])
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
-    return keymgmt->genkey(provctx, domain, params);
+    return keymgmt->genkey(provctx, domparams, params);
 }
 
 void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
@@ -280,38 +273,18 @@ void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey)
     keymgmt->freekey(provkey);
 }
 
-int evp_keymgmt_exportkey_priv(const EVP_KEYMGMT *keymgmt,
-                               void *provkey, OSSL_PARAM params[])
+int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
+                          OSSL_PARAM params[])
 {
-    return keymgmt->exportkey_priv(provkey, params);
+    return keymgmt->exportkey(provkey, params);
 }
 
-int evp_keymgmt_exportkey_pub(const EVP_KEYMGMT *keymgmt,
-                              void *provkey, OSSL_PARAM params[])
+const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt)
 {
-    return keymgmt->exportkey_pub(provkey, params);
+    return keymgmt->importkey_types();
 }
 
-const OSSL_PARAM *
-evp_keymgmt_importkey_priv_types(const EVP_KEYMGMT *keymgmt)
+const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt)
 {
-    return keymgmt->importkey_priv_types();
-}
-
-const OSSL_PARAM *
-evp_keymgmt_importkey_pub_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->importkey_pub_types();
-}
-
-const OSSL_PARAM *
-evp_keymgmt_exportkey_priv_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->exportkey_priv_types();
-}
-
-const OSSL_PARAM *
-evp_keymgmt_exportkey_pub_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->exportkey_pub_types();
+    return keymgmt->exportkey_types();
 }
