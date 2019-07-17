@@ -71,25 +71,21 @@ struct evp_keymgmt_st {
     CRYPTO_RWLOCK *lock;
 
     /* Domain parameter routines */
-    OSSL_OP_keymgmt_importdomain_fn *importdomain;
-    OSSL_OP_keymgmt_gendomain_fn *gendomain;
-    OSSL_OP_keymgmt_freedomain_fn *freedomain;
-    OSSL_OP_keymgmt_exportdomain_fn *exportdomain;
-    OSSL_OP_keymgmt_importdomain_types_fn *importdomain_types;
-    OSSL_OP_keymgmt_exportdomain_types_fn *exportdomain_types;
+    OSSL_OP_keymgmt_importdomparams_fn *importdomparams;
+    OSSL_OP_keymgmt_gendomparams_fn *gendomparams;
+    OSSL_OP_keymgmt_freedomparams_fn *freedomparams;
+    OSSL_OP_keymgmt_exportdomparams_fn *exportdomparams;
+    OSSL_OP_keymgmt_importdomparam_types_fn *importdomparam_types;
+    OSSL_OP_keymgmt_exportdomparam_types_fn *exportdomparam_types;
 
     /* Key routines */
-    OSSL_OP_keymgmt_importkey_priv_fn *importkey_priv;
-    OSSL_OP_keymgmt_importkey_pub_fn *importkey_pub;
+    OSSL_OP_keymgmt_importkey_fn *importkey;
     OSSL_OP_keymgmt_genkey_fn *genkey;
     OSSL_OP_keymgmt_loadkey_fn *loadkey;
     OSSL_OP_keymgmt_freekey_fn *freekey;
-    OSSL_OP_keymgmt_exportkey_priv_fn *exportkey_priv;
-    OSSL_OP_keymgmt_exportkey_pub_fn *exportkey_pub;
-    OSSL_OP_keymgmt_importkey_priv_types_fn *importkey_priv_types;
-    OSSL_OP_keymgmt_importkey_pub_types_fn *importkey_pub_types;
-    OSSL_OP_keymgmt_exportkey_priv_types_fn *exportkey_priv_types;
-    OSSL_OP_keymgmt_exportkey_pub_types_fn *exportkey_pub_types;
+    OSSL_OP_keymgmt_exportkey_fn *exportkey;
+    OSSL_OP_keymgmt_importkey_types_fn *importkey_types;
+    OSSL_OP_keymgmt_exportkey_types_fn *exportkey_types;
 } /* EVP_KEYMGMT */ ;
 
 struct evp_keyexch_st {

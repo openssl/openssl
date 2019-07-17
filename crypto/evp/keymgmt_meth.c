@@ -42,48 +42,44 @@ static void *keymgmt_from_dispatch(const OSSL_DISPATCH *fns,
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
-        case OSSL_FUNC_KEYMGMT_IMPORTDOMAIN:
-            if (keymgmt->importdomain != NULL)
+        case OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS:
+            if (keymgmt->importdomparams != NULL)
                 break;
-            keymgmt->importdomain = OSSL_get_OP_keymgmt_importdomain(fns);
+            keymgmt->importdomparams =
+                OSSL_get_OP_keymgmt_importdomparams(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_GENDOMAIN:
-            if (keymgmt->gendomain != NULL)
+        case OSSL_FUNC_KEYMGMT_GENDOMPARAMS:
+            if (keymgmt->gendomparams != NULL)
                 break;
-            keymgmt->gendomain = OSSL_get_OP_keymgmt_gendomain(fns);
+            keymgmt->gendomparams = OSSL_get_OP_keymgmt_gendomparams(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_FREEDOMAIN:
-            if (keymgmt->freedomain != NULL)
+        case OSSL_FUNC_KEYMGMT_FREEDOMPARAMS:
+            if (keymgmt->freedomparams != NULL)
                 break;
-            keymgmt->freedomain = OSSL_get_OP_keymgmt_freedomain(fns);
+            keymgmt->freedomparams = OSSL_get_OP_keymgmt_freedomparams(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_EXPORTDOMAIN:
-            if (keymgmt->exportdomain != NULL)
+        case OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS:
+            if (keymgmt->exportdomparams != NULL)
                 break;
-            keymgmt->exportdomain = OSSL_get_OP_keymgmt_exportdomain(fns);
+            keymgmt->exportdomparams =
+                OSSL_get_OP_keymgmt_exportdomparams(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_IMPORTDOMAIN_TYPES:
-            if (keymgmt->importdomain_types != NULL)
+        case OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES:
+            if (keymgmt->importdomparam_types != NULL)
                 break;
-            keymgmt->importdomain_types =
-                OSSL_get_OP_keymgmt_importdomain_types(fns);
+            keymgmt->importdomparam_types =
+                OSSL_get_OP_keymgmt_importdomparam_types(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_EXPORTDOMAIN_TYPES:
-            if (keymgmt->exportdomain_types != NULL)
+        case OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES:
+            if (keymgmt->exportdomparam_types != NULL)
                 break;
-            keymgmt->exportdomain_types =
-                OSSL_get_OP_keymgmt_exportdomain_types(fns);
+            keymgmt->exportdomparam_types =
+                OSSL_get_OP_keymgmt_exportdomparam_types(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_IMPORTKEY_PRIV:
-            if (keymgmt->importkey_priv != NULL)
+        case OSSL_FUNC_KEYMGMT_IMPORTKEY:
+            if (keymgmt->importkey != NULL)
                 break;
-            keymgmt->importkey_priv =
-                OSSL_get_OP_keymgmt_importkey_priv(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_IMPORTKEY_PUB:
-            if (keymgmt->importkey_pub != NULL)
-                break;
-            keymgmt->importkey_pub = OSSL_get_OP_keymgmt_importkey_pub(fns);
+            keymgmt->importkey = OSSL_get_OP_keymgmt_importkey(fns);
             break;
         case OSSL_FUNC_KEYMGMT_GENKEY:
             if (keymgmt->genkey != NULL)
@@ -100,40 +96,22 @@ static void *keymgmt_from_dispatch(const OSSL_DISPATCH *fns,
                 break;
             keymgmt->freekey = OSSL_get_OP_keymgmt_freekey(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_EXPORTKEY_PRIV:
-            if (keymgmt->exportkey_priv != NULL)
+        case OSSL_FUNC_KEYMGMT_EXPORTKEY:
+            if (keymgmt->exportkey != NULL)
                 break;
-            keymgmt->exportkey_priv =
-                OSSL_get_OP_keymgmt_exportkey_priv(fns);
+            keymgmt->exportkey = OSSL_get_OP_keymgmt_exportkey(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_EXPORTKEY_PUB:
-            if (keymgmt->exportkey_pub != NULL)
+        case OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES:
+            if (keymgmt->importkey_types != NULL)
                 break;
-            keymgmt->exportkey_pub = OSSL_get_OP_keymgmt_exportkey_pub(fns);
+            keymgmt->importkey_types =
+                OSSL_get_OP_keymgmt_importkey_types(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_IMPORTKEY_PRIV_TYPES:
-            if (keymgmt->importkey_priv_types != NULL)
+        case OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES:
+            if (keymgmt->exportkey_types != NULL)
                 break;
-            keymgmt->importkey_priv_types =
-                OSSL_get_OP_keymgmt_importkey_priv_types(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_IMPORTKEY_PUB_TYPES:
-            if (keymgmt->importkey_pub_types != NULL)
-                break;
-            keymgmt->importkey_pub_types =
-                OSSL_get_OP_keymgmt_importkey_pub_types(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_EXPORTKEY_PRIV_TYPES:
-            if (keymgmt->exportkey_priv_types != NULL)
-                break;
-            keymgmt->exportkey_priv_types =
-                OSSL_get_OP_keymgmt_exportkey_priv_types(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_EXPORTKEY_PUB_TYPES:
-            if (keymgmt->exportkey_pub_types != NULL)
-                break;
-            keymgmt->exportkey_pub_types =
-                OSSL_get_OP_keymgmt_exportkey_pub_types(fns);
+            keymgmt->exportkey_types =
+                OSSL_get_OP_keymgmt_exportkey_types(fns);
             break;
         }
     }
@@ -143,26 +121,21 @@ static void *keymgmt_from_dispatch(const OSSL_DISPATCH *fns,
      * It makes no sense providing OSSL_PARAM descriptors for import and
      * export if you can't import or export.
      */
-    if ((keymgmt->freedomain != NULL
-         && (keymgmt->importdomain == NULL
-             && keymgmt->gendomain == NULL))
+    if ((keymgmt->freedomparams != NULL
+         && (keymgmt->importdomparams == NULL
+             && keymgmt->gendomparams == NULL))
         || (keymgmt->freekey != NULL
-            && (keymgmt->importkey_priv == NULL
-                && keymgmt->importkey_pub == NULL
+            && (keymgmt->importkey == NULL
                 && keymgmt->genkey == NULL
                 && keymgmt->loadkey == NULL))
-        || (keymgmt->importdomain_types != NULL
-            && keymgmt->importdomain == NULL)
-        || (keymgmt->exportdomain_types != NULL
-            && keymgmt->exportdomain == NULL)
-        || (keymgmt->importkey_priv_types != NULL
-            && keymgmt->importkey_priv == NULL)
-        || (keymgmt->importkey_pub_types != NULL
-            && keymgmt->importkey_pub == NULL)
-        || (keymgmt->exportkey_priv_types != NULL
-            && keymgmt->exportkey_priv == NULL)
-        || (keymgmt->exportkey_pub_types != NULL
-            && keymgmt->exportkey_pub == NULL)) {
+        || (keymgmt->importdomparam_types != NULL
+            && keymgmt->importdomparams == NULL)
+        || (keymgmt->exportdomparam_types != NULL
+            && keymgmt->exportdomparams == NULL)
+        || (keymgmt->importkey_types != NULL
+            && keymgmt->importkey == NULL)
+        || (keymgmt->exportkey_types != NULL
+            && keymgmt->exportkey == NULL)) {
         EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
