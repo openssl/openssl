@@ -572,65 +572,77 @@ static int provider_forall_loaded(struct provider_store_st *store,
     return ret;
 }
 
+/*
+ * This function only does something once when store->use_fallbacks == 1,
+ * and then sets store->use_fallbacks = 0, so the second call and so on is
+ * effectively a no-op.
+ */
+static void provider_activate_fallbacks(struct provider_store_st *store)
+{
+    if (store->use_fallbacks) {
+        int num_provs = sk_OSSL_PROVIDER_num(store->providers);
+        int activated_fallback_count = 0;
+        int i;
+
+        for (i = 0; i < num_provs; i++) {
+            OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
+
+            /*
+             * Note that we don't care if the activation succeeds or not.
+             * If it doesn't succeed, then any attempt to use any of the
+             * fallback providers will fail anyway.
+             */
+            if (prov->flag_fallback) {
+                activated_fallback_count++;
+                provider_activate(prov);
+            }
+        }
+
+        /*
+         * We assume that all fallbacks have been added to the store before
+         * any fallback is activated.
+         * TODO: We may have to reconsider this, IF we find ourselves adding
+         * fallbacks after any previous fallback has been activated.
+         */
+        if (activated_fallback_count > 0)
+            store->use_fallbacks = 0;
+    }
+}
+
 int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
                                 int (*cb)(OSSL_PROVIDER *provider,
                                           void *cbdata),
                                 void *cbdata)
 {
     int ret = 1;
-    int i;
     struct provider_store_st *store = get_provider_store(ctx);
 
     if (store != NULL) {
-        int found_activated = 0;
-
         CRYPTO_THREAD_read_lock(store->lock);
-        ret = provider_forall_loaded(store, &found_activated, cb, cbdata);
+
+        provider_activate_fallbacks(store);
 
         /*
-         * If there's nothing activated ever in this store, try to activate
-         * all fallbacks.
+         * Now, we sweep through all providers
          */
-        if (!found_activated && store->use_fallbacks) {
-            int num_provs = sk_OSSL_PROVIDER_num(store->providers);
-            int activated_fallback_count = 0;
+        ret = provider_forall_loaded(store, NULL, cb, cbdata);
 
-            for (i = 0; i < num_provs; i++) {
-                OSSL_PROVIDER *prov =
-                    sk_OSSL_PROVIDER_value(store->providers, i);
-
-                /*
-                 * Note that we don't care if the activation succeeds or
-                 * not.  If it doesn't succeed, then the next loop will
-                 * fail anyway.
-                 */
-                if (prov->flag_fallback) {
-                    activated_fallback_count++;
-                    provider_activate(prov);
-                }
-            }
-
-            if (activated_fallback_count > 0) {
-                /*
-                 * We assume that all fallbacks have been added to the store
-                 * before any fallback is activated.
-                 * TODO: We may have to reconsider this, IF we find ourselves
-                 * adding fallbacks after any previous fallback has been
-                 * activated.
-                 */
-                store->use_fallbacks = 0;
-
-                /*
-                 * Now that we've activated available fallbacks, try a
-                 * second sweep
-                 */
-                ret = provider_forall_loaded(store, NULL, cb, cbdata);
-            }
-        }
         CRYPTO_THREAD_unlock(store->lock);
     }
 
     return ret;
+}
+
+int ossl_provider_available(OSSL_PROVIDER *prov)
+{
+    if (prov != NULL) {
+        CRYPTO_THREAD_read_lock(prov->store->lock);
+        provider_activate_fallbacks(prov->store);
+        CRYPTO_THREAD_unlock(prov->store->lock);
+
+        return prov->flag_initialized;
+    }
+    return 0;
 }
 
 /* Setters of Provider Object data */

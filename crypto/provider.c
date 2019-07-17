@@ -35,6 +35,18 @@ int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov)
     return 1;
 }
 
+int OSSL_PROVIDER_available(OPENSSL_CTX *libctx, const char *name)
+{
+    OSSL_PROVIDER *prov = NULL;
+    int available = 0;
+
+    /* Find it or create it */
+    prov = ossl_provider_find(libctx, name);
+    available = ossl_provider_available(prov);
+    ossl_provider_free(prov);
+    return available;
+}
+
 const OSSL_PARAM *OSSL_PROVIDER_get_param_types(const OSSL_PROVIDER *prov)
 {
     return ossl_provider_get_param_types(prov);
