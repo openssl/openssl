@@ -6,7 +6,7 @@ ossl_provider_find, ossl_provider_new, ossl_provider_up_ref,
 ossl_provider_free,
 ossl_provider_set_fallback, ossl_provider_set_module_path,
 ossl_provider_add_parameter,
-ossl_provider_activate,
+ossl_provider_activate, ossl_provider_available,
 ossl_provider_ctx,
 ossl_provider_forall_loaded,
 ossl_provider_name, ossl_provider_dso,
@@ -33,6 +33,8 @@ ossl_provider_get_params, ossl_provider_query_operation
 
  /* Load and initialize the Provider */
  int ossl_provider_activate(OSSL_PROVIDER *prov);
+ /* Check if provider is available */
+ int ossl_provider_available(OSSL_PROVIDER *prov);
 
  /* Return pointer to the provider's context */
  void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
@@ -148,6 +150,9 @@ be located in that module, and called.
 
 =back
 
+ossl_provider_available() checks if given provider object I<prov> is
+"activated" or a fallback.
+
 ossl_provider_ctx() returns a context created by the provider.
 Outside of the provider, it's completely opaque, but it needs to be
 passed back to some of the provider functions.
@@ -227,6 +232,9 @@ ossl_provider_free() doesn't return any value.
 
 ossl_provider_set_module_path(), ossl_provider_set_fallback() and
 ossl_provider_activate() return 1 on success, or 0 on error.
+
+ossl_provider_available() return 1 if the provider is available,
+otherwise 0.
 
 ossl_provider_name(), ossl_provider_dso(),
 ossl_provider_module_name(), and ossl_provider_module_path() return a

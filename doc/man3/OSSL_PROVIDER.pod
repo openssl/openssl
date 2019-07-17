@@ -3,6 +3,7 @@
 =head1 NAME
 
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
+OSSL_PROVIDER_available,
 OSSL_PROVIDER_get_param_types, OSSL_PROVIDER_get_params,
 OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
 
@@ -12,13 +13,14 @@ OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
 
  typedef struct ossl_provider_st OSSL_PROVIDER;
 
- OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
+ OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name);
  int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
+ int OSSL_PROVIDER_available(OPENSSL_CTX *libctx, const char *name);
 
  const OSSL_PARAM *OSSL_PROVIDER_get_param_types(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, OSSL_PARAM params[]);
 
- int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
+ int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
                                ossl_provider_init_fn *init_fn);
 
  const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov);
@@ -31,6 +33,9 @@ provider is).
 A provider can be built in to the application or the OpenSSL
 libraries, or can be a loadable module.
 The functions described here handle both forms.
+
+Some of these functions operate within a library context, please see
+L<OPENSSL_CTX(3)> for further details.
 
 =head2 Functions
 
@@ -48,6 +53,9 @@ entry point, C<OSSL_provider_init>.
 OSSL_PROVIDER_unload() unloads the given provider.
 For a provider added with OSSL_PROVIDER_add_builtin(), this simply
 runs its teardown function.
+
+OSSL_PROVIDER_available() checks if a named provider is available
+for use.
 
 OSSL_PROVIDER_get_param_types() is used to get a provider parameter
 descriptor set as a constant B<OSSL_PARAM> array.
@@ -68,6 +76,9 @@ OSSL_PROVIDER_load() returns a pointer to a provider object on
 success, or B<NULL> on error.
 
 OSSL_PROVIDER_unload() returns 1 on success, or 0 on error.
+
+OSSL_PROVIDER_available() returns 1 if the named provider is available,
+otherwise 0.
 
 OSSL_PROVIDER_get_param_types() returns a pointer to an array
 of constant B<OSSL_PARAM>, or NULL if none is provided.
@@ -95,7 +106,7 @@ its build number.
 
 =head1 SEE ALSO
 
-L<openssl-core.h(7)>, L<provider(7)>
+L<openssl-core.h(7)>, L<OPENSSL_CTX(3)>, L<provider(7)>
 
 =head1 HISTORY
 
