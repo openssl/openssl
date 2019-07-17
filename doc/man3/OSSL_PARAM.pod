@@ -237,14 +237,6 @@ requested data, it must set C<return_size> for each such
 C<OSSL_PARAM> item to the required size, and eventually return an
 error.
 
-=item *
-
-Functions returning a constant C<OSSL_PARAM> array as a parameter
-descriptor may set C<data> and C<return_size> for their own purposes.
-And example would be to have C<data> point at handler functions for
-each parameter, which would be used by a I<setter> or I<responder> of
-those same parameters.
-
 =back
 
 =begin comment RETURN VALUES doesn't make sense for a manual that only
