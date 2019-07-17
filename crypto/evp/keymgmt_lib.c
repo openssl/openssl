@@ -119,18 +119,18 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         /*
          * If the given keymgmt doesn't have an import function, give up
          */
-        if (keymgmt->importkey_priv == NULL)
+        if (keymgmt->importkey == NULL)
             return NULL;
 
         for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
-            if (pk->pkeys[j].keymgmt->exportkey_priv != NULL) {
+            if (pk->pkeys[j].keymgmt->exportkey != NULL) {
                 const OSSL_PARAM *paramdefs = NULL;
                 OSSL_PARAM *params = NULL;
                 void *data = NULL;
                 void *provctx =
                     ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
-                paramdefs = pk->pkeys[j].keymgmt->exportkey_priv_types();
+                paramdefs = pk->pkeys[j].keymgmt->exportkey_types();
                 /*
                  * All params have 'data' set to NULL.  In that case,
                  * the exportkey call should just fill in 'return_size'
@@ -138,8 +138,7 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
                  */
                 params = paramdefs_to_params(paramdefs);
                 /* Get 'return_size' filled */
-                pk->pkeys[j].keymgmt->exportkey_priv(pk->pkeys[j].provkey,
-                                                     params);
+                pk->pkeys[j].keymgmt->exportkey(pk->pkeys[j].provkey, params);
 
                 /*
                  * Allocate space and assign 'data' to point into the
@@ -151,14 +150,13 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
                  * Call the exportkey function a second time, to get
                  * the data filled
                  */
-                pk->pkeys[j].keymgmt->exportkey_priv(pk->pkeys[j].provkey,
-                                                     params);
+                pk->pkeys[j].keymgmt->exportkey(pk->pkeys[j].provkey, params);
 
                 /*
                  * We should have all the data at this point, so import
                  * into the new provider and hope to get a key back.
                  */
-                provkey = keymgmt->importkey_priv(provctx, params);
+                provkey = keymgmt->importkey(provctx, params);
                 OPENSSL_free(params);
                 OPENSSL_free(data);
 
