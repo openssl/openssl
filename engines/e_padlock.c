@@ -222,7 +222,7 @@ struct gmi_cipher_data {
 };
 
 /* Interface to assembler module */
-unsigned int get_cpu_fms();
+unsigned int get_cpu_fms(void);
 unsigned int padlock_capability(void);
 void padlock_key_bswap(AES_KEY *key);
 void padlock_verify_context(struct padlock_cipher_data *ctx);
