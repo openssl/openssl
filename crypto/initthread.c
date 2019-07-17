@@ -137,11 +137,14 @@ static union {
 } destructor_key = { -1 };
 
 /*
- * The thread event handler is thread specific and is a linked
- * list of all handler functions that should be called for the
- * current thread. We also keep a global reference to that linked
- * list, so that we can deregister handlers if necessary before all
- * the threads are stopped.
+ * The thread event handler list is a thread specific linked list
+ * of callback functions which are invoked in list order by the
+ * current thread in case of certain events. (Currently, there is
+ * only one type of event, the 'thread stop' event.)
+ *
+ * We also keep a global reference to that linked list, so that we
+ * can deregister handlers if necessary before all the threads are
+ * stopped.
  */
 static int init_thread_push_handlers(THREAD_EVENT_HANDLER **hands)
 {
