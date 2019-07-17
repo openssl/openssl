@@ -21,7 +21,7 @@
  * we have our own copy of ossl_init_thread_start, which cascades notifications
  * about threads stopping from libcrypto to all the code in the FIPS provider
  * that needs to know about it.
- * 
+ *
  * The FIPS provider tells libcrypto about which threads it is interested in
  * by calling "c_thread_start" which is a function pointer created during
  * provider initialisation (i.e. OSSL_init_provider).
@@ -77,6 +77,12 @@ static GLOBAL_TEVENT_REGISTER *get_global_tevent_register(void)
 }
 #endif
 
+#ifndef FIPS_MODE
+static int  init_thread_push_handlers(THREAD_EVENT_HANDLER **hands);
+static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin);
+static void init_thread_destructor(void *hands);
+static int  init_thread_deregister(void *arg, int all);
+#endif
 static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands);
 
 static THREAD_EVENT_HANDLER **
@@ -86,40 +92,22 @@ init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
 
     if (alloc) {
         if (hands == NULL) {
-#ifndef FIPS_MODE
-            GLOBAL_TEVENT_REGISTER *gtr;
-#endif
 
-            if ((hands = OPENSSL_zalloc(sizeof(*hands))) == NULL) {
-                OPENSSL_free(hands);
+            if ((hands = OPENSSL_zalloc(sizeof(*hands))) == NULL)
                 return NULL;
-            }
 
-#ifndef FIPS_MODE
-            /*
-             * The thread event handler is thread specific and is a linked
-             * list of all handler functions that should be called for the
-             * current thread. We also keep a global reference to that linked
-             * list, so that we can deregister handlers if necessary before all
-             * the threads are stopped.
-             */
-            gtr = get_global_tevent_register();
-            if (gtr == NULL) {
-                OPENSSL_free(hands);
-                return NULL;
-            }
-            CRYPTO_THREAD_write_lock(gtr->lock);
-            if (!sk_THREAD_EVENT_HANDLER_PTR_push(gtr->skhands, hands)) {
-                OPENSSL_free(hands);
-                CRYPTO_THREAD_unlock(gtr->lock);
-                return NULL;
-            }
-            CRYPTO_THREAD_unlock(gtr->lock);
-#endif
             if (!CRYPTO_THREAD_set_local(local, hands)) {
                 OPENSSL_free(hands);
                 return NULL;
             }
+
+#ifndef FIPS_MODE
+            if (!init_thread_push_handlers(hands)) {
+                CRYPTO_THREAD_set_local(local, NULL);
+                OPENSSL_free(hands);
+                return NULL;
+            }
+#endif
         }
     } else if (!keep) {
         CRYPTO_THREAD_set_local(local, NULL);
@@ -147,6 +135,29 @@ static union {
     long sane;
     CRYPTO_THREAD_LOCAL value;
 } destructor_key = { -1 };
+
+/*
+ * The thread event handler is thread specific and is a linked
+ * list of all handler functions that should be called for the
+ * current thread. We also keep a global reference to that linked
+ * list, so that we can deregister handlers if necessary before all
+ * the threads are stopped.
+ */
+static int init_thread_push_handlers(THREAD_EVENT_HANDLER **hands)
+{
+    int ret;
+    GLOBAL_TEVENT_REGISTER *gtr;
+
+    gtr = get_global_tevent_register();
+    if (gtr == NULL)
+        return 0;
+
+    CRYPTO_THREAD_write_lock(gtr->lock);
+    ret = (sk_THREAD_EVENT_HANDLER_PTR_push(gtr->skhands, hands) != 0);
+    CRYPTO_THREAD_unlock(gtr->lock);
+
+    return ret;
+}
 
 static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
 {
@@ -186,8 +197,6 @@ int ossl_init_thread(void)
 
     return 1;
 }
-
-static int init_thread_deregister(void *arg, int all);
 
 void ossl_cleanup_thread(void)
 {
