@@ -315,14 +315,24 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 #  define S390X_aes_128_xts_CAPABLE     1       /* checked by callee */
 #  define S390X_aes_256_xts_CAPABLE     1
 
-#  define S390X_aes_128_ccm_CAPABLE (S390X_aes_128_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmac[0] &       \
+# define S390X_aes_128_gcm_CAPABLE (S390X_aes_128_CAPABLE &&        \
+                                    (OPENSSL_s390xcap_P.kma[0] &    \
                                      S390X_CAPBIT(S390X_AES_128)))
-#  define S390X_aes_192_ccm_CAPABLE (S390X_aes_192_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmac[0] &       \
+# define S390X_aes_192_gcm_CAPABLE (S390X_aes_192_CAPABLE &&        \
+                                    (OPENSSL_s390xcap_P.kma[0] &    \
                                      S390X_CAPBIT(S390X_AES_192)))
-#  define S390X_aes_256_ccm_CAPABLE (S390X_aes_256_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmac[0] &       \
+# define S390X_aes_256_gcm_CAPABLE (S390X_aes_256_CAPABLE &&        \
+                                    (OPENSSL_s390xcap_P.kma[0] &    \
+                                     S390X_CAPBIT(S390X_AES_256)))
+
+#  define S390X_aes_128_ccm_CAPABLE (S390X_aes_128_CAPABLE &&       \
+                                    (OPENSSL_s390xcap_P.kmac[0] &   \
+                                     S390X_CAPBIT(S390X_AES_128)))
+#  define S390X_aes_192_ccm_CAPABLE (S390X_aes_192_CAPABLE &&       \
+                                    (OPENSSL_s390xcap_P.kmac[0] &   \
+                                     S390X_CAPBIT(S390X_AES_192)))
+#  define S390X_aes_256_ccm_CAPABLE (S390X_aes_256_CAPABLE &&       \
+                                    (OPENSSL_s390xcap_P.kmac[0] &   \
                                      S390X_CAPBIT(S390X_AES_256)))
 #  define S390X_CCM_AAD_FLAG    0x40
 
