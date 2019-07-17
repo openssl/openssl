@@ -729,12 +729,13 @@ int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
 }
 
 #ifndef FIPS_MODE
+# ifndef OPENSSL_NO_DH
 /*
  * TODO(3.0): Temporarily unavailable in FIPS mode. This will need to be added
  * in later.
  */
 
-#define MAX_PARAMS 10
+#  define MAX_PARAMS 10
 typedef struct {
     /* Number of the current param */
     size_t curr;
@@ -845,12 +846,15 @@ static OSSL_PARAM *evp_pkey_dh_to_param(EVP_PKEY *pkey, size_t *sz)
 
     return param_template_to_param(&tmpl, sz);
 }
+# endif /* OPENSSL_NO_DH */
 
 OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz)
 {
     switch (pkey->type) {
+# ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         return evp_pkey_dh_to_param(pkey, sz);
+# endif
     default:
         return NULL;
     }

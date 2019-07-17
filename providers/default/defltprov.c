@@ -115,7 +115,9 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
 };
 
 static const OSSL_ALGORITHM deflt_keyexch[] = {
+#ifndef OPENSSL_NO_DH
     { "dhKeyAgreement", "default=yes", dh_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

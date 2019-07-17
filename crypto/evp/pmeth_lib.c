@@ -393,6 +393,7 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     return 0;
 }
 
+#ifndef OPENSSL_NO_DH
 int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 {
     OSSL_PARAM dh_pad_params[2];
@@ -407,13 +408,16 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 
     return EVP_PKEY_CTX_set_params(ctx, dh_pad_params);
 }
+#endif
 
 static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                                 int cmd, int p1, void *p2)
 {
     switch (cmd) {
+#ifndef OPENSSL_NO_DH
     case EVP_PKEY_CTRL_DH_PAD:
         return EVP_PKEY_CTX_set_dh_pad(ctx, p1);
+#endif
     }
     return 0;
 }
@@ -470,12 +474,14 @@ int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
 static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
                                     const char *value)
 {
+#ifndef OPENSSL_NO_DH
     if (strcmp(name, "dh_pad") == 0) {
         int pad;
 
         pad = atoi(value);
         return EVP_PKEY_CTX_set_dh_pad(ctx, pad);
     }
+#endif
     return 0;
 }
 
