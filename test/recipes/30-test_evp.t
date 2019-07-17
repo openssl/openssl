@@ -10,19 +10,24 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw(:DEFAULT data_file bldtop_dir);
+use OpenSSL::Test qw(:DEFAULT data_file bldtop_dir srctop_file);
 
 setup("test_evp");
 
-my @files = ( "evpciph.txt", "evpdigest.txt", "evpencod.txt", "evpkdf.txt",
-    "evppkey_kdf.txt", "evpmac.txt", "evppbe.txt", "evppkey.txt",
-    "evppkey_ecc.txt", "evpcase.txt", "evpaessiv.txt", "evpccmcavs.txt" );
+my @configs = qw( default-and-legacy.cnf fips.cnf );
+my @files = qw( evpciph.txt evpdigest.txt evpencod.txt evpkdf.txt
+    evppkey_kdf.txt evpmac.txt evppbe.txt evppkey.txt
+    evppkey_ecc.txt evpcase.txt evpaessiv.txt evpccmcavs.txt );
 
-plan tests => scalar(@files);
+plan tests => scalar(@configs) * scalar(@files);
 
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
 
-foreach my $f ( @files ) {
-    ok(run(test(["evp_test", data_file("$f")])),
-       "running evp_test $f");
+foreach (@configs) {
+    $ENV{OPENSSL_CONF} = srctop_file("test", $_);
+
+    foreach my $f ( @files ) {
+        ok(run(test(["evp_test", data_file("$f")])),
+           "running evp_test $f");
+    }
 }
