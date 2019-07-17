@@ -54,10 +54,12 @@ def gen_keys(sig_alg):
         )
     else:
         # generate CA key and cert
+        if sig_alg == 'rsa': sig_alg_sized = "rsa:3072"
+        else: sig_alg_sized = "rsa"
         helpers.run_subprocess(
             [
                 'apps/openssl', 'req', '-x509', '-new',
-                '-newkey', sig_alg,
+                '-newkey', sig_alg_sized,
                 '-keyout', '{}_CA.key'.format(sig_alg),
                 '-out', '{}_CA.crt'.format(sig_alg),
                 '-nodes',
@@ -71,7 +73,7 @@ def gen_keys(sig_alg):
         helpers.run_subprocess(
             [
                 'apps/openssl', 'req', '-new',
-                '-newkey', sig_alg,
+                '-newkey', sig_alg_sized,
                 '-keyout', '{}_srv.key'.format(sig_alg),
                 '-out', '{}_srv.csr'.format(sig_alg),
                 '-nodes',
