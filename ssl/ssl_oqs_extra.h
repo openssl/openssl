@@ -77,12 +77,6 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_sikep610;
   } else if (strncmp(value, "sikep751", len) == 0) {
     nid = NID_OQS_sikep751;
-  } else if (strncmp(value, "ledacryptkemlt12", len) == 0) {
-    nid = NID_OQS_ledacryptkemlt12;
-  } else if (strncmp(value, "ledacryptkemlt32", len) == 0) {
-    nid = NID_OQS_ledacryptkemlt32;
-  } else if (strncmp(value, "ledacryptkemlt52", len) == 0) {
-    nid = NID_OQS_ledacryptkemlt52;
 ///// OQS_TEMPLATE_FRAGMENT_NID_FROM_STRING_END
   /* hybrid algs */
   } else if (strncmp(value,"p256-oqs_kem_default", len) == 0) {
@@ -158,12 +152,6 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_p256_sikep610;
   } else if (strncmp(value, "p256-sikep751", len) == 0) {
     nid = NID_OQS_p256_sikep751;
-  } else if (strncmp(value, "p256-ledacryptkemlt12", len) == 0) {
-    nid = NID_OQS_p256_ledacryptkemlt12;
-  } else if (strncmp(value, "p256-ledacryptkemlt32", len) == 0) {
-    nid = NID_OQS_p256_ledacryptkemlt32;
-  } else if (strncmp(value, "p256-ledacryptkemlt52", len) == 0) {
-    nid = NID_OQS_p256_ledacryptkemlt52;
 ///// OQS_TEMPLATE_FRAGMENT_NID_FROM_STRING_HYBRID_END
   }
   return nid;

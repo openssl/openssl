@@ -209,6 +209,9 @@ kems:
     nid_hybrid_p256: "0x0322"
     oqs_alg: "OQS_KEM_alg_sike_p751"
     bit_security: 256
+kem_nid_end: "0x0222"
+kem_nid_hybrid_end: "0x0322"
+unused_kems:
   -
     name_group: "ledacryptkemlt12"
     nid: "0x0223"
@@ -227,5 +230,27 @@ kems:
     nid_hybrid_p256: "0x0325"
     oqs_alg: "OQS_KEM_alg_ledacrypt_kem_lt_52"
     bit_security: 256
-kem_nid_end: "0x0225"
-kem_nid_hybrid_end: "0x0325"
+  -
+    name_group: "ntrulpr653"
+    nid: "0x0226"
+    nid_hybrid_p256: "0x0326"
+    oqs_alg: "OQS_KEM_alg_ntruprime_ntrulpr653"
+    bit_security: 128
+  -
+    name_group: "ntrulpr761"
+    nid: "0x0227"
+    nid_hybrid_p256: "0x0327"
+    oqs_alg: "OQS_KEM_alg_ntruprime_ntrulpr761"
+    bit_security: 192
+  -
+    name_group: "ntrulpr857"
+    nid: "0x0228"
+    nid_hybrid_p256: "0x0328"
+    oqs_alg: "OQS_KEM_alg_ntruprime_ntrulpr857"
+    bit_security: 192
+  -
+    name_group: "ntskem1264"
+    nid: "0x0229"
+    nid_hybrid_p256: "0x0329"
+    oqs_alg: "OQS_KEM_alg_ntskem_12_64"
+    bit_security: 128

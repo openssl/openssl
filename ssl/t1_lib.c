@@ -215,9 +215,6 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_sikep503, 128, TLS_CURVE_CUSTOM}, /* sikep503 (0x0220) */
     {NID_OQS_sikep610, 192, TLS_CURVE_CUSTOM}, /* sikep610 (0x0221) */
     {NID_OQS_sikep751, 256, TLS_CURVE_CUSTOM}, /* sikep751 (0x0222) */
-    {NID_OQS_ledacryptkemlt12, 128, TLS_CURVE_CUSTOM}, /* ledacryptkemlt12 (0x0223) */
-    {NID_OQS_ledacryptkemlt32, 192, TLS_CURVE_CUSTOM}, /* ledacryptkemlt32 (0x0224) */
-    {NID_OQS_ledacryptkemlt52, 256, TLS_CURVE_CUSTOM}, /* ledacryptkemlt52 (0x0225) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_END
 };
     /* Hybrid OQS groups. Security level is classical. */
@@ -259,9 +256,6 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_OQS_p256_sikep503, 128, TLS_CURVE_CUSTOM}, /* p256 + sikep503 hybrid (0x0220) */
     {NID_OQS_p256_sikep610, 192, TLS_CURVE_CUSTOM}, /* p256 + sikep610 hybrid (0x0221) */
     {NID_OQS_p256_sikep751, 256, TLS_CURVE_CUSTOM}, /* p256 + sikep751 hybrid (0x0222) */
-    {NID_OQS_p256_ledacryptkemlt12, 128, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt12 hybrid (0x0223) */
-    {NID_OQS_p256_ledacryptkemlt32, 192, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt32 hybrid (0x0224) */
-    {NID_OQS_p256_ledacryptkemlt52, 256, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt52 hybrid (0x0225) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_END
 };
 
@@ -317,9 +311,6 @@ static const uint16_t eccurves_default[] = {
     0x0220, /* OQS sikep503 */
     0x0221, /* OQS sikep610 */
     0x0222, /* OQS sikep751 */
-    0x0223, /* OQS ledacryptkemlt12 */
-    0x0224, /* OQS ledacryptkemlt32 */
-    0x0225, /* OQS ledacryptkemlt52 */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_END
     0x02FF, /* p256 - OQS default KEM hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_START
@@ -358,9 +349,6 @@ static const uint16_t eccurves_default[] = {
     0x0320, /* p256 - OQS sikep503 hybrid */
     0x0321, /* p256 - OQS sikep610 hybrid */
     0x0322, /* p256 - OQS sikep751 hybrid */
-    0x0323, /* p256 - OQS ledacryptkemlt12 hybrid */
-    0x0324, /* p256 - OQS ledacryptkemlt32 hybrid */
-    0x0325, /* p256 - OQS ledacryptkemlt52 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
 };
 

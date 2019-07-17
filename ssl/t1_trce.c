@@ -567,9 +567,6 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_sikep503), "sikep503"},
     {OQS_KEM_CURVEID(NID_OQS_sikep610), "sikep610"},
     {OQS_KEM_CURVEID(NID_OQS_sikep751), "sikep751"},
-    {OQS_KEM_CURVEID(NID_OQS_ledacryptkemlt12), "ledacryptkemlt12"},
-    {OQS_KEM_CURVEID(NID_OQS_ledacryptkemlt32), "ledacryptkemlt32"},
-    {OQS_KEM_CURVEID(NID_OQS_ledacryptkemlt52), "ledacryptkemlt52"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_END
     {OQS_KEM_CURVEID(NID_OQS_p256_KEM_DEFAULT), "p256 - OQS KEM default hybrid"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_HYBRID_START
@@ -608,9 +605,6 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_p256_sikep503), "p256 - sikep503 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_sikep610), "p256 - sikep610 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_sikep751), "p256 - sikep751 hybrid"},
-    {OQS_KEM_CURVEID(NID_OQS_p256_ledacryptkemlt12), "p256 - ledacryptkemlt12 hybrid"},
-    {OQS_KEM_CURVEID(NID_OQS_p256_ledacryptkemlt32), "p256 - ledacryptkemlt32 hybrid"},
-    {OQS_KEM_CURVEID(NID_OQS_p256_ledacryptkemlt52), "p256 - ledacryptkemlt52 hybrid"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_HYBRID_END
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}
