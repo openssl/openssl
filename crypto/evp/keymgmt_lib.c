@@ -191,10 +191,13 @@ void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
         for (i = 0;
              i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
              i++) {
-            pk->pkeys[i].keymgmt->freekey(pk->pkeys[i].provkey);
-            EVP_KEYMGMT_free(pk->pkeys[i].keymgmt);
+            EVP_KEYMGMT *keymgmt = pk->pkeys[i].keymgmt;
+            void *provkey = pk->pkeys[i].provkey;
+
             pk->pkeys[i].keymgmt = NULL;
             pk->pkeys[i].provkey = NULL;
+            keymgmt->freekey(provkey);
+            EVP_KEYMGMT_free(keymgmt);
         }
     }
 }
