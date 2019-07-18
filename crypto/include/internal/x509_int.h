@@ -197,7 +197,7 @@ struct x509_st {
  * kept and passed around.
  */
 struct x509_store_ctx_st {      /* X509_STORE_CTX */
-    X509_STORE *ctx;
+    X509_STORE *store;
     /* The following are set by the caller */
     /* The cert to check */
     X509 *cert;
