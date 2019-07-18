@@ -2,22 +2,22 @@
 
 =head1 NAME
 
-ossl_param_bld_init,
-ossl_param_bld_to_param, ossl_param_bld_push_int,
-ossl_param_bld_push_uint, ossl_param_bld_push_long,
-ossl_param_bld_push_ulong, ossl_param_bld_push_int32,
-ossl_param_bld_push_uint32, ossl_param_bld_push_int64,
-ossl_param_bld_push_uint64, ossl_param_bld_push_size_t,
-ossl_param_bld_push_double, ossl_param_bld_push_BN,
-ossl_param_bld_push_utf8_string, ossl_param_bld_push_utf8_ptr,
-ossl_param_bld_push_octet_string, ossl_param_bld_push_octet_ptr
+ossl_param_bld_init, ossl_param_bld_to_param, ossl_param_bld_to_param_ex,
+ossl_param_bld_free, ossl_param_bld_push_int, ossl_param_bld_push_uint,
+ossl_param_bld_push_long, ossl_param_bld_push_ulong,
+ossl_param_bld_push_int32, ossl_param_bld_push_uint32,
+ossl_param_bld_push_int64, ossl_param_bld_push_uint64,
+ossl_param_bld_push_size_t, ossl_param_bld_push_double,
+ossl_param_bld_push_BN, ossl_param_bld_push_utf8_string,
+ossl_param_bld_push_utf8_ptr, ossl_param_bld_push_octet_string,
+ossl_param_bld_push_octet_ptr
 - functions to assist in the creation of OSSL_PARAM arrays
 
 =head1 SYNOPSIS
 
 =for comment generic
 
- #include "internal/params_template.h"
+ #include "internal/params_build.h"
 
  #define OSSL_PARAM_BLD_MAX 10
  typedef struct { ... } OSSL_PARAM_BLD;

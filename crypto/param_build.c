@@ -15,6 +15,8 @@
 #include "internal/cryptlib.h"
 #include "internal/param_build.h"
 
+#define OSSL_PARAM_ALLOCATED_END    127
+
 typedef union {
     OSSL_UNION_ALIGN;
 } OSSL_PARAM_BLD_BLOCK;
@@ -303,6 +305,7 @@ OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld)
     last = param_bld_convert(bld, params, blk, s);
     last->data_size = ss;
     last->data = s;
+    last->data_type = OSSL_PARAM_ALLOCATED_END;
     return params;
 }
 
@@ -313,7 +316,8 @@ void ossl_param_bld_free(OSSL_PARAM *params)
 
         for (p = params; p->key != NULL; p++)
             ;
-        OPENSSL_secure_clear_free(p->data, p->data_size);
+        if (p->data_type == OSSL_PARAM_ALLOCATED_END)
+            OPENSSL_secure_clear_free(p->data, p->data_size);
         OPENSSL_free(params);
     }
 }
