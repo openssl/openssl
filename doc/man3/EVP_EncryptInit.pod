@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+EVP_CIPHER_fetch,
 EVP_CIPHER_CTX_new,
 EVP_CIPHER_CTX_reset,
 EVP_CIPHER_CTX_free,
@@ -54,6 +55,8 @@ EVP_enc_null
 
  #include <openssl/evp.h>
 
+ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                              const char *properties);
  EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
  int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx);
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
@@ -123,6 +126,14 @@ EVP_enc_null
 The EVP cipher routines are a high level interface to certain
 symmetric ciphers.
 
+EVP_CIPHER_fetch() fetches the cipher implementation for the given
+B<algorithm> from any provider offering it, withing the criteria given
+by the B<properties>.
+See L<provider(7)/Fetching algorithms> for further information.
+
+The returned value must eventually be freed with
+L<EVP_CIPHER_meth_free(3)>.
+
 EVP_CIPHER_CTX_new() creates a cipher context.
 
 EVP_CIPHER_CTX_free() clears all information from a cipher context
@@ -132,10 +143,13 @@ cipher are complete so sensitive information does not remain in
 memory.
 
 EVP_EncryptInit_ex() sets up cipher context B<ctx> for encryption
-with cipher B<type> from ENGINE B<impl>. B<ctx> must be created
-before calling this function. B<type> is normally supplied
-by a function such as EVP_aes_256_cbc(). If B<impl> is NULL then the
-default implementation is used. B<key> is the symmetric key to use
+with cipher B<type>. B<type> is typically supplied by a function such
+as EVP_aes_256_cbc(), or a value explicitly fetched with
+EVP_CIPHER_fetch(). If supplied by a function such as
+EVP_aes_256_cbc(), the ENGINE B<impl> may be non-NULL and point at an
+engine that implements the type, and otherwise, the default
+implementation of digest B<type> is used. If supplied by an explicitly
+fetched value, B<impl> is ignored. B<key> is the symmetric key to use
 and B<iv> is the IV to use (if necessary), the actual number of bytes
 used for the key and IV depends on the cipher. It is possible to set
 all parameters to NULL except B<type> in an initial call and supply
@@ -279,6 +293,9 @@ generation routine to support keys of a specific form. B<Key> must point to a
 buffer at least as big as the value returned by EVP_CIPHER_CTX_key_length().
 
 =head1 RETURN VALUES
+
+EVP_CIPHER_fetch() returns a pointer to a B<EVP_CIPHER> for success
+and B<NULL> for failure.
 
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
 B<EVP_CIPHER_CTX> for success and B<NULL> for failure.

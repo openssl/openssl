@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+EVP_MD_fetch,
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy,
 EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl, EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
@@ -18,6 +19,8 @@ EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
 
  #include <openssl/evp.h>
 
+ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                      const char *properties);
  EVP_MD_CTX *EVP_MD_CTX_new(void);
  int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
@@ -75,6 +78,14 @@ and should be used instead of the cipher-specific functions.
 
 =over 4
 
+=item EVP_MD_fetch()
+
+Fetches the digest implementation for the given B<algorithm> from any
+provider offering it, withing the criteria given by the B<properties>.
+See L<provider(7)/Fetching algorithms> for further information.
+
+The returned value must eventually be freed with L<EVP_MD_meth_free(3)>.
+
 =item EVP_MD_CTX_new()
 
 Allocates and returns a digest context.
@@ -123,9 +134,15 @@ If B<impl> is NULL the default implementation of digest B<type> is used.
 
 =item EVP_DigestInit_ex()
 
-Sets up digest context B<ctx> to use a digest B<type> from ENGINE B<impl>.
-B<type> will typically be supplied by a function such as EVP_sha1().  If
-B<impl> is NULL then the default implementation of digest B<type> is used.
+Sets up digest context B<ctx> to use a digest B<type>.
+B<type> is typically supplied by a function such as EVP_sha1(), or a
+value explicitly fetched with EVP_MD_fetch().
+
+If supplied by a function such as EVP_sha1(), ENGINE B<impl> may be
+non-NULL and point at an engine that implements the type, and
+otherwise, the default implementation of digest B<type> is used.
+
+If supplied by an explicitly fetched value, B<impl> is ignored.
 
 =item EVP_DigestUpdate()
 
@@ -343,6 +360,10 @@ disabled with this flag.
 
 =over 4
 
+=item EVP_MD_fetch()
+
+Returns a pointer to a B<EVP_MD> for success or NULL for failure.
+
 =item EVP_DigestInit_ex(),
 EVP_DigestUpdate(),
 EVP_DigestFinal_ex()
@@ -487,6 +508,7 @@ L<EVP_sha224(3)>,
 L<EVP_sha3_224(3)>,
 L<EVP_sm3(3)>,
 L<EVP_whirlpool(3)>
+L<provider(7)/Fetching algorithms>
 
 =head1 HISTORY
 
