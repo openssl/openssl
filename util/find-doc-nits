@@ -79,8 +79,7 @@ sub name_synopsis()
     print "$id missing comma in NAME\n" if $tmp =~ /[^,] /;
 
     my $dirname = dirname($filename);
-    my $simplename = basename($filename);
-    $simplename =~ s/.pod$//;
+    my $simplename = basename(basename($filename, ".in"), ".pod");
     my $foundfilename = 0;
     my %foundfilenames = ();
     my %names;
@@ -92,9 +91,10 @@ sub name_synopsis()
         $names{$n} = 1;
         $foundfilename++ if $n eq $simplename;
         $foundfilenames{$n} = 1
-            if -f "$dirname/$n.pod" && $n ne $simplename;
+            if ((-f "$dirname/$n.pod.in" || -f "$dirname/$n.pod")
+                && $n ne $simplename);
     }
-    print "$id the following exist as other .pod files:\n",
+    print "$id the following exist as other .pod or .pod.in files:\n",
         join(" ", sort keys %foundfilenames), "\n"
         if %foundfilenames;
     print "$id $simplename (filename) missing from NAME section\n"
@@ -283,7 +283,7 @@ sub getdocced
     my $dir = shift;
     my %return;
 
-    foreach my $pod ( glob("$dir/*.pod") ) {
+    foreach my $pod ( glob("$dir/*.pod"), glob("$dir/*.pod.in") ) {
         my %podinfo = extract_pod_info($pod);
         foreach my $n ( @{$podinfo{names}} ) {
             $return{$n} = $pod;
@@ -394,7 +394,7 @@ sub collectnames {
     my $filename = shift;
     $filename =~ m|man(\d)/|;
     my $section = $1;
-    my $simplename = basename($filename, ".pod");
+    my $simplename = basename(basename($filename, ".in"), ".pod");
     my $id = "${filename}:1:";
 
     my $contents = '';
@@ -412,9 +412,12 @@ sub collectnames {
         return;
     }
     $tmp =~ tr/\n/ /;
-    $tmp =~ s/-.*//g;
+    $tmp =~ s/ -.*//g;
 
-    my @names = map { s/^\s+//g; s/\s+$//g; $_ } split(/,/, $tmp);
+    my @names =
+        map { s|/|-|g; $_ }              # Treat slash as dash
+        map { s/^\s+//g; s/\s+$//g; $_ } # Trim prefix and suffix blanks
+        split(/,/, $tmp);
     unless (grep { $simplename eq $_ } @names) {
         print "$id missing $simplename\n";
         push @names, $simplename;
@@ -427,8 +430,10 @@ sub collectnames {
         my $name_sec = "$name($section)";
         if (! exists $name_collection{$name_sec}) {
             $name_collection{$name_sec} = $filename;
-        } else { #elsif ($filename ne $name_collection{$name_sec}) {
-            print "$id $name_sec also in $name_collection{$name_sec}\n";
+        } elsif ($filename eq $name_collection{$name_sec}) {
+            print "$id $name_sec repeated in NAME section of $name_collection{$name_sec}\n"
+        } else {
+            print "$id $name_sec also in NAME section of $name_collection{$name_sec}\n";
         }
     }
 
@@ -577,7 +582,7 @@ if ( $opt_c ) {
     # See if each has a manpage.
     foreach ( @commands ) {
         next if $_ eq 'help' || $_ eq 'exit';
-        if ( ! -f "doc/man1/$_.pod" ) {
+        if ( ! -f "doc/man1/$_.pod"  ) {
             print "doc/man1/$_.pod does not exist\n";
             $ok = 0;
         } else {
@@ -600,7 +605,7 @@ if ( $opt_c ) {
 }
 
 if ( $opt_l ) {
-    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'),
+    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'), glob('doc/*/*.pod.in'),
                               glob('doc/internal/*/*.pod'))) {
         collectnames($_);
     }
@@ -609,7 +614,7 @@ if ( $opt_l ) {
 
 if ( $opt_n ) {
     &publicize() if $opt_p;
-    foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
+    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'), glob('doc/*/*.pod.in'))) {
         &check($_);
     }
     {
