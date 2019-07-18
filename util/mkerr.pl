@@ -394,10 +394,6 @@ foreach my $file ( @source ) {
                 $fnew{$2}++;
             }
             $ftrans{$3} = $func unless exists $ftrans{$3};
-            if ( uc($func) ne $3 ) {
-                print STDERR "ERROR: mismatch $file:$linenr $func:$3\n";
-                $errors++;
-            }
             print STDERR "  Function $1 = $fcodes{$1}\n"
               if $debug;
         }
