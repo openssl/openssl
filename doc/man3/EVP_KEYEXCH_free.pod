@@ -2,21 +2,30 @@
 
 =head1 NAME
 
-EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref
+EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref
 - Functions to manage EVP_KEYEXCH algorithm objects
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
+ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                                const char *properties);
  void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange);
  int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange);
 
 =head1 DESCRIPTION
 
+EVP_KEYEXCH_fetch() fetches the key exchange implementation for the given
+B<algorithm> from any provider offering it, within the criteria given
+by the B<properties>.
+See L<provider(7)/Fetching algorithms> for further information.
+
+The returned value must eventually be freed with EVP_KEYEXCH_free().
+
 EVP_KEYEXCH_free() decrements the reference count for the B<EVP_KEYEXCH>
 structure. Typically this structure will have been obtained from an earlier call
-to L<EVP_KEYEXCH_fetch(3)>. If the reference count drops to 0 then the
+to EVP_KEYEXCH_fetch(). If the reference count drops to 0 then the
 structure is freed.
 
 EVP_KEYEXCH_up_ref() increments the reference count for an B<EVP_KEYEXCH>
@@ -24,11 +33,14 @@ structure.
 
 =head1 RETURN VALUES
 
+EVP_KEYEXCH_fetch() returns a pointer to a B<EVP_KEYEXCH> for success
+or B<NULL> for failure.
+
 EVP_KEYEXCH_up_ref() returns 1 for success or 0 otherwise.
 
 =head1 SEE ALSO
 
-L<EVP_KEYEXCH_fetch(3)>
+L<provider(7)/Fetching algorithms>
 
 =head1 HISTORY
 
