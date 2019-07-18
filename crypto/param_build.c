@@ -15,6 +15,8 @@
 #include "internal/cryptlib.h"
 #include "internal/param_build.h"
 
+#define OSSL_PARAM_ALLOCATED_END    127
+
 typedef union {
     OSSL_UNION_ALIGN;
 } OSSL_PARAM_BLD_BLOCK;
@@ -274,40 +276,50 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         }
     }
     param[i] = OSSL_PARAM_construct_end();
-    return param;
+    return param + i;
 }
 
-OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld, void **secure)
+OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld)
 {
     OSSL_PARAM_BLD_BLOCK *blk, *s = NULL;
-    OSSL_PARAM *param;
-    const size_t p_blks = bytes_to_blocks((bld->curr + 1) * sizeof(*param));
+    OSSL_PARAM *params, *last;
+    const size_t p_blks = bytes_to_blocks((1 + bld->curr) * sizeof(*params));
     const size_t total = ALIGN_SIZE * (p_blks + bld->total_blocks);
+    const size_t ss = ALIGN_SIZE * bld->secure_blocks;
 
-    if (bld->secure_blocks > 0) {
-        if (secure == NULL) {
-            CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM,
-                      CRYPTO_R_INVALID_NULL_ARGUMENT);
-            return NULL;
-        }
-        s = OPENSSL_secure_malloc(bld->secure_blocks * ALIGN_SIZE);
+    if (ss > 0) {
+        s = OPENSSL_secure_malloc(ss);
         if (s == NULL) {
             CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM,
                       CRYPTO_R_SECURE_MALLOC_FAILURE);
             return NULL;
         }
     }
-    param = OPENSSL_malloc(total);
-    if (param == NULL) {
+    params = OPENSSL_malloc(total);
+    if (params == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM, ERR_R_MALLOC_FAILURE);
         OPENSSL_secure_free(s);
         return NULL;
     }
-    if (secure != NULL)
-        *secure = s;
-    blk = p_blks + (OSSL_PARAM_BLD_BLOCK *)(param);
-    param_bld_convert(bld, param, blk, s);
-    return param;
+    blk = p_blks + (OSSL_PARAM_BLD_BLOCK *)(params);
+    last = param_bld_convert(bld, params, blk, s);
+    last->data_size = ss;
+    last->data = s;
+    last->data_type = OSSL_PARAM_ALLOCATED_END;
+    return params;
+}
+
+void ossl_param_bld_free(OSSL_PARAM *params)
+{
+    if (params != NULL) {
+        OSSL_PARAM *p;
+
+        for (p = params; p->key != NULL; p++)
+            ;
+        if (p->data_type == OSSL_PARAM_ALLOCATED_END)
+            OPENSSL_secure_clear_free(p->data, p->data_size);
+        OPENSSL_free(params);
+    }
 }
 
 OSSL_PARAM *ossl_param_bld_to_param_ex(OSSL_PARAM_BLD *bld, OSSL_PARAM *params,
