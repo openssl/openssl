@@ -40,7 +40,8 @@ typedef struct {
 } OSSL_PARAM_BLD;
 
 void ossl_param_bld_init(OSSL_PARAM_BLD *bld);
-OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld, void **secure);
+OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld);
+void ossl_param_bld_free(OSSL_PARAM *params);
 OSSL_PARAM *ossl_param_bld_to_param_ex(OSSL_PARAM_BLD *bld,
                                        OSSL_PARAM *params, size_t param_n,
                                        void *data, size_t data_n,
