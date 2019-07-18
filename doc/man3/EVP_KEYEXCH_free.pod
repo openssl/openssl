@@ -36,7 +36,6 @@ structure.
 EVP_KEYEXCH_fetch() returns a pointer to a B<EVP_KEYEXCH> for success
 or B<NULL> for failure.
 
-
 EVP_KEYEXCH_up_ref() returns 1 for success or 0 otherwise.
 
 =head1 SEE ALSO
