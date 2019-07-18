@@ -69,7 +69,7 @@ the default provider unless the default search criteria have been changed and/or
 different providers have been loaded.
 
 Implicit fetching can also occur with functions such as
-L<EVP_PKEY_CTX_derive_init_ex(3)> where a NULL algorithm parameter is supplied.
+L<EVP_PKEY_derive_init_ex(3)> where a NULL algorithm parameter is supplied.
 In this case an algorithm implementation is implicitly fetched using default
 search criteria and an algorithm name that is consistent with the type of
 EVP_PKEY being used.

@@ -285,7 +285,7 @@ could fill in the parameters like this:
 
 =head1 SEE ALSO
 
-L<openssl-core.h(7)>, L<OSSL_PARAM_get_int32_t(3)>
+L<openssl-core.h(7)>, L<OSSL_PARAM_get_int(3)>
 
 =head1 HISTORY
 
