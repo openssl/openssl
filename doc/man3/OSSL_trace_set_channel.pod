@@ -1,5 +1,7 @@
 =pod
 
+=for comment foreign manuals: atexit(3)
+
 =head1 NAME
 
 OSSL_trace_set_channel, OSSL_trace_set_prefix, OSSL_trace_set_suffix,
