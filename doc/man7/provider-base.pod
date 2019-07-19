@@ -121,8 +121,8 @@ reference to the provider objects I<prov>.
 The I<reason> is a number defined by the provider and used to index
 the reason strings table that's returned by
 provider_get_reason_strings().
-I<file> and I<line> may also be passed to indicate exactly where in
-the provider source of error occured or was reported.
+I<file> and I<line> may also be passed to indicate exactly where the
+error occured or was reported.
 This corresponds to the OpenSSL function L<ERR_put_error(3)>.
 
 core_add_error_vdata() is used to add additional text data to an
