@@ -17,7 +17,7 @@ EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref
 =head1 DESCRIPTION
 
 EVP_KEYEXCH_fetch() fetches the key exchange implementation for the given
-B<algorithm> from any provider offering it, withing the criteria given
+B<algorithm> from any provider offering it, within the criteria given
 by the B<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 

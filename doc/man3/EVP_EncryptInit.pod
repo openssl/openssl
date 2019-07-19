@@ -127,7 +127,7 @@ The EVP cipher routines are a high level interface to certain
 symmetric ciphers.
 
 EVP_CIPHER_fetch() fetches the cipher implementation for the given
-B<algorithm> from any provider offering it, withing the criteria given
+B<algorithm> from any provider offering it, within the criteria given
 by the B<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
@@ -145,11 +145,9 @@ memory.
 EVP_EncryptInit_ex() sets up cipher context B<ctx> for encryption
 with cipher B<type>. B<type> is typically supplied by a function such
 as EVP_aes_256_cbc(), or a value explicitly fetched with
-EVP_CIPHER_fetch(). If supplied by a function such as
-EVP_aes_256_cbc(), the ENGINE B<impl> may be non-NULL and point at an
-engine that implements the type, and otherwise, the default
-implementation of digest B<type> is used. If supplied by an explicitly
-fetched value, B<impl> is ignored. B<key> is the symmetric key to use
+EVP_CIPHER_fetch(). If B<impl> is non-NULL, its implementation of the
+cipher B<type> is used if there is one, and if not, the default
+implementation is used. B<key> is the symmetric key to use
 and B<iv> is the IV to use (if necessary), the actual number of bytes
 used for the key and IV depends on the cipher. It is possible to set
 all parameters to NULL except B<type> in an initial call and supply

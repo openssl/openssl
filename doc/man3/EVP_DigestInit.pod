@@ -81,7 +81,7 @@ and should be used instead of the cipher-specific functions.
 =item EVP_MD_fetch()
 
 Fetches the digest implementation for the given B<algorithm> from any
-provider offering it, withing the criteria given by the B<properties>.
+provider offering it, within the criteria given by the B<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
 The returned value must eventually be freed with L<EVP_MD_meth_free(3)>.
@@ -138,11 +138,8 @@ Sets up digest context B<ctx> to use a digest B<type>.
 B<type> is typically supplied by a function such as EVP_sha1(), or a
 value explicitly fetched with EVP_MD_fetch().
 
-If supplied by a function such as EVP_sha1(), ENGINE B<impl> may be
-non-NULL and point at an engine that implements the type, and
-otherwise, the default implementation of digest B<type> is used.
-
-If supplied by an explicitly fetched value, B<impl> is ignored.
+If B<impl> is non-NULL, its implementation of the digest B<type> is used if
+there is one, and if not, the default implementation is used.
 
 =item EVP_DigestUpdate()
 
