@@ -29,12 +29,11 @@ certain types of objects.
 
 =head2 Provider
 
-I<NOTE: This section is mostly interesting for those writing APIs that
-are directly dealing with providers, or provider authors.>
+I<NOTE: This section is mostly interesting for provider authors.>
 
-A I<provider> offers an initialization function, as set of base
-functions in form of a B<OSSL_DISPATCH> array, and by extension, a set
-of B<OSSL_ALGORITHM>s (see L<openssl-core.h(7)>).
+A I<provider> offers an initialization function, as a set of base
+functions in the form of an B<OSSL_DISPATCH> array, and by extension,
+a set of B<OSSL_ALGORITHM>s (see L<openssl-core.h(7)>).
 It may be a dynamically loadable module, or may be built-in, in
 OpenSSL libraries or in the application.
 If it's a dynamically loadable module, the initialization function
@@ -96,8 +95,7 @@ commonly in the I<fetching> type of functions
 
 =head2 Operations
 
-I<NOTE: This section is mostly interesting for those writing APIs that
-are directly dealing with providers, or provider authors.>
+I<NOTE: This section is mostly interesting for provider authors.>
 
 Operations are referred to with numbers, via macros with names
 starting with C<OSSL_OP_>.
@@ -167,8 +165,8 @@ I<NOTE: This section is mostly interesting to OpenSSL users.>
 
 Users of the OpenSSL libraries never query the provider directly for
 its diverse implementations and dispatch tables.
-Instead, the diverse OpenSSL APIs oftemn have fetching functions that
-do the work, and that returns an appropriate method object back to the
+Instead, the diverse OpenSSL APIs often have fetching functions that
+do the work, and they return an appropriate method object back to the
 user.
 These functions usually have the name C<APINAME_fetch>, where
 C<APINAME> is the name of the API, for example L<EVP_MD_fetch(3)>.
@@ -180,7 +178,7 @@ arguments are passed:
 
 =item The library context
 
-See L<OPENSSL_CTX(3)> for a closer description.
+See L<OPENSSL_CTX(3)> for a more detailed description.
 This may be NULL to signify the default (global) library context, or a
 context created by the user.
 Only providers loaded in this library context (see
@@ -216,7 +214,7 @@ associated implementation, such as L<EVP_sha256(3)>,
 L<EVP_blake2b512(3)> or L<EVP_aes_128_cbc(3)>, which are present for
 compatibility with OpenSSL before version 3.0.
 
-When they are use with functions like L<EVP_DigestInit_ex(3)> or
+When they are used with functions like L<EVP_DigestInit_ex(3)> or
 L<EVP_CipherInit_ex(3)>, the actual implementation to be used is
 fetched implicitly using default search criteria.
 
@@ -227,7 +225,7 @@ In this case an algorithm implementation is implicitly fetched using
 default search criteria and an algorithm name that is consistent with
 the type of EVP_PKEY being used.
 
-=head1 OpenSSL PROVIDERS
+=head1 OPENSSL PROVIDERS
 
 OpenSSL comes with a set of providers.
 All the algorithm names mentioned can be used as an algorithm
@@ -237,8 +235,8 @@ identifier to the appropriate fetching function.
 
 The default provider is built in as part of the F<libcrypto> library.
 Should it be needed (if other providers are loaded and offer
-implementations the same agorithms), the property "default=yes" can be
-used as a search criterion for these implementations.
+implementations of the same algorithms), the property "default=yes"
+can be used as a search criterion for these implementations.
 
 It currently offers the following named algorithms:
 
@@ -248,7 +246,7 @@ It currently offers the following named algorithms:
 
 SHA1, SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256,
 SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE128, SHAKE256, SM3,
-BLAKE2b512, BLAKE2s256 and MD5-SHA1.
+BLAKE2b512, BLAKE2s256, KMAC128, KMAC256, MD5, MD5-SHA1
 
 =item Symmetric ciphers
 
@@ -256,7 +254,11 @@ AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC,
 AES-128-CBC, AES-256-OFB, AES-192-OFB, AES-128-OFB, AES-256-CFB,
 AES-192-CFB, AES-128-CFB, AES-256-CFB1, AES-192-CFB1, AES-128-CFB1,
 AES-256-CFB8, AES-192-CFB8, AES-128-CFB8, AES-256-CTR, AES-192-CTR,
-AES-128-CTR, id-aes256-GCM, id-aes192-GCM and id-aes128-GCM.
+AES-128-CTR, id-aes256-GCM, id-aes192-GCM, id-aes128-GCM
+
+=item Key Exchange
+
+dhKeyAgreement
 
 =back
 
@@ -266,14 +268,22 @@ The FIPS provider is a dynamically loadable module, and must therefore
 be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>).
 Should it be needed (if other providers are loaded and offer
-implementations the same agorithms), the property "fips=yes" can be
-used as a search criterion for these implementations.
+implementations of the same algorithms), the property "fips=yes" can
+be used as a search criterion for these implementations.
 
 It currently offers the following FIPS approved named algorithms:
 
 =over 4
 
-=item TBA
+=item Digests
+
+SHA1, SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256,
+SHA3-224, SHA3-256, SHA3-384, SHA3-512, KMAC128, KMAC256
+
+=item Symmetric ciphers
+
+AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC,
+AES-128-CBC, AES-256-CTR, AES-192-CTR, AES-128-CTR
 
 =back
 
@@ -283,7 +293,7 @@ The FIPS provider is a dynamically loadable module, and must therefore
 be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>).
 Should it be needed (if other providers are loaded and offer
-implementations the same agorithms), the property "legacy=yes" can be
+implementations of the same algorithms), the property "legacy=yes" can be
 used as a search criterion for these implementations.
 
 It currently offers the following named algorithms:
@@ -292,7 +302,7 @@ It currently offers the following named algorithms:
 
 =item Digest algorithms:
 
-RIPEMD160, MD2, MD4, MD5, MDC2 and whirlpool.
+RIPEMD160, MD2, MD4, MDC2, whirlpool.
 
 =back
 
