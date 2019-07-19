@@ -582,7 +582,7 @@ if ( $opt_c ) {
     # See if each has a manpage.
     foreach ( @commands ) {
         next if $_ eq 'help' || $_ eq 'exit';
-        if ( ! -f "doc/man1/$_.pod"  ) {
+        if ( ! -f "doc/man1/$_.pod" ) {
             print "doc/man1/$_.pod does not exist\n";
             $ok = 0;
         } else {
