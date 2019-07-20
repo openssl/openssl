@@ -265,7 +265,7 @@ size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
         return 0;
 
     memset(&data, 0, sizeof(data));
-    pool = rand_pool_new(0, min_len, max_len);
+    pool = rand_pool_new(0, 0, min_len, max_len);
     if (pool == NULL)
         return 0;
 
@@ -295,7 +295,7 @@ size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
 void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
                              unsigned char *out, size_t outlen)
 {
-    OPENSSL_secure_clear_free(out, outlen);
+    OPENSSL_clear_free(out, outlen);
 }
 
 /*
@@ -909,7 +909,7 @@ int RAND_DRBG_bytes(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
     if (drbg->adin_pool == NULL) {
         if (drbg->type == 0)
             goto err;
-        drbg->adin_pool = rand_pool_new(0, 0, drbg->max_adinlen);
+        drbg->adin_pool = rand_pool_new(0, 0, 0, drbg->max_adinlen);
         if (drbg->adin_pool == NULL)
             goto err;
     }

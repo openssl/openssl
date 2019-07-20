@@ -180,6 +180,7 @@ struct rand_pool_st {
     size_t len; /* current number of random bytes contained in the pool */
 
     int attached;  /* true pool was attached to existing buffer */
+    int secure;    /* 1: allocated on the secure heap, 0: otherwise */
 
     size_t min_len; /* minimum number of random bytes requested */
     size_t max_len; /* maximum number of random bytes (allocated buffer size) */

@@ -149,7 +149,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         pool = drbg->seed_pool;
         pool->entropy_requested = entropy;
     } else {
-        pool = rand_pool_new(entropy, min_len, max_len);
+        pool = rand_pool_new(entropy, drbg->secure, min_len, max_len);
         if (pool == NULL)
             return 0;
     }
@@ -203,8 +203,12 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
                                unsigned char *out, size_t outlen)
 {
-    if (drbg->seed_pool == NULL)
-        OPENSSL_secure_clear_free(out, outlen);
+    if (drbg->seed_pool == NULL) {
+        if (drbg->secure)
+            OPENSSL_secure_clear_free(out, outlen);
+        else
+            OPENSSL_clear_free(out, outlen);
+    }
 }
 
 /*
@@ -331,7 +335,7 @@ int RAND_poll(void)
         RAND_POOL *pool = NULL;
 
         /* fill random pool and seed the current legacy RNG */
-        pool = rand_pool_new(RAND_DRBG_STRENGTH,
+        pool = rand_pool_new(RAND_DRBG_STRENGTH, 1,
                              (RAND_DRBG_STRENGTH + 7) / 8,
                              RAND_POOL_MAX_LENGTH);
         if (pool == NULL)
@@ -360,7 +364,8 @@ int RAND_poll(void)
  * Allocate memory and initialize a new random pool
  */
 
-RAND_POOL *rand_pool_new(int entropy_requested, size_t min_len, size_t max_len)
+RAND_POOL *rand_pool_new(int entropy_requested, int secure,
+                         size_t min_len, size_t max_len)
 {
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
 
@@ -373,13 +378,18 @@ RAND_POOL *rand_pool_new(int entropy_requested, size_t min_len, size_t max_len)
     pool->max_len = (max_len > RAND_POOL_MAX_LENGTH) ?
         RAND_POOL_MAX_LENGTH : max_len;
 
-    pool->buffer = OPENSSL_secure_zalloc(pool->max_len);
+    if (secure)
+        pool->buffer = OPENSSL_secure_zalloc(pool->max_len);
+    else
+        pool->buffer = OPENSSL_zalloc(pool->max_len);
+
     if (pool->buffer == NULL) {
         RANDerr(RAND_F_RAND_POOL_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     pool->entropy_requested = entropy_requested;
+    pool->secure = secure;
 
     return pool;
 
@@ -434,8 +444,13 @@ void rand_pool_free(RAND_POOL *pool)
      * to rand_pool_attach() as `const unsigned char*`.
      * (see corresponding comment in rand_pool_attach()).
      */
-    if (!pool->attached)
-        OPENSSL_secure_clear_free(pool->buffer, pool->max_len);
+    if (!pool->attached) {
+        if (pool->secure)
+            OPENSSL_secure_clear_free(pool->buffer, pool->max_len);
+        else
+            OPENSSL_clear_free(pool->buffer, pool->max_len);
+    }
+
     OPENSSL_free(pool);
 }
 
