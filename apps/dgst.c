@@ -461,7 +461,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     size_t len;
     int i, backslash = 0;
 
-    for (i = 0; !BIO_eof(bp);) {
+    while (!BIO_eof(bp)) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
         if (i < 0) {
             BIO_printf(bio_err, "Read Error in %s\n", file);
