@@ -586,7 +586,7 @@ int enc_main(int argc, char **argv)
     if (benc != NULL)
         wbio = BIO_push(benc, wbio);
 
-    for (inl = 0; ! BIO_eof(rbio);) {
+    for (inl = 0; !BIO_eof(rbio);) {
         inl = BIO_read(rbio, (char *)buff, bsize);
         if (inl <= 0)
             break;
