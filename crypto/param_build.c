@@ -15,13 +15,6 @@
 #include "internal/cryptlib.h"
 #include "internal/param_build.h"
 
-typedef struct {
-    void *secure_alloc;
-    size_t secure_size;
-    /* This field must be last */
-    OSSL_PARAM params[1];
-} OSSL_PARAM_BLD_INFO;
-
 typedef union {
     OSSL_UNION_ALIGN;
 } OSSL_PARAM_BLD_BLOCK;
@@ -281,22 +274,15 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         }
     }
     param[i] = OSSL_PARAM_construct_end();
-    return param;
+    return param + i;
 }
 
 OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld)
 {
     OSSL_PARAM_BLD_BLOCK *blk, *s = NULL;
-    OSSL_PARAM_BLD_INFO *header;
-    OSSL_PARAM *params;
-    /* Offset from start of params to start of data */
-    const size_t p_bytes = ((1 + bld->curr) * sizeof(*params));
-    const size_t p_blks = bytes_to_blocks(p_bytes);
-    /* Size of normal memory to allocate */
-    const size_t n_bytes = bld->curr * sizeof(*params) + sizeof(*header);
-    const size_t n_blks = bytes_to_blocks(n_bytes);
-    const size_t total = ALIGN_SIZE * (n_blks + bld->total_blocks);
-    /* Size of secure memory to allocate */
+    OSSL_PARAM *params, *last;
+    const size_t p_blks = bytes_to_blocks((1 + bld->curr) * sizeof(*params));
+    const size_t total = ALIGN_SIZE * (p_blks + bld->total_blocks);
     const size_t ss = ALIGN_SIZE * bld->secure_blocks;
 
     if (ss > 0) {
@@ -307,32 +293,29 @@ OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld)
             return NULL;
         }
     }
-    header = OPENSSL_malloc(total);
-    if (header == NULL) {
+    params = OPENSSL_malloc(total);
+    if (params == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM, ERR_R_MALLOC_FAILURE);
         OPENSSL_secure_free(s);
         return NULL;
     }
-    header->secure_alloc = s;
-    header->secure_size = s != NULL ? ss : 0;
-    params = header->params;
     blk = p_blks + (OSSL_PARAM_BLD_BLOCK *)(params);
-    param_bld_convert(bld, params, blk, s);
+    last = param_bld_convert(bld, params, blk, s);
+    last->data_size = ss;
+    last->data = s;
     return params;
 }
 
 void ossl_param_bld_free(OSSL_PARAM *params)
 {
-    OSSL_PARAM_BLD_INFO offset, *header;
-    unsigned char *beg = (unsigned char *)&offset;
-    unsigned char *end = (unsigned char *)&offset.params;
+    if (params != NULL) {
+        OSSL_PARAM *p;
 
-    if (params == NULL)
-        return;
-    header = (OSSL_PARAM_BLD_INFO *)(((unsigned char *)params) - (end - beg));
-    if (header->secure_alloc != NULL)
-        OPENSSL_secure_clear_free(header->secure_alloc, header->secure_size);
-    OPENSSL_free(header);
+        for (p = params; p->key != NULL; p++)
+            ;
+        OPENSSL_secure_clear_free(p->data, p->data_size);
+        OPENSSL_free(params);
+    }
 }
 
 OSSL_PARAM *ossl_param_bld_to_param_ex(OSSL_PARAM_BLD *bld, OSSL_PARAM *params,
