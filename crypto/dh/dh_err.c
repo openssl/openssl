@@ -41,6 +41,7 @@ static const ERR_STRING_DATA DH_str_reasons[] = {
     {ERR_PACK(ERR_LIB_DH, 0, DH_R_KEYS_NOT_SET), "keys not set"},
     {ERR_PACK(ERR_LIB_DH, 0, DH_R_MISSING_PUBKEY), "missing pubkey"},
     {ERR_PACK(ERR_LIB_DH, 0, DH_R_MODULUS_TOO_LARGE), "modulus too large"},
+    {ERR_PACK(ERR_LIB_DH, 0, DH_R_MODULUS_TOO_SMALL), "modulus too small"},
     {ERR_PACK(ERR_LIB_DH, 0, DH_R_NOT_SUITABLE_GENERATOR),
     "not suitable generator"},
     {ERR_PACK(ERR_LIB_DH, 0, DH_R_NO_PARAMETERS_SET), "no parameters set"},

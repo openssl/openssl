@@ -103,8 +103,9 @@ This can be used with a subsequent B<-rand> flag.
 This option specifies that a parameter set should be generated of size
 I<numbits>. It must be the last option. If this option is present then
 the input file is ignored and parameters are generated instead. If
-this option is not present but a generator (B<-2> or B<-5>) is
+this option is not present but a generator (B<-2>, B<-3> or B<-5>) is
 present, parameters are generated with a default length of 2048 bits.
+The minimim length is 512 bits. The maximum length is 10000 bits.
 
 =item B<-noout>
 

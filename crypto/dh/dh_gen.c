@@ -61,6 +61,16 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     int g, ok = -1;
     BN_CTX *ctx = NULL;
 
+    if (prime_len > OPENSSL_DH_MAX_MODULUS_BITS) {
+        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_MODULUS_TOO_LARGE);
+        return 0;
+    }
+
+    if (prime_len < DH_MIN_MODULUS_BITS) {
+        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_MODULUS_TOO_SMALL);
+        return 0;
+    }
+
     ctx = BN_CTX_new();
     if (ctx == NULL)
         goto err;
