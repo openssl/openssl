@@ -264,7 +264,7 @@ B<NID_undef>.
 EVP_CIPHER_name() and EVP_CIPHER_CTX_name() return the name of the passed
 cipher or context.
 
-EVP_CIPHER_provider() returns a B<OSSL_PROVIDER> pointer to the provider
+EVP_CIPHER_provider() returns an B<OSSL_PROVIDER> pointer to the provider
 that implements the given B<EVP_CIPHER>.
 
 EVP_CIPHER_CTX_cipher() returns the B<EVP_CIPHER> structure when passed
