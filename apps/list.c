@@ -64,6 +64,7 @@ static void list_ciphers(void)
     sk_EVP_CIPHER_sort(ciphers);
     for (i = 0; i < sk_EVP_CIPHER_num(ciphers); i++) {
         const EVP_CIPHER *c = sk_EVP_CIPHER_value(ciphers, i);
+
         BIO_printf(bio_out, "  %s", EVP_CIPHER_name(c));
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
@@ -100,6 +101,7 @@ static int md_cmp(const EVP_MD * const *a, const EVP_MD * const *b)
 static void collect_digests(EVP_MD *md, void *stack)
 {
     STACK_OF(EVP_MD) *digest_stack = stack;
+
     sk_EVP_MD_push(digest_stack, md);
     EVP_MD_up_ref(md);
 }
@@ -117,6 +119,7 @@ static void list_digests(void)
     sk_EVP_MD_sort(digests);
     for (i = 0; i < sk_EVP_MD_num(digests); i++) {
         const EVP_MD *c = sk_EVP_MD_value(digests, i);
+
         BIO_printf(bio_out, "  %s", EVP_MD_name(c));
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_MD_provider(c)));
