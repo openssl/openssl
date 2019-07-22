@@ -10,6 +10,8 @@
 #include <openssl/dh.h>
 #include "internal/refcount.h"
 
+#define DH_MIN_MODULUS_BITS     512
+
 struct dh_st {
     /*
      * This first argument is used to pick up errors when a DH is passed

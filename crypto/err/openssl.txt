@@ -2276,6 +2276,7 @@ DH_R_KDF_PARAMETER_ERROR:112:kdf parameter error
 DH_R_KEYS_NOT_SET:108:keys not set
 DH_R_MISSING_PUBKEY:125:missing pubkey
 DH_R_MODULUS_TOO_LARGE:103:modulus too large
+DH_R_MODULUS_TOO_SMALL:126:modulus too small
 DH_R_NOT_SUITABLE_GENERATOR:120:not suitable generator
 DH_R_NO_PARAMETERS_SET:107:no parameters set
 DH_R_NO_PRIVATE_VALUE:100:no private value
