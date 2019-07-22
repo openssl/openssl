@@ -22,23 +22,33 @@ provider-base
                        OSSL_thread_stop_handler_fn handfn);
  void core_put_error(const OSSL_PROVIDER *prov,
                      uint32_t reason, const char *file, int line);
- void core_add_error_vdata(const OSSL_PROVIDER *prov, int num, va_list args);
+ void core_add_error_vdata(const OSSL_PROVIDER *prov,
+                           int num, va_list args);
  OPENSSL_CTX *core_get_library_context(const OSSL_PROVIDER *prov);
 
- /* Some OpenSSL functionality is directly offered to providers via dispatch */
+ /*
+  * Some OpenSSL functionality is directly offered to providers via
+  * dispatch
+  */
  void *CRYPTO_malloc(size_t num, const char *file, int line);
  void *CRYPTO_zalloc(size_t num, const char *file, int line);
- void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
+ void *CRYPTO_memdup(const void *str, size_t siz,
+                     const char *file, int line);
  char *CRYPTO_strdup(const char *str, const char *file, int line);
- char *CRYPTO_strndup(const char *str, size_t s, const char *file, int line);
+ char *CRYPTO_strndup(const char *str, size_t s,
+                      const char *file, int line);
  void CRYPTO_free(void *ptr, const char *file, int line);
- void CRYPTO_clear_free(void *ptr, size_t num, const char *file, int line);
- void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
- void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num, const char *file, int line);
+ void CRYPTO_clear_free(void *ptr, size_t num,
+                        const char *file, int line);
+ void *CRYPTO_realloc(void *addr, size_t num,
+                      const char *file, int line);
+ void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
+                            const char *file, int line);
  void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
  void *CRYPTO_secure_zalloc(size_t num, const char *file, int line);
  void CRYPTO_secure_free(void *ptr, const char *file, int line);
- void CRYPTO_secure_clear_free(void *ptr, size_t num, const char *file, int line);
+ void CRYPTO_secure_clear_free(void *ptr, size_t num,
+                               const char *file, int line);
  int CRYPTO_secure_allocated(const void *ptr);
  void OPENSSL_cleanse(void *ptr, size_t len);
  unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
@@ -47,7 +57,8 @@ provider-base
  void provider_teardown(void *provctx);
  const OSSL_ITEM *provider_get_param_types(void *provctx);
  int provider_get_params(void *provctx, OSSL_PARAM params[]);
- const OSSL_ALGORITHM *provider_query_operation(void *provctx, int operation_id,
+ const OSSL_ALGORITHM *provider_query_operation(void *provctx,
+                                                int operation_id,
                                                 const int *no_store);
  const OSSL_ITEM *provider_get_reason_strings(void *provctx);
 
@@ -113,6 +124,8 @@ core_get_param_types() returns a constant array of descriptor
 B<OSSL_PARAM>, for parameters that core_get_params() can handle.
 
 core_get_params() retrieves I<prov> parameters from the core.
+See L</Core parameters> below for a description of currently known
+parameters.
 
 =for comment core_thread_start() TBA
 
@@ -173,6 +186,74 @@ None of these functions are mandatory, but a provider is fairly
 useless without at least provider_query_operation(), and
 provider_get_param_types() is fairly useless if not accompanied by
 provider_get_params().
+
+=head2 Core parameters
+
+core_get_params() understands the following known parameters:
+
+=over 4
+
+=item "openssl-version"
+
+This is a B<OSSL_PARAM_UTF8_PTR> type of parameter, pointing at the
+OpenSSL libraries' full version string, i.e. the string expanded from
+the macro B<OPENSSL_VERSION_STR>.
+
+=item "provider-name"
+
+This is a B<OSSL_PARAM_UTF8_PTR> type of parameter, pointing at the
+OpenSSL libraries' idea of what the calling provider is called.
+
+=back
+
+Additionally, any configuration parameter from the config file are
+available, in dotted name form.
+The dotted name form is a concatenation of section names and final
+config command name separated by periods.
+
+For example, let's say we have the following config example:
+
+ openssl_conf = openssl_init
+
+ [openssl_init]
+ providers = providers_sect
+
+ [providers_sect]
+ foo = foo_sect
+
+ [foo_sect]
+ activate = 1
+ data1 = 2
+ data2 = str
+ more = foo_more
+
+ [foo_more]
+ data3 = foo,bar
+
+The provider will have these additional parameters available:
+
+=over 4
+
+=item "activate"
+
+pointing at the string "1"
+
+=item "data1"
+
+pointing at the string "2"
+
+=item "data2"
+
+pointing at the string "str"
+
+=item "more.data3"
+
+pointing at the string "foo,bar"
+
+=back
+
+For more information on handling parameters, see L<OSSL_PARAM(3)> as
+L<OSSL_PARAM_int(3)>.
 
 =head1 EXAMPLES
 
