@@ -44,7 +44,7 @@ The initialization function must have the following signature:
 
  int NAME(const OSSL_PROVIDER *provider,
           const OSSL_DISPATCH *in, const OSSL_DISPATCH **out,
-          void *provctx);
+          void **provctx);
 
 I<provider> is the OpenSSL library object for the provider, and works
 as a handle for everything the OpenSSL libraries need to know about
@@ -189,14 +189,13 @@ function.
 
 This is most commonly an algorithm name (this is the case for all EVP
 methods), but may also be called something else.
-The fetch functions
 
 =for comment For example, an OSSL_STORE implementation would use the
 URI scheme as an identifier.
 
 =item A property query string
 
-See L<property(7)> for a closer description.
+See L<property(7)> for a more detailed description.
 This is used to select more exactly which providers will get to offer
 an implementation.
 
@@ -289,7 +288,7 @@ AES-128-CBC, AES-256-CTR, AES-192-CTR, AES-128-CTR
 
 =head2 Legacy provider
 
-The FIPS provider is a dynamically loadable module, and must therefore
+The legacy provider is a dynamically loadable module, and must therefore
 be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>).
 Should it be needed (if other providers are loaded and offer
