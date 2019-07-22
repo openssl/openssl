@@ -62,7 +62,7 @@ All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_get_{name}>.
-For example, the "function" core_get_param_types() have these:
+For example, the "function" core_get_param_types() has these:
 
  typedef OSSL_ITEM *
      (OSSL_core_get_param_types_fn)(const OSSL_PROVIDER *prov);
@@ -117,7 +117,7 @@ core_get_params() retrieves I<prov> parameters from the core.
 =for comment core_thread_start() TBA
 
 core_put_error() is used to report an error back to the core, with
-reference to the provider objects I<prov>.
+reference to the provider object I<prov>.
 The I<reason> is a number defined by the provider and used to index
 the reason strings table that's returned by
 provider_get_reason_strings().
@@ -127,6 +127,9 @@ This corresponds to the OpenSSL function L<ERR_put_error(3)>.
 
 core_add_error_vdata() is used to add additional text data to an
 error already reported with core_put_error().
+It takes I<num> strings in a B<va_list> an concatenates them.
+Provider authors will have to write the corresponding variadic
+argument function.
 
 core_get_library_context() retrieves the library context in which the
 B<OSSL_PROVIDER> object I<prov> is stored.
@@ -165,6 +168,11 @@ not store a reference).
 provider_get_reason_strings() should return a constant B<OSSL_ITEM>
 array that provides reason strings for reason codes the provider may
 use when reporting errors using core_put_error().
+
+None of these functions are mandatory, but a provider is fairly
+useless without at least provider_query_operation(), and
+provider_get_param_types() is fairly useless if not accompanied by
+provider_get_params().
 
 =head1 EXAMPLES
 
