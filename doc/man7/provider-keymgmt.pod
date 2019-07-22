@@ -46,6 +46,10 @@ The KEYMGMT operation doesn't have much public visibility in OpenSSL
 libraries, it's a rather internal one that's designed to work in
 tandem with operations that use private/public key pairs.
 
+Because the KEYMGMT operation share knowledge with the operations it
+works in tandem with, they must belong to the same provider.
+The OpenSSL libraries will ensure that they do.
+
 The primary responsibility of the KEYMGMT operation is to hold the
 provider side domain parameters and keys for the OpenSSL library
 EVP_PKEY structure.
