@@ -33,6 +33,11 @@
 #    undef DECLARE_DEPRECATED
 #    define DECLARE_DEPRECATED(f)    f __attribute__ ((deprecated));
 #   endif
+#  elif defined(__SUNPRO_C)
+#   if (__SUNPRO_C >= 0x5130)
+#    undef DECLARE_DEPRECATED
+#    define DECLARE_DEPRECATED(f)    f __attribute__ ((deprecated));
+#   endif
 #  endif
 # endif
 
