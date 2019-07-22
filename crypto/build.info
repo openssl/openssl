@@ -66,7 +66,7 @@ SOURCE[../providers/fips]=$CORE_COMMON
 
 # Central utilities
 $UTIL_COMMON=\
-        cryptlib.c params.c bsearch.c ex_data.c o_str.c mem_str.c \
+        cryptlib.c params.c bsearch.c ex_data.c o_str.c \
         ctype.c threads_pthread.c threads_win.c threads_none.c initthread.c \
         context.c sparse_array.c param_build.c $CPUIDASM
 $UTIL_DEFINE=$CPUIDDEF
