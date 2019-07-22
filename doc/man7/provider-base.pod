@@ -65,7 +65,7 @@ B<OSSL_get_{name}>.
 For example, the "function" core_get_param_types() have these:
 
  typedef OSSL_ITEM *
-     (OSSL_NAME_core_get_param_types_fn)(const OSSL_PROVIDER *prov);
+     (OSSL_core_get_param_types_fn)(const OSSL_PROVIDER *prov);
  static ossl_inline OSSL_NAME_core_get_param_types_fn
      OSSL_get_core_get_param_types(const OSSL_DISPATCH *opf);
 
