@@ -310,7 +310,7 @@ buffer at least as big as the value returned by EVP_CIPHER_CTX_key_length().
 EVP_CIPHER_do_all_ex() traverses all ciphers implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
-and the given I<arg> as argument, .
+and the given I<arg> as argument.
 
 =head1 RETURN VALUES
 
