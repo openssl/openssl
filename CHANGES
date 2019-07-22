@@ -9,6 +9,13 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Correct the extended master secret constant on EBCDIC systems. Without this
+     fix TLS connections between an EBCDIC system and a non-EBCDIC system that
+     negotiate EMS will fail. Unfortunately this also means that TLS connections
+     between EBCDIC systems with this fix, and EBCDIC systems without this
+     fix will fail if they negotiate EMS.
+     [Matt Caswell]
+
   *) Changed the library initialisation so that the config file is now loaded
      by default. This was already the case for libssl. It now occurs for both
      libcrypto and libssl. Use the OPENSSL_INIT_NO_LOAD_CONFIG option to
