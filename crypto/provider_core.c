@@ -812,9 +812,6 @@ static const OSSL_DISPATCH core_dispatch_[] = {
 
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },
     { OSSL_FUNC_CRYPTO_ZALLOC, (void (*)(void))CRYPTO_zalloc },
-    { OSSL_FUNC_CRYPTO_MEMDUP, (void (*)(void))CRYPTO_memdup },
-    { OSSL_FUNC_CRYPTO_STRDUP, (void (*)(void))CRYPTO_strdup },
-    { OSSL_FUNC_CRYPTO_STRNDUP, (void (*)(void))CRYPTO_strndup },
     { OSSL_FUNC_CRYPTO_FREE, (void (*)(void))CRYPTO_free },
     { OSSL_FUNC_CRYPTO_CLEAR_FREE, (void (*)(void))CRYPTO_clear_free },
     { OSSL_FUNC_CRYPTO_REALLOC, (void (*)(void))CRYPTO_realloc },
@@ -827,7 +824,6 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CRYPTO_SECURE_ALLOCATED,
         (void (*)(void))CRYPTO_secure_allocated },
     { OSSL_FUNC_OPENSSL_CLEANSE, (void (*)(void))OPENSSL_cleanse },
-    { OSSL_FUNC_OPENSSL_HEXSTR2BUF, (void (*)(void))OPENSSL_hexstr2buf },
 
     { 0, NULL }
 };
