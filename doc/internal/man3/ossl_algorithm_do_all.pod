@@ -18,8 +18,8 @@ ossl_algorithm_do_all - generic algorithm implementation iterator
 ossl_algorithm_do_all() looks up every algorithm it can find, given a
 library context I<libctx>, an operation identity I<operation_id> and a
 provider I<provider>.
-I<libctx> may be NULL to signify that the default library context is
-used.
+I<libctx> may be NULL to signify that the default library context should
+be used.
 I<operation_id> may be zero to signify that all kinds of operations
 will be looked up.
 I<provider> may be NULL to signify that all loaded providers will be
@@ -37,7 +37,7 @@ ossl_algorithm_do_all() doesn't return any value.
 
 =head1 NOTES
 
-The functions described here are mainly useful for discovery, and
+The function described here are mainly useful for discovery, and
 possibly display of what has been discovered, for example an
 application that wants to display the loaded providers and what they
 may offer, but also for constructors, such as
