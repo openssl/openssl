@@ -37,10 +37,11 @@ static void *keymgmt_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
 {
     EVP_KEYMGMT *keymgmt = NULL;
 
-    if ((keymgmt = keymgmt_new()) == NULL)
+    if ((keymgmt = keymgmt_new()) == NULL
+        || (keymgmt->name = OPENSSL_strdup(name)) == NULL) {
+        EVP_KEYMGMT_free(keymgmt);
         return NULL;
-
-    keymgmt->name = OPENSSL_strdup(name);
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

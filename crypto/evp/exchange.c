@@ -38,10 +38,11 @@ static void *evp_keyexch_from_dispatch(const char *name,
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0;
 
-    if ((exchange = evp_keyexch_new(prov)) == NULL)
+    if ((exchange = evp_keyexch_new(prov)) == NULL
+        || (exchange->name = OPENSSL_strdup(name)) == NULL) {
+        EVP_KEYEXCH_free(exchange);
         return NULL;
-
-    exchange->name = OPENSSL_strdup(name);
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

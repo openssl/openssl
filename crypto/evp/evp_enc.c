@@ -1138,10 +1138,11 @@ static void *evp_cipher_from_dispatch(const char *name,
      * The legacy NID is set by EVP_CIPHER_fetch() if the name exists in
      * the object database.
      */
-    if ((cipher = EVP_CIPHER_meth_new(0, 0, 0)) == NULL)
+    if ((cipher = EVP_CIPHER_meth_new(0, 0, 0)) == NULL
+        || (cipher->name = OPENSSL_strdup(name)) == NULL) {
+        evp_cipher_free(cipher);
         return NULL;
-
-    cipher->name = OPENSSL_strdup(name);
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
