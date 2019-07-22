@@ -258,7 +258,6 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
     }
 }
 
-
 void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
                         void (*user_fn)(void *method, void *arg),
                         void *user_arg,
