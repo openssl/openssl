@@ -206,8 +206,8 @@ OpenSSL libraries' idea of what the calling provider is called.
 
 =back
 
-Additionally, any configuration parameter from the config file are
-available, in dotted name form.
+Additionally, provider specific configuration parameters from the
+config file are available, in dotted name form.
 The dotted name form is a concatenation of section names and final
 config command name separated by periods.
 
