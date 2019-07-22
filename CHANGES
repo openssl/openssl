@@ -9,6 +9,13 @@
 
  Changes between 1.1.1c and 1.1.1d [xx XXX xxxx]
 
+  *) Correct the extended master secret constant on EBCDIC systems. Without this
+     fix TLS connections between an EBCDIC system and a non-EBCDIC system that
+     negotiate EMS will fail. Unfortunately this also means that TLS connections
+     between EBCDIC systems with this fix, and EBCDIC systems without this
+     fix will fail if they negotiate EMS.
+     [Matt Caswell]
+
   *) Use Windows installation paths in the mingw builds
 
      Mingw isn't a POSIX environment per se, which means that Windows
