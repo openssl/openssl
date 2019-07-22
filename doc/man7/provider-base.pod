@@ -140,7 +140,7 @@ This corresponds to the OpenSSL function L<ERR_put_error(3)>.
 
 core_add_error_vdata() is used to add additional text data to an
 error already reported with core_put_error().
-It takes I<num> strings in a B<va_list> an concatenates them.
+It takes I<num> strings in a B<va_list> and concatenates them.
 Provider authors will have to write the corresponding variadic
 argument function.
 
