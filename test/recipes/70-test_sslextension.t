@@ -201,7 +201,7 @@ $proxy->start();
 ok($fatal_alert, "Duplicate ServerHello extension");
 
 SKIP: {
-    skip "TLS <= 1.2 disabled", 3 if $no_below_tls13;
+    skip "TLS <= 1.2 disabled", 2 if $no_below_tls13;
 
     #Test 3: Sending a zero length extension block should pass
     $proxy->clear();
