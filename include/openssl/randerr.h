@@ -11,9 +11,7 @@
 #ifndef HEADER_RANDERR_H
 # define HEADER_RANDERR_H
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
+# include <openssl/symhacks.h>
 
 # ifdef  __cplusplus
 extern "C"
@@ -46,6 +44,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_F_RAND_POOL_ADD_END                         114
 # define RAND_F_RAND_POOL_ATTACH                          124
 # define RAND_F_RAND_POOL_BYTES_NEEDED                    115
+# define RAND_F_RAND_POOL_GROW                            125
 # define RAND_F_RAND_POOL_NEW                             116
 # define RAND_F_RAND_WRITE_FILE                           112
 

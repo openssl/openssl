@@ -15,6 +15,9 @@
      private key for those. This avoids leaking bit 0 of the private key.
      [Bernd Edlinger]
 
+  *) Significantly reduce secure memory usage by the randomness pools.
+     [Paul Dale]
+
   *) Revert the DEVRANDOM_WAIT feature for Linux systems
 
      The DEVRANDOM_WAIT feature added a select() call to wait for the
