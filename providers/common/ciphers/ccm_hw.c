@@ -9,7 +9,7 @@
 
 #include <openssl/opensslconf.h>
 #include "ciphers_locl.h"
-#include "internal/aes_platform.h"
+#include "internal/ciphermode_platform.h"
 
 #define AES_CCM_SET_KEY_FN(fn_set_enc_key, fn_blk, fn_ccm_enc, fn_ccm_dec)     \
     fn_set_enc_key(key, keylen * 8, &actx->ccm.ks.ks);                         \

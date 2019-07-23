@@ -1,6 +1,6 @@
 LIBS=../../../libcrypto
 
-$COMMON=block.c aes.c aes_basic.c gcm.c gcm_hw.c ciphers_common.c \
+$COMMON=block.c basic_modes.c basic_ciphers.c ciphers_common.c gcm.c gcm_hw.c \
         ccm.c ccm_hw.c
 
 SOURCE[../../../libcrypto]=$COMMON

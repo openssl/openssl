@@ -16,7 +16,6 @@ typedef struct prov_gcm_hw_st PROV_GCM_HW;
 #define GCM_IV_MAX_SIZE     64
 #define GCM_TAG_MAX_SIZE    16
 
-
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
 /*-
  * KMA-GCM-AES parameter block - begin
