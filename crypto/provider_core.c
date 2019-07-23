@@ -636,7 +636,9 @@ int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
 int ossl_provider_available(OSSL_PROVIDER *prov)
 {
     if (prov != NULL) {
+        CRYPTO_THREAD_read_lock(prov->store->lock);
         provider_activate_fallbacks(prov->store);
+        CRYPTO_THREAD_unlock(prov->store->lock);
 
         return prov->flag_initialized;
     }
