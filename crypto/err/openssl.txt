@@ -1025,6 +1025,7 @@ RAND_F_RAND_POOL_ADD_BEGIN:113:rand_pool_add_begin
 RAND_F_RAND_POOL_ADD_END:114:rand_pool_add_end
 RAND_F_RAND_POOL_ATTACH:124:rand_pool_attach
 RAND_F_RAND_POOL_BYTES_NEEDED:115:rand_pool_bytes_needed
+RAND_F_RAND_POOL_GROW:125:rand_pool_grow
 RAND_F_RAND_POOL_NEW:116:rand_pool_new
 RAND_F_RAND_WRITE_FILE:112:RAND_write_file
 RSA_F_CHECK_PADDING_MD:140:check_padding_md

@@ -72,6 +72,12 @@
  *                                1.5 * (RAND_DRBG_STRENGTH / 8))
  */
 
+/*
+ * Initial allocation minimum.
+ * Because of the way the secure allocator works, this should be a power of
+ * two.
+ */
+# define RAND_POOL_MIN_ALLOCATION   64
 
 /* DRBG status values */
 typedef enum drbg_status_e {
@@ -153,6 +159,7 @@ struct rand_pool_st {
 
     size_t min_len; /* minimum number of random bytes requested */
     size_t max_len; /* maximum number of random bytes (allocated buffer size) */
+    size_t alloc_len; /* current number of bytes allocated */
     size_t entropy; /* current entropy count in bits */
     size_t entropy_requested; /* requested entropy count in bits */
 };
