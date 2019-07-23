@@ -49,6 +49,7 @@ int ERR_load_RAND_strings(void);
 #  define RAND_F_RAND_POOL_ADD_END                         0
 #  define RAND_F_RAND_POOL_ATTACH                          0
 #  define RAND_F_RAND_POOL_BYTES_NEEDED                    0
+#  define RAND_F_RAND_POOL_GROW                            0
 #  define RAND_F_RAND_POOL_NEW                             0
 #  define RAND_F_RAND_WRITE_FILE                           0
 # endif
