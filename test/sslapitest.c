@@ -3741,7 +3741,7 @@ static int test_ciphersuite_change(void)
 }
 
 /*
- * Test TLSv1.3 Key exchange
+ * Test Key exchange
  * Test 0 = Test ECDHE Key exchange with TLSv1.3 client and server
  * Test 1 = Test ECDHE with TLSv1.2 client and server
  * Test 2 = Test FFDHE Key exchange with TLSv1.3 client and server
@@ -3757,12 +3757,12 @@ static int test_ciphersuite_change(void)
  * Test 12 = Test NID_ffdhe6144 with TLSv1.3 client and server
  * Test 13 = Test NID_ffdhe8192 with TLSv1.3 client and server
  */
-static int test_tls13_key_exchange(int idx)
+static int test_key_exchange(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC)
     int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
                                 NID_X25519, NID_X448};
 #endif
@@ -3779,8 +3779,10 @@ static int test_tls13_key_exchange(int idx)
 
     switch (idx) {
 #ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_TLS1_2
         case 1:
             max_version = TLS1_2_VERSION;
+# endif
             /* Fall through */
         case 0:
             kexch_groups = ecdhe_kexch_groups;
@@ -3803,8 +3805,10 @@ static int test_tls13_key_exchange(int idx)
             break;
 #endif
 #ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_TLS1_2
         case 3:
             max_version = TLS1_2_VERSION;
+# endif
             /* Fall through */
         case 2:
             kexch_groups = ffdhe_kexch_groups;
@@ -6744,7 +6748,7 @@ int setup_tests(void)
 #else
     ADD_ALL_TESTS(test_tls13_psk, 4);
 #endif  /* OPENSSL_NO_PSK */
-    ADD_ALL_TESTS(test_tls13_key_exchange, 14);
+    ADD_ALL_TESTS(test_key_exchange, 14);
     ADD_ALL_TESTS(test_custom_exts, 5);
     ADD_TEST(test_stateless);
     ADD_TEST(test_pha_key_update);
