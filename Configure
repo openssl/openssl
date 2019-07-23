@@ -118,7 +118,7 @@ my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare
 # -Wincompatible-pointer-types-discards-qualifiers, -Wcast-align,
 # -Wunreachable-code -Wunused-parameter -Wlanguage-extension-token
 # -Wextended-offsetof
-my $clang_disabled_warnings = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token  -Wno-extended-offsetof";
+my $clang_disabled_warnings = "-Wno-unknown-warning-option -Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token  -Wno-extended-offsetof";
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
@@ -128,7 +128,7 @@ my $clang_disabled_warnings = "-Wno-unused-parameter -Wno-missing-field-initiali
 # -Wincompatible-pointer-types-discards-qualifiers, -Wcast-align,
 # -Wunreachable-code -Wunused-parameter -Wlanguage-extension-token
 # -Wextended-offsetof
-my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Qunused-arguments";
+my $clang_devteam_warn = "-Wno-unknown-warning-option -Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Qunused-arguments";
 
 # Warn that "make depend" should be run?
 my $warn_make_depend = 0;
