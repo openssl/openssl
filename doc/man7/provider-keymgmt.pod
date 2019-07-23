@@ -29,7 +29,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  /* Key creation and destruction */
  void *OP_keymgmt_importkey(void *provctx, const OSSL_PARAM params[]);
  void *OP_keymgmt_genkey(void *provctx,
-                      void *domparams, const OSSL_PARAM genkeyparams[]);
+                         void *domparams, const OSSL_PARAM genkeyparams[]);
  void *OP_keymgmt_loadkey(void *provctx, void *id, size_t idlen);
  void OP_keymgmt_freekey(void *key);
 
@@ -43,11 +43,11 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
 =head1 DESCRIPTION
 
 The KEYMGMT operation doesn't have much public visibility in OpenSSL
-libraries, it's a rather internal one that's designed to work in
-tandem with operations that use private/public key pairs.
+libraries, it's rather an internal operation that's designed to work
+in tandem with operations that use private/public key pairs.
 
-Because the KEYMGMT operation share knowledge with the operations it
-works in tandem with, they must belong to the same provider.
+Because the KEYMGMT operation shares knowledge with the operations it
+works with in tandem, they must belong to the same provider.
 The OpenSSL libraries will ensure that they do.
 
 The primary responsibility of the KEYMGMT operation is to hold the
@@ -56,7 +56,7 @@ EVP_PKEY structure.
 
 All "functions" mentioned here are passed as function pointers between
 F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
-B<OSSL_ALGORITHM> arrays that are returned by the providers
+B<OSSL_ALGORITHM> arrays that are returned by the provider's
 provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
@@ -64,7 +64,7 @@ All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_get_{name}>.
-For example, the "function" OP_keymgmt_importdomparams() have these:
+For example, the "function" OP_keymgmt_importdomparams() has these:
 
  typedef void *
      (OSSL_OP_keymgmt_importdomparams_fn)(void *provctx,
@@ -134,7 +134,7 @@ key generation.
 
 OP_keymgmt_loadkey() should return a provider side key structure with
 a key loaded from a location known only to the provider, identitified
-with the identity I<id> or size I<idlen>.
+with the identity I<id> of size I<idlen>.
 This identity is internal to the provider and is retrieved from the
 provider through other means.
 
