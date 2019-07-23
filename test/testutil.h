@@ -545,4 +545,7 @@ char *glue_strings(const char *list[], size_t *out_len);
 uint32_t test_random(void);
 void test_random_seed(uint32_t sd);
 
+/* Create a file path from a directory and a filename */
+char *test_mk_file_path(const char *dir, const char *file);
+
 #endif                          /* HEADER_TESTUTIL_H */
