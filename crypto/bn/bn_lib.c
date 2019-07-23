@@ -142,10 +142,12 @@ int BN_num_bits(const BIGNUM *a)
     return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
 }
 
-static void bn_free_d(BIGNUM *a)
+static void bn_free_d(BIGNUM *a, int clear)
 {
     if (BN_get_flags(a, BN_FLG_SECURE))
-        OPENSSL_secure_free(a->d);
+        OPENSSL_secure_clear_free(a->d, a->dmax * sizeof(a->d[0]));
+    else if (clear != 0)
+        OPENSSL_clear_free(a->d, a->dmax * sizeof(a->d[0]));
     else
         OPENSSL_free(a->d);
 }
@@ -155,10 +157,8 @@ void BN_clear_free(BIGNUM *a)
 {
     if (a == NULL)
         return;
-    if (a->d != NULL && !BN_get_flags(a, BN_FLG_STATIC_DATA)) {
-        OPENSSL_cleanse(a->d, a->dmax * sizeof(a->d[0]));
-        bn_free_d(a);
-    }
+    if (a->d != NULL && !BN_get_flags(a, BN_FLG_STATIC_DATA))
+        bn_free_d(a, 1);
     if (BN_get_flags(a, BN_FLG_MALLOCED)) {
         OPENSSL_cleanse(a, sizeof(*a));
         OPENSSL_free(a);
@@ -170,7 +170,7 @@ void BN_free(BIGNUM *a)
     if (a == NULL)
         return;
     if (!BN_get_flags(a, BN_FLG_STATIC_DATA))
-        bn_free_d(a);
+        bn_free_d(a, 0);
     if (a->flags & BN_FLG_MALLOCED)
         OPENSSL_free(a);
 }
@@ -248,10 +248,8 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
         BN_ULONG *a = bn_expand_internal(b, words);
         if (!a)
             return NULL;
-        if (b->d) {
-            OPENSSL_cleanse(b->d, b->dmax * sizeof(b->d[0]));
-            bn_free_d(b);
-        }
+        if (b->d != NULL)
+            bn_free_d(b, 1);
         b->d = a;
         b->dmax = words;
     }
