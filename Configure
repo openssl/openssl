@@ -144,13 +144,13 @@ my @gcc_devteam_warn = qw(
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my @clang_devteam_warn = qw(
+    -Wno-unknown-warning-option
     -Wswitch-default
     -Wno-parentheses-equality
     -Wno-language-extension-token
     -Wno-extended-offsetof
     -Wconditional-uninitialized
     -Wincompatible-pointer-types-discards-qualifiers
-    -Wno-unknown-warning-option
     -Wmissing-variable-declarations
 );
 
