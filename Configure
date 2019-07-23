@@ -142,6 +142,7 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my $clang_devteam_warn = ""
+        . " -Wno-unknown-warning-option"
         . " -Qunused-arguments"
         . " -Wno-language-extension-token"
         . " -Wno-extended-offsetof"
