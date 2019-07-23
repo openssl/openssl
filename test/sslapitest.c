@@ -45,6 +45,7 @@ static int find_session_cb_cnt = 0;
 static SSL_SESSION *create_a_psk(SSL *ssl);
 #endif
 
+static char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
 static char *srpvfile = NULL;
@@ -6291,7 +6292,10 @@ static int cert_cb(SSL *s, void *arg)
     SSL_CTX *ctx = (SSL_CTX *)arg;
     BIO *in = NULL;
     EVP_PKEY *pkey = NULL;
-    X509 *x509 = NULL;
+    X509 *x509 = NULL, *rootx = NULL;
+    STACK_OF(X509) *chain = NULL;
+    char *rootfile = NULL, *ecdsacert = NULL, *ecdsakey = NULL;
+    int ret = 0;
 
     if (cert_cb_cnt == 0) {
         /* Suspend the handshake */
@@ -6314,38 +6318,58 @@ static int cert_cb(SSL *s, void *arg)
         return 1;
     } else if (cert_cb_cnt == 3) {
         int rv;
+
+        rootfile = test_mk_file_path(certsdir, "rootcert.pem");
+        ecdsacert = test_mk_file_path(certsdir, "server-ecdsa-cert.pem");
+        ecdsakey = test_mk_file_path(certsdir, "server-ecdsa-key.pem");
+        if (!TEST_ptr(rootfile) || !TEST_ptr(ecdsacert) || !TEST_ptr(ecdsakey))
+            goto out;
+        chain = sk_X509_new_null();
+        if (!TEST_ptr(chain))
+            goto out;
         if (!TEST_ptr(in = BIO_new(BIO_s_file()))
-                || !TEST_int_ge(BIO_read_filename(in, cert), 0)
+                || !TEST_int_ge(BIO_read_filename(in, rootfile), 0)
+                || !TEST_ptr(rootx = PEM_read_bio_X509(in, NULL, NULL, NULL))
+                || !TEST_true(sk_X509_push(chain, rootx)))
+            goto out;
+        rootx = NULL;
+        BIO_free(in);
+        if (!TEST_ptr(in = BIO_new(BIO_s_file()))
+                || !TEST_int_ge(BIO_read_filename(in, ecdsacert), 0)
                 || !TEST_ptr(x509 = PEM_read_bio_X509(in, NULL, NULL, NULL)))
             goto out;
         BIO_free(in);
         if (!TEST_ptr(in = BIO_new(BIO_s_file()))
-                || !TEST_int_ge(BIO_read_filename(in, privkey), 0)
+                || !TEST_int_ge(BIO_read_filename(in, ecdsakey), 0)
                 || !TEST_ptr(pkey = PEM_read_bio_PrivateKey(in, NULL, NULL, NULL)))
             goto out;
-        rv = SSL_check_chain(s, x509, pkey, NULL);
+        rv = SSL_check_chain(s, x509, pkey, chain);
         /*
          * If the cert doesn't show as valid here (e.g., because we don't
          * have any shared sigalgs), then we will not set it, and there will
          * be no certificate at all on the SSL or SSL_CTX.  This, in turn,
          * will cause tls_choose_sigalgs() to fail the connection.
          */
-        if ((rv & CERT_PKEY_VALID)) {
+        if ((rv & (CERT_PKEY_VALID | CERT_PKEY_CA_SIGNATURE))
+                == (CERT_PKEY_VALID | CERT_PKEY_CA_SIGNATURE)) {
             if (!SSL_use_cert_and_key(s, x509, pkey, NULL, 1))
                 goto out;
         }
-        BIO_free(in);
-        EVP_PKEY_free(pkey);
-        X509_free(x509);
-        return 1;
+
+        ret = 1;
     }
 
     /* Abort the handshake */
  out:
+    OPENSSL_free(ecdsacert);
+    OPENSSL_free(ecdsakey);
+    OPENSSL_free(rootfile);
     BIO_free(in);
     EVP_PKEY_free(pkey);
     X509_free(x509);
-    return 0;
+    X509_free(rootx);
+    sk_X509_pop_free(chain, X509_free);
+    return ret;
 }
 
 /*
@@ -6353,12 +6377,22 @@ static int cert_cb(SSL *s, void *arg)
  * Test 0: Callback fails
  * Test 1: Success - no SSL_set_SSL_CTX() in the callback
  * Test 2: Success - SSL_set_SSL_CTX() in the callback
+ * Test 3: Success - Call SSL_check_chain from the callback
+ * Test 4: Failure - SSL_check_chain fails from callback due to bad cert in the
+ *                   chain
+ * Test 5: Failure - SSL_check_chain fails from callback due to bad ee cert
  */
 static int test_cert_cb_int(int prot, int tst)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL, *snictx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0, ret;
+
+#ifdef OPENSSL_NO_EC
+    /* We use an EC cert in these tests, so we skip in a no-ec build */
+    if (tst >= 3)
+        return 1;
+#endif
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
                                        TLS_client_method(),
@@ -6369,10 +6403,11 @@ static int test_cert_cb_int(int prot, int tst)
 
     if (tst == 0)
         cert_cb_cnt = -1;
-    else if (tst == 3)
+    else if (tst >= 3)
         cert_cb_cnt = 3;
     else
         cert_cb_cnt = 0;
+
     if (tst == 2)
         snictx = SSL_CTX_new(TLS_server_method());
     SSL_CTX_set_cert_cb(sctx, cert_cb, snictx);
@@ -6381,8 +6416,26 @@ static int test_cert_cb_int(int prot, int tst)
                                       NULL, NULL)))
         goto end;
 
+    if (tst == 4) {
+        /*
+         * We cause SSL_check_chain() to fail by specifying sig_algs that
+         * the chain doesn't meet (the root uses an RSA cert)
+         */
+        if (!TEST_true(SSL_set1_sigalgs_list(clientssl,
+                                             "ecdsa_secp256r1_sha256")))
+            goto end;
+    } else if (tst == 5) {
+        /*
+         * We cause SSL_check_chain() to fail by specifying sig_algs that
+         * the ee cert doesn't meet (the ee uses an ECDSA cert)
+         */
+        if (!TEST_true(SSL_set1_sigalgs_list(clientssl,
+                           "rsa_pss_rsae_sha256:rsa_pkcs1_sha256")))
+            goto end;
+    }
+
     ret = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
-    if (!TEST_true(tst == 0 ? !ret : ret)
+    if (!TEST_true(tst == 0 || tst == 4 || tst == 5 ? !ret : ret)
             || (tst > 0
                 && !TEST_int_eq((cert_cb_cnt - 2) * (cert_cb_cnt - 3), 0))) {
         goto end;
@@ -6648,10 +6701,9 @@ OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
 
 int setup_tests(void)
 {
-    if (!TEST_ptr(cert = test_get_argument(0))
-            || !TEST_ptr(privkey = test_get_argument(1))
-            || !TEST_ptr(srpvfile = test_get_argument(2))
-            || !TEST_ptr(tmpfilename = test_get_argument(3)))
+    if (!TEST_ptr(certsdir = test_get_argument(0))
+            || !TEST_ptr(srpvfile = test_get_argument(1))
+            || !TEST_ptr(tmpfilename = test_get_argument(2)))
         return 0;
 
     if (getenv("OPENSSL_TEST_GETCOUNTS") != NULL) {
@@ -6668,6 +6720,16 @@ int setup_tests(void)
                 mcount, rcount, fcount);
         return 1;
 #endif
+    }
+
+    cert = test_mk_file_path(certsdir, "servercert.pem");
+    if (cert == NULL)
+        return 0;
+
+    privkey = test_mk_file_path(certsdir, "serverkey.pem");
+    if (privkey == NULL) {
+        OPENSSL_free(cert);
+        return 0;
     }
 
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_KTLS) \
@@ -6772,7 +6834,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 12);
     ADD_ALL_TESTS(test_shutdown, 7);
-    ADD_ALL_TESTS(test_cert_cb, 4);
+    ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
     ADD_ALL_TESTS(test_ca_names, 3);
     return 1;
@@ -6780,6 +6842,8 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+    OPENSSL_free(cert);
+    OPENSSL_free(privkey);
     bio_s_mempacket_test_free();
     bio_s_always_retry_free();
 }

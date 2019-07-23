@@ -439,3 +439,21 @@ char *glue_strings(const char *list[], size_t *out_len)
     return ret;
 }
 
+char *test_mk_file_path(const char *dir, const char *file)
+{
+# ifndef OPENSSL_SYS_VMS
+    const char *sep = "/";
+# else
+    const char *sep = "";
+# endif
+    size_t len = strlen(dir) + strlen(sep) + strlen(file) + 1;
+    char *full_file = OPENSSL_zalloc(len);
+
+    if (full_file != NULL) {
+        OPENSSL_strlcpy(full_file, dir, len);
+        OPENSSL_strlcat(full_file, sep, len);
+        OPENSSL_strlcat(full_file, file, len);
+    }
+
+    return full_file;
+}
