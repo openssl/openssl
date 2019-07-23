@@ -24,6 +24,7 @@ static void *keymgmt_new(void)
     if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL
         || (keymgmt->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

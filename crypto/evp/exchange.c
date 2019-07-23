@@ -41,6 +41,7 @@ static void *evp_keyexch_from_dispatch(const char *name,
     if ((exchange = evp_keyexch_new(prov)) == NULL
         || (exchange->name = OPENSSL_strdup(name)) == NULL) {
         EVP_KEYEXCH_free(exchange);
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

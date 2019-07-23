@@ -1140,7 +1140,8 @@ static void *evp_cipher_from_dispatch(const char *name,
      */
     if ((cipher = EVP_CIPHER_meth_new(0, 0, 0)) == NULL
         || (cipher->name = OPENSSL_strdup(name)) == NULL) {
-        evp_cipher_free(cipher);
+        EVP_CIPHER_meth_free(cipher);
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

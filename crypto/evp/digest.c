@@ -584,10 +584,12 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
     int fncnt = 0;
 
     /* EVP_MD_fetch() will set the legacy NID if available */
-    if ((md = EVP_MD_meth_new(NID_undef, NID_undef)) == NULL)
+    if ((md = EVP_MD_meth_new(NID_undef, NID_undef)) == NULL
+        || (md->name = OPENSSL_strdup(name)) == NULL) {
+        EVP_MD_meth_free(md);
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
-
-    md->name = OPENSSL_strdup(name);
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
