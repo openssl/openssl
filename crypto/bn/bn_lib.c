@@ -146,7 +146,7 @@ static void bn_free_d(BIGNUM *a, int clear)
 {
     if (BN_get_flags(a, BN_FLG_SECURE))
         OPENSSL_secure_clear_free(a->d, a->dmax * sizeof(a->d[0]));
-    else if (clear)
+    else if (clear != 0)
         OPENSSL_clear_free(a->d, a->dmax * sizeof(a->d[0]));
     else
         OPENSSL_free(a->d);
@@ -248,7 +248,7 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
         BN_ULONG *a = bn_expand_internal(b, words);
         if (!a)
             return NULL;
-        if (b->d)
+        if (b->d != NULL)
             bn_free_d(b, 1);
         b->d = a;
         b->dmax = words;
