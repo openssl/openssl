@@ -596,21 +596,19 @@ static int rand_pool_grow(RAND_POOL *pool, size_t len)
             newlen = newlen < limit ? newlen * 2 : pool->max_len;
         while (len > newlen - pool->len);
 
-        if (pool->secure) {
-            p = OPENSSL_secure_malloc(newlen);
-            if (p == NULL) {
-                RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_MALLOC_FAILURE);
-                return 0;
-            }
-            memcpy(p, pool->buffer, pool->len);
-            OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);
-        } else {
-            p = OPENSSL_realloc(pool->buffer, newlen);
-            if (p == NULL) {
-                RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_MALLOC_FAILURE);
-                return 0;
-            }
+        if (pool->secure)
+            p = OPENSSL_secure_zalloc(newlen);
+        else
+            p = OPENSSL_zalloc(newlen);
+        if (p == NULL) {
+            RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_MALLOC_FAILURE);
+            return 0;
         }
+        memcpy(p, pool->buffer, pool->len);
+        if (pool->secure)
+            OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);
+        else
+            OPENSSL_clear_free(pool->buffer, pool->alloc_len);
         pool->buffer = p;
         pool->alloc_len = newlen;
     }
