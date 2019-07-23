@@ -150,8 +150,9 @@ be located in that module, and called.
 
 =back
 
-ossl_provider_available() checks if given provider object I<prov> is
-"activated" or a fallback.
+ossl_provider_available() activates all fallbacks of no provider is
+activated yet, then checks if given provider object I<prov> is
+activated.
 
 ossl_provider_ctx() returns a context created by the provider.
 Outside of the provider, it's completely opaque, but it needs to be
