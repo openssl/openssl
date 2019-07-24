@@ -20,11 +20,12 @@ provider-base
  int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
  int core_thread_start(const OSSL_PROVIDER *prov,
                        OSSL_thread_stop_handler_fn handfn);
- void core_put_error(const OSSL_PROVIDER *prov,
-                     uint32_t reason, const char *file, int line);
- void core_add_error_vdata(const OSSL_PROVIDER *prov,
-                           int num, va_list args);
  OPENSSL_CTX *core_get_library_context(const OSSL_PROVIDER *prov);
+ void core_new_error(const OSSL_PROVIDER *prov);
+ void core_set_error_debug(const OSSL_PROVIDER *prov,
+                           const char *file, int line, const char *func);
+ void core_vset_error(const OSSL_PROVIDER *prov,
+                      uint32_t reason, const char *fmt, va_list args);
 
  /*
   * Some OpenSSL functionality is directly offered to providers via
@@ -89,9 +90,10 @@ provider):
  core_get_param_types           OSSL_FUNC_CORE_GET_PARAM_TYPES
  core_get_params                OSSL_FUNC_CORE_GET_PARAMS
  core_thread_start              OSSL_FUNC_CORE_THREAD_START
- core_put_error                 OSSL_FUNC_CORE_PUT_ERROR
- core_add_error_vdata           OSSL_FUNC_CORE_ADD_ERROR_VDATA
  core_get_library_context       OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT
+ core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
+ core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
+ core_set_error                 OSSL_FUNC_CORE_SET_ERROR
  CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
  CRYPTO_zalloc                  OSSL_FUNC_CRYPTO_ZALLOC
  CRYPTO_memdup                  OSSL_FUNC_CRYPTO_MEMDUP
@@ -129,25 +131,47 @@ parameters.
 
 =for comment core_thread_start() TBA
 
-core_put_error() is used to report an error back to the core, with
-reference to the provider object I<prov>.
-The I<reason> is a number defined by the provider and used to index
-the reason strings table that's returned by
-provider_get_reason_strings().
-I<file> and I<line> may also be passed to indicate exactly where the
-error occured or was reported.
-This corresponds to the OpenSSL function L<ERR_put_error(3)>.
-
-core_add_error_vdata() is used to add additional text data to an
-error already reported with core_put_error().
-It takes I<num> strings in a B<va_list> and concatenates them.
-Provider authors will have to write the corresponding variadic
-argument function.
-
 core_get_library_context() retrieves the library context in which the
 B<OSSL_PROVIDER> object I<prov> is stored.
 This may sometimes be useful if the provider wishes to store a
 reference to its context in the same library context.
+
+core_new_error(), core_set_error_debug() and core_set_error() are
+building blocks for reporting an error back to the core, with
+reference to the provider object I<prov>.
+
+=over 4
+
+=item core_new_error()
+
+allocates a new thread specific error record.
+
+This corresponds to the OpenSSL function L<ERR_new(3)>.
+
+=item core_set_error_debug()
+
+sets debugging information in the current thread specific error
+record.
+The debugging information includes the name of the file I<file>, the
+line I<line> and the function name I<func> where the error occured.
+
+This corresponds to the OpenSSL function L<ERR_set_debug(3)>.
+
+=item core_set_error()
+
+sets the I<reason> for the error, along with any addition data.
+The I<reason> is a number defined by the provider and used to index
+the reason strings table that's returned by
+provider_get_reason_strings().
+The additional data is given as a format string I<fmt> and a set of
+arguments I<args>, which are treated in the same manner as with
+BIO_vsnprintf().
+I<file> and I<line> may also be passed to indicate exactly where the
+error occured or was reported.
+
+This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
+
+=back
 
 CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_memdup(), CRYPTO_strdup(),
 CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),

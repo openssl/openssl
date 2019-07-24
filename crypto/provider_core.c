@@ -225,9 +225,8 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
 
     if ((prov = ossl_provider_find(libctx, name)) != NULL) { /* refcount +1 */
         ossl_provider_free(prov); /* refcount -1 */
-        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_NEW,
-                  CRYPTO_R_PROVIDER_ALREADY_EXISTS);
-        ERR_add_error_data(2, "name=", name);
+        ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_ALREADY_EXISTS, NULL,
+                       "name=%s", name);
         return NULL;
     }
 
@@ -438,8 +437,8 @@ static int provider_activate(OSSL_PROVIDER *prov)
     if (prov->init_function == NULL
         || !prov->init_function(prov, core_dispatch, &provider_dispatch,
                                 &prov->provctx)) {
-        CRYPTOerr(CRYPTO_F_PROVIDER_ACTIVATE, ERR_R_INIT_FAIL);
-        ERR_add_error_data(2, "name=", prov->name);
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL, NULL,
+                       "name=%s", prov->name);
 #ifndef FIPS_MODE
         DSO_free(prov->module);
         prov->module = NULL;
@@ -730,6 +729,21 @@ static const OSSL_PARAM param_types[] = {
     OSSL_PARAM_END
 };
 
+/*
+ * Forward declare all the functions that are provided aa dispatch.
+ * This ensures that the compiler will complain if they aren't defined
+ * with the correct signature.
+ */
+static OSSL_core_get_param_types_fn core_get_param_types;
+static OSSL_core_get_params_fn core_get_params;
+static OSSL_core_thread_start_fn core_thread_start;
+static OSSL_core_get_library_context_fn core_get_libctx;
+#ifndef FIPS_MODE
+static OSSL_core_new_error_fn core_new_error;
+static OSSL_core_set_error_debug_fn core_set_error_debug;
+static OSSL_core_vset_error_fn core_vset_error;
+#endif
+
 static const OSSL_PARAM *core_get_param_types(const OSSL_PROVIDER *prov)
 {
     return param_types;
@@ -758,7 +772,6 @@ static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     return 1;
 }
 
-static OSSL_core_get_library_context_fn core_get_libctx; /* Check */
 static OPENSSL_CTX *core_get_libctx(const OSSL_PROVIDER *prov)
 {
     return prov->libctx;
@@ -776,8 +789,26 @@ static int core_thread_start(const OSSL_PROVIDER *prov,
  * ones.
  */
 #ifndef FIPS_MODE
-static void core_put_error(const OSSL_PROVIDER *prov,
-                           uint32_t reason, const char *file, int line)
+/*
+ * TODO(3.0) These error functions should use |prov| to select the proper
+ * library context to report in the correct error stack, at least if error
+ * stacks become tied to the library context.
+ * We cannot currently do that since there's no support for it in the
+ * ERR subsystem.
+ */
+static void core_new_error(const OSSL_PROVIDER *prov)
+{
+    ERR_new();
+}
+
+static void core_set_error_debug(const OSSL_PROVIDER *prov,
+                                 const char *file, int line, const char *func)
+{
+    ERR_set_debug(file, line, func);
+}
+
+static void core_vset_error(const OSSL_PROVIDER *prov,
+                            uint32_t reason, const char *fmt, va_list args)
 {
     /*
      * If the uppermost 8 bits are non-zero, it's an OpenSSL library
@@ -785,26 +816,10 @@ static void core_put_error(const OSSL_PROVIDER *prov,
      * provider error and will be treated as such.
      */
     if (ERR_GET_LIB(reason) != 0) {
-        ERR_PUT_error(ERR_GET_LIB(reason),
-                      ERR_GET_FUNC(reason),
-                      ERR_GET_REASON(reason),
-                      file, line);
+        ERR_vset_error(ERR_GET_LIB(reason), ERR_GET_REASON(reason), fmt, args);
     } else {
-        ERR_PUT_error(prov->error_lib, 0, (int)reason, file, line);
+        ERR_vset_error(prov->error_lib, (int)reason, fmt, args);
     }
-}
-
-/*
- * TODO(3.0) This, as well as core_put_error above, should use |prov|
- * to select the proper library context to report in the correct error
- * stack, at least if error stacks become tied to the library context.
- * We cannot currently do that since there's no support for it in the
- * ERR subsystem.
- */
-static void core_add_error_vdata(const OSSL_PROVIDER *prov,
-                                 int num, va_list args)
-{
-    ERR_add_error_vdata(num, args);
 }
 #endif
 
@@ -818,8 +833,9 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
 #ifndef FIPS_MODE
-    { OSSL_FUNC_CORE_PUT_ERROR, (void (*)(void))core_put_error },
-    { OSSL_FUNC_CORE_ADD_ERROR_VDATA, (void (*)(void))core_add_error_vdata },
+    { OSSL_FUNC_CORE_NEW_ERROR, (void (*)(void))core_new_error },
+    { OSSL_FUNC_CORE_SET_ERROR_DEBUG, (void (*)(void))core_set_error_debug },
+    { OSSL_FUNC_CORE_VSET_ERROR, (void (*)(void))core_vset_error },
 #endif
 
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },

@@ -66,17 +66,19 @@ OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
 # define OSSL_FUNC_CORE_THREAD_START           3
 OSSL_CORE_MAKE_FUNC(int,core_thread_start,(const OSSL_PROVIDER *prov,
                                            OSSL_thread_stop_handler_fn handfn))
-# define OSSL_FUNC_CORE_PUT_ERROR              4
-OSSL_CORE_MAKE_FUNC(void,core_put_error,
-                    (const OSSL_PROVIDER *prov,
-                     uint32_t reason, const char *file, int line))
-# define OSSL_FUNC_CORE_ADD_ERROR_VDATA        5
-OSSL_CORE_MAKE_FUNC(void,core_add_error_vdata,(const OSSL_PROVIDER *prov,
-                                               int num, va_list args))
-# define OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT    6
+# define OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT    4
 OSSL_CORE_MAKE_FUNC(OPENSSL_CTX *,core_get_library_context,
                     (const OSSL_PROVIDER *prov))
-
+# define OSSL_FUNC_CORE_NEW_ERROR              5
+OSSL_CORE_MAKE_FUNC(void,core_new_error,(const OSSL_PROVIDER *prov))
+# define OSSL_FUNC_CORE_SET_ERROR_DEBUG        6
+OSSL_CORE_MAKE_FUNC(void,core_set_error_debug,
+                    (const OSSL_PROVIDER *prov,
+                     const char *file, int line, const char *func))
+# define OSSL_FUNC_CORE_VSET_ERROR             7
+OSSL_CORE_MAKE_FUNC(void,core_vset_error,
+                    (const OSSL_PROVIDER *prov,
+                     uint32_t reason, const char *fmt, va_list args))
 
 /* Memory allocation, freeing, clearing. */
 #define OSSL_FUNC_CRYPTO_MALLOC               10
