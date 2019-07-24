@@ -69,7 +69,7 @@ For example, the "function" OP_keymgmt_importdomparams() has these:
  typedef void *
      (OSSL_OP_keymgmt_importdomparams_fn)(void *provctx,
                                           const OSSL_PARAM params[]);
- static ossl_inline OSSL_NAME_keymgmt_importdomparams_fn
+ static ossl_inline OSSL_OP_keymgmt_importdomparams_fn
      OSSL_get_OP_keymgmt_importdomparams(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
