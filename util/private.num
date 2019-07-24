@@ -196,6 +196,8 @@ ERR_GET_REASON                          define
 ERR_PACK                                define
 ERR_free_strings                        define deprecated 1.1.0
 ERR_load_crypto_strings                 define deprecated 1.1.0
+ERR_raise                               define
+ERR_raise_data                          define
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
 EVP_KDF_name                            define

@@ -108,49 +108,49 @@ typedef struct err_state_st {
 # define ERR_LIB_USER            128
 
 # if ! OPENSSL_API_3
-#  define SYSerr(f,r)  ERR_PUT_error(ERR_LIB_SYS,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-#endif
-# define FUNCerr(f,r)  ERR_PUT_func_error(ERR_LIB_SYS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define BNerr(f,r)   ERR_PUT_error(ERR_LIB_BN,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define RSAerr(f,r)  ERR_PUT_error(ERR_LIB_RSA,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define DHerr(f,r)   ERR_PUT_error(ERR_LIB_DH,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define EVPerr(f,r)  ERR_PUT_error(ERR_LIB_EVP,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define BUFerr(f,r)  ERR_PUT_error(ERR_LIB_BUF,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define OBJerr(f,r)  ERR_PUT_error(ERR_LIB_OBJ,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PEMerr(f,r)  ERR_PUT_error(ERR_LIB_PEM,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define DSAerr(f,r)  ERR_PUT_error(ERR_LIB_DSA,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define X509err(f,r) ERR_PUT_error(ERR_LIB_X509,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ASN1err(f,r) ERR_PUT_error(ERR_LIB_ASN1,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CONFerr(f,r) ERR_PUT_error(ERR_LIB_CONF,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CRYPTOerr(f,r) ERR_PUT_error(ERR_LIB_CRYPTO,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ECerr(f,r)   ERR_PUT_error(ERR_LIB_EC,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define SSLerr(f,r)  ERR_PUT_error(ERR_LIB_SSL,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define BIOerr(f,r)  ERR_PUT_error(ERR_LIB_BIO,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PKCS7err(f,r) ERR_PUT_error(ERR_LIB_PKCS7,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define X509V3err(f,r) ERR_PUT_error(ERR_LIB_X509V3,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PKCS12err(f,r) ERR_PUT_error(ERR_LIB_PKCS12,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define RANDerr(f,r) ERR_PUT_error(ERR_LIB_RAND,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define DSOerr(f,r) ERR_PUT_error(ERR_LIB_DSO,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ENGINEerr(f,r) ERR_PUT_error(ERR_LIB_ENGINE,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define OCSPerr(f,r) ERR_PUT_error(ERR_LIB_OCSP,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define UIerr(f,r) ERR_PUT_error(ERR_LIB_UI,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define COMPerr(f,r) ERR_PUT_error(ERR_LIB_COMP,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ECDSAerr(f,r)  ERR_PUT_error(ERR_LIB_ECDSA,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ECDHerr(f,r)  ERR_PUT_error(ERR_LIB_ECDH,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define OSSL_STOREerr(f,r) ERR_PUT_error(ERR_LIB_OSSL_STORE,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define FIPSerr(f,r) ERR_PUT_error(ERR_LIB_FIPS,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CMSerr(f,r) ERR_PUT_error(ERR_LIB_CMS,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CRMFerr(f,r) ERR_PUT_error(ERR_LIB_CRMF,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CMPerr(f,r) ERR_PUT_error(ERR_LIB_CMP,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define TSerr(f,r) ERR_PUT_error(ERR_LIB_TS,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define HMACerr(f,r) ERR_PUT_error(ERR_LIB_HMAC,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CTerr(f,r) ERR_PUT_error(ERR_LIB_CT,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ASYNCerr(f,r) ERR_PUT_error(ERR_LIB_ASYNC,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define KDFerr(f,r) ERR_PUT_error(ERR_LIB_KDF,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define SM2err(f,r) ERR_PUT_error(ERR_LIB_SM2,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ESSerr(f,r) ERR_PUT_error(ERR_LIB_ESS,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PROPerr(f,r) ERR_PUT_error(ERR_LIB_PROP,0,(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PROVerr(f,r) ERR_PUT_error(ERR_LIB_PROV,0,(r),OPENSSL_FILE,OPENSSL_LINE)
+#  define SYSerr(f,r)  ERR_raise(ERR_LIB_SYS,(r))
+# endif
+# define FUNCerr(f,r)  ERR_raise_data(ERR_LIB_SYS,(r),"calling function %s",(f))
+# define BNerr(f,r)   ERR_raise(ERR_LIB_RSA,(r))
+# define RSAerr(f,r)  ERR_raise(ERR_LIB_RSA,(r))
+# define DHerr(f,r)   ERR_raise(ERR_LIB_DH,(r))
+# define EVPerr(f,r)  ERR_raise(ERR_LIB_EVP,(r))
+# define BUFerr(f,r)  ERR_raise(ERR_LIB_BUF,(r))
+# define OBJerr(f,r)  ERR_raise(ERR_LIB_OBJ,(r))
+# define PEMerr(f,r)  ERR_raise(ERR_LIB_PEM,(r))
+# define DSAerr(f,r)  ERR_raise(ERR_LIB_DSA,(r))
+# define X509err(f,r) ERR_raise(ERR_LIB_X509,(r))
+# define ASN1err(f,r) ERR_raise(ERR_LIB_ASN1,(r))
+# define CONFerr(f,r) ERR_raise(ERR_LIB_CONF,(r))
+# define CRYPTOerr(f,r) ERR_raise(ERR_LIB_CRYPTO,(r))
+# define ECerr(f,r)   ERR_raise(ERR_LIB_EC,(r))
+# define SSLerr(f,r)  ERR_raise(ERR_LIB_SSL,(r))
+# define BIOerr(f,r)  ERR_raise(ERR_LIB_BIO,(r))
+# define PKCS7err(f,r) ERR_raise(ERR_LIB_PKCS7,(r))
+# define X509V3err(f,r) ERR_raise(ERR_LIB_X509V3,(r))
+# define PKCS12err(f,r) ERR_raise(ERR_LIB_PKCS12,(r))
+# define RANDerr(f,r) ERR_raise(ERR_LIB_RAND,(r))
+# define DSOerr(f,r) ERR_raise(ERR_LIB_DSO,(r))
+# define ENGINEerr(f,r) ERR_raise(ERR_LIB_ENGINE,(r))
+# define OCSPerr(f,r) ERR_raise(ERR_LIB_OCSP,(r))
+# define UIerr(f,r) ERR_raise(ERR_LIB_UI,(r))
+# define COMPerr(f,r) ERR_raise(ERR_LIB_COMP,(r))
+# define ECDSAerr(f,r)  ERR_raise(ERR_LIB_ECDSA,(r))
+# define ECDHerr(f,r)  ERR_raise(ERR_LIB_ECDH,(r))
+# define OSSL_STOREerr(f,r) ERR_raise(ERR_LIB_OSSL_STORE,(r))
+# define FIPSerr(f,r) ERR_raise(ERR_LIB_FIPS,(r))
+# define CMSerr(f,r) ERR_raise(ERR_LIB_CMS,(r))
+# define CRMFerr(f,r) ERR_raise(ERR_LIB_CRMF,(r))
+# define CMPerr(f,r) ERR_raise(ERR_LIB_CMP,(r))
+# define TSerr(f,r) ERR_raise(ERR_LIB_TS,(r))
+# define HMACerr(f,r) ERR_raise(ERR_LIB_HMAC,(r))
+# define CTerr(f,r) ERR_raise(ERR_LIB_CT,(r))
+# define ASYNCerr(f,r) ERR_raise(ERR_LIB_ASYNC,(r))
+# define KDFerr(f,r) ERR_raise(ERR_LIB_KDF,(r))
+# define SM2err(f,r) ERR_raise(ERR_LIB_SM2,(r))
+# define ESSerr(f,r) ERR_raise(ERR_LIB_ESS,(r))
+# define PROPerr(f,r) ERR_raise(ERR_LIB_PROP,(r))
+# define PROVerr(f,r) ERR_raise(ERR_LIB_PROV,(r))
 
 # define ERR_PACK(l,f,r) ( \
         (((unsigned int)(l) & 0x0FF) << 24L) | \
@@ -244,6 +244,13 @@ void ERR_new(void);
 void ERR_set_debug(const char *file, int line, const char *func);
 void ERR_set_error(int lib, int reason, const char *fmt, ...);
 void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
+
+/* Main error raising functions */
+#define ERR_raise(lib, reason) ERR_raise_data((lib),(reason),NULL)
+#define ERR_raise_data                                          \
+    (ERR_new(),                                                 \
+     ERR_set_debug(OPENSSL_FILE,OPENSSL_LINE,OPENSSL_FUNC),     \
+     ERR_set_error)
 
 void ERR_put_error(int lib, int func, int reason, const char *file, int line);
 void ERR_put_func_error(int lib, const char *func, int reason,
