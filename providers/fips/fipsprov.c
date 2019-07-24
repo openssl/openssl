@@ -39,8 +39,9 @@ extern OSSL_core_thread_start_fn *c_thread_start;
 static OSSL_core_get_param_types_fn *c_get_param_types;
 static OSSL_core_get_params_fn *c_get_params;
 OSSL_core_thread_start_fn *c_thread_start;
-static OSSL_core_put_error_fn *c_put_error;
-static OSSL_core_add_error_vdata_fn *c_add_error_vdata;
+static OSSL_core_new_error_fn *c_new_error;
+static OSSL_core_set_error_debug_fn *c_set_error_debug;
+static OSSL_core_vset_error_fn *c_vset_error;
 static OSSL_CRYPTO_malloc_fn *c_CRYPTO_malloc;
 static OSSL_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
 static OSSL_CRYPTO_free_fn *c_CRYPTO_free;
@@ -305,11 +306,14 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CORE_THREAD_START:
             c_thread_start = OSSL_get_core_thread_start(in);
             break;
-        case OSSL_FUNC_CORE_PUT_ERROR:
-            c_put_error = OSSL_get_core_put_error(in);
+        case OSSL_FUNC_CORE_NEW_ERROR:
+            c_new_error = OSSL_get_core_new_error(in);
             break;
-        case OSSL_FUNC_CORE_ADD_ERROR_VDATA:
-            c_add_error_vdata = OSSL_get_core_add_error_vdata(in);
+        case OSSL_FUNC_CORE_SET_ERROR_DEBUG:
+            c_set_error_debug = OSSL_get_core_set_error_debug(in);
+            break;
+        case OSSL_FUNC_CORE_VSET_ERROR:
+            c_vset_error = OSSL_get_core_vset_error(in);
             break;
         case OSSL_FUNC_CRYPTO_MALLOC:
             c_CRYPTO_malloc = OSSL_get_CRYPTO_malloc(in);
@@ -416,29 +420,28 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
     return 1;
 }
 
-void ERR_put_error(int lib, int func, int reason, const char *file, int line)
+void ERR_new(void)
 {
-    /*
-     * TODO(3.0) the first argument is currently NULL but is expected to
-     * be passed something else in the future, either an OSSL_PROVIDER or
-     * a OPENSSL_CTX pointer.
-     */
-    c_put_error(NULL, ERR_PACK(lib, func, reason), file, line);
-    ERR_add_error_data(1, "(in the FIPS module)");
+    c_new_error(NULL);
 }
 
-void ERR_add_error_data(int num, ...)
+void ERR_set_debug(const char *file, int line, const char *func)
+{
+    c_set_error_debug(NULL, file, line, func);
+}
+
+void ERR_set_error(int lib, int reason, const char *fmt, ...)
 {
     va_list args;
 
-    va_start(args, num);
-    ERR_add_error_vdata(num, args);
+    va_start(args, fmt);
+    c_vset_error(NULL, ERR_PACK(lib, 0, reason), fmt, args);
     va_end(args);
 }
 
-void ERR_add_error_vdata(int num, va_list args)
+void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
 {
-    c_add_error_vdata(NULL, num, args);
+    c_vset_error(NULL, ERR_PACK(lib, 0, reason), fmt, args);
 }
 
 const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx)
