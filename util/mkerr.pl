@@ -650,7 +650,8 @@ ${st}void ERR_${lib}_error(int function, int reason, char *file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
-    ERR_PUT_error(lib_code, function, reason, file, line);
+    ERR_raise(lib_code, reason);
+    ERR_set_debug(file, line, NULL);
 }
 EOF
 

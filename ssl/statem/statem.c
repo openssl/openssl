@@ -118,7 +118,8 @@ void ossl_statem_set_renegotiate(SSL *s)
 void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
                        int line)
 {
-    ERR_put_error(ERR_LIB_SSL, func, reason, file, line);
+    ERR_raise(ERR_LIB_SSL, reason);
+    ERR_set_debug(file, line, NULL); /* Override what ERR_raise set */
     /* We shouldn't call SSLfatal() twice. Once is enough */
     if (s->statem.in_init && s->statem.state == MSG_FLOW_ERROR)
       return;
