@@ -355,44 +355,6 @@ void err_free_strings_int(void)
 
 /********************************************************/
 
-void ERR_put_func_error(int lib, const char *func, int reason,
-                        const char *file, int line)
-{
-    ERR_put_error(lib, 0, reason, file, line);
-    ERR_add_error_data(2, "calling function ", func);
-}
-
-void ERR_put_error(int lib, int func, int reason, const char *file, int line)
-{
-    ERR_STATE *es;
-
-#ifdef _OSD_POSIX
-    /*
-     * In the BS2000-OSD POSIX subsystem, the compiler generates path names
-     * in the form "*POSIX(/etc/passwd)". This dirty hack strips them to
-     * something sensible. @@@ We shouldn't modify a const string, though.
-     */
-    if (strncmp(file, "*POSIX(", sizeof("*POSIX(") - 1) == 0) {
-        char *end;
-
-        /* Skip the "*POSIX(" prefix */
-        file += sizeof("*POSIX(") - 1;
-        end = &file[strlen(file) - 1];
-        if (*end == ')')
-            *end = '\0';
-        /* Optional: use the basename of the path only. */
-        if ((end = strrchr(file, '/')) != NULL)
-            file = &end[1];
-    }
-#endif
-    es = ERR_get_state();
-    if (es == NULL)
-        return;
-
-    err_get_slot(es);
-    err_clear(es, es->top, 0);
-}
-
 void ERR_clear_error(void)
 {
     int i;
