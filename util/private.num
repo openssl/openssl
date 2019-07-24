@@ -195,6 +195,7 @@ ERR_GET_LIB                             define
 ERR_GET_REASON                          define
 ERR_PACK                                define
 ERR_free_strings                        define deprecated 1.1.0
+ERR_put_error                           define deprecated 3.0
 ERR_load_crypto_strings                 define deprecated 1.1.0
 ERR_raise                               define
 ERR_raise_data                          define

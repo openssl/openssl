@@ -252,9 +252,14 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
      ERR_set_debug(OPENSSL_FILE,OPENSSL_LINE,OPENSSL_FUNC),     \
      ERR_set_error)
 
-void ERR_put_error(int lib, int func, int reason, const char *file, int line);
-void ERR_put_func_error(int lib, const char *func, int reason,
-                        const char *file, int line);
+#if !OPENSSL_API_3
+/* Backward compatibility */
+#define ERR_put_error(lib, func, reason, file, line)            \
+    (ERR_new(),                                                 \
+     ERR_set_debug((file), (line), NULL),                       \
+     ERR_set_error((lib), (reason), NULL))
+#endif
+
 void ERR_set_error_data(char *data, int flags);
 
 unsigned long ERR_get_error(void);

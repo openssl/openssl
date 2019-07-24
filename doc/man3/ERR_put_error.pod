@@ -3,8 +3,8 @@
 =head1 NAME
 
 ERR_raise, ERR_raise_data,
-ERR_put_error, ERR_put_func_error,
-ERR_add_error_data, ERR_add_error_vdata - record an error
+ERR_put_error, ERR_add_error_data, ERR_add_error_vdata
+- record an error
 
 =head1 SYNOPSIS
 
@@ -13,12 +13,12 @@ ERR_add_error_data, ERR_add_error_vdata - record an error
  void ERR_raise(int lib, int reason);
  void ERR_raise_data(int lib, int reason, const char *fmt, ...);
 
- void ERR_put_error(int lib, int func, int reason, const char *file, int line);
- void ERR_put_func_error(int lib, const char *func, int reason,
-                         const char *file, int line);
-
  void ERR_add_error_data(int num, ...);
  void ERR_add_error_vdata(int num, va_list arg);
+
+Deprecated since OpenSSL 3.0:
+
+ void ERR_put_error(int lib, int func, int reason, const char *file, int line);
 
 =head1 DESCRIPTION
 
@@ -37,10 +37,6 @@ signals that the error of reason code B<reason> occurred in function
 B<func> of library B<lib>, in line number B<line> of B<file>.
 This function is usually called by a macro.
 
-ERR_put_func_err() is similar except that the B<func> is a string naming
-a function external to OpenSSL, usually provided by the platform on which
-OpenSSL and the application is running.
-
 ERR_add_error_data() associates the concatenation of its B<num> string
 arguments with the error code added last.
 ERR_add_error_vdata() is similar except the argument is a B<va_list>.
@@ -51,6 +47,8 @@ error strings so that the application can a generate human-readable
 error messages for the error code.
 
 =head2 Reporting errors
+
+=for comment TODO(3.0) should this be internal documentation?
 
 Each sub-library has a specific macro XXXerr() that is used to report
 errors. Its first argument is a function code B<XXX_F_...>, the second
@@ -78,12 +76,12 @@ the ASN1err() macro.
 
 =head1 RETURN VALUES
 
-ERR_raise(), ERR_put_error() and ERR_add_error_data()
-return no values.
+ERR_raise(), ERR_put_error(), ERR_add_error_data() and
+ERR_add_error_vdata() return no values.
 
 =head1 NOTES
 
-ERR_raise() is implemented as a macro.
+ERR_raise() and ERR_put_error() are implemented as macros.
 
 =head1 SEE ALSO
 
