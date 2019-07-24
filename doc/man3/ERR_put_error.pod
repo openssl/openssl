@@ -2,12 +2,16 @@
 
 =head1 NAME
 
+ERR_raise, ERR_raise_data,
 ERR_put_error, ERR_put_func_error,
 ERR_add_error_data, ERR_add_error_vdata - record an error
 
 =head1 SYNOPSIS
 
  #include <openssl/err.h>
+
+ void ERR_raise(int lib, int reason);
+ void ERR_raise_data(int lib, int reason, const char *fmt, ...);
 
  void ERR_put_error(int lib, int func, int reason, const char *file, int line);
  void ERR_put_func_error(int lib, const char *func, int reason,
@@ -17,6 +21,16 @@ ERR_add_error_data, ERR_add_error_vdata - record an error
  void ERR_add_error_vdata(int num, va_list arg);
 
 =head1 DESCRIPTION
+
+ERR_raise() adds a new error to the thread's error queue.  The
+error occured in the library B<lib> for the reason given by the
+B<reason> code.  Furthermore, the name of the file, the line, and name
+of the function where the error occured is saved with the error
+record.
+
+ERR_raise_data() does the same thing as ERR_raise(), but also lets the
+caller specify additional information as a format string B<fmt> and an
+arbitrary number of values, which are processed with L<BIO_snprintf(3)>.  
 
 ERR_put_error() adds an error code to the thread's error queue. It
 signals that the error of reason code B<reason> occurred in function
@@ -64,8 +78,12 @@ the ASN1err() macro.
 
 =head1 RETURN VALUES
 
-ERR_put_error() and ERR_add_error_data() return
-no values.
+ERR_raise(), ERR_put_error() and ERR_add_error_data()
+return no values.
+
+=head1 NOTES
+
+ERR_raise() is implemented as a macro.
 
 =head1 SEE ALSO
 
@@ -73,7 +91,7 @@ L<ERR_load_strings(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
