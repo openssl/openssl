@@ -1,0 +1,58 @@
+#! /usr/bin/env perl
+# Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Run this program like this:
+#       perl -pi util/err-to-error files...
+# or
+#       git ls-files | grep '\.c$' | xargs perl -pi util/err-to-raise
+# There will be some hand-edits necessary, when the second arg was on a
+# separate line.
+
+use strict;
+use warnings;
+
+s/ASN1err\([0-9A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_ASN1, $1)/;
+s/ASYNCerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_ASYNC, $1)/;
+s/BIOerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_BIO, $1)/;
+s/BNerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_BN, $1)/;
+s/BUFerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_BUF, $1)/;
+s/CMPerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_CMP, $1)/;
+s/CMSerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_CMS, $1)/;
+s/COMPerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_COMP, $1)/;
+s/CONFerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_CONF, $1)/;
+s/CRMFerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_CRMF, $1)/;
+s/CRYPTOerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_CRYPTO, $1)/;
+s/CTerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_CT, $1)/;
+s/DHerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_DH, $1)/;
+s/DSAerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_DSA, $1)/;
+s/DSOerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_DSO, $1)/;
+s/ECDHerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_ECDH, $1)/;
+s/ECDSAerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_ECDSA, $1)/;
+s/ECerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_EC, $1)/;
+s/ENGINEerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_ENGINE, $1)/;
+s/ESSerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_ESS, $1)/;
+s/EVPerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_EVP, $1)/;
+s/FIPSerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_FIPS, $1)/;
+s/KDFerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_KDF, $1)/;
+s/OBJerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_OBJ, $1)/;
+s/OCSPerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_OCSP, $1)/;
+s/OSSL_STOREerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_OSSL_STORE, $1)/;
+s/PEMerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_PEM, $1)/;
+s/PKCS12err\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_PKCS12, $1)/;
+s/PKCS7err\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_PKCS7, $1)/;
+s/PROPerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_PROP, $1)/;
+s/PROVerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_PROV, $1)/;
+s/RANDerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_RAND, $1)/;
+s/RSAerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_RSA, $1)/;
+s/SM2err\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_SM2, $1)/;
+s/SSLerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_SSL, $1)/;
+s/SYSerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_SYS, $1)/;
+s/TSerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_TS, $1)/;
+s/UIerr\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_UI, $1)/;
+s/X509V3err\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_X509V3, $1)/;
+s/X509err\([A-Z_]+, *([0-9A-Z_]+)\)/ERR_raise(ERR_LIB_X509, $1)/;
