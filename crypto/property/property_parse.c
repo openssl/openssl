@@ -91,8 +91,8 @@ static int parse_name(OPENSSL_CTX *ctx, const char *t[], int create,
 
     for (;;) {
         if (!ossl_isalpha(*s)) {
-            PROPerr(PROP_F_PARSE_NAME, PROP_R_NOT_AN_IDENTIFIER);
-            ERR_add_error_data(2, "HERE-->", *t);
+            ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_AN_IDENTIFIER,
+                           "HERE-->%s", *t);
             return 0;
         }
         do {
@@ -112,8 +112,7 @@ static int parse_name(OPENSSL_CTX *ctx, const char *t[], int create,
     }
     name[i] = '\0';
     if (err) {
-        PROPerr(PROP_F_PARSE_NAME, PROP_R_NAME_TOO_LONG);
-        ERR_add_error_data(2, "HERE-->", *t);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_NAME_TOO_LONG, "HERE-->%s", *t);
         return 0;
     }
     *t = skip_space(s);
@@ -132,8 +131,8 @@ static int parse_number(const char *t[], PROPERTY_DEFINITION *res)
         v = v * 10 + (*s++ - '0');
     } while (ossl_isdigit(*s));
     if (!ossl_isspace(*s) && *s != '\0' && *s != ',') {
-        PROPerr(PROP_F_PARSE_NUMBER, PROP_R_NOT_A_DECIMAL_DIGIT);
-        ERR_add_error_data(2, "HERE-->", *t);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_A_DECIMAL_DIGIT,
+                       "HERE-->%s", *t);
         return 0;
     }
     *t = skip_space(s);
@@ -157,8 +156,8 @@ static int parse_hex(const char *t[], PROPERTY_DEFINITION *res)
             v += ossl_tolower(*s) - 'a';
     } while (ossl_isxdigit(*++s));
     if (!ossl_isspace(*s) && *s != '\0' && *s != ',') {
-        PROPerr(PROP_F_PARSE_HEX, PROP_R_NOT_AN_HEXADECIMAL_DIGIT);
-        ERR_add_error_data(2, "HERE-->", *t);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_AN_HEXADECIMAL_DIGIT,
+                       "HERE-->%s", *t);
         return 0;
     }
     *t = skip_space(s);
@@ -178,8 +177,8 @@ static int parse_oct(const char *t[], PROPERTY_DEFINITION *res)
         v = (v << 3) + (*s - '0');
     } while (ossl_isdigit(*++s) && *s != '9' && *s != '8');
     if (!ossl_isspace(*s) && *s != '\0' && *s != ',') {
-        PROPerr(PROP_F_PARSE_OCT, PROP_R_NOT_AN_OCTAL_DIGIT);
-        ERR_add_error_data(2, "HERE-->", *t);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_AN_OCTAL_DIGIT,
+                       "HERE-->%s", *t);
         return 0;
     }
     *t = skip_space(s);
@@ -204,18 +203,13 @@ static int parse_string(OPENSSL_CTX *ctx, const char *t[], char delim,
         s++;
     }
     if (*s == '\0') {
-        char buf[2] = { 0, 0 };
-
-        PROPerr(PROP_F_PARSE_STRING,
-                PROP_R_NO_MATCHING_STRING_DELIMETER);
-        buf[0] = delim;
-        ERR_add_error_data(3, "HERE-->", buf, *t);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_NO_MATCHING_STRING_DELIMETER,
+                       "HERE-->%c%s", delim, *t);
         return 0;
     }
     v[i] = '\0';
     if (err) {
-        PROPerr(PROP_F_PARSE_STRING, PROP_R_STRING_TOO_LONG);
-        ERR_add_error_data(2, "HERE-->", *t);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_STRING_TOO_LONG, "HERE-->%s", *t);
     } else {
         res->v.str_val = ossl_property_value(ctx, v, create);
     }
@@ -242,14 +236,13 @@ static int parse_unquoted(OPENSSL_CTX *ctx, const char *t[],
         s++;
     }
     if (!ossl_isspace(*s) && *s != '\0' && *s != ',') {
-        PROPerr(PROP_F_PARSE_UNQUOTED, PROP_R_NOT_AN_ASCII_CHARACTER);
-        ERR_add_error_data(2, "HERE-->", s);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_NOT_AN_ASCII_CHARACTER,
+                       "HERE-->%s", s);
         return 0;
     }
     v[i] = 0;
     if (err) {
-        PROPerr(PROP_F_PARSE_UNQUOTED, PROP_R_STRING_TOO_LONG);
-        ERR_add_error_data(2, "HERE-->", *t);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_STRING_TOO_LONG, "HERE-->%s", *t);
     } else {
         res->v.str_val = ossl_property_value(ctx, v, create);
     }
@@ -358,14 +351,14 @@ OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *defn)
             goto err;
         prop->oper = PROPERTY_OPER_EQ;
         if (prop->name_idx == 0) {
-            PROPerr(PROP_F_OSSL_PARSE_PROPERTY, PROP_R_PARSE_FAILED);
-            ERR_add_error_data(2, "Unknown name HERE-->", start);
+            ERR_raise_data(ERR_LIB_PROP, PROP_R_PARSE_FAILED,
+                           "Unknown name HERE-->%s", start);
             goto err;
         }
         if (match_ch(&s, '=')) {
             if (!parse_value(ctx, &s, prop, 1)) {
-                PROPerr(PROP_F_OSSL_PARSE_PROPERTY, PROP_R_NO_VALUE);
-                ERR_add_error_data(2, "HERE-->", start);
+                ERR_raise_data(ERR_LIB_PROP, PROP_R_NO_VALUE,
+                               "HERE-->%s", start);
                 goto err;
             }
         } else {
@@ -380,8 +373,8 @@ OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *defn)
         done = !match_ch(&s, ',');
     }
     if (*s != '\0') {
-        PROPerr(PROP_F_OSSL_PARSE_PROPERTY, PROP_R_TRAILING_CHARACTERS);
-        ERR_add_error_data(2, "HERE-->", s);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_TRAILING_CHARACTERS,
+                       "HERE-->%s", s);
         goto err;
     }
     res = stack_to_property_list(sk);
@@ -442,8 +435,8 @@ skip_value:
         done = !match_ch(&s, ',');
     }
     if (*s != '\0') {
-        PROPerr(PROP_F_OSSL_PARSE_QUERY, PROP_R_TRAILING_CHARACTERS);
-        ERR_add_error_data(2, "HERE-->", s);
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_TRAILING_CHARACTERS,
+                       "HERE-->%s", s);
         goto err;
     }
     res = stack_to_property_list(sk);
