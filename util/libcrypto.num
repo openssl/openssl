@@ -4700,3 +4700,7 @@ EVP_CIPHER_do_all_ex                    4805	3_0_0	EXIST::FUNCTION:
 EVP_MD_do_all_ex                        4806	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_provider                    4807	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_available                 4808	3_0_0	EXIST::FUNCTION:
+ERR_new                                 4809	3_0_0	EXIST::FUNCTION:
+ERR_set_debug                           4810	3_0_0	EXIST::FUNCTION:
+ERR_set_error                           4811	3_0_0	EXIST::FUNCTION:
+ERR_vset_error                          4812	3_0_0	EXIST::FUNCTION:

@@ -236,6 +236,15 @@ typedef struct ERR_string_data_st {
 
 DEFINE_LHASH_OF(ERR_STRING_DATA);
 
+/* 12 lines and some on an 80 column terminal */
+#define ERR_MAX_DATA_SIZE       1024
+
+/* Building blocks */
+void ERR_new(void);
+void ERR_set_debug(const char *file, int line, const char *func);
+void ERR_set_error(int lib, int reason, const char *fmt, ...);
+void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
+
 void ERR_put_error(int lib, int func, int reason, const char *file, int line);
 void ERR_put_func_error(int lib, const char *func, int reason,
                         const char *file, int line);
