@@ -50,6 +50,7 @@ typedef struct err_state_st {
     int err_data_flags[ERR_NUM_ERRORS];
     const char *err_file[ERR_NUM_ERRORS];
     int err_line[ERR_NUM_ERRORS];
+    const char *err_func[ERR_NUM_ERRORS];
     int top, bottom;
 } ERR_STATE;
 
