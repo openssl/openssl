@@ -157,19 +157,17 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_final,
                      unsigned char *out, size_t *outl, size_t outsz))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_digest,
                     (void *provctx, const unsigned char *in, size_t inl,
-                     unsigned char *out, size_t *out_l, size_t outsz))
+                     unsigned char *out, size_t *outl, size_t outsz))
 
-OSSL_CORE_MAKE_FUNC(void, OP_digest_cleanctx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(void, OP_digest_freectx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *dctx))
 
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_set_params,
-                    (void *vctx, const OSSL_PARAM params[]))
+                    (void *dctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params,
-                    (void *vctx, OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(unsigned long, OP_cipher_get_flags, (void))
+                    (void *dctx, OSSL_PARAM params[]))
 
 /* Symmetric Ciphers */
 
