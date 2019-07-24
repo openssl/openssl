@@ -22,6 +22,7 @@
 #include "internal/ctype.h"
 #include "internal/constant_time_locl.h"
 #include "e_os.h"
+#include "err_locl.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -235,40 +236,6 @@ static void build_SYS_str_reasons(void)
 }
 #endif
 
-#define err_get_slot(p) \
-    do { \
-        (p)->top = ((p)->top + 1) % ERR_NUM_ERRORS; \
-        if ((p)->top == (p)->bottom) \
-            (p)->bottom = ((p)->bottom + 1) % ERR_NUM_ERRORS; \
-    } while (0)
-
-#define err_clear_data(p, i, deall)                             \
-        do {                                                    \
-            if ((p)->err_data_flags[i] & ERR_TXT_MALLOCED) {    \
-                if (deall) {                                    \
-                    OPENSSL_free((p)->err_data[i]);             \
-                    (p)->err_data[i] = NULL;                    \
-                    (p)->err_data_size[i] = 0;                  \
-                    (p)->err_data_flags[i] = 0;                 \
-                } else if ((p)->err_data[i] != NULL) {          \
-                    (p)->err_data[i][0] = '\0';                 \
-                }                                               \
-            } else {                                            \
-                (p)->err_data[i] = NULL;                        \
-                (p)->err_data_size[i] = 0;                      \
-                (p)->err_data_flags[i] = 0;                     \
-            }                                                   \
-        } while (0)
-
-#define err_clear(p, i, deall) \
-        do { \
-            err_clear_data((p), (i), (deall)); \
-            (p)->err_flags[i] = 0; \
-            (p)->err_buffer[i] = 0; \
-            (p)->err_file[i] = NULL; \
-            (p)->err_line[i] = -1; \
-        } while (0)
-
 static void ERR_STATE_free(ERR_STATE *s)
 {
     int i;
@@ -424,9 +391,6 @@ void ERR_put_error(int lib, int func, int reason, const char *file, int line)
 
     err_get_slot(es);
     err_clear(es, es->top, 0);
-    es->err_buffer[es->top] = ERR_PACK(lib, func, reason);
-    es->err_file[es->top] = file;
-    es->err_line[es->top] = line;
 }
 
 void ERR_clear_error(void)
@@ -789,18 +753,13 @@ static int err_set_error_data_int(char *data, size_t size, int flags,
                                   int deallocate)
 {
     ERR_STATE *es;
-    int i;
 
     es = ERR_get_state();
     if (es == NULL)
         return 0;
 
-    i = es->top;
-
     err_clear_data(es, es->top, deallocate);
-    es->err_data[i] = data;
-    es->err_data_size[i] = size;
-    es->err_data_flags[i] = flags;
+    err_set_data(es, es->top, data, size, flags);
 
     return 1;
 }
