@@ -35,8 +35,8 @@
  ./Configure defaults to '/usr/local/ssl' as installation top.  This is
  suitable for Unix, but not for Windows, where this usually is a world
  writable directory and therefore accessible for change by untrusted users.
- It is therefore recommended to set your own --prefix or --openssldir
- (see the examples below)
+ It is therefore recommended to set your own --prefix or --openssldir to
+ some location that is not world writeable (see the example above)
 
  Compiling procedure
  -------------------
