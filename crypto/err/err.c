@@ -779,7 +779,8 @@ int ERR_get_next_error_library(void)
     return ret;
 }
 
-static int err_set_error_data_int(char *data, size_t size, int flags)
+static int err_set_error_data_int(char *data, size_t size, int flags,
+                                  int deallocate)
 {
     ERR_STATE *es;
     int i;
@@ -790,6 +791,7 @@ static int err_set_error_data_int(char *data, size_t size, int flags)
 
     i = es->top;
 
+    err_clear_data(es, es->top, deallocate);
     es->err_data[i] = data;
     es->err_data_size[i] = size;
     es->err_data_flags[i] = flags;
@@ -802,9 +804,18 @@ void ERR_set_error_data(char *data, int flags)
     /*
      * This function is void so we cannot propagate the error return. Since it
      * is also in the public API we can't change the return type.
+     *
+     * We estimate the size of the data.  If it's not flagged as allocated,
+     * then this is safe, and if it is flagged as allocated, then our size
+     * may be smaller than the actual allocation, but that doesn't matter
+     * too much, the buffer will remain untouched or will eventually be
+     * reallocated to a new size.
+     *
+     * callers should be adviced that this function takes over ownership of
+     * the allocated memory, i.e. they can't count on the pointer to remain
+     * valid.
      */
-    err_clear_data(es, i, 1);
-    err_set_error_data_int(data, flags);
+    err_set_error_data_int(data, strlen(data) + 1, flags, 1);
 }
 
 void ERR_add_error_data(int num, ...)
@@ -869,7 +880,7 @@ void ERR_add_error_vdata(int num, va_list args)
         }
         OPENSSL_strlcat(str, arg, (size_t)size + 1);
     }
-    if (!err_set_error_data_int(str, size, flags))
+    if (!err_set_error_data_int(str, size, flags, 0))
         OPENSSL_free(str);
 }
 
