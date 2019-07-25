@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* TODO: When ERR_STATE becomes opaque, this musts be removed */
+#define OSSL_FORCE_ERR_STATE
+
 #include <string.h>
 #include <openssl/err.h>
 #include "err_locl.h"

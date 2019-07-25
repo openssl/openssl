@@ -38,11 +38,12 @@ extern "C" {
 # define ERR_TXT_MALLOCED        0x01
 # define ERR_TXT_STRING          0x02
 
-# define ERR_FLAG_MARK           0x01
-# define ERR_FLAG_CLEAR          0x02
+# if !OPENSSL_API_3 || defined(OSSL_FORCE_ERR_STATE)
+#  define ERR_FLAG_MARK           0x01
+#  define ERR_FLAG_CLEAR          0x02
 
-# define ERR_NUM_ERRORS  16
-typedef struct err_state_st {
+#  define ERR_NUM_ERRORS  16
+struct err_state_st {
     int err_flags[ERR_NUM_ERRORS];
     unsigned long err_buffer[ERR_NUM_ERRORS];
     char *err_data[ERR_NUM_ERRORS];
@@ -52,7 +53,8 @@ typedef struct err_state_st {
     int err_line[ERR_NUM_ERRORS];
     const char *err_func[ERR_NUM_ERRORS];
     int top, bottom;
-} ERR_STATE;
+};
+# endif
 
 /* library */
 # define ERR_LIB_NONE            1
