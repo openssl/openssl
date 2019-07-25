@@ -49,7 +49,10 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_CIPHER_OPERATION_FAILED                   102
 # define PROV_R_FAILED_TO_GET_PARAMETER                   103
 # define PROV_R_FAILED_TO_SET_PARAMETER                   104
+# define PROV_R_INVALID_AAD                               108
+# define PROV_R_INVALID_IVLEN                             109
 # define PROV_R_INVALID_KEYLEN                            105
+# define PROV_R_INVALID_TAG                               110
 # define PROV_R_OUTPUT_BUFFER_TOO_SMALL                   106
 # define PROV_R_WRONG_FINAL_BLOCK_LENGTH                  107
 
