@@ -46,6 +46,7 @@ typedef struct err_state_st {
     int err_flags[ERR_NUM_ERRORS];
     unsigned long err_buffer[ERR_NUM_ERRORS];
     char *err_data[ERR_NUM_ERRORS];
+    size_t err_data_size[ERR_NUM_ERRORS];
     int err_data_flags[ERR_NUM_ERRORS];
     const char *err_file[ERR_NUM_ERRORS];
     int err_line[ERR_NUM_ERRORS];
