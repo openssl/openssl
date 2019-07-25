@@ -37,7 +37,6 @@ extern "C" {
 
 # define ERR_TXT_MALLOCED        0x01
 # define ERR_TXT_STRING          0x02
-# define ERR_TXT_IGNORE          0x04
 
 # define ERR_FLAG_MARK           0x01
 # define ERR_FLAG_CLEAR          0x02

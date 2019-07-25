@@ -242,15 +242,22 @@ static void build_SYS_str_reasons(void)
             (p)->bottom = ((p)->bottom + 1) % ERR_NUM_ERRORS; \
     } while (0)
 
-#define err_clear_data(p, i, deall) \
-        do { \
-            if (deall && ((p)->err_data_flags[i] & ERR_TXT_MALLOCED)) { \
-                OPENSSL_free((p)->err_data[i]); \
-                (p)->err_data[i] = NULL; \
-                (p)->err_data_size[i] = 0; \
-                (p)->err_data_flags[i] = 0; \
-            } \
-            (p)->err_data_flags[i] |= ERR_TXT_IGNORE; \
+#define err_clear_data(p, i, deall)                             \
+        do {                                                    \
+            if ((p)->err_data_flags[i] & ERR_TXT_MALLOCED) {    \
+                if (deall) {                                    \
+                    OPENSSL_free((p)->err_data[i]);             \
+                    (p)->err_data[i] = NULL;                    \
+                    (p)->err_data_size[i] = 0;                  \
+                    (p)->err_data_flags[i] = 0;                 \
+                } else if ((p)->err_data[i] != NULL) {          \
+                    (p)->err_data[i][0] = '\0';                 \
+                }                                               \
+            } else {                                            \
+                (p)->err_data[i] = NULL;                        \
+                (p)->err_data_size[i] = 0;                      \
+                (p)->err_data_flags[i] = 0;                     \
+            }                                                   \
         } while (0)
 
 #define err_clear(p, i, deall) \
@@ -554,8 +561,7 @@ static unsigned long get_error_values(int inc, int top, const char **file,
             err_clear_data(es, i, 0);
         }
     } else {
-        if (es->err_data[i] == NULL
-            || (es->err_data_flags[i] & ERR_TXT_IGNORE)) {
+        if (es->err_data[i] == NULL) {
             *data = "";
             if (flags != NULL)
                 *flags = 0;
@@ -841,14 +847,21 @@ void ERR_add_error_vdata(int num, va_list args)
 
     /*
      * If err_data is allocated already, re-use the space.
-     * If it's flagged to be ignored, it means it's unused, so clear it
      * Otherwise, allocate a small new buffer.
      */
     if ((es->err_data_flags[i] & flags) == flags) {
         str = es->err_data[i];
         size = es->err_data_size[i];
-        if (es->err_data_flags[i] & ERR_TXT_IGNORE)
-            str[0] = '\0';
+
+        /*
+         * To protect the string we just grabbed from tampering by other
+         * functions we may call, or to protect them from freeing a pointer
+         * that may no longer be valid at that point, we clear away the
+         * data pointer and the flags.  We will set them again at the end
+         * of this function.
+         */
+        es->err_data[i] = NULL;
+        es->err_data_flags[i] = 0;
     } else if ((str = OPENSSL_malloc(size = 81)) == NULL) {
         return;
     } else {
@@ -871,12 +884,6 @@ void ERR_add_error_vdata(int num, va_list args)
                 return;
             }
             str = p;
-
-            /*
-             * At this point, the original pointer is incorrect, so we need
-             * to make sure no attempt is made to free it (again).
-             */
-            es->err_data[i] = NULL;
         }
         OPENSSL_strlcat(str, arg, (size_t)size + 1);
     }
