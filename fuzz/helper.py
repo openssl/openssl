@@ -9,12 +9,15 @@
 
 """Fuzzing helper, creates and uses corpus/crash directories.
 
-fuzzer.py <fuzzer> <extra fuzzer arguments>
+helper.py <fuzzer> <extra fuzzer arguments>
 """
 
 import os
 import subprocess
 import sys
+
+if len(sys.argv) < 2:
+    exit("Please provide a <fuzzer> argument as one of the executables in fuzz/")
 
 FUZZER = sys.argv[1]
 
@@ -44,8 +47,9 @@ def main():
     _add(FUZZER + "-seed")
 
     cmd = ([os.path.abspath(os.path.join(THIS_DIR, FUZZER))]  + sys.argv[2:]
-           + ["-artifact_prefix=" + corpora[1] + "/"] + corpora)
+               + ["-artifact_prefix=" + corpora[1] + "/"] + corpora)
     print(" ".join(cmd))
+    
     subprocess.call(cmd)
 
 if __name__ == "__main__":
