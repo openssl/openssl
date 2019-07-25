@@ -118,10 +118,10 @@ static int generic_aes_gcm_init_key(PROV_GCM_CTX *ctx, const unsigned char *key,
 # ifdef HWAES_CAPABLE
     if (HWAES_CAPABLE) {
 #  ifdef HWAES_ctr32_encrypt_blocks
-        SET_KEY_CTR_FN(AES, HWAES_set_encrypt_key, HWAES_encrypt,
+        SET_KEY_CTR_FN(ks, HWAES_set_encrypt_key, HWAES_encrypt,
                        HWAES_ctr32_encrypt_blocks);
 #  else
-        SET_KEY_CTR_FN(AES, HWAES_set_encrypt_key, HWAES_encrypt, NULL);
+        SET_KEY_CTR_FN(ks, HWAES_set_encrypt_key, HWAES_encrypt, NULL);
 #  endif /* HWAES_ctr32_encrypt_blocks */
     } else
 # endif /* HWAES_CAPABLE */
