@@ -9,7 +9,12 @@
 
  Changes between 1.0.2s and 1.0.2t [xx XXX xxxx]
 
-  *)
+  *) Document issue with installation paths in diverse Windows builds
+
+     '/usr/local/ssl' is an unsafe prefix for location to install OpenSSL
+     binaries and run-time config file.
+     (CVE-2019-1552)
+     [Richard Levitte]
 
  Changes between 1.0.2r and 1.0.2s [28 May 2019]
 
