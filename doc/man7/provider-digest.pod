@@ -74,7 +74,7 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_digest_size          OSSL_FUNC_DIGEST_SIZE
  OP_digest_block_size    OSSL_FUNC_DIGEST_BLOCK_SIZE
  OP_digest_set_params    OSSL_FUNC_DIGEST_SET_PARAMS
- OP_digest_get_params    SSL_FUNC_DIGEST_GET_PARAMS
+ OP_digest_get_params    OSSL_FUNC_DIGEST_GET_PARAMS
 
 A digest algorithm implementation may not implement all of these functions.
 In order to be useable all or none of OP_digest_newctx, OP_digest_freectx,
