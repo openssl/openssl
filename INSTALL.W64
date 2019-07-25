@@ -30,6 +30,14 @@
    Neither of these is actually big deal and hardly encountered
    in real-life applications.
 
+ ### Default install and config paths
+
+ ./Configure defaults to '/usr/local/ssl' as installation top.  This is
+ suitable for Unix, but not for Windows, where this usually is a world
+ writable directory and therefore accessible for change by untrusted users.
+ It is therefore recommended to set your own --prefix or --openssldir to
+ some location that is not world writeable (see the example above)
+
  Compiling procedure
  -------------------
 
@@ -43,7 +51,7 @@
 
  To build for Win64/x64:
 
- > perl Configure VC-WIN64A
+ > perl Configure VC-WIN64A --prefix=c:\some\openssl\dir
  > ms\do_win64a
  > nmake -f ms\ntdll.mak
  > cd out32dll
@@ -51,7 +59,7 @@
 
  To build for Win64/IA64:
 
- > perl Configure VC-WIN64I
+ > perl Configure VC-WIN64I --prefix=c:\some\openssl\dir
  > ms\do_win64i
  > nmake -f ms\ntdll.mak
  > cd out32dll

@@ -33,8 +33,18 @@
  running in a DOS box under Windows. If so, just close the BASH
  shell, go back to Windows, and restart BASH. Then run "make" again.
 
- RUN-TIME CAVEAT LECTOR
- --------------
+ CAVEAT LECTOR
+ -------------
+
+ ### Default install and config paths
+
+ ./Configure defaults to '/usr/local/ssl' as installation top.  This is
+ suitable for Unix, but not for Windows, where this usually is a world
+ writable directory and therefore accessible for change by untrusted users.
+ It is therefore recommended to set your own --prefix or --openssldir to
+ some location that is not world writeable (see the example above)
+
+ ### Entropy
 
  Quoting FAQ:
 

@@ -34,6 +34,17 @@
  get it all to work. See the trouble shooting section later on for if (when?)
  it goes wrong.
 
+ CAVEAT LECTOR
+ -------------
+
+ ### Default install and config paths
+
+ ./Configure defaults to '/usr/local/ssl' as installation top.  This is
+ suitable for Unix, but not for Windows, where this usually is a world
+ writable directory and therefore accessible for change by untrusted users.
+ It is therefore recommended to set your own --prefix or --openssldir to
+ some location that is not world writeable (see the example above)
+
  Visual C++
  ----------
 
@@ -104,7 +115,7 @@
  ---------------------
 
  * Configure for building with Borland Builder:
-   > perl Configure BC-32
+   > perl Configure BC-32 --prefix=c:\some\openssl\dir
 
  * Create the appropriate makefile
    > ms\do_nasm
@@ -196,7 +207,7 @@
 
  * Compile OpenSSL:
 
-   $ ./config
+   $ ./config --prefix=c:/some/openssl/dir
    [...]
    $ make
    [...]
@@ -206,7 +217,11 @@
    and openssl.exe application in apps directory.
 
    It is also possible to cross-compile it on Linux by configuring
-   with './Configure --cross-compile-prefix=i386-mingw32- mingw ...'.
+   like this:
+
+   $ ./Configure --cross-compile-prefix=i386-mingw32- \
+     --prefix=c:/some/openssl/dir mingw ...
+
    'make test' is naturally not applicable then.
 
    libcrypto.a and libssl.a are the static libraries. To use the DLLs,
@@ -239,6 +254,9 @@
 	$ copy /b out32dll\ssleay32.dll c:\openssl\bin
 	$ copy /b out32dll\libeay32.dll c:\openssl\bin
 	$ copy /b out32dll\openssl.exe  c:\openssl\bin
+
+      ("c:\openssl" should be whatever you specified to --prefix when
+      configuring the build)
 
       Of course, you can choose another device than c:.  C: is used here
       because that's usually the first (and often only) harddisk device.
