@@ -1216,9 +1216,8 @@ static void *evp_cipher_from_dispatch(const char *name,
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "encrypt" functions, or a complete set of "decrypt"
-         * functions, or a single "cipher" function. In all cases we need a
-         * complete set of context management functions, as well as the
-         * blocksize, iv_length and key_length functions.
+         * functions, or a single "cipher" function. In all cases we need both
+         * the "newctx" and "freectx" functions.
          */
         EVP_CIPHER_meth_free(cipher);
         EVPerr(EVP_F_EVP_CIPHER_FROM_DISPATCH, EVP_R_INVALID_PROVIDER_FUNCTIONS);
