@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* TODO: When ERR_STATE becomes opaque, this musts be removed */
+#define OSSL_FORCE_ERR_STATE
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -23,6 +26,9 @@
 #include "internal/constant_time_locl.h"
 #include "e_os.h"
 #include "err_locl.h"
+
+/* Forward declaration in case it's not published because of configuration */
+ERR_STATE *ERR_get_state(void);
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
