@@ -235,18 +235,27 @@ static void build_SYS_str_reasons(void)
 }
 #endif
 
-#define err_clear_data(p, i) \
+#define err_get_slot(p) \
+    do { \
+        (p)->top = ((p)->top + 1) % ERR_NUM_ERRORS; \
+        if ((p)->top == (p)->bottom) \
+            (p)->bottom = ((p)->bottom + 1) % ERR_NUM_ERRORS; \
+    } while (0)
+
+#define err_clear_data(p, i, deall) \
         do { \
-            if ((p)->err_data_flags[i] & ERR_TXT_MALLOCED) {\
+            if (deall && ((p)->err_data_flags[i] & ERR_TXT_MALLOCED)) { \
                 OPENSSL_free((p)->err_data[i]); \
                 (p)->err_data[i] = NULL; \
+                (p)->err_data_size[i] = 0; \
+                (p)->err_data_flags[i] = 0; \
             } \
-            (p)->err_data_flags[i] = 0; \
+            (p)->err_data_flags[i] |= ERR_TXT_IGNORE; \
         } while (0)
 
-#define err_clear(p, i) \
+#define err_clear(p, i, deall) \
         do { \
-            err_clear_data(p, i); \
+            err_clear_data((p), (i), (deall)); \
             (p)->err_flags[i] = 0; \
             (p)->err_buffer[i] = 0; \
             (p)->err_file[i] = NULL; \
@@ -260,7 +269,7 @@ static void ERR_STATE_free(ERR_STATE *s)
     if (s == NULL)
         return;
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
-        err_clear_data(s, i);
+        err_clear_data(s, i, 1);
     }
     OPENSSL_free(s);
 }
@@ -406,14 +415,11 @@ void ERR_put_error(int lib, int func, int reason, const char *file, int line)
     if (es == NULL)
         return;
 
-    es->top = (es->top + 1) % ERR_NUM_ERRORS;
-    if (es->top == es->bottom)
-        es->bottom = (es->bottom + 1) % ERR_NUM_ERRORS;
-    es->err_flags[es->top] = 0;
+    err_get_slot(es);
+    err_clear(es, es->top, 0);
     es->err_buffer[es->top] = ERR_PACK(lib, func, reason);
     es->err_file[es->top] = file;
     es->err_line[es->top] = line;
-    err_clear_data(es, es->top);
 }
 
 void ERR_clear_error(void)
@@ -426,7 +432,7 @@ void ERR_clear_error(void)
         return;
 
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
-        err_clear(es, i);
+        err_clear(es, i, 0);
     }
     es->top = es->bottom = 0;
 }
@@ -506,14 +512,14 @@ static unsigned long get_error_values(int inc, int top, const char **file,
 
     while (es->bottom != es->top) {
         if (es->err_flags[es->top] & ERR_FLAG_CLEAR) {
-            err_clear(es, es->top);
+            err_clear(es, es->top, 0);
             es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
             continue;
         }
         i = (es->bottom + 1) % ERR_NUM_ERRORS;
         if (es->err_flags[i] & ERR_FLAG_CLEAR) {
             es->bottom = i;
-            err_clear(es, es->bottom);
+            err_clear(es, es->bottom, 0);
             continue;
         }
         break;
@@ -545,10 +551,11 @@ static unsigned long get_error_values(int inc, int top, const char **file,
 
     if (data == NULL) {
         if (inc) {
-            err_clear_data(es, i);
+            err_clear_data(es, i, 0);
         }
     } else {
-        if (es->err_data[i] == NULL) {
+        if (es->err_data[i] == NULL
+            || (es->err_data_flags[i] & ERR_TXT_IGNORE)) {
             *data = "";
             if (flags != NULL)
                 *flags = 0;
@@ -772,7 +779,7 @@ int ERR_get_next_error_library(void)
     return ret;
 }
 
-static int err_set_error_data_int(char *data, int flags)
+static int err_set_error_data_int(char *data, size_t size, int flags)
 {
     ERR_STATE *es;
     int i;
@@ -783,8 +790,8 @@ static int err_set_error_data_int(char *data, int flags)
 
     i = es->top;
 
-    err_clear_data(es, i);
     es->err_data[i] = data;
+    es->err_data_size[i] = size;
     es->err_data_flags[i] = flags;
 
     return 1;
@@ -796,6 +803,7 @@ void ERR_set_error_data(char *data, int flags)
      * This function is void so we cannot propagate the error return. Since it
      * is also in the public API we can't change the return type.
      */
+    err_clear_data(es, i, 1);
     err_set_error_data_int(data, flags);
 }
 
@@ -810,7 +818,8 @@ void ERR_add_error_data(int num, ...)
 void ERR_add_error_vdata(int num, va_list args)
 {
     int i, len, size;
-    char *str, *p, *arg;
+    int flags = ERR_TXT_MALLOCED | ERR_TXT_STRING;
+    char *str, *arg;
     ERR_STATE *es;
 
     /* Get the current error data; if an allocated string get it. */
@@ -818,16 +827,23 @@ void ERR_add_error_vdata(int num, va_list args)
     if (es == NULL)
         return;
     i = es->top;
-    p = es->err_data_flags[i] == (ERR_TXT_MALLOCED | ERR_TXT_STRING)
-            ? es->err_data[i] : "";
 
-    /* Start with initial (or empty) string and allocate a new buffer */
-    size = 80 + strlen(p);
-    if ((str = OPENSSL_malloc(size + 1)) == NULL) {
-        /* ERRerr(ERR_F_ERR_ADD_ERROR_VDATA, ERR_R_MALLOC_FAILURE); */
+    /*
+     * If err_data is allocated already, re-use the space.
+     * If it's flagged to be ignored, it means it's unused, so clear it
+     * Otherwise, allocate a small new buffer.
+     */
+    if ((es->err_data_flags[i] & flags) == flags) {
+        str = es->err_data[i];
+        size = es->err_data_size[i];
+        if (es->err_data_flags[i] & ERR_TXT_IGNORE)
+            str[0] = '\0';
+    } else if ((str = OPENSSL_malloc(size = 81)) == NULL) {
         return;
+    } else {
+        str[0] = '\0';
     }
-    strcpy(str, p);
+    len = strlen(str);
 
     for (len = 0; --num >= 0; ) {
         arg = va_arg(args, char *);
@@ -835,6 +851,8 @@ void ERR_add_error_vdata(int num, va_list args)
             arg = "<NULL>";
         len += strlen(arg);
         if (len > size) {
+            char *p;
+
             size = len + 20;
             p = OPENSSL_realloc(str, size + 1);
             if (p == NULL) {
@@ -842,10 +860,16 @@ void ERR_add_error_vdata(int num, va_list args)
                 return;
             }
             str = p;
+
+            /*
+             * At this point, the original pointer is incorrect, so we need
+             * to make sure no attempt is made to free it (again).
+             */
+            es->err_data[i] = NULL;
         }
         OPENSSL_strlcat(str, arg, (size_t)size + 1);
     }
-    if (!err_set_error_data_int(str, ERR_TXT_MALLOCED | ERR_TXT_STRING))
+    if (!err_set_error_data_int(str, size, flags))
         OPENSSL_free(str);
 }
 
@@ -873,7 +897,7 @@ int ERR_pop_to_mark(void)
 
     while (es->bottom != es->top
            && (es->err_flags[es->top] & ERR_FLAG_MARK) == 0) {
-        err_clear(es, es->top);
+        err_clear(es, es->top, 0);
         es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
     }
 
