@@ -112,7 +112,7 @@ void setup_test_framework()
             seed = (int)time(NULL);
         test_printf_stdout("%*s# RAND SEED %d\n", subtest_level(), "", seed);
         test_flush_stdout();
-        srand(seed);
+        test_random_seed(seed);
     }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -190,7 +190,7 @@ int run_tests(const char *test_prog_name)
         permute[i] = i;
     if (seed != 0)
         for (i = num_tests - 1; i >= 1; i--) {
-            j = rand() % (1 + i);
+            j = test_random() % (1 + i);
             ii = permute[j];
             permute[j] = permute[i];
             permute[i] = ii;
@@ -228,7 +228,7 @@ int run_tests(const char *test_prog_name)
                 jstep = 1;
             else
                 do
-                    jstep = rand() % all_tests[i].num;
+                    jstep = test_random() % all_tests[i].num;
                 while (jstep == 0 || gcd(all_tests[i].num, jstep) != 1);
 
             for (jj = 0; jj < all_tests[i].num; jj++) {

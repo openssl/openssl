@@ -454,4 +454,12 @@ void test_clearstanza(STANZA *s);
  */
 char *glue_strings(const char *list[], size_t *out_len);
 
+/*
+ * Pseudo random number generator of low quality but having repeatability
+ * across platforms.  The two calls are replacements for random(3) and
+ * srandom(3).
+ */
+uint32_t test_random(void);
+void test_random_seed(uint32_t sd);
+
 #endif                          /* HEADER_TESTUTIL_H */
