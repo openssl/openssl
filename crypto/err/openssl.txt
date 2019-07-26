@@ -2421,6 +2421,8 @@ EVP_R_BAD_DECRYPT:100:bad decrypt
 EVP_R_BAD_KEY_LENGTH:195:bad key length
 EVP_R_BUFFER_TOO_SMALL:155:buffer too small
 EVP_R_CAMELLIA_KEY_SETUP_FAILED:157:camellia key setup failed
+EVP_R_CANNOT_GET_PARAMETERS:197:cannot get parameters
+EVP_R_CANNOT_SET_PARAMETERS:198:cannot set parameters
 EVP_R_CIPHER_NOT_GCM_MODE:184:cipher not gcm mode
 EVP_R_CIPHER_PARAMETER_ERROR:122:cipher parameter error
 EVP_R_COMMAND_NOT_SUPPORTED:147:command not supported
