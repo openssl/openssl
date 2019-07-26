@@ -365,7 +365,7 @@ void ERR_clear_error(void)
     int i;
     ERR_STATE *es;
 
-    es = ERR_get_state();
+    es = err_get_state_int();
     if (es == NULL)
         return;
 
@@ -488,7 +488,7 @@ static unsigned long get_error_values(int inc, int top, const char **file,
     ERR_STATE *es;
     unsigned long ret;
 
-    es = ERR_get_state();
+    es = err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -685,7 +685,7 @@ DEFINE_RUN_ONCE_STATIC(err_do_init)
     return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
 }
 
-ERR_STATE *ERR_get_state(void)
+ERR_STATE *err_get_state_int(void)
 {
     ERR_STATE *state;
     int saveerrno = get_last_sys_error();
@@ -723,6 +723,14 @@ ERR_STATE *ERR_get_state(void)
     set_sys_error(saveerrno);
     return state;
 }
+
+#if !OPENSSL_API_3
+ERR_STATE *ERR_get_state(void)
+{
+    return err_get_state_int();
+}
+#endif
+
 
 /*
  * err_shelve_state returns the current thread local error state
@@ -786,7 +794,7 @@ static int err_set_error_data_int(char *data, size_t size, int flags,
 {
     ERR_STATE *es;
 
-    es = ERR_get_state();
+    es = err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -831,7 +839,7 @@ void ERR_add_error_vdata(int num, va_list args)
     ERR_STATE *es;
 
     /* Get the current error data; if an allocated string get it. */
-    es = ERR_get_state();
+    es = err_get_state_int();
     if (es == NULL)
         return;
     i = es->top;
@@ -886,7 +894,7 @@ int ERR_set_mark(void)
 {
     ERR_STATE *es;
 
-    es = ERR_get_state();
+    es = err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -900,7 +908,7 @@ int ERR_pop_to_mark(void)
 {
     ERR_STATE *es;
 
-    es = ERR_get_state();
+    es = err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -921,7 +929,7 @@ int ERR_clear_last_mark(void)
     ERR_STATE *es;
     int top;
 
-    es = ERR_get_state();
+    es = err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -942,7 +950,7 @@ void err_clear_last_constant_time(int clear)
     ERR_STATE *es;
     int top;
 
-    es = ERR_get_state();
+    es = err_get_state_int();
     if (es == NULL)
         return;
 

@@ -66,3 +66,5 @@ static ossl_inline void err_clear(ERR_STATE *es, size_t i, int deall)
     es->err_file[i] = NULL;
     es->err_line[i] = -1;
 }
+
+ERR_STATE *err_get_state_int(void);
