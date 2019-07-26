@@ -72,6 +72,10 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
         reason = DSA_R_MISSING_PARAMETERS;
         goto err;
     }
+    if (dsa->priv_key == NULL) {
+        reason = DSA_R_MISSING_PRIVATE_KEY;
+        goto err;
+    }
 
     ret = DSA_SIG_new();
     if (ret == NULL)
@@ -193,6 +197,10 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     /* Reject obviously invalid parameters */
     if (BN_is_zero(dsa->p) || BN_is_zero(dsa->q) || BN_is_zero(dsa->g)) {
         DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_INVALID_PARAMETERS);
+        return 0;
+    }
+    if (dsa->priv_key == NULL) {
+        DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PRIVATE_KEY);
         return 0;
     }
 
