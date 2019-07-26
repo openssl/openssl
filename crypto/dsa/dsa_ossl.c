@@ -72,6 +72,10 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
         reason = DSA_R_MISSING_PARAMETERS;
         goto err;
     }
+    if (dsa->priv_key == NULL) {
+        reason = DSA_R_MISSING_PRIVATE_KEY;
+        goto err;
+    }
 
     ret = DSA_SIG_new();
     if (ret == NULL)
@@ -126,10 +130,6 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     BN_set_flags(tmp, BN_FLG_CONSTTIME);
 
     /* tmp := blind * priv_key * r mod q */
-    if (dsa->priv_key == NULL) {
-        reason = DSA_R_MISSING_PRIVATE_KEY;
-        goto err;
-    }
     if (!BN_mod_mul(tmp, blind, dsa->priv_key, dsa->q, ctx))
         goto err;
     if (!BN_mod_mul(tmp, tmp, ret->r, dsa->q, ctx))
