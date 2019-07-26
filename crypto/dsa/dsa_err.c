@@ -22,6 +22,8 @@ static const ERR_STRING_DATA DSA_str_reasons[] = {
     "invalid digest type"},
     {ERR_PACK(ERR_LIB_DSA, 0, DSA_R_INVALID_PARAMETERS), "invalid parameters"},
     {ERR_PACK(ERR_LIB_DSA, 0, DSA_R_MISSING_PARAMETERS), "missing parameters"},
+    {ERR_PACK(ERR_LIB_DSA, 0, DSA_R_MISSING_PRIVATE_KEY),
+    "missing private key"},
     {ERR_PACK(ERR_LIB_DSA, 0, DSA_R_MODULUS_TOO_LARGE), "modulus too large"},
     {ERR_PACK(ERR_LIB_DSA, 0, DSA_R_NO_PARAMETERS_SET), "no parameters set"},
     {ERR_PACK(ERR_LIB_DSA, 0, DSA_R_PARAMETER_ENCODING_ERROR),
