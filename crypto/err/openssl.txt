@@ -2101,6 +2101,7 @@ DSA_R_DECODE_ERROR:104:decode error
 DSA_R_INVALID_DIGEST_TYPE:106:invalid digest type
 DSA_R_INVALID_PARAMETERS:112:invalid parameters
 DSA_R_MISSING_PARAMETERS:101:missing parameters
+DSA_R_MISSING_PRIVATE_KEY:111:missing private key
 DSA_R_MODULUS_TOO_LARGE:103:modulus too large
 DSA_R_NO_PARAMETERS_SET:107:no parameters set
 DSA_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
@@ -2536,6 +2537,7 @@ RSA_R_KEY_PRIME_NUM_INVALID:165:key prime num invalid
 RSA_R_KEY_SIZE_TOO_SMALL:120:key size too small
 RSA_R_LAST_OCTET_INVALID:134:last octet invalid
 RSA_R_MGF1_DIGEST_NOT_ALLOWED:152:mgf1 digest not allowed
+RSA_R_MISSING_PRIVATE_KEY:179:missing private key
 RSA_R_MODULUS_TOO_LARGE:105:modulus too large
 RSA_R_MP_COEFFICIENT_NOT_INVERSE_OF_R:168:mp coefficient not inverse of r
 RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D:169:mp exponent not congruent to d
