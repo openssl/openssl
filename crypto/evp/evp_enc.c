@@ -1039,7 +1039,7 @@ legacy:
     }
 
     ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
-    if (ret == -1) {
+    if (ret == EVP_CTRL_RET_UNSUPPORTED) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL,
                EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
         return 0;
