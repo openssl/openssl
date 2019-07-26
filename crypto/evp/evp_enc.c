@@ -926,7 +926,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
     params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_KEYLEN, &keylen);
     ok = evp_do_ciph_ctx_setparams(c->cipher, c->provctx, params);
 
-    if (ok != -2)
+    if (ok != EVP_CTRL_RET_UNSUPPORTED)
         return ok;
 
     /* TODO(3.0) legacy code follows */
@@ -960,7 +960,7 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
-    int ret = -2;                /* Unsupported */
+    int ret = EVP_CTRL_RET_UNSUPPORTED;
     int set_params = 1;
     size_t sz;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
@@ -981,7 +981,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
     case EVP_CTRL_INIT: /* TODO(3.0) Purely legacy, no provider counterpart */
     default:
-        return -2;      /* Unsupported */
+        return EVP_CTRL_RET_UNSUPPORTED;
     case EVP_CTRL_GET_IV:
         set_params = 0;
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
