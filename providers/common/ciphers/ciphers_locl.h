@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -43,10 +42,10 @@ typedef struct S390X_kma_params_st {
 
 typedef struct prov_aes_cipher_st PROV_AES_CIPHER;
 
-#define IV_STATE_UNINITIALISED 0  /* initial state in not initialised */
+#define IV_STATE_UNINITIALISED 0  /* initial state is not initialized */
 #define IV_STATE_BUFFERED      1  /* iv has been copied to the iv buffer */
 #define IV_STATE_COPIED        2  /* iv has been copied from the iv buffer */
-#define IV_STATE_FINISHED      3  /* the iv has been used - so dont reuse it */
+#define IV_STATE_FINISHED      3  /* the iv has been used - so don't reuse it */
 
 typedef struct prov_aes_key_st {
     union {

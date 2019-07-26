@@ -488,6 +488,7 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
+int EVP_CIPHER_CTX_cur_iv_length(const EVP_CIPHER_CTX *ctx);
 const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx);
 const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx);
 unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx);

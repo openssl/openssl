@@ -278,11 +278,24 @@ static int aria_gcm_init_key(PROV_GCM_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
+static int aria_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+                              size_t len, unsigned char *out)
+{
+    if (ctx->enc) {
+        if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
+            return 0;
+    } else {
+        if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, len))
+            return 0;
+    }
+    return 1;
+}
+
 static const PROV_GCM_HW aria_gcm = {
     aria_gcm_init_key,
     gcm_setiv,
     gcm_aad_update,
-    gcm_cipher_update,
+    aria_cipher_update,
     gcm_cipher_final,
     gcm_one_shot
 };

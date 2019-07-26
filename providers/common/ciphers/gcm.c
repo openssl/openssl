@@ -59,24 +59,19 @@ static void gcm_deinitctx(PROV_GCM_CTX *ctx)
     OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
 }
 
-/*
- * Note: The passed in ivlen is ignored. since the default is already set OR
- * the user has set the required ivlen.
- */
-
-/* TODO(3.0) Figure out why we pass in default values here that are not used */
 static int gcm_init(void *vctx, const unsigned char *key, size_t default_keylen,
-                    const unsigned char *iv, size_t default_ivlen, int enc)
+                    const unsigned char *iv, size_t ivlen, int enc)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
 
     ctx->enc = enc;
 
     if (iv != NULL) {
-        if (ctx->ivlen < (int)ctx->ivlen_min) {
-            PROVerr(0, ERR_R_INTERNAL_ERROR);
+        if (ivlen < ctx->ivlen_min || ivlen > sizeof(ctx->iv)) {
+            PROVerr(0, PROV_R_INVALID_IVLEN);
             return 0;
         }
+        ctx->ivlen = ivlen;
         memcpy(ctx->iv, iv, ctx->ivlen);
         ctx->iv_state = IV_STATE_BUFFERED;
     }
@@ -109,6 +104,11 @@ static int gcm_ctx_get_params(void *vctx, OSSL_PARAM params[])
     OSSL_PARAM *p;
     size_t sz;
 
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, ctx->ivlen))
+            return 0;
+    }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
         PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);

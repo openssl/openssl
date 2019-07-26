@@ -365,6 +365,11 @@ static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[])
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
     OSSL_PARAM *p;
 
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, AES_BLOCK_SIZE))
+            return 0;
+    }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->pad)) {
         PROVerr(PROV_F_AES_CTX_GET_PARAMS, PROV_R_FAILED_TO_SET_PARAMETER);
