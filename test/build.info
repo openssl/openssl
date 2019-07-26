@@ -22,7 +22,7 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/tap_bio.c \
           testutil/test_cleanup.c testutil/main.c testutil/init.c \
           testutil/options.c testutil/test_options.c \
-          testutil/apps_mem.c $LIBAPPSSRC
+          testutil/apps_mem.c testutil/random.c $LIBAPPSSRC
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
