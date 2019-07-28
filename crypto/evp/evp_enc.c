@@ -264,7 +264,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                                               : EVP_CIPHER_CTX_key_length(ctx),
                                   iv,
                                   iv == NULL ? 0
-                                             : EVP_CIPHER_CTX_cur_iv_length(ctx));
+                                             : EVP_CIPHER_CTX_iv_length(ctx));
     }
 
     if (ctx->cipher->dinit == NULL) {
@@ -278,7 +278,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                                           : EVP_CIPHER_CTX_key_length(ctx),
                               iv,
                               iv == NULL ? 0
-                                         : EVP_CIPHER_CTX_cur_iv_length(ctx));
+                                         : EVP_CIPHER_CTX_iv_length(ctx));
 
     /* TODO(3.0): Remove legacy code below */
  legacy:

@@ -315,11 +315,6 @@ int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
-    return EVP_CIPHER_iv_length(ctx->cipher);
-}
-
-int EVP_CIPHER_CTX_cur_iv_length(const EVP_CIPHER_CTX *ctx)
-{
     int ok, v = EVP_CIPHER_iv_length(ctx->cipher);
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 

@@ -165,6 +165,8 @@ all parameters to NULL except B<type> in an initial call and supply
 the remaining parameters in subsequent calls, all of which have B<type>
 set to NULL. This is done when the default cipher parameters are not
 appropriate.
+For EVP_CIPH_GCM_MODE the IV will be generated internally if it is not
+specified.
 
 EVP_EncryptUpdate() encrypts B<inl> bytes from the buffer B<in> and
 writes the encrypted version to B<out>. This function can be called

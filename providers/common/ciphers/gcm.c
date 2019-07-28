@@ -262,7 +262,6 @@ static int gcm_cipher(void *vctx,
     return 1;
 }
 
-#ifdef FIPS_MODE
 /*
  * See SP800-38D (GCM) Section 8 "Uniqueness requirement on IVS and keys"
  *
@@ -286,7 +285,6 @@ static int gcm_iv_generate(PROV_GCM_CTX *ctx, int offset)
     ctx->iv_gen_rand = 1;
     return 1;
 }
-#endif /* FIPS_MODE */
 
 static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,
@@ -302,7 +300,6 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     if (!ctx->key_set || ctx->iv_state == IV_STATE_FINISHED)
         goto err;
 
-#ifdef FIPS_MODE
     /*
      * FIPS requires generation of AES-GCM IV's inside the FIPS module.
      * The IV can still be set externally (the security policy will state that
@@ -313,10 +310,7 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
         if (!ctx->enc || !gcm_iv_generate(ctx, 0))
             goto err;
     }
-#else
-    if (ctx->iv_state == IV_STATE_UNINITIALISED)
-        goto err;
-#endif
+
     if (ctx->iv_state == IV_STATE_BUFFERED) {
         if (!hw->setiv(ctx, ctx->iv, ctx->ivlen))
             goto err;
