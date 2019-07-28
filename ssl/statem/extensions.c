@@ -1645,9 +1645,9 @@ static int final_early_data(SSL *s, unsigned int context, int sent)
             || s->early_data_state != SSL_EARLY_DATA_ACCEPTING
             || !s->ext.early_data_ok
             || s->hello_retry_request != SSL_HRR_NONE
-            || (s->ctx->allow_early_data_cb != NULL
-                && !s->ctx->allow_early_data_cb(s,
-                                         s->ctx->allow_early_data_cb_data))) {
+            || (s->allow_early_data_cb != NULL
+                && !s->allow_early_data_cb(s,
+                                         s->allow_early_data_cb_data))) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
