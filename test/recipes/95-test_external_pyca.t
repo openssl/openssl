@@ -22,7 +22,8 @@ plan skip_all => "PYCA Cryptography not available"
 plan skip_all => "PYCA tests only available in a shared build"
     if disabled("shared");
 
-plan tests => 1;
+plan skip_all => "PYCA tests are disabled until resolution of issue #8968";
+# plan tests => 1;
 
-ok(run(cmd(["sh", data_file("cryptography.sh")])),
-   "running Python Cryptography tests");
+# ok(run(cmd(["sh", data_file("cryptography.sh")])),
+#    "running Python Cryptography tests");
