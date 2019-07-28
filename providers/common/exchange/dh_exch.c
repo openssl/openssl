@@ -42,22 +42,22 @@ static int dh_init(void *vpdhctx, void *vdh)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
 
+    if (pdhctx == NULL || vdh == NULL || !DH_up_ref(vdh))
+        return 0;
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
-    DH_up_ref(pdhctx->dh);
-
-    return pdhctx->dh != NULL;
+    return 1;
 }
 
 static int dh_set_peer(void *vpdhctx, void *vdh)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
 
+    if (pdhctx == NULL || vdh == NULL || !DH_up_ref(vdh))
+        return 0;
     DH_free(pdhctx->dhpeer);
     pdhctx->dhpeer = vdh;
-    DH_up_ref(pdhctx->dhpeer);
-
-    return pdhctx->dhpeer != NULL;
+    return 1;
 }
 
 static int dh_derive(void *vpdhctx, unsigned char *key, size_t *keylen,
