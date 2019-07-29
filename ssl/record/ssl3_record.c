@@ -1703,7 +1703,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         return 0;
     }
     OSSL_TRACE_BEGIN(TLS) {
-        BIO_printf(trc_out, "dec %ld\n", rr->length);
+        BIO_printf(trc_out, "dec %zd\n", rr->length);
         BIO_dump_indent(trc_out, rr->data, rr->length, 4);
     } OSSL_TRACE_END(TLS);
 

@@ -49,7 +49,7 @@ static void tree_print(BIO *channel,
         curr++;
 
     BIO_printf(channel, "Level print after %s\n", str);
-    BIO_printf(channel, "Printing Up to Level %ld\n",
+    BIO_printf(channel, "Printing Up to Level %zd\n",
                curr - tree->levels);
     for (plev = tree->levels; plev != curr; plev++) {
         int i;

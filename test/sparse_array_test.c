@@ -122,7 +122,7 @@ static void leaf_check_all(ossl_uintmax_t n, char *value, void *arg)
             doall_data->res = 1;
             return;
         }
-    TEST_error("Index %zu with value %s not found", n, value);
+    TEST_error("Index %ju with value %s not found", n, value);
 }
 
 static void leaf_delete(ossl_uintmax_t n, char *value, void *arg)
@@ -138,7 +138,7 @@ static void leaf_delete(ossl_uintmax_t n, char *value, void *arg)
             ossl_sa_char_set(doall_data->sa, n, NULL);
             return;
         }
-    TEST_error("Index %zu with value %s not found", n, value);
+    TEST_error("Index %ju with value %s not found", n, value);
 }
 
 static int test_sparse_array_doall(void)
