@@ -60,7 +60,7 @@ static int dh_set_peer(void *vpdhctx, void *vdh)
     return 1;
 }
 
-static int dh_derive(void *vpdhctx, unsigned char *key, size_t *keylen,
+static int dh_derive(void *vpdhctx, unsigned char *secret, size_t *secretlen,
                      size_t outlen)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
@@ -73,20 +73,20 @@ static int dh_derive(void *vpdhctx, unsigned char *key, size_t *keylen,
         return 0;
 
     dhsize = (size_t)DH_size(pdhctx->dh);
-    if (key == NULL) {
-        *keylen = dhsize;
+    if (secret == NULL) {
+        *secretlen = dhsize;
         return 1;
     }
     if (outlen < dhsize)
         return 0;
 
     DH_get0_key(pdhctx->dhpeer, &pub_key, NULL);
-    ret = (pdhctx->pad) ? DH_compute_key_padded(key, pub_key, pdhctx->dh)
-                        : DH_compute_key(key, pub_key, pdhctx->dh);
+    ret = (pdhctx->pad) ? DH_compute_key_padded(secret, pub_key, pdhctx->dh)
+                        : DH_compute_key(secret, pub_key, pdhctx->dh);
     if (ret <= 0)
         return 0;
 
-    *keylen = ret;
+    *secretlen = ret;
     return 1;
 }
 

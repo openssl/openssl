@@ -302,8 +302,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
 
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_init, (void *ctx, void *provkey))
-OSSL_CORE_MAKE_FUNC(int, OP_keyexch_derive, (void *ctx,  unsigned char *key,
-                                             size_t *keylen, size_t outlen))
+OSSL_CORE_MAKE_FUNC(int, OP_keyexch_derive, (void *ctx,  unsigned char *secret,
+                                             size_t *secretlen, size_t outlen))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_peer, (void *ctx, void *provkey))
 OSSL_CORE_MAKE_FUNC(void, OP_keyexch_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_dupctx, (void *ctx))
