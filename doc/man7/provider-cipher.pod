@@ -64,7 +64,7 @@ B<OSSL_get_{name}>.
 For example, the "function" OP_cipher_newctx() has these:
 
  typedef void *(OSSL_OP_cipher_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OP_digest_newctx_fn
+ static ossl_inline OSSL_OP_cipher_newctx_fn
      OSSL_get_OP_cipher_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
@@ -113,7 +113,7 @@ B<cctx> parameter and return the duplicate copy.
 OP_cipher_encrypt_init() initialises a cipher operation for encryption given a
 newly created provider side cipher context in the B<cctx> paramter.
 The key to be used is given in B<key> which is B<keylen> bytes long.
-The IV to be used is given in B<iv> which B<ivlen> bytes long.
+The IV to be used is given in B<iv> which is B<ivlen> bytes long.
 
 OP_cipher_decrypt_init() is the same as OP_cipher_encrypt_init() except that it
 initialises the context for a decryption operation.
@@ -131,12 +131,12 @@ It is the responsibility of the cipher implementation to handle input lengths
 that are not multiples of the block length.
 In such cases a cipher implementation will typically cache partial blocks of
 input data until a complete block is obtained.
-B<out> may be the same location as B<in> but it will not partially overlap.
+B<out> may be the same location as B<in> but it should not partially overlap.
 The same expectations apply to B<outsize> as documented for
 L<EVP_EncryptUpdate(3)> and L<EVP_DecryptUpdate(3)>.
 
 OP_cipher_final() completes an encryption or decryption started through previous
-OP_cipher_encrypt_init() or OP_cipher_decrypto_init(), and OP_cipher_update()
+OP_cipher_encrypt_init() or OP_cipher_decrypt_init(), and OP_cipher_update()
 calls.
 The B<cctx> parameter contains a pointer to the provider side context.
 Any final encryption/decryption output should be written to B<out> and the
