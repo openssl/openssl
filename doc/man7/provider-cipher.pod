@@ -302,6 +302,12 @@ IV length and the tag length.
 
 Sets the IV length to be used for an AEAD cipher for the associated cipher ctx.
 
+=item B<OSSL_CIPHER_PARAM_RANDOM_KEY> (octet_string)
+
+Gets a implementation specific randomly generated key for the associated
+cipher ctx. This is currently only supported by 3DES (which sets the key to
+odd parity).
+
 =back
 
 =head1 RETURN VALUES

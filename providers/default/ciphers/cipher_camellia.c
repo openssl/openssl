@@ -9,9 +9,8 @@
 
 /* Dispatch functions for CAMELLIA cipher modes ecb, cbc, ofb, cfb, ctr */
 
-#include "cipher_locl.h"
+#include "cipher_camellia.h"
 
-#if !defined(OPENSSL_NO_CAMELLIA)
 static OSSL_OP_cipher_freectx_fn camellia_freectx;
 static OSSL_OP_cipher_dupctx_fn camellia_dupctx;
 
@@ -79,4 +78,3 @@ IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 192, 8, 128, stream)
 /* camellia128ctr_functions */
 IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 128, 8, 128, stream)
 
-#endif /* OPENSSL_NO_CAMELLIA */

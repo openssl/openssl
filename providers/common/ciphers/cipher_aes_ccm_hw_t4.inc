@@ -17,7 +17,7 @@ static int ccm_t4_aes_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
 {
     PROV_AES_CCM_CTX *actx = (PROV_AES_CCM_CTX *)ctx;
 
-    AES_CCM_SET_KEY_FN(aes_t4_set_encrypt_key, aes_t4_encrypt, NULL, NULL);
+    AES_HW_CCM_SET_KEY_FN(aes_t4_set_encrypt_key, aes_t4_encrypt, NULL, NULL);
     return 1;
 }
 

@@ -324,6 +324,8 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
     { "id-aes256-CCM", "fips=yes", aes256ccm_functions },
     { "id-aes192-CCM", "fips=yes", aes192ccm_functions },
     { "id-aes128-CCM", "fips=yes", aes128ccm_functions },
+    { "DES-EDE3", "fips=yes", tdes_ede3_ecb_functions },
+    { "DES-EDE3-CBC", "fips=yes", tdes_ede3_cbc_functions },
     { NULL, NULL, NULL }
 };
 

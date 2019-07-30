@@ -54,6 +54,7 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD  "tlsaadpad"  /* size_t */
 #define OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED "tlsivfixed" /* octet_string */
 #define OSSL_CIPHER_PARAM_AEAD_IVLEN         "aeadivlen"  /* size_t */
+#define OSSL_CIPHER_PARAM_RANDOM_KEY         "randkey"    /* octet_string */
 
 /* digest parameters */
 #define OSSL_DIGEST_PARAM_XOFLEN    "xoflen"

@@ -9,18 +9,13 @@
  */
 
 #include <openssl/aes.h>
+#include "cipher_aead.h"
 
 typedef struct prov_gcm_hw_st PROV_GCM_HW;
 
 #define GCM_IV_DEFAULT_SIZE 12/* IV's for AES_GCM should normally be 12 bytes */
 #define GCM_IV_MAX_SIZE     64
 #define GCM_TAG_MAX_SIZE    16
-
-/* TODO(3.0) Figure out what flags are really needed */
-#define AEAD_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_DEFAULT_ASN1     \
-                       | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER      \
-                       | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT        \
-                       | EVP_CIPH_CUSTOM_COPY)
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
 /*-
@@ -137,21 +132,6 @@ struct prov_gcm_hw_st {
 };
 const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits);
 
-#if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
-
-#include "internal/aria.h"
-
-typedef struct prov_aria_gcm_ctx_st {
-    PROV_GCM_CTX base;              /* must be first entry in struct */
-    union {
-        OSSL_UNION_ALIGN;
-        ARIA_KEY ks;
-    } ks;
-} PROV_ARIA_GCM_CTX;
-const PROV_GCM_HW *PROV_ARIA_HW_gcm(size_t keybits);
-
-#endif /* !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE) */
-
 OSSL_OP_cipher_encrypt_init_fn gcm_einit;
 OSSL_OP_cipher_decrypt_init_fn gcm_dinit;
 OSSL_OP_cipher_get_ctx_params_fn gcm_get_ctx_params;
@@ -163,3 +143,19 @@ void gcm_deinitctx(PROV_GCM_CTX *ctx);
 void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
                  const PROV_GCM_HW *hw, size_t ivlen_min);
 
+int gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen);
+int gcm_aad_update(PROV_GCM_CTX *ctx, const unsigned char *aad,
+                   size_t aad_len);
+int gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag);
+int gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
+                 const unsigned char *in, size_t in_len,
+                 unsigned char *out, unsigned char *tag, size_t tag_len);
+int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+                      size_t len, unsigned char *out);
+
+#define GCM_HW_SET_KEY_CTR_FN(ks, fn_set_enc_key, fn_block, fn_ctr)     \
+    ctx->ks = ks;                                                              \
+    fn_set_enc_key(key, keylen * 8, ks);                                       \
+    CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)fn_block);                   \
+    ctx->ctr = (ctr128_f)fn_ctr;                                               \
+    ctx->key_set = 1;

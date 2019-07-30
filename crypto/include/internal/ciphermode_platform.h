@@ -223,6 +223,7 @@ void cmll256_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
 
 
 #  define SPARC_AES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_AES)
+#  define SPARC_DES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_DES)
 #  define HWAES_CAPABLE           (OPENSSL_sparcv9cap_P[0] & SPARCV9_FJAESX)
 #  define HWAES_set_encrypt_key aes_fx_set_encrypt_key
 #  define HWAES_set_decrypt_key aes_fx_set_decrypt_key
@@ -237,6 +238,12 @@ void aes_t4_encrypt(const unsigned char *in, unsigned char *out,
                     const AES_KEY *key);
 void aes_t4_decrypt(const unsigned char *in, unsigned char *out,
                     const AES_KEY *key);
+void des_t4_key_expand(const void *key, DES_key_schedule *ks);
+void des_t4_ede3_cbc_encrypt(const void *inp, void *out, size_t len,
+                             const DES_key_schedule ks[3], unsigned char iv[8]);
+void des_t4_ede3_cbc_decrypt(const void *inp, void *out, size_t len,
+                             const DES_key_schedule ks[3], unsigned char iv[8]);
+
 /*
  * Key-length specific subroutines were chosen for following reason.
  * Each SPARC T4 core can execute up to 8 threads which share core's

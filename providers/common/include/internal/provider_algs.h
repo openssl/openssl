@@ -126,6 +126,24 @@ extern const OSSL_DISPATCH kmac256_functions[];
 extern const OSSL_DISPATCH siphash_functions[];
 extern const OSSL_DISPATCH poly1305_functions[];
 
+extern const OSSL_DISPATCH tdes_ede3_ecb_functions[];
+extern const OSSL_DISPATCH tdes_ede3_cbc_functions[];
+
+#ifndef FIPS_MODE
+extern const OSSL_DISPATCH tdes_ede3_ofb_functions[];
+extern const OSSL_DISPATCH tdes_ede3_cfb_functions[];
+extern const OSSL_DISPATCH tdes_ede3_cfb8_functions[];
+extern const OSSL_DISPATCH tdes_ede3_cfb1_functions[];
+
+extern const OSSL_DISPATCH tdes_ede2_ecb_functions[];
+extern const OSSL_DISPATCH tdes_ede2_cbc_functions[];
+extern const OSSL_DISPATCH tdes_ede2_ofb_functions[];
+extern const OSSL_DISPATCH tdes_ede2_cfb_functions[];
+
+extern const OSSL_DISPATCH tdes_desx_cbc_functions[];
+extern const OSSL_DISPATCH tdes_wrap_cbc_functions[];
+#endif /* FIPS_MODE */
+
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
 

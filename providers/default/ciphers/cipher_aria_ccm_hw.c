@@ -9,10 +9,9 @@
 
 /*-
  * Generic support for ARIA CCM.
- * This file is included by cipher_ccm_hw.c
  */
 
-#if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
+#include "cipher_aria_ccm.h"
 
 static int ccm_aria_initkey(PROV_CCM_CTX *ctx,
                             const unsigned char *key, size_t keylen)
@@ -39,4 +38,3 @@ const PROV_CCM_HW *PROV_ARIA_HW_ccm(size_t keybits)
 {
     return &ccm_aria;
 }
-#endif /* OPENSSL_NO_ARIA */
