@@ -228,20 +228,23 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
             return NULL;
         }
         return (ASN1_OBJECT *)&(nid_objs[n]);
-    } else if (added == NULL)
-        return NULL;
-    else {
-        ad.type = ADDED_NID;
-        ad.obj = &ob;
-        ob.nid = n;
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            return adp->obj;
-        else {
-            OBJerr(OBJ_F_OBJ_NID2OBJ, OBJ_R_UNKNOWN_NID);
-            return NULL;
-        }
     }
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
+    if (added == NULL)
+        return NULL;
+
+    ad.type = ADDED_NID;
+    ad.obj = &ob;
+    ob.nid = n;
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        return adp->obj;
+
+    OBJerr(OBJ_F_OBJ_NID2OBJ, OBJ_R_UNKNOWN_NID);
+    return NULL;
 }
 
 const char *OBJ_nid2sn(int n)
@@ -255,20 +258,23 @@ const char *OBJ_nid2sn(int n)
             return NULL;
         }
         return nid_objs[n].sn;
-    } else if (added == NULL)
-        return NULL;
-    else {
-        ad.type = ADDED_NID;
-        ad.obj = &ob;
-        ob.nid = n;
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            return adp->obj->sn;
-        else {
-            OBJerr(OBJ_F_OBJ_NID2SN, OBJ_R_UNKNOWN_NID);
-            return NULL;
-        }
     }
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
+    if (added == NULL)
+        return NULL;
+
+    ad.type = ADDED_NID;
+    ad.obj = &ob;
+    ob.nid = n;
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        return adp->obj->sn;
+
+    OBJerr(OBJ_F_OBJ_NID2SN, OBJ_R_UNKNOWN_NID);
+    return NULL;
 }
 
 const char *OBJ_nid2ln(int n)
@@ -282,20 +288,23 @@ const char *OBJ_nid2ln(int n)
             return NULL;
         }
         return nid_objs[n].ln;
-    } else if (added == NULL)
-        return NULL;
-    else {
-        ad.type = ADDED_NID;
-        ad.obj = &ob;
-        ob.nid = n;
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            return adp->obj->ln;
-        else {
-            OBJerr(OBJ_F_OBJ_NID2LN, OBJ_R_UNKNOWN_NID);
-            return NULL;
-        }
     }
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
+    if (added == NULL)
+        return NULL;
+
+    ad.type = ADDED_NID;
+    ad.obj = &ob;
+    ob.nid = n;
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        return adp->obj->ln;
+
+    OBJerr(OBJ_F_OBJ_NID2LN, OBJ_R_UNKNOWN_NID);
+    return NULL;
 }
 
 static int obj_cmp(const ASN1_OBJECT *const *ap, const unsigned int *bp)
@@ -326,6 +335,9 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 
     if (a->length == 0)
         return NID_undef;
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
     if (added != NULL) {
         ad.type = ADDED_DATA;
@@ -544,6 +556,9 @@ int OBJ_ln2nid(const char *s)
     ADDED_OBJ ad, *adp;
     const unsigned int *op;
 
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
     o.ln = s;
     if (added != NULL) {
         ad.type = ADDED_LNAME;
@@ -564,6 +579,9 @@ int OBJ_sn2nid(const char *s)
     const ASN1_OBJECT *oo = &o;
     ADDED_OBJ ad, *adp;
     const unsigned int *op;
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
     o.sn = s;
     if (added != NULL) {

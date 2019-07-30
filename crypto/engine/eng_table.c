@@ -197,6 +197,9 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
     ENGINE_PILE tmplate, *fnd = NULL;
     int initres, loop = 0;
 
+    /* Load the config before trying to check if engines are available */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
     if (!(*table)) {
         OSSL_TRACE3(ENGINE_TABLE,
                    "%s:%d, nid=%d, nothing registered!\n",

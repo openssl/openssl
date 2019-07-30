@@ -17,8 +17,8 @@ OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name)
     OSSL_PROVIDER *prov = NULL;
 
     /* Find it or create it */
-    if ((prov = ossl_provider_find(libctx, name)) == NULL
-        && (prov = ossl_provider_new(libctx, name, NULL)) == NULL)
+    if ((prov = ossl_provider_find(libctx, name, 0)) == NULL
+        && (prov = ossl_provider_new(libctx, name, NULL, 0)) == NULL)
         return NULL;
 
     if (!ossl_provider_activate(prov)) {
@@ -41,7 +41,7 @@ int OSSL_PROVIDER_available(OPENSSL_CTX *libctx, const char *name)
     int available = 0;
 
     /* Find it or create it */
-    prov = ossl_provider_find(libctx, name);
+    prov = ossl_provider_find(libctx, name, 0);
     available = ossl_provider_available(prov);
     ossl_provider_free(prov);
     return available;
@@ -69,7 +69,7 @@ int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
     }
 
     /* Create it */
-    if ((prov = ossl_provider_new(libctx, name, init_fn)) == NULL)
+    if ((prov = ossl_provider_new(libctx, name, init_fn, 0)) == NULL)
         return 0;
 
     /*
