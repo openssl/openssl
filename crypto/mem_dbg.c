@@ -209,6 +209,7 @@ static unsigned long mem_hash(const MEM *a)
     return ret;
 }
 
+#if !OPENSSL_API_3
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
 {
     return 0;
@@ -218,6 +219,7 @@ int CRYPTO_mem_debug_pop(void)
 {
     return 0;
 }
+#endif
 
 static unsigned long break_order_num = 0;
 
