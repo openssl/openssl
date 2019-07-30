@@ -59,10 +59,10 @@ subtest "generating certificate requests" => sub {
 };
 
 subtest "generating SM2 certificate requests" => sub {
-    plan tests => 2;
+    plan tests => 4;
 
     SKIP: {
-        skip "SM2 is not supported by this OpenSSL build", 2
+        skip "SM2 is not supported by this OpenSSL build", 4
         if disabled("sm2");
         ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file("test", "certs", "sm2.key"),
@@ -73,6 +73,17 @@ subtest "generating SM2 certificate requests" => sub {
         ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq.pem", "-noout",
                     "-sm2-id", "1234567812345678", "-sm3"])),
+           "Verifying signature on SM2 certificate request");
+
+        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-key", srctop_file("test", "certs", "sm2.key"),
+                    "-sigopt", "sm2_hex_id:DEADBEEF",
+                    "-out", "testreq.pem", "-sm3"])),
+           "Generating SM2 certificate request with hex id");
+
+        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq.pem", "-noout",
+                    "-sm2-hex-id", "DEADBEEF", "-sm3"])),
            "Verifying signature on SM2 certificate request");
     }
 };

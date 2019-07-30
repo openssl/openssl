@@ -341,6 +341,13 @@ This sets the ID string used in SM2 sign or verify operations. While verifying
 an SM2 signature, the ID string must be the same one used when signing the data.
 Otherwise the verification will fail.
 
+=item B<sm2_hex_id:hex_string>
+
+This sets the ID string used in SM2 sign or verify operations. While verifying
+an SM2 signature, the ID string must be the same one used when signing the data.
+Otherwise the verification will fail. The ID string provided with this option
+should be a valid hexadecimal value.
+
 =back
 
 =head1 EXAMPLES

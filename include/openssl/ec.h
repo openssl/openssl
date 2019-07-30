@@ -1444,7 +1444,6 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTX_set1_id(ctx, id, id_len) \
         EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
                                 EVP_PKEY_CTRL_SET1_ID, (int)id_len, (void*)(id))
-
 # define EVP_PKEY_CTX_get1_id(ctx, id) \
         EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
                                 EVP_PKEY_CTRL_GET1_ID, 0, (void*)(id))
