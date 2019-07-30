@@ -20,8 +20,8 @@ void ERR_new(void)
         return;
 
     /* Allocate a slot */
-    err_allocate(es);
-    err_clear(es, es->top);
+    err_get_slot(es);
+    err_clear(es, es->top, 0);
 }
 
 void ERR_set_debug(const char *file, int line, const char *func)
@@ -48,41 +48,66 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
 {
     ERR_STATE *es;
     char *buf = NULL;
-    size_t buf_len = 0;
+    size_t buf_size = 0;
     unsigned long flags = 0;
+    size_t i;
 
     es = ERR_get_state();
     if (es == NULL)
         return;
+    i = es->top;
 
-    if (fmt != NULL
-        && (buf = OPENSSL_malloc(ERR_MAX_DATA_SIZE)) != NULL) {
+    if (fmt != NULL) {
         int printed_len = 0;
         char *rbuf = NULL;
 
-        printed_len = BIO_vsnprintf(buf, ERR_MAX_DATA_SIZE, fmt, args);
-        if (printed_len > 0)
-            buf_len += printed_len;
-        buf[buf_len] = '\0';
-
-        /* Try to reduce the size */
-        rbuf = OPENSSL_realloc(buf, buf_len + 1);
+        buf = es->err_data[i];
+        buf_size = es->err_data_size[i];
 
         /*
-         * According to documentation, realloc leaves the old buffer untouched
-         * if it fails.  We could deal with this in two ways, either free the
-         * buffer, or simply keep it.  We choose the former, because that's
-         * what ERR_add_error_vdata() does on the same kind of failure.
+         * To protect the string we just grabbed from tampering by other
+         * functions we may call, or to protect them from freeing a pointer
+         * that may no longer be valid at that point, we clear away the
+         * data pointer and the flags.  We will set them again at the end
+         * of this function.
          */
-        if (rbuf == NULL)
-            OPENSSL_free(buf);
-        buf = rbuf;
+        es->err_data[i] = NULL;
+        es->err_data_flags[i] = 0;
+
+        /*
+         * Try to maximize the space available.  If that fails, we use what
+         * we have.
+         */
+        if (buf_size < ERR_MAX_DATA_SIZE
+            && (rbuf = OPENSSL_realloc(buf, ERR_MAX_DATA_SIZE)) != NULL) {
+            buf = rbuf;
+            buf_size = ERR_MAX_DATA_SIZE;
+        }
+
+        if (buf != NULL) {
+            printed_len = BIO_vsnprintf(buf, ERR_MAX_DATA_SIZE, fmt, args);
+        }
+        if (printed_len < 0)
+            printed_len = 0;
+        buf[printed_len] = '\0';
+
+        /*
+         * Try to reduce the size, but only if we maximized above.  If that
+         * fails, we keep what we have.
+         * (According to documentation, realloc leaves the old buffer untouched
+         * if it fails)
+         */
+        if ((rbuf = OPENSSL_realloc(buf, printed_len + 1)) != NULL) {
+            buf = rbuf;
+            buf_size = printed_len + 1;
+        }
 
         if (buf != NULL)
             flags = ERR_TXT_MALLOCED | ERR_TXT_STRING;
     }
 
-    err_clear_data(es, es->top);
+    err_clear_data(es, es->top, 0);
     err_set_error(es, es->top, lib, reason);
-    err_set_data(es, es->top, buf, flags);
+    if (fmt != NULL)
+        err_set_data(es, es->top, buf, buf_size, flags);
 }
