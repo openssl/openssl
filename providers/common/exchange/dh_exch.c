@@ -106,6 +106,8 @@ static void *dh_dupctx(void *vpdhctx)
     PROV_DH_CTX *dstctx;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
+    if (dstctx == NULL)
+        return NULL;
 
     *dstctx = *srcctx;
     if (dstctx->dh != NULL && !DH_up_ref(dstctx->dh)) {
