@@ -19,9 +19,11 @@ ossl_provider_get_params, ossl_provider_query_operation
 
  #include "internal/provider.h"
 
- OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name);
+ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name,
+                                   int noconfig);
  OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
-                                  ossl_provider_init_fn *init_function);
+                                  ossl_provider_init_fn *init_function
+                                  int noconfig);
  int ossl_provider_up_ref(OSSL_PROVIDER *prov);
  void ossl_provider_free(OSSL_PROVIDER *prov);
 
@@ -81,7 +83,9 @@ times as ossl_provider_activate() has.
 =head2 Functions
 
 ossl_provider_find() finds an existing provider object in the provider
-object store by I<name>. 
+object store by I<name>.
+The config file will be automatically loaded unless I<noconfig> is set.
+Typically I<noconfig> should be 0.
 The provider object it finds has its reference count incremented.
 
 ossl_provider_new() creates a new provider object named I<name> and
@@ -89,6 +93,8 @@ stores it in the provider object store, unless there already is one
 there with the same name.
 If there already is one with the same name, it's returned with its
 reference count incremented.
+The config file will be automatically loaded unless I<noconfig> is set.
+Typically I<noconfig> should be 0.
 The reference count of a newly created provider object will always
 be 2; one for being added to the store, and one for the returned
 reference.

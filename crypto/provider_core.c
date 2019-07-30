@@ -159,7 +159,8 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
     return store;
 }
 
-OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
+OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name,
+                                  int noconfig)
 {
     struct provider_store_st *store = NULL;
     OSSL_PROVIDER *prov = NULL;
@@ -167,6 +168,15 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
     if ((store = get_provider_store(libctx)) != NULL) {
         OSSL_PROVIDER tmpl = { 0, };
         int i;
+
+#ifndef FIPS_MODE
+        /*
+         * Make sure any providers are loaded from config before we try to find
+         * them.
+         */
+        if (!noconfig)
+            OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
         tmpl.name = (char *)name;
         CRYPTO_THREAD_write_lock(store->lock);
@@ -215,7 +225,8 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov)
 }
 
 OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
-                                 OSSL_provider_init_fn *init_function)
+                                 OSSL_provider_init_fn *init_function,
+                                 int noconfig)
 {
     struct provider_store_st *store = NULL;
     OSSL_PROVIDER *prov = NULL;
@@ -223,7 +234,8 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
     if ((store = get_provider_store(libctx)) == NULL)
         return NULL;
 
-    if ((prov = ossl_provider_find(libctx, name)) != NULL) { /* refcount +1 */
+    if ((prov = ossl_provider_find(libctx, name,
+                                   noconfig)) != NULL) { /* refcount +1 */
         ossl_provider_free(prov); /* refcount -1 */
         ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_ALREADY_EXISTS, NULL,
                        "name=%s", name);
@@ -552,7 +564,17 @@ static int provider_forall_loaded(struct provider_store_st *store,
 {
     int i;
     int ret = 1;
-    int num_provs = sk_OSSL_PROVIDER_num(store->providers);
+    int num_provs;
+
+#ifndef FIPS_MODE
+    /*
+     * Make sure any providers are loaded from config before we try to use
+     * them.
+     */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
+
+    num_provs = sk_OSSL_PROVIDER_num(store->providers);
 
     if (found_activated != NULL)
         *found_activated = 0;
@@ -753,6 +775,11 @@ static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 {
     int i;
     OSSL_PARAM *p;
+
+#ifndef FIPS_MODE
+    /* Load config before we attempt to read any provider parameters */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
     if ((p = OSSL_PARAM_locate(params, "openssl-version")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
