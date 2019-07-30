@@ -260,7 +260,6 @@ static int test_kdf_ss_hmac(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    const EVP_MAC *mac;
     unsigned char out[16];
     static const unsigned char z[] = {
         0xb7,0x4a,0x14,0x9a,0x16,0x15,0x46,0xf8,0xc2,0x0b,0x06,0xac,0x4e,0xd4
@@ -279,8 +278,7 @@ static int test_kdf_ss_hmac(void)
 
     ret =
         TEST_ptr(kctx = EVP_KDF_CTX_new_id(EVP_KDF_SS))
-        && TEST_ptr(mac = EVP_get_macbyname("HMAC"))
-        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC, mac), 0)
+        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC, "HMAC"), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD,  EVP_sha256()), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z, sizeof(z)), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SSKDF_INFO, other,
@@ -299,7 +297,6 @@ static int test_kdf_ss_kmac(void)
     int ret;
     EVP_KDF_CTX *kctx;
     unsigned char out[64];
-    const EVP_MAC *mac;
     static const unsigned char z[] = {
         0xb7,0x4a,0x14,0x9a,0x16,0x15,0x46,0xf8,0xc2,0x0b,0x06,0xac,0x4e,0xd4
     };
@@ -320,8 +317,7 @@ static int test_kdf_ss_kmac(void)
 
     ret =
         TEST_ptr(kctx = EVP_KDF_CTX_new_id(EVP_KDF_SS))
-        && TEST_ptr(mac = EVP_get_macbyname("KMAC128"))
-        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC, mac), 0)
+        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC, "KMAC128"), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z,
                                     sizeof(z)), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SSKDF_INFO, other,
