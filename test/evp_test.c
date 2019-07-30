@@ -3055,8 +3055,7 @@ top:
                 t->skip = 1;
                 return 0;
             }
-        }
-        if (strcmp(pp->key, "Result") == 0) {
+        } else if (strcmp(pp->key, "Result") == 0) {
             if (t->expected_err != NULL) {
                 TEST_info("Line %d: multiple result lines", t->s.curr);
                 return 0;
