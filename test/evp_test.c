@@ -18,7 +18,10 @@
 #include <openssl/x509v3.h>
 #include <openssl/pkcs12.h>
 #include <openssl/kdf.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
 #include "internal/numbers.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 #include "evp_test.h"
 
@@ -865,7 +868,7 @@ static const EVP_TEST_METHOD cipher_test_method = {
 
 typedef struct mac_data_st {
     /* MAC type in one form or another */
-    const EVP_MAC *mac;          /* for mac_test_run_mac */
+    EVP_MAC *mac;                /* for mac_test_run_mac */
     int type;                    /* for mac_test_run_pkey */
     /* Algorithm string for this MAC */
     char *alg;
@@ -892,11 +895,11 @@ typedef struct mac_data_st {
 
 static int mac_test_init(EVP_TEST *t, const char *alg)
 {
-    const EVP_MAC *mac = NULL;
+    EVP_MAC *mac = NULL;
     int type = NID_undef;
     MAC_DATA *mdat;
 
-    if ((mac = EVP_get_macbyname(alg)) == NULL) {
+    if ((mac = EVP_MAC_fetch(NULL, alg, NULL)) == NULL) {
         /*
          * Since we didn't find an EVP_MAC, we check for known EVP_PKEY methods
          * For debugging purposes, we allow 'NNNN by EVP_PKEY' to force running
@@ -964,6 +967,7 @@ static void mac_test_cleanup(EVP_TEST *t)
 {
     MAC_DATA *mdat = t->data;
 
+    EVP_MAC_free(mdat->mac);
     sk_OPENSSL_STRING_pop_free(mdat->controls, openssl_free);
     OPENSSL_free(mdat->alg);
     OPENSSL_free(mdat->key);
@@ -1114,11 +1118,14 @@ static int mac_test_run_mac(EVP_TEST *t)
 {
     MAC_DATA *expected = t->data;
     EVP_MAC_CTX *ctx = NULL;
-    const void *algo = NULL;
-    int algo_ctrl = 0;
     unsigned char *got = NULL;
     size_t got_len;
-    int rv, i;
+    int i;
+    OSSL_PARAM params[21];
+    size_t params_n = 0;
+    size_t params_n_allocstart = 0;
+    const OSSL_PARAM *defined_params =
+        EVP_MAC_CTX_settable_params(expected->mac);
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", EVP_MAC_name(expected->mac));
@@ -1134,97 +1141,74 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
 #endif
 
+    if (expected->alg != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                                             expected->alg,
+                                             strlen(expected->alg) + 1);
+    if (expected->key != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                              expected->key,
+                                              expected->key_len);
+    if (expected->custom != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+                                              expected->custom,
+                                              expected->custom_len);
+    if (expected->salt != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_SALT,
+                                              expected->salt,
+                                              expected->salt_len);
+    if (expected->iv != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
+                                              expected->iv,
+                                              expected->iv_len);
+
+    /*
+     * Unknown controls.  They must match parameters that the MAC recognises
+     */
+    if (params_n + sk_OPENSSL_STRING_num(expected->controls)
+        >= OSSL_NELEM(params)) {
+        t->err = "MAC_TOO_MANY_PARAMETERS";
+        goto err;
+    }
+    params_n_allocstart = params_n;
+    for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++) {
+        char *tmpkey, *tmpval;
+        char *value = sk_OPENSSL_STRING_value(expected->controls, i);
+
+        if (!TEST_ptr(tmpkey = OPENSSL_strdup(value))) {
+            t->err = "MAC_PARAM_ERROR";
+            goto err;
+        }
+        tmpval = strchr(tmpkey, ':');
+        if (tmpval != NULL)
+            *tmpval++ = '\0';
+
+        if (!OSSL_PARAM_allocate_from_text(&params[params_n], defined_params,
+                                           tmpkey, tmpval,
+                                           strlen(tmpval))) {
+            OPENSSL_free(tmpkey);
+            t->err = "MAC_PARAM_ERROR";
+            goto err;
+        }
+        params_n++;
+
+        OPENSSL_free(tmpkey);
+    }
+    params[params_n] = OSSL_PARAM_construct_end();
+
     if ((ctx = EVP_MAC_CTX_new(expected->mac)) == NULL) {
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
 
-    if (expected->alg != NULL
-        && ((algo_ctrl = EVP_MAC_CTRL_SET_CIPHER,
-             algo = EVP_get_cipherbyname(expected->alg)) == NULL
-            && (algo_ctrl = EVP_MAC_CTRL_SET_MD,
-                algo = EVP_get_digestbyname(expected->alg)) == NULL)) {
-        t->err = "MAC_BAD_ALGORITHM";
+    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+        t->err = "MAC_BAD_PARAMS";
         goto err;
-    }
-
-
-    if (algo_ctrl != 0) {
-        rv = EVP_MAC_ctrl(ctx, algo_ctrl, algo);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-    }
-
-    rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY,
-                      expected->key, expected->key_len);
-    if (rv == -2) {
-        t->err = "MAC_CTRL_INVALID";
-        goto err;
-    } else if (rv <= 0) {
-        t->err = "MAC_CTRL_ERROR";
-        goto err;
-    }
-    if (expected->custom != NULL) {
-        rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_CUSTOM,
-                          expected->custom, expected->custom_len);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-    }
-
-    if (expected->salt != NULL) {
-        rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_SALT,
-                          expected->salt, expected->salt_len);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-    }
-
-    if (expected->iv != NULL) {
-        rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_IV,
-                          expected->iv, expected->iv_len);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-    }
-
-    for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++) {
-        char *p, *tmpval;
-        char *value = sk_OPENSSL_STRING_value(expected->controls, i);
-
-        if (!TEST_ptr(tmpval = OPENSSL_strdup(value))) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-        p = strchr(tmpval, ':');
-        if (p != NULL)
-            *p++ = '\0';
-        rv = EVP_MAC_ctrl_str(ctx, tmpval, p);
-        OPENSSL_free(tmpval);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
     }
     if (!EVP_MAC_init(ctx)) {
         t->err = "MAC_INIT_ERROR";
@@ -1234,7 +1218,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_UPDATE_ERROR";
         goto err;
     }
-    if (!EVP_MAC_final(ctx, NULL, &got_len)) {
+    if (!EVP_MAC_final(ctx, NULL, &got_len, 0)) {
         t->err = "MAC_FINAL_LENGTH_ERROR";
         goto err;
     }
@@ -1242,7 +1226,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "TEST_FAILURE";
         goto err;
     }
-    if (!EVP_MAC_final(ctx, got, &got_len)
+    if (!EVP_MAC_final(ctx, got, &got_len, got_len)
         || !memory_err_compare(t, "TEST_MAC_ERR",
                                expected->output, expected->output_len,
                                got, got_len)) {
@@ -1251,6 +1235,9 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
     t->err = NULL;
  err:
+    while (params_n-- > params_n_allocstart) {
+        OPENSSL_free(params[params_n].data);
+    }
     EVP_MAC_CTX_free(ctx);
     OPENSSL_free(got);
     return 1;
