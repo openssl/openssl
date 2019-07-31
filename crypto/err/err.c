@@ -795,18 +795,18 @@ void ERR_add_error_vdata(int num, va_list args)
         if (arg == NULL)
             arg = "<NULL>";
         len += strlen(arg);
-        if (len > size) {
+        if (len >= size) {
             char *p;
 
             size = len + 20;
-            p = OPENSSL_realloc(str, size + 1);
+            p = OPENSSL_realloc(str, size);
             if (p == NULL) {
                 OPENSSL_free(str);
                 return;
             }
             str = p;
         }
-        OPENSSL_strlcat(str, arg, (size_t)size + 1);
+        OPENSSL_strlcat(str, arg, (size_t)size);
     }
     if (!err_set_error_data_int(str, size, flags, 0))
         OPENSSL_free(str);

@@ -85,7 +85,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
         }
 
         if (buf != NULL) {
-            printed_len = BIO_vsnprintf(buf, ERR_MAX_DATA_SIZE, fmt, args);
+            printed_len = BIO_vsnprintf(buf, buf_size, fmt, args);
         }
         if (printed_len < 0)
             printed_len = 0;
