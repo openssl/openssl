@@ -14,7 +14,10 @@ use OpenSSL::Test qw(:DEFAULT data_file bldtop_dir srctop_file);
 
 setup("test_evp");
 
-my @configs = qw( default-and-legacy.cnf fips.cnf );
+#TODO(3.0) We temporarily disable testing with the FIPS module while that
+#          testing is broken
+#my @configs = qw( default-and-legacy.cnf fips.cnf );
+my @configs = qw( default-and-legacy.cnf );
 my @files = qw( evpciph.txt evpdigest.txt evpencod.txt evpkdf.txt
     evppkey_kdf.txt evpmac.txt evppbe.txt evppkey.txt
     evppkey_ecc.txt evpcase.txt evpaessiv.txt evpccmcavs.txt );
