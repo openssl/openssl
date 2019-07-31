@@ -767,7 +767,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 
     if (errno) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                       "calling readdir(\"%s\")",
+                       "calling OPENSSL_dir_read(%s)",
                        dir);
         SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
         goto err;

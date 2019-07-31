@@ -139,7 +139,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                              BIO_ADDRINFO_protocol(c->addr_iter), 0);
             if (ret == (int)INVALID_SOCKET) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling socket hostname=%s service=%s",
+                               "calling socket(%s, %s)",
                                c->param_hostname, c->param_service);
                 BIOerr(BIO_F_CONN_STATE, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
@@ -170,7 +170,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     break;
                 } else {
                     ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                                   "calling connect hostname=%s service=%s",
+                                   "calling connect(%s, %s)",
                                     c->param_hostname, c->param_service);
                     BIOerr(BIO_F_CONN_STATE, BIO_R_CONNECT_ERROR);
                 }
@@ -185,7 +185,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             if (i) {
                 BIO_clear_retry_flags(b);
                 ERR_raise_data(ERR_LIB_SYS, i,
-                               "calling connect(\"%s\", \"%s\")",
+                               "calling connect(%s, %s)",
                                 c->param_hostname, c->param_service);
                 BIOerr(BIO_F_CONN_STATE, BIO_R_NBIO_CONNECT_ERROR);
                 ret = 0;
