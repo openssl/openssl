@@ -9,6 +9,14 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Introduced new error raising macros, ERR_raise() and ERR_raise_data(),
+     where the former acts as a replacement for ERR_put_error(), and the
+     latter replaces the combination ERR_put_error()+ERR_add_error_data().
+     ERR_raise_data() adds more flexibility by taking a format string and
+     an arbitrary number of arguments following it, to be processed with
+     BIO_snprintf().
+     [Richard Levitte]
+
   *) Introduced a new function, OSSL_PROVIDER_available(), which can be used
      to check if a named provider is loaded and available.  When called, it
      will also activate all fallback providers if such are still present.
