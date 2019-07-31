@@ -1276,7 +1276,7 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
     /* Don't allow recursive CRL path validation */
     if (ctx->parent)
         return 0;
-    if (!X509_STORE_CTX_init(&crl_ctx, ctx->ctx, x, ctx->untrusted))
+    if (!X509_STORE_CTX_init(&crl_ctx, ctx->store, x, ctx->untrusted))
         return -1;
 
     crl_ctx.crls = ctx->crls;
@@ -2201,7 +2201,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 {
     int ret = 1;
 
-    ctx->ctx = store;
+    ctx->store = store;
     ctx->cert = x509;
     ctx->untrusted = chain;
     ctx->crls = NULL;
