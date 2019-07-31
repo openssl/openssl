@@ -31,10 +31,6 @@
      private key for those. This avoids leaking bit 0 of the private key.
      [Bernd Edlinger]
 
-  *) Added a new FUNCerr() macro that takes a function name.
-     The macro SYSerr() is deprecated.
-     [Rich Salz]
-
   *) Significantly reduce secure memory usage by the randomness pools.
      [Paul Dale]
 

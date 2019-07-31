@@ -54,12 +54,13 @@ static int platform_error(void)
 
     file = __FILE__;
     line = __LINE__ + 1; /* The error is generated on the next line */
-    FUNCerr("exit", ERR_R_INTERNAL_ERROR);
+    ERR_raise_data(ERR_LIB_SYS, ERR_R_INTERNAL_ERROR,
+                   "calling %s()", "exit");
     if (!TEST_ulong_ne(e = ERR_get_error_line_data(&f, &l, &data, NULL), 0)
             || !TEST_int_eq(ERR_GET_REASON(e), ERR_R_INTERNAL_ERROR)
             || !TEST_int_eq(l, line)
             || !TEST_str_eq(f, file)
-            || !TEST_str_eq(data, "calling function exit"))
+            || !TEST_str_eq(data, "calling exit()"))
         return 0;
     return 1;
 }

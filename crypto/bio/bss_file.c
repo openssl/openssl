@@ -66,8 +66,9 @@ BIO *BIO_new_file(const char *filename, const char *mode)
         fp_flags |= BIO_FP_TEXT;
 
     if (file == NULL) {
-        FUNCerr("fopen", get_last_sys_error());
-        ERR_add_error_data(5, "fopen('", filename, "','", mode, "')");
+        ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                       "calling fopen(\"%s\", \"%s\")",
+                       filename, mode);
         if (errno == ENOENT
 #ifdef ENXIO
             || errno == ENXIO
@@ -146,7 +147,8 @@ static int file_read(BIO *b, char *out, int outl)
         if (ret == 0
             && (b->flags & BIO_FLAGS_UPLINK_INTERNAL
                 ? UP_ferror((FILE *)b->ptr) : ferror((FILE *)b->ptr))) {
-            FUNCerr("fread", get_last_sys_error());
+            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                           "calling %s()", "fread");
             BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
             ret = -1;
         }
@@ -285,8 +287,9 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
 # endif
         fp = openssl_fopen(ptr, p);
         if (fp == NULL) {
-            FUNCerr("fopen", get_last_sys_error());
-            ERR_add_error_data(5, "fopen('", ptr, "','", p, "')");
+            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                           "calling fopen(\"%s\", \"%s\")",
+                           ptr, p);
             BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
             ret = 0;
             break;
@@ -313,8 +316,8 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         st = b->flags & BIO_FLAGS_UPLINK_INTERNAL
                 ? UP_fflush(b->ptr) : fflush((FILE *)b->ptr);
         if (st == EOF) {
-            FUNCerr("fflush", get_last_sys_error());
-            ERR_add_error_data(1, "fflush()");
+            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                           "calling %s()", "fflush");
             BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
             ret = 0;
         }

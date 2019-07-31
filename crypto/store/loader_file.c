@@ -824,8 +824,9 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         }
 
         if (stat(path_data[i].path, &st) < 0) {
-            FUNCerr("stat", errno);
-            ERR_add_error_data(1, path_data[i].path);
+            ERR_raise_data(ERR_LIB_SYS, errno,
+                           "calling stat(\"%s\")",
+                           path_data[i].path);
         } else {
             path = path_data[i].path;
         }

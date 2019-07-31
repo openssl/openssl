@@ -226,10 +226,9 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                              BIO_ADDRINFO_socktype(c->addr_iter),
                              BIO_ADDRINFO_protocol(c->addr_iter), 0);
             if (ret == (int)INVALID_SOCKET) {
-                FUNCerr("socket", get_last_socket_error());
-                ERR_add_error_data(4,
-                                   "hostname=", c->param_addr,
-                                   " service=", c->param_serv);
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling socket hostname=%s service=%s",
+                                c->param_addr, c->param_serv);
                 BIOerr(BIO_F_ACPT_STATE, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }

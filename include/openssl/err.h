@@ -110,7 +110,6 @@ typedef struct err_state_st {
 # if ! OPENSSL_API_3
 #  define SYSerr(f,r)  ERR_raise(ERR_LIB_SYS,(r))
 # endif
-# define FUNCerr(f,r)  ERR_raise_data(ERR_LIB_SYS,(r),"calling function %s",(f))
 # define BNerr(f,r)   ERR_raise(ERR_LIB_RSA,(r))
 # define RSAerr(f,r)  ERR_raise(ERR_LIB_RSA,(r))
 # define DHerr(f,r)   ERR_raise(ERR_LIB_DH,(r))
