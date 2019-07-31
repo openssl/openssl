@@ -890,6 +890,20 @@ const ASN1_OCTET_STRING *X509_get0_authority_key_id(X509 *x)
     return (x->akid != NULL ? x->akid->keyid : NULL);
 }
 
+const GENERAL_NAMES *X509_get0_authority_issuer(X509 *x)
+{
+    /* Call for side-effect of computing hash and caching extensions */
+    X509_check_purpose(x, -1, -1);
+    return (x->akid != NULL ? x->akid->issuer : NULL);
+}
+
+const ASN1_INTEGER *X509_get0_authority_serial(X509 *x)
+{
+    /* Call for side-effect of computing hash and caching extensions */
+    X509_check_purpose(x, -1, -1);
+    return (x->akid != NULL ? x->akid->serial : NULL);
+}
+
 long X509_get_pathlen(X509 *x)
 {
     /* Called for side effect of caching extensions */

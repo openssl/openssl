@@ -4700,3 +4700,5 @@ ERR_new                                 4809	3_0_0	EXIST::FUNCTION:
 ERR_set_debug                           4810	3_0_0	EXIST::FUNCTION:
 ERR_set_error                           4811	3_0_0	EXIST::FUNCTION:
 ERR_vset_error                          4812	3_0_0	EXIST::FUNCTION:
+X509_get0_authority_issuer              4813	3_0_0	EXIST::FUNCTION:
+X509_get0_authority_serial              4814	3_0_0	EXIST::FUNCTION:
