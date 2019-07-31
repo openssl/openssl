@@ -59,7 +59,7 @@ static void gcm_deinitctx(PROV_GCM_CTX *ctx)
     OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
 }
 
-static int gcm_init(void *vctx, const unsigned char *key, size_t default_keylen,
+static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
                     const unsigned char *iv, size_t ivlen, int enc)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
@@ -77,7 +77,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t default_keylen,
     }
 
     if (key != NULL) {
-        if (default_keylen != ctx->keylen) {
+        if (keylen != ctx->keylen) {
             PROVerr(0, PROV_R_INVALID_KEYLEN);
             return 0;
         }
