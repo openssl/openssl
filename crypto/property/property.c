@@ -429,8 +429,8 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
     state.nelem = 0;
     if ((state.seed = OPENSSL_rdtsc()) == 0)
         state.seed = 1;
-    ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
     store->need_flush = 0;
+    ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
     store->nelem = state.nelem;
 }
 
