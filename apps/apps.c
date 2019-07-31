@@ -1395,8 +1395,8 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
 #ifndef OPENSSL_NO_POSIX_IO
     BIO_get_fp(in, &dbfp);
     if (fstat(fileno(dbfp), &dbst) == -1) {
-        FUNCerr("fstat", errno);
-        ERR_add_error_data(1, dbfile);
+        ERR_raise_data(ERR_LIB_SYS, errno,
+                       "calling fstat(%s)", dbfile);
         ERR_print_errors(bio_err);
         goto err;
     }

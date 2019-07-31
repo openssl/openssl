@@ -207,7 +207,8 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
                                flags)) != 0) {
 # ifdef EAI_SYSTEM
             if (ret == EAI_SYSTEM) {
-                FUNCerr("getnameinfo", get_last_socket_error());
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling getnameinfo()");
                 BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
             } else
 # endif
@@ -700,7 +701,8 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
-            FUNCerr("getaddrinfo", get_last_socket_error());
+            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                           "calling getaddrinfo()");
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
             break;
 # endif
@@ -804,12 +806,15 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  */
 # if defined(OPENSSL_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
-                FUNCerr("gethostbyname", 1000 );
+                ERR_raise_data(ERR_LIB_SYS, 1000,
+                               "calling gethostbyname()");
 # else
-                FUNCerr("gethostbyname", 1000 + h_errno);
+                ERR_raise_data(ERR_LIB_SYS, 1000 + h_errno,
+                               "calling gethostbyname()");
 # endif
 #else
-                FUNCerr("gethostbyname", get_last_socket_error());
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling gethostbyname()");
 #endif
                 ret = 0;
                 goto err;
@@ -855,7 +860,8 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
-                    FUNCerr("getservbyname", get_last_socket_error());
+                    ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                                   "calling getservbyname()");
                     goto err;
                 }
             } else {
