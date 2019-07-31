@@ -58,9 +58,9 @@ struct ossl_method_store_st {
 };
 
 typedef struct {
-    OSSL_METHOD_STORE *store;
     LHASH_OF(QUERY) *cache;
     size_t nelem;
+    uint32_t seed;
 } IMPL_CACHE_FLUSH;
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
@@ -376,37 +376,40 @@ IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);
 /*
  * Flush an element from the query cache (perhaps).
  *
- * In order to avoid taking a write lock to keep accurate LRU information or
- * using atomic operations to approximate similar, the procedure used here
- * is to stochastically flush approximately half the cache.  Since generating
- * random numbers is relatively expensive, we produce them in blocks and
- * consume them as we go, saving generated bits between generations of flushes.
+ * In order to avoid taking a write lock or using atomic operations
+ * to keep accurate least recently used (LRU) or least frequently used
+ * (LFU) information, the procedure used here is to stochastically
+ * flush approximately half the cache.
  *
- * This procedure isn't ideal, LRU would be better.  However, in normal
- * operation, reaching a full cache would be quite unexpected.  It means
- * that no steady state of algorithm queries has been reached.  I.e. it is most
- * likely an attack of some form.  A suboptimal clearance strategy that doesn't
- * degrade performance of the normal case is preferable to a more refined
- * approach that imposes a performance impact.
+ * This procedure isn't ideal, LRU or LFU would be better.  However,
+ * in normal operation, reaching a full cache would be unexpected.
+ * It means that no steady state of algorithm queries has been reached.
+ * That is, it is most likely an attack of some form.  A suboptimal clearance
+ * strategy that doesn't degrade performance of the normal case is
+ * preferable to a more refined approach that imposes a performance
+ * impact.
  */
 static void impl_cache_flush_cache(QUERY *c, IMPL_CACHE_FLUSH *state)
 {
-#if !defined(FIPS_MODE)
-/* TODO(3.0): No RAND_bytes yet in FIPS module. Add this back when available */
-    OSSL_METHOD_STORE *store = state->store;
-    unsigned int n;
+    uint32_t n;
 
-    if (store->nbits == 0) {
-        if (!RAND_bytes(store->rand_bits, sizeof(store->rand_bits)))
-            return;
-        store->nbits = sizeof(store->rand_bits) * 8;
-    }
-    n = --store->nbits;
-    if ((store->rand_bits[n >> 3] & (1 << (n & 7))) != 0)
+    /*
+     * Implement the 32 bit xorshift as suggested by George Marsaglia in:
+     *      https://doi.org/10.18637/jss.v008.i14
+     *
+     * This is a very fast PRNG so there is no need to extract bits one at a
+     * time and use the entire value each time.
+     */
+    n = state->seed;
+    n ^= n << 13;
+    n ^= n >> 17;
+    n ^= n << 5;
+    state->seed = n;
+
+    if ((n & 1) != 0)
         OPENSSL_free(lh_QUERY_delete(state->cache, c));
     else
         state->nelem++;
-#endif /* !defined(FIPS_MODE) */
 }
 
 static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
@@ -424,7 +427,8 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
     IMPL_CACHE_FLUSH state;
 
     state.nelem = 0;
-    state.store = store;
+    if ((state.seed = OPENSSL_rdtsc()) == 0)
+        state.seed = 1;
     ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
     store->need_flush = 0;
     store->nelem = state.nelem;
@@ -480,7 +484,8 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
 
     if (method == NULL) {
         elem.query = prop_query;
-        lh_QUERY_delete(alg->cache, &elem);
+        if (lh_QUERY_delete(alg->cache, &elem) != NULL)
+            store->nelem--;
         ossl_property_unlock(store);
         return 1;
     }
@@ -489,11 +494,13 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
         p->query = p->body;
         p->method = method;
         memcpy((char *)p->query, prop_query, len + 1);
-        if ((old = lh_QUERY_insert(alg->cache, p)) != NULL)
+        if ((old = lh_QUERY_insert(alg->cache, p)) != NULL) {
             OPENSSL_free(old);
-        if (old != NULL || !lh_QUERY_error(alg->cache)) {
-            store->nelem++;
-            if (store->nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
+            ossl_property_unlock(store);
+            return 1;
+        }
+        if (!lh_QUERY_error(alg->cache)) {
+            if (++store->nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
                 store->need_flush = 1;
             ossl_property_unlock(store);
             return 1;
