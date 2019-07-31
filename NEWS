@@ -7,6 +7,9 @@
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
 
+      o Added error raising macros, ERR_raise() and ERR_raise_data().
+      o Deprecated ERR_put_error().
+      o Added OSSL_PROVIDER_available(), to check provider availibility.
       o Added 'openssl mac' that uses the EVP_MAC API.
       o Added 'openssl kdf' that uses the EVP_KDF API.
       o Add OPENSSL_info() and 'openssl info' to get built-in data.
