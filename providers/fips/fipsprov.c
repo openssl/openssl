@@ -250,6 +250,9 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
     { "AES-256-CTR", "fips=yes", aes256ctr_functions },
     { "AES-192-CTR", "fips=yes", aes192ctr_functions },
     { "AES-128-CTR", "fips=yes", aes128ctr_functions },
+    { "id-aes256-GCM", "fips=yes", aes256gcm_functions },
+    { "id-aes192-GCM", "fips=yes", aes192gcm_functions },
+    { "id-aes128-GCM", "fips=yes", aes128gcm_functions },
     { NULL, NULL, NULL }
 };
 

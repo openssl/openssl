@@ -57,6 +57,14 @@ extern const OSSL_DISPATCH aes128cfb8_functions[];
 extern const OSSL_DISPATCH aes256ctr_functions[];
 extern const OSSL_DISPATCH aes192ctr_functions[];
 extern const OSSL_DISPATCH aes128ctr_functions[];
+extern const OSSL_DISPATCH aes256gcm_functions[];
+extern const OSSL_DISPATCH aes192gcm_functions[];
+extern const OSSL_DISPATCH aes128gcm_functions[];
+#ifndef OPENSSL_NO_ARIA
+extern const OSSL_DISPATCH aria256gcm_functions[];
+extern const OSSL_DISPATCH aria192gcm_functions[];
+extern const OSSL_DISPATCH aria128gcm_functions[];
+#endif /* OPENSSL_NO_ARIA */
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];

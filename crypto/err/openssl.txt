@@ -2694,7 +2694,10 @@ PROV_R_BAD_DECRYPT:100:bad decrypt
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
 PROV_R_FAILED_TO_GET_PARAMETER:103:failed to get parameter
 PROV_R_FAILED_TO_SET_PARAMETER:104:failed to set parameter
+PROV_R_INVALID_AAD:108:invalid aad
+PROV_R_INVALID_IVLEN:109:invalid ivlen
 PROV_R_INVALID_KEYLEN:105:invalid keylen
+PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
 RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long

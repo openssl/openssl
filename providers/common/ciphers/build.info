@@ -1,8 +1,8 @@
 LIBS=../../../libcrypto
-SOURCE[../../../libcrypto]=\
-        block.c aes.c aes_basic.c
+$COMMON=block.c aes.c aes_basic.c gcm.c gcm_hw.c
+
+SOURCE[../../../libcrypto]=$COMMON
 INCLUDE[../../../libcrypto]=. ../../../crypto
 
-SOURCE[../../fips]=\
-        block.c aes.c aes_basic.c
+SOURCE[../../fips]=$COMMON
 INCLUDE[../../fips]=. ../../../crypto

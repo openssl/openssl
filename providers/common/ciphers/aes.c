@@ -13,6 +13,7 @@
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
+#include <openssl/rand.h>
 #include "internal/cryptlib.h"
 #include "internal/provider_algs.h"
 #include "ciphers_locl.h"
@@ -248,50 +249,63 @@ static int aes_cipher(void *vctx,
     return 1;
 }
 
-#define IMPLEMENT_cipher(lcmode, UCMODE, flags, kbits, blkbits, ivbits) \
-    static OSSL_OP_cipher_get_params_fn aes_##kbits##_##lcmode##_get_params; \
-    static int aes_##kbits##_##lcmode##_get_params(OSSL_PARAM params[]) \
-    { \
-        OSSL_PARAM *p; \
-                                                                \
-        p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);          \
-        if (p != NULL) {                                                \
-            if (!OSSL_PARAM_set_int(p, EVP_CIPH_##UCMODE##_MODE))           \
-                return 0;                                               \
-        }                                                           \
-        p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_FLAGS); \
-        if (p != NULL) {                                                \
-            if (!OSSL_PARAM_set_ulong(p, (flags)))                          \
-                return 0;                                               \
-        }                                                           \
-        p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);        \
-        if (p != NULL) {                                                \
-            if (!OSSL_PARAM_set_int(p, (kbits) / 8))                         \
-                return 0;                                               \
-        }                                                           \
-        p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);    \
-        if (p != NULL) {                                                \
-            if (!OSSL_PARAM_set_int(p, (blkbits) / 8))                   \
-                return 0;                                               \
-        }                                                               \
-        p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);         \
-        if (p != NULL) {                                                \
-            if (!OSSL_PARAM_set_int(p, (ivbits) / 8))                    \
-                return 0;                                               \
-        }                                                               \
-    \
-        return 1; \
-    } \
-    static OSSL_OP_cipher_newctx_fn aes_##kbits##_##lcmode##_newctx; \
-    static void *aes_##kbits##_##lcmode##_newctx(void *provctx) \
-    { \
-        PROV_AES_KEY *ctx = OPENSSL_zalloc(sizeof(*ctx)); \
-    \
-        ctx->pad = 1; \
-        ctx->keylen = ((kbits) / 8);                        \
-        ctx->ciph = PROV_AES_CIPHER_##lcmode(ctx->keylen); \
-        ctx->mode = EVP_CIPH_##UCMODE##_MODE; \
-        return ctx; \
+static void *aes_new_ctx(void *provctx, size_t mode, size_t kbits,
+                         const PROV_AES_CIPHER *ciph)
+{
+    PROV_AES_KEY *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    ctx->pad = 1;
+    ctx->keylen = kbits / 8;
+    ctx->ciph = ciph;
+    ctx->mode = mode;
+    return ctx;
+}
+
+int aes_get_params(OSSL_PARAM params[], int md, unsigned long flags,
+                   int kbits, int blkbits, int ivbits)
+{
+    OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, md))
+            return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_FLAGS);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_ulong(p, flags))
+            return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, kbits / 8))
+            return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, blkbits / 8))
+            return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, ivbits / 8))
+            return 0;
+    }
+    return 1;
+}
+
+#define IMPLEMENT_cipher(lcmode, UCMODE, flags, kbits, blkbits, ivbits)        \
+    static OSSL_OP_cipher_get_params_fn aes_##kbits##_##lcmode##_get_params;   \
+    static int aes_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])        \
+    {                                                                          \
+        return aes_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags, kbits,  \
+                              blkbits, ivbits);                                \
+    }                                                                          \
+    static OSSL_OP_cipher_newctx_fn aes_##kbits##_##lcmode##_newctx;           \
+    static void *aes_##kbits##_##lcmode##_newctx(void *provctx)                \
+    {                                                                          \
+        return aes_new_ctx(provctx, EVP_CIPH_##UCMODE##_MODE, kbits,           \
+                           PROV_AES_CIPHER_##lcmode(kbits / 8));               \
     }
 
 /* ECB */
@@ -351,6 +365,11 @@ static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[])
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
     OSSL_PARAM *p;
 
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    if (p != NULL) {
+        if (!OSSL_PARAM_set_int(p, AES_BLOCK_SIZE))
+            return 0;
+    }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->pad)) {
         PROVerr(PROV_F_AES_CTX_GET_PARAMS, PROV_R_FAILED_TO_SET_PARAMETER);

@@ -111,6 +111,14 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-256-CTR", "default=yes", aes256ctr_functions },
     { "AES-192-CTR", "default=yes", aes192ctr_functions },
     { "AES-128-CTR", "default=yes", aes128ctr_functions },
+    { "id-aes256-GCM", "default=yes", aes256gcm_functions },
+    { "id-aes192-GCM", "default=yes", aes192gcm_functions },
+    { "id-aes128-GCM", "default=yes", aes128gcm_functions },
+#ifndef OPENSSL_NO_ARIA
+    { "ARIA-256-GCM", "default=yes", aria256gcm_functions },
+    { "ARIA-192-GCM", "default=yes", aria192gcm_functions },
+    { "ARIA-128-GCM", "default=yes", aria128gcm_functions },
+#endif /* OPENSSL_NO_ARIA */
     { NULL, NULL, NULL }
 };
 

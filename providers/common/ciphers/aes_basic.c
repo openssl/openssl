@@ -6,18 +6,16 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
+#include <string.h>
+#include <assert.h>
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <string.h>
-#include <assert.h>
 #include <openssl/aes.h>
-#include "internal/modes_int.h"
-#include "internal/evp_int.h"
 #include <openssl/rand.h>
 #include <openssl/cmac.h>
 #include "ciphers_locl.h"
+#include "internal/evp_int.h"
 #include "internal/providercommonerr.h"
 #include "internal/aes_platform.h"
 
