@@ -9,6 +9,12 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Changed the library initialisation so that the config file is now loaded
+     by default. This was already the case for libssl. It now occurs for both
+     libcrypto and libssl. Use the OPENSSL_INIT_NO_LOAD_CONFIG option to
+     OPENSSL_init_crypto() to suppress automatic loading of a config file.
+     [Matt Caswell]
+
   *) Introduced new error raising macros, ERR_raise() and ERR_raise_data(),
      where the former acts as a replacement for ERR_put_error(), and the
      latter replaces the combination ERR_put_error()+ERR_add_error_data().
