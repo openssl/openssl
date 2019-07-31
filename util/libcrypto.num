@@ -4476,10 +4476,6 @@ ASYNC_WAIT_CTX_get_callback             4581	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_set_callback             4582	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_set_status               4583	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_get_status               4584	3_0_0	EXIST::FUNCTION:
-CMS_add1_signing_cert                   4585	3_0_0	EXIST::FUNCTION:CMS
-CMS_add1_signing_cert_v2                4586	3_0_0	EXIST::FUNCTION:CMS
-ESS_SIGNING_CERT_new_init               4587	3_0_0	EXIST::FUNCTION:
-ESS_SIGNING_CERT_V2_new_init            4588	3_0_0	EXIST::FUNCTION:
 ERR_load_ESS_strings                    4589	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_new_id                      4590	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_free                        4591	3_0_0	EXIST::FUNCTION:

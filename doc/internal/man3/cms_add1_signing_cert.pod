@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_add1_signing_cert, CMS_add1_signing_cert_v2
+cms_add1_signing_cert, cms_add1_signing_cert_v2
 - add ESS signing-certificate signed attribute to a
 CMS_SignerInfo data structure
 
@@ -10,15 +10,15 @@ CMS_SignerInfo data structure
 
  #include <openssl/cms.h>
 
- int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
+ int cms_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
 
- int CMS_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc2);
+ int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc2);
 
 =head1 DESCRIPTION
 
-CMS_add1_signing_cert() adds an ESS Signing Certificate B<sc> (version 1) signed
+cms_add1_signing_cert() adds an ESS Signing Certificate B<sc> (version 1) signed
 attribute to the CMS_SignerInfo B<si>.
-CMS_add1_signing_cert_v2() adds an ESS Signing Certificate B<sc2> (version 2) signed
+cms_add1_signing_cert_v2() adds an ESS Signing Certificate B<sc2> (version 2) signed
 attribute to the CMS_SignerInfo B<si>.
 The ESS Signing Certificate attributes version 1 and 2 are defined in RFC 5035
 which updates Section 5.4 of RFC 2634.
@@ -31,7 +31,8 @@ For a fuller description see L<cms(1)>).
 
 =head1 RETURN VALUES
 
-CMS_add1_signing_cert() and CMS_add1_signing_cert_v2() return 1 if attribute is added or 0 if an error occurred.
+cms_add1_signing_cert() and cms_add1_signing_cert_v2() return 1 if attribute 
+is added or 0 if an error occurred.
 
 =head1 COPYRIGHT
 

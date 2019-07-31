@@ -12,8 +12,17 @@
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_get(PKCS7_SIGNER_INFO *si);
 int ESS_SIGNING_CERT_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
 
+ESS_SIGNING_CERT *ESS_SIGNING_CERT_new_init(X509 *signcert,
+                                            STACK_OF(X509) *certs,
+                                            int issuer_needed);
+
 ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_get(PKCS7_SIGNER_INFO *si);
 int ESS_SIGNING_CERT_V2_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT_V2 *sc);
+
+ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
+                                                  X509 *signcert,
+                                                  STACK_OF(X509) *certs,
+                                                  int issuer_needed);
 
 /*-
  * IssuerSerial ::= SEQUENCE {

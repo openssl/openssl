@@ -474,12 +474,6 @@ ERR_load_X509_strings
 ERR_load_strings_const
 ERR_set_error_data
 ERR_unload_strings
-ESS_CERT_ID_V2_dup
-ESS_CERT_ID_V2_free
-ESS_CERT_ID_V2_new
-ESS_SIGNING_CERT_V2_dup
-ESS_SIGNING_CERT_V2_free
-ESS_SIGNING_CERT_V2_new
 ESS_SIGNING_CERT_V2_new_init
 ESS_SIGNING_CERT_new_init
 EVP_CIPHER_CTX_buf_noconst
@@ -1456,8 +1450,6 @@ b2i_PublicKey_bio
 conf_ssl_get
 conf_ssl_get_cmd
 conf_ssl_name_find
-d2i_ESS_CERT_ID_V2
-d2i_ESS_SIGNING_CERT_V2
 d2i_X509_bio
 d2i_X509_fp
 err_free_strings_int
@@ -1469,8 +1461,6 @@ i2a_ASN1_STRING
 i2b_PVK_bio
 i2b_PrivateKey_bio
 i2b_PublicKey_bio
-i2d_ESS_CERT_ID_V2
-i2d_ESS_SIGNING_CERT_V2
 i2d_PrivateKey_bio
 i2d_PrivateKey_fp
 i2d_X509_bio

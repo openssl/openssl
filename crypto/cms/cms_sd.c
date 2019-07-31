@@ -14,9 +14,12 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
+#include <openssl/ess.h>
 #include "cms_lcl.h"
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/cms_int.h"
+#include "internal/ess_int.h"
 
 /* CMS SignedData Utilities */
 
@@ -355,13 +358,13 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 if ((sc = ESS_SIGNING_CERT_new_init(signer,
                                                     NULL, 1)) == NULL)
                     goto err;
-                add_sc = CMS_add1_signing_cert(si, sc);
+                add_sc = cms_add1_signing_cert(si, sc);
                 ESS_SIGNING_CERT_free(sc);
             } else {
                 if ((sc2 = ESS_SIGNING_CERT_V2_new_init(md, signer,
                                                         NULL, 1)) == NULL)
                     goto err;
-                add_sc = CMS_add1_signing_cert_v2(si, sc2);
+                add_sc = cms_add1_signing_cert_v2(si, sc2);
                 ESS_SIGNING_CERT_V2_free(sc2);
             }
             if (!add_sc)

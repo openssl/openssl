@@ -41,9 +41,6 @@ DECLARE_ASN1_DUP_FUNCTION(ESS_CERT_ID)
 DECLARE_ASN1_ALLOC_FUNCTIONS(ESS_SIGNING_CERT)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(ESS_SIGNING_CERT, ESS_SIGNING_CERT)
 DECLARE_ASN1_DUP_FUNCTION(ESS_SIGNING_CERT)
-ESS_SIGNING_CERT *ESS_SIGNING_CERT_new_init(X509 *signcert,
-                                            STACK_OF(X509) *certs,
-                                            int issuer_needed);
 
 DECLARE_ASN1_ALLOC_FUNCTIONS(ESS_CERT_ID_V2)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(ESS_CERT_ID_V2, ESS_CERT_ID_V2)
@@ -52,10 +49,6 @@ DECLARE_ASN1_DUP_FUNCTION(ESS_CERT_ID_V2)
 DECLARE_ASN1_ALLOC_FUNCTIONS(ESS_SIGNING_CERT_V2)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(ESS_SIGNING_CERT_V2, ESS_SIGNING_CERT_V2)
 DECLARE_ASN1_DUP_FUNCTION(ESS_SIGNING_CERT_V2)
-ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
-                                                  X509 *signcert,
-                                                  STACK_OF(X509) *certs,
-                                                  int issuer_needed);
 
 # ifdef  __cplusplus
 }
