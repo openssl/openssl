@@ -208,7 +208,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
 # ifdef EAI_SYSTEM
             if (ret == EAI_SYSTEM) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling %s()", "getnameinfo");
+                               "calling getnameinfo()");
                 BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
             } else
 # endif
@@ -702,7 +702,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                           "calling %s()", "getaddrinfo");
+                           "calling getaddrinfo()");
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
             break;
 # endif
@@ -807,14 +807,14 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 # if defined(OPENSSL_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
                 ERR_raise_data(ERR_LIB_SYS, 1000,
-                               "calling %s()", "gethostbyname");
+                               "calling gethostbyname()");
 # else
                 ERR_raise_data(ERR_LIB_SYS, 1000 + h_errno,
-                               "calling %s()", "gethostbyname");
+                               "calling gethostbyname()");
 # endif
 #else
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling %s()", "gethostbyname");
+                               "calling gethostbyname()");
 #endif
                 ret = 0;
                 goto err;
@@ -861,7 +861,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 
                 if (se == NULL) {
                     ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                                   "calling %s()", "getservbyname");
+                                   "calling getservbyname()");
                     goto err;
                 }
             } else {

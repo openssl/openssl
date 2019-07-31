@@ -130,7 +130,7 @@ int BIO_sock_init(void)
          */
         if (WSAStartup(0x0202, &wsa_state) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                           "calling %s()", "wsastartup");
+                           "calling wsastartup()");
             BIOerr(BIO_F_BIO_SOCK_INIT, BIO_R_WSASTARTUP);
             return -1;
         }
@@ -191,7 +191,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 #  endif                        /* __DJGPP__ */
     if (i < 0)
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                       "calling %s()", "ioctlsocket");
+                       "calling ioctlsocket()");
     return i;
 }
 
@@ -243,7 +243,7 @@ int BIO_accept(int sock, char **ip_port)
             goto end;
         }
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                       "calling %s()", "accept");
+                       "calling accept()");
         BIOerr(BIO_F_BIO_ACCEPT, BIO_R_ACCEPT_ERROR);
         goto end;
     }
@@ -309,7 +309,7 @@ int BIO_socket_nbio(int s, int mode)
     l = fcntl(s, F_GETFL, 0);
     if (l == -1) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                       "calling %s()", "fcntl");
+                       "calling fcntl()");
         ret = -1;
     } else {
 #  if defined(O_NONBLOCK)
@@ -328,7 +328,7 @@ int BIO_socket_nbio(int s, int mode)
 
         if (ret < 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                           "calling %s()", "fcntl");
+                           "calling fcntl()");
         }
     }
 # else
@@ -352,7 +352,7 @@ int BIO_sock_info(int sock,
                               &addr_len);
             if (ret == -1) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                               "calling %s()", "getsockname");
+                               "calling getsockname()");
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
                 return 0;
             }

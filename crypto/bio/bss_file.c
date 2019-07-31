@@ -148,7 +148,7 @@ static int file_read(BIO *b, char *out, int outl)
             && (b->flags & BIO_FLAGS_UPLINK_INTERNAL
                 ? UP_ferror((FILE *)b->ptr) : ferror((FILE *)b->ptr))) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                           "calling %s()", "fread");
+                           "calling fread()");
             BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
             ret = -1;
         }
@@ -317,7 +317,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ? UP_fflush(b->ptr) : fflush((FILE *)b->ptr);
         if (st == EOF) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                           "calling %s()", "fflush");
+                           "calling fflush()");
             BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
             ret = 0;
         }
