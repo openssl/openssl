@@ -42,14 +42,14 @@ static int s390x_aes_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv,
     actx->plat.s390x.areslen = 0;
     actx->plat.s390x.kreslen = 0;
 
-    if (ivlen == AES_GCM_IV_DEFAULT_SIZE) {
+    if (ivlen == GCM_IV_DEFAULT_SIZE) {
         memcpy(&kma->j0, iv, ivlen);
         kma->j0.w[3] = 1;
         kma->cv.w = 1;
     } else {
         unsigned long long ivbits = ivlen << 3;
         size_t len = S390X_gcm_ivpadlen(ivlen);
-        unsigned char iv_zero_pad[S390X_gcm_ivpadlen(AES_GCM_IV_MAX_SIZE)];
+        unsigned char iv_zero_pad[S390X_gcm_ivpadlen(GCM_IV_MAX_SIZE)];
         /*
          * The IV length needs to be zero padded to be a multiple of 16 bytes
          * followed by 8 bytes of zeros and 8 bytes for the IV length.
@@ -93,7 +93,7 @@ static int s390x_aes_gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
     OPENSSL_cleanse(out, actx->plat.s390x.mreslen);
 
     if (ctx->enc) {
-        ctx->taglen = AES_GCM_TAG_MAX_SIZE;
+        ctx->taglen = GCM_TAG_MAX_SIZE;
         memcpy(tag, kma->t.b, ctx->taglen);
         rc = 1;
     } else {
