@@ -46,6 +46,18 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
     return 1;
 }
 
+// Added by OQS
+EVP_MD_CTX *EVP_MD_CTX_create(void)
+{
+    return EVP_MD_CTX_new();
+}
+
+// Added by OQS
+void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
+{
+    EVP_MD_CTX_free(ctx);
+}
+
 EVP_MD_CTX *EVP_MD_CTX_new(void)
 {
     return OPENSSL_zalloc(sizeof(EVP_MD_CTX));
