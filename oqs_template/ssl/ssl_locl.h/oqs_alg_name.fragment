@@ -1,0 +1,9 @@
+
+#define OQS_ALG_NAME(nid) \
+  (nid == NID_OQS_KEM_DEFAULT     ? OQS_KEM_alg_default : \
+{%- for kem in config['kems'] %}
+  (nid == NID_OQS_{{ kem['name_group'] }} ? {{ kem['oqs_alg'] }} : \
+{%- endfor %}
+  0 \
+  {% for kem in config['kems'] %}){% endfor %})
+

@@ -1,0 +1,5 @@
+{% for kem in config['kems'] %}
+  } else if (strncmp(value, "{{ kem['name_group'] }}", len) == 0) {
+    nid = NID_OQS_{{ kem['name_group'] }};
+{%- endfor %}
+
