@@ -66,6 +66,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
+#include "constant_time_locl.h"
 
 const char BN_version[] = "Big Number" OPENSSL_VERSION_PTEXT;
 
@@ -187,13 +188,57 @@ int BN_num_bits_word(BN_ULONG l)
     return bits;
 }
 
+/*
+ * This function still leaks `a->dmax`: it's caller's responsibility to
+ * expand the input `a` in advance to a public length.
+ */
+static inline
+int bn_num_bits_consttime(const BIGNUM *a)
+{
+    int j, ret;
+    unsigned int mask, past_i;
+    int i = a->top - 1;
+    bn_check_top(a);
+
+    for (j = 0, past_i = 0, ret = 0; j < a->dmax; j++) {
+        mask = constant_time_eq_int(i, j); /* 0xff..ff if i==j, 0x0 otherwise */
+
+        ret += BN_BITS2 & (~mask & ~past_i);
+        ret += BN_num_bits_word(a->d[j]) & mask;
+
+        past_i |= mask; /* past_i will become 0xff..ff after i==j */
+    }
+
+    /*
+     * if BN_is_zero(a) => i is -1 and ret contains garbage, so we mask the
+     * final result.
+     */
+    mask = ~(constant_time_eq_int(i, ((int)-1)));
+
+    return ret & mask;
+}
+
 int BN_num_bits(const BIGNUM *a)
 {
     int i = a->top - 1;
     bn_check_top(a);
 
+    if (a->flags & BN_FLG_CONSTTIME) {
+        /*
+         * We assume that BIGNUMs flagged as CONSTTIME have also been expanded
+         * so that a->dmax is not leaking secret information.
+         *
+         * In other words, it's the caller's responsibility to ensure `a` has
+         * been preallocated in advance to a public length if we hit this
+         * branch.
+         *
+         */
+        return bn_num_bits_consttime(a);
+    }
+
     if (BN_is_zero(a))
         return 0;
+
     return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
 }
 
