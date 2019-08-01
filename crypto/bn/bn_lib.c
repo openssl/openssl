@@ -132,14 +132,73 @@ int BN_num_bits_word(BN_ULONG l)
     return bits;
 }
 
+/* returns 0xff..ff if i==j , 0x0 otherwise */
+static inline int _ints_are_equal(int i, int j)
+{
+#define BITS_IN_A_INT (sizeof(int)*8)
+    int mask = (i-j) | (j-i);
+    /*
+     * if (i == j)  =>  mask := 0
+     *
+     * otherwise    =>  either side of the or is negative, so ORing will
+     *                  make sure that the sign bit of mask is now set.
+     */
+
+    /*
+     * now we shift right to bring the sign bit to the LSB:
+     *
+     * if (i == j)  =>  the sign bit was NOT set    => mask := 0
+     *
+     * otherwise    =>  the sign bit was set        => mask := 1
+     *
+     */
+    mask = (mask >> (BITS_IN_A_INT-1)) & 1;
+
+    /*
+     * if (i == j)  => mask := "-0" => 0x0
+     * otherwise    => mask := -1   => 0xff..ff
+     */
+    mask = -mask;
+
+    /* now flip the bits to return 0xff..ff on equality, 0x0 otherwise */
+    return ~mask;
+#undef BITS_IN_A_INT
+}
+
+
 int BN_num_bits(const BIGNUM *a)
 {
     int i = a->top - 1;
     bn_check_top(a);
 
-    if (BN_is_zero(a))
-        return 0;
-    return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
+    if (a->flags & BN_FLG_CONSTTIME) {
+        int j, ret, mask, past_i;
+
+        /*
+         * We assume that BIGNUMs flagged as CONSTTIME have also been expanded
+         * so that bn->dmax is not leaking secret information.
+         */
+        for (j = 0, past_i = 0, ret = 0; j < a->dmax; j++) {
+            mask = _ints_are_equal(i, j); /* 0xff..ff if i==j, 0x0 otherwise */
+
+            ret += BN_BITS2 & (~mask & ~past_i);
+            ret += BN_num_bits_word(a->d[j]) & mask;
+
+            past_i |= mask; /* past_i will become 0xff..ff after i==j */
+        }
+
+        /*
+         * if BN_is_zero(a) => i is -1 and ret contains garbage, so we mask the
+         * final result.
+         */
+        mask = ~(_ints_are_equal(i, ((int)-1)));
+
+        return ret & mask;
+    } else {
+        if (BN_is_zero(a))
+            return 0;
+        return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
+    }
 }
 
 static void bn_free_d(BIGNUM *a, int clear)
