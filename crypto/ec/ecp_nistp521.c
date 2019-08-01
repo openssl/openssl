@@ -184,8 +184,6 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     felem_bytearray b_out;
     unsigned num_bytes;
 
-    /* BN_bn2bin eats leading zeroes */
-    memset(b_out, 0, sizeof(b_out));
     num_bytes = BN_num_bytes(bn);
     if (num_bytes > sizeof(b_out)) {
         ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
@@ -195,7 +193,7 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
         ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
-    num_bytes = BN_bn2bin(bn, b_in);
+    num_bytes = BN_bn2binpad(bn, b_in, sizeof(b_in));
     flip_endian(b_out, b_in, num_bytes);
     bin66_to_felem(out, b_out);
     return 1;
@@ -1977,9 +1975,9 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
                         ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
                         goto err;
                     }
-                    num_bytes = BN_bn2bin(tmp_scalar, tmp);
+                    num_bytes = BN_bn2binpad(tmp_scalar, tmp, sizeof(tmp));
                 } else
-                    num_bytes = BN_bn2bin(p_scalar, tmp);
+                    num_bytes = BN_bn2binpad(p_scalar, tmp, sizeof(tmp));
                 flip_endian(secrets[i], tmp, num_bytes);
                 /* precompute multiples */
                 if ((!BN_to_felem(x_out, p->X)) ||
@@ -2023,9 +2021,9 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
                 ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
                 goto err;
             }
-            num_bytes = BN_bn2bin(tmp_scalar, tmp);
+            num_bytes = BN_bn2binpad(tmp_scalar, tmp, sizeof(tmp));
         } else
-            num_bytes = BN_bn2bin(scalar, tmp);
+            num_bytes = BN_bn2binpad(scalar, tmp, sizeof(tmp));
         flip_endian(g_secret, tmp, num_bytes);
         /* do the multiplication with generator precomputation */
         batch_mul(x_out, y_out, z_out,
