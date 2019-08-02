@@ -3742,46 +3742,44 @@ static int test_ciphersuite_change(void)
 }
 
 /*
- * Test Key exchange
- * Test 0 = Test ECDHE Key exchange with TLSv1.3 client and server
- * Test 1 = Test ECDHE with TLSv1.2 client and server
- * Test 2 = Test FFDHE Key exchange with TLSv1.3 client and server
- * Test 3 = Test FFDHE with TLSv1.2 client and server
- * Test 4 = Test NID_X9_62_prime256v1 with TLSv1.3 client and server
- * Test 5 = Test NID_secp384r1 with TLSv1.3 client and server
- * Test 6 = Test NID_secp521r1 with TLSv1.3 client and server
- * Test 7 = Test NID_X25519 with TLSv1.3 client and server
- * Test 8 = Test NID_X448 with TLSv1.3 client and server
- * Test 9 = Test NID_ffdhe2048 with TLSv1.3 client and server
- * Test 10 = Test NID_ffdhe3072 with TLSv1.3 client and server
- * Test 11 = Test NID_ffdhe4096 with TLSv1.3 client and server
- * Test 12 = Test NID_ffdhe6144 with TLSv1.3 client and server
- * Test 13 = Test NID_ffdhe8192 with TLSv1.3 client and server
+ * Test TLSv1.3 Key exchange
+ * Test 0 = Test all ECDHE Key exchange with TLSv1.3 client and server
+ * Test 1 = Test NID_X9_62_prime256v1 with TLSv1.3 client and server
+ * Test 2 = Test NID_secp384r1 with TLSv1.3 client and server
+ * Test 3 = Test NID_secp521r1 with TLSv1.3 client and server
+ * Test 4 = Test NID_X25519 with TLSv1.3 client and server
+ * Test 5 = Test NID_X448 with TLSv1.3 client and server
+ * Test 6 = Test all FFDHE Key exchange with TLSv1.3 client and server
+ * Test 7 = Test NID_ffdhe2048 with TLSv1.3 client and server
+ * Test 8 = Test NID_ffdhe3072 with TLSv1.3 client and server
+ * Test 9 = Test NID_ffdhe4096 with TLSv1.3 client and server
+ * Test 10 = Test NID_ffdhe6144 with TLSv1.3 client and server
+ * Test 11 = Test NID_ffdhe8192 with TLSv1.3 client and server
+ * Test 12 = Test all ECDHE with TLSv1.2 client and server
+ * Test 13 = Test all FFDHE with TLSv1.2 client and server
  */
 static int test_key_exchange(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-#if !defined(OPENSSL_NO_EC)
-    int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
-                                NID_X25519, NID_X448};
-#endif
-#ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_EC
+    int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1,
+                                NID_secp521r1, NID_X25519, NID_X448};
+# endif
+# ifndef OPENSSL_NO_DH
     int ffdhe_kexch_groups[] = {NID_ffdhe2048, NID_ffdhe3072, NID_ffdhe4096,
                                 NID_ffdhe6144, NID_ffdhe8192};
-#endif
+# endif
     int kexch_alg;
     int *kexch_groups = &kexch_alg;
     int kexch_groups_size = 1;
     int max_version = TLS1_3_VERSION;
-    int want_err = SSL_ERROR_NONE;
-    int expected_err_reason = 0;
 
     switch (idx) {
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
 # ifndef OPENSSL_NO_TLS1_2
-        case 1:
+        case 12:
             max_version = TLS1_2_VERSION;
 # endif
             /* Fall through */
@@ -3789,48 +3787,48 @@ static int test_key_exchange(int idx)
             kexch_groups = ecdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ecdhe_kexch_groups);
             break;
-        case 4:
+        case 1:
             kexch_alg = NID_X9_62_prime256v1;
             break;
-        case 5:
+        case 2:
             kexch_alg = NID_secp384r1;
             break;
-        case 6:
+        case 3:
             kexch_alg = NID_secp521r1;
             break;
-        case 7:
+        case 4:
             kexch_alg = NID_X25519;
             break;
-        case 8:
+        case 5:
             kexch_alg = NID_X448;
             break;
-#endif
-#ifndef OPENSSL_NO_DH
+# endif
+# ifndef OPENSSL_NO_DH
 # ifndef OPENSSL_NO_TLS1_2
-        case 3:
+        case 13:
             max_version = TLS1_2_VERSION;
 # endif
             /* Fall through */
-        case 2:
+        case 6:
             kexch_groups = ffdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ffdhe_kexch_groups);
             break;
-        case 9:
+        case 7:
             kexch_alg = NID_ffdhe2048;
             break;
-        case 10:
+        case 8:
             kexch_alg = NID_ffdhe3072;
             break;
-        case 11:
+        case 9:
             kexch_alg = NID_ffdhe4096;
             break;
-        case 12:
+        case 10:
             kexch_alg = NID_ffdhe6144;
             break;
-        case 13:
+        case 11:
             kexch_alg = NID_ffdhe8192;
             break;
-#endif
+# endif
         default:
             /* We're skipping this test */
             return 1;
@@ -3841,23 +3839,28 @@ static int test_key_exchange(int idx)
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (!TEST_true(SSL_CTX_set_ciphersuites(sctx, TLS1_3_RFC_AES_128_GCM_SHA256)))
+    if (!TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                   TLS1_3_RFC_AES_128_GCM_SHA256)))
         goto end;
 
-    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, TLS1_3_RFC_AES_128_GCM_SHA256)))
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                   TLS1_3_RFC_AES_128_GCM_SHA256)))
         goto end;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, TLS1_TXT_RSA_WITH_AES_128_SHA)))
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx,
+                   TLS1_TXT_RSA_WITH_AES_128_SHA)))
         goto end;
 
     /*
      * Must include an EC ciphersuite so that we send supported groups in
      * TLSv1.2
      */
+# ifndef OPENSSL_NO_TLS1_2
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
                    TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM ":"
                    TLS1_TXT_RSA_WITH_AES_128_SHA)))
         goto end;
+# endif
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL)))
@@ -3867,29 +3870,16 @@ static int test_key_exchange(int idx)
         || !TEST_true(SSL_set1_groups(clientssl, kexch_groups, kexch_groups_size)))
         goto end;
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl, want_err))) {
-        /* Fail only if no error is expected in handshake */
-        if (expected_err_reason == 0)
-            goto end;
-    }
-
-    /* Fail if expected error is not happening for failure testcases */
-    if (expected_err_reason != 0) {
-        unsigned long err_code = ERR_get_error();
-
-        ERR_print_errors_fp(stdout);
-        if (TEST_int_eq(ERR_GET_REASON(err_code), expected_err_reason))
-            testresult = 1;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
-    }
 
     /*
-     * If Handshake succeeds the negotiated kexch alg should the first one in
-     * configured, except in the case of FFDHE groups which are TLSv1.3 only
-     * so we expect no shared group to exist.
+     * If Handshake succeeds the negotiated kexch alg should be the first one in
+     * configured, except in the case of FFDHE groups (idx 13), which are
+     * TLSv1.3 only so we expect no shared group to exist.
      */
     if (!TEST_int_eq(SSL_get_shared_group(serverssl, 0),
-                     idx == 3 ? 0 : kexch_groups[0]))
+                     idx == 13 ? 0 : kexch_groups[0]))
         goto end;
     if (max_version == TLS1_3_VERSION) {
         if (!TEST_int_eq(SSL_get_negotiated_group(serverssl), kexch_groups[0]))
@@ -6942,12 +6932,18 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_set_ciphersuite, 10);
     ADD_TEST(test_ciphersuite_change);
     ADD_ALL_TESTS(test_tls13_ciphersuite, 4);
-#ifdef OPENSSL_NO_PSK
+# ifdef OPENSSL_NO_PSK
     ADD_ALL_TESTS(test_tls13_psk, 1);
-#else
+# else
     ADD_ALL_TESTS(test_tls13_psk, 4);
-#endif  /* OPENSSL_NO_PSK */
+# endif  /* OPENSSL_NO_PSK */
+# ifndef OPENSSL_NO_TLS1_2
+    /* Test with both TLSv1.3 and 1.2 versions */
     ADD_ALL_TESTS(test_key_exchange, 14);
+# else
+    /* Test with only TLSv1.3 versions */
+    ADD_ALL_TESTS(test_key_exchange, 12);
+# endif
     ADD_ALL_TESTS(test_custom_exts, 5);
     ADD_TEST(test_stateless);
     ADD_TEST(test_pha_key_update);
