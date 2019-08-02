@@ -421,7 +421,7 @@ int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
     if (f->new_func == NULL)
         return 0;
 
-    f->new_func(obj, curval, ad, idx, f->argl, f->argp);
+    f->new_func(obj, NULL, ad, idx, f->argl, f->argp);
 
     return 1;
 }
