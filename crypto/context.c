@@ -16,7 +16,6 @@ struct openssl_ctx_onfree_list_st {
 };
 
 struct openssl_ctx_st {
-    CRYPTO_RWLOCK *lock;
     CRYPTO_EX_DATA data;
 
     /*
@@ -45,10 +44,6 @@ static int context_init(OPENSSL_CTX *ctx)
 {
     size_t i;
 
-    ctx->lock = CRYPTO_THREAD_lock_new();
-    if (ctx->lock == NULL)
-        return 0;
-
     ctx->oncelock = CRYPTO_THREAD_lock_new();
     if (ctx->oncelock == NULL)
         goto err;
@@ -68,8 +63,6 @@ static int context_init(OPENSSL_CTX *ctx)
     return 1;
  err:
     CRYPTO_THREAD_lock_free(ctx->oncelock);
-    CRYPTO_THREAD_lock_free(ctx->lock);
-    ctx->lock = NULL;
     return 0;
 }
 
@@ -92,8 +85,6 @@ static int context_deinit(OPENSSL_CTX *ctx)
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_OPENSSL_CTX, NULL, &ctx->data);
     crypto_cleanup_all_ex_data_int(ctx);
     CRYPTO_THREAD_lock_free(ctx->oncelock);
-    CRYPTO_THREAD_lock_free(ctx->lock);
-    ctx->lock = NULL;
     return 1;
 }
 
@@ -192,20 +183,14 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
     if (ctx == NULL)
         return NULL;
 
-    CRYPTO_THREAD_read_lock(ctx->lock);
-
     if (ctx->dyn_indexes[index] == -1
-            && !openssl_ctx_init_index(ctx, index, meth)) {
-        CRYPTO_THREAD_unlock(ctx->lock);
+            && !openssl_ctx_init_index(ctx, index, meth))
         return NULL;
-    }
 
     /* The alloc call ensures there's a value there */
     if (CRYPTO_alloc_ex_data(CRYPTO_EX_INDEX_OPENSSL_CTX, NULL,
                              &ctx->data, ctx->dyn_indexes[index]))
         data = CRYPTO_get_ex_data(&ctx->data, ctx->dyn_indexes[index]);
-
-    CRYPTO_THREAD_unlock(ctx->lock);
 
     return data;
 }
