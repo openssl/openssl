@@ -16,8 +16,10 @@ OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
     if (p != NULL && key != NULL)
         for (; p->key != NULL; p++)
-            if (strcmp(key, p->key) == 0)
+            if (strcmp(key, p->key) == 0) {
+                OSSL_PARAM_set_used(p, 1);
                 return p;
+            }
     return NULL;
 }
 
@@ -32,6 +34,8 @@ static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
     OSSL_PARAM res;
 
     res.key = key;
+    res.flags = 0;
+    res.reserved = 0;
     res.data_type = data_type;
     res.data = data;
     res.data_size = data_size;
@@ -39,7 +43,7 @@ static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
     return res;
 }
 
-int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val)
+int OSSL_PARAM_get_int(OSSL_PARAM *p, int *val)
 {
     switch (sizeof(int)) {
     case sizeof(int32_t):
@@ -66,7 +70,7 @@ OSSL_PARAM OSSL_PARAM_construct_int(const char *key, int *buf)
     return ossl_param_construct(key, OSSL_PARAM_INTEGER, buf, sizeof(int));
 }
 
-int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val)
+int OSSL_PARAM_get_uint(OSSL_PARAM *p, unsigned int *val)
 {
     switch (sizeof(unsigned int)) {
     case sizeof(uint32_t):
@@ -94,7 +98,7 @@ OSSL_PARAM OSSL_PARAM_construct_uint(const char *key, unsigned int *buf)
                                 sizeof(unsigned int));
 }
 
-int OSSL_PARAM_get_long(const OSSL_PARAM *p, long int *val)
+int OSSL_PARAM_get_long(OSSL_PARAM *p, long int *val)
 {
     switch (sizeof(long int)) {
     case sizeof(int32_t):
@@ -121,7 +125,7 @@ OSSL_PARAM OSSL_PARAM_construct_long(const char *key, long int *buf)
     return ossl_param_construct(key, OSSL_PARAM_INTEGER, buf, sizeof(long int));
 }
 
-int OSSL_PARAM_get_ulong(const OSSL_PARAM *p, unsigned long int *val)
+int OSSL_PARAM_get_ulong(OSSL_PARAM *p, unsigned long int *val)
 {
     switch (sizeof(unsigned long int)) {
     case sizeof(uint32_t):
@@ -149,7 +153,7 @@ OSSL_PARAM OSSL_PARAM_construct_ulong(const char *key, unsigned long int *buf)
                                 sizeof(unsigned long int));
 }
 
-int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
+int OSSL_PARAM_get_int32(OSSL_PARAM *p, int32_t *val)
 {
     int64_t i64;
     uint32_t u32;
@@ -159,6 +163,7 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
     if (val == NULL || p == NULL )
         return 0;
 
+    OSSL_PARAM_set_used(p, 1);
     if (p->data_type == OSSL_PARAM_INTEGER) {
         switch (p->data_size) {
         case sizeof(int32_t):
@@ -247,7 +252,7 @@ OSSL_PARAM OSSL_PARAM_construct_int32(const char *key, int32_t *buf)
                                 sizeof(int32_t));
 }
 
-int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
+int OSSL_PARAM_get_uint32(OSSL_PARAM *p, uint32_t *val)
 {
     int32_t i32;
     int64_t i64;
@@ -257,6 +262,7 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
     if (val == NULL || p == NULL)
         return 0;
 
+    OSSL_PARAM_set_used(p, 1);
     if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
         switch (p->data_size) {
         case sizeof(uint32_t):
@@ -349,7 +355,7 @@ OSSL_PARAM OSSL_PARAM_construct_uint32(const char *key, uint32_t *buf)
                                 sizeof(uint32_t));
 }
 
-int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
+int OSSL_PARAM_get_int64(OSSL_PARAM *p, int64_t *val)
 {
     uint64_t u64;
     double d;
@@ -357,6 +363,7 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
     if (val == NULL || p == NULL )
         return 0;
 
+    OSSL_PARAM_set_used(p, 1);
     if (p->data_type == OSSL_PARAM_INTEGER) {
         switch (p->data_size) {
         case sizeof(int32_t):
@@ -448,7 +455,7 @@ OSSL_PARAM OSSL_PARAM_construct_int64(const char *key, int64_t *buf)
     return ossl_param_construct(key, OSSL_PARAM_INTEGER, buf, sizeof(int64_t));
 }
 
-int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
+int OSSL_PARAM_get_uint64(OSSL_PARAM *p, uint64_t *val)
 {
     int32_t i32;
     int64_t i64;
@@ -457,6 +464,7 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
     if (val == NULL || p == NULL)
         return 0;
 
+    OSSL_PARAM_set_used(p, 1);
     if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
         switch (p->data_size) {
         case sizeof(uint32_t):
@@ -554,7 +562,7 @@ OSSL_PARAM OSSL_PARAM_construct_uint64(const char *key, uint64_t *buf)
                                 sizeof(uint64_t));
 }
 
-int OSSL_PARAM_get_size_t(const OSSL_PARAM *p, size_t *val)
+int OSSL_PARAM_get_size_t(OSSL_PARAM *p, size_t *val)
 {
     switch (sizeof(size_t)) {
     case sizeof(uint32_t):
@@ -582,7 +590,7 @@ OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf)
                                 sizeof(size_t));
 }
 
-int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
+int OSSL_PARAM_get_BN(OSSL_PARAM *p, BIGNUM **val)
 {
     BIGNUM *b;
 
@@ -591,6 +599,7 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
         || p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
         return 0;
 
+    OSSL_PARAM_set_used(p, 1);
     b = BN_native2bn(p->data, (int)p->data_size, *val);
     if (b != NULL) {
         *val = b;
@@ -626,7 +635,7 @@ OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
                                 buf, bsize);
 }
 
-int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
+int OSSL_PARAM_get_double(OSSL_PARAM *p, double *val)
 {
     int64_t i64;
     uint64_t u64;
@@ -634,6 +643,7 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
     if (val == NULL || p == NULL)
         return 0;
 
+    OSSL_PARAM_set_used(p, 1);
     if (p->data_type == OSSL_PARAM_REAL) {
         switch (p->data_size) {
         case sizeof(double):
@@ -729,7 +739,7 @@ OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf)
     return ossl_param_construct(key, OSSL_PARAM_REAL, buf, sizeof(double));
 }
 
-static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
+static int get_string_internal(OSSL_PARAM *p, void **val, size_t max_len,
                                size_t *used_len, unsigned int type)
 {
     size_t sz;
@@ -737,6 +747,7 @@ static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
     if (val == NULL || p == NULL || p->data_type != type)
         return 0;
 
+    OSSL_PARAM_set_used(p, 1);
     sz = p->data_size;
 
     if (used_len != NULL)
@@ -757,13 +768,13 @@ static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
     return 1;
 }
 
-int OSSL_PARAM_get_utf8_string(const OSSL_PARAM *p, char **val, size_t max_len)
+int OSSL_PARAM_get_utf8_string(OSSL_PARAM *p, char **val, size_t max_len)
 {
     return get_string_internal(p, (void **)val, max_len, NULL,
                                OSSL_PARAM_UTF8_STRING);
 }
 
-int OSSL_PARAM_get_octet_string(const OSSL_PARAM *p, void **val, size_t max_len,
+int OSSL_PARAM_get_octet_string(OSSL_PARAM *p, void **val, size_t max_len,
                                 size_t *used_len)
 {
     return get_string_internal(p, val, max_len, used_len,
@@ -816,23 +827,25 @@ OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
     return ossl_param_construct(key, OSSL_PARAM_OCTET_STRING, buf, bsize);
 }
 
-static int get_ptr_internal(const OSSL_PARAM *p, const void **val,
+static int get_ptr_internal(OSSL_PARAM *p, const void **val,
                             size_t *used_len, unsigned int type)
 {
     if (val == NULL || p == NULL || p->data_type != type)
         return 0;
+
+    OSSL_PARAM_set_used(p, 1);
     if (used_len != NULL)
         *used_len = p->data_size;
     *val = *(const void **)p->data;
     return 1;
 }
 
-int OSSL_PARAM_get_utf8_ptr(const OSSL_PARAM *p, const char **val)
+int OSSL_PARAM_get_utf8_ptr(OSSL_PARAM *p, const char **val)
 {
     return get_ptr_internal(p, (const void **)val, NULL, OSSL_PARAM_UTF8_PTR);
 }
 
-int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, const void **val,
+int OSSL_PARAM_get_octet_ptr(OSSL_PARAM *p, const void **val,
                              size_t *used_len)
 {
     return get_ptr_internal(p, val, used_len, OSSL_PARAM_OCTET_PTR);
@@ -886,4 +899,25 @@ OSSL_PARAM OSSL_PARAM_construct_end(void)
     OSSL_PARAM end = OSSL_PARAM_END;
 
     return end;
+}
+
+int OSSL_PARAM_used(OSSL_PARAM *p)
+{
+    return (p->flags & OSSL_PARAM_USED) != 0;
+}
+
+void OSSL_PARAM_set_used(OSSL_PARAM *p, int set)
+{
+    if (p != NULL) {
+        if (set)
+            p->flags |= OSSL_PARAM_USED;
+        else
+            p->flags &= ~OSSL_PARAM_USED;
+    }
+}
+
+void OSSL_PARAM_set_all_unused(OSSL_PARAM *params)
+{
+    while (params != NULL && params->key != NULL)
+        OSSL_PARAM_set_used(params++, 0);
 }

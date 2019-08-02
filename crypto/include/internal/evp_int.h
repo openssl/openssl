@@ -580,8 +580,7 @@ evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt);
 const OSSL_PARAM *
 evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt);
 
-void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
+void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt, OSSL_PARAM params[]);
 void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
                          const OSSL_PARAM params[]);
 void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,

@@ -524,7 +524,7 @@ int EVP_Digest(const void *data, size_t count,
     return ret;
 }
 
-int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
+int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
 {
     if (ctx->digest != NULL && ctx->digest->set_params != NULL)
         return ctx->digest->set_params(ctx->provctx, params);

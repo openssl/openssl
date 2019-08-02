@@ -167,7 +167,7 @@ OSSL_CORE_MAKE_FUNC(void *, OP_digest_dupctx, (void *dctx))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_size, (void))
 OSSL_CORE_MAKE_FUNC(size_t, OP_digest_block_size, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_set_params,
-                    (void *dctx, const OSSL_PARAM params[]))
+                    (void *dctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_get_params,
                     (void *dctx, OSSL_PARAM params[]))
 
@@ -215,7 +215,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
                                                     OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
-                                                    const OSSL_PARAM params[]))
+                                                    OSSL_PARAM params[]))
 
 /*-
  * Key management
@@ -269,7 +269,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportdomparam_types,
 # define OSSL_FUNC_KEYMGMT_LOADKEY                 12
 # define OSSL_FUNC_KEYMGMT_FREEKEY                 13
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importkey,
-                    (void *provctx, const OSSL_PARAM params[]))
+                    (void *provctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_genkey,
                     (void *provctx,
                      void *domparams, const OSSL_PARAM genkeyparams[]))

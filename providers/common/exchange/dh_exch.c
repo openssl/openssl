@@ -124,16 +124,16 @@ static void *dh_dupctx(void *vpdhctx)
     return dstctx;
 }
 
-static int dh_set_params(void *vpdhctx, const OSSL_PARAM params[])
+static int dh_set_params(void *vpdhctx, OSSL_PARAM params[])
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
-    const OSSL_PARAM *p;
+    OSSL_PARAM *p;
     int pad;
 
     if (pdhctx == NULL || params == NULL)
         return 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_PAD);
+    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_PAD);
     if (p == NULL || !OSSL_PARAM_get_int(p, &pad))
         return 0;
 

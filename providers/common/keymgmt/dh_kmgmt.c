@@ -16,20 +16,20 @@
 
 static OSSL_OP_keymgmt_importkey_fn dh_importkey;
 
-static int params_to_key(DH *dh, const OSSL_PARAM params[])
+static int params_to_key(DH *dh, OSSL_PARAM params[])
 {
-    const OSSL_PARAM *param_p, *param_g, *param_priv_key, *param_pub_key;
+    OSSL_PARAM *param_p, *param_g, *param_priv_key, *param_pub_key;
     BIGNUM *p = NULL, *g = NULL, *priv_key = NULL, *pub_key = NULL;
 
     if (dh == NULL)
         return 0;
 
-    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_P);
-    param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_G);
+    param_p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DH_P);
+    param_g = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DH_G);
     param_priv_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PRIV_KEY);
+        OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DH_PRIV_KEY);
     param_pub_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PUB_KEY);
+        OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DH_PUB_KEY);
 
     /*
      * DH documentation says that a public key must be present if a
@@ -65,7 +65,7 @@ static int params_to_key(DH *dh, const OSSL_PARAM params[])
     return 0;
 }
 
-static void *dh_importkey(void *provctx, const OSSL_PARAM params[])
+static void *dh_importkey(void *provctx, OSSL_PARAM params[])
 {
     DH *dh;
 

@@ -74,11 +74,20 @@ struct ossl_algorithm_st {
  */
 struct ossl_param_st {
     const char *key;             /* the name of the parameter */
-    unsigned int data_type;      /* declare what kind of content is in buffer */
+    unsigned short flags;        /* flags */
+    unsigned char reserved;      /* reserved for future use, should be zero */
+    unsigned char data_type;     /* declare what kind of content is in buffer */
     void *data;                  /* value being passed in or out */
     size_t data_size;            /* data size */
     size_t return_size;          /* returned content size */
 };
+
+/* Currently supported OSSL_PARAM flags */
+/*
+ * The OSSL_PARAM_USED should be set by the receiver to indicate that the
+ * parameter was processed.
+ */
+# define OSSL_PARAM_USED 1
 
 /* Currently supported OSSL_PARAM data types */
 /*

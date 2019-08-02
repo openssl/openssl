@@ -242,8 +242,7 @@ const OSSL_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt)
 }
 
 
-void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[])
+void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt, OSSL_PARAM params[])
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 

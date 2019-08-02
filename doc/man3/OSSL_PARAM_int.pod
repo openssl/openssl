@@ -27,7 +27,8 @@ OSSL_PARAM_set_int64, OSSL_PARAM_set_long, OSSL_PARAM_set_size_t,
 OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32, OSSL_PARAM_set_uint64,
 OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN, OSSL_PARAM_set_utf8_string,
 OSSL_PARAM_set_octet_string, OSSL_PARAM_set_utf8_ptr,
-OSSL_PARAM_set_octet_ptr
+OSSL_PARAM_set_octet_ptr,
+OSSL_PARAM_used, OSSL_PARAM_set_used, OSSL_PARAM_set_all_unused
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -66,8 +67,7 @@ OSSL_PARAM_set_octet_ptr
  OSSL_PARAM OSSL_PARAM_construct_end(void);
 
  OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *array, const char *key);
- const OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *array,
-                                           const char *key);
+ OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *array, const char *key);
 
  int OSSL_PARAM_get_TYPE(const OSSL_PARAM *p, TYPE *val);
  int OSSL_PARAM_set_TYPE(OSSL_PARAM *p, TYPE val);
@@ -90,6 +90,10 @@ OSSL_PARAM_set_octet_ptr
                               size_t *used_len);
  int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                               size_t used_len);
+
+ int OSSL_PARAM_used(const OSSL_PARAM *p);
+ void OSSL_PARAM_set_used(OSSL_PARAM *p, int set);
+ void OSSL_PARAM_set_all_unused(OSSL_PARAM *p);
 
 =head1 DESCRIPTION
 
@@ -241,6 +245,16 @@ OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
 referenced by B<p> to the values B<val>.
 The length of the OCTET string is provided by B<used_len>.
 
+OSSL_PARAM_used() queries the setting of the used flag for the parameter
+referenced by B<p>.
+
+OSSL_PARAM_set_used() clears the used flag for the parameter referenced
+by B<p> to B<set>.
+
+OSSL_PARAM_set_all_unused() clears the used flag for all the parameters in
+the array referenced by B<params>.
+The array is terminated by an OSSL_PARAM_END record.
+
 =head1 RETURN VALUES
 
 OSSL_PARAM_construct_TYPE(), OSSL_PARAM_construct_BN(),
@@ -251,6 +265,8 @@ return a populated OSSL_PARAM structure.
 OSSL_PARAM_locate() and OSSL_PARAM_locate_const() return a pointer to
 the matching OSSL_PARAM object.  They return B<NULL> on error or when
 no object matching B<key> exists in the B<array>.
+
+OSSL_PARAM_used() returns B<1> if the used flag is set and B<0> otherwise.
 
 All other functions return B<1> on success and B<0> on failure.
 

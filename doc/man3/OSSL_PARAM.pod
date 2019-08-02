@@ -11,6 +11,8 @@ OSSL_PARAM - a structure to pass or request object parameters
  typedef struct ossl_param_st OSSL_PARAM;
  struct ossl_param_st {
      const char *key;             /* the name of the parameter */
+     unsigned short flags;        /* flags */
+     unsigned char reserved;      /* reserved for future use, should be zero */
      unsigned char data_type;     /* declare what kind of content is in data */
      void *data;                  /* value being passed in or out */
      size_t data_size;            /* data size */
@@ -68,6 +70,14 @@ I<responder>.
 
 The identity of the parameter in the form of a string.
 
+=item C<flags>
+
+The C<flags> field contains flags as described in L</Flags> below.
+
+=item C<reserved>
+
+This field is reserved for future use and should be zero.
+
 =item C<data_type>
 
 =for comment It's still debated if this field should be present, or if
@@ -118,6 +128,19 @@ Entities that want to set or request parameters need to know what
 those keys are and of what type, any functionality between those two
 entities should remain oblivious and just pass the C<OSSL_PARAM> array
 along.
+
+=head2 Flags
+
+The C<flags> field contains the following flags:
+
+=over 4
+
+=item C<OSSL_PARAM_USED>
+
+This flag is used, by the receiver, to indicate if the parameter has been
+processed successfully or not.
+
+=back
 
 =head2 Supported types
 

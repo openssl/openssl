@@ -9,14 +9,15 @@
 
 #include <stddef.h>
 #include <openssl/provider.h>
+#include <openssl/params.h>
 #include "testutil.h"
 
 extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
 static OSSL_PARAM greeting_request[] = {
-    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf) },
-    { NULL, 0, NULL, 0, 0 }
+    OSSL_PARAM_utf8_string("greeting", buf, sizeof(buf)),
+    OSSL_PARAM_END
 };
 
 static int test_provider(const char *name)
