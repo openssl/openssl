@@ -209,6 +209,19 @@ static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[])
         }
     }
 
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+    if (p != NULL) {
+        int keylen;
+
+        if (!OSSL_PARAM_get_int(p, &keylen)) {
+            PROVerr(0, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        /* The key length can not be modified for gcm mode */
+        if (keylen != (int)ctx->keylen)
+            return 0;
+    }
+
     return 1;
 }
 
