@@ -229,21 +229,52 @@ static void list_digests(void)
     sk_EVP_MD_pop_free(digests, EVP_MD_meth_free);
 }
 
-#if 0                            /* Temporarly disabled */
-static void list_mac_fn(const EVP_MAC *m,
-                        const char *from, const char *to, void *arg)
+DEFINE_STACK_OF(EVP_MAC)
+static int mac_cmp(const EVP_MAC * const *a, const EVP_MAC * const *b)
 {
-    if (m != NULL) {
-        BIO_printf(arg, "%s\n", EVP_MAC_name(m));
-    } else {
-        if (from == NULL)
-            from = "<undefined>";
-        if (to == NULL)
-            to = "<undefined>";
-        BIO_printf(arg, "%s => %s\n", from, to);
-    }
+    int ret = strcasecmp(EVP_MAC_name(*a), EVP_MAC_name(*b));
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_MAC_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_MAC_provider(*b)));
+
+    return ret;
 }
-#endif
+
+static void collect_macs(EVP_MAC *mac, void *stack)
+{
+    STACK_OF(EVP_MAC) *mac_stack = stack;
+
+    sk_EVP_MAC_push(mac_stack, mac);
+    EVP_MAC_up_ref(mac);
+}
+
+static void list_macs(void)
+{
+    STACK_OF(EVP_MAC) *macs = sk_EVP_MAC_new(mac_cmp);
+    int i;
+
+    BIO_printf(bio_out, "Provided MACs:\n");
+    EVP_MAC_do_all_ex(NULL, collect_macs, macs);
+    sk_EVP_MAC_sort(macs);
+    for (i = 0; i < sk_EVP_MAC_num(macs); i++) {
+        const EVP_MAC *m = sk_EVP_MAC_value(macs, i);
+
+        BIO_printf(bio_out, "  %s", EVP_MAC_name(m));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_MAC_provider(m)));
+
+        if (verbose) {
+            print_param_types("retrievable algorithm parameters",
+                              EVP_MAC_gettable_params(m));
+            print_param_types("retrievable operation parameters",
+                              EVP_MAC_CTX_gettable_params(m));
+            print_param_types("settable operation parameters",
+                              EVP_MAC_CTX_settable_params(m));
+        }
+    }
+    sk_EVP_MAC_pop_free(macs, EVP_MAC_free);
+}
 
 static void list_missing_help(void)
 {
@@ -706,10 +737,8 @@ opthelp:
         list_type(FT_md, one);
     if (todo.digest_algorithms)
         list_digests();
-#if 0                            /* Temporarly disabled */
     if (todo.mac_algorithms)
-        EVP_MAC_do_all_sorted(list_mac_fn, bio_out);
-#endif
+        list_macs();
     if (todo.cipher_commands)
         list_type(FT_cipher, one);
     if (todo.cipher_algorithms)
