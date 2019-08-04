@@ -17,6 +17,8 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 
+#define OSSL_DUMMY_STRING "******"
+
 #ifndef OPENSSL_NO_STDIO
 int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
 {
@@ -147,9 +149,15 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                 case V_ASN1_NUMERICSTRING:
                 case V_ASN1_UTF8STRING:
                 case V_ASN1_IA5STRING:
-                    if (BIO_write(bp, (char *)bs->data, bs->length)
-                            != bs->length)
-                        goto err;
+                    if (NID_pkcs9_challengePassword == (OBJ_obj2nid(X509_ATTRIBUTE_get0_object(a)))) {
+                        if (BIO_write(bp,OSSL_DUMMY_STRING,
+                            (int)strlen(OSSL_DUMMY_STRING)) != (int)strlen(OSSL_DUMMY_STRING))
+                            goto err;
+                    } else {
+                        if (BIO_write(bp, (char *)bs->data, bs->length)
+                                != bs->length)
+                            goto err;
+                    }
                     if (BIO_puts(bp, "\n") <= 0)
                         goto err;
                     break;
