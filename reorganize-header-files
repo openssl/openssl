@@ -1,0 +1,633 @@
+#!/bin/bash
+
+branch=${1:-master}
+build=${BUILD:-no}
+
+logfiles=logfiles
+
+logfile=${logfiles}/reorganize-header-files.log
+fix_include_guards_sed=${logfiles}/fix-include-guards.sed
+fix_include_guards_compat_sed=${logfiles}/fix-include-guards-compat.sed
+
+# the following three sed files are collected during different
+# commits of this pull request and are going to be joined in the
+# file 'fix-includes.sed' at the end
+fix_crypto_includes_sed=${logfiles}/fix-crypto-includes.sed
+fix_local_includes_sed=${logfiles}/fix-local-includes.sed
+fix_public_includes_sed=${logfiles}/fix-public-includes.sed
+
+# the 'official' fix-includes script...
+fix_includes=util/fix-includes
+# ...and its sed file, joined from the three sed files above
+fix_includes_sed=util/fix-includes.sed
+
+deprecation_version="OPENSSL_API_3"
+deprecation_comment="deprecated in version 3.0"
+
+gitlog="git log --oneline --decorate"
+
+
+case "$branch" in
+	master)
+		branch=pr-reorganize-header-files
+		restart=start-reorganize-header-files
+		upstream=master
+		;;
+	111)
+		branch=pr-reorganize-header-files-111
+		restart=start-reorganize-header-files-111
+		upstream=OpenSSL_1_1_1-stable
+		;;
+	*)
+		echo "Invalid branch: $branch" >&2
+		exit 1
+		;;
+esac
+
+function rebuild () {
+	rebuild=${1:-$build}
+	if [ "$rebuild" == "yes" ]; then
+		make clean >/dev/null 2>&1 || return 1
+		perl Configure debug-linux-x86_64 --strict-warnings >/dev/null 2>&1 || return 1
+		make -j 16 >/dev/null || return 1
+		make clean >/dev/null 2>&1 || return 1
+	fi
+}
+
+function clean () {
+	make clean >/dev/null 2>&1
+}
+
+function fix_include_guards () {
+
+	rm -f ${fix_include_guards_sed} ${fix_include_guards_compat_sed}
+	echo "# $(basename ${fix_include_guards_sed})" > ${fix_include_guards_sed}
+	echo "# $(basename ${fix_include_guards_compat_sed})" > ${fix_include_guards_compat_sed}
+
+	for file in $(git ls-files | fgrep .h); do
+		old_guard=$(sed -n -E \
+						-e '/#ifndef +([A-Z0-9_]+_H\>_*)/ {s//\1/p;q}' \
+						-e '/#ifndef +(HEADER_[A-Z0-9_]+)/ {s//\1/p;q}' \
+						-e '/#ifndef +(__[A-Z0-9_]+__)/ {s//\1/p;q}' \
+						$file)
+		upper_filename=$(echo $file | tr '[:lower:]/.' '[:upper:]__')
+		upper_basename=$(echo $(basename $file) | tr '[:lower:]/.' '[:upper:]__')
+
+		add_compat=no
+		sed_script=""
+		new_guard=""
+
+		case "$file" in
+			include/openssl/opensslconf.h.in)
+				# add_compat=no, because compatibility guard was already added (manually) to the end
+				;;
+			include/openssl/*)
+				# add compatibility guard, but only if file exists in 1.1.1 already
+				if [ "${branch}" == "master" ]; then
+					git cat-file -e "OpenSSL_1_1_1-stable:$file" 2>/dev/null && add_compat=yes
+				else
+					add_compat=yes
+				fi
+				;;
+		esac
+
+		new_guard=$(echo "$upper_filename" | \
+						   perl -p \
+								-e 's/_H_IN$/_H/ ;' \
+								-e 's/^INCLUDE_OPENSSL_/OPENSSL_/ ;' \
+								-e 's/^INCLUDE_/OSSL_/ ;' \
+								-e 's/^E_/OSSL_E_/ ;' \
+								-e 's/^(CRYPTO|SSL|ENGINES|APPS|TEST|PROVIDERS)_/OSSL_\1_/ ;' \
+								-e 's/^OSSL_CRYPTO_ASYNC_ARCH_ASYNC_/OSSL_CRYPTO_ASYNC_/ ;' \
+								-e 's/^OSSL_CRYPTO_EC_CURVE448_ARCH_32_ARCH_/OSSL_CRYPTO_EC_CURVE448_ARCH_32_/ ;' \
+								-e 's/^OSSL_APPS_INCLUDE_/OSSL_APPS_/ ;' \
+								-e 's/^OSSL_TEST_OSSL_SHIM_/OSSL_TEST_SHIM_/ ;' \
+								-e 's/^OSSL_PROVIDERS_COMMON_INCLUDE_INTERNAL_/OSSL_PROVIDERS_/ ;' \
+								-e 's/_([A-Z0-9]+)_\g1/_\1/ ;')
+
+		echo -n "$file:  "
+
+		if [ -n "$old_guard" ]; then
+			if [ -n "$new_guard" ] ; then
+				if [ "$old_guard" !=  "$new_guard" ] ; then
+					echo "$old_guard => $new_guard  [NEW]"
+					echo "s/([ !])${old_guard}/\1${new_guard}/g ;" >> ${fix_include_guards_sed}
+
+					if [ "${add_compat}" == "yes" ] ; then
+						if [ "${branch}" == "master" ]; then
+							# on master, we include <openssl/macros.h> and add a !OPENSSL_API_3 deprecation guard around the legacy include guard
+							echo "s|\# *define +${new_guard}|# define ${new_guard}\n# pragma once\n\n# include <openssl/macros.h>\n# if !${deprecation_version}\n#  define ${old_guard} /* ${deprecation_comment} */\n# endif|g ;" >> ${fix_include_guards_compat_sed}
+						else
+							# on 1.1.1, we add the bare legacy include guard
+							echo "s|\# *define +${new_guard}|# define ${new_guard}\n# pragma once\n\n# define ${old_guard} /* ${deprecation_comment} */|g ;" >> ${fix_include_guards_compat_sed}
+						fi
+					fi
+				else
+					echo "$old_guard  [OLD]"
+				fi
+			else
+				echo "$old_guard  [TBD]"
+			fi
+		else
+			echo "[NONE]"
+		fi
+	done
+}
+
+
+# safety check
+if ! git diff-index --quiet HEAD ; then
+	echo "You need to commit or stash your local changes first." >&2
+	exit 1
+fi
+
+clean
+
+# prevent script from being reset in order not to loose uncommitted changes
+#
+# It is supported to execute an arbitrary backup copy, or even the ~autosaved
+# copy, in case the original was lost somehow. The script will detect it
+# and act accordingly.
+#
+case "$(basename $0)" in
+	"reorganize-header-files")
+		# it's the original script
+		mv reorganize-header-files reorganize-header-files~autosaved
+		;;
+	"reorganize-header-files~autosaved")
+		# it's the autosaved copy of the script
+		rm -f reorganize-header-files
+		;;
+	*)
+		# it's a manual copy of the script
+		cp $0 reorganize-header-files~autosaved
+		rm -f reorganize-header-files
+		;;
+esac
+
+set -o xtrace
+
+# Check whether the restart branch exists
+if git rev-parse --verify --quiet ${restart}^{commit} >/dev/null; then
+	# if yes, simply checkout the restart branch
+	git checkout ${restart}
+else
+	echo "Unable to find restart branch: '${restart}'" >&2
+	exit 1
+fi
+
+${gitlog} --oneline HEAD~..
+
+# Check whether the branch exists
+if git rev-parse --verify --quiet ${branch}^{commit} >/dev/null; then
+	# if yes, reset branch to the restart point
+	git checkout ${branch}
+	git reset --hard ${restart}
+else
+	# otherwise, create a new branch at the restart point
+	git checkout -b ${branch} ${restart}
+fi
+
+${gitlog} --oneline HEAD~..
+
+
+#
+# Create empty logfile directory
+#
+
+rm -rf ${logfiles}
+mkdir ${logfiles}
+
+
+#
+# Redirect output to logfile
+#
+
+exec &> >(tee ${logfile})
+
+#
+# Save current tree
+#
+git ls-files | fgrep .h | sort > ${logfiles}/header-files.before
+
+
+
+#
+# COMMIT: Reorganize private crypto header files
+#
+
+# join "internal/{store_int,store}.h" => "internal/store.h"
+declaration=$(grep ^void ./crypto/include/internal/store.h)
+sed \
+	-e "s/Copyright 2017-2018/Copyright 2016-2019/g" \
+	-e "s/HEADER_STORE_INT_H/HEADER_STORE_H/g" \
+	-e "/#endif/i $declaration\n" \
+	./crypto/include/internal/store_int.h > ./crypto/include/internal/store.h
+
+git add ./crypto/include/internal/store.h
+git rm  ./crypto/include/internal/store_int.h
+
+mkdir -p include/crypto
+
+# move "crypto/include/internal/*_int.h" => "include/crypto/*.h"
+for f in crypto/include/internal/*_int.h
+do
+	git mv $f include/crypto/$(basename $f _int.h).h
+done
+
+# create a list of all remaining files in `crypto/include/internal`, separated by '|' for the regular
+# expression (adding 'foobar' at the end to avoid a trailing '|').
+# This is necessary when renaming the '#include "include/*.h"' directives, because they can refer
+# to files in two different directories!
+#
+cryptoheaders="$(ls crypto/include/internal | sed -E 's/\.h\.in/.h/g' | tr '\n' '|')foobar"
+
+for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
+do
+	git mv $f include/crypto
+done
+
+# some special cases
+
+sed -i 's|crypto/include/internal/sm2.h|include/crypto/sm2.h         |' crypto/err/openssl.ec
+sed -i 's|crypto/include/internal|include/crypto|g' .gitignore build.info test/drbgtest.c
+sed -i 's|include/crypto/rand_int.h|include/crypto/rand.h|g' test/drbgtest.c
+sed -i 's|internal usage in evp_int.h|internal usage in "crypto/evp.h"|g' include/openssl/evp.h
+
+
+# the general case
+#
+# For all files which were moved from crypto/include/internal, replace
+#
+#   "internal/file_int.h" => "crypto/file.h"
+#   "internal/file.h"     => "crypto/file.h"
+cat <<EOF > ${fix_crypto_includes_sed}
+s|internal/([a-z0-9_]+)_int\.h|crypto/\1.h|g ;
+s@internal/(${cryptoheaders})@crypto/\1@g ;
+EOF
+
+find \( \
+	 -name '*.h' -o \
+	 -name '*.h.in' -o \
+	 -name '*.c' -o \
+	 -name '*.ec' -o \
+	 -name 'README*' -o \
+	 -name '*.pod' -o \
+	 -name '*.conf' \
+	 \) -exec sed -E -i \
+	 -f ${fix_crypto_includes_sed} {} \;
+
+# now the directory should be empty
+rmdir crypto/include/internal
+rmdir crypto/include
+
+
+# remove all INCLUDE directives referring to [../../]crypto/include and
+# rename crypto/include/internal => include/crypto
+find \( -name 'build.info' -o -name openssl.ec \) -exec sed -E -i \
+	 -e '/INCLUDE\[.*\]=/s| +[./]*crypto/include +| |g ; t' \
+	 -e 's|crypto/include/internal|include/crypto|g' \
+	 {} \;
+
+
+git commit -a -F - <<EOF
+Reorganize private crypto header files
+
+Currently, there are two different directories which contain internal
+header files of libcrypto which are meant to be shared internally:
+
+  'include/internal'
+  'crypto/include/internal'
+
+While header files in the former directory are intended to be shared
+between libcrypto and libssl, the files in the latter directory are
+private headers, they are intended to be shared inside libcrypto only.
+
+To make things complicated, the include search path is set up in such
+a way that the directive #include "internal/file.h" could refer to
+a file in either directory. This makes it necessary in some cases to
+add a '_int.h' suffix to some files to resolve this ambiguity:
+
+  #include "internal/file.h"      # located in 'include/internal'
+  #include "internal/file_int.h"  # located in 'crypto/include/internal'
+
+This commit moves the private crypto headers from
+
+  'crypto/include/internal'  to  'include/crypto'
+
+As a result, the include directives become unambiguous
+
+  #include "internal/file.h"       # located in 'include/internal'
+  #include "crypto/file.h"         # located in 'include/crypto'
+
+hence the superfluous '_int.h' suffixes can be stripped.
+
+(The files 'store_int.h' and 'store.h' need to be treated specially;
+they are joined into a single file.)
+EOF
+
+${gitlog} --oneline HEAD~..
+rebuild
+
+
+#
+# COMMIT: Reorganize local header files
+#
+
+# 'constant_time_locl.h' should not have a suffix at all.
+git mv include/internal/{constant_time_locl,constant_time}.h
+
+for suffix in lcl locl int
+do
+	for f in $(find -name "*_$suffix.h")
+	do
+		git mv $f $(dirname $f)/$(basename $f _$suffix.h)_local.h
+	done
+done
+
+cat <<EOF > ${fix_local_includes_sed}
+s/constant_time_locl/constant_time/g ;
+s/_lo?cl\.h/_local.h/g ;
+s/_int\.h/_local.h/g ;
+EOF
+
+# adjust local include directives
+find \( \
+	 -name '*.h' -o \
+	 -name '*.h.in' -o \
+	 -name '*.c' -o \
+	 -name '*.ec' -o \
+	 -name 'README*' -o \
+	 -name '*.pod' -o \
+	 -name '*.conf' \
+	 \) -exec sed -E -i \
+	 -f ${fix_local_includes_sed} {} \;
+
+
+git commit -a -F - <<EOF
+Reorganize local header files
+
+Apart from public and internal header files, there is a third type called
+local header files, which are located next to source files in the source
+directory. Currently, they have different suffixes like
+
+  '*_lcl.h', '*_local.h', or '*_int.h'
+
+This commit changes the different suffixes to '*_local.h' uniformly.
+EOF
+
+${gitlog} --oneline HEAD~..
+rebuild
+
+
+
+#
+# COMMIT: Reorganize public header files (part 1)
+#
+
+git mv include/openssl/ossl_typ.h include/openssl/types.h
+
+cat <<EOF > ${fix_public_includes_sed}
+s|openssl/ossl_typ\.h|openssl/types.h|g ;
+EOF
+
+find \( \
+	 -name '*.h' -o \
+	 -name '*.h.in' -o \
+	 -name '*.c' -o \
+	 -name '*.ec' -o \
+	 -name 'README*' -o \
+	 -name '*.pod' -o \
+	 -name '*.conf' \
+	 \) -exec sed -E -i \
+	 -f ${fix_public_includes_sed} {} \;
+
+git commit -a -F - <<EOF
+Reorganize public header files (part 1)
+
+Rename <openssl/ossl_typ.h> to <openssl/types.h>.
+EOF
+
+${gitlog} --oneline HEAD~..
+rebuild
+
+#
+# COMMIT: Reorganize public header files (part 2)
+#
+
+
+cat <<EOF > include/openssl/ossl_typ.h
+/*
+ * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/*
+ * The original <openssl/ossl_typ.h> was renamed to <openssl/types.h>
+ *
+ * This header file only exists for compatibility reasons with older
+ * applications which #include <openssl/ossl_typ.h>.
+ */
+# include <openssl/types.h>
+EOF
+
+git add include/openssl/ossl_typ.h
+
+git commit -F - <<EOF
+Reorganize public header files (part 2)
+
+Add an <openssl/ossl_typ.h> compatibility header.
+EOF
+
+${gitlog} --oneline HEAD~..
+rebuild
+
+#
+# COMMIT: Fix header file include guards
+#
+# The include guards will be corrected in two passes:
+#
+# In the first pass,
+#     we collect all necessary replacements into a sed scriptfile.
+#
+# In the second pass,
+#     we apply them simultaneously. The advantage of using two passes
+#     is that all replacements are applied to all files simultaneously.
+#     This to deal with the rare cases (mostly in the app directory),
+#     where public include guards are queried explicitly outside the
+#     header file.
+#
+# In the third pass,
+#     compatibility defines are added to the public headers, details
+#     see commit message below.
+
+set +o xtrace
+
+echo '# First Pass: collect include guard fixes into a sed script'
+fix_include_guards
+
+echo '# Second Pass: apply include guard fixes'
+for file in $(git ls-files | fgrep .h); do
+	sed -i -E -f ${fix_include_guards_sed} ${file}
+done
+
+
+# fix mkerr.pl
+sed -i \
+	-e 's/HEADER_\${lib}ERR_H/OPENSSL_${lib}ERR_H/g' \
+	util/mkerr.pl
+
+set -o xtrace
+
+git commit -a -F - <<EOF
+Fix header file include guard names
+
+Make the include guards consistent by renaming them systematically according
+to the naming conventions below
+
+For the files in the 'include' directory, the guard names match very closely
+the path specified in the include directives, with all letters converted to
+upper case and '/' and '.' replaced by '_'. For all except the public header
+files, an extra 'OSSL' is added as prefix.
+
+
+   Location  |     Include Directive      |       Include Guard
+=============+============================+=================================
+include      |                            |
+  + openssl  | #include <openssl/file.h>  | #ifndef __OPENSSL_FILE_H__
+  |          |                            |
+  + internal | #include "internal/file.h" | #ifndef __OSSL_INTERNAL_FILE_H__
+  |          |                            |
+  + crypto   | #include "crypto/file.h"   | #ifndef __OSSL_CRYPTO_FILE_H__
+  |          |                            |
+  + ..etc..  |                            |
+
+For the header files in the source tree the naming conventions are similar, but
+not followed so rigidly. Sometimes parts of the relative path are used as
+constituents of the include guard name for clarity.
+EOF
+
+${gitlog} --oneline HEAD~..
+rebuild
+
+
+#
+# COMMIT: Add legacy include guards to public header files
+#
+
+echo '# Third Pass: add compatibility defines for public include guards'
+for file in $(git ls-files include/openssl | fgrep .h); do
+	sed -i -E -f ${fix_include_guards_compat_sed} ${file}
+done
+
+git commit -a -F - <<EOF
+Add legacy include guards to public header files
+
+For every public header file, the old include guard definition needs
+to be added in addition to the new one
+
+include/openssl/file.h:
+
+    #ifndef __OPENSSL_FILE_H__
+    # define __OPENSSL_FILE_H__
+    # pragma once
+
+    # include <openssl/macros.h>
+    # if !${deprecation_version}
+    #  define HEADER_FILE_H /* ${deprecation_comment} */
+    # endif
+    ...
+
+This is going to ensure that applications which use the old include guards
+externally, for example like this
+
+    #ifndef HEADER_FILE_H
+    # include <openssl/file.h>
+    #endif
+
+will not fail to compile.
+
+In addition to the legacy guard, the public header files also receive a
+'# pragma once' directive.
+EOF
+
+${gitlog} --oneline HEAD~..
+rebuild
+
+
+#
+# COMMIT: Add util/fix-includes script
+#
+
+cat <<EOF > ${fix_includes}
+#!/bin/sh
+#
+# Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+find -name ossl_typ.h -o \( \\
+	 -name '*.h' -o \\
+	 -name '*.h.in' -o \\
+	 -name '*.c' -o \\
+	 -name '*.ec' -o \\
+	 -name 'README*' -o \\
+	 -name '*.pod' -o \\
+	 -name '*.conf' \\
+	 \) -exec sed -E -i \\
+	 -f ${fix_includes_sed} {} \;
+EOF
+
+chmod +x ${fix_includes}
+cat ${fix_crypto_includes_sed} ${fix_local_includes_sed} ${fix_public_includes_sed} > ${fix_includes_sed}
+
+git add  ${fix_includes} ${fix_includes_sed}
+
+git commit -a -F - <<EOF
+Add util/fix-includes script
+
+This script contains all adjustments to header files which were made
+during the reorganization of the header files. It is meant as an aid
+for other contributors which encounter preprocessor #include errors
+after rebasing over this pull request. Simply running
+
+  util/fix-includes
+
+from the root of the source directory should hopefully fix the problem.
+
+Note: such #include errors are expected only for pull requests which
+add a lot of new code, in particular new compilation modules.
+EOF
+
+${gitlog} --oneline HEAD~..
+
+#
+# Save current tree
+#
+git ls-files | fgrep .h | sort > ${logfiles}/header-files.after
+
+diff -u ${logfiles}/header-files.before ${logfiles}/header-files.after > ${logfiles}/header-files.diff || true
+
+rebuild yes
+
+${gitlog} ${restart}..
+
+#
+# remove redirection
+#
+
+echo "Saving the logfiles to the '${logfiles}' directory..."
+
+exec 1>&- 2>&-
+
+git add ${logfiles}
+git commit -F - <<EOF
+Script succeeded. See '${logfiles}' directory for details. [will be discarded]
+EOF
