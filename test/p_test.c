@@ -34,8 +34,8 @@ static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Tell the core what params we provide and what type they are */
 static const OSSL_PARAM p_param_types[] = {
-    { "greeting", 0, 0, OSSL_PARAM_UTF8_STRING, NULL, 0, 0 },
-    { NULL, 0, 0, 0, NULL, 0, 0 }
+    { 0, 0, OSSL_PARAM_UTF8_STRING, "greeting", NULL, 0, 0 },
+    { 0, 0, 0, NULL, NULL, 0, 0 }
 };
 
 /* This is a trick to ensure we define the provider functions correctly */
@@ -60,16 +60,16 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
             static char *greeting;
             static OSSL_PARAM counter_request[] = {
                 /* Known libcrypto provided parameters */
-                { "openssl-version", 0, 0, OSSL_PARAM_UTF8_PTR,
+                { 0, 0, OSSL_PARAM_UTF8_PTR, "openssl-version",
                   &opensslv, sizeof(&opensslv), 0 },
-                { "provider-name", 0, 0, OSSL_PARAM_UTF8_PTR,
+                { 0, 0, OSSL_PARAM_UTF8_PTR, "provider-name",
                   &provname, sizeof(&provname), 0},
 
                 /* This might be present, if there's such a configuration */
-                { "greeting", 0, 0, OSSL_PARAM_UTF8_PTR,
+                { 0, 0, OSSL_PARAM_UTF8_PTR, "greeting",
                   &greeting, sizeof(&greeting), 0 },
 
-                { NULL, 0, 0, 0, NULL, 0, 0 }
+                { 0, 0, 0, NULL, NULL, 0, 0 }
             };
             char buf[256];
             size_t buf_l;

@@ -10,10 +10,10 @@ OSSL_PARAM - a structure to pass or request object parameters
 
  typedef struct ossl_param_st OSSL_PARAM;
  struct ossl_param_st {
-     const char *key;             /* the name of the parameter */
-     unsigned short flags;        /* flags */
-     unsigned char reserved;      /* reserved for future use, should be zero */
+     unsigned char version;       /* OSSL_PARAM structure version number */
      unsigned char data_type;     /* declare what kind of content is in data */
+     unsigned short flags;        /* flags */
+     const char *key;             /* the name of the parameter */
      void *data;                  /* value being passed in or out */
      size_t data_size;            /* data size */
      size_t return_size;          /* returned size */
@@ -135,10 +135,20 @@ The C<flags> field contains the following flags:
 
 =over 4
 
-=item C<OSSL_PARAM_USED>
+=item C<OSSL_PARAM_LOCATED>
 
 This flag is used, by the receiver, to indicate if the parameter has been
-processed successfully or not.
+looked up by name successfully or not.
+
+=item C<OSSL_PARAM_READ>
+
+This flag is used, by the receiver, to indicate if the value of the parameter
+has been read.
+
+=item C<OSSL_PARAM_WRITTEN>
+
+This flag is used, by the receiver, to indicate if the value of the parameter
+has been written.
 
 =back
 

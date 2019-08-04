@@ -73,10 +73,10 @@ struct ossl_algorithm_st {
  * An array of these is always terminated by key == NULL
  */
 struct ossl_param_st {
-    const char *key;             /* the name of the parameter */
+    unsigned char version;       /* OSSL_PARAM structure version number */
     unsigned short flags;        /* flags */
-    unsigned char reserved;      /* reserved for future use, should be zero */
     unsigned char data_type;     /* declare what kind of content is in buffer */
+    const char *key;             /* the name of the parameter */
     void *data;                  /* value being passed in or out */
     size_t data_size;            /* data size */
     size_t return_size;          /* returned content size */
@@ -84,15 +84,23 @@ struct ossl_param_st {
 
 /* Currently supported OSSL_PARAM flags */
 /*
- * The OSSL_PARAM_USED should be set by the receiver to indicate that the
- * parameter was processed.
+ * The OSSL_PARAM_LOCATED flag should be set by the receiver to indicate that
+ * the parameter was checked for by name.
+ *
+ * The OSSL_PARAM_READ flag should be set by the receiver to indicate that the
+ * parameter's value was read.
+ *
+ * The OSSLPARAM_WRITTEN flag should be set by the receiver to indicate that the
+ * paramter's value has been written.
  */
-# define OSSL_PARAM_USED 1
+# define OSSL_PARAM_READ    0x0001
+# define OSSL_PARAM_WRITTEN 0x0002
+# define OSSL_PARAM_LOCATED 0x0004
 
 /* Currently supported OSSL_PARAM data types */
 /*
  * OSSL_PARAM_INTEGER and OSSL_PARAM_UNSIGNED_INTEGER
- * are arbitrary length and therefore require an arbitrarily sized buffer,
+ * are arbitrary length and therefore require an arbitrarily sized bufsfer,
  * since they may be used to pass numbers larger than what is natively
  * available.
  *

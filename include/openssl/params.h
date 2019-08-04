@@ -19,10 +19,10 @@ extern "C" {
 # endif
 
 # define OSSL_PARAM_END \
-    { NULL, 0, 0, 0, NULL, 0, 0 }
+    { 0, 0, 0, NULL, NULL, 0, 0 }
 
 # define OSSL_PARAM_DEFN(key, type, addr, sz)    \
-    { (key), 0, 0, (type), (addr), (sz), 0 }
+    { 0, 0, (type), (key), (addr), (sz), 0 }
 
 /* Basic parameter types without return sizes */
 # define OSSL_PARAM_int(key, addr) \
@@ -130,8 +130,9 @@ int OSSL_PARAM_get_octet_ptr(OSSL_PARAM *p, const void **val,
 int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                              size_t used_len);
 
-int OSSL_PARAM_used(OSSL_PARAM *p);
-void OSSL_PARAM_set_used(OSSL_PARAM *p, int set);
+int OSSL_PARAM_read(const OSSL_PARAM *p);
+int OSSL_PARAM_written(const OSSL_PARAM *p);
+int OSSL_PARAM_located(const OSSL_PARAM *p);
 void OSSL_PARAM_set_all_unused(OSSL_PARAM *params);
 
 # ifdef  __cplusplus

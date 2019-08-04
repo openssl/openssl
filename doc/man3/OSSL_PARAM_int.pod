@@ -28,7 +28,8 @@ OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32, OSSL_PARAM_set_uint64,
 OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN, OSSL_PARAM_set_utf8_string,
 OSSL_PARAM_set_octet_string, OSSL_PARAM_set_utf8_ptr,
 OSSL_PARAM_set_octet_ptr,
-OSSL_PARAM_used, OSSL_PARAM_set_used, OSSL_PARAM_set_all_unused
+OSSL_PARAM_located, OSSL_PARAM_read, OSSL_PARAM_written,
+OSSL_PARAM_set_all_unused
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -91,8 +92,9 @@ OSSL_PARAM_used, OSSL_PARAM_set_used, OSSL_PARAM_set_all_unused
  int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                               size_t used_len);
 
- int OSSL_PARAM_used(const OSSL_PARAM *p);
- void OSSL_PARAM_set_used(OSSL_PARAM *p, int set);
+ int OSSL_PARAM_located(const OSSL_PARAM *p);
+ int OSSL_PARAM_read(const OSSL_PARAM *p);
+ int OSSL_PARAM_written(const OSSL_PARAM *p);
  void OSSL_PARAM_set_all_unused(OSSL_PARAM *p);
 
 =head1 DESCRIPTION
@@ -245,11 +247,20 @@ OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
 referenced by B<p> to the values B<val>.
 The length of the OCTET string is provided by B<used_len>.
 
-OSSL_PARAM_used() queries the setting of the used flag for the parameter
+OSSL_PARAM_located() queries the setting of the located flag for the parameter
 referenced by B<p>.
+This flag is set if the parameter has been the subject of a OSSL_PARAM_locate()
+call.
 
-OSSL_PARAM_set_used() clears the used flag for the parameter referenced
-by B<p> to B<set>.
+OSSL_PARAM_read() queries the setting of the read flag for the parameter
+referenced by B<p>.
+This flag is set if the parameter has had its value read using one of the
+OSSL_PARAM_get_TYPE calls.
+
+OSSL_PARAM_written() queries the setting of the written flag for the parameter
+referenced by B<p>.
+This flag is set if the parameter has had its value written using one of the
+OSSL_PARAM_set_TYPE calls.
 
 OSSL_PARAM_set_all_unused() clears the used flag for all the parameters in
 the array referenced by B<params>.
@@ -283,6 +294,9 @@ I<responder>, i.e. to get parameter data back.
 In that case, B<bsize> can safely be given zero.
 See L<OSSL_PARAM(3)/DESCRIPTION> for further information on the
 possible purposes.
+
+The OSSL_PARAM_locate_const() function does not set the located flag if a
+paramter is returned.
 
 =head1 EXAMPLES
 
