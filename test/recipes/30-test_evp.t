@@ -14,15 +14,13 @@ use OpenSSL::Test qw(:DEFAULT data_file bldtop_dir srctop_file);
 
 setup("test_evp");
 
-#TODO(3.0) We temporarily disable testing with the FIPS module while that
-#          testing is broken
-#my @configs = qw( default-and-legacy.cnf fips.cnf );
-my @configs = qw( default-and-legacy.cnf );
-my @files = qw( evpciph.txt evpdigest.txt evpencod.txt evpkdf.txt
-    evppkey_kdf.txt evpmac.txt evppbe.txt evppkey.txt
-    evppkey_ecc.txt evpcase.txt evpaessiv.txt evpccmcavs.txt );
+my @configs = qw( default-and-legacy.cnf fips.cnf );
+my @files = qw( evpciph.txt evpdigest.txt );
+my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
+    evppbe.txt evppkey.txt evppkey_ecc.txt evpcase.txt evpaessiv.txt
+    evpccmcavs.txt );
 
-plan tests => scalar(@configs) * scalar(@files);
+plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles);
 
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
 
@@ -33,4 +31,14 @@ foreach (@configs) {
         ok(run(test(["evp_test", data_file("$f")])),
            "running evp_test $f");
     }
+}
+
+#TODO(3.0): As more operations are converted to providers we can move more of
+#           these tests to the loop above
+
+$ENV{OPENSSL_CONF} = srctop_file("test", "default-and-legacy.cnf");
+
+foreach my $f ( @defltfiles ) {
+    ok(run(test(["evp_test", data_file("$f")])),
+       "running evp_test $f");
 }
