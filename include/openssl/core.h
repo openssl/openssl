@@ -100,7 +100,7 @@ struct ossl_param_st {
 /* Currently supported OSSL_PARAM data types */
 /*
  * OSSL_PARAM_INTEGER and OSSL_PARAM_UNSIGNED_INTEGER
- * are arbitrary length and therefore require an arbitrarily sized bufsfer,
+ * are arbitrary length and therefore require an arbitrarily sized buffer,
  * since they may be used to pass numbers larger than what is natively
  * available.
  *
