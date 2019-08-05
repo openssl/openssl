@@ -67,7 +67,7 @@ and therefore the values that have been passed in should not be freed directly
 after this function has been called.
 
 See L<i2d_ECDSA_SIG(3)> and L<d2i_ECDSA_SIG(3)> for information about encoding
-and decoding EDSA signatures to/from DER.
+and decoding ECDSA signatures to/from DER.
 
 ECDSA_size() returns the maximum length of a DER encoded ECDSA signature
 created with the private EC key B<eckey>.
