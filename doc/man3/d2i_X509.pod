@@ -53,6 +53,7 @@ d2i_DSA_PUBKEY_bio,
 d2i_DSA_PUBKEY_fp,
 d2i_DSA_SIG,
 d2i_DSAparams,
+d2i_ECDSA_SIG,
 d2i_ECPKParameters,
 d2i_ECParameters,
 d2i_ECPrivateKey,
@@ -241,6 +242,7 @@ i2d_DSA_PUBKEY_bio,
 i2d_DSA_PUBKEY_fp,
 i2d_DSA_SIG,
 i2d_DSAparams,
+i2d_ECDSA_SIG,
 i2d_ECPKParameters,
 i2d_ECParameters,
 i2d_ECPrivateKey,
@@ -497,6 +499,10 @@ Represents a DSA public key using a B<SubjectPublicKeyInfo> structure.
 
 Use a non-standard OpenSSL format and should be avoided; use B<DSA_PUBKEY>,
 B<PEM_write_PrivateKey(3)>, or similar instead.
+
+=item B<ECDSA_SIG>
+
+Represents an ECDSA signature.
 
 =item B<RSAPublicKey>
 

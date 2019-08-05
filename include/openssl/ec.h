@@ -1194,7 +1194,8 @@ void ECDSA_SIG_free(ECDSA_SIG *sig);
  *  (*pp += length of the DER encoded signature)).
  *  \param  sig  pointer to the ECDSA_SIG object
  *  \param  pp   pointer to a unsigned char pointer for the output or NULL
- *  \return the length of the DER encoded ECDSA_SIG object or 0
+ *  \return the length of the DER encoded ECDSA_SIG object or a negative value
+ *          on error
  */
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(ECDSA_SIG, ECDSA_SIG)
 
