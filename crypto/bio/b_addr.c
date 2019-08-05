@@ -7,6 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * We need to do this early, because stdio.h includes the header files that
+ * handle _GNU_SOURCE and other similar macros.  Defining it later is simply
+ * too late, because those headers are protected from re- inclusion.
+ */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE            /* make sure EAI_ADDRFAMILY is declared */
+#endif
+
 #include <assert.h>
 #include <string.h>
 
@@ -709,7 +718,8 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         case 0:
             ret = 1;             /* Success */
             break;
-# if (defined(EAI_FAMILY) || defined(EAI_ADDRFAMILY)) && defined(AI_ADDRCONFIG)
+# ifdef AI_ADDRCONFIG
+	case EAI_NONAME:
 #  ifdef EAI_FAMILY
         case EAI_FAMILY:
 #  endif
