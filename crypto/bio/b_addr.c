@@ -707,20 +707,14 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         case 0:
             ret = 1;             /* Success */
             break;
-# if (defined(EAI_FAMILY) || defined(EAI_ADDRFAMILY)) && defined(AI_ADDRCONFIG)
-#  ifdef EAI_FAMILY
-        case EAI_FAMILY:
-#  endif
-#  ifdef EAI_ADDRFAMILY
-        case EAI_ADDRFAMILY:
-#  endif
+        default:
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
             if (hints.ai_flags & AI_ADDRCONFIG) {
                 hints.ai_flags &= ~AI_ADDRCONFIG;
+                hints.ai_flags |= AI_NUMERICHOST;
                 goto retry;
             }
 # endif
-            /* fall through */
-        default:
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
             ERR_add_error_data(1, gai_strerror(gai_ret));
             break;
