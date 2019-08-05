@@ -197,9 +197,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         ctx->flags = flags;
     }
 
-    if (cipher != NULL)
-        ctx->cipher = cipher;
-    else
+    if (cipher == NULL)
         cipher = ctx->cipher;
 
     if (cipher->prov == NULL) {
