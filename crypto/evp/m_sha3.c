@@ -108,6 +108,9 @@ static int sha3_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
     size_t bsz = ctx->block_size;
     size_t num = ctx->num;
 
+    if (ctx->md_size == 0)
+        return 1;
+
     /*
      * Pad the data with 10*1. Note that |num| can be |bsz - 1|
      * in which case both byte operations below are performed on
