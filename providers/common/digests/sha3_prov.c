@@ -90,10 +90,12 @@ static int keccak_update(void *vctx, const unsigned char *inp, size_t len)
 static int keccak_final(void *vctx, unsigned char *out, size_t *outl,
                         size_t outsz)
 {
-    int ret;
+    int ret = 1;
     KECCAK1600_CTX *ctx = vctx;
 
-    ret = ctx->meth.final(out, ctx);
+    if (outsz > 0)
+        ret = ctx->meth.final(out, ctx);
+
     *outl = ctx->md_size;
     return ret;
 }

@@ -89,6 +89,9 @@ int sha3_final(unsigned char *md, KECCAK1600_CTX *ctx)
     size_t bsz = ctx->block_size;
     size_t num = ctx->bufsz;
 
+    if (ctx->md_size == 0)
+        return 1;
+
     /*
      * Pad the data with 10*1. Note that |num| can be |bsz - 1|
      * in which case both byte operations below are performed on
