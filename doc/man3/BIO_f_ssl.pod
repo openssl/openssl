@@ -240,6 +240,13 @@ a client and also echoes the request to standard output.
      ERR_print_errors_fp(stderr);
      exit(1);
  }
+ /*Added BIO_do_accpet cal after first BIO has been setup*/
+ if (BIO_do_accept(acpt) <= 0) {
+    fprintf(stderr, "Error in connection\n");
+    ERR_print_errors_fp(stderr);
+    exit(1);
+ }
+
 
  /* We only want one connection so remove and free accept BIO */
  sbio = BIO_pop(acpt);
