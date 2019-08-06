@@ -41,6 +41,7 @@ static int pkcs11_rsa_free(RSA *rsa);
 static unsigned char *pkcs11_pad(char *field, int len);
 static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x);
 static char *pkcs11_get_console_pin(PKCS11_CTX *ctx);
+CK_BYTE *pin_from_file(const char *filename);
 
 static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
@@ -209,6 +210,33 @@ static unsigned char *pkcs11_pad(char *field, int len)
     return ret;
 }
 
+CK_BYTE *pin_from_file(const char *filename)
+{
+    BIO *in = NULL;
+    int i;
+    static char buf[255];
+
+    in = BIO_new_file(filename, "r");
+    if (in == NULL) {
+        BIO_free(in);
+        goto err;
+    }
+    i = BIO_gets(in, buf, sizeof(buf));
+    BIO_free(in);
+    in = NULL;
+    if (i <= 0)
+        goto err;
+    char *c = (strchr(buf, '\n'));
+    if (c != NULL) {
+        *c = 0;     /* truncate at newline */
+    }
+    return (CK_BYTE *) buf;
+
+ err:
+    PKCS11_trace("Can't read PIN from %s\n", filename);
+    return NULL;
+}
+
 static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
 {
     char *p, *q, *tmpstr;
@@ -231,6 +259,20 @@ static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
                     goto memerr;
                 ctx->pin = (CK_BYTE *) tmpstr;
                 ctx->pinlen = (CK_ULONG) strlen((char *) ctx->pin);
+            } else if (strncmp(p, "pin-source=", 11) == 0 && ctx->pin == NULL) {
+                p += 11;
+                if (strncmp(p, "file:", 5) == 0) {
+                    p += 5;
+                    tmpstr = OPENSSL_strdup(p);
+                        if (tmpstr == NULL)
+                            goto memerr;
+                        if ((ctx->pin = pin_from_file(tmpstr)) == NULL)
+                            goto err;
+                        ctx->pinlen = (CK_ULONG) strlen((char *) ctx->pin);
+                } else {
+                    PKCS11_trace("file source only supported\n");
+                    goto err;
+                }
             } else if (strncmp(p, "object=", 7) == 0 && ctx->label == NULL) {
                 p += 7;
                 tmpstr = OPENSSL_strdup(p);
@@ -295,7 +337,9 @@ static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri)
 
  memerr:
     PKCS11err(PKCS11_F_PKCS11_PARSE_ITEMS, ERR_R_MALLOC_FAILURE);
+ err:
     return 0;
+
 }
 
 /*-
@@ -367,7 +411,8 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store)
 
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
-        pkcs11_parse_items(ctx, path);
+        if (!pkcs11_parse_items(ctx, path))
+            goto err;
 
         if (ctx->id == NULL && ctx->label == NULL && !store) {
             PKCS11_trace("ID and OBJECT are null\n");
