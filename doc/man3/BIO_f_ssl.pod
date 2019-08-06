@@ -240,7 +240,7 @@ a client and also echoes the request to standard output.
      ERR_print_errors_fp(stderr);
      exit(1);
  }
- /* Added BIO_do_accept cal after first BIO_do_accept is actually bind while *
+ /* Added BIO_do_accept call after first BIO_do_accept is actually bind while *
     second BIO_do_accept is really an accept                                 */
  if (BIO_do_accept(acpt) <= 0) {
     fprintf(stderr, "Error in connection\n");
