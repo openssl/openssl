@@ -427,67 +427,81 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 static const char* OQS_CURVE_ID_NAME_STR(int id) {
   switch(id) {
   case 0x01FF: return "oqs_kem_default";
-  case 0x0200: return "sike503";
-  case 0x0201: return "sike751";
-#if !defined(OQS_NIST_BRANCH)
-  case 0x0202: return "sidh503";
-  case 0x0203: return "sidh751";
-#endif
-  case 0x0204: return "frodo640aes";
-  case 0x0205: return "frodo640cshake";
-  case 0x0206: return "frodo976aes";
-  case 0x0207: return "frodo976cshake";
-  case 0x0208: return "bike1l1";
-  case 0x0209: return "bike1l3";
-  case 0x020a: return "bike1l5";
-  case 0x020b: return "bike2l1";
-  case 0x020c: return "bike2l3";
-  case 0x020d: return "bike2l5";
-  case 0x020e: return "bike3l1";
-  case 0x020f: return "bike3l3";
-  case 0x0210: return "bike3l5";
-  case 0x0211: return "newhope512cca";
-  case 0x0212: return "newhope1024cca";
-#if defined(OQS_NIST_BRANCH)
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-  case 0x0216: return "kyber512";
-  case 0x0217: return "kyber768";
-  case 0x0218: return "kyber1024";
-  case 0x0219: return "ledakem_C1_N02";
-  case 0x021a: return "ledakem_C1_N03";
-  case 0x021b: return "ledakem_C1_N04";
-  case 0x021c: return "ledakem_C3_N02";
-  case 0x021d: return "ledakem_C3_N03";
-  case 0x021e: return "ledakem_C3_N04";
-  case 0x021f: return "ledakem_C5_N02";
-    /*
-  case 0x0220: return "ledakem_C5_N03";
-  case 0x0221: return "ledakem_C5_N04";
-    */
-  case 0x0228: return "saber_light_saber";
-  case 0x0229: return "saber_saber";
-  case 0x022a: return "saber_fire_saber";
-#endif
-  /* ADD_MORE_OQS_KEM_HERE */
+  ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_START
+  case 0x0200: return "frodo640aes";
+  case 0x0201: return "frodo640shake";
+  case 0x0202: return "frodo976aes";
+  case 0x0203: return "frodo976shake";
+  case 0x0204: return "frodo1344aes";
+  case 0x0205: return "frodo1344shake";
+  case 0x0206: return "bike1l1";
+  case 0x0207: return "bike1l3";
+  case 0x0208: return "bike1l5";
+  case 0x0209: return "bike2l1";
+  case 0x020A: return "bike2l3";
+  case 0x020B: return "bike2l5";
+  case 0x020C: return "bike3l1";
+  case 0x020D: return "bike3l3";
+  case 0x020E: return "bike3l5";
+  case 0x020F: return "kyber512";
+  case 0x0210: return "kyber768";
+  case 0x0211: return "kyber1024";
+  case 0x0212: return "newhope512cca";
+  case 0x0213: return "newhope1024cca";
+  case 0x0214: return "ntru_hps2048509";
+  case 0x0215: return "ntru_hps2048677";
+  case 0x0216: return "ntru_hps4096821";
+  case 0x0217: return "ntru_hrss701";
+  case 0x0218: return "lightsaber";
+  case 0x0219: return "saber";
+  case 0x021A: return "firesaber";
+  case 0x021B: return "sidhp434";
+  case 0x021C: return "sidhp503";
+  case 0x021D: return "sidhp610";
+  case 0x021E: return "sidhp751";
+  case 0x021F: return "sikep434";
+  case 0x0220: return "sikep503";
+  case 0x0221: return "sikep610";
+  case 0x0222: return "sikep751";
+  ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
   case 0x02FF: return "p256-oqs_kem_default hybrid";
-  case 0x0300: return "p256-sike503 hybrid";
-  case 0x0301: return "p256-sidh503 hybrid";
-  case 0x0302: return "p256-frodo640aes hybrid";
-  case 0x0303: return "p256-frodo640cshake hybrid";
-  case 0x0304: return "p256-bike1l1 hybrid";
-  case 0x0305: return "p256-bike2l1 hybrid";
-  case 0x0306: return "p256-bike3l1 hybrid";
-  case 0x0307: return "p256-newhope512cca hybrid";
-#if defined(OQS_NIST_BRANCH)
-  case 0x0309: return "p256-kyber512 hybrid";
-  case 0x030a: return "p256-ledakem_C1_N02 hybrid";
-  case 0x030b: return "p256-ledakem_C1_N03 hybrid";
-  case 0x030c: return "p256-ledakem_C1_N04 hybrid";
-    /*
-  case 0x030e: return "p256-saber_light_saber hybrid";
-    */
-#endif
-  /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
+  ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_START
+  case 0x0300: return "p256-frodo640aes hybrid";
+  case 0x0301: return "p256-frodo640shake hybrid";
+  case 0x0302: return "p256-frodo976aes hybrid";
+  case 0x0303: return "p256-frodo976shake hybrid";
+  case 0x0304: return "p256-frodo1344aes hybrid";
+  case 0x0305: return "p256-frodo1344shake hybrid";
+  case 0x0306: return "p256-bike1l1 hybrid";
+  case 0x0307: return "p256-bike1l3 hybrid";
+  case 0x0308: return "p256-bike1l5 hybrid";
+  case 0x0309: return "p256-bike2l1 hybrid";
+  case 0x030A: return "p256-bike2l3 hybrid";
+  case 0x030B: return "p256-bike2l5 hybrid";
+  case 0x030C: return "p256-bike3l1 hybrid";
+  case 0x030D: return "p256-bike3l3 hybrid";
+  case 0x030E: return "p256-bike3l5 hybrid";
+  case 0x030F: return "p256-kyber512 hybrid";
+  case 0x0310: return "p256-kyber768 hybrid";
+  case 0x0311: return "p256-kyber1024 hybrid";
+  case 0x0312: return "p256-newhope512cca hybrid";
+  case 0x0313: return "p256-newhope1024cca hybrid";
+  case 0x0314: return "p256-ntru_hps2048509 hybrid";
+  case 0x0315: return "p256-ntru_hps2048677 hybrid";
+  case 0x0316: return "p256-ntru_hps4096821 hybrid";
+  case 0x0317: return "p256-ntru_hrss701 hybrid";
+  case 0x0318: return "p256-lightsaber hybrid";
+  case 0x0319: return "p256-saber hybrid";
+  case 0x031A: return "p256-firesaber hybrid";
+  case 0x031B: return "p256-sidhp434 hybrid";
+  case 0x031C: return "p256-sidhp503 hybrid";
+  case 0x031D: return "p256-sidhp610 hybrid";
+  case 0x031E: return "p256-sidhp751 hybrid";
+  case 0x031F: return "p256-sikep434 hybrid";
+  case 0x0320: return "p256-sikep503 hybrid";
+  case 0x0321: return "p256-sikep610 hybrid";
+  case 0x0322: return "p256-sikep751 hybrid";
+  ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_END
   default: return "";
   }
 }
