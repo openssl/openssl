@@ -104,7 +104,9 @@ static int dummy_evp_call(void *provctx)
     BIGNUM *a = NULL, *b = NULL;
     unsigned char randbuf[128];
     RAND_DRBG *drbg = OPENSSL_CTX_get0_public_drbg(libctx);
+#ifndef OPENSSL_NO_EC
     EC_KEY *key = NULL;
+#endif
 
     if (ctx == NULL || sha256 == NULL || drbg == NULL)
         goto err;
@@ -138,6 +140,7 @@ static int dummy_evp_call(void *provctx)
     if (!BN_rand_ex(a, 256, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, bnctx))
         goto err;
 
+#ifndef OPENSSL_NO_EC
     /* Do some dummy EC calls */
     key = EC_KEY_new_by_curve_name_ex(libctx, NID_X9_62_prime256v1);
     if (key == NULL)
@@ -145,6 +148,7 @@ static int dummy_evp_call(void *provctx)
 
     if (!EC_KEY_generate_key(key))
         goto err;
+#endif
 
     ret = 1;
  err:
@@ -154,7 +158,9 @@ static int dummy_evp_call(void *provctx)
     EVP_MD_CTX_free(ctx);
     EVP_MD_meth_free(sha256);
 
+#ifndef OPENSSL_NO_EC
     EC_KEY_free(key);
+#endif
     return ret;
 }
 
