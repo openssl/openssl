@@ -1334,7 +1334,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_INIT:
-        ivlen = EVP_CIPHER_iv_length(c);
+        ivlen = EVP_CIPHER_iv_length(c->cipher);
         iv = EVP_CIPHER_CTX_iv_noconst(c);
         gctx->key_set = 0;
         gctx->iv_set = 0;
