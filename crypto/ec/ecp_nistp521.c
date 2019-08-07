@@ -1748,7 +1748,7 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL)
-        new_ctx = BN_CTX_new();
+        ctx = new_ctx = BN_CTX_new();
 #endif
     if (ctx == NULL)
         return 0;
@@ -2072,7 +2072,7 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 
 #ifndef FIPS_MODE
     if (ctx == NULL)
-        new_ctx = BN_CTX_new();
+        ctx = new_ctx = BN_CTX_new();
 #endif
     if (ctx == NULL)
         return 0;
