@@ -566,14 +566,6 @@ static int provider_forall_loaded(struct provider_store_st *store,
     int ret = 1;
     int num_provs;
 
-#ifndef FIPS_MODE
-    /*
-     * Make sure any providers are loaded from config before we try to use
-     * them.
-     */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
-#endif
-
     num_provs = sk_OSSL_PROVIDER_num(store->providers);
 
     if (found_activated != NULL)
@@ -637,6 +629,14 @@ int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
 {
     int ret = 1;
     struct provider_store_st *store = get_provider_store(ctx);
+
+#ifndef FIPS_MODE
+    /*
+     * Make sure any providers are loaded from config before we try to use
+     * them.
+     */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
     if (store != NULL) {
         CRYPTO_THREAD_read_lock(store->lock);
