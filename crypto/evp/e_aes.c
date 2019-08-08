@@ -1334,7 +1334,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_INIT:
-        ivlen = EVP_CIPHER_CTX_iv_length(c);
+        ivlen = EVP_CIPHER_iv_length(c->cipher);
         iv = EVP_CIPHER_CTX_iv_noconst(c);
         gctx->key_set = 0;
         gctx->iv_set = 0;
@@ -1343,6 +1343,10 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         gctx->taglen = -1;
         gctx->iv_gen = 0;
         gctx->tls_aad_len = -1;
+        return 1;
+
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = gctx->ivlen;
         return 1;
 
     case EVP_CTRL_AEAD_SET_IVLEN:
@@ -2053,6 +2057,10 @@ static int s390x_aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         cctx->aes.ccm.tls_aad_len = -1;
         return 1;
 
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = 15 - cctx->aes.ccm.l;
+        return 1;
+
     case EVP_CTRL_AEAD_TLS1_AAD:
         if (arg != EVP_AEAD_TLS1_AAD_LEN)
             return 0;
@@ -2536,11 +2544,15 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     case EVP_CTRL_INIT:
         gctx->key_set = 0;
         gctx->iv_set = 0;
-        gctx->ivlen = c->cipher->iv_len;
+        gctx->ivlen = EVP_CIPHER_iv_length(c->cipher);
         gctx->iv = c->iv;
         gctx->taglen = -1;
         gctx->iv_gen = 0;
         gctx->tls_aad_len = -1;
+        return 1;
+
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = gctx->ivlen;
         return 1;
 
     case EVP_CTRL_AEAD_SET_IVLEN:
@@ -3055,7 +3067,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #define CUSTOM_FLAGS    (EVP_CIPH_FLAG_DEFAULT_ASN1 \
                 | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
                 | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT \
-                | EVP_CIPH_CUSTOM_COPY)
+                | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_CUSTOM_IV_LENGTH)
 
 BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
@@ -3258,6 +3270,10 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         cctx->tag_set = 0;
         cctx->len_set = 0;
         cctx->tls_aad_len = -1;
+        return 1;
+
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = 15 - cctx->L;
         return 1;
 
     case EVP_CTRL_AEAD_TLS1_AAD:
@@ -3708,11 +3724,15 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     case EVP_CTRL_INIT:
         octx->key_set = 0;
         octx->iv_set = 0;
-        octx->ivlen = EVP_CIPHER_CTX_iv_length(c);
+        octx->ivlen = EVP_CIPHER_iv_length(c->cipher);
         octx->iv = EVP_CIPHER_CTX_iv_noconst(c);
         octx->taglen = 16;
         octx->data_buf_len = 0;
         octx->aad_buf_len = 0;
+        return 1;
+
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = octx->ivlen;
         return 1;
 
     case EVP_CTRL_AEAD_SET_IVLEN:

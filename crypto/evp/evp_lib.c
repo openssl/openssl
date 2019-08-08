@@ -315,13 +315,22 @@ int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
-    int ok, v = EVP_CIPHER_iv_length(ctx->cipher);
+    int len, rv, v = EVP_CIPHER_iv_length(ctx->cipher);
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_IVLEN, &v);
-    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
-
-    return ok != 0 ? v : -1;
+    rv = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+    if (rv == EVP_CTRL_RET_UNSUPPORTED)
+        goto legacy;
+    return rv != 0 ? v : -1;
+    /* TODO (3.0) Remove legacy support */
+legacy:
+    if ((EVP_CIPHER_flags(ctx->cipher) & EVP_CIPH_CUSTOM_IV_LENGTH) != 0) {
+        rv = EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN,
+                                 0, &len);
+        return (rv == 1) ? len : -1;
+    }
+    return v;
 }
 
 const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx)
