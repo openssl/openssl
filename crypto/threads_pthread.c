@@ -126,7 +126,16 @@ int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 
 void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key)
 {
+#ifndef CHARSET_EBCDIC  
     return pthread_getspecific(*key);
+#else    
+    /*  On z/OS this is 
+    int pthread_getspecific(pthread_key_t key, void **value); 
+    */
+    void *some_value;
+    pthread_getspecific(*key, &some_value);
+    return some_value;
+ #endif
 }
 
 int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val)

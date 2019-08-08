@@ -557,7 +557,62 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         }
     }
 #   endif
+#if defined(B_ENDIAN) && defined(CHARSET_EBCDIC)
+    {
+      short int code;
+      gid_t curr_gid;
+      pid_t curr_pid;
+      uid_t curr_uid;
+      int i, k;
+      struct timespec ts;
+      unsigned char v;
+      struct timeval curr_timeval;
+      struct timezone cur_timezone;
+      double clock_time;
 
+      /*
+       * Seed with the gid, pid, and uid, to ensure *some* variation between
+       * different processes.
+       */
+
+      curr_gid = getgid();
+      rand_pool_add(pool, &curr_gid, sizeof curr_gid, 8);
+      curr_gid = 0;
+
+      curr_pid = getpid();
+      rand_pool_add(pool, &curr_pid, sizeof curr_pid, 8);
+      curr_pid = 0;
+
+      curr_uid = getuid();
+      rand_pool_add(pool, &curr_uid, sizeof curr_uid, 8);
+      curr_uid = 0;
+
+      clock_time = (double)clock();
+      rand_pool_add(pool, &clock_time, sizeof clock_time,8 );
+      clock_time = 0.0;
+
+      bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+      for (i = 0; i < bytes_needed; i++) {
+
+        /*
+         * burn some cpu; hope for interrupts, cache collisions, bus
+         * interference, etc.
+         */
+        for (k = 0; k < 99; k++) {
+          ts.tv_nsec = random();
+        }
+
+        /* get wall clock time.  */
+        /* clock_gettime(CLOCK_REALTIME, &ts); */ 
+        k= gettimeofday(&curr_timeval, &cur_timezone);
+          
+        /* take 8 bits */
+        v = (unsigned char)(curr_timeval.tv_usec & 0xFF);
+        rand_pool_add(pool, &v, sizeof v, 8);
+        v = 0;
+      }
+    }
+#endif  /* if defined(B_ENDIAN) && defined(CHARSET_EBCDIC) */
     return rand_pool_entropy_available(pool);
 #  endif
 }
