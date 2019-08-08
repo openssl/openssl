@@ -557,6 +557,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         }
     }
 #   endif
+
     return rand_pool_entropy_available(pool);
 #  endif
 }

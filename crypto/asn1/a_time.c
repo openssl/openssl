@@ -136,20 +136,20 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
     if (l < min_l)
         goto err;
     for (i = 0; i < end; i++) {
-    if (!strict && (i == btz) && ((a[o] == upper_z) || (a[o] == plus) || (a[o] == hyphen))) {
+        if (!strict && (i == btz) && ((a[o] == upper_z) || (a[o] == plus) || (a[o] == hyphen))) {
             i++;
             break;
         }
-    if (!ascii_isdigit(a[o]))
+        if (!ascii_isdigit(a[o]))
             goto err;
-    n = a[o] - num_zero;
+        n = a[o] - num_zero;
         /* incomplete 2-digital number */
         if (++o == l)
             goto err;
 
-    if (!ascii_isdigit(a[o]))
+        if (!ascii_isdigit(a[o]))
             goto err;
-    n = (n * 10) + a[o] - num_zero;
+        n = (n * 10) + a[o] - num_zero;
         /* no more bytes to read, but we haven't seen time-zone yet */
         if (++o == l)
             goto err;
@@ -201,14 +201,14 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      * Optional fractional seconds: decimal point followed by one or more
      * digits.
      */
-  if (d->type == V_ASN1_GENERALIZEDTIME && a[o] == period) {
+      if (d->type == V_ASN1_GENERALIZEDTIME && a[o] == period) {
         if (strict)
             /* RFC 5280 forbids fractional seconds */
             goto err;
         if (++o == l)
             goto err;
         i = o;
-    while ((o < l) && ascii_isdigit(a[o]))
+        while ((o < l) && ascii_isdigit(a[o]))
             o++;
         /* Must have at least one digit after decimal point */
         if (i == o)
@@ -223,10 +223,10 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      * 'o' can point to '\0' is either the subsequent if or the first
      * else if is true.
      */
-  if (a[o] == upper_z) {
+      if (a[o] == upper_z) {
         o++;
-  } else if (!strict && ((a[o] == plus) || (a[o] == hyphen))) {
-    int offsign = a[o] == hyphen ? 1 : -1;
+      } else if (!strict && ((a[o] == plus) || (a[o] == hyphen))) {
+        int offsign = a[o] == hyphen ? 1 : -1;
         int offset = 0;
 
         o++;
@@ -239,13 +239,13 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
         if (o + 4 != l)
             goto err;
         for (i = end; i < end + 2; i++) {
-      if (!ascii_isdigit(a[o]))
+            if (!ascii_isdigit(a[o]))
                 goto err;
-      n = a[o] - num_zero;
+            n = a[o] - num_zero;
             o++;
-      if (!ascii_isdigit(a[o]))
+            if (!ascii_isdigit(a[o]))
                 goto err;
-      n = (n * 10) + a[o] - num_zero;
+            n = (n * 10) + a[o] - num_zero;
             i2 = (d->type == V_ASN1_UTCTIME) ? i + 1 : i;
             if ((n < min[i2]) || (n > max[i2]))
                 goto err;
