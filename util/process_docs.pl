@@ -109,7 +109,7 @@ _____
 pod2html "--podroot=$sourcedir" --htmldir=$updir --podpath=man1:man3:man5:man7 "--infile=$podpath" "--title=$podname" --quiet
 _____
                 } -> {$options{type}};
-            my $output_dir = catdir($options{destdir}, "man$podinfo{section}");
+            my $output_dir = catdir($options{destdir}, "man$podinfo{section}" . (defined($options{suffix}) and $options{type} eq 'man' ? $options{suffix} : ""));
             my $output_file = $podname . $suffix;
             my $output_path = catfile($output_dir, $output_file);
 
