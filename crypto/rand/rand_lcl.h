@@ -45,7 +45,6 @@
 # define DRBG_MAX_LENGTH                         INT32_MAX
 
 
-
 /*
  * Maximum allocation size for RANDOM_POOL buffers
  *
