@@ -201,7 +201,7 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      * Optional fractional seconds: decimal point followed by one or more
      * digits.
      */
-      if (d->type == V_ASN1_GENERALIZEDTIME && a[o] == period) {
+    if (d->type == V_ASN1_GENERALIZEDTIME && a[o] == period) {
         if (strict)
             /* RFC 5280 forbids fractional seconds */
             goto err;
@@ -223,9 +223,9 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      * 'o' can point to '\0' is either the subsequent if or the first
      * else if is true.
      */
-      if (a[o] == upper_z) {
+    if (a[o] == upper_z) {
         o++;
-      } else if (!strict && ((a[o] == plus) || (a[o] == hyphen))) {
+    } else if (!strict && ((a[o] == plus) || (a[o] == hyphen))) {
         int offsign = a[o] == hyphen ? 1 : -1;
         int offset = 0;
 
