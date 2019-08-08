@@ -160,7 +160,7 @@ B<EVP_MAC_CTRL_SET_MD> and B<EVP_MAC_CTRL_SET_CIPHER> below.
 
 =item B<EVP_MAC_CTRL_SET_IV>
 
-This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
+This control expects two arguments: C<unsigned char *iv>, C<size_t ivlen>
 
 Some MAC implementations require an IV, this control sets the IV.
 
