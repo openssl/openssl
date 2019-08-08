@@ -85,13 +85,8 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
     int n, i, i2, l, o, min_l = 11, strict = 0, end = 6, btz = 5, md;
     struct tm tmp;
   const char
-    lower_a = 0x61,
-    lower_z = 0x7A,
-    upper_a = 0x41,
     upper_z = 0x5A,
     num_zero = 0x30,
-    num_nine = 0x39,
-    underscore = 0x5F,
     period = 0x2E,
     hyphen = 0x2D,
     plus = 0x2B;
@@ -484,16 +479,8 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
     int gmt = 0, l;
     struct tm stm;
     const char
-      lower_a = 0x61,
-      lower_z = 0x7A,
-      upper_a = 0x41,
       upper_z = 0x5A,
-      num_zero = 0x30,
-      num_nine = 0x39,
-      underscore = 0x5F,
-      period = 0x2E,
-      hyphen = 0x2D,
-      plus = 0x2B;
+      period = 0x2E;
 
     if (!asn1_time_to_tm(&stm, tm)) {
         /* asn1_time_to_tm will check the time type */
