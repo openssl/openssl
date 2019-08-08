@@ -211,11 +211,14 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_cipher,
                      const unsigned char *in, size_t inl))
 OSSL_CORE_MAKE_FUNC(void, OP_cipher_freectx, (void *cctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_cipher_dupctx, (void *cctx))
-OSSL_CORE_MAKE_FUNC(int, OP_cipher_get_params, (OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_cipher_get_params, (OSSL_PARAM params[],
+                                                int found[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
-                                                    OSSL_PARAM params[]))
+                                                    OSSL_PARAM params[],
+                                                    int found[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
-                                                    const OSSL_PARAM params[]))
+                                                    const OSSL_PARAM params[],
+                                                    int found[]))
 
 /*-
  * Key management

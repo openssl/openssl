@@ -165,11 +165,12 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
  * or the return value from the desired function
  *    (evp_do_param will return it to the caller)
  */
-int evp_do_ciph_getparams(const EVP_CIPHER *ciph, OSSL_PARAM params[]);
+int evp_do_ciph_getparams(const EVP_CIPHER *ciph, OSSL_PARAM params[],
+                          int found[]);
 int evp_do_ciph_ctx_getparams(const EVP_CIPHER *ciph, void *provctx,
-                              OSSL_PARAM params[]);
+                              OSSL_PARAM params[], int found[]);
 int evp_do_ciph_ctx_setparams(const EVP_CIPHER *ciph, void *provctx,
-                              OSSL_PARAM params[]);
+                              OSSL_PARAM params[], int found[]);
 
 OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
 

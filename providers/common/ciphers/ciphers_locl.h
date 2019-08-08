@@ -145,4 +145,4 @@ int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
 void padblock(unsigned char *buf, size_t *buflen, size_t blocksize);
 int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize);
 int aes_get_params(OSSL_PARAM params[], int md, unsigned long flags,
-                   int kbits, int blkbits, int ivbits);
+                   int kbits, int blkbits, int ivbits, int found[]);

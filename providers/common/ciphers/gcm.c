@@ -98,24 +98,24 @@ static int gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return gcm_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
-static int gcm_ctx_get_params(void *vctx, OSSL_PARAM params[])
+static int gcm_ctx_get_params(void *vctx, OSSL_PARAM params[], int found[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     OSSL_PARAM *p;
     size_t sz;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_IVLEN, found);
     if (p != NULL) {
         if (!OSSL_PARAM_set_int(p, ctx->ivlen))
             return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_KEYLEN, found);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
         PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_IV, found);
     if (p != NULL) {
         if (ctx->iv_gen != 1 && ctx->iv_gen_rand != 1)
             return 0;
@@ -129,12 +129,12 @@ static int gcm_ctx_get_params(void *vctx, OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, found);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
         PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_AEAD_TAG, found);
     if (p != NULL) {
         sz = p->data_size;
         if (sz == 0 || sz > EVP_GCM_TLS_TAG_LEN || !ctx->enc || ctx->taglen < 0) {
@@ -149,14 +149,15 @@ static int gcm_ctx_get_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[])
+static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[],
+                              int found[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     const OSSL_PARAM *p;
     size_t sz;
     void *vp;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    p = OSSL_PARAM_locate2_const(params, OSSL_CIPHER_PARAM_AEAD_TAG, found);
     if (p != NULL) {
         vp = ctx->buf;
         if (!OSSL_PARAM_get_octet_string(p, &vp, EVP_GCM_TLS_TAG_LEN, &sz)) {
@@ -170,7 +171,7 @@ static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[])
         ctx->taglen = sz;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_IVLEN);
+    p = OSSL_PARAM_locate2_const(params, OSSL_CIPHER_PARAM_AEAD_IVLEN, found);
     if (p != NULL) {
         if (!OSSL_PARAM_get_size_t(p, &sz)) {
             PROVerr(0, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -183,7 +184,7 @@ static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[])
         ctx->ivlen = sz;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
+    p = OSSL_PARAM_locate2_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, found);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
             PROVerr(0, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -197,7 +198,8 @@ static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[])
         ctx->tls_aad_pad_sz = sz;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED);
+    p = OSSL_PARAM_locate2_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED,
+                                found);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
             PROVerr(0, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -208,26 +210,6 @@ static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
     }
-
-    /*
-     * TODO(3.0) Temporary solution to address fuzz test crash, which will be
-     * reworked once the discussion in PR #9510 is resolved. i.e- We need a
-     * general solution for handling missing parameters inside set_params and
-     * get_params methods.
-     */
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL) {
-        int keylen;
-
-        if (!OSSL_PARAM_get_int(p, &keylen)) {
-            PROVerr(0, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
-        /* The key length can not be modified for gcm mode */
-        if (keylen != (int)ctx->keylen)
-            return 0;
-    }
-
     return 1;
 }
 
@@ -515,10 +497,11 @@ err:
 
 #define IMPLEMENT_cipher(alg, lcmode, UCMODE, flags, kbits, blkbits, ivbits)   \
     static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params; \
-    static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])      \
+    static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[],      \
+                                                     int found[])              \
     {                                                                          \
         return aes_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,         \
-                               kbits, blkbits, ivbits);                        \
+                               kbits, blkbits, ivbits, found);                 \
     }                                                                          \
     static OSSL_OP_cipher_newctx_fn alg##kbits##gcm_newctx;                    \
     static void *alg##kbits##gcm_newctx(void *provctx)                         \

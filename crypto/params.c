@@ -12,6 +12,26 @@
 #include <openssl/params.h>
 #include "internal/thread_once.h"
 
+OSSL_PARAM *OSSL_PARAM_locate2(OSSL_PARAM *p, const char *key, int found[])
+{
+    int i = 0;
+    if (p != NULL && key != NULL)
+        for (; p->key != NULL; p++, i++)
+            if (strcmp(key, p->key) == 0) {
+                if (found != NULL)
+                    found[i] = 1;
+                return p;
+            }
+    return NULL;
+}
+
+const OSSL_PARAM *OSSL_PARAM_locate2_const(const OSSL_PARAM *p, const char *key,
+                                           int found[])
+{
+    return OSSL_PARAM_locate2((OSSL_PARAM *)p, key, found);
+}
+
+
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
     if (p != NULL && key != NULL)

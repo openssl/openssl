@@ -33,17 +33,17 @@
     }
 
 #define PARAM_FUNC(name, func, type, err)                                      \
-int name (const type *obj, OSSL_PARAM params[])                                \
+int name (const type *obj, OSSL_PARAM params[], int ignored[])                 \
 {                                                                              \
     PARAM_CHECK(obj, func, err)                                                \
-    return obj->func(params);                                                  \
+    return obj->func(params, ignored);                                         \
 }
 
 #define PARAM_CTX_FUNC(name, func, type, err)                                  \
-int name (const type *obj, void *provctx, OSSL_PARAM params[])                 \
+int name (const type *obj, void *provctx, OSSL_PARAM params[], int ignored[])  \
 {                                                                              \
     PARAM_CHECK(obj, func, err)                                                \
-    return obj->func(provctx, params);                                         \
+    return obj->func(provctx, params, ignored);                                \
 }
 
 #define PARAM_FUNCTIONS(type,                                                  \

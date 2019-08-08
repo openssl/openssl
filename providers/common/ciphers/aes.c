@@ -262,31 +262,31 @@ static void *aes_new_ctx(void *provctx, size_t mode, size_t kbits,
 }
 
 int aes_get_params(OSSL_PARAM params[], int md, unsigned long flags,
-                   int kbits, int blkbits, int ivbits)
+                   int kbits, int blkbits, int ivbits, int found[])
 {
     OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_MODE, found);
     if (p != NULL) {
         if (!OSSL_PARAM_set_int(p, md))
             return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_FLAGS);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_FLAGS, found);
     if (p != NULL) {
         if (!OSSL_PARAM_set_ulong(p, flags))
             return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_KEYLEN, found);
     if (p != NULL) {
         if (!OSSL_PARAM_set_int(p, kbits / 8))
             return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_BLOCK_SIZE, found);
     if (p != NULL) {
         if (!OSSL_PARAM_set_int(p, blkbits / 8))
             return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_IVLEN, found);
     if (p != NULL) {
         if (!OSSL_PARAM_set_int(p, ivbits / 8))
             return 0;
@@ -296,10 +296,10 @@ int aes_get_params(OSSL_PARAM params[], int md, unsigned long flags,
 
 #define IMPLEMENT_cipher(lcmode, UCMODE, flags, kbits, blkbits, ivbits)        \
     static OSSL_OP_cipher_get_params_fn aes_##kbits##_##lcmode##_get_params;   \
-    static int aes_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])        \
+    static int aes_##kbits##_##lcmode##_get_params(OSSL_PARAM params[], int f[])\
     {                                                                          \
         return aes_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags, kbits,  \
-                              blkbits, ivbits);                                \
+                              blkbits, ivbits, f);                             \
     }                                                                          \
     static OSSL_OP_cipher_newctx_fn aes_##kbits##_##lcmode##_newctx;           \
     static void *aes_##kbits##_##lcmode##_newctx(void *provctx)                \
@@ -360,22 +360,22 @@ static void *aes_dupctx(void *ctx)
     return ret;
 }
 
-static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[])
+static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[], int found[])
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
     OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_IVLEN, found);
     if (p != NULL) {
         if (!OSSL_PARAM_set_int(p, AES_BLOCK_SIZE))
             return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_PADDING, found);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->pad)) {
         PROVerr(PROV_F_AES_CTX_GET_PARAMS, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_IV, found);
     if (p != NULL
         && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, AES_BLOCK_SIZE)
         && !OSSL_PARAM_set_octet_string(p, &ctx->iv, AES_BLOCK_SIZE)) {
@@ -383,13 +383,13 @@ static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[])
                 PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_NUM);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_NUM, found);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->num)) {
         PROVerr(PROV_F_AES_CTX_GET_PARAMS,
                 PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = OSSL_PARAM_locate2(params, OSSL_CIPHER_PARAM_KEYLEN, found);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
         PROVerr(PROV_F_AES_CTX_GET_PARAMS,
                 PROV_R_FAILED_TO_SET_PARAMETER);
@@ -399,12 +399,12 @@ static int aes_ctx_get_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[])
+static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[], int found[])
 {
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
+    p = OSSL_PARAM_locate2_const(params, OSSL_CIPHER_PARAM_PADDING, found);
     if (p != NULL) {
         int pad;
 
@@ -415,7 +415,7 @@ static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[])
         }
         ctx->pad = pad ? 1 : 0;
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_NUM);
+    p = OSSL_PARAM_locate2_const(params, OSSL_CIPHER_PARAM_NUM, found);
     if (p != NULL) {
         int num;
 
@@ -426,7 +426,7 @@ static int aes_ctx_set_params(void *vctx, const OSSL_PARAM params[])
         }
         ctx->num = num;
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = OSSL_PARAM_locate2_const(params, OSSL_CIPHER_PARAM_KEYLEN, found);
     if (p != NULL) {
         int keylen;
 
