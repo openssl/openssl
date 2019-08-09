@@ -468,9 +468,7 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
     char *v;
     int gmt = 0, l;
     struct tm stm;
-    const char
-      upper_z = 0x5A,
-      period = 0x2E;
+    const char upper_z = 0x5A, period = 0x2E;
 
     if (!asn1_time_to_tm(&stm, tm)) {
         /* asn1_time_to_tm will check the time type */
