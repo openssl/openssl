@@ -129,30 +129,30 @@ static int raw_set_params(void *vobj, OSSL_PARAM *params)
     for (; params->key != NULL; params++)
         if (strcmp(params->key, "p1") == 0) {
             obj->p1 = *(int *)params->data;
-            params->flags |= OSSL_PARAM_READ | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_READ;
         } else if (strcmp(params->key, "p2") == 0) {
             obj->p2 = *(double *)params->data;
-            params->flags |= OSSL_PARAM_READ | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_READ;
         } else if (strcmp(params->key, "p3") == 0) {
             BN_free(obj->p3);
             if (!TEST_ptr(obj->p3 = BN_native2bn(params->data,
                                                  params->data_size, NULL)))
                 return 0;
-            params->flags |= OSSL_PARAM_READ | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_READ;
         } else if (strcmp(params->key, "p4") == 0) {
             OPENSSL_free(obj->p4);
             if (!TEST_ptr(obj->p4 = OPENSSL_strndup(params->data,
                                                     params->data_size)))
                 return 0;
-            params->flags |= OSSL_PARAM_READ | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_READ;
         } else if (strcmp(params->key, "p5") == 0) {
             strncpy(obj->p5, params->data, params->data_size);
             obj->p5_l = strlen(obj->p5) + 1;
-            params->flags |= OSSL_PARAM_READ | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_READ;
         } else if (strcmp(params->key, "p6") == 0) {
             obj->p6 = *(const char **)params->data;
             obj->p6_l = params->data_size;
-            params->flags |= OSSL_PARAM_READ | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_READ;
         }
 
     return 1;
@@ -166,11 +166,11 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
         if (strcmp(params->key, "p1") == 0) {
             params->return_size = sizeof(obj->p1);
             *(int *)params->data = obj->p1;
-            params->flags |= OSSL_PARAM_WRITTEN | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_WRITTEN;
         } else if (strcmp(params->key, "p2") == 0) {
             params->return_size = sizeof(obj->p2);
             *(double *)params->data = obj->p2;
-            params->flags |= OSSL_PARAM_WRITTEN | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_WRITTEN;
         } else if (strcmp(params->key, "p3") == 0) {
             size_t bytes = BN_num_bytes(obj->p3);
 
@@ -178,7 +178,7 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
             if (!TEST_size_t_ge(params->data_size, bytes))
                 return 0;
             BN_bn2nativepad(obj->p3, params->data, bytes);
-            params->flags |= OSSL_PARAM_WRITTEN | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_WRITTEN;
         } else if (strcmp(params->key, "p4") == 0) {
             size_t bytes = strlen(obj->p4) + 1;
 
@@ -186,7 +186,7 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
             if (!TEST_size_t_ge(params->data_size, bytes))
                 return 0;
             strcpy(params->data, obj->p4);
-            params->flags |= OSSL_PARAM_WRITTEN | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_WRITTEN;
         } else if (strcmp(params->key, "p5") == 0) {
             size_t bytes = strlen(obj->p5) + 1;
 
@@ -194,7 +194,7 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
             if (!TEST_size_t_ge(params->data_size, bytes))
                 return 0;
             strcpy(params->data, obj->p5);
-            params->flags |= OSSL_PARAM_WRITTEN | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_WRITTEN;
         } else if (strcmp(params->key, "p6") == 0) {
             /*
              * We COULD also use OPENSSL_FULL_VERSION_STR directly and
@@ -206,7 +206,7 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
 
             params->return_size = bytes;
             *(const char **)params->data = obj->p6;
-            params->flags |= OSSL_PARAM_WRITTEN | OSSL_PARAM_LOCATED;
+            params->used = OSSL_PARAM_WRITTEN;
         }
 
     return 1;
@@ -361,14 +361,14 @@ static int init_app_variables(void)
 
 /* An array of OSSL_PARAM, specific in the most raw manner possible */
 static OSSL_PARAM static_raw_params[] = {
-    { 0, 0, OSSL_PARAM_INTEGER, "p1", &app_p1, sizeof(app_p1), 0 },
-    { 0, 0, OSSL_PARAM_UNSIGNED_INTEGER, "p3", &bignumbin, sizeof(bignumbin), 0 },
-    { 0, 0, OSSL_PARAM_UTF8_STRING, "p4", &app_p4, sizeof(app_p4), 0 },
-    { 0, 0, OSSL_PARAM_UTF8_STRING, "p5", &app_p5, sizeof(app_p5), 0 },
+    { "p1", 0, OSSL_PARAM_INTEGER, &app_p1, sizeof(app_p1), 0 },
+    { "p3", 0, OSSL_PARAM_UNSIGNED_INTEGER, &bignumbin, sizeof(bignumbin), 0 },
+    { "p4", 0, OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), 0 },
+    { "p5", 0, OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5), 0 },
     /* sizeof(app_p6_init), because we know that's what we're using */
-    { 0, 0, OSSL_PARAM_UTF8_PTR, "p6", &app_p6, sizeof(app_p6_init), 0 },
-    { 0, 0, OSSL_PARAM_OCTET_STRING, "foo", &foo, sizeof(foo), 0 },
-    { 0, 0, 0, NULL, NULL, 0, 0 }
+    { "p6", 0, OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init), 0 },
+    { "foo", 0, OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), 0 },
+    { NULL, 0, 0, NULL, 0, 0 }
 };
 
 /* The same array of OSSL_PARAM, specified with the macros from params.h */

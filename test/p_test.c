@@ -28,14 +28,15 @@
 
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
+#include <openssl/params.h>
 
 static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Tell the core what params we provide and what type they are */
 static const OSSL_PARAM p_param_types[] = {
-    { 0, 0, OSSL_PARAM_UTF8_STRING, "greeting", NULL, 0, 0 },
-    { 0, 0, 0, NULL, NULL, 0, 0 }
+    OSSL_PARAM_utf8_string("greeting", NULL, 0),
+    OSSL_PARAM_END
 };
 
 /* This is a trick to ensure we define the provider functions correctly */
@@ -60,16 +61,14 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
             static char *greeting;
             static OSSL_PARAM counter_request[] = {
                 /* Known libcrypto provided parameters */
-                { 0, 0, OSSL_PARAM_UTF8_PTR, "openssl-version",
-                  &opensslv, sizeof(&opensslv), 0 },
-                { 0, 0, OSSL_PARAM_UTF8_PTR, "provider-name",
-                  &provname, sizeof(&provname), 0},
+                OSSL_PARAM_utf8_ptr("openssl-version", opensslv,
+                                    sizeof(&opensslv)),
+                OSSL_PARAM_utf8_ptr("provider-name", provname,
+                                    sizeof(&provname)),
 
                 /* This might be present, if there's such a configuration */
-                { 0, 0, OSSL_PARAM_UTF8_PTR, "greeting",
-                  &greeting, sizeof(&greeting), 0 },
-
-                { 0, 0, 0, NULL, NULL, 0, 0 }
+                OSSL_PARAM_utf8_ptr("greeting", greeting, sizeof(&greeting)),
+                OSSL_PARAM_END
             };
             char buf[256];
             size_t buf_l;

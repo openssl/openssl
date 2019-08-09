@@ -15,28 +15,31 @@
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
     p = (OSSL_PARAM *)OSSL_PARAM_locate_const(p, key);
-    if (p != NULL)
-        p->flags |= OSSL_PARAM_LOCATED;
+    if (p != NULL && p->used == OSSL_PARAM_UNTOUCHED)
+        p->used = OSSL_PARAM_LOCATED;
     return p;
 }
 
 const OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *p, const char *key)
 {
     if (p != NULL && key != NULL)
-        for (; p->key != NULL; p++)
+        do
             if (strcmp(key, p->key) == 0)
                 return p;
+        while ((++p)->key != NULL);
     return NULL;
 }
 
 static void param_set_read(OSSL_PARAM *p)
 {
-    p->flags |= OSSL_PARAM_READ;
+    if (p != NULL && p->used <= OSSL_PARAM_LOCATED)
+        p->used = OSSL_PARAM_READ;
 }
 
 static void param_set_written(OSSL_PARAM *p)
 {
-    p->flags |= OSSL_PARAM_WRITTEN;
+    if (p != NULL && p->used <= OSSL_PARAM_READ)
+        p->used = OSSL_PARAM_WRITTEN;
 }
 
 static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
@@ -45,8 +48,7 @@ static OSSL_PARAM ossl_param_construct(const char *key, unsigned int data_type,
     OSSL_PARAM res;
 
     res.key = key;
-    res.flags = 0;
-    res.version = 0;
+    res.used = OSSL_PARAM_UNTOUCHED;
     res.data_type = data_type;
     res.data = data;
     res.data_size = data_size;
@@ -922,22 +924,21 @@ OSSL_PARAM OSSL_PARAM_construct_end(void)
 
 int OSSL_PARAM_read(const OSSL_PARAM *p)
 {
-    return (p->flags & OSSL_PARAM_READ) != 0;
+    return p->used >= OSSL_PARAM_READ;
 }
 
 int OSSL_PARAM_written(const OSSL_PARAM *p)
 {
-    return (p->flags & OSSL_PARAM_WRITTEN) != 0;
+    return p->used >= OSSL_PARAM_WRITTEN;
 }
 
 int OSSL_PARAM_located(const OSSL_PARAM *p)
 {
-    return (p->flags & OSSL_PARAM_LOCATED) != 0;
+    return p->used >= OSSL_PARAM_LOCATED;
 }
 
 void OSSL_PARAM_set_all_unused(OSSL_PARAM *params)
 {
     while (params != NULL && params->key != NULL)
-        params++->flags &= ~(OSSL_PARAM_READ | OSSL_PARAM_WRITTEN
-                             | OSSL_PARAM_LOCATED);
+        params++->used = OSSL_PARAM_UNTOUCHED;
 }

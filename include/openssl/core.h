@@ -73,17 +73,17 @@ struct ossl_algorithm_st {
  * An array of these is always terminated by key == NULL
  */
 struct ossl_param_st {
-    unsigned char version;       /* OSSL_PARAM structure version number */
-    unsigned short flags;        /* flags */
-    unsigned char data_type;     /* declare what kind of content is in buffer */
     const char *key;             /* the name of the parameter */
+    unsigned char used;          /* How was this param used */
+    unsigned char data_type;     /* declare what kind of content is in buffer */
     void *data;                  /* value being passed in or out */
     size_t data_size;            /* data size */
     size_t return_size;          /* returned content size */
 };
 
-/* Currently supported OSSL_PARAM flags */
+/* Currently supported values for the OSSL_PARAM used field */
 /*
+ * The OSSL_PARAM_UNTOUCHED value means 
  * The OSSL_PARAM_LOCATED flag should be set by the receiver to indicate that
  * the parameter was checked for by name.
  *
@@ -93,9 +93,10 @@ struct ossl_param_st {
  * The OSSLPARAM_WRITTEN flag should be set by the receiver to indicate that the
  * paramter's value has been written.
  */
-# define OSSL_PARAM_READ    0x0001
-# define OSSL_PARAM_WRITTEN 0x0002
-# define OSSL_PARAM_LOCATED 0x0004
+# define OSSL_PARAM_UNTOUCHED   0
+# define OSSL_PARAM_LOCATED     1
+# define OSSL_PARAM_READ        2
+# define OSSL_PARAM_WRITTEN     3
 
 /* Currently supported OSSL_PARAM data types */
 /*

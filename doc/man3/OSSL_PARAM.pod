@@ -10,10 +10,9 @@ OSSL_PARAM - a structure to pass or request object parameters
 
  typedef struct ossl_param_st OSSL_PARAM;
  struct ossl_param_st {
-     unsigned char version;       /* OSSL_PARAM structure version number */
-     unsigned char data_type;     /* declare what kind of content is in data */
-     unsigned short flags;        /* flags */
      const char *key;             /* the name of the parameter */
+     unsigned char used;          /* How was this param used */
+     unsigned char data_type;     /* declare what kind of content is in data */
      void *data;                  /* value being passed in or out */
      size_t data_size;            /* data size */
      size_t return_size;          /* returned size */
@@ -70,13 +69,11 @@ I<responder>.
 
 The identity of the parameter in the form of a string.
 
-=item C<flags>
+=item C<used>
 
-The C<flags> field contains flags as described in L</Flags> below.
+The C<used> field contains a value indicating how the parameter was accessed
+by thye receiver.  The possible values are described in L</Usages> below.
 
-=item C<reserved>
-
-This field is reserved for future use and should be zero.
 
 =item C<data_type>
 
@@ -96,7 +93,7 @@ See L</Supported types> below for a description of the types.
 C<data> is a pointer to the memory where the parameter data is (when
 setting parameters) or shall (when requesting parameters) be stored,
 and C<data_size> is its size in bytes.
-The organization of the data depends on the parameter type and flag.
+The organization of the data depends on the parameter type.
 
 When the C<OSSL_PARAM> is used as a parameter descriptor, C<data>
 should be ignored.
@@ -129,26 +126,27 @@ those keys are and of what type, any functionality between those two
 entities should remain oblivious and just pass the C<OSSL_PARAM> array
 along.
 
-=head2 Flags
+=head2 Usages
 
-The C<flags> field contains the following flags:
+The C<used> field can contain one of the following values:
 
 =over 4
 
+=item C<OSSL_PARAM_UNTOUCHED>
+
+The parameter was not accessed or searched for.
+
 =item C<OSSL_PARAM_LOCATED>
 
-This flag is used, by the receiver, to indicate if the parameter has been
-looked up by name successfully or not.
+The parameter was searched for but neither read from nor written to.
 
 =item C<OSSL_PARAM_READ>
 
-This flag is used, by the receiver, to indicate if the value of the parameter
-has been read.
+The parameter was read but not written to.
 
 =item C<OSSL_PARAM_WRITTEN>
 
-This flag is used, by the receiver, to indicate if the value of the parameter
-has been written.
+The parameter was written to, it could have been read in addition.
 
 =back
 

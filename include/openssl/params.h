@@ -18,11 +18,10 @@
 extern "C" {
 # endif
 
-# define OSSL_PARAM_END \
-    { 0, 0, 0, NULL, NULL, 0, 0 }
-
 # define OSSL_PARAM_DEFN(key, type, addr, sz)    \
-    { 0, 0, (type), (key), (addr), (sz), 0 }
+    { (key), 0, (type), (addr), (sz), 0 }
+
+# define OSSL_PARAM_END OSSL_PARAM_DEFN(NULL, 0, NULL, 0)
 
 /* Basic parameter types without return sizes */
 # define OSSL_PARAM_int(key, addr) \
