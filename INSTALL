@@ -238,7 +238,7 @@
                                source exists.
                    getrandom:  Use the L<getrandom(2)> or equivalent system
                                call.
-                   devrandom:  Use the the first device from the DEVRANDOM list
+                   devrandom:  Use the first device from the DEVRANDOM list
                                which can be opened to read random bytes. The
                                DEVRANDOM preprocessor constant expands to
                                "/dev/urandom","/dev/random","/dev/srandom" on
