@@ -930,9 +930,15 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
     params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_KEYLEN, &keylen);
     ok = evp_do_ciph_ctx_setparams(c->cipher, c->provctx, params);
 
-    if (ok != EVP_CTRL_RET_UNSUPPORTED)
-        return ok;
+    if (ok == EVP_CTRL_RET_UNSUPPORTED)
+        goto legacy;
 
+    if (ok > 0 && EVP_CIPHER_CTX_key_length(c) != keylen) {
+        EVPerr(0, EVP_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+    return ok;
+ legacy:
     /* TODO(3.0) legacy code follows */
     if (c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
         return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
