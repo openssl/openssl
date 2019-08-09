@@ -70,11 +70,6 @@ static void determine_days(struct tm *tm)
     /* Zeller's congruence */
     tm->tm_wday = (d + (13 * m) / 5 + y + y / 4 + c / 4 + 5 * c + 6) % 7;
 }
-static int ascii_isdigit(char inchar) {
-  if (inchar > 0x2F && inchar < 0x3A)
-    return 1;
-  return 0;
-}
 
 int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
 {
@@ -84,12 +79,7 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
     char *a;
     int n, i, i2, l, o, min_l = 11, strict = 0, end = 6, btz = 5, md;
     struct tm tmp;
-  const char
-    upper_z = 0x5A,
-    num_zero = 0x30,
-    period = 0x2E,
-    hyphen = 0x2D,
-    plus = 0x2B;
+    const char upper_z = 0x5A, num_zero = 0x30, period = 0x2E, hyphen = 0x2D, plus = 0x2B;
 
     /*
      * ASN1_STRING_FLAG_X509_TIME is used to enforce RFC 5280

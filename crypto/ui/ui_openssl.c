@@ -444,14 +444,6 @@ static int open_console(UI *ui)
             is_a_tty = 0;
         else
 #  endif
-#  ifdef ENOSYS
-            /*
-             * z/OS Mainframe can reurn E_NO_SYS (The function is not implemented)
-             */
-        if (errno == ENOSYS)
-            is_a_tty = 0;
-        else
-#  endif
             {
                 char tmp_num[10];
                 BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%d", errno);

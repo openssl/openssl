@@ -1782,11 +1782,6 @@ int X509_cmp_current_time(const ASN1_TIME *ctm)
     return X509_cmp_time(ctm, NULL);
 }
 
-static int ascii_isdigit(char inchar) {
-  if (inchar > 0x2F && inchar < 0x3A)
-    return 1;
-  return 0;
-}
 int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 {
     static const size_t utctime_length = sizeof("YYMMDDHHMMSSZ") - 1;

@@ -272,3 +272,10 @@ int ossl_toupper(int c)
 {
     return ossl_islower(c) ? c ^ case_change : c;
 }
+
+int ascii_isdigit(const char inchar) {
+    if (inchar > 0x2F && inchar < 0x3A)
+        return 1;
+    return 0;
+}
+
