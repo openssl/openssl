@@ -23,6 +23,8 @@ OSSL_CMP_ITAV_push0_stack_item
 
 =head1 DESCRIPTION
 
+Certificate Management Protocol (CMP, RFC 4210) extension to OpenSSL
+
 ITAV is short for InfoTypeAndValue. This type is defined in RFC 4210
 section 5.3.19 and Appendix F. It is used at various places in CMP messages,
 e.g., in the generalInfo PKIHeader field, to hold a key-value pair.
@@ -92,6 +94,10 @@ included in the requests' PKIHeader's genInfo field.
 =head1 SEE ALSO
 
 L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_CTX_free(3)>, L<ASN1_TYPE_set(3)>
+
+=head1 HISTORY
+
+The OpenSSL CMP support was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

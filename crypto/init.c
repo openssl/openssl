@@ -27,6 +27,7 @@
 #include "internal/dso_conf.h"
 #include "internal/dso.h"
 #include "internal/store.h"
+#include <openssl/cmp_util.h>
 #include <openssl/trace.h>
 
 static int stopped = 0;
@@ -329,6 +330,19 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_zlib)
 }
 #endif
 
+#ifndef OPENSSL_NO_CMP
+static CRYPTO_ONCE cmp_log = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_init_cmp_log)
+{
+    OSSL_TRACE(INIT, "OSSL_CMP_log_open()\n");
+# ifdef FIX_9567_MERGED /* TODO */
+    return OSSL_CMP_log_open();
+# else
+    return 1;
+# endif
+}
+#endif
+
 void OPENSSL_cleanup(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
@@ -430,6 +444,11 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: CRYPTO_secure_malloc_done()\n");
     CRYPTO_secure_malloc_done();
+
+#ifndef OPENSSL_NO_CMP
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: OSSL_CMP_log_close()\n");
+    OSSL_CMP_log_close();
+#endif
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
@@ -584,6 +603,11 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 #ifndef OPENSSL_NO_COMP
     if ((opts & OPENSSL_INIT_ZLIB)
             && !RUN_ONCE(&zlib, ossl_init_zlib))
+        return 0;
+#endif
+
+#ifndef OPENSSL_NO_CMP
+    if (!RUN_ONCE(&cmp_log, ossl_init_cmp_log))
         return 0;
 #endif
 

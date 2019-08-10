@@ -69,7 +69,7 @@ control in the given B<msg> copying the given B<tok> as value. See RFC 4211,
 section 6.3.
 
 OSSL_CRMF_MSG_set1_regCtrl_protocolEncrKey() sets the protocolEncrKey control in
-the given B<msg> copying the given B<pubkey> as value. See RFC 4211, section 6.6.
+the given B<msg> copying the given B<pubkey> as value. See RFC 4211 section 6.6.
 
 OSSL_CRMF_MSG_set1_regCtrl_oldCertID() sets the oldCertID control in the given
 B<msg> copying the given B<cid> as value. See RFC 4211, section 6.5.
@@ -93,6 +93,10 @@ create the needed OSSL_CRMF_PKIARCHIVEOPTINS content.
 =head1 SEE ALSO
 
 RFC 4211
+
+=head1 HISTORY
+
+The OpenSSL CRMF support was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

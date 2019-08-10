@@ -331,6 +331,27 @@ OpenSSL_add_all_algorithms              define deprecated 1.1.0
 OpenSSL_add_all_ciphers                 define deprecated 1.1.0
 OpenSSL_add_all_digests                 define deprecated 1.1.0
 OpenSSL_add_ssl_algorithms              define
+OSSL_CMP_CTX_set_log_verbosity          define
+OSSL_CMP_DEFAULT_PORT                   define
+OSSL_CMP_LOG_ALERT                      define
+OSSL_CMP_LOG_CRIT                       define
+OSSL_CMP_LOG_DEBUG                      define
+OSSL_CMP_LOG_EMERG                      define
+OSSL_CMP_LOG_ERR                        define
+OSSL_CMP_LOG_INFO                       define
+OSSL_CMP_LOG_NOTICE                     define
+OSSL_CMP_LOG_WARNING                    define
+OSSL_CMP_alert                          define
+OSSL_CMP_debug                          define
+OSSL_CMP_err                            define
+OSSL_CMP_info                           define
+OSSL_CMP_log                            define
+OSSL_CMP_log1                           define
+OSSL_CMP_log2                           define
+OSSL_CMP_log3                           define
+OSSL_CMP_log4                           define
+OSSL_CMP_severity                       datatype
+OSSL_CMP_warn                           define
 OSSL_PARAM_TYPE                         define
 OSSL_PARAM_octet_ptr                    define
 OSSL_PARAM_octet_string                 define

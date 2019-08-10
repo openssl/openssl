@@ -26,7 +26,10 @@
  *        superseded              (4),
  *        cessationOfOperation    (5),
  *        certificateHold         (6),
- *        removeFromCRL           (8) }
+ *        -- value 7 is not used
+ *        removeFromCRL           (8),
+ *        privilegeWithdrawn      (9),
+ *        aACompromise           (10) }
  */
 #  define OCSP_REVOKED_STATUS_NOSTATUS               -1
 #  define OCSP_REVOKED_STATUS_UNSPECIFIED             0
@@ -37,6 +40,8 @@
 #  define OCSP_REVOKED_STATUS_CESSATIONOFOPERATION    5
 #  define OCSP_REVOKED_STATUS_CERTIFICATEHOLD         6
 #  define OCSP_REVOKED_STATUS_REMOVEFROMCRL           8
+#  define OCSP_REVOKED_STATUS_PRIVILEGEWITHDRAWN      9
+#  define OCSP_REVOKED_STATUS_AACOMPROMISE           10
 
 
 # ifndef OPENSSL_NO_OCSP
