@@ -7,8 +7,6 @@
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- *
- * CMP implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
 #include <openssl/asn1t.h>
@@ -166,8 +164,10 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
 {
     int created = 0;
 
-    if (itav_sk_p == NULL)
+    if (itav_sk_p == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
         goto err;
+    }
 
     if (*itav_sk_p == NULL) {
         if ((*itav_sk_p = sk_OSSL_CMP_ITAV_new_null()) == NULL)
@@ -185,6 +185,26 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
         *itav_sk_p = NULL;
     }
     return 0;
+}
+
+/* get ASN.1 encoded integer, return -1 on error */
+int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
+{
+    int64_t res;
+
+    if (!ASN1_INTEGER_get_int64(&res, a)) {
+        CMPerr(0, ASN1_R_INVALID_NUMBER);
+        return -1;
+    }
+    if (res < INT_MIN) {
+        CMPerr(0, ASN1_R_TOO_SMALL);
+        return -1;
+    }
+    if (res > INT_MAX) {
+        CMPerr(0, ASN1_R_TOO_LARGE);
+        return -1;
+    }
+    return (int)res;
 }
 
 ASN1_CHOICE(OSSL_CMP_CERTORENCCERT) = {

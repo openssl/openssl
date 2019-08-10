@@ -42,7 +42,7 @@
  *                  -- the encrypted value itself
  * }
  */
-struct OSSL_crmf_encryptedvalue_st {
+struct ossl_crmf_encryptedvalue_st {
     X509_ALGOR *intendedAlg;      /* 0 */
     X509_ALGOR *symmAlg;          /* 1 */
     ASN1_BIT_STRING *encSymmKey;  /* 2 */
@@ -62,7 +62,7 @@ struct OSSL_crmf_encryptedvalue_st {
  *     attributes                    [0] IMPLICIT Attributes OPTIONAL
  *  }
  */
-typedef struct OSSL_crmf_privatekeyinfo_st {
+typedef struct ossl_crmf_privatekeyinfo_st {
     ASN1_INTEGER *version;
     X509_ALGOR *privateKeyAlgorithm;
     ASN1_OCTET_STRING *privateKey;
@@ -82,7 +82,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PRIVATEKEYINFO)
  *                } OPTIONAL
  * }
  */
-typedef struct OSSL_crmf_enckeywithid_identifier_st {
+typedef struct ossl_crmf_enckeywithid_identifier_st {
     int type;
     union {
         ASN1_UTF8STRING *string;
@@ -91,7 +91,7 @@ typedef struct OSSL_crmf_enckeywithid_identifier_st {
 } OSSL_CRMF_ENCKEYWITHID_IDENTIFIER;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCKEYWITHID_IDENTIFIER)
 
-typedef struct OSSL_crmf_enckeywithid_st {
+typedef struct ossl_crmf_enckeywithid_st {
     OSSL_CRMF_PRIVATEKEYINFO *privateKey;
     /* [0] */
     OSSL_CRMF_ENCKEYWITHID_IDENTIFIER *identifier;
@@ -104,7 +104,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCKEYWITHID)
  *      serialNumber     INTEGER
  * }
  */
-struct OSSL_crmf_certid_st {
+struct ossl_crmf_certid_st {
     GENERAL_NAME *issuer;
     ASN1_INTEGER *serialNumber;
 } /* OSSL_CRMF_CERTID */;
@@ -120,7 +120,7 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
  *  pubLocation  GeneralName OPTIONAL
  * }
  */
-struct OSSL_crmf_singlepubinfo_st {
+struct ossl_crmf_singlepubinfo_st {
     ASN1_INTEGER *pubMethod;
     GENERAL_NAME *pubLocation;
 } /* OSSL_CRMF_SINGLEPUBINFO */;
@@ -139,7 +139,7 @@ typedef STACK_OF(OSSL_CRMF_SINGLEPUBINFO) OSSL_CRMF_PUBINFOS;
  *      -- "dontCare" is assumed)
  * }
  */
-struct OSSL_crmf_pkipublicationinfo_st {
+struct ossl_crmf_pkipublicationinfo_st {
     ASN1_INTEGER *action;
     OSSL_CRMF_PUBINFOS *pubInfos;
 } /* OSSL_CRMF_PKIPUBLICATIONINFO */;
@@ -153,7 +153,7 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_PKIPUBLICATIONINFO)
  * value  BIT STRING
  * }
  */
-typedef struct OSSL_crmf_pkmacvalue_st {
+typedef struct ossl_crmf_pkmacvalue_st {
     X509_ALGOR *algId;
     ASN1_BIT_STRING *value;
 } OSSL_CRMF_PKMACVALUE;
@@ -182,7 +182,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PKMACVALUE)
  * }
  */
 
-typedef struct OSSL_crmf_popoprivkey_st {
+typedef struct ossl_crmf_popoprivkey_st {
     int type;
     union {
         ASN1_BIT_STRING *thisMessage; /* 0 */     /* Deprecated */
@@ -211,7 +211,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOPRIVKEY)
  *    -- or HMAC [HMAC, RFC2202])
  * }
  */
-struct OSSL_crmf_pbmparameter_st {
+struct ossl_crmf_pbmparameter_st {
     ASN1_OCTET_STRING *salt;
     X509_ALGOR *owf;
     ASN1_INTEGER *iterationCount;
@@ -233,7 +233,7 @@ struct OSSL_crmf_pbmparameter_st {
  * publicKey      SubjectPublicKeyInfo  -- from CertTemplate
  * }
 */
-typedef struct OSSL_crmf_poposigningkeyinput_authinfo_st {
+typedef struct ossl_crmf_poposigningkeyinput_authinfo_st {
     int type;
     union {
         /* 0 */ GENERAL_NAME *sender;
@@ -242,7 +242,7 @@ typedef struct OSSL_crmf_poposigningkeyinput_authinfo_st {
 } OSSL_CRMF_POPOSIGNINGKEYINPUT_AUTHINFO;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEYINPUT_AUTHINFO)
 
-typedef struct OSSL_crmf_poposigningkeyinput_st {
+typedef struct ossl_crmf_poposigningkeyinput_st {
     OSSL_CRMF_POPOSIGNINGKEYINPUT_AUTHINFO *authInfo;
     X509_PUBKEY *publicKey;
 } OSSL_CRMF_POPOSIGNINGKEYINPUT;
@@ -255,7 +255,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEYINPUT)
  *  signature             BIT STRING
  * }
  */
-struct OSSL_crmf_poposigningkey_st {
+struct ossl_crmf_poposigningkey_st {
     OSSL_CRMF_POPOSIGNINGKEYINPUT *poposkInput;
     X509_ALGOR *algorithmIdentifier;
     ASN1_BIT_STRING *signature;
@@ -272,7 +272,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPOSIGNINGKEY)
  *  keyAgreement      [3] POPOPrivKey
  * }
  */
-typedef struct OSSL_crmf_popo_st {
+typedef struct ossl_crmf_popo_st {
     int type;
     union {
         ASN1_NULL *raVerified; /* 0 */
@@ -289,7 +289,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_POPO)
  *  notAfter       [1] Time OPTIONAL  -- at least one MUST be present
  * }
  */
-struct OSSL_crmf_optionalvalidity_st {
+struct ossl_crmf_optionalvalidity_st {
     /* 0 */ ASN1_TIME *notBefore;
     /* 1 */ ASN1_TIME *notAfter;
 } /* OSSL_CRMF_OPTIONALVALIDITY */;
@@ -309,7 +309,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_OPTIONALVALIDITY)
  * extensions       [9] Extensions                OPTIONAL
  * }
  */
-struct OSSL_crmf_certtemplate_st {
+struct ossl_crmf_certtemplate_st {
     ASN1_INTEGER *version;           /* 0 */
     ASN1_INTEGER *serialNumber;      /* 1 */ /* serialNumber MUST be omitted  */
              /* This field is assigned by the CA during certificate creation  */
@@ -333,7 +333,7 @@ struct OSSL_crmf_certtemplate_st {
  *  controls         Controls OPTIONAL -- Attributes affecting issuance
  * }
  */
-struct OSSL_crmf_certrequest_st {
+struct ossl_crmf_certrequest_st {
     ASN1_INTEGER *certReqId;
     OSSL_CRMF_CERTTEMPLATE *certTemplate;
     /* TODO: make OSSL_CRMF_CONTROLS out of that - but only cosmetical */
@@ -343,7 +343,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_CERTREQUEST)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTREQUEST)
 
 /* TODO: isn't there a better way to have this for ANY type? */
-struct OSSL_crmf_attributetypeandvalue_st {
+struct ossl_crmf_attributetypeandvalue_st {
     ASN1_OBJECT *type;
     union {
         /* NID_id_regCtrl_regToken */
@@ -383,7 +383,7 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
  *  regInfo   SEQUENCE SIZE(1..MAX) OF AttributeTypeAndValue OPTIONAL
  * }
  */
-struct OSSL_crmf_msg_st {
+struct ossl_crmf_msg_st {
     OSSL_CRMF_CERTREQUEST *certReq;
     /* 0 */
     OSSL_CRMF_POPO *popo;

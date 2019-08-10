@@ -25,11 +25,9 @@ OSSL_CRMF_MSGS_verify_popo
                                  const X509_NAME *issuer,
                                  const ASN1_INTEGER *serial);
 
- int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm,
-                                   X509_EXTENSIONS *exts);
+ int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm, X509_EXTENSIONS *exts);
 
- int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
-                                   const X509_EXTENSION *ext);
+ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, X509_EXTENSION *ext);
 
  int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
                                int dgst, int ppmtd);
@@ -56,9 +54,10 @@ certTemplate of B<crm>. Frees any pre-existing ones and consumes B<exts>.
 OSSL_CRMF_MSG_push0_extension() pushes the X509 extension B<ext> to the
 extensions in the certTemplate of B<crm>.  Consumes B<ext>.
 
-OSSL_CRMF_MSG_create_popo() creates and sets the Proof-of-Possession (POP)
-according to the method B<ppmtd> for B<pkey> to B<crm>. In case the method is
-OSSL_CRMF_POPO_SIGNATURE, POP is calculated using the B<dgst>.
+OSSL_CRMF_MSG_create_popo() creates and sets the Proof-of-Possession (POPO)
+according to the method B<ppmtd> in B<crm>.
+In case the method is OSSL_CRMF_POPO_SIGNATURE the POPO is calculated
+using the private B<pkey> and the digest algorithm NID B<dgst>.
 
 B<ppmtd> can be one of the following:
 
@@ -92,6 +91,10 @@ All functions return 1 on success, 0 on error.
 =head1 SEE ALSO
 
 RFC 4211
+
+=head1 HISTORY
+
+The OpenSSL CRMF support was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
