@@ -39,10 +39,11 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
      * to copy a property definition and paste that wherever a property
      * is being queried.
      */
-    if (data->mcm->get(data->libctx, NULL, data->operation_id,
-                       algo->algorithm_name, algo->property_definition,
-                       data->mcm_data) != NULL)
-        return;
+    if ((method = data->mcm->get(data->libctx, NULL, data->operation_id,
+                                 algo->algorithm_name,
+                                 algo->property_definition,
+                                 data->mcm_data)) != NULL)
+        goto end;
 
     if ((method = data->mcm->construct(algo->algorithm_name,
                                        algo->implementation, provider,
@@ -74,6 +75,7 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
                    algo->algorithm_name, algo->property_definition,
                    data->mcm_data);
 
+ end:
     /* refcnt-- because we're dropping the reference */
     data->mcm->destruct(method, data->mcm_data);
 }
