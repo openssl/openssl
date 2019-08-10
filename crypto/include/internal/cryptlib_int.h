@@ -27,6 +27,5 @@ void ossl_ctx_thread_stop(void *arg);
 # define OPENSSL_INIT_ZLIB                   0x00010000L
 # define OPENSSL_INIT_BASE_ONLY              0x00040000L
 
-int ossl_trace_init(void);
 void ossl_trace_cleanup(void);
 void ossl_malloc_setup_failures(void);
