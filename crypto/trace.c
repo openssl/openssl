@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "internal/thread_once.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/trace.h>
@@ -218,6 +219,13 @@ static int trace_detach_cb(int category, int type, const void *data)
     return 1;
 }
 
+static int do_ossl_trace_init(void);
+static CRYPTO_ONCE trace_inited = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_trace_init)
+{
+    return do_ossl_trace_init();
+}
+
 static int set_trace_data(int category, int type, BIO **channel,
                           const char **prefix, const char **suffix,
                           int (*attach_cb)(int, int, const void *),
@@ -227,8 +235,9 @@ static int set_trace_data(int category, int type, BIO **channel,
     char *curr_prefix = NULL;
     char *curr_suffix = NULL;
 
-    /* Ensure ossl_trace_init() is called */
-    OPENSSL_init_crypto(0, NULL);
+    /* Ensure do_ossl_trace_init() is called once */
+    if (!RUN_ONCE(&trace_inited, ossl_trace_init))
+        return 0;
 
     curr_channel = trace_channels[category].bio;
     curr_prefix = trace_channels[category].prefix;
@@ -297,18 +306,14 @@ static int set_trace_data(int category, int type, BIO **channel,
 
     return 1;
 }
-#endif
 
-int ossl_trace_init(void)
+static int do_ossl_trace_init(void)
 {
-#ifndef OPENSSL_NO_TRACE
     trace_lock = CRYPTO_THREAD_lock_new();
-    if (trace_lock == NULL)
-        return 0;
-#endif
-
-    return 1;
+    return trace_lock != NULL;
 }
+
+#endif
 
 void ossl_trace_cleanup(void)
 {
