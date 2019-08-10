@@ -31,6 +31,19 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
     struct construct_data_st *data = cbdata;
     void *method = NULL;
 
+    /*
+     * Check to see if a method has already been constructed from this
+     * implementation.  Note that we use the property definition as a
+     * property query, which stresses that they MUST have compatible
+     * syntax, or else...  (in other words, it must always be possible
+     * to copy a property definition and paste that wherever a property
+     * is being queried.
+     */
+    if (data->mcm->get(data->libctx, NULL, data->operation_id,
+                       algo->algorithm_name, algo->property_definition,
+                       data->mcm_data) != NULL)
+        return;
+
     if ((method = data->mcm->construct(algo->algorithm_name,
                                        algo->implementation, provider,
                                        data->mcm_data)) == NULL)
