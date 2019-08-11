@@ -132,10 +132,13 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
         && (store = get_default_method_store(libctx)) == NULL)
         return 0;
 
-    if (methdata->refcnt_up_method(method)
-        && ossl_method_store_add(store, methid, propdef, method,
-                                 methdata->destruct_method))
-        return 1;
+    if (methdata->refcnt_up_method(method)) {
+        if (ossl_method_store_add(store, methid, propdef, method,
+                                  methdata->destruct_method))
+            return 1;
+        /* refcnt-- */
+        methdata->destruct_method(method);
+    }
     return 0;
 }
 
