@@ -38,12 +38,12 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
      * supposed to store the method in the global store.
      *
      * Note that while data->mcm->put() takes a property *definition*,
-     * while data->mcm->get() takes a property *query*, but we're using
-     * the property *definition* string as a property query here.
+     * data->mcm->get() takes a property *query*, but we're using the
+     * property *definition* string as a property query here.
      * This is possible because property definitions have a syntax that
      * can also be used for a property query with equality tests.  We do
      * this to look up already existing methods matching the implementation
-     * that we just for from the provider (via |algo|),
+     * that we just got from the provider (via |algo|).
      */
     if (global_store
         && (method = data->mcm->get(data->libctx, NULL, data->operation_id,
