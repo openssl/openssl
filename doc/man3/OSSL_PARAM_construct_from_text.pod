@@ -131,7 +131,7 @@ Can be written like this instead:
 
       if ((stmp = OPENSSL_strdup(opt)) == NULL
           || (vtmp = strchr(stmp, ':')) == NULL
-          || (*vtmp++ = 0) /* Always zero */
+          || (*vtmp++ = '\0') /* Always zero */
           || !OSSL_PARAM_allocate_from_text(&params[params_n],
                                             paramdefs,
                                             stmp, vtmp, strlen(vtmp))) {
