@@ -33,16 +33,18 @@
  If you have Android Studio installed then the NDK is in 
  $HOME/Android/Sdk/ndk-bundle.
 
- For example, to compile for target aarch64-linux-android using NDK r19c:
+ For example, to compile for target aarch64-linux-android 
+ on linux-x86_64 using NDK r19c:
 
     export ANDROID_NDK_HOME=$HOME/Android/Sdk/ndk-bundle
-    NDK=$ANDROID_NDK_HOME \
-    HOST_TAG=linux-x86_64 \
-    PATH=$NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin:$PATH \
-    CC=$NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/aarch64-linux-android28-clang \
-    CXX=$NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/aarch64-linux-android28-clang++ \
+    PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH \
+    CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang \
+    CXX=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang++ \
     ./Configure --prefix=/usr/local/android-arm64-28 android-arm64 -D__ANDROID_API__=28
     make
+
+ If you are not on linux-x86_64 replace that part with what ever is 
+ valid on your system e.g. darwin-x86_64.
 
  Caveat lector! Earlier OpenSSL versions relied on additional CROSS_SYSROOT
  variable set to $ANDROID_NDK_HOME/platforms/android-<api>/arch-<arch> to
