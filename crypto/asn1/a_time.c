@@ -79,8 +79,11 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
     char *a;
     int n, i, i2, l, o, min_l = 11, strict = 0, end = 6, btz = 5, md;
     struct tm tmp;
-    const char upper_z = 0x5A, num_zero = 0x30, period = 0x2E, hyphen = 0x2D, plus = 0x2B;
-
+#if defined(CHARSET_EBCDIC)
+    const char upper_z = 0x5A, num_zero = 0x30, period = 0x2E, minus = 0x2D, plus = 0x2B;
+#else
+    const char upper_z = 'Z', num_zero = '0', period = '.', minus = '-', plus = '+';
+#endif
     /*
      * ASN1_STRING_FLAG_X509_TIME is used to enforce RFC 5280
      * time string format, in which:
@@ -121,7 +124,7 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
     if (l < min_l)
         goto err;
     for (i = 0; i < end; i++) {
-        if (!strict && (i == btz) && ((a[o] == upper_z) || (a[o] == plus) || (a[o] == hyphen))) {
+        if (!strict && (i == btz) && ((a[o] == upper_z) || (a[o] == plus) || (a[o] == minus))) {
             i++;
             break;
         }
@@ -210,8 +213,8 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      */
     if (a[o] == upper_z) {
         o++;
-    } else if (!strict && ((a[o] == plus) || (a[o] == hyphen))) {
-        int offsign = a[o] == hyphen ? 1 : -1;
+    } else if (!strict && ((a[o] == plus) || (a[o] == minus))) {
+        int offsign = a[o] == minus ? 1 : -1;
         int offset = 0;
 
         o++;
