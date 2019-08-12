@@ -89,14 +89,13 @@ Code that looked like this:
   {
       int rv;
       char *stmp, *vtmp = NULL;
+
       stmp = OPENSSL_strdup(value);
-      if (!stmp)
+      if (stmp == NULL)
           return -1;
       vtmp = strchr(stmp, ':');
-      if (vtmp) {
-          *vtmp = 0;
-          vtmp++;
-      }
+      if (vtmp != NULL)
+          *vtmp++ = '\0';
       rv = EVP_MAC_ctrl_str(ctx, stmp, vtmp);
       OPENSSL_free(stmp);
       return rv;
@@ -105,9 +104,9 @@ Code that looked like this:
   ...
 
 
-  char *macopt;
   for (i = 0; i < sk_OPENSSL_STRING_num(macopts); i++) {
-      macopt = sk_OPENSSL_STRING_value(macopts, i);
+      char *macopt = sk_OPENSSL_STRING_value(macopts, i);
+
       if (pkey_ctrl_string(mac_ctx, macopt) <= 0) {
           BIO_printf(bio_err,
                      "MAC parameter error \"%s\"\n", macopt);
@@ -119,37 +118,40 @@ Code that looked like this:
 Can be written like this instead:
 
   OSSL_PARAM *params =
-      OPENSSL_zalloc(sizeof(OSSL_PARAM)
+      OPENSSL_zalloc(sizeof(*params)
                      * (sk_OPENSSL_STRING_num(opts) + 1));
   const OSSL_PARAM *paramdefs = EVP_MAC_CTX_set_param_types(mac);
   size_t params_n;
+  char *opt = "<unknown>";
 
   for (params_n = 0; params_n < (size_t)sk_OPENSSL_STRING_num(opts);
        params_n++) {
-      char *opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
       char *stmp, *vtmp = NULL;
 
+      opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
       if ((stmp = OPENSSL_strdup(opt)) == NULL
-          || (vtmp = strchr(stmp, ':')) == NULL
-          || (*vtmp++ = '\0') /* Always zero */
-          || !OSSL_PARAM_allocate_from_text(&params[params_n],
-                                            paramdefs,
-                                            stmp, vtmp, strlen(vtmp))) {
-          BIO_printf(bio_err, "MAC parameter error '%s'\n", opt);
-          ERR_print_errors(bio_err);
+              || (vtmp = strchr(stmp, ':')) == NULL)
           goto err;
-      }
+
+      *vtmp++ = '\0';
+      if (!OSSL_PARAM_allocate_from_text(&params[params_n],
+                                         paramdefs, stmp,
+                                         vtmp, strlen(vtmp)))
+          goto err;
   }
   params[params_n] = OSSL_PARAM_construct_end();
-  if (!EVP_MAC_CTX_set_params(ctx, params)) {
-      BIO_printf(bio_err, "MAC parameter error\n");
-      ERR_print_errors(bio_err);
+  if (!EVP_MAC_CTX_set_params(ctx, params))
       goto err;
-  }
-  for (; params_n-- > 0;) {
+  while (params_n-- > 0)
       OPENSSL_free(params[params_n].data);
-  }
   OPENSSL_free(params);
+  /* ... */
+  return;
+
+ err:
+  BIO_printf(bio_err, "MAC parameter error '%s'\n", opt);
+  ERR_print_errors(bio_err);
+
 
 =head1 SEE ALSO
 
