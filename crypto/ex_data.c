@@ -49,8 +49,8 @@ static EX_CALLBACKS *get_and_lock(OPENSSL_CTX *ctx, int class_index)
          return NULL;
     }
 
-    ip = &global->ex_data[class_index];
     CRYPTO_THREAD_write_lock(global->ex_data_lock);
+    ip = &global->ex_data[class_index];
     return ip;
 }
 
