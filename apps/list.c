@@ -16,8 +16,94 @@
 #include "progs.h"
 #include "opt.h"
 
-static void list_cipher_fn(const EVP_CIPHER *c,
-                           const char *from, const char *to, void *arg)
+static int verbose = 0;
+
+static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
+{
+    const char *type_mod = "";
+    const char *type = NULL;
+    int show_type_number = 0;
+    int printed_len;
+
+    switch (param->data_type) {
+    case OSSL_PARAM_UNSIGNED_INTEGER:
+        type_mod = "unsigned ";
+        /* FALLTHRU */
+    case OSSL_PARAM_INTEGER:
+        type = "integer";
+        break;
+    case OSSL_PARAM_UTF8_PTR:
+        type_mod = "pointer to a ";
+        /* FALLTHRU */
+    case OSSL_PARAM_UTF8_STRING:
+        type = "UTF8 encoded string";
+        break;
+    case OSSL_PARAM_OCTET_PTR:
+        type_mod = "pointer to an ";
+        /* FALLTHRU */
+    case OSSL_PARAM_OCTET_STRING:
+        type = "octet string";
+        break;
+    default:
+        type = "unknown type";
+        show_type_number = 1;
+        break;
+    }
+
+    printed_len = BIO_snprintf(buf, bufsz, "%s: ", param->key);
+    if (printed_len > 0) {
+        buf += printed_len;
+        bufsz -= printed_len;
+    }
+    printed_len = BIO_snprintf(buf, bufsz, "%s%s", type_mod, type);
+    if (printed_len > 0) {
+        buf += printed_len;
+        bufsz -= printed_len;
+    }
+    if (show_type_number) {
+        printed_len = BIO_snprintf(buf, bufsz, " [%d]", param->data_type);
+        if (printed_len > 0) {
+            buf += printed_len;
+            bufsz -= printed_len;
+        }
+    }
+    if (param->data_size == 0)
+        printed_len = BIO_snprintf(buf, bufsz, " (arbitrary size)");
+    else
+        printed_len = BIO_snprintf(buf, bufsz, " (max %zu bytes large)",
+                                   param->data_size);
+    if (printed_len > 0) {
+        buf += printed_len;
+        bufsz -= printed_len;
+    }
+    *buf = '\0';
+    return 1;
+}
+
+static int print_param_types(const char *thing, const OSSL_PARAM *pdefs)
+{
+    if (pdefs == NULL) {
+        BIO_printf(bio_out, "    No declared %s\n", thing);
+    } else if (pdefs->key == NULL) {
+        /*
+         * An empty list?  This shouldn't happen, but let's just make sure to
+         * say something if there's a badly written provider...
+         */
+        BIO_printf(bio_out, "    Empty list of %s (!!!)\n", thing);
+    } else {
+        BIO_printf(bio_out, "    %s:\n", thing);
+        for (; pdefs->key != NULL; pdefs++) {
+            char buf[200];       /* This should be ample space */
+
+            describe_param_type(buf, sizeof(buf), pdefs);
+            BIO_printf(bio_out, "      %s\n", buf);
+        }
+    }
+    return 1;
+}
+
+static void legacy_cipher_fn(const EVP_CIPHER *c,
+                             const char *from, const char *to, void *arg)
 {
     if (c != NULL) {
         BIO_printf(arg, "  %s\n", EVP_CIPHER_name(c));
@@ -57,7 +143,7 @@ static void list_ciphers(void)
     int i;
 
     BIO_printf(bio_out, "Legacy:\n");
-    EVP_CIPHER_do_all_sorted(list_cipher_fn, bio_out);
+    EVP_CIPHER_do_all_sorted(legacy_cipher_fn, bio_out);
 
     BIO_printf(bio_out, "Provided:\n");
     EVP_CIPHER_do_all_ex(NULL, collect_ciphers, ciphers);
@@ -68,6 +154,14 @@ static void list_ciphers(void)
         BIO_printf(bio_out, "  %s", EVP_CIPHER_name(c));
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
+        if (verbose) {
+            print_param_types("retrievable algorithm parameters",
+                              EVP_CIPHER_gettable_params(c));
+            print_param_types("retrievable operation parameters",
+                              EVP_CIPHER_CTX_gettable_params(c));
+            print_param_types("settable operation parameters",
+                              EVP_CIPHER_CTX_settable_params(c));
+        }
     }
     sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_meth_free);
 }
@@ -118,11 +212,19 @@ static void list_digests(void)
     EVP_MD_do_all_ex(NULL, collect_digests, digests);
     sk_EVP_MD_sort(digests);
     for (i = 0; i < sk_EVP_MD_num(digests); i++) {
-        const EVP_MD *c = sk_EVP_MD_value(digests, i);
+        const EVP_MD *m = sk_EVP_MD_value(digests, i);
 
-        BIO_printf(bio_out, "  %s", EVP_MD_name(c));
+        BIO_printf(bio_out, "  %s", EVP_MD_name(m));
         BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_MD_provider(c)));
+                   OSSL_PROVIDER_name(EVP_MD_provider(m)));
+        if (verbose) {
+            print_param_types("retrievable algorithm parameters",
+                              EVP_MD_gettable_params(m));
+            print_param_types("retrievable operation parameters",
+                              EVP_MD_CTX_gettable_params(m));
+            print_param_types("settable operation parameters",
+                              EVP_MD_CTX_settable_params(m));
+        }
     }
     sk_EVP_MD_pop_free(digests, EVP_MD_meth_free);
 }
@@ -471,7 +573,7 @@ static void list_disabled(void)
 
 /* Unified enum for help and list commands. */
 typedef enum HELPLIST_CHOICE {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ONE,
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ONE, OPT_VERBOSE,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
@@ -481,6 +583,7 @@ typedef enum HELPLIST_CHOICE {
 const OPTIONS list_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"1", OPT_ONE, '-', "List in one column"},
+    {"verbose", OPT_VERBOSE, '-', "Verbose listing"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
      "List of message digest commands"},
@@ -513,6 +616,23 @@ int list_main(int argc, char **argv)
     char *prog;
     HELPLIST_CHOICE o;
     int one = 0, done = 0;
+    struct {
+        unsigned int commands:1;
+        unsigned int digest_commands:1;
+        unsigned int digest_algorithms:1;
+        unsigned int mac_algorithms:1;
+        unsigned int cipher_commands:1;
+        unsigned int cipher_algorithms:1;
+        unsigned int pk_algorithms:1;
+        unsigned int pk_method:1;
+        unsigned int engines:1;
+        unsigned int disabled:1;
+        unsigned int missing_help:1;
+        unsigned int objects:1;
+        unsigned int options:1;
+    } todo = { 0, };
+
+    verbose = 0;                 /* Clear a possible previous call */
 
     prog = opt_init(argc, argv, list_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -529,43 +649,46 @@ opthelp:
             one = 1;
             break;
         case OPT_COMMANDS:
-            list_type(FT_general, one);
+            todo.commands = 1;
             break;
         case OPT_DIGEST_COMMANDS:
-            list_type(FT_md, one);
+            todo.digest_commands = 1;
             break;
         case OPT_DIGEST_ALGORITHMS:
-            list_digests();
+            todo.digest_algorithms = 1;
             break;
         case OPT_MAC_ALGORITHMS:
-            EVP_MAC_do_all_sorted(list_mac_fn, bio_out);
+            todo.mac_algorithms = 1;
             break;
         case OPT_CIPHER_COMMANDS:
-            list_type(FT_cipher, one);
+            todo.cipher_commands = 1;
             break;
         case OPT_CIPHER_ALGORITHMS:
-            list_ciphers();
+            todo.cipher_algorithms = 1;
             break;
         case OPT_PK_ALGORITHMS:
-            list_pkey();
+            todo.pk_algorithms = 1;
             break;
         case OPT_PK_METHOD:
-            list_pkey_meth();
+            todo.pk_method = 1;
             break;
         case OPT_ENGINES:
-            list_engines();
+            todo.engines = 1;
             break;
         case OPT_DISABLED:
-            list_disabled();
+            todo.disabled = 1;
             break;
         case OPT_MISSING_HELP:
-            list_missing_help();
+            todo.missing_help = 1;
             break;
         case OPT_OBJECTS:
-            list_objects();
+            todo.objects = 1;
             break;
         case OPT_OPTIONS:
             list_options_for_command(opt_arg());
+            break;
+        case OPT_VERBOSE:
+            verbose = 1;
             break;
         }
         done = 1;
@@ -574,6 +697,31 @@ opthelp:
         BIO_printf(bio_err, "Extra arguments given.\n");
         goto opthelp;
     }
+
+    if (todo.commands)
+        list_type(FT_general, one);
+    if (todo.digest_commands)
+        list_type(FT_md, one);
+    if (todo.digest_algorithms)
+        list_digests();
+    if (todo.mac_algorithms)
+        EVP_MAC_do_all_sorted(list_mac_fn, bio_out);
+    if (todo.cipher_commands)
+        list_type(FT_cipher, one);
+    if (todo.cipher_algorithms)
+        list_ciphers();
+    if (todo.pk_algorithms)
+        list_pkey();
+    if (todo.pk_method)
+        list_pkey_meth();
+    if (todo.engines)
+        list_engines();
+    if (todo.disabled)
+        list_disabled();
+    if (todo.missing_help)
+        list_missing_help();
+    if (todo.objects)
+        list_objects();
 
     if (!done)
         goto opthelp;

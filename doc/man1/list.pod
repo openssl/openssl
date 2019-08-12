@@ -9,6 +9,7 @@ list - list algorithms and features
 
 B<openssl list>
 [B<-help>]
+[B<-verbose>]
 [B<-1>]
 [B<-commands>]
 [B<-digest-commands>]
@@ -34,6 +35,11 @@ features.
 
 Display a usage message.
 
+=item B<-verbose>
+
+Displays extra information.
+The options below where verbosity applies say a bit more about what that means.
+
 =item B<-1>
 
 List the commands, digest-commands, or cipher-commands in a single column.
@@ -56,6 +62,9 @@ official algorithm name, B<bar>.
 If a line is of the form C<foo @ bar>, then B<foo> is provided by the provider
 B<bar>.
 
+In verbose mode, the algorithms provided by a provider will get additional
+information on what parameters each implementation supports.
+
 =item B<-mac-algorithms>
 
 Display a list of message authentication code algorithms.
@@ -74,6 +83,9 @@ If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
 official algorithm name, B<bar>.
 If a line is of the form C<foo @ bar>, then B<foo> is provided by the provider
 B<bar>.
+
+In verbose mode, the algorithms provided by a provider will get additional
+information on what parameters each implementation supports.
 
 =item B<-public-key-algorithms>
 
