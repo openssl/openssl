@@ -42,6 +42,19 @@ static void *name##_dupctx(void *ctx) \
 
 # define OSSL_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)     \
 static OSSL_OP_digest_get_params_fn name##_get_params;                  \
+static OSSL_OP_digest_get_param_types_fn name##_get_param_types;        \
+static const OSSL_PARAM name##_known_params[] = {                       \
+    {OSSL_DIGEST_PARAM_BLOCK_SIZE, OSSL_PARAM_INTEGER,                  \
+     NULL, sizeof(int), 0},                                             \
+    {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_INTEGER, NULL, sizeof(int), 0}, \
+    {OSSL_DIGEST_PARAM_FLAGS, OSSL_PARAM_INTEGER,                       \
+     NULL, sizeof(unsigned long), 0},                                   \
+    OSSL_PARAM_END                                                      \
+};                                                                      \
+static const OSSL_PARAM *name##_get_param_types(void)                   \
+{                                                                       \
+    return name##_known_params;                                         \
+}                                                                       \
 static int name##_get_params(OSSL_PARAM params[])                       \
 {                                                                       \
     OSSL_PARAM *p = NULL;                                               \
@@ -77,7 +90,9 @@ const OSSL_DISPATCH name##_functions[] = { \
     { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))name##_wrapfinal }, \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))name##_freectx }, \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))name##_dupctx }, \
-    { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))name##_get_params },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))name##_get_params }, \
+    { OSSL_FUNC_DIGEST_GET_PARAM_TYPES, \
+      (void (*)(void))name##_get_param_types },
 
 # define OSSL_FUNC_DIGEST_CONSTRUCT_END \
     { 0, NULL } \
@@ -99,9 +114,11 @@ OSSL_FUNC_DIGEST_CONSTRUCT_END
 
 # define OSSL_FUNC_DIGEST_CONSTRUCT_PARAMS(name, CTX,                   \
                                            blksize, dgstsize, flags,    \
-                                           init, upd, fin, setparams)   \
+                                           init, upd, fin,              \
+                                           setparamtypes, setparams)    \
 OSSL_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags,   \
                                  init, upd, fin)                        \
+    { OSSL_FUNC_DIGEST_CTX_SET_PARAM_TYPES, (void (*)(void))setparamtypes }, \
     { OSSL_FUNC_DIGEST_CTX_SET_PARAMS, (void (*)(void))setparams },     \
 OSSL_FUNC_DIGEST_CONSTRUCT_END
 

@@ -19,6 +19,17 @@
 #include "internal/sha.h"
 
 static OSSL_OP_digest_ctx_set_params_fn sha1_set_params;
+static OSSL_OP_digest_ctx_set_param_types_fn sha1_set_param_types;
+
+const OSSL_PARAM known_sha1_ctx_params[] = {
+    {OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *sha1_set_param_types(void)
+{
+    return known_sha1_ctx_params;
+}
 
 /* Special set_params method for SSL3 */
 static int sha1_set_params(void *vctx, const OSSL_PARAM params[])
@@ -39,7 +50,7 @@ OSSL_FUNC_DIGEST_CONSTRUCT_PARAMS(sha1, SHA_CTX,
                            SHA_CBLOCK, SHA_DIGEST_LENGTH,
                            EVP_MD_FLAG_DIGALGID_ABSENT,
                            SHA1_Init, SHA1_Update, SHA1_Final,
-                           sha1_set_params)
+                           sha1_set_param_types, sha1_set_params)
 
 OSSL_FUNC_DIGEST_CONSTRUCT(sha224, SHA256_CTX,
                            SHA256_CBLOCK, SHA224_DIGEST_LENGTH,
