@@ -91,6 +91,8 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
     case OSSL_PARAM_OCTET_STRING:
         if (*ishex) {
             *buf_n = strlen(value) >> 1;
+        } else {
+            *buf_n = value_n;
         }
         break;
     }
