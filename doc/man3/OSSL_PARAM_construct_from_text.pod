@@ -40,8 +40,8 @@ I<buf>.
 If I<buf> is NULL, only I<buf_n> will be modified, everything else is
 left untouched, allowing a caller to find out how large the buffer
 should be.
-I<buf> needs to be safely aligned for all kinds of uses, including as
-native type data.
+I<buf> needs to be correctly aligned for the type of the B<OSSL_PARAM>
+I<key>.
 
 OSSL_PARAM_allocate_from_text() works like OSSL_PARAM_construct_from_text(),
 except it allocates the buffer internally.
