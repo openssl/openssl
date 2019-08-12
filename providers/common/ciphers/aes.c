@@ -59,7 +59,7 @@ static int aes_einit(void *vctx, const unsigned char *key, size_t keylen,
     }
     if (key != NULL) {
         if (keylen != ctx->keylen) {
-            PROVerr(PROV_F_AES_EINIT, PROV_R_INVALID_KEYLEN);
+            PROVerr(PROV_F_AES_EINIT, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         return ctx->ciph->init(ctx, key, ctx->keylen);
@@ -79,7 +79,7 @@ static int aes_dinit(void *vctx, const unsigned char *key, size_t keylen,
     }
     if (key != NULL) {
         if (keylen != ctx->keylen) {
-            PROVerr(PROV_F_AES_DINIT, PROV_R_INVALID_KEYLEN);
+            PROVerr(PROV_F_AES_DINIT, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         return ctx->ciph->init(ctx, key, ctx->keylen);

@@ -68,7 +68,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
 
     if (iv != NULL) {
         if (ivlen < ctx->ivlen_min || ivlen > sizeof(ctx->iv)) {
-            PROVerr(0, PROV_R_INVALID_IVLEN);
+            PROVerr(0, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
         ctx->ivlen = ivlen;
@@ -78,7 +78,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
 
     if (key != NULL) {
         if (keylen != ctx->keylen) {
-            PROVerr(0, PROV_R_INVALID_KEYLEN);
+            PROVerr(0, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         return ctx->hw->setkey(ctx, key, ctx->keylen);
@@ -120,7 +120,7 @@ static int gcm_ctx_get_params(void *vctx, OSSL_PARAM params[])
         if (ctx->iv_gen != 1 && ctx->iv_gen_rand != 1)
             return 0;
         if (ctx->ivlen != (int)p->data_size) {
-            PROVerr(0, PROV_R_INVALID_IVLEN);
+            PROVerr(0, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
         if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)) {
@@ -177,7 +177,7 @@ static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
         if (sz == 0 || sz > sizeof(ctx->iv)) {
-            PROVerr(0, PROV_R_INVALID_IVLEN);
+            PROVerr(0, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
         ctx->ivlen = sz;
