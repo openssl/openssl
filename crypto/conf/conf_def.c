@@ -54,7 +54,9 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx);
 
 static CONF *def_create(CONF_METHOD *meth);
 static int def_init_default(CONF *conf);
+#if !OPENSSL_API_3
 static int def_init_WIN32(CONF *conf);
+#endif
 static int def_destroy(CONF *conf);
 static int def_destroy_data(CONF *conf);
 static int def_load(CONF *conf, const char *name, long *eline);
@@ -76,6 +78,12 @@ static CONF_METHOD default_method = {
     def_load
 };
 
+CONF_METHOD *NCONF_default(void)
+{
+    return &default_method;
+}
+
+#if ! OPENSSL_API_3
 static CONF_METHOD WIN32_method = {
     "WIN32",
     def_create,
@@ -89,15 +97,11 @@ static CONF_METHOD WIN32_method = {
     def_load
 };
 
-CONF_METHOD *NCONF_default(void)
-{
-    return &default_method;
-}
-
 CONF_METHOD *NCONF_WIN32(void)
 {
     return &WIN32_method;
 }
+#endif
 
 static CONF *def_create(CONF_METHOD *meth)
 {
@@ -124,6 +128,7 @@ static int def_init_default(CONF *conf)
     return 1;
 }
 
+#if ! OPENSSL_API_3
 static int def_init_WIN32(CONF *conf)
 {
     if (conf == NULL)
@@ -135,6 +140,7 @@ static int def_init_WIN32(CONF *conf)
 
     return 1;
 }
+#endif
 
 static int def_destroy(CONF *conf)
 {

@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) The undocumented function NCONF_WIN32() has been deprecated; for
+     conversion details see the HISTORY section of doc/man5/config.pod
+     [Rich Salz]
+
   *) Introduced the new functions EVP_DigestSignInit_ex() and
      EVP_DigestVerifyInit_ex(). The macros EVP_DigestSignUpdate() and
      EVP_DigestVerifyUpdate() have been converted to functions. See the man
