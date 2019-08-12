@@ -10,12 +10,8 @@
 #       perl -pi util/err-to-error files...
 # or
 #       git ls-files | grep '\.c$' | xargs perl -pi util/err-to-raise
-
-# There will be some hand-edits necessary, when the second arg was on a
-# separate line.  This command will find them:
-#       git grep -E '[A-Z0-9_]+err\('
-# There are about 500 such lines. Another script looks for such things
-# and tries to merge lines.
+# Consider running util/merge-err-lines first, to catch most (all?) of the
+# cases where the XXXerr() call is split into two lines.
 
 # Also, what to do about the engines files?  This includes:
 #       AFALGerr, CAPIerr, DASYNC, OSSLTEST
