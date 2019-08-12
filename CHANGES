@@ -76,6 +76,9 @@
      CMS_DEBUG_DECRYPT flag.
      [Bernd Edlinger]
 
+  *) The function NCONF_WIN32() has been deprecated.
+     [Rich Salz]
+
   *) Early start up entropy quality from the DEVRANDOM seed source has been
      improved for older Linux systems.  The RAND subsystem will wait for
      /dev/random to be producing output before seeding from /dev/urandom.

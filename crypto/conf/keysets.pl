@@ -108,9 +108,11 @@ for ($i = 0; $i < 128; $i++) {
 }
 print "\n};\n\n";
 
+print "#if ! OPENSSL_API_3\n";
 print "static const unsigned short CONF_type_win32[128] = {";
 for ($i = 0; $i < 128; $i++) {
     print "\n   " if ($i % 8) == 0;
     printf " 0x%04X,", $V_w32[$i];
 }
 print "\n};\n";
+print "#endif\n";
