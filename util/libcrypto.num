@@ -4710,3 +4710,13 @@ OPENSSL_hexstr2buf_ex                   4819	3_0_0	EXIST::FUNCTION:
 OPENSSL_buf2hexstr_ex                   4820	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_construct_from_text          4821	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_allocate_from_text           4822	3_0_0	EXIST::FUNCTION:
+EVP_MD_get_param_types                  4823	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_set_param_types              4824	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_get_param_types              4825	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_get_params                   4826	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_set_params               4827	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_get_params               4828	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_get_param_types              4829	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_set_param_types          4830	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_get_param_types          4831	3_0_0	EXIST::FUNCTION:
+EVP_MD_get_params                       4832	3_0_0	EXIST::FUNCTION:

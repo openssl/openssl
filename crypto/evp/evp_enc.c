@@ -1051,6 +1051,48 @@ legacy:
     return ret;
 }
 
+int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[])
+{
+    if (cipher != NULL && cipher->get_params != NULL)
+        return cipher->get_params(params);
+    return 0;
+}
+
+int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
+{
+    if (ctx->cipher != NULL && ctx->cipher->ctx_set_params != NULL)
+        return ctx->cipher->ctx_set_params(ctx->provctx, params);
+    return 0;
+}
+
+int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[])
+{
+    if (ctx->cipher != NULL && ctx->cipher->ctx_get_params != NULL)
+        return ctx->cipher->ctx_get_params(ctx->provctx, params);
+    return 0;
+}
+
+const OSSL_PARAM *EVP_CIPHER_get_param_types(const EVP_CIPHER *cipher)
+{
+    if (cipher != NULL && cipher->get_param_types != NULL)
+        return cipher->get_param_types();
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_CIPHER_CTX_set_param_types(const EVP_CIPHER *cipher)
+{
+    if (cipher != NULL && cipher->ctx_set_param_types != NULL)
+        return cipher->ctx_set_param_types();
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_CIPHER_CTX_get_param_types(const EVP_CIPHER *cipher)
+{
+    if (cipher != NULL && cipher->ctx_get_param_types != NULL)
+        return cipher->ctx_get_param_types();
+    return NULL;
+}
+
 #if !defined(FIPS_MODE)
 /* TODO(3.0): No support for RAND yet in the FIPS module */
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
@@ -1211,6 +1253,23 @@ static void *evp_cipher_from_dispatch(const char *name,
             if (cipher->ctx_set_params != NULL)
                 break;
             cipher->ctx_set_params = OSSL_get_OP_cipher_ctx_set_params(fns);
+            break;
+        case OSSL_FUNC_CIPHER_GET_PARAM_TYPES:
+            if (cipher->get_param_types != NULL)
+                break;
+            cipher->get_param_types = OSSL_get_OP_cipher_get_param_types(fns);
+            break;
+        case OSSL_FUNC_CIPHER_CTX_GET_PARAM_TYPES:
+            if (cipher->ctx_get_param_types != NULL)
+                break;
+            cipher->ctx_get_param_types =
+                OSSL_get_OP_cipher_ctx_get_param_types(fns);
+            break;
+        case OSSL_FUNC_CIPHER_CTX_SET_PARAM_TYPES:
+            if (cipher->ctx_set_param_types != NULL)
+                break;
+            cipher->ctx_set_param_types =
+                OSSL_get_OP_cipher_ctx_set_param_types(fns);
             break;
         }
     }

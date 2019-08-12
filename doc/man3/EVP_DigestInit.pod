@@ -4,7 +4,9 @@
 
 EVP_MD_fetch,
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy,
-EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl, EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
+EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl,
+EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
+EVP_MD_CTX_set_param_types, EVP_MD_CTX_get_param_types,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
 EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
@@ -31,6 +33,8 @@ EVP_MD_do_all_ex
  void EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void* p2);
  int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
  int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *EVP_MD_CTX_set_param_types(const EVP_MD *digest);
+ const OSSL_PARAM *EVP_MD_CTX_get_param_types(const EVP_MD *digest);
  void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
  void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
  int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
@@ -121,15 +125,22 @@ EVP_MD_CTX_ctrl() must be called after EVP_DigestInit_ex(). Other restrictions
 may apply depending on the control type and digest implementation.
 See L</CONTROLS> below for more information.
 
-=item EVP_MD_CTX_get_params
+=item EVP_MD_CTX_get_params()
 
 Retrieves the requested list of B<params> from a MD context B<ctx>.
 See L</PARAMS> below for more information.
 
-=item EVP_MD_CTX_set_params
+=item EVP_MD_CTX_set_params()
 
-Sets the list of <params> into a MD context B<ctx>.
+Sets the list of B<params> into a MD context B<ctx>.
 See L</PARAMS> below for more information.
+
+=item EVP_MD_CTX_get_param_types(), EVP_MD_CTX_set_param_types()
+
+Get a B<OSSL_PARAM> array that describes the retrievable and settable
+parameters, i.e. parameters that can be used with EVP_MD_CTX_get_params()
+and EVP_MD_CTX_set_params(), respectively.
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
 
@@ -404,6 +415,12 @@ Returns 1 if successful or 0 for failure.
 EVP_MD_CTX_get_params()
 
 Returns 1 if successful or 0 for failure.
+
+=item EVP_MD_CTX_set_param_types(),
+EVP_MD_CTX_get_param_types()
+
+Return an array of constant B<OSSL_PARAM>s, or NULL if there is none
+to get.
 
 =item EVP_MD_CTX_copy_ex()
 

@@ -240,6 +240,27 @@ decrypting. If the B<pad> parameter is zero then no padding is
 performed, the total amount of data encrypted or decrypted must then
 be a multiple of the block size or an error will occur.
 
+EVP_CIPHER_get_params() retrieves the requested list of algorithm
+B<params> from a B<cipher>.
+
+EVP_CIPHER_CTX_set_params() Sets the list of operation B<params> into a CIPHER
+context B<ctx>.
+
+EVP_CIPHER_get_params() retrieves the requested list of operation
+B<params> from CIPHER context B<ctx>.
+
+EVP_CIPHER_get_param_types(), EVP_CIPHER_CTX_get_param_types(), and
+EVP_CIPHER_CTX_set_param_types() get a constant B<OSSL_PARAM> array
+that decribes the retrievable and settable parameters, i.e. parameters
+that can be used with EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params()
+and EVP_CIPHER_CTX_set_params(), respectively.
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+
+Get a B<OSSL_PARAM> array that describes the retrievable and settable
+parameters, i.e. parameters that can be used with EVP_MD_CTX_get_params()
+and EVP_MD_CTX_set_params(), respectively.
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+
 EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
 length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
 structure. The constant B<EVP_MAX_KEY_LENGTH> is the maximum key length
