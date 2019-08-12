@@ -1,4 +1,15 @@
 LIBS=../libssl
+
+#Needed for the multiblock code in rec_layer_s3.c
+IF[{- !$disabled{asm} -}]
+  $AESDEF_x86=AES_ASM
+  $AESDEF_x86_64=AES_ASM
+
+  IF[$AESDEF_{- $target{asm_arch} -}]
+    $AESDEF=$AESDEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
 #TODO: For now we just include the libcrypto packet.c in libssl as well. We
 #      could either continue to do it like this, or export all the WPACKET
 #      symbols so that libssl can use them like any other. Probably would do
@@ -17,3 +28,4 @@ SOURCE[../libssl]=\
         bio_ssl.c ssl_err.c tls_srp.c t1_trce.c ssl_utst.c \
         record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
         statem/statem.c record/ssl3_record_tls13.c
+DEFINE[../libssl]=$AESDEF
