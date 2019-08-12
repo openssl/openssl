@@ -36,8 +36,17 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
  int OP_cipher_cipher(void *cctx, unsigned char *out, size_t *outl,
                       size_t outsize, const unsigned char *in, size_t inl);
 
+ /* Cipher parameter descriptors */
+ const OSSL_PARAM *OP_cipher_gettable_params(void);
+
+ /* Cipheroperation parameter descriptors */
+ const OSSL_PARAM *OP_cipher_gettable_ctx_params(void);
+ const OSSL_PARAM *OP_cipher_settable_ctx_params(void);
+
  /* Cipher parameters */
  int OP_cipher_get_params(OSSL_PARAM params[]);
+
+ /* Cipher operation parameters */
  int OP_cipher_ctx_get_params(void *cctx, OSSL_PARAM params[]);
  int OP_cipher_ctx_set_params(void *cctx, const OSSL_PARAM params[]);
 
@@ -70,19 +79,23 @@ For example, the "function" OP_cipher_newctx() has these:
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_numbers.h(7)>, as follows:
 
- OP_cipher_newctx            OSSL_FUNC_CIPHER_NEWCTX
- OP_cipher_freectx           OSSL_FUNC_CIPHER_FREECTX
- OP_cipher_dupctx            OSSL_FUNC_CIPHER_DUPCTX
+ OP_cipher_newctx               OSSL_FUNC_CIPHER_NEWCTX
+ OP_cipher_freectx              OSSL_FUNC_CIPHER_FREECTX
+ OP_cipher_dupctx               OSSL_FUNC_CIPHER_DUPCTX
 
- OP_cipher_encrypt_init      OSSL_FUNC_CIPHER_ENCRYPT_INIT
- OP_cipher_decrypt_init      OSSL_FUNC_CIPHER_DECRYPT_INIT
- OP_cipher_update            OSSL_FUNC_CIPHER_UPDATE
- OP_cipher_final             OSSL_FUNC_CIPHER_FINAL
- OP_cipher_cipher            OSSL_FUNC_CIPHER_CIPHER
+ OP_cipher_encrypt_init         OSSL_FUNC_CIPHER_ENCRYPT_INIT
+ OP_cipher_decrypt_init         OSSL_FUNC_CIPHER_DECRYPT_INIT
+ OP_cipher_update               OSSL_FUNC_CIPHER_UPDATE
+ OP_cipher_final                OSSL_FUNC_CIPHER_FINAL
+ OP_cipher_cipher               OSSL_FUNC_CIPHER_CIPHER
 
- OP_cipher_get_params        OSSL_FUNC_CIPHER_GET_PARAMS
- OP_cipher_ctx_get_params    OSSL_FUNC_CIPHER_CTX_GET_PARAMS
- OP_cipher_ctx_set_params    OSSL_FUNC_CIPHER_CTX_SET_PARAMS
+ OP_cipher_get_params           OSSL_FUNC_CIPHER_GET_PARAMS
+ OP_cipher_ctx_get_params       OSSL_FUNC_CIPHER_CTX_GET_PARAMS
+ OP_cipher_ctx_set_params       OSSL_FUNC_CIPHER_CTX_SET_PARAMS
+
+ OP_cipher_gettable_params      OSSL_FUNC_CIPHER_GETTABLE_PARAMS
+ OP_cipher_gettable_ctx_params  OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS
+ OP_cipher_settable_ctx_params  OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS
 
 A cipher algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions there must at least be a complete
@@ -163,16 +176,21 @@ B<outsize> bytes.
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
-OP_cipher_get_params() gets details of parameter values associated with the
-provider algorithm and stores them in B<params>.
+OP_cipher_get_params() gets details of the algorithm implementation
+and stores them in B<params>.
 
-OP_cipher_ctx_set_params() sets cipher parameters associated with the given
+OP_cipher_ctx_set_params() sets cipher operation parameters for the
 provider side cipher context B<cctx> to B<params>.
 Any parameter settings are additional to any that were previously set.
 
-OP_cipher_ctx_get_params() gets details of currently set parameter values
-associated with the given provider side cipher context B<cctx> and stores them
-in B<params>.
+OP_cipher_ctx_get_params() gets cipher operation details details from
+the given provider side cipher context B<cctx> and stores them in B<params>.
+
+OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params(), and
+OP_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
+as descriptors of the parameters that OP_cipher_get_params(),
+OP_cipher_ctx_get_params(), and OP_cipher_ctx_set_params() can handle,
+respectively.
 
 Parameters currently recognised by built-in ciphers are as follows. Not all
 parameters are relevant to, or are understood by all ciphers:

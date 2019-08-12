@@ -548,8 +548,12 @@ void BIO_set_md(BIO *, const EVP_MD *md);
 # define EVP_delete_digest_alias(alias) \
         OBJ_NAME_remove(alias,OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS);
 
+int EVP_MD_get_params(const EVP_MD *digest, OSSL_PARAM params[]);
 int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
 int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
+const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest);
+const OSSL_PARAM *EVP_MD_CTX_settable_params(const EVP_MD *digest);
+const OSSL_PARAM *EVP_MD_CTX_gettable_params(const EVP_MD *digest);
 int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 EVP_MD_CTX *EVP_MD_CTX_new(void);
 int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
@@ -702,6 +706,12 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
+int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[]);
+int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[]);
+int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[]);
+const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher);
+const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(const EVP_CIPHER *cipher);
+const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(const EVP_CIPHER *cipher);
 
 const BIO_METHOD *BIO_f_md(void);
 const BIO_METHOD *BIO_f_base64(void);
