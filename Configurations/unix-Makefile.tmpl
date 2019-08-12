@@ -391,13 +391,13 @@ libclean:
 clean: libclean
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
-	-$(RM) `find . -name .git -prune -o -name '*{- platform->depext() -}' -print`
-	-$(RM) `find . -name .git -prune -o -name '*{- platform->objext() -}' -print`
+	-$(RM) `find . -name '*{- platform->depext() -}' \! -name '.*' -print`
+	-$(RM) `find . -name '*{- platform->objext() -}' \! -name '.*' -print`
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc
-	-$(RM) `find . -name .git -prune -o -type l -print`
+	-$(RM) `find . -type l \! -name '.*' -print`
 	$(RM) $(TARFILE)
 
 distclean: clean
