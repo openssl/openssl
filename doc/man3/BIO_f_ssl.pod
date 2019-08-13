@@ -250,7 +250,6 @@ a client and also echoes the request to standard output.
     exit(1);
  }
 
-
  /* We only want one connection so remove and free accept BIO */
  sbio = BIO_pop(acpt);
  BIO_free_all(acpt);
