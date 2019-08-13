@@ -30,10 +30,17 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
  int OP_digest_digest(void *provctx, const unsigned char *in, size_t inl,
                       unsigned char *out, size_t *outl, size_t outsz);
 
+ /* Digest parameter descriptors */
+ const OSSL_PARAM *OP_cipher_get_params(void);
+
+ /* Digest operation parameter descriptors */
+ const OSSL_PARAM *OP_cipher_ctx_get_params(void);
+ const OSSL_PARAM *OP_cipher_ctx_set_params(void);
+
  /* Digest parameters */
  int OP_digest_get_params(OSSL_PARAM params[]);
 
- /* Digest context parameters */
+ /* Digest operation parameters */
  int OP_digest_ctx_set_params(void *dctx, const OSSL_PARAM params[]);
  int OP_digest_ctx_get_params(void *dctx, OSSL_PARAM params[]);
 
@@ -65,19 +72,22 @@ For example, the "function" OP_digest_newctx() has these:
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_numbers.h(7)>, as follows:
 
- OP_digest_newctx        OSSL_FUNC_DIGEST_NEWCTX
- OP_digest_freectx       OSSL_FUNC_DIGEST_FREECTX
- OP_digest_dupctx        OSSL_FUNC_DIGEST_DUPCTX
+ OP_digest_newctx               OSSL_FUNC_DIGEST_NEWCTX
+ OP_digest_freectx              OSSL_FUNC_DIGEST_FREECTX
+ OP_digest_dupctx               OSSL_FUNC_DIGEST_DUPCTX
 
- OP_digest_init          OSSL_FUNC_DIGEST_INIT
- OP_digest_update        OSSL_FUNC_DIGEST_UPDATE
- OP_digest_final         OSSL_FUNC_DIGEST_FINAL
- OP_digest_digest        OSSL_FUNC_DIGEST_DIGEST
+ OP_digest_init                 OSSL_FUNC_DIGEST_INIT
+ OP_digest_update               OSSL_FUNC_DIGEST_UPDATE
+ OP_digest_final                OSSL_FUNC_DIGEST_FINAL
+ OP_digest_digest               OSSL_FUNC_DIGEST_DIGEST
 
- OP_digest_size          OSSL_FUNC_DIGEST_SIZE
- OP_digest_block_size    OSSL_FUNC_DIGEST_BLOCK_SIZE
- OP_digest_set_params    OSSL_FUNC_DIGEST_SET_PARAMS
- OP_digest_get_params    OSSL_FUNC_DIGEST_GET_PARAMS
+ OP_digest_get_params           OSSL_FUNC_DIGEST_GET_PARAMS
+ OP_digest_ctx_get_params       OSSL_FUNC_DIGEST_CTX_GET_PARAMS
+ OP_digest_ctx_set_params       OSSL_FUNC_DIGEST_CTX_SET_PARAMS
+
+ OP_digest_get_param_types      OSSL_FUNC_DIGEST_GET_PARAM_TYPES
+ OP_digest_ctx_get_param_types  OSSL_FUNC_DIGEST_CTX_GET_PARAM_TYPES
+ OP_digest_ctx_set_param_types  OSSL_FUNC_DIGEST_CTX_SET_PARAM_TYPES
 
 A digest algorithm implementation may not implement all of these functions.
 In order to be useable all or none of OP_digest_newctx, OP_digest_freectx,
@@ -130,9 +140,24 @@ exceed B<outsz> bytes.
 
 =head2 Digest Parameters
 
+See L<OSSL_PARAM(3)> for further details on the parameters structure used by
+these functions.
+
 OP_digest_get_params() gets details of the algorithm implementation
 and stores them in B<params>.
-See L<OSSL_PARAM(3)> for further details on the parameters structure.
+
+OP_digest_ctx_set_params() sets digest operation parameters for the
+provider side digest context B<dctx> to B<params>.
+Any parameter settings are additional to any that were previously set.
+
+OP_digest_ctx_get_params() gets digest operation details details from
+the given provider side digest context B<dctx> and stores them in B<params>.
+
+OP_digest_get_param_types(), OP_digest_ctx_get_param_types(), and
+OP_digest_ctx_set_param_types() all return constant B<OSSL_PARAM> arrays
+as descriptors of the parameters that OP_digest_get_params(),
+OP_digest_ctx_get_params(), and OP_digest_ctx_set_params() can handle,
+respectively.
 
 Parameters currently recognised by built-in digests with this function
 are as follows. Not all parametes are relevant to, or are understood
