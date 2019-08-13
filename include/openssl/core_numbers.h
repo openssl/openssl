@@ -134,9 +134,18 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
 OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
                     (void *provctx))
 
-/* Digests */
+/* Operations */
 
 # define OSSL_OP_DIGEST                              1
+# define OSSL_OP_CIPHER                              2   /* Symmetric Ciphers */
+# define OSSL_OP_MAC                                 3
+# define OSSL_OP_KEYMGMT                            10
+# define OSSL_OP_KEYEXCH                            11
+
+/* Highest known operation number */
+# define OSSL_OP__HIGHEST                            3
+
+/* Digests */
 
 # define OSSL_FUNC_DIGEST_NEWCTX                     1
 # define OSSL_FUNC_DIGEST_INIT                       2
@@ -176,8 +185,6 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_settable_ctx_params, (void))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_gettable_ctx_params, (void))
 
 /* Symmetric Ciphers */
-
-# define OSSL_OP_CIPHER                              2
 
 # define OSSL_FUNC_CIPHER_NEWCTX                     1
 # define OSSL_FUNC_CIPHER_ENCRYPT_INIT               2
@@ -223,16 +230,11 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_get_ctx_params, (void *cctx,
                                                     OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_set_ctx_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_params,
-                    (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_settable_ctx_params,
-                    (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_ctx_params,
-                    (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_params,     (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_settable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_ctx_params, (void))
 
 /* MACs */
-
-# define OSSL_OP_MAC                                 3
 
 # define OSSL_FUNC_MAC_NEWCTX                        1
 # define OSSL_FUNC_MAC_DUPCTX                        2
@@ -240,12 +242,12 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_ctx_params,
 # define OSSL_FUNC_MAC_INIT                          4
 # define OSSL_FUNC_MAC_UPDATE                        5
 # define OSSL_FUNC_MAC_FINAL                         6
-# define OSSL_FUNC_MAC_GETTABLE_PARAMS               7
-# define OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS           8
-# define OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS           9
-# define OSSL_FUNC_MAC_GET_PARAMS                   10
-# define OSSL_FUNC_MAC_GET_CTX_PARAMS               11
-# define OSSL_FUNC_MAC_SET_CTX_PARAMS               12
+# define OSSL_FUNC_MAC_GET_PARAMS                    7
+# define OSSL_FUNC_MAC_GET_CTX_PARAMS                8
+# define OSSL_FUNC_MAC_SET_CTX_PARAMS                9
+# define OSSL_FUNC_MAC_GETTABLE_PARAMS              10
+# define OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS          11
+# define OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS          12
 
 OSSL_CORE_MAKE_FUNC(void *, OP_mac_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_mac_dupctx, (void *src))
@@ -286,8 +288,6 @@ OSSL_CORE_MAKE_FUNC(int, OP_mac_set_ctx_params,
  * - by loading an internal key, given a binary blob that forms an identity.
  *   THE CALLER MUST ENSURE THAT A CORRECT IDENTITY IS USED.
  */
-
-# define OSSL_OP_KEYMGMT                           10
 
 /* Key domain parameter creation and destruction */
 # define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS          1
@@ -339,8 +339,6 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
 
 /* Key Exchange */
 
-# define OSSL_OP_KEYEXCH                              11
-
 # define OSSL_FUNC_KEYEXCH_NEWCTX                      1
 # define OSSL_FUNC_KEYEXCH_INIT                        2
 # define OSSL_FUNC_KEYEXCH_DERIVE                      3
@@ -358,9 +356,6 @@ OSSL_CORE_MAKE_FUNC(void, OP_keyexch_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_dupctx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_params, (void *ctx,
                                                  const OSSL_PARAM params[]))
-
-/* Highest known operation number */
-# define OSSL_OP__HIGHEST                            3
 
 # ifdef __cplusplus
 }

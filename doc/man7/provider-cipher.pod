@@ -314,6 +314,10 @@ OP_cipher_final(), OP_cipher_cipher(), OP_cipher_get_params(),
 OP_cipher_get_ctx_params() and OP_cipher_set_ctx_params() should return 1 for
 success or 0 on error.
 
+OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params() and
+OP_cipher_settable_ctx_params() should return a constant B<OSSL_PARAM>
+array, or NULL if none is offered.
+
 =head1 SEE ALSO
 
 L<provider(7)>

@@ -517,8 +517,8 @@ err:
     static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params; \
     static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])      \
     {                                                                          \
-        return aes_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,         \
-                               kbits, blkbits, ivbits);                        \
+        return cipher_default_get_params(params, EVP_CIPH_##UCMODE##_MODE,     \
+                                         flags, kbits, blkbits, ivbits);       \
     }                                                                          \
     static OSSL_OP_cipher_newctx_fn alg##kbits##gcm_newctx;                    \
     static void *alg##kbits##gcm_newctx(void *provctx)                         \
@@ -539,6 +539,12 @@ err:
             (void (*)(void))gcm_get_ctx_params },                              \
         { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                     \
             (void (*)(void))gcm_set_ctx_params },                              \
+        { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                    \
+                (void (*)(void))cipher_default_gettable_params },              \
+        { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                \
+                (void (*)(void))cipher_aead_gettable_ctx_params },             \
+        { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                \
+                (void (*)(void))cipher_aead_settable_ctx_params },             \
         { 0, NULL }                                                            \
     }
 
