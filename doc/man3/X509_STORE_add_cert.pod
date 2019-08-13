@@ -55,9 +55,9 @@ operate on pointers to B<X509> objects, though.
 
 X509_STORE_add_cert() and X509_STORE_add_crl() add the respective object
 to the B<X509_STORE>'s local storage.  Untrusted objects should not be
-added in this way.  The added object's reference count is increased by those
-functions so that the caller need to handle the memory management as well,
-for instance, free the object if needed.
+added in this way.  The added object's reference count is incremented by one,
+hence the caller retains ownership of the object and needs to free it when it
+is no longer needed.
 
 X509_STORE_set_depth(), X509_STORE_set_flags(), X509_STORE_set_purpose(),
 X509_STORE_set_trust(), and X509_STORE_set1_param() set the default values
