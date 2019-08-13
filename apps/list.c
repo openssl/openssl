@@ -80,31 +80,18 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
     return 1;
 }
 
-enum param_types { GET = 0, SET = 1 };
-enum param_levels { ALGO = 0, CTX = 1 };
-static int print_param_types(enum param_types type, enum param_levels level,
-                             const OSSL_PARAM *pdefs)
+static int print_param_types(const char *thing, const OSSL_PARAM *pdefs)
 {
-    const char *type_words[] = {
-        "retrievable", "settable"
-    };
-    const char *level_words[] = {
-        "algorithm", "operation"
-    };
-
     if (pdefs == NULL) {
-        BIO_printf(bio_out, "    No declared %s %s parameters\n",
-                   type_words[type], level_words[level]);
+        BIO_printf(bio_out, "    No declared %s\n", thing);
     } else if (pdefs->key == NULL) {
         /*
          * An empty list?  This shouldn't happen, but let's just make sure to
          * say something if there's a badly written provider...
          */
-        BIO_printf(bio_out, "    Empty list of %s %s parameters (!!!)\n",
-                   type_words[type], level_words[level]);
+        BIO_printf(bio_out, "    Empty list of %s (!!!)\n", thing);
     } else {
-        BIO_printf(bio_out, "    %s %s parameters:\n",
-                   level_words[level], type_words[type]);
+        BIO_printf(bio_out, "    %s:\n", thing);
         for (; pdefs->key != NULL; pdefs++) {
             char buf[200];       /* This should be ample space */
 
@@ -168,9 +155,12 @@ static void list_ciphers(void)
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
         if (verbose) {
-            print_param_types(GET, ALGO, EVP_CIPHER_get_param_types(c));
-            print_param_types(GET, CTX, EVP_CIPHER_CTX_get_param_types(c));
-            print_param_types(SET, CTX, EVP_CIPHER_CTX_set_param_types(c));
+            print_param_types("retrievable algorithm parameters",
+                              EVP_CIPHER_get_param_types(c));
+            print_param_types("retrievable operation parameters",
+                              EVP_CIPHER_CTX_get_param_types(c));
+            print_param_types("settable operation parameters",
+                              EVP_CIPHER_CTX_set_param_types(c));
         }
     }
     sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_meth_free);
@@ -228,9 +218,12 @@ static void list_digests(void)
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_MD_provider(m)));
         if (verbose) {
-            print_param_types(GET, ALGO, EVP_MD_get_param_types(m));
-            print_param_types(GET, CTX, EVP_MD_CTX_get_param_types(m));
-            print_param_types(SET, CTX, EVP_MD_CTX_set_param_types(m));
+            print_param_types("retrievable algorithm parameters",
+                              EVP_MD_get_param_types(m));
+            print_param_types("retrievable operation parameters",
+                              EVP_MD_CTX_get_param_types(m));
+            print_param_types("settable operation parameters",
+                              EVP_MD_CTX_set_param_types(m));
         }
     }
     sk_EVP_MD_pop_free(digests, EVP_MD_meth_free);
