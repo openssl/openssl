@@ -66,11 +66,11 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { "SHA3-512", "default=yes", sha3_512_functions },
 
     /*
-     * KMAC128 and KMAC256 as hashes are mostly useful for the MACs with the
-     * same names
+     * KECCAK_KMAC128 and KECCAK_KMAC256 as hashes are mostly useful for
+     * the KMAC128 and KMAC256.
      */
-    { "KMAC128", "default=yes", keccak_kmac_128_functions },
-    { "KMAC256", "default=yes", keccak_kmac_256_functions },
+    { "KECCAK_KMAC128", "default=yes", keccak_kmac_128_functions },
+    { "KECCAK_KMAC256", "default=yes", keccak_kmac_256_functions },
 
     { "SHAKE128", "default=yes", shake_128_functions },
     { "SHAKE256", "default=yes", shake_256_functions },

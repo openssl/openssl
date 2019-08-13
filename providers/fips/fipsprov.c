@@ -253,11 +253,11 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { "SHA3-384", "fips=yes", sha3_384_functions },
     { "SHA3-512", "fips=yes", sha3_512_functions },
     /*
-     * KMAC128 and KMAC256 as hashes are mostly useful for the MACs with the
-     * same names
+     * KECCAK_KMAC128 and KECCAK_KMAC256 as hashes are mostly useful for
+     * the KMAC128 and KMAC256.
      */
-    { "KMAC128", "fips=yes", keccak_kmac_128_functions },
-    { "KMAC256", "fips=yes", keccak_kmac_256_functions },
+    { "KECCAK_KMAC128", "fips=yes", keccak_kmac_128_functions },
+    { "KECCAK_KMAC256", "fips=yes", keccak_kmac_256_functions },
 
     { NULL, NULL, NULL }
 };

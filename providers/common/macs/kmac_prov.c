@@ -203,12 +203,12 @@ static void *kmac_fetch_new(void *provctx, const char *mdname)
 
 static void *kmac128_new(void *provctx)
 {
-    return kmac_fetch_new(provctx, "KMAC128");
+    return kmac_fetch_new(provctx, "KECCAK_KMAC128");
 }
 
 static void *kmac256_new(void *provctx)
 {
-    return kmac_fetch_new(provctx, "KMAC256");
+    return kmac_fetch_new(provctx, "KECCAK_KMAC256");
 }
 
 static void *kmac_dup(void *vsrc)
