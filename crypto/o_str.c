@@ -125,40 +125,6 @@ int OPENSSL_hexchar2int(unsigned char c)
           return 0x0E;
     case 'f': case 'F':
           return 0x0F;
-#ifdef CHARSET_EBCDIC
-    case 0x30:   /* ASCII 0 */
-          return 0;
-    case 0x31:   /* ASCII 1 */
-          return 1;
-    case 0x32:
-          return 2;
-    case 0x33:
-          return 3;
-    case 0x34:
-          return 4;
-    case 0x35:
-          return 5;
-    case 0x36:
-          return 6;
-    case 0x37:
-          return 7;
-    case 0x38:
-          return 8;
-    case 0x39:
-          return 9;
-    case 0x61: case 0x41: /* ASCII a or A */
-          return 0x0A;
-    case 0x62: case 0x42: /* ASCII b or B */
-          return 0x0B;
-    case 0x63: case 0x43:
-          return 0x0C;
-    case 0x64: case 0x44:
-          return 0x0D;
-    case 0x65: case 0x45:
-          return 0x0E;
-    case 0x66: case 0x46:
-          return 0x0F;
-#endif
     }
     return -1;
 }

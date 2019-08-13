@@ -75,14 +75,8 @@ typedef struct drbg_nonce_global_st {
 } DRBG_NONCE_GLOBAL;
 
 /* NIST SP 800-90A DRBG recommends the use of a personalization string. */
-#ifdef CHARSET_EBCDIC
-/* NOTE: If you change DRBG_DEFAULT_PERS_STRING, you will need to change this */
-static const char ossl_pers_string[] = { 0x4f, 0x70, 0x65, 0x6e, 0x53, 0x53,
-     0x4c, 0x20, 0x4e, 0x49, 0x53, 0x54, 0x20, 0x53, 0x50, 0x20, 0x38, 0x30,
-     0x30, 0x2d, 0x39, 0x30, 0x41, 0x20, 0x44, 0x52, 0x42, 0x47, 0x00};
-#else
 static const char ossl_pers_string[] = DRBG_DEFAULT_PERS_STRING;
-#endif
+
 #define RAND_DRBG_TYPE_FLAGS    ( \
     RAND_DRBG_FLAG_MASTER | RAND_DRBG_FLAG_PUBLIC | RAND_DRBG_FLAG_PRIVATE )
 
