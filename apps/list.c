@@ -16,7 +16,7 @@
 #include "progs.h"
 #include "opt.h"
 
-int verbose = 0;
+static int verbose = 0;
 
 static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
 {
