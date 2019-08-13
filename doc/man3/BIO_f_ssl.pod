@@ -241,7 +241,8 @@ a client and also echoes the request to standard output.
      exit(1);
  }
 
- /* Added BIO_do_accept call: the first BIO_do_accept made the socket bind 
+ /* 
+  * Added BIO_do_accept call: the first BIO_do_accept made the socket bind 
   *  and listen and in the second BIO_do_accept will do an accept           
   */
  if (BIO_do_accept(acpt) <= 0) {
