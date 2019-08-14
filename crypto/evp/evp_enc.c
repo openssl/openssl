@@ -1138,16 +1138,21 @@ static void *evp_cipher_from_dispatch(const char *name,
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
 
-    /*
-     * The legacy NID is set by EVP_CIPHER_fetch() if the name exists in
-     * the object database.
-     */
     if ((cipher = EVP_CIPHER_meth_new(0, 0, 0)) == NULL
         || (cipher->name = OPENSSL_strdup(name)) == NULL) {
         EVP_CIPHER_meth_free(cipher);
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+#ifndef FIPS_MODE
+    /*
+     * FIPS module note: since internal fetches will be entirely
+     * provider based, we know that none of its code depends on legacy
+     * NIDs or any functionality that use them.
+     */
+    cipher->nid = OBJ_sn2nid(name);
+#endif
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -1251,18 +1256,6 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
         evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
                           evp_cipher_from_dispatch, evp_cipher_up_ref,
                           evp_cipher_free);
-
-#ifndef FIPS_MODE
-    /* TODO(3.x) get rid of the need for legacy NIDs */
-    if (cipher != NULL) {
-        /*
-         * FIPS module note: since internal fetches will be entirely
-         * provider based, we know that none of its code depends on legacy
-         * NIDs or any functionality that use them.
-         */
-        cipher->nid = OBJ_sn2nid(algorithm);
-    }
-#endif
 
     return cipher;
 }

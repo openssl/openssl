@@ -602,6 +602,15 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
         return NULL;
     }
 
+#ifndef FIPS_MODE
+    /*
+     * FIPS module note: since internal fetches will be entirely
+     * provider based, we know that none of its code depends on legacy
+     * NIDs or any functionality that use them.
+     */
+    md->type = OBJ_sn2nid(name);
+#endif
+
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
         case OSSL_FUNC_DIGEST_NEWCTX:
@@ -693,18 +702,6 @@ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
         evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
                           evp_md_from_dispatch, evp_md_up_ref,
                           evp_md_free);
-
-#ifndef FIPS_MODE
-    /* TODO(3.x) get rid of the need for legacy NIDs */
-    if (md != NULL) {
-        /*
-         * FIPS module note: since internal fetches will be entirely
-         * provider based, we know that none of its code depends on legacy
-         * NIDs or any functionality that use them.
-         */
-        md->type = OBJ_sn2nid(algorithm);
-    }
-#endif
 
     return md;
 }
