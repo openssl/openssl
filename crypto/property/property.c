@@ -84,12 +84,6 @@ int ossl_property_unlock(OSSL_METHOD_STORE *p)
     return p != 0 ? CRYPTO_THREAD_unlock(p->lock) : 0;
 }
 
-static openssl_ctx_run_once_fn do_method_store_init;
-int do_method_store_init(OPENSSL_CTX *ctx)
-{
-    return ossl_property_parse_init(ctx);
-}
-
 static unsigned long query_hash(const QUERY *a)
 {
     return OPENSSL_LH_strhash(a->query);
@@ -131,11 +125,6 @@ static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a)
 OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx)
 {
     OSSL_METHOD_STORE *res;
-
-    if (!openssl_ctx_run_once(ctx,
-                              OPENSSL_CTX_METHOD_STORE_RUN_ONCE_INDEX,
-                              do_method_store_init))
-        return NULL;
 
     res = OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {

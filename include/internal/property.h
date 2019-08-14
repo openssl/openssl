@@ -15,6 +15,9 @@
 
 typedef struct ossl_method_store_st OSSL_METHOD_STORE;
 
+/* Initialisation */
+int ossl_property_parse_init(OPENSSL_CTX *ctx);
+
 /* Implementation store functions */
 OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx);
 void ossl_method_store_free(OSSL_METHOD_STORE *store);
