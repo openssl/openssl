@@ -156,11 +156,11 @@ static void list_ciphers(void)
                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
-                              EVP_CIPHER_get_param_types(c));
+                              EVP_CIPHER_gettable_types(c));
             print_param_types("retrievable operation parameters",
-                              EVP_CIPHER_CTX_get_param_types(c));
+                              EVP_CIPHER_CTX_gettable_types(c));
             print_param_types("settable operation parameters",
-                              EVP_CIPHER_CTX_set_param_types(c));
+                              EVP_CIPHER_CTX_settable_types(c));
         }
     }
     sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_meth_free);
@@ -219,11 +219,11 @@ static void list_digests(void)
                    OSSL_PROVIDER_name(EVP_MD_provider(m)));
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
-                              EVP_MD_get_param_types(m));
+                              EVP_MD_gettable_types(m));
             print_param_types("retrievable operation parameters",
-                              EVP_MD_CTX_get_param_types(m));
+                              EVP_MD_CTX_gettable_types(m));
             print_param_types("settable operation parameters",
-                              EVP_MD_CTX_set_param_types(m));
+                              EVP_MD_CTX_settable_types(m));
         }
     }
     sk_EVP_MD_pop_free(digests, EVP_MD_meth_free);
