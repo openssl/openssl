@@ -26,8 +26,8 @@ static OSSL_OP_digest_update_fn keccak_update;
 static OSSL_OP_digest_final_fn keccak_final;
 static OSSL_OP_digest_freectx_fn keccak_freectx;
 static OSSL_OP_digest_dupctx_fn keccak_dupctx;
-static OSSL_OP_digest_ctx_set_params_fn shake_set_params;
-static OSSL_OP_digest_ctx_set_param_types_fn shake_set_param_types;
+static OSSL_OP_digest_ctx_set_params_fn shake_ctx_set_params;
+static OSSL_OP_digest_settable_ctx_types_fn shake_settable_ctx_types;
 static sha3_absorb_fn generic_sha3_absorb;
 static sha3_final_fn generic_sha3_final;
 
@@ -206,8 +206,8 @@ static void *uname##_newctx(void *provctx) \
 #define OSSL_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags,   \
                               stparamtypes, stparams)                   \
 static OSSL_OP_digest_get_params_fn name##_get_params;                  \
-static OSSL_OP_digest_get_param_types_fn name##_get_param_types;        \
-static const OSSL_PARAM name##_known_params[] = {                       \
+static OSSL_OP_digest_gettable_types_fn name##_gettable_types;          \
+static const OSSL_PARAM known_##name##_gettable_types[] = {             \
     {OSSL_DIGEST_PARAM_BLOCK_SIZE, OSSL_PARAM_INTEGER,                  \
      NULL, sizeof(int), 0},                                             \
     {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_INTEGER, NULL, sizeof(int), 0}, \
@@ -215,9 +215,9 @@ static const OSSL_PARAM name##_known_params[] = {                       \
      NULL, sizeof(unsigned long), 0},                                   \
     OSSL_PARAM_END                                                      \
 };                                                                      \
-static const OSSL_PARAM *name##_get_param_types(void)                   \
+static const OSSL_PARAM *name##_gettable_types(void)                    \
 {                                                                       \
-    return name##_known_params;                                         \
+    return known_##name##_gettable_types;                               \
 }                                                                       \
 static int name##_get_params(OSSL_PARAM params[])                       \
 {                                                                       \
@@ -242,10 +242,11 @@ const OSSL_DISPATCH name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },       \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))keccak_dupctx },         \
     { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))name##_get_params }, \
-    { OSSL_FUNC_DIGEST_GET_PARAM_TYPES,                                 \
-      (void (*)(void))name##_get_param_types },                         \
+    { OSSL_FUNC_DIGEST_GETTABLE_TYPES,                                  \
+      (void (*)(void))name##_gettable_types },                          \
     { OSSL_FUNC_DIGEST_CTX_SET_PARAMS, (void (*)(void))stparams },      \
-    { OSSL_FUNC_DIGEST_CTX_SET_PARAM_TYPES, (void (*)(void))stparamtypes }, \
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_TYPES,                              \
+      (void (*)(void))stparamtypes },                                   \
 OSSL_FUNC_DIGEST_CONSTRUCT_END
 
 static void keccak_freectx(void *vctx)
@@ -264,17 +265,17 @@ static void *keccak_dupctx(void *ctx)
     return ret;
 }
 
-const OSSL_PARAM known_shake_ctx_params[] = {
+static const OSSL_PARAM known_shake_settable_ctx_types[] = {
     {OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *shake_set_param_types(void)
+static const OSSL_PARAM *shake_settable_ctx_types(void)
 {
-    return known_shake_ctx_params;
+    return known_shake_settable_ctx_types;
 }
 
-static int shake_set_params(void *vctx, const OSSL_PARAM params[])
+static int shake_ctx_set_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
@@ -299,13 +300,13 @@ static int shake_set_params(void *vctx, const OSSL_PARAM params[])
     OSSL_FUNC_SHA3_DIGEST(shake_##bitlen, bitlen, \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen), \
                           EVP_MD_FLAG_XOF, \
-                          shake_set_param_types, shake_set_params)
+                          shake_settable_ctx_types, shake_ctx_set_params)
 #define KMAC(bitlen) \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04') \
     OSSL_FUNC_SHA3_DIGEST(keccak_kmac_##bitlen, bitlen, \
                           SHA3_BLOCKSIZE(bitlen), KMAC_MDSIZE(bitlen), \
                           EVP_MD_FLAG_XOF, \
-                          shake_set_param_types, shake_set_params)
+                          shake_settable_ctx_types, shake_ctx_set_params)
 
 SHA3(224)
 SHA3(256)
