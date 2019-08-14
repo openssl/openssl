@@ -28,6 +28,9 @@ struct openssl_ctx_st {
     /* Map internal static indexes to dynamically created indexes */
     int dyn_indexes[OPENSSL_CTX_MAX_INDEXES];
 
+    /* Keep a separate lock for each index */
+    CRYPTO_RWLOCK *index_locks[OPENSSL_CTX_MAX_INDEXES];
+
     CRYPTO_RWLOCK *oncelock;
     int run_once_done[OPENSSL_CTX_MAX_RUN_ONCE];
     int run_once_ret[OPENSSL_CTX_MAX_RUN_ONCE];
@@ -53,8 +56,12 @@ static int context_init(OPENSSL_CTX *ctx)
     if (ctx->oncelock == NULL)
         goto err;
 
-    for (i = 0; i < OPENSSL_CTX_MAX_INDEXES; i++)
+    for (i = 0; i < OPENSSL_CTX_MAX_INDEXES; i++) {
+        ctx->index_locks[i] = CRYPTO_THREAD_lock_new();
         ctx->dyn_indexes[i] = -1;
+        if (ctx->index_locks[i] == NULL)
+            goto err;
+    }
 
     if (!do_ex_data_init(ctx))
         goto err;
@@ -76,6 +83,7 @@ static int context_init(OPENSSL_CTX *ctx)
 static int context_deinit(OPENSSL_CTX *ctx)
 {
     struct openssl_ctx_onfree_list_st *tmp, *onfree;
+    int i;
 
     if (ctx == NULL)
         return 1;
@@ -91,6 +99,9 @@ static int context_deinit(OPENSSL_CTX *ctx)
     }
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_OPENSSL_CTX, NULL, &ctx->data);
     crypto_cleanup_all_ex_data_int(ctx);
+    for (i = 0; i < OPENSSL_CTX_MAX_INDEXES; i++)
+        CRYPTO_THREAD_lock_free(ctx->index_locks[i]);
+
     CRYPTO_THREAD_lock_free(ctx->oncelock);
     CRYPTO_THREAD_lock_free(ctx->lock);
     ctx->lock = NULL;
@@ -187,25 +198,47 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
                            const OPENSSL_CTX_METHOD *meth)
 {
     void *data = NULL;
+    int dynidx;
 
     ctx = openssl_ctx_get_concrete(ctx);
     if (ctx == NULL)
         return NULL;
 
     CRYPTO_THREAD_read_lock(ctx->lock);
+    dynidx = ctx->dyn_indexes[index];
+    CRYPTO_THREAD_unlock(ctx->lock);
 
-    if (ctx->dyn_indexes[index] == -1
-            && !openssl_ctx_init_index(ctx, index, meth)) {
+    if (dynidx != -1) {
+        CRYPTO_THREAD_read_lock(ctx->index_locks[index]);
+        data = CRYPTO_get_ex_data(&ctx->data, dynidx);
+        CRYPTO_THREAD_unlock(ctx->index_locks[index]);
+        return data;
+    }
+
+    CRYPTO_THREAD_write_lock(ctx->index_locks[index]);
+    CRYPTO_THREAD_write_lock(ctx->lock);
+
+    dynidx = ctx->dyn_indexes[index];
+    if (dynidx != -1) {
+        CRYPTO_THREAD_unlock(ctx->lock);
+        data = CRYPTO_get_ex_data(&ctx->data, dynidx);
+        CRYPTO_THREAD_unlock(ctx->index_locks[index]);
+        return data;
+    }
+
+    if (!openssl_ctx_init_index(ctx, index, meth)) {
         CRYPTO_THREAD_unlock(ctx->lock);
         return NULL;
     }
+
+    CRYPTO_THREAD_unlock(ctx->lock);
 
     /* The alloc call ensures there's a value there */
     if (CRYPTO_alloc_ex_data(CRYPTO_EX_INDEX_OPENSSL_CTX, NULL,
                              &ctx->data, ctx->dyn_indexes[index]))
         data = CRYPTO_get_ex_data(&ctx->data, ctx->dyn_indexes[index]);
 
-    CRYPTO_THREAD_unlock(ctx->lock);
+    CRYPTO_THREAD_unlock(ctx->index_locks[index]);
 
     return data;
 }
