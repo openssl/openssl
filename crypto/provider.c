@@ -47,9 +47,9 @@ int OSSL_PROVIDER_available(OPENSSL_CTX *libctx, const char *name)
     return available;
 }
 
-const OSSL_PARAM *OSSL_PROVIDER_get_param_types(const OSSL_PROVIDER *prov)
+const OSSL_PARAM *OSSL_PROVIDER_gettable_params(const OSSL_PROVIDER *prov)
 {
-    return ossl_provider_get_param_types(prov);
+    return ossl_provider_gettable_params(prov);
 }
 
 int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])

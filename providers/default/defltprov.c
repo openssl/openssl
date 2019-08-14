@@ -16,7 +16,7 @@
 #include "internal/provider_algs.h"
 
 /* Functions provided by the core */
-static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
+static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Parameters we provide to the core */
@@ -27,7 +27,7 @@ static const OSSL_PARAM deflt_param_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *deflt_get_param_types(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *deflt_gettable_params(const OSSL_PROVIDER *prov)
 {
     return deflt_param_types;
 }
@@ -156,7 +156,7 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
 
 /* Functions we provide to the core */
 static const OSSL_DISPATCH deflt_dispatch_table[] = {
-    { OSSL_FUNC_PROVIDER_GET_PARAM_TYPES, (void (*)(void))deflt_get_param_types },
+    { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))deflt_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))deflt_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))deflt_query },
     { 0, NULL }
@@ -173,8 +173,8 @@ int ossl_default_provider_init(const OSSL_PROVIDER *provider,
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GET_PARAM_TYPES:
-            c_get_param_types = OSSL_get_core_get_param_types(in);
+        case OSSL_FUNC_CORE_GETTABLE_PARAMS:
+            c_gettable_params = OSSL_get_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_get_core_get_params(in);

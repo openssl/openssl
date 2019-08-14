@@ -4504,7 +4504,7 @@ OSSL_trace_end                          4613	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_load                      4614	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_unload                    4615	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_add_builtin               4616	3_0_0	EXIST::FUNCTION:
-OSSL_PROVIDER_get_param_types           4617	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_gettable_params           4617	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_get_params                4618	3_0_0	EXIST::FUNCTION:
 d2i_OSSL_CRMF_ENCRYPTEDVALUE            4619	3_0_0	EXIST::FUNCTION:CRMF
 i2d_OSSL_CRMF_ENCRYPTEDVALUE            4620	3_0_0	EXIST::FUNCTION:CRMF

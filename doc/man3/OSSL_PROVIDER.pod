@@ -4,7 +4,7 @@
 
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
 OSSL_PROVIDER_available,
-OSSL_PROVIDER_get_param_types, OSSL_PROVIDER_get_params,
+OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
 OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
 
 =head1 SYNOPSIS
@@ -17,7 +17,7 @@ OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
  int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_available(OPENSSL_CTX *libctx, const char *name);
 
- const OSSL_PARAM *OSSL_PROVIDER_get_param_types(OSSL_PROVIDER *prov);
+ const OSSL_PARAM *OSSL_PROVIDER_gettable_params(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, OSSL_PARAM params[]);
 
  int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
@@ -57,7 +57,7 @@ runs its teardown function.
 OSSL_PROVIDER_available() checks if a named provider is available
 for use.
 
-OSSL_PROVIDER_get_param_types() is used to get a provider parameter
+OSSL_PROVIDER_gettable_params() is used to get a provider parameter
 descriptor set as a constant B<OSSL_PARAM> array.
 See L<OSSL_PARAM(3)> for more information.
 
@@ -80,7 +80,7 @@ OSSL_PROVIDER_unload() returns 1 on success, or 0 on error.
 OSSL_PROVIDER_available() returns 1 if the named provider is available,
 otherwise 0.
 
-OSSL_PROVIDER_get_param_types() returns a pointer to an array
+OSSL_PROVIDER_gettable_params() returns a pointer to an array
 of constant B<OSSL_PARAM>, or NULL if none is provided.
 
 OSSL_PROVIDER_get_params() returns 1 on success, or 0 on error.
