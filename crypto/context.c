@@ -9,6 +9,7 @@
 
 #include "internal/cryptlib_int.h"
 #include "internal/thread_once.h"
+#include "internal/property.h"
 
 struct openssl_ctx_onfree_list_st {
     openssl_ctx_onfree_fn *fn;
@@ -47,6 +48,7 @@ static OPENSSL_CTX *default_context = NULL;
 static int context_init(OPENSSL_CTX *ctx)
 {
     size_t i;
+    int exdata_done = 0;
 
     ctx->lock = CRYPTO_THREAD_lock_new();
     if (ctx->lock == NULL)
@@ -63,8 +65,10 @@ static int context_init(OPENSSL_CTX *ctx)
             goto err;
     }
 
+    /* OPENSSL_CTX is built on top of ex_data so we initialise that directly */
     if (!do_ex_data_init(ctx))
         goto err;
+    exdata_done = 1;
 
     if (!crypto_new_ex_data_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, NULL,
                                &ctx->data)) {
@@ -72,8 +76,14 @@ static int context_init(OPENSSL_CTX *ctx)
         goto err;
     }
 
+    /* Everything depends on properties, so we also pre-initialise that */
+    if (!ossl_property_parse_init(ctx))
+        goto err;
+
     return 1;
  err:
+    if (exdata_done)
+        crypto_cleanup_all_ex_data_int(ctx);
     CRYPTO_THREAD_lock_free(ctx->oncelock);
     CRYPTO_THREAD_lock_free(ctx->lock);
     ctx->lock = NULL;
