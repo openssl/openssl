@@ -11,7 +11,7 @@ ossl_provider_ctx,
 ossl_provider_forall_loaded,
 ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
-ossl_provider_teardown, ossl_provider_get_param_types,
+ossl_provider_teardown, ossl_provider_gettable_types,
 ossl_provider_get_params, ossl_provider_query_operation
 - internal provider routines
 
@@ -55,7 +55,7 @@ ossl_provider_get_params, ossl_provider_query_operation
 
  /* Thin wrappers around calls to the provider */
  void ossl_provider_teardown(const OSSL_PROVIDER *prov);
- const OSSL_PARAM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov);
+ const OSSL_PARAM *ossl_provider_gettable_types(const OSSL_PROVIDER *prov);
  int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
  const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                      int operation_id,
@@ -188,7 +188,7 @@ for providers that come in the form of loadable modules.
 ossl_provider_teardown() calls the provider's I<teardown> function, if
 the provider has one.
 
-ossl_provider_get_param_types() calls the provider's I<get_param_types>
+ossl_provider_gettable_types() calls the provider's I<gettable_types>
 function, if the provider has one.
 It should return an array of I<OSSL_PARAM> to describe all the
 parameters that the provider has for the provider object.
@@ -254,7 +254,7 @@ is returned.
 
 ossl_provider_teardown() doesnt't return any value.
 
-ossl_provider_get_param_types() returns a pointer to a constant
+ossl_provider_gettable_types() returns a pointer to a constant
 I<OSSL_PARAM> array if this function is available in the provider,
 otherwise NULL.
 

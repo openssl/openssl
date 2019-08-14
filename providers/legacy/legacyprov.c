@@ -16,7 +16,7 @@
 #include "internal/provider_algs.h"
 
 /* Functions provided by the core */
-static OSSL_core_get_param_types_fn *c_get_param_types = NULL;
+static OSSL_core_gettable_types_fn *c_gettable_types = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Parameters we provide to the core */
@@ -27,7 +27,7 @@ static const OSSL_ITEM legacy_param_types[] = {
     { 0, NULL }
 };
 
-static const OSSL_ITEM *legacy_get_param_types(const OSSL_PROVIDER *prov)
+static const OSSL_ITEM *legacy_gettable_types(const OSSL_PROVIDER *prov)
 {
     return legacy_param_types;
 }
@@ -87,7 +87,7 @@ static const OSSL_ALGORITHM *legacy_query(OSSL_PROVIDER *prov,
 
 /* Functions we provide to the core */
 static const OSSL_DISPATCH legacy_dispatch_table[] = {
-    { OSSL_FUNC_PROVIDER_GET_PARAM_TYPES, (void (*)(void))legacy_get_param_types },
+    { OSSL_FUNC_PROVIDER_GETTABLE_TYPES, (void (*)(void))legacy_gettable_types },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))legacy_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))legacy_query },
     { 0, NULL }
@@ -102,8 +102,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GET_PARAM_TYPES:
-            c_get_param_types = OSSL_get_core_get_param_types(in);
+        case OSSL_FUNC_CORE_GETTABLE_TYPES:
+            c_gettable_types = OSSL_get_core_gettable_types(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_get_core_get_params(in);

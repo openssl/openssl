@@ -16,7 +16,7 @@ provider-base
   */
 
  /* Functions offered by libcrypto to the providers */
- const OSSL_ITEM *core_get_param_types(const OSSL_PROVIDER *prov);
+ const OSSL_ITEM *core_gettable_types(const OSSL_PROVIDER *prov);
  int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
  int core_thread_start(const OSSL_PROVIDER *prov,
                        OSSL_thread_stop_handler_fn handfn);
@@ -56,7 +56,7 @@ provider-base
 
  /* Functions offered by the provider to libcrypto */
  void provider_teardown(void *provctx);
- const OSSL_ITEM *provider_get_param_types(void *provctx);
+ const OSSL_ITEM *provider_gettable_types(void *provctx);
  int provider_get_params(void *provctx, OSSL_PARAM params[]);
  const OSSL_ALGORITHM *provider_query_operation(void *provctx,
                                                 int operation_id,
@@ -74,12 +74,12 @@ All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_get_{name}>.
-For example, the "function" core_get_param_types() has these:
+For example, the "function" core_gettable_types() has these:
 
  typedef OSSL_ITEM *
-     (OSSL_core_get_param_types_fn)(const OSSL_PROVIDER *prov);
- static ossl_inline OSSL_NAME_core_get_param_types_fn
-     OSSL_get_core_get_param_types(const OSSL_DISPATCH *opf);
+     (OSSL_core_gettable_types_fn)(const OSSL_PROVIDER *prov);
+ static ossl_inline OSSL_NAME_core_gettable_types_fn
+     OSSL_get_core_gettable_types(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_numbers.h(7)>, as follows:
@@ -87,7 +87,7 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
 For I<in> (the B<OSSL_DISPATCH> array passed from F<libcrypto> to the
 provider):
 
- core_get_param_types           OSSL_FUNC_CORE_GET_PARAM_TYPES
+ core_gettable_types            OSSL_FUNC_CORE_GETTABLE_TYPES
  core_get_params                OSSL_FUNC_CORE_GET_PARAMS
  core_thread_start              OSSL_FUNC_CORE_THREAD_START
  core_get_library_context       OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT
@@ -115,14 +115,14 @@ For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
 F<libcrypto>):
 
  provider_teardown              OSSL_FUNC_PROVIDER_TEARDOWN
- provider_get_param_types       OSSL_FUNC_PROVIDER_GET_PARAM_TYPES
+ provider_gettable_types        OSSL_FUNC_PROVIDER_GETTABLE_TYPES
  provider_get_params            OSSL_FUNC_PROVIDER_GET_PARAMS
  provider_query_operation       OSSL_FUNC_PROVIDER_QUERY_OPERATION
  provider_get_reason_strings    OSSL_FUNC_PROVIDER_GET_REASON_STRINGS
 
 =head2 Core functions
 
-core_get_param_types() returns a constant array of descriptor
+core_gettable_types() returns a constant array of descriptor
 B<OSSL_PARAM>, for parameters that core_get_params() can handle.
 
 core_get_params() retrieves I<prov> parameters from the core.
@@ -189,7 +189,7 @@ provider_teardown() is called when a provider is shut down and removed
 from the core's provider store.
 It must free the passed I<provctx>.
 
-provider_get_param_types() should return a constant array of
+provider_gettable_types() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that provider_get_params()
 can handle.
 
@@ -208,7 +208,7 @@ use when reporting errors using core_put_error().
 
 None of these functions are mandatory, but a provider is fairly
 useless without at least provider_query_operation(), and
-provider_get_param_types() is fairly useless if not accompanied by
+provider_gettable_types() is fairly useless if not accompanied by
 provider_get_params().
 
 =head2 Core parameters
