@@ -3,11 +3,11 @@
 =head1 NAME
 
 EVP_MD_fetch,
-EVP_MD_get_params, EVP_MD_get_param_types,
+EVP_MD_get_params, EVP_MD_gettable_types,
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy,
 EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl,
 EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
-EVP_MD_CTX_set_param_types, EVP_MD_CTX_get_param_types,
+EVP_MD_CTX_settable_types, EVP_MD_CTX_gettable_types,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
 EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
@@ -29,15 +29,15 @@ EVP_MD_do_all_ex
  EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                       const char *properties);
  int EVP_MD_get_params(const EVP_MD *digest, OSSL_PARAM params[]);
- const OSSL_PARAM *EVP_MD_get_param_types(const EVP_MD *digest);
+ const OSSL_PARAM *EVP_MD_gettable_types(const EVP_MD *digest);
  EVP_MD_CTX *EVP_MD_CTX_new(void);
  int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void* p2);
  int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
  int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *EVP_MD_CTX_set_param_types(const EVP_MD *digest);
- const OSSL_PARAM *EVP_MD_CTX_get_param_types(const EVP_MD *digest);
+ const OSSL_PARAM *EVP_MD_CTX_settable_types(const EVP_MD *digest);
+ const OSSL_PARAM *EVP_MD_CTX_gettable_types(const EVP_MD *digest);
  void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
  void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
  int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
@@ -143,8 +143,8 @@ See L</PARAMS> below for more information.
 Sets the list of B<params> into a MD context B<ctx>.
 See L</PARAMS> below for more information.
 
-=item EVP_MD_get_param_types(), EVP_MD_CTX_get_param_types(),
-EVP_MD_CTX_set_param_types()
+=item EVP_MD_gettable_types(), EVP_MD_CTX_gettable_types(),
+EVP_MD_CTX_settable_types()
 
 Get a B<OSSL_PARAM> array that describes the retrievable and settable
 parameters, i.e. parameters that can be used with EVP_MD_get_params(),
@@ -425,8 +425,8 @@ EVP_MD_CTX_get_params()
 
 Returns 1 if successful or 0 for failure.
 
-=item EVP_MD_CTX_set_param_types(),
-EVP_MD_CTX_get_param_types()
+=item EVP_MD_CTX_settable_types(),
+EVP_MD_CTX_gettable_types()
 
 Return an array of constant B<OSSL_PARAM>s, or NULL if there is none
 to get.

@@ -148,9 +148,9 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 # define OSSL_FUNC_DIGEST_GET_PARAMS                 8
 # define OSSL_FUNC_DIGEST_CTX_SET_PARAMS             9
 # define OSSL_FUNC_DIGEST_CTX_GET_PARAMS            10
-# define OSSL_FUNC_DIGEST_GET_PARAM_TYPES           11
-# define OSSL_FUNC_DIGEST_CTX_SET_PARAM_TYPES       12
-# define OSSL_FUNC_DIGEST_CTX_GET_PARAM_TYPES       13
+# define OSSL_FUNC_DIGEST_GETTABLE_TYPES            11
+# define OSSL_FUNC_DIGEST_SETTABLE_CTX_TYPES        12
+# define OSSL_FUNC_DIGEST_GETTABLE_CTX_TYPES        13
 
 OSSL_CORE_MAKE_FUNC(void *, OP_digest_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_init, (void *dctx))
@@ -171,9 +171,9 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_ctx_set_params,
                     (void *vctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_ctx_get_params,
                     (void *vctx, OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_get_param_types, (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_ctx_set_param_types, (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_ctx_get_param_types, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_gettable_types, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_settable_ctx_types, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_gettable_ctx_types, (void))
 
 /* Symmetric Ciphers */
 
@@ -190,9 +190,9 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_ctx_get_param_types, (void))
 # define OSSL_FUNC_CIPHER_GET_PARAMS                 9
 # define OSSL_FUNC_CIPHER_CTX_GET_PARAMS            10
 # define OSSL_FUNC_CIPHER_CTX_SET_PARAMS            11
-# define OSSL_FUNC_CIPHER_GET_PARAM_TYPES           12
-# define OSSL_FUNC_CIPHER_CTX_GET_PARAM_TYPES       13
-# define OSSL_FUNC_CIPHER_CTX_SET_PARAM_TYPES       14
+# define OSSL_FUNC_CIPHER_GETTABLE_TYPES            12
+# define OSSL_FUNC_CIPHER_GETTABLE_CTX_TYPES        13
+# define OSSL_FUNC_CIPHER_SETTABLE_CTX_TYPES        14
 
 OSSL_CORE_MAKE_FUNC(void *, OP_cipher_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_encrypt_init, (void *cctx,
@@ -223,11 +223,11 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
                                                     OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_get_param_types,
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_types,
                     (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_ctx_set_param_types,
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_settable_ctx_types,
                     (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_ctx_get_param_types,
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_ctx_types,
                     (void))
 
 /*-

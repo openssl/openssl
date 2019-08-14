@@ -531,10 +531,10 @@ int EVP_MD_get_params(const EVP_MD *digest, OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_MD_get_param_types(const EVP_MD *digest)
+const OSSL_PARAM *EVP_MD_gettable_types(const EVP_MD *digest)
 {
-    if (digest != NULL && digest->get_param_types != NULL)
-        return digest->get_param_types();
+    if (digest != NULL && digest->gettable_types != NULL)
+        return digest->gettable_types();
     return NULL;
 }
 
@@ -545,10 +545,10 @@ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_MD_CTX_set_param_types(const EVP_MD *digest)
+const OSSL_PARAM *EVP_MD_CTX_settable_types(const EVP_MD *digest)
 {
-    if (digest != NULL && digest->ctx_set_param_types != NULL)
-        return digest->ctx_set_param_types();
+    if (digest != NULL && digest->settable_ctx_types != NULL)
+        return digest->settable_ctx_types();
     return NULL;
 }
 
@@ -559,10 +559,10 @@ int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_MD_CTX_get_param_types(const EVP_MD *digest)
+const OSSL_PARAM *EVP_MD_CTX_gettable_types(const EVP_MD *digest)
 {
-    if (digest != NULL && digest->ctx_get_param_types != NULL)
-        return digest->ctx_get_param_types();
+    if (digest != NULL && digest->gettable_ctx_types != NULL)
+        return digest->gettable_ctx_types();
     return NULL;
 }
 
@@ -683,19 +683,19 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
             if (md->ctx_get_params == NULL)
                 md->ctx_get_params = OSSL_get_OP_digest_ctx_get_params(fns);
             break;
-        case OSSL_FUNC_DIGEST_GET_PARAM_TYPES:
-            if (md->get_param_types == NULL)
-                md->get_param_types = OSSL_get_OP_digest_get_param_types(fns);
+        case OSSL_FUNC_DIGEST_GETTABLE_TYPES:
+            if (md->gettable_types == NULL)
+                md->gettable_types = OSSL_get_OP_digest_gettable_types(fns);
             break;
-        case OSSL_FUNC_DIGEST_CTX_SET_PARAM_TYPES:
-            if (md->ctx_set_param_types == NULL)
-                md->ctx_set_param_types =
-                    OSSL_get_OP_digest_ctx_set_param_types(fns);
+        case OSSL_FUNC_DIGEST_SETTABLE_CTX_TYPES:
+            if (md->settable_ctx_types == NULL)
+                md->settable_ctx_types =
+                    OSSL_get_OP_digest_settable_ctx_types(fns);
             break;
-        case OSSL_FUNC_DIGEST_CTX_GET_PARAM_TYPES:
-            if (md->ctx_get_param_types == NULL)
-                md->ctx_get_param_types =
-                    OSSL_get_OP_digest_ctx_get_param_types(fns);
+        case OSSL_FUNC_DIGEST_GETTABLE_CTX_TYPES:
+            if (md->gettable_ctx_types == NULL)
+                md->gettable_ctx_types =
+                    OSSL_get_OP_digest_gettable_ctx_types(fns);
             break;
         }
     }
