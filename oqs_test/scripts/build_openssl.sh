@@ -14,7 +14,7 @@ case "$OSTYPE" in
     linux*)   ./Configure no-shared linux-x86_64 -lm  ;;
     *)        echo "Unknown operating system: $OSTYPE" ; exit 1 ;;
 esac
-
+make clean
 if [ "x${CIRCLECI}" == "xtrue" ] || [ "x${TRAVIS}" == "xtrue" ]; then
     make -j2
 else

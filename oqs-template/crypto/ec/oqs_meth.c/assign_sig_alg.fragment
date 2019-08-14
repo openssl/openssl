@@ -1,0 +1,10 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+    case NID_{{ variant['name'] }}:
+        {%- for classical_alg in variant['mix_with'] %}
+    case NID_{{ classical_alg['name'] }}_{{ variant['name'] }}:
+        {%- endfor %}
+      return {{ variant['oqs_meth'] }};
+    {%- endfor %}
+{%- endfor %}
+

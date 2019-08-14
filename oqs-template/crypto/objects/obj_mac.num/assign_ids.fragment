@@ -1,0 +1,11 @@
+{%- set count = namespace(val=1195) -%}
+{%- for sig in config['sigs'] -%}
+    {%- for variant in sig['variants'] -%}
+{{ variant['name'] }}	{{ count.val }}
+{% set count.val = count.val + 1 -%}
+        {%- for classical_alg in variant['mix_with'] -%}
+{{ classical_alg['name'] }}_{{ variant['name'] }}	{{ count.val }}
+{% set count.val = count.val + 1 -%}
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor -%}

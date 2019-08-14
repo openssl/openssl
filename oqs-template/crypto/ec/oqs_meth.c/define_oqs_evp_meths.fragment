@@ -1,0 +1,9 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+DEFINE_OQS_EVP_METHODS({{ variant['name'] }}, NID_{{ variant['name'] }}, "{{ variant['name'] }}", "OpenSSL {{ variant['pretty_name'] }} algorithm")
+        {%- for classical_alg in variant['mix_with'] %}
+DEFINE_OQS_EVP_METHODS({{ classical_alg['name'] }}_{{ variant['name'] }}, NID_{{ classical_alg['name'] }}_{{ variant['name'] }}, "{{ classical_alg['name'] }}_{{ variant['name'] }}", "OpenSSL {{ classical_alg['pretty_name'] }} {{ variant['pretty_name'] }} algorithm")
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+

@@ -834,23 +834,27 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_ed448,
 #endif
 #if !defined(OQS_NIST_BRANCH)
-    /* OQS sig schemes*/
-    TLSEXT_SIGALG_picnicL1FS,
-    TLSEXT_SIGALG_qteslaI,
-    TLSEXT_SIGALG_qteslaIIIsize,
-    TLSEXT_SIGALG_qteslaIIIspeed,
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_TLS12_SIGALGS_START
+    TLSEXT_SIGALG_oqsdefault,
+    TLSEXT_SIGALG_p256_oqsdefault,
+    TLSEXT_SIGALG_rsa3072_oqsdefault,
     TLSEXT_SIGALG_dilithium2,
+    TLSEXT_SIGALG_p256_dilithium2,
+    TLSEXT_SIGALG_rsa3072_dilithium2,
     TLSEXT_SIGALG_dilithium3,
     TLSEXT_SIGALG_dilithium4,
-    /* ADD_MORE_OQS_SIG_HERE */
-    /* OQS hybrid schemes*/
-    TLSEXT_SIGALG_p256_picnicL1FS,
-    TLSEXT_SIGALG_rsa3072_picnicL1FS,
-    TLSEXT_SIGALG_p256_qteslaI,
-    TLSEXT_SIGALG_rsa3072_qteslaI,
-    TLSEXT_SIGALG_p384_qteslaIIIsize,
-    TLSEXT_SIGALG_p384_qteslaIIIspeed,
-    /* ADD_MORE_OQS_SIG_HERE hybrid only */
+    TLSEXT_SIGALG_p384_dilithium4,
+    TLSEXT_SIGALG_picnicl1fs,
+    TLSEXT_SIGALG_p256_picnicl1fs,
+    TLSEXT_SIGALG_rsa3072_picnicl1fs,
+    TLSEXT_SIGALG_qteslai,
+    TLSEXT_SIGALG_p256_qteslai,
+    TLSEXT_SIGALG_rsa3072_qteslai,
+    TLSEXT_SIGALG_qteslaiiisize,
+    TLSEXT_SIGALG_p384_qteslaiiisize,
+    TLSEXT_SIGALG_qteslaiiispeed,
+    TLSEXT_SIGALG_p384_qteslaiiispeed,
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_TLS12_SIGALGS_END
 #endif
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
@@ -981,49 +985,65 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_undef, NID_undef},
 #endif
 #if !defined(OQS_NIST_BRANCH)
-    /* OQS sig schemes */
-    {"picnicL1FS", TLSEXT_SIGALG_picnicL1FS,
-     NID_undef, -1, EVP_PKEY_PICNICL1FS, SSL_PKEY_PICNICL1FS,
+///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_START
+    {"oqsdefault", TLSEXT_SIGALG_oqsdefault,
+     NID_undef, -1, EVP_PKEY_OQSDEFAULT, SSL_PKEY_OQSDEFAULT,
      NID_undef, NID_undef},
-    {"qteslaI", TLSEXT_SIGALG_qteslaI,
-     NID_undef, -1, EVP_PKEY_QTESLAI, SSL_PKEY_QTESLAI,
+    {"p256_oqsdefault", TLSEXT_SIGALG_p256_oqsdefault,
+     NID_undef, -1, EVP_PKEY_P256_OQSDEFAULT, SSL_PKEY_P256_OQSDEFAULT,
      NID_undef, NID_undef},
-    {"qteslaIIIsize", TLSEXT_SIGALG_qteslaIIIsize,
-     NID_undef, -1, EVP_PKEY_QTESLAIIISIZE, SSL_PKEY_QTESLAIIISIZE,
-     NID_undef, NID_undef},
-    {"qteslaIIIspeed", TLSEXT_SIGALG_qteslaIIIspeed,
-     NID_undef, -1, EVP_PKEY_QTESLAIIISPEED, SSL_PKEY_QTESLAIIISPEED,
+    {"rsa3072_oqsdefault", TLSEXT_SIGALG_rsa3072_oqsdefault,
+     NID_undef, -1, EVP_PKEY_RSA3072_OQSDEFAULT, SSL_PKEY_RSA3072_OQSDEFAULT,
      NID_undef, NID_undef},
     {"dilithium2", TLSEXT_SIGALG_dilithium2,
      NID_undef, -1, EVP_PKEY_DILITHIUM2, SSL_PKEY_DILITHIUM2,
+     NID_undef, NID_undef},
+    {"p256_dilithium2", TLSEXT_SIGALG_p256_dilithium2,
+     NID_undef, -1, EVP_PKEY_P256_DILITHIUM2, SSL_PKEY_P256_DILITHIUM2,
+     NID_undef, NID_undef},
+    {"rsa3072_dilithium2", TLSEXT_SIGALG_rsa3072_dilithium2,
+     NID_undef, -1, EVP_PKEY_RSA3072_DILITHIUM2, SSL_PKEY_RSA3072_DILITHIUM2,
      NID_undef, NID_undef},
     {"dilithium3", TLSEXT_SIGALG_dilithium3,
      NID_undef, -1, EVP_PKEY_DILITHIUM3, SSL_PKEY_DILITHIUM3,
      NID_undef, NID_undef},
     {"dilithium4", TLSEXT_SIGALG_dilithium4,
      NID_undef, -1, EVP_PKEY_DILITHIUM4, SSL_PKEY_DILITHIUM4,
-     NID_undef, NID_undef},  
-    /* ADD_MORE_OQS_SIG_HERE */
-    /* OQS hybrid schemes */
-    {"p256_picnicL1FS", TLSEXT_SIGALG_p256_picnicL1FS,
+     NID_undef, NID_undef},
+    {"p384_dilithium4", TLSEXT_SIGALG_p384_dilithium4,
+     NID_undef, -1, EVP_PKEY_P384_DILITHIUM4, SSL_PKEY_P384_DILITHIUM4,
+     NID_undef, NID_undef},
+    {"picnicl1fs", TLSEXT_SIGALG_picnicl1fs,
+     NID_undef, -1, EVP_PKEY_PICNICL1FS, SSL_PKEY_PICNICL1FS,
+     NID_undef, NID_undef},
+    {"p256_picnicl1fs", TLSEXT_SIGALG_p256_picnicl1fs,
      NID_undef, -1, EVP_PKEY_P256_PICNICL1FS, SSL_PKEY_P256_PICNICL1FS,
      NID_undef, NID_undef},
-    {"rsa3072_picnicL1FS", TLSEXT_SIGALG_rsa3072_picnicL1FS,
+    {"rsa3072_picnicl1fs", TLSEXT_SIGALG_rsa3072_picnicl1fs,
      NID_undef, -1, EVP_PKEY_RSA3072_PICNICL1FS, SSL_PKEY_RSA3072_PICNICL1FS,
      NID_undef, NID_undef},
-    {"p256_qteslaI", TLSEXT_SIGALG_p256_qteslaI,
+    {"qteslai", TLSEXT_SIGALG_qteslai,
+     NID_undef, -1, EVP_PKEY_QTESLAI, SSL_PKEY_QTESLAI,
+     NID_undef, NID_undef},
+    {"p256_qteslai", TLSEXT_SIGALG_p256_qteslai,
      NID_undef, -1, EVP_PKEY_P256_QTESLAI, SSL_PKEY_P256_QTESLAI,
      NID_undef, NID_undef},
-    {"rsa3072_qteslaI", TLSEXT_SIGALG_rsa3072_qteslaI,
+    {"rsa3072_qteslai", TLSEXT_SIGALG_rsa3072_qteslai,
      NID_undef, -1, EVP_PKEY_RSA3072_QTESLAI, SSL_PKEY_RSA3072_QTESLAI,
      NID_undef, NID_undef},
-    {"p384_qteslaIIIsize", TLSEXT_SIGALG_p384_qteslaIIIsize,
+    {"qteslaiiisize", TLSEXT_SIGALG_qteslaiiisize,
+     NID_undef, -1, EVP_PKEY_QTESLAIIISIZE, SSL_PKEY_QTESLAIIISIZE,
+     NID_undef, NID_undef},
+    {"p384_qteslaiiisize", TLSEXT_SIGALG_p384_qteslaiiisize,
      NID_undef, -1, EVP_PKEY_P384_QTESLAIIISIZE, SSL_PKEY_P384_QTESLAIIISIZE,
      NID_undef, NID_undef},
-    {"p384_qteslaIIIspeed", TLSEXT_SIGALG_p384_qteslaIIIspeed,
+    {"qteslaiiispeed", TLSEXT_SIGALG_qteslaiiispeed,
+     NID_undef, -1, EVP_PKEY_QTESLAIIISPEED, SSL_PKEY_QTESLAIIISPEED,
+     NID_undef, NID_undef},
+    {"p384_qteslaiiispeed", TLSEXT_SIGALG_p384_qteslaiiispeed,
      NID_undef, -1, EVP_PKEY_P384_QTESLAIIISPEED, SSL_PKEY_P384_QTESLAIIISPEED,
      NID_undef, NID_undef},
-    /* ADD_MORE_OQS_SIG_HERE hybrid only */
+///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_END
 #endif
 };
 /* Legacy sigalgs for TLS < 1.2 RSA TLS signatures */
@@ -2629,23 +2649,27 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED25519);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED448);
 #if !defined(OQS_NIST_BRANCH)
-    /* OQS sig schemes */
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNICL1FS);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAI);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISIZE);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISPEED);
+///// OQS_TEMPLATE_FRAGMENT_ADD_CERT_CHAIN_CHECKS_START
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_OQSDEFAULT);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_OQSDEFAULT);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_OQSDEFAULT);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM2);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_DILITHIUM2);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_DILITHIUM2);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM3);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM4);
-    /* ADD_MORE_OQS_SIG_HERE */
-    /* OQS hybrid schemes */
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_DILITHIUM4);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNICL1FS);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_PICNICL1FS);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_PICNICL1FS);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAI);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_QTESLAI);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_QTESLAI);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISIZE);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_QTESLAIIISIZE);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISPEED);
-    /* ADD_MORE_OQS_SIG_HERE hybrid only */
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_QTESLAIIISPEED);
+///// OQS_TEMPLATE_FRAGMENT_ADD_CERT_CHAIN_CHECKS_END
 #endif
 }
 

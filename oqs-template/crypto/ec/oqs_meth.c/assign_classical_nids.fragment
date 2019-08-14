@@ -1,0 +1,32 @@
+{%- set with_rsa3072 = [] -%}
+{%- set with_p256 = [] -%}
+{%- set with_p384 = [] -%}
+{%- set with_p521 = [] -%}
+{%- for sig in config['sigs'] -%}
+    {%- for variant in sig['variants'] -%}
+        {%- for classical_alg in variant['mix_with'] -%}
+            {%- if classical_alg.name == 'rsa3072' -%}
+                {%- do with_rsa3072.append(variant) -%}
+            {%- elif classical_alg.name == 'p256' -%}
+                {%- do with_p256.append(variant) -%}
+            {%- elif classical_alg.name == 'p384' -%}
+                {%- do with_p384.append(variant) -%}
+            {%- elif classical_alg.name == 'p521' -%}
+                {%- do with_p521.append(variant) -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endfor -%}
+{%- endfor %}
+{%- for pq_alg in with_rsa3072 %}
+    case NID_rsa3072_{{ pq_alg['name'] }}:
+{%- endfor %}
+      return NID_rsaEncryption;
+{%- for pq_alg in with_p256 %}
+    case NID_p256_{{ pq_alg['name'] }}:
+{%- endfor %}
+      return NID_X9_62_prime256v1;
+{%- for pq_alg in with_p384 %}
+    case NID_p384_{{ pq_alg['name'] }}:
+{%- endfor %}
+      return NID_secp384r1;
+

@@ -1,0 +1,12 @@
+{%- for sig in config['sigs'] %}
+    {%- set count = namespace(val=1) -%}
+    {%- for variant in sig['variants'] %}
+{{ sig['oid']|replace('.', ' ') }} {{ count.val }} : {{ variant['name'] }} : {{ variant['name'] }}
+        {%- set count.val = count.val + 1 -%}
+        {%- for classical_alg in variant['mix_with'] %}
+{{ sig['oid']|replace('.', ' ') }} {{ count.val }} : {{ classical_alg['name'] }}_{{ variant['name'] }} : {{ classical_alg['name'] }}_{{ variant['name'] }}
+        {%- set count.val = count.val + 1 -%}
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+

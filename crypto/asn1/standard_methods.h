@@ -60,20 +60,26 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
     &sm2_asn1_meth,
 #endif
 #if !defined(OQS_NIST_BRANCH)
-    /* OQS sig schemes (list in NID order!) */
-    /* ADD_MORE_OQS_SIG_HERE */
-    &picnicL1FS_asn1_meth,
-    &p256_picnicL1FS_asn1_meth,
-    &rsa3072_picnicL1FS_asn1_meth,
-    &qteslaI_asn1_meth,
-    &p256_qteslaI_asn1_meth,
-    &rsa3072_qteslaI_asn1_meth,
-    &qteslaIIIsize_asn1_meth,
-    &p384_qteslaIIIsize_asn1_meth,
-    &qteslaIIIspeed_asn1_meth,
-    &p384_qteslaIIIspeed_asn1_meth,
+///// OQS_TEMPLATE_FRAGMENT_SIG_ASN1_METHS_START
+    &oqsdefault_asn1_meth,
+    &p256_oqsdefault_asn1_meth,
+    &rsa3072_oqsdefault_asn1_meth,
     &dilithium2_asn1_meth,
+    &p256_dilithium2_asn1_meth,
+    &rsa3072_dilithium2_asn1_meth,
     &dilithium3_asn1_meth,
     &dilithium4_asn1_meth,
+    &p384_dilithium4_asn1_meth,
+    &picnicl1fs_asn1_meth,
+    &p256_picnicl1fs_asn1_meth,
+    &rsa3072_picnicl1fs_asn1_meth,
+    &qteslai_asn1_meth,
+    &p256_qteslai_asn1_meth,
+    &rsa3072_qteslai_asn1_meth,
+    &qteslaiiisize_asn1_meth,
+    &p384_qteslaiiisize_asn1_meth,
+    &qteslaiiispeed_asn1_meth,
+    &p384_qteslaiiispeed_asn1_meth,
+///// OQS_TEMPLATE_FRAGMENT_SIG_ASN1_METHS_END
 #endif
 };

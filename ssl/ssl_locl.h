@@ -203,36 +203,46 @@
 /* GOST R 34.10-2012 signature auth */
 # define SSL_aGOST12             0x00000080U
 #if !defined(OQS_NIST_BRANCH)
-/* OQS sig schemes */
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_MASKS_START
+/* OQS Default Signature Algorithm auth */
+#define SSL_aOQSDEFAULT 0x00000100
+/* ECDSA p256 - OQS Default Signature Algorithm auth */
+#define SSL_aP256OQSDEFAULT 0x00000200
+/* RSA3072 - OQS Default Signature Algorithm auth */
+#define SSL_aRSA3072OQSDEFAULT 0x00000400
+/* Dilithium-2 auth */
+#define SSL_aDILITHIUM2 0x00000800
+/* ECDSA p256 - Dilithium-2 auth */
+#define SSL_aP256DILITHIUM2 0x00001000
+/* RSA3072 - Dilithium-2 auth */
+#define SSL_aRSA3072DILITHIUM2 0x00002000
+/* Dilithium-3 auth */
+#define SSL_aDILITHIUM3 0x00004000
+/* Dilithium-4 auth */
+#define SSL_aDILITHIUM4 0x00008000
+/* ECDSA p384 - Dilithium-4 auth */
+#define SSL_aP384DILITHIUM4 0x00010000
 /* Picnic L1 FS auth */
-# define SSL_aPICNICL1FS         0x00000100U
-/* qTESLA I auth */
-# define SSL_aQTESLAI            0x00000200U
-/* qTESLA III size auth */
-# define SSL_aQTESLAIIISIZE      0x00000400U
-/* qTESLA III speed auth */
-# define SSL_aQTESLAIIISPEED     0x00000800U
-/* Dilithium 2 auth */
-# define SSL_aDILITHIUM2         0x00040000U
-/* Dilithium 3 auth */
-# define SSL_aDILITHIUM3         0x00080000U
-/* Dilithium 4 auth */
-# define SSL_aDILITHIUM4         0x00100000U
-/* ADD_MORE_OQS_SIG_HERE */
-/* OQS hybrid schemes */
-/* ECDSA P256 - Picnic L1 FS auth */
-# define SSL_aP256PICNICL1FS     0x00001000U
+#define SSL_aPICNICL1FS 0x00020000
+/* ECDSA p256 - Picnic L1 FS auth */
+#define SSL_aP256PICNICL1FS 0x00040000
 /* RSA3072 - Picnic L1 FS auth */
-# define SSL_aRSA3072PICNICL1FS  0x00002000U
-/* ECDSA P256 - qTESLA I auth */
-# define SSL_aP256QTESLAI        0x00004000U
-/* RSA3072 - qTESLA I auth */
-# define SSL_aRSA3072QTESLAI     0x00008000U
-/* ECDSA P384 - qTESLA III size auth */
-# define SSL_aP384QTESLAIIISIZE  0x00010000U
-/* ECDSA P384 - qTESLA III speed auth */
-# define SSL_aP384QTESLAIIISPEED 0x00020000U
-/* ADD_MORE_OQS_SIG_HERE hybrid only */
+#define SSL_aRSA3072PICNICL1FS 0x00080000
+/* qTESLA-I auth */
+#define SSL_aQTESLAI 0x00100000
+/* ECDSA p256 - qTESLA-I auth */
+#define SSL_aP256QTESLAI 0x00200000
+/* RSA3072 - qTESLA-I auth */
+#define SSL_aRSA3072QTESLAI 0x00400000
+/* qTESLA-III-size auth */
+#define SSL_aQTESLAIIISIZE 0x00800000
+/* ECDSA p384 - qTESLA-III-size auth */
+#define SSL_aP384QTESLAIIISIZE 0x01000000
+/* qTESLA-III-speed auth */
+#define SSL_aQTESLAIIISPEED 0x02000000
+/* ECDSA p384 - qTESLA-III-speed auth */
+#define SSL_aP384QTESLAIIISPEED 0x04000000
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_MASKS_END
 #endif
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 # define SSL_aANY                0x00000000U
@@ -417,24 +427,29 @@
 # define SSL_PKEY_ED25519        7
 # define SSL_PKEY_ED448          8
 #if !defined(OQS_NIST_BRANCH)
-/* OQS sig schemes */
-# define SSL_PKEY_PICNICL1FS     9
-# define SSL_PKEY_QTESLAI        10
-# define SSL_PKEY_QTESLAIIISIZE  11
-# define SSL_PKEY_QTESLAIIISPEED 12
-# define SSL_PKEY_DILITHIUM2     19
-# define SSL_PKEY_DILITHIUM3     20
-# define SSL_PKEY_DILITHIUM4     21
-/* ADD_MORE_OQS_SIG_HERE */
-/* OQS hybrid schemes */
-# define SSL_PKEY_P256_PICNICL1FS     13
-# define SSL_PKEY_RSA3072_PICNICL1FS  14
-# define SSL_PKEY_P256_QTESLAI        15
-# define SSL_PKEY_RSA3072_QTESLAI     16
-# define SSL_PKEY_P384_QTESLAIIISIZE  17
-# define SSL_PKEY_P384_QTESLAIIISPEED 18
-/* ADD_MORE_OQS_SIG_HERE */
-# define SSL_PKEY_NUM            22
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_SSL_PKEYS_START
+#define SSL_PKEY_OQSDEFAULT 9
+#define SSL_PKEY_P256_OQSDEFAULT 10
+#define SSL_PKEY_RSA3072_OQSDEFAULT 11
+#define SSL_PKEY_DILITHIUM2 12
+#define SSL_PKEY_P256_DILITHIUM2 13
+#define SSL_PKEY_RSA3072_DILITHIUM2 14
+#define SSL_PKEY_DILITHIUM3 15
+#define SSL_PKEY_DILITHIUM4 16
+#define SSL_PKEY_P384_DILITHIUM4 17
+#define SSL_PKEY_PICNICL1FS 18
+#define SSL_PKEY_P256_PICNICL1FS 19
+#define SSL_PKEY_RSA3072_PICNICL1FS 20
+#define SSL_PKEY_QTESLAI 21
+#define SSL_PKEY_P256_QTESLAI 22
+#define SSL_PKEY_RSA3072_QTESLAI 23
+#define SSL_PKEY_QTESLAIIISIZE 24
+#define SSL_PKEY_P384_QTESLAIIISIZE 25
+#define SSL_PKEY_QTESLAIIISPEED 26
+#define SSL_PKEY_P384_QTESLAIIISPEED 27
+
+#define SSL_PKEY_NUM 28
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_SSL_PKEYS_END
 #else
 # define SSL_PKEY_NUM            9
 #endif
@@ -2388,23 +2403,46 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_ed448                                     0x0808
 
 #if !defined(OQS_NIST_BRANCH)
-/* OQS sig schemes */
-#define TLSEXT_SIGALG_picnicL1FS                                0xfe00 /* private use code point */
-#define TLSEXT_SIGALG_qteslaI                                   0xfe01 /* private use code point */
-#define TLSEXT_SIGALG_qteslaIIIsize                             0xfe02 /* private use code point */
-#define TLSEXT_SIGALG_qteslaIIIspeed                            0xfe03 /* private use code point */
-#define TLSEXT_SIGALG_dilithium2                                0xfe0a /* private use code point */
-#define TLSEXT_SIGALG_dilithium3                                0xfe0b /* private use code point */
-#define TLSEXT_SIGALG_dilithium4                                0xfe0c /* private use code point */
-/* ADD_MORE_OQS_SIG_HERE */
-/* OQS hybrid schemes */
-#define TLSEXT_SIGALG_p256_picnicL1FS                           0xfe04 /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_picnicL1FS                        0xfe05 /* private use code point */
-#define TLSEXT_SIGALG_p256_qteslaI                              0xfe06 /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_qteslaI                           0xfe07 /* private use code point */
-#define TLSEXT_SIGALG_p384_qteslaIIIsize                        0xfe08 /* private use code point */
-#define TLSEXT_SIGALG_p384_qteslaIIIspeed                       0xfe09 /* private use code point */
-/* ADD_MORE_OQS_SIG_HERE hybrid only */
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_CODE_POINTS_START
+#define TLSEXT_SIGALG_oqsdefault \
+      0xfe00 /* private use code point */
+#define TLSEXT_SIGALG_p256_oqsdefault \
+      0xfe01 /* private use code point */
+#define TLSEXT_SIGALG_rsa3072_oqsdefault \
+      0xfe02 /* private use code point */
+#define TLSEXT_SIGALG_dilithium2 \
+      0xfe03 /* private use code point */
+#define TLSEXT_SIGALG_p256_dilithium2 \
+      0xfe04 /* private use code point */
+#define TLSEXT_SIGALG_rsa3072_dilithium2 \
+      0xfe05 /* private use code point */
+#define TLSEXT_SIGALG_dilithium3 \
+      0xfe06 /* private use code point */
+#define TLSEXT_SIGALG_dilithium4 \
+      0xfe07 /* private use code point */
+#define TLSEXT_SIGALG_p384_dilithium4 \
+      0xfe08 /* private use code point */
+#define TLSEXT_SIGALG_picnicl1fs \
+      0xfe09 /* private use code point */
+#define TLSEXT_SIGALG_p256_picnicl1fs \
+      0xfe0a /* private use code point */
+#define TLSEXT_SIGALG_rsa3072_picnicl1fs \
+      0xfe0b /* private use code point */
+#define TLSEXT_SIGALG_qteslai \
+      0xfe0c /* private use code point */
+#define TLSEXT_SIGALG_p256_qteslai \
+      0xfe0d /* private use code point */
+#define TLSEXT_SIGALG_rsa3072_qteslai \
+      0xfe0e /* private use code point */
+#define TLSEXT_SIGALG_qteslaiiisize \
+      0xfe0f /* private use code point */
+#define TLSEXT_SIGALG_p384_qteslaiiisize \
+      0xfe10 /* private use code point */
+#define TLSEXT_SIGALG_qteslaiiispeed \
+      0xfe11 /* private use code point */
+#define TLSEXT_SIGALG_p384_qteslaiiispeed \
+      0xfe12 /* private use code point */
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_CODE_POINTS_END
 #endif
 
 /* Known PSK key exchange modes */

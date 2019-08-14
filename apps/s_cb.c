@@ -226,54 +226,65 @@ static const char *get_sigtype(int nid)
     case EVP_PKEY_DSA:
         return "DSA";
 
-     case EVP_PKEY_EC:
+    case EVP_PKEY_EC:
         return "ECDSA";
 
-     case NID_ED25519:
+    case NID_ED25519:
         return "Ed25519";
 
-     case NID_ED448:
+    case NID_ED448:
         return "Ed448";
 
-     case NID_id_GostR3410_2001:
+    case NID_id_GostR3410_2001:
         return "gost2001";
 
-     case NID_id_GostR3410_2012_256:
+    case NID_id_GostR3410_2012_256:
         return "gost2012_256";
 
-     case NID_id_GostR3410_2012_512:
+    case NID_id_GostR3410_2012_512:
         return "gost2012_512";
 
 #if !defined(OQS_NIST_BRANCH)
-     /* OQS sig schemes */
-     case NID_picnicL1FS:
-        return "Picnic L1 FS";
-     case NID_qteslaI:
-        return "qTESLA-I";
-     case NID_qteslaIIIsize:
-        return "qTESLA-III-size";
-     case NID_qteslaIIIspeed:
-        return "qTESLA-III-speed";
-     case NID_dilithium2:
+///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_START
+    case NID_oqsdefault:
+        return "OQS Default Signature Algorithm";
+    case NID_p256_oqsdefault:
+        return "ECDSA p256 - OQS Default Signature Algorithm";
+    case NID_rsa3072_oqsdefault:
+        return "RSA3072 - OQS Default Signature Algorithm";
+    case NID_dilithium2:
         return "Dilithium-2";
-     case NID_dilithium3:
+    case NID_p256_dilithium2:
+        return "ECDSA p256 - Dilithium-2";
+    case NID_rsa3072_dilithium2:
+        return "RSA3072 - Dilithium-2";
+    case NID_dilithium3:
         return "Dilithium-3";
-     case NID_dilithium4:
-        return "Dilithium-4"; 
-     /* ADD_MORE_OQS_SIG_HERE */
-     case NID_p256_picnicL1FS:
+    case NID_dilithium4:
+        return "Dilithium-4";
+    case NID_p384_dilithium4:
+        return "ECDSA p384 - Dilithium-4";
+    case NID_picnicl1fs:
+        return "Picnic L1 FS";
+    case NID_p256_picnicl1fs:
         return "ECDSA p256 - Picnic L1 FS";
-     case NID_rsa3072_picnicL1FS:
+    case NID_rsa3072_picnicl1fs:
         return "RSA3072 - Picnic L1 FS";
-     case NID_p256_qteslaI:
+    case NID_qteslai:
+        return "qTESLA-I";
+    case NID_p256_qteslai:
         return "ECDSA p256 - qTESLA-I";
-     case NID_rsa3072_qteslaI:
+    case NID_rsa3072_qteslai:
         return "RSA3072 - qTESLA-I";
-     case NID_p384_qteslaIIIsize:
+    case NID_qteslaiiisize:
+        return "qTESLA-III-size";
+    case NID_p384_qteslaiiisize:
         return "ECDSA p384 - qTESLA-III-size";
-     case NID_p384_qteslaIIIspeed:
+    case NID_qteslaiiispeed:
+        return "qTESLA-III-speed";
+    case NID_p384_qteslaiiispeed:
         return "ECDSA p384 - qTESLA-III-speed";
-     /* ADD_MORE_OQS_SIG_HERE hybrid only */
+///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_END
 #endif
     default:
         return NULL;

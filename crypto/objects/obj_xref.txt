@@ -23,21 +23,27 @@ RSA_SHA3_512		sha3_512 rsaEncryption
 rsassaPss		undef	rsaEncryption
 ED25519		    undef	ED25519
 ED448		    undef	ED448
-# OQS signature schemes
-picnicL1FS          undef     picnicL1FS
-p256_picnicL1FS     undef     p256_picnicL1FS
-rsa3072_picnicL1FS  undef     rsa3072_picnicL1FS
-qteslaI             undef     qteslaI
-p256_qteslaI        undef     p256_qteslaI
-rsa3072_qteslaI     undef     rsa3072_qteslaI
-qteslaIIIsize       undef     qteslaIIIsize
-p384_qteslaIIIsize  undef     p384_qteslaIIIsize
-qteslaIIIspeed      undef     qteslaIIIspeed
-p384_qteslaIIIspeed undef     p384_qteslaIIIspeed
-dilithium2         undef     dilithium2
-dilithium3         undef     dilithium3
-dilithium4         undef     dilithium4
-# ADD_MORE_OQS_SIG_HERE
+##### OQS_TEMPLATE_FRAGMENT_LIST_OQS_SIGS_START
+oqsdefault	undef	oqsdefault
+p256_oqsdefault	undef	p256_oqsdefault
+rsa3072_oqsdefault	undef	rsa3072_oqsdefault
+dilithium2	undef	dilithium2
+p256_dilithium2	undef	p256_dilithium2
+rsa3072_dilithium2	undef	rsa3072_dilithium2
+dilithium3	undef	dilithium3
+dilithium4	undef	dilithium4
+p384_dilithium4	undef	p384_dilithium4
+picnicl1fs	undef	picnicl1fs
+p256_picnicl1fs	undef	p256_picnicl1fs
+rsa3072_picnicl1fs	undef	rsa3072_picnicl1fs
+qteslai	undef	qteslai
+p256_qteslai	undef	p256_qteslai
+rsa3072_qteslai	undef	rsa3072_qteslai
+qteslaiiisize	undef	qteslaiiisize
+p384_qteslaiiisize	undef	p384_qteslaiiisize
+qteslaiiispeed	undef	qteslaiiispeed
+p384_qteslaiiispeed	undef	p384_qteslaiiispeed
+##### OQS_TEMPLATE_FRAGMENT_LIST_OQS_SIGS_END
 
 
 # Alternative deprecated OIDs. By using the older "rsa" OID this

@@ -113,23 +113,27 @@ extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD poly1305_pkey_meth;
 extern const EVP_PKEY_METHOD siphash_pkey_meth;
 #if !defined(OQS_NIST_BRANCH)
-/* OQS sig schemes */
-extern const EVP_PKEY_METHOD picnicL1FS_pkey_meth;
-extern const EVP_PKEY_METHOD qteslaI_pkey_meth;
-extern const EVP_PKEY_METHOD qteslaIIIsize_pkey_meth;
-extern const EVP_PKEY_METHOD qteslaIIIspeed_pkey_meth;
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_METHS_START
+extern const EVP_PKEY_METHOD oqsdefault_pkey_meth;
+extern const EVP_PKEY_METHOD p256_oqsdefault_pkey_meth;
+extern const EVP_PKEY_METHOD rsa3072_oqsdefault_pkey_meth;
 extern const EVP_PKEY_METHOD dilithium2_pkey_meth;
+extern const EVP_PKEY_METHOD p256_dilithium2_pkey_meth;
+extern const EVP_PKEY_METHOD rsa3072_dilithium2_pkey_meth;
 extern const EVP_PKEY_METHOD dilithium3_pkey_meth;
 extern const EVP_PKEY_METHOD dilithium4_pkey_meth;
-/* ADD_MORE_OQS_SIG_HERE */
-/* OQS hybrid schemes */
-extern const EVP_PKEY_METHOD p256_picnicL1FS_pkey_meth;
-extern const EVP_PKEY_METHOD rsa3072_picnicL1FS_pkey_meth;
-extern const EVP_PKEY_METHOD p256_qteslaI_pkey_meth;
-extern const EVP_PKEY_METHOD rsa3072_qteslaI_pkey_meth;
-extern const EVP_PKEY_METHOD p384_qteslaIIIsize_pkey_meth;
-extern const EVP_PKEY_METHOD p384_qteslaIIIspeed_pkey_meth;
-/* ADD_MORE_OQS_SIG_HERE hybrid only */
+extern const EVP_PKEY_METHOD p384_dilithium4_pkey_meth;
+extern const EVP_PKEY_METHOD picnicl1fs_pkey_meth;
+extern const EVP_PKEY_METHOD p256_picnicl1fs_pkey_meth;
+extern const EVP_PKEY_METHOD rsa3072_picnicl1fs_pkey_meth;
+extern const EVP_PKEY_METHOD qteslai_pkey_meth;
+extern const EVP_PKEY_METHOD p256_qteslai_pkey_meth;
+extern const EVP_PKEY_METHOD rsa3072_qteslai_pkey_meth;
+extern const EVP_PKEY_METHOD qteslaiiisize_pkey_meth;
+extern const EVP_PKEY_METHOD p384_qteslaiiisize_pkey_meth;
+extern const EVP_PKEY_METHOD qteslaiiispeed_pkey_meth;
+extern const EVP_PKEY_METHOD p384_qteslaiiispeed_pkey_meth;
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_METHS_END
 #endif
 
 struct evp_md_st {

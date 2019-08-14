@@ -69,21 +69,27 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &sm2_pkey_meth,
 #endif
 #if !defined(OQS_NIST_BRANCH)
-    /* OQS schemes (list in NID order!) */
-    /* ADD_MORE_OQS_SIG_HERE */
-    &picnicL1FS_pkey_meth,
-    &p256_picnicL1FS_pkey_meth,
-    &rsa3072_picnicL1FS_pkey_meth,
-    &qteslaI_pkey_meth,
-    &p256_qteslaI_pkey_meth,
-    &rsa3072_qteslaI_pkey_meth,
-    &qteslaIIIsize_pkey_meth,
-    &p384_qteslaIIIsize_pkey_meth,
-    &qteslaIIIspeed_pkey_meth,
-    &p384_qteslaIIIspeed_pkey_meth,
+///// OQS_TEMPLATE_FRAGMENT_LIST_PKEY_METHS_START
+    &oqsdefault_pkey_meth,
+    &p256_oqsdefault_pkey_meth,
+    &rsa3072_oqsdefault_pkey_meth,
     &dilithium2_pkey_meth,
+    &p256_dilithium2_pkey_meth,
+    &rsa3072_dilithium2_pkey_meth,
     &dilithium3_pkey_meth,
     &dilithium4_pkey_meth,
+    &p384_dilithium4_pkey_meth,
+    &picnicl1fs_pkey_meth,
+    &p256_picnicl1fs_pkey_meth,
+    &rsa3072_picnicl1fs_pkey_meth,
+    &qteslai_pkey_meth,
+    &p256_qteslai_pkey_meth,
+    &rsa3072_qteslai_pkey_meth,
+    &qteslaiiisize_pkey_meth,
+    &p384_qteslaiiisize_pkey_meth,
+    &qteslaiiispeed_pkey_meth,
+    &p384_qteslaiiispeed_pkey_meth,
+///// OQS_TEMPLATE_FRAGMENT_LIST_PKEY_METHS_END
 #endif
 };
 

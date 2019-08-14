@@ -1,0 +1,9 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+# define EVP_PKEY_{{ variant['name']|upper }} NID_{{ variant['name'] }}
+        {%- for classical_alg in variant['mix_with'] %}
+# define EVP_PKEY_{{ classical_alg['name']|upper }}_{{ variant['name']|upper }} NID_{{ classical_alg['name'] }}_{{ variant['name'] }}
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+

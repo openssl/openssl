@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7921] = {
+static const unsigned char so[7953] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1076,24 +1076,28 @@ static const unsigned char so[7921] = {
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x04,  /* [ 7736] OBJ_id_tc26_gost_3410_2012_256_paramSetD */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0C,       /* [ 7745] OBJ_hmacWithSHA512_224 */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0D,       /* [ 7753] OBJ_hmacWithSHA512_256 */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,            /* [ 7761] OBJ_Microsoft */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,  /* [ 7768] OBJ_MSRPQC */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7777] OBJ_picnicL1FS */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x02,  /* [ 7788] OBJ_p256_picnicL1FS */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x03,  /* [ 7799] OBJ_rsa3072_picnicL1FS */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x01,  /* [ 7810] OBJ_qteslaI */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x02,  /* [ 7821] OBJ_p256_qteslaI */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x03,  /* [ 7832] OBJ_rsa3072_qteslaI */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x04,  /* [ 7843] OBJ_qteslaIIIsize */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x05,  /* [ 7854] OBJ_p384_qteslaIIIsize */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x06,  /* [ 7865] OBJ_qteslaIIIspeed */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x07,  /* [ 7876] OBJ_p384_qteslaIIIspeed */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x02,  /* [ 7887] OBJ_dilithium2 */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x03,  /* [ 7898] OBJ_dilithium3 */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x04,  /* [ 7909] OBJ_dilithium4 */
+    0x2B,0xCE,0x0F,0x01,0x01,                      /* [ 7761] OBJ_oqsdefault */
+    0x2B,0xCE,0x0F,0x01,0x02,                      /* [ 7766] OBJ_p256_oqsdefault */
+    0x2B,0xCE,0x0F,0x01,0x03,                      /* [ 7771] OBJ_rsa3072_oqsdefault */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x01,  /* [ 7776] OBJ_dilithium2 */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x02,  /* [ 7787] OBJ_p256_dilithium2 */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x03,  /* [ 7798] OBJ_rsa3072_dilithium2 */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x04,  /* [ 7809] OBJ_dilithium3 */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x05,  /* [ 7820] OBJ_dilithium4 */
+    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x06,  /* [ 7831] OBJ_p384_dilithium4 */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7842] OBJ_picnicl1fs */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x02,  /* [ 7853] OBJ_p256_picnicl1fs */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x03,  /* [ 7864] OBJ_rsa3072_picnicl1fs */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x01,  /* [ 7875] OBJ_qteslai */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x02,  /* [ 7886] OBJ_p256_qteslai */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x03,  /* [ 7897] OBJ_rsa3072_qteslai */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x04,  /* [ 7908] OBJ_qteslaiiisize */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x05,  /* [ 7919] OBJ_p384_qteslaiiisize */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x06,  /* [ 7930] OBJ_qteslaiiispeed */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x07,  /* [ 7941] OBJ_p384_qteslaiiispeed */
 };
 
-#define NUM_NID 1210
+#define NUM_NID 1214
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2290,24 +2294,28 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"magma-mac", "magma-mac", NID_magma_mac},
     {"hmacWithSHA512-224", "hmacWithSHA512-224", NID_hmacWithSHA512_224, 8, &so[7745]},
     {"hmacWithSHA512-256", "hmacWithSHA512-256", NID_hmacWithSHA512_256, 8, &so[7753]},
-    {"Microsoft", "Microsoft", NID_Microsoft, 7, &so[7761]},
-    {"MSRPQC", "MSRPQC", NID_MSRPQC, 9, &so[7768]},
-    {"picnicL1FS", "picnicL1FS", NID_picnicL1FS, 11, &so[7777]},
-    {"p256_picnicL1FS", "p256_picnicL1FS", NID_p256_picnicL1FS, 11, &so[7788]},
-    {"rsa3072_picnicL1FS", "rsa3072_picnicL1FS", NID_rsa3072_picnicL1FS, 11, &so[7799]},
-    {"qteslaI", "qteslaI", NID_qteslaI, 11, &so[7810]},
-    {"p256_qteslaI", "p256_qteslaI", NID_p256_qteslaI, 11, &so[7821]},
-    {"rsa3072_qteslaI", "rsa3072_qteslaI", NID_rsa3072_qteslaI, 11, &so[7832]},
-    {"qteslaIIIsize", "qteslaIIIsize", NID_qteslaIIIsize, 11, &so[7843]},
-    {"p384_qteslaIIIsize", "p384_qteslaIIIsize", NID_p384_qteslaIIIsize, 11, &so[7854]},
-    {"qteslaIIIspeed", "qteslaIIIspeed", NID_qteslaIIIspeed, 11, &so[7865]},
-    {"p384_qteslaIIIspeed", "p384_qteslaIIIspeed", NID_p384_qteslaIIIspeed, 11, &so[7876]},
-    {"dilithium2", "dilithium2", NID_dilithium2, 11, &so[7887]},
-    {"dilithium3", "dilithium3", NID_dilithium3, 11, &so[7898]},
-    {"dilithium4", "dilithium4", NID_dilithium4, 11, &so[7909]},
+    {"oqsdefault", "oqsdefault", NID_oqsdefault, 5, &so[7761]},
+    {"p256_oqsdefault", "p256_oqsdefault", NID_p256_oqsdefault, 5, &so[7766]},
+    {"rsa3072_oqsdefault", "rsa3072_oqsdefault", NID_rsa3072_oqsdefault, 5, &so[7771]},
+    {"dilithium2", "dilithium2", NID_dilithium2, 11, &so[7776]},
+    {"p256_dilithium2", "p256_dilithium2", NID_p256_dilithium2, 11, &so[7787]},
+    {"rsa3072_dilithium2", "rsa3072_dilithium2", NID_rsa3072_dilithium2, 11, &so[7798]},
+    {"dilithium3", "dilithium3", NID_dilithium3, 11, &so[7809]},
+    {"dilithium4", "dilithium4", NID_dilithium4, 11, &so[7820]},
+    {"p384_dilithium4", "p384_dilithium4", NID_p384_dilithium4, 11, &so[7831]},
+    {"picnicl1fs", "picnicl1fs", NID_picnicl1fs, 11, &so[7842]},
+    {"p256_picnicl1fs", "p256_picnicl1fs", NID_p256_picnicl1fs, 11, &so[7853]},
+    {"rsa3072_picnicl1fs", "rsa3072_picnicl1fs", NID_rsa3072_picnicl1fs, 11, &so[7864]},
+    {"qteslai", "qteslai", NID_qteslai, 11, &so[7875]},
+    {"p256_qteslai", "p256_qteslai", NID_p256_qteslai, 11, &so[7886]},
+    {"rsa3072_qteslai", "rsa3072_qteslai", NID_rsa3072_qteslai, 11, &so[7897]},
+    {"qteslaiiisize", "qteslaiiisize", NID_qteslaiiisize, 11, &so[7908]},
+    {"p384_qteslaiiisize", "p384_qteslaiiisize", NID_p384_qteslaiiisize, 11, &so[7919]},
+    {"qteslaiiispeed", "qteslaiiispeed", NID_qteslaiiispeed, 11, &so[7930]},
+    {"p384_qteslaiiispeed", "p384_qteslaiiispeed", NID_p384_qteslaiiispeed, 11, &so[7941]},
 };
 
-#define NUM_SN 1201
+#define NUM_SN 1205
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2490,9 +2498,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      114,    /* "MD5-SHA1" */
       95,    /* "MDC2" */
      911,    /* "MGF1" */
-    1196,    /* "MSRPQC" */
      388,    /* "Mail" */
-    1195,    /* "Microsoft" */
      393,    /* "NULL" */
      404,    /* "NULL" */
       57,    /* "Netscape" */
@@ -2714,9 +2720,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      939,    /* "dhSinglePass-stdDH-sha384kdf-scheme" */
      940,    /* "dhSinglePass-stdDH-sha512kdf-scheme" */
      920,    /* "dhpublicnumber" */
-    1207,    /* "dilithium2" */
-    1208,    /* "dilithium3" */
-    1209,    /* "dilithium4" */
+    1198,    /* "dilithium2" */
+    1201,    /* "dilithium3" */
+    1202,    /* "dilithium4" */
      382,    /* "directory" */
      887,    /* "distinguishedName" */
      892,    /* "dmdName" */
@@ -3181,15 +3187,19 @@ static const unsigned int sn_objs[NUM_SN] = {
      139,    /* "nsSGC" */
       77,    /* "nsSslServerName" */
      681,    /* "onBasis" */
+    1195,    /* "oqsdefault" */
     1089,    /* "organizationIdentifier" */
      491,    /* "organizationalStatus" */
     1141,    /* "oscca" */
      475,    /* "otherMailbox" */
      876,    /* "owner" */
-    1198,    /* "p256_picnicL1FS" */
-    1201,    /* "p256_qteslaI" */
-    1204,    /* "p384_qteslaIIIsize" */
-    1206,    /* "p384_qteslaIIIspeed" */
+    1199,    /* "p256_dilithium2" */
+    1196,    /* "p256_oqsdefault" */
+    1205,    /* "p256_picnicl1fs" */
+    1208,    /* "p256_qteslai" */
+    1203,    /* "p384_dilithium4" */
+    1211,    /* "p384_qteslaiiisize" */
+    1213,    /* "p384_qteslaiiispeed" */
      489,    /* "pagerTelephoneNumber" */
      374,    /* "path" */
      112,    /* "pbeWithMD5AndCast5CBC" */
@@ -3197,7 +3207,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      487,    /* "personalTitle" */
      464,    /* "photo" */
      863,    /* "physicalDeliveryOfficeName" */
-    1197,    /* "picnicL1FS" */
+    1204,    /* "picnicl1fs" */
      437,    /* "pilot" */
      439,    /* "pilotAttributeSyntax" */
      438,    /* "pilotAttributeType" */
@@ -3247,9 +3257,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      510,    /* "pseudonym" */
      435,    /* "pss" */
      286,    /* "qcStatements" */
-    1200,    /* "qteslaI" */
-    1203,    /* "qteslaIIIsize" */
-    1205,    /* "qteslaIIIspeed" */
+    1207,    /* "qteslai" */
+    1210,    /* "qteslaiiisize" */
+    1212,    /* "qteslaiiispeed" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
      870,    /* "registeredAddress" */
@@ -3257,8 +3267,10 @@ static const unsigned int sn_objs[NUM_SN] = {
      877,    /* "roleOccupant" */
      448,    /* "room" */
      463,    /* "roomNumber" */
-    1199,    /* "rsa3072_picnicL1FS" */
-    1202,    /* "rsa3072_qteslaI" */
+    1200,    /* "rsa3072_dilithium2" */
+    1197,    /* "rsa3072_oqsdefault" */
+    1206,    /* "rsa3072_picnicl1fs" */
+    1209,    /* "rsa3072_qteslai" */
        6,    /* "rsaEncryption" */
      644,    /* "rsaOAEPEncryptionSET" */
      377,    /* "rsaSignature" */
@@ -3512,7 +3524,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1201
+#define NUM_LN 1205
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3614,10 +3626,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      647,    /* "International Organizations" */
      142,    /* "Invalidity Date" */
      504,    /* "MIME MHS" */
-    1196,    /* "MSRPQC" */
      388,    /* "Mail" */
      383,    /* "Management" */
-    1195,    /* "Microsoft" */
      417,    /* "Microsoft CSP Name" */
      135,    /* "Microsoft Commercial Code Signing" */
      138,    /* "Microsoft Encrypted File System" */
@@ -3948,9 +3958,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      938,    /* "dhSinglePass-stdDH-sha256kdf-scheme" */
      939,    /* "dhSinglePass-stdDH-sha384kdf-scheme" */
      940,    /* "dhSinglePass-stdDH-sha512kdf-scheme" */
-    1207,    /* "dilithium2" */
-    1208,    /* "dilithium3" */
-    1209,    /* "dilithium4" */
+    1198,    /* "dilithium2" */
+    1201,    /* "dilithium3" */
+    1202,    /* "dilithium4" */
       11,    /* "directory services (X.500)" */
      378,    /* "directory services - algorithms" */
      887,    /* "distinguishedName" */
@@ -4356,6 +4366,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      481,    /* "nSRecord" */
      173,    /* "name" */
      681,    /* "onBasis" */
+    1195,    /* "oqsdefault" */
      379,    /* "org" */
     1089,    /* "organizationIdentifier" */
       17,    /* "organizationName" */
@@ -4364,10 +4375,13 @@ static const unsigned int ln_objs[NUM_LN] = {
     1141,    /* "oscca" */
      475,    /* "otherMailbox" */
      876,    /* "owner" */
-    1198,    /* "p256_picnicL1FS" */
-    1201,    /* "p256_qteslaI" */
-    1204,    /* "p384_qteslaIIIsize" */
-    1206,    /* "p384_qteslaIIIspeed" */
+    1199,    /* "p256_dilithium2" */
+    1196,    /* "p256_oqsdefault" */
+    1205,    /* "p256_picnicl1fs" */
+    1208,    /* "p256_qteslai" */
+    1203,    /* "p384_dilithium4" */
+    1211,    /* "p384_qteslaiiisize" */
+    1213,    /* "p384_qteslaiiispeed" */
      935,    /* "pSpecified" */
      489,    /* "pagerTelephoneNumber" */
      782,    /* "password based MAC" */
@@ -4390,7 +4404,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      487,    /* "personalTitle" */
      464,    /* "photo" */
      863,    /* "physicalDeliveryOfficeName" */
-    1197,    /* "picnicL1FS" */
+    1204,    /* "picnicl1fs" */
      437,    /* "pilot" */
      439,    /* "pilotAttributeSyntax" */
      438,    /* "pilotAttributeType" */
@@ -4432,9 +4446,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      510,    /* "pseudonym" */
      435,    /* "pss" */
      286,    /* "qcStatements" */
-    1200,    /* "qteslaI" */
-    1203,    /* "qteslaIIIsize" */
-    1205,    /* "qteslaIIIspeed" */
+    1207,    /* "qteslai" */
+    1210,    /* "qteslaiiisize" */
+    1212,    /* "qteslaiiispeed" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
       98,    /* "rc2-40-cbc" */
@@ -4459,8 +4473,10 @@ static const unsigned int ln_objs[NUM_LN] = {
      448,    /* "room" */
      463,    /* "roomNumber" */
       19,    /* "rsa" */
-    1199,    /* "rsa3072_picnicL1FS" */
-    1202,    /* "rsa3072_qteslaI" */
+    1200,    /* "rsa3072_dilithium2" */
+    1197,    /* "rsa3072_oqsdefault" */
+    1206,    /* "rsa3072_picnicl1fs" */
+    1209,    /* "rsa3072_qteslai" */
        6,    /* "rsaEncryption" */
      644,    /* "rsaOAEPEncryptionSET" */
      377,    /* "rsaSignature" */
@@ -4717,7 +4733,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1086
+#define NUM_OBJ 1090
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5025,6 +5041,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      732,    /* OBJ_sect409r1                    1 3 132 0 37 */
      733,    /* OBJ_sect571k1                    1 3 132 0 38 */
      734,    /* OBJ_sect571r1                    1 3 132 0 39 */
+    1195,    /* OBJ_oqsdefault                   1 3 9999 1 1 */
+    1196,    /* OBJ_p256_oqsdefault              1 3 9999 1 2 */
+    1197,    /* OBJ_rsa3072_oqsdefault           1 3 9999 1 3 */
      624,    /* OBJ_set_rootKeyThumb             2 23 42 3 0 0 */
      625,    /* OBJ_set_addPolicy                2 23 42 3 0 1 */
      626,    /* OBJ_setAttr_Token_EMV            2 23 42 3 2 1 */
@@ -5135,7 +5154,6 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      791,    /* OBJ_ecdsa_with_Recommended       1 2 840 10045 4 2 */
      792,    /* OBJ_ecdsa_with_Specified         1 2 840 10045 4 3 */
      920,    /* OBJ_dhpublicnumber               1 2 840 10046 2 1 */
-    1195,    /* OBJ_Microsoft                    1 3 6 1 4 1 311 */
     1032,    /* OBJ_pkInitClientAuth             1 3 6 1 5 2 3 4 */
     1033,    /* OBJ_pkInitKDC                    1 3 6 1 5 2 3 5 */
      258,    /* OBJ_id_pkix_mod                  1 3 6 1 5 5 7 0 */
@@ -5490,7 +5508,6 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      683,    /* OBJ_X9_62_ppBasis                1 2 840 10045 1 2 3 3 */
      417,    /* OBJ_ms_csp_name                  1 3 6 1 4 1 311 17 1 */
      856,    /* OBJ_LocalKeySet                  1 3 6 1 4 1 311 17 2 */
-    1196,    /* OBJ_MSRPQC                       1 3 6 1 4 1 311 89 2 */
      390,    /* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
       91,    /* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
      973,    /* OBJ_id_scrypt                    1 3 6 1 4 1 11591 4 11 */
@@ -5779,19 +5796,22 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      955,    /* OBJ_jurisdictionLocalityName     1 3 6 1 4 1 311 60 2 1 1 */
      956,    /* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
      957,    /* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
-    1197,    /* OBJ_picnicL1FS                   1 3 6 1 4 1 311 89 2 1 1 */
-    1198,    /* OBJ_p256_picnicL1FS              1 3 6 1 4 1 311 89 2 1 2 */
-    1199,    /* OBJ_rsa3072_picnicL1FS           1 3 6 1 4 1 311 89 2 1 3 */
-    1200,    /* OBJ_qteslaI                      1 3 6 1 4 1 311 89 2 2 1 */
-    1201,    /* OBJ_p256_qteslaI                 1 3 6 1 4 1 311 89 2 2 2 */
-    1202,    /* OBJ_rsa3072_qteslaI              1 3 6 1 4 1 311 89 2 2 3 */
-    1203,    /* OBJ_qteslaIIIsize                1 3 6 1 4 1 311 89 2 2 4 */
-    1204,    /* OBJ_p384_qteslaIIIsize           1 3 6 1 4 1 311 89 2 2 5 */
-    1205,    /* OBJ_qteslaIIIspeed               1 3 6 1 4 1 311 89 2 2 6 */
-    1206,    /* OBJ_p384_qteslaIIIspeed          1 3 6 1 4 1 311 89 2 2 7 */
-    1207,    /* OBJ_dilithium2                   1 3 6 1 4 1 772 1 2 2 2 */
-    1208,    /* OBJ_dilithium3                   1 3 6 1 4 1 772 1 2 2 3 */
-    1209,    /* OBJ_dilithium4                   1 3 6 1 4 1 772 1 2 2 4 */
+    1204,    /* OBJ_picnicl1fs                   1 3 6 1 4 1 311 89 2 1 1 */
+    1205,    /* OBJ_p256_picnicl1fs              1 3 6 1 4 1 311 89 2 1 2 */
+    1206,    /* OBJ_rsa3072_picnicl1fs           1 3 6 1 4 1 311 89 2 1 3 */
+    1207,    /* OBJ_qteslai                      1 3 6 1 4 1 311 89 2 2 1 */
+    1208,    /* OBJ_p256_qteslai                 1 3 6 1 4 1 311 89 2 2 2 */
+    1209,    /* OBJ_rsa3072_qteslai              1 3 6 1 4 1 311 89 2 2 3 */
+    1210,    /* OBJ_qteslaiiisize                1 3 6 1 4 1 311 89 2 2 4 */
+    1211,    /* OBJ_p384_qteslaiiisize           1 3 6 1 4 1 311 89 2 2 5 */
+    1212,    /* OBJ_qteslaiiispeed               1 3 6 1 4 1 311 89 2 2 6 */
+    1213,    /* OBJ_p384_qteslaiiispeed          1 3 6 1 4 1 311 89 2 2 7 */
+    1198,    /* OBJ_dilithium2                   1 3 6 1 4 1 772 1 2 2 1 */
+    1199,    /* OBJ_p256_dilithium2              1 3 6 1 4 1 772 1 2 2 2 */
+    1200,    /* OBJ_rsa3072_dilithium2           1 3 6 1 4 1 772 1 2 2 3 */
+    1201,    /* OBJ_dilithium3                   1 3 6 1 4 1 772 1 2 2 4 */
+    1202,    /* OBJ_dilithium4                   1 3 6 1 4 1 772 1 2 2 5 */
+    1203,    /* OBJ_p384_dilithium4              1 3 6 1 4 1 772 1 2 2 6 */
     1056,    /* OBJ_blake2b512                   1 3 6 1 4 1 1722 12 2 1 16 */
     1057,    /* OBJ_blake2s256                   1 3 6 1 4 1 1722 12 2 2 8 */
     1159,    /* OBJ_dstu4145be                   1 2 804 2 1 1 1 1 3 1 1 1 1 */

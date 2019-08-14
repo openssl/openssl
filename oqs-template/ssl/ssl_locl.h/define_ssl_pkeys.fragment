@@ -1,0 +1,14 @@
+{% set count = namespace(val=9) %}
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+#define SSL_PKEY_{{ variant['name']|upper }} {{ count.val }}
+        {%- set count.val = count.val + 1 -%}
+        {%- for classical_alg in variant['mix_with'] %}
+#define SSL_PKEY_{{ classical_alg['name']|upper }}_{{ variant['name']|upper }} {{ count.val }}
+        {%- set count.val = count.val + 1 -%}
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+
+#define SSL_PKEY_NUM {{ count.val }}
+
