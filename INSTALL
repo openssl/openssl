@@ -144,7 +144,10 @@
                    Don't build with support for deprecated APIs below the
                    specified version number. For example "--api=1.1.0" will
                    remove support for all APIS that were deprecated in OpenSSL
-                   version 1.1.0 or below.
+                   version 1.1.0 or below. This is a rather specialized option
+                   for developers. If you just intend to remove all deprecated
+                   APIs entirely (up to the current version), it is easier
+                   to add the 'no-deprecated' option instead (see below).
 
   --cross-compile-prefix=PREFIX
                    The PREFIX to include in front of commands for your
