@@ -42,8 +42,8 @@ static void *name##_dupctx(void *ctx) \
 
 # define OSSL_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)     \
 static OSSL_OP_digest_get_params_fn name##_get_params;                  \
-static OSSL_OP_digest_gettable_types_fn name##_gettable_types;          \
-static const OSSL_PARAM known_##name##_gettable_types[] = {             \
+static OSSL_OP_digest_gettable_params_fn name##_gettable_params;          \
+static const OSSL_PARAM known_##name##_gettable_params[] = {             \
     {OSSL_DIGEST_PARAM_BLOCK_SIZE, OSSL_PARAM_INTEGER,                  \
      NULL, sizeof(int), 0},                                             \
     {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_INTEGER, NULL, sizeof(int), 0}, \
@@ -51,9 +51,9 @@ static const OSSL_PARAM known_##name##_gettable_types[] = {             \
      NULL, sizeof(unsigned long), 0},                                   \
     OSSL_PARAM_END                                                      \
 };                                                                      \
-static const OSSL_PARAM *name##_gettable_types(void)                    \
+static const OSSL_PARAM *name##_gettable_params(void)                    \
 {                                                                       \
-    return known_##name##_gettable_types;                               \
+    return known_##name##_gettable_params;                               \
 }                                                                       \
 static int name##_get_params(OSSL_PARAM params[])                       \
 {                                                                       \
@@ -92,7 +92,7 @@ const OSSL_DISPATCH name##_functions[] = { \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))name##_dupctx }, \
     { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))name##_get_params }, \
     { OSSL_FUNC_DIGEST_GETTABLE_TYPES, \
-      (void (*)(void))name##_gettable_types },
+      (void (*)(void))name##_gettable_params },
 
 # define OSSL_FUNC_DIGEST_CONSTRUCT_END \
     { 0, NULL } \
