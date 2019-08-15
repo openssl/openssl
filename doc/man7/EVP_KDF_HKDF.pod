@@ -126,7 +126,7 @@ the intermediate fixed-length pseudorandom key otherwise an error will occur.
 For that mode, the fixed output size can be looked up by calling EVP_KDF_size()
 after setting the mode and digest on the C<EVP_KDF_CTX>.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example derives 10 bytes using SHA-256 with the secret key "secret",
 salt value "salt" and info value "label":

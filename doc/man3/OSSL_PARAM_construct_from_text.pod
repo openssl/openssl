@@ -81,7 +81,7 @@ All other attributes are ignored.
 The I<data_size> attribute can be zero, meaning that the parameter it
 describes expects arbitrary length data.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Code that looked like this:
 

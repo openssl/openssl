@@ -90,7 +90,7 @@ EVP_KDF_CTX *kctx = EVP_KDF_CTX_new_id(EVP_KDF_X942);
 The output length of an X942KDF is specified via the C<keylen>
 parameter to the L<EVP_KDF_derive(3)> function.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example derives 24 bytes, with the secret key "secret" and a random user
 keying material:

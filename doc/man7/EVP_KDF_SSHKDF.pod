@@ -120,7 +120,7 @@ to obtain the requisite length is not meaningful. The caller must
 allocate a buffer of the desired length, and pass that buffer to the
 L<EVP_KDF_derive(3)> function along with the desired length.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
 "xcghash" and "session_id" values:

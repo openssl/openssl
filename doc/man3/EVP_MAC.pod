@@ -272,7 +272,7 @@ If it isn't set, a call to EVP_MAC_init() should get it set.
 
 EVP_MAC_do_all_ex() returns nothing at all.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
   #include <stdlib.h>
   #include <stdio.h>

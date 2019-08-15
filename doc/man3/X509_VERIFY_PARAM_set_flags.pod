@@ -346,7 +346,7 @@ If CRLs checking is enable CRLs are expected to be available in the
 corresponding B<X509_STORE> structure. No attempt is made to download
 CRLs from the CRL distribution points extension.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Enable CRL checking when performing certificate verification during SSL
 connections associated with an B<SSL_CTX> structure B<ctx>:

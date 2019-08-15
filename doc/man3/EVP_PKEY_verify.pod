@@ -44,7 +44,7 @@ A negative value indicates an error other that signature verification failure.
 In particular a return value of -2 indicates the operation is not supported by
 the public key algorithm.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Verify signature using PKCS#1 and SHA256 digest:
 

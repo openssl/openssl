@@ -133,7 +133,7 @@ locations for B<bio1> and B<bio2>. Check the error stack for more information.
 
 [XXXXX: More return values need to be added here]
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 The BIO pair can be used to have full control over the network access of an
 application. The application can call select() on the socket as required
