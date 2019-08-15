@@ -9,6 +9,15 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Early start up entropy quality from the DEVRANDOM seed source has been
+     improved for older Linux systems.  The RAND subsystem will wait for
+     /dev/random to be producing output before seeding from /dev/urandom.
+     The seeded state is stored for future library initialisations using
+     a system global shared memory segment.  The shared memory identifier
+     can be configured by defining OSSL_SHM_SEEDED to the desired value.
+     The default identifier is 114.
+     [Paul Dale]
+
   *) Revised BN_generate_prime_ex to not avoid factors 2..17863 in p-1
      when primes for RSA keys are computed.
      Since we previously always generated primes == 2 (mod 3) for RSA keys,

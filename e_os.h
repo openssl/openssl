@@ -28,6 +28,29 @@
  * default, we will try to read at least one of these files
  */
 #  define DEVRANDOM "/dev/urandom", "/dev/random", "/dev/hwrng", "/dev/srandom"
+#  ifdef __linux
+#   define DEVRANDOM_WAIT   "/dev/random"
+/*
+ * Linux kernels 4.8 and later changes how their random device works and there
+ * is no reliable way to tell that /dev/urandom has been seeded -- getentropy(2)
+ * should be used instead.
+ */
+#   define DEVRANDOM_SAFE_KERNEL        4, 8
+/*
+ * Some operating systems do not permit select(2) on their random devices,
+ * defining this to zero will force the used of read(2) to extra one byte
+ * from /dev/random.
+ */
+#   define DEVRANDM_WAIT_USE_SELECT     1
+/*
+ * Define the shared memory identifier used to indicate if the operating
+ * system has properly seeded the DEVRANDOM source.
+ */
+#   ifndef OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID
+#    define OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID 114
+#   endif
+
+#  endif
 # endif
 # if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
 /*
