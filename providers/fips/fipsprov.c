@@ -37,7 +37,7 @@ extern OSSL_core_thread_start_fn *c_thread_start;
  * us with the OPENSSL_CTX as a parameter.
  */
 /* Functions provided by the core */
-static OSSL_core_gettable_types_fn *c_gettable_types;
+static OSSL_core_gettable_params_fn *c_gettable_params;
 static OSSL_core_get_params_fn *c_get_params;
 OSSL_core_thread_start_fn *c_thread_start;
 static OSSL_core_new_error_fn *c_new_error;
@@ -164,7 +164,7 @@ static int dummy_evp_call(void *provctx)
     return ret;
 }
 
-static const OSSL_PARAM *fips_gettable_types(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *fips_gettable_params(const OSSL_PROVIDER *prov)
 {
     return fips_param_types;
 }
@@ -295,7 +295,7 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
      * use OPENSSL_CTX_free directly as our teardown function
      */
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OPENSSL_CTX_free },
-    { OSSL_FUNC_PROVIDER_GETTABLE_TYPES, (void (*)(void))fips_gettable_types },
+    { OSSL_FUNC_PROVIDER_GETTABLE_TYPES, (void (*)(void))fips_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))fips_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
     { 0, NULL }
@@ -319,7 +319,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GETTABLE_TYPES:
-            c_gettable_types = OSSL_get_core_gettable_types(in);
+            c_gettable_params = OSSL_get_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_get_core_get_params(in);
