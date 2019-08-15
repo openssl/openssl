@@ -467,7 +467,7 @@ static int sskdf_derive(EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen)
          * block size?
          */
         macname = EVP_MAC_name(impl->mac);
-        if (strcmp(macname, "HMAC") == 0) {
+        if (strcmp(macname, OSSL_MAC_NAME_HMAC) == 0) {
             /* H(x) = HMAC(x, salt, hash) */
             if (impl->md == NULL) {
                 KDFerr(KDF_F_SSKDF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
@@ -476,12 +476,12 @@ static int sskdf_derive(EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen)
             default_salt_len = EVP_MD_block_size(impl->md);
             if (default_salt_len <= 0)
                 return 0;
-        } else if (strcmp(macname, "KMAC128") == 0
-                   || strcmp(macname, "KMAC256") == 0) {
+        } else if (strcmp(macname, OSSL_MAC_NAME_KMAC128) == 0
+                   || strcmp(macname, OSSL_MAC_NAME_KMAC256) == 0) {
             /* H(x) = KMACzzz(x, salt, custom) */
             custom = kmac_custom_str;
             custom_len = sizeof(kmac_custom_str);
-            if (strcmp(macname, "KMAC128") == 0)
+            if (strcmp(macname, OSSL_MAC_NAME_KMAC128) == 0)
                 default_salt_len = SSKDF_KMAC128_DEFAULT_SALT_SIZE;
             else
                 default_salt_len = SSKDF_KMAC256_DEFAULT_SALT_SIZE;
