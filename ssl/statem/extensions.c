@@ -379,7 +379,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #ifndef OPENSSL_NO_QUIC
     {
         TLSEXT_TYPE_quic_transport_parameters,
-        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
         | SSL_EXT_TLS_IMPLEMENTATION_ONLY | SSL_EXT_TLS1_3_ONLY,
         init_quic_transport_params,
         tls_parse_ctos_quic_transport_params, tls_parse_stoc_quic_transport_params,
