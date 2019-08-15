@@ -790,6 +790,10 @@ int tls13_change_cipher_state(SSL *s, int which)
         }
     } else if (label == client_application_traffic)
         memcpy(s->client_app_traffic_secret, secret, hashlen);
+    else if (label == client_handshake_traffic)
+        memcpy(s->client_hand_traffic_secret, secret, hashlen);
+    else if (label == server_handshake_traffic)
+        memcpy(s->server_hand_traffic_secret, secret, hashlen);
 
     if (!ssl_log_secret(s, log_label, secret, hashlen)) {
         /* SSLfatal() already called */
