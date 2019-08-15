@@ -358,7 +358,7 @@ which has the type
                                        OSSL_CMP_MSG **res);
 Returns 1 on success, 0 on error.
 
-Default is OSSL_CMP_MSG_http_perform().
+Default is NULL, which implies the use of L<OSSL_CMP_MSG_http_perform(3)>.
 The callback should send the CMP request it obtains via the B<req> parameter
 and on success place the response in the B<*res> output parameter.
 The transfer callback may make use of a custom defined argument stored in

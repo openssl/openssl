@@ -108,12 +108,6 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
     ctx->status = -1;
     ctx->failInfoCode = -1;
 
-    ctx->transfer_cb =
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
-        OSSL_CMP_MSG_http_perform;
-#else
-        NULL;
-#endif
     /* serverPath must be an empty string if not set since it's not mandatory */
     if ((ctx->serverPath = OPENSSL_zalloc(1)) == NULL)
         goto err;
