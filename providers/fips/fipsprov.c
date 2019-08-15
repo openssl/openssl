@@ -12,6 +12,7 @@
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
+#include <openssl/fips.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -92,23 +93,23 @@ static const OSSL_PARAM fips_param_types[] = {
 /*
  * Parameters to retrieve from the core provider - required for self testing.
  * NOTE: inside core_get_params() these will be loaded from config items
- * stored inside prov->parameters.
+ * stored inside prov->parameters (except for OSSL_PROV_PARAM_MODULE_FILENAME).
  */
 static OSSL_PARAM core_params[] =
 {
     OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_MODULE_FILENAME,
                         selftest_params.module_filename,
                         sizeof(selftest_params.module_filename)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_MODULE_MAC,
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_MODULE_MAC,
                         selftest_params.module_checksum_data,
                         sizeof(selftest_params.module_checksum_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_INSTALL_MAC,
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
                         selftest_params.indicator_checksum_data,
                         sizeof(selftest_params.indicator_checksum_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_INSTALL_STATUS,
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
                         selftest_params.indicator_data,
                         sizeof(selftest_params.indicator_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_INSTALL_VERSION,
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
                         selftest_params.indicator_version,
                         sizeof(selftest_params.indicator_version)),
     OSSL_PARAM_END
@@ -359,8 +360,6 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
 {
     FIPS_GLOBAL *fgbl;
     OPENSSL_CTX *ctx;
-
-    memset(&selftest_params, 0, sizeof(selftest_params));
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {

@@ -12,15 +12,13 @@
 
 typedef struct self_test_post_params_st {
     /* FIPS module integrity check parameters */
-    char *module_filename;                /* Module file to perform MAC on */
-    unsigned char *module_checksum_data;  /* Expected module MAC integrity */
-    size_t module_checksum_len;
+    const char *module_filename;            /* Module file to perform MAC on */
+    const char *module_checksum_data;       /* Expected module MAC integrity */
 
     /* Used for KAT install indicator integrity check */
-    char *indicator_version;                /* version - for future proofing */
-    char *indicator_data;                   /* data to perform MAC on */
-    unsigned char *indicator_checksum_data; /* Expected MAC integrity value */
-    size_t indicator_checksum_len;
+    const char *indicator_version;          /* version - for future proofing */
+    const char *indicator_data;             /* data to perform MAC on */
+    const char *indicator_checksum_data;    /* Expected MAC integrity value */
 
     /* BIO callbacks supplied to the FIPS provider */
     OSSL_BIO_new_file_fn *bio_new_file_cb;

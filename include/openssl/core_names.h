@@ -35,30 +35,10 @@ extern "C" {
 #define OSSL_PROV_PARAM_BUILDINFO   "buildinfo"
 
 /*
- * The module filename (Used for FIPS Self Testing)
- * Type: OSSL_PARAM_UTF8_STRING
+ * The module filename
+ * Type: OSSL_PARAM_OCTET_STRING
  */
 #define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"
-/*
- * The calculated MAC of the module file (Used for FIPS Self Testing)
- * Type: OSSL_PARAM_UTF8_STRING
- */
-#define OSSL_PROV_PARAM_MODULE_MAC      "module-checksum"
-/*
- * A version number for the fips install process (Used for FIPS Self Testing)
- * Type: OSSL_PARAM_UTF8_STRING
- */
-#define OSSL_PROV_PARAM_INSTALL_VERSION "install-version"
-/*
- * The calculated MAC of the install status indicator (Used for FIPS Self Testing)
- * Type: OSSL_PARAM_UTF8_STRING
- */
-#define OSSL_PROV_PARAM_INSTALL_MAC     "install-checksum"
-/*
- * The install status indicator (Used for FIPS Self Testing)
- * Type: OSSL_PARAM_UTF8_STRING
- */
-#define OSSL_PROV_PARAM_INSTALL_STATUS  "install-status"
 
 /* cipher parameters */
 #define OSSL_CIPHER_PARAM_PADDING   "padding"    /* int */
