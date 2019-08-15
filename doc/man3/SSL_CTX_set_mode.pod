@@ -38,7 +38,7 @@ The following mode changes are available:
 
 =item SSL_MODE_ENABLE_PARTIAL_WRITE
 
-Allow SSL_write_ex(..., n, &r) to return with 0 < r < n (i.e. report success
+Allow SSL_write_ex(..., n, &r) to return with 0 < r < n (i.e., report success
 when just a single record has been written). This works in a similar way for
 SSL_write(). When not set (the default), SSL_write_ex() or SSL_write() will only
 report success once the complete chunk was written. Once SSL_write_ex() or

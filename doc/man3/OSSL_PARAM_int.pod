@@ -263,7 +263,7 @@ expected type of the parameter.
 
 For OSSL_PARAM_get_utf8_ptr() and OSSL_PARAM_get_octet_ptr(), B<bsize>
 is not relevant if the purpose is to send the B<OSSL_PARAM> array to a
-I<responder>, i.e. to get parameter data back.
+I<responder>, i.e., to get parameter data back.
 In that case, B<bsize> can safely be given zero.
 See L<OSSL_PARAM(3)/DESCRIPTION> for further information on the
 possible purposes.

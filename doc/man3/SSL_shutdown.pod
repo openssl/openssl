@@ -23,7 +23,7 @@ a currently open session is considered closed and good and will be kept in the
 session cache for further reuse.
 
 Note that SSL_shutdown() must not be called if a previous fatal error has
-occurred on a connection i.e. if SSL_get_error() has returned SSL_ERROR_SYSCALL
+occurred on a connection i.e., if SSL_get_error() has returned SSL_ERROR_SYSCALL
 or SSL_ERROR_SSL.
 
 The shutdown procedure consists of two steps: sending of the close_notify

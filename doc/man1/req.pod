@@ -159,7 +159,7 @@ This can be used with a subsequent B<-rand> flag.
 This option creates a new certificate request and a new private
 key. The argument takes one of several forms. B<rsa:nbits>, where
 B<nbits> is the number of bits, generates an RSA key B<nbits>
-in size. If B<nbits> is omitted, i.e. B<-newkey rsa> specified,
+in size. If B<nbits> is omitted, i.e., B<-newkey rsa> specified,
 the default key size, specified in the configuration file is used.
 
 All other algorithms support the B<-newkey alg:file> form, where file may be
@@ -357,7 +357,7 @@ certificate. The argument for this option is string of hexadecimal digits.
 
 The configuration options are specified in the B<req> section of
 the configuration file. As with all configuration files if no
-value is specified in the specific section (i.e. B<req>) then
+value is specified in the specific section (i.e., B<req>) then
 the initial unnamed or B<default> section is searched too.
 
 The options available are described in detail below.
@@ -416,7 +416,7 @@ option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 This option specifies the digest algorithm to use. Any digest supported by the
 OpenSSL B<dgst> command can be used. This option can be overridden on the
-command line. Certain signing algorithms (i.e. Ed25519 and Ed448) will ignore
+command line. Certain signing algorithms (i.e., Ed25519 and Ed448) will ignore
 any digest that has been set.
 
 =item B<string_mask>

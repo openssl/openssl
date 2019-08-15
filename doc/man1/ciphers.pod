@@ -258,17 +258,17 @@ Anonymous Elliptic Curve Diffie-Hellman cipher suites.
 
 =item B<aDSS>, B<DSS>
 
-Cipher suites using DSS authentication, i.e. the certificates carry DSS keys.
+Cipher suites using DSS authentication, i.e., the certificates carry DSS keys.
 
 =item B<aDH>
 
-Cipher suites effectively using DH authentication, i.e. the certificates carry
+Cipher suites effectively using DH authentication, i.e., the certificates carry
 DH keys.
 All these cipher suites have been removed in OpenSSL 1.1.0.
 
 =item B<aECDSA>, B<ECDSA>
 
-Cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
+Cipher suites using ECDSA authentication, i.e., the certificates carry ECDSA
 keys.
 
 =item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>

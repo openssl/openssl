@@ -165,7 +165,7 @@ Sets the scrypt B<N>, B<r> or B<p> parameters.
 Various different formats are used by the pkcs8 utility. These are detailed
 below.
 
-If a key is being converted from PKCS#8 form (i.e. the B<-topk8> option is
+If a key is being converted from PKCS#8 form (i.e., the B<-topk8> option is
 not used) then the input file must be in PKCS#8 format. An encrypted
 key is expected unless B<-nocrypt> is included.
 

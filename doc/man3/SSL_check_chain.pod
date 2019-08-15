@@ -40,7 +40,7 @@ acceptable (e.g., it is a supported curve).
 B<CERT_PKEY_CA_PARAM>: the parameters of all CA certificates are acceptable.
 
 B<CERT_PKEY_EXPLICIT_SIGN>: the end entity certificate algorithm
-can be used explicitly for signing (i.e. it is mentioned in the signature
+can be used explicitly for signing (i.e., it is mentioned in the signature
 algorithms extension).
 
 B<CERT_PKEY_ISSUER_NAME>: the issuer name is acceptable. This is only

@@ -89,7 +89,7 @@ on B<str> only.
 The ASN1_TIME_normalize() function converts an ASN1_GENERALIZEDTIME or
 ASN1_UTCTIME into a time value that can be used in a certificate. It
 should be used after the ASN1_TIME_set_string() functions and before
-ASN1_TIME_print() functions to get consistent (i.e. GMT) results.
+ASN1_TIME_print() functions to get consistent (i.e., GMT) results.
 
 The ASN1_TIME_check(), ASN1_UTCTIME_check() and ASN1_GENERALIZEDTIME_check()
 functions check the syntax of the time structure B<s>.

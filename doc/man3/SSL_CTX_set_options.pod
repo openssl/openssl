@@ -323,7 +323,7 @@ servers will fail.
 
 The option B<SSL_OP_LEGACY_SERVER_CONNECT> is currently set by default even
 though it has security implications: otherwise it would be impossible to
-connect to unpatched servers (i.e. all of them initially) and this is clearly
+connect to unpatched servers (i.e., all of them initially) and this is clearly
 not acceptable. Renegotiation is permitted because this does not add any
 additional security issues: during an attack clients do not see any
 renegotiations anyway.

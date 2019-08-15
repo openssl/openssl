@@ -45,7 +45,7 @@ space allocated to it.
 
 Encoding of binary data is performed in blocks of 48 input bytes (or less for
 the final block). For each 48 byte input block encoded 64 bytes of base 64 data
-is output plus an additional newline character (i.e. 65 bytes in total). The
+is output plus an additional newline character (i.e., 65 bytes in total). The
 final block (which may be less than 48 bytes) will output 4 bytes for every 3
 bytes of input. If the data length is not divisible by 3 then a full 4 bytes is
 still output for the final 1 or 2 bytes of input. Similarly a newline character
@@ -74,7 +74,7 @@ process any partial block of data remaining in the B<ctx> object. The output
 data will be stored in B<out> and the length of the data written will be stored
 in B<*outl>. It is the caller's responsibility to ensure that B<out> is
 sufficiently large to accommodate the output data which will never be more than
-65 bytes plus an additional NUL terminator (i.e. 66 bytes in total).
+65 bytes plus an additional NUL terminator (i.e., 66 bytes in total).
 
 EVP_ENCODE_CTX_copy() can be used to copy a context B<sctx> to a context
 B<dctx>. B<dctx> must be initialized before calling this function.
@@ -88,7 +88,7 @@ output data will be produced. If B<dlen> is not divisible by 3 then the block is
 encoded as a final block of data and the output is padded such that it is always
 divisible by 4. Additionally a NUL terminator character will be added. For
 example if 16 bytes of input data is provided then 24 bytes of encoded data is
-created plus 1 byte for a NUL terminator (i.e. 25 bytes in total). The length of
+created plus 1 byte for a NUL terminator (i.e., 25 bytes in total). The length of
 the data generated I<without> the NUL terminator is returned from the function.
 
 EVP_DecodeInit() initialises B<ctx> for the start of a new decoding operation.

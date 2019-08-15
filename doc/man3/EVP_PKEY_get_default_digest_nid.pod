@@ -13,7 +13,7 @@ EVP_PKEY_get_default_digest_nid - get default signature digest
 
 The EVP_PKEY_get_default_digest_nid() function sets B<pnid> to the default
 message digest NID for the public key signature operations associated with key
-B<pkey>. Note that some signature algorithms (i.e. Ed25519 and Ed448) do not use
+B<pkey>. Note that some signature algorithms (i.e., Ed25519 and Ed448) do not use
 a digest during signing. In this case B<pnid> will be set to NID_undef.
 
 =head1 NOTES

@@ -282,7 +282,7 @@ The length of the explicit part of the IV and the tag length will depend on the
 cipher in use and will be defined in the RFC for the relevant ciphersuite.
 In order to allow for "in place" decryption the plaintext output should be
 written to the same location in the output buffer that the ciphertext payload
-was read from, i.e. immediately after the explicit IV.
+was read from, i.e., immediately after the explicit IV.
 
 When encrypting a record the first bytes of the input buffer will be empty to
 allow space for the explicit IV, as will the final bytes where the tag will

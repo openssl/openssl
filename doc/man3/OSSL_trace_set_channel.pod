@@ -293,7 +293,7 @@ necessary to configure and build OpenSSL with the 'enable-trace' option.
 
 When the library is built with tracing disabled, the macro
 C<OPENSSL_NO_TRACE> is defined in C<openssl/opensslconf.h> and all
-functions described here are inoperational, i.e. will do nothing.
+functions described here are inoperational, i.e., will do nothing.
 
 =head1 HISTORY
 

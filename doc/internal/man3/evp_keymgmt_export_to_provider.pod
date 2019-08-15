@@ -22,7 +22,7 @@ It maintains a cache of provider key references in I<pk> to keep track
 of all such exports.
 
 If I<pk> has an assigned legacy key, a check is done to see if any of
-its key material has changed since last export, i.e. the legacy key's
+its key material has changed since last export, i.e., the legacy key's
 is_dirty() method returns 1.
 If it has, the cache of already exported keys is cleared, and a new
 export is made with the new key material.

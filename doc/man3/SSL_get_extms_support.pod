@@ -21,7 +21,7 @@ This function is implemented as a macro.
 
 SSL_get_extms_support() returns 1 if the current session used extended
 master secret, 0 if it did not and -1 if a handshake is currently in
-progress i.e. it is not possible to determine if extended master secret
+progress i.e., it is not possible to determine if extended master secret
 was used.
 
 =head1 SEE ALSO

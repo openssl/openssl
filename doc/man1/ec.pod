@@ -125,7 +125,7 @@ the preprocessor macro B<OPENSSL_EC_BIN_PT_COMP> at compile time.
 =item B<-param_enc arg>
 
 This specifies how the elliptic curve parameters are encoded.
-Possible value are: B<named_curve>, i.e. the ec parameters are
+Possible value are: B<named_curve>, i.e., the ec parameters are
 specified by an OID, or B<explicit> where the ec parameters are
 explicitly given (see RFC 3279 for the definition of the
 EC parameters structures). The default value is B<named_curve>.

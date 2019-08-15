@@ -77,7 +77,7 @@ default.  They are all written in PEM format.
 
 =item B<-passin arg>
 
-The PKCS#12 file (i.e. input file) password source. For more information about
+The PKCS#12 file (i.e., input file) password source. For more information about
 the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)>.
 
@@ -205,7 +205,7 @@ displays them.
 
 =item B<-pass arg>, B<-passout arg>
 
-The PKCS#12 file (i.e. output file) password source. For more information about
+The PKCS#12 file (i.e., output file) password source. For more information about
 the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)>.
 

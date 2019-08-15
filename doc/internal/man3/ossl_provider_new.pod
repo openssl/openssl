@@ -74,7 +74,7 @@ in the library context.
 
 Provider objects are reference counted.
 
-Provider objects are initially inactive, i.e. they are only recorded
+Provider objects are initially inactive, i.e., they are only recorded
 in the store, but are not used.
 They are activated with the first call to ossl_provider_activate(),
 and are inactivated when ossl_provider_free() has been called as many

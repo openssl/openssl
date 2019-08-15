@@ -38,7 +38,7 @@ should not have been used for other purposes or initialised in any way.
 
 =item *
 
-B<dest> must only be used in "read-only" operations, i.e. typically those
+B<dest> must only be used in "read-only" operations, i.e., typically those
 functions where the relevant parameter is declared "const".
 
 =item *

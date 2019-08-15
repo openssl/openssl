@@ -49,7 +49,7 @@ ASYNC_STATUS_EAGAIN
 
 For an overview of how asynchronous operations are implemented in OpenSSL see
 L<ASYNC_start_job(3)>. An ASYNC_WAIT_CTX object represents an asynchronous
-"session", i.e. a related set of crypto operations. For example in SSL terms
+"session", i.e., a related set of crypto operations. For example in SSL terms
 this would have a one-to-one correspondence with an SSL connection.
 
 Application code must create an ASYNC_WAIT_CTX using the ASYNC_WAIT_CTX_new()

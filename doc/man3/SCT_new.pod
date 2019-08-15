@@ -193,7 +193,7 @@ malloc fails.
 B<SCT_set_signature_nid> returns 1 if the specified NID is supported, 0 otherwise.
 
 B<SCT_set1_extensions> and B<SCT_set1_signature> return 1 if the supplied buffer
-is copied successfully, 0 otherwise (i.e. if malloc fails).
+is copied successfully, 0 otherwise (i.e., if malloc fails).
 
 B<SCT_set_source> returns 1 on success, 0 otherwise.
 

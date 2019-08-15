@@ -27,7 +27,7 @@ OPENSSL_instrument_bus() performs B<num> probes and records the number of
 oscillator cycles every probe took.
 
 OPENSSL_instrument_bus2() on the other hand B<accumulates> consecutive
-probes with the same value, i.e. in a way it records duration of
+probes with the same value, i.e., in a way it records duration of
 periods when probe values appeared deterministic. The subroutine
 performs at most B<max> probes in attempt to fill the B<vector[num]>,
 with B<max> value of 0 meaning "as many as it takes."

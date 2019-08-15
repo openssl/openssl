@@ -384,7 +384,7 @@ The following B<flags> are supported:
 
 If B<ASN1_PKEY_SIGPARAM_NULL> is set, then the signature algorithm
 parameters are given the type B<V_ASN1_NULL> by default, otherwise
-they will be given the type B<V_ASN1_UNDEF> (i.e. the parameter is
+they will be given the type B<V_ASN1_UNDEF> (i.e., the parameter is
 omitted).
 See L<X509_ALGOR_set0(3)> for more information.
 

@@ -49,7 +49,7 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
-HMAC is a MAC (message authentication code), i.e. a keyed hash
+HMAC is a MAC (message authentication code), i.e., a keyed hash
 function used for message authentication, which is based on a hash
 function.
 

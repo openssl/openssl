@@ -109,7 +109,7 @@ C<return_size> should be ignored.
 B<NOTE:>
 
 The key names and associated types are defined by the entity that
-offers these parameters, i.e. names for parameters provided by the
+offers these parameters, i.e., names for parameters provided by the
 OpenSSL libraries are defined by the libraries, and names for
 parameters provided by providers are defined by those providers,
 except for the pointer form of strings (see data type descriptions
@@ -130,7 +130,7 @@ The C<data_type> field can be one of the following types:
 =item C<OSSL_PARAM_UNSIGNED_INTEGER>
 
 The parameter data is an integer (signed or unsigned) of arbitrary
-length, organized in native form, i.e. most significant byte first on
+length, organized in native form, i.e., most significant byte first on
 Big-Endian systems, and least significant byte first on Little-Endian
 systems.
 

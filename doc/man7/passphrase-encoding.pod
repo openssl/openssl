@@ -92,9 +92,9 @@ This section assumes that you know what pass phrase was used for encryption,
 but that it may have been encoded in a different character encoding than the
 one used by your current input method.
 For example, the pass phrase may have been used at a time when your default
-encoding was ISO-8859-1 (i.e. "naïve" resulting in the byte sequence 0x6E 0x61
+encoding was ISO-8859-1 (i.e., "naïve" resulting in the byte sequence 0x6E 0x61
 0xEF 0x76 0x65), and you're now in an environment where your default encoding
-is UTF-8 (i.e. "naïve" resulting in the byte sequence 0x6E 0x61 0xC3 0xAF 0x76
+is UTF-8 (i.e., "naïve" resulting in the byte sequence 0x6E 0x61 0xC3 0xAF 0x76
 0x65).
 Whenever it's mentioned that you should use a certain character encoding, it
 should be understood that you either change the input method to use the
@@ -145,7 +145,7 @@ according to the specification.
 
 =item 3.
 
-Do a naïve (i.e. purely mathematical) ISO-8859-1 to UTF-8 conversion and try
+Do a naïve (.e., purely mathematical) ISO-8859-1 to UTF-8 conversion and try
 with the result.
 This differs from the previous attempt because ISO-8859-1 maps directly to
 U+0000 to U+00FF, which other non-UTF-8 character sets do not.

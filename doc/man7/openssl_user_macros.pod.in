@@ -65,11 +65,11 @@ these numbers are also available:
 
 =over 4
 
-=item Z<>0 (C<0x00908000L>, i.e. version 0.9.8)
+=item Z<>0 (C<0x00908000L>, i.e., version 0.9.8)
 
-=item Z<>1 (C<0x10000000L>, i.e. version 1.0.0)
+=item Z<>1 (C<0x10000000L>, i.e., version 1.0.0)
 
-=item Z<>2 (C<0x10100000L>, i.e. version 1.1.0)
+=item Z<>2 (C<0x10100000L>, i.e., version 1.1.0)
 
 =back
 

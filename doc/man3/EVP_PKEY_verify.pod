@@ -20,7 +20,7 @@ context using key B<pkey> for a signature verification operation.
 
 The EVP_PKEY_verify() function performs a public key verification operation
 using B<ctx>. The signature is specified using the B<sig> and
-B<siglen> parameters. The verified data (i.e. the data believed originally
+B<siglen> parameters. The verified data (i.e., the data believed originally
 signed) is specified using the B<tbs> and B<tbslen> parameters.
 
 =head1 NOTES

@@ -65,7 +65,7 @@ if flag B<SSL_BUILD_CHAIN_FLAG_CLEAR_ERROR> is also set verification errors
 are cleared from the error queue.
 
 Each of these functions operates on the I<current> end entity
-(i.e. server or client) certificate. This is the last certificate loaded or
+(i.e., server or client) certificate. This is the last certificate loaded or
 selected on the corresponding B<ctx> structure.
 
 SSL_CTX_select_current_cert() selects B<x509> as the current end entity

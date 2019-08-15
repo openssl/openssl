@@ -40,7 +40,7 @@ created. Ownership of the string remains with the CTLOG.
 
 CTLOG_get0_log_id() sets *log_id to point to a string containing that log's
 LogID (see RFC 6962). It sets *log_id_len to the length of that LogID. For a
-v1 CT log, the LogID will be a SHA-256 hash (i.e. 32 bytes long). Ownership of
+v1 CT log, the LogID will be a SHA-256 hash (i.e., 32 bytes long). Ownership of
 the string remains with the CTLOG.
 
 CTLOG_get0_public_key() returns the public key of the CT log. Ownership of the

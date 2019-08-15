@@ -23,7 +23,7 @@ SSL_CONF_cmd_value_type() returns the type of value that B<cmd> refers to.
 
 =head1 SUPPORTED COMMAND LINE COMMANDS
 
-Currently supported B<cmd> names for command lines (i.e. when the
+Currently supported B<cmd> names for command lines (i.e., when the
 flag B<SSL_CONF_CMDLINE> is set) are listed below. Note: all B<cmd> names
 are case sensitive. Unless otherwise stated commands can be used by
 both clients and servers and the B<value> parameter is not used. The default
@@ -242,7 +242,7 @@ required. Switching off anti-replay is equivalent to B<SSL_OP_NO_ANTI_REPLAY>.
 
 =head1 SUPPORTED CONFIGURATION FILE COMMANDS
 
-Currently supported B<cmd> names for configuration files (i.e. when the
+Currently supported B<cmd> names for configuration files (i.e., when the
 flag B<SSL_CONF_FLAG_FILE> is set) are listed below. All configuration file
 B<cmd> names are case insensitive so B<signaturealgorithms> is recognised
 as well as B<SignatureAlgorithms>. Unless otherwise stated the B<value> names

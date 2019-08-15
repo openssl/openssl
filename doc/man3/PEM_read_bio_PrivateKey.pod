@@ -287,7 +287,7 @@ routine has the following form:
  int cb(char *buf, int size, int rwflag, void *u);
 
 B<buf> is the buffer to write the passphrase to. B<size> is the maximum
-length of the passphrase (i.e. the size of buf). B<rwflag> is a flag
+length of the passphrase (i.e., the size of buf). B<rwflag> is a flag
 which is set to 0 when reading and 1 when writing. A typical routine
 will ask the user to verify the passphrase (for example by prompting
 for it twice) if B<rwflag> is 1. The B<u> parameter has the same

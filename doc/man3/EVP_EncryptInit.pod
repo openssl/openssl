@@ -264,7 +264,7 @@ B<params> from CIPHER context B<ctx>.
 
 EVP_CIPHER_gettable_params(), EVP_CIPHER_CTX_gettable_params(), and
 EVP_CIPHER_CTX_settable_params() get a constant B<OSSL_PARAM> array
-that decribes the retrievable and settable parameters, i.e. parameters
+that decribes the retrievable and settable parameters, i.e., parameters
 that can be used with EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params()
 and EVP_CIPHER_CTX_set_params(), respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
@@ -432,7 +432,7 @@ The following I<ctrl>s are supported in GCM and OCB modes.
 Sets the IV length. This call can only be made before specifying an IV. If
 not called a default IV length is used.
 
-For GCM AES and OCB AES the default is 12 (i.e. 96 bits). For OCB mode the
+For GCM AES and OCB AES the default is 12 (i.e., 96 bits). For OCB mode the
 maximum is 15.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag)
@@ -459,7 +459,7 @@ In OCB mode, calling this before encryption with C<tag> set to C<NULL> sets the
 tag length.  If this is not called prior to encryption, a default tag length is
 used.
 
-For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
+For OCB AES, the default tag length is 16 (i.e., 128 bits).  It is also the
 maximum tag length for OCB.
 
 =back
@@ -551,8 +551,8 @@ The following I<ctrl>s are supported for the ChaCha20-Poly1305 AEAD algorithm.
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
 Sets the nonce length. This call can only be made before specifying the nonce.
-If not called a default nonce length of 12 (i.e. 96 bits) is used. The maximum
-nonce length is 12 bytes (i.e. 96-bits). If a nonce of less than 12 bytes is set
+If not called a default nonce length of 12 (i.e., 96 bits) is used. The maximum
+nonce length is 12 bytes (i.e., 96-bits). If a nonce of less than 12 bytes is set
 then the nonce is automatically padded with leading 0 bytes to make it 12 bytes
 in length.
 
@@ -562,7 +562,7 @@ Writes C<taglen> bytes of the tag value to the buffer indicated by C<tag>.
 This call can only be made when encrypting data and B<after> all data has been
 processed (e.g., after an EVP_EncryptFinal() call).
 
-C<taglen> specified here must be 16 (B<POLY1305_BLOCK_SIZE>, i.e. 128-bits) or
+C<taglen> specified here must be 16 (B<POLY1305_BLOCK_SIZE>, i.e., 128-bits) or
 less.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)

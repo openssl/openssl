@@ -51,7 +51,7 @@ BN_bn2lebinpad() and BN_lebin2bn() are identical to BN_bn2binpad() and
 BN_bin2bn() except the buffer is in little-endian format.
 
 BN_bn2nativepad() and BN_native2bn() are identical to BN_bn2binpad() and
-BN_bin2bn() except the buffer is in native format, i.e. most significant
+BN_bin2bn() except the buffer is in native format, i.e., most significant
 byte first on big-endian platforms, and least significant byte first on
 little-endian platforms.
 

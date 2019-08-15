@@ -63,7 +63,7 @@ failure.
 =head2 Initialization
 
 For a type C<FOO> that should end up in the OpenSSL library context, a
-small bit of initialization is needed, i.e. to associate a constructor
+small bit of initialization is needed, i.e., to associate a constructor
 and a destructor to an index.
 
  typedef struct foo_st {

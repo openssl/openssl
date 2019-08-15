@@ -147,7 +147,7 @@ See L</PARAMS> below for more information.
 EVP_MD_CTX_settable_params()
 
 Get a B<OSSL_PARAM> array that describes the retrievable and settable
-parameters, i.e. parameters that can be used with EVP_MD_get_params(),
+parameters, i.e., parameters that can be used with EVP_MD_get_params(),
 EVP_MD_CTX_get_params() and EVP_MD_CTX_set_params(), respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
@@ -181,7 +181,7 @@ data.
 =item EVP_DigestFinal_ex()
 
 Retrieves the digest value from B<ctx> and places it in B<md>. If the B<s>
-parameter is not NULL then the number of bytes of data written (i.e. the
+parameter is not NULL then the number of bytes of data written (i.e., the
 length of the digest) will be written to the integer at B<s>, at most
 B<EVP_MAX_MD_SIZE> bytes will be written.  After calling EVP_DigestFinal_ex()
 no additional calls to EVP_DigestUpdate() can be made, but
@@ -229,7 +229,7 @@ B<EVP_MD>.
 EVP_MD_CTX_size()
 
 Return the size of the message digest when passed an B<EVP_MD> or an
-B<EVP_MD_CTX> structure, i.e. the size of the hash.
+B<EVP_MD_CTX> structure, i.e., the size of the hash.
 
 =item EVP_MD_block_size(),
 EVP_MD_CTX_block_size()
@@ -283,7 +283,7 @@ longer linked this function is only retained for compatibility reasons.
 
 =item EVP_md_null()
 
-A "null" message digest that does nothing: i.e. the hash it returns is of zero
+A "null" message digest that does nothing: i.e., the hash it returns is of zero
 length.
 
 =item EVP_get_digestbyname(),

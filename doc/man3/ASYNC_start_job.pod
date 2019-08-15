@@ -97,7 +97,7 @@ At any one time there can be a maximum of one job actively running per thread
 a pointer to the currently executing ASYNC_JOB. If no job is currently executing
 then this will return NULL.
 
-If executing within the context of a job (i.e. having been called directly or
+If executing within the context of a job (i.e., having been called directly or
 indirectly by the function "func" passed as an argument to ASYNC_start_job())
 then ASYNC_pause_job() will immediately return control to the calling
 application with ASYNC_PAUSE returned from the ASYNC_start_job() call. A
@@ -231,7 +231,7 @@ The following example demonstrates how to use most of the core async APIs:
 
      /*
       * Normally some external event would cause this to happen at some
-      * later point - but we do it here for demo purposes, i.e.
+      * later point - but we do it here for demo purposes, i.e.,
       * immediately signalling that the job is ready to be woken up after
       * we return to main via ASYNC_pause_job().
       */

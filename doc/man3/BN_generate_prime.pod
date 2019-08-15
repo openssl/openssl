@@ -95,7 +95,7 @@ If B<add> is not B<NULL>, the prime will fulfill the condition p % B<add>
 == B<rem> (p % B<add> == 1 if B<rem> == B<NULL>) in order to suit a given
 generator.
 
-If B<safe> is true, it will be a safe prime (i.e. a prime p so
+If B<safe> is true, it will be a safe prime (i.e., a prime p so
 that (p-1)/2 is also prime). If B<safe> is true, and B<rem> == B<NULL>
 the condition will be p % B<add> == 3.
 It is recommended that B<add> is a multiple of 4.

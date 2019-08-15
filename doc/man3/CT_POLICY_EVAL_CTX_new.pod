@@ -101,7 +101,7 @@ CT_POLICY_EVAL_CTX_free() to delete it.
 
 The issuer certificate only needs to be provided if at least one of the SCTs
 was issued for a pre-certificate. This will be the case for SCTs embedded in a
-certificate (i.e. those in an X.509 extension), but may not be the case for SCTs
+certificate (i.e., those in an X.509 extension), but may not be the case for SCTs
 found in the TLS SCT extension or OCSP response.
 
 =head1 RETURN VALUES

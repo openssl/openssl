@@ -215,6 +215,8 @@ sub check()
         if $contents =~ /OpenSSL version [019]/;
     print "$id e.g. without comma\n"
         if $contents =~ /[Ee]\.g\.[^,]/;
+    print "$id i.e. without comma\n"
+        if $contents =~ /[Ii]\.e\.[^,]/;
 
     if ( $contents !~ /=for comment multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines

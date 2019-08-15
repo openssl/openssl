@@ -69,7 +69,7 @@ the buffer that should be populated with the list of names and B<size> is the
 size of that buffer. A pointer to B<buf> is returned on success or NULL on
 error. If the supplied buffer is not large enough to contain the complete list
 of names then a truncated list of names will be returned. Note that just because
-a ciphersuite is available (i.e. it is configured in the cipher list) and shared
+a ciphersuite is available (i.e., it is configured in the cipher list) and shared
 by both the client and the server it does not mean that it is enabled (see the
 description of SSL_get1_supported_ciphers() above). This function will return
 available shared ciphersuites whether or not they are enabled. This is a server

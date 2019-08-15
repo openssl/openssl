@@ -101,7 +101,7 @@ EVP_get_kdfbynid() fetches a KDF implementation from the object
 database by numeric identity.
 
 EVP_get_kdfbyobj() fetches a KDF implementation from the object
-database by ASN.1 OBJECT (i.e. an encoded OID).
+database by ASN.1 OBJECT (i.e., an encoded OID).
 
 =head1 CONTROLS
 

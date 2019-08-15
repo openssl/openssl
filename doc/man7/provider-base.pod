@@ -220,7 +220,7 @@ core_get_params() understands the following known parameters:
 =item "openssl-version"
 
 This is a B<OSSL_PARAM_UTF8_PTR> type of parameter, pointing at the
-OpenSSL libraries' full version string, i.e. the string expanded from
+OpenSSL libraries' full version string, i.e., the string expanded from
 the macro B<OPENSSL_VERSION_STR>.
 
 =item "provider-name"

@@ -33,7 +33,7 @@ custom session ticket callbacks (see L<SSL_CTX_set_session_ticket_cb(3)>).
 Tickets are also issued on receipt of a post-handshake certificate from the
 client following a request by the server using
 L<SSL_verify_client_post_handshake(3)>. These new tickets will be associated
-with the updated client identity (i.e. including their certificate and
+with the updated client identity (i.e., including their certificate and
 verification status). The number of tickets issued will normally be the same as
 was used for the initial handshake. If the initial handshake was a full
 handshake then SSL_set_num_tickets() can be called again prior to calling

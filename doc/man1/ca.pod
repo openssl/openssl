@@ -193,7 +193,7 @@ The number of days to certify the certificate for.
 
 The message digest to use.
 Any digest supported by the OpenSSL B<dgst> command can be used. For signing
-algorithms that do not support a digest (i.e. Ed25519 and Ed448) any message
+algorithms that do not support a digest (i.e., Ed25519 and Ed448) any message
 digest that is set is ignored. This option also applies to CRLs.
 
 =item B<-policy arg>
@@ -474,7 +474,7 @@ least one of these must be present to generate a CRL.
 =item B<default_md>
 
 The same as the B<-md> option. Mandatory except where the signing algorithm does
-not require a digest (i.e. Ed25519 and Ed448).
+not require a digest (i.e., Ed25519 and Ed448).
 
 =item B<database>
 

@@ -46,7 +46,7 @@ a BIO_f_buffer() buffering BIO will prevent this.
 
 =head1 BUGS
 
-There is currently no corresponding inverse BIO: i.e. one which can decode
+There is currently no corresponding inverse BIO: i.e., one which can decode
 a CMS structure on the fly.
 
 =head1 RETURN VALUES

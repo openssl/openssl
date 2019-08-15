@@ -98,7 +98,7 @@ The <master> DRBG is intended to be accessed concurrently for reseeding
 by its child DRBG instances. The necessary locking is done internally.
 It is I<not> thread-safe to access the <master> DRBG directly via the
 RAND_DRBG interface.
-The <public> and <private> DRBG are thread-local, i.e. there is an
+The <public> and <private> DRBG are thread-local, i.e., there is an
 instance of each per thread. So they can safely be accessed without
 locking via the RAND_DRBG interface.
 

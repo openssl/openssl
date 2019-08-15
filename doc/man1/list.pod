@@ -108,7 +108,7 @@ of the installation.
 
 =item B<-objects>
 
-Display a list of built in objects, i.e. OIDs with names.  They're listed in the
+Display a list of built in objects, i.e., OIDs with names.  They're listed in the
 format described in L<config(5)/ASN1 Object Configuration Module>.
 
 =back

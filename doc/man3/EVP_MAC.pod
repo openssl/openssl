@@ -139,7 +139,7 @@ EVP_get_macbynid() fetches a MAC implementation from the object
 database by numeric identity.
 
 EVP_get_macbyobj() fetches a MAC implementation from the object
-database by ASN.1 OBJECT (i.e. an encoded OID).
+database by ASN.1 OBJECT (i.e., an encoded OID).
 
 =head1 CONTROLS
 

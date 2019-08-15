@@ -65,7 +65,7 @@ I<mcm> and the data in I<mcm_data> (which is passed by
 ossl_method_construct()).
 
 This function assumes that the sub-system method creator implements
-reference counting and acts accordingly (i.e. it will call the
+reference counting and acts accordingly (i.e., it will call the
 sub-system destruct() method to decrement the reference count when
 appropriate).
 

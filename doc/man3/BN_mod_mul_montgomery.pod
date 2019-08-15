@@ -48,7 +48,7 @@ the result in I<r>.
 
 BN_from_montgomery() performs the Montgomery reduction I<r> = I<a>*R^-1.
 
-BN_to_montgomery() computes Mont(I<a>,R^2), i.e. I<a>*R.
+BN_to_montgomery() computes Mont(I<a>,R^2), i.e., I<a>*R.
 Note that I<a> must be non-negative and smaller than the modulus.
 
 For all functions, I<ctx> is a previously allocated B<BN_CTX> used for

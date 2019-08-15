@@ -72,7 +72,7 @@ data. For specific details, consult the TLS 1.3 specification.
 When a server receives early data it may opt to immediately respond by sending
 application data back to the client. Data sent by the server at this stage is
 done before the full handshake has been completed. Specifically the client's
-authentication messages have not yet been received, i.e. the client is
+authentication messages have not yet been received, i.e., the client is
 unauthenticated at this point and care should be taken when using this
 capability.
 
@@ -98,7 +98,7 @@ page describes the differences between SSL_write_early_data() and
 L<SSL_write_ex(3)>.
 
 When called by a client, SSL_write_early_data() must be the first IO function
-called on a new connection, i.e. it must occur before any calls to
+called on a new connection, i.e., it must occur before any calls to
 L<SSL_write_ex(3)>, L<SSL_read_ex(3)>, L<SSL_connect(3)>, L<SSL_do_handshake(3)>
 or other similar functions. It may be called multiple times to stream data to
 the server, but the total number of bytes written must not exceed the value
@@ -127,7 +127,7 @@ A server uses the SSL_read_early_data() function to receive early data on a
 connection for which early data has been enabled using
 SSL_CTX_set_max_early_data() or SSL_set_max_early_data(). As for
 SSL_write_early_data(), this must be the first IO function
-called on a connection, i.e. it must occur before any calls to
+called on a connection, i.e., it must occur before any calls to
 L<SSL_write_ex(3)>, L<SSL_read_ex(3)>, L<SSL_accept(3)>, L<SSL_do_handshake(3)>,
 or other similar functions.
 
@@ -157,7 +157,7 @@ or if the early data was rejected.
 
 =back
 
-Once the initial SSL_read_early_data() call has completed successfully (i.e. it
+Once the initial SSL_read_early_data() call has completed successfully (i.e., it
 has returned SSL_READ_EARLY_DATA_SUCCESS or SSL_READ_EARLY_DATA_FINISH) then the
 server may choose to write data immediately to the unauthenticated client using
 SSL_write_early_data(). If SSL_read_early_data() returned

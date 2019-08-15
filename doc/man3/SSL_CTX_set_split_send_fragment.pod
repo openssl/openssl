@@ -53,7 +53,7 @@ functions will only accept a value in the range 512 - SSL3_RT_MAX_PLAIN_LENGTH.
 SSL_CTX_set_max_pipelines() and SSL_set_max_pipelines() set the maximum number
 of pipelines that will be used at any one time. This value applies to both
 "read" pipelining and "write" pipelining. By default only one pipeline will be
-used (i.e. normal non-parallel operation). The number of pipelines set must be
+used (i.e., normal non-parallel operation). The number of pipelines set must be
 in the range 1 - SSL_MAX_PIPELINES (32). Setting this to a value > 1 will also
 automatically turn on "read_ahead" (see L<SSL_CTX_set_read_ahead(3)>). This is
 explained further below. OpenSSL will only every use more than one pipeline if
