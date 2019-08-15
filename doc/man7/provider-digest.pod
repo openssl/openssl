@@ -85,9 +85,9 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_digest_ctx_get_params       OSSL_FUNC_DIGEST_CTX_GET_PARAMS
  OP_digest_ctx_set_params       OSSL_FUNC_DIGEST_CTX_SET_PARAMS
 
- OP_digest_gettable_params       OSSL_FUNC_DIGEST_GETTABLE_PARAMS
- OP_digest_gettable_ctx_params   OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS
- OP_digest_settable_ctx_params   OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS
+ OP_digest_gettable_params      OSSL_FUNC_DIGEST_GETTABLE_PARAMS
+ OP_digest_gettable_ctx_params  OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS
+ OP_digest_settable_ctx_params  OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS
 
 A digest algorithm implementation may not implement all of these functions.
 In order to be useable all or none of OP_digest_newctx, OP_digest_freectx,
