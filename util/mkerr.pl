@@ -220,8 +220,6 @@ if ( ! $reindex && $statefile ) {
             }
             $rcodes{$name} = $code;
         } elsif ( $name =~ /^(?:OSSL_|OPENSSL_)?[A-Z0-9]{2,}_F_/ ) {
-            die "$lib function code $code collision at $name\n"
-                if $fassigned{$lib} =~ /:$code:/;
             $fassigned{$lib} .= "$code:";
             $fmax{$lib} = $code if $code > $fmax{$lib};
             $fcodes{$name} = $code;
