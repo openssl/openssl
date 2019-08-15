@@ -491,7 +491,7 @@ static int test_single_eval(void)
            && TEST_ptr_eq(p, buf + 1)
            && TEST_ptr_null(p = NULL)
            /* strings */
-           && TEST_str_eq(p = "123456" + 1, "23456")
+           && TEST_str_eq(p = &("123456"[1]), "23456")
            && TEST_str_eq("3456", ++p)
            && TEST_str_ne(p++, "456")
            /* memory */
