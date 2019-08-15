@@ -238,6 +238,7 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
 
     if (!openssl_ctx_init_index(ctx, index, meth)) {
         CRYPTO_THREAD_unlock(ctx->lock);
+        CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return NULL;
     }
 
