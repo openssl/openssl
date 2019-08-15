@@ -206,8 +206,8 @@ static void *uname##_newctx(void *provctx) \
 #define OSSL_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags,   \
                               stparamtypes, stparams)                   \
 static OSSL_OP_digest_get_params_fn name##_get_params;                  \
-static OSSL_OP_digest_gettable_params_fn name##_gettable_params;          \
-static const OSSL_PARAM known_##name##_gettable_params[] = {             \
+static OSSL_OP_digest_gettable_params_fn name##_gettable_params;        \
+static const OSSL_PARAM known_##name##_gettable_params[] = {            \
     {OSSL_DIGEST_PARAM_BLOCK_SIZE, OSSL_PARAM_INTEGER,                  \
      NULL, sizeof(int), 0},                                             \
     {OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_INTEGER, NULL, sizeof(int), 0}, \
@@ -215,9 +215,9 @@ static const OSSL_PARAM known_##name##_gettable_params[] = {             \
      NULL, sizeof(unsigned long), 0},                                   \
     OSSL_PARAM_END                                                      \
 };                                                                      \
-static const OSSL_PARAM *name##_gettable_params(void)                    \
+static const OSSL_PARAM *name##_gettable_params(void)                   \
 {                                                                       \
-    return known_##name##_gettable_params;                               \
+    return known_##name##_gettable_params;                              \
 }                                                                       \
 static int name##_get_params(OSSL_PARAM params[])                       \
 {                                                                       \
@@ -242,10 +242,10 @@ const OSSL_DISPATCH name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },       \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))keccak_dupctx },         \
     { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))name##_get_params }, \
-    { OSSL_FUNC_DIGEST_GETTABLE_TYPES,                                  \
-      (void (*)(void))name##_gettable_params },                          \
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,                                 \
+      (void (*)(void))name##_gettable_params },                         \
     { OSSL_FUNC_DIGEST_CTX_SET_PARAMS, (void (*)(void))stparams },      \
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_TYPES,                              \
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                             \
       (void (*)(void))stparamtypes },                                   \
 OSSL_FUNC_DIGEST_CONSTRUCT_END
 
