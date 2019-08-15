@@ -683,16 +683,16 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
             if (md->ctx_get_params == NULL)
                 md->ctx_get_params = OSSL_get_OP_digest_ctx_get_params(fns);
             break;
-        case OSSL_FUNC_DIGEST_GETTABLE_TYPES:
+        case OSSL_FUNC_DIGEST_GETTABLE_PARAMS:
             if (md->gettable_params == NULL)
                 md->gettable_params = OSSL_get_OP_digest_gettable_params(fns);
             break;
-        case OSSL_FUNC_DIGEST_SETTABLE_CTX_TYPES:
+        case OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS:
             if (md->settable_ctx_params == NULL)
                 md->settable_ctx_params =
                     OSSL_get_OP_digest_settable_ctx_params(fns);
             break;
-        case OSSL_FUNC_DIGEST_GETTABLE_CTX_TYPES:
+        case OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS:
             if (md->gettable_ctx_params == NULL)
                 md->gettable_ctx_params =
                     OSSL_get_OP_digest_gettable_ctx_params(fns);

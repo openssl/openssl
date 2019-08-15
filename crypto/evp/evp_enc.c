@@ -1254,18 +1254,18 @@ static void *evp_cipher_from_dispatch(const char *name,
                 break;
             cipher->ctx_set_params = OSSL_get_OP_cipher_ctx_set_params(fns);
             break;
-        case OSSL_FUNC_CIPHER_GETTABLE_TYPES:
+        case OSSL_FUNC_CIPHER_GETTABLE_PARAMS:
             if (cipher->gettable_params != NULL)
                 break;
             cipher->gettable_params = OSSL_get_OP_cipher_gettable_params(fns);
             break;
-        case OSSL_FUNC_CIPHER_GETTABLE_CTX_TYPES:
+        case OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS:
             if (cipher->gettable_ctx_params != NULL)
                 break;
             cipher->gettable_ctx_params =
                 OSSL_get_OP_cipher_gettable_ctx_params(fns);
             break;
-        case OSSL_FUNC_CIPHER_SETTABLE_CTX_TYPES:
+        case OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS:
             if (cipher->settable_ctx_params != NULL)
                 break;
             cipher->settable_ctx_params =

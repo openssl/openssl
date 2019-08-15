@@ -93,9 +93,9 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_cipher_ctx_get_params       OSSL_FUNC_CIPHER_CTX_GET_PARAMS
  OP_cipher_ctx_set_params       OSSL_FUNC_CIPHER_CTX_SET_PARAMS
 
- OP_cipher_gettable_params       OSSL_FUNC_CIPHER_GETTABLE_TYPES
- OP_cipher_gettable_ctx_params   OSSL_FUNC_CIPHER_GETTABLE_CTX_TYPES
- OP_cipher_settable_ctx_params   OSSL_FUNC_CIPHER_SETTABLE_CTX_TYPES
+ OP_cipher_gettable_params       OSSL_FUNC_CIPHER_GETTABLE_PARAMS
+ OP_cipher_gettable_ctx_params   OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS
+ OP_cipher_settable_ctx_params   OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS
 
 A cipher algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions there must at least be a complete
