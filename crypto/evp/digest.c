@@ -607,6 +607,8 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
      * FIPS module note: since internal fetches will be entirely
      * provider based, we know that none of its code depends on legacy
      * NIDs or any functionality that use them.
+     *
+     * TODO(3.x) get rid of the need for legacy NIDs
      */
     md->type = OBJ_sn2nid(name);
 #endif

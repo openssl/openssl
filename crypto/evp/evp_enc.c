@@ -1150,6 +1150,8 @@ static void *evp_cipher_from_dispatch(const char *name,
      * FIPS module note: since internal fetches will be entirely
      * provider based, we know that none of its code depends on legacy
      * NIDs or any functionality that use them.
+     *
+     * TODO(3.x) get rid of the need for legacy NIDs
      */
     cipher->nid = OBJ_sn2nid(name);
 #endif
