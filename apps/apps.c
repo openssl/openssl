@@ -2566,3 +2566,55 @@ int opt_printf_stderr(const char *fmt, ...)
     va_end(ap);
     return ret;
 }
+
+OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
+                                     const OSSL_PARAM *paramdefs)
+{
+    OSSL_PARAM *params = NULL;
+    size_t sz = (size_t)sk_OPENSSL_STRING_num(opts);
+    size_t params_n;
+    int ok = 1;
+
+    if (opts == NULL)
+        return NULL;
+
+    params = OPENSSL_zalloc(sizeof(OSSL_PARAM) * (sz + 1));
+    if (params == NULL)
+        return NULL;
+
+    for (params_n = 0; params_n < sz; params_n++) {
+        char *opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
+        char *stmp, *vtmp = NULL;
+
+        if ((stmp = OPENSSL_strdup(opt)) == NULL
+            || (vtmp = strchr(stmp, ':')) == NULL
+            || (*vtmp++ = 0) /* Always zero */
+            || !OSSL_PARAM_allocate_from_text(&params[params_n], paramdefs,
+                                              stmp, vtmp, strlen(vtmp))) {
+            BIO_printf(bio_err, "Parameter error '%s'\n", opt);
+            ERR_print_errors(bio_err);
+            ok = 0;
+        }
+        OPENSSL_free(stmp);
+        if (!ok)
+            break;
+    }
+    if (ok) {
+        params[params_n] = OSSL_PARAM_construct_end();
+    } else {
+        app_params_free(params);
+        params = NULL;
+    }
+    return params;
+}
+
+void app_params_free(OSSL_PARAM *params)
+{
+    int i;
+
+    if (params != NULL) {
+        for (i = 0; params[i].key != NULL; ++i)
+            OPENSSL_free(params[i].data);
+        OPENSSL_free(params);
+    }
+}
