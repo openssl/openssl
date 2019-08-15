@@ -70,7 +70,7 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
     const char *p_func = buf;
     const char *p_file = buf == NULL ? NULL : strchr(buf, ':');
     const char *p_level = buf;
-    const char *prefix = buf;
+    const char *msg = buf;
 
     *level = -1;
     *func = NULL;
@@ -92,12 +92,14 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
                     *func = OPENSSL_strndup(p_func, p_file - 1 - p_func);
                     *file = OPENSSL_strndup(p_file, p_line - 1 - p_file);
                     *line = (int)line_number;
-                    prefix = p_level;
+                    msg = strchr(p_level, ':') + 1;
+                    if (*msg == ' ')
+                        msg++;
                 }
             }
         }
     }
-    return prefix;
+    return msg;
 }
 
 

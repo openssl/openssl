@@ -81,7 +81,7 @@ a component identifier (which may be a library name or function name) or NULL,
 a file path name or NULL,
 a line number or 0 indicating the source code location,
 a severity level, and
-a message string describing the nature of the event.
+a message string describing the nature of the event, terminated by '\n'.
 
 Even when an activity is successful some warnings may be useful and some degree
 of auditing may be required. Therefore the logging facility supports a severity

@@ -99,10 +99,6 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
         goto err;
     }
 
-#ifndef OPENSSL_NO_TRACE
-    if (!OSSL_CMP_CTX_set_log_cb(ctx, NULL))
-        goto err;
-#endif
     ctx->log_verbosity = OSSL_CMP_LOG_INFO;
 
     ctx->status = -1;
@@ -326,26 +322,14 @@ static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
 
     if (buf == NULL || cnt == 0 || cmd != OSSL_TRACE_CTRL_WRITE || ctx == NULL)
         return 0;
+    if (ctx->log_cb == NULL)
+        return 1; /* silently drop message */
 
     prefix_msg = ossl_cmp_log_parse_metadata(buf, &level, &func, &file, &line);
 
     if (level > ctx->log_verbosity) /* excludes the case level is unknown */
         goto end; /* suppress output since severity is not sufficient */
 
-    if (ctx->log_cb == NULL) {
-        /*  send full message text including any location prefix to stdout */
-#ifndef OPENSSL_NO_STDIO
-        BIO *bio = BIO_new_fp(stdout, BIO_NOCLOSE);
-
-        cnt = BIO_write(bio, buf, cnt);
-        BIO_free(bio);
-#else
-        /* no output, do not complain on this */
-#endif
-        goto end;
-    }
-
-    /* else send message text along with any parsed location info stdout */
     if (!ctx->log_cb(func != NULL ? func : "(no func)",
                      file != NULL ? file : "(no file)",
                      line, level, prefix_msg))

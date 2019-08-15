@@ -68,8 +68,9 @@ certificates and optionally the (possible) trust anchor(s).
 
 =head1 RETURN VALUES
 
-ossl_cmp_log_parse_metadata() returns the pointer to the
-OSSL_CMP_LOG_PREFIX if found in the buffer, else the beginning of the buffer.
+ossl_cmp_log_parse_metadata() returns the pointer to the actual message text
+after the OSSL_CMP_LOG_PREFIX and level and ':' if found in the buffer,
+else the beginning of the buffer.
 
 ossl_cmp_add_error_txt()
 ossl_cmp_add_error_data(), and

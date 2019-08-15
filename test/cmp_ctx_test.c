@@ -253,7 +253,7 @@ static int test_log_cb(const char *func, const char *file, int line,
         (strcmp(file, OPENSSL_FILE) == 0 || strcmp(file, "(no file)") == 0)
         && (line == test_log_line || line == 0)
         && (level == OSSL_CMP_LOG_INFO || level == -1)
-        && strcmp(msg, "CMP INFO: ok\n") == 0;
+        && strcmp(msg, "ok\n") == 0;
     return 1;
 }
 #endif
