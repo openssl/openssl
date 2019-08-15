@@ -78,8 +78,8 @@ will also be used for the B<key_share> sent by a client in a TLSv1.3
 B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
-either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
+either the B<NIST> name (e.g., B<P-256>), some other commonly used name where
+applicable (e.g., B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
@@ -98,7 +98,7 @@ servers
 
 The B<value> argument is a curve name or the special value B<auto> which
 picks an appropriate curve based on client and server preferences. The curve
-can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
+can be either the B<NIST> name (e.g., B<P-256>) or an OpenSSL OID name
 (e.g B<prime256v1>). Curve names are case sensitive.
 
 =item B<-cipher>
@@ -198,7 +198,7 @@ Equivalent to B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
 Prioritize ChaCha ciphers when the client has a ChaCha20 cipher at the top of
 its preference list. This usually indicates a client without AES hardware
-acceleration (e.g. mobile) is in use. Equivalent to B<SSL_OP_PRIORITIZE_CHACHA>.
+acceleration (e.g., mobile) is in use. Equivalent to B<SSL_OP_PRIORITIZE_CHACHA>.
 Only used by servers. Requires B<-serverpref>.
 
 =item B<-no_resumption_on_reneg>
@@ -359,8 +359,8 @@ will also be used for the B<key_share> sent by a client in a TLSv1.3
 B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
-either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
+either the B<NIST> name (e.g., B<P-256>), some other commonly used name where
+applicable (e.g., B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
 (e.g B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
@@ -414,7 +414,7 @@ by them.
 The B<Protocol> command is fragile and deprecated; do not use it.
 Use B<MinProtocol> and B<MaxProtocol> instead.
 If you do use B<Protocol>, make sure that the resulting range of enabled
-protocols has no "holes", e.g. if TLS 1.0 and TLS 1.2 are both enabled, make
+protocols has no "holes", e.g., if TLS 1.0 and TLS 1.2 are both enabled, make
 sure to also leave TLS 1.1 enabled.
 
 =item B<Options>
@@ -557,7 +557,7 @@ The value is a directory name.
 
 =item B<SSL_CONF_TYPE_NONE>
 
-The value string is not used e.g. a command line option which doesn't take an
+The value string is not used e.g., a command line option which doesn't take an
 argument.
 
 =back

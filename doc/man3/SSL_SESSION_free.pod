@@ -43,17 +43,17 @@ as a session may be reused, several SSL objects may be using one SSL_SESSION
 object at the same time. It is therefore crucial to keep the reference
 count (usage information) correct and not delete a SSL_SESSION object
 that is still used, as this may lead to program failures due to
-dangling pointers. These failures may also appear delayed, e.g.
+dangling pointers. These failures may also appear delayed, e.g.,
 when an SSL_SESSION object was completely freed as the reference count
 incorrectly became 0, but it is still referenced in the internal
 session cache and the cache list is processed during a
 L<SSL_CTX_flush_sessions(3)> operation.
 
 SSL_SESSION_free() must only be called for SSL_SESSION objects, for
-which the reference count was explicitly incremented (e.g.
+which the reference count was explicitly incremented (e.g.,
 by calling SSL_get1_session(), see L<SSL_get_session(3)>)
 or when the SSL_SESSION object was generated outside a TLS handshake
-operation, e.g. by using L<d2i_SSL_SESSION(3)>.
+operation, e.g., by using L<d2i_SSL_SESSION(3)>.
 It must not be called on other SSL_SESSION objects, as this would cause
 incorrect reference counts and therefore program failures.
 

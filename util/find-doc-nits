@@ -213,6 +213,8 @@ sub check()
         if $contents =~ /=over([^ ][^24])/;
     print "$id Possible version style issue\n"
         if $contents =~ /OpenSSL version [019]/;
+    print "$id e.g. without comma\n"
+        if $contents =~ /[Ee]\.g\.[^,]/;
 
     if ( $contents !~ /=for comment multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines

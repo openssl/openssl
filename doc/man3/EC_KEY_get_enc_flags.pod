@@ -19,10 +19,10 @@ i2d_ECPrivateKey() (such as whether it is stored in a compressed form or not) is
 described by the point_conversion_form. See L<EC_GROUP_copy(3)>
 for a description of point_conversion_form.
 
-When reading a private key encoded without an associated public key (e.g. if
+When reading a private key encoded without an associated public key (e.g., if
 EC_PKEY_NO_PUBKEY has been used - see below), then d2i_ECPrivateKey() generates
 the missing public key automatically. Private keys encoded without parameters
-(e.g. if EC_PKEY_NO_PARAMETERS has been used - see below) cannot be loaded using
+(e.g., if EC_PKEY_NO_PARAMETERS has been used - see below) cannot be loaded using
 d2i_ECPrivateKey().
 
 The functions EC_KEY_get_enc_flags() and EC_KEY_set_enc_flags() get and set the

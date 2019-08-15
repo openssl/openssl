@@ -245,7 +245,7 @@ The object can be released with OPENSSL_INIT_free() when done.
 =head1 NOTES
 
 Resources local to a thread are deallocated automatically when the thread exits
-(e.g. in a pthreads environment, when pthread_exit() is called). On Windows
+(e.g., in a pthreads environment, when pthread_exit() is called). On Windows
 platforms this is done in response to a DLL_THREAD_DETACH message being sent to
 the libcrypto32.dll entry point. Some windows functions may cause threads to exit
 without sending this message (for example ExitProcess()). If the application

@@ -86,7 +86,7 @@ MAC. This message is always fatal.
 
 =item "DF"/"decompression failure"
 
-The decompression function received improper input (e.g. data
+The decompression function received improper input (e.g., data
 that would expand to excessive length). This message is always
 fatal.
 

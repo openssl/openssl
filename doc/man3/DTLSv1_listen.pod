@@ -36,7 +36,7 @@ If DTLS is used over UDP (or any datagram based protocol that does not validate
 the source IP) then it is susceptible to this type of attack. TLSv1.3 is
 designed to operate over a stream-based transport protocol (such as TCP).
 If TCP is being used then there is no need to use SSL_stateless(). However some
-stream-based transport protocols (e.g. QUIC) may not validate the source
+stream-based transport protocols (e.g., QUIC) may not validate the source
 address. In this case a TLSv1.3 application would be susceptible to this attack.
 
 As a countermeasure to this issue TLSv1.3 and DTLS include a stateless cookie

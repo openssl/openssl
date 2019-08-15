@@ -439,7 +439,7 @@ maximum is 15.
 
 Writes C<taglen> bytes of the tag value to the buffer indicated by C<tag>.
 This call can only be made when encrypting data and B<after> all data has been
-processed (e.g. after an EVP_EncryptFinal() call).
+processed (e.g., after an EVP_EncryptFinal() call).
 
 For OCB, C<taglen> must either be 16 or the value previously set via
 B<EVP_CTRL_AEAD_SET_TAG>.
@@ -525,13 +525,13 @@ The following ctrls are supported in both SIV modes.
 
 Writes B<taglen> bytes of the tag value to the buffer indicated by B<tag>.
 This call can only be made when encrypting data and B<after> all data has been
-processed (e.g. after an EVP_EncryptFinal() call). For SIV mode the taglen must
+processed (e.g., after an EVP_EncryptFinal() call). For SIV mode the taglen must
 be 16.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
 Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
-when decrypting data and must be made B<before> any data is processed (e.g.
+when decrypting data and must be made B<before> any data is processed (e.g.,
 before any EVP_DecryptUpdate() call). For SIV mode the taglen must be 16.
 
 =back
@@ -560,7 +560,7 @@ in length.
 
 Writes C<taglen> bytes of the tag value to the buffer indicated by C<tag>.
 This call can only be made when encrypting data and B<after> all data has been
-processed (e.g. after an EVP_EncryptFinal() call).
+processed (e.g., after an EVP_EncryptFinal() call).
 
 C<taglen> specified here must be 16 (B<POLY1305_BLOCK_SIZE>, i.e. 128-bits) or
 less.

@@ -97,7 +97,7 @@ The configuration section should consist of a set of name value pairs which
 contain specific module configuration information. The B<name> represents
 the name of the I<configuration module>. The meaning of the B<value> is
 module specific: it may, for example, represent a further configuration
-section containing configuration module specific information. E.g.:
+section containing configuration module specific information. For example:
 
  # This must be in the default section
  openssl_conf = openssl_init
@@ -365,7 +365,7 @@ the B<EXAMPLES> section for an example of how to do this.
 If the same variable exists in the same section then all but the last
 value will be silently ignored. In certain circumstances such as with
 DNs the same field may occur multiple times. This is usually worked
-around by ignoring any characters before an initial B<.> e.g.
+around by ignoring any characters before an initial B<.>, for example:
 
  1.OU="My first OU"
  2.OU="My Second OU"

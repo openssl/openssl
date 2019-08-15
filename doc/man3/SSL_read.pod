@@ -53,7 +53,7 @@ buffer, the read functions will trigger the processing of the next record.
 Only when the record has been received and processed completely will the read
 functions return reporting success. At most the contents of one record will
 be returned. As the size of an SSL/TLS record may exceed the maximum packet size
-of the underlying transport (e.g. TCP), it may be necessary to read several
+of the underlying transport (e.g., TCP), it may be necessary to read several
 packets from the transport layer before the record is complete and the read call
 can succeed.
 
@@ -99,8 +99,8 @@ SSL_read_ex() and SSL_peek_ex() will return 1 for success or 0 for failure.
 Success means that 1 or more application data bytes have been read from the SSL
 connection.
 Failure means that no bytes could be read from the SSL connection.
-Failures can be retryable (e.g. we are waiting for more bytes to
-be delivered by the network) or non-retryable (e.g. a fatal network error).
+Failures can be retryable (e.g., we are waiting for more bytes to
+be delivered by the network) or non-retryable (e.g., a fatal network error).
 In the event of a failure call L<SSL_get_error(3)> to find out the reason which
 indicates whether the call is retryable or not.
 

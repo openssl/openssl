@@ -524,7 +524,7 @@ where security is not important.
 
 Obtain the password from the environment variable B<var>. Since
 the environment of other processes is visible on certain platforms
-(e.g. ps under certain Unix OSes) this option should be used with caution.
+(e.g., ps under certain Unix OSes) this option should be used with caution.
 
 =item B<file:pathname>
 

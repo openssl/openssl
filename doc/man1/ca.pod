@@ -145,7 +145,7 @@ Names and values of these options are algorithm-specific.
 =item B<-key password>
 
 The password used to encrypt the private key. Since on some
-systems the command line arguments are visible (e.g. Unix with
+systems the command line arguments are visible (e.g., Unix with
 the 'ps' utility) this option should be used with caution.
 
 =item B<-selfsign>

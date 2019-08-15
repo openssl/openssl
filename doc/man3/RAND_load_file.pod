@@ -25,7 +25,7 @@ been updated by RAND_write_file() between reads.
 Also, note that B<filename> should be adequately protected so that an
 attacker cannot replace or examine the contents.
 If B<filename> is not a regular file, then user is considered to be
-responsible for any side effects, e.g. non-anticipated blocking or
+responsible for any side effects, e.g., non-anticipated blocking or
 capture of controlling terminal.
 
 RAND_write_file() writes a number of random bytes (currently 128) to

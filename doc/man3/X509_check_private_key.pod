@@ -33,8 +33,8 @@ obtained using L<ERR_get_error(3)>.
 =head1 BUGS
 
 The B<check_private_key> functions don't check if B<k> itself is indeed
-a private key or not. It merely compares the public materials (e.g. exponent
-and modulus of an RSA key) and/or key parameters (e.g. EC params of an EC key)
+a private key or not. It merely compares the public materials (e.g., exponent
+and modulus of an RSA key) and/or key parameters (e.g., EC params of an EC key)
 of a key pair. So if you pass a public key to these functions in B<k>, it will
 return success.
 

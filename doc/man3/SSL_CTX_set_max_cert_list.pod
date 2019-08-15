@@ -45,7 +45,7 @@ L<SSL_CTX_set_verify(3)>, and certificates
 without special extensions have a typical size of 1-2kB).
 
 For special applications it can be necessary to extend the maximum certificate
-chain size allowed to be sent by the peer, see e.g. the work on
+chain size allowed to be sent by the peer, see e.g., the work on
 "Internet X.509 Public Key Infrastructure Proxy Certificate Profile"
 and "TLS Delegation Protocol" at http://www.ietf.org/ and
 http://www.globus.org/ .

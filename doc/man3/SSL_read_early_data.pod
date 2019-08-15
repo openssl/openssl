@@ -161,7 +161,7 @@ Once the initial SSL_read_early_data() call has completed successfully (i.e. it
 has returned SSL_READ_EARLY_DATA_SUCCESS or SSL_READ_EARLY_DATA_FINISH) then the
 server may choose to write data immediately to the unauthenticated client using
 SSL_write_early_data(). If SSL_read_early_data() returned
-SSL_READ_EARLY_DATA_FINISH then in some situations (e.g. if the client only
+SSL_READ_EARLY_DATA_FINISH then in some situations (e.g., if the client only
 supports TLSv1.2) the handshake may have already been completed and calls
 to SSL_write_early_data() are not allowed. Call L<SSL_is_init_finished(3)> to
 determine whether the handshake has completed or not. If the handshake is still
@@ -316,7 +316,7 @@ cache. Applications should be designed with this in mind in order to minimise
 the possibility of replay attacks.
 
 The OpenSSL replay protection does not apply to external Pre Shared Keys (PSKs)
-(e.g. see SSL_CTX_set_psk_find_session_callback(3)). Therefore extreme caution
+(e.g., see SSL_CTX_set_psk_find_session_callback(3)). Therefore extreme caution
 should be applied when combining external PSKs with early data.
 
 Some applications may mitigate the replay risks in other ways. For those

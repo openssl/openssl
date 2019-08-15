@@ -221,7 +221,7 @@ that there will be no forward secrecy for the resumed session.
 When SSL_OP_CIPHER_SERVER_PREFERENCE is set, temporarily reprioritize
 ChaCha20-Poly1305 ciphers to the top of the server cipher list if a
 ChaCha20-Poly1305 cipher is at the top of the client cipher list. This helps
-those clients (e.g. mobile) use ChaCha20-Poly1305 if that cipher is anywhere
+those clients (e.g., mobile) use ChaCha20-Poly1305 if that cipher is anywhere
 in the server cipher list; but still allows other clients to use AES and other
 ciphers. Requires B<SSL_OP_CIPHER_SERVER_PREFERENCE>.
 

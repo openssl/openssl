@@ -15,7 +15,7 @@ SSL object
 =head1 DESCRIPTION
 
 Data is received in whole blocks known as records from the peer. A whole record
-is processed (e.g. decrypted) in one go and is buffered by OpenSSL until it is
+is processed (e.g., decrypted) in one go and is buffered by OpenSSL until it is
 read by the application via a call to L<SSL_read_ex(3)> or L<SSL_read(3)>.
 
 SSL_pending() returns the number of bytes which have been processed, buffered
@@ -39,7 +39,7 @@ data because the unprocessed buffered data when processed yielded no application
 data (for example this can happen during renegotiation). It is also possible in
 this scenario for SSL_has_pending() to continue to return 1 even after an
 SSL_read_ex() or SSL_read() call because the buffered and unprocessed data is
-not yet processable (e.g. because OpenSSL has only received a partial record so
+not yet processable (e.g., because OpenSSL has only received a partial record so
 far).
 
 =head1 RETURN VALUES

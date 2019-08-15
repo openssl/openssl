@@ -104,7 +104,7 @@ The callback B<add_cb> is called to send custom extension data to be
 included in various TLS messages. The B<ext_type> parameter is set to the
 extension type which will be added and B<add_arg> to the value set when the
 extension handler was added. When using the new style callbacks the B<context>
-parameter will indicate which message is currently being constructed e.g. for
+parameter will indicate which message is currently being constructed e.g., for
 the ClientHello it will be set to B<SSL_EXT_CLIENT_HELLO>.
 
 If the application wishes to include the extension B<ext_type> it should

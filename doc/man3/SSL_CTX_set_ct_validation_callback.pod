@@ -77,7 +77,7 @@ Ownership of this context remains with the caller.
 If no callback is set, SCTs will not be requested and Certificate Transparency
 validation will not occur.
 
-No callback will be invoked when the peer presents no certificate, e.g. by
+No callback will be invoked when the peer presents no certificate, e.g., by
 employing an anonymous (aNULL) cipher suite.
 In that case the handshake continues as it would had no callback been
 requested.
@@ -115,7 +115,7 @@ extensions (B<TLSEXT_TYPE_signed_certificate_timestamp>).
 SSL_enable_ct(), SSL_CTX_enable_ct(), SSL_CTX_set_ct_validation_callback() and
 SSL_set_ct_validation_callback() return 1 if the B<callback> is successfully
 set.
-They return 0 if an error occurs, e.g. a custom client extension handler has
+They return 0 if an error occurs, e.g., a custom client extension handler has
 been setup to handle SCTs.
 
 SSL_disable_ct() and SSL_CTX_disable_ct() do not return a result.

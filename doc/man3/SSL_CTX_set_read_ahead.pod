@@ -48,7 +48,7 @@ B<SSL_MODE_AUTO_RETRY> is not turned off using SSL_CTX_clear_mode().
 That will prevent getting B<SSL_ERROR_WANT_READ> when there is still a complete
 record available that hasn't been processed.
 
-If the application wants to continue to use the underlying transport (e.g. TCP
+If the application wants to continue to use the underlying transport (e.g., TCP
 connection) after the SSL connection is finished using SSL_shutdown() reading
 ahead should be turned off.
 Otherwise the SSL structure might read data that it shouldn't.

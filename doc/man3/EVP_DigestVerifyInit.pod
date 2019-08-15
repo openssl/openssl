@@ -68,7 +68,7 @@ transparent to the algorithm used and much more flexible.
 EVP_DigestVerify() is a one shot operation which verifies a single block of
 data in one function. For algorithms that support streaming it is equivalent
 to calling EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal(). For
-algorithms which do not support streaming (e.g. PureEdDSA) it is the only way
+algorithms which do not support streaming (e.g., PureEdDSA) it is the only way
 to verify data.
 
 In previous versions of OpenSSL there was a link between message digest types

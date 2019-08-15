@@ -91,7 +91,7 @@ give any useful information at all during key or parameter generation. Others
 might not even call the callback.
 
 The operation performed by key or parameter generation depends on the algorithm
-used. In some cases (e.g. EC with a supplied named curve) the "generation"
+used. In some cases (e.g., EC with a supplied named curve) the "generation"
 option merely sets the appropriate fields in an EVP_PKEY structure.
 
 In OpenSSL an EVP_PKEY structure containing a private key also contains the

@@ -118,7 +118,7 @@ transparent to the algorithm used and much more flexible.
 EVP_DigestSign() is a one shot operation which signs a single block of data
 in one function. For algorithms that support streaming it is equivalent to
 calling EVP_DigestSignUpdate() and EVP_DigestSignFinal(). For algorithms which
-do not support streaming (e.g. PureEdDSA) it is the only way to sign data.
+do not support streaming (e.g., PureEdDSA) it is the only way to sign data.
 
 In previous versions of OpenSSL there was a link between message digest types
 and public key algorithms. This meant that "clone" digests such as EVP_dss1()

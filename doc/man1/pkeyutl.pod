@@ -214,7 +214,7 @@ The value B<alg> should represent a digest name as used in the
 EVP_get_digestbyname() function for example B<sha1>. This value is not used to
 hash the input data. It is used (by some algorithms) for sanity-checking the
 lengths of data passed in to the B<pkeyutl> and for creating the structures that
-make up the signature (e.g. B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
+make up the signature (e.g., B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
 
 This utility does not hash the input data (except where -rawin is used) but
 rather it will use the data directly as input to the signature algorithm.
@@ -349,11 +349,11 @@ Sign some data using a private key:
 
  openssl pkeyutl -sign -in file -inkey key.pem -out sig
 
-Recover the signed data (e.g. if an RSA key is used):
+Recover the signed data (e.g., if an RSA key is used):
 
  openssl pkeyutl -verifyrecover -in sig -inkey key.pem
 
-Verify the signature (e.g. a DSA key):
+Verify the signature (e.g., a DSA key):
 
  openssl pkeyutl -verify -in file -sigfile sig -inkey key.pem
 

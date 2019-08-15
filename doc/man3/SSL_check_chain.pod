@@ -35,7 +35,7 @@ B<CERT_PKEY_CA_SIGNATURE>: the signature algorithms of all CA certificates
 are acceptable.
 
 B<CERT_PKEY_EE_PARAM>: the parameters of the end entity certificate are
-acceptable (e.g. it is a supported curve).
+acceptable (e.g., it is a supported curve).
 
 B<CERT_PKEY_CA_PARAM>: the parameters of all CA certificates are acceptable.
 

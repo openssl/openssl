@@ -75,7 +75,7 @@ even when the call that set this error was an SSL_write() or SSL_write_ex().
 However if the call was an SSL_write() or SSL_write_ex(), it should be called
 again to continue sending the application data.
 
-For socket B<BIO>s (e.g. when SSL_set_fd() was used), select() or
+For socket B<BIO>s (e.g., when SSL_set_fd() was used), select() or
 poll() on the underlying socket can be used to find out when the
 TLS/SSL I/O function should be retried.
 

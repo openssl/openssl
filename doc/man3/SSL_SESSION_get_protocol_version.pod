@@ -26,7 +26,7 @@ up a session based PSK (see L<SSL_CTX_set_psk_use_session_callback(3)>).
 =head1 RETURN VALUES
 
 SSL_SESSION_get_protocol_version() returns a number indicating the protocol
-version used for the session; this number matches the constants I<e.g.>
+version used for the session; this number matches the constants
 B<TLS1_VERSION>, B<TLS1_2_VERSION> or B<TLS1_3_VERSION>.
 
 Note that the SSL_SESSION_get_protocol_version() function

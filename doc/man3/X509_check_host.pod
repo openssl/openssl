@@ -105,7 +105,7 @@ for "*" as wildcard pattern in labels that have a prefix or suffix,
 such as: "www*" or "*www"; this only applies to B<X509_check_host>.
 
 If set, B<X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS> allows a "*" that
-constitutes the complete label of a DNS name (e.g. "*.example.com")
+constitutes the complete label of a DNS name (e.g., "*.example.com")
 to match more than one label in B<name>; this flag only applies
 to B<X509_check_host>.
 

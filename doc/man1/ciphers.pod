@@ -405,7 +405,7 @@ permissible.
 The following lists give the SSL or TLS cipher suites names from the
 relevant specification and their OpenSSL equivalents. It should be noted,
 that several cipher suite names do not include the authentication used,
-e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
+e.g., DES-CBC3-SHA. In these cases, RSA authentication is used.
 
 =head2 SSL v3.0 cipher suites
 

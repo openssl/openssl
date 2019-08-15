@@ -33,9 +33,9 @@ information for the local end of the connection.
 =head1 RETURN VALUES
 
 These functions return 1 for success and 0 for failure. There are several
-possible reasons for failure: the cipher suite has no signature (e.g. it
+possible reasons for failure: the cipher suite has no signature (e.g., it
 uses RSA key exchange or is anonymous), the TLS version is below 1.2 or
-the functions were called too early, e.g. before the peer signed a message.
+the functions were called too early, e.g., before the peer signed a message.
 
 =head1 SEE ALSO
 

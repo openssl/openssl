@@ -485,7 +485,7 @@ just consist of field names and values: for example,
  OU=My Organization
  emailAddress=someone@somewhere.org
 
-This allows external programs (e.g. GUI based) to generate a template file
+This allows external programs (e.g., GUI based) to generate a template file
 with all the field names and values and just pass it to B<req>. An example
 of this kind of configuration file is contained in the B<EXAMPLES> section.
 

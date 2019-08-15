@@ -88,7 +88,7 @@ A DSA cipher can only be chosen, when a DSA certificate is available.
 DSA ciphers always use DH key exchange and therefore need DH-parameters
 (see L<SSL_CTX_set_tmp_dh_callback(3)>).
 
-When these conditions are not met for any cipher in the list (e.g. a
+When these conditions are not met for any cipher in the list (e.g., a
 client only supports export RSA ciphers with an asymmetric key length
 of 512 bits and the server is not configured to use temporary RSA
 keys), the "no shared cipher" (SSL_R_NO_SHARED_CIPHER) error is generated

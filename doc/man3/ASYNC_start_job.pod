@@ -67,7 +67,7 @@ ASYNC_start_job will return one of the following values:
 
 =item B<ASYNC_ERR>
 
-An error occurred trying to start the job. Check the OpenSSL error queue (e.g.
+An error occurred trying to start the job. Check the OpenSSL error queue (e.g.,
 see L<ERR_print_errors(3)>) for more details.
 
 =item B<ASYNC_NO_JOBS>
@@ -130,7 +130,7 @@ used even if it has been set. See ASYNC_WAIT_CTX_new() for more details.
 
 The ASYNC_block_pause() function will prevent the currently active job from
 pausing. The block will remain in place until a subsequent call to
-ASYNC_unblock_pause(). These functions can be nested, e.g. if you call
+ASYNC_unblock_pause(). These functions can be nested, e.g., if you call
 ASYNC_block_pause() twice then you must call ASYNC_unblock_pause() twice in
 order to re-enable pausing. If these functions are called while there is no
 currently active job then they have no effect. This functionality can be useful

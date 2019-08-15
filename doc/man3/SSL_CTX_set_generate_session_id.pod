@@ -42,7 +42,7 @@ sensitive information.
 Without a callback being set, an OpenSSL server will generate a unique
 session id from pseudo random numbers of the maximum possible length.
 Using the callback function, the session id can be changed to contain
-additional information like e.g. a host id in order to improve load balancing
+additional information like e.g., a host id in order to improve load balancing
 or external caching techniques.
 
 The callback function receives a pointer to the memory location to put
@@ -62,7 +62,7 @@ of generating the same session id is extremely small (2^256 for SSLv3/TLSv1).
 In order to assure the uniqueness of the generated session id, the callback must call
 SSL_has_matching_session_id() and generate another id if a conflict occurs.
 If an id conflict is not resolved, the handshake will fail.
-If the application codes e.g. a unique host id, a unique process number, and
+If the application codes e.g., a unique host id, a unique process number, and
 a unique sequence number into the session id, uniqueness could easily be
 achieved without randomness added (it should however be taken care that
 no confidential information is leaked this way). If the application can not

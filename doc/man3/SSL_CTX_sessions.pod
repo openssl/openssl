@@ -19,7 +19,7 @@ internal session cache for B<ctx>.
 
 The sessions in the internal session cache are kept in an
 L<LHASH(3)> type database. It is possible to directly
-access this database e.g. for searching. In parallel, the sessions
+access this database e.g., for searching. In parallel, the sessions
 form a linked list which is maintained separately from the
 L<LHASH(3)> operations, so that the database must not be
 modified directly but by using the

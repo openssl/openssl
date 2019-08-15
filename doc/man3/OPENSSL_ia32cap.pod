@@ -88,11 +88,11 @@ CPUID with EAX=7 and ECX=0 as input. Following bits are significant:
 
 =over 4
 
-=item bit #64+3 denoting availability of BMI1 instructions, e.g. ANDN;
+=item bit #64+3 denoting availability of BMI1 instructions, e.g., ANDN;
 
 =item bit #64+5 denoting availability of AVX2 instructions;
 
-=item bit #64+8 denoting availability of BMI2 instructions, e.g. MULX
+=item bit #64+8 denoting availability of BMI2 instructions, e.g., MULX
 and RORX;
 
 =item bit #64+16 denoting availability of AVX512F extension;

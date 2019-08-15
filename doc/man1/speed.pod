@@ -54,7 +54,7 @@ of hardware engines.
 
 Use the specified cipher or message digest algorithm via the EVP interface.
 If B<algo> is an AEAD cipher, then you can pass <-aead> to benchmark a
-TLS-like sequence. And if B<algo> is a multi-buffer capable cipher, e.g.
+TLS-like sequence. And if B<algo> is a multi-buffer capable cipher, such as
 aes-128-cbc-hmac-sha1, then B<-mb> will time multi-buffer operation.
 
 =item B<-hmac digest>
@@ -63,7 +63,7 @@ Time the HMAC algorithm using the specified message digest.
 
 =item B<-cmac cipher>
 
-Time the CMAC algorithm using the specified cipher e.g. B<speed -cmac aes128>.
+Time the CMAC algorithm using the specified cipher e.g., B<speed -cmac aes128>.
 
 =item B<-decrypt>
 

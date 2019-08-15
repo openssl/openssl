@@ -520,7 +520,7 @@ L<SSL_CTX_set_split_send_fragment(3)> for further information.
 =item B<-max_pipelines +int>
 
 The maximum number of encrypt/decrypt pipelines to be used. This will only have
-an effect if an engine has been loaded that supports pipelining (e.g. the dasync
+an effect if an engine has been loaded that supports pipelining (e.g., the dasync
 engine) and a suitable cipher suite has been negotiated. The default value is 1.
 See L<SSL_CTX_set_max_pipelines(3)> for further information.
 

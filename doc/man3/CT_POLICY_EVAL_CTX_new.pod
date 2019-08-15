@@ -86,7 +86,7 @@ CT_POLICY_EVAL_CTX_set_time() to set the time SCTs should be compared with to de
 The SCT timestamp will be compared to this time to check whether the SCT was
 issued in the future. RFC6962 states that "TLS clients MUST reject SCTs whose
 timestamp is in the future". By default, this will be set to 5 minutes in the
-future (e.g. (time() + 300) * 1000), to allow for clock drift.
+future (e.g., (time() + 300) * 1000), to allow for clock drift.
 
 The time should be in milliseconds since the Unix epoch.
 

@@ -18,7 +18,7 @@ Get a Certificate Transparency log from a CTLOG_STORE
 A Signed Certificate Timestamp (SCT) identifies the Certificate Transparency
 (CT) log that issued it using the log's LogID (see RFC 6962, Section 3.2).
 Therefore, it is useful to be able to look up more information about a log
-(e.g. its public key) using this LogID.
+(e.g., its public key) using this LogID.
 
 CTLOG_STORE_get0_log_by_id() provides a way to do this. It will find a CTLOG
 in a CTLOG_STORE that has a given LogID.

@@ -51,7 +51,7 @@ format. The file can contain several CA certificates identified by
  -----END CERTIFICATE-----
 
 sequences. Before, between, and after the certificates text is allowed
-which can be used e.g. for descriptions of the certificates.
+which can be used e.g., for descriptions of the certificates.
 
 The B<CAfile> is processed on execution of the SSL_CTX_load_verify_locations()
 function.
@@ -60,12 +60,12 @@ If B<CApath> is not NULL, it points to a directory containing CA certificates
 in PEM format. The files each contain one CA certificate. The files are
 looked up by the CA subject name hash value, which must hence be available.
 If more than one CA certificate with the same name hash value exist, the
-extension must be different (e.g. 9d66eef0.0, 9d66eef0.1 etc). The search
+extension must be different (e.g., 9d66eef0.0, 9d66eef0.1 etc). The search
 is performed in the ordering of the extension number, regardless of other
 properties of the certificates.
 Use the B<c_rehash> utility to create the necessary links.
 
-The certificates in B<CApath> are only looked up when required, e.g. when
+The certificates in B<CApath> are only looked up when required, e.g., when
 building the certificate chain or when actually performing the verification
 of a peer certificate.
 

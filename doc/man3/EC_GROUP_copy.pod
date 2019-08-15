@@ -148,7 +148,7 @@ the correct order.
 
 The function EC_GROUP_check_named_curve determines if the group's domain parameters match one of the built-in curves supported by the library.
 The curve name is returned as a B<NID> if it matches. If the group's domain parameters have been modified then no match will be found.
-If the curve name of the given group is B<NID_undef> (e.g. it has been created by using explicit parameters with no curve name),
+If the curve name of the given group is B<NID_undef> (e.g., it has been created by using explicit parameters with no curve name),
 then this method can be used to lookup the name of the curve that matches the group domain parameters. The built-in curves contain
 aliases, so that multiple NID's can map to the same domain parameters. For such curves it is unspecified which of the aliases will be
 returned if the curve name of the given group is NID_undef.

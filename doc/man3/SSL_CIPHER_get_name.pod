@@ -61,11 +61,11 @@ SSL_CIPHER_get_version() returns string which indicates the SSL/TLS protocol
 version that first defined the cipher.  It returns "(NONE)" if B<cipher> is NULL.
 
 SSL_CIPHER_get_cipher_nid() returns the cipher NID corresponding to B<c>.
-If there is no cipher (e.g. for cipher suites with no encryption) then
+If there is no cipher (e.g., for cipher suites with no encryption) then
 B<NID_undef> is returned.
 
 SSL_CIPHER_get_digest_nid() returns the digest NID corresponding to the MAC
-used by B<c> during record encryption/decryption. If there is no digest (e.g.
+used by B<c> during record encryption/decryption. If there is no digest (e.g.,
 for AEAD cipher suites) then B<NID_undef> is returned.
 
 SSL_CIPHER_get_handshake_digest() returns an EVP_MD for the digest used during
@@ -91,7 +91,7 @@ TLS 1.3 cipher suites) B<NID_auth_any> is returned. Examples (not comprehensive)
  NID_auth_ecdsa
  NID_auth_psk
 
-SSL_CIPHER_is_aead() returns 1 if the cipher B<c> is AEAD (e.g. GCM or
+SSL_CIPHER_is_aead() returns 1 if the cipher B<c> is AEAD (e.g., GCM or
 ChaCha20/Poly1305), and 0 if it is not AEAD.
 
 SSL_CIPHER_find() returns a B<SSL_CIPHER> structure which has the cipher ID stored

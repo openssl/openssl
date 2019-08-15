@@ -49,7 +49,7 @@ enables applications to obtain information about all sessions sent by the
 server.
 
 A session will be automatically removed from the session cache and marked as
-non-resumable if the connection is not closed down cleanly, e.g. if a fatal
+non-resumable if the connection is not closed down cleanly, e.g., if a fatal
 error occurs on the connection or L<SSL_shutdown(3)> is not called prior to
 L<SSL_free(3)>.
 

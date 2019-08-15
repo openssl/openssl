@@ -162,7 +162,7 @@ parameter is specified. (Optional)
 
 It is possible to specify the message imprint explicitly without the data
 file. The imprint must be specified in a hexadecimal format, two characters
-per byte, the bytes optionally separated by colons (e.g. 1A:F6:01:... or
+per byte, the bytes optionally separated by colons (e.g., 1A:F6:01:... or
 1AF601...). The number of bytes must match the message digest algorithm
 in use. (Optional)
 
@@ -285,7 +285,7 @@ B<default_policy> config file option. (Optional)
 Specifies a previously created time stamp response or time stamp token
 (if B<-token_in> is also specified) in DER format that will be written
 to the output file. This option does not require a request, it is
-useful e.g. when you need to examine the content of a response or
+useful e.g., when you need to examine the content of a response or
 token or you want to extract the time stamp token from a response. If
 the input is a token and the output is a time stamp response a default
 'granted' status info is added to the token. (Optional)
@@ -438,7 +438,7 @@ generation a new file is created with serial number 1. (Mandatory)
 
 Specifies the OpenSSL engine that will be set as the default for
 all available algorithms. The default value is builtin, you can specify
-any other engines supported by OpenSSL (e.g. use chil for the NCipher HSM).
+any other engines supported by OpenSSL (e.g., use chil for the NCipher HSM).
 (Optional)
 
 =item B<signer_cert>
@@ -481,7 +481,7 @@ one algorithm must be specified. (Mandatory)
 =item B<accuracy>
 
 The accuracy of the time source of the TSA in seconds, milliseconds
-and microseconds. E.g. secs:1, millisecs:500, microsecs:100. If any of
+and microseconds; e.g., secs:1, millisecs:500, microsecs:100. If any of
 the components is missing zero is assumed for that field. (Optional)
 
 =item B<clock_precision_digits>
@@ -525,7 +525,7 @@ public key certificate identifier. Default is sha256. (Optional)
 =head1 EXAMPLES
 
 All the examples below presume that B<OPENSSL_CONF> is set to a proper
-configuration file, e.g. the example configuration file
+configuration file, e.g., the example configuration file
 openssl/apps/openssl.cnf will do.
 
 =head2 Time Stamp Request

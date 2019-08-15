@@ -26,7 +26,7 @@ or at least L<SSL_set_shutdown(3)> was used to
 set the SSL_SENT_SHUTDOWN state.
 
 If a session was closed cleanly, the session object will be kept and all
-settings corresponding. This explicitly means, that e.g. the special method
+settings corresponding. This explicitly means, that e.g., the special method
 used during the session will be kept for the next handshake. So if the
 session was a TLSv1 session, a SSL client object will use a TLSv1 client
 method for the next handshake and a SSL server object will use a TLSv1

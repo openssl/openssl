@@ -57,7 +57,7 @@ function prior to calling ASYNC_start_job() (see L<ASYNC_start_job(3)>). When
 the job is started it is associated with the ASYNC_WAIT_CTX for the duration of
 that job. An ASYNC_WAIT_CTX should only be used for one ASYNC_JOB at any one
 time, but can be reused after an ASYNC_JOB has finished for a subsequent
-ASYNC_JOB. When the session is complete (e.g. the SSL connection is closed),
+ASYNC_JOB. When the session is complete (e.g., the SSL connection is closed),
 application code cleans up with ASYNC_WAIT_CTX_free().
 
 ASYNC_WAIT_CTXs can have "wait" file descriptors associated with them. Calling
@@ -83,7 +83,7 @@ will be populated with the list of added and deleted fds respectively. Similarly
 to ASYNC_WAIT_CTX_get_all_fds() either of these can be NULL, but if they are not
 NULL then the caller is responsible for ensuring sufficient memory is allocated.
 
-Implementors of async aware code (e.g. engines) are encouraged to return a
+Implementors of async aware code (e.g., engines) are encouraged to return a
 stable fd for the lifetime of the ASYNC_WAIT_CTX in order to reduce the "churn"
 of regularly changing fds - although no guarantees of this are provided to
 applications.
@@ -94,7 +94,7 @@ that the job should be resumed). If no file descriptor is made available then an
 application will have to periodically "poll" the job by attempting to restart it
 to see if it is ready to continue.
 
-Async aware code (e.g. engines) can get the current ASYNC_WAIT_CTX from the job
+Async aware code (e.g., engines) can get the current ASYNC_WAIT_CTX from the job
 via L<ASYNC_get_wait_ctx(3)> and provide a file descriptor to use for waiting
 on by calling ASYNC_WAIT_CTX_set_wait_fd(). Typically this would be done by an
 engine immediately prior to calling ASYNC_pause_job() and not by end user code.

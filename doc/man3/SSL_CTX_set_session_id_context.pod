@@ -25,12 +25,12 @@ B<sid_ctx_len> within which a session can be reused for the B<ssl> object.
 
 Sessions are generated within a certain context. When exporting/importing
 sessions with B<i2d_SSL_SESSION>/B<d2i_SSL_SESSION> it would be possible,
-to re-import a session generated from another context (e.g. another
+to re-import a session generated from another context (e.g., another
 application), which might lead to malfunctions. Therefore each application
 must set its own session id context B<sid_ctx> which is used to distinguish
 the contexts and is stored in exported sessions. The B<sid_ctx> can be
 any kind of binary data with a given length, it is therefore possible
-to use e.g. the name of the application and/or the hostname and/or service
+to use e.g., the name of the application and/or the hostname and/or service
 name ...
 
 The session id context becomes part of the session. The session id context

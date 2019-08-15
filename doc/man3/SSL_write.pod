@@ -87,8 +87,8 @@ if SSL_MODE_ENABLE_PARTIAL_WRITE is in use, at least 1 application data byte has
 been written to the SSL connection. Failure means that not all the requested
 bytes have been written yet (if SSL_MODE_ENABLE_PARTIAL_WRITE is not in use) or
 no bytes could be written to the SSL connection (if
-SSL_MODE_ENABLE_PARTIAL_WRITE is in use). Failures can be retryable (e.g. the
-network write buffer has temporarily filled up) or non-retryable (e.g. a fatal
+SSL_MODE_ENABLE_PARTIAL_WRITE is in use). Failures can be retryable (e.g., the
+network write buffer has temporarily filled up) or non-retryable (e.g., a fatal
 network error). In the event of a failure call L<SSL_get_error(3)> to find out
 the reason which indicates whether the call is retryable or not.
 
