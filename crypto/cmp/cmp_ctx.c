@@ -92,12 +92,10 @@ int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
  */
 OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
 {
-    OSSL_CMP_CTX *ctx = OPENSSL_zalloc(sizeof(OSSL_CMP_CTX));
+    OSSL_CMP_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        goto err;
-    }
+    if (ctx == NULL)
+        return NULL;
 
     ctx->log_verbosity = OSSL_CMP_LOG_INFO;
 
@@ -129,7 +127,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
     return ctx;
 
  err:
-    OPENSSL_free(ctx);
+    OSSL_CMP_CTX_free(ctx);
     return NULL;
 }
 
@@ -246,10 +244,8 @@ OSSL_CMP_PKIFREETEXT *OSSL_CMP_CTX_get0_statusString(const OSSL_CMP_CTX *ctx)
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
                                    OSSL_CMP_PKIFREETEXT *text)
 {
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(ctx != NULL))
         return 0;
-    }
     sk_ASN1_UTF8STRING_pop_free(ctx->statusString, ASN1_UTF8STRING_free);
     ctx->statusString = text;
     return 1;
@@ -257,10 +253,8 @@ int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
 
 int ossl_cmp_ctx_set0_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert)
 {
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(ctx != NULL))
         return 0;
-    }
     X509_free(ctx->validatedSrvCert);
     ctx->validatedSrvCert = cert;
     return 1;
@@ -421,10 +415,8 @@ STACK_OF(X509) *OSSL_CMP_CTX_get1_extraCertsIn(const OSSL_CMP_CTX *ctx)
 int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
                                    STACK_OF(X509) *extraCertsIn)
 {
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(ctx != NULL))
         return 0;
-    }
 
     sk_X509_pop_free(ctx->extraCertsIn, X509_free);
     ctx->extraCertsIn = NULL;
@@ -454,7 +446,7 @@ int OSSL_CMP_CTX_set1_extraCertsOut(OSSL_CMP_CTX *ctx,
 }
 
 /*
- * OSSL_CMP_CTX_push1_policyOID() adds the given policy info object
+ * Add the given policy info object
  * to the X509_EXTENSIONS of the requested certificate template.
  * Returns 1 on success, 0 on error.
  */
@@ -519,10 +511,8 @@ STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx)
  */
 int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs)
 {
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(ctx != NULL))
         return 0;
-    }
 
     sk_X509_pop_free(ctx->caPubs, X509_free);
     ctx->caPubs = NULL;
@@ -741,10 +731,8 @@ int OSSL_CMP_CTX_set1_p10CSR(OSSL_CMP_CTX *ctx, const X509_REQ *csr)
  */
 int ossl_cmp_ctx_set0_newCert(OSSL_CMP_CTX *ctx, X509 *cert)
 {
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(ctx != NULL))
         return 0;
-    }
 
     X509_free(ctx->newCert);
     ctx->newCert = cert;
@@ -836,24 +824,9 @@ int OSSL_CMP_CTX_set1_transactionID(OSSL_CMP_CTX *ctx,
 int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                             const ASN1_OCTET_STRING *nonce)
 {
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(ctx != NULL))
         return 0;
-    }
     return ossl_cmp_asn1_octet_string_set1(&ctx->recipNonce, nonce);
-}
-
-/*
- * Gets the recipNonce of the given context.
- * Returns a pointer to the nonce on success, NULL on error
- */
-ASN1_OCTET_STRING *ossl_cmp_ctx_get0_recipNonce(const OSSL_CMP_CTX *ctx)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return NULL;
-    }
-    return ctx->recipNonce;
 }
 
 /*
@@ -868,19 +841,6 @@ int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
         return 0;
     }
     return ossl_cmp_asn1_octet_string_set1(&ctx->senderNonce, nonce);
-}
-
-/*
- * Gets the sender nonce of the last message sent.
- * Returns a pointer to the nonce on success, NULL on error
- */
-ASN1_OCTET_STRING *ossl_cmp_ctx_get0_senderNonce(const OSSL_CMP_CTX *ctx)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return NULL;
-    }
-    return ctx->senderNonce;
 }
 
 /*
@@ -1051,10 +1011,8 @@ int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path)
  */
 int ossl_cmp_ctx_set_failInfoCode(OSSL_CMP_CTX *ctx, int fail_info)
 {
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(ctx != NULL))
         return 0;
-    }
     ctx->failInfoCode = fail_info;
     return 1;
 }

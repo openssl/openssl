@@ -9,9 +9,7 @@ ossl_cmp_ctx_set0_statusString,
 ossl_cmp_ctx_set_failInfoCode,
 ossl_cmp_ctx_set0_newCert,
 ossl_cmp_ctx_set1_extraCertsIn,
-ossl_cmp_ctx_get0_senderNonce,
-ossl_cmp_ctx_set1_recipNonce,
-ossl_cmp_ctx_get0_recipNonce
+ossl_cmp_ctx_set1_recipNonce
 - internal functions for managing the CMP client context datastructure
 
 =head1 SYNOPSIS
@@ -27,10 +25,8 @@ ossl_cmp_ctx_get0_recipNonce
  int ossl_cmp_ctx_set0_newCert(OSSL_CMP_CTX *ctx, X509 *cert);
  int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
                                     STACK_OF(X509) *extraCertsIn);
- ASN1_OCTET_STRING *ossl_cmp_ctx_get0_senderNonce(const OSSL_CMP_CTX *ctx);
  int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                   const ASN1_OCTET_STRING *nonce);
- ASN1_OCTET_STRING *ossl_cmp_ctx_get0_recipNonce(const OSSL_CMP_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -54,12 +50,7 @@ in the context.
 ossl_cmp_ctx_set1_extraCertsIn() sets the extraCertsIn field of the context.
 The reference counts of those certificates handled successfully are increased.
 
-ossl_cmp_ctx_get0_senderNonce() returns the senderNonce stored
-in the context.
-
 ossl_cmp_ctx_set1_recipNonce() sets the given recipient nonce in the context.
-
-ossl_cmp_ctx_get0_recipNonce() returns the recipient nonce in the context.
 
 =head1 NOTES
 
@@ -67,11 +58,7 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 
 =head1 RETURN VALUES
 
-ossl_cmp_ctx_get0_senderNonce() and
-ossl_cmp_ctx_get0_recipNonce()
-return the intended pointer value as described above or NULL on error.
-
-All other functions return 1 on success, 0 on error.
+All functions return 1 on success, 0 on error.
 
 =head1 HISTORY
 
