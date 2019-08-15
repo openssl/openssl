@@ -464,7 +464,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
             prov->teardown =
                 OSSL_get_provider_teardown(provider_dispatch);
             break;
-        case OSSL_FUNC_PROVIDER_GETTABLE_TYPES:
+        case OSSL_FUNC_PROVIDER_GETTABLE_PARAMS:
             prov->gettable_params =
                 OSSL_get_provider_gettable_params(provider_dispatch);
             break;
@@ -855,7 +855,7 @@ static void core_vset_error(const OSSL_PROVIDER *prov,
  * functions.
  */
 static const OSSL_DISPATCH core_dispatch_[] = {
-    { OSSL_FUNC_CORE_GETTABLE_TYPES, (void (*)(void))core_gettable_params },
+    { OSSL_FUNC_CORE_GETTABLE_PARAMS, (void (*)(void))core_gettable_params },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
     { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },

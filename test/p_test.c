@@ -101,7 +101,7 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
 }
 
 static const OSSL_DISPATCH p_test_table[] = {
-    { OSSL_FUNC_PROVIDER_GETTABLE_TYPES, (void (*)(void))p_gettable_params },
+    { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))p_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))p_get_params },
     { 0, NULL }
 };
@@ -113,7 +113,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
 {
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GETTABLE_TYPES:
+        case OSSL_FUNC_CORE_GETTABLE_PARAMS:
             c_gettable_params = OSSL_get_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:

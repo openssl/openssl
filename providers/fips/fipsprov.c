@@ -295,7 +295,7 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
      * use OPENSSL_CTX_free directly as our teardown function
      */
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OPENSSL_CTX_free },
-    { OSSL_FUNC_PROVIDER_GETTABLE_TYPES, (void (*)(void))fips_gettable_params },
+    { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))fips_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))fips_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
     { 0, NULL }
@@ -318,7 +318,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GETTABLE_TYPES:
+        case OSSL_FUNC_CORE_GETTABLE_PARAMS:
             c_gettable_params = OSSL_get_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:

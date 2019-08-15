@@ -57,7 +57,7 @@ extern "C" {
  * therefore NEVER be used as a function identity.
  */
 /* Functions provided by the Core to the provider, reserved numbers 1-1023 */
-# define OSSL_FUNC_CORE_GETTABLE_TYPES         1
+# define OSSL_FUNC_CORE_GETTABLE_PARAMS        1
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
                     core_gettable_params,(const OSSL_PROVIDER *prov))
 # define OSSL_FUNC_CORE_GET_PARAMS             2
@@ -121,7 +121,7 @@ OSSL_CORE_MAKE_FUNC(void,
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
 OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void *provctx))
-# define OSSL_FUNC_PROVIDER_GETTABLE_TYPES   1025
+# define OSSL_FUNC_PROVIDER_GETTABLE_PARAMS  1025
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
                     provider_gettable_params,(void *provctx))
 # define OSSL_FUNC_PROVIDER_GET_PARAMS       1026

@@ -156,7 +156,7 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
 
 /* Functions we provide to the core */
 static const OSSL_DISPATCH deflt_dispatch_table[] = {
-    { OSSL_FUNC_PROVIDER_GETTABLE_TYPES, (void (*)(void))deflt_gettable_params },
+    { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))deflt_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))deflt_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))deflt_query },
     { 0, NULL }
@@ -173,7 +173,7 @@ int ossl_default_provider_init(const OSSL_PROVIDER *provider,
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GETTABLE_TYPES:
+        case OSSL_FUNC_CORE_GETTABLE_PARAMS:
             c_gettable_params = OSSL_get_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
