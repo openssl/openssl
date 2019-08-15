@@ -35,7 +35,7 @@ extern "C" {
 #define OSSL_PROV_PARAM_BUILDINFO   "buildinfo"
 
 /*
- * The modules filename including the path (Used for FIPS Self Testing)
+ * The module filename (Used for FIPS Self Testing)
  * Type: OSSL_PARAM_UTF8_STRING
  */
 #define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"

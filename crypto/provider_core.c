@@ -9,6 +9,7 @@
 
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
+#include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "internal/cryptlib_int.h"
@@ -795,7 +796,10 @@ static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
         if ((p = OSSL_PARAM_locate(params, pair->name)) != NULL)
             OSSL_PARAM_set_utf8_ptr(p, pair->value);
     }
-
+#ifndef FIPS_MODE
+    if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_MODULE_FILENAME)) != NULL)
+        OSSL_PARAM_set_utf8_ptr(p, ossl_provider_module_path(prov));
+#endif
     return 1;
 }
 

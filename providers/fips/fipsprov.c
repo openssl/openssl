@@ -92,7 +92,7 @@ static const OSSL_PARAM fips_param_types[] = {
 /*
  * Parameters to retrieve from the core provider - required for self testing.
  * NOTE: inside core_get_params() these will be loaded from config items
- * styored inside prov->parameters
+ * stored inside prov->parameters.
  */
 static OSSL_PARAM core_params[] =
 {
