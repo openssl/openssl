@@ -215,9 +215,9 @@ struct evp_md_st {
     OSSL_OP_digest_get_params_fn *get_params;
     OSSL_OP_digest_ctx_set_params_fn *ctx_set_params;
     OSSL_OP_digest_ctx_get_params_fn *ctx_get_params;
-    OSSL_OP_digest_gettable_types_fn *gettable_types;
-    OSSL_OP_digest_settable_ctx_types_fn *settable_ctx_types;
-    OSSL_OP_digest_gettable_ctx_types_fn *gettable_ctx_types;
+    OSSL_OP_digest_gettable_params_fn *gettable_params;
+    OSSL_OP_digest_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_OP_digest_gettable_ctx_params_fn *gettable_ctx_params;
 
 } /* EVP_MD */ ;
 
@@ -269,9 +269,9 @@ struct evp_cipher_st {
     OSSL_OP_cipher_get_params_fn *get_params;
     OSSL_OP_cipher_ctx_get_params_fn *ctx_get_params;
     OSSL_OP_cipher_ctx_set_params_fn *ctx_set_params;
-    OSSL_OP_cipher_gettable_types_fn *gettable_types;
-    OSSL_OP_cipher_gettable_ctx_types_fn *gettable_ctx_types;
-    OSSL_OP_cipher_settable_ctx_types_fn *settable_ctx_types;
+    OSSL_OP_cipher_gettable_params_fn *gettable_params;
+    OSSL_OP_cipher_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_OP_cipher_settable_ctx_params_fn *settable_ctx_params;
 } /* EVP_CIPHER */ ;
 
 /* Macros to code block cipher wrappers */

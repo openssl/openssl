@@ -37,11 +37,11 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
                       size_t outsize, const unsigned char *in, size_t inl);
 
  /* Cipher parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_types(void);
+ const OSSL_PARAM *OP_cipher_gettable_params(void);
 
  /* Cipheroperation parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_ctx_types(void);
- const OSSL_PARAM *OP_cipher_settable_ctx_types(void);
+ const OSSL_PARAM *OP_cipher_gettable_ctx_params(void);
+ const OSSL_PARAM *OP_cipher_settable_ctx_params(void);
 
  /* Cipher parameters */
  int OP_cipher_get_params(OSSL_PARAM params[]);
@@ -93,9 +93,9 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_cipher_ctx_get_params       OSSL_FUNC_CIPHER_CTX_GET_PARAMS
  OP_cipher_ctx_set_params       OSSL_FUNC_CIPHER_CTX_SET_PARAMS
 
- OP_cipher_gettable_types       OSSL_FUNC_CIPHER_GETTABLE_TYPES
- OP_cipher_gettable_ctx_types   OSSL_FUNC_CIPHER_GETTABLE_CTX_TYPES
- OP_cipher_settable_ctx_types   OSSL_FUNC_CIPHER_SETTABLE_CTX_TYPES
+ OP_cipher_gettable_params       OSSL_FUNC_CIPHER_GETTABLE_TYPES
+ OP_cipher_gettable_ctx_params   OSSL_FUNC_CIPHER_GETTABLE_CTX_TYPES
+ OP_cipher_settable_ctx_params   OSSL_FUNC_CIPHER_SETTABLE_CTX_TYPES
 
 A cipher algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions there must at least be a complete
@@ -186,8 +186,8 @@ Any parameter settings are additional to any that were previously set.
 OP_cipher_ctx_get_params() gets cipher operation details details from
 the given provider side cipher context B<cctx> and stores them in B<params>.
 
-OP_cipher_gettable_types(), OP_cipher_gettable_ctx_types(), and
-OP_cipher_settable_ctx_types() all return constant B<OSSL_PARAM> arrays
+OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params(), and
+OP_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
 as descriptors of the parameters that OP_cipher_get_params(),
 OP_cipher_ctx_get_params(), and OP_cipher_ctx_set_params() can handle,
 respectively.

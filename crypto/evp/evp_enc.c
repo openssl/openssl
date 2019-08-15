@@ -1072,24 +1072,24 @@ int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_CIPHER_gettable_types(const EVP_CIPHER *cipher)
+const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->gettable_types != NULL)
-        return cipher->gettable_types();
+    if (cipher != NULL && cipher->gettable_params != NULL)
+        return cipher->gettable_params();
     return NULL;
 }
 
-const OSSL_PARAM *EVP_CIPHER_CTX_settable_types(const EVP_CIPHER *cipher)
+const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->settable_ctx_types != NULL)
-        return cipher->settable_ctx_types();
+    if (cipher != NULL && cipher->settable_ctx_params != NULL)
+        return cipher->settable_ctx_params();
     return NULL;
 }
 
-const OSSL_PARAM *EVP_CIPHER_CTX_gettable_types(const EVP_CIPHER *cipher)
+const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->gettable_ctx_types != NULL)
-        return cipher->gettable_ctx_types();
+    if (cipher != NULL && cipher->gettable_ctx_params != NULL)
+        return cipher->gettable_ctx_params();
     return NULL;
 }
 
@@ -1255,21 +1255,21 @@ static void *evp_cipher_from_dispatch(const char *name,
             cipher->ctx_set_params = OSSL_get_OP_cipher_ctx_set_params(fns);
             break;
         case OSSL_FUNC_CIPHER_GETTABLE_TYPES:
-            if (cipher->gettable_types != NULL)
+            if (cipher->gettable_params != NULL)
                 break;
-            cipher->gettable_types = OSSL_get_OP_cipher_gettable_types(fns);
+            cipher->gettable_params = OSSL_get_OP_cipher_gettable_params(fns);
             break;
         case OSSL_FUNC_CIPHER_GETTABLE_CTX_TYPES:
-            if (cipher->gettable_ctx_types != NULL)
+            if (cipher->gettable_ctx_params != NULL)
                 break;
-            cipher->gettable_ctx_types =
-                OSSL_get_OP_cipher_gettable_ctx_types(fns);
+            cipher->gettable_ctx_params =
+                OSSL_get_OP_cipher_gettable_ctx_params(fns);
             break;
         case OSSL_FUNC_CIPHER_SETTABLE_CTX_TYPES:
-            if (cipher->settable_ctx_types != NULL)
+            if (cipher->settable_ctx_params != NULL)
                 break;
-            cipher->settable_ctx_types =
-                OSSL_get_OP_cipher_settable_ctx_types(fns);
+            cipher->settable_ctx_params =
+                OSSL_get_OP_cipher_settable_ctx_params(fns);
             break;
         }
     }

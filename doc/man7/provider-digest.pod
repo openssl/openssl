@@ -31,11 +31,11 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
                       unsigned char *out, size_t *outl, size_t outsz);
 
  /* Digest parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_types(void);
+ const OSSL_PARAM *OP_cipher_gettable_params(void);
 
  /* Digest operation parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_ctx_types(void);
- const OSSL_PARAM *OP_cipher_settable_ctx_types(void);
+ const OSSL_PARAM *OP_cipher_gettable_ctx_params(void);
+ const OSSL_PARAM *OP_cipher_settable_ctx_params(void);
 
  /* Digest parameters */
  int OP_digest_get_params(OSSL_PARAM params[]);
@@ -85,9 +85,9 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_digest_ctx_get_params       OSSL_FUNC_DIGEST_CTX_GET_PARAMS
  OP_digest_ctx_set_params       OSSL_FUNC_DIGEST_CTX_SET_PARAMS
 
- OP_digest_gettable_types       OSSL_FUNC_DIGEST_GETTABLE_TYPES
- OP_digest_gettable_ctx_types   OSSL_FUNC_DIGEST_GETTABLE_CTX_TYPES
- OP_digest_settable_ctx_types   OSSL_FUNC_DIGEST_SETTABLE_CTX_TYPES
+ OP_digest_gettable_params       OSSL_FUNC_DIGEST_GETTABLE_TYPES
+ OP_digest_gettable_ctx_params   OSSL_FUNC_DIGEST_GETTABLE_CTX_TYPES
+ OP_digest_settable_ctx_params   OSSL_FUNC_DIGEST_SETTABLE_CTX_TYPES
 
 A digest algorithm implementation may not implement all of these functions.
 In order to be useable all or none of OP_digest_newctx, OP_digest_freectx,
@@ -153,8 +153,8 @@ Any parameter settings are additional to any that were previously set.
 OP_digest_ctx_get_params() gets digest operation details details from
 the given provider side digest context B<dctx> and stores them in B<params>.
 
-OP_digest_gettable_types(), OP_digest_gettable_ctx_types(), and
-OP_digest_settable_ctx_types() all return constant B<OSSL_PARAM> arrays
+OP_digest_gettable_params(), OP_digest_gettable_ctx_params(), and
+OP_digest_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
 as descriptors of the parameters that OP_digest_get_params(),
 OP_digest_ctx_get_params(), and OP_digest_ctx_set_params() can handle,
 respectively.

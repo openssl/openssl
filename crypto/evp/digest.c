@@ -531,10 +531,10 @@ int EVP_MD_get_params(const EVP_MD *digest, OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_MD_gettable_types(const EVP_MD *digest)
+const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest)
 {
-    if (digest != NULL && digest->gettable_types != NULL)
-        return digest->gettable_types();
+    if (digest != NULL && digest->gettable_params != NULL)
+        return digest->gettable_params();
     return NULL;
 }
 
@@ -545,10 +545,10 @@ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_MD_CTX_settable_types(const EVP_MD *digest)
+const OSSL_PARAM *EVP_MD_CTX_settable_params(const EVP_MD *digest)
 {
-    if (digest != NULL && digest->settable_ctx_types != NULL)
-        return digest->settable_ctx_types();
+    if (digest != NULL && digest->settable_ctx_params != NULL)
+        return digest->settable_ctx_params();
     return NULL;
 }
 
@@ -559,10 +559,10 @@ int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_MD_CTX_gettable_types(const EVP_MD *digest)
+const OSSL_PARAM *EVP_MD_CTX_gettable_params(const EVP_MD *digest)
 {
-    if (digest != NULL && digest->gettable_ctx_types != NULL)
-        return digest->gettable_ctx_types();
+    if (digest != NULL && digest->gettable_ctx_params != NULL)
+        return digest->gettable_ctx_params();
     return NULL;
 }
 
@@ -684,18 +684,18 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
                 md->ctx_get_params = OSSL_get_OP_digest_ctx_get_params(fns);
             break;
         case OSSL_FUNC_DIGEST_GETTABLE_TYPES:
-            if (md->gettable_types == NULL)
-                md->gettable_types = OSSL_get_OP_digest_gettable_types(fns);
+            if (md->gettable_params == NULL)
+                md->gettable_params = OSSL_get_OP_digest_gettable_params(fns);
             break;
         case OSSL_FUNC_DIGEST_SETTABLE_CTX_TYPES:
-            if (md->settable_ctx_types == NULL)
-                md->settable_ctx_types =
-                    OSSL_get_OP_digest_settable_ctx_types(fns);
+            if (md->settable_ctx_params == NULL)
+                md->settable_ctx_params =
+                    OSSL_get_OP_digest_settable_ctx_params(fns);
             break;
         case OSSL_FUNC_DIGEST_GETTABLE_CTX_TYPES:
-            if (md->gettable_ctx_types == NULL)
-                md->gettable_ctx_types =
-                    OSSL_get_OP_digest_gettable_ctx_types(fns);
+            if (md->gettable_ctx_params == NULL)
+                md->gettable_ctx_params =
+                    OSSL_get_OP_digest_gettable_ctx_params(fns);
             break;
         }
     }

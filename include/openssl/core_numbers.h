@@ -171,9 +171,9 @@ OSSL_CORE_MAKE_FUNC(int, OP_digest_ctx_set_params,
                     (void *vctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_digest_ctx_get_params,
                     (void *vctx, OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_gettable_types, (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_settable_ctx_types, (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_gettable_ctx_types, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_gettable_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_settable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_digest_gettable_ctx_params, (void))
 
 /* Symmetric Ciphers */
 
@@ -223,11 +223,11 @@ OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_get_params, (void *cctx,
                                                     OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_cipher_ctx_set_params, (void *cctx,
                                                     const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_types,
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_params,
                     (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_settable_ctx_types,
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_settable_ctx_params,
                     (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_ctx_types,
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_cipher_gettable_ctx_params,
                     (void))
 
 /*-

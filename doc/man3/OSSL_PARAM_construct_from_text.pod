@@ -120,7 +120,7 @@ Can be written like this instead:
   OSSL_PARAM *params =
       OPENSSL_zalloc(sizeof(*params)
                      * (sk_OPENSSL_STRING_num(opts) + 1));
-  const OSSL_PARAM *paramdefs = EVP_MAC_CTX_settable_types(mac);
+  const OSSL_PARAM *paramdefs = EVP_MAC_CTX_settable_params(mac);
   size_t params_n;
   char *opt = "<unknown>";
 

@@ -30,7 +30,7 @@ EVP_CIPHER_name,
 EVP_CIPHER_provider,
 EVP_CIPHER_nid,
 EVP_CIPHER_get_params,
-EVP_CIPHER_gettable_types,
+EVP_CIPHER_gettable_params,
 EVP_CIPHER_block_size,
 EVP_CIPHER_key_length,
 EVP_CIPHER_iv_length,
@@ -41,9 +41,9 @@ EVP_CIPHER_CTX_cipher,
 EVP_CIPHER_CTX_name,
 EVP_CIPHER_CTX_nid,
 EVP_CIPHER_CTX_get_params,
-EVP_CIPHER_CTX_gettable_types,
+EVP_CIPHER_CTX_gettable_params,
 EVP_CIPHER_CTX_set_params,
-EVP_CIPHER_CTX_settable_types,
+EVP_CIPHER_CTX_settable_params,
 EVP_CIPHER_CTX_block_size,
 EVP_CIPHER_CTX_key_length,
 EVP_CIPHER_CTX_iv_length,
@@ -127,9 +127,9 @@ EVP_CIPHER_do_all_ex
  int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[]);
  int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[]);
  int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[]);
- const OSSL_PARAM *EVP_CIPHER_gettable_types(const EVP_CIPHER *cipher);
- const OSSL_PARAM *EVP_CIPHER_CTX_settable_types(const EVP_CIPHER *cipher);
- const OSSL_PARAM *EVP_CIPHER_CTX_gettable_types(const EVP_CIPHER *cipher);
+ const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher);
+ const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(const EVP_CIPHER *cipher);
+ const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(const EVP_CIPHER *cipher);
  int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
@@ -262,8 +262,8 @@ context B<ctx>.
 EVP_CIPHER_CTX_get_params() retrieves the requested list of operation
 B<params> from CIPHER context B<ctx>.
 
-EVP_CIPHER_gettable_types(), EVP_CIPHER_CTX_gettable_types(), and
-EVP_CIPHER_CTX_settable_types() get a constant B<OSSL_PARAM> array
+EVP_CIPHER_gettable_params(), EVP_CIPHER_CTX_gettable_params(), and
+EVP_CIPHER_CTX_settable_params() get a constant B<OSSL_PARAM> array
 that decribes the retrievable and settable parameters, i.e. parameters
 that can be used with EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params()
 and EVP_CIPHER_CTX_set_params(), respectively.
