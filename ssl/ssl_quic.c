@@ -114,15 +114,26 @@ int SSL_provide_quic_data(SSL *ssl, OSSL_ENCRYPTION_LEVEL level,
         QUIC_DATA *qd;
         const uint8_t *p = data + 1;
 
+        /* Check for an incomplete block */
+        qd = ssl->quic_input_data_tail;
+        if (qd != NULL) {
+            l = ssl->quic_input_data_tail->length - ssl->quic_input_data_tail->offset;
+            if (l != 0) {
+                /* we still need to copy `l` bytes into the last data block */
+                if (l > len)
+                    l = len;
+                memcpy((char*)(qd+1) + qd->offset, data, l);
+                qd->offset += l;
+                len -= l;
+                data += l;
+                continue;
+            }
+        }
+
         n2l3(p, l);
         l += SSL3_HM_HEADER_LENGTH;
 
-        if (l > len) {
-            SSLerr(SSL_F_SSL_PROVIDE_QUIC_DATA, SSL_R_BAD_DATA_LENGTH);
-            return 0;
-        }
-
-        qd = OPENSSL_malloc(sizeof(QUIC_DATA) + l);
+        qd = OPENSSL_zalloc(sizeof(QUIC_DATA) + l);
         if (qd == NULL) {
             SSLerr(SSL_F_SSL_PROVIDE_QUIC_DATA, SSL_R_INTERNAL_ERROR);
             return 0;
@@ -131,6 +142,11 @@ int SSL_provide_quic_data(SSL *ssl, OSSL_ENCRYPTION_LEVEL level,
         qd->next = NULL;
         qd->length = l;
         qd->level = level;
+        /* partial data received? */
+        if (l > len)
+            l = len;
+        qd->offset = l;
+
         memcpy((void*)(qd + 1), data, l);
         if (ssl->quic_input_data_tail != NULL)
             ssl->quic_input_data_tail->next = qd;

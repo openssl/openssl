@@ -1215,6 +1215,7 @@ typedef struct cert_pkey_st CERT_PKEY;
 struct quic_data_st {
     struct quic_data_st *next;
     OSSL_ENCRYPTION_LEVEL level;
+    size_t offset;
     size_t length;
 };
 typedef struct quic_data_st QUIC_DATA;
