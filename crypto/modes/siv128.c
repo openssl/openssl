@@ -186,7 +186,8 @@ int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
     if (key == NULL || cbc == NULL || ctr == NULL
             || (ctx->cipher_ctx = EVP_CIPHER_CTX_new()) == NULL
             /* TODO(3.0) library context */
-            || (ctx->mac = EVP_MAC_fetch(NULL, "CMAC", NULL)) == NULL
+            || (ctx->mac =
+                EVP_MAC_fetch(NULL, OSSL_MAC_NAME_CMAC, NULL)) == NULL
             || (ctx->mac_ctx_init = EVP_MAC_CTX_new(ctx->mac)) == NULL
             || !EVP_MAC_CTX_set_params(ctx->mac_ctx_init, params)
             || !EVP_EncryptInit_ex(ctx->cipher_ctx, ctr, NULL, key + klen, NULL)

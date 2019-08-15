@@ -243,7 +243,7 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     int mac_flags;
     const char *mdname = EVP_MD_name(md);
 
-    mac = EVP_MAC_fetch(NULL, "HMAC", NULL); /* Implicit fetch */
+    mac = EVP_MAC_fetch(NULL, OSSL_MAC_NAME_HMAC, NULL); /* Implicit fetch */
     ctx_init = EVP_MAC_CTX_new(mac);
     if (ctx_init == NULL)
         goto err;
