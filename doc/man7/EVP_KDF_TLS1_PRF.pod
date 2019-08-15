@@ -97,7 +97,7 @@ an error will occur.
 The output length of the PRF is specified by the C<keylen> parameter to the
 EVP_KDF_derive() function.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example derives 10 bytes using SHA-256 with the secret key "secret"
 and seed value "seed":

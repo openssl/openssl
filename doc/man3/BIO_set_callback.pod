@@ -223,7 +223,7 @@ via a call to BIO_set_callback_arg().
 BIO_debug_callback() returns 1 or B<ret> if it's called after specific BIO
 operations.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 The BIO_debug_callback() function is a good example, its source is
 in crypto/bio/bio_cb.c

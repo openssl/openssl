@@ -71,7 +71,7 @@ applicable (as with RFC7671 DANE-EE(3)), or no trusted peername was
 matched.  Otherwise, it returns the matched peername.  To determine
 whether verification succeeded call L<SSL_get_verify_result(3)>.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Suppose "smtp.example.com" is the MX host of the domain "example.com".
 The calls below will arrange to match either the MX hostname or the

@@ -52,7 +52,7 @@ pointer to a BIO_METHOD. There is a naming convention for such functions:
 a source/sink BIO is normally called BIO_s_*() and a filter BIO
 BIO_f_*();
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Create a memory BIO:
 

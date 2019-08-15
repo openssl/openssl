@@ -34,7 +34,7 @@ L<UI_OpenSSL(3)>, for example.
 PKCS12_newpass() returns 1 on success or 0 on failure. Applications can
 retrieve the most recent error from PKCS12_newpass() with ERR_get_error().
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example loads a PKCS#12 file, changes its password and writes out
 the result to a new file.

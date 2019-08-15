@@ -53,7 +53,7 @@ on it other than the discarded return value.
 
 BIO_set() was removed in OpenSSL 1.1.0 as BIO type is now opaque.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Create a memory BIO:
 

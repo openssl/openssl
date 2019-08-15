@@ -37,7 +37,7 @@ B<X509_VERIFY_PARAM> structure.
 SSL_CTX_set1_param() and SSL_set1_param() return 1 for success and 0
 for failure.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Check hostname matches "www.foo.com" in peer certificate:
 
