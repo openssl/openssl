@@ -27,6 +27,7 @@
 #include "internal/provider_algs.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommon.h"
+#include "selftest.h"
 
 extern OSSL_core_thread_start_fn *c_thread_start;
 
@@ -36,6 +37,9 @@ extern OSSL_core_thread_start_fn *c_thread_start;
  * at the moment because c_put_error/c_add_error_vdata do not provide
  * us with the OPENSSL_CTX as a parameter.
  */
+
+static SELF_TEST_POST_PARAMS selftest_params;
+
 /* Functions provided by the core */
 static OSSL_core_gettable_params_fn *c_gettable_params;
 static OSSL_core_get_params_fn *c_get_params;
@@ -82,6 +86,31 @@ static const OSSL_PARAM fips_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_END
+};
+
+/*
+ * Parameters to retrieve from the core provider - required for self testing.
+ * NOTE: inside core_get_params() these will be loaded from config items
+ * styored inside prov->parameters
+ */
+static OSSL_PARAM core_params[] =
+{
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_MODULE_FILENAME,
+                        selftest_params.module_filename,
+                        sizeof(selftest_params.module_filename)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_MODULE_MAC,
+                        selftest_params.module_checksum_data,
+                        sizeof(selftest_params.module_checksum_data)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_INSTALL_MAC,
+                        selftest_params.indicator_checksum_data,
+                        sizeof(selftest_params.indicator_checksum_data)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_INSTALL_STATUS,
+                        selftest_params.indicator_data,
+                        sizeof(selftest_params.indicator_data)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_INSTALL_VERSION,
+                        selftest_params.indicator_version,
+                        sizeof(selftest_params.indicator_version)),
     OSSL_PARAM_END
 };
 
@@ -331,6 +360,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     FIPS_GLOBAL *fgbl;
     OPENSSL_CTX *ctx;
 
+    memset(&selftest_params, 0, sizeof(selftest_params));
+
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
@@ -384,11 +415,26 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CRYPTO_SECURE_ALLOCATED:
             c_CRYPTO_secure_allocated = OSSL_get_CRYPTO_secure_allocated(in);
             break;
+        case OSSL_FUNC_BIO_NEW_FILE:
+            selftest_params.bio_new_file_cb = OSSL_get_BIO_new_file(in);
+            break;
+        case OSSL_FUNC_BIO_NEW_MEMBUF:
+            selftest_params.bio_new_buffer_cb = OSSL_get_BIO_new_membuf(in);
+            break;
+        case OSSL_FUNC_BIO_READ:
+            selftest_params.bio_read_cb = OSSL_get_BIO_read(in);
+            break;
+        case OSSL_FUNC_BIO_FREE:
+            selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
+            break;
         default:
             /* Just ignore anything we don't understand */
             break;
         }
     }
+
+    if (!c_get_params(provider, core_params))
+        return 0;
 
     /*  Create a context. */
     if ((ctx = OPENSSL_CTX_new()) == NULL)
