@@ -151,6 +151,22 @@ sub name_synopsis()
     }
 }
 
+# Check that period ends a line in the text (=head1 DESCRIPTION) block.
+sub check_linebreaks()
+{
+    my $id = shift;
+    my $contents = shift;
+
+    $contents =~ s/=head1 DESCRIPTION(.*)=head1 COPYRIGHT.*/$1/ms;
+    foreach my $line ( split /\n+/, $contents ) {
+        next if $line =~ /^ /;
+        # Look for "period space" if not proceeded by i.e. or e.g.
+        print $id, "Linebreak needed:\n  $line\n"
+            if $line =~ /(?<!(i\.e|e\.g))\. +/i;
+    }
+}
+
+
 # Check if SECTION ($3) is located before BEFORE ($4)
 sub check_section_location()
 {
@@ -223,6 +239,8 @@ sub check()
     &name_synopsis($id, $filename, $contents)
         unless $contents =~ /=for comment generic/
             or $filename =~ m@man[157]/@;
+
+    &check_linebreaks($id, $contents);
 
     print "$id doesn't start with =pod\n"
         if $contents !~ /^=pod/;
