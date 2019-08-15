@@ -8,11 +8,16 @@ OPENSSL FIPS CONFIGURATION
 
 A separate configuration file containing data related to FIPS 'self tests' is
 written to during installation time.
-This data is used for 2 purposes when the fips module is loaded.
+This data is used for 2 purposes when the fips module is loaded:
 
- - Verify the module's checksum each time the fips module loads.
- - Run the startup FIPS self test KATS (known answer tests). This only needs
-   to be run once during installation.
+=over 4
+
+=item - Verify the module's checksum each time the fips module loads.
+
+=item - Run the startup FIPS self test KATS (known answer tests).
+This only needs to be run once during installation.
+
+=back
 
 The supported options are:
 
@@ -30,13 +35,14 @@ A version number for the fips install process. Should be 1.
 
 The install status indicator description that will be verified.
 If this field is not present the FIPS self tests will run when the fips module
-loads. This value should only be written to after the FIPS module has
+loads.
+This value should only be written to after the FIPS module has
 successfully passed its self tests during installation.
 
 =item B<install-checksum>
 
-The calculated MAC of the install status indicator. It is initially empty and
-is written to at the same time as the install_status.
+The calculated MAC of the install status indicator.
+It is initially empty and is written to at the same time as the install_status.
 
 =back
 
