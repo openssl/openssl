@@ -233,7 +233,7 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
         size_t pksize = (size_t)EVP_PKEY_size(ctx->pkey);         \
                                                                   \
         if (pksize == 0) {                                        \
-            EVPerr(err, EVP_R_INVALID_KEY); /*ckerr_ignore*/      \
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY); /*ckerr_ignore*/ \
             return 0;                                             \
         }                                                         \
         if (arg == NULL) {                                        \
@@ -241,7 +241,7 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
             return 1;                                             \
         }                                                         \
         if (*arglen < pksize) {                                   \
-            EVPerr(err, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/ \
+            ERR_raise(ERR_LIB_EVP, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/ \
             return 0;                                             \
         }                                                         \
     }
