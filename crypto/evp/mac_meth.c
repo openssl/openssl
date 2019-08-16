@@ -120,15 +120,15 @@ static void *evp_mac_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
                 break;
             mac->get_params = OSSL_get_OP_mac_get_params(fns);
             break;
-        case OSSL_FUNC_MAC_CTX_GET_PARAMS:
-            if (mac->ctx_get_params != NULL)
+        case OSSL_FUNC_MAC_GET_CTX_PARAMS:
+            if (mac->get_ctx_params != NULL)
                 break;
-            mac->ctx_get_params = OSSL_get_OP_mac_ctx_get_params(fns);
+            mac->get_ctx_params = OSSL_get_OP_mac_get_ctx_params(fns);
             break;
-        case OSSL_FUNC_MAC_CTX_SET_PARAMS:
-            if (mac->ctx_set_params != NULL)
+        case OSSL_FUNC_MAC_SET_CTX_PARAMS:
+            if (mac->set_ctx_params != NULL)
                 break;
-            mac->ctx_set_params = OSSL_get_OP_mac_ctx_set_params(fns);
+            mac->set_ctx_params = OSSL_get_OP_mac_set_ctx_params(fns);
             break;
         }
     }

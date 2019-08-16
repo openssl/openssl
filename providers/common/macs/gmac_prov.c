@@ -30,7 +30,7 @@ static OSSL_OP_mac_freectx_fn gmac_free;
 static OSSL_OP_mac_gettable_params_fn gmac_gettable_params;
 static OSSL_OP_mac_get_params_fn gmac_get_params;
 static OSSL_OP_mac_settable_ctx_params_fn gmac_settable_ctx_params;
-static OSSL_OP_mac_ctx_set_params_fn gmac_ctx_set_params;
+static OSSL_OP_mac_set_ctx_params_fn gmac_set_ctx_params;
 static OSSL_OP_mac_init_fn gmac_init;
 static OSSL_OP_mac_update_fn gmac_update;
 static OSSL_OP_mac_final_fn gmac_final;
@@ -188,7 +188,7 @@ static const OSSL_PARAM *gmac_settable_ctx_params(void)
 /*
  * ALL parameters should be set before init().
  */
-static int gmac_ctx_set_params(void *vmacctx, const OSSL_PARAM params[])
+static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct gmac_data_st *macctx = vmacctx;
     EVP_CIPHER_CTX *ctx = macctx->ctx;
@@ -286,6 +286,6 @@ const OSSL_DISPATCH gmac_functions[] = {
     { OSSL_FUNC_MAC_GET_PARAMS, (void (*)(void))gmac_get_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))gmac_settable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_SET_PARAMS, (void (*)(void))gmac_ctx_set_params },
+    { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))gmac_set_ctx_params },
     { 0, NULL }
 };

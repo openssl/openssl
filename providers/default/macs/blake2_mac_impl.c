@@ -28,9 +28,9 @@ static OSSL_OP_mac_newctx_fn blake2_mac_new;
 static OSSL_OP_mac_dupctx_fn blake2_mac_dup;
 static OSSL_OP_mac_freectx_fn blake2_mac_free;
 static OSSL_OP_mac_gettable_ctx_params_fn blake2_gettable_ctx_params;
-static OSSL_OP_mac_ctx_get_params_fn blake2_ctx_get_params;
+static OSSL_OP_mac_get_ctx_params_fn blake2_get_ctx_params;
 static OSSL_OP_mac_settable_ctx_params_fn blake2_mac_settable_ctx_params;
-static OSSL_OP_mac_ctx_set_params_fn blake2_mac_ctx_set_params;
+static OSSL_OP_mac_set_ctx_params_fn blake2_mac_set_ctx_params;
 static OSSL_OP_mac_init_fn blake2_mac_init;
 static OSSL_OP_mac_update_fn blake2_mac_update;
 static OSSL_OP_mac_final_fn blake2_mac_final;
@@ -117,7 +117,7 @@ static const OSSL_PARAM *blake2_gettable_ctx_params(void)
     return known_gettable_ctx_params;
 }
 
-static int blake2_ctx_get_params(void *vmacctx, OSSL_PARAM params[])
+static int blake2_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -144,7 +144,7 @@ static const OSSL_PARAM *blake2_mac_settable_ctx_params()
 /*
  * ALL parameters should be set before init().
  */
-static int blake2_mac_ctx_set_params(void *vmacctx, const OSSL_PARAM params[])
+static int blake2_mac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct blake2_mac_data_st *macctx = vmacctx;
     const OSSL_PARAM *p;
@@ -220,10 +220,10 @@ const OSSL_DISPATCH BLAKE2_FUNCTIONS[] = {
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))blake2_mac_final },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
       (void (*)(void))blake2_gettable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_GET_PARAMS, (void (*)(void))blake2_ctx_get_params },
+    { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))blake2_get_ctx_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))blake2_mac_settable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_SET_PARAMS, (void (*)(void))blake2_mac_ctx_set_params },
+    { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))blake2_mac_set_ctx_params },
     { 0, NULL }
 };
 

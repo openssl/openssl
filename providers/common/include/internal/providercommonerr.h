@@ -28,8 +28,8 @@ int ERR_load_PROV_strings(void);
 #  define PROV_F_AES_BLOCK_FINAL                           0
 #  define PROV_F_AES_BLOCK_UPDATE                          0
 #  define PROV_F_AES_CIPHER                                0
-#  define PROV_F_AES_CTX_GET_PARAMS                        0
-#  define PROV_F_AES_CTX_SET_PARAMS                        0
+#  define PROV_F_AES_GET_CTX_PARAMS                        0
+#  define PROV_F_AES_SET_CTX_PARAMS                        0
 #  define PROV_F_AES_DINIT                                 0
 #  define PROV_F_AES_DUPCTX                                0
 #  define PROV_F_AES_EINIT                                 0

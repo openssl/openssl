@@ -26,7 +26,7 @@ static OSSL_OP_digest_update_fn keccak_update;
 static OSSL_OP_digest_final_fn keccak_final;
 static OSSL_OP_digest_freectx_fn keccak_freectx;
 static OSSL_OP_digest_dupctx_fn keccak_dupctx;
-static OSSL_OP_digest_ctx_set_params_fn shake_ctx_set_params;
+static OSSL_OP_digest_set_ctx_params_fn shake_set_ctx_params;
 static OSSL_OP_digest_settable_ctx_params_fn shake_settable_ctx_params;
 static sha3_absorb_fn generic_sha3_absorb;
 static sha3_final_fn generic_sha3_final;
@@ -244,7 +244,7 @@ const OSSL_DISPATCH name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))name##_get_params }, \
     { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,                                 \
       (void (*)(void))name##_gettable_params },                         \
-    { OSSL_FUNC_DIGEST_CTX_SET_PARAMS, (void (*)(void))stparams },      \
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))stparams },      \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                             \
       (void (*)(void))stparamtypes },                                   \
 OSSL_FUNC_DIGEST_CONSTRUCT_END
@@ -275,7 +275,7 @@ static const OSSL_PARAM *shake_settable_ctx_params(void)
     return known_shake_settable_ctx_params;
 }
 
-static int shake_ctx_set_params(void *vctx, const OSSL_PARAM params[])
+static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
@@ -300,13 +300,13 @@ static int shake_ctx_set_params(void *vctx, const OSSL_PARAM params[])
     OSSL_FUNC_SHA3_DIGEST(shake_##bitlen, bitlen, \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen), \
                           EVP_MD_FLAG_XOF, \
-                          shake_settable_ctx_params, shake_ctx_set_params)
+                          shake_settable_ctx_params, shake_set_ctx_params)
 #define KMAC(bitlen) \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04') \
     OSSL_FUNC_SHA3_DIGEST(keccak_kmac_##bitlen, bitlen, \
                           SHA3_BLOCKSIZE(bitlen), KMAC_MDSIZE(bitlen), \
                           EVP_MD_FLAG_XOF, \
-                          shake_settable_ctx_params, shake_ctx_set_params)
+                          shake_settable_ctx_params, shake_set_ctx_params)
 
 SHA3(224)
 SHA3(256)

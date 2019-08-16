@@ -29,13 +29,13 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
 
  /* MAC parameter descriptors */
  const OSSL_PARAM *OP_mac_get_params(void);
- const OSSL_PARAM *OP_mac_ctx_get_params(void);
- const OSSL_PARAM *OP_mac_ctx_set_params(void);
+ const OSSL_PARAM *OP_mac_get_ctx_params(void);
+ const OSSL_PARAM *OP_mac_set_ctx_params(void);
 
  /* MAC parameters */
  int OP_mac_get_params(OSSL_PARAM params[]);
- int OP_mac_ctx_get_params(void *mctx, OSSL_PARAM params[]);
- int OP_mac_ctx_set_params(void *mctx, const OSSL_PARAM params[]);
+ int OP_mac_get_ctx_params(void *mctx, OSSL_PARAM params[]);
+ int OP_mac_set_ctx_params(void *mctx, const OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -74,8 +74,8 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_mac_final                OSSL_FUNC_MAC_FINAL
 
  OP_mac_get_params           OSSL_FUNC_MAC_GET_PARAMS
- OP_mac_ctx_get_params       OSSL_FUNC_MAC_CTX_GET_PARAMS
- OP_mac_ctx_set_params       OSSL_FUNC_MAC_CTX_SET_PARAMS
+ OP_mac_get_ctx_params       OSSL_FUNC_MAC_GET_CTX_PARAMS
+ OP_mac_set_ctx_params       OSSL_FUNC_MAC_SET_CTX_PARAMS
 
  OP_mac_gettable_params      OSSL_FUNC_MAC_GETTABLE_PARAMS
  OP_mac_gettable_ctx_params  OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS
@@ -132,18 +132,18 @@ these functions.
 OP_mac_get_params() gets details of parameter values associated with the
 provider algorithm and stores them in I<params>.
 
-OP_mac_ctx_set_params() sets mac parameters associated with the given
+OP_mac_set_ctx_params() sets mac parameters associated with the given
 provider side mac context I<mctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-OP_mac_ctx_get_params() gets details of currently set parameter values
+OP_mac_get_ctx_params() gets details of currently set parameter values
 associated with the given provider side mac context I<mctx> and stores them
 in I<params>.
 
 OP_mac_gettable_params(), OP_mac_gettable_ctx_params(), and
 OP_mac_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
 as descriptors of the parameters that OP_mac_get_params(),
-OP_mac_ctx_get_params(), and OP_mac_ctx_set_params() can handle,
+OP_mac_get_ctx_params(), and OP_mac_set_ctx_params() can handle,
 respectively.
 
 Parameters currently recognised by built-in macs are as follows. Not all
@@ -228,7 +228,7 @@ OP_mac_newctx() and OP_mac_dupctx() should return the newly created
 provider side mac context, or NULL on failure.
 
 OP_mac_init(), OP_mac_update(), OP_mac_final(), OP_mac_get_params(),
-OP_mac_ctx_get_params() and OP_mac_ctx_set_params() should return 1 for
+OP_mac_get_ctx_params() and OP_mac_set_ctx_params() should return 1 for
 success or 0 on error.
 
 OP_mac_gettable_params(), OP_mac_gettable_ctx_params() and

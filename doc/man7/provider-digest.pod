@@ -41,8 +41,8 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
  int OP_digest_get_params(OSSL_PARAM params[]);
 
  /* Digest operation parameters */
- int OP_digest_ctx_set_params(void *dctx, const OSSL_PARAM params[]);
- int OP_digest_ctx_get_params(void *dctx, OSSL_PARAM params[]);
+ int OP_digest_set_ctx_params(void *dctx, const OSSL_PARAM params[]);
+ int OP_digest_get_ctx_params(void *dctx, OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -82,8 +82,8 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_digest_digest               OSSL_FUNC_DIGEST_DIGEST
 
  OP_digest_get_params           OSSL_FUNC_DIGEST_GET_PARAMS
- OP_digest_ctx_get_params       OSSL_FUNC_DIGEST_CTX_GET_PARAMS
- OP_digest_ctx_set_params       OSSL_FUNC_DIGEST_CTX_SET_PARAMS
+ OP_digest_get_ctx_params       OSSL_FUNC_DIGEST_GET_CTX_PARAMS
+ OP_digest_set_ctx_params       OSSL_FUNC_DIGEST_SET_CTX_PARAMS
 
  OP_digest_gettable_params      OSSL_FUNC_DIGEST_GETTABLE_PARAMS
  OP_digest_gettable_ctx_params  OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS
@@ -146,17 +146,17 @@ these functions.
 OP_digest_get_params() gets details of the algorithm implementation
 and stores them in B<params>.
 
-OP_digest_ctx_set_params() sets digest operation parameters for the
+OP_digest_set_ctx_params() sets digest operation parameters for the
 provider side digest context B<dctx> to B<params>.
 Any parameter settings are additional to any that were previously set.
 
-OP_digest_ctx_get_params() gets digest operation details details from
+OP_digest_get_ctx_params() gets digest operation details details from
 the given provider side digest context B<dctx> and stores them in B<params>.
 
 OP_digest_gettable_params(), OP_digest_gettable_ctx_params(), and
 OP_digest_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
 as descriptors of the parameters that OP_digest_get_params(),
-OP_digest_ctx_get_params(), and OP_digest_ctx_set_params() can handle,
+OP_digest_get_ctx_params(), and OP_digest_set_ctx_params() can handle,
 respectively.
 
 Parameters currently recognised by built-in digests with this function
@@ -213,12 +213,12 @@ Currently unused.
 
 =head2 Digest Context Parameters
 
-OP_digest_ctx_set_params() sets digest parameters associated with the
+OP_digest_set_ctx_params() sets digest parameters associated with the
 given provider side digest context B<dctx> to B<params>.
 Any parameter settings are additional to any that were previously set.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-OP_digest_ctx_get_params() gets details of currently set parameters
+OP_digest_get_ctx_params() gets details of currently set parameters
 values associated with the give provider side digest context B<dctx>
 and stores them in B<params>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.

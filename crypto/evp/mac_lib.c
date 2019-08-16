@@ -90,8 +90,8 @@ size_t EVP_MAC_size(EVP_MAC_CTX *ctx)
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
         params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN, &sz);
-        if (ctx->meth->ctx_get_params != NULL) {
-            if (ctx->meth->ctx_get_params(ctx->data, params))
+        if (ctx->meth->get_ctx_params != NULL) {
+            if (ctx->meth->get_ctx_params(ctx->data, params))
                 return sz;
         } else if (ctx->meth->get_params != NULL) {
             if (ctx->meth->get_params(params))
@@ -146,14 +146,14 @@ int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[])
 
 int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
 {
-    if (ctx->meth->ctx_get_params != NULL)
-        return ctx->meth->ctx_get_params(ctx->data, params);
+    if (ctx->meth->get_ctx_params != NULL)
+        return ctx->meth->get_ctx_params(ctx->data, params);
     return 1;
 }
 
 int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 {
-    if (ctx->meth->ctx_set_params != NULL)
-        return ctx->meth->ctx_set_params(ctx->data, params);
+    if (ctx->meth->set_ctx_params != NULL)
+        return ctx->meth->set_ctx_params(ctx->data, params);
     return 1;
 }

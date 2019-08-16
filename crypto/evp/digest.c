@@ -540,8 +540,8 @@ const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest)
 
 int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
 {
-    if (ctx->digest != NULL && ctx->digest->ctx_set_params != NULL)
-        return ctx->digest->ctx_set_params(ctx->provctx, params);
+    if (ctx->digest != NULL && ctx->digest->set_ctx_params != NULL)
+        return ctx->digest->set_ctx_params(ctx->provctx, params);
     return 0;
 }
 
@@ -555,7 +555,7 @@ const OSSL_PARAM *EVP_MD_CTX_settable_params(const EVP_MD *digest)
 int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
 {
     if (ctx->digest != NULL && ctx->digest->get_params != NULL)
-        return ctx->digest->ctx_get_params(ctx->provctx, params);
+        return ctx->digest->get_ctx_params(ctx->provctx, params);
     return 0;
 }
 
@@ -675,13 +675,13 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
             if (md->get_params == NULL)
                 md->get_params = OSSL_get_OP_digest_get_params(fns);
             break;
-        case OSSL_FUNC_DIGEST_CTX_SET_PARAMS:
-            if (md->ctx_set_params == NULL)
-                md->ctx_set_params = OSSL_get_OP_digest_ctx_set_params(fns);
+        case OSSL_FUNC_DIGEST_SET_CTX_PARAMS:
+            if (md->set_ctx_params == NULL)
+                md->set_ctx_params = OSSL_get_OP_digest_set_ctx_params(fns);
             break;
-        case OSSL_FUNC_DIGEST_CTX_GET_PARAMS:
-            if (md->ctx_get_params == NULL)
-                md->ctx_get_params = OSSL_get_OP_digest_ctx_get_params(fns);
+        case OSSL_FUNC_DIGEST_GET_CTX_PARAMS:
+            if (md->get_ctx_params == NULL)
+                md->get_ctx_params = OSSL_get_OP_digest_get_ctx_params(fns);
             break;
         case OSSL_FUNC_DIGEST_GETTABLE_PARAMS:
             if (md->gettable_params == NULL)
