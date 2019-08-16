@@ -98,7 +98,8 @@ OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_realloc, (void *addr, size_t num, const char *file, int line))
 #define OSSL_FUNC_CRYPTO_CLEAR_REALLOC        15
 OSSL_CORE_MAKE_FUNC(void *,
-        CRYPTO_clear_realloc, (void *addr, size_t old_num, size_t num, const char *file, int line))
+        CRYPTO_clear_realloc, (void *addr, size_t old_num, size_t num,
+                               const char *file, int line))
 #define OSSL_FUNC_CRYPTO_SECURE_MALLOC        16
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_secure_malloc, (size_t num, const char *file, int line))
@@ -110,7 +111,8 @@ OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_secure_free, (void *ptr, const char *file, int line))
 #define OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE    19
 OSSL_CORE_MAKE_FUNC(void,
-        CRYPTO_secure_clear_free, (void *ptr, size_t num, const char *file, int line))
+        CRYPTO_secure_clear_free, (void *ptr, size_t num, const char *file,
+                                   int line))
 #define OSSL_FUNC_CRYPTO_SECURE_ALLOCATED     20
 OSSL_CORE_MAKE_FUNC(int,
         CRYPTO_secure_allocated, (const void *ptr))
@@ -141,9 +143,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 # define OSSL_OP_MAC                                 3
 # define OSSL_OP_KEYMGMT                            10
 # define OSSL_OP_KEYEXCH                            11
-
 /* Highest known operation number */
-# define OSSL_OP__HIGHEST                            3
+# define OSSL_OP__HIGHEST                           11
 
 /* Digests */
 

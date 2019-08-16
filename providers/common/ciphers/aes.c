@@ -38,7 +38,7 @@ static int PROV_AES_KEY_generic_init(PROV_AES_KEY *ctx,
 {
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
         if (ivlen != AES_BLOCK_SIZE) {
-            PROVerr(PROV_F_PROV_AES_KEY_GENERIC_INIT, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
@@ -54,12 +54,12 @@ static int aes_einit(void *vctx, const unsigned char *key, size_t keylen,
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
     if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 1)) {
-        /* PROVerr already called */
+        /* ERR_raise( already called */
         return 0;
     }
     if (key != NULL) {
         if (keylen != ctx->keylen) {
-            PROVerr(PROV_F_AES_EINIT, PROV_R_INVALID_KEY_LENGTH);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         return ctx->ciph->init(ctx, key, ctx->keylen);
@@ -74,12 +74,12 @@ static int aes_dinit(void *vctx, const unsigned char *key, size_t keylen,
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
     if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 0)) {
-        /* PROVerr already called */
+        /* ERR_raise( already called */
         return 0;
     }
     if (key != NULL) {
         if (keylen != ctx->keylen) {
-            PROVerr(PROV_F_AES_DINIT, PROV_R_INVALID_KEY_LENGTH);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         return ctx->ciph->init(ctx, key, ctx->keylen);
@@ -104,11 +104,11 @@ static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
     if (ctx->bufsz == AES_BLOCK_SIZE
             && (ctx->enc || inl > 0 || !ctx->pad)) {
         if (outsize < AES_BLOCK_SIZE) {
-            PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+            ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
         }
         if (!ctx->ciph->cipher(ctx, out, ctx->buf, AES_BLOCK_SIZE)) {
-            PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_CIPHER_OPERATION_FAILED);
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
         }
         ctx->bufsz = 0;
@@ -118,25 +118,25 @@ static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
     if (nextblocks > 0) {
         if (!ctx->enc && ctx->pad && nextblocks == inl) {
             if (!ossl_assert(inl >= AES_BLOCK_SIZE)) {
-                PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+                ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
                 return 0;
             }
             nextblocks -= AES_BLOCK_SIZE;
         }
         outlint += nextblocks;
         if (outsize < outlint) {
-            PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+            ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
         }
         if (!ctx->ciph->cipher(ctx, out, in, nextblocks)) {
-            PROVerr(PROV_F_AES_BLOCK_UPDATE, PROV_R_CIPHER_OPERATION_FAILED);
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
         }
         in += nextblocks;
         inl -= nextblocks;
     }
     if (!trailingdata(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE, &in, &inl)) {
-        /* PROVerr already called */
+        /* ERR_raise( already called */
         return 0;
     }
 
@@ -156,16 +156,16 @@ static int aes_block_final(void *vctx, unsigned char *out, size_t *outl,
             *outl = 0;
             return 1;
         } else if (ctx->bufsz != AES_BLOCK_SIZE) {
-            PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_WRONG_FINAL_BLOCK_LENGTH);
+            ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_FINAL_BLOCK_LENGTH);
             return 0;
         }
 
         if (outsize < AES_BLOCK_SIZE) {
-            PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+            ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
         }
         if (!ctx->ciph->cipher(ctx, out, ctx->buf, AES_BLOCK_SIZE)) {
-            PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_CIPHER_OPERATION_FAILED);
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
         }
         ctx->bufsz = 0;
@@ -179,22 +179,22 @@ static int aes_block_final(void *vctx, unsigned char *out, size_t *outl,
             *outl = 0;
             return 1;
         }
-        PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_WRONG_FINAL_BLOCK_LENGTH);
+        ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_FINAL_BLOCK_LENGTH);
         return 0;
     }
 
     if (!ctx->ciph->cipher(ctx, ctx->buf, ctx->buf, AES_BLOCK_SIZE)) {
-        PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_CIPHER_OPERATION_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
     }
 
     if (ctx->pad && !unpadblock(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE)) {
-        /* PROVerr already called */
+        /* ERR_raise( already called */
         return 0;
     }
 
     if (outsize < ctx->bufsz) {
-        PROVerr(PROV_F_AES_BLOCK_FINAL, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
     memcpy(out, ctx->buf, ctx->bufsz);
@@ -210,12 +210,12 @@ static int aes_stream_update(void *vctx, unsigned char *out, size_t *outl,
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
     if (outsize < inl) {
-        PROVerr(PROV_F_AES_STREAM_UPDATE, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
     if (!ctx->ciph->cipher(ctx, out, in, inl)) {
-        PROVerr(PROV_F_AES_STREAM_UPDATE, PROV_R_CIPHER_OPERATION_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
     }
 
@@ -236,12 +236,12 @@ static int aes_cipher(void *vctx,
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
     if (outsize < inl) {
-        PROVerr(PROV_F_AES_CIPHER, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
     if (!ctx->ciph->cipher(ctx, out, in, inl)) {
-        PROVerr(PROV_F_AES_CIPHER, PROV_R_CIPHER_OPERATION_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
     }
 
@@ -274,7 +274,7 @@ static void *aes_dupctx(void *ctx)
     PROV_AES_KEY *ret = OPENSSL_malloc(sizeof(*ret));
 
     if (ret == NULL) {
-        PROVerr(PROV_F_AES_DUPCTX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     *ret = *in;
@@ -289,29 +289,29 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
     if (p != NULL && !OSSL_PARAM_set_int(p, AES_BLOCK_SIZE)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->pad)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL
         && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, AES_BLOCK_SIZE)
         && !OSSL_PARAM_set_octet_string(p, &ctx->iv, AES_BLOCK_SIZE)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_NUM);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->num)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
@@ -328,7 +328,7 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         int pad;
 
         if (!OSSL_PARAM_get_int(p, &pad)) {
-            PROVerr(0, PROV_R_FAILED_TO_GET_PARAMETER);
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
         ctx->pad = pad ? 1 : 0;
@@ -338,7 +338,7 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         int num;
 
         if (!OSSL_PARAM_get_int(p, &num)) {
-            PROVerr(0, PROV_R_FAILED_TO_GET_PARAMETER);
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
         ctx->num = num;
@@ -348,7 +348,7 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         int keylen;
 
         if (!OSSL_PARAM_get_int(p, &keylen)) {
-            PROVerr(0, PROV_R_FAILED_TO_GET_PARAMETER);
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
         ctx->keylen = keylen;

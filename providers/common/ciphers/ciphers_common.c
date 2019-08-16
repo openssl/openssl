@@ -35,27 +35,27 @@ int cipher_default_get_params(OSSL_PARAM params[], int md, unsigned long flags,
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);
     if (p != NULL && !OSSL_PARAM_set_int(p, md)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_FLAGS);
     if (p != NULL && !OSSL_PARAM_set_ulong(p, flags)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_int(p, kbits / 8)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
     if (p != NULL && !OSSL_PARAM_set_int(p, blkbits / 8)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
     if (p != NULL && !OSSL_PARAM_set_int(p, ivbits / 8)) {
-        PROVerr(0, PROV_R_FAILED_TO_SET_PARAMETER);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     return 1;
