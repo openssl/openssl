@@ -204,7 +204,7 @@ an implementation.
 The method object that is fetched can then be used with diverse other
 functions that use them, for example L<EVP_DigestInit_ex(3)>.
 
-=head2 Implicit fetch
+=head3 Implicit fetch
 
 I<NOTE: This section is mostly interesting to OpenSSL users.>
 

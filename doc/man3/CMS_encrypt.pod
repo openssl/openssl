@@ -17,8 +17,6 @@ CMS_encrypt() creates and returns a CMS EnvelopedData structure. B<certs>
 is a list of recipient certificates. B<in> is the content to be encrypted.
 B<cipher> is the symmetric cipher to use. B<flags> is an optional set of flags.
 
-=head1 NOTES
-
 Only certificates carrying RSA, Diffie-Hellman or EC keys are supported by this
 function.
 
@@ -59,8 +57,6 @@ finalization.
 The data being encrypted is included in the CMS_ContentInfo structure, unless
 B<CMS_DETACHED> is set in which case it is omitted. This is rarely used in
 practice and is not supported by SMIME_write_CMS().
-
-=head1 NOTES
 
 If the flag B<CMS_STREAM> is set the returned B<CMS_ContentInfo> structure is
 B<not> complete and outputting its contents via a function that does not

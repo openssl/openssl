@@ -559,7 +559,7 @@ The B<-debug_decrypt> option can be used to disable the MMA attack protection
 and return an error if no recipient can be found: this option should be used
 with caution. For a fuller description see L<CMS_decrypt(3)>).
 
-=head1 CAdES Basic Electronic Signature (CAdES-BES)
+=head1 CADES BASIC ELECTRONIC SIGNATURE (CADES-BES)
 
 A CAdES Basic Electronic Signature (CAdES-BES), as defined in the European Standard ETSI EN 319 122-1 V1.1.1, contains:
 
@@ -625,7 +625,7 @@ the signers certificates.
 
 =back
 
-=head1 COMPATIBILITY WITH PKCS#7 format.
+=head1 COMPATIBILITY WITH PKCS#7 FORMAT
 
 The B<smime> utility can only process the older B<PKCS#7> format. The B<cms>
 utility supports Cryptographic Message Syntax format. Use of some features
