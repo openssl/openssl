@@ -11,12 +11,6 @@
  * CMP implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
-#include <stdio.h>
-#if defined OPENSSL_SYS_UNIX || defined DJGPP \
-    || (defined __VMS_VER && __VMS_VER >= 70000000)
-# include <dirent.h>
-#endif
-
 #include <openssl/trace.h>
 #include <openssl/bio.h>
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
@@ -102,9 +96,6 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
     ctx->status = -1;
     ctx->failInfoCode = -1;
 
-    /* serverPath must be an empty string if not set since it's not mandatory */
-    if ((ctx->serverPath = OPENSSL_zalloc(1)) == NULL)
-        goto err;
     ctx->serverPort = OSSL_CMP_DEFAULT_PORT;
     ctx->proxyPort = OSSL_CMP_DEFAULT_PORT;
     ctx->msgtimeout = 2 * 60;
@@ -521,96 +512,72 @@ int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs)
     return (ctx->caPubs = X509_chain_up_ref(caPubs)) != NULL;
 }
 
+#define char_dup OPENSSL_strdup
+#define char_free OPENSSL_free
+#define DECLARE_OSSL_CMP_CTX_set1(FIELD, TYPE) /* this uses _dup */ \
+int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, const TYPE *val) \
+{ \
+    TYPE *val_dup = NULL; \
+    \
+    if (ctx == NULL) { \
+        CMPerr(0, CMP_R_NULL_ARGUMENT); \
+        return 0; \
+    } \
+    \
+    if (val != NULL && (val_dup = TYPE##_dup(val)) == NULL) \
+        return 0; \
+    TYPE##_free(ctx->FIELD); \
+    ctx->FIELD = val_dup; \
+    return 1; \
+}
+
+#define DECLARE_OSSL_CMP_CTX_set1_up_ref(FIELD, TYPE) \
+int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
+{ \
+    if (ctx == NULL) { \
+        CMPerr(0, CMP_R_NULL_ARGUMENT); \
+        return 0; \
+    } \
+    \
+    if (val != NULL && !TYPE##_up_ref(val)) \
+        return 0; \
+    TYPE##_free(ctx->FIELD); \
+    ctx->FIELD = val; \
+    return 1; \
+}
+
 /*
  * Pins the server certificate to be directly trusted (even if it is expired)
  * for verifying response messages.
  * Cert pointer is not consumed. It may be NULL to clear the entry.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_srvCert(OSSL_CMP_CTX *ctx, X509 *cert)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    X509_free(ctx->srvCert);
-    ctx->srvCert = cert;
-    return cert == NULL ? 1 : X509_up_ref(cert);
-}
+DECLARE_OSSL_CMP_CTX_set1_up_ref(srvCert, X509)
 
 /*
  * Set the X509 name of the recipient. Set in the PKIHeader.
  * returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_recipient(OSSL_CMP_CTX *ctx, const X509_NAME *name)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    X509_NAME_free(ctx->recipient);
-    ctx->recipient = NULL;
-    if (name == NULL)
-        return 1;
-    return (ctx->recipient = X509_NAME_dup(name)) != NULL;
-}
+DECLARE_OSSL_CMP_CTX_set1(recipient, X509_NAME)
 
 /*
  * Store the X509 name of the expected sender in the PKIHeader of responses.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_expected_sender(OSSL_CMP_CTX *ctx, const X509_NAME *name)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    X509_NAME_free(ctx->expected_sender);
-    ctx->expected_sender = NULL;
-    if (name == NULL)
-        return 1;
-    return (ctx->expected_sender = X509_NAME_dup(name)) != NULL;
-}
+DECLARE_OSSL_CMP_CTX_set1(expected_sender, X509_NAME)
 
 /*
  * Set the X509 name of the issuer. Set in the PKIHeader.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_issuer(OSSL_CMP_CTX *ctx, const X509_NAME *name)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    X509_NAME_free(ctx->issuer);
-    ctx->issuer = NULL;
-    if (name == NULL)
-        return 1;
-    return (ctx->issuer = X509_NAME_dup(name)) != NULL;
-}
+DECLARE_OSSL_CMP_CTX_set1(issuer, X509_NAME)
 
 /*
  * Set the subject name that will be placed in the certificate
  * request. This will be the subject name on the received certificate.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_subjectName(OSSL_CMP_CTX *ctx, const X509_NAME *name)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    X509_NAME_free(ctx->subjectName);
-    ctx->subjectName = NULL;
-    if (name == NULL)
-        return 1;
-    return (ctx->subjectName = X509_NAME_dup(name)) != NULL;
-}
+DECLARE_OSSL_CMP_CTX_set1(subjectName, X509_NAME)
 
 /*
  * Set the X.509v3 certificate request extensions to be used in IR/CR/KUR.
@@ -654,6 +621,8 @@ int OSSL_CMP_CTX_reqExtensions_have_SAN(OSSL_CMP_CTX *ctx)
 int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
                                       const GENERAL_NAME *name)
 {
+    GENERAL_NAME *name_dup;
+
     if (ctx == NULL || name == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
@@ -667,7 +636,13 @@ int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
     if (ctx->subjectAltNames == NULL
             && (ctx->subjectAltNames = sk_GENERAL_NAME_new_null()) == NULL)
         return 0;
-    return sk_GENERAL_NAME_push(ctx->subjectAltNames, GENERAL_NAME_dup(name));
+    if ((name_dup = GENERAL_NAME_dup(name)) == NULL)
+        return 0;
+    if (!sk_GENERAL_NAME_push(ctx->subjectAltNames, name_dup)) {
+        GENERAL_NAME_free(name_dup);
+        return 0;
+    }
+    return 1;
 }
 
 /*
@@ -675,17 +650,7 @@ int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
  * doing the IR with existing certificate.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_clCert(OSSL_CMP_CTX *ctx, X509 *cert)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    X509_free(ctx->clCert);
-    ctx->clCert = cert;
-    return cert == NULL ? 1 : X509_up_ref(cert);
-}
+DECLARE_OSSL_CMP_CTX_set1_up_ref(clCert, X509)
 
 /*
  * Set the old certificate that we are updating in KUR
@@ -694,35 +659,13 @@ int OSSL_CMP_CTX_set1_clCert(OSSL_CMP_CTX *ctx, X509 *cert)
  * and SANs. Its issuer is used as default recipient in the CMP message header.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_oldCert(OSSL_CMP_CTX *ctx, X509 *cert)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    X509_free(ctx->oldCert);
-    ctx->oldCert = cert;
-    return cert == NULL ? 1 : X509_up_ref(cert);
-}
+DECLARE_OSSL_CMP_CTX_set1_up_ref(oldCert, X509)
 
 /*
  * Set the PKCS#10 CSR to be sent in P10CR.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_p10CSR(OSSL_CMP_CTX *ctx, const X509_REQ *csr)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    X509_REQ_free(ctx->p10CSR);
-    ctx->p10CSR = NULL;
-    if (csr == NULL)
-        return 1;
-    return (ctx->p10CSR = X509_REQ_dup(csr)) != NULL;
-}
+DECLARE_OSSL_CMP_CTX_set1(p10CSR, X509_REQ)
 
 /*
  * Sets the (newly received in IP/KUP/CP) certificate in the context.
@@ -756,17 +699,7 @@ X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx)
  * Set the client's current private key.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_pkey(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    EVP_PKEY_free(ctx->pkey);
-    ctx->pkey = pkey;
-    return pkey == NULL ? 1 : EVP_PKEY_up_ref(pkey);
-}
+DECLARE_OSSL_CMP_CTX_set1_up_ref(pkey, EVP_PKEY)
 
 /*
  * Set new key pair. Used e.g. when doing Key Update.
@@ -847,37 +780,13 @@ int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
  * Set the host name of the (HTTP) proxy server to use for all connections
  * returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_proxyName(OSSL_CMP_CTX *ctx, const char *name)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    OPENSSL_free(ctx->proxyName);
-    ctx->proxyName = NULL;
-    if (name == NULL)
-        return 1;
-    return (ctx->proxyName = OPENSSL_strdup(name)) != NULL;
-}
+DECLARE_OSSL_CMP_CTX_set1(proxyName, char)
 
 /*
  * Set the (HTTP) host name of the CA server.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_serverName(OSSL_CMP_CTX *ctx, const char *name)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    OPENSSL_free(ctx->serverName);
-    ctx->serverName = NULL;
-    if (name == NULL)
-        return 1;
-    return (ctx->serverName = OPENSSL_strdup(name)) != NULL;
-}
+DECLARE_OSSL_CMP_CTX_set1(serverName, char)
 
 /*
  * Sets the (HTTP) proxy port to be used.
@@ -993,17 +902,7 @@ int OSSL_CMP_CTX_set_serverPort(OSSL_CMP_CTX *ctx, int port)
  * Sets the HTTP path to be used on the server (e.g "pkix/").
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path)
-{
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-
-    OPENSSL_free(ctx->serverPath);
-    ctx->serverPath = path == NULL ? OPENSSL_zalloc(1) : OPENSSL_strdup(path);
-    return ctx->serverPath != NULL;
-}
+DECLARE_OSSL_CMP_CTX_set1(serverPath, char)
 
 /*
  * Set the failInfo error code as bit encoding in OSSL_CMP_CTX.

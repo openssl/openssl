@@ -241,7 +241,11 @@ int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
     }
     if (!sk_X509_insert(sk, cert, prepend ? 0 : -1))
         return 0;
-    return X509_up_ref(cert);
+    if (!X509_up_ref(cert)) {
+        (void)sk_X509_delete(sk, prepend ? 0 : sk_X509_num(sk) - 1);
+        return 0;
+    }
+    return 1;
 }
 
 int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
@@ -305,13 +309,19 @@ STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store)
         X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
 
         if (cert != NULL) {
-            if (!sk_X509_push(sk, cert) || !X509_up_ref(cert)) {
-                sk_X509_pop_free(sk, X509_free);
-                return NULL;
+            if (!sk_X509_push(sk, cert))
+                goto err;
+            if (!X509_up_ref(cert)) {
+                (void)sk_X509_pop(sk);
+                goto err;
             }
         }
     }
     return sk;
+
+ err:
+    sk_X509_pop_free(sk, X509_free);
+    return NULL;
 }
 
 /*-
@@ -350,8 +360,8 @@ STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
     if (csc == NULL)
         goto err;
 
-    ossl_cmp_X509_STORE_add1_certs(store, certs, 0);
-    if (!X509_STORE_CTX_init(csc, store, cert, NULL))
+    if (!ossl_cmp_X509_STORE_add1_certs(store, certs, 0)
+            || !X509_STORE_CTX_init(csc, store, cert, NULL))
         goto err;
 
     (void)ERR_set_mark();
@@ -368,8 +378,11 @@ STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
     /* result list to store the up_ref'ed not self-signed certificates */
     if ((result = sk_X509_new_null()) == NULL)
         goto err;
-    ossl_cmp_sk_X509_add1_certs(result, chain, 1 /* no self-signed */,
-                                1 /* no duplicates */, 0);
+    if (!ossl_cmp_sk_X509_add1_certs(result, chain, 1 /* no self-signed */,
+                                     1 /* no duplicates */, 0)) {
+        sk_X509_free(result);
+        result = NULL;
+    }
 
  err:
     X509_STORE_free(store);
@@ -402,21 +415,20 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                           const unsigned char *bytes, int len)
 {
     ASN1_OCTET_STRING *new = NULL;
-    int res;
 
     if (tgt == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (bytes != NULL) {
-        if ((new = ASN1_OCTET_STRING_new()) == NULL
+        if ((new =  ASN1_OCTET_STRING_new()) == NULL
                 || !(ASN1_OCTET_STRING_set(new, bytes, len))) {
             ASN1_OCTET_STRING_free(new);
             return 0;
         }
     }
 
-    res = ossl_cmp_asn1_octet_string_set1(tgt, new);
-    ASN1_OCTET_STRING_free(new);
-    return res;
+    ASN1_OCTET_STRING_free(*tgt);
+    *tgt = new;
+    return 1;
 }

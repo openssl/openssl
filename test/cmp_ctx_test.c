@@ -481,8 +481,6 @@ static void char_free(char *val) {
     OPENSSL_free(val);
 }
 
-#define EMPTY_STR(x) ((x) == NULL || strlen(x) == 0)
-
 #define EMPTY_SK_X509(x) ((x) == NULL || sk_X509_num(x) == 0)
 
 static X509_STORE *X509_STORE_new_1(void) {
@@ -720,7 +718,7 @@ DECLARE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
 DECLARE_SET_CB_TEST(log_cb)
 #endif
 
-DECLARE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, serverPath, char, EMPTY_STR)
+DECLARE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, serverPath, char, IS_0)
 DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, serverName, char)
 DECLARE_SET_PORT_TEST(serverPort)
 DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, proxyName, char)
