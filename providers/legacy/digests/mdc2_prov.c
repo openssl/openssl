@@ -15,7 +15,7 @@
 #include "internal/core_mkdigest.h"
 #include "internal/provider_algs.h"
 
-static OSSL_OP_digest_ctx_set_params_fn mdc2_ctx_set_params;
+static OSSL_OP_digest_set_ctx_params_fn mdc2_set_ctx_params;
 static OSSL_OP_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
 
 static const OSSL_PARAM known_mdc2_settable_ctx_params[] = {
@@ -28,7 +28,7 @@ static const OSSL_PARAM *mdc2_settable_ctx_params(void)
     return known_mdc2_settable_ctx_params;
 }
 
-static int mdc2_ctx_set_params(void *vctx, const OSSL_PARAM params[])
+static int mdc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     MDC2_CTX *ctx = (MDC2_CTX *)vctx;
@@ -45,4 +45,4 @@ static int mdc2_ctx_set_params(void *vctx, const OSSL_PARAM params[])
 OSSL_FUNC_DIGEST_CONSTRUCT_PARAMS(mdc2, MDC2_CTX,
                                   MDC2_BLOCK, MDC2_DIGEST_LENGTH, 0,
                                   MDC2_Init, MDC2_Update, MDC2_Final,
-                                  mdc2_settable_ctx_params, mdc2_ctx_set_params)
+                                  mdc2_settable_ctx_params, mdc2_set_ctx_params)

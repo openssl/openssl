@@ -1150,8 +1150,8 @@ PROV_F_AESNI_INIT_KEY:101:aesni_init_key
 PROV_F_AES_BLOCK_FINAL:102:aes_block_final
 PROV_F_AES_BLOCK_UPDATE:103:aes_block_update
 PROV_F_AES_CIPHER:104:aes_cipher
-PROV_F_AES_CTX_GET_PARAMS:105:aes_ctx_get_params
-PROV_F_AES_CTX_SET_PARAMS:106:aes_ctx_set_params
+PROV_F_AES_GET_CTX_PARAMS:105:aes_get_ctx_params
+PROV_F_AES_SET_CTX_PARAMS:106:aes_set_ctx_params
 PROV_F_AES_DINIT:107:aes_dinit
 PROV_F_AES_DUPCTX:108:aes_dupctx
 PROV_F_AES_EINIT:109:aes_einit

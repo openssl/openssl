@@ -68,9 +68,9 @@ static OSSL_OP_mac_newctx_fn kmac256_new;
 static OSSL_OP_mac_dupctx_fn kmac_dup;
 static OSSL_OP_mac_freectx_fn kmac_free;
 static OSSL_OP_mac_gettable_ctx_params_fn kmac_gettable_ctx_params;
-static OSSL_OP_mac_ctx_get_params_fn kmac_ctx_get_params;
+static OSSL_OP_mac_get_ctx_params_fn kmac_get_ctx_params;
 static OSSL_OP_mac_settable_ctx_params_fn kmac_settable_ctx_params;
-static OSSL_OP_mac_ctx_set_params_fn kmac_ctx_set_params;
+static OSSL_OP_mac_set_ctx_params_fn kmac_set_ctx_params;
 static OSSL_OP_mac_size_fn kmac_size;
 static OSSL_OP_mac_init_fn kmac_init;
 static OSSL_OP_mac_update_fn kmac_update;
@@ -266,7 +266,7 @@ static int kmac_init(void *vmacctx)
             OSSL_PARAM_octet_string(OSSL_MAC_PARAM_CUSTOM, "", 0),
             OSSL_PARAM_END
         };
-        (void)kmac_ctx_set_params(kctx, params);
+        (void)kmac_set_ctx_params(kctx, params);
     }
 
     return bytepad(out, &out_len, kmac_string, sizeof(kmac_string),
@@ -321,7 +321,7 @@ static const OSSL_PARAM *kmac_gettable_ctx_params(void)
     return known_gettable_ctx_params;
 }
 
-static int kmac_ctx_get_params(void *vmacctx, OSSL_PARAM params[])
+static int kmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -355,7 +355,7 @@ static const OSSL_PARAM *kmac_settable_ctx_params(void)
  *
  * All other params should be set before init().
  */
-static int kmac_ctx_set_params(void *vmacctx, const OSSL_PARAM *params)
+static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 {
     struct kmac_data_st *kctx = vmacctx;
     const OSSL_PARAM *p;
@@ -534,10 +534,10 @@ const OSSL_DISPATCH kmac128_functions[] = {
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))kmac_final },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
       (void (*)(void))kmac_gettable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_GET_PARAMS, (void (*)(void))kmac_ctx_get_params },
+    { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))kmac_get_ctx_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))kmac_settable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_SET_PARAMS, (void (*)(void))kmac_ctx_set_params },
+    { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))kmac_set_ctx_params },
     { 0, NULL }
 };
 
@@ -550,9 +550,9 @@ const OSSL_DISPATCH kmac256_functions[] = {
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))kmac_final },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
       (void (*)(void))kmac_gettable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_GET_PARAMS, (void (*)(void))kmac_ctx_get_params },
+    { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))kmac_get_ctx_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))kmac_settable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_SET_PARAMS, (void (*)(void))kmac_ctx_set_params },
+    { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))kmac_set_ctx_params },
     { 0, NULL }
 };

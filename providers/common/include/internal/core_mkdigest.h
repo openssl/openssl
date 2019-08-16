@@ -120,7 +120,7 @@ OSSL_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags,   \
                                  init, upd, fin)                        \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                             \
       (void (*)(void))setparamtypes },                                  \
-    { OSSL_FUNC_DIGEST_CTX_SET_PARAMS, (void (*)(void))setparams },     \
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))setparams },     \
 OSSL_FUNC_DIGEST_CONSTRUCT_END
 
 # ifdef __cplusplus

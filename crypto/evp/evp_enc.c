@@ -1060,15 +1060,15 @@ int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[])
 
 int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
 {
-    if (ctx->cipher != NULL && ctx->cipher->ctx_set_params != NULL)
-        return ctx->cipher->ctx_set_params(ctx->provctx, params);
+    if (ctx->cipher != NULL && ctx->cipher->set_ctx_params != NULL)
+        return ctx->cipher->set_ctx_params(ctx->provctx, params);
     return 0;
 }
 
 int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[])
 {
-    if (ctx->cipher != NULL && ctx->cipher->ctx_get_params != NULL)
-        return ctx->cipher->ctx_get_params(ctx->provctx, params);
+    if (ctx->cipher != NULL && ctx->cipher->get_ctx_params != NULL)
+        return ctx->cipher->get_ctx_params(ctx->provctx, params);
     return 0;
 }
 
@@ -1244,15 +1244,15 @@ static void *evp_cipher_from_dispatch(const char *name,
                 break;
             cipher->get_params = OSSL_get_OP_cipher_get_params(fns);
             break;
-        case OSSL_FUNC_CIPHER_CTX_GET_PARAMS:
-            if (cipher->ctx_get_params != NULL)
+        case OSSL_FUNC_CIPHER_GET_CTX_PARAMS:
+            if (cipher->get_ctx_params != NULL)
                 break;
-            cipher->ctx_get_params = OSSL_get_OP_cipher_ctx_get_params(fns);
+            cipher->get_ctx_params = OSSL_get_OP_cipher_get_ctx_params(fns);
             break;
-        case OSSL_FUNC_CIPHER_CTX_SET_PARAMS:
-            if (cipher->ctx_set_params != NULL)
+        case OSSL_FUNC_CIPHER_SET_CTX_PARAMS:
+            if (cipher->set_ctx_params != NULL)
                 break;
-            cipher->ctx_set_params = OSSL_get_OP_cipher_ctx_set_params(fns);
+            cipher->set_ctx_params = OSSL_get_OP_cipher_set_ctx_params(fns);
             break;
         case OSSL_FUNC_CIPHER_GETTABLE_PARAMS:
             if (cipher->gettable_params != NULL)

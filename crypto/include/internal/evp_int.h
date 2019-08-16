@@ -138,8 +138,8 @@ struct evp_mac_st {
     OSSL_OP_mac_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_OP_mac_settable_ctx_params_fn *settable_ctx_params;
     OSSL_OP_mac_get_params_fn *get_params;
-    OSSL_OP_mac_ctx_get_params_fn *ctx_get_params;
-    OSSL_OP_mac_ctx_set_params_fn *ctx_set_params;
+    OSSL_OP_mac_get_ctx_params_fn *get_ctx_params;
+    OSSL_OP_mac_set_ctx_params_fn *set_ctx_params;
 };
 
 /* Internal keccak algorithms used for KMAC */
@@ -211,8 +211,8 @@ struct evp_md_st {
     OSSL_OP_digest_freectx_fn *freectx;
     OSSL_OP_digest_dupctx_fn *dupctx;
     OSSL_OP_digest_get_params_fn *get_params;
-    OSSL_OP_digest_ctx_set_params_fn *ctx_set_params;
-    OSSL_OP_digest_ctx_get_params_fn *ctx_get_params;
+    OSSL_OP_digest_set_ctx_params_fn *set_ctx_params;
+    OSSL_OP_digest_get_ctx_params_fn *get_ctx_params;
     OSSL_OP_digest_gettable_params_fn *gettable_params;
     OSSL_OP_digest_settable_ctx_params_fn *settable_ctx_params;
     OSSL_OP_digest_gettable_ctx_params_fn *gettable_ctx_params;
@@ -265,8 +265,8 @@ struct evp_cipher_st {
     OSSL_OP_cipher_freectx_fn *freectx;
     OSSL_OP_cipher_dupctx_fn *dupctx;
     OSSL_OP_cipher_get_params_fn *get_params;
-    OSSL_OP_cipher_ctx_get_params_fn *ctx_get_params;
-    OSSL_OP_cipher_ctx_set_params_fn *ctx_set_params;
+    OSSL_OP_cipher_get_ctx_params_fn *get_ctx_params;
+    OSSL_OP_cipher_set_ctx_params_fn *set_ctx_params;
     OSSL_OP_cipher_gettable_params_fn *gettable_params;
     OSSL_OP_cipher_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_OP_cipher_settable_ctx_params_fn *settable_ctx_params;

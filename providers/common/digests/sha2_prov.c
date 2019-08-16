@@ -18,7 +18,7 @@
 #include "internal/provider_algs.h"
 #include "internal/sha.h"
 
-static OSSL_OP_digest_ctx_set_params_fn sha1_set_params;
+static OSSL_OP_digest_set_ctx_params_fn sha1_set_params;
 static OSSL_OP_digest_settable_ctx_params_fn sha1_settable_params;
 
 static const OSSL_PARAM known_sha1_ctx_params[] = {

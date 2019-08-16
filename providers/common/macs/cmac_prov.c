@@ -29,9 +29,9 @@ static OSSL_OP_mac_newctx_fn cmac_new;
 static OSSL_OP_mac_dupctx_fn cmac_dup;
 static OSSL_OP_mac_freectx_fn cmac_free;
 static OSSL_OP_mac_gettable_ctx_params_fn cmac_gettable_ctx_params;
-static OSSL_OP_mac_ctx_get_params_fn cmac_ctx_get_params;
+static OSSL_OP_mac_get_ctx_params_fn cmac_get_ctx_params;
 static OSSL_OP_mac_settable_ctx_params_fn cmac_settable_ctx_params;
-static OSSL_OP_mac_ctx_set_params_fn cmac_ctx_set_params;
+static OSSL_OP_mac_set_ctx_params_fn cmac_set_ctx_params;
 static OSSL_OP_mac_init_fn cmac_init;
 static OSSL_OP_mac_update_fn cmac_update;
 static OSSL_OP_mac_final_fn cmac_final;
@@ -149,7 +149,7 @@ static const OSSL_PARAM *cmac_gettable_ctx_params(void)
     return known_gettable_ctx_params;
 }
 
-static int cmac_ctx_get_params(void *vmacctx, OSSL_PARAM params[])
+static int cmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -177,7 +177,7 @@ static const OSSL_PARAM *cmac_settable_ctx_params(void)
 /*
  * ALL parameters should be set before init().
  */
-static int cmac_ctx_set_params(void *vmacctx, const OSSL_PARAM params[])
+static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct cmac_data_st *macctx = vmacctx;
     const OSSL_PARAM *p;
@@ -255,10 +255,10 @@ const OSSL_DISPATCH cmac_functions[] = {
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))cmac_final },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
       (void (*)(void))cmac_gettable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_GET_PARAMS, (void (*)(void))cmac_ctx_get_params },
+    { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))cmac_get_ctx_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))cmac_settable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_SET_PARAMS, (void (*)(void))cmac_ctx_set_params },
+    { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))cmac_set_ctx_params },
     { 0, NULL }
 };
 

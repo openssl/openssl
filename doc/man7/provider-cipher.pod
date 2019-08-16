@@ -47,8 +47,8 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
  int OP_cipher_get_params(OSSL_PARAM params[]);
 
  /* Cipher operation parameters */
- int OP_cipher_ctx_get_params(void *cctx, OSSL_PARAM params[]);
- int OP_cipher_ctx_set_params(void *cctx, const OSSL_PARAM params[]);
+ int OP_cipher_get_ctx_params(void *cctx, OSSL_PARAM params[]);
+ int OP_cipher_set_ctx_params(void *cctx, const OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -90,8 +90,8 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_cipher_cipher               OSSL_FUNC_CIPHER_CIPHER
 
  OP_cipher_get_params           OSSL_FUNC_CIPHER_GET_PARAMS
- OP_cipher_ctx_get_params       OSSL_FUNC_CIPHER_CTX_GET_PARAMS
- OP_cipher_ctx_set_params       OSSL_FUNC_CIPHER_CTX_SET_PARAMS
+ OP_cipher_get_ctx_params       OSSL_FUNC_CIPHER_GET_CTX_PARAMS
+ OP_cipher_set_ctx_params       OSSL_FUNC_CIPHER_SET_CTX_PARAMS
 
  OP_cipher_gettable_params      OSSL_FUNC_CIPHER_GETTABLE_PARAMS
  OP_cipher_gettable_ctx_params  OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS
@@ -179,17 +179,17 @@ these functions.
 OP_cipher_get_params() gets details of the algorithm implementation
 and stores them in B<params>.
 
-OP_cipher_ctx_set_params() sets cipher operation parameters for the
+OP_cipher_set_ctx_params() sets cipher operation parameters for the
 provider side cipher context B<cctx> to B<params>.
 Any parameter settings are additional to any that were previously set.
 
-OP_cipher_ctx_get_params() gets cipher operation details details from
+OP_cipher_get_ctx_params() gets cipher operation details details from
 the given provider side cipher context B<cctx> and stores them in B<params>.
 
 OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params(), and
 OP_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
 as descriptors of the parameters that OP_cipher_get_params(),
-OP_cipher_ctx_get_params(), and OP_cipher_ctx_set_params() can handle,
+OP_cipher_get_ctx_params(), and OP_cipher_set_ctx_params() can handle,
 respectively.
 
 Parameters currently recognised by built-in ciphers are as follows. Not all
@@ -311,7 +311,7 @@ provider side cipher context, or NULL on failure.
 
 OP_cipher_encrypt_init(), OP_cipher_decrypt_init(), OP_cipher_update(),
 OP_cipher_final(), OP_cipher_cipher(), OP_cipher_get_params(),
-OP_cipher_ctx_get_params() and OP_cipher_ctx_set_params() should return 1 for
+OP_cipher_get_ctx_params() and OP_cipher_set_ctx_params() should return 1 for
 success or 0 on error.
 
 =head1 SEE ALSO

@@ -25,8 +25,8 @@
 
 static OSSL_OP_cipher_encrypt_init_fn gcm_einit;
 static OSSL_OP_cipher_decrypt_init_fn gcm_dinit;
-static OSSL_OP_cipher_ctx_get_params_fn gcm_ctx_get_params;
-static OSSL_OP_cipher_ctx_set_params_fn gcm_ctx_set_params;
+static OSSL_OP_cipher_get_ctx_params_fn gcm_get_ctx_params;
+static OSSL_OP_cipher_set_ctx_params_fn gcm_set_ctx_params;
 static OSSL_OP_cipher_cipher_fn gcm_cipher;
 static OSSL_OP_cipher_update_fn gcm_stream_update;
 static OSSL_OP_cipher_final_fn gcm_stream_final;
@@ -98,7 +98,7 @@ static int gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return gcm_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
-static int gcm_ctx_get_params(void *vctx, OSSL_PARAM params[])
+static int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     OSSL_PARAM *p;
@@ -149,7 +149,7 @@ static int gcm_ctx_get_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-static int gcm_ctx_set_params(void *vctx, const OSSL_PARAM params[])
+static int gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     const OSSL_PARAM *p;
@@ -535,10 +535,10 @@ err:
         { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_gcm_freectx },      \
         { OSSL_FUNC_CIPHER_GET_PARAMS,                                         \
             (void (*)(void)) alg##_##kbits##_##lcmode##_get_params },          \
-        { OSSL_FUNC_CIPHER_CTX_GET_PARAMS,                                     \
-            (void (*)(void))gcm_ctx_get_params },                              \
-        { OSSL_FUNC_CIPHER_CTX_SET_PARAMS,                                     \
-            (void (*)(void))gcm_ctx_set_params },                              \
+        { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                     \
+            (void (*)(void))gcm_get_ctx_params },                              \
+        { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                     \
+            (void (*)(void))gcm_set_ctx_params },                              \
         { 0, NULL }                                                            \
     }
 

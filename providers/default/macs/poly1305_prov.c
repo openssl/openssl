@@ -38,7 +38,7 @@ static OSSL_OP_mac_freectx_fn poly1305_free;
 static OSSL_OP_mac_gettable_params_fn poly1305_gettable_params;
 static OSSL_OP_mac_get_params_fn poly1305_get_params;
 static OSSL_OP_mac_settable_ctx_params_fn poly1305_settable_ctx_params;
-static OSSL_OP_mac_ctx_set_params_fn poly1305_ctx_set_params;
+static OSSL_OP_mac_set_ctx_params_fn poly1305_set_ctx_params;
 static OSSL_OP_mac_init_fn poly1305_init;
 static OSSL_OP_mac_update_fn poly1305_update;
 static OSSL_OP_mac_final_fn poly1305_final;
@@ -135,7 +135,7 @@ static const OSSL_PARAM *poly1305_settable_ctx_params(void)
     return known_settable_ctx_params;
 }
 
-static int poly1305_ctx_set_params(void *vmacctx, const OSSL_PARAM *params)
+static int poly1305_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 {
     struct poly1305_data_st *ctx = vmacctx;
     const OSSL_PARAM *p = NULL;
@@ -162,7 +162,7 @@ const OSSL_DISPATCH poly1305_functions[] = {
     { OSSL_FUNC_MAC_GET_PARAMS, (void (*)(void))poly1305_get_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))poly1305_settable_ctx_params },
-    { OSSL_FUNC_MAC_CTX_SET_PARAMS, (void (*)(void))poly1305_ctx_set_params },
+    { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))poly1305_set_ctx_params },
     { 0, NULL }
 };
 
