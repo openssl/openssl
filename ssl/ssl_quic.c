@@ -117,7 +117,7 @@ int SSL_provide_quic_data(SSL *ssl, OSSL_ENCRYPTION_LEVEL level,
         /* Check for an incomplete block */
         qd = ssl->quic_input_data_tail;
         if (qd != NULL) {
-            l = ssl->quic_input_data_tail->length - ssl->quic_input_data_tail->offset;
+            l = qd->length - qd->offset;
             if (l != 0) {
                 /* we still need to copy `l` bytes into the last data block */
                 if (l > len)
