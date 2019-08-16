@@ -40,10 +40,12 @@ void OSSL_CMP_log_close(void) /* is designed to be idempotent */
     (void)OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_CMP, NULL);
 }
 
+#define max_level_len 5 /* = max length of the below strings, e.g., "EMERG" */
 static OSSL_CMP_severity parse_level(const char *level)
 {
     const char *end_level = strchr(level, ':');
     int len;
+    char level_copy[max_level_len + 1];
 
     if (end_level == NULL)
         return -1;
@@ -52,15 +54,18 @@ static OSSL_CMP_severity parse_level(const char *level)
                 strlen(OSSL_CMP_LOG_PREFIX)) == 0)
         level += strlen(OSSL_CMP_LOG_PREFIX);
     len = end_level - level;
+    if (len > max_level_len)
+        return -1;
+    OPENSSL_strlcpy(level_copy, level, len + 1);
     return
-        strncmp(level, "EMERG", len) == 0 ? OSSL_CMP_LOG_EMERG :
-        strncmp(level, "ALERT", len) == 0 ? OSSL_CMP_LOG_ALERT :
-        strncmp(level, "CRIT", len) == 0 ? OSSL_CMP_LOG_CRIT :
-        strncmp(level, "ERROR", len) == 0 ? OSSL_CMP_LOG_ERR :
-        strncmp(level, "WARN", len) == 0 ? OSSL_CMP_LOG_WARNING :
-        strncmp(level, "NOTE", len) == 0 ? OSSL_CMP_LOG_NOTICE :
-        strncmp(level, "INFO", len) == 0 ? OSSL_CMP_LOG_INFO :
-        strncmp(level, "DEBUG", len) == 0 ? OSSL_CMP_LOG_DEBUG :
+        strcmp(level_copy, "EMERG") == 0 ? OSSL_CMP_LOG_EMERG :
+        strcmp(level_copy, "ALERT") == 0 ? OSSL_CMP_LOG_ALERT :
+        strcmp(level_copy, "CRIT") == 0 ? OSSL_CMP_LOG_CRIT :
+        strcmp(level_copy, "ERROR") == 0 ? OSSL_CMP_LOG_ERR :
+        strcmp(level_copy, "WARN") == 0 ? OSSL_CMP_LOG_WARNING :
+        strcmp(level_copy, "NOTE") == 0 ? OSSL_CMP_LOG_NOTICE :
+        strcmp(level_copy, "INFO") == 0 ? OSSL_CMP_LOG_INFO :
+        strcmp(level_copy, "DEBUG") == 0 ? OSSL_CMP_LOG_DEBUG :
         -1;
 }
 
@@ -132,7 +137,7 @@ void ossl_cmp_add_error_txt(const char *separator, const char *txt)
         put_error(ERR_LIB_CMP, NULL, 0, "", 0);
 
     do {
-        int available_len;
+        size_t available_len, data_len;
         const char *curr = txt, *next = txt;
         char *tmp;
 
@@ -141,23 +146,30 @@ void ossl_cmp_add_error_txt(const char *separator, const char *txt)
             data = "";
             separator = "";
         }
+        data_len = strlen(data);
         /* TODO add when available: ERR_peek_last_error_func(&func); */
 
         /* workaround for limit of ERR_print_errors_cb() */
-        available_len = MAX_DATA_LEN - (int)strlen(data) - strlen(separator);
-        if (*separator == '\0') {
-            const long len_next = strlen(next);
+        if (data_len >= MAX_DATA_LEN
+                || strlen(separator) >= (size_t)(MAX_DATA_LEN - data_len))
+            available_len = 0;
+        else
+            available_len = MAX_DATA_LEN - data_len - strlen(separator) - 1;
+        /* MAX_DATA_LEN > available_len >= 0 */
 
-            if (len_next < available_len) {
+        if (separator[0] == '\0') {
+            const size_t len_next = strlen(next);
+
+            if (len_next <= available_len) {
                 next += len_next;
                 curr = NULL; /* no need to split */
             }
             else {
-                next += available_len - 1;
+                next += available_len;
                 curr = next; /* will split at this point */
             }
         } else {
-            while (*next != '\0' && next - txt < available_len) {
+            while (*next != '\0' && (size_t)(next - txt) <= available_len) {
                 curr = next;
                 next = strstr(curr, separator);
                 if (next != NULL)
@@ -165,8 +177,8 @@ void ossl_cmp_add_error_txt(const char *separator, const char *txt)
                 else
                     next = curr + strlen(curr);
             }
-            if (next - txt < available_len) /* implies here: *next == '\0' */
-                curr = NULL;
+            if ((size_t)(next - txt) <= available_len)
+                curr = NULL; /* the above loop implies *next == '\0' */
         }
         if (curr != NULL) {
             /* split error msg at curr since error data would get too long */
@@ -239,10 +251,10 @@ int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
                 return 1;
         }
     }
-    if (!sk_X509_insert(sk, cert, prepend ? 0 : -1))
+    if (!X509_up_ref(cert))
         return 0;
-    if (!X509_up_ref(cert)) {
-        (void)sk_X509_delete(sk, prepend ? 0 : sk_X509_num(sk) - 1);
+    if (!sk_X509_insert(sk, cert, prepend ? 0 : -1)) {
+        X509_free(cert);
         return 0;
     }
     return 1;

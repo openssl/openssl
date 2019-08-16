@@ -514,7 +514,7 @@ int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs)
 
 #define char_dup OPENSSL_strdup
 #define char_free OPENSSL_free
-#define DECLARE_OSSL_CMP_CTX_set1(FIELD, TYPE) /* this uses _dup */ \
+#define DEFINE_OSSL_CMP_CTX_set1(FIELD, TYPE) /* this uses _dup */ \
 int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, const TYPE *val) \
 { \
     TYPE *val_dup = NULL; \
@@ -531,7 +531,7 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, const TYPE *val) \
     return 1; \
 }
 
-#define DECLARE_OSSL_CMP_CTX_set1_up_ref(FIELD, TYPE) \
+#define DEFINE_OSSL_CMP_CTX_set1_up_ref(FIELD, TYPE) \
 int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
 { \
     if (ctx == NULL) { \
@@ -552,32 +552,32 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
  * Cert pointer is not consumed. It may be NULL to clear the entry.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1_up_ref(srvCert, X509)
+DEFINE_OSSL_CMP_CTX_set1_up_ref(srvCert, X509)
 
 /*
  * Set the X509 name of the recipient. Set in the PKIHeader.
  * returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1(recipient, X509_NAME)
+DEFINE_OSSL_CMP_CTX_set1(recipient, X509_NAME)
 
 /*
  * Store the X509 name of the expected sender in the PKIHeader of responses.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1(expected_sender, X509_NAME)
+DEFINE_OSSL_CMP_CTX_set1(expected_sender, X509_NAME)
 
 /*
  * Set the X509 name of the issuer. Set in the PKIHeader.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1(issuer, X509_NAME)
+DEFINE_OSSL_CMP_CTX_set1(issuer, X509_NAME)
 
 /*
  * Set the subject name that will be placed in the certificate
  * request. This will be the subject name on the received certificate.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1(subjectName, X509_NAME)
+DEFINE_OSSL_CMP_CTX_set1(subjectName, X509_NAME)
 
 /*
  * Set the X.509v3 certificate request extensions to be used in IR/CR/KUR.
@@ -650,7 +650,7 @@ int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
  * doing the IR with existing certificate.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1_up_ref(clCert, X509)
+DEFINE_OSSL_CMP_CTX_set1_up_ref(clCert, X509)
 
 /*
  * Set the old certificate that we are updating in KUR
@@ -659,13 +659,13 @@ DECLARE_OSSL_CMP_CTX_set1_up_ref(clCert, X509)
  * and SANs. Its issuer is used as default recipient in the CMP message header.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1_up_ref(oldCert, X509)
+DEFINE_OSSL_CMP_CTX_set1_up_ref(oldCert, X509)
 
 /*
  * Set the PKCS#10 CSR to be sent in P10CR.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1(p10CSR, X509_REQ)
+DEFINE_OSSL_CMP_CTX_set1(p10CSR, X509_REQ)
 
 /*
  * Sets the (newly received in IP/KUP/CP) certificate in the context.
@@ -699,7 +699,7 @@ X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx)
  * Set the client's current private key.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1_up_ref(pkey, EVP_PKEY)
+DEFINE_OSSL_CMP_CTX_set1_up_ref(pkey, EVP_PKEY)
 
 /*
  * Set new key pair. Used e.g. when doing Key Update.
@@ -780,13 +780,13 @@ int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
  * Set the host name of the (HTTP) proxy server to use for all connections
  * returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1(proxyName, char)
+DEFINE_OSSL_CMP_CTX_set1(proxyName, char)
 
 /*
  * Set the (HTTP) host name of the CA server.
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1(serverName, char)
+DEFINE_OSSL_CMP_CTX_set1(serverName, char)
 
 /*
  * Sets the (HTTP) proxy port to be used.
@@ -902,7 +902,7 @@ int OSSL_CMP_CTX_set_serverPort(OSSL_CMP_CTX *ctx, int port)
  * Sets the HTTP path to be used on the server (e.g "pkix/").
  * Returns 1 on success, 0 on error
  */
-DECLARE_OSSL_CMP_CTX_set1(serverPath, char)
+DEFINE_OSSL_CMP_CTX_set1(serverPath, char)
 
 /*
  * Set the failInfo error code as bit encoding in OSSL_CMP_CTX.

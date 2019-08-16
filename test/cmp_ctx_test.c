@@ -333,8 +333,8 @@ typedef OSSL_CMP_CTX CMP_CTX; /* prevents rewriting type name by below macro */
 #define get0 0
 #define get1 1
 
-#define DECLARE_SET_GET_BASE_TEST(PREFIX, SETN, GETN, DUP, FIELD, TYPE, \
-                                  ERR, DEFAULT, NEW, FREE) \
+#define DEFINE_SET_GET_BASE_TEST(PREFIX, SETN, GETN, DUP, FIELD, TYPE, ERR, \
+                                 DEFAULT, NEW, FREE) \
 static int execute_CTX_##SETN##_##GETN##_##FIELD( \
     OSSL_CMP_CTX_TEST_FIXTURE *fixture) \
 { \
@@ -501,45 +501,45 @@ static X509_STORE *X509_STORE_new_1(void) {
 
 #define ERR(x) (CMPerr(0, CMP_R_NULL_ARGUMENT), x)
 
-#define DECLARE_SET_GET_TEST(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE) \
-    DECLARE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
+#define DEFINE_SET_GET_TEST(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE) \
+    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
                               TYPE*, NULL, IS_0, TYPE##_new(), TYPE##_free)
 
-#define DECLARE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, ELEM_TYPE, \
-                                        DEFAULT, NEW, FREE) \
-    DECLARE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, 1, FIELD, \
+#define DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, ELEM_TYPE, \
+                                       DEFAULT, NEW, FREE) \
+    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, 1, FIELD, \
                               STACK_OF(ELEM_TYPE)*, NULL, DEFAULT, NEW, FREE)
-#define DECLARE_SET_GET_SK_TEST(OSSL_CMP, CTX, N, M, FIELD, T) \
-    DECLARE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, T, \
+#define DEFINE_SET_GET_SK_TEST(OSSL_CMP, CTX, N, M, FIELD, T) \
+    DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, T, \
                                     IS_0, sk_##T##_new_null(), sk_##T##_free)
-#define DECLARE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, N, M, FNAME) \
-    DECLARE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FNAME, X509, \
+#define DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, N, M, FNAME) \
+    DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FNAME, X509, \
                                     EMPTY_SK_X509, \
                                     sk_X509_new_1(), sk_X509_pop_X509_free)
 
-#define DECLARE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE, \
-                                     DEFAULT) \
-    DECLARE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
+#define DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE, \
+                                    DEFAULT) \
+    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
                               TYPE*, NULL, DEFAULT, TYPE##_new(), TYPE##_free)
-#define DECLARE_SET_TEST_DEFAULT(OSSL_CMP, CTX, N, DUP, FIELD, TYPE, DEFAULT) \
+#define DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, N, DUP, FIELD, TYPE, DEFAULT) \
     static TYPE *OSSL_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
     { \
         return ctx == NULL ? ERR(NULL) : ctx->FIELD; \
     } \
-    DECLARE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, N, 0, DUP, FIELD, TYPE, DEFAULT)
-#define DECLARE_SET_TEST(OSSL_CMP, CTX, N, DUP, FIELD, TYPE) \
-    DECLARE_SET_TEST_DEFAULT(OSSL_CMP, CTX, N, DUP, FIELD, TYPE, IS_0)
+    DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, N, 0, DUP, FIELD, TYPE, DEFAULT)
+#define DEFINE_SET_TEST(OSSL_CMP, CTX, N, DUP, FIELD, TYPE) \
+    DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, N, DUP, FIELD, TYPE, IS_0)
 
-#define DECLARE_SET_SK_TEST(OSSL_CMP, CTX, N, FIELD, TYPE) \
+#define DEFINE_SET_SK_TEST(OSSL_CMP, CTX, N, FIELD, TYPE) \
     static STACK_OF(TYPE) *OSSL_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
     { \
         return ctx == NULL ? ERR(NULL) : ctx->FIELD; \
     } \
-    DECLARE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get0, 1, FIELD, \
+    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get0, 1, FIELD, \
                               STACK_OF(TYPE)*, NULL, IS_0, \
                               sk_##TYPE##_new_null(), sk_##TYPE##_free)
 
-#define DECLARE_SET_CB_TEST(FIELD) \
+#define DEFINE_SET_CB_TEST(FIELD) \
     static OSSL_cmp_##FIELD##_t \
         OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
     { \
@@ -547,26 +547,26 @@ static X509_STORE *X509_STORE_new_1(void) {
             CMPerr(0, CMP_R_NULL_ARGUMENT); \
         return ctx == NULL ? NULL /* cannot use ERR(NULL) here */ : ctx->FIELD;\
     } \
-    DECLARE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, FIELD, \
+    DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, FIELD, \
                               OSSL_cmp_##FIELD##_t, NULL, IS_0, \
                               test_##FIELD, DROP)
-#define DECLARE_SET_GET_P_VOID_TEST(FIELD) \
-    DECLARE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, FIELD, void*, \
+#define DEFINE_SET_GET_P_VOID_TEST(FIELD) \
+    DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, FIELD, void*, \
                               NULL, IS_0, ((void *)1), DROP)
 
-#define DECLARE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, DEFAULT) \
-    DECLARE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set, get, 0, FIELD, int, -1, \
+#define DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, DEFAULT) \
+    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set, get, 0, FIELD, int, -1, \
                               DEFAULT, 1, DROP)
-#define DECLARE_SET_GET_INT_TEST(OSSL_CMP, CTX, FIELD) \
-    DECLARE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_NEG)
-#define DECLARE_SET_PORT_TEST(FIELD) \
+#define DEFINE_SET_GET_INT_TEST(OSSL_CMP, CTX, FIELD) \
+    DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_NEG)
+#define DEFINE_SET_PORT_TEST(FIELD) \
     static int OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
     { \
         return ctx == NULL ? ERR(-1) : ctx->FIELD; \
     } \
-    DECLARE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_DEFAULT_PORT)
+    DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_DEFAULT_PORT)
 
-#define DECLARE_SET_GET_ARG_FN(SETN, GETN, FIELD, ARG, T) \
+#define DEFINE_SET_GET_ARG_FN(SETN, GETN, FIELD, ARG, T) \
     static int OSSL_CMP_CTX_##SETN##_##FIELD##_##ARG(CMP_CTX *ctx, T val) \
     { \
         return OSSL_CMP_CTX_##SETN##_##FIELD(ctx, ARG, val); \
@@ -577,7 +577,7 @@ static X509_STORE *X509_STORE_new_1(void) {
         return OSSL_CMP_CTX_##GETN##_##FIELD(ctx, ARG); \
     }
 
-#define DECLARE_SET_GET1_STR_FN(SETN, FIELD) \
+#define DEFINE_SET_GET1_STR_FN(SETN, FIELD) \
     static int OSSL_CMP_CTX_##SETN##_##FIELD##_str(CMP_CTX *ctx, char *val)\
     { \
         return OSSL_CMP_CTX_##SETN##_##FIELD(ctx, (unsigned char *)val, \
@@ -595,7 +595,7 @@ static X509_STORE *X509_STORE_new_1(void) {
 #define push 0
 #define push0 0
 #define push1 1
-#define DECLARE_PUSH_BASE_TEST(PUSHN, DUP, FIELD, ELEM, TYPE, T, \
+#define DEFINE_PUSH_BASE_TEST(PUSHN, DUP, FIELD, ELEM, TYPE, T, \
                                DEFAULT, NEW, FREE) \
 static TYPE sk_top_##FIELD(const CMP_CTX *ctx) { \
     return sk_##T##_value(ctx->FIELD, sk_##T##_num(ctx->FIELD) - 1); \
@@ -700,8 +700,8 @@ static int test_CTX_##PUSHN##_##ELEM(void) \
     return result; \
 } \
 
-#define DECLARE_PUSH_TEST(N, DUP, FIELD, ELEM, TYPE) \
-    DECLARE_PUSH_BASE_TEST(push##N, DUP, FIELD, ELEM, TYPE*, TYPE, \
+#define DEFINE_PUSH_TEST(N, DUP, FIELD, ELEM, TYPE) \
+    DEFINE_PUSH_BASE_TEST(push##N, DUP, FIELD, ELEM, TYPE*, TYPE, \
                            IS_0, TYPE##_new(), TYPE##_free)
 
 void cleanup_tests(void)
@@ -709,75 +709,75 @@ void cleanup_tests(void)
     return;
 }
 
-DECLARE_SET_GET_ARG_FN(set, get, option, 16, int)
+DEFINE_SET_GET_ARG_FN(set, get, option, 16, int)
                                     /* option == OSSL_CMP_OPT_IGNORE_KEYUSAGE */
-DECLARE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
+DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
                           1 /* true */, DROP)
 
 #ifndef OPENSSL_NO_TRACE
-DECLARE_SET_CB_TEST(log_cb)
+DEFINE_SET_CB_TEST(log_cb)
 #endif
 
-DECLARE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, serverPath, char, IS_0)
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, serverName, char)
-DECLARE_SET_PORT_TEST(serverPort)
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, proxyName, char)
-DECLARE_SET_PORT_TEST(proxyPort)
-DECLARE_SET_CB_TEST(http_cb)
-DECLARE_SET_GET_P_VOID_TEST(http_cb_arg)
-DECLARE_SET_CB_TEST(transfer_cb)
-DECLARE_SET_GET_P_VOID_TEST(transfer_cb_arg)
+DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, serverPath, char, IS_0)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, serverName, char)
+DEFINE_SET_PORT_TEST(serverPort)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, proxyName, char)
+DEFINE_SET_PORT_TEST(proxyPort)
+DEFINE_SET_CB_TEST(http_cb)
+DEFINE_SET_GET_P_VOID_TEST(http_cb_arg)
+DEFINE_SET_CB_TEST(transfer_cb)
+DEFINE_SET_GET_P_VOID_TEST(transfer_cb_arg)
 
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
-DECLARE_SET_TEST(ossl_cmp, ctx, 0, 0, validatedSrvCert, X509)
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
-DECLARE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trustedStore,
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
+DEFINE_SET_TEST(ossl_cmp, ctx, 0, 0, validatedSrvCert, X509)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
+DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trustedStore,
                           X509_STORE*, NULL,
                           DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
-DECLARE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted_certs)
+DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted_certs)
 
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 0, clCert, X509)
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 0, pkey, EVP_PKEY)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, clCert, X509)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, pkey, EVP_PKEY)
 
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, recipient, X509_NAME)
-DECLARE_PUSH_TEST(0, 0, geninfo_ITAVs, geninfo_ITAV, OSSL_CMP_ITAV)
-DECLARE_SET_SK_TEST(OSSL_CMP, CTX, 1, extraCertsOut, X509)
-DECLARE_SET_GET_ARG_FN(set0, get0, newPkey, 1, EVP_PKEY*) /* priv == 1 */
-DECLARE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_1, EVP_PKEY)
-DECLARE_SET_GET_ARG_FN(set0, get0, newPkey, 0, EVP_PKEY*) /* priv == 0 */
-DECLARE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_0, EVP_PKEY)
-DECLARE_SET_GET1_STR_FN(set1, referenceValue)
-DECLARE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, referenceValue_str,
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, recipient, X509_NAME)
+DEFINE_PUSH_TEST(0, 0, geninfo_ITAVs, geninfo_ITAV, OSSL_CMP_ITAV)
+DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 1, extraCertsOut, X509)
+DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 1, EVP_PKEY*) /* priv == 1 */
+DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_1, EVP_PKEY)
+DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 0, EVP_PKEY*) /* priv == 0 */
+DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_0, EVP_PKEY)
+DEFINE_SET_GET1_STR_FN(set1, referenceValue)
+DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, referenceValue_str,
                              char, IS_0)
-DECLARE_SET_GET1_STR_FN(set1, secretValue)
-DECLARE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, secretValue_str,
+DEFINE_SET_GET1_STR_FN(set1, secretValue)
+DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, secretValue_str,
                              char, IS_0)
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, issuer, X509_NAME)
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, subjectName, X509_NAME)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, issuer, X509_NAME)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, subjectName, X509_NAME)
 #ifdef ISSUE_9504_RESOLVED
-DECLARE_PUSH_TEST(1, 1, subjectAltNames, subjectAltName, GENERAL_NAME)
+DEFINE_PUSH_TEST(1, 1, subjectAltNames, subjectAltName, GENERAL_NAME)
 #endif
-DECLARE_SET_SK_TEST(OSSL_CMP, CTX, 0, reqExtensions, X509_EXTENSION)
-DECLARE_PUSH_TEST(0, 0, policies, policy, POLICYINFO)
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 0, oldCert, X509)
+DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 0, reqExtensions, X509_EXTENSION)
+DEFINE_PUSH_TEST(0, 0, policies, policy, POLICYINFO)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, oldCert, X509)
 #ifdef ISSUE_9504_RESOLVED
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, p10CSR, X509_REQ)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, p10CSR, X509_REQ)
 #endif
-DECLARE_PUSH_TEST(0, 0, genm_ITAVs, genm_ITAV, OSSL_CMP_ITAV)
-DECLARE_SET_CB_TEST(certConf_cb)
-DECLARE_SET_GET_P_VOID_TEST(certConf_cb_arg)
+DEFINE_PUSH_TEST(0, 0, genm_ITAVs, genm_ITAV, OSSL_CMP_ITAV)
+DEFINE_SET_CB_TEST(certConf_cb)
+DEFINE_SET_GET_P_VOID_TEST(certConf_cb_arg)
 
-DECLARE_SET_GET_INT_TEST(ossl_cmp, ctx, status)
-DECLARE_SET_GET_SK_TEST(ossl_cmp, ctx, 0, 0, statusString, ASN1_UTF8STRING)
-DECLARE_SET_GET_INT_TEST(ossl_cmp, ctx, failInfoCode)
-DECLARE_SET_GET_TEST(ossl_cmp, ctx, 0, 0, 0, newCert, X509)
-DECLARE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, caPubs)
-DECLARE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, extraCertsIn)
+DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, status)
+DEFINE_SET_GET_SK_TEST(ossl_cmp, ctx, 0, 0, statusString, ASN1_UTF8STRING)
+DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, failInfoCode)
+DEFINE_SET_GET_TEST(ossl_cmp, ctx, 0, 0, 0, newCert, X509)
+DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, caPubs)
+DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, extraCertsIn)
 
-DECLARE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, transactionID,
+DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, transactionID,
                          ASN1_OCTET_STRING, IS_0)
-DECLARE_SET_TEST(OSSL_CMP, CTX, 1, 1, senderNonce, ASN1_OCTET_STRING)
-DECLARE_SET_TEST(ossl_cmp, ctx, 1, 1, recipNonce, ASN1_OCTET_STRING)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, senderNonce, ASN1_OCTET_STRING)
+DEFINE_SET_TEST(ossl_cmp, ctx, 1, 1, recipNonce, ASN1_OCTET_STRING)
 
 int setup_tests(void)
 {
