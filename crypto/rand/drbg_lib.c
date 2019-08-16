@@ -541,9 +541,10 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     }
 
     if (drbg->state != DRBG_UNINITIALISED) {
-        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
-                drbg->state == DRBG_ERROR ? RAND_R_IN_ERROR_STATE
-                                          : RAND_R_ALREADY_INSTANTIATED);
+        if (drbg->state == DRBG_ERROR)
+            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_IN_ERROR_STATE);
+        else
+            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ALREADY_INSTANTIATED);
         goto end;
     }
 

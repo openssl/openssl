@@ -60,10 +60,10 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
         }
     } else
         ret = -1;
-    if (ret <= 0)
-        EVPerr(EVP_F_EVP_CIPHER_PARAM_TO_ASN1, ret == -2 ?
-               ASN1_R_UNSUPPORTED_CIPHER :
-               EVP_R_CIPHER_PARAMETER_ERROR);
+    if (ret == -2)
+        EVPerr(EVP_F_EVP_CIPHER_PARAM_TO_ASN1, ASN1_R_UNSUPPORTED_CIPHER);
+    else if (ret <= 0)
+        EVPerr(EVP_F_EVP_CIPHER_PARAM_TO_ASN1, EVP_R_CIPHER_PARAMETER_ERROR);
     if (ret < -1)
         ret = -1;
     return ret;
@@ -106,10 +106,10 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
         }
     } else
         ret = -1;
-    if (ret <= 0)
-        EVPerr(EVP_F_EVP_CIPHER_ASN1_TO_PARAM, ret == -2 ?
-               EVP_R_UNSUPPORTED_CIPHER :
-               EVP_R_CIPHER_PARAMETER_ERROR);
+    if (ret == -2)
+        EVPerr(EVP_F_EVP_CIPHER_ASN1_TO_PARAM, EVP_R_UNSUPPORTED_CIPHER);
+    else if (ret <= 0)
+        EVPerr(EVP_F_EVP_CIPHER_ASN1_TO_PARAM, EVP_R_CIPHER_PARAMETER_ERROR);
     if (ret < -1)
         ret = -1;
     return ret;
