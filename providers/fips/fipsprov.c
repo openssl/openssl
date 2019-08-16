@@ -12,7 +12,6 @@
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
-#include <openssl/fips.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -21,6 +20,7 @@
 #include <openssl/sha.h>
 #include <openssl/rand_drbg.h>
 #include <openssl/ec.h>
+#include <openssl/fips_names.h>
 
 #include "internal/cryptlib.h"
 #include "internal/property.h"
