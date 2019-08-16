@@ -98,6 +98,14 @@ application developer's responsibility to include windows.h prior to
 crypto.h where use of CRYPTO_THREAD_* types and functions is required.
 
 =head1 EXAMPLES
+You can find out if OpenSSL was configured with thread support:
+
+ #include <openssl/opensslconf.h>
+ #if defined(OPENSSL_THREADS)
+     /* thread support enabled */
+ #else
+     /* no thread support */
+ #endif
 
 This example safely initializes and uses a lock.
 
@@ -143,17 +151,6 @@ This can only be done at process exit or when a dynamically loaded library is
 no longer in use and is unloaded.
 The simplest solution is to just "leak" the lock in applications and not
 repeatedly load/unload shared libraries that allocate locks.
-
-=head1 NOTES
-
-You can find out if OpenSSL was configured with thread support:
-
- #include <openssl/opensslconf.h>
- #if defined(OPENSSL_THREADS)
-     /* thread support enabled */
- #else
-     /* no thread support */
- #endif
 
 =head1 SEE ALSO
 

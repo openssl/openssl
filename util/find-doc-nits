@@ -159,10 +159,35 @@ sub check_section_location()
     my $section = shift;
     my $before = shift;
 
-    return
-        unless $contents =~ /=head1 $section/ and $contents =~ /=head1 $before/;
-    print "$id $section should be placed before $before section\n"
+    return unless $contents =~ /=head1 $section/
+        and $contents =~ /=head1 $before/;
+    print "$id $section should appear before $before section\n"
         if $contents =~ /=head1 $before.*=head1 $section/ms;
+}
+
+# Check if a =head1 is duplicated, or a =headX is duplicated within a
+# =head1.  Treats =head2 =head3 as equivalent -- it doesn't reset the head3
+# sets if it finds a =head2 -- but that is good enough for now.
+sub check_duplicate_sections()
+{
+    my $id = shift;
+    my $contents = shift;
+    my %head1;
+    my %subheads;
+
+    foreach my $line ( split /\n+/, $contents ) {
+        next unless $line =~ /^=head/;
+        if ( $line =~ /head1/ ) {
+            print "$id duplicate section $line\n"
+                if defined $head1{$line};
+            $head1{$line} = 1;
+            %subheads = ();
+        } else {
+            print "$id duplicate subsection $line\n"
+                if defined $subheads{$line};
+            $subheads{$line} = 1;
+        }
+    }
 }
 
 sub check()
@@ -179,6 +204,7 @@ sub check()
     }
 
     my $id = "${filename}:1:";
+    &check_duplicate_sections($id, $contents);
 
     # Check ordering of some sections in man3
     if ( $filename =~ m|man3/| ) {
