@@ -392,7 +392,7 @@ immediately available.
 
 =back
 
-=head1 OCSP Response verification.
+=head1 OCSP RESPONSE VERIFICATION
 
 OCSP Response follows the rules specified in RFC2560.
 

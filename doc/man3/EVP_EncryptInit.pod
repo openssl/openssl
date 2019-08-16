@@ -406,7 +406,7 @@ Null cipher: does nothing.
 
 =back
 
-=head1 AEAD Interface
+=head1 AEAD INTERFACE
 
 The EVP interface for Authenticated Encryption with Associated Data (AEAD)
 modes are subtly altered and several additional I<ctrl> operations are supported
@@ -485,7 +485,7 @@ the length of the tag (with the C<tag> parameter set to NULL) when encrypting.
 The tag length is often referred to as B<M>. If not set a default value is
 used (12 for AES). When decrypting, the tag needs to be set before passing
 in data to be decrypted, but as in GCM and OCB mode, it can be set after
-passing additional authenticated data (see L<AEAD Interface>).
+passing additional authenticated data (see L</AEAD INTERFACE>).
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, ivlen, NULL)
 

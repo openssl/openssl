@@ -209,7 +209,7 @@ The last feature has been added to support the common practice used with
 previous OpenSSL versions to call RAND_add() before calling RAND_bytes().
 
 
-=head2 Entropy Input vs. Additional Data
+=head2 Entropy Input and Additional Data
 
 The DRBG distinguishes two different types of random input: I<entropy>,
 which comes from a trusted source, and I<additional input>',

@@ -309,12 +309,12 @@ The EC algorithm supports sign, verify and derive operations. The sign and
 verify operations use ECDSA and derive uses ECDH. SHA1 is assumed by default for
 the B<-pkeyopt> B<digest> option.
 
-=head1 X25519 and X448 ALGORITHMS
+=head1 X25519 AND X448 ALGORITHMS
 
 The X25519 and X448 algorithms support key derivation only. Currently there are
 no additional options.
 
-=head1 Ed25519 and Ed448 ALGORITHMS
+=head1 ED25519 AND ED448 ALGORITHMS
 
 These algorithms only support signing and verifying. OpenSSL only implements the
 "pure" variants of these algorithms so raw data can be passed directly to them

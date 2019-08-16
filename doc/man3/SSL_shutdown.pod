@@ -15,8 +15,6 @@ SSL_shutdown - shut down a TLS/SSL connection
 SSL_shutdown() shuts down an active TLS/SSL connection. It sends the
 close_notify shutdown alert to the peer.
 
-=head1 NOTES
-
 SSL_shutdown() tries to send the close_notify shutdown alert to the peer.
 Whether the operation succeeds or not, the SSL_SENT_SHUTDOWN flag is set and
 a currently open session is considered closed and good and will be kept in the
@@ -51,6 +49,32 @@ synchronized.
 SSL_shutdown() only closes the write direction.
 It is not possible to call SSL_write() after calling SSL_shutdown().
 The read direction is closed by the peer.
+
+The behaviour of SSL_shutdown() additionally depends on the underlying BIO.
+If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
+handshake step has been finished or an error occurred.
+
+If the underlying BIO is B<non-blocking>, SSL_shutdown() will also return
+when the underlying BIO could not satisfy the needs of SSL_shutdown()
+to continue the handshake. In this case a call to SSL_get_error() with the
+return value of SSL_shutdown() will yield B<SSL_ERROR_WANT_READ> or
+B<SSL_ERROR_WANT_WRITE>. The calling process then must repeat the call after
+taking appropriate action to satisfy the needs of SSL_shutdown().
+The action depends on the underlying BIO. When using a non-blocking socket,
+nothing is to be done, but select() can be used to check for the required
+condition. When using a buffering BIO, like a BIO pair, data must be written
+into or retrieved out of the BIO before being able to continue.
+
+After SSL_shutdown() returned 0, it is possible to call SSL_shutdown() again
+to wait for the peer's close_notify alert.
+SSL_shutdown() will return 1 in that case.
+However, it is recommended to wait for it using SSL_read() instead.
+
+SSL_shutdown() can be modified to only set the connection to "shutdown"
+state but not actually send the close_notify alert messages,
+see L<SSL_CTX_set_quiet_shutdown(3)>.
+When "quiet shutdown" is enabled, SSL_shutdown() will always succeed
+and return 1.
 
 =head2 First to close the connection
 
@@ -88,34 +112,6 @@ If successful, SSL_shutdown() will return 1.
 
 Whether SSL_RECEIVED_SHUTDOWN is already set can be checked using the
 SSL_get_shutdown() (see also L<SSL_set_shutdown(3)> call.
-
-=head1 NOTES
-
-The behaviour of SSL_shutdown() additionally depends on the underlying BIO.
-If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
-handshake step has been finished or an error occurred.
-
-If the underlying BIO is B<non-blocking>, SSL_shutdown() will also return
-when the underlying BIO could not satisfy the needs of SSL_shutdown()
-to continue the handshake. In this case a call to SSL_get_error() with the
-return value of SSL_shutdown() will yield B<SSL_ERROR_WANT_READ> or
-B<SSL_ERROR_WANT_WRITE>. The calling process then must repeat the call after
-taking appropriate action to satisfy the needs of SSL_shutdown().
-The action depends on the underlying BIO. When using a non-blocking socket,
-nothing is to be done, but select() can be used to check for the required
-condition. When using a buffering BIO, like a BIO pair, data must be written
-into or retrieved out of the BIO before being able to continue.
-
-After SSL_shutdown() returned 0, it is possible to call SSL_shutdown() again
-to wait for the peer's close_notify alert.
-SSL_shutdown() will return 1 in that case.
-However, it is recommended to wait for it using SSL_read() instead.
-
-SSL_shutdown() can be modified to only set the connection to "shutdown"
-state but not actually send the close_notify alert messages,
-see L<SSL_CTX_set_quiet_shutdown(3)>.
-When "quiet shutdown" is enabled, SSL_shutdown() will always succeed
-and return 1.
 
 =head1 RETURN VALUES
 

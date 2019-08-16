@@ -209,7 +209,7 @@ It is possible to write out DER encoded encrypted private keys in
 PKCS#8 format because the encryption details are included at an ASN1
 level whereas the traditional format includes them at a PEM level.
 
-=head1 PKCS#5 v1.5 and PKCS#12 algorithms.
+=head1 PKCS#5 V1.5 AND PKCS#12 ALGORITHMS
 
 Various algorithms can be used with the B<-v1> command line option,
 including PKCS#5 v1.5 and PKCS#12. These are described in more detail
