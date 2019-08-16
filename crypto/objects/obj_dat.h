@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7953] = {
+static const unsigned char so[7917] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1079,22 +1079,22 @@ static const unsigned char so[7953] = {
     0x2B,0xCE,0x0F,0x01,0x01,                      /* [ 7761] OBJ_oqsdefault */
     0x2B,0xCE,0x0F,0x01,0x02,                      /* [ 7766] OBJ_p256_oqsdefault */
     0x2B,0xCE,0x0F,0x01,0x03,                      /* [ 7771] OBJ_rsa3072_oqsdefault */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x01,  /* [ 7776] OBJ_dilithium2 */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x02,  /* [ 7787] OBJ_p256_dilithium2 */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x03,  /* [ 7798] OBJ_rsa3072_dilithium2 */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x04,  /* [ 7809] OBJ_dilithium3 */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x05,  /* [ 7820] OBJ_dilithium4 */
-    0x2B,0x06,0x01,0x04,0x01,0x86,0x04,0x01,0x02,0x02,0x06,  /* [ 7831] OBJ_p384_dilithium4 */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7842] OBJ_picnicl1fs */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x02,  /* [ 7853] OBJ_p256_picnicl1fs */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x03,  /* [ 7864] OBJ_rsa3072_picnicl1fs */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x01,  /* [ 7875] OBJ_qteslai */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x02,  /* [ 7886] OBJ_p256_qteslai */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x03,  /* [ 7897] OBJ_rsa3072_qteslai */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x04,  /* [ 7908] OBJ_qteslaiiisize */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x05,  /* [ 7919] OBJ_p384_qteslaiiisize */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x06,  /* [ 7930] OBJ_qteslaiiispeed */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x07,  /* [ 7941] OBJ_p384_qteslaiiispeed */
+    0x2B,0xCE,0x0F,0x02,0x01,                      /* [ 7776] OBJ_dilithium2 */
+    0x2B,0xCE,0x0F,0x02,0x02,                      /* [ 7781] OBJ_p256_dilithium2 */
+    0x2B,0xCE,0x0F,0x02,0x03,                      /* [ 7786] OBJ_rsa3072_dilithium2 */
+    0x2B,0xCE,0x0F,0x02,0x04,                      /* [ 7791] OBJ_dilithium3 */
+    0x2B,0xCE,0x0F,0x02,0x05,                      /* [ 7796] OBJ_dilithium4 */
+    0x2B,0xCE,0x0F,0x02,0x06,                      /* [ 7801] OBJ_p384_dilithium4 */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7806] OBJ_picnicl1fs */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x02,  /* [ 7817] OBJ_p256_picnicl1fs */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x03,  /* [ 7828] OBJ_rsa3072_picnicl1fs */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x01,  /* [ 7839] OBJ_qteslai */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x02,  /* [ 7850] OBJ_p256_qteslai */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x03,  /* [ 7861] OBJ_rsa3072_qteslai */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x04,  /* [ 7872] OBJ_qteslaiiisize */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x05,  /* [ 7883] OBJ_p384_qteslaiiisize */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x06,  /* [ 7894] OBJ_qteslaiiispeed */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x07,  /* [ 7905] OBJ_p384_qteslaiiispeed */
 };
 
 #define NUM_NID 1214
@@ -2297,22 +2297,22 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"oqsdefault", "oqsdefault", NID_oqsdefault, 5, &so[7761]},
     {"p256_oqsdefault", "p256_oqsdefault", NID_p256_oqsdefault, 5, &so[7766]},
     {"rsa3072_oqsdefault", "rsa3072_oqsdefault", NID_rsa3072_oqsdefault, 5, &so[7771]},
-    {"dilithium2", "dilithium2", NID_dilithium2, 11, &so[7776]},
-    {"p256_dilithium2", "p256_dilithium2", NID_p256_dilithium2, 11, &so[7787]},
-    {"rsa3072_dilithium2", "rsa3072_dilithium2", NID_rsa3072_dilithium2, 11, &so[7798]},
-    {"dilithium3", "dilithium3", NID_dilithium3, 11, &so[7809]},
-    {"dilithium4", "dilithium4", NID_dilithium4, 11, &so[7820]},
-    {"p384_dilithium4", "p384_dilithium4", NID_p384_dilithium4, 11, &so[7831]},
-    {"picnicl1fs", "picnicl1fs", NID_picnicl1fs, 11, &so[7842]},
-    {"p256_picnicl1fs", "p256_picnicl1fs", NID_p256_picnicl1fs, 11, &so[7853]},
-    {"rsa3072_picnicl1fs", "rsa3072_picnicl1fs", NID_rsa3072_picnicl1fs, 11, &so[7864]},
-    {"qteslai", "qteslai", NID_qteslai, 11, &so[7875]},
-    {"p256_qteslai", "p256_qteslai", NID_p256_qteslai, 11, &so[7886]},
-    {"rsa3072_qteslai", "rsa3072_qteslai", NID_rsa3072_qteslai, 11, &so[7897]},
-    {"qteslaiiisize", "qteslaiiisize", NID_qteslaiiisize, 11, &so[7908]},
-    {"p384_qteslaiiisize", "p384_qteslaiiisize", NID_p384_qteslaiiisize, 11, &so[7919]},
-    {"qteslaiiispeed", "qteslaiiispeed", NID_qteslaiiispeed, 11, &so[7930]},
-    {"p384_qteslaiiispeed", "p384_qteslaiiispeed", NID_p384_qteslaiiispeed, 11, &so[7941]},
+    {"dilithium2", "dilithium2", NID_dilithium2, 5, &so[7776]},
+    {"p256_dilithium2", "p256_dilithium2", NID_p256_dilithium2, 5, &so[7781]},
+    {"rsa3072_dilithium2", "rsa3072_dilithium2", NID_rsa3072_dilithium2, 5, &so[7786]},
+    {"dilithium3", "dilithium3", NID_dilithium3, 5, &so[7791]},
+    {"dilithium4", "dilithium4", NID_dilithium4, 5, &so[7796]},
+    {"p384_dilithium4", "p384_dilithium4", NID_p384_dilithium4, 5, &so[7801]},
+    {"picnicl1fs", "picnicl1fs", NID_picnicl1fs, 11, &so[7806]},
+    {"p256_picnicl1fs", "p256_picnicl1fs", NID_p256_picnicl1fs, 11, &so[7817]},
+    {"rsa3072_picnicl1fs", "rsa3072_picnicl1fs", NID_rsa3072_picnicl1fs, 11, &so[7828]},
+    {"qteslai", "qteslai", NID_qteslai, 11, &so[7839]},
+    {"p256_qteslai", "p256_qteslai", NID_p256_qteslai, 11, &so[7850]},
+    {"rsa3072_qteslai", "rsa3072_qteslai", NID_rsa3072_qteslai, 11, &so[7861]},
+    {"qteslaiiisize", "qteslaiiisize", NID_qteslaiiisize, 11, &so[7872]},
+    {"p384_qteslaiiisize", "p384_qteslaiiisize", NID_p384_qteslaiiisize, 11, &so[7883]},
+    {"qteslaiiispeed", "qteslaiiispeed", NID_qteslaiiispeed, 11, &so[7894]},
+    {"p384_qteslaiiispeed", "p384_qteslaiiispeed", NID_p384_qteslaiiispeed, 11, &so[7905]},
 };
 
 #define NUM_SN 1205
@@ -5044,6 +5044,12 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1195,    /* OBJ_oqsdefault                   1 3 9999 1 1 */
     1196,    /* OBJ_p256_oqsdefault              1 3 9999 1 2 */
     1197,    /* OBJ_rsa3072_oqsdefault           1 3 9999 1 3 */
+    1198,    /* OBJ_dilithium2                   1 3 9999 2 1 */
+    1199,    /* OBJ_p256_dilithium2              1 3 9999 2 2 */
+    1200,    /* OBJ_rsa3072_dilithium2           1 3 9999 2 3 */
+    1201,    /* OBJ_dilithium3                   1 3 9999 2 4 */
+    1202,    /* OBJ_dilithium4                   1 3 9999 2 5 */
+    1203,    /* OBJ_p384_dilithium4              1 3 9999 2 6 */
      624,    /* OBJ_set_rootKeyThumb             2 23 42 3 0 0 */
      625,    /* OBJ_set_addPolicy                2 23 42 3 0 1 */
      626,    /* OBJ_setAttr_Token_EMV            2 23 42 3 2 1 */
@@ -5806,12 +5812,6 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1211,    /* OBJ_p384_qteslaiiisize           1 3 6 1 4 1 311 89 2 2 5 */
     1212,    /* OBJ_qteslaiiispeed               1 3 6 1 4 1 311 89 2 2 6 */
     1213,    /* OBJ_p384_qteslaiiispeed          1 3 6 1 4 1 311 89 2 2 7 */
-    1198,    /* OBJ_dilithium2                   1 3 6 1 4 1 772 1 2 2 1 */
-    1199,    /* OBJ_p256_dilithium2              1 3 6 1 4 1 772 1 2 2 2 */
-    1200,    /* OBJ_rsa3072_dilithium2           1 3 6 1 4 1 772 1 2 2 3 */
-    1201,    /* OBJ_dilithium3                   1 3 6 1 4 1 772 1 2 2 4 */
-    1202,    /* OBJ_dilithium4                   1 3 6 1 4 1 772 1 2 2 5 */
-    1203,    /* OBJ_p384_dilithium4              1 3 6 1 4 1 772 1 2 2 6 */
     1056,    /* OBJ_blake2b512                   1 3 6 1 4 1 1722 12 2 1 16 */
     1057,    /* OBJ_blake2s256                   1 3 6 1 4 1 1722 12 2 2 8 */
     1159,    /* OBJ_dstu4145be                   1 2 804 2 1 1 1 1 3 1 1 1 1 */

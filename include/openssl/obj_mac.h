@@ -5215,32 +5215,32 @@
 #define SN_dilithium2           "dilithium2"
 #define LN_dilithium2           "dilithium2"
 #define NID_dilithium2          1198
-#define OBJ_dilithium2          1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,1L
+#define OBJ_dilithium2          1L,3L,9999L,2L,1L
 
 #define SN_p256_dilithium2              "p256_dilithium2"
 #define LN_p256_dilithium2              "p256_dilithium2"
 #define NID_p256_dilithium2             1199
-#define OBJ_p256_dilithium2             1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,2L
+#define OBJ_p256_dilithium2             1L,3L,9999L,2L,2L
 
 #define SN_rsa3072_dilithium2           "rsa3072_dilithium2"
 #define LN_rsa3072_dilithium2           "rsa3072_dilithium2"
 #define NID_rsa3072_dilithium2          1200
-#define OBJ_rsa3072_dilithium2          1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,3L
+#define OBJ_rsa3072_dilithium2          1L,3L,9999L,2L,3L
 
 #define SN_dilithium3           "dilithium3"
 #define LN_dilithium3           "dilithium3"
 #define NID_dilithium3          1201
-#define OBJ_dilithium3          1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,4L
+#define OBJ_dilithium3          1L,3L,9999L,2L,4L
 
 #define SN_dilithium4           "dilithium4"
 #define LN_dilithium4           "dilithium4"
 #define NID_dilithium4          1202
-#define OBJ_dilithium4          1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,5L
+#define OBJ_dilithium4          1L,3L,9999L,2L,5L
 
 #define SN_p384_dilithium4              "p384_dilithium4"
 #define LN_p384_dilithium4              "p384_dilithium4"
 #define NID_p384_dilithium4             1203
-#define OBJ_p384_dilithium4             1L,3L,6L,1L,4L,1L,772L,1L,2L,2L,6L
+#define OBJ_p384_dilithium4             1L,3L,9999L,2L,6L
 
 #define SN_picnicl1fs           "picnicl1fs"
 #define LN_picnicl1fs           "picnicl1fs"
