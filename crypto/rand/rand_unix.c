@@ -275,6 +275,13 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 #  endif
 
 #  if defined(OPENSSL_RAND_SEED_GETRANDOM)
+
+#   if defined(__linux) && !defined(__NR_getrandom)
+#    if defined(__arm__) && defined(__NR_SYSCALL_BASE)
+#     define __NR_getrandom    (__NR_SYSCALL_BASE+384)
+#    endif
+#   endif
+
 /*
  * syscall_random(): Try to get random data using a system call
  * returns the number of bytes returned in buf, or < 0 on error.
