@@ -54,7 +54,7 @@ static int aes_einit(void *vctx, const unsigned char *key, size_t keylen,
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
     if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 1)) {
-        /* ERR_raise( already called */
+        /* ERR_raise already called */
         return 0;
     }
     if (key != NULL) {
@@ -74,7 +74,7 @@ static int aes_dinit(void *vctx, const unsigned char *key, size_t keylen,
     PROV_AES_KEY *ctx = (PROV_AES_KEY *)vctx;
 
     if (!PROV_AES_KEY_generic_init(ctx, iv, ivlen, 0)) {
-        /* ERR_raise( already called */
+        /* ERR_raise already called */
         return 0;
     }
     if (key != NULL) {
@@ -136,7 +136,7 @@ static int aes_block_update(void *vctx, unsigned char *out, size_t *outl,
         inl -= nextblocks;
     }
     if (!trailingdata(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE, &in, &inl)) {
-        /* ERR_raise( already called */
+        /* ERR_raise already called */
         return 0;
     }
 
@@ -189,7 +189,7 @@ static int aes_block_final(void *vctx, unsigned char *out, size_t *outl,
     }
 
     if (ctx->pad && !unpadblock(ctx->buf, &ctx->bufsz, AES_BLOCK_SIZE)) {
-        /* ERR_raise( already called */
+        /* ERR_raise already called */
         return 0;
     }
 
