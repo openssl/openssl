@@ -133,7 +133,7 @@ const char *OPENSSL_version_build_metadata(void);
 /*
  * Applications should use -DOPENSSL_API_COMPAT=<version> to suppress the
  * declarations of functions deprecated in or before <version>.  If this is
- * undefined, the value of the macro OPENSSL_API_MIN from opensslconf.h
+ * undefined, the value of the macro OPENSSL_MIN_API from opensslconf.h
  * is the default.
  *
  * For any version number up until version 1.1.x, <version> is expected to be
