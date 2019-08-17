@@ -168,27 +168,31 @@ script:
     - if $make update; then
           echo -e '+\057 MAKE UPDATE OK';
       else
-          echo -e '+\057 MAKE UPDATE FAILED'; false;
+          echo -e '+\057 MAKE UPDATE FAILED';
+          travis_terminate 1;
       fi
     - git diff --exit-code
     - if [ -n "$CHECKDOCS" ]; then
           if $make doc-nits; then
               echo -e '+\057\057 MAKE DOC-NITS OK';
           else
-              echo -e '+\057\057 MAKE DOC-NITS FAILED'; false;
+              echo -e '+\057\057 MAKE DOC-NITS FAILED';
+              travis_terminate 1;
           fi;
       fi
     - if [ -n "$GENERATE" ]; then
           if $make build_all_generated; then
               echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED OK';
           else
-              echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED FAILED'; false;
+              echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED FAILED';
+              travis_terminate 1;
           fi;
       fi
     - if $make2; then
           echo -e '+\057\057\057\057 MAKE OK';
       else
-          echo -e '+\057\057\057\057 MAKE FAILED'; false;
+          echo -e '+\057\057\057\057 MAKE FAILED';
+          travis_terminate 1;
       fi;
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
@@ -203,7 +207,8 @@ script:
           if HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
               echo -e '+\057\057\057\057\057 MAKE TEST OK';
           else
-              echo -e '+\057\057\057\057\057 MAKE TEST FAILED'; false;
+              echo -e '+\057\057\057\057\057 MAKE TEST FAILED';
+              travis_terminate 1;
           fi;
       else
           if $make build_tests >~/build.log 2>&1; then
@@ -211,7 +216,7 @@ script:
           else
               echo -e '+\057\057\057\057\057\057 MAKE BUILD_TESTS FAILED';
               cat ~/build.log
-              false;
+              travis_terminate 1;
           fi;
       fi
     - if [ -n "$DESTDIR" ]; then
@@ -221,7 +226,7 @@ script:
           else
               echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL FAILED';
               cat ~/install.log;
-              false;
+              travis_terminate 1;
           fi;
       fi
     - cd $top
