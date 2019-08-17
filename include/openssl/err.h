@@ -20,6 +20,7 @@
 # include <openssl/ossl_typ.h>
 # include <openssl/bio.h>
 # include <openssl/lhash.h>
+# include <openssl/macros.h>
 
 #ifdef  __cplusplus
 extern "C" {

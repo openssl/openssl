@@ -9,10 +9,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslv.h>
-
 #ifndef HEADER_OPENSSLCONF_H
 # define HEADER_OPENSSLCONF_H
+
+/*
+ * Important Note: Since the change of the versioning scheme in commit
+ * 3a63dbef15b6, the two header files
+ *
+ *    <openssl/opensslconf.h>
+ *    <openssl/opensslv.h>
+ *
+ * depend on each other and must be read by the compiler in exactly the
+ * given order. To enforce this ordering regardless of which header gets
+ * included (first), <openssl/opensslconf.h> includes <openssl/opensslv.h>
+ * at the end, not the beginning of the file.
+ */
 
 # ifdef  __cplusplus
 extern "C" {
@@ -63,9 +74,10 @@ extern "C" {
 
 # define RC4_INT {- $config{rc4_int} -}
 
-#include <openssl/macros.h>
-
 # ifdef  __cplusplus
 }
 # endif
+
+# include <openssl/opensslv.h>
+
 #endif                          /* HEADER_OPENSSLCONF_H */
