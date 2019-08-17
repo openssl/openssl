@@ -1930,7 +1930,11 @@ ${func}_avx2:
 	mov	$inp,$_inp		# save inp, 2nd arh
 	mov	%rdx,$_end		# save end pointer, "3rd" arg
 	mov	%rax,$_rsp		# save copy of %rsp
-.cfi_cfa_expression	$_rsp,deref,+8
+# the frame info is at $_rsp, but the stack is moving...
+# so a second frame pointer is saved at -8(%rsp)
+# that is in the red zone
+	mov	%rax,-8(%rsp)
+.cfi_cfa_expression	%rsp-8,deref,+8
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,16*$SZ+32(%rsp)
@@ -1993,6 +1997,11 @@ $code.=<<___;
 	xor	$a1,$a1
 	vmovdqa	$t1,0x20(%rsp)
 	lea	-$PUSH8(%rsp),%rsp
+.cfi_cfa_expression	%rsp+`$PUSH8-8`,deref,+8
+# copy secondary frame pointer to new location again at -8(%rsp)
+	mov	$PUSH8-8(%rsp),%rdi
+	mov	%rdi,-8(%rsp)
+.cfi_cfa_expression	%rsp-8,deref,+8
 	mov	$B,$a3
 	vmovdqa	$t2,0x00(%rsp)
 	xor	$C,$a3			# magic
@@ -2012,7 +2021,18 @@ my @X = @_;
 my @insns = (&$body,&$body,&$body,&$body);	# 96 instructions
 my $base = "+2*$PUSH8(%rsp)";
 
-	&lea	("%rsp","-$PUSH8(%rsp)")	if (($j%2)==0);
+	if (($j%2)==0) {
+$code.=<<___;
+	lea	-$PUSH8(%rsp),%rsp
+.cfi_cfa_expression	%rsp+`$PUSH8-8`,deref,+8
+# copy secondary frame pointer to new location again at -8(%rsp)
+	pushq	$PUSH8-8(%rsp)
+.cfi_cfa_expression	%rsp,deref,+8
+	lea	8(%rsp),%rsp
+.cfi_cfa_expression	%rsp-8,deref,+8
+___
+	}
+
 	foreach (Xupdate_256_AVX()) {		# 29 instructions
 	    eval;
 	    eval(shift(@insns));
@@ -2084,6 +2104,11 @@ $code.=<<___;
 	vpaddq	0x40($Tbl),@X[6],$t2
 	vmovdqa	$t3,0x60(%rsp)
 	lea	-$PUSH8(%rsp),%rsp
+.cfi_cfa_expression	%rsp+`$PUSH8-8`,deref,+8
+# copy secondary frame pointer to new location again at -8(%rsp)
+	mov	$PUSH8-8(%rsp),%rdi
+	mov	%rdi,-8(%rsp)
+.cfi_cfa_expression	%rsp-8,deref,+8
 	vpaddq	0x60($Tbl),@X[7],$t3
 	vmovdqa	$t0,0x00(%rsp)
 	xor	$a1,$a1
@@ -2107,7 +2132,18 @@ my @X = @_;
 my @insns = (&$body,&$body);			# 48 instructions
 my $base = "+2*$PUSH8(%rsp)";
 
-	&lea	("%rsp","-$PUSH8(%rsp)")	if (($j%4)==0);
+	if (($j%4)==0) {
+$code.=<<___;
+	lea	-$PUSH8(%rsp),%rsp
+.cfi_cfa_expression	%rsp+`$PUSH8-8`,deref,+8
+# copy secondary frame pointer to new location again at -8(%rsp)
+	pushq	$PUSH8-8(%rsp)
+.cfi_cfa_expression	%rsp,deref,+8
+	lea	8(%rsp),%rsp
+.cfi_cfa_expression	%rsp-8,deref,+8
+___
+	}
+
 	foreach (Xupdate_512_AVX()) {		# 23 instructions
 	    eval;
 	    if ($_ !~ /\;$/) {
@@ -2182,6 +2218,13 @@ $code.=<<___;
 	add	$a1,$A
 	#mov	`2*$SZ*$rounds+8`(%rsp),$inp	# $_inp
 	lea	`2*$SZ*($rounds-8)`(%rsp),%rsp
+# restore frame pointer to original location at $_rsp
+.cfi_cfa_expression	$_rsp,deref,+8
+# copy secondary frame pointer to new location again at -8(%rsp)
+	pushq	$_rsp
+.cfi_cfa_expression	%rsp,deref,+8
+	lea	8(%rsp),%rsp
+.cfi_cfa_expression	%rsp-8,deref,+8
 
 	add	$SZ*0($ctx),$A
 	add	$SZ*1($ctx),$B
@@ -2210,6 +2253,8 @@ $code.=<<___;
 
 .Ldone_avx2:
 	lea	($Tbl),%rsp
+# restore frame pointer to original location at $_rsp
+.cfi_cfa_expression	$_rsp,deref,+8
 	mov	$_rsp,%rsi
 .cfi_def_cfa	%rsi,8
 	vzeroupper
