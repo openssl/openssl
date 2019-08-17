@@ -886,9 +886,6 @@ typedef struct mac_data_st {
     int type;                    /* for mac_test_run_pkey */
     /* Algorithm string for this MAC */
     char *alg;
-    /* Underlying algorithm if it was explicitly fetched */
-    void *fetched_md;
-    void *fetched_cipher;
     /* MAC key */
     unsigned char *key;
     size_t key_len;
@@ -993,8 +990,6 @@ static void mac_test_cleanup(EVP_TEST *t)
     OPENSSL_free(mdat->salt);
     OPENSSL_free(mdat->input);
     OPENSSL_free(mdat->output);
-    EVP_MD_meth_free(mdat->fetched_md);
-    EVP_CIPHER_meth_free(mdat->fetched_cipher);
 }
 
 static int mac_test_parse(EVP_TEST *t,
