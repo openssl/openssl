@@ -435,10 +435,12 @@ test : tests
         DEFINE BLDTOP {- builddir() -}
         DEFINE RESULT_D {- builddir(qw(test test-runs)) -}
         DEFINE OPENSSL_ENGINES {- builddir("engines") -}
+        DEFINE OPENSSL_MODULES {- builddir("providers") -}
         DEFINE OPENSSL_DEBUG_MEMORY "on"
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
         DEASSIGN OPENSSL_DEBUG_MEMORY
+        DEASSIGN OPENSSL_MODULES
         DEASSIGN OPENSSL_ENGINES
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP

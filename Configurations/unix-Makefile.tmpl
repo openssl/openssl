@@ -352,6 +352,7 @@ test: tests
 	  PERL="$(PERL)" \
 	  EXE_EXT={- platform->binext() -} \
 	  OPENSSL_ENGINES=`cd ../$(BLDDIR)/engines 2>/dev/null && pwd` \
+	  OPENSSL_MODULES=`cd ../$(BLDDIR)/providers 2>/dev/null && pwd` \
 	  OPENSSL_DEBUG_MEMORY=on \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
