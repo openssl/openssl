@@ -14,12 +14,16 @@
  * can be found at https://blake2.net.
  */
 
-#include <assert.h>
-#include <string.h>
-#include <openssl/crypto.h>
-#include "blake2_impl.h"
+#include <openssl/opensslconf.h>
 
-#include "internal/blake2.h"
+#ifdef OPENSSL_NO_BLAKE2
+NON_EMPTY_TRANSLATION_UNIT
+#else
+# include <assert.h>
+# include <string.h>
+# include <openssl/crypto.h>
+# include "blake2_impl.h"
+# include "internal/blake2.h"
 
 static const uint64_t blake2b_IV[8] =
 {
@@ -200,7 +204,7 @@ static void blake2b_compress(BLAKE2B_CTX *S,
         v[13] = S->t[1] ^ blake2b_IV[5];
         v[14] = S->f[0] ^ blake2b_IV[6];
         v[15] = S->f[1] ^ blake2b_IV[7];
-#define G(r,i,a,b,c,d) \
+# define G(r,i,a,b,c,d) \
         do { \
             a = a + b + m[blake2b_sigma[r][2*i+0]]; \
             d = rotr64(d ^ a, 32); \
@@ -211,7 +215,7 @@ static void blake2b_compress(BLAKE2B_CTX *S,
             c = c + d; \
             b = rotr64(b ^ c, 63); \
         } while (0)
-#define ROUND(r)  \
+# define ROUND(r)  \
         do { \
             G(r,0,v[ 0],v[ 4],v[ 8],v[12]); \
             G(r,1,v[ 1],v[ 5],v[ 9],v[13]); \
@@ -222,12 +226,12 @@ static void blake2b_compress(BLAKE2B_CTX *S,
             G(r,6,v[ 2],v[ 7],v[ 8],v[13]); \
             G(r,7,v[ 3],v[ 4],v[ 9],v[14]); \
         } while (0)
-#if defined(OPENSSL_SMALL_FOOTPRINT)
+# if defined(OPENSSL_SMALL_FOOTPRINT)
         /* 3x size reduction on x86_64, almost 7x on ARMv8, 9x on ARMv4 */
         for (i = 0; i < 12; i++) {
             ROUND(i);
         }
-#else
+# else
         ROUND(0);
         ROUND(1);
         ROUND(2);
@@ -240,13 +244,13 @@ static void blake2b_compress(BLAKE2B_CTX *S,
         ROUND(9);
         ROUND(10);
         ROUND(11);
-#endif
+# endif
 
         for (i = 0; i < 8; ++i) {
             S->h[i] = v[i] ^= v[i + 8] ^ S->h[i];
         }
-#undef G
-#undef ROUND
+# undef G
+# undef ROUND
         blocks += increment;
         len -= increment;
     } while (len);
@@ -327,3 +331,5 @@ int blake2b_final(unsigned char *md, BLAKE2B_CTX *c)
     OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
     return 1;
 }
+
+#endif /* OPENSSL_NO_BLAKE2 */

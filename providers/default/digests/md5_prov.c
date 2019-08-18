@@ -7,11 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include <openssl/md5.h>
-#include "internal/core_mkdigest.h"
-#include "internal/provider_algs.h"
+#include <openssl/opensslconf.h>
 
-OSSL_FUNC_DIGEST_CONSTRUCT(md5, MD5_CTX,
+#ifdef OPENSSL_NO_MD5
+NON_EMPTY_TRANSLATION_UNIT
+#else
+# include <openssl/crypto.h>
+# include <openssl/md5.h>
+# include "internal/digestcommon.h"
+# include "internal/provider_algs.h"
+
+/* md5_functions */
+IMPLEMENT_digest_functions(md5, MD5_CTX,
                            MD5_CBLOCK, MD5_DIGEST_LENGTH, 0,
                            MD5_Init, MD5_Update, MD5_Final)
+#endif /* OPENSSL_NO_MD5 */

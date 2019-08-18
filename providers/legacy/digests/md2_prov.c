@@ -6,13 +6,18 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include <openssl/opensslconf.h>
 
-#include <openssl/crypto.h>
-#include <openssl/md2.h>
+#ifdef OPENSSL_NO_MD2
+NON_EMPTY_TRANSLATION_UNIT
+#else
+# include <openssl/crypto.h>
+# include <openssl/md2.h>
+# include "internal/digestcommon.h"
+# include "internal/provider_algs.h"
 
-#include "internal/core_mkdigest.h"
-#include "internal/provider_algs.h"
-
-OSSL_FUNC_DIGEST_CONSTRUCT(md2, MD2_CTX,
+/* md2_functions */
+IMPLEMENT_digest_functions(md2, MD2_CTX,
                            MD2_BLOCK, MD2_DIGEST_LENGTH, 0,
                            MD2_Init, MD2_Update, MD2_Final)
+#endif /* OPENSSL_NO_MD2 */
