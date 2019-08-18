@@ -34,6 +34,11 @@ extern "C" {
  */
 #define OSSL_PROV_PARAM_BUILDINFO   "buildinfo"
 
+/*
+ * The module filename
+ * Type: OSSL_PARAM_OCTET_STRING
+ */
+#define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"
 
 /* cipher parameters */
 #define OSSL_CIPHER_PARAM_PADDING   "padding"    /* int */

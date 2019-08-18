@@ -9,6 +9,7 @@
 
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
+#include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "internal/cryptlib_int.h"
@@ -751,7 +752,7 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
  * never knows.
  */
 static const OSSL_PARAM param_types[] = {
-    OSSL_PARAM_DEFN("openssl-verstion", OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN("openssl-version", OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN("provider-name", OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_END
 };
@@ -781,15 +782,15 @@ static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     int i;
     OSSL_PARAM *p;
 
-#ifndef FIPS_MODE
-    /* Load config before we attempt to read any provider parameters */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
-#endif
-
     if ((p = OSSL_PARAM_locate(params, "openssl-version")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
     if ((p = OSSL_PARAM_locate(params, "provider-name")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, prov->name);
+
+#ifndef FIPS_MODE
+    if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_MODULE_FILENAME)) != NULL)
+        OSSL_PARAM_set_utf8_ptr(p, ossl_provider_module_path(prov));
+#endif
 
     if (prov->parameters == NULL)
         return 1;
@@ -800,7 +801,6 @@ static int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
         if ((p = OSSL_PARAM_locate(params, pair->name)) != NULL)
             OSSL_PARAM_set_utf8_ptr(p, pair->value);
     }
-
     return 1;
 }
 
@@ -868,6 +868,10 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_NEW_ERROR, (void (*)(void))core_new_error },
     { OSSL_FUNC_CORE_SET_ERROR_DEBUG, (void (*)(void))core_set_error_debug },
     { OSSL_FUNC_CORE_VSET_ERROR, (void (*)(void))core_vset_error },
+    { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))BIO_new_file },
+    { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))BIO_new_mem_buf },
+    { OSSL_FUNC_BIO_READ, (void (*)(void))BIO_read },
+    { OSSL_FUNC_BIO_FREE, (void (*)(void))BIO_free },
 #endif
 
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },

@@ -108,6 +108,10 @@ provider):
  CRYPTO_secure_free             OSSL_FUNC_CRYPTO_SECURE_FREE
  CRYPTO_secure_clear_free       OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE
  CRYPTO_secure_allocated        OSSL_FUNC_CRYPTO_SECURE_ALLOCATED
+ BIO_new_file                   OSSL_FUNC_BIO_NEW_FILE
+ BIO_new_mem_buf                OSSL_FUNC_BIO_NEW_MEMBUF
+ BIO_read                       OSSL_FUNC_BIO_READ
+ BIO_free                       OSSL_FUNC_BIO_FREE
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
  OPENSSL_hexstr2buf             OSSL_FUNC_OPENSSL_HEXSTR2BUF
 
@@ -178,6 +182,7 @@ CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
 CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
+BIO_new_file(), BIO_new_mem_buf(), BIO_read(), BIO_free(),
 OPENSSL_cleanse(), and OPENSSL_hexstr2buf() correspond exactly to the
 public functions with the same name.
 As a matter of fact, the pointers in the B<OSSL_DISPATCH> array are
