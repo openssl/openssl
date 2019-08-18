@@ -176,7 +176,7 @@ and must be transferred to the network. Use BIO_ctrl_get_read_request() to
 find out, how many bytes must be written into the buffer before the
 SSL_operation() can successfully be continued.
 
-=head1 WARNING
+=head1 WARNINGS
 
 As the data is buffered, SSL_operation() may return with an ERROR_SSL_WANT_READ
 condition, but there is still data in the write buffer. An application must
