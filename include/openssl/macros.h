@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/opensslconf.h>
+
 #ifndef OPENSSL_MACROS_H
 # define OPENSSL_MACROS_H
 
@@ -74,13 +76,12 @@
 # endif
 
 /*
- * Do not deprecate things to be deprecated in version 4.0 before the
- * OpenSSL version number matches.
+ * Define API level check macros up to what makes sense.  Since we
+ * do future deprecations, we define one API level beyond the current
+ * major version number.
  */
-# if OPENSSL_VERSION_MAJOR < 4
-#  define DEPRECATEDIN_4(f)       f;
-#  define OPENSSL_API_4 0
-# elif OPENSSL_API_LEVEL < 4
+
+# if OPENSSL_API_LEVEL < 4
 #  define DEPRECATEDIN_4(f)       DECLARE_DEPRECATED(f)
 #  define OPENSSL_API_4 0
 # else
