@@ -1,5 +1,5 @@
 LIBS=../../../libcrypto
-$COMMON=block.c aes.c aes_basic.c gcm.c gcm_hw.c
+$COMMON=block.c aes.c aes_basic.c gcm.c gcm_hw.c ciphers_common.c
 
 SOURCE[../../../libcrypto]=$COMMON
 INCLUDE[../../../libcrypto]=. ../../../crypto

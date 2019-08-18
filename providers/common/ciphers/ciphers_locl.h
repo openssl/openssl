@@ -10,6 +10,7 @@
 #include <openssl/opensslconf.h>
 #include <openssl/aes.h>
 #include <openssl/params.h>
+#include <openssl/core_numbers.h>
 #include "internal/cryptlib.h"
 #include "internal/modes_int.h"
 
@@ -144,5 +145,13 @@ int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
                  const unsigned char **in, size_t *inlen);
 void padblock(unsigned char *buf, size_t *buflen, size_t blocksize);
 int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize);
-int aes_get_params(OSSL_PARAM params[], int md, unsigned long flags,
-                   int kbits, int blkbits, int ivbits);
+
+OSSL_OP_cipher_gettable_params_fn     cipher_default_gettable_params;
+OSSL_OP_cipher_gettable_ctx_params_fn cipher_default_gettable_ctx_params;
+OSSL_OP_cipher_settable_ctx_params_fn cipher_default_settable_ctx_params;
+OSSL_OP_cipher_gettable_ctx_params_fn cipher_aead_gettable_ctx_params;
+OSSL_OP_cipher_settable_ctx_params_fn cipher_aead_settable_ctx_params;
+
+int cipher_default_get_params(OSSL_PARAM params[], int md, unsigned long flags,
+                              int kbits, int blkbits, int ivbits);
+

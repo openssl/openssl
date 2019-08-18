@@ -48,7 +48,7 @@ static int aesni_init_key(PROV_AES_KEY *dat, const unsigned char *key,
     }
 
     if (ret < 0) {
-        PROVerr(PROV_F_AESNI_INIT_KEY, PROV_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 
@@ -169,7 +169,7 @@ static int aes_t4_init_key(PROV_AES_KEY *dat, const unsigned char *key,
     }
 
     if (ret < 0) {
-        PROVerr(PROV_F_AES_T4_INIT_KEY, PROV_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 
@@ -509,7 +509,7 @@ static int aes_init_key(PROV_AES_KEY *dat, const unsigned char *key,
     }
 
     if (ret < 0) {
-        PROVerr(PROV_F_AES_INIT_KEY, PROV_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 
