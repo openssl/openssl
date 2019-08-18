@@ -1930,6 +1930,7 @@ ${func}_avx2:
 	mov	$inp,$_inp		# save inp, 2nd arh
 	mov	%rdx,$_end		# save end pointer, "3rd" arg
 	mov	%rax,$_rsp		# save copy of %rsp
+.cfi_cfa_expression	$_rsp,deref,+8
 ___
 $code.=<<___ if (!$win64);
 # the frame info is at $_rsp, but the stack is moving...
