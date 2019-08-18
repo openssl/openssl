@@ -199,6 +199,8 @@ sub check()
         if $contents =~ /=cut.*=cut/ms;
     print "$id EXAMPLE not EXAMPLES section.\n"
         if $contents =~ /=head1 EXAMPLE[^S]/;
+    print "$id WARNING not WARNINGS section.\n"
+        if $contents =~ /=head1 WARNING[^S]/;
     print "$id missing copyright\n"
         if $contents !~ /Copyright .* The OpenSSL Project Authors/;
     print "$id copyright not last\n"
