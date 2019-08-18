@@ -12,9 +12,8 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
  #include <openssl/core_names.h>
 
  /*
-  * None of these are actual functions, but are displayed like this for
-  * the function signatures for functions that are offered as function
-  * pointers in OSSL_DISPATCH arrays.
+  * Digests support the following function signatures in OSSL_DISPATCH arrays.
+  * (The function signatures are not actual functions).
   */
 
  /* Context management */
@@ -90,7 +89,7 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_digest_settable_ctx_params  OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS
 
 A digest algorithm implementation may not implement all of these functions.
-In order to be useable all or none of OP_digest_newctx, OP_digest_freectx,
+In order to be usable all or none of OP_digest_newctx, OP_digest_freectx,
 OP_digest_init, OP_digest_update and OP_digest_final should be implemented.
 All other functions are optional.
 
@@ -100,7 +99,7 @@ OP_digest_newctx() should create and return a pointer to a provider side
 structure for holding context information during a digest operation.
 A pointer to this context will be passed back in a number of the other digest
 operation function calls.
-The paramater B<provctx> is the provider context generated during provider
+The parameter B<provctx> is the provider context generated during provider
 initialisation (see L<provider(3)>).
 
 OP_digest_freectx() is passed a pointer to the provider side digest context in
@@ -113,7 +112,7 @@ B<dctx> parameter and return the duplicate copy.
 =head2 Digest Generation Functions
 
 OP_digest_init() initialises a digest operation given a newly created
-provider side digest context in the B<dctx> paramter.
+provider side digest context in the B<dctx> parameter.
 
 OP_digest_update() is called to supply data to be digested as part of a
 previously initialised digest operation.
@@ -160,7 +159,7 @@ OP_digest_get_ctx_params(), and OP_digest_set_ctx_params() can handle,
 respectively.
 
 Parameters currently recognised by built-in digests with this function
-are as follows. Not all parametes are relevant to, or are understood
+are as follows. Not all parameters are relevant to, or are understood
 by all digests:
 
 =over 4
@@ -224,7 +223,7 @@ and stores them in B<params>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
 Parameters currently recognised by built-in digests are as follows. Not all
-parametes are relevant to, or are understood by all digests:
+parameters are relevant to, or are understood by all digests:
 
 =over 4
 

@@ -205,8 +205,8 @@ static void *uname##_newctx(void *provctx)                                     \
     return ctx;                                                                \
 }
 
-#define OSSL_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags)   \
-OSSL_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
+#define PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags)   \
+PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
 const OSSL_DISPATCH name##_functions[] = {                                     \
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init },                    \
@@ -214,18 +214,18 @@ const OSSL_DISPATCH name##_functions[] = {                                     \
     { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))keccak_final },                  \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },              \
     { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))keccak_dupctx },                \
-    OSSL_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)
+    PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)
 
-#define OSSL_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)          \
-    OSSL_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
-    OSSL_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+#define PROV_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)          \
+    PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
+    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
-#define OSSL_FUNC_SHAKE_DIGEST(name, bitlen, blksize, dgstsize, flags)         \
-    OSSL_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
+#define PROV_FUNC_SHAKE_DIGEST(name, bitlen, blksize, dgstsize, flags)         \
+    PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))shake_settable_ctx_params },                              \
-    OSSL_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 static void keccak_freectx(void *vctx)
 {
@@ -270,18 +270,18 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
 #define IMPLEMENT_SHA3_functions(bitlen)                                       \
     SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, '\x06')            \
-    OSSL_FUNC_SHA3_DIGEST(sha3_##bitlen, bitlen,                               \
+    PROV_FUNC_SHA3_DIGEST(sha3_##bitlen, bitlen,                               \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
                           EVP_MD_FLAG_DIGALGID_ABSENT)
 
 #define IMPLEMENT_SHAKE_functions(bitlen)                                      \
     SHA3_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen, '\x1f')         \
-    OSSL_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
+    PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
                           EVP_MD_FLAG_XOF)
 #define IMPLEMENT_KMAC_functions(bitlen)                                       \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04')                          \
-    OSSL_FUNC_SHAKE_DIGEST(keccak_kmac_##bitlen, bitlen,                       \
+    PROV_FUNC_SHAKE_DIGEST(keccak_kmac_##bitlen, bitlen,                       \
                            SHA3_BLOCKSIZE(bitlen), KMAC_MDSIZE(bitlen),        \
                            EVP_MD_FLAG_XOF)
 
