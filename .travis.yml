@@ -166,32 +166,32 @@ script:
           cd _build;
       fi
     - if $make update; then
-          echo -e '+\057 MAKE UPDATE OK';
+          echo -e '\052\052 OK -- MAKE UPDATE';
       else
-          echo -e '+\057 MAKE UPDATE FAILED';
+          echo -e '\052\052 FAILED -- MAKE UPDATE';
           travis_terminate 1;
       fi
     - git diff --exit-code
     - if [ -n "$CHECKDOCS" ]; then
           if $make doc-nits; then
-              echo -e '+\057\057 MAKE DOC-NITS OK';
+              echo -e '\052\052 OK -- MAKE DOC-NITS';
           else
-              echo -e '+\057\057 MAKE DOC-NITS FAILED';
+              echo -e '\052\052 FAILED -- MAKE DOC-NITS';
               travis_terminate 1;
           fi;
       fi
     - if [ -n "$GENERATE" ]; then
           if $make build_all_generated; then
-              echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED OK';
+              echo -e '\052\052 OK -- MAKE BUILD_ALL_GENERATED';
           else
-              echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED FAILED';
+              echo -e '\052\052 FAILED -- MAKE BUILD_ALL_GENERATED';
               travis_terminate 1;
           fi;
       fi
     - if $make2; then
-          echo -e '+\057\057\057\057 MAKE OK';
+          echo -e '\052\052 OK -- MAKE';
       else
-          echo -e '+\057\057\057\057 MAKE FAILED';
+          echo -e '\052\052 FAILED -- MAKE';
           travis_terminate 1;
       fi;
     - if [ -z "$BUILDONLY" ]; then
@@ -205,16 +205,16 @@ script:
               sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
           fi;
           if HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
-              echo -e '+\057\057\057\057\057 MAKE TEST OK';
+              echo -e '\052\052 OK -- MAKE TEST';
           else
-              echo -e '+\057\057\057\057\057 MAKE TEST FAILED';
+              echo -e '\052\052 FAILED -- MAKE TEST';
               travis_terminate 1;
           fi;
       else
           if $make build_tests >~/build.log 2>&1; then
-              echo -e '+\057\057\057\057\057\057 MAKE BUILD_TESTS OK';
+              echo -e '\052\052 OK -- MAKE BUILD_TESTS';
           else
-              echo -e '+\057\057\057\057\057\057 MAKE BUILD_TESTS FAILED';
+              echo -e '\052\052 FAILED -- MAKE BUILD_TESTS';
               cat ~/build.log
               travis_terminate 1;
           fi;
@@ -222,9 +222,9 @@ script:
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
           if $make install DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
-              echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL OK';
+              echo -e '\052\052 OK -- MAKE INSTALL';
           else
-              echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL FAILED';
+              echo -e '\052\052 FAILED -- MAKE INSTALL';
               cat ~/install.log;
               travis_terminate 1;
           fi;
