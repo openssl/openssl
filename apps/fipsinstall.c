@@ -27,14 +27,8 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_IN,
-    OPT_OUT,
-    OPT_MODULE,
-    OPT_PROV_NAME,
-    OPT_SECTION_NAME,
-    OPT_MAC_NAME,
-    OPT_MACOPT,
-    OPT_VERIFY
+    OPT_IN, OPT_OUT, OPT_MODULE,
+    OPT_PROV_NAME, OPT_SECTION_NAME, OPT_MAC_NAME, OPT_MACOPT, OPT_VERIFY
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
@@ -67,13 +61,8 @@ static int do_mac(EVP_MAC_CTX *ctx, unsigned char *tmp, BIO *in,
         goto err;
     if (EVP_MAC_size(ctx) > outsz)
         goto end;
-    for (;;) {
-        i = BIO_read(in, (char *)tmp, BUFSIZE);
-        if (i < 0)
-            goto err;
-        if (i == 0)
-            break;
-        if (!EVP_MAC_update(ctx, tmp, i))
+    while ((i = BIO_read(in, (char *)tmp, BUFSIZE)) != 0) {
+        if (i < 0 || !EVP_MAC_update(ctx, tmp, i))
             goto err;
     }
 end:

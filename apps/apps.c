@@ -2573,7 +2573,7 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
     OSSL_PARAM *params = NULL;
     size_t sz = (size_t)sk_OPENSSL_STRING_num(opts);
     size_t params_n;
-    int ok = 1;
+    char *opt = "", *stmp, *vtmp = NULL;
 
     if (opts == NULL)
         return NULL;
@@ -2583,29 +2583,27 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
         return NULL;
 
     for (params_n = 0; params_n < sz; params_n++) {
-        char *opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
-        char *stmp, *vtmp = NULL;
-
+        opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
         if ((stmp = OPENSSL_strdup(opt)) == NULL
-            || (vtmp = strchr(stmp, ':')) == NULL
-            || (*vtmp++ = 0) /* Always zero */
-            || !OSSL_PARAM_allocate_from_text(&params[params_n], paramdefs,
-                                              stmp, vtmp, strlen(vtmp))) {
-            BIO_printf(bio_err, "Parameter error '%s'\n", opt);
-            ERR_print_errors(bio_err);
-            ok = 0;
-        }
+            || (vtmp = strchr(stmp, ':')) == NULL)
+            goto err;
+        /* Replace ':' with 0 to terminate the string pointed to by stmp */
+        *vtmp = 0;
+        /* Skip over the separator so that vmtp points to the value */
+        vtmp++;
+        if (!OSSL_PARAM_allocate_from_text(&params[params_n], paramdefs,
+                                           stmp, vtmp, strlen(vtmp)))
+            goto err;
         OPENSSL_free(stmp);
-        if (!ok)
-            break;
     }
-    if (ok) {
-        params[params_n] = OSSL_PARAM_construct_end();
-    } else {
-        app_params_free(params);
-        params = NULL;
-    }
+    params[params_n] = OSSL_PARAM_construct_end();
     return params;
+err:
+    OPENSSL_free(stmp);
+    BIO_printf(bio_err, "Parameter error '%s'\n", opt);
+    ERR_print_errors(bio_err);
+    app_params_free(params);
+    return NULL;
 }
 
 void app_params_free(OSSL_PARAM *params)
