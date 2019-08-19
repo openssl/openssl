@@ -342,25 +342,32 @@ static void cleanup_shm(void)
 
 /*
  * Ensure that the system randomness source has been adequately seeded.
- * This is done by having the first start of libcrypto, read one bytes from
- * /dev/random.  Subsequent starts of the library and later reseedings do not
- * need to do this.
+ * This is done by having the first start of libcrypto, wait until the device
+ * /dev/random becomes able to supply a byte of entropy.  Subsequent starts
+ * of the library and later reseedings do not need to do this.
  */
 #   if defined(__linux)
 static int wait_random_seeded(void)
 {
-    static int seeded = 0;
+    static int seeded = OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID < 0;
     static const int kernel_version[] = { DEVRANDOM_SAFE_KERNEL };
     int kernel[2];
-    int shm_id, fd = -1, r;
-    char c, *p;
-    fd_set fds;
+    int shm_id, fd, r;
+    char *p;
     struct utsname un;
 
-    if (!seeded && OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID >= 0) {
+    if (!seeded) {
         /* See if anthing has created the global seeded indication */
         if ((shm_id = shmget(OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID, 1, 0)) == -1) {
-            /* Check the kernel's version and fail if it is too recent */
+            /*
+             * Check the kernel's version and fail if it is too recent.
+             *
+             * Linux kernels from 4.8 onwards do not guarantee that
+             * /dev/urandom is properly seeded when /dev/random becomes
+             * readable.  However, such kernels support the getentropy(2)
+             * system call and this should always succeed which renders
+             * this alternative but essentially identical source moot.
+             */
             if (uname(&un) == 0) {
                 kernel[0] = atoi(un.release);
                 p = strchr(un.release, '.');
@@ -373,14 +380,18 @@ static int wait_random_seeded(void)
             }
             /* Open /dev/random and wait for it to be readable */
             if ((fd = open(DEVRANDOM_WAIT, O_RDONLY)) != -1) {
-                if (DEVRANDM_WAIT_USE_SELECT) {
-                    FD_ZERO(&fds);
-                    FD_SET(fd, &fds);
-                    while ((r = select(fd + 1, &fds, NULL, NULL, NULL)) < 0
-                           && errno == EINTR);
-                } else {
-                    while ((r = read(fd, &c, 1)) < 0 && errno == EINTR);
-                }
+#    if defined(DEVRANDM_WAIT_USE_SELECT)
+                fd_set fds;
+
+                FD_ZERO(&fds);
+                FD_SET(fd, &fds);
+                while ((r = select(fd + 1, &fds, NULL, NULL, NULL)) < 0
+                       && errno == EINTR);
+#    else
+                char c;
+
+                while ((r = read(fd, &c, 1)) < 0 && errno == EINTR);
+#    endif
                 close(fd);
                 if (r == 1) {
                     seeded = 1;
@@ -575,41 +586,39 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 
 #   if defined(OPENSSL_RAND_SEED_DEVRANDOM)
     if (wait_random_seeded()) {
+        size_t i;
+
         bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-        {
-            size_t i;
+        for (i = 0; bytes_needed > 0 && i < OSSL_NELEM(random_device_paths);
+             i++) {
+            ssize_t bytes = 0;
+            /* Maximum number of consecutive unsuccessful attempts */
+            int attempts = 3;
+            const int fd = get_random_device(i);
 
-            for (i = 0; bytes_needed > 0 && i < OSSL_NELEM(random_device_paths);
-                 i++) {
-                ssize_t bytes = 0;
-                /* Maximum number of consecutive unsuccessful attempts */
-                int attempts = 3;
-                const int fd = get_random_device(i);
+            if (fd == -1)
+                continue;
 
-                if (fd == -1)
-                    continue;
+            while (bytes_needed != 0 && attempts-- > 0) {
+                buffer = rand_pool_add_begin(pool, bytes_needed);
+                bytes = read(fd, buffer, bytes_needed);
 
-                while (bytes_needed != 0 && attempts-- > 0) {
-                    buffer = rand_pool_add_begin(pool, bytes_needed);
-                    bytes = read(fd, buffer, bytes_needed);
-
-                    if (bytes > 0) {
-                        rand_pool_add_end(pool, bytes, 8 * bytes);
-                        bytes_needed -= bytes;
-                        attempts = 3; /* reset counter on successful attempt */
-                    } else if (bytes < 0 && errno != EINTR) {
-                        break;
-                    }
+                if (bytes > 0) {
+                    rand_pool_add_end(pool, bytes, 8 * bytes);
+                    bytes_needed -= bytes;
+                    attempts = 3; /* reset counter on successful attempt */
+                } else if (bytes < 0 && errno != EINTR) {
+                    break;
                 }
-                if (bytes < 0 || !keep_random_devices_open)
-                    close_random_device(i);
-
-                bytes_needed = rand_pool_bytes_needed(pool, 1);
             }
-            entropy_available = rand_pool_entropy_available(pool);
-            if (entropy_available > 0)
-                return entropy_available;
+            if (bytes < 0 || !keep_random_devices_open)
+                close_random_device(i);
+
+            bytes_needed = rand_pool_bytes_needed(pool, 1);
         }
+        entropy_available = rand_pool_entropy_available(pool);
+        if (entropy_available > 0)
+            return entropy_available;
     }
 #   endif
 
