@@ -327,6 +327,8 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
     } else {
         if (!read_lebn(&p, 20, &dsa->priv_key))
             goto memerr;
+        /* Set constant time flag before public key calculation */
+        BN_set_flags(dsa->priv_key, BN_FLG_CONSTTIME);
         /* Calculate public key */
         if (!(dsa->pub_key = BN_new()))
             goto memerr;
