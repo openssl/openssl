@@ -89,8 +89,6 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { "MD5-SHA1", "default=yes", md5_sha1_functions },
 #endif /* OPENSSL_NO_MD5 */
 
-    /*{ "UNDEF", "default=yes", nullmd_functions }, */
-
     { NULL, NULL, NULL }
 };
 

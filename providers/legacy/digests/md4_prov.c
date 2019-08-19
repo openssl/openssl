@@ -9,10 +9,10 @@
 
 #include <openssl/crypto.h>
 #include <openssl/md4.h>
-
-#include "internal/core_mkdigest.h"
+#include "internal/digestcommon.h"
 #include "internal/provider_algs.h"
 
-OSSL_FUNC_DIGEST_CONSTRUCT(md4, MD4_CTX,
+/* md4_functions */
+IMPLEMENT_digest_functions(md4, MD4_CTX,
                            MD4_CBLOCK, MD4_DIGEST_LENGTH, 0,
                            MD4_Init, MD4_Update, MD4_Final)
