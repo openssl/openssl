@@ -318,10 +318,13 @@ int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
             return 0;
     }
 
+    if (!X509_OBJECT_up_ref_count(tmp))
+        return 0;
+
     ret->type = tmp->type;
     ret->data.ptr = tmp->data.ptr;
 
-    return X509_OBJECT_up_ref_count(ret);
+    return 1;
 }
 
 static int x509_store_add(X509_STORE *store, void *x, int crl) {
