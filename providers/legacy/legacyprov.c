@@ -15,6 +15,11 @@
 #include <openssl/params.h>
 #include "internal/provider_algs.h"
 
+#ifdef STATIC_LEGACY
+OSSL_provider_init_fn ossl_legacy_provider_init;
+# define OSSL_provider_init ossl_legacy_provider_init
+#endif
+
 /* Functions provided by the core */
 static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;

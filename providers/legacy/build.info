@@ -1,4 +1,8 @@
 SUBDIRS=digests
+IF[{- $disabled{module} -}]
+  $GOAL=../../libcrypto
+ELSE
+  $GOAL=../legacy
+ENDIF
 
-SOURCE[../legacy]=\
-        legacyprov.c
+SOURCE[$GOAL]=legacyprov.c
