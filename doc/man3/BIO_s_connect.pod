@@ -163,7 +163,7 @@ BIO_set_nbio() always returns 1.
 BIO_do_connect() returns 1 if the connection was successfully
 established and 0 or -1 if the connection failed.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This is example connects to a webserver on the local host and attempts
 to retrieve a page and copy the result to standard output.

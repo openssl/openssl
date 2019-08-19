@@ -181,7 +181,7 @@ The functions SSL_CTX_dane_set_flags(), SSL_CTX_dane_clear_flags(),
 SSL_dane_set_flags() and SSL_dane_clear_flags() return the B<flags> in effect
 before they were called.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Suppose "smtp.example.com" is the MX host of the domain "example.com", and has
 DNSSEC-validated TLSA records.

@@ -60,7 +60,7 @@ This option checks the correctness of parameters.
 
 =back
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Print out text version of parameters:
 

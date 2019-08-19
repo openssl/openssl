@@ -118,7 +118,16 @@ BIO_FLAGS_NONCLEAR_RST set has the same effect as a write operation.
 
 There should be an option to set the maximum size of a memory BIO.
 
-=head1 EXAMPLE
+=head1 RETURN VALUES
+
+BIO_s_mem() and BIO_s_secmem() return a valid memory B<BIO_METHOD> structure.
+
+BIO_set_mem_eof_return(), BIO_get_mem_data(), BIO_set_mem_buf() and BIO_get_mem_ptr()
+return 1 on success or a value which is less than or equal to 0 if an error occurred.
+
+BIO_new_mem_buf() returns a valid B<BIO> structure on success or NULL on error.
+
+=head1 EXAMPLES
 
 Create a memory BIO and write some data to it:
 
@@ -139,14 +148,6 @@ Extract the BUF_MEM structure from a memory BIO and then free up the BIO:
  BIO_set_close(mem, BIO_NOCLOSE); /* So BIO_free() leaves BUF_MEM alone */
  BIO_free(mem);
 
-=head1 RETURN VALUES
-
-BIO_s_mem() and BIO_s_secmem() return a valid memory B<BIO_METHOD> structure.
-
-BIO_set_mem_eof_return(), BIO_get_mem_data(), BIO_set_mem_buf() and BIO_get_mem_ptr()
-return 1 on success or a value which is less than or equal to 0 if an error occurred.
-
-BIO_new_mem_buf() returns a valid B<BIO> structure on success or NULL on error.
 
 =head1 COPYRIGHT
 
