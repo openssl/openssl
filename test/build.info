@@ -28,6 +28,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[libtestutil.a]=../libcrypto
 
   PROGRAMS{noinst}=\
+          confdump \
           versions \
           aborttest test_test \
           sanitytest rsa_complex exdatatest bntest \
@@ -59,6 +60,10 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test
+
+  SOURCE[confdump]=confdump.c
+  INCLUDE[confdump]=../include ../apps/include
+  DEPEND[confdump]=../libcrypto
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include ../apps/include

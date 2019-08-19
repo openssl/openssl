@@ -456,6 +456,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 continue;
             } else if (*p != '=') {
                 CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_MISSING_EQUAL_SIGN);
+                ERR_add_error_data(2, "HERE-->", p);
                 goto err;
             }
             *end = '\0';
