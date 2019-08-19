@@ -29,19 +29,25 @@
  */
 #  define DEVRANDOM "/dev/urandom", "/dev/random", "/dev/hwrng", "/dev/srandom"
 #  ifdef __linux
-#   define DEVRANDOM_WAIT   "/dev/random"
+#   ifndef DEVRANDOM_WAIT
+#    define DEVRANDOM_WAIT   "/dev/random"
+#   endif
 /*
  * Linux kernels 4.8 and later changes how their random device works and there
  * is no reliable way to tell that /dev/urandom has been seeded -- getentropy(2)
  * should be used instead.
  */
-#   define DEVRANDOM_SAFE_KERNEL        4, 8
+#   ifndef DEVRANDOM_SAFE_KERNEL
+#    define DEVRANDOM_SAFE_KERNEL        4, 8
+#   endif
 /*
  * Some operating systems do not permit select(2) on their random devices,
- * defining this to zero will force the used of read(2) to extra one byte
+ * defining this to zero will force the used of read(2) to extract one byte
  * from /dev/random.
  */
-#   define DEVRANDM_WAIT_USE_SELECT     1
+#   ifndef DEVRANDM_WAIT_USE_SELECT
+#    define DEVRANDM_WAIT_USE_SELECT     1
+#   endif
 /*
  * Define the shared memory identifier used to indicate if the operating
  * system has properly seeded the DEVRANDOM source.

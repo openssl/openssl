@@ -353,8 +353,9 @@ static int wait_random_seeded(void)
     static const int kernel_version[] = { DEVRANDOM_SAFE_KERNEL };
     int kernel[2];
     int shm_id, fd, r;
-    char *p;
+    char c, *p;
     struct utsname un;
+    fd_set fds;
 
     if (!seeded) {
         /* See if anthing has created the global seeded indication */
@@ -380,18 +381,14 @@ static int wait_random_seeded(void)
             }
             /* Open /dev/random and wait for it to be readable */
             if ((fd = open(DEVRANDOM_WAIT, O_RDONLY)) != -1) {
-#    if defined(DEVRANDM_WAIT_USE_SELECT)
-                fd_set fds;
-
-                FD_ZERO(&fds);
-                FD_SET(fd, &fds);
-                while ((r = select(fd + 1, &fds, NULL, NULL, NULL)) < 0
-                       && errno == EINTR);
-#    else
-                char c;
-
-                while ((r = read(fd, &c, 1)) < 0 && errno == EINTR);
-#    endif
+                if (DEVRANDM_WAIT_USE_SELECT) {
+                    FD_ZERO(&fds);
+                    FD_SET(fd, &fds);
+                    while ((r = select(fd + 1, &fds, NULL, NULL, NULL)) < 0
+                           && errno == EINTR);
+                } else {
+                    while ((r = read(fd, &c, 1)) < 0 && errno == EINTR);
+                }
                 close(fd);
                 if (r == 1) {
                     seeded = 1;
