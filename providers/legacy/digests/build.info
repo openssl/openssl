@@ -1,24 +1,30 @@
+IF[{- $disabled{module} -}]
+  $GOAL=../../../libcrypto
+ELSE
+  $GOAL=../../legacy
+ENDIF
+
 IF[{- !$disabled{md2} -}]
-  SOURCE[../../legacy]=\
+  SOURCE[$GOAL]=\
           md2_prov.c
 ENDIF
 
 IF[{- !$disabled{md4} -}]
-  SOURCE[../../legacy]=\
+  SOURCE[$GOAL]=\
           md4_prov.c
 ENDIF
 
 IF[{- !$disabled{mdc2} -}]
-  SOURCE[../../legacy]=\
+  SOURCE[$GOAL]=\
           mdc2_prov.c
 ENDIF
 
 IF[{- !$disabled{whirlpool} -}]
-  SOURCE[../../legacy]=\
+  SOURCE[$GOAL]=\
           wp_prov.c
 ENDIF
 
 IF[{- !$disabled{rmd160} -}]
-  SOURCE[../../legacy]=\
+  SOURCE[$GOAL]=\
           ripemd_prov.c
 ENDIF

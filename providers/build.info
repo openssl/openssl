@@ -15,11 +15,16 @@ ENDIF
 
 IF[{- !$disabled{legacy} -}]
   SUBDIRS=legacy
-  MODULES=legacy
-  IF[{- defined $target{shared_defflag} -}]
-    SOURCE[legacy]=legacy.ld
-    GENERATE[legacy.ld]=../util/providers.num
+  IF[{- $disabled{module} -}]
+    LIBS=../libcrypto
+    DEFINE[../libcrypto]=STATIC_LEGACY
+  ELSE
+    MODULES=legacy
+    IF[{- defined $target{shared_defflag} -}]
+      SOURCE[legacy]=legacy.ld
+      GENERATE[legacy.ld]=../util/providers.num
+    ENDIF
+    DEPEND[legacy]=../libcrypto
+    INCLUDE[legacy]=.. ../include ../crypto/include common/include
   ENDIF
-  INCLUDE[legacy]=.. ../include ../crypto/include common/include
-  DEPEND[legacy]=../libcrypto
 ENDIF
