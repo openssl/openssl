@@ -258,6 +258,10 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 #   if defined(__linux) && !defined(__NR_getrandom)
 #    if defined(__arm__) && defined(__NR_SYSCALL_BASE)
 #     define __NR_getrandom    (__NR_SYSCALL_BASE+384)
+#    elif defined(__i386__)
+#     define __NR_getrandom    355
+#    elif defined(__x86_64__) && !defined(__ILP32__)
+#     define __NR_getrandom    318
 #    endif
 #   endif
 
