@@ -12,18 +12,37 @@ use warnings;
 use File::Spec;
 use File::Copy;
 use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir bldtop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_fipsinstall");
+BEGIN {
+    setup("test_fipsinstall");
+}
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
-plan skip_all => "Test disabled in this configuration"
-    if $^O eq 'MSWin32';
+plan skip_all => "Test only supported in a dso build" if disabled("dso");
 
-plan tests => 2;
+plan tests => 6;
 
-my $infile = srctop_file("providers", "fips.so");
-$ENV{'OPENSSL_MODULES'} = srctop_file("providers");
+my $infile = bldtop_file('providers', platform->dso('fips'));
+$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+
+#fail if no module name
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module',
+             '-provider_name', 'fips',
+             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+             '-section_name', 'fips_install'])),
+   "fipinstall fail");
+
+# fail to Verify if the configuration file is missing
+ok(!run(app(['openssl', 'fipsinstall', '-in', 'dummy.tmp', '-module', $infile,
+             '-provider_name', 'fips', '-mac_name', 'HMAC',
+             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+             '-section_name', 'fips_install', '-verify'])),
+   "fipinstall verify fail");
+
 
 # output a fips.conf file containing mac data
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
@@ -38,3 +57,17 @@ ok(run(app(['openssl', 'fipsinstall', '-in', 'fips.conf', '-module', $infile,
             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
             '-section_name', 'fips_install', '-verify'])),
    "fipinstall verify");
+
+# Fail to Verify the fips.conf file if a different key is used
+ok(!run(app(['openssl', 'fipsinstall', '-in', 'fips.conf', '-module', $infile,
+             '-provider_name', 'fips', '-mac_name', 'HMAC',
+             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:01',
+             '-section_name', 'fips_install', '-verify'])),
+   "fipinstall verify fail bad key");
+
+# Fail to Verify the fips.conf file if a different mac digest is used
+ok(!run(app(['openssl', 'fipsinstall', '-in', 'fips.conf', '-module', $infile,
+             '-provider_name', 'fips', '-mac_name', 'HMAC',
+             '-macopt', 'digest:SHA512', '-macopt', 'hexkey:00',
+             '-section_name', 'fips_install', '-verify'])),
+   "fipinstall verify fail incorrect digest");
