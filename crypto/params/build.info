@@ -1,0 +1,4 @@
+LIBS=../../libcrypto
+$COMMON=params.c params_from_text.c param_build.c
+SOURCE[../../libcrypto]=$COMMON
+SOURCE[../../providers/fips]=$COMMON

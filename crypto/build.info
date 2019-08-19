@@ -1,7 +1,7 @@
 # Note that these directories are filtered in Configure.  Look for %skipdir
 # there for further explanations.
 SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 conf \
-        txt_db pkcs7 pkcs12 ui kdf store property \
+        txt_db pkcs7 pkcs12 ui kdf store params property \
         md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 blake2 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
@@ -67,9 +67,9 @@ SOURCE[../providers/fips]=$CORE_COMMON
 
 # Central utilities
 $UTIL_COMMON=\
-        cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
+        cryptlib.c bsearch.c ex_data.c o_str.c \
         ctype.c threads_pthread.c threads_win.c threads_none.c initthread.c \
-        context.c sparse_array.c asn1_dsa.c packet.c param_build.c $CPUIDASM
+        context.c sparse_array.c asn1_dsa.c packet.c $CPUIDASM
 $UTIL_DEFINE=$CPUIDDEF
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
