@@ -1742,10 +1742,18 @@ if ($builder eq "unified") {
             my $value = '';
             my $value_rest = shift;
 
+            if ($ENV{CONFIGURE_DEBUG_VARIABLE_EXPAND}) {
+                print STDERR
+                    "DEBUG[\$expand_variables] Parsed '$value_rest' into:\n"
+            }
             while ($value_rest =~ /(?<!\\)${variable_re}/) {
                 $value .= $`;
                 $value .= $variables{$1};
                 $value_rest = $';
+            }
+            if ($ENV{CONFIGURE_DEBUG_VARIABLE_EXPAND}) {
+                print STDERR
+                    "DEBUG[\$expand_variables] ... '$value$value_rest'\n";
             }
             return $value . $value_rest;
         };
@@ -1899,26 +1907,31 @@ if ($builder eq "unified") {
             },
 
             qr/^\s*ORDINALS\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/,
-            => sub { push @{$ordinals{$1}}, tokenize($expand_variables->($2))
+            => sub { push @{$ordinals{$expand_variables->($1)}},
+                         tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$sources{$1}}, tokenize($expand_variables->($2))
+            => sub { push @{$sources{$expand_variables->($1)}},
+                         tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SHARED_SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$shared_sources{$1}},
+            => sub { push @{$shared_sources{$expand_variables->($1)}},
                          tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$includes{$1}}, tokenize($expand_variables->($2))
+            => sub { push @{$includes{$expand_variables->($1)}},
+                         tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*DEFINE\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$defines{$1}}, tokenize($expand_variables->($2))
+            qr/^\s*DEFINE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$defines{$expand_variables->($1)}},
+                         tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*DEPEND\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$depends{$1}}, tokenize($expand_variables->($2))
+            => sub { push @{$depends{$expand_variables->($1)}},
+                         tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*GENERATE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$generate{$1}}, $2
+            => sub { push @{$generate{$expand_variables->($1)}}, $2
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*(?:#.*)?$/ => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
