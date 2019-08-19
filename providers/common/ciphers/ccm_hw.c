@@ -109,7 +109,7 @@ static const PROV_CCM_HW aes_ccm = {
 };
 
 #if defined(S390X_aes_128_CAPABLE)
-#  include "aes_ccm_s390x.c"
+# include "aes_ccm_s390x.c"
 #elif defined(AESNI_CAPABLE)
 
 /* AES-NI section */
