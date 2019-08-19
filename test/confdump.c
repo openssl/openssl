@@ -66,4 +66,5 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
         return 1;
     }
+    return 0;
 }
