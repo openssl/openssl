@@ -33,7 +33,7 @@ file syntax.
 SSL_CTX_config() and SSL_config() return 1 for success or 0 if an error
 occurred.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 If the file "config.cnf" contains the following:
 

@@ -64,7 +64,7 @@ See the example below.
 
 =back
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 To list all the commands available to a dynamic engine:
 

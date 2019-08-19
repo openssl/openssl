@@ -75,7 +75,7 @@ corresponding to each certificate.
 OCSP_request_onereq_count() and OCSP_request_onereq_get0() are mainly used by
 OCSP responders.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Create an B<OCSP_REQUEST> structure for certificate B<cert> with issuer
 B<issuer>:

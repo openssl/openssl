@@ -25,7 +25,7 @@ implemented as a macro.
 SSL_library_init() must be called before any other action takes place.
 SSL_library_init() is not reentrant.
 
-=head1 WARNING
+=head1 WARNINGS
 
 SSL_library_init() adds ciphers and digests used directly and indirectly by
 SSL/TLS.

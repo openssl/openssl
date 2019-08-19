@@ -20,7 +20,7 @@ second colon.
 
 None.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 The error code:
 

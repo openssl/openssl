@@ -483,7 +483,7 @@ For example:
 
  basicConstraints=critical,DER:00:01:02:03
 
-=head1 WARNING
+=head1 WARNINGS
 
 There is no guarantee that a specific implementation will process a given
 extension. It may therefore be sometimes possible to use certificates for
@@ -492,7 +492,6 @@ not recognize or honour the values of the relevant extensions.
 
 The DER and ASN1 options should be used with caution. It is possible to create
 totally invalid extensions if they are not used carefully.
-
 
 =head1 NOTES
 
