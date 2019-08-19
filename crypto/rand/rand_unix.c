@@ -329,7 +329,7 @@ static struct random_device {
 } random_devices[OSSL_NELEM(random_device_paths)];
 static int keep_random_devices_open = 1;
 
-#   if defined(DEVRANDOM_WAIT)
+#   if defined(__linux)
 static void *shm_addr;
 
 #    if !defined(FIPS_MODE)
@@ -338,7 +338,6 @@ static void cleanup_shm(void)
     shmdt(shm_addr);
 }
 #    endif
-#   endif
 
 /*
  * Ensure that the system randomness source has been adequately seeded.
@@ -346,7 +345,6 @@ static void cleanup_shm(void)
  * /dev/random becomes able to supply a byte of entropy.  Subsequent starts
  * of the library and later reseedings do not need to do this.
  */
-#   if defined(__linux)
 static int wait_random_seeded(void)
 {
     static int seeded = OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID < 0;
@@ -405,21 +403,21 @@ static int wait_random_seeded(void)
              * If this call fails, it isn't a big problem.
              */
             shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
-#   ifndef FIPS_MODE
+#    ifndef FIPS_MODE
             /* TODO 3.0: The FIPS provider doesn't have OPENSSL_atexit */
             if (shm_addr != (void *)-1)
                 OPENSSL_atexit(&cleanup_shm);
-#   endif
+#    endif
         }
     }
     return seeded;
 }
-#  else
+#   else /* defined __linux */
 static int wait_random_seeded(void)
 {
     return 1;
 }
-#  endif
+#   endif
 
 /*
  * Verify that the file descriptor associated with the random source is
