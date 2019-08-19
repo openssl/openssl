@@ -7,19 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_MD5
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <string.h>
-# include <openssl/crypto.h>
-# include <openssl/evp.h>
-# include <openssl/params.h>
-# include <openssl/core_names.h>
-# include "internal/md5_sha1.h"
-# include "internal/digestcommon.h"
-# include "internal/provider_algs.h"
+#include <string.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
+#include "internal/md5_sha1.h"
+#include "internal/digestcommon.h"
+#include "internal/provider_algs.h"
 
 static OSSL_OP_digest_set_ctx_params_fn md5_sha1_set_ctx_params;
 static OSSL_OP_digest_settable_ctx_params_fn md5_sha1_settable_ctx_params;
@@ -54,4 +49,3 @@ IMPLEMENT_digest_functions_with_settable_ctx(
     md5_sha1, MD5_SHA1_CTX, MD5_SHA1_CBLOCK, MD5_SHA1_DIGEST_LENGTH, 0,
     md5_sha1_init, md5_sha1_update, md5_sha1_final,
     md5_sha1_settable_ctx_params, md5_sha1_set_ctx_params)
-#endif /* OPENSSL_NO_MD5 */

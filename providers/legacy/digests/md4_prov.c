@@ -7,18 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_MD4
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <openssl/crypto.h>
-# include <openssl/md4.h>
-# include "internal/digestcommon.h"
-# include "internal/provider_algs.h"
+#include <openssl/crypto.h>
+#include <openssl/md4.h>
+#include "internal/digestcommon.h"
+#include "internal/provider_algs.h"
 
 /* md4_functions */
 IMPLEMENT_digest_functions(md4, MD4_CTX,
                            MD4_CBLOCK, MD4_DIGEST_LENGTH, 0,
                            MD4_Init, MD4_Update, MD4_Final)
-#endif /* OPENSSL_NO_MD4 */

@@ -7,19 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_SM3
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <openssl/crypto.h>
-# include "internal/sm3.h"
-# include "internal/digestcommon.h"
-# include "internal/provider_algs.h"
+#include <openssl/crypto.h>
+#include "internal/sm3.h"
+#include "internal/digestcommon.h"
+#include "internal/provider_algs.h"
 
 /* sm3_functions */
 IMPLEMENT_digest_functions(sm3, SM3_CTX,
                            SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
                            sm3_init, sm3_update, sm3_final)
-
-#endif /* OPENSSL_NO_SM3 */

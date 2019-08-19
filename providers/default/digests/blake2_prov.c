@@ -7,15 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_BLAKE2
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <openssl/crypto.h>
-# include "internal/blake2.h"
-# include "internal/digestcommon.h"
-# include "internal/provider_algs.h"
+#include <openssl/crypto.h>
+#include "internal/blake2.h"
+#include "internal/digestcommon.h"
+#include "internal/provider_algs.h"
 
 OSSL_OP_digest_init_fn blake2s256_init;
 OSSL_OP_digest_init_fn blake2b512_init;
@@ -45,4 +40,3 @@ IMPLEMENT_digest_functions(blake2s256, BLAKE2S_CTX,
 IMPLEMENT_digest_functions(blake2b512, BLAKE2B_CTX,
                            BLAKE2B_BLOCKBYTES, BLAKE2B_DIGEST_LENGTH, 0,
                            blake2b512_init, blake2b_update, blake2b_final)
-#endif /* OPENSSL_NO_BLAKE2 */

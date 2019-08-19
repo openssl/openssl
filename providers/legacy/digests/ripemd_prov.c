@@ -7,18 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_RMD160
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <openssl/crypto.h>
-# include <openssl/ripemd.h>
-# include "internal/digestcommon.h"
-# include "internal/provider_algs.h"
+#include <openssl/crypto.h>
+#include <openssl/ripemd.h>
+#include "internal/digestcommon.h"
+#include "internal/provider_algs.h"
 
 /* ripemd160_functions */
 IMPLEMENT_digest_functions(ripemd160, RIPEMD160_CTX,
                            RIPEMD160_CBLOCK, RIPEMD160_DIGEST_LENGTH, 0,
                            RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final)
-#endif /* OPENSSL_NO_RMD160 */

@@ -7,19 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_MDC2
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <openssl/crypto.h>
-# include <openssl/params.h>
-# include <openssl/mdc2.h>
-# include <openssl/core_names.h>
-# include <openssl/err.h>
-# include "internal/digestcommon.h"
-# include "internal/provider_algs.h"
-# include "internal/providercommonerr.h"
+#include <openssl/crypto.h>
+#include <openssl/params.h>
+#include <openssl/mdc2.h>
+#include <openssl/core_names.h>
+#include <openssl/err.h>
+#include "internal/digestcommon.h"
+#include "internal/provider_algs.h"
+#include "internal/providercommonerr.h"
 
 static OSSL_OP_digest_set_ctx_params_fn mdc2_set_ctx_params;
 static OSSL_OP_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
@@ -55,5 +50,3 @@ IMPLEMENT_digest_functions_with_settable_ctx(
     mdc2, MDC2_CTX, MDC2_BLOCK, MDC2_DIGEST_LENGTH, 0,
     MDC2_Init, MDC2_Update, MDC2_Final,
     mdc2_settable_ctx_params, mdc2_set_ctx_params)
-
-#endif  /* OPENSSL_NO_MDC2 */

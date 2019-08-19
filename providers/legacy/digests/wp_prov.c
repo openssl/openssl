@@ -7,18 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_WHIRLPOOL
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <openssl/crypto.h>
-# include <openssl/whrlpool.h>
-# include "internal/digestcommon.h"
-# include "internal/provider_algs.h"
+#include <openssl/crypto.h>
+#include <openssl/whrlpool.h>
+#include "internal/digestcommon.h"
+#include "internal/provider_algs.h"
 
 /* wp_functions */
 IMPLEMENT_digest_functions(wp, WHIRLPOOL_CTX,
                            WHIRLPOOL_BBLOCK / 8, WHIRLPOOL_DIGEST_LENGTH, 0,
                            WHIRLPOOL_Init, WHIRLPOOL_Update, WHIRLPOOL_Final)
-#endif /* OPENSSL_NO_WHIRLPOOL */
