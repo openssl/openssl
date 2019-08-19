@@ -16,6 +16,34 @@ typedef struct prov_gcm_hw_st PROV_GCM_HW;
 #define GCM_IV_MAX_SIZE     64
 #define GCM_TAG_MAX_SIZE    16
 
+
+#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
+/*-
+ * KMA-GCM-AES parameter block - begin
+ * (see z/Architecture Principles of Operation >= SA22-7832-11)
+ */
+typedef struct S390X_kma_params_st {
+    unsigned char reserved[12];
+    union {
+        unsigned int w;
+        unsigned char b[4];
+    } cv; /* 32 bit counter value */
+    union {
+        unsigned long long g[2];
+        unsigned char b[16];
+    } t; /* tag */
+    unsigned char h[16]; /* hash subkey */
+    unsigned long long taadl; /* total AAD length */
+    unsigned long long tpcl; /* total plaintxt/ciphertxt len */
+    union {
+        unsigned long long g[2];
+        unsigned int w[4];
+    } j0;                   /* initial counter value */
+    unsigned char k[32];    /* key */
+} S390X_KMA_PARAMS;
+
+#endif
+
 typedef struct prov_gcm_ctx_st {
     int enc;                /* Set to 1 if we are encrypting or 0 otherwise */
     int mode;               /* The mode that we are using */
@@ -80,17 +108,17 @@ typedef struct prov_aes_gcm_ctx_st {
     } plat;
 } PROV_AES_GCM_CTX;
 
-OSSL_CIPHER_FUNC(int, GCM_setkey, (PROV_GCM_CTX *ctx, const unsigned char *key,
+PROV_CIPHER_FUNC(int, GCM_setkey, (PROV_GCM_CTX *ctx, const unsigned char *key,
                                    size_t keylen));
-OSSL_CIPHER_FUNC(int, GCM_setiv, (PROV_GCM_CTX *dat, const unsigned char *iv,
+PROV_CIPHER_FUNC(int, GCM_setiv, (PROV_GCM_CTX *dat, const unsigned char *iv,
                                   size_t ivlen));
-OSSL_CIPHER_FUNC(int, GCM_aadupdate, (PROV_GCM_CTX *ctx,
+PROV_CIPHER_FUNC(int, GCM_aadupdate, (PROV_GCM_CTX *ctx,
                                       const unsigned char *aad, size_t aadlen));
-OSSL_CIPHER_FUNC(int, GCM_cipherupdate, (PROV_GCM_CTX *ctx,
+PROV_CIPHER_FUNC(int, GCM_cipherupdate, (PROV_GCM_CTX *ctx,
                                          const unsigned char *in, size_t len,
                                          unsigned char *out));
-OSSL_CIPHER_FUNC(int, GCM_cipherfinal, (PROV_GCM_CTX *ctx, unsigned char *tag));
-OSSL_CIPHER_FUNC(int, GCM_oneshot, (PROV_GCM_CTX *ctx, unsigned char *aad,
+PROV_CIPHER_FUNC(int, GCM_cipherfinal, (PROV_GCM_CTX *ctx, unsigned char *tag));
+PROV_CIPHER_FUNC(int, GCM_oneshot, (PROV_GCM_CTX *ctx, unsigned char *aad,
                                     size_t aad_len, const unsigned char *in,
                                     size_t in_len, unsigned char *out,
                                     unsigned char *tag, size_t taglen));

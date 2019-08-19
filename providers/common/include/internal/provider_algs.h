@@ -60,10 +60,16 @@ extern const OSSL_DISPATCH aes128ctr_functions[];
 extern const OSSL_DISPATCH aes256gcm_functions[];
 extern const OSSL_DISPATCH aes192gcm_functions[];
 extern const OSSL_DISPATCH aes128gcm_functions[];
+extern const OSSL_DISPATCH aes256ccm_functions[];
+extern const OSSL_DISPATCH aes192ccm_functions[];
+extern const OSSL_DISPATCH aes128ccm_functions[];
 #ifndef OPENSSL_NO_ARIA
 extern const OSSL_DISPATCH aria256gcm_functions[];
 extern const OSSL_DISPATCH aria192gcm_functions[];
 extern const OSSL_DISPATCH aria128gcm_functions[];
+extern const OSSL_DISPATCH aria256ccm_functions[];
+extern const OSSL_DISPATCH aria192ccm_functions[];
+extern const OSSL_DISPATCH aria128ccm_functions[];
 #endif /* OPENSSL_NO_ARIA */
 
 /* MACs */

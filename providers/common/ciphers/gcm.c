@@ -105,9 +105,9 @@ static int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     size_t sz;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL) {
-        if (!OSSL_PARAM_set_int(p, ctx->ivlen))
-            return 0;
+    if (p != NULL && !OSSL_PARAM_set_int(p, ctx->ivlen)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
@@ -513,41 +513,6 @@ err:
     return rv;
 }
 
-#define IMPLEMENT_cipher(alg, lcmode, UCMODE, flags, kbits, blkbits, ivbits)   \
-    static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params; \
-    static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])      \
-    {                                                                          \
-        return cipher_default_get_params(params, EVP_CIPH_##UCMODE##_MODE,     \
-                                         flags, kbits, blkbits, ivbits);       \
-    }                                                                          \
-    static OSSL_OP_cipher_newctx_fn alg##kbits##gcm_newctx;                    \
-    static void *alg##kbits##gcm_newctx(void *provctx)                         \
-    {                                                                          \
-        return alg##_gcm_newctx(provctx, kbits);                               \
-    }                                                                          \
-    const OSSL_DISPATCH alg##kbits##gcm_functions[] = {                        \
-        { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))gcm_einit },          \
-        { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))gcm_dinit },          \
-        { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))gcm_stream_update },        \
-        { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))gcm_stream_final },          \
-        { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))gcm_cipher },               \
-        { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void)) alg##kbits##gcm_newctx },  \
-        { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_gcm_freectx },      \
-        { OSSL_FUNC_CIPHER_GET_PARAMS,                                         \
-            (void (*)(void)) alg##_##kbits##_##lcmode##_get_params },          \
-        { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                     \
-            (void (*)(void))gcm_get_ctx_params },                              \
-        { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                     \
-            (void (*)(void))gcm_set_ctx_params },                              \
-        { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                    \
-                (void (*)(void))cipher_default_gettable_params },              \
-        { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                \
-                (void (*)(void))cipher_aead_gettable_ctx_params },             \
-        { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                \
-                (void (*)(void))cipher_aead_settable_ctx_params },             \
-        { 0, NULL }                                                            \
-    }
-
 static void *aes_gcm_newctx(void *provctx, size_t keybits)
 {
     PROV_AES_GCM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
@@ -568,11 +533,11 @@ static void aes_gcm_freectx(void *vctx)
 }
 
 /* aes128gcm_functions */
-IMPLEMENT_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 128, 8, 96);
+IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 128, 8, 96);
 /* aes192gcm_functions */
-IMPLEMENT_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 192, 8, 96);
+IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 192, 8, 96);
 /* aes256gcm_functions */
-IMPLEMENT_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 256, 8, 96);
+IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 256, 8, 96);
 
 #if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
 
@@ -596,10 +561,10 @@ static void aria_gcm_freectx(void *vctx)
 }
 
 /* aria128gcm_functions */
-IMPLEMENT_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 128, 8, 96);
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 128, 8, 96);
 /* aria192gcm_functions */
-IMPLEMENT_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 192, 8, 96);
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 192, 8, 96);
 /* aria256gcm_functions */
-IMPLEMENT_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 256, 8, 96);
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 256, 8, 96);
 
 #endif /* !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE) */
