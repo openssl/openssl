@@ -8,14 +8,8 @@
  */
 
 #include <openssl/opensslconf.h>
-//#include <openssl/crypto.h>
 #include <openssl/err.h>
-//#include <string.h>
-//#include <assert.h>
-//#include <openssl/aes.h>
 #include "internal/evp_int.h"
-//#include <openssl/rand.h>
-//#include <openssl/cmac.h>
 #include "ciphers_locl.h"
 #include "internal/providercommonerr.h"
 #include "internal/ciphermode_platform.h"
