@@ -19,6 +19,7 @@ use lib catdir(dirname($0), "perl");
 use OpenSSL::Util::Pod;
 
 # Options.
+our($opt_b);
 our($opt_d);
 our($opt_e);
 our($opt_s);
@@ -35,6 +36,7 @@ sub help()
 {
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
+    -b List places needing linebreaks
     -d Detailed list of undocumented (implies -u)
     -e Detailed list of new undocumented (implies -v)
     -s Same as -e except no output is generated if nothing is undocumented
@@ -240,7 +242,8 @@ sub check()
         unless $contents =~ /=for comment generic/
             or $filename =~ m@man[157]/@;
 
-    &check_linebreaks($id, $contents);
+    &check_linebreaks($id, $contents)
+        if $opt_b;
 
     print "$id doesn't start with =pod\n"
         if $contents !~ /^=pod/;
