@@ -22,6 +22,10 @@
 #define PROV_CIPHER_FUNC(type, name, args) typedef type (* OSSL_##name##_fn)args
 
 typedef struct prov_generic_cipher_st PROV_GENERIC_CIPHER;
+typedef struct prov_generic_key_st PROV_GENERIC_KEY;
+
+typedef int (PROV_GENERIC_CIPHER_FN)(PROV_GENERIC_KEY *dat, unsigned char *out,
+                                     const unsigned char *in, size_t len);
 
 typedef struct prov_generic_key_st {
     block128_f block;
@@ -54,8 +58,7 @@ typedef struct prov_generic_key_st {
 
 struct prov_generic_cipher_st {
   int (*init)(PROV_GENERIC_KEY *dat, const uint8_t *key, size_t keylen);
-  int (*cipher)(PROV_GENERIC_KEY *dat, uint8_t *out, const uint8_t *in,
-                size_t inl);
+  PROV_GENERIC_CIPHER_FN *cipher;
 };
 
 #include "ciphers_aes.h"
@@ -113,3 +116,18 @@ int cipher_default_get_params(OSSL_PARAM params[], int md, unsigned long flags,
                 (void (*)(void))cipher_aead_settable_ctx_params },             \
         { 0, NULL }                                                            \
     }
+
+PROV_GENERIC_CIPHER_FN generic_cbc_cipher;
+PROV_GENERIC_CIPHER_FN generic_ecb_cipher;
+PROV_GENERIC_CIPHER_FN generic_ofb128_cipher;
+PROV_GENERIC_CIPHER_FN generic_cfb128_cipher;
+PROV_GENERIC_CIPHER_FN generic_cfb8_cipher;
+PROV_GENERIC_CIPHER_FN generic_cfb1_cipher;
+PROV_GENERIC_CIPHER_FN generic_ctr_cipher;
+PROV_GENERIC_CIPHER_FN chunked_cbc_cipher;
+PROV_GENERIC_CIPHER_FN chunked_cfb8_cipher;
+PROV_GENERIC_CIPHER_FN chunked_cfb128_cipher;
+PROV_GENERIC_CIPHER_FN chunked_ofb128_cipher;
+#define chunked_ecb_cipher generic_ecb_cipher
+#define chunked_ctr_cipher generic_ctr_cipher
+#define chunked_cfb1_cipher generic_cfb1_cipher

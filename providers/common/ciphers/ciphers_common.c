@@ -9,9 +9,13 @@
 
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/evp.h>
 #include "ciphers_locl.h"
 #include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
+
+#define MAXBITCHUNK     ((size_t)1 << (sizeof(size_t) * 8 - 4))
+#define EVP_MAXCHUNK ((size_t)1<<(sizeof(long)*8-2))
 
 /*-
  * Default cipher functions for OSSL_PARAM gettables and settables
@@ -113,3 +117,176 @@ const OSSL_PARAM *cipher_aead_settable_ctx_params(void)
 {
     return cipher_aead_known_settable_ctx_params;
 }
+
+
+
+int generic_cbc_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
+                       const unsigned char *in, size_t len)
+{
+    if (dat->stream.cbc)
+        (*dat->stream.cbc) (in, out, len, dat->ks, dat->iv, dat->enc);
+    else if (dat->enc)
+        CRYPTO_cbc128_encrypt(in, out, len, dat->ks, dat->iv, dat->block);
+    else
+        CRYPTO_cbc128_decrypt(in, out, len, dat->ks, dat->iv, dat->block);
+
+    return 1;
+}
+
+int generic_ecb_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
+                       const unsigned char *in, size_t len)
+{
+    size_t i, bl = dat->blocksize;
+
+    if (len < bl)
+        return 1;
+
+    for (i = 0, len -= bl; i <= len; i += bl)
+        (*dat->block) (in + i, out + i, dat->ks);
+
+    return 1;
+}
+
+int generic_ofb128_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
+                          const unsigned char *in, size_t len)
+{
+    int num = dat->num;
+
+    CRYPTO_ofb128_encrypt(in, out, len, dat->ks, dat->iv, &num, dat->block);
+    dat->num = num;
+
+    return 1;
+}
+
+int generic_cfb128_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
+                          const unsigned char *in, size_t len)
+{
+    int num = dat->num;
+
+    CRYPTO_cfb128_encrypt(in, out, len, dat->ks, dat->iv, &num, dat->enc,
+                          dat->block);
+    dat->num = num;
+
+    return 1;
+}
+
+int generic_cfb8_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
+                        const unsigned char *in, size_t len)
+{
+    int num = dat->num;
+
+    CRYPTO_cfb128_8_encrypt(in, out, len, dat->ks, dat->iv, &num, dat->enc,
+                            dat->block);
+    dat->num = num;
+
+    return 1;
+}
+
+int generic_cfb1_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
+                        const unsigned char *in, size_t len)
+{
+    int num = dat->num;
+
+    if ((dat->flags & EVP_CIPH_FLAG_LENGTH_BITS) != 0) {
+        CRYPTO_cfb128_1_encrypt(in, out, len, dat->ks, dat->iv, &num,
+                                dat->enc, dat->block);
+        dat->num = num;
+        return 1;
+    }
+
+    while (len >= MAXBITCHUNK) {
+        CRYPTO_cfb128_1_encrypt(in, out, MAXBITCHUNK * 8, dat->ks,
+                                dat->iv, &num, dat->enc, dat->block);
+        len -= MAXBITCHUNK;
+        out += MAXBITCHUNK;
+        in  += MAXBITCHUNK;
+    }
+    if (len)
+        CRYPTO_cfb128_1_encrypt(in, out, len * 8, dat->ks, dat->iv, &num,
+                                dat->enc, dat->block);
+
+    dat->num = num;
+
+    return 1;
+}
+
+int generic_ctr_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
+                       const unsigned char *in, size_t len)
+{
+    unsigned int num = dat->num;
+
+    if (dat->stream.ctr)
+        CRYPTO_ctr128_encrypt_ctr32(in, out, len, dat->ks, dat->iv, dat->buf,
+                                    &num, dat->stream.ctr);
+    else
+        CRYPTO_ctr128_encrypt(in, out, len, dat->ks, dat->iv, dat->buf,
+                              &num, dat->block);
+    dat->num = num;
+
+    return 1;
+}
+
+int chunked_cbc_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
+                       const unsigned char *in, size_t inl)
+{
+    while (inl >= EVP_MAXCHUNK) {
+        generic_cbc_cipher(ctx, out, in, EVP_MAXCHUNK);
+        inl -= EVP_MAXCHUNK;
+        in  += EVP_MAXCHUNK;
+        out += EVP_MAXCHUNK;
+    }
+    if (inl > 0)
+        generic_cbc_cipher(ctx, out, in, inl);
+    return 1;
+}
+
+int chunked_cfb8_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
+                        const unsigned char *in, size_t inl)
+{
+    size_t chunk = EVP_MAXCHUNK;
+
+    if (inl < chunk)
+        chunk = inl;
+    while (inl > 0 && inl >= chunk) {
+        generic_cfb8_cipher(ctx, out, in, inl);
+        inl -= chunk;
+        in += chunk;
+        out += chunk;
+        if (inl < chunk)
+            chunk = inl;
+    }
+    return 1;
+}
+
+int chunked_cfb128_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
+                          const unsigned char *in, size_t inl)
+{
+    size_t chunk = EVP_MAXCHUNK;
+
+    if (inl < chunk)
+        chunk = inl;
+    while (inl > 0 && inl >= chunk) {
+        generic_cfb128_cipher(ctx, out, in, inl);
+        inl -= chunk;
+        in += chunk;
+        out += chunk;
+        if (inl < chunk)
+            chunk = inl;
+    }
+    return 1;
+}
+
+int chunked_ofb128_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
+                          const unsigned char *in, size_t inl)
+{
+    while (inl >= EVP_MAXCHUNK) {
+        generic_ofb128_cipher(ctx, out, in, EVP_MAXCHUNK);
+        inl -= EVP_MAXCHUNK;
+        in  += EVP_MAXCHUNK;
+        out += EVP_MAXCHUNK;
+    }
+    if (inl > 0)
+        generic_ofb128_cipher(ctx, out, in, inl);
+    return 1;
+}
+

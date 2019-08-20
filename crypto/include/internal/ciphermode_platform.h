@@ -10,7 +10,7 @@
 #ifndef HEADER_INTERNAL_CIPHERMODE_PLATFORM_H
 # define HEADER_INTERNAL_CIPHERMODE_PLATFORM_H
 
-#include "openssl/aes.h"
+# include "openssl/aes.h"
 
 # ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
