@@ -1193,17 +1193,4 @@ magma_mac		1192
 hmacWithSHA512_224		1193
 hmacWithSHA512_256		1194
 ##### OQS_TEMPLATE_FRAGMENT_ASSIGN_IDS_START
-picnicL1FS		1197
-p256_picnicL1FS		1198
-rsa3072_picnicL1FS		1199
-qteslaI		1200
-p256_qteslaI		1201
-rsa3072_qteslaI		1202
-qteslaIIIsize		1203
-p384_qteslaIIIsize		1204
-qteslaIIIspeed		1205
-p384_qteslaIIIspeed		1206
-dilithium2		1207
-dilithium3		1208
-dilithium4		1209
 ##### OQS_TEMPLATE_FRAGMENT_ASSIGN_IDS_END

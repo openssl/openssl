@@ -20,13 +20,17 @@
 {%- for pq_alg in with_rsa3072 %}
     case NID_rsa3072_{{ pq_alg['name'] }}:
 {%- endfor %}
-      return NID_rsaEncryption;
+{% if with_rsa3072 %}      return NID_rsaEncryption; {%- endif %}
 {%- for pq_alg in with_p256 %}
     case NID_p256_{{ pq_alg['name'] }}:
 {%- endfor %}
-      return NID_X9_62_prime256v1;
+{% if with_p256 %}      return NID_X9_62_prime256v1; {%- endif %}
 {%- for pq_alg in with_p384 %}
     case NID_p384_{{ pq_alg['name'] }}:
 {%- endfor %}
-      return NID_secp384r1;
+{% if with_p384 %}      return NID_secp384r1; {%- endif %}
+{%- for pq_alg in with_p521 %}
+    case NID_p521_{{ pq_alg['name'] }}:
+{%- endfor %}
+{% if with_p384 %}      return NID_secp521r1; {%- endif %}
 
