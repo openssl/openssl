@@ -330,7 +330,7 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 }                                                                              \
 const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
-        (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                  \
+      (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))generic_einit },          \
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))generic_dinit },          \
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))generic_##typ##_update },       \
@@ -339,17 +339,17 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) alg##_dupctx },                \
     { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
-        (void (*)(void)) alg##_##kbits##_##lcmode##_get_params },              \
+      (void (*)(void)) alg##_##kbits##_##lcmode##_get_params },                \
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
-        (void (*)(void))generic_get_ctx_params },                              \
+      (void (*)(void))generic_get_ctx_params },                                \
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                         \
-        (void (*)(void))generic_set_ctx_params },                              \
+      (void (*)(void))generic_set_ctx_params },                                \
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
       (void (*)(void))cipher_default_gettable_params },                        \
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))cipher_default_gettable_ctx_params },                    \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
-      (void (*)(void))cipher_default_settable_ctx_params },                    \
+     (void (*)(void))cipher_default_settable_ctx_params },                     \
     { 0, NULL }                                                                \
 };
 

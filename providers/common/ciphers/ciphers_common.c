@@ -14,8 +14,8 @@
 #include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
 
-#define MAXBITCHUNK     ((size_t)1 << (sizeof(size_t) * 8 - 4))
-#define EVP_MAXCHUNK ((size_t)1<<(sizeof(long)*8-2))
+#define MAXCHUNK    ((size_t)1 << (sizeof(long) * 8 - 2))
+#define MAXBITCHUNK ((size_t)1 << (sizeof(size_t) * 8 - 4))
 
 /*-
  * Default cipher functions for OSSL_PARAM gettables and settables
@@ -118,7 +118,9 @@ const OSSL_PARAM *cipher_aead_settable_ctx_params(void)
     return cipher_aead_known_settable_ctx_params;
 }
 
-
+/*-
+ * Generic cipher functions
+ */
 
 int generic_cbc_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
                        const unsigned char *in, size_t len)
@@ -229,11 +231,11 @@ int generic_ctr_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
 int chunked_cbc_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
                        const unsigned char *in, size_t inl)
 {
-    while (inl >= EVP_MAXCHUNK) {
-        generic_cbc_cipher(ctx, out, in, EVP_MAXCHUNK);
-        inl -= EVP_MAXCHUNK;
-        in  += EVP_MAXCHUNK;
-        out += EVP_MAXCHUNK;
+    while (inl >= MAXCHUNK) {
+        generic_cbc_cipher(ctx, out, in, MAXCHUNK);
+        inl -= MAXCHUNK;
+        in  += MAXCHUNK;
+        out += MAXCHUNK;
     }
     if (inl > 0)
         generic_cbc_cipher(ctx, out, in, inl);
@@ -243,7 +245,7 @@ int chunked_cbc_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
 int chunked_cfb8_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
                         const unsigned char *in, size_t inl)
 {
-    size_t chunk = EVP_MAXCHUNK;
+    size_t chunk = MAXCHUNK;
 
     if (inl < chunk)
         chunk = inl;
@@ -261,7 +263,7 @@ int chunked_cfb8_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
 int chunked_cfb128_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
                           const unsigned char *in, size_t inl)
 {
-    size_t chunk = EVP_MAXCHUNK;
+    size_t chunk = MAXCHUNK;
 
     if (inl < chunk)
         chunk = inl;
@@ -279,11 +281,11 @@ int chunked_cfb128_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
 int chunked_ofb128_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
                           const unsigned char *in, size_t inl)
 {
-    while (inl >= EVP_MAXCHUNK) {
-        generic_ofb128_cipher(ctx, out, in, EVP_MAXCHUNK);
-        inl -= EVP_MAXCHUNK;
-        in  += EVP_MAXCHUNK;
-        out += EVP_MAXCHUNK;
+    while (inl >= MAXCHUNK) {
+        generic_ofb128_cipher(ctx, out, in, MAXCHUNK);
+        inl -= MAXCHUNK;
+        in  += MAXCHUNK;
+        out += MAXCHUNK;
     }
     if (inl > 0)
         generic_ofb128_cipher(ctx, out, in, inl);

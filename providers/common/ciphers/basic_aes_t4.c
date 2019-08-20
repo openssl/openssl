@@ -89,4 +89,6 @@ static const PROV_GENERIC_CIPHER aes_##mode = {                                \
         aes_init_key,                                                          \
         generic_##mode##_cipher};                                              \
 const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_##mode(size_t keybits)              \
-{ return SPARC_AES_CAPABLE?&aes_t4_##mode:&aes_##mode; }
+{                                                                              \
+    return SPARC_AES_CAPABLE? &aes_t4_##mode : &aes_##mode;                    \
+}

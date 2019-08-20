@@ -15,8 +15,6 @@
 # include "s390x_arch.h"
 
 # define s390x_aes_init_key aes_init_key
-static int s390x_aes_init_key(PROV_GENERIC_KEY *dat, const unsigned char *key,
-                              size_t keylen);
 # define s390x_aes_cbc_init_key aes_init_key
 # define s390x_aes_cbc_cipher generic_cbc_cipher
 

@@ -21,13 +21,16 @@
 #elif defined(S390X_aes_128_CAPABLE)
 # include "basic_aes_s390x.c"
 #else
+
 /* The generic case */
 # define BLOCK_CIPHER_aes_generic_prov(mode)                                   \
 static const PROV_GENERIC_CIPHER aes_##mode = {                                \
         aes_init_key,                                                          \
         generic_##mode##_cipher};                                              \
 const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_##mode(size_t keybits)              \
-{ return &aes_##mode; }
+{                                                                              \
+    return &aes_##mode;                                                        \
+}
 #endif
 
 static int aes_init_key(PROV_GENERIC_KEY *dat, const unsigned char *key,
@@ -161,7 +164,9 @@ static const PROV_GENERIC_CIPHER aria_##mode = {                               \
         aria_init_key,                                                         \
         chunked_##mode##_cipher};                                              \
 const PROV_GENERIC_CIPHER *PROV_ARIA_CIPHER_##mode(size_t keybits)             \
-{ return &aria_##mode; }
+{                                                                              \
+    return &aria_##mode;                                                       \
+}
 
 BLOCK_CIPHER_aria_chunked_prov(cbc)
 BLOCK_CIPHER_aria_chunked_prov(ecb)
@@ -248,7 +253,6 @@ const PROV_GENERIC_CIPHER *PROV_CAMELLIA_CIPHER_##mode(size_t keybits)         \
 {                                                                              \
     if (SPARC_CMLL_CAPABLE)                                                    \
         return &t4_camellia_##mode;                                            \
-                                                                               \
     return &camellia_##mode;                                                   \
 }
 
