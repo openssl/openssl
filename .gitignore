@@ -39,6 +39,7 @@ Makefile
 
 # Executables
 /apps/openssl
+/apps/openssl-fips
 /test/sha256t
 /test/sha512t
 /test/gost2814789t

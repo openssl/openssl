@@ -38,10 +38,14 @@ IF[{- !$disabled{apps} -}]
   SOURCE[libapps.a]=$LIBAPPSSRC $AUXLIBAPPSSRC
   INCLUDE[libapps.a]=.. ../include include
 
-  PROGRAMS=openssl
+  PROGRAMS=openssl openssl-fips
   SOURCE[openssl]=$INITSRC $OPENSSLSRC
   INCLUDE[openssl]=.. ../include include
   DEPEND[openssl]=libapps.a ../libssl
+
+  SOURCE[openssl-fips]=fips.c
+  INCLUDE[openssl-fips]=.. ../include include
+  DEPEND[openssl-fips]=../libcrypto
 
   IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
     GENERATE[openssl.rc]=../util/mkrc.pl openssl
