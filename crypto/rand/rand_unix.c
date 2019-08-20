@@ -14,12 +14,16 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
+#include <openssl/crypto.h>
 #include "rand_lcl.h"
 #include "internal/rand_int.h"
 #include <stdio.h>
 #include "internal/dso.h"
 #if defined(__linux)
 # include <asm/unistd.h>
+# include <sys/ipc.h>
+# include <sys/shm.h>
+# include <sys/utsname.h>
 #endif
 #if defined(__FreeBSD__) && !defined(OPENSSL_SYS_UEFI)
 # include <sys/types.h>
@@ -357,6 +361,96 @@ static struct random_device {
 } random_devices[OSSL_NELEM(random_device_paths)];
 static int keep_random_devices_open = 1;
 
+#   if defined(__linux) && defined(DEVRANDOM_WAIT)
+static void *shm_addr;
+
+#    if !defined(FIPS_MODE)
+static void cleanup_shm(void)
+{
+    shmdt(shm_addr);
+}
+#    endif
+
+/*
+ * Ensure that the system randomness source has been adequately seeded.
+ * This is done by having the first start of libcrypto, wait until the device
+ * /dev/random becomes able to supply a byte of entropy.  Subsequent starts
+ * of the library and later reseedings do not need to do this.
+ */
+static int wait_random_seeded(void)
+{
+    static int seeded = OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID < 0;
+    static const int kernel_version[] = { DEVRANDOM_SAFE_KERNEL };
+    int kernel[2];
+    int shm_id, fd, r;
+    char c, *p;
+    struct utsname un;
+    fd_set fds;
+
+    if (!seeded) {
+        /* See if anthing has created the global seeded indication */
+        if ((shm_id = shmget(OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID, 1, 0)) == -1) {
+            /*
+             * Check the kernel's version and fail if it is too recent.
+             *
+             * Linux kernels from 4.8 onwards do not guarantee that
+             * /dev/urandom is properly seeded when /dev/random becomes
+             * readable.  However, such kernels support the getentropy(2)
+             * system call and this should always succeed which renders
+             * this alternative but essentially identical source moot.
+             */
+            if (uname(&un) == 0) {
+                kernel[0] = atoi(un.release);
+                p = strchr(un.release, '.');
+                kernel[1] = p == NULL ? 0 : atoi(p + 1);
+                if (kernel[0] > kernel_version[0]
+                    || (kernel[0] == kernel_version[0]
+                        && kernel[1] >= kernel_version[1])) {
+                    return 0;
+                }
+            }
+            /* Open /dev/random and wait for it to be readable */
+            if ((fd = open(DEVRANDOM_WAIT, O_RDONLY)) != -1) {
+                if (DEVRANDM_WAIT_USE_SELECT) {
+                    FD_ZERO(&fds);
+                    FD_SET(fd, &fds);
+                    while ((r = select(fd + 1, &fds, NULL, NULL, NULL)) < 0
+                           && errno == EINTR);
+                } else {
+                    while ((r = read(fd, &c, 1)) < 0 && errno == EINTR);
+                }
+                close(fd);
+                if (r == 1) {
+                    seeded = 1;
+                    /* Craete the shared memory indicator */
+                    shm_id = shmget(OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID, 1,
+                                    IPC_CREAT | S_IRUSR | S_IRGRP | S_IROTH);
+                }
+            }
+        }
+        if (shm_id != -1) {
+            seeded = 1;
+            /*
+             * Map the shared memory to prevent its premature destruction.
+             * If this call fails, it isn't a big problem.
+             */
+            shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
+#    ifndef FIPS_MODE
+            /* TODO 3.0: The FIPS provider doesn't have OPENSSL_atexit */
+            if (shm_addr != (void *)-1)
+                OPENSSL_atexit(&cleanup_shm);
+#    endif
+        }
+    }
+    return seeded;
+}
+#   else /* defined __linux */
+static int wait_random_seeded(void)
+{
+    return 1;
+}
+#   endif
+
 /*
  * Verify that the file descriptor associated with the random source is
  * still valid. The rationale for doing this is the fact that it is not
@@ -518,13 +612,14 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_DEVRANDOM)
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    {
+    if (wait_random_seeded()) {
         size_t i;
 
-        for (i = 0; bytes_needed > 0 && i < OSSL_NELEM(random_device_paths); i++) {
+        bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        for (i = 0; bytes_needed > 0 && i < OSSL_NELEM(random_device_paths);
+             i++) {
             ssize_t bytes = 0;
-            /* Maximum allowed number of consecutive unsuccessful attempts */
+            /* Maximum number of consecutive unsuccessful attempts */
             int attempts = 3;
             const int fd = get_random_device(i);
 
@@ -538,7 +633,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
                 if (bytes > 0) {
                     rand_pool_add_end(pool, bytes, 8 * bytes);
                     bytes_needed -= bytes;
-                    attempts = 3; /* reset counter after successful attempt */
+                    attempts = 3; /* reset counter on successful attempt */
                 } else if (bytes < 0 && errno != EINTR) {
                     break;
                 }
@@ -546,7 +641,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             if (bytes < 0 || !keep_random_devices_open)
                 close_random_device(i);
 
-            bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+            bytes_needed = rand_pool_bytes_needed(pool, 1);
         }
         entropy_available = rand_pool_entropy_available(pool);
         if (entropy_available > 0)
