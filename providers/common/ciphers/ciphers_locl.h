@@ -27,7 +27,7 @@ typedef struct prov_generic_key_st PROV_GENERIC_KEY;
 typedef int (PROV_GENERIC_CIPHER_FN)(PROV_GENERIC_KEY *dat, unsigned char *out,
                                      const unsigned char *in, size_t len);
 
-typedef struct prov_generic_key_st {
+struct prov_generic_key_st {
     block128_f block;
     union {
         cbc128_f cbc;
@@ -54,7 +54,7 @@ typedef struct prov_generic_key_st {
     unsigned char buf[GENERIC_BLOCK_SIZE];
     unsigned char iv[GENERIC_BLOCK_SIZE];
     const void *ks; /* Pointer to algorithm specific key data */
-} PROV_GENERIC_KEY;
+};
 
 struct prov_generic_cipher_st {
   int (*init)(PROV_GENERIC_KEY *dat, const uint8_t *key, size_t keylen);
