@@ -12,6 +12,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
 
 #define TLS13_MAX_LABEL_LEN     249
 
@@ -35,7 +36,11 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
 #else
     static const unsigned char label_prefix[] = "tls13 ";
 #endif
-    EVP_KDF_CTX *kctx = EVP_KDF_CTX_new_id(EVP_PKEY_HKDF);
+    EVP_KDF *kdf = EVP_KDF_fetch(NULL, SN_hkdf, NULL);
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[5], *p = params;
+    int mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
+    const char *mdname = EVP_MD_name(md);
     int ret;
     size_t hkdflabellen;
     size_t hashlen;
@@ -49,6 +54,8 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                             + 1 + EVP_MAX_MD_SIZE];
     WPACKET pkt;
 
+    kctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
 
@@ -88,12 +95,16 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
         return 0;
     }
 
-    ret = EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_HKDF_MODE,
-                       EVP_PKEY_HKDEF_MODE_EXPAND_ONLY) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, md) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, secret, hashlen) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_HKDF_INFO,
-                        hkdflabel, hkdflabellen) <= 0
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)mdname, strlen(mdname) + 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                             (unsigned char *)secret, hashlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                             hkdflabel, hkdflabellen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
         || EVP_KDF_derive(kctx, out, outlen) <= 0;
 
     EVP_KDF_CTX_free(kctx);
@@ -171,7 +182,11 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     size_t mdlen, prevsecretlen;
     int mdleni;
     int ret;
-    EVP_KDF_CTX *kctx = EVP_KDF_CTX_new_id(EVP_PKEY_HKDF);
+    EVP_KDF *kdf;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[5], *p = params;
+    int mode = EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY;
+    const char *mdname = EVP_MD_name(md);
 #ifdef CHARSET_EBCDIC
     static const char derived_secret_label[] = { 0x64, 0x65, 0x72, 0x69, 0x76, 0x65, 0x64, 0x00 };
 #else
@@ -179,6 +194,9 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
 #endif
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
+    kdf = EVP_KDF_fetch(NULL, SN_hkdf, NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
     if (kctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
@@ -232,12 +250,18 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         prevsecretlen = mdlen;
     }
 
-    ret = EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_HKDF_MODE,
-                       EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, md) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, insecret, insecretlen) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
-                        prevsecret, prevsecretlen) <= 0
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)mdname, strlen(mdname) + 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                             (unsigned char *)insecret,
+                                             insecretlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                             (unsigned char *)prevsecret,
+                                             prevsecretlen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
         || EVP_KDF_derive(kctx, outsecret, mdlen) <= 0;
 
     if (ret != 0)

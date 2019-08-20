@@ -18,6 +18,7 @@
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
 #include <openssl/obj_mac.h>
+#include <openssl/core_names.h>
 #include <openssl/trace.h>
 
 /* seed1 through seed5 are concatenated */
@@ -31,8 +32,10 @@ static int tls1_PRF(SSL *s,
                     unsigned char *out, size_t olen, int fatal)
 {
     const EVP_MD *md = ssl_prf_md(s);
+    EVP_KDF *kdf;
     EVP_KDF_CTX *kctx = NULL;
-    int ret = 0;
+    OSSL_PARAM params[8], *p = params;
+    const char *mdname = EVP_MD_name(md);
 
     if (md == NULL) {
         /* Should never happen */
@@ -43,35 +46,43 @@ static int tls1_PRF(SSL *s,
             SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    kctx = EVP_KDF_CTX_new_id(EVP_PKEY_TLS1_PRF);
-    if (kctx == NULL
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, md) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_TLS_SECRET,
-                        sec, (size_t)slen) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
-                        seed1, (size_t)seed1_len) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
-                        seed2, (size_t)seed2_len) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
-                        seed3, (size_t)seed3_len) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
-                        seed4, (size_t)seed4_len) <= 0
-        || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_ADD_TLS_SEED,
-                        seed5, (size_t)seed5_len) <= 0
-        || EVP_KDF_derive(kctx, out, olen) <= 0) {
-        if (fatal)
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
-                     ERR_R_INTERNAL_ERROR);
-        else
-            SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
+    kdf = EVP_KDF_fetch(NULL, SN_tls1_prf, NULL);
+    if (kdf == NULL)
         goto err;
+    kctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
+    if (kctx == NULL)
+        goto err;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)mdname, strlen(mdname) + 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+                                             (unsigned char *)sec,
+                                             (size_t)slen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed1, (size_t)seed1_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed2, (size_t)seed2_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed3, (size_t)seed3_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed4, (size_t)seed4_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed5, (size_t)seed5_len);
+    *p = OSSL_PARAM_construct_end();
+    if (EVP_KDF_CTX_set_params(kctx, params)
+            && EVP_KDF_derive(kctx, out, olen)) {
+        EVP_KDF_CTX_free(kctx);
+        return 1;
     }
 
-    ret = 1;
-
  err:
+    if (fatal)
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
+                 ERR_R_INTERNAL_ERROR);
+    else
+        SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
     EVP_KDF_CTX_free(kctx);
-    return ret;
+    return 0;
 }
 
 static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
