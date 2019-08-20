@@ -308,6 +308,10 @@ EVP_MAC_do_all_ex() returns nothing at all.
           params[params_n++] =
               OSSL_PARAM_construct_utf8_string("digest", digest,
                                                strlen(digest) + 1, NULL);
+      /*
+       * Note that in general, the key would be binary data and that
+       * the strlen(key) call would not be appropriate here.
+       */
       params[params_n++] =
           OSSL_PARAM_construct_octet_string("key", key, strlen(key), NULL);
       params[params_n] = OSSL_PARAM_construct_end();
