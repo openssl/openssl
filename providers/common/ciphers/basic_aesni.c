@@ -74,7 +74,7 @@ static int aesni_ecb_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
 static const PROV_GENERIC_CIPHER aesni_##mode = {                              \
         aesni_init_key,                                                        \
         aesni_##mode##_cipher};                                                \
-PROV_GENERIC_CIPHER aes_##mode = {                                             \
+static const PROV_GENERIC_CIPHER aes_##mode = {                                \
         aes_init_key,                                                          \
         generic_##mode##_cipher};                                              \
 const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_##mode(size_t keybits)              \
