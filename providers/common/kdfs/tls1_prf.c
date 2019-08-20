@@ -125,6 +125,8 @@ static int kdf_tls1_prf_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
         impl->seclen = len;
         return 1;
 
+    /* TODO: This is only ever called from pkey_kdf and only as part of setting the TLS secret
+    consider merging the twe two?? */
     case EVP_KDF_CTRL_RESET_TLS_SEED:
         OPENSSL_cleanse(impl->seed, impl->seedlen);
         impl->seedlen = 0;
