@@ -1,0 +1,13 @@
+$COMMON=tls1_prf.c hkdf.c scrypt.c pbkdf2.c sskdf.c
+
+LIBS=../../../libcrypto
+SOURCE[../../../libcrypto]=$COMMON sshkdf.c x942kdf.c
+INCLUDE[../../../libcrypto]=. ../../../crypto
+
+IF[{- !$disabled{fips} -}]
+  MODULES=../../fips
+  SOURCE[../../fips]=$COMMON
+  INCLUDE[../../fips]=. ../../../crypto
+ENDIF
+
+        
