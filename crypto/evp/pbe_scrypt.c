@@ -10,6 +10,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
 #include "internal/numbers.h"
 
 #ifndef OPENSSL_NO_SCRYPT
@@ -40,7 +41,9 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
 {
     const char *empty = "";
     int rv = 1;
+    EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[7], *z = params;
 
     if (r > UINT32_MAX || p > UINT32_MAX) {
         EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_PARAMETER_TOO_LARGE);
@@ -59,17 +62,23 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
-    kctx = EVP_KDF_CTX_new_id(EVP_KDF_SCRYPT);
+    kdf = EVP_KDF_fetch(NULL, SN_id_scrypt, NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
 
-    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS, pass, (size_t)passlen) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
-                            salt, (size_t)saltlen) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_N, N) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_R, (uint32_t)r) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_P, (uint32_t)p) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAXMEM_BYTES, maxmem) != 1
+    *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+                                              (unsigned char *)pass,
+                                                      passlen);
+    *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                             (unsigned char *)salt, saltlen);
+    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_N, &N);
+    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_R, &r);
+    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_P, &p);
+    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_MAXMEM, &maxmem);
+    *z = OSSL_PARAM_construct_end();
+    if (EVP_KDF_CTX_set_params(kctx, params) != 1
             || EVP_KDF_derive(kctx, key, keylen) != 1)
         rv = 0;
 

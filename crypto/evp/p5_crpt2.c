@@ -15,6 +15,7 @@
 #include <openssl/kdf.h>
 #include <openssl/hmac.h>
 #include <openssl/trace.h>
+#include <openssl/core_names.h>
 #include "internal/evp_int.h"
 #include "evp_locl.h"
 
@@ -23,8 +24,11 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                       const EVP_MD *digest, int keylen, unsigned char *out)
 {
     const char *empty = "";
-    int rv = 1;
+    int rv = 1, mode = 1;
+    EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
+    const char *mdname = EVP_MD_name(digest);
+    OSSL_PARAM params[6], *p = params;
 
     /* Keep documented behaviour. */
     if (pass == NULL) {
@@ -36,15 +40,21 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     if (salt == NULL && saltlen == 0)
         salt = (unsigned char *)empty;
 
-    kctx = EVP_KDF_CTX_new_id(EVP_KDF_PBKDF2);
+    kdf = EVP_KDF_fetch(NULL, LN_id_pbkdf2, NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
-    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS, pass, (size_t)passlen) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE, 1) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
-                            salt, (size_t)saltlen) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_ITER, iter) != 1
-            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, digest) != 1
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+                                             (char *)pass, (size_t)passlen);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                             (unsigned char *)salt, saltlen);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)mdname, strlen(mdname) + 1);
+    *p = OSSL_PARAM_construct_end();
+    if (EVP_KDF_CTX_set_params(kctx, params) != 1
             || EVP_KDF_derive(kctx, out, keylen) != 1)
         rv = 0;
 
