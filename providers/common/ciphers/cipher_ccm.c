@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* Dispatch functions for ccm mode */
+
 #include <openssl/core_names.h>
 #include "cipher_locl.h"
 #include "internal/provider_algs.h"

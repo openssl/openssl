@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* Dispatch functions for CAMELLIA cipher modes ecb, cbc, ofb, cfb, ctr */
+
 #include "cipher_locl.h"
 #include "internal/providercommonerr.h"
 

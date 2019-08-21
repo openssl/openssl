@@ -30,11 +30,11 @@ static int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
     ctx->key_set = 1;
 
 #if defined(AESNI_CAPABLE)
-# include "cipher_aes_gcm_hw_aesni.c"
+# include "cipher_aes_gcm_hw_aesni.inc"
 #elif defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
-# include "cipher_aes_gcm_hw_t4.c"
+# include "cipher_aes_gcm_hw_t4.inc"
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
-# include "cipher_aes_gcm_hw_s390x.c"
+# include "cipher_aes_gcm_hw_s390x.inc"
 #else
 const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
 {
@@ -199,4 +199,4 @@ static const PROV_GCM_HW aes_gcm = {
     gcm_one_shot
 };
 
-#include "cipher_aria_gcm_hw.c"
+#include "cipher_aria_gcm_hw.inc"

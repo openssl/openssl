@@ -7,7 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* AES-NI section */
+/*-
+ * AES-NI support for AES GCM.
+ * This file is included by cipher_gcm_hw.c
+ */
 
 static int aesni_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
                              size_t keylen)

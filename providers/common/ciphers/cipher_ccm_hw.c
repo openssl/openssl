@@ -108,11 +108,11 @@ static const PROV_CCM_HW aes_ccm = {
     ccm_generic_gettag
 };
 #if defined(S390X_aes_128_CAPABLE)
-# include "cipher_aes_ccm_hw_s390x.c"
+# include "cipher_aes_ccm_hw_s390x.inc"
 #elif defined(AESNI_CAPABLE)
-# include "cipher_aes_ccm_hw_aesni.c"
+# include "cipher_aes_ccm_hw_aesni.inc"
 #elif defined(SPARC_AES_CAPABLE)
-# include "cipher_aes_ccm_hw_t4.c"
+# include "cipher_aes_ccm_hw_t4.inc"
 #else
 const PROV_CCM_HW *PROV_AES_HW_ccm(size_t keybits)
 {
@@ -120,4 +120,4 @@ const PROV_CCM_HW *PROV_AES_HW_ccm(size_t keybits)
 }
 #endif
 
-#include "cipher_aria_ccm_hw.c"
+#include "cipher_aria_ccm_hw.inc"

@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * IBM S390X AES GCM support
- * Note this file is included by aes_gcm_hw.c
+/*-
+ * IBM S390X support for AES GCM.
+ * This file is included by cipher_gcm_hw.c
  */
 
 /* iv + padding length for iv lengths != 12 */

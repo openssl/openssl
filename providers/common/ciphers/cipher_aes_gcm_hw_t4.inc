@@ -7,7 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Fujitsu SPARC64 X support */
+/*-
+ * Fujitsu SPARC64 X support for AES GCM.
+ * This file is included by cipher_gcm_hw.c
+ */
 
 static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
                               size_t keylen)

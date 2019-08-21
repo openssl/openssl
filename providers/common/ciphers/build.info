@@ -1,14 +1,14 @@
 LIBS=../../../libcrypto
 
 $COMMON=cipher_common.c cipher_common_hw.c block.c \
-        cipher_aes_modes.c cipher_aes_modes_hw.c \
+        cipher_aes.c cipher_aes_hw.c \
         cipher_gcm.c cipher_aes_gcm.c cipher_gcm_hw.c \
         cipher_ccm.c cipher_aes_ccm.c cipher_ccm_hw.c
 
 SOURCE[../../../libcrypto]=$COMMON
 IF[{- !$disabled{aria} -}]
   SOURCE[../../../libcrypto]=\
-      cipher_aria_modes.c cipher_aria_modes_hw.c \
+      cipher_aria.c cipher_aria_hw.c \
       cipher_aria_gcm.c cipher_aria_ccm.c 
 ENDIF
 

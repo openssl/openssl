@@ -122,11 +122,11 @@ const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_##mode(size_t keybits)                \
 }
 
 #if defined(AESNI_CAPABLE)
-# include "cipher_aes_modes_hw_aesni.c"
+# include "cipher_aes_hw_aesni.inc"
 #elif defined(SPARC_AES_CAPABLE)
-# include "cipher_aes_modes_hw_t4.c"
+# include "cipher_aes_hw_t4.inc"
 #elif defined(S390X_aes_128_CAPABLE)
-# include "cipher_aes_modes_hw_s390x.c"
+# include "cipher_aes_hw_s390x.inc"
 #else
 /* The generic case */
 # define PROV_CIPHER_HW_declare(mode)

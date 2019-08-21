@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*-
+ * Generic support for ARIA CCM.
+ * This file is included by cipher_ccm_hw.c
+ */
+
 #if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
-/* ARIA CCM Algorithm specific methods */
+
 static int ccm_aria_initkey(PROV_CCM_CTX *ctx,
                             const unsigned char *key, size_t keylen)
 {

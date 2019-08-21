@@ -7,7 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* AES Sparc t4 support */
+/*-
+ * Sparc t4 support for AES modes ecb, cbc, ofb, cfb, ctr.
+ * This file is included by cipher_aes_hw.c
+ */
 
 static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
                                     const unsigned char *key, size_t keylen)

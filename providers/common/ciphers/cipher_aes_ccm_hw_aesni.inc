@@ -7,7 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* AES-NI section */
+/*-
+ * AES-NI support for AES CCM.
+ * This file is included by cipher_ccm_hw.c"
+ */
+
 static int ccm_aesni_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
                              size_t keylen)
 {

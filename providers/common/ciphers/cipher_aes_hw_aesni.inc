@@ -7,7 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* AES-NI section. */
+/*-
+ * AES-NI support for AES modes ecb, cbc, ofb, cfb, ctr.
+ * This file is included by cipher_aes_hw.c
+ */
 
 #define cipher_hw_aesni_ofb128 cipher_hw_generic_ofb128
 #define cipher_hw_aesni_cfb128 cipher_hw_generic_cfb128

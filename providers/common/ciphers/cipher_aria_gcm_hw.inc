@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*-
+ * Generic support for ARIA GCM.
+ * This file is included by cipher_gcm_hw.c
+ */
+
 #if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
 
 static int aria_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,

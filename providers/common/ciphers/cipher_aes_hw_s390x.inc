@@ -8,8 +8,8 @@
  */
 
 /*
- * IBM S390X AES basic modes support
- * Note this file is included by aes_gcm_hw.c
+ * IBM S390X support for AES modes ecb, cbc, ofb, cfb, ctr.
+ * This file is included by cipher_aes_hw.c
  */
 
 #include "s390x_arch.h"

@@ -7,7 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Fujitsu SPARC64 X support for AES CCM */
+/*-
+ * Fujitsu SPARC64 X support for AES CCM.
+ * This file is included by cipher_ccm_hw.c
+ */
 
 static int ccm_t4_aes_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
                               size_t keylen)

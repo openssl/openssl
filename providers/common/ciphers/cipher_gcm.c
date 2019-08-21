@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* Dispatch functions for gcm mode */
+
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/core_numbers.h>

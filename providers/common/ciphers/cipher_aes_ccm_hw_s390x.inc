@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*-
+ * S390X support for AES CCM.
+ * This file is included by cipher_ccm_hw.c"
+ */
+
 #define S390X_CCM_AAD_FLAG 0x40
 
 static int s390x_aes_ccm_initkey(PROV_CCM_CTX *ctx,
