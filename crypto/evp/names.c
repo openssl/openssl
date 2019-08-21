@@ -56,23 +56,6 @@ int EVP_add_digest(const EVP_MD *md)
     return r;
 }
 
-/* TODO(3.0) Is this needed after changing to providers? */
-int EVP_add_kdf(const EVP_KDF *k)
-{
-    int r;
-
-    if (k == NULL)
-        return 0;
-
-    r = OBJ_NAME_add(OBJ_nid2sn(k->type), OBJ_NAME_TYPE_KDF_METH,
-                     (const char *)k);
-    if (r == 0)
-        return 0;
-    r = OBJ_NAME_add(OBJ_nid2ln(k->type), OBJ_NAME_TYPE_KDF_METH,
-                     (const char *)k);
-    return r;
-}
-
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 {
     const EVP_CIPHER *cp;
@@ -93,18 +76,6 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
 
     cp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
     return cp;
-}
-
-/* TODO(3.0) Is this API needed after implementing providers? */
-const EVP_KDF *EVP_get_kdfbyname(const char *name)
-{
-    const EVP_KDF *kdf;
-
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_KDFS, NULL))
-        return NULL;
-
-    kdf = (const EVP_KDF *)OBJ_NAME_get(name, OBJ_NAME_TYPE_KDF_METH);
-    return kdf;
 }
 
 void evp_cleanup_int(void)

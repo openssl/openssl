@@ -140,26 +140,23 @@ struct evp_mac_st {
     OSSL_OP_mac_set_ctx_params_fn *set_ctx_params;
 };
 
-/*
- * This function is internal for now, but can be made external when needed.
- * The documentation would read:
- *
- * EVP_add_mac() adds the MAC implementation C<mac> to the internal
- * object database.
- */
-int EVP_add_kdf(const EVP_KDF *kdf);
-
-/* struct evp_kdf_impl_st is defined by the implementation */
-typedef struct evp_kdf_impl_st EVP_KDF_IMPL;
 struct evp_kdf_st {
-    int type;
-    EVP_KDF_IMPL *(*new) (void);
-    void (*free) (EVP_KDF_IMPL *impl);
-    void (*reset) (EVP_KDF_IMPL *impl);
-    int (*ctrl) (EVP_KDF_IMPL *impl, int cmd, va_list args);
-    int (*ctrl_str) (EVP_KDF_IMPL *impl, const char *type, const char *value);
-    size_t (*size) (EVP_KDF_IMPL *impl);
-    int (*derive) (EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen);
+    OSSL_PROVIDER *prov;
+    char *name;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+
+    OSSL_OP_kdf_newctx_fn *newctx;
+    OSSL_OP_kdf_dupctx_fn *dupctx;
+    OSSL_OP_kdf_freectx_fn *freectx;
+    OSSL_OP_kdf_reset_fn *reset;
+    OSSL_OP_kdf_derive_fn *derive;
+    OSSL_OP_kdf_gettable_params_fn *gettable_params;
+    OSSL_OP_kdf_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_OP_kdf_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_OP_kdf_get_params_fn *get_params;
+    OSSL_OP_kdf_get_ctx_params_fn *get_ctx_params;
+    OSSL_OP_kdf_set_ctx_params_fn *set_ctx_params;
 };
 
 extern const EVP_KDF pbkdf2_kdf_meth;
@@ -553,8 +550,6 @@ struct evp_pkey_st {
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
-void openssl_add_all_macs_int(void);
-void openssl_add_all_kdfs_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 
