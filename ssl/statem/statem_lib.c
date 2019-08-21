@@ -1033,14 +1033,25 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
     int cleanuphand = s->statem.cleanuphand;
 
     if (clearbufs) {
-        if (!SSL_IS_DTLS(s)) {
+        if (!SSL_IS_DTLS(s)
+#ifndef OPENSSL_NO_SCTP
             /*
-             * We don't do this in DTLS because we may still need the init_buf
+             * RFC6083: SCTP provides a reliable and in-sequence transport service for DTLS
+             * messages that require it. Therefore, DTLS procedures for retransmissions
+             * MUST NOT be used.
+             * Hence the init_buf can be cleared when DTLS over SCTP as transport is used.
+             */
+            || BIO_dgram_is_sctp(SSL_get_wbio(s))
+#endif
+            ) {
+            /*
+             * We don't do this in DTLS over UDP because we may still need the init_buf
              * in case there are any unexpected retransmits
              */
             BUF_MEM_free(s->init_buf);
             s->init_buf = NULL;
         }
+
         if (!ssl_free_wbio_buffer(s)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_FINISH_HANDSHAKE,
                      ERR_R_INTERNAL_ERROR);
