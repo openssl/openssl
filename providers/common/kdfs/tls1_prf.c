@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,16 +48,26 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "internal/cryptlib.h"
+#include "internal/numbers.h"
 #include "internal/evp_int.h"
-#include "kdf_local.h"
+#include "internal/provider_ctx.h"
+#include "internal/providercommonerr.h"
+#include "internal/provider_algs.h"
+#include "e_os.h"
 
-static void kdf_tls1_prf_reset(EVP_KDF_IMPL *impl);
-static int tls1_prf_alg(const EVP_MD *md,
+static OSSL_OP_kdf_newctx_fn kdf_tls1_prf_new;
+static OSSL_OP_kdf_freectx_fn kdf_tls1_prf_free;
+static OSSL_OP_kdf_reset_fn kdf_tls1_prf_reset;
+static OSSL_OP_kdf_derive_fn kdf_tls1_prf_derive;
+static OSSL_OP_kdf_settable_ctx_params_fn kdf_tls1_prf_settable_ctx_params;
+static OSSL_OP_kdf_set_ctx_params_fn kdf_tls1_prf_set_ctx_params;
+
+static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
                         const unsigned char *sec, size_t slen,
                         const unsigned char *seed, size_t seed_len,
                         unsigned char *out, size_t olen);
@@ -65,149 +75,184 @@ static int tls1_prf_alg(const EVP_MD *md,
 #define TLS1_PRF_MAXBUF 1024
 
 /* TLS KDF kdf context structure */
-
-struct evp_kdf_impl_st {
+typedef struct {
+    void *provctx;
     /* Digest to use for PRF */
-    const EVP_MD *md;
+    EVP_MD *md;
+    /* Second digest for the MD5/SHA-1 combined PRF */
+    EVP_MD *sha1;
     /* Secret value to use for PRF */
     unsigned char *sec;
     size_t seclen;
     /* Buffer of concatenated seed data */
     unsigned char seed[TLS1_PRF_MAXBUF];
     size_t seedlen;
-};
+} TLS1_PRF;
 
-static EVP_KDF_IMPL *kdf_tls1_prf_new(void)
+static void *kdf_tls1_prf_new(void *provctx)
 {
-    EVP_KDF_IMPL *impl;
+    TLS1_PRF *ctx;
 
-    if ((impl = OPENSSL_zalloc(sizeof(*impl))) == NULL)
-        KDFerr(KDF_F_KDF_TLS1_PRF_NEW, ERR_R_MALLOC_FAILURE);
-    return impl;
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    ctx->provctx = provctx;
+    return ctx;
 }
 
-static void kdf_tls1_prf_free(EVP_KDF_IMPL *impl)
+static void kdf_tls1_prf_free(void *vctx)
 {
-    kdf_tls1_prf_reset(impl);
-    OPENSSL_free(impl);
+    TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+
+    kdf_tls1_prf_reset(ctx);
+    EVP_MD_meth_free(ctx->sha1);
+    EVP_MD_meth_free(ctx->md);
+    OPENSSL_free(ctx);
 }
 
-static void kdf_tls1_prf_reset(EVP_KDF_IMPL *impl)
+static void kdf_tls1_prf_reset(void *vctx)
 {
-    OPENSSL_clear_free(impl->sec, impl->seclen);
-    OPENSSL_cleanse(impl->seed, impl->seedlen);
-    memset(impl, 0, sizeof(*impl));
+    TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+
+    OPENSSL_clear_free(ctx->sec, ctx->seclen);
+    OPENSSL_cleanse(ctx->seed, ctx->seedlen);
+    memset(ctx, 0, sizeof(*ctx));
 }
 
-static int kdf_tls1_prf_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
-{
-    const unsigned char *p;
-    size_t len;
-    const EVP_MD *md;
-
-    switch (cmd) {
-    case EVP_KDF_CTRL_SET_MD:
-        md = va_arg(args, const EVP_MD *);
-        if (md == NULL)
-            return 0;
-
-        impl->md = md;
-        return 1;
-
-    case EVP_KDF_CTRL_SET_TLS_SECRET:
-        p = va_arg(args, const unsigned char *);
-        len = va_arg(args, size_t);
-        OPENSSL_clear_free(impl->sec, impl->seclen);
-        impl->sec = OPENSSL_memdup(p, len);
-        if (impl->sec == NULL)
-            return 0;
-
-        impl->seclen = len;
-        return 1;
-
-    /* TODO: This is only ever called from pkey_kdf and only as part of setting the TLS secret
-    consider merging the twe two?? */
-    case EVP_KDF_CTRL_RESET_TLS_SEED:
-        OPENSSL_cleanse(impl->seed, impl->seedlen);
-        impl->seedlen = 0;
-        return 1;
-
-    case EVP_KDF_CTRL_ADD_TLS_SEED:
-        p = va_arg(args, const unsigned char *);
-        len = va_arg(args, size_t);
-        if (len == 0 || p == NULL)
-            return 1;
-
-        if (len > (TLS1_PRF_MAXBUF - impl->seedlen))
-            return 0;
-
-        memcpy(impl->seed + impl->seedlen, p, len);
-        impl->seedlen += len;
-        return 1;
-
-    default:
-        return -2;
-    }
-}
-
-static int kdf_tls1_prf_ctrl_str(EVP_KDF_IMPL *impl,
-                                 const char *type, const char *value)
-{
-    if (value == NULL) {
-        KDFerr(KDF_F_KDF_TLS1_PRF_CTRL_STR, KDF_R_VALUE_MISSING);
-        return 0;
-    }
-    if (strcmp(type, "digest") == 0)
-        return kdf_md2ctrl(impl, kdf_tls1_prf_ctrl, EVP_KDF_CTRL_SET_MD, value);
-
-    if (strcmp(type, "secret") == 0)
-        return kdf_str2ctrl(impl, kdf_tls1_prf_ctrl,
-                            EVP_KDF_CTRL_SET_TLS_SECRET, value);
-
-    if (strcmp(type, "hexsecret") == 0)
-        return kdf_hex2ctrl(impl, kdf_tls1_prf_ctrl,
-                            EVP_KDF_CTRL_SET_TLS_SECRET, value);
-
-    if (strcmp(type, "seed") == 0)
-        return kdf_str2ctrl(impl, kdf_tls1_prf_ctrl, EVP_KDF_CTRL_ADD_TLS_SEED,
-                            value);
-
-    if (strcmp(type, "hexseed") == 0)
-        return kdf_hex2ctrl(impl, kdf_tls1_prf_ctrl, EVP_KDF_CTRL_ADD_TLS_SEED,
-                            value);
-
-    return -2;
-}
-
-static int kdf_tls1_prf_derive(EVP_KDF_IMPL *impl, unsigned char *key,
+static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
                                size_t keylen)
 {
-    if (impl->md == NULL) {
-        KDFerr(KDF_F_KDF_TLS1_PRF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
+    TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+
+    if (ctx->md == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    if (impl->sec == NULL) {
-        KDFerr(KDF_F_KDF_TLS1_PRF_DERIVE, KDF_R_MISSING_SECRET);
+    if (ctx->sec == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
         return 0;
     }
-    if (impl->seedlen == 0) {
-        KDFerr(KDF_F_KDF_TLS1_PRF_DERIVE, KDF_R_MISSING_SEED);
+    if (ctx->seedlen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SEED);
         return 0;
     }
-    return tls1_prf_alg(impl->md, impl->sec, impl->seclen,
-                        impl->seed, impl->seedlen,
+    return tls1_prf_alg(ctx->md, ctx->sha1, ctx->sec, ctx->seclen,
+                        ctx->seed, ctx->seedlen,
                         key, keylen);
 }
 
-const EVP_KDF tls1_prf_kdf_meth = {
-    EVP_KDF_TLS1_PRF,
-    kdf_tls1_prf_new,
-    kdf_tls1_prf_free,
-    kdf_tls1_prf_reset,
-    kdf_tls1_prf_ctrl,
-    kdf_tls1_prf_ctrl_str,
-    NULL,
-    kdf_tls1_prf_derive
+static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    TLS1_PRF *ctx = vctx;
+    EVP_MD *md, *sha = NULL;
+    const char *properties = NULL, *name;
+
+    /* Grab search properties, this should be before the digest lookup */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
+        != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        properties = p->data;
+    }
+    /* Handle aliasing of digest parameter names */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        name = p->data;
+        if (strcasecmp(name, SN_md5_sha1) == 0) {
+            sha = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), SN_sha1,
+                               properties);
+            if (sha == NULL) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOAD_SHA1);
+                return 0;
+            }
+            name = SN_md5;
+        }
+        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), name,
+                          properties);
+        if (md == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+            EVP_MD_meth_free(sha);
+            return 0;
+        }
+        EVP_MD_meth_free(ctx->sha1);
+        EVP_MD_meth_free(ctx->md);
+        ctx->md = md;
+        ctx->sha1 = sha;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET)) != NULL) {
+        OPENSSL_clear_free(ctx->sec, ctx->seclen);
+        ctx->sec = NULL;
+        if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->sec, 0, &ctx->seclen))
+            return 0;
+    }
+    /* The seed fields concatenate, so process them all */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SEED)) != NULL) {
+        OPENSSL_cleanse(ctx->seed, ctx->seedlen);
+        ctx->seedlen = 0;
+
+        for (; p != NULL; p = OSSL_PARAM_locate_const(p + 1,
+                                                      OSSL_KDF_PARAM_SEED)) {
+            const void *q = ctx->seed + ctx->seedlen;
+            size_t sz = 0;
+
+            if (p->data_size != 0
+                && p->data != NULL
+                && !OSSL_PARAM_get_octet_string(p, (void **)&q,
+                                                TLS1_PRF_MAXBUF - ctx->seedlen,
+                                                &sz))
+                return 0;
+            ctx->seedlen += sz;
+        }
+    }
+    return 1;
+}
+
+static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(void)
+{
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SECRET, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SEED, NULL, 0),
+        OSSL_PARAM_END
+    };
+    return known_settable_ctx_params;
+}
+
+static int kdf_tls1_prf_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
+        return OSSL_PARAM_set_size_t(p, SIZE_MAX);
+    return -2;
+}
+
+static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(void)
+{
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
+        OSSL_PARAM_END
+    };
+    return known_gettable_ctx_params;
+}
+
+const OSSL_DISPATCH kdf_tls1_prf_functions[] = {
+    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_tls1_prf_new },
+    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_tls1_prf_free },
+    { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_tls1_prf_reset },
+    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_tls1_prf_derive },
+    { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
+      (void(*)(void))kdf_tls1_prf_settable_ctx_params },
+    { OSSL_FUNC_KDF_SET_CTX_PARAMS,
+      (void(*)(void))kdf_tls1_prf_set_ctx_params },
+    { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
+      (void(*)(void))kdf_tls1_prf_gettable_ctx_params },
+    { OSSL_FUNC_KDF_GET_CTX_PARAMS,
+      (void(*)(void))kdf_tls1_prf_get_ctx_params },
+    { 0, NULL }
 };
 
 /*
@@ -337,12 +382,12 @@ static int tls1_prf_P_hash(const EVP_MD *md,
  *
  *   PRF(secret, label, seed) = P_<hash>(secret, label + seed)
  */
-static int tls1_prf_alg(const EVP_MD *md,
+static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
                         const unsigned char *sec, size_t slen,
                         const unsigned char *seed, size_t seed_len,
                         unsigned char *out, size_t olen)
 {
-    if (EVP_MD_type(md) == NID_md5_sha1) {
+    if (sha1 != NULL) {
         /* TLS v1.0 and TLS v1.1 */
         size_t i;
         unsigned char *tmp;
@@ -350,15 +395,15 @@ static int tls1_prf_alg(const EVP_MD *md,
         size_t L_S1 = (slen + 1) / 2;
         size_t L_S2 = L_S1;
 
-        if (!tls1_prf_P_hash(EVP_md5(), sec, L_S1,
+        if (!tls1_prf_P_hash(md, sec, L_S1,
                              seed, seed_len, out, olen))
             return 0;
 
         if ((tmp = OPENSSL_malloc(olen)) == NULL) {
-            KDFerr(KDF_F_TLS1_PRF_ALG, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        if (!tls1_prf_P_hash(EVP_sha1(), sec + slen - L_S2, L_S2,
+        if (!tls1_prf_P_hash(sha1, sec + slen - L_S2, L_S2,
                              seed, seed_len, tmp, olen)) {
             OPENSSL_clear_free(tmp, olen);
             return 0;

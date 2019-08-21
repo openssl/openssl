@@ -1,7 +1,7 @@
-$COMMON=tls1_prf.c hkdf.c scrypt.c pbkdf2.c sskdf.c
+$COMMON=tls1_prf.c hkdf.c pbkdf2.c sskdf.c
 
 LIBS=../../../libcrypto
-SOURCE[../../../libcrypto]=$COMMON sshkdf.c x942kdf.c
+SOURCE[../../../libcrypto]=$COMMON
 INCLUDE[../../../libcrypto]=. ../../../crypto
 
 IF[{- !$disabled{fips} -}]
