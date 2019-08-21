@@ -1932,13 +1932,6 @@ ${func}_avx2:
 	mov	%rax,$_rsp		# save copy of %rsp
 .cfi_cfa_expression	$_rsp,deref,+8
 ___
-$code.=<<___ if (!$win64);
-# the frame info is at $_rsp, but the stack is moving...
-# so a second frame pointer is saved at -8(%rsp)
-# that is in the red zone
-	mov	%rax,-8(%rsp)
-.cfi_cfa_expression	%rsp-8,deref,+8
-___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,16*$SZ+32(%rsp)
 	movaps	%xmm7,16*$SZ+48(%rsp)
@@ -1999,12 +1992,19 @@ $code.=<<___;
 	vmovdqa	$t0,0x00(%rsp)
 	xor	$a1,$a1
 	vmovdqa	$t1,0x20(%rsp)
+___
+$code.=<<___ if (!$win64);
+# temporarily use %rdi as frame pointer
+	mov	$_rsp,%rdi
+.cfi_def_cfa_register	%rdi
+___
+$code.=<<___;
 	lea	-$PUSH8(%rsp),%rsp
 ___
 $code.=<<___ if (!$win64);
-.cfi_cfa_expression	%rsp+`$PUSH8-8`,deref,+8
-# copy secondary frame pointer to new location again at -8(%rsp)
-	mov	$PUSH8-8(%rsp),%rdi
+# the frame info is at $_rsp, but the stack is moving...
+# so a second frame pointer is saved at -8(%rsp)
+# that is in the red zone
 	mov	%rdi,-8(%rsp)
 .cfi_cfa_expression	%rsp-8,deref,+8
 ___
@@ -2110,12 +2110,19 @@ $code.=<<___;
 	vmovdqa	$t2,0x40(%rsp)
 	vpaddq	0x40($Tbl),@X[6],$t2
 	vmovdqa	$t3,0x60(%rsp)
+___
+$code.=<<___ if (!$win64);
+# temporarily use %rdi as frame pointer
+	mov	$_rsp,%rdi
+.cfi_def_cfa_register	%rdi
+___
+$code.=<<___;
 	lea	-$PUSH8(%rsp),%rsp
 ___
 $code.=<<___ if (!$win64);
-.cfi_cfa_expression	%rsp+`$PUSH8-8`,deref,+8
-# copy secondary frame pointer to new location again at -8(%rsp)
-	mov	$PUSH8-8(%rsp),%rdi
+# the frame info is at $_rsp, but the stack is moving...
+# so a second frame pointer is saved at -8(%rsp)
+# that is in the red zone
 	mov	%rdi,-8(%rsp)
 .cfi_cfa_expression	%rsp-8,deref,+8
 ___
@@ -2229,17 +2236,8 @@ $code.=<<___;
 	add	$a1,$A
 	#mov	`2*$SZ*$rounds+8`(%rsp),$inp	# $_inp
 	lea	`2*$SZ*($rounds-8)`(%rsp),%rsp
-___
-$code.=<<___ if (!$win64);
 # restore frame pointer to original location at $_rsp
 .cfi_cfa_expression	$_rsp,deref,+8
-# copy secondary frame pointer to new location again at -8(%rsp)
-	pushq	$_rsp
-.cfi_cfa_expression	%rsp,deref,+8
-	lea	8(%rsp),%rsp
-.cfi_cfa_expression	%rsp-8,deref,+8
-___
-$code.=<<___;
 	add	$SZ*0($ctx),$A
 	add	$SZ*1($ctx),$B
 	add	$SZ*2($ctx),$C
@@ -2264,6 +2262,9 @@ $code.=<<___;
 
 	jbe	.Loop_avx2
 	lea	(%rsp),$Tbl
+# temporarily use $Tbl as index to $_rsp
+# this avoids the need to save a secondary frame pointer at -8(%rsp)
+.cfi_cfa_expression	$Tbl+`16*$SZ+3*8`,deref,+8
 
 .Ldone_avx2:
 	lea	($Tbl),%rsp
