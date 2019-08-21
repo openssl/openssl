@@ -78,11 +78,14 @@ int ERR_load_KDF_strings(void);
  */
 # define KDF_R_BAD_ENCODING                               122
 # define KDF_R_BAD_LENGTH                                 123
+# define KDF_R_BOTH_MODE_AND_MODE_INT                     127
 # define KDF_R_INAVLID_UKM_LEN                            124
 # define KDF_R_INVALID_DIGEST                             100
 # define KDF_R_INVALID_ITERATION_COUNT                    119
 # define KDF_R_INVALID_KEY_LEN                            120
 # define KDF_R_INVALID_MAC_TYPE                           116
+# define KDF_R_INVALID_MODE                               128
+# define KDF_R_INVALID_MODE_INT                           129
 # define KDF_R_INVALID_SALT_LEN                           121
 # define KDF_R_MISSING_CEK_ALG                            125
 # define KDF_R_MISSING_ITERATION_COUNT                    109
