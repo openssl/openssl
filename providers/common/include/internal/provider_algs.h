@@ -115,17 +115,6 @@ extern const OSSL_DISPATCH camellia192ctr_functions[];
 extern const OSSL_DISPATCH camellia128ctr_functions[];
 #endif /* OPENSSL_NO_CAMELLIA */
 
-/* MACs */
-extern const OSSL_DISPATCH blake2bmac_functions[];
-extern const OSSL_DISPATCH blake2smac_functions[];
-extern const OSSL_DISPATCH cmac_functions[];
-extern const OSSL_DISPATCH gmac_functions[];
-extern const OSSL_DISPATCH hmac_functions[];
-extern const OSSL_DISPATCH kmac128_functions[];
-extern const OSSL_DISPATCH kmac256_functions[];
-extern const OSSL_DISPATCH siphash_functions[];
-extern const OSSL_DISPATCH poly1305_functions[];
-
 extern const OSSL_DISPATCH tdes_ede3_ecb_functions[];
 extern const OSSL_DISPATCH tdes_ede3_cbc_functions[];
 
@@ -143,6 +132,32 @@ extern const OSSL_DISPATCH tdes_ede2_cfb_functions[];
 extern const OSSL_DISPATCH tdes_desx_cbc_functions[];
 extern const OSSL_DISPATCH tdes_wrap_cbc_functions[];
 #endif /* FIPS_MODE */
+
+/* MACs */
+extern const OSSL_DISPATCH blake2bmac_functions[];
+extern const OSSL_DISPATCH blake2smac_functions[];
+extern const OSSL_DISPATCH cmac_functions[];
+extern const OSSL_DISPATCH gmac_functions[];
+extern const OSSL_DISPATCH hmac_functions[];
+extern const OSSL_DISPATCH kmac128_functions[];
+extern const OSSL_DISPATCH kmac256_functions[];
+extern const OSSL_DISPATCH siphash_functions[];
+extern const OSSL_DISPATCH poly1305_functions[];
+
+/* KDFs / PRFs */
+extern const OSSL_DISPATCH kdf_pbkdf2_functions[];
+#ifndef OPENSSL_NO_SCRYPT
+extern const OSSL_DISPATCH kdf_scrypt_functions[];
+#endif
+extern const OSSL_DISPATCH kdf_tls1_prf_functions[];
+extern const OSSL_DISPATCH kdf_hkdf_functions[];
+extern const OSSL_DISPATCH kdf_sshkdf_functions[];
+extern const OSSL_DISPATCH kdf_sskdf_functions[];
+extern const OSSL_DISPATCH kdf_x963_kdf_functions[];
+#ifndef OPENSSL_NO_CMS
+extern const OSSL_DISPATCH kdf_x942_kdf_functions[];
+#endif
+
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];

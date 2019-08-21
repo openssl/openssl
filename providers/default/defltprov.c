@@ -211,6 +211,22 @@ static const OSSL_ALGORITHM deflt_macs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_kdfs[] = {
+    { "HKDF", "default=yes", kdf_hkdf_functions },
+    { "SSKDF", "default=yes", kdf_sskdf_functions },
+    { "PBKDF2", "default=yes", kdf_pbkdf2_functions },
+    { "SSHKDF", "default=yes", kdf_sshkdf_functions },
+    { "X963KDF", "default=yes", kdf_x963_kdf_functions },
+    { "TLS1-PRF", "default=yes", kdf_tls1_prf_functions },
+#ifndef OPENSSL_NO_CMS
+    { "X942KDF", "default=yes", kdf_x942_kdf_functions },
+#endif
+#ifndef OPENSSL_NO_SCRYPT
+    { "id-scrypt", "default=yes", kdf_scrypt_functions },
+#endif
+   { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM deflt_keyexch[] = {
 #ifndef OPENSSL_NO_DH
     { "dhKeyAgreement", "default=yes", dh_keyexch_functions },
@@ -237,6 +253,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
         return deflt_ciphers;
     case OSSL_OP_MAC:
         return deflt_macs;
+    case OSSL_OP_KDF:
+        return deflt_kdfs;
     case OSSL_OP_KEYMGMT:
         return deflt_keymgmt;
     case OSSL_OP_KEYEXCH:

@@ -13,9 +13,13 @@
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+#include "internal/numbers.h"
 #include "internal/evp_int.h"
-#include "kdf_local.h"
+#include "internal/provider_ctx.h"
+#include "internal/providercommonerr.h"
+#include "internal/provider_algs.h"
 
 /* Constants specified in SP800-132 */
 #define KDF_PBKDF2_MIN_KEY_LEN_BITS  112
@@ -32,195 +36,216 @@
 # define KDF_PBKDF2_DEFAULT_CHECKS 0
 #endif /* FIPS_MODE */
 
-static void kdf_pbkdf2_reset(EVP_KDF_IMPL *impl);
-static void kdf_pbkdf2_init(EVP_KDF_IMPL *impl);
+static OSSL_OP_kdf_newctx_fn kdf_pbkdf2_new;
+static OSSL_OP_kdf_freectx_fn kdf_pbkdf2_free;
+static OSSL_OP_kdf_reset_fn kdf_pbkdf2_reset;
+static OSSL_OP_kdf_derive_fn kdf_pbkdf2_derive;
+static OSSL_OP_kdf_settable_ctx_params_fn kdf_pbkdf2_settable_ctx_params;
+static OSSL_OP_kdf_set_ctx_params_fn kdf_pbkdf2_set_ctx_params;
+
 static int  pbkdf2_derive(const char *pass, size_t passlen,
-                          const unsigned char *salt, int saltlen, int iter,
+                          const unsigned char *salt, int saltlen, uint64_t iter,
                           const EVP_MD *digest, unsigned char *key,
                           size_t keylen, int extra_checks);
 
-struct evp_kdf_impl_st {
+typedef struct {
+    void *provctx;
     unsigned char *pass;
     size_t pass_len;
     unsigned char *salt;
     size_t salt_len;
-    int iter;
-    const EVP_MD *md;
+    uint64_t iter;
+    EVP_MD *md;
     int lower_bound_checks;
-};
+} KDF_PBKDF2;
 
-static EVP_KDF_IMPL *kdf_pbkdf2_new(void)
+static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx);
+
+static void *kdf_pbkdf2_new(void *provctx)
 {
-    EVP_KDF_IMPL *impl;
+    KDF_PBKDF2 *ctx;
 
-    impl = OPENSSL_zalloc(sizeof(*impl));
-    if (impl == NULL) {
-        KDFerr(KDF_F_KDF_PBKDF2_NEW, ERR_R_MALLOC_FAILURE);
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    kdf_pbkdf2_init(impl);
-    return impl;
+    ctx->provctx = provctx;
+    kdf_pbkdf2_init(ctx);
+    return ctx;
 }
 
-static void kdf_pbkdf2_free(EVP_KDF_IMPL *impl)
+static void kdf_pbkdf2_free(void *vctx)
 {
-    kdf_pbkdf2_reset(impl);
-    OPENSSL_free(impl);
+    KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
+
+    kdf_pbkdf2_reset(ctx);
+    EVP_MD_meth_free(ctx->md);
+    OPENSSL_free(ctx);
 }
 
-static void kdf_pbkdf2_reset(EVP_KDF_IMPL *impl)
+static void kdf_pbkdf2_reset(void *vctx)
 {
-    OPENSSL_free(impl->salt);
-    OPENSSL_clear_free(impl->pass, impl->pass_len);
-    memset(impl, 0, sizeof(*impl));
-    kdf_pbkdf2_init(impl);
+    KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
+
+    OPENSSL_free(ctx->salt);
+    OPENSSL_clear_free(ctx->pass, ctx->pass_len);
+    memset(ctx, 0, sizeof(*ctx));
+    kdf_pbkdf2_init(ctx);
 }
 
-static void kdf_pbkdf2_init(EVP_KDF_IMPL *impl)
+static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
 {
-    impl->iter = PKCS5_DEFAULT_ITER;
-    impl->md = EVP_sha1();
-    impl->lower_bound_checks = KDF_PBKDF2_DEFAULT_CHECKS;
+    ctx->iter = PKCS5_DEFAULT_ITER;
+    ctx->md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), SN_sha1,
+                           NULL);
+    ctx->lower_bound_checks = KDF_PBKDF2_DEFAULT_CHECKS;
 }
 
 static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
-                             const unsigned char *new_buffer,
-                             size_t new_buflen)
+                             const OSSL_PARAM *p)
 {
-    if (new_buffer == NULL)
-        return 1;
-
     OPENSSL_clear_free(*buffer, *buflen);
-
-    if (new_buflen > 0) {
-        *buffer = OPENSSL_memdup(new_buffer, new_buflen);
-    } else {
-        *buffer = OPENSSL_malloc(1);
+    if (p->data_size == 0) {
+        if ((*buffer = OPENSSL_malloc(1)) == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    } else if (p->data != NULL) {
+        *buffer = NULL;
+        if (!OSSL_PARAM_get_octet_string(p, (void **)buffer, 0, buflen))
+            return 0;
     }
-    if (*buffer == NULL) {
-        KDFerr(KDF_F_PBKDF2_SET_MEMBUF, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-
-    *buflen = new_buflen;
     return 1;
 }
 
-static int kdf_pbkdf2_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
+static int kdf_pbkdf2_derive(void *vctx, unsigned char *key,
+                             size_t keylen)
 {
-    int iter, pkcs5, min_iter;
-    const unsigned char *p;
-    size_t len;
-    const EVP_MD *md;
+    KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
 
-    switch (cmd) {
-    case EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE:
-        pkcs5 = va_arg(args, int);
-        impl->lower_bound_checks = (pkcs5 == 0) ? 1 : 0;
-        return 1;
-    case EVP_KDF_CTRL_SET_PASS:
-        p = va_arg(args, const unsigned char *);
-        len = va_arg(args, size_t);
-        return pbkdf2_set_membuf(&impl->pass, &impl->pass_len, p, len);
-
-    case EVP_KDF_CTRL_SET_SALT:
-        p = va_arg(args, const unsigned char *);
-        len = va_arg(args, size_t);
-        if (impl->lower_bound_checks != 0 && len < KDF_PBKDF2_MIN_SALT_LEN) {
-            KDFerr(KDF_F_KDF_PBKDF2_CTRL, KDF_R_INVALID_SALT_LEN);
-            return 0;
-        }
-        return pbkdf2_set_membuf(&impl->salt, &impl->salt_len, p, len);
-
-    case EVP_KDF_CTRL_SET_ITER:
-        iter = va_arg(args, int);
-        min_iter = impl->lower_bound_checks != 0 ? KDF_PBKDF2_MIN_ITERATIONS : 1;
-        if (iter < min_iter) {
-            KDFerr(KDF_F_KDF_PBKDF2_CTRL, KDF_R_INVALID_ITERATION_COUNT);
-            return 0;
-        }
-        impl->iter = iter;
-        return 1;
-
-    case EVP_KDF_CTRL_SET_MD:
-        md = va_arg(args, const EVP_MD *);
-        if (md == NULL) {
-            KDFerr(KDF_F_KDF_PBKDF2_CTRL, KDF_R_VALUE_MISSING);
-            return 0;
-        }
-
-        impl->md = md;
-        return 1;
-
-    default:
-        return -2;
-    }
-}
-
-static int kdf_pbkdf2_ctrl_str(EVP_KDF_IMPL *impl, const char *type,
-                               const char *value)
-{
-    if (value == NULL) {
-        KDFerr(KDF_F_KDF_PBKDF2_CTRL_STR, KDF_R_VALUE_MISSING);
+    if (ctx->pass == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_PASS);
         return 0;
     }
 
-    if (strcmp(type, "pass") == 0)
-        return kdf_str2ctrl(impl, kdf_pbkdf2_ctrl, EVP_KDF_CTRL_SET_PASS,
-                            value);
+    if (ctx->salt == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SALT);
+        return 0;
+    }
 
-    if (strcmp(type, "hexpass") == 0)
-        return kdf_hex2ctrl(impl, kdf_pbkdf2_ctrl, EVP_KDF_CTRL_SET_PASS,
-                            value);
+    return pbkdf2_derive((char *)ctx->pass, ctx->pass_len,
+                         ctx->salt, ctx->salt_len, ctx->iter,
+                         ctx->md, key, keylen, ctx->lower_bound_checks);
+}
 
-    if (strcmp(type, "salt") == 0)
-        return kdf_str2ctrl(impl, kdf_pbkdf2_ctrl, EVP_KDF_CTRL_SET_SALT,
-                            value);
+static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    KDF_PBKDF2 *ctx = vctx;
+    EVP_MD *md;
+    int pkcs5;
+    uint64_t iter, min_iter;
+    const char *properties = NULL;
 
-    if (strcmp(type, "hexsalt") == 0)
-        return kdf_hex2ctrl(impl, kdf_pbkdf2_ctrl, EVP_KDF_CTRL_SET_SALT,
-                            value);
+    /* Grab search properties, this should be before the digest lookup */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
+        != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        properties = p->data;
+    }
+    /* Handle aliasing of digest parameter names */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), p->data,
+                          properties);
+        if (md == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+            return 0;
+        }
+        EVP_MD_meth_free(ctx->md);
+        ctx->md = md;
+    }
 
-    if (strcmp(type, "iter") == 0)
-        return call_ctrl(kdf_pbkdf2_ctrl, impl, EVP_KDF_CTRL_SET_ITER,
-                         atoi(value));
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PKCS5)) != NULL) {
+        if (!OSSL_PARAM_get_int(p, &pkcs5))
+            return 0;
+        ctx->lower_bound_checks = pkcs5 == 0;
+    }
 
-    if (strcmp(type, "digest") == 0)
-        return kdf_md2ctrl(impl, kdf_pbkdf2_ctrl, EVP_KDF_CTRL_SET_MD, value);
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
+        if (!pbkdf2_set_membuf(&ctx->pass, &ctx->pass_len, p))
+            return 0;
 
-    if (strcmp(type, "pkcs5") == 0)
-        return kdf_str2ctrl(impl, kdf_pbkdf2_ctrl,
-                            EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE, value);
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL) {
+        if (ctx->lower_bound_checks != 0
+            && p->data_size < KDF_PBKDF2_MIN_SALT_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
+            return 0;
+        }
+        if (!pbkdf2_set_membuf(&ctx->salt, &ctx->salt_len,p))
+            return 0;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_ITER)) != NULL) {
+        if (!OSSL_PARAM_get_uint64(p, &iter))
+            return 0;
+        min_iter = ctx->lower_bound_checks != 0 ? KDF_PBKDF2_MIN_ITERATIONS : 1;
+        if (iter < min_iter) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_ITERATION_COUNT);
+            return 0;
+        }
+        ctx->iter = iter;
+    }
+    return 1;
+}
+
+static const OSSL_PARAM *kdf_pbkdf2_settable_ctx_params(void)
+{
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PASSWORD, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
+        OSSL_PARAM_uint64(OSSL_KDF_PARAM_ITER, NULL),
+        OSSL_PARAM_int(OSSL_KDF_PARAM_PKCS5, NULL),
+        OSSL_PARAM_END
+    };
+    return known_settable_ctx_params;
+}
+
+static int kdf_pbkdf2_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
+        return OSSL_PARAM_set_size_t(p, SIZE_MAX);
     return -2;
 }
 
-static int kdf_pbkdf2_derive(EVP_KDF_IMPL *impl, unsigned char *key,
-                             size_t keylen)
+static const OSSL_PARAM *kdf_pbkdf2_gettable_ctx_params(void)
 {
-    if (impl->pass == NULL) {
-        KDFerr(KDF_F_KDF_PBKDF2_DERIVE, KDF_R_MISSING_PASS);
-        return 0;
-    }
-
-    if (impl->salt == NULL) {
-        KDFerr(KDF_F_KDF_PBKDF2_DERIVE, KDF_R_MISSING_SALT);
-        return 0;
-    }
-
-    return pbkdf2_derive((char *)impl->pass, impl->pass_len,
-                         impl->salt, impl->salt_len, impl->iter,
-                         impl->md, key, keylen, impl->lower_bound_checks);
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
+        OSSL_PARAM_END
+    };
+    return known_gettable_ctx_params;
 }
 
-const EVP_KDF pbkdf2_kdf_meth = {
-    EVP_KDF_PBKDF2,
-    kdf_pbkdf2_new,
-    kdf_pbkdf2_free,
-    kdf_pbkdf2_reset,
-    kdf_pbkdf2_ctrl,
-    kdf_pbkdf2_ctrl_str,
-    NULL,
-    kdf_pbkdf2_derive
+const OSSL_DISPATCH kdf_pbkdf2_functions[] = {
+    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pbkdf2_new },
+    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pbkdf2_free },
+    { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pbkdf2_reset },
+    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_pbkdf2_derive },
+    { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
+      (void(*)(void))kdf_pbkdf2_settable_ctx_params },
+    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_pbkdf2_set_ctx_params },
+    { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
+      (void(*)(void))kdf_pbkdf2_gettable_ctx_params },
+    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_pbkdf2_get_ctx_params },
+    { 0, NULL }
 };
 
 /*
@@ -234,13 +259,14 @@ const EVP_KDF pbkdf2_kdf_meth = {
  *  - Randomly-generated portion of the salt shall be at least 128 bits.
  */
 static int pbkdf2_derive(const char *pass, size_t passlen,
-                         const unsigned char *salt, int saltlen, int iter,
+                         const unsigned char *salt, int saltlen, uint64_t iter,
                          const EVP_MD *digest, unsigned char *key,
                          size_t keylen, int lower_bound_checks)
 {
     int ret = 0;
     unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
-    int cplen, j, k, tkeylen, mdlen;
+    int cplen, k, tkeylen, mdlen;
+    uint64_t j;
     unsigned long i = 1;
     HMAC_CTX *hctx_tpl = NULL, *hctx = NULL;
 
@@ -253,23 +279,23 @@ static int pbkdf2_derive(const char *pass, size_t passlen,
      * results in an overflow of the loop counter 'i'.
      */
     if ((keylen / mdlen) >= KDF_PBKDF2_MAX_KEY_LEN_DIGEST_RATIO) {
-        KDFerr(KDF_F_PBKDF2_DERIVE, KDF_R_INVALID_KEY_LEN);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LEN);
         return 0;
     }
 
     if (lower_bound_checks) {
-         if ((keylen * 8) < KDF_PBKDF2_MIN_KEY_LEN_BITS) {
-             KDFerr(KDF_F_PBKDF2_DERIVE, KDF_R_INVALID_KEY_LEN);
-             return 0;
-         }
-         if (saltlen < KDF_PBKDF2_MIN_SALT_LEN) {
-             KDFerr(KDF_F_PBKDF2_DERIVE, KDF_R_INVALID_SALT_LEN);
+        if ((keylen * 8) < KDF_PBKDF2_MIN_KEY_LEN_BITS) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LEN);
             return 0;
-         }
-         if (iter < KDF_PBKDF2_MIN_ITERATIONS) {
-             KDFerr(KDF_F_PBKDF2_DERIVE, KDF_R_INVALID_ITERATION_COUNT);
-             return 0;
-         }
+        }
+        if (saltlen < KDF_PBKDF2_MIN_SALT_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
+            return 0;
+        }
+        if (iter < KDF_PBKDF2_MIN_ITERATIONS) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_ITERATION_COUNT);
+            return 0;
+        }
     }
 
     hctx_tpl = HMAC_CTX_new();

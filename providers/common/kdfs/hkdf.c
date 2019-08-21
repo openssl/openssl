@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,14 +13,26 @@
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/evp_int.h"
-#include "kdf_local.h"
+#include "internal/provider_ctx.h"
+#include "internal/providercommonerr.h"
+#include "internal/provider_algs.h"
+#include "e_os.h"
 
 #define HKDF_MAXBUF 1024
 
-static void kdf_hkdf_reset(EVP_KDF_IMPL *impl);
+static OSSL_OP_kdf_newctx_fn kdf_hkdf_new;
+static OSSL_OP_kdf_freectx_fn kdf_hkdf_free;
+static OSSL_OP_kdf_reset_fn kdf_hkdf_reset;
+static OSSL_OP_kdf_derive_fn kdf_hkdf_derive;
+static OSSL_OP_kdf_settable_ctx_params_fn kdf_hkdf_settable_ctx_params;
+static OSSL_OP_kdf_set_ctx_params_fn kdf_hkdf_set_ctx_params;
+static OSSL_OP_kdf_gettable_ctx_params_fn kdf_hkdf_gettable_ctx_params;
+static OSSL_OP_kdf_get_ctx_params_fn kdf_hkdf_get_ctx_params;
+
 static int HKDF(const EVP_MD *evp_md,
                 const unsigned char *salt, size_t salt_len,
                 const unsigned char *key, size_t key_len,
@@ -35,209 +47,236 @@ static int HKDF_Expand(const EVP_MD *evp_md,
                        const unsigned char *info, size_t info_len,
                        unsigned char *okm, size_t okm_len);
 
-struct evp_kdf_impl_st {
+typedef struct {
+    void *provctx;
     int mode;
-    const EVP_MD *md;
+    EVP_MD *md;
     unsigned char *salt;
     size_t salt_len;
     unsigned char *key;
     size_t key_len;
     unsigned char info[HKDF_MAXBUF];
     size_t info_len;
-};
+} KDF_HKDF;
 
-static EVP_KDF_IMPL *kdf_hkdf_new(void)
+static void *kdf_hkdf_new(void *provctx)
 {
-    EVP_KDF_IMPL *impl;
+    KDF_HKDF *ctx;
 
-    if ((impl = OPENSSL_zalloc(sizeof(*impl))) == NULL)
-        KDFerr(KDF_F_KDF_HKDF_NEW, ERR_R_MALLOC_FAILURE);
-    return impl;
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    else
+        ctx->provctx = provctx;
+    return ctx;
 }
 
-static void kdf_hkdf_free(EVP_KDF_IMPL *impl)
+static void kdf_hkdf_free(void *vctx)
 {
-    kdf_hkdf_reset(impl);
-    OPENSSL_free(impl);
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+
+    kdf_hkdf_reset(ctx);
+    EVP_MD_meth_free(ctx->md);
+    OPENSSL_free(ctx);
 }
 
-static void kdf_hkdf_reset(EVP_KDF_IMPL *impl)
+static void kdf_hkdf_reset(void *vctx)
 {
-    OPENSSL_free(impl->salt);
-    OPENSSL_clear_free(impl->key, impl->key_len);
-    OPENSSL_cleanse(impl->info, impl->info_len);
-    memset(impl, 0, sizeof(*impl));
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+
+    OPENSSL_free(ctx->salt);
+    OPENSSL_clear_free(ctx->key, ctx->key_len);
+    OPENSSL_cleanse(ctx->info, ctx->info_len);
+    memset(ctx, 0, sizeof(*ctx));
 }
 
-static int kdf_hkdf_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
-{
-    const unsigned char *p;
-    size_t len;
-    const EVP_MD *md;
-
-    switch (cmd) {
-    case EVP_KDF_CTRL_SET_MD:
-        md = va_arg(args, const EVP_MD *);
-        if (md == NULL)
-            return 0;
-
-        impl->md = md;
-        return 1;
-
-    case EVP_KDF_CTRL_SET_HKDF_MODE:
-        impl->mode = va_arg(args, int);
-        return 1;
-
-    case EVP_KDF_CTRL_SET_SALT:
-        p = va_arg(args, const unsigned char *);
-        len = va_arg(args, size_t);
-        if (len == 0 || p == NULL)
-            return 1;
-
-        OPENSSL_free(impl->salt);
-        impl->salt = OPENSSL_memdup(p, len);
-        if (impl->salt == NULL)
-            return 0;
-
-        impl->salt_len = len;
-        return 1;
-
-    case EVP_KDF_CTRL_SET_KEY:
-        p = va_arg(args, const unsigned char *);
-        len = va_arg(args, size_t);
-        OPENSSL_clear_free(impl->key, impl->key_len);
-        impl->key = OPENSSL_memdup(p, len);
-        if (impl->key == NULL)
-            return 0;
-
-        impl->key_len  = len;
-        return 1;
-
-    case EVP_KDF_CTRL_RESET_HKDF_INFO:
-        OPENSSL_cleanse(impl->info, impl->info_len);
-        impl->info_len = 0;
-        return 1;
-
-    case EVP_KDF_CTRL_ADD_HKDF_INFO:
-        p = va_arg(args, const unsigned char *);
-        len = va_arg(args, size_t);
-        if (len == 0 || p == NULL)
-            return 1;
-
-        if (len > (HKDF_MAXBUF - impl->info_len))
-            return 0;
-
-        memcpy(impl->info + impl->info_len, p, len);
-        impl->info_len += len;
-        return 1;
-
-    default:
-        return -2;
-    }
-}
-
-static int kdf_hkdf_ctrl_str(EVP_KDF_IMPL *impl, const char *type,
-                             const char *value)
-{
-    if (strcmp(type, "mode") == 0) {
-        int mode;
-
-        if (strcmp(value, "EXTRACT_AND_EXPAND") == 0)
-            mode = EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND;
-        else if (strcmp(value, "EXTRACT_ONLY") == 0)
-            mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
-        else if (strcmp(value, "EXPAND_ONLY") == 0)
-            mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
-        else
-            return 0;
-
-        return call_ctrl(kdf_hkdf_ctrl, impl, EVP_KDF_CTRL_SET_HKDF_MODE, mode);
-    }
-
-    if (strcmp(type, "digest") == 0)
-        return kdf_md2ctrl(impl, kdf_hkdf_ctrl, EVP_KDF_CTRL_SET_MD, value);
-
-    if (strcmp(type, "salt") == 0)
-        return kdf_str2ctrl(impl, kdf_hkdf_ctrl, EVP_KDF_CTRL_SET_SALT, value);
-
-    if (strcmp(type, "hexsalt") == 0)
-        return kdf_hex2ctrl(impl, kdf_hkdf_ctrl, EVP_KDF_CTRL_SET_SALT, value);
-
-    if (strcmp(type, "key") == 0)
-        return kdf_str2ctrl(impl, kdf_hkdf_ctrl, EVP_KDF_CTRL_SET_KEY, value);
-
-    if (strcmp(type, "hexkey") == 0)
-        return kdf_hex2ctrl(impl, kdf_hkdf_ctrl, EVP_KDF_CTRL_SET_KEY, value);
-
-    if (strcmp(type, "info") == 0)
-        return kdf_str2ctrl(impl, kdf_hkdf_ctrl, EVP_KDF_CTRL_ADD_HKDF_INFO,
-                            value);
-
-    if (strcmp(type, "hexinfo") == 0)
-        return kdf_hex2ctrl(impl, kdf_hkdf_ctrl, EVP_KDF_CTRL_ADD_HKDF_INFO,
-                            value);
-
-    return -2;
-}
-
-static size_t kdf_hkdf_size(EVP_KDF_IMPL *impl)
+static size_t kdf_hkdf_size(KDF_HKDF *ctx)
 {
     int sz;
 
-    if (impl->mode != EVP_KDF_HKDF_MODE_EXTRACT_ONLY)
+    if (ctx->mode != EVP_KDF_HKDF_MODE_EXTRACT_ONLY)
         return SIZE_MAX;
 
-    if (impl->md == NULL) {
-        KDFerr(KDF_F_KDF_HKDF_SIZE, KDF_R_MISSING_MESSAGE_DIGEST);
+    if (ctx->md == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    sz = EVP_MD_size(impl->md);
+    sz = EVP_MD_size(ctx->md);
     if (sz < 0)
         return 0;
 
     return sz;
 }
 
-static int kdf_hkdf_derive(EVP_KDF_IMPL *impl, unsigned char *key,
-                           size_t keylen)
+static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
-    if (impl->md == NULL) {
-        KDFerr(KDF_F_KDF_HKDF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+
+    if (ctx->md == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    if (impl->key == NULL) {
-        KDFerr(KDF_F_KDF_HKDF_DERIVE, KDF_R_MISSING_KEY);
+    if (ctx->key == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
 
-    switch (impl->mode) {
+    switch (ctx->mode) {
     case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
-        return HKDF(impl->md, impl->salt, impl->salt_len, impl->key,
-                    impl->key_len, impl->info, impl->info_len, key,
+        return HKDF(ctx->md, ctx->salt, ctx->salt_len, ctx->key,
+                    ctx->key_len, ctx->info, ctx->info_len, key,
                     keylen);
 
     case EVP_KDF_HKDF_MODE_EXTRACT_ONLY:
-        return HKDF_Extract(impl->md, impl->salt, impl->salt_len, impl->key,
-                            impl->key_len, key, keylen);
+        return HKDF_Extract(ctx->md, ctx->salt, ctx->salt_len, ctx->key,
+                            ctx->key_len, key, keylen);
 
     case EVP_KDF_HKDF_MODE_EXPAND_ONLY:
-        return HKDF_Expand(impl->md, impl->key, impl->key_len, impl->info,
-                           impl->info_len, key, keylen);
+        return HKDF_Expand(ctx->md, ctx->key, ctx->key_len, ctx->info,
+                           ctx->info_len, key, keylen);
 
     default:
         return 0;
     }
 }
 
-const EVP_KDF hkdf_kdf_meth = {
-    EVP_KDF_HKDF,
-    kdf_hkdf_new,
-    kdf_hkdf_free,
-    kdf_hkdf_reset,
-    kdf_hkdf_ctrl,
-    kdf_hkdf_ctrl_str,
-    kdf_hkdf_size,
-    kdf_hkdf_derive
+static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    KDF_HKDF *ctx = vctx;
+    EVP_MD *md;
+    int n;
+    const char *properties = NULL;
+
+    /* Grab search properties, this should be before the digest lookup */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
+        != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        properties = p->data;
+    }
+    /* Handle aliasing of digest parameter names */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), p->data,
+                          properties);
+        if (md == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+            return 0;
+        }
+        EVP_MD_meth_free(ctx->md);
+        ctx->md = md;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE)) != NULL) {
+        if (p->data_type == OSSL_PARAM_UTF8_STRING) {
+            if (strcasecmp(p->data, "EXTRACT_AND_EXPAND") == 0) {
+                ctx->mode = EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND;
+            } else if (strcasecmp(p->data, "EXTRACT_ONLY") == 0) {
+                ctx->mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
+            } else if (strcasecmp(p->data, "EXPAND_ONLY") == 0) {
+                ctx->mode = EVP_KDF_HKDF_MODE_EXPAND_ONLY;
+            } else {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
+                return 0;
+            }
+        } else if (OSSL_PARAM_get_int(p, &n)) {
+            if (n != EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND
+                && n != EVP_KDF_HKDF_MODE_EXTRACT_ONLY
+                && n != EVP_KDF_HKDF_MODE_EXPAND_ONLY) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
+                return 0;
+            }
+            ctx->mode = n;
+        } else {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
+            return 0;
+        }
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL) {
+        OPENSSL_clear_free(ctx->key, ctx->key_len);
+        ctx->key = NULL;
+        if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->key, 0,
+                                         &ctx->key_len))
+            return 0;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL) {
+        if (p->data_size != 0 && p->data != NULL) {
+            OPENSSL_free(ctx->salt);
+            ctx->salt = NULL;
+            if (!OSSL_PARAM_get_octet_string(p, (void **)&ctx->salt, 0,
+                                             &ctx->salt_len))
+                return 0;
+        }
+    }
+    /* The info fields concatenate, so process them all */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_INFO)) != NULL) {
+        ctx->info_len = 0;
+        for (; p != NULL; p = OSSL_PARAM_locate_const(p + 1,
+                                                      OSSL_KDF_PARAM_INFO)) {
+            const void *q = ctx->info + ctx->info_len;
+            size_t sz = 0;
+
+            if (p->data_size != 0
+                && p->data != NULL
+                && !OSSL_PARAM_get_octet_string(p, (void **)&q,
+                                                HKDF_MAXBUF - ctx->info_len,
+                                                &sz))
+                return 0;
+            ctx->info_len += sz;
+        }
+    }
+    return 1;
+}
+
+static const OSSL_PARAM *kdf_hkdf_settable_ctx_params(void)
+{
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),
+        OSSL_PARAM_int(OSSL_KDF_PARAM_MODE, NULL),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
+        OSSL_PARAM_END
+    };
+    return known_settable_ctx_params;
+}
+
+static int kdf_hkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
+        return OSSL_PARAM_set_size_t(p, kdf_hkdf_size(ctx));
+    return -2;
+}
+
+static const OSSL_PARAM *kdf_hkdf_gettable_ctx_params(void)
+{
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
+        OSSL_PARAM_END
+    };
+    return known_gettable_ctx_params;
+}
+
+const OSSL_DISPATCH kdf_hkdf_functions[] = {
+    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_hkdf_new },
+    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_hkdf_free },
+    { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_hkdf_reset },
+    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_hkdf_derive },
+    { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
+      (void(*)(void))kdf_hkdf_settable_ctx_params },
+    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_hkdf_set_ctx_params },
+    { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
+      (void(*)(void))kdf_hkdf_gettable_ctx_params },
+    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params },
+    { 0, NULL }
 };
 
 /*
@@ -325,7 +364,7 @@ static int HKDF_Extract(const EVP_MD *evp_md,
     if (sz < 0)
         return 0;
     if (prk_len != (size_t)sz) {
-        KDFerr(KDF_F_HKDF_EXTRACT, KDF_R_WRONG_OUTPUT_BUFFER_SIZE);
+        ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_OUTPUT_BUFFER_SIZE);
         return 0;
     }
     /* calc: PRK = HMAC-Hash(salt, IKM) */
