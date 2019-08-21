@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "ciphers_locl.h"
+#include "cipher_locl.h"
 #include "internal/ciphermode_platform.h"
 
 static const PROV_GCM_HW aes_gcm;
@@ -30,78 +30,11 @@ static int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
     ctx->key_set = 1;
 
 #if defined(AESNI_CAPABLE)
-
-/* AES-NI section */
-static int aesni_gcm_init_key(PROV_GCM_CTX *ctx, const unsigned char *key,
-                              size_t keylen)
-{
-    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks = &actx->ks.ks;
-
-    SET_KEY_CTR_FN(ks, aesni_set_encrypt_key, aesni_encrypt,
-                   aesni_ctr32_encrypt_blocks);
-    return 1;
-}
-
-static const PROV_GCM_HW aesni_gcm = {
-    aesni_gcm_init_key,
-    gcm_setiv,
-    gcm_aad_update,
-    gcm_cipher_update,
-    gcm_cipher_final,
-    gcm_one_shot
-};
-
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
-{
-    return AESNI_CAPABLE ? &aesni_gcm : &aes_gcm;
-}
-
+# include "cipher_aes_gcm_hw_aesni.c"
 #elif defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
-
-/* Fujitsu SPARC64 X support */
-
-static int t4_aes_gcm_init_key(PROV_GCM_CTX *ctx, const unsigned char *key,
-                               size_t keylen)
-{
-    ctr128_f ctr;
-    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks = &actx->ks.ks;
-
-
-    switch (keylen) {
-    case 16:
-        ctr = (ctr128_f)aes128_t4_ctr32_encrypt;
-        break;
-    case 24:
-        ctr = (ctr128_f)aes192_t4_ctr32_encrypt;
-        break;
-    case 32:
-        ctr = (ctr128_f)aes256_t4_ctr32_encrypt;
-        break;
-    default:
-        return 0;
-    }
-
-    SET_KEY_CTR_FN(ks, aes_t4_set_encrypt_key, aes_t4_encrypt, ctr);
-    return 1;
-}
-
-static const PROV_GCM_HW t4_aes_gcm = {
-    t4_aes_gcm_init_key,
-    gcm_setiv,
-    gcm_aad_update,
-    gcm_cipher_update,
-    gcm_cipher_final,
-    gcm_one_shot
-};
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
-{
-    return SPARC_AES_CAPABLE ? &t4_aes_gcm : &aes_gcm;
-}
-
+# include "cipher_aes_gcm_hw_t4.c"
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
-# include "gcm_s390x.c"
+# include "cipher_aes_gcm_hw_s390x.c"
 #else
 const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
 {
@@ -109,8 +42,8 @@ const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
 }
 #endif
 
-static int generic_aes_gcm_init_key(PROV_GCM_CTX *ctx, const unsigned char *key,
-                                    size_t keylen)
+static int generic_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
+                                   size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
@@ -258,7 +191,7 @@ err:
 }
 
 static const PROV_GCM_HW aes_gcm = {
-    generic_aes_gcm_init_key,
+    generic_aes_gcm_initkey,
     gcm_setiv,
     gcm_aad_update,
     gcm_cipher_update,
@@ -266,42 +199,4 @@ static const PROV_GCM_HW aes_gcm = {
     gcm_one_shot
 };
 
-#if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
-
-static int aria_gcm_init_key(PROV_GCM_CTX *ctx, const unsigned char *key,
-                             size_t keylen)
-{
-    PROV_ARIA_GCM_CTX *actx = (PROV_ARIA_GCM_CTX *)ctx;
-    ARIA_KEY *ks = &actx->ks.ks;
-
-    SET_KEY_CTR_FN(ks, aria_set_encrypt_key, aria_encrypt, NULL);
-    return 1;
-}
-
-static int aria_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
-                              size_t len, unsigned char *out)
-{
-    if (ctx->enc) {
-        if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
-            return 0;
-    } else {
-        if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, len))
-            return 0;
-    }
-    return 1;
-}
-
-static const PROV_GCM_HW aria_gcm = {
-    aria_gcm_init_key,
-    gcm_setiv,
-    gcm_aad_update,
-    aria_cipher_update,
-    gcm_cipher_final,
-    gcm_one_shot
-};
-const PROV_GCM_HW *PROV_ARIA_HW_gcm(size_t keybits)
-{
-    return &aria_gcm;
-}
-
-#endif /* !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE) */
+#include "cipher_aria_gcm_hw.c"

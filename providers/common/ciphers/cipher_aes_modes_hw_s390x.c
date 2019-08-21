@@ -12,16 +12,19 @@
  * Note this file is included by aes_gcm_hw.c
  */
 
-# include "s390x_arch.h"
+#include "s390x_arch.h"
 
-# define s390x_aes_init_key aes_init_key
-# define s390x_aes_cbc_init_key aes_init_key
-# define s390x_aes_cbc_cipher generic_cbc_cipher
+#define s390x_aes_cbc_initkey    cipher_hw_aes_initkey
+#define s390x_aes_cfb1_initkey   cipher_hw_aes_initkey
+#define s390x_aes_ctr_initkey    cipher_hw_aes_initkey
+#define s390x_aes_cbc_cipher_hw  cipher_hw_generic_cbc
+#define s390x_aes_cfb1_cipher_hw cipher_hw_generic_cfb1
+#define s390x_aes_ctr_cipher_hw  cipher_hw_generic_ctr
 
-static int s390x_aes_ecb_init_key(PROV_GENERIC_KEY *dat,
-                                  const unsigned char *key, size_t keylen)
+static int s390x_aes_ecb_initkey(PROV_CIPHER_CTX *dat,
+                                 const unsigned char *key, size_t keylen)
 {
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
     adat->plat.s390x.fc = S390X_AES_FC(keylen);
     if (!dat->enc)
@@ -31,19 +34,19 @@ static int s390x_aes_ecb_init_key(PROV_GENERIC_KEY *dat,
     return 1;
 }
 
-static int s390x_aes_ecb_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
-                                const unsigned char *in, size_t len)
+static int s390x_aes_ecb_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
+                                   const unsigned char *in, size_t len)
 {
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
     s390x_km(in, len, out, adat->plat.s390x.fc, &adat->plat.s390x.param.km);
     return 1;
 }
 
-static int s390x_aes_ofb_init_key(PROV_GENERIC_KEY *dat,
-                                  const unsigned char *key, size_t keylen)
+static int s390x_aes_ofb_initkey(PROV_CIPHER_CTX *dat,
+                                 const unsigned char *key, size_t keylen)
 {
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
     memcpy(adat->plat.s390x.param.kmo_kmf.cv, dat->iv, dat->blocksize);
     memcpy(adat->plat.s390x.param.kmo_kmf.k, key, keylen);
@@ -52,10 +55,10 @@ static int s390x_aes_ofb_init_key(PROV_GENERIC_KEY *dat,
     return 1;
 }
 
-static int s390x_aes_ofb_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
-                                const unsigned char *in, size_t len)
+static int s390x_aes_ofb_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
+                                   const unsigned char *in, size_t len)
 {
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
     int n = adat->plat.s390x.res;
     int rem;
 
@@ -93,10 +96,10 @@ static int s390x_aes_ofb_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
     return 1;
 }
 
-static int s390x_aes_cfb_init_key(PROV_GENERIC_KEY *dat,
-                                  const unsigned char *key, size_t keylen)
+static int s390x_aes_cfb_initkey(PROV_CIPHER_CTX *dat,
+                                 const unsigned char *key, size_t keylen)
 {
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
     adat->plat.s390x.fc = S390X_AES_FC(keylen);
     adat->plat.s390x.fc |= 16 << 24;   /* 16 bytes cipher feedback */
@@ -109,10 +112,10 @@ static int s390x_aes_cfb_init_key(PROV_GENERIC_KEY *dat,
     return 1;
 }
 
-static int s390x_aes_cfb_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
-                                const unsigned char *in, size_t len)
+static int s390x_aes_cfb_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
+                                   const unsigned char *in, size_t len)
 {
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
     int n = adat->plat.s390x.res;
     int rem;
     unsigned char tmp;
@@ -155,10 +158,10 @@ static int s390x_aes_cfb_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
     return 1;
 }
 
-static int s390x_aes_cfb8_init_key(PROV_GENERIC_KEY *dat,
-                                   const unsigned char *key, size_t keylen)
+static int s390x_aes_cfb8_initkey(PROV_CIPHER_CTX *dat,
+                                  const unsigned char *key, size_t keylen)
 {
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
     adat->plat.s390x.fc = S390X_AES_FC(keylen);
     adat->plat.s390x.fc |= 1 << 24;   /* 1 byte cipher feedback */
@@ -170,36 +173,24 @@ static int s390x_aes_cfb8_init_key(PROV_GENERIC_KEY *dat,
     return 1;
 }
 
-static int s390x_aes_cfb8_cipher(PROV_GENERIC_KEY *dat, unsigned char *out,
-                                 const unsigned char *in, size_t len)
+static int s390x_aes_cfb8_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
+                                    const unsigned char *in, size_t len)
 {
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
     s390x_kmf(in, len, out, adat->plat.s390x.fc,
               &adat->plat.s390x.param.kmo_kmf);
     return 1;
 }
 
-# define s390x_aes_cfb1_init_key aes_init_key
-# define s390x_aes_cfb1_cipher generic_cfb1_cipher
-# define s390x_aes_ctr_init_key aes_init_key
-# define s390x_aes_ctr_cipher aes_ctr_cipher
+#define PROV_CIPHER_HW_declare(mode)                                           \
+static const PROV_CIPHER_HW s390x_aes_##mode = {                               \
+    s390x_aes_##mode##_initkey,                                                \
+    s390x_aes_##mode##_cipher_hw                                               \
+};
+#define PROV_CIPHER_HW_select(mode)                                            \
+if ((keybits == 128 && S390X_aes_128_##mode##_CAPABLE)                         \
+     || (keybits == 192 && S390X_aes_192_##mode##_CAPABLE)                     \
+     || (keybits == 256 && S390X_aes_256_##mode##_CAPABLE))                    \
+    return &s390x_aes_##mode;
 
-# define BLOCK_CIPHER_aes_generic_prov(mode)                                   \
-static const PROV_GENERIC_CIPHER s390x_aes_##mode = {                          \
-        s390x_aes_##mode##_init_key,                                           \
-        s390x_aes_##mode##_cipher                                              \
-};                                                                             \
-static const PROV_GENERIC_CIPHER aes_##mode = {                                \
-        aes_init_key,                                                          \
-        generic_##mode##_cipher                                                \
-};                                                                             \
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_##mode(size_t keybits)              \
-{                                                                              \
-    if ((keybits == 128 && S390X_aes_128_##mode##_CAPABLE)                     \
-            || (keybits == 192 && S390X_aes_192_##mode##_CAPABLE)              \
-            || (keybits == 256 && S390X_aes_256_##mode##_CAPABLE))             \
-        return &s390x_aes_##mode;                                              \
-                                                                               \
-    return &aes_##mode;                                                        \
-}

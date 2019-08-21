@@ -15,8 +15,8 @@
 /* iv + padding length for iv lengths != 12 */
 #define S390X_gcm_ivpadlen(i)  ((((i) + 15) >> 4 << 4) + 16)
 
-static int s390x_aes_gcm_init_key(PROV_GCM_CTX *ctx,
-                                  const unsigned char *key, size_t keylen)
+static int s390x_aes_gcm_initkey(PROV_GCM_CTX *ctx,
+                                 const unsigned char *key, size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
 
@@ -285,7 +285,7 @@ static int s390x_aes_gcm_cipher_update(PROV_GCM_CTX *ctx,
 }
 
 static const PROV_GCM_HW s390x_aes_gcm = {
-    s390x_aes_gcm_init_key,
+    s390x_aes_gcm_initkey,
     s390x_aes_gcm_setiv,
     s390x_aes_gcm_aad_update,
     s390x_aes_gcm_cipher_update,

@@ -9,11 +9,11 @@
 
 /* AES Sparc t4 support */
 
-static int aes_t4_init_key(PROV_GENERIC_KEY *dat, const unsigned char *key,
-                           size_t keylen)
+static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
+                                    const unsigned char *key, size_t keylen)
 {
     int ret, bits;
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
     dat->ks = &adat->ks.ks;
 
@@ -81,14 +81,11 @@ static int aes_t4_init_key(PROV_GENERIC_KEY *dat, const unsigned char *key,
     return 1;
 }
 
-# define BLOCK_CIPHER_aes_generic_prov(mode)                                   \
-static const PROV_GENERIC_CIPHER aes_t4_##mode = {                             \
-        aes_t4_init_key,                                                       \
-        generic_##mode##_cipher};                                              \
-static const PROV_GENERIC_CIPHER aes_##mode = {                                \
-        aes_init_key,                                                          \
-        generic_##mode##_cipher};                                              \
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_##mode(size_t keybits)              \
-{                                                                              \
-    return SPARC_AES_CAPABLE? &aes_t4_##mode : &aes_##mode;                    \
-}
+#define PROV_CIPHER_HW_declare(mode)                                           \
+static const PROV_CIPHER_HW aes_t4_##mode = {                                  \
+    cipher_hw_aes_t4_initkey,                                                  \
+    cipher_hw_generic_##mode                                                   \
+};
+#define PROV_CIPHER_HW_select(mode)                                            \
+    if (SPARC_AES_CAPABLE)                                                     \
+        return aes_t4_##mode;

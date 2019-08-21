@@ -11,25 +11,11 @@
 #include <openssl/params.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
+#include "cipher_locl.h"
 #include "internal/rand_int.h"
 #include "internal/provider_algs.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
-#include "ciphers_locl.h"
-
-/* TODO(3.0) Figure out what flags are really needed */
-#define AEAD_GCM_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_DEFAULT_ASN1 \
-                       | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER      \
-                       | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT        \
-                       | EVP_CIPH_CUSTOM_COPY)
-
-static OSSL_OP_cipher_encrypt_init_fn gcm_einit;
-static OSSL_OP_cipher_decrypt_init_fn gcm_dinit;
-static OSSL_OP_cipher_get_ctx_params_fn gcm_get_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn gcm_set_ctx_params;
-static OSSL_OP_cipher_cipher_fn gcm_cipher;
-static OSSL_OP_cipher_update_fn gcm_stream_update;
-static OSSL_OP_cipher_final_fn gcm_stream_final;
 
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
 static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
@@ -40,8 +26,8 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,
                                size_t len);
 
-static void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
-                        const PROV_GCM_HW *hw, size_t ivlen_min)
+void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
+                 const PROV_GCM_HW *hw, size_t ivlen_min)
 {
     ctx->pad = 1;
     ctx->mode = EVP_CIPH_GCM_MODE;
@@ -54,7 +40,7 @@ static void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
     ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
 }
 
-static void gcm_deinitctx(PROV_GCM_CTX *ctx)
+void gcm_deinitctx(PROV_GCM_CTX *ctx)
 {
     OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
 }
@@ -86,19 +72,19 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
     return 1;
 }
 
-static int gcm_einit(void *vctx, const unsigned char *key, size_t keylen,
-                     const unsigned char *iv, size_t ivlen)
+int gcm_einit(void *vctx, const unsigned char *key, size_t keylen,
+              const unsigned char *iv, size_t ivlen)
 {
     return gcm_init(vctx, key, keylen, iv, ivlen, 1);
 }
 
-static int gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                     const unsigned char *iv, size_t ivlen)
+int gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
+              const unsigned char *iv, size_t ivlen)
 {
     return gcm_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
-static int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     OSSL_PARAM *p;
@@ -149,7 +135,7 @@ static int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-static int gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+int gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     const OSSL_PARAM *p;
@@ -231,9 +217,8 @@ static int gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static int gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
-                             size_t outsize, const unsigned char *in,
-                             size_t inl)
+int gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
+                      size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
 
@@ -249,8 +234,8 @@ static int gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static int gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
-                            size_t outsize)
+int gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
+                     size_t outsize)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     int i;
@@ -263,9 +248,9 @@ static int gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static int gcm_cipher(void *vctx,
-                      unsigned char *out, size_t *outl, size_t outsize,
-                      const unsigned char *in, size_t inl)
+int gcm_cipher(void *vctx,
+               unsigned char *out, size_t *outl, size_t outsize,
+               const unsigned char *in, size_t inl)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
 
@@ -512,59 +497,3 @@ err:
     *padlen = plen;
     return rv;
 }
-
-static void *aes_gcm_newctx(void *provctx, size_t keybits)
-{
-    PROV_AES_GCM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
-
-    if (ctx != NULL)
-        gcm_initctx(provctx, (PROV_GCM_CTX *)ctx, keybits,
-                    PROV_AES_HW_gcm(keybits), 8);
-    return ctx;
-}
-
-static OSSL_OP_cipher_freectx_fn aes_gcm_freectx;
-static void aes_gcm_freectx(void *vctx)
-{
-    PROV_AES_GCM_CTX *ctx = (PROV_AES_GCM_CTX *)vctx;
-
-    gcm_deinitctx((PROV_GCM_CTX *)ctx);
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
-}
-
-/* aes128gcm_functions */
-IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 128, 8, 96);
-/* aes192gcm_functions */
-IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 192, 8, 96);
-/* aes256gcm_functions */
-IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_GCM_FLAGS, 256, 8, 96);
-
-#if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
-
-static void *aria_gcm_newctx(void *provctx, size_t keybits)
-{
-    PROV_ARIA_GCM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
-
-    if (ctx != NULL)
-        gcm_initctx(provctx, (PROV_GCM_CTX *)ctx, keybits,
-                    PROV_ARIA_HW_gcm(keybits), 4);
-    return ctx;
-}
-
-static OSSL_OP_cipher_freectx_fn aria_gcm_freectx;
-static void aria_gcm_freectx(void *vctx)
-{
-    PROV_ARIA_GCM_CTX *ctx = (PROV_ARIA_GCM_CTX *)vctx;
-
-    gcm_deinitctx((PROV_GCM_CTX *)ctx);
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
-}
-
-/* aria128gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 128, 8, 96);
-/* aria192gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 192, 8, 96);
-/* aria256gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_GCM_FLAGS, 256, 8, 96);
-
-#endif /* !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE) */

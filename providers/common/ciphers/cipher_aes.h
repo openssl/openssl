@@ -9,8 +9,8 @@
 
 #include <openssl/aes.h>
 
-typedef struct prov_aes_key_st {
-    PROV_GENERIC_KEY base;      /* Must be first */
+typedef struct prov_aes_ctx_st {
+    PROV_CIPHER_CTX base;      /* Must be first */
     union {
         OSSL_UNION_ALIGN;
         AES_KEY ks;
@@ -47,14 +47,15 @@ typedef struct prov_aes_key_st {
 #endif /* defined(OPENSSL_CPUID_OBJ) && defined(__s390__) */
     } plat;
 
-} PROV_AES_KEY;
+} PROV_AES_CTX;
 
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_ecb(size_t keybits);
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_cbc(size_t keybits);
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_ofb128(size_t keybits);
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_cfb128(size_t keybits);
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_cfb1(size_t keybits);
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_cfb8(size_t keybits);
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_ctr(size_t keybits);
-#define PROV_AES_CIPHER_ofb PROV_AES_CIPHER_ofb128
-#define PROV_AES_CIPHER_cfb PROV_AES_CIPHER_cfb128
+#define PROV_CIPHER_HW_aes_ofb PROV_CIPHER_HW_aes_ofb128
+#define PROV_CIPHER_HW_aes_cfb PROV_CIPHER_HW_aes_cfb128
+const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ecb(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cbc(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ofb128(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb128(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb1(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb8(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ctr(size_t keybits);
+

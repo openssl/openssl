@@ -9,11 +9,17 @@
 
 /* AES-NI section. */
 
-static int aesni_init_key(PROV_GENERIC_KEY *dat, const unsigned char *key,
-                          size_t keylen)
+#define cipher_hw_aesni_ofb128 cipher_hw_generic_ofb128
+#define cipher_hw_aesni_cfb128 cipher_hw_generic_cfb128
+#define cipher_hw_aesni_cfb8   cipher_hw_generic_cfb8
+#define cipher_hw_aesni_cfb1   cipher_hw_generic_cfb1
+#define cipher_hw_aesni_ctr    cipher_hw_generic_ctr
+
+static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
+                                   const unsigned char *key, size_t keylen)
 {
     int ret;
-    PROV_AES_KEY *adat = (PROV_AES_KEY *)dat;
+    PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
     AES_KEY *ks = &adat->ks.ks;
 
     dat->ks = ks;
@@ -43,8 +49,8 @@ static int aesni_init_key(PROV_GENERIC_KEY *dat, const unsigned char *key,
     return 1;
 }
 
-static int aesni_cbc_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
-                            const unsigned char *in, size_t len)
+static int cipher_hw_aesni_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                               const unsigned char *in, size_t len)
 {
     const AES_KEY *ks = ctx->ks;
 
@@ -53,8 +59,8 @@ static int aesni_cbc_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
     return 1;
 }
 
-static int aesni_ecb_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
-                            const unsigned char *in, size_t len)
+static int cipher_hw_aesni_ecb(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                               const unsigned char *in, size_t len)
 {
     if (len < ctx->blocksize)
         return 1;
@@ -64,21 +70,11 @@ static int aesni_ecb_cipher(PROV_GENERIC_KEY *ctx, unsigned char *out,
     return 1;
 }
 
-# define aesni_ofb128_cipher generic_ofb128_cipher
-# define aesni_cfb128_cipher generic_cfb128_cipher
-# define aesni_cfb8_cipher generic_cfb8_cipher
-# define aesni_cfb1_cipher generic_cfb1_cipher
-# define aesni_ctr_cipher generic_ctr_cipher
-
-# define BLOCK_CIPHER_aes_generic_prov(mode)                                   \
-static const PROV_GENERIC_CIPHER aesni_##mode = {                              \
-        aesni_init_key,                                                        \
-        aesni_##mode##_cipher};                                                \
-static const PROV_GENERIC_CIPHER aes_##mode = {                                \
-        aes_init_key,                                                          \
-        generic_##mode##_cipher};                                              \
-const PROV_GENERIC_CIPHER *PROV_AES_CIPHER_##mode(size_t keybits)              \
-{                                                                              \
-    return AESNI_CAPABLE ? &aesni_##mode : &aes_##mode;                        \
-}
-
+#define PROV_CIPHER_HW_declare(mode)                                           \
+static const PROV_CIPHER_HW aesni_##mode = {                                   \
+    cipher_hw_aesni_initkey,                                                   \
+    cipher_hw_aesni_##mode                                                     \
+};
+#define PROV_CIPHER_HW_select(mode)                                            \
+if (AESNI_CAPABLE)                                                             \
+    return &aesni_##mode;
