@@ -70,8 +70,8 @@ has a method from the same provider with the same B<nid> and B<properties>.
 If the B<method_up_ref> function is given, it's called to increment the
 reference count of the method.
 If the B<method_destruct> function is given, it's called when this function
-fails to add the method to the store, or later on when B<method> is being
-released from the B<store>.
+fails to add the method to the store, or later on when it is being released from
+the B<store>.
 
 ossl_method_store_remove() removes the B<method> identified by B<nid> from the
 B<store>.
