@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-mac,
-mac - perform Message Authentication Code operations
+openssl-mac - perform Message Authentication Code operations
 
 =head1 SYNOPSIS
 
