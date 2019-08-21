@@ -174,8 +174,9 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
 }
 
 int ossl_method_store_add(OSSL_METHOD_STORE *store,
-                          int nid, const char *properties,
-                          void *method, void (*method_destruct)(void *))
+                          int nid, const char *properties, void *method,
+                          int (*method_up_ref)(void *),
+                          void (*method_destruct)(void *))
 {
     ALGORITHM *alg = NULL;
     IMPLEMENTATION *impl;
@@ -189,6 +190,8 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
     /* Create new entry */
     impl = OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
+        return 0;
+    if (method_up_ref != NULL && !method_up_ref(method))
         return 0;
     impl->method = method;
     impl->method_destruct = method_destruct;

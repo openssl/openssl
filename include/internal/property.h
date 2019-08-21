@@ -20,6 +20,7 @@ OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx);
 void ossl_method_store_free(OSSL_METHOD_STORE *store);
 int ossl_method_store_add(OSSL_METHOD_STORE *store, int nid,
                           const char *properties, void *implementation,
+                          int (*implementation_up_ref)(void *),
                           void (*implementation_destruct)(void *));
 int ossl_method_store_remove(OSSL_METHOD_STORE *store,
                              int nid, const void *implementation);

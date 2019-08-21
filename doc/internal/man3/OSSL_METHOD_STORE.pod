@@ -20,8 +20,9 @@ ossl_method_store_cache_get, ossl_method_store_cache_set
  int ossl_method_store_init(OPENSSL_CTX *ctx);
  void ossl_method_store_cleanup(OPENSSL_CTX *ctx);
  int ossl_method_store_add(OSSL_METHOD_STORE *store,
-                           int nid, const char *properties,
-                           void *method, void (*method_destruct)(void *));
+                           int nid, const char *properties, void *method,
+                           int (*method_up_ref)(void *),
+                           void (*method_destruct)(void *));
  int ossl_method_store_remove(OSSL_METHOD_STORE *store,
                               int nid, const void *method);
  int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
@@ -64,8 +65,11 @@ ossl_method_store_free() frees resources allocated to B<store>.
 
 ossl_method_store_add() adds the B<method> to the B<store> as an instance of an
 algorithm indicated by B<nid> and the property definition B<properties>.
-The optional B<method_destruct> function is called when B<method> is being
-released from B<store>.
+If the B<method_up_ref> function is given, it's called to increment the
+reference count of the method.
+If the B<method_destruct> function is given, it's called when this function
+fails to add the method to the store, or later on when it is being released from
+the B<store>.
 
 ossl_method_store_remove() removes the B<method> identified by B<nid> from the
 B<store>.
