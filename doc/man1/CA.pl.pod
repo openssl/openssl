@@ -199,7 +199,11 @@ behaviour of the certificate commands call the B<openssl> command directly.
 
 =head1 SEE ALSO
 
-L<x509(1)>, L<ca(1)>, L<req(1)>, L<pkcs12(1)>,
+L<openssl(1)>,
+L<openssl-x509(1)>,
+L<openssl-ca(1)>,
+L<openssl-req(1)>,
+L<openssl-pkcs12(1)>,
 L<config(5)>
 
 =head1 COPYRIGHT
