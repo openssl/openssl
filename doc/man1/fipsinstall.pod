@@ -111,7 +111,7 @@ To see the list of supported digests, use the command I<list -digest-commands>.
 
 =head1 EXAMPLES
 
-Calculate the mac of the FIPS module 'fips.so' and run a FIPS self test
+Calculate the mac of a FIPS module 'fips.so' and run a FIPS self test
 for the module, and save the fips.conf configuration file:
 
  openssl fipsinstall -module ./fips.so -out fips.conf -provider_name fips \
