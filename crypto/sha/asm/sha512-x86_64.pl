@@ -2238,6 +2238,7 @@ $code.=<<___;
 	lea	`2*$SZ*($rounds-8)`(%rsp),%rsp
 # restore frame pointer to original location at $_rsp
 .cfi_cfa_expression	$_rsp,deref,+8
+
 	add	$SZ*0($ctx),$A
 	add	$SZ*1($ctx),$B
 	add	$SZ*2($ctx),$C
