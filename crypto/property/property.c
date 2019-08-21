@@ -25,6 +25,7 @@
 #define IMPL_CACHE_FLUSH_THRESHOLD  500
 
 typedef struct {
+    const OSSL_PROVIDER *provider;
     OSSL_PROPERTY_LIST *properties;
     void *method;
     void (*method_destruct)(void *);
@@ -173,7 +174,7 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
         return ossl_sa_ALGORITHM_set(store->algs, alg->nid, alg);
 }
 
-int ossl_method_store_add(OSSL_METHOD_STORE *store,
+int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
                           int nid, const char *properties, void *method,
                           int (*method_up_ref)(void *),
                           void (*method_destruct)(void *))
@@ -181,6 +182,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
     ALGORITHM *alg = NULL;
     IMPLEMENTATION *impl;
     int ret = 0;
+    int i;
 
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
@@ -191,8 +193,11 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
     impl = OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
         return 0;
-    if (method_up_ref != NULL && !method_up_ref(method))
+    if (method_up_ref != NULL && !method_up_ref(method)) {
+        OPENSSL_free(impl);
         return 0;
+    }
+    impl->provider = prov;
     impl->method = method;
     impl->method_destruct = method_destruct;
 
@@ -222,8 +227,16 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
             goto err;
     }
 
-    /* Push onto stack */
-    if (sk_IMPLEMENTATION_push(alg->impls, impl))
+    /* Push onto stack if there isn't one there already */
+    for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
+        const IMPLEMENTATION *tmpimpl = sk_IMPLEMENTATION_value(alg->impls, i);
+
+        if (tmpimpl->provider == impl->provider
+            && tmpimpl->properties == impl->properties)
+            break;
+    }
+    if (i == sk_IMPLEMENTATION_num(alg->impls)
+        && sk_IMPLEMENTATION_push(alg->impls, impl))
         ret = 1;
     ossl_property_unlock(store);
     if (ret == 0)
