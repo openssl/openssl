@@ -2,9 +2,20 @@
 
 =head1 NAME
 
-EVP_KDF, EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_new_id, EVP_KDF_CTX_free,
-EVP_KDF_CTX_kdf, EVP_KDF_reset, EVP_KDF_ctrl, EVP_KDF_vctrl, EVP_KDF_ctrl_str,
-EVP_KDF_size, EVP_KDF_derive, EVP_KDF_nid, EVP_KDF_name,
+EVP_KDF, EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free,
+EVP_KDF_CTX_kdf, EVP_KDF_reset,
+EVP_KDF_size, EVP_KDF_derive, EVP_KDF_name,
+EVP_KDF_CTX_dup,
+EVP_KDF_CTX_get_params,
+EVP_KDF_CTX_set_params,
+EVP_KDF_do_all_ex,
+ EVP_KDF_fetch,
+ EVP_KDF_free,
+EVP_KDF_get_params,
+EVP_KDF_CTX_gettable_params,
+EVP_KDF_CTX_settable_params,
+EVP_KDF_gettable_params,
+EVP_KDF_provider, EVP_KDF_up_ref,
 EVP_get_kdfbyname, EVP_get_kdfbynid, EVP_get_kdfbyobj - EVP KDF routines
 
 =head1 SYNOPSIS
@@ -15,17 +26,27 @@ EVP_get_kdfbyname, EVP_get_kdfbynid, EVP_get_kdfbyobj - EVP KDF routines
  typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
 
  EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf);
- EVP_KDF_CTX *EVP_KDF_CTX_new_id(int nid);
  const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
  void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
+ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
  void EVP_KDF_reset(EVP_KDF_CTX *ctx);
- int EVP_KDF_ctrl(EVP_KDF_CTX *ctx, int cmd, ...);
- int EVP_KDF_vctrl(EVP_KDF_CTX *ctx, int cmd, va_list args);
- int EVP_KDF_ctrl_str(EVP_KDF_CTX *ctx, const char *type, const char *value);
  size_t EVP_KDF_size(EVP_KDF_CTX *ctx);
  int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
- int EVP_KDF_nid(const EVP_KDF *kdf);
  const char *EVP_KDF_name(const EVP_KDF *kdf);
+ int EVP_KDF_up_ref(EVP_KDF *kdf);
+ void EVP_KDF_free(EVP_KDF *kdf);
+ EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+                        const char *properties);
+ void EVP_KDF_do_all_ex(OPENSSL_CTX *libctx,
+                        void (*fn)(EVP_KDF *kdf, void *arg),
+                        void *arg);
+ int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
+ int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
+ int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
+ const OSSL_PARAM *EVP_KDF_CTX_gettable_params(const EVP_KDF *kdf);
+ const OSSL_PARAM *EVP_KDF_CTX_settable_params(const EVP_KDF *kdf);
+ const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
  const EVP_KDF *EVP_get_kdfbyname(const char *name);
  const EVP_KDF *EVP_get_kdfbynid(int nid);
  const EVP_KDF *EVP_get_kdfbyobj(const ASN1_OBJECT *o);
@@ -35,9 +56,9 @@ EVP_get_kdfbyname, EVP_get_kdfbynid, EVP_get_kdfbyobj - EVP KDF routines
 The EVP KDF routines are a high level interface to Key Derivation Function
 algorithms and should be used instead of algorithm-specific functions.
 
-After creating a C<EVP_KDF_CTX> for the required algorithm using either
-EVP_KDF_CTX_new() or EVP_KDF_CTX_new_id(), inputs to the algorithm are supplied
-using calls to EVP_KDF_ctrl(), EVP_KDF_vctrl() or EVP_KDF_ctrl_str() before
+After creating a C<EVP_KDF_CTX> for the required algorithm using
+EVP_KDF_CTX_new(), inputs to the algorithm are supplied
+using calls to EVP_KDF_CTX_set_params() before
 calling EVP_KDF_derive() to derive the key.
 
 =head2 Types
@@ -50,8 +71,6 @@ B<EVP_KDF_CTX> is a context type that holds the algorithm inputs.
 
 EVP_KDF_CTX_new() creates a new context for the KDF type C<kdf>.
 
-EVP_KDF_CTX_new_id() creates a new context for the numerical KDF identity C<nid>.
-
 EVP_KDF_CTX_free() frees up the context C<ctx>.  If C<ctx> is C<NULL>, nothing
 is done.
 
@@ -63,18 +82,10 @@ C<ctx>.
 EVP_KDF_reset() resets the context to the default state as if the context
 had just been created.
 
-EVP_KDF_ctrl() is used to provide inputs to the KDF algorithm prior to
+EVP_KDF_CTX_set_params() is used to provide inputs to the KDF algorithm prior to
 EVP_KDF_derive() being called.  The inputs that may be provided will vary
-depending on the KDF algorithm or its implementation.  This functions takes
-variable arguments, the exact expected arguments depend on C<cmd>.
+depending on the KDF algorithm or its implementation.
 See L</CONTROLS> below for a description of standard controls.
-
-EVP_KDF_vctrl() is the variant of EVP_KDF_ctrl() that takes a C<va_list>
-argument instead of variadic arguments.
-
-EVP_KDF_ctrl_str() allows an application to send an algorithm specific control
-operation to a context C<ctx> in string form.  This is intended to be used for
-options specified on the command line or in text files.
 
 EVP_KDF_derive() derives C<keylen> bytes of key material and places it in the
 C<key> buffer.  If the algorithm produces a fixed amount of output then an
@@ -87,8 +98,6 @@ EVP_KDF_size() returns the output size if the algorithm produces a fixed amount
 of output and C<SIZE_MAX> otherwise.  If an error occurs then 0 is returned.
 For some algorithms an error may result if input parameters necessary to
 calculate a fixed output size have not yet been supplied.
-
-EVP_KDF_nid() returns the numeric identity of the given KDF implementation.
 
 EVP_KDF_name() returns the name of the given KDF implementation.
 
@@ -116,8 +125,6 @@ This control expects two arguments: C<unsigned char *pass>, C<size_t passlen>
 Some KDF implementations require a password.  For those KDF implementations
 that support it, this control sets the password.
 
-EVP_KDF_ctrl_str() takes two type strings for this control:
-
 =over 4
 
 =item "pass"
@@ -140,8 +147,6 @@ support it, this control sets the salt.
 
 The default value, if any, is implementation dependent.
 
-EVP_KDF_ctrl_str() takes two type strings for this control:
-
 =over 4
 
 =item "salt"
@@ -163,20 +168,12 @@ Some KDF implementations require an iteration count. For those KDF implementatio
 
 The default value, if any, is implementation dependent.
 
-EVP_KDF_ctrl_str() type string: "iter"
-
-The value string is expected to be a decimal number.
-
 =item B<EVP_KDF_CTRL_SET_MAC>
 
 This control expects one argument: C<EVP_MAC *mac>
 
 Some KDF implementations use a MAC as an underlying computation
 algorithm, this control sets what the MAC algorithm should be.
-
-EVP_KDF_ctrl_str() type string: "mac"
-
-The value string is expected to be the name of a MAC.
 
 =item B<EVP_KDF_CTRL_SET_MD>
 
@@ -185,18 +182,12 @@ This control expects one argument: C<EVP_MD *md>
 For MAC implementations that use a message digest as an underlying computation
 algorithm, this control sets what the digest algorithm should be.
 
-EVP_KDF_ctrl_str() type string: "digest"
-
-The value string is expected to be the name of a digest.
-
 =item B<EVP_KDF_CTRL_SET_KEY>
 
 This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
 
 Some KDF implementations require a key.  For those KDF implementations that
 support it, this control sets the key.
-
-EVP_KDF_ctrl_str() takes two type strings for this control:
 
 =over 4
 
@@ -220,10 +211,6 @@ those KDF implementations that support it, this control sets the MAC output size
 
 The default value, if any, is implementation dependent.
 
-EVP_KDF_ctrl_str() type string: "outlen"
-
-The value string is expected to be a decimal number.
-
 =item B<EVP_KDF_CTRL_SET_MAXMEM_BYTES>
 
 This control expects one argument: C<uint64_t maxmem_bytes>
@@ -237,15 +224,11 @@ the key derivation will fail.
 
 The default value is implementation dependent.
 
-EVP_KDF_ctrl_str() type string: "maxmem_bytes"
-
-The value string is expected to be a decimal number.
-
 =back
 
 =head1 RETURN VALUES
 
-EVP_KDF_CTX_new() and EVP_KDF_CTX_new_id() return either the newly allocated
+EVP_KDF_CTX_new() returns either the newly allocated
 C<EVP_KDF_CTX> structure or C<NULL> if an error occurred.
 
 EVP_KDF_CTX_free() and EVP_KDF_reset() do not return a value.
@@ -253,13 +236,8 @@ EVP_KDF_CTX_free() and EVP_KDF_reset() do not return a value.
 EVP_KDF_size() returns the output size.  C<SIZE_MAX> is returned to indicate
 that the algorithm produces a variable amount of output; 0 to indicate failure.
 
-EVP_KDF_nid() returns the numeric identity for the given C<kdf>.
-
 EVP_KDF_name() returns the name for the given C<kdf>, if it has been
 added to the object database.
-
-EVP_add_kdf() returns 1 if the given C<kdf> was successfully added to
-the object database, otherwise 0.
 
 EVP_get_kdfbyname(), EVP_get_kdfbynid() and EVP_get_kdfbyobj() return
 the requested KDF implementation, if it exists in the object database,
