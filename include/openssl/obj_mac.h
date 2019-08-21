@@ -1856,6 +1856,11 @@
 #define NID_id_on_permanentIdentifier           858
 #define OBJ_id_on_permanentIdentifier           OBJ_id_on,3L
 
+#define SN_id_on_SmtpUTF8Mailbox                "id-on-SmtpUTF8Mailbox"
+#define LN_id_on_SmtpUTF8Mailbox                "Smtp UTF8 Mailbox"
+#define NID_id_on_SmtpUTF8Mailbox               1208
+#define OBJ_id_on_SmtpUTF8Mailbox               OBJ_id_on,9L
+
 #define SN_id_pda_dateOfBirth           "id-pda-dateOfBirth"
 #define NID_id_pda_dateOfBirth          348
 #define OBJ_id_pda_dateOfBirth          OBJ_id_pda,1L

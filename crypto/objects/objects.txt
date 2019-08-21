@@ -609,6 +609,7 @@ id-cmc 24		: id-cmc-confirmCertAcceptance
 # other names
 id-on 1			: id-on-personalData
 id-on 3			: id-on-permanentIdentifier : Permanent Identifier
+id-on 9			: id-on-SmtpUTF8Mailbox : Smtp UTF8 Mailbox
 
 # personal data attributes
 id-pda 1		: id-pda-dateOfBirth
