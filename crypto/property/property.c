@@ -193,8 +193,10 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     impl = OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
         return 0;
-    if (method_up_ref != NULL && !method_up_ref(method))
+    if (method_up_ref != NULL && !method_up_ref(method)) {
+        OPENSSL_free(impl);
         return 0;
+    }
     impl->provider = prov;
     impl->method = method;
     impl->method_destruct = method_destruct;
