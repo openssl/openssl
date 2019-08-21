@@ -191,6 +191,9 @@ static void drbg_ossl_ctx_free(void *vdgbl)
 {
     DRBG_GLOBAL *dgbl = vdgbl;
 
+    if (dgbl == NULL)
+        return;
+
     RAND_DRBG_free(dgbl->master_drbg);
     CRYPTO_THREAD_cleanup_local(&dgbl->private_drbg);
     CRYPTO_THREAD_cleanup_local(&dgbl->public_drbg);
@@ -229,6 +232,9 @@ static void *drbg_nonce_ossl_ctx_new(OPENSSL_CTX *libctx)
 static void drbg_nonce_ossl_ctx_free(void *vdngbl)
 {
     DRBG_NONCE_GLOBAL *dngbl = vdngbl;
+
+    if (dngbl == NULL)
+        return;
 
     CRYPTO_THREAD_lock_free(dngbl->rand_nonce_lock);
 
