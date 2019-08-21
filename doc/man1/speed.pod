@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-speed,
-speed - test library performance
+openssl-speed - test library performance
 
 =head1 SYNOPSIS
 

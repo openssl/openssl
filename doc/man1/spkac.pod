@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-spkac,
-spkac - SPKAC printing and generating utility
+openssl-spkac - SPKAC printing and generating utility
 
 =head1 SYNOPSIS
 

@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-storeutl,
-storeutl - STORE utility
+openssl-storeutl - STORE utility
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,6 @@
 
 =head1 NAME
 
-openssl-tsget,
 tsget - Time Stamping HTTP/HTTPS client
 
 =head1 SYNOPSIS

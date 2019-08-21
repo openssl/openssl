@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-srp,
-srp - maintain SRP password file
+openssl-srp - maintain SRP password file
 
 =head1 SYNOPSIS
 
