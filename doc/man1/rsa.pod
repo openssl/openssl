@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-rsa,
-rsa - RSA key processing tool
+openssl-rsa - RSA key processing tool
 
 =head1 SYNOPSIS
 

@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-list,
-list - list algorithms and features
+openssl-list - list algorithms and features
 
 =head1 SYNOPSIS
 

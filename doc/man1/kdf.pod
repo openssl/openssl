@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-kdf,
-kdf - perform Key Derivation Function operations
+openssl-kdf - perform Key Derivation Function operations
 
 =head1 SYNOPSIS
 
