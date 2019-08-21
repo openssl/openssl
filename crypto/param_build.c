@@ -160,7 +160,7 @@ int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
 }
 
 int ossl_param_bld_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
-                                    char *buf, size_t bsize)
+                                    const char *buf, size_t bsize)
 {
     OSSL_PARAM_BLD_DEF *pd;
 
@@ -198,7 +198,7 @@ int ossl_param_bld_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
 }
 
 int ossl_param_bld_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
-                                     void *buf, size_t bsize)
+                                     const void *buf, size_t bsize)
 {
     OSSL_PARAM_BLD_DEF *pd;
 
