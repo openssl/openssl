@@ -13,7 +13,8 @@
 # include <stdarg.h>
 # include <stddef.h>
 # include <openssl/ossl_typ.h>
-# include <openssl/kdferr.h>
+# include <openssl/core.h>
+
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -27,23 +28,32 @@ extern "C" {
 # define EVP_KDF_X963       NID_x963kdf
 # define EVP_KDF_X942       NID_x942kdf
 
-EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id);
-EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf);
+int EVP_KDF_up_ref(EVP_KDF *kdf);
+void EVP_KDF_free(EVP_KDF *kdf);
+EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+                       const char *properties);
+#define EVP_get_kdfbyname(name) EVP_KDF_fetch(NULL, (name), NULL)
+
+EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
 void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
+EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
+const char *EVP_KDF_name(const EVP_KDF *kdf);
+const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
 const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
 
 void EVP_KDF_reset(EVP_KDF_CTX *ctx);
-int EVP_KDF_ctrl(EVP_KDF_CTX *ctx, int cmd, ...);
-int EVP_KDF_vctrl(EVP_KDF_CTX *ctx, int cmd, va_list args);
-int EVP_KDF_ctrl_str(EVP_KDF_CTX *ctx, const char *type, const char *value);
 size_t EVP_KDF_size(EVP_KDF_CTX *ctx);
 int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
+int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
+int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
+int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
+const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
+const OSSL_PARAM *EVP_KDF_CTX_gettable_params(const EVP_KDF *kdf);
+const OSSL_PARAM *EVP_KDF_CTX_settable_params(const EVP_KDF *kdf);
 
-int EVP_KDF_nid(const EVP_KDF *kdf);
-# define EVP_get_kdfbynid(a)    EVP_get_kdfbyname(OBJ_nid2sn(a))
-# define EVP_get_kdfbyobj(a)    EVP_get_kdfbynid(OBJ_obj2nid(a))
-# define EVP_KDF_name(o)        OBJ_nid2sn(EVP_KDF_nid(o))
-const EVP_KDF *EVP_get_kdfbyname(const char *name);
+void EVP_KDF_do_all_ex(OPENSSL_CTX *libctx,
+                       void (*fn)(EVP_KDF *kdf, void *arg),
+                       void *arg);
 
 # define EVP_KDF_CTRL_SET_PASS               0x01 /* unsigned char *, size_t */
 # define EVP_KDF_CTRL_SET_SALT               0x02 /* unsigned char *, size_t */
@@ -52,23 +62,22 @@ const EVP_KDF *EVP_get_kdfbyname(const char *name);
 # define EVP_KDF_CTRL_SET_KEY                0x05 /* unsigned char *, size_t */
 # define EVP_KDF_CTRL_SET_MAXMEM_BYTES       0x06 /* uint64_t */
 # define EVP_KDF_CTRL_SET_TLS_SECRET         0x07 /* unsigned char *, size_t */
-# define EVP_KDF_CTRL_RESET_TLS_SEED         0x08
-# define EVP_KDF_CTRL_ADD_TLS_SEED           0x09 /* unsigned char *, size_t */
-# define EVP_KDF_CTRL_RESET_HKDF_INFO        0x0a
-# define EVP_KDF_CTRL_ADD_HKDF_INFO          0x0b /* unsigned char *, size_t */
-# define EVP_KDF_CTRL_SET_HKDF_MODE          0x0c /* int */
-# define EVP_KDF_CTRL_SET_SCRYPT_N           0x0d /* uint64_t */
-# define EVP_KDF_CTRL_SET_SCRYPT_R           0x0e /* uint32_t */
-# define EVP_KDF_CTRL_SET_SCRYPT_P           0x0f /* uint32_t */
-# define EVP_KDF_CTRL_SET_SSHKDF_XCGHASH     0x10 /* unsigned char *, size_t */
-# define EVP_KDF_CTRL_SET_SSHKDF_SESSION_ID  0x11 /* unsigned char *, size_t */
-# define EVP_KDF_CTRL_SET_SSHKDF_TYPE        0x12 /* int */
-# define EVP_KDF_CTRL_SET_MAC                0x13 /* EVP_MAC * */
-# define EVP_KDF_CTRL_SET_MAC_SIZE           0x14 /* size_t */
-# define EVP_KDF_CTRL_SET_SSKDF_INFO         0x15 /* unsigned char *, size_t */
-# define EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE  0x16 /* int */
-# define EVP_KDF_CTRL_SET_UKM                0x17 /* unsigned char *, size_t */
-# define EVP_KDF_CTRL_SET_CEK_ALG            0x18 /* char * */
+# define EVP_KDF_CTRL_ADD_TLS_SEED           0x08 /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_RESET_HKDF_INFO        0x09
+# define EVP_KDF_CTRL_ADD_HKDF_INFO          0x0a /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_HKDF_MODE          0x0b /* int */
+# define EVP_KDF_CTRL_SET_SCRYPT_N           0x0c /* uint64_t */
+# define EVP_KDF_CTRL_SET_SCRYPT_R           0x0d /* uint32_t */
+# define EVP_KDF_CTRL_SET_SCRYPT_P           0x0e /* uint32_t */
+# define EVP_KDF_CTRL_SET_SSHKDF_XCGHASH     0x0f /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_SSHKDF_SESSION_ID  0x10 /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_SSHKDF_TYPE        0x11 /* int */
+# define EVP_KDF_CTRL_SET_MAC                0x12 /* EVP_MAC * */
+# define EVP_KDF_CTRL_SET_MAC_SIZE           0x13 /* size_t */
+# define EVP_KDF_CTRL_SET_SSKDF_INFO         0x14 /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE  0x15 /* int */
+# define EVP_KDF_CTRL_SET_UKM                0x16 /* unsigned char *, size_t */
+# define EVP_KDF_CTRL_SET_CEK_ALG            0x17 /* char * */
 # define EVP_KDF_CTRL_SET_SHARED_INFO        EVP_KDF_CTRL_SET_SSKDF_INFO
 
 # define EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND  0
