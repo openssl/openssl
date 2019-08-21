@@ -1975,6 +1975,8 @@ typedef struct kdf_data_st {
     /* Expected output */
     unsigned char *output;
     size_t output_len;
+    OSSL_PARAM params[20];
+    OSSL_PARAM *p;
 } KDF_DATA;
 
 /*
@@ -1984,7 +1986,7 @@ typedef struct kdf_data_st {
 static int kdf_test_init(EVP_TEST *t, const char *name)
 {
     KDF_DATA *kdata;
-    const EVP_KDF *kdf;
+    EVP_KDF *kdf;
 
 #ifdef OPENSSL_NO_SCRYPT
     if (strcmp(name, "scrypt") == 0) {
@@ -2000,13 +2002,16 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     }
 #endif /* OPENSSL_NO_CMS */
 
-    kdf = EVP_get_kdfbyname(name);
-    if (kdf == NULL)
-        return 0;
-
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
+    kdata->p = kdata->params;
+    *kdata->p = OSSL_PARAM_construct_end();
+
+    kdf = EVP_KDF_fetch(NULL, name, NULL);
+    if (kdf == NULL)
+        return 0;
     kdata->ctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
     if (kdata->ctx == NULL) {
         OPENSSL_free(kdata);
         return 0;
@@ -2018,6 +2023,10 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
 static void kdf_test_cleanup(EVP_TEST *t)
 {
     KDF_DATA *kdata = t->data;
+    OSSL_PARAM *p;
+
+    for (p = kdata->params; p->key != NULL; p++)
+        OPENSSL_free(p->data);
     OPENSSL_free(kdata->output);
     EVP_KDF_CTX_free(kdata->ctx);
 }
@@ -2025,36 +2034,35 @@ static void kdf_test_cleanup(EVP_TEST *t)
 static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
                          const char *value)
 {
+    KDF_DATA *kdata = t->data;
     int rv;
-    char *p, *tmpval;
+    char *p, *name;
+    const OSSL_PARAM *defs = EVP_KDF_CTX_settable_params(EVP_KDF_CTX_kdf(kctx));
 
-    if (!TEST_ptr(tmpval = OPENSSL_strdup(value)))
+    if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;
-    p = strchr(tmpval, ':');
+    p = strchr(name, ':');
     if (p != NULL)
         *p++ = '\0';
-    rv = EVP_KDF_ctrl_str(kctx, tmpval, p);
-    if (rv == -2) {
-        t->err = "KDF_CTRL_INVALID";
-        rv = 1;
-    } else if (p != NULL && rv <= 0) {
+
+    rv = OSSL_PARAM_allocate_from_text(kdata->p, defs, name, p, strlen(p));
+    *++kdata->p = OSSL_PARAM_construct_end();
+    if (!rv) {
+        t->err = "KDF_PARAM_ERROR";
+        OPENSSL_free(name);
+        return 0;
+    }
+    if (strcmp(name, "digest") == 0 && p != NULL) {
         /* If p has an OID and lookup fails assume disabled algorithm */
         int nid = OBJ_sn2nid(p);
 
         if (nid == NID_undef)
              nid = OBJ_ln2nid(p);
-        if (nid != NID_undef
-                && EVP_get_digestbynid(nid) == NULL
-                && EVP_get_cipherbynid(nid) == NULL) {
+        if (nid != NID_undef && EVP_get_digestbynid(nid) == NULL)
             t->skip = 1;
-            rv = 1;
-        } else {
-            t->err = "KDF_CTRL_ERROR";
-            rv = 1;
-        }
     }
-    OPENSSL_free(tmpval);
-    return rv > 0;
+    OPENSSL_free(name);
+    return 1;
 }
 
 static int kdf_test_parse(EVP_TEST *t,
@@ -2075,6 +2083,10 @@ static int kdf_test_run(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len = expected->output_len;
 
+    if (!EVP_KDF_CTX_set_params(expected->ctx, expected->params)) {
+        t->err = "KDF_CTRL_ERROR";
+        return 1;
+    }
     if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "INTERNAL_ERROR";
         goto err;
@@ -2161,6 +2173,7 @@ static int pkey_kdf_test_init(EVP_TEST *t, const char *name)
 static void pkey_kdf_test_cleanup(EVP_TEST *t)
 {
     PKEY_KDF_DATA *kdata = t->data;
+
     OPENSSL_free(kdata->output);
     EVP_PKEY_CTX_free(kdata->ctx);
 }
