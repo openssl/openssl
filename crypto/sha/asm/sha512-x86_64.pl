@@ -1996,7 +1996,7 @@ ___
 $code.=<<___ if (!$win64);
 # temporarily use %rdi as frame pointer
 	mov	$_rsp,%rdi
-.cfi_def_cfa_register	%rdi
+.cfi_def_cfa	%rdi,8
 ___
 $code.=<<___;
 	lea	-$PUSH8(%rsp),%rsp
@@ -2269,8 +2269,6 @@ $code.=<<___;
 
 .Ldone_avx2:
 	lea	($Tbl),%rsp
-# restore frame pointer to original location at $_rsp
-.cfi_cfa_expression	$_rsp,deref,+8
 	mov	$_rsp,%rsi
 .cfi_def_cfa	%rsi,8
 	vzeroupper
