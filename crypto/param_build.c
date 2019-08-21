@@ -174,7 +174,7 @@ int ossl_param_bld_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
     pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_UTF8_STRING, 0);
     if (pd == NULL)
         return 0;
-    pd->string = buf;
+    pd->string = (char *)buf;
     return 1;
 }
 
@@ -210,7 +210,7 @@ int ossl_param_bld_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
     pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_OCTET_STRING, 0);
     if (pd == NULL)
         return 0;
-    pd->string = buf;
+    pd->string = (void *)buf;
     return 1;
 }
 
