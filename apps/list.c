@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/provider.h>
 #include <openssl/safestack.h>
+#include <openssl/kdf.h>
 #include "apps.h"
 #include "app_params.h"
 #include "progs.h"
@@ -191,6 +192,56 @@ static void list_macs(void)
         }
     }
     sk_EVP_MAC_pop_free(macs, EVP_MAC_free);
+}
+
+/*
+ * KDFs and PRFs
+ */
+DEFINE_STACK_OF(EVP_KDF)
+static int kdf_cmp(const EVP_KDF * const *a, const EVP_KDF * const *b)
+{
+    int ret = strcasecmp(EVP_KDF_name(*a), EVP_KDF_name(*b));
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KDF_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KDF_provider(*b)));
+
+    return ret;
+}
+
+static void collect_kdfs(EVP_KDF *kdf, void *stack)
+{
+    STACK_OF(EVP_KDF) *kdf_stack = stack;
+
+    sk_EVP_KDF_push(kdf_stack, kdf);
+    EVP_KDF_up_ref(kdf);
+}
+
+static void list_kdfs(void)
+{
+    STACK_OF(EVP_KDF) *kdfs = sk_EVP_KDF_new(kdf_cmp);
+    int i;
+
+    BIO_printf(bio_out, "Provided KDFs and PDFs:\n");
+    EVP_KDF_do_all_ex(NULL, collect_kdfs, kdfs);
+    sk_EVP_KDF_sort(kdfs);
+    for (i = 0; i < sk_EVP_KDF_num(kdfs); i++) {
+        const EVP_KDF *m = sk_EVP_KDF_value(kdfs, i);
+
+        BIO_printf(bio_out, "  %s", EVP_KDF_name(m));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_KDF_provider(m)));
+
+        if (verbose) {
+            print_param_types("retrievable algorithm parameters",
+                              EVP_KDF_gettable_params(m), 4);
+            print_param_types("retrievable operation parameters",
+                              EVP_KDF_CTX_gettable_params(m), 4);
+            print_param_types("settable operation parameters",
+                              EVP_KDF_CTX_settable_params(m), 4);
+        }
+    }
+    sk_EVP_KDF_pop_free(kdfs, EVP_KDF_free);
 }
 
 static void list_missing_help(void)
@@ -527,7 +578,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
-    OPT_MISSING_HELP, OPT_OBJECTS
+    OPT_KDF_ALGORITHMS, OPT_MISSING_HELP, OPT_OBJECTS
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -539,6 +590,8 @@ const OPTIONS list_options[] = {
      "List of message digest commands"},
     {"digest-algorithms", OPT_DIGEST_ALGORITHMS, '-',
      "List of message digest algorithms"},
+    {"kdf-algorithms", OPT_KDF_ALGORITHMS, '-',
+     "List of key derivation and pseudo random function algorithms"},
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
      "List of message authentication code algorithms"},
     {"cipher-commands", OPT_CIPHER_COMMANDS, '-', "List of cipher commands"},
@@ -570,6 +623,7 @@ int list_main(int argc, char **argv)
         unsigned int commands:1;
         unsigned int digest_commands:1;
         unsigned int digest_algorithms:1;
+        unsigned int kdf_algorithms:1;
         unsigned int mac_algorithms:1;
         unsigned int cipher_commands:1;
         unsigned int cipher_algorithms:1;
@@ -606,6 +660,9 @@ opthelp:
             break;
         case OPT_DIGEST_ALGORITHMS:
             todo.digest_algorithms = 1;
+            break;
+        case OPT_KDF_ALGORITHMS:
+            todo.kdf_algorithms = 1;
             break;
         case OPT_MAC_ALGORITHMS:
             todo.mac_algorithms = 1;
@@ -654,6 +711,8 @@ opthelp:
         list_type(FT_md, one);
     if (todo.digest_algorithms)
         list_digests();
+    if (todo.kdf_algorithms)
+        list_kdfs();
     if (todo.mac_algorithms)
         list_macs();
     if (todo.cipher_commands)
