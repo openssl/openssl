@@ -71,8 +71,13 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 
     switch (gen->type) {
     case GEN_OTHERNAME:
-        if (!X509V3_add_value("othername", "<unsupported>", &ret))
-            return NULL;
+        if (OBJ_cmp(gen->d.otherName->type_id, OBJ_nid2obj(NID_id_on_SmtpUTF8Mailbox)) == 0) {
+            if (!X509V3_add_value_uchar("othername: SmtpUTF8Mailbox:", gen->d.otherName->value->value.utf8string->data, &ret))
+                return NULL;
+        } else {
+            if (!X509V3_add_value("othername", "<unsupported>", &ret))
+                return NULL;
+        }
         break;
 
     case GEN_X400:
@@ -144,7 +149,10 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
     int i;
     switch (gen->type) {
     case GEN_OTHERNAME:
-        BIO_printf(out, "othername:<unsupported>");
+        if (OBJ_cmp(gen->d.otherName->type_id, OBJ_nid2obj(NID_id_on_SmtpUTF8Mailbox)) == 0)
+            BIO_printf(out, "othername:SmtpUTF8Mailbox:%s", gen->d.otherName->value->value.utf8string->data);
+        else
+            BIO_printf(out, "othername:<unsupported>");
         break;
 
     case GEN_X400:
