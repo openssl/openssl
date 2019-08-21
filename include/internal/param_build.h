@@ -20,7 +20,7 @@ typedef struct {
     size_t size;
     size_t alloc_blocks;
     const BIGNUM *bn;
-    void *string;
+    const void *string;
     union {
         /*
          * These fields are never directly addressed, but their sizes are

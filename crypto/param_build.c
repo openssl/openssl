@@ -260,7 +260,7 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         } else if (pd->type == OSSL_PARAM_OCTET_PTR
                    || pd->type == OSSL_PARAM_UTF8_PTR) {
             /* PTR */
-            *(void **)p = pd->string;
+            *(const void **)p = pd->string;
         } else if (pd->type == OSSL_PARAM_OCTET_STRING
                    || pd->type == OSSL_PARAM_UTF8_STRING) {
             if (pd->string != NULL)
