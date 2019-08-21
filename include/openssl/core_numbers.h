@@ -281,6 +281,36 @@ OSSL_CORE_MAKE_FUNC(int, OP_mac_get_ctx_params,
 OSSL_CORE_MAKE_FUNC(int, OP_mac_set_ctx_params,
                     (void *mctx, const OSSL_PARAM params[]))
 
+/* KDFs and PRFs */
+# define OSSL_OP_KDF                                 4
+
+# define OSSL_FUNC_KDF_NEWCTX                        1
+# define OSSL_FUNC_KDF_DUPCTX                        2
+# define OSSL_FUNC_KDF_FREECTX                       3
+# define OSSL_FUNC_KDF_RESET                         4
+# define OSSL_FUNC_KDF_DERIVE                        5
+# define OSSL_FUNC_KDF_GETTABLE_PARAMS               6
+# define OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS           7
+# define OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS           8
+# define OSSL_FUNC_KDF_GET_PARAMS                    9
+# define OSSL_FUNC_KDF_GET_CTX_PARAMS               10
+# define OSSL_FUNC_KDF_SET_CTX_PARAMS               11
+
+OSSL_CORE_MAKE_FUNC(void *, OP_kdf_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_kdf_dupctx, (void *src))
+OSSL_CORE_MAKE_FUNC(void, OP_kdf_freectx, (void *kctx))
+OSSL_CORE_MAKE_FUNC(void, OP_kdf_reset, (void *kctx))
+OSSL_CORE_MAKE_FUNC(int, OP_kdf_derive, (void *kctx, unsigned char *key,
+                                          size_t keylen))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_kdf_gettable_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_kdf_gettable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_kdf_settable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(int, OP_kdf_get_params, (OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_kdf_get_ctx_params,
+                    (void *kctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
+                    (void *kctx, const OSSL_PARAM params[]))
+
 /*-
  * Key management
  *
