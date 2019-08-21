@@ -2268,20 +2268,19 @@ $code.=<<___;
 .cfi_cfa_expression	$Tbl+`16*$SZ+3*8`,deref,+8
 
 .Ldone_avx2:
-	lea	($Tbl),%rsp
-	mov	$_rsp,%rsi
+	mov	`16*$SZ+3*8`($Tbl),%rsi
 .cfi_def_cfa	%rsi,8
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
-	movaps	16*$SZ+32(%rsp),%xmm6
-	movaps	16*$SZ+48(%rsp),%xmm7
-	movaps	16*$SZ+64(%rsp),%xmm8
-	movaps	16*$SZ+80(%rsp),%xmm9
+	movaps	16*$SZ+32($Tbl),%xmm6
+	movaps	16*$SZ+48($Tbl),%xmm7
+	movaps	16*$SZ+64($Tbl),%xmm8
+	movaps	16*$SZ+80($Tbl),%xmm9
 ___
 $code.=<<___ if ($win64 && $SZ>4);
-	movaps	16*$SZ+96(%rsp),%xmm10
-	movaps	16*$SZ+112(%rsp),%xmm11
+	movaps	16*$SZ+96($Tbl),%xmm10
+	movaps	16*$SZ+112($Tbl),%xmm11
 ___
 $code.=<<___;
 	mov	-48(%rsi),%r15
