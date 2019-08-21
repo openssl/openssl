@@ -9,7 +9,7 @@
 
 /*-
  * S390X support for AES CCM.
- * This file is included by cipher_ccm_hw.c"
+ * This file is included by cipher_ccm_hw.c
  */
 
 #define S390X_CCM_AAD_FLAG 0x40

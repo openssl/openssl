@@ -7,12 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#if !defined(OPENSSL_NO_ARIA)
-# include <openssl/err.h>
-# include "cipher_locl.h"
-# include "internal/providercommonerr.h"
-# include "internal/ciphermode_platform.h"
+#include "cipher_locl.h"
 
 static int cipher_hw_aria_initkey(PROV_CIPHER_CTX *dat,
                                   const unsigned char *key, size_t keylen)
@@ -51,5 +46,3 @@ PROV_CIPHER_HW_aria_mode(cfb128)
 PROV_CIPHER_HW_aria_mode(cfb1)
 PROV_CIPHER_HW_aria_mode(cfb8)
 PROV_CIPHER_HW_aria_mode(ctr)
-
-#endif /* OPENSSL_NO_ARIA */

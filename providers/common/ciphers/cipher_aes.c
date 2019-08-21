@@ -10,7 +10,6 @@
 /* Dispatch functions for AES cipher modes ecb, cbc, ofb, cfb, ctr */
 
 #include "cipher_locl.h"
-#include "internal/providercommonerr.h"
 
 static OSSL_OP_cipher_freectx_fn aes_freectx;
 static OSSL_OP_cipher_dupctx_fn aes_dupctx;

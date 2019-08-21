@@ -9,15 +9,9 @@
 
 /* Dispatch functions for gcm mode */
 
-#include <openssl/evp.h>
-#include <openssl/params.h>
-#include <openssl/core_numbers.h>
-#include <openssl/core_names.h>
 #include "cipher_locl.h"
 #include "internal/rand_int.h"
-#include "internal/provider_algs.h"
 #include "internal/provider_ctx.h"
-#include "internal/providercommonerr.h"
 
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
 static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,

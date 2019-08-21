@@ -9,10 +9,7 @@
 
 /* Dispatch functions for ccm mode */
 
-#include <openssl/core_names.h>
 #include "cipher_locl.h"
-#include "internal/provider_algs.h"
-#include "internal/providercommonerr.h"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,

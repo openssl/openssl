@@ -11,13 +11,7 @@
  * Generic dispatch table functions for ciphers.
  */
 
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/evp.h>
-
 #include "cipher_locl.h"
-#include "internal/provider_algs.h"
-#include "internal/providercommonerr.h"
 
 #define MAXCHUNK    ((size_t)1 << (sizeof(long) * 8 - 2))
 #define MAXBITCHUNK ((size_t)1 << (sizeof(size_t) * 8 - 4))

@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*-
+ * Fujitsu SPARC64 X support for camellia modes.
+ * This file is included by cipher_camellia_hw.c
+ */
+
 static int cipher_hw_camellia_t4_initkey(PROV_CIPHER_CTX *dat,
                                          const unsigned char *key,
                                          size_t keylen)

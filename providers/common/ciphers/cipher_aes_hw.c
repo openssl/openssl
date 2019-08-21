@@ -7,11 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#include <openssl/err.h>
 #include "cipher_locl.h"
-#include "internal/providercommonerr.h"
-#include "internal/ciphermode_platform.h"
 
 static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
                                  const unsigned char *key, size_t keylen)

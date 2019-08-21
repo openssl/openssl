@@ -9,7 +9,7 @@
 
 /*-
  * AES-NI support for AES CCM.
- * This file is included by cipher_ccm_hw.c"
+ * This file is included by cipher_ccm_hw.c
  */
 
 static int ccm_aesni_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,

@@ -8,7 +8,6 @@
  */
 
 #include "cipher_locl.h"
-#include "internal/ciphermode_platform.h"
 
 static const PROV_GCM_HW aes_gcm;
 

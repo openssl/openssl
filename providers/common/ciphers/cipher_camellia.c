@@ -10,7 +10,6 @@
 /* Dispatch functions for CAMELLIA cipher modes ecb, cbc, ofb, cfb, ctr */
 
 #include "cipher_locl.h"
-#include "internal/providercommonerr.h"
 
 #if !defined(OPENSSL_NO_CAMELLIA)
 static OSSL_OP_cipher_freectx_fn camellia_freectx;

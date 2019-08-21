@@ -7,10 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cipher_locl.h"
-#include "internal/providercommonerr.h"
+/* Dispatch functions for ARIA cipher modes ecb, cbc, ofb, cfb, ctr */
 
-#if !defined(OPENSSL_NO_ARIA)
+#include "cipher_locl.h"
 
 static OSSL_OP_cipher_freectx_fn aria_freectx;
 static OSSL_OP_cipher_dupctx_fn aria_dupctx;
@@ -78,5 +77,3 @@ IMPLEMENT_generic_cipher(aria, ARIA, ctr, CTR, 0, 256, 8, 128, stream)
 IMPLEMENT_generic_cipher(aria, ARIA, ctr, CTR, 0, 192, 8, 128, stream)
 /* aria128ctr_functions */
 IMPLEMENT_generic_cipher(aria, ARIA, ctr, CTR, 0, 128, 8, 128, stream)
-
-#endif /* OPENSSL_NO_ARIA */
