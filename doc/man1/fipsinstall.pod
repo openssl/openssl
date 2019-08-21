@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-openssl-fipsinstall,
-fipsinstall - perform FIPS configuration installation
+openssl-fipsinstall - perform FIPS configuration installation
 
 =head1 SYNOPSIS
 
@@ -22,8 +21,8 @@ B<openssl> I<fipsinstall> [B<...>]
 
 =head1 DESCRIPTION
 
-During FIPS installation this utility is used to run the FIPS modules self tests
-and then generate a FIPS related configuration file that contains:
+This utility is used to generate a FIPS module configuration file.
+The generated configuration file consists of:
 
 =over 4
 
@@ -34,7 +33,7 @@ have successfully run.
 
 =back
 
-This configuration file will then be used each time the FIPS module is loaded
+This configuration file can be used each time a FIPS module is loaded
 in order to pass data to the FIPS modules self tests. The FIPS module always
 verifies the modules MAC, but only needs to run the KATS once during install.
 
@@ -48,7 +47,7 @@ Print a usage message.
 
 =item B<-module filename>
 
-Filename of the fips module to perform an integrity check on.
+Filename of a fips module to perform an integrity check on.
 
 =item B<-out configfilename>
 
