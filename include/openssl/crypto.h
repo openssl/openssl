@@ -169,6 +169,7 @@ const char *OpenSSL_version(int type);
 # define OPENSSL_VERSION_STRING         6
 # define OPENSSL_FULL_VERSION_STRING    7
 # define OPENSSL_MODULES_DIR            8
+# define OPENSSL_CPU_INFO               9
 
 const char *OPENSSL_info(int type);
 /*
@@ -182,6 +183,7 @@ const char *OPENSSL_info(int type);
 # define OPENSSL_INFO_DIR_FILENAME_SEPARATOR    1005
 # define OPENSSL_INFO_LIST_SEPARATOR            1006
 # define OPENSSL_INFO_SEED_SOURCE               1007
+# define OPENSSL_INFO_CPU_SETTINGS              1008
 
 int OPENSSL_issetugid(void);
 

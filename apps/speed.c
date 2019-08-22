@@ -3363,6 +3363,7 @@ int speed_main(int argc, char **argv)
         printf("%s ", BF_options());
 #endif
         printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
+        printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
     }
 
     if (pr_header) {

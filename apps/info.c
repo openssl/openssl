@@ -14,7 +14,7 @@
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_CONFIGDIR, OPT_ENGINESDIR, OPT_MODULESDIR, OPT_DSOEXT, OPT_DIRNAMESEP,
-    OPT_LISTSEP, OPT_SEEDS
+    OPT_LISTSEP, OPT_SEEDS, OPT_CPUSETTINGS
 } OPTION_CHOICE;
 
 const OPTIONS info_options[] = {
@@ -31,6 +31,7 @@ const OPTIONS info_options[] = {
     {"dirnamesep", OPT_DIRNAMESEP, '-', "Directory-filename separator"},
     {"listsep", OPT_LISTSEP, '-', "List separator character"},
     {"seeds", OPT_SEEDS, '-', "Seed sources"},
+    {"cpusettings", OPT_CPUSETTINGS, '-', "CPU settings info"},
     {NULL}
 };
 
@@ -77,6 +78,10 @@ opthelp:
             break;
         case OPT_SEEDS:
             type = OPENSSL_INFO_SEED_SOURCE;
+            dirty++;
+            break;
+        case OPT_CPUSETTINGS:
+            type = OPENSSL_INFO_CPU_SETTINGS;
             dirty++;
             break;
         }

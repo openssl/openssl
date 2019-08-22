@@ -7,18 +7,57 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stddef.h>
 #include <openssl/crypto.h>
 #include "internal/dso_conf.h"
+#include "internal/thread_once.h"
+#include "internal/cryptlib.h"
 #include "e_os.h"
 #include "buildinf.h"
-#include "internal/thread_once.h"
+
+#if defined(__arm__) || defined(__arm) || defined(__aarch64__)
+# include "arm_arch.h"
+#endif
+
+/* extern declaration to avoid warning */
+extern char ossl_cpu_info_str[];
 
 static char *seed_sources = NULL;
+
+char ossl_cpu_info_str[128] = "";
+#define CPUINFO_PREFIX "CPUINFO: "
+
 static CRYPTO_ONCE init_info = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(init_info_strings)
 {
+#if defined(OPENSSL_CPUID_OBJ)
+# if defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
+     defined(__x86_64) || defined(__x86_64__) || \
+     defined(_M_AMD64) || defined(_M_X64)
+    const char *env;
+
+    BIO_snprintf(ossl_cpu_info_str, sizeof(ossl_cpu_info_str),
+                 CPUINFO_PREFIX "OPENSSL_ia32cap=0x%llx:0x%llx",
+                 (long long)OPENSSL_ia32cap_P[0] |
+                 (long long)OPENSSL_ia32cap_P[1] << 32,
+                 (long long)OPENSSL_ia32cap_P[2] |
+                 (long long)OPENSSL_ia32cap_P[3] << 32);
+    if ((env = getenv("OPENSSL_ia32cap")) != NULL)
+        BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
+                     sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
+                     " env:%s", env);
+# elif defined(__arm__) || defined(__arm) || defined(__aarch64__)
+    const char *env;
+
+    BIO_snprintf(ossl_cpu_info_str, sizeof(ossl_cpu_info_str),
+                 CPUINFO_PREFIX "OPENSSL_armcap=0x%x", OPENSSL_armcap_P);
+    if ((env = getenv("OPENSSL_armcap")) != NULL)
+        BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
+                     sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
+                     " env:%s", env);
+# endif
+#endif
+
     {
         static char seeds[512] = "";
 
@@ -107,6 +146,15 @@ const char *OPENSSL_info(int t)
         }
     case OPENSSL_INFO_SEED_SOURCE:
         return seed_sources;
+    case OPENSSL_INFO_CPU_SETTINGS:
+        /*
+         * If successfully initialized, ossl_cpu_info_str will start
+         * with CPUINFO_PREFIX, if failed it will be an empty string.
+         * Strip away the CPUINFO_PREFIX which we don't need here.
+         */
+        if (ossl_cpu_info_str[0] != '\0')
+            return ossl_cpu_info_str + strlen(CPUINFO_PREFIX);
+        break;
     default:
         break;
     }
