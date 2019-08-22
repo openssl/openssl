@@ -86,6 +86,7 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     }
 
     ASN1_INTEGER_free(public_key);
+    dh->dirty_cnt++;
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, dh);
     return 1;
 
@@ -559,17 +560,27 @@ static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     OSSL_PARAM *params;
     void *provkey = NULL;
 
-    if (p == NULL || g == NULL || pub_key == NULL)
+    /*
+     * Domain parameters p and g must always be present...  however, the
+     * keys themselves aren't if this is a domain parameter EVP_PKEY, so
+     * we can't make them mandatory.
+     */
+    if (p == NULL || g == NULL)
         return NULL;
 
     ossl_param_bld_init(&tmpl);
     if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_P, p)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_G, g)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_key))
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_G, g))
         return NULL;
 
     if (q != NULL) {
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_Q, q))
+            return NULL;
+    }
+
+    if (pub_key != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY,
+                                    pub_key))
             return NULL;
     }
 
@@ -720,6 +731,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     pkpeer = EVP_PKEY_new();
     if (pkpeer == NULL)
         goto err;
+    dhpeer->dirty_cnt++;
     EVP_PKEY_assign(pkpeer, pk->ameth->pkey_id, dhpeer);
     dhpeer = NULL;
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)

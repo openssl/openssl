@@ -18,38 +18,37 @@ static OSSL_OP_keymgmt_importkey_fn dh_importkey;
 
 static int params_to_key(DH *dh, const OSSL_PARAM params[])
 {
-    const OSSL_PARAM *param_p, *param_g, *param_priv_key, *param_pub_key;
-    BIGNUM *p = NULL, *g = NULL, *priv_key = NULL, *pub_key = NULL;
+    const OSSL_PARAM *param_p, *param_q, *param_g;
+    const OSSL_PARAM *param_priv_key, *param_pub_key;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *priv_key = NULL, *pub_key = NULL;
 
     if (dh == NULL)
         return 0;
 
     param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_P);
+    param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_Q);
     param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_G);
     param_priv_key =
         OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PRIV_KEY);
     param_pub_key =
         OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PUB_KEY);
 
-    /*
-     * DH documentation says that a public key must be present if a
-     * private key is present.
-     * We want to have at least a public key either way, so we end up
-     * requiring it unconditionally.
-     */
-    if (param_pub_key == NULL)
+    /* Domain parameters p and g must be present, the rest might not */
+    if (param_p == NULL || param_g == NULL)
         return 0;
 
-    if ((param_p != NULL && !OSSL_PARAM_get_BN(param_p, &p))
-        || (param_g != NULL && !OSSL_PARAM_get_BN(param_g, &g))
+    if (!OSSL_PARAM_get_BN(param_p, &p)
+        || !OSSL_PARAM_get_BN(param_g, &g)
+        || (param_q != NULL && !OSSL_PARAM_get_BN(param_q, &q))
         || (param_priv_key != NULL
             && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))
-        || !OSSL_PARAM_get_BN(param_pub_key, &pub_key))
+        || (param_pub_key != NULL
+            && !OSSL_PARAM_get_BN(param_pub_key, &pub_key)))
         goto err;
 
-    if (!DH_set0_pqg(dh, p, NULL, g))
+    if (!DH_set0_pqg(dh, p, q, g))
         goto err;
-    p = g = NULL;
+    p = q = g = NULL;
 
     if (!DH_set0_key(dh, pub_key, priv_key))
         goto err;
@@ -59,6 +58,7 @@ static int params_to_key(DH *dh, const OSSL_PARAM params[])
 
  err:
     BN_free(p);
+    BN_free(q);
     BN_free(g);
     BN_free(priv_key);
     BN_free(pub_key);
