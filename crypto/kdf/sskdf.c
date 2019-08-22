@@ -168,7 +168,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
             || kmac_out_len == 64))
         return 0;
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN,
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE,
                                             &kmac_out_len);
 
     if (EVP_MAC_CTX_set_params(ctx, params) <= 0)
@@ -222,7 +222,7 @@ static int SSKDF_mac_kdm(EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
     if (hmac_md != NULL) {
         const char *mdname = EVP_MD_name(hmac_md);
         params[params_n++] =
-            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                              (char *)mdname,
                                              strlen(mdname) + 1);
     }

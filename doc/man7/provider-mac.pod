@@ -178,21 +178,12 @@ Gets flags associated with the MAC.
 
 =for comment We need to investigate if this is the right approach
 
-=item B<OSSL_MAC_PARAM_ALGORITHM> (utf8 string)
-
-Sets the name of the underlying algorithm to be used.
-It must name a suitable algorithm for the MAC that's being used.
-
-=item B<OSSL_MAC_PARAM_MD> (utf8 string)
+=item B<OSSL_MAC_PARAM_CIPHER> (utf8 string)
 
 =item B<OSSL_MAC_PARAM_DIGEST> (utf8 string)
 
-=item B<OSSL_MAC_PARAM_CIPHER> (utf8 string)
-
-These have the same meaning as B<OSSL_MAC_PARAM_ALGORITHM>, but specify
-the expected operation for the underlying algorithm.
-These are regarded as antiquated, but are kept for easier transition from
-legacy MAC implementations.
+Sets the name of the underlying cipher or digest to be used.
+It must name a suitable algorithm for the MAC that's being used.
 
 =item B<OSSL_MAC_PARAM_ENGINE> (utf8 string)
 
@@ -212,13 +203,11 @@ and engine, or a built in legacy function depends on what is available.
 
 =item B<OSSL_MAC_PARAM_SIZE> (int)
 
-=item B<OSSL_MAC_PARAM_DIGESTSIZE> (int)
+Can be used to get the resulting MAC size.
 
-=item B<OSSL_MAC_PARAM_OUTLEN> (int)
-
-All three names are considered the same.
-B<OSSL_MAC_PARAM_SIZE> and B<OSSL_MAC_PARAM_DIGESTSIZE> are considered
-antiquated, but are kept for easier transition from legacy MAC implementations.
+With some MAC algorithms, it can also be used to set the size that the
+resulting MAC should have.
+Allowable sizes are decided within each implementation.
 
 =back
 

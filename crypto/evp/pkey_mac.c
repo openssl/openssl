@@ -281,7 +281,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                                                      engineid,
                                                      strlen(engineid) + 1);
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                                      ciphname,
                                                      strlen(ciphname) + 1);
                 params[params_n] = OSSL_PARAM_construct_end();
@@ -336,13 +336,13 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
              */
 
             params[0] =
-                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN, &size);
+                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &size);
 
             if (!EVP_MAC_CTX_set_params(hctx->ctx, params))
                 return 0;
 
             params[0] =
-                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN, &verify);
+                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &verify);
 
             if (!EVP_MAC_CTX_get_params(hctx->ctx, params))
                 return 0;
@@ -407,7 +407,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                                                          engineid_l);
                 }
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                      mdname,
                                                      strlen(mdname) + 1);
                 params[params_n++] =
@@ -440,6 +440,20 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
     const EVP_MAC *mac = EVP_MAC_CTX_mac(hctx->ctx);
     OSSL_PARAM params[2];
     int ok = 0;
+
+    /*
+     * Translation of some control names that are equivalent to a single
+     * parameter name.
+     *
+     * "md" and "digest" are the same thing, we use the single "digest"
+     *
+     * "digestsize" was a setting control in siphash, but naming wise,
+     * it's really the same as "size".
+     */
+    if (strcmp(type, "md") == 0)
+        type = OSSL_MAC_PARAM_DIGEST;
+    else if (strcmp(type, "digestsize") == 0)
+        type = OSSL_MAC_PARAM_SIZE;
 
     if (!OSSL_PARAM_allocate_from_text(&params[0],
                                        EVP_MAC_CTX_settable_params(mac),

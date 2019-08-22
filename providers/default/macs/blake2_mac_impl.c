@@ -108,8 +108,7 @@ static int blake2_mac_final(void *vmacctx,
 }
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL), /* Same as "outlen" */
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *blake2_gettable_ctx_params(void)
@@ -121,15 +120,13 @@ static int blake2_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-        || (p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
         return OSSL_PARAM_set_size_t(p, blake2_mac_size(vmacctx));
 
     return 1;
 }
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_CUSTOM, NULL, 0),
@@ -149,9 +146,7 @@ static int blake2_mac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     struct blake2_mac_data_st *macctx = vmacctx;
     const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-        ||
-        (p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL) {
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL) {
         size_t size;
 
         if (!OSSL_PARAM_get_size_t(p, &size)

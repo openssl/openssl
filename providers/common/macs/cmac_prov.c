@@ -140,8 +140,7 @@ static int cmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL), /* Same as "outlen" */
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *cmac_gettable_ctx_params(void)
@@ -153,16 +152,13 @@ static int cmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-        || (p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
         return OSSL_PARAM_set_size_t(p, cmac_size(vmacctx));
 
     return 1;
 }
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
-    /* "algorithm" and "cipher" are the same parameter */
-    OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_ALGORITHM, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_CIPHER, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_ENGINE, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_PROPERTIES, NULL, 0),
@@ -182,9 +178,7 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     struct cmac_data_st *macctx = vmacctx;
     const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CIPHER)) != NULL
-        || ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_ALGORITHM))
-            != NULL)) {
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CIPHER)) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
 

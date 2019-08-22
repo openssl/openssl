@@ -53,7 +53,7 @@ struct gmac_data_st {
     /*
      * Conditions for legacy EVP_CIPHER uses.
      */
-    ENGINE *engine;              /* Engine implementing the algorithm */
+    ENGINE *engine;              /* Engine implementing the cipher */
 };
 
 static size_t gmac_size(void);
@@ -150,8 +150,7 @@ static size_t gmac_size(void)
 }
 
 static const OSSL_PARAM known_gettable_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL), /* Same as "outlen" */
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *gmac_gettable_params(void)
@@ -163,16 +162,13 @@ static int gmac_get_params(OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-        || (p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
         return OSSL_PARAM_set_size_t(p, gmac_size());
 
     return 1;
 }
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
-    /* "algorithm" and "cipher" are the same parameter */
-    OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_ALGORITHM, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_CIPHER, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_ENGINE, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_PROPERTIES, NULL, 0),
@@ -194,9 +190,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     EVP_CIPHER_CTX *ctx = macctx->ctx;
     const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CIPHER)) != NULL
-        || (p = OSSL_PARAM_locate_const(params,
-                                        OSSL_MAC_PARAM_ALGORITHM)) != NULL) {
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CIPHER)) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
 
