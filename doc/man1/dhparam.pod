@@ -153,7 +153,8 @@ There should be a way to generate and manipulate DH keys.
 
 =head1 SEE ALSO
 
-L<dsaparam(1)>
+L<openssl(1)>,
+L<openssl-dsaparam(1)>
 
 =head1 COPYRIGHT
 

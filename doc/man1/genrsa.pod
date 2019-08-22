@@ -118,7 +118,8 @@ of a key.
 
 =head1 SEE ALSO
 
-L<gendsa(1)>
+L<openssl(1)>,
+L<openssl-gendsa(1)>
 
 =head1 COPYRIGHT
 

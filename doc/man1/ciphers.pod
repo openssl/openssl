@@ -752,7 +752,10 @@ Set security level to 2 and display all ciphers consistent with level 2:
 
 =head1 SEE ALSO
 
-L<s_client(1)>, L<s_server(1)>, L<ssl(7)>
+L<openssl(1)>,
+L<openssl-s_client(1)>,
+L<openssl-s_server(1)>,
+L<ssl(7)>
 
 =head1 HISTORY
 

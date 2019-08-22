@@ -61,6 +61,7 @@ Show the output as a hex string.
 
 =head1 SEE ALSO
 
+L<openssl(1)>,
 L<RAND_bytes(3)>
 
 =head1 COPYRIGHT

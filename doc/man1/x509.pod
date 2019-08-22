@@ -939,8 +939,12 @@ dates rather than an offset from the current time.
 
 =head1 SEE ALSO
 
-L<req(1)>, L<ca(1)>, L<genrsa(1)>,
-L<gendsa(1)>, L<verify(1)>,
+L<openssl(1)>,
+L<openssl-req(1)>,
+L<openssl-ca(1)>,
+L<openssl-genrsa(1)>,
+L<openssl-gendsa(1)>,
+L<openssl-verify(1)>,
 L<x509v3_config(5)>
 
 =head1 HISTORY

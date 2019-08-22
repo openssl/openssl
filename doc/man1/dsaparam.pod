@@ -120,8 +120,11 @@ DSA parameters is often used to generate several distinct keys.
 
 =head1 SEE ALSO
 
-L<gendsa(1)>, L<dsa(1)>, L<genrsa(1)>,
-L<rsa(1)>
+L<openssl(1)>,
+L<openssl-gendsa(1)>,
+L<openssl-dsa(1)>,
+L<openssl-genrsa(1)>,
+L<openssl-rsa(1)>
 
 =head1 COPYRIGHT
 

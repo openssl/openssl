@@ -200,6 +200,7 @@ ASN.1 types is not well handled (if at all).
 
 =head1 SEE ALSO
 
+L<openssl(1)>,
 L<ASN1_generate_nconf(3)>
 
 =head1 COPYRIGHT

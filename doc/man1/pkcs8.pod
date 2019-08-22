@@ -299,8 +299,11 @@ in use and other details such as the iteration count.
 
 =head1 SEE ALSO
 
-L<dsa(1)>, L<rsa(1)>, L<genrsa(1)>,
-L<gendsa(1)>
+L<openssl(1)>,
+L<openssl-dsa(1)>,
+L<openssl-rsa(1)>,
+L<openssl-genrsa(1)>,
+L<openssl-gendsa(1)>
 
 =head1 HISTORY
 

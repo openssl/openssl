@@ -142,6 +142,7 @@ The B<list -mac-algorithms> command can be used to list them.
 
 =head1 SEE ALSO
 
+L<openssl(1)>,
 L<EVP_MAC(3)>,
 L<EVP_MAC_CMAC(7)>,
 L<EVP_MAC_GMAC(7)>,

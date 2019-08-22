@@ -20,6 +20,7 @@ errstr,
 gendsa,
 genpkey,
 genrsa,
+info,
 kdf,
 mac,
 nseq,
@@ -49,8 +50,8 @@ storeutl,
 ts,
 verify,
 version,
-x509,
-cmds, - OpenSSL application commands
+x509
+- OpenSSL application commands
 
 =head1 SYNOPSIS
 
@@ -97,6 +98,7 @@ L<openssl-errstr(1)>,
 L<openssl-gendsa(1)>,
 L<openssl-genpkey(1)>,
 L<openssl-genrsa(1)>,
+L<openssl-info(1)>,
 L<openssl-kdf(1)>,
 L<openssl-mac(1)>,
 L<openssl-nseq(1)>,

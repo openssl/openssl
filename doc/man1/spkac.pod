@@ -140,7 +140,8 @@ to be used in a "replay attack".
 
 =head1 SEE ALSO
 
-L<ca(1)>
+L<openssl(1)>,
+L<openssl-ca(1)>
 
 =head1 COPYRIGHT
 

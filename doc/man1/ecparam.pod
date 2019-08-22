@@ -183,7 +183,9 @@ To print out the EC parameters to standard output:
 
 =head1 SEE ALSO
 
-L<ec(1)>, L<dsaparam(1)>
+L<openssl(1)>,
+L<openssl-ec(1)>,
+L<openssl-dsaparam(1)>
 
 =head1 COPYRIGHT
 

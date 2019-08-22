@@ -197,7 +197,10 @@ fails.
 
 =head1 SEE ALSO
 
-L<s_client(1)>, L<s_server(1)>, L<ciphers(1)>
+L<openssl(1)>,
+L<openssl-s_client(1)>,
+L<openssl-s_server(1)>,
+L<openssl-ciphers(1)>
 
 =head1 COPYRIGHT
 

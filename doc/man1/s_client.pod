@@ -829,8 +829,13 @@ information whenever a session is renegotiated.
 
 =head1 SEE ALSO
 
-L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>,
-L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>,
+L<openssl(1)>,
+L<openssl-sess_id(1)>,
+L<openssl-s_server(1)>,
+L<openssl-ciphers(1)>,
+L<SSL_CONF_cmd(3)>,
+L<SSL_CTX_set_max_send_fragment(3)>,
+L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY

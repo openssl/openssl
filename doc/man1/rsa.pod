@@ -189,8 +189,11 @@ without having to manually edit them.
 
 =head1 SEE ALSO
 
-L<pkcs8(1)>, L<dsa(1)>, L<genrsa(1)>,
-L<gendsa(1)>
+L<openssl(1)>,
+L<openssl-pkcs8(1)>,
+L<openssl-dsa(1)>,
+L<openssl-genrsa(1)>,
+L<openssl-gendsa(1)>
 
 =head1 COPYRIGHT
 

@@ -152,8 +152,13 @@ To just output the public part of a private key:
 
 =head1 SEE ALSO
 
-L<genpkey(1)>, L<rsa(1)>, L<pkcs8(1)>,
-L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)>
+L<openssl(1)>,
+L<openssl-genpkey(1)>,
+L<openssl-rsa(1)>,
+L<openssl-pkcs8(1)>,
+L<openssl-dsa(1)>,
+L<openssl-genrsa(1)>,
+L<openssl-gendsa(1)>
 
 =head1 COPYRIGHT
 

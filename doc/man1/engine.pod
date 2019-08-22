@@ -104,6 +104,7 @@ The path to the engines directory.
 
 =head1 SEE ALSO
 
+L<openssl(1)>,
 L<config(5)>
 
 =head1 COPYRIGHT

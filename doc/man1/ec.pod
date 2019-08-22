@@ -188,7 +188,10 @@ To change the point conversion form to B<compressed>:
 
 =head1 SEE ALSO
 
-L<ecparam(1)>, L<dsa(1)>, L<rsa(1)>
+L<openssl(1)>,
+L<openssl-ecparam(1)>,
+L<openssl-dsa(1)>,
+L<openssl-rsa(1)>
 
 =head1 COPYRIGHT
 

@@ -151,7 +151,9 @@ The cipher and start time should be printed out in human readable form.
 
 =head1 SEE ALSO
 
-L<ciphers(1)>, L<s_server(1)>
+L<openssl(1)>,
+L<openssl-ciphers(1)>,
+L<openssl-s_server(1)>
 
 =head1 COPYRIGHT
 

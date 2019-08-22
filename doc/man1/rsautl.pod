@@ -205,7 +205,10 @@ which it can be seen agrees with the recovered value above.
 
 =head1 SEE ALSO
 
-L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>
+L<openssl(1)>,
+L<openssl-dgst(1)>,
+L<openssl-rsa(1)>,
+L<openssl-genrsa(1)>
 
 =head1 COPYRIGHT
 

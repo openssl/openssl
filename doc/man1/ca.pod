@@ -769,8 +769,13 @@ are in year 2050 or later.
 
 =head1 SEE ALSO
 
-L<req(1)>, L<spkac(1)>, L<x509(1)>, L<CA.pl(1)>,
-L<config(5)>, L<x509v3_config(5)>
+L<openssl(1)>,
+L<openssl-req(1)>,
+L<openssl-spkac(1)>,
+L<openssl-x509(1)>,
+L<CA.pl(1)>,
+L<config(5)>,
+L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 

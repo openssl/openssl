@@ -659,8 +659,12 @@ test/testtsa).
 
 =head1 SEE ALSO
 
-L<tsget(1)>, L<openssl(1)>, L<req(1)>,
-L<x509(1)>, L<ca(1)>, L<genrsa(1)>,
+L<openssl(1)>,
+L<openssl-tsget(1)>,
+L<openssl-req(1)>,
+L<openssl-x509(1)>,
+L<openssl-ca(1)>,
+L<openssl-genrsa(1)>,
 L<config(5)>
 
 =head1 COPYRIGHT

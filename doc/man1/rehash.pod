@@ -130,8 +130,8 @@ Ignored if directories are listed on the command line.
 =head1 SEE ALSO
 
 L<openssl(1)>,
-L<crl(1)>.
-L<x509(1)>.
+L<openssl-crl(1)>,
+L<openssl-x509(1)>
 
 =head1 COPYRIGHT
 
