@@ -15,6 +15,7 @@ B<openssl info>
 [B<-dirfilesep>]
 [B<-listsep]>
 [B<-seeds]>
+[B<-cpusettings]>
 
 =head1 DESCRIPTION
 
@@ -66,6 +67,10 @@ style lists.
 =item B<-seeds>
 
 Outputs the randomness seed sources.
+
+=item B<-cpusettings>
+
+Outputs the OpenSSL CPU settings info.
 
 =back
 
