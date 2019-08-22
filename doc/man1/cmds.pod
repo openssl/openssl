@@ -130,10 +130,10 @@ L<openssl-x509(1)>,
 
 =head1 HISTORY
 
-Initially, the manual page entry for the B<openssl cmd> used to be
-available at B<cmd(1)>. Later, the alias B<openssl-cmd(1)> was
-introduced, which made it easier to group the subcommands using the
-L<apropos(1)> command or the shell's tab completion.
+Initially, the manual page entry for the B<openssl cmd> command used
+to be available at B<cmd(1)>. Later, the alias B<openssl-cmd(1)> was
+introduced, which made it easier to group the openssl commands using
+the L<apropos(1)> command or the shell's tab completion.
 
 In order to reduce cluttering of the global manual page namespace,
 the manual page entries without the 'openssl-' prefix have been
