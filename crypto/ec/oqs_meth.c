@@ -31,9 +31,6 @@
 #include "internal/evp_int.h"
 #include <oqs/oqs.h>
 
-/* Only supports OQS's master branch signature API for now */
-#if !defined(OQS_NIST_BRANCH)
-
 #define SIZE_OF_UINT32 4
 #define ENCODE_UINT32(pbuf, i)  (pbuf)[0] = (unsigned char)((i>>24) & 0xff); \
                                 (pbuf)[1] = (unsigned char)((i>>16) & 0xff); \
@@ -1219,5 +1216,3 @@ DEFINE_OQS_EVP_METHODS(p384_qteslaiiisize, NID_p384_qteslaiiisize, "p384_qteslai
 DEFINE_OQS_EVP_METHODS(qteslaiiispeed, NID_qteslaiiispeed, "qteslaiiispeed", "OpenSSL qTESLA-III-speed algorithm")
 DEFINE_OQS_EVP_METHODS(p384_qteslaiiispeed, NID_p384_qteslaiiispeed, "p384_qteslaiiispeed", "OpenSSL ECDSA p384 qTESLA-III-speed algorithm")
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_END
-
-#endif /* !defined(OQS_NIST_BRANCH) */

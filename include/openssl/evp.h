@@ -63,7 +63,6 @@
 # define EVP_PKEY_ED25519 NID_ED25519
 # define EVP_PKEY_X448 NID_X448
 # define EVP_PKEY_ED448 NID_ED448
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_START
 # define EVP_PKEY_OQSDEFAULT NID_oqsdefault
 # define EVP_PKEY_P256_OQSDEFAULT NID_p256_oqsdefault
@@ -85,7 +84,6 @@
 # define EVP_PKEY_QTESLAIIISPEED NID_qteslaiiispeed
 # define EVP_PKEY_P384_QTESLAIIISPEED NID_p384_qteslaiiispeed
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_END
-#endif
 
 #ifdef  __cplusplus
 extern "C" {

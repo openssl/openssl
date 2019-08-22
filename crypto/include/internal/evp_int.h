@@ -112,7 +112,6 @@ extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD poly1305_pkey_meth;
 extern const EVP_PKEY_METHOD siphash_pkey_meth;
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_METHS_START
 extern const EVP_PKEY_METHOD oqsdefault_pkey_meth;
 extern const EVP_PKEY_METHOD p256_oqsdefault_pkey_meth;
@@ -134,7 +133,6 @@ extern const EVP_PKEY_METHOD p384_qteslaiiisize_pkey_meth;
 extern const EVP_PKEY_METHOD qteslaiiispeed_pkey_meth;
 extern const EVP_PKEY_METHOD p384_qteslaiiispeed_pkey_meth;
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_METHS_END
-#endif
 
 struct evp_md_st {
     int type;

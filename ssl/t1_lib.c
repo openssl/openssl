@@ -833,7 +833,6 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_ed25519,
     TLSEXT_SIGALG_ed448,
 #endif
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_TLS12_SIGALGS_START
     TLSEXT_SIGALG_oqsdefault,
     TLSEXT_SIGALG_p256_oqsdefault,
@@ -855,7 +854,6 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_qteslaiiispeed,
     TLSEXT_SIGALG_p384_qteslaiiispeed,
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_TLS12_SIGALGS_END
-#endif
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
     TLSEXT_SIGALG_rsa_pss_pss_sha384,
@@ -984,7 +982,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_id_GostR3410_2001, SSL_PKEY_GOST01,
      NID_undef, NID_undef},
 #endif
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_START
     {"oqsdefault", TLSEXT_SIGALG_oqsdefault,
      NID_undef, -1, EVP_PKEY_OQSDEFAULT, SSL_PKEY_OQSDEFAULT,
@@ -1044,7 +1041,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_undef, -1, EVP_PKEY_P384_QTESLAIIISPEED, SSL_PKEY_P384_QTESLAIIISPEED,
      NID_undef, NID_undef},
 ///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_END
-#endif
 };
 /* Legacy sigalgs for TLS < 1.2 RSA TLS signatures */
 static const SIGALG_LOOKUP legacy_rsa_sigalg = {
@@ -2648,7 +2644,6 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_512);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED25519);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED448);
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_ADD_CERT_CHAIN_CHECKS_START
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_OQSDEFAULT);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_OQSDEFAULT);
@@ -2670,7 +2665,6 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISPEED);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_QTESLAIIISPEED);
 ///// OQS_TEMPLATE_FRAGMENT_ADD_CERT_CHAIN_CHECKS_END
-#endif
 }
 
 /* User level utility function to check a chain is suitable */
