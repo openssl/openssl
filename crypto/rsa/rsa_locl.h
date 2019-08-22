@@ -66,6 +66,9 @@ struct rsa_st {
     BN_BLINDING *blinding;
     BN_BLINDING *mt_blinding;
     CRYPTO_RWLOCK *lock;
+
+    /* Provider data */
+    size_t dirty_cnt; /* If any key material changes, increment this */
 };
 
 struct rsa_meth_st {

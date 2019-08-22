@@ -128,6 +128,7 @@ extern const OSSL_DISPATCH poly1305_functions[];
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
+extern const OSSL_DISPATCH rsa_keymgmt_functions[];
 
 /* Key Exchange */
 extern const OSSL_DISPATCH dh_keyexch_functions[];

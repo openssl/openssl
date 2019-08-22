@@ -327,6 +327,7 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
         r->d = d;
     }
 
+    r->dirty_cnt++;
     return 1;
 }
 
@@ -348,6 +349,7 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
         r->q = q;
     }
 
+    r->dirty_cnt++;
     return 1;
 }
 
@@ -374,6 +376,7 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
         r->iqmp = iqmp;
     }
 
+    r->dirty_cnt++;
     return 1;
 }
 
@@ -435,6 +438,7 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
 
     r->version = RSA_ASN1_VERSION_MULTI;
 
+    r->dirty_cnt++;
     return 1;
  err:
     /* r, d, t should not be freed */

@@ -3,3 +3,5 @@ IF[{- !$disabled{dh} -}]
   SOURCE[../../../libcrypto]=\
           dh_kmgmt.c
 ENDIF
+SOURCE[../../../libcrypto]=\
+        rsa_kmgmt.c

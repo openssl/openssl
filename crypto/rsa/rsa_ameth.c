@@ -16,6 +16,8 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 #include "rsa_locl.h"
+#include <openssl/core_names.h>
+#include "internal/param_build.h"
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);
@@ -109,6 +111,7 @@ static int rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
         RSA_free(rsa);
         return 0;
     }
+    rsa->dirty_cnt++;
     if (!EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa)) {
         RSA_free(rsa);
         return 0;
@@ -133,6 +136,7 @@ static int old_rsa_priv_decode(EVP_PKEY *pkey,
         RSAerr(RSA_F_OLD_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
         return 0;
     }
+    rsa->dirty_cnt++;
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
     return 1;
 }
@@ -187,6 +191,7 @@ static int rsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         RSA_free(rsa);
         return 0;
     }
+    rsa->dirty_cnt++;
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
     return 1;
 }
@@ -1045,6 +1050,60 @@ static int rsa_pkey_check(const EVP_PKEY *pkey)
     return RSA_check_key_ex(pkey->pkey.rsa, NULL);
 }
 
+static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
+{
+    return pkey->pkey.rsa->dirty_cnt;
+}
+
+static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
+{
+    RSA *rsa = pk->pkey.rsa;
+    OSSL_PARAM_BLD tmpl;
+    const BIGNUM *n = RSA_get0_n(rsa), *e = RSA_get0_e(rsa);
+    const BIGNUM *d = RSA_get0_d(rsa);
+    const BIGNUM *p = RSA_get0_p(rsa), *q = RSA_get0_q(rsa);
+    const BIGNUM *dmp1 = RSA_get0_dmp1(rsa);
+    const BIGNUM *dmq1 = RSA_get0_dmq1(rsa);
+    const BIGNUM *iqmp = RSA_get0_iqmp(rsa);
+    OSSL_PARAM *params;
+    void *provkey = NULL;
+
+    /* At least the public key components must be present */
+    if (n == NULL || e == NULL)
+        return NULL;
+
+    ossl_param_bld_init(&tmpl);
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n)
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, e))
+        return NULL;
+    if (d != NULL
+        && !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
+        return NULL;
+    if (p != NULL
+        && !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_P, p))
+        return NULL;
+    if (q != NULL
+        && !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_Q, q))
+        return NULL;
+    if (dmp1 != NULL
+        && !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_DMP1, dmp1))
+        return NULL;
+    if (dmq1 != NULL
+        && !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_DMQ1, dmq1))
+        return NULL;
+    if (iqmp != NULL
+        && !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_IQMP, iqmp))
+        return NULL;
+
+    params = ossl_param_bld_to_param(&tmpl);
+
+    /* We export, the provider imports */
+    provkey = evp_keymgmt_importkey(keymgmt, params);
+
+    ossl_param_bld_free(params);
+    return provkey;
+}
+
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
     {
      EVP_PKEY_RSA,
@@ -1077,7 +1136,13 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      rsa_item_verify,
      rsa_item_sign,
      rsa_sig_info_set,
-     rsa_pkey_check
+     rsa_pkey_check,
+     0, 0,
+
+     0, 0, 0, 0,
+
+     rsa_pkey_dirty_cnt,
+     rsa_pkey_export_to,
     },
 
     {
@@ -1116,5 +1181,5 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
      rsa_item_verify,
      rsa_item_sign,
      0,
-     rsa_pkey_check
+     rsa_pkey_check,
 };

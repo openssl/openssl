@@ -32,6 +32,7 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         *pval = NULL;
         return 2;
     } else if (operation == ASN1_OP_D2I_POST) {
+        ((RSA *)*pval)->dirty_cnt++;
         if (((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI) {
             /* not a multi-prime key, skip */
             return 1;
@@ -74,6 +75,10 @@ static int rsa_pss_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     if (operation == ASN1_OP_FREE_PRE) {
         RSA_PSS_PARAMS *pss = (RSA_PSS_PARAMS *)*pval;
         X509_ALGOR_free(pss->maskHash);
+#if 0                            /* Not yet implemented */
+    } else if (operation == ASN1_OP_D2I_POST) {
+        ((RSA_PSS_PARAMS *)*pval)->dirty_cnt++;
+#endif
     }
     return 1;
 }
@@ -94,6 +99,10 @@ static int rsa_oaep_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     if (operation == ASN1_OP_FREE_PRE) {
         RSA_OAEP_PARAMS *oaep = (RSA_OAEP_PARAMS *)*pval;
         X509_ALGOR_free(oaep->maskHash);
+#if 0                            /* Not yet implemented */
+    } else if (operation == ASN1_OP_D2I_POST) {
+        ((RSA_OAEP_PARAMS *)*pval)->dirty_cnt++;
+#endif
     }
     return 1;
 }

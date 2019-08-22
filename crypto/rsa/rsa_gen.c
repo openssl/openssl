@@ -31,8 +31,13 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
  */
 int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 {
-    if (rsa->meth->rsa_keygen != NULL)
-        return rsa->meth->rsa_keygen(rsa, bits, e_value, cb);
+    if (rsa->meth->rsa_keygen != NULL) {
+        int ok = rsa->meth->rsa_keygen(rsa, bits, e_value, cb);
+
+        if (ok)
+            rsa->dirty_cnt++;
+        return ok;
+    }
 
     return RSA_generate_multi_prime_key(rsa, bits, RSA_DEFAULT_PRIME_NUM,
                                         e_value, cb);
@@ -41,6 +46,12 @@ int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes,
                                  BIGNUM *e_value, BN_GENCB *cb)
 {
+    /*
+     * Assume we do change the key.
+     * Worst case scenario, we might invalidate a cache...
+     */
+    rsa->dirty_cnt++;
+
 #ifndef FIPS_MODE
     /* multi-prime is only supported with the builtin key generation */
     if (rsa->meth->rsa_multi_prime_keygen != NULL) {
