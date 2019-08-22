@@ -61,9 +61,13 @@ extern "C" {
 
 # define RC4_INT {- $config{rc4_int} -}
 
-#include <openssl/macros.h>
-
 # ifdef  __cplusplus
 }
 # endif
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_FILE_H /* deprecated in version 3.0 */
+# endif
+
 #endif                          /* HEADER_OPENSSLCONF_H */
