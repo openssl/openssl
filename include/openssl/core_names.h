@@ -99,6 +99,13 @@ extern "C" {
 /* Diffie-Hellman Keys */
 #define OSSL_PKEY_PARAM_DH_PUB_KEY   "dh-pub"
 #define OSSL_PKEY_PARAM_DH_PRIV_KEY  "dh-priv"
+/* DSA Parameters */
+#define OSSL_PKEY_PARAM_DSA_P        "dsa-p"
+#define OSSL_PKEY_PARAM_DSA_G        "dsa-g"
+#define OSSL_PKEY_PARAM_DSA_Q        "dsa-q"
+/* DSA Keys */
+#define OSSL_PKEY_PARAM_DSA_PUB_KEY  "dsa-pub"
+#define OSSL_PKEY_PARAM_DSA_PRIV_KEY "dsa-priv"
 /* RSA Parameters and Keys */
 # define OSSL_PKEY_PARAM_RSA_N      "rsa-n"
 # define OSSL_PKEY_PARAM_RSA_E      "rsa-e"
