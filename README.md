@@ -1,42 +1,70 @@
-OQS-OpenSSL\_1\_1\_1-stable
-==========================
-
 [![CircleCI](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable.svg?style=svg)](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable)
 
----
+OQS-OpenSSL\_1\_1\_1
+==================================
 
-**OpenSSL** ([https://openssl.org/](https://openssl.org/)) is an open-source TLS/SSL and crypto library.  (View the original [README file](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README) for OpenSSL.)
+[OpenSSL](https://openssl.org/) is an open-source implementation of the TLS protocol and various cryptographic algorithms ([View the original README](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README).)
 
-This branch (OQS-OpenSSL\_1\_1\_1-stable) is a fork of OpenSSL 1.1.1 (currently in sync with the [OpenSSL\_1\_1\_1c tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1c)) that adds the following:
+OQS-OpenSSL\_1\_1\_1 is a fork of OpenSSL 1.1.1 that adds quantum-safe key exchange and authentication algorithms using [liboqs](https://github.com/open-quantum-safe/liboqs) for prototyping and evaluation purposes. This fork is not endorsed by the OpenSSL project.
 
-- post-quantum key exchange in TLS 1.3
-- hybrid (post-quantum + elliptic curve) key exchange in TLS 1.3
-- post-quantum authentication in TLS 1.3
-- hybrid (post-quantum + elliptic curve) authentication in TLS 1.3
+- [Overview](#overview)
+- [Status](#status)
+  * [Limitations and Security](#limitations-and-security)
+  * [Supported Algorithms](#supported-algorithms)
+- [Quickstart](#quickstart)
+  * [Building](#building)
+    * [Linux and macOS](#linux-and-macOS)
+    * [Windows](#windows)
+  * [Running](#running)
+- [Contributing](#contributing)
+- [License](#license)
+- [Team](#team)
+- [Acknowledgements](#acknowledgements)
 
-Overview
---------
+## Overview
 
-The **Open Quantum Safe (OQS) project** has the goal of developing and prototyping quantum-resistant cryptography.  
+**liboqs** is an open source C library for quantum-resistant cryptographic algorithms. See [here](https://github.com/open-quantum-safe/liboqs/) for more information.
 
-**liboqs** is an open source C library for quantum-resistant cryptographic algorithms.  See more about liboqs at [https://github.com/open-quantum-safe/liboqs/](https://github.com/open-quantum-safe/liboqs/), including a list of supported algorithms.
+**OQS-OpenSSL\_1\_1\_1-stable** is a fork that integrates liboqs into OpenSSL 1.1.1.  The goal of this integration is to provide easy prototyping of quantum-safe cryptography in the TLS 1.3 protocol. (For TLS 1.2, see the [OQS-OpenSSL\_1\_0\_2-stable](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_0_2-stable) branch.)
 
-**OQS-OpenSSL\_1\_1\_1-stable** is an integration of liboqs into (a fork of) OpenSSL 1.1.1.  The goal of this integration is to provide easy prototyping of quantum-resistant cryptography in the TLS 1.3 protocol.  The integration should not be considered "production quality".
+Both liboqs and this fork are part of the **Open Quantum Safe (OQS) project**, which aims to develop and prototype quantum-safe cryptography. More information about the project can be found [here](https://openquantumsafe.org/).
 
-More information on OQS can be found on our website: [https://openquantumsafe.org/](https://openquantumsafe.org/).
+## Status
 
-Contents of branch OQS-OpenSSL\_1\_1\_1-stable
-----------------------------------------------
+This fork is currently in sync with the [OpenSSL\_1\_1\_1c tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1c), and adds the following:
 
-This branch ([OQS-OpenSSL\_1\_1\_1-stable branch](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable)) integrates post-quantum key exchange from liboqs in TLS 1.3 in OpenSSL v1.1.1.  
+- quantum-safe key exchange in TLS 1.3
+- hybrid (quantum-safe + elliptic curve) key exchange in TLS 1.3
+- quantum-safe authentication in TLS 1.3
+- hybrid (quantum-safe + elliptic curve) authentication in TLS 1.3
 
-(For TLS 1.2, see the [OQS-OpenSSL\_1\_0\_2-stable](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_0_2-stable) branch.)
+**This fork is at an experimental stage**, and has not received the same level of auditing and analysis that OpenSSL has received. See the [Limitations and Security](#limitations-and-security) section below for more information.
 
-### Key exchange mechanisms
+**We do not recommend relying on this fork in a production environment or to protect any sensitive data.**
 
-The following key exchange / key encapsulation mechanisms from liboqs are supported (assuming they have been enabled in liboqs):
+liboqs and our integration into OpenSSL is provided "as is", without warranty of any kind.  See the [LICENSE](https://github.com/open-quantum-safe/liboqs/blob/master/LICENSE.txt) for the full disclaimer.
 
-- `oqs_kem_default`: this special mechanisms uses the liboqs's default configured scheme. This is useful to test schemes not yet directly supported by OpenSSL.
+### Limitations and security
+As research advances, the supported algorithms may see rapid changes in their security, and may even prove insecure against both classical and quantum computers.
+
+We believe that the NIST Post-Quantum Cryptography standardization project is currently the best avenue to identifying potentially quantum-resistant algorithms, and strongly recommend that applications and protocols rely on the outcomes of the NIST standardization project when deploying quantum-safe cryptography.
+
+While at the time of this writing there are no vulnerabilities known in any of the quantum-safe algorithms used in this fork, it is advisable to wait on deploying quantum-safe algorithms until further guidance is provided by the standards community, especially from the NIST standardization project.
+
+We realize some parties may want to deploy quantum-safe cryptography prior to the conclusion of the standardization project.  We strongly recommend such attempts make use of so-called **hybrid cryptography**, in which quantum-safe public-key algorithms are combined with traditional public key algorithms (like RSA or elliptic curves) such that the solution is at least no less secure than existing traditional cryptography. This fork provides the ability to use hybrid cryptography.
+
+Proofs of TLS such as [[JKSS12]](https://eprint.iacr.org/2011/219) and [[KPW13]](https://eprint.iacr.org/2013/339) require a key exchange mechanism that has a form of active security, either in the form of the PRF-ODH assumption, or an IND-CCA KEM.
+Some of the KEMs provided in liboqs do provide IND-CCA security; others do not ([these datasheets](https://github.com/open-quantum-safe/liboqs/tree/master/docs/algorithms) specify which provide what security), in which case existing proofs of security of TLS against active attackers do not apply.
+
+### Supported Algorithms
+
+If an algorithm is provided by liboqs but is not listed below, it can still be used in the fork through [either one of two ways](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks).
+
+#### Key Exchange
+
+The following quantum-safe algorithms from liboqs are supported (assuming they have been enabled in liboqs):
+
+- `oqs_kem_default` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
 - **BIKE**: `bike1l1`, `bike1l3`, `bike1l5`, `bike2l1`, `bike2l3`, `bike2l5`, `bike3l1`, `bike3l3`, `bike3l5` (not currently on Windows)
 - **FrodoKEM**: `frodo640aes`, `frodo640shake`, `frodo976aes`, `frodo976shake`, `frodo1344aes`, `frodo1344shake`
 - **Kyber**: `kyber512`, `kyber1024`
@@ -45,114 +73,90 @@ The following key exchange / key encapsulation mechanisms from liboqs are suppor
 - **Saber**: `lightsaber`, `saber`, `firesaber`
 - **SIDH** and **SIKE**: `sidhp434`, `sidhp503`, `sidhp610`, `sidhp751`, `sikep434`, `sikep503`, `sikep610`, `sikep751`
 
-### Authentication mechanisms
+The following hybrid algorithms are supported only for L1 schemes; they combine an L1 quantum-safe algorithm listed above with ECDH that uses NIST's P256 curve:
+- `p256-<KEX>`, where ``<KEX>`` is any one of the L1 algorithms listed above.
 
-The following signature schemes from liboqs are supported (assuming they have been enabled in liboqs):
+#### Authentication
 
-- **Dilithium**: `dilithium2`, `dilithium3`, `dilithium4` (not currently on Windows) 
-- **Picnic**: `picnicL1FS`
-- **qTesla**: `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed` (not currently on Windows) 
+The following digital signature algorithms from liboqs are supported (assuming they have been enabled in liboqs):
 
-The following hybrid schemes are supported, using either the NIST P-256 curve or 3072-bit RSA for L1 schemes, or the NIST P-384 curve for L3 schemes:
+- `oqsdefault` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
+- **Dilithium**: `dilithium2`, `dilithium3`, `dilithium4` (not currently on Windows)
+- **Picnic**: `picnicl1fs`
+- **qTesla**: `qteslai`, `qteslaiiisize`, `qteslaiiispeed` (not currently on Windows)
 
-- **Picnic hybrid**: `p256_picnicL1FS`, `rsa3072_picnicL1FS`
-- **qTesla hybrid**: `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed` (not currently on Windows)
+The following hybrid algorithms are supported; they combine a quantum-safe algorithm listed above with a traditional digital signature algorithm (`<SIG>` is any one of the algorithms listed above):
 
+- if `<SIG>` has L1 security, then the fork provides the methods `rsa3072-<SIG>` and `p256-<SIG>`, which combine `<SIG>` with RSA3072 and with ECDSA using NIST's P256 curve respectively.
+- if `<SIG>` has L3 security, the fork provides the method `p384-<SIG>`, which combines `<SIG>` with ECDSA using NIST's P384 curve.
+- if `<SIG>` has L5 security, the fork provides the method `p521-<SIG>`, which combines `<SIG>` with ECDSA using NIST's P521 curve.
 
-Limitations and security
-------------------------
+## Quickstart
 
-liboqs and this integration into OpenSSL are designed for prototyping and evaluating quantum-resistant cryptography.  Security of proposed quantum-resistant algorithms may rapidly change as research advances, and may ultimately be completely insecure against either classical or quantum computers.
+The steps below have been confirmed to work on macOS 10.14 (clang 10.0.0), Ubuntu 14.04 (gcc-5), Ubuntu 16.04 (gcc-5), Ubuntu 18.04.1 (gcc-7), and Windows 10 (VS2017 build tools).
 
-We believe that the NIST Post-Quantum Cryptography standardization project is currently the best avenue to identifying potentially quantum-resistant algorithms.  liboqs does not intend to "pick winners", and we strongly recommend that applications and protocols rely on the outcomes of the NIST standardization project when deploying post-quantum cryptography.
+### Building
 
-We acknowledge that some parties may want to begin deploying post-quantum cryptography prior to the conclusion of the NIST standardization project.  We strongly recommend that any attempts to do make use of so-called **hybrid cryptography**, in which post-quantum public-key algorithms are used alongside traditional public key algorithms (like RSA or elliptic curves) so that the solution is at least no less secure than existing traditional cryptography.
+#### Linux and macOS
 
-liboqs and our integration into OpenSSL is provided "as is", without warranty of any kind.  See [LICENSE.txt](https://github.com/open-quantum-safe/liboqs/blob/master/LICENSE.txt) for the full disclaimer.
+#### Step 0: Get pre-requisites
 
-The integration of liboqs into our fork of OpenSSL is currently at an experimental stage, and has not received significant review.  At this stage, we do not recommend relying on it in any production environment or to protect any sensitive data.
-
-The OQS fork of OpenSSL is not endorsed by the OpenSSL project.
-
-Proofs of TLS such as [[JKSS12]](https://eprint.iacr.org/2011/219) and [[KPW13]](https://eprint.iacr.org/2013/339) require a key exchange mechanism that has a form of active security, either in the form of the PRF-ODH assumption, or an IND-CCA KEM.  Some of the KEMs provided in liboqs do provide IND-CCA security; others do not, in which case existing proofs of security of TLS against active attackers do not apply.
-
-Currently, this branch supports post-quantum and hybrid (traditional + post-quantum) key exchange and post-quantum and hybrid authentication in TLS 1.3.
-
-Lifecycle for OQS-OpenSSL\_1\_1\_1-stable
------------------------------------------
-
-**Release cycle:** We aim to make releases of OQS-OpenSSL\_1\_1\_1-stable on a bi-monthly basis, either when there has been a new release of OpenSSL 1.1.1 or when we have made changes to our fork.
-
-See the README.md files of [liboqs](https://github.com/open-quantum-safe/liboqs/blob/master/README.md) for information about the algorithm lifecycle within liboqs.
-
-**TLS compatibility:** The ciphersuite numbers and message formats used for post-quantum and hybrid key exchange and authentication are experimental, and may change between releases of OQS-OpenSSL\_1\_1\_1-stable.
-
-Building on Linux and macOS
----------------------------
-
-Builds have been tested manually on macOS 10.14 (clang 10.0.0), Ubuntu 14.04 (gcc-5), Ubuntu 16.04 (gcc-5), and Ubuntu 18.04.1 (gcc-7).
-
-### Step 0: Install dependencies
-
-For **Ubuntu**, you need to install the following packages:
+On **Ubuntu**, you need to install the following packages:
 
 	sudo apt install autoconf automake gcc libtool libssl-dev make unzip xsltproc
 
-For **macOS**, you need to install the following packages using brew (or a package manager of your choice):
+On **macOS**, you need to install the following packages using `brew` (or a package manager of your choice):
 
 	brew install autoconf automake libtool openssl wget
 
-### Step 1: Download fork of OpenSSL
+Then, get source code of this fork (`<OPENSSL_DIR>` is a directory of your choosing):
 
-Clone or download the source from Github:
+	git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git <OPENSSL_DIR>
 
-	git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git
-
-### Step 2: Build liboqs
+#### Step 1: Build and install liboqs
 
 The following instructions will download and build liboqs, then install it into a subdirectory inside the OpenSSL folder.
 
 	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
 	cd liboqs
 	autoreconf -i
-	./configure --prefix=<path-to-openssl-dir>/oqs --enable-shared=no
+	./configure --prefix=<OPENSSL_DIR>/oqs --enable-shared=no
 	make -j
 	make install
 
-Building liboqs requires your system to have OpenSSL already installed.  configure will detect it if it is located in a standard location, such as `/usr` or `/usr/local/opt/openssl` (for brew on macOS).  Otherwise, you may need to specify it with `--with-openssl=<path-to-system-openssl-dir>`.
+Building liboqs requires your system to have (a standard) OpenSSL already installed. `configure` will detect it if it is located in a standard location, such as `/usr` or `/usr/local/opt/openssl` (for brew on macOS).  Otherwise, you may need to specify it with `--with-openssl=<path-to-system-openssl-dir>`.
 
-### Step 3: Build fork of OpenSSL
+#### Step 2: Build the fork
 
-Now we follow the standard instructions for building OpenSSL.
+Now we follow the standard instructions for building OpenSSL. Navigate to `<OPENSSL_DIR>`, and:
 
-For **Ubuntu**:
+on **Ubuntu**, run:
 
-	cd <path-to-openssl-dir>
 	./Configure no-shared linux-x86_64 -lm
 	make -j
 
-For **macOS**:
+on **macOS**, run:
 
-	cd <path-to-openssl-dir>
 	./Configure no-shared darwin64-x86_64-cc
 	make -j
 
-The OQS fork of OpenSSL can also be built with shared libraries, but we have used `no-shared` in the instructions above to avoid having to get the shared libraries in the right place for the runtime linker.
+The fork can also be built with shared libraries, but we have used `no-shared` in the instructions above to avoid having to get the shared libraries in the right place for the runtime linker.
 
-Building on Windows
--------------------
+#### Windows
 
-Builds have been tested on Windows 10 (VS2017 build tools). Make sure you can build the unmodified version of OpenSSL by following the instructions in [INSTALL](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/INSTALL) and [NOTES.WIN](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/NOTES.WIN).
+#### Step 0
 
-### Step 1: Download fork of OpenSSL
+Make sure you can build the unmodified version of OpenSSL by following the instructions in [INSTALL](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/INSTALL) and [NOTES.WIN](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/NOTES.WIN).
 
-Clone or download the source from Github:
+Then, get the fork source code (`<OPENSSL_DIR>` is a directory of your choosing):
 
-	git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git
+	git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git <OPENSSL_DIR>
 
-### Step 2: Build liboqs
+The above command uses `git`, but alternatively, an archive of the source code can be downloaded and expanded into `<OPENSSL_DIR>`
 
-Next, you must download and build liboqs using the master branch of liboqs.  The following instructions will download (using git, alternatively, [download](https://github.com/open-quantum-safe/liboqs/archive/master.zip) and unzip the project) and build the x64 release configuration of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs master branch README.md](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
+#### Step 1: Build and install liboqs
+
+The following instructions will download (using git, alternatively, [download an archive of the source](https://github.com/open-quantum-safe/liboqs/archive/master.zip) and unzip the project) and build the x64 release configuration of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs README](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
 
 	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
 	msbuild liboqs\VisualStudio\liboqs.sln /p:Configuration=Release;Platform=x64
@@ -162,99 +166,72 @@ Next, you must download and build liboqs using the master branch of liboqs.  The
 	xcopy liboqs\VisualStudio\x64\Release\oqs.lib openssl\oqs\lib\
 	xcopy /S liboqs\VisualStudio\include openssl\oqs\include\
 
-### Step 3: Build fork of OpenSSL
+#### Step 2: Build the fork
 
-Now we follow the standard instructions for building OpenSSL, for example:
+Now we follow the standard instructions for building OpenSSL:
 
 	perl Configure VC-WIN64A
 	nmake
 
-Running
--------
+### Running
 
-See the [liboqs documentation](https://github.com/open-quantum-safe/liboqs/) for information on test programs in liboqs.
+#### TLS demo
 
-### TLS demo
+OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) which can be used to demonstrate and test TLS connections.
 
-OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) which can be used to demonstrate and test SSL/TLS connections.
+To run a server, you first need to generate a X.509 certificate, using either a classical (`rsa`), quantum-safe (any quantum-safe authentication algorithm in the [Supported Algorithms](#supported-algorithms) section above), or hybrid (any hybrid authentication algorithm in the [Supported Algorithms](#supported-algorithms) section above) algorithm. The server certificate can either be self-signed or part of a chain. In either case, you need to generate a self-signed root CA certificate using the following command, replacing `<SIG>` with an algorithm mentioned above:
 
-To run a server, you first need to generate a X.509 certificate, using either a classical (`rsa`), post-quantum (`picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`, `dilithium2`, `dilithium3`, `dilithium4`), or hybrid (`p256_picnicl1fs`, `rsa3072_picnicl1fs`, `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed`) algorithm. The server certificate can either be self-signed or part of a chain. In either case, you need to generate a self-signed root CA certificate using the following command, replacing `<SIGALG>` with one supported algorithm:
+	apps/openssl req -x509 -new -newkey <SIG> -keyout <SIG>_CA.key -out <SIG>_CA.crt -nodes -subj "/CN=oqstest CA" -days 365 -config apps/openssl.cnf
 
-	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest CA" -days 365 -config apps/openssl.cnf
+If you want an ECDSA certificate (`<SIG>` = `ecdsa`), you instead need to run:
 
-If you want an ECDSA certificate (`<SIGALG>` = `ecdsa`), you instead need to use:
-
-	apps/openssl req -x509 -new -newkey ec:<(apps/openssl ecparam -name secp384r1) -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
+	apps/openssl req -x509 -new -newkey ec:<(apps/openssl ecparam -name secp384r1) -keyout <SIG>_CA.key -out <SIG>_CA.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
 
 The root CA certificate can be used directly to start the server (see below), or can be used to issue a server certificate, using the usual OpenSSL process (note that for simplicity, we use the same algorithm for the server and CA certificates; in practice the CA is likely to use a stronger one):
 
 1. The server generates its key pair:
 
-		apps/openssl genpkey -algorithm <SIGALG> -out <SIGALG>_srv.key
+		apps/openssl genpkey -algorithm <SIG> -out <SIG>_srv.key
 
 2. The server generates a certificate request and sends it the to CA:
 
-		apps/openssl req -new -newkey <SIGALG> -keyout <SIGALG>_srv.key -out <SIGALG>_srv.csr -nodes -subj "/CN=oqstest server" -config apps/openssl.cnf
+		apps/openssl req -new -newkey <SIG> -keyout <SIG>_srv.key -out <SIG>_srv.csr -nodes -subj "/CN=oqstest server" -config apps/openssl.cnf
 
 3. The CA generates the signed server certificate:
 
-		apps/openssl x509 -req -in <SIGALG>_srv.csr -out <SIGALG>_srv.crt -CA <SIGALG>_CA.crt -CAkey <SIGALG>_CA.key -CAcreateserial -days 365
+		apps/openssl x509 -req -in <SIG>_srv.csr -out <SIG>_srv.crt -CA <SIG>_CA.crt -CAkey <SIG>_CA.key -CAcreateserial -days 365
 
-To run a basic TLS server with all OQS ciphersuites enabled, run the following command, replacing `<SERVER>` with either `<SIGALG>_CA` or `<SIGALG>_srv`:
+To run a basic TLS server with all libOQS ciphersuites enabled, run the following command, replacing `<SERVER>` with either `<SIG>_CA` or `<SIG>_srv`:
 
 	apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3
 
-In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEXALG>` = one of the key exchange mechanisms listed above) or the hybrid ciphersuites (`p256-<KEXALG>`, only the NIST p256 curve in combination with L1 PQC KEM schemes are supported for now):
+In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEX>` = one of the quantum-safe or hybrid key exchange algorithms listed in the [Supported Algorithms](#supported-algorithms) section above):
 
-	apps/openssl s_client -curves <KEXALG> -CAfile <SIGALG>_CA.crt -connect localhost:4433
+	apps/openssl s_client -curves <KEX> -CAfile <SIG>_CA.crt -connect localhost:4433
 
-Integration tests
------------------
+## Contributing
 
-Integration tests are available under the `oqs_test` directory; see the [README.md](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/oqs_test/README.md) for details on how to run the tests locally.
+Contributions gratefully welcomed. See our [Contributing Guide](https://github.com/open-quantum-safe/openssl/wiki/Contributing-Guide) for more details.
 
-Contributing
-------------
+## License
 
-Follow these steps to add additional key exchange and signature algorithms from liboqs.
+All modifications to this repository are released under the same terms as OpenSSL, namely as described in the file [LICENSE](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/LICENSE).
 
-One goal is to minimize the OQS footprint into the OpenSSL code, to improve readability. Therefore, some redundant code is implemented using macros to avoid creating functions and registering them in OpenSSL.
-
-### Adding a key exchange algorithm
-
-The TLS 1.3 key exchange integration is done at the TLS layer (start looking in `ssl/statem/extensions_(clnt,srvr).c`). It would have been nice to integrate in the crypto EVP layer, but it wasn't possible given the asymmetric nature of the KEM API (genkey, encrypt, decrypt) and the lack of role context when the Diffie-Hellman EVP functions are invoked. 
-
-We use a templating system to generate code related to the specific algorithms we have.  Adding a new key exchange algorithm from liboqs means simply adding metadata to `oqs_template/generate.yml`, then running `python3 oqs_template/generate.py`.
-
-### Adding an authentication mechanism
-
-To add a new algorithm <NEWALG> with OID <NEWOID>:
-
-1. Define `<NEWOID>` in `crypto/objects/objects.txt` and `crypto/objects/obj_xref.txt`, add `<NEWALG>` to `crypto/objects/obj_mac.num`, incrementing the last NID value, and run `make generate_crypto_objects` to re-generate objects-related files (`obj_dat.h`, `obj_mac.num`, `obj_mac.h`)
-2. Run `grep -r ADD_MORE_OQS_SIG_HERE` and add new code following the example of other OQS schemes.
-
-License
--------
-
-All modifications in the open-quantum-safe/openssl repository are released under the same terms as OpenSSL, namely as described in the file [LICENSE](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/LICENSE).
-
-Team
-----
+## Team
 
 The Open Quantum Safe project is led by [Douglas Stebila](https://www.douglas.stebila.ca/research/) and [Michele Mosca](http://faculty.iqc.uwaterloo.ca/mmosca/) at the University of Waterloo.
 
-### Contributors
-
-Contributors to open-quantum-safe/openssl branch OQS-OpenSSL\_1\_1\_1-stable include:
+Contributors to OQS-OpenSSL\_1\_1\_1 include:
 
 - Christian Paquin (Microsoft Research)
 - Dimitris Sikeridis (University of New Mexico / Cisco Systems)
 - Douglas Stebila (University of Waterloo)
+- Goutam Tamvada (University of Waterloo)
 
-### Support
+## Acknowledgments
 
-Financial support for the development of Open Quantum Safe has been provided by Amazon Web Services and the Tutte Institute for Mathematics and Computing.  
+Financial support for the development of Open Quantum Safe has been provided by Amazon Web Services and the Tutte Institute for Mathematics and Computing.
 
-We'd like to make a special acknowledgement to the companies who have dedicated programmer time to contribute source code to OQS, including Amazon Web Services, Cisco Systems, evolutionQ, and Microsoft Research.  
+We'd like to make a special acknowledgement to the companies who have dedicated programmer time to contribute source code to OQS, including Amazon Web Services, Cisco Systems, evolutionQ, and Microsoft Research.
 
-Research projects which developed specific components of OQS have been supported by various research grants, including funding from the Natural Sciences and Engineering Research Council of Canada (NSERC); see the source papers for funding acknowledgments.
+Research projects which developed specific components of OQS have been supported by various research grants, including funding from the Natural Sciences and Engineering Research Council of Canada (NSERC); see [here](https://openquantumsafe.org/papers/SAC-SteMos16.pdf) and [here](https://openquantumsafe.org/papers/NISTPQC-CroPaqSte19.pdf) for funding acknowledgments.
