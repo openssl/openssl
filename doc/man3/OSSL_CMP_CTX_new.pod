@@ -641,11 +641,6 @@ the General Response contents.
     print_itavs(itavs);
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
 
-=head1 SEE ALSO
-
-L<OSSL_CMP_exec_IR_ses(3)>, L<OSSL_CMP_exec_KUR_ses(3)>,
-L<OSSL_CMP_exec_GENM_ses(3)>
-
 =head1 HISTORY
 
 The OpenSSL CMP support was added in OpenSSL 3.0.

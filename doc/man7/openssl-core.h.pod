@@ -10,7 +10,7 @@ openssl/core.h - OpenSSL Core types
 
 =head1 DESCRIPTION
 
-The <openssl/core.h> header file defines a number of public types that
+The header file C<openssl/core.h> defines a number of public types that
 are used to communicate between the OpenSSL libraries and
 implementation providers.
 These types are designed to minimise the need for intimate knowledge
@@ -30,7 +30,7 @@ Arrays of this type must be terminated with a tuple having function
 identity zero and function pointer NULL.
 
 The available function identities and corresponding function
-signatures are defined by L<openssl-core_numbers.h(7)>.
+signatures are defined in C<openssl/core_numbers.h>.
 
 Any function identity not recognised by the recipient of this type
 will be ignored.
@@ -75,10 +75,6 @@ parameters, and to describe parameters.
 B<OSSL_PARAM> is further described in L<OSSL_PARAM(3)>
 
 =back
-
-=head1 SEE ALSO
-
-L<openssl-core_numbers.h(7)>
 
 =head1 HISTORY
 

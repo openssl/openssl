@@ -94,7 +94,7 @@ structure for holding context information during a mac operation.
 A pointer to this context will be passed back in a number of the other mac
 operation function calls.
 The paramater I<provctx> is the provider context generated during provider
-initialisation (see L<provider(3)>).
+initialisation (see L<provider(7)>).
 
 OP_mac_freectx() is passed a pointer to the provider side mac context in
 the I<mctx> parameter.

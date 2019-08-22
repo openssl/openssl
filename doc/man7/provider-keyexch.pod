@@ -88,7 +88,7 @@ structure for holding context information during a key exchange operation.
 A pointer to this context will be passed back in a number of the other key
 exchange operation function calls.
 The paramater I<provctx> is the provider context generated during provider
-initialisation (see L<provider(3)>).
+initialisation (see L<provider(7)>).
 
 OP_keyexch_freectx() is passed a pointer to the provider side key exchange
 context in the I<ctx> parameter.

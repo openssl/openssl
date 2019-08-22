@@ -82,7 +82,7 @@ For example, the "function" core_gettable_params() has these:
      OSSL_get_core_gettable_params(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in C<openssl/core_numbers.h>, as follows:
 
 For I<in> (the B<OSSL_DISPATCH> array passed from F<libcrypto> to the
 provider):

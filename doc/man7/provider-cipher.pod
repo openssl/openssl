@@ -77,7 +77,7 @@ For example, the "function" OP_cipher_newctx() has these:
      OSSL_get_OP_cipher_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in C<openssl/core_numbers.h>, as follows:
 
  OP_cipher_newctx               OSSL_FUNC_CIPHER_NEWCTX
  OP_cipher_freectx              OSSL_FUNC_CIPHER_FREECTX
@@ -112,7 +112,7 @@ structure for holding context information during a cipher operation.
 A pointer to this context will be passed back in a number of the other cipher
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(3)>).
+initialisation (see L<provider(7)>).
 
 OP_cipher_freectx() is passed a pointer to the provider side cipher context in
 the I<cctx> parameter.
