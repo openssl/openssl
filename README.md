@@ -102,6 +102,7 @@ The steps below have been confirmed to work on macOS 10.14 (clang 10.0.0), Ubunt
 #### Step 0: Get pre-requisites
 
 On **Ubuntu**, you need to install the following packages:
+
 	sudo apt install autoconf automake gcc libtool libssl-dev make unzip xsltproc
 
 On **macOS**, you need to install the following packages using `brew` (or a package manager of your choice):
