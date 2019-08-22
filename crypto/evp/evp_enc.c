@@ -175,6 +175,48 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_aria_256_ccm:
         case NID_aria_192_ccm:
         case NID_aria_128_ccm:
+        case NID_aria_256_ecb:
+        case NID_aria_192_ecb:
+        case NID_aria_128_ecb:
+        case NID_aria_256_cbc:
+        case NID_aria_192_cbc:
+        case NID_aria_128_cbc:
+        case NID_aria_256_ofb128:
+        case NID_aria_192_ofb128:
+        case NID_aria_128_ofb128:
+        case NID_aria_256_cfb128:
+        case NID_aria_192_cfb128:
+        case NID_aria_128_cfb128:
+        case NID_aria_256_cfb1:
+        case NID_aria_192_cfb1:
+        case NID_aria_128_cfb1:
+        case NID_aria_256_cfb8:
+        case NID_aria_192_cfb8:
+        case NID_aria_128_cfb8:
+        case NID_aria_256_ctr:
+        case NID_aria_192_ctr:
+        case NID_aria_128_ctr:
+        case NID_camellia_256_ecb:
+        case NID_camellia_192_ecb:
+        case NID_camellia_128_ecb:
+        case NID_camellia_256_cbc:
+        case NID_camellia_192_cbc:
+        case NID_camellia_128_cbc:
+        case NID_camellia_256_ofb128:
+        case NID_camellia_192_ofb128:
+        case NID_camellia_128_ofb128:
+        case NID_camellia_256_cfb128:
+        case NID_camellia_192_cfb128:
+        case NID_camellia_128_cfb128:
+        case NID_camellia_256_cfb1:
+        case NID_camellia_192_cfb1:
+        case NID_camellia_128_cfb1:
+        case NID_camellia_256_cfb8:
+        case NID_camellia_192_cfb8:
+        case NID_camellia_128_cfb8:
+        case NID_camellia_256_ctr:
+        case NID_camellia_192_ctr:
+        case NID_camellia_128_ctr:
             break;
         default:
             goto legacy;

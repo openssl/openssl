@@ -16,6 +16,11 @@ typedef struct prov_gcm_hw_st PROV_GCM_HW;
 #define GCM_IV_MAX_SIZE     64
 #define GCM_TAG_MAX_SIZE    16
 
+/* TODO(3.0) Figure out what flags are really needed */
+#define AEAD_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_DEFAULT_ASN1     \
+                       | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER      \
+                       | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT        \
+                       | EVP_CIPH_CUSTOM_COPY)
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
 /*-
@@ -146,3 +151,15 @@ typedef struct prov_aria_gcm_ctx_st {
 const PROV_GCM_HW *PROV_ARIA_HW_gcm(size_t keybits);
 
 #endif /* !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE) */
+
+OSSL_OP_cipher_encrypt_init_fn gcm_einit;
+OSSL_OP_cipher_decrypt_init_fn gcm_dinit;
+OSSL_OP_cipher_get_ctx_params_fn gcm_get_ctx_params;
+OSSL_OP_cipher_set_ctx_params_fn gcm_set_ctx_params;
+OSSL_OP_cipher_cipher_fn gcm_cipher;
+OSSL_OP_cipher_update_fn gcm_stream_update;
+OSSL_OP_cipher_final_fn gcm_stream_final;
+void gcm_deinitctx(PROV_GCM_CTX *ctx);
+void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
+                 const PROV_GCM_HW *hw, size_t ivlen_min);
+

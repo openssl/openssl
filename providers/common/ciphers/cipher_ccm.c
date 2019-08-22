@@ -7,27 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core_numbers.h>
-#include <openssl/core_names.h>
-#include <openssl/evp.h>
-#include <openssl/params.h>
-#include "internal/provider_algs.h"
-#include "internal/providercommonerr.h"
-#include "ciphers_locl.h"
+/* Dispatch functions for ccm mode */
 
-/* TODO(3.0) Figure out what flags are really needed here */
-#define CCM_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_DEFAULT_ASN1      \
-                   | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER          \
-                   | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT            \
-                   | EVP_CIPH_CUSTOM_COPY)
-
-static OSSL_OP_cipher_encrypt_init_fn ccm_einit;
-static OSSL_OP_cipher_decrypt_init_fn ccm_dinit;
-static OSSL_OP_cipher_get_ctx_params_fn ccm_get_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn ccm_set_ctx_params;
-static OSSL_OP_cipher_update_fn ccm_stream_update;
-static OSSL_OP_cipher_final_fn ccm_stream_final;
-static OSSL_OP_cipher_cipher_fn ccm_cipher;
+#include "cipher_locl.h"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,
@@ -80,7 +62,7 @@ static size_t ccm_get_ivlen(PROV_CCM_CTX *ctx)
     return 15 - ctx->l;
 }
 
-static int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     const OSSL_PARAM *p;
@@ -153,7 +135,7 @@ static int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     OSSL_PARAM *p;
@@ -233,19 +215,19 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
     return 1;
 }
 
-static int ccm_einit(void *vctx, const unsigned char *key, size_t keylen,
+int ccm_einit(void *vctx, const unsigned char *key, size_t keylen,
                      const unsigned char *iv, size_t ivlen)
 {
     return ccm_init(vctx, key, keylen, iv, ivlen, 1);
 }
 
-static int ccm_dinit(void *vctx, const unsigned char *key, size_t keylen,
+int ccm_dinit(void *vctx, const unsigned char *key, size_t keylen,
                      const unsigned char *iv, size_t ivlen)
 {
     return ccm_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
-static int ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
+int ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
                              size_t outsize, const unsigned char *in,
                              size_t inl)
 {
@@ -263,7 +245,7 @@ static int ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static int ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
+int ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
                             size_t outsize)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
@@ -277,7 +259,7 @@ static int ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static int ccm_cipher(void *vctx,
+int ccm_cipher(void *vctx,
                       unsigned char *out, size_t *outl, size_t outsize,
                       const unsigned char *in, size_t inl)
 {
@@ -412,8 +394,7 @@ err:
     return rv;
 }
 
-static void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits,
-                        const PROV_CCM_HW *hw)
+void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw)
 {
     ctx->keylen = keybits / 8;
     ctx->key_set = 0;
@@ -426,61 +407,7 @@ static void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits,
     ctx->hw = hw;
 }
 
-static void ccm_finalctx(PROV_CCM_CTX *ctx)
+void ccm_finalctx(PROV_CCM_CTX *ctx)
 {
     OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
 }
-
-/*- Algorithm specific methods for CCM mode */
-
-static void *aes_ccm_newctx(void *provctx, size_t keybits)
-{
-    PROV_AES_CCM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
-
-    ccm_initctx(&ctx->base, keybits, PROV_AES_HW_ccm(keybits));
-    return ctx;
-}
-
-static OSSL_OP_cipher_freectx_fn aes_ccm_freectx;
-static void aes_ccm_freectx(void *vctx)
-{
-    PROV_AES_CCM_CTX *ctx = (PROV_AES_CCM_CTX *)vctx;
-
-    ccm_finalctx((PROV_CCM_CTX *)ctx);
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
-}
-
-/*- CCM Dispatch macros */
-
-/* aes128ccm_functions */
-IMPLEMENT_aead_cipher(aes, ccm, CCM, CCM_FLAGS, 128, 8, 96);
-/* aes192ccm_functions */
-IMPLEMENT_aead_cipher(aes, ccm, CCM, CCM_FLAGS, 192, 8, 96);
-/* aes256ccm_functions */
-IMPLEMENT_aead_cipher(aes, ccm, CCM, CCM_FLAGS, 256, 8, 96);
-
-#if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
-static void *aria_ccm_newctx(void *provctx, size_t keybits)
-{
-    PROV_ARIA_CCM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
-
-    ccm_initctx(&ctx->base, keybits, PROV_ARIA_HW_ccm(keybits));
-    return ctx;
-}
-
-static OSSL_OP_cipher_freectx_fn aria_ccm_freectx;
-static void aria_ccm_freectx(void *vctx)
-{
-    PROV_ARIA_CCM_CTX *ctx = (PROV_ARIA_CCM_CTX *)vctx;
-
-    ccm_finalctx((PROV_CCM_CTX *)ctx);
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
-}
-
-/* aria128ccm functions */
-IMPLEMENT_aead_cipher(aria, ccm, CCM, CCM_FLAGS, 128, 8, 96);
-/* aria192ccm functions */
-IMPLEMENT_aead_cipher(aria, ccm, CCM, CCM_FLAGS, 192, 8, 96);
-/* aria256ccm functions */
-IMPLEMENT_aead_cipher(aria, ccm, CCM, CCM_FLAGS, 256, 8, 96);
-#endif /* !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE) */

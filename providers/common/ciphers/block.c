@@ -7,12 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include "ciphers_locl.h"
 #include <assert.h>
-#include "internal/providercommonerr.h"
+#include "cipher_locl.h"
 
 /*
  * Fills a single block of buffered data from the input, and returns the amount

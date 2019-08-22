@@ -1,9 +1,21 @@
 LIBS=../../../libcrypto
 
-$COMMON=block.c aes.c aes_basic.c gcm.c gcm_hw.c ciphers_common.c \
-        ccm.c ccm_hw.c
+$COMMON=cipher_common.c cipher_common_hw.c block.c \
+        cipher_aes.c cipher_aes_hw.c \
+        cipher_gcm.c cipher_aes_gcm.c cipher_gcm_hw.c \
+        cipher_ccm.c cipher_aes_ccm.c cipher_ccm_hw.c
 
 SOURCE[../../../libcrypto]=$COMMON
+IF[{- !$disabled{aria} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_aria.c cipher_aria_hw.c \
+      cipher_aria_gcm.c cipher_aria_ccm.c 
+ENDIF
+
+IF[{- !$disabled{camellia} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_camellia.c cipher_camellia_hw.c
+ENDIF
 INCLUDE[../../../libcrypto]=. ../../../crypto
 
 SOURCE[../../fips]=$COMMON

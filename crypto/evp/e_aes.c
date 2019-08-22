@@ -20,7 +20,7 @@
 #include "internal/cryptlib.h"
 #include "internal/modes_int.h"
 #include "internal/siv_int.h"
-#include "internal/aes_platform.h"
+#include "internal/ciphermode_platform.h"
 #include "evp_locl.h"
 
 typedef struct {

@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_INTERNAL_AES_PLATFORM_H
-# define HEADER_INTERNAL_AES_PLATFORM_H
+#ifndef HEADER_INTERNAL_CIPHERMODE_PLATFORM_H
+# define HEADER_INTERNAL_CIPHERMODE_PLATFORM_H
+
+# include "openssl/aes.h"
 
 # ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
@@ -189,6 +191,37 @@ void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in, size_t len);
 /* Fujitsu SPARC64 X support */
 extern unsigned int OPENSSL_sparcv9cap_P[];
 #  include "sparc_arch.h"
+
+#  ifndef OPENSSL_NO_CAMELLIA
+#   define SPARC_CMLL_CAPABLE      (OPENSSL_sparcv9cap_P[1] & CFR_CAMELLIA)
+
+void cmll_t4_set_key(const unsigned char *key, int bits, CAMELLIA_KEY *ks);
+void cmll_t4_encrypt(const unsigned char *in, unsigned char *out,
+                     const CAMELLIA_KEY *key);
+void cmll_t4_decrypt(const unsigned char *in, unsigned char *out,
+                     const CAMELLIA_KEY *key);
+
+void cmll128_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                            size_t len, const CAMELLIA_KEY *key,
+                            unsigned char *ivec);
+void cmll128_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
+                            size_t len, const CAMELLIA_KEY *key,
+                            unsigned char *ivec);
+void cmll256_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                            size_t len, const CAMELLIA_KEY *key,
+                            unsigned char *ivec);
+void cmll256_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
+                            size_t len, const CAMELLIA_KEY *key,
+                            unsigned char *ivec);
+void cmll128_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
+                              size_t blocks, const CAMELLIA_KEY *key,
+                              unsigned char *ivec);
+void cmll256_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
+                              size_t blocks, const CAMELLIA_KEY *key,
+                              unsigned char *ivec);
+#  endif /* OPENSSL_NO_CAMELLIA */
+
+
 #  define SPARC_AES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_AES)
 #  define HWAES_CAPABLE           (OPENSSL_sparcv9cap_P[0] & SPARCV9_FJAESX)
 #  define HWAES_set_encrypt_key aes_fx_set_encrypt_key
@@ -398,4 +431,4 @@ void HWAES_ocb_decrypt(const unsigned char *in, unsigned char *out,
 
 # endif /* HWAES_CAPABLE */
 
-#endif /* HEADER_INTERNAL_AES_PLATFORM_H */
+#endif /* HEADER_INTERNAL_CIPHERMODE_PLATFORM_H */

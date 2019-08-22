@@ -41,7 +41,7 @@ int ERR_load_PROV_strings(void);
 #  define PROV_F_GMAC_SET_PARAMS                           0
 #  define PROV_F_KMAC_SET_PARAMS                           0
 #  define PROV_F_POLY1305_SET_PARAMS                       0
-#  define PROV_F_PROV_AES_KEY_GENERIC_INIT                 0
+#  define PROV_F_PROV_AES_CTX_GENERIC_INIT                 0
 #  define PROV_F_TRAILINGDATA                              0
 #  define PROV_F_UNPADBLOCK                                0
 # endif
