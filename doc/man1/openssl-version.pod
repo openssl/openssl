@@ -16,6 +16,9 @@ B<openssl version>
 [B<-p>]
 [B<-d>]
 [B<-e>]
+[B<-m>]
+[B<-r>]
+[B<-c>]
 
 =head1 DESCRIPTION
 
@@ -60,6 +63,18 @@ OPENSSLDIR setting.
 =item B<-e>
 
 ENGINESDIR settings.
+
+=item B<-m>
+
+MODULESDIR settings.
+
+=item B<-r>
+
+The random number generator source settings.
+
+=item B<-c>
+
+The OpenSSL CPU settings info.
 
 =back
 

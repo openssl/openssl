@@ -125,6 +125,20 @@ if available or "OPENSSLDIR: N/A" otherwise.
 The "ENGINESDIR" setting of the library build in the form "ENGINESDIR: "...""
 if available or "ENGINESDIR: N/A" otherwise.
 
+=item OPENSSL_MODULES_DIR
+
+The "MODULESDIR" setting of the library build in the form "MODULESDIR: "...""
+if available or "MODULESDIR: N/A" otherwise.
+
+=item OPENSSL_CPU_INFO
+
+The current OpenSSL cpu settings.
+This is the current setting of the cpu capability flags. It is usually
+automatically configured but may be set via an environment variable.
+The value has the same syntax as the environment variable.
+For x86 the string looks like "CPUINFO: OPENSSL_ia32cap=0x123:0x456".
+Or "CPUINFO: N/A" if not available, e.g. no-asm build.
+
 =back
 
 For an unknown B<t>, the text "not available" is returned.
@@ -165,6 +179,14 @@ This is typically used in strings that are lists of items, such as the
 value of the environment variable C<$PATH> on Unix (where the
 separator is ":") or C<%PATH%> on Windows (where the separator is
 ";").
+
+=item OPENSSL_INFO_CPU_SETTINGS
+
+The current OpenSSL cpu settings.
+This is the current setting of the cpu capability flags. It is usually
+automatically configured but may be set via an environment variable.
+The value has the same syntax as the environment variable.
+For x86 the string looks like "OPENSSL_ia32cap=0x123:0x456".
 
 =back
 
@@ -224,7 +246,7 @@ with the exception of the L</BACKWARD COMPATIBILITY> ones.
 
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
