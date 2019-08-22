@@ -31,19 +31,20 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
 # endif
         } else
 #endif
-#ifdef BSAES_CAPABLE
-        if (BSAES_CAPABLE && dat->mode == EVP_CIPH_CBC_MODE) {
-            ret = AES_set_decrypt_key(key, keylen * 8, ks);
-            dat->block = (block128_f)AES_decrypt;
-            dat->stream.cbc = (cbc128_f)bsaes_cbc_encrypt;
-        } else
-#endif
 #ifdef VPAES_CAPABLE
         if (VPAES_CAPABLE) {
             ret = vpaes_set_decrypt_key(key, keylen * 8, ks);
             dat->block = (block128_f)vpaes_decrypt;
             dat->stream.cbc = (dat->mode == EVP_CIPH_CBC_MODE)
                               ?(cbc128_f)vpaes_cbc_encrypt : NULL;
+        } else
+#endif
+#ifdef BSAES_CAPABLE
+        /* not completely constant time */
+        if (BSAES_CAPABLE && dat->mode == EVP_CIPH_CBC_MODE) {
+            ret = AES_set_decrypt_key(key, keylen * 8, ks);
+            dat->block = (block128_f)AES_decrypt;
+            dat->stream.cbc = (cbc128_f)bsaes_cbc_encrypt;
         } else
 #endif
         {
@@ -71,19 +72,20 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
             (void)0;            /* terminate potentially open 'else' */
     } else
 #endif
-#ifdef BSAES_CAPABLE
-    if (BSAES_CAPABLE && dat->mode == EVP_CIPH_CTR_MODE) {
-        ret = AES_set_encrypt_key(key, keylen * 8, ks);
-        dat->block = (block128_f)AES_encrypt;
-        dat->stream.ctr = (ctr128_f)bsaes_ctr32_encrypt_blocks;
-    } else
-#endif
 #ifdef VPAES_CAPABLE
     if (VPAES_CAPABLE) {
         ret = vpaes_set_encrypt_key(key, keylen * 8, ks);
         dat->block = (block128_f)vpaes_encrypt;
         dat->stream.cbc = (dat->mode == EVP_CIPH_CBC_MODE)
                           ? (cbc128_f)vpaes_cbc_encrypt : NULL;
+    } else
+#endif
+#ifdef BSAES_CAPABLE
+    /* not completely constant time */
+    if (BSAES_CAPABLE && dat->mode == EVP_CIPH_CTR_MODE) {
+        ret = AES_set_encrypt_key(key, keylen * 8, ks);
+        dat->block = (block128_f)AES_encrypt;
+        dat->stream.ctr = (ctr128_f)bsaes_ctr32_encrypt_blocks;
     } else
 #endif
     {

@@ -58,18 +58,19 @@ static int generic_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     } else
 # endif /* HWAES_CAPABLE */
 
-# ifdef BSAES_CAPABLE
-    if (BSAES_CAPABLE) {
-        SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt,
-                       bsaes_ctr32_encrypt_blocks);
-    } else
-# endif /* BSAES_CAPABLE */
-
 # ifdef VPAES_CAPABLE
     if (VPAES_CAPABLE) {
         SET_KEY_CTR_FN(ks, vpaes_set_encrypt_key, vpaes_encrypt, NULL);
     } else
 # endif /* VPAES_CAPABLE */
+
+# ifdef BSAES_CAPABLE
+    /* not completely constant time */
+    if (BSAES_CAPABLE) {
+        SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt,
+                       bsaes_ctr32_encrypt_blocks);
+    } else
+# endif /* BSAES_CAPABLE */
 
     {
 # ifdef AES_CTR_ASM
