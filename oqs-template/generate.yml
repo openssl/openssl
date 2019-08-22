@@ -254,3 +254,91 @@ unused_kems:
     nid_hybrid_p256: "0x0329"
     oqs_alg: "OQS_KEM_alg_ntskem_12_64"
     bit_security: 128
+sigs:
+  -
+    # iso (1)
+    # identified-organization (3)
+    # reserved (9999)
+    # oqsdefault (1)
+    oid: "1.3.9999.1"
+    variants:
+      -
+        name: "oqsdefault"
+        pretty_name: "OQS Default Signature Algorithm"
+        oqs_meth: "OQS_SIG_alg_default"
+        security: 128
+        mix_with: [{'name': 'p256', 'pretty_name': "ECDSA p256"}, {'name':'rsa3072', 'pretty_name': "RSA3072"}]
+  -
+    # iso (1)
+    # identified-organization (3)
+    # reserved (9999)
+    # dilithium (2)
+    oid: "1.3.9999.2"
+    variants:
+      -
+        name: "dilithium2"
+        pretty_name: "Dilithium-2"
+        oqs_meth: "OQS_SIG_alg_dilithium_2"
+        security: 128
+        mix_with: [{'name': 'p256', 'pretty_name': "ECDSA p256"}, {'name':'rsa3072', 'pretty_name': "RSA3072"}]
+      -
+        name: "dilithium3"
+        pretty_name: "Dilithium-3"
+        oqs_meth: "OQS_SIG_alg_dilithium_3"
+        security: 128
+      -
+        name: "dilithium4"
+        pretty_name: "Dilithium-4"
+        oqs_meth: "OQS_SIG_alg_dilithium_4"
+        security: 192
+        mix_with: [{'name': 'p384', 'pretty_name': "ECDSA p384"}]
+  -
+    # iso (1)
+    # identified-organization (3)
+    # dod (6)
+    # internet (1)
+    # private (4)
+    # enterprise (1)
+    # Microsoft (311)
+    # MSRCrypto (89)
+    # PQC (2)
+    # picnic (1)
+    oid: "1.3.6.1.4.1.311.89.2.1"
+    variants:
+      -
+        name: "picnicl1fs"
+        pretty_name: "Picnic L1 FS"
+        oqs_meth: "OQS_SIG_alg_picnic_L1_FS"
+        security: 128
+        mix_with: [{'name': 'p256', 'pretty_name': "ECDSA p256"}, {'name':'rsa3072', 'pretty_name': "RSA3072"}]
+  -
+    # iso (1)
+    # identified-organization (3)
+    # dod (6)
+    # internet (1)
+    # private (4)
+    # enterprise (1)
+    # Microsoft (311)
+    # MSRCrypto (89)
+    # PQC (2)
+    # qTESLA (2)
+    oid: "1.3.6.1.4.1.311.89.2.2"
+    variants:
+      -
+        name: "qteslai"
+        pretty_name: "qTESLA-I"
+        oqs_meth: "OQS_SIG_alg_qTESLA_I"
+        security: 128
+        mix_with: [{'name': 'p256', 'pretty_name': "ECDSA p256"}, {'name':'rsa3072', 'pretty_name': "RSA3072"}]
+      -
+        name: "qteslaiiisize"
+        pretty_name: "qTESLA-III-size"
+        oqs_meth: "OQS_SIG_alg_qTESLA_III_size"
+        security: 192
+        mix_with: [{'name': 'p384', 'pretty_name': "ECDSA p384"}]
+      -
+        name: "qteslaiiispeed"
+        pretty_name: "qTESLA-III-speed"
+        oqs_meth: "OQS_SIG_alg_qTESLA_III_speed"
+        security: 192
+        mix_with: [{'name': 'p384', 'pretty_name': "ECDSA p384"}]

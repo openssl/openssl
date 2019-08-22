@@ -1,0 +1,9 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_{{ variant['name']|upper }});
+        {%- for classical_alg in variant['mix_with'] %}
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_{{ classical_alg['name']|upper }}_{{ variant['name']|upper }});
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+

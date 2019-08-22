@@ -1,0 +1,10 @@
+{# the schemes must be listed in NID order #}
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+    &{{ variant['name'] }}_asn1_meth,
+        {%- for classical_alg in variant['mix_with'] %}
+    &{{ classical_alg['name'] }}_{{ variant['name'] }}_asn1_meth,
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+

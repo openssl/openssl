@@ -1,0 +1,11 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+    case NID_{{ variant['name'] }}:
+        return "{{ variant['pretty_name'] }}";
+        {%- for classical_alg in variant['mix_with'] %}
+    case NID_{{ classical_alg['name'] }}_{{ variant['name'] }}:
+        return "{{ classical_alg['pretty_name'] }} - {{ variant['pretty_name'] }}";
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+

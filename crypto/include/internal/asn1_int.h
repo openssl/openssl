@@ -87,23 +87,27 @@ extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD siphash_asn1_meth;
 
 #if !defined(OQS_NIST_BRANCH)
-/* OQS sig schemes */
-extern const EVP_PKEY_ASN1_METHOD picnicL1FS_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD qteslaI_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD qteslaIIIsize_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD qteslaIIIspeed_asn1_meth;
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_START
+extern const EVP_PKEY_ASN1_METHOD oqsdefault_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_oqsdefault_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_oqsdefault_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dilithium2_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_dilithium2_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_dilithium2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dilithium3_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dilithium4_asn1_meth;
-/* ADD_MORE_OQS_SIG_HERE */
-/* OQS hybrid schemes */
-extern const EVP_PKEY_ASN1_METHOD p256_picnicL1FS_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD rsa3072_picnicL1FS_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p256_qteslaI_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD rsa3072_qteslaI_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p384_qteslaIIIsize_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p384_qteslaIIIspeed_asn1_meth;
-/* ADD_MORE_OQS_SIG_HERE hybrid only */
+extern const EVP_PKEY_ASN1_METHOD p384_dilithium4_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD picnicl1fs_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_picnicl1fs_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_picnicl1fs_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD qteslai_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_qteslai_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_qteslai_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD qteslaiiisize_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p384_qteslaiiisize_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD qteslaiiispeed_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p384_qteslaiiispeed_asn1_meth;
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_END
 #endif
 
 /*

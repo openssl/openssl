@@ -652,23 +652,27 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, "gost2012_512"},
     {TLSEXT_SIGALG_gostr34102001_gostr3411, "gost2001_gost94"},
 #if !defined(OQS_NIST_BRANCH)
-    /* OQS sig schemes */
-    {TLSEXT_SIGALG_picnicL1FS, "picnicL1FS"},
-    {TLSEXT_SIGALG_qteslaI, "qteslaI"},
-    {TLSEXT_SIGALG_qteslaIIIsize, "qteslaIIIsize"},
-    {TLSEXT_SIGALG_qteslaIIIspeed, "qteslaIIIspeed"},
+///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_START
+    {TLSEXT_SIGALG_oqsdefault, "oqsdefault"},
+    {TLSEXT_SIGALG_p256_oqsdefault, "p256_oqsdefault"},
+    {TLSEXT_SIGALG_rsa3072_oqsdefault, "rsa3072_oqsdefault"},
     {TLSEXT_SIGALG_dilithium2, "dilithium2"},
+    {TLSEXT_SIGALG_p256_dilithium2, "p256_dilithium2"},
+    {TLSEXT_SIGALG_rsa3072_dilithium2, "rsa3072_dilithium2"},
     {TLSEXT_SIGALG_dilithium3, "dilithium3"},
     {TLSEXT_SIGALG_dilithium4, "dilithium4"},
-    /* ADD_MORE_OQS_SIG_HERE */
-    /* OQS hybrid schemes */
-    {TLSEXT_SIGALG_p256_picnicL1FS, "p256_picnicL1FS"},
-    {TLSEXT_SIGALG_rsa3072_picnicL1FS, "rsa3072_picnicL1FS"},
-    {TLSEXT_SIGALG_p256_qteslaI, "p256_qteslaI"},
-    {TLSEXT_SIGALG_rsa3072_qteslaI, "rsa3072_qteslaI"},
-    {TLSEXT_SIGALG_p384_qteslaIIIsize, "p256_qteslaIIIsize"},
-    {TLSEXT_SIGALG_p384_qteslaIIIspeed, "rsa3072_qteslaIIIspeed"},
-    /* ADD_MORE_OQS_SIG_HERE hybrid only */
+    {TLSEXT_SIGALG_p384_dilithium4, "p384_dilithium4"},
+    {TLSEXT_SIGALG_picnicl1fs, "picnicl1fs"},
+    {TLSEXT_SIGALG_p256_picnicl1fs, "p256_picnicl1fs"},
+    {TLSEXT_SIGALG_rsa3072_picnicl1fs, "rsa3072_picnicl1fs"},
+    {TLSEXT_SIGALG_qteslai, "qteslai"},
+    {TLSEXT_SIGALG_p256_qteslai, "p256_qteslai"},
+    {TLSEXT_SIGALG_rsa3072_qteslai, "rsa3072_qteslai"},
+    {TLSEXT_SIGALG_qteslaiiisize, "qteslaiiisize"},
+    {TLSEXT_SIGALG_p384_qteslaiiisize, "p384_qteslaiiisize"},
+    {TLSEXT_SIGALG_qteslaiiispeed, "qteslaiiispeed"},
+    {TLSEXT_SIGALG_p384_qteslaiiispeed, "p384_qteslaiiispeed"},
+///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_END
 #endif
 };
 

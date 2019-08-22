@@ -1,0 +1,13 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+    {"{{ variant['name'] }}", TLSEXT_SIGALG_{{ variant['name'] }},
+     NID_undef, -1, EVP_PKEY_{{ variant['name']|upper }}, SSL_PKEY_{{ variant['name']|upper }},
+     NID_undef, NID_undef},
+        {%- for classical_alg in variant['mix_with'] %}
+    {"{{ classical_alg['name'] }}_{{ variant['name'] }}", TLSEXT_SIGALG_{{ classical_alg['name'] }}_{{ variant['name'] }},
+     NID_undef, -1, EVP_PKEY_{{ classical_alg['name']|upper }}_{{ variant['name']|upper }}, SSL_PKEY_{{ classical_alg['name']|upper }}_{{ variant['name']|upper }},
+     NID_undef, NID_undef},
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+

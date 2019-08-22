@@ -77,88 +77,118 @@ typedef enum {
 static char* get_oqs_alg_name(int openssl_nid)
 {
   switch (openssl_nid)
-    {
-    case NID_picnicL1FS:
-    case NID_p256_picnicL1FS:
-    case NID_rsa3072_picnicL1FS:
-      return OQS_SIG_alg_picnic_L1_FS;
-    case NID_qteslaI:
-    case NID_p256_qteslaI:
-    case NID_rsa3072_qteslaI:
-      return OQS_SIG_alg_qTESLA_I;
-    case NID_qteslaIIIsize:
-    case NID_p384_qteslaIIIsize:
-      return OQS_SIG_alg_qTESLA_III_size;
-    case NID_qteslaIIIspeed:
-    case NID_p384_qteslaIIIspeed:
-      return OQS_SIG_alg_qTESLA_III_speed;
+  {
+///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_START
+    case NID_oqsdefault:
+    case NID_p256_oqsdefault:
+    case NID_rsa3072_oqsdefault:
+      return OQS_SIG_alg_default;
     case NID_dilithium2:
+    case NID_p256_dilithium2:
+    case NID_rsa3072_dilithium2:
       return OQS_SIG_alg_dilithium_2;
     case NID_dilithium3:
       return OQS_SIG_alg_dilithium_3;
     case NID_dilithium4:
+    case NID_p384_dilithium4:
       return OQS_SIG_alg_dilithium_4;
-    /* ADD_MORE_OQS_SIG_HERE */
+    case NID_picnicl1fs:
+    case NID_p256_picnicl1fs:
+    case NID_rsa3072_picnicl1fs:
+      return OQS_SIG_alg_picnic_L1_FS;
+    case NID_qteslai:
+    case NID_p256_qteslai:
+    case NID_rsa3072_qteslai:
+      return OQS_SIG_alg_qTESLA_I;
+    case NID_qteslaiiisize:
+    case NID_p384_qteslaiiisize:
+      return OQS_SIG_alg_qTESLA_III_size;
+    case NID_qteslaiiispeed:
+    case NID_p384_qteslaiiispeed:
+      return OQS_SIG_alg_qTESLA_III_speed;
+///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_END
     default:
       return NULL;
-    }
+  }
 }
 
 static int is_oqs_hybrid_alg(int openssl_nid)
 {
   switch (openssl_nid)
-    {
-    case NID_p256_picnicL1FS:
-    case NID_rsa3072_picnicL1FS:
-    case NID_p256_qteslaI:
-    case NID_rsa3072_qteslaI:
-    case NID_p384_qteslaIIIsize:
-    case NID_p384_qteslaIIIspeed:
-    /* ADD_MORE_OQS_SIG_HERE hybrid only */
+  {
+///// OQS_TEMPLATE_FRAGMENT_LIST_HYBRID_NIDS_START
+    case NID_p256_oqsdefault:
+    case NID_rsa3072_oqsdefault:
+    case NID_p256_dilithium2:
+    case NID_rsa3072_dilithium2:
+    case NID_p384_dilithium4:
+    case NID_p256_picnicl1fs:
+    case NID_rsa3072_picnicl1fs:
+    case NID_p256_qteslai:
+    case NID_rsa3072_qteslai:
+    case NID_p384_qteslaiiisize:
+    case NID_p384_qteslaiiispeed:
+///// OQS_TEMPLATE_FRAGMENT_LIST_HYBRID_NIDS_END
       return 1;
     default:
       return 0;
-    }
+  }
 }
 
 
 static int get_classical_nid(int hybrid_id)
 {
- switch (hybrid_id)
-    {
-    case NID_rsa3072_picnicL1FS:
-    case NID_rsa3072_qteslaI:
+  switch (hybrid_id)
+  {
+///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_START
+    case NID_rsa3072_oqsdefault:
+    case NID_rsa3072_dilithium2:
+    case NID_rsa3072_picnicl1fs:
+    case NID_rsa3072_qteslai:
       return NID_rsaEncryption;
-    case NID_p256_picnicL1FS:
-    case NID_p256_qteslaI:
+    case NID_p256_oqsdefault:
+    case NID_p256_dilithium2:
+    case NID_p256_picnicl1fs:
+    case NID_p256_qteslai:
       return NID_X9_62_prime256v1;
-    case NID_p384_qteslaIIIsize:
-    case NID_p384_qteslaIIIspeed:
+    case NID_p384_dilithium4:
+    case NID_p384_qteslaiiisize:
+    case NID_p384_qteslaiiispeed:
       return NID_secp384r1;
-    /* ADD_MORE_OQS_SIG_HERE hybrid only */
+///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_END
     default:
       return 0;
-    }
+  }
 }
 
 static int get_oqs_nid(int hybrid_id)
 {
- switch (hybrid_id)
-    {
-    case NID_rsa3072_picnicL1FS:
-    case NID_p256_picnicL1FS:
-      return NID_picnicL1FS;
-    case NID_rsa3072_qteslaI:
-    case NID_p256_qteslaI:
-      return NID_qteslaI;
-    case NID_p384_qteslaIIIsize:
-      return NID_qteslaIIIsize;
-    case NID_p384_qteslaIIIspeed:
-      return NID_qteslaIIIspeed;
-    /* ADD_MORE_OQS_SIG_HERE hybrid only */
+  switch (hybrid_id)
+  {
+///// OQS_TEMPLATE_FRAGMENT_ASSIGN_OQS_NID_START
+    case NID_p256_oqsdefault:
+    case NID_rsa3072_oqsdefault:
+      return NID_oqsdefault;
+    case NID_p256_dilithium2:
+    case NID_rsa3072_dilithium2:
+      return NID_dilithium2;
+      return NID_dilithium3;
+    case NID_p384_dilithium4:
+      return NID_dilithium4;
+    case NID_p256_picnicl1fs:
+    case NID_rsa3072_picnicl1fs:
+      return NID_picnicl1fs;
+    case NID_p256_qteslai:
+    case NID_rsa3072_qteslai:
+      return NID_qteslai;
+    case NID_p384_qteslaiiisize:
+      return NID_qteslaiiisize;
+    case NID_p384_qteslaiiispeed:
+      return NID_qteslaiiispeed;
+///// OQS_TEMPLATE_FRAGMENT_ASSIGN_OQS_NID_END
     default:
       return 0;
-    }
+  }
 }
 
 static int get_classical_key_len(oqs_key_type_t keytype, int classical_id) {
@@ -196,38 +226,39 @@ static int get_classical_sig_len(int classical_id)
 static int get_oqs_security_bits(int openssl_nid)
 {
   switch (openssl_nid)
-    {
-    case NID_picnicL1FS:
+  {
+///// OQS_TEMPLATE_FRAGMENT_GET_SIG_SECURITY_BITS_START
+    case NID_oqsdefault:
+    case NID_p256_oqsdefault:
+    case NID_rsa3072_oqsdefault:
       return 128;
-    case NID_qteslaI:
-      return 128;
-    case NID_qteslaIIIsize:
-      return 192;
-    case NID_qteslaIIIspeed:
-      return 192;
     case NID_dilithium2:
+    case NID_p256_dilithium2:
+    case NID_rsa3072_dilithium2:
       return 128;
     case NID_dilithium3:
       return 128;
     case NID_dilithium4:
+    case NID_p384_dilithium4:
       return 192;
-    /* hybrid schemes */
-    case NID_p256_picnicL1FS:
+    case NID_picnicl1fs:
+    case NID_p256_picnicl1fs:
+    case NID_rsa3072_picnicl1fs:
       return 128;
-    case NID_rsa3072_picnicL1FS:
-      return 192;
-    case NID_p256_qteslaI:
+    case NID_qteslai:
+    case NID_p256_qteslai:
+    case NID_rsa3072_qteslai:
       return 128;
-    case NID_rsa3072_qteslaI:
-      return 128;
-    case NID_p384_qteslaIIIsize:
+    case NID_qteslaiiisize:
+    case NID_p384_qteslaiiisize:
       return 192;
-    case NID_p384_qteslaIIIspeed:
+    case NID_qteslaiiispeed:
+    case NID_p384_qteslaiiispeed:
       return 192;
-    /* ADD_MORE_OQS_SIG_HERE */
+///// OQS_TEMPLATE_FRAGMENT_GET_SIG_SECURITY_BITS_END
     default:
       return 0;
-    }
+  }
 }
 
 static int is_EC_nid(int nid) {
@@ -792,21 +823,29 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
     nid = OBJ_obj2nid(obj);
     if (
-	(nid != NID_picnicL1FS &&
-	 nid != NID_p256_picnicL1FS &&
-	 nid != NID_rsa3072_picnicL1FS &&
-	 nid != NID_qteslaI &&
-	 nid != NID_p256_qteslaI &&
-	 nid != NID_rsa3072_qteslaI &&
-	 nid != NID_qteslaIIIsize &&
-	 nid != NID_p384_qteslaIIIsize &&
-	 nid != NID_qteslaIIIspeed &&
-	 nid != NID_p384_qteslaIIIspeed &&
-   nid != NID_dilithium2 &&
-   nid != NID_dilithium3 &&
-   nid != NID_dilithium4
-	 /* ADD_MORE_OQS_SIG_HERE */
-	 ) || ptype != V_ASN1_UNDEF) {
+    (
+///// OQS_TEMPLATE_FRAGMENT_CHECK_IF_KNOWN_NID_START
+        nid != NID_oqsdefault &&
+        nid != NID_p256_oqsdefault &&
+        nid != NID_rsa3072_oqsdefault &&
+        nid != NID_dilithium2 &&
+        nid != NID_p256_dilithium2 &&
+        nid != NID_rsa3072_dilithium2 &&
+        nid != NID_dilithium3 &&
+        nid != NID_dilithium4 &&
+        nid != NID_p384_dilithium4 &&
+        nid != NID_picnicl1fs &&
+        nid != NID_p256_picnicl1fs &&
+        nid != NID_rsa3072_picnicl1fs &&
+        nid != NID_qteslai &&
+        nid != NID_p256_qteslai &&
+        nid != NID_rsa3072_qteslai &&
+        nid != NID_qteslaiiisize &&
+        nid != NID_p384_qteslaiiisize &&
+        nid != NID_qteslaiiispeed &&
+        nid != NID_p384_qteslaiiispeed
+///// OQS_TEMPLATE_FRAGMENT_CHECK_IF_KNOWN_NID_END
+    ) || ptype != V_ASN1_UNDEF) {
         ECerr(EC_F_OQS_ITEM_VERIFY, EC_R_UNKNOWN_NID);
         return 0;
     }
@@ -1159,22 +1198,26 @@ DEFINE_OQS_ITEM_SIGN(ALG, NID_ALG)                                    \
 DEFINE_OQS_SIGN_INFO_SET(ALG, NID_ALG)                                \
 DEFINE_OQS_EVP_PKEY_METHOD(ALG, NID_ALG)                              \
 DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME)
-
-DEFINE_OQS_EVP_METHODS(picnicL1FS, NID_picnicL1FS, "picnicL1FS", "OpenSSL Picnic L1 FS algorithm")
-DEFINE_OQS_EVP_METHODS(qteslaI, NID_qteslaI, "qteslaI", "OpenSSL qTESLA-I algorithm")
-DEFINE_OQS_EVP_METHODS(qteslaIIIsize, NID_qteslaIIIsize, "qteslaIIIsize", "OpenSSL qTESLA-III-size algorithm")
-DEFINE_OQS_EVP_METHODS(qteslaIIIspeed, NID_qteslaIIIspeed, "qteslaIIIspeed", "OpenSSL qTESLA-III-speed algorithm")
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_START
+DEFINE_OQS_EVP_METHODS(oqsdefault, NID_oqsdefault, "oqsdefault", "OpenSSL OQS Default Signature Algorithm algorithm")
+DEFINE_OQS_EVP_METHODS(p256_oqsdefault, NID_p256_oqsdefault, "p256_oqsdefault", "OpenSSL ECDSA p256 OQS Default Signature Algorithm algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_oqsdefault, NID_rsa3072_oqsdefault, "rsa3072_oqsdefault", "OpenSSL RSA3072 OQS Default Signature Algorithm algorithm")
 DEFINE_OQS_EVP_METHODS(dilithium2, NID_dilithium2, "dilithium2", "OpenSSL Dilithium-2 algorithm")
+DEFINE_OQS_EVP_METHODS(p256_dilithium2, NID_p256_dilithium2, "p256_dilithium2", "OpenSSL ECDSA p256 Dilithium-2 algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_dilithium2, NID_rsa3072_dilithium2, "rsa3072_dilithium2", "OpenSSL RSA3072 Dilithium-2 algorithm")
 DEFINE_OQS_EVP_METHODS(dilithium3, NID_dilithium3, "dilithium3", "OpenSSL Dilithium-3 algorithm")
 DEFINE_OQS_EVP_METHODS(dilithium4, NID_dilithium4, "dilithium4", "OpenSSL Dilithium-4 algorithm")
-/* ADD_MORE_OQS_SIG_HERE */
-/* hybrid schemes */
-DEFINE_OQS_EVP_METHODS(p256_picnicL1FS, NID_p256_picnicL1FS, "p256_picnicL1FS", "OpenSSL hybrid p256 Picnic L1 FS algorithm")
-DEFINE_OQS_EVP_METHODS(rsa3072_picnicL1FS, NID_rsa3072_picnicL1FS, "rsa3072_picnicL1FS", "OpenSSL hybrid RSA3072 Picnic L1 FS algorithm")
-DEFINE_OQS_EVP_METHODS(p256_qteslaI, NID_p256_qteslaI, "p256_qteslaI", "OpenSSL hybrid p256 qTESLA-I algorithm")
-DEFINE_OQS_EVP_METHODS(rsa3072_qteslaI, NID_rsa3072_qteslaI, "rsa3072_qteslaI", "OpenSSL hybrid RSA3072 qTESLA-I algorithm")
-DEFINE_OQS_EVP_METHODS(p384_qteslaIIIsize, NID_p384_qteslaIIIsize, "p384_qteslaIIIsize", "OpenSSL hybrid p384 qTESLA-III-size algorithm")
-DEFINE_OQS_EVP_METHODS(p384_qteslaIIIspeed, NID_p384_qteslaIIIspeed, "p384_qteslaIIIspeed", "OpenSSL hybrid p384 qTESLA-III-speed algorithm")
-/* ADD_MORE_OQS_SIG_HERE hybrid only */
+DEFINE_OQS_EVP_METHODS(p384_dilithium4, NID_p384_dilithium4, "p384_dilithium4", "OpenSSL ECDSA p384 Dilithium-4 algorithm")
+DEFINE_OQS_EVP_METHODS(picnicl1fs, NID_picnicl1fs, "picnicl1fs", "OpenSSL Picnic L1 FS algorithm")
+DEFINE_OQS_EVP_METHODS(p256_picnicl1fs, NID_p256_picnicl1fs, "p256_picnicl1fs", "OpenSSL ECDSA p256 Picnic L1 FS algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_picnicl1fs, NID_rsa3072_picnicl1fs, "rsa3072_picnicl1fs", "OpenSSL RSA3072 Picnic L1 FS algorithm")
+DEFINE_OQS_EVP_METHODS(qteslai, NID_qteslai, "qteslai", "OpenSSL qTESLA-I algorithm")
+DEFINE_OQS_EVP_METHODS(p256_qteslai, NID_p256_qteslai, "p256_qteslai", "OpenSSL ECDSA p256 qTESLA-I algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_qteslai, NID_rsa3072_qteslai, "rsa3072_qteslai", "OpenSSL RSA3072 qTESLA-I algorithm")
+DEFINE_OQS_EVP_METHODS(qteslaiiisize, NID_qteslaiiisize, "qteslaiiisize", "OpenSSL qTESLA-III-size algorithm")
+DEFINE_OQS_EVP_METHODS(p384_qteslaiiisize, NID_p384_qteslaiiisize, "p384_qteslaiiisize", "OpenSSL ECDSA p384 qTESLA-III-size algorithm")
+DEFINE_OQS_EVP_METHODS(qteslaiiispeed, NID_qteslaiiispeed, "qteslaiiispeed", "OpenSSL qTESLA-III-speed algorithm")
+DEFINE_OQS_EVP_METHODS(p384_qteslaiiispeed, NID_p384_qteslaiiispeed, "p384_qteslaiiispeed", "OpenSSL ECDSA p384 qTESLA-III-speed algorithm")
+///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_END
 
 #endif /* !defined(OQS_NIST_BRANCH) */

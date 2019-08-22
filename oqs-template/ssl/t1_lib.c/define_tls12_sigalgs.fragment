@@ -1,0 +1,9 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+    TLSEXT_SIGALG_{{ variant['name'] }},
+        {%- for classical_alg in variant['mix_with'] %}
+    TLSEXT_SIGALG_{{ classical_alg['name'] }}_{{ variant['name'] }},
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+
