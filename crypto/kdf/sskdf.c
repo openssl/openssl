@@ -168,7 +168,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
             || kmac_out_len == 64))
         return 0;
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN,
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE,
                                             &kmac_out_len);
 
     if (EVP_MAC_CTX_set_params(ctx, params) <= 0)

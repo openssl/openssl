@@ -106,8 +106,7 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 static const OSSL_PARAM known_gettable_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL), /* Same as "outlen" */
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *poly1305_gettable_params(void)
@@ -119,8 +118,7 @@ static int poly1305_get_params(OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-        || (p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
         return OSSL_PARAM_set_size_t(p, poly1305_size());
 
     return 1;

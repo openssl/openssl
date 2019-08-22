@@ -336,13 +336,13 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
              */
 
             params[0] =
-                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN, &size);
+                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &size);
 
             if (!EVP_MAC_CTX_set_params(hctx->ctx, params))
                 return 0;
 
             params[0] =
-                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN, &verify);
+                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &verify);
 
             if (!EVP_MAC_CTX_get_params(hctx->ctx, params))
                 return 0;
@@ -440,6 +440,24 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
     const EVP_MAC *mac = EVP_MAC_CTX_mac(hctx->ctx);
     OSSL_PARAM params[2];
     int ok = 0;
+
+    /*
+     * Translation of some control names that are equivalent to a single
+     * parameter name.
+     *
+     * md, digest and cipher are really just the underlying algorithm,
+     * and since they are now simply specified by name, we use the single
+     * parameter "algorithm" for them all.
+     *
+     * "digestsize" was a setting control in siphash, but naming wise,
+     * it's really the same as "size".
+     */
+    if (strcmp(type, "md") == 0
+        || strcmp(type, "digest") == 0
+        || strcmp(type, "cipher") == 0)
+        type = OSSL_MAC_PARAM_ALGORITHM;
+    else if (strcmp(type, "digestsize") == 0)
+        type = OSSL_MAC_PARAM_SIZE;
 
     if (!OSSL_PARAM_allocate_from_text(&params[0],
                                        EVP_MAC_CTX_settable_params(mac),
