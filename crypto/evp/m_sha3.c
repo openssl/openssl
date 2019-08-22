@@ -36,12 +36,6 @@ static int shake_init(EVP_MD_CTX *ctx)
     return sha3_init(EVP_MD_CTX_md_data(ctx), '\x1f', ctx->digest->md_size * 8);
 }
 
-static int kmac_init(EVP_MD_CTX *ctx)
-{
-    return keccak_kmac_init(EVP_MD_CTX_md_data(ctx), '\x04',
-                            ctx->digest->md_size * 8 / 2);
-}
-
 static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
 {
     KECCAK1600_CTX *ctx = evp_ctx->md_data;
@@ -323,27 +317,3 @@ EVP_MD_SHA3(512)
 
 EVP_MD_SHAKE(128)
 EVP_MD_SHAKE(256)
-
-
-# define EVP_MD_KECCAK_KMAC(bitlen)             \
-const EVP_MD *evp_keccak_kmac##bitlen(void)     \
-{                                               \
-    static const EVP_MD kmac_##bitlen##_md = {  \
-        NID_kmac##bitlen,                       \
-        0,                                      \
-        2 * bitlen / 8,                         \
-        EVP_MD_FLAG_XOF,                        \
-        kmac_init,                              \
-        update,                                 \
-        final,                                  \
-        NULL,                                   \
-        NULL,                                   \
-        (KECCAK1600_WIDTH - bitlen * 2) / 8,    \
-        sizeof(KECCAK1600_CTX),                 \
-        shake_ctrl                              \
-    };                                          \
-    return &kmac_##bitlen##_md;                 \
-}
-
-EVP_MD_KECCAK_KMAC(128)
-EVP_MD_KECCAK_KMAC(256)

@@ -118,8 +118,6 @@ extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD poly1305_pkey_meth;
 extern const EVP_PKEY_METHOD siphash_pkey_meth;
 
-/* struct evp_mac_impl_st is defined by the implementation */
-typedef struct evp_mac_impl_st EVP_MAC_IMPL;
 struct evp_mac_st {
     OSSL_PROVIDER *prov;
     char *name;
@@ -142,10 +140,6 @@ struct evp_mac_st {
     OSSL_OP_mac_set_ctx_params_fn *set_ctx_params;
 };
 
-/* Internal keccak algorithms used for KMAC */
-const EVP_MD *evp_keccak_kmac128(void);
-const EVP_MD *evp_keccak_kmac256(void);
-
 /*
  * This function is internal for now, but can be made external when needed.
  * The documentation would read:
@@ -153,7 +147,6 @@ const EVP_MD *evp_keccak_kmac256(void);
  * EVP_add_mac() adds the MAC implementation C<mac> to the internal
  * object database.
  */
-int EVP_add_mac(const EVP_MAC *mac);
 int EVP_add_kdf(const EVP_KDF *kdf);
 
 /* struct evp_kdf_impl_st is defined by the implementation */
