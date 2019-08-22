@@ -100,7 +100,7 @@ structure for holding context information during a digest operation.
 A pointer to this context will be passed back in a number of the other digest
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(3)>).
+initialisation (see L<provider(7)>).
 
 OP_digest_freectx() is passed a pointer to the provider side digest context in
 the I<dctx> parameter.
@@ -132,7 +132,7 @@ The digest should not exceed I<outsz> bytes.
 OP_digest_digest() is a "oneshot" digest function.
 No provider side digest context is used.
 Instead the provider context that was created during provider initialisation is
-passed in the I<provctx> parameter (see L<provider(3)>).
+passed in the I<provctx> parameter (see L<provider(7)>).
 I<inl> bytes at I<in> should be digested and the result should be stored at
 I<out>. The length of the digest should be stored in I<*outl> which should not
 exceed I<outsz> bytes.

@@ -112,7 +112,7 @@ structure for holding context information during a signature operation.
 A pointer to this context will be passed back in a number of the other signature
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(3)>).
+initialisation (see L<provider(7)>).
 
 OP_signature_freectx() is passed a pointer to the provider side signature
 context in the I<ctx> parameter.
