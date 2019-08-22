@@ -2563,27 +2563,23 @@ static int check_cert_usable(SSL *s, const SIGALG_LOOKUP *sig, X509 *x,
 {
     const SIGALG_LOOKUP *lu;
     int mdnid, pknid, default_mdnid;
-    int mandatory_md = 0;
     size_t i;
 
     /* If the EVP_PKEY reports a mandatory digest, allow nothing else. */
     ERR_set_mark();
-    switch (EVP_PKEY_get_default_digest_nid(pkey, &default_mdnid)) {
-    case 2:
-        mandatory_md = 1;
-        break;
-    case 1:
-    default: /* If it didn't report a mandatory NID, for whatever reasons,
-              * just clear the error and allow all hashes to be used. */
-        break;
-    }
+    if (EVP_PKEY_get_default_digest_nid(pkey, &default_mdnid) == 2 &&
+        sig->hash != default_mdnid)
+            return 0;
+
+    /* If it didn't report a mandatory NID, for whatever reasons,
+     * just clear the error and allow all hashes to be used. */
     ERR_pop_to_mark();
+
     if (s->s3->tmp.peer_cert_sigalgs != NULL) {
         for (i = 0; i < s->s3->tmp.peer_cert_sigalgslen; i++) {
             lu = tls1_lookup_sigalg(s->s3->tmp.peer_cert_sigalgs[i]);
             if (lu == NULL
-                || !X509_get_signature_info(x, &mdnid, &pknid, NULL, NULL)
-                || (mandatory_md && mdnid != default_mdnid))
+                || !X509_get_signature_info(x, &mdnid, &pknid, NULL, NULL))
                 continue;
             /*
              * TODO this does not differentiate between the
@@ -2596,7 +2592,7 @@ static int check_cert_usable(SSL *s, const SIGALG_LOOKUP *sig, X509 *x,
         }
         return 0;
     }
-    return !mandatory_md || sig->hash == default_mdnid;
+    return 1;
 }
 
 /*
