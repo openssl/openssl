@@ -176,11 +176,10 @@ static void ctr64_inc(unsigned char *counter)
 # define HWAES_xts_decrypt aes_p8_xts_decrypt
 #endif
 
-#if     defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
-        ((defined(__i386)       || defined(__i386__)    || \
+#if     ((defined(__i386)       || defined(__i386__)    || \
           defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
         defined(__x86_64)       || defined(__x86_64__)  || \
-        defined(_M_AMD64)       || defined(_M_X64)      )
+        defined(_M_AMD64)       || defined(_M_X64)
 
 extern unsigned int OPENSSL_ia32cap_P[];
 
