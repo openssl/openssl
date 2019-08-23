@@ -1908,7 +1908,7 @@ if ($builder eq "unified") {
             qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$includes{$1}}, tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*DEFINE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            qr/^\s*DEFINE\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
             => sub { push @{$defines{$1}}, tokenize($expand_variables->($2))
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*DEPEND\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
@@ -2109,24 +2109,33 @@ EOF
             }
         }
 
-        foreach (keys %defines) {
-            my $dest = $_;
-            my $ddest = cleanfile($sourced, $_, $blddir);
+        foreach my $dest (keys %defines) {
+            my $ddest;
 
-            # If the destination doesn't exist in source, it can only be
-            # a generated file in the build tree.
-            if (! -f $ddest) {
-                $ddest = cleanfile($buildd, $_, $blddir);
-                if ($unified_info{rename}->{$ddest}) {
-                    $ddest = $unified_info{rename}->{$ddest};
+            if ($dest ne "") {
+                $ddest = cleanfile($sourced, $dest, $blddir);
+
+                # If the destination doesn't exist in source, it can only
+                # be a generated file in the build tree.
+                if (! -f $ddest) {
+                    $ddest = cleanfile($buildd, $dest, $blddir);
+                    if ($unified_info{rename}->{$ddest}) {
+                        $ddest = $unified_info{rename}->{$ddest};
+                    }
                 }
             }
-            foreach (@{$defines{$dest}}) {
-                m|^([^=]*)(=.*)?$|;
+            foreach my $v (@{$defines{$dest}}) {
+                $v =~ m|^([^=]*)(=.*)?$|;
                 die "0 length macro name not permitted\n" if $1 eq "";
-                die "$1 defined more than once\n"
-                    if defined $unified_info{defines}->{$ddest}->{$1};
-                $unified_info{defines}->{$ddest}->{$1} = $2;
+                if ($dest ne "") {
+                    die "$1 defined more than once\n"
+                        if defined $unified_info{defines}->{$ddest}->{$1};
+                    $unified_info{defines}->{$ddest}->{$1} = $2;
+                } else {
+                    die "$1 defined more than once\n"
+                        if grep { $v eq $_ } @{$config{defines}};
+                    push @{$config{defines}}, $v;
+                }
             }
         }
     }
