@@ -121,14 +121,14 @@ void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #  endif
 # endif /* OPENSSL_CPUID_OBJ */
 
-# if     defined(AES_ASM) &&     ( \
+# if     defined(OPENSSL_CPUID_OBJ) &&                   (  \
          defined(__x86_64)       || defined(__x86_64__)  || \
          defined(_M_AMD64)       || defined(_M_X64)      )
 #  define AES_CBC_HMAC_SHA_CAPABLE 1
 #  define AESNI_CBC_HMAC_SHA_CAPABLE (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
 # endif
 
-# if     defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
+# if     defined(OPENSSL_CPUID_OBJ) &&                   (  \
          ((defined(__i386)       || defined(__i386__)    || \
            defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
          defined(__x86_64)       || defined(__x86_64__)  || \
@@ -139,9 +139,6 @@ void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #  define AESNI_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
 #  ifdef VPAES_ASM
 #   define VPAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
-#  endif
-#  ifdef BSAES_ASM
-#   define BSAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
 #  endif
 
 #  define AES_GCM_ENC_BYTES 32
@@ -222,7 +219,6 @@ void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in, size_t len);
 #   define AES_GCM_ASM(ctx)    (ctx->ctr == aesni_ctr32_encrypt_blocks && \
                                 ctx->gcm.ghash == gcm_ghash_avx)
 #  endif
-
 
 # elif defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
 
