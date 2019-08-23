@@ -557,7 +557,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
                 if (cdat->aad[i] == NULL)
                     return parse_bin(value, &cdat->aad[i], &cdat->aad_len[i]);
             }
-            return 0;
+            return -1;
         }
         if (strcmp(keyword, "Tag") == 0)
             return parse_bin(value, &cdat->tag, &cdat->tag_len);
@@ -567,7 +567,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
             else if (strcmp(value, "FALSE") == 0)
                 cdat->tag_late = 0;
             else
-                return 0;
+                return -1;
             return 1;
         }
     }
@@ -578,7 +578,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
         else if (strcmp(value, "DECRYPT") == 0)
             cdat->enc = 0;
         else
-            return 0;
+            return -1;
         return 1;
     }
     return 0;
@@ -1016,7 +1016,7 @@ static int mac_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Algorithm") == 0) {
         mdata->alg = OPENSSL_strdup(value);
         if (!mdata->alg)
-            return 0;
+            return -1;
         return 1;
     }
     if (strcmp(keyword, "Input") == 0)
@@ -1533,9 +1533,9 @@ static int pderive_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "PeerKey") == 0) {
         EVP_PKEY *peer;
         if (find_key(&peer, value, public_keys) == 0)
-            return 0;
+            return -1;
         if (EVP_PKEY_derive_set_peer(kdata->ctx, peer) <= 0)
-            return 0;
+            return -1;
         return 1;
     }
     if (strcmp(keyword, "SharedSecret") == 0)
@@ -2529,7 +2529,7 @@ static int digestsigver_test_parse(EVP_TEST *t,
     }
     if (strcmp(keyword, "Ctrl") == 0) {
         if (mdata->pctx == NULL)
-            return 0;
+            return -1;
         return pkey_test_ctrl(t, mdata->pctx, value);
     }
     return 0;
