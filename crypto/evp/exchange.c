@@ -32,19 +32,44 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     return exchange;
 }
 
+struct keymgmt_data_st {
+    OPENSSL_CTX *ctx;
+    const char *properties;
+};
+
 static void *evp_keyexch_from_dispatch(const char *name,
                                        const OSSL_DISPATCH *fns,
-                                       OSSL_PROVIDER *prov)
+                                       OSSL_PROVIDER *prov,
+                                       void *vkeymgmt_data)
 {
+    /*
+     * Key exchange cannot work without a key, and key management
+     * from the same provider to manage its keys.  We therefore fetch
+     * a key management method using the same algorithm and properties
+     * and pass that down to evp_generic_fetch to be passed on to our
+     * evp_keyexch_from_dispatch, which will attach the key management
+     * method to the newly created key exchange method as long as the
+     * provider matches.
+     */
+    struct keymgmt_data_st *keymgmt_data = vkeymgmt_data;
+    EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(keymgmt_data->ctx, name,
+                                             keymgmt_data->properties);
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0;
 
+    if (keymgmt == NULL || EVP_KEYMGMT_provider(keymgmt) != prov) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEYMGMT_AVAILABLE);
+        goto err;
+    }
+
     if ((exchange = evp_keyexch_new(prov)) == NULL
         || (exchange->name = OPENSSL_strdup(name)) == NULL) {
-        EVP_KEYEXCH_free(exchange);
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        goto err;
     }
+
+    exchange->keymgmt = keymgmt;
+    keymgmt = NULL;              /* avoid double free on failure below */
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -96,13 +121,17 @@ static void *evp_keyexch_from_dispatch(const char *name,
          * and freectx. The dupctx, set_peer and set_params functions are
          * optional.
          */
-        EVP_KEYEXCH_free(exchange);
         EVPerr(EVP_F_EVP_KEYEXCH_FROM_DISPATCH,
                EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
 
     return exchange;
+
+ err:
+    EVP_KEYEXCH_free(exchange);
+    EVP_KEYMGMT_free(keymgmt);
+    return NULL;
 }
 
 void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
@@ -137,31 +166,16 @@ OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
 EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    /*
-     * Key exchange cannot work without a key, and we key management
-     * from the same provider to manage its keys.
-     */
-    EVP_KEYEXCH *keyexch =
-        evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
-                          evp_keyexch_from_dispatch,
-                          (int (*)(void *))EVP_KEYEXCH_up_ref,
-                          (void (*)(void *))EVP_KEYEXCH_free);
+    EVP_KEYEXCH *keyexch = NULL;
+    struct keymgmt_data_st keymgmt_data;
 
-    /* If the method is newly created, there's no keymgmt attached */
-    if (keyexch->keymgmt == NULL) {
-        EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(ctx, algorithm, properties);
+    keymgmt_data.ctx = ctx;
+    keymgmt_data.properties = properties;
+    keyexch = evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
+                                evp_keyexch_from_dispatch, &keymgmt_data,
+                                (int (*)(void *))EVP_KEYEXCH_up_ref,
+                                (void (*)(void *))EVP_KEYEXCH_free);
 
-        if (keymgmt == NULL
-            || (EVP_KEYEXCH_provider(keyexch)
-                != EVP_KEYMGMT_provider(keymgmt))) {
-            EVP_KEYEXCH_free(keyexch);
-            EVP_KEYMGMT_free(keymgmt);
-            EVPerr(EVP_F_EVP_KEYEXCH_FETCH, EVP_R_NO_KEYMGMT_PRESENT);
-            return NULL;
-        }
-
-        keyexch->keymgmt = keymgmt;
-    }
     return keyexch;
 }
 

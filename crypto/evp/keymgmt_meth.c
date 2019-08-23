@@ -34,7 +34,7 @@ static void *keymgmt_new(void)
 }
 
 static void *keymgmt_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov)
+                                   OSSL_PROVIDER *prov, void *unused)
 {
     EVP_KEYMGMT *keymgmt = NULL;
 
@@ -156,7 +156,7 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_KEYMGMT *keymgmt =
         evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
-                          keymgmt_from_dispatch,
+                          keymgmt_from_dispatch, NULL,
                           (int (*)(void *))EVP_KEYMGMT_up_ref,
                           (void (*)(void *))EVP_KEYMGMT_free);
 

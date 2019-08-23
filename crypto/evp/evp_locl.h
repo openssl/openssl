@@ -141,7 +141,9 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
                         const char *algorithm, const char *properties,
                         void *(*new_method)(const char *name,
                                             const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov),
+                                            OSSL_PROVIDER *prov,
+                                            void *method_data),
+                        void *method_data,
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *));
 void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
@@ -149,7 +151,9 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
                         void *user_arg,
                         void *(*new_method)(const char *name,
                                             const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov),
+                                            OSSL_PROVIDER *prov,
+                                            void *method_data),
+                        void *method_data,
                         void (*free_method)(void *));
 
 /* Helper functions to avoid duplicating code */
