@@ -345,7 +345,7 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                              (char *)engine_name,
                                              strlen(engine_name) + 1);
     params[paramsn++] =
-        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                          (char *)cipher_name,
                                          strlen(cipher_name) + 1);
     params[paramsn++] =

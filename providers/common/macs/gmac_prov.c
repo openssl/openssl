@@ -53,7 +53,7 @@ struct gmac_data_st {
     /*
      * Conditions for legacy EVP_CIPHER uses.
      */
-    ENGINE *engine;              /* Engine implementing the algorithm */
+    ENGINE *engine;              /* Engine implementing the cipher */
 };
 
 static size_t gmac_size(void);
@@ -169,7 +169,7 @@ static int gmac_get_params(OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
-    OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_ALGORITHM, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_CIPHER, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_ENGINE, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
@@ -190,8 +190,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     EVP_CIPHER_CTX *ctx = macctx->ctx;
     const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate_const(params,
-                                     OSSL_MAC_PARAM_ALGORITHM)) != NULL) {
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CIPHER)) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
 

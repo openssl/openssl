@@ -222,7 +222,7 @@ static int SSKDF_mac_kdm(EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
     if (hmac_md != NULL) {
         const char *mdname = EVP_MD_name(hmac_md);
         params[params_n++] =
-            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                              (char *)mdname,
                                              strlen(mdname) + 1);
     }

@@ -281,7 +281,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                                                      engineid,
                                                      strlen(engineid) + 1);
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                                      ciphname,
                                                      strlen(ciphname) + 1);
                 params[params_n] = OSSL_PARAM_construct_end();
@@ -407,7 +407,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                                                          engineid_l);
                 }
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                      mdname,
                                                      strlen(mdname) + 1);
                 params[params_n++] =
@@ -445,17 +445,13 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
      * Translation of some control names that are equivalent to a single
      * parameter name.
      *
-     * md, digest and cipher are really just the underlying algorithm,
-     * and since they are now simply specified by name, we use the single
-     * parameter "algorithm" for them all.
+     * "md" and "digest" are the same thing, we use the single "digest"
      *
      * "digestsize" was a setting control in siphash, but naming wise,
      * it's really the same as "size".
      */
-    if (strcmp(type, "md") == 0
-        || strcmp(type, "digest") == 0
-        || strcmp(type, "cipher") == 0)
-        type = OSSL_MAC_PARAM_ALGORITHM;
+    if (strcmp(type, "md") == 0)
+        type = OSSL_MAC_PARAM_DIGEST;
     else if (strcmp(type, "digestsize") == 0)
         type = OSSL_MAC_PARAM_SIZE;
 

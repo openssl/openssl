@@ -172,7 +172,7 @@ int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
     OSSL_PARAM params[3];
     const char *cbc_name = EVP_CIPHER_name(cbc);
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                                  (char *)cbc_name,
                                                  strlen(cbc_name) + 1);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,

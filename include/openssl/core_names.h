@@ -77,9 +77,10 @@ extern "C" {
 #define OSSL_MAC_PARAM_FLAGS        "flags"     /* int */
 /*
  * If "engine" or "properties" are specified, they should always be paired
- * with "algorithm".
+ * with "cipher" or "digest".
  */
-#define OSSL_MAC_PARAM_ALGORITHM    "algorithm" /* utf8 string */
+#define OSSL_MAC_PARAM_CIPHER       "cipher"    /* utf8 string */
+#define OSSL_MAC_PARAM_DIGEST       "digest"    /* utf8 string */
 #define OSSL_MAC_PARAM_ENGINE       "engine"    /* utf8 string */
 #define OSSL_MAC_PARAM_PROPERTIES   "properties" /* utf8 string */
 #define OSSL_MAC_PARAM_SIZE         "size"      /* size_t */
