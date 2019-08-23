@@ -20,6 +20,10 @@ ECDSA_SIG *ECDSA_do_sign_ex(const unsigned char *dgst, int dlen,
                             const BIGNUM *kinv, const BIGNUM *rp,
                             EC_KEY *eckey)
 {
+    int curvebits = EC_GROUP_order_bits(EC_KEY_get0_group(eckey));
+    if (curvebits && dlen > (curvebits + 7) / 8)
+        dlen = (curvebits + 7) / 8;
+
     if (eckey->meth->sign_sig != NULL)
         return eckey->meth->sign_sig(dgst, dlen, kinv, rp, eckey);
     ECerr(EC_F_ECDSA_DO_SIGN_EX, EC_R_OPERATION_NOT_SUPPORTED);
