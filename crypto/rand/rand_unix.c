@@ -24,6 +24,9 @@
 # include <sys/ipc.h>
 # include <sys/shm.h>
 # include <sys/utsname.h>
+# if defined(DEVRANDOM_WAIT)
+#  include <poll.h>
+# endif
 #endif
 #if defined(__FreeBSD__) && !defined(OPENSSL_SYS_UEFI)
 # include <sys/types.h>
@@ -364,7 +367,7 @@ static int wait_random_seeded(void)
     int shm_id, fd, r;
     char c, *p;
     struct utsname un;
-    fd_set fds;
+    struct pollfd pset;
 
     if (!seeded) {
         /* See if anthing has created the global seeded indication */
@@ -390,11 +393,12 @@ static int wait_random_seeded(void)
             }
             /* Open /dev/random and wait for it to be readable */
             if ((fd = open(DEVRANDOM_WAIT, O_RDONLY)) != -1) {
-                if (DEVRANDM_WAIT_USE_SELECT) {
-                    FD_ZERO(&fds);
-                    FD_SET(fd, &fds);
-                    while ((r = select(fd + 1, &fds, NULL, NULL, NULL)) < 0
-                           && errno == EINTR);
+                if (DEVRANDM_WAIT_USE_POLL) {
+                    pset.fd = fd;
+                    pset.events = POLLIN;
+                    pset.revents = 0;
+
+                    while ((r = poll(&pset, 1, -1)) < 0 && errno == EINTR);
                 } else {
                     while ((r = read(fd, &c, 1)) < 0 && errno == EINTR);
                 }

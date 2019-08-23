@@ -41,12 +41,12 @@
 #    define DEVRANDOM_SAFE_KERNEL        4, 8
 #   endif
 /*
- * Some operating systems do not permit select(2) on their random devices,
+ * Some operating systems do not permit poll(2) on their random devices,
  * defining this to zero will force the used of read(2) to extract one byte
  * from /dev/random.
  */
-#   ifndef DEVRANDM_WAIT_USE_SELECT
-#    define DEVRANDM_WAIT_USE_SELECT     1
+#   ifndef DEVRANDM_WAIT_USE_POLL
+#    define DEVRANDM_WAIT_USE_POLL     1
 #   endif
 /*
  * Define the shared memory identifier used to indicate if the operating
