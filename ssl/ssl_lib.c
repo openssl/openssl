@@ -2061,11 +2061,11 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
         return -1;
     }
 
-#ifndef OPENSSL_NO_KTLS
-    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, flags);
+#ifdef OPENSSL_NO_KTLS
+    ERR_raise_data(ERR_LIB_SYS, ERR_R_INTERNAL_ERROR, "calling sendfile()");
+    return -1;
 #else
-    ret = -1;
-#endif
+    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, flags);
     if (ret < 0) {
 #if defined(EAGAIN) && defined(EINTR) && defined(EBUSY)
         if ((get_last_sys_error() == EAGAIN) ||
@@ -2074,16 +2074,12 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
             BIO_set_retry_write(s->wbio);
         else
 #endif
-#ifdef OPENSSL_NO_KTLS
-            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                          "calling sendfile()");
-#else
             SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
-#endif
         return ret;
     }
     s->rwstate = SSL_NOTHING;
     return ret;
+#endif
 }
 
 int SSL_write(SSL *s, const void *buf, int num)
