@@ -41,10 +41,6 @@ int ERR_load_EVP_strings(void);
 #  define EVP_F_ARIA_GCM_INIT_KEY                          0
 #  define EVP_F_ARIA_INIT_KEY                              0
 #  define EVP_F_B64_NEW                                    0
-#  define EVP_F_BLAKE2B_MAC_CTRL                           0
-#  define EVP_F_BLAKE2B_MAC_INIT                           0
-#  define EVP_F_BLAKE2S_MAC_CTRL                           0
-#  define EVP_F_BLAKE2S_MAC_INIT                           0
 #  define EVP_F_CAMELLIA_INIT_KEY                          0
 #  define EVP_F_CHACHA20_POLY1305_CTRL                     0
 #  define EVP_F_CMLL_T4_INIT_KEY                           0
@@ -218,6 +214,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_NO_CIPHER_SET                              131
 # define EVP_R_NO_DEFAULT_DIGEST                          158
 # define EVP_R_NO_DIGEST_SET                              139
+# define EVP_R_NO_KEYMGMT_AVAILABLE                       199
 # define EVP_R_NO_KEYMGMT_PRESENT                         196
 # define EVP_R_NO_KEY_SET                                 154
 # define EVP_R_NO_OPERATION_SET                           149

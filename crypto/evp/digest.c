@@ -617,7 +617,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 }
 
 static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
-                                  OSSL_PROVIDER *prov)
+                                  OSSL_PROVIDER *prov, void *unused)
 {
     EVP_MD *md = NULL;
     int fncnt = 0;
@@ -744,7 +744,7 @@ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_MD *md =
         evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-                          evp_md_from_dispatch, evp_md_up_ref,
+                          evp_md_from_dispatch, NULL, evp_md_up_ref,
                           evp_md_free);
 
     return md;
@@ -756,5 +756,5 @@ void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
                        (void (*)(void *, void *))fn, arg,
-                       evp_md_from_dispatch, evp_md_free);
+                       evp_md_from_dispatch, NULL, evp_md_free);
 }

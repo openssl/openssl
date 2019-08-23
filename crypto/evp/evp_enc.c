@@ -1246,7 +1246,8 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 
 static void *evp_cipher_from_dispatch(const char *name,
                                       const OSSL_DISPATCH *fns,
-                                      OSSL_PROVIDER *prov)
+                                      OSSL_PROVIDER *prov,
+                                      void *unused)
 {
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
@@ -1386,7 +1387,7 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_CIPHER *cipher =
         evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
-                          evp_cipher_from_dispatch, evp_cipher_up_ref,
+                          evp_cipher_from_dispatch, NULL, evp_cipher_up_ref,
                           evp_cipher_free);
 
     return cipher;
@@ -1398,5 +1399,5 @@ void EVP_CIPHER_do_all_ex(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_CIPHER,
                        (void (*)(void *, void *))fn, arg,
-                       evp_cipher_from_dispatch, evp_cipher_free);
+                       evp_cipher_from_dispatch, NULL, evp_cipher_free);
 }
