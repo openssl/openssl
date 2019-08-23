@@ -25,9 +25,9 @@ static int params_to_key(DSA *dsa, const OSSL_PARAM params[])
     if (dsa == NULL)
         return 0;
 
-    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DSA_P);
-    param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DSA_Q);
-    param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DSA_G);
+    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_P);
+    param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_Q);
+    param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_G);
     param_priv_key =
         OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DSA_PRIV_KEY);
     param_pub_key =
