@@ -162,11 +162,9 @@ extern "C" {
 
 # ifndef OPENSSL_NO_KTLS
 #  define BIO_get_ktls_send(b)         \
-     (BIO_method_type(b) == BIO_TYPE_SOCKET \
-      && BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL))
+     BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL)
 #  define BIO_get_ktls_recv(b)         \
-     (BIO_method_type(b) == BIO_TYPE_SOCKET \
-      && BIO_ctrl(b, BIO_CTRL_GET_KTLS_RECV, 0, NULL))
+     BIO_ctrl(b, BIO_CTRL_GET_KTLS_RECV, 0, NULL)
 # else
 #  define BIO_get_ktls_send(b)  (0)
 #  define BIO_get_ktls_recv(b)  (0)
