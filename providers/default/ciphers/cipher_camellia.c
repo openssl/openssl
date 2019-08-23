@@ -10,6 +10,7 @@
 /* Dispatch functions for CAMELLIA cipher modes ecb, cbc, ofb, cfb, ctr */
 
 #include "cipher_camellia.h"
+#include "internal/provider_algs.h"
 
 static OSSL_OP_cipher_freectx_fn camellia_freectx;
 static OSSL_OP_cipher_dupctx_fn camellia_dupctx;

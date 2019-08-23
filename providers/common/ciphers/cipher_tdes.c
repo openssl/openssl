@@ -10,6 +10,7 @@
 #include "cipher_locl.h"
 #include "internal/ciphers/cipher_tdes.h"
 #include "internal/rand_int.h"
+#include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
 
 void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
@@ -108,5 +109,8 @@ int tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
  * TODO(3.0) - ECB mode does not use an IV - but existing test code is setting
  * an IV. Fixing this could potentially make applications break.
  */
+
+/* tdes_ede3_ecb_functions */
 IMPLEMENT_tdes_cipher(ede3, EDE3, ecb, ECB, TDES_FLAGS, 64*3, 64, 64, block);
+/* tdes_ede3_cbc_functions */
 IMPLEMENT_tdes_cipher(ede3, EDE3, cbc, CBC, TDES_FLAGS, 64*3, 64, 64, block);

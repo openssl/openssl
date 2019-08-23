@@ -11,6 +11,7 @@
 #include "cipher_tdes_default.h"
 #include "internal/evp_int.h"
 #include "internal/rand_int.h"
+#include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
 
 /* TODO (3.0) Figure out what flags are requred */
@@ -194,4 +195,5 @@ const OSSL_DISPATCH tdes_wrap_cbc_functions[] =                                \
     { 0, NULL }                                                                \
 }
 
+/* tdes_wrap_cbc_functions */
 IMPLEMENT_WRAP_CIPHER(TDES_WRAP_FLAGS, 64*3, 64, 0);
