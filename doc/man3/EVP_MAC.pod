@@ -205,27 +205,23 @@ Some MACs do not support this option.
 
 =item OSSL_MAC_PARAM_ENGINE ("engine") <utf8string>
 
-=item OSSL_MAC_PARAM_MD ("md") <utf8string>
+=item OSSL_MAC_PARAM_PROPERTIES ("properties") <utf8string>
 
 =item OSSL_MAC_PARAM_DIGEST ("digest") <utf8string>
 
 =item OSSL_MAC_PARAM_CIPHER ("cipher") <utf8string>
 
-=item OSSL_MAC_PARAM_ALGORITHM ("algorithm") <utf8string>
+For MAC implementations that use an underlying computation cipher or
+digest, these parameters set what the algorithm should be, and the
+engine that implements the algorithm or the properties to fetch it
+by if needed.
 
-For MAC implementations that use an underlying computation algorithm,
-these parameters set what the algorithm should be, and the engine that
-implements the algorithm if needed.
-
-The value is always the name of the intended engine or algorithm.
+The value is always the name of the intended engine, algorithm,
+or the properties.
 
 Note that not all algorithms may support all digests.
 HMAC does not support variable output length digests such as SHAKE128
 or SHAKE256.
-
-Also note that OSSL_MAC_PARAM_ALGORITHM can be use generically instead
-of OSSL_MAC_PARAM_MD, OSSL_MAC_PARAM_DIGEST or OSSL_MAC_PARAM_CIPHER,
-and that OSSL_MAC_PARAM_MD and OSSL_MAC_PARAM_DIGEST are also interchangable.
 
 =item OSSL_MAC_PARAM_SIZE <unsigned int>
 
