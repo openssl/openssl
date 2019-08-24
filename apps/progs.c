@@ -44,6 +44,7 @@ FUNCTION functions[] = {
     {FT_general, "engine", engine_main, engine_options},
 #endif
     {FT_general, "errstr", errstr_main, errstr_options},
+    {FT_general, "fipsinstall", fipsinstall_main, fipsinstall_options},
 #ifndef OPENSSL_NO_DSA
     {FT_general, "gendsa", gendsa_main, gendsa_options},
 #endif
