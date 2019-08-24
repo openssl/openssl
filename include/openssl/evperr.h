@@ -65,11 +65,8 @@ int ERR_load_EVP_strings(void);
 #  define EVP_F_EVP_ENCRYPTDECRYPTUPDATE                   0
 #  define EVP_F_EVP_ENCRYPTFINAL_EX                        0
 #  define EVP_F_EVP_ENCRYPTUPDATE                          0
-#  define EVP_F_EVP_KDF_CTRL                               0
-#  define EVP_F_EVP_KDF_CTRL_STR                           0
 #  define EVP_F_EVP_KDF_CTX_DUP                            0
 #  define EVP_F_EVP_KDF_CTX_NEW                            0
-#  define EVP_F_EVP_KDF_CTX_NEW_ID                         0
 #  define EVP_F_EVP_KEYEXCH_FETCH                          0
 #  define EVP_F_EVP_KEYEXCH_FROM_DISPATCH                  0
 #  define EVP_F_EVP_MAC_CTRL                               0

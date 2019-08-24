@@ -825,11 +825,8 @@ EVP_F_EVP_DIGESTUPDATE:231:EVP_DigestUpdate
 EVP_F_EVP_ENCRYPTDECRYPTUPDATE:219:evp_EncryptDecryptUpdate
 EVP_F_EVP_ENCRYPTFINAL_EX:127:EVP_EncryptFinal_ex
 EVP_F_EVP_ENCRYPTUPDATE:167:EVP_EncryptUpdate
-EVP_F_EVP_KDF_CTRL:224:EVP_KDF_ctrl
-EVP_F_EVP_KDF_CTRL_STR:225:EVP_KDF_ctrl_str
 EVP_F_EVP_KDF_CTX_DUP:220:
-EVP_F_EVP_KDF_CTX_NEW:240:EVP_KDF_CTX_new
-EVP_F_EVP_KDF_CTX_NEW_ID:226:EVP_KDF_CTX_new_id
+EVP_F_EVP_KDF_CTX_NEW:221:
 EVP_F_EVP_KEYEXCH_FETCH:245:EVP_KEYEXCH_fetch
 EVP_F_EVP_KEYEXCH_FROM_DISPATCH:244:evp_keyexch_from_dispatch
 EVP_F_EVP_MAC_CTRL:209:EVP_MAC_ctrl
@@ -917,53 +914,6 @@ EVP_F_S390X_AES_GCM_CTRL:201:s390x_aes_gcm_ctrl
 EVP_F_S390X_AES_GCM_TLS_CIPHER:208:s390x_aes_gcm_tls_cipher
 EVP_F_SCRYPT_ALG:228:scrypt_alg
 EVP_F_UPDATE:173:update
-KDF_F_HKDF_EXTRACT:112:HKDF_Extract
-KDF_F_KDF_HKDF_DERIVE:113:kdf_hkdf_derive
-KDF_F_KDF_HKDF_NEW:114:kdf_hkdf_new
-KDF_F_KDF_HKDF_SIZE:115:kdf_hkdf_size
-KDF_F_KDF_MD2CTRL:116:kdf_md2ctrl
-KDF_F_KDF_PBKDF2_CTRL:140:kdf_pbkdf2_ctrl
-KDF_F_KDF_PBKDF2_CTRL_STR:117:kdf_pbkdf2_ctrl_str
-KDF_F_KDF_PBKDF2_DERIVE:118:kdf_pbkdf2_derive
-KDF_F_KDF_PBKDF2_NEW:119:kdf_pbkdf2_new
-KDF_F_KDF_SCRYPT_CTRL_STR:120:kdf_scrypt_ctrl_str
-KDF_F_KDF_SCRYPT_CTRL_UINT32:121:kdf_scrypt_ctrl_uint32
-KDF_F_KDF_SCRYPT_CTRL_UINT64:122:kdf_scrypt_ctrl_uint64
-KDF_F_KDF_SCRYPT_DERIVE:123:kdf_scrypt_derive
-KDF_F_KDF_SCRYPT_NEW:124:kdf_scrypt_new
-KDF_F_KDF_SSHKDF_CTRL:130:kdf_sshkdf_ctrl
-KDF_F_KDF_SSHKDF_CTRL_STR:131:kdf_sshkdf_ctrl_str
-KDF_F_KDF_SSHKDF_DERIVE:132:kdf_sshkdf_derive
-KDF_F_KDF_SSHKDF_NEW:133:kdf_sshkdf_new
-KDF_F_KDF_TLS1_PRF_CTRL_STR:125:kdf_tls1_prf_ctrl_str
-KDF_F_KDF_TLS1_PRF_DERIVE:126:kdf_tls1_prf_derive
-KDF_F_KDF_TLS1_PRF_NEW:127:kdf_tls1_prf_new
-KDF_F_PBKDF2_DERIVE:141:pbkdf2_derive
-KDF_F_PBKDF2_SET_MEMBUF:128:pbkdf2_set_membuf
-KDF_F_PKEY_HKDF_CTRL_STR:103:pkey_hkdf_ctrl_str
-KDF_F_PKEY_HKDF_DERIVE:102:pkey_hkdf_derive
-KDF_F_PKEY_HKDF_INIT:108:pkey_hkdf_init
-KDF_F_PKEY_SCRYPT_CTRL_STR:104:pkey_scrypt_ctrl_str
-KDF_F_PKEY_SCRYPT_CTRL_UINT64:105:pkey_scrypt_ctrl_uint64
-KDF_F_PKEY_SCRYPT_DERIVE:109:pkey_scrypt_derive
-KDF_F_PKEY_SCRYPT_INIT:106:pkey_scrypt_init
-KDF_F_PKEY_SCRYPT_SET_MEMBUF:107:pkey_scrypt_set_membuf
-KDF_F_PKEY_TLS1_PRF_CTRL_STR:100:pkey_tls1_prf_ctrl_str
-KDF_F_PKEY_TLS1_PRF_DERIVE:101:pkey_tls1_prf_derive
-KDF_F_PKEY_TLS1_PRF_INIT:110:pkey_tls1_prf_init
-KDF_F_SCRYPT_SET_MEMBUF:129:scrypt_set_membuf
-KDF_F_SSKDF_CTRL_STR:134:sskdf_ctrl_str
-KDF_F_SSKDF_DERIVE:135:sskdf_derive
-KDF_F_SSKDF_MAC2CTRL:136:sskdf_mac2ctrl
-KDF_F_SSKDF_NEW:137:sskdf_new
-KDF_F_SSKDF_SIZE:138:sskdf_size
-KDF_F_TLS1_PRF_ALG:111:tls1_prf_alg
-KDF_F_X942KDF_CTRL:142:x942kdf_ctrl
-KDF_F_X942KDF_DERIVE:143:x942kdf_derive
-KDF_F_X942KDF_HASH_KDM:144:x942kdf_hash_kdm
-KDF_F_X942KDF_NEW:145:x942kdf_new
-KDF_F_X942KDF_SIZE:146:x942kdf_size
-KDF_F_X963KDF_DERIVE:139:x963kdf_derive
 OBJ_F_OBJ_ADD_OBJECT:105:OBJ_add_object
 OBJ_F_OBJ_ADD_SIGID:107:OBJ_add_sigid
 OBJ_F_OBJ_CREATE:100:OBJ_create
@@ -2524,14 +2474,12 @@ EVP_R_XTS_DUPLICATED_KEYS:192:xts duplicated keys
 KDF_R_BAD_ENCODING:122:bad encoding
 KDF_R_BAD_LENGTH:123:bad length
 KDF_R_BOTH_MODE_AND_MODE_INT:127:both mode and mode int
-KDF_R_INAVLID_UKM_LEN:124:inavlid ukm len
 KDF_R_INVALID_DIGEST:100:invalid digest
 KDF_R_INVALID_ITERATION_COUNT:119:invalid iteration count
 KDF_R_INVALID_KEY_LEN:120:invalid key len
 KDF_R_INVALID_MAC_TYPE:116:invalid mac type
 KDF_R_INVALID_MODE:128:invalid mode
 KDF_R_INVALID_MODE_INT:129:invalid mode int
-KDF_R_INVALID_SALT_LEN:121:invalid salt len
 KDF_R_MISSING_CEK_ALG:125:missing cek alg
 KDF_R_MISSING_ITERATION_COUNT:109:missing iteration count
 KDF_R_MISSING_KEY:104:missing key
@@ -2712,26 +2660,52 @@ PROP_R_STRING_TOO_LONG:109:string too long
 PROP_R_TRAILING_CHARACTERS:110:trailing characters
 PROV_R_AES_KEY_SETUP_FAILED:101:aes key setup failed
 PROV_R_BAD_DECRYPT:100:bad decrypt
+PROV_R_BAD_ENCODING:141:bad encoding
+PROV_R_BAD_LENGTH:142:bad length
+PROV_R_BOTH_MODE_AND_MODE_INT:127:both mode and mode int
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
 PROV_R_FAILED_TO_GENERATE_KEY:121:failed to generate key
 PROV_R_FAILED_TO_GET_PARAMETER:103:failed to get parameter
 PROV_R_FAILED_TO_SET_PARAMETER:104:failed to set parameter
+PROV_R_INAVLID_UKM_LENGTH:146:inavlid ukm length
 PROV_R_INVALID_AAD:108:invalid aad
 PROV_R_INVALID_CUSTOM_LENGTH:111:invalid custom length
 PROV_R_INVALID_DATA:115:invalid data
+PROV_R_INVALID_DIGEST:122:invalid digest
+PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IVLEN:116:invalid ivlen
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
 PROV_R_INVALID_KEYLEN:117:invalid keylen
+PROV_R_INVALID_KEY_LEN:124:invalid key len
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
+PROV_R_INVALID_MODE:125:invalid mode
+PROV_R_INVALID_MODE_INT:126:invalid mode int
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
 PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAGLEN:118:invalid taglen
+PROV_R_MISSING_CEK_ALG:144:missing cek alg
+PROV_R_MISSING_KEY:128:missing key
+PROV_R_MISSING_MESSAGE_DIGEST:129:missing message digest
+PROV_R_MISSING_PASS:130:missing pass
+PROV_R_MISSING_SALT:131:missing salt
+PROV_R_MISSING_SECRET:132:missing secret
+PROV_R_MISSING_SEED:140:missing seed
+PROV_R_MISSING_SESSION_ID:133:missing session id
+PROV_R_MISSING_TYPE:134:missing type
+PROV_R_MISSING_XCGHASH:135:missing xcghash
+PROV_R_NOT_SUPPORTED:136:not supported
 PROV_R_NOT_XOF_OR_INVALID_LENGTH:113:not xof or invalid length
 PROV_R_NO_KEY_SET:114:no key set
 PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
 PROV_R_TAG_NOTSET:119:tag notset
 PROV_R_TAG_NOT_NEEDED:120:tag not needed
+PROV_R_UNABLE_TO_LOAD_SHA1:143:unable to load sha1
+PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
+PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
+PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
+PROV_R_VALUE_ERROR:138:value error
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
+PROV_R_WRONG_OUTPUT_BUFFER_SIZE:139:wrong output buffer size
 RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long
 RAND_R_ALREADY_INSTANTIATED:103:already instantiated
 RAND_R_ARGUMENT_OUT_OF_RANGE:105:argument out of range

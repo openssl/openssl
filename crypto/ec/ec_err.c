@@ -23,6 +23,8 @@ static const ERR_STRING_DATA EC_str_reasons[] = {
     "coordinates out of range"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_CURVE_DOES_NOT_SUPPORT_ECDH),
     "curve does not support ecdh"},
+    {ERR_PACK(ERR_LIB_EC, 0, EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA),
+    "curve does not support ecdsa"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING),
     "curve does not support signing"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_D2I_ECPKPARAMETERS_FAILURE),
