@@ -101,7 +101,6 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
          defined(_M_AMD64)       || defined(_M_X64)      )
 
 /* AES-NI section */
-extern unsigned int OPENSSL_ia32cap_P[];
 
 #  define AESNI_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
 #  ifdef VPAES_ASM

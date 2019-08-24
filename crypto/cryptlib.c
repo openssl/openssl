@@ -18,7 +18,7 @@
 
 extern unsigned int OPENSSL_ia32cap_P[4];
 
-# if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+# if defined(OPENSSL_CPUID_OBJ)
 
 /*
  * Purpose of these minimalistic and character-type-agnostic subroutines
