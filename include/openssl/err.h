@@ -97,13 +97,12 @@ typedef struct err_state_st {
 /* # define ERR_LIB_JPAKE       49 */
 # define ERR_LIB_CT              50
 # define ERR_LIB_ASYNC           51
-# define ERR_LIB_KDF             52
-# define ERR_LIB_SM2             53
-# define ERR_LIB_ESS             54
-# define ERR_LIB_PROP            55
-# define ERR_LIB_CRMF            56
-# define ERR_LIB_PROV            57
-# define ERR_LIB_CMP             58
+# define ERR_LIB_SM2             52
+# define ERR_LIB_ESS             53
+# define ERR_LIB_PROP            54
+# define ERR_LIB_CRMF            55
+# define ERR_LIB_PROV            56
+# define ERR_LIB_CMP             57
 
 # define ERR_LIB_USER            128
 
@@ -145,7 +144,6 @@ typedef struct err_state_st {
 # define HMACerr(f,r) ERR_raise(ERR_LIB_HMAC,(r))
 # define CTerr(f,r) ERR_raise(ERR_LIB_CT,(r))
 # define ASYNCerr(f,r) ERR_raise(ERR_LIB_ASYNC,(r))
-# define KDFerr(f,r) ERR_raise(ERR_LIB_KDF,(r))
 # define SM2err(f,r) ERR_raise(ERR_LIB_SM2,(r))
 # define ESSerr(f,r) ERR_raise(ERR_LIB_ESS,(r))
 # define PROPerr(f,r) ERR_raise(ERR_LIB_PROP,(r))
