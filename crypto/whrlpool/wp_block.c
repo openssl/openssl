@@ -36,6 +36,7 @@
  *
  */
 
+#include "internal/cryptlib.h"
 #include "wp_locl.h"
 #include <string.h>
 
@@ -75,7 +76,6 @@ typedef unsigned long long u64;
 #   define OPENSSL_SMALL_FOOTPRINT
 #  endif
 #  define GO_FOR_MMX(ctx,inp,num)     do {                    \
-        extern unsigned long OPENSSL_ia32cap_P[];               \
         void whirlpool_block_mmx(void *,const void *,size_t);   \
         if (!(OPENSSL_ia32cap_P[0] & (1<<23)))  break;          \
         whirlpool_block_mmx(ctx->H.c,inp,num);  return;         \

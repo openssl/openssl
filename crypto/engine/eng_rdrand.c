@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "internal/engine.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
@@ -79,8 +80,6 @@ static ENGINE *ENGINE_rdrand(void)
 
 void engine_load_rdrand_int(void)
 {
-    extern unsigned int OPENSSL_ia32cap_P[];
-
     if (OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) {
         ENGINE *toadd = ENGINE_rdrand();
         if (!toadd)
