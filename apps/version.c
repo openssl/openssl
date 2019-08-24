@@ -157,40 +157,8 @@ opthelp:
         printf("%s\n", OpenSSL_version(OPENSSL_ENGINES_DIR));
     if (moddir)
         printf("%s\n", OpenSSL_version(OPENSSL_MODULES_DIR));
-    if (seed) {
-        printf("Seeding source:");
-#ifdef OPENSSL_RAND_SEED_RTDSC
-        printf(" rtdsc");
-#endif
-#ifdef OPENSSL_RAND_SEED_RDCPU
-        printf(" rdrand ( rdseed rdrand )");
-#endif
-#ifdef OPENSSL_RAND_SEED_LIBRANDOM
-        printf(" C-library-random");
-#endif
-#ifdef OPENSSL_RAND_SEED_GETRANDOM
-        printf(" getrandom-syscall");
-#endif
-#ifdef OPENSSL_RAND_SEED_DEVRANDOM
-        {
-            static const char *dev[] = { DEVRANDOM, NULL };
-            printlist(" random-device", dev);
-        }
-#endif
-#ifdef OPENSSL_RAND_SEED_EGD
-        {
-            static const char *dev[] = { DEVRANDOM_EGD, NULL };
-            printlist(" EGD", dev);
-        }
-#endif
-#ifdef OPENSSL_RAND_SEED_NONE
-        printf(" none");
-#endif
-#ifdef OPENSSL_RAND_SEED_OS
-        printf(" os-specific");
-#endif
-        printf("\n");
-    }
+    if (seed)
+        printf("Seeding source: %s\n", OPENSSL_info(OPENSSL_INFO_SEED_SOURCE));
     ret = 0;
  end:
     return ret;
