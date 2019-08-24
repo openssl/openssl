@@ -181,6 +181,7 @@ const char *OPENSSL_info(int type);
 # define OPENSSL_INFO_DSO_EXTENSION             1004
 # define OPENSSL_INFO_DIR_FILENAME_SEPARATOR    1005
 # define OPENSSL_INFO_LIST_SEPARATOR            1006
+# define OPENSSL_INFO_SEED_SOURCE               1007
 
 int OPENSSL_issetugid(void);
 
