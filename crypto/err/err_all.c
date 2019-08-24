@@ -38,7 +38,6 @@
 #include <openssl/cmperr.h>
 #include <openssl/cterr.h>
 #include <openssl/asyncerr.h>
-#include <openssl/kdferr.h>
 #include <openssl/storeerr.h>
 #include <openssl/esserr.h>
 #include "internal/propertyerr.h"
