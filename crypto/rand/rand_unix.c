@@ -573,12 +573,12 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 #  if defined(OPENSSL_RAND_SEED_NONE)
     return rand_pool_entropy_available(pool);
 #  else
-    size_t bytes_needed;
-    size_t entropy_available = 0;
-    unsigned char *buffer;
+    size_t entropy_available;
 
 #   if defined(OPENSSL_RAND_SEED_GETRANDOM)
     {
+        size_t bytes_needed;
+        unsigned char *buffer;
         ssize_t bytes;
         /* Maximum allowed number of consecutive unsuccessful attempts */
         int attempts = 3;
@@ -609,6 +609,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 
 #   if defined(OPENSSL_RAND_SEED_DEVRANDOM)
     if (wait_random_seeded()) {
+        size_t bytes_needed;
+        unsigned char *buffer;
         size_t i;
 
         bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
@@ -658,26 +660,29 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_EGD)
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    if (bytes_needed > 0) {
+    {
         static const char *paths[] = { DEVRANDOM_EGD, NULL };
+        size_t bytes_needed;
+        unsigned char *buffer;
         int i;
 
-        for (i = 0; paths[i] != NULL; i++) {
-            buffer = rand_pool_add_begin(pool, bytes_needed);
-            if (buffer != NULL) {
-                size_t bytes = 0;
-                int num = RAND_query_egd_bytes(paths[i],
-                                               buffer, (int)bytes_needed);
-                if (num == (int)bytes_needed)
-                    bytes = bytes_needed;
+        bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        for (i = 0; bytes_needed > 0 && paths[i] != NULL; i++) {
+            size_t bytes = 0;
+            int num;
 
-                rand_pool_add_end(pool, bytes, 8 * bytes);
-                entropy_available = rand_pool_entropy_available(pool);
-            }
-            if (entropy_available > 0)
-                return entropy_available;
+            buffer = rand_pool_add_begin(pool, bytes_needed);
+            num = RAND_query_egd_bytes(paths[i],
+                                       buffer, (int)bytes_needed);
+            if (num == (int)bytes_needed)
+                bytes = bytes_needed;
+
+            rand_pool_add_end(pool, bytes, 8 * bytes);
+            bytes_needed = rand_pool_bytes_needed(pool, 1);
         }
+        entropy_available = rand_pool_entropy_available(pool);
+        if (entropy_available > 0)
+            return entropy_available;
     }
 #   endif
 
