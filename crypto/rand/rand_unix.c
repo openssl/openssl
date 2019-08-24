@@ -411,7 +411,7 @@ static int wait_random_seeded(void)
             }
             /* Open /dev/random and wait for it to be readable */
             if ((fd = open(DEVRANDOM_WAIT, O_RDONLY)) != -1) {
-                if (DEVRANDM_WAIT_USE_SELECT) {
+                if (DEVRANDM_WAIT_USE_SELECT && fd < FD_SETSIZE) {
                     FD_ZERO(&fds);
                     FD_SET(fd, &fds);
                     while ((r = select(fd + 1, &fds, NULL, NULL, NULL)) < 0
