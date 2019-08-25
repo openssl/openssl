@@ -19,6 +19,7 @@ use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs splitdir/;
 use File::Path qw/mkpath/;
 use OpenSSL::fallback "$FindBin::Bin/external/perl/MODULES.txt";
 use OpenSSL::Glob;
+use OpenSSL::Template;
 
 # see INSTALL for instructions.
 
@@ -2387,452 +2388,50 @@ foreach (grep /_(asm|aux)_src$/, keys %target) {
 
 # Write down our configuration where it fits #########################
 
-print "Creating configdata.pm\n";
-open(OUT,">configdata.pm") || die "unable to create configdata.pm: $!\n";
-print OUT <<"EOF";
-#! $config{HASHBANGPERL}
-
-package configdata;
-
-use strict;
-use warnings;
-
-use Exporter;
-#use vars qw(\@ISA \@EXPORT);
-our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\%config \%target \%disabled \%withargs \%unified_info \@disablables \@disablables_int);
-
-EOF
-print OUT "our %config = (\n";
-foreach (sort keys %config) {
-    if (ref($config{$_}) eq "ARRAY") {
-        print OUT "  ", $_, " => [ ", join(", ",
-                                           map { quotify("perl", $_) }
-                                           @{$config{$_}}), " ],\n";
-    } elsif (ref($config{$_}) eq "HASH") {
-        print OUT "  ", $_, " => {";
-        if (scalar keys %{$config{$_}} > 0) {
-            print OUT "\n";
-            foreach my $key (sort keys %{$config{$_}}) {
-                print OUT "      ",
-                    join(" => ",
-                         quotify("perl", $key),
-                         defined $config{$_}->{$key}
-                             ? quotify("perl", $config{$_}->{$key})
-                             : "undef");
-                print OUT ",\n";
-            }
-            print OUT "  ";
-        }
-        print OUT "},\n";
-    } else {
-        print OUT "  ", $_, " => ", quotify("perl", $config{$_}), ",\n"
-    }
-}
-print OUT <<"EOF";
+my %template_vars = (
+    config => \%config,
+    target => \%target,
+    disablables => \@disablables,
+    disablables_int => \@disablables_int,
+    disabled => \%disabled,
+    withargs => \%withargs,
+    unified_info => \%unified_info,
+    tls => \@tls,
+    dtls => \@dtls,
+    makevars => [ sort keys %user ],
+    disabled_info => \%disabled_info,
+    user_crossable => \@user_crossable,
 );
-
-EOF
-print OUT "our %target = (\n";
-foreach (sort keys %target) {
-    if (ref($target{$_}) eq "ARRAY") {
-        print OUT "  ", $_, " => [ ", join(", ",
-                                           map { quotify("perl", $_) }
-                                           @{$target{$_}}), " ],\n";
-    } else {
-        print OUT "  ", $_, " => ", quotify("perl", $target{$_}), ",\n"
-    }
-}
-print OUT <<"EOF";
-);
-
-EOF
-print OUT "our \%available_protocols = (\n";
-print OUT "  tls => [ ", join(", ", map { quotify("perl", $_) } @tls), " ],\n";
-print OUT "  dtls => [ ", join(", ", map { quotify("perl", $_) } @dtls), " ],\n";
-print OUT <<"EOF";
-);
-
-EOF
-print OUT "our \@disablables = (\n";
-foreach (@disablables) {
-    print OUT "  ", quotify("perl", $_), ",\n";
-}
-print OUT <<"EOF";
-);
-
-EOF
-print OUT "# The following come from Configure's @disablables_int\n";
-print OUT "our \@disablables_int = (\n";
-foreach (@disablables_int) {
-    print OUT "  ", quotify("perl", $_), ",\n";
-}
-print OUT <<"EOF";
-);
-
-EOF
-print OUT "our \%disabled = (\n";
-foreach (sort keys %disabled) {
-    print OUT "  ", quotify("perl", $_), " => ", quotify("perl", $disabled{$_}), ",\n";
-}
-print OUT <<"EOF";
-);
-
-EOF
-print OUT "our %withargs = (\n";
-foreach (sort keys %withargs) {
-    if (ref($withargs{$_}) eq "ARRAY") {
-        print OUT "  ", $_, " => [ ", join(", ",
-                                           map { quotify("perl", $_) }
-                                           @{$withargs{$_}}), " ],\n";
-    } else {
-        print OUT "  ", $_, " => ", quotify("perl", $withargs{$_}), ",\n"
-    }
-}
-print OUT <<"EOF";
-);
-
-EOF
-if ($builder eq "unified") {
-    my $recurse;
-    $recurse = sub {
-        my $indent = shift;
-        foreach (@_) {
-            if (ref $_ eq "ARRAY") {
-                print OUT " "x$indent, "[\n";
-                foreach (@$_) {
-                    $recurse->($indent + 4, $_);
-                }
-                print OUT " "x$indent, "],\n";
-            } elsif (ref $_ eq "HASH") {
-                my %h = %$_;
-                print OUT " "x$indent, "{\n";
-                foreach (sort keys %h) {
-                    if (ref $h{$_} eq "") {
-                        print OUT " "x($indent + 4), quotify("perl", $_), " => ", quotify("perl", $h{$_}), ",\n";
-                    } else {
-                        print OUT " "x($indent + 4), quotify("perl", $_), " =>\n";
-                        $recurse->($indent + 8, $h{$_});
-                    }
-                }
-                print OUT " "x$indent, "},\n";
-            } else {
-                print OUT " "x$indent, quotify("perl", $_), ",\n";
-            }
-        }
-    };
-    print OUT "our %unified_info = (\n";
-    foreach (sort keys %unified_info) {
-        if (ref $unified_info{$_} eq "") {
-            print OUT " "x4, quotify("perl", $_), " => ", quotify("perl", $unified_info{$_}), ",\n";
-        } else {
-            print OUT " "x4, quotify("perl", $_), " =>\n";
-            $recurse->(8, $unified_info{$_});
-        }
-    }
-    print OUT <<"EOF";
-);
-
-EOF
-}
-print OUT
-    "# The following data is only used when this files is use as a script\n";
-print OUT "my \@makevars = (\n";
-foreach (sort keys %user) {
-    print OUT "    '",$_,"',\n";
-}
-print OUT ");\n";
-print OUT "my \%disabled_info = (\n";
-foreach my $what (sort keys %disabled_info) {
-    print OUT "    '$what' => {\n";
-    foreach my $info (sort keys %{$disabled_info{$what}}) {
-        if (ref $disabled_info{$what}->{$info} eq 'ARRAY') {
-            print OUT "        $info => [ ",
-                join(', ', map { "'$_'" } @{$disabled_info{$what}->{$info}}),
-                " ],\n";
-        } else {
-            print OUT "        $info => '", $disabled_info{$what}->{$info},
-                "',\n";
-        }
-    }
-    print OUT "    },\n";
-}
-print OUT ");\n";
-print OUT 'my @user_crossable = qw( ', join (' ', @user_crossable), " );\n";
-print OUT << 'EOF';
-# If run directly, we can give some answers, and even reconfigure
-unless (caller) {
-    use Getopt::Long;
-    use File::Spec::Functions;
-    use File::Basename;
-    use Pod::Usage;
-
-    my $here = dirname($0);
-
-    my $dump = undef;
-    my $cmdline = undef;
-    my $options = undef;
-    my $target = undef;
-    my $envvars = undef;
-    my $makevars = undef;
-    my $buildparams = undef;
-    my $reconf = undef;
-    my $verbose = undef;
-    my $help = undef;
-    my $man = undef;
-    GetOptions('dump|d'                 => \$dump,
-               'command-line|c'         => \$cmdline,
-               'options|o'              => \$options,
-               'target|t'               => \$target,
-               'environment|e'          => \$envvars,
-               'make-variables|m'       => \$makevars,
-               'build-parameters|b'     => \$buildparams,
-               'reconfigure|reconf|r'   => \$reconf,
-               'verbose|v'              => \$verbose,
-               'help'                   => \$help,
-               'man'                    => \$man)
-        or die "Errors in command line arguments\n";
-
-    unless ($dump || $cmdline || $options || $target || $envvars || $makevars
-            || $buildparams || $reconf || $verbose || $help || $man) {
-        print STDERR <<"_____";
-You must give at least one option.
-For more information, do '$0 --help'
-_____
-        exit(2);
-    }
-
-    if ($help) {
-        pod2usage(-exitval => 0,
-                  -verbose => 1);
-    }
-    if ($man) {
-        pod2usage(-exitval => 0,
-                  -verbose => 2);
-    }
-    if ($dump || $cmdline) {
-        print "\nCommand line (with current working directory = $here):\n\n";
-        print '    ',join(' ',
-                          $config{PERL},
-                          catfile($config{sourcedir}, 'Configure'),
-                          @{$config{perlargv}}), "\n";
-        print "\nPerl information:\n\n";
-        print '    ',$config{perl_cmd},"\n";
-        print '    ',$config{perl_version},' for ',$config{perl_archname},"\n";
-    }
-    if ($dump || $options) {
-        my $longest = 0;
-        my $longest2 = 0;
-        foreach my $what (@disablables) {
-            $longest = length($what) if $longest < length($what);
-            $longest2 = length($disabled{$what})
-                if $disabled{$what} && $longest2 < length($disabled{$what});
-        }
-        print "\nEnabled features:\n\n";
-        foreach my $what (@disablables) {
-            print "    $what\n" unless $disabled{$what};
-        }
-        print "\nDisabled features:\n\n";
-        foreach my $what (@disablables) {
-            if ($disabled{$what}) {
-                print "    $what", ' ' x ($longest - length($what) + 1),
-                    "[$disabled{$what}]", ' ' x ($longest2 - length($disabled{$what}) + 1);
-                print $disabled_info{$what}->{macro}
-                    if $disabled_info{$what}->{macro};
-                print ' (skip ',
-                    join(', ', @{$disabled_info{$what}->{skipped}}),
-                    ')'
-                    if $disabled_info{$what}->{skipped};
-                print "\n";
-            }
-        }
-    }
-    if ($dump || $target) {
-        print "\nConfig target attributes:\n\n";
-        foreach (sort keys %target) {
-            next if $_ =~ m|^_| || $_ eq 'template';
-            my $quotify = sub {
-                map { (my $x = $_) =~ s|([\\\$\@"])|\\$1|g; "\"$x\""} @_;
-            };
-            print '    ', $_, ' => ';
-            if (ref($target{$_}) eq "ARRAY") {
-                print '[ ', join(', ', $quotify->(@{$target{$_}})), " ],\n";
-            } else {
-                print $quotify->($target{$_}), ",\n"
-            }
-        }
-    }
-    if ($dump || $envvars) {
-        print "\nRecorded environment:\n\n";
-        foreach (sort keys %{$config{perlenv}}) {
-            print '    ',$_,' = ',($config{perlenv}->{$_} || ''),"\n";
-        }
-    }
-    if ($dump || $makevars) {
-        print "\nMakevars:\n\n";
-        foreach my $var (@makevars) {
-            my $prefix = '';
-            $prefix = $config{CROSS_COMPILE}
-                if grep { $var eq $_ } @user_crossable;
-            $prefix //= '';
-            print '    ',$var,' ' x (16 - length $var),'= ',
-                (ref $config{$var} eq 'ARRAY'
-                 ? join(' ', @{$config{$var}})
-                 : $prefix.$config{$var}),
-                "\n"
-                if defined $config{$var};
-        }
-
-        my @buildfile = ($config{builddir}, $config{build_file});
-        unshift @buildfile, $here
-            unless file_name_is_absolute($config{builddir});
-        my $buildfile = canonpath(catdir(@buildfile));
-        print <<"_____";
-
-NOTE: These variables only represent the configuration view.  The build file
-template may have processed these variables further, please have a look at the
-build file for more exact data:
-    $buildfile
-_____
-    }
-    if ($dump || $buildparams) {
-        my @buildfile = ($config{builddir}, $config{build_file});
-        unshift @buildfile, $here
-            unless file_name_is_absolute($config{builddir});
-        print "\nbuild file:\n\n";
-        print "    ", canonpath(catfile(@buildfile)),"\n";
-
-        print "\nbuild file templates:\n\n";
-        foreach (@{$config{build_file_templates}}) {
-            my @tmpl = ($_);
-            unshift @tmpl, $here
-                unless file_name_is_absolute($config{sourcedir});
-            print '    ',canonpath(catfile(@tmpl)),"\n";
-        }
-    }
-    if ($reconf) {
-        if ($verbose) {
-            print 'Reconfiguring with: ', join(' ',@{$config{perlargv}}), "\n";
-            foreach (sort keys %{$config{perlenv}}) {
-                print '    ',$_,' = ',($config{perlenv}->{$_} || ""),"\n";
-            }
-        }
-
-        chdir $here;
-        exec $^X,catfile($config{sourcedir}, 'Configure'),'reconf';
-    }
-}
-
-1;
-
-__END__
-
-=head1 NAME
-
-configdata.pm - configuration data for OpenSSL builds
-
-=head1 SYNOPSIS
-
-Interactive:
-
-  perl configdata.pm [options]
-
-As data bank module:
-
-  use configdata;
-
-=head1 DESCRIPTION
-
-This module can be used in two modes, interactively and as a module containing
-all the data recorded by OpenSSL's Configure script.
-
-When used interactively, simply run it as any perl script, with at least one
-option, and you will get the information you ask for.  See L</OPTIONS> below.
-
-When loaded as a module, you get a few databanks with useful information to
-perform build related tasks.  The databanks are:
-
-    %config             Configured things.
-    %target             The OpenSSL config target with all inheritances
-                        resolved.
-    %disabled           The features that are disabled.
-    @disablables        The list of features that can be disabled.
-    %withargs           All data given through --with-THING options.
-    %unified_info       All information that was computed from the build.info
-                        files.
-
-=head1 OPTIONS
-
-=over 4
-
-=item B<--help>
-
-Print a brief help message and exit.
-
-=item B<--man>
-
-Print the manual page and exit.
-
-=item B<--dump> | B<-d>
-
-Print all relevant configuration data.  This is equivalent to B<--command-line>
-B<--options> B<--target> B<--environment> B<--make-variables>
-B<--build-parameters>.
-
-=item B<--command-line> | B<-c>
-
-Print the current configuration command line.
-
-=item B<--options> | B<-o>
-
-Print the features, both enabled and disabled, and display defined macro and
-skipped directories where applicable.
-
-=item B<--target> | B<-t>
-
-Print the config attributes for this config target.
-
-=item B<--environment> | B<-e>
-
-Print the environment variables and their values at the time of configuration.
-
-=item B<--make-variables> | B<-m>
-
-Print the main make variables generated in the current configuration
-
-=item B<--build-parameters> | B<-b>
-
-Print the build parameters, i.e. build file and build file templates.
-
-=item B<--reconfigure> | B<--reconf> | B<-r>
-
-Redo the configuration.
-
-=item B<--verbose> | B<-v>
-
-Verbose output.
-
-=back
-
-=cut
-
-EOF
-close(OUT);
+my $configdata_outname = 'configdata.pm';
+print "Creating $configdata_outname\n";
+open CONFIGDATA, ">$configdata_outname.new"
+            or die "Trying to create $configdata_outname.new: $!";
+my $configdata_tmplname = cleanfile($srcdir, "configdata.pm.in", $blddir);
+my $configdata_tmpl =
+    OpenSSL::Template->new(TYPE => 'FILE', SOURCE => $configdata_tmplname);
+$configdata_tmpl->fill_in(
+    FILENAME => $configdata_tmplname,
+    OUTPUT => \*CONFIGDATA,
+    HASH => { %template_vars,
+              autowarntext => [
+                  'WARNING: do not edit!',
+                  "Generated by Configure from $configdata_tmplname",
+              ] }
+) or die $Text::Template::ERROR;
+close CONFIGDATA;
+rename "$configdata_outname.new", $configdata_outname;
 if ($builder_platform eq 'unix') {
     my $mode = (0755 & ~umask);
     chmod $mode, 'configdata.pm'
         or warn sprintf("WARNING: Couldn't change mode for 'configdata.pm' to 0%03o: %s\n",$mode,$!);
 }
 
-my %builders = (
-    unified => sub {
-        print 'Creating ',$target{build_file},"\n";
-        run_dofile(catfile($blddir, $target{build_file}),
-                   @{$config{build_file_templates}});
-    },
-    );
-
-$builders{$builder}->($builder_platform, @builder_opts);
+print "Running $configdata_outname\n";
+my $perlcmd = (quotify("maybeshell", $config{PERL}))[0];
+my $cmd = "$perlcmd $configdata_outname";
+#print STDERR "DEBUG[run_dofile]: \$cmd = $cmd\n";
+system($cmd);
+exit 1 if $? != 0;
 
 $SIG{__DIE__} = $orig_death_handler;
 
@@ -3222,24 +2821,6 @@ sub usage
         print STDERR "\n\nNOTE: If in doubt, on Unix-ish systems use './config'.\n";
         exit(1);
         }
-
-sub run_dofile
-{
-    my $out = shift;
-    my @templates = @_;
-
-    unlink $out || warn "Can't remove $out, $!"
-        if -f $out;
-    foreach (@templates) {
-        die "Can't open $_, $!" unless -f $_;
-    }
-    my $perlcmd = (quotify("maybeshell", $config{PERL}))[0];
-    my $cmd = "$perlcmd \"-I.\" \"-Mconfigdata\" \"$dofile\" -o\"Configure\" \"".join("\" \"",@templates)."\" > \"$out.new\"";
-    #print STDERR "DEBUG[run_dofile]: \$cmd = $cmd\n";
-    system($cmd);
-    exit 1 if $? != 0;
-    rename("$out.new", $out) || die "Can't rename $out.new, $!";
-}
 
 sub compiler_predefined {
     state %predefined;
