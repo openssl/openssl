@@ -61,6 +61,7 @@ Makefile
 /test/rsa_complex
 # Other generated files in test/
 /test/provider_internal_test.conf
+/test/fipsinstall.conf
 
 # Certain files that get created by tests on the fly
 /test/test-runs

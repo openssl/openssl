@@ -123,13 +123,13 @@ OSSL_CORE_MAKE_FUNC(void,
 /* Bio functions provided by the core */
 #define OSSL_FUNC_BIO_NEW_FILE                22
 #define OSSL_FUNC_BIO_NEW_MEMBUF              23
-#define OSSL_FUNC_BIO_READ                    24
+#define OSSL_FUNC_BIO_READ_EX                 24
 #define OSSL_FUNC_BIO_FREE                    25
 
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_file, (const char *filename, const char *mode))
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_membuf, (const void *buf, int len))
-OSSL_CORE_MAKE_FUNC(int, BIO_read, (BIO *bio, void *data, size_t data_len,
-                                    size_t *bytes_read))
+OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (BIO *bio, void *data, size_t data_len,
+                                       size_t *bytes_read))
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (BIO *bio))
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
