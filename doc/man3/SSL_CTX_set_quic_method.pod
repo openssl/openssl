@@ -59,7 +59,7 @@ containing the TransportParameters will be put in B<*out_params>, and its
 length in B<*out_params_len>. This buffer will be valid for the lifetime of the
 B<ssl>. If no params were received from the peer, B<*out_params_len> will be 0.
 
-SSL_quic_max_handshake_flight_len() returns returns the maximum number of bytes
+SSL_quic_max_handshake_flight_len() returns the maximum number of bytes
 that may be received at the given encryption level. This function should be
 used to limit buffering in the QUIC implementation.
 
