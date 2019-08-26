@@ -71,6 +71,7 @@ FUNCTION functions[] = {
     {FT_general, "pkeyparam", pkeyparam_main, pkeyparam_options},
     {FT_general, "pkeyutl", pkeyutl_main, pkeyutl_options},
     {FT_general, "prime", prime_main, prime_options},
+    {FT_general, "provider", provider_main, provider_options},
     {FT_general, "rand", rand_main, rand_options},
     {FT_general, "rehash", rehash_main, rehash_options},
     {FT_general, "req", req_main, req_options},
