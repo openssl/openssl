@@ -8,94 +8,22 @@
  */
 
 #include "cipher_locl.h"
+#include "internal/ciphers/cipher_gcm.h"
 
-static const PROV_GCM_HW aes_gcm;
 
-static int gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen);
-static int gcm_aad_update(PROV_GCM_CTX *ctx, const unsigned char *aad,
-                          size_t aad_len);
-static int gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag);
-static int gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
-                        const unsigned char *in, size_t in_len,
-                        unsigned char *out, unsigned char *tag, size_t tag_len);
-static int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
-                             size_t len, unsigned char *out);
-
-#define SET_KEY_CTR_FN(ks, fn_set_enc_key, fn_block, fn_ctr)                   \
-    ctx->ks = ks;                                                              \
-    fn_set_enc_key(key, keylen * 8, ks);                                       \
-    CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)fn_block);                   \
-    ctx->ctr = (ctr128_f)fn_ctr;                                               \
-    ctx->key_set = 1;
-
-#if defined(AESNI_CAPABLE)
-# include "cipher_aes_gcm_hw_aesni.inc"
-#elif defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
-# include "cipher_aes_gcm_hw_t4.inc"
-#elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
-# include "cipher_aes_gcm_hw_s390x.inc"
-#else
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
-{
-    return &aes_gcm;
-}
-#endif
-
-static int generic_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
-                                   size_t keylen)
-{
-    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks = &actx->ks.ks;
-
-# ifdef HWAES_CAPABLE
-    if (HWAES_CAPABLE) {
-#  ifdef HWAES_ctr32_encrypt_blocks
-        SET_KEY_CTR_FN(ks, HWAES_set_encrypt_key, HWAES_encrypt,
-                       HWAES_ctr32_encrypt_blocks);
-#  else
-        SET_KEY_CTR_FN(ks, HWAES_set_encrypt_key, HWAES_encrypt, NULL);
-#  endif /* HWAES_ctr32_encrypt_blocks */
-    } else
-# endif /* HWAES_CAPABLE */
-
-# ifdef BSAES_CAPABLE
-    if (BSAES_CAPABLE) {
-        SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt,
-                       bsaes_ctr32_encrypt_blocks);
-    } else
-# endif /* BSAES_CAPABLE */
-
-# ifdef VPAES_CAPABLE
-    if (VPAES_CAPABLE) {
-        SET_KEY_CTR_FN(ks, vpaes_set_encrypt_key, vpaes_encrypt, NULL);
-    } else
-# endif /* VPAES_CAPABLE */
-
-    {
-# ifdef AES_CTR_ASM
-        SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt, AES_ctr32_encrypt);
-# else
-        SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt, NULL);
-# endif /* AES_CTR_ASM */
-    }
-    ctx->key_set = 1;
-    return 1;
-}
-
-static int gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen)
+int gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen)
 {
     CRYPTO_gcm128_setiv(&ctx->gcm, iv, ivlen);
     return 1;
 }
 
-static int gcm_aad_update(PROV_GCM_CTX *ctx,
-                          const unsigned char *aad, size_t aad_len)
+int gcm_aad_update(PROV_GCM_CTX *ctx, const unsigned char *aad, size_t aad_len)
 {
     return CRYPTO_gcm128_aad(&ctx->gcm, aad, aad_len) == 0;
 }
 
-static int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
-                             size_t len, unsigned char *out)
+int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+                      size_t len, unsigned char *out)
 {
     if (ctx->enc) {
         if (ctx->ctr != NULL) {
@@ -156,7 +84,7 @@ static int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
     return 1;
 }
 
-static int gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
+int gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
 {
     if (ctx->enc) {
         CRYPTO_gcm128_tag(&ctx->gcm, tag, GCM_TAG_MAX_SIZE);
@@ -169,9 +97,9 @@ static int gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
     return 1;
 }
 
-static int gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
-                        const unsigned char *in, size_t in_len,
-                        unsigned char *out, unsigned char *tag, size_t tag_len)
+int gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
+                 const unsigned char *in, size_t in_len,
+                 unsigned char *out, unsigned char *tag, size_t tag_len)
 {
     int ret = 0;
 
@@ -188,14 +116,3 @@ static int gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
 err:
     return ret;
 }
-
-static const PROV_GCM_HW aes_gcm = {
-    generic_aes_gcm_initkey,
-    gcm_setiv,
-    gcm_aad_update,
-    gcm_cipher_update,
-    gcm_cipher_final,
-    gcm_one_shot
-};
-
-#include "cipher_aria_gcm_hw.inc"

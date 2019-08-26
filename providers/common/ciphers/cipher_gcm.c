@@ -10,6 +10,8 @@
 /* Dispatch functions for gcm mode */
 
 #include "cipher_locl.h"
+#include "internal/ciphers/cipher_gcm.h"
+#include "internal/providercommonerr.h"
 #include "internal/rand_int.h"
 #include "internal/provider_ctx.h"
 

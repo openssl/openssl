@@ -17,8 +17,9 @@ static int ccm_aesni_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
 {
     PROV_AES_CCM_CTX *actx = (PROV_AES_CCM_CTX *)ctx;
 
-    AES_CCM_SET_KEY_FN(aesni_set_encrypt_key, aesni_encrypt,
-                       aesni_ccm64_encrypt_blocks, aesni_ccm64_decrypt_blocks);
+    AES_HW_CCM_SET_KEY_FN(aesni_set_encrypt_key, aesni_encrypt,
+                          aesni_ccm64_encrypt_blocks,
+                          aesni_ccm64_decrypt_blocks);
     return 1;
 }
 

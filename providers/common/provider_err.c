@@ -19,6 +19,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_BAD_DECRYPT), "bad decrypt"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_CIPHER_OPERATION_FAILED),
     "cipher operation failed"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_GENERATE_KEY),
+    "failed to generate key"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_GET_PARAMETER),
     "failed to get parameter"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_SET_PARAMETER),

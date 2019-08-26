@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "cipher_aead.h"
+
 typedef struct prov_ccm_hw_st PROV_CCM_HW;
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
@@ -111,20 +113,6 @@ struct prov_ccm_hw_st {
 
 const PROV_CCM_HW *PROV_AES_HW_ccm(size_t keylen);
 
-#if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
-# include "internal/aria.h"
-typedef struct prov_aria_ccm_ctx_st {
-    PROV_CCM_CTX base; /* Must be first */
-    union {
-        OSSL_UNION_ALIGN;
-        ARIA_KEY ks;
-    } ks;                       /* ARIA key schedule to use */
-} PROV_ARIA_CCM_CTX;
-
-const PROV_CCM_HW *PROV_ARIA_HW_ccm(size_t keylen);
-
-#endif /* !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE) */
-
 OSSL_OP_cipher_encrypt_init_fn ccm_einit;
 OSSL_OP_cipher_decrypt_init_fn ccm_dinit;
 OSSL_OP_cipher_get_ctx_params_fn ccm_get_ctx_params;
@@ -134,3 +122,14 @@ OSSL_OP_cipher_final_fn ccm_stream_final;
 OSSL_OP_cipher_cipher_fn ccm_cipher;
 void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw);
 void ccm_finalctx(PROV_CCM_CTX *ctx);
+
+int ccm_generic_setiv(PROV_CCM_CTX *ctx, const unsigned char *nonce,
+                      size_t nlen, size_t mlen);
+int ccm_generic_setaad(PROV_CCM_CTX *ctx, const unsigned char *aad, size_t alen);
+int ccm_generic_gettag(PROV_CCM_CTX *ctx, unsigned char *tag, size_t tlen);
+int ccm_generic_auth_encrypt(PROV_CCM_CTX *ctx, const unsigned char *in,
+                             unsigned char *out, size_t len,
+                             unsigned char *tag, size_t taglen);
+int ccm_generic_auth_decrypt(PROV_CCM_CTX *ctx, const unsigned char *in,
+                             unsigned char *out, size_t len,
+                             unsigned char *expected_tag, size_t taglen);

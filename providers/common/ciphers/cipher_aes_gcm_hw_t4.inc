@@ -34,7 +34,7 @@ static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
         return 0;
     }
 
-    SET_KEY_CTR_FN(ks, aes_t4_set_encrypt_key, aes_t4_encrypt, ctr);
+    GCM_HW_SET_KEY_CTR_FN(ks, aes_t4_set_encrypt_key, aes_t4_encrypt, ctr);
     return 1;
 }
 

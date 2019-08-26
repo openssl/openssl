@@ -9,7 +9,10 @@
 
 /* Dispatch functions for ARIA CCM mode */
 
-#include "cipher_locl.h"
+#include "cipher_aria_ccm.h"
+#include "internal/provider_algs.h"
+
+static OSSL_OP_cipher_freectx_fn aria_ccm_freectx;
 
 static void *aria_ccm_newctx(void *provctx, size_t keybits)
 {
@@ -20,7 +23,6 @@ static void *aria_ccm_newctx(void *provctx, size_t keybits)
     return ctx;
 }
 
-static OSSL_OP_cipher_freectx_fn aria_ccm_freectx;
 static void aria_ccm_freectx(void *vctx)
 {
     PROV_ARIA_CCM_CTX *ctx = (PROV_ARIA_CCM_CTX *)vctx;

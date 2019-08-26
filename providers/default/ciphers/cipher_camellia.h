@@ -7,9 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_NO_CAMELLIA
-
-# include <openssl/camellia.h>
+#include "openssl/camellia.h"
+#include "internal/ciphers/ciphercommon.h"
 
 typedef struct prov_camellia_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
@@ -19,8 +18,8 @@ typedef struct prov_camellia_ctx_st {
     } ks;
 } PROV_CAMELLIA_CTX;
 
-# define PROV_CIPHER_HW_camellia_ofb PROV_CIPHER_HW_camellia_ofb128
-# define PROV_CIPHER_HW_camellia_cfb PROV_CIPHER_HW_camellia_cfb128
+#define PROV_CIPHER_HW_camellia_ofb PROV_CIPHER_HW_camellia_ofb128
+#define PROV_CIPHER_HW_camellia_cfb PROV_CIPHER_HW_camellia_cfb128
 const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_ecb(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_cbc(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_ofb128(size_t keybits);
@@ -28,5 +27,3 @@ const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_cfb128(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_cfb1(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_cfb8(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_ctr(size_t keybits);
-
-#endif /* OPENSSL_NO_CAMELLIA */

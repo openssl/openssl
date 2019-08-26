@@ -10,6 +10,8 @@
 /* Dispatch functions for ccm mode */
 
 #include "cipher_locl.h"
+#include "internal/ciphers/cipher_ccm.h"
+#include "internal/providercommonerr.h"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,

@@ -9,10 +9,9 @@
 
 /*-
  * Generic support for ARIA GCM.
- * This file is included by cipher_gcm_hw.c
  */
 
-#if !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE)
+#include "cipher_aria_gcm.h"
 
 static int aria_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
                             size_t keylen)
@@ -20,7 +19,7 @@ static int aria_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     PROV_ARIA_GCM_CTX *actx = (PROV_ARIA_GCM_CTX *)ctx;
     ARIA_KEY *ks = &actx->ks.ks;
 
-    SET_KEY_CTR_FN(ks, aria_set_encrypt_key, aria_encrypt, NULL);
+    GCM_HW_SET_KEY_CTR_FN(ks, aria_set_encrypt_key, aria_encrypt, NULL);
     return 1;
 }
 
@@ -49,5 +48,3 @@ const PROV_GCM_HW *PROV_ARIA_HW_gcm(size_t keybits)
 {
     return &aria_gcm;
 }
-
-#endif /* !defined(OPENSSL_NO_ARIA) && !defined(FIPS_MODE) */

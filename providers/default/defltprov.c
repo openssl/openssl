@@ -173,6 +173,18 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "CAMELLIA-192-CTR", "default=yes", camellia192ctr_functions },
     { "CAMELLIA-128-CTR", "default=yes", camellia128ctr_functions },
 #endif /* OPENSSL_NO_CAMELLIA */
+    { "DES-EDE3", "default=yes", tdes_ede3_ecb_functions },
+    { "DES-EDE3-CBC", "default=yes", tdes_ede3_cbc_functions },
+    { "DES-EDE3-OFB", "default=yes", tdes_ede3_ofb_functions },
+    { "DES-EDE3-CFB", "default=yes", tdes_ede3_cfb_functions },
+    { "DES-EDE3-CFB8", "default=yes", tdes_ede3_cfb8_functions },
+    { "DES-EDE3-CFB1", "default=yes", tdes_ede3_cfb1_functions },
+    { "DES-EDE", "default=yes", tdes_ede2_ecb_functions },
+    { "DES-EDE-CBC", "default=yes", tdes_ede2_cbc_functions },
+    { "DES-EDE-OFB", "default=yes", tdes_ede2_ofb_functions },
+    { "DES-EDE-CFB", "default=yes", tdes_ede2_cfb_functions },
+    { "DESX-CBC", "default=yes", tdes_desx_cbc_functions },
+    { "id-smime-alg-CMS3DESwrap", "default=yes", tdes_wrap_cbc_functions },
     { NULL, NULL, NULL }
 };
 

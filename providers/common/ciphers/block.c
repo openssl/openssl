@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include "cipher_locl.h"
+#include "internal/providercommonerr.h"
 
 /*
  * Fills a single block of buffered data from the input, and returns the amount

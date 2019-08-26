@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#if !defined(OPENSSL_NO_ARIA)
-# include "internal/aria.h"
+#include "internal/aria.h"
+#include "internal/ciphers/ciphercommon.h"
 
 typedef struct prov_aria_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
@@ -17,6 +17,7 @@ typedef struct prov_aria_ctx_st {
         ARIA_KEY ks;
     } ks;
 } PROV_ARIA_CTX;
+
 
 # define PROV_CIPHER_HW_aria_ofb PROV_CIPHER_HW_aria_ofb128
 # define PROV_CIPHER_HW_aria_cfb PROV_CIPHER_HW_aria_cfb128
@@ -27,5 +28,3 @@ const PROV_CIPHER_HW *PROV_CIPHER_HW_aria_cfb128(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aria_cfb1(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aria_cfb8(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aria_ctr(size_t keybits);
-
-#endif /* OPENSSL_NO_ARIA */

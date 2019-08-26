@@ -9,7 +9,8 @@
 
 /* Dispatch functions for ARIA cipher modes ecb, cbc, ofb, cfb, ctr */
 
-#include "cipher_locl.h"
+#include "cipher_aria.h"
+#include "internal/provider_algs.h"
 
 static OSSL_OP_cipher_freectx_fn aria_freectx;
 static OSSL_OP_cipher_dupctx_fn aria_dupctx;

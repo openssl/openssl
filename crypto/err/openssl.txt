@@ -2708,6 +2708,7 @@ PROP_R_TRAILING_CHARACTERS:110:trailing characters
 PROV_R_AES_KEY_SETUP_FAILED:101:aes key setup failed
 PROV_R_BAD_DECRYPT:100:bad decrypt
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
+PROV_R_FAILED_TO_GENERATE_KEY:121:failed to generate key
 PROV_R_FAILED_TO_GET_PARAMETER:103:failed to get parameter
 PROV_R_FAILED_TO_SET_PARAMETER:104:failed to set parameter
 PROV_R_INVALID_AAD:108:invalid aad

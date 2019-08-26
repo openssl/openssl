@@ -8,6 +8,7 @@
  */
 
 #include <openssl/aes.h>
+#include "internal/ciphers/ciphercommon.h"
 
 typedef struct prov_aes_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
