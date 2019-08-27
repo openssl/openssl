@@ -63,7 +63,7 @@ Outputs the OpenSSL list separator character.
 This is typically used to construct C<$PATH> (C<%PATH%> on Windows)
 style lists.
 
-=item B<-listsep>
+=item B<-seeds>
 
 Outputs the randomness seed sources.
 

@@ -38,6 +38,7 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
                 for (; *dev != NULL; dev++) {                           \
                     if (!first)                                         \
                         OPENSSL_strlcat(seeds, " ", sizeof(seeds));     \
+                    first = 0;                                          \
                     OPENSSL_strlcat(seeds, *dev, sizeof(seeds));        \
                 }                                                       \
             }                                                           \
