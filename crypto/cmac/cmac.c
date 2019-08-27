@@ -178,7 +178,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
             return 0;
     }
     /* Encrypt all but one of the complete blocks left */
-    while (dlen > bl) {
+    while (dlen > (size_t)bl) {
         if (!EVP_Cipher(ctx->cctx, ctx->tbl, data, bl))
             return 0;
         dlen -= bl;
