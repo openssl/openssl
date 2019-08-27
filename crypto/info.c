@@ -41,6 +41,7 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
                     OPENSSL_strlcat(seeds, *dev, sizeof(seeds));        \
                 }                                                       \
             }                                                           \
+            OPENSSL_strlcat(seeds, ")", sizeof(seeds));                 \
         } while (0)
 
 #ifdef OPENSSL_RAND_SEED_NONE
