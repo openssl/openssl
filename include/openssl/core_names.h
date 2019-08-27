@@ -103,7 +103,7 @@ extern "C" {
 
 /* Key Exchange parameters */
 
-#define OSSL_EXCHANGE_PARAM_PAD      "exchange-pad" /*size_t */
+#define OSSL_EXCHANGE_PARAM_PAD      "exchange-pad" /* size_t */
 
 # ifdef __cplusplus
 }

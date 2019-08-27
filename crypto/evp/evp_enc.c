@@ -1069,13 +1069,9 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
             OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED,
                                               ptr, sz);
         break;
-    case EVP_CTRL_AEAD_SET_TAG:
-        params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                              ptr, sz);
-        break;
     case EVP_CTRL_AEAD_GET_TAG:
-        set_params = 0;
+        set_params = 0; /* Fall thru */
+    case EVP_CTRL_AEAD_SET_TAG:
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
                                                       ptr, sz);
         break;

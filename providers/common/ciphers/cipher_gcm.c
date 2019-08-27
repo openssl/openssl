@@ -15,7 +15,6 @@
 #include "internal/rand_int.h"
 #include "internal/provider_ctx.h"
 
-
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
 static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
                                 size_t len);
@@ -122,8 +121,10 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         sz = p->data_size;
-        if (sz == 0 || sz > EVP_GCM_TLS_TAG_LEN
-            || !ctx->enc || ctx->taglen == UNINITIALISED_SIZET) {
+        if (sz == 0
+            || sz > EVP_GCM_TLS_TAG_LEN
+            || !ctx->enc
+            || ctx->taglen == UNINITIALISED_SIZET) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
             return 0;
         }
