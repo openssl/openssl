@@ -219,10 +219,10 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
 int EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
 {
     int ok;
-    unsigned int v = cipher->block_size;
+    size_t v = cipher->block_size;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_BLOCK_SIZE, &v);
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, &v);
     ok = evp_do_ciph_getparams(cipher, params);
 
     return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
