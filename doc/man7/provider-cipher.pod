@@ -248,6 +248,11 @@ block has been "used" already.
 Gets or sets the AEAD tag for the associated cipher ctx.
 See L<EVP_EncryptInit(3)/AEAD Interface>.
 
+=item B<OSSL_CIPHER_PARAM_AEAD_TAGLEN> (size_t)
+
+Gets the tag length to be used for an AEAD cipher for the associated cipher ctx.
+It returns a default value if it has not been set.
+
 =item B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD> (octet_string)
 
 =for comment TODO(3.0): Consider changing this interface so that all ciphers

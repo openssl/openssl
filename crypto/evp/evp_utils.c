@@ -25,6 +25,8 @@
  * use the same value, and other callers will have to compensate.
  */
 #define PARAM_CHECK(obj, func, errfunc)                                        \
+    if (obj == NULL)                                                           \
+        return 0;                                                              \
     if (obj->prov == NULL)                                                     \
         return EVP_CTRL_RET_UNSUPPORTED;                                       \
     if (obj->func == NULL) {                                                   \
