@@ -66,8 +66,9 @@ static void *cmac_new(void *provctx)
         || (macctx->ctx = CMAC_CTX_new()) == NULL) {
         OPENSSL_free(macctx);
         macctx = NULL;
+    } else {
+        macctx->provctx = provctx;
     }
-    macctx->provctx = provctx;
 
     return macctx;
 }

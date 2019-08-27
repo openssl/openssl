@@ -133,8 +133,8 @@ static void collect_ciphers(EVP_CIPHER *cipher, void *stack)
 {
     STACK_OF(EVP_CIPHER) *cipher_stack = stack;
 
-    sk_EVP_CIPHER_push(cipher_stack, cipher);
-    EVP_CIPHER_up_ref(cipher);
+    if (sk_EVP_CIPHER_push(cipher_stack, cipher) > 0)
+        EVP_CIPHER_up_ref(cipher);
 }
 
 static void list_ciphers(void)
@@ -196,8 +196,8 @@ static void collect_digests(EVP_MD *md, void *stack)
 {
     STACK_OF(EVP_MD) *digest_stack = stack;
 
-    sk_EVP_MD_push(digest_stack, md);
-    EVP_MD_up_ref(md);
+    if (sk_EVP_MD_push(digest_stack, md) > 0)
+        EVP_MD_up_ref(md);
 }
 
 static void list_digests(void)
@@ -245,8 +245,8 @@ static void collect_macs(EVP_MAC *mac, void *stack)
 {
     STACK_OF(EVP_MAC) *mac_stack = stack;
 
-    sk_EVP_MAC_push(mac_stack, mac);
-    EVP_MAC_up_ref(mac);
+    if (sk_EVP_MAC_push(mac_stack, mac) > 0)
+        EVP_MAC_up_ref(mac);
 }
 
 static void list_macs(void)
