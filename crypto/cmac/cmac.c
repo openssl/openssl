@@ -87,6 +87,7 @@ void CMAC_CTX_free(CMAC_CTX *ctx)
 int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 {
     int bl;
+
     if (in->nlast_block == -1)
         return 0;
     if ((bl = EVP_CIPHER_CTX_block_size(in->cctx)) < 0)
@@ -105,6 +106,7 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
               const EVP_CIPHER *cipher, ENGINE *impl)
 {
     static const unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH] = { 0 };
+
     /* All zeros means restart */
     if (!key && !cipher && !impl && keylen == 0) {
         /* Not initialised */
@@ -122,6 +124,7 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
     /* Non-NULL key means initialisation complete */
     if (key) {
         int bl;
+
         if (!EVP_CIPHER_CTX_cipher(ctx->cctx))
             return 0;
         if (!EVP_CIPHER_CTX_set_key_length(ctx->cctx, keylen))
@@ -149,6 +152,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 {
     const unsigned char *data = in;
     int bl;
+
     if (ctx->nlast_block == -1)
         return 0;
     if (dlen == 0)
@@ -158,6 +162,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
     /* Copy into partial block if we need to */
     if (ctx->nlast_block > 0) {
         size_t nleft;
+
         nleft = bl - ctx->nlast_block;
         if (dlen < nleft)
             nleft = dlen;
@@ -189,6 +194,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 {
     int i, bl, lb;
+
     if (ctx->nlast_block == -1)
         return 0;
     if ((bl = EVP_CIPHER_CTX_block_size(ctx->cctx)) < 0)
