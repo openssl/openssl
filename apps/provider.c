@@ -272,9 +272,11 @@ int provider_main(int argc, char **argv)
             OSSL_PROVIDER_unload(prov);
         } else {
             ERR_print_errors(bio_err);
-            /* because exit codes above 127 have special meaning on Unix */
-            if (++ret > 127)
-                ret = 127;
+            ret = 1;
+            /*
+             * Just because one provider module failed, there's no reason to
+             * stop, if there are more to try.
+             */
         }
     }
 
