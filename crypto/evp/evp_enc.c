@@ -1028,7 +1028,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
     int ret = EVP_CTRL_RET_UNSUPPORTED;
     int set_params = 1;
-    size_t sz = (size_t)arg;
+    size_t sz = arg;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (ctx == NULL || ctx->cipher == NULL) {

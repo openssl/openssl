@@ -219,7 +219,7 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
 int EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
 {
     int ok;
-    size_t v = (size_t)cipher->block_size;
+    size_t v = cipher->block_size;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, &v);
@@ -306,7 +306,7 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 {
     int ok;
-    size_t v = (size_t)cipher->iv_len;
+    size_t v = cipher->iv_len;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &v);
@@ -534,7 +534,7 @@ unsigned long EVP_MD_flags(const EVP_MD *md)
     params[0] = OSSL_PARAM_construct_ulong(OSSL_CIPHER_PARAM_FLAGS, &v);
     ok = evp_do_md_getparams(md, params);
 
-    return ok != 0 ? (int)v : 0;
+    return ok != 0 ? v : 0;
 }
 
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
