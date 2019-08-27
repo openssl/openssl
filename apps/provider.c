@@ -25,8 +25,7 @@ typedef enum OPTION_choice {
 
 const OPTIONS provider_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] provider...\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  provider... Providers to load\n"},
+    {OPT_HELP_STR, 1, '-', "  provider... Providers to load\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"v", OPT_V, '-', "List the algorithm names of specified provider"},
     {"vv", OPT_VV, '-', "List the algorithm names of specified providers,"},
@@ -53,7 +52,7 @@ struct meta_st {
     int indent;
     int subindent;
     int verbose;
-    const char *lable;
+    const char *label;
     OSSL_PROVIDER *prov;
     void (*fn)(META *meta, INFO *info);
 };
@@ -68,13 +67,13 @@ static void print_caps(META *meta, INFO *info)
         if (meta->first) {
             if (meta->total > 0)
                 BIO_printf(bio_out, "\n");
-            BIO_printf(bio_out, "%*s%ss:", meta->indent, " ", meta->lable);
+            BIO_printf(bio_out, "%*s%ss:", meta->indent, " ", meta->label);
         }
         BIO_printf(bio_out, " %s", info->name);
         break;
     case 3:
     default:
-        BIO_printf(bio_out, "%*s%s %s\n", meta->indent, " ", meta->lable,
+        BIO_printf(bio_out, "%*s%s %s\n", meta->indent, " ", meta->label,
                    info->name);
         print_param_types("retrievable algorithm parameters",
                           info->gettable_params, meta->subindent);
@@ -227,28 +226,28 @@ int provider_main(int argc, char **argv)
 
                 if (verbose > 1) {
                     data.first = 1;
-                    data.lable = "Cipher";
+                    data.label = "Cipher";
                 }
                 EVP_CIPHER_do_all_ex(NULL, do_cipher, &data);
                 if (verbose > 1) {
                     data.first = 1;
-                    data.lable = "Digest";
+                    data.label = "Digest";
                 }
                 EVP_MD_do_all_ex(NULL, do_digest, &data);
                 if (verbose > 1) {
                     data.first = 1;
-                    data.lable = "MAC";
+                    data.label = "MAC";
                 }
                 EVP_MAC_do_all_ex(NULL, do_mac, &data);
 #if 0
                 if (verbose > 1) {
                     data.first = 1;
-                    data.lable = "Key manager";
+                    data.label = "Key manager";
                 }
                 EVP_KEYMGMT_do_all_ex(NULL, do_keymgmt, &data);
                 if (verbose > 1) {
                     data.first = 1;
-                    data.lable = "Key exchange";
+                    data.label = "Key exchange";
                 }
                 EVP_KEYEXCH_do_all_ex(NULL, do_keyexch, &data);
 #endif
