@@ -194,6 +194,7 @@ extern unsigned int OPENSSL_sparcv9cap_P[];
 
 #  ifndef OPENSSL_NO_CAMELLIA
 #   define SPARC_CMLL_CAPABLE      (OPENSSL_sparcv9cap_P[1] & CFR_CAMELLIA)
+#   include "openssl/camellia.h"
 
 void cmll_t4_set_key(const unsigned char *key, int bits, CAMELLIA_KEY *ks);
 void cmll_t4_encrypt(const unsigned char *in, unsigned char *out,
