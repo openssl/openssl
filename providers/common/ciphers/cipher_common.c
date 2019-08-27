@@ -19,10 +19,10 @@
  * Generic cipher functions for OSSL_PARAM gettables and settables
  */
 static const OSSL_PARAM cipher_known_gettable_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_MODE, NULL),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_MODE, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
     OSSL_PARAM_ulong(OSSL_CIPHER_PARAM_FLAGS, NULL),
     OSSL_PARAM_END
 };
@@ -38,7 +38,7 @@ int cipher_generic_get_params(OSSL_PARAM params[], size_t md,
     OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, md)) {
+    if (p != NULL && !OSSL_PARAM_set_uint(p, md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -53,7 +53,7 @@ int cipher_generic_get_params(OSSL_PARAM params[], size_t md,
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, blkbits / 8)) {
+    if (p != NULL && !OSSL_PARAM_set_uint(p, blkbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -70,7 +70,7 @@ CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(cipher_generic)
 
 static const OSSL_PARAM cipher_known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_PADDING, NULL),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_NUM, NULL),
     OSSL_PARAM_END
 };
@@ -319,7 +319,7 @@ int cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PADDING);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->pad)) {
+    if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->pad)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -351,9 +351,9 @@ int cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL) {
-        size_t pad;
+        unsigned int pad;
 
-        if (!OSSL_PARAM_get_size_t(p, &pad)) {
+        if (!OSSL_PARAM_get_uint(p, &pad)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }

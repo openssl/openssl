@@ -1011,14 +1011,14 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 {
     int ok;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    size_t pd = pad;
+    unsigned int pd = pad;
 
     if (pad)
         ctx->flags &= ~EVP_CIPH_NO_PADDING;
     else
         ctx->flags |= EVP_CIPH_NO_PADDING;
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_PADDING, &pd);
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
 
     return ok != 0;

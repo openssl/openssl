@@ -41,9 +41,9 @@ extern "C" {
 #define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"
 
 /* cipher parameters */
-#define OSSL_CIPHER_PARAM_PADDING   "padding"    /* size_t */
-#define OSSL_CIPHER_PARAM_MODE      "mode"       /* size_t */
-#define OSSL_CIPHER_PARAM_BLOCK_SIZE "blocksize" /* size_t */
+#define OSSL_CIPHER_PARAM_PADDING   "padding"    /* uint */
+#define OSSL_CIPHER_PARAM_MODE      "mode"       /* uint */
+#define OSSL_CIPHER_PARAM_BLOCK_SIZE "blocksize" /* uint */
 #define OSSL_CIPHER_PARAM_FLAGS     "flags"      /* ulong */
 #define OSSL_CIPHER_PARAM_KEYLEN    "keylen"     /* size_t */
 #define OSSL_CIPHER_PARAM_IVLEN     "ivlen"      /* size_t */

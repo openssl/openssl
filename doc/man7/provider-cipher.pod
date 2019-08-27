@@ -197,18 +197,18 @@ parameters are relevant to, or are understood by all ciphers:
 
 =over 4
 
-=item B<OSSL_CIPHER_PARAM_PADDING> (size_t)
+=item B<OSSL_CIPHER_PARAM_PADDING> (uint)
 
 Sets the padding mode for the associated cipher ctx.
 Setting a value of 1 will turn padding on.
 Setting a value of 0 will turn padding off.
 
-=item B<OSSL_CIPHER_PARAM_MODE> (size_t)
+=item B<OSSL_CIPHER_PARAM_MODE> (uint)
 
 Gets the mode for the associated cipher algorithm.
 See L<EVP_CIPHER_mode(3)> for a list of valid modes.
 
-=item B<OSSL_CIPHER_PARAM_BLOCK_SIZE> (size_t)
+=item B<OSSL_CIPHER_PARAM_BLOCK_SIZE> (uint)
 
 Gets the block size for the associated cipher algorithm.
 The block size should be 1 for stream ciphers.

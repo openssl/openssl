@@ -44,8 +44,8 @@ struct prov_cipher_ctx_st {
     size_t keylen;        /* key size (in bytes) */
     size_t ivlen;
     size_t blocksize;
-    size_t pad;           /* Whether padding should be used or not */
     size_t bufsz;         /* Number of bytes in buf */
+    unsigned int pad;     /* Whether padding should be used or not */
 
     /*
      * num contains the number of bytes of |iv| which are valid for modes that
