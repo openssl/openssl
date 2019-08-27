@@ -1228,9 +1228,11 @@ static int mac_test_run_mac(EVP_TEST *t)
         if (tmpval != NULL)
             *tmpval++ = '\0';
 
-        if (!OSSL_PARAM_allocate_from_text(&params[params_n], defined_params,
-                                           tmpkey, tmpval,
-                                           strlen(tmpval))) {
+        if (tmpval == NULL
+            || !OSSL_PARAM_allocate_from_text(&params[params_n],
+                                              defined_params,
+                                              tmpkey, tmpval,
+                                              strlen(tmpval))) {
             OPENSSL_free(tmpkey);
             t->err = "MAC_PARAM_ERROR";
             goto err;
