@@ -1225,7 +1225,7 @@ static int mac_test_run_mac(EVP_TEST *t)
             goto err;
         }
         tmpval = strchr(tmpkey, ':');
-        if (tmpval != NULL) {
+        if (tmpval != NULL)
             *tmpval++ = '\0';
 
         if (tmpval == NULL
