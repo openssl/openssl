@@ -12,6 +12,7 @@
 #include "apps.h"
 #include "app_params.h"
 #include "progs.h"
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/safestack.h>
 #include <openssl/provider.h>
