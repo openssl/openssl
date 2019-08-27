@@ -986,8 +986,9 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
     int ok;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    size_t len = keylen;
 
-    params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_KEYLEN, &keylen);
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
     ok = evp_do_ciph_ctx_setparams(c->cipher, c->provctx, params);
 
     if (ok != EVP_CTRL_RET_UNSUPPORTED)
@@ -1010,13 +1011,14 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 {
     int ok;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    size_t pd = pad;
 
     if (pad)
         ctx->flags &= ~EVP_CIPH_NO_PADDING;
     else
         ctx->flags |= EVP_CIPH_NO_PADDING;
 
-    params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_PADDING, &pad);
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_PADDING, &pd);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
 
     return ok != 0;
@@ -1026,7 +1028,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
     int ret = EVP_CTRL_RET_UNSUPPORTED;
     int set_params = 1;
-    size_t sz;
+    size_t sz = (size_t)arg;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (ctx == NULL || ctx->cipher == NULL) {
@@ -1039,13 +1041,13 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_SET_KEY_LENGTH:
-        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_KEYLEN, &arg);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &sz);
         break;
     case EVP_CTRL_RAND_KEY:      /* Used by DES */
         set_params = 0;
         params[0] =
             OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY,
-                                              ptr, (size_t)arg);
+                                              ptr, sz);
         break;
 
     case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
@@ -1055,35 +1057,33 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     case EVP_CTRL_GET_IV:
         set_params = 0;
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
-                                                      ptr, (size_t)arg);
+                                                      ptr, sz);
         break;
     case EVP_CTRL_AEAD_SET_IVLEN:
         if (arg < 0)
             return 0;
-        sz = (size_t)arg;
-        params[0] =
-            OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, &sz);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &sz);
         break;
     case EVP_CTRL_GCM_SET_IV_FIXED:
         params[0] =
             OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED,
-                                              ptr, (size_t)arg);
+                                              ptr, sz);
         break;
     case EVP_CTRL_AEAD_SET_TAG:
         params[0] =
             OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                              ptr, (size_t)arg);
+                                              ptr, sz);
         break;
     case EVP_CTRL_AEAD_GET_TAG:
         set_params = 0;
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                      ptr, (size_t)arg);
+                                                      ptr, sz);
         break;
     case EVP_CTRL_AEAD_TLS1_AAD:
         /* This one does a set and a get - since it returns a padding size */
         params[0] =
             OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD,
-                                              ptr, (size_t)arg);
+                                              ptr, sz);
         ret = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
         if (ret <= 0)
             return ret;

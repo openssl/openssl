@@ -15,6 +15,7 @@
 #include "internal/rand_int.h"
 #include "internal/provider_ctx.h"
 
+
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
 static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
                                 size_t len);
@@ -29,8 +30,8 @@ void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
 {
     ctx->pad = 1;
     ctx->mode = EVP_CIPH_GCM_MODE;
-    ctx->taglen = -1;
-    ctx->tls_aad_len = -1;
+    ctx->taglen = UNINITIALISED_SIZET;
+    ctx->tls_aad_len = UNINITIALISED_SIZET;
     ctx->ivlen_min = ivlen_min;
     ctx->ivlen = (EVP_GCM_TLS_FIXED_IV_LEN + EVP_GCM_TLS_EXPLICIT_IV_LEN);
     ctx->keylen = keybits / 8;
@@ -89,12 +90,12 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     size_t sz;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL && !OSSL_PARAM_set_int(p, ctx->ivlen)) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -103,7 +104,7 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p != NULL) {
         if (ctx->iv_gen != 1 && ctx->iv_gen_rand != 1)
             return 0;
-        if (ctx->ivlen != (int)p->data_size) {
+        if (ctx->ivlen != p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
@@ -121,7 +122,8 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         sz = p->data_size;
-        if (sz == 0 || sz > EVP_GCM_TLS_TAG_LEN || !ctx->enc || ctx->taglen < 0) {
+        if (sz == 0 || sz > EVP_GCM_TLS_TAG_LEN
+            || !ctx->enc || ctx->taglen == UNINITIALISED_SIZET) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
             return 0;
         }
@@ -201,14 +203,14 @@ int gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      */
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
-        int keylen;
+        size_t keylen;
 
-        if (!OSSL_PARAM_get_int(p, &keylen)) {
+        if (!OSSL_PARAM_get_size_t(p, &keylen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
         /* The key length can not be modified for gcm mode */
-        if (keylen != (int)ctx->keylen)
+        if (keylen != ctx->keylen)
             return 0;
     }
 
@@ -296,7 +298,7 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     int rv = 0;
     const PROV_GCM_HW *hw = ctx->hw;
 
-    if (ctx->tls_aad_len >= 0)
+    if (ctx->tls_aad_len != UNINITIALISED_SIZET)
         return gcm_tls_cipher(ctx, out, padlen, in, len);
 
     if (!ctx->key_set || ctx->iv_state == IV_STATE_FINISHED)
@@ -425,7 +427,8 @@ static void ctr64_inc(unsigned char *counter)
 static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
                           const unsigned char *in, size_t len)
 {
-    int rv = 0, arg = EVP_GCM_TLS_EXPLICIT_IV_LEN;
+    int rv = 0;
+    size_t arg = EVP_GCM_TLS_EXPLICIT_IV_LEN;
     size_t plen = 0;
     unsigned char *tag = NULL;
 
@@ -491,7 +494,7 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
     rv = 1;
 err:
     ctx->iv_state = IV_STATE_FINISHED;
-    ctx->tls_aad_len = -1;
+    ctx->tls_aad_len = UNINITIALISED_SIZET;
     *padlen = plen;
     return rv;
 }

@@ -143,7 +143,7 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL && !OSSL_PARAM_set_int(p, ccm_get_ivlen(ctx))) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ccm_get_ivlen(ctx))) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -161,7 +161,7 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL && !OSSL_PARAM_set_int(p, ctx->keylen)) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }

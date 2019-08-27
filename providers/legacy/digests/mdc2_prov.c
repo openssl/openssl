@@ -20,7 +20,7 @@ static OSSL_OP_digest_set_ctx_params_fn mdc2_set_ctx_params;
 static OSSL_OP_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
 
 static const OSSL_PARAM known_mdc2_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_PAD_TYPE, OSSL_PARAM_INTEGER, NULL, sizeof(int), 0},
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_PAD_TYPE, NULL),
     OSSL_PARAM_END
 };
 
@@ -36,7 +36,7 @@ static int mdc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (ctx != NULL && params != NULL) {
         p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_PAD_TYPE);
-        if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->pad_type)) {
+        if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->pad_type)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }

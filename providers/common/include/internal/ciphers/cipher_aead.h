@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define UNINITIALISED_SIZET ((size_t)-1)
+
 /* TODO(3.0) Figure out what flags are really needed */
 #define AEAD_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_DEFAULT_ASN1     \
                        | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER      \

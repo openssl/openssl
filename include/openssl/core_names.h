@@ -41,50 +41,50 @@ extern "C" {
 #define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"
 
 /* cipher parameters */
-#define OSSL_CIPHER_PARAM_PADDING   "padding"    /* int */
-#define OSSL_CIPHER_PARAM_MODE      "mode"       /* int */
-#define OSSL_CIPHER_PARAM_BLOCK_SIZE "blocksize" /* int */
+#define OSSL_CIPHER_PARAM_PADDING   "padding"    /* size_t */
+#define OSSL_CIPHER_PARAM_MODE      "mode"       /* size_t */
+#define OSSL_CIPHER_PARAM_BLOCK_SIZE "blocksize" /* size_t */
 #define OSSL_CIPHER_PARAM_FLAGS     "flags"      /* ulong */
-#define OSSL_CIPHER_PARAM_KEYLEN    "keylen"     /* int */
-#define OSSL_CIPHER_PARAM_IVLEN     "ivlen"      /* int */
+#define OSSL_CIPHER_PARAM_KEYLEN    "keylen"     /* size_t */
+#define OSSL_CIPHER_PARAM_IVLEN     "ivlen"      /* size_t */
 #define OSSL_CIPHER_PARAM_IV        "iv"         /* octet_string OR octet_ptr */
-#define OSSL_CIPHER_PARAM_NUM       "num"        /* int */
+#define OSSL_CIPHER_PARAM_NUM       "num"        /* size_t */
 #define OSSL_CIPHER_PARAM_AEAD_TAG           "tag"        /* octet_string */
 #define OSSL_CIPHER_PARAM_AEAD_TLS1_AAD      "tlsaad"     /* octet_string */
 #define OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD  "tlsaadpad"  /* size_t */
 #define OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED "tlsivfixed" /* octet_string */
-#define OSSL_CIPHER_PARAM_AEAD_IVLEN         "aeadivlen"  /* size_t */
+#define OSSL_CIPHER_PARAM_AEAD_IVLEN OSSL_CIPHER_PARAM_IVLEN
 #define OSSL_CIPHER_PARAM_RANDOM_KEY         "randkey"    /* octet_string */
 
 /* digest parameters */
-#define OSSL_DIGEST_PARAM_XOFLEN    "xoflen"
-#define OSSL_DIGEST_PARAM_SSL3_MS   "ssl3-ms"
-#define OSSL_DIGEST_PARAM_PAD_TYPE  "pad_type"
-#define OSSL_DIGEST_PARAM_MICALG    "micalg"
-#define OSSL_DIGEST_PARAM_BLOCK_SIZE "blocksize" /* OSSL_PARAM_INTEGER */
-#define OSSL_DIGEST_PARAM_SIZE      "size" /* OSSL_PARAM_INTEGER */
-#define OSSL_DIGEST_PARAM_FLAGS     "flags" /* OSSL_PARAM_UNSIGNED_INTEGER */
+#define OSSL_DIGEST_PARAM_XOFLEN     "xoflen"    /* size_t */
+#define OSSL_DIGEST_PARAM_SSL3_MS    "ssl3-ms"   /* octet string */
+#define OSSL_DIGEST_PARAM_PAD_TYPE   "pad_type"  /* size_t */
+#define OSSL_DIGEST_PARAM_MICALG     "micalg"    /* utf8 string */
+#define OSSL_DIGEST_PARAM_BLOCK_SIZE "blocksize" /* size_t */
+#define OSSL_DIGEST_PARAM_SIZE       "size"      /* size_t */
+#define OSSL_DIGEST_PARAM_FLAGS      "flags"     /* ulong */
 
 /* Known DIGEST names (not a complete list) */
 #define OSSL_DIGEST_NAME_KECCAK_KMAC128 "KECCAK_KMAC128"
 #define OSSL_DIGEST_NAME_KECCAK_KMAC256 "KECCAK_KMAC256"
 
 /* MAC parameters */
-#define OSSL_MAC_PARAM_KEY          "key"       /* octet string */
-#define OSSL_MAC_PARAM_IV           "iv"        /* octet string */
-#define OSSL_MAC_PARAM_CUSTOM       "custom"    /* utf8 string */
-#define OSSL_MAC_PARAM_SALT         "salt"      /* octet string */
-#define OSSL_MAC_PARAM_XOF          "xof"       /* int, 0 or 1 */
-#define OSSL_MAC_PARAM_FLAGS        "flags"     /* int */
+#define OSSL_MAC_PARAM_KEY          "key"        /* octet string */
+#define OSSL_MAC_PARAM_IV           "iv"         /* octet string */
+#define OSSL_MAC_PARAM_CUSTOM       "custom"     /* utf8 string */
+#define OSSL_MAC_PARAM_SALT         "salt"       /* octet string */
+#define OSSL_MAC_PARAM_XOF          "xof"        /* int, 0 or 1 */
+#define OSSL_MAC_PARAM_FLAGS        "flags"      /* int */
 /*
  * If "engine" or "properties" are specified, they should always be paired
  * with "cipher" or "digest".
  */
-#define OSSL_MAC_PARAM_CIPHER       "cipher"    /* utf8 string */
-#define OSSL_MAC_PARAM_DIGEST       "digest"    /* utf8 string */
-#define OSSL_MAC_PARAM_ENGINE       "engine"    /* utf8 string */
+#define OSSL_MAC_PARAM_CIPHER       "cipher"     /* utf8 string */
+#define OSSL_MAC_PARAM_DIGEST       "digest"     /* utf8 string */
+#define OSSL_MAC_PARAM_ENGINE       "engine"     /* utf8 string */
 #define OSSL_MAC_PARAM_PROPERTIES   "properties" /* utf8 string */
-#define OSSL_MAC_PARAM_SIZE         "size"      /* size_t */
+#define OSSL_MAC_PARAM_SIZE         "size"       /* size_t */
 
 /* Known MAC names (not a complete list) */
 #define OSSL_MAC_NAME_CMAC          "CMAC"
@@ -103,7 +103,7 @@ extern "C" {
 
 /* Key Exchange parameters */
 
-#define OSSL_EXCHANGE_PARAM_PAD           "exchange-pad"
+#define OSSL_EXCHANGE_PARAM_PAD      "exchange-pad" /*size_t */
 
 # ifdef __cplusplus
 }

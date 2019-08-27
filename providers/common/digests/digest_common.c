@@ -11,18 +11,18 @@
 #include "internal/digestcommon.h"
 #include "internal/providercommonerr.h"
 
-int digest_default_get_params(OSSL_PARAM params[], int blksz, int paramsz,
+int digest_default_get_params(OSSL_PARAM params[], size_t blksz, size_t paramsz,
                               unsigned long flags)
 {
     OSSL_PARAM *p = NULL;
 
     p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_BLOCK_SIZE);
-    if (p != NULL && !OSSL_PARAM_set_int(p, blksz)) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, blksz)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SIZE);
-    if (p != NULL && !OSSL_PARAM_set_int(p, paramsz)) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, paramsz)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -35,10 +35,9 @@ int digest_default_get_params(OSSL_PARAM params[], int blksz, int paramsz,
 }
 
 static const OSSL_PARAM digest_default_known_gettable_params[] = {
-    { OSSL_DIGEST_PARAM_BLOCK_SIZE, OSSL_PARAM_INTEGER, NULL, sizeof(int), 0},
-    { OSSL_DIGEST_PARAM_SIZE, OSSL_PARAM_INTEGER, NULL, sizeof(int), 0},
-    { OSSL_DIGEST_PARAM_FLAGS, OSSL_PARAM_INTEGER, NULL,
-      sizeof(unsigned long), 0},
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, NULL),
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_SIZE, NULL),
+    OSSL_PARAM_ulong(OSSL_DIGEST_PARAM_FLAGS, NULL),
     OSSL_PARAM_END
 };
 const OSSL_PARAM *digest_default_gettable_params(void)

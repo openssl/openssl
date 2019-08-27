@@ -30,7 +30,7 @@ static OSSL_OP_keyexch_dupctx_fn dh_dupctx;
 typedef struct {
     DH *dh;
     DH *dhpeer;
-    int pad;
+    size_t pad;
 } PROV_DH_CTX;
 
 static void *dh_newctx(void *provctx)
@@ -128,16 +128,13 @@ static int dh_set_params(void *vpdhctx, const OSSL_PARAM params[])
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
     const OSSL_PARAM *p;
-    int pad;
 
     if (pdhctx == NULL || params == NULL)
         return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_PAD);
-    if (p == NULL || !OSSL_PARAM_get_int(p, &pad))
+    if (p == NULL || !OSSL_PARAM_get_size_t(p, &pdhctx->pad))
         return 0;
-
-    pdhctx->pad = pad;
 
     return 1;
 }

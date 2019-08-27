@@ -39,20 +39,20 @@ struct prov_cipher_ctx_st {
         ctr128_f ctr;
     } stream;
 
+    int enc;              /* Set to 1 for encrypt, or 0 otherwise */
+    size_t mode;
+    size_t keylen;        /* key size (in bytes) */
+    size_t ivlen;
+    size_t blocksize;
+    size_t pad;           /* Whether padding should be used or not */
+    size_t bufsz;         /* Number of bytes in buf */
+
     /*
      * num contains the number of bytes of |iv| which are valid for modes that
      * manage partial blocks themselves.
      */
     size_t num;
-
-    int mode;
-    int enc;              /* Set to 1 for encrypt, or 0 otherwise */
-    size_t bufsz;         /* Number of bytes in buf */
-    size_t keylen;        /* key size (in bytes) */
-    size_t ivlen;
-    size_t blocksize;
     uint64_t flags;
-    unsigned int pad : 1; /* Whether padding should be used or not */
 
     /* Buffer of partial blocks processed via update calls */
     unsigned char buf[GENERIC_BLOCK_SIZE];
@@ -81,10 +81,11 @@ OSSL_OP_cipher_gettable_ctx_params_fn cipher_generic_gettable_ctx_params;
 OSSL_OP_cipher_settable_ctx_params_fn cipher_generic_settable_ctx_params;
 OSSL_OP_cipher_gettable_ctx_params_fn cipher_aead_gettable_ctx_params;
 OSSL_OP_cipher_settable_ctx_params_fn cipher_aead_settable_ctx_params;
-int cipher_generic_get_params(OSSL_PARAM params[], int md, unsigned long flags,
-                              int kbits, int blkbits, int ivbits);
+int cipher_generic_get_params(OSSL_PARAM params[], size_t md,
+                              unsigned long flags,
+                              size_t kbits, size_t blkbits, size_t ivbits);
 void cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
-                            size_t ivbits, int mode,
+                            size_t ivbits, size_t mode,
                             const PROV_CIPHER_HW *hw, void *provctx);
 
 #define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,     \

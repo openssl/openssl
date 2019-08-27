@@ -93,7 +93,7 @@ PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 
 const OSSL_PARAM *digest_default_gettable_params(void);
-int digest_default_get_params(OSSL_PARAM params[], int blksz, int paramsz,
+int digest_default_get_params(OSSL_PARAM params[], size_t blksz, size_t paramsz,
                               unsigned long flags);
 
 # ifdef __cplusplus

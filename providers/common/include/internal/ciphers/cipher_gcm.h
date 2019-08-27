@@ -46,17 +46,17 @@ typedef struct S390X_kma_params_st {
 
 typedef struct prov_gcm_ctx_st {
     int enc;                /* Set to 1 if we are encrypting or 0 otherwise */
-    int mode;               /* The mode that we are using */
+    size_t mode;               /* The mode that we are using */
     size_t keylen;
-    int ivlen;
+    size_t ivlen;
     size_t ivlen_min;
-    int taglen;
+    size_t taglen;
     int key_set;            /* Set if key initialised */
     int iv_state;           /* set to one of IV_STATE_XXX */
     int iv_gen_rand;        /* No IV was specified, so generate a rand IV */
     int iv_gen;             /* It is OK to generate IVs */
-    int tls_aad_pad_sz;
-    int tls_aad_len;        /* TLS AAD length */
+    size_t tls_aad_pad_sz;
+    size_t tls_aad_len;     /* TLS AAD length */
     uint64_t tls_enc_records;   /* Number of TLS records encrypted */
 
     /*
@@ -67,7 +67,7 @@ typedef struct prov_gcm_ctx_st {
     size_t bufsz;           /* Number of bytes in buf */
     uint64_t flags;
 
-    unsigned int pad : 1;   /* Whether padding should be used or not */
+    size_t pad;             /* Whether padding should be used or not */
 
     unsigned char iv[GCM_IV_MAX_SIZE]; /* Buffer to use for IV's */
     unsigned char buf[AES_BLOCK_SIZE];     /* Buffer of partial blocks processed via update calls */
