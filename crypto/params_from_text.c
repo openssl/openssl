@@ -107,48 +107,49 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
     if (buf == NULL)
         return 0;
 
-    switch (paramdef->data_type) {
-    case OSSL_PARAM_INTEGER:
-    case OSSL_PARAM_UNSIGNED_INTEGER:
-        /*
-        {
-            if ((new_value = OPENSSL_malloc(new_value_n)) == NULL) {
-                BN_free(a);
-                break;
+    if (buf_n > 0) {
+        switch (paramdef->data_type) {
+        case OSSL_PARAM_INTEGER:
+        case OSSL_PARAM_UNSIGNED_INTEGER:
+            /*
+            {
+                if ((new_value = OPENSSL_malloc(new_value_n)) == NULL) {
+                    BN_free(a);
+                    break;
+                }
+            */
+
+            BN_bn2nativepad(tmpbn, buf, buf_n);
+
+            /*
+             * 2s complement negate, part two.
+             *
+             * Because we did the first part on the BIGNUM itself, we can just
+             * invert all the bytes here and be done with it.
+             */
+            if (paramdef->data_type == OSSL_PARAM_INTEGER
+                && BN_is_negative(tmpbn)) {
+                unsigned char *cp;
+                size_t i = buf_n;
+
+                for (cp = buf; i-- > 0; cp++)
+                    *cp ^= 0xFF;
             }
-        */
+            break;
+        case OSSL_PARAM_UTF8_STRING:
+            strncpy(buf, value, buf_n);
+            break;
+        case OSSL_PARAM_OCTET_STRING:
+            if (ishex) {
+                size_t l = 0;
 
-        BN_bn2nativepad(tmpbn, buf, buf_n);
-
-        /*
-         * 2s complement negate, part two.
-         *
-         * Because we did the first part on the BIGNUM itself, we can just
-         * invert all the bytes here and be done with it.
-         */
-        if (paramdef->data_type == OSSL_PARAM_INTEGER
-            && BN_is_negative(tmpbn)) {
-            unsigned char *cp;
-            size_t i = buf_n;
-
-            for (cp = buf; i-- > 0; cp++)
-                *cp ^= 0xFF;
+                if (!OPENSSL_hexstr2buf_ex(buf, buf_n, &l, value))
+                    return 0;
+            } else {
+                memcpy(buf, value, buf_n);
+            }
+            break;
         }
-        break;
-    case OSSL_PARAM_UTF8_STRING:
-        strncpy(buf, value, buf_n);
-        break;
-    case OSSL_PARAM_OCTET_STRING:
-        if (ishex) {
-            size_t l = 0;
-
-            if (!OPENSSL_hexstr2buf_ex(buf, buf_n, &l, value))
-                return 0;
-        } else {
-            memcpy(buf, value, buf_n);
-
-        }
-        break;
     }
 
     *to = *paramdef;
@@ -209,7 +210,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                            &paramdef, &ishex, &buf_n, &tmpbn))
         return 0;
 
-    if ((buf = OPENSSL_malloc(buf_n)) == NULL) {
+    if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL) {
         CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -217,5 +218,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
     ok = construct_from_text(to, paramdef, value, value_n, ishex,
                              buf, buf_n, tmpbn);
     BN_free(tmpbn);
+    if (!ok)
+        OPENSSL_free(buf);
     return ok;
 }
