@@ -22,7 +22,7 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_MODE, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
     OSSL_PARAM_ulong(OSSL_CIPHER_PARAM_FLAGS, NULL),
     OSSL_PARAM_END
 };
@@ -53,7 +53,7 @@ int cipher_generic_get_params(OSSL_PARAM params[], size_t md,
         return 0;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
-    if (p != NULL && !OSSL_PARAM_set_uint(p, blkbits / 8)) {
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, blkbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }

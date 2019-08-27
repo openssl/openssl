@@ -208,7 +208,7 @@ Setting a value of 0 will turn padding off.
 Gets the mode for the associated cipher algorithm.
 See L<EVP_CIPHER_mode(3)> for a list of valid modes.
 
-=item B<OSSL_CIPHER_PARAM_BLOCK_SIZE> (uint)
+=item B<OSSL_CIPHER_PARAM_BLOCK_SIZE> (size_t)
 
 Gets the block size for the associated cipher algorithm.
 The block size should be 1 for stream ciphers.
