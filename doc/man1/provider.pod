@@ -7,9 +7,9 @@ openssl-provider - load and query providers
 =head1 SYNOPSIS
 
 B<openssl provider>
-[B<-c>]
-[B<-cc>]
-[B<-ccc>]
+[B<-v>]
+[B<-vv>]
+[B<-vvv>]
 [ I<provider...> ]
 
 =head1 DESCRIPTION
@@ -21,7 +21,7 @@ I<provider>'s.
 
 =over 4
 
-=item B<-c> B<-cc> B<-ccc>
+=item B<-v> B<-vv> B<-vvv>
 
 Provides information about each specified provider.
 The first flag lists the names of all algorithms each provider
