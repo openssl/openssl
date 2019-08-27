@@ -130,6 +130,9 @@ static void do_mac(EVP_MAC *mac, void *meta)
               meta);
 }
 
+/*
+ * TODO(3.0) Enable when KEYMGMT and KEYEXCH have gettables and settables
+ */
 #if 0
 static void do_keymgmt(EVP_KEYMGMT *keymgmt, void *meta)
 {
@@ -239,6 +242,10 @@ int provider_main(int argc, char **argv)
                     data.label = "MAC";
                 }
                 EVP_MAC_do_all_ex(NULL, do_mac, &data);
+
+/*
+ * TODO(3.0) Enable when KEYMGMT and KEYEXCH have do_all_ex functions
+ */
 #if 0
                 if (verbose > 1) {
                     data.first = 1;
