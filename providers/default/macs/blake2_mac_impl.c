@@ -7,17 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_BLAKE2
+#include <openssl/core_numbers.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 
-# include <openssl/core_numbers.h>
-# include <openssl/core_names.h>
-# include <openssl/params.h>
-
-# include "internal/blake2.h"
-# include "internal/cryptlib.h"
-# include "internal/providercommonerr.h"
-# include "internal/provider_algs.h"
+#include "internal/blake2.h"
+#include "internal/cryptlib.h"
+#include "internal/providercommonerr.h"
+#include "internal/provider_algs.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -221,5 +218,3 @@ const OSSL_DISPATCH BLAKE2_FUNCTIONS[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))blake2_mac_set_ctx_params },
     { 0, NULL }
 };
-
-#endif

@@ -7,25 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_POLY1305
+#include <openssl/core_numbers.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
 
-# include <openssl/core_numbers.h>
-# include <openssl/core_names.h>
-# include <openssl/params.h>
-# include <openssl/evp.h>
-# include <openssl/err.h>
-
-# include "internal/poly1305.h"
+#include "internal/poly1305.h"
 /*
  * TODO(3.0) when poly1305 has moved entirely to our providers, this
  * header should be moved to the provider include directory.  For the
  * moment, crypto/poly1305/poly1305_ameth.c has us stuck.
  */
-# include "../../../crypto/poly1305/poly1305_local.h"
+#include "../../../crypto/poly1305/poly1305_local.h"
 
-# include "internal/providercommonerr.h"
-# include "internal/provider_algs.h"
+#include "internal/providercommonerr.h"
+#include "internal/provider_algs.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -163,5 +160,3 @@ const OSSL_DISPATCH poly1305_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))poly1305_set_ctx_params },
     { 0, NULL }
 };
-
-#endif
