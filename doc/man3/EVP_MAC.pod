@@ -167,7 +167,7 @@ and the given I<arg> as argument.
 
 =head1 PARAMETER NAMES
 
-Parameters are identified by name in form of strings, and have an
+Parameters are identified by name in the form of strings, and have an
 expected data type and maximum size.
 OpenSSL has a set of macros for parameter names it expects to see in
 its own MAC implementations.
