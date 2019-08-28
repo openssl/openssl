@@ -112,8 +112,6 @@ EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth);
 /**
  *  Creates a new EC_GROUP object. Same as EC_GROUP_new_ex with NULL for the
  *  library context.
- *  \param   libctx The associated library context or NULL for the default
- *                  library context
  *  \param   meth   EC_METHOD to use
  *  \return  newly created EC_GROUP object or NULL in case of an error.
  */
