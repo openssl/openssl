@@ -167,49 +167,56 @@ and the given I<arg> as argument.
 
 =head1 PARAMETER NAMES
 
+Parameters are identified by name as strings, and have an expected
+data type and maximum size.
+OpenSSL has a set of macros for parameter names it expects to see in
+its own MAC implementations.
+Here, we show all three, the OpenSSL macro for the parameter name, the
+name in string form, and a type description.
+
 The standard parameter names are:
 
 =over 4
 
-=item OSSL_MAC_PARAM_KEY ("key") <octet string>
+=item B<OSSL_MAC_PARAM_KEY> ("key") <octet string>
 
 Its value is the MAC key as an array of bytes.
 
 For MACs that use an underlying computation algorithm, the algorithm
 must be set first, see parameter names "algorithm" below.
 
-=item OSSL_MAC_PARAM_IV ("iv") <octet string>
+=item B<OSSL_MAC_PARAM_IV> ("iv") <octet string>
 
 Some MAC implementations require an IV, this parameter sets the IV.
 
-=item OSSL_MAC_PARAM_CUSTOM ("custom") <octet string>
+=item B<OSSL_MAC_PARAM_CUSTOM> ("custom") <octet string>
 
 Some MAC implementations (KMAC, BLAKE2) accept a Customization String,
 this parameter sets the Customization String. The default value is the
 empty string.
 
-=item OSSL_MAC_PARAM_SALT ("salt") <octet string>
+=item B<OSSL_MAC_PARAM_SALT> ("salt") <octet string>
 
 This option is used by BLAKE2 MAC.
 
-=item OSSL_MAC_PARAM_XOF ("xof") <int>
+=item B<OSSL_MAC_PARAM_XOF> ("xof") <int>
 
 It's a simple flag, the value 0 or 1 are expected.
 
 This option is used by KMAC.
 
-=item OSSL_MAC_PARAM_FLAGS ("flags") <int>
+=item B<OSSL_MAC_PARAM_FLAGS> ("flags") <int>
 
 These will set the MAC flags to the given numbers.
 Some MACs do not support this option.
 
-=item OSSL_MAC_PARAM_ENGINE ("engine") <utf8string>
+=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8string>
 
-=item OSSL_MAC_PARAM_PROPERTIES ("properties") <utf8string>
+=item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <utf8string>
 
-=item OSSL_MAC_PARAM_DIGEST ("digest") <utf8string>
+=item B<OSSL_MAC_PARAM_DIGEST> ("digest") <utf8string>
 
-=item OSSL_MAC_PARAM_CIPHER ("cipher") <utf8string>
+=item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <utf8string>
 
 For MAC implementations that use an underlying computation cipher or
 digest, these parameters set what the algorithm should be, and the
@@ -223,7 +230,7 @@ Note that not all algorithms may support all digests.
 HMAC does not support variable output length digests such as SHAKE128
 or SHAKE256.
 
-=item OSSL_MAC_PARAM_SIZE <unsigned int>
+=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned int>
 
 For MAC implementations that support it, set the output size that
 EVP_MAC_final() should produce.
