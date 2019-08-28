@@ -1,4 +1,8 @@
-$COMMON=cmac_prov.c gmac_prov.c hmac_prov.c kmac_prov.c
+IF[{- !$disabled{cmac} -}]
+  $COMMON=cmac_prov.c gmac_prov.c hmac_prov.c kmac_prov.c
+ELSE
+  $COMMON=gmac_prov.c hmac_prov.c kmac_prov.c
+ENDIF
 
 LIBS=../../../libcrypto
 SOURCE[../../../libcrypto]=$COMMON

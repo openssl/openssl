@@ -7,18 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_CMAC
+#include <openssl/core_numbers.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
+#include <openssl/engine.h>
+#include <openssl/evp.h>
+#include <openssl/cmac.h>
 
-# include <openssl/core_numbers.h>
-# include <openssl/core_names.h>
-# include <openssl/params.h>
-# include <openssl/engine.h>
-# include <openssl/evp.h>
-# include <openssl/cmac.h>
-
-# include "internal/provider_algs.h"
-# include "internal/provider_ctx.h"
+#include "internal/provider_algs.h"
+#include "internal/provider_ctx.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -256,5 +253,3 @@ const OSSL_DISPATCH cmac_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))cmac_set_ctx_params },
     { 0, NULL }
 };
-
-#endif
