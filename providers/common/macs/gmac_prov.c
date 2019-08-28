@@ -198,7 +198,8 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
             const char *algoname = p->data;
             const char *propquery = NULL;
 
-#ifndef FIPS_MODE /* Inside the FIPS module, we don't support engines */
+/* Inside the FIPS module, we don't support engines */
+#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
             ENGINE_finish(macctx->engine);
             macctx->engine = NULL;
 
