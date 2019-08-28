@@ -409,13 +409,14 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 {
     OSSL_PARAM dh_pad_params[2];
+    unsigned int upad = pad;
 
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->exchprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE,
                                  EVP_PKEY_CTRL_DH_PAD, pad, NULL);
 
-    dh_pad_params[0] = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_PAD, &pad);
+    dh_pad_params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &upad);
     dh_pad_params[1] = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, dh_pad_params);

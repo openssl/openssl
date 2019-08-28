@@ -26,7 +26,7 @@ typedef struct mdc2_ctx_st {
     unsigned int num;
     unsigned char data[MDC2_BLOCK];
     DES_cblock h, hh;
-    size_t pad_type;               /* either 1 or 2, default 1 */
+    unsigned int pad_type;   /* either 1 or 2, default 1 */
 } MDC2_CTX;
 
 int MDC2_Init(MDC2_CTX *c);

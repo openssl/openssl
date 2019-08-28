@@ -59,7 +59,7 @@ extern "C" {
 /* digest parameters */
 #define OSSL_DIGEST_PARAM_XOFLEN     "xoflen"    /* size_t */
 #define OSSL_DIGEST_PARAM_SSL3_MS    "ssl3-ms"   /* octet string */
-#define OSSL_DIGEST_PARAM_PAD_TYPE   "pad_type"  /* size_t */
+#define OSSL_DIGEST_PARAM_PAD_TYPE   "pad_type"  /* uint */
 #define OSSL_DIGEST_PARAM_MICALG     "micalg"    /* utf8 string */
 #define OSSL_DIGEST_PARAM_BLOCK_SIZE "blocksize" /* size_t */
 #define OSSL_DIGEST_PARAM_SIZE       "size"      /* size_t */
@@ -103,7 +103,7 @@ extern "C" {
 
 /* Key Exchange parameters */
 
-#define OSSL_EXCHANGE_PARAM_PAD      "exchange-pad" /* size_t */
+#define OSSL_EXCHANGE_PARAM_PAD      "exchange-pad" /* uint */
 
 # ifdef __cplusplus
 }

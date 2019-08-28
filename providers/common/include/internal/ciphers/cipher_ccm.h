@@ -28,24 +28,24 @@ typedef struct S390X_kmac_params_st {
 
 /* Base structure that is shared by AES & ARIA for CCM MODE */
 typedef struct prov_ccm_st {
-    int enc;
-    int key_set;                /* Set if key initialised */
-    int iv_set;                 /* Set if an iv is set */
-    int tag_set;                /* Set if tag is valid */
-    int len_set;                /* Set if message length set */
-    size_t l, m;                /* L and M parameters from RFC3610 */
+    unsigned int enc : 1;
+    unsigned int key_set : 1;  /* Set if key initialised */
+    unsigned int iv_set : 1;   /* Set if an iv is set */
+    unsigned int tag_set : 1;  /* Set if tag is valid */
+    unsigned int len_set : 1;  /* Set if message length set */
+    size_t l, m;               /* L and M parameters from RFC3610 */
     size_t keylen;
-    int tls_aad_len;            /* TLS AAD length */
+    int tls_aad_len;           /* TLS AAD length */
     size_t tls_aad_pad_sz;
     unsigned char iv[AES_BLOCK_SIZE];
     unsigned char buf[AES_BLOCK_SIZE];
     CCM128_CONTEXT ccm_ctx;
     ccm128_f str;
-    const PROV_CCM_HW *hw;      /* hardware specific methods  */
+    const PROV_CCM_HW *hw;     /* hardware specific methods  */
 } PROV_CCM_CTX;
 
 typedef struct prov_aes_ccm_ctx_st {
-    PROV_CCM_CTX base;          /* Must be first */
+    PROV_CCM_CTX base;         /* Must be first */
     union {
         OSSL_UNION_ALIGN;
         /*-
@@ -71,7 +71,7 @@ typedef struct prov_aes_ccm_ctx_st {
                 unsigned char b[AES_BLOCK_SIZE];
             } buf;
             unsigned char dummy_pad[168];
-            unsigned int fc;    /* fc has same offset as ks.ks.rounds */
+            unsigned int fc;   /* fc has same offset as ks.ks.rounds */
         } s390x;
 #endif /* defined(OPENSSL_CPUID_OBJ) && defined(__s390__) */
     } ccm;

@@ -243,7 +243,7 @@ section 5.6.8.
 The next call after setting this parameter will be OP_digest_final().
 This is only relevant for implementations of SHA1 or MD5_SHA1.
 
-=item B<OSSL_DIGEST_PARAM_PAD_TYPE> (size_t)
+=item B<OSSL_DIGEST_PARAM_PAD_TYPE> (uint)
 
 Sets the pad type to be used.
 The only built-in digest that uses this is MDC2.

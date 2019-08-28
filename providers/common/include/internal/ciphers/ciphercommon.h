@@ -39,13 +39,14 @@ struct prov_cipher_ctx_st {
         ctr128_f ctr;
     } stream;
 
-    int enc;              /* Set to 1 for encrypt, or 0 otherwise */
-    size_t mode;
+    unsigned int mode;
     size_t keylen;        /* key size (in bytes) */
     size_t ivlen;
     size_t blocksize;
     size_t bufsz;         /* Number of bytes in buf */
-    unsigned int pad;     /* Whether padding should be used or not */
+    unsigned int pad : 1; /* Whether padding should be used or not */
+    unsigned int enc : 1; /* Set to 1 for encrypt, or 0 otherwise */
+
 
     /*
      * num contains the number of bytes of |iv| which are valid for modes that
@@ -81,11 +82,11 @@ OSSL_OP_cipher_gettable_ctx_params_fn cipher_generic_gettable_ctx_params;
 OSSL_OP_cipher_settable_ctx_params_fn cipher_generic_settable_ctx_params;
 OSSL_OP_cipher_gettable_ctx_params_fn cipher_aead_gettable_ctx_params;
 OSSL_OP_cipher_settable_ctx_params_fn cipher_aead_settable_ctx_params;
-int cipher_generic_get_params(OSSL_PARAM params[], size_t md,
+int cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                               unsigned long flags,
                               size_t kbits, size_t blkbits, size_t ivbits);
 void cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
-                            size_t ivbits, size_t mode,
+                            size_t ivbits, unsigned int mode,
                             const PROV_CIPHER_HW *hw, void *provctx);
 
 #define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,     \

@@ -40,7 +40,7 @@ static unsigned char pad2[16] = {
 static int test_mdc2(void)
 {
     int testresult = 0;
-    size_t pad_type = 2;
+    unsigned int pad_type = 2;
     unsigned char md[MDC2_DIGEST_LENGTH];
     EVP_MD_CTX *c;
     static char text[] = "Now is the time for all ";
@@ -48,8 +48,8 @@ static int test_mdc2(void)
     OSSL_PROVIDER *prov = NULL;
     OSSL_PARAM params[2];
 
-    params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_PAD_TYPE,
-                                              &pad_type),
+    params[i++] = OSSL_PARAM_construct_uint(OSSL_DIGEST_PARAM_PAD_TYPE,
+                                            &pad_type),
     params[i++] = OSSL_PARAM_construct_end();
 
     prov = OSSL_PROVIDER_load(NULL, "legacy");

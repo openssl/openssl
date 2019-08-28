@@ -138,7 +138,7 @@ algorithms:
 
 =over 4
 
-=item B<OSSL_EXCHANGE_PARAM_PAD> (size_t)
+=item B<OSSL_EXCHANGE_PARAM_PAD> (uint)
 
 Sets the padding mode for the associated key exchange ctx.
 Setting a value of 1 will turn padding on.

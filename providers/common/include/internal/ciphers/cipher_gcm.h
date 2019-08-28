@@ -13,7 +13,7 @@
 
 typedef struct prov_gcm_hw_st PROV_GCM_HW;
 
-#define GCM_IV_DEFAULT_SIZE 12/* IV's for AES_GCM should normally be 12 bytes */
+#define GCM_IV_DEFAULT_SIZE 12 /* IV's for AES_GCM should normally be 12 bytes */
 #define GCM_IV_MAX_SIZE     64
 #define GCM_TAG_MAX_SIZE    16
 
@@ -45,18 +45,13 @@ typedef struct S390X_kma_params_st {
 #endif
 
 typedef struct prov_gcm_ctx_st {
-    int enc;                /* Set to 1 if we are encrypting or 0 otherwise */
-    size_t mode;               /* The mode that we are using */
+    unsigned int mode;          /* The mode that we are using */
     size_t keylen;
     size_t ivlen;
     size_t ivlen_min;
     size_t taglen;
-    int key_set;            /* Set if key initialised */
-    int iv_state;           /* set to one of IV_STATE_XXX */
-    int iv_gen_rand;        /* No IV was specified, so generate a rand IV */
-    int iv_gen;             /* It is OK to generate IVs */
     size_t tls_aad_pad_sz;
-    size_t tls_aad_len;     /* TLS AAD length */
+    size_t tls_aad_len;         /* TLS AAD length */
     uint64_t tls_enc_records;   /* Number of TLS records encrypted */
 
     /*
@@ -64,13 +59,18 @@ typedef struct prov_gcm_ctx_st {
      * manage partial blocks themselves.
      */
     size_t num;
-    size_t bufsz;           /* Number of bytes in buf */
+    size_t bufsz;               /* Number of bytes in buf */
     uint64_t flags;
 
-    size_t pad;             /* Whether padding should be used or not */
+    unsigned int iv_state;      /* set to one of IV_STATE_XXX */
+    unsigned int enc:1;         /* Set to 1 if we are encrypting or 0 otherwise */
+    unsigned int pad:1;         /* Whether padding should be used or not */
+    unsigned int key_set:1;     /* Set if key initialised */
+    unsigned int iv_gen_rand:1; /* No IV was specified, so generate a rand IV */
+    unsigned int iv_gen:1;      /* It is OK to generate IVs */
 
     unsigned char iv[GCM_IV_MAX_SIZE]; /* Buffer to use for IV's */
-    unsigned char buf[AES_BLOCK_SIZE];     /* Buffer of partial blocks processed via update calls */
+    unsigned char buf[AES_BLOCK_SIZE]; /* Buffer of partial blocks processed via update calls */
 
     OPENSSL_CTX *libctx;    /* needed for rand calls */
     const PROV_GCM_HW *hw;  /* hardware specific methods */
@@ -153,7 +153,7 @@ int gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
 int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
                       size_t len, unsigned char *out);
 
-#define GCM_HW_SET_KEY_CTR_FN(ks, fn_set_enc_key, fn_block, fn_ctr)     \
+#define GCM_HW_SET_KEY_CTR_FN(ks, fn_set_enc_key, fn_block, fn_ctr)            \
     ctx->ks = ks;                                                              \
     fn_set_enc_key(key, keylen * 8, ks);                                       \
     CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)fn_block);                   \

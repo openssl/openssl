@@ -31,7 +31,7 @@ const OSSL_PARAM *cipher_generic_gettable_params(void)
     return cipher_known_gettable_params;
 }
 
-int cipher_generic_get_params(OSSL_PARAM params[], size_t md,
+int cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                               unsigned long flags,
                               size_t kbits, size_t blkbits, size_t ivbits)
 {
@@ -113,7 +113,7 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
                                         const unsigned char *iv, size_t ivlen,
                                         int enc)
 {
-    ctx->enc = enc;
+    ctx->enc = enc ? 1 : 0;
 
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
         if (ivlen != ctx->ivlen) {
@@ -383,7 +383,7 @@ int cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 void cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
-                            size_t ivbits, size_t mode,
+                            size_t ivbits, unsigned int mode,
                             const PROV_CIPHER_HW *hw, void *provctx)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
