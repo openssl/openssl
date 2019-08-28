@@ -332,7 +332,9 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
 };
 
 static const OSSL_ALGORITHM fips_macs[] = {
+#ifndef OPENSSL_NO_CMAC
     { "CMAC", "fips=yes", cmac_functions },
+#endif
     { "GMAC", "fips=yes", gmac_functions },
     { "HMAC", "fips=yes", hmac_functions },
     { "KMAC128", "fips=yes", kmac128_functions },
