@@ -3937,11 +3937,11 @@ static int test_tls13_ciphersuite(int idx)
             break;
         case 2:
             set_at_ctx = 1;
-            t12_cipher = TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256;
+            t12_cipher = TLS1_TXT_RSA_WITH_AES_128_SHA256;
             break;
         case 3:
             set_at_ssl = 1;
-            t12_cipher = TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256;
+            t12_cipher = TLS1_TXT_RSA_WITH_AES_128_SHA256;
             break;
     }
 
