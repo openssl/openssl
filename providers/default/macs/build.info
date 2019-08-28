@@ -1,4 +1,15 @@
 LIBS=../../../libcrypto
-SOURCE[../../../libcrypto]=\
-        blake2b_mac.c blake2s_mac.c siphash_prov.c poly1305_prov.c
+
+IF[{- !$disabled{blake2} -}]
+  SOURCE[../../../libcrypto]=blake2b_mac.c blake2s_mac.c
+ENDIF
+
+IF[{- !$disabled{siphash} -}]
+  SOURCE[../../../libcrypto]=siphash_prov.c
+ENDIF
+
+IF[{- !$disabled{poly1305} -}]
+  SOURCE[../../../libcrypto]=poly1305_prov.c
+ENDIF
+
 INCLUDE[../../../libcrypto]=. ../../../crypto
