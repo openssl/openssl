@@ -294,8 +294,6 @@ EVP_get_digestbynid                     define
 EVP_get_digestbyobj                     define
 EVP_get_macbynid                        define
 EVP_get_macbyobj                        define
-EVP_get_kdfbynid                        define
-EVP_get_kdfbyobj                        define
 EVP_idea_cfb                            define
 EVP_rc2_cfb                             define
 EVP_rc5_32_12_16_cfb                    define
