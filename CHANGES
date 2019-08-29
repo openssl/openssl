@@ -14,8 +14,8 @@
      /dev/random to be producing output before seeding from /dev/urandom.
      The seeded state is stored for future library initialisations using
      a system global shared memory segment.  The shared memory identifier
-     can be configured by defining OSSL_SHM_SEEDED to the desired value.
-     The default identifier is 114.
+     can be configured by defining OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID to
+     the desired value.  The default identifier is 114.
      [Paul Dale]
 
   *) Revised BN_generate_prime_ex to not avoid factors 2..17863 in p-1
