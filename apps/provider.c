@@ -68,13 +68,13 @@ static void print_caps(META *meta, INFO *info)
         if (meta->first) {
             if (meta->total > 0)
                 BIO_printf(bio_out, "\n");
-            BIO_printf(bio_out, "%*s%ss:", meta->indent, " ", meta->label);
+            BIO_printf(bio_out, "%*s%ss:", meta->indent, "", meta->label);
         }
         BIO_printf(bio_out, " %s", info->name);
         break;
     case 3:
     default:
-        BIO_printf(bio_out, "%*s%s %s\n", meta->indent, " ", meta->label,
+        BIO_printf(bio_out, "%*s%s %s\n", meta->indent, "", meta->label,
                    info->name);
         print_param_types("retrievable algorithm parameters",
                           info->gettable_params, meta->subindent);
