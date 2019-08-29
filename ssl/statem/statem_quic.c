@@ -18,30 +18,29 @@ NON_EMPTY_TRANSLATION_UNIT
 int quic_get_message(SSL *s, int *mt, size_t *len)
 {
     size_t l;
-    QUIC_DATA *qd;
+    QUIC_DATA *qd = s->quic_input_data_head;
     uint8_t *p;
 
-    if (s->quic_input_data_head == NULL) {
+    if (qd == NULL || (qd->length - qd->offset) != 0) {
         s->rwstate = SSL_READING;
         *len = 0;
         return 0;
     }
 
     /* This is where we check for the proper level, not when data is given */
-    if (s->quic_input_data_head->level != s->quic_read_level) {
+    if (qd->level != s->quic_read_level) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_WRONG_ENCRYPTION_LEVEL_RECEIVED);
         *len = 0;
         return 0;
     }
 
-    if (!BUF_MEM_grow_clean(s->init_buf, (int)s->quic_input_data_head->length)) {
+    if (!BUF_MEM_grow_clean(s->init_buf, (int)qd->length)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
         *len = 0;
         return 0;
     }
 
     /* Copy buffered data */
-    qd = s->quic_input_data_head;
     memcpy(s->init_buf->data, (void*)(qd + 1), qd->length);
     s->init_buf->length = qd->length;
     s->quic_input_data_head = qd->next;
