@@ -265,16 +265,19 @@ int quic_set_encryption_secrets(SSL *ssl, OSSL_ENCRYPTION_LEVEL level)
 
 int SSL_process_quic_post_handshake(SSL *ssl)
 {
+    int ret;
+
     if (SSL_in_init(ssl) || !SSL_IS_QUIC(ssl)) {
         SSLerr(SSL_F_SSL_PROCESS_QUIC_POST_HANDSHAKE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
 
     ossl_statem_set_in_init(ssl, 1);
+    ret = ssl->handshake_func(ssl);
+    ossl_statem_set_in_init(ssl, 0);
 
-    if (ssl->handshake_func(ssl) <= 0)
+    if (ret <= 0)
         return 0;
-
     return 1;
 }
 
