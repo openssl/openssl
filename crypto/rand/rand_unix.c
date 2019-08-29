@@ -388,7 +388,7 @@ static int wait_random_seeded(void)
     fd_set fds;
 
     if (!seeded) {
-        /* See if anthing has created the global seeded indication */
+        /* See if anything has created the global seeded indication */
         if ((shm_id = shmget(OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID, 1, 0)) == -1) {
             /*
              * Check the kernel's version and fail if it is too recent.
@@ -422,7 +422,7 @@ static int wait_random_seeded(void)
                 close(fd);
                 if (r == 1) {
                     seeded = 1;
-                    /* Craete the shared memory indicator */
+                    /* Create the shared memory indicator */
                     shm_id = shmget(OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID, 1,
                                     IPC_CREAT | S_IRUSR | S_IRGRP | S_IROTH);
                 }
