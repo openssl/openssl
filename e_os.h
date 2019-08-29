@@ -28,7 +28,7 @@
  * default, we will try to read at least one of these files
  */
 #  define DEVRANDOM "/dev/urandom", "/dev/random", "/dev/hwrng", "/dev/srandom"
-#  ifdef __linux
+#  if defined(__linux) && !defined(__ANDROID__)
 #   ifndef DEVRANDOM_WAIT
 #    define DEVRANDOM_WAIT   "/dev/random"
 #   endif
