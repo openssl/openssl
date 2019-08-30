@@ -85,6 +85,11 @@ static void *evp_kdf_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
             kdf->freectx = OSSL_get_OP_kdf_freectx(fns);
             fnctxcnt++;
             break;
+        case OSSL_FUNC_KDF_RESET:
+            if (kdf->reset != NULL)
+                break;
+            kdf->reset = OSSL_get_OP_kdf_reset(fns);
+            break;
         case OSSL_FUNC_KDF_DERIVE:
             if (kdf->derive != NULL)
                 break;
