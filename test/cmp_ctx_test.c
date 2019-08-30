@@ -153,9 +153,9 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
 #else
     ctx->log_cb = msg_total_size_log_cb;
 #endif
-    if (!TEST_true(ctx->log_cb != NULL))
+    if (!TEST_true(ctx->log_cb != NULL)) {
         res = 0;
-    else {
+    } else {
         CMPerr(0, CMP_R_INVALID_ARGS);
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         base_err_msg_size = strlen("INVALID_ARGS") + strlen("NULL_ARGUMENT");
