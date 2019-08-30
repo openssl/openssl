@@ -207,7 +207,7 @@ int quic_set_encryption_secrets(SSL *ssl, OSSL_ENCRYPTION_LEVEL level)
     /* secrets from the POV of the client */
     switch (level) {
     case ssl_encryption_early_data:
-        s2c_secret = ssl->early_secret;
+        c2s_secret = ssl->early_secret;
         break;
     case ssl_encryption_handshake:
         c2s_secret = ssl->client_hand_traffic_secret;
