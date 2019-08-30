@@ -515,33 +515,18 @@ static int quic_change_cipher_state(SSL *s, int which)
     }
     hashlen = (size_t)hashleni;
 
-    if (is_handshake)
-        level = ssl_encryption_handshake;
-    else
-        level = ssl_encryption_application;
-
     if (is_client_read || is_server_write) {
         if (is_handshake) {
             level = ssl_encryption_handshake;
 
             if (!tls13_hkdf_expand(s, md, s->handshake_secret, client_handshake_traffic,
                                    sizeof(client_handshake_traffic)-1, hash, hashlen,
-                                   s->client_hand_traffic_secret, hashlen, 1)) {
-                /* SSLfatal() already called */
-                goto err;
-            }
-            if (!ssl_log_secret(s, CLIENT_HANDSHAKE_LABEL, s->client_hand_traffic_secret, hashlen)) {
-                /* SSLfatal() already called */
-                goto err;
-            }
-
-            if (!tls13_hkdf_expand(s, md, s->handshake_secret, server_handshake_traffic,
-                                   sizeof(server_handshake_traffic)-1, hash, hashlen,
-                                   s->server_hand_traffic_secret, hashlen, 1)) {
-                /* SSLfatal() already called */
-                goto err;
-            }
-            if (!ssl_log_secret(s, SERVER_HANDSHAKE_LABEL, s->server_hand_traffic_secret, hashlen)) {
+                                   s->client_hand_traffic_secret, hashlen, 1)
+                || !ssl_log_secret(s, CLIENT_HANDSHAKE_LABEL, s->client_hand_traffic_secret, hashlen)
+                || !tls13_hkdf_expand(s, md, s->handshake_secret, server_handshake_traffic,
+                                      sizeof(server_handshake_traffic)-1, hash, hashlen,
+                                      s->server_hand_traffic_secret, hashlen, 1)
+                || !ssl_log_secret(s, SERVER_HANDSHAKE_LABEL, s->server_hand_traffic_secret, hashlen)) {
                 /* SSLfatal() already called */
                 goto err;
             }
@@ -550,25 +535,19 @@ static int quic_change_cipher_state(SSL *s, int which)
 
             if (!tls13_hkdf_expand(s, md, s->master_secret, client_application_traffic,
                                    sizeof(client_application_traffic)-1, hash, hashlen,
-                                   s->client_app_traffic_secret, hashlen, 1)) {
+                                   s->client_app_traffic_secret, hashlen, 1)
+                || !ssl_log_secret(s, CLIENT_APPLICATION_LABEL, s->client_app_traffic_secret, hashlen)
+                || !tls13_hkdf_expand(s, md, s->master_secret, server_application_traffic,
+                                      sizeof(server_application_traffic)-1, hash, hashlen,
+                                      s->server_app_traffic_secret, hashlen, 1)
+                || !ssl_log_secret(s, SERVER_APPLICATION_LABEL, s->server_app_traffic_secret, hashlen)) {
                 /* SSLfatal() already called */
                 goto err;
             }
-            if (!ssl_log_secret(s, CLIENT_APPLICATION_LABEL, s->client_app_traffic_secret, hashlen)) {
-                /* SSLfatal() already called */
-                goto err;
-            }
-
-            if (!tls13_hkdf_expand(s, md, s->master_secret, server_application_traffic,
-                                   sizeof(server_application_traffic)-1, hash, hashlen,
-                                   s->server_app_traffic_secret, hashlen, 1)) {
-                /* SSLfatal() already called */
-                goto err;
-            }
-            if (!ssl_log_secret(s, SERVER_APPLICATION_LABEL, s->server_app_traffic_secret, hashlen)) {
-                /* SSLfatal() already called */
-                goto err;
-            }
+        }
+        if (!quic_set_encryption_secrets(s, level)) {
+            /* SSLfatal() already called */
+            goto err;
         }
         if (s->server)
             s->quic_write_level = level;
@@ -580,23 +559,23 @@ static int quic_change_cipher_state(SSL *s, int which)
 
             if (!tls13_hkdf_expand(s, md, s->early_secret, client_early_traffic,
                                    sizeof(client_early_traffic)-1, hash, hashlen,
-                                   s->client_early_traffic_secret, hashlen, 1)) {
+                                   s->client_early_traffic_secret, hashlen, 1)
+                || !ssl_log_secret(s, CLIENT_EARLY_LABEL, s->client_early_traffic_secret, hashlen)
+                || !quic_set_encryption_secrets(s, level)) {
                 /* SSLfatal() already called */
                 goto err;
             }
-            if (!ssl_log_secret(s, CLIENT_EARLY_LABEL, s->client_early_traffic_secret, hashlen)) {
-                /* SSLfatal() already called */
-                goto err;
-            }
+        } else if (is_handshake) {
+            level = ssl_encryption_handshake;
+        } else {
+            level = ssl_encryption_application;
         }
+
         if (s->server)
             s->quic_read_level = level;
         else
             s->quic_write_level = level;
     }
-
-    if (level != ssl_encryption_initial && !quic_set_encryption_secrets(s, level))
-        goto err;
 
     ret = 1;
  err:
