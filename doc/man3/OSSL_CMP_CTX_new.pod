@@ -585,7 +585,7 @@ return the intended value as described above or -1 on error.
 
 All other functions return 1 on success, 0 on error.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 The following code does an Initialization Request:
 
