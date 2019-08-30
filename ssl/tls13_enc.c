@@ -795,6 +795,8 @@ int tls13_change_cipher_state(SSL *s, int which)
         memcpy(s->client_hand_traffic_secret, secret, hashlen);
     else if (label == server_handshake_traffic)
         memcpy(s->server_hand_traffic_secret, secret, hashlen);
+    else if (label == client_early_traffic)
+        memcpy(s->client_early_traffic_secret, secret, hashlen);
 #endif
 
     if (!ssl_log_secret(s, log_label, secret, hashlen)) {
