@@ -234,9 +234,20 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_signature[] = {
+#ifndef OPENSSL_NO_DSA
+    { "DSA", "default=yes", dsa_signature_functions },
+#endif
+    { NULL, NULL, NULL }
+};
+
+
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
     { "dhKeyAgreement", "default=yes", dh_keymgmt_functions },
+#endif
+#ifndef OPENSSL_NO_DSA
+    { "DSA", "default=yes", dsa_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -259,6 +270,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
         return deflt_keymgmt;
     case OSSL_OP_KEYEXCH:
         return deflt_keyexch;
+    case OSSL_OP_SIGNATURE:
+        return deflt_signature;
     }
     return NULL;
 }

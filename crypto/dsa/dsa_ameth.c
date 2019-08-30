@@ -8,14 +8,16 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
-#include "dsa_locl.h"
 #include <openssl/bn.h>
 #include <openssl/cms.h>
+#include <openssl/core_names.h>
+#include "internal/cryptlib.h"
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/param_build.h"
+#include "dsa_locl.h"
 
 static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {
@@ -63,6 +65,7 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
         goto err;
     }
 
+    dsa->dirty_cnt++;
     ASN1_INTEGER_free(public_key);
     EVP_PKEY_assign_DSA(pkey, dsa);
     return 1;
@@ -185,6 +188,7 @@ static int dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         goto dsaerr;
     }
 
+    dsa->dirty_cnt++;
     EVP_PKEY_assign_DSA(pkey, dsa);
 
     ret = 1;
@@ -300,6 +304,7 @@ static int dsa_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         return 0;
     BN_free(to->pkey.dsa->g);
     to->pkey.dsa->g = a;
+    to->pkey.dsa->dirty_cnt++;
     return 1;
 }
 
@@ -381,6 +386,7 @@ static int dsa_param_decode(EVP_PKEY *pkey,
         DSAerr(DSA_F_DSA_PARAM_DECODE, ERR_R_DSA_LIB);
         return 0;
     }
+    dsa->dirty_cnt++;
     EVP_PKEY_assign_DSA(pkey, dsa);
     return 1;
 }
@@ -417,6 +423,7 @@ static int old_dsa_priv_decode(EVP_PKEY *pkey,
         DSAerr(DSA_F_OLD_DSA_PRIV_DECODE, ERR_R_DSA_LIB);
         return 0;
     }
+    dsa->dirty_cnt++;
     EVP_PKEY_assign_DSA(pkey, dsa);
     return 1;
 }
@@ -514,6 +521,56 @@ static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 }
 
+static size_t dsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
+{
+    return pkey->pkey.dsa->dirty_cnt;
+}
+
+static void *dsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
+{
+    DSA *dsa = pk->pkey.dsa;
+    OSSL_PARAM_BLD tmpl;
+    const BIGNUM *p = DSA_get0_p(dsa), *g = DSA_get0_g(dsa);
+    const BIGNUM *q = DSA_get0_q(dsa), *pub_key = DSA_get0_pub_key(dsa);
+    const BIGNUM *priv_key = DSA_get0_priv_key(dsa);
+    OSSL_PARAM *params;
+    void *provkey = NULL;
+
+    if (p == NULL || q == NULL || g == NULL)
+        return NULL;
+
+    ossl_param_bld_init(&tmpl);
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+        return NULL;
+
+    /*
+     * This may be used to pass domain parameters only without any key data -
+     * so "pub_key" is optional. We can never have a "priv_key" without a
+     * corresponding "pub_key" though.
+     */
+    if (pub_key != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PUB_KEY,
+                                    pub_key))
+            return NULL;
+
+        if (priv_key != NULL) {
+            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PRIV_KEY,
+                                        priv_key))
+                return NULL;
+        }
+    }
+
+    params = ossl_param_bld_to_param(&tmpl);
+
+    /* We export, the provider imports */
+    provkey = evp_keymgmt_importkey(keymgmt, params);
+
+    ossl_param_bld_free(params);
+    return provkey;
+}
+
 /* NB these are sorted in pkey_id order, lowest first */
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5] = {
@@ -570,5 +627,13 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5] = {
      int_dsa_free,
      dsa_pkey_ctrl,
      old_dsa_priv_decode,
-     old_dsa_priv_encode}
+     old_dsa_priv_encode,
+
+     NULL, NULL, NULL,
+     NULL, NULL, NULL,
+     NULL, NULL, NULL, NULL,
+
+     dsa_pkey_dirty_cnt,
+     dsa_pkey_export_to
+    }
 };

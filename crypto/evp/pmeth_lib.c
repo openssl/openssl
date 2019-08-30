@@ -430,6 +430,38 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 }
 #endif
 
+int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
+{
+    OSSL_PARAM sig_md_params[3];
+    size_t mdsize;
+    const char *name;
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->sigprovctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,
+                                 EVP_PKEY_CTRL_MD, 0, (void *)(md));
+
+    if (md == NULL)
+        return 1;
+
+    mdsize = EVP_MD_size(md);
+    name = EVP_MD_name(md);
+    sig_md_params[0] = OSSL_PARAM_construct_utf8_string(
+                           OSSL_SIGNATURE_PARAM_DIGEST,
+                           /*
+                            * Cast away the const. This is read only so should
+                            * be safe
+                            */
+                           (char *)name,
+                           strlen(name) + 1);
+    sig_md_params[1] = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
+                                                   &mdsize);
+    sig_md_params[2] = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, sig_md_params);
+
+}
+
 static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                                 int cmd, int p1, void *p2)
 {

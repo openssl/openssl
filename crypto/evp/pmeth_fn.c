@@ -194,6 +194,8 @@ int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
          */
         if (ctx->pkey != NULL) {
             switch (ctx->pkey->type) {
+            case NID_dsa:
+                break;
             default:
                 goto legacy;
             }

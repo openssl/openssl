@@ -408,6 +408,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_params, (void *ctx,
 # define OSSL_FUNC_SIGNATURE_SIGN                    3
 # define OSSL_FUNC_SIGNATURE_FREECTX                 4
 # define OSSL_FUNC_SIGNATURE_DUPCTX                  5
+# define OSSL_FUNC_SIGNATURE_SET_PARAMS              6
 
 OSSL_CORE_MAKE_FUNC(void *, OP_signature_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_sign_init, (void *ctx, void *provkey))
@@ -417,6 +418,8 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_sign, (void *ctx,  unsigned char *sig,
                                              size_t tbslen))
 OSSL_CORE_MAKE_FUNC(void, OP_signature_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_signature_dupctx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_set_params, (void *ctx,
+                                                   const OSSL_PARAM params[]))
 
 # ifdef __cplusplus
 }

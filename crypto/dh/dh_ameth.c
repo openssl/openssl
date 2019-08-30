@@ -563,13 +563,13 @@ static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return NULL;
 
     ossl_param_bld_init(&tmpl);
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_P, p)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_G, g)
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g)
         || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_key))
         return NULL;
 
     if (q != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_Q, q))
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q))
             return NULL;
     }
 

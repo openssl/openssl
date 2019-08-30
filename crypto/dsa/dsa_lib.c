@@ -273,6 +273,7 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
         BN_free(d->g);
         d->g = g;
     }
+    d->dirty_cnt++;
 
     return 1;
 }
@@ -303,6 +304,7 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
         BN_free(d->priv_key);
         d->priv_key = priv_key;
     }
+    d->dirty_cnt++;
 
     return 1;
 }

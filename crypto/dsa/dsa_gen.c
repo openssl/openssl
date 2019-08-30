@@ -281,6 +281,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
         ret->p = BN_dup(p);
         ret->q = BN_dup(q);
         ret->g = BN_dup(g);
+        ret->dirty_cnt++;
         if (ret->p == NULL || ret->q == NULL || ret->g == NULL) {
             ok = 0;
             goto err;
@@ -598,6 +599,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
             ok = -1;
             goto err;
         }
+        ret->dirty_cnt++;
         if (counter_ret != NULL)
             *counter_ret = counter;
         if (h_ret != NULL)

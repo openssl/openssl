@@ -24,8 +24,8 @@ static int params_to_key(DH *dh, const OSSL_PARAM params[])
     if (dh == NULL)
         return 0;
 
-    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_P);
-    param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_G);
+    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_P);
+    param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_G);
     param_priv_key =
         OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PRIV_KEY);
     param_pub_key =
