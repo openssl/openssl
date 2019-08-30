@@ -32,11 +32,6 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     return exchange;
 }
 
-struct keymgmt_data_st {
-    OPENSSL_CTX *ctx;
-    const char *properties;
-};
-
 static void *evp_keyexch_from_dispatch(const char *name,
                                        const OSSL_DISPATCH *fns,
                                        OSSL_PROVIDER *prov,

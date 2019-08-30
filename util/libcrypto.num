@@ -4740,3 +4740,8 @@ EVP_KDF_gettable_params                 4856	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_gettable_params             4857	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_settable_params             4858	3_0_0	EXIST::FUNCTION:
 EVP_KDF_do_all_ex                       4859	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_free                      4860	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_up_ref                    4861	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_provider                  4862	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_fetch                     4863	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_sign_init_ex                   4864	3_0_0	EXIST::FUNCTION:

@@ -21,6 +21,9 @@ struct evp_pkey_ctx_st {
     EVP_KEYEXCH *exchange;
     void *exchprovctx;
 
+    EVP_SIGNATURE *signature;
+    void *sigprovctx;
+
     /* Legacy fields below */
 
     /* Method associated with this operation */

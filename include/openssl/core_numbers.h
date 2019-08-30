@@ -156,8 +156,9 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 # define OSSL_OP_KDF                                 4
 # define OSSL_OP_KEYMGMT                            10
 # define OSSL_OP_KEYEXCH                            11
+# define OSSL_OP_SIGNATURE                          12
 /* Highest known operation number */
-# define OSSL_OP__HIGHEST                           11
+# define OSSL_OP__HIGHEST                           12
 
 /* Digests */
 
@@ -399,6 +400,23 @@ OSSL_CORE_MAKE_FUNC(void, OP_keyexch_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_dupctx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_params, (void *ctx,
                                                  const OSSL_PARAM params[]))
+
+/* Signature */
+
+# define OSSL_FUNC_SIGNATURE_NEWCTX                  1
+# define OSSL_FUNC_SIGNATURE_SIGN_INIT               2
+# define OSSL_FUNC_SIGNATURE_SIGN                    3
+# define OSSL_FUNC_SIGNATURE_FREECTX                 4
+# define OSSL_FUNC_SIGNATURE_DUPCTX                  5
+
+OSSL_CORE_MAKE_FUNC(void *, OP_signature_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_sign_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_sign, (void *ctx,  unsigned char *sig,
+                                             size_t *siglen, size_t sigsize,
+                                             const unsigned char *tbs,
+                                             size_t tbslen))
+OSSL_CORE_MAKE_FUNC(void, OP_signature_freectx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_signature_dupctx, (void *ctx))
 
 # ifdef __cplusplus
 }
