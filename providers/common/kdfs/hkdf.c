@@ -75,7 +75,6 @@ static void kdf_hkdf_free(void *vctx)
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
 
     kdf_hkdf_reset(ctx);
-    EVP_MD_meth_free(ctx->md);
     OPENSSL_free(ctx);
 }
 
@@ -83,6 +82,7 @@ static void kdf_hkdf_reset(void *vctx)
 {
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
 
+    EVP_MD_meth_free(ctx->md);
     OPENSSL_free(ctx->salt);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_cleanse(ctx->info, ctx->info_len);

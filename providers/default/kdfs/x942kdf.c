@@ -255,6 +255,7 @@ static void x942kdf_reset(void *vctx)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
 
+    EVP_MD_meth_free(ctx->md);
     OPENSSL_clear_free(ctx->secret, ctx->secret_len);
     OPENSSL_clear_free(ctx->ukm, ctx->ukm_len);
     memset(ctx, 0, sizeof(*ctx));
@@ -265,7 +266,6 @@ static void x942kdf_free(void *vctx)
     KDF_X942 *ctx = (KDF_X942 *)vctx;
 
     x942kdf_reset(ctx);
-    EVP_MD_meth_free(ctx->md);
     OPENSSL_free(ctx);
 }
 
