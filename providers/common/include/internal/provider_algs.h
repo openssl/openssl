@@ -146,6 +146,10 @@ extern const OSSL_DISPATCH tdes_wrap_cbc_functions[];
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
+extern const OSSL_DISPATCH dsa_keymgmt_functions[];
 
 /* Key Exchange */
 extern const OSSL_DISPATCH dh_keyexch_functions[];
+
+/* Signature */
+extern const OSSL_DISPATCH dsa_signature_functions[];

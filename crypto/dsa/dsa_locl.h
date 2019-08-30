@@ -31,6 +31,9 @@ struct dsa_st {
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
+
+    /* Provider data */
+    size_t dirty_cnt; /* If any key material changes, increment this */
 };
 
 struct DSA_SIG_st {

@@ -93,17 +93,26 @@ extern "C" {
 #define OSSL_MAC_NAME_KMAC256       "KMAC256"
 
 /* PKEY parameters */
-/* Diffie-Hellman Parameters */
-#define OSSL_PKEY_PARAM_DH_P         "dh-p"
-#define OSSL_PKEY_PARAM_DH_G         "dh-g"
-#define OSSL_PKEY_PARAM_DH_Q         "dh-q"
+/* Diffie-Hellman/DSA Parameters */
+#define OSSL_PKEY_PARAM_FFC_P        "ffc-p"
+#define OSSL_PKEY_PARAM_FFC_G        "ffc-g"
+#define OSSL_PKEY_PARAM_FFC_Q        "ffc-q"
+
 /* Diffie-Hellman Keys */
 #define OSSL_PKEY_PARAM_DH_PUB_KEY   "dh-pub"
 #define OSSL_PKEY_PARAM_DH_PRIV_KEY  "dh-priv"
 
+/* DSA Keys */
+#define OSSL_PKEY_PARAM_DSA_PUB_KEY  "dsa-pub"
+#define OSSL_PKEY_PARAM_DSA_PRIV_KEY "dsa-priv"
+
 /* Key Exchange parameters */
 
 #define OSSL_EXCHANGE_PARAM_PAD      "exchange-pad" /* uint */
+
+/* Signature parameters */
+#define OSSL_SIGNATURE_PARAM_DIGEST         "digest"
+#define OSSL_SIGNATURE_PARAM_DIGEST_SIZE    "digest-size"
 
 # ifdef __cplusplus
 }

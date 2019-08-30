@@ -1,4 +1,4 @@
-SUBDIRS=digests ciphers macs exchange keymgmt
+SUBDIRS=digests ciphers macs exchange keymgmt signature
 
 SOURCE[../../libcrypto]=\
         provider_err.c provlib.c
