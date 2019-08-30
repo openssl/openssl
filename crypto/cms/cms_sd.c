@@ -706,11 +706,23 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         si->pctx = pctx;
     }
 
+    /*
+     * TODO(3.0): This causes problems when providers are in use, so disabled
+     * for now. Can we get rid of this completely? AFAICT this ctrl has been
+     * present since CMS was first put in - but has never been used to do
+     * anything. All internal implementations just return 1 and ignore this ctrl
+     * and have always done so by the looks of things. To fix this we could
+     * convert this ctrl into a param, which would require us to send all the
+     * signer info data as a set of params...but that is non-trivial and since
+     * this isn't used by anything it may be better just to remove it.
+     */
+#if 0
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
                           EVP_PKEY_CTRL_CMS_SIGN, 0, si) <= 0) {
         CMSerr(CMS_F_CMS_SIGNERINFO_SIGN, CMS_R_CTRL_ERROR);
         goto err;
     }
+#endif
 
     alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
                          ASN1_ITEM_rptr(CMS_Attributes_Sign));
@@ -727,11 +739,23 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
         goto err;
 
+    /*
+     * TODO(3.0): This causes problems when providers are in use, so disabled
+     * for now. Can we get rid of this completely? AFAICT this ctrl has been
+     * present since CMS was first put in - but has never been used to do
+     * anything. All internal implementations just return 1 and ignore this ctrl
+     * and have always done so by the looks of things. To fix this we could
+     * convert this ctrl into a param, which would require us to send all the
+     * signer info data as a set of params...but that is non-trivial and since
+     * this isn't used by anything it may be better just to remove it.
+     */
+#if 0
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
                           EVP_PKEY_CTRL_CMS_SIGN, 1, si) <= 0) {
         CMSerr(CMS_F_CMS_SIGNERINFO_SIGN, CMS_R_CTRL_ERROR);
         goto err;
     }
+#endif
 
     EVP_MD_CTX_reset(mctx);
 

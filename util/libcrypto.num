@@ -4734,3 +4734,8 @@ EVP_MAC_provider                        4843	3_0_0	EXIST::FUNCTION:
 EVP_MAC_do_all_ex                       4844	3_0_0	EXIST::FUNCTION:
 EVP_MD_free                             4845	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_free                         4846	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_free                      4847	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_up_ref                    4848	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_provider                  4849	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_fetch                     4850	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_sign_init_ex                   4851	3_0_0	EXIST::FUNCTION:

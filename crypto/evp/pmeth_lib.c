@@ -390,6 +390,11 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 
     EVP_KEYEXCH_free(ctx->exchange);
 
+    if (ctx->sigprovctx != NULL && ctx->signature != NULL)
+        ctx->signature->freectx(ctx->sigprovctx);
+
+    EVP_SIGNATURE_free(ctx->signature);
+
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
 #ifndef OPENSSL_NO_ENGINE
@@ -402,6 +407,8 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
     if (ctx->exchprovctx != NULL && ctx->exchange != NULL)
         return ctx->exchange->set_params(ctx->exchprovctx, params);
+    if (ctx->sigprovctx != NULL && ctx->signature != NULL)
+        return ctx->signature->set_params(ctx->sigprovctx, params);
     return 0;
 }
 
