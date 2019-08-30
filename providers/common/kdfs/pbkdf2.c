@@ -75,11 +75,19 @@ static void *kdf_pbkdf2_new(void *provctx)
     return ctx;
 }
 
+static void kdf_pbkdf2_cleanup(KDF_PBKDF2 *ctx)
+{
+    EVP_MD_meth_free(ctx->md);
+    OPENSSL_free(ctx->salt);
+    OPENSSL_clear_free(ctx->pass, ctx->pass_len);
+    memset(ctx, 0, sizeof(*ctx));
+}
+
 static void kdf_pbkdf2_free(void *vctx)
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
 
-    kdf_pbkdf2_reset(ctx);
+    kdf_pbkdf2_cleanup(ctx);
     OPENSSL_free(ctx);
 }
 
@@ -87,10 +95,7 @@ static void kdf_pbkdf2_reset(void *vctx)
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
 
-    EVP_MD_meth_free(ctx->md);
-    OPENSSL_free(ctx->salt);
-    OPENSSL_clear_free(ctx->pass, ctx->pass_len);
-    memset(ctx, 0, sizeof(*ctx));
+    kdf_pbkdf2_cleanup(ctx);
     kdf_pbkdf2_init(ctx);
 }
 
