@@ -446,19 +446,38 @@ static int test_kdf_sshkdf(void)
 
 static int test_kdf_get_kdf(void)
 {
-    const EVP_KDF *kdf1, *kdf2;
+    EVP_KDF *kdf1 = NULL, *kdf2 = NULL;
     ASN1_OBJECT *obj;
+    int ok = 1;
 
-    return
-        TEST_ptr(obj = OBJ_nid2obj(NID_id_pbkdf2))
-        && TEST_ptr(kdf1 = EVP_get_kdfbyname(LN_id_pbkdf2))
-        && TEST_ptr(kdf2 = EVP_get_kdfbyname(OBJ_nid2sn(OBJ_obj2nid(obj))))
-        && TEST_ptr_eq(kdf1, kdf2)
-        && TEST_ptr(kdf1 = EVP_get_kdfbyname(SN_tls1_prf))
-        && TEST_ptr(kdf2 = EVP_get_kdfbyname(LN_tls1_prf))
-        && TEST_ptr_eq(kdf1, kdf2)
-        && TEST_ptr(kdf2 = EVP_get_kdfbyname(OBJ_nid2sn(NID_tls1_prf)))
-        && TEST_ptr_eq(kdf1, kdf2);
+    if (!TEST_ptr(obj = OBJ_nid2obj(NID_id_pbkdf2))
+        || !TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, LN_id_pbkdf2, NULL))
+        || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(OBJ_obj2nid(obj)),
+                                          NULL))
+        || !TEST_ptr_eq(kdf1, kdf2))
+        ok = 0;
+    EVP_KDF_free(kdf1);
+    kdf1 = NULL;
+    EVP_KDF_free(kdf2);
+    kdf2 = NULL;
+
+    if (!TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, SN_tls1_prf, NULL))
+        || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, LN_tls1_prf, NULL))
+        || !TEST_ptr_eq(kdf1, kdf2))
+        ok = 0;
+    /* kdf1 is re-used below, so don't free it here */
+    EVP_KDF_free(kdf2);
+    kdf2 = NULL;
+
+    if (!TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(NID_tls1_prf), NULL))
+        || !TEST_ptr_eq(kdf1, kdf2))
+        ok = 0;
+    EVP_KDF_free(kdf1);
+    kdf1 = NULL;
+    EVP_KDF_free(kdf2);
+    kdf2 = NULL;
+
+    return ok;
 }
 
 #ifndef OPENSSL_NO_CMS
