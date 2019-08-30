@@ -19,20 +19,10 @@
 extern "C" {
 # endif
 
-# define EVP_KDF_PBKDF2     NID_id_pbkdf2
-# define EVP_KDF_SCRYPT     NID_id_scrypt
-# define EVP_KDF_TLS1_PRF   NID_tls1_prf
-# define EVP_KDF_HKDF       NID_hkdf
-# define EVP_KDF_SSHKDF     NID_sshkdf
-# define EVP_KDF_SS         NID_sskdf
-# define EVP_KDF_X963       NID_x963kdf
-# define EVP_KDF_X942       NID_x942kdf
-
 int EVP_KDF_up_ref(EVP_KDF *kdf);
 void EVP_KDF_free(EVP_KDF *kdf);
 EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                        const char *properties);
-#define EVP_get_kdfbyname(name) EVP_KDF_fetch(NULL, (name), NULL)
 
 EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
 void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
