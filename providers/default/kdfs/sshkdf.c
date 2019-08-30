@@ -63,7 +63,6 @@ static void kdf_sshkdf_free(void *vctx)
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
 
     kdf_sshkdf_reset(ctx);
-    EVP_MD_meth_free(ctx->md);
     OPENSSL_free(ctx);
 }
 
@@ -71,6 +70,7 @@ static void kdf_sshkdf_reset(void *vctx)
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
 
+    EVP_MD_meth_free(ctx->md);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->xcghash, ctx->xcghash_len);
     OPENSSL_clear_free(ctx->session_id, ctx->session_id_len);

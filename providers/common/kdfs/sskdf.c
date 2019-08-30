@@ -315,10 +315,11 @@ static void sskdf_reset(void *vctx)
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
 
+    EVP_MD_meth_free(ctx->md);
+    EVP_MAC_free(ctx->mac);
     OPENSSL_clear_free(ctx->secret, ctx->secret_len);
     OPENSSL_clear_free(ctx->info, ctx->info_len);
     OPENSSL_clear_free(ctx->salt, ctx->salt_len);
-    EVP_MAC_free(ctx->mac);
     memset(ctx, 0, sizeof(*ctx));
 }
 
@@ -327,8 +328,6 @@ static void sskdf_free(void *vctx)
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
 
     sskdf_reset(ctx);
-    EVP_MD_meth_free(ctx->md);
-    EVP_MAC_free(ctx->mac);
     OPENSSL_free(ctx);
 }
 
