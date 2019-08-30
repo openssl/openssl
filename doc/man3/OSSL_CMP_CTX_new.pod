@@ -226,7 +226,7 @@ The following options can be set:
             OSSL_CRMF_POPO_KEYENC     - decrypt the encrypted certificate
                                         ("indirect method")
 
-        Note that a signature-based POPO can only produced if a private key
+        Note that a signature-based POPO can only be produced if a private key
         is provided as the newPkey or client pkey component of the CMP context.
 
 =item B<OSSL_CMP_OPT_DIGEST_ALGNID>
@@ -314,7 +314,7 @@ OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host.
 OSSL_CMP_CTX_set1_serverName() sets the given server Address (as IP or name)
 in the given OSSL_CMP_CTX structure.
 
-OSSL_CMP_CTX_set_serverPort() sets the port of the CMP server to connect to
+OSSL_CMP_CTX_set_serverPort() sets the port of the CMP server to connect to.
 Port defaults to OSSL_CMP_DEFAULT_PORT = 8080 if not set explicitly.
 
 OSSL_CMP_CTX_set1_proxyName() sets the host name of the HTTP proxy to be used
