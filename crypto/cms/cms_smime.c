@@ -606,7 +606,7 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
     int debug = 0, match_ri = 0;
     ris = CMS_get0_RecipientInfos(cms);
     if (ris)
-        debug = cms->d.envelopedData->encryptedContentInfo->debug;
+        debug = cms->d.envelopedData->encryptedContentInfo->debug > 0;
     ri_type = cms_pkey_get_ri_type(pk);
     if (ri_type == CMS_RECIPINFO_NONE) {
         CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY,
@@ -741,6 +741,8 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
         return 0;
     if (flags & CMS_DEBUG_DECRYPT)
         cms->d.envelopedData->encryptedContentInfo->debug = 1;
+    else if (!cert)
+        cms->d.envelopedData->encryptedContentInfo->debug = -1;
     else
         cms->d.envelopedData->encryptedContentInfo->debug = 0;
     if (!pk && !cert && !dcont && !out)

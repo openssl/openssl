@@ -111,7 +111,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
              * Only reveal failure if debugging so we don't leak information
              * which may be useful in MMA.
              */
-            if (enc || ec->debug) {
+            if (enc || ec->debug > 0) {
                 CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
                        CMS_R_INVALID_KEY_LENGTH);
                 goto err;
