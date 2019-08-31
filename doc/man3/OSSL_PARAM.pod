@@ -70,11 +70,6 @@ The identity of the parameter in the form of a string.
 
 =item I<data_type>
 
-=for comment It's still debated if this field should be present, or if
-the type should always be implied by how it's used.
-Either way, these data types will have to be passed together with the
-names as an array of OSSL_ITEM, for discovery purposes.
-
 The I<data_type> is a value that describes the type and organization of
 the data.
 See L</Supported types> below for a description of the types.
