@@ -19,7 +19,7 @@ OSSL_PARAM - a structure to pass or request object parameters
 
 =head1 DESCRIPTION
 
-C<OSSL_PARAM> is a type that allows passing arbitrary data for some
+B<OSSL_PARAM> is a type that allows passing arbitrary data for some
 object between two parties that have no or very little shared
 knowledge about their respective internal structures for that object.
 
@@ -33,76 +33,76 @@ Arrays of this type can be used for the following purposes:
 
 =item * Setting parameters for some object
 
-The caller sets up the C<OSSL_PARAM> array and calls some function
+The caller sets up the B<OSSL_PARAM> array and calls some function
 (the I<setter>) that has intimate knowledge about the object that can
-take the data from the C<OSSL_PARAM> array and assign them in a
+take the data from the B<OSSL_PARAM> array and assign them in a
 suitable form for the internal structure of the object.
 
 =item * Request parameters of some object
 
-The caller (the I<requestor>) sets up the C<OSSL_PARAM> array and
+The caller (the I<requestor>) sets up the B<OSSL_PARAM> array and
 calls some function (the I<responder>) that has intimate knowledge
 about the object, which can take the internal data of the object and
 copy (possibly convert) that to the memory prepared by the
-I<requestor> and pointed at with the C<OSSL_PARAM> C<data>.
+I<requestor> and pointed at with the B<OSSL_PARAM> I<data>.
 
 =item * Request parameter descriptors
 
-The caller gets an array of constant C<OSSL_PARAM>, which describe
+The caller gets an array of constant B<OSSL_PARAM>, which describe
 available parameters and some of their properties; name, data type and
 expected data size.
 For a detailed description of each field for this use, see the field
 descriptions below.
 
 The caller may then use the information from this descriptor array to
-build up its own C<OSSL_PARAM> array to pass down to a I<setter> or
+build up its own B<OSSL_PARAM> array to pass down to a I<setter> or
 I<responder>.
 
 =back
 
-=head2 C<OSSL_PARAM> fields
+=head2 B<OSSL_PARAM> fields
 
 =over 4
 
-=item C<key>
+=item I<key>
 
 The identity of the parameter in the form of a string.
 
-=item C<data_type>
+=item I<data_type>
 
 =for comment It's still debated if this field should be present, or if
 the type should always be implied by how it's used.
 Either way, these data types will have to be passed together with the
 names as an array of OSSL_ITEM, for discovery purposes.
 
-The C<data_type> is a value that describes the type and organization of
+The I<data_type> is a value that describes the type and organization of
 the data.
 See L</Supported types> below for a description of the types.
 
-=item C<data>
+=item I<data>
 
-=item C<data_size>
+=item I<data_size>
 
-C<data> is a pointer to the memory where the parameter data is (when
+I<data> is a pointer to the memory where the parameter data is (when
 setting parameters) or shall (when requesting parameters) be stored,
-and C<data_size> is its size in bytes.
+and I<data_size> is its size in bytes.
 The organization of the data depends on the parameter type and flag.
 
-When the C<OSSL_PARAM> is used as a parameter descriptor, C<data>
+When the B<OSSL_PARAM> is used as a parameter descriptor, I<data>
 should be ignored.
-If C<data_size> is zero, it means that an arbitrary data size is
+If I<data_size> is zero, it means that an arbitrary data size is
 accepted, otherwise it specifies the maximum size allowed.
 
-=item C<return_size>
+=item I<return_size>
 
-When an array of C<OSSL_PARAM> is used to request data, the
+When an array of B<OSSL_PARAM> is used to request data, the
 I<responder> must set this field to indicate the actual size of the
 parameter data.
-In case the C<data_size> is too small for the data, the I<responder>
+In case the I<data_size> is too small for the data, the I<responder>
 must still set this field to indicate the minimum data size required.
 
-When the C<OSSL_PARAM> is used as a parameter descriptor,
-C<return_size> should be ignored.
+When the B<OSSL_PARAM> is used as a parameter descriptor,
+I<return_size> should be ignored.
 
 =back
 
@@ -116,75 +116,75 @@ except for the pointer form of strings (see data type descriptions
 below).
 Entities that want to set or request parameters need to know what
 those keys are and of what type, any functionality between those two
-entities should remain oblivious and just pass the C<OSSL_PARAM> array
+entities should remain oblivious and just pass the B<OSSL_PARAM> array
 along.
 
 =head2 Supported types
 
-The C<data_type> field can be one of the following types:
+The I<data_type> field can be one of the following types:
 
 =over 4
 
-=item C<OSSL_PARAM_INTEGER>
+=item B<OSSL_PARAM_INTEGER>
 
-=item C<OSSL_PARAM_UNSIGNED_INTEGER>
+=item B<OSSL_PARAM_UNSIGNED_INTEGER>
 
 The parameter data is an integer (signed or unsigned) of arbitrary
 length, organized in native form, i.e. most significant byte first on
 Big-Endian systems, and least significant byte first on Little-Endian
 systems.
 
-=item C<OSSL_PARAM_REAL>
+=item B<OSSL_PARAM_REAL>
 
 The parameter data is a floating point value in native form.
 
-=item C<OSSL_PARAM_UTF8_STRING>
+=item B<OSSL_PARAM_UTF8_STRING>
 
 The parameter data is a printable string.
 
-=item C<OSSL_PARAM_OCTET_STRING>
+=item B<OSSL_PARAM_OCTET_STRING>
 
 The parameter data is an arbitrary string of bytes.
 
-=item C<OSSL_PARAM_UTF8_PTR>
+=item B<OSSL_PARAM_UTF8_PTR>
 
 The parameter data is a pointer to a printable string.
 
-The difference between this and C<OSSL_PARAM_UTF8_STRING> is that C<data>
+The difference between this and B<OSSL_PARAM_UTF8_STRING> is that I<data>
 doesn't point directly at the data, but to a pointer that points to the data.
 
 This is used to indicate that constant data is or will be passed,
 and there is therefore no need to copy the data that is passed, just
 the pointer to it.
 
-C<data_size> must be set to the size of the data, not the size of the
+I<data_size> must be set to the size of the data, not the size of the
 pointer to the data.
 If this is used in a parameter request,
-C<data_size> is not relevant.  However, the I<responder> will set
-C<return_size> to the size of the data.
+I<data_size> is not relevant.  However, the I<responder> will set
+I<return_size> to the size of the data.
 
 Note that the use of this type is B<fragile> and can only be safely
 used for data that remains constant and in a constant location for a
 long enough duration (such as the life-time of the entity that
 offers these parameters).
 
-=item C<OSSL_PARAM_OCTET_PTR>
+=item B<OSSL_PARAM_OCTET_PTR>
 
 The parameter data is a pointer to an arbitrary string of bytes.
 
-The difference between this and C<OSSL_PARAM_OCTET_STRING> is that
-C<data> doesn't point directly at the data, but to a pointer that
+The difference between this and B<OSSL_PARAM_OCTET_STRING> is that
+I<data> doesn't point directly at the data, but to a pointer that
 points to the data.
 
 This is used to indicate that constant data is or will be passed, and
 there is therefore no need to copy the data that is passed, just the
 pointer to it.
 
-C<data_size> must be set to the size of the data, not the size of the
+I<data_size> must be set to the size of the data, not the size of the
 pointer to the data.
 If this is used in a parameter request,
-C<data_size> is not relevant.  However, the I<responder> will set
-C<return_size> to the size of the data.
+I<data_size> is not relevant.  However, the I<responder> will set
+I<return_size> to the size of the data.
 
 Note that the use of this type is B<fragile> and can only be safely
 used for data that remains constant and in a constant location for a
@@ -214,10 +214,10 @@ enough set of data, that call should succeed.
 
 =item *
 
-Apart from the C<return_size>, a I<responder> must never change the fields
-of an C<OSSL_PARAM>.
+Apart from the I<return_size>, a I<responder> must never change the fields
+of an B<OSSL_PARAM>.
 To return a value, it should change the contents of the memory that
-C<data> points at.
+I<data> points at.
 
 =item *
 
@@ -227,14 +227,14 @@ the called function may return an error.
 The called function may also try to convert the data to a suitable
 form (for example, it's plausible to pass a large number as an octet
 string, so even though a given key is defined as an
-C<OSSL_PARAM_UNSIGNED_INTEGER>, is plausible to pass the value as an
-C<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
+B<OSSL_PARAM_UNSIGNED_INTEGER>, is plausible to pass the value as an
+B<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
 
 =item *
 
 If a I<responder> finds that some data sizes are too small for the
-requested data, it must set C<return_size> for each such
-C<OSSL_PARAM> item to the required size, and eventually return an
+requested data, it must set I<return_size> for each such
+B<OSSL_PARAM> item to the required size, and eventually return an
 error.
 
 =back
@@ -251,7 +251,7 @@ txt
 
 =head1 EXAMPLES
 
-A couple of examples to just show how C<OSSL_PARAM> arrays could be
+A couple of examples to just show how B<OSSL_PARAM> arrays could be
 set up.
 
 =head3 Example 1
@@ -283,7 +283,7 @@ This example is for requesting parameters on some object:
         { NULL, 0, NULL, 0, NULL }
     };
 
-A I<responder> that receives this array (as C<params> in this example)
+A I<responder> that receives this array (as I<params> in this example)
 could fill in the parameters like this:
 
     /* OSSL_PARAM *params */
@@ -307,7 +307,7 @@ L<openssl-core.h(7)>, L<OSSL_PARAM_get_int(3)>
 
 =head1 HISTORY
 
-C<OSSL_PARAM> was added in OpenSSL 3.0.
+B<OSSL_PARAM> was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
