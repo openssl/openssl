@@ -54,6 +54,20 @@
      (CVE-2019-1547)
      [Billy Bob Brumley]
 
+  *) Fixed a padding oracle in PKCS7_dataDecode and CMS_decrypt_set1_pkey.
+     An attack is simple, if the first CMS_recipientInfo is valid but the
+     second CMS_recipientInfo is chosen ciphertext. If the second
+     recipientInfo decodes to PKCS #1 v1.5 form plaintext, the correct
+     encryption key will be replaced by garbage, and the message cannot be
+     decoded, but if the RSA decryption fails, the correct encryption key is
+     used and the recipient will not notice the attack.
+     As a work around for this potential attack the length of the decrypted
+     key must be equal to the cipher default key length, in case the
+     certifiate is not given and all recipientInfo are tried out.
+     The old behaviour can be re-enabled in the CMS code by setting the
+     CMS_DEBUG_DECRYPT flag.
+     [Bernd Edlinger]
+
   *) Early start up entropy quality from the DEVRANDOM seed source has been
      improved for older Linux systems.  The RAND subsystem will wait for
      /dev/random to be producing output before seeding from /dev/urandom.
