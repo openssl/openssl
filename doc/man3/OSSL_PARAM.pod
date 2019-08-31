@@ -60,6 +60,10 @@ I<responder>.
 
 =back
 
+Normally, the order of the an B<OSSL_PARAM> array is not relevant.
+However, if the I<responder> can handle multiple elements with the
+same key, those elements must be handled in the order they are in.
+
 =head2 B<OSSL_PARAM> fields
 
 =over 4
