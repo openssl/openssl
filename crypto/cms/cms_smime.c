@@ -743,6 +743,10 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
         cms->d.envelopedData->encryptedContentInfo->debug = 1;
     else
         cms->d.envelopedData->encryptedContentInfo->debug = 0;
+    if (!cert)
+        cms->d.envelopedData->encryptedContentInfo->havenocert = 1;
+    else
+        cms->d.envelopedData->encryptedContentInfo->havenocert = 0;
     if (!pk && !cert && !dcont && !out)
         return 1;
     if (pk && !CMS_decrypt_set1_pkey(cms, pk, cert))
