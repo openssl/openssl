@@ -2178,6 +2178,16 @@ EOF
 
     # Massage the result
 
+    # Scripts may not need any building, but we couldn't know that before.
+    # So we look through them now to see if they have any sources, and if
+    # not, we assume they exist in the source directory instead.
+    $unified_info{scripts} = {
+        map {
+            ( defined $unified_info{sources}->{$_}
+              ? $_ : cleanfile($srcdir, $_, $blddir) ) => 1;
+        } keys %{$unified_info{scripts}}
+    };
+
     # If we depend on a header file or a perl module, add an inclusion of
     # its directory to allow smoothe inclusion
     foreach my $dest (keys %{$unified_info{depends}}) {

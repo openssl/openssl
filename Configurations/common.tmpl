@@ -190,7 +190,8 @@
      return "" if $cache{$script};
      $OUT .= in2script(script => $script,
                        attrs => $unified_info{attributes}->{$script},
-                       sources => $unified_info{sources}->{$script});
+                       sources => $unified_info{sources}->{$script})
+         if defined $unified_info{sources}->{$script};
      $cache{$script} = 1;
  }
 
