@@ -694,8 +694,10 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     if (ctx->check_issued(ctx, x, obj->data.x509)) {
         if (x509_check_cert_time(ctx, obj->data.x509, -1)) {
             *issuer = obj->data.x509;
-            if (!(ok = X509_up_ref(*issuer)))
+            if (!X509_up_ref(*issuer)) {
                 *issuer = NULL;
+                ok = -1;
+            }
             X509_OBJECT_free(obj);
             return ok;
         }
@@ -736,7 +738,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     }
     if (*issuer && !X509_up_ref(*issuer)) {
         *issuer = NULL;
-        ret = 0;
+        ret = -1;
     }
     X509_STORE_unlock(store);
     return ret;
