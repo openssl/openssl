@@ -165,8 +165,7 @@ int provider_main(int argc, char **argv)
     prog = opt_init(argc, argv, provider_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-        case OPT_EOF:
-        case OPT_ERR:
+        default: /* Catching OPT_ERR & covering OPT_EOF which isn't possible */
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
