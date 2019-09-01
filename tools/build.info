@@ -5,3 +5,5 @@ IF[{- !$disabled{apps} -}]
   SCRIPTS={- $c_rehash_name -}
   SOURCE[{- $c_rehash_name -}]=c_rehash.in
 ENDIF
+
+SCRIPTS=ossl-version.pl

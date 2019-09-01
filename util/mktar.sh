@@ -8,10 +8,10 @@
 
 HERE=`dirname $0`
 
-version=`grep 'OPENSSL_VERSION_TEXT  *"OpenSSL' $HERE/../include/openssl/opensslv.h | sed -e 's|.*"OpenSSL ||' -e 's| .*||'`
 basename=openssl
+eval `"$HERE/../tools/ossl-version.pl"`
 
-NAME="$basename-$version"
+NAME="$basename-$OPENSSL_FULL_VERSION_STR"
 
 while [ $# -gt 0 ]; do
     case "$1" in
