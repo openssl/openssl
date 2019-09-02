@@ -194,7 +194,9 @@ X509_extract_key
 X509_REQ_extract_key
 X509_name_cmp
 X509_LOOKUP_load_file
+X509_LOOKUP_load_store
 X509_LOOKUP_add_dir
+X509_LOOKUP_add_store
 X509V3_conf_err
 X509V3_set_ctx_test
 X509V3_set_ctx_nodb
