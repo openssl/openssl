@@ -69,6 +69,7 @@ static void *evp_keyexch_from_dispatch(const char *name,
     }
 
     exchange->keymgmt = keymgmt;
+    keymgmt = NULL;              /* avoid double free on failure below */
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
