@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
+     the first value.
+     [Jon Spillett]
+
   *) Deprecated the public definition of ERR_STATE as well as the function
      ERR_get_state().  This is done in preparation of making ERR_STATE an
      opaque type.
