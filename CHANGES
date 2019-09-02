@@ -381,6 +381,10 @@
      applications with zero-copy system calls such as sendfile and splice.
      [Boris Pismenny]
 
+  *) Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
+     the first value.
+     [Jon Spillett]
+
  Changes between 1.1.1a and 1.1.1b [xx XXX xxxx]
 
   *) Change the info callback signals for the start and end of a post-handshake
