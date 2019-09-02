@@ -2,36 +2,52 @@
 
 =head1 NAME
 
-SSL_CTX_load_verify_locations, SSL_CTX_set_default_verify_paths,
-SSL_CTX_set_default_verify_dir, SSL_CTX_set_default_verify_file - set
-default locations for trusted CA certificates
+SSL_CTX_load_verify_dir, SSL_CTX_load_verify_file,
+SSL_CTX_load_verify_store, SSL_CTX_set_default_verify_paths,
+SSL_CTX_set_default_verify_dir, SSL_CTX_set_default_verify_file,
+SSL_CTX_set_default_verify_store, SSL_CTX_load_verify_locations
+- set default locations for trusted CA certificates
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                                   const char *CApath);
+ int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath);
+ int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile);
+ int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore);
 
  int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
 
  int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx);
-
  int SSL_CTX_set_default_verify_file(SSL_CTX *ctx);
+ int SSL_CTX_set_default_verify_store(SSL_CTX *ctx);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
+                                   const char *CApath);
 
 =head1 DESCRIPTION
 
-SSL_CTX_load_verify_locations() specifies the locations for B<ctx>, at
-which CA certificates for verification purposes are located. The certificates
-available via B<CAfile> and B<CApath> are trusted.
+SSL_CTX_load_verify_dir(), SSL_CTX_load_verify_file(),
+SSL_CTX_load_verify_store() specifies the locations for B<ctx>, at
+which CA certificates for verification purposes are located. The
+certificates available via B<CAfile>, B<CApath> and B<CAstore> are
+trusted.
 
 SSL_CTX_set_default_verify_paths() specifies that the default locations from
-which CA certificates are loaded should be used. There is one default directory
-and one default file. The default CA certificates directory is called "certs" in
-the default OpenSSL directory. Alternatively the SSL_CERT_DIR environment
-variable can be defined to override this location. The default CA certificates
-file is called "cert.pem" in the default OpenSSL directory. Alternatively the
-SSL_CERT_FILE environment variable can be defined to override this location.
+which CA certificates are loaded should be used. There is one default directory,
+one default file and one default store.
+The default CA certificates directory is called "certs" in the default OpenSSL
+directory, and this is also the default store.
+Alternatively the SSL_CERT_DIR environment variable can be defined to
+override this location.
+The default CA certificates file is called "cert.pem" in the default
+OpenSSL directory.
+Alternatively the SSL_CERT_FILE environment variable can be defined to
+override this location.
 
 SSL_CTX_set_default_verify_dir() is similar to
 SSL_CTX_set_default_verify_paths() except that just the default directory is
@@ -39,6 +55,10 @@ used.
 
 SSL_CTX_set_default_verify_file() is similar to
 SSL_CTX_set_default_verify_paths() except that just the default file is
+used.
+
+SSL_CTX_set_default_verify_sstore() is similar to
+SSL_CTX_set_default_verify_paths() except that just the default store is
 used.
 
 =head1 NOTES
@@ -77,6 +97,11 @@ do not match, the next certificate will be tried. If a first certificate
 matching the parameters is found, the verification process will be performed;
 no other certificates for the same parameters will be searched in case of
 failure.
+
+If B<CAstore> is not NULL, it's a URI for to a store, which may
+represent a single container or a whole catalogue of containers.
+Apart from the B<CAstore> not necessarily being a local file or
+directory, it's generally treated the same way as a B<CApath>.
 
 In server mode, when requesting a client certificate, the server must send
 the list of CAs of which it will accept client certificates. This list

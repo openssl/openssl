@@ -19,6 +19,7 @@ SSL_SRP_CTX_free
 SSL_SRP_CTX_init
 SSL_add_dir_cert_subjects_to_stack
 SSL_add_file_cert_subjects_to_stack
+SSL_add_store_cert_subjects_to_stack
 SSL_add_ssl_module
 SSL_certs_clear
 SSL_copy_session_id
