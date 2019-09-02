@@ -4740,3 +4740,5 @@ EVP_SIGNATURE_provider                  4849	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_fetch                     4850	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_sign_init_ex                   4851	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_signature_md           4852	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_verify_init_ex                 4853	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_verify_recover_init_ex         4854	3_0_0	EXIST::FUNCTION:

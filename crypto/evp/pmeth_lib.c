@@ -19,6 +19,7 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 #include "internal/numbers.h"
+#include "internal/provider.h"
 #include "evp_locl.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
@@ -470,6 +471,8 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
     case EVP_PKEY_CTRL_DH_PAD:
         return EVP_PKEY_CTX_set_dh_pad(ctx, p1);
 #endif
+    case EVP_PKEY_CTRL_MD:
+        return EVP_PKEY_CTX_set_signature_md(ctx, p2);
     }
     return 0;
 }
@@ -484,7 +487,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return -2;
     }
 
-    if (ctx->exchprovctx != NULL)
+    if (ctx->exchprovctx != NULL || ctx->sigprovctx != NULL)
         return legacy_ctrl_to_param(ctx, keytype, optype, cmd, p1, p2);
 
     if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
@@ -534,6 +537,18 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         return EVP_PKEY_CTX_set_dh_pad(ctx, pad);
     }
 #endif
+    if (strcmp(name, "digest") == 0) {
+        int ret;
+        EVP_MD *md
+            = EVP_MD_fetch(ossl_provider_library_context(ctx->signature->prov),
+                           value, NULL);
+        if (md == NULL)
+            return 0;
+        ret = EVP_PKEY_CTX_set_signature_md(ctx, md);
+        EVP_MD_meth_free(md);
+        return ret;
+    }
+
     return 0;
 }
 
@@ -545,7 +560,7 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
         return -2;
     }
 
-    if (ctx->exchprovctx != NULL)
+    if (ctx->exchprovctx != NULL || ctx->sigprovctx != NULL)
         return legacy_ctrl_str_to_param(ctx, name, value);
 
     if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str) {
