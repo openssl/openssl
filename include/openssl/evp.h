@@ -1479,10 +1479,12 @@ int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
                   unsigned char *sig, size_t *siglen,
                   const unsigned char *tbs, size_t tbslen);
+int EVP_PKEY_verify_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature);
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
                     const unsigned char *sig, size_t siglen,
                     const unsigned char *tbs, size_t tbslen);
+int EVP_PKEY_verify_recover_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature);
 int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
                             unsigned char *rout, size_t *routlen,

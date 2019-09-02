@@ -15,7 +15,8 @@
 #include "internal/provider_algs.h"
 
 static OSSL_OP_signature_newctx_fn dsa_newctx;
-static OSSL_OP_signature_sign_init_fn dsa_sign_init;
+static OSSL_OP_signature_sign_init_fn dsa_signature_init;
+static OSSL_OP_signature_verify_init_fn dsa_signature_init;
 static OSSL_OP_signature_sign_fn dsa_sign;
 static OSSL_OP_signature_freectx_fn dsa_freectx;
 static OSSL_OP_signature_dupctx_fn dsa_dupctx;
@@ -37,7 +38,7 @@ static void *dsa_newctx(void *provctx)
     return OPENSSL_zalloc(sizeof(PROV_DSA_CTX));
 }
 
-static int dsa_sign_init(void *vpdsactx, void *vdsa)
+static int dsa_signature_init(void *vpdsactx, void *vdsa)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -67,7 +68,7 @@ static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
     if (pdsactx->mdsize != 0 && tbslen != pdsactx->mdsize)
         return 0;
 
-    ret = DSA_sign(0, tbs, tbslen, sig, &sltmp, pdsactx-> dsa);
+    ret = DSA_sign(0, tbs, tbslen, sig, &sltmp, pdsactx->dsa);
 
     if (ret <= 0)
         return 0;
@@ -75,6 +76,18 @@ static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
     *siglen = sltmp;
     return 1;
 }
+
+static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
+                      const unsigned char *tbs, size_t tbslen)
+{
+    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+
+    if (pdsactx->mdsize != 0 && tbslen != pdsactx->mdsize)
+        return 0;
+
+    return DSA_verify(0, tbs, tbslen, sig, siglen, pdsactx->dsa);
+}
+
 
 static void dsa_freectx(void *vpdsactx)
 {
@@ -123,8 +136,10 @@ static int dsa_set_params(void *vpdsactx, const OSSL_PARAM params[])
 
 const OSSL_DISPATCH dsa_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))dsa_newctx },
-    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))dsa_sign_init },
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))dsa_signature_init },
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))dsa_sign },
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))dsa_signature_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))dsa_verify },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))dsa_freectx },
     { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))dsa_dupctx },
     { OSSL_FUNC_SIGNATURE_SET_PARAMS, (void (*)(void))dsa_set_params },

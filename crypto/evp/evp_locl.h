@@ -124,6 +124,10 @@ struct evp_signature_st {
     OSSL_OP_signature_newctx_fn *newctx;
     OSSL_OP_signature_sign_init_fn *sign_init;
     OSSL_OP_signature_sign_fn *sign;
+    OSSL_OP_signature_verify_init_fn *verify_init;
+    OSSL_OP_signature_verify_fn *verify;
+    OSSL_OP_signature_verify_recover_init_fn *verify_recover_init;
+    OSSL_OP_signature_verify_recover_fn *verify_recover;
     OSSL_OP_signature_freectx_fn *freectx;
     OSSL_OP_signature_dupctx_fn *dupctx;
     OSSL_OP_signature_set_params_fn *set_params;

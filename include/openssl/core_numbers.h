@@ -406,9 +406,13 @@ OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_params, (void *ctx,
 # define OSSL_FUNC_SIGNATURE_NEWCTX                  1
 # define OSSL_FUNC_SIGNATURE_SIGN_INIT               2
 # define OSSL_FUNC_SIGNATURE_SIGN                    3
-# define OSSL_FUNC_SIGNATURE_FREECTX                 4
-# define OSSL_FUNC_SIGNATURE_DUPCTX                  5
-# define OSSL_FUNC_SIGNATURE_SET_PARAMS              6
+# define OSSL_FUNC_SIGNATURE_VERIFY_INIT             4
+# define OSSL_FUNC_SIGNATURE_VERIFY                  5
+# define OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT     6
+# define OSSL_FUNC_SIGNATURE_VERIFY_RECOVER          7
+# define OSSL_FUNC_SIGNATURE_FREECTX                 8
+# define OSSL_FUNC_SIGNATURE_DUPCTX                  9
+# define OSSL_FUNC_SIGNATURE_SET_PARAMS             10
 
 OSSL_CORE_MAKE_FUNC(void *, OP_signature_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_sign_init, (void *ctx, void *provkey))
@@ -416,6 +420,20 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_sign, (void *ctx,  unsigned char *sig,
                                              size_t *siglen, size_t sigsize,
                                              const unsigned char *tbs,
                                              size_t tbslen))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_verify_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_verify, (void *ctx,
+                                               const unsigned char *sig,
+                                               size_t siglen,
+                                               const unsigned char *tbs,
+                                               size_t tbslen))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_verify_recover_init, (void *ctx,
+                                                            void *provkey))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_verify_recover, (void *ctx,
+                                                       unsigned char *rout,
+                                                       size_t *routlen,
+                                                       size_t routsize,
+                                                       const unsigned char *sig,
+                                                       size_t siglen))
 OSSL_CORE_MAKE_FUNC(void, OP_signature_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_signature_dupctx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_set_params, (void *ctx,

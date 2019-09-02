@@ -50,7 +50,7 @@ static void *evp_signature_from_dispatch(const char *name,
     EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(keymgmt_data->ctx, name,
                                              keymgmt_data->properties);
     EVP_SIGNATURE *signature = NULL;
-    int fncnt = 0;
+    int ctxfncnt = 0, signfncnt = 0, verifyfncnt = 0, verifyrecfncnt = 0;
 
     if (keymgmt == NULL || EVP_KEYMGMT_provider(keymgmt) != prov) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEYMGMT_AVAILABLE);
@@ -72,25 +72,51 @@ static void *evp_signature_from_dispatch(const char *name,
             if (signature->newctx != NULL)
                 break;
             signature->newctx = OSSL_get_OP_signature_newctx(fns);
-            fncnt++;
+            ctxfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SIGN_INIT:
             if (signature->sign_init != NULL)
                 break;
             signature->sign_init = OSSL_get_OP_signature_sign_init(fns);
-            fncnt++;
+            signfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SIGN:
             if (signature->sign != NULL)
                 break;
             signature->sign = OSSL_get_OP_signature_sign(fns);
-            fncnt++;
+            signfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_VERIFY_INIT:
+            if (signature->verify_init != NULL)
+                break;
+            signature->verify_init = OSSL_get_OP_signature_verify_init(fns);
+            verifyfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_VERIFY:
+            if (signature->verify != NULL)
+                break;
+            signature->verify = OSSL_get_OP_signature_verify(fns);
+            verifyfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT:
+            if (signature->verify_recover_init != NULL)
+                break;
+            signature->verify_recover_init
+                = OSSL_get_OP_signature_verify_recover_init(fns);
+            verifyrecfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_VERIFY_RECOVER:
+            if (signature->verify_recover != NULL)
+                break;
+            signature->verify_recover
+                = OSSL_get_OP_signature_verify_recover(fns);
+            verifyrecfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_FREECTX:
             if (signature->freectx != NULL)
                 break;
             signature->freectx = OSSL_get_OP_signature_freectx(fns);
-            fncnt++;
+            ctxfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DUPCTX:
             if (signature->dupctx != NULL)
@@ -104,11 +130,14 @@ static void *evp_signature_from_dispatch(const char *name,
             break;
         }
     }
-    if (fncnt != 4) {
+    if (ctxfncnt != 2
+        || (signfncnt != 2 && verifyfncnt != 2 && verifyrecfncnt != 2)) {
         /*
          * In order to be a consistent set of functions we must have at least
-         * a complete set of "signature" functions: sign_init, sign, newctx,
-         * and freectx. The dupctx function is optional.
+         * a set of context functions (newctx and freectx) as well as a pair of
+         * "signature" functions: (sign_init, sign) or (verify_init verify) or
+         * (verify_recover_init, verify_recover). The dupctx and set_params
+         * functions are optional.
          */
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;
@@ -167,9 +196,10 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_SIGNATURE_free);
 }
 
-int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
+static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
+                                   int operation)
 {
-    int ret;
+    int ret = 0;
     void *provkey = NULL;
 
     if (ctx == NULL) {
@@ -177,7 +207,7 @@ int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
         return -2;
     }
 
-    ctx->operation = EVP_PKEY_OP_SIGN;
+    ctx->operation = operation;
 
     if (ctx->engine != NULL)
         goto legacy;
@@ -227,30 +257,91 @@ int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
         EVPerr(0, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    ret = signature->sign_init(ctx->sigprovctx, provkey);
 
-    return ret ? 1 : 0;
- err:
-    ctx->operation = EVP_PKEY_OP_UNDEFINED;
-    return 0;
+    switch (operation) {
+    case EVP_PKEY_OP_SIGN:
+        if (signature->sign_init == NULL) {
+            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ret = -2;
+            goto err;
+        }
+        ret = signature->sign_init(ctx->sigprovctx, provkey);
+        break;
+    case EVP_PKEY_OP_VERIFY:
+        if (signature->verify_init == NULL) {
+            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ret = -2;
+            goto err;
+        }
+        ret = signature->verify_init(ctx->sigprovctx, provkey);
+        break;
+    case EVP_PKEY_OP_VERIFYRECOVER:
+        if (signature->verify_recover_init == NULL) {
+            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ret = -2;
+            goto err;
+        }
+        ret = signature->verify_recover_init(ctx->sigprovctx, provkey);
+        break;
+    default:
+        EVPerr(0, EVP_R_INITIALIZATION_ERROR);
+        goto err;
+    }
+
+    if (ret <= 0) {
+        signature->freectx(ctx->sigprovctx);
+        ctx->sigprovctx = NULL;
+        goto err;
+    }
+    return 1;
 
  legacy:
-    if (ctx->pmeth == NULL || ctx->pmeth->sign == NULL) {
+    if (ctx->pmeth == NULL
+            || (operation == EVP_PKEY_OP_SIGN && ctx->pmeth->sign == NULL)
+            || (operation == EVP_PKEY_OP_VERIFY && ctx->pmeth->verify == NULL)
+            || (operation == EVP_PKEY_OP_VERIFYRECOVER
+                && ctx->pmeth->verify_recover == NULL)) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
-    if (ctx->pmeth->sign_init == NULL)
-        return 1;
-    ret = ctx->pmeth->sign_init(ctx);
+    switch (operation) {
+    case EVP_PKEY_OP_SIGN:
+        if (ctx->pmeth->sign_init == NULL)
+            return 1;
+        ret = ctx->pmeth->sign_init(ctx);
+        break;
+    case EVP_PKEY_OP_VERIFY:
+        if (ctx->pmeth->verify_init == NULL)
+            return 1;
+        ret = ctx->pmeth->verify_init(ctx);
+        break;
+    case EVP_PKEY_OP_VERIFYRECOVER:
+        if (ctx->pmeth->verify_recover_init == NULL)
+            return 1;
+        ret = ctx->pmeth->verify_recover_init(ctx);
+        break;
+    default:
+        EVPerr(0, EVP_R_INITIALIZATION_ERROR);
+        goto err;
+    }
     if (ret <= 0)
-        ctx->operation = EVP_PKEY_OP_UNDEFINED;
+        goto err;
     return ret;
+
+ err:
+    ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    return ret;
+}
+
+int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
+{
+    return evp_pkey_signature_init(ctx, signature, EVP_PKEY_OP_SIGN);
 }
 
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 {
-    return EVP_PKEY_sign_init_ex(ctx, NULL);
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_SIGN);
 }
 
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
@@ -287,68 +378,84 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
         return ctx->pmeth->sign(ctx, sig, siglen, tbs, tbslen);
 }
 
+int EVP_PKEY_verify_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
+{
+    return evp_pkey_signature_init(ctx, signature, EVP_PKEY_OP_VERIFY);
+}
+
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
 {
-    int ret;
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->verify) {
-        EVPerr(EVP_F_EVP_PKEY_VERIFY_INIT,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    ctx->operation = EVP_PKEY_OP_VERIFY;
-    if (!ctx->pmeth->verify_init)
-        return 1;
-    ret = ctx->pmeth->verify_init(ctx);
-    if (ret <= 0)
-        ctx->operation = EVP_PKEY_OP_UNDEFINED;
-    return ret;
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_VERIFY);
 }
 
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
                     const unsigned char *sig, size_t siglen,
                     const unsigned char *tbs, size_t tbslen)
 {
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->verify) {
-        EVPerr(EVP_F_EVP_PKEY_VERIFY,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    int ret;
+
+    if (ctx == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
+
     if (ctx->operation != EVP_PKEY_OP_VERIFY) {
-        EVPerr(EVP_F_EVP_PKEY_VERIFY, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
+
+    if (ctx->sigprovctx == NULL)
+        goto legacy;
+
+    ret = ctx->signature->verify(ctx->sigprovctx, sig, siglen, tbs, tbslen);
+
+    return ret;
+ legacy:
+    if (ctx->pmeth == NULL || ctx->pmeth->verify == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
     return ctx->pmeth->verify(ctx, sig, siglen, tbs, tbslen);
+}
+
+int EVP_PKEY_verify_recover_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
+{
+    return evp_pkey_signature_init(ctx, signature, EVP_PKEY_OP_VERIFYRECOVER);
 }
 
 int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
 {
-    int ret;
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover) {
-        EVPerr(EVP_F_EVP_PKEY_VERIFY_RECOVER_INIT,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    ctx->operation = EVP_PKEY_OP_VERIFYRECOVER;
-    if (!ctx->pmeth->verify_recover_init)
-        return 1;
-    ret = ctx->pmeth->verify_recover_init(ctx);
-    if (ret <= 0)
-        ctx->operation = EVP_PKEY_OP_UNDEFINED;
-    return ret;
+    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_VERIFYRECOVER);
 }
 
 int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
                             unsigned char *rout, size_t *routlen,
                             const unsigned char *sig, size_t siglen)
 {
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover) {
-        EVPerr(EVP_F_EVP_PKEY_VERIFY_RECOVER,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    int ret;
+
+    if (ctx == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
+
     if (ctx->operation != EVP_PKEY_OP_VERIFYRECOVER) {
-        EVPerr(EVP_F_EVP_PKEY_VERIFY_RECOVER, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
+    }
+
+    if (ctx->sigprovctx == NULL)
+        goto legacy;
+
+    ret = ctx->signature->verify_recover(ctx->sigprovctx, rout, routlen,
+                                         (rout == NULL ? 0 : *routlen),
+                                         sig, siglen);
+    return ret;
+ legacy:
+    if (ctx->pmeth == NULL || ctx->pmeth->verify_recover == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
     }
     M_check_autoarg(ctx, rout, routlen, EVP_F_EVP_PKEY_VERIFY_RECOVER)
         return ctx->pmeth->verify_recover(ctx, rout, routlen, sig, siglen);
