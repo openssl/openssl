@@ -2,14 +2,14 @@
 
 =head1 NAME
 
-EVP_KDF_SCRYPT - The scrypt EVP_KDF implementation
+EVP_KDF-SCRYPT - The scrypt EVP_KDF implementation
 
 =head1 DESCRIPTION
 
 Support for computing the B<scrypt> password-based KDF through the B<EVP_KDF>
 API.
 
-The EVP_KDF_SCRYPT algorithm implements the scrypt password-based key
+The EVP_KDF-SCRYPT algorithm implements the scrypt password-based key
 derivation function, as described in RFC 7914.  It is memory-hard in the sense
 that it deliberately requires a significant amount of RAM for efficient
 computation. The intention of this is to render brute forcing of passwords on
@@ -32,40 +32,32 @@ GHz), this computation takes about 3 seconds. When N, r or p are not specified,
 they default to 1048576, 8, and 1, respectively. The maximum amount of RAM that
 may be used by scrypt defaults to 1025 MiB.
 
-=head2 Numeric identity
+=head2 Identity
 
-B<EVP_KDF_SCRYPT> is the numeric identity for this implementation; it
-can be used with the EVP_KDF_CTX_new_id() function.
+"ID-SCRYPT" is the name for this implementation; it
+can be used with the EVP_KDF_fetch() function.
 
-=head2 Supported controls
+=head2 Supported parameters
 
-The supported controls are:
+The supported parameters are:
 
 =over 4
 
-=item B<EVP_KDF_CTRL_SET_PASS>
+=item B<OSSL_KDF_PARAM_PASSWORD> ("pass") <octet string>
 
-=item B<EVP_KDF_CTRL_SET_SALT>
+=item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
 
-These controls work as described in L<EVP_KDF_CTX(3)/CONTROLS>.
+These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<EVP_KDF_CTRL_SET_SCRYPT_N>
+=item B<OSSL_KDF_PARAM_SCRYPT_N> ("n") <int>
 
-=item B<EVP_KDF_CTRL_SET_SCRYPT_R>
+=item B<OSSL_KDF_PARAM_SCRYPT_R> ("r") <int>
 
-=item B<EVP_KDF_CTRL_SET_SCRYPT_P>
+=item B<OSSL_KDF_PARAM_SCRYPT_P> ("p") <int>
 
-B<EVP_KDF_CTRL_SET_SCRYPT_N> expects one argument: C<uint64_t N>
-
-B<EVP_KDF_CTRL_SET_SCRYPT_R> expects one argument: C<uint32_t r>
-
-B<EVP_KDF_CTRL_SET_SCRYPT_P> expects one argument: C<uint32_t p>
-
-These controls configure the scrypt work factors N, r and p.
-
-EVP_KDF_ctrl_str() type strings: "N", "r" and "p", respectively.
-
-The corresponding value strings are expected to be decimal numbers.
+These parameters configure the scrypt work factors N, r and p.
+N is a parameter of type uint64_t.
+Both r and p are parameters of type uint32_t.
 
 =back
 
@@ -73,35 +65,36 @@ The corresponding value strings are expected to be decimal numbers.
 
 A context for scrypt can be obtained by calling:
 
- EVP_KDF_CTX *kctx = EVP_KDF_CTX_new_id(EVP_KDF_SCRYPT);
+ EVP_KDF *kdf = EVP_KDF_fetch(NULL, "ID-SCRYPT", NULL);
+ EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an scrypt key derivation is specified via the
-B<keylen> parameter to the L<EVP_KDF_derive(3)> function.
+B<keylen> parameter to the L<EVP_KDF-derive(3)> function.
 
 =head1 EXAMPLES
 
 This example derives a 64-byte long test vector using scrypt with the password
 "password", salt "NaCl" and N = 1024, r = 8, p = 16.
 
+ EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
  unsigned char out[64];
+ OSSL_PARAM params[6], *p = params;
 
- kctx = EVP_KDF_CTX_new_id(EVP_KDF_SCRYPT);
+ kdf = EVP_KDF_fetch(NULL, "ID-SCRYPT", NULL);
+ kctx = EVP_KDF_CTX_new(kdf);
+ EVP_KDF_free(kdf);
 
- if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS, "password", (size_t)8) <= 0) {
-     error("EVP_KDF_CTRL_SET_PASS");
- }
- if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT, "NaCl", (size_t)4) <= 0) {
-     error("EVP_KDF_CTRL_SET_SALT");
- }
- if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_N, (uint64_t)1024) <= 0) {
-     error("EVP_KDF_CTRL_SET_SCRYPT_N");
- }
- if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_R, (uint32_t)8) <= 0) {
-     error("EVP_KDF_CTRL_SET_SCRYPT_R");
- }
- if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_P, (uint32_t)16) <= 0) {
-     error("EVP_KDF_CTRL_SET_SCRYPT_P");
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+                                          "password", (size_t)8);
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                          "NaCl", (size_t)4);
+ *p++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_N, (uint64_t)1024);
+ *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_R, (uint32_t)8);
+ *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_P, (uint32_t)16);
+ *p = OSSL_PARAM_construct_end();
+ if (EVP_KDF_set_params(kctx, params) <= 0) {
+     error("EVP_KDF_set_params");
  }
  if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
      error("EVP_KDF_derive");
@@ -130,12 +123,12 @@ RFC 7914
 
 =head1 SEE ALSO
 
-L<EVP_KDF_CTX>,
-L<EVP_KDF_CTX_new_id(3)>,
-L<EVP_KDF_CTX_free(3)>,
-L<EVP_KDF_ctrl(3)>,
-L<EVP_KDF_derive(3)>,
-L<EVP_KDF_CTX(3)/CONTROLS>
+L<EVP_KDF>,
+L<EVP_KDF-CTX_new_id(3)>,
+L<EVP_KDF-CTX_free(3)>,
+L<EVP_KDF-ctrl(3)>,
+L<EVP_KDF-derive(3)>,
+L<EVP_KDF-CTX(3)/PARAMETERS>
 
 =head1 COPYRIGHT
 
