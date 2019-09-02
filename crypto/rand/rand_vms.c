@@ -456,15 +456,9 @@ size_t data_collect_method(RAND_POOL *pool)
      * If we can't feed the requirements from the caller, we're in deep trouble.
      */
     if (!ossl_assert(total_length >= bytes_needed)) {
-        char neededstr[20];
-        char availablestr[20];
-
-        BIO_snprintf(neededstr, sizeof(neededstr), "%zu", bytes_needed);
-        BIO_snprintf(availablestr, sizeof(availablestr), "%zu", total_length);
-        RANDerr(RAND_F_RAND_POOL_ACQUIRE_ENTROPY,
-                RAND_R_RANDOM_POOL_UNDERFLOW);
-        ERR_add_error_data(4, "Needed: ", neededstr, ", Available: ",
-                           availablestr);
+        ERR_raise_data(ERR_LIB_RAND, RAND_R_RANDOM_POOL_UNDERFLOW,
+                       "Needed: %zu, Available: %zu",
+                       bytes_needed, total_length);
         return 0;
     }
 
