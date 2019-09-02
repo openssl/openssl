@@ -42,9 +42,9 @@
  * DATA COLLECTION METHOD
  * ======================
  *
- * This is a method to get *some* very low quality entropy.
+ * This is a method to get low quality entropy.
  * It works by collecting all kinds of statistical data that
- * VMS offers and using them as "entropy".
+ * VMS offers and using them as random seed.
  */
 
 /* We need to make sure we have the right size pointer in some cases */
@@ -506,12 +506,11 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
  * SYS$GET_ENTROPY METHOD
  * ======================
  *
- * This is a high entropy method based on a new systems service that is
+ * This is a high entropy method based on a new system service that is
  * based on getentropy() from FreeBSD 12.  It's only used if available,
  * and its availability is detected at run-time.
  *
- * We assume that this function gives 1 bit of entropy for each bit of
- * output.
+ * We assume that this function provides full entropy random output.
  */
 #define PUBLIC_VECTORS "SYS$LIBRARY:SYS$PUBLIC_VECTORS.EXE"
 #define GET_ENTROPY "SYS$GET_ENTROPY"
@@ -563,7 +562,7 @@ size_t get_entropy_method(RAND_POOL *pool)
 }
 
 /*
- * MAIN ENTTROPY AQUISITION FUNCTIONS
+ * MAIN ENTROPY ACQUISITION FUNCTIONS
  * ==================================
  *
  * These functions are called by the RAND / DRBG functions
