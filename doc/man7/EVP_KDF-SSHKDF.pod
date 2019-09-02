@@ -2,69 +2,49 @@
 
 =head1 NAME
 
-EVP_KDF_SSHKDF - The SSHKDF EVP_KDF implementation
+EVP_KDF-SSHKDF - The SSHKDF EVP_KDF implementation
 
 =head1 DESCRIPTION
 
 Support for computing the B<SSHKDF> KDF through the B<EVP_KDF> API.
 
-The EVP_KDF_SSHKDF algorithm implements the SSHKDF key derivation function.
+The EVP_KDF-SSHKDF algorithm implements the SSHKDF key derivation function.
 It is defined in RFC 4253, section 7.2 and is used by SSH to derive IVs,
 encryption keys and integrity keys.
 Five inputs are required to perform key derivation: The hashing function
 (for example SHA256), the Initial Key, the Exchange Hash, the Session ID,
 and the derivation key type.
 
-=head2 Numeric identity
+=head2 Identity
 
-B<EVP_KDF_SSHKDF> is the numeric identity for this implementation; it
-can be used with the EVP_KDF_CTX_new_id() function.
+"SSHKDF" is the name for this implementation; it
+can be used with the EVP_KDF_fetch() function.
 
-=head2 Supported controls
+=head2 Supported parameters
 
-The supported controls are:
-
-=over 4
-
-=item B<EVP_KDF_CTRL_SET_MD>
-
-=item B<EVP_KDF_CTRL_SET_KEY>
-
-These controls work as described in L<EVP_KDF_CTX(3)/CONTROLS>.
-
-=item B<EVP_KDF_CTRL_SET_SSHKDF_XCGHASH>
-
-=item B<EVP_KDF_CTRL_SET_SSHKDF_SESSION_ID>
-
-These controls expect two arguments: C<unsigned char *buffer>, C<size_t length>
-
-They set the respective values to the first B<length> bytes of the buffer
-B<buffer>. If a value is already set, the contents are replaced.
-
-EVP_KDF_ctrl_str() takes two type strings for these controls:
+The supported parameters are:
 
 =over 4
 
-=item "xcghash"
+=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
 
-=item "session_id"
+=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
 
-The value string is used as is.
+=item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>
 
-=item "hexxcghash"
+These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item "hexsession_id"
+=item B<OSSL_KDF_PARAM_SSHKDF_XCGHASH> ("xcghash") <octet string>
 
-The value string is expected to be a hexadecimal number, which will be
-decoded before being passed on as the control value.
+=item B<OSSL_KDF_PARAM_SSHKDF_SESSION_ID> ("session_id") <octet string>
 
-=back
+These parameters set the respective values for the KDF.
+If a value is already set, the contents are replaced.
 
-=item B<EVP_KDF_CTRL_SET_SSHKDF_TYPE>
+=item B<OSSL_KDF_PARAM_SSHKDF_TYPE> ("type") <int>
 
-This control expects one argument: C<int mode>
-
-Sets the type for the SSHHKDF operation. There are six supported types:
+This parameter sets the type for the SSHHKDF operation.
+There are six supported types:
 
 =over 4
 
@@ -100,50 +80,54 @@ A single char of value 70 (ASCII char 'F').
 
 =back
 
-EVP_KDF_ctrl_str() type string: "type"
-
-The value is a string of length one character. The only valid values
-are the numerical values of the ASCII characters: "A" (65) to "F" (70).
-
 =back
 
 =head1 NOTES
 
 A context for SSHKDF can be obtained by calling:
 
- EVP_KDF_CTX *kctx = EVP_KDF_CTX_new_id(EVP_KDF_SSHKDF);
+ EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SSHKDF", NULL);
+ EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of the SSHKDF derivation is specified via the C<keylen>
-parameter to the L<EVP_KDF_derive(3)> function.
-Since the SSHKDF output length is variable, calling L<EVP_KDF_size()>
+parameter to the L<EVP_KDF-derive(3)> function.
+Since the SSHKDF output length is variable, calling L<EVP_KDF-size()>
 to obtain the requisite length is not meaningful. The caller must
 allocate a buffer of the desired length, and pass that buffer to the
-L<EVP_KDF_derive(3)> function along with the desired length.
+L<EVP_KDF-derive(3)> function along with the desired length.
 
 =head1 EXAMPLES
 
 This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
 "xcghash" and "session_id" values:
 
+ EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
  unsigned char key[1024] = "01234...";
  unsigned char xcghash[32] = "012345...";
  unsigned char session_id[32] = "012345...";
  unsigned char out[8];
  size_t outlen = sizeof(out);
- kctx = EVP_KDF_CTX_new_id(EVP_KDF_SSHKDF);
+ OSSL_PARAM params[6], *p = params;
 
- if (EVP_KDF_CTX_set_md(kctx, EVP_sha256()) <= 0)
+ kdf = EVP_KDF_fetch(NULL, "SSHKDF", NULL);
+ kctx = EVP_KDF_CTX_new(kdf);
+ EVP_KDF_free(kdf);
+
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                         SN_sha256, strlen(SN_sha256));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                          key, (size_t)1024);
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SSHKDF_XCGHASH,
+                                          xcghash, (size_t)32);
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                          session_id, (size_t)32);
+ *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_SSHKDF_TYPE,
+                                 EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV);
+ *p = OSSL_PARAM_construct_end();
+ if (EVP_KDF_set_params(kctx, params) <= 0)
      /* Error */
- if (EVP_KDF_CTX_set1_key(kctx, key, 1024) <= 0)
-     /* Error */
- if (EVP_KDF_CTX_set1_sshkdf_xcghash(kctx, xcghash, 32) <= 0)
-     /* Error */
- if (EVP_KDF_CTX_set1_sshkdf_session_id(kctx, session_id, 32) <= 0)
-     /* Error */
- if (EVP_KDF_CTX_set_sshkdf_type(kctx,
-                    EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV) <= 0)
-     /* Error */
+
  if (EVP_KDF_derive(kctx, out, &outlen) <= 0)
      /* Error */
 
@@ -154,13 +138,13 @@ RFC 4253
 
 =head1 SEE ALSO
 
-L<EVP_KDF_CTX>,
-L<EVP_KDF_CTX_new_id(3)>,
-L<EVP_KDF_CTX_free(3)>,
-L<EVP_KDF_ctrl(3)>,
-L<EVP_KDF_size(3)>,
-L<EVP_KDF_derive(3)>,
-L<EVP_KDF_CTX(3)/CONTROLS>
+L<EVP_KDF>,
+L<EVP_KDF-CTX_new_id(3)>,
+L<EVP_KDF-CTX_free(3)>,
+L<EVP_KDF-ctrl(3)>,
+L<EVP_KDF-size(3)>,
+L<EVP_KDF-derive(3)>,
+L<EVP_KDF(3)/PARAMETERS>
 
 =head1 COPYRIGHT
 

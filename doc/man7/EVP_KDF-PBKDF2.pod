@@ -2,46 +2,45 @@
 
 =head1 NAME
 
-EVP_KDF_PBKDF2 - The PBKDF2 EVP_KDF implementation
+EVP_KDF-PBKDF2 - The PBKDF2 EVP_KDF implementation
 
 =head1 DESCRIPTION
 
 Support for computing the B<PBKDF2> password-based KDF through the B<EVP_KDF>
 API.
 
-The EVP_KDF_PBKDF2 algorithm implements the PBKDF2 password-based key
+The EVP_KDF-PBKDF2 algorithm implements the PBKDF2 password-based key
 derivation function, as described in SP800-132; it derives a key from a password
 using a salt and iteration count.
 
-=head2 Numeric identity
+=head2 Identity
 
-B<EVP_KDF_PBKDF2> is the numeric identity for this implementation; it
-can be used with the EVP_KDF_CTX_new_id() function.
+"PBKDF2" is the name for this implementation; it
+can be used with the EVP_KDF_fetch() function.
 
-=head2 Supported controls
+=head2 Supported parameters
 
-The supported controls are:
+The supported parameters are:
 
 =over 4
 
-=item B<EVP_KDF_CTRL_SET_PASS>
+=item B<OSSL_KDF_PARAM_PASSWORD> ("pass") <octet string>
 
-=item B<EVP_KDF_CTRL_SET_SALT>
+=item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
 
-=item B<EVP_KDF_CTRL_SET_ITER>
+=item B<OSSL_KDF_PARAM_ITER> ("iter") <unsigned int>
 
-This control has a default value of 2048.
+This parameter has a default value of 2048.
 
-=item B<EVP_KDF_CTRL_SET_MD>
+=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
 
-These controls work as described in L<EVP_KDF_CTX(3)/CONTROLS>.
+=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
 
-=item B<EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE>
+These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-This control expects one argument: C<int mode>
+=item B<OSSL_KDF_PARAM_PKCS5> ("pkcs5") <int>
 
-This control can be used to enable or disable SP800-132 compliance checks.
-
+This parameter can be used to enable or disable SP800-132 compliance checks.
 Setting the mode to 0 enables the compliance checks.
 
 The checks performed are:
@@ -58,8 +57,6 @@ The checks performed are:
 
 The default provider uses a default mode of 1 for backwards compatibility,
 and the fips provider uses a default mode of 0.
-
-EVP_KDF_ctrl_str() type string: "pkcs5"
 
 The value string is expected to be a decimal number 0 or 1.
 
@@ -84,12 +81,12 @@ SP800-132
 
 =head1 SEE ALSO
 
-L<EVP_KDF_CTX>,
-L<EVP_KDF_CTX_new_id(3)>,
-L<EVP_KDF_CTX_free(3)>,
-L<EVP_KDF_ctrl(3)>,
-L<EVP_KDF_derive(3)>,
-L<EVP_KDF_CTX(3)/CONTROLS>
+L<EVP_KDF>,
+L<EVP_KDF-CTX_new_id(3)>,
+L<EVP_KDF-CTX_free(3)>,
+L<EVP_KDF-ctrl(3)>,
+L<EVP_KDF-derive(3)>,
+L<EVP_KDF-CTX(3)/PARAMETERS>
 
 =head1 HISTORY
 
