@@ -9,7 +9,9 @@
 
  Changes between 1.1.1d and 1.1.1e [xx XXX xxxx]
 
-  *)
+  *) Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
+     the first value.
+     [Jon Spillett]
 
  Changes between 1.1.1c and 1.1.1d [10 Sep 2019]
 
