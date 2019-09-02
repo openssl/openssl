@@ -13,6 +13,7 @@ B<openssl list>
 [B<-commands>]
 [B<-digest-commands>]
 [B<-digest-algorithms>]
+[B<-kdf-algorithms>]
 [B<-mac-algorithms>]
 [B<-cipher-commands>]
 [B<-cipher-algorithms>]
@@ -64,6 +65,12 @@ B<bar>.
 In verbose mode, the algorithms provided by a provider will get additional
 information on what parameters each implementation supports.
 
+=item B<-kdf-algorithms>
+
+Display a list of key derivation function algorithms.
+If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
+official algorithm name, B<bar>.
+
 =item B<-mac-algorithms>
 
 Display a list of message authentication code algorithms.
@@ -93,8 +100,7 @@ a block of multiple lines, all but the first are indented.
 
 =item B<-public-key-methods>
 
-Display a list of public key method OIDs: this also includes public key methods
-without an associated ASN.1 method, for example, KDF algorithms.
+Display a list of public key method OIDs.
 
 =item B<-engines>
 
