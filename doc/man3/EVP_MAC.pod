@@ -147,7 +147,7 @@ defined by the implementation.
 EVP_MAC_gettable_params(), EVP_MAC_CTX_gettable_params() and
 EVP_MAC_CTX_settable_params() get a constant B<OSSL_PARAM> array that
 decribes the retrievable and settable parameters, i.e. parameters that
-can be used with EVP_MAC_CTX_get_params(), EVP_MAC_CTX_get_params()
+can be used with EVP_MAC_get_params(), EVP_MAC_CTX_get_params()
 and EVP_MAC_CTX_set_params(), respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
