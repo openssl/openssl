@@ -521,9 +521,9 @@ static int (*get_entropy_address)(void *buffer, size_t buffer_size) = NULL;
 static int init_get_entropy_address(void)
 {
     if (get_entropy_address_flag == 0)
-        get_entropy_addr = dlsym(dlopen(PUBLIC_VECTORS, 0), OLD_ROUTINE);
+        get_entropy_address = dlsym(dlopen(PUBLIC_VECTORS, 0), GET_ENTROPY);
     get_entropy_address_flag = 1;
-    return get_entropy_addr != NULL;
+    return get_entropy_address != NULL;
 }
 
 size_t get_entropy_method(RAND_POOL *pool)
