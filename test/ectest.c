@@ -1680,7 +1680,7 @@ static int check_named_curve_test(int id)
         || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0, NULL), 0)
         /* The order is not an optional field, so this should fail */
         || TEST_true(EC_GROUP_set_generator(gtest, group_gen, NULL,
-                                             group_cofactor))
+                                            group_cofactor))
         || !TEST_true(EC_GROUP_set_generator(gtest, group_gen, group_order,
                                              other_cofactor))
         || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0, NULL), 0)
