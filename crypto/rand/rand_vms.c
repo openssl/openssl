@@ -513,7 +513,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
  * We assume that this function gives 1 bit of entropy for each bit of
  * output.
  */
-#define PUBLIC_VECTORS "SYS$PUBLIC_VECTORS"
+#define PUBLIC_VECTORS "SYS$LIBRARY:SYS$PUBLIC_VECTORS.EXE"
 #define GET_ENTROPY "SYS$GET_ENTROPY"
 
 static int get_entropy_address_flag = 0;
@@ -533,23 +533,32 @@ size_t get_entropy_method(RAND_POOL *pool)
      * 256 bytes of data.
      */
     unsigned char buffer[256];
-    size_t bytes_needed = rand_pool_bytes_needed(pool, 1);
-    size_t bytes_remaining = rand_pool_bytes_remaining(pool);
+    size_t bytes_needed;
+    size_t bytes_to_get = 0;
     uint32_t status;
 
- again:
-    status = get_entropy_address(buffer, bytes_remaining);
-    if (status != SS$_RETRY) {
-        /* Should sleep some amount of time */
-        goto again;
+    for (bytes_needed = rand_pool_bytes_needed(pool, 1);
+         bytes_needed > 0;
+         bytes_needed -= bytes_to_get) {
+        bytes_to_get =
+            bytes_needed > sizeof(buffer) ? sizeof(buffer) : bytes_needed;
+
+        status = get_entropy_address(buffer, bytes_to_get);
+        if (status == SS$_RETRY) {
+            /* Set to zero so the loop doesn't diminish |bytes_needed| */
+            bytes_to_get = 0;
+            /* Should sleep some amount of time */
+            continue;
+        }
+
+        if (status != SS$_NORMAL) {
+            lib$signal(status);
+            return 0;
+        }
+
+        rand_pool_add(pool, buffer, bytes_to_get, 8 * bytes_to_get);
     }
 
-    if (status != SS$_NORMAL) {
-        lib$signal(status);
-        return 0;
-    }
-
-    rand_pool_add(pool, buffer, bytes_remaining, 8 * bytes_remaining);
     return rand_pool_entropy_available(pool);
 }
 
