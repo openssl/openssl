@@ -1154,8 +1154,8 @@ static int test_EVP_MD_fetch(int tst)
     if (!TEST_true(EVP_MD_up_ref(md)))
         goto err;
     /* Ref count should now be 2. Release both */
-    EVP_MD_meth_free(md);
-    EVP_MD_meth_free(md);
+    EVP_MD_free(md);
+    EVP_MD_free(md);
     md = NULL;
 
     /*
@@ -1174,7 +1174,7 @@ static int test_EVP_MD_fetch(int tst)
             goto err;
     }
 
-    EVP_MD_meth_free(md);
+    EVP_MD_free(md);
     md = NULL;
 
     /*
@@ -1195,7 +1195,7 @@ static int test_EVP_MD_fetch(int tst)
             goto err;
     }
 
-    EVP_MD_meth_free(md);
+    EVP_MD_free(md);
     md = NULL;
 
     /*
@@ -1217,7 +1217,7 @@ static int test_EVP_MD_fetch(int tst)
     ret = 1;
 
  err:
-    EVP_MD_meth_free(md);
+    EVP_MD_free(md);
     OSSL_PROVIDER_unload(defltprov);
     OSSL_PROVIDER_unload(fipsprov);
     /* Not normally needed, but we would like to test that

@@ -310,7 +310,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
 
  err:
     EVP_MD_CTX_free(mdctx);
-    EVP_MD_meth_free(md);
+    EVP_MD_free(md);
     OPENSSL_free(k_bytes);
     OPENSSL_cleanse(private_bytes, sizeof(private_bytes));
     return ret;

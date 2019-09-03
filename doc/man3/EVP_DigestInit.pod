@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_MD_fetch,
+EVP_MD_fetch, EVP_MD_up_ref, EVP_MD_free,
 EVP_MD_get_params, EVP_MD_gettable_params,
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy,
 EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl,
@@ -28,6 +28,8 @@ EVP_MD_do_all_ex
 
  EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                       const char *properties);
+ int EVP_MD_up_ref(EVP_MD *md);
+ void EVP_MD_free(EVP_MD *md);
  int EVP_MD_get_params(const EVP_MD *digest, OSSL_PARAM params[]);
  const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest);
  EVP_MD_CTX *EVP_MD_CTX_new(void);
@@ -92,7 +94,9 @@ EVP_MD_do_all_ex
 =head1 DESCRIPTION
 
 The EVP digest routines are a high level interface to message digests,
-and should be used instead of the cipher-specific functions.
+and should be used instead of the digest-specific functions.
+
+The B<EVP_MD> type is a structure for digest method implementation.
 
 =over 4
 
@@ -102,7 +106,18 @@ Fetches the digest implementation for the given B<algorithm> from any
 provider offering it, within the criteria given by the B<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
-The returned value must eventually be freed with L<EVP_MD_meth_free(3)>.
+The returned value must eventually be freed with EVP_MD_free().
+
+Fetched B<EVP_MD> structures are reference counted.
+
+=item EVP_MD_up_ref()
+
+Increments the reference count for an B<EVP_MD> structure.
+
+=item EVP_MD_free()
+
+Decrements the reference count for the fetched B<EVP_MD> structure.
+If the reference count drops to 0 then the structure is freed.
 
 =item EVP_MD_CTX_new()
 
@@ -409,6 +424,10 @@ disabled with this flag.
 
 Returns a pointer to a B<EVP_MD> for success or NULL for failure.
 
+=item EVP_MD_up_ref()
+
+Returns 1 for success or 0 for failure.
+
 =item EVP_DigestInit_ex(),
 EVP_DigestUpdate(),
 EVP_DigestFinal_ex()
@@ -573,8 +592,8 @@ The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
 The EVP_MD_CTX_set_pkey_ctx() function was added in 1.1.1.
 
-The EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params() functions were
-added in 3.0.
+The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(), EVP_MD_CTX_set_params()
+and EVP_MD_CTX_get_params() functions were added in 3.0.
 
 =head1 COPYRIGHT
 

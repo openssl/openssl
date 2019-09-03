@@ -290,7 +290,7 @@ static int drbg_hash_generate(RAND_DRBG *drbg,
 
 static int drbg_hash_uninstantiate(RAND_DRBG *drbg)
 {
-    EVP_MD_meth_free(drbg->data.hash.md);
+    EVP_MD_free(drbg->data.hash.md);
     EVP_MD_CTX_free(drbg->data.hash.ctx);
     OPENSSL_cleanse(&drbg->data.hash, sizeof(drbg->data.hash));
     return 1;
@@ -346,12 +346,12 @@ int drbg_hash_init(RAND_DRBG *drbg)
     if (hash->ctx == NULL) {
         hash->ctx = EVP_MD_CTX_new();
         if (hash->ctx == NULL) {
-            EVP_MD_meth_free(md);
+            EVP_MD_free(md);
             return 0;
         }
     }
 
-    EVP_MD_meth_free(hash->md);
+    EVP_MD_free(hash->md);
     hash->md = md;
 
     /* These are taken from SP 800-90 10.1 Table 2 */

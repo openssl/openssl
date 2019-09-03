@@ -81,7 +81,6 @@ int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq);
 # ifndef EVP_MD
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
-int EVP_MD_up_ref(EVP_MD *md);
 void EVP_MD_meth_free(EVP_MD *md);
 
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
@@ -585,6 +584,8 @@ __owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
 
 __owur EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                             const char *properties);
+int EVP_MD_up_ref(EVP_MD *md);
+void EVP_MD_free(EVP_MD *md);
 
 int EVP_read_pw_string(char *buf, int length, const char *prompt, int verify);
 int EVP_read_pw_string_min(char *buf, int minlen, int maxlen,

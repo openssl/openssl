@@ -150,7 +150,7 @@ static void kmac_free(void *vmacctx)
 
     if (kctx != NULL) {
         EVP_MD_CTX_free(kctx->ctx);
-        EVP_MD_meth_free(kctx->alloc_md);
+        EVP_MD_free(kctx->alloc_md);
         OPENSSL_cleanse(kctx->key, kctx->key_len);
         OPENSSL_cleanse(kctx->custom, kctx->custom_len);
         OPENSSL_free(kctx);
@@ -197,7 +197,7 @@ static void *kmac_fetch_new(void *provctx, const char *mdname)
 
     ret = kmac_new(provctx, fetched_md, md);
     if (ret == NULL)
-        EVP_MD_meth_free(fetched_md);
+        EVP_MD_free(fetched_md);
     return ret;
 }
 
