@@ -153,6 +153,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 # define OSSL_OP_DIGEST                              1
 # define OSSL_OP_CIPHER                              2   /* Symmetric Ciphers */
 # define OSSL_OP_MAC                                 3
+# define OSSL_OP_KDF                                 4
 # define OSSL_OP_KEYMGMT                            10
 # define OSSL_OP_KEYEXCH                            11
 /* Highest known operation number */
@@ -282,7 +283,6 @@ OSSL_CORE_MAKE_FUNC(int, OP_mac_set_ctx_params,
                     (void *mctx, const OSSL_PARAM params[]))
 
 /* KDFs and PRFs */
-# define OSSL_OP_KDF                                 4
 
 # define OSSL_FUNC_KDF_NEWCTX                        1
 # define OSSL_FUNC_KDF_DUPCTX                        2
