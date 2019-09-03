@@ -143,7 +143,7 @@ static void list_digests(void)
                               EVP_MD_CTX_settable_params(m), 4);
         }
     }
-    sk_EVP_MD_pop_free(digests, EVP_MD_meth_free);
+    sk_EVP_MD_pop_free(digests, EVP_MD_free);
 }
 
 DEFINE_STACK_OF(EVP_MAC)

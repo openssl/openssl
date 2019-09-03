@@ -79,7 +79,7 @@ static void hmac_free(void *vmacctx)
 
     if (macctx != NULL) {
         HMAC_CTX_free(macctx->ctx);
-        EVP_MD_meth_free(macctx->alloc_md);
+        EVP_MD_free(macctx->alloc_md);
         OPENSSL_free(macctx);
     }
 }
@@ -222,7 +222,7 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
                 propquery = p->data;
             }
 
-            EVP_MD_meth_free(macctx->alloc_md);
+            EVP_MD_free(macctx->alloc_md);
 
             macctx->tmpmd = macctx->alloc_md =
                 EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(macctx->provctx),

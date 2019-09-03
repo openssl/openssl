@@ -41,7 +41,7 @@ static c448_error_t oneshot_hash(OPENSSL_CTX *ctx, uint8_t *out, size_t outlen,
     ret = C448_SUCCESS;
  err:
     EVP_MD_CTX_free(hashctx);
-    EVP_MD_meth_free(shake256);
+    EVP_MD_free(shake256);
     return ret;
 }
 
@@ -77,11 +77,11 @@ static c448_error_t hash_init_with_dom(OPENSSL_CTX *ctx, EVP_MD_CTX *hashctx,
             || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
             || !EVP_DigestUpdate(hashctx, dom, sizeof(dom))
             || !EVP_DigestUpdate(hashctx, context, context_len)) {
-        EVP_MD_meth_free(shake256);
+        EVP_MD_free(shake256);
         return C448_FAILURE;
     }
 
-    EVP_MD_meth_free(shake256);
+    EVP_MD_free(shake256);
     return C448_SUCCESS;
 }
 

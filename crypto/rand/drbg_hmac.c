@@ -184,7 +184,7 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
 
 static int drbg_hmac_uninstantiate(RAND_DRBG *drbg)
 {
-    EVP_MD_meth_free(drbg->data.hmac.md);
+    EVP_MD_free(drbg->data.hmac.md);
     HMAC_CTX_free(drbg->data.hmac.ctx);
     OPENSSL_cleanse(&drbg->data.hmac, sizeof(drbg->data.hmac));
     return 1;
@@ -239,13 +239,13 @@ int drbg_hmac_init(RAND_DRBG *drbg)
     if (hmac->ctx == NULL) {
         hmac->ctx = HMAC_CTX_new();
         if (hmac->ctx == NULL) {
-            EVP_MD_meth_free(md);
+            EVP_MD_free(md);
             return 0;
         }
     }
 
     /* These are taken from SP 800-90 10.1 Table 2 */
-    EVP_MD_meth_free(hmac->md);
+    EVP_MD_free(hmac->md);
     hmac->md = md;
     hmac->blocklen = EVP_MD_size(md);
     /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */
