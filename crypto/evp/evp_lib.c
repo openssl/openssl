@@ -676,6 +676,8 @@ unsigned long EVP_MD_flags(const EVP_MD *md)
     return ok != 0 ? v : 0;
 }
 
+#if !OPENSSL_API_3
+
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
 {
     EVP_MD *md = evp_md_new();
@@ -842,6 +844,8 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 {
     return md->md_ctrl;
 }
+
+#endif  /* OPENSSL_API_3 */
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 {

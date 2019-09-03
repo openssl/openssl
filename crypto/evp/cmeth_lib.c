@@ -14,6 +14,10 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
+#if OPENSSL_API_3
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
 {
     EVP_CIPHER *cipher = evp_cipher_new();
@@ -188,3 +192,4 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
     return cipher->ctrl;
 }
 
+#endif  /* OPENSSL_API_3 */
