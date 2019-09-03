@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS12_SAFEBAG_get0_attrs,PKCS12_get_attr_gen - Retrieve attributes from a PKCS#12 safeBag
+PKCS12_SAFEBAG_get0_attrs, PKCS12_get_attr_gen - Retrieve attributes from a PKCS#12 safeBag
 
 =head1 SYNOPSIS
 
@@ -30,11 +30,13 @@ PKCS12_get_attr_gen() does not allocate a new attribute. The returned attribute 
 
 =head1 SEE ALSO
 
-L<PKCS12_add_friendlyname_asc(3)>,
+L<PKCS12_get_friendlyname(3)>,
+L<PKCS12_get_localkeyid(3)>,
+L<PKCS12_add_friendlyname_asc(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
