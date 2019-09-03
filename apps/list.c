@@ -80,7 +80,7 @@ static void list_ciphers(void)
                               EVP_CIPHER_CTX_settable_params(c), 4);
         }
     }
-    sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_meth_free);
+    sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_free);
 }
 
 static void list_md_fn(const EVP_MD *m,
