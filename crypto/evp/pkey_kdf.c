@@ -127,8 +127,10 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
          * Perform the semantics described in
          * EVP_PKEY_CTX_add1_tls1_prf_seed(3)
          */
-        if (ctx->pmeth->pkey_id == NID_tls1_prf)
+        if (ctx->pmeth->pkey_id == NID_tls1_prf) {
             BUF_MEM_free(pkctx->collected_seed);
+            pkctx->collected_seed = NULL;
+        }
         break;
     case EVP_PKEY_CTRL_TLS_SEED:
         cmd = T_OCTET_STRING;
