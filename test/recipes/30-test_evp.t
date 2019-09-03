@@ -29,8 +29,6 @@ my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
 
 plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles);
 
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-
 foreach (@configs) {
     $ENV{OPENSSL_CONF} = srctop_file("test", $_);
 

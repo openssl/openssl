@@ -470,7 +470,7 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
         BIO_printf(p->biodebug, "Hostname in TLS extension: \"");
         while ((uc = *cp++) != 0)
             BIO_printf(p->biodebug,
-                       isascii(uc) && isprint(uc) ? "%c" : "\\x%02x", uc);
+                       (((uc) & ~127) == 0) && isprint(uc) ? "%c" : "\\x%02x", uc);
         BIO_printf(p->biodebug, "\"\n");
     }
 

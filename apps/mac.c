@@ -29,8 +29,8 @@ const OPTIONS mac_options[] = {
     {OPT_HELP_STR, 1, '-', "mac_name\t\t MAC algorithm (See list "
                            "-mac-algorithms)"},
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"macopt", OPT_MACOPT, 's', "MAC algorithm control parameters in n:v form. "
-                                "See 'Supported Controls' in the EVP_MAC_ docs"},
+    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form. "
+                                "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},
     {"in", OPT_IN, '<', "Input file to MAC (default is stdin)"},
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
     {"binary", OPT_BIN, '-', "Output in binary format (Default is hexadecimal "
@@ -103,43 +103,19 @@ opthelp:
         goto err;
 
     if (opts != NULL) {
-        OSSL_PARAM *params =
-            OPENSSL_zalloc(sizeof(OSSL_PARAM)
-                           * (sk_OPENSSL_STRING_num(opts) + 1));
-        const OSSL_PARAM *paramdefs = EVP_MAC_CTX_settable_params(mac);
-        size_t params_n;
         int ok = 1;
+        OSSL_PARAM *params =
+            app_params_new_from_opts(opts, EVP_MAC_CTX_settable_params(mac));
 
-        for (params_n = 0; params_n < (size_t)sk_OPENSSL_STRING_num(opts);
-             params_n++) {
-            char *opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
-            char *stmp, *vtmp = NULL;
+        if (params == NULL)
+            goto err;
 
-            if ((stmp = OPENSSL_strdup(opt)) == NULL
-                || (vtmp = strchr(stmp, ':')) == NULL
-                || (*vtmp++ = 0) /* Always zero */
-                || !OSSL_PARAM_allocate_from_text(&params[params_n], paramdefs,
-                                                  stmp, vtmp, strlen(vtmp))) {
-                BIO_printf(bio_err, "MAC parameter error '%s'\n", opt);
-                ERR_print_errors(bio_err);
-                ok = 0;
-            }
-            OPENSSL_free(stmp);
-            if (!ok)
-                break;
+        if (!EVP_MAC_CTX_set_params(ctx, params)) {
+            BIO_printf(bio_err, "MAC parameter error\n");
+            ERR_print_errors(bio_err);
+            ok = 0;
         }
-        if (ok) {
-            params[params_n] = OSSL_PARAM_construct_end();
-            if (!EVP_MAC_CTX_set_params(ctx, params)) {
-                BIO_printf(bio_err, "MAC parameter error\n");
-                ERR_print_errors(bio_err);
-                goto err;
-            }
-        }
-        for (; params_n-- > 0;) {
-            OPENSSL_free(params[params_n].data);
-        }
-        OPENSSL_free(params);
+        app_params_free(params);
         if (!ok)
             goto err;
     }
@@ -159,7 +135,6 @@ opthelp:
         BIO_printf(bio_err, "EVP_MAC_Init failed\n");
         goto err;
     }
-
 
     for (;;) {
         i = BIO_read(in, (char *)buf, BUFSIZE);

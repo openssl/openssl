@@ -243,7 +243,7 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     int mac_flags;
     const char *mdname = EVP_MD_name(md);
 
-    mac = EVP_MAC_fetch(NULL, "HMAC", NULL); /* Implicit fetch */
+    mac = EVP_MAC_fetch(NULL, OSSL_MAC_NAME_HMAC, NULL); /* Implicit fetch */
     ctx_init = EVP_MAC_CTX_new(mac);
     if (ctx_init == NULL)
         goto err;
@@ -251,7 +251,7 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     /* TODO(3.0) rethink "flags", also see hmac.c in providers */
     mac_flags = EVP_MD_CTX_FLAG_NON_FIPS_ALLOW;
     params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FLAGS, &mac_flags);
-    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  (char *)mdname,
                                                  strlen(mdname) + 1);
     params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,

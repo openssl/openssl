@@ -21,6 +21,4 @@ if (disabled("mdc2") || disabled("legacy")) {
 
 plan tests => 1;
 
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-
 ok(run(test(["mdc2test"])), "running mdc2test");

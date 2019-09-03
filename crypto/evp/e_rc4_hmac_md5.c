@@ -71,7 +71,6 @@ static int rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                                        * rc4_md5-x86_64.pl */
         md5_off = MD5_CBLOCK - key->md.num, blocks;
     unsigned int l;
-    extern unsigned int OPENSSL_ia32cap_P[];
 # endif
     size_t plen = key->payload_length;
 

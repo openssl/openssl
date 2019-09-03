@@ -174,7 +174,7 @@ is included, commonly as one of the first included headers. Therefore
 it is defined as an application developer's responsibility to include
 windows.h prior to async.h.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 The following example demonstrates how to use most of the core async APIs:
 

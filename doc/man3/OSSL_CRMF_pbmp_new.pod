@@ -49,7 +49,7 @@ OSSL_CRMF_pbm_new() returns 1 on success, 0 on error.
 OSSL_CRMF_pbmp_new() returns a new and initialized OSSL_CRMF_PBMPARAMETER
 structure, or NULL on error.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
  OSSL_CRMF_PBMPARAMETER *pbm = NULL;
  unsigned char *msg = "Hello";

@@ -40,7 +40,7 @@ BIO_next() returns the next BIO in a chain.
 
 BIO_method_type() returns the type of the BIO B<b>.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Traverse a chain looking for digest BIOs:
 

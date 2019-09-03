@@ -59,7 +59,7 @@ return the respective pointer or NULL if their input is NULL.
 
 OSSL_CMP_ITAV_push0_stack_item() returns 1 on success, 0 on error.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 The following code creates and sets a structure representing a generic
 InfoTypeAndValue sequence, using an OID created from text as type, and an

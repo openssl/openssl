@@ -214,7 +214,7 @@ the following:
      BIO_dump(trc_out, bar, sizeof(bar));
  } OSSL_TRACE_END(TLS);
 
-=head1 Simple example
+=head2 Simple example
 
 An example with just a channel and constant prefix / suffix.
 

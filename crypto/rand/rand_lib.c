@@ -69,8 +69,6 @@ size_t rand_acquire_entropy_from_tsc(RAND_POOL *pool)
 size_t OPENSSL_ia32_rdseed_bytes(unsigned char *buf, size_t len);
 size_t OPENSSL_ia32_rdrand_bytes(unsigned char *buf, size_t len);
 
-extern unsigned int OPENSSL_ia32cap_P[];
-
 /*
  * Acquire entropy using Intel-specific cpu instructions
  *

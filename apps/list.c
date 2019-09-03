@@ -13,94 +13,11 @@
 #include <openssl/provider.h>
 #include <openssl/safestack.h>
 #include "apps.h"
+#include "app_params.h"
 #include "progs.h"
 #include "opt.h"
 
 static int verbose = 0;
-
-static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
-{
-    const char *type_mod = "";
-    const char *type = NULL;
-    int show_type_number = 0;
-    int printed_len;
-
-    switch (param->data_type) {
-    case OSSL_PARAM_UNSIGNED_INTEGER:
-        type_mod = "unsigned ";
-        /* FALLTHRU */
-    case OSSL_PARAM_INTEGER:
-        type = "integer";
-        break;
-    case OSSL_PARAM_UTF8_PTR:
-        type_mod = "pointer to a ";
-        /* FALLTHRU */
-    case OSSL_PARAM_UTF8_STRING:
-        type = "UTF8 encoded string";
-        break;
-    case OSSL_PARAM_OCTET_PTR:
-        type_mod = "pointer to an ";
-        /* FALLTHRU */
-    case OSSL_PARAM_OCTET_STRING:
-        type = "octet string";
-        break;
-    default:
-        type = "unknown type";
-        show_type_number = 1;
-        break;
-    }
-
-    printed_len = BIO_snprintf(buf, bufsz, "%s: ", param->key);
-    if (printed_len > 0) {
-        buf += printed_len;
-        bufsz -= printed_len;
-    }
-    printed_len = BIO_snprintf(buf, bufsz, "%s%s", type_mod, type);
-    if (printed_len > 0) {
-        buf += printed_len;
-        bufsz -= printed_len;
-    }
-    if (show_type_number) {
-        printed_len = BIO_snprintf(buf, bufsz, " [%d]", param->data_type);
-        if (printed_len > 0) {
-            buf += printed_len;
-            bufsz -= printed_len;
-        }
-    }
-    if (param->data_size == 0)
-        printed_len = BIO_snprintf(buf, bufsz, " (arbitrary size)");
-    else
-        printed_len = BIO_snprintf(buf, bufsz, " (max %zu bytes large)",
-                                   param->data_size);
-    if (printed_len > 0) {
-        buf += printed_len;
-        bufsz -= printed_len;
-    }
-    *buf = '\0';
-    return 1;
-}
-
-static int print_param_types(const char *thing, const OSSL_PARAM *pdefs)
-{
-    if (pdefs == NULL) {
-        BIO_printf(bio_out, "    No declared %s\n", thing);
-    } else if (pdefs->key == NULL) {
-        /*
-         * An empty list?  This shouldn't happen, but let's just make sure to
-         * say something if there's a badly written provider...
-         */
-        BIO_printf(bio_out, "    Empty list of %s (!!!)\n", thing);
-    } else {
-        BIO_printf(bio_out, "    %s:\n", thing);
-        for (; pdefs->key != NULL; pdefs++) {
-            char buf[200];       /* This should be ample space */
-
-            describe_param_type(buf, sizeof(buf), pdefs);
-            BIO_printf(bio_out, "      %s\n", buf);
-        }
-    }
-    return 1;
-}
 
 static void legacy_cipher_fn(const EVP_CIPHER *c,
                              const char *from, const char *to, void *arg)
@@ -133,8 +50,8 @@ static void collect_ciphers(EVP_CIPHER *cipher, void *stack)
 {
     STACK_OF(EVP_CIPHER) *cipher_stack = stack;
 
-    sk_EVP_CIPHER_push(cipher_stack, cipher);
-    EVP_CIPHER_up_ref(cipher);
+    if (sk_EVP_CIPHER_push(cipher_stack, cipher) > 0)
+        EVP_CIPHER_up_ref(cipher);
 }
 
 static void list_ciphers(void)
@@ -156,11 +73,11 @@ static void list_ciphers(void)
                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
-                              EVP_CIPHER_gettable_params(c));
+                              EVP_CIPHER_gettable_params(c), 4);
             print_param_types("retrievable operation parameters",
-                              EVP_CIPHER_CTX_gettable_params(c));
+                              EVP_CIPHER_CTX_gettable_params(c), 4);
             print_param_types("settable operation parameters",
-                              EVP_CIPHER_CTX_settable_params(c));
+                              EVP_CIPHER_CTX_settable_params(c), 4);
         }
     }
     sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_meth_free);
@@ -196,8 +113,8 @@ static void collect_digests(EVP_MD *md, void *stack)
 {
     STACK_OF(EVP_MD) *digest_stack = stack;
 
-    sk_EVP_MD_push(digest_stack, md);
-    EVP_MD_up_ref(md);
+    if (sk_EVP_MD_push(digest_stack, md) > 0)
+        EVP_MD_up_ref(md);
 }
 
 static void list_digests(void)
@@ -219,11 +136,11 @@ static void list_digests(void)
                    OSSL_PROVIDER_name(EVP_MD_provider(m)));
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
-                              EVP_MD_gettable_params(m));
+                              EVP_MD_gettable_params(m), 4);
             print_param_types("retrievable operation parameters",
-                              EVP_MD_CTX_gettable_params(m));
+                              EVP_MD_CTX_gettable_params(m), 4);
             print_param_types("settable operation parameters",
-                              EVP_MD_CTX_settable_params(m));
+                              EVP_MD_CTX_settable_params(m), 4);
         }
     }
     sk_EVP_MD_pop_free(digests, EVP_MD_meth_free);
@@ -245,8 +162,8 @@ static void collect_macs(EVP_MAC *mac, void *stack)
 {
     STACK_OF(EVP_MAC) *mac_stack = stack;
 
-    sk_EVP_MAC_push(mac_stack, mac);
-    EVP_MAC_up_ref(mac);
+    if (sk_EVP_MAC_push(mac_stack, mac) > 0)
+        EVP_MAC_up_ref(mac);
 }
 
 static void list_macs(void)
@@ -266,11 +183,11 @@ static void list_macs(void)
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
-                              EVP_MAC_gettable_params(m));
+                              EVP_MAC_gettable_params(m), 4);
             print_param_types("retrievable operation parameters",
-                              EVP_MAC_CTX_gettable_params(m));
+                              EVP_MAC_CTX_gettable_params(m), 4);
             print_param_types("settable operation parameters",
-                              EVP_MAC_CTX_settable_params(m));
+                              EVP_MAC_CTX_settable_params(m), 4);
         }
     }
     sk_EVP_MAC_pop_free(macs, EVP_MAC_free);

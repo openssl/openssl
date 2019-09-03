@@ -1,4 +1,4 @@
-SUBDIRS=digests macs
+SUBDIRS=digests macs ciphers
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         defltprov.c

@@ -203,12 +203,12 @@ static void *kmac_fetch_new(void *provctx, const char *mdname)
 
 static void *kmac128_new(void *provctx)
 {
-    return kmac_fetch_new(provctx, "KECCAK_KMAC128");
+    return kmac_fetch_new(provctx, OSSL_DIGEST_NAME_KECCAK_KMAC128);
 }
 
 static void *kmac256_new(void *provctx)
 {
-    return kmac_fetch_new(provctx, "KECCAK_KMAC256");
+    return kmac_fetch_new(provctx, OSSL_DIGEST_NAME_KECCAK_KMAC256);
 }
 
 static void *kmac_dup(void *vsrc)
@@ -311,9 +311,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL), /* Same as "outlen" */
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_DIGESTSIZE, NULL), /* Same as "outlen" */
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *kmac_gettable_ctx_params(void)
@@ -325,9 +323,7 @@ static int kmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-        || (p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL
-        || (p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_DIGESTSIZE)) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
         return OSSL_PARAM_set_size_t(p, kmac_size(vmacctx));
 
     return 1;
@@ -335,7 +331,6 @@ static int kmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_int(OSSL_MAC_PARAM_XOF, NULL),
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_CUSTOM, NULL, 0),
@@ -363,9 +358,7 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_XOF)) != NULL
         && !OSSL_PARAM_get_int(p, &kctx->xof_mode))
         return 0;
-    if (((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-         ||
-         (p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL)
+    if (((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL)
         && !OSSL_PARAM_get_size_t(p, &kctx->out_len))
         return 0;
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {

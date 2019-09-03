@@ -56,7 +56,7 @@ must be used, see the L<ARBITRARY EXTENSIONS|/"ARBITRARY EXTENSIONS"> section fo
 
 The following sections describe each supported extension in detail.
 
-=head2 Basic Constraints.
+=head2 Basic Constraints
 
 This is a multi valued extension which indicates whether a certificate is
 a CA certificate. The first (mandatory) name is B<CA> followed by B<TRUE> or
@@ -81,7 +81,7 @@ below this one in a chain. So if you have a CA with a pathlen of zero it can
 only be used to sign end user certificates and not further CAs.
 
 
-=head2 Key Usage.
+=head2 Key Usage
 
 Key usage is a multi valued extension consisting of a list of names of the
 permitted key usages.
@@ -97,7 +97,7 @@ Examples:
  keyUsage=critical, keyCertSign
 
 
-=head2 Extended Key Usage.
+=head2 Extended Key Usage
 
 This extensions consists of a list of usages indicating purposes for which
 the certificate public key can be used for,
@@ -126,7 +126,7 @@ Examples:
  extendedKeyUsage=serverAuth,clientAuth
 
 
-=head2 Subject Key Identifier.
+=head2 Subject Key Identifier
 
 This is really a string extension and can take two possible values. Either
 the word B<hash> which will automatically follow the guidelines in RFC3280
@@ -138,7 +138,7 @@ Example:
  subjectKeyIdentifier=hash
 
 
-=head2 Authority Key Identifier.
+=head2 Authority Key Identifier
 
 The authority key identifier extension permits two options. keyid and issuer:
 both can take the optional value "always".
@@ -156,7 +156,7 @@ Example:
  authorityKeyIdentifier=keyid,issuer
 
 
-=head2 Subject Alternative Name.
+=head2 Subject Alternative Name
 
 The subject alternative name extension allows various literal values to be
 included in the configuration file. These include B<email> (an email address)
@@ -195,7 +195,7 @@ Examples:
  CN=My Name
 
 
-=head2 Issuer Alternative Name.
+=head2 Issuer Alternative Name
 
 The issuer alternative name option supports all the literal options of
 subject alternative name. It does B<not> support the email:copy option because
@@ -208,7 +208,7 @@ Example:
  issuerAltName = issuer:copy
 
 
-=head2 Authority Info Access.
+=head2 Authority Info Access
 
 The authority information access extension gives details about how to access
 certain information relating to the CA. Its syntax is accessOID;location
@@ -300,7 +300,7 @@ Example:
  CN=Some Name
 
 
-=head2 Certificate Policies.
+=head2 Certificate Policies
 
 This is a I<raw> extension. All the fields of this extension can be set by
 using the appropriate syntax.
@@ -424,7 +424,7 @@ Example:
 The following extensions are non standard, Netscape specific and largely
 obsolete. Their use in new applications is discouraged.
 
-=head2 Netscape String extensions.
+=head2 Netscape String extensions
 
 Netscape Comment (B<nsComment>) is a string extension containing a comment
 which will be displayed when the certificate is viewed in some browsers.
@@ -483,7 +483,7 @@ For example:
 
  basicConstraints=critical,DER:00:01:02:03
 
-=head1 WARNING
+=head1 WARNINGS
 
 There is no guarantee that a specific implementation will process a given
 extension. It may therefore be sometimes possible to use certificates for
@@ -492,7 +492,6 @@ not recognize or honour the values of the relevant extensions.
 
 The DER and ASN1 options should be used with caution. It is possible to create
 totally invalid extensions if they are not used carefully.
-
 
 =head1 NOTES
 

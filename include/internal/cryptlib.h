@@ -84,7 +84,11 @@ DEFINE_LHASH_OF(MEM);
 # define HEX_SIZE(type)          (sizeof(type)*2)
 
 void OPENSSL_cpuid_setup(void);
+#if defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
+    defined(__x86_64) || defined(__x86_64__) || \
+    defined(_M_AMD64) || defined(_M_X64)
 extern unsigned int OPENSSL_ia32cap_P[];
+#endif
 void OPENSSL_showfatal(const char *fmta, ...);
 int do_ex_data_init(OPENSSL_CTX *ctx);
 void crypto_cleanup_all_ex_data_int(OPENSSL_CTX *ctx);

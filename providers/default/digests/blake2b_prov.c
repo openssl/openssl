@@ -18,7 +18,6 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include "blake2_impl.h"
-
 #include "internal/blake2.h"
 
 static const uint64_t blake2b_IV[8] =

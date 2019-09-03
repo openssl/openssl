@@ -9,9 +9,10 @@
 
 #include <openssl/crypto.h>
 #include "internal/sm3.h"
-#include "internal/core_mkdigest.h"
+#include "internal/digestcommon.h"
 #include "internal/provider_algs.h"
 
-OSSL_FUNC_DIGEST_CONSTRUCT(sm3, SM3_CTX,
+/* sm3_functions */
+IMPLEMENT_digest_functions(sm3, SM3_CTX,
                            SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
                            sm3_init, sm3_update, sm3_final)

@@ -28,7 +28,6 @@ extern const OSSL_DISPATCH blake2b512_functions[];
 extern const OSSL_DISPATCH md5_functions[];
 extern const OSSL_DISPATCH md5_sha1_functions[];
 extern const OSSL_DISPATCH sm3_functions[];
-extern const OSSL_DISPATCH nullmd_functions[];
 extern const OSSL_DISPATCH md2_functions[];
 extern const OSSL_DISPATCH md4_functions[];
 extern const OSSL_DISPATCH mdc2_functions[];
@@ -60,11 +59,61 @@ extern const OSSL_DISPATCH aes128ctr_functions[];
 extern const OSSL_DISPATCH aes256gcm_functions[];
 extern const OSSL_DISPATCH aes192gcm_functions[];
 extern const OSSL_DISPATCH aes128gcm_functions[];
+extern const OSSL_DISPATCH aes256ccm_functions[];
+extern const OSSL_DISPATCH aes192ccm_functions[];
+extern const OSSL_DISPATCH aes128ccm_functions[];
 #ifndef OPENSSL_NO_ARIA
 extern const OSSL_DISPATCH aria256gcm_functions[];
 extern const OSSL_DISPATCH aria192gcm_functions[];
 extern const OSSL_DISPATCH aria128gcm_functions[];
+extern const OSSL_DISPATCH aria256ccm_functions[];
+extern const OSSL_DISPATCH aria192ccm_functions[];
+extern const OSSL_DISPATCH aria128ccm_functions[];
+extern const OSSL_DISPATCH aria256ecb_functions[];
+extern const OSSL_DISPATCH aria192ecb_functions[];
+extern const OSSL_DISPATCH aria128ecb_functions[];
+extern const OSSL_DISPATCH aria256cbc_functions[];
+extern const OSSL_DISPATCH aria192cbc_functions[];
+extern const OSSL_DISPATCH aria128cbc_functions[];
+extern const OSSL_DISPATCH aria256ofb_functions[];
+extern const OSSL_DISPATCH aria192ofb_functions[];
+extern const OSSL_DISPATCH aria128ofb_functions[];
+extern const OSSL_DISPATCH aria256cfb_functions[];
+extern const OSSL_DISPATCH aria192cfb_functions[];
+extern const OSSL_DISPATCH aria128cfb_functions[];
+extern const OSSL_DISPATCH aria256cfb1_functions[];
+extern const OSSL_DISPATCH aria192cfb1_functions[];
+extern const OSSL_DISPATCH aria128cfb1_functions[];
+extern const OSSL_DISPATCH aria256cfb8_functions[];
+extern const OSSL_DISPATCH aria192cfb8_functions[];
+extern const OSSL_DISPATCH aria128cfb8_functions[];
+extern const OSSL_DISPATCH aria256ctr_functions[];
+extern const OSSL_DISPATCH aria192ctr_functions[];
+extern const OSSL_DISPATCH aria128ctr_functions[];
 #endif /* OPENSSL_NO_ARIA */
+#ifndef OPENSSL_NO_CAMELLIA
+extern const OSSL_DISPATCH camellia256ecb_functions[];
+extern const OSSL_DISPATCH camellia192ecb_functions[];
+extern const OSSL_DISPATCH camellia128ecb_functions[];
+extern const OSSL_DISPATCH camellia256cbc_functions[];
+extern const OSSL_DISPATCH camellia192cbc_functions[];
+extern const OSSL_DISPATCH camellia128cbc_functions[];
+extern const OSSL_DISPATCH camellia256ofb_functions[];
+extern const OSSL_DISPATCH camellia192ofb_functions[];
+extern const OSSL_DISPATCH camellia128ofb_functions[];
+extern const OSSL_DISPATCH camellia256cfb_functions[];
+extern const OSSL_DISPATCH camellia192cfb_functions[];
+extern const OSSL_DISPATCH camellia128cfb_functions[];
+extern const OSSL_DISPATCH camellia256cfb1_functions[];
+extern const OSSL_DISPATCH camellia192cfb1_functions[];
+extern const OSSL_DISPATCH camellia128cfb1_functions[];
+extern const OSSL_DISPATCH camellia256cfb8_functions[];
+extern const OSSL_DISPATCH camellia192cfb8_functions[];
+extern const OSSL_DISPATCH camellia128cfb8_functions[];
+extern const OSSL_DISPATCH camellia256ctr_functions[];
+extern const OSSL_DISPATCH camellia192ctr_functions[];
+extern const OSSL_DISPATCH camellia128ctr_functions[];
+#endif /* OPENSSL_NO_CAMELLIA */
 
 /* MACs */
 extern const OSSL_DISPATCH blake2bmac_functions[];
@@ -76,6 +125,24 @@ extern const OSSL_DISPATCH kmac128_functions[];
 extern const OSSL_DISPATCH kmac256_functions[];
 extern const OSSL_DISPATCH siphash_functions[];
 extern const OSSL_DISPATCH poly1305_functions[];
+
+extern const OSSL_DISPATCH tdes_ede3_ecb_functions[];
+extern const OSSL_DISPATCH tdes_ede3_cbc_functions[];
+
+#ifndef FIPS_MODE
+extern const OSSL_DISPATCH tdes_ede3_ofb_functions[];
+extern const OSSL_DISPATCH tdes_ede3_cfb_functions[];
+extern const OSSL_DISPATCH tdes_ede3_cfb8_functions[];
+extern const OSSL_DISPATCH tdes_ede3_cfb1_functions[];
+
+extern const OSSL_DISPATCH tdes_ede2_ecb_functions[];
+extern const OSSL_DISPATCH tdes_ede2_cbc_functions[];
+extern const OSSL_DISPATCH tdes_ede2_ofb_functions[];
+extern const OSSL_DISPATCH tdes_ede2_cfb_functions[];
+
+extern const OSSL_DISPATCH tdes_desx_cbc_functions[];
+extern const OSSL_DISPATCH tdes_wrap_cbc_functions[];
+#endif /* FIPS_MODE */
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];

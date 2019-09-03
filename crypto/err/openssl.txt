@@ -547,15 +547,15 @@ EC_F_ECDH_COMPUTE_KEY:246:ECDH_compute_key
 EC_F_ECDH_SIMPLE_COMPUTE_KEY:257:ecdh_simple_compute_key
 EC_F_ECDSA_DO_SIGN_EX:251:ECDSA_do_sign_ex
 EC_F_ECDSA_DO_VERIFY:252:ECDSA_do_verify
+EC_F_ECDSA_S390X_NISTP_SIGN_SIG:313:ecdsa_s390x_nistp_sign_sig
+EC_F_ECDSA_S390X_NISTP_VERIFY_SIG:314:ecdsa_s390x_nistp_verify_sig
 EC_F_ECDSA_SIGN_EX:254:ECDSA_sign_ex
 EC_F_ECDSA_SIGN_SETUP:248:ECDSA_sign_setup
 EC_F_ECDSA_SIG_NEW:265:ECDSA_SIG_new
-EC_F_ECDSA_VERIFY:253:ECDSA_verify
 EC_F_ECDSA_SIMPLE_SIGN_SETUP:310:ecdsa_simple_sign_setup
 EC_F_ECDSA_SIMPLE_SIGN_SIG:311:ecdsa_simple_sign_sig
 EC_F_ECDSA_SIMPLE_VERIFY_SIG:312:ecdsa_simple_verify_sig
-EC_F_ECDSA_S390X_NISTP_SIGN_SIG:313:ecdsa_s390x_nistp_sign_sig
-EC_F_ECDSA_S390X_NISTP_VERIFY_SIG:314:ecdsa_s390x_nistp_verify_sig
+EC_F_ECDSA_VERIFY:253:ECDSA_verify
 EC_F_ECD_ITEM_VERIFY:270:ecd_item_verify
 EC_F_ECKEY_PARAM2TYPE:223:eckey_param2type
 EC_F_ECKEY_PARAM_DECODE:212:eckey_param_decode
@@ -1150,12 +1150,12 @@ PROV_F_AESNI_INIT_KEY:101:aesni_init_key
 PROV_F_AES_BLOCK_FINAL:102:aes_block_final
 PROV_F_AES_BLOCK_UPDATE:103:aes_block_update
 PROV_F_AES_CIPHER:104:aes_cipher
-PROV_F_AES_GET_CTX_PARAMS:105:aes_get_ctx_params
-PROV_F_AES_SET_CTX_PARAMS:106:aes_set_ctx_params
 PROV_F_AES_DINIT:107:aes_dinit
 PROV_F_AES_DUPCTX:108:aes_dupctx
 PROV_F_AES_EINIT:109:aes_einit
+PROV_F_AES_GET_CTX_PARAMS:105:aes_get_ctx_params
 PROV_F_AES_INIT_KEY:110:aes_init_key
+PROV_F_AES_SET_CTX_PARAMS:106:aes_set_ctx_params
 PROV_F_AES_STREAM_UPDATE:111:aes_stream_update
 PROV_F_AES_T4_INIT_KEY:112:aes_t4_init_key
 PROV_F_BLAKE2_MAC_INIT:115:blake2_mac_init
@@ -2708,17 +2708,24 @@ PROP_R_TRAILING_CHARACTERS:110:trailing characters
 PROV_R_AES_KEY_SETUP_FAILED:101:aes key setup failed
 PROV_R_BAD_DECRYPT:100:bad decrypt
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
+PROV_R_FAILED_TO_GENERATE_KEY:121:failed to generate key
 PROV_R_FAILED_TO_GET_PARAMETER:103:failed to get parameter
 PROV_R_FAILED_TO_SET_PARAMETER:104:failed to set parameter
 PROV_R_INVALID_AAD:108:invalid aad
 PROV_R_INVALID_CUSTOM_LENGTH:111:invalid custom length
+PROV_R_INVALID_DATA:115:invalid data
+PROV_R_INVALID_IVLEN:116:invalid ivlen
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
+PROV_R_INVALID_KEYLEN:117:invalid keylen
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
 PROV_R_INVALID_TAG:110:invalid tag
+PROV_R_INVALID_TAGLEN:118:invalid taglen
 PROV_R_NOT_XOF_OR_INVALID_LENGTH:113:not xof or invalid length
 PROV_R_NO_KEY_SET:114:no key set
 PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
+PROV_R_TAG_NOTSET:119:tag notset
+PROV_R_TAG_NOT_NEEDED:120:tag not needed
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
 RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long
 RAND_R_ALREADY_INSTANTIATED:103:already instantiated

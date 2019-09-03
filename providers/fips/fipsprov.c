@@ -20,6 +20,7 @@
 #include <openssl/sha.h>
 #include <openssl/rand_drbg.h>
 #include <openssl/ec.h>
+#include <openssl/fips_names.h>
 
 #include "internal/cryptlib.h"
 #include "internal/property.h"
@@ -27,6 +28,7 @@
 #include "internal/provider_algs.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommon.h"
+#include "selftest.h"
 
 extern OSSL_core_thread_start_fn *c_thread_start;
 
@@ -36,6 +38,9 @@ extern OSSL_core_thread_start_fn *c_thread_start;
  * at the moment because c_put_error/c_add_error_vdata do not provide
  * us with the OPENSSL_CTX as a parameter.
  */
+
+static SELF_TEST_POST_PARAMS selftest_params;
+
 /* Functions provided by the core */
 static OSSL_core_gettable_params_fn *c_gettable_params;
 static OSSL_core_get_params_fn *c_get_params;
@@ -82,6 +87,31 @@ static const OSSL_PARAM fips_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_END
+};
+
+/*
+ * Parameters to retrieve from the core provider - required for self testing.
+ * NOTE: inside core_get_params() these will be loaded from config items
+ * stored inside prov->parameters (except for OSSL_PROV_PARAM_MODULE_FILENAME).
+ */
+static OSSL_PARAM core_params[] =
+{
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_MODULE_FILENAME,
+                        selftest_params.module_filename,
+                        sizeof(selftest_params.module_filename)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_MODULE_MAC,
+                        selftest_params.module_checksum_data,
+                        sizeof(selftest_params.module_checksum_data)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
+                        selftest_params.indicator_checksum_data,
+                        sizeof(selftest_params.indicator_checksum_data)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
+                        selftest_params.indicator_data,
+                        sizeof(selftest_params.indicator_data)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
+                        selftest_params.indicator_version,
+                        sizeof(selftest_params.indicator_version)),
     OSSL_PARAM_END
 };
 
@@ -235,6 +265,21 @@ const char *ossl_prov_util_nid_to_name(int nid)
         return "AES-192-CTR";
     case NID_aes_128_ctr:
         return "AES-128-CTR";
+    /* TODO(3.0) Change these when we have aliases */
+    case NID_aes_256_gcm:
+        return "id-aes256-GCM";
+    case NID_aes_192_gcm:
+        return "id-aes192-GCM";
+    case NID_aes_128_gcm:
+        return "id-aes128-GCM";
+    case NID_aes_256_ccm:
+        return "id-aes256-CCM";
+    case NID_aes_192_ccm:
+        return "id-aes192-CCM";
+    case NID_aes_128_ccm:
+        return "id-aes128-CCM";
+    default:
+        break;
     }
 
     return NULL;
@@ -272,14 +317,24 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
     { "AES-256-CTR", "fips=yes", aes256ctr_functions },
     { "AES-192-CTR", "fips=yes", aes192ctr_functions },
     { "AES-128-CTR", "fips=yes", aes128ctr_functions },
+    /* TODO(3.0) Add aliases for these ciphers */
     { "id-aes256-GCM", "fips=yes", aes256gcm_functions },
     { "id-aes192-GCM", "fips=yes", aes192gcm_functions },
     { "id-aes128-GCM", "fips=yes", aes128gcm_functions },
+    { "id-aes256-CCM", "fips=yes", aes256ccm_functions },
+    { "id-aes192-CCM", "fips=yes", aes192ccm_functions },
+    { "id-aes128-CCM", "fips=yes", aes128ccm_functions },
+#ifndef OPENSSL_NO_DES
+    { "DES-EDE3", "fips=yes", tdes_ede3_ecb_functions },
+    { "DES-EDE3-CBC", "fips=yes", tdes_ede3_cbc_functions },
+#endif  /* OPENSSL_NO_DES */
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_macs[] = {
+#ifndef OPENSSL_NO_CMAC
     { "CMAC", "fips=yes", cmac_functions },
+#endif
     { "GMAC", "fips=yes", gmac_functions },
     { "HMAC", "fips=yes", hmac_functions },
     { "KMAC128", "fips=yes", kmac128_functions },
@@ -384,11 +439,26 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CRYPTO_SECURE_ALLOCATED:
             c_CRYPTO_secure_allocated = OSSL_get_CRYPTO_secure_allocated(in);
             break;
+        case OSSL_FUNC_BIO_NEW_FILE:
+            selftest_params.bio_new_file_cb = OSSL_get_BIO_new_file(in);
+            break;
+        case OSSL_FUNC_BIO_NEW_MEMBUF:
+            selftest_params.bio_new_buffer_cb = OSSL_get_BIO_new_membuf(in);
+            break;
+        case OSSL_FUNC_BIO_READ:
+            selftest_params.bio_read_cb = OSSL_get_BIO_read(in);
+            break;
+        case OSSL_FUNC_BIO_FREE:
+            selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
+            break;
         default:
             /* Just ignore anything we don't understand */
             break;
         }
     }
+
+    if (!c_get_params(provider, core_params))
+        return 0;
 
     /*  Create a context. */
     if ((ctx = OPENSSL_CTX_new()) == NULL)

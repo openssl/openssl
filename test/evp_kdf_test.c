@@ -15,6 +15,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
 #include "testutil.h"
 
 static int test_kdf_tls1_prf(void)
@@ -278,7 +279,8 @@ static int test_kdf_ss_hmac(void)
 
     ret =
         TEST_ptr(kctx = EVP_KDF_CTX_new_id(EVP_KDF_SS))
-        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC, "HMAC"), 0)
+        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC,
+                                    OSSL_MAC_NAME_HMAC), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD,  EVP_sha256()), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z, sizeof(z)), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SSKDF_INFO, other,
@@ -317,7 +319,8 @@ static int test_kdf_ss_kmac(void)
 
     ret =
         TEST_ptr(kctx = EVP_KDF_CTX_new_id(EVP_KDF_SS))
-        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC, "KMAC128"), 0)
+        && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC,
+                                    OSSL_MAC_NAME_KMAC128), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z,
                                     sizeof(z)), 0)
         && TEST_int_gt(EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SSKDF_INFO, other,

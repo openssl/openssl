@@ -112,8 +112,6 @@ EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth);
 /**
  *  Creates a new EC_GROUP object. Same as EC_GROUP_new_ex with NULL for the
  *  library context.
- *  \param   libctx The associated library context or NULL for the default
- *                  library context
  *  \param   meth   EC_METHOD to use
  *  \return  newly created EC_GROUP object or NULL in case of an error.
  */
@@ -1494,7 +1492,6 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTX_set1_id(ctx, id, id_len) \
         EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
                                 EVP_PKEY_CTRL_SET1_ID, (int)id_len, (void*)(id))
-
 # define EVP_PKEY_CTX_get1_id(ctx, id) \
         EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
                                 EVP_PKEY_CTRL_GET1_ID, 0, (void*)(id))

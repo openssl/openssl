@@ -1,0 +1,22 @@
+LIBS=../../../libcrypto
+
+IF[{- !$disabled{des} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_tdes_default.c cipher_tdes_default_hw.c \
+      cipher_tdes_wrap.c cipher_tdes_wrap_hw.c \
+      cipher_desx.c cipher_desx_hw.c
+ENDIF
+
+IF[{- !$disabled{aria} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_aria.c cipher_aria_hw.c \
+      cipher_aria_gcm.c cipher_aria_gcm_hw.c \
+      cipher_aria_ccm.c cipher_aria_ccm_hw.c
+ENDIF
+
+IF[{- !$disabled{camellia} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_camellia.c cipher_camellia_hw.c
+ENDIF
+
+INCLUDE[../../../libcrypto]=. ../../../crypto

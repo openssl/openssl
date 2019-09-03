@@ -89,7 +89,7 @@ size_t EVP_MAC_size(EVP_MAC_CTX *ctx)
     if (ctx->data != NULL) {
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN, &sz);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &sz);
         if (ctx->meth->get_ctx_params != NULL) {
             if (ctx->meth->get_ctx_params(ctx->data, params))
                 return sz;

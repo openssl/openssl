@@ -407,6 +407,28 @@ static int digest_test_run(EVP_TEST *t)
     }
 
     if (EVP_MD_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+        EVP_MD_CTX *mctx_cpy;
+        char dont[] = "touch";
+
+        if (!TEST_ptr(mctx_cpy = EVP_MD_CTX_new())) {
+            goto err;
+        }
+        if (!EVP_MD_CTX_copy(mctx_cpy, mctx)) {
+            EVP_MD_CTX_free(mctx_cpy);
+            goto err;
+        }
+        if (!EVP_DigestFinalXOF(mctx_cpy, (unsigned char *)dont, 0)) {
+            EVP_MD_CTX_free(mctx_cpy);
+            t->err = "DIGESTFINALXOF_ERROR";
+            goto err;
+        }
+        if (!TEST_str_eq(dont, "touch")) {
+            EVP_MD_CTX_free(mctx_cpy);
+            t->err = "DIGESTFINALXOF_ERROR";
+            goto err;
+        }
+        EVP_MD_CTX_free(mctx_cpy);
+
         got_len = expected->output_len;
         if (!EVP_DigestFinalXOF(mctx, got, got_len)) {
             t->err = "DIGESTFINALXOF_ERROR";
@@ -535,7 +557,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
                 if (cdat->aad[i] == NULL)
                     return parse_bin(value, &cdat->aad[i], &cdat->aad_len[i]);
             }
-            return 0;
+            return -1;
         }
         if (strcmp(keyword, "Tag") == 0)
             return parse_bin(value, &cdat->tag, &cdat->tag_len);
@@ -545,7 +567,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
             else if (strcmp(value, "FALSE") == 0)
                 cdat->tag_late = 0;
             else
-                return 0;
+                return -1;
             return 1;
         }
     }
@@ -556,7 +578,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
         else if (strcmp(value, "DECRYPT") == 0)
             cdat->enc = 0;
         else
-            return 0;
+            return -1;
         return 1;
     }
     return 0;
@@ -994,7 +1016,7 @@ static int mac_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Algorithm") == 0) {
         mdata->alg = OPENSSL_strdup(value);
         if (!mdata->alg)
-            return 0;
+            return -1;
         return 1;
     }
     if (strcmp(keyword, "Input") == 0)
@@ -1141,11 +1163,29 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
 #endif
 
-    if (expected->alg != NULL)
-        params[params_n++] =
-            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
-                                             expected->alg,
-                                             strlen(expected->alg) + 1);
+    if (expected->alg != NULL) {
+        /*
+         * The underlying algorithm may be a cipher or a digest.
+         * We don't know which it is, but we can ask the MAC what it
+         * should be and bet on that.
+         */
+        if (OSSL_PARAM_locate_const(defined_params,
+                                    OSSL_MAC_PARAM_CIPHER) != NULL) {
+            params[params_n++] =
+                OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+                                                 expected->alg,
+                                                 strlen(expected->alg) + 1);
+        } else if (OSSL_PARAM_locate_const(defined_params,
+                                           OSSL_MAC_PARAM_DIGEST) != NULL) {
+            params[params_n++] =
+                OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                 expected->alg,
+                                                 strlen(expected->alg) + 1);
+        } else {
+            t->err = "MAC_BAD_PARAMS";
+            goto err;
+        }
+    }
     if (expected->key != NULL)
         params[params_n++] =
             OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
@@ -1188,9 +1228,11 @@ static int mac_test_run_mac(EVP_TEST *t)
         if (tmpval != NULL)
             *tmpval++ = '\0';
 
-        if (!OSSL_PARAM_allocate_from_text(&params[params_n], defined_params,
-                                           tmpkey, tmpval,
-                                           strlen(tmpval))) {
+        if (tmpval == NULL
+            || !OSSL_PARAM_allocate_from_text(&params[params_n],
+                                              defined_params,
+                                              tmpkey, tmpval,
+                                              strlen(tmpval))) {
             OPENSSL_free(tmpkey);
             t->err = "MAC_PARAM_ERROR";
             goto err;
@@ -1511,9 +1553,9 @@ static int pderive_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "PeerKey") == 0) {
         EVP_PKEY *peer;
         if (find_key(&peer, value, public_keys) == 0)
-            return 0;
+            return -1;
         if (EVP_PKEY_derive_set_peer(kdata->ctx, peer) <= 0)
-            return 0;
+            return -1;
         return 1;
     }
     if (strcmp(keyword, "SharedSecret") == 0)
@@ -2507,7 +2549,7 @@ static int digestsigver_test_parse(EVP_TEST *t,
     }
     if (strcmp(keyword, "Ctrl") == 0) {
         if (mdata->pctx == NULL)
-            return 0;
+            return -1;
         return pkey_test_ctrl(t, mdata->pctx, value);
     }
     return 0;

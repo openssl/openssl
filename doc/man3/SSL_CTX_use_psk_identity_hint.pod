@@ -85,8 +85,6 @@ check to see if a callback has been set via SSL_CTX_set_psk_server_callback() or
 SSL_set_psk_server_callback() and use that. In this case the handshake digest
 will default to SHA-256 for any returned PSK.
 
-=head1 NOTES
-
 A connection established via a TLSv1.3 PSK will appear as if session resumption
 has occurred so that L<SSL_session_reused(3)> will return true.
 

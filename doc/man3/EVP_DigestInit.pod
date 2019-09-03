@@ -494,7 +494,7 @@ as macros.
 EVP_MD_CTX_ctrl() sends commands to message digests for additional configuration
 or control.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example digests the data "Test Message\n" and "Hello World\n", using the
 digest name passed on the command line.

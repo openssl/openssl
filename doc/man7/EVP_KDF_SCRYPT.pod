@@ -78,7 +78,7 @@ A context for scrypt can be obtained by calling:
 The output length of an scrypt key derivation is specified via the
 B<keylen> parameter to the L<EVP_KDF_derive(3)> function.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example derives a 64-byte long test vector using scrypt with the password
 "password", salt "NaCl" and N = 1024, r = 8, p = 16.

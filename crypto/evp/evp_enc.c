@@ -169,6 +169,66 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_aria_256_gcm:
         case NID_aria_192_gcm:
         case NID_aria_128_gcm:
+        case NID_aes_256_ccm:
+        case NID_aes_192_ccm:
+        case NID_aes_128_ccm:
+        case NID_aria_256_ccm:
+        case NID_aria_192_ccm:
+        case NID_aria_128_ccm:
+        case NID_aria_256_ecb:
+        case NID_aria_192_ecb:
+        case NID_aria_128_ecb:
+        case NID_aria_256_cbc:
+        case NID_aria_192_cbc:
+        case NID_aria_128_cbc:
+        case NID_aria_256_ofb128:
+        case NID_aria_192_ofb128:
+        case NID_aria_128_ofb128:
+        case NID_aria_256_cfb128:
+        case NID_aria_192_cfb128:
+        case NID_aria_128_cfb128:
+        case NID_aria_256_cfb1:
+        case NID_aria_192_cfb1:
+        case NID_aria_128_cfb1:
+        case NID_aria_256_cfb8:
+        case NID_aria_192_cfb8:
+        case NID_aria_128_cfb8:
+        case NID_aria_256_ctr:
+        case NID_aria_192_ctr:
+        case NID_aria_128_ctr:
+        case NID_camellia_256_ecb:
+        case NID_camellia_192_ecb:
+        case NID_camellia_128_ecb:
+        case NID_camellia_256_cbc:
+        case NID_camellia_192_cbc:
+        case NID_camellia_128_cbc:
+        case NID_camellia_256_ofb128:
+        case NID_camellia_192_ofb128:
+        case NID_camellia_128_ofb128:
+        case NID_camellia_256_cfb128:
+        case NID_camellia_192_cfb128:
+        case NID_camellia_128_cfb128:
+        case NID_camellia_256_cfb1:
+        case NID_camellia_192_cfb1:
+        case NID_camellia_128_cfb1:
+        case NID_camellia_256_cfb8:
+        case NID_camellia_192_cfb8:
+        case NID_camellia_128_cfb8:
+        case NID_camellia_256_ctr:
+        case NID_camellia_192_ctr:
+        case NID_camellia_128_ctr:
+        case NID_des_ede3_cbc:
+        case NID_des_ede3_ecb:
+        case NID_des_ede3_ofb64:
+        case NID_des_ede3_cfb64:
+        case NID_des_ede3_cfb8:
+        case NID_des_ede3_cfb1:
+        case NID_des_ede_cbc:
+        case NID_des_ede_ecb:
+        case NID_des_ede_ofb64:
+        case NID_des_ede_cfb64:
+        case NID_desx_cbc:
+        case NID_id_smime_alg_CMS3DESwrap:
             break;
         default:
             goto legacy;
@@ -982,6 +1042,12 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_KEYLEN, &arg);
         break;
     case EVP_CTRL_RAND_KEY:      /* Used by DES */
+        set_params = 0;
+        params[0] =
+            OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY,
+                                              ptr, (size_t)arg);
+        break;
+
     case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
     case EVP_CTRL_INIT: /* TODO(3.0) Purely legacy, no provider counterpart */
     default:
@@ -1093,19 +1159,24 @@ const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(const EVP_CIPHER *cipher)
     return NULL;
 }
 
-#if !defined(FIPS_MODE)
-/* TODO(3.0): No support for RAND yet in the FIPS module */
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 {
-    int kl;
     if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
         return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
-    kl = EVP_CIPHER_CTX_key_length(ctx);
-    if (kl <= 0 || RAND_priv_bytes(key, kl) <= 0)
-        return 0;
-    return 1;
+
+#ifdef FIPS_MODE
+    return 0;
+#else
+    {
+        int kl;
+
+        kl = EVP_CIPHER_CTX_key_length(ctx);
+        if (kl <= 0 || RAND_priv_bytes(key, kl) <= 0)
+            return 0;
+        return 1;
+    }
+#endif /* FIPS_MODE */
 }
-#endif
 
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 {
@@ -1180,16 +1251,23 @@ static void *evp_cipher_from_dispatch(const char *name,
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
 
-    /*
-     * The legacy NID is set by EVP_CIPHER_fetch() if the name exists in
-     * the object database.
-     */
     if ((cipher = EVP_CIPHER_meth_new(0, 0, 0)) == NULL
         || (cipher->name = OPENSSL_strdup(name)) == NULL) {
         EVP_CIPHER_meth_free(cipher);
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+#ifndef FIPS_MODE
+    /*
+     * FIPS module note: since internal fetches will be entirely
+     * provider based, we know that none of its code depends on legacy
+     * NIDs or any functionality that use them.
+     *
+     * TODO(3.x) get rid of the need for legacy NIDs
+     */
+    cipher->nid = OBJ_sn2nid(name);
+#endif
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -1310,18 +1388,6 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
         evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
                           evp_cipher_from_dispatch, evp_cipher_up_ref,
                           evp_cipher_free);
-
-#ifndef FIPS_MODE
-    /* TODO(3.x) get rid of the need for legacy NIDs */
-    if (cipher != NULL) {
-        /*
-         * FIPS module note: since internal fetches will be entirely
-         * provider based, we know that none of its code depends on legacy
-         * NIDs or any functionality that use them.
-         */
-        cipher->nid = OBJ_sn2nid(algorithm);
-    }
-#endif
 
     return cipher;
 }

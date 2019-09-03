@@ -7,26 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_SIPHASH
+#include <string.h>
+#include <openssl/core_numbers.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
 
-# include <string.h>
-# include <openssl/core_numbers.h>
-# include <openssl/core_names.h>
-# include <openssl/params.h>
-# include <openssl/evp.h>
-# include <openssl/err.h>
-
-# include "internal/siphash.h"
+#include "internal/siphash.h"
 /*
  * TODO(3.0) when siphash has moved entirely to our providers, this
  * header should be moved to the provider include directory.  For the
  * moment, crypto/siphash/siphash_ameth.c has us stuck.
  */
-# include "../../../crypto/siphash/siphash_local.h"
+#include "../../../crypto/siphash/siphash_local.h"
 
-# include "internal/providercommonerr.h"
-# include "internal/provider_algs.h"
+#include "internal/providercommonerr.h"
+#include "internal/provider_algs.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -111,9 +108,7 @@ static int siphash_final(void *vmacctx, unsigned char *out, size_t *outl,
 }
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL), /* Same as "outlen" */
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_DIGESTSIZE, NULL), /* Same as "outlen" */
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *siphash_gettable_ctx_params(void)
@@ -125,18 +120,14 @@ static int siphash_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-        || (p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL
-        || (p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_DIGESTSIZE)) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
         return OSSL_PARAM_set_size_t(p, siphash_size(vmacctx));
 
     return 1;
 }
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_OUTLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL), /* Same as "outlen" */
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_DIGESTSIZE, NULL), /* Same as "outlen" */
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
 };
@@ -150,11 +141,7 @@ static int siphash_set_params(void *vmacctx, const OSSL_PARAM *params)
     struct siphash_data_st *ctx = vmacctx;
     const OSSL_PARAM *p = NULL;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_OUTLEN)) != NULL
-        || ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_DIGESTSIZE))
-            != NULL)
-        || ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE))
-            != NULL)) {
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL) {
         size_t size;
 
         if (!OSSL_PARAM_get_size_t(p, &size)
@@ -184,5 +171,3 @@ const OSSL_DISPATCH siphash_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))siphash_set_params },
     { 0, NULL }
 };
-
-#endif

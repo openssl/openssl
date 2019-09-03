@@ -398,8 +398,7 @@ int pkeyutl_main(int argc, char **argv)
     if (!rawin
             && buf_inlen > EVP_MAX_MD_SIZE
             && (pkey_op == EVP_PKEY_OP_SIGN
-                || pkey_op == EVP_PKEY_OP_VERIFY
-                || pkey_op == EVP_PKEY_OP_VERIFYRECOVER)) {
+                || pkey_op == EVP_PKEY_OP_VERIFY)) {
         BIO_printf(bio_err,
                    "Error: The input data looks too long to be a hash\n");
         goto end;

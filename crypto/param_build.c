@@ -160,7 +160,7 @@ int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
 }
 
 int ossl_param_bld_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
-                                    char *buf, size_t bsize)
+                                    const char *buf, size_t bsize)
 {
     OSSL_PARAM_BLD_DEF *pd;
 
@@ -198,7 +198,7 @@ int ossl_param_bld_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
 }
 
 int ossl_param_bld_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
-                                     void *buf, size_t bsize)
+                                     const void *buf, size_t bsize)
 {
     OSSL_PARAM_BLD_DEF *pd;
 
@@ -260,7 +260,7 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         } else if (pd->type == OSSL_PARAM_OCTET_PTR
                    || pd->type == OSSL_PARAM_UTF8_PTR) {
             /* PTR */
-            *(void **)p = pd->string;
+            *(const void **)p = pd->string;
         } else if (pd->type == OSSL_PARAM_OCTET_STRING
                    || pd->type == OSSL_PARAM_UTF8_STRING) {
             if (pd->string != NULL)

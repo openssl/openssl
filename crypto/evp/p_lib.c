@@ -321,13 +321,15 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {
 #ifndef OPENSSL_NO_CMAC
-    const char *engine_name = e != NULL ? ENGINE_get_name(e) : NULL;
+# ifndef OPENSSL_NO_ENGINE
+    const char *engine_id = e != NULL ? ENGINE_get_id(e) : NULL;
+# endif
     const char *cipher_name = EVP_CIPHER_name(cipher);
     const OSSL_PROVIDER *prov = EVP_CIPHER_provider(cipher);
     OPENSSL_CTX *libctx =
         prov == NULL ? NULL : ossl_provider_library_context(prov);
     EVP_PKEY *ret = EVP_PKEY_new();
-    EVP_MAC *cmac = EVP_MAC_fetch(libctx, "CMAC", NULL);
+    EVP_MAC *cmac = EVP_MAC_fetch(libctx, OSSL_MAC_NAME_CMAC, NULL);
     EVP_MAC_CTX *cmctx = cmac != NULL ? EVP_MAC_CTX_new(cmac) : NULL;
     OSSL_PARAM params[4];
     size_t paramsn = 0;
@@ -339,13 +341,16 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
         goto err;
     }
 
-    if (engine_name != NULL)
+# ifndef OPENSSL_NO_ENGINE
+    if (engine_id != NULL)
         params[paramsn++] =
             OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
-                                             (char *)engine_name,
-                                             strlen(engine_name) + 1);
+                                             (char *)engine_id,
+                                             strlen(engine_id) + 1);
+# endif
+
     params[paramsn++] =
-        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                          (char *)cipher_name,
                                          strlen(cipher_name) + 1);
     params[paramsn++] =

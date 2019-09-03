@@ -52,14 +52,14 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
          * If we haven't been told not to store,
          * add to the global store
          */
-        data->mcm->put(data->libctx, NULL, method, data->operation_id,
-                       algo->algorithm_name,
+        data->mcm->put(data->libctx, NULL, method, provider,
+                       data->operation_id, algo->algorithm_name,
                        algo->property_definition, data->mcm_data);
     }
 
-    data->mcm->put(data->libctx, data->store, method, data->operation_id,
-                   algo->algorithm_name, algo->property_definition,
-                   data->mcm_data);
+    data->mcm->put(data->libctx, data->store, method, provider,
+                   data->operation_id, algo->algorithm_name,
+                   algo->property_definition, data->mcm_data);
 
     /* refcnt-- because we're dropping the reference */
     data->mcm->destruct(method, data->mcm_data);

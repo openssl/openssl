@@ -9,7 +9,7 @@
 
 #include <openssl/crypto.h>
 #include "internal/blake2.h"
-#include "internal/core_mkdigest.h"
+#include "internal/digestcommon.h"
 #include "internal/provider_algs.h"
 
 OSSL_OP_digest_init_fn blake2s256_init;
@@ -31,10 +31,12 @@ int blake2b512_init(void *ctx)
     return blake2b_init((BLAKE2B_CTX *)ctx, &P);
 }
 
-OSSL_FUNC_DIGEST_CONSTRUCT(blake2s256, BLAKE2S_CTX,
+/* blake2s256_functions */
+IMPLEMENT_digest_functions(blake2s256, BLAKE2S_CTX,
                            BLAKE2S_BLOCKBYTES, BLAKE2S_DIGEST_LENGTH, 0,
                            blake2s256_init, blake2s_update, blake2s_final)
 
-OSSL_FUNC_DIGEST_CONSTRUCT(blake2b512, BLAKE2B_CTX,
+/* blake2b512_functions */
+IMPLEMENT_digest_functions(blake2b512, BLAKE2B_CTX,
                            BLAKE2B_BLOCKBYTES, BLAKE2B_DIGEST_LENGTH, 0,
                            blake2b512_init, blake2b_update, blake2b_final)

@@ -313,7 +313,7 @@ unaware of the unpatched nature of the client.
 If the option B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then
 renegotiation B<always> succeeds.
 
-=head2 Patched OpenSSL client and unpatched server.
+=head2 Patched OpenSSL client and unpatched server
 
 If the option B<SSL_OP_LEGACY_SERVER_CONNECT> or
 B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then initial connections

@@ -168,7 +168,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
             || kmac_out_len == 64))
         return 0;
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_OUTLEN,
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE,
                                             &kmac_out_len);
 
     if (EVP_MAC_CTX_set_params(ctx, params) <= 0)
@@ -222,7 +222,7 @@ static int SSKDF_mac_kdm(EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
     if (hmac_md != NULL) {
         const char *mdname = EVP_MD_name(hmac_md);
         params[params_n++] =
-            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                              (char *)mdname,
                                              strlen(mdname) + 1);
     }
@@ -467,7 +467,7 @@ static int sskdf_derive(EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen)
          * block size?
          */
         macname = EVP_MAC_name(impl->mac);
-        if (strcmp(macname, "HMAC") == 0) {
+        if (strcmp(macname, OSSL_MAC_NAME_HMAC) == 0) {
             /* H(x) = HMAC(x, salt, hash) */
             if (impl->md == NULL) {
                 KDFerr(KDF_F_SSKDF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
@@ -476,12 +476,12 @@ static int sskdf_derive(EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen)
             default_salt_len = EVP_MD_block_size(impl->md);
             if (default_salt_len <= 0)
                 return 0;
-        } else if (strcmp(macname, "KMAC128") == 0
-                   || strcmp(macname, "KMAC256") == 0) {
+        } else if (strcmp(macname, OSSL_MAC_NAME_KMAC128) == 0
+                   || strcmp(macname, OSSL_MAC_NAME_KMAC256) == 0) {
             /* H(x) = KMACzzz(x, salt, custom) */
             custom = kmac_custom_str;
             custom_len = sizeof(kmac_custom_str);
-            if (strcmp(macname, "KMAC128") == 0)
+            if (strcmp(macname, OSSL_MAC_NAME_KMAC128) == 0)
                 default_salt_len = SSKDF_KMAC128_DEFAULT_SALT_SIZE;
             else
                 default_salt_len = SSKDF_KMAC256_DEFAULT_SALT_SIZE;

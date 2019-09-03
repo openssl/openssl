@@ -123,7 +123,7 @@ The RSA_padding_check_xxx() functions return the length of the
 recovered data, -1 on error. Error codes can be obtained by calling
 L<ERR_get_error(3)>.
 
-=head1 WARNING
+=head1 WARNINGS
 
 The result of RSA_padding_check_PKCS1_type_2() is a very sensitive
 information which can potentially be used to mount a Bleichenbacher

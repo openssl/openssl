@@ -1,6 +1,17 @@
 LIBS=../../../libcrypto
-$COMMON=block.c aes.c aes_basic.c gcm.c gcm_hw.c
 
+IF[{- !$disabled{des} -}]
+  $COMMON_DES=cipher_tdes.c cipher_tdes_hw.c
+ENDIF
+
+$COMMON=cipher_common.c cipher_common_hw.c block.c \
+        cipher_aes.c cipher_aes_hw.c \
+        cipher_gcm.c cipher_gcm_hw.c \
+        cipher_aes_gcm.c cipher_aes_gcm_hw.c \
+        cipher_ccm.c cipher_ccm_hw.c \
+        cipher_aes_ccm.c cipher_aes_ccm_hw.c \
+        $COMMON_DES
+        
 SOURCE[../../../libcrypto]=$COMMON
 INCLUDE[../../../libcrypto]=. ../../../crypto
 
