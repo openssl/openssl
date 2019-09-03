@@ -104,6 +104,7 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 
 }
 
+/* unfortunately cannot constify SMIME_write_ASN1() due to this function */
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
 {
     ASN1_OCTET_STRING **pos = CMS_get0_content(cms);

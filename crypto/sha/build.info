@@ -1,7 +1,83 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        sha1dgst.c sha1_one.c sha256.c sha512.c {- $target{sha1_asm_src} -} \
-        {- $target{keccak1600_asm_src} -}
+
+$SHA1ASM=
+IF[{- !$disabled{asm} -}]
+  $SHA1ASM_x86=sha1-586.s sha256-586.s sha512-586.s
+  $SHA1DEF_x86=SHA1_ASM SHA256_ASM SHA512_ASM
+  $SHA1ASM_x86_64=\
+        sha1-x86_64.s sha256-x86_64.s sha512-x86_64.s sha1-mb-x86_64.s \
+        sha256-mb-x86_64.s
+  $SHA1DEF_x86_64=SHA1_ASM SHA256_ASM SHA512_ASM
+
+  $SHA1ASM_ia64=sha1-ia64.s sha256-ia64.s sha512-ia64.s
+  $SHA1DEF_ia64=SHA1_ASM SHA256_ASM SHA512_ASM
+
+  $SHA1ASM_sparcv9=sha1-sparcv9.S sha256-sparcv9.S sha512-sparcv9.S
+  $SHA1DEF_sparcv9=SHA1_ASM SHA256_ASM SHA512_ASM
+
+  $SHA1ASM_alpha=sha1-alpha.S
+  $SHA1DEF_alpha=SHA1_ASM
+
+  $SHA1ASM_mips32=sha1-mips.S sha256-mips.S
+  $SHA1DEF_mips32=SHA1_ASM SHA256_ASM
+  $SHA1ASM_mips64=$SHA1ASM_mips32 sha512-mips.S
+  $SHA1DEF_mips64=$SHA1DEF_mips32 SHA512_ASM
+
+  $SHA1ASM_s390x=sha1-s390x.S sha256-s390x.S sha512-s390x.S
+  $SHA1DEF_s390x=SHA1_ASM SHA256_ASM SHA512_ASM
+
+  $SHA1ASM_armv4=sha1-armv4-large.S sha256-armv4.S sha512-armv4.S
+  $SHA1DEF_armv4=SHA1_ASM SHA256_ASM SHA512_ASM
+  $SHA1ASM_aarch64=sha1-armv8.S sha256-armv8.S sha512-armv8.S
+  $SHA1DEF_aarch64=SHA1_ASM SHA256_ASM SHA512_ASM
+
+  $SHA1ASM_parisc11=sha1-parisc.s sha256-parisc.s sha512-parisc.s
+  $SHA1DEF_parisc11=SHA1_ASM SHA256_ASM SHA512_ASM
+  $SHA1ASM_parisc20_64=$SHA1ASM_parisc11
+  $SHA1DEF_parisc20_64=$SHA1DEF_parisc11
+
+  $SHA1ASM_ppc32=\
+        sha1-ppc.s sha256-ppc.s sha512-ppc.s sha256p8-ppc.s sha512p8-ppc.s
+  $SHA1DEF_ppc32=SHA1_ASM SHA256_ASM SHA512_ASM
+  $SHA1ASM_ppc64=$SHA1ASM_ppc32
+  $SHA1DEF_ppc64=$SHA1DEF_ppc32
+
+  $SHA1ASM_c64xplus=sha1-c64xplus.s sha256-c64xplus.s sha512-c64xplus.s
+  $SHA1DEF_c64xplus=SHA1_ASM SHA256_ASM SHA512_ASM
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+  IF[$SHA1ASM_{- $target{asm_arch} -}]
+    $SHA1ASM=$SHA1ASM_{- $target{asm_arch} -}
+    $SHA1DEF=$SHA1DEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
+$KECCAK1600ASM=keccak1600.c
+IF[{- !$disabled{asm} -}]
+  $KECCAK1600ASM_x86=
+  $KECCAK1600ASM_x86_64=keccak1600-x86_64.s
+
+  $KECCAK1600ASM_s390x=keccak1600-s390x.S
+
+  $KECCAK1600ASM_armv4=keccak1600-armv4.S
+  $KECCAK1600ASM_aarch64=keccak1600-armv8.S
+
+  $KECCAK1600ASM_ppc64=keccak1600-ppc64.s
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+  IF[$KECCAK1600ASM_{- $target{asm_arch} -}]
+    $KECCAK1600ASM=$KECCAK1600ASM_{- $target{asm_arch} -}
+    $KECCAK1600DEF=KECCAK1600_ASM
+  ENDIF
+ENDIF
+
+$COMMON=sha1dgst.c sha256.c sha512.c sha3.c $SHA1ASM $KECCAK1600ASM
+SOURCE[../../libcrypto]=$COMMON sha1_one.c
+DEFINE[../../libcrypto]=$SHA1DEF $KECCAK1600DEF
+SOURCE[../../providers/fips]= $COMMON
+DEFINE[../../providers/fips]= $SHA1DEF $KECCAK1600DEF
 
 GENERATE[sha1-586.s]=asm/sha1-586.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)

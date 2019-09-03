@@ -19,9 +19,9 @@
 #include <stdio.h>
 #include "internal/dso.h"
 #if defined(__linux)
-# include <sys/syscall.h>
+# include <asm/unistd.h>
 #endif
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) && !defined(OPENSSL_SYS_UEFI)
 # include <sys/types.h>
 # include <sys/sysctl.h>
 # include <sys/param.h>
@@ -30,7 +30,8 @@
 # include <sys/param.h>
 #endif
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
+#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+     || defined(__DJGPP__)
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <fcntl.h>
@@ -88,30 +89,8 @@ static uint64_t get_timer_bits(void);
 # undef OPENSSL_RAND_SEED_EGD
 #endif
 
-#if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
-        !defined(OPENSSL_RAND_SEED_NONE)
-# error "UEFI and VXWorks only support seeding NONE"
-#endif
-
-#if defined(OPENSSL_SYS_VXWORKS)
-/* empty implementation */
-int rand_pool_init(void)
-{
-    return 1;
-}
-
-void rand_pool_cleanup(void)
-{
-}
-
-void rand_pool_keep_random_devices_open(int keep)
-{
-}
-
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
-{
-    return rand_pool_entropy_available(pool);
-}
+#if defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_RAND_SEED_NONE)
+# error "UEFI only supports seeding NONE"
 #endif
 
 #if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) \
@@ -306,7 +285,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
 
     if (getentropy != NULL)
         return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  else
+#  elif !defined(FIPS_MODE)
     union {
         void *p;
         int (*f)(void *buffer, size_t length);
@@ -324,8 +303,8 @@ static ssize_t syscall_random(void *buf, size_t buflen)
 #  endif
 
     /* Linux supports this since version 3.17 */
-#  if defined(__linux) && defined(SYS_getrandom)
-    return syscall(SYS_getrandom, buf, buflen, 0);
+#  if defined(__linux) && defined(__NR_getrandom)
+    return syscall(__NR_getrandom, buf, buflen, 0);
 #  elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return sysctl_random(buf, buflen);
 #  else
@@ -585,14 +564,18 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 #endif
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
+#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+     || defined(__DJGPP__)
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
         pid_t pid;
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
@@ -611,7 +594,10 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     struct {
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add some noise from the thread id and a high resolution timer.

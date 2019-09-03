@@ -9,7 +9,7 @@ EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH,
 EVP_PKEY_assign_EC_KEY, EVP_PKEY_assign_POLY1305, EVP_PKEY_assign_SIPHASH,
 EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305, EVP_PKEY_get0_siphash,
 EVP_PKEY_type, EVP_PKEY_id, EVP_PKEY_base_id, EVP_PKEY_set_alias_type,
-EVP_PKEY_set1_engine - EVP_PKEY assignment functions
+EVP_PKEY_set1_engine, EVP_PKEY_get0_engine - EVP_PKEY assignment functions
 
 =head1 SYNOPSIS
 
@@ -28,10 +28,10 @@ EVP_PKEY_set1_engine - EVP_PKEY assignment functions
  const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
  const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len);
  const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len);
- RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey);
- DSA *EVP_PKEY_get0_DSA(EVP_PKEY *pkey);
- DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey);
- EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey);
+ RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey);
+ DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey);
+ DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey);
+ EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
 
  int EVP_PKEY_assign_RSA(EVP_PKEY *pkey, RSA *key);
  int EVP_PKEY_assign_DSA(EVP_PKEY *pkey, DSA *key);
@@ -45,6 +45,7 @@ EVP_PKEY_set1_engine - EVP_PKEY assignment functions
  int EVP_PKEY_type(int type);
  int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
+ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
  int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *engine);
 
 =head1 DESCRIPTION
@@ -81,6 +82,8 @@ often seen in practice.
 EVP_PKEY_type() returns the underlying type of the NID B<type>. For example
 EVP_PKEY_type(EVP_PKEY_RSA2) will return B<EVP_PKEY_RSA>.
 
+EVP_PKEY_get0_engine() returns a reference to the ENGINE handling B<pkey>.
+
 EVP_PKEY_set1_engine() sets the ENGINE handling B<pkey> to B<engine>. It
 must be called after the key algorithm and components are set up.
 If B<engine> does not include an B<EVP_PKEY_METHOD> for B<pkey> an
@@ -111,13 +114,6 @@ is no longer possible: the equivalent is EVP_PKEY_base_id(pkey).
 EVP_PKEY_set1_engine() is typically used by an ENGINE returning an HSM
 key as part of its routine to load a private key.
 
-=head1 EXAMPLES
-
-After loading an ECC key, it is possible to convert it to using SM2
-algorithms with EVP_PKEY_set_alias_type:
-
- EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
-
 =head1 RETURN VALUES
 
 EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
@@ -137,6 +133,13 @@ type or B<NID_undef> (equivalently B<EVP_PKEY_NONE>) on error.
 EVP_PKEY_set1_engine() returns 1 for success and 0 for failure.
 
 EVP_PKEY_set_alias_type() returns 1 for success and 0 for error.
+
+=head1 EXAMPLES
+
+After loading an ECC key, it is possible to convert it to using SM2
+algorithms with EVP_PKEY_set_alias_type:
+
+ EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
 
 =head1 SEE ALSO
 

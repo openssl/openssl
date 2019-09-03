@@ -27,8 +27,8 @@
 static const curve448_scalar_t precomputed_scalarmul_adjustment = {
     {
         {
-            SC_LIMB(0xc873d6d54a7bb0cf), SC_LIMB(0xe933d8d723a70aad),
-            SC_LIMB(0xbb124b65129c96fd), SC_LIMB(0x00000008335dc163)
+            SC_LIMB(0xc873d6d54a7bb0cfULL), SC_LIMB(0xe933d8d723a70aadULL),
+            SC_LIMB(0xbb124b65129c96fdULL), SC_LIMB(0x00000008335dc163ULL)
         }
     }
 };
@@ -501,9 +501,9 @@ struct smvt_control {
 };
 
 #if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 3))
-# define NUMTRAILINGZEROS	__builtin_ctz
+# define NUMTRAILINGZEROS       __builtin_ctz
 #else
-# define NUMTRAILINGZEROS	numtrailingzeros
+# define NUMTRAILINGZEROS       numtrailingzeros
 static uint32_t numtrailingzeros(uint32_t i)
 {
     uint32_t tmp;

@@ -33,7 +33,7 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_B, OPT_D, OPT_E, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R
+    OPT_B, OPT_D, OPT_E, OPT_M, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R
 } OPTION_CHOICE;
 
 const OPTIONS version_options[] = {
@@ -42,6 +42,7 @@ const OPTIONS version_options[] = {
     {"b", OPT_B, '-', "Show build date"},
     {"d", OPT_D, '-', "Show configuration directory"},
     {"e", OPT_E, '-', "Show engines directory"},
+    {"m", OPT_M, '-', "Show modules directory"},
     {"f", OPT_F, '-', "Show compiler flags used"},
     {"o", OPT_O, '-', "Show some internal datatype options"},
     {"p", OPT_P, '-', "Show target build platform"},
@@ -64,7 +65,7 @@ int version_main(int argc, char **argv)
 {
     int ret = 1, dirty = 0, seed = 0;
     int cflags = 0, version = 0, date = 0, options = 0, platform = 0, dir = 0;
-    int engdir = 0;
+    int engdir = 0, moddir = 0;
     char *prog;
     OPTION_CHOICE o;
 
@@ -89,6 +90,9 @@ opthelp:
         case OPT_E:
             dirty = engdir = 1;
             break;
+        case OPT_M:
+            dirty = moddir = 1;
+            break;
         case OPT_F:
             dirty = cflags = 1;
             break;
@@ -105,7 +109,8 @@ opthelp:
             dirty = version = 1;
             break;
         case OPT_A:
-            seed = options = cflags = version = date = platform = dir = engdir
+            seed = options = cflags = version = date = platform
+                = dir = engdir = moddir
                 = 1;
             break;
         }
@@ -117,35 +122,30 @@ opthelp:
     if (!dirty)
         version = 1;
 
-    if (version) {
-        if (strcmp(OpenSSL_version(OPENSSL_FULL_VERSION_STRING),
-                   OPENSSL_FULL_VERSION_STR) == 0)
-            printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
-        else
-            printf("%s (Library: %s)\n",
-                   OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION));
-    }
+    if (version)
+        printf("%s (Library: %s)\n",
+               OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION));
     if (date)
         printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
     if (platform)
         printf("%s\n", OpenSSL_version(OPENSSL_PLATFORM));
     if (options) {
-        printf("options:  ");
-        printf("%s ", BN_options());
+        printf("options: ");
+        printf(" %s", BN_options());
 #ifndef OPENSSL_NO_MD2
-        printf("%s ", MD2_options());
+        printf(" %s", MD2_options());
 #endif
 #ifndef OPENSSL_NO_RC4
-        printf("%s ", RC4_options());
+        printf(" %s", RC4_options());
 #endif
 #ifndef OPENSSL_NO_DES
-        printf("%s ", DES_options());
+        printf(" %s", DES_options());
 #endif
 #ifndef OPENSSL_NO_IDEA
-        printf("%s ", IDEA_options());
+        printf(" %s", IDEA_options());
 #endif
 #ifndef OPENSSL_NO_BF
-        printf("%s ", BF_options());
+        printf(" %s", BF_options());
 #endif
         printf("\n");
     }
@@ -155,6 +155,8 @@ opthelp:
         printf("%s\n", OpenSSL_version(OPENSSL_DIR));
     if (engdir)
         printf("%s\n", OpenSSL_version(OPENSSL_ENGINES_DIR));
+    if (moddir)
+        printf("%s\n", OpenSSL_version(OPENSSL_MODULES_DIR));
     if (seed) {
         printf("Seeding source:");
 #ifdef OPENSSL_RAND_SEED_RTDSC

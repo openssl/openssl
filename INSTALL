@@ -23,6 +23,7 @@
   * NOTES.WIN (any supported Windows)
   * NOTES.DJGPP (DOS platform with DJGPP)
   * NOTES.ANDROID (obviously Android [NDK])
+  * NOTES.VALGRIND (testing with Valgrind)
 
  Notational conventions in this document
  ---------------------------------------
@@ -98,6 +99,9 @@
     $ nmake test
     $ nmake install
 
+ Note that in order to perform the install step above you need to have
+ appropriate permissions to write to the installation directory.
+
  If any of these steps fails, see section Installation in Detail below.
 
  This will build and install OpenSSL in the default location, which is:
@@ -106,6 +110,12 @@
   OpenVMS: SYS$COMMON:[OPENSSL-'version'...], where 'version' is the
            OpenSSL version number with underscores instead of periods.
   Windows: C:\Program Files\OpenSSL or C:\Program Files (x86)\OpenSSL
+
+ The installation directory should be appropriately protected to ensure
+ unprivileged users cannot make changes to OpenSSL binaries or files, or install
+ engines. If you already have a pre-installed version of OpenSSL as part of
+ your Operating System it is recommended that you do not overwrite the system
+ version and instead install to somewhere else.
 
  If you want to install it anywhere else, run config like this:
 
@@ -135,7 +145,10 @@
                    Don't build with support for deprecated APIs below the
                    specified version number. For example "--api=1.1.0" will
                    remove support for all APIS that were deprecated in OpenSSL
-                   version 1.1.0 or below.
+                   version 1.1.0 or below. This is a rather specialized option
+                   for developers. If you just intend to remove all deprecated
+                   APIs entirely (up to the current version), it is easier
+                   to add the 'no-deprecated' option instead (see below).
 
   --cross-compile-prefix=PREFIX
                    The PREFIX to include in front of commands for your
@@ -229,7 +242,7 @@
                                source exists.
                    getrandom:  Use the L<getrandom(2)> or equivalent system
                                call.
-                   devrandom:  Use the the first device from the DEVRANDOM list
+                   devrandom:  Use the first device from the DEVRANDOM list
                                which can be opened to read random bytes. The
                                DEVRANDOM preprocessor constant expands to
                                "/dev/urandom","/dev/random","/dev/srandom" on
@@ -296,9 +309,25 @@
                    Typically OpenSSL will automatically load a system config
                    file which configures default ssl options.
 
+  enable-buildtest-c++
+                   While testing, generate C++ buildtest files that
+                   simply check that the public OpenSSL header files
+                   are usable standalone with C++.
+
+                   Enabling this option demands extra care.  For any
+                   compiler flag given directly as configuration
+                   option, you must ensure that it's valid for both
+                   the C and the C++ compiler.  If not, the C++ build
+                   test will most likely break.  As an alternative,
+                   you can use the language specific variables, CFLAGS
+                   and CXXFLAGS.
+
   no-capieng
                    Don't build the CAPI engine. This option will be forced if
                    on a platform that does not support CAPI.
+
+  no-cmp
+                   Don't build support for CMP features
 
   no-cms
                    Don't build support for CMS features
@@ -339,9 +368,6 @@
                    Build the /dev/crypto engine.  It is automatically selected
                    on BSD implementations, in which case it can be disabled with
                    no-devcryptoeng.
-
-  no-dso
-                   Don't build support for loading Dynamic Shared Objects.
 
   no-dynamic-engine
                    Don't build the dynamically loaded engines. This only has an
@@ -384,6 +410,9 @@
                    Don't compile in filename and line number information (e.g.
                    for errors and memory allocation).
 
+  no-fips
+                   Don't compile the FIPS module
+
   enable-fuzz-libfuzzer, enable-fuzz-afl
                    Build with support for fuzzing using either libfuzzer or AFL.
                    These are developer options only. They may not work on all
@@ -396,11 +425,16 @@
                    available if the GOST algorithms are also available through
                    loading an externally supplied engine.
 
-  no-hw-padlock
-                   Don't build the padlock engine.
+  no-legacy
+                   Don't build the legacy provider. Disabling this also disables
+                   the legacy algorithms: MD2 (already disabled by default).
 
   no-makedepend
                    Don't generate dependencies.
+
+  no-module
+                   Don't build any dynamically loadable engines.  This also
+                   implies 'no-dynamic-engine'.
 
   no-multiblock
                    Don't build support for writing multiple records in one
@@ -412,6 +446,11 @@
 
   no-ocsp
                    Don't build support for OCSP.
+
+  no-padlockeng
+  no-hw-padlock
+                   Don't build the padlock engine.
+                   ('no-hw-padlock' is deprecated and should not be used)
 
   no-pic
                    Don't build with support for Position Independent Code.
@@ -508,6 +547,10 @@
                    require additional system-dependent options! See "Note on
                    multi-threading" below.
 
+  enable-trace
+                   Build with support for the integrated tracing api. See manual pages
+                   OSSL_trace_set_channel(3) and OSSL_trace_enabled(3) for details.
+
   no-ts
                    Don't build Time Stamping Authority support.
 
@@ -526,6 +569,9 @@
   enable-unit-test
                    Enable additional unit test APIs. This should not typically
                    be used in production deployments.
+
+  no-uplink
+                   Don't build support for UPLINK interface.
 
   enable-weak-ssl-ciphers
                    Build support for SSL/TLS ciphers that are considered "weak"
@@ -673,6 +719,11 @@
 
                         CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- \
                         ./config -DCOOKIE
+
+                   If CC is set, it is advisable to also set CXX to ensure
+                   both C and C++ compilers are in the same "family".  This
+                   becomes relevant with 'enable-external-tests' and
+                   'enable-buildtest-c++'.
 
   reconf
   reconfigure
@@ -902,8 +953,11 @@
        $ mms install                                    ! OpenVMS
        $ nmake install                                  # Windows
 
-     This will install all the software components in this directory
-     tree under PREFIX (the directory given with --prefix or its
+     Note that in order to perform the install step above you need to have
+     appropriate permissions to write to the installation directory.
+
+     The above commands will install all the software components in this
+     directory tree under PREFIX (the directory given with --prefix or its
      default):
 
        Unix:
@@ -958,6 +1012,12 @@
          private        Initially empty, this is the default location
                         for private key files.
          misc           Various scripts.
+
+     The installation directory should be appropriately protected to ensure
+     unprivileged users cannot make changes to OpenSSL binaries or files, or
+     install engines. If you already have a pre-installed version of OpenSSL as
+     part of your Operating System it is recommended that you do not overwrite
+     the system version and instead install to somewhere else.
 
      Package builders who want to configure the library for standard
      locations, but have the package installed somewhere else so that
@@ -1166,6 +1226,11 @@
  Example: All tests in test groups 80 to 99 except for tests in group 90:
 
  $ make TESTS='[89]? -90'
+
+To stochastically verify that the algorithm that produces uniformly distributed
+random numbers is operating correctly (with a false positive rate of 0.01%):
+
+ $ ./util/shlib_wrap.sh test/bntest -stochastic
 
  Note on multi-threading
  -----------------------

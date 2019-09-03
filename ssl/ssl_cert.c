@@ -154,8 +154,6 @@ CERT *ssl_cert_dup(CERT *cert)
         ret->client_sigalgslen = cert->client_sigalgslen;
     } else
         ret->client_sigalgs = NULL;
-    /* Shared sigalgs also NULL */
-    ret->shared_sigalgs = NULL;
     /* Copy any custom client certificate types */
     if (cert->ctype) {
         ret->ctype = OPENSSL_memdup(cert->ctype, cert->ctype_len);
@@ -240,7 +238,6 @@ void ssl_cert_free(CERT *c)
     ssl_cert_clear_certs(c);
     OPENSSL_free(c->conf_sigalgs);
     OPENSSL_free(c->client_sigalgs);
-    OPENSSL_free(c->shared_sigalgs);
     OPENSSL_free(c->ctype);
     X509_STORE_free(c->verify_store);
     X509_STORE_free(c->chain_store);
@@ -516,13 +513,13 @@ void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 
 const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s)
 {
-    return s->s3 != NULL ? s->s3->tmp.peer_ca_names : NULL;
+    return s->s3.tmp.peer_ca_names;
 }
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
     if (!s->server)
-        return s->s3 != NULL ?  s->s3->tmp.peer_ca_names : NULL;
+        return s->s3.tmp.peer_ca_names;
     return s->client_ca_names != NULL ?  s->client_ca_names
                                       : s->ctx->client_ca_names;
 }
@@ -769,8 +766,9 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     }
 
     if (errno) {
-        SYSerr(SYS_F_OPENDIR, get_last_sys_error());
-        ERR_add_error_data(3, "OPENSSL_DIR_read(&ctx, '", dir, "')");
+        ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                       "calling OPENSSL_dir_read(%s)",
+                       dir);
         SSLerr(SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK, ERR_R_SYS_LIB);
         goto err;
     }

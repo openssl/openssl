@@ -35,13 +35,14 @@ void OPENSSL_config(const char *appname)
     memset(&settings, 0, sizeof(settings));
     if (appname != NULL)
         settings.appname = strdup(appname);
+    settings.flags = DEFAULT_CONF_MFLAGS;
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings);
 }
 #endif
 
 int openssl_config_int(const OPENSSL_INIT_SETTINGS *settings)
 {
-    int ret;
+    int ret = 0;
     const char *filename;
     const char *appname;
     unsigned long flags;

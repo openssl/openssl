@@ -52,7 +52,9 @@ B<openssl> B<x509>
 [B<-CAkey filename>]
 [B<-CAcreateserial>]
 [B<-CAserial filename>]
+[B<-new>]
 [B<-force_pubkey filename>]
+[B<-subj arg>]
 [B<-text>]
 [B<-ext extensions>]
 [B<-certopt option>]
@@ -61,6 +63,7 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
+[B<-sigopt nm:v>]
 [B<-rand file...>]
 [B<-writerand file>]
 [B<-engine id>]
@@ -362,6 +365,11 @@ and the end date to a value determined by the B<-days> option.
 It retains any certificate extensions unless the B<-clrext> option is supplied;
 this includes, for example, any existing key identifier extensions.
 
+=item B<-sigopt nm:v>
+
+Pass options to the signature algorithm during sign or verify operations.
+Names and values of these options are algorithm-specific.
+
 =item B<-passin arg>
 
 The key password source. For more information about the format of B<arg>
@@ -454,14 +462,38 @@ specified then the extensions should either be contained in the unnamed
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 
+=item B<-new>
+
+Generate a certificate from scratch, not using an input certificate
+or certificate request. So the B<-in> option must not be used in this case.
+Instead, the B<-subj> and <-force_pubkey> options need to be given.
+
 =item B<-force_pubkey filename>
 
 When a certificate is created set its public key to the key in B<filename>
 instead of the key contained in the input or given with the B<-signkey> option.
+
 This option is useful for creating self-issued certificates that are not
 self-signed, for instance when the key cannot be used for signing, such as DH.
+It can also be used in conjunction with b<-new> and B<-subj> to directly
+generate a certificate containing any desired public key.
 
 The format of the key file can be specified using the B<-keyform> option.
+
+=item B<-subj arg>
+
+When a certificate is created set its subject name to the given value.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Empty values are permitted, but the corresponding type will not be included
+in the certificate. Giving a single I</> will lead to an empty sequence of RDNs
+(a NULL subject DN).
+
+Unless the B<-CA> option is given the issuer is set to the same value.
+
+This option can be used in conjunction with the B<-force_pubkey> option
+to create a certificate even without providing an input certificate
+or certificate request.
 
 =back
 
@@ -922,7 +954,7 @@ the old form must have their links rebuilt using B<c_rehash> or similar.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

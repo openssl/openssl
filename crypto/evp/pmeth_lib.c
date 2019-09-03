@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -9,13 +10,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "internal/cryptlib.h"
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
+#include <openssl/core_names.h>
+#include <openssl/dh.h>
+#include "internal/cryptlib.h"
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 #include "internal/numbers.h"
+#include "evp_locl.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
@@ -103,8 +107,17 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
 static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 {
     EVP_PKEY_CTX *ret;
-    const EVP_PKEY_METHOD *pmeth;
+    const EVP_PKEY_METHOD *pmeth = NULL;
 
+    /*
+     * When using providers, the context is bound to the algo implementation
+     * later.
+     */
+    if (pkey == NULL && e == NULL && id == -1)
+        goto common;
+
+    /* TODO(3.0) Legacy code should be removed when all is provider based */
+    /* BEGIN legacy */
     if (id == -1) {
         if (pkey == NULL)
             return 0;
@@ -140,7 +153,9 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
         EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }
+    /* END legacy */
 
+ common:
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
 #ifndef OPENSSL_NO_ENGINE
@@ -156,7 +171,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     if (pkey != NULL)
         EVP_PKEY_up_ref(pkey);
 
-    if (pmeth->init) {
+    if (pmeth != NULL && pmeth->init != NULL) {
         if (pmeth->init(ret) <= 0) {
             ret->pmeth = NULL;
             EVP_PKEY_CTX_free(ret);
@@ -250,10 +265,12 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
     return int_ctx_new(NULL, e, id);
 }
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
+EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 {
     EVP_PKEY_CTX *rctx;
-    if (!pctx->pmeth || !pctx->pmeth->copy)
+
+    if (((pctx->pmeth == NULL) || (pctx->pmeth->copy == NULL))
+            && pctx->exchprovctx == NULL)
         return NULL;
 #ifndef OPENSSL_NO_ENGINE
     /* Make sure it's safe to copy a pkey context using an ENGINE */
@@ -262,10 +279,32 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
         return 0;
     }
 #endif
-    rctx = OPENSSL_malloc(sizeof(*rctx));
+    rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
+
+    if (pctx->pkey != NULL)
+        EVP_PKEY_up_ref(pctx->pkey);
+    rctx->pkey = pctx->pkey;
+    rctx->operation = pctx->operation;
+
+    if (pctx->exchprovctx != NULL) {
+        if (!ossl_assert(pctx->exchange != NULL))
+            return NULL;
+        rctx->exchange = pctx->exchange;
+        if (!EVP_KEYEXCH_up_ref(rctx->exchange)) {
+            OPENSSL_free(rctx);
+            return NULL;
+        }
+        rctx->exchprovctx = pctx->exchange->dupctx(pctx->exchprovctx);
+        if (rctx->exchprovctx == NULL) {
+            EVP_KEYEXCH_free(rctx->exchange);
+            OPENSSL_free(rctx);
+            return NULL;
+        }
+        return rctx;
     }
 
     rctx->pmeth = pctx->pmeth;
@@ -273,19 +312,9 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
     rctx->engine = pctx->engine;
 #endif
 
-    if (pctx->pkey)
-        EVP_PKEY_up_ref(pctx->pkey);
-
-    rctx->pkey = pctx->pkey;
-
     if (pctx->peerkey)
         EVP_PKEY_up_ref(pctx->peerkey);
-
     rctx->peerkey = pctx->peerkey;
-
-    rctx->data = NULL;
-    rctx->app_data = NULL;
-    rctx->operation = pctx->operation;
 
     if (pctx->pmeth->copy(rctx, pctx) > 0)
         return rctx;
@@ -355,6 +384,12 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
         return;
     if (ctx->pmeth && ctx->pmeth->cleanup)
         ctx->pmeth->cleanup(ctx);
+
+    if (ctx->exchprovctx != NULL && ctx->exchange != NULL)
+        ctx->exchange->freectx(ctx->exchprovctx);
+
+    EVP_KEYEXCH_free(ctx->exchange);
+
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
 #ifndef OPENSSL_NO_ENGINE
@@ -363,12 +398,56 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
+{
+    if (ctx->exchprovctx != NULL && ctx->exchange != NULL)
+        return ctx->exchange->set_params(ctx->exchprovctx, params);
+    return 0;
+}
+
+#ifndef OPENSSL_NO_DH
+int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
+{
+    OSSL_PARAM dh_pad_params[2];
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->exchprovctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE,
+                                 EVP_PKEY_CTRL_DH_PAD, pad, NULL);
+
+    dh_pad_params[0] = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_PAD, &pad);
+    dh_pad_params[1] = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, dh_pad_params);
+}
+#endif
+
+static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
+                                int cmd, int p1, void *p2)
+{
+    switch (cmd) {
+#ifndef OPENSSL_NO_DH
+    case EVP_PKEY_CTRL_DH_PAD:
+        return EVP_PKEY_CTX_set_dh_pad(ctx, p1);
+#endif
+    }
+    return 0;
+}
+
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                       int cmd, int p1, void *p2)
 {
     int ret;
 
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl) {
+    if (ctx == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
+    }
+
+    if (ctx->exchprovctx != NULL)
+        return legacy_ctrl_to_param(ctx, keytype, optype, cmd, p1, p2);
+
+    if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
@@ -404,9 +483,31 @@ int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
     return EVP_PKEY_CTX_ctrl(ctx, keytype, optype, cmd, 0, &value);
 }
 
+static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
+                                    const char *value)
+{
+#ifndef OPENSSL_NO_DH
+    if (strcmp(name, "dh_pad") == 0) {
+        int pad;
+
+        pad = atoi(value);
+        return EVP_PKEY_CTX_set_dh_pad(ctx, pad);
+    }
+#endif
+    return 0;
+}
+
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
                           const char *name, const char *value)
 {
+    if (ctx == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
+    }
+
+    if (ctx->exchprovctx != NULL)
+        return legacy_ctrl_str_to_param(ctx, name, value);
+
     if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
@@ -472,7 +573,7 @@ void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data)
     ctx->data = data;
 }
 
-void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx)
+void *EVP_PKEY_CTX_get_data(const EVP_PKEY_CTX *ctx)
 {
     return ctx->data;
 }
@@ -505,7 +606,7 @@ void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
                             int (*copy) (EVP_PKEY_CTX *dst,
-                                         EVP_PKEY_CTX *src))
+                                         const EVP_PKEY_CTX *src))
 {
     pmeth->copy = copy;
 }
@@ -675,7 +776,7 @@ void EVP_PKEY_meth_get_init(const EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_get_copy(const EVP_PKEY_METHOD *pmeth,
                             int (**pcopy) (EVP_PKEY_CTX *dst,
-                                           EVP_PKEY_CTX *src))
+                                           const EVP_PKEY_CTX *src))
 {
     *pcopy = pmeth->copy;
 }

@@ -732,8 +732,8 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
     /* generate blinding value */
     do {
-        if (!BN_priv_rand(b, BN_num_bits(p) - 1,
-                          BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+        if (!BN_priv_rand_ex(b, BN_num_bits(p) - 1,
+                             BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx))
             goto err;
     } while (BN_is_zero(b));
 
@@ -1031,7 +1031,8 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
         if (tmp == NULL)
             goto err;
         do {
-            if (!BN_priv_rand(rho, p[0], BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            if (!BN_priv_rand_ex(rho, p[0], BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY,
+                                 ctx))
                 goto err;
             if (!BN_GF2m_mod_arr(rho, rho, p))
                 goto err;

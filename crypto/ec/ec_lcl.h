@@ -15,7 +15,6 @@
 #include <openssl/bn.h>
 #include "internal/refcount.h"
 #include "internal/ec_int.h"
-#include "curve448/curve448_lcl.h"
 
 #if defined(__SUNPRO_C)
 # if __SUNPRO_C >= 0x520
@@ -155,7 +154,7 @@ struct ec_method_st {
     int (*field_div) (const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                       const BIGNUM *b, BN_CTX *);
     /*-
-     * 'field_inv' computes the multipicative inverse of a in the field,
+     * 'field_inv' computes the multiplicative inverse of a in the field,
      * storing the result in r.
      *
      * If 'a' is zero (or equivalent), you'll get an EC_R_CANNOT_INVERT error.
@@ -180,6 +179,14 @@ struct ec_method_st {
     /* custom ECDH operation */
     int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
+    /* custom ECDSA */
+    int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinvp,
+                            BIGNUM **rp);
+    ECDSA_SIG *(*ecdsa_sign_sig)(const unsigned char *dgst, int dgstlen,
+                                 const BIGNUM *kinv, const BIGNUM *r,
+                                 EC_KEY *eckey);
+    int (*ecdsa_verify_sig)(const unsigned char *dgst, int dgstlen,
+                            const ECDSA_SIG *sig, EC_KEY *eckey);
     /* Inverse modulo order */
     int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r,
                                  const BIGNUM *x, BN_CTX *);
@@ -269,6 +276,8 @@ struct ec_group_st {
         NISTZ256_PRE_COMP *nistz256;
         EC_PRE_COMP *ec;
     } pre_comp;
+
+    OPENSSL_CTX *libctx;
 };
 
 #define SETPRECOMP(g, type, pre) \
@@ -287,8 +296,11 @@ struct ec_key_st {
     point_conversion_form_t conv_form;
     CRYPTO_REF_COUNT references;
     int flags;
+#ifndef FIPS_MODE
     CRYPTO_EX_DATA ex_data;
+#endif
     CRYPTO_RWLOCK *lock;
+    OPENSSL_CTX *libctx;
 };
 
 struct ec_point_st {
@@ -310,13 +322,10 @@ struct ec_point_st {
 static ossl_inline int ec_point_is_compat(const EC_POINT *point,
                                           const EC_GROUP *group)
 {
-    if (group->meth != point->meth
-        || (group->curve_name != 0
-            && point->curve_name != 0
-            && group->curve_name != point->curve_name))
-        return 0;
-
-    return 1;
+    return group->meth == point->meth
+           && (group->curve_name == 0
+               || point->curve_name == 0
+               || group->curve_name == point->curve_name);
 }
 
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
@@ -588,6 +597,11 @@ int ec_group_simple_order_bits(const EC_GROUP *group);
  */
 const EC_METHOD *EC_GFp_nistz256_method(void);
 #endif
+#ifdef S390X_NISTP_ASM
+const EC_METHOD *EC_GFp_s390x_nistp256_method(void);
+const EC_METHOD *EC_GFp_s390x_nistp384_method(void);
+const EC_METHOD *EC_GFp_s390x_nistp521_method(void);
+#endif
 
 size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
                               unsigned char *buf, size_t len);
@@ -595,6 +609,8 @@ int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len);
 int ec_key_simple_generate_key(EC_KEY *eckey);
 int ec_key_simple_generate_public_key(EC_KEY *eckey);
 int ec_key_simple_check_key(const EC_KEY *eckey);
+
+int ec_curve_nid_from_params(const EC_GROUP *group, BN_CTX *ctx);
 
 /* EC_METHOD definitions */
 
@@ -627,6 +643,8 @@ struct ec_key_method_st {
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
+EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine);
+
 int ossl_ec_key_gen(EC_KEY *eckey);
 int ossl_ecdh_compute_key(unsigned char **pout, size_t *poutlen,
                           const EC_POINT *pub_key, const EC_KEY *ecdh);
@@ -650,6 +668,13 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
                           const ECDSA_SIG *sig, EC_KEY *eckey);
+int ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+                            BIGNUM **rp);
+ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
+                                 const BIGNUM *in_kinv, const BIGNUM *in_r,
+                                 EC_KEY *eckey);
+int ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
+                            const ECDSA_SIG *sig, EC_KEY *eckey);
 
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
                  const uint8_t public_key[32], const uint8_t private_key[32]);

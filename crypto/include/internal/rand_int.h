@@ -24,8 +24,6 @@
 typedef struct rand_pool_st RAND_POOL;
 
 void rand_cleanup_int(void);
-void rand_drbg_cleanup_int(void);
-void drbg_delete_thread_state(void);
 void rand_fork(void);
 
 /* Hardware-based seeding functions. */
@@ -49,10 +47,19 @@ size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout);
 
 void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out);
 
+/* CRNG test entropy filter callbacks. */
+size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
+                              unsigned char **pout,
+                              int entropy, size_t min_len, size_t max_len,
+                              int prediction_resistance);
+void rand_crngt_cleanup_entropy(RAND_DRBG *drbg,
+                                unsigned char *out, size_t outlen);
+
 /*
  * RAND_POOL functions
  */
-RAND_POOL *rand_pool_new(int entropy_requested, size_t min_len, size_t max_len);
+RAND_POOL *rand_pool_new(int entropy_requested, int secure,
+                         size_t min_len, size_t max_len);
 RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
                             size_t entropy);
 void rand_pool_free(RAND_POOL *pool);
@@ -130,5 +137,11 @@ void rand_pool_cleanup(void);
  * Control the random pool use of open file descriptors.
  */
 void rand_pool_keep_random_devices_open(int keep);
+
+/* Equivalent of RAND_priv_bytes() but additionally taking an OPENSSL_CTX */
+int rand_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+
+/* Equivalent of RAND_bytes() but additionally taking an OPENSSL_CTX */
+int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
 
 #endif

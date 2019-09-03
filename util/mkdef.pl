@@ -109,24 +109,20 @@ my $libname = platform->sharedname($name);
 my %OS_data = (
     solaris     => { writer     => \&writer_linux,
                      sort       => sorter_linux(),
-                     platforms  => { UNIX                       => 1,
-                                     EXPORT_VAR_AS_FUNCTION     => 0 } },
+                     platforms  => { UNIX                       => 1 } },
     linux       => 'solaris',   # alias
     "bsd-gcc"   => 'solaris',   # alias
     aix         => { writer     => \&writer_aix,
                      sort       => sorter_unix(),
-                     platforms  => { UNIX                       => 1,
-                                     EXPORT_VAR_AS_FUNCTION     => 0 } },
+                     platforms  => { UNIX                       => 1 } },
     VMS         => { writer     => \&writer_VMS,
                      sort       => OpenSSL::Ordinals::by_number(),
-                     platforms  => { VMS                        => 1,
-                                     EXPORT_VAR_AS_FUNCTION     => 0 } },
+                     platforms  => { VMS                        => 1 } },
     vms         => 'VMS',       # alias
     WINDOWS     => { writer     => \&writer_windows,
                      sort       => OpenSSL::Ordinals::by_name(),
                      platforms  => { WIN32                      => 1,
-                                     _WIN32                     => 1,
-                                     EXPORT_VAR_AS_FUNCTION     => 1 } },
+                                     _WIN32                     => 1 } },
     windows     => 'WINDOWS',   # alias
     WIN32       => 'WINDOWS',   # alias
     win32       => 'WIN32',     # alias

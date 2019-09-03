@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,12 +17,27 @@
 #include "internal/evp_int.h"
 #include "kdf_local.h"
 
+/* Constants specified in SP800-132 */
+#define KDF_PBKDF2_MIN_KEY_LEN_BITS  112
+#define KDF_PBKDF2_MAX_KEY_LEN_DIGEST_RATIO 0xFFFFFFFF
+#define KDF_PBKDF2_MIN_ITERATIONS 1000
+#define KDF_PBKDF2_MIN_SALT_LEN   (128 / 8)
+/*
+ * For backwards compatibility reasons,
+ * Extra checks are done by default in fips mode only.
+ */
+#ifdef FIPS_MODE
+# define KDF_PBKDF2_DEFAULT_CHECKS 1
+#else
+# define KDF_PBKDF2_DEFAULT_CHECKS 0
+#endif /* FIPS_MODE */
+
 static void kdf_pbkdf2_reset(EVP_KDF_IMPL *impl);
 static void kdf_pbkdf2_init(EVP_KDF_IMPL *impl);
-static int pkcs5_pbkdf2_alg(const char *pass, size_t passlen,
-                            const unsigned char *salt, int saltlen, int iter,
-                            const EVP_MD *digest, unsigned char *key,
-                            size_t keylen);
+static int  pbkdf2_derive(const char *pass, size_t passlen,
+                          const unsigned char *salt, int saltlen, int iter,
+                          const EVP_MD *digest, unsigned char *key,
+                          size_t keylen, int extra_checks);
 
 struct evp_kdf_impl_st {
     unsigned char *pass;
@@ -31,6 +46,7 @@ struct evp_kdf_impl_st {
     size_t salt_len;
     int iter;
     const EVP_MD *md;
+    int lower_bound_checks;
 };
 
 static EVP_KDF_IMPL *kdf_pbkdf2_new(void)
@@ -64,6 +80,7 @@ static void kdf_pbkdf2_init(EVP_KDF_IMPL *impl)
 {
     impl->iter = PKCS5_DEFAULT_ITER;
     impl->md = EVP_sha1();
+    impl->lower_bound_checks = KDF_PBKDF2_DEFAULT_CHECKS;
 }
 
 static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
@@ -91,12 +108,16 @@ static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
 
 static int kdf_pbkdf2_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
 {
-    int iter;
+    int iter, pkcs5, min_iter;
     const unsigned char *p;
     size_t len;
     const EVP_MD *md;
 
     switch (cmd) {
+    case EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE:
+        pkcs5 = va_arg(args, int);
+        impl->lower_bound_checks = (pkcs5 == 0) ? 1 : 0;
+        return 1;
     case EVP_KDF_CTRL_SET_PASS:
         p = va_arg(args, const unsigned char *);
         len = va_arg(args, size_t);
@@ -105,20 +126,28 @@ static int kdf_pbkdf2_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
     case EVP_KDF_CTRL_SET_SALT:
         p = va_arg(args, const unsigned char *);
         len = va_arg(args, size_t);
+        if (impl->lower_bound_checks != 0 && len < KDF_PBKDF2_MIN_SALT_LEN) {
+            KDFerr(KDF_F_KDF_PBKDF2_CTRL, KDF_R_INVALID_SALT_LEN);
+            return 0;
+        }
         return pbkdf2_set_membuf(&impl->salt, &impl->salt_len, p, len);
 
     case EVP_KDF_CTRL_SET_ITER:
         iter = va_arg(args, int);
-        if (iter < 1)
+        min_iter = impl->lower_bound_checks != 0 ? KDF_PBKDF2_MIN_ITERATIONS : 1;
+        if (iter < min_iter) {
+            KDFerr(KDF_F_KDF_PBKDF2_CTRL, KDF_R_INVALID_ITERATION_COUNT);
             return 0;
-
+        }
         impl->iter = iter;
         return 1;
 
     case EVP_KDF_CTRL_SET_MD:
         md = va_arg(args, const EVP_MD *);
-        if (md == NULL)
+        if (md == NULL) {
+            KDFerr(KDF_F_KDF_PBKDF2_CTRL, KDF_R_VALUE_MISSING);
             return 0;
+        }
 
         impl->md = md;
         return 1;
@@ -159,6 +188,9 @@ static int kdf_pbkdf2_ctrl_str(EVP_KDF_IMPL *impl, const char *type,
     if (strcmp(type, "digest") == 0)
         return kdf_md2ctrl(impl, kdf_pbkdf2_ctrl, EVP_KDF_CTRL_SET_MD, value);
 
+    if (strcmp(type, "pkcs5") == 0)
+        return kdf_str2ctrl(impl, kdf_pbkdf2_ctrl,
+                            EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE, value);
     return -2;
 }
 
@@ -175,12 +207,12 @@ static int kdf_pbkdf2_derive(EVP_KDF_IMPL *impl, unsigned char *key,
         return 0;
     }
 
-    return pkcs5_pbkdf2_alg((char *)impl->pass, impl->pass_len,
-                            impl->salt, impl->salt_len, impl->iter,
-                            impl->md, key, keylen);
+    return pbkdf2_derive((char *)impl->pass, impl->pass_len,
+                         impl->salt, impl->salt_len, impl->iter,
+                         impl->md, key, keylen, impl->lower_bound_checks);
 }
 
-const EVP_KDF_METHOD pbkdf2_kdf_meth = {
+const EVP_KDF pbkdf2_kdf_meth = {
     EVP_KDF_PBKDF2,
     kdf_pbkdf2_new,
     kdf_pbkdf2_free,
@@ -195,12 +227,16 @@ const EVP_KDF_METHOD pbkdf2_kdf_meth = {
  * This is an implementation of PKCS#5 v2.0 password based encryption key
  * derivation function PBKDF2. SHA1 version verified against test vectors
  * posted by Peter Gutmann to the PKCS-TNG mailing list.
+ *
+ * The constraints specified by SP800-132 have been added i.e.
+ *  - Check the range of the key length.
+ *  - Minimum iteration count of 1000.
+ *  - Randomly-generated portion of the salt shall be at least 128 bits.
  */
-
-static int pkcs5_pbkdf2_alg(const char *pass, size_t passlen,
-                            const unsigned char *salt, int saltlen, int iter,
-                            const EVP_MD *digest, unsigned char *key,
-                            size_t keylen)
+static int pbkdf2_derive(const char *pass, size_t passlen,
+                         const unsigned char *salt, int saltlen, int iter,
+                         const EVP_MD *digest, unsigned char *key,
+                         size_t keylen, int lower_bound_checks)
 {
     int ret = 0;
     unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
@@ -209,8 +245,32 @@ static int pkcs5_pbkdf2_alg(const char *pass, size_t passlen,
     HMAC_CTX *hctx_tpl = NULL, *hctx = NULL;
 
     mdlen = EVP_MD_size(digest);
-    if (mdlen < 0)
+    if (mdlen <= 0)
         return 0;
+
+    /*
+     * This check should always be done because keylen / mdlen >= (2^32 - 1)
+     * results in an overflow of the loop counter 'i'.
+     */
+    if ((keylen / mdlen) >= KDF_PBKDF2_MAX_KEY_LEN_DIGEST_RATIO) {
+        KDFerr(KDF_F_PBKDF2_DERIVE, KDF_R_INVALID_KEY_LEN);
+        return 0;
+    }
+
+    if (lower_bound_checks) {
+         if ((keylen * 8) < KDF_PBKDF2_MIN_KEY_LEN_BITS) {
+             KDFerr(KDF_F_PBKDF2_DERIVE, KDF_R_INVALID_KEY_LEN);
+             return 0;
+         }
+         if (saltlen < KDF_PBKDF2_MIN_SALT_LEN) {
+             KDFerr(KDF_F_PBKDF2_DERIVE, KDF_R_INVALID_SALT_LEN);
+            return 0;
+         }
+         if (iter < KDF_PBKDF2_MIN_ITERATIONS) {
+             KDFerr(KDF_F_PBKDF2_DERIVE, KDF_R_INVALID_ITERATION_COUNT);
+             return 0;
+         }
+    }
 
     hctx_tpl = HMAC_CTX_new();
     if (hctx_tpl == NULL)

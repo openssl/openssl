@@ -79,9 +79,13 @@ B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
-names are case sensitive. The list should be in order of preference with the
-most preferred group first.
+applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
+(e.g B<prime256v1>). Group names are case sensitive. The list should be in
+order of preference with the most preferred group first.
+
+Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
+B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>,
+B<ffdhe8192>.
 
 =item B<-curves>
 
@@ -356,9 +360,13 @@ B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
-names are case sensitive. The list should be in order of preference with the
-most preferred group first.
+applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
+(e.g B<prime256v1>). Group names are case sensitive. The list should be in
+order of preference with the most preferred group first.
+
+Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
+B<X25519>, B<X448>, B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>,
+B<ffdhe8192>.
 
 =item B<Curves>
 
@@ -598,6 +606,23 @@ checking or translation of the command value. For example if the return
 value is B<SSL_CONF_TYPE_FILE> an application could translate a relative
 pathname to an absolute pathname.
 
+=head1 RETURN VALUES
+
+SSL_CONF_cmd() returns 1 if the value of B<cmd> is recognised and B<value> is
+B<NOT> used and 2 if both B<cmd> and B<value> are used. In other words it
+returns the number of arguments processed. This is useful when processing
+command lines.
+
+A return value of -2 means B<cmd> is not recognised.
+
+A return value of -3 means B<cmd> is recognised and the command requires a
+value but B<value> is NULL.
+
+A return code of 0 indicates that both B<cmd> and B<value> are valid but an
+error occurred attempting to perform the operation: for example due to an
+error in the syntax of B<value> in this case the error queue may provide
+additional information.
+
 =head1 EXAMPLES
 
 Set supported signature algorithms:
@@ -643,23 +668,6 @@ Enable compression:
 Set supported curves to P-256, P-384:
 
  SSL_CONF_cmd(ctx, "Curves", "P-256:P-384");
-
-=head1 RETURN VALUES
-
-SSL_CONF_cmd() returns 1 if the value of B<cmd> is recognised and B<value> is
-B<NOT> used and 2 if both B<cmd> and B<value> are used. In other words it
-returns the number of arguments processed. This is useful when processing
-command lines.
-
-A return value of -2 means B<cmd> is not recognised.
-
-A return value of -3 means B<cmd> is recognised and the command requires a
-value but B<value> is NULL.
-
-A return code of 0 indicates that both B<cmd> and B<value> are valid but an
-error occurred attempting to perform the operation: for example due to an
-error in the syntax of B<value> in this case the error queue may provide
-additional information.
 
 =head1 SEE ALSO
 

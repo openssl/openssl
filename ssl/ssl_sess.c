@@ -94,7 +94,7 @@ SSL_SESSION *SSL_SESSION_new(void)
     return ss;
 }
 
-SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
+SSL_SESSION *SSL_SESSION_dup(const SSL_SESSION *src)
 {
     return ssl_session_dup(src, 1);
 }
@@ -103,7 +103,7 @@ SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
  * Create a new SSL_SESSION and duplicate the contents of |src| into it. If
  * ticket == 0 then no ticket information is duplicated, otherwise it is.
  */
-SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
+SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *dest;
 
@@ -121,12 +121,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->psk_identity_hint = NULL;
     dest->psk_identity = NULL;
 #endif
-    dest->ciphers = NULL;
     dest->ext.hostname = NULL;
-#ifndef OPENSSL_NO_EC
-    dest->ext.ecpointformats = NULL;
-    dest->ext.supportedgroups = NULL;
-#endif
     dest->ext.tick = NULL;
     dest->ext.alpn_selected = NULL;
 #ifndef OPENSSL_NO_SRP
@@ -176,12 +171,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     }
 #endif
 
-    if (src->ciphers != NULL) {
-        dest->ciphers = sk_SSL_CIPHER_dup(src->ciphers);
-        if (dest->ciphers == NULL)
-            goto err;
-    }
-
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL_SESSION,
                             &dest->ex_data, &src->ex_data)) {
         goto err;
@@ -193,23 +182,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
             goto err;
         }
     }
-#ifndef OPENSSL_NO_EC
-    if (src->ext.ecpointformats) {
-        dest->ext.ecpointformats =
-            OPENSSL_memdup(src->ext.ecpointformats,
-                           src->ext.ecpointformats_len);
-        if (dest->ext.ecpointformats == NULL)
-            goto err;
-    }
-    if (src->ext.supportedgroups) {
-        dest->ext.supportedgroups =
-            OPENSSL_memdup(src->ext.supportedgroups,
-                           src->ext.supportedgroups_len
-                                * sizeof(*src->ext.supportedgroups));
-        if (dest->ext.supportedgroups == NULL)
-            goto err;
-    }
-#endif
 
     if (ticket != 0 && src->ext.tick != NULL) {
         dest->ext.tick =
@@ -438,7 +410,7 @@ int ssl_get_new_session(SSL *s, int session)
     ss->verify_result = X509_V_OK;
 
     /* If client supports extended master secret set it in session */
-    if (s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS)
+    if (s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)
         ss->flags |= SSL_SESS_FLAG_EXTMS;
 
     return 1;
@@ -620,13 +592,13 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     /* Check extended master secret extension consistency */
     if (ret->flags & SSL_SESS_FLAG_EXTMS) {
         /* If old session includes extms, but new does not: abort handshake */
-        if (!(s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
+        if (!(s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL_GET_PREV_SESSION,
                      SSL_R_INCONSISTENT_EXTMS);
             fatal = 1;
             goto err;
         }
-    } else if (s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) {
+    } else if (s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS) {
         /* If new session includes extms, but old does not: do not resume */
         goto err;
     }
@@ -790,17 +762,8 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_cleanse(ss->session_id, sizeof(ss->session_id));
     X509_free(ss->peer);
     sk_X509_pop_free(ss->peer_chain, X509_free);
-    sk_SSL_CIPHER_free(ss->ciphers);
     OPENSSL_free(ss->ext.hostname);
     OPENSSL_free(ss->ext.tick);
-#ifndef OPENSSL_NO_EC
-    OPENSSL_free(ss->ext.ecpointformats);
-    ss->ext.ecpointformats = NULL;
-    ss->ext.ecpointformats_len = 0;
-    OPENSSL_free(ss->ext.supportedgroups);
-    ss->ext.supportedgroups = NULL;
-    ss->ext.supportedgroups_len = 0;
-#endif                          /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(ss->psk_identity_hint);
     OPENSSL_free(ss->psk_identity);

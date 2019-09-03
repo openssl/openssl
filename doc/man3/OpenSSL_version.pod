@@ -8,8 +8,8 @@ OPENSSL_VERSION_PRE_RELEASE_STR, OPENSSL_VERSION_BUILD_METADATA_STR,
 OPENSSL_VERSION_TEXT,
 OPENSSL_version_major, OPENSSL_version_minor, OPENSSL_version_patch,
 OPENSSL_version_pre_release, OPENSSL_version_build_metadata, OpenSSL_version,
-OPENSSL_VERSION_NUMBER, OpenSSL_version_num
-- get OpenSSL version number
+OPENSSL_VERSION_NUMBER, OpenSSL_version_num, OPENSSL_info
+- get OpenSSL version number and other information
 
 =head1 SYNOPSIS
 
@@ -36,6 +36,8 @@ OPENSSL_VERSION_NUMBER, OpenSSL_version_num
  #include <openssl/crypto.h>
 
  const char *OpenSSL_version(int t);
+
+ const char *OPENSSL_info(int t);
 
 Deprecated:
 
@@ -127,6 +129,47 @@ if available or "ENGINESDIR: N/A" otherwise.
 
 For an unknown B<t>, the text "not available" is returned.
 
+OPENSSL_info() also returns different strings depending on B<t>:
+
+=over 4
+
+=item OPENSSL_INFO_CONFIG_DIR
+
+The configured C<OPENSSLDIR>, which is the default location for
+OpenSSL configuration files.
+
+=item OPENSSL_INFO_ENGINES_DIR
+
+The configured C<ENGINESDIR>, which is the default location for
+OpenSSL engines.
+
+=item OPENSSL_INFO_MODULES_DIR
+
+The configured C<MODULESDIR>, which is the default location for
+dynamically loadable OpenSSL modules other than engines.
+
+=item OPENSSL_INFO_DSO_EXTENSION
+
+The configured dynamically loadable module extension.
+
+=item OPENSSL_INFO_DIR_FILENAME_SEPARATOR
+
+The separator between a directory specification and a file name.
+Note that on some operating systems, this is not the same as the
+separator between directory elements.
+
+=item OPENSSL_INFO_LIST_SEPARATOR
+
+The OpenSSL list separator.
+This is typically used in strings that are lists of items, such as the
+value of the environment variable C<$PATH> on Unix (where the
+separator is ":") or C<%PATH%> on Windows (where the separator is
+";").
+
+=back
+
+For an unknown B<t>, NULL is returned.
+
 =head1 BACKWARD COMPATIBILITY
 
 For compatibility, some older macros and functions are retained or
@@ -176,7 +219,7 @@ L<crypto(7)>
 
 =head1 HISTORY
 
-The macros and functions described here were added in OpenSSL 3.0.0,
+The macros and functions described here were added in OpenSSL 3.0,
 with the exception of the L</BACKWARD COMPATIBILITY> ones.
 
 =head1 COPYRIGHT

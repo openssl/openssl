@@ -207,9 +207,9 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
                     int safe_nid, int iter, const char *pass);
 PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
 
-int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12);
+int i2d_PKCS12_bio(BIO *bp, const PKCS12 *p12);
 # ifndef OPENSSL_NO_STDIO
-int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12);
+int i2d_PKCS12_fp(FILE *fp, const PKCS12 *p12);
 # endif
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12);
 # ifndef OPENSSL_NO_STDIO

@@ -14,9 +14,12 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
+#include <openssl/ess.h>
 #include "cms_lcl.h"
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/cms_int.h"
+#include "internal/ess_int.h"
 
 /* CMS SignedData Utilities */
 
@@ -107,6 +110,27 @@ static void cms_sd_set_version(CMS_SignedData *sd)
     if (sd->version < 1)
         sd->version = 1;
 
+}
+
+/*
+ * RFC 5652 Section 11.1 Content Type
+ * The content-type attribute within signed-data MUST
+ *   1) be present if there are signed attributes
+ *   2) match the content type in the signed-data,
+ *   3) be a signed attribute.
+ *   4) not have more than one copy of the attribute.
+ *
+ * Note that since the CMS_SignerInfo_sign() always adds the "signing time"
+ * attribute, the content type attribute MUST be added also.
+ * Assumptions: This assumes that the attribute does not already exist.
+ */
+static int cms_set_si_contentType_attr(CMS_ContentInfo *cms, CMS_SignerInfo *si)
+{
+    ASN1_OBJECT *ctype = cms->d.signedData->encapContentInfo->eContentType;
+
+    /* Add the contentType attribute */
+    return CMS_signed_add1_attr_by_NID(si, NID_pkcs9_contentType,
+                                       V_ASN1_OBJECT, ctype, -1) > 0;
 }
 
 /* Copy an existing messageDigest value */
@@ -325,13 +349,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             if (!i)
                 goto merr;
         }
-        if (flags & CMS_REUSE_DIGEST) {
-            if (!cms_copy_messageDigest(cms, si))
-                goto err;
-            if (!(flags & (CMS_PARTIAL | CMS_KEY_PARAM)) &&
-                !CMS_SignerInfo_sign(si))
-                goto err;
-        }
         if (flags & CMS_CADES) {
             ESS_SIGNING_CERT *sc = NULL;
             ESS_SIGNING_CERT_V2 *sc2 = NULL;
@@ -341,16 +358,25 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 if ((sc = ESS_SIGNING_CERT_new_init(signer,
                                                     NULL, 1)) == NULL)
                     goto err;
-                add_sc = CMS_add1_signing_cert(si, sc);
+                add_sc = cms_add1_signing_cert(si, sc);
                 ESS_SIGNING_CERT_free(sc);
             } else {
                 if ((sc2 = ESS_SIGNING_CERT_V2_new_init(md, signer,
                                                         NULL, 1)) == NULL)
                     goto err;
-                add_sc = CMS_add1_signing_cert_v2(si, sc2);
+                add_sc = cms_add1_signing_cert_v2(si, sc2);
                 ESS_SIGNING_CERT_V2_free(sc2);
             }
             if (!add_sc)
+                goto err;
+        }
+        if (flags & CMS_REUSE_DIGEST) {
+            if (!cms_copy_messageDigest(cms, si))
+                goto err;
+            if (!cms_set_si_contentType_attr(cms, si))
+                goto err;
+            if (!(flags & (CMS_PARTIAL | CMS_KEY_PARAM)) &&
+                !CMS_SignerInfo_sign(si))
                 goto err;
         }
     }
@@ -370,8 +396,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             if (EVP_PKEY_CTX_set_signature_md(si->pctx, md) <= 0)
                 goto err;
-        } else if (EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, pk) <=
-                   0)
+        } else if (EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, pk) <= 0)
             goto err;
     }
 
@@ -579,8 +604,6 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
      */
 
     if (CMS_signed_get_attr_count(si) >= 0) {
-        ASN1_OBJECT *ctype =
-            cms->d.signedData->encapContentInfo->eContentType;
         unsigned char md[EVP_MAX_MD_SIZE];
         unsigned int mdlen;
         if (!EVP_DigestFinal_ex(mctx, md, &mdlen))
@@ -589,9 +612,9 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
                                          V_ASN1_OCTET_STRING, md, mdlen))
             goto err;
         /* Copy content type across */
-        if (CMS_signed_add1_attr_by_NID(si, NID_pkcs9_contentType,
-                                        V_ASN1_OBJECT, ctype, -1) <= 0)
+        if (!cms_set_si_contentType_attr(cms, si))
             goto err;
+
         if (!CMS_SignerInfo_sign(si))
             goto err;
     } else if (si->pctx) {
@@ -671,6 +694,9 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
             goto err;
     }
 
+    if (!CMS_si_check_attributes(si))
+        goto err;
+
     if (si->pctx)
         pctx = si->pctx;
     else {
@@ -717,7 +743,6 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     OPENSSL_free(abuf);
     EVP_MD_CTX_reset(mctx);
     return 0;
-
 }
 
 int CMS_SignerInfo_verify(CMS_SignerInfo *si)
@@ -731,6 +756,9 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_NO_PUBLIC_KEY);
         return -1;
     }
+
+    if (!CMS_si_check_attributes(si))
+        return -1;
 
     md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
     if (md == NULL)

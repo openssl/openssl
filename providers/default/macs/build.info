@@ -1,0 +1,4 @@
+LIBS=../../../libcrypto
+SOURCE[../../../libcrypto]=\
+        blake2b_mac.c blake2s_mac.c siphash_prov.c poly1305_prov.c
+INCLUDE[../../../libcrypto]=. ../../../crypto

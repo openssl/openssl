@@ -13,13 +13,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
-
-ASN1_SEQUENCE(DSA_SIG) = {
-        ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
-        ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
-} static_ASN1_SEQUENCE_END(DSA_SIG)
-
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA_SIG, DSA_SIG, DSA_SIG)
+#include "internal/asn1_dsa.h"
 
 DSA_SIG *DSA_SIG_new(void)
 {
@@ -36,6 +30,74 @@ void DSA_SIG_free(DSA_SIG *sig)
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
     OPENSSL_free(sig);
+}
+
+DSA_SIG *d2i_DSA_SIG(DSA_SIG **psig, const unsigned char **ppin, long len)
+{
+    DSA_SIG *sig;
+
+    if (len < 0)
+        return NULL;
+    if (psig != NULL && *psig != NULL) {
+        sig = *psig;
+    } else {
+        sig = DSA_SIG_new();
+        if (sig == NULL)
+            return NULL;
+    }
+    if (sig->r == NULL)
+        sig->r = BN_new();
+    if (sig->s == NULL)
+        sig->s = BN_new();
+    if (decode_der_dsa_sig(sig->r, sig->s, ppin, (size_t)len) == 0) {
+        if (psig == NULL || *psig == NULL)
+            DSA_SIG_free(sig);
+        return NULL;
+    }
+    if (psig != NULL && *psig == NULL)
+        *psig = sig;
+    return sig;
+}
+
+int i2d_DSA_SIG(const DSA_SIG *sig, unsigned char **ppout)
+{
+    BUF_MEM *buf = NULL;
+    size_t encoded_len;
+    WPACKET pkt;
+
+    if (ppout == NULL) {
+        if (!WPACKET_init_null(&pkt, 0))
+            return -1;
+    } else if (*ppout == NULL) {
+        if ((buf = BUF_MEM_new()) == NULL
+                || !WPACKET_init_len(&pkt, buf, 0)) {
+            BUF_MEM_free(buf);
+            return -1;
+        }
+    } else {
+        if (!WPACKET_init_static_len(&pkt, *ppout, SIZE_MAX, 0))
+            return -1;
+    }
+
+    if (!encode_der_dsa_sig(&pkt, sig->r, sig->s)
+            || !WPACKET_get_total_written(&pkt, &encoded_len)
+            || !WPACKET_finish(&pkt)) {
+        BUF_MEM_free(buf);
+        WPACKET_cleanup(&pkt);
+        return -1;
+    }
+
+    if (ppout != NULL) {
+        if (*ppout == NULL) {
+            *ppout = (unsigned char *)buf->data;
+            buf->data = NULL;
+            BUF_MEM_free(buf);
+        } else {
+            *ppout += encoded_len;
+        }
+    }
+
+    return (int)encoded_len;
 }
 
 void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
@@ -83,7 +145,7 @@ ASN1_SEQUENCE_cb(DSAPrivateKey, dsa_cb) = {
         ASN1_SIMPLE(DSA, priv_key, CBIGNUM)
 } static_ASN1_SEQUENCE_END_cb(DSA, DSAPrivateKey)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPrivateKey, DSAPrivateKey)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(DSA, DSAPrivateKey, DSAPrivateKey)
 
 ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
         ASN1_SIMPLE(DSA, p, BIGNUM),
@@ -91,7 +153,7 @@ ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
         ASN1_SIMPLE(DSA, g, BIGNUM),
 } static_ASN1_SEQUENCE_END_cb(DSA, DSAparams)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAparams, DSAparams)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(DSA, DSAparams, DSAparams)
 
 ASN1_SEQUENCE_cb(DSAPublicKey, dsa_cb) = {
         ASN1_SIMPLE(DSA, pub_key, BIGNUM),
@@ -100,9 +162,9 @@ ASN1_SEQUENCE_cb(DSAPublicKey, dsa_cb) = {
         ASN1_SIMPLE(DSA, g, BIGNUM)
 } static_ASN1_SEQUENCE_END_cb(DSA, DSAPublicKey)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(DSA, DSAPublicKey, DSAPublicKey)
 
-DSA *DSAparams_dup(DSA *dsa)
+DSA *DSAparams_dup(const DSA *dsa)
 {
     return ASN1_item_dup(ASN1_ITEM_rptr(DSAparams), dsa);
 }

@@ -1,6 +1,6 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
-SUBDIRS=crypto ssl apps test util tools fuzz engines
+SUBDIRS=crypto ssl apps test util tools fuzz engines providers
 
 LIBS=libcrypto libssl
 INCLUDE[libcrypto]=. crypto/include include

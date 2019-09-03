@@ -9,7 +9,7 @@
 
 #include "dso_locl.h"
 
-#if !defined(DSO_VMS) && !defined(DSO_DLCFN) && !defined(DSO_DL) && !defined(DSO_WIN32) && !defined(DSO_DLFCN)
+#ifdef DSO_NONE
 
 static DSO_METHOD dso_meth_null = {
     "NULL shared library method"

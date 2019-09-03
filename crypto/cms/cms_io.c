@@ -14,6 +14,7 @@
 #include <openssl/cms.h>
 #include "cms_lcl.h"
 
+/* unfortunately cannot constify BIO_new_NDEF() due to this and PKCS7_stream() */
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 {
     ASN1_OCTET_STRING **pos;

@@ -46,9 +46,12 @@ B<openssl> B<req>
 [B<-reqopt>]
 [B<-subject>]
 [B<-subj arg>]
+[B<-sigopt nm:v>]
 [B<-batch>]
 [B<-verbose>]
 [B<-engine id>]
+[B<-sm2-id string>]
+[B<-sm2-hex-id hex-string>]
 
 =head1 DESCRIPTION
 
@@ -81,6 +84,11 @@ as the B<-inform> option.
 This specifies the input filename to read a request from or standard input
 if this option is not specified. A request is only read if the creation
 options (B<-new> and B<-newkey>) are not specified.
+
+=item B<-sigopt nm:v>
+
+Pass options to the signature algorithm during sign or verify operations.
+Names and values of these options are algorithm-specific.
 
 =item B<-passin arg>
 
@@ -333,6 +341,16 @@ for all available algorithms.
 Specifies an engine (by its unique B<id> string) which would be used
 for key generation operations.
 
+=item B<-sm2-id>
+
+Specify the ID string to use when verifying an SM2 certificate. The ID string is
+required by the SM2 signature algorithm for signing and verification.
+
+=item B<-sm2-hex-id>
+
+Specify a binary ID string to use when signing or verifying using an SM2
+certificate. The argument for this option is string of hexadecimal digits.
+
 =back
 
 =head1 CONFIGURATION FILE FORMAT
@@ -528,6 +546,15 @@ Generate a self signed root certificate:
 
  openssl req -x509 -newkey rsa:2048 -keyout key.pem -out req.pem
 
+Create an SM2 private key and then generate a certificate request from it:
+
+ openssl ecparam -genkey -name SM2 -out sm2.key
+ openssl req -new -key sm2.key -out sm2.csr -sm3 -sigopt "sm2_id:1234567812345678"
+
+Examine and verify an SM2 certificate request:
+
+ openssl req -verify -in sm2.csr -sm3 -sm2-id 1234567812345678
+
 Example of a file pointed to by the B<oid_file> option:
 
  1.2.3.4        shortName       A longer Name
@@ -689,7 +716,7 @@ L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

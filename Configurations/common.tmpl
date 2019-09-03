@@ -151,9 +151,9 @@
      return "" if $cache{$lib};
      $OUT .= obj2dso(lib => $lib,
                      attrs => $unified_info{attributes}->{$lib},
-                     objs => $unified_info{shared_sources}->{$lib},
+                     objs => $unified_info{sources}->{$lib},
                      deps => [ resolvedepends($lib) ]);
-     foreach (@{$unified_info{shared_sources}->{$lib}}) {
+     foreach (@{$unified_info{sources}->{$lib}}) {
          # If this is somehow a compiled object, take care of it that way
          # Otherwise, it might simply be generated
          if (defined $unified_info{sources}->{$_}) {

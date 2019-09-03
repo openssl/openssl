@@ -12,8 +12,8 @@
 
 #ifndef OPENSSL_NO_SM3
 # include <openssl/evp.h>
-# include "internal/evp_int.h"
 # include "internal/sm3.h"
+# include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
 {

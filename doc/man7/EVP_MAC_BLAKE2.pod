@@ -100,7 +100,7 @@ L<EVP_MAC_ctrl(3)>, L<EVP_MAC(3)/CONTROLS>
 
 =head1 HISTORY
 
-The macros and functions described here were added to OpenSSL 3.0.0.
+The macros and functions described here were added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

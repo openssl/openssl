@@ -378,7 +378,7 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
 
  err:
     EC_POINT_free(p);
-    EC_POINT_free(s);
+    EC_POINT_clear_free(s);
     BN_CTX_end(ctx);
 
     return ret;
@@ -441,7 +441,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
          * scalar multiplication implementation based on a Montgomery ladder,
          * with various timing attack defenses.
          */
-        if ((scalar != NULL) && (num == 0)) {
+        if ((scalar != group->order) && (scalar != NULL) && (num == 0)) {
             /*-
              * In this case we want to compute scalar * GeneratorPoint: this
              * codepath is reached most prominently by (ephemeral) key
@@ -452,7 +452,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
              */
             return ec_scalar_mul_ladder(group, r, scalar, NULL, ctx);
         }
-        if ((scalar == NULL) && (num == 1)) {
+        if ((scalar == NULL) && (num == 1) && (scalars[0] != group->order)) {
             /*-
              * In this case we want to compute scalar * VariablePoint: this
              * codepath is reached most prominently by the second half of ECDH,
@@ -815,12 +815,14 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
     const EC_POINT *generator;
     EC_POINT *tmp_point = NULL, *base = NULL, **var;
-    BN_CTX *new_ctx = NULL;
     const BIGNUM *order;
     size_t i, bits, w, pre_points_per_block, blocksize, numblocks, num;
     EC_POINT **points = NULL;
     EC_PRE_COMP *pre_comp;
     int ret = 0;
+#ifndef FIPS_MODE
+    BN_CTX *new_ctx = NULL;
+#endif
 
     /* if there is an old EC_PRE_COMP object, throw it away */
     EC_pre_comp_free(group);
@@ -833,11 +835,12 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         goto err;
     }
 
-    if (ctx == NULL) {
+#ifndef FIPS_MODE
+    if (ctx == NULL)
         ctx = new_ctx = BN_CTX_new();
-        if (ctx == NULL)
-            goto err;
-    }
+#endif
+    if (ctx == NULL)
+        goto err;
 
     BN_CTX_start(ctx);
 
@@ -948,9 +951,10 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     ret = 1;
 
  err:
-    if (ctx != NULL)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
+#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
+#endif
     EC_ec_pre_comp_free(pre_comp);
     if (points) {
         EC_POINT **p;

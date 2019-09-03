@@ -87,4 +87,28 @@ int bn_rshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n);
 int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
                      const BIGNUM *d, BN_CTX *ctx);
 
+#define BN_PRIMETEST_COMPOSITE                    0
+#define BN_PRIMETEST_COMPOSITE_WITH_FACTOR        1
+#define BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME 2
+#define BN_PRIMETEST_PROBABLY_PRIME               3
+
+int bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
+                             BN_GENCB *cb, int enhanced, int *status);
+
+const BIGNUM *bn_get0_small_factors(void);
+
+int bn_rsa_fips186_4_prime_MR_min_checks(int nbits);
+
+int bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
+                                     BIGNUM *p1, BIGNUM *p2,
+                                     const BIGNUM *Xp, const BIGNUM *Xp1,
+                                     const BIGNUM *Xp2, int nlen,
+                                     const BIGNUM *e, BN_CTX *ctx,
+                                     BN_GENCB *cb);
+
+int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
+                                  const BIGNUM *r1, const BIGNUM *r2, int nlen,
+                                  const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
+
+OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx);
 #endif

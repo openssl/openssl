@@ -10,6 +10,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/kdf.h>
+#include "internal/numbers.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 
@@ -50,6 +51,10 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (pass == NULL) {
         pass = empty;
         passlen = 0;
+    }
+    if (salt == NULL) {
+        salt = (const unsigned char *)empty;
+        saltlen = 0;
     }
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;

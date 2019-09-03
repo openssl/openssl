@@ -57,6 +57,8 @@ int ossl_ctype_check(int c, unsigned int mask);
 int ossl_tolower(int c);
 int ossl_toupper(int c);
 
+int ascii_isdigit(const char inchar);
+
 # define ossl_isalnum(c)        (ossl_ctype_check((c), CTYPE_MASK_alnum))
 # define ossl_isalpha(c)        (ossl_ctype_check((c), CTYPE_MASK_alpha))
 # ifdef CHARSET_EBCDIC

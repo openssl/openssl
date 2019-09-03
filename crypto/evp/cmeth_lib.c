@@ -11,6 +11,7 @@
 
 #include <openssl/evp.h>
 #include "internal/evp_int.h"
+#include "internal/provider.h"
 #include "evp_locl.h"
 
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
@@ -21,6 +22,12 @@ EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
         cipher->nid = cipher_type;
         cipher->block_size = block_size;
         cipher->key_len = key_len;
+        cipher->lock = CRYPTO_THREAD_lock_new();
+        if (cipher->lock == NULL) {
+            OPENSSL_free(cipher);
+            return NULL;
+        }
+        cipher->refcnt = 1;
     }
     return cipher;
 }
@@ -30,14 +37,36 @@ EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
     EVP_CIPHER *to = EVP_CIPHER_meth_new(cipher->nid, cipher->block_size,
                                          cipher->key_len);
 
-    if (to != NULL)
+    if (to != NULL) {
+        CRYPTO_RWLOCK *lock = to->lock;
+
         memcpy(to, cipher, sizeof(*to));
+        to->lock = lock;
+    }
     return to;
 }
 
 void EVP_CIPHER_meth_free(EVP_CIPHER *cipher)
 {
-    OPENSSL_free(cipher);
+    if (cipher != NULL) {
+        int i;
+
+        CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
+        if (i > 0)
+            return;
+        ossl_provider_free(cipher->prov);
+        OPENSSL_free(cipher->name);
+        CRYPTO_THREAD_lock_free(cipher->lock);
+        OPENSSL_free(cipher);
+    }
+}
+
+int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
+{
+    int ref = 0;
+
+    CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
+    return 1;
 }
 
 int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len)

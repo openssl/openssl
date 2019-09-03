@@ -29,12 +29,14 @@
  */
 #define TEST_ENG_OPENSSL_RC4
 #ifndef OPENSSL_NO_STDIO
-#define TEST_ENG_OPENSSL_PKEY
+# define TEST_ENG_OPENSSL_PKEY
 #endif
 /* #define TEST_ENG_OPENSSL_HMAC */
 /* #define TEST_ENG_OPENSSL_HMAC_INIT */
 /* #define TEST_ENG_OPENSSL_RC4_OTHERS */
-#define TEST_ENG_OPENSSL_RC4_P_INIT
+#ifndef OPENSSL_NO_STDIO
+# define TEST_ENG_OPENSSL_RC4_P_INIT
+#endif
 /* #define TEST_ENG_OPENSSL_RC4_P_CIPHER */
 #define TEST_ENG_OPENSSL_SHA
 /* #define TEST_ENG_OPENSSL_SHA_OTHERS */
@@ -189,12 +191,15 @@ typedef struct {
 static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
+    const int n = EVP_CIPHER_CTX_key_length(ctx);
+
 # ifdef TEST_ENG_OPENSSL_RC4_P_INIT
     fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) test_init_key() called\n");
 # endif
-    memcpy(&test(ctx)->key[0], key, EVP_CIPHER_CTX_key_length(ctx));
-    RC4_set_key(&test(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx),
-                test(ctx)->key);
+    if (n <= 0)
+        return n;
+    memcpy(&test(ctx)->key[0], key, n);
+    RC4_set_key(&test(ctx)->ks, n, test(ctx)->key);
     return 1;
 }
 

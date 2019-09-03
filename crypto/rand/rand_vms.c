@@ -475,7 +475,10 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
         pid_t pid;
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add process id, thread id, and a high resolution timestamp
@@ -499,7 +502,10 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     struct {
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add some noise from the thread id and a high resolution timer.
@@ -507,7 +513,11 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
      * concurrently (which is the case for the <master> drbg).
      */
     data.tid = CRYPTO_THREAD_get_current_id();
+#if __CRTL_VER >= 80400000
     sys$gettim_prec(&data.time);
+#else
+    sys$gettim((void*)&data.time);
+#endif
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }

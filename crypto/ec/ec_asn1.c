@@ -13,6 +13,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 #include "internal/nelem.h"
+#include "internal/asn1_dsa.h"
+
+#ifndef FIPS_MODE
 
 int EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
@@ -217,9 +220,9 @@ ASN1_CHOICE(ECPKPARAMETERS) = {
         ASN1_SIMPLE(ECPKPARAMETERS, value.implicitlyCA, ASN1_NULL)
 } ASN1_CHOICE_END(ECPKPARAMETERS)
 
-DECLARE_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECPKPARAMETERS, ECPKPARAMETERS)
-IMPLEMENT_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
+DECLARE_ASN1_FUNCTIONS(ECPKPARAMETERS)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECPKPARAMETERS, ECPKPARAMETERS)
+IMPLEMENT_ASN1_FUNCTIONS(ECPKPARAMETERS)
 
 ASN1_SEQUENCE(EC_PRIVATEKEY) = {
         ASN1_EMBED(EC_PRIVATEKEY, version, INT32),
@@ -228,9 +231,9 @@ ASN1_SEQUENCE(EC_PRIVATEKEY) = {
         ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
 } static_ASN1_SEQUENCE_END(EC_PRIVATEKEY)
 
-DECLARE_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(EC_PRIVATEKEY, EC_PRIVATEKEY)
-IMPLEMENT_ASN1_FUNCTIONS_const(EC_PRIVATEKEY)
+DECLARE_ASN1_FUNCTIONS(EC_PRIVATEKEY)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(EC_PRIVATEKEY, EC_PRIVATEKEY)
+IMPLEMENT_ASN1_FUNCTIONS(EC_PRIVATEKEY)
 
 /* some declarations of internal function */
 
@@ -968,7 +971,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     return NULL;
 }
 
-int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
+int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
 {
     int ret = 0, ok = 0;
     unsigned char *priv= NULL, *pub= NULL;
@@ -1040,7 +1043,7 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
     return (ok ? ret : 0);
 }
 
-int i2d_ECParameters(EC_KEY *a, unsigned char **out)
+int i2d_ECParameters(const EC_KEY *a, unsigned char **out)
 {
     if (a == NULL) {
         ECerr(EC_F_I2D_ECPARAMETERS, ERR_R_PASSED_NULL_PARAMETER);
@@ -1137,14 +1140,10 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
     return buf_len;
 }
 
-ASN1_SEQUENCE(ECDSA_SIG) = {
-        ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
-        ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
-} static_ASN1_SEQUENCE_END(ECDSA_SIG)
+DECLARE_ASN1_FUNCTIONS(ECDSA_SIG)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECDSA_SIG, ECDSA_SIG)
 
-DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ECDSA_SIG, ECDSA_SIG, ECDSA_SIG)
+#endif /* FIPS_MODE */
 
 ECDSA_SIG *ECDSA_SIG_new(void)
 {
@@ -1161,6 +1160,74 @@ void ECDSA_SIG_free(ECDSA_SIG *sig)
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
     OPENSSL_free(sig);
+}
+
+ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **psig, const unsigned char **ppin, long len)
+{
+    ECDSA_SIG *sig;
+
+    if (len < 0)
+        return NULL;
+    if (psig != NULL && *psig != NULL) {
+        sig = *psig;
+    } else {
+        sig = ECDSA_SIG_new();
+        if (sig == NULL)
+            return NULL;
+    }
+    if (sig->r == NULL)
+        sig->r = BN_new();
+    if (sig->s == NULL)
+        sig->s = BN_new();
+    if (decode_der_dsa_sig(sig->r, sig->s, ppin, (size_t)len) == 0) {
+        if (psig == NULL || *psig == NULL)
+            ECDSA_SIG_free(sig);
+        return NULL;
+    }
+    if (psig != NULL && *psig == NULL)
+        *psig = sig;
+    return sig;
+}
+
+int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **ppout)
+{
+    BUF_MEM *buf = NULL;
+    size_t encoded_len;
+    WPACKET pkt;
+
+    if (ppout == NULL) {
+        if (!WPACKET_init_null(&pkt, 0))
+            return -1;
+    } else if (*ppout == NULL) {
+        if ((buf = BUF_MEM_new()) == NULL
+                || !WPACKET_init_len(&pkt, buf, 0)) {
+            BUF_MEM_free(buf);
+            return -1;
+        }
+    } else {
+        if (!WPACKET_init_static_len(&pkt, *ppout, SIZE_MAX, 0))
+            return -1;
+    }
+
+    if (!encode_der_dsa_sig(&pkt, sig->r, sig->s)
+            || !WPACKET_get_total_written(&pkt, &encoded_len)
+            || !WPACKET_finish(&pkt)) {
+        BUF_MEM_free(buf);
+        WPACKET_cleanup(&pkt);
+        return -1;
+    }
+
+    if (ppout != NULL) {
+        if (*ppout == NULL) {
+            *ppout = (unsigned char *)buf->data;
+            buf->data = NULL;
+            BUF_MEM_free(buf);
+        } else {
+            *ppout += encoded_len;
+        }
+    }
+
+    return (int)encoded_len;
 }
 
 void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
@@ -1192,6 +1259,7 @@ int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
+#ifndef FIPS_MODE
 int ECDSA_size(const EC_KEY *r)
 {
     int ret, i;
@@ -1219,3 +1287,4 @@ int ECDSA_size(const EC_KEY *r)
     ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
     return ret;
 }
+#endif

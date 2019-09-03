@@ -35,8 +35,8 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
                 ((unsigned int)(p)[0])     | ((unsigned int)(p)[1]<<8) | \
                 ((unsigned int)(p)[2]<<16) | ((unsigned int)(p)[3]<<24)  )
 
-#define CHACHA_KEY_SIZE		32
-#define CHACHA_CTR_SIZE		16
-#define CHACHA_BLK_SIZE		64
+#define CHACHA_KEY_SIZE         32
+#define CHACHA_CTR_SIZE         16
+#define CHACHA_BLK_SIZE         64
 
 #endif

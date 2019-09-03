@@ -162,6 +162,13 @@ bits are zero.
 
 =back
 
+=head1 RETURN VALUES
+
+ASN1_generate_nconf() and ASN1_generate_v3() return the encoded
+data as an B<ASN1_TYPE> structure or B<NULL> if an error occurred.
+
+The error codes that can be obtained by L<ERR_get_error(3)>.
+
 =head1 EXAMPLES
 
 A simple IA5String:
@@ -246,13 +253,6 @@ structure:
  D4D2C6D000430DEC66ABF47829E74B8C5108623A1C0EE8BE217B3AD8D36D5EB4FCA1D9
 
  e=INTEGER:0x010001
-
-=head1 RETURN VALUES
-
-ASN1_generate_nconf() and ASN1_generate_v3() return the encoded
-data as an B<ASN1_TYPE> structure or B<NULL> if an error occurred.
-
-The error codes that can be obtained by L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 

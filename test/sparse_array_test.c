@@ -30,11 +30,11 @@ DEFINE_SPARSE_ARRAY_OF(char);
 static int test_sparse_array(void)
 {
     static const struct {
-        size_t n;
+        ossl_uintmax_t n;
         char *v;
     } cases[] = {
         { 22, "a" }, { 0, "z" }, { 1, "b" }, { 290, "c" },
-        { INT_MAX, "m" }, { 6666666, "d" }, { (size_t)-1, "H" },
+        { INT_MAX, "m" }, { 6666666, "d" }, { (ossl_uintmax_t)-1, "H" },
         { 99, "e" }
     };
     SPARSE_ARRAY_OF(char) *sa;
@@ -69,7 +69,7 @@ static int test_sparse_array_num(void)
 {
     static const struct {
         size_t num;
-        size_t n;
+        ossl_uintmax_t n;
         char *v;
     } cases[] = {
         { 1, 22, "a" }, { 2, 1021, "b" }, { 3, 3, "c" }, { 2, 22, NULL },
@@ -96,7 +96,7 @@ err:
 }
 
 struct index_cases_st {
-    size_t n;
+    ossl_uintmax_t n;
     char *v;
     int del;
 };
@@ -109,7 +109,7 @@ struct doall_st {
     int all;
 };
 
-static void leaf_check_all(size_t n, char *value, void *arg)
+static void leaf_check_all(ossl_uintmax_t n, char *value, void *arg)
 {
     struct doall_st *doall_data = (struct doall_st *)arg;
     const struct index_cases_st *cases = doall_data->cases;
@@ -122,10 +122,10 @@ static void leaf_check_all(size_t n, char *value, void *arg)
             doall_data->res = 1;
             return;
         }
-    TEST_error("Index %zu with value %s not found", n, value);
+    TEST_error("Index %ju with value %s not found", n, value);
 }
 
-static void leaf_delete(size_t n, char *value, void *arg)
+static void leaf_delete(ossl_uintmax_t n, char *value, void *arg)
 {
     struct doall_st *doall_data = (struct doall_st *)arg;
     const struct index_cases_st *cases = doall_data->cases;
@@ -138,15 +138,15 @@ static void leaf_delete(size_t n, char *value, void *arg)
             ossl_sa_char_set(doall_data->sa, n, NULL);
             return;
         }
-    TEST_error("Index %zu with value %s not found", n, value);
+    TEST_error("Index %ju with value %s not found", n, value);
 }
 
 static int test_sparse_array_doall(void)
 {
     static const struct index_cases_st cases[] = {
         { 22, "A", 1 }, { 1021, "b", 0 }, { 3, "c", 0 }, { INT_MAX, "d", 1 },
-        { (size_t)-1, "H", 0 }, { (size_t)-2, "i", 1 }, { 666666666, "s", 1 },
-        { 1234567890, "t", 0 },
+        { (ossl_uintmax_t)-1, "H", 0 }, { (ossl_uintmax_t)-2, "i", 1 },
+        { 666666666, "s", 1 }, { 1234567890, "t", 0 },
     };
     struct doall_st doall_data;
     size_t i;

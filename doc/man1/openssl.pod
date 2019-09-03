@@ -11,7 +11,7 @@ I<command>
 [ I<command_opts> ]
 [ I<command_args> ]
 
-B<openssl> B<list> [ B<standard-commands> | B<digest-commands> | B<cipher-commands> | B<cipher-algorithms> | B<digest-algorithms> | B<public-key-algorithms>]
+B<openssl> B<list> [ B<standard-commands> | B<digest-commands> | B<cipher-commands> | B<cipher-algorithms> | B<digest-algorithms> | B<mac-algorithms> | B<public-key-algorithms>]
 
 B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
 
@@ -28,7 +28,7 @@ It can be used for
  o  Creation and management of private keys, public keys and parameters
  o  Public key cryptographic operations
  o  Creation of X.509 certificates, CSRs and CRLs
- o  Calculation of Message Digests
+ o  Calculation of Message Digests and Message Authentication Codes
  o  Encryption and Decryption with Ciphers
  o  SSL/TLS Client and Server Tests
  o  Handling of S/MIME signed or encrypted mail
@@ -57,8 +57,9 @@ and B<cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,
 respectively, that are available in the present B<openssl> utility.
 
-The list parameters B<cipher-algorithms> and
-B<digest-algorithms> list all cipher and message digest names, one entry per line. Aliases are listed as:
+The list parameters B<cipher-algorithms>, B<digest-algorithms>,
+and B<mac-algorithms> list all cipher, message digest, and message
+authentication code names, one entry per line. Aliases are listed as:
 
  from => to
 
@@ -106,7 +107,8 @@ CRL to PKCS#7 Conversion.
 
 =item B<dgst>
 
-Message Digest Calculation.
+Message Digest calculation. MAC calculations are superseded by
+L<mac(1)>.
 
 =item B<dh>
 
@@ -164,6 +166,18 @@ Generation of Private Key or Parameters.
 =item B<genrsa>
 
 Generation of RSA Private Key. Superseded by L<genpkey(1)>.
+
+=item B<info>
+
+Display diverse information built into the OpenSSL libraries.
+
+=item B<kdf>
+
+Key Derivation Functions.
+
+=item B<mac>
+
+Message Authentication Code Calculation.
 
 =item B<nseq>
 
@@ -531,6 +545,74 @@ Read the password from standard input.
 
 =back
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<OPENSSL_TRACE=>I<name,...>
+
+Enable tracing output of OpenSSL library, by name.
+This output will only make sense if you know OpenSSL internals well.
+Also, it might not give you any output at all, depending on how
+OpenSSL was built.
+
+The value is a comma separated list of names, with the following
+available:
+
+=over 4
+
+=item B<TRACE>
+
+The tracing functionality.
+
+=item B<TLS>
+
+General SSL/TLS.
+
+=item B<TLS_CIPHER>
+
+SSL/TLS cipher.
+
+=item B<ENGINE_CONF>
+
+ENGINE configuration.
+
+=item B<ENGINE_TABLE>
+
+The function that is used by RSA, DSA (etc) code to select registered
+ENGINEs, cache defaults and functional references (etc), will generate
+debugging summaries.
+
+=item B<ENGINE_REF_COUNT>
+
+Reference counts in the ENGINE structure will be monitored with a line
+of generated for each change.
+
+=item B<PKCS5V2>
+
+PKCS#5 v2 keygen.
+
+=item B<PKCS12_KEYGEN>
+
+PKCS#12 key generation.
+
+=item B<PKCS12_DECRYPT>
+
+PKCS#12 decryption.
+
+=item B<X509V3_POLICY>
+
+Generates the complete policy tree at various point during X.509 v3
+policy evaluation.
+
+=item B<BN_CTX>
+
+BIGNUM context.
+
+=back
+
+=back
+
 =head1 SEE ALSO
 
 L<asn1parse(1)>, L<ca(1)>, L<ciphers(1)>, L<cms(1)>, L<config(5)>,
@@ -538,7 +620,7 @@ L<crl(1)>, L<crl2pkcs7(1)>, L<dgst(1)>,
 L<dhparam(1)>, L<dsa(1)>, L<dsaparam(1)>,
 L<ec(1)>, L<ecparam(1)>,
 L<enc(1)>, L<engine(1)>, L<errstr(1)>, L<gendsa(1)>, L<genpkey(1)>,
-L<genrsa(1)>, L<nseq(1)>, L<ocsp(1)>,
+L<genrsa(1)>, L<kdf(1)>, L<mac(1)>, L<nseq(1)>, L<ocsp(1)>,
 L<passwd(1)>,
 L<pkcs12(1)>, L<pkcs7(1)>, L<pkcs8(1)>,
 L<pkey(1)>, L<pkeyparam(1)>, L<pkeyutl(1)>, L<prime(1)>,
@@ -558,7 +640,7 @@ manual pages.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

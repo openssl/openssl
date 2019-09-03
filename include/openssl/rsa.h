@@ -276,8 +276,8 @@ const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 
 int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2);
 
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPublicKey)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPrivateKey)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(RSA, RSAPublicKey)
+DECLARE_ASN1_ENCODE_FUNCTIONS_name(RSA, RSAPrivateKey)
 
 typedef struct rsa_pss_params_st {
     X509_ALGOR *hashAlgorithm;
@@ -393,8 +393,8 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 int RSA_set_ex_data(RSA *r, int idx, void *arg);
 void *RSA_get_ex_data(const RSA *r, int idx);
 
-RSA *RSAPublicKey_dup(RSA *rsa);
-RSA *RSAPrivateKey_dup(RSA *rsa);
+DECLARE_ASN1_DUP_FUNCTION_name(RSA, RSAPublicKey)
+DECLARE_ASN1_DUP_FUNCTION_name(RSA, RSAPrivateKey)
 
 /*
  * If this flag is set the RSA method is FIPS compliant and can be used in

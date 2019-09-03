@@ -109,9 +109,6 @@ extern "C" {
 /* ExtensionType value from RFC5764 */
 # define TLSEXT_TYPE_use_srtp    14
 
-/* ExtensionType value from RFC5620 */
-# define TLSEXT_TYPE_heartbeat   15
-
 /* ExtensionType value from RFC7301 */
 # define TLSEXT_TYPE_application_layer_protocol_negotiation 16
 
@@ -327,35 +324,6 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
         SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,\
                 (void (*)(void))cb)
-
-# ifndef OPENSSL_NO_HEARTBEATS
-#  define SSL_DTLSEXT_HB_ENABLED                   0x01
-#  define SSL_DTLSEXT_HB_DONT_SEND_REQUESTS        0x02
-#  define SSL_DTLSEXT_HB_DONT_RECV_REQUESTS        0x04
-#  define SSL_get_dtlsext_heartbeat_pending(ssl) \
-        SSL_ctrl(ssl,SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING,0,NULL)
-#  define SSL_set_dtlsext_heartbeat_no_requests(ssl, arg) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS,arg,NULL)
-
-#  if !OPENSSL_API_1_1_0
-#   define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT \
-        SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT
-#   define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING \
-        SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING
-#   define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS \
-        SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS
-#   define SSL_TLSEXT_HB_ENABLED \
-        SSL_DTLSEXT_HB_ENABLED
-#   define SSL_TLSEXT_HB_DONT_SEND_REQUESTS \
-        SSL_DTLSEXT_HB_DONT_SEND_REQUESTS
-#   define SSL_TLSEXT_HB_DONT_RECV_REQUESTS \
-        SSL_DTLSEXT_HB_DONT_RECV_REQUESTS
-#   define SSL_get_tlsext_heartbeat_pending(ssl) \
-        SSL_get_dtlsext_heartbeat_pending(ssl)
-#   define SSL_set_tlsext_heartbeat_no_requests(ssl, arg) \
-        SSL_set_dtlsext_heartbeat_no_requests(ssl,arg)
-#  endif
-# endif
 
 /* PSK ciphersuites from 4279 */
 # define TLS1_CK_PSK_WITH_RC4_128_SHA                    0x0300008A
@@ -1224,7 +1192,7 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 /*
  * extended master secret
  */
-#  define TLS_MD_EXTENDED_MASTER_SECRET_CONST    "\x65\x78\x74\x65\x63\x64\x65\x64\x20\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
+#  define TLS_MD_EXTENDED_MASTER_SECRET_CONST    "\x65\x78\x74\x65\x6e\x64\x65\x64\x20\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
 # endif
 
 /* TLS Session Ticket extension struct */

@@ -27,7 +27,7 @@ static int test_certs(int num)
     unsigned char *data = 0;
     long len;
     typedef X509 *(*d2i_X509_t)(X509 **, const unsigned char **, long);
-    typedef int (*i2d_X509_t)(X509 *, unsigned char **);
+    typedef int (*i2d_X509_t)(const X509 *, unsigned char **);
     int err = 0;
     BIO *fp = BIO_new_file(test_get_argument(num), "r");
     X509 *reuse = NULL;

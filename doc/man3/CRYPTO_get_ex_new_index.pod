@@ -162,7 +162,7 @@ dup_func() should return 0 for failure and 1 for success.
 
 =head1 HISTORY
 
-CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.0.
+CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

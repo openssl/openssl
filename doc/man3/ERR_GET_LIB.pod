@@ -38,12 +38,13 @@ unique. However, when checking for sub-library specific reason codes,
 be sure to also compare the library number.
 
 ERR_GET_LIB(), ERR_GET_FUNC(), ERR_GET_REASON(), and ERR_FATAL_ERROR()
- are macros.
+are macros.
 
 =head1 RETURN VALUES
 
 The library number, function code, reason code, and whether the error
 is fatal, respectively.
+Starting with OpenSSL 3.0.0, the function code is always set to zero.
 
 =head1 SEE ALSO
 

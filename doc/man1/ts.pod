@@ -170,7 +170,7 @@ in use. (Optional)
 
 The message digest to apply to the data file.
 Any digest supported by the OpenSSL B<dgst> command can be used.
-The default is SHA-1. (Optional)
+The default is SHA-256. (Optional)
 
 =item B<-tspolicy> object_id
 
@@ -262,7 +262,7 @@ specified, the argument is given to the engine as a key identifier.
 =item B<-I<digest>>
 
 Signing digest to use. Overrides the B<signer_digest> config file
-option. (Optional)
+option. (Mandatory unless specified in the config file)
 
 =item B<-chain> certs_file.pem
 
@@ -460,7 +460,8 @@ command line option. (Optional)
 =item B<signer_digest>
 
 Signing digest to use. The same as the
-B<-I<digest>> command line option. (Optional)
+B<-I<digest>> command line option. (Mandatory unless specified on the command
+line)
 
 =item B<default_policy>
 
@@ -517,7 +518,7 @@ included. Default is no. (Optional)
 =item B<ess_cert_id_alg>
 
 This option specifies the hash function to be used to calculate the TSA's
-public key certificate identifier. Default is sha1. (Optional)
+public key certificate identifier. Default is sha256. (Optional)
 
 =back
 
@@ -529,8 +530,9 @@ openssl/apps/openssl.cnf will do.
 
 =head2 Time Stamp Request
 
-To create a time stamp request for design1.txt with SHA-1
-without nonce and policy and no certificate is required in the response:
+To create a time stamp request for design1.txt with SHA-256 digest,
+without nonce and policy, and without requirement for a certificate
+in the response:
 
   openssl ts -query -data design1.txt -no_nonce \
         -out design1.tsq
@@ -545,12 +547,12 @@ To print the content of the previous request in human readable format:
 
   openssl ts -query -in design1.tsq -text
 
-To create a time stamp request which includes the MD-5 digest
-of design2.txt, requests the signer certificate and nonce,
+To create a time stamp request which includes the SHA-512 digest
+of design2.txt, requests the signer certificate and nonce, and
 specifies a policy id (assuming the tsa_policy1 name is defined in the
 OID section of the config file):
 
-  openssl ts -query -data design2.txt -md5 \
+  openssl ts -query -data design2.txt -sha512 \
         -tspolicy tsa_policy1 -cert -out design2.tsq
 
 =head2 Time Stamp Response

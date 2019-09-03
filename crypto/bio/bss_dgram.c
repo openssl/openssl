@@ -53,6 +53,8 @@ static int dgram_sctp_puts(BIO *h, const char *str);
 static long dgram_sctp_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int dgram_sctp_new(BIO *h);
 static int dgram_sctp_free(BIO *data);
+static int dgram_sctp_wait_for_dry(BIO *b);
+static int dgram_sctp_msg_waiting(BIO *b);
 #  ifdef SCTP_AUTHENTICATION_EVENT
 static void dgram_sctp_handle_auth_free_key_event(BIO *b, union sctp_notification
                                                   *snp);
@@ -124,7 +126,7 @@ typedef struct bio_dgram_sctp_data_st {
     struct bio_dgram_sctp_sndinfo sndinfo;
     struct bio_dgram_sctp_rcvinfo rcvinfo;
     struct bio_dgram_sctp_prinfo prinfo;
-    void (*handle_notifications) (BIO *bio, void *context, void *buf);
+    BIO_dgram_sctp_notification_handler_fn handle_notifications;
     void *notification_context;
     int in_handshake;
     int ccs_rcvd;
@@ -784,7 +786,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
      * reasons. When BIO_CTRL_DGRAM_SET_PEEK_MODE was first defined its value
      * was incorrectly clashing with BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE. The
      * value has been updated to a non-clashing value. However to preserve
-     * binary compatiblity we now respond to both the old value and the new one
+     * binary compatibility we now respond to both the old value and the new one
      */
     case BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE:
     case BIO_CTRL_DGRAM_SET_PEEK_MODE:
@@ -1562,6 +1564,10 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
         else
             data->save_shutdown = 0;
         break;
+    case BIO_CTRL_DGRAM_SCTP_WAIT_FOR_DRY:
+        return dgram_sctp_wait_for_dry(b);
+    case BIO_CTRL_DGRAM_SCTP_MSG_WAITING:
+        return dgram_sctp_msg_waiting(b);
 
     default:
         /*
@@ -1574,11 +1580,8 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
 }
 
 int BIO_dgram_sctp_notification_cb(BIO *b,
-                                   void (*handle_notifications) (BIO *bio,
-                                                                 void
-                                                                 *context,
-                                                                 void *buf),
-                                   void *context)
+                BIO_dgram_sctp_notification_handler_fn handle_notifications,
+                void *context)
 {
     bio_dgram_sctp_data *data = (bio_dgram_sctp_data *) b->ptr;
 
@@ -1605,6 +1608,11 @@ int BIO_dgram_sctp_notification_cb(BIO *b,
  *  1 when dry
  */
 int BIO_dgram_sctp_wait_for_dry(BIO *b)
+{
+    return (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SCTP_WAIT_FOR_DRY, 0, NULL);
+}
+
+static int dgram_sctp_wait_for_dry(BIO *b)
 {
     int is_dry = 0;
     int sockflags = 0;
@@ -1763,6 +1771,11 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
 }
 
 int BIO_dgram_sctp_msg_waiting(BIO *b)
+{
+    return (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SCTP_MSG_WAITING, 0, NULL);
+}
+
+static int dgram_sctp_msg_waiting(BIO *b)
 {
     int n, sockflags;
     union sctp_notification snp;

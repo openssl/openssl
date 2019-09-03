@@ -27,11 +27,7 @@
  * set this to a comma-separated list of 'random' device files to try out. By
  * default, we will try to read at least one of these files
  */
-#  if defined(__s390__)
-#   define DEVRANDOM "/dev/prandom","/dev/urandom","/dev/hwrng","/dev/random"
-#  else
-#   define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
-#  endif
+#  define DEVRANDOM "/dev/urandom", "/dev/random", "/dev/hwrng", "/dev/srandom"
 # endif
 # if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
 /*
@@ -39,7 +35,7 @@
  * sockets will be tried in the order listed in case accessing the device
  * files listed in DEVRANDOM did not return enough randomness.
  */
-#  define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
+#  define DEVRANDOM_EGD "/var/run/egd-pool", "/dev/egd-pool", "/etc/egd-pool", "/etc/entropy"
 # endif
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
@@ -211,7 +207,7 @@ extern FILE *_imp___iob;
 # else                          /* The non-microsoft world */
 
 #  if defined(OPENSSL_SYS_VXWORKS)
-#   include <sys/times.h>
+#   include <time.h>
 #  else
 #   include <sys/time.h>
 #  endif
@@ -261,11 +257,7 @@ extern FILE *_imp___iob;
 
 #  else
      /* !defined VMS */
-#   ifdef OPENSSL_UNISTD
-#    include OPENSSL_UNISTD
-#   else
-#    include <unistd.h>
-#   endif
+#   include <unistd.h>
 #   include <sys/types.h>
 #   ifdef OPENSSL_SYS_WIN32_CYGWIN
 #    include <io.h>

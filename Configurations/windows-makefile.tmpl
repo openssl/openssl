@@ -148,20 +148,33 @@ OPENSSLDIR_dev={- #
 OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           file_name_is_absolute($libdir) ? "" : $libdir -}
-ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
-                  our $enginesdir = catdir($prefix,$libdir,"engines-$sover_dirname");
-                  our ($enginesdir_dev, $enginesdir_dir, $enginesdir_file) =
-                      splitpath($enginesdir, 1);
-                  $enginesdir_dev -}
+MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
+                  our $modulesprefix = catdir($prefix,$libdir);
+                  our ($modulesprefix_dev, $modulesprefix_dir,
+                       $modulesprefix_file) =
+                      splitpath($modulesprefix, 1);
+                  our $modulesdir_dev = $modulesprefix_dev;
+                  our $modulesdir_dir =
+                      catdir($modulesprefix_dir, "ossl-modules");
+                  our $modulesdir = catpath($modulesdir_dev, $modulesdir_dir);
+                  our $enginesdir_dev = $modulesprefix_dev;
+                  our $enginesdir_dir =
+                      catdir($modulesprefix_dir, "engines-$sover_dirname");
+                  our $enginesdir = catpath($enginesdir_dev, $enginesdir_dir);
+                  $modulesdir_dev -}
+MODULESDIR_dir={- canonpath($modulesdir_dir) -}
+ENGINESDIR_dev={- $enginesdir_dev -}
 ENGINESDIR_dir={- canonpath($enginesdir_dir) -}
 !IF "$(DESTDIR)" != ""
 INSTALLTOP=$(DESTDIR)$(INSTALLTOP_dir)
 OPENSSLDIR=$(DESTDIR)$(OPENSSLDIR_dir)
 ENGINESDIR=$(DESTDIR)$(ENGINESDIR_dir)
+MODULESDIR=$(DESTDIR)$(MODULESDIR_dir)
 !ELSE
 INSTALLTOP=$(INSTALLTOP_dev)$(INSTALLTOP_dir)
 OPENSSLDIR=$(OPENSSLDIR_dev)$(OPENSSLDIR_dir)
 ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
+MODULESDIR=$(MODULESDIR_dev)$(MODULESDIR_dir)
 !ENDIF
 
 # $(libdir) is chosen to be compatible with the GNU coding standards
@@ -193,6 +206,7 @@ AS={- $config{AS} -}
 ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
 
 RC={- $config{RC} -}
+RCFLAGS={- join(' ', @{$config{RCFLAGS}}) -}
 
 ECHO="$(PERL)" "$(SRCDIR)\util\echo.pl"
 
@@ -255,7 +269,8 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $lib_cppflags,
                           (map { '-D'.quotify1($_) }
                                "OPENSSLDIR=\"$openssldir\"",
-                               "ENGINESDIR=\"$enginesdir\""),
+                               "ENGINESDIR=\"$enginesdir\"",
+                               "MODULESDIR=\"$modulesdir\""),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
                         $target{shared_cflag} || (),
@@ -272,7 +287,17 @@ DSO_ASFLAGS={- join(' ', $target{dso_asflags} || (),
                          @{$config{module_asflags}},
                          '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
 DSO_CPPFLAGS={- join(' ', $target{dso_cppflags} || (),
-                          $target{module_cppflags} || (),
+                          $target{module_cppflag} || (),
+                          (map { '-D'.quotify1($_) }
+                               @{$target{dso_defines}},
+                               @{$target{module_defines}},
+                               @{$config{dso_defines}},
+                               @{$config{module_defines}}),
+                          (map { '-I'.quotify1($_) }
+                               @{$target{dso_includes}},
+                               @{$target{module_includes}},
+                               @{$config{dso_includes}},
+                               @{$config{module_includes}}),
                           @{$config{dso_cppflags}},
                           @{$config{module_cppflags}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
@@ -524,7 +549,7 @@ reconfigure reconf:
               $args{generator}->[1] || platform->dsoname($args{product});
           return <<"EOF";
 $target: $args{generator}->[0] $deps $mkdef
-	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name --OS windows > $target
+	"\$(PERL)" $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name --OS windows > $target
 EOF
       } elsif (!platform->isasm($args{src})) {
           my $target = $args{src};
@@ -587,8 +612,13 @@ EOF
   }
 
  sub src2obj {
+     my $asmext = platform->asmext();
      my %args = @_;
-     my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x } ( @{$args{srcs}} );
+     my @srcs =
+         map { my $x = $_;
+               (platform->isasm($x) && grep { $x eq $_ } @generated)
+               ? platform->asm($x) : $x }
+         ( @{$args{srcs}} );
      my $srcs = '"'.join('" "',  @srcs).'"';
      my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
      my $incs = join("", map { ' /I "'.$_.'"' } @{$args{incs}});
@@ -611,12 +641,12 @@ EOF
          my $res = platform->res($args{obj});
          return <<"EOF";
 $res: $deps
-	\$(RC) \$(RCOUTFLAG)\$\@ $srcs
+	\$(RC) \$(RCFLAGS) \$(RCOUTFLAG)\$\@ $srcs
 EOF
      }
      my $obj = platform->obj($args{obj});
      my $dep = platform->dep($args{obj});
-     if ($srcs[0] =~ /\.asm$/) {
+     if ($srcs[0] =~ /\Q${asmext}\E$/) {
          return <<"EOF";
 $obj: $deps
 	\$(AS) $asflags \$(ASOUTFLAG)\$\@ $srcs

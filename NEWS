@@ -7,9 +7,20 @@
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
 
+      o Added error raising macros, ERR_raise() and ERR_raise_data().
+      o Deprecated ERR_put_error().
+      o Added OSSL_PROVIDER_available(), to check provider availibility.
+      o Added 'openssl mac' that uses the EVP_MAC API.
+      o Added 'openssl kdf' that uses the EVP_KDF API.
+      o Add OPENSSL_info() and 'openssl info' to get built-in data.
+      o Add support for enabling instrumentation through trace and debug
+        output.
       o Changed our version number scheme and set the next major release to
         3.0.0
       o Added EVP_MAC, an EVP layer MAC API, and a generic EVP_PKEY to EVP_MAC
+        bridge.
+      o Removed the heartbeat message in DTLS feature.
+      o Added EVP_KDF, an EVP layer KDF API, and a generic EVP_PKEY to EVP_KDF
         bridge.
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 1.1.1a [20 Nov 2018]
@@ -597,7 +608,7 @@
 
   Major changes between OpenSSL 0.9.7h and OpenSSL 0.9.7i [14 Oct 2005]:
 
-      o Give EVP_MAX_MD_SIZE it's old value, except for a FIPS build.
+      o Give EVP_MAX_MD_SIZE its old value, except for a FIPS build.
 
   Major changes between OpenSSL 0.9.7g and OpenSSL 0.9.7h [11 Oct 2005]:
 

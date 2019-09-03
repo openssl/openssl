@@ -65,6 +65,9 @@ const EC_METHOD *EC_GFp_nist_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
+        ecdsa_simple_sign_setup,
+        ecdsa_simple_sign_sig,
+        ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         ec_GFp_simple_blind_coordinates,
         ec_GFp_simple_ladder_pre,
@@ -89,7 +92,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+        if ((ctx = new_ctx = BN_CTX_new_ex(group->libctx)) == NULL)
             return 0;
 
     BN_CTX_start(ctx);
@@ -128,7 +131,7 @@ int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
         goto err;
     }
     if (!ctx)
-        if ((ctx_new = ctx = BN_CTX_new()) == NULL)
+        if ((ctx_new = ctx = BN_CTX_new_ex(group->libctx)) == NULL)
             goto err;
 
     if (!BN_mul(r, a, b, ctx))
@@ -153,7 +156,7 @@ int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
         goto err;
     }
     if (!ctx)
-        if ((ctx_new = ctx = BN_CTX_new()) == NULL)
+        if ((ctx_new = ctx = BN_CTX_new_ex(group->libctx)) == NULL)
             goto err;
 
     if (!BN_sqr(r, a, ctx))

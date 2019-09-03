@@ -458,6 +458,8 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         DSA_SIG_free(dsa_sig);
         return rv;
     }
+    if (BIO_puts(bp, "\n") <= 0)
+        return 0;
     return X509_signature_dump(bp, sig, indent);
 }
 
@@ -503,7 +505,7 @@ static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         *(int *)arg2 = NID_sha256;
-        return 2;
+        return 1;
 
     default:
         return -2;

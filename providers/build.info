@@ -1,0 +1,25 @@
+SUBDIRS=common default
+
+INCLUDE[../libcrypto]=common/include
+
+IF[{- !$disabled{fips} -}]
+  SUBDIRS=fips
+  MODULES=fips
+  IF[{- defined $target{shared_defflag} -}]
+    SOURCE[fips]=fips.ld
+    GENERATE[fips.ld]=../util/providers.num
+  ENDIF
+  INCLUDE[fips]=.. ../include ../crypto/include common/include
+  DEFINE[fips]=FIPS_MODE
+ENDIF
+
+IF[{- !$disabled{legacy} -}]
+  SUBDIRS=legacy
+  MODULES=legacy
+  IF[{- defined $target{shared_defflag} -}]
+    SOURCE[legacy]=legacy.ld
+    GENERATE[legacy.ld]=../util/providers.num
+  ENDIF
+  INCLUDE[legacy]=.. ../include ../crypto/include common/include
+  DEPEND[legacy]=../libcrypto
+ENDIF

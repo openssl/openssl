@@ -167,6 +167,8 @@ OPENSSLDIR={- catdir($config{openssldir}) or
 OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
 # Where installed ENGINE modules reside, for C
 ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
+# Where modules reside, for C
+MODULESDIR_C={- platform->osslprefix() -}MODULES{- $sover_dirname.$target{pointer_size} -}:
 
 ##### User defined commands and flags ################################
 
@@ -226,7 +228,8 @@ LIB_DEFINES={- our $lib_defines =
                                        @{$config{shared_defines}}));
                join('', $lib_defines,
                         (map { ",$_" } 'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
-                                       'ENGINESDIR="""$(ENGINESDIR_C)"""'),
+                                       'ENGINESDIR="""$(ENGINESDIR_C)"""',
+                                       'MODULESDIR="""$(MODULESDIR_C)"""'),
                         '$(CNF_DEFINES)', '$(DEFINES)') -}
 LIB_INCLUDES={- our $lib_includes =
                 join(',', @{$target{lib_includes}},
@@ -843,9 +846,15 @@ EOF
   }
 
   sub src2obj {
+      my $asmext = platform->asmext();
       my %args = @_;
-      my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x } ( @{$args{srcs}} );
+      my @srcs =
+          map { my $x = $_;
+                (platform->isasm($x) && grep { $x eq $_ } @generated)
+                ? platform->asm($x) : $x }
+          ( @{$args{srcs}} );
       my $obj = platform->obj($args{obj});
+      my $dep = platform->dep($args{obj});
       my $deps = join(", -\n\t\t", @srcs, @{$args{deps}});
 
       # Because VMS C isn't very good at combining a /INCLUDE path with
@@ -857,25 +866,13 @@ EOF
       my $forward = dirname($args{srcs}->[0]);
       my $backward = abs2rel(rel2abs("."), rel2abs($forward));
       my $objd = abs2rel(rel2abs(dirname($obj)), rel2abs($forward));
-      my $objn = basename($obj, platform->objext());
+      my $objn = basename($obj);
+      my $depd = abs2rel(rel2abs(dirname($dep)), rel2abs($forward));
+      my $depn = basename($dep);
       my $srcs =
           join(", ", map { abs2rel(rel2abs($_), rel2abs($forward)) } @srcs);
       my $before = $unified_info{before}->{$obj} || "\@ !";
       my $after = $unified_info{after}->{$obj} || "\@ !";
-
-      if ($srcs[0] =~ /\.asm$/) {
-          my $asflags = { shlib => ' $(LIB_ASFLAGS)',
-		          lib => ' $(LIB_ASFLAGS)',
-		          dso => ' $(DSO_ASFLAGS)',
-		          bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
-          return <<"EOF";
-$obj : $deps
-        ${before}
-        SET DEFAULT $forward
-        \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn}.OBJ $srcs
-        SET DEFAULT $backward
-EOF
-      }
 
       my $cflags;
       if ($args{attrs}->{noinst}) {
@@ -911,37 +908,37 @@ EOF
       my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
       my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
 
-      if ($srcs[0] =~ /\.asm$/) {
+      if ($srcs[0] =~ /\Q${asmext}\E$/) {
           return <<"EOF";
-$obj.OBJ : $deps
+$obj : $deps
         ${before}
         SET DEFAULT $forward
-        \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn}.OBJ $srcs
+        \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn} $srcs
         SET DEFAULT $backward
         ${after}
-        - PURGE $obj.OBJ
+        - PURGE $obj
 EOF
       } elsif ($srcs[0] =~ /.S$/) {
          return <<"EOF";
-$obj.OBJ : $deps
+$obj : $deps
         ${before}
         SET DEFAULT $forward
         \@ $incs_on
         \@ extradefines = "$defs"
         PIPE \$(CPP) ${cflags} $srcs | -
              \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" -
-             > ${objd}${objn}.asm
+             > ${objd}${objn}-asm
         \@ DELETE/SYMBOL/LOCAL extradefines
         \@ $incs_off
         SET DEFAULT $backward
         ${after}
-        \$(AS) $asflags \$(ASOUTFLAG)$obj.OBJ $obj.asm
-        - PURGE $obj.OBJ
+        \$(AS) $asflags \$(ASOUTFLAG)$obj $obj-asm
+        - PURGE $obj
 EOF
       }
 
       my $depbuild = $disabled{makedepend} ? ""
-          : " /MMS=(FILE=${objd}${objn}.D,TARGET=$obj)";
+          : " /MMS=(FILE=${depd}${depn},TARGET=$obj)";
 
       return <<"EOF";
 $obj : $deps
@@ -949,7 +946,7 @@ $obj : $deps
         SET DEFAULT $forward
         \@ $incs_on
         \@ extradefines = "$defs"
-        \$(CC) ${cflags}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
+        \$(CC) ${cflags}${depbuild} /OBJECT=${objd}${objn} /REPOSITORY=$backward $srcs
         \@ DELETE/SYMBOL/LOCAL extradefines
         \@ $incs_off
         SET DEFAULT $backward

@@ -27,6 +27,8 @@ static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         DH_free((DH *)*pval);
         *pval = NULL;
         return 2;
+    } else if (operation == ASN1_OP_D2I_POST) {
+        ((DH *)*pval)->dirty_cnt++;
     }
     return 1;
 }
@@ -37,7 +39,7 @@ ASN1_SEQUENCE_cb(DHparams, dh_cb) = {
         ASN1_OPT_EMBED(DH, length, ZINT32),
 } ASN1_SEQUENCE_END_cb(DH, DHparams)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DH, DHparams, DHparams)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(DH, DHparams, DHparams)
 
 /*
  * Internal only structures for handling X9.42 DH: this gets translated to or
@@ -74,7 +76,7 @@ int_dhx942_dh *d2i_int_dhx(int_dhx942_dh **a,
                            const unsigned char **pp, long length);
 int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(int_dhx942_dh, DHxparams, int_dhx)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(int_dhx942_dh, DHxparams, int_dhx)
 
 /* Application public function: read in X9.42 DH parameters into DH structure */
 

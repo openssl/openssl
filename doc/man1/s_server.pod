@@ -184,6 +184,7 @@ B<openssl> B<s_server>
 [B<-early_data>]
 [B<-anti_replay>]
 [B<-no_anti_replay>]
+[B<-http_server_binmode>]
 
 =head1 DESCRIPTION
 
@@ -193,7 +194,7 @@ for connections on a given port using SSL/TLS.
 =head1 OPTIONS
 
 In addition to the options below the B<s_server> utility also supports the
-common and server only options documented in the
+common and server only options documented
 in the "Supported Command Line Commands" section of the L<SSL_CONF_cmd(3)>
 manual page.
 
@@ -542,7 +543,7 @@ OpenSSL was built.
 
 =item B<-bugs>
 
-There are several known bug in SSL and TLS implementations. Adding this
+There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-no_comp>
@@ -743,6 +744,11 @@ has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
 
+=item B<-http_server_binmode>
+
+When acting as web-server (using option B<-WWW> or B<-HTTP>) open files requested
+by the client in binary mode.
+
 =back
 
 =head1 CONNECTED COMMANDS
@@ -782,10 +788,6 @@ cause the client to disconnect due to a protocol violation.
 =item B<S>
 
 Print out some session cache status information.
-
-=item B<B>
-
-Send a heartbeat message to the client (DTLS only)
 
 =item B<k>
 

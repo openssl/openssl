@@ -1,6 +1,6 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
- * Copyright (c) 2018, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,68 +20,39 @@
 #include "internal/numbers.h"
 #include "evp_locl.h"
 
-typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
-
-/* This array needs to be in order of NIDs */
-static const EVP_KDF_METHOD *standard_methods[] = {
-    &pbkdf2_kdf_meth,
-#ifndef OPENSSL_NO_SCRYPT
-    &scrypt_kdf_meth,
-#endif
-    &tls1_prf_kdf_meth,
-    &hkdf_kdf_meth
-};
-
-DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_KDF_METHOD *, const EVP_KDF_METHOD *,
-                           kmeth);
-
-static int kmeth_cmp(const EVP_KDF_METHOD *const *a,
-                     const EVP_KDF_METHOD *const *b)
+EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf)
 {
-    return ((*a)->type - (*b)->type);
-}
+    EVP_KDF_CTX *ctx = NULL;
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_KDF_METHOD *, const EVP_KDF_METHOD *,
-                             kmeth);
-
-static const EVP_KDF_METHOD *kdf_meth_find(int type)
-{
-    EVP_KDF_METHOD tmp;
-    const EVP_KDF_METHOD *t = &tmp, **ret;
-
-    tmp.type = type;
-    ret = OBJ_bsearch_kmeth(&t, standard_methods,
-                            OSSL_NELEM(standard_methods));
-    if (ret == NULL || *ret == NULL)
+    if (kdf == NULL)
         return NULL;
 
-    return *ret;
+    ctx = OPENSSL_zalloc(sizeof(EVP_KDF_CTX));
+    if (ctx == NULL || (ctx->impl = kdf->new()) == NULL) {
+        EVPerr(EVP_F_EVP_KDF_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ctx);
+        ctx = NULL;
+    } else {
+        ctx->meth = kdf;
+    }
+    return ctx;
 }
 
 EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id)
 {
-    EVP_KDF_CTX *ret;
-    const EVP_KDF_METHOD *kmeth;
+    const EVP_KDF *kdf = EVP_get_kdfbynid(id);
 
-    kmeth = kdf_meth_find(id);
-    if (kmeth == NULL) {
-        EVPerr(EVP_F_EVP_KDF_CTX_NEW_ID, EVP_R_UNSUPPORTED_ALGORITHM);
-        return NULL;
-    }
+    return EVP_KDF_CTX_new(kdf);
+}
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL) {
-        EVPerr(EVP_F_EVP_KDF_CTX_NEW_ID, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
+int EVP_KDF_nid(const EVP_KDF *kdf)
+{
+    return kdf->type;
+}
 
-    if (kmeth->new != NULL && (ret->impl = kmeth->new()) == NULL) {
-        EVP_KDF_CTX_free(ret);
-        return NULL;
-    }
-
-    ret->kmeth = kmeth;
-    return ret;
+const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx)
+{
+    return ctx->meth;
 }
 
 void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx)
@@ -89,7 +60,7 @@ void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx)
     if (ctx == NULL)
         return;
 
-    ctx->kmeth->free(ctx->impl);
+    ctx->meth->free(ctx->impl);
     OPENSSL_free(ctx);
 }
 
@@ -98,8 +69,8 @@ void EVP_KDF_reset(EVP_KDF_CTX *ctx)
     if (ctx == NULL)
         return;
 
-    if (ctx->kmeth->reset != NULL)
-        ctx->kmeth->reset(ctx->impl);
+    if (ctx->meth->reset != NULL)
+        ctx->meth->reset(ctx->impl);
 }
 
 int EVP_KDF_ctrl(EVP_KDF_CTX *ctx, int cmd, ...)
@@ -122,7 +93,7 @@ int EVP_KDF_vctrl(EVP_KDF_CTX *ctx, int cmd, va_list args)
     if (ctx == NULL)
         return 0;
 
-    return ctx->kmeth->ctrl(ctx->impl, cmd, args);
+    return ctx->meth->ctrl(ctx->impl, cmd, args);
 }
 
 int EVP_KDF_ctrl_str(EVP_KDF_CTX *ctx, const char *type, const char *value)
@@ -132,12 +103,12 @@ int EVP_KDF_ctrl_str(EVP_KDF_CTX *ctx, const char *type, const char *value)
     if (ctx == NULL)
         return 0;
 
-    if (ctx->kmeth->ctrl_str == NULL) {
+    if (ctx->meth->ctrl_str == NULL) {
         EVPerr(EVP_F_EVP_KDF_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
 
-    ret = ctx->kmeth->ctrl_str(ctx->impl, type, value);
+    ret = ctx->meth->ctrl_str(ctx->impl, type, value);
     if (ret == -2)
         EVPerr(EVP_F_EVP_KDF_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
 
@@ -149,10 +120,10 @@ size_t EVP_KDF_size(EVP_KDF_CTX *ctx)
     if (ctx == NULL)
         return 0;
 
-    if (ctx->kmeth->size == NULL)
+    if (ctx->meth->size == NULL)
         return SIZE_MAX;
 
-    return ctx->kmeth->size(ctx->impl);
+    return ctx->meth->size(ctx->impl);
 }
 
 int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen)
@@ -160,6 +131,5 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen)
     if (ctx == NULL)
         return 0;
 
-    return ctx->kmeth->derive(ctx->impl, key, keylen);
+    return ctx->meth->derive(ctx->impl, key, keylen);
 }
-

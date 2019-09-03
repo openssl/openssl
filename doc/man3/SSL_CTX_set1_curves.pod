@@ -4,8 +4,8 @@
 
 SSL_CTX_set1_groups, SSL_CTX_set1_groups_list, SSL_set1_groups,
 SSL_set1_groups_list, SSL_get1_groups, SSL_get_shared_group,
-SSL_CTX_set1_curves, SSL_CTX_set1_curves_list, SSL_set1_curves,
-SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve
+SSL_get_negotiated_group, SSL_CTX_set1_curves, SSL_CTX_set1_curves_list,
+SSL_set1_curves, SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve
 - EC supported curve functions
 
 =head1 SYNOPSIS
@@ -20,6 +20,7 @@ SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve
 
  int SSL_get1_groups(SSL *ssl, int *groups);
  int SSL_get_shared_group(SSL *s, int n);
+ int SSL_get_negotiated_group(SSL *s);
 
  int SSL_CTX_set1_curves(SSL_CTX *ctx, int *clist, int clistlen);
  int SSL_CTX_set1_curves_list(SSL_CTX *ctx, char *list);
@@ -39,11 +40,16 @@ SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
 groups in the array B<glist>. The array consist of all NIDs of groups in
 preference order. For a TLS client the groups are used directly in the
 supported groups extension. For a TLS server the groups are used to
-determine the set of shared groups.
+determine the set of shared groups. Currently supported groups for
+B<TLSv1.3> are B<NID_X9_62_prime256v1>, B<NID_secp384r1>, B<NID_secp521r1>,
+B<NID_X25519>, B<NID_X448>, B<NID_ffdhe2048>, B<NID_ffdhe3072>,
+B<NID_ffdhe4096>, B<NID_ffdhe6144> and B<NID_ffdhe8192>.
 
 SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
 string B<list>. The string is a colon separated list of group NIDs or
-names, for example "P-521:P-384:P-256".
+names, for example "P-521:P-384:P-256:X25519:ffdhe2048". Currently supported
+groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>, B<X25519>, B<X448>,
+B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>.
 
 SSL_set1_groups() and SSL_set1_groups_list() are similar except they set
 supported groups for the SSL structure B<ssl>.
@@ -62,6 +68,9 @@ returned, which may be zero. Other than for diagnostic purposes,
 most applications will only be interested in the first shared group
 so B<n> is normally set to zero. If the value B<n> is out of range,
 NID_undef is returned.
+
+SSL_get_negotiated_group() returns the negotiated group on a TLSv1.3 connection
+for key exchange. This can be called by either client or server.
 
 All these functions are implemented as macros.
 
@@ -91,6 +100,10 @@ is -1.
 When called on a client B<ssl>, SSL_get_shared_group() has no meaning and
 returns -1.
 
+SSL_get_negotiated_group() returns the NID of the negotiated group on a
+TLSv1.3 connection for key exchange. Or it returns NID_undef if no negotiated
+group.
+
 =head1 SEE ALSO
 
 L<SSL_CTX_add_extra_chain_cert(3)>
@@ -98,7 +111,8 @@ L<SSL_CTX_add_extra_chain_cert(3)>
 =head1 HISTORY
 
 The curve functions were added in OpenSSL 1.0.2. The equivalent group
-functions were added in OpenSSL 1.1.1.
+functions were added in OpenSSL 1.1.1. The SSL_get_negotiated_group() function
+was added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 

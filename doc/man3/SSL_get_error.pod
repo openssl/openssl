@@ -14,9 +14,9 @@ SSL_get_error - obtain result code for TLS/SSL I/O operation
 
 SSL_get_error() returns a result code (suitable for the C "switch"
 statement) for a preceding call to SSL_connect(), SSL_accept(), SSL_do_handshake(),
-SSL_read_ex(), SSL_read(), SSL_peek_ex(), SSL_peek(), SSL_write_ex() or
-SSL_write() on B<ssl>.  The value returned by that TLS/SSL I/O function must be
-passed to SSL_get_error() in parameter B<ret>.
+SSL_read_ex(), SSL_read(), SSL_peek_ex(), SSL_peek(), SSL_shutdown(),
+SSL_write_ex() or SSL_write() on B<ssl>.  The value returned by that TLS/SSL I/O
+function must be passed to SSL_get_error() in parameter B<ret>.
 
 In addition to B<ssl> and B<ret>, SSL_get_error() inspects the
 current thread's OpenSSL error queue.  Thus, SSL_get_error() must be
@@ -138,17 +138,20 @@ Details depend on the application.
 
 =item SSL_ERROR_SYSCALL
 
-Some non-recoverable I/O error occurred.
-The OpenSSL error queue may contain more information on the error.
-For socket I/O on Unix systems, consult B<errno> for details.
+Some non-recoverable, fatal I/O error occurred. The OpenSSL error queue may
+contain more information on the error. For socket I/O on Unix systems, consult
+B<errno> for details. If this error occurs then no further I/O operations should
+be performed on the connection and SSL_shutdown() must not be called.
 
 This value can also be returned for other errors, check the error queue for
 details.
 
 =item SSL_ERROR_SSL
 
-A failure in the SSL library occurred, usually a protocol error.  The
-OpenSSL error queue contains more information on the error.
+A non-recoverable, fatal error in the SSL library occurred, usually a protocol
+error.  The OpenSSL error queue contains more information on the error. If this
+error occurs then no further I/O operations should be performed on the
+connection and SSL_shutdown() must not be called.
 
 =back
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,8 @@
 # define OBJ_NAME_TYPE_PKEY_METH         0x03
 # define OBJ_NAME_TYPE_COMP_METH         0x04
 # define OBJ_NAME_TYPE_MAC_METH          0x05
-# define OBJ_NAME_TYPE_NUM               0x06
+# define OBJ_NAME_TYPE_KDF_METH          0x06
+# define OBJ_NAME_TYPE_NUM               0x07
 
 # define OBJ_NAME_ALIAS                  0x8000
 
@@ -56,7 +57,7 @@ void OBJ_NAME_do_all_sorted(int type,
                             void (*fn) (const OBJ_NAME *, void *arg),
                             void *arg);
 
-ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o);
+DECLARE_ASN1_DUP_FUNCTION_name(ASN1_OBJECT, OBJ)
 ASN1_OBJECT *OBJ_nid2obj(int n);
 const char *OBJ_nid2ln(int n);
 const char *OBJ_nid2sn(int n);

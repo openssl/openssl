@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include "modes_lcl.h"
 #include <string.h>
+#include <openssl/crypto.h>
+#include "internal/modes_int.h"
 
 /*
  * First you setup M and L parameters and pass the key schedule. This is
@@ -425,7 +425,7 @@ size_t CRYPTO_ccm128_tag(CCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
 
     M *= 2;
     M += 2;
-    if (len < M)
+    if (len != M)
         return 0;
     memcpy(tag, ctx->cmac.c, M);
     return M;

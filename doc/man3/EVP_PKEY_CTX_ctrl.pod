@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+EVP_PKEY_CTX_set_params,
 EVP_PKEY_CTX_ctrl,
 EVP_PKEY_CTX_ctrl_str,
 EVP_PKEY_CTX_ctrl_uint64,
@@ -62,6 +63,8 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
 
  #include <openssl/evp.h>
 
+ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+
  int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                        int cmd, int p1, void *p2);
  int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
@@ -74,7 +77,8 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
  int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd);
 
- int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, unsigned char *key, int len);
+ int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
+                              int len);
 
  #include <openssl/rsa.h>
 
@@ -139,6 +143,25 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len);
 
 =head1 DESCRIPTION
+
+The EVP_PKEY_CTX_set_params() function sends arbitrary parameters to the
+algorithm implementation.
+Not all parameters may be supported by all providers.
+See L<OSSL_PROVIDER(3)> for more information on providers.
+See L<OSSL_PARAM(3)> for more information on parameters.
+The parameters currently supported by the default provider are:
+
+=over 4
+
+=item OSSL_EXCHANGE_PARAM_PAD (int type)
+
+Sets the DH padding mode.
+If B<OSSL_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeroes
+up to the size of the DH prime B<p>.
+If B<OSSL_EXCHANGE_PARAM_PAD> is zero (the default) then no padding is
+performed.
+
+=back
 
 The function EVP_PKEY_CTX_ctrl() sends a control operation to the context
 B<ctx>. The key type used must match B<keytype> if it is not -1. The parameter
@@ -289,8 +312,9 @@ The EVP_PKEY_CTX_set_dh_paramgen_type() macro sets the key type for DH
 parameter generation. Use 0 for PKCS#3 DH and 1 for X9.42 DH.
 The default is 0.
 
-The EVP_PKEY_CTX_set_dh_pad() macro sets the DH padding mode. If B<pad> is
-1 the shared secret is padded with zeroes up to the size of the DH prime B<p>.
+The EVP_PKEY_CTX_set_dh_pad() function sets the DH padding mode.
+If B<pad> is 1 the shared secret is padded with zeroes up to the size of the DH
+prime B<p>.
 If B<pad> is zero (the default) then no padding is performed.
 
 EVP_PKEY_CTX_set_dh_nid() sets the DH parameters to values corresponding to
@@ -456,6 +480,9 @@ L<EVP_PKEY_keygen(3)>
 The
 EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and EVP_PKEY_CTX_get1_id_len()
 macros were added in 1.1.1, other functions were added in OpenSSL 1.0.0.
+
+EVP_PKEY_CTX_set_dh_pad() was a macro in OpenSSL 1.1.1 and below.
+From OpenSSL 3.0 it is a function.
 
 =head1 COPYRIGHT
 

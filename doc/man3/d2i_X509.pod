@@ -53,6 +53,7 @@ d2i_DSA_PUBKEY_bio,
 d2i_DSA_PUBKEY_fp,
 d2i_DSA_SIG,
 d2i_DSAparams,
+d2i_ECDSA_SIG,
 d2i_ECPKParameters,
 d2i_ECParameters,
 d2i_ECPrivateKey,
@@ -63,8 +64,10 @@ d2i_EC_PUBKEY_bio,
 d2i_EC_PUBKEY_fp,
 d2i_EDIPARTYNAME,
 d2i_ESS_CERT_ID,
+d2i_ESS_CERT_ID_V2,
 d2i_ESS_ISSUER_SERIAL,
 d2i_ESS_SIGNING_CERT,
+d2i_ESS_SIGNING_CERT_V2,
 d2i_EXTENDED_KEY_USAGE,
 d2i_GENERAL_NAME,
 d2i_GENERAL_NAMES,
@@ -93,6 +96,16 @@ d2i_OCSP_REVOKEDINFO,
 d2i_OCSP_SERVICELOC,
 d2i_OCSP_SIGNATURE,
 d2i_OCSP_SINGLERESP,
+d2i_OSSL_CMP_MSG,
+d2i_OSSL_CMP_PKIHEADER,
+d2i_OSSL_CRMF_CERTID,
+d2i_OSSL_CRMF_CERTTEMPLATE,
+d2i_OSSL_CRMF_ENCRYPTEDVALUE,
+d2i_OSSL_CRMF_MSG,
+d2i_OSSL_CRMF_MSGS,
+d2i_OSSL_CRMF_PBMPARAMETER,
+d2i_OSSL_CRMF_PKIPUBLICATIONINFO,
+d2i_OSSL_CRMF_SINGLEPUBINFO,
 d2i_OTHERNAME,
 d2i_PBE2PARAM,
 d2i_PBEPARAM,
@@ -229,6 +242,7 @@ i2d_DSA_PUBKEY_bio,
 i2d_DSA_PUBKEY_fp,
 i2d_DSA_SIG,
 i2d_DSAparams,
+i2d_ECDSA_SIG,
 i2d_ECPKParameters,
 i2d_ECParameters,
 i2d_ECPrivateKey,
@@ -239,8 +253,10 @@ i2d_EC_PUBKEY_bio,
 i2d_EC_PUBKEY_fp,
 i2d_EDIPARTYNAME,
 i2d_ESS_CERT_ID,
+i2d_ESS_CERT_ID_V2,
 i2d_ESS_ISSUER_SERIAL,
 i2d_ESS_SIGNING_CERT,
+i2d_ESS_SIGNING_CERT_V2,
 i2d_EXTENDED_KEY_USAGE,
 i2d_GENERAL_NAME,
 i2d_GENERAL_NAMES,
@@ -269,6 +285,16 @@ i2d_OCSP_REVOKEDINFO,
 i2d_OCSP_SERVICELOC,
 i2d_OCSP_SIGNATURE,
 i2d_OCSP_SINGLERESP,
+i2d_OSSL_CMP_MSG,
+i2d_OSSL_CMP_PKIHEADER,
+i2d_OSSL_CRMF_CERTID,
+i2d_OSSL_CRMF_CERTTEMPLATE,
+i2d_OSSL_CRMF_ENCRYPTEDVALUE,
+i2d_OSSL_CRMF_MSG,
+i2d_OSSL_CRMF_MSGS,
+i2d_OSSL_CRMF_PBMPARAMETER,
+i2d_OSSL_CRMF_PKIPUBLICATIONINFO,
+i2d_OSSL_CRMF_SINGLEPUBINFO,
 i2d_OTHERNAME,
 i2d_PBE2PARAM,
 i2d_PBEPARAM,
@@ -305,7 +331,6 @@ i2d_POLICYQUALINFO,
 i2d_PROFESSION_INFO,
 i2d_PROXY_CERT_INFO_EXTENSION,
 i2d_PROXY_POLICY,
-i2d_PublicKey,
 i2d_RSAPrivateKey,
 i2d_RSAPrivateKey_bio,
 i2d_RSAPrivateKey_fp,
@@ -368,8 +393,11 @@ i2d_X509_VAL,
  TYPE *d2i_TYPE_bio(BIO *bp, TYPE **a);
  TYPE *d2i_TYPE_fp(FILE *fp, TYPE **a);
 
+ int i2d_TYPE(const TYPE *a, unsigned char **ppout);
  int i2d_TYPE(TYPE *a, unsigned char **ppout);
+ int i2d_TYPE_fp(FILE *fp, const TYPE *a);
  int i2d_TYPE_fp(FILE *fp, TYPE *a);
+ int i2d_TYPE_bio(BIO *bp, const TYPE *a);
  int i2d_TYPE_bio(BIO *bp, TYPE *a);
 
 =head1 DESCRIPTION
@@ -472,6 +500,10 @@ Represents a DSA public key using a B<SubjectPublicKeyInfo> structure.
 Use a non-standard OpenSSL format and should be avoided; use B<DSA_PUBKEY>,
 B<PEM_write_PrivateKey(3)>, or similar instead.
 
+=item B<ECDSA_SIG>
+
+Represents an ECDSA signature.
+
 =item B<RSAPublicKey>
 
 Represents a PKCS#1 RSA public key structure.
@@ -495,6 +527,19 @@ Represents a PKCS#10 certificate request.
 Represents the B<DigestInfo> structure defined in PKCS#1 and PKCS#7.
 
 =back
+
+=head1 RETURN VALUES
+
+d2i_TYPE(), d2i_TYPE_bio() and d2i_TYPE_fp() return a valid B<TYPE> structure
+or B<NULL> if an error occurs.  If the "reuse" capability has been used with
+a valid structure being passed in via B<a>, then the object is freed in
+the event of error and B<*a> is set to NULL.
+
+i2d_TYPE() returns the number of bytes successfully encoded or a negative
+value if an error occurs.
+
+i2d_TYPE_bio() and i2d_TYPE_fp() return 1 for success and 0 if an error
+occurs.
 
 =head1 EXAMPLES
 
@@ -569,9 +614,13 @@ happen.
 =head1 BUGS
 
 In some versions of OpenSSL the "reuse" behaviour of d2i_TYPE() when
-B<*px> is valid is broken and some parts of the reused structure may
-persist if they are not present in the new one. As a result the use
-of this "reuse" behaviour is strongly discouraged.
+B<*a> is valid is broken and some parts of the reused structure may
+persist if they are not present in the new one. Additionally, in versions of
+OpenSSL prior to 1.1.0, when the "reuse" behaviour is used and an error occurs
+the behaviour is inconsistent. Some functions behaved as described here, while
+some did not free B<*a> on error and did not set B<*a> to NULL.
+
+As a result of the above issues the "reuse" behaviour is strongly discouraged.
 
 i2d_TYPE() will not return an error in many versions of OpenSSL,
 if mandatory fields are not initialized due to a programming error
@@ -585,19 +634,6 @@ i2d_TYPE() or i2d_TYPE()) may return a stale encoding if the
 structure has been modified after deserialization or previous
 serialization. This is because some objects cache the encoding for
 efficiency reasons.
-
-=head1 RETURN VALUES
-
-d2i_TYPE(), d2i_TYPE_bio() and d2i_TYPE_fp() return a valid B<TYPE> structure
-or B<NULL> if an error occurs.  If the "reuse" capability has been used with
-a valid structure being passed in via B<a>, then the object is not freed in
-the event of error but may be in a potentially invalid or inconsistent state.
-
-i2d_TYPE() returns the number of bytes successfully encoded or a negative
-value if an error occurs.
-
-i2d_TYPE_bio() and i2d_TYPE_fp() return 1 for success and 0 if an error
-occurs.
 
 =head1 COPYRIGHT
 

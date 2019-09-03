@@ -86,6 +86,7 @@ int dgst_main(int argc, char **argv)
     const EVP_MD *md = NULL, *m;
     const char *outfile = NULL, *keyfile = NULL, *prog = NULL;
     const char *sigfile = NULL;
+    const char *md_name = NULL;
     OPTION_CHOICE o;
     int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
     int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
@@ -365,13 +366,15 @@ int dgst_main(int argc, char **argv)
         BIO_get_md_ctx(bmd, &tctx);
         md = EVP_MD_CTX_md(tctx);
     }
+    if (md != NULL)
+        md_name = EVP_MD_name(md);
 
     if (argc == 0) {
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         ret = do_fp(out, buf, inp, separator, out_bin, sigkey, sigbuf,
-                    siglen, NULL, NULL, "stdin");
+                    siglen, NULL, md_name, "stdin");
     } else {
-        const char *md_name = NULL, *sig_name = NULL;
+        const char *sig_name = NULL;
         if (!out_bin) {
             if (sigkey != NULL) {
                 const EVP_PKEY_ASN1_METHOD *ameth;
@@ -380,8 +383,6 @@ int dgst_main(int argc, char **argv)
                     EVP_PKEY_asn1_get0_info(NULL, NULL,
                                             NULL, NULL, &sig_name, ameth);
             }
-            if (md != NULL)
-                md_name = EVP_MD_name(md);
         }
         ret = 0;
         for (i = 0; i < argc; i++) {
@@ -413,13 +414,52 @@ int dgst_main(int argc, char **argv)
     return ret;
 }
 
+/*
+ * The newline_escape_filename function performs newline escaping for any
+ * filename that contains a newline.  This function also takes a pointer
+ * to backslash. The backslash pointer is a flag to indicating whether a newline
+ * is present in the filename.  If a newline is present, the backslash flag is
+ * set and the output format will contain a backslash at the beginning of the
+ * digest output. This output format is to replicate the output format found
+ * in the '*sum' checksum programs. This aims to preserve backward
+ * compatibility.
+ */
+static const char *newline_escape_filename(const char *file, int * backslash)
+{
+    size_t i, e = 0, length = strlen(file), newline_count = 0, mem_len = 0;
+    char *file_cpy = NULL;
+
+    for (i = 0; i < length; i++)
+        if (file[i] == '\n')
+            newline_count++;
+
+    mem_len = length + newline_count + 1;
+    file_cpy = app_malloc(mem_len, file);
+    i = 0;
+
+    while(e < length) {
+        const char c = file[e];
+        if (c == '\n') {
+            file_cpy[i++] = '\\';
+            file_cpy[i++] = 'n';
+            *backslash = 1;
+        } else {
+            file_cpy[i++] = c;
+        }
+        e++;
+    }
+    file_cpy[i] = '\0';
+    return (const char*)file_cpy;
+}
+
+
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
           const char *file)
 {
     size_t len;
-    int i;
+    int i, backslash = 0;
 
     for (;;) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
@@ -467,9 +507,16 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     if (binout) {
         BIO_write(out, buf, len);
     } else if (sep == 2) {
+        file = newline_escape_filename(file, &backslash);
+
+        if (backslash == 1)
+            BIO_puts(out, "\\");
+
         for (i = 0; i < (int)len; i++)
             BIO_printf(out, "%02x", buf[i]);
+
         BIO_printf(out, " *%s\n", file);
+        OPENSSL_free((char *)file);
     } else {
         if (sig_name != NULL) {
             BIO_puts(out, sig_name);

@@ -142,10 +142,12 @@ int BN_num_bits(const BIGNUM *a)
     return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
 }
 
-static void bn_free_d(BIGNUM *a)
+static void bn_free_d(BIGNUM *a, int clear)
 {
     if (BN_get_flags(a, BN_FLG_SECURE))
-        OPENSSL_secure_free(a->d);
+        OPENSSL_secure_clear_free(a->d, a->dmax * sizeof(a->d[0]));
+    else if (clear != 0)
+        OPENSSL_clear_free(a->d, a->dmax * sizeof(a->d[0]));
     else
         OPENSSL_free(a->d);
 }
@@ -155,10 +157,8 @@ void BN_clear_free(BIGNUM *a)
 {
     if (a == NULL)
         return;
-    if (a->d != NULL && !BN_get_flags(a, BN_FLG_STATIC_DATA)) {
-        OPENSSL_cleanse(a->d, a->dmax * sizeof(a->d[0]));
-        bn_free_d(a);
-    }
+    if (a->d != NULL && !BN_get_flags(a, BN_FLG_STATIC_DATA))
+        bn_free_d(a, 1);
     if (BN_get_flags(a, BN_FLG_MALLOCED)) {
         OPENSSL_cleanse(a, sizeof(*a));
         OPENSSL_free(a);
@@ -170,7 +170,7 @@ void BN_free(BIGNUM *a)
     if (a == NULL)
         return;
     if (!BN_get_flags(a, BN_FLG_STATIC_DATA))
-        bn_free_d(a);
+        bn_free_d(a, 0);
     if (a->flags & BN_FLG_MALLOCED)
         OPENSSL_free(a);
 }
@@ -248,10 +248,8 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
         BN_ULONG *a = bn_expand_internal(b, words);
         if (!a)
             return NULL;
-        if (b->d) {
-            OPENSSL_cleanse(b->d, b->dmax * sizeof(b->d[0]));
-            bn_free_d(b);
-        }
+        if (b->d != NULL)
+            bn_free_d(b, 1);
         b->d = a;
         b->dmax = words;
     }
@@ -338,6 +336,8 @@ void BN_swap(BIGNUM *a, BIGNUM *b)
 
 void BN_clear(BIGNUM *a)
 {
+    if (a == NULL)
+        return;
     bn_check_top(a);
     if (a->d != NULL)
         OPENSSL_cleanse(a->d, sizeof(*a->d) * a->dmax);
@@ -536,6 +536,24 @@ int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
     return tolen;
 }
 
+BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+#ifdef B_ENDIAN
+    return BN_bin2bn(s, len, ret);
+#else
+    return BN_lebin2bn(s, len, ret);
+#endif
+}
+
+int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+#ifdef B_ENDIAN
+    return BN_bn2binpad(a, to, tolen);
+#else
+    return BN_bn2lebinpad(a, to, tolen);
+#endif
+}
+
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 {
     int i;
@@ -694,6 +712,9 @@ int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
 {
     int i;
     BN_ULONG aa, bb;
+
+    if (n == 0)
+        return 0;
 
     aa = a[n - 1];
     bb = b[n - 1];

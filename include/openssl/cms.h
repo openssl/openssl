@@ -16,7 +16,6 @@
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 # include <openssl/cmserr.h>
-# include <openssl/ess.h>
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -199,7 +198,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
                                                const EVP_CIPHER *kekciph);
 
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
-int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
+int CMS_RecipientInfo_encrypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                    unsigned int flags);
@@ -285,10 +284,6 @@ int CMS_unsigned_add1_attr_by_txt(CMS_SignerInfo *si,
                                   const void *bytes, int len);
 void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
                                     int lastpos, int type);
-int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
-int CMS_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc);
-
-# ifdef HEADER_X509V3_H
 
 int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr);
 CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
@@ -302,7 +297,6 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
                                     int *pallorfirst,
                                     STACK_OF(GENERAL_NAMES) **plist,
                                     STACK_OF(GENERAL_NAMES) **prto);
-# endif
 int CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri,
                                     X509_ALGOR **palg,
                                     ASN1_OCTET_STRING **pukm);

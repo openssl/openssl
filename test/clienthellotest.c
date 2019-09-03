@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 #include <time.h>
 
-#include "../ssl/packet_locl.h"
+#include "internal/packet.h"
 
 #include "testutil.h"
 
@@ -58,7 +58,7 @@ static int test_client_hello(int currtest)
     BIO *wbio;
     long len;
     unsigned char *data;
-    PACKET pkt = {0}, pkt2 = {0}, pkt3 = {0};
+    PACKET pkt, pkt2, pkt3;
     char *dummytick = "Hello World!";
     unsigned int type = 0;
     int testresult = 0;
@@ -70,6 +70,10 @@ static int test_client_hello(int currtest)
     if (currtest == TEST_ADD_PADDING_AND_PSK)
         return 1;
 #endif
+
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&pkt2, 0, sizeof(pkt2));
+    memset(&pkt3, 0, sizeof(pkt3));
 
     /*
      * For each test set up an SSL_CTX and SSL and see what ClientHello gets
@@ -85,6 +89,7 @@ static int test_client_hello(int currtest)
     case TEST_SET_SESSION_TICK_DATA_VER_NEG:
 #if !defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_TLS1_2)
         /* TLSv1.3 is enabled and TLSv1.2 is disabled so can't do this test */
+        SSL_CTX_free(ctx);
         return 1;
 #else
         /* Testing for session tickets <= TLS1.2; not relevant for 1.3 */

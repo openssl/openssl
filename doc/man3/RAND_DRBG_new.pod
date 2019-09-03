@@ -2,7 +2,9 @@
 
 =head1 NAME
 
+RAND_DRBG_new_ex,
 RAND_DRBG_new,
+RAND_DRBG_secure_new_ex,
 RAND_DRBG_secure_new,
 RAND_DRBG_set,
 RAND_DRBG_set_defaults,
@@ -15,10 +17,19 @@ RAND_DRBG_free
 
  #include <openssl/rand_drbg.h>
 
+ RAND_DRBG *RAND_DRBG_new_ex(OPENSSL_CTX *ctx,
+                             int type,
+                             unsigned int flags,
+                             RAND_DRBG *parent);
 
  RAND_DRBG *RAND_DRBG_new(int type,
                           unsigned int flags,
                           RAND_DRBG *parent);
+
+ RAND_DRBG *RAND_DRBG_secure_new_ex(OPENSSL_CTX *ctx,
+                                    int type,
+                                    unsigned int flags,
+                                    RAND_DRBG *parent);
 
  RAND_DRBG *RAND_DRBG_secure_new(int type,
                                  unsigned int flags,
@@ -39,10 +50,13 @@ RAND_DRBG_free
 
 =head1 DESCRIPTION
 
-RAND_DRBG_new() and RAND_DRBG_secure_new()
+RAND_DRBG_new_ex() and RAND_DRBG_secure_new_ex()
 create a new DRBG instance of the given B<type>, allocated from the heap resp.
-the secure heap
-(using OPENSSL_zalloc() resp. OPENSSL_secure_zalloc()).
+the secure heap, for the given OPENSSL_CTX <ctx>
+(using OPENSSL_zalloc() resp. OPENSSL_secure_zalloc()). The <ctx> parameter can
+be NULL in which case the default OPENSSL_CTX is used. RAND_DRBG_new() and
+RAND_DRBG_secure_new() are the same as RAND_DRBG_new_ex() and
+RAND_DRBG_secure_new_ex() except that the default OPENSSL_CTX is always used.
 
 RAND_DRBG_set() initializes the B<drbg> with the given B<type> and B<flags>.
 
@@ -108,8 +122,9 @@ uninstantiated state.
 =head1 RETURN VALUES
 
 
-RAND_DRBG_new() and RAND_DRBG_secure_new() return a pointer to a DRBG
-instance allocated on the heap, resp. secure heap.
+RAND_DRBG_new_ex(), RAND_DRBG_new(), RAND_DRBG_secure_new_ex() and
+RAND_DRBG_secure_new() return a pointer to a DRBG instance allocated on the
+heap, resp. secure heap.
 
 RAND_DRBG_set(),
 RAND_DRBG_instantiate(), and
@@ -134,10 +149,6 @@ To ensure that they are applied to the global and thread-local DRBG instances
 RAND_DRBG_set_defaults() before creating any thread and before calling any
 cryptographic routines that obtain random data directly or indirectly.
 
-=head1 HISTORY
-
-The RAND_DRBG functions were added in OpenSSL 1.1.1.
-
 =head1 SEE ALSO
 
 L<OPENSSL_zalloc(3)>,
@@ -145,9 +156,13 @@ L<OPENSSL_secure_zalloc(3)>,
 L<RAND_DRBG_generate(3)>,
 L<RAND_DRBG(7)>
 
+=head1 HISTORY
+
+The RAND_DRBG functions were added in OpenSSL 1.1.1.
+
 =head1 COPYRIGHT
 
-Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

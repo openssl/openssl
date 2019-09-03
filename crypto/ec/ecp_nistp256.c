@@ -1823,6 +1823,9 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
+        ecdsa_simple_sign_setup,
+        ecdsa_simple_sign_sig,
+        ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         0, /* blind_coordinates */
         0, /* ladder_pre */
@@ -1901,12 +1904,16 @@ int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
                                     BN_CTX *ctx)
 {
     int ret = 0;
-    BN_CTX *new_ctx = NULL;
     BIGNUM *curve_p, *curve_a, *curve_b;
+#ifndef FIPS_MODE
+    BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+        ctx = new_ctx = BN_CTX_new();
+#endif
+    if (ctx == NULL)
+        return 0;
+
     BN_CTX_start(ctx);
     curve_p = BN_CTX_get(ctx);
     curve_a = BN_CTX_get(ctx);
@@ -1925,7 +1932,9 @@ int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
+#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
+#endif
     return ret;
 }
 
@@ -2215,17 +2224,24 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     int ret = 0;
     NISTP256_PRE_COMP *pre = NULL;
     int i, j;
-    BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y;
     EC_POINT *generator = NULL;
     smallfelem tmp_smallfelems[32];
     felem x_tmp, y_tmp, z_tmp;
+#ifndef FIPS_MODE
+    BN_CTX *new_ctx = NULL;
+#endif
 
     /* throw away old precomputation */
     EC_pre_comp_free(group);
+
+#ifndef FIPS_MODE
     if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+        ctx = new_ctx = BN_CTX_new();
+#endif
+    if (ctx == NULL)
+        return 0;
+
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
@@ -2343,7 +2359,9 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
+#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
+#endif
     EC_nistp256_pre_comp_free(pre);
     return ret;
 }

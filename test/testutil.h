@@ -255,7 +255,9 @@ DECLARE_COMPARISONS(char, char)
 DECLARE_COMPARISONS(unsigned char, uchar)
 DECLARE_COMPARISONS(long, long)
 DECLARE_COMPARISONS(unsigned long, ulong)
+DECLARE_COMPARISONS(double, double)
 DECLARE_COMPARISONS(time_t, time_t)
+
 /*
  * Because this comparison uses a printf format specifier that's not
  * universally known (yet), we provide an option to not have it declared.
@@ -344,6 +346,9 @@ void test_info(const char *file, int line, const char *desc, ...)
     PRINTF_FORMAT(3, 4);
 void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_note(const char *desc, ...) PRINTF_FORMAT(1, 2);
+int test_skip(const char *file, int line, const char *desc, ...)
+    PRINTF_FORMAT(3, 4);
+int test_skip_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_openssl_errors(void);
 void test_perror(const char *s);
 
@@ -406,6 +411,13 @@ void test_perror(const char *s);
 # define TEST_size_t_gt(a, b) test_size_t_gt(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_size_t_ge(a, b) test_size_t_ge(__FILE__, __LINE__, #a, #b, a, b)
 
+# define TEST_double_eq(a, b) test_double_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_ne(a, b) test_double_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_lt(a, b) test_double_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_le(a, b) test_double_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_gt(a, b) test_double_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_double_ge(a, b) test_double_ge(__FILE__, __LINE__, #a, #b, a, b)
+
 # define TEST_time_t_eq(a, b) test_time_t_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_time_t_ne(a, b) test_time_t_ne(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_time_t_lt(a, b) test_time_t_lt(__FILE__, __LINE__, #a, #b, a, b)
@@ -454,9 +466,11 @@ void test_perror(const char *s);
 # if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
 #  define TEST_error         test_error_c90
 #  define TEST_info          test_info_c90
+#  define TEST_skip          test_skip_c90
 # else
 #  define TEST_error(...)    test_error(__FILE__, __LINE__, __VA_ARGS__)
 #  define TEST_info(...)     test_info(__FILE__, __LINE__, __VA_ARGS__)
+#  define TEST_skip(...)     test_skip(__FILE__, __LINE__, __VA_ARGS__)
 # endif
 # define TEST_note           test_note
 # define TEST_openssl_errors test_openssl_errors
@@ -522,5 +536,16 @@ void test_clearstanza(STANZA *s);
  * Optionally return the whole length of this string in |out_len|
  */
 char *glue_strings(const char *list[], size_t *out_len);
+
+/*
+ * Pseudo random number generator of low quality but having repeatability
+ * across platforms.  The two calls are replacements for random(3) and
+ * srandom(3).
+ */
+uint32_t test_random(void);
+void test_random_seed(uint32_t sd);
+
+/* Create a file path from a directory and a filename */
+char *test_mk_file_path(const char *dir, const char *file);
 
 #endif                          /* HEADER_TESTUTIL_H */

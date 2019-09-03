@@ -16,8 +16,19 @@ int RSA_check_key(const RSA *key)
     return RSA_check_key_ex(key, NULL);
 }
 
+/*
+ * NOTE: Key validation requires separate checks to be able to be accessed
+ *  individually. These should be visible from the PKEY API..
+ *  See rsa_sp800_56b_check_public, rsa_sp800_56b_check_private and
+ *      rsa_sp800_56b_check_keypair.
+ */
 int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 {
+#ifdef FIPS_MODE
+    return rsa_sp800_56b_check_public(key)
+               && rsa_sp800_56b_check_private(key)
+               && rsa_sp800_56b_check_keypair(key, NULL, -1, RSA_bits(key));
+#else
     BIGNUM *i, *j, *k, *l, *m;
     BN_CTX *ctx;
     int ret = 1, ex_primes = 0, idx;
@@ -225,4 +236,5 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
     BN_free(m);
     BN_CTX_free(ctx);
     return ret;
+#endif /* FIPS_MODE */
 }

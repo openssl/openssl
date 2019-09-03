@@ -142,6 +142,7 @@ LIBDIR={- our $libdir = $config{libdir};
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
 ENGINESDIR=$(libdir)/engines-{- $sover_dirname -}
+MODULESDIR=$(libdir)/ossl-modules
 
 # Convenience variable for those who want to set the rpath in shared
 # libraries and applications
@@ -231,14 +232,15 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $target{lib_cppflags} || (),
                           $target{shared_cppflag} || (),
                           (map { '-D'.$_ }
-                               @{$config{lib_defines}},
-                               @{$config{shared_defines}}),
+                               @{$config{lib_defines} || ()},
+                               @{$config{shared_defines} || ()}),
                           @{$config{lib_cppflags}},
                           @{$config{shared_cppflag}});
                 join(' ', $lib_cppflags,
                           (map { '-D'.$_ }
                                'OPENSSLDIR="\"$(OPENSSLDIR)\""',
-                               'ENGINESDIR="\"$(ENGINESDIR)\""'),
+                               'ENGINESDIR="\"$(ENGINESDIR)\""',
+                               'MODULESDIR="\"$(MODULESDIR)\""'),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
                         $target{shared_cflag} || (),
@@ -256,6 +258,9 @@ LIB_LDFLAGS={- join(' ', $target{shared_ldflag} || (),
 LIB_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 DSO_CPPFLAGS={- join(' ', $target{dso_cppflags} || (),
                           $target{module_cppflags} || (),
+                          (map { '-D'.$_ }
+                               @{$config{dso_defines} || ()},
+                               @{$config{module_defines} || ()}),
                           @{$config{dso_cppflags}},
                           @{$config{module_cppflags}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
@@ -276,6 +281,7 @@ DSO_LDFLAGS={- join(' ', $target{dso_ldflags} || (),
                          '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
 DSO_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 BIN_CPPFLAGS={- join(' ', $target{bin_cppflags} || (),
+                          (map { '-D'.$_ } @{$config{bin_defines} || ()}),
                           @{$config{bin_cppflags}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 BIN_CFLAGS={- join(' ', $target{bin_cflags} || (),
@@ -385,13 +391,13 @@ libclean:
 clean: libclean
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
-	-$(RM) `find . -name .git -prune -o -name '*{- platform->depext() -}' -print`
-	-$(RM) `find . -name .git -prune -o -name '*{- platform->objext() -}' -print`
+	-$(RM) `find . -name '*{- platform->depext() -}' \! -name '.*' -print`
+	-$(RM) `find . -name '*{- platform->objext() -}' \! -name '.*' -print`
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc
-	-$(RM) `find . -name .git -prune -o -type l -print`
+	-$(RM) `find . -type l \! -name '.*' -print`
 	$(RM) $(TARFILE)
 
 distclean: clean
@@ -416,7 +422,7 @@ uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 install_docs: install_man_docs install_html_docs
 
 uninstall_docs: uninstall_man_docs uninstall_html_docs
-	$(RM) -r -v $(DESTDIR)$(DOCDIR)
+	$(RM) -r $(DESTDIR)$(DOCDIR)
 
 install_ssldirs:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs
@@ -722,7 +728,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 
 .PHONY: doc-nits
 doc-nits: build_generated
-	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -p ) >doc-nits
+	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -p -s ) >doc-nits
 	@if [ -s doc-nits ] ; then cat doc-nits ; exit 1; \
 	else echo 'doc-nits: no errors.'; rm doc-nits ; fi
 
@@ -736,6 +742,12 @@ lint:
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
+	@ : {- output_off() if $disabled{apps}; "" -}
+	( b=`pwd`; cd $(SRCDIR); \
+	  $(PERL) -I$$b apps/progs.pl -H $(APPS_OPENSSL) > apps/progs.h )
+	( b=`pwd`; cd $(SRCDIR); \
+	  $(PERL) -I$$b apps/progs.pl -C $(APPS_OPENSSL) > apps/progs.c )
+	@ : {- output_on() if $disabled{apps}; "" -}
 
 generate_crypto_bn:
 	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
@@ -798,7 +810,6 @@ errors:
    our @cryptoheaders =
        qw( include/internal/dso.h
            include/internal/o_dir.h
-           include/internal/o_str.h
            include/internal/err.h
            include/internal/sslconf.h );
    our @cryptoskipheaders = ( @sslheaders,

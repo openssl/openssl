@@ -150,7 +150,7 @@ L<SSL_write(3)>, L<SSL_get_error(3)>
 =head1 HISTORY
 
 SSL_MODE_ASYNC was added in OpenSSL 1.1.0.
-SSL_MODE_NO_KTLS_TX was added in OpenSSL 3.0.0.
+SSL_MODE_NO_KTLS_TX was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

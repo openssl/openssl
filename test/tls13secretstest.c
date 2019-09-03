@@ -17,7 +17,7 @@
 #define KEYLEN  16
 
 /*
- * Based on the test vectors availble in:
+ * Based on the test vectors available in:
  * https://tools.ietf.org/html/draft-ietf-tls-tls13-vectors-06
  */
 

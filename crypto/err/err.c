@@ -22,6 +22,7 @@
 #include "internal/ctype.h"
 #include "internal/constant_time_locl.h"
 #include "e_os.h"
+#include "err_locl.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -58,6 +59,8 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_UI, 0, 0), "UI routines"},
     {ERR_PACK(ERR_LIB_FIPS, 0, 0), "FIPS routines"},
     {ERR_PACK(ERR_LIB_CMS, 0, 0), "CMS routines"},
+    {ERR_PACK(ERR_LIB_CRMF, 0, 0), "CRMF routines"},
+    {ERR_PACK(ERR_LIB_CMP, 0, 0), "CMP routines"},
     {ERR_PACK(ERR_LIB_HMAC, 0, 0), "HMAC routines"},
     {ERR_PACK(ERR_LIB_CT, 0, 0), "CT routines"},
     {ERR_PACK(ERR_LIB_ASYNC, 0, 0), "ASYNC routines"},
@@ -65,36 +68,7 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, 0), "STORE routines"},
     {ERR_PACK(ERR_LIB_SM2, 0, 0), "SM2 routines"},
     {ERR_PACK(ERR_LIB_ESS, 0, 0), "ESS routines"},
-    {0, NULL},
-};
-
-static ERR_STRING_DATA ERR_str_functs[] = {
-    {ERR_PACK(0, SYS_F_FOPEN, 0), "fopen"},
-    {ERR_PACK(0, SYS_F_CONNECT, 0), "connect"},
-    {ERR_PACK(0, SYS_F_GETSERVBYNAME, 0), "getservbyname"},
-    {ERR_PACK(0, SYS_F_SOCKET, 0), "socket"},
-    {ERR_PACK(0, SYS_F_IOCTLSOCKET, 0), "ioctlsocket"},
-    {ERR_PACK(0, SYS_F_BIND, 0), "bind"},
-    {ERR_PACK(0, SYS_F_LISTEN, 0), "listen"},
-    {ERR_PACK(0, SYS_F_ACCEPT, 0), "accept"},
-# ifdef OPENSSL_SYS_WINDOWS
-    {ERR_PACK(0, SYS_F_WSASTARTUP, 0), "WSAstartup"},
-# endif
-    {ERR_PACK(0, SYS_F_OPENDIR, 0), "opendir"},
-    {ERR_PACK(0, SYS_F_FREAD, 0), "fread"},
-    {ERR_PACK(0, SYS_F_GETADDRINFO, 0), "getaddrinfo"},
-    {ERR_PACK(0, SYS_F_GETNAMEINFO, 0), "getnameinfo"},
-    {ERR_PACK(0, SYS_F_SETSOCKOPT, 0), "setsockopt"},
-    {ERR_PACK(0, SYS_F_GETSOCKOPT, 0), "getsockopt"},
-    {ERR_PACK(0, SYS_F_GETSOCKNAME, 0), "getsockname"},
-    {ERR_PACK(0, SYS_F_GETHOSTBYNAME, 0), "gethostbyname"},
-    {ERR_PACK(0, SYS_F_FFLUSH, 0), "fflush"},
-    {ERR_PACK(0, SYS_F_OPEN, 0), "open"},
-    {ERR_PACK(0, SYS_F_CLOSE, 0), "close"},
-    {ERR_PACK(0, SYS_F_IOCTL, 0), "ioctl"},
-    {ERR_PACK(0, SYS_F_STAT, 0), "stat"},
-    {ERR_PACK(0, SYS_F_FCNTL, 0), "fcntl"},
-    {ERR_PACK(0, SYS_F_FSTAT, 0), "fstat"},
+    {ERR_PACK(ERR_LIB_PROV, 0, 0), "Provider routines"},
     {0, NULL},
 };
 
@@ -161,7 +135,7 @@ static unsigned long err_string_data_hash(const ERR_STRING_DATA *a)
     unsigned long ret, l;
 
     l = a->error;
-    ret = l ^ ERR_GET_LIB(l) ^ ERR_GET_FUNC(l);
+    ret = l ^ ERR_GET_LIB(l);
     return (ret ^ ret % 19 * 13);
 }
 
@@ -185,8 +159,8 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
-/* A measurement on Linux 2018-11-21 showed about 3.5kib */
-# define SPACE_SYS_STR_REASONS 4 * 1024
+/* 2019-05-21: Russian and Ukrainian locales on Linux require more than 6,5 kB */
+# define SPACE_SYS_STR_REASONS 8 * 1024
 # define NUM_SYS_STR_REASONS 127
 
 static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
@@ -220,21 +194,23 @@ static void build_SYS_str_reasons(void)
         ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
 
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
-        if (str->string == NULL) {
+        /*
+         * If we have used up all the space in strerror_pool,
+         * there's no point in calling openssl_strerror_r()
+         */
+        if (str->string == NULL && cnt < sizeof(strerror_pool)) {
             if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
                 size_t l = strlen(cur);
 
                 str->string = cur;
                 cnt += l;
-                if (cnt > sizeof(strerror_pool))
-                    cnt = sizeof(strerror_pool);
                 cur += l;
 
                 /*
                  * VMS has an unusual quirk of adding spaces at the end of
-                 * some (most? all?) messages.  Lets trim them off.
+                 * some (most? all?) messages. Lets trim them off.
                  */
-                while (ossl_isspace(cur[-1])) {
+                while (cur > strerror_pool && ossl_isspace(cur[-1])) {
                     cur--;
                     cnt--;
                 }
@@ -260,24 +236,6 @@ static void build_SYS_str_reasons(void)
 }
 #endif
 
-#define err_clear_data(p, i) \
-        do { \
-            if ((p)->err_data_flags[i] & ERR_TXT_MALLOCED) {\
-                OPENSSL_free((p)->err_data[i]); \
-                (p)->err_data[i] = NULL; \
-            } \
-            (p)->err_data_flags[i] = 0; \
-        } while (0)
-
-#define err_clear(p, i) \
-        do { \
-            err_clear_data(p, i); \
-            (p)->err_flags[i] = 0; \
-            (p)->err_buffer[i] = 0; \
-            (p)->err_file[i] = NULL; \
-            (p)->err_line[i] = -1; \
-        } while (0)
-
 static void ERR_STATE_free(ERR_STATE *s)
 {
     int i;
@@ -285,7 +243,7 @@ static void ERR_STATE_free(ERR_STATE *s)
     if (s == NULL)
         return;
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
-        err_clear_data(s, i);
+        err_clear_data(s, i, 1);
     }
     OPENSSL_free(s);
 }
@@ -349,8 +307,6 @@ int ERR_load_ERR_strings(void)
 
     err_load_strings(ERR_str_libraries);
     err_load_strings(ERR_str_reasons);
-    err_patch(ERR_LIB_SYS, ERR_str_functs);
-    err_load_strings(ERR_str_functs);
     build_SYS_str_reasons();
 #endif
     return 1;
@@ -399,43 +355,6 @@ void err_free_strings_int(void)
 
 /********************************************************/
 
-void ERR_put_error(int lib, int func, int reason, const char *file, int line)
-{
-    ERR_STATE *es;
-
-#ifdef _OSD_POSIX
-    /*
-     * In the BS2000-OSD POSIX subsystem, the compiler generates path names
-     * in the form "*POSIX(/etc/passwd)". This dirty hack strips them to
-     * something sensible. @@@ We shouldn't modify a const string, though.
-     */
-    if (strncmp(file, "*POSIX(", sizeof("*POSIX(") - 1) == 0) {
-        char *end;
-
-        /* Skip the "*POSIX(" prefix */
-        file += sizeof("*POSIX(") - 1;
-        end = &file[strlen(file) - 1];
-        if (*end == ')')
-            *end = '\0';
-        /* Optional: use the basename of the path only. */
-        if ((end = strrchr(file, '/')) != NULL)
-            file = &end[1];
-    }
-#endif
-    es = ERR_get_state();
-    if (es == NULL)
-        return;
-
-    es->top = (es->top + 1) % ERR_NUM_ERRORS;
-    if (es->top == es->bottom)
-        es->bottom = (es->bottom + 1) % ERR_NUM_ERRORS;
-    es->err_flags[es->top] = 0;
-    es->err_buffer[es->top] = ERR_PACK(lib, func, reason);
-    es->err_file[es->top] = file;
-    es->err_line[es->top] = line;
-    err_clear_data(es, es->top);
-}
-
 void ERR_clear_error(void)
 {
     int i;
@@ -446,7 +365,7 @@ void ERR_clear_error(void)
         return;
 
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
-        err_clear(es, i);
+        err_clear(es, i, 0);
     }
     es->top = es->bottom = 0;
 }
@@ -524,8 +443,24 @@ static unsigned long get_error_values(int inc, int top, const char **file,
         return ERR_R_INTERNAL_ERROR;
     }
 
+    while (es->bottom != es->top) {
+        if (es->err_flags[es->top] & ERR_FLAG_CLEAR) {
+            err_clear(es, es->top, 0);
+            es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
+            continue;
+        }
+        i = (es->bottom + 1) % ERR_NUM_ERRORS;
+        if (es->err_flags[i] & ERR_FLAG_CLEAR) {
+            es->bottom = i;
+            err_clear(es, es->bottom, 0);
+            continue;
+        }
+        break;
+    }
+
     if (es->bottom == es->top)
         return 0;
+
     if (top)
         i = es->top;            /* last error */
     else
@@ -549,7 +484,7 @@ static unsigned long get_error_values(int inc, int top, const char **file,
 
     if (data == NULL) {
         if (inc) {
-            err_clear_data(es, i);
+            err_clear_data(es, i, 0);
         }
     } else {
         if (es->err_data[i] == NULL) {
@@ -567,9 +502,9 @@ static unsigned long get_error_values(int inc, int top, const char **file,
 
 void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 {
-    char lsbuf[64], fsbuf[64], rsbuf[64];
-    const char *ls, *fs, *rs;
-    unsigned long l, f, r;
+    char lsbuf[64], rsbuf[64];
+    const char *ls, *rs;
+    unsigned long f = 0, l, r;
 
     if (len == 0)
         return;
@@ -581,13 +516,6 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         ls = lsbuf;
     }
 
-    fs = ERR_func_error_string(e);
-    f = ERR_GET_FUNC(e);
-    if (fs == NULL) {
-        BIO_snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
-        fs = fsbuf;
-    }
-
     rs = ERR_reason_error_string(e);
     r = ERR_GET_REASON(e);
     if (rs == NULL) {
@@ -595,7 +523,7 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         rs = rsbuf;
     }
 
-    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, fs, rs);
+    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, "", rs);
     if (strlen(buf) == len - 1) {
         /* Didn't fit; use a minimal format. */
         BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, f, r);
@@ -633,18 +561,9 @@ const char *ERR_lib_error_string(unsigned long e)
 
 const char *ERR_func_error_string(unsigned long e)
 {
-    ERR_STRING_DATA d, *p;
-    unsigned long l, f;
-
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return NULL;
-    }
-
-    l = ERR_GET_LIB(e);
-    f = ERR_GET_FUNC(e);
-    d.error = ERR_PACK(l, f, 0);
-    p = int_err_get_item(&d);
-    return ((p == NULL) ? NULL : p->string);
+    return ERR_GET_LIB(e) == ERR_LIB_SYS ? "system library" : NULL;
 }
 
 const char *ERR_reason_error_string(unsigned long e)
@@ -667,7 +586,8 @@ const char *ERR_reason_error_string(unsigned long e)
     return ((p == NULL) ? NULL : p->string);
 }
 
-void err_delete_thread_state(void)
+/* TODO(3.0): arg ignored for now */
+static void err_delete_thread_state(void *arg)
 {
     ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == NULL)
@@ -719,7 +639,7 @@ ERR_STATE *ERR_get_state(void)
             return NULL;
         }
 
-        if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE)
+        if (!ossl_init_thread_start(NULL, NULL, err_delete_thread_state)
                 || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
             ERR_STATE_free(state);
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
@@ -791,20 +711,17 @@ int ERR_get_next_error_library(void)
     return ret;
 }
 
-static int err_set_error_data_int(char *data, int flags)
+static int err_set_error_data_int(char *data, size_t size, int flags,
+                                  int deallocate)
 {
     ERR_STATE *es;
-    int i;
 
     es = ERR_get_state();
     if (es == NULL)
         return 0;
 
-    i = es->top;
-
-    err_clear_data(es, i);
-    es->err_data[i] = data;
-    es->err_data_flags[i] = flags;
+    err_clear_data(es, es->top, deallocate);
+    err_set_data(es, es->top, data, size, flags);
 
     return 1;
 }
@@ -814,8 +731,18 @@ void ERR_set_error_data(char *data, int flags)
     /*
      * This function is void so we cannot propagate the error return. Since it
      * is also in the public API we can't change the return type.
+     *
+     * We estimate the size of the data.  If it's not flagged as allocated,
+     * then this is safe, and if it is flagged as allocated, then our size
+     * may be smaller than the actual allocation, but that doesn't matter
+     * too much, the buffer will remain untouched or will eventually be
+     * reallocated to a new size.
+     *
+     * callers should be advised that this function takes over ownership of
+     * the allocated memory, i.e. they can't count on the pointer to remain
+     * valid.
      */
-    err_set_error_data_int(data, flags);
+    err_set_error_data_int(data, strlen(data) + 1, flags, 1);
 }
 
 void ERR_add_error_data(int num, ...)
@@ -828,34 +755,60 @@ void ERR_add_error_data(int num, ...)
 
 void ERR_add_error_vdata(int num, va_list args)
 {
-    int i, n, s;
-    char *str, *p, *a;
+    int i, len, size;
+    int flags = ERR_TXT_MALLOCED | ERR_TXT_STRING;
+    char *str, *arg;
+    ERR_STATE *es;
 
-    s = 80;
-    if ((str = OPENSSL_malloc(s + 1)) == NULL) {
-        /* ERRerr(ERR_F_ERR_ADD_ERROR_VDATA, ERR_R_MALLOC_FAILURE); */
+    /* Get the current error data; if an allocated string get it. */
+    es = ERR_get_state();
+    if (es == NULL)
         return;
-    }
-    str[0] = '\0';
+    i = es->top;
 
-    n = 0;
-    for (i = 0; i < num; i++) {
-        a = va_arg(args, char *);
-        if (a == NULL)
-            a = "<NULL>";
-        n += strlen(a);
-        if (n > s) {
-            s = n + 20;
-            p = OPENSSL_realloc(str, s + 1);
+    /*
+     * If err_data is allocated already, re-use the space.
+     * Otherwise, allocate a small new buffer.
+     */
+    if ((es->err_data_flags[i] & flags) == flags) {
+        str = es->err_data[i];
+        size = es->err_data_size[i];
+
+        /*
+         * To protect the string we just grabbed from tampering by other
+         * functions we may call, or to protect them from freeing a pointer
+         * that may no longer be valid at that point, we clear away the
+         * data pointer and the flags.  We will set them again at the end
+         * of this function.
+         */
+        es->err_data[i] = NULL;
+        es->err_data_flags[i] = 0;
+    } else if ((str = OPENSSL_malloc(size = 81)) == NULL) {
+        return;
+    } else {
+        str[0] = '\0';
+    }
+    len = strlen(str);
+
+    for (len = 0; --num >= 0; ) {
+        arg = va_arg(args, char *);
+        if (arg == NULL)
+            arg = "<NULL>";
+        len += strlen(arg);
+        if (len >= size) {
+            char *p;
+
+            size = len + 20;
+            p = OPENSSL_realloc(str, size);
             if (p == NULL) {
                 OPENSSL_free(str);
                 return;
             }
             str = p;
         }
-        OPENSSL_strlcat(str, a, (size_t)s + 1);
+        OPENSSL_strlcat(str, arg, (size_t)size);
     }
-    if (!err_set_error_data_int(str, ERR_TXT_MALLOCED | ERR_TXT_STRING))
+    if (!err_set_error_data_int(str, size, flags, 0))
         OPENSSL_free(str);
 }
 
@@ -883,7 +836,7 @@ int ERR_pop_to_mark(void)
 
     while (es->bottom != es->top
            && (es->err_flags[es->top] & ERR_FLAG_MARK) == 0) {
-        err_clear(es, es->top);
+        err_clear(es, es->top, 0);
         es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
     }
 
@@ -914,25 +867,6 @@ int ERR_clear_last_mark(void)
     return 1;
 }
 
-#ifdef UINTPTR_T
-# undef UINTPTR_T
-#endif
-/*
- * uintptr_t is the answer, but unfortunately C89, current "least common
- * denominator" doesn't define it. Most legacy platforms typedef it anyway,
- * so that attempt to fill the gaps means that one would have to identify
- * that track these gaps, which would be undesirable. Macro it is...
- */
-#if defined(__VMS) && __INITIAL_POINTER_SIZE==64
-/*
- * But we can't use size_t on VMS, because it adheres to sizeof(size_t)==4
- * even in 64-bit builds, which means that it won't work as mask.
- */
-# define UINTPTR_T unsigned long long
-#else
-# define UINTPTR_T size_t
-#endif
-
 void err_clear_last_constant_time(int clear)
 {
     ERR_STATE *es;
@@ -944,11 +878,11 @@ void err_clear_last_constant_time(int clear)
 
     top = es->top;
 
-    es->err_flags[top] &= ~(0 - clear);
-    es->err_buffer[top] &= ~(0UL - clear);
-    es->err_file[top] = (const char *)((UINTPTR_T)es->err_file[top] &
-                                       ~((UINTPTR_T)0 - clear));
-    es->err_line[top] |= 0 - clear;
-
-    es->top = (top + ERR_NUM_ERRORS - clear) % ERR_NUM_ERRORS;
+    /*
+     * Flag error as cleared but remove it elsewhere to avoid two errors
+     * accessing the same error stack location, revealing timing information.
+     */
+    clear = constant_time_select_int(constant_time_eq_int(clear, 0),
+                                     0, ERR_FLAG_CLEAR);
+    es->err_flags[top] |= clear;
 }

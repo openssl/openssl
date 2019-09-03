@@ -32,8 +32,48 @@ static int preserves_system_error(void)
 #endif
 }
 
+/* Test that calls to ERR_add_error_[v]data append */
+static int vdata_appends(void)
+{
+    const char *data;
+
+    CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+    ERR_add_error_data(1, "hello ");
+    ERR_add_error_data(1, "world");
+    ERR_get_error_line_data(NULL, NULL, &data, NULL);
+    return TEST_str_eq(data, "hello world");
+}
+
+/* Test that setting a platform error sets the right values. */
+static int platform_error(void)
+{
+    const char *f, *data;
+    int l;
+    unsigned long e;
+#ifndef OPENSSL_NO_FILENAMES
+    const char *file;
+    int line;
+
+    file = __FILE__;
+    line = __LINE__ + 2; /* The error is generated on the ERR_raise_data line */
+#endif
+    ERR_raise_data(ERR_LIB_SYS, ERR_R_INTERNAL_ERROR,
+                   "calling exit()");
+    if (!TEST_ulong_ne(e = ERR_get_error_line_data(&f, &l, &data, NULL), 0)
+            || !TEST_int_eq(ERR_GET_REASON(e), ERR_R_INTERNAL_ERROR)
+#ifndef OPENSSL_NO_FILENAMES
+            || !TEST_int_eq(l, line)
+            || !TEST_str_eq(f, file)
+#endif
+            || !TEST_str_eq(data, "calling exit()"))
+        return 0;
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(preserves_system_error);
+    ADD_TEST(vdata_appends);
+    ADD_TEST(platform_error);
     return 1;
 }

@@ -468,7 +468,6 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_srp, "srp"},
     {TLSEXT_TYPE_signature_algorithms, "signature_algorithms"},
     {TLSEXT_TYPE_use_srtp, "use_srtp"},
-    {TLSEXT_TYPE_heartbeat, "tls_heartbeat"},
     {TLSEXT_TYPE_application_layer_protocol_negotiation,
      "application_layer_protocol_negotiation"},
     {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
@@ -783,9 +782,6 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         }
         break;
 
-    case TLSEXT_TYPE_heartbeat:
-        return 0;
-
     case TLSEXT_TYPE_session_ticket:
         if (extlen != 0)
             ssl_print_hex(bio, indent + 4, "ticket", ext, extlen);
@@ -1034,7 +1030,7 @@ static int ssl_print_server_hello(BIO *bio, int indent,
 
 static int ssl_get_keyex(const char **pname, const SSL *ssl)
 {
-    unsigned long alg_k = ssl->s3->tmp.new_cipher->algorithm_mkey;
+    unsigned long alg_k = ssl->s3.tmp.new_cipher->algorithm_mkey;
 
     if (alg_k & SSL_kRSA) {
         *pname = "rsa";

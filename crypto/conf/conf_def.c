@@ -669,12 +669,13 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
 static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
                             char **dirpath)
 {
-    struct stat st = { 0 };
+    struct stat st;
     BIO *next;
 
     if (stat(include, &st) < 0) {
-        SYSerr(SYS_F_STAT, errno);
-        ERR_add_error_data(1, include);
+        ERR_raise_data(ERR_LIB_SYS, errno,
+                       "calling stat(%s)",
+                       include);
         /* missing include file is not fatal error */
         return NULL;
     }

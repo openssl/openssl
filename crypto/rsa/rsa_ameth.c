@@ -447,7 +447,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         RSA_PSS_PARAMS_free(pss);
         if (!rv)
             return 0;
-    } else if (!sig && BIO_puts(bp, "\n") <= 0) {
+    } else if (BIO_puts(bp, "\n") <= 0) {
         return 0;
     }
     if (sig)
@@ -458,6 +458,9 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     X509_ALGOR *alg = NULL;
+    const EVP_MD *md;
+    const EVP_MD *mgf1md;
+    int min_saltlen;
 
     switch (op) {
 
@@ -497,6 +500,16 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 #endif
 
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
+        if (pkey->pkey.rsa->pss != NULL) {
+            if (!rsa_pss_get_param(pkey->pkey.rsa->pss, &md, &mgf1md,
+                                   &min_saltlen)) {
+                RSAerr(0, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            *(int *)arg2 = EVP_MD_type(md);
+            /* Return of 2 indicates this MD is mandatory */
+            return 2;
+        }
         *(int *)arg2 = NID_sha256;
         return 1;
 
@@ -583,10 +596,12 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
         return NULL;
     if (saltlen == -1) {
         saltlen = EVP_MD_size(sigmd);
-    } else if (saltlen == -2) {
+    } else if (saltlen == -2 || saltlen == -3) {
         saltlen = EVP_PKEY_size(pk) - EVP_MD_size(sigmd) - 2;
         if ((EVP_PKEY_bits(pk) & 0x7) == 1)
             saltlen--;
+        if (saltlen < 0)
+            return NULL;
     }
 
     return rsa_pss_params_create(sigmd, mgf1md, saltlen);

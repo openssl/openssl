@@ -198,15 +198,21 @@ void BN_zero_ex(BIGNUM *a);
 
 const BIGNUM *BN_value_one(void);
 char *BN_options(void);
+BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx);
 BN_CTX *BN_CTX_new(void);
+BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx);
 BN_CTX *BN_CTX_secure_new(void);
 void BN_CTX_free(BN_CTX *c);
 void BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);
 void BN_CTX_end(BN_CTX *ctx);
+int BN_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx);
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom);
+int BN_priv_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx);
 int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom);
+int BN_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx);
 int BN_rand_range(BIGNUM *rnd, const BIGNUM *range);
+int BN_priv_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx);
 int BN_priv_rand_range(BIGNUM *rnd, const BIGNUM *range);
 int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom);
 int BN_pseudo_rand_range(BIGNUM *rnd, const BIGNUM *range);
@@ -223,6 +229,8 @@ int BN_bn2bin(const BIGNUM *a, unsigned char *to);
 int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen);
+BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret);
+int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_mpi2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
 int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
@@ -340,6 +348,9 @@ DEPRECATEDIN_0_9_8(int
                                         int do_trial_division))
 
 /* Newer versions */
+int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
+                         const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb,
+                         BN_CTX *ctx);
 int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
                          const BIGNUM *rem, BN_GENCB *cb);
 int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);

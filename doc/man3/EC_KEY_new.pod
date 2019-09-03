@@ -2,10 +2,10 @@
 
 =head1 NAME
 
-EC_KEY_get_method, EC_KEY_set_method,
+EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_ex,
 EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags,
-EC_KEY_new_by_curve_name, EC_KEY_free, EC_KEY_copy, EC_KEY_dup, EC_KEY_up_ref,
-EC_KEY_get0_engine,
+EC_KEY_new_by_curve_name_ex, EC_KEY_new_by_curve_name, EC_KEY_free, EC_KEY_copy,
+EC_KEY_dup, EC_KEY_up_ref, EC_KEY_get0_engine,
 EC_KEY_get0_group, EC_KEY_set_group, EC_KEY_get0_private_key,
 EC_KEY_set_private_key, EC_KEY_get0_public_key, EC_KEY_set_public_key,
 EC_KEY_get_conv_form,
@@ -19,10 +19,12 @@ EC_KEY objects
 
  #include <openssl/ec.h>
 
+ EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx);
  EC_KEY *EC_KEY_new(void);
  int EC_KEY_get_flags(const EC_KEY *key);
  void EC_KEY_set_flags(EC_KEY *key, int flags);
  void EC_KEY_clear_flags(EC_KEY *key, int flags);
+ EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid);
  EC_KEY *EC_KEY_new_by_curve_name(int nid);
  void EC_KEY_free(EC_KEY *key);
  EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
@@ -57,15 +59,31 @@ EC_KEY objects
 =head1 DESCRIPTION
 
 An EC_KEY represents a public key and, optionally, the associated private
-key. A new EC_KEY with no associated curve can be constructed by calling
-EC_KEY_new(). The reference count for the newly created EC_KEY is initially
-set to 1. A curve can be associated with the EC_KEY by calling
+key.
+A new EC_KEY with no associated curve can be constructed by calling
+EC_KEY_new_ex() and specifying the associated library context in B<ctx>
+(see L<OPENSSL_CTX(3)>).
+The B<ctx> parameter may be NULL in which case the default library context is
+used.
+The reference count for the newly created EC_KEY is initially
+set to 1.
+A curve can be associated with the EC_KEY by calling
 EC_KEY_set_group().
 
+EC_KEY_new() is the same as EC_KEY_new_ex() except that the default library
+context is always used.
+
 Alternatively a new EC_KEY can be constructed by calling
-EC_KEY_new_by_curve_name() and supplying the nid of the associated curve. See
-L<EC_GROUP_new(3)> for a description of curve names. This function simply
-wraps calls to EC_KEY_new() and EC_GROUP_new_by_curve_name().
+EC_KEY_new_by_curve_name_ex() and supplying the nid of the associated curve and
+the library context to be used B<ctx> (see L<OPENSSL_CTX(3)>).
+The B<ctx> parameter may be NULL in which case the default library context is
+used.
+See L<EC_GROUP_new(3)> for a description of curve names.
+This function simply wraps calls to EC_KEY_new_ex() and
+EC_GROUP_new_by_curve_name_ex().
+
+EC_KEY_new_by_curve_name() is the same as EC_KEY_new_by_curve_name_ex() except
+that the default library context is always used.
 
 Calling EC_KEY_free() decrements the reference count for the EC_KEY object,
 and if it has dropped to zero then frees the memory associated with it.  If
@@ -144,8 +162,8 @@ EC_KEY_priv2buf() converts an EC_KEY private key into an allocated buffer.
 
 =head1 RETURN VALUES
 
-EC_KEY_new(), EC_KEY_new_by_curve_name() and EC_KEY_dup() return a pointer to
-the newly created EC_KEY object, or NULL on error.
+EC_KEY_new_ex(), EC_KEY_new(), EC_KEY_new_by_curve_name() and EC_KEY_dup()
+return a pointer to the newly created EC_KEY object, or NULL on error.
 
 EC_KEY_get_flags() returns the flags associated with the EC_KEY object as an
 integer.
@@ -174,7 +192,8 @@ L<crypto(7)>, L<EC_GROUP_new(3)>,
 L<EC_GROUP_copy(3)>, L<EC_POINT_new(3)>,
 L<EC_POINT_add(3)>,
 L<EC_GFp_simple_method(3)>,
-L<d2i_ECPKParameters(3)>
+L<d2i_ECPKParameters(3)>,
+L<OPENSSL_CTX(3)>
 
 =head1 COPYRIGHT
 

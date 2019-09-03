@@ -12,6 +12,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/kdf.h>
+#include "internal/numbers.h"
 #include "internal/evp_int.h"
 
 static int pkey_kdf_init(EVP_PKEY_CTX *ctx)

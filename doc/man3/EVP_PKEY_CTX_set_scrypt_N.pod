@@ -29,7 +29,7 @@ EVP_PKEY_CTX_set_scrypt_maxmem_bytes
 
 These functions are used to set up the necessary data to use the
 scrypt KDF.
-For more information on scrypt, see L<scrypt(7)>.
+For more information on scrypt, see L<EVP_KDF_SCRYPT(7)>.
 
 EVP_PKEY_CTX_set1_scrypt_salt() sets the B<saltlen> bytes long salt
 value.
@@ -54,6 +54,9 @@ respectively.
 
 =head1 NOTES
 
+There is a newer generic API for KDFs, L<EVP_KDF(3)>, which is
+preferred over the EVP_PKEY method.
+
 The scrypt KDF also uses EVP_PKEY_CTX_set1_pbe_pass() as well as
 the value from the string controls "pass" and "hexpass".
 See L<EVP_PKEY_CTX_set1_pbe_pass(3)>.
@@ -69,7 +72,7 @@ supported by the public key algorithm.
 
 =head1 SEE ALSO
 
-L<scrypt(7)>,
+L<EVP_KDF(3)>
 L<EVP_PKEY_CTX_new(3)>,
 L<EVP_PKEY_CTX_ctrl_str(3)>,
 L<EVP_PKEY_derive(3)>

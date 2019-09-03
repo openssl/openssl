@@ -21,12 +21,15 @@ ossl_sa_TYPE_doall_arg, ossl_sa_TYPE_get, ossl_sa_TYPE_set
  SPARSE_ARRAY_OF(TYPE) *ossl_sa_TYPE_new(void);
  void ossl_sa_TYPE_free(const SPARSE_ARRAY_OF(TYPE) *sa);
  void ossl_sa_TYPE_free_leaves(const SPARSE_ARRAY_OF(TYPE) *sa);
- int ossl_sa_TYPE_num(const SPARSE_ARRAY_OF(TYPE) *sa);
- void ossl_sa_TYPE_doall(const OPENSSL_SA *sa, void (*leaf)(size_t, void *));
+ size_t ossl_sa_TYPE_num(const SPARSE_ARRAY_OF(TYPE) *sa);
+ void ossl_sa_TYPE_doall(const OPENSSL_SA *sa, void (*leaf)(ossl_uintmax_t,
+                                                            void *));
  void ossl_sa_TYPE_doall_arg(const OPENSSL_SA *sa,
-                             void (*leaf)(size_t, void *, void *), void *arg);
- TYPE *ossl_sa_TYPE_get(const SPARSE_ARRAY_OF(TYPE) *sa, size_t idx);
- int ossl_sa_TYPE_set(SPARSE_ARRAY_OF(TYPE) *sa, size_t idx, TYPE *value);
+                             void (*leaf)(ossl_uintmax_t, void *, void *),
+                             void *arg);
+ TYPE *ossl_sa_TYPE_get(const SPARSE_ARRAY_OF(TYPE) *sa, ossl_uintmax_t idx);
+ int ossl_sa_TYPE_set(SPARSE_ARRAY_OF(TYPE) *sa, ossl_uintmax_t idx,
+                      TYPE *value);
 
 =head1 DESCRIPTION
 
@@ -36,7 +39,7 @@ B<TYPE>. This will mean that a pointer to type B<TYPE> is stored in each
 element of a sparse array, the type is referenced by SPARSE_ARRAY_OF(TYPE) and
 each function name begins with I<ossl_sa_TYPE_>. For example:
 
- TYPE *ossl_sa_TYPE_get(SPARSE_ARRAY_OF(TYPE) *sa, size_t idx);
+ TYPE *ossl_sa_TYPE_get(SPARSE_ARRAY_OF(TYPE) *sa, ossl_uintmax_t idx);
 
 ossl_sa_TYPE_num() returns the number of elements in B<sa> or 0 if B<sa> is
 B<NULL>.
@@ -105,7 +108,7 @@ ossl_sa_TYPE_free_leaves() do not return values.
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.0.
+This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

@@ -2,20 +2,33 @@
 
 =head1 NAME
 
-EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_derive - derive public key algorithm shared secret
+EVP_PKEY_derive_init, EVP_PKEY_derive_init_ex, EVP_PKEY_derive_set_peer,
+EVP_PKEY_derive - derive public key algorithm shared secret
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
+ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange);
  int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
  int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_derive_init() function initializes a public key algorithm
-context using key B<pkey> for shared secret derivation.
+The EVP_PKEY_derive_init_ex() function initializes a public key algorithm
+context for shared secret derivation using the key exchange algorithm
+B<exchange>.
+The key exchange algorithm B<exchange> should be fetched using a call to
+L<EVP_KEYEXCH_fetch(3)>.
+The EVP_PKEY object associated with B<ctx> must be compatible with that
+algorithm.
+B<exchange> may be NULL in which case the EVP_KEYEXCH algorithm is fetched
+implicitly based on the type of EVP_PKEY associated with B<ctx>.
+See L<EVP_KEYEXCH_fetch(3)> for more information about implict fetches.
+
+The EVP_PKEY_derive_init() function is the same as EVP_PKEY_derive() except that
+the EVP_KEYEXCH algorithm is always implicitly fetched.
 
 The EVP_PKEY_derive_set_peer() function sets the peer key: this will normally
 be a public key.
@@ -29,18 +42,19 @@ written to B<keylen>.
 
 =head1 NOTES
 
-After the call to EVP_PKEY_derive_init() algorithm specific control
-operations can be performed to set any appropriate parameters for the
-operation.
+After the call to EVP_PKEY_derive_init() or EVP_PKEY_derive_init_ex() algorithm
+specific control operations can be performed to set any appropriate parameters
+for the operation.
 
 The function EVP_PKEY_derive() can be called more than once on the same
 context if several operations are performed using the same parameters.
 
 =head1 RETURN VALUES
 
-EVP_PKEY_derive_init() and EVP_PKEY_derive() return 1 for success and 0
-or a negative value for failure. In particular a return value of -2
-indicates the operation is not supported by the public key algorithm.
+EVP_PKEY_derive_init_ex(), EVP_PKEY_derive_init() and EVP_PKEY_derive() return 1
+for success and 0 or a negative value for failure.
+In particular a return value of -2 indicates the operation is not supported by
+the public key algorithm.
 
 =head1 EXAMPLE
 
@@ -86,10 +100,12 @@ L<EVP_PKEY_decrypt(3)>,
 L<EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify(3)>,
 L<EVP_PKEY_verify_recover(3)>,
+L<EVP_KEYEXCH_fetch(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.0.
+These functions were added in OpenSSL 1.0.0. The EVP_PKEY_derive_init_ex()
+function was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

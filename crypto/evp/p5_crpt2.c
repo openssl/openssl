@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,15 +14,9 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/hmac.h>
+#include <openssl/trace.h>
 #include "internal/evp_int.h"
 #include "evp_locl.h"
-
-/* set this to print out info about the keygen algorithm */
-/* #define OPENSSL_DEBUG_PKCS5V2 */
-
-#ifdef OPENSSL_DEBUG_PKCS5V2
-static void h__dump(const unsigned char *p, int len);
-#endif
 
 int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                       const unsigned char *salt, int saltlen, int iter,
@@ -46,6 +40,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     if (kctx == NULL)
         return 0;
     if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS, pass, (size_t)passlen) != 1
+            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE, 1) != 1
             || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
                             salt, (size_t)saltlen) != 1
             || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_ITER, iter) != 1
@@ -55,15 +50,21 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
 
     EVP_KDF_CTX_free(kctx);
 
-# ifdef OPENSSL_DEBUG_PKCS5V2
-    fprintf(stderr, "Password:\n");
-    h__dump(pass, passlen);
-    fprintf(stderr, "Salt:\n");
-    h__dump(salt, saltlen);
-    fprintf(stderr, "Iteration count %d\n", iter);
-    fprintf(stderr, "Key:\n");
-    h__dump(out, keylen);
-# endif
+    OSSL_TRACE_BEGIN(PKCS5V2) {
+        BIO_printf(trc_out, "Password:\n");
+        BIO_hex_string(trc_out,
+                       0, passlen, pass, passlen);
+        BIO_printf(trc_out, "\n");
+        BIO_printf(trc_out, "Salt:\n");
+        BIO_hex_string(trc_out,
+                       0, saltlen, salt, saltlen);
+        BIO_printf(trc_out, "\n");
+        BIO_printf(trc_out, "Iteration count %d\n", iter);
+        BIO_printf(trc_out, "Key:\n");
+        BIO_hex_string(trc_out,
+                       0, keylen, out, keylen);
+        BIO_printf(trc_out, "\n");
+    } OSSL_TRACE_END(PKCS5V2);
     return rv;
 }
 
@@ -134,7 +135,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              const EVP_CIPHER *c, const EVP_MD *md, int en_de)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
-    int saltlen, iter;
+    int saltlen, iter, t;
     int rv = 0;
     unsigned int keylen = 0;
     int prf_nid, hmac_md_nid;
@@ -157,7 +158,12 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         goto err;
     }
 
-    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    t = EVP_CIPHER_CTX_key_length(ctx);
+    if (t < 0) {
+        EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_INVALID_KEY_LENGTH);
+        goto err;
+    }
+    keylen = t;
 
     /* Now check the parameters of the kdf */
 
@@ -200,12 +206,3 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     PBKDF2PARAM_free(kdf);
     return rv;
 }
-
-# ifdef OPENSSL_DEBUG_PKCS5V2
-static void h__dump(const unsigned char *p, int len)
-{
-    for (; len--; p++)
-        fprintf(stderr, "%02X ", *p);
-    fprintf(stderr, "\n");
-}
-# endif

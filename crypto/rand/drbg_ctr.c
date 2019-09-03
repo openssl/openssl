@@ -354,6 +354,7 @@ static int drbg_ctr_uninstantiate(RAND_DRBG *drbg)
 {
     EVP_CIPHER_CTX_free(drbg->data.ctr.ctx);
     EVP_CIPHER_CTX_free(drbg->data.ctr.ctx_df);
+    EVP_CIPHER_meth_free(drbg->data.ctr.cipher);
     OPENSSL_cleanse(&drbg->data.ctr, sizeof(drbg->data.ctr));
     return 1;
 }
@@ -369,6 +370,7 @@ int drbg_ctr_init(RAND_DRBG *drbg)
 {
     RAND_DRBG_CTR *ctr = &drbg->data.ctr;
     size_t keylen;
+    EVP_CIPHER *cipher = NULL;
 
     switch (drbg->type) {
     default:
@@ -376,17 +378,22 @@ int drbg_ctr_init(RAND_DRBG *drbg)
         return 0;
     case NID_aes_128_ctr:
         keylen = 16;
-        ctr->cipher = EVP_aes_128_ecb();
+        cipher = EVP_CIPHER_fetch(drbg->libctx, "AES-128-ECB", "");
         break;
     case NID_aes_192_ctr:
         keylen = 24;
-        ctr->cipher = EVP_aes_192_ecb();
+        cipher = EVP_CIPHER_fetch(drbg->libctx, "AES-192-ECB", "");
         break;
     case NID_aes_256_ctr:
         keylen = 32;
-        ctr->cipher = EVP_aes_256_ecb();
+        cipher = EVP_CIPHER_fetch(drbg->libctx, "AES-256-ECB", "");
         break;
     }
+    if (cipher == NULL)
+        return 0;
+
+    EVP_CIPHER_meth_free(ctr->cipher);
+    ctr->cipher = cipher;
 
     drbg->meth = &drbg_ctr_meth;
 
@@ -422,6 +429,11 @@ int drbg_ctr_init(RAND_DRBG *drbg)
         drbg->max_perslen = DRBG_MAX_LENGTH;
         drbg->max_adinlen = DRBG_MAX_LENGTH;
     } else {
+#ifdef FIPS_MODE
+        RANDerr(RAND_F_DRBG_CTR_INIT,
+                RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS);
+        return 0;
+#else
         drbg->min_entropylen = drbg->seedlen;
         drbg->max_entropylen = drbg->seedlen;
         /* Nonce not used */
@@ -429,6 +441,7 @@ int drbg_ctr_init(RAND_DRBG *drbg)
         drbg->max_noncelen = 0;
         drbg->max_perslen = drbg->seedlen;
         drbg->max_adinlen = drbg->seedlen;
+#endif
     }
 
     drbg->max_request = 1 << 16;

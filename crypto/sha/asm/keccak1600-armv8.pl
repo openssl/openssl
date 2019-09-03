@@ -51,6 +51,7 @@
 # Kryo		12
 # Denver	7.8
 # Apple A7	7.2
+# ThunderX2	9.7
 #
 # (*)	Corresponds to SHA3-256. No improvement coefficients are listed
 #	because they vary too much from compiler to compiler. Newer
@@ -730,7 +731,7 @@ $code.=<<___;
 	blo	.Lprocess_block_ce
 	ldr	d31,[$inp],#8		// *inp++
 #ifdef	__AARCH64EB__
-	rev	v31.16b,v31.16b
+	rev64	v31.16b,v31.16b
 #endif
 	eor	$A[$j/5][$j%5],$A[$j/5][$j%5],v31.16b
 	beq	.Lprocess_block_ce
@@ -739,7 +740,7 @@ ___
 $code.=<<___;
 	ldr	d31,[$inp],#8		// *inp++
 #ifdef	__AARCH64EB__
-	rev	v31.16b,v31.16b
+	rev64	v31.16b,v31.16b
 #endif
 	eor	$A[4][4],$A[4][4],v31.16b
 

@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include "modes_lcl.h"
 #include <string.h>
+#include <openssl/crypto.h>
+#include "internal/modes_int.h"
 
 #if defined(BSWAP4) && defined(STRICT_ALIGNMENT)
 /* redefine, because alignment is ensured */

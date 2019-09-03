@@ -11,18 +11,6 @@
 #include <limits.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include "internal/o_str.h"
-
-int OPENSSL_memcmp(const void *v1, const void *v2, size_t n)
-{
-    const unsigned char *c1 = v1, *c2 = v2;
-    int ret = 0;
-
-    while (n && (ret = *c1 - *c2) == 0)
-        n--, c1++, c2++;
-
-    return ret;
-}
 
 char *CRYPTO_strdup(const char *str, const char* file, int line)
 {
@@ -144,43 +132,100 @@ int OPENSSL_hexchar2int(unsigned char c)
 /*
  * Give a string of hex digits convert to a buffer
  */
-unsigned char *OPENSSL_hexstr2buf(const char *str, long *len)
+int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
+                          const char *str)
 {
-    unsigned char *hexbuf, *q;
+    unsigned char *q;
     unsigned char ch, cl;
     int chi, cli;
     const unsigned char *p;
-    size_t s;
+    size_t cnt;
 
-    s = strlen(str);
-    if ((hexbuf = OPENSSL_malloc(s >> 1)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-    for (p = (const unsigned char *)str, q = hexbuf; *p; ) {
+    for (p = (const unsigned char *)str, q = buf, cnt = 0; *p; ) {
         ch = *p++;
         if (ch == ':')
             continue;
         cl = *p++;
         if (!cl) {
-            CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF,
+            CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF_EX,
                       CRYPTO_R_ODD_NUMBER_OF_DIGITS);
-            OPENSSL_free(hexbuf);
-            return NULL;
+            return 0;
         }
         cli = OPENSSL_hexchar2int(cl);
         chi = OPENSSL_hexchar2int(ch);
         if (cli < 0 || chi < 0) {
-            OPENSSL_free(hexbuf);
-            CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF, CRYPTO_R_ILLEGAL_HEX_DIGIT);
-            return NULL;
+            CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF_EX,
+                      CRYPTO_R_ILLEGAL_HEX_DIGIT);
+            return 0;
         }
-        *q++ = (unsigned char)((chi << 4) | cli);
+        cnt++;
+        if (q != NULL) {
+            if (cnt > buf_n) {
+                CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF_EX,
+                          CRYPTO_R_TOO_SMALL_BUFFER);
+                return 0;
+            }
+            *q++ = (unsigned char)((chi << 4) | cli);
+        }
     }
 
-    if (len)
-        *len = q - hexbuf;
-    return hexbuf;
+    if (buflen != NULL)
+        *buflen = cnt;
+    return 1;
+}
+
+unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen)
+{
+    unsigned char *buf;
+    size_t buf_n, tmp_buflen;
+
+    buf_n = strlen(str) >> 1;
+    if ((buf = OPENSSL_malloc(buf_n)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    if (buflen != NULL)
+        *buflen = 0;
+    tmp_buflen = 0;
+    if (OPENSSL_hexstr2buf_ex(buf, buf_n, &tmp_buflen, str)) {
+        if (buflen != NULL)
+            *buflen = (long)tmp_buflen;
+        return buf;
+    }
+    OPENSSL_free(buf);
+    return NULL;
+}
+
+int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
+                          const unsigned char *buf, size_t buflen)
+{
+    static const char hexdig[] = "0123456789ABCDEF";
+    const unsigned char *p;
+    char *q;
+    size_t i;
+
+    if (strlen != NULL)
+        *strlen = buflen * 3;
+    if (str == NULL)
+        return 1;
+
+    if (str_n < (unsigned long)buflen * 3) {
+        CRYPTOerr(CRYPTO_F_OPENSSL_BUF2HEXSTR_EX, CRYPTO_R_TOO_SMALL_BUFFER);
+        return 0;
+    }
+
+    q = str;
+    for (i = 0, p = buf; i < buflen; i++, p++) {
+        *q++ = hexdig[(*p >> 4) & 0xf];
+        *q++ = hexdig[*p & 0xf];
+        *q++ = ':';
+    }
+    q[-1] = 0;
+#ifdef CHARSET_EBCDIC
+    ebcdic2ascii(str, str, q - str - 1);
+#endif
+    return 1;
 }
 
 /*
@@ -188,34 +233,24 @@ unsigned char *OPENSSL_hexstr2buf(const char *str, long *len)
  * hex representation @@@ (Contents of buffer are always kept in ASCII, also
  * on EBCDIC machines)
  */
-char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len)
+char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen)
 {
-    static const char hexdig[] = "0123456789ABCDEF";
-    char *tmp, *q;
-    const unsigned char *p;
-    int i;
+    char *tmp;
+    size_t tmp_n;
 
-    if (len == 0)
-    {
+    if (buflen == 0)
         return OPENSSL_zalloc(1);
-    }
 
-    if ((tmp = OPENSSL_malloc(len * 3)) == NULL) {
+    tmp_n = buflen * 3;
+    if ((tmp = OPENSSL_malloc(tmp_n)) == NULL) {
         CRYPTOerr(CRYPTO_F_OPENSSL_BUF2HEXSTR, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    q = tmp;
-    for (i = 0, p = buffer; i < len; i++, p++) {
-        *q++ = hexdig[(*p >> 4) & 0xf];
-        *q++ = hexdig[*p & 0xf];
-        *q++ = ':';
-    }
-    q[-1] = 0;
-#ifdef CHARSET_EBCDIC
-    ebcdic2ascii(tmp, tmp, q - tmp - 1);
-#endif
 
-    return tmp;
+    if (OPENSSL_buf2hexstr_ex(tmp, tmp_n, NULL, buf, buflen))
+        return tmp;
+    OPENSSL_free(tmp);
+    return NULL;
 }
 
 int openssl_strerror_r(int errnum, char *buf, size_t buflen)
@@ -223,7 +258,26 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 #if defined(_MSC_VER) && _MSC_VER>=1400
     return !strerror_s(buf, buflen, errnum);
 #elif defined(_GNU_SOURCE)
-    return strerror_r(errnum, buf, buflen) != NULL;
+    char *err;
+
+    /*
+     * GNU strerror_r may not actually set buf.
+     * It can return a pointer to some (immutable) static string in which case
+     * buf is left unused.
+     */
+    err = strerror_r(errnum, buf, buflen);
+    if (err == NULL || buflen == 0)
+        return 0;
+    /*
+     * If err is statically allocated, err != buf and we need to copy the data.
+     * If err points somewhere inside buf, OPENSSL_strlcpy can handle this,
+     * since src and dest are not annotated with __restrict and the function
+     * reads src byte for byte and writes to dest.
+     * If err == buf we do not have to copy anything.
+     */
+    if (err != buf)
+        OPENSSL_strlcpy(buf, err, buflen);
+    return 1;
 #elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
       (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
     /*
@@ -234,6 +288,7 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
     return !strerror_r(errnum, buf, buflen);
 #else
     char *err;
+
     /* Fall back to non-thread safe strerror()...its all we can do */
     if (buflen < 2)
         return 0;
@@ -241,8 +296,7 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
     /* Can this ever happen? */
     if (err == NULL)
         return 0;
-    strncpy(buf, err, buflen - 1);
-    buf[buflen - 1] = '\0';
+    OPENSSL_strlcpy(buf, err, buflen);
     return 1;
 #endif
 }

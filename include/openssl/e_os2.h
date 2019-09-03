@@ -136,15 +136,6 @@ extern "C" {
  * That's it for OS-specific stuff
  *****************************************************************************/
 
-/* Specials for I/O an exit */
-# ifdef OPENSSL_SYS_MSDOS
-#  define OPENSSL_UNISTD_IO <io.h>
-#  define OPENSSL_DECLARE_EXIT extern void exit(int);
-# else
-#  define OPENSSL_UNISTD_IO OPENSSL_UNISTD
-#  define OPENSSL_DECLARE_EXIT  /* declared in unistd.h */
-# endif
-
 /*-
  * OPENSSL_EXTERN is normally used to declare a symbol with possible extra
  * attributes to handle its presence in a shared library.
@@ -170,29 +161,6 @@ extern "C" {
 # else
 #  define OPENSSL_EXPORT extern
 #  define OPENSSL_EXTERN extern
-# endif
-
-/*-
- * Macros to allow global variables to be reached through function calls when
- * required (if a shared library version requires it, for example.
- * The way it's done allows definitions like this:
- *
- *      // in foobar.c
- *      OPENSSL_IMPLEMENT_GLOBAL(int,foobar,0)
- *      // in foobar.h
- *      OPENSSL_DECLARE_GLOBAL(int,foobar);
- *      #define foobar OPENSSL_GLOBAL_REF(foobar)
- */
-# ifdef OPENSSL_EXPORT_VAR_AS_FUNCTION
-#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value)                      \
-        type *_shadow_##name(void)                                      \
-        { static type _hide_##name=value; return &_hide_##name; }
-#  define OPENSSL_DECLARE_GLOBAL(type,name) type *_shadow_##name(void)
-#  define OPENSSL_GLOBAL_REF(name) (*(_shadow_##name()))
-# else
-#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) type _shadow_##name=value;
-#  define OPENSSL_DECLARE_GLOBAL(type,name) OPENSSL_EXPORT type _shadow_##name
-#  define OPENSSL_GLOBAL_REF(name) _shadow_##name
 # endif
 
 # ifdef _WIN32
@@ -228,6 +196,8 @@ extern "C" {
 # endif
 
 /* Standard integer types */
+# define OPENSSL_NO_INTTYPES_H
+# define OPENSSL_NO_STDINT_H
 # if defined(OPENSSL_SYS_UEFI)
 typedef INT8 int8_t;
 typedef UINT8 uint8_t;
@@ -241,6 +211,9 @@ typedef UINT64 uint64_t;
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
      defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
 #  include <inttypes.h>
+#  undef OPENSSL_NO_INTTYPES_H
+/* Because the specs say that inttypes.h includes stdint.h if present */
+#  undef OPENSSL_NO_STDINT_H
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
  * minimally required typdefs for systems not supporting inttypes.h or
@@ -256,6 +229,7 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 # else
 #  include <stdint.h>
+#  undef OPENSSL_NO_STDINT_H
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */

@@ -83,6 +83,16 @@
  is, of course, to choose a different set of directories by using
  --prefix and --openssldir when configuring.
 
+
+ Special notes for Universal Windows Platform builds, a.k.a. VC-*-UWP
+ --------------------------------------------------------------------
+
+ - UWP targets only support building the static and dynamic libraries.
+
+ - You should define the platform type to "uwp" and the target arch via
+   "vcvarsall.bat" before you compile. For example, if you want to build
+   "arm64" builds, you should type "vcvarsall.bat x86_arm64 uwp".
+
  mingw and mingw64
  =================
 

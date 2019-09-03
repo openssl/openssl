@@ -28,7 +28,7 @@ struct v3_ext_ctx;
 typedef void *(*X509V3_EXT_NEW)(void);
 typedef void (*X509V3_EXT_FREE) (void *);
 typedef void *(*X509V3_EXT_D2I)(void *, const unsigned char **, long);
-typedef int (*X509V3_EXT_I2D) (void *, unsigned char **);
+typedef int (*X509V3_EXT_I2D) (const void *, unsigned char **);
 typedef STACK_OF(CONF_VALUE) *
     (*X509V3_EXT_I2V) (const struct v3_ext_method *method, void *ext,
                        STACK_OF(CONF_VALUE) *extlist);
@@ -467,7 +467,7 @@ DECLARE_ASN1_FUNCTIONS(AUTHORITY_KEYID)
 DECLARE_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
 
 DECLARE_ASN1_FUNCTIONS(GENERAL_NAME)
-GENERAL_NAME *GENERAL_NAME_dup(GENERAL_NAME *a);
+DECLARE_ASN1_DUP_FUNCTION(GENERAL_NAME)
 int GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b);
 
 ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
@@ -497,10 +497,10 @@ DECLARE_ASN1_FUNCTIONS(OTHERNAME)
 DECLARE_ASN1_FUNCTIONS(EDIPARTYNAME)
 int OTHERNAME_cmp(OTHERNAME *a, OTHERNAME *b);
 void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value);
-void *GENERAL_NAME_get0_value(GENERAL_NAME *a, int *ptype);
+void *GENERAL_NAME_get0_value(const GENERAL_NAME *a, int *ptype);
 int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
                                 ASN1_OBJECT *oid, ASN1_TYPE *value);
-int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen,
+int GENERAL_NAME_get0_otherName(const GENERAL_NAME *gen,
                                 ASN1_OBJECT **poid, ASN1_TYPE **pvalue);
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
@@ -661,6 +661,8 @@ uint32_t X509_get_key_usage(X509 *x);
 uint32_t X509_get_extended_key_usage(X509 *x);
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x);
 const ASN1_OCTET_STRING *X509_get0_authority_key_id(X509 *x);
+const GENERAL_NAMES *X509_get0_authority_issuer(X509 *x);
+const ASN1_INTEGER *X509_get0_authority_serial(X509 *x);
 
 int X509_PURPOSE_get_count(void);
 X509_PURPOSE *X509_PURPOSE_get0(int idx);

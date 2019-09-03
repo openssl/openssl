@@ -11,7 +11,7 @@
 #include <string.h>
 #include "ssltestlib.h"
 #include "testutil.h"
-#include "../ssl/packet_locl.h"
+#include "internal/packet.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -315,8 +315,15 @@ static int test_tls13ccs(int tst)
 
     if ((tst >= 3 && tst <= 5) || tst >= 9) {
         /* HRR handshake */
+#if defined(OPENSSL_NO_EC)
+# if !defined(OPENSSL_NO_DH)
+        if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "ffdhe3072")))
+            goto err;
+# endif
+#else
         if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "P-256")))
             goto err;
+#endif
     }
 
     s_to_c_fbio = BIO_new(bio_f_watchccs_filter());

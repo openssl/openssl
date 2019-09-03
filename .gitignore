@@ -26,7 +26,6 @@ Makefile
 
 # Auto generated headers
 /crypto/buildinf.h
-/apps/progs.h
 /crypto/include/internal/*_conf.h
 /openssl/include/opensslconf.h
 /util/domd
@@ -60,6 +59,8 @@ Makefile
 /test/versions
 /test/ossl_shim/ossl_shim
 /test/rsa_complex
+# Other generated files in test/
+/test/provider_internal_test.conf
 
 # Certain files that get created by tests on the fly
 /test/test-runs

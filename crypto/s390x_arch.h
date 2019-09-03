@@ -26,6 +26,9 @@ void s390x_kmf(const unsigned char *in, size_t len, unsigned char *out,
                unsigned int fc, void *param);
 void s390x_kma(const unsigned char *aad, size_t alen, const unsigned char *in,
                size_t len, unsigned char *out, unsigned int fc, void *param);
+int s390x_pcc(unsigned int fc, void *param);
+int s390x_kdsa(unsigned int fc, void *param, const unsigned char *in,
+               size_t len);
 
 /*
  * The field elements of OPENSSL_s390xcap_P are the 64-bit words returned by
@@ -45,76 +48,95 @@ struct OPENSSL_s390xcap_st {
     unsigned long long kmf[2];
     unsigned long long prno[2];
     unsigned long long kma[2];
+    unsigned long long pcc[2];
+    unsigned long long kdsa[2];
 };
 
 extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 /* Max number of 64-bit words currently returned by STFLE */
-#  define S390X_STFLE_MAX	3
+#  define S390X_STFLE_MAX       3
 
 /* convert facility bit number or function code to bit mask */
-#  define S390X_CAPBIT(i)	(1ULL << (63 - (i) % 64))
+#  define S390X_CAPBIT(i)       (1ULL << (63 - (i) % 64))
 
 # endif
 
 /* OPENSSL_s390xcap_P offsets [bytes] */
-# define S390X_STFLE		0x00
-# define S390X_KIMD		0x20
-# define S390X_KLMD		0x30
-# define S390X_KM		0x40
-# define S390X_KMC		0x50
-# define S390X_KMAC		0x60
-# define S390X_KMCTR		0x70
-# define S390X_KMO		0x80
-# define S390X_KMF		0x90
-# define S390X_PRNO		0xa0
-# define S390X_KMA		0xb0
+# define S390X_STFLE            0x00
+# define S390X_KIMD             0x20
+# define S390X_KLMD             0x30
+# define S390X_KM               0x40
+# define S390X_KMC              0x50
+# define S390X_KMAC             0x60
+# define S390X_KMCTR            0x70
+# define S390X_KMO              0x80
+# define S390X_KMF              0x90
+# define S390X_PRNO             0xa0
+# define S390X_KMA              0xb0
+# define S390X_PCC              0xc0
+# define S390X_KDSA             0xd0
 
 /* Facility Bit Numbers */
-# define S390X_MSA		17	/* message-security-assist */
-# define S390X_STCKF		25	/* store-clock-fast */
-# define S390X_MSA5		57	/* message-security-assist-ext. 5 */
-# define S390X_MSA3		76	/* message-security-assist-ext. 3 */
-# define S390X_MSA4		77	/* message-security-assist-ext. 4 */
-# define S390X_VX		129	/* vector */
-# define S390X_VXD		134	/* vector packed decimal */
-# define S390X_VXE		135	/* vector enhancements 1 */
-# define S390X_MSA8		146	/* message-security-assist-ext. 8 */
+# define S390X_MSA              17      /* message-security-assist */
+# define S390X_STCKF            25      /* store-clock-fast */
+# define S390X_MSA5             57      /* message-security-assist-ext. 5 */
+# define S390X_MSA3             76      /* message-security-assist-ext. 3 */
+# define S390X_MSA4             77      /* message-security-assist-ext. 4 */
+# define S390X_VX               129     /* vector */
+# define S390X_VXD              134     /* vector packed decimal */
+# define S390X_VXE              135     /* vector enhancements 1 */
+# define S390X_MSA8             146     /* message-security-assist-ext. 8 */
+# define S390X_MSA9             155     /* message-security-assist-ext. 9 */
 
 /* Function Codes */
 
 /* all instructions */
-# define S390X_QUERY		0
+# define S390X_QUERY            0
 
 /* kimd/klmd */
-# define S390X_SHA_1		1
-# define S390X_SHA_256		2
-# define S390X_SHA_512		3
-# define S390X_SHA3_224		32
-# define S390X_SHA3_256		33
-# define S390X_SHA3_384		34
-# define S390X_SHA3_512		35
-# define S390X_SHAKE_128	36
-# define S390X_SHAKE_256	37
-# define S390X_GHASH		65
+# define S390X_SHA_1            1
+# define S390X_SHA_256          2
+# define S390X_SHA_512          3
+# define S390X_SHA3_224         32
+# define S390X_SHA3_256         33
+# define S390X_SHA3_384         34
+# define S390X_SHA3_512         35
+# define S390X_SHAKE_128        36
+# define S390X_SHAKE_256        37
+# define S390X_GHASH            65
 
 /* km/kmc/kmac/kmctr/kmo/kmf/kma */
-# define S390X_AES_128		18
-# define S390X_AES_192		19
-# define S390X_AES_256		20
+# define S390X_AES_128          18
+# define S390X_AES_192          19
+# define S390X_AES_256          20
 
 /* km */
-# define S390X_XTS_AES_128	50
-# define S390X_XTS_AES_256	52
+# define S390X_XTS_AES_128      50
+# define S390X_XTS_AES_256      52
 
 /* prno */
-# define S390X_SHA_512_DRNG	3
-# define S390X_TRNG		114
+# define S390X_SHA_512_DRNG     3
+# define S390X_TRNG             114
+
+/* pcc */
+# define S390X_SCALAR_MULTIPLY_P256     64
+# define S390X_SCALAR_MULTIPLY_P384     65
+# define S390X_SCALAR_MULTIPLY_P521     66
+
+/* kdsa */
+# define S390X_ECDSA_VERIFY_P256        1
+# define S390X_ECDSA_VERIFY_P384        2
+# define S390X_ECDSA_VERIFY_P521        3
+# define S390X_ECDSA_SIGN_P256          9
+# define S390X_ECDSA_SIGN_P384          10
+# define S390X_ECDSA_SIGN_P521          11
 
 /* Register 0 Flags */
-# define S390X_DECRYPT		0x80
-# define S390X_KMA_LPC		0x100
-# define S390X_KMA_LAAD		0x200
-# define S390X_KMA_HS		0x400
+# define S390X_DECRYPT          0x80
+# define S390X_KMA_LPC          0x100
+# define S390X_KMA_LAAD         0x200
+# define S390X_KMA_HS           0x400
+# define S390X_KDSA_D           0x80
 
 #endif

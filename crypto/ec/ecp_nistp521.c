@@ -357,10 +357,15 @@ static void felem_diff64(felem out, const felem in)
 static void felem_diff_128_64(largefelem out, const felem in)
 {
     /*
-     * In order to prevent underflow, we add 0 mod p before subtracting.
+     * In order to prevent underflow, we add 64p mod p (which is equivalent
+     * to 0 mod p) before subtracting. p is 2^521 - 1, i.e. in binary a 521
+     * digit number with all bits set to 1. See "The representation of field
+     * elements" comment above for a description of how limbs are used to
+     * represent a number. 64p is represented with 8 limbs containing a number
+     * with 58 bits set and one limb with a number with 57 bits set.
      */
-    static const limb two63m6 = (((limb) 1) << 62) - (((limb) 1) << 5);
-    static const limb two63m5 = (((limb) 1) << 62) - (((limb) 1) << 4);
+    static const limb two63m6 = (((limb) 1) << 63) - (((limb) 1) << 6);
+    static const limb two63m5 = (((limb) 1) << 63) - (((limb) 1) << 5);
 
     out[0] += two63m6 - in[0];
     out[1] += two63m5 - in[1];
@@ -1264,7 +1269,7 @@ static void point_add(felem x3, felem y3, felem z3,
          * ffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb
          * 71e913863f7, in that case the penultimate intermediate is -9G and
          * the final digit is also -9G. Since this only happens for a single
-         * scalar, the timing leak is irrelevent. (Any attacker who wanted to
+         * scalar, the timing leak is irrelevant. (Any attacker who wanted to
          * check whether a secret scalar was that exact value, can already do
          * so.)
          */
@@ -1660,6 +1665,9 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
+        ecdsa_simple_sign_setup,
+        ecdsa_simple_sign_sig,
+        ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         0, /* blind_coordinates */
         0, /* ladder_pre */
@@ -1738,12 +1746,16 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
                                     BN_CTX *ctx)
 {
     int ret = 0;
-    BN_CTX *new_ctx = NULL;
     BIGNUM *curve_p, *curve_a, *curve_b;
+#ifndef FIPS_MODE
+    BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+        ctx = new_ctx = BN_CTX_new();
+#endif
+    if (ctx == NULL)
+        return 0;
+
     BN_CTX_start(ctx);
     curve_p = BN_CTX_get(ctx);
     curve_a = BN_CTX_get(ctx);
@@ -1762,7 +1774,9 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
+#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
+#endif
     return ret;
 }
 
@@ -2049,16 +2063,23 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     int ret = 0;
     NISTP521_PRE_COMP *pre = NULL;
     int i, j;
-    BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y;
     EC_POINT *generator = NULL;
     felem tmp_felems[16];
+#ifndef FIPS_MODE
+    BN_CTX *new_ctx = NULL;
+#endif
 
     /* throw away old precomputation */
     EC_pre_comp_free(group);
+
+#ifndef FIPS_MODE
     if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+        ctx = new_ctx = BN_CTX_new();
+#endif
+    if (ctx == NULL)
+        return 0;
+
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
@@ -2146,7 +2167,9 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
+#ifndef FIPS_MODE
     BN_CTX_free(new_ctx);
+#endif
     EC_nistp521_pre_comp_free(pre);
     return ret;
 }

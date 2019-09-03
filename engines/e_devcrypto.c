@@ -25,7 +25,7 @@
 
 /* #define ENGINE_DEVCRYPTO_DEBUG */
 
-#ifdef CRYPTO_ALGORITHM_MIN
+#if CRYPTO_ALGORITHM_MIN < CRYPTO_ALGORITHM_MAX
 # define CHECK_BSD_STYLE_MACROS
 #endif
 
@@ -59,7 +59,7 @@ struct driver_info_st {
 
     enum devcrypto_accelerated_t {
         DEVCRYPTO_NOT_ACCELERATED        = -1, /* software implemented */
-        DEVCRYPTO_ACCELERATION_UNKNOWN   =  0, /* acceleration support unkown */
+        DEVCRYPTO_ACCELERATION_UNKNOWN   =  0, /* acceleration support unknown */
         DEVCRYPTO_ACCELERATED            =  1  /* hardware accelerated */
     } accelerated;
 
@@ -72,7 +72,7 @@ void engine_load_devcrypto_int(void);
 
 static int clean_devcrypto_session(struct session_op *sess) {
     if (ioctl(cfd, CIOCFSESSION, &sess->ses) < 0) {
-        SYSerr(SYS_F_IOCTL, errno);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
     memset(sess, 0, sizeof(struct session_op));
@@ -208,7 +208,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     cipher_ctx->mode = cipher_d->flags & EVP_CIPH_MODE;
     cipher_ctx->blocksize = cipher_d->blocksize;
     if (ioctl(cfd, CIOCGSESSION, &cipher_ctx->sess) < 0) {
-        SYSerr(SYS_F_IOCTL, errno);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
 
@@ -260,7 +260,7 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #endif
 
     if (ioctl(cfd, CIOCCRYPT, &cryp) < 0) {
-        SYSerr(SYS_F_IOCTL, errno);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
 
@@ -353,7 +353,7 @@ static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
         to_cipher_ctx =
             (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(to_ctx);
         memset(&to_cipher_ctx->sess, 0, sizeof(to_cipher_ctx->sess));
-        return cipher_init(to_ctx, cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
+        return cipher_init(to_ctx, (void *)cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
                            (cipher_ctx->op == COP_ENCRYPT));
 
     case EVP_CTRL_INIT:
@@ -704,7 +704,7 @@ static int digest_init(EVP_MD_CTX *ctx)
     memset(&digest_ctx->sess, 0, sizeof(digest_ctx->sess));
     digest_ctx->sess.mac = digest_d->devcryptoid;
     if (ioctl(cfd, CIOCGSESSION, &digest_ctx->sess) < 0) {
-        SYSerr(SYS_F_IOCTL, errno);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
     return 1;
@@ -743,7 +743,7 @@ static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
         return 1;
     }
 
-    SYSerr(SYS_F_IOCTL, errno);
+    ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
     return 0;
 }
 
@@ -758,7 +758,7 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
     if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT)) {
         memcpy(md, digest_ctx->digest_res, EVP_MD_CTX_size(ctx));
     } else if (digest_op(digest_ctx, NULL, 0, md, COP_FLAG_FINAL) < 0) {
-        SYSerr(SYS_F_IOCTL, errno);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
 
@@ -777,14 +777,14 @@ static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
         return 1;
 
     if (!digest_init(to)) {
-        SYSerr(SYS_F_IOCTL, errno);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
 
     cphash.src_ses = digest_from->sess.ses;
     cphash.dst_ses = digest_to->sess.ses;
     if (ioctl(cfd, CIOCCPHASH, &cphash) < 0) {
-        SYSerr(SYS_F_IOCTL, errno);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling ioctl()");
         return 0;
     }
     return 1;

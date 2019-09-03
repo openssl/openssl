@@ -51,11 +51,14 @@ B<openssl> B<ca>
 [B<-engine id>]
 [B<-subj arg>]
 [B<-utf8>]
+[B<-sigopt nm:v>]
 [B<-create_serial>]
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
 [B<-rand file...>]
 [B<-writerand file>]
+[B<-sm2-id string>]
+[B<-sm2-hex-id hex-string>]
 
 =head1 DESCRIPTION
 
@@ -133,6 +136,11 @@ The private key to sign requests with.
 
 The format of the data in the private key file.
 The default is PEM.
+
+=item B<-sigopt nm:v>
+
+Pass options to the signature algorithm during sign or verify operations.
+Names and values of these options are algorithm-specific.
 
 =item B<-key password>
 
@@ -296,6 +304,16 @@ all others.
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
+
+=item B<-sm2-id>
+
+Specify the ID string to use when verifying an SM2 certificate. The ID string is
+required by the SM2 signature algorithm for signing and verification.
+
+=item B<-sm2-hex-id>
+
+Specify a binary ID string to use when signing or verifying using an SM2
+certificate. The argument for this option is string of hexadecimal digits.
 
 =back
 
@@ -594,6 +612,10 @@ Sign a certificate request:
 
  openssl ca -in req.pem -out newcert.pem
 
+Sign an SM2 certificate request:
+
+ openssl ca -in sm2.csr -out sm2.crt -md sm3 -sigopt "sm2_id:1234567812345678" -sm2-id "1234567812345678"
+
 Sign a certificate request, using CA extensions:
 
  openssl ca -in req.pem -extensions v3_ca -out newcert.pem
@@ -753,7 +775,7 @@ L<config(5)>, L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

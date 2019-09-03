@@ -9,6 +9,7 @@ list - list algorithms and features
 
 B<openssl list>
 [B<-help>]
+[B<-verbose>]
 [B<-1>]
 [B<-commands>]
 [B<-digest-commands>]
@@ -18,6 +19,7 @@ B<openssl list>
 [B<-cipher-algorithms>]
 [B<-public-key-algorithms>]
 [B<-public-key-methods>]
+[B<-engines>]
 [B<-disabled>]
 
 =head1 DESCRIPTION
@@ -32,6 +34,11 @@ features.
 =item B<-help>
 
 Display a usage message.
+
+=item B<-verbose>
+
+Displays extra information.
+The options below where verbosity applies say a bit more about what that means.
 
 =item B<-1>
 
@@ -52,6 +59,11 @@ as input to the L<dgst(1)> or L<speed(1)> commands.
 Display a list of message digest algorithms.
 If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
 official algorithm name, B<bar>.
+If a line is of the form C<foo @ bar>, then B<foo> is provided by the provider
+B<bar>.
+
+In verbose mode, the algorithms provided by a provider will get additional
+information on what parameters each implementation supports.
 
 =item B<-mac-algorithms>
 
@@ -69,6 +81,11 @@ to the L<dgst(1)> or L<speed(1)> commands.
 Display a list of cipher algorithms.
 If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
 official algorithm name, B<bar>.
+If a line is of the form C<foo @ bar>, then B<foo> is provided by the provider
+B<bar>.
+
+In verbose mode, the algorithms provided by a provider will get additional
+information on what parameters each implementation supports.
 
 =item B<-public-key-algorithms>
 
@@ -79,6 +96,10 @@ a block of multiple lines, all but the first are indented.
 
 Display a list of public key method OIDs: this also includes public key methods
 without an associated ASN.1 method, for example, KDF algorithms.
+
+=item B<-engines>
+
+Display a list of loaded engines.
 
 =item B<-disabled>
 

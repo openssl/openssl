@@ -26,7 +26,8 @@ structure are freed.
 SSL_up_ref() increments the reference count for an
 existing B<SSL> structure.
 
-SSL_dup() duplicates an existing B<SSL> structure into a new allocated one. All
+SSL_dup() duplicates an existing B<SSL> structure into a new allocated one
+or just increments the reference count if the connection is active. All
 settings are inherited from the original B<SSL> structure. Dynamic data (i.e.
 existing connection details) are not copied, the new B<SSL> is set into an
 initial accept (server) or connect (client) state.

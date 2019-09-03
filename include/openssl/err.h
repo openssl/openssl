@@ -26,9 +26,11 @@ extern "C" {
 #endif
 
 # ifndef OPENSSL_NO_ERR
-#  define ERR_PUT_error(a,b,c,d,e)        ERR_put_error(a,b,c,d,e)
+#  define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,fn,ln)
+#  define ERR_PUT_func_error(l,f,r,fn,ln) ERR_put_func_error(l,f,r,fn,ln)
 # else
-#  define ERR_PUT_error(a,b,c,d,e)        ERR_put_error(a,b,c,NULL,0)
+#  define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,NULL,0)
+#  define ERR_PUT_func_error(l,f,r,fn,ln) ERR_put_func_error(l,f,r,NULL,0)
 # endif
 
 # include <errno.h>
@@ -37,15 +39,18 @@ extern "C" {
 # define ERR_TXT_STRING          0x02
 
 # define ERR_FLAG_MARK           0x01
+# define ERR_FLAG_CLEAR          0x02
 
 # define ERR_NUM_ERRORS  16
 typedef struct err_state_st {
     int err_flags[ERR_NUM_ERRORS];
     unsigned long err_buffer[ERR_NUM_ERRORS];
     char *err_data[ERR_NUM_ERRORS];
+    size_t err_data_size[ERR_NUM_ERRORS];
     int err_data_flags[ERR_NUM_ERRORS];
     const char *err_file[ERR_NUM_ERRORS];
     int err_line[ERR_NUM_ERRORS];
+    const char *err_func[ERR_NUM_ERRORS];
     int top, bottom;
 } ERR_STATE;
 
@@ -96,47 +101,55 @@ typedef struct err_state_st {
 # define ERR_LIB_SM2             53
 # define ERR_LIB_ESS             54
 # define ERR_LIB_PROP            55
+# define ERR_LIB_CRMF            56
+# define ERR_LIB_PROV            57
+# define ERR_LIB_CMP             58
 
 # define ERR_LIB_USER            128
 
-# define SYSerr(f,r)  ERR_PUT_error(ERR_LIB_SYS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define BNerr(f,r)   ERR_PUT_error(ERR_LIB_BN,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define RSAerr(f,r)  ERR_PUT_error(ERR_LIB_RSA,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define DHerr(f,r)   ERR_PUT_error(ERR_LIB_DH,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define EVPerr(f,r)  ERR_PUT_error(ERR_LIB_EVP,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define BUFerr(f,r)  ERR_PUT_error(ERR_LIB_BUF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define OBJerr(f,r)  ERR_PUT_error(ERR_LIB_OBJ,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PEMerr(f,r)  ERR_PUT_error(ERR_LIB_PEM,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define DSAerr(f,r)  ERR_PUT_error(ERR_LIB_DSA,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define X509err(f,r) ERR_PUT_error(ERR_LIB_X509,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ASN1err(f,r) ERR_PUT_error(ERR_LIB_ASN1,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CONFerr(f,r) ERR_PUT_error(ERR_LIB_CONF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CRYPTOerr(f,r) ERR_PUT_error(ERR_LIB_CRYPTO,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ECerr(f,r)   ERR_PUT_error(ERR_LIB_EC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define SSLerr(f,r)  ERR_PUT_error(ERR_LIB_SSL,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define BIOerr(f,r)  ERR_PUT_error(ERR_LIB_BIO,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PKCS7err(f,r) ERR_PUT_error(ERR_LIB_PKCS7,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define X509V3err(f,r) ERR_PUT_error(ERR_LIB_X509V3,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PKCS12err(f,r) ERR_PUT_error(ERR_LIB_PKCS12,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define RANDerr(f,r) ERR_PUT_error(ERR_LIB_RAND,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define DSOerr(f,r) ERR_PUT_error(ERR_LIB_DSO,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ENGINEerr(f,r) ERR_PUT_error(ERR_LIB_ENGINE,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define OCSPerr(f,r) ERR_PUT_error(ERR_LIB_OCSP,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define UIerr(f,r) ERR_PUT_error(ERR_LIB_UI,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define COMPerr(f,r) ERR_PUT_error(ERR_LIB_COMP,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ECDSAerr(f,r)  ERR_PUT_error(ERR_LIB_ECDSA,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ECDHerr(f,r)  ERR_PUT_error(ERR_LIB_ECDH,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define OSSL_STOREerr(f,r) ERR_PUT_error(ERR_LIB_OSSL_STORE,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define FIPSerr(f,r) ERR_PUT_error(ERR_LIB_FIPS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CMSerr(f,r) ERR_PUT_error(ERR_LIB_CMS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define TSerr(f,r) ERR_PUT_error(ERR_LIB_TS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define HMACerr(f,r) ERR_PUT_error(ERR_LIB_HMAC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define CTerr(f,r) ERR_PUT_error(ERR_LIB_CT,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ASYNCerr(f,r) ERR_PUT_error(ERR_LIB_ASYNC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define KDFerr(f,r) ERR_PUT_error(ERR_LIB_KDF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define SM2err(f,r) ERR_PUT_error(ERR_LIB_SM2,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define ESSerr(f,r) ERR_PUT_error(ERR_LIB_ESS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
-# define PROPerr(f,r) ERR_PUT_error(ERR_LIB_PROP,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
+# if ! OPENSSL_API_3
+#  define SYSerr(f,r)  ERR_raise(ERR_LIB_SYS,(r))
+# endif
+# define BNerr(f,r)   ERR_raise(ERR_LIB_BN,(r))
+# define RSAerr(f,r)  ERR_raise(ERR_LIB_RSA,(r))
+# define DHerr(f,r)   ERR_raise(ERR_LIB_DH,(r))
+# define EVPerr(f,r)  ERR_raise(ERR_LIB_EVP,(r))
+# define BUFerr(f,r)  ERR_raise(ERR_LIB_BUF,(r))
+# define OBJerr(f,r)  ERR_raise(ERR_LIB_OBJ,(r))
+# define PEMerr(f,r)  ERR_raise(ERR_LIB_PEM,(r))
+# define DSAerr(f,r)  ERR_raise(ERR_LIB_DSA,(r))
+# define X509err(f,r) ERR_raise(ERR_LIB_X509,(r))
+# define ASN1err(f,r) ERR_raise(ERR_LIB_ASN1,(r))
+# define CONFerr(f,r) ERR_raise(ERR_LIB_CONF,(r))
+# define CRYPTOerr(f,r) ERR_raise(ERR_LIB_CRYPTO,(r))
+# define ECerr(f,r)   ERR_raise(ERR_LIB_EC,(r))
+# define SSLerr(f,r)  ERR_raise(ERR_LIB_SSL,(r))
+# define BIOerr(f,r)  ERR_raise(ERR_LIB_BIO,(r))
+# define PKCS7err(f,r) ERR_raise(ERR_LIB_PKCS7,(r))
+# define X509V3err(f,r) ERR_raise(ERR_LIB_X509V3,(r))
+# define PKCS12err(f,r) ERR_raise(ERR_LIB_PKCS12,(r))
+# define RANDerr(f,r) ERR_raise(ERR_LIB_RAND,(r))
+# define DSOerr(f,r) ERR_raise(ERR_LIB_DSO,(r))
+# define ENGINEerr(f,r) ERR_raise(ERR_LIB_ENGINE,(r))
+# define OCSPerr(f,r) ERR_raise(ERR_LIB_OCSP,(r))
+# define UIerr(f,r) ERR_raise(ERR_LIB_UI,(r))
+# define COMPerr(f,r) ERR_raise(ERR_LIB_COMP,(r))
+# define ECDSAerr(f,r)  ERR_raise(ERR_LIB_ECDSA,(r))
+# define ECDHerr(f,r)  ERR_raise(ERR_LIB_ECDH,(r))
+# define OSSL_STOREerr(f,r) ERR_raise(ERR_LIB_OSSL_STORE,(r))
+# define FIPSerr(f,r) ERR_raise(ERR_LIB_FIPS,(r))
+# define CMSerr(f,r) ERR_raise(ERR_LIB_CMS,(r))
+# define CRMFerr(f,r) ERR_raise(ERR_LIB_CRMF,(r))
+# define CMPerr(f,r) ERR_raise(ERR_LIB_CMP,(r))
+# define TSerr(f,r) ERR_raise(ERR_LIB_TS,(r))
+# define HMACerr(f,r) ERR_raise(ERR_LIB_HMAC,(r))
+# define CTerr(f,r) ERR_raise(ERR_LIB_CT,(r))
+# define ASYNCerr(f,r) ERR_raise(ERR_LIB_ASYNC,(r))
+# define KDFerr(f,r) ERR_raise(ERR_LIB_KDF,(r))
+# define SM2err(f,r) ERR_raise(ERR_LIB_SM2,(r))
+# define ESSerr(f,r) ERR_raise(ERR_LIB_ESS,(r))
+# define PROPerr(f,r) ERR_raise(ERR_LIB_PROP,(r))
+# define PROVerr(f,r) ERR_raise(ERR_LIB_PROV,(r))
 
 # define ERR_PACK(l,f,r) ( \
         (((unsigned int)(l) & 0x0FF) << 24L) | \
@@ -147,31 +160,33 @@ typedef struct err_state_st {
 # define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
 # define ERR_FATAL_ERROR(l)      (int)( (l)         & ERR_R_FATAL)
 
-/* OS functions */
-# define SYS_F_FOPEN             1
-# define SYS_F_CONNECT           2
-# define SYS_F_GETSERVBYNAME     3
-# define SYS_F_SOCKET            4
-# define SYS_F_IOCTLSOCKET       5
-# define SYS_F_BIND              6
-# define SYS_F_LISTEN            7
-# define SYS_F_ACCEPT            8
-# define SYS_F_WSASTARTUP        9/* Winsock stuff */
-# define SYS_F_OPENDIR           10
-# define SYS_F_FREAD             11
-# define SYS_F_GETADDRINFO       12
-# define SYS_F_GETNAMEINFO       13
-# define SYS_F_SETSOCKOPT        14
-# define SYS_F_GETSOCKOPT        15
-# define SYS_F_GETSOCKNAME       16
-# define SYS_F_GETHOSTBYNAME     17
-# define SYS_F_FFLUSH            18
-# define SYS_F_OPEN              19
-# define SYS_F_CLOSE             20
-# define SYS_F_IOCTL             21
-# define SYS_F_STAT              22
-# define SYS_F_FCNTL             23
-# define SYS_F_FSTAT             24
+# if !OPENSSL_API_3
+#  define SYS_F_FOPEN             0
+#  define SYS_F_CONNECT           0
+#  define SYS_F_GETSERVBYNAME     0
+#  define SYS_F_SOCKET            0
+#  define SYS_F_IOCTLSOCKET       0
+#  define SYS_F_BIND              0
+#  define SYS_F_LISTEN            0
+#  define SYS_F_ACCEPT            0
+#  define SYS_F_WSASTARTUP        0
+#  define SYS_F_OPENDIR           0
+#  define SYS_F_FREAD             0
+#  define SYS_F_GETADDRINFO       0
+#  define SYS_F_GETNAMEINFO       0
+#  define SYS_F_SETSOCKOPT        0
+#  define SYS_F_GETSOCKOPT        0
+#  define SYS_F_GETSOCKNAME       0
+#  define SYS_F_GETHOSTBYNAME     0
+#  define SYS_F_FFLUSH            0
+#  define SYS_F_OPEN              0
+#  define SYS_F_CLOSE             0
+#  define SYS_F_IOCTL             0
+#  define SYS_F_STAT              0
+#  define SYS_F_FCNTL             0
+#  define SYS_F_FSTAT             0
+#  define SYS_F_SENDFILE          0
+# endif
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
@@ -220,7 +235,30 @@ typedef struct ERR_string_data_st {
 
 DEFINE_LHASH_OF(ERR_STRING_DATA);
 
-void ERR_put_error(int lib, int func, int reason, const char *file, int line);
+/* 12 lines and some on an 80 column terminal */
+#define ERR_MAX_DATA_SIZE       1024
+
+/* Building blocks */
+void ERR_new(void);
+void ERR_set_debug(const char *file, int line, const char *func);
+void ERR_set_error(int lib, int reason, const char *fmt, ...);
+void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
+
+/* Main error raising functions */
+#define ERR_raise(lib, reason) ERR_raise_data((lib),(reason),NULL)
+#define ERR_raise_data                                          \
+    (ERR_new(),                                                 \
+     ERR_set_debug(OPENSSL_FILE,OPENSSL_LINE,OPENSSL_FUNC),     \
+     ERR_set_error)
+
+#if !OPENSSL_API_3
+/* Backward compatibility */
+#define ERR_put_error(lib, func, reason, file, line)            \
+    (ERR_new(),                                                 \
+     ERR_set_debug((file), (line), NULL),                       \
+     ERR_set_error((lib), (reason), NULL))
+#endif
+
 void ERR_set_error_data(char *data, int flags);
 
 unsigned long ERR_get_error(void);

@@ -9,28 +9,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include "internal/cryptlib.h"
 #include "internal/evp_int.h"
-
-#define M_check_autoarg(ctx, arg, arglen, err) \
-    if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) {           \
-        size_t pksize = (size_t)EVP_PKEY_size(ctx->pkey);         \
-                                                                  \
-        if (pksize == 0) {                                        \
-            EVPerr(err, EVP_R_INVALID_KEY); /*ckerr_ignore*/      \
-            return 0;                                             \
-        }                                                         \
-        if (!arg) {                                               \
-            *arglen = pksize;                                     \
-            return 1;                                             \
-        }                                                         \
-        if (*arglen < pksize) {                                   \
-            EVPerr(err, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/ \
-            return 0;                                             \
-        }                                                         \
-    }
+#include "evp_locl.h"
 
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 {
@@ -199,99 +182,4 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     }
     M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_DECRYPT)
         return ctx->pmeth->decrypt(ctx, out, outlen, in, inlen);
-}
-
-int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
-{
-    int ret;
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->derive) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    ctx->operation = EVP_PKEY_OP_DERIVE;
-    if (!ctx->pmeth->derive_init)
-        return 1;
-    ret = ctx->pmeth->derive_init(ctx);
-    if (ret <= 0)
-        ctx->operation = EVP_PKEY_OP_UNDEFINED;
-    return ret;
-}
-
-int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
-{
-    int ret;
-    if (!ctx || !ctx->pmeth
-        || !(ctx->pmeth->derive || ctx->pmeth->encrypt || ctx->pmeth->decrypt)
-        || !ctx->pmeth->ctrl) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    if (ctx->operation != EVP_PKEY_OP_DERIVE
-        && ctx->operation != EVP_PKEY_OP_ENCRYPT
-        && ctx->operation != EVP_PKEY_OP_DECRYPT) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-               EVP_R_OPERATON_NOT_INITIALIZED);
-        return -1;
-    }
-
-    ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 0, peer);
-
-    if (ret <= 0)
-        return ret;
-
-    if (ret == 2)
-        return 1;
-
-    if (!ctx->pkey) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_NO_KEY_SET);
-        return -1;
-    }
-
-    if (ctx->pkey->type != peer->type) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_DIFFERENT_KEY_TYPES);
-        return -1;
-    }
-
-    /*
-     * For clarity.  The error is if parameters in peer are
-     * present (!missing) but don't match.  EVP_PKEY_cmp_parameters may return
-     * 1 (match), 0 (don't match) and -2 (comparison is not defined).  -1
-     * (different key types) is impossible here because it is checked earlier.
-     * -2 is OK for us here, as well as 1, so we can check for 0 only.
-     */
-    if (!EVP_PKEY_missing_parameters(peer) &&
-        !EVP_PKEY_cmp_parameters(ctx->pkey, peer)) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_DIFFERENT_PARAMETERS);
-        return -1;
-    }
-
-    EVP_PKEY_free(ctx->peerkey);
-    ctx->peerkey = peer;
-
-    ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
-
-    if (ret <= 0) {
-        ctx->peerkey = NULL;
-        return ret;
-    }
-
-    EVP_PKEY_up_ref(peer);
-    return 1;
-}
-
-int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
-{
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->derive) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    if (ctx->operation != EVP_PKEY_OP_DERIVE) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE, EVP_R_OPERATON_NOT_INITIALIZED);
-        return -1;
-    }
-    M_check_autoarg(ctx, key, pkeylen, EVP_F_EVP_PKEY_DERIVE)
-        return ctx->pmeth->derive(ctx, key, pkeylen);
 }

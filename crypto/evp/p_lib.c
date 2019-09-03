@@ -20,9 +20,12 @@
 #include <openssl/dh.h>
 #include <openssl/cmac.h>
 #include <openssl/engine.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
 
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/provider.h"
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 
@@ -318,8 +321,16 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {
 #ifndef OPENSSL_NO_CMAC
+    const char *engine_name = e != NULL ? ENGINE_get_name(e) : NULL;
+    const char *cipher_name = EVP_CIPHER_name(cipher);
+    const OSSL_PROVIDER *prov = EVP_CIPHER_provider(cipher);
+    OPENSSL_CTX *libctx =
+        prov == NULL ? NULL : ossl_provider_library_context(prov);
     EVP_PKEY *ret = EVP_PKEY_new();
-    EVP_MAC_CTX *cmctx = EVP_MAC_CTX_new_id(EVP_MAC_CMAC);
+    EVP_MAC *cmac = EVP_MAC_fetch(libctx, "CMAC", NULL);
+    EVP_MAC_CTX *cmctx = cmac != NULL ? EVP_MAC_CTX_new(cmac) : NULL;
+    OSSL_PARAM params[4];
+    size_t paramsn = 0;
 
     if (ret == NULL
             || cmctx == NULL
@@ -328,9 +339,21 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
         goto err;
     }
 
-    if (EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_ENGINE, e) <= 0
-        || EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_CIPHER, cipher) <= 0
-        || EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_KEY, priv, len) <= 0) {
+    if (engine_name != NULL)
+        params[paramsn++] =
+            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
+                                             (char *)engine_name,
+                                             strlen(engine_name) + 1);
+    params[paramsn++] =
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                                         (char *)cipher_name,
+                                         strlen(cipher_name) + 1);
+    params[paramsn++] =
+        OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                          (char *)priv, len);
+    params[paramsn] = OSSL_PARAM_construct_end();
+
+    if (!EVP_MAC_CTX_set_params(cmctx, params)) {
         EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
@@ -341,6 +364,7 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
  err:
     EVP_PKEY_free(ret);
     EVP_MAC_CTX_free(cmctx);
+    EVP_MAC_free(cmac);
     return NULL;
 #else
     EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY,
@@ -395,6 +419,11 @@ int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
     ENGINE_finish(pkey->pmeth_engine);
     pkey->pmeth_engine = e;
     return 1;
+}
+
+ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
+{
+    return pkey->engine;
 }
 #endif
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
@@ -460,7 +489,7 @@ int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
     return ret;
 }
 
-RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
+RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_RSA) {
         EVPerr(EVP_F_EVP_PKEY_GET0_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
@@ -487,7 +516,7 @@ int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
     return ret;
 }
 
-DSA *EVP_PKEY_get0_DSA(EVP_PKEY *pkey)
+DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_DSA) {
         EVPerr(EVP_F_EVP_PKEY_GET0_DSA, EVP_R_EXPECTING_A_DSA_KEY);
@@ -515,7 +544,7 @@ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
     return ret;
 }
 
-EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
+EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_EC) {
         EVPerr(EVP_F_EVP_PKEY_GET0_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
@@ -543,7 +572,7 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
     return ret;
 }
 
-DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey)
+DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_DH && pkey->type != EVP_PKEY_DHX) {
         EVPerr(EVP_F_EVP_PKEY_GET0_DH, EVP_R_EXPECTING_A_DH_KEY);
@@ -608,6 +637,9 @@ void EVP_PKEY_free(EVP_PKEY *x)
 static void EVP_PKEY_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
+
+    evp_keymgmt_clear_pkey_cache(x);
+
     if (x->ameth && x->ameth->pkey_free) {
         x->ameth->pkey_free(x);
         x->pkey.ptr = NULL;

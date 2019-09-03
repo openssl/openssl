@@ -1,0 +1,124 @@
+=pod
+
+=head1 NAME
+
+OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
+OSSL_PROVIDER_available,
+OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
+OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/provider.h>
+
+ typedef struct ossl_provider_st OSSL_PROVIDER;
+
+ OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name);
+ int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
+ int OSSL_PROVIDER_available(OPENSSL_CTX *libctx, const char *name);
+
+ const OSSL_PARAM *OSSL_PROVIDER_gettable_params(OSSL_PROVIDER *prov);
+ int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, OSSL_PARAM params[]);
+
+ int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
+                               ossl_provider_init_fn *init_fn);
+
+ const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov);
+
+=head1 DESCRIPTION
+
+B<OSSL_PROVIDER> is a type that holds internal information about
+implementation providers (see L<provider(7)> for information on what a
+provider is).
+A provider can be built in to the application or the OpenSSL
+libraries, or can be a loadable module.
+The functions described here handle both forms.
+
+Some of these functions operate within a library context, please see
+L<OPENSSL_CTX(3)> for further details.
+
+=head2 Functions
+
+OSSL_PROVIDER_add_builtin() is used to add a built in provider to
+B<OSSL_PROVIDER> store in the given library context, by associating a
+provider name with a provider initialization function.
+This name can then be used with OSSL_PROVIDER_load().
+
+OSSL_PROVIDER_load() loads and initializes a provider.
+This may simply initialize a provider that was previously added with
+OSSL_PROVIDER_add_builtin() and run its given initialization function,
+or load a provider module with the given name and run its provider
+entry point, C<OSSL_provider_init>.
+
+OSSL_PROVIDER_unload() unloads the given provider.
+For a provider added with OSSL_PROVIDER_add_builtin(), this simply
+runs its teardown function.
+
+OSSL_PROVIDER_available() checks if a named provider is available
+for use.
+
+OSSL_PROVIDER_gettable_params() is used to get a provider parameter
+descriptor set as a constant B<OSSL_PARAM> array.
+See L<OSSL_PARAM(3)> for more information.
+
+OSSL_PROVIDER_get_params() is used to get provider parameter values.
+The caller must prepare the B<OSSL_PARAM> array before calling this
+function, and the variables acting as buffers for this parameter array
+should be filled with data when it returns successfully.
+
+OSSL_PROVIDER_name() returns the name of the given provider.
+
+=head1 RETURN VALUES
+
+OSSL_PROVIDER_add() returns 1 on success, or 0 on error.
+
+OSSL_PROVIDER_load() returns a pointer to a provider object on
+success, or B<NULL> on error.
+
+OSSL_PROVIDER_unload() returns 1 on success, or 0 on error.
+
+OSSL_PROVIDER_available() returns 1 if the named provider is available,
+otherwise 0.
+
+OSSL_PROVIDER_gettable_params() returns a pointer to an array
+of constant B<OSSL_PARAM>, or NULL if none is provided.
+
+OSSL_PROVIDER_get_params() returns 1 on success, or 0 on error.
+
+=head1 EXAMPLES
+
+This demonstrates how to load the provider module "foo" and ask for
+its build number.
+
+ OSSL_PROVIDER *prov = NULL;
+ const char *build = NULL;
+ size_t built_l = 0;
+ OSSL_PARAM request[] = {
+     { "build", OSSL_PARAM_UTF8_STRING_PTR, &build, 0, &build_l },
+     { NULL, 0, NULL, 0, NULL }
+ };
+
+ if ((prov = OSSL_PROVIDER_load(NULL, "foo")) != NULL
+     && OSSL_PROVIDER_get_params(prov, request))
+     printf("Provider 'foo' build %s\n", build);
+ else
+     ERR_print_errors_fp(stderr);
+
+=head1 SEE ALSO
+
+L<openssl-core.h(7)>, L<OPENSSL_CTX(3)>, L<provider(7)>
+
+=head1 HISTORY
+
+The type and functions described here were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

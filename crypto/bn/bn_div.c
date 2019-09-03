@@ -258,7 +258,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
  *
  *     - availability of constant-time bn_div_3_words;
  *     - dividend is at least as "wide" as divisor, limb-wise, zero-padded
- *       if so requied, which shouldn't be a privacy problem, because
+ *       if so required, which shouldn't be a privacy problem, because
  *       divisor's length is considered public;
  */
 int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,

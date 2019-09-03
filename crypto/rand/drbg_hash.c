@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
+#include "internal/providercommon.h"
 #include "rand_lcl.h"
 
 /* 440 bits from SP800-90Ar1 10.1 table 2 */
@@ -289,6 +290,7 @@ static int drbg_hash_generate(RAND_DRBG *drbg,
 
 static int drbg_hash_uninstantiate(RAND_DRBG *drbg)
 {
+    EVP_MD_meth_free(drbg->data.hash.md);
     EVP_MD_CTX_free(drbg->data.hash.ctx);
     OPENSSL_cleanse(&drbg->data.hash, sizeof(drbg->data.hash));
     return 1;
@@ -303,22 +305,54 @@ static RAND_DRBG_METHOD drbg_hash_meth = {
 
 int drbg_hash_init(RAND_DRBG *drbg)
 {
-    const EVP_MD *md;
+    EVP_MD *md;
     RAND_DRBG_HASH *hash = &drbg->data.hash;
 
-    /* Any approved digest is allowed */
-    md = EVP_get_digestbynid(drbg->type);
+    /*
+     * Confirm digest is allowed. Outside FIPS_MODE we allow all non-legacy
+     * digests. Inside FIPS_MODE we only allow approved digests. Also no XOF
+     * digests (such as SHAKE).
+     */
+    switch (drbg->type) {
+    default:
+        return 0;
+
+    case NID_sha1:
+    case NID_sha224:
+    case NID_sha256:
+    case NID_sha384:
+    case NID_sha512:
+    case NID_sha512_224:
+    case NID_sha512_256:
+    case NID_sha3_224:
+    case NID_sha3_256:
+    case NID_sha3_384:
+    case NID_sha3_512:
+#ifndef FIPS_MODE
+    case NID_blake2b512:
+    case NID_blake2s256:
+    case NID_sm3:
+#endif
+        break;
+    }
+
+    md = EVP_MD_fetch(drbg->libctx, ossl_prov_util_nid_to_name(drbg->type), "");
     if (md == NULL)
         return 0;
 
+
     drbg->meth = &drbg_hash_meth;
-    hash->md = md;
 
     if (hash->ctx == NULL) {
         hash->ctx = EVP_MD_CTX_new();
-        if (hash->ctx == NULL)
+        if (hash->ctx == NULL) {
+            EVP_MD_meth_free(md);
             return 0;
+        }
     }
+
+    EVP_MD_meth_free(hash->md);
+    hash->md = md;
 
     /* These are taken from SP 800-90 10.1 Table 2 */
     hash->blocklen = EVP_MD_size(md);

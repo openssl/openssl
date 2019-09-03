@@ -14,10 +14,14 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/provider.h>
 #include <openssl/x509v3.h>
 #include <openssl/pkcs12.h>
 #include <openssl/kdf.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
 #include "internal/numbers.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 #include "evp_test.h"
 
@@ -35,7 +39,6 @@ typedef struct evp_test_st {
     const EVP_TEST_METHOD *meth;  /* method for this test */
     const char *err, *aux_err;    /* Error string for test */
     char *expected_err;           /* Expected error value of test */
-    char *func;                   /* Expected error function string */
     char *reason;                 /* Expected error reason string */
     void *data;                   /* test specific data */
 } EVP_TEST;
@@ -463,6 +466,7 @@ typedef struct cipher_data_st {
     size_t aad_len[AAD_NUM];
     unsigned char *tag;
     size_t tag_len;
+    int tag_late;
 } CIPHER_DATA;
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
@@ -535,6 +539,15 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
         }
         if (strcmp(keyword, "Tag") == 0)
             return parse_bin(value, &cdat->tag, &cdat->tag_len);
+        if (strcmp(keyword, "SetTagLate") == 0) {
+            if (strcmp(value, "TRUE") == 0)
+                cdat->tag_late = 1;
+            else if (strcmp(value, "FALSE") == 0)
+                cdat->tag_late = 0;
+            else
+                return 0;
+            return 1;
+        }
     }
 
     if (strcmp(keyword, "Operation") == 0) {
@@ -620,7 +633,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
          * If encrypting or OCB just set tag length initially, otherwise
          * set tag length and value.
          */
-        if (enc || expected->aead == EVP_CIPH_OCB_MODE) {
+        if (enc || expected->aead == EVP_CIPH_OCB_MODE || expected->tag_late) {
             t->err = "TAG_LENGTH_SET_ERROR";
             tag = NULL;
         } else {
@@ -642,13 +655,13 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         t->err = "KEY_SET_ERROR";
         goto err;
     }
-
-    if (!enc && expected->aead == EVP_CIPH_OCB_MODE) {
-        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                 expected->tag_len, expected->tag)) {
-            t->err = "TAG_SET_ERROR";
-            goto err;
-        }
+    /* Check that we get the same IV back */
+    if (expected->iv != NULL
+        && (EVP_CIPHER_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
+        && !TEST_mem_eq(expected->iv, expected->iv_len,
+                        EVP_CIPHER_CTX_iv(ctx), expected->iv_len)) {
+        t->err = "INVALID_IV";
+        goto err;
     }
 
     if (expected->aead == EVP_CIPH_CCM_MODE) {
@@ -689,6 +702,15 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             }
         }
     }
+
+    if (!enc && (expected->aead == EVP_CIPH_OCB_MODE || expected->tag_late)) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                 expected->tag_len, expected->tag)) {
+            t->err = "TAG_SET_ERROR";
+            goto err;
+        }
+    }
+
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
@@ -846,7 +868,7 @@ static const EVP_TEST_METHOD cipher_test_method = {
 
 typedef struct mac_data_st {
     /* MAC type in one form or another */
-    const EVP_MAC *mac;          /* for mac_test_run_mac */
+    EVP_MAC *mac;                /* for mac_test_run_mac */
     int type;                    /* for mac_test_run_pkey */
     /* Algorithm string for this MAC */
     char *alg;
@@ -873,11 +895,11 @@ typedef struct mac_data_st {
 
 static int mac_test_init(EVP_TEST *t, const char *alg)
 {
-    const EVP_MAC *mac = NULL;
+    EVP_MAC *mac = NULL;
     int type = NID_undef;
     MAC_DATA *mdat;
 
-    if ((mac = EVP_get_macbyname(alg)) == NULL) {
+    if ((mac = EVP_MAC_fetch(NULL, alg, NULL)) == NULL) {
         /*
          * Since we didn't find an EVP_MAC, we check for known EVP_PKEY methods
          * For debugging purposes, we allow 'NNNN by EVP_PKEY' to force running
@@ -945,6 +967,7 @@ static void mac_test_cleanup(EVP_TEST *t)
 {
     MAC_DATA *mdat = t->data;
 
+    EVP_MAC_free(mdat->mac);
     sk_OPENSSL_STRING_pop_free(mdat->controls, openssl_free);
     OPENSSL_free(mdat->alg);
     OPENSSL_free(mdat->key);
@@ -1095,11 +1118,14 @@ static int mac_test_run_mac(EVP_TEST *t)
 {
     MAC_DATA *expected = t->data;
     EVP_MAC_CTX *ctx = NULL;
-    const void *algo = NULL;
-    int algo_ctrl = 0;
     unsigned char *got = NULL;
     size_t got_len;
-    int rv, i;
+    int i;
+    OSSL_PARAM params[21];
+    size_t params_n = 0;
+    size_t params_n_allocstart = 0;
+    const OSSL_PARAM *defined_params =
+        EVP_MAC_CTX_settable_params(expected->mac);
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", EVP_MAC_name(expected->mac));
@@ -1115,97 +1141,74 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
 #endif
 
+    if (expected->alg != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                                             expected->alg,
+                                             strlen(expected->alg) + 1);
+    if (expected->key != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                              expected->key,
+                                              expected->key_len);
+    if (expected->custom != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+                                              expected->custom,
+                                              expected->custom_len);
+    if (expected->salt != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_SALT,
+                                              expected->salt,
+                                              expected->salt_len);
+    if (expected->iv != NULL)
+        params[params_n++] =
+            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
+                                              expected->iv,
+                                              expected->iv_len);
+
+    /*
+     * Unknown controls.  They must match parameters that the MAC recognises
+     */
+    if (params_n + sk_OPENSSL_STRING_num(expected->controls)
+        >= OSSL_NELEM(params)) {
+        t->err = "MAC_TOO_MANY_PARAMETERS";
+        goto err;
+    }
+    params_n_allocstart = params_n;
+    for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++) {
+        char *tmpkey, *tmpval;
+        char *value = sk_OPENSSL_STRING_value(expected->controls, i);
+
+        if (!TEST_ptr(tmpkey = OPENSSL_strdup(value))) {
+            t->err = "MAC_PARAM_ERROR";
+            goto err;
+        }
+        tmpval = strchr(tmpkey, ':');
+        if (tmpval != NULL)
+            *tmpval++ = '\0';
+
+        if (!OSSL_PARAM_allocate_from_text(&params[params_n], defined_params,
+                                           tmpkey, tmpval,
+                                           strlen(tmpval))) {
+            OPENSSL_free(tmpkey);
+            t->err = "MAC_PARAM_ERROR";
+            goto err;
+        }
+        params_n++;
+
+        OPENSSL_free(tmpkey);
+    }
+    params[params_n] = OSSL_PARAM_construct_end();
+
     if ((ctx = EVP_MAC_CTX_new(expected->mac)) == NULL) {
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
 
-    if (expected->alg != NULL
-        && ((algo_ctrl = EVP_MAC_CTRL_SET_CIPHER,
-             algo = EVP_get_cipherbyname(expected->alg)) == NULL
-            && (algo_ctrl = EVP_MAC_CTRL_SET_MD,
-                algo = EVP_get_digestbyname(expected->alg)) == NULL)) {
-        t->err = "MAC_BAD_ALGORITHM";
+    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+        t->err = "MAC_BAD_PARAMS";
         goto err;
-    }
-
-
-    if (algo_ctrl != 0) {
-        rv = EVP_MAC_ctrl(ctx, algo_ctrl, algo);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-    }
-
-    rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY,
-                      expected->key, expected->key_len);
-    if (rv == -2) {
-        t->err = "MAC_CTRL_INVALID";
-        goto err;
-    } else if (rv <= 0) {
-        t->err = "MAC_CTRL_ERROR";
-        goto err;
-    }
-    if (expected->custom != NULL) {
-        rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_CUSTOM,
-                          expected->custom, expected->custom_len);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-    }
-
-    if (expected->salt != NULL) {
-        rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_SALT,
-                          expected->salt, expected->salt_len);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-    }
-
-    if (expected->iv != NULL) {
-        rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_IV,
-                          expected->iv, expected->iv_len);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-    }
-
-    for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++) {
-        char *p, *tmpval;
-        char *value = sk_OPENSSL_STRING_value(expected->controls, i);
-
-        if (!TEST_ptr(tmpval = OPENSSL_strdup(value))) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
-        p = strchr(tmpval, ':');
-        if (p != NULL)
-            *p++ = '\0';
-        rv = EVP_MAC_ctrl_str(ctx, tmpval, p);
-        OPENSSL_free(tmpval);
-        if (rv == -2) {
-            t->err = "MAC_CTRL_INVALID";
-            goto err;
-        } else if (rv <= 0) {
-            t->err = "MAC_CTRL_ERROR";
-            goto err;
-        }
     }
     if (!EVP_MAC_init(ctx)) {
         t->err = "MAC_INIT_ERROR";
@@ -1215,7 +1218,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_UPDATE_ERROR";
         goto err;
     }
-    if (!EVP_MAC_final(ctx, NULL, &got_len)) {
+    if (!EVP_MAC_final(ctx, NULL, &got_len, 0)) {
         t->err = "MAC_FINAL_LENGTH_ERROR";
         goto err;
     }
@@ -1223,7 +1226,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "TEST_FAILURE";
         goto err;
     }
-    if (!EVP_MAC_final(ctx, got, &got_len)
+    if (!EVP_MAC_final(ctx, got, &got_len, got_len)
         || !memory_err_compare(t, "TEST_MAC_ERR",
                                expected->output, expected->output_len,
                                got, got_len)) {
@@ -1232,6 +1235,9 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
     t->err = NULL;
  err:
+    while (params_n-- > params_n_allocstart) {
+        OPENSSL_free(params[params_n].data);
+    }
     EVP_MAC_CTX_free(ctx);
     OPENSSL_free(got);
     return 1;
@@ -1378,6 +1384,7 @@ static int pkey_test_run(EVP_TEST *t)
     PKEY_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len;
+    EVP_PKEY_CTX *copy = NULL;
 
     if (expected->keyop(expected->ctx, NULL, &got_len,
                         expected->input, expected->input_len) <= 0
@@ -1396,8 +1403,33 @@ static int pkey_test_run(EVP_TEST *t)
         goto err;
 
     t->err = NULL;
+    OPENSSL_free(got);
+    got = NULL;
+
+    /* Repeat the test on a copy. */
+    if (!TEST_ptr(copy = EVP_PKEY_CTX_dup(expected->ctx))) {
+        t->err = "INTERNAL_ERROR";
+        goto err;
+    }
+    if (expected->keyop(copy, NULL, &got_len, expected->input,
+                        expected->input_len) <= 0
+            || !TEST_ptr(got = OPENSSL_malloc(got_len))) {
+        t->err = "KEYOP_LENGTH_ERROR";
+        goto err;
+    }
+    if (expected->keyop(copy, got, &got_len, expected->input,
+                        expected->input_len) <= 0) {
+        t->err = "KEYOP_ERROR";
+        goto err;
+    }
+    if (!memory_err_compare(t, "KEYOP_MISMATCH",
+                            expected->output, expected->output_len,
+                            got, got_len))
+        goto err;
+
  err:
     OPENSSL_free(got);
+    EVP_PKEY_CTX_free(copy);
     return 1;
 }
 
@@ -1912,21 +1944,29 @@ typedef struct kdf_data_st {
 static int kdf_test_init(EVP_TEST *t, const char *name)
 {
     KDF_DATA *kdata;
-    int kdf_nid = OBJ_sn2nid(name);
+    const EVP_KDF *kdf;
 
 #ifdef OPENSSL_NO_SCRYPT
     if (strcmp(name, "scrypt") == 0) {
         t->skip = 1;
         return 1;
     }
-#endif
+#endif /* OPENSSL_NO_SCRYPT */
 
-    if (kdf_nid == NID_undef)
-        kdf_nid = OBJ_ln2nid(name);
+#ifdef OPENSSL_NO_CMS
+    if (strcmp(name, "X942KDF") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif /* OPENSSL_NO_CMS */
+
+    kdf = EVP_get_kdfbyname(name);
+    if (kdf == NULL)
+        return 0;
 
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
-    kdata->ctx = EVP_KDF_CTX_new_id(kdf_nid);
+    kdata->ctx = EVP_KDF_CTX_new(kdf);
     if (kdata->ctx == NULL) {
         OPENSSL_free(kdata);
         return 0;
@@ -2050,7 +2090,14 @@ static int pkey_kdf_test_init(EVP_TEST *t, const char *name)
         t->skip = 1;
         return 1;
     }
-#endif
+#endif /* OPENSSL_NO_SCRYPT */
+
+#ifdef OPENSSL_NO_CMS
+    if (strcmp(name, "X942KDF") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif /* OPENSSL_NO_CMS */
 
     if (kdf_nid == NID_undef)
         kdf_nid = OBJ_ln2nid(name);
@@ -2666,8 +2713,6 @@ static void clear_test(EVP_TEST *t)
     }
     OPENSSL_free(t->expected_err);
     t->expected_err = NULL;
-    OPENSSL_free(t->func);
-    t->func = NULL;
     OPENSSL_free(t->reason);
     t->reason = NULL;
 
@@ -2710,10 +2755,10 @@ static int check_test_error(EVP_TEST *t)
         return 0;
     }
 
-    if (t->func == NULL && t->reason == NULL)
+    if (t->reason == NULL)
         return 1;
 
-    if (t->func == NULL || t->reason == NULL) {
+    if (t->reason == NULL) {
         TEST_info("%s:%d: Test is missing function or reason code",
                   t->s.test_file, t->s.start);
         return 0;
@@ -2721,25 +2766,25 @@ static int check_test_error(EVP_TEST *t)
 
     err = ERR_peek_error();
     if (err == 0) {
-        TEST_info("%s:%d: Expected error \"%s:%s\" not set",
-                  t->s.test_file, t->s.start, t->func, t->reason);
+        TEST_info("%s:%d: Expected error \"%s\" not set",
+                  t->s.test_file, t->s.start, t->reason);
         return 0;
     }
 
     func = ERR_func_error_string(err);
     reason = ERR_reason_error_string(err);
     if (func == NULL && reason == NULL) {
-        TEST_info("%s:%d: Expected error \"%s:%s\", no strings available."
+        TEST_info("%s:%d: Expected error \"%s\", no strings available."
                   " Assuming ok.",
-                  t->s.test_file, t->s.start, t->func, t->reason);
+                  t->s.test_file, t->s.start, t->reason);
         return 1;
     }
 
-    if (strcmp(func, t->func) == 0 && strcmp(reason, t->reason) == 0)
+    if (strcmp(reason, t->reason) == 0)
         return 1;
 
-    TEST_info("%s:%d: Expected error \"%s:%s\", got \"%s:%s\"",
-              t->s.test_file, t->s.start, t->func, t->reason, func, reason);
+    TEST_info("%s:%d: Expected error \"%s\", got \"%s\"",
+              t->s.test_file, t->s.start, t->reason, reason);
 
     return 0;
 }
@@ -2831,6 +2876,33 @@ static char *take_value(PAIR *pp)
 
     pp->value = NULL;
     return p;
+}
+
+/*
+ * Return 1 if one of the providers named in the string is available.
+ * The provider names are separated with whitespace.
+ * NOTE: destructive function, it inserts '\0' after each provider name.
+ */
+static int prov_available(char *providers)
+{
+    char *p;
+    int more = 1;
+
+    while (more) {
+        for (; isspace(*providers); providers++)
+            continue;
+        if (*providers == '\0')
+            break;               /* End of the road */
+        for (p = providers; *p != '\0' && !isspace(*p); p++)
+            continue;
+        if (*p == '\0')
+            more = 0;
+        else
+            *p = '\0';
+        if (OSSL_PROVIDER_available(NULL, providers))
+            return 1;            /* Found one */
+    }
+    return 0;
 }
 
 /*
@@ -2963,18 +3035,21 @@ top:
     }
 
     for (pp++, i = 1; i < t->s.numpairs; pp++, i++) {
-        if (strcmp(pp->key, "Result") == 0) {
+        if (strcmp(pp->key, "Availablein") == 0) {
+            if (!prov_available(pp->value)) {
+                TEST_info("skipping, providers not available: %s:%d",
+                          t->s.test_file, t->s.start);
+                t->skip = 1;
+                return 0;
+            }
+        } else if (strcmp(pp->key, "Result") == 0) {
             if (t->expected_err != NULL) {
                 TEST_info("Line %d: multiple result lines", t->s.curr);
                 return 0;
             }
             t->expected_err = take_value(pp);
         } else if (strcmp(pp->key, "Function") == 0) {
-            if (t->func != NULL) {
-                TEST_info("Line %d: multiple function lines\n", t->s.curr);
-                return 0;
-            }
-            t->func = take_value(pp);
+            /* Ignore old line. */
         } else if (strcmp(pp->key, "Reason") == 0) {
             if (t->reason != NULL) {
                 TEST_info("Line %d: multiple reason lines", t->s.curr);
@@ -3015,8 +3090,10 @@ static int run_file_tests(int i)
 
     while (!BIO_eof(t->s.fp)) {
         c = parse(t);
-        if (t->skip)
+        if (t->skip) {
+            t->s.numskip++;
             continue;
+        }
         if (c == 0 || !run_test(t)) {
             t->s.errors++;
             break;

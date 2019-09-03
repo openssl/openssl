@@ -10,18 +10,22 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include "internal/rand_int.h"
 #include "bn_lcl.h"
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include <openssl/evp.h>
 
 typedef enum bnrand_flag_e {
     NORMAL, TESTING, PRIVATE
 } BNRAND_FLAG;
 
-static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom)
+static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
+                  BN_CTX *ctx)
 {
     unsigned char *buf = NULL;
     int b, ret = 0, bit, bytes, mask;
+    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
 
     if (bits == 0) {
         if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
@@ -43,7 +47,8 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom)
     }
 
     /* make a random number and set the top and bottom bits */
-    b = flag == NORMAL ? RAND_bytes(buf, bytes) : RAND_priv_bytes(buf, bytes);
+    b = flag == NORMAL ? rand_bytes_ex(libctx, buf, bytes)
+                       : rand_priv_bytes_ex(libctx, buf, bytes);
     if (b <= 0)
         goto err;
 
@@ -55,7 +60,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom)
         unsigned char c;
 
         for (i = 0; i < bytes; i++) {
-            if (RAND_bytes(&c, 1) <= 0)
+            if (rand_bytes_ex(libctx, &c, 1) <= 0)
                 goto err;
             if (c >= 128 && i > 0)
                 buf[i] = buf[i - 1];
@@ -94,23 +99,37 @@ toosmall:
     return 0;
 }
 
+int BN_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx)
+{
+    return bnrand(NORMAL, rnd, bits, top, bottom, ctx);
+}
+#ifndef FIPS_MODE
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
-    return bnrand(NORMAL, rnd, bits, top, bottom);
+    return bnrand(NORMAL, rnd, bits, top, bottom, NULL);
 }
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
-    return bnrand(TESTING, rnd, bits, top, bottom);
+    return bnrand(TESTING, rnd, bits, top, bottom, NULL);
+}
+#endif
+
+int BN_priv_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx)
+{
+    return bnrand(PRIVATE, rnd, bits, top, bottom, ctx);
 }
 
+#ifndef FIPS_MODE
 int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
-    return bnrand(PRIVATE, rnd, bits, top, bottom);
+    return bnrand(PRIVATE, rnd, bits, top, bottom, NULL);
 }
+#endif
 
 /* random number r:  0 <= r < range */
-static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range)
+static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
+                        BN_CTX *ctx)
 {
     int n;
     int count = 100;
@@ -132,7 +151,8 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range)
          * than range
          */
         do {
-            if (!bnrand(flag, r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+            if (!bnrand(flag, r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY,
+                        ctx))
                 return 0;
 
             /*
@@ -159,7 +179,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range)
     } else {
         do {
             /* range = 11..._2  or  range = 101..._2 */
-            if (!bnrand(flag, r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+            if (!bnrand(flag, r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx))
                 return 0;
 
             if (!--count) {
@@ -174,14 +194,27 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range)
     return 1;
 }
 
-int BN_rand_range(BIGNUM *r, const BIGNUM *range)
+int BN_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx)
 {
-    return bnrand_range(NORMAL, r, range);
+    return bnrand_range(NORMAL, r, range, ctx);
 }
 
+#ifndef FIPS_MODE
+int BN_rand_range(BIGNUM *r, const BIGNUM *range)
+{
+    return bnrand_range(NORMAL, r, range, NULL);
+}
+#endif
+
+int BN_priv_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx)
+{
+    return bnrand_range(PRIVATE, r, range, ctx);
+}
+
+#ifndef FIPS_MODE
 int BN_priv_rand_range(BIGNUM *r, const BIGNUM *range)
 {
-    return bnrand_range(PRIVATE, r, range);
+    return bnrand_range(PRIVATE, r, range, NULL);
 }
 
 int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
@@ -193,6 +226,7 @@ int BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return BN_rand_range(r, range);
 }
+#endif
 
 /*
  * BN_generate_dsa_nonce generates a random number 0 <= out < range. Unlike
@@ -206,7 +240,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
                           const BIGNUM *priv, const unsigned char *message,
                           size_t message_len, BN_CTX *ctx)
 {
-    SHA512_CTX sha;
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     /*
      * We use 512 bits of random data per iteration to ensure that we have at
      * least |range| bits of randomness.
@@ -217,8 +251,13 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     /* We generate |range|+8 bytes of random output. */
     const unsigned num_k_bytes = BN_num_bytes(range) + 8;
     unsigned char private_bytes[96];
-    unsigned char *k_bytes;
+    unsigned char *k_bytes = NULL;
     int ret = 0;
+    EVP_MD *md = NULL;
+    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+
+    if (mdctx == NULL)
+        goto err;
 
     k_bytes = OPENSSL_malloc(num_k_bytes);
     if (k_bytes == NULL)
@@ -238,15 +277,23 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     memcpy(private_bytes, priv->d, todo);
     memset(private_bytes + todo, 0, sizeof(private_bytes) - todo);
 
+    md = EVP_MD_fetch(libctx, "SHA512", NULL);
+    if (md == NULL) {
+        BNerr(BN_F_BN_GENERATE_DSA_NONCE, BN_R_NO_SUITABLE_DIGEST);
+        goto err;
+    }
     for (done = 0; done < num_k_bytes;) {
-        if (RAND_priv_bytes(random_bytes, sizeof(random_bytes)) != 1)
+        if (!rand_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes)))
             goto err;
-        SHA512_Init(&sha);
-        SHA512_Update(&sha, &done, sizeof(done));
-        SHA512_Update(&sha, private_bytes, sizeof(private_bytes));
-        SHA512_Update(&sha, message, message_len);
-        SHA512_Update(&sha, random_bytes, sizeof(random_bytes));
-        SHA512_Final(digest, &sha);
+
+        if (!EVP_DigestInit_ex(mdctx, md, NULL)
+                || !EVP_DigestUpdate(mdctx, &done, sizeof(done))
+                || !EVP_DigestUpdate(mdctx, private_bytes,
+                                     sizeof(private_bytes))
+                || !EVP_DigestUpdate(mdctx, message, message_len)
+                || !EVP_DigestUpdate(mdctx, random_bytes, sizeof(random_bytes))
+                || !EVP_DigestFinal_ex(mdctx, digest, NULL))
+            goto err;
 
         todo = num_k_bytes - done;
         if (todo > SHA512_DIGEST_LENGTH)
@@ -262,6 +309,8 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     ret = 1;
 
  err:
+    EVP_MD_CTX_free(mdctx);
+    EVP_MD_meth_free(md);
     OPENSSL_free(k_bytes);
     OPENSSL_cleanse(private_bytes, sizeof(private_bytes));
     return ret;

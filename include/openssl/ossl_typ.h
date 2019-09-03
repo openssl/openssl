@@ -18,6 +18,8 @@ extern "C" {
 
 # include <openssl/e_os2.h>
 
+typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
+
 # ifdef NO_ASN1_TYPEDEFS
 #  define ASN1_INTEGER            ASN1_STRING
 #  define ASN1_ENUMERATED         ASN1_STRING
@@ -99,7 +101,12 @@ typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
 typedef struct evp_pkey_method_st EVP_PKEY_METHOD;
 typedef struct evp_pkey_ctx_st EVP_PKEY_CTX;
 
+typedef struct evp_keymgmt_st EVP_KEYMGMT;
+
+typedef struct evp_kdf_st EVP_KDF;
 typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
+
+typedef struct evp_keyexch_st EVP_KEYEXCH;
 
 typedef struct evp_Encode_Ctx_st EVP_ENCODE_CTX;
 
@@ -180,6 +187,11 @@ typedef struct ossl_store_info_st OSSL_STORE_INFO;
 typedef struct ossl_store_search_st OSSL_STORE_SEARCH;
 
 typedef struct openssl_ctx_st OPENSSL_CTX;
+
+typedef struct ossl_dispatch_st OSSL_DISPATCH;
+typedef struct ossl_item_st OSSL_ITEM;
+typedef struct ossl_algorithm_st OSSL_ALGORITHM;
+typedef struct ossl_param_st OSSL_PARAM;
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)

@@ -7,12 +7,52 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Refer to "The TLS Protocol Version 1.0" Section 5
+ * (https://tools.ietf.org/html/rfc2246#section-5) and
+ * "The Transport Layer Security (TLS) Protocol Version 1.2" Section 5
+ * (https://tools.ietf.org/html/rfc5246#section-5).
+ *
+ * For TLS v1.0 and TLS v1.1 the TLS PRF algorithm is given by:
+ *
+ *   PRF(secret, label, seed) = P_MD5(S1, label + seed) XOR
+ *                              P_SHA-1(S2, label + seed)
+ *
+ * where P_MD5 and P_SHA-1 are defined by P_<hash>, below, and S1 and S2 are
+ * two halves of the secret (with the possibility of one shared byte, in the
+ * case where the length of the original secret is odd).  S1 is taken from the
+ * first half of the secret, S2 from the second half.
+ *
+ * For TLS v1.2 the TLS PRF algorithm is given by:
+ *
+ *   PRF(secret, label, seed) = P_<hash>(secret, label + seed)
+ *
+ * where hash is SHA-256 for all cipher suites defined in RFC 5246 as well as
+ * those published prior to TLS v1.2 while the TLS v1.2 protocol is in effect,
+ * unless defined otherwise by the cipher suite.
+ *
+ * P_<hash> is an expansion function that uses a single hash function to expand
+ * a secret and seed into an arbitrary quantity of output:
+ *
+ *   P_<hash>(secret, seed) = HMAC_<hash>(secret, A(1) + seed) +
+ *                            HMAC_<hash>(secret, A(2) + seed) +
+ *                            HMAC_<hash>(secret, A(3) + seed) + ...
+ *
+ * where + indicates concatenation.  P_<hash> can be iterated as many times as
+ * is necessary to produce the required quantity of data.
+ *
+ * A(i) is defined as:
+ *     A(0) = seed
+ *     A(i) = HMAC_<hash>(secret, A(i-1))
+ */
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 #include "internal/evp_int.h"
 #include "kdf_local.h"
 
@@ -82,7 +122,7 @@ static int kdf_tls1_prf_ctrl(EVP_KDF_IMPL *impl, int cmd, va_list args)
         if (impl->sec == NULL)
             return 0;
 
-        impl->seclen  = len;
+        impl->seclen = len;
         return 1;
 
     case EVP_KDF_CTRL_RESET_TLS_SEED:
@@ -157,7 +197,7 @@ static int kdf_tls1_prf_derive(EVP_KDF_IMPL *impl, unsigned char *key,
                         key, keylen);
 }
 
-const EVP_KDF_METHOD tls1_prf_kdf_meth = {
+const EVP_KDF tls1_prf_kdf_meth = {
     EVP_KDF_TLS1_PRF,
     kdf_tls1_prf_new,
     kdf_tls1_prf_free,
@@ -168,87 +208,148 @@ const EVP_KDF_METHOD tls1_prf_kdf_meth = {
     kdf_tls1_prf_derive
 };
 
+/*
+ * Refer to "The TLS Protocol Version 1.0" Section 5
+ * (https://tools.ietf.org/html/rfc2246#section-5) and
+ * "The Transport Layer Security (TLS) Protocol Version 1.2" Section 5
+ * (https://tools.ietf.org/html/rfc5246#section-5).
+ *
+ * P_<hash> is an expansion function that uses a single hash function to expand
+ * a secret and seed into an arbitrary quantity of output:
+ *
+ *   P_<hash>(secret, seed) = HMAC_<hash>(secret, A(1) + seed) +
+ *                            HMAC_<hash>(secret, A(2) + seed) +
+ *                            HMAC_<hash>(secret, A(3) + seed) + ...
+ *
+ * where + indicates concatenation.  P_<hash> can be iterated as many times as
+ * is necessary to produce the required quantity of data.
+ *
+ * A(i) is defined as:
+ *     A(0) = seed
+ *     A(i) = HMAC_<hash>(secret, A(i-1))
+ */
 static int tls1_prf_P_hash(const EVP_MD *md,
                            const unsigned char *sec, size_t sec_len,
                            const unsigned char *seed, size_t seed_len,
                            unsigned char *out, size_t olen)
 {
-    int chunk;
-    EVP_MAC_CTX *ctx = NULL, *ctx_tmp = NULL, *ctx_init = NULL;
-    unsigned char A1[EVP_MAX_MD_SIZE];
-    size_t A1_len;
+    size_t chunk;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL, *ctx_Ai = NULL, *ctx_init = NULL;
+    unsigned char Ai[EVP_MAX_MD_SIZE];
+    size_t Ai_len;
     int ret = 0;
+    OSSL_PARAM params[4];
+    int mac_flags;
+    const char *mdname = EVP_MD_name(md);
 
-    chunk = EVP_MD_size(md);
-    if (!ossl_assert(chunk > 0))
+    mac = EVP_MAC_fetch(NULL, "HMAC", NULL); /* Implicit fetch */
+    ctx_init = EVP_MAC_CTX_new(mac);
+    if (ctx_init == NULL)
         goto err;
 
-    ctx = EVP_MAC_CTX_new_id(EVP_MAC_HMAC);
-    ctx_tmp = EVP_MAC_CTX_new_id(EVP_MAC_HMAC);
-    ctx_init = EVP_MAC_CTX_new_id(EVP_MAC_HMAC);
-    if (ctx == NULL || ctx_tmp == NULL || ctx_init == NULL)
-        goto err;
-    if (EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_FLAGS, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW) != 1)
-        goto err;
-    if (EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_MD, md) != 1)
-        goto err;
-    if (EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_KEY, sec, sec_len) != 1)
+    /* TODO(3.0) rethink "flags", also see hmac.c in providers */
+    mac_flags = EVP_MD_CTX_FLAG_NON_FIPS_ALLOW;
+    params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FLAGS, &mac_flags);
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ALGORITHM,
+                                                 (char *)mdname,
+                                                 strlen(mdname) + 1);
+    params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                                  (void *)sec, sec_len);
+    params[3] = OSSL_PARAM_construct_end();
+    if (!EVP_MAC_CTX_set_params(ctx_init, params))
         goto err;
     if (!EVP_MAC_init(ctx_init))
         goto err;
-    if (!EVP_MAC_CTX_copy(ctx, ctx_init))
+    chunk = EVP_MAC_size(ctx_init);
+    if (chunk == 0)
         goto err;
-    if (seed != NULL && !EVP_MAC_update(ctx, seed, seed_len))
+    /* A(0) = seed */
+    ctx_Ai = EVP_MAC_CTX_dup(ctx_init);
+    if (ctx_Ai == NULL)
         goto err;
-    if (!EVP_MAC_final(ctx, A1, &A1_len))
+    if (seed != NULL && !EVP_MAC_update(ctx_Ai, seed, seed_len))
         goto err;
 
     for (;;) {
-        /* Reinit mac contexts */
-        if (!EVP_MAC_CTX_copy(ctx, ctx_init))
+        /* calc: A(i) = HMAC_<hash>(secret, A(i-1)) */
+        if (!EVP_MAC_final(ctx_Ai, Ai, &Ai_len, sizeof(Ai)))
             goto err;
-        if (!EVP_MAC_update(ctx, A1, A1_len))
+        EVP_MAC_CTX_free(ctx_Ai);
+        ctx_Ai = NULL;
+
+        /* calc next chunk: HMAC_<hash>(secret, A(i) + seed) */
+        ctx = EVP_MAC_CTX_dup(ctx_init);
+        if (ctx == NULL)
             goto err;
-        if (olen > (size_t)chunk && !EVP_MAC_CTX_copy(ctx_tmp, ctx))
+        if (!EVP_MAC_update(ctx, Ai, Ai_len))
             goto err;
+        /* save state for calculating next A(i) value */
+        if (olen > chunk) {
+            ctx_Ai = EVP_MAC_CTX_dup(ctx);
+            if (ctx_Ai == NULL)
+                goto err;
+        }
         if (seed != NULL && !EVP_MAC_update(ctx, seed, seed_len))
             goto err;
-
-        if (olen > (size_t)chunk) {
-            size_t mac_len;
-            if (!EVP_MAC_final(ctx, out, &mac_len))
+        if (olen <= chunk) {
+            /* last chunk - use Ai as temp bounce buffer */
+            if (!EVP_MAC_final(ctx, Ai, &Ai_len, sizeof(Ai)))
                 goto err;
-            out += mac_len;
-            olen -= mac_len;
-            /* calc the next A1 value */
-            if (!EVP_MAC_final(ctx_tmp, A1, &A1_len))
-                goto err;
-        } else {                /* last one */
-
-            if (!EVP_MAC_final(ctx, A1, &A1_len))
-                goto err;
-            memcpy(out, A1, olen);
+            memcpy(out, Ai, olen);
             break;
         }
+        if (!EVP_MAC_final(ctx, out, NULL, olen))
+            goto err;
+        EVP_MAC_CTX_free(ctx);
+        ctx = NULL;
+        out += chunk;
+        olen -= chunk;
     }
     ret = 1;
  err:
     EVP_MAC_CTX_free(ctx);
-    EVP_MAC_CTX_free(ctx_tmp);
+    EVP_MAC_CTX_free(ctx_Ai);
     EVP_MAC_CTX_free(ctx_init);
-    OPENSSL_cleanse(A1, sizeof(A1));
+    EVP_MAC_free(mac);
+    OPENSSL_cleanse(Ai, sizeof(Ai));
     return ret;
 }
 
+/*
+ * Refer to "The TLS Protocol Version 1.0" Section 5
+ * (https://tools.ietf.org/html/rfc2246#section-5) and
+ * "The Transport Layer Security (TLS) Protocol Version 1.2" Section 5
+ * (https://tools.ietf.org/html/rfc5246#section-5).
+ *
+ * For TLS v1.0 and TLS v1.1:
+ *
+ *   PRF(secret, label, seed) = P_MD5(S1, label + seed) XOR
+ *                              P_SHA-1(S2, label + seed)
+ *
+ * S1 is taken from the first half of the secret, S2 from the second half.
+ *
+ *   L_S = length in bytes of secret;
+ *   L_S1 = L_S2 = ceil(L_S / 2);
+ *
+ * For TLS v1.2:
+ *
+ *   PRF(secret, label, seed) = P_<hash>(secret, label + seed)
+ */
 static int tls1_prf_alg(const EVP_MD *md,
                         const unsigned char *sec, size_t slen,
                         const unsigned char *seed, size_t seed_len,
                         unsigned char *out, size_t olen)
 {
     if (EVP_MD_type(md) == NID_md5_sha1) {
+        /* TLS v1.0 and TLS v1.1 */
         size_t i;
         unsigned char *tmp;
-        if (!tls1_prf_P_hash(EVP_md5(), sec, slen/2 + (slen & 1),
+        /* calc: L_S1 = L_S2 = ceil(L_S / 2) */
+        size_t L_S1 = (slen + 1) / 2;
+        size_t L_S2 = L_S1;
+
+        if (!tls1_prf_P_hash(EVP_md5(), sec, L_S1,
                              seed, seed_len, out, olen))
             return 0;
 
@@ -256,7 +357,7 @@ static int tls1_prf_alg(const EVP_MD *md,
             KDFerr(KDF_F_TLS1_PRF_ALG, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        if (!tls1_prf_P_hash(EVP_sha1(), sec + slen/2, slen/2 + (slen & 1),
+        if (!tls1_prf_P_hash(EVP_sha1(), sec + slen - L_S2, L_S2,
                              seed, seed_len, tmp, olen)) {
             OPENSSL_clear_free(tmp, olen);
             return 0;
@@ -266,6 +367,8 @@ static int tls1_prf_alg(const EVP_MD *md,
         OPENSSL_clear_free(tmp, olen);
         return 1;
     }
+
+    /* TLS v1.2 */
     if (!tls1_prf_P_hash(md, sec, slen, seed, seed_len, out, olen))
         return 0;
 

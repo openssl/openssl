@@ -603,6 +603,14 @@ int cms_main(int argc, char **argv)
         goto opthelp;
     }
 
+    if (flags & CMS_CADES) {
+        if (flags & CMS_NOATTR) {
+            BIO_puts(bio_err, "Incompatible options: "
+                     "CAdES required signed attributes\n");
+            goto opthelp;
+        }
+    }
+
     if (operation & SMIME_SIGNERS) {
         if (keyfile != NULL && signerfile == NULL) {
             BIO_puts(bio_err, "Illegal -inkey without -signer\n");
@@ -640,6 +648,7 @@ int cms_main(int argc, char **argv)
             goto opthelp;
         }
     } else if (!operation) {
+        BIO_printf(bio_err, "No operation option (-encrypt|-decrypt|-sign|-verify|...) specified.\n");
         goto opthelp;
     }
 

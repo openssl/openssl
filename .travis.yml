@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 sudo: required
 
 osx_image: xcode9.3
@@ -28,7 +28,7 @@ compiler:
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
     - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="no-asm no-makedepend --strict-warnings -std=c89 -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes"
+    - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
 
 matrix:
     include:
@@ -37,16 +37,14 @@ matrix:
           compiler: clang
           env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
         - os: linux
-          addons:
-              apt:
-                  packages:
-                      - gcc-5
-                      - g++-5
-                  sources:
-                      - ubuntu-toolchain-r-test
-          compiler: gcc-5
+          compiler: gcc
           env: CONFIG_OPTS="--strict-warnings" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
+          dist: trusty
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
+        - os: linux
+          dist: bionic
           compiler: clang
           env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
         - os: linux
@@ -67,43 +65,28 @@ matrix:
           addons:
               apt:
                   packages:
-                      - gcc-5
-                      - g++-5
-                      - golang-1.6
-                  sources:
-                      - ubuntu-toolchain-r-test
-          compiler: gcc-5
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
+                      - golang-1.10
+          compiler: gcc
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared enable-buildtest-c++ -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++"
         - os: linux
           addons:
               apt:
                   packages:
-                      - gcc-5
-                      - g++-5
-                      - golang-1.6
-                  sources:
-                      - ubuntu-toolchain-r-test
-          compiler: gcc-5
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS=95
+                      - golang-1.10
+          compiler: gcc
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++" BORINGSSL_TESTS="yes" CXX="g++" TESTS=95
         - os: linux
           compiler: clang
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
           compiler: clang
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument" CXX="clang++"
         - os: linux
           compiler: clang
           env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
-          addons:
-              apt:
-                  packages:
-                      - gcc-5
-                      - g++-5
-                  sources:
-                      - ubuntu-toolchain-r-test
-          compiler: gcc-5
-          env: UBUNTU_GCC_HACK="yes" EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
+          compiler: gcc
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 enable-buildtest-c++ -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           addons:
               apt:
@@ -123,8 +106,6 @@ matrix:
         - os: linux
           language: python
           python: 3.7
-          dist: xenial    # required for Python 3.7 (travis-ci/travis-ci#9069)
-          sudo: required  # required for Python 3.7 (travis-ci/travis-ci#9069)
           install: pip install flake8
           before_script:
             # stop the build if there are Python syntax errors or undefined names
@@ -154,10 +135,6 @@ before_script:
           srcdir=.;
           top=.;
       fi
-    - if [ -n "$UBUNTU_GCC_HACK" ]; then
-          $CC -dumpspecs | sed "s/--push-state//g; s/--pop-state/--as-needed/g" > gcc-specs.txt;
-          CC="$CC -specs=gcc-specs.txt";
-      fi
     - if [ "$CC" = i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
@@ -165,14 +142,7 @@ before_script:
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          if [ "$CC" = clang-3.9 ]; then
-              sudo cp .travis-apt-pin.preferences /etc/apt/preferences.d/no-ubuntu-clang;
-              curl -sSL "http://apt.llvm.org/llvm-snapshot.gpg.key" | sudo -E apt-key add -;
-              echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main" | sudo tee -a /etc/apt/sources.list > /dev/null;
-              sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test";
-              sudo -E apt-get -yq update;
-              sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-3.9;
-          elif which ccache >/dev/null; then
+          if which ccache >/dev/null && test "$BORINGSSL_TESTS" != yes; then
               CC="ccache $CC";
           fi;
           $srcdir/config -v $CONFIG_OPTS;
@@ -258,7 +228,7 @@ script:
 
 after_success:
     - if [ -n "$COVERALLS" ]; then
-          coveralls -b . --gcov gcov-5 --gcov-options '\-lpbc';
+          coveralls -b . --gcov gcov --gcov-options '\-lpbc';
       fi;
 
 notifications:

@@ -123,7 +123,7 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
      (char *(*)())d2i_OCSP_REQUEST,PEM_STRING_OCSP_REQUEST, \
      bp,(char **)(x),cb,NULL)
 
-#  define PEM_read_bio_OCSP_RESPONSE(bp,x,cb)(OCSP_RESPONSE *)PEM_ASN1_read_bio(\
+#  define PEM_read_bio_OCSP_RESPONSE(bp,x,cb) (OCSP_RESPONSE *)PEM_ASN1_read_bio(\
      (char *(*)())d2i_OCSP_RESPONSE,PEM_STRING_OCSP_RESPONSE, \
      bp,(char **)(x),cb,NULL)
 
@@ -146,7 +146,7 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
                 (OCSP_CERTSTATUS*)ASN1_dup((int(*)())i2d_OCSP_CERTSTATUS,\
                 (char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
 
-OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
+DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
@@ -229,8 +229,8 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
 int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
                    int *pssl);
 
-int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
-int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
+int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
+int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 
 int OCSP_request_onereq_count(OCSP_REQUEST *req);
 OCSP_ONEREQ *OCSP_request_onereq_get0(OCSP_REQUEST *req, int i);

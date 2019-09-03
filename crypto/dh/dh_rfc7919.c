@@ -22,6 +22,7 @@ static DH *dh_param_init(const BIGNUM *p, int32_t nbits)
     dh->p = (BIGNUM *)p;
     dh->g = (BIGNUM *)&_bignum_const_2;
     dh->length = nbits;
+    dh->dirty_cnt++;
     return dh;
 }
 

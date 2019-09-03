@@ -15,7 +15,7 @@
 #include "internal/nelem.h"
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
-# include OPENSSL_UNISTD
+# include <unistd.h>
 #endif
 
 #include <stdlib.h>
@@ -377,7 +377,8 @@ int opt_long(const char *value, long *result)
 }
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-    defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+    defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
+    !defined(OPENSSL_NO_INTTYPES_H)
 
 /* Parse an intmax_t, put it into *result; return 0 on failure, else 1. */
 int opt_imax(const char *value, intmax_t *result)
