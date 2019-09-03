@@ -68,14 +68,10 @@ information on what parameters each implementation supports.
 =item B<-kdf-algorithms>
 
 Display a list of key derivation function algorithms.
-If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
-official algorithm name, B<bar>.
 
 =item B<-mac-algorithms>
 
 Display a list of message authentication code algorithms.
-If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
-official algorithm name, B<bar>.
 
 =item B<-cipher-commands>
 
