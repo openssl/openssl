@@ -43,7 +43,7 @@ my @kdf_tests = (
 );
 
 my @scrypt_tests = (
-    { cmd => [qw{openssl kdf -keylen 64 -kdfopt pass:password -kdfopt salt:NaCl -kdfopt N:1024 -kdfopt r:8 -kdfopt p:16 -kdfopt maxmem_bytes:10485760 id-scrypt}],
+    { cmd => [qw{openssl kdf -keylen 64 -kdfopt pass:password -kdfopt salt:NaCl -kdfopt n:1024 -kdfopt r:8 -kdfopt p:16 -kdfopt maxmem_bytes:10485760 id-scrypt}],
       expected => 'fd:ba:be:1c:9d:34:72:00:78:56:e7:19:0d:01:e9:fe:7c:6a:d7:cb:c8:23:78:30:e7:73:76:63:4b:37:31:62:2e:af:30:d9:2e:22:a3:88:6f:f1:09:27:9d:98:30:da:c7:27:af:b9:4a:83:ee:6d:83:60:cb:df:a2:cc:06:40',
       desc => 'SCRYPT' },
 );
