@@ -1244,6 +1244,21 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
     return 1;
 }
 
+EVP_CIPHER *evp_cipher_new(void)
+{
+    EVP_CIPHER *cipher = OPENSSL_zalloc(sizeof(EVP_CIPHER));
+
+    if (cipher != NULL) {
+        cipher->lock = CRYPTO_THREAD_lock_new();
+        if (cipher->lock == NULL) {
+            OPENSSL_free(cipher);
+            return NULL;
+        }
+        cipher->refcnt = 1;
+    }
+    return cipher;
+}
+
 static void *evp_cipher_from_dispatch(const char *name,
                                       const OSSL_DISPATCH *fns,
                                       OSSL_PROVIDER *prov,
@@ -1252,9 +1267,9 @@ static void *evp_cipher_from_dispatch(const char *name,
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
 
-    if ((cipher = EVP_CIPHER_meth_new(0, 0, 0)) == NULL
+    if ((cipher = evp_cipher_new()) == NULL
         || (cipher->name = OPENSSL_strdup(name)) == NULL) {
-        EVP_CIPHER_meth_free(cipher);
+        EVP_CIPHER_free(cipher);
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -1391,6 +1406,30 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                           evp_cipher_free);
 
     return cipher;
+}
+
+int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
+{
+    int ref = 0;
+
+    CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
+    return 1;
+}
+
+void EVP_CIPHER_free(EVP_CIPHER *cipher)
+{
+    int i;
+
+    if (cipher == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
+    if (i > 0)
+        return;
+    ossl_provider_free(cipher->prov);
+    OPENSSL_free(cipher->name);
+    CRYPTO_THREAD_lock_free(cipher->lock);
+    OPENSSL_free(cipher);
 }
 
 void EVP_CIPHER_do_all_ex(OPENSSL_CTX *libctx,

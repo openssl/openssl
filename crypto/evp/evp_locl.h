@@ -158,6 +158,7 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
 
 /* Internal structure constructors for fetched methods */
 EVP_MD *evp_md_new(void);
+EVP_CIPHER *evp_cipher_new(void);
 
 /* Helper functions to avoid duplicating code */
 

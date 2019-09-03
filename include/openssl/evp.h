@@ -486,6 +486,8 @@ unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher);
 int EVP_CIPHER_mode(const EVP_CIPHER *cipher);
 EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                              const char *properties);
+int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
+void EVP_CIPHER_free(EVP_CIPHER *cipher);
 
 const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx);

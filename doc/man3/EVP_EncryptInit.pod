@@ -3,6 +3,8 @@
 =head1 NAME
 
 EVP_CIPHER_fetch,
+EVP_CIPHER_up_ref,
+EVP_CIPHER_free,
 EVP_CIPHER_CTX_new,
 EVP_CIPHER_CTX_reset,
 EVP_CIPHER_CTX_free,
@@ -67,6 +69,8 @@ EVP_CIPHER_do_all_ex
 
  EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                               const char *properties);
+ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
+ void EVP_CIPHER_free(EVP_CIPHER *cipher);
  EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
  int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx);
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
@@ -150,13 +154,21 @@ EVP_CIPHER_do_all_ex
 The EVP cipher routines are a high level interface to certain
 symmetric ciphers.
 
+The B<EVP_CIPHER> type is a structure for cipher method implementation.
+
 EVP_CIPHER_fetch() fetches the cipher implementation for the given
 B<algorithm> from any provider offering it, within the criteria given
 by the B<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
-The returned value must eventually be freed with
-L<EVP_CIPHER_meth_free(3)>.
+The returned value must eventually be freed with EVP_CIPHER_free().
+
+EVP_CIPHER_up_ref() increments the reference count for an B<EVP_CIPHER>
+structure.
+
+EVP_CIPHER_free() decrements the reference count for the B<EVP_CIPHER>
+structure.
+If the reference count drops to 0 then the structure is freed.
 
 EVP_CIPHER_CTX_new() creates a cipher context.
 
@@ -350,6 +362,8 @@ and the given I<arg> as argument.
 
 EVP_CIPHER_fetch() returns a pointer to a B<EVP_CIPHER> for success
 and B<NULL> for failure.
+
+EVP_CIPHER_up_ref() returns 1 for success or 0 otherwise.
 
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
 B<EVP_CIPHER_CTX> for success and B<NULL> for failure.
@@ -756,6 +770,10 @@ B<EVP_CIPHER_CTX> was made opaque in OpenSSL 1.1.0.  As a result,
 EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup()
 disappeared.  EVP_CIPHER_CTX_init() remains as an alias for
 EVP_CIPHER_CTX_reset().
+
+The EVP_CIPHER_fetch(), EVP_CIPHER_free(), EVP_CIPHER_up_ref(),
+EVP_CIPHER_CTX_set_params() and EVP_CIPHER_CTX_get_params() functions
+were added in 3.0.
 
 =head1 COPYRIGHT
 
