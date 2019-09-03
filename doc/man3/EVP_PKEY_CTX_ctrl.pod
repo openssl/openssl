@@ -161,6 +161,17 @@ up to the size of the DH prime B<p>.
 If B<OSSL_EXCHANGE_PARAM_PAD> is zero (the default) then no padding is
 performed.
 
+=item OSSL_SIGNATURE_PARAM_DIGEST (UTF8 string type)
+
+Sets the name of the digest algorithm used for the input to the signature
+functions.
+
+=item OSSL_SIGNATURE_PARAM_DIGEST_SIZE (size_t type)
+
+Sets the output size of the digest algorithm used for the input to the signature
+functions.
+The internal algorithm that supports this parameter is DSA.
+
 =back
 
 The function EVP_PKEY_CTX_ctrl() sends a control operation to the context

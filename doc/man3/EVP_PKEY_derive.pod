@@ -25,10 +25,10 @@ The EVP_PKEY object associated with B<ctx> must be compatible with that
 algorithm.
 B<exchange> may be NULL in which case the EVP_KEYEXCH algorithm is fetched
 implicitly based on the type of EVP_PKEY associated with B<ctx>.
-See L<EVP_KEYEXCH_fetch(3)> for more information about implict fetches.
+See L<provider(7)/Implicit fetch> for more information about implict fetches.
 
-The EVP_PKEY_derive_init() function is the same as EVP_PKEY_derive() except that
-the EVP_KEYEXCH algorithm is always implicitly fetched.
+The EVP_PKEY_derive_init() function is the same as EVP_PKEY_derive_init_ex()
+except that the EVP_KEYEXCH algorithm is always implicitly fetched.
 
 The EVP_PKEY_derive_set_peer() function sets the peer key: this will normally
 be a public key.
