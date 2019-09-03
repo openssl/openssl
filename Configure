@@ -1225,6 +1225,15 @@ foreach (keys %useradd) {
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
+# With "deprecated" disable all deprecated features.
+if (defined($disabled{"deprecated"})) {
+        $config{api} = $maxapi;
+}
+$config{minapi} = $apitable->{$config{api}} // -1;
+
+# Fundamental functionality the engines need is deprecated in version 3.0
+disable('minapi', 'engine') if $config{minapi} >= 3;
+
 ######################################################################
 # Build up information for skipping certain directories depending on disabled
 # features, as well as setting up macros for disabled features.
@@ -1359,11 +1368,6 @@ foreach (grep /^-fsanitize=/, @{$config{CFLAGS} || []}) {
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
     push @{$config{openssl_feature_defines}}, "OPENSSL_THREADS";
-}
-
-# With "deprecated" disable all deprecated features.
-if (defined($disabled{"deprecated"})) {
-        $config{api} = $maxapi;
 }
 
 my $no_shared_warn=0;
@@ -1510,7 +1514,7 @@ $config{cxxflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
                           @{$config{cxxflags}} ] if $config{CXX};
 
 $config{openssl_api_defines} = [
-    "OPENSSL_MIN_API=".($apitable->{$config{api} // ""} // -1)
+    "OPENSSL_MIN_API=$config{minapi}"
 ];
 
 my @strict_warnings_collection=();
