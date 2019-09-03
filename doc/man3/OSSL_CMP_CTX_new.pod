@@ -292,7 +292,7 @@ RFC 4210.
 
 =back
 
-OSSL_CMP_CTX_get_option() reads the current of the given option
+OSSL_CMP_CTX_get_option() reads the current value of the given option
 (e.g., OSSL_CMP_OPT_IMPLICITCONFIRM) from the given OSSL_CMP_CTX structure.
 
 OSSL_CMP_CTX_set_log_cb() sets in B<ctx> the log callback function C<cb>

@@ -198,10 +198,8 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
 
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status)
 {
-    if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
+    if (!ossl_assert(ctx != NULL))
+         return 0;
     ctx->status = status;
     return 1;
 }
