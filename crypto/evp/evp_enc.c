@@ -35,7 +35,7 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
         ctx->provctx = NULL;
     }
     if (ctx->fetched_cipher != NULL)
-        EVP_CIPHER_meth_free(ctx->fetched_cipher);
+        EVP_CIPHER_free(ctx->fetched_cipher);
     memset(ctx, 0, sizeof(*ctx));
 
     return 1;
@@ -133,7 +133,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             || impl != NULL) {
         if (ctx->cipher == ctx->fetched_cipher)
             ctx->cipher = NULL;
-        EVP_CIPHER_meth_free(ctx->fetched_cipher);
+        EVP_CIPHER_free(ctx->fetched_cipher);
         ctx->fetched_cipher = NULL;
         goto legacy;
     }
@@ -274,7 +274,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             return 0;
         }
         cipher = provciph;
-        EVP_CIPHER_meth_free(ctx->fetched_cipher);
+        EVP_CIPHER_free(ctx->fetched_cipher);
         ctx->fetched_cipher = provciph;
 #endif
     }
@@ -1376,7 +1376,7 @@ static void *evp_cipher_from_dispatch(const char *name,
          * functions, or a single "cipher" function. In all cases we need both
          * the "newctx" and "freectx" functions.
          */
-        EVP_CIPHER_meth_free(cipher);
+        EVP_CIPHER_free(cipher);
         EVPerr(EVP_F_EVP_CIPHER_FROM_DISPATCH, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
@@ -1394,7 +1394,7 @@ static int evp_cipher_up_ref(void *cipher)
 
 static void evp_cipher_free(void *cipher)
 {
-    EVP_CIPHER_meth_free(cipher);
+    EVP_CIPHER_free(cipher);
 }
 
 EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,

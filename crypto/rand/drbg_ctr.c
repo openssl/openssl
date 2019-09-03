@@ -354,7 +354,7 @@ static int drbg_ctr_uninstantiate(RAND_DRBG *drbg)
 {
     EVP_CIPHER_CTX_free(drbg->data.ctr.ctx);
     EVP_CIPHER_CTX_free(drbg->data.ctr.ctx_df);
-    EVP_CIPHER_meth_free(drbg->data.ctr.cipher);
+    EVP_CIPHER_free(drbg->data.ctr.cipher);
     OPENSSL_cleanse(&drbg->data.ctr, sizeof(drbg->data.ctr));
     return 1;
 }
@@ -392,7 +392,7 @@ int drbg_ctr_init(RAND_DRBG *drbg)
     if (cipher == NULL)
         return 0;
 
-    EVP_CIPHER_meth_free(ctr->cipher);
+    EVP_CIPHER_free(ctr->cipher);
     ctr->cipher = cipher;
 
     drbg->meth = &drbg_ctr_meth;

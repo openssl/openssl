@@ -1317,8 +1317,8 @@ static int test_EVP_CIPHER_fetch(int tst)
     if (!TEST_true(EVP_CIPHER_up_ref(cipher)))
         goto err;
     /* Ref count should now be 2. Release both */
-    EVP_CIPHER_meth_free(cipher);
-    EVP_CIPHER_meth_free(cipher);
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_free(cipher);
     cipher = NULL;
 
     /*
@@ -1336,7 +1336,7 @@ static int test_EVP_CIPHER_fetch(int tst)
             goto err;
     }
 
-    EVP_CIPHER_meth_free(cipher);
+    EVP_CIPHER_free(cipher);
     cipher = NULL;
 
     /*
@@ -1355,7 +1355,7 @@ static int test_EVP_CIPHER_fetch(int tst)
             goto err;
     }
 
-    EVP_CIPHER_meth_free(cipher);
+    EVP_CIPHER_free(cipher);
     cipher = NULL;
 
     /*
@@ -1381,7 +1381,7 @@ static int test_EVP_CIPHER_fetch(int tst)
     ret = 1;
 
  err:
-    EVP_CIPHER_meth_free(cipher);
+    EVP_CIPHER_free(cipher);
     OSSL_PROVIDER_unload(defltprov);
     OSSL_PROVIDER_unload(fipsprov);
     /* Not normally needed, but we would like to test that
