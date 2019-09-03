@@ -529,54 +529,38 @@ unsigned long EVP_MD_flags(const EVP_MD *md)
 
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
 {
-    EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
+    EVP_MD *md = evp_md_new();
 
     if (md != NULL) {
         md->type = md_type;
         md->pkey_type = pkey_type;
-        md->lock = CRYPTO_THREAD_lock_new();
-        if (md->lock == NULL) {
-            OPENSSL_free(md);
-            return NULL;
-        }
-        md->refcnt = 1;
     }
     return md;
 }
 
 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
 {
-    EVP_MD *to = EVP_MD_meth_new(md->type, md->pkey_type);
+    EVP_MD *to = NULL;
 
-    if (to != NULL) {
+    /*
+     * Non-legacy EVP_MDs can't be duplicated like this.
+     * Use EVP_MD_up_ref() instead.
+     */
+    if (md->prov != NULL)
+        return NULL;
+
+    if ((to = EVP_MD_meth_new(md->type, md->pkey_type)) != NULL) {
         CRYPTO_RWLOCK *lock = to->lock;
+
         memcpy(to, md, sizeof(*to));
         to->lock = lock;
     }
     return to;
 }
 
-int EVP_MD_up_ref(EVP_MD *md)
-{
-    int ref = 0;
-
-    CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
-    return 1;
-}
-
 void EVP_MD_meth_free(EVP_MD *md)
 {
-    if (md != NULL) {
-        int i;
-
-        CRYPTO_DOWN_REF(&md->refcnt, &i, md->lock);
-        if (i > 0)
-            return;
-        ossl_provider_free(md->prov);
-        OPENSSL_free(md->name);
-        CRYPTO_THREAD_lock_free(md->lock);
-        OPENSSL_free(md);
-    }
+    EVP_MD_free(md);
 }
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
 {
