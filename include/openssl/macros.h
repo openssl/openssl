@@ -134,8 +134,8 @@
 # ifndef OPENSSL_FUNC
 #  if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #   define OPENSSL_FUNC __func__
-#  elif defined(__STDC__) && defined(PEDANTIC)
-#   define OPENSSL_FUNC "(PEDANTIC disallows function name)"
+#  elif defined(__STRICT_ANSI__)
+#   define OPENSSL_FUNC "(unknown function)"
 #  elif defined(_MSC_VER) || (defined(__GNUC__) && __GNUC__ >= 2)
 #   define OPENSSL_FUNC __FUNCTION__
 #  elif defined(__FUNCSIG__)
