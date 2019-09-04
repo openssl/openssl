@@ -31,8 +31,8 @@ extern "C" {
 int  OSSL_CMP_log_open(void);
 void OSSL_CMP_log_close(void);
 #  define OSSL_CMP_LOG_PREFIX "CMP "
-#  define OSSL_CMP_LOG_START OPENSSL_FUNC ":" OPENSSL_FILE ":" \
-                             OPENSSL_MSTR(OPENSSL_LINE) ":" OSSL_CMP_LOG_PREFIX
+#  define OSSL_CMP_LOG_START OPENSSL_FILE ":" OPENSSL_MSTR(OPENSSL_LINE) ":" \
+          OSSL_CMP_LOG_PREFIX
 #  define OSSL_CMP_alert(msg) OSSL_CMP_log(ALERT, msg)
 #  define OSSL_CMP_err(msg)   OSSL_CMP_log(ERROR, msg)
 #  define OSSL_CMP_warn(msg)  OSSL_CMP_log(WARN, msg)
