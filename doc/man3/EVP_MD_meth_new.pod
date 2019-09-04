@@ -65,7 +65,7 @@ These B<EVP_MD> structures are reference counted.
 
 EVP_MD_meth_dup() creates a copy of B<md>.
 
-EVP_MD_meth_free() ecrements the reference count for the B<EVP_MD> structure.
+EVP_MD_meth_free() decrements the reference count for the B<EVP_MD> structure.
 If the reference count drops to 0 then the structure is freed.
 
 EVP_MD_meth_set_input_blocksize() sets the internal input block size
