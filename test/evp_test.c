@@ -2799,7 +2799,6 @@ static void clear_test(EVP_TEST *t)
 static int check_test_error(EVP_TEST *t)
 {
     unsigned long err;
-    const char *func;
     const char *reason;
 
     if (t->err == NULL && t->expected_err == NULL)
@@ -2842,9 +2841,8 @@ static int check_test_error(EVP_TEST *t)
         return 0;
     }
 
-    func = ERR_func_error_string(err);
     reason = ERR_reason_error_string(err);
-    if (func == NULL && reason == NULL) {
+    if (reason == NULL) {
         TEST_info("%s:%d: Expected error \"%s\", no strings available."
                   " Assuming ok.",
                   t->s.test_file, t->s.start, t->reason);
