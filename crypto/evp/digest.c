@@ -769,8 +769,6 @@ int EVP_MD_up_ref(EVP_MD *md)
 {
     int ref = 0;
 
-    if (md->prov == NULL)
-        return 0;                /* Do not refcount legacy stuff */
     CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
     return 1;
 }
