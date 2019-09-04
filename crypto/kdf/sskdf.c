@@ -223,8 +223,7 @@ static int SSKDF_mac_kdm(EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
         const char *mdname = EVP_MD_name(hmac_md);
         params[params_n++] =
             OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                             (char *)mdname,
-                                             strlen(mdname) + 1);
+                                             (char *)mdname, 0);
     }
     params[params_n++] =
         OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, (void *)salt,

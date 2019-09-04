@@ -166,23 +166,22 @@ size B<rsize> is created.
 
 OSSL_PARAM_construct_utf8_string() is a function that constructs a UTF8
 string OSSL_PARAM structure.
-A parameter with name B<key>, storage B<buf>, size B<bsize> and return
-size B<rsize> is created.
+A parameter with name B<key>, storage B<buf> and size B<bsize> is created.
+If B<bsize> is zero, the string length is determined using strlen(3).
 
 OSSL_PARAM_construct_octet_string() is a function that constructs an OCTET
 string OSSL_PARAM structure.
-A parameter with name B<key>, storage B<buf>, size B<bsize> and return
-size B<rsize> is created.
+A parameter with name B<key>, storage B<buf> and size B<bsize> is created.
 
 OSSL_PARAM_construct_utf8_ptr() is a function that constructes a UTF string
 pointer OSSL_PARAM structure.
-A parameter with name B<key>, storage pointer B<*buf>, size B<bsize> and
-return size B<rsize> is created.
+A parameter with name B<key>, storage pointer B<*buf> and size B<bsize>
+is created.
 
 OSSL_PARAM_construct_octet_ptr() is a function that constructes an OCTET string
 pointer OSSL_PARAM structure.
-A parameter with name B<key>, storage pointer B<*buf>, size B<bsize> and
-return size B<rsize> is created.
+A parameter with name B<key>, storage pointer B<*buf> and size B<bsize>
+is created.
 
 OSSL_PARAM_construct_end() is a function that constructs the terminating
 OSSL_PARAM structure.
