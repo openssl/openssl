@@ -345,14 +345,12 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
     if (engine_id != NULL)
         params[paramsn++] =
             OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
-                                             (char *)engine_id,
-                                             strlen(engine_id) + 1);
+                                             (char *)engine_id, 0);
 # endif
 
     params[paramsn++] =
         OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                         (char *)cipher_name,
-                                         strlen(cipher_name) + 1);
+                                         (char *)cipher_name, 0);
     params[paramsn++] =
         OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                           (char *)priv, len);

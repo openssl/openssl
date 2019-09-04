@@ -252,8 +252,7 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     mac_flags = EVP_MD_CTX_FLAG_NON_FIPS_ALLOW;
     params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FLAGS, &mac_flags);
     params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                 (char *)mdname,
-                                                 strlen(mdname) + 1);
+                                                 (char *)mdname, 0);
     params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                   (void *)sec, sec_len);
     params[3] = OSSL_PARAM_construct_end();
