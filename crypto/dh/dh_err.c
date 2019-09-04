@@ -60,7 +60,7 @@ static const ERR_STRING_DATA DH_str_reasons[] = {
 int ERR_load_DH_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(DH_str_reasons[0].error) == NULL)
+    if (ERR_reason_error_string(DH_str_reasons[0].error) == NULL)
         ERR_load_strings_const(DH_str_reasons);
 #endif
     return 1;
