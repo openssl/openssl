@@ -80,7 +80,7 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set_serverPort(OSSL_CMP_CTX *ctx, int port);
  int OSSL_CMP_CTX_set1_proxyName(OSSL_CMP_CTX *ctx, const char *name);
  int OSSL_CMP_CTX_set_proxyPort(OSSL_CMP_CTX *ctx, int port);
- #define OSSL_CMP_DEFAULT_PORT 8080
+ #define OSSL_CMP_DEFAULT_PORT 80
  typedef BIO (*OSSL_cmp_http_cb_t) (OSSL_CMP_CTX *ctx, BIO *hbio,
                                     unsigned long detail);
  int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_http_cb_t cb);
@@ -315,13 +315,13 @@ OSSL_CMP_CTX_set1_serverName() sets the given server Address (as IP or name)
 in the given OSSL_CMP_CTX structure.
 
 OSSL_CMP_CTX_set_serverPort() sets the port of the CMP server to connect to.
-Port defaults to OSSL_CMP_DEFAULT_PORT = 8080 if not set explicitly.
+Port defaults to OSSL_CMP_DEFAULT_PORT = 80 if not set explicitly.
 
 OSSL_CMP_CTX_set1_proxyName() sets the host name of the HTTP proxy to be used
 for connecting to the CA server.
 
 OSSL_CMP_CTX_set_proxyPort() sets the port of the HTTP proxy.
-Port defaults to OSSL_CMP_DEFAULT_PORT = 8080 if not set explicitly.
+Port defaults to OSSL_CMP_DEFAULT_PORT = 80 if not set explicitly.
 
 OSSL_CMP_CTX_set_http_cb() sets the optional http connect/disconnect callback
 function, which has the prototype
