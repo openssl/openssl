@@ -188,6 +188,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
     int ret;
     void *provkey = NULL;
 
+    evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_DERIVE;
 
     if (ctx->engine != NULL)
@@ -221,10 +222,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
         }
     }
 
-    if (ctx->exchprovctx != NULL && ctx->exchange != NULL)
-        ctx->exchange->freectx(ctx->exchprovctx);
-    EVP_KEYEXCH_free(ctx->exchange);
-    ctx->exchange = exchange;
+    ctx->op.kex.exchange = exchange;
     if (ctx->pkey != NULL) {
         provkey = evp_keymgmt_export_to_provider(ctx->pkey, exchange->keymgmt);
         if (provkey == NULL) {
@@ -232,13 +230,13 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
             goto err;
         }
     }
-    ctx->exchprovctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
-    if (ctx->exchprovctx == NULL) {
+    ctx->op.kex.exchprovctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
+    if (ctx->op.kex.exchprovctx == NULL) {
         /* The provider key can stay in the cache */
         EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT_EX, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    ret = exchange->init(ctx->exchprovctx, provkey);
+    ret = exchange->init(ctx->op.kex.exchprovctx, provkey);
 
     return ret ? 1 : 0;
  err:
@@ -276,27 +274,22 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return -2;
     }
 
-    if (ctx->exchprovctx == NULL)
+    if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx) || ctx->op.kex.exchprovctx == NULL)
         goto legacy;
 
-    if (ctx->operation != EVP_PKEY_OP_DERIVE) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-               EVP_R_OPERATON_NOT_INITIALIZED);
-        return -1;
-    }
-
-    if (ctx->exchange->set_peer == NULL) {
+    if (ctx->op.kex.exchange->set_peer == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
-    provkey = evp_keymgmt_export_to_provider(peer, ctx->exchange->keymgmt);
+    provkey = evp_keymgmt_export_to_provider(peer,
+                                             ctx->op.kex.exchange->keymgmt);
     if (provkey == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    return ctx->exchange->set_peer(ctx->exchprovctx, provkey);
+    return ctx->op.kex.exchange->set_peer(ctx->op.kex.exchprovctx, provkey);
 
  legacy:
     if (ctx->pmeth == NULL
@@ -371,15 +364,16 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         return -2;
     }
 
-    if (ctx->operation != EVP_PKEY_OP_DERIVE) {
+    if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
 
-    if (ctx->exchprovctx == NULL)
+    if (ctx->op.kex.exchprovctx == NULL)
         goto legacy;
 
-    ret = ctx->exchange->derive(ctx->exchprovctx, key, pkeylen, SIZE_MAX);
+    ret = ctx->op.kex.exchange->derive(ctx->op.kex.exchprovctx, key, pkeylen,
+                                       SIZE_MAX);
 
     return ret;
  legacy:

@@ -270,7 +270,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
      * TODO(3.0): Temporarily no support for EVP_DigestSign* inside FIPS module
      * or when using providers.
      */
-    if (ctx->pctx != NULL && ctx->pctx->signature == NULL) {
+    if (ctx->pctx != NULL
+            && (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
+                 || ctx->pctx->op.sig.signature == NULL)) {
         int r;
         r = EVP_PKEY_CTX_ctrl(ctx->pctx, -1, EVP_PKEY_OP_TYPE_SIG,
                               EVP_PKEY_CTRL_DIGESTINIT, 0, ctx);
