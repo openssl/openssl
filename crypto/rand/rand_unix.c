@@ -19,11 +19,12 @@
 #include "internal/rand_int.h"
 #include <stdio.h>
 #include "internal/dso.h"
-#if defined(__linux)
-# include <asm/unistd.h>
-# include <sys/ipc.h>
-# include <sys/shm.h>
-# include <sys/utsname.h>
+#ifdef __linux
+# include <sys/syscall.h>
+# ifdef DEVRANDOM_WAIT
+#  include <sys/shm.h>
+#  include <sys/utsname.h>
+# endif
 #endif
 #if defined(__FreeBSD__) && !defined(OPENSSL_SYS_UEFI)
 # include <sys/types.h>
