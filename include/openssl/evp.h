@@ -191,7 +191,6 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
 EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
 void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
-int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
 
 int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len);
 int EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags);
