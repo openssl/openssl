@@ -77,7 +77,7 @@ static const ERR_STRING_DATA X509_str_reasons[] = {
 int ERR_load_X509_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(X509_str_reasons[0].error) == NULL)
+    if (ERR_reason_error_string(X509_str_reasons[0].error) == NULL)
         ERR_load_strings_const(X509_str_reasons);
 #endif
     return 1;

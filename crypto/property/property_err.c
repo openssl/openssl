@@ -39,7 +39,7 @@ static const ERR_STRING_DATA PROP_str_reasons[] = {
 int ERR_load_PROP_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(PROP_str_reasons[0].error) == NULL)
+    if (ERR_reason_error_string(PROP_str_reasons[0].error) == NULL)
         ERR_load_strings_const(PROP_str_reasons);
 #endif
     return 1;

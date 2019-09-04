@@ -29,7 +29,7 @@ static const ERR_STRING_DATA ASYNC_str_reasons[] = {
 int ERR_load_ASYNC_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(ASYNC_str_reasons[0].error) == NULL)
+    if (ERR_reason_error_string(ASYNC_str_reasons[0].error) == NULL)
         ERR_load_strings_const(ASYNC_str_reasons);
 #endif
     return 1;
