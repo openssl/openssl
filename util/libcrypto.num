@@ -1807,7 +1807,6 @@ i2d_ASN1_bio_stream                     1849	3_0_0	EXIST::FUNCTION:
 CRYPTO_THREAD_init_local                1850	3_0_0	EXIST::FUNCTION:
 TS_RESP_CTX_set_serial_cb               1851	3_0_0	EXIST::FUNCTION:TS
 POLICY_MAPPING_it                       1852	3_0_0	EXIST::FUNCTION:
-ERR_load_KDF_strings                    1853	3_0_0	EXIST::FUNCTION:
 UI_method_set_reader                    1854	3_0_0	EXIST::FUNCTION:
 BIO_next                                1855	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_set_default_mask_asc        1856	3_0_0	EXIST::FUNCTION:
@@ -4477,12 +4476,8 @@ ASYNC_WAIT_CTX_set_callback             4582	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_set_status               4583	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_get_status               4584	3_0_0	EXIST::FUNCTION:
 ERR_load_ESS_strings                    4589	3_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_new_id                      4590	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_free                        4591	3_0_0	EXIST::FUNCTION:
 EVP_KDF_reset                           4592	3_0_0	EXIST::FUNCTION:
-EVP_KDF_ctrl                            4593	3_0_0	EXIST::FUNCTION:
-EVP_KDF_vctrl                           4594	3_0_0	EXIST::FUNCTION:
-EVP_KDF_ctrl_str                        4595	3_0_0	EXIST::FUNCTION:
 EVP_KDF_size                            4596	3_0_0	EXIST::FUNCTION:
 EVP_KDF_derive                          4597	3_0_0	EXIST::FUNCTION:
 EC_GROUP_get0_field                     4598	3_0_0	EXIST::FUNCTION:EC
@@ -4632,8 +4627,6 @@ EVP_CIPHER_mode                         4741	3_0_0	EXIST::FUNCTION:
 OPENSSL_info                            4742	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_new                         4743	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_kdf                         4744	3_0_0	EXIST::FUNCTION:
-EVP_KDF_nid                             4745	3_0_0	EXIST::FUNCTION:
-EVP_get_kdfbyname                       4746	3_0_0	EXIST::FUNCTION:
 i2d_KeyParams                           4747	3_0_0	EXIST::FUNCTION:
 d2i_KeyParams                           4748	3_0_0	EXIST::FUNCTION:
 i2d_KeyParams_bio                       4749	3_0_0	EXIST::FUNCTION:
@@ -4734,3 +4727,16 @@ EVP_MAC_provider                        4843	3_0_0	EXIST::FUNCTION:
 EVP_MAC_do_all_ex                       4844	3_0_0	EXIST::FUNCTION:
 EVP_MD_free                             4845	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_free                         4846	3_0_0	EXIST::FUNCTION:
+EVP_KDF_up_ref                          4847	3_0_0	EXIST::FUNCTION:
+EVP_KDF_free                            4848	3_0_0	EXIST::FUNCTION:
+EVP_KDF_fetch                           4849	3_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_dup                         4850	3_0_0	EXIST::FUNCTION:
+EVP_KDF_name                            4851	3_0_0	EXIST::FUNCTION:
+EVP_KDF_provider                        4852	3_0_0	EXIST::FUNCTION:
+EVP_KDF_get_params                      4853	3_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_get_params                  4854	3_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_set_params                  4855	3_0_0	EXIST::FUNCTION:
+EVP_KDF_gettable_params                 4856	3_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_gettable_params             4857	3_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_settable_params             4858	3_0_0	EXIST::FUNCTION:
+EVP_KDF_do_all_ex                       4859	3_0_0	EXIST::FUNCTION:
