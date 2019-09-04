@@ -20,6 +20,8 @@ static OSSL_OP_keyexch_set_peer_fn dh_set_peer;
 static OSSL_OP_keyexch_derive_fn dh_derive;
 static OSSL_OP_keyexch_freectx_fn dh_freectx;
 static OSSL_OP_keyexch_dupctx_fn dh_dupctx;
+static OSSL_OP_keyexch_set_ctx_params_fn dh_set_ctx_params;
+static OSSL_OP_keyexch_settable_ctx_params_fn dh_settable_ctx_params;
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.
@@ -124,7 +126,7 @@ static void *dh_dupctx(void *vpdhctx)
     return dstctx;
 }
 
-static int dh_set_params(void *vpdhctx, const OSSL_PARAM params[])
+static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
     const OSSL_PARAM *p;
@@ -140,6 +142,16 @@ static int dh_set_params(void *vpdhctx, const OSSL_PARAM params[])
     return 1;
 }
 
+static const OSSL_PARAM known_settable_ctx_params[] = {
+    OSSL_PARAM_int(OSSL_EXCHANGE_PARAM_PAD, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *dh_settable_ctx_params(void)
+{
+    return known_settable_ctx_params;
+}
+
 const OSSL_DISPATCH dh_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))dh_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))dh_init },
@@ -147,6 +159,8 @@ const OSSL_DISPATCH dh_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_SET_PEER, (void (*)(void))dh_set_peer },
     { OSSL_FUNC_KEYEXCH_FREECTX, (void (*)(void))dh_freectx },
     { OSSL_FUNC_KEYEXCH_DUPCTX, (void (*)(void))dh_dupctx },
-    { OSSL_FUNC_KEYEXCH_SET_PARAMS, (void (*)(void))dh_set_params },
+    { OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS, (void (*)(void))dh_set_ctx_params },
+    { OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS,
+      (void (*)(void))dh_settable_ctx_params },
     { 0, NULL }
 };

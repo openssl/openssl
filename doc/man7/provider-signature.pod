@@ -39,8 +39,10 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
                                  const unsigned char *sig, size_t siglen);
 
  /* Signature parameters */
- int OP_signature_set_params(void *ctx, const OSSL_PARAM params[]);
-
+ int OP_signature_get_ctx_params(void *ctx, OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_signature_gettable_ctx_params(void);
+ int OP_signature_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_signature_settable_ctx_params(void);
 
 =head1 DESCRIPTION
 
@@ -86,7 +88,10 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_signature_verify_recover_init    OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT
  OP_signature_verify_recover         OSSL_FUNC_SIGNATURE_VERIFY_RECOVER
 
- OP_signature_set_params             OSSL_FUNC_SIGNATURE_SET_PARAMS
+ OP_signature_get_ctx_params         OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS
+ OP_signature_gettable_ctx_params    OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS
+ OP_signature_set_ctx_params         OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS
+ OP_signature_settable_ctx_params    OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS
 
 A signature algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions a provider must implement
@@ -174,10 +179,12 @@ the B<routlen> parameter.
 =head2 Signature Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
-the OP_signature_set_params() function.
+the OP_signature_get_ctx_params() and OP_signature_set_ctx_params() functions.
 
-OP_signature_set_params() sets signature parameters associated with the given
-provider side key exchange context B<ctx> to B<params>.
+OP_signature_get_ctx_params() gets signature parameters associated with the
+given provider side signature context B<ctx> and stored them in B<params>.
+OP_signature_set_ctx_params() sets the signature parameters associated with the
+given provider side signature context B<ctx> to B<params>.
 Any parameter settings are additional to any that were previously set.
 
 Parameters currently recognised by built-in signature algorithms are as
@@ -187,27 +194,30 @@ algorithms:
 
 =over 4
 
-=item B<OSSL_SIGNATURE_PARAM_DIGEST> (UTF8 string)
+=item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <utf8 string>
 
-Sets the name of the digest algorithm used for the input to the signature
+Get or sets the name of the digest algorithm used for the input to the signature
 functions.
 
-=item B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE> (size_t)
+=item "digest-size" (B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE>) <size_t>
 
-Sets the output size of the digest algorithm used for the input to the signature
-functions.
+Gets or sets the output size of the digest algorithm used for the input to the
+signature functions.
 
 =back
+
+OP_signature_gettable_ctx_params() and OP_signature_settable_ctx_params() get a
+constant B<OSSL_PARAM> array that decribes the gettable and settable parameters,
+i.e. parameters that can be used with OP_signature_get_ctx_params() and
+OP_signature_set_ctx_params() respectively.
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =head1 RETURN VALUES
 
 OP_signature_newctx() and OP_signature_dupctx() should return the newly created
 provider side signature, or NULL on failure.
 
-OP_signature_sign_init(), OP_signature_sign(), OP_signature_verify_init(),
-OP_signature_verify(), OP_signature_verify_recover_init(),
-OP_signature_verify_recover() and OP_signature_set_params() should return 1 for
-success or 0 on error.
+All other functions should return 1 for success or 0 on error.
 
 =head1 SEE ALSO
 

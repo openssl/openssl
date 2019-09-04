@@ -50,7 +50,7 @@ static void *evp_keyexch_from_dispatch(const char *name,
     EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(keymgmt_data->ctx, name,
                                              keymgmt_data->properties);
     EVP_KEYEXCH *exchange = NULL;
-    int fncnt = 0;
+    int fncnt = 0, paramfncnt = 0;
 
     if (keymgmt == NULL || EVP_KEYMGMT_provider(keymgmt) != prov) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEYMGMT_AVAILABLE);
@@ -102,19 +102,28 @@ static void *evp_keyexch_from_dispatch(const char *name,
                 break;
             exchange->dupctx = OSSL_get_OP_keyexch_dupctx(fns);
             break;
-        case OSSL_FUNC_KEYEXCH_SET_PARAMS:
-            if (exchange->set_params != NULL)
+        case OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS:
+            if (exchange->set_ctx_params != NULL)
                 break;
-            exchange->set_params = OSSL_get_OP_keyexch_set_params(fns);
+            exchange->set_ctx_params = OSSL_get_OP_keyexch_set_ctx_params(fns);
+            paramfncnt++;
+            break;
+        case OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS:
+            if (exchange->settable_ctx_params != NULL)
+                break;
+            exchange->settable_ctx_params
+                = OSSL_get_OP_keyexch_settable_ctx_params(fns);
+            paramfncnt++;
             break;
         }
     }
-    if (fncnt != 4) {
+    if (fncnt != 4 || (paramfncnt != 0 && paramfncnt != 2)) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "exchange" functions: init, derive, newctx,
-         * and freectx. The dupctx, set_peer and set_params functions are
-         * optional.
+         * and freectx. The set_ctx_params and settable_ctx_params functions are
+         * optional, but if one of them is present then the other one must also
+         * be present. The dupctx and set_peer functions are optional.
          */
         EVPerr(EVP_F_EVP_KEYEXCH_FROM_DISPATCH,
                EVP_R_INVALID_PROVIDER_FUNCTIONS);

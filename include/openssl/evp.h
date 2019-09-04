@@ -1337,6 +1337,7 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
                                      int (*pkey_security_bits) (const EVP_PKEY
                                                                 *pk));
 
+int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
 int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 
 # define EVP_PKEY_OP_UNDEFINED           0
@@ -1363,10 +1364,6 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 
 # define EVP_PKEY_OP_TYPE_GEN \
                 (EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN)
-
-# define  EVP_PKEY_CTX_get_signature_md(ctx, pmd)        \
-                EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,  \
-                                        EVP_PKEY_CTRL_GET_MD, 0, (void *)(pmd))
 
 # define  EVP_PKEY_CTX_set_mac_key(ctx, key, len)        \
                 EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_KEYGEN,  \
@@ -1427,7 +1424,10 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
 
+int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                       int cmd, int p1, void *p2);
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,

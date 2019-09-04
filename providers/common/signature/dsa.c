@@ -20,7 +20,10 @@ static OSSL_OP_signature_verify_init_fn dsa_signature_init;
 static OSSL_OP_signature_sign_fn dsa_sign;
 static OSSL_OP_signature_freectx_fn dsa_freectx;
 static OSSL_OP_signature_dupctx_fn dsa_dupctx;
-static OSSL_OP_signature_set_params_fn dsa_set_params;
+static OSSL_OP_signature_get_ctx_params_fn dsa_get_ctx_params;
+static OSSL_OP_signature_gettable_ctx_params_fn dsa_gettable_ctx_params;
+static OSSL_OP_signature_set_ctx_params_fn dsa_set_ctx_params;
+static OSSL_OP_signature_settable_ctx_params_fn dsa_settable_ctx_params;
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.
@@ -31,6 +34,8 @@ static OSSL_OP_signature_set_params_fn dsa_set_params;
 typedef struct {
     DSA *dsa;
     size_t mdsize;
+    /* Should be big enough */
+    char mdname[80];
 } PROV_DSA_CTX;
 
 static void *dsa_newctx(void *provctx)
@@ -116,22 +121,72 @@ static void *dsa_dupctx(void *vpdsactx)
     return dstctx;
 }
 
-static int dsa_set_params(void *vpdsactx, const OSSL_PARAM params[])
+static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
+{
+    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+    OSSL_PARAM *p;
+
+    if (pdsactx == NULL || params == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, pdsactx->mdsize))
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST);
+    if (p != NULL && !OSSL_PARAM_set_utf8_string(p, pdsactx->mdname))
+        return 0;
+
+    return 1;
+}
+
+static const OSSL_PARAM known_gettable_ctx_params[] = {
+    OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *dsa_gettable_ctx_params(void)
+{
+    return known_gettable_ctx_params;
+}
+
+static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     const OSSL_PARAM *p;
-    size_t mdsize;
+    char *mdname;
 
     if (pdsactx == NULL || params == NULL)
         return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
-    if (p == NULL || !OSSL_PARAM_get_size_t(p, &mdsize))
+    if (p != NULL && !OSSL_PARAM_get_size_t(p, &pdsactx->mdsize))
         return 0;
 
-    pdsactx->mdsize = mdsize;
+    /*
+     * We never actually use the mdname, but we do support getting it later.
+     * This can be useful for applications that want to know the MD that they
+     * previously set.
+     */
+    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
+    mdname = pdsactx->mdname;
+    if (p != NULL
+            && !OSSL_PARAM_get_utf8_string(p, &mdname, sizeof(pdsactx->mdname)))
+        return 0;
 
     return 1;
+}
+
+static const OSSL_PARAM known_settable_ctx_params[] = {
+    OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *dsa_settable_ctx_params(void)
+{
+    return known_settable_ctx_params;
 }
 
 const OSSL_DISPATCH dsa_signature_functions[] = {
@@ -142,6 +197,11 @@ const OSSL_DISPATCH dsa_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))dsa_verify },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))dsa_freectx },
     { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))dsa_dupctx },
-    { OSSL_FUNC_SIGNATURE_SET_PARAMS, (void (*)(void))dsa_set_params },
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))dsa_get_ctx_params },
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
+      (void (*)(void))dsa_gettable_ctx_params },
+    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))dsa_set_ctx_params },
+    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
+      (void (*)(void))dsa_settable_ctx_params },
     { 0, NULL }
 };
