@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 # if !OPENSSL_API_3
-#  ifndef OPENSSL_NO_ERR
+#  ifndef OPENSSL_NO_FILENAMES
 #   define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,fn,ln)
 #  else
 #   define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,NULL,0)
@@ -242,28 +242,18 @@ void ERR_set_debug(const char *file, int line, const char *func);
 void ERR_set_error(int lib, int reason, const char *fmt, ...);
 void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
 
-# ifndef OPENSSL_NO_ERR
-#  define ERR_DBG_FILE OPENSSL_FILE
-#  define ERR_DBG_LINE OPENSSL_LINE
-#  define ERR_DBG_FUNC OPENSSL_FUNC
-# else
-#  define ERR_DBG_FILE NULL
-#  define ERR_DBG_LINE 0
-#  define ERR_DBG_FUNC NULL
-# endif
-
 /* Main error raising functions */
 # define ERR_raise(lib, reason) ERR_raise_data((lib),(reason),NULL)
 # define ERR_raise_data                                         \
     (ERR_new(),                                                 \
-     ERR_set_debug(ERR_DBG_FILE,ERR_DBG_LINE,ERR_DBG_FUNC),     \
+     ERR_set_debug(OPENSSL_FILE,OPENSSL_LINE,OPENSSL_FUNC),     \
      ERR_set_error)
 
 # if !OPENSSL_API_3
 /* Backward compatibility */
 #  define ERR_put_error(lib, func, reason, file, line)          \
     (ERR_new(),                                                 \
-     ERR_set_debug((file), (line), NULL),                       \
+     ERR_set_debug((file), (line), OPENSSL_FUNC),               \
      ERR_set_error((lib), (reason), NULL))
 # endif
 
