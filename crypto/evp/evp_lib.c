@@ -569,6 +569,9 @@ int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
 }
 int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize)
 {
+    if (md->md_size != 0)
+        return 0;
+
     md->md_size = resultsize;
     return 1;
 }
