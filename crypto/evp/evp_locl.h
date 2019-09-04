@@ -110,7 +110,8 @@ struct evp_keyexch_st {
     OSSL_OP_keyexch_derive_fn *derive;
     OSSL_OP_keyexch_freectx_fn *freectx;
     OSSL_OP_keyexch_dupctx_fn *dupctx;
-    OSSL_OP_keyexch_set_params_fn *set_params;
+    OSSL_OP_keyexch_set_ctx_params_fn *set_ctx_params;
+    OSSL_OP_keyexch_settable_ctx_params_fn *settable_ctx_params;
 } /* EVP_KEYEXCH */;
 
 struct evp_signature_st {
@@ -130,7 +131,10 @@ struct evp_signature_st {
     OSSL_OP_signature_verify_recover_fn *verify_recover;
     OSSL_OP_signature_freectx_fn *freectx;
     OSSL_OP_signature_dupctx_fn *dupctx;
-    OSSL_OP_signature_set_params_fn *set_params;
+    OSSL_OP_signature_get_ctx_params_fn *get_ctx_params;
+    OSSL_OP_signature_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_OP_signature_set_ctx_params_fn *set_ctx_params;
+    OSSL_OP_signature_settable_ctx_params_fn *settable_ctx_params;
 } /* EVP_SIGNATURE */;
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,

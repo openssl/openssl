@@ -29,8 +29,8 @@ provider-keyexch - The keyexch library E<lt>-E<gt> provider functions
                        size_t outlen);
 
  /* Key Exchange parameters */
- int OP_keyexch_set_params(void *ctx, const OSSL_PARAM params[]);
-
+ int OP_keyexch_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_keyexch_settable_ctx_params(void);
 
 =head1 DESCRIPTION
 
@@ -61,15 +61,16 @@ For example, the "function" OP_keyexch_newctx() has these:
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_numbers.h(7)>, as follows:
 
- OP_keyexch_newctx           OSSL_FUNC_KEYEXCH_NEWCTX
- OP_keyexch_freectx          OSSL_FUNC_KEYEXCH_FREECTX
- OP_keyexch_dupctx           OSSL_FUNC_KEYEXCH_DUPCTX
+ OP_keyexch_newctx                OSSL_FUNC_KEYEXCH_NEWCTX
+ OP_keyexch_freectx               OSSL_FUNC_KEYEXCH_FREECTX
+ OP_keyexch_dupctx                OSSL_FUNC_KEYEXCH_DUPCTX
 
- OP_keyexch_init             OSSL_FUNC_KEYEXCH_INIT
- OP_keyexch_set_peer         OSSL_FUNC_KEYEXCH_SET_PEER
- OP_keyexch_derive           OSSL_FUNC_KEYEXCH_DERIVE
+ OP_keyexch_init                  OSSL_FUNC_KEYEXCH_INIT
+ OP_keyexch_set_peer              OSSL_FUNC_KEYEXCH_SET_PEER
+ OP_keyexch_derive                OSSL_FUNC_KEYEXCH_DERIVE
 
- OP_keyexch_set_params       OSSL_FUNC_KEYEXCH_SET_PARAMS
+ OP_keyexch_set_ctx_params        OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS
+ OP_keyexch_settable_ctx_params   OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS
 
 A key exchange algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions a provider must implement
@@ -127,8 +128,8 @@ written to B<*secretlen>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 the OP_keyexch_set_params() function.
 
-OP_keyexch_set_params() sets key exchange parameters associated with the given
-provider side key exchange context B<ctx> to B<params>.
+OP_keyexch_set_ctx_params() sets key exchange parameters associated with the
+given provider side key exchange context B<ctx> to B<params>.
 Any parameter settings are additional to any that were previously set.
 
 Parameters currently recognised by built-in key exchange algorithms are as
@@ -150,6 +151,11 @@ with 0s where necessary to make the shared secret the same size as the largest
 possible secret size.
 
 =back
+
+OP_keyexch_settable_ctx_params() gets a constant B<OSSL_PARAM> array that
+decribes the settable parameters, i.e. parameters that can be used with
+OP_signature_set_ctx_params().
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =head1 RETURN VALUES
 

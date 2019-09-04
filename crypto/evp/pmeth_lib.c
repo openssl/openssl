@@ -404,13 +404,47 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
+{
+    if (ctx->sigprovctx != NULL
+            && ctx->signature != NULL
+            && ctx->signature->get_ctx_params != NULL)
+        return ctx->signature->get_ctx_params(ctx->sigprovctx, params);
+    return 0;
+}
+
+const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
+{
+    if (ctx->signature != NULL
+            && ctx->signature->gettable_ctx_params != NULL)
+        return ctx->signature->gettable_ctx_params();
+
+    return NULL;
+}
+
 int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
-    if (ctx->exchprovctx != NULL && ctx->exchange != NULL)
-        return ctx->exchange->set_params(ctx->exchprovctx, params);
-    if (ctx->sigprovctx != NULL && ctx->signature != NULL)
-        return ctx->signature->set_params(ctx->sigprovctx, params);
+    if (ctx->exchprovctx != NULL
+            && ctx->exchange != NULL
+            && ctx->exchange->set_ctx_params != NULL)
+        return ctx->exchange->set_ctx_params(ctx->exchprovctx, params);
+    if (ctx->sigprovctx != NULL
+            && ctx->signature != NULL
+            && ctx->signature->set_ctx_params != NULL)
+        return ctx->signature->set_ctx_params(ctx->sigprovctx, params);
     return 0;
+}
+
+const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
+{
+    if (ctx->exchange != NULL
+            && ctx->exchange->settable_ctx_params != NULL)
+        return ctx->exchange->settable_ctx_params();
+    if (ctx->signature != NULL
+            && ctx->signature->settable_ctx_params != NULL)
+        return ctx->signature->settable_ctx_params();
+
+    return NULL;
 }
 
 #ifndef OPENSSL_NO_DH
@@ -431,36 +465,78 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 }
 #endif
 
+int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
+{
+    OSSL_PARAM sig_md_params[3], *p = sig_md_params;
+    /* 80 should be big enough */
+    char name[80] = "";
+    const EVP_MD *tmp;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->sigprovctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,
+                                 EVP_PKEY_CTRL_GET_MD, 0, (void *)(md));
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+                                            name,
+                                            sizeof(name));
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!EVP_PKEY_CTX_get_params(ctx, sig_md_params))
+        return 0;
+
+    tmp = EVP_get_digestbyname(name);
+    if (tmp == NULL)
+        return 0;
+
+    *md = tmp;
+
+    return 1;
+}
+
 int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
-    OSSL_PARAM sig_md_params[3];
+    OSSL_PARAM sig_md_params[3], *p = sig_md_params;
     size_t mdsize;
     const char *name;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
 
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->sigprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,
                                  EVP_PKEY_CTRL_MD, 0, (void *)(md));
 
-    if (md == NULL)
-        return 1;
+    if (md == NULL) {
+        name = "";
+        mdsize = 0;
+    } else {
+        mdsize = EVP_MD_size(md);
+        name = EVP_MD_name(md);
+    }
 
-    mdsize = EVP_MD_size(md);
-    name = EVP_MD_name(md);
-    sig_md_params[0] = OSSL_PARAM_construct_utf8_string(
-                           OSSL_SIGNATURE_PARAM_DIGEST,
-                           /*
-                            * Cast away the const. This is read only so should
-                            * be safe
-                            */
-                           (char *)name,
-                           strlen(name) + 1);
-    sig_md_params[1] = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
-                                                   &mdsize);
-    sig_md_params[2] = OSSL_PARAM_construct_end();
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+                                            /*
+                                             * Cast away the const. This is read
+                                             * only so should be safe
+                                             */
+                                            (char *)name,
+                                            strlen(name) + 1);
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
+                                       &mdsize);
+    *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, sig_md_params);
-
 }
 
 static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
