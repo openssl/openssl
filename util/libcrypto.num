@@ -515,7 +515,7 @@ DH_generate_parameters                  526	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_0
 BN_set_negative                         527	3_0_0	EXIST::FUNCTION:
 i2d_TS_RESP_bio                         528	3_0_0	EXIST::FUNCTION:TS
 ASYNC_WAIT_CTX_set_wait_fd              529	3_0_0	EXIST::FUNCTION:
-ERR_func_error_string                   530	3_0_0	EXIST::FUNCTION:
+ERR_func_error_string                   530	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 ASN1_STRING_data                        531	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 X509_CRL_add1_ext_i2d                   532	3_0_0	EXIST::FUNCTION:
 i2d_TS_TST_INFO                         533	3_0_0	EXIST::FUNCTION:TS
@@ -757,7 +757,7 @@ EVP_rc5_32_12_16_cfb64                  775	3_0_0	EXIST::FUNCTION:RC5
 PKCS7_dataVerify                        776	3_0_0	EXIST::FUNCTION:
 PKCS7_SIGNER_INFO_free                  777	3_0_0	EXIST::FUNCTION:
 PKCS7_add_attrib_smimecap               778	3_0_0	EXIST::FUNCTION:
-ERR_peek_last_error_line_data           779	3_0_0	EXIST::FUNCTION:
+ERR_peek_last_error_line_data           779	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 EVP_PKEY_meth_set_sign                  780	3_0_0	EXIST::FUNCTION:
 ASN1_i2d_bio                            781	3_0_0	EXIST::FUNCTION:
 DSA_verify                              782	3_0_0	EXIST::FUNCTION:DSA
@@ -969,7 +969,7 @@ DH_get_default_method                   993	3_0_0	EXIST::FUNCTION:DH
 PEM_proc_type                           994	3_0_0	EXIST::FUNCTION:
 BIO_printf                              995	3_0_0	EXIST::FUNCTION:
 a2i_IPADDRESS                           996	3_0_0	EXIST::FUNCTION:
-ERR_peek_error_line_data                997	3_0_0	EXIST::FUNCTION:
+ERR_peek_error_line_data                997	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 ERR_unload_strings                      998	3_0_0	EXIST::FUNCTION:
 SEED_cfb128_encrypt                     999	3_0_0	EXIST::FUNCTION:SEED
 ASN1_BIT_STRING_it                      1000	3_0_0	EXIST::FUNCTION:
@@ -1554,7 +1554,7 @@ SRP_VBASE_free                          1588	3_0_0	EXIST::FUNCTION:SRP
 PKCS7_add0_attrib_signing_time          1589	3_0_0	EXIST::FUNCTION:
 X509_STORE_set_flags                    1590	3_0_0	EXIST::FUNCTION:
 UI_get0_output_string                   1591	3_0_0	EXIST::FUNCTION:
-ERR_get_error_line_data                 1592	3_0_0	EXIST::FUNCTION:
+ERR_get_error_line_data                 1592	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 CTLOG_get0_name                         1593	3_0_0	EXIST::FUNCTION:CT
 ASN1_TBOOLEAN_it                        1594	3_0_0	EXIST::FUNCTION:
 RC2_set_key                             1595	3_0_0	EXIST::FUNCTION:RC2
@@ -4753,3 +4753,12 @@ EVP_PKEY_CTX_get_params                 4869	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_gettable_params            4870	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_settable_params            4871	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_tag_length               4872	3_0_0	EXIST::FUNCTION:
+ERR_get_error_func                      4873	3_0_0	EXIST::FUNCTION:
+ERR_get_error_data                      4874	3_0_0	EXIST::FUNCTION:
+ERR_get_error_all                       4875	3_0_0	EXIST::FUNCTION:
+ERR_peek_error_func                     4876	3_0_0	EXIST::FUNCTION:
+ERR_peek_error_data                     4877	3_0_0	EXIST::FUNCTION:
+ERR_peek_error_all                      4878	3_0_0	EXIST::FUNCTION:
+ERR_peek_last_error_func                4879	3_0_0	EXIST::FUNCTION:
+ERR_peek_last_error_data                4880	3_0_0	EXIST::FUNCTION:
+ERR_peek_last_error_all                 4881	3_0_0	EXIST::FUNCTION:

@@ -40,7 +40,7 @@ static int vdata_appends(void)
     CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
     ERR_add_error_data(1, "hello ");
     ERR_add_error_data(1, "world");
-    ERR_get_error_line_data(NULL, NULL, &data, NULL);
+    ERR_peek_error_data(&data, NULL);
     return TEST_str_eq(data, "hello world");
 }
 
@@ -63,7 +63,7 @@ static int raised_error(void)
 #endif
     ERR_raise_data(ERR_LIB_SYS, ERR_R_INTERNAL_ERROR,
                    "calling exit()");
-    if (!TEST_ulong_ne(e = ERR_get_error_line_data(&f, &l, &data, NULL), 0)
+    if (!TEST_ulong_ne(e = ERR_get_error_all(&f, &l, NULL, &data, NULL), 0)
             || !TEST_int_eq(ERR_GET_REASON(e), ERR_R_INTERNAL_ERROR)
 #if !defined(OPENSSL_NO_FILENAMES) && !defined(OPENSSL_NO_ERR)
             || !TEST_int_eq(l, line)

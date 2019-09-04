@@ -260,31 +260,64 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
 void ERR_set_error_data(char *data, int flags);
 
 unsigned long ERR_get_error(void);
+/*
+ * TODO(3.0) consider if the following three functions should be deprecated.
+ * They all drop the error record from the error queue, so regardless of which
+ * one is used, the rest of the information is lost, making them not so useful.
+ * The recommendation should be to use the peek functions to extract all the
+ * additional data.
+ */
 unsigned long ERR_get_error_line(const char **file, int *line);
-unsigned long ERR_get_error_line_data(const char **file, int *line,
-                                      const char **data, int *flags);
+unsigned long ERR_get_error_func(const char **func);
+unsigned long ERR_get_error_data(const char **data, int *flags);
+unsigned long ERR_get_error_all(const char **file, int *line,
+                                const char **func,
+                                const char **data, int *flags);
+DEPRECATEDIN_3(unsigned long ERR_get_error_line_data(const char **file,
+                                                     int *line,
+                                                     const char **data,
+                                                     int *flags))
 unsigned long ERR_peek_error(void);
 unsigned long ERR_peek_error_line(const char **file, int *line);
-unsigned long ERR_peek_error_line_data(const char **file, int *line,
-                                       const char **data, int *flags);
+unsigned long ERR_peek_error_func(const char **func);
+unsigned long ERR_peek_error_data(const char **data, int *flags);
+unsigned long ERR_peek_error_all(const char **file, int *line,
+                                 const char **func,
+                                 const char **data, int *flags);
+DEPRECATEDIN_3(unsigned long ERR_peek_error_line_data(const char **file,
+                                                      int *line,
+                                                      const char **data,
+                                                      int *flags))
 unsigned long ERR_peek_last_error(void);
 unsigned long ERR_peek_last_error_line(const char **file, int *line);
-unsigned long ERR_peek_last_error_line_data(const char **file, int *line,
-                                            const char **data, int *flags);
+unsigned long ERR_peek_last_error_func(const char **func);
+unsigned long ERR_peek_last_error_data(const char **data, int *flags);
+unsigned long ERR_peek_last_error_all(const char **file, int *line,
+                                      const char **func,
+                                      const char **data, int *flags);
+DEPRECATEDIN_3(unsigned long ERR_peek_last_error_line_data(const char **file,
+                                                           int *line,
+                                                           const char **data,
+                                                           int *flags))
+
 void ERR_clear_error(void);
+
 char *ERR_error_string(unsigned long e, char *buf);
 void ERR_error_string_n(unsigned long e, char *buf, size_t len);
 const char *ERR_lib_error_string(unsigned long e);
-const char *ERR_func_error_string(unsigned long e);
+DEPRECATEDIN_3(const char *ERR_func_error_string(unsigned long e))
 const char *ERR_reason_error_string(unsigned long e);
+
 void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
                          void *u);
 # ifndef OPENSSL_NO_STDIO
 void ERR_print_errors_fp(FILE *fp);
 # endif
 void ERR_print_errors(BIO *bp);
+
 void ERR_add_error_data(int num, ...);
 void ERR_add_error_vdata(int num, va_list args);
+
 int ERR_load_strings(int lib, ERR_STRING_DATA *str);
 int ERR_load_strings_const(const ERR_STRING_DATA *str);
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str);
