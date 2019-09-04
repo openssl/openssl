@@ -14,9 +14,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-#if OPENSSL_API_3
-NON_EMPTY_TRANSLATION_UNIT
-#else
+/* This module isn't built if configured with --api=3.0.0 or newer */
 
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
 {
