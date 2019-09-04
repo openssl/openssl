@@ -380,10 +380,10 @@ unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
 int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx)
 {
     int ok;
-    size_t v = ctx->num;
+    unsigned int v = (unsigned int)ctx->num;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_NUM, &v);
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &v);
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
 
     return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
@@ -392,10 +392,10 @@ int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx)
 int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
 {
     int ok;
-    size_t n = num;
+    unsigned int n = (unsigned int)num;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_NUM, &n);
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &n);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
 
     if (ok != 0)

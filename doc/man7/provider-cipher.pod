@@ -237,7 +237,7 @@ Gets the IV length for the associated cipher algorithm.
 
 Gets the IV for the associated cipher ctx.
 
-=item B<OSSL_CIPHER_PARAM_NUM> (size_t)
+=item B<OSSL_CIPHER_PARAM_NUM> (uint)
 
 Gets or sets the cipher specific "num" parameter for the associated cipher ctx.
 Built-in ciphers typically use this to track how much of the current underlying

@@ -47,12 +47,11 @@ struct prov_cipher_ctx_st {
     unsigned int pad : 1; /* Whether padding should be used or not */
     unsigned int enc : 1; /* Set to 1 for encrypt, or 0 otherwise */
 
-
     /*
      * num contains the number of bytes of |iv| which are valid for modes that
      * manage partial blocks themselves.
      */
-    size_t num;
+    unsigned int num;
     uint64_t flags;
 
     /* Buffer of partial blocks processed via update calls */
