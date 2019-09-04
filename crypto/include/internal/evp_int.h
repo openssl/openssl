@@ -18,11 +18,20 @@
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
 struct evp_pkey_ctx_st {
-    EVP_KEYEXCH *exchange;
-    void *exchprovctx;
+    /* Actual operation */
+    int operation;
 
-    EVP_SIGNATURE *signature;
-    void *sigprovctx;
+    union {
+        struct {
+            EVP_KEYEXCH *exchange;
+            void *exchprovctx;
+        } kex;
+
+        struct {
+            EVP_SIGNATURE *signature;
+            void *sigprovctx;
+        } sig;
+    } op;
 
     /* Legacy fields below */
 
@@ -34,8 +43,6 @@ struct evp_pkey_ctx_st {
     EVP_PKEY *pkey;
     /* Peer key for key agreement, may be NULL */
     EVP_PKEY *peerkey;
-    /* Actual operation */
-    int operation;
     /* Algorithm specific data */
     void *data;
     /* Application specific data */
@@ -553,6 +560,15 @@ struct evp_pkey_st {
     size_t dirty_cnt_copy;
 } /* EVP_PKEY */ ;
 
+#define EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_SIGN \
+     || (ctx)->operation == EVP_PKEY_OP_SIGNCTX \
+     || (ctx)->operation == EVP_PKEY_OP_VERIFY \
+     || (ctx)->operation == EVP_PKEY_OP_VERIFYCTX \
+     || (ctx)->operation == EVP_PKEY_OP_VERIFYRECOVER)
+
+#define EVP_PKEY_CTX_IS_DERIVE_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_DERIVE)
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);

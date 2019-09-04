@@ -183,6 +183,19 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     return ret;
 }
 
+void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
+{
+    if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+        if (ctx->op.kex.exchprovctx != NULL && ctx->op.kex.exchange != NULL)
+            ctx->op.kex.exchange->freectx(ctx->op.kex.exchprovctx);
+        EVP_KEYEXCH_free(ctx->op.kex.exchange);
+    } else if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
+        if (ctx->op.sig.sigprovctx != NULL && ctx->op.sig.signature != NULL)
+            ctx->op.sig.signature->freectx(ctx->op.sig.sigprovctx);
+        EVP_SIGNATURE_free(ctx->op.sig.signature);
+    }
+}
+
 EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 {
     EVP_PKEY_METHOD *pmeth;
@@ -271,7 +284,10 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     EVP_PKEY_CTX *rctx;
 
     if (((pctx->pmeth == NULL) || (pctx->pmeth->copy == NULL))
-            && pctx->exchprovctx == NULL)
+            && ((EVP_PKEY_CTX_IS_DERIVE_OP(pctx)
+                 && pctx->op.kex.exchprovctx == NULL)
+                || (EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)
+                    && pctx->op.sig.sigprovctx == NULL)))
         return NULL;
 #ifndef OPENSSL_NO_ENGINE
     /* Make sure it's safe to copy a pkey context using an ENGINE */
@@ -291,21 +307,46 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     rctx->pkey = pctx->pkey;
     rctx->operation = pctx->operation;
 
-    if (pctx->exchprovctx != NULL) {
-        if (!ossl_assert(pctx->exchange != NULL))
-            return NULL;
-        rctx->exchange = pctx->exchange;
-        if (!EVP_KEYEXCH_up_ref(rctx->exchange)) {
-            OPENSSL_free(rctx);
-            return NULL;
+    if (EVP_PKEY_CTX_IS_DERIVE_OP(pctx)) {
+        if (rctx->op.kex.exchange != NULL) {
+            rctx->op.kex.exchange = pctx->op.kex.exchange;
+            if (!EVP_KEYEXCH_up_ref(rctx->op.kex.exchange)) {
+                OPENSSL_free(rctx);
+                return NULL;
+            }
         }
-        rctx->exchprovctx = pctx->exchange->dupctx(pctx->exchprovctx);
-        if (rctx->exchprovctx == NULL) {
-            EVP_KEYEXCH_free(rctx->exchange);
-            OPENSSL_free(rctx);
-            return NULL;
+        if (pctx->op.kex.exchprovctx != NULL) {
+            if (!ossl_assert(pctx->op.kex.exchange != NULL))
+                return NULL;
+            rctx->op.kex.exchprovctx
+                = pctx->op.kex.exchange->dupctx(pctx->op.kex.exchprovctx);
+            if (rctx->op.kex.exchprovctx == NULL) {
+                EVP_KEYEXCH_free(rctx->op.kex.exchange);
+                OPENSSL_free(rctx);
+                return NULL;
+            }
+            return rctx;
         }
-        return rctx;
+    } else if (EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)) {
+        if (rctx->op.sig.signature != NULL) {
+            rctx->op.sig.signature = pctx->op.sig.signature;
+            if (!EVP_SIGNATURE_up_ref(rctx->op.sig.signature)) {
+                OPENSSL_free(rctx);
+                return NULL;
+            }
+        }
+        if (pctx->op.sig.sigprovctx != NULL) {
+            if (!ossl_assert(pctx->op.sig.signature != NULL))
+                return NULL;
+            rctx->op.sig.sigprovctx
+                = pctx->op.sig.signature->dupctx(pctx->op.sig.sigprovctx);
+            if (rctx->op.sig.sigprovctx == NULL) {
+                EVP_SIGNATURE_free(rctx->op.sig.signature);
+                OPENSSL_free(rctx);
+                return NULL;
+            }
+            return rctx;
+        }
     }
 
     rctx->pmeth = pctx->pmeth;
@@ -386,15 +427,7 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
     if (ctx->pmeth && ctx->pmeth->cleanup)
         ctx->pmeth->cleanup(ctx);
 
-    if (ctx->exchprovctx != NULL && ctx->exchange != NULL)
-        ctx->exchange->freectx(ctx->exchprovctx);
-
-    EVP_KEYEXCH_free(ctx->exchange);
-
-    if (ctx->sigprovctx != NULL && ctx->signature != NULL)
-        ctx->signature->freectx(ctx->sigprovctx);
-
-    EVP_SIGNATURE_free(ctx->signature);
+    evp_pkey_ctx_free_old_ops(ctx);
 
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
@@ -406,43 +439,52 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
-    if (ctx->sigprovctx != NULL
-            && ctx->signature != NULL
-            && ctx->signature->get_ctx_params != NULL)
-        return ctx->signature->get_ctx_params(ctx->sigprovctx, params);
+    if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+            && ctx->op.sig.sigprovctx != NULL
+            && ctx->op.sig.signature != NULL
+            && ctx->op.sig.signature->get_ctx_params != NULL)
+        return ctx->op.sig.signature->get_ctx_params(ctx->op.sig.sigprovctx,
+                                                     params);
     return 0;
 }
 
 const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
 {
-    if (ctx->signature != NULL
-            && ctx->signature->gettable_ctx_params != NULL)
-        return ctx->signature->gettable_ctx_params();
+    if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+            && ctx->op.sig.signature != NULL
+            && ctx->op.sig.signature->gettable_ctx_params != NULL)
+        return ctx->op.sig.signature->gettable_ctx_params();
 
     return NULL;
 }
 
 int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
-    if (ctx->exchprovctx != NULL
-            && ctx->exchange != NULL
-            && ctx->exchange->set_ctx_params != NULL)
-        return ctx->exchange->set_ctx_params(ctx->exchprovctx, params);
-    if (ctx->sigprovctx != NULL
-            && ctx->signature != NULL
-            && ctx->signature->set_ctx_params != NULL)
-        return ctx->signature->set_ctx_params(ctx->sigprovctx, params);
+    if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
+            && ctx->op.kex.exchprovctx != NULL
+            && ctx->op.kex.exchange != NULL
+            && ctx->op.kex.exchange->set_ctx_params != NULL)
+        return ctx->op.kex.exchange->set_ctx_params(ctx->op.kex.exchprovctx,
+                                                    params);
+    if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+            && ctx->op.sig.sigprovctx != NULL
+            && ctx->op.sig.signature != NULL
+            && ctx->op.sig.signature->set_ctx_params != NULL)
+        return ctx->op.sig.signature->set_ctx_params(ctx->op.sig.sigprovctx,
+                                                     params);
     return 0;
 }
 
 const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
 {
-    if (ctx->exchange != NULL
-            && ctx->exchange->settable_ctx_params != NULL)
-        return ctx->exchange->settable_ctx_params();
-    if (ctx->signature != NULL
-            && ctx->signature->settable_ctx_params != NULL)
-        return ctx->signature->settable_ctx_params();
+    if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
+            && ctx->op.kex.exchange != NULL
+            && ctx->op.kex.exchange->settable_ctx_params != NULL)
+        return ctx->op.kex.exchange->settable_ctx_params();
+    if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+            && ctx->op.sig.signature != NULL
+            && ctx->op.sig.signature->settable_ctx_params != NULL)
+        return ctx->op.sig.signature->settable_ctx_params();
 
     return NULL;
 }
@@ -453,8 +495,14 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
     OSSL_PARAM dh_pad_params[2];
     unsigned int upad = pad;
 
+    /* We use EVP_PKEY_CTX_ctrl return values */
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
+    }
+
     /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->exchprovctx == NULL)
+    if (ctx->op.kex.exchprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE,
                                  EVP_PKEY_CTRL_DH_PAD, pad, NULL);
 
@@ -472,14 +520,14 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
     char name[80] = "";
     const EVP_MD *tmp;
 
-    if (ctx == NULL) {
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
         return -2;
     }
 
     /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->sigprovctx == NULL)
+    if (ctx->op.sig.sigprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,
                                  EVP_PKEY_CTRL_GET_MD, 0, (void *)(md));
 
@@ -506,14 +554,14 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
     size_t mdsize;
     const char *name;
 
-    if (ctx == NULL) {
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
         return -2;
     }
 
     /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->sigprovctx == NULL)
+    if (ctx->op.sig.sigprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,
                                  EVP_PKEY_CTRL_MD, 0, (void *)(md));
 
@@ -549,6 +597,8 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
 #endif
     case EVP_PKEY_CTRL_MD:
         return EVP_PKEY_CTX_set_signature_md(ctx, p2);
+    case EVP_PKEY_CTRL_GET_MD:
+        return EVP_PKEY_CTX_get_signature_md(ctx, p2);
     }
     return 0;
 }
@@ -563,7 +613,9 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return -2;
     }
 
-    if (ctx->exchprovctx != NULL || ctx->sigprovctx != NULL)
+    if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx) && ctx->op.kex.exchprovctx != NULL)
+            || (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
+                && ctx->op.sig.sigprovctx != NULL))
         return legacy_ctrl_to_param(ctx, keytype, optype, cmd, p1, p2);
 
     if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
@@ -615,9 +667,12 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
 #endif
     if (strcmp(name, "digest") == 0) {
         int ret;
-        EVP_MD *md
-            = EVP_MD_fetch(ossl_provider_library_context(ctx->signature->prov),
-                           value, NULL);
+        EVP_MD *md;
+
+        if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx) || ctx->op.sig.signature == NULL)
+            return 0;
+        md = EVP_MD_fetch(ossl_provider_library_context(ctx->op.sig.signature->prov),
+                          value, NULL);
         if (md == NULL)
             return 0;
         ret = EVP_PKEY_CTX_set_signature_md(ctx, md);
@@ -636,7 +691,9 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
         return -2;
     }
 
-    if (ctx->exchprovctx != NULL || ctx->sigprovctx != NULL)
+    if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx) && ctx->op.kex.exchprovctx != NULL)
+            || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+                && ctx->op.sig.sigprovctx != NULL))
         return legacy_ctrl_str_to_param(ctx, name, value);
 
     if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str) {

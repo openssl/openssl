@@ -232,3 +232,5 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
             return 0;                                             \
         }                                                         \
     }
+
+void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
