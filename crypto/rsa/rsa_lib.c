@@ -198,6 +198,7 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
     if (d != NULL) {
         BN_clear_free(r->d);
         r->d = d;
+        BN_set_flags(r->d, BN_FLG_CONSTTIME);
     }
 
     return 1;
@@ -215,10 +216,12 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
     if (p != NULL) {
         BN_clear_free(r->p);
         r->p = p;
+        BN_set_flags(r->p, BN_FLG_CONSTTIME);
     }
     if (q != NULL) {
         BN_clear_free(r->q);
         r->q = q;
+        BN_set_flags(r->q, BN_FLG_CONSTTIME);
     }
 
     return 1;
@@ -237,14 +240,17 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
     if (dmp1 != NULL) {
         BN_clear_free(r->dmp1);
         r->dmp1 = dmp1;
+        BN_set_flags(r->dmp1, BN_FLG_CONSTTIME);
     }
     if (dmq1 != NULL) {
         BN_clear_free(r->dmq1);
         r->dmq1 = dmq1;
+        BN_set_flags(r->dmq1, BN_FLG_CONSTTIME);
     }
     if (iqmp != NULL) {
         BN_clear_free(r->iqmp);
         r->iqmp = iqmp;
+        BN_set_flags(r->iqmp, BN_FLG_CONSTTIME);
     }
 
     return 1;
