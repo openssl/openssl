@@ -1,4 +1,5 @@
 SUBDIRS=digests ciphers macs kdfs exchange keymgmt
+$COMMON=provider_util.c
 
-SOURCE[../../libcrypto]=\
-        provider_err.c provlib.c
+SOURCE[../../libcrypto]=$COMMON provider_err.c provlib.c
+SOURCE[../fips]=$COMMON
