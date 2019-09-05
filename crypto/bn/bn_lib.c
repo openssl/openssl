@@ -458,8 +458,11 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     return ret;
 }
 
+typedef enum {big, little} endianess_t;
+
 /* ignore negative */
-static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
+static
+int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endianess)
 {
     int n;
     size_t i, lasti, j, atop, mask;
@@ -491,10 +494,17 @@ static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 
     lasti = atop - 1;
     atop = a->top * BN_BYTES;
-    for (i = 0, j = 0, to += tolen; j < (size_t)tolen; j++) {
+    if (endianess == big)
+        to += tolen; /* start from the end of the buffer */
+    for (i = 0, j = 0; j < (size_t)tolen; j++) {
+        unsigned char val;
         l = a->d[i / BN_BYTES];
         mask = 0 - ((j - atop) >> (8 * sizeof(i) - 1));
-        *--to = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
+        val = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
+        if (endianess == big)
+            *--to = val;
+        else
+            *to++ = val;
         i += (i - lasti) >> (8 * sizeof(i) - 1); /* stay on last limb */
     }
 
@@ -505,12 +515,12 @@ int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
     if (tolen < 0)
         return -1;
-    return bn2binpad(a, to, tolen);
+    return bn2binpad(a, to, tolen, big);
 }
 
 int BN_bn2bin(const BIGNUM *a, unsigned char *to)
 {
-    return bn2binpad(a, to, -1);
+    return bn2binpad(a, to, -1, big);
 }
 
 BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
@@ -562,22 +572,9 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
 
 int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
-    int i;
-    BN_ULONG l;
-    bn_check_top(a);
-    i = BN_num_bytes(a);
-    if (tolen < i)
+    if (tolen < 0)
         return -1;
-    /* Add trailing zeroes if necessary */
-    if (tolen > i)
-        memset(to + i, 0, tolen - i);
-    to += i;
-    while (i--) {
-        l = a->d[i / BN_BYTES];
-        to--;
-        *to = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
-    }
-    return tolen;
+    return bn2binpad(a, to, tolen, little);
 }
 
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
