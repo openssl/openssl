@@ -9,6 +9,19 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added ERR functionality to give callers access to the stored function
+     names that have replaced the older function code based functions.
+
+     New functions are ERR_get_error_func(), ERR_peek_error_func(),
+     ERR_peek_last_error_func(), ERR_get_error_data(), ERR_peek_error_data(),
+     ERR_peek_last_error_data(), ERR_get_error_all(), ERR_peek_error_all()
+     and ERR_peek_last_error_all().
+
+     These functions have become deprecated: ERR_get_error_line_data(),
+     ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
+     ERR_func_error_string().
+     [Richard Levitte]
+
   *) Extended testing to be verbose for failing tests only.  The make variables
      VERBOSE_FAILURE or VF can be used to enable this:
 
