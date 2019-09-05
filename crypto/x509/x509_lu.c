@@ -318,10 +318,11 @@ int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
             return 0;
     }
 
+    if (!X509_OBJECT_up_ref_count(tmp))
+        return 0;
+
     ret->type = tmp->type;
     ret->data.ptr = tmp->data.ptr;
-
-    X509_OBJECT_up_ref_count(ret);
 
     return 1;
 }
@@ -343,7 +344,11 @@ static int x509_store_add(X509_STORE *store, void *x, int crl) {
         obj->type = X509_LU_X509;
         obj->data.x509 = (X509 *)x;
     }
-    X509_OBJECT_up_ref_count(obj);
+    if (!X509_OBJECT_up_ref_count(obj)) {
+        obj->type = X509_LU_NONE;
+        X509_OBJECT_free(obj);
+        return 0;
+    }
 
     X509_STORE_lock(store);
     if (X509_OBJECT_retrieve_match(store->objs, obj)) {
@@ -568,7 +573,11 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
     for (i = 0; i < cnt; i++, idx++) {
         obj = sk_X509_OBJECT_value(store->objs, idx);
         x = obj->data.x509;
-        X509_up_ref(x);
+        if (!X509_up_ref(x)) {
+            X509_STORE_unlock(store);
+            sk_X509_pop_free(sk, X509_free);
+            return NULL;
+        }
         if (!sk_X509_push(sk, x)) {
             X509_STORE_unlock(store);
             X509_free(x);
@@ -609,7 +618,11 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
     for (i = 0; i < cnt; i++, idx++) {
         obj = sk_X509_OBJECT_value(store->objs, idx);
         x = obj->data.crl;
-        X509_CRL_up_ref(x);
+        if (!X509_CRL_up_ref(x)) {
+            X509_STORE_unlock(store);
+            sk_X509_CRL_pop_free(sk, X509_CRL_free);
+            return NULL;
+        }
         if (!sk_X509_CRL_push(sk, x)) {
             X509_STORE_unlock(store);
             X509_CRL_free(x);
@@ -681,9 +694,12 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     if (ctx->check_issued(ctx, x, obj->data.x509)) {
         if (x509_check_cert_time(ctx, obj->data.x509, -1)) {
             *issuer = obj->data.x509;
-            X509_up_ref(*issuer);
+            if (!X509_up_ref(*issuer)) {
+                *issuer = NULL;
+                ok = -1;
+            }
             X509_OBJECT_free(obj);
-            return 1;
+            return ok;
         }
     }
     X509_OBJECT_free(obj);
@@ -720,9 +736,11 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
             }
         }
     }
+    if (*issuer && !X509_up_ref(*issuer)) {
+        *issuer = NULL;
+        ret = -1;
+    }
     X509_STORE_unlock(store);
-    if (*issuer)
-        X509_up_ref(*issuer);
     return ret;
 }
 

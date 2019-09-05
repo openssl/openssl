@@ -39,7 +39,7 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
  /* Cipher parameter descriptors */
  const OSSL_PARAM *OP_cipher_gettable_params(void);
 
- /* Cipheroperation parameter descriptors */
+ /* Cipher operation parameter descriptors */
  const OSSL_PARAM *OP_cipher_gettable_ctx_params(void);
  const OSSL_PARAM *OP_cipher_settable_ctx_params(void);
 
@@ -111,7 +111,7 @@ OP_cipher_newctx() should create and return a pointer to a provider side
 structure for holding context information during a cipher operation.
 A pointer to this context will be passed back in a number of the other cipher
 operation function calls.
-The paramater B<provctx> is the provider context generated during provider
+The parameter B<provctx> is the provider context generated during provider
 initialisation (see L<provider(3)>).
 
 OP_cipher_freectx() is passed a pointer to the provider side cipher context in
@@ -124,7 +124,7 @@ B<cctx> parameter and return the duplicate copy.
 =head2 Encryption/Decryption Functions
 
 OP_cipher_encrypt_init() initialises a cipher operation for encryption given a
-newly created provider side cipher context in the B<cctx> paramter.
+newly created provider side cipher context in the B<cctx> parameter.
 The key to be used is given in B<key> which is B<keylen> bytes long.
 The IV to be used is given in B<iv> which is B<ivlen> bytes long.
 
@@ -158,7 +158,7 @@ The same expectations apply to B<outsize> as documented for
 L<EVP_EncryptFinal(3)> and L<EVP_DecryptFinal(3)>.
 
 OP_cipher_cipher() performs encryption/decryption using the provider side cipher
-context in the B<cctx> paramter that should have been previously initialised via
+context in the B<cctx> parameter that should have been previously initialised via
 a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init.
 This should call the raw underlying cipher function without any padding.
 This will be invoked in the provider as a result of the application calling
@@ -197,18 +197,18 @@ parameters are relevant to, or are understood by all ciphers:
 
 =over 4
 
-=item B<OSSL_CIPHER_PARAM_PADDING> (int)
+=item B<OSSL_CIPHER_PARAM_PADDING> (uint)
 
 Sets the padding mode for the associated cipher ctx.
 Setting a value of 1 will turn padding on.
-Setting a vlue of 0 will turn padding off.
+Setting a value of 0 will turn padding off.
 
-=item B<OSSL_CIPHER_PARAM_MODE> (int)
+=item B<OSSL_CIPHER_PARAM_MODE> (uint)
 
 Gets the mode for the associated cipher algorithm.
 See L<EVP_CIPHER_mode(3)> for a list of valid modes.
 
-=item B<OSSL_CIPHER_PARAM_BLOCK_SIZE> (int)
+=item B<OSSL_CIPHER_PARAM_BLOCK_SIZE> (size_t)
 
 Gets the block size for the associated cipher algorithm.
 The block size should be 1 for stream ciphers.
@@ -223,13 +223,13 @@ Gets any flags for the associated cipher algorithm.
 See L<EVP_CIPHER_meth_set_flags(3)> for a list of currently defined cipher
 flags.
 
-=item B<OSSL_CIPHER_PARAM_KEYLEN> (int)
+=item B<OSSL_CIPHER_PARAM_KEYLEN> (size_t)
 
 Gets the key length for the associated cipher algorithm.
 This can also be used to get or set the key length for the associated cipher
 ctx.
 
-=item B<OSSL_CIPHER_PARAM_IVLEN> (int)
+=item B<OSSL_CIPHER_PARAM_IVLEN> (size_t)
 
 Gets the IV length for the associated cipher algorithm.
 
@@ -237,7 +237,7 @@ Gets the IV length for the associated cipher algorithm.
 
 Gets the IV for the associated cipher ctx.
 
-=item B<OSSL_CIPHER_PARAM_NUM> (int)
+=item B<OSSL_CIPHER_PARAM_NUM> (uint)
 
 Gets or sets the cipher specific "num" parameter for the associated cipher ctx.
 Built-in ciphers typically use this to track how much of the current underlying
