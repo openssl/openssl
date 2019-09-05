@@ -163,7 +163,7 @@ The parameters currently supported by the default provider are:
 
 =over 4
 
-=item "exchange-pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <uint>
+=item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <uint>
 
 Sets the DH padding mode.
 If B<OSSL_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeroes
