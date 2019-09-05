@@ -38,7 +38,7 @@ EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
         return NULL;
 
     if ((to = EVP_CIPHER_meth_new(cipher->nid, cipher->block_size,
-                                  cipher->key_len)) == NULL) {
+                                  cipher->key_len)) != NULL) {
         CRYPTO_RWLOCK *lock = to->lock;
 
         memcpy(to, cipher, sizeof(*to));
