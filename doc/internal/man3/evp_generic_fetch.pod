@@ -11,8 +11,11 @@ evp_generic_fetch - generic algorithm fetcher and method creator for EVP
 
  void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                          const char *name, const char *properties,
-                         void *(*new_method)(const OSSL_DISPATCH *fns,
-                                             OSSL_PROVIDER *prov),
+                         void *(*new_method)(const char *name,
+                                             const OSSL_DISPATCH *fns,
+                                             OSSL_PROVIDER *prov,
+                                             void *method_data),
+                         void *method_data,
                          int (*up_ref_method)(void *),
                          void (*free_method)(void *));
 
@@ -31,6 +34,8 @@ The three functions are supposed to:
 
 creates an internal method from function pointers found in the
 dispatch table C<fns>.
+The algorithm I<name>, provider I<prov>, and I<method_data> are
+also passed to be used as new_method() sees fit.
 
 =item up_ref_method()
 

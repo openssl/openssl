@@ -808,6 +808,8 @@ int OSSL_PARAM_set_octet_string(OSSL_PARAM *p, const void *val,
 OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
                                             size_t bsize)
 {
+    if (buf != NULL && bsize == 0)
+        bsize = strlen(buf) + 1;
     return ossl_param_construct(key, OSSL_PARAM_UTF8_STRING, buf, bsize);
 }
 

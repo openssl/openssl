@@ -87,7 +87,7 @@ int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx,
         if (r != 0)
             memcpy(buf, p, CRNGT_BUFSIZ);
         rand_pool_reattach(pool, p);
-        EVP_MD_meth_free(fmd);
+        EVP_MD_free(fmd);
         return r;
     }
     return 0;

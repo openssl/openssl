@@ -76,7 +76,7 @@ static void cmac_free(void *vmacctx)
 
     if (macctx != NULL) {
         CMAC_CTX_free(macctx->ctx);
-        EVP_CIPHER_meth_free(macctx->alloc_cipher);
+        EVP_CIPHER_free(macctx->alloc_cipher);
         OPENSSL_free(macctx);
     }
 }
@@ -208,7 +208,7 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
                 propquery = p->data;
             }
 
-            EVP_CIPHER_meth_free(macctx->alloc_cipher);
+            EVP_CIPHER_free(macctx->alloc_cipher);
 
             macctx->tmpcipher = macctx->alloc_cipher =
                 EVP_CIPHER_fetch(PROV_LIBRARY_CONTEXT_OF(macctx->provctx),

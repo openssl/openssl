@@ -1173,14 +1173,12 @@ static int mac_test_run_mac(EVP_TEST *t)
                                     OSSL_MAC_PARAM_CIPHER) != NULL) {
             params[params_n++] =
                 OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                                 expected->alg,
-                                                 strlen(expected->alg) + 1);
+                                                 expected->alg, 0);
         } else if (OSSL_PARAM_locate_const(defined_params,
                                            OSSL_MAC_PARAM_DIGEST) != NULL) {
             params[params_n++] =
                 OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                 expected->alg,
-                                                 strlen(expected->alg) + 1);
+                                                 expected->alg, 0);
         } else {
             t->err = "MAC_BAD_PARAMS";
             goto err;

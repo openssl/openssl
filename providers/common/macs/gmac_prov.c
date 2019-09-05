@@ -64,7 +64,7 @@ static void gmac_free(void *vmacctx)
 
     if (macctx != NULL) {
         EVP_CIPHER_CTX_free(macctx->ctx);
-        EVP_CIPHER_meth_free(macctx->alloc_cipher);
+        EVP_CIPHER_free(macctx->alloc_cipher);
         OPENSSL_free(macctx);
     }
 }
@@ -222,7 +222,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
                 propquery = p->data;
             }
 
-            EVP_CIPHER_meth_free(macctx->alloc_cipher);
+            EVP_CIPHER_free(macctx->alloc_cipher);
             macctx->cipher = macctx->alloc_cipher = NULL;
 
             macctx->cipher = macctx->alloc_cipher =

@@ -1,19 +1,20 @@
 SUBDIRS=ossl_shim
 
-# TODO: use ../apps/libapps.a instead of direct ../apps source.
+# TODO: use ../apps/libapps.a instead of direct ../apps/lib source.
 # This can't currently be done, because some of its units drag in too many
-# unresolved references that don't apply here.  Most of all, ../apps/apps.c
-# needs to be divided in smaller pieces to be useful here.
+# unresolved references that don't apply here.
+# Most of all, ../apps/lib/apps.c needs to be divided in smaller pieces to
+# be useful here.
 #
 # Auxilliary program source (copied from ../apps/build.info)
 IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
-  $AUXLIBAPPSSRC=../apps/win32_init.c
+  $AUXLIBAPPSSRC=../apps/lib/win32_init.c
 ENDIF
 IF[{- $config{target} =~ /^vms-/ -}]
-  $AUXLIBAPPSSRC=../apps/vms_term_sock.c ../apps/vms_decc_argv.c
+  $AUXLIBAPPSSRC=../apps/lib/vms_term_sock.c ../apps/lib/vms_decc_argv.c
 ENDIF
-$LIBAPPSSRC=../apps/opt.c ../apps/bf_prefix.c $AUXLIBAPPSSRC
+$LIBAPPSSRC=../apps/lib/opt.c ../apps/lib/bf_prefix.c $AUXLIBAPPSSRC
 
 IF[{- !$disabled{tests} -}]
   LIBS{noinst,has_main}=libtestutil.a
@@ -435,7 +436,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl libtestutil.a
   ENDIF
 
-  SOURCE[uitest]=uitest.c ../apps/apps_ui.c
+  SOURCE[uitest]=uitest.c ../apps/lib/apps_ui.c
   INCLUDE[uitest]=.. ../include ../apps/include
   DEPEND[uitest]=../libcrypto ../libssl libtestutil.a
 

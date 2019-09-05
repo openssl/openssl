@@ -186,7 +186,7 @@ static int dummy_evp_call(void *provctx)
     BN_CTX_free(bnctx);
 
     EVP_MD_CTX_free(ctx);
-    EVP_MD_meth_free(sha256);
+    EVP_MD_free(sha256);
 
 #ifndef OPENSSL_NO_EC
     EC_KEY_free(key);

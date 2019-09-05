@@ -1,3 +1,5 @@
+SUBDIRS=lib
+
 # Program init source, that don't have direct linkage with the rest of the
 # source, and can therefore not be part of a library.
 IF[{- !$disabled{uplink} -}]
@@ -7,37 +9,18 @@ IF[{- $config{target} =~ /^vms-/ -}]
   $INITSRC=vms_decc_init.c
 ENDIF
 
-# Auxilliary program source
-IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
-  # It's called 'init', but doesn't have much 'init' in it...
-  $AUXLIBAPPSSRC=win32_init.c
-ENDIF
-IF[{- $config{target} =~ /^vms-/ -}]
-  $AUXLIBAPPSSRC=vms_term_sock.c vms_decc_argv.c
-ENDIF
-
 # Source for the 'openssl' program
-# We need the perl variable for the DEPEND generator further down.
-$OPENSSLSRC={-
-   our @opensslsrc =
-       qw(openssl.c progs.c
-          asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c
-          dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c gendsa.c
-          genpkey.c genrsa.c kdf.c mac.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c
-          pkcs8.c pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c rsa.c
-          rsautl.c s_client.c s_server.c s_time.c sess_id.c smime.c speed.c
-          spkac.c srp.c ts.c verify.c version.c x509.c rehash.c storeutl.c
-          list.c info.c provider.c fipsinstall.c);
-   join(' ', @opensslsrc); -}
-# Source for libapps
-$LIBAPPSSRC=apps.c apps_ui.c opt.c fmt.c s_cb.c s_socket.c app_rand.c \
-        bf_prefix.c columns.c lib/app_params.c
+$OPENSSLSRC=\
+        openssl.c progs.c \
+        asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c \
+        dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c gendsa.c \
+        genpkey.c genrsa.c kdf.c mac.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c \
+        pkcs8.c pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c rsa.c \
+        rsautl.c s_client.c s_server.c s_time.c sess_id.c smime.c speed.c \
+        spkac.c srp.c ts.c verify.c version.c x509.c rehash.c storeutl.c \
+        list.c info.c provider.c fipsinstall.c
 
 IF[{- !$disabled{apps} -}]
-  LIBS{noinst}=libapps.a
-  SOURCE[libapps.a]=$LIBAPPSSRC $AUXLIBAPPSSRC
-  INCLUDE[libapps.a]=.. ../include include
-
   PROGRAMS=openssl
   SOURCE[openssl]=$INITSRC $OPENSSLSRC
   INCLUDE[openssl]=.. ../include include

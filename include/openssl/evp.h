@@ -81,7 +81,6 @@ int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq);
 # ifndef EVP_MD
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
-int EVP_MD_up_ref(EVP_MD *md);
 void EVP_MD_meth_free(EVP_MD *md);
 
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
@@ -192,7 +191,6 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
 EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
 void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
-int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
 
 int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len);
 int EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags);
@@ -486,6 +484,8 @@ unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher);
 int EVP_CIPHER_mode(const EVP_CIPHER *cipher);
 EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                              const char *properties);
+int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
+void EVP_CIPHER_free(EVP_CIPHER *cipher);
 
 const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx);
@@ -585,6 +585,8 @@ __owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
 
 __owur EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                             const char *properties);
+int EVP_MD_up_ref(EVP_MD *md);
+void EVP_MD_free(EVP_MD *md);
 
 int EVP_read_pw_string(char *buf, int length, const char *prompt, int verify);
 int EVP_read_pw_string_min(char *buf, int minlen, int maxlen,

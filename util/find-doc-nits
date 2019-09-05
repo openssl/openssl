@@ -533,6 +533,7 @@ my %skips = (
 
 sub checkflags() {
     my $cmd = shift;
+    my $doc = shift;
     my %cmdopts;
     my %docopts;
     my $ok = 1;
@@ -548,8 +549,8 @@ sub checkflags() {
     close CFH;
 
     # Get the list of flags from the synopsis
-    open CFH, "<doc/man1/$cmd.pod"
-        || die "Can't open $cmd.pod, $!";
+    open CFH, "<$doc"
+        || die "Can't open $doc, $!";
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
@@ -617,13 +618,15 @@ if ( $opt_c ) {
     close FH;
 
     # See if each has a manpage.
-    foreach ( @commands ) {
-        next if $_ eq 'help' || $_ eq 'exit';
-        if ( ! -f "doc/man1/$_.pod" ) {
-            print "doc/man1/$_.pod does not exist\n";
+    foreach my $cmd ( @commands ) {
+        next if $cmd eq 'help' || $cmd eq 'exit';
+        my $doc = "doc/man1/$cmd.pod";
+        $doc = "doc/man1/openssl-$cmd.pod" if -f "doc/man1/openssl-$cmd.pod";
+        if ( ! -f "$doc" ) {
+            print "$doc does not exist\n";
             $ok = 0;
         } else {
-            $ok = 0 if not &checkflags($_);
+            $ok = 0 if not &checkflags($cmd, $doc);
         }
     }
 

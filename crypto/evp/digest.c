@@ -86,7 +86,7 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
 
     EVP_MD_CTX_reset(ctx);
 
-    EVP_MD_meth_free(ctx->fetched_digest);
+    EVP_MD_free(ctx->fetched_digest);
     ctx->fetched_digest = NULL;
     ctx->digest = NULL;
     ctx->reqdigest = NULL;
@@ -156,7 +156,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0) {
         if (ctx->digest == ctx->fetched_digest)
             ctx->digest = NULL;
-        EVP_MD_meth_free(ctx->fetched_digest);
+        EVP_MD_free(ctx->fetched_digest);
         ctx->fetched_digest = NULL;
         goto legacy;
     }
@@ -181,7 +181,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             return 0;
         }
         type = provmd;
-        EVP_MD_meth_free(ctx->fetched_digest);
+        EVP_MD_free(ctx->fetched_digest);
         ctx->fetched_digest = provmd;
 #endif
     }
@@ -415,7 +415,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     EVP_MD_CTX_reset(out);
     if (out->fetched_digest != NULL)
-        EVP_MD_meth_free(out->fetched_digest);
+        EVP_MD_free(out->fetched_digest);
     *out = *in;
     /* NULL out pointers in case of error */
     out->pctx = NULL;
@@ -616,16 +616,31 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     return ret;
 }
 
+EVP_MD *evp_md_new(void)
+{
+    EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
+
+    if (md != NULL) {
+        md->lock = CRYPTO_THREAD_lock_new();
+        if (md->lock == NULL) {
+            OPENSSL_free(md);
+            return NULL;
+        }
+        md->refcnt = 1;
+    }
+    return md;
+}
+
 static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
-                                  OSSL_PROVIDER *prov)
+                                  OSSL_PROVIDER *prov, void *unused)
 {
     EVP_MD *md = NULL;
     int fncnt = 0;
 
     /* EVP_MD_fetch() will set the legacy NID if available */
-    if ((md = EVP_MD_meth_new(NID_undef, NID_undef)) == NULL
+    if ((md = evp_md_new()) == NULL
         || (md->name = OPENSSL_strdup(name)) == NULL) {
-        EVP_MD_meth_free(md);
+        EVP_MD_free(md);
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -718,7 +733,7 @@ static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
          * The "digest" function can standalone. We at least need one way to
          * generate digests.
          */
-        EVP_MD_meth_free(md);
+        EVP_MD_free(md);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
@@ -736,7 +751,7 @@ static int evp_md_up_ref(void *md)
 
 static void evp_md_free(void *md)
 {
-    EVP_MD_meth_free(md);
+    EVP_MD_free(md);
 }
 
 EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
@@ -744,10 +759,34 @@ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_MD *md =
         evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-                          evp_md_from_dispatch, evp_md_up_ref,
+                          evp_md_from_dispatch, NULL, evp_md_up_ref,
                           evp_md_free);
 
     return md;
+}
+
+int EVP_MD_up_ref(EVP_MD *md)
+{
+    int ref = 0;
+
+    CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
+    return 1;
+}
+
+void EVP_MD_free(EVP_MD *md)
+{
+    int i;
+
+    if (md == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&md->refcnt, &i, md->lock);
+    if (i > 0)
+        return;
+    ossl_provider_free(md->prov);
+    OPENSSL_free(md->name);
+    CRYPTO_THREAD_lock_free(md->lock);
+    OPENSSL_free(md);
 }
 
 void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
@@ -756,5 +795,5 @@ void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
                        (void (*)(void *, void *))fn, arg,
-                       evp_md_from_dispatch, evp_md_free);
+                       evp_md_from_dispatch, NULL, evp_md_free);
 }
