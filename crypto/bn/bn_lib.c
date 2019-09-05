@@ -137,7 +137,7 @@ int BN_num_bits_word(BN_ULONG l)
  * expand the input `a` in advance to a public length.
  */
 static ossl_inline
-int BN_num_bits_consttime(const BIGNUM *a)
+int bn_num_bits_consttime(const BIGNUM *a)
 {
     int j, ret;
     unsigned int mask, past_i;
@@ -177,7 +177,7 @@ int BN_num_bits(const BIGNUM *a)
          * branch.
          *
          */
-        return BN_num_bits_consttime(a);
+        return bn_num_bits_consttime(a);
     }
 
     if (BN_is_zero(a))
