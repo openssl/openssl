@@ -29,6 +29,7 @@
 #include <openssl/asn1t.h>
 
 #include "crmf_int.h"
+#include "internal/constant_time_locl.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>
@@ -654,7 +655,9 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     X509 *cert = NULL; /* decrypted certificate */
     EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
     unsigned char *ek = NULL; /* decrypted symmetric encryption key */
+    size_t eksize = 0; /* size of decrypted symmetric encryption key */
     const EVP_CIPHER *cipher = NULL; /* used cipher */
+    int cikeysize = 0; /* key size from cipher */
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     unsigned char *outbuf = NULL; /* decryption output buffer */
     const unsigned char *p = NULL; /* needed for decoding ASN1 */
@@ -673,31 +676,37 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
                 CRMF_R_UNSUPPORTED_CIPHER);
         return NULL;
     }
-
+    /* select symmetric cipher based on algorithm given in message */
+    if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {
+        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
+                CRMF_R_UNSUPPORTED_CIPHER);
+        goto end;
+    }
+    cikeysize = EVP_CIPHER_key_length(cipher);
     /* first the symmetric key needs to be decrypted */
     pkctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
         ASN1_BIT_STRING *encKey = ecert->encSymmKey;
-        size_t eksize = 0;
+        size_t failure;
+        int retval;
 
-        if (EVP_PKEY_decrypt(pkctx, NULL, &eksize, encKey->data, encKey->length)
-                <= 0
-                || (ek = OPENSSL_malloc(eksize)) == NULL
-                || EVP_PKEY_decrypt(pkctx, ek, &eksize, encKey->data,
-                                    encKey->length) <= 0) {
+        if (EVP_PKEY_decrypt(pkctx, NULL, &eksize,
+                             encKey->data, encKey->length) <= 0
+                || (ek = OPENSSL_malloc(eksize)) == NULL)
+            goto oom;
+        retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
+                                  encKey->data, encKey->length);
+        ERR_clear_error(); /* error state may have sensitive information */
+        failure = ~constant_time_is_zero_s(constant_time_msb(retval)
+                                           | constant_time_is_zero(retval));
+        failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
+        if (failure) {
             CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
                     CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
             goto end;
         }
     } else {
         goto oom;
-    }
-
-    /* select symmetric cipher based on algorithm given in message */
-    if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
-                CRMF_R_UNSUPPORTED_CIPHER);
-        goto end;
     }
     if ((iv = OPENSSL_malloc(EVP_CIPHER_iv_length(cipher))) == NULL)
         goto oom;
@@ -743,7 +752,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     EVP_PKEY_CTX_free(pkctx);
     OPENSSL_free(outbuf);
     EVP_CIPHER_CTX_free(evp_ctx);
-    OPENSSL_free(ek);
+    OPENSSL_clear_free(ek, eksize);
     OPENSSL_free(iv);
     return cert;
 }
