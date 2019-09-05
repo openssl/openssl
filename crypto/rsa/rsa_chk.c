@@ -63,6 +63,13 @@ int RSA_check_key(const RSA *key)
         return 0;
     }
 
+    /* Set consant-time flag on all private parameters */
+    BN_set_flags(key->p, BN_FLG_CONSTTIME);
+    BN_set_flags(key->q, BN_FLG_CONSTTIME);
+    BN_set_flags(key->d, BN_FLG_CONSTTIME);
+    BN_set_flags(key->dmp1, BN_FLG_CONSTTIME);
+    BN_set_flags(key->dmq1, BN_FLG_CONSTTIME);
+    BN_set_flags(key->iqmp, BN_FLG_CONSTTIME);
     i = BN_new();
     j = BN_new();
     k = BN_new();
