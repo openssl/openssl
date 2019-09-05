@@ -18,6 +18,7 @@
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"
 #include "internal/provider_ctx.h"
+#include "internal/provider_util.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -40,20 +41,7 @@ static OSSL_OP_mac_final_fn gmac_final;
 struct gmac_data_st {
     void *provctx;
     EVP_CIPHER_CTX *ctx;         /* Cipher context */
-
-    /*
-     * References to the underlying cipher implementation.  |cipher| caches
-     * the cipher, always.  |alloc_cipher| only holds a reference to an
-     * explicitly fetched cipher.
-     * |cipher| is cleared after a CMAC_Init call.
-     */
-    const EVP_CIPHER *cipher;    /* Cache GCM cipher */
-    EVP_CIPHER *alloc_cipher;    /* Fetched cipher */
-
-    /*
-     * Conditions for legacy EVP_CIPHER uses.
-     */
-    ENGINE *engine;              /* Engine implementing the cipher */
+    PROV_CIPHER cipher;
 };
 
 static size_t gmac_size(void);
@@ -64,7 +52,7 @@ static void gmac_free(void *vmacctx)
 
     if (macctx != NULL) {
         EVP_CIPHER_CTX_free(macctx->ctx);
-        EVP_CIPHER_free(macctx->alloc_cipher);
+        ossl_prov_cipher_reset(&macctx->cipher);
         OPENSSL_free(macctx);
     }
 }
@@ -92,15 +80,10 @@ static void *gmac_dup(void *vsrc)
         return NULL;
 
     if (!EVP_CIPHER_CTX_copy(dst->ctx, src->ctx)
-        || (src->alloc_cipher != NULL
-            && !EVP_CIPHER_up_ref(src->alloc_cipher))) {
+        || !ossl_prov_cipher_copy(&dst->cipher, &src->cipher)) {
         gmac_free(dst);
         return NULL;
     }
-
-    dst->cipher = src->cipher;
-    dst->alloc_cipher = src->alloc_cipher;
-    dst->engine = src->engine;
     return dst;
 }
 
@@ -188,65 +171,22 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct gmac_data_st *macctx = vmacctx;
     EVP_CIPHER_CTX *ctx = macctx->ctx;
+    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CIPHER)) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
+   if (!ossl_prov_cipher_load_from_params(&macctx->cipher, params, provctx))
+        return 0;
 
-        {
-            const char *algoname = p->data;
-            const char *propquery = NULL;
-
-/* Inside the FIPS module, we don't support engines */
-#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
-            ENGINE_finish(macctx->engine);
-            macctx->engine = NULL;
-
-            if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_ENGINE))
-                != NULL) {
-                if (p->data_type != OSSL_PARAM_UTF8_STRING)
-                    return 0;
-
-                macctx->engine = ENGINE_by_id(p->data);
-                if (macctx->engine == NULL)
-                    return 0;
-            }
-#endif
-            if ((p = OSSL_PARAM_locate_const(params,
-                                             OSSL_MAC_PARAM_PROPERTIES))
-                != NULL) {
-                if (p->data_type != OSSL_PARAM_UTF8_STRING)
-                    return 0;
-
-                propquery = p->data;
-            }
-
-            EVP_CIPHER_free(macctx->alloc_cipher);
-            macctx->cipher = macctx->alloc_cipher = NULL;
-
-            macctx->cipher = macctx->alloc_cipher =
-                EVP_CIPHER_fetch(PROV_LIBRARY_CONTEXT_OF(macctx->provctx),
-                                 algoname, propquery);
-#ifndef FIPS_MODE /* Inside the FIPS module, we don't support legacy ciphers */
-            /* TODO(3.0) BEGIN legacy stuff, to be removed */
-            if (macctx->cipher == NULL)
-                macctx->cipher = EVP_get_cipherbyname(algoname);
-            /* TODO(3.0) END of legacy stuff */
-#endif
-
-            if (macctx->cipher == NULL)
-                return 0;
-
-            if (EVP_CIPHER_mode(macctx->cipher) != EVP_CIPH_GCM_MODE) {
-                ERR_raise(ERR_LIB_PROV, EVP_R_CIPHER_NOT_GCM_MODE);
-                return 0;
-            }
-        }
-        if (!EVP_EncryptInit_ex(ctx, macctx->cipher, macctx->engine,
-                                NULL, NULL))
-            return 0;
+    if (EVP_CIPHER_mode(ossl_prov_cipher_cipher(&macctx->cipher))
+        != EVP_CIPH_GCM_MODE) {
+        ERR_raise(ERR_LIB_PROV, EVP_R_CIPHER_NOT_GCM_MODE);
+        return 0;
     }
+    if (!EVP_EncryptInit_ex(ctx, ossl_prov_cipher_cipher(&macctx->cipher),
+                            ossl_prov_cipher_engine(&macctx->cipher), NULL,
+                            NULL))
+        return 0;
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
