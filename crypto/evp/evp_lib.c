@@ -564,6 +564,9 @@ void EVP_MD_meth_free(EVP_MD *md)
 }
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
 {
+    if (md->block_size != 0)
+        return 0;
+
     md->block_size = blocksize;
     return 1;
 }
@@ -577,16 +580,25 @@ int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize)
 }
 int EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize)
 {
+    if (md->ctx_size != 0)
+        return 0;
+
     md->ctx_size = datasize;
     return 1;
 }
 int EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags)
 {
+    if (md->flags != 0)
+        return 0;
+
     md->flags = flags;
     return 1;
 }
 int EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx))
 {
+    if (md->init != NULL)
+        return 0;
+
     md->init = init;
     return 1;
 }
@@ -594,29 +606,44 @@ int EVP_MD_meth_set_update(EVP_MD *md, int (*update)(EVP_MD_CTX *ctx,
                                                      const void *data,
                                                      size_t count))
 {
+    if (md->update != NULL)
+        return 0;
+
     md->update = update;
     return 1;
 }
 int EVP_MD_meth_set_final(EVP_MD *md, int (*final)(EVP_MD_CTX *ctx,
                                                    unsigned char *md))
 {
+    if (md->final != NULL)
+        return 0;
+
     md->final = final;
     return 1;
 }
 int EVP_MD_meth_set_copy(EVP_MD *md, int (*copy)(EVP_MD_CTX *to,
                                                  const EVP_MD_CTX *from))
 {
+    if (md->copy != NULL)
+        return 0;
+
     md->copy = copy;
     return 1;
 }
 int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx))
 {
+    if (md->cleanup != NULL)
+        return 0;
+
     md->cleanup = cleanup;
     return 1;
 }
 int EVP_MD_meth_set_ctrl(EVP_MD *md, int (*ctrl)(EVP_MD_CTX *ctx, int cmd,
                                                  int p1, void *p2))
 {
+    if (md->md_ctrl != NULL)
+        return 0;
+
     md->md_ctrl = ctrl;
     return 1;
 }
