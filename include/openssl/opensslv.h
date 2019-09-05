@@ -121,21 +121,17 @@ const char *OPENSSL_version_build_metadata(void);
 /*
  * SECTION 4: BACKWARD COMPATIBILITY
  */
-# include <openssl/macros.h>
-
-# if !OPENSSL_API_4
 /* Synthesize OPENSSL_VERSION_NUMBER with the layout 0xMNN00PPSL */
-#  ifdef OPENSSL_VERSION_PRE_RELEASE
-#   define _OPENSSL_VERSION_PRE_RELEASE 0x0L
-#  else
-#   define _OPENSSL_VERSION_PRE_RELEASE 0xfL
-#  endif
-#  define OPENSSL_VERSION_NUMBER        \
-          ( (OPENSSL_VERSION_MAJOR<<28)  \
-            |(OPENSSL_VERSION_MINOR<<20) \
-            |(OPENSSL_VERSION_PATCH<<4)  \
-            |_OPENSSL_VERSION_PRE_RELEASE )
+# ifdef OPENSSL_VERSION_PRE_RELEASE
+#  define _OPENSSL_VERSION_PRE_RELEASE 0x0
+# else
+#  define _OPENSSL_VERSION_PRE_RELEASE 0xf
 # endif
+# define OPENSSL_VERSION_NUMBER          \
+    ( (OPENSSL_VERSION_MAJOR<<28)        \
+      |(OPENSSL_VERSION_MINOR<<20)       \
+      |(OPENSSL_VERSION_PATCH<<4)        \
+      |_OPENSSL_VERSION_PRE_RELEASE )
 
 # ifdef  __cplusplus
 }
