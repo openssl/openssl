@@ -57,6 +57,7 @@
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"
 #include "internal/provider_ctx.h"
+#include "internal/provider_util.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -113,16 +114,7 @@ static const unsigned char kmac_string[] = {
 struct kmac_data_st {
     void  *provctx;
     EVP_MD_CTX *ctx;
-
-    /*
-     * References to the underlying keccak_kmac implementation.  |md|
-     * caches the digest, always.  |alloc_md| only holds a reference to an
-     * explicitly fetched digest.
-     * |md| is cleared after a EVP_DigestInit call.
-     */
-    const EVP_MD *md;            /* Cache KMAC digest */
-    EVP_MD *alloc_md;            /* Fetched digest */
-
+    PROV_DIGEST digest;
     size_t out_len;
     int key_len;
     int custom_len;
@@ -150,7 +142,7 @@ static void kmac_free(void *vmacctx)
 
     if (kctx != NULL) {
         EVP_MD_CTX_free(kctx->ctx);
-        EVP_MD_free(kctx->alloc_md);
+        ossl_prov_digest_reset(&kctx->digest);
         OPENSSL_cleanse(kctx->key, kctx->key_len);
         OPENSSL_cleanse(kctx->custom, kctx->custom_len);
         OPENSSL_free(kctx);
@@ -162,12 +154,9 @@ static void kmac_free(void *vmacctx)
  * reimplementing the EVP functionality with direct use of
  * keccak_mac_init() and friends.
  */
-static void *kmac_new(void *provctx, EVP_MD *fetched_md, const EVP_MD *md)
+static struct kmac_data_st *kmac_new(void *provctx)
 {
-    struct kmac_data_st *kctx = NULL;
-
-    if (md == NULL)
-        return NULL;
+    struct kmac_data_st *kctx;
 
     if ((kctx = OPENSSL_zalloc(sizeof(*kctx))) == NULL
             || (kctx->ctx = EVP_MD_CTX_new()) == NULL) {
@@ -175,58 +164,57 @@ static void *kmac_new(void *provctx, EVP_MD *fetched_md, const EVP_MD *md)
         return NULL;
     }
     kctx->provctx = provctx;
-    kctx->md = md;
-    kctx->alloc_md = fetched_md;
-    kctx->out_len = EVP_MD_size(md);
     return kctx;
 }
 
-static void *kmac_fetch_new(void *provctx, const char *mdname)
+static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
 {
-    EVP_MD *fetched_md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(provctx),
-                                      mdname, NULL);
-    const EVP_MD *md = fetched_md;
-    void *ret = NULL;
+    struct kmac_data_st *kctx = kmac_new(provctx);
 
-#ifndef FIPS_MODE /* Inside the FIPS module, we don't support legacy digests */
-    /* TODO(3.0) BEGIN legacy stuff, to be removed */
-    if (md == NULL)
-        md = EVP_get_digestbyname(mdname);
-    /* TODO(3.0) END of legacy stuff */
-#endif
+    if (kctx == NULL)
+        return 0;
+    if (!ossl_prov_digest_load_from_params(&kctx->digest, params,
+                                      PROV_LIBRARY_CONTEXT_OF(provctx)))
+        return 0;
 
-    ret = kmac_new(provctx, fetched_md, md);
-    if (ret == NULL)
-        EVP_MD_free(fetched_md);
-    return ret;
+    kctx->out_len = EVP_MD_size(ossl_prov_digest_md(&kctx->digest));
+    return kctx;
 }
 
 static void *kmac128_new(void *provctx)
 {
-    return kmac_fetch_new(provctx, OSSL_DIGEST_NAME_KECCAK_KMAC128);
+    static const OSSL_PARAM kmac128_params[] = {
+        OSSL_PARAM_utf8_string("digest", OSSL_DIGEST_NAME_KECCAK_KMAC128,
+                               sizeof(OSSL_DIGEST_NAME_KECCAK_KMAC128)),
+        OSSL_PARAM_END
+    };
+    return kmac_fetch_new(provctx, kmac128_params);
 }
 
 static void *kmac256_new(void *provctx)
 {
-    return kmac_fetch_new(provctx, OSSL_DIGEST_NAME_KECCAK_KMAC256);
+    static const OSSL_PARAM kmac256_params[] = {
+        OSSL_PARAM_utf8_string("digest", OSSL_DIGEST_NAME_KECCAK_KMAC256,
+                               sizeof(OSSL_DIGEST_NAME_KECCAK_KMAC256)),
+        OSSL_PARAM_END
+    };
+    return kmac_fetch_new(provctx, kmac256_params);
 }
 
 static void *kmac_dup(void *vsrc)
 {
     struct kmac_data_st *src = vsrc;
-    struct kmac_data_st *dst = kmac_new(src->provctx, src->alloc_md, src->md);
+    struct kmac_data_st *dst = kmac_new(src->provctx);
 
     if (dst == NULL)
         return NULL;
 
     if (!EVP_MD_CTX_copy(dst->ctx, src->ctx)
-        || (src->alloc_md != NULL && !EVP_MD_up_ref(src->alloc_md))) {
+        || !ossl_prov_digest_copy(&dst->digest, &src->digest)) {
         kmac_free(dst);
         return NULL;
     }
 
-    dst->md = src->md;
-    dst->alloc_md = src->alloc_md;
     dst->out_len = src->out_len;
     dst->key_len = src->key_len;
     dst->custom_len = src->custom_len;
@@ -255,10 +243,11 @@ static int kmac_init(void *vmacctx)
         EVPerr(EVP_F_KMAC_INIT, EVP_R_NO_KEY_SET);
         return 0;
     }
-    if (!EVP_DigestInit_ex(kctx->ctx, kctx->md, NULL))
+    if (!EVP_DigestInit_ex(kctx->ctx, ossl_prov_digest_md(&kctx->digest),
+                           NULL))
         return 0;
 
-    block_len = EVP_MD_block_size(kctx->md);
+    block_len = EVP_MD_block_size(ossl_prov_digest_md(&kctx->digest));
 
     /* Set default custom string if it is not already set */
     if (kctx->custom_len == 0) {
@@ -354,6 +343,7 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 {
     struct kmac_data_st *kctx = vmacctx;
     const OSSL_PARAM *p;
+    const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_XOF)) != NULL
         && !OSSL_PARAM_get_int(p, &kctx->xof_mode))
@@ -368,7 +358,7 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
         }
         if (!kmac_bytepad_encode_key(kctx->key, &kctx->key_len,
                                      p->data, p->data_size,
-                                     EVP_MD_block_size(kctx->md)))
+                                     EVP_MD_block_size(digest)))
             return 0;
     }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CUSTOM))
