@@ -654,6 +654,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     X509 *cert = NULL; /* decrypted certificate */
     EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
     unsigned char *ek = NULL; /* decrypted symmetric encryption key */
+    size_t eksize = 0; /* size of decrypted symmetric encryption key */
     const EVP_CIPHER *cipher = NULL; /* used cipher */
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     unsigned char *outbuf = NULL; /* decryption output buffer */
@@ -678,7 +679,6 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     pkctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
         ASN1_BIT_STRING *encKey = ecert->encSymmKey;
-        size_t eksize = 0;
 
         if (EVP_PKEY_decrypt(pkctx, NULL, &eksize, encKey->data, encKey->length)
                 <= 0
@@ -720,6 +720,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
 
     if (!EVP_DecryptInit(evp_ctx, cipher, ek, iv)
+            || eksize != (size_t)EVP_CIPHER_key_length(cipher)
             || !EVP_DecryptUpdate(evp_ctx, outbuf, &outlen,
                                   ecert->encValue->data,
                                   ecert->encValue->length)
@@ -743,7 +744,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     EVP_PKEY_CTX_free(pkctx);
     OPENSSL_free(outbuf);
     EVP_CIPHER_CTX_free(evp_ctx);
-    OPENSSL_free(ek);
+    OPENSSL_clear_free(ek, eksize);
     OPENSSL_free(iv);
     return cert;
 }
