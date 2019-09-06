@@ -9,6 +9,12 @@
 
  Changes between 1.1.1c and 1.1.1d [xx XXX xxxx]
 
+  *) Compute ECC cofactors if not provided during EC_GROUP construction. Before
+     this change, EC_GROUP_set_generator would accept order and/or cofactor as
+     NULL. After this change, only the cofactor parameter can be NULL. It also
+     does some minimal sanity checks on the passed order.
+     [Billy Bob Brumley]
+
   *) Early start up entropy quality from the DEVRANDOM seed source has been
      improved for older Linux systems.  The RAND subsystem will wait for
      /dev/random to be producing output before seeding from /dev/urandom.
