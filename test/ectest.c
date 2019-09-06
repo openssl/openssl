@@ -1914,19 +1914,19 @@ static int cardinality_test(int n)
         /* negative test for invalid cofactor */
         || !TEST_true(BN_set_word(g2_cf, 0))
         || !TEST_true(BN_sub(g2_cf, g2_cf, BN_value_one()))
-        || TEST_true(EC_GROUP_set_generator(g2, g2_gen, g1_order, g2_cf))
+        || !TEST_false(EC_GROUP_set_generator(g2, g2_gen, g1_order, g2_cf))
         /* negative test for NULL order */
-        || TEST_true(EC_GROUP_set_generator(g2, g2_gen, NULL, NULL))
+        || !TEST_false(EC_GROUP_set_generator(g2, g2_gen, NULL, NULL))
         /* negative test for zero order */
         || !TEST_true(BN_set_word(g1_order, 0))
-        || TEST_true(EC_GROUP_set_generator(g2, g2_gen, g1_order, NULL))
+        || !TEST_false(EC_GROUP_set_generator(g2, g2_gen, g1_order, NULL))
         /* negative test for negative order */
         || !TEST_true(BN_set_word(g2_cf, 0))
         || !TEST_true(BN_sub(g2_cf, g2_cf, BN_value_one()))
-        || TEST_true(EC_GROUP_set_generator(g2, g2_gen, g1_order, NULL))
+        || !TEST_false(EC_GROUP_set_generator(g2, g2_gen, g1_order, NULL))
         /* negative test for too large order */
         || !TEST_true(BN_lshift(g1_order, g1_p, 2))
-        || TEST_true(EC_GROUP_set_generator(g2, g2_gen, g1_order, NULL)))
+        || !TEST_false(EC_GROUP_set_generator(g2, g2_gen, g1_order, NULL)))
         goto err;
     ret = 1;
  err:
