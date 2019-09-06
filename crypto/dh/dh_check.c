@@ -31,6 +31,10 @@ int DH_check_params_ex(const DH *dh)
         DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_CHECK_P_NOT_PRIME);
     if ((errflags & DH_NOT_SUITABLE_GENERATOR) != 0)
         DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_NOT_SUITABLE_GENERATOR);
+    if ((errflags & DH_MODULUS_TOO_SMALL) != 0)
+        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_MODULUS_TOO_SMALL);
+    if ((errflags & DH_MODULUS_TOO_LARGE) != 0)
+        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_MODULUS_TOO_LARGE);
 
     return errflags == 0;
 }
@@ -58,6 +62,10 @@ int DH_check_params(const DH *dh, int *ret)
         goto err;
     if (BN_cmp(dh->g, tmp) >= 0)
         *ret |= DH_NOT_SUITABLE_GENERATOR;
+    if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS)
+        *ret |= DH_MODULUS_TOO_SMALL;
+    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS)
+        *ret |= DH_MODULUS_TOO_LARGE;
 
     ok = 1;
  err:
@@ -91,6 +99,10 @@ int DH_check_ex(const DH *dh)
         DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_P_NOT_PRIME);
     if ((errflags & DH_CHECK_P_NOT_SAFE_PRIME) != 0)
         DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_P_NOT_SAFE_PRIME);
+    if ((errflags & DH_MODULUS_TOO_SMALL) != 0)
+        DHerr(DH_F_DH_CHECK_EX, DH_R_MODULUS_TOO_SMALL);
+    if ((errflags & DH_MODULUS_TOO_LARGE) != 0)
+        DHerr(DH_F_DH_CHECK_EX, DH_R_MODULUS_TOO_LARGE);
 
     return errflags == 0;
 }

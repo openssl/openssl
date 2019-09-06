@@ -73,6 +73,14 @@ The generator B<g> is not suitable.
 Note that the lack of this bit doesn't guarantee that B<g> is
 suitable, unless B<p> is known to be a strong prime.
 
+=item DH_MODULUS_TOO_SMALL
+
+The modulus is too small.
+
+=item DH_MODULUS_TOO_LARGE
+
+The modulus is too large.
+
 =back
 
 DH_check() confirms that the Diffie-Hellman parameters B<dh> are valid. The
@@ -141,7 +149,7 @@ DH_generate_parameters_ex() instead.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
