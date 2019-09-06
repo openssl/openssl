@@ -409,9 +409,9 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
         if (pinfo == NULL)
             goto err;
         if (primes[i] != NULL && exps[i] != NULL && coeffs[i] != NULL) {
-            BN_free(pinfo->r);
-            BN_free(pinfo->d);
-            BN_free(pinfo->t);
+            BN_clear_free(pinfo->r);
+            BN_clear_free(pinfo->d);
+            BN_clear_free(pinfo->t);
             pinfo->r = primes[i];
             pinfo->d = exps[i];
             pinfo->t = coeffs[i];
