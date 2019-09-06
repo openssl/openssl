@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -63,14 +63,19 @@ static int dh_test(void)
         || !TEST_true(DH_set0_pqg(dh, p, q, g)))
         goto err1;
 
+    /* check fails, because p is way too small */
     if (!DH_check(dh, &i))
         goto err2;
+    i ^= DH_MODULUS_TOO_SMALL;
     if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
             || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
-            || !TEST_false(i & DH_CHECK_INVALID_Q_VALUE)
-            || !TEST_false(i & DH_CHECK_Q_NOT_PRIME)
             || !TEST_false(i & DH_UNABLE_TO_CHECK_GENERATOR)
             || !TEST_false(i & DH_NOT_SUITABLE_GENERATOR)
+            || !TEST_false(i & DH_CHECK_Q_NOT_PRIME)
+            || !TEST_false(i & DH_CHECK_INVALID_Q_VALUE)
+            || !TEST_false(i & DH_CHECK_INVALID_J_VALUE)
+            || !TEST_false(i & DH_MODULUS_TOO_SMALL)
+            || !TEST_false(i & DH_MODULUS_TOO_LARGE)
             || !TEST_false(i))
         goto err2;
 
@@ -130,6 +135,11 @@ static int dh_test(void)
             || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
             || !TEST_false(i & DH_UNABLE_TO_CHECK_GENERATOR)
             || !TEST_false(i & DH_NOT_SUITABLE_GENERATOR)
+            || !TEST_false(i & DH_CHECK_Q_NOT_PRIME)
+            || !TEST_false(i & DH_CHECK_INVALID_Q_VALUE)
+            || !TEST_false(i & DH_CHECK_INVALID_J_VALUE)
+            || !TEST_false(i & DH_MODULUS_TOO_SMALL)
+            || !TEST_false(i & DH_MODULUS_TOO_LARGE)
             || !TEST_false(i))
         goto err3;
 
