@@ -1192,3 +1192,6 @@ magma_cfb		1191
 magma_mac		1192
 hmacWithSHA512_224		1193
 hmacWithSHA512_256		1194
+gost89-cfb-12		1195
+gost89-cbc-12		1196
+gost89-ecb-12		1197

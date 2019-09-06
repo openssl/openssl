@@ -1253,10 +1253,13 @@ cryptopro 19		: gost2001	: GOST R 34.10-2001
 cryptopro 20		: gost94	: GOST R 34.10-94
 !Cname id-Gost28147-89
 cryptopro 21		: gost89 		: GOST 28147-89
+			: gost89-cfb-12
 			: gost89-cnt
 			: gost89-cnt-12
 			: gost89-cbc
+			: gost89-cbc-12
 			: gost89-ecb
+			: gost89-ecb-12
 			: gost89-ctr
 !Cname id-Gost28147-89-MAC
 cryptopro 22		: gost-mac	: GOST 28147-89 MAC
