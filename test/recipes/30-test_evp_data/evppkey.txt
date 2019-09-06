@@ -16147,3 +16147,53 @@ Result = KEYPAIR_MISMATCH
 PrivPubKeyPair = DSA-1024-BIS:DSA-1024-PUBLIC
 Result = KEYPAIR_MISMATCH
 
+# Title=explicit parameters with no cofactor test
+
+PrivateKey=P256_explicit
+-----BEGIN PRIVATE KEY-----
+MIIBMAIBADCCAQAGByqGSM49AgEwgfQCAQEwLAYHKoZIzj0BAQIhAP////8AAAABAAAAAAAAAAAA
+AAAA////////////////MFsEIP////8AAAABAAAAAAAAAAAAAAAA///////////////8BCBaxjXY
+qjqT57PrvVV2mIa8ZR0GsMxTsPY7zjw+J9JgSwMVAMSdNgiG5wSTamZ44ROdJreBn36QBEEEaxfR
+8uEsQkf4vOblY6RA8ncDfYEt6zOg9KE5RdiYwpZP40Li/hp/m47n60p8D54WK84zV2sxXs7LtkBo
+N79R9QIhAP////8AAAAA//////////+85vqtpxeehPO5ysL8YyVRBCcwJQIBAQQgya+p2EW6dRZr
+XCFXZ7HWk05Qw9s26JsSe4piKxIPZyE=
+-----END PRIVATE KEY-----
+
+PublicKey=P256_explicit_PUB
+-----BEGIN PUBLIC KEY-----
+MIIBSDCCAQAGByqGSM49AgEwgfQCAQEwLAYHKoZIzj0BAQIhAP////8AAAABAAAAAAAAAAAAAAAA
+////////////////MFsEIP////8AAAABAAAAAAAAAAAAAAAA///////////////8BCBaxjXYqjqT
+57PrvVV2mIa8ZR0GsMxTsPY7zjw+J9JgSwMVAMSdNgiG5wSTamZ44ROdJreBn36QBEEEaxfR8uEs
+Qkf4vOblY6RA8ncDfYEt6zOg9KE5RdiYwpZP40Li/hp/m47n60p8D54WK84zV2sxXs7LtkBoN79R
+9QIhAP////8AAAAA//////////+85vqtpxeehPO5ysL8YyVRA0IABGD+1LolWp0xyWHrdMY1bWjA
+SbiSO2H6bOZpYi5g8p+2eQP+EAi4vJmkGunpVii8ZPLxsgwtfp9Rd6PClNRGIpk=
+-----END PUBLIC KEY-----
+
+PrivPubKeyPair=P256_explicit:P256_explicit_PUB
+
+PrivateKey=P384_explicit
+-----BEGIN PRIVATE KEY-----
+MIIBoQIBADCCAWEGByqGSM49AgEwggFUAgEBMDwGByqGSM49AQECMQD/////////////////////
+/////////////////////v////8AAAAAAAAAAP////8wewQw////////////////////////////
+//////////////7/////AAAAAAAAAAD////8BDCzMS+n4j7n5JiOBWvj+C0ZGB2cbv6BQRIDFAiP
+UBOHWsZWOY2KLtGdKoXI7dPsKu8DFQCjNZJqoxmieh0AiWpnc6SCes2scwRhBKqHyiK+iwU3jrHH
+HvMgrXRuHTtii6ebmFn3QeCCVCo4VQLyXb9VKWw6VF44cnYKtzYX3kqWJixvXZ6Yv5KS3Cn49B29
+KJoUfOnaMRO18LjACmCxzh1+gZ16Qx18kOoOXwIxAP///////////////////////////////8dj
+TYH0Ny3fWBoNskiwp3rs7BlqzMUpcwQ3MDUCAQEEMGudPa0uG4wcBbGYdbZln03iPDtme/KXupqk
+d0B4cTfYltVyTkxwqCX4csnqYNLt9Q==
+-----END PRIVATE KEY-----
+
+PublicKey=P384_explicit_PUB
+-----BEGIN PUBLIC KEY-----
+MIIByTCCAWEGByqGSM49AgEwggFUAgEBMDwGByqGSM49AQECMQD/////////////////////////
+/////////////////v////8AAAAAAAAAAP////8wewQw////////////////////////////////
+//////////7/////AAAAAAAAAAD////8BDCzMS+n4j7n5JiOBWvj+C0ZGB2cbv6BQRIDFAiPUBOH
+WsZWOY2KLtGdKoXI7dPsKu8DFQCjNZJqoxmieh0AiWpnc6SCes2scwRhBKqHyiK+iwU3jrHHHvMg
+rXRuHTtii6ebmFn3QeCCVCo4VQLyXb9VKWw6VF44cnYKtzYX3kqWJixvXZ6Yv5KS3Cn49B29KJoU
+fOnaMRO18LjACmCxzh1+gZ16Qx18kOoOXwIxAP///////////////////////////////8djTYH0
+Ny3fWBoNskiwp3rs7BlqzMUpcwNiAATsOk5BW04ZpFaGGAKfQn+l2pqLxK6S4C4GquUoazAMZN74
+8OqQVYZgZKJUUVSAvBOAFdm3LX1XJE6o75rAxiGJZwilk2f537n1TKhLPxydsSiLIxw64NT+c0T9
+JTMmRyA=
+-----END PUBLIC KEY-----
+
+PrivPubKeyPair=P384_explicit:P384_explicit_PUB
