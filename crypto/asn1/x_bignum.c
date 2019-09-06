@@ -133,16 +133,12 @@ static int bn_secure_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     int ret;
     BIGNUM *bn;
 
-    if (!*pval) {
-        if (!bn_secure_new(pval, it))
-            return 0;
-    }
+    if (!*pval && !bn_secure_new(pval, it))
+        return 0;
 
     ret = bn_c2i(pval, cont, len, utype, free_cont, it);
-    if (!ret) {
-        bn_free(pval, it);
+    if (!ret)
         return 0;
-    }
 
     /* Set constant-time flag for all secure BIGNUMS */
     bn = (BIGNUM *)*pval;
