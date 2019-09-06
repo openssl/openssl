@@ -415,6 +415,9 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
             pinfo->r = primes[i];
             pinfo->d = exps[i];
             pinfo->t = coeffs[i];
+            BN_set_flags(pinfo->r, BN_FLG_CONSTTIME);
+            BN_set_flags(pinfo->d, BN_FLG_CONSTTIME);
+            BN_set_flags(pinfo->t, BN_FLG_CONSTTIME);
         } else {
             rsa_multip_info_free(pinfo);
             goto err;
