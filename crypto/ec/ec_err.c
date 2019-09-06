@@ -273,6 +273,7 @@ static ERR_STRING_DATA EC_str_reasons[] = {
     {ERR_REASON(EC_R_SLOT_FULL), "slot full"},
     {ERR_REASON(EC_R_UNDEFINED_GENERATOR), "undefined generator"},
     {ERR_REASON(EC_R_UNDEFINED_ORDER), "undefined order"},
+    {ERR_REASON(EC_R_UNKNOWN_COFACTOR), "unknown cofactor"},
     {ERR_REASON(EC_R_UNKNOWN_GROUP), "unknown group"},
     {ERR_REASON(EC_R_UNKNOWN_ORDER), "unknown order"},
     {ERR_REASON(EC_R_UNSUPPORTED_FIELD), "unsupported field"},

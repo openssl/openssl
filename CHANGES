@@ -9,13 +9,19 @@
 
  Changes between 1.1.0k and 1.1.0l [xx XXX xxxx]
 
+  *) Compute ECC cofactors if not provided during EC_GROUP construction. Before
+     this change, EC_GROUP_set_generator would accept order and/or cofactor as
+     NULL. After this change, only the cofactor parameter can be NULL. It also
+     does some minimal sanity checks on the passed order.
+     (CVE-2019-1547)
+     [Billy Bob Brumley]
+
   *) Use Windows installation paths in the mingw builds
 
      Mingw isn't a POSIX environment per se, which means that Windows
      paths should be used for installation.
      (CVE-2019-1552)
      [Richard Levitte]
-
 
  Changes between 1.1.0j and 1.1.0k [28 May 2019]
 
