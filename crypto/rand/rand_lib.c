@@ -545,6 +545,42 @@ size_t rand_pool_entropy_needed(RAND_POOL *pool)
     return 0;
 }
 
+/* Increase the allocation size -- not usable for an attached pool */
+static int rand_pool_grow(RAND_POOL *pool, size_t len)
+{
+    if (len > pool->alloc_len - pool->len) {
+        unsigned char *p;
+        const size_t limit = pool->max_len / 2;
+        size_t newlen = pool->alloc_len;
+
+        if (pool->attached || len > pool->max_len - pool->len) {
+            RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        do
+            newlen = newlen < limit ? newlen * 2 : pool->max_len;
+        while (len > newlen - pool->len);
+
+        if (pool->secure)
+            p = OPENSSL_secure_zalloc(newlen);
+        else
+            p = OPENSSL_zalloc(newlen);
+        if (p == NULL) {
+            RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        memcpy(p, pool->buffer, pool->len);
+        if (pool->secure)
+            OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);
+        else
+            OPENSSL_clear_free(pool->buffer, pool->alloc_len);
+        pool->buffer = p;
+        pool->alloc_len = newlen;
+    }
+    return 1;
+}
+
 /*
  * Returns the number of bytes needed to fill the pool, assuming
  * the input has 1 / |entropy_factor| entropy bits per data bit.
@@ -574,6 +610,24 @@ size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
         /* to meet the min_len requirement */
         bytes_needed = pool->min_len - pool->len;
 
+    /*
+     * Make sure the buffer is large enough for the requested amount
+     * of data. This guarantees that existing code patterns where
+     * rand_pool_add_begin, rand_pool_add_end or rand_pool_add
+     * are used to collect entropy data without any error handling
+     * whatsoever, continue to be valid.
+     * Furthermore if the allocation here fails once, make sure that
+     * we don't fall back to a less secure or even blocking random source,
+     * as that could happen by the existing code patterns.
+     * This is not a concern for additional data, therefore that
+     * is not needed if rand_pool_grow fails in other places.
+     */
+    if (!rand_pool_grow(pool, bytes_needed)) {
+        /* persistent error for this pool */
+        pool->max_len = pool->len = 0;
+        return 0;
+    }
+
     return bytes_needed;
 }
 
@@ -581,36 +635,6 @@ size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
 size_t rand_pool_bytes_remaining(RAND_POOL *pool)
 {
     return pool->max_len - pool->len;
-}
-
-static int rand_pool_grow(RAND_POOL *pool, size_t len)
-{
-    if (len > pool->alloc_len - pool->len) {
-        unsigned char *p;
-        const size_t limit = pool->max_len / 2;
-        size_t newlen = pool->alloc_len;
-
-        do
-            newlen = newlen < limit ? newlen * 2 : pool->max_len;
-        while (len > newlen - pool->len);
-
-        if (pool->secure)
-            p = OPENSSL_secure_zalloc(newlen);
-        else
-            p = OPENSSL_zalloc(newlen);
-        if (p == NULL) {
-            RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        memcpy(p, pool->buffer, pool->len);
-        if (pool->secure)
-            OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);
-        else
-            OPENSSL_clear_free(pool->buffer, pool->alloc_len);
-        pool->buffer = p;
-        pool->alloc_len = newlen;
-    }
-    return 1;
 }
 
 /*
@@ -636,6 +660,25 @@ int rand_pool_add(RAND_POOL *pool,
     }
 
     if (len > 0) {
+        /*
+         * This is to protect us from accidentally passing the buffer
+         * returned from rand_pool_add_begin.
+         * The check for alloc_len makes sure we do not compare the
+         * address of the end of the allocated memory to something
+         * different, since that comparison would have an
+         * indeterminate result.
+         */
+        if (pool->alloc_len > pool->len && pool->buffer + pool->len == buffer) {
+            RANDerr(RAND_F_RAND_POOL_ADD, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        /*
+         * We have that only for cases when a pool is used to collect
+         * additional data.
+         * For entropy data, as long as the allocation request stays within
+         * the limits given by rand_pool_bytes_needed this rand_pool_grow
+         * below is guaranteed to succeed, thus no allocation happens.
+         */
         if (!rand_pool_grow(pool, len))
             return 0;
         memcpy(pool->buffer + pool->len, buffer, len);
@@ -673,8 +716,18 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
         return NULL;
     }
 
+    /*
+     * As long as the allocation request stays within the limits given
+     * by rand_pool_bytes_needed this rand_pool_grow below is guaranteed
+     * to succeed, thus no allocation happens.
+     * We have that only for cases when a pool is used to collect
+     * additional data. Then the buffer might need to grow here,
+     * and of course the caller is responsible to check the return
+     * value of this function.
+     */
     if (!rand_pool_grow(pool, len))
         return NULL;
+
     return pool->buffer + pool->len;
 }
 
@@ -689,7 +742,7 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
  */
 int rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
 {
-    if (len > pool->max_len - pool->len) {
+    if (len > pool->alloc_len - pool->len) {
         RANDerr(RAND_F_RAND_POOL_ADD_END, RAND_R_RANDOM_POOL_OVERFLOW);
         return 0;
     }
