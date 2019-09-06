@@ -2088,17 +2088,15 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
         memset(secrets, 0, sizeof(*secrets) * num_points);
         memset(pre_comp, 0, sizeof(*pre_comp) * num_points);
         for (i = 0; i < num_points; ++i) {
-            if (i == num)
+            if (i == num) {
                 /*
                  * we didn't have a valid precomputation, so we pick the
                  * generator
                  */
-            {
                 p = EC_GROUP_get0_generator(group);
                 p_scalar = scalar;
-            } else
+            } else {
                 /* the i^th point */
-            {
                 p = points[i];
                 p_scalar = scalars[i];
             }
@@ -2169,18 +2167,20 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
                 goto err;
             }
             num_bytes = BN_bn2lebinpad(tmp_scalar, g_secret, sizeof(g_secret));
-        } else
+        } else {
             num_bytes = BN_bn2lebinpad(scalar, g_secret, sizeof(g_secret));
+        }
         /* do the multiplication with generator precomputation */
         batch_mul(x_out, y_out, z_out,
                   (const felem_bytearray(*))secrets, num_points,
                   g_secret,
                   mixed, (const smallfelem(*)[17][3])pre_comp, g_pre_comp);
-    } else
+    } else {
         /* do the multiplication without generator precomputation */
         batch_mul(x_out, y_out, z_out,
                   (const felem_bytearray(*))secrets, num_points,
                   NULL, mixed, (const smallfelem(*)[17][3])pre_comp, NULL);
+    }
     /* reduce the output to its unique minimal representation */
     felem_contract(x_in, x_out);
     felem_contract(y_in, y_out);
