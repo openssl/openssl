@@ -308,7 +308,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     rctx->operation = pctx->operation;
 
     if (EVP_PKEY_CTX_IS_DERIVE_OP(pctx)) {
-        if (rctx->op.kex.exchange != NULL) {
+        if (pctx->op.kex.exchange != NULL) {
             rctx->op.kex.exchange = pctx->op.kex.exchange;
             if (!EVP_KEYEXCH_up_ref(rctx->op.kex.exchange)) {
                 OPENSSL_free(rctx);
@@ -328,7 +328,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
             return rctx;
         }
     } else if (EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)) {
-        if (rctx->op.sig.signature != NULL) {
+        if (pctx->op.sig.signature != NULL) {
             rctx->op.sig.signature = pctx->op.sig.signature;
             if (!EVP_SIGNATURE_up_ref(rctx->op.sig.signature)) {
                 OPENSSL_free(rctx);
