@@ -4004,6 +4004,9 @@
 #define NID_id_Gost28147_89             813
 #define OBJ_id_Gost28147_89             OBJ_cryptopro,21L
 
+#define SN_gost89_cfb_12                "gost89-cfb-12"
+#define NID_gost89_cfb_12               1208
+
 #define SN_gost89_cnt           "gost89-cnt"
 #define NID_gost89_cnt          814
 
@@ -4013,8 +4016,14 @@
 #define SN_gost89_cbc           "gost89-cbc"
 #define NID_gost89_cbc          1009
 
+#define SN_gost89_cbc_12                "gost89-cbc-12"
+#define NID_gost89_cbc_12               1209
+
 #define SN_gost89_ecb           "gost89-ecb"
 #define NID_gost89_ecb          1010
+
+#define SN_gost89_ecb_12                "gost89-ecb-12"
+#define NID_gost89_ecb_12               1210
 
 #define SN_gost89_ctr           "gost89-ctr"
 #define NID_gost89_ctr          1011

@@ -1205,3 +1205,6 @@ SM2_with_SM3		1204
 sskdf		1205
 x963kdf		1206
 x942kdf		1207
+gost89-cfb-12		1208
+gost89-cbc-12		1209
+gost89-ecb-12		1210
