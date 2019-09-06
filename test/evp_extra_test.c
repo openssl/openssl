@@ -20,6 +20,7 @@
 #include <openssl/kdf.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
+#include <openssl/dsa.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/evp_int.h"
