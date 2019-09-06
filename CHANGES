@@ -16,6 +16,11 @@
      (CVE-2019-1552)
      [Richard Levitte]
 
+  *) Compute ECC cofactors if not provided during EC_GROUP construction. Before
+     this change, EC_GROUP_set_generator would accept order and/or cofactor as
+     NULL. After this change, only the cofactor parameter can be NULL. It also
+     does some minimal sanity checks on the passed order.
+     [Billy Bob Brumley]
 
  Changes between 1.1.0j and 1.1.0k [28 May 2019]
 
