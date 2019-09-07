@@ -1568,7 +1568,7 @@ int ERR_load_EC_strings(void);
 # define EC_R_SLOT_FULL                                   108
 # define EC_R_UNDEFINED_GENERATOR                         113
 # define EC_R_UNDEFINED_ORDER                             128
-# define EC_R_UNKNOWN_COFACTOR                            136
+# define EC_R_UNKNOWN_COFACTOR                            164
 # define EC_R_UNKNOWN_GROUP                               129
 # define EC_R_UNKNOWN_ORDER                               114
 # define EC_R_UNSUPPORTED_FIELD                           131
