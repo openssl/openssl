@@ -166,18 +166,22 @@ The default value, if any, is implementation dependent.
 
 =item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
 
-Some KDF implementations use other cryptographic algorithms, this parameter
-sets what property query will be used to fetch the implementation.
-
 =item B<OSSL_KDF_PARAM_MAC> ("mac") <UTF8 string>
-
-Some KDF implementations use a MAC as an underlying computation
-algorithm, this parameter sets what the MAC algorithm should be.
 
 =item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
 
-For MAC implementations that use a message digest as an underlying computation
-algorithm, this parameter sets what the digest algorithm should be.
+=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8string>
+
+For KDF implementations that use an underlying computation MAC or
+digest, these parameters set what the algorithm should be, and the
+engine that implements the algorithm or the properties to fetch it
+by if needed.
+
+The value is always the name of the intended engine, algorithm,
+or the properties.
+
+Note that not all algorithms may support all possible underlying
+implementations.
 
 =item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>
 
