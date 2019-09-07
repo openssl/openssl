@@ -19,6 +19,7 @@
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"
+# include "internal/provider_util.h"
 
 /* See RFC 4253, Section 7.2 */
 static OSSL_OP_kdf_newctx_fn kdf_sshkdf_new;
@@ -38,7 +39,7 @@ static int SSHKDF(const EVP_MD *evp_md,
 
 typedef struct {
     void *provctx;
-    EVP_MD *md;
+    PROV_DIGEST digest;
     unsigned char *key; /* K */
     size_t key_len;
     unsigned char *xcghash; /* H */
@@ -70,7 +71,7 @@ static void kdf_sshkdf_reset(void *vctx)
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
 
-    EVP_MD_meth_free(ctx->md);
+    ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->xcghash, ctx->xcghash_len);
     OPENSSL_clear_free(ctx->session_id, ctx->session_id_len);
@@ -89,8 +90,9 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key,
                              size_t keylen)
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
-    if (ctx->md == NULL) {
+    if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
@@ -110,7 +112,7 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_TYPE);
         return 0;
     }
-    return SSHKDF(ctx->md, ctx->key, ctx->key_len,
+    return SSHKDF(md, ctx->key, ctx->key_len,
                   ctx->xcghash, ctx->xcghash_len,
                   ctx->session_id, ctx->session_id_len,
                   ctx->type, key, keylen);
@@ -120,30 +122,11 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_SSHKDF *ctx = vctx;
-    EVP_MD *md;
+    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     int t;
-    const char *properties = NULL;
 
-    /* Grab search properties, this should be before the digest lookup */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
-        != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        properties = p->data;
-    }
-    /* Handle aliasing of digest parameter names */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), p->data,
-                          properties);
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-            return 0;
-        }
-        EVP_MD_meth_free(ctx->md);
-        ctx->md = md;
-    }
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+        return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
         if (!sshkdf_set_membuf(&ctx->key, &ctx->key_len, p))
