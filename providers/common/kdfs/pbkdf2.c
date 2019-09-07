@@ -20,6 +20,7 @@
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"
+#include "internal/provider_util.h"
 
 /* Constants specified in SP800-132 */
 #define KDF_PBKDF2_MIN_KEY_LEN_BITS  112
@@ -55,7 +56,7 @@ typedef struct {
     unsigned char *salt;
     size_t salt_len;
     uint64_t iter;
-    EVP_MD *md;
+    PROV_DIGEST digest;
     int lower_bound_checks;
 } KDF_PBKDF2;
 
@@ -77,7 +78,7 @@ static void *kdf_pbkdf2_new(void *provctx)
 
 static void kdf_pbkdf2_cleanup(KDF_PBKDF2 *ctx)
 {
-    EVP_MD_meth_free(ctx->md);
+    ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_free(ctx->salt);
     OPENSSL_clear_free(ctx->pass, ctx->pass_len);
     memset(ctx, 0, sizeof(*ctx));
@@ -101,9 +102,13 @@ static void kdf_pbkdf2_reset(void *vctx)
 
 static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
 {
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                                 SN_sha1, 0);
+    ossl_prov_digest_load_from_params(&ctx->digest, params, provctx);
     ctx->iter = PKCS5_DEFAULT_ITER;
-    ctx->md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), SN_sha1,
-                           NULL);
     ctx->lower_bound_checks = KDF_PBKDF2_DEFAULT_CHECKS;
 }
 
@@ -128,6 +133,7 @@ static int kdf_pbkdf2_derive(void *vctx, unsigned char *key,
                              size_t keylen)
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
     if (ctx->pass == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_PASS);
@@ -141,38 +147,19 @@ static int kdf_pbkdf2_derive(void *vctx, unsigned char *key,
 
     return pbkdf2_derive((char *)ctx->pass, ctx->pass_len,
                          ctx->salt, ctx->salt_len, ctx->iter,
-                         ctx->md, key, keylen, ctx->lower_bound_checks);
+                         md, key, keylen, ctx->lower_bound_checks);
 }
 
 static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_PBKDF2 *ctx = vctx;
-    EVP_MD *md;
+    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     int pkcs5;
     uint64_t iter, min_iter;
-    const char *properties = NULL;
 
-    /* Grab search properties, this should be before the digest lookup */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
-        != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        properties = p->data;
-    }
-    /* Handle aliasing of digest parameter names */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), p->data,
-                          properties);
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-            return 0;
-        }
-        EVP_MD_meth_free(ctx->md);
-        ctx->md = md;
-    }
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+        return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PKCS5)) != NULL) {
         if (!OSSL_PARAM_get_int(p, &pkcs5))
