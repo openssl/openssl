@@ -9,6 +9,17 @@
 
  Changes between 1.0.2s and 1.0.2t [xx XXX xxxx]
 
+   *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
+      used even when parsing explicit parameters, when loading a serialized key
+      or calling `EC_GROUP_new_from_ecpkparameters()`/
+      `EC_GROUP_new_from_ecparameters()`.
+      This prevents bypass of security hardening and performance gains,
+      especially for curves with specialized EC_METHODs.
+      By default, if a key encoded with explicit parameters is loaded and later
+      serialized, the output is still encoded with explicit parameters, even if
+      internally a "named" EC_GROUP is used for computation.
+      [Nicola Tuveri]
+
   *) Compute ECC cofactors if not provided during EC_GROUP construction. Before
      this change, EC_GROUP_set_generator would accept order and/or cofactor as
      NULL. After this change, only the cofactor parameter can be NULL. It also
