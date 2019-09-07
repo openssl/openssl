@@ -28,6 +28,7 @@
 # include "internal/provider_ctx.h"
 # include "internal/providercommonerr.h"
 # include "internal/provider_algs.h"
+# include "internal/provider_util.h"
 
 # define X942KDF_MAX_INLEN (1 << 30)
 
@@ -42,7 +43,7 @@ static OSSL_OP_kdf_get_ctx_params_fn x942kdf_get_ctx_params;
 
 typedef struct {
     void *provctx;
-    EVP_MD *md;
+    PROV_DIGEST digest;
     unsigned char *secret;
     size_t secret_len;
     int cek_nid;
@@ -255,7 +256,7 @@ static void x942kdf_reset(void *vctx)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
 
-    EVP_MD_meth_free(ctx->md);
+    ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->secret, ctx->secret_len);
     OPENSSL_clear_free(ctx->ukm, ctx->ukm_len);
     memset(ctx, 0, sizeof(*ctx));
@@ -283,18 +284,20 @@ static int x942kdf_set_buffer(unsigned char **out, size_t *out_len,
 static size_t x942kdf_size(KDF_X942 *ctx)
 {
     int len;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
-    if (ctx->md == NULL) {
+    if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    len = EVP_MD_size(ctx->md);
+    len = EVP_MD_size(md);
     return (len <= 0) ? 0 : (size_t)len;
 }
 
 static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
     int ret = 0;
     unsigned char *ctr;
     unsigned char *der = NULL;
@@ -304,7 +307,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
         return 0;
     }
-    if (ctx->md == NULL) {
+    if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
@@ -331,7 +334,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
         ERR_raise(ERR_LIB_PROV, PROV_R_BAD_ENCODING);
         return 0;
     }
-    ret = x942kdf_hash_kdm(ctx->md, ctx->secret, ctx->secret_len,
+    ret = x942kdf_hash_kdm(md, ctx->secret, ctx->secret_len,
                            der, der_len, ctr, key, keylen);
     OPENSSL_free(der);
     return ret;
@@ -341,30 +344,11 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_X942 *ctx = vctx;
-    EVP_MD *md;
-    const char *properties = NULL;
+    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     size_t i;
 
-    /* Grab search properties, this should be before the digest lookup */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
-        != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        properties = p->data;
-    }
-    /* Handle aliasing of digest parameter names */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), p->data,
-                          properties);
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-            return 0;
-        }
-        EVP_MD_meth_free(ctx->md);
-        ctx->md = md;
-    }
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+        return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET)) != NULL
         || (p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
