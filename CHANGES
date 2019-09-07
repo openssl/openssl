@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added configure options to allow GMAC and KMAC to be disabled.
+     [Paul Dale]
+
   *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
      used even when parsing explicit parameters, when loading a serialized key
      or calling `EC_GROUP_new_from_ecpkparameters()`/

@@ -28,9 +28,6 @@ my @kdf_tests = (
     { cmd => [qw{openssl kdf -keylen 25 -kdfopt digest:SHA256 -kdfopt pass:passwordPASSWORDpassword -kdfopt salt:saltSALTsaltSALTsaltSALTsaltSALTsalt -kdfopt iter:4096 PBKDF2}],
       expected => '34:8C:89:DB:CB:D3:2B:2F:32:D8:14:B8:11:6E:84:CF:2B:17:34:7E:BC:18:00:18:1C',
       desc => 'PBKDF2 SHA256'},
-    { cmd => [qw{openssl kdf -keylen 64 -kdfopt mac:KMAC128 -kdfopt maclen:20 -kdfopt hexkey:b74a149a161546f8c20b06ac4ed4 -kdfopt hexinfo:348a37a27ef1282f5f020dcc -kdfopt hexsalt:3638271ccd68a25dc24ecddd39ef3f89 SSKDF}],
-      expected => 'e9:c1:84:53:a0:62:b5:3b:db:fc:bb:5a:34:bd:b8:e5:e7:07:ee:bb:5d:d1:34:42:43:d8:cf:c2:c2:e6:33:2f:91:bd:a5:86:f3:7d:e4:8a:65:d4:c5:14:fd:ef:aa:1e:67:54:f3:73:d2:38:e1:95:ae:15:7e:1d:e8:14:98:03',
-      desc => 'SSKDF KMAC128'},
     { cmd => [qw{openssl kdf -keylen 16 -kdfopt mac:HMAC -kdfopt digest:SHA256 -kdfopt hexkey:b74a149a161546f8c20b06ac4ed4 -kdfopt hexinfo:348a37a27ef1282f5f020dcc -kdfopt hexsalt:3638271ccd68a25dc24ecddd39ef3f89 SSKDF}],
       expected => '44:f6:76:e8:5c:1b:1a:8b:bc:3d:31:92:18:63:1c:a3',
       desc => 'SSKDF HMAC SHA256'},
@@ -40,6 +37,12 @@ my @kdf_tests = (
     { cmd => [qw{openssl kdf -keylen 16 -kdfopt digest:SHA256 -kdfopt hexkey:0102030405 -kdfopt hexxcghash:06090A -kdfopt hexsession_id:01020304 -kdfopt type:A SSHKDF}],
     expected => '5C:49:94:47:3B:B1:53:3A:58:EB:19:42:04:D3:78:16',
     desc => 'SSHKDF SHA256'},
+);
+
+my @sskdf_kmac_tests = (
+    { cmd => [qw{openssl kdf -keylen 64 -kdfopt mac:KMAC128 -kdfopt maclen:20 -kdfopt hexkey:b74a149a161546f8c20b06ac4ed4 -kdfopt hexinfo:348a37a27ef1282f5f020dcc -kdfopt hexsalt:3638271ccd68a25dc24ecddd39ef3f89 SSKDF}],
+      expected => 'e9:c1:84:53:a0:62:b5:3b:db:fc:bb:5a:34:bd:b8:e5:e7:07:ee:bb:5d:d1:34:42:43:d8:cf:c2:c2:e6:33:2f:91:bd:a5:86:f3:7d:e4:8a:65:d4:c5:14:fd:ef:aa:1e:67:54:f3:73:d2:38:e1:95:ae:15:7e:1d:e8:14:98:03',
+      desc => 'SSKDF KMAC128'},
 );
 
 my @scrypt_tests = (

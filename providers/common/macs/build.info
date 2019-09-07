@@ -1,7 +1,15 @@
-$COMMON=gmac_prov.c hmac_prov.c kmac_prov.c
+$COMMON=hmac_prov.c
 
 IF[{- !$disabled{cmac} -}]
   $COMMON=$COMMON cmac_prov.c
+ENDIF
+
+IF[{- !$disabled{gmac} -}]
+  $COMMON=$COMMON gmac_prov.c
+ENDIF
+
+IF[{- !$disabled{kmac} -}]
+  $COMMON=$COMMON kmac_prov.c
 ENDIF
 
 LIBS=../../../libcrypto

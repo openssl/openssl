@@ -340,6 +340,7 @@ static int test_kdf_ss_hmac(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_KMAC
 static int test_kdf_ss_kmac(void)
 {
     int ret;
@@ -385,6 +386,7 @@ static int test_kdf_ss_kmac(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif
 
 static int test_kdf_sshkdf(void)
 {
@@ -530,7 +532,9 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_kdf_ss_hash);
     ADD_TEST(test_kdf_ss_hmac);
+#ifndef OPENSSL_NO_KMAC
     ADD_TEST(test_kdf_ss_kmac);
+#endif
     ADD_TEST(test_kdf_sshkdf);
     ADD_TEST(test_kdf_x963);
 #ifndef OPENSSL_NO_CMS

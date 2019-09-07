@@ -22,11 +22,17 @@ my @mac_tests = (
       input => unpack("H*", "Sample message for keylen=blocklen"),
       expected => '5FD596EE78D5553C8FF4E72D266DFD192366DA29',
       desc => 'HMAC SHA1' },
+);
+
+my @gmac_tests = (
    { cmd => [qw{openssl mac -macopt cipher:AES-256-GCM -macopt hexkey:4C973DBC7364621674F8B5B89E5C15511FCED9216490FB1C1A2CAA0FFE0407E5 -macopt hexiv:7AE8E2CA4EC500012E58495C}],
      type => 'GMAC',
      input => '68F2E77696CE7AE8E2CA4EC588E541002E58495C08000F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D0007',
      expected => '00BDA1B7E87608BCBF470F12157F4C07',
      desc => 'GMAC' },
+);
+
+my @kmac_tests = (
    { cmd => [qw{openssl mac -macopt hexkey:404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F -macopt xof:0}],
      type => 'KMAC128',
      input => '00010203',
@@ -68,6 +74,8 @@ my @poly1305_tests = (
       desc => 'Poly1305 (wrap 2^128)' },
 );
 
+push @mac_tests, @gmac_tests unless disabled("gmac");
+push @mac_tests, @kmac_tests unless disabled("kmac");
 push @mac_tests, @siphash_tests unless disabled("siphash");
 push @mac_tests, @cmac_tests unless disabled("cmac");
 push @mac_tests, @poly1305_tests unless disabled("poly1305");
