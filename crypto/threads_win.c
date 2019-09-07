@@ -166,6 +166,6 @@ int openssl_init_fork_handlers(void)
 
 int openssl_get_fork_id(void)
 {
-    return getpid();
+    return 0;
 }
 #endif
