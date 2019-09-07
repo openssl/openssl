@@ -58,6 +58,7 @@
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"
+#include "internal/provider_util.h"
 #include "e_os.h"
 
 static OSSL_OP_kdf_newctx_fn kdf_tls1_prf_new;
@@ -78,9 +79,9 @@ static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
 typedef struct {
     void *provctx;
     /* Digest to use for PRF */
-    EVP_MD *md;
+    PROV_DIGEST digest;
     /* Second digest for the MD5/SHA-1 combined PRF */
-    EVP_MD *sha1;
+    PROV_DIGEST sha1;
     /* Secret value to use for PRF */
     unsigned char *sec;
     size_t seclen;
@@ -111,8 +112,8 @@ static void kdf_tls1_prf_reset(void *vctx)
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
 
-    EVP_MD_meth_free(ctx->sha1);
-    EVP_MD_meth_free(ctx->md);
+    ossl_prov_digest_reset(&ctx->sha1);
+    ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->sec, ctx->seclen);
     OPENSSL_cleanse(ctx->seed, ctx->seedlen);
     memset(ctx, 0, sizeof(*ctx));
@@ -122,8 +123,9 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
                                size_t keylen)
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
-    if (ctx->md == NULL) {
+    if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
@@ -135,7 +137,8 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SEED);
         return 0;
     }
-    return tls1_prf_alg(ctx->md, ctx->sha1, ctx->sec, ctx->seclen,
+    return tls1_prf_alg(md, ossl_prov_digest_md(&ctx->sha1),
+                        ctx->sec, ctx->seclen,
                         ctx->seed, ctx->seedlen,
                         key, keylen);
 }
@@ -144,41 +147,28 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     TLS1_PRF *ctx = vctx;
-    EVP_MD *md, *sha = NULL;
-    const char *properties = NULL, *name;
+    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
 
-    /* Grab search properties, this should be before the digest lookup */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
-        != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL
+        && p->data_type == OSSL_PARAM_UTF8_STRING
+        && strcasecmp(p->data, SN_md5_sha1) == 0) {
+        OSSL_PARAM qaram[4], *q = qaram;
+
+        /* Handle combined MD5 / SHA1 digest specially */
+        *q++ = OSSL_PARAM_construct_utf8_string("digest", SN_md5, 0);
+        if ((p = OSSL_PARAM_locate_const(params, "engine")) != NULL)
+            *q++ = *p;
+        if ((p = OSSL_PARAM_locate_const(params, "properties")) != NULL)
+            *q++ = *p;
+        *q = OSSL_PARAM_construct_end();
+        if (!ossl_prov_digest_load_from_params(&ctx->digest, qaram, provctx))
             return 0;
-        properties = p->data;
-    }
-    /* Handle aliasing of digest parameter names */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+        qaram[0] = OSSL_PARAM_construct_utf8_string("digest", SN_sha1, 0);
+        if (!ossl_prov_digest_load_from_params(&ctx->sha1, qaram, provctx))
             return 0;
-        name = p->data;
-        if (strcasecmp(name, SN_md5_sha1) == 0) {
-            sha = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), SN_sha1,
-                               properties);
-            if (sha == NULL) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOAD_SHA1);
-                return 0;
-            }
-            name = SN_md5;
-        }
-        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), name,
-                          properties);
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-            EVP_MD_meth_free(sha);
-            return 0;
-        }
-        EVP_MD_meth_free(ctx->sha1);
-        EVP_MD_meth_free(ctx->md);
-        ctx->md = md;
-        ctx->sha1 = sha;
+    } else if (!ossl_prov_digest_load_from_params(&ctx->digest, params,
+                                                  provctx)) {
+        return 0;
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET)) != NULL) {
