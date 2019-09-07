@@ -20,6 +20,7 @@
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"
+#include "internal/provider_util.h"
 #include "e_os.h"
 
 #define HKDF_MAXBUF 1024
@@ -50,7 +51,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
 typedef struct {
     void *provctx;
     int mode;
-    EVP_MD *md;
+    PROV_DIGEST digest;
     unsigned char *salt;
     size_t salt_len;
     unsigned char *key;
@@ -82,7 +83,7 @@ static void kdf_hkdf_reset(void *vctx)
 {
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
 
-    EVP_MD_meth_free(ctx->md);
+    ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_free(ctx->salt);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_cleanse(ctx->info, ctx->info_len);
@@ -92,15 +93,16 @@ static void kdf_hkdf_reset(void *vctx)
 static size_t kdf_hkdf_size(KDF_HKDF *ctx)
 {
     int sz;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
     if (ctx->mode != EVP_KDF_HKDF_MODE_EXTRACT_ONLY)
         return SIZE_MAX;
 
-    if (ctx->md == NULL) {
+    if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    sz = EVP_MD_size(ctx->md);
+    sz = EVP_MD_size(md);
     if (sz < 0)
         return 0;
 
@@ -110,8 +112,9 @@ static size_t kdf_hkdf_size(KDF_HKDF *ctx)
 static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
-    if (ctx->md == NULL) {
+    if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
@@ -122,16 +125,16 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen)
 
     switch (ctx->mode) {
     case EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND:
-        return HKDF(ctx->md, ctx->salt, ctx->salt_len, ctx->key,
+        return HKDF(md, ctx->salt, ctx->salt_len, ctx->key,
                     ctx->key_len, ctx->info, ctx->info_len, key,
                     keylen);
 
     case EVP_KDF_HKDF_MODE_EXTRACT_ONLY:
-        return HKDF_Extract(ctx->md, ctx->salt, ctx->salt_len, ctx->key,
+        return HKDF_Extract(md, ctx->salt, ctx->salt_len, ctx->key,
                             ctx->key_len, key, keylen);
 
     case EVP_KDF_HKDF_MODE_EXPAND_ONLY:
-        return HKDF_Expand(ctx->md, ctx->key, ctx->key_len, ctx->info,
+        return HKDF_Expand(md, ctx->key, ctx->key_len, ctx->info,
                            ctx->info_len, key, keylen);
 
     default:
@@ -143,30 +146,11 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_HKDF *ctx = vctx;
-    EVP_MD *md;
+    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     int n;
-    const char *properties = NULL;
 
-    /* Grab search properties, this should be before the digest lookup */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
-        != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        properties = p->data;
-    }
-    /* Handle aliasing of digest parameter names */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), p->data,
-                          properties);
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-            return 0;
-        }
-        EVP_MD_meth_free(ctx->md);
-        ctx->md = md;
-    }
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+        return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE)) != NULL) {
         if (p->data_type == OSSL_PARAM_UTF8_STRING) {
