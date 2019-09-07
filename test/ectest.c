@@ -1519,6 +1519,271 @@ static const unsigned char p521_explicit[] = {
     0xbb, 0x6f, 0xb7, 0x1e, 0x91, 0x38, 0x64, 0x09, 0x02, 0x01, 0x01,
 };
 
+/*
+ * Sometime we cannot compare nids for equality, as the built-in curve table
+ * includes aliases with different names for the same curve.
+ *
+ * This function returns TRUE (1) if the checked nids are identical, or if they
+ * alias to the same curve. FALSE (0) otherwise.
+ */
+static ossl_inline
+int are_ec_nids_compatible(int n1d, int n2d)
+{
+    int ret = 0;
+    switch (n1d) {
+# ifndef OPENSSL_NO_EC2M
+        case NID_sect113r1:
+        case NID_wap_wsg_idm_ecid_wtls4:
+            ret = (n2d == NID_sect113r1 || n2d == NID_wap_wsg_idm_ecid_wtls4);
+            break;
+        case NID_sect163k1:
+        case NID_wap_wsg_idm_ecid_wtls3:
+            ret = (n2d == NID_sect163k1 || n2d == NID_wap_wsg_idm_ecid_wtls3);
+            break;
+        case NID_sect233k1:
+        case NID_wap_wsg_idm_ecid_wtls10:
+            ret = (n2d == NID_sect233k1 || n2d == NID_wap_wsg_idm_ecid_wtls10);
+            break;
+        case NID_sect233r1:
+        case NID_wap_wsg_idm_ecid_wtls11:
+            ret = (n2d == NID_sect233r1 || n2d == NID_wap_wsg_idm_ecid_wtls11);
+            break;
+        case NID_X9_62_c2pnb163v1:
+        case NID_wap_wsg_idm_ecid_wtls5:
+            ret = (n2d == NID_X9_62_c2pnb163v1
+                   || n2d == NID_wap_wsg_idm_ecid_wtls5);
+            break;
+# endif /* OPENSSL_NO_EC2M */
+        case NID_secp112r1:
+        case NID_wap_wsg_idm_ecid_wtls6:
+            ret = (n2d == NID_secp112r1 || n2d == NID_wap_wsg_idm_ecid_wtls6);
+            break;
+        case NID_secp160r2:
+        case NID_wap_wsg_idm_ecid_wtls7:
+            ret = (n2d == NID_secp160r2 || n2d == NID_wap_wsg_idm_ecid_wtls7);
+            break;
+# ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+        case NID_secp224r1:
+        case NID_wap_wsg_idm_ecid_wtls12:
+            ret = (n2d == NID_secp224r1 || n2d == NID_wap_wsg_idm_ecid_wtls12);
+            break;
+# else
+        /*
+         * For SEC P-224 we want to ensure that the SECP nid is returned, as
+         * that is associated with a specialized method.
+         */
+        case NID_wap_wsg_idm_ecid_wtls12:
+            ret = (n2d == NID_secp224r1);
+            break;
+# endif /* def(OPENSSL_NO_EC_NISTP_64_GCC_128) */
+
+        default:
+            ret = (n1d == n2d);
+    }
+    return ret;
+}
+
+/*
+ * This checks that EC_GROUP_bew_from_ecparameters() returns a "named"
+ * EC_GROUP for built-in curves.
+ *
+ * Note that it is possible to retrieve an alternative alias that does not match
+ * the original nid.
+ *
+ * Ensure that the OPENSSL_EC_EXPLICIT_CURVE ASN1 flag is set.
+ */
+static int check_named_curve_from_ecparameters(int id)
+{
+    int ret = 0, nid, tnid;
+    EC_GROUP *group = NULL, *tgroup = NULL, *tmpg = NULL;
+    const EC_POINT *group_gen = NULL;
+    EC_POINT *other_gen = NULL;
+    BIGNUM *group_cofactor = NULL, *other_cofactor = NULL;
+    BIGNUM *other_gen_x = NULL, *other_gen_y = NULL;
+    const BIGNUM *group_order = NULL;
+    BIGNUM *other_order = NULL;
+    BN_CTX *bn_ctx = NULL;
+    static const unsigned char invalid_seed[] = "THIS IS NOT A VALID SEED";
+    static size_t invalid_seed_len = sizeof(invalid_seed);
+    ECPARAMETERS *params = NULL, *other_params = NULL;
+    EC_GROUP *g_ary[8] = {NULL};
+    EC_GROUP **g_next = &g_ary[0];
+    ECPARAMETERS *p_ary[8] = {NULL};
+    ECPARAMETERS **p_next = &p_ary[0];
+
+    /* Do some setup */
+    nid = curves[id].nid;
+    TEST_note("Curve %s", OBJ_nid2sn(nid));
+    if (!TEST_ptr(bn_ctx = BN_CTX_new()))
+        return ret;
+    BN_CTX_start(bn_ctx);
+
+    if (/* Allocations */
+        !TEST_ptr(group_cofactor = BN_CTX_get(bn_ctx))
+        || !TEST_ptr(other_gen_x = BN_CTX_get(bn_ctx))
+        || !TEST_ptr(other_gen_y = BN_CTX_get(bn_ctx))
+        || !TEST_ptr(other_order = BN_CTX_get(bn_ctx))
+        || !TEST_ptr(other_cofactor = BN_CTX_get(bn_ctx))
+        /* Generate reference group and params */
+        || !TEST_ptr(group = EC_GROUP_new_by_curve_name(nid))
+        || !TEST_ptr(params = EC_GROUP_get_ecparameters(group, NULL))
+        || !TEST_ptr(group_gen = EC_GROUP_get0_generator(group))
+        || !TEST_ptr(group_order = EC_GROUP_get0_order(group))
+        || !TEST_true(EC_GROUP_get_cofactor(group, group_cofactor, NULL))
+        /* compute `other_*` values */
+        || !TEST_ptr(tmpg = EC_GROUP_dup(group))
+        || !TEST_ptr(other_gen = EC_POINT_dup(group_gen, group))
+        || !TEST_true(EC_POINT_add(group, other_gen, group_gen, group_gen, NULL))
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, other_gen,
+                      other_gen_x, other_gen_y, bn_ctx))
+        || !TEST_true(BN_copy(other_order, group_order))
+        || !TEST_true(BN_add_word(other_order, 1))
+        || !TEST_true(BN_copy(other_cofactor, group_cofactor))
+        || !TEST_true(BN_add_word(other_cofactor, 1)))
+        goto err;
+
+    EC_POINT_free(other_gen);
+    other_gen = NULL;
+
+    if (!TEST_ptr(other_gen = EC_POINT_new(tmpg))
+        || !TEST_true(EC_POINT_set_affine_coordinates(tmpg, other_gen,
+                                                      other_gen_x, other_gen_y,
+                                                      bn_ctx)))
+        goto err;
+
+    /*
+     * ###########################
+     * # Actual tests start here #
+     * ###########################
+     */
+
+    /*
+     * Creating a group from built-in explicit parameters returns a
+     * "named" EC_GROUP
+     */
+    if (!TEST_ptr(tgroup = *g_next++ = EC_GROUP_new_from_ecparameters(params))
+        || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef))
+        goto err;
+    /*
+     * We cannot always guarantee the names match, as the built-in table
+     * contains aliases for the same curve with different names.
+     */
+    if (!TEST_true(are_ec_nids_compatible(nid, tnid))) {
+        TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
+        goto err;
+    }
+    /* Ensure that the OPENSSL_EC_EXPLICIT_CURVE ASN1 flag is set. */
+    if (!TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup), OPENSSL_EC_EXPLICIT_CURVE))
+        goto err;
+
+    /*
+     * An invalid seed in the parameters should be ignored: expect a "named"
+     * group.
+     */
+    if (!TEST_int_eq(EC_GROUP_set_seed(tmpg, invalid_seed, invalid_seed_len),
+                     invalid_seed_len)
+            || !TEST_ptr(other_params = *p_next++ =
+                         EC_GROUP_get_ecparameters(tmpg, NULL))
+            || !TEST_ptr(tgroup = *g_next++ =
+                          EC_GROUP_new_from_ecparameters(other_params))
+            || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+            || !TEST_true(are_ec_nids_compatible(nid, tnid))
+            || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                            OPENSSL_EC_EXPLICIT_CURVE)) {
+        TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
+        goto err;
+    }
+
+    /*
+     * A null seed in the parameters should be ignored, as it is optional:
+     * expect a "named" group.
+     */
+    if (!TEST_int_eq(EC_GROUP_set_seed(tmpg, NULL, 0), 1)
+            || !TEST_ptr(other_params = *p_next++ =
+                         EC_GROUP_get_ecparameters(tmpg, NULL))
+            || !TEST_ptr(tgroup = *g_next++ =
+                          EC_GROUP_new_from_ecparameters(other_params))
+            || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+            || !TEST_true(are_ec_nids_compatible(nid, tnid))
+            || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                            OPENSSL_EC_EXPLICIT_CURVE)) {
+        TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
+        goto err;
+    }
+
+    /*
+     * Check that changing any of the generator parameters does not yield a
+     * match with the built-in curves
+     */
+    if (/* Other gen, same group order & cofactor */
+        !TEST_true(EC_GROUP_set_generator(tmpg, other_gen, group_order,
+                                          group_cofactor))
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        /* Same gen & cofactor, different order */
+        || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, other_order,
+                                             group_cofactor))
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        /* The order is not an optional field, so this should fail */
+        || !TEST_false(EC_GROUP_set_generator(tmpg, group_gen, NULL,
+                                              group_cofactor))
+        /* Check that a wrong cofactor is ignored, and we still match */
+        || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, group_order,
+                                             other_cofactor))
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        || !TEST_true(are_ec_nids_compatible(nid, tnid))
+        || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                        OPENSSL_EC_EXPLICIT_CURVE)
+        /* Check that if the cofactor is not set then it still matches */
+        || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, group_order,
+                                             NULL))
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        || !TEST_true(are_ec_nids_compatible(nid, tnid))
+        || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                        OPENSSL_EC_EXPLICIT_CURVE)
+        /* check that restoring the generator passes */
+        || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, group_order,
+                                             group_cofactor))
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        || !TEST_true(are_ec_nids_compatible(nid, tnid))
+        || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                        OPENSSL_EC_EXPLICIT_CURVE))
+        goto err;
+
+    ret = 1;
+err:
+    for (g_next = &g_ary[0]; g_next < g_ary + OSSL_NELEM(g_ary); g_next++)
+        EC_GROUP_free(*g_next);
+    for (p_next = &p_ary[0]; p_next < p_ary + OSSL_NELEM(g_ary); p_next++)
+        ECPARAMETERS_free(*p_next);
+    ECPARAMETERS_free(params);
+    EC_POINT_free(other_gen);
+    EC_GROUP_free(tmpg);
+    EC_GROUP_free(group);
+    BN_CTX_end(bn_ctx);
+    BN_CTX_free(bn_ctx);
+    return ret;
+}
+
 static int parameter_test(void)
 {
     EC_GROUP *group = NULL, *group2 = NULL;
@@ -1667,7 +1932,9 @@ int setup_tests(void)
 # endif
     ADD_ALL_TESTS(internal_curve_test, crv_len);
     ADD_ALL_TESTS(internal_curve_test_method, crv_len);
-#endif
+
+    ADD_ALL_TESTS(check_named_curve_from_ecparameters, crv_len);
+#endif /* OPENSSL_NO_EC */
     return 1;
 }
 
