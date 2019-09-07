@@ -48,11 +48,12 @@
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"
+#include "internal/provider_util.h"
 
 typedef struct {
     void *provctx;
     EVP_MAC *mac;       /* H(x) = HMAC_hash OR H(x) = KMAC */
-    EVP_MD *md;         /* H(x) = hash OR when H(x) = HMAC_hash */
+    PROV_DIGEST digest;
     unsigned char *secret;
     size_t secret_len;
     unsigned char *info;
@@ -315,7 +316,7 @@ static void sskdf_reset(void *vctx)
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
 
-    EVP_MD_meth_free(ctx->md);
+    ossl_prov_digest_reset(&ctx->digest);
     EVP_MAC_free(ctx->mac);
     OPENSSL_clear_free(ctx->secret, ctx->secret_len);
     OPENSSL_clear_free(ctx->info, ctx->info_len);
@@ -344,18 +345,20 @@ static int sskdf_set_buffer(unsigned char **out, size_t *out_len,
 static size_t sskdf_size(KDF_SSKDF *ctx)
 {
     int len;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
-    if (ctx->md == NULL) {
+    if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    len = EVP_MD_size(ctx->md);
+    len = EVP_MD_size(md);
     return (len <= 0) ? 0 : (size_t)len;
 }
 
 static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
     if (ctx->secret == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
@@ -378,11 +381,11 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
         macname = EVP_MAC_name(ctx->mac);
         if (strcmp(macname, OSSL_MAC_NAME_HMAC) == 0) {
             /* H(x) = HMAC(x, salt, hash) */
-            if (ctx->md == NULL) {
+            if (md == NULL) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
                 return 0;
             }
-            default_salt_len = EVP_MD_block_size(ctx->md);
+            default_salt_len = EVP_MD_block_size(md);
             if (default_salt_len <= 0)
                 return 0;
         } else if (strcmp(macname, OSSL_MAC_NAME_KMAC128) == 0
@@ -407,7 +410,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
             }
             ctx->salt_len = default_salt_len;
         }
-        ret = SSKDF_mac_kdm(ctx->mac, ctx->md,
+        ret = SSKDF_mac_kdm(ctx->mac, md,
                             custom, custom_len, ctx->out_len,
                             ctx->salt, ctx->salt_len,
                             ctx->secret, ctx->secret_len,
@@ -415,11 +418,11 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
         return ret;
     } else {
         /* H(x) = hash */
-        if (ctx->md == NULL) {
+        if (md == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
             return 0;
         }
-        return SSKDF_hash_kdm(ctx->md, ctx->secret, ctx->secret_len,
+        return SSKDF_hash_kdm(md, ctx->secret, ctx->secret_len,
                               ctx->info, ctx->info_len, 0, key, keylen);
     }
 }
@@ -427,6 +430,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
 static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
+    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
     if (ctx->secret == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
@@ -438,11 +442,11 @@ static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen)
         return 0;
     } else {
         /* H(x) = hash */
-        if (ctx->md == NULL) {
+        if (md == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
             return 0;
         }
-        return SSKDF_hash_kdm(ctx->md, ctx->secret, ctx->secret_len,
+        return SSKDF_hash_kdm(md, ctx->secret, ctx->secret_len,
                               ctx->info, ctx->info_len, 1, key, keylen);
     }
 }
@@ -451,31 +455,13 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_SSKDF *ctx = vctx;
-    EVP_MD *md;
+    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     EVP_MAC *mac;
     size_t sz;
     const char *properties = NULL;
 
-    /* Grab search properties, should be before the digest and mac lookups */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PROPERTIES))
-        != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        properties = p->data;
-    }
-    /* Handle aliasing of digest parameter names */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        md = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(ctx->provctx), p->data,
-                          properties);
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-            return 0;
-        }
-        EVP_MD_meth_free(ctx->md);
-        ctx->md = md;
-    }
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+        return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MAC)) != NULL) {
         EVP_MAC_free(ctx->mac);
