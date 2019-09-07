@@ -1257,3 +1257,60 @@ int ec_precompute_mont_data(EC_GROUP *group)
         BN_CTX_free(ctx);
     return ret;
 }
+
+/*
+ * This is just a wrapper around the public functions
+ *  - EC_GROUP_get_curve_GF2m
+ *  - EC_GROUP_get_curve_GFp
+ *
+ * It is meant to facilitate backporting of code from newer branches, where
+ * the public API includes a "field agnostic" version of it.
+ */
+int ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
+                       BIGNUM *b, BN_CTX *ctx)
+{
+    int field_nid;
+
+    field_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+
+#ifndef OPENSSL_NO_EC2M
+    if (field_nid == NID_X9_62_characteristic_two_field) {
+        return EC_GROUP_get_curve_GF2m(group, p, a, b, ctx);
+    } else
+#endif /* !def(OPENSSL_NO_EC2M) */
+    if (field_nid == NID_X9_62_prime_field) {
+        return EC_GROUP_get_curve_GFp(group, p, a, b, ctx);
+    } else {
+        /* this should never happen */
+        return 0;
+    }
+}
+
+/*
+ * This is just a wrapper around the public functions
+ *   - EC_POINT_get_affine_coordinates_GF2m
+ *   - EC_POINT_get_affine_coordinates_GFp
+ *
+ * It is meant to facilitate backporting of code from newer branches, where
+ * the public API includes a "field agnostic" version of it.
+ */
+int ec_point_get_affine_coordinates(const EC_GROUP *group,
+                                    const EC_POINT *point, BIGNUM *x,
+                                    BIGNUM *y, BN_CTX *ctx)
+{
+    int field_nid;
+
+    field_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+
+#ifndef OPENSSL_NO_EC2M
+    if (field_nid == NID_X9_62_characteristic_two_field) {
+        return EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx);
+    } else
+#endif /* !def(OPENSSL_NO_EC2M) */
+    if (field_nid == NID_X9_62_prime_field) {
+        return EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx);
+    } else {
+        /* this should never happen */
+        return 0;
+    }
+}
