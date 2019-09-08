@@ -35,7 +35,7 @@ static int tls1_PRF(SSL *s,
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx = NULL;
     OSSL_PARAM params[8], *p = params;
-    const char *mdname = EVP_MD_name(md);
+    const char *mdname;
 
     if (md == NULL) {
         /* Should never happen */
@@ -53,6 +53,7 @@ static int tls1_PRF(SSL *s,
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         goto err;
+    mdname = EVP_MD_name(md);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             (char *)mdname, strlen(mdname) + 1);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
