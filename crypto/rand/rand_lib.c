@@ -618,7 +618,7 @@ size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
      * whatsoever, continue to be valid.
      * Furthermore if the allocation here fails once, make sure that
      * we don't fall back to a less secure or even blocking random source,
-     * as that could happen by the the existing code patterns.
+     * as that could happen by the existing code patterns.
      * This is not a concern for additional data, therefore that
      * is not needed if rand_pool_grow fails in other places.
      */
@@ -675,7 +675,7 @@ int rand_pool_add(RAND_POOL *pool,
         /*
          * We have that only for cases when a pool is used to collect
          * additional data.
-         * For entroy data, as long as the allocation request stays within
+         * For entropy data, as long as the allocation request stays within
          * the limits given by rand_pool_bytes_needed this rand_pool_grow
          * below is guaranteed to succeed, thus no allocation happens.
          */
