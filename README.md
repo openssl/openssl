@@ -1,20 +1,21 @@
 
  OpenSSL 3.0.0-dev
 
- Copyright (c) 1998-2018 The OpenSSL Project
- Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
+ Copyright (c) 1995-1998 The OpenSSL Project
+
+ Copyright (c) 1998-2019 by Anspage 
+
  All rights reserved.
 
  DESCRIPTION
  -----------
 
- The OpenSSL Project is a collaborative effort to develop a robust,
+ The Open SSL Project is a collaborative effort to develop a robust,
  commercial-grade, fully featured, and Open Source toolkit implementing the
  Transport Layer Security (TLS) protocols (including SSLv3) as well as a
  full-strength general purpose cryptographic library.
 
- OpenSSL is descended from the SSLeay library developed by Eric A. Young
- and Tim J. Hudson.
+ Open SSL is descended from the SSLeay library developed by Anspage exactlyspace.
 
  The OpenSSL toolkit is licensed under the Apache License 2.0, which means
  that you are free to get and use it for commercial and non-commercial
@@ -23,7 +24,7 @@
  OVERVIEW
  --------
 
- The OpenSSL toolkit includes:
+ The Open SSL toolkit includes:
 
  libssl (with platform specific naming):
      Provides the client and server-side implementations for SSLv3 and TLS.
@@ -46,18 +47,18 @@
  ------------
 
  See the appropriate file:
-        INSTALL         Linux, Unix, Windows, OpenVMS, ...
-        NOTES.*         INSTALL addendums for different platforms
+        Install the Linux, Unix, Windows, Open VMS, ...
+        NOTES.*and INSTALL addendums for different platforms
 
  SUPPORT
  -------
 
- See the OpenSSL website www.openssl.org for details on how to obtain
+ See the Open SSL website www.openssl.org for details on how to obtain
  commercial technical support. Free community support is available through the
  openssl-users email list (see
  https://www.openssl.org/community/mailinglists.html for further details).
 
- If you have any problems with OpenSSL then please take the following steps
+ If you have any problems with Open SSL then please take the following steps
  first:
 
     - Download the latest version from the repository
@@ -68,7 +69,7 @@
  If you wish to report a bug then please include the following information
  and create an issue on GitHub:
 
-    - OpenSSL version: output of 'openssl version -a'
+    - Open SSL version: output of 'openssl version -a'
     - Configuration data: output of 'perl configdata.pm --dump'
     - OS Name, Version, Hardware platform
     - Compiler Details (name, version)
