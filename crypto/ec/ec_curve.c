@@ -3168,6 +3168,49 @@ int EC_curve_nist2nid(const char *name)
     return NID_undef;
 }
 
+static ossl_inline
+int ec_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
+                       BIGNUM *b, BN_CTX *ctx)
+{
+    int field_nid;
+
+    field_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+
+#ifndef OPENSSL_NO_EC2M
+    if (field_nid == NID_X9_62_characteristic_two_field) {
+        return EC_GROUP_get_curve_GF2m(group, p, a, b, ctx);
+    } else
+#endif /* !def(OPENSSL_NO_EC2M) */
+    if (field_nid == NID_X9_62_prime_field) {
+        return EC_GROUP_get_curve_GFp(group, p, a, b, ctx);
+    } else {
+        /* this should never happen */
+        return 0;
+    }
+}
+
+static ossl_inline
+int ec_point_get_affine_coordinates(const EC_GROUP *group,
+                                    const EC_POINT *point, BIGNUM *x,
+                                    BIGNUM *y, BN_CTX *ctx)
+{
+    int field_nid;
+
+    field_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+
+#ifndef OPENSSL_NO_EC2M
+    if (field_nid == NID_X9_62_characteristic_two_field) {
+        return EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx);
+    } else
+#endif /* !def(OPENSSL_NO_EC2M) */
+    if (field_nid == NID_X9_62_prime_field) {
+        return EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx);
+    } else {
+        /* this should never happen */
+        return 0;
+    }
+}
+
 #define NUM_BN_FIELDS 6
 /*
  * Validates EC domain parameter data for known named curves.
@@ -3228,10 +3271,10 @@ int ec_curve_nid_from_params(const EC_GROUP *group, BN_CTX *ctx)
      * i.e. the values are p, a, b, x, y, order.
      */
     /* Get p, a & b */
-    if (!(EC_GROUP_get_curve(group, bn[0], bn[1], bn[2], ctx)
+    if (!(ec_group_get_curve(group, bn[0], bn[1], bn[2], ctx)
         && ((generator = EC_GROUP_get0_generator(group)) != NULL)
         /* Get x & y */
-        && EC_POINT_get_affine_coordinates(group, generator, bn[3], bn[4], ctx)
+        && ec_point_get_affine_coordinates(group, generator, bn[3], bn[4], ctx)
         /* Get order */
         && EC_GROUP_get_order(group, bn[5], ctx)))
         goto end;
