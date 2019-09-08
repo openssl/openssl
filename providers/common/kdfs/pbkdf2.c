@@ -107,7 +107,9 @@ static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                                  SN_sha1, 0);
-    ossl_prov_digest_load_from_params(&ctx->digest, params, provctx);
+    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+        /* This is an error, but there is no way to indicate such directly */
+        ossl_prov_digest_reset(&ctx->digest);
     ctx->iter = PKCS5_DEFAULT_ITER;
     ctx->lower_bound_checks = KDF_PBKDF2_DEFAULT_CHECKS;
 }
