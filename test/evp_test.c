@@ -2008,8 +2008,10 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     *kdata->p = OSSL_PARAM_construct_end();
 
     kdf = EVP_KDF_fetch(NULL, name, NULL);
-    if (kdf == NULL)
+    if (kdf == NULL) {
+        OPENSSL_free(kdata);
         return 0;
+    }
     kdata->ctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kdata->ctx == NULL) {
