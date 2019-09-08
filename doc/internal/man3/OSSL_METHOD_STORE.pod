@@ -76,7 +76,7 @@ the B<store>.
 ossl_method_store_remove() removes the B<method> identified by B<nid> from the
 B<store>.
 
-ossl_method_store_fetch() queries B<store> for an method identified by B<nid>
+ossl_method_store_fetch() queries B<store> for a method identified by B<nid>
 that matches the property query B<prop_query>.
 The result, if any, is returned in B<method>.
 
@@ -88,24 +88,24 @@ and the ones passed to the ossl_method_store_free().
 =head2 Cache Functions
 
 ossl_method_store_cache_get() queries the cache associated with the B<store>
-for an method identified by B<nid> that matches the property query
+for a method identified by B<nid> that matches the property query
 B<prop_query>.
 The result, if any, is returned in B<method>.
 
 ossl_method_store_cache_set() sets a cache entry identified by B<nid> with the
 property query B<prop_query> in the B<store>.
-Future cache gets will return the specified B<method>.
+Future calls to ossl_method_store_cache_get() will return the specified B<method>.
 
 =head1 RETURN VALUES
 
-ossl_method_store_new() a new method store object or B<NULL> on failure.
+ossl_method_store_new() returns a new method store object or B<NULL> on failure.
 
 ossl_method_store_free(), ossl_method_store_add(),
 ossl_method_store_remove(), ossl_method_store_fetch(),
 ossl_method_store_set_global_properties(), ossl_method_store_cache_get()
 and ossl_method_store_cache_set() return B<1> on success and B<0> on error.
 
-ossl_method_store_free() and ossl_method_store_cleanup() do not return values.
+ossl_method_store_free() and ossl_method_store_cleanup() do not return any value.
 
 =head1 HISTORY
 
