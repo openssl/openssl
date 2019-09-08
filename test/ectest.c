@@ -1584,23 +1584,21 @@ int are_ec_nids_compatible(int n1d, int n2d)
  */
 static int check_named_curve_from_ecparameters(int id)
 {
-    int ret = 0, nid, field_nid, has_seed , tnid;
+    int ret = 0, nid, tnid;
     EC_GROUP *group = NULL, *tgroup = NULL, *tmpg = NULL;
     const EC_POINT *group_gen = NULL;
     EC_POINT *other_gen = NULL;
-    BIGNUM *group_p = NULL, *group_a = NULL, *group_b = NULL;
-    BIGNUM *other_p = NULL, *other_a = NULL, *other_b = NULL;
     BIGNUM *group_cofactor = NULL, *other_cofactor = NULL;
-    BIGNUM *other_order = NULL;
     BIGNUM *other_gen_x = NULL, *other_gen_y = NULL;
     const BIGNUM *group_order = NULL;
+    BIGNUM *other_order = NULL;
     BN_CTX *bn_ctx = NULL;
     static const unsigned char invalid_seed[] = "THIS IS NOT A VALID SEED";
     static size_t invalid_seed_len = sizeof(invalid_seed);
     ECPARAMETERS *params = NULL, *other_params = NULL;
-    EC_GROUP *g_ary[30] = {NULL};
+    EC_GROUP *g_ary[8] = {NULL};
     EC_GROUP **g_next = &g_ary[0];
-    ECPARAMETERS *p_ary[30] = {NULL};
+    ECPARAMETERS *p_ary[8] = {NULL};
     ECPARAMETERS **p_next = &p_ary[0];
 
     /* Do some setup */
@@ -1611,13 +1609,7 @@ static int check_named_curve_from_ecparameters(int id)
     BN_CTX_start(bn_ctx);
 
     if (/* Allocations */
-        !TEST_ptr(group_p = BN_CTX_get(bn_ctx))
-        || !TEST_ptr(group_a = BN_CTX_get(bn_ctx))
-        || !TEST_ptr(group_b = BN_CTX_get(bn_ctx))
-        || !TEST_ptr(group_cofactor = BN_CTX_get(bn_ctx))
-        || !TEST_ptr(other_p = BN_CTX_get(bn_ctx))
-        || !TEST_ptr(other_a = BN_CTX_get(bn_ctx))
-        || !TEST_ptr(other_b = BN_CTX_get(bn_ctx))
+        !TEST_ptr(group_cofactor = BN_CTX_get(bn_ctx))
         || !TEST_ptr(other_gen_x = BN_CTX_get(bn_ctx))
         || !TEST_ptr(other_gen_y = BN_CTX_get(bn_ctx))
         || !TEST_ptr(other_order = BN_CTX_get(bn_ctx))
@@ -1628,13 +1620,8 @@ static int check_named_curve_from_ecparameters(int id)
         || !TEST_ptr(group_gen = EC_GROUP_get0_generator(group))
         || !TEST_ptr(group_order = EC_GROUP_get0_order(group))
         || !TEST_true(EC_GROUP_get_cofactor(group, group_cofactor, NULL))
-        || !TEST_true(EC_GROUP_get_curve(group, group_p, group_a, group_b, NULL))
         /* compute `other_*` values */
         || !TEST_ptr(tmpg = EC_GROUP_dup(group))
-        || !TEST_true(BN_copy(other_a, group_a))
-        || !TEST_true(BN_add_word(other_a, 1))
-        || !TEST_true(BN_copy(other_b, group_b))
-        || !TEST_true(BN_add_word(other_b, 1))
         || !TEST_ptr(other_gen = EC_POINT_dup(group_gen, group))
         || !TEST_true(EC_POINT_add(group, other_gen, group_gen, group_gen, NULL))
         || !TEST_true(EC_POINT_get_affine_coordinates(group, other_gen,
@@ -1654,26 +1641,6 @@ static int check_named_curve_from_ecparameters(int id)
                                                       bn_ctx)))
         goto err;
 
-    /* Determine if the built-in curve has a seed field set */
-    has_seed = (EC_GROUP_get_seed_len(group) > 0);
-    field_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
-    if (field_nid == NID_X9_62_characteristic_two_field) {
-        if (!TEST_ptr(BN_copy(other_p, group_p))
-            || !TEST_true(BN_lshift1(other_p, other_p)))
-            goto err;
-    } else {
-        /*
-         * Just choosing any arbitrary prime does not work..
-         * Setting p via ec_GFp_nist_group_set_curve() needs the prime to be a
-         * nist prime. So only select one of these as an alternate prime.
-         */
-        if (!TEST_ptr(BN_copy(other_p,
-                              BN_ucmp(BN_get0_nist_prime_192(), group_p) == 0 ?
-                                      BN_get0_nist_prime_256() :
-                                      BN_get0_nist_prime_192())))
-            goto err;
-    }
-
     /*
      * ###########################
      * # Actual tests start here #
@@ -1684,200 +1651,117 @@ static int check_named_curve_from_ecparameters(int id)
      * Creating a group from built-in explicit parameters returns a
      * "named" EC_GROUP
      */
-    if (!TEST_ptr((tgroup = *g_next++ = EC_GROUP_new_from_ecparameters(params)))
+    if (!TEST_ptr(tgroup = *g_next++ = EC_GROUP_new_from_ecparameters(params))
         || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef))
         goto err;
     /*
      * We cannot always guarantee the names match, as the built-in table
      * contains aliases for the same curve with different names.
      */
-    if (!TEST_true(are_ec_nids_compatible(nid, tnid))) {
-        TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
-        goto err;
-    }
     /*
      * FIXME(@romen): for secp224 we want to prefer the secp alias as it is
      * associated with a specialized method
      */
-
-    if (!TEST_int_eq(EC_GROUP_set_seed(tmpg, invalid_seed, invalid_seed_len),
-                     invalid_seed_len))
+    if (!TEST_true(are_ec_nids_compatible(nid, tnid))) {
+        TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
+        goto err;
+    }
+    /* Ensure that the OPENSSL_EC_EXPLICIT_CURVE ASN1 flag is set. */
+    if (!TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup), OPENSSL_EC_EXPLICIT_CURVE))
         goto err;
 
-# if 0
-    if (has_seed) {
-        /*
-         * If the built-in curve has a seed and we set the seed to another value
-         * then it will fail the check.
-         */
-        /* FIXME(@romen): no we don't, in this case we want to match a built-in
-         * curve even if the unused optional parameters do no match exactly
-         */
-        if (!TEST_ptr(other_params = *p_next++ =
-                      EC_GROUP_get_ecparameters(tmpg, NULL))
-                || !TEST_ptr((tgroup = *g_next++ =
-                              EC_GROUP_new_from_ecparameters(other_params)))
-                || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)),
-                                NID_undef))
-            goto err;
-    } else {
-# else
-    (void)has_seed;
-    if (1) {
-# endif
-        /*
-         * If the built-in curve does not have a seed then setting the seed will
-         * still return a "named" group (as the seed is optional).
-         */
-        /*
-         * FIXME(@romen): this is the behaviour we want no matter which seed
-         */
-        if (!TEST_ptr(other_params = *p_next++ =
-                      EC_GROUP_get_ecparameters(tmpg, NULL))
-                || !TEST_ptr((tgroup = *g_next++ =
-                              EC_GROUP_new_from_ecparameters(other_params)))
-                || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)),
-                                NID_undef)
-                || !TEST_true(are_ec_nids_compatible(nid, tnid))) {
-            TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
-            goto err;
-        }
-    }
-    /* Pass if the seed is unknown (as it is optional) */
-    if (!TEST_int_eq(EC_GROUP_set_seed(tmpg, NULL, 0), 1)
+    /*
+     * An invalid seed in the parameters should be ignored: expect a "named"
+     * group.
+     */
+    if (!TEST_int_eq(EC_GROUP_set_seed(tmpg, invalid_seed, invalid_seed_len),
+                     invalid_seed_len)
             || !TEST_ptr(other_params = *p_next++ =
                          EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
+            || !TEST_ptr(tgroup = *g_next++ =
+                          EC_GROUP_new_from_ecparameters(other_params))
             || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
-            || !TEST_true(are_ec_nids_compatible(nid, tnid))) {
+            || !TEST_true(are_ec_nids_compatible(nid, tnid))
+            || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                            OPENSSL_EC_EXPLICIT_CURVE)) {
         TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
         goto err;
     }
 
-    /* check that changing any generator parameter fails */
-    if (!TEST_true(EC_GROUP_set_generator(tmpg, other_gen, group_order,
-                                          group_cofactor))
+    /*
+     * A null seed in the parameters should be ignored, as it is optional:
+     * expect a "named" group.
+     */
+    if (!TEST_int_eq(EC_GROUP_set_seed(tmpg, NULL, 0), 1)
             || !TEST_ptr(other_params = *p_next++ =
                          EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+            || !TEST_ptr(tgroup = *g_next++ =
+                          EC_GROUP_new_from_ecparameters(other_params))
+            || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+            || !TEST_true(are_ec_nids_compatible(nid, tnid))
+            || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                            OPENSSL_EC_EXPLICIT_CURVE)) {
+        TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
+        goto err;
+    }
 
+    /*
+     * Check that changing any of the generator parameters does not yield a
+     * match with the built-in curves
+     */
+    if (/* Other gen, same group order & cofactor */
+        !TEST_true(EC_GROUP_set_generator(tmpg, other_gen, group_order,
+                                          group_cofactor))
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        /* Same gen & cofactor, different order */
         || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, other_order,
                                              group_cofactor))
-
-            || !TEST_ptr(other_params = *p_next++ =
-                         EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
-
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
         /* The order is not an optional field, so this should fail */
         || !TEST_false(EC_GROUP_set_generator(tmpg, group_gen, NULL,
                                               group_cofactor))
         /* Check that a wrong cofactor is ignored, and we still match */
         || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, group_order,
                                              other_cofactor))
-
-            || !TEST_ptr(other_params = *p_next++ =
-                         EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
-            || !TEST_true(are_ec_nids_compatible(nid, tnid))
-
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        || !TEST_true(are_ec_nids_compatible(nid, tnid))
+        || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                        OPENSSL_EC_EXPLICIT_CURVE)
         /* Check that if the cofactor is not set then it still matches */
         || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, group_order,
                                              NULL))
-
-            || !TEST_ptr(other_params = *p_next++ =
-                         EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
-            || !TEST_true(are_ec_nids_compatible(nid, tnid))
-
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        || !TEST_true(are_ec_nids_compatible(nid, tnid))
+        || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                        OPENSSL_EC_EXPLICIT_CURVE)
         /* check that restoring the generator passes */
         || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, group_order,
                                              group_cofactor))
-
-            || !TEST_ptr(other_params = *p_next++ =
-                         EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
-            || !TEST_true(are_ec_nids_compatible(nid, tnid)))
+        || !TEST_ptr(other_params = *p_next++ =
+                     EC_GROUP_get_ecparameters(tmpg, NULL))
+        || !TEST_ptr(tgroup = *g_next++ =
+                      EC_GROUP_new_from_ecparameters(other_params))
+        || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
+        || !TEST_true(are_ec_nids_compatible(nid, tnid))
+        || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
+                        OPENSSL_EC_EXPLICIT_CURVE))
         goto err;
-
-#if 0
-    /*
-     * FIXME(@romen): this set of negative tests can't really work because with
-     * wonky parameters we gracefully fail during the creation of the new group
-     * from the parameters. We detect if the combination of
-     *  (p, a, b, gen, order)
-     * is invalid.
-     *
-     * To do this kind of negative testing we would need a way to generate a set
-     * of valid parameters...
-     */
-
-    /*
-     * check that changing any curve parameter fails
-     *
-     * Setting arbitrary p, a or b might fail for some EC_GROUPs
-     * depending on the internal EC_METHOD implementation, hence run
-     * these tests conditionally to the success of EC_GROUP_set_curve().
-     */
-    ERR_set_mark();
-    if (EC_GROUP_set_curve(tmpg, other_p, group_a, group_b, NULL)) {
-        if(!TEST_ptr(other_params = *p_next++ =
-                     EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef))
-            goto err;
-    } else {
-        /* clear the error stack if EC_GROUP_set_curve() failed */
-        ERR_pop_to_mark();
-        ERR_set_mark();
-    }
-    if (EC_GROUP_set_curve(tmpg, group_p, other_a, group_b, NULL)) {
-        if(!TEST_ptr(other_params = *p_next++ =
-                     EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef))
-            goto err;
-    } else {
-        /* clear the error stack if EC_GROUP_set_curve() failed */
-        ERR_pop_to_mark();
-        ERR_set_mark();
-    }
-    if (EC_GROUP_set_curve(tmpg, group_p, group_a, other_b, NULL)) {
-        if(!TEST_ptr(other_params = *p_next++ =
-                     EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_eq((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef))
-            goto err;
-    } else {
-        /* clear the error stack if EC_GROUP_set_curve() failed */
-        ERR_pop_to_mark();
-        ERR_set_mark();
-    }
-    ERR_pop_to_mark();
-#endif
-
-    /* Check that restoring the curve parameters passes */
-    if (!TEST_true(EC_GROUP_set_curve(tmpg, group_p, group_a, group_b, NULL))
-            || !TEST_ptr(other_params = *p_next++ =
-                         EC_GROUP_get_ecparameters(tmpg, NULL))
-            || !TEST_ptr((tgroup = *g_next++ =
-                          EC_GROUP_new_from_ecparameters(other_params)))
-            || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
-            || !TEST_true(are_ec_nids_compatible(nid, tnid)))
-            goto err;
 
     ret = 1;
 err:
