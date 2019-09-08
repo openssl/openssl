@@ -174,7 +174,8 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
-   if (!ossl_prov_cipher_load_from_params(&macctx->cipher, params, provctx))
+   if (ctx == NULL
+        || !ossl_prov_cipher_load_from_params(&macctx->cipher, params, provctx))
         return 0;
 
     if (EVP_CIPHER_mode(ossl_prov_cipher_cipher(&macctx->cipher))
