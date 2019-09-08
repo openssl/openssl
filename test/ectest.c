@@ -1855,10 +1855,20 @@ int are_ec_nids_compatible(int n1d, int n2d)
         case NID_wap_wsg_idm_ecid_wtls7:
             ret = (n2d == NID_secp160r2 || n2d == NID_wap_wsg_idm_ecid_wtls7);
             break;
+# ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
         case NID_secp224r1:
         case NID_wap_wsg_idm_ecid_wtls12:
             ret = (n2d == NID_secp224r1 || n2d == NID_wap_wsg_idm_ecid_wtls12);
             break;
+# else
+        /*
+         * For SEC P-224 we want to ensure that the SECP nid is returned, as
+         * that is associated with a specialized method.
+         */
+        case NID_wap_wsg_idm_ecid_wtls12:
+            ret = (n2d == NID_secp224r1);
+            break;
+# endif /* def(OPENSSL_NO_EC_NISTP_64_GCC_128) */
 
         default:
             ret = (n1d == n2d);
@@ -1950,10 +1960,6 @@ static int check_named_curve_from_ecparameters(int id)
     /*
      * We cannot always guarantee the names match, as the built-in table
      * contains aliases for the same curve with different names.
-     */
-    /*
-     * FIXME(@romen): for secp224 we want to prefer the secp alias as it is
-     * associated with a specialized method
      */
     if (!TEST_true(are_ec_nids_compatible(nid, tnid))) {
         TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
