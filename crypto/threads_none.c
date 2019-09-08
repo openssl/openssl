@@ -12,6 +12,11 @@
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 
+# if defined(OPENSSL_SYS_UNIX)
+#  include <sys/types.h>
+#  include <unistd.h>
+# endif
+
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 {
     CRYPTO_RWLOCK *lock;
@@ -135,6 +140,10 @@ int openssl_init_fork_handlers(void)
 
 int openssl_get_fork_id(void)
 {
+# if defined(OPENSSL_SYS_UNIX)
+    return getpid();
+# else
     return return 0;
+# endif
 }
 #endif
