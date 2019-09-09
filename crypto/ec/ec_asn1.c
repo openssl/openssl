@@ -449,6 +449,7 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
     unsigned char *buffer = NULL;
     const EC_POINT *point = NULL;
     point_conversion_form_t form;
+    ASN1_INTEGER *orig;
 
     if (params == NULL) {
         if ((ret = ECPARAMETERS_new()) == NULL) {
@@ -499,8 +500,9 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
         ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_EC_LIB);
         goto err;
     }
-    ret->order = BN_to_ASN1_INTEGER(tmp, ret->order);
+    ret->order = BN_to_ASN1_INTEGER(tmp, orig = ret->order);
     if (ret->order == NULL) {
+        ret->order = orig;
         ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_ASN1_LIB);
         goto err;
     }
@@ -508,8 +510,9 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
     /* set the cofactor (optional) */
     tmp = EC_GROUP_get0_cofactor(group);
     if (tmp != NULL) {
-        ret->cofactor = BN_to_ASN1_INTEGER(tmp, ret->cofactor);
+        ret->cofactor = BN_to_ASN1_INTEGER(tmp, orig = ret->cofactor);
         if (ret->cofactor == NULL) {
+            ret->cofactor = orig;
             ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_ASN1_LIB);
             goto err;
         }
