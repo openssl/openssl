@@ -122,7 +122,7 @@ static int dummy_evp_call(void *provctx)
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
-    EVP_KDF *kdf = EVP_KDF_fetch(libctx, "pbkdf2", NULL);
+    EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, NULL);
     char msg[] = "Hello World!";
     const unsigned char exptd[] = {
         0x7f, 0x83, 0xb1, 0x65, 0x7f, 0xf1, 0xfc, 0x53, 0xb9, 0x2d, 0xc1, 0x81,
