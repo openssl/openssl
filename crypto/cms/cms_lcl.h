@@ -125,6 +125,8 @@ struct CMS_EncryptedContentInfo_st {
     size_t keylen;
     /* Set to 1 if we are debugging decrypt and don't fake keys for MMA */
     int debug;
+    /* Set to 1 if we have no cert and need extra safety measures for MMA */
+    int havenocert;
 };
 
 struct CMS_RecipientInfo_st {

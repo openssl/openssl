@@ -372,7 +372,8 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         return 0;
     }
 
-    if (cms->d.envelopedData->encryptedContentInfo->debug < 0) {
+    if (cms->d.envelopedData->encryptedContentInfo->havenocert
+            && !cms->d.envelopedData->encryptedContentInfo->debug) {
         X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
         const EVP_CIPHER *ciph = EVP_get_cipherbyobj(calg->algorithm);
 
