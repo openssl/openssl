@@ -46,7 +46,7 @@ static int tls1_PRF(SSL *s,
             SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    kdf = EVP_KDF_fetch(NULL, SN_tls1_prf, NULL);
+    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_TLS1_PRF, NULL);
     if (kdf == NULL)
         goto err;
     kctx = EVP_KDF_CTX_new(kdf);
