@@ -796,24 +796,24 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
      * built-in curves.
      *
      * We create a copy of the group just built, so that we can remove optional
-     * fields for the lookup: we do this to avoid that one of the optional
-     * parameters is used to force the library into using a less performant and
-     * less secure EC_METHOD instead of the specialized one.
+     * fields for the lookup: we do this to avoid the possibility that one of
+     * the optional parameters is used to force the library into using a less
+     * performant and less secure EC_METHOD instead of the specialized one.
      * In any case, `seed` is not really used in any computation, while a
      * cofactor different from the one in the built-in table is just
      * mathematically wrong anyway and should not be used.
      */
-    if (NULL == (ctx = BN_CTX_new())) {
+    if ((ctx = BN_CTX_new()) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_BN_LIB);
         goto err;
     }
-    if (NULL == (dup = EC_GROUP_dup(ret))
-            || 1 != EC_GROUP_set_seed(dup, NULL, 0)
+    if ((dup = EC_GROUP_dup(ret)) == NULL
+            || EC_GROUP_set_seed(dup, NULL, 0) != 1
             || !EC_GROUP_set_generator(dup, point, a, NULL)) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_EC_LIB);
         goto err;
     }
-    if (NID_undef != (curve_name = ec_curve_nid_from_params(dup, ctx))) {
+    if ((curve_name = ec_curve_nid_from_params(dup, ctx)) != NID_undef) {
         /*
          * The input explicit parameters successfully matched one of the
          * built-in curves: often for built-in curves we have specialized
@@ -834,7 +834,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
             curve_name = NID_secp224r1;
 #endif /* !def(OPENSSL_NO_EC_NISTP_64_GCC_128) */
 
-        if (NULL == (named_group = EC_GROUP_new_by_curve_name(curve_name))) {
+        if ((named_group = EC_GROUP_new_by_curve_name(curve_name)) == NULL) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_EC_LIB);
             goto err;
         }
