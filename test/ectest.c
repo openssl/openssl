@@ -1923,7 +1923,7 @@ static const unsigned char params_cf_fail[] = {
  * will always succeed in computing the cofactor. Neither of these curves
  * conform to that -- this is just robustness testing.
  */
-static int cofactor_range_test()
+static int cofactor_range_test(void)
 {
     EC_GROUP *group = NULL;
     BIGNUM *cf = NULL;
