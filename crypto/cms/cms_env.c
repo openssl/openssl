@@ -374,7 +374,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
     if (cms->d.envelopedData->encryptedContentInfo->debug < 0) {
         X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
-        const EVP_CIPHER *ciph =EVP_get_cipherbyobj(calg->algorithm);
+        const EVP_CIPHER *ciph = EVP_get_cipherbyobj(calg->algorithm);
 
         if (ciph == NULL) {
             CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, CMS_R_UNKNOWN_CIPHER);
