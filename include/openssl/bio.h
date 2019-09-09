@@ -142,7 +142,7 @@ extern "C" {
 # define BIO_CTRL_DGRAM_SET_PEEK_MODE      71
 
 /*
- * internal BIO see include/internal/bio.h:
+ * internal BIO:
  * # define BIO_CTRL_SET_KTLS_SEND                 72
  * # define BIO_CTRL_SET_KTLS_SEND_CTRL_MSG        74
  * # define BIO_CTRL_CLEAR_KTLS_CTRL_MSG           75
