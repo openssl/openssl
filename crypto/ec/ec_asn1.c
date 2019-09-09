@@ -841,7 +841,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_EC_LIB);
             goto err;
         }
-        EC_GROUP_clear_free(ret);
+        EC_GROUP_free(ret);
         ret = named_group;
 
         /*
@@ -855,10 +855,10 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
 
  err:
     if (!ok) {
-        EC_GROUP_clear_free(ret);
+        EC_GROUP_free(ret);
         ret = NULL;
     }
-    EC_GROUP_clear_free(dup);
+    EC_GROUP_free(dup);
 
     BN_free(p);
     BN_free(a);
@@ -927,7 +927,7 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
     }
 
     if (a) {
-        EC_GROUP_clear_free(*a);
+        EC_GROUP_free(*a);
         *a = group;
     }
 
@@ -975,7 +975,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         ret = *a;
 
     if (priv_key->parameters) {
-        EC_GROUP_clear_free(ret->group);
+        EC_GROUP_free(ret->group);
         ret->group = EC_GROUP_new_from_ecpkparameters(priv_key->parameters);
     }
 
