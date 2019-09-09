@@ -17,6 +17,7 @@ use lib "$FindBin::Bin/util/perl";
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs splitdir/;
 use File::Path qw/mkpath/;
+use OpenSSL::fallback "$FindBin::Bin/external/perl/MODULES.txt";
 use OpenSSL::Glob;
 
 # see INSTALL for instructions.
@@ -1617,7 +1618,7 @@ my %unified_info = ();
 
 my $buildinfo_debug = defined($ENV{CONFIGURE_DEBUG_BUILDINFO});
 if ($builder eq "unified") {
-    use with_fallback qw(Text::Template);
+    use Text::Template 1.46;
 
     sub cleandir {
         my $base = shift;
