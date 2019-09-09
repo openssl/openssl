@@ -470,6 +470,8 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
             goto err;
 
     j = BN_bn2binpad(ret, buf, num);
+    if (j < 0)
+        goto err;
 
     switch (padding) {
     case RSA_PKCS1_PADDING:
@@ -569,6 +571,8 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
             goto err;
 
     i = BN_bn2binpad(ret, buf, num);
+    if (i < 0)
+        goto err;
 
     switch (padding) {
     case RSA_PKCS1_PADDING:
