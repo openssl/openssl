@@ -14,8 +14,9 @@
 use strict;
 use warnings;
 
-use FindBin;
 use Getopt::Std;
+use FindBin;
+use lib "$FindBin::Bin/perl";
 
 # We actually expect to get the following hash tables from configdata:
 #
@@ -37,10 +38,8 @@ package OpenSSL::Template;
 
 # Because we know that Text::Template isn't a core Perl module, we use
 # a fallback in case it's not installed on the system
-use File::Basename;
-use File::Spec::Functions;
-use lib "$FindBin::Bin/perl";
-use with_fallback "Text::Template 1.46";
+use OpenSSL::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
+use Text::Template 1.46;
 
 #use parent qw/Text::Template/;
 use vars qw/@ISA/;
