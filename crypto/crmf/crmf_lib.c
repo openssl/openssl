@@ -687,18 +687,20 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     pkctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
         ASN1_BIT_STRING *encKey = ecert->encSymmKey;
-        if (EVP_PKEY_decrypt(pkctx, NULL, &eksize, encKey->data, encKey->length)
-            <= 0
-            || (ek = OPENSSL_malloc(eksize)) == NULL) {
+        size_t failure;
+        int retval;
+
+        if (EVP_PKEY_decrypt(pkctx, NULL, &eksize,
+                             encKey->data, encKey->length) <= 0
+                || (ek = OPENSSL_malloc(eksize)) == NULL)
             goto oom;
-        }
-        int retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
-                                      encKey->data, encKey->length);
+        retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
+                                  encKey->data, encKey->length);
         ERR_clear_error(); /* error state may have sensitive information */
-        size_t decrypt_failed = ~constant_time_is_zero_s(
-                constant_time_msb(retval) | constant_time_is_zero(retval));
-        decrypt_failed |= ~constant_time_eq_s (eksize, (size_t)cikeysize);
-        if (decrypt_failed) {
+        failure = ~constant_time_is_zero_s(constant_time_msb(retval)
+                                           | constant_time_is_zero(retval));
+        failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
+        if (failure) {
             CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
                     CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
             goto end;
