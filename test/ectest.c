@@ -1679,8 +1679,8 @@ static int check_named_curve_test(int id)
                                              group_cofactor))
         || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0, NULL), 0)
         /* The order is not an optional field, so this should fail */
-        || TEST_true(EC_GROUP_set_generator(gtest, group_gen, NULL,
-                                            group_cofactor))
+        || !TEST_false(EC_GROUP_set_generator(gtest, group_gen, NULL,
+                                              group_cofactor))
         || !TEST_true(EC_GROUP_set_generator(gtest, group_gen, group_order,
                                              other_cofactor))
         || !TEST_int_eq(EC_GROUP_check_named_curve(gtest, 0, NULL), 0)
@@ -1948,17 +1948,17 @@ static int check_ec_key_field_public_range_test(int id)
     BIGNUM *x = NULL, *y = NULL;
     EC_KEY *key = NULL;
 
-    if (!(TEST_ptr(x = BN_new())
-          && TEST_ptr(y = BN_new())
-          && TEST_ptr(key = EC_KEY_new_by_curve_name(curves[id].nid))
-          && TEST_ptr(group = EC_KEY_get0_group(key))
-          && TEST_ptr(meth = EC_GROUP_method_of(group))
-          && TEST_ptr(field = EC_GROUP_get0_field(group))
-          && TEST_int_gt(EC_KEY_generate_key(key), 0)
-          && TEST_int_gt(EC_KEY_check_key(key), 0)
-          && TEST_ptr(pub = EC_KEY_get0_public_key(key))
-          && TEST_int_gt(EC_POINT_get_affine_coordinates(group, pub, x, y,
-                                                         NULL), 0)))
+    if (!TEST_ptr(x = BN_new())
+            || !TEST_ptr(y = BN_new())
+            || !TEST_ptr(key = EC_KEY_new_by_curve_name(curves[id].nid))
+            || !TEST_ptr(group = EC_KEY_get0_group(key))
+            || !TEST_ptr(meth = EC_GROUP_method_of(group))
+            || !TEST_ptr(field = EC_GROUP_get0_field(group))
+            || !TEST_int_gt(EC_KEY_generate_key(key), 0)
+            || !TEST_int_gt(EC_KEY_check_key(key), 0)
+            || !TEST_ptr(pub = EC_KEY_get0_public_key(key))
+            || !TEST_int_gt(EC_POINT_get_affine_coordinates(group, pub, x, y,
+                                                            NULL), 0))
         goto err;
 
     /*
