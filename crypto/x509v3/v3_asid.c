@@ -254,6 +254,7 @@ static void extract_min_max(ASIdOrRange *aor,
 static int ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
 {
     ASN1_INTEGER *a_max_plus_one = NULL;
+    ASN1_INTEGER *orig;
     BIGNUM *bn = NULL;
     int i, ret = 0;
 
@@ -295,9 +296,15 @@ static int ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
          */
         if ((bn == NULL && (bn = BN_new()) == NULL) ||
             ASN1_INTEGER_to_BN(a_max, bn) == NULL ||
-            !BN_add_word(bn, 1) ||
-            (a_max_plus_one =
-             BN_to_ASN1_INTEGER(bn, a_max_plus_one)) == NULL) {
+            !BN_add_word(bn, 1)) {
+            X509V3err(X509V3_F_ASIDENTIFIERCHOICE_IS_CANONICAL,
+                      ERR_R_MALLOC_FAILURE);
+            goto done;
+        }
+
+        if ((a_max_plus_one =
+                BN_to_ASN1_INTEGER(bn, orig = a_max_plus_one)) == NULL) {
+            a_max_plus_one = orig;
             X509V3err(X509V3_F_ASIDENTIFIERCHOICE_IS_CANONICAL,
                       ERR_R_MALLOC_FAILURE);
             goto done;
@@ -348,6 +355,7 @@ int X509v3_asid_is_canonical(ASIdentifiers *asid)
 static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 {
     ASN1_INTEGER *a_max_plus_one = NULL;
+    ASN1_INTEGER *orig;
     BIGNUM *bn = NULL;
     int i, ret = 0;
 
@@ -411,9 +419,15 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
          */
         if ((bn == NULL && (bn = BN_new()) == NULL) ||
             ASN1_INTEGER_to_BN(a_max, bn) == NULL ||
-            !BN_add_word(bn, 1) ||
-            (a_max_plus_one =
-             BN_to_ASN1_INTEGER(bn, a_max_plus_one)) == NULL) {
+            !BN_add_word(bn, 1)) {
+            X509V3err(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE,
+                      ERR_R_MALLOC_FAILURE);
+            goto done;
+        }
+
+        if ((a_max_plus_one =
+                 BN_to_ASN1_INTEGER(bn, orig = a_max_plus_one)) == NULL) {
+            a_max_plus_one = orig;
             X509V3err(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE,
                       ERR_R_MALLOC_FAILURE);
             goto done;
