@@ -128,6 +128,16 @@ extern "C" {
 #define OSSL_KDF_PARAM_SSHKDF_TYPE  "type"      /* int */
 #define OSSL_KDF_PARAM_SIZE         "size"      /* size_t */
 
+/* Known KDF names */
+#define OSSL_KDF_NAME_HKDF          "HKDF"
+#define OSSL_KDF_NAME_PBKDF2        "PBKDF2"
+#define OSSL_KDF_NAME_SCRYPT        "id-scrypt"
+#define OSSL_KDF_NAME_SSHKDF        "SSHKDF"
+#define OSSL_KDF_NAME_SSKDF         "SSKDF"
+#define OSSL_KDF_NAME_TLS1_PRF      "TLS1-PRF"
+#define OSSL_KDF_NAME_X942KDF       "X942KDF"
+#define OSSL_KDF_NAME_X963KDF       "X963KDF"
+
 /* PKEY parameters */
 /* Diffie-Hellman/DSA Parameters */
 #define OSSL_PKEY_PARAM_FFC_P        "p"
