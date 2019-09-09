@@ -1843,7 +1843,7 @@ static int cardinality_test(int n)
     BIGNUM *g1_p = NULL, *g1_a = NULL, *g1_b = NULL, *g1_x = NULL, *g1_y = NULL,
            *g1_order = NULL, *g1_cf = NULL, *g2_cf = NULL;
 
-   TEST_info("Curve %s cardinality test", OBJ_nid2sn(nid));
+    TEST_info("Curve %s cardinality test", OBJ_nid2sn(nid));
 
     if (!TEST_ptr(ctx = BN_CTX_new())
         || !TEST_ptr(g1 = EC_GROUP_new_by_curve_name(nid))
