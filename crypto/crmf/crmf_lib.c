@@ -29,6 +29,7 @@
 #include <openssl/asn1t.h>
 
 #include "crmf_int.h"
+#include "internal/constant_time_locl.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>
@@ -681,23 +682,23 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
                 CRMF_R_UNSUPPORTED_CIPHER);
         goto end;
     }
-    ERR_clear_error();
     cikeysize = EVP_CIPHER_key_length(cipher);
     /* first the symmetric key needs to be decrypted */
     pkctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (pkctx != NULL && EVP_PKEY_decrypt_init(pkctx)) {
         ASN1_BIT_STRING *encKey = ecert->encSymmKey;
-        int decrypt_failed = EVP_PKEY_decrypt(pkctx, NULL, &eksize,
-                                              encKey->data,
-                                              encKey->length) <= 0;
-        if ((ek = OPENSSL_malloc(eksize)) == NULL) {
+        if (EVP_PKEY_decrypt(pkctx, NULL, &eksize, encKey->data, encKey->length)
+            <= 0
+            || (ek = OPENSSL_malloc(eksize)) == NULL) {
             goto oom;
         }
-        decrypt_failed |= EVP_PKEY_decrypt(pkctx, ek, &eksize,
-                                           encKey->data, encKey->length) <= 0;
-        decrypt_failed |= eksize != (size_t)cikeysize;
+        int retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
+                                      encKey->data, encKey->length);
+        ERR_clear_error(); /* error state may have sensitive information */
+        size_t decrypt_failed = ~constant_time_is_zero_s(
+                constant_time_msb(retval) | constant_time_is_zero(retval));
+        decrypt_failed |= ~constant_time_eq_s (eksize, (size_t)cikeysize);
         if (decrypt_failed) {
-            ERR_clear_error(); /* error state has sensitive information */
             CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
                     CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
             goto end;
