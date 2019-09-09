@@ -346,10 +346,10 @@ static const OSSL_ALGORITHM fips_macs[] = {
 };
 
 static const OSSL_ALGORITHM fips_kdfs[] = {
-    { "HKDF", "fips=yes", kdf_hkdf_functions },
-    { "SSKDF", "fips=yes", kdf_sskdf_functions },
-    { "PBKDF2", "fips=yes", kdf_pbkdf2_functions },
-    { "TLS1-PRF", "fips=yes", kdf_tls1_prf_functions },
+    { OSSL_KDF_NAME_HKDF, "fips=yes", kdf_hkdf_functions },
+    { OSSL_KDF_NAME_SSKDF, "fips=yes", kdf_sskdf_functions },
+    { OSSL_KDF_NAME_PBKDF2, "fips=yes", kdf_pbkdf2_functions },
+    { OSSL_KDF_NAME_TLS1_PRF, "fips=yes", kdf_tls1_prf_functions },
    { NULL, NULL, NULL }
 };
 
