@@ -3,8 +3,9 @@ Intro
 
 If we find a useful Perl module that isn't one of the core Perl
 modules, we may choose to bundle it with the OpenSSL source.
+They remain unmodified and retain their copyright and license.
 
-Here, we simply list those modules and where we downloaded them from.
+Here, we simply list those modules and where we got them from.
 
 Downloaded and bundled Perl modules
 -----------------------------------
