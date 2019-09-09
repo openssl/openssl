@@ -23,7 +23,7 @@ BEGIN {
 }
 
 use FindBin;
-use lib "$FindBin::Bin/util/perl";
+use lib "$FindBin::Bin/../util/perl";
 use OpenSSL::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
 use Text::Template 1.46;
 
