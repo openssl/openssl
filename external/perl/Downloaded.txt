@@ -10,5 +10,5 @@ Here, we simply list those modules and where we got them from.
 Downloaded and bundled Perl modules
 -----------------------------------
 
-Text::Template 1.46 was downloaded from
-http://search.cpan.org/CPAN/authors/id/M/MJ/MJD/Text-Template-1.46.tar.gz
+Text::Template 1.56 was downloaded from
+https://cpan.metacpan.org/authors/id/M/MS/MSCHOUT/Text-Template-1.56.tar.gz
