@@ -53,6 +53,10 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
  * for 2, p mod 24 == 23
  * for 3, p mod 12 == 11
  * for 5, p mod 60 == 59
+ *
+ * However for compatibilty with previous versions we use:
+ * for 2, p mod 24 == 11
+ * for 5, p mod 60 == 23
  */
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb)
@@ -83,13 +87,13 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     if (generator == DH_GENERATOR_2) {
         if (!BN_set_word(t1, 24))
             goto err;
-        if (!BN_set_word(t2, 23))
+        if (!BN_set_word(t2, 11))
             goto err;
         g = 2;
     } else if (generator == DH_GENERATOR_5) {
         if (!BN_set_word(t1, 60))
             goto err;
-        if (!BN_set_word(t2, 59))
+        if (!BN_set_word(t2, 23))
             goto err;
         g = 5;
     } else {

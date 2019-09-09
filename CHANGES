@@ -50,8 +50,8 @@
      (CVE-2019-1552)
      [Richard Levitte]
 
-  *) Changed DH parameters to generate the order q subgroup instead of 2q.
-     Previously generated DH parameters are still accepted by DH_check
+  *) Changed DH_check to accept parameters with order q and 2q subgroups.
+     With order 2q subgroups the bit 0 of the private key is not secret
      but DH_generate_key works around that by clearing bit 0 of the
      private key for those. This avoids leaking bit 0 of the private key.
      [Bernd Edlinger]
