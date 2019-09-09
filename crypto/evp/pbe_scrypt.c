@@ -62,7 +62,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
-    kdf = EVP_KDF_fetch(NULL, SN_id_scrypt, NULL);
+    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_SCRYPT, NULL);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)

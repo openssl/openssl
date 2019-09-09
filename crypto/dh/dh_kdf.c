@@ -39,7 +39,7 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     if (oid_sn == NULL)
         return 0;
 
-    kdf = EVP_KDF_fetch(provctx, SN_x942kdf, NULL);
+    kdf = EVP_KDF_fetch(provctx, OSSL_KDF_NAME_X942KDF, NULL);
     if ((kctx = EVP_KDF_CTX_new(kdf)) == NULL)
         goto err;
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
