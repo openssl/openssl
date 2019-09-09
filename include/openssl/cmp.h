@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
@@ -7,8 +7,6 @@
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- *
- * CMP (RFC 4210) implementation by M. Peylo, M. Viljanen, and D. von Oheimb.
  */
 
 #ifndef OSSL_HEADER_CMP_H
