@@ -49,7 +49,7 @@ static int test_kdf_tls1_prf(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_tls1_prf))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -79,7 +79,7 @@ static int test_kdf_hkdf(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_hkdf))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -120,7 +120,7 @@ static int test_kdf_pbkdf2(void)
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
     *p = OSSL_PARAM_construct_end();
 
-    if (!TEST_ptr(kctx = get_kdfbyname(LN_id_pbkdf2))
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_PBKDF2))
         || !TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         || !TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         || !TEST_mem_eq(out, sizeof(out), expected, sizeof(expected))
@@ -190,7 +190,7 @@ static int test_kdf_scrypt(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_id_scrypt))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SCRYPT))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         /* failure test *//*
         && TEST_int_le(EVP_KDF_derive(kctx, out, sizeof(out)), 0)*/
@@ -234,7 +234,7 @@ static int test_kdf_ss_hash(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_sskdf))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -288,7 +288,7 @@ static int test_kdf_x963(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_x963kdf))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_X963KDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -331,7 +331,7 @@ static int test_kdf_ss_hmac(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_sskdf))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -377,7 +377,7 @@ static int test_kdf_ss_kmac(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_sskdf))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -435,7 +435,7 @@ static int test_kdf_sshkdf(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_sshkdf))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSHKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -451,7 +451,7 @@ static int test_kdf_get_kdf(void)
     int ok = 1;
 
     if (!TEST_ptr(obj = OBJ_nid2obj(NID_id_pbkdf2))
-        || !TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, LN_id_pbkdf2, NULL))
+        || !TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL))
         || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(OBJ_obj2nid(obj)),
                                           NULL))
         || !TEST_ptr_eq(kdf1, kdf2))
@@ -509,7 +509,7 @@ static int test_kdf_x942_asn1(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(SN_x942kdf))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_X942KDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
