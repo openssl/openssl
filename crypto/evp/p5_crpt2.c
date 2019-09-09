@@ -40,7 +40,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     if (salt == NULL && saltlen == 0)
         salt = (unsigned char *)empty;
 
-    kdf = EVP_KDF_fetch(NULL, LN_id_pbkdf2, NULL);
+    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)

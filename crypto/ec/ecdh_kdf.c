@@ -24,7 +24,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
     EVP_KDF_CTX *kctx = NULL;
     OSSL_PARAM params[4], *p = params;
     const char *mdname = EVP_MD_name(md);
-    EVP_KDF *kdf = EVP_KDF_fetch(NULL, SN_x963kdf, NULL);
+    EVP_KDF *kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_X963KDF, NULL);
 
     if ((kctx = EVP_KDF_CTX_new(kdf)) != NULL) {
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
