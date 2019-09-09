@@ -191,7 +191,7 @@ static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
     }
 
     rv = ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, plen, KEY_OP_PRIVATE);
-    ASN1_OCTET_STRING_free(oct);
+    ASN1_STRING_clear_free(oct);
     return rv;
 }
 
