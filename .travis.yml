@@ -195,7 +195,7 @@ script:
           if [ -e krb5/src ]; then
               sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
           fi;
-          if ! HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
+          if ! BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
               echo -e '\052\052 FAILED -- MAKE TEST';
               travis_terminate 1;
           fi;
