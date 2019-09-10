@@ -7,7 +7,14 @@
 
   Major changes between OpenSSL 1.0.2r and OpenSSL 1.0.2t [under development]
 
-      o
+      o Fixed a padding oracle in PKCS7_decrypt() and CMS_decrypt()
+        (CVE-2019-1563)
+      o For built-in EC curves, ensure an EC_GROUP built from the curve name is
+        used even when parsing explicit parameters
+      o Compute ECC cofactors if not provided during EC_GROUP construction
+        (CVE-2019-1547)
+      o Document issue with installation paths in diverse Windows builds
+        (CVE-2019-1552)
 
   Major changes between OpenSSL 1.0.2q and OpenSSL 1.0.2r [26 Feb 2019]
 
