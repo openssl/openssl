@@ -11,7 +11,7 @@ use warnings;
 
 # Recognise VERBOSE and V which is common on other projects.
 BEGIN {
-    $ENV{HARNESS_VERBOSE} = "yes" if $ENV{VERBOSE} || $ENV{V};
+    $ENV{HARNESS_VERBOSE} = "1" if $ENV{VERBOSE} || $ENV{V};
 }
 
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
@@ -31,7 +31,7 @@ my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 $ENV{OPENSSL_CONF} = catdir($srctop, "apps", "openssl.cnf");
 
 my %tapargs =
-    ( verbosity => $ENV{VERBOSE} || $ENV{V} || $ENV{HARNESS_VERBOSE} ? 1 : 0,
+    ( verbosity => $ENV{HARNESS_VERBOSE} ? 1 : 0,
       lib       => [ $libdir ],
       switches  => '-w',
       merge     => 1
