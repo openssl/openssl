@@ -9,6 +9,33 @@
 
  Changes between 1.1.1c and 1.1.1d [xx XXX xxxx]
 
+  *) Fixed a fork protection issue. OpenSSL 1.1.1 introduced a rewritten random
+     number generator (RNG). This was intended to include protection in the
+     event of a fork() system call in order to ensure that the parent and child
+     processes did not share the same RNG state. However this protection was not
+     being used in the default case.
+
+     A partial mitigation for this issue is that the output from a high
+     precision timer is mixed into the RNG state so the likelihood of a parent
+     and child process sharing state is significantly reduced.
+
+     If an application already calls OPENSSL_init_crypto() explicitly using
+     OPENSSL_INIT_ATFORK then this problem does not occur at all.
+     (CVE-2019-1549)
+     [Matthias St. Pierre]
+
+  *) Fixed a padding oracle in PKCS7_decrypt() and CMS_decrypt(). In situations
+     where an attacker receives automated notification of the success or failure
+     of a decryption attempt an attacker, after sending a very large number of
+     messages to be decrypted, can recover a CMS/PKCS7 transported encryption
+     key or decrypt any RSA encrypted message that was encrypted with the public
+     RSA key, using a Bleichenbacher padding oracle attack. Applications are not
+     affected if they use a certificate together with the private RSA key to the
+     CMS_decrypt or PKCS7_decrypt functions to select the correct recipient info
+     to decrypt.
+     (CVE-2019-1563)
+     [Bernd Edlinger]
+
   *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
      used even when parsing explicit parameters, when loading a serialized key
      or calling `EC_GROUP_new_from_ecpkparameters()`/
@@ -70,6 +97,7 @@
      was decided to revert this feature and leave it up to the OS
      resp. the platform maintainer to ensure a proper initialization
      during early boot time.
+     [Matthias St. Pierre]
 
  Changes between 1.1.1b and 1.1.1c [28 May 2019]
 
