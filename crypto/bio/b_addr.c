@@ -697,7 +697,9 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
          * macro magic in bio_local.h
          */
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
       retry:
+# endif
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
