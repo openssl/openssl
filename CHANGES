@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.0.2t and 1.0.2u [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.2s and 1.0.2t [10 Sep 2019]
 
    *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
