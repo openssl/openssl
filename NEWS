@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.2r and OpenSSL 1.0.2t [under development]
+  Major changes between OpenSSL 1.0.2s and OpenSSL 1.0.2t [under development]
 
       o Fixed a padding oracle in PKCS7_dataDecode and CMS_decrypt_set1_pkey
         (CVE-2019-1563)
@@ -15,6 +15,10 @@
         (CVE-2019-1547)
       o Document issue with installation paths in diverse Windows builds
         (CVE-2019-1552)
+
+  Major changes between OpenSSL 1.0.2r and OpenSSL 1.0.2s [28 May 2019]
+
+      o None
 
   Major changes between OpenSSL 1.0.2q and OpenSSL 1.0.2r [26 Feb 2019]
 
