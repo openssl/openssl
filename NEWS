@@ -7,7 +7,13 @@
 
   Major changes between OpenSSL 1.1.0k and OpenSSL 1.1.0l [under development]
 
-      o
+      o Fixed a padding oracle in PKCS7_decrypt() and CMS_decrypt()
+        (CVE-2019-1563)
+      o For built-in EC curves, ensure an EC_GROUP built from the curve name is
+        used even when parsing explicit parameters
+      o Compute ECC cofactors if not provided during EC_GROUP construction
+        (CVE-2019-1547)
+      o Use Windows installation paths in the mingw builds (CVE-2019-1552)
 
   Major changes between OpenSSL 1.1.0j and OpenSSL 1.1.0k [28 May 2019]
 
