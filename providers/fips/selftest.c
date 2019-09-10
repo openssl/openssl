@@ -68,7 +68,6 @@ static int verify_integrity(BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
     if (!EVP_MAC_final(ctx, out, &out_len, sizeof(out)))
         goto err;
 
-
     if (expected_len != out_len
             || memcmp(expected, out, out_len) != 0)
         goto err;
@@ -90,13 +89,12 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st)
     unsigned char *module_checksum = NULL;
     unsigned char *indicator_checksum = NULL;
 
-    if (st == NULL)
-        goto end;
-    if (FIPS_state == FIPS_STATE_ERROR || FIPS_state == FIPS_STATE_SELFTEST)
+    if (st == NULL
+            || FIPS_state == FIPS_STATE_ERROR
+            || FIPS_state == FIPS_STATE_SELFTEST
+            || st->module_checksum_data == NULL)
         goto end;
 
-    if (st->module_checksum_data == NULL)
-        goto end;
     module_checksum = OPENSSL_hexstr2buf(st->module_checksum_data,
                                          &checksum_len);
     if (module_checksum == NULL)

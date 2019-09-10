@@ -37,8 +37,9 @@ plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles) + 1;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 
-ok(run(app(['openssl', 'fipsinstall', '-out', srctop_file('test', 'fipsinstall.conf'),
+ok(run(app(['openssl', 'fipsinstall', '-out', bldtop_file('providers', 'fipsinstall.conf'),
             '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',

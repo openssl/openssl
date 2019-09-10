@@ -6,19 +6,33 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
+use OpenSSL::Test qw(:DEFAULT bldtop_dir srctop_file srctop_dir bldtop_file);
+use OpenSSL::Test::Utils;
 
+BEGIN {
 setup("test_evp_fetch_prov");
+}
+
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
 my @types = ( "digest", "cipher" );
 
-plan tests => 1 + 16 * scalar(@types);
+plan tests => 2 + 16 * scalar(@types);
 
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
+
+my $infile = bldtop_file('providers', platform->dso('fips'));
+ok(run(app(['openssl', 'fipsinstall', '-out', bldtop_file('providers', 'fipsinstall.conf'),
+            '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-section_name', 'fips_sect'])), "fipinstall");
 
 # Do implicit fetch using the default context
 ok(run(test(["evp_fetch_prov_test", "-defaultctx"])),

@@ -62,6 +62,7 @@ Makefile
 # Other generated files in test/
 /test/provider_internal_test.conf
 /test/fipsinstall.conf
+/providers/fipsinstall.conf
 
 # Certain files that get created by tests on the fly
 /test/test-runs
