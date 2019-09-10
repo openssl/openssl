@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.0k and 1.1.0l [xx XXX xxxx]
+ Changes between 1.1.0k and 1.1.0l [10 Sep 2019]
 
   *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
      used even when parsing explicit parameters, when loading a serialized key

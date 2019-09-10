@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.0k and OpenSSL 1.1.0l [under development]
+  Major changes between OpenSSL 1.1.0k and OpenSSL 1.1.0l [10 Sep 2019]
 
       o Fixed a padding oracle in PKCS7_dataDecode and CMS_decrypt_set1_pkey
         (CVE-2019-1563)
