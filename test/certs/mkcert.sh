@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2016 Viktor Dukhovni <openssl-users@dukhovni.org>.
 # All rights reserved.
 #
