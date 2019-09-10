@@ -69,6 +69,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_KEYLEN                            117
 # define PROV_R_INVALID_KEY_LEN                           124
 # define PROV_R_INVALID_KEY_LENGTH                        105
+# define PROV_R_INVALID_MAC                               151
 # define PROV_R_INVALID_MODE                              125
 # define PROV_R_INVALID_MODE_INT                          126
 # define PROV_R_INVALID_SALT_LENGTH                       112
@@ -76,6 +77,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_TAGLEN                            118
 # define PROV_R_MISSING_CEK_ALG                           144
 # define PROV_R_MISSING_KEY                               128
+# define PROV_R_MISSING_MAC                               150
 # define PROV_R_MISSING_MESSAGE_DIGEST                    129
 # define PROV_R_MISSING_PASS                              130
 # define PROV_R_MISSING_SALT                              131

@@ -272,6 +272,7 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { OSSL_KDF_NAME_SSHKDF, "default=yes", kdf_sshkdf_functions },
     { OSSL_KDF_NAME_X963KDF, "default=yes", kdf_x963_kdf_functions },
     { OSSL_KDF_NAME_TLS1_PRF, "default=yes", kdf_tls1_prf_functions },
+    { OSSL_KDF_NAME_KBKDF, "default=yes", kdf_kbkdf_functions },
 #ifndef OPENSSL_NO_CMS
     { OSSL_KDF_NAME_X942KDF, "default=yes", kdf_x942_kdf_functions },
 #endif
