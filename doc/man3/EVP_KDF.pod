@@ -144,19 +144,19 @@ The standard parameter names are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PASSWORD> ("pass") <octet string>
+=item "pass" (B<OSSL_KDF_PARAM_PASSWORD>) <octet string>
 
 Some KDF implementations require a password.
 For those KDF implementations that support it, this parameter sets the password.
 
-=item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
+=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
 Some KDF implementations can take a salt.
 For those KDF implementations that support it, this parameter sets the salt.
 
 The default value, if any, is implementation dependent.
 
-=item B<OSSL_KDF_PARAM_ITER> ("iter") <unsigned integer>
+=item "iter" (B<OSSL_KDF_PARAM_ITER>) <unsigned integer>
 
 Some KDF implementations require an iteration count.
 For those KDF implementations that support it, this parameter sets the
@@ -164,11 +164,11 @@ iteration count.
 
 The default value, if any, is implementation dependent.
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_MAC> ("mac") <UTF8 string>
+=item "mac" (B<OSSL_KDF_PARAM_MAC>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
 For KDF implementations that use an underlying computation MAC or
 digest, these parameters set what the algorithm should be.
@@ -179,13 +179,13 @@ or the properties.
 Note that not all algorithms may support all possible underlying
 implementations.
 
-=item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
 Some KDF implementations require a key.
 For those KDF implementations that support it, this octet string parameter
 sets the key.
 
-=item B<OSSL_KDF_PARAM_MAC_SIZE> ("maclen") <unsigned integer>
+=item "maclen" (B<OSSL_KDF_PARAM_MAC_SIZE>) <unsigned integer>
 
 Used by implementations that use a MAC with a variable output size (KMAC).
 For those KDF implementations that support it, this parameter
@@ -194,7 +194,7 @@ sets the MAC output size.
 The default value, if any, is implementation dependent.
 The length must never exceed what can be given with a B<size_t>.
 
-=item B<OSSL_KDF_PARAM_SCRYPT_MAXMEM> ("macmaxmem_byteslen") <unsigned integer>
+=item "maxmem_bytes" (B<OSSL_KDF_PARAM_SCRYPT_MAXMEM>) <unsigned integer>
 
 Memory-hard password-based KDF algorithms, such as scrypt, use an amount of
 memory that depends on the load factors provided as input.

@@ -24,21 +24,21 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PASSWORD> ("pass") <octet string>
+=item "pass" (B<OSSL_KDF_PARAM_PASSWORD>) <octet string>
 
-=item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
+=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
-=item B<OSSL_KDF_PARAM_ITER> ("iter") <unsigned integer>
+=item "iter" (B<OSSL_KDF_PARAM_ITER>) <unsigned integer>
 
 This parameter has a default value of 2048.
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<OSSL_KDF_PARAM_PKCS5> ("pkcs5") <integer>
+=item "pkcs5" (B<OSSL_KDF_PARAM_PKCS5>) <integer>
 
 This parameter can be used to enable or disable SP800-132 compliance checks.
 Setting the mode to 0 enables the compliance checks.

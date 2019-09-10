@@ -22,23 +22,23 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
 The shared secret used for key derivation.  This parameter sets the secret.
 
-=item B<OSSL_KDF_PARAM_UKM> ("ukm") <octet string>
+=item "ukm" (B<OSSL_KDF_PARAM_UKM>) <octet string>
 
 This parameter is an optional random string that is provided
 by the sender called "partyAInfo".
 In CMS this is the user keying material.
 
-=item B<OSSL_KDF_PARAM_CEK_ALG> ("cekalg") <UTF8 string>
+=item "cekalg" (B<OSSL_KDF_PARAM_CEK_ALG>) <UTF8 string>
 
 This parameter sets the CEK wrapping algorithm name. 
 

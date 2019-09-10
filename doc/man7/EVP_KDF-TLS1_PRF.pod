@@ -22,9 +22,9 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
@@ -33,12 +33,12 @@ associated with the TLS PRF.
 EVP_md5_sha1() is treated as a special case which uses the
 PRF algorithm using both B<MD5> and B<SHA1> as used in TLS 1.0 and 1.1.
 
-=item B<OSSL_KDF_PARAM_SECRET> ("secret") <octet string>
+=item "secret" (B<OSSL_KDF_PARAM_SECRET>) <octet string>
 
 This parameter sets the secret value of the TLS PRF.
 Any existing secret value is replaced.
 
-=item B<OSSL_KDF_PARAM_SEED> ("seed") <octet string>
+=item "seed" (B<OSSL_KDF_PARAM_SEED>) <octet string>
 
 This parameter sets the context seed.
 The length of the context seed cannot exceed 1024 bytes;

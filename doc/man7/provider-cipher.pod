@@ -197,18 +197,18 @@ parameters are relevant to, or are understood by all ciphers:
 
 =over 4
 
-=item B<OSSL_CIPHER_PARAM_PADDING> ("padding") <unsigned integer>
+=item "padding" (B<OSSL_CIPHER_PARAM_PADDING>) <unsigned integer>
 
 Sets the padding mode for the associated cipher ctx.
 Setting a value of 1 will turn padding on.
 Setting a value of 0 will turn padding off.
 
-=item B<OSSL_CIPHER_PARAM_MODE> ("mode") <unsigned integer>
+=item "mode" (B<OSSL_CIPHER_PARAM_MODE>) <unsigned integer>
 
 Gets the mode for the associated cipher algorithm.
 See L<EVP_CIPHER_mode(3)> for a list of valid modes.
 
-=item B<OSSL_CIPHER_PARAM_BLOCK_SIZE> ("blocksize") <unsigned integer>
+=item "blocksize" (B<OSSL_CIPHER_PARAM_BLOCK_SIZE>) <unsigned integer>
 
 Gets the block size for the associated cipher algorithm.
 The block size should be 1 for stream ciphers.
@@ -218,7 +218,7 @@ For example AES in CTR mode has a block size of 1 (because it operates like a
 stream cipher), even though AES has a block size of 16.
 The length of the "blocksize" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_FLAGS> ("flags") <unsigned integer>
+=item "flags" (B<OSSL_CIPHER_PARAM_FLAGS>) <unsigned integer>
 
 Gets any flags for the associated cipher algorithm.
 See L<EVP_CIPHER_meth_set_flags(3)> for a list of currently defined cipher
@@ -226,40 +226,40 @@ flags.
 The length of the "flags" parameter should equal that of an
 B<unsigned long int>.
 
-=item B<OSSL_CIPHER_PARAM_KEYLEN> ("keylen") <unsigned integer>
+=item "keylen" (B<OSSL_CIPHER_PARAM_KEYLEN>) <unsigned integer>
 
 Gets the key length for the associated cipher algorithm.
 This can also be used to get or set the key length for the associated cipher
 ctx.
 The length of the "keylen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_IVLEN> ("ivlen") <unsigned integer>
+=item "ivlen" (B<OSSL_CIPHER_PARAM_IVLEN>) <unsigned integer>
 
 Gets the IV length for the associated cipher algorithm.
 The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_IV> ("iv") <octet string OR octet ptr>
+=item "iv" (B<OSSL_CIPHER_PARAM_IV>) <octet string OR octet ptr>
 
 Gets the IV for the associated cipher ctx.
 
-=item B<OSSL_CIPHER_PARAM_NUM> ("num") <unsigned integer>
+=item "num" (B<OSSL_CIPHER_PARAM_NUM>) <unsigned integer>
 
 Gets or sets the cipher specific "num" parameter for the associated cipher ctx.
 Built-in ciphers typically use this to track how much of the current underlying
 block has been "used" already.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TAG> ("tag") <octet string>
+=item "tag" (B<OSSL_CIPHER_PARAM_AEAD_TAG>) <octet string>
 
 Gets or sets the AEAD tag for the associated cipher ctx.
 See L<EVP_EncryptInit(3)/AEAD Interface>.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TAGLEN> ("taglen") <unsigned integer>
+=item "taglen" (B<OSSL_CIPHER_PARAM_AEAD_TAGLEN>) <unsigned integer>
 
 Gets the tag length to be used for an AEAD cipher for the associated cipher ctx.
 It returns a default value if it has not been set.
 The length of the "taglen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD> ("tlsaad") <octet string>
+=item "tlsaad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD>) <octet string>
 
 =for comment TODO(3.0): Consider changing this interface so that all ciphers
 use the standard AEAD interface - rather than having this special purpose
@@ -269,13 +269,13 @@ Sets TLSv1.2 AAD information for the associated cipher ctx.
 TLSv1.2 AAD information is always 13 bytes in length and is as defined for the
 "additional_data" field described in section 6.2.3.3 of RFC5246.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD> ("tlsaadpad") <unsigned integer>
+=item "tlsaadpad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD>) <unsigned integer>
 
 Gets the length of the tag that will be added to a TLS record for the AEAD
 tag for the associated cipher ctx.
 The length of the "tlsaadpad" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED> ("tlsivfixed") <octet string>
+=item "tlsivfixed" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED>) <octet string>
 
 =for comment TODO(3.0): This interface needs completely redesigning!
 
@@ -310,12 +310,12 @@ Whether encrypting or decrypting the value written to B<*outl> in the
 OP_cipher_cipher call should be the length of the payload excluding the explicit
 IV length and the tag length.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_IVLEN> ("ivlen") <unsigned integer>
+=item "ivlen" (B<OSSL_CIPHER_PARAM_AEAD_IVLEN>) <unsigned integer>
 
 Sets the IV length to be used for an AEAD cipher for the associated cipher ctx.
 The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_RANDOM_KEY> ("randkey") <octet string>
+=item "randkey" (B<OSSL_CIPHER_PARAM_RANDOM_KEY>) <octet string>
 
 Gets a implementation specific randomly generated key for the associated
 cipher ctx. This is currently only supported by 3DES (which sets the key to
