@@ -156,7 +156,7 @@ ec_curve.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 ec_curve.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ec_curve.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_curve.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec_curve.o: ../../include/openssl/symhacks.h ec_curve.c ec_lcl.h
+ec_curve.o: ../../include/openssl/symhacks.h ../bn_int.h ec_curve.c ec_lcl.h
 ec_cvt.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec_cvt.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ec_cvt.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

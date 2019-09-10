@@ -297,8 +297,8 @@ bn_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bn_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_lib.o: ../../include/openssl/symhacks.h ../bn_int.h ../cryptlib.h bn_lcl.h
-bn_lib.o: bn_lib.c
+bn_lib.o: ../../include/openssl/symhacks.h ../bn_int.h ../constant_time_locl.h
+bn_lib.o: ../cryptlib.h bn_lcl.h bn_lib.c
 bn_mod.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_mod.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_mod.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
