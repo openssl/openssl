@@ -244,7 +244,6 @@ static const char *get_sigtype(int nid)
     case NID_id_GostR3410_2012_512:
         return "gost2012_512";
 
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_START
     case NID_oqsdefault:
         return "OQS Default Signature Algorithm";
@@ -285,7 +284,6 @@ static const char *get_sigtype(int nid)
     case NID_p384_qteslaiiispeed:
         return "ECDSA p384 - qTESLA-III-speed";
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_END
-#endif
     default:
         return NULL;
     }

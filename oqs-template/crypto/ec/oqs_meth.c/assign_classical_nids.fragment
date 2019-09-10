@@ -32,5 +32,5 @@
 {%- for pq_alg in with_p521 %}
     case NID_p521_{{ pq_alg['name'] }}:
 {%- endfor %}
-{% if with_p384 %}      return NID_secp521r1; {%- endif %}
+{% if with_p521 %}      return NID_secp521r1; {%- endif %}
 

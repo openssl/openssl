@@ -59,7 +59,6 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_SM2
     &sm2_asn1_meth,
 #endif
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_SIG_ASN1_METHS_START
     &oqsdefault_asn1_meth,
     &p256_oqsdefault_asn1_meth,
@@ -81,5 +80,4 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
     &qteslaiiispeed_asn1_meth,
     &p384_qteslaiiispeed_asn1_meth,
 ///// OQS_TEMPLATE_FRAGMENT_SIG_ASN1_METHS_END
-#endif
 };

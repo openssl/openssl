@@ -651,7 +651,6 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, "gost2012_256"},
     {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, "gost2012_512"},
     {TLSEXT_SIGALG_gostr34102001_gostr3411, "gost2001_gost94"},
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_START
     {TLSEXT_SIGALG_oqsdefault, "oqsdefault"},
     {TLSEXT_SIGALG_p256_oqsdefault, "p256_oqsdefault"},
@@ -673,7 +672,6 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_qteslaiiispeed, "qteslaiiispeed"},
     {TLSEXT_SIGALG_p384_qteslaiiispeed, "p384_qteslaiiispeed"},
 ///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_END
-#endif
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {

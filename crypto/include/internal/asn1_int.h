@@ -86,7 +86,6 @@ extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD siphash_asn1_meth;
 
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_START
 extern const EVP_PKEY_ASN1_METHOD oqsdefault_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p256_oqsdefault_asn1_meth;
@@ -108,7 +107,6 @@ extern const EVP_PKEY_ASN1_METHOD p384_qteslaiiisize_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD qteslaiiispeed_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p384_qteslaiiispeed_asn1_meth;
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_END
-#endif
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the

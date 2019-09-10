@@ -47,7 +47,6 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
         break;
     case EVP_PKEY_ED448:
     case EVP_PKEY_ED25519:
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_LIST_SIG_SWITCH_CASES_START
     case EVP_PKEY_OQSDEFAULT:
     case EVP_PKEY_P256_OQSDEFAULT:
@@ -69,7 +68,6 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
     case EVP_PKEY_QTESLAIIISPEED:
     case EVP_PKEY_P384_QTESLAIIISPEED:
 ///// OQS_TEMPLATE_FRAGMENT_LIST_SIG_SWITCH_CASES_END
-#endif
         ret = EVP_PKT_SIGN;
         break;
     case EVP_PKEY_DH:

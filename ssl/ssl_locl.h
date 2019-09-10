@@ -202,7 +202,6 @@
 # define SSL_aSRP                0x00000040U
 /* GOST R 34.10-2012 signature auth */
 # define SSL_aGOST12             0x00000080U
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_MASKS_START
 /* OQS Default Signature Algorithm auth */
 #define SSL_aOQSDEFAULT 0x00000100
@@ -243,7 +242,6 @@
 /* ECDSA p384 - qTESLA-III-speed auth */
 #define SSL_aP384QTESLAIIISPEED 0x04000000
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_MASKS_END
-#endif
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 # define SSL_aANY                0x00000000U
 /* All bits requiring a certificate */
@@ -426,7 +424,6 @@
 # define SSL_PKEY_GOST12_512     6
 # define SSL_PKEY_ED25519        7
 # define SSL_PKEY_ED448          8
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SSL_PKEYS_START
 #define SSL_PKEY_OQSDEFAULT 9
 #define SSL_PKEY_P256_OQSDEFAULT 10
@@ -450,9 +447,6 @@
 
 #define SSL_PKEY_NUM 28
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SSL_PKEYS_END
-#else
-# define SSL_PKEY_NUM            9
-#endif
 
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
@@ -2402,7 +2396,6 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_ed25519                                   0x0807
 #define TLSEXT_SIGALG_ed448                                     0x0808
 
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_CODE_POINTS_START
 #define TLSEXT_SIGALG_oqsdefault \
       0xfe00 /* private use code point */
@@ -2443,7 +2436,6 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_p384_qteslaiiispeed \
       0xfe12 /* private use code point */
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_CODE_POINTS_END
-#endif
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00

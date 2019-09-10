@@ -68,7 +68,6 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_SM2
     &sm2_pkey_meth,
 #endif
-#if !defined(OQS_NIST_BRANCH)
 ///// OQS_TEMPLATE_FRAGMENT_LIST_PKEY_METHS_START
     &oqsdefault_pkey_meth,
     &p256_oqsdefault_pkey_meth,
@@ -90,7 +89,6 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &qteslaiiispeed_pkey_meth,
     &p384_qteslaiiispeed_pkey_meth,
 ///// OQS_TEMPLATE_FRAGMENT_LIST_PKEY_METHS_END
-#endif
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
