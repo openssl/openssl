@@ -4752,3 +4752,4 @@ EVP_PKEY_CTX_get_signature_md           4868	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get_params                 4869	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_gettable_params            4870	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_settable_params            4871	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_tag_length               4872	3_0_0	EXIST::FUNCTION:
