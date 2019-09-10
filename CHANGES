@@ -9,18 +9,6 @@
 
  Changes between 1.0.2s and 1.0.2t [xx XXX xxxx]
 
-  *) Fixed a padding oracle in PKCS7_decrypt() and CMS_decrypt(). In situations
-     where an attacker receives automated notification of the success or failure
-     of a decryption attempt an attacker, after sending a very large number of
-     messages to be decrypted, can recover a CMS/PKCS7 transported encryption
-     key or decrypt any RSA encrypted message that was encrypted with the public
-     RSA key, using a Bleichenbacher padding oracle attack. Applications are not
-     affected if they use a certificate together with the private RSA key to the
-     CMS_decrypt or PKCS7_decrypt functions to select the correct recipient info
-     to decrypt.
-     (CVE-2019-1563)
-     [Bernd Edlinger]
-
    *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
       used even when parsing explicit parameters, when loading a serialized key
       or calling `EC_GROUP_new_from_ecpkparameters()`/
@@ -51,6 +39,7 @@
      certifiate is not given and all recipientInfo are tried out.
      The old behaviour can be re-enabled in the CMS code by setting the
      CMS_DEBUG_DECRYPT flag.
+     (CVE-2019-1563)
      [Bernd Edlinger]
 
   *) Document issue with installation paths in diverse Windows builds
