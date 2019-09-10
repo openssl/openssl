@@ -2684,6 +2684,7 @@ PROV_R_INVALID_IV_LENGTH:109:invalid iv length
 PROV_R_INVALID_KEYLEN:117:invalid keylen
 PROV_R_INVALID_KEY_LEN:124:invalid key len
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
+PROV_R_INVALID_MAC:151:invalid mac
 PROV_R_INVALID_MODE:125:invalid mode
 PROV_R_INVALID_MODE_INT:126:invalid mode int
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
@@ -2691,6 +2692,7 @@ PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAGLEN:118:invalid taglen
 PROV_R_MISSING_CEK_ALG:144:missing cek alg
 PROV_R_MISSING_KEY:128:missing key
+PROV_R_MISSING_MAC:150:missing mac
 PROV_R_MISSING_MESSAGE_DIGEST:129:missing message digest
 PROV_R_MISSING_PASS:130:missing pass
 PROV_R_MISSING_SALT:131:missing salt

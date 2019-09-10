@@ -212,6 +212,7 @@ extern const OSSL_DISPATCH kdf_hkdf_functions[];
 extern const OSSL_DISPATCH kdf_sshkdf_functions[];
 extern const OSSL_DISPATCH kdf_sskdf_functions[];
 extern const OSSL_DISPATCH kdf_x963_kdf_functions[];
+extern const OSSL_DISPATCH kdf_kbkdf_functions[];
 #ifndef OPENSSL_NO_CMS
 extern const OSSL_DISPATCH kdf_x942_kdf_functions[];
 #endif
