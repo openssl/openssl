@@ -194,12 +194,12 @@ algorithms:
 
 =over 4
 
-=item B<OSSL_SIGNATURE_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 Get or sets the name of the digest algorithm used for the input to the signature
 functions.
 
-=item B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE> ("digest-size") <unsigned integer>
+=item "digest-size" (B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE>) <unsigned integer>
 
 Gets or sets the output size of the digest algorithm used for the input to the
 signature functions.

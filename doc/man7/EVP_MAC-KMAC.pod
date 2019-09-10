@@ -34,13 +34,13 @@ The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =over 4
 
-=item B<OSSL_MAC_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
-=item B<OSSL_MAC_PARAM_CUSTOM> ("custom") <octet string>
+=item "custom" (B<OSSL_MAC_PARAM_CUSTOM>) <octet string>
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned integer>
+=item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
-=item B<OSSL_MAC_PARAM_XOF>
+=item "xof" (B<OSSL_MAC_PARAM_XOF>) <integer>
 
 =back
 

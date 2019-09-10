@@ -32,9 +32,9 @@ The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =over 4
 
-=item B<OSSL_MAC_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned integer>
+=item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
 =back
 
