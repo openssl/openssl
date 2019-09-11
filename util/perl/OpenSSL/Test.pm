@@ -446,12 +446,12 @@ sub run {
     die "OpenSSL::Test::run(): statusvar value not a scalar reference"
         if $opts{statusvar} && ref($opts{statusvar}) ne "SCALAR";
 
-    # Make stdout/stderr redirection on non-verbosity dead code
-    # We're not yet sure this works properly everywhere, so we keep
-    # the code until we've experimented enough to be satisfied
+    # For some reason, program output, or even output from this function
+    # somehow isn't caught by TAP::Harness (TAP::Parser?) on VMS, so we're
+    # silencing it specifically there until further notice.
     my $save_STDOUT;
     my $save_STDERR;
-    if (0) {
+    if ($^O eq 'VMS') {
         # In non-verbose, we want to shut up the command interpreter, in case
         # it has something to complain about.  On VMS, it might complain both
         # on stdout and stderr
@@ -494,10 +494,8 @@ sub run {
         ${$opts{statusvar}} = $r;
     }
 
-    # Make stdout/stderr redirection on non-verbosity dead code
-    # We're not yet sure this works properly everywhere, so we keep
-    # the code until we've experimented enough to be satisfied
-    if (0) {
+    # Restore STDOUT / STDERR on VMS
+    if ($^O eq 'VMS') {
         if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
             close STDOUT;
             close STDERR;
@@ -1256,10 +1254,8 @@ sub __decorate_cmd {
 
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
-    # Make stdout/stderr redirection on non-verbosity dead code
-    # We're not yet sure this works properly everywhere, so we keep
-    # the code until we've experimented enough to be satisfied
-    if (0) {
+    # VMS program output escapes TAP::Parser
+    if ($^O eq 'VMS') {
         $stderr=" 2> ".$null
             unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
     }
