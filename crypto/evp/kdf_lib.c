@@ -117,7 +117,7 @@ size_t EVP_KDF_size(EVP_KDF_CTX *ctx)
 
     *params = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &s);
     if (ctx->meth->get_ctx_params != NULL
-        && ctx->meth->get_ctx_params(ctx, params))
+        && ctx->meth->get_ctx_params(ctx->data, params))
             return s;
     if (ctx->meth->get_params != NULL
         && ctx->meth->get_params(params))
