@@ -107,12 +107,13 @@ static int cipher_hw_aes_xts_t4_initkey(PROV_CIPHER_CTX *ctx,
     OSSL_xts_stream_fn stream_enc = NULL;
     OSSL_xts_stream_fn stream_dec = NULL;
 
+    /* Note: keylen is the size of 2 keys */
     switch (keylen) {
-    case 16:
+    case 32:
         stream_enc = aes128_t4_xts_encrypt;
         stream_dec = aes128_t4_xts_decrypt;
         break;
-    case 32:
+    case 64:
         stream_enc = aes256_t4_xts_encrypt;
         stream_dec = aes256_t4_xts_decrypt;
         break;
