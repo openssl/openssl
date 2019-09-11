@@ -1989,6 +1989,7 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     EVP_KDF *kdf;
 
 #ifdef OPENSSL_NO_SCRYPT
+    /* TODO(3.0) Replace with "scrypt" once aliases are supported */
     if (strcmp(name, "id-scrypt") == 0) {
         t->skip = 1;
         return 1;
