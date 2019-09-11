@@ -446,16 +446,21 @@ sub run {
     die "OpenSSL::Test::run(): statusvar value not a scalar reference"
         if $opts{statusvar} && ref($opts{statusvar}) ne "SCALAR";
 
-    # In non-verbose, we want to shut up the command interpreter, in case
-    # it has something to complain about.  On VMS, it might complain both
-    # on stdout and stderr
+    # Make stdout/stderr redirection on non-verbosity dead code
+    # We're not yet sure this works properly everywhere, so we keep
+    # the code until we've experimented enough to be satisfied
     my $save_STDOUT;
     my $save_STDERR;
-    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
-        open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
-        open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
-        open STDOUT, ">", devnull();
-        open STDERR, ">", devnull();
+    if (0) {
+        # In non-verbose, we want to shut up the command interpreter, in case
+        # it has something to complain about.  On VMS, it might complain both
+        # on stdout and stderr
+        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+            open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
+            open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
+            open STDOUT, ">", devnull();
+            open STDERR, ">", devnull();
+        }
     }
 
     $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
@@ -489,15 +494,22 @@ sub run {
         ${$opts{statusvar}} = $r;
     }
 
-    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
-        close STDOUT;
-        close STDERR;
-        open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
-        open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
-    }
+    # Make stdout/stderr redirection on non-verbosity dead code
+    # We're not yet sure this works properly everywhere, so we keep
+    # the code until we've experimented enough to be satisfied
+    if (0) {
+        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+            close STDOUT;
+            close STDERR;
+            open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
+            open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
+        }
 
-    print STDERR "$prefix$display_cmd => $e\n"
-        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+        print STDERR "$prefix$display_cmd => $e\n"
+            if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    } else {
+        print STDERR "$prefix$display_cmd => $e\n";
+    }
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -1244,8 +1256,13 @@ sub __decorate_cmd {
 
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
-    $stderr=" 2> ".$null
-        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    # Make stdout/stderr redirection on non-verbosity dead code
+    # We're not yet sure this works properly everywhere, so we keep
+    # the code until we've experimented enough to be satisfied
+    if (0) {
+        $stderr=" 2> ".$null
+            unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    }
 
     $cmdstr .= "$stdin$stdout$stderr";
 
