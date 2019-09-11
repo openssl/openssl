@@ -1989,7 +1989,7 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     EVP_KDF *kdf;
 
 #ifdef OPENSSL_NO_SCRYPT
-    if (strcmp(name, "scrypt") == 0) {
+    if (strcmp(name, "id-scrypt") == 0) {
         t->skip = 1;
         return 1;
     }
