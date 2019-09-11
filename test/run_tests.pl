@@ -10,8 +10,10 @@ use strict;
 use warnings;
 
 # Recognise VERBOSE and V which is common on other projects.
+# Additionally, also recognise VERBOSE_FAILURE and VF.
 BEGIN {
     $ENV{HARNESS_VERBOSE} = "yes" if $ENV{VERBOSE} || $ENV{V};
+    $ENV{HARNESS_VERBOSE_FAILURE} = "yes" if $ENV{VERBOSE_FAILURE} || $ENV{VF};
 }
 
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;

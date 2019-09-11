@@ -9,6 +9,15 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Extended testing to be verbose for failing tests only.  The make variables
+     VERBOSE_FAILURE or VF can be used to enable this:
+
+     $ make VF=1 test                                   # Unix
+     $ mms /macro=(VF=1) test                           ! OpenVMS
+     $ nmake VF=1 test                                  # Windows
+
+     [Richard Levitte]
+
   *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
      used even when parsing explicit parameters, when loading a serialized key
      or calling `EC_GROUP_new_from_ecpkparameters()`/

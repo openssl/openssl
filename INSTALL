@@ -911,11 +911,17 @@
      malfunction with Perl).  You may want increased verbosity, that
      can be accomplished like this:
 
-       $ make VERBOSE=1 test                            # Unix
+     Verbosity on failure only (make macro VERBOSE or VF):
 
-       $ mms /macro=(VERBOSE=1) test                    ! OpenVMS
+       $ make VF=1 test                                 # Unix
+       $ mms /macro=(VF=1) test                         ! OpenVMS
+       $ nmake VF=1 test                                # Windows
 
-       $ nmake VERBOSE=1 test                           # Windows
+     Full verbosity (make macro VERBOSE or V):
+
+       $ make V=1 test                                  # Unix
+       $ mms /macro=(V=1) test                          ! OpenVMS
+       $ nmake V=1 test                                 # Windows
 
      If you want to run just one or a few specific tests, you can use
      the make variable TESTS to specify them, like this:
@@ -926,7 +932,7 @@
 
      And of course, you can combine (Unix example shown):
 
-       $ make VERBOSE=1 TESTS='test_rsa test_dsa' test
+       $ make VF=1 TESTS='test_rsa test_dsa' test
 
      You can find the list of available tests like this:
 
