@@ -54,7 +54,7 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
+          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes" DESTDIR="_install"
         # Uncomment if there is reason to believe that PPC-specific problem
         # can be diagnosed with this possibly >30 mins sanitizer build...
         #- os: linux-ppc64le
