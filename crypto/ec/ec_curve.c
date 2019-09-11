@@ -3200,11 +3200,11 @@ int ec_point_get_affine_coordinates(const EC_GROUP *group,
 
 #ifndef OPENSSL_NO_EC2M
     if (field_nid == NID_X9_62_characteristic_two_field) {
-        return EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx);
+        return EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx);
     } else
 #endif /* !def(OPENSSL_NO_EC2M) */
     if (field_nid == NID_X9_62_prime_field) {
-        return EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx);
+        return EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx);
     } else {
         /* this should never happen */
         return 0;
