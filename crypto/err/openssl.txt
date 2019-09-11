@@ -2706,6 +2706,8 @@ PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
 PROV_R_VALUE_ERROR:138:value error
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
 PROV_R_WRONG_OUTPUT_BUFFER_SIZE:139:wrong output buffer size
+PROV_R_XTS_DATA_UNIT_IS_TOO_LARGE:148:xts data unit is too large
+PROV_R_XTS_DUPLICATED_KEYS:149:xts duplicated keys
 RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long
 RAND_R_ALREADY_INSTANTIATED:103:already instantiated
 RAND_R_ARGUMENT_OUT_OF_RANGE:105:argument out of range

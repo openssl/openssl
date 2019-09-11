@@ -83,6 +83,10 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "wrong final block length"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_WRONG_OUTPUT_BUFFER_SIZE),
     "wrong output buffer size"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_XTS_DATA_UNIT_IS_TOO_LARGE),
+    "xts data unit is too large"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_XTS_DUPLICATED_KEYS),
+    "xts duplicated keys"},
     {0, NULL}
 };
 

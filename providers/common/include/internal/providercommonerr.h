@@ -97,5 +97,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_VALUE_ERROR                               138
 # define PROV_R_WRONG_FINAL_BLOCK_LENGTH                  107
 # define PROV_R_WRONG_OUTPUT_BUFFER_SIZE                  139
+# define PROV_R_XTS_DATA_UNIT_IS_TOO_LARGE                148
+# define PROV_R_XTS_DUPLICATED_KEYS                       149
 
 #endif
