@@ -82,17 +82,13 @@ static int collect(BUF_MEM **collector, void *data, size_t datalen)
         return 0;
     }
 
-    i = (*collector)->length; /* BUF_MEM_grow() changes it! */
-    /*
-     * The i + datalen check is to distinguish between BUF_MEM_grow()
-     * signaling an error and BUF_MEM_grow() simply returning the (zero)
-     * length.
-     */
-    if (!BUF_MEM_grow(*collector, i + datalen)
-        && i + datalen != 0)
-        return 0;
-    if (data != NULL)
+    if (data != NULL && datalen > 0) {
+        i = (*collector)->length; /* BUF_MEM_grow() changes it! */
+
+        if (!BUF_MEM_grow(*collector, i + datalen))
+            return 0;
         memcpy((*collector)->data + i, data, datalen);
+    }
     return 1;
 }
 
