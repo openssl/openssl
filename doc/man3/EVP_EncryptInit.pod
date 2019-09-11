@@ -49,6 +49,7 @@ EVP_CIPHER_CTX_settable_params,
 EVP_CIPHER_CTX_block_size,
 EVP_CIPHER_CTX_key_length,
 EVP_CIPHER_CTX_iv_length,
+EVP_CIPHER_CTX_tag_length,
 EVP_CIPHER_CTX_get_app_data,
 EVP_CIPHER_CTX_set_app_data,
 EVP_CIPHER_CTX_type,
@@ -137,6 +138,7 @@ EVP_CIPHER_do_all_ex
  int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
+ int EVP_CIPHER_CTX_tag_length(const EVP_CIPHER_CTX *ctx);
  void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
  void EVP_CIPHER_CTX_set_app_data(const EVP_CIPHER_CTX *ctx, void *data);
  int EVP_CIPHER_CTX_type(const EVP_CIPHER_CTX *ctx);
@@ -297,6 +299,10 @@ length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>.
 It will return zero if the cipher does not use an IV.  The constant
 B<EVP_MAX_IV_LENGTH> is the maximum IV length for all ciphers.
 
+EVP_CIPHER_CTX_tag_length() returns the tag length of a AEAD cipher when passed
+a B<EVP_CIPHER_CTX>. It will return zero if the cipher does not support a tag.
+It returns a default value if the tag length has not been set.
+
 EVP_CIPHER_block_size() and EVP_CIPHER_CTX_block_size() return the block
 size of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
 structure. The constant B<EVP_MAX_BLOCK_LENGTH> is also the maximum block
@@ -394,6 +400,9 @@ EVP_CIPHER_CTX_set_padding() always returns 1.
 
 EVP_CIPHER_iv_length() and EVP_CIPHER_CTX_iv_length() return the IV
 length or zero if the cipher does not use an IV.
+
+EVP_CIPHER_CTX_tag_length() return the tag length or zero if the cipher does not
+use a tag.
 
 EVP_CIPHER_type() and EVP_CIPHER_CTX_type() return the NID of the cipher's
 OBJECT IDENTIFIER or NID_undef if it has no defined OBJECT IDENTIFIER.

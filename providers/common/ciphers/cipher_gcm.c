@@ -98,6 +98,16 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAGLEN);
+    if (p != NULL) {
+        size_t taglen = (ctx->taglen != UNINITIALISED_SIZET) ? ctx->taglen :
+                         GCM_TAG_MAX_SIZE;
+
+        if (!OSSL_PARAM_set_size_t(p, taglen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+    }
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL) {
@@ -133,6 +143,7 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
+
     return 1;
 }
 

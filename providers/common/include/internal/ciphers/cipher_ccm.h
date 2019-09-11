@@ -35,7 +35,7 @@ typedef struct prov_ccm_st {
     unsigned int len_set : 1;  /* Set if message length set */
     size_t l, m;               /* L and M parameters from RFC3610 */
     size_t keylen;
-    int tls_aad_len;           /* TLS AAD length */
+    size_t tls_aad_len;        /* TLS AAD length */
     size_t tls_aad_pad_sz;
     unsigned char iv[AES_BLOCK_SIZE];
     unsigned char buf[AES_BLOCK_SIZE];
