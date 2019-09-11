@@ -40,14 +40,6 @@ X509 *load_pem_cert(const char *file)
     return cert;
 }
 
-OSSL_CMP_MSG *load_pkimsg(const char *file)
-{
-    OSSL_CMP_MSG *msg;
-
-    (void)TEST_ptr((msg = NULL));
-    return msg;
-}
-
 X509_REQ *load_csr(const char *file)
 {
     X509_REQ *csr = NULL;

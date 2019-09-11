@@ -25,7 +25,6 @@
 EVP_PKEY *load_pem_key(const char *file);
 X509 *load_pem_cert(const char *file);
 X509_REQ *load_csr(const char *file);
-OSSL_CMP_MSG *load_pkimsg(const char *file);
 int valid_asn1_encoding(const OSSL_CMP_MSG *msg);
 EVP_PKEY *gen_rsa(void);
 int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2);
