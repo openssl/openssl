@@ -1,5 +1,9 @@
 LIBS=../../../libcrypto
 IF[{- !$disabled{dh} -}]
   SOURCE[../../../libcrypto]=\
-          dh_kmgmt.c dsa_kmgmt.c
+          dh_kmgmt.c
+ENDIF
+IF[{- !$disabled{dsa} -}]
+  SOURCE[../../../libcrypto]=\
+          dsa_kmgmt.c
 ENDIF

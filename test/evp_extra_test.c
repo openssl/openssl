@@ -1398,6 +1398,7 @@ static int test_EVP_CIPHER_fetch(int tst)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DSA
 /* Test getting and setting parameters on an EVP_PKEY_CTX */
 static int test_EVP_PKEY_CTX_get_set_params(void)
 {
@@ -1508,6 +1509,7 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
 
     return ret;
 }
+#endif
 
 int setup_tests(void)
 {
@@ -1545,6 +1547,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_EVP_MD_fetch, 5);
     ADD_ALL_TESTS(test_EVP_CIPHER_fetch, 5);
 #endif
+#ifndef OPENSSL_NO_DSA
     ADD_TEST(test_EVP_PKEY_CTX_get_set_params);
+#endif
     return 1;
 }
