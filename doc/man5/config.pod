@@ -41,7 +41,7 @@ directive. Relative paths are evaluated based on the application current
 working directory so unless the configuration file containing the
 B<.include> directive is application specific the inclusion will not
 work as expected. The environment variable B<OPENSSL_CONF_INCLUDE> can also be
-used to specify the path for all .include files.
+used to specify the path to prepend to all .include paths.
 
 There can be optional B<=> character and whitespace characters between
 B<.include> directive and the path which can be useful in cases the
@@ -490,7 +490,7 @@ Ignored in set-user-ID and set-group-ID programs.
 
 =item B<OPENSSL_CONF_INCLUDE>
 
-The optional path to prepend to any file included using .include.
+The optional path to prepend to all .include paths.
 
 =back
 
