@@ -15,7 +15,7 @@ configuration:
     - shared
 
 matrix:
-    allow_failures:
+    exclude:
         - platform: x64
           VSVER: 9
         - platform: x64
