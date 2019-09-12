@@ -980,8 +980,16 @@ $args{src}: $args{generator}->[0] $deps
 EOF
 	  }
       } else {
+          my $cppflags = {
+              shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
+              bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
+          } -> {$args{intent}};
+
           if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = 'CC="$(CC)" $(PERL)'.$generator_incs.' '.$generator;
+              $generator = 'CC="$(CC)" $(PERL)'.$generator_incs.' '.$generator
+                  .' "$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSSOR)';
           } elsif ($args{generator}->[0] =~ /\.m4$/) {
               $generator = 'm4 -B 8192'.$generator_incs.' '.$generator.' >'
           } elsif ($args{generator}->[0] =~ /\.S$/) {
@@ -990,12 +998,6 @@ EOF
               die "Generator type for $args{src} unknown: $generator\n";
           }
 
-          my $cppflags = {
-              shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
-              lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
-              dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
-              bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
-          } -> {$args{intent}};
           if (defined($generator)) {
               return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
