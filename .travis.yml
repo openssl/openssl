@@ -34,7 +34,7 @@ matrix:
     include:
         - os: linux
           sudo: false
-          compiler: gcc
+          compiler: clang
           env: CONFIG_OPTS="--strict-warnings zlib"
         - os: linux-ppc64le
           sudo: false
@@ -125,6 +125,10 @@ matrix:
 
 before_script:
     - env
+    - dpkg-query -s clang
+    - dpkg-query -s gcc
+    - dpkg-query -s libc6-dev
+    - grep -r __s2_len /usr/include
     - if [ "$TRAVIS_PULL_REQUEST" != "false" -a -n "$EXTENDED_TEST" ]; then
           (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || exit 0;
       fi
