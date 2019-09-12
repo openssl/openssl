@@ -56,10 +56,9 @@ my @template_settings =
 
 my $prepend = <<"_____";
 use File::Spec::Functions;
-use lib catdir('$config{sourcedir}', 'util', 'perl');
 _____
 $prepend .= <<"_____" if defined $target{perl_platform};
-use lib catdir('$config{sourcedir}', 'Configurations');
+use lib "$FindBin::Bin/../Configurations";
 use lib '$config{builddir}';
 use platform;
 _____
