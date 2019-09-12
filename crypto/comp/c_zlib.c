@@ -546,6 +546,7 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
     int ret, *ip;
     int ibs, obs;
     BIO *next = BIO_next(b);
+    z_stream *zin;
 
     if (next == NULL)
         return 0;
@@ -596,6 +597,30 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
         BIO_clear_retry_flags(b);
         ret = BIO_ctrl(next, cmd, num, ptr);
         BIO_copy_next_retry(b);
+        break;
+
+    case BIO_CTRL_WPENDING:
+        if (ctx->obuf == NULL)
+            return 0;
+
+        if (ctx->odone) {
+            ret = ctx->ocount;
+        }
+        else {
+            ret = ctx->ocount;
+            if (ret == 0)
+                /* Unknown amount pending but we are not finished */
+                ret = 1;
+        }
+        if (ret == 0)
+            ret = BIO_ctrl(next, cmd, num, ptr);
+        break;
+
+    case BIO_CTRL_PENDING:
+        zin = &ctx->zin;
+        ret = zin->avail_in;
+        if (ret == 0)
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
 
     default:
