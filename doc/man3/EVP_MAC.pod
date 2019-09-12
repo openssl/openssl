@@ -199,24 +199,24 @@ empty string.
 
 This option is used by BLAKE2 MAC.
 
-=item B<OSSL_MAC_PARAM_XOF> ("xof") <int>
+=item B<OSSL_MAC_PARAM_XOF> ("xof") <integer>
 
 It's a simple flag, the value 0 or 1 are expected.
 
 This option is used by KMAC.
 
-=item B<OSSL_MAC_PARAM_FLAGS> ("flags") <int>
+=item B<OSSL_MAC_PARAM_FLAGS> ("flags") <integer>
 
 These will set the MAC flags to the given numbers.
 Some MACs do not support this option.
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8string>
+=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8 string>
 
-=item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <utf8string>
+=item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <utf8 string>
 
-=item B<OSSL_MAC_PARAM_DIGEST> ("digest") <utf8string>
+=item B<OSSL_MAC_PARAM_DIGEST> ("digest") <utf8 string>
 
-=item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <utf8string>
+=item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <utf8 string>
 
 For MAC implementations that use an underlying computation cipher or
 digest, these parameters set what the algorithm should be, and the
@@ -230,7 +230,7 @@ Note that not all algorithms may support all digests.
 HMAC does not support variable output length digests such as SHAKE128
 or SHAKE256.
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned int>
+=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned integer>
 
 For MAC implementations that support it, set the output size that
 EVP_MAC_final() should produce.
