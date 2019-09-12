@@ -125,8 +125,6 @@ matrix:
 
 before_script:
     - env
-    - dpkg-query -s clang
-    - dpkg-query -s gcc
     - dpkg-query -s libc6-dev
     - grep -r __s2_len /usr/include
     - if [ "$TRAVIS_PULL_REQUEST" != "false" -a -n "$EXTENDED_TEST" ]; then
