@@ -617,8 +617,7 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_PENDING:
-        zin = &ctx->zin;
-        ret = zin->avail_in;
+        ret = ctx->zin.avail_in;
         if (ret == 0)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
