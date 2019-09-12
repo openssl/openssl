@@ -564,6 +564,13 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = BIO_flush(next);
         break;
 
+    case BIO_CTRL_PENDING:
+        ret = ctx->zin.avail_in != 0;
+        break;
+    case BIO_CTRL_WPENDING:
+        ret = ctx->ocount != 0;
+        break;
+
     case BIO_C_SET_BUFF_SIZE:
         ibs = -1;
         obs = -1;
