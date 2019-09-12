@@ -36,11 +36,8 @@ L</Functions>.
 
 =cut
 
-# Because we know that Text::Template isn't a core Perl module, we use
-# a fallback in case it's not installed on the system
 use File::Basename;
 use File::Spec::Functions;
-
 use Text::Template 1.46;
 
 our @ISA = qw(Text::Template);  # parent
