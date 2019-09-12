@@ -546,7 +546,6 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
     int ret, *ip;
     int ibs, obs;
     BIO *next = BIO_next(b);
-    z_stream *zin;
 
     if (next == NULL)
         return 0;
