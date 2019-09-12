@@ -104,8 +104,8 @@ sub find_matching_tests {
     return glob(catfile($recipesdir,"*-$glob.t"));
 }
 
-# The following is quite a bit of hackery to adapt to both  TAP::Harness and
-# Test::Harness, depending on what's available.
+# The following is quite a bit of hackery to adapt to both TAP::Harness
+# and Test::Harness, depending on what's available.
 # The TAP::Harness hack allows support for HARNESS_VERBOSE_FAILURE and
 # HARNESS_TAP_COPY, while the Test::Harness hack can't, because the pre
 # TAP::Harness Test::Harness simply doesn't have support for this sort of
