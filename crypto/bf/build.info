@@ -13,6 +13,5 @@ ENDIF
 
 SOURCE[../../libcrypto]=bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c $BFASM
 
-GENERATE[bf-586.s]=asm/bf-586.pl \
-        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
+GENERATE[bf-586.s]=asm/bf-586.pl
 DEPEND[bf-586.s]=../perlasm/x86asm.pl ../perlasm/cbc.pl

@@ -86,7 +86,6 @@ IF[{- !$disabled{"engine"} -}]
       GENERATE[ossltest.ld]=../util/engines.num
     ENDIF
   ENDIF
-  GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl \
-    $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
-  GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl $(PERLASM_SCHEME)
+  GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl
+  GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl
 ENDIF
