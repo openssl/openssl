@@ -20,8 +20,7 @@ ENDIF
 SOURCE[../../libcrypto]=wp_dgst.c $WPASM
 DEFINE[../../libcrypto]=$WPDEF
 
-GENERATE[wp-mmx.s]=asm/wp-mmx.pl \
-        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
+GENERATE[wp-mmx.s]=asm/wp-mmx.pl
 DEPEND[wp-mmx.s]=../perlasm/x86asm.pl
 
-GENERATE[wp-x86_64.s]=asm/wp-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[wp-x86_64.s]=asm/wp-x86_64.pl

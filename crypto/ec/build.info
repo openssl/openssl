@@ -60,24 +60,23 @@ DEFINE[../../libcrypto]=$ECDEF
 SOURCE[../../providers/fips]=$COMMON
 DEFINE[../../providers/fips]=$ECDEF
 
-GENERATE[ecp_nistz256-x86.s]=asm/ecp_nistz256-x86.pl \
-        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
+GENERATE[ecp_nistz256-x86.s]=asm/ecp_nistz256-x86.pl
 
-GENERATE[ecp_nistz256-x86_64.s]=asm/ecp_nistz256-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[ecp_nistz256-x86_64.s]=asm/ecp_nistz256-x86_64.pl
 
-GENERATE[ecp_nistz256-avx2.s]=asm/ecp_nistz256-avx2.pl $(PERLASM_SCHEME)
+GENERATE[ecp_nistz256-avx2.s]=asm/ecp_nistz256-avx2.pl
 
-GENERATE[ecp_nistz256-sparcv9.S]=asm/ecp_nistz256-sparcv9.pl $(PERLASM_SCHEME)
+GENERATE[ecp_nistz256-sparcv9.S]=asm/ecp_nistz256-sparcv9.pl
 INCLUDE[ecp_nistz256-sparcv9.o]=..
 
-GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl $(PERLASM_SCHEME)
+GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl
 INCLUDE[ecp_nistz256-armv4.o]=..
-GENERATE[ecp_nistz256-armv8.S]=asm/ecp_nistz256-armv8.pl $(PERLASM_SCHEME)
+GENERATE[ecp_nistz256-armv8.S]=asm/ecp_nistz256-armv8.pl
 INCLUDE[ecp_nistz256-armv8.o]=..
-GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl $(PERLASM_SCHEME)
+GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl
 
-GENERATE[x25519-x86_64.s]=asm/x25519-x86_64.pl $(PERLASM_SCHEME)
-GENERATE[x25519-ppc64.s]=asm/x25519-ppc64.pl $(PERLASM_SCHEME)
+GENERATE[x25519-x86_64.s]=asm/x25519-x86_64.pl
+GENERATE[x25519-ppc64.s]=asm/x25519-ppc64.pl
 
 INCLUDE[curve448/arch_32/f_impl.o]=curve448/arch_32 curve448
 INCLUDE[curve448/f_generic.o]=curve448/arch_32 curve448

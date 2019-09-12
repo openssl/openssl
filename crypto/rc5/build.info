@@ -15,6 +15,5 @@ ENDIF
 SOURCE[../../libcrypto]=\
         rc5_skey.c rc5_ecb.c $RC5ASM rc5cfb64.c rc5ofb64.c
 
-GENERATE[rc5-586.s]=asm/rc5-586.pl \
-        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS)
+GENERATE[rc5-586.s]=asm/rc5-586.pl
 DEPEND[rc5-586.s]=../perlasm/x86asm.pl ../perlasm/cbc.pl

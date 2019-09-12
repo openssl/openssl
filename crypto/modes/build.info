@@ -57,20 +57,19 @@ DEFINE[../../providers/fips]=$MODESDEF
 
 INCLUDE[gcm128.o]=..
 
-GENERATE[ghash-ia64.s]=asm/ghash-ia64.pl $(LIB_CFLAGS) $(LIB_CPPFLAGS)
-GENERATE[ghash-x86.s]=asm/ghash-x86.pl \
-        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
-GENERATE[ghash-x86_64.s]=asm/ghash-x86_64.pl $(PERLASM_SCHEME)
-GENERATE[aesni-gcm-x86_64.s]=asm/aesni-gcm-x86_64.pl $(PERLASM_SCHEME)
-GENERATE[ghash-sparcv9.S]=asm/ghash-sparcv9.pl $(PERLASM_SCHEME)
+GENERATE[ghash-ia64.s]=asm/ghash-ia64.pl
+GENERATE[ghash-x86.s]=asm/ghash-x86.pl
+GENERATE[ghash-x86_64.s]=asm/ghash-x86_64.pl
+GENERATE[aesni-gcm-x86_64.s]=asm/aesni-gcm-x86_64.pl
+GENERATE[ghash-sparcv9.S]=asm/ghash-sparcv9.pl
 INCLUDE[ghash-sparcv9.o]=..
-GENERATE[ghash-alpha.S]=asm/ghash-alpha.pl $(PERLASM_SCHEME)
-GENERATE[ghash-parisc.s]=asm/ghash-parisc.pl $(PERLASM_SCHEME)
-GENERATE[ghashp8-ppc.s]=asm/ghashp8-ppc.pl $(PERLASM_SCHEME)
-GENERATE[ghash-armv4.S]=asm/ghash-armv4.pl $(PERLASM_SCHEME)
+GENERATE[ghash-alpha.S]=asm/ghash-alpha.pl
+GENERATE[ghash-parisc.s]=asm/ghash-parisc.pl
+GENERATE[ghashp8-ppc.s]=asm/ghashp8-ppc.pl
+GENERATE[ghash-armv4.S]=asm/ghash-armv4.pl
 INCLUDE[ghash-armv4.o]=..
-GENERATE[ghashv8-armx.S]=asm/ghashv8-armx.pl $(PERLASM_SCHEME)
+GENERATE[ghashv8-armx.S]=asm/ghashv8-armx.pl
 INCLUDE[ghashv8-armx.o]=..
-GENERATE[ghash-s390x.S]=asm/ghash-s390x.pl $(PERLASM_SCHEME)
+GENERATE[ghash-s390x.S]=asm/ghash-s390x.pl
 INCLUDE[ghash-s390x.o]=..
-GENERATE[ghash-c64xplus.S]=asm/ghash-c64xplus.pl $(PERLASM_SCHEME)
+GENERATE[ghash-c64xplus.S]=asm/ghash-c64xplus.pl
