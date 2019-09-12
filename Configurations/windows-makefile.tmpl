@@ -570,22 +570,23 @@ $target: "$args{generator}->[0]" $deps
 EOF
 	  }
       } else {
+          my $cppflags = {
+              shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
+              bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
+          } -> {$args{intent}};
           my $target = platform->asm($args{src});
+
           if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = '"$(PERL)"'.$generator_incs.' '.$generator;
+              $generator = '"$(PERL)"'.$generator_incs.' '.$generator
+                  '"$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSSOR)';
           } elsif ($args{generator}->[0] =~ /\.S$/) {
               $generator = undef;
           } else {
               die "Generator type for $src unknown: $generator\n";
           }
 
-          my $cppflags = $incs;
-          $cppflags .= {
-              shlib => ' $(LIB_CFLAGS) $(LIB_CPPFLAGS)',
-              lib => ' $(LIB_CFLAGS) $(LIB_CPPFLAGS)',
-              dso => ' $(DSO_CFLAGS) $(DSO_CPPFLAGS)',
-              bin => ' $(BIN_CFLAGS) $(BIN_CPPFLAGS)'
-          } -> {$args{intent}};
           if (defined($generator)) {
               # If the target is named foo.S in build.info, we want to
               # end up generating foo.s in two steps.
@@ -594,7 +595,7 @@ EOF
 $target: "$args{generator}->[0]" $deps
 	set ASM=\$(AS)
 	$generator \$@.S
-	\$(CPP) $cppflags $defs \$@.S > \$@.i && move /Y \$@.i \$@
+	\$(CPP) $incs $cppflags $defs \$@.S > \$@.i && move /Y \$@.i \$@
         del /Q \$@.S
 EOF
               }

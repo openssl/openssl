@@ -787,15 +787,6 @@ $target : $args{generator}->[0] $deps
 EOF
 	  }
       } else {
-          my $target = platform->asm($args{src});
-          if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = '$(PERL)'.$generator_incs.' '.$generator;
-          } elsif ($args{generator}->[0] =~ /\.S$/) {
-              $generator = undef;
-          } else {
-              die "Generator type for $src unknown: $generator\n";
-          }
-
           my $cppflags = {
               shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
@@ -812,6 +803,17 @@ EOF
           my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
           my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
           my $defs = join("", map { ",".$_ } @{$args{defs}});
+          my $target = platform->asm($args{src});
+
+          if ($args{generator}->[0] =~ /\.pl$/) {
+              $generator = '$(PERL)'.$generator_incs.' '.$generator
+                  .' '.$cppflags;
+          } elsif ($args{generator}->[0] =~ /\.S$/) {
+              $generator = undef;
+          } else {
+              die "Generator type for $src unknown: $generator\n";
+          }
+
           if (defined($generator)) {
               # If the target is named foo.S in build.info, we want to
               # end up generating foo.s in two steps.
@@ -832,7 +834,11 @@ EOF
               # Otherwise....
               return <<"EOF";
 $target : $args{generator}->[0] $deps
+        \@ $incs_on
+        \@ extradefines = "$defs"
 	$generator \$\@
+        \@ DELETE/SYMBOL/LOCAL extradefines
+        \@ $incs_off
 EOF
           }
           return <<"EOF";
