@@ -32,6 +32,10 @@ env:
 
 matrix:
     include:
+        - os: linux
+          sudo: false
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings zlib"
         - os: linux-ppc64le
           sudo: false
           compiler: clang
