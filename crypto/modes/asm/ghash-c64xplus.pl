@@ -26,8 +26,7 @@
 # better, because theoretical [though not necessarily achievable]
 # estimate for "4-bit" table-driven implementation is ~12 cycles.
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 ($Xip,$Htable,$inp,$len)=("A4","B4","A6","B6");	# arguments
 

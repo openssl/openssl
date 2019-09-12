@@ -6,9 +6,12 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-$output=pop;
+# $output is the last argument if it looks like a file (it has an extension)
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-open OUT,"| \"$^X\" \"${dir}../crypto/perlasm/x86_64-xlate.pl\" \"$output\"";
+open OUT,"| \"$^X\" \"${dir}../crypto/perlasm/x86_64-xlate.pl\" \"$output\""
+    or die "can't call ${dir}../crypto/perlasm/x86_64-xlate.pl: $!";
 *STDOUT=*OUT;
 push(@INC,"${dir}.");
 

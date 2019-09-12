@@ -49,8 +49,7 @@
 # module still have hidden potential [see TODO list there], which is
 # estimated to be larger than 20%...
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 # int bn_mul_mont(
 $rp="%i0";	# BN_ULONG *rp,

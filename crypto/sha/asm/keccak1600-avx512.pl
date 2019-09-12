@@ -545,7 +545,6 @@ iotas:
 .asciz	"Keccak-1600 absorb and squeeze for AVX-512F, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
-$output=pop;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 print $code;
 close STDOUT;

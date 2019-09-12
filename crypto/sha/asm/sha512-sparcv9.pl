@@ -56,8 +56,10 @@
 # saturates at 11.5x single-process result on 8-core processor, or
 # ~11/16GBps per 2.85GHz socket.
 
-$output=pop;
-open STDOUT,">$output";
+# $output is the last argument if it looks like a file (it has an extension)
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+
+$output and open STDOUT,">$output";
 
 if ($output =~ /512/) {
 	$label="512";

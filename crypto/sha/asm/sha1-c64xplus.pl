@@ -32,8 +32,7 @@
 # service routines are expected to preserve it and for own well-being
 # zero it upon entry.
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 ($CTX,$INP,$NUM) = ("A4","B4","A6");		# arguments
 

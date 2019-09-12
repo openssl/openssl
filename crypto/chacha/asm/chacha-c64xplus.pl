@@ -24,8 +24,7 @@
 # dependent on input length. This module on the other hand is free
 # from such limitation.
 
-$output=pop;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 
 ($OUT,$INP,$LEN,$KEYB,$COUNTERA)=("A4","B4","A6","B6","A8");
 ($KEYA,$COUNTERB,$STEP)=("A7","B7","A3");

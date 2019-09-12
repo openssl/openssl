@@ -37,8 +37,7 @@
 #	cost of 8x increased pressure on L1D. 8x because you'd have
 #	to interleave both Te and Td tables...
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 ($TEA,$TEB)=("A5","B5");
 ($KPA,$KPB)=("A3","B1");

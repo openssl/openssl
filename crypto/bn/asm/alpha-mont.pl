@@ -22,8 +22,7 @@
 # I.e. if you compare 1GHz 21264 and 2GHz Opteron, you'll observe ~2x
 # difference.
 
-$output=pop;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 
 # int bn_mul_mont(
 $rp="a0";	# BN_ULONG *rp,
