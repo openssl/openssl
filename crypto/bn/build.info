@@ -96,7 +96,7 @@ IF[{- !$disabled{asm} -}]
       $BNDEF=$BNDEF $BNDEF_{- $target{asm_arch} -}_ec2m
     ENDIF
     IF[{- !$disabled{sse2} -}]
-      DEFINE[]=$BNDEF_{- $target{asm_arch} -}_sse2
+      $BNDEF=$BNDEF $BNDEF_{- $target{asm_arch} -}_sse2
     ENDIF
   ENDIF
 ENDIF
