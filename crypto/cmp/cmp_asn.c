@@ -164,8 +164,10 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
 {
     int created = 0;
 
-    if (itav_sk_p == NULL)
+    if (itav_sk_p == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
         goto err;
+    }
 
     if (*itav_sk_p == NULL) {
         if ((*itav_sk_p = sk_OSSL_CMP_ITAV_new_null()) == NULL)
