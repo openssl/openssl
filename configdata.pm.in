@@ -70,6 +70,9 @@
  sub sourcedir {
      return abs_path(catdir($config{sourcedir}, @_));
  }
+ sub sourcefile {
+     return abs_path(catfile($config{sourcedir}, @_));
+ }
 -}
 package configdata;
 
@@ -115,6 +118,7 @@ unless (caller) {
         # With no arguments, re-create the build file
 
         use lib '{- sourcedir('util', 'perl') -}';
+        use OpenSSL::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
         use OpenSSL::Template;
 
         my $prepend = <<"_____";
