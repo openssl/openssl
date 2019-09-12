@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -141,7 +141,7 @@ static int test_check_null_numbers(void)
     }
 
     /*
-     * Verify that a NULL config with a missing envrionment variable returns
+     * Verify that a NULL config with a missing environment variable returns
      * a failure code.
      */
     if (!TEST_int_eq(unsetenv("FNORD"), 0)
