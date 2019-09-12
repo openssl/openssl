@@ -54,9 +54,16 @@
 # has to content with 40-85% improvement depending on benchmark and
 # key length, more for longer keys.
 
-$flavour = shift || "o32";
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output  = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
+$flavour ||= "o32";
 
 if ($flavour =~ /64|n32/i) {
 	$LD="ld";
@@ -90,6 +97,8 @@ if ($flavour =~ /64|n32/i) {
 	$REG_L="lw";
 	$code="#if !(defined (__mips_isa_rev) && (__mips_isa_rev >= 6))\n.set     mips2\n#endif\n";
 }
+
+$output and open STDOUT,">$output";
 
 # Below is N32/64 register layout used in the original module.
 #

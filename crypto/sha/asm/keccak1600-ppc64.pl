@@ -37,7 +37,15 @@
 #	much better (but watch out for them generating code specific
 #	to processor they execute on).
 
-$flavour = shift;
+$output  = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
 
 if ($flavour =~ /64/) {
 	$SIZE_T	=8;
@@ -53,7 +61,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
+open STDOUT,"| $^X $xlate $flavour \"$output\""
+    || die "can't call $xlate: $!";
 
 $FRAME=24*$SIZE_T+6*$SIZE_T+32;
 $LOCALS=6*$SIZE_T;

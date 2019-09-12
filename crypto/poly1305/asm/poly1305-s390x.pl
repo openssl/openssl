@@ -47,7 +47,16 @@ use FindBin qw($Bin);
 use lib "$Bin/../..";
 use perlasm::s390x qw(:DEFAULT :LD :GE :EI :MI1 :VX AUTOLOAD LABEL INCLUDE);
 
-my $flavour = shift;
+my $output = pop;
+my $flavour;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
 
 my ($z,$SIZE_T);
 if ($flavour =~ /3[12]/) {
@@ -57,9 +66,6 @@ if ($flavour =~ /3[12]/) {
 	$z=1;	# zSeries ABI
 	$SIZE_T=8;
 }
-
-my $output;
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 
 my $stdframe=16*$SIZE_T+4*8;
 my $sp="%r15";

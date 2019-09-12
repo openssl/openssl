@@ -38,9 +38,15 @@
 #	in real-life application are somewhat lower, e.g. for 2KB
 #	fragments they range from 30% to 100% (on Haswell);
 
-$flavour = shift;
-$output  = shift;
-if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+$output  = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
@@ -70,7 +76,8 @@ if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
-open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 # void sha1_multi_block (

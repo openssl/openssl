@@ -69,10 +69,17 @@
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 
-$flavour = shift;
-$output = shift;
+$output = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
 
-open STDOUT,">$output";
+$output and open STDOUT,">$output";
 
 if ($flavour =~ /64/) {
 	$LEVEL		="2.0W";

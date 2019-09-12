@@ -26,8 +26,7 @@
 # by over 40%, while code increases by only 10% or 32 bytes. But once
 # again, the goal was to establish _size_ benchmark, not performance.
 
-$output=shift;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 
 $inline=0;
 #$cheat_on_binutils=1;

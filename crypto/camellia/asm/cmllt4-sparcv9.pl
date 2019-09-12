@@ -53,8 +53,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "sparcv9_modes.pl";
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 $::evp=1;	# if $evp is set to 0, script generates module with
 # Camellia_[en|de]crypt, Camellia_set_key and Camellia_cbc_encrypt

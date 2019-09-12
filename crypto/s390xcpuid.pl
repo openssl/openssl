@@ -6,7 +6,15 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-$flavour = shift;
+$output = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
 
 if ($flavour =~ /3[12]/) {
 	$SIZE_T=4;
@@ -16,8 +24,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output and open STDOUT,">$output";
 
 $ra="%r14";
 $sp="%r15";

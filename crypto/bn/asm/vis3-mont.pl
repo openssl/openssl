@@ -25,8 +25,7 @@
 # for reference purposes, because T4 has dedicated Montgomery
 # multiplication and squaring *instructions* that deliver even more.
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 $frame = "STACK_FRAME";
 $bias = "STACK_BIAS";

@@ -89,7 +89,15 @@
 # instructions, which deliver ~70% improvement at 8KB block size over
 # vanilla km-based code, 37% - at most like 512-bytes block size.
 
-$flavour = shift;
+$output = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
 
 if ($flavour =~ /3[12]/) {
 	$SIZE_T=4;
@@ -99,8 +107,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output and open STDOUT,">$output";
 
 $softonly=0;	# allow hardware support
 

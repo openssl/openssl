@@ -56,7 +56,16 @@
 #
 ######################################################################
 
-$flavour = shift || "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
+$output = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
+$flavour ||= "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
 
 die "MIPS64 only" unless ($flavour =~ /64|n32/i);
 
@@ -431,7 +440,7 @@ poly1305_emit:
 ___
 }
 
-$output=pop and open STDOUT,">$output";
+$output and open STDOUT,">$output";
 print $code;
 close STDOUT;
 

@@ -25,7 +25,15 @@
 # successor can achieve higher scalar instruction issue rate, then
 # this module will loose... And it does on POWER9 with 12.0 vs. 9.4.
 
-$flavour = shift;
+$output  = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
 
 if ($flavour =~ /64/) {
 	$SIZE_T	=8;
@@ -48,7 +56,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
+open STDOUT,"| $^X $xlate $flavour \"$output\""
+    || die "can't call $xlate: $!";
 
 $FRAME=6*$SIZE_T+13*16;	# 13*16 is for v20-v31 offload
 

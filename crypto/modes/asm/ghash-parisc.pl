@@ -27,9 +27,17 @@
 #
 # Special thanks to polarhome.com for providing HP-UX account.
 
-$flavour = shift;
-$output = shift;
-open STDOUT,">$output";
+$output = pop;
+# if $output doesn't have an extension, it's not an output file
+# so use it for $flavour.
+if (defined $output && $output !~ m|\.\w+$|) {
+	$flavour = $output;
+	undef $output;
+} else {
+	$flavour = shift;
+}
+
+$output and open STDOUT,">$output";
 
 if ($flavour =~ /64/) {
 	$LEVEL		="2.0W";
