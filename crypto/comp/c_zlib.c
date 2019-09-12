@@ -604,8 +604,7 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         if (ctx->odone) {
             ret = ctx->ocount;
-        }
-        else {
+        } else {
             ret = ctx->ocount;
             if (ret == 0)
                 /* Unknown amount pending but we are not finished */
