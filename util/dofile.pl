@@ -16,6 +16,7 @@ use warnings;
 
 use FindBin;
 use lib "$FindBin::Bin/perl";
+use OpenSSL::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
 use Getopt::Std;
 use OpenSSL::Template;
 

@@ -41,9 +41,6 @@ L</Functions>.
 use File::Basename;
 use File::Spec::Functions;
 
-use FindBin;
-use lib "$FindBin::Bin/..";
-use OpenSSL::fallback "$FindBin::Bin/../../../external/perl/MODULES.txt";
 use Text::Template 1.46;
 
 our @ISA = qw(Text::Template);  # parent
