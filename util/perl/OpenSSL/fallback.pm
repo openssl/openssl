@@ -32,7 +32,7 @@ It is used to add extra directories at the end of perl's search path so
 that later "use" or "require" statements will find modules which are not
 located on perl's default search path.
 
-This us similar to L<lib>, except the paths are I<appended> to @INC rather
+This is similar to L<lib>, except the paths are I<appended> to @INC rather
 than prepended, thus allowing the use of a newer module on perl's default
 search path if there is one.
 
@@ -54,8 +54,7 @@ will be ignored:
 
 The sole exception is the file F<MODULES.txt>, which must contain a list of
 sub-directories relative to the location of that F<MODULES.txt> file.
-All these sub-directories will be appended to @INC, combined with the
-directory of that F<MODULES.txt> file.
+All these sub-directories will be appended to @INC.
 
 =cut
 
