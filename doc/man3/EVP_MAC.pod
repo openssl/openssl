@@ -210,13 +210,13 @@ This option is used by KMAC.
 These will set the MAC flags to the given numbers.
 Some MACs do not support this option.
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8 string>
+=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <utf8 string>
+=item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_DIGEST> ("digest") <utf8 string>
+=item B<OSSL_MAC_PARAM_DIGEST> ("digest") <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <utf8 string>
+=item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <UTF8 string>
 
 For MAC implementations that use an underlying computation cipher or
 digest, these parameters set what the algorithm should be, and the
@@ -234,7 +234,8 @@ or SHAKE256.
 
 For MAC implementations that support it, set the output size that
 EVP_MAC_final() should produce.
-The allowed sizes vary between MAC implementations.
+The allowed sizes vary between MAC implementations, but must never exceed
+what can be given with a B<size_t>.
 
 =back
 
