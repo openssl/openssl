@@ -48,9 +48,10 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-$COMMON=cbc128.c ctr128.c cfb128.c ofb128.c gcm128.c ccm128.c $MODESASM
+$COMMON=cbc128.c ctr128.c cfb128.c ofb128.c gcm128.c ccm128.c xts128.c $MODESASM
 SOURCE[../../libcrypto]=$COMMON \
-        cts128.c xts128.c wrap128.c ocb128.c siv128.c
+        cts128.c wrap128.c ocb128.c siv128.c
+
 DEFINE[../../libcrypto]=$MODESDEF
 SOURCE[../../providers/fips]=$COMMON
 DEFINE[../../providers/fips]=$MODESDEF
