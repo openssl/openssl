@@ -681,6 +681,9 @@ DECLARE_ASN1_FUNCTIONS(CMP_PROTECTEDPART)
  * functions
  */
 
+/* from cmp_asn.c */
+int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);
+
 /* from cmp_util.c */
 const char *ossl_cmp_log_parse_metadata(const char *buf,
                                         OSSL_CMP_severity *level, char **func,
