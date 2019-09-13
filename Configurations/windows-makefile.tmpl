@@ -580,7 +580,7 @@ EOF
 
           if ($args{generator}->[0] =~ /\.pl$/) {
               $generator = '"$(PERL)"'.$generator_incs.' '.$generator
-                  '"$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSSOR)';
+                  .'"$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSSOR)';
           } elsif ($args{generator}->[0] =~ /\.S$/) {
               $generator = undef;
           } else {
