@@ -989,7 +989,7 @@ EOF
 
           if ($args{generator}->[0] =~ /\.pl$/) {
               $generator = 'CC="$(CC)" $(PERL)'.$generator_incs.' '.$generator
-                  .'"$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSSOR)';
+                  .' "$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSSOR)';
           } elsif ($args{generator}->[0] =~ /\.m4$/) {
               $generator = 'm4 -B 8192'.$generator_incs.' '.$generator.' >'
           } elsif ($args{generator}->[0] =~ /\.S$/) {
