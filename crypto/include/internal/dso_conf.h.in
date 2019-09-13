@@ -10,6 +10,7 @@
 
 #ifndef HEADER_DSO_CONF_H
 # define HEADER_DSO_CONF_H
+# ifndef DSO_NONE
 {-  # The DSO code currently always implements all functions so that no
     # applications will have to worry about that from a compilation point
     # of view. However, the "method"s may return zero unless that platform
@@ -26,6 +27,7 @@
     } elsif ($scheme eq "DLFCN_NO_H") {
         @macros = ( "DSO_DLFCN" );
     }
-    join("\n", map { "# define $_" } @macros); -}
+    join("\n", map { "#  define $_" } @macros); -}
+# endif
 # define DSO_EXTENSION "{- $target{dso_extension} -}"
 #endif
