@@ -7,27 +7,42 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <openssl/bio.h>
-#include <openssl/conf.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
+#include <openssl/sha.h>
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/kdf.h>
 #include <openssl/provider.h>
 #include "testutil.h"
-#include "internal/nelem.h"
-#include "internal/evp_int.h"
 
 static char *alg = "digest";
 static int use_default_ctx = 0;
 static char *fetch_property = NULL;
 static int expected_fetch_result = 1;
+
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_ALG_FETCH_TYPE,
+    OPT_FETCH_PROPERTY,
+    OPT_FETCH_FAILURE,
+    OPT_USE_DEFAULTCTX,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS test_options[] = {
+        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[provname...]\n"),
+        { "type", OPT_ALG_FETCH_TYPE, 's', "The fetch type to test" },
+        { "property", OPT_FETCH_PROPERTY, 's', "The fetch property e.g. fips=yes" },
+        { "fetchfail", OPT_FETCH_FAILURE, '-', "fetch is expected to fail" },
+        { "defaultctx", OPT_USE_DEFAULTCTX, '-',
+          "Use the default context if this is set" },
+        { OPT_HELP_STR, 1, '-',
+          "file\tProvider names to explicitly load\n" },
+        { NULL }
+    };
+    return test_options;
+}
 
 static int calculate_digest(const EVP_MD *md, const char *msg, size_t len,
                             const unsigned char *exptd)
@@ -75,6 +90,7 @@ static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
 err:
     return ret;
 }
+
 /*
  * Test EVP_MD_fetch()
  */
@@ -101,9 +117,7 @@ static int test_EVP_MD_fetch(void)
             || !TEST_int_eq(EVP_MD_block_size(EVP_sha256()), SHA256_CBLOCK))
         goto err;
 
-    /*
-     * Fetch the digest from a provider using properties.
-     */
+    /* Fetch the digest from a provider using properties. */
     md = EVP_MD_fetch(ctx, "SHA256", fetch_property);
     if (expected_fetch_result != 0) {
         if (!TEST_ptr(md)
@@ -163,7 +177,6 @@ err:
     return ret;
 }
 
-
 /*
  * Test EVP_CIPHER_fetch()
  */
@@ -182,9 +195,7 @@ static int test_EVP_CIPHER_fetch(void)
     if (!TEST_true(encrypt_decrypt(EVP_aes_128_cbc(), testmsg, sizeof(testmsg))))
         goto err;
 
-    /*
-     * Fetch the cipher from a provider using properties.
-     */
+    /* Fetch the cipher from a provider using properties. */
     cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", fetch_property);
     if (expected_fetch_result != 0) {
         if (!TEST_ptr(cipher)
@@ -206,241 +217,6 @@ err:
     OPENSSL_CTX_free(ctx);
     return ret;
 }
-
-
-
-#if 0
-static int get_num_params(const OSSL_PARAM *params)
-{
-    int i = 0;
-
-    if (params != NULL) {
-        while (params[i].key != NULL)
-            ++i;
-        ++i;
-    }
-    return i;
-}
-
-//CONF *load_config(const char *name)
-//{
- //   CONF *conf = NCONF_new(NULL);
-//
- //   NCONF_load(conf, name, NULL);
- //   ret = CONF_modules_load(conf, appname, flags);
-//}
-
-/*
- * Test EVP_CIPHER_fetch()
- *
- * Test 0: Test with the default OPENSSL_CTX
- * Test 1: Test with an explicit OPENSSL_CTX
- * Test 2: Explicit OPENSSL_CTX with explicit load of default provider
- * Test 3: Explicit OPENSSL_CTX with explicit load of default and fips provider
- * Test 4: Explicit OPENSSL_CTX with explicit load of fips provider
- */
-
-
-
-    /* Also test EVP_CIPHER_up_ref() while we're doing this */
-    if (!TEST_true(EVP_CIPHER_up_ref(cipher)))
-        goto err;
-    /* Ref count should now be 2. Release both */
-    EVP_CIPHER_meth_free(cipher);
-    EVP_CIPHER_meth_free(cipher);
-    cipher = NULL;
-
-
-    md = EVP_MD_fetch(ctx, "SHA256", fetch_property);
-    if (expected_fetch_result != 0) {
-        if (!TEST_ptr(md)
-            || !TEST_int_eq(EVP_MD_nid(md), NID_sha256)
-            || !TEST_true(calculate_digest(md, testmsg, sizeof(testmsg), exptd))
-            || !TEST_int_eq(EVP_MD_size(md), SHA256_DIGEST_LENGTH)
-            || !TEST_int_eq(EVP_MD_block_size(md), SHA256_CBLOCK))
-        goto err;
-
-        /* Also test EVP_MD_up_ref() while we're doing this */
-        if (!TEST_true(EVP_MD_up_ref(md)))
-            goto err;
-        /* Ref count should now be 2. Release first one here */
-        EVP_MD_meth_free(md);
-    } else {
-        if (!TEST_ptr_null(md))
-            goto err;
-    }
-    ret = 1;
-
- err:
-    EVP_MD_meth_free(md);
-    OSSL_PROVIDER_unload(prov[0]);
-    OSSL_PROVIDER_unload(prov[1]);
-    /* Not normally needed, but we would like to test that
-     * OPENSSL_thread_stop_ex() behaves as expected.
-     */
-    if (ctx != NULL) {
-        OPENSSL_thread_stop_ex(ctx);
-        OPENSSL_CTX_free(ctx);
-    }
-    return ret;
-}
-
-
-static int test_EVP_CIPHER_fetch(void)
-{
-    OPENSSL_CTX *ctx = NULL;
-    EVP_CIPHER *cipher = NULL;
-    OSSL_PROVIDER *defltprov = NULL, *fipsprov = NULL;
-    int ret = 0;
-    const unsigned char testmsg[] = "Hello world";
-    const OSSL_PARAM *params;
-
-//    if (tst == 2)
-//        CONF_modules_load_file("test/default.cnf", NULL, 0);
-//    if (tst == 3)
-//        CONF_modules_load_file("test/default-and-fips.cnf", NULL, 0);
-//    if (tst == 4)
-//        CONF_modules_load_file("test/fips.cnf", NULL, 0);
-
-
-    if (tst > 0) {
-        ctx = OPENSSL_CTX_new();
-        if (!TEST_ptr(ctx))
-            goto err;
-
-        if (tst == 2 || tst == 3) {
-            defltprov = OSSL_PROVIDER_load(ctx, "default");
-            if (!TEST_ptr(defltprov))
-                goto err;
-        }
-        if (tst == 3 || tst == 4) {
-
-            fipsprov = OSSL_PROVIDER_load(ctx, "fips");
-            if (!TEST_ptr(fipsprov))
-                goto err;
-        }
-    }
-
-    /* Implicit fetching of the cipher should produce the expected result */
-    if (!TEST_true(encrypt_decrypt(EVP_aes_128_cbc(), testmsg, sizeof(testmsg))))
-        goto err;
-
-    /*
-     * Test that without specifying any properties we can get a cipher from a
-     * provider.
-     */
-    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", NULL))
-            || !TEST_true(encrypt_decrypt(cipher, testmsg, sizeof(testmsg))))
-        goto err;
-
-    /* Also test EVP_CIPHER_up_ref() while we're doing this */
-    if (!TEST_true(EVP_CIPHER_up_ref(cipher)))
-        goto err;
-    /* Ref count should now be 2. Release both */
-    EVP_CIPHER_meth_free(cipher);
-    EVP_CIPHER_meth_free(cipher);
-    cipher = NULL;
-
-    /*
-     * In tests 0 - 2 we've only loaded the default provider so explicitly
-     * asking for a non-default implementation should fail. In tests 3 and 4 we
-     * have the FIPS provider loaded so we should succeed in that case.
-     */
-    cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "default=no");
-    if (tst == 3 || tst == 4) {
-        if (!TEST_ptr(cipher)
-                || !TEST_true(encrypt_decrypt(cipher, testmsg, sizeof(testmsg))))
-            goto err;
-    } else  {
-        if (!TEST_ptr_null(cipher))
-            goto err;
-    }
-
-    EVP_CIPHER_meth_free(cipher);
-    cipher = NULL;
-
-    /*
-     * Explicitly asking for the default implementation should succeed except
-     * in test 4 where the default provider is not loaded.
-     */
-    cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "default=yes");
-    if (tst != 4) {
-        if (!TEST_ptr(cipher)
-                || !TEST_int_eq(EVP_CIPHER_nid(cipher), NID_aes_128_cbc)
-                || !TEST_true(encrypt_decrypt(cipher, testmsg, sizeof(testmsg)))
-                || !TEST_int_eq(EVP_CIPHER_block_size(cipher), 128/8))
-            goto err;
-    } else {
-        if (!TEST_ptr_null(cipher))
-            goto err;
-    }
-
-    EVP_CIPHER_meth_free(cipher);
-    cipher = NULL;
-
-    /*
-     * Explicitly asking for a fips implementation should succeed if we have
-     * the FIPS provider loaded and fail otherwise
-     */
-    cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "fips=yes");
-    if (tst == 3 || tst == 4) {
-        if (!TEST_ptr(cipher)
-                || !TEST_true(encrypt_decrypt(cipher, testmsg, sizeof(testmsg)))
-                || !TEST_ptr(params = cipher->gettable_params())
-                || !TEST_int_gt(get_num_params(params), 1)
-                || !TEST_ptr(params = cipher->gettable_ctx_params())
-                || !TEST_int_gt(get_num_params(params), 1)
-                || !TEST_ptr(params = cipher->settable_ctx_params())
-                || !TEST_int_gt(get_num_params(params), 1))
-            goto err;
-    } else  {
-        if (!TEST_ptr_null(cipher))
-            goto err;
-    }
-
-    ret = 1;
-
- err:
-    EVP_CIPHER_meth_free(cipher);
-    OSSL_PROVIDER_unload(defltprov);
-    OSSL_PROVIDER_unload(fipsprov);
-    /* Not normally needed, but we would like to test that
-     * OPENSSL_thread_stop_ex() behaves as expected.
-     */
-    if (ctx != NULL)
-        OPENSSL_thread_stop_ex(ctx);
-    OPENSSL_CTX_free(ctx);
-    return ret;
-}
-
-#endif
-
-typedef enum OPTION_choice {
-    OPT_ERR = -1,
-    OPT_EOF = 0,
-    OPT_ALG_FETCH_TYPE,
-    OPT_FETCH_PROPERTY,
-    OPT_FETCH_FAILURE,
-    OPT_USE_DEFAULTCTX,
-    OPT_TEST_ENUM
-} OPTION_CHOICE;
-
-const OPTIONS *test_get_options(void)
-{
-    static const OPTIONS test_options[] = {
-        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[provname...]\n"),
-        { "type", OPT_ALG_FETCH_TYPE, 's', "The fetch type to test" },
-        { "property", OPT_FETCH_PROPERTY, 's', "The fetch property e.g. fips=yes" },
-        { "fetchfail", OPT_FETCH_FAILURE, '-', "fetch is expected to fail" },
-        { "defaultctx", OPT_USE_DEFAULTCTX, '-',
-          "Use the default context if this is set" },
-        { OPT_HELP_STR, 1, '-',
-          "file\tProvider names to explicitly load\n" },
-        { NULL }
-    };
-    return test_options;
-}
-
 
 int setup_tests(void)
 {

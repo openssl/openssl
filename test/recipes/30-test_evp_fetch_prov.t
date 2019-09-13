@@ -39,7 +39,6 @@ ok(run(test(["evp_fetch_prov_test", "-defaultctx"])),
     "running evp_fetch_prov_test using implicit fetch using the default libctx");
 
 foreach my $alg(@types) {
-   
    $ENV{OPENSSL_CONF} = srctop_file("test", "default.cnf");
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg"])),
        "running evp_fetch_prov_test using implicit fetch using a created libctx");
@@ -48,12 +47,12 @@ foreach my $alg(@types) {
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=yes", "default"])),
        "running evp_fetch_prov_test with $alg fetch 'default=yes' using default provider loaded");
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=no", "default"])),
-       "running evp_fetch_prov_test with $alg fetch 'fips=no' using default provider loaded"); 
+       "running evp_fetch_prov_test with $alg fetch 'fips=no' using default provider loaded");
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=no", "-fetchfail", "default"])),
        "running evp_fetch_prov_test with $alg fetch 'default=no' using default provider loaded should fail");
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=yes", "-fetchfail", "default"])),
        "running evp_fetch_prov_test with $alg fetch 'fips=yes' using default provider loaded should fail");
-   
+
    $ENV{OPENSSL_CONF} = srctop_file("test", "fips.cnf");
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "", "fips"])),
        "running evp_fetch_prov_test with $alg fetch '' using loaded fips provider");
@@ -64,8 +63,8 @@ foreach my $alg(@types) {
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=yes", "-fetchfail", "fips"])),
        "running evp_fetch_prov_test with $alg fetch 'default=yes' using loaded fips provider should fail");
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=no", "-fetchfail", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'fips=no' using loaded fips provider should fail");            
-   
+       "running evp_fetch_prov_test with $alg fetch 'fips=no' using loaded fips provider should fail");
+
    $ENV{OPENSSL_CONF} = srctop_file("test", "default-and-fips.cnf");
    ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "", "default", "fips"])),
        "running evp_fetch_prov_test with $alg fetch '' using loaded default & fips provider");
