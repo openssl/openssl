@@ -41,7 +41,9 @@
 # (***)	Multi-process benchmark saturates at ~12.5x single-process
 #	result on 8-core processor, or ~21GBps per 2.85GHz socket.
 
-my $output = pop;
+# $output is the last argument if it looks like a file (it has an extension)
+my $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+
 open STDOUT,">$output" if $output;
 
 my ($ctx,$inp,$len,$padbit,$shl,$shr)	= map("%i$_",(0..5));

@@ -52,17 +52,12 @@
 # ($t0,$t1,$t2,$t3,$t8,$t9)=map("\$$_",(12..15,24,25));
 # ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7)=map("\$$_",(16..23));
 # ($gp,$sp,$fp,$ra)=map("\$$_",(28..31));
-#
-$output  = pop;
-# if $output doesn't have an extension, it's not an output file
-# so use it for $flavour.
-if (defined $output && $output !~ m|\.\w+$|) {
-	$flavour = $output;
-	undef $output;
-} else {
-	$flavour = shift;
-}
-$flavour ||= "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
+
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+# supported flavours are o32,n32,64,nubi32,nubi64, default is o32
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : "o32"; 
 
 if ($flavour =~ /64|n32/i) {
 	$PTR_ADD="daddu";	# incidentally works even on n32

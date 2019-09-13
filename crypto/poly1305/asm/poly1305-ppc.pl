@@ -52,15 +52,10 @@
 # not, not one usable in the context. Improvement is ~40% over -m64
 # result above and is ~1.43 on little-endian systems.
 
-$output = pop;
-# if $output doesn't have an extension, it's not an output file
-# so use it for $flavour.
-if (defined $output && $output !~ m|\.\w+$|) {
-	$flavour = $output;
-	undef $output;
-} else {
-	$flavour = shift;
-}
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour =~ /64/) {
 	$SIZE_T	=8;

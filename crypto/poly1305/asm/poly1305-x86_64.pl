@@ -63,15 +63,10 @@
 # (***)	strangely enough performance seems to vary from core to core,
 #	listed result is best case;
 
-$output  = pop;
-# if $output doesn't have an extension, it's not an output file
-# so use it for $flavour.
-if (defined $output && $output !~ m|\.\w+$|) {
-	$flavour = $output;
-	undef $output;
-} else {
-	$flavour = shift;
-}
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 

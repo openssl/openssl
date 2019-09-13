@@ -56,16 +56,11 @@
 #
 ######################################################################
 
-$output = pop;
-# if $output doesn't have an extension, it's not an output file
-# so use it for $flavour.
-if (defined $output && $output !~ m|\.\w+$|) {
-	$flavour = $output;
-	undef $output;
-} else {
-	$flavour = shift;
-}
-$flavour ||= "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+# supported flavours are o32,n32,64,nubi32,nubi64, default is o32
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : "o32";
 
 die "MIPS64 only" unless ($flavour =~ /64|n32/i);
 
