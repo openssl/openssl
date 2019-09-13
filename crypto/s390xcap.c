@@ -86,16 +86,20 @@ void OPENSSL_cpuid_setup(void)
     {
         const unsigned long hwcap = getauxval(AT_HWCAP);
 
+# ifdef HWCAP_S390_STFLE
         /* protection against missing store-facility-list-extended */
         if (hwcap & HWCAP_S390_STFLE)
             OPENSSL_s390x_facilities();
+# endif
 
+# ifdef HWCAP_S390_VX
         /* protection against disabled vector facility */
         if (!(hwcap & HWCAP_S390_VX)) {
             OPENSSL_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
                                              | S390X_CAPBIT(S390X_VXD)
                                              | S390X_CAPBIT(S390X_VXE));
         }
+# endif
     }
 #else
     {
