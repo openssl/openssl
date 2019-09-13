@@ -351,6 +351,9 @@
                    Don't build support for datagram based BIOs. Selecting this
                    option will also force the disabling of DTLS.
 
+  no-dso
+                   Don't build support for loading Dynamic Shared Objects.
+
   enable-devcryptoeng
                    Build the /dev/crypto engine.  It is automatically selected
                    on BSD implementations, in which case it can be disabled with
