@@ -339,12 +339,13 @@ EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
 
 =over 4
 
-=item OSSL_PARAM_DIGEST_KEY_XOFLEN <size_t>
+=item OSSL_PARAM_DIGEST_KEY_XOFLEN <unsigned integer>
 
 Sets the digest length for extendable output functions.
-It is used by the SHAKE algorithm.
+It is used by the SHAKE algorithm and should not exceed what can be given
+using a B<size_t>.
 
-=item OSSL_PARAM_DIGEST_KEY_PAD_TYPE <int>
+=item OSSL_PARAM_DIGEST_KEY_PAD_TYPE <integer>
 
 Sets the pad type.
 It is used by the MDC2 algorithm.
@@ -355,7 +356,7 @@ EVP_MD_CTX_get_params() can be used with the following OSSL_PARAM keys:
 
 =over 4
 
-=item OSSL_PARAM_DIGEST_KEY_MICALG <utf8string>.
+=item OSSL_PARAM_DIGEST_KEY_MICALG <UTF8 string>.
 
 Gets the digest Message Integrity Check algorithm string. This is used when
 creating S/MIME multipart/signed messages, as specified in RFC 3851.
