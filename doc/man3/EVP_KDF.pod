@@ -156,7 +156,7 @@ For those KDF implementations that support it, this parameter sets the salt.
 
 The default value, if any, is implementation dependent.
 
-=item B<OSSL_KDF_PARAM_ITER> ("iter") <unsigned int>
+=item B<OSSL_KDF_PARAM_ITER> ("iter") <unsigned integer>
 
 Some KDF implementations require an iteration count.
 For those KDF implementations that support it, this parameter sets the
@@ -170,7 +170,7 @@ The default value, if any, is implementation dependent.
 
 =item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8string>
+=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <UTF8 string>
 
 For KDF implementations that use an underlying computation MAC or
 digest, these parameters set what the algorithm should be, and the
@@ -189,15 +189,16 @@ Some KDF implementations require a key.
 For those KDF implementations that support it, this octet string parameter
 sets the key.
 
-=item B<OSSL_KDF_PARAM_MAC_SIZE> ("maclen") <size_t>
+=item B<OSSL_KDF_PARAM_MAC_SIZE> ("maclen") <unsigned integer>
 
 Used by implementations that use a MAC with a variable output size (KMAC).
 For those KDF implementations that support it, this parameter
 sets the MAC output size.
 
 The default value, if any, is implementation dependent.
+The length must never exceed what can be given with a B<size_t>.
 
-=item B<OSSL_KDF_PARAM_SCRYPT_MAXMEM> ("macmaxmem_byteslen") <size_t>
+=item B<OSSL_KDF_PARAM_SCRYPT_MAXMEM> ("macmaxmem_byteslen") <unsigned integer>
 
 Memory-hard password-based KDF algorithms, such as scrypt, use an amount of
 memory that depends on the load factors provided as input.
@@ -208,6 +209,7 @@ If this memory usage limit is exceeded because the load factors are chosen
 too high, the key derivation will fail.
 
 The default value is implementation dependent.
+The memory size must never exceed what can be given with a B<size_t>.
 
 =back
 
