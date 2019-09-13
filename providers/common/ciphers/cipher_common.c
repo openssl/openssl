@@ -124,9 +124,13 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
         memcpy(ctx->iv, iv, ctx->ivlen);
     }
     if (key != NULL) {
-        if (keylen != ctx->keylen) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEYLEN);
-            return 0;
+        if ((ctx->flags & EVP_CIPH_VARIABLE_LENGTH) == 0) {
+            if (keylen != ctx->keylen) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEYLEN);
+                return 0;
+            }
+        } else {
+            ctx->keylen = keylen;
         }
         return ctx->hw->init(ctx, key, ctx->keylen);
     }
@@ -384,11 +388,12 @@ int cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 void cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
-                            size_t ivbits, unsigned int mode,
+                            size_t ivbits, unsigned int mode, uint64_t flags,
                             const PROV_CIPHER_HW *hw, void *provctx)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
+    ctx->flags = flags;
     ctx->pad = 1;
     ctx->keylen = ((kbits) / 8);
     ctx->ivlen = ((ivbits) / 8);
