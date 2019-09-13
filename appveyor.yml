@@ -10,6 +10,7 @@ environment:
 configuration:
     - shared
     - plain
+    - minimal
 
 before_build:
     - ps: >-
@@ -23,6 +24,8 @@ before_build:
     - ps: >-
         If ($env:Configuration -Match "shared") {
             $env:SHARED="no-makedepend"
+        } ElseIf ($env:Configuration -Match "minimal") {
+            $env:SHARED="no-shared no-dso no-makedepend no-autoload-config no-engine no-comp no-cms no-dh no-dsa no-ec2m no-srp no-des no-mdc2 no-md4 no-rc2 no-rc4 no-bf no-camellia no-cast no-idea no-seed no-whirlpool no-ocsp no-sm2 no-sm3 no-sm4 no-ssl3 no-ssl3-method no-psk no-heartbeats no-nextprotoneg no-sctp no-srtp no-asm -DOPENSSL_SMALL_FOOTPRINT"
         } Else {
             $env:SHARED="no-shared no-makedepend"
         }
