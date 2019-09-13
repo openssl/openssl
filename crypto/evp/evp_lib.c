@@ -317,8 +317,8 @@ int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
-    int rv;
-    size_t v = EVP_CIPHER_iv_length(ctx->cipher);
+    int rv, len = EVP_CIPHER_iv_length(ctx->cipher);
+    size_t v = len;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &v);
@@ -329,13 +329,11 @@ int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
     /* TODO (3.0) Remove legacy support */
 legacy:
     if ((EVP_CIPHER_flags(ctx->cipher) & EVP_CIPH_CUSTOM_IV_LENGTH) != 0) {
-        int len = 0;
-
         rv = EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN,
                                  0, &len);
         return (rv == 1) ? len : -1;
     }
-    return v;
+    return len;
 }
 
 int EVP_CIPHER_CTX_tag_length(const EVP_CIPHER_CTX *ctx)
