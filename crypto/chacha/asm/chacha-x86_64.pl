@@ -91,7 +91,7 @@ if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([
 }
 
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
-    or die "can't $xlate: $!";
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 # input parameter block

@@ -52,7 +52,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 die "can't locate ppc-xlate.pl";
 
 open STDOUT,"| $^X $xlate $flavour \"$output\""
-    || die "can't call $xlate: $!";
+    or die "can't call $xlate: $!";
 
 $FRAME=6*$SIZE_T+13*16;	# 13*16 is for v20-v31 offload
 

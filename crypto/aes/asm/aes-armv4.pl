@@ -51,7 +51,7 @@ if ($flavour && $flavour ne "void") {
     die "can't locate arm-xlate.pl";
 
     open STDOUT,"| \"$^X\" $xlate $flavour \"$output\""
-        or die "can't $xlate: $!";
+        or die "can't call $xlate: $!";
 } else {
     $output and open STDOUT,">$output";
 }

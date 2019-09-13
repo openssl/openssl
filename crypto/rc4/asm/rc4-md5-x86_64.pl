@@ -66,7 +66,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
 die "can't locate x86_64-xlate.pl";
 
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
-    or die "can't $xlate: $!";
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 my ($dat,$in0,$out,$ctx,$inp,$len, $func,$nargs);

@@ -57,7 +57,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 die "can't locate ppc-xlate.pl";
 
 open STDOUT,"| $^X $xlate $flavour \"$output\""
-    || die "can't call $xlate: $!";
+    or die "can't call $xlate: $!";
 
 $FRAME=24*$SIZE_T+64;
 $LOCALS=6*$SIZE_T;
