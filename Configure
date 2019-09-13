@@ -350,6 +350,7 @@ my @disablables = (
     "dgram",
     "dh",
     "dsa",
+    "dso",
     "dtls",
     "dynamic-engine",
     "ec",
@@ -442,7 +443,6 @@ my %deprecated_disablables = (
     "hw-padlock" => "padlockeng",
     "ripemd" => "rmd160",
     "ui" => "ui-console",
-    "dso" => undef,
     "heartbeats" => undef,
     );
 
@@ -510,6 +510,7 @@ my @disable_cascades = (
     # (note that even with shared libraries, both the app and dynamic engines
     # must be linked with the same library)
     "shared"            => [ "dynamic-engine", "uplink" ],
+    "dso"               => [ "dynamic-engine", "module" ],
     # Other modules don't necessarily have to link with libcrypto, so shared
     # libraries do not have to be a condition to produce those.
 
@@ -1239,7 +1240,7 @@ foreach my $what (sort keys %disabled) {
 
         $skipdir{engines} = $what if $what eq 'engine';
         $skipdir{"crypto/$skipdir"} = $what
-            unless $what eq 'async' || $what eq 'err';
+            unless $what eq 'async' || $what eq 'err' || $what eq 'dso';
     }
 }
 
