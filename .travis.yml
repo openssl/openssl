@@ -69,7 +69,7 @@ matrix:
           env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
         - os: linux
           compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings" COMMENT="Move to the BORINGTEST build when interoperable"
+          env: CONFIG_OPTS="--strict-warnings no-ec enable-trace enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           dist: trusty
           compiler: clang
@@ -146,6 +146,9 @@ matrix:
             # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
             - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
           script: true
+        - os: linux
+          compiler: gcc
+          env: CONFIGURE_TARGET="linux-generic32" CONFIG_OPTS="--strict-warnings no-shared no-dso no-pic no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-cmp no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-ktls no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-siv no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT"
     exclude:
         - os: linux
           compiler: clang
@@ -188,7 +191,11 @@ before_script:
           if which ccache >/dev/null && test "$BORINGSSL_TESTS" != yes; then
               CC="ccache $CC";
           fi;
-          $srcdir/config -v $CONFIG_OPTS;
+          if [ -n "$CONFIGURE_TARGET" ]; then
+              $srcdir/Configure $CONFIGURE_TARGET $CONFIG_OPTS;
+          else
+              $srcdir/config -v $CONFIG_OPTS;
+          fi;
       fi
     - ./configdata.pm --dump
     - cd $top
