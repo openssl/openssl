@@ -317,3 +317,11 @@ int evp_name_number(OPENSSL_CTX *libctx, const char *name)
     /* If it already exists, the existing number is returned */
     return ossl_namemap_add(namemap, 0,name);
 }
+
+int evp_is_a(OSSL_PROVIDER *prov, int number, const char *name)
+{
+    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+
+    return ossl_namemap_name2num(namemap, name) == number;
+}

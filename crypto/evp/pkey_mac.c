@@ -221,8 +221,8 @@ static int pkey_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
         && (ctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) != 0;
 
     if (set_key) {
-        if (strcmp(OBJ_nid2sn(EVP_PKEY_id(EVP_PKEY_CTX_get0_pkey(ctx))),
-                   EVP_MAC_name(EVP_MAC_CTX_mac(hctx->ctx))) != 0)
+        if (!EVP_MAC_is_a(EVP_MAC_CTX_mac(hctx->ctx),
+                          OBJ_nid2sn(EVP_PKEY_id(EVP_PKEY_CTX_get0_pkey(ctx)))))
             return 0;
         key = EVP_PKEY_get0(EVP_PKEY_CTX_get0_pkey(ctx));
         if (key == NULL)

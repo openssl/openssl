@@ -370,7 +370,6 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
         int ret;
         const unsigned char *custom = NULL;
         size_t custom_len = 0;
-        const char *macname;
         int default_salt_len;
 
         /*
@@ -378,8 +377,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
          * Why does KMAC require a salt length that's shorter than the MD
          * block size?
          */
-        macname = EVP_MAC_name(ctx->mac);
-        if (strcmp(macname, OSSL_MAC_NAME_HMAC) == 0) {
+        if (EVP_MAC_is_a(ctx->mac, OSSL_MAC_NAME_HMAC)) {
             /* H(x) = HMAC(x, salt, hash) */
             if (md == NULL) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
@@ -388,12 +386,12 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
             default_salt_len = EVP_MD_block_size(md);
             if (default_salt_len <= 0)
                 return 0;
-        } else if (strcmp(macname, OSSL_MAC_NAME_KMAC128) == 0
-                   || strcmp(macname, OSSL_MAC_NAME_KMAC256) == 0) {
+        } else if (EVP_MAC_is_a(ctx->mac, OSSL_MAC_NAME_KMAC128)
+                   || EVP_MAC_is_a(ctx->mac, OSSL_MAC_NAME_KMAC256)) {
             /* H(x) = KMACzzz(x, salt, custom) */
             custom = kmac_custom_str;
             custom_len = sizeof(kmac_custom_str);
-            if (strcmp(macname, OSSL_MAC_NAME_KMAC128) == 0)
+            if (EVP_MAC_is_a(ctx->mac, OSSL_MAC_NAME_KMAC128))
                 default_salt_len = SSKDF_KMAC128_DEFAULT_SALT_SIZE;
             else
                 default_salt_len = SSKDF_KMAC256_DEFAULT_SALT_SIZE;
