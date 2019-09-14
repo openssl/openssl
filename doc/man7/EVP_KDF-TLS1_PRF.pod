@@ -80,8 +80,8 @@ and seed value "seed":
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                           "seed", (size_t)4);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_set_params");
+ if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
+     error("EVP_KDF_CTX_set_params");
  }
  if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
      error("EVP_KDF_derive");

@@ -92,8 +92,8 @@ and fixedinfo value "label":
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "label", (size_t)5);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_set_params");
+ if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
+     error("EVP_KDF_CTX_set_params");
  }
  if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
      error("EVP_KDF_derive");
@@ -124,8 +124,8 @@ fixedinfo value "label" and salt "salt":
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                           "salt", (size_t)4);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_set_params");
+ if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
+     error("EVP_KDF_CTX_set_params");
  }
  if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
      error("EVP_KDF_derive");
@@ -157,8 +157,8 @@ fixedinfo value "label", salt of "salt" and KMAC outlen of 20:
                                           "salt", (size_t)4);
  *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_SIZE, (size_t)20);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_set_params");
+ if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
+     error("EVP_KDF_CTX_set_params");
  }
  if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
      error("EVP_KDF_derive");
