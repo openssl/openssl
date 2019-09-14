@@ -346,6 +346,7 @@ my @disablables = (
     "dgram",
     "dh",
     "dsa",
+    "dso",
     "dtls",
     "dynamic-engine",
     "ec",
@@ -423,7 +424,6 @@ my %deprecated_disablables = (
     "buf-freelists" => undef,
     "ripemd" => "rmd160",
     "ui" => "ui-console",
-    "dso" => "",                # Empty string means we're silent about it
     );
 
 # All of the following are disabled by default:
@@ -480,6 +480,7 @@ my @disable_cascades = (
     # Without position independent code, there can be no shared libraries or DSOs
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
+    "dso"               => [ "dynamic-engine" ],
     "engine"            => [ "afalgeng", "devcryptoeng" ],
 
     # no-autoalginit is only useful when building non-shared
@@ -1181,7 +1182,7 @@ foreach my $what (sort keys %disabled) {
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
 
         if ((grep { $what eq $_ } @{$config{sdirs}})
-                && $what ne 'async' && $what ne 'err') {
+                && $what ne 'async' && $what ne 'err' && $what ne 'dso') {
             @{$config{sdirs}} = grep { $what ne $_} @{$config{sdirs}};
             $disabled_info{$what}->{skipped} = [ catdir('crypto', $what) ];
 
