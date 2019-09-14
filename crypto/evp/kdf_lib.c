@@ -85,7 +85,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
 
 const char *EVP_KDF_name(const EVP_KDF *kdf)
 {
-    return kdf->name;
+    return evp_first_name(kdf->prov, kdf->name_id);
 }
 
 const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf)

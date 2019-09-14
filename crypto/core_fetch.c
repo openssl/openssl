@@ -66,15 +66,12 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
 }
 
 void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
-                            const char *name, const char *propquery,
                             int force_store,
                             OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data)
 {
     void *method = NULL;
 
-    if ((method =
-         mcm->get(libctx, NULL, operation_id, name, propquery, mcm_data))
-        == NULL) {
+    if ((method = mcm->get(libctx, NULL, mcm_data)) == NULL) {
         struct construct_data_st cbdata;
 
         /*
@@ -92,8 +89,7 @@ void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
         ossl_algorithm_do_all(libctx, operation_id, NULL,
                               ossl_method_construct_this, &cbdata);
 
-        method = mcm->get(libctx, cbdata.store, operation_id, name,
-                          propquery, mcm_data);
+        method = mcm->get(libctx, cbdata.store, mcm_data);
         mcm->dealloc_tmp_store(cbdata.store);
     }
 

@@ -173,6 +173,32 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
     return number;
 }
 
+struct num2name_data_st {
+    size_t idx;                  /* Countdown */
+    const char *name;            /* Result */
+};
+
+static void do_num2name(const char *name, void *vdata)
+{
+    struct num2name_data_st *data = vdata;
+
+    if (data->idx > 0)
+        data->idx--;
+    else if (data->name == NULL)
+        data->name = name;
+}
+
+const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
+                                  size_t idx)
+{
+    struct num2name_data_st data;
+
+    data.idx = idx;
+    data.name = NULL;
+    ossl_namemap_doall_names(namemap, number, do_num2name, &data);
+    return data.name;
+}
+
 int ossl_namemap_add(OSSL_NAMEMAP *namemap, int number, const char *name)
 {
     NAMENUM_ENTRY *namenum = NULL;

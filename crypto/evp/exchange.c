@@ -32,7 +32,7 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     return exchange;
 }
 
-static void *evp_keyexch_from_dispatch(const char *name,
+static void *evp_keyexch_from_dispatch(int name_id,
                                        const OSSL_DISPATCH *fns,
                                        OSSL_PROVIDER *prov,
                                        void *vkeymgmt_data)
@@ -47,8 +47,9 @@ static void *evp_keyexch_from_dispatch(const char *name,
      * provider matches.
      */
     struct keymgmt_data_st *keymgmt_data = vkeymgmt_data;
-    EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(keymgmt_data->ctx, name,
-                                             keymgmt_data->properties);
+    EVP_KEYMGMT *keymgmt =
+        evp_keymgmt_fetch_by_number(keymgmt_data->ctx, name_id,
+                                    keymgmt_data->properties);
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0, paramfncnt = 0;
 
@@ -57,12 +58,12 @@ static void *evp_keyexch_from_dispatch(const char *name,
         goto err;
     }
 
-    if ((exchange = evp_keyexch_new(prov)) == NULL
-        || (exchange->name = OPENSSL_strdup(name)) == NULL) {
+    if ((exchange = evp_keyexch_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
+    exchange->name_id = name_id;
     exchange->keymgmt = keymgmt;
     keymgmt = NULL;              /* avoid double free on failure below */
 
@@ -148,7 +149,6 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
             return;
         EVP_KEYMGMT_free(exchange->keymgmt);
         ossl_provider_free(exchange->prov);
-        OPENSSL_free(exchange->name);
         CRYPTO_THREAD_lock_free(exchange->lock);
         OPENSSL_free(exchange);
     }
@@ -175,7 +175,8 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 
     keymgmt_data.ctx = ctx;
     keymgmt_data.properties = properties;
-    keyexch = evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
+    keyexch = evp_generic_fetch(ctx, OSSL_OP_KEYEXCH,
+                                evp_name_number(ctx, algorithm), properties,
                                 evp_keyexch_from_dispatch, &keymgmt_data,
                                 (int (*)(void *))EVP_KEYEXCH_up_ref,
                                 (void (*)(void *))EVP_KEYEXCH_free);

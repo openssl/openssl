@@ -32,7 +32,7 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
     return signature;
 }
 
-static void *evp_signature_from_dispatch(const char *name,
+static void *evp_signature_from_dispatch(int name_id,
                                          const OSSL_DISPATCH *fns,
                                          OSSL_PROVIDER *prov,
                                          void *vkeymgmt_data)
@@ -47,8 +47,9 @@ static void *evp_signature_from_dispatch(const char *name,
      * provider matches.
      */
     struct keymgmt_data_st *keymgmt_data = vkeymgmt_data;
-    EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(keymgmt_data->ctx, name,
-                                             keymgmt_data->properties);
+    EVP_KEYMGMT *keymgmt =
+        evp_keymgmt_fetch_by_number(keymgmt_data->ctx, name_id,
+                                    keymgmt_data->properties);
     EVP_SIGNATURE *signature = NULL;
     int ctxfncnt = 0, signfncnt = 0, verifyfncnt = 0, verifyrecfncnt = 0;
     int gparamfncnt = 0, sparamfncnt = 0;
@@ -58,12 +59,12 @@ static void *evp_signature_from_dispatch(const char *name,
         goto err;
     }
 
-    if ((signature = evp_signature_new(prov)) == NULL
-        || (signature->name = OPENSSL_strdup(name)) == NULL) {
+    if ((signature = evp_signature_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
+    signature->name_id = name_id;
     signature->keymgmt = keymgmt;
     keymgmt = NULL;              /* avoid double free on failure below */
 
@@ -189,7 +190,6 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
             return;
         EVP_KEYMGMT_free(signature->keymgmt);
         ossl_provider_free(signature->prov);
-        OPENSSL_free(signature->name);
         CRYPTO_THREAD_lock_free(signature->lock);
         OPENSSL_free(signature);
     }
@@ -219,7 +219,8 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
      */
     keymgmt_data.ctx = ctx;
     keymgmt_data.properties = properties;
-    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
+    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE,
+                             evp_name_number(ctx, algorithm), properties,
                              evp_signature_from_dispatch, &keymgmt_data,
                              (int (*)(void *))EVP_SIGNATURE_up_ref,
                              (void (*)(void *))EVP_SIGNATURE_free);

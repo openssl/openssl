@@ -68,7 +68,7 @@ struct evp_kdf_ctx_st {
 struct evp_keymgmt_st {
     int id;                      /* libcrypto internal */
 
-    char *name;
+    int name_id;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -97,7 +97,7 @@ struct keymgmt_data_st {
 };
 
 struct evp_keyexch_st {
-    char *name;
+    int name_id;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -115,7 +115,7 @@ struct evp_keyexch_st {
 } /* EVP_KEYEXCH */;
 
 struct evp_signature_st {
-    char *name;
+    int name_id;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -167,8 +167,8 @@ int is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 #include <openssl/core.h>
 
 void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
-                        const char *algorithm, const char *properties,
-                        void *(*new_method)(const char *name,
+                        int name_id, const char *properties,
+                        void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov,
                                             void *method_data),
@@ -178,12 +178,16 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
 void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
                         void (*user_fn)(void *method, void *arg),
                         void *user_arg,
-                        void *(*new_method)(const char *name,
+                        void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov,
                                             void *method_data),
                         void *method_data,
                         void (*free_method)(void *));
+
+/* Internal fetchers for method types that are to be combined with others */
+EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
+                                         const char *properties);
 
 /* Internal structure constructors for fetched methods */
 EVP_MD *evp_md_new(void);
@@ -234,3 +238,7 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
     }
 
 void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
+
+/* OSSL_PROVIDER * is only used to get the library context */
+const char *evp_first_name(OSSL_PROVIDER *prov, int name_id);
+int evp_name_number(OPENSSL_CTX *libctx, const char *name);
