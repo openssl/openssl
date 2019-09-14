@@ -33,16 +33,18 @@ static void *keymgmt_new(void)
     return keymgmt;
 }
 
-static void *keymgmt_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov, void *unused)
+static void *keymgmt_from_dispatch(int name_id,
+                                   const OSSL_DISPATCH *fns,
+                                   OSSL_PROVIDER *prov,
+                                   void *unused)
 {
     EVP_KEYMGMT *keymgmt = NULL;
 
-    if ((keymgmt = keymgmt_new()) == NULL
-        || (keymgmt->name = OPENSSL_strdup(name)) == NULL) {
+    if ((keymgmt = keymgmt_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
         return NULL;
     }
+    keymgmt->name_id = name_id;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -151,16 +153,23 @@ static void *keymgmt_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
     return keymgmt;
 }
 
+EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
+                                         const char *properties)
+{
+    return evp_generic_fetch_by_number(ctx,
+                                       OSSL_OP_KEYMGMT, name_id, properties,
+                                       keymgmt_from_dispatch, NULL,
+                                       (int (*)(void *))EVP_KEYMGMT_up_ref,
+                                       (void (*)(void *))EVP_KEYMGMT_free);
+}
+
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    EVP_KEYMGMT *keymgmt =
-        evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
-                          keymgmt_from_dispatch, NULL,
-                          (int (*)(void *))EVP_KEYMGMT_up_ref,
-                          (void (*)(void *))EVP_KEYMGMT_free);
-
-    return keymgmt;
+    return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
+                             keymgmt_from_dispatch, NULL,
+                             (int (*)(void *))EVP_KEYMGMT_up_ref,
+                             (void (*)(void *))EVP_KEYMGMT_free);
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
@@ -182,7 +191,6 @@ void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
     if (ref > 0)
         return;
     ossl_provider_free(keymgmt->prov);
-    OPENSSL_free(keymgmt->name);
     CRYPTO_THREAD_lock_free(keymgmt->lock);
     OPENSSL_free(keymgmt);
 }

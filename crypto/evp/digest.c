@@ -636,29 +636,31 @@ EVP_MD *evp_md_new(void)
     return md;
 }
 
-static void *evp_md_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
+static void *evp_md_from_dispatch(int name_id,
+                                  const OSSL_DISPATCH *fns,
                                   OSSL_PROVIDER *prov, void *unused)
 {
     EVP_MD *md = NULL;
     int fncnt = 0;
 
     /* EVP_MD_fetch() will set the legacy NID if available */
-    if ((md = evp_md_new()) == NULL
-        || (md->name = OPENSSL_strdup(name)) == NULL) {
-        EVP_MD_free(md);
+    if ((md = evp_md_new()) == NULL) {
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    md->name_id = name_id;
 
 #ifndef FIPS_MODE
-    /*
-     * FIPS module note: since internal fetches will be entirely
-     * provider based, we know that none of its code depends on legacy
-     * NIDs or any functionality that use them.
-     *
-     * TODO(3.x) get rid of the need for legacy NIDs
-     */
-    md->type = OBJ_sn2nid(name);
+    {
+        /*
+         * FIPS module note: since internal fetches will be entirely
+         * provider based, we know that none of its code depends on legacy
+         * NIDs or any functionality that use them.
+         *
+         * TODO(3.x) get rid of the need for legacy NIDs
+         */
+        md->type = OBJ_sn2nid(evp_first_name(prov, name_id));
+    }
 #endif
 
     for (; fns->function_id != 0; fns++) {
@@ -789,7 +791,6 @@ void EVP_MD_free(EVP_MD *md)
     if (i > 0)
         return;
     ossl_provider_free(md->prov);
-    OPENSSL_free(md->name);
     CRYPTO_THREAD_lock_free(md->lock);
     OPENSSL_free(md);
 }

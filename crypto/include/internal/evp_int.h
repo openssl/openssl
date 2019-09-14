@@ -130,7 +130,7 @@ extern const EVP_PKEY_METHOD siphash_pkey_meth;
 
 struct evp_mac_st {
     OSSL_PROVIDER *prov;
-    char *name;
+    int name_id;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -152,7 +152,7 @@ struct evp_mac_st {
 
 struct evp_kdf_st {
     OSSL_PROVIDER *prov;
-    char *name;
+    int name_id;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
@@ -199,7 +199,7 @@ struct evp_md_st {
 
     /* New structure members */
     /* TODO(3.0): Remove above comment when legacy has gone */
-    char *name;
+    int name_id;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -252,7 +252,7 @@ struct evp_cipher_st {
 
     /* New structure members */
     /* TODO(3.0): Remove above comment when legacy has gone */
-    char *name;
+    int name_id;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;

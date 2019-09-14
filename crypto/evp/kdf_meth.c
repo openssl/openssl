@@ -33,7 +33,6 @@ static void evp_kdf_free(void *vkdf){
         CRYPTO_DOWN_REF(&kdf->refcnt, &ref, kdf->lock);
         if (ref <= 0) {
             ossl_provider_free(kdf->prov);
-            OPENSSL_free(kdf->name);
             CRYPTO_THREAD_lock_free(kdf->lock);
             OPENSSL_free(kdf);
         }
@@ -53,18 +52,19 @@ static void *evp_kdf_new(void)
     return kdf;
 }
 
-static void *evp_kdf_from_dispatch(const char *name, const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov, void *method_data)
+static void *evp_kdf_from_dispatch(int name_id,
+                                   const OSSL_DISPATCH *fns,
+                                   OSSL_PROVIDER *prov,
+                                   void *method_data)
 {
     EVP_KDF *kdf = NULL;
     int fnkdfcnt = 0, fnctxcnt = 0;
 
-    if ((kdf = evp_kdf_new()) == NULL
-        || (kdf->name = OPENSSL_strdup(name)) == NULL) {
-        evp_kdf_free(kdf);
+    if ((kdf = evp_kdf_new()) == NULL) {
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    kdf->name_id = name_id;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

@@ -451,7 +451,7 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 {
     if (cipher->prov != NULL)
-        return cipher->name;
+        return evp_first_name(cipher->prov, cipher->name_id);
 #ifndef FIPS_MODE
     return OBJ_nid2sn(EVP_CIPHER_nid(cipher));
 #else
@@ -479,7 +479,7 @@ int EVP_CIPHER_mode(const EVP_CIPHER *cipher)
 const char *EVP_MD_name(const EVP_MD *md)
 {
     if (md->prov != NULL)
-        return md->name;
+        return evp_first_name(md->prov, md->name_id);
 #ifndef FIPS_MODE
     return OBJ_nid2sn(EVP_MD_nid(md));
 #else

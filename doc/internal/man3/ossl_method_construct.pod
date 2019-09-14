@@ -15,13 +15,11 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
      /* Remove a store */
      void (*dealloc_tmp_store)(void *store);
      /* Get an already existing method from a store */
-     void *(*get)(OPENSSL_CTX *libctx, void *store,
-                  int operation_id, const char *name, const char *propquery,
-                  void *data);
+     void *(*get)(OPENSSL_CTX *libctx, void *store, void *data);
      /* Store a method in a store */
      int (*put)(OPENSSL_CTX *libctx, void *store, void *method,
-                int operation_id, const char *name, const char *propdef,
-                void *data);
+                const OSSL_PROVIDER *prov, int operation_id, const char *name,
+                const char *propdef, void *data);
      /* Construct a new method */
      void *(*construct)(const char *name, const OSSL_DISPATCH *fns,
                         OSSL_PROVIDER *prov, void *data);
@@ -31,7 +29,6 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
  typedef struct ossl_method_construct_method OSSL_METHOD_CONSTRUCT_METHOD;
 
  void *ossl_method_construct(OPENSSL_CTX *ctx, int operation_id,
-                             const char *name, const char *properties,
                              int force_cache,
                              OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data);
 
@@ -58,11 +55,10 @@ It's important to keep in mind that a method is identified by three things:
 =head2 Functions
 
 ossl_method_construct() creates a method by asking all available
-providers for a dispatch table given an I<operation_id>, an algorithm
-I<name> and a set of I<properties>, and then calling the appropriate
-functions given by the sub-system specific method creator through
-I<mcm> and the data in I<mcm_data> (which is passed by
-ossl_method_construct()).
+providers for a dispatch table given an I<operation_id>, and then
+calling the appropriate functions given by the sub-system specific
+method creator through I<mcm> and the data in I<mcm_data> (which is
+passed by ossl_method_construct()).
 
 This function assumes that the sub-system method creator implements
 reference counting and acts accordingly (i.e. it will call the
@@ -98,10 +94,10 @@ B<NULL> is a valid value and means that a sub-system default store
 must be used.
 This default store should be stored in the library context I<libctx>.
 
-The method to be looked up should be identified with the given
-I<operation_id>, I<name>, the provided property query I<propquery>
-and data from I<data> (which is the I<mcm_data> that was passed to
-ossl_construct_method()).
+The method to be looked up should be identified with data found in I<data>
+(which is the I<mcm_data> that was passed to ossl_construct_method()).
+In other words, the ossl_method_construct() caller is entirely responsible
+for ensuring the necesssary data is made available.
 
 This function is expected to increment the method's reference count.
 
