@@ -168,6 +168,11 @@ void EVP_MAC_free(EVP_MAC *mac)
     evp_mac_free(mac);
 }
 
+int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)
+{
+    return evp_is_a(mac->prov, mac->name_id, name);
+}
+
 const char *EVP_MAC_name(const EVP_MAC *mac)
 {
     return evp_first_name(mac->prov, mac->name_id);

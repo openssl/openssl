@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free, EVP_MAC_name,
+EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free,
+EVP_MAC_is_a, EVP_MAC_name,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
@@ -21,6 +22,7 @@ EVP_MAC_do_all_ex - EVP MAC routines
                         const char *properties);
  int EVP_MAC_up_ref(EVP_MAC *mac);
  void EVP_MAC_free(EVP_MAC *mac);
+ int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
  const char *EVP_MAC_name(const EVP_MAC *mac);
  const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac);
  int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[]);
@@ -157,6 +159,9 @@ EVP_MAC_size() returns the MAC output size for the given context.
 
 EVP_MAC_name() returns the name of the given MAC implementation.
 
+EVP_MAC_is_a() checks if the given I<mac> is an implementation of an
+algorithm that's identifiable with I<name>.
+
 EVP_MAC_provider() returns the provider that holds the implementation
 of the given I<mac>.
 
@@ -255,6 +260,9 @@ EVP_MAC_free() returns nothing at all.
 
 EVP_MAC_name() returns the name of the MAC, or NULL if NULL was
 passed.
+
+EVP_MAC_is_a() returns 1 if the given method can be identified with
+the given name, otherwise 0.
 
 EVP_MAC_provider() returns a pointer to the provider for the MAC, or
 NULL on error.

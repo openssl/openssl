@@ -448,6 +448,11 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
     return ctx->cipher->nid;
 }
 
+int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name)
+{
+    return evp_is_a(cipher->prov, cipher->name_id, name);
+}
+
 const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 {
     if (cipher->prov != NULL)

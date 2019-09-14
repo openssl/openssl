@@ -4762,3 +4762,5 @@ ERR_peek_error_all                      4878	3_0_0	EXIST::FUNCTION:
 ERR_peek_last_error_func                4879	3_0_0	EXIST::FUNCTION:
 ERR_peek_last_error_data                4880	3_0_0	EXIST::FUNCTION:
 ERR_peek_last_error_all                 4881	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_is_a                         4882	3_0_0	EXIST::FUNCTION:
+EVP_MAC_is_a                            4883	3_0_0	EXIST::FUNCTION:

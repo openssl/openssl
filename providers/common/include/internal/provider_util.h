@@ -21,6 +21,9 @@ typedef struct {
 
     /* Conditions for legacy EVP_CIPHER uses */
     ENGINE *engine;             /* cipher engine */
+
+    /* Name this was fetched by */
+    char name[51];               /* A longer name would be unexpected */
 } PROV_CIPHER;
 
 typedef struct {
@@ -34,6 +37,9 @@ typedef struct {
 
     /* Conditions for legacy EVP_MD uses */
     ENGINE *engine;             /* digest engine */
+
+    /* Name this was fetched by */
+    char name[51];               /* A longer name would be unexpected */
 } PROV_DIGEST;
 
 /* Cipher functions */
@@ -43,19 +49,20 @@ typedef struct {
  * implementation used.  If a provider cannot be found, it falls back to trying
  * non-provider based implementations.
  */
-int ossl_prov_cipher_load_from_params(PROV_CIPHER *pd,
+int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
                                       const OSSL_PARAM params[],
                                       OPENSSL_CTX *ctx);
 
 /* Reset the PROV_CIPHER fields and free any allocated cipher reference */
-void ossl_prov_cipher_reset(PROV_CIPHER *pd);
+void ossl_prov_cipher_reset(PROV_CIPHER *pc);
 
 /* Clone a PROV_CIPHER structure into a second */
 int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src);
 
 /* Query the cipher and associated engine (if any) */
-const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pd);
-ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pd);
+const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc);
+ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
+const char *ossl_prov_cipher_name(const PROV_CIPHER *pc);
 
 /* Digest functions */
 /*
@@ -77,3 +84,4 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src);
 /* Query the digest and associated engine (if any) */
 const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd);
 ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd);
+const char *ossl_prov_digest_name(const PROV_DIGEST *pd);
