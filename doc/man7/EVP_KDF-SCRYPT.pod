@@ -93,8 +93,8 @@ This example derives a 64-byte long test vector using scrypt with the password
  *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_R, (uint32_t)8);
  *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_P, (uint32_t)16);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_set_params");
+ if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
+     error("EVP_KDF_CTX_set_params");
  }
  if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
      error("EVP_KDF_derive");

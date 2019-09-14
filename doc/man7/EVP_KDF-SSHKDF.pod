@@ -125,7 +125,7 @@ This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
  *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_SSHKDF_TYPE,
                                  EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_params(kctx, params) <= 0)
+ if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
      /* Error */
 
  if (EVP_KDF_derive(kctx, out, &outlen) <= 0)
