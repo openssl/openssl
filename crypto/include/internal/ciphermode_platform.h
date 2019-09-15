@@ -238,12 +238,6 @@ void aes_t4_encrypt(const unsigned char *in, unsigned char *out,
                     const AES_KEY *key);
 void aes_t4_decrypt(const unsigned char *in, unsigned char *out,
                     const AES_KEY *key);
-void des_t4_key_expand(const void *key, DES_key_schedule *ks);
-void des_t4_ede3_cbc_encrypt(const void *inp, void *out, size_t len,
-                             const DES_key_schedule ks[3], unsigned char iv[8]);
-void des_t4_ede3_cbc_decrypt(const void *inp, void *out, size_t len,
-                             const DES_key_schedule ks[3], unsigned char iv[8]);
-
 /*
  * Key-length specific subroutines were chosen for following reason.
  * Each SPARC T4 core can execute up to 8 threads which share core's
@@ -294,6 +288,15 @@ void aes256_t4_xts_encrypt(const unsigned char *in, unsigned char *out,
 void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
                            size_t blocks, const AES_KEY *key1,
                            const AES_KEY *key2, const unsigned char *ivec);
+
+#  ifndef OPENSSL_NO_DES
+#   include <openssl/des.h>
+void des_t4_key_expand(const void *key, DES_key_schedule *ks);
+void des_t4_ede3_cbc_encrypt(const void *inp, void *out, size_t len,
+                             const DES_key_schedule ks[3], unsigned char iv[8]);
+void des_t4_ede3_cbc_decrypt(const void *inp, void *out, size_t len,
+                             const DES_key_schedule ks[3], unsigned char iv[8]);
+#  endif /*  OPENSSL_NO_DES */
 
 # elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
 /* IBM S390X support */
