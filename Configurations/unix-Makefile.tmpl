@@ -106,18 +106,18 @@ DESTDIR=
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
 INSTALLTOP={- # $prefix is used in the OPENSSLDIR perl snippet
-	      #
-	      our $prefix = $config{prefix} || "/usr/local";
+              #
+              our $prefix = $config{prefix} || "/usr/local";
               $prefix -}
 OPENSSLDIR={- #
-	      # The logic here is that if no --openssldir was given,
-	      # OPENSSLDIR will get the value from $prefix plus "/ssl".
-	      # If --openssldir was given and the value is an absolute
-	      # path, OPENSSLDIR will get its value without change.
-	      # If the value from --openssldir is a relative path,
-	      # OPENSSLDIR will get $prefix with the --openssldir
-	      # value appended as a subdirectory.
-	      #
+              # The logic here is that if no --openssldir was given,
+              # OPENSSLDIR will get the value from $prefix plus "/ssl".
+              # If --openssldir was given and the value is an absolute
+              # path, OPENSSLDIR will get its value without change.
+              # If the value from --openssldir is a relative path,
+              # OPENSSLDIR will get $prefix with the --openssldir
+              # value appended as a subdirectory.
+              #
               use File::Spec::Functions;
               our $openssldir =
                   $config{openssldir} ?
@@ -351,8 +351,8 @@ test: tests
 	  RESULT_D=test-runs \
 	  PERL="$(PERL)" \
 	  EXE_EXT={- platform->binext() -} \
-	  OPENSSL_ENGINES=`cd ../$(BLDDIR)/engines 2>/dev/null && pwd` \
-	  OPENSSL_MODULES=`cd ../$(BLDDIR)/providers 2>/dev/null && pwd` \
+	  OPENSSL_ENGINES=`cd "../$(BLDDIR)/engines" 2>/dev/null && pwd` \
+	  OPENSSL_MODULES=`cd "../$(BLDDIR)/providers" 2>/dev/null && pwd` \
 	  OPENSSL_DEBUG_MEMORY=on \
 	    $(PERL) "../$(SRCDIR)/test/run_tests.pl" $(TESTS) )
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
@@ -362,7 +362,7 @@ test: tests
 list-tests:
 	@ : {- output_off() if $disabled{tests}; "" -}
 	@SRCTOP="$(SRCDIR)" \
-	 $(PERL) "$(SRCDIR)/test/run_tests.pl" list
+	  $(PERL) "$(SRCDIR)/test/run_tests.pl" list
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
@@ -376,14 +376,14 @@ libclean:
 		if [ "$$s" = ";" ]; then continue; fi; \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
-		$(ECHO) $(RM) $$s1; {- output_off() unless windowsdll(); "" -}\
-		$(RM) apps/$$s1; \
-		$(RM) test/$$s1; \
-		$(RM) fuzz/$$s1; {- output_on() unless windowsdll(); "" -}\
-		$(RM) $$s1; \
+		$(ECHO) $(RM) "$$s1"; {- output_off() unless windowsdll(); "" -}\
+		$(RM) "apps/$$s1"; \
+		$(RM) "test/$$s1"; \
+		$(RM) "fuzz/$$s1"; {- output_on() unless windowsdll(); "" -}\
+		$(RM) "$$s1"; \
 		if [ "$$s1" != "$$s2" ]; then \
-			$(ECHO) $(RM) $$s2; \
-			$(RM) $$s2; \
+			$(ECHO) $(RM) "$$s2"; \
+			$(RM) "$$s2"; \
 		fi; \
 	done
 	$(RM) $(LIBS)
@@ -399,7 +399,7 @@ clean: libclean
 	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-$(RM) `find . -type l \! -name '.*' -print`
-	$(RM) $(TARFILE)
+	$(RM) '$(TARFILE)'
 
 distclean: clean
 	$(RM) configdata.pm
@@ -410,8 +410,8 @@ distclean: clean
 depend:
 	@: {- output_off() if $disabled{makedepend}; "" -}
 	@$(PERL) "$(SRCDIR)/util/add-depends.pl" {-
-		 defined $makedepprog  && $makedepprog =~ /\/makedepend/
-                 ? 'makedepend' : 'gcc' -}
+	         defined $makedepprog  && $makedepprog =~ /\/makedepend/
+	         ? 'makedepend' : 'gcc' -}
 	@: {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
@@ -433,9 +433,9 @@ install_ssldirs:
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		x1=`echo "$$x" | cut -f1 -d:`; \
 		x2=`echo "$$x" | cut -f2 -d:`; \
-		fn=`basename $$x1`; \
+		fn=`basename "$$x1"`; \
 		$(ECHO) "install $$x1 -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
-		cp $$x1 "$(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new"; \
+		cp "$$x1" "$(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new"; \
 		chmod 755 "$(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new"; \
 		mv -f "$(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new" \
 		      "$(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
@@ -447,7 +447,7 @@ install_ssldirs:
 			: {- output_on() unless windowsdll();
 			     output_off() if windowsdll(); "" -}; \
 			$(ECHO) "link $(DESTDIR)$(OPENSSLDIR)/misc/$$ln -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
-			ln -sf $$fn "$(DESTDIR)$(OPENSSLDIR)/misc/$$ln"; \
+			ln -sf "$$fn" "$(DESTDIR)$(OPENSSLDIR)/misc/$$ln"; \
 			: {- output_on() if windowsdll(); "" -}; \
 		fi; \
 	done
@@ -480,17 +480,17 @@ install_dev: install_runtime_libs
 	@chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
 	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@set -e; for i in "$(SRCDIR)"/include/openssl/*.h \
-		              "$(BLDDIR)"/include/openssl/*.h; do \
-		fn=`basename $$i`; \
+	                  "$(BLDDIR)"/include/openssl/*.h; do \
+		fn=`basename "$$i"`; \
 		$(ECHO) "install $$i -> $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
-		cp $$i "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
+		cp "$$i" "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 		chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
 	@$(PERL) "$(SRCDIR)/util/mkdir-p.pl" "$(DESTDIR)$(libdir)"
 	@set -e; for l in $(INSTALL_LIBS); do \
-		fn=`basename $$l`; \
+		fn=`basename "$$l"`; \
 		$(ECHO) "install $$l -> $(DESTDIR)$(libdir)/$$fn"; \
-		cp $$l "$(DESTDIR)$(libdir)/$$fn.new"; \
+		cp "$$l" "$(DESTDIR)$(libdir)/$$fn.new"; \
 		$(RANLIB) "$(DESTDIR)$(libdir)/$$fn.new"; \
 		chmod 644 "$(DESTDIR)$(libdir)/$$fn.new"; \
 		mv -f "$(DESTDIR)$(libdir)/$$fn.new" \
@@ -500,16 +500,16 @@ install_dev: install_runtime_libs
 	@set -e; for s in $(INSTALL_SHLIB_INFO); do \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
-		fn1=`basename $$s1`; \
-		fn2=`basename $$s2`; \
+		fn1=`basename "$$s1"`; \
+		fn2=`basename "$$s2"`; \
 		: {- output_off(); output_on() unless windowsdll() or sharedaix(); "" -}; \
 		if [ "$$fn1" != "$$fn2" ]; then \
 			$(ECHO) "link $(DESTDIR)$(libdir)/$$fn2 -> $(DESTDIR)$(libdir)/$$fn1"; \
-			ln -sf $$fn1 "$(DESTDIR)$(libdir)/$$fn2"; \
+			ln -sf "$$fn1" "$(DESTDIR)$(libdir)/$$fn2"; \
 		fi; \
 		: {- output_off() unless windowsdll() or sharedaix(); output_on() if windowsdll(); "" -}; \
 		$(ECHO) "install $$s2 -> $(DESTDIR)$(libdir)/$$fn2"; \
-		cp $$s2 "$(DESTDIR)$(libdir)/$$fn2.new"; \
+		cp "$$s2" "$(DESTDIR)$(libdir)/$$fn2.new"; \
 		chmod 755 "$(DESTDIR)$(libdir)/$$fn2.new"; \
 		mv -f "$(DESTDIR)$(libdir)/$$fn2.new" \
 		      "$(DESTDIR)$(libdir)/$$fn2"; \
@@ -549,15 +549,15 @@ uninstall_dev: uninstall_runtime_libs
 	@$(RM) "$(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
 	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@set -e; for i in "$(SRCDIR)"/include/openssl/*.h \
-		              "$(BLDDIR)"/include/openssl/*.h; do \
-		fn=`basename $$i`; \
+	                  "$(BLDDIR)"/include/openssl/*.h; do \
+		fn=`basename "$$i"`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/openssl"
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include"
 	@set -e; for l in $(INSTALL_LIBS); do \
-		fn=`basename $$l`; \
+		fn=`basename "$$l"`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn"; \
 		$(RM) "$(DESTDIR)$(libdir)/$$fn"; \
 	done
@@ -565,8 +565,8 @@ uninstall_dev: uninstall_runtime_libs
 	@set -e; for s in $(INSTALL_SHLIB_INFO); do \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
-		fn1=`basename $$s1`; \
-		fn2=`basename $$s2`; \
+		fn1=`basename "$$s1"`; \
+		fn2=`basename "$$s2"`; \
 		: {- output_off() if windowsdll(); "" -}; \
 		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
 		$(RM) "$(DESTDIR)$(libdir)/$$fn2"; \
@@ -592,9 +592,9 @@ install_engines: install_runtime_libs build_modules
 	@$(ECHO) "*** Installing ENGINE modules"
 	@set -e; for e in dummy $(INSTALL_ENGINES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
-		fn=`basename $$e`; \
+		fn=`basename "$$e"`; \
 		$(ECHO) "install $$e -> $(DESTDIR)$(ENGINESDIR)/$$fn"; \
-		cp $$e "$(DESTDIR)$(ENGINESDIR)/$$fn.new"; \
+		cp "$$e" "$(DESTDIR)$(ENGINESDIR)/$$fn.new"; \
 		chmod 755 "$(DESTDIR)$(ENGINESDIR)/$$fn.new"; \
 		mv -f "$(DESTDIR)$(ENGINESDIR)/$$fn.new" \
 		      "$(DESTDIR)$(ENGINESDIR)/$$fn"; \
@@ -604,7 +604,7 @@ uninstall_engines:
 	@$(ECHO) "*** Uninstalling ENGINE modules"
 	@set -e; for e in dummy $(INSTALL_ENGINES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
-		fn=`basename $$e`; \
+		fn=`basename "$$e"`; \
 		if [ "$$fn" = '{- platform->dso("ossltest") -}' ]; then \
 			continue; \
 		fi; \
@@ -625,16 +625,16 @@ install_runtime_libs: build_libs
 	@$(ECHO) "*** Installing runtime libraries"
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
-		fn=`basename $$s`; \
+		fn=`basename "$$s"`; \
 		: {- output_off() unless windowsdll(); "" -}; \
 		$(ECHO) "install $$s -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		cp $$s "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
+		cp "$$s" "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
 		chmod 755 "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
 		mv -f "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new" \
 		      "$(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		: {- output_on() unless windowsdll(); "" -}{- output_off() if windowsdll(); "" -}; \
 		$(ECHO) "install $$s -> $(DESTDIR)$(libdir)/$$fn"; \
-		cp $$s "$(DESTDIR)$(libdir)/$$fn.new"; \
+		cp "$$s" "$(DESTDIR)$(libdir)/$$fn.new"; \
 		chmod 755 "$(DESTDIR)$(libdir)/$$fn.new"; \
 		mv -f "$(DESTDIR)$(libdir)/$$fn.new" \
 		      "$(DESTDIR)$(libdir)/$$fn"; \
@@ -647,18 +647,18 @@ install_programs: install_runtime_libs build_programs
 	@$(ECHO) "*** Installing runtime programs"
 	@set -e; for x in dummy $(INSTALL_PROGRAMS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
+		fn=`basename "$$x"`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		cp $$x "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
+		cp "$$x" "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
 		chmod 755 "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
 		mv -f "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new" \
 		      "$(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 	done
 	@set -e; for x in dummy $(BIN_SCRIPTS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
+		fn=`basename "$$x"`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
-		cp $$x "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
+		cp "$$x" "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
 		chmod 755 "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new"; \
 		mv -f "$(DESTDIR)$(INSTALLTOP)/bin/$$fn.new" \
 		      "$(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
@@ -671,14 +671,14 @@ uninstall_programs:
 	@set -e; for x in dummy $(INSTALL_PROGRAMS); \
 	do  \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
+		fn=`basename "$$x"`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) "$(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 	done;
 	@set -e; for x in dummy $(BIN_SCRIPTS); \
 	do  \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
+		fn=`basename "$$x"`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) "$(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 	done
@@ -689,7 +689,7 @@ uninstall_runtime_libs:
 	@ : {- output_off() unless windowsdll(); "" -}
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
-		fn=`basename $$s`; \
+		fn=`basename "$$s"`; \
 		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) "$(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 	done
@@ -700,24 +700,24 @@ install_man_docs:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(ECHO) "*** Installing manpages"
 	$(PERL) "$(SRCDIR)/util/process_docs.pl" \
-		"--destdir=$(DESTDIR)$(MANDIR)" --type=man --suffix=$(MANSUFFIX)
+	        "--destdir=$(DESTDIR)$(MANDIR)" --type=man --suffix=$(MANSUFFIX)
 
 uninstall_man_docs:
 	@$(ECHO) "*** Uninstalling manpages"
 	$(PERL) "$(SRCDIR)/util/process_docs.pl" \
-		"--destdir=$(DESTDIR)$(MANDIR)" --type=man --suffix=$(MANSUFFIX) \
-		--remove
+	        "--destdir=$(DESTDIR)$(MANDIR)" --type=man --suffix=$(MANSUFFIX) \
+	        --remove
 
 install_html_docs:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(ECHO) "*** Installing HTML manpages"
 	$(PERL) "$(SRCDIR)/util/process_docs.pl" \
-		"--destdir=$(DESTDIR)$(HTMLDIR)" --type=html
+	        "--destdir=$(DESTDIR)$(HTMLDIR)" --type=html
 
 uninstall_html_docs:
 	@$(ECHO) "*** Uninstalling manpages"
 	$(PERL) "$(SRCDIR)/util/process_docs.pl" \
-		"--destdir=$(DESTDIR)$(HTMLDIR)" --type=html --remove
+	        "--destdir=$(DESTDIR)$(HTMLDIR)" --type=html --remove
 
 
 # Developer targets (note: these are only available on Unix) #########
@@ -740,12 +740,12 @@ lint:
 
 generate_apps:
 	( cd "$(SRCDIR)"; $(PERL) VMS/VMSify-conf.pl \
-				< apps/openssl.cnf > apps/openssl-vms.cnf )
+	                          < apps/openssl.cnf > apps/openssl-vms.cnf )
 	@ : {- output_off() if $disabled{apps}; "" -}
 	( b=`pwd`; cd "$(SRCDIR)"; \
-	  $(PERL) -I$$b apps/progs.pl -H $(APPS_OPENSSL) > apps/progs.h )
+	  $(PERL) "-I$$b" apps/progs.pl -H "$(APPS_OPENSSL)" > apps/progs.h )
 	( b=`pwd`; cd "$(SRCDIR)"; \
-	  $(PERL) -I$$b apps/progs.pl -C $(APPS_OPENSSL) > apps/progs.c )
+	  $(PERL) "-I$$b" apps/progs.pl -C "$(APPS_OPENSSL)" > apps/progs.c )
 	@ : {- output_on() if $disabled{apps}; "" -}
 
 generate_crypto_bn:
@@ -753,48 +753,48 @@ generate_crypto_bn:
 
 generate_crypto_objects:
 	( cd "$(SRCDIR)"; $(PERL) crypto/objects/objects.pl -n \
-				crypto/objects/objects.txt \
-				crypto/objects/obj_mac.num \
-				> crypto/objects/obj_mac.new && \
+	                          crypto/objects/objects.txt \
+	                          crypto/objects/obj_mac.num \
+	                          > crypto/objects/obj_mac.new && \
 	    mv crypto/objects/obj_mac.new crypto/objects/obj_mac.num )
 	( cd "$(SRCDIR)"; $(PERL) crypto/objects/objects.pl \
-				crypto/objects/objects.txt \
-				crypto/objects/obj_mac.num \
-				> include/openssl/obj_mac.h )
+	                          crypto/objects/objects.txt \
+	                          crypto/objects/obj_mac.num \
+	                          > include/openssl/obj_mac.h )
 	( cd "$(SRCDIR)"; $(PERL) crypto/objects/obj_dat.pl \
-				include/openssl/obj_mac.h \
-				> crypto/objects/obj_dat.h )
+	                          include/openssl/obj_mac.h \
+	                          > crypto/objects/obj_dat.h )
 	( cd "$(SRCDIR)"; $(PERL) crypto/objects/objxref.pl \
-				crypto/objects/obj_mac.num \
-				crypto/objects/obj_xref.txt \
-				> crypto/objects/obj_xref.h )
+	                          crypto/objects/obj_mac.num \
+	                          crypto/objects/obj_xref.txt \
+	                          > crypto/objects/obj_xref.h )
 
 generate_crypto_conf:
 	( cd "$(SRCDIR)"; $(PERL) crypto/conf/keysets.pl \
-			        > crypto/conf/conf_def.h )
+	                          > crypto/conf/conf_def.h )
 
 generate_crypto_asn1:
 	( cd "$(SRCDIR)"; $(PERL) crypto/asn1/charmap.pl \
-			        > crypto/asn1/charmap.h )
+	                          > crypto/asn1/charmap.h )
 
 generate_fuzz_oids:
 	( cd "$(SRCDIR)"; $(PERL) fuzz/mkfuzzoids.pl \
-				crypto/objects/obj_dat.h \
-				> fuzz/oids.txt )
+	                          crypto/objects/obj_dat.h \
+	                          > fuzz/oids.txt )
 
 # Set to -force to force a rebuild
 ERROR_REBUILD=
 errors:
 	( b=`pwd`; set -e; cd "$(SRCDIR)"; \
-          $(PERL) util/ck_errf.pl -strict -internal; \
-          $(PERL) -I$$b util/mkerr.pl $(ERROR_REBUILD) -internal )
+	  $(PERL) util/ck_errf.pl -strict -internal; \
+	  $(PERL) "-I$$b" util/mkerr.pl $(ERROR_REBUILD) -internal )
 	( b=`pwd`; set -e; cd "$(SRCDIR)/engines"; \
-          for E in *.ec ; do \
-              $(PERL) ../util/ck_errf.pl -strict \
-                -conf $$E `basename $$E .ec`.c; \
-              $(PERL) -I$$b ../util/mkerr.pl $(ERROR_REBUILD) -static \
-                -conf $$E `basename $$E .ec`.c ; \
-          done )
+	  for E in *.ec ; do \
+	      $(PERL) ../util/ck_errf.pl -strict \
+	        -conf "$$E" `basename "$$E" .ec`.c; \
+	      $(PERL) "-I$$b" ../util/mkerr.pl $(ERROR_REBUILD) -static \
+	        -conf "$$E" `basename "$$E" .ec`.c ; \
+	  done )
 
 {- use File::Basename;
 
@@ -971,12 +971,12 @@ $args{src}: $args{generator}->[0] $deps
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $generator > \$@
 EOF
-	  } else {
+          } else {
               return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
 	\$(PERL)$generator_incs $generator > \$@
 EOF
-	  }
+          }
       } else {
           my $cppflags = {
               shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
@@ -1139,8 +1139,8 @@ EOF
       $recipe .= <<"EOF";
 $full: $deps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
-		-o $full$shared_def $objs \\
-                $linklibs \$(LIB_EX_LIBS)
+	        -o $full$shared_def $objs \\
+	        $linklibs \$(LIB_EX_LIBS)
 EOF
       if (windowsdll()) {
           $recipe .= <<"EOF";
@@ -1179,8 +1179,8 @@ EOF
       return <<"EOF";
 $dso: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
-		-o $dso$shared_def $objs \\
-                $linklibs \$(DSO_EX_LIBS)
+	        -o $dso$shared_def $objs \\
+	        $linklibs \$(DSO_EX_LIBS)
 EOF
   }
   sub obj2lib {
@@ -1224,8 +1224,8 @@ EOF
 $bin: $objs $deps
 	rm -f $bin
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
-		-o $bin $objs \\
-		$linklibs \$(BIN_EX_LIBS)
+	        -o $bin $objs \\
+	        $linklibs \$(BIN_EX_LIBS)
 EOF
   }
   sub in2script {
