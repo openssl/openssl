@@ -95,9 +95,9 @@ RFC 2246, RFC 5246 and NIST SP 800-135 r1
 =head1 SEE ALSO
 
 L<EVP_KDF>,
-L<EVP_KDF-CTX_new_id(3)>,
+L<EVP_KDF-CTX_new(3)>,
 L<EVP_KDF-CTX_free(3)>,
-L<EVP_KDF-ctrl(3)>,
+L<EVP_KDF-CTX_set_params(3)>,
 L<EVP_KDF-derive(3)>,
 L<EVP_KDF-CTX(3)/PARAMETERS>
 
