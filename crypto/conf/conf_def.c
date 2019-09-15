@@ -352,6 +352,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 && (p != pname + 8 || *p == '=')) {
                 char *include = NULL;
                 BIO *next;
+                const char *include_dir = ossl_safe_getenv("OPENSSL_CONF_INCLUDE");
+                char *include_path = NULL;
 
                 if (*p == '=') {
                     p++;
@@ -360,17 +362,34 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 trim_ws(conf, p);
                 if (!str_copy(conf, psection, &include, p))
                     goto err;
+
+                if (include_dir != NULL) {
+                    size_t newlen = strlen(include_dir) + strlen(include) + 2;
+
+                    include_path = OPENSSL_malloc(newlen);
+                    OPENSSL_strlcpy(include_path, include_dir, newlen);
+                    OPENSSL_strlcat(include_path, "/", newlen);
+                    OPENSSL_strlcat(include_path, include, newlen);
+                } else {
+                    include_path = include;
+                }
+
                 /* get the BIO of the included file */
 #ifndef OPENSSL_NO_POSIX_IO
-                next = process_include(include, &dirctx, &dirpath);
-                if (include != dirpath) {
+                next = process_include(include_path, &dirctx, &dirpath);
+                if (include_path != dirpath) {
                     /* dirpath will contain include in case of a directory */
                     OPENSSL_free(include);
+                    if (include_path != include)
+                        OPENSSL_free(include_path);
                 }
 #else
-                next = BIO_new_file(include, "r");
+                next = BIO_new_file(include_path, "r");
                 OPENSSL_free(include);
+                if (include_path != include)
+                    OPENSSL_free(include_path);
 #endif
+
                 if (next != NULL) {
                     /* push the currently processing BIO onto stack */
                     if (biosk == NULL) {

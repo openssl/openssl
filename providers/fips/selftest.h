@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/params.h>
 #include <openssl/core_numbers.h>
+#include <openssl/ossl_typ.h>
 
 typedef struct self_test_post_params_st {
     /* FIPS module integrity check parameters */
@@ -23,7 +23,10 @@ typedef struct self_test_post_params_st {
     /* BIO callbacks supplied to the FIPS provider */
     OSSL_BIO_new_file_fn *bio_new_file_cb;
     OSSL_BIO_new_membuf_fn *bio_new_buffer_cb;
-    OSSL_BIO_read_fn *bio_read_cb;
+    OSSL_BIO_read_ex_fn *bio_read_ex_cb;
     OSSL_BIO_free_fn *bio_free_cb;
+    OPENSSL_CTX *libctx;
 
 } SELF_TEST_POST_PARAMS;
+
+int SELF_TEST_post(SELF_TEST_POST_PARAMS *st);

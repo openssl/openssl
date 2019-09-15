@@ -464,8 +464,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_BIO_NEW_MEMBUF:
             selftest_params.bio_new_buffer_cb = OSSL_get_BIO_new_membuf(in);
             break;
-        case OSSL_FUNC_BIO_READ:
-            selftest_params.bio_read_cb = OSSL_get_BIO_read(in);
+        case OSSL_FUNC_BIO_READ_EX:
+            selftest_params.bio_read_ex_cb = OSSL_get_BIO_read_ex(in);
             break;
         case OSSL_FUNC_BIO_FREE:
             selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
@@ -487,7 +487,15 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         OPENSSL_CTX_free(ctx);
         return 0;
     }
+
     fgbl->prov = provider;
+
+    selftest_params.libctx = PROV_LIBRARY_CONTEXT_OF(ctx);
+    if (!SELF_TEST_post(&selftest_params)) {
+        OPENSSL_CTX_free(ctx);
+        return 0;
+    }
+
     *out = fips_dispatch_table;
     *provctx = ctx;
 

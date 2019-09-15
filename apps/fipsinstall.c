@@ -128,6 +128,7 @@ static int write_config_fips_section(BIO *out, const char *section,
     int ret = 0;
 
     if (!(BIO_printf(out, "[%s]\n", section) > 0
+          && BIO_printf(out, "activate = 1\n") > 0
           && BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
                         VERSION_VAL) > 0
           && print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
