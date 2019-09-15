@@ -42,9 +42,9 @@ Output the derived key in binary form. Uses hexadecimal text format if not speci
 =item B<-kdfopt> I<nm:v>
 
 Passes options to the KDF algorithm.
-A comprehensive list of controls can be found in the EVP_KDF_CTX implementation
-documentation.
-Common control strings used by EVP_KDF_ctrl_str() are:
+A comprehensive list of parameters can be found in the EVP_KDF_CTX
+implementation documentation.
+Common parameter names used by EVP_KDF_CTX_set_params() are:
 
 =over 4
 
@@ -82,7 +82,8 @@ To see the list of supported digests, use the command I<list -digest-commands>.
 =item I<kdf_name>
 
 Specifies the name of a supported KDF algorithm which will be used.
-The supported algorithms names are TLS1-PRF, HKDF, SSKDF, PBKDF2, SSHKDF and id-scrypt.
+The supported algorithms names include TLS1-PRF, HKDF, SSKDF, PBKDF2,
+SSHKDF, X942KDF, X963KDF and id-scrypt.
 
 =back
 
@@ -143,14 +144,16 @@ used when building OpenSSL.
 =head1 SEE ALSO
 
 L<openssl(1)>,
-L<openssl-pkeyutl(1)>
+L<openssl-pkeyutl(1)>,
 L<EVP_KDF(3)>,
-L<EVP_KDF-SCRYPT(7)>
-L<EVP_KDF-TLS1_PRF(7)>
-L<EVP_KDF-PBKDF2(7)>
-L<EVP_KDF-HKDF(7)>
-L<EVP_KDF-SS(7)>
-L<EVP_KDF-SSHKDF(7)>
+L<EVP_KDF-SCRYPT(7)>,
+L<EVP_KDF-TLS1_PRF(7)>,
+L<EVP_KDF-PBKDF2(7)>,
+L<EVP_KDF-HKDF(7)>,
+L<EVP_KDF-SS(7)>,
+L<EVP_KDF-SSHKDF(7)>,
+L<EVP_KDF-X942(7)>,
+L<EVP_KDF-X963(7)>
 
 =head1 HISTORY
 
