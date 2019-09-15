@@ -63,6 +63,8 @@ sub fill_in {
 
     $self->SUPER::fill_in(HASH => { quotify1 => \&quotify1,
                                     quotify_l => \&quotify_l,
+                                    quotify_dep => \&quotify_dep,
+                                    quotify_arg => \&quotify_arg,
                                     output_on => sub { $self->output_on() },
                                     output_off => sub { $self->output_off() },
                                     %hash },
@@ -173,6 +175,46 @@ sub quotify_l {
             quotify1($_);
         }
     } @_;
+}
+
+=over 4
+
+=item quotify_dep STRING
+
+This escapes spaces with a backslash, to be used with filenames
+in GNU Make dependency rules.
+
+=back
+
+=cut
+
+# quotify_dep STRING
+# Escape spaces with backslash for GNU Make dependency lines
+sub quotify_dep {
+    my $s = shift @_;
+    $s =~ s{ }{\\ }g;
+    $s;
+}
+
+=over 4
+
+=item quotify_arg STRING
+
+This put the string between double-quotes if it contains space.
+
+=back
+
+=cut
+
+# quotify_arg STRING
+# Enclose string in double-quotes if it contains space
+sub quotify_arg {
+    my $s = shift @_;
+    if (index($s, ' ') != -1) {
+       '"'.$s.'"';
+    } else {
+       $s;
+    }
 }
 
 =head1 SEE ALSO

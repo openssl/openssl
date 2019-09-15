@@ -175,7 +175,7 @@ CC=$(CROSS_COMPILE){- $config{CC} -}
 CXX={- $config{CXX} ? "\$(CROSS_COMPILE)$config{CXX}" : '' -}
 CPPFLAGS={- our $cppflags1 = join(" ",
                                   (map { "-D".$_} @{$config{CPPDEFINES}}),
-                                  (map { "-I".$_} @{$config{CPPINCLUDES}}),
+                                  (map { quotify_arg("-I".$_)} @{$config{CPPINCLUDES}}),
                                   @{$config{CPPFLAGS}}) -}
 CFLAGS={- join(' ', @{$config{CFLAGS}}) -}
 CXXFLAGS={- join(' ', @{$config{CXXFLAGS}}) -}
@@ -210,8 +210,8 @@ CNF_CPPFLAGS={- our $cppflags2 =
                     join(' ', $target{cppflags} || (),
                               (map { "-D".$_} @{$target{defines}},
                                               @{$config{defines}}),
-                              (map { "-I".$_} @{$target{includes}},
-                                              @{$config{includes}}),
+                              (map { quotify_arg("-I".$_)} @{$target{includes}},
+                                                           @{$config{includes}}),
                               @{$config{cppflags}}) -}
 CNF_CFLAGS={- join(' ', $target{cflags} || (),
                         @{$config{cflags}}) -}
@@ -855,9 +855,9 @@ tar:
 
 # Helper targets #####################################################
 
-link-utils: $(BLDDIR)/util/opensslwrap.sh
+link-utils: $(subst $(subst x, ,x),\ ,$(BLDDIR)/util/opensslwrap.sh)
 
-$(BLDDIR)/util/opensslwrap.sh: configdata.pm
+$(subst $(subst x, ,x),\ ,$(BLDDIR)/util/opensslwrap.sh): configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/opensslwrap.sh" "$(BLDDIR)/util"; \
@@ -918,7 +918,7 @@ openssl.pc:
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
-configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
+configdata.pm: $(subst $(subst x, ,x),\ ,$(SRCDIR)/Configure) $(subst $(subst x, ,x),\ ,$(SRCDIR)/config) {- join(" ", map { quotify_dep($_) } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
 	$(PERL) configdata.pm -r
 	@echo "**************************************************"
@@ -946,11 +946,11 @@ reconfigure reconf:
 
   sub generatesrc {
       my %args = @_;
-      my $generator = join(" ", @{$args{generator}});
-      my $generator_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
-      my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $generator = join(" ", map { quotify_arg($_) } @{$args{generator}});
+      my $generator_incs = join("", map { " ".quotify_arg("-I".$_) } @{$args{generator_incs}});
+      my $incs = join("", map { " ".quotify1("-I".$_) } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
-      my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
+      my $deps = join(" ", map { quotify_dep($_) } @{$args{generator_deps}}, @{$args{deps}});
 
       if (platform->isdef($args{src})) {
           my $target = platform->def($args{src});
@@ -958,8 +958,8 @@ reconfigure reconf:
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
           my $ord_name = $args{generator}->[1] || $args{product};
           return <<"EOF";
-$target: $args{generator}->[0] $deps \$(SRCDIR)/util/mkdef.pl
-	\$(PERL) "\$(SRCDIR)/util/mkdef.pl"$ord_ver --ordinals $args{generator}->[0]  --name $ord_name --OS $mkdef_os > $target
+$target: @{[quotify_dep($args{generator}->[0])]} $deps \$(subst \$(subst x, ,x),\\ ,\$(SRCDIR)/util/mkdef.pl)
+	\$(PERL) "\$(SRCDIR)/util/mkdef.pl"$ord_ver --ordinals @{[quotify_arg($args{generator}->[0])]}  --name $ord_name --OS $mkdef_os > $target
 EOF
       } elsif (!platform->isasm($args{src})) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
@@ -967,13 +967,13 @@ EOF
                                                    "util", "dofile.pl")),
                                    rel2abs($config{builddir}));
               return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
+$args{src}: @{[quotify_dep($args{generator}->[0])]} $deps
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $generator > \$@
 EOF
           } else {
               return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
+$args{src}: @{[quotify_dep($args{generator}->[0])]} $deps
 	\$(PERL)$generator_incs $generator > \$@
 EOF
           }
@@ -998,13 +998,13 @@ EOF
 
           if (defined($generator)) {
               return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
+$args{src}: @{[quotify_dep($args{generator}->[0])]} $deps
 	$generator \$@
 EOF
           }
           return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
-	\$(CC) $incs $cppflags $defs -E $args{generator}->[0] | \\
+$args{src}: @{[quotify_dep($args{generator}->[0])]} $deps
+	\$(CC) $incs $cppflags $defs -E @{[quotify_arg($args{generator}->[0])]} | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
       }
@@ -1018,10 +1018,11 @@ EOF
       my $obj = platform->obj($args{obj});
       my $dep = platform->dep($args{obj});
       my @srcs = @{$args{srcs}};
-      my $srcs = join(" ",  @srcs);
-      my $deps = join(" ", @srcs, @{$args{deps}});
-      my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $srcs = join(" ", map { quotify_arg($_) } @srcs);
+      my $deps = join(" ", map { quotify_dep($_) } @srcs, @{$args{deps}});
+      my $incs = join("", map { " ".quotify_arg("-I".$_) } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
+
       my $cmd;
       my $cmdflags;
       my $cmdcompile;
@@ -1231,15 +1232,16 @@ EOF
   sub in2script {
       my %args = @_;
       my $script = $args{script};
-      my $sources = join(" ", @{$args{sources}});
+      my $sources = join(" ", map { quotify_arg($_) } @{$args{sources}});
+      my $sources_dep = join(" ", map { quotify_dep($_) } @{$args{sources}});
       my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                            "util", "dofile.pl")),
                            rel2abs($config{builddir}));
       return <<"EOF";
-$script: $sources
+$script: $sources_dep
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $sources > "$script"
-	chmod a+x $script
+	chmod a+x "$script"
 EOF
   }
   sub generatedir {
