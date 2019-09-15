@@ -106,13 +106,13 @@ static int aes_xts_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return aes_xts_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
-static void *aes_xts_newctx(void *provctx, unsigned int mode, size_t kbits,
-                            size_t blkbits, size_t ivbits)
+static void *aes_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
+                            size_t kbits, size_t blkbits, size_t ivbits)
 {
     PROV_AES_XTS_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx != NULL) {
-        cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits, mode,
+        cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits, mode, flags,
                                PROV_CIPHER_HW_aes_xts(kbits), NULL);
     }
     return ctx;
@@ -255,7 +255,7 @@ static int aes_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])            \
 static OSSL_OP_cipher_newctx_fn aes_##kbits##_xts_newctx;                      \
 static void *aes_##kbits##_xts_newctx(void *provctx)                           \
 {                                                                              \
-    return aes_xts_newctx(provctx, EVP_CIPH_##UCMODE##_MODE, 2 * kbits,        \
+    return aes_xts_newctx(provctx, EVP_CIPH_##UCMODE##_MODE, flags, 2 * kbits, \
                           AES_XTS_BLOCK_BITS, AES_XTS_IV_BITS);                \
 }                                                                              \
 const OSSL_DISPATCH aes##kbits##xts_functions[] = {                            \

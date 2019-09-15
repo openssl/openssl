@@ -85,7 +85,7 @@ int cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                               unsigned long flags,
                               size_t kbits, size_t blkbits, size_t ivbits);
 void cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
-                            size_t ivbits, unsigned int mode,
+                            size_t ivbits, unsigned int mode, uint64_t flags,
                             const PROV_CIPHER_HW *hw, void *provctx);
 
 #define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,     \
@@ -102,7 +102,7 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
-                                EVP_CIPH_##UCMODE##_MODE,                      \
+                                EVP_CIPH_##UCMODE##_MODE, flags,               \
                                 PROV_CIPHER_HW_##alg##_##lcmode(kbits), NULL); \
      }                                                                         \
      return ctx;                                                               \
@@ -147,4 +147,80 @@ PROV_CIPHER_HW_FN cipher_hw_chunked_ofb128;
 #define cipher_hw_chunked_ctr  cipher_hw_generic_ctr
 #define cipher_hw_chunked_cfb1 cipher_hw_generic_cfb1
 
+#define IMPLEMENT_CIPHER_HW_OFB(MODE, NAME, CTX_NAME, KEY_NAME, FUNC_PREFIX)   \
+static int cipher_hw_##NAME##_##MODE##_cipher(PROV_CIPHER_CTX *ctx,            \
+                                         unsigned char *out,                   \
+                                         const unsigned char *in, size_t len)  \
+{                                                                              \
+    int num = ctx->num;                                                        \
+    KEY_NAME *key = &(((CTX_NAME *)ctx)->ks.ks);                               \
+                                                                               \
+    while (len >= MAXCHUNK) {                                                  \
+        FUNC_PREFIX##_encrypt(in, out, MAXCHUNK, key, ctx->iv, &num);          \
+        len -= MAXCHUNK;                                                       \
+        in += MAXCHUNK;                                                        \
+        out += MAXCHUNK;                                                       \
+    }                                                                          \
+    if (len > 0) {                                                             \
+        FUNC_PREFIX##_encrypt(in, out, (long)len, key, ctx->iv, &num);         \
+    }                                                                          \
+    ctx->num = num;                                                            \
+    return 1;                                                                  \
+}
 
+#define IMPLEMENT_CIPHER_HW_ECB(MODE, NAME, CTX_NAME, KEY_NAME, FUNC_PREFIX)   \
+static int cipher_hw_##NAME##_##MODE##_cipher(PROV_CIPHER_CTX *ctx,            \
+                                         unsigned char *out,                   \
+                                         const unsigned char *in, size_t len)  \
+{                                                                              \
+    size_t i, bl = ctx->blocksize;                                             \
+    KEY_NAME *key = &(((CTX_NAME *)ctx)->ks.ks);                               \
+                                                                               \
+    if (len < bl)                                                              \
+        return 1;                                                              \
+    for (i = 0, len -= bl; i <= len; i += bl)                                  \
+        FUNC_PREFIX##_encrypt(in + i, out + i, key, ctx->enc);                 \
+    return 1;                                                                  \
+}
+
+#define IMPLEMENT_CIPHER_HW_CBC(MODE, NAME, CTX_NAME, KEY_NAME, FUNC_PREFIX)   \
+static int cipher_hw_##NAME##_##MODE##_cipher(PROV_CIPHER_CTX *ctx,            \
+                                         unsigned char *out,                   \
+                                         const unsigned char *in, size_t len)  \
+{                                                                              \
+    KEY_NAME *key = &(((CTX_NAME *)ctx)->ks.ks);                               \
+                                                                               \
+    while (len >= MAXCHUNK) {                                                  \
+        FUNC_PREFIX##_encrypt(in, out, MAXCHUNK, key, ctx->iv, ctx->enc);      \
+        len -= MAXCHUNK;                                                       \
+        in += MAXCHUNK;                                                        \
+        out += MAXCHUNK;                                                       \
+    }                                                                          \
+    if (len > 0)                                                               \
+        FUNC_PREFIX##_encrypt(in, out, (long)len, key, ctx->iv, ctx->enc);     \
+    return 1;                                                                  \
+}
+
+#define IMPLEMENT_CIPHER_HW_CFB(MODE, NAME, CTX_NAME, KEY_NAME, FUNC_PREFIX)   \
+static int cipher_hw_##NAME##_##MODE##_cipher(PROV_CIPHER_CTX *ctx,            \
+                                         unsigned char *out,                   \
+                                         const unsigned char *in, size_t len)  \
+{                                                                              \
+    size_t chunk = MAXCHUNK;                                                   \
+    KEY_NAME *key = &(((CTX_NAME *)ctx)->ks.ks);                               \
+    int num = ctx->num;                                                        \
+                                                                               \
+    if (len < chunk)                                                           \
+        chunk = len;                                                           \
+    while (len > 0 && len >= chunk) {                                          \
+        FUNC_PREFIX##_encrypt(in, out, (long)chunk, key, ctx->iv, &num,        \
+                              ctx->enc);                                       \
+        len -= chunk;                                                          \
+        in += chunk;                                                           \
+        out += chunk;                                                          \
+        if (len < chunk)                                                       \
+            chunk = len;                                                       \
+    }                                                                          \
+    ctx->num = num;                                                            \
+    return 1;                                                                  \
+}

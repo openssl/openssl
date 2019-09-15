@@ -19,4 +19,9 @@ IF[{- !$disabled{camellia} -}]
       cipher_camellia.c cipher_camellia_hw.c
 ENDIF
 
+IF[{- !$disabled{bf} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_blowfish.c cipher_blowfish_hw.c
+ENDIF
+
 INCLUDE[../../../libcrypto]=. ../../../crypto

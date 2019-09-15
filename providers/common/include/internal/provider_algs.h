@@ -116,6 +116,12 @@ extern const OSSL_DISPATCH camellia256ctr_functions[];
 extern const OSSL_DISPATCH camellia192ctr_functions[];
 extern const OSSL_DISPATCH camellia128ctr_functions[];
 #endif /* OPENSSL_NO_CAMELLIA */
+#ifndef OPENSSL_NO_BF
+extern const OSSL_DISPATCH blowfish128ecb_functions[];
+extern const OSSL_DISPATCH blowfish128cbc_functions[];
+extern const OSSL_DISPATCH blowfish64ofb64_functions[];
+extern const OSSL_DISPATCH blowfish64cfb64_functions[];
+#endif /* OPENSSL_NO_BF */
 
 extern const OSSL_DISPATCH tdes_ede3_ecb_functions[];
 extern const OSSL_DISPATCH tdes_ede3_cbc_functions[];

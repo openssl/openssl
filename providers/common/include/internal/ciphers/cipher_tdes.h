@@ -35,7 +35,7 @@ static OSSL_OP_cipher_newctx_fn tdes_##type##_##lcmode##_newctx;               \
 static void *tdes_##type##_##lcmode##_newctx(void *provctx)                    \
 {                                                                              \
     return tdes_newctx(provctx, EVP_CIPH_##UCMODE##_MODE, kbits, blkbits,      \
-                       ivbits, PROV_CIPHER_HW_tdes_##type##_##lcmode());       \
+                       ivbits, flags, PROV_CIPHER_HW_tdes_##type##_##lcmode());\
 }                                                                              \
 static OSSL_OP_cipher_get_params_fn tdes_##type##_##lcmode##_get_params;       \
 static int tdes_##type##_##lcmode##_get_params(OSSL_PARAM params[])            \
@@ -68,7 +68,7 @@ const OSSL_DISPATCH tdes_##type##_##lcmode##_functions[] = {                   \
 }
 
 void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
-                  size_t ivbits, const PROV_CIPHER_HW *hw);
+                  size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw);
 OSSL_OP_cipher_freectx_fn tdes_freectx;
 OSSL_OP_cipher_encrypt_init_fn tdes_einit;
 OSSL_OP_cipher_decrypt_init_fn tdes_dinit;

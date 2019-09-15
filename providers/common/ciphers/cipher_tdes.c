@@ -14,12 +14,13 @@
 #include "internal/providercommonerr.h"
 
 void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
-                  size_t ivbits, const PROV_CIPHER_HW *hw)
+                  size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
 {
     PROV_TDES_CTX *tctx = OPENSSL_zalloc(sizeof(*tctx));
 
     if (tctx != NULL)
-        cipher_generic_initkey(tctx, kbits, blkbits, ivbits, mode, hw, provctx);
+        cipher_generic_initkey(tctx, kbits, blkbits, ivbits, mode, flags, hw,
+                               provctx);
     return tctx;
 }
 
