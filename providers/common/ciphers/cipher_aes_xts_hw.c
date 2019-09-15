@@ -84,7 +84,7 @@ static int cipher_hw_aesni_xts_initkey(PROV_CIPHER_CTX *ctx,
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
 
     XTS_SET_KEY_FN(aesni_set_encrypt_key, aesni_set_decrypt_key,
-                   aesni_xts_encrypt, aesni_decrypt,
+                   aesni_encrypt, aesni_decrypt,
                    aesni_xts_encrypt, aesni_xts_decrypt);
     return 1;
 }
