@@ -325,9 +325,10 @@ int req_main(int argc, char **argv)
             newreq = 1;
             break;
         case OPT_PKEYOPT:
-            if (!pkeyopts)
+            if (pkeyopts == NULL)
                 pkeyopts = sk_OPENSSL_STRING_new_null();
-            if (!pkeyopts || !sk_OPENSSL_STRING_push(pkeyopts, opt_arg()))
+            if (pkeyopts == NULL
+                    || !sk_OPENSSL_STRING_push(pkeyopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_SIGOPT:

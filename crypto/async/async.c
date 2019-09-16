@@ -287,7 +287,7 @@ static void async_empty_pool(async_pool *pool)
 {
     ASYNC_JOB *job;
 
-    if (!pool || !pool->jobs)
+    if (pool == NULL || pool->jobs == NULL)
         return;
 
     do {

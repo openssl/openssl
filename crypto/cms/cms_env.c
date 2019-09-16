@@ -56,14 +56,15 @@ int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
         pkey = ri->d.ktri->pkey;
     else if (ri->type == CMS_RECIPINFO_AGREE) {
         EVP_PKEY_CTX *pctx = ri->d.kari->pctx;
-        if (!pctx)
+
+        if (pctx == NULL)
             return 0;
         pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-        if (!pkey)
+        if (pkey == NULL)
             return 0;
     } else
         return 0;
-    if (!pkey->ameth || !pkey->ameth->pkey_ctrl)
+    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
     if (i == -2) {
@@ -191,7 +192,7 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
         goto merr;
 
     pk = X509_get0_pubkey(recip);
-    if (!pk) {
+    if (pk == NULL) {
         CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT, CMS_R_ERROR_GETTING_PUBLIC_KEY);
         goto err;
     }

@@ -48,7 +48,7 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
             EVP_PKEY *tmp;
             PKCS8_PRIV_KEY_INFO *p8 = NULL;
             p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, length);
-            if (!p8)
+            if (p8 == NULL)
                 goto err;
             tmp = EVP_PKCS82PKEY(p8);
             PKCS8_PRIV_KEY_INFO_free(p8);
@@ -104,7 +104,7 @@ EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
         EVP_PKEY *ret;
 
         sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
-        if (!p8) {
+        if (p8 == NULL) {
             ASN1err(ASN1_F_D2I_AUTOPRIVATEKEY,
                     ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
             return NULL;

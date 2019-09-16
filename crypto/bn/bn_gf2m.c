@@ -297,7 +297,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
 
     bn_check_top(a);
 
-    if (!p[0]) {
+    if (p[0] == 0) {
         /* reduction mod 1 => return 0 */
         BN_zero(r);
         return 1;
@@ -929,7 +929,7 @@ int BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const int p[],
 
     bn_check_top(a);
 
-    if (!p[0]) {
+    if (p[0] == 0) {
         /* reduction mod 1 => return 0 */
         BN_zero(r);
         return 1;
@@ -988,7 +988,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 
     bn_check_top(a_);
 
-    if (!p[0]) {
+    if (p[0] == 0) {
         /* reduction mod 1 => return 0 */
         BN_zero(r);
         return 1;

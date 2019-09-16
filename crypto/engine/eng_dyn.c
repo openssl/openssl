@@ -343,7 +343,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         return 1;
     case DYNAMIC_CMD_DIR_ADD:
         /* a NULL 'p' or a string of zero-length is the same thing */
-        if (!p || (strlen((const char *)p) < 1)) {
+        if (p == NULL || (strlen((const char *)p) < 1)) {
             ENGINEerr(ENGINE_F_DYNAMIC_CTRL, ENGINE_R_INVALID_ARGUMENT);
             return 0;
         }

@@ -124,8 +124,9 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             continue;
         } else if (*pstr == '@') {
             STACK_OF(CONF_VALUE) *polsect;
+
             polsect = X509V3_get_section(ctx, pstr + 1);
-            if (!polsect) {
+            if (polsect == NULL) {
                 X509V3err(X509V3_F_R2I_CERTPOL, X509V3_R_INVALID_SECTION);
 
                 X509V3_conf_err(cnf);
@@ -221,7 +222,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             X509V3_section_free(ctx, unot);
             if (!qual)
                 goto err;
-            if (!pol->qualifiers)
+            if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
             if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual))
                 goto merr;
@@ -232,7 +233,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             goto err;
         }
     }
-    if (!pol->policyid) {
+    if (pol->policyid == NULL) {
         X509V3err(X509V3_F_POLICY_SECTION, X509V3_R_NO_POLICY_IDENTIFIER);
         goto err;
     }

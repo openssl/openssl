@@ -641,7 +641,7 @@ const char *ERR_reason_error_string(unsigned long e)
     r = ERR_GET_REASON(e);
     d.error = ERR_PACK(l, 0, r);
     p = int_err_get_item(&d);
-    if (!p) {
+    if (p == NULL) {
         d.error = ERR_PACK(0, 0, r);
         p = int_err_get_item(&d);
     }

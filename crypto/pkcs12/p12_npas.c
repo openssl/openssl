@@ -33,7 +33,7 @@ int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass)
 {
     /* Check for NULL PKCS12 structure */
 
-    if (!p12) {
+    if (p12 == NULL) {
         PKCS12err(PKCS12_F_PKCS12_NEWPASS,
                   PKCS12_R_INVALID_NULL_PKCS12_POINTER);
         return 0;
@@ -94,7 +94,7 @@ static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
         else
             p7new = PKCS12_pack_p7encdata(pbe_nid, newpass, -1, NULL,
                                           pbe_saltlen, pbe_iter, bags);
-        if (!p7new || !sk_PKCS7_push(newsafes, p7new))
+        if (p7new == NULL || !sk_PKCS7_push(newsafes, p7new))
             goto err;
         sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
         bags = NULL;
@@ -173,8 +173,9 @@ static int alg_get(const X509_ALGOR *alg, int *pnid, int *piter,
                    int *psaltlen)
 {
     PBEPARAM *pbe;
+
     pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), alg->parameter);
-    if (!pbe)
+    if (pbe == NULL)
         return 0;
     *pnid = OBJ_obj2nid(alg->algorithm);
     *piter = ASN1_INTEGER_get(pbe->iter);

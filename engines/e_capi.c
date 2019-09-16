@@ -1301,13 +1301,14 @@ static void capi_dump_prov_info(CAPI_CTX *ctx, BIO *out,
                                 CRYPT_KEY_PROV_INFO *pinfo)
 {
     char *provname = NULL, *contname = NULL;
-    if (!pinfo) {
+
+    if (pinfo == NULL) {
         BIO_printf(out, "  No Private Key\n");
         return;
     }
     provname = wide_to_asc(pinfo->pwszProvName);
     contname = wide_to_asc(pinfo->pwszContainerName);
-    if (!provname || !contname)
+    if (provname == NULL || contname == NULL)
         goto err;
 
     BIO_printf(out, "  Private Key Info:\n");
@@ -1777,7 +1778,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
     sk_X509_free(certs);
 
-    if (!*pcert)
+    if (*pcert == NULL)
         return 0;
 
     /* Setup key for selected certificate */

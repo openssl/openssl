@@ -178,7 +178,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     /* dup supplied name */
     ptmp->name = OPENSSL_strdup(name);
     ptmp->sname = OPENSSL_strdup(sname);
-    if (!ptmp->name || !ptmp->sname) {
+    if (ptmp->name == NULL|| ptmp->sname == NULL) {
         X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -216,7 +216,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
 
 static void xptable_free(X509_PURPOSE *p)
 {
-    if (!p)
+    if (p == NULL)
         return;
     if (p->flags & X509_PURPOSE_DYNAMIC) {
         if (p->flags & X509_PURPOSE_DYNAMIC_NAME) {

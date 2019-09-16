@@ -625,7 +625,8 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
         EVP_PKEY_HMAC,
         0
     };
-    if (!pmeth) {
+
+    if (pmeth == NULL) {
         *nids = ossl_pkey_nids;
         return 1;
     }

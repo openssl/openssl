@@ -170,7 +170,7 @@ void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e)
 
 static void int_cleanup_cb_doall(ENGINE_PILE *p)
 {
-    if (!p)
+    if (p == NULL)
         return;
     sk_ENGINE_free(p->sk);
     if (p->funct)

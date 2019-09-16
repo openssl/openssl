@@ -117,10 +117,11 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     int klen;
     EVP_PKEY *ret;
     char psbuf[PEM_BUFSIZE];
+
     p8 = d2i_PKCS8_bio(bp, NULL);
-    if (!p8)
+    if (p8 == NULL)
         return NULL;
-    if (cb)
+    if (cb != NULL)
         klen = cb(psbuf, PEM_BUFSIZE, 0, u);
     else
         klen = PEM_def_callback(psbuf, PEM_BUFSIZE, 0, u);
@@ -132,13 +133,13 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     p8inf = PKCS8_decrypt(p8, psbuf, klen);
     X509_SIG_free(p8);
     OPENSSL_cleanse(psbuf, klen);
-    if (!p8inf)
+    if (p8inf == NULL)
         return NULL;
     ret = EVP_PKCS82PKEY(p8inf);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     if (!ret)
         return NULL;
-    if (x) {
+    if (x != NULL) {
         EVP_PKEY_free(*x);
         *x = ret;
     }

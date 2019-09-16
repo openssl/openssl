@@ -505,7 +505,7 @@ static ASN1_OBJECT *ts_RESP_get_policy(TS_RESP_CTX *ctx)
         if (!OBJ_cmp(requested, current))
             policy = current;
     }
-    if (!policy) {
+    if (policy == NULL) {
         TSerr(TS_F_TS_RESP_GET_POLICY, TS_R_UNACCEPTABLE_POLICY);
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Requested policy is not " "supported.");

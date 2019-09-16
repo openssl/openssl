@@ -116,7 +116,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
         goto err;
     }
     if (mdnid == NID_undef) {
-        if (!pkey->ameth || !pkey->ameth->item_verify) {
+        if (pkey->ameth == NULL || pkey->ameth->item_verify == NULL) {
             ASN1err(ASN1_F_ASN1_ITEM_VERIFY,
                     ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
             goto err;

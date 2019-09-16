@@ -40,7 +40,7 @@ int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
 {
     if (pkey == NULL)
         return 0;
-    if (!pkey->ameth || !pkey->ameth->pkey_security_bits)
+    if (pkey->ameth == NULL || pkey->ameth->pkey_security_bits == NULL)
         return -2;
     return pkey->ameth->pkey_security_bits(pkey);
 }
