@@ -81,9 +81,6 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
     if (ctx == NULL)
         return;
 
-    if (ctx->digest == NULL || ctx->digest->prov == NULL)
-        goto legacy;
-
     EVP_MD_CTX_reset(ctx);
 
     EVP_MD_free(ctx->fetched_digest);
@@ -93,11 +90,6 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
 
     OPENSSL_free(ctx);
     return;
-
-    /* TODO(3.0): Remove legacy code below */
- legacy:
-    EVP_MD_CTX_reset(ctx);
-    OPENSSL_free(ctx);
 }
 
 int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)

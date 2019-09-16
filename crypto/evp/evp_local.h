@@ -129,12 +129,22 @@ struct evp_signature_st {
     OSSL_OP_signature_verify_fn *verify;
     OSSL_OP_signature_verify_recover_init_fn *verify_recover_init;
     OSSL_OP_signature_verify_recover_fn *verify_recover;
+    OSSL_OP_signature_digest_sign_init_fn *digest_sign_init;
+    OSSL_OP_signature_digest_sign_update_fn *digest_sign_update;
+    OSSL_OP_signature_digest_sign_final_fn *digest_sign_final;
+    OSSL_OP_signature_digest_verify_init_fn *digest_verify_init;
+    OSSL_OP_signature_digest_verify_update_fn *digest_verify_update;
+    OSSL_OP_signature_digest_verify_final_fn *digest_verify_final;
     OSSL_OP_signature_freectx_fn *freectx;
     OSSL_OP_signature_dupctx_fn *dupctx;
     OSSL_OP_signature_get_ctx_params_fn *get_ctx_params;
     OSSL_OP_signature_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_OP_signature_set_ctx_params_fn *set_ctx_params;
     OSSL_OP_signature_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_OP_signature_get_ctx_md_params_fn *get_ctx_md_params;
+    OSSL_OP_signature_gettable_ctx_md_params_fn *gettable_ctx_md_params;
+    OSSL_OP_signature_set_ctx_md_params_fn *set_ctx_md_params;
+    OSSL_OP_signature_settable_ctx_md_params_fn *settable_ctx_md_params;
 } /* EVP_SIGNATURE */;
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,

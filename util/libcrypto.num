@@ -4822,3 +4822,7 @@ OSSL_CMP_log_close                      4938	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_print_errors_cb                4939	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CRMF_CERTID_get0_issuer            4940	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_CERTID_get0_serialNumber      4941	3_0_0	EXIST::FUNCTION:CRMF
+EVP_DigestSignInit_ex                   4942	3_0_0	EXIST::FUNCTION:
+EVP_DigestSignUpdate                    4943	3_0_0	EXIST::FUNCTION:
+EVP_DigestVerifyInit_ex                 4944	3_0_0	EXIST::FUNCTION:
+EVP_DigestVerifyUpdate                  4945	3_0_0	EXIST::FUNCTION:
