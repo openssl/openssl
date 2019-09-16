@@ -49,7 +49,7 @@ Output the MAC in binary form. Uses hexadecimal text format if not specified.
 Passes options to the MAC algorithm.
 A comprehensive list of controls can be found in the EVP_MAC implementation
 documentation.
-Common control strings used by EVP_MAC_ctrl_str() are:
+Common parameter names used by EVP_MAC_CTX_get_params() are:
 
 =over 4
 
@@ -144,12 +144,12 @@ The B<list -mac-algorithms> command can be used to list them.
 
 L<openssl(1)>,
 L<EVP_MAC(3)>,
-L<EVP_MAC_CMAC(7)>,
-L<EVP_MAC_GMAC(7)>,
-L<EVP_MAC_HMAC(7)>,
-L<EVP_MAC_KMAC(7)>,
-L<EVP_MAC_SIPHASH(7)>,
-L<EVP_MAC_POLY1305(7)>
+L<EVP_MAC-CMAC(7)>,
+L<EVP_MAC-GMAC(7)>,
+L<EVP_MAC-HMAC(7)>,
+L<EVP_MAC-KMAC(7)>,
+L<EVP_MAC-SIPHASH(7)>,
+L<EVP_MAC-POLY1305(7)>
 
 =head1 COPYRIGHT
 
