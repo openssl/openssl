@@ -23,7 +23,7 @@ used with EVP_MAC_fetch():
 =head2 Supported parameters
 
 The general description of these parameters can be found in
-L<EVP_MAC(3)/PARAMETER NAMES>.
+L<EVP_MAC(3)/PARAMETERS>.
 
 All these parameters can be set with EVP_MAC_CTX_set_params().
 Furthermore, the "size" parameter can be retrieved with
@@ -40,7 +40,7 @@ EVP_MAC_CTX_get_params(), or with EVP_MAC_size().
 =head1 SEE ALSO
 
 L<EVP_MAC_CTX_get_params(3)>, L<EVP_MAC_CTX_set_params(3)>,
-L<EVP_MAC(3)/PARAMETER NAMES>, L<OSSL_PARAM(3)>
+L<EVP_MAC(3)/PARAMETERS>, L<OSSL_PARAM(3)>
 
 =head1 COPYRIGHT
 
