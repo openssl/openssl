@@ -165,7 +165,7 @@ providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
 
-=head1 PARAMETER NAMES
+=head1 PARAMETERS
 
 Parameters are identified by name as strings, and have an expected
 data type and maximum size.
