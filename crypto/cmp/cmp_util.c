@@ -117,15 +117,15 @@ static void put_error(int lib, const char *func, int reason,
     ERR_set_error(lib, reason, NULL);
 }
 
-#define ERR_print_errors_cb_LIMIT 4096 /* size of char buf2[] variable there */
+#define ERR_print_errors_cb_LIMIT 4096 /* size of char buf[] variable there */
 #define TYPICAL_MAX_OUTPUT_BEFORE_DATA 100
 #define MAX_DATA_LEN (ERR_print_errors_cb_LIMIT-TYPICAL_MAX_OUTPUT_BEFORE_DATA)
 void ossl_cmp_add_error_txt(const char *separator, const char *txt)
 {
-    const char *file;
+    const char *file = NULL;
     int line;
     const char *func = NULL;
-    const char *data;
+    const char *data = NULL;
     int flags;
     unsigned long err = ERR_peek_last_error();
 
@@ -139,13 +139,12 @@ void ossl_cmp_add_error_txt(const char *separator, const char *txt)
         const char *curr = txt, *next = txt;
         char *tmp;
 
-        ERR_peek_last_error_line_data(&file, &line, &data, &flags);
+        ERR_peek_last_error_all(&file, &line, &func, &data, &flags);
         if ((flags & ERR_TXT_STRING) == 0) {
             data = "";
             separator = "";
         }
         data_len = strlen(data);
-        /* TODO add when available: ERR_peek_last_error_func(&func); */
 
         /* workaround for limit of ERR_print_errors_cb() */
         if (data_len >= MAX_DATA_LEN
@@ -200,7 +199,7 @@ void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn)
     unsigned long err;
     char component[128];
     char msg[ERR_print_errors_cb_LIMIT];
-    const char *file, *func = NULL, *data;
+    const char *file = NULL, *func = NULL, *data = NULL;
     int line, flags;
 
     if (log_fn == NULL) {
@@ -215,8 +214,7 @@ void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn)
         return;
     }
 
-    /* TODO add when available: ERR_peek_error_func(&func); */
-    while ((err = ERR_get_error_line_data(&file, &line, &data, &flags)) != 0) {
+    while ((err = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
         if (!(flags & ERR_TXT_STRING))
             data = NULL;
         BIO_snprintf(component, sizeof(component), "OpenSSL:%s:%s",
@@ -225,7 +223,6 @@ void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn)
                      data == NULL ? "" : " : ", data == NULL ? "" : data);
         if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)
             break;              /* abort outputting the error report */
-        /* TODO add when available: ERR_peek_error_func(&func); */
     }
 }
 

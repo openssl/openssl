@@ -41,20 +41,16 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
     OSSL_CRMF_PBMPARAMETER *pbm = NULL;
     unsigned char *salt = NULL;
 
-    if ((pbm = OSSL_CRMF_PBMPARAMETER_new()) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, ERR_R_MALLOC_FAILURE);
+    if ((pbm = OSSL_CRMF_PBMPARAMETER_new()) == NULL)
         goto err;
-    }
 
     /*
      * salt contains a randomly generated value used in computing the key
      * of the MAC process.  The salt SHOULD be at least 8 octets (64
      * bits) long.
      */
-    if ((salt = OPENSSL_malloc(slen)) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, ERR_R_MALLOC_FAILURE);
+    if ((salt = OPENSSL_malloc(slen)) == NULL)
         goto err;
-    }
     if (RAND_bytes(salt, (int)slen) <= 0) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_FAILURE_OBTAINING_RANDOM);
         goto err;
@@ -145,10 +141,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_NULL_ARGUMENT);
         goto err;
     }
-    if ((mac_res = OPENSSL_malloc(EVP_MAX_MD_SIZE)) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, ERR_R_MALLOC_FAILURE);
+    if ((mac_res = OPENSSL_malloc(EVP_MAX_MD_SIZE)) == NULL)
         goto err;
-    }
 
     /*
      * owf identifies the hash algorithm and associated parameters used to
@@ -160,10 +154,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
         goto err;
     }
 
-    if ((ctx = EVP_MD_CTX_new()) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, ERR_R_MALLOC_FAILURE);
+    if ((ctx = EVP_MD_CTX_new()) == NULL)
         goto err;
-    }
 
     /* compute the basekey of the salted secret */
     if (!EVP_DigestInit_ex(ctx, m, NULL))
