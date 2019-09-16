@@ -19,6 +19,7 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
+#include <ctype.h>
 
 #undef BUFSIZE
 #define BUFSIZE 1024*8
@@ -27,9 +28,15 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
           const char *file);
+static void show_digests(const OBJ_NAME *name, void *bio_);
+
+struct doall_dgst_digests {
+    BIO *bio;
+    int n;
+};
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_LIST,
     OPT_C, OPT_R, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
     OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
@@ -43,6 +50,7 @@ const OPTIONS dgst_options[] = {
     {OPT_HELP_STR, 1, '-',
         "  file... files to digest (default is stdin)\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"list", OPT_LIST, '-', "List digests"},
     {"c", OPT_C, '-', "Print the digest with separating colons"},
     {"r", OPT_R, '-', "Print the digest in coreutils format"},
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
@@ -91,6 +99,7 @@ int dgst_main(int argc, char **argv)
     int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
     int engine_impl = 0;
+    struct doall_dgst_digests dec;
 
     prog = opt_progname(argv[0]);
     buf = app_malloc(BUFSIZE, "I/O buffer");
@@ -106,6 +115,15 @@ int dgst_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(dgst_options);
+            ret = 0;
+            goto end;
+        case OPT_LIST:
+            BIO_printf(bio_out, "Supported digests:\n");
+            dec.bio = bio_out;
+            dec.n = 0;
+            OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH,
+                                   show_digests, &dec);
+            BIO_printf(bio_out, "\n");
             ret = 0;
             goto end;
         case OPT_C:
@@ -411,6 +429,32 @@ int dgst_main(int argc, char **argv)
     BIO_free(bmd);
     release_engine(e);
     return ret;
+}
+
+static void show_digests(const OBJ_NAME *name, void *arg)
+{
+    struct doall_dgst_digests *dec = (struct doall_dgst_digests *)arg;
+    const EVP_MD *md = NULL;
+
+    /* Filter out signed digests (a.k.a signature algorithms) */
+    if (strstr(name->name, "rsa") != NULL || strstr(name->name, "RSA") != NULL)
+        return;
+
+    if (!islower((unsigned char)*name->name))
+        return;
+
+    /* Filter out message digests that we cannot use */
+    md = EVP_get_digestbyname(name->name);
+    if (md == NULL)
+        return;
+
+    BIO_printf(dec->bio, "-%-25s", name->name);
+    if (++dec->n == 3) {
+        BIO_printf(dec->bio, "\n");
+        dec->n = 0;
+    } else {
+        BIO_printf(dec->bio, " ");
+    }
 }
 
 /*
