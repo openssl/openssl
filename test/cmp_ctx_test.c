@@ -145,13 +145,9 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
 #endif
 
     /* this should work regardless of OPENSSL_NO_STDIO and OPENSSL_NO_TRACE: */
-#ifndef OPENSSL_NO_TRACE
     if (!TEST_true(OSSL_CMP_CTX_set_log_cb(ctx, msg_total_size_log_cb)))
         res = 0;
-#else
-    ctx->log_cb = msg_total_size_log_cb;
-#endif
-    if (!TEST_true(ctx->log_cb != NULL)) {
+    if (!TEST_true(ctx->log_cb == msg_total_size_log_cb)) {
         res = 0;
     } else {
         CMPerr(0, CMP_R_INVALID_ARGS);
