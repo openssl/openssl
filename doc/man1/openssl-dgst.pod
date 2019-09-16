@@ -11,6 +11,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-help>]
 [B<-c>]
 [B<-d>]
+[B<-list>]
 [B<-hex>]
 [B<-binary>]
 [B<-r>]
@@ -63,6 +64,10 @@ the B<-hex> option is given as well.
 =item B<-d>
 
 Print out BIO debugging information.
+
+=item B<-list>
+
+Prints out a list of supported message digests.
 
 =item B<-hex>
 
