@@ -146,17 +146,17 @@ See L</CONTROLS> below for more information.
 =item EVP_MD_get_params()
 
 Retrieves the requested list of B<params> from a MD B<md>.
-See L</PARAMS> below for more information.
+See L</PARAMETERS> below for more information.
 
 =item EVP_MD_CTX_get_params()
 
 Retrieves the requested list of B<params> from a MD context B<ctx>.
-See L</PARAMS> below for more information.
+See L</PARAMETERS> below for more information.
 
 =item EVP_MD_CTX_set_params()
 
 Sets the list of B<params> into a MD context B<ctx>.
-See L</PARAMS> below for more information.
+See L</PARAMETERS> below for more information.
 
 =item EVP_MD_gettable_params(), EVP_MD_CTX_gettable_params(),
 EVP_MD_CTX_settable_params()
@@ -331,7 +331,7 @@ I<arg> as argument.
 
 =back
 
-=head1 PARAMS
+=head1 PARAMETERS
 
 See L<OSSL_PARAM(3)> for information about passing parameters.
 
