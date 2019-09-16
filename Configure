@@ -1213,7 +1213,7 @@ $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 # The actual processing of these entries is done in the build.info lookup
 # loop further down.
 #
-# The key is a Unix formated path in the source tree, the value is an index
+# The key is a Unix formatted path in the source tree, the value is an index
 # into %disabled_info, so any existing path gets added to a corresponding
 # 'skipped' entry in there with the list of skipped directories.
 my %skipdir = ();
