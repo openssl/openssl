@@ -33,9 +33,9 @@ void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     ASN1_aux_cb *asn1_cb;
     int i;
 
-    if (!pval)
+    if (pval == NULL)
         return;
-    if ((it->itype != ASN1_ITYPE_PRIMITIVE) && !*pval)
+    if ((it->itype != ASN1_ITYPE_PRIMITIVE) && *pval == NULL)
         return;
     if (aux && aux->asn1_cb)
         asn1_cb = aux->asn1_cb;
@@ -168,15 +168,15 @@ void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 
         utype = typ->type;
         pval = &typ->value.asn1_value;
-        if (!*pval)
+        if (*pval == NULL)
             return;
     } else if (it->itype == ASN1_ITYPE_MSTRING) {
         utype = -1;
-        if (!*pval)
+        if (*pval == NULL)
             return;
     } else {
         utype = it->utype;
-        if ((utype != V_ASN1_BOOLEAN) && !*pval)
+        if ((utype != V_ASN1_BOOLEAN) && *pval == NULL)
             return;
     }
 

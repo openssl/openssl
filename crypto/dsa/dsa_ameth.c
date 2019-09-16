@@ -211,7 +211,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     unsigned char *dp = NULL;
     int dplen;
 
-    if (!pkey->pkey.dsa || !pkey->pkey.dsa->priv_key) {
+    if (pkey->pkey.dsa  == NULL|| pkey->pkey.dsa->priv_key == NULL) {
         DSAerr(DSA_F_DSA_PRIV_ENCODE, DSA_R_MISSING_PARAMETERS);
         goto err;
     }
@@ -233,7 +233,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     /* Get private key into integer */
     prkey = BN_to_ASN1_INTEGER(pkey->pkey.dsa->priv_key, NULL);
 
-    if (!prkey) {
+    if (prkey == NULL) {
         DSAerr(DSA_F_DSA_PRIV_ENCODE, DSA_R_BN_ERROR);
         goto err;
     }

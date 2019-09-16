@@ -184,7 +184,7 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
 
 static void trtable_free(X509_TRUST *p)
 {
-    if (!p)
+    if (p == NULL)
         return;
     if (p->flags & X509_TRUST_DYNAMIC) {
         if (p->flags & X509_TRUST_DYNAMIC_NAME)

@@ -2134,10 +2134,10 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 {
     int idx;
     /* If purpose not set use default */
-    if (!purpose)
+    if (purpose == 0)
         purpose = def_purpose;
     /* If we have a purpose then check it is valid */
-    if (purpose) {
+    if (purpose != 0) {
         X509_PURPOSE *ptmp;
         idx = X509_PURPOSE_get_by_id(purpose);
         if (idx == -1) {
@@ -2502,8 +2502,9 @@ int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)
 {
     const X509_VERIFY_PARAM *param;
+
     param = X509_VERIFY_PARAM_lookup(name);
-    if (!param)
+    if (param == NULL)
         return 0;
     return X509_VERIFY_PARAM_inherit(ctx->param, param);
 }

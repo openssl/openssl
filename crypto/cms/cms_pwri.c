@@ -146,7 +146,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     pwri->keyDerivationAlgorithm = PKCS5_pbkdf2_set(iter, NULL, 0, -1, -1);
 
-    if (!pwri->keyDerivationAlgorithm)
+    if (pwri->keyDerivationAlgorithm == NULL)
         goto err;
 
     CMS_RecipientInfo_set0_password(ri, pass, passlen);
@@ -289,7 +289,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *
 
     pwri = ri->d.pwri;
 
-    if (!pwri->pass) {
+    if (pwri->pass == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, CMS_R_NO_PASSWORD);
         return 0;
     }

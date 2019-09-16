@@ -42,7 +42,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
     /* Check for NULL PKCS12 structure */
 
-    if (!p12) {
+    if (p12 == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PARSE,
                   PKCS12_R_INVALID_NULL_PKCS12_POINTER);
         return 0;
@@ -57,7 +57,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
      * password are two different things...
      */
 
-    if (!pass || !*pass) {
+    if (pass == NULL || *pass == '\0') {
         if (PKCS12_verify_mac(p12, NULL, 0))
             pass = NULL;
         else if (PKCS12_verify_mac(p12, "", 0))
@@ -85,7 +85,8 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     }
 
     while ((x = sk_X509_pop(ocerts))) {
-        if (pkey && *pkey && cert && !*cert) {
+        if (pkey != NULL && *pkey != '\0'
+                && cert != NULL && *cert == NULL) {
             ERR_set_mark();
             if (X509_check_private_key(x, *pkey)) {
                 *cert = x;
@@ -95,9 +96,9 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         }
 
         if (ca && x) {
-            if (!*ca)
+            if (*ca == NULL)
                 *ca = sk_X509_new_null();
-            if (!*ca)
+            if (*ca == NULL)
                 goto err;
             if (!sk_X509_push(*ca, x))
                 goto err;
@@ -191,7 +192,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 
     switch (PKCS12_SAFEBAG_get_nid(bag)) {
     case NID_keyBag:
-        if (!pkey || *pkey)
+        if (pkey == NULL || *pkey != NULL)
             return 1;
         *pkey = EVP_PKCS82PKEY(PKCS12_SAFEBAG_get0_p8inf(bag));
         if (*pkey == NULL)
@@ -199,7 +200,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
         break;
 
     case NID_pkcs8ShroudedKeyBag:
-        if (!pkey || *pkey)
+        if (pkey == NULL || *pkey != NULL)
             return 1;
         if ((p8 = PKCS12_decrypt_skey(bag, pass, passlen)) == NULL)
             return 0;

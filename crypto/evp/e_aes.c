@@ -3744,7 +3744,7 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         return 1;
 
     case EVP_CTRL_AEAD_SET_TAG:
-        if (!ptr) {
+        if (ptr == NULL) {
             /* Tag len must be 0 to 16 */
             if (arg < 0 || arg > 16)
                 return 0;

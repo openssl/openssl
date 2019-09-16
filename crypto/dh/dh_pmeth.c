@@ -80,6 +80,7 @@ static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
 static int pkey_dh_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     DH_PKEY_CTX *dctx, *sctx;
+
     if (!pkey_dh_init(dst))
         return 0;
     sctx = src->data;

@@ -85,7 +85,7 @@ int chopup_args(ARGS *arg, char *buf)
         /* Skip whitespace. */
         while (*p && isspace(_UC(*p)))
             p++;
-        if (!*p)
+        if (*p == '\0')
             break;
 
         /* The start of something good :-) */
@@ -258,7 +258,7 @@ static char *app_get_pass(const char *arg, int keepbio)
 #endif
         } else if (strcmp(arg, "stdin") == 0) {
             pwdbio = dup_bio_in(FORMAT_TEXT);
-            if (!pwdbio) {
+            if (pwdbio == NULL) {
                 BIO_printf(bio_err, "Can't open BIO for stdin\n");
                 return NULL;
             }
@@ -407,7 +407,7 @@ static int load_pkcs12(BIO *in, const char *desc,
     if (PKCS12_verify_mac(p12, "", 0) || PKCS12_verify_mac(p12, NULL, 0)) {
         pass = "";
     } else {
-        if (!pem_cb)
+        if (pem_cb == NULL)
             pem_cb = (pem_password_cb *)password_callback;
         len = pem_cb(tpass, PEM_BUFSIZE, 0, cb_data);
         if (len < 0) {

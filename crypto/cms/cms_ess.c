@@ -202,7 +202,7 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 
     /* Extract and decode receipt content */
     pcont = CMS_get0_content(cms);
-    if (!pcont || !*pcont) {
+    if (pcont == NULL || *pcont == NULL) {
         CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_CONTENT);
         goto err;
     }

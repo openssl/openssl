@@ -156,7 +156,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     size_t len;
     const char *s, *ss, *p;
 
-    if (dir == NULL || !*dir) {
+    if (dir == NULL || *dir == '\0') {
         X509err(X509_F_ADD_CERT_DIR, X509_R_INVALID_DIRECTORY);
         return 0;
     }

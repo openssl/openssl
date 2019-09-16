@@ -78,7 +78,8 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 static int check_content(CMS_ContentInfo *cms)
 {
     ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
-    if (!pos || !*pos) {
+
+    if (pos == NULL || *pos == NULL) {
         CMSerr(CMS_F_CHECK_CONTENT, CMS_R_NO_CONTENT);
         return 0;
     }
@@ -87,14 +88,13 @@ static int check_content(CMS_ContentInfo *cms)
 
 static void do_free_upto(BIO *f, BIO *upto)
 {
-    if (upto) {
+    if (upto != NULL) {
         BIO *tbio;
         do {
             tbio = BIO_pop(f);
             BIO_free(f);
             f = tbio;
-        }
-        while (f && f != upto);
+        } while (f != upto);
     } else
         BIO_free_all(f);
 }
@@ -488,7 +488,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
     flags &= ~(CMS_STREAM | CMS_TEXT);
     /* Not really detached but avoids content being allocated */
     flags |= CMS_PARTIAL | CMS_BINARY | CMS_DETACHED;
-    if (!pkey || !signcert) {
+    if (pkey == NULL || signcert == NULL) {
         CMSerr(CMS_F_CMS_SIGN_RECEIPT, CMS_R_NO_KEY_OR_CERT);
         return NULL;
     }
@@ -733,6 +733,7 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 {
     int r;
     BIO *cont;
+
     if (OBJ_obj2nid(CMS_get0_type(cms)) != NID_pkcs7_enveloped) {
         CMSerr(CMS_F_CMS_DECRYPT, CMS_R_TYPE_NOT_ENVELOPED_DATA);
         return 0;
@@ -747,12 +748,12 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
         cms->d.envelopedData->encryptedContentInfo->havenocert = 1;
     else
         cms->d.envelopedData->encryptedContentInfo->havenocert = 0;
-    if (!pk && !cert && !dcont && !out)
+    if (pk == NULL && cert == NULL && dcont == NULL && out == NULL)
         return 1;
-    if (pk && !CMS_decrypt_set1_pkey(cms, pk, cert))
+    if (pk != NULL && !CMS_decrypt_set1_pkey(cms, pk, cert))
         return 0;
     cont = CMS_dataInit(cms, dcont);
-    if (!cont)
+    if (cont == NULL)
         return 0;
     r = cms_copy_content(out, cont, flags);
     do_free_upto(cont, dcont);

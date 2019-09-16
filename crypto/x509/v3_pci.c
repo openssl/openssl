@@ -116,7 +116,8 @@ static int process_pci_value(CONF_VALUE *val,
     } else if (strcmp(val->name, "policy") == 0) {
         unsigned char *tmp_data = NULL;
         long val_len;
-        if (!*policy) {
+
+        if (*policy == NULL) {
             *policy = ASN1_OCTET_STRING_new();
             if (*policy == NULL) {
                 X509V3err(X509V3_F_PROCESS_PCI_VALUE, ERR_R_MALLOC_FAILURE);

@@ -3183,7 +3183,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
      * Get server certificate PKEY and create ctx from it
      */
     peer_cert = s->session->peer;
-    if (!peer_cert) {
+    if (peer_cert == NULL) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_CONSTRUCT_CKE_GOST,
                SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
         return 0;

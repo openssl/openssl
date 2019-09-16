@@ -227,7 +227,7 @@ static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
 {
     EVP_PKEY *pkey = si->pkey;
     int i;
-    if (!pkey->ameth || !pkey->ameth->pkey_ctrl)
+    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
     if (i == -2) {

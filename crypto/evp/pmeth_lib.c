@@ -94,18 +94,12 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
 {
     pmeth_fn *ret;
     EVP_PKEY_METHOD tmp;
-    const EVP_PKEY_METHOD *t = &tmp;
-    tmp.pkey_id = type;
-    if (app_pkey_methods) {
-        int idx;
-        idx = sk_EVP_PKEY_METHOD_find(app_pkey_methods, &tmp);
-        if (idx >= 0)
-            return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
-    }
+    const EVP_PKEY_METHOD *t = &tmp, **ret;
+
     ret = OBJ_bsearch_pmeth_func(&t, standard_methods,
                                  sizeof(standard_methods) /
                                  sizeof(pmeth_fn));
-    if (!ret || !*ret)
+    if (ret == NULL || *ret == NULL)
         return NULL;
     return (**ret)();
 }

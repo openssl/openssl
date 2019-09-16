@@ -159,10 +159,10 @@ int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk)
 
     EVP_PKEY_CTX_free(kari->pctx);
     kari->pctx = NULL;
-    if (!pk)
+    if (pk == NULL)
         return 1;
     pctx = EVP_PKEY_CTX_new(pk, NULL);
-    if (!pctx || EVP_PKEY_derive_init(pctx) <= 0)
+    if (pctx == NULL || EVP_PKEY_derive_init(pctx) <= 0)
         goto err;
     kari->pctx = pctx;
     return 1;
@@ -260,8 +260,9 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *ekey = NULL;
     int rv = 0;
+
     pctx = EVP_PKEY_CTX_new(pk, NULL);
-    if (!pctx)
+    if (pctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(pctx) <= 0)
         goto err;
@@ -269,7 +270,7 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
         goto err;
     EVP_PKEY_CTX_free(pctx);
     pctx = EVP_PKEY_CTX_new(ekey, NULL);
-    if (!pctx)
+    if (pctx == NULL)
         goto err;
     if (EVP_PKEY_derive_init(pctx) <= 0)
         goto err;

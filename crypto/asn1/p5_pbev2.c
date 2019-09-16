@@ -107,7 +107,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
     pbe2->keyfunc = PKCS5_pbkdf2_set(iter, salt, saltlen, prf_nid, keylen);
 
-    if (!pbe2->keyfunc)
+    if (pbe2->keyfunc == NULL)
         goto merr;
 
     /* Now set up top level AlgorithmIdentifier */

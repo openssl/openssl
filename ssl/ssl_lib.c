@@ -2857,7 +2857,7 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
                                     unsigned *len)
 {
     *data = s->ext.npn;
-    if (!*data) {
+    if (*data == NULL) {
         *len = 0;
     } else {
         *len = (unsigned int)s->ext.npn_len;

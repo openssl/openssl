@@ -123,7 +123,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
         }
         sk_ACCESS_DESCRIPTION_push(ainfo, acc); /* Cannot fail due to reserve */
         ptmp = strchr(cnf->name, ';');
-        if (!ptmp) {
+        if (ptmp == NULL) {
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
                       X509V3_R_INVALID_SYNTAX);
             goto err;

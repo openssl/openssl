@@ -561,8 +561,9 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 {
     char *baseptr = (char *)base->data;
     char *dnsptr = (char *)dns->data;
+
     /* Empty matches everything */
-    if (!*baseptr)
+    if (*baseptr == '\0')
         return X509_V_OK;
     /*
      * Otherwise can add zero or more components on the left so compare RHS
@@ -628,8 +629,9 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
     const char *hostptr = (char *)uri->data;
     const char *p = strchr(hostptr, ':');
     int hostlen;
+
     /* Check for foo:// and skip past it */
-    if (!p || (p[1] != '/') || (p[2] != '/'))
+    if (p == NULL || (p[1] != '/') || (p[2] != '/'))
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
     hostptr = p + 3;
 
@@ -639,10 +641,10 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 
     p = strchr(hostptr, ':');
     /* Otherwise look for trailing slash */
-    if (!p)
+    if (p == NULL)
         p = strchr(hostptr, '/');
 
-    if (!p)
+    if (p == NULL)
         hostlen = strlen(hostptr);
     else
         hostlen = p - hostptr;
