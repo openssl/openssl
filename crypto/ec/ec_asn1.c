@@ -582,7 +582,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
     BN_CTX *ctx = NULL;
 
     if (params->fieldID == NULL
-            || !params->fieldID->fieldType
+            || params->fieldID->fieldType == NULL
             || params->fieldID->p.ptr == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, EC_R_ASN1_ERROR);
         goto err;

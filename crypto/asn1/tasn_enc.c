@@ -55,7 +55,7 @@ int ASN1_item_i2d(const ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *i
 static int asn1_item_flags_i2d(const ASN1_VALUE *val, unsigned char **out,
                                const ASN1_ITEM *it, int flags)
 {
-    if (out && *out == NULL) {
+    if (out != NULL && *out == NULL) {
         unsigned char *p, *buf;
         int len;
 
