@@ -113,6 +113,18 @@ matrix:
             # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
             - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
           script: true
+        - os: linux
+          compiler: gcc
+          env: CONFIG_OPTS="android-arm -D__ANDROID_API__=16" ANDROID_NDK_VERSION="r17c" NDK_HOST_TAG="arm-linux-androideabi" BUILDONLY="yes"
+        - os: linux
+          compiler: gcc
+          env: CONFIG_OPTS="android-x86 -D__ANDROID_API__=16" ANDROID_NDK_VERSION="r17c" NDK_HOST_TAG="x86" BUILDONLY="yes"
+        - os: linux
+          compiler: gcc
+          env: CONFIG_OPTS="android-arm64 -D__ANDROID_API__=21" ANDROID_NDK_VERSION="r17c" NDK_HOST_TAG="aarch64-linux-android" BUILDONLY="yes"
+        - os: linux
+          compiler: gcc
+          env: CONFIG_OPTS="android-x86_64 -D__ANDROID_API__=21" ANDROID_NDK_VERSION="r17c" NDK_HOST_TAG="x86_64" BUILDONLY="yes"
     exclude:
         - os: linux
           compiler: clang
@@ -141,6 +153,17 @@ before_script:
       elif [ "$CC" = x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
+      elif [ -n "$ANDROID_NDK_VERSION" ]; then
+          sudo apt-get update;
+          sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install unzip;
+          rm -rf $PWD/android-ndk*;
+          ndk="android-ndk-$ANDROID_NDK_VERSION";
+          ndk_zip="${ndk}-linux-x86_64.zip";
+          wget --quiet --tries=0 http://dl.google.com/android/repository/$ndk_zip;
+          unzip -q $ndk_zip;
+          export ANDROID_NDK_HOME="$PWD/$ndk";
+          PATH="$ANDROID_NDK_HOME/toolchains/${NDK_HOST_TAG}-4.9/prebuilt/linux-x86_64/bin:$PATH";
+          $srcdir/Configure $CONFIG_OPTS;
       else
           if which ccache >/dev/null && test "$BORINGSSL_TESTS" != yes; then
               CC="ccache $CC";
