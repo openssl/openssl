@@ -277,6 +277,10 @@ typedef struct options_st {
      */
     int valtype;
     const char *helpstr;
+    /*
+     * Group options for better readability
+     */
+    int group;
 } OPTIONS;
 
 /*
@@ -338,6 +342,7 @@ int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 void opt_help(const OPTIONS * list);
+void opt_help_ex(const OPTIONS * list, const char** groups, int num_groups);
 int opt_format_error(const char *s, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);
