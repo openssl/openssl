@@ -195,6 +195,12 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "BF-OFB", "default=yes", blowfish64ofb64_functions },
     { "BF-CFB", "default=yes", blowfish64cfb64_functions },
 #endif /* OPENSSL_NO_BF */
+#ifndef OPENSSL_NO_IDEA
+    { "IDEA-ECB", "default=yes", idea128ecb_functions },
+    { "IDEA-CBC", "default=yes", idea128cbc_functions },
+    { "IDEA-OFB", "default=yes", idea128ofb64_functions },
+    { "IDEA-CFB", "default=yes", idea128cfb64_functions },
+#endif /* OPENSSL_NO_IDEA */
     { NULL, NULL, NULL }
 };
 

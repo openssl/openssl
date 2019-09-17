@@ -235,6 +235,10 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_bf_ecb:
         case NID_bf_cfb64:
         case NID_bf_ofb64:
+        case NID_idea_cbc:
+        case NID_idea_ecb:
+        case NID_idea_cfb64:
+        case NID_idea_ofb64:
             break;
         default:
             goto legacy;

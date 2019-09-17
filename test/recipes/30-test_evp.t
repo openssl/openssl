@@ -32,6 +32,8 @@ my @files = qw( evpciph.txt evpdigest.txt );
 my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
     evppbe.txt evppkey.txt evppkey_ecc.txt evpcase.txt evpaessiv.txt
     evpccmcavs.txt );
+my @ideafiles = qw( evpciph_idea.txt );
+push @defltfiles, @ideafiles unless disabled("idea");
 
 plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles) + 1;
 
