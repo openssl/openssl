@@ -470,8 +470,12 @@ IF[{- !$disabled{tests} -}]
   DEPEND[conf_include_test]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{cmp} -}]
-    PROGRAMS{noinst}=cmp_ctx_test
+    PROGRAMS{noinst}=cmp_asn_test cmp_ctx_test
   ENDIF
+
+  SOURCE[cmp_asn_test]=cmp_asn_test.c cmp_testlib.c
+  INCLUDE[cmp_asn_test]=.. ../include ../apps/include
+  DEPEND[cmp_asn_test]=../libcrypto.a libtestutil.a
 
   SOURCE[cmp_ctx_test]=cmp_ctx_test.c cmp_testlib.c
   INCLUDE[cmp_ctx_test]=.. ../include ../apps/include

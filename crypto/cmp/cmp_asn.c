@@ -187,6 +187,26 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     return 0;
 }
 
+/* get ASN.1 encoded integer, return -1 on error */
+int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
+{
+    int64_t res;
+
+    if (!ASN1_INTEGER_get_int64(&res, a)) {
+        CMPerr(0, ASN1_R_INVALID_NUMBER);
+        return -1;
+    }
+    if (res < INT_MIN) {
+        CMPerr(0, ASN1_R_TOO_SMALL);
+        return -1;
+    }
+    if (res > INT_MAX) {
+        CMPerr(0, ASN1_R_TOO_LARGE);
+        return -1;
+    }
+    return (int)res;
+}
+
 ASN1_CHOICE(OSSL_CMP_CERTORENCCERT) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
     ASN1_EXP(OSSL_CMP_CERTORENCCERT, value.certificate, X509, 0),
