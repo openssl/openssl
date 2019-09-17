@@ -131,6 +131,22 @@
 #  endif
 # endif
 
+/*
+ * __func__ was standardized in C99, so for any compiler that claims
+ * to implement that language level or newer, we assume we can safely
+ * used that symbol.
+ *
+ * GNU C also provides __FUNCTION__ since version 2, which predates
+ * C99.  We can, however, only use this if __STDC_VERSION exists,
+ * as it's otherwise not allowed according to ISO C standards (C90).
+ * (compiling with GNU C's -pedantic tells us so)
+ *
+ * If none of the above applies, we check if the compiler is MSVC,
+ * and use __FUNCTION__ if that's the case.
+ *
+ * If all these possibilities are exhausted, we give up and use a
+ * static string.
+ */
 # ifndef OPENSSL_FUNC
 #  if defined(__STDC_VERSION__)
 #   if __STDC_VERSION__ >= 199901L
@@ -140,8 +156,6 @@
 #   endif
 #  elif defined(_MSC_VER)
 #    define OPENSSL_FUNC __FUNCTION__
-#  elif defined(__FUNCSIG__)
-#   define OPENSSL_FUNC __FUNCSIG__
 #  else
 #   define OPENSSL_FUNC "(unknown function)"
 #  endif
