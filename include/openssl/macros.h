@@ -134,10 +134,10 @@
 /*
  * __func__ was standardized in C99, so for any compiler that claims
  * to implement that language level or newer, we assume we can safely
- * used that symbol.
+ * use that symbol.
  *
  * GNU C also provides __FUNCTION__ since version 2, which predates
- * C99.  We can, however, only use this if __STDC_VERSION exists,
+ * C99.  We can, however, only use this if __STDC_VERSION__ exists,
  * as it's otherwise not allowed according to ISO C standards (C90).
  * (compiling with GNU C's -pedantic tells us so)
  *
