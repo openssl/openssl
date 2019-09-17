@@ -339,6 +339,7 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
 #ifndef OPENSSL_NO_SCRYPT
     { "SCRYPT:id-scrypt", "default=yes", kdf_scrypt_functions },
 #endif
+    { OSSL_KDF_NAME_KRB5KDF, "default=yes", kdf_krb5kdf_functions },
    { NULL, NULL, NULL }
 };
 

@@ -133,6 +133,8 @@ extern "C" {
 #define OSSL_KDF_PARAM_SSHKDF_SESSION_ID "session_id" /* octet string */
 #define OSSL_KDF_PARAM_SSHKDF_TYPE  "type"      /* int */
 #define OSSL_KDF_PARAM_SIZE         "size"      /* size_t */
+#define OSSL_KDF_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER     /* utf8 string */
+#define OSSL_KDF_PARAM_CONSTANT     "constant"  /* octet string */
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF          "HKDF"
@@ -144,6 +146,7 @@ extern "C" {
 #define OSSL_KDF_NAME_X942KDF       "X942KDF"
 #define OSSL_KDF_NAME_X963KDF       "X963KDF"
 #define OSSL_KDF_NAME_KBKDF         "KBKDF"
+#define OSSL_KDF_NAME_KRB5KDF       "KRB5KDF"
 
 /* PKEY parameters */
 /* Diffie-Hellman/DSA Parameters */

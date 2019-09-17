@@ -2116,6 +2116,15 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
         if (nid != NID_undef && EVP_get_digestbynid(nid) == NULL)
             t->skip = 1;
     }
+    if (p != NULL && strcmp(name, "cipher") == 0) {
+        /* If p has an OID and lookup fails assume disabled algorithm */
+        int nid = OBJ_sn2nid(p);
+
+        if (nid == NID_undef)
+             nid = OBJ_ln2nid(p);
+        if (nid != NID_undef && EVP_get_cipherbynid(nid) == NULL)
+            t->skip = 1;
+    }
     OPENSSL_free(name);
     return 1;
 }

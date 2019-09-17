@@ -183,8 +183,10 @@ The default value, if any, is implementation dependent.
 
 =item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
-For KDF implementations that use an underlying computation MAC or
-digest, these parameters set what the algorithm should be.
+=item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
+
+For KDF implementations that use an underlying computation MAC, digest or
+cipher, these parameters set what the algorithm should be.
 
 The value is always the name of the intended algorithm,
 or the properties.

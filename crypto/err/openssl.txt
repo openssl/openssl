@@ -2681,6 +2681,7 @@ PROV_R_FAILED_TO_GET_PARAMETER:103:failed to get parameter
 PROV_R_FAILED_TO_SET_PARAMETER:104:failed to set parameter
 PROV_R_INAVLID_UKM_LENGTH:146:inavlid ukm length
 PROV_R_INVALID_AAD:108:invalid aad
+PROV_R_INVALID_CONSTANT_LENGTH:157:invalid constant length
 PROV_R_INVALID_CUSTOM_LENGTH:111:invalid custom length
 PROV_R_INVALID_DATA:115:invalid data
 PROV_R_INVALID_DIGEST:122:invalid digest
@@ -2698,6 +2699,8 @@ PROV_R_INVALID_SEED_LENGTH:154:invalid seed length
 PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAGLEN:118:invalid taglen
 PROV_R_MISSING_CEK_ALG:144:missing cek alg
+PROV_R_MISSING_CIPHER:155:missing cipher
+PROV_R_MISSING_CONSTANT:156:missing constant
 PROV_R_MISSING_KEY:128:missing key
 PROV_R_MISSING_MAC:150:missing mac
 PROV_R_MISSING_MESSAGE_DIGEST:129:missing message digest
