@@ -17,34 +17,35 @@ static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
 {
     int ret, bits;
     PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
+    AES_KEY *ks = &adat->ks.ks;
 
-    dat->ks = &adat->ks.ks;
+    dat->ks = (const void *)ks; /* used by cipher_hw_generic_XXX */
 
     bits = keylen * 8;
     if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE)
         && !dat->enc) {
         ret = 0;
-        aes_t4_set_decrypt_key(key, bits, dat->ks);
-        dat->block = (block128_f) aes_t4_decrypt;
+        aes_t4_set_decrypt_key(key, bits, ks);
+        dat->block = (block128_f)aes_t4_decrypt;
         switch (bits) {
         case 128:
             dat->stream.cbc = dat->mode == EVP_CIPH_CBC_MODE ?
-                (cbc128_f) aes128_t4_cbc_decrypt : NULL;
+                (cbc128_f)aes128_t4_cbc_decrypt : NULL;
             break;
         case 192:
             dat->stream.cbc = dat->mode == EVP_CIPH_CBC_MODE ?
-                (cbc128_f) aes192_t4_cbc_decrypt : NULL;
+                (cbc128_f)aes192_t4_cbc_decrypt : NULL;
             break;
         case 256:
             dat->stream.cbc = dat->mode == EVP_CIPH_CBC_MODE ?
-                (cbc128_f) aes256_t4_cbc_decrypt : NULL;
+                (cbc128_f)aes256_t4_cbc_decrypt : NULL;
             break;
         default:
             ret = -1;
         }
     } else {
         ret = 0;
-        aes_t4_set_encrypt_key(key, bits, dat->ks);
+        aes_t4_set_encrypt_key(key, bits, ks);
         dat->block = (block128_f)aes_t4_encrypt;
         switch (bits) {
         case 128:
