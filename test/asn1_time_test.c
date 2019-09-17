@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,8 +24,8 @@ struct testdata {
     int expected_type;      /* expected type after set/set_string_gmt */
     int check_result;       /* check result */
     time_t t;               /* expected time_t*/
-    int cmp_result;         /* compariston to baseline result */
-    int convert_result;     /* convertion result */
+    int cmp_result;         /* comparison to baseline result */
+    int convert_result;     /* conversion result */
 };
 
 static struct testdata tbl_testdata_pos[] = {
