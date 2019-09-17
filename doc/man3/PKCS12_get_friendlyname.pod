@@ -18,7 +18,7 @@ B<bag> is the B<PKCS12_SAFEBAG> to retrieve the attribute from.
 
 =head1 RETURN VALUES
 
-A UTF-8 string, or NULL if the attribute was not present or an error occurred.
+A UTF-8 string, or NULL if the attribute was either not present or an error occurred.
 
 The returned string is allocated by OpenSSL and should be freed by the user.
 
