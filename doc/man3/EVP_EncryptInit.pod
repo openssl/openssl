@@ -28,6 +28,7 @@ EVP_CipherFinal,
 EVP_get_cipherbyname,
 EVP_get_cipherbynid,
 EVP_get_cipherbyobj,
+EVP_CIPHER_is_a,
 EVP_CIPHER_name,
 EVP_CIPHER_provider,
 EVP_CIPHER_nid,
@@ -116,6 +117,7 @@ EVP_CIPHER_do_all_ex
  const EVP_CIPHER *EVP_get_cipherbyobj(const ASN1_OBJECT *a);
 
  int EVP_CIPHER_nid(const EVP_CIPHER *e);
+ int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name);
  const char *EVP_CIPHER_name(const EVP_CIPHER *cipher);
  const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
  int EVP_CIPHER_block_size(const EVP_CIPHER *e);
@@ -314,6 +316,9 @@ IDENTIFIER as such it ignores the cipher parameters and 40 bit RC2 and
 128 bit RC2 have the same NID. If the cipher does not have an object
 identifier or does not have ASN1 support this function will return
 B<NID_undef>.
+
+EVP_CIPHER_is_a() checks if the given I<cipher> is an implementation of an
+algorithm that's identifiable with I<name>.
 
 EVP_CIPHER_name() and EVP_CIPHER_CTX_name() return the name of the passed
 cipher or context.
