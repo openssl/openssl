@@ -60,76 +60,70 @@ typedef enum OPTION_choice {
     OPT_R_ENUM
 } OPTION_CHOICE;
 
-typedef enum OPTION_group {
-    OPT_GRP_GENERAL = 0,
-    OPT_GRP_PASSWORD,
-    OPT_GRP_ENCRYPT,
-    OPT_GRP_MAC,
-    OPT_GRP_CA,
-    OPT_GRP_ATTR,
-    OPT_GRP_INPUT,
-    OPT_GRP_OUTPUT,
-} OPTION_GROUP;
-
-const char* pkcs12_opt_groups[] = {
-    "General", "Password", "Encryption", "MAC", "CA Certificate", "Attribute", "Input", "Output"
-};
-
 const OPTIONS pkcs12_options[] = {
-    {"help", OPT_HELP, '-', "Display this summary", OPT_GRP_GENERAL},
-    {"nokeys", OPT_NOKEYS, '-', "Don't output private keys", OPT_GRP_OUTPUT},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options]\n"},
+    OPT_SECTION("General"),
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"nokeys", OPT_NOKEYS, '-', "Don't output private keys"},
     {"keyex", OPT_KEYEX, '-', "Set MS key exchange type"},
     {"keysig", OPT_KEYSIG, '-', "Set MS key signature type"},
-    {"nocerts", OPT_NOCERTS, '-', "Don't output certificates", OPT_GRP_OUTPUT},
-    {"clcerts", OPT_CLCERTS, '-', "Only output client certificates", OPT_GRP_OUTPUT},
-    {"cacerts", OPT_CACERTS, '-', "Only output CA certificates", OPT_GRP_OUTPUT},
-    {"noout", OPT_NOOUT, '-', "Don't output anything, just verify", OPT_GRP_OUTPUT},
-    {"info", OPT_INFO, '-', "Print info about PKCS#12 structure", OPT_GRP_OUTPUT},
     {"chain", OPT_CHAIN, '-', "Add certificate chain"},
-    {"twopass", OPT_TWOPASS, '-', "Separate MAC, encryption passwords", OPT_GRP_PASSWORD},
-    {"nomacver", OPT_NOMACVER, '-', "Don't verify MAC", OPT_GRP_MAC},
-# ifndef OPENSSL_NO_RC2
-    {"descert", OPT_DESCERT, '-',
-     "Encrypt output with 3DES (default RC2-40)", OPT_GRP_ENCRYPT},
-    {"certpbe", OPT_CERTPBE, 's',
-     "Certificate PBE algorithm (default RC2-40)", OPT_GRP_ENCRYPT},
-# else
-    {"descert", OPT_DESCERT, '-', "Encrypt output with 3DES (the default)", OPT_GRP_ENCRYPT},
-    {"certpbe", OPT_CERTPBE, 's', "Certificate PBE algorithm (default 3DES)", OPT_GRP_ENCRYPT},
-# endif
-    {"export", OPT_EXPORT, '-', "Output PKCS12 file", OPT_GRP_OUTPUT},
-    {"noiter", OPT_NOITER, '-', "Don't use encryption iteration", OPT_GRP_ENCRYPT},
-    {"maciter", OPT_MACITER, '-', "Use MAC iteration", OPT_GRP_MAC},
-    {"nomaciter", OPT_NOMACITER, '-', "Don't use MAC iteration", OPT_GRP_MAC},
-    {"nomac", OPT_NOMAC, '-', "Don't generate MAC", OPT_GRP_MAC},
-    {"LMK", OPT_LMK, '-',
-     "Add local machine keyset attribute to private key", OPT_GRP_ATTR},
-    {"nodes", OPT_NODES, '-', "Don't encrypt private keys", OPT_GRP_ENCRYPT},
-    {"macalg", OPT_MACALG, 's',
-     "Digest algorithm used in MAC (default SHA1)", OPT_GRP_MAC},
-    {"keypbe", OPT_KEYPBE, 's', "Private key PBE algorithm (default 3DES)", OPT_GRP_ENCRYPT},
     OPT_R_OPTIONS,
-    {"inkey", OPT_INKEY, 's', "Private key if not infile", OPT_GRP_INPUT},
-    {"certfile", OPT_CERTFILE, '<', "Load certs from file", OPT_GRP_INPUT},
-    {"name", OPT_NAME, 's', "Use name as friendly name", OPT_GRP_ATTR},
-    {"CSP", OPT_CSP, 's', "Microsoft CSP name", OPT_GRP_ATTR},
-    {"caname", OPT_CANAME, 's',
-     "Use name as CA friendly name (can be repeated)"},
-    {"in", OPT_IN, '<', "Input filename", OPT_GRP_INPUT},
-    {"out", OPT_OUT, '>', "Output filename", OPT_GRP_OUTPUT},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source", OPT_GRP_PASSWORD},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source", OPT_GRP_PASSWORD},
-    {"password", OPT_PASSWORD, 's', "Set import/export password source", OPT_GRP_PASSWORD},
-    {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's", OPT_GRP_CA},
-    {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's", OPT_GRP_CA},
-    {"no-CAfile", OPT_NOCAFILE, '-',
-     "Do not load the default certificates file", OPT_GRP_CA},
-    {"no-CApath", OPT_NOCAPATH, '-',
-     "Do not load certificates from the default certificates directory", OPT_GRP_CA},
-    {"", OPT_CIPHER, '-', "Any supported cipher", OPT_GRP_ENCRYPT},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_ENGINE 
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
+    OPT_SECTION("Password"),
+    {"twopass", OPT_TWOPASS, '-', "Separate MAC, encryption passwords"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    {"password", OPT_PASSWORD, 's', "Set import/export password source"},
+    OPT_SECTION("Encryption"),
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+# ifndef OPENSSL_NO_RC2
+    {"descert", OPT_DESCERT, '-',
+     "Encrypt output with 3DES (default RC2-40)"},
+    {"certpbe", OPT_CERTPBE, 's',
+     "Certificate PBE algorithm (default RC2-40)"},
+# else
+    {"descert", OPT_DESCERT, '-', "Encrypt output with 3DES (the default)"},
+    {"certpbe", OPT_CERTPBE, 's', "Certificate PBE algorithm (default 3DES)"},
+# endif
+    {"keypbe", OPT_KEYPBE, 's', "Private key PBE algorithm (default 3DES)"},
+    {"nodes", OPT_NODES, '-', "Don't encrypt private keys"},
+    {"noiter", OPT_NOITER, '-', "Don't use encryption iteration"},
+    OPT_SECTION("MAC"),
+    {"macalg", OPT_MACALG, 's',
+     "Digest algorithm used in MAC (default SHA1)"},
+    {"maciter", OPT_MACITER, '-', "Use MAC iteration"},
+    {"nomaciter", OPT_NOMACITER, '-', "Don't use MAC iteration"},
+    {"nomac", OPT_NOMAC, '-', "Don't generate MAC"},
+    {"nomacver", OPT_NOMACVER, '-', "Don't verify MAC"},
+    OPT_SECTION("Attribute"),
+    {"name", OPT_NAME, 's', "Use name as friendly name"},
+    {"caname", OPT_CANAME, 's',
+     "Use name as CA friendly name (can be repeated)"},
+    {"CSP", OPT_CSP, 's', "Microsoft CSP name"},
+    {"LMK", OPT_LMK, '-',
+     "Add local machine keyset attribute to private key"},
+    OPT_SECTION("CA"),
+    {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
+    {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
+    {"no-CAfile", OPT_NOCAFILE, '-',
+     "Do not load the default certificates file"},
+    {"no-CApath", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates directory"},
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input filename"},
+    {"inkey", OPT_INKEY, 's', "Private key if not infile"},
+    {"certfile", OPT_CERTFILE, '<', "Load certs from file"},
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output filename"},
+    {"export", OPT_EXPORT, '-', "Output PKCS12 file"},
+    {"noout", OPT_NOOUT, '-', "Don't output anything, just verify"},
+    {"info", OPT_INFO, '-', "Print info about PKCS#12 structure"},
+    {"nocerts", OPT_NOCERTS, '-', "Don't output certificates"},
+    {"clcerts", OPT_CLCERTS, '-', "Only output client certificates"},
+    {"cacerts", OPT_CACERTS, '-', "Only output CA certificates"},
     {NULL}
 };
 
@@ -169,7 +163,7 @@ int pkcs12_main(int argc, char **argv)
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
-            opt_help_ex(pkcs12_options, pkcs12_opt_groups, sizeof(pkcs12_opt_groups)/sizeof(char*));
+            opt_help(pkcs12_options);
             ret = 0;
             goto end;
         case OPT_NOKEYS:

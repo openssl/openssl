@@ -832,7 +832,7 @@ static const char *valtype2param(const OPTIONS *o)
     return "parm";
 }
 
-void opt_print(const OPTIONS *o, int width, const char** groups)
+void opt_print(const OPTIONS *o, int width)
 {
     const char* help;
     char start[80 + 1];
@@ -877,11 +877,10 @@ void opt_print(const OPTIONS *o, int width, const char** groups)
         opt_printf_stderr("%s  %s\n", start, help);
 }
 
-void opt_help_ex(const OPTIONS *list, const char** groups, int num_groups)
+void opt_help(const OPTIONS *list)
 {
     const OPTIONS *o;
     int i;
-    int grp;
     int standard_prolog;
     int width = 5;
     char start[80 + 1];
@@ -896,38 +895,18 @@ void opt_help_ex(const OPTIONS *list, const char** groups, int num_groups)
         i = 2 + (int)strlen(o->name);
         if (o->valtype != '-')
             i += 1 + strlen(valtype2param(o));
-        if (groups != NULL)
-            i += 1 + strlen(groups[o->group]);
         if (i < MAX_OPT_HELP_WIDTH && i > width)
             width = i;
         OPENSSL_assert(i < (int)sizeof(start));
     }
 
-    if (standard_prolog) {
-        opt_printf_stderr("Usage: %s [options]\n", prog);
-        if (groups == NULL)
-            opt_printf_stderr("Valid options are:\n");
-    }
+    if (standard_prolog)
+        opt_printf_stderr("Usage: %s [options]\nValid options are:\n", prog);
 
     /* Now let's print. */
-    if (groups != NULL) {
-        for (grp = 0; grp < num_groups; grp++) {
-            opt_printf_stderr("%s options:\n", groups[grp]);
-            for (o = list; o->name; o++) {
-                if (o->group == grp)
-                    opt_print(o, width, groups);
-            }
-        }
-    } else {
-        for (o = list; o->name; o++) {
-            opt_print(o, width, groups);
-        }
+    for (o = list; o->name; o++) {
+        opt_print(o, width);
     }
-}
-
-void opt_help(const OPTIONS *list)
-{
-    return opt_help_ex(list, NULL, 0);
 }
 
 /* opt_isdir section */
