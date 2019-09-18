@@ -412,6 +412,13 @@ typedef enum {
     SSL_PHA_REQUESTED        /* request received by client, or sent by server */
 } SSL_PHA_STATE;
 
+/* used to hold info about SSLv3 and all TLS versions */
+struct ssl_version_st {
+    uint8_t is_default;
+    const char *name;           /* text name */
+    int ssl_version;            /* SSL/TLS protocol version */
+};
+
 /* CipherSuite length. SSLv3 and all TLS versions. */
 # define TLS_CIPHER_LEN 2
 /* used to hold info on the particular ciphers used */

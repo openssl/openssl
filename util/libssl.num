@@ -506,3 +506,4 @@ SSL_get_async_status                    506	3_0_0	EXIST::FUNCTION:
 SSL_sendfile                            507	3_0_0	EXIST::FUNCTION:
 OSSL_default_cipher_list                508	3_0_0	EXIST::FUNCTION:
 OSSL_default_ciphersuites               509	3_0_0	EXIST::FUNCTION:
+OPENSSL_version_list                    510	3_0_0	EXIST::FUNCTION:

@@ -217,6 +217,7 @@ extern "C" {
 typedef struct ssl_st *ssl_crock_st;
 typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
 typedef struct ssl_method_st SSL_METHOD;
+typedef struct ssl_version_st SSL_VERSION;
 typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
@@ -1515,6 +1516,7 @@ __owur BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
 __owur int BIO_ssl_copy_session_id(BIO *to, BIO *from);
 void BIO_ssl_shutdown(BIO *ssl_bio);
 
+__owur int OPENSSL_version_list(const char *str, int *version_mask);
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
