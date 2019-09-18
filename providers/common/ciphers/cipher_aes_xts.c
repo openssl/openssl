@@ -176,7 +176,6 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
     else if (CRYPTO_xts128_encrypt(&ctx->xts, ctx->base.iv, in, out, inl,
                                    ctx->base.enc))
         return 0;
-    return 1;
 
     *outl = inl;
     return 1;
@@ -198,7 +197,6 @@ static int aes_xts_stream_update(void *vctx, unsigned char *out, size_t *outl,
         return 0;
     }
 
-    *outl = inl;
     return 1;
 }
 
