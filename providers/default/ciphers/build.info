@@ -34,4 +34,9 @@ IF[{- !$disabled{cast} -}]
       cipher_cast5.c cipher_cast5_hw.c
 ENDIF
 
+IF[{- !$disabled{seed} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_seed.c cipher_seed_hw.c
+ENDIF
+
 INCLUDE[../../../libcrypto]=. ../../../crypto
