@@ -45,6 +45,7 @@
 #define SSL_ENC_ARIA128GCM_IDX  20
 #define SSL_ENC_ARIA256GCM_IDX  21
 #define SSL_ENC_NUM_IDX         22
+#define SSL_NUM_VERSIONS        OSSL_NELEM(ssl_version_table)
 
 /* NB: make sure indices in these tables match values above */
 
@@ -195,6 +196,31 @@ typedef struct cipher_order_st {
     int dead;
     struct cipher_order_st *next, *prev;
 } CIPHER_ORDER;
+
+/* The list of available SSL versions */
+static const SSL_VERSION ssl_version_table[] = {
+    {
+        0,
+        SSL_TXT_ALL,
+        0,
+    }, {
+        1,
+        SSL_TXT_SSLV3,
+        SSL3_VERSION,
+    }, {
+        1,
+        SSL_TXT_TLSV1,
+        TLS1_VERSION,
+    }, {
+        1,
+        SSL_TXT_TLSV1_1,
+        TLS1_1_VERSION,
+    }, {
+        1,
+        SSL_TXT_TLSV1_2,
+        TLS1_2_VERSION,
+    },
+};
 
 static const SSL_CIPHER cipher_aliases[] = {
     /* "ALL" doesn't include eNULL (must be specifically enabled) */
@@ -955,6 +981,77 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 
     OPENSSL_free(number_uses);
     return 1;
+}
+
+/*
+ * Process version string and save it to the bitvise version mask.
+ * If at least one valid version string was found, return processed length,
+ * otherwise return 0. If an empty string is provided, set version mask to
+ * default versions.
+ */
+int OPENSSL_version_list(const char *str, int *version_mask)
+{
+    const char *l, *buf;
+    int i, found, buflen, processed_len;
+    char ch;
+    if (str == NULL) {
+        *version_mask = 0;
+        for (i = 0; i < SSL_NUM_VERSIONS; ++i) {
+            if (ssl_version_table[i].is_default)
+                *version_mask |= (1 << i);
+        }
+        return 0;
+    }
+    l = str;
+    processed_len = found = 0;
+    *version_mask = 0;
+    for ( ; ; ) {
+        ch = *l;
+        buf = l;
+        buflen = 0;
+#ifndef CHARSET_EBCDIC
+        while (((ch >= 'A') && (ch <= 'Z')) ||
+               ((ch >= '0') && (ch <= '9')) ||
+               ((ch >= 'a') && (ch <= 'z')) ||
+               (ch == '.'))
+#else
+        while (isalnum((unsigned char)ch) || (ch == '.'))
+#endif
+        {
+            ch = *(++l);
+            buflen++;
+            processed_len++;
+        }
+        if (buflen == 0)
+            /*
+             * Invalid character found, but this is not an error.
+             * It's probably newline or cipherlist separator,
+             * so it's up to caller function to deal with it.
+             */
+            break;
+
+        for (i = 0; i < SSL_NUM_VERSIONS;) {
+            if (strncmp(buf, ssl_version_table[i].name, buflen) == 0
+                && (ssl_version_table[i].name[buflen] == '\0')) {
+                    *version_mask |= 1 << i;
+                    found = 1;
+                    break;
+            } else {
+                i++;
+            }
+        }
+
+        if (ch == '|') {
+            l++;
+            processed_len++;
+            continue;
+        }
+    }
+    if (!found)
+        /* No valid version string found. */
+        return 0;
+    else
+        return processed_len;
 }
 
 static int ssl_cipher_process_rulestr(const char *rule_str,
