@@ -277,10 +277,6 @@ typedef struct options_st {
      */
     int valtype;
     const char *helpstr;
-    /*
-     * Group options for better readability
-     */
-    int group;
 } OPTIONS;
 
 /*
