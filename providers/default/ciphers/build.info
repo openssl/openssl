@@ -24,4 +24,9 @@ IF[{- !$disabled{bf} -}]
       cipher_blowfish.c cipher_blowfish_hw.c
 ENDIF
 
+IF[{- !$disabled{idea} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_idea.c cipher_idea_hw.c
+ENDIF
+
 INCLUDE[../../../libcrypto]=. ../../../crypto
