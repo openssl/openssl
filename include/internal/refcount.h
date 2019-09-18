@@ -73,6 +73,21 @@ static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
     return 1;
 }
+#  elif defined(__ICL) && defined(_WIN32)
+#   define HAVE_ATOMICS 1
+typedef volatile int CRYPTO_REF_COUNT;
+
+static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
+{
+    *ret = _InterlockedExchangeAdd((void *)val, 1) + 1;
+    return 1;
+}
+
+static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
+{
+    *ret = _InterlockedExchangeAdd((void *)val, -1) - 1;
+    return 1;
+}
 
 #  elif defined(_MSC_VER) && _MSC_VER>=1200
 
