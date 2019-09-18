@@ -38,6 +38,7 @@ void OSSL_CMP_log_close(void) /* is designed to be idempotent */
     (void)OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_CMP, NULL);
 }
 
+/* return >= 0 if level contains logging level, possibly preceded by "CMP " */
 #define max_level_len 5 /* = max length of the below strings, e.g., "EMERG" */
 static OSSL_CMP_severity parse_level(const char *level)
 {
@@ -83,11 +84,10 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
     if (p_file != NULL) {
         const char *p_line = strchr(++p_file, ':');
 
-        /* check if buf contains at least "CMP "followed by logging level */
-        if ((*level = parse_level(buf)) < 0 && p_line++ != NULL) {
-            /* else check if buf contains location info and logging level */
+        if ((*level = parse_level(buf)) < 0 && p_line != NULL) {
+            /* check if buf contains location info and logging level */
             char *p_level_tmp = (char *)p_level;
-            const long line_number = strtol(p_line, &p_level_tmp, 10);
+            const long line_number = strtol(++p_line, &p_level_tmp, 10);
 
             p_level = p_level_tmp;
             if (p_level > p_line && *(p_level++) == ':') {
@@ -234,6 +234,10 @@ void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn)
 int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
                                int no_dup, int prepend)
 {
+    if (sk == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
     if (no_dup) {
         /*
          * not using sk_X509_set_cmp_func() and sk_X509_find()
@@ -265,9 +269,7 @@ int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if (certs == NULL)
-        return 1;
-    for (i = 0; i < sk_X509_num(certs); i++) {
+    for (i = 0; i < sk_X509_num(certs); i++) { /* certs may be NULL */
         X509 *cert = sk_X509_value(certs, i);
 
         if (!no_self_signed || X509_check_issued(cert, cert) != X509_V_OK) {
