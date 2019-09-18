@@ -68,7 +68,7 @@ static OSSL_OP_kdf_derive_fn kdf_tls1_prf_derive;
 static OSSL_OP_kdf_settable_ctx_params_fn kdf_tls1_prf_settable_ctx_params;
 static OSSL_OP_kdf_set_ctx_params_fn kdf_tls1_prf_set_ctx_params;
 
-static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
+static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
                         const unsigned char *sec, size_t slen,
                         const unsigned char *seed, size_t seed_len,
                         unsigned char *out, size_t olen);
@@ -78,10 +78,12 @@ static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
 /* TLS KDF kdf context structure */
 typedef struct {
     void *provctx;
-    /* Digest to use for PRF */
-    PROV_DIGEST digest;
-    /* Second digest for the MD5/SHA-1 combined PRF */
-    PROV_DIGEST sha1;
+
+    /* MAC context for the main digest */
+    EVP_MAC_CTX *P_hash;
+    /* MAC context for SHA1 for the MD5/SHA-1 combined PRF */
+    EVP_MAC_CTX *P_sha1;
+
     /* Secret value to use for PRF */
     unsigned char *sec;
     size_t seclen;
@@ -112,8 +114,8 @@ static void kdf_tls1_prf_reset(void *vctx)
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
 
-    ossl_prov_digest_reset(&ctx->sha1);
-    ossl_prov_digest_reset(&ctx->digest);
+    EVP_MAC_CTX_free(ctx->P_hash);
+    EVP_MAC_CTX_free(ctx->P_sha1);
     OPENSSL_clear_free(ctx->sec, ctx->seclen);
     OPENSSL_cleanse(ctx->seed, ctx->seedlen);
     memset(ctx, 0, sizeof(*ctx));
@@ -123,9 +125,8 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
                                size_t keylen)
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
 
-    if (md == NULL) {
+    if (ctx->P_hash == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
@@ -137,38 +138,73 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SEED);
         return 0;
     }
-    return tls1_prf_alg(md, ossl_prov_digest_md(&ctx->sha1),
+
+    return tls1_prf_alg(ctx->P_hash, ctx->P_sha1,
                         ctx->sec, ctx->seclen,
                         ctx->seed, ctx->seedlen,
                         key, keylen);
+}
+
+static EVP_MAC_CTX *kdf_tls1_prf_mkmac(OPENSSL_CTX *libctx,
+                                       const char *mdname,
+                                       const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    OSSL_PARAM mac_params[5], *mp = mac_params;
+    const char *properties = NULL;
+    /* TODO(3.0) rethink "flags", also see hmac.c in providers */
+    int mac_flags = EVP_MD_CTX_FLAG_NON_FIPS_ALLOW;
+    EVP_MAC_CTX *macctx = NULL;
+
+    *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                             (char *)mdname, 0);
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_ENGINE)) != NULL)
+        *mp++ = *p;
+#endif
+    if ((p = OSSL_PARAM_locate_const(params,
+                                     OSSL_KDF_PARAM_PROPERTIES)) != NULL) {
+        properties = p->data;
+        *mp++ = *p;
+    }
+    *mp++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FLAGS, &mac_flags);
+    *mp = OSSL_PARAM_construct_end();
+
+    /* Implicit fetch */
+    {
+        EVP_MAC *mac = EVP_MAC_fetch(libctx, OSSL_MAC_NAME_HMAC, properties);
+
+        macctx = EVP_MAC_CTX_new(mac);
+        /* The context holds on to the MAC */
+        EVP_MAC_free(mac);
+        if (macctx == NULL)
+            goto err;
+    }
+
+    if (EVP_MAC_CTX_set_params(macctx, mac_params))
+        goto done;
+ err:
+    EVP_MAC_CTX_free(macctx);
+    macctx = NULL;
+ done:
+    return macctx;
 }
 
 static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     TLS1_PRF *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL
-        && p->data_type == OSSL_PARAM_UTF8_STRING
-        && strcasecmp(p->data, SN_md5_sha1) == 0) {
-        OSSL_PARAM qaram[4], *q = qaram;
-
-        /* Handle combined MD5 / SHA1 digest specially */
-        *q++ = OSSL_PARAM_construct_utf8_string("digest", SN_md5, 0);
-        if ((p = OSSL_PARAM_locate_const(params, "engine")) != NULL)
-            *q++ = *p;
-        if ((p = OSSL_PARAM_locate_const(params, "properties")) != NULL)
-            *q++ = *p;
-        *q = OSSL_PARAM_construct_end();
-        if (!ossl_prov_digest_load_from_params(&ctx->digest, qaram, provctx))
-            return 0;
-        qaram[0] = OSSL_PARAM_construct_utf8_string("digest", SN_sha1, 0);
-        if (!ossl_prov_digest_load_from_params(&ctx->sha1, qaram, provctx))
-            return 0;
-    } else if (!ossl_prov_digest_load_from_params(&ctx->digest, params,
-                                                  provctx)) {
-        return 0;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
+        EVP_MAC_CTX_free(ctx->P_hash);
+        EVP_MAC_CTX_free(ctx->P_sha1);
+        if (strcasecmp(p->data, SN_md5_sha1) == 0) {
+            ctx->P_hash = kdf_tls1_prf_mkmac(libctx, SN_md5, params);
+            ctx->P_sha1 = kdf_tls1_prf_mkmac(libctx, SN_sha1, params);
+        } else {
+            ctx->P_hash = kdf_tls1_prf_mkmac(libctx, p->data, params);
+        }
     }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET)) != NULL) {
@@ -265,34 +301,21 @@ const OSSL_DISPATCH kdf_tls1_prf_functions[] = {
  *     A(0) = seed
  *     A(i) = HMAC_<hash>(secret, A(i-1))
  */
-static int tls1_prf_P_hash(const EVP_MD *md,
+static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
                            const unsigned char *sec, size_t sec_len,
                            const unsigned char *seed, size_t seed_len,
                            unsigned char *out, size_t olen)
 {
     size_t chunk;
-    EVP_MAC *mac = NULL;
-    EVP_MAC_CTX *ctx = NULL, *ctx_Ai = NULL, *ctx_init = NULL;
+    EVP_MAC_CTX *ctx = NULL, *ctx_Ai = NULL;
     unsigned char Ai[EVP_MAX_MD_SIZE];
     size_t Ai_len;
     int ret = 0;
-    OSSL_PARAM params[4];
-    int mac_flags;
-    const char *mdname = EVP_MD_name(md);
+    OSSL_PARAM params[2], *p = params;
 
-    mac = EVP_MAC_fetch(NULL, OSSL_MAC_NAME_HMAC, NULL); /* Implicit fetch */
-    ctx_init = EVP_MAC_CTX_new(mac);
-    if (ctx_init == NULL)
-        goto err;
-
-    /* TODO(3.0) rethink "flags", also see hmac.c in providers */
-    mac_flags = EVP_MD_CTX_FLAG_NON_FIPS_ALLOW;
-    params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FLAGS, &mac_flags);
-    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                 (char *)mdname, 0);
-    params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                                  (void *)sec, sec_len);
-    params[3] = OSSL_PARAM_construct_end();
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                             (void *)sec, sec_len);
+    *p = OSSL_PARAM_construct_end();
     if (!EVP_MAC_CTX_set_params(ctx_init, params))
         goto err;
     if (!EVP_MAC_init(ctx_init))
@@ -346,8 +369,6 @@ static int tls1_prf_P_hash(const EVP_MD *md,
  err:
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_CTX_free(ctx_Ai);
-    EVP_MAC_CTX_free(ctx_init);
-    EVP_MAC_free(mac);
     OPENSSL_cleanse(Ai, sizeof(Ai));
     return ret;
 }
@@ -372,12 +393,12 @@ static int tls1_prf_P_hash(const EVP_MD *md,
  *
  *   PRF(secret, label, seed) = P_<hash>(secret, label + seed)
  */
-static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
+static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
                         const unsigned char *sec, size_t slen,
                         const unsigned char *seed, size_t seed_len,
                         unsigned char *out, size_t olen)
 {
-    if (sha1 != NULL) {
+    if (sha1ctx != NULL) {
         /* TLS v1.0 and TLS v1.1 */
         size_t i;
         unsigned char *tmp;
@@ -385,7 +406,7 @@ static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
         size_t L_S1 = (slen + 1) / 2;
         size_t L_S2 = L_S1;
 
-        if (!tls1_prf_P_hash(md, sec, L_S1,
+        if (!tls1_prf_P_hash(mdctx, sec, L_S1,
                              seed, seed_len, out, olen))
             return 0;
 
@@ -393,7 +414,8 @@ static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        if (!tls1_prf_P_hash(sha1, sec + slen - L_S2, L_S2,
+
+        if (!tls1_prf_P_hash(sha1ctx, sec + slen - L_S2, L_S2,
                              seed, seed_len, tmp, olen)) {
             OPENSSL_clear_free(tmp, olen);
             return 0;
@@ -405,7 +427,7 @@ static int tls1_prf_alg(const EVP_MD *md, const EVP_MD *sha1,
     }
 
     /* TLS v1.2 */
-    if (!tls1_prf_P_hash(md, sec, slen, seed, seed_len, out, olen))
+    if (!tls1_prf_P_hash(mdctx, sec, slen, seed, seed_len, out, olen))
         return 0;
 
     return 1;
