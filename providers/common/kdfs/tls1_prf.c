@@ -145,9 +145,9 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
                         key, keylen);
 }
 
-static EVP_MAC_CTX *kdf_tls1_prf_mkmac(OPENSSL_CTX *libctx,
-                                       const char *mdname,
-                                       const OSSL_PARAM params[])
+static EVP_MAC_CTX *kdf_tls1_prf_mkmacctx(OPENSSL_CTX *libctx,
+                                          const char *mdname,
+                                          const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     OSSL_PARAM mac_params[5], *mp = mac_params;
@@ -200,10 +200,10 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         EVP_MAC_CTX_free(ctx->P_hash);
         EVP_MAC_CTX_free(ctx->P_sha1);
         if (strcasecmp(p->data, SN_md5_sha1) == 0) {
-            ctx->P_hash = kdf_tls1_prf_mkmac(libctx, SN_md5, params);
-            ctx->P_sha1 = kdf_tls1_prf_mkmac(libctx, SN_sha1, params);
+            ctx->P_hash = kdf_tls1_prf_mkmacctx(libctx, SN_md5, params);
+            ctx->P_sha1 = kdf_tls1_prf_mkmacctx(libctx, SN_sha1, params);
         } else {
-            ctx->P_hash = kdf_tls1_prf_mkmac(libctx, p->data, params);
+            ctx->P_hash = kdf_tls1_prf_mkmacctx(libctx, p->data, params);
         }
     }
 
