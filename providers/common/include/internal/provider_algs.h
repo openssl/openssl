@@ -128,6 +128,12 @@ extern const OSSL_DISPATCH idea128cbc_functions[];
 extern const OSSL_DISPATCH idea128ofb64_functions[];
 extern const OSSL_DISPATCH idea128cfb64_functions[];
 #endif /* OPENSSL_NO_IDEA */
+#ifndef OPENSSL_NO_CAST
+extern const OSSL_DISPATCH cast5128ecb_functions[];
+extern const OSSL_DISPATCH cast5128cbc_functions[];
+extern const OSSL_DISPATCH cast564ofb64_functions[];
+extern const OSSL_DISPATCH cast564cfb64_functions[];
+#endif /* OPENSSL_NO_CAST */
 
 extern const OSSL_DISPATCH tdes_ede3_ecb_functions[];
 extern const OSSL_DISPATCH tdes_ede3_cbc_functions[];
