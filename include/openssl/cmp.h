@@ -236,8 +236,8 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
                                    OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
-void OSSL_CMP_PKISI_free(OSSL_CMP_PKISI *si); /* not really needed */
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_MSG) /* not really needed */
+void OSSL_CMP_PKISI_free(OSSL_CMP_PKISI *si);
+DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 
 /* from cmp_ctx.c */
 OSSL_CMP_CTX *OSSL_CMP_CTX_new(void);
@@ -333,7 +333,7 @@ int OSSL_CMP_CTX_get_failInfoCode(const OSSL_CMP_CTX *ctx);
 X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx);
 STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx);
 STACK_OF(X509) *OSSL_CMP_CTX_get1_extraCertsIn(const OSSL_CMP_CTX *ctx);
-/* exported for testing and debugging purposes: */
+/* support application-level CMP debugging in cmp.c: */
 int OSSL_CMP_CTX_set1_transactionID(OSSL_CMP_CTX *ctx,
                                     const ASN1_OCTET_STRING *id);
 int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
