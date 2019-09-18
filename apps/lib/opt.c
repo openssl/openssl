@@ -28,6 +28,7 @@
 #define MAX_OPT_HELP_WIDTH 30
 const char OPT_HELP_STR[] = "--";
 const char OPT_MORE_STR[] = "---";
+const char OPT_SECTION_STR[] = "----";
 
 /* Our state */
 static char **argv;
@@ -133,7 +134,8 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         int duplicated, i;
 #endif
 
-        if (o->name == OPT_HELP_STR || o->name == OPT_MORE_STR)
+        if (o->name == OPT_HELP_STR || o->name == OPT_MORE_STR ||
+            o->name == OPT_SECTION_STR)
             continue;
 #ifndef NDEBUG
         i = o->valtype;
@@ -839,7 +841,7 @@ void opt_print(const OPTIONS *o, int width)
     char *p;
 
         help = o->helpstr ? o->helpstr : "(No additional info)";
-        if (o->name == OPT_HELP_STR) {
+        if (o->name == OPT_HELP_STR || o->name == OPT_SECTION_STR) {
             opt_printf_stderr(help, prog);
             return;
         }
@@ -900,8 +902,11 @@ void opt_help(const OPTIONS *list)
         OPENSSL_assert(i < (int)sizeof(start));
     }
 
-    if (standard_prolog)
-        opt_printf_stderr("Usage: %s [options]\nValid options are:\n", prog);
+    if (standard_prolog) {
+        opt_printf_stderr("Usage: %s [options]\n", prog);
+        if (list[0].name != OPT_SECTION_STR)
+            opt_printf_stderr("Valid options are:\n", prog);
+    }
 
     /* Now let's print. */
     for (o = list; o->name; o++) {
