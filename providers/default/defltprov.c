@@ -201,6 +201,12 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "IDEA-OFB", "default=yes", idea128ofb64_functions },
     { "IDEA-CFB", "default=yes", idea128cfb64_functions },
 #endif /* OPENSSL_NO_IDEA */
+#ifndef OPENSSL_NO_CAST
+    { "CAST5-ECB", "default=yes", cast5128ecb_functions },
+    { "CAST5-CBC", "default=yes", cast5128cbc_functions },
+    { "CAST5-OFB", "default=yes", cast564ofb64_functions },
+    { "CAST5-CFB", "default=yes", cast564cfb64_functions },
+#endif /* OPENSSL_NO_CAST */
     { NULL, NULL, NULL }
 };
 

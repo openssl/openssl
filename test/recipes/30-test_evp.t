@@ -35,6 +35,9 @@ my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
 my @ideafiles = qw( evpciph_idea.txt );
 push @defltfiles, @ideafiles unless disabled("idea");
 
+my @castfiles = qw( evpciph_cast5.txt );
+push @defltfiles, @castfiles unless disabled("cast");
+
 plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles) + 1;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
