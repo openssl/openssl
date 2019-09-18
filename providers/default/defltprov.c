@@ -213,6 +213,13 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "SEED-OFB", "default=yes", seed128ofb128_functions },
     { "SEED-CFB", "default=yes", seed128cfb128_functions },
 #endif /* OPENSSL_NO_SEED */
+#ifndef OPENSSL_NO_SM4
+    { "SM4-ECB", "default=yes", sm4128ecb_functions },
+    { "SM4-CBC", "default=yes", sm4128cbc_functions },
+    { "SM4-CTR", "default=yes", sm4128ctr_functions },
+    { "SM4-OFB", "default=yes", sm4128ofb128_functions },
+    { "SM4-CFB", "default=yes", sm4128cfb128_functions },
+#endif /* OPENSSL_NO_SM4 */
     { NULL, NULL, NULL }
 };
 

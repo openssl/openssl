@@ -140,6 +140,13 @@ extern const OSSL_DISPATCH seed128cbc_functions[];
 extern const OSSL_DISPATCH seed128ofb128_functions[];
 extern const OSSL_DISPATCH seed128cfb128_functions[];
 #endif /* OPENSSL_NO_SEED */
+#ifndef OPENSSL_NO_SM4
+extern const OSSL_DISPATCH sm4128ecb_functions[];
+extern const OSSL_DISPATCH sm4128cbc_functions[];
+extern const OSSL_DISPATCH sm4128ctr_functions[];
+extern const OSSL_DISPATCH sm4128ofb128_functions[];
+extern const OSSL_DISPATCH sm4128cfb128_functions[];
+#endif /* OPENSSL_NO_SM4 */
 
 extern const OSSL_DISPATCH tdes_ede3_ecb_functions[];
 extern const OSSL_DISPATCH tdes_ede3_cbc_functions[];

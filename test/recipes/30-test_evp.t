@@ -41,6 +41,9 @@ push @defltfiles, @castfiles unless disabled("cast");
 my @seedfiles = qw( evpciph_seed.txt );
 push @defltfiles, @seedfiles unless disabled("seed");
 
+my @sm4files = qw( evpciph_sm4.txt );
+push @defltfiles, @sm4files unless disabled("sm4");
+
 plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles) + 1;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
