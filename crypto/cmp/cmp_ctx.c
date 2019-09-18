@@ -29,7 +29,7 @@ X509_STORE *OSSL_CMP_CTX_get0_trustedStore(const OSSL_CMP_CTX *ctx)
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    return ctx->trusted_store;
+    return ctx->trusted;
 }
 
 /*
@@ -44,9 +44,9 @@ int OSSL_CMP_CTX_set0_trustedStore(OSSL_CMP_CTX *ctx, X509_STORE *store)
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    X509_STORE_free(ctx->trusted_store);
-    ctx->trusted_store = store != NULL ? store : X509_STORE_new();
-    return ctx->trusted_store != NULL;
+    X509_STORE_free(ctx->trusted);
+    ctx->trusted = store;
+    return 1;
 }
 
 /*
@@ -98,8 +98,6 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
     ctx->proxyPort = OSSL_CMP_DEFAULT_PORT;
     ctx->msgtimeout = 2 * 60;
 
-    if ((ctx->trusted_store = X509_STORE_new()) == NULL)
-        goto err;
     if ((ctx->untrusted_certs = sk_X509_new_null()) == NULL)
         goto err;
 
@@ -158,7 +156,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     X509_free(ctx->srvCert);
     X509_free(ctx->validatedSrvCert);
     X509_NAME_free(ctx->expected_sender);
-    X509_STORE_free(ctx->trusted_store);
+    X509_STORE_free(ctx->trusted);
     sk_X509_pop_free(ctx->untrusted_certs, X509_free);
 
     X509_free(ctx->clCert);
