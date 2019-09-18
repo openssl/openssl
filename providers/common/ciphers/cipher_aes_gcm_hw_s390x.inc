@@ -97,10 +97,7 @@ static int s390x_aes_gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
         memcpy(tag, kma->t.b, ctx->taglen);
         rc = 1;
     } else {
-        if (ctx->taglen < 0)
-            rc = 0;
-        else
-            rc = (CRYPTO_memcmp(tag, kma->t.b, ctx->taglen) == 0);
+        rc = (CRYPTO_memcmp(tag, kma->t.b, ctx->taglen) == 0);
     }
     return rc;
 }
