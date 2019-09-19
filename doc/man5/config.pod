@@ -507,6 +507,17 @@ Files are loaded in a single pass. This means that an variable expansion
 will only work if the variables referenced are defined earlier in the
 file.
 
+=head1 HISTORY
+
+An undocumented API, NCONF_WIN32(), used a slightly different set
+of parsing rules there were intended to be tailored to
+the Microsoft Windows platform.
+Specifically, the backslash character was not an escape character and
+could be used in pathnames, only the double-quote character was recognized,
+and comments began with a semi-colon.
+This function was deprecated in OpenSSL 3.0; applications with
+configuration files using that syntax will have to be modified.
+
 =head1 SEE ALSO
 
 L<x509(1)>, L<req(1)>, L<ca(1)>, L<fips_config(5)>
