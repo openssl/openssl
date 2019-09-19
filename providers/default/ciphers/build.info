@@ -39,4 +39,9 @@ IF[{- !$disabled{seed} -}]
       cipher_seed.c cipher_seed_hw.c
 ENDIF
 
+IF[{- !$disabled{sm4} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_sm4.c cipher_sm4_hw.c
+ENDIF
+
 INCLUDE[../../../libcrypto]=. ../../../crypto
