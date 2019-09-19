@@ -5197,3 +5197,9 @@ OSSL_DESERIALIZER_CTX_set_cleanup       ?	3_0_0	EXIST::FUNCTION:
 OSSL_DESERIALIZER_CTX_get_construct     ?	3_0_0	EXIST::FUNCTION:
 OSSL_DESERIALIZER_CTX_get_construct_data ?	3_0_0	EXIST::FUNCTION:
 OSSL_DESERIALIZER_CTX_get_cleanup       ?	3_0_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get0_bag_obj             ?	3_0_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get0_bag_type            ?	3_0_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_create_secret            ?	3_0_0	EXIST::FUNCTION:
+PKCS12_add1_attr_by_NID                 ?	3_0_0	EXIST::FUNCTION:
+PKCS12_add1_attr_by_txt                 ?	3_0_0	EXIST::FUNCTION:
+PKCS12_add_secret                       ?	3_0_0	EXIST::FUNCTION:

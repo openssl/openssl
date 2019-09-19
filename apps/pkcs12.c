@@ -789,6 +789,16 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
         X509_free(x509);
         break;
 
+    case NID_secretBag:
+        if (options & INFO) 
+            BIO_printf(bio_err, "Secret bag\n");
+        print_attribs(out, attrs, "Bag Attributes");
+        BIO_printf(bio_err, "Bag Type: ");
+        i2a_ASN1_OBJECT(bio_err, PKCS12_SAFEBAG_get0_bag_type(bag));
+        BIO_printf(bio_err, "\nBag Value: ");
+        print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
+        return 1;
+
     case NID_safeContentsBag:
         if (options & INFO)
             BIO_printf(bio_err, "Safe Contents bag\n");
@@ -952,6 +962,10 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
                                 av->value.bmpstring->length);
         BIO_printf(out, "%s\n", value);
         OPENSSL_free(value);
+        break;
+
+    case V_ASN1_UTF8STRING:
+        BIO_printf(out, "%s\n", av->value.utf8string->data);
         break;
 
     case V_ASN1_OCTET_STRING:
