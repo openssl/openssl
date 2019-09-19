@@ -22,6 +22,10 @@ B<openssl> B<s_time>
 [B<-nameopt option>]
 [B<-time seconds>]
 [B<-ssl3>]
+[B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
+[B<-tls1_3>]
 [B<-bugs>]
 [B<-cipher cipherlist>]
 [B<-ciphersuites val>]
@@ -109,19 +113,13 @@ Performs the timing test using the same session ID; this can be used as a test
 that session caching is working. If neither B<-new> nor B<-reuse> are
 specified, they are both on by default and executed in sequence.
 
-=item B<-ssl3>
+=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>
 
-This option disables the use of SSL version 3. By default
-the initial handshake uses a method which should be compatible with all
-servers and permit them to use SSL v3 or TLS as appropriate.
-
-The timing program is not as rich in options to turn protocols on and off as
-the L<s_client(1)> program and may not connect to all servers.
-Unfortunately there are a lot of ancient and broken servers in use which
-cannot handle this technique and will fail to connect. Some servers only
-work if TLS is turned off with the B<-ssl3> option.
-
-Note that this option may not be available, depending on how
+These options enable specific SSL or TLS protocol versions for the handshake
+initiated by B<s_time>.
+By default B<s_time> negotiates the highest mutually supported protocol
+version.
+Note that not all protocols and flags may be available, depending on how
 OpenSSL was built.
 
 =item B<-bugs>
