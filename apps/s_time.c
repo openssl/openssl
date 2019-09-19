@@ -47,7 +47,7 @@ typedef enum OPTION_choice {
     OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
     OPT_CAPATH, OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NEW, OPT_REUSE,
     OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
-    OPT_WWW
+    OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3
 } OPTION_CHOICE;
 
 const OPTIONS s_time_options[] = {
@@ -76,6 +76,18 @@ const OPTIONS s_time_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
+#ifndef OPENSSL_NO_TLS1
+    {"tls1", OPT_TLS1, '-', "Just use TLSv1.0"},
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+    {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
+#endif
+#ifndef OPENSSL_NO_TLS1_3
+    {"tls1_3", OPT_TLS1_3, '-', "Just use TLSv1.3"},
+#endif
     {NULL}
 };
 
@@ -101,7 +113,7 @@ int s_time_main(int argc, char **argv)
     int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
     long bytes_read = 0, finishtime = 0;
     OPTION_CHOICE o;
-    int max_version = 0, ver, buf_len;
+    int min_version = 0, max_version = 0, ver, buf_len;
     size_t buf_size;
 
     meth = TLS_client_method();
@@ -177,7 +189,24 @@ int s_time_main(int argc, char **argv)
             }
             break;
         case OPT_SSL3:
+            min_version = SSL3_VERSION;
             max_version = SSL3_VERSION;
+            break;
+        case OPT_TLS1:
+            min_version = TLS1_VERSION;
+            max_version = TLS1_VERSION;
+            break;
+        case OPT_TLS1_1:
+            min_version = TLS1_1_VERSION;
+            max_version = TLS1_1_VERSION;
+            break;
+        case OPT_TLS1_2:
+            min_version = TLS1_2_VERSION;
+            max_version = TLS1_2_VERSION;
+            break;
+        case OPT_TLS1_3:
+            min_version = TLS1_3_VERSION;
+            max_version = TLS1_3_VERSION;
             break;
         }
     }
@@ -193,6 +222,8 @@ int s_time_main(int argc, char **argv)
 
     SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
     SSL_CTX_set_quiet_shutdown(ctx, 1);
+    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+        goto end;
     if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
         goto end;
 
