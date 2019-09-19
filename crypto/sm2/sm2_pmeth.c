@@ -309,7 +309,7 @@ static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     return EVP_DigestUpdate(mctx, z, (size_t)mdlen);
 }
 
-const EVP_PKEY_METHOD sm2_pkey_meth = {
+static const EVP_PKEY_METHOD sm2_pkey_meth = {
     EVP_PKEY_SM2,
     0,
     pkey_sm2_init,
@@ -349,3 +349,8 @@ const EVP_PKEY_METHOD sm2_pkey_meth = {
 
     pkey_sm2_digest_custom
 };
+
+const EVP_PKEY_METHOD *sm2_pkey_method(void)
+{
+    return &sm2_pkey_meth;
+}

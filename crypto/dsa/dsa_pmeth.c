@@ -239,7 +239,7 @@ static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     return DSA_generate_key(pkey->pkey.dsa);
 }
 
-const EVP_PKEY_METHOD dsa_pkey_meth = {
+static const EVP_PKEY_METHOD dsa_pkey_meth = {
     EVP_PKEY_DSA,
     EVP_PKEY_FLAG_AUTOARGLEN,
     pkey_dsa_init,
@@ -271,3 +271,8 @@ const EVP_PKEY_METHOD dsa_pkey_meth = {
     pkey_dsa_ctrl,
     pkey_dsa_ctrl_str
 };
+
+const EVP_PKEY_METHOD *dsa_pkey_method(void)
+{
+    return &dsa_pkey_meth;
+}
