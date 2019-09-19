@@ -90,8 +90,7 @@ int gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
         CRYPTO_gcm128_tag(&ctx->gcm, tag, GCM_TAG_MAX_SIZE);
         ctx->taglen = GCM_TAG_MAX_SIZE;
     } else {
-        if (ctx->taglen == UNINITIALISED_SIZET
-            || CRYPTO_gcm128_finish(&ctx->gcm, tag, ctx->taglen) != 0)
+        if (CRYPTO_gcm128_finish(&ctx->gcm, tag, ctx->taglen) != 0)
             return 0;
     }
     return 1;
