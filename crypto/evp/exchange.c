@@ -175,8 +175,7 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 
     keymgmt_data.ctx = ctx;
     keymgmt_data.properties = properties;
-    keyexch = evp_generic_fetch(ctx, OSSL_OP_KEYEXCH,
-                                evp_name_number(ctx, algorithm), properties,
+    keyexch = evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
                                 evp_keyexch_from_dispatch, &keymgmt_data,
                                 (int (*)(void *))EVP_KEYEXCH_up_ref,
                                 (void (*)(void *))EVP_KEYEXCH_free);

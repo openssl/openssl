@@ -219,8 +219,7 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
      */
     keymgmt_data.ctx = ctx;
     keymgmt_data.properties = properties;
-    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE,
-                             evp_name_number(ctx, algorithm), properties,
+    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
                              evp_signature_from_dispatch, &keymgmt_data,
                              (int (*)(void *))EVP_SIGNATURE_up_ref,
                              (void (*)(void *))EVP_SIGNATURE_free);

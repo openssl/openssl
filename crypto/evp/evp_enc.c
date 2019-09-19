@@ -1416,8 +1416,7 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                              const char *properties)
 {
     EVP_CIPHER *cipher =
-        evp_generic_fetch(ctx, OSSL_OP_CIPHER,
-                          evp_name_number(ctx, algorithm), properties,
+        evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
                           evp_cipher_from_dispatch, NULL, evp_cipher_up_ref,
                           evp_cipher_free);
 

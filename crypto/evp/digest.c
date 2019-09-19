@@ -765,8 +765,7 @@ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
     EVP_MD *md =
-        evp_generic_fetch(ctx, OSSL_OP_DIGEST,
-                          evp_name_number(ctx, algorithm), properties,
+        evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
                           evp_md_from_dispatch, NULL, evp_md_up_ref,
                           evp_md_free);
 

@@ -167,7 +167,7 @@ int is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 #include <openssl/core.h>
 
 void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
-                        int name_id, const char *properties,
+                        const char *name, const char *properties,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov,
@@ -175,6 +175,15 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
                         void *method_data,
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *));
+void *evp_generic_fetch_by_number(OPENSSL_CTX *ctx, int operation_id,
+                                  int name_id, const char *properties,
+                                  void *(*new_method)(int name_id,
+                                                      const OSSL_DISPATCH *fns,
+                                                      OSSL_PROVIDER *prov,
+                                                      void *method_data),
+                                  void *method_data,
+                                  int (*up_ref_method)(void *),
+                                  void (*free_method)(void *));
 void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
                         void (*user_fn)(void *method, void *arg),
                         void *user_arg,

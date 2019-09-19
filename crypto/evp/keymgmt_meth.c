@@ -156,17 +156,20 @@ static void *keymgmt_from_dispatch(int name_id,
 EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
                                          const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, name_id, properties,
-                             keymgmt_from_dispatch, NULL,
-                             (int (*)(void *))EVP_KEYMGMT_up_ref,
-                             (void (*)(void *))EVP_KEYMGMT_free);
+    return evp_generic_fetch_by_number(ctx,
+                                       OSSL_OP_KEYMGMT, name_id, properties,
+                                       keymgmt_from_dispatch, NULL,
+                                       (int (*)(void *))EVP_KEYMGMT_up_ref,
+                                       (void (*)(void *))EVP_KEYMGMT_free);
 }
 
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    return evp_keymgmt_fetch_by_number(ctx, evp_name_number(ctx, algorithm),
-                                       properties);
+    return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
+                             keymgmt_from_dispatch, NULL,
+                             (int (*)(void *))EVP_KEYMGMT_up_ref,
+                             (void (*)(void *))EVP_KEYMGMT_free);
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
