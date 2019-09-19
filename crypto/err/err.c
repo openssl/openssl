@@ -533,35 +533,30 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
         es->err_buffer[i] = 0;
     }
 
-    if (file != NULL && line != NULL) {
-        if (es->err_file[i] == NULL) {
-            *file = "NA";
-            *line = 0;
-        } else {
-            *file = es->err_file[i];
-            *line = es->err_line[i];
-        }
+    if (file != NULL) {
+        *file = es->err_file[i];
+        if (*file == NULL)
+            *file = "";
     }
-
+    if (line != NULL)
+        *line = es->err_line[i];
     if (func != NULL) {
         *func = es->err_func[i];
         if (*func == NULL)
-            *func = "N/A";
+            *func = "";
     }
-
+    if (flags != NULL)
+        *flags = es->err_data_flags[i];
     if (data == NULL) {
         if (g == EV_POP) {
             err_clear_data(es, i, 0);
         }
     } else {
-        if (es->err_data[i] == NULL) {
+        *data = es->err_data[i];
+        if (*data == NULL) {
             *data = "";
             if (flags != NULL)
                 *flags = 0;
-        } else {
-            *data = es->err_data[i];
-            if (flags != NULL)
-                *flags = es->err_data_flags[i];
         }
     }
     return ret;

@@ -61,28 +61,35 @@ error queue without modifying it.
 ERR_peek_last_error() returns the latest error code from the thread's
 error queue without modifying it.
 
-See L<ERR_GET_LIB(3)> for obtaining information about
-location and reason of the error, and
-L<ERR_error_string(3)> for human-readable error
-messages.
+See L<ERR_GET_LIB(3)> for obtaining further specific information
+such as the reason of the error,
+and L<ERR_error_string(3)> for human-readable error messages.
 
 ERR_get_error_line(), ERR_peek_error_line() and
 ERR_peek_last_error_line() are the same as ERR_get_error(),
-ERR_peek_error() and ERR_peek_last_error(), but they
+ERR_peek_error() and ERR_peek_last_error(), but on success they
 additionally store the file name and line number where
-the error occurred in *B<file> and *B<line>, unless these are B<NULL>.
+the error occurred in *B<file> and *B<line>, as far as they are not B<NULL>.
+An unset file name is indicated as B<"">, i.e., an empty string.
+An unset line number is indicated as B<0>.
+
+A pointer returned this way by these functions and the ones below
+is valid until the respective entry is removed from the error queue.
 
 ERR_get_error_func(), ERR_peek_error_func() and
 ERR_peek_last_error_func() are the same as ERR_get_error(),
-ERR_peek_error() and ERR_peek_last_error(), but they
-additionally store the name of the function where the error in *B<func>,
-unless it is B<NULL>.
+ERR_peek_error() and ERR_peek_last_error(), but on success they
+additionally store the name of the function where the error occurred
+in *B<func>, unless it is B<NULL>.
+An unset function name is indicated as B<"">.
 
 ERR_get_error_data(), ERR_peek_error_data() and
 ERR_peek_last_error_data() are the same as ERR_get_error(),
-ERR_peek_error() and ERR_peek_last_error(), but they
+ERR_peek_error() and ERR_peek_last_error(), but on success they
 additionally store additional data and flags associated with the error
-code in *B<data> and *B<flags>, unless these are B<NULL>.
+code in *B<data> and *B<flags>, as far as they are not B<NULL>.
+Unset data is indicated as B<"">.
+In this case the value given for the flag is irrelevant (and equals B<0>).
 *B<data> contains a string if *B<flags>&B<ERR_TXT_STRING> is true.
 
 ERR_get_error_all(), ERR_peek_error_all() and
