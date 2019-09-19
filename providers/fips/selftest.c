@@ -41,7 +41,15 @@ static unsigned char fixed_key[32] = { 0 };
 static CRYPTO_ONCE fips_self_test_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
 {
+    /*
+     * This lock gets freed in platform specific ways that may occur after we
+     * do mem leak checking. If we don't know how to free it for a particular
+     * platform then we just leak it deliberately. So we temporarily disable the
+     * mem leak checking while we allocate this.
+     */
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     self_test_lock = CRYPTO_THREAD_lock_new();
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
 
     return self_test_lock != NULL;
 }
