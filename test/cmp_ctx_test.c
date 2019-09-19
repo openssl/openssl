@@ -155,14 +155,17 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         res = 0;
     } else {
         CMPerr(0, CMP_R_INVALID_ARGS);
+        base_err_msg_size = strlen("INVALID_ARGS");
         CMPerr(0, CMP_R_NULL_ARGUMENT);
-        base_err_msg_size = strlen("INVALID_ARGS") + strlen("NULL_ARGUMENT");
+        base_err_msg_size += strlen("NULL_ARGUMENT");
+        expected_size = base_err_msg_size;
         ossl_cmp_add_error_data("data1"); /* should prepend separator " : " */
+        expected_size += strlen(" : " "data1");
         ossl_cmp_add_error_data("data2"); /* should prepend separator " : " */
+        expected_size += strlen(" : " "data2");
         ossl_cmp_add_error_line("new line"); /* should prepend separator "\n" */
+        expected_size += strlen("\n" "new line");
         OSSL_CMP_CTX_print_errors(ctx);
-        expected_size = base_err_msg_size + strlen(" : ") +
-            strlen("data1") + strlen(" : ""data2") + strlen("\n""new line");
         if (!TEST_int_eq(msg_total_size, expected_size))
             res = 0;
 
@@ -171,16 +174,12 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         expected_size = base_err_msg_size;
         while (expected_size < 4096) { /* force split */
             ossl_cmp_add_error_txt(STR_SEP, max_str_literal);
-            expected_size += strlen(max_str_literal) + strlen(STR_SEP);
+            expected_size += strlen(STR_SEP) + strlen(max_str_literal);
         }
         expected_size += base_err_msg_size - 2 * strlen(STR_SEP);
         msg_total_size = 0;
         OSSL_CMP_CTX_print_errors(ctx);
-#ifdef FIX_9558_merged
         if (!TEST_int_eq(msg_total_size, expected_size))
-#else
-        if (!TEST_int_le(msg_total_size, expected_size))
-#endif
             res = 0;
     }
 
