@@ -27,8 +27,8 @@ int cipher_hw_tdes_ede3_initkey(PROV_CIPHER_CTX *ctx, const unsigned char *key,
             des_t4_key_expand(&deskey[0], &tctx->ks1);
             des_t4_key_expand(&deskey[1], &tctx->ks2);
             des_t4_key_expand(&deskey[2], &tctx->ks3);
-            dat->tstream.cbc = enc ? des_t4_ede3_cbc_encrypt :
-                                     des_t4_ede3_cbc_decrypt;
+            tctx->tstream.cbc = ctx->enc ? des_t4_ede3_cbc_encrypt :
+                                           des_t4_ede3_cbc_decrypt;
             return 1;
         }
     }

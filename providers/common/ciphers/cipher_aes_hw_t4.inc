@@ -92,4 +92,4 @@ static const PROV_CIPHER_HW aes_t4_##mode = {                                  \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
     if (SPARC_AES_CAPABLE)                                                     \
-        return aes_t4_##mode;
+        return &aes_t4_##mode;
