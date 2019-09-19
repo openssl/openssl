@@ -1019,7 +1019,7 @@ ASN1_UTCTIME_it                         1013	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION
 ASN1_UTCTIME_it                         1013	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 i2d_DSA_PUBKEY_fp                       1014	1_1_0	EXIST::FUNCTION:DSA,STDIO
 X509at_get_attr_by_OBJ                  1015	1_1_0	EXIST::FUNCTION:
-EVP_MD_CTX_copy_ex                      1016	1_1_0	NOEXIST::FUNCTION:
+EVP_MD_CTX_copy_ex                      1016	1_1_0	EXIST::FUNCTION:
 UI_dup_error_string                     1017	1_1_0	EXIST::FUNCTION:
 OPENSSL_LH_num_items                    1018	1_1_0	EXIST::FUNCTION:
 ASN1_INTEGER_cmp                        1020	1_1_0	EXIST::FUNCTION:

@@ -6,7 +6,7 @@ localCheckout: &localCheckout
   run: |-
     PROJECT_PATH=$(cd ${CIRCLE_WORKING_DIRECTORY}; pwd)
     mkdir -p ${PROJECT_PATH}
-    cd /tmp/_circleci_local_build_repo 
+    cd /tmp/_circleci_local_build_repo
     git ls-files -z | xargs -0 -s 2090860 tar -c | tar -x -C ${PROJECT_PATH} 
     cp -a /tmp/_circleci_local_build_repo/.git ${PROJECT_PATH}
 
@@ -26,7 +26,7 @@ localCheckout: &localCheckout
         command: cd oqs_test && scripts/build_openssl.sh
     - run:
         name: Run unit tests
-        command: cd oqs_test && mkdir -p test-results && python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml
+        command: cd oqs_test && mkdir -p test-results && LD_LIBRARY_PATH=$(dirname $PWD) python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml
     - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
         path: oqs_test/test-results
 
@@ -45,6 +45,14 @@ jobs:
       ARCH: x64
       LIBOQS: master
       OPENSSL: 111
+  ubuntu-xenial-x86_64-shared:
+    <<: *openssljob
+    environment:
+      IMAGE: dstebila/liboqs:ubuntu-xenial-x86_64-0.1.0
+      ARCH: x64
+      LIBOQS: master
+      OPENSSL: 111
+      LIBTYPE: shared
 
 workflows:
   version: 2
@@ -52,6 +60,7 @@ workflows:
     jobs:
       - debian-buster-amd64
       - ubuntu-xenial-x86_64
+      - ubuntu-xenial-x86_64-shared
   nightly:
     triggers:
       - schedule:
@@ -63,3 +72,4 @@ workflows:
     jobs:
       - debian-buster-amd64
       - ubuntu-xenial-x86_64
+      - ubuntu-xenial-x86_64-shared

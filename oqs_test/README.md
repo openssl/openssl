@@ -33,8 +33,9 @@ You can locally run any of the integration tests that CircleCI runs.  First, you
 
 where `<jobname>` is one of the following:
 
-- `ssl-amd64-buster-liboqs-master-openssl-111`
-- `ssl-x86_64-xenial-liboqs-master-openssl-111`
+- `debian-buster-amd64`
+- `ubuntu-xenial-x86_64`
+- `ubuntu-xenial-x86_64-shared`
 
 By default, these jobs will use the current Github versions of liboqs and OQS-OpenSSL.  You can override these by passing environment variables to CircleCI:
 

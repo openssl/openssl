@@ -559,15 +559,30 @@ EVP_MD_CTX *EVP_MD_CTX_new(void);
 int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
 
-// The following two macros have been removed by OQS
-// as libOQS expects them to be function prototypes.
-// Note that the utils/mkdef.pl script, which is called
-// when a shared library is being built, does not correctly
-// process comments, and so comments near macros/prototypes
-// must be placed with care.
-// # define EVP_MD_CTX_create()     EVP_MD_CTX_new()
-// # define EVP_MD_CTX_destroy(ctx) EVP_MD_CTX_free((ctx))
+/* The following two macros have been removed by OQS
+   and redefined as functions in crypto/evp/digest.c
+   since libOQS expects them to be function prototypes.
+
+   The utils/mkdef.pl script, which outputs a
+   linker script for shared-library building on Linux,
+   recognizes only C-style comments. The macros have
+   therefore not been commented with C-style comments
+   so as to let mkdef.pl mark the EVP_MD_CTX_create()
+   and destroy() symbols as existing in this header,
+   which would prompt the linker to expose them as
+   global symbols when building libcrypto.
+
+   Thus, while these functions will elicit implicit
+   declaration warnings at compile-time, they will be
+   available during the final link.
+
+   The semicolon below serves as to delimit the symbols
+   for mkdef.pl.*/
+//# define EVP_MD_CTX_create()     EVP_MD_CTX_new();
+//# define EVP_MD_CTX_destroy(ctx) EVP_MD_CTX_free((ctx))
+
 # define EVP_MD_CTX_init(ctx)    EVP_MD_CTX_reset((ctx))
+
 __owur int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
 void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
