@@ -25,9 +25,5 @@ const OSSL_PARAM * name##_gettable_ctx_params(void)                            \
     return name##_known_gettable_ctx_params;                                   \
 }
 
-size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
-                 const unsigned char **in, size_t *inlen);
-int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
-                 const unsigned char **in, size_t *inlen);
 void padblock(unsigned char *buf, size_t *buflen, size_t blocksize);
 int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize);

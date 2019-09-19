@@ -58,6 +58,11 @@ extern const OSSL_DISPATCH aes192ctr_functions[];
 extern const OSSL_DISPATCH aes128ctr_functions[];
 extern const OSSL_DISPATCH aes256xts_functions[];
 extern const OSSL_DISPATCH aes128xts_functions[];
+#ifndef OPENSSL_NO_OCB
+extern const OSSL_DISPATCH aes256ocb_functions[];
+extern const OSSL_DISPATCH aes192ocb_functions[];
+extern const OSSL_DISPATCH aes128ocb_functions[];
+#endif /* OPENSSL_NO_OCB */
 extern const OSSL_DISPATCH aes256gcm_functions[];
 extern const OSSL_DISPATCH aes192gcm_functions[];
 extern const OSSL_DISPATCH aes128gcm_functions[];
