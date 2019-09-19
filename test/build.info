@@ -30,7 +30,7 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}= \
           confdump \
           versions \
-          aborttest test_test \
+          aborttest test_test pkcs12_format_test \
           sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest gmdifftest pbelutest \
           destest mdc2test \
@@ -234,6 +234,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[memleaktest]=../include ../apps/include
   DEPEND[memleaktest]=../libcrypto libtestutil.a
 
+  SOURCE[pkcs12_format_test]=pkcs12_format_test.c pkcs12_helper.c
+  INCLUDE[pkcs12_format_test]=../include ../apps/include
+  DEPEND[pkcs12_format_test]=../libcrypto libtestutil.a
+
   SOURCE[stack_test]=stack_test.c
   INCLUDE[stack_test]=../include ../apps/include
   DEPEND[stack_test]=../libcrypto libtestutil.a
@@ -276,6 +280,7 @@ IF[{- !$disabled{tests} -}]
 
   INCLUDE[ssl_test_ctx.o]=../include
   INCLUDE[handshake_helper.o]=.. ../include
+  INCLUDE[pkcs12_helper.o]=.. ../include
   INCLUDE[ssltestlib.o]=.. ../include
   INCLUDE[cmp_testlib.o]=.. ../include ../apps/include
 

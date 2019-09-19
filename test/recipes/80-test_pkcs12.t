@@ -57,7 +57,10 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 1;
+plan tests => 2;
+
+# Test different PKCS#12 formats
+ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
 
 # just see that we can read shibboleth.pfx protected with $pass
 ok(run(app(["openssl", "pkcs12", "-noout",
