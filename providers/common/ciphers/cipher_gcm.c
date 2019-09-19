@@ -344,7 +344,9 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
                 goto err;
         }
     } else {
-        /* Finished when in == NULL */
+        /* The tag must be set before actually decrypting data */
+        if (!ctx->enc && ctx->taglen == UNINITIALISED_SIZET)
+            goto err;
         if (!hw->cipherfinal(ctx, ctx->buf))
             goto err;
         ctx->iv_state = IV_STATE_FINISHED; /* Don't reuse the IV */
