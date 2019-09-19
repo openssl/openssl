@@ -17,7 +17,6 @@ void ossl_prov_cipher_reset(PROV_CIPHER *pc)
     pc->alloc_cipher = NULL;
     pc->cipher = NULL;
     pc->engine = NULL;
-    pc->name[0] = '\0';
 }
 
 int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src)
@@ -27,7 +26,6 @@ int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src)
     dst->engine = src->engine;
     dst->cipher = src->cipher;
     dst->alloc_cipher = src->alloc_cipher;
-    OPENSSL_strlcpy(dst->name, src->name, sizeof(dst->name));
     return 1;
 }
 
@@ -79,7 +77,6 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
 
     EVP_CIPHER_free(pc->alloc_cipher);
     pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, p->data, propquery);
-    OPENSSL_strlcpy(pc->name, p->data, sizeof(pc->name));
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODE /* Inside the FIPS module, we don't support legacy ciphers */
     if (pc->cipher == NULL)
@@ -98,18 +95,12 @@ ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc)
     return pc->engine;
 }
 
-const char *ossl_prov_cipher_name(const PROV_CIPHER *pc)
-{
-    return pc->name;
-}
-
 void ossl_prov_digest_reset(PROV_DIGEST *pd)
 {
     EVP_MD_free(pd->alloc_md);
     pd->alloc_md = NULL;
     pd->md = NULL;
     pd->engine = NULL;
-    pd->name[0] = '\0';
 }
 
 int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src)
@@ -119,7 +110,6 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src)
     dst->engine = src->engine;
     dst->md = src->md;
     dst->alloc_md = src->alloc_md;
-    OPENSSL_strlcpy(dst->name, src->name, sizeof(dst->name));
     return 1;
 }
 
@@ -142,7 +132,6 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
 
     EVP_MD_free(pd->alloc_md);
     pd->md = pd->alloc_md = EVP_MD_fetch(ctx, p->data, propquery);
-    OPENSSL_strlcpy(pd->name, p->data, sizeof(pd->name));
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODE /* Inside the FIPS module, we don't support legacy digests */
     if (pd->md == NULL)
@@ -159,11 +148,6 @@ const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd)
 ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd)
 {
     return pd->engine;
-}
-
-const char *ossl_prov_digest_name(const PROV_DIGEST *pd)
-{
-    return pd->name;
 }
 
 int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
