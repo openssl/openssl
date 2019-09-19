@@ -165,3 +165,91 @@ const char *ossl_prov_digest_name(const PROV_DIGEST *pd)
 {
     return pd->name;
 }
+
+int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
+                                      const OSSL_PARAM params[],
+                                      const char *macname,
+                                      const char *ciphername,
+                                      const char *mdname,
+                                      OPENSSL_CTX *libctx)
+{
+    const OSSL_PARAM *p;
+    OSSL_PARAM mac_params[5], *mp = mac_params;
+    const char *properties = NULL;
+
+    if (macname == NULL
+        && (p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_MAC)) != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        macname = p->data;
+    }
+    if ((p = OSSL_PARAM_locate_const(params,
+                                     OSSL_ALG_PARAM_PROPERTIES)) != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        properties = p->data;
+    }
+
+    /* If we got a new mac name, we make a new EVP_MAC_CTX */
+    if (macname != NULL) {
+        EVP_MAC *mac = EVP_MAC_fetch(libctx, macname, properties);
+
+        EVP_MAC_CTX_free(*macctx);
+        *macctx = mac == NULL ? NULL : EVP_MAC_CTX_new(mac);
+        /* The context holds on to the MAC */
+        EVP_MAC_free(mac);
+        if (*macctx == NULL)
+            return 0;
+    }
+
+    /*
+     * If there is no MAC yet (and therefore, no MAC context), we ignore
+     * all other parameters.
+     */
+    if (*macctx == NULL)
+        return 1;
+
+    if (mdname == NULL) {
+        if ((p = OSSL_PARAM_locate_const(params,
+                                         OSSL_ALG_PARAM_DIGEST)) != NULL) {
+            if (p->data_type != OSSL_PARAM_UTF8_STRING)
+                return 0;
+            mdname = p->data;
+        }
+    }
+    if (ciphername == NULL) {
+        if ((p = OSSL_PARAM_locate_const(params,
+                                         OSSL_ALG_PARAM_CIPHER)) != NULL) {
+            if (p->data_type != OSSL_PARAM_UTF8_STRING)
+                return 0;
+            ciphername = p->data;
+        }
+    }
+
+    if (mdname != NULL)
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                 (char *)mdname, 0);
+    if (ciphername != NULL)
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                 (char *)ciphername, 0);
+    if (properties != NULL)
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+                                                 (char *)properties, 0);
+
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE)) != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
+                                                 p->data, p->data_size);
+    }
+#endif
+    *mp = OSSL_PARAM_construct_end();
+
+    if (EVP_MAC_CTX_set_params(*macctx, mac_params))
+        return 1;
+
+    EVP_MAC_CTX_free(*macctx);
+    *macctx = NULL;
+    return 0;
+}

@@ -145,51 +145,6 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
                         key, keylen);
 }
 
-static EVP_MAC_CTX *kdf_tls1_prf_mkmacctx(OPENSSL_CTX *libctx,
-                                          const char *mdname,
-                                          const OSSL_PARAM params[])
-{
-    const OSSL_PARAM *p;
-    OSSL_PARAM mac_params[5], *mp = mac_params;
-    const char *properties = NULL;
-    /* TODO(3.0) rethink "flags", also see hmac.c in providers */
-    int mac_flags = EVP_MD_CTX_FLAG_NON_FIPS_ALLOW;
-    EVP_MAC_CTX *macctx = NULL;
-
-    *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                             (char *)mdname, 0);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_ENGINE)) != NULL)
-        *mp++ = *p;
-#endif
-    if ((p = OSSL_PARAM_locate_const(params,
-                                     OSSL_KDF_PARAM_PROPERTIES)) != NULL) {
-        properties = p->data;
-        *mp++ = *p;
-    }
-    *mp++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FLAGS, &mac_flags);
-    *mp = OSSL_PARAM_construct_end();
-
-    /* Implicit fetch */
-    {
-        EVP_MAC *mac = EVP_MAC_fetch(libctx, OSSL_MAC_NAME_HMAC, properties);
-
-        macctx = EVP_MAC_CTX_new(mac);
-        /* The context holds on to the MAC */
-        EVP_MAC_free(mac);
-        if (macctx == NULL)
-            goto err;
-    }
-
-    if (EVP_MAC_CTX_set_params(macctx, mac_params))
-        goto done;
- err:
-    EVP_MAC_CTX_free(macctx);
-    macctx = NULL;
- done:
-    return macctx;
-}
-
 static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
@@ -197,13 +152,20 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
-        EVP_MAC_CTX_free(ctx->P_hash);
-        EVP_MAC_CTX_free(ctx->P_sha1);
         if (strcasecmp(p->data, SN_md5_sha1) == 0) {
-            ctx->P_hash = kdf_tls1_prf_mkmacctx(libctx, SN_md5, params);
-            ctx->P_sha1 = kdf_tls1_prf_mkmacctx(libctx, SN_sha1, params);
+            if (!ossl_prov_macctx_load_from_params(&ctx->P_hash, params,
+                                                   OSSL_MAC_NAME_HMAC,
+                                                   NULL, SN_md5, libctx)
+                || !ossl_prov_macctx_load_from_params(&ctx->P_sha1, params,
+                                                      OSSL_MAC_NAME_HMAC,
+                                                      NULL, SN_sha1, libctx))
+                return 0;
         } else {
-            ctx->P_hash = kdf_tls1_prf_mkmacctx(libctx, p->data, params);
+            EVP_MAC_CTX_free(ctx->P_sha1);
+            if (!ossl_prov_macctx_load_from_params(&ctx->P_hash, params,
+                                                   OSSL_MAC_NAME_HMAC,
+                                                   NULL, NULL, libctx))
+                return 0;
         }
     }
 
