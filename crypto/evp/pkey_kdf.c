@@ -307,7 +307,7 @@ static int pkey_kdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 }
 
 #ifndef OPENSSL_NO_SCRYPT
-const EVP_PKEY_METHOD scrypt_pkey_meth = {
+static const EVP_PKEY_METHOD scrypt_pkey_meth = {
     EVP_PKEY_SCRYPT,
     0,
     pkey_kdf_init,
@@ -336,9 +336,14 @@ const EVP_PKEY_METHOD scrypt_pkey_meth = {
     pkey_kdf_ctrl,
     pkey_kdf_ctrl_str
 };
+
+const EVP_PKEY_METHOD *scrypt_pkey_method(void)
+{
+    return &scrypt_pkey_meth;
+}
 #endif
 
-const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
+static const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
     EVP_PKEY_TLS1_PRF,
     0,
     pkey_kdf_init,
@@ -368,7 +373,12 @@ const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
     pkey_kdf_ctrl_str
 };
 
-const EVP_PKEY_METHOD hkdf_pkey_meth = {
+const EVP_PKEY_METHOD *tls1_prf_pkey_method(void)
+{
+    return &tls1_prf_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD hkdf_pkey_meth = {
     EVP_PKEY_HKDF,
     0,
     pkey_kdf_init,
@@ -398,3 +408,7 @@ const EVP_PKEY_METHOD hkdf_pkey_meth = {
     pkey_kdf_ctrl_str
 };
 
+const EVP_PKEY_METHOD *hkdf_pkey_method(void)
+{
+    return &hkdf_pkey_meth;
+}

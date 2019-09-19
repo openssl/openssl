@@ -478,7 +478,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     return 0;
 }
 
-const EVP_PKEY_METHOD dh_pkey_meth = {
+static const EVP_PKEY_METHOD dh_pkey_meth = {
     EVP_PKEY_DH,
     0,
     pkey_dh_init,
@@ -512,7 +512,12 @@ const EVP_PKEY_METHOD dh_pkey_meth = {
     pkey_dh_ctrl_str
 };
 
-const EVP_PKEY_METHOD dhx_pkey_meth = {
+const EVP_PKEY_METHOD *dh_pkey_method(void)
+{
+    return &dh_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD dhx_pkey_meth = {
     EVP_PKEY_DHX,
     0,
     pkey_dh_init,
@@ -545,3 +550,8 @@ const EVP_PKEY_METHOD dhx_pkey_meth = {
     pkey_dh_ctrl,
     pkey_dh_ctrl_str
 };
+
+const EVP_PKEY_METHOD *dhx_pkey_method(void)
+{
+    return &dhx_pkey_meth;
+}

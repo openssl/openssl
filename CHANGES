@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) s390x assembly pack: add hardware-support for P-256, P-384, P-521,
+     X25519, X448, Ed25519 and Ed448.
+     [Patrick Steuer]
+
   *) Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
      the first value.
      [Jon Spillett]

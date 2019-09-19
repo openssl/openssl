@@ -461,7 +461,7 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
     return ok;
 }
 
-const EVP_PKEY_METHOD cmac_pkey_meth = {
+static const EVP_PKEY_METHOD cmac_pkey_meth = {
     EVP_PKEY_CMAC,
     EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     pkey_mac_init,
@@ -494,7 +494,12 @@ const EVP_PKEY_METHOD cmac_pkey_meth = {
     pkey_mac_ctrl_str
 };
 
-const EVP_PKEY_METHOD hmac_pkey_meth = {
+const EVP_PKEY_METHOD *cmac_pkey_method(void)
+{
+    return &cmac_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD hmac_pkey_meth = {
     EVP_PKEY_HMAC,
     0,
     pkey_mac_init,
@@ -527,7 +532,12 @@ const EVP_PKEY_METHOD hmac_pkey_meth = {
     pkey_mac_ctrl_str
 };
 
-const EVP_PKEY_METHOD siphash_pkey_meth = {
+const EVP_PKEY_METHOD *hmac_pkey_method(void)
+{
+    return &hmac_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD siphash_pkey_meth = {
     EVP_PKEY_SIPHASH,
     EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     pkey_mac_init,
@@ -560,7 +570,12 @@ const EVP_PKEY_METHOD siphash_pkey_meth = {
     pkey_mac_ctrl_str
 };
 
-const EVP_PKEY_METHOD poly1305_pkey_meth = {
+const EVP_PKEY_METHOD *siphash_pkey_method(void)
+{
+    return &siphash_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD poly1305_pkey_meth = {
     EVP_PKEY_POLY1305,
     EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     pkey_mac_init,
@@ -592,3 +607,8 @@ const EVP_PKEY_METHOD poly1305_pkey_meth = {
     pkey_mac_ctrl,
     pkey_mac_ctrl_str
 };
+
+const EVP_PKEY_METHOD *poly1305_pkey_method(void)
+{
+    return &poly1305_pkey_meth;
+}

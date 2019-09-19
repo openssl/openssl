@@ -495,6 +495,62 @@ s390x_kdsa:
 ___
 }
 
+################
+# void s390x_flip_endian32(unsigned char dst[32], const unsigned char src[32])
+{
+my ($dst,$src) = map("%r$_",(2..3));
+$code.=<<___;
+.globl	s390x_flip_endian32
+.type	s390x_flip_endian32,\@function
+.align	16
+s390x_flip_endian32:
+	lrvg	%r0,0(%r0,$src)
+	lrvg	%r1,8(%r0,$src)
+	lrvg	%r4,16(%r0,$src)
+	lrvg	%r5,24(%r0,$src)
+	stg	%r0,24(%r0,$dst)
+	stg	%r1,16(%r0,$dst)
+	stg	%r4,8(%r0,$dst)
+	stg	%r5,0(%r0,$dst)
+	br	$ra
+.size	s390x_flip_endian32,.-s390x_flip_endian32
+___
+}
+
+################
+# void s390x_flip_endian64(unsigned char dst[64], const unsigned char src[64])
+{
+my ($dst,$src) = map("%r$_",(2..3));
+$code.=<<___;
+.globl	s390x_flip_endian64
+.type	s390x_flip_endian64,\@function
+.align	16
+s390x_flip_endian64:
+	stmg	%r6,%r9,6*$SIZE_T($sp)
+
+	lrvg	%r0,0(%r0,$src)
+	lrvg	%r1,8(%r0,$src)
+	lrvg	%r4,16(%r0,$src)
+	lrvg	%r5,24(%r0,$src)
+	lrvg	%r6,32(%r0,$src)
+	lrvg	%r7,40(%r0,$src)
+	lrvg	%r8,48(%r0,$src)
+	lrvg	%r9,56(%r0,$src)
+	stg	%r0,56(%r0,$dst)
+	stg	%r1,48(%r0,$dst)
+	stg	%r4,40(%r0,$dst)
+	stg	%r5,32(%r0,$dst)
+	stg	%r6,24(%r0,$dst)
+	stg	%r7,16(%r0,$dst)
+	stg	%r8,8(%r0,$dst)
+	stg	%r9,0(%r0,$dst)
+
+	lmg	%r6,%r9,6*$SIZE_T($sp)
+	br	$ra
+.size	s390x_flip_endian64,.-s390x_flip_endian64
+___
+}
+
 $code.=<<___;
 .section	.init
 	brasl	$ra,OPENSSL_cpuid_setup
