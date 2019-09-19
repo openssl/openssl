@@ -261,6 +261,9 @@ EVP_MAC_free() returns nothing at all.
 EVP_MAC_name() returns the name of the MAC, or NULL if NULL was
 passed.
 
+EVP_MAC_is_a() returns 1 if the given method can be identified with
+the given name, otherwise 0.
+
 EVP_MAC_provider() returns a pointer to the provider for the MAC, or
 NULL on error.
 
