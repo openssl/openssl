@@ -266,6 +266,7 @@
  */
 extern const char OPT_HELP_STR[];
 extern const char OPT_MORE_STR[];
+extern const char OPT_SECTION_STR[];
 typedef struct options_st {
     const char *name;
     int retval;
@@ -307,6 +308,9 @@ typedef struct string_int_pair_st {
         OPT_FMT_ENGINE | OPT_FMT_MSBLOB | OPT_FMT_NSS   | \
         OPT_FMT_TEXT   | OPT_FMT_HTTP   | OPT_FMT_PVK)
 
+/* Divide options into sections when displaying usage */
+#define OPT_SECTION(sec) {OPT_SECTION_STR, 1, '-', sec " options:\n"}
+
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
@@ -338,6 +342,7 @@ int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 void opt_help(const OPTIONS * list);
+void opt_print(const OPTIONS * opt, int width);
 int opt_format_error(const char *s, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);

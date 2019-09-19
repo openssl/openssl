@@ -28,6 +28,7 @@
 #define MAX_OPT_HELP_WIDTH 30
 const char OPT_HELP_STR[] = "--";
 const char OPT_MORE_STR[] = "---";
+const char OPT_SECTION_STR[] = "----";
 
 /* Our state */
 static char **argv;
@@ -133,7 +134,8 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         int duplicated, i;
 #endif
 
-        if (o->name == OPT_HELP_STR || o->name == OPT_MORE_STR)
+        if (o->name == OPT_HELP_STR || o->name == OPT_MORE_STR ||
+            o->name == OPT_SECTION_STR)
             continue;
 #ifndef NDEBUG
         i = o->valtype;
@@ -832,40 +834,16 @@ static const char *valtype2param(const OPTIONS *o)
     return "parm";
 }
 
-void opt_help(const OPTIONS *list)
+void opt_print(const OPTIONS *o, int width)
 {
-    const OPTIONS *o;
-    int i;
-    int standard_prolog;
-    int width = 5;
+    const char* help;
     char start[80 + 1];
     char *p;
-    const char *help;
 
-    /* Starts with its own help message? */
-    standard_prolog = list[0].name != OPT_HELP_STR;
-
-    /* Find the widest help. */
-    for (o = list; o->name; o++) {
-        if (o->name == OPT_MORE_STR)
-            continue;
-        i = 2 + (int)strlen(o->name);
-        if (o->valtype != '-')
-            i += 1 + strlen(valtype2param(o));
-        if (i < MAX_OPT_HELP_WIDTH && i > width)
-            width = i;
-        OPENSSL_assert(i < (int)sizeof(start));
-    }
-
-    if (standard_prolog)
-        opt_printf_stderr("Usage: %s [options]\nValid options are:\n", prog);
-
-    /* Now let's print. */
-    for (o = list; o->name; o++) {
         help = o->helpstr ? o->helpstr : "(No additional info)";
-        if (o->name == OPT_HELP_STR) {
+        if (o->name == OPT_HELP_STR || o->name == OPT_SECTION_STR) {
             opt_printf_stderr(help, prog);
-            continue;
+            return;
         }
 
         /* Pad out prefix */
@@ -876,7 +854,7 @@ void opt_help(const OPTIONS *list)
             /* Continuation of previous line; pad and print. */
             start[width] = '\0';
             opt_printf_stderr("%s  %s\n", start, help);
-            continue;
+            return;
         }
 
         /* Build up the "-flag [param]" part. */
@@ -899,6 +877,40 @@ void opt_help(const OPTIONS *list)
         }
         start[width] = '\0';
         opt_printf_stderr("%s  %s\n", start, help);
+}
+
+void opt_help(const OPTIONS *list)
+{
+    const OPTIONS *o;
+    int i;
+    int standard_prolog;
+    int width = 5;
+    char start[80 + 1];
+
+    /* Starts with its own help message? */
+    standard_prolog = list[0].name != OPT_HELP_STR;
+
+    /* Find the widest help. */
+    for (o = list; o->name; o++) {
+        if (o->name == OPT_MORE_STR)
+            continue;
+        i = 2 + (int)strlen(o->name);
+        if (o->valtype != '-')
+            i += 1 + strlen(valtype2param(o));
+        if (i < MAX_OPT_HELP_WIDTH && i > width)
+            width = i;
+        OPENSSL_assert(i < (int)sizeof(start));
+    }
+
+    if (standard_prolog) {
+        opt_printf_stderr("Usage: %s [options]\n", prog);
+        if (list[0].name != OPT_SECTION_STR)
+            opt_printf_stderr("Valid options are:\n", prog);
+    }
+
+    /* Now let's print. */
+    for (o = list; o->name; o++) {
+        opt_print(o, width);
     }
 }
 
