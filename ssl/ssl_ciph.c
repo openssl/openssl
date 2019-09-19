@@ -800,6 +800,7 @@ static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
 static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                                   uint32_t alg_auth, uint32_t alg_enc,
                                   uint32_t alg_mac, int min_tls,
+                                  int version_mask,
                                   uint32_t algo_strength, int rule,
                                   int32_t strength_bits, CIPHER_ORDER **head_p,
                                   CIPHER_ORDER **tail_p)
@@ -807,6 +808,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     CIPHER_ORDER *head, *tail, *curr, *next, *last;
     const SSL_CIPHER *cp;
     int reverse = 0;
+    int i, found, version;
 
     OSSL_TRACE_BEGIN(TLS_CIPHER){
         BIO_printf(trc_out,
@@ -872,6 +874,20 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 continue;
             if (min_tls && (min_tls != cp->min_tls))
                 continue;
+            if (version_mask) {
+                found = 0;
+                for (i = 0; i < SSL_NUM_VERSIONS; ++i) {
+                    if (version_mask & 1<<i) {
+                        version = ssl_version_table[i].ssl_version;
+                        if (!version || version == cp->min_tls) {
+                            found = 1;
+                            break;
+                        }
+                    }
+                }
+                if (!found)
+                    continue;
+            }
             if ((algo_strength & SSL_STRONG_MASK)
                 && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
                 continue;
@@ -976,8 +992,8 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
      */
     for (i = max_strength_bits; i >= 0; i--)
         if (number_uses[i] > 0)
-            ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ORD, i, head_p,
-                                  tail_p);
+            ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, 0, CIPHER_ORD, i,
+                                  head_p, tail_p);
 
     OPENSSL_free(number_uses);
     return 1;
@@ -1305,7 +1321,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
         } else if (found) {
             ssl_cipher_apply_rule(cipher_id,
                                   alg_mkey, alg_auth, alg_enc, alg_mac,
-                                  min_tls, algo_strength, rule, -1, head_p,
+                                  min_tls, 0, algo_strength, rule, -1, head_p,
                                   tail_p);
         } else {
             while ((*l != '\0') && !ITEM_SEP(*l))
@@ -1560,17 +1576,17 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
      * server has both certificates, and is using the DEFAULT, or a client
      * preference).
      */
-    ssl_cipher_apply_rule(0, SSL_kECDHE, SSL_aECDSA, 0, 0, 0, 0, CIPHER_ADD,
+    ssl_cipher_apply_rule(0, SSL_kECDHE, SSL_aECDSA, 0, 0, 0, 0, 0, CIPHER_ADD,
                           -1, &head, &tail);
-    ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head,
+    ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head,
                           &tail);
-    ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head,
+    ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head,
                           &tail);
 
     /* Within each strength group, we prefer GCM over CHACHA... */
-    ssl_cipher_apply_rule(0, 0, 0, SSL_AESGCM, 0, 0, 0, CIPHER_ADD, -1,
+    ssl_cipher_apply_rule(0, 0, 0, SSL_AESGCM, 0, 0, 0, 0, CIPHER_ADD, -1,
                           &head, &tail);
-    ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20, 0, 0, 0, CIPHER_ADD, -1,
+    ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20, 0, 0, 0, 0, CIPHER_ADD, -1,
                           &head, &tail);
 
     /*
@@ -1578,14 +1594,14 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
      * Note that AEADs will be bumped to take preference after sorting by
      * strength.
      */
-    ssl_cipher_apply_rule(0, 0, 0, SSL_AES ^ SSL_AESGCM, 0, 0, 0, CIPHER_ADD,
+    ssl_cipher_apply_rule(0, 0, 0, SSL_AES ^ SSL_AESGCM, 0, 0, 0, 0, CIPHER_ADD,
                           -1, &head, &tail);
 
     /* Temporarily enable everything else for sorting */
-    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 
     /* Low priority for MD5 */
-    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_MD5, 0, 0, CIPHER_ORD, -1, &head,
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_MD5, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
     /*
@@ -1593,16 +1609,16 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
      * disabled. (For applications that allow them, they aren't too bad, but
      * we prefer authenticated ciphers.)
      */
-    ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+    ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
-    ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+    ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
-    ssl_cipher_apply_rule(0, SSL_kPSK, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+    ssl_cipher_apply_rule(0, SSL_kPSK, 0, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
     /* RC4 is sort-of broken -- move to the end */
-    ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head,
+    ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
     /*
@@ -1618,7 +1634,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
      * Partially overrule strength sort to prefer TLS 1.2 ciphers/PRFs.
      * TODO(openssl-team): is there an easier way to accomplish all this?
      */
-    ssl_cipher_apply_rule(0, 0, 0, 0, 0, TLS1_2_VERSION, 0, CIPHER_BUMP, -1,
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, TLS1_2_VERSION, 0, 0, CIPHER_BUMP, -1,
                           &head, &tail);
 
     /*
@@ -1634,15 +1650,15 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
      * Because we now bump ciphers to the top of the list, we proceed in
      * reverse order of preference.
      */
-    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_AEAD, 0, 0, CIPHER_BUMP, -1,
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_AEAD, 0, 0, 0, CIPHER_BUMP, -1,
                           &head, &tail);
-    ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, 0, 0, 0,
+    ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, 0, 0, 0, 0,
                           CIPHER_BUMP, -1, &head, &tail);
-    ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, SSL_AEAD, 0, 0,
+    ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, SSL_AEAD, 0, 0, 0,
                           CIPHER_BUMP, -1, &head, &tail);
 
     /* Now disable everything (maintaining the ordering!) */
-    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
 
     /*
      * We also need cipher aliases for selecting based on the rule_str.
