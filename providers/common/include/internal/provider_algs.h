@@ -160,10 +160,10 @@ extern const OSSL_DISPATCH sm4128ofb128_functions[];
 extern const OSSL_DISPATCH sm4128cfb128_functions[];
 #endif /* OPENSSL_NO_SM4 */
 
+#ifndef OPENSSL_NO_DES
 extern const OSSL_DISPATCH tdes_ede3_ecb_functions[];
 extern const OSSL_DISPATCH tdes_ede3_cbc_functions[];
-
-#ifndef FIPS_MODE
+# ifndef FIPS_MODE
 extern const OSSL_DISPATCH tdes_ede3_ofb_functions[];
 extern const OSSL_DISPATCH tdes_ede3_cfb_functions[];
 extern const OSSL_DISPATCH tdes_ede3_cfb8_functions[];
@@ -176,7 +176,15 @@ extern const OSSL_DISPATCH tdes_ede2_cfb_functions[];
 
 extern const OSSL_DISPATCH tdes_desx_cbc_functions[];
 extern const OSSL_DISPATCH tdes_wrap_cbc_functions[];
-#endif /* FIPS_MODE */
+
+extern const OSSL_DISPATCH des_ecb_functions[];
+extern const OSSL_DISPATCH des_cbc_functions[];
+extern const OSSL_DISPATCH des_ofb64_functions[];
+extern const OSSL_DISPATCH des_cfb64_functions[];
+extern const OSSL_DISPATCH des_cfb1_functions[];
+extern const OSSL_DISPATCH des_cfb8_functions[];
+# endif /* FIPS_MODE */
+#endif /* OPENSSL_NO_DES */
 
 /* MACs */
 extern const OSSL_DISPATCH blake2bmac_functions[];

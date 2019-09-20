@@ -239,6 +239,12 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_des_ede_ofb64:
         case NID_des_ede_cfb64:
         case NID_desx_cbc:
+        case NID_des_cbc:
+        case NID_des_ecb:
+        case NID_des_cfb1:
+        case NID_des_cfb8:
+        case NID_des_cfb64:
+        case NID_des_ofb64:
         case NID_id_smime_alg_CMS3DESwrap:
         case NID_bf_cbc:
         case NID_bf_ecb:
