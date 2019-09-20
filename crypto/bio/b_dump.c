@@ -36,8 +36,8 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
 
     if (indent < 0)
         indent = 0;
-    else if (indent > 128)
-        indent = 128;
+    else if (indent > 64)
+        indent = 64;
 
     dump_width = DUMP_WIDTH_LESS_INDENT(indent);
     rows = len / dump_width;
