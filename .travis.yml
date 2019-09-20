@@ -75,7 +75,7 @@ matrix:
                       - golang-1.10
                       - libboost-dev
           compiler: clang
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++ enable-md2 enable-rc5" BORINGSSL_TESTS="yes" CXX="clang++" CFLAGS="-fsanitize=address,undefined" CXXFLAGS="-fsanitize=address,undefined" TESTS=95
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++ enable-md2 enable-rc5" BORINGSSL_TESTS="yes" CXX="clang++" CFLAGS="-fsanitize=address,undefined" CXXFLAGS="-fsanitize=address,undefined" ASAN_OPTIONS="detect_leaks=0" TESTS=95
         - os: linux
           compiler: clang
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
