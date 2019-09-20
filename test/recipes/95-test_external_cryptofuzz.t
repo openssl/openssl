@@ -11,11 +11,12 @@ use OpenSSL::Test;
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT bldtop_file data_file srctop_file cmdstr/;
 
-
 setup("test_external_cryptofuzz");
 
 plan skip_all => "No external tests in this configuration"
     if disabled("external-tests");
+plan skip_all => "Cryptofuzz tests not available on Windows or VMS"
+    if $^O =~ /^(VMS|MSWin32)$/;
 plan skip_all => "Cryptofuzz not available"
     if ! -f srctop_file("cryptofuzz", "README.md");
 plan skip_all => "Cryptofuzz only available in a static build"

@@ -7,8 +7,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-OPENSSL_INCLUDE_PATH=`pwd`/$BLDTOP/include
-OPENSSL_LIBCRYPTO_A_PATH=`pwd`/$BLDTOP/libcrypto.a
+export OPENSSL_INCLUDE_PATH=`pwd`/$BLDTOP/include
+export OPENSSL_LIBCRYPTO_A_PATH=`pwd`/$BLDTOP/libcrypto.a
 
 cd $SRCTOP/cryptofuzz
 
