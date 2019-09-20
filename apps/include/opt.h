@@ -32,6 +32,7 @@
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
+        OPT_SECTION("Validation"), \
         { "policy", OPT_V_POLICY, 's', "adds policy to the acceptable policy set"}, \
         { "purpose", OPT_V_PURPOSE, 's', \
             "certificate chain purpose"}, \
@@ -124,6 +125,7 @@
         OPT_X__LAST
 
 # define OPT_X_OPTIONS \
+        OPT_SECTION("Extended certificate"), \
         { "xkey", OPT_X_KEY, '<', "key for Extended certificates"}, \
         { "xcert", OPT_X_CERT, '<', "cert for Extended certificates"}, \
         { "xchain", OPT_X_CHAIN, '<', "chain for Extended certificates"}, \
@@ -161,6 +163,7 @@
         OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
+        OPT_SECTION("TLS/SSL"), \
         {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
         {"no_tls1", OPT_S_NOTLS1, '-', "Just disable TLSv1"}, \
         {"no_tls1_1", OPT_S_NOTLS1_1, '-', "Just disable TLSv1.1" }, \
@@ -254,6 +257,7 @@
         OPT_R__FIRST=1500, OPT_R_RAND, OPT_R_WRITERAND, OPT_R__LAST
 
 # define OPT_R_OPTIONS \
+    OPT_SECTION("Random state"), \
     {"rand", OPT_R_RAND, 's', "Load the file(s) into the random number generator"}, \
     {"writerand", OPT_R_WRITERAND, '>', "Write random data to the specified file"}
 
@@ -309,7 +313,7 @@ typedef struct string_int_pair_st {
         OPT_FMT_TEXT   | OPT_FMT_HTTP   | OPT_FMT_PVK)
 
 /* Divide options into sections when displaying usage */
-#define OPT_SECTION(sec) {OPT_SECTION_STR, 1, '-', sec " options:\n"}
+#define OPT_SECTION(sec) { OPT_SECTION_STR, 1, '-', sec " options:\n" }
 
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);

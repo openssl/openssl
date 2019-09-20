@@ -35,31 +35,38 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS ecparam_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
-    {"in", OPT_IN, '<', "Input file  - default stdin"},
-    {"out", OPT_OUT, '>', "Output file - default stdout"},
-    {"text", OPT_TEXT, '-', "Print the ec parameters in text form"},
-    {"C", OPT_C, '-', "Print a 'C' function creating the parameters"},
-    {"check", OPT_CHECK, '-', "Validate the ec parameters"},
-    {"check_named", OPT_CHECK_NAMED, '-',
-     "Check that named EC curve parameters have not been modified"},
     {"list_curves", OPT_LIST_CURVES, '-',
      "Prints a list of all curve 'short names'"},
-    {"no_seed", OPT_NO_SEED, '-',
-     "If 'explicit' parameters are chosen do not use the seed"},
-    {"noout", OPT_NOOUT, '-', "Do not print the ec parameter"},
-    {"name", OPT_NAME, 's',
-     "Use the ec parameters with specified 'short name'"},
-    {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
-    {"param_enc", OPT_PARAM_ENC, 's',
-     "Specifies the way the ec parameters are encoded"},
-    {"genkey", OPT_GENKEY, '-', "Generate ec key"},
-    OPT_R_OPTIONS,
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
+
+    {"genkey", OPT_GENKEY, '-', "Generate ec key"},
+    {"in", OPT_IN, '<', "Input file  - default stdin"},
+    {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
+    {"out", OPT_OUT, '>', "Output file - default stdout"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
+
+    OPT_SECTION("Output"),
+    {"text", OPT_TEXT, '-', "Print the ec parameters in text form"},
+    {"C", OPT_C, '-', "Print a 'C' function creating the parameters"},
+    {"noout", OPT_NOOUT, '-', "Do not print the ec parameter"},
+    {"param_enc", OPT_PARAM_ENC, 's',
+     "Specifies the way the ec parameters are encoded"},
+
+    OPT_SECTION("Parameter"),
+    {"check", OPT_CHECK, '-', "Validate the ec parameters"},
+    {"check_named", OPT_CHECK_NAMED, '-',
+     "Check that named EC curve parameters have not been modified"},
+    {"no_seed", OPT_NO_SEED, '-',
+     "If 'explicit' parameters are chosen do not use the seed"},
+    {"name", OPT_NAME, 's',
+     "Use the ec parameters with specified 'short name'"},
+    {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
+
+    OPT_R_OPTIONS,
     {NULL}
 };
 

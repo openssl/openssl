@@ -23,6 +23,8 @@ typedef enum OPTION_choice {
 const OPTIONS errstr_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] errnum...\n"},
     {OPT_HELP_STR, 1, '-', "  errnum  Error number\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {NULL}
 };

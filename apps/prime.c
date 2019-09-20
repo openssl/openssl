@@ -22,13 +22,17 @@ const OPTIONS prime_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [number...]\n"},
     {OPT_HELP_STR, 1, '-',
         "  number Number to check for primality\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"bits", OPT_BITS, 'p', "Size of number in bits"},
+    {"checks", OPT_CHECKS, 'p', "Number of checks"},
+
+    OPT_SECTION("Output"),
     {"hex", OPT_HEX, '-', "Hex output"},
     {"generate", OPT_GENERATE, '-', "Generate a prime"},
-    {"bits", OPT_BITS, 'p', "Size of number in bits"},
     {"safe", OPT_SAFE, '-',
      "When used with -generate, generate a safe prime"},
-    {"checks", OPT_CHECKS, 'p', "Number of checks"},
     {NULL}
 };
 

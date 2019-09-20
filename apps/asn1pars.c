@@ -27,27 +27,32 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS asn1parse_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"oid", OPT_OID, '<', "file of extra oid definitions"},
+
+    OPT_SECTION("I/O"),
     {"inform", OPT_INFORM, 'F', "input format - one of DER PEM"},
     {"in", OPT_IN, '<', "input file"},
     {"out", OPT_OUT, '>', "output file (output format is always DER)"},
-    {"i", OPT_INDENT, 0, "indents the output"},
-    {"noout", OPT_NOOUT, 0, "do not produce any output"},
     {"offset", OPT_OFFSET, 'p', "offset into file"},
     {"length", OPT_LENGTH, 'p', "length of section in file"},
-    {"oid", OPT_OID, '<', "file of extra oid definitions"},
-    {"dump", OPT_DUMP, 0, "unknown data in hex form"},
-    {"dlimit", OPT_DLIMIT, 'p',
-     "dump the first arg bytes of unknown data in hex form"},
     {"strparse", OPT_STRPARSE, 'p',
      "offset; a series of these can be used to 'dig'"},
-    {OPT_MORE_STR, 0, 0, "into multiple ASN1 blob wrappings"},
     {"genstr", OPT_GENSTR, 's', "string to generate ASN1 structure from"},
+    {OPT_MORE_STR, 0, 0, "into multiple ASN1 blob wrappings"},
     {"genconf", OPT_GENCONF, 's', "file to generate ASN1 structure from"},
-    {OPT_MORE_STR, 0, 0, "(-inform  will be ignored)"},
     {"strictpem", OPT_STRICTPEM, 0,
      "do not attempt base64 decode outside PEM markers"},
     {"item", OPT_ITEM, 's', "item to parse and print"},
+    {OPT_MORE_STR, 0, 0, "(-inform  will be ignored)"},
+
+    OPT_SECTION("Formatting"),
+    {"i", OPT_INDENT, 0, "indents the output"},
+    {"noout", OPT_NOOUT, 0, "do not produce any output"},
+    {"dump", OPT_DUMP, 0, "unknown data in hex form"},
+    {"dlimit", OPT_DLIMIT, 'p',
+     "dump the first arg bytes of unknown data in hex form"},
     {NULL}
 };
 

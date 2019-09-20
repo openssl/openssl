@@ -37,20 +37,26 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS dsaparam_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"text", OPT_TEXT, '-', "Print as text"},
-    {"C", OPT_C, '-', "Output C code"},
-    {"noout", OPT_NOOUT, '-', "No output"},
-    {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
-    OPT_R_OPTIONS,
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input file"},
+    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
+    {"text", OPT_TEXT, '-', "Print as text"},
+    {"C", OPT_C, '-', "Output C code"},
+    {"noout", OPT_NOOUT, '-', "No output"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
+
+    OPT_R_OPTIONS,
     {NULL}
 };
 

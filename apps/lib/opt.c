@@ -134,8 +134,9 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         int duplicated, i;
 #endif
 
-        if (o->name == OPT_HELP_STR || o->name == OPT_MORE_STR ||
-            o->name == OPT_SECTION_STR)
+        if (o->name == OPT_HELP_STR
+                || o->name == OPT_MORE_STR
+                || o->name == OPT_SECTION_STR)
             continue;
 #ifndef NDEBUG
         i = o->valtype;
@@ -844,7 +845,12 @@ void opt_print(const OPTIONS *o, int width)
     char *p;
 
         help = o->helpstr ? o->helpstr : "(No additional info)";
-        if (o->name == OPT_HELP_STR || o->name == OPT_SECTION_STR) {
+        if (o->name == OPT_HELP_STR) {
+            opt_printf_stderr(help, prog);
+            return;
+        }
+        if (o->name == OPT_SECTION_STR) {
+            opt_printf_stderr("\n");
             opt_printf_stderr(help, prog);
             return;
         }

@@ -316,17 +316,9 @@ typedef enum OPTION_choice {
 
 const OPTIONS speed_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] ciphers...\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
-    {"hmac", OPT_HMAC, 's', "HMAC using EVP-named digest"},
-#ifndef OPENSSL_NO_CMAC
-    {"cmac", OPT_CMAC, 's', "CMAC using EVP-named cipher"},
-#endif
-    {"decrypt", OPT_DECRYPT, '-',
-     "Time decryption instead of encryption (only EVP)"},
-    {"aead", OPT_AEAD, '-',
-     "Benchmark EVP-named AEAD cipher in TLS-like sequence"},
     {"mb", OPT_MB, '-',
      "Enable (tls1>=1) multi-block mode on EVP-named cipher"},
     {"mr", OPT_MR, '-', "Produce machine readable output"},
@@ -337,19 +329,33 @@ const OPTIONS speed_options[] = {
     {"async_jobs", OPT_ASYNCJOBS, 'p',
      "Enable async mode and start specified number of jobs"},
 #endif
-    OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
+
+    OPT_SECTION("Selection"),
+    {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
+    {"hmac", OPT_HMAC, 's', "HMAC using EVP-named digest"},
+#ifndef OPENSSL_NO_CMAC
+    {"cmac", OPT_CMAC, 's', "CMAC using EVP-named cipher"},
+#endif
+    {"decrypt", OPT_DECRYPT, '-',
+     "Time decryption instead of encryption (only EVP)"},
+    {"aead", OPT_AEAD, '-',
+     "Benchmark EVP-named AEAD cipher in TLS-like sequence"},
+
+    OPT_SECTION("Timing"),
     {"elapsed", OPT_ELAPSED, '-',
      "Use wall-clock time instead of CPU user time as divisor"},
-    {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
     {"seconds", OPT_SECONDS, 'p',
      "Run benchmarks for specified amount of seconds"},
     {"bytes", OPT_BYTES, 'p',
      "Run [non-PKI] benchmarks on custom-sized buffer"},
     {"misalign", OPT_MISALIGN, 'p',
      "Use specified offset to mis-align buffers"},
+
+    OPT_R_OPTIONS,
     {NULL}
 };
 

@@ -366,6 +366,7 @@ static void list_options_for_command(const char *command)
 
         if (o->name == OPT_HELP_STR
                 || o->name == OPT_MORE_STR
+                || o->name == OPT_SECTION_STR
                 || o->name[0] == '\0')
             continue;
         BIO_printf(bio_out, "%s %c\n", o->name, c == '\0' ? '-' : c);
@@ -617,7 +618,11 @@ typedef enum HELPLIST_CHOICE {
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+
+    OPT_SECTION("Output"),
     {"1", OPT_ONE, '-', "List in one column"},
     {"verbose", OPT_VERBOSE, '-', "Verbose listing"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},

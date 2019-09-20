@@ -36,18 +36,8 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS dsa_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
-    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
-    {"in", OPT_IN, 's', "Input key"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"noout", OPT_NOOUT, '-', "Don't print key out"},
-    {"text", OPT_TEXT, '-', "Print the key in text"},
-    {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
-    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
-    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_RC4
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
@@ -57,6 +47,22 @@ const OPTIONS dsa_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, 's', "Input key"},
+    {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
+    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
+    {"noout", OPT_NOOUT, '-', "Don't print key out"},
+    {"text", OPT_TEXT, '-', "Print the key in text"},
+    {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
+    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+
     {NULL}
 };
 

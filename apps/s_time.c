@@ -52,31 +52,18 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS s_time_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+
+    OPT_SECTION("Connection"),
     {"connect", OPT_CONNECT, 's',
      "Where to connect as post:port (default is " SSL_CONNECT_NAME ")"},
-    {"cipher", OPT_CIPHER, 's', "TLSv1.2 and below cipher list to be used"},
-    {"ciphersuites", OPT_CIPHERSUITES, 's',
-     "Specify TLSv1.3 ciphersuites to be used"},
-    {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
-    {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
-    {"cafile", OPT_CAFILE, '<', "PEM format file of CA's"},
-    {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
-    {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
-    {"no-CAfile", OPT_NOCAFILE, '-',
-     "Do not load the default certificates file"},
-    {"no-CApath", OPT_NOCAPATH, '-',
-     "Do not load certificates from the default certificates directory"},
-    {"no-CAstore", OPT_NOCASTORE, '-',
-     "Do not load certificates from the default certificates store URI"},
     {"new", OPT_NEW, '-', "Just time new connections"},
     {"reuse", OPT_REUSE, '-', "Just time connection reuse"},
     {"bugs", OPT_BUGS, '-', "Turn on SSL bug compatibility"},
-    {"verify", OPT_VERIFY, 'p',
-     "Turn on peer certificate verification, set depth"},
-    {"time", OPT_TIME, 'p', "Seconds to collect data, default " SECONDSSTR},
-    {"www", OPT_WWW, 's', "Fetch specified page from the site"},
+    {"cipher", OPT_CIPHER, 's', "TLSv1.2 and below cipher list to be used"},
+    {"ciphersuites", OPT_CIPHERSUITES, 's',
+     "Specify TLSv1.3 ciphersuites to be used"},
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
@@ -92,6 +79,25 @@ const OPTIONS s_time_options[] = {
 #ifndef OPENSSL_NO_TLS1_3
     {"tls1_3", OPT_TLS1_3, '-', "Just use TLSv1.3"},
 #endif
+    {"verify", OPT_VERIFY, 'p',
+     "Turn on peer certificate verification, set depth"},
+    {"time", OPT_TIME, 'p', "Seconds to collect data, default " SECONDSSTR},
+    {"www", OPT_WWW, 's', "Fetch specified page from the site"},
+
+    OPT_SECTION("Certificate"),
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+    {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
+    {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
+    {"cafile", OPT_CAFILE, '<', "PEM format file of CA's"},
+    {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
+    {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
+    {"no-CAfile", OPT_NOCAFILE, '-',
+     "Do not load the default certificates file"},
+    {"no-CApath", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store URI"},
+
     {NULL}
 };
 

@@ -36,10 +36,17 @@ typedef enum OPTION_choice {
 
 const OPTIONS verify_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
     {"verbose", OPT_VERBOSE, '-',
         "Print extra information about the operations being performed."},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+
+    OPT_SECTION("Certificate chain"),
     {"CApath", OPT_CAPATH, '/', "A directory of trusted certificates"},
     {"CAfile", OPT_CAFILE, '<', "A file of trusted certificates"},
     {"CAstore", OPT_CASTORE, ':', "URI to a store of trusted certificates"},
@@ -57,11 +64,8 @@ const OPTIONS verify_options[] = {
         "Attempt to download CRL information for this certificate"},
     {"show_chain", OPT_SHOW_CHAIN, '-',
         "Display information about the certificate chain"},
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+
     OPT_V_OPTIONS,
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
 #ifndef OPENSSL_NO_SM2
     {"sm2-id", OPT_SM2ID, 's',
      "Specify an ID string to verify an SM2 certificate"},

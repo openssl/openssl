@@ -59,15 +59,22 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS passwd_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Read passwords from file"},
     {"noverify", OPT_NOVERIFY, '-',
      "Never verify when reading password from terminal"},
+    {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
+
+    OPT_SECTION("Output"),
     {"quiet", OPT_QUIET, '-', "No warnings"},
     {"table", OPT_TABLE, '-', "Format output as table"},
     {"reverse", OPT_REVERSE, '-', "Switch table columns"},
+
+    OPT_SECTION("Cryptographic"),
     {"salt", OPT_SALT, 's', "Use provided salt"},
-    {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
     {"6", OPT_6, '-', "SHA512-based password algorithm"},
     {"5", OPT_5, '-', "SHA256-based password algorithm"},
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
@@ -76,6 +83,7 @@ const OPTIONS passwd_options[] = {
 #ifndef OPENSSL_NO_DES
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
 #endif
+
     OPT_R_OPTIONS,
     {NULL}
 };

@@ -33,15 +33,18 @@ typedef enum OPTION_choice {
 
 const OPTIONS gendsa_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [args] dsaparam-file\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output the key to the specified file"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     OPT_R_OPTIONS,
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     {NULL}
 };
