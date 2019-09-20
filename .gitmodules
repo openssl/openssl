@@ -9,3 +9,6 @@
 [submodule "krb5"]
 	path = krb5
 	url = https://github.com/krb5/krb5
+[submodule "cryptofuzz"]
+	path = cryptofuzz
+	url = https://github.com/guidovranken/cryptofuzz
