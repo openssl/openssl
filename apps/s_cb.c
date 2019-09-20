@@ -269,20 +269,16 @@ static const char *get_sigtype(int nid)
         return "ECDSA p256 - Picnic L1 FS";
     case NID_rsa3072_picnicl1fs:
         return "RSA3072 - Picnic L1 FS";
-    case NID_qteslai:
-        return "qTESLA-I";
-    case NID_p256_qteslai:
-        return "ECDSA p256 - qTESLA-I";
-    case NID_rsa3072_qteslai:
-        return "RSA3072 - qTESLA-I";
-    case NID_qteslaiiisize:
-        return "qTESLA-III-size";
-    case NID_p384_qteslaiiisize:
-        return "ECDSA p384 - qTESLA-III-size";
-    case NID_qteslaiiispeed:
-        return "qTESLA-III-speed";
-    case NID_p384_qteslaiiispeed:
-        return "ECDSA p384 - qTESLA-III-speed";
+    case NID_qteslapi:
+        return "qTesla-I-p";
+    case NID_p256_qteslapi:
+        return "ECDSA p256 - qTesla-I-p";
+    case NID_rsa3072_qteslapi:
+        return "RSA3072 - qTesla-I-p";
+    case NID_qteslapiii:
+        return "qTESLA-p-III";
+    case NID_p384_qteslapiii:
+        return "ECDSA p384 - qTESLA-p-III";
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_END
     default:
         return NULL;

@@ -76,13 +76,11 @@
 # define EVP_PKEY_PICNICL1FS NID_picnicl1fs
 # define EVP_PKEY_P256_PICNICL1FS NID_p256_picnicl1fs
 # define EVP_PKEY_RSA3072_PICNICL1FS NID_rsa3072_picnicl1fs
-# define EVP_PKEY_QTESLAI NID_qteslai
-# define EVP_PKEY_P256_QTESLAI NID_p256_qteslai
-# define EVP_PKEY_RSA3072_QTESLAI NID_rsa3072_qteslai
-# define EVP_PKEY_QTESLAIIISIZE NID_qteslaiiisize
-# define EVP_PKEY_P384_QTESLAIIISIZE NID_p384_qteslaiiisize
-# define EVP_PKEY_QTESLAIIISPEED NID_qteslaiiispeed
-# define EVP_PKEY_P384_QTESLAIIISPEED NID_p384_qteslaiiispeed
+# define EVP_PKEY_QTESLAPI NID_qteslapi
+# define EVP_PKEY_P256_QTESLAPI NID_p256_qteslapi
+# define EVP_PKEY_RSA3072_QTESLAPI NID_rsa3072_qteslapi
+# define EVP_PKEY_QTESLAPIII NID_qteslapiii
+# define EVP_PKEY_P384_QTESLAPIII NID_p384_qteslapiii
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_END
 
 #ifdef  __cplusplus

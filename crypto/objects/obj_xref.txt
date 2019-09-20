@@ -36,13 +36,11 @@ p384_dilithium4	undef	p384_dilithium4
 picnicl1fs	undef	picnicl1fs
 p256_picnicl1fs	undef	p256_picnicl1fs
 rsa3072_picnicl1fs	undef	rsa3072_picnicl1fs
-qteslai	undef	qteslai
-p256_qteslai	undef	p256_qteslai
-rsa3072_qteslai	undef	rsa3072_qteslai
-qteslaiiisize	undef	qteslaiiisize
-p384_qteslaiiisize	undef	p384_qteslaiiisize
-qteslaiiispeed	undef	qteslaiiispeed
-p384_qteslaiiispeed	undef	p384_qteslaiiispeed
+qteslapi	undef	qteslapi
+p256_qteslapi	undef	p256_qteslapi
+rsa3072_qteslapi	undef	rsa3072_qteslapi
+qteslapiii	undef	qteslapiii
+p384_qteslapiii	undef	p384_qteslapiii
 ##### OQS_TEMPLATE_FRAGMENT_LIST_OQS_SIGS_END
 
 

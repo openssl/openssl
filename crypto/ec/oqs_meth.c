@@ -93,16 +93,13 @@ static char* get_oqs_alg_name(int openssl_nid)
     case NID_p256_picnicl1fs:
     case NID_rsa3072_picnicl1fs:
       return OQS_SIG_alg_picnic_L1_FS;
-    case NID_qteslai:
-    case NID_p256_qteslai:
-    case NID_rsa3072_qteslai:
-      return OQS_SIG_alg_qTESLA_I;
-    case NID_qteslaiiisize:
-    case NID_p384_qteslaiiisize:
-      return OQS_SIG_alg_qTESLA_III_size;
-    case NID_qteslaiiispeed:
-    case NID_p384_qteslaiiispeed:
-      return OQS_SIG_alg_qTESLA_III_speed;
+    case NID_qteslapi:
+    case NID_p256_qteslapi:
+    case NID_rsa3072_qteslapi:
+      return OQS_SIG_alg_qTesla_p_I;
+    case NID_qteslapiii:
+    case NID_p384_qteslapiii:
+      return OQS_SIG_alg_qTesla_p_III;
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_END
     default:
       return NULL;
@@ -121,10 +118,9 @@ static int is_oqs_hybrid_alg(int openssl_nid)
     case NID_p384_dilithium4:
     case NID_p256_picnicl1fs:
     case NID_rsa3072_picnicl1fs:
-    case NID_p256_qteslai:
-    case NID_rsa3072_qteslai:
-    case NID_p384_qteslaiiisize:
-    case NID_p384_qteslaiiispeed:
+    case NID_p256_qteslapi:
+    case NID_rsa3072_qteslapi:
+    case NID_p384_qteslapiii:
 ///// OQS_TEMPLATE_FRAGMENT_LIST_HYBRID_NIDS_END
       return 1;
     default:
@@ -141,17 +137,17 @@ static int get_classical_nid(int hybrid_id)
     case NID_rsa3072_oqsdefault:
     case NID_rsa3072_dilithium2:
     case NID_rsa3072_picnicl1fs:
-    case NID_rsa3072_qteslai:
+    case NID_rsa3072_qteslapi:
       return NID_rsaEncryption;
     case NID_p256_oqsdefault:
     case NID_p256_dilithium2:
     case NID_p256_picnicl1fs:
-    case NID_p256_qteslai:
+    case NID_p256_qteslapi:
       return NID_X9_62_prime256v1;
     case NID_p384_dilithium4:
-    case NID_p384_qteslaiiisize:
-    case NID_p384_qteslaiiispeed:
+    case NID_p384_qteslapiii:
       return NID_secp384r1;
+
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_END
     default:
       return 0;
@@ -175,13 +171,11 @@ static int get_oqs_nid(int hybrid_id)
     case NID_p256_picnicl1fs:
     case NID_rsa3072_picnicl1fs:
       return NID_picnicl1fs;
-    case NID_p256_qteslai:
-    case NID_rsa3072_qteslai:
-      return NID_qteslai;
-    case NID_p384_qteslaiiisize:
-      return NID_qteslaiiisize;
-    case NID_p384_qteslaiiispeed:
-      return NID_qteslaiiispeed;
+    case NID_p256_qteslapi:
+    case NID_rsa3072_qteslapi:
+      return NID_qteslapi;
+    case NID_p384_qteslapiii:
+      return NID_qteslapiii;
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_OQS_NID_END
     default:
       return 0;
@@ -242,15 +236,12 @@ static int get_oqs_security_bits(int openssl_nid)
     case NID_p256_picnicl1fs:
     case NID_rsa3072_picnicl1fs:
       return 128;
-    case NID_qteslai:
-    case NID_p256_qteslai:
-    case NID_rsa3072_qteslai:
+    case NID_qteslapi:
+    case NID_p256_qteslapi:
+    case NID_rsa3072_qteslapi:
       return 128;
-    case NID_qteslaiiisize:
-    case NID_p384_qteslaiiisize:
-      return 192;
-    case NID_qteslaiiispeed:
-    case NID_p384_qteslaiiispeed:
+    case NID_qteslapiii:
+    case NID_p384_qteslapiii:
       return 192;
 ///// OQS_TEMPLATE_FRAGMENT_GET_SIG_SECURITY_BITS_END
     default:
@@ -834,13 +825,11 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
         nid != NID_picnicl1fs &&
         nid != NID_p256_picnicl1fs &&
         nid != NID_rsa3072_picnicl1fs &&
-        nid != NID_qteslai &&
-        nid != NID_p256_qteslai &&
-        nid != NID_rsa3072_qteslai &&
-        nid != NID_qteslaiiisize &&
-        nid != NID_p384_qteslaiiisize &&
-        nid != NID_qteslaiiispeed &&
-        nid != NID_p384_qteslaiiispeed
+        nid != NID_qteslapi &&
+        nid != NID_p256_qteslapi &&
+        nid != NID_rsa3072_qteslapi &&
+        nid != NID_qteslapiii &&
+        nid != NID_p384_qteslapiii
 ///// OQS_TEMPLATE_FRAGMENT_CHECK_IF_KNOWN_NID_END
     ) || ptype != V_ASN1_UNDEF) {
         ECerr(EC_F_OQS_ITEM_VERIFY, EC_R_UNKNOWN_NID);
@@ -1208,11 +1197,9 @@ DEFINE_OQS_EVP_METHODS(p384_dilithium4, NID_p384_dilithium4, "p384_dilithium4", 
 DEFINE_OQS_EVP_METHODS(picnicl1fs, NID_picnicl1fs, "picnicl1fs", "OpenSSL Picnic L1 FS algorithm")
 DEFINE_OQS_EVP_METHODS(p256_picnicl1fs, NID_p256_picnicl1fs, "p256_picnicl1fs", "OpenSSL ECDSA p256 Picnic L1 FS algorithm")
 DEFINE_OQS_EVP_METHODS(rsa3072_picnicl1fs, NID_rsa3072_picnicl1fs, "rsa3072_picnicl1fs", "OpenSSL RSA3072 Picnic L1 FS algorithm")
-DEFINE_OQS_EVP_METHODS(qteslai, NID_qteslai, "qteslai", "OpenSSL qTESLA-I algorithm")
-DEFINE_OQS_EVP_METHODS(p256_qteslai, NID_p256_qteslai, "p256_qteslai", "OpenSSL ECDSA p256 qTESLA-I algorithm")
-DEFINE_OQS_EVP_METHODS(rsa3072_qteslai, NID_rsa3072_qteslai, "rsa3072_qteslai", "OpenSSL RSA3072 qTESLA-I algorithm")
-DEFINE_OQS_EVP_METHODS(qteslaiiisize, NID_qteslaiiisize, "qteslaiiisize", "OpenSSL qTESLA-III-size algorithm")
-DEFINE_OQS_EVP_METHODS(p384_qteslaiiisize, NID_p384_qteslaiiisize, "p384_qteslaiiisize", "OpenSSL ECDSA p384 qTESLA-III-size algorithm")
-DEFINE_OQS_EVP_METHODS(qteslaiiispeed, NID_qteslaiiispeed, "qteslaiiispeed", "OpenSSL qTESLA-III-speed algorithm")
-DEFINE_OQS_EVP_METHODS(p384_qteslaiiispeed, NID_p384_qteslaiiispeed, "p384_qteslaiiispeed", "OpenSSL ECDSA p384 qTESLA-III-speed algorithm")
+DEFINE_OQS_EVP_METHODS(qteslapi, NID_qteslapi, "qteslapi", "OpenSSL qTesla-I-p algorithm")
+DEFINE_OQS_EVP_METHODS(p256_qteslapi, NID_p256_qteslapi, "p256_qteslapi", "OpenSSL ECDSA p256 qTesla-I-p algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_qteslapi, NID_rsa3072_qteslapi, "rsa3072_qteslapi", "OpenSSL RSA3072 qTesla-I-p algorithm")
+DEFINE_OQS_EVP_METHODS(qteslapiii, NID_qteslapiii, "qteslapiii", "OpenSSL qTESLA-p-III algorithm")
+DEFINE_OQS_EVP_METHODS(p384_qteslapiii, NID_p384_qteslapiii, "p384_qteslapiii", "OpenSSL ECDSA p384 qTESLA-p-III algorithm")
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_END

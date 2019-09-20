@@ -1204,10 +1204,8 @@ p384_dilithium4		1203
 picnicl1fs		1204
 p256_picnicl1fs		1205
 rsa3072_picnicl1fs		1206
-qteslai		1207
-p256_qteslai		1208
-rsa3072_qteslai		1209
-qteslaiiisize		1210
-p384_qteslaiiisize		1211
-qteslaiiispeed		1212
-p384_qteslaiiispeed		1213
+qteslapi		1207
+p256_qteslapi		1208
+rsa3072_qteslapi		1209
+qteslapiii		1210
+p384_qteslapiii		1211
