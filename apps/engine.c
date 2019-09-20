@@ -30,8 +30,6 @@ typedef enum OPTION_choice {
 
 const OPTIONS engine_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] engine...\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  engine... Engines to load\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -48,6 +46,9 @@ const OPTIONS engine_options[] = {
     {"tt", OPT_TT, '-', "Display error trace for unavailable engines"},
     {OPT_MORE_STR, OPT_EOF, 1,
      "Commands are like \"SO_PATH:/lib/libdriver.so\""},
+
+    OPT_PARAMETERS(),
+    {"engine", 0, 0, "ID of engine(s) to load"},
     {NULL}
 };
 

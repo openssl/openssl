@@ -58,6 +58,9 @@ const OPTIONS storeutl_options[] = {
     {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"text", OPT_TEXT, '-', "Print a text form of the objects"},
     {"noout", OPT_NOOUT, '-', "No PEM output, just status"},
+
+    OPT_PARAMETERS(),
+    {"uri", 0, 0, "URI of the store object"},
     {NULL}
 };
 

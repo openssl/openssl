@@ -32,7 +32,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS gendsa_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [args] dsaparam-file\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] dsaparam-file\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -46,6 +46,9 @@ const OPTIONS gendsa_options[] = {
     OPT_R_OPTIONS,
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+
+    OPT_PARAMETERS(),
+    {"dsaparam-file", 0, 0, "File containing DSA parameters"},
     {NULL}
 };
 

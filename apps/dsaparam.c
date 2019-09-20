@@ -37,6 +37,8 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS dsaparam_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [numbits]\n"},
+
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
 # ifndef OPENSSL_NO_ENGINE
@@ -57,6 +59,9 @@ const OPTIONS dsaparam_options[] = {
     {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
 
     OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"numbits", 0, 0, "Number of bits if generating parameters (optional)"},
     {NULL}
 };
 

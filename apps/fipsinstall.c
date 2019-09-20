@@ -34,8 +34,8 @@ typedef enum OPTION_choice {
 const OPTIONS fipsinstall_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"verify", OPT_VERIFY, '-', "Verification mode, i.e verify a config file "
-     "instead of generating one"},
+    {"verify", OPT_VERIFY, '-',
+        "Verify a config file instead of generating one"},
     {"module", OPT_MODULE, '<', "File name of the provider module"},
     {"provider_name", OPT_PROV_NAME, 's', "FIPS provider name"},
     {"section_name", OPT_SECTION_NAME, 's',

@@ -605,6 +605,8 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS s_client_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [host:port]\n"},
+
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
 #ifndef OPENSSL_NO_ENGINE
@@ -816,6 +818,9 @@ const OPTIONS s_client_options[] = {
     {"chainCAfile", OPT_CHAINCAFILE, '<',
      "CA file for certificate chain (PEM format)"},
     OPT_X_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"host:port", 0, 0, "Where to connect; same as -connect option"},
     {NULL}
 };
 

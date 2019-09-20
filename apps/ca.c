@@ -154,6 +154,8 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS ca_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [certreq...]\n"},
+
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output during processing"},
@@ -235,6 +237,9 @@ const OPTIONS ca_options[] = {
     {"revoke", OPT_REVOKE, '<', "Revoke a cert (given in file)"},
 
     OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"certreq", 0, 0, "Certificate requests to be signed (optional)"},
     {NULL}
 };
 

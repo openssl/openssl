@@ -47,8 +47,7 @@ typedef enum OPTION_choice {
 
 const OPTIONS dgst_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [file...]\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  file... files to digest (default is stdin)\n"},
+
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list", OPT_LIST, '-', "List digests"},
@@ -83,6 +82,9 @@ const OPTIONS dgst_options[] = {
      "Compute HMAC with the key used in OpenSSL-FIPS fingerprint"},
 
     OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"file", 0, 0, "Files to digest (optional; default is stdin)"},
     {NULL}
 };
 
