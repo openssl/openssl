@@ -211,7 +211,7 @@ In another terminal window, you can run a TLS client requesting one of the suppo
 
 ## Contributing
 
-Contributions gratefully welcomed. See our [Contributing Guide](https://github.com/open-quantum-safe/openssl/wiki/Contributing-Guide) for more details.
+Contributions are gratefully welcomed. See our [Contributing Guide](https://github.com/open-quantum-safe/openssl/wiki/Contributing-Guide) for more details.
 
 ## License
 
