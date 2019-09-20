@@ -73,6 +73,7 @@ matrix:
               apt:
                   packages:
                       - golang-1.10
+                      - libboost-dev
           compiler: clang
           env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++" BORINGSSL_TESTS="yes" CXX="clang++" TESTS=95
         - os: linux
