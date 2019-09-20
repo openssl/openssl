@@ -1734,10 +1734,6 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
 
     ret = 1;
  err:
-#ifndef OPENSSL_NO_SM2
-    if (!ret)
-        EVP_PKEY_CTX_free(pctx);
-#endif
     return ret;
 }
 
