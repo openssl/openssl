@@ -74,6 +74,9 @@ the error occurred in *B<file> and *B<line>, as far as they are not B<NULL>.
 An unset file name is indicated as B<NULL>.
 An unset line number is indicated as B<0>.
 
+A non-B<NULL> pointer returned this way by these functions and the ones below
+is valid until the respective entry is removed from the error queue.
+
 ERR_get_error_func(), ERR_peek_error_func() and
 ERR_peek_last_error_func() are the same as ERR_get_error(),
 ERR_peek_error() and ERR_peek_last_error(), but on success they
