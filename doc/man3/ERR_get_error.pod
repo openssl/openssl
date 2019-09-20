@@ -61,10 +61,9 @@ error queue without modifying it.
 ERR_peek_last_error() returns the latest error code from the thread's
 error queue without modifying it.
 
-See L<ERR_GET_LIB(3)> for obtaining information about
-location and reason of the error, and
-L<ERR_error_string(3)> for human-readable error
-messages.
+See L<ERR_GET_LIB(3)> for obtaining further specific information
+such as the reason of the error,
+and L<ERR_error_string(3)> for human-readable error messages.
 
 ERR_get_error_line(), ERR_peek_error_line() and
 ERR_peek_last_error_line() are the same as ERR_get_error(),
