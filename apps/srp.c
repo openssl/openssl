@@ -197,6 +197,8 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS srp_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [user...]\n"},
+
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
@@ -220,6 +222,9 @@ const OPTIONS srp_options[] = {
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
 
     OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"user", 0, 0, "Username(s) to process (optional)"},
     {NULL}
 };
 

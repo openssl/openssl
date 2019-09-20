@@ -25,7 +25,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS rand_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [flags] num\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] num\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -39,6 +39,9 @@ const OPTIONS rand_options[] = {
     {"hex", OPT_HEX, '-', "Hex encode output"},
 
     OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"num", 0, 0, "Number of bytes to generate"},
     {NULL}
 };
 

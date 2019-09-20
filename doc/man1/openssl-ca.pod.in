@@ -62,6 +62,7 @@ B<openssl> B<ca>
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+[I<certreq>...]
 
 =for openssl ifdef engine sm2-id sm2-hex-id
 
@@ -69,8 +70,11 @@ B<openssl> B<ca>
 
 This command is a minimal CA application. It can be used
 to sign certificate requests in a variety of forms and generate
-CRLs it also maintains a text database of issued certificates
+CRLs. It also maintains a text database of issued certificates
 and their status.
+When signing certificates, a single certificate request can be specified
+with the B<-in> option, or multiple requests can be processed by
+specifying a set of B<certreq> files after all options.
 
 The options descriptions will be divided into each purpose.
 

@@ -26,8 +26,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS provider_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] provider...\n"},
-    {OPT_HELP_STR, 1, '-', "  provider... Providers to load\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [provider...]\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -38,6 +37,9 @@ const OPTIONS provider_options[] = {
     {OPT_MORE_STR, 0, '-', "categorised by operation type"},
     {"vvv", OPT_VVV, '-', "List the algorithm names of specified provider"},
     {OPT_MORE_STR, 0, '-', "one at a time, and list all known parameters"},
+
+    OPT_PARAMETERS(),
+    {"provider", 0, 0, "Provider(s) to load"},
     {NULL}
 };
 
@@ -268,6 +270,7 @@ int provider_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
     for ( ; *argv; argv++) {
+        /* This isn't necessary since -- is supported. */
         if (**argv == '-') {
             BIO_printf(bio_err, "%s: Cannot mix flags and provider names.\n",
                        prog);

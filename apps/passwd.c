@@ -59,6 +59,8 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS passwd_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [password]\n"},
+
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
 
@@ -85,6 +87,9 @@ const OPTIONS passwd_options[] = {
 #endif
 
     OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"password", 0, 0, "Password text to digest (optional)"},
     {NULL}
 };
 

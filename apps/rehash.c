@@ -451,7 +451,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS rehash_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert-directory...]\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [directory...]\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -462,6 +462,9 @@ const OPTIONS rehash_options[] = {
 
     OPT_SECTION("Output"),
     {"v", OPT_VERBOSE, '-', "Verbose output"},
+
+    OPT_PARAMETERS(),
+    {"directory", 0, 0, "One or more directories to process (optional)"},
     {NULL}
 };
 

@@ -35,7 +35,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS verify_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert...]\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -72,6 +72,9 @@ const OPTIONS verify_options[] = {
     {"sm2-hex-id", OPT_SM2HEXID, 's',
      "Specify a hex ID string to verify an SM2 certificate"},
 #endif
+
+    OPT_PARAMETERS(),
+    {"cert", 0, 0, "Certificate(s) to verify (optional)"},
     {NULL}
 };
 
@@ -102,20 +105,20 @@ int verify_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(verify_options);
-            BIO_printf(bio_err, "Recognized usages:\n");
+            BIO_printf(bio_err, "\nRecognized certificate chain purposes:\n");
             for (i = 0; i < X509_PURPOSE_get_count(); i++) {
-                X509_PURPOSE *ptmp;
-                ptmp = X509_PURPOSE_get0(i);
-                BIO_printf(bio_err, "\t%-10s\t%s\n",
+                X509_PURPOSE *ptmp = X509_PURPOSE_get0(i);
+
+                BIO_printf(bio_err, "  %-15s  %s\n",
                         X509_PURPOSE_get0_sname(ptmp),
                         X509_PURPOSE_get0_name(ptmp));
             }
 
-            BIO_printf(bio_err, "Recognized verify names:\n");
+            BIO_printf(bio_err, "Recognized certificate policy names:\n");
             for (i = 0; i < X509_VERIFY_PARAM_get_count(); i++) {
-                const X509_VERIFY_PARAM *vptmp;
-                vptmp = X509_VERIFY_PARAM_get0(i);
-                BIO_printf(bio_err, "\t%-10s\n",
+                const X509_VERIFY_PARAM *vptmp = X509_VERIFY_PARAM_get0(i);
+
+                BIO_printf(bio_err, "  %s\n",
                         X509_VERIFY_PARAM_get0_name(vptmp));
             }
             ret = 0;

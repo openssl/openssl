@@ -20,8 +20,6 @@ typedef enum OPTION_choice {
 
 const OPTIONS prime_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [number...]\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  number Number to check for primality\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -33,6 +31,9 @@ const OPTIONS prime_options[] = {
     {"generate", OPT_GENERATE, '-', "Generate a prime"},
     {"safe", OPT_SAFE, '-',
      "When used with -generate, generate a safe prime"},
+
+    OPT_PARAMETERS(),
+    {"number", 0, 0, "Number(s) to check for primality if not generating"},
     {NULL}
 };
 

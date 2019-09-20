@@ -31,6 +31,8 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS ciphers_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cipher]\n"},
+
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
 
@@ -65,6 +67,9 @@ const OPTIONS ciphers_options[] = {
 #endif
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Configure the TLSv1.3 ciphersuites to use"},
+
+    OPT_PARAMETERS(),
+    {"cipher", 0, 0, "Cipher string to decode (optional)"},
     {NULL}
 };
 

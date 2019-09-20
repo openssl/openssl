@@ -26,7 +26,7 @@ B<openssl passwd>
 [B<-quiet>]
 [B<-table>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{I<password>}
+[I<password>]
 
 =for openssl ifdef crypt
 

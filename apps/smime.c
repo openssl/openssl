@@ -49,9 +49,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS smime_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  cert.pem... recipient certs for encryption\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert...]\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -123,6 +121,9 @@ const OPTIONS smime_options[] = {
 
     OPT_R_OPTIONS,
     OPT_V_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"cert", 0, 0, "Recipient certs, used when encrypting"},
     {NULL}
 };
 

@@ -315,7 +315,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS speed_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] ciphers...\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [algorithm...]\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -356,6 +356,9 @@ const OPTIONS speed_options[] = {
      "Use specified offset to mis-align buffers"},
 
     OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"algorithm", 0, 0, "Algorithm(s) to test"},
     {NULL}
 };
 

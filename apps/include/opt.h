@@ -271,6 +271,8 @@
 extern const char OPT_HELP_STR[];
 extern const char OPT_MORE_STR[];
 extern const char OPT_SECTION_STR[];
+extern const char OPT_PARAM_STR[];
+
 typedef struct options_st {
     const char *name;
     int retval;
@@ -314,6 +316,7 @@ typedef struct string_int_pair_st {
 
 /* Divide options into sections when displaying usage */
 #define OPT_SECTION(sec) { OPT_SECTION_STR, 1, '-', sec " options:\n" }
+#define OPT_PARAMETERS() { OPT_PARAM_STR, 1, '-', "Parameters:\n" }
 
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
@@ -346,7 +349,7 @@ int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 void opt_help(const OPTIONS * list);
-void opt_print(const OPTIONS * opt, int width);
+void opt_print(const OPTIONS * opt, int doingparams, int width);
 int opt_format_error(const char *s, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);

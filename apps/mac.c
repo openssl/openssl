@@ -26,21 +26,22 @@ typedef enum OPTION_choice {
 
 const OPTIONS mac_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] mac_name\n"},
-    {OPT_HELP_STR, 1, '-', "mac_name\t\t MAC algorithm (See list "
-                           "-mac-algorithms)"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form. "
-                                "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},
+    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form"},
+    {OPT_MORE_STR, 1, '-', "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file to MAC (default is stdin)"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"binary", OPT_BIN, '-', "Output in binary format (Default is hexadecimal "
-                             "output)"},
+    {"binary", OPT_BIN, '-',
+        "Output in binary format (default is hexadecimal)"},
+
+    OPT_PARAMETERS(),
+    {"mac_name", 0, 0, "MAC algorithm"},
     {NULL}
 };
 
