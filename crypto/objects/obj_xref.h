@@ -91,13 +91,11 @@ static const nid_triple sigoid_srt[] = {
     {NID_picnicl1fs, NID_undef, NID_picnicl1fs},
     {NID_p256_picnicl1fs, NID_undef, NID_p256_picnicl1fs},
     {NID_rsa3072_picnicl1fs, NID_undef, NID_rsa3072_picnicl1fs},
-    {NID_qteslai, NID_undef, NID_qteslai},
-    {NID_p256_qteslai, NID_undef, NID_p256_qteslai},
-    {NID_rsa3072_qteslai, NID_undef, NID_rsa3072_qteslai},
-    {NID_qteslaiiisize, NID_undef, NID_qteslaiiisize},
-    {NID_p384_qteslaiiisize, NID_undef, NID_p384_qteslaiiisize},
-    {NID_qteslaiiispeed, NID_undef, NID_qteslaiiispeed},
-    {NID_p384_qteslaiiispeed, NID_undef, NID_p384_qteslaiiispeed},
+    {NID_qteslapi, NID_undef, NID_qteslapi},
+    {NID_p256_qteslapi, NID_undef, NID_p256_qteslapi},
+    {NID_rsa3072_qteslapi, NID_undef, NID_rsa3072_qteslapi},
+    {NID_qteslapiii, NID_undef, NID_qteslapiii},
+    {NID_p384_qteslapiii, NID_undef, NID_p384_qteslapiii},
 };
 
 static const nid_triple *const sigoid_srt_xref[] = {

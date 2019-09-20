@@ -99,13 +99,11 @@ extern const EVP_PKEY_ASN1_METHOD p384_dilithium4_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD picnicl1fs_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p256_picnicl1fs_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa3072_picnicl1fs_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD qteslai_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p256_qteslai_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD rsa3072_qteslai_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD qteslaiiisize_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p384_qteslaiiisize_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD qteslaiiispeed_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p384_qteslaiiispeed_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD qteslapi_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_qteslapi_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_qteslapi_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD qteslapiii_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p384_qteslapiii_asn1_meth;
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_END
 
 /*

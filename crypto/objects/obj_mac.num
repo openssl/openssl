@@ -1192,6 +1192,7 @@ magma_cfb		1191
 magma_mac		1192
 hmacWithSHA512_224		1193
 hmacWithSHA512_256		1194
+<<<<<<< HEAD
 oqsdefault	1195
 p256_oqsdefault	1196
 rsa3072_oqsdefault	1197
@@ -1211,3 +1212,22 @@ qteslaiiisize	1210
 p384_qteslaiiisize	1211
 qteslaiiispeed	1212
 p384_qteslaiiispeed	1213
+=======
+oqsdefault		1195
+p256_oqsdefault		1196
+rsa3072_oqsdefault		1197
+dilithium2		1198
+p256_dilithium2		1199
+rsa3072_dilithium2		1200
+dilithium3		1201
+dilithium4		1202
+p384_dilithium4		1203
+picnicl1fs		1204
+p256_picnicl1fs		1205
+rsa3072_picnicl1fs		1206
+qteslapi		1207
+p256_qteslapi		1208
+rsa3072_qteslapi		1209
+qteslapiii		1210
+p384_qteslapiii		1211
+>>>>>>> Added qtesla round 2, replacing heuristic param sets with the provably-secure ones.

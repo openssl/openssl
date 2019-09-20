@@ -81,13 +81,11 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &picnicl1fs_pkey_meth,
     &p256_picnicl1fs_pkey_meth,
     &rsa3072_picnicl1fs_pkey_meth,
-    &qteslai_pkey_meth,
-    &p256_qteslai_pkey_meth,
-    &rsa3072_qteslai_pkey_meth,
-    &qteslaiiisize_pkey_meth,
-    &p384_qteslaiiisize_pkey_meth,
-    &qteslaiiispeed_pkey_meth,
-    &p384_qteslaiiispeed_pkey_meth,
+    &qteslapi_pkey_meth,
+    &p256_qteslapi_pkey_meth,
+    &rsa3072_qteslapi_pkey_meth,
+    &qteslapiii_pkey_meth,
+    &p384_qteslapiii_pkey_meth,
 ///// OQS_TEMPLATE_FRAGMENT_LIST_PKEY_METHS_END
 };
 
