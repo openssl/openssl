@@ -1081,6 +1081,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
     int j, multi, found, rule, retval, ok, buflen;
     uint32_t cipher_id = 0;
     char ch;
+    int parsed_len, version_mask;
 
     retval = 1;
     l = rule_str;
@@ -1158,6 +1159,17 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                 l++;
             } else {
                 multi = 0;
+            }
+
+            /* Check for version specification */
+            if (ch == '|') {
+                l++;
+                parsed_len = OPENSSL_version_list(l, &version_mask);
+                if (parsed_len == 0) {
+                    found = 0;
+                    break;
+                }
+                l += parsed_len;
             }
 
             /*
@@ -1265,9 +1277,11 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             if (ca_list[j]->valid) {
                 /*
                  * explicit ciphersuite found; its protocol version does not
-                 * become part of the search pattern!
+                 * become part of the search pattern! Version mask will be
+                 * ignored.
                  */
 
+                OPENSSL_version_list(SSL_TXT_ALL, &version_mask);
                 cipher_id = ca_list[j]->id;
             } else {
                 /*
@@ -1276,6 +1290,8 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                  */
 
                 if (ca_list[j]->min_tls) {
+                    /* We hit version alias, so ignore version mask */
+                    OPENSSL_version_list(SSL_TXT_ALL, &version_mask);
                     if (min_tls != 0 && min_tls != ca_list[j]->min_tls) {
                         found = 0;
                         break;
@@ -1321,8 +1337,8 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
         } else if (found) {
             ssl_cipher_apply_rule(cipher_id,
                                   alg_mkey, alg_auth, alg_enc, alg_mac,
-                                  min_tls, 0, algo_strength, rule, -1, head_p,
-                                  tail_p);
+                                  min_tls, version_mask, algo_strength, rule, -1,
+                                  head_p, tail_p);
         } else {
             while ((*l != '\0') && !ITEM_SEP(*l))
                 l++;
