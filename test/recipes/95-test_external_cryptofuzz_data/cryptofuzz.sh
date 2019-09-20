@@ -15,9 +15,9 @@ cd $SRCTOP/cryptofuzz
 python gen_repository.py
 
 cd modules/openssl
-make -B -s
+CXXFLAGS="$CXXFLAGS -stdlib=libc++" make -B
 
 cd ../..
-CXXFLAGS="-I $OPENSSL_INCLUDE_PATH" LIBFUZZER_LINK="-fsanitize=fuzzer" make -B -s
+CXXFLAGS="$CXXFLAGS -stdlib=libc++ -I $OPENSSL_INCLUDE_PATH" LIBFUZZER_LINK="-fsanitize=fuzzer" make -B
 
 # TODO run cryptofuzz against corpus
