@@ -236,8 +236,6 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
                                    OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
-void OSSL_CMP_PKISI_free(OSSL_CMP_PKISI *si);
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 
 /* from cmp_ctx.c */
 OSSL_CMP_CTX *OSSL_CMP_CTX_new(void);

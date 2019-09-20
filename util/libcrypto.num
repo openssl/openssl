@@ -4647,8 +4647,8 @@ OSSL_CMP_ITAV_get0_value                4763	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_push0_stack_item          4764	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_free                      4765	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_free                       4766	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_PKISI_free                     4767	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_MSG_dup                        4768	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_PKISI_free                     4767	3_0_0	NOEXIST::FUNCTION:CMP
+OSSL_CMP_MSG_dup                        4768	3_0_0	NOEXIST::FUNCTION:CMP
 ERR_load_CMP_strings                    4769	3_0_0	EXIST::FUNCTION:CMP
 EVP_MD_CTX_set_params                   4770	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get_params                   4771	3_0_0	EXIST::FUNCTION:

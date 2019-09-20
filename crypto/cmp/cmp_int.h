@@ -620,6 +620,7 @@ struct ossl_cmp_msg_st {
     STACK_OF(X509) *extraCerts; /* 1 */
 } /* OSSL_CMP_MSG */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_MSG)
+DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 
 /*-
  * ProtectedPart ::= SEQUENCE {
