@@ -608,10 +608,19 @@
                    Take note of the VAR=value documentation below and how
                    these flags interact with those variables.
 
-  -xxx, +xxx
+  -xxx, +xxx, /xxx
                    Additional options that are not otherwise recognised are
-                   passed through as they are to the compiler as well.  Again,
-                   consult your compiler documentation.
+                   passed through as they are to the compiler as well.
+                   Unix-style options beginning with a '-' or '+' and
+                   Windows-style options beginning with a '/' are recognized.
+                   Again, consult your compiler documentation.
+
+                   If the option contains arguments separated by spaces,
+                   then the URL-style notation %20 can be used for the space
+                   character in order to avoid having to quote the option.
+                   For example, -opt%20arg gets expanded to -opt arg.
+                   In fact, any ASCII character can be encoded as %xx using its
+                   hexadecimal encoding.
 
                    Take note of the VAR=value documentation below and how
                    these flags interact with those variables.

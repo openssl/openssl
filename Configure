@@ -69,7 +69,15 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # no-sse2       disables IA-32 SSE2 code in assembly modules, the above
 #               mentioned '386' option implies this one
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
-# -<xxx> +<xxx> compiler options are passed through
+# -<xxx> +<xxx> All options which are unknown to the 'Configure' script are
+# /<xxx>        passed through to the compiler. Unix-style options beginning
+#               with a '-' or '+' are recognized, as well as Windows-style
+#               options beginning with a '/'. If the option contains arguments
+#               separated by spaces, then the URL-style notation %20 can be
+#               used for the space character in order to avoid having to quote
+#               the option. For example, -opt%20arg gets expanded to -opt arg.
+#               In fact, any ASCII character can be encoded as %xx using its
+#               hexadecimal encoding.
 # -static       while -static is also a pass-through compiler option (and
 #               as such is limited to environments where it's actually
 #               meaningful), it triggers a number configuration options,
@@ -777,7 +785,7 @@ while (@argvcopy)
                 {
                 die "FIPS mode not supported\n";
                 }
-        elsif (/^[-+]/)
+        elsif (m|^[-+/]|)
                 {
                 if (/^--prefix=(.*)$/)
                         {
@@ -854,11 +862,11 @@ while (@argvcopy)
                         {
                         push @{$useradd{LDFLAGS}}, $_;
                         }
-                elsif (/^-D(.*)$/)
+                elsif (m|^[-/]D(.*)$|)
                         {
                         push @{$useradd{CPPDEFINES}}, $1;
                         }
-                elsif (/^-I(.*)$/)
+                elsif (m|^[-/]I(.*)$|)
                         {
                         push @{$useradd{CPPINCLUDES}}, $1;
                         }
@@ -868,10 +876,22 @@ while (@argvcopy)
                         }
                 else    # common if (/^[-+]/), just pass down...
                         {
+                        # Treat %xx as an ASCII code (e.g. replace %20 by a space character).
+                        # This provides a simple way to pass options with arguments separated
+                        # by spaces without quoting (e.g. -opt%20arg translates to -opt arg).
                         $_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
                         push @{$useradd{CFLAGS}}, $_;
                         push @{$useradd{CXXFLAGS}}, $_;
                         }
+                }
+        elsif (m|^/|)
+                {
+                # Treat %xx as an ASCII code (e.g. replace %20 by a space character).
+                # This provides a simple way to pass options with arguments separated
+                # by spaces without quoting (e.g. /opt%20arg translates to /opt arg).
+                $_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
+                push @{$useradd{CFLAGS}}, $_;
+                push @{$useradd{CXXFLAGS}}, $_;
                 }
         else
                 {
