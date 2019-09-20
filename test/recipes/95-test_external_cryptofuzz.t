@@ -11,6 +11,7 @@ use OpenSSL::Test;
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT bldtop_file data_file srctop_file cmdstr/;
 
+
 setup("test_external_cryptofuzz");
 
 plan skip_all => "No external tests in this configuration"
