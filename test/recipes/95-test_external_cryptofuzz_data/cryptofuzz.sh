@@ -15,10 +15,10 @@ cd $SRCTOP/cryptofuzz
 python gen_repository.py
 
 cd modules/openssl
-CXXFLAGS="$CXXFLAGS -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR" make -B
+CXXFLAGS="$CXXFLAGS -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -stdlib=libc++" make -B
 
 cd ../..
-CXXFLAGS="$CXXFLAGS -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -I $OPENSSL_INCLUDE_PATH" LIBFUZZER_LINK="-fsanitize=fuzzer" make -B
+CXXFLAGS="$CXXFLAGS -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -stdlib=libc++ -I $OPENSSL_INCLUDE_PATH" LIBFUZZER_LINK="-fsanitize=fuzzer" make -B
 
 mkdir corpus
 unzip $SRCTOP/cryptofuzz/cryptofuzz-corpora/openssl_latest.zip -d corpus/
