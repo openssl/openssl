@@ -342,8 +342,8 @@ for key generation operations.
 
 =item B<-sm2-id>
 
-Specify the ID string to use when verifying an SM2 certificate. The ID string is
-required by the SM2 signature algorithm for signing and verification.
+Specify the ID string to use when verifying an SM2 certificate request. The ID
+string is required by the SM2 signature algorithm for signing and verification.
 
 =item B<-sm2-hex-id>
 
