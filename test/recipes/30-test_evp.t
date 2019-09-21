@@ -56,6 +56,9 @@ push @defltfiles, @rc4files unless disabled("rc4");
 my @rc5files = qw( evpciph_rc5.txt );
 push @defltfiles, @rc5files unless disabled("rc5");
 
+my @rc2files = qw( evpciph_rc2.txt );
+push @defltfiles, @rc2files unless disabled("rc2");
+
 plan tests =>
     ($no_fips ? 0 : 1)          # FIPS install test
     + (scalar(@configs) * scalar(@files))
