@@ -1,4 +1,4 @@
-/*
+/*
  * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -161,6 +161,7 @@ static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(void)
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_ENGINE, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SSHKDF_XCGHASH, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SSHKDF_SESSION_ID, NULL, 0),

@@ -201,6 +201,7 @@ static const OSSL_PARAM *kdf_pbkdf2_settable_ctx_params(void)
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_ENGINE, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PASSWORD, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
         OSSL_PARAM_uint64(OSSL_KDF_PARAM_ITER, NULL),

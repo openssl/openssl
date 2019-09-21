@@ -483,6 +483,7 @@ static const OSSL_PARAM *sskdf_settable_ctx_params(void)
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MAC, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_ENGINE, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_MAC_SIZE, NULL),
         OSSL_PARAM_END
