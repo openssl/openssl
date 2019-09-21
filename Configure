@@ -80,8 +80,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               separated by spaces, then the URL-style notation %20 can be
 #               used for the space character in order to avoid having to quote
 #               the option. For example, -opt%20arg gets expanded to -opt arg.
-#               In fact, any character can be encoded as %xx using its
-#               hexadecimal ASCII value.
+#               In fact, any ASCII character can be encoded as %xx using its
+#               hexadecimal encoding.
 # -static       while -static is also a pass-through compiler option (and
 #               as such is limited to environments where it's actually
 #               meaningful), it triggers a number configuration options,

@@ -652,8 +652,8 @@
                    then the URL-style notation %20 can be used for the space
                    character in order to avoid having to quote the option.
                    For example, -opt%20arg gets expanded to -opt arg.
-                   In fact, any character can be encoded as %xx using its
-                   hexadecimal ASCII value.
+                   In fact, any ASCII character can be encoded as %xx using its
+                   hexadecimal encoding.
 
                    Take note of the VAR=value documentation below and how
                    these flags interact with those variables.
