@@ -87,7 +87,7 @@ printable characters only).
 
 Used by GMAC to specify an IV in hexadecimal form (two hex digits per byte).
 
-=item B<outlen:>I<int>
+=item B<size:>I<int>
 
 Used by KMAC128 or KMAC256 to specify an output length.
 The default sizes are 32 or 64 bytes respectively.
@@ -127,7 +127,7 @@ To create a hex-encoded CMAC-AES-128-CBC MAC from a file:\
 To create a hex-encoded KMAC128 MAC from a file with a Customisation String
 'Tag' and output length of 16: \
  openssl mac -macopt custom:Tag -macopt hexkey:40414243444546 \
-         -macopt outlen:16 -in msg.bin KMAC128
+         -macopt size:16 -in msg.bin KMAC128
 
 To create a hex-encoded GMAC-AES-128-GCM with a IV from a file: \
  openssl mac -macopt cipher:AES-128-GCM -macopt hexiv:E0E00F19FED7BA0136A797F3 \

@@ -44,8 +44,8 @@ The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =back
 
-The "xof" parameter value is exptect to be 1 or 0. Use 1 to enable XOF
-mode. If XOF is enabled then the output len that is encoded as part of
+The "xof" parameter value is expected to be 1 or 0. Use 1 to enable XOF
+mode. If XOF is enabled then the output length that is encoded as part of
 the input stream is set to zero.
 
 =head1 SEE ALSO
