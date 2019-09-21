@@ -1856,6 +1856,16 @@
 #define NID_id_on_permanentIdentifier           858
 #define OBJ_id_on_permanentIdentifier           OBJ_id_on,3L
 
+#define SN_XmppAddr             "id-on-xmppAddr"
+#define LN_XmppAddr             "XmppAddr"
+#define NID_XmppAddr            1209
+#define OBJ_XmppAddr            OBJ_id_on,5L
+
+#define SN_SRVName              "id-on-dnsSRV"
+#define LN_SRVName              "SRVName"
+#define NID_SRVName             1210
+#define OBJ_SRVName             OBJ_id_on,7L
+
 #define SN_id_on_SmtpUTF8Mailbox                "id-on-SmtpUTF8Mailbox"
 #define LN_id_on_SmtpUTF8Mailbox                "Smtp UTF8 Mailbox"
 #define NID_id_on_SmtpUTF8Mailbox               1208
