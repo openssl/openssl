@@ -43,6 +43,8 @@ The supported parameters are:
 
 =item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
 
+=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <UTF8 string>
+
 =item B<OSSL_KDF_PARAM_MAC> ("mac") <UTF8 string>
 
 =item B<OSSL_KDF_PARAM_MAC_SIZE> ("maclen") <size_t>

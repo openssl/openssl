@@ -25,6 +25,8 @@ The supported parameters are:
 
 =item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
 
+=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <UTF8 string>
+
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
 =item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>

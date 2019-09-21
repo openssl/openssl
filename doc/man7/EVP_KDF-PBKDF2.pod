@@ -36,6 +36,8 @@ This parameter has a default value of 2048.
 
 =item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
 
+=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <UTF8 string>
+
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
 =item B<OSSL_KDF_PARAM_PKCS5> ("pkcs5") <int>
