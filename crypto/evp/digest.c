@@ -636,6 +636,31 @@ EVP_MD *evp_md_new(void)
     return md;
 }
 
+/*
+ * FIPS module note: since internal fetches will be entirely
+ * provider based, we know that none of its code depends on legacy
+ * NIDs or any functionality that use them.
+ */
+#ifndef FIPS_MODE
+/* TODO(3.x) get rid of the need for legacy NIDs */
+static void set_legacy_nid(const char *name, void *vlegacy_nid)
+{
+    int nid;
+    int *legacy_nid = vlegacy_nid;
+
+    if (*legacy_nid == -1)       /* We found a clash already */
+        return;
+    if ((nid = OBJ_sn2nid(name)) == NID_undef
+        && (nid = OBJ_ln2nid(name)) == NID_undef)
+        return;
+    if (*legacy_nid != NID_undef && *legacy_nid != nid) {
+        *legacy_nid = -1;
+        return;
+    }
+    *legacy_nid = nid;
+}
+#endif
+
 static void *evp_md_from_dispatch(int name_id,
                                   const OSSL_DISPATCH *fns,
                                   OSSL_PROVIDER *prov, void *unused)
@@ -648,20 +673,19 @@ static void *evp_md_from_dispatch(int name_id,
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    md->name_id = name_id;
 
 #ifndef FIPS_MODE
-    {
-        /*
-         * FIPS module note: since internal fetches will be entirely
-         * provider based, we know that none of its code depends on legacy
-         * NIDs or any functionality that use them.
-         *
-         * TODO(3.x) get rid of the need for legacy NIDs
-         */
-        md->type = OBJ_sn2nid(evp_first_name(prov, name_id));
+    /* TODO(3.x) get rid of the need for legacy NIDs */
+    md->type = NID_undef;
+    evp_doall_names(prov, name_id, set_legacy_nid, &md->type);
+    if (md->type == -1) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        EVP_MD_free(md);
+        return NULL;
     }
 #endif
+
+    md->name_id = name_id;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
