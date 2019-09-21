@@ -2772,7 +2772,7 @@ const char *SSL_get_servername(const SSL *s, const int type)
      * call the relevant callbacks for such resumption flows, and callbacks
      * might error out if there is not a SNI value available.
      */
-    if (s->hit)
+    if (s->hit && s->session->ext.hostname != NULL)
         return s->session->ext.hostname;
     return s->ext.hostname;
 }
