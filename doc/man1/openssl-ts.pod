@@ -82,6 +82,8 @@ I<verify options:>
 [B<-verify_name> I<name>]
 [B<-x509_strict>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<ts> command is a basic Time Stamping Authority (TSA) client and server

@@ -70,6 +70,8 @@ B<openssl> B<smime>
 [B<-md> I<digest>]
 [cert.pem]...
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<smime> command handles S/MIME mail. It can encrypt, decrypt, sign and

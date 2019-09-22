@@ -139,6 +139,16 @@ B<openssl> B<s_client>
 [B<-enable_pha>]
 [I<host>:I<port>]
 
+=for comment ifdef engine ssl_client_engine ct noct ctlogfile
+
+=for comment ifdef ssl3 unix 4 6 use_srtp status trace wdebug nextprotoneg
+
+=for comment ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
+
+=for comment ifdef sctp_label_bug sctp
+
+=for comment ifdef srpuser srppass srp_lateuser srp_moregroups srp_strength
+
 =head1 DESCRIPTION
 
 The B<s_client> command implements a generic SSL/TLS client which connects

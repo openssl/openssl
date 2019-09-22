@@ -12,7 +12,7 @@ B<openssl info>
 [B<-enginesdir>]
 [B<-modulesdir> ]
 [B<-dsoext>]
-[B<-dirfilesep>]
+[B<-dirnamesep>]
 [B<-listsep>]
 [B<-seeds>]
 [B<-cpusettings>]

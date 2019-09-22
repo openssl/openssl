@@ -27,6 +27,8 @@ B<openssl> B<gendsa>
 [B<-verbose>]
 [B<paramfile>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<gendsa> command generates a DSA private key from a DSA parameter file

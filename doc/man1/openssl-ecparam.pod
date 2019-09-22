@@ -27,6 +27,8 @@ B<openssl ecparam>
 [B<-genkey>]
 [B<-engine> I<id>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 This command is used to manipulate or generate EC parameter files.

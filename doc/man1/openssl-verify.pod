@@ -54,6 +54,8 @@ B<openssl> B<verify>
 [B<->]
 [certificates]
 
+=for comment ifdef engine sm2-id sm2-hex-id
+
 =head1 DESCRIPTION
 
 The B<verify> command verifies certificate chains.

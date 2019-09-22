@@ -538,6 +538,7 @@ sub publicize {
     }
 }
 
+# Cipher/digests to skip if not documented
 my %skips = (
     'aes128' => 1,
     'aes192' => 1,
@@ -551,8 +552,8 @@ my %skips = (
     'des' => 1,
     'des3' => 1,
     'idea' => 1,
-    '[cipher]' => 1,
-    '[digest]' => 1,
+    'cipher' => 1,
+    'digest' => 1,
 );
 
 sub checkflags {
@@ -560,6 +561,7 @@ sub checkflags {
     my $doc = shift;
     my %cmdopts;
     my %docopts;
+    my %localskips;
 
     # Get the list of options in the command.
     open CFH, "./apps/openssl list --options $cmd|"
@@ -577,7 +579,15 @@ sub checkflags {
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
+        if ( /=for comment ifdef (.*)/ ) {
+            foreach my $f ( split / /, $1 ) {
+                $localskips{$f} = 1;
+            }
+            next;
+        }
         next unless /\[B<-([^ >]+)/;
+        my $opt = $1;
+        $opt = $1 if $opt =~ /I<(.*)/;
         $docopts{$1} = 1;
     }
     close CFH;
@@ -589,7 +599,7 @@ sub checkflags {
     }
     if ( scalar @undocced > 0 ) {
         foreach ( @undocced ) {
-            err("doc/man1/$cmd.pod: Missing -$_");
+            err("$doc: undocumented option -$_");
         }
     }
 
@@ -600,8 +610,8 @@ sub checkflags {
     }
     if ( scalar @unimpl > 0 ) {
         foreach ( @unimpl ) {
-            next if defined $skips{$_};
-            err("doc/man1/$cmd.pod: Not implemented -$_");
+            next if defined $skips{$_} || defined $localskips{$_};
+            err("$cmd documented but not implemented -$_");
         }
     }
 }

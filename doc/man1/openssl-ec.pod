@@ -28,6 +28,8 @@ B<openssl> B<ec>
 [B<-check>]
 [B<-engine> I<id>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<ec> command processes EC keys. They can be converted between various

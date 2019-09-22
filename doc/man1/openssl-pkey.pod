@@ -25,6 +25,8 @@ B<openssl> B<pkey>
 [B<-check>]
 [B<-pubcheck>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<pkey> command processes public or private keys. They can be converted
