@@ -21,6 +21,8 @@ B<openssl> B<spkac>
 [B<-verify>]
 [B<-engine id>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<spkac> command processes Netscape signed public key and challenge

@@ -59,6 +59,8 @@ B<openssl> B<ca>
 [B<-sm2-id string>]
 [B<-sm2-hex-id hex-string>]
 
+=for comment ifdef engine sm2-id sm2-hex-id
+
 =head1 DESCRIPTION
 
 The B<ca> command is a minimal CA application. It can be used

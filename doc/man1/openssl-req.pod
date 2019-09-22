@@ -52,6 +52,8 @@ B<openssl> B<req>
 [B<-sm2-id string>]
 [B<-sm2-hex-id hex-string>]
 
+=for comment ifdef engine keygen_engine sm2-id sm2-hex-id
+
 =head1 DESCRIPTION
 
 The B<req> command primarily creates and processes certificate requests

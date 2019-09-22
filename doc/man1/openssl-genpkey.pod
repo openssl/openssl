@@ -19,6 +19,8 @@ B<openssl> B<genpkey>
 [B<-genparam>]
 [B<-text>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<genpkey> command generates a private key.

@@ -25,6 +25,8 @@ B<openssl dhparam>
 [B<-engine id>]
 [I<numbits>]
 
+=for comment ifdef dsaparam engine
+
 =head1 DESCRIPTION
 
 This command is used to manipulate DH parameter files.

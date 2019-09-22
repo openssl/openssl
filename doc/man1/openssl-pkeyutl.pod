@@ -38,6 +38,8 @@ B<openssl> B<pkeyutl>
 [B<-engine id>]
 [B<-engine_impl>]
 
+=for comment ifdef engine engine_impl
+
 =head1 DESCRIPTION
 
 The B<pkeyutl> command can be used to perform low level public key operations

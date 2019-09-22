@@ -26,6 +26,8 @@ B<openssl> B<rsautl>
 [B<-hexdump>]
 [B<-asn1parse>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<rsautl> command can be used to sign, verify, encrypt and decrypt

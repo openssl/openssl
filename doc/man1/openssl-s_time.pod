@@ -30,6 +30,8 @@ B<openssl> B<s_time>
 [B<-cipher cipherlist>]
 [B<-ciphersuites val>]
 
+=for comment ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
+
 =head1 DESCRIPTION
 
 The B<s_time> command implements a generic SSL/TLS client which connects to a

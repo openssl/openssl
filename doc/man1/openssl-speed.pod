@@ -21,6 +21,8 @@ B<openssl speed>
 [B<-bytes num>]
 [B<algorithm...>]
 
+=for comment ifdef cmac multi async_jobs engine
+
 =head1 DESCRIPTION
 
 This command is used to test the performance of cryptographic algorithms.

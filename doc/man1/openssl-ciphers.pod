@@ -24,6 +24,8 @@ B<openssl> B<ciphers>
 [B<-ciphersuites val>]
 [B<cipherlist>]
 
+=for comment ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 psk srp
+
 =head1 DESCRIPTION
 
 The B<ciphers> command converts textual OpenSSL cipher lists into ordered

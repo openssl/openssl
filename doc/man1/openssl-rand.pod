@@ -15,6 +15,8 @@ B<openssl rand>
 [B<-hex>]
 I<num>
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<rand> command outputs I<num> pseudo-random bytes after seeding

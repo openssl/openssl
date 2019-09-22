@@ -24,6 +24,8 @@ B<openssl passwd>
 [B<-writerand file>]
 {I<password>}
 
+=for comment ifdef crypt
+
 =head1 DESCRIPTION
 
 The B<passwd> command computes the hash of a password typed at

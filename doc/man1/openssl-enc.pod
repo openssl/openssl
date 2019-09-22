@@ -38,6 +38,8 @@ B<openssl enc -I<cipher>>
 [B<-writerand file>]
 [B<-engine id>]
 
+=for comment ifdef z engine
+
 B<openssl> I<[cipher]> [B<...>]
 
 =head1 DESCRIPTION

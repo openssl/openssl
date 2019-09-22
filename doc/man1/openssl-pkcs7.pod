@@ -17,6 +17,8 @@ B<openssl> B<pkcs7>
 [B<-noout>]
 [B<-engine id>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<pkcs7> command processes PKCS#7 files in DER or PEM format.

@@ -33,6 +33,8 @@ B<openssl> B<dsa>
 [B<-pubout>]
 [B<-engine id>]
 
+=for comment ifdef pvk-string pvk-weak pvk-none engine
+
 =head1 DESCRIPTION
 
 The B<dsa> command processes DSA keys. They can be converted between various

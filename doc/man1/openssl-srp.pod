@@ -22,6 +22,8 @@ B<openssl srp>
 [B<-passout arg>]
 [I<user...>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<srp> command is used to maintain an SRP (secure remote password)

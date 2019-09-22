@@ -90,6 +90,8 @@ B<openssl> B<ocsp>
 [B<-rcid I<digest>>]
 [B<-I<digest>>]
 
+=for comment ifdef multi
+
 =head1 DESCRIPTION
 
 The Online Certificate Status Protocol (OCSP) enables applications to

@@ -44,6 +44,8 @@ B<openssl> B<pkcs12>
 [B<-no-CApath>]
 [B<-CSP name>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<pkcs12> command allows PKCS#12 files (sometimes referred to as

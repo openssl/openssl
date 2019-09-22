@@ -30,6 +30,8 @@ B<openssl> B<pkcs8>
 [B<-scrypt_r r>]
 [B<-scrypt_p p>]
 
+=for comment ifdef engine scrypt scrypt_N scrypt_r scrypt_p
+
 =head1 DESCRIPTION
 
 The B<pkcs8> command processes private keys in PKCS#8 format. It can handle

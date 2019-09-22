@@ -102,6 +102,8 @@ B<openssl> B<cms>
 [B<-subject subj>]
 [cert.pem]...
 
+=for comment ifdef des-wrap engine
+
 =head1 DESCRIPTION
 
 The B<cms> command handles S/MIME v3.1 mail. It can encrypt, decrypt, sign and

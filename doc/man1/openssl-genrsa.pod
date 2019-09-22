@@ -31,6 +31,8 @@ B<openssl> B<genrsa>
 [B<-verbose>]
 [B<numbits>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
 The B<genrsa> command generates an RSA private key.

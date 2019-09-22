@@ -22,6 +22,8 @@ B<openssl> B<crl>
 [B<-CAfile file>]
 [B<-CApath dir>]
 
+=for comment ifdef hash_old
+
 =head1 DESCRIPTION
 
 The B<crl> command processes CRL files in DER or PEM format.

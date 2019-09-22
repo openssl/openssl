@@ -7,6 +7,7 @@ openssl-provider - load and query providers
 =head1 SYNOPSIS
 
 B<openssl provider>
+[B<-help>]
 [B<-v>]
 [B<-vv>]
 [B<-vvv>]
@@ -20,6 +21,10 @@ I<provider>'s.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-v> B<-vv> B<-vvv>
 

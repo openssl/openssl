@@ -36,6 +36,8 @@ B<openssl> B<rsa>
 [B<-RSAPublicKey_out>]
 [B<-engine id>]
 
+=for comment ifdef pvk-strong pvk-weak pvk-none engine
+
 =head1 DESCRIPTION
 
 The B<rsa> command processes RSA keys. They can be converted between various
