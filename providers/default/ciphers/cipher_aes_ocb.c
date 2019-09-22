@@ -285,9 +285,11 @@ static void aes_ocb_freectx(void *vctx)
 {
     PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
 
-    aes_generic_ocb_cleanup(ctx);
-    OPENSSL_cleanse(ctx->base.iv, sizeof(ctx->base.iv));
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    if (ctx != NULL) {
+        aes_generic_ocb_cleanup(ctx);
+        OPENSSL_cleanse(ctx->base.iv, sizeof(ctx->base.iv));
+        OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    }
 }
 
 static void *aes_ocb_dupctx(void *vctx)
@@ -300,8 +302,10 @@ static void *aes_ocb_dupctx(void *vctx)
         return NULL;
     }
     *ret = *in;
-    if (!aes_generic_ocb_copy_ctx(ret, in))
+    if (!aes_generic_ocb_copy_ctx(ret, in)) {
         OPENSSL_free(ret);
+        ret = NULL;
+    }
     return ret;
 }
 
