@@ -46,7 +46,7 @@ static int load_common(const OSSL_PARAM params[], const char **propquery,
     /* TODO legacy stuff, to be removed */
     /* Inside the FIPS module, we don't support legacy ciphers */
 #if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
-    p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE);
+    p = OSSL_PARAM_locate_const(params, "engine");
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
@@ -221,10 +221,10 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
                                                  (char *)properties, 0);
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE)) != NULL) {
+    if ((p = OSSL_PARAM_locate_const(params, "engine")) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
+        *mp++ = OSSL_PARAM_construct_utf8_string("engine",
                                                  p->data, p->data_size);
     }
 #endif
