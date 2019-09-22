@@ -136,7 +136,6 @@ static int cmac_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_CIPHER, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_ENGINE, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
