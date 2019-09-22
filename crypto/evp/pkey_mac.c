@@ -278,8 +278,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 char *engineid = (char *)ENGINE_get_id(ctx->engine);
 
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
-                                                     engineid, 0);
+                    OSSL_PARAM_construct_utf8_string("engine", engineid, 0);
 #endif
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
@@ -400,11 +399,9 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 char *engineid = ctx->engine == NULL
                     ? NULL : (char *)ENGINE_get_id(ctx->engine);
 
-                if (engineid != NULL) {
+                if (engineid != NULL)
                     params[params_n++] =
-                        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
-                                                         engineid, 0);
-                }
+                        OSSL_PARAM_construct_utf8_string("engine", engineid, 0);
 #endif
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
