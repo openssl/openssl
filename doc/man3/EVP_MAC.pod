@@ -215,8 +215,6 @@ This option is used by KMAC.
 These will set the MAC flags to the given numbers.
 Some MACs do not support this option.
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <UTF8 string>
-
 =item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <UTF8 string>
 
 =item B<OSSL_MAC_PARAM_DIGEST> ("digest") <UTF8 string>
@@ -224,11 +222,9 @@ Some MACs do not support this option.
 =item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <UTF8 string>
 
 For MAC implementations that use an underlying computation cipher or
-digest, these parameters set what the algorithm should be, and the
-engine that implements the algorithm or the properties to fetch it
-by if needed.
+digest, these parameters set what the algorithm should be.
 
-The value is always the name of the intended engine, algorithm,
+The value is always the name of the intended algorithm,
 or the properties.
 
 Note that not all algorithms may support all digests.

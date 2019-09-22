@@ -170,14 +170,10 @@ The default value, if any, is implementation dependent.
 
 =item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <UTF8 string>
-
 For KDF implementations that use an underlying computation MAC or
-digest, these parameters set what the algorithm should be, and the
-engine that implements the algorithm or the properties to fetch it
-by if needed.
+digest, these parameters set what the algorithm should be.
 
-The value is always the name of the intended engine, algorithm,
+The value is always the name of the intended algorithm,
 or the properties.
 
 Note that not all algorithms may support all possible underlying
