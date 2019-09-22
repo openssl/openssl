@@ -829,7 +829,7 @@ while (@argvcopy)
                 {
                 die "FIPS mode not supported\n";
                 }
-        elsif (/^[-+]/)
+        elsif (m|^[-+/]|)
                 {
                 if (/^--prefix=(.*)$/)
                         {
@@ -890,7 +890,7 @@ while (@argvcopy)
                         {
                         push @{$useradd{LDLIBS}}, $_, shift(@argvcopy);
                         }
-                elsif (/^-L(.*)$/ or /^-Wl,/)
+                elsif (m|^[-/]L(.*)$| or /^-Wl,/)
                         {
                         push @{$useradd{LDFLAGS}}, $_;
                         }
@@ -906,11 +906,11 @@ while (@argvcopy)
                         {
                         push @{$useradd{LDFLAGS}}, $_;
                         }
-                elsif (/^-D(.*)$/)
+                elsif (m|^[-/]D(.*)$|)
                         {
                         push @{$useradd{CPPDEFINES}}, $1;
                         }
-                elsif (/^-I(.*)$/)
+                elsif (m|^[-/]I(.*)$|)
                         {
                         push @{$useradd{CPPINCLUDES}}, $1;
                         }
