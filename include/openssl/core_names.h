@@ -48,7 +48,6 @@ extern "C" {
 #define OSSL_ALG_PARAM_DIGEST       "digest"    /* utf8_string */
 #define OSSL_ALG_PARAM_CIPHER       "cipher"    /* utf8_string */
 #define OSSL_ALG_PARAM_MAC          "mac"       /* utf8_string */
-#define OSSL_ALG_PARAM_ENGINE       "engine"    /* utf8_string */
 #define OSSL_ALG_PARAM_PROPERTIES   "properties"/* utf8_string */
 
 /* cipher parameters */
@@ -94,7 +93,6 @@ extern "C" {
  */
 #define OSSL_MAC_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER     /* utf8 string */
 #define OSSL_MAC_PARAM_DIGEST       OSSL_ALG_PARAM_DIGEST     /* utf8 string */
-#define OSSL_MAC_PARAM_ENGINE       OSSL_ALG_PARAM_ENGINE     /* utf8 string */
 #define OSSL_MAC_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES /* utf8 string */
 #define OSSL_MAC_PARAM_SIZE         "size"       /* size_t */
 
@@ -112,7 +110,6 @@ extern "C" {
 #define OSSL_KDF_PARAM_DIGEST       OSSL_ALG_PARAM_DIGEST     /* utf8 string */
 #define OSSL_KDF_PARAM_MAC          OSSL_ALG_PARAM_MAC        /* utf8 string */
 #define OSSL_KDF_PARAM_MAC_SIZE     "maclen"    /* size_t */
-#define OSSL_KDF_PARAM_ENGINE       OSSL_ALG_PARAM_ENGINE     /* utf8 string */
 #define OSSL_KDF_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES /* utf8 string */
 #define OSSL_KDF_PARAM_ITER         "iter"      /* unsigned int */
 #define OSSL_KDF_PARAM_MODE         "mode"      /* utf8 string or int */
