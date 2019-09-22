@@ -30,8 +30,6 @@ The following parameter can be set with EVP_MAC_CTX_set_params():
 
 =item B<OSSL_MAC_PARAM_KEY> ("key") <octet string>
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8 string>
-
 =item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <utf8 string>
 
 =item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <utf8 string>
