@@ -116,10 +116,10 @@ EVP_MAC_update() adds I<datalen> bytes from I<data> to the MAC input.
 EVP_MAC_final() does the final computation and stores the result in
 the memory pointed at by I<out> of size I<outsize>, and sets the number
 of bytes written in I<*outl> at.
-If I<out> is B<NULL> or I<outsize> is too small, then no computation
+If I<out> is NULL or I<outsize> is too small, then no computation
 is made.
 To figure out what the output length will be and allocate space for it
-dynamically, simply call with I<out> being B<NULL> and I<outl>
+dynamically, simply call with I<out> being NULL and I<outl>
 pointing at a valid location, then allocate space and make a second
 call with I<out> pointing at the allocated space.
 
