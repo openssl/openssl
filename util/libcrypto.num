@@ -4683,8 +4683,8 @@ EVP_CIPHER_name                         4799	3_0_0	EXIST::FUNCTION:
 EVP_MD_provider                         4800	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_provider                     4801	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_name                      4802	3_0_0	EXIST::FUNCTION:
-EVP_CIPHER_do_all_ex                    4803	3_0_0	EXIST::FUNCTION:
-EVP_MD_do_all_ex                        4804	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_do_all_provided              4803	3_0_0	EXIST::FUNCTION:
+EVP_MD_do_all_provided                  4804	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_provider                    4805	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_available                 4806	3_0_0	EXIST::FUNCTION:
 ERR_new                                 4807	3_0_0	EXIST::FUNCTION:
@@ -4722,7 +4722,7 @@ EVP_MAC_name                            4838	3_0_0	EXIST::FUNCTION:
 EVP_MAC_get_params                      4839	3_0_0	EXIST::FUNCTION:
 EVP_MAC_gettable_params                 4840	3_0_0	EXIST::FUNCTION:
 EVP_MAC_provider                        4841	3_0_0	EXIST::FUNCTION:
-EVP_MAC_do_all_ex                       4842	3_0_0	EXIST::FUNCTION:
+EVP_MAC_do_all_provided                 4842	3_0_0	EXIST::FUNCTION:
 EVP_MD_free                             4843	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_free                         4844	3_0_0	EXIST::FUNCTION:
 EVP_KDF_up_ref                          4845	3_0_0	EXIST::FUNCTION:
@@ -4737,7 +4737,7 @@ EVP_KDF_CTX_set_params                  4853	3_0_0	EXIST::FUNCTION:
 EVP_KDF_gettable_params                 4854	3_0_0	EXIST::FUNCTION:
 EVP_KDF_gettable_ctx_params             4855	3_0_0	EXIST::FUNCTION:
 EVP_KDF_settable_ctx_params             4856	3_0_0	EXIST::FUNCTION:
-EVP_KDF_do_all_ex                       4857	3_0_0	EXIST::FUNCTION:
+EVP_KDF_do_all_provided                 4857	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_free                      4858	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_up_ref                    4859	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_provider                  4860	3_0_0	EXIST::FUNCTION:
@@ -4828,3 +4828,11 @@ EVP_DigestVerifyInit_ex                 4944	3_0_0	EXIST::FUNCTION:
 EVP_DigestVerifyUpdate                  4945	3_0_0	EXIST::FUNCTION:
 BN_check_prime                          4946	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_provided               4947	3_0_0	EXIST::FUNCTION:
+EVP_KEYMGMT_is_a                        4948	3_0_0	EXIST::FUNCTION:
+EVP_KEYMGMT_do_all_provided             4949	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_is_a                        4950	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_do_all_provided             4951	3_0_0	EXIST::FUNCTION:
+EVP_KDF_is_a                            4952	3_0_0	EXIST::FUNCTION:
+EVP_MD_is_a                             4953	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_is_a                      4954	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_do_all_provided           4955	3_0_0	EXIST::FUNCTION:

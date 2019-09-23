@@ -902,9 +902,9 @@ void EVP_MD_free(EVP_MD *md)
     OPENSSL_free(md);
 }
 
-void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
-                          void (*fn)(EVP_MD *mac, void *arg),
-                          void *arg)
+void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
+                            void (*fn)(EVP_MD *mac, void *arg),
+                            void *arg)
 {
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
                        (void (*)(void *, void *))fn, arg,

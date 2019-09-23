@@ -168,11 +168,6 @@ void EVP_MAC_free(EVP_MAC *mac)
     evp_mac_free(mac);
 }
 
-int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)
-{
-    return evp_is_a(mac->prov, mac->name_id, name);
-}
-
 const char *EVP_MAC_name(const EVP_MAC *mac)
 {
     return evp_first_name(mac->prov, mac->name_id);
@@ -204,9 +199,9 @@ const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac)
     return mac->settable_ctx_params();
 }
 
-void EVP_MAC_do_all_ex(OPENSSL_CTX *libctx,
-                       void (*fn)(EVP_MAC *mac, void *arg),
-                       void *arg)
+void EVP_MAC_do_all_provided(OPENSSL_CTX *libctx,
+                             void (*fn)(EVP_MAC *mac, void *arg),
+                             void *arg)
 {
     evp_generic_do_all(libctx, OSSL_OP_MAC,
                        (void (*)(void *, void *))fn, arg,

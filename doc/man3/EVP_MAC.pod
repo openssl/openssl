@@ -9,7 +9,7 @@ EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
 EVP_MAC_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
 EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
-EVP_MAC_do_all_ex - EVP MAC routines
+EVP_MAC_do_all_provided - EVP MAC routines
 
 =head1 SYNOPSIS
 
@@ -44,9 +44,9 @@ EVP_MAC_do_all_ex - EVP MAC routines
  const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
 
- void EVP_MAC_do_all_ex(OPENSSL_CTX *libctx,
-                        void (*fn)(EVP_MAC *mac, void *arg),
-                        void *arg);
+ void EVP_MAC_do_all_provided(OPENSSL_CTX *libctx,
+                              void (*fn)(EVP_MAC *mac, void *arg),
+                              void *arg);
 
 =head1 DESCRIPTION
 
@@ -165,7 +165,7 @@ algorithm that's identifiable with I<name>.
 EVP_MAC_provider() returns the provider that holds the implementation
 of the given I<mac>.
 
-EVP_MAC_do_all_ex() traverses all MAC implemented by all activated
+EVP_MAC_do_all_provided() traverses all MAC implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
@@ -278,7 +278,7 @@ EVP_MAC_size() returns the expected output size, or 0 if it isn't
 set.
 If it isn't set, a call to EVP_MAC_init() should get it set.
 
-EVP_MAC_do_all_ex() returns nothing at all.
+EVP_MAC_do_all_provided() returns nothing at all.
 
 =head1 EXAMPLES
 

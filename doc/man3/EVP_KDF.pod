@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_provider, EVP_KDF_up_ref,
-EVP_KDF_name,
-EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_kdf,
-EVP_KDF_reset, EVP_KDF_size, EVP_KDF_derive, EVP_KDF_CTX_dup,
-EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_ex,
+EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
+EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
+EVP_KDF_reset, EVP_KDF_derive,
+EVP_KDF_size, EVP_KDF_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
+EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_provided,
 EVP_KDF_get_params, EVP_KDF_gettable_ctx_params, EVP_KDF_settable_ctx_params,
 EVP_KDF_gettable_params - EVP KDF routines
 
@@ -29,9 +29,11 @@ EVP_KDF_gettable_params - EVP KDF routines
  void EVP_KDF_free(EVP_KDF *kdf);
  EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                         const char *properties);
- void EVP_KDF_do_all_ex(OPENSSL_CTX *libctx,
-                        void (*fn)(EVP_KDF *kdf, void *arg),
-                        void *arg);
+ int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
+ const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
+ void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+                              void (*fn)(EVP_KDF *kdf, void *arg),
+                              void *arg);
  int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
  int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
  int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
@@ -130,10 +132,13 @@ calculate a fixed output size have not yet been supplied.
 
 EVP_KDF_name() returns the name of the given KDF implementation.
 
+EVP_KDF_is_a() returns 1 if I<kdf> is an implementation of an
+algorithm that's identifiable with I<name>, otherwise 0.
+
 EVP_KDF_provider() returns the provider that holds the implementation
 of the given I<kdf>.
 
-EVP_KDF_do_all_ex() traverses all KDF implemented by all activated
+EVP_KDF_do_all_provided() traverses all KDF implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.

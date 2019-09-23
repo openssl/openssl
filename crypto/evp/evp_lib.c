@@ -573,6 +573,11 @@ int EVP_CIPHER_mode(const EVP_CIPHER *cipher)
     return ok != 0 ? (int)v : 0;
 }
 
+int EVP_MD_is_a(const EVP_MD *md, const char *name)
+{
+    return evp_is_a(md->prov, md->name_id, name);
+}
+
 const char *EVP_MD_name(const EVP_MD *md)
 {
     if (md->prov != NULL)

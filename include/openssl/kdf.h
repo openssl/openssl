@@ -34,6 +34,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
 void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
 EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
 const char *EVP_KDF_name(const EVP_KDF *kdf);
+int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
 const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
 const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
 
@@ -47,9 +48,9 @@ const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
 const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf);
 const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf);
 
-void EVP_KDF_do_all_ex(OPENSSL_CTX *libctx,
-                       void (*fn)(EVP_KDF *kdf, void *arg),
-                       void *arg);
+void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+                             void (*fn)(EVP_KDF *kdf, void *arg),
+                             void *arg);
 
 # define EVP_KDF_CTRL_SET_PASS               0x01 /* unsigned char *, size_t */
 # define EVP_KDF_CTRL_SET_SALT               0x02 /* unsigned char *, size_t */
