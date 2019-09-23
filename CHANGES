@@ -9,6 +9,12 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Introduced the new functions EVP_DigestSignInit_ex() and
+     EVP_DigestVerifyInit_ex(). The macros EVP_DigestSignUpdate() and
+     EVP_DigestVerifyUpdate() have been converted to functions. See the man
+     pages for further details.
+     [Matt Caswell]
+
   *) s390x assembly pack: add hardware-support for P-256, P-384, P-521,
      X25519, X448, Ed25519 and Ed448.
      [Patrick Steuer]
