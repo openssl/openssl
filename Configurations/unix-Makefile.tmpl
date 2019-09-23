@@ -22,11 +22,16 @@
      }
      '';
 -}
+EMPTY=
+SPACE=$(EMPTY)\ $(EMPTY)
+
 PLATFORM={- $config{target} -}
 OPTIONS={- $config{options} -}
 CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
 SRCDIR={- $config{sourcedir} -}
+SRCDIRINRULE={- $_ = $config{sourcedir}; $_ =~ s/ /\$(SPACE)/g; $_ -}
 BLDDIR={- $config{builddir} -}
+BLDDIRINRULE={- $_ = $config{builddir}; $_ =~ s/ /\$(SPACE)/g; $_ -}
 
 VERSION={- "$config{full_version}" -}
 MAJOR={- $config{major} -}
@@ -855,9 +860,9 @@ tar:
 
 # Helper targets #####################################################
 
-link-utils: $(subst $(subst x, ,x),\ ,$(BLDDIR)/util/opensslwrap.sh)
+link-utils: $(BLDDIRINRULE)/util/opensslwrap.sh
 
-$(subst $(subst x, ,x),\ ,$(BLDDIR)/util/opensslwrap.sh): configdata.pm
+$(BLDDIRINRULE)/util/opensslwrap.sh: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/opensslwrap.sh" "$(BLDDIR)/util"; \
@@ -918,7 +923,7 @@ openssl.pc:
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
-configdata.pm: $(subst $(subst x, ,x),\ ,$(SRCDIR)/Configure) $(subst $(subst x, ,x),\ ,$(SRCDIR)/config) {- join(" ", map { quotify_dep($_) } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
+configdata.pm: $(SRCDIRINRULE)/Configure $(SRCDIRINRULE)/config {- join(" ", map { quotify_dep($_) } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
 	$(PERL) configdata.pm -r
 	@echo "**************************************************"
@@ -958,7 +963,7 @@ reconfigure reconf:
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
           my $ord_name = $args{generator}->[1] || $args{product};
           return <<"EOF";
-$target: @{[quotify_dep($args{generator}->[0])]} $deps \$(subst \$(subst x, ,x),\\ ,\$(SRCDIR)/util/mkdef.pl)
+$target: @{[quotify_dep($args{generator}->[0])]} $deps \$(SRCDIRINRULE)/util/mkdef.pl
 	\$(PERL) "\$(SRCDIR)/util/mkdef.pl"$ord_ver --ordinals @{[quotify_arg($args{generator}->[0])]}  --name $ord_name --OS $mkdef_os > $target
 EOF
       } elsif (!platform->isasm($args{src})) {
