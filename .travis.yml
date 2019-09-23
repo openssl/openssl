@@ -134,7 +134,7 @@ matrix:
           script: true
         - os: linux
           compiler: gcc
-          env: EXTENDED_TEST="yes" CONFIGURE_TARGET="linux-generic32" CONFIG_OPTS="--strict-warnings no-shared no-dso no-pic no-autoload-config no-engine no-comp no-cms no-dh no-dsa no-ec2m no-srp no-des no-mdc2 no-md4 no-rc2 no-rc4 no-bf no-camellia no-cast no-idea no-seed no-whirlpool no-ocsp no-sm2 no-sm3 no-sm4 no-ssl3 no-ssl3-method no-psk no-heartbeats no-nextprotoneg no-sctp no-srtp no-asm -DOPENSSL_SMALL_FOOTPRINT"
+          env: EXTENDED_TEST="yes" CONFIGURE_TARGET="linux-generic32" CONFIG_OPTS="--strict-warnings no-shared no-dso no-pic no-autoload-config no-engine no-comp no-cms no-dh no-dsa no-ec2m no-srp no-des no-mdc2 no-md4 no-rc2 no-rc4 no-bf no-camellia no-cast no-idea no-rmd160 no-seed no-whirlpool no-ocsp no-ocb no-sm2 no-sm3 no-sm4 no-ssl3 no-ssl3-method no-psk no-heartbeats no-nextprotoneg no-sctp no-srtp no-ct no-async no-asm -DOPENSSL_SMALL_FOOTPRINT"
     exclude:
         - os: linux
           compiler: clang
