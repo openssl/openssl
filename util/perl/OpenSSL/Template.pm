@@ -63,7 +63,7 @@ sub fill_in {
 
     $self->SUPER::fill_in(HASH => { quotify1 => \&quotify1,
                                     quotify_l => \&quotify_l,
-                                    quotify_dep => \&quotify_dep,
+                                    quotify_rule => \&quotify_rule,
                                     quotify_arg => \&quotify_arg,
                                     output_on => sub { $self->output_on() },
                                     output_off => sub { $self->output_off() },
@@ -179,7 +179,7 @@ sub quotify_l {
 
 =over 4
 
-=item quotify_dep STRING
+=item quotify_rule STRING
 
 This escapes spaces with a backslash, to be used with filenames
 in GNU Make dependency rules.
@@ -188,9 +188,9 @@ in GNU Make dependency rules.
 
 =cut
 
-# quotify_dep STRING
-# Escape spaces with backslash for GNU Make dependency lines
-sub quotify_dep {
+# quotify_rule STRING
+# Escape spaces with backslash for GNU Make dependency rules
+sub quotify_rule {
     my $s = shift @_;
     $s =~ s{ }{\\ }g;
     $s;

@@ -923,7 +923,7 @@ openssl.pc:
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
-configdata.pm: $(SRCDIRINRULE)/Configure $(SRCDIRINRULE)/config {- join(" ", map { quotify_dep($_) } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
+configdata.pm: $(SRCDIRINRULE)/Configure $(SRCDIRINRULE)/config {- join(" ", map { quotify_rule($_) } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
 	$(PERL) configdata.pm -r
 	@echo "**************************************************"
@@ -955,7 +955,7 @@ reconfigure reconf:
       my $generator_incs = join("", map { " ".quotify_arg("-I".$_) } @{$args{generator_incs}});
       my $incs = join("", map { " ".quotify1("-I".$_) } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
-      my $deps = join(" ", map { quotify_dep($_) } @{$args{generator_deps}}, @{$args{deps}});
+      my $deps = join(" ", map { quotify_rule($_) } @{$args{generator_deps}}, @{$args{deps}});
 
       if (platform->isdef($args{src})) {
           my $target = platform->def($args{src});
@@ -963,7 +963,7 @@ reconfigure reconf:
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
           my $ord_name = $args{generator}->[1] || $args{product};
           return <<"EOF";
-$target: @{[quotify_dep($args{generator}->[0])]} $deps \$(SRCDIRINRULE)/util/mkdef.pl
+$target: @{[quotify_rule($args{generator}->[0])]} $deps \$(SRCDIRINRULE)/util/mkdef.pl
 	\$(PERL) "\$(SRCDIR)/util/mkdef.pl"$ord_ver --ordinals @{[quotify_arg($args{generator}->[0])]}  --name $ord_name --OS $mkdef_os > $target
 EOF
       } elsif (!platform->isasm($args{src})) {
@@ -972,13 +972,13 @@ EOF
                                                    "util", "dofile.pl")),
                                    rel2abs($config{builddir}));
               return <<"EOF";
-$args{src}: @{[quotify_dep($args{generator}->[0])]} $deps
+$args{src}: @{[quotify_rule($args{generator}->[0])]} $deps
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $generator > \$@
 EOF
           } else {
               return <<"EOF";
-$args{src}: @{[quotify_dep($args{generator}->[0])]} $deps
+$args{src}: @{[quotify_rule($args{generator}->[0])]} $deps
 	\$(PERL)$generator_incs $generator > \$@
 EOF
           }
@@ -1003,12 +1003,12 @@ EOF
 
           if (defined($generator)) {
               return <<"EOF";
-$args{src}: @{[quotify_dep($args{generator}->[0])]} $deps
+$args{src}: @{[quotify_rule($args{generator}->[0])]} $deps
 	$generator \$@
 EOF
           }
           return <<"EOF";
-$args{src}: @{[quotify_dep($args{generator}->[0])]} $deps
+$args{src}: @{[quotify_rule($args{generator}->[0])]} $deps
 	\$(CC) $incs $cppflags $defs -E @{[quotify_arg($args{generator}->[0])]} | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
@@ -1024,7 +1024,7 @@ EOF
       my $dep = platform->dep($args{obj});
       my @srcs = @{$args{srcs}};
       my $srcs = join(" ", map { quotify_arg($_) } @srcs);
-      my $deps = join(" ", map { quotify_dep($_) } @srcs, @{$args{deps}});
+      my $deps = join(" ", map { quotify_rule($_) } @srcs, @{$args{deps}});
       my $incs = join("", map { " ".quotify_arg("-I".$_) } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
 
@@ -1062,7 +1062,7 @@ $obj: $deps
 	$cmd $cmdflags -c -o \$\@ $srcs
 EOF
       } elsif (grep /\.S$/, @srcs) {
-          # Originally there was mutli-step rule with $(CC) -E file.S
+          # Originally there was multi-step rule with $(CC) -E file.S
           # followed by $(CC) -c file.s. It compensated for one of
           # legacy platform compiler's inability to handle .S files.
           # The platform is long discontinued by vendor so there is
@@ -1238,12 +1238,12 @@ EOF
       my %args = @_;
       my $script = $args{script};
       my $sources = join(" ", map { quotify_arg($_) } @{$args{sources}});
-      my $sources_dep = join(" ", map { quotify_dep($_) } @{$args{sources}});
+      my $sources_rule = join(" ", map { quotify_rule($_) } @{$args{sources}});
       my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                            "util", "dofile.pl")),
                            rel2abs($config{builddir}));
       return <<"EOF";
-$script: $sources_dep
+$script: $sources_rule
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $sources > "$script"
 	chmod a+x "$script"
