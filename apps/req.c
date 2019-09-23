@@ -1744,7 +1744,7 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
                  STACK_OF(OPENSSL_STRING) *sigopts)
 {
-    int rv, try_free = 0;
+    int rv;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 #ifndef OPENSSL_NO_SM2
     EVP_PKEY_CTX *pctx = NULL;
@@ -1753,18 +1753,17 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0) {
         rv = X509_sign_ctx(x, mctx);
-        try_free = 1;
-    }
 #ifndef OPENSSL_NO_SM2
-    /*
-     * only in SM2 case we need to free the pctx explicitly
-     * if do_sign_init() fails, no need to double free pctx
-     */
-    if (try_free && ec_pkey_is_sm2(pkey)) {
-        pctx = EVP_MD_CTX_pkey_ctx(mctx);
-        EVP_PKEY_CTX_free(pctx);
-    }
+        /*
+         * only in SM2 case we need to free the pctx explicitly
+         * if do_sign_init() fails, pctx is already freed in it
+         */
+        if (ec_pkey_is_sm2(pkey)) {
+            pctx = EVP_MD_CTX_pkey_ctx(mctx);
+            EVP_PKEY_CTX_free(pctx);
+        }
 #endif
+    }
     EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
@@ -1772,7 +1771,7 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
 int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
-    int rv, try_free = 0;
+    int rv;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 #ifndef OPENSSL_NO_SM2
     EVP_PKEY_CTX *pctx = NULL;
@@ -1781,18 +1780,17 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0) {
         rv = X509_REQ_sign_ctx(x, mctx);
-        try_free = 1;
-    }
 #ifndef OPENSSL_NO_SM2
-    /*
-     * only in SM2 case we need to free the pctx explicitly
-     * if do_sign_init() fails, no need to double free pctx
-     */
-    if (try_free && ec_pkey_is_sm2(pkey)) {
-        pctx = EVP_MD_CTX_pkey_ctx(mctx);
-        EVP_PKEY_CTX_free(pctx);
-    }
+        /*
+         * only in SM2 case we need to free the pctx explicitly
+         * if do_sign_init() fails, pctx is already freed in it
+         */
+        if (ec_pkey_is_sm2(pkey)) {
+            pctx = EVP_MD_CTX_pkey_ctx(mctx);
+            EVP_PKEY_CTX_free(pctx);
+        }
 #endif
+    }
     EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
@@ -1800,7 +1798,7 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
-    int rv, try_free = 0;
+    int rv;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 #ifndef OPENSSL_NO_SM2
     EVP_PKEY_CTX *pctx = NULL;
@@ -1809,18 +1807,17 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0) {
         rv = X509_CRL_sign_ctx(x, mctx);
-        try_free = 1;
-    }
 #ifndef OPENSSL_NO_SM2
-    /*
-     * only in SM2 case we need to free the pctx explicitly
-     * if do_sign_init() fails, no need to double free pctx
-     */
-    if (try_free && ec_pkey_is_sm2(pkey)) {
-        pctx = EVP_MD_CTX_pkey_ctx(mctx);
-        EVP_PKEY_CTX_free(pctx);
-    }
+        /*
+         * only in SM2 case we need to free the pctx explicitly
+         * if do_sign_init() fails, no need to double free pctx
+         */
+        if (ec_pkey_is_sm2(pkey)) {
+            pctx = EVP_MD_CTX_pkey_ctx(mctx);
+            EVP_PKEY_CTX_free(pctx);
+        }
 #endif
+    }
     EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
