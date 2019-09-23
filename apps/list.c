@@ -17,6 +17,7 @@
 #include "app_params.h"
 #include "progs.h"
 #include "opt.h"
+#include "names.h"
 
 static int verbose = 0;
 
@@ -38,7 +39,7 @@ DEFINE_STACK_OF(EVP_CIPHER)
 static int cipher_cmp(const EVP_CIPHER * const *a,
                       const EVP_CIPHER * const *b)
 {
-    int ret = strcasecmp(EVP_CIPHER_name(*a), EVP_CIPHER_name(*b));
+    int ret = EVP_CIPHER_number(*a) - EVP_CIPHER_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_CIPHER_provider(*a)),
@@ -64,14 +65,22 @@ static void list_ciphers(void)
     EVP_CIPHER_do_all_sorted(legacy_cipher_fn, bio_out);
 
     BIO_printf(bio_out, "Provided:\n");
-    EVP_CIPHER_do_all_ex(NULL, collect_ciphers, ciphers);
+    EVP_CIPHER_do_all_provided(NULL, collect_ciphers, ciphers);
     sk_EVP_CIPHER_sort(ciphers);
     for (i = 0; i < sk_EVP_CIPHER_num(ciphers); i++) {
         const EVP_CIPHER *c = sk_EVP_CIPHER_value(ciphers, i);
+        STACK_OF(OPENSSL_CSTRING) *names =
+            sk_OPENSSL_CSTRING_new(name_cmp);
 
-        BIO_printf(bio_out, "  %s", EVP_CIPHER_name(c));
+        EVP_CIPHER_names_do_all(c, collect_names, names);
+
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
+
+        sk_OPENSSL_CSTRING_free(names);
+
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
                               EVP_CIPHER_gettable_params(c), 4);
@@ -101,7 +110,7 @@ static void list_md_fn(const EVP_MD *m,
 DEFINE_STACK_OF(EVP_MD)
 static int md_cmp(const EVP_MD * const *a, const EVP_MD * const *b)
 {
-    int ret = strcasecmp(EVP_MD_name(*a), EVP_MD_name(*b));
+    int ret = EVP_MD_number(*a) - EVP_MD_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_MD_provider(*a)),
@@ -127,14 +136,22 @@ static void list_digests(void)
     EVP_MD_do_all_sorted(list_md_fn, bio_out);
 
     BIO_printf(bio_out, "Provided:\n");
-    EVP_MD_do_all_ex(NULL, collect_digests, digests);
+    EVP_MD_do_all_provided(NULL, collect_digests, digests);
     sk_EVP_MD_sort(digests);
     for (i = 0; i < sk_EVP_MD_num(digests); i++) {
         const EVP_MD *m = sk_EVP_MD_value(digests, i);
+        STACK_OF(OPENSSL_CSTRING) *names =
+            sk_OPENSSL_CSTRING_new(name_cmp);
 
-        BIO_printf(bio_out, "  %s", EVP_MD_name(m));
+        EVP_MD_names_do_all(m, collect_names, names);
+
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_MD_provider(m)));
+
+        sk_OPENSSL_CSTRING_free(names);
+
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
                               EVP_MD_gettable_params(m), 4);
@@ -150,7 +167,7 @@ static void list_digests(void)
 DEFINE_STACK_OF(EVP_MAC)
 static int mac_cmp(const EVP_MAC * const *a, const EVP_MAC * const *b)
 {
-    int ret = strcasecmp(EVP_MAC_name(*a), EVP_MAC_name(*b));
+    int ret = EVP_MAC_number(*a) - EVP_MAC_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_MAC_provider(*a)),
@@ -173,14 +190,21 @@ static void list_macs(void)
     int i;
 
     BIO_printf(bio_out, "Provided MACs:\n");
-    EVP_MAC_do_all_ex(NULL, collect_macs, macs);
+    EVP_MAC_do_all_provided(NULL, collect_macs, macs);
     sk_EVP_MAC_sort(macs);
     for (i = 0; i < sk_EVP_MAC_num(macs); i++) {
         const EVP_MAC *m = sk_EVP_MAC_value(macs, i);
+        STACK_OF(OPENSSL_CSTRING) *names =
+            sk_OPENSSL_CSTRING_new(name_cmp);
 
-        BIO_printf(bio_out, "  %s", EVP_MAC_name(m));
+        EVP_MAC_names_do_all(m, collect_names, names);
+
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_MAC_provider(m)));
+
+        sk_OPENSSL_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -200,7 +224,7 @@ static void list_macs(void)
 DEFINE_STACK_OF(EVP_KDF)
 static int kdf_cmp(const EVP_KDF * const *a, const EVP_KDF * const *b)
 {
-    int ret = strcasecmp(EVP_KDF_name(*a), EVP_KDF_name(*b));
+    int ret = EVP_KDF_number(*a) - EVP_KDF_number(*b);
 
     if (ret == 0)
         ret = strcmp(OSSL_PROVIDER_name(EVP_KDF_provider(*a)),
@@ -223,22 +247,29 @@ static void list_kdfs(void)
     int i;
 
     BIO_printf(bio_out, "Provided KDFs and PDFs:\n");
-    EVP_KDF_do_all_ex(NULL, collect_kdfs, kdfs);
+    EVP_KDF_do_all_provided(NULL, collect_kdfs, kdfs);
     sk_EVP_KDF_sort(kdfs);
     for (i = 0; i < sk_EVP_KDF_num(kdfs); i++) {
-        const EVP_KDF *m = sk_EVP_KDF_value(kdfs, i);
+        const EVP_KDF *k = sk_EVP_KDF_value(kdfs, i);
+        STACK_OF(OPENSSL_CSTRING) *names =
+            sk_OPENSSL_CSTRING_new(name_cmp);
 
-        BIO_printf(bio_out, "  %s", EVP_KDF_name(m));
+        EVP_KDF_names_do_all(k, collect_names, names);
+
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_KDF_provider(m)));
+                   OSSL_PROVIDER_name(EVP_KDF_provider(k)));
+
+        sk_OPENSSL_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
-                              EVP_KDF_gettable_params(m), 4);
+                              EVP_KDF_gettable_params(k), 4);
             print_param_types("retrievable operation parameters",
-                              EVP_KDF_gettable_ctx_params(m), 4);
+                              EVP_KDF_gettable_ctx_params(k), 4);
             print_param_types("settable operation parameters",
-                              EVP_KDF_settable_ctx_params(m), 4);
+                              EVP_KDF_settable_ctx_params(k), 4);
         }
     }
     sk_EVP_KDF_pop_free(kdfs, EVP_KDF_free);
