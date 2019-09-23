@@ -9,6 +9,7 @@ EVP_KEYMGMT_free,
 EVP_KEYMGMT_provider,
 EVP_KEYMGMT_is_a,
 EVP_KEYMGMT_do_all_provided,
+EVP_KEYMGMT_names_do_all
 - EVP key management routines
 
 =head1 SYNOPSIS
@@ -26,6 +27,9 @@ EVP_KEYMGMT_do_all_provided,
  void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
                                   void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
                                   void *arg);
+ void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
 
 =head1 DESCRIPTION
 
@@ -53,6 +57,9 @@ implementation.
 
 EVP_KEYMGMT_is_a() checks if I<keymgmt> is an implementation of an
 algorithm that's identifiable with I<name>.
+
+EVP_KEYMGMT_names_do_all() traverses all names for the I<keymgmt>, and
+calls I<fn> with each name and I<data>.
 
 EVP_KEYMGMT_do_all_provided() traverses all key keymgmt implementations by
 all activated providers in the library context I<libctx>, and for each

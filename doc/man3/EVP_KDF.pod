@@ -6,6 +6,7 @@ EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
 EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
 EVP_KDF_reset, EVP_KDF_derive,
 EVP_KDF_size, EVP_KDF_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
+EVP_KDF_names_do_all,
 EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_provided,
 EVP_KDF_get_params, EVP_KDF_gettable_ctx_params, EVP_KDF_settable_ctx_params,
 EVP_KDF_gettable_params - EVP KDF routines
@@ -24,7 +25,6 @@ EVP_KDF_gettable_params - EVP KDF routines
  void EVP_KDF_reset(EVP_KDF_CTX *ctx);
  size_t EVP_KDF_size(EVP_KDF_CTX *ctx);
  int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
- const char *EVP_KDF_name(const EVP_KDF *kdf);
  int EVP_KDF_up_ref(EVP_KDF *kdf);
  void EVP_KDF_free(EVP_KDF *kdf);
  EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
@@ -34,6 +34,9 @@ EVP_KDF_gettable_params - EVP KDF routines
  void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
                               void (*fn)(EVP_KDF *kdf, void *arg),
                               void *arg);
+ void EVP_KDF_names_do_all(const EVP_KDF *kdf,
+                           void (*fn)(const char *name, void *data),
+                           void *data);
  int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
  int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
  int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
@@ -130,8 +133,6 @@ of output and B<SIZE_MAX> otherwise.  If an error occurs then 0 is returned.
 For some algorithms an error may result if input parameters necessary to
 calculate a fixed output size have not yet been supplied.
 
-EVP_KDF_name() returns the name of the given KDF implementation.
-
 EVP_KDF_is_a() returns 1 if I<kdf> is an implementation of an
 algorithm that's identifiable with I<name>, otherwise 0.
 
@@ -142,6 +143,9 @@ EVP_KDF_do_all_provided() traverses all KDF implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
+
+EVP_KDF_names_do_all() traverses all names for I<kdf>, and calls
+I<fn> with each name and I<data>.
 
 =head1 PARAMETERS
 
@@ -218,9 +222,6 @@ The memory size must never exceed what can be given with a B<size_t>.
 
 EVP_KDF_fetch() returns a pointer to a newly fetched B<EVP_KDF>, or
 NULL if allocation failed.
-
-EVP_KDF_name() returns the name for the given I<kdf>, if it has been
-added to the object database.
 
 EVP_KDF_provider() returns a pointer to the provider for the KDF, or
 NULL on error.

@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free,
-EVP_MAC_is_a, EVP_MAC_name,
+EVP_MAC_is_a, EVP_MAC_names_do_all,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
@@ -23,7 +23,9 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_up_ref(EVP_MAC *mac);
  void EVP_MAC_free(EVP_MAC *mac);
  int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
- const char *EVP_MAC_name(const EVP_MAC *mac);
+ void EVP_MAC_names_do_all(const EVP_MAC *mac,
+                           void (*fn)(const char *name, void *data),
+                           void *data);
  const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac);
  int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[]);
 
@@ -157,8 +159,6 @@ See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 EVP_MAC_size() returns the MAC output size for the given context.
 
-EVP_MAC_name() returns the name of the given MAC implementation.
-
 EVP_MAC_is_a() checks if the given I<mac> is an implementation of an
 algorithm that's identifiable with I<name>.
 
@@ -169,6 +169,9 @@ EVP_MAC_do_all_provided() traverses all MAC implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
+
+EVP_MAC_names_do_all() traverses all names for I<mac>, and calls
+I<fn> with each name and I<data>.
 
 =head1 PARAMETERS
 
@@ -253,9 +256,6 @@ NULL if allocation failed.
 EVP_MAC_up_ref() returns 1 on success, 0 on error.
 
 EVP_MAC_free() returns nothing at all.
-
-EVP_MAC_name() returns the name of the MAC, or NULL if NULL was
-passed.
 
 EVP_MAC_is_a() returns 1 if the given method can be identified with
 the given name, otherwise 0.

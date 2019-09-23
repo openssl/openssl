@@ -556,6 +556,14 @@ const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 #endif
 }
 
+void EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
+                             void (*fn)(const char *name, void *data),
+                             void *data)
+{
+    if (cipher->prov != NULL)
+        evp_names_do_all(cipher->prov, cipher->name_id, fn, data);
+}
+
 const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher)
 {
     return cipher->prov;
@@ -587,6 +595,14 @@ const char *EVP_MD_name(const EVP_MD *md)
 #else
     return NULL;
 #endif
+}
+
+void EVP_MD_names_do_all(const EVP_MD *md,
+                         void (*fn)(const char *name, void *data),
+                         void *data)
+{
+    if (md->prov != NULL)
+        evp_names_do_all(md->prov, md->name_id, fn, data);
 }
 
 const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md)

@@ -468,9 +468,9 @@ int evp_is_a(OSSL_PROVIDER *prov, int number, const char *name)
     return ossl_namemap_name2num(namemap, name) == number;
 }
 
-void evp_doall_names(OSSL_PROVIDER *prov, int number,
-                     void (*fn)(const char *name, void *data),
-                     void *data)
+void evp_names_do_all(OSSL_PROVIDER *prov, int number,
+                      void (*fn)(const char *name, void *data),
+                      void *data)
 {
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
