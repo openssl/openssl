@@ -296,6 +296,10 @@ void des_t4_ede3_cbc_encrypt(const void *inp, void *out, size_t len,
                              const DES_key_schedule ks[3], unsigned char iv[8]);
 void des_t4_ede3_cbc_decrypt(const void *inp, void *out, size_t len,
                              const DES_key_schedule ks[3], unsigned char iv[8]);
+void des_t4_cbc_encrypt(const void *inp, void *out, size_t len,
+                        const DES_key_schedule *ks, unsigned char iv[8]);
+void des_t4_cbc_decrypt(const void *inp, void *out, size_t len,
+                        const DES_key_schedule *ks, unsigned char iv[8]);
 #  endif /*  OPENSSL_NO_DES */
 
 # elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)

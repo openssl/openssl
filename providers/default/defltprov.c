@@ -199,6 +199,12 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "DES-EDE-CFB", "default=yes", tdes_ede2_cfb_functions },
     { "DESX-CBC", "default=yes", tdes_desx_cbc_functions },
     { "id-smime-alg-CMS3DESwrap", "default=yes", tdes_wrap_cbc_functions },
+    { "DES-ECB", "default=yes", des_ecb_functions },
+    { "DES-CBC", "default=yes", des_cbc_functions },
+    { "DES-OFB", "default=yes", des_ofb64_functions },
+    { "DES-CFB", "default=yes", des_cfb64_functions },
+    { "DES-CFB1", "default=yes", des_cfb1_functions },
+    { "DES-CFB8", "default=yes", des_cfb8_functions },
 #endif /* OPENSSL_NO_DES */
 #ifndef OPENSSL_NO_BF
     { "BF-ECB", "default=yes", blowfish128ecb_functions },

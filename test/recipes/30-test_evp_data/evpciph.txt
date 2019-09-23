@@ -50,50 +50,6 @@ IV = fedcba9876543210
 Plaintext = 37363534333231204E6F77206973207468652074696D6520666F722000000000
 Ciphertext = 3FE301C962AC01D02213763C1CBD4CDC799657C064ECF5D41C673812CFDE9675
 
-# DES ECB tests (from destest)
-
-Cipher = DES-ECB
-Availablein = default
-Key = 0000000000000000
-Plaintext = 0000000000000000
-Ciphertext = 8CA64DE9C1B123A7
-
-Cipher = DES-ECB
-Availablein = default
-Key = FFFFFFFFFFFFFFFF
-Plaintext = FFFFFFFFFFFFFFFF
-Ciphertext = 7359B2163E4EDC58
-
-Cipher = DES-ECB
-Availablein = default
-Key = 3000000000000000
-Plaintext = 1000000000000001
-Ciphertext = 958E6E627A05557B
-
-Cipher = DES-ECB
-Availablein = default
-Key = 1111111111111111
-Plaintext = 1111111111111111
-Ciphertext = F40379AB9E0EC533
-
-Cipher = DES-ECB
-Availablein = default
-Key = 0123456789ABCDEF
-Plaintext = 1111111111111111
-Ciphertext = 17668DFC7292532D
-
-Cipher = DES-ECB
-Availablein = default
-Key = 1111111111111111
-Plaintext = 0123456789ABCDEF
-Ciphertext = 8A5AE1F81AB8F2DD
-
-Cipher = DES-ECB
-Availablein = default
-Key = FEDCBA9876543210
-Plaintext = 0123456789ABCDEF
-Ciphertext = ED39D950FA74BCC4
-
 Title = AES (from FIPS-197 test vectors)
 
 Cipher = AES-128-ECB

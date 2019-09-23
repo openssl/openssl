@@ -4,7 +4,8 @@ IF[{- !$disabled{des} -}]
   SOURCE[../../../libcrypto]=\
       cipher_tdes_default.c cipher_tdes_default_hw.c \
       cipher_tdes_wrap.c cipher_tdes_wrap_hw.c \
-      cipher_desx.c cipher_desx_hw.c
+      cipher_desx.c cipher_desx_hw.c \
+      cipher_des.c cipher_des_hw.c
 ENDIF
 
 IF[{- !$disabled{aria} -}]
