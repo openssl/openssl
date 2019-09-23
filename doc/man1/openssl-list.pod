@@ -54,37 +54,17 @@ Display a list of standard commands.
 Display a list of message digest commands, which are typically used
 as input to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 
-=item B<-digest-algorithms>
-
-Display a list of message digest algorithms.
-If a line is of the form C<foo =E<gt> bar> then C<foo> is an alias for the
-official algorithm name, C<bar>.
-If a line is of the form C<foo @ bar>, then C<foo> is provided by the provider
-C<bar>.
-
-In verbose mode, the algorithms provided by a provider will get additional
-information on what parameters each implementation supports.
-
-=item B<-kdf-algorithms>
-
-Display a list of key derivation function algorithms.
-
-=item B<-mac-algorithms>
-
-Display a list of message authentication code algorithms.
-
 =item B<-cipher-commands>
 
 Display a list of cipher commands, which are typically used as input
 to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 
-=item B<-cipher-algorithms>
+=item B<-digest-algorithms>, B<-kdf-algorithms>, B<-mac-algorithms>,
+B<-cipher-algorithms>
 
-Display a list of cipher algorithms.
-If a line is of the form C<foo =E<gt> bar> then C<foo> is an alias for the
-official algorithm name, B<bar>.
-If a line is of the form C<foo @ bar>, then C<foo> is provided by the provider
-C<bar>.
+Display a list of cipher, digest, kdf and mac algorithms.
+See L</Display of algorithm names> for a description of how names are
+displayed.
 
 In verbose mode, the algorithms provided by a provider will get additional
 information on what parameters each implementation supports.
@@ -111,6 +91,33 @@ of the installation.
 
 Display a list of built in objects, i.e. OIDs with names.  They're listed in the
 format described in L<config(5)/ASN1 Object Configuration Module>.
+
+=back
+
+=head2 Display of algorithm names
+
+Algorithm names may be displayed in one of two manners:
+
+=over 4
+
+=item Legacy implementations
+
+Legacy implementations will simply display the main name of the
+algorithm on a line of its own, or in the form C<<foo > bar>> to show
+that C<foo> is an alias for the main name, C<bar>
+
+=item Provided implementations
+
+Implementations from a provider are displayed like this if the
+implementation is labeled with a single name:
+
+ foo @ bar
+
+or like this if it's labeled with multiple names:
+
+ { foo1, foo2 } @bar
+
+In both cases, C<bar> is the name of the provider.
 
 =back
 
