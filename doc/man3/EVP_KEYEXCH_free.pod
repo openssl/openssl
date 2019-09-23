@@ -18,8 +18,8 @@ EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref, EVP_KEYEXCH_provider
 =head1 DESCRIPTION
 
 EVP_KEYEXCH_fetch() fetches the key exchange implementation for the given
-B<algorithm> from any provider offering it, within the criteria given
-by the B<properties>.
+I<algorithm> from any provider offering it, within the criteria given
+by the I<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
 The returned value must eventually be freed with EVP_KEYEXCH_free().
@@ -37,7 +37,7 @@ EVP_KEYEXCH_provider() returns the provider that I<exchange> was fetched from.
 =head1 RETURN VALUES
 
 EVP_KEYEXCH_fetch() returns a pointer to a B<EVP_KEYEXCH> for success
-or B<NULL> for failure.
+or NULL for failure.
 
 EVP_KEYEXCH_up_ref() returns 1 for success or 0 otherwise.
 
