@@ -336,6 +336,10 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
     int ret = 0;
     const char *ktype = NULL;
     const BIGNUM *priv_key, *pub_key;
+    int mod_len = 0;
+
+    if (x->p != NULL)
+        mod_len = BN_num_bits(x->p);
 
     if (ptype == 2)
         priv_key = x->priv_key;
@@ -359,6 +363,9 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
             goto err;
         if (BIO_printf(bp, "%s: (%d bit)\n", ktype, BN_num_bits(x->p))
             <= 0)
+            goto err;
+    } else {
+        if (BIO_printf(bp, "Public-Key: (%d bit)\n", mod_len) <= 0)
             goto err;
     }
 
