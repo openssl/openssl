@@ -760,7 +760,7 @@ static void *evp_md_from_dispatch(int name_id,
 #ifndef FIPS_MODE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     md->type = NID_undef;
-    evp_doall_names(prov, name_id, set_legacy_nid, &md->type);
+    evp_names_do_all(prov, name_id, set_legacy_nid, &md->type);
     if (md->type == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         EVP_MD_free(md);

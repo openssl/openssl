@@ -168,11 +168,6 @@ void EVP_MAC_free(EVP_MAC *mac)
     evp_mac_free(mac);
 }
 
-const char *EVP_MAC_name(const EVP_MAC *mac)
-{
-    return evp_first_name(mac->prov, mac->name_id);
-}
-
 const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac)
 {
     return mac->prov;

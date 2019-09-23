@@ -214,3 +214,11 @@ void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
                        keymgmt_from_dispatch, NULL,
                        (void (*)(void *))EVP_KEYMGMT_free);
 }
+
+void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
+                              void (*fn)(const char *name, void *data),
+                              void *data)
+{
+    if (keymgmt->prov != NULL)
+        evp_names_do_all(keymgmt->prov, keymgmt->name_id, fn, data);
+}

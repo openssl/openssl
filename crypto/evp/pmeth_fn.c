@@ -332,6 +332,15 @@ void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
                        (void (*)(void *))EVP_SIGNATURE_free);
 }
 
+
+void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
+                                void (*fn)(const char *name, void *data),
+                                void *data)
+{
+    if (signature->prov != NULL)
+        evp_names_do_all(signature->prov, signature->name_id, fn, data);
+}
+
 static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
                                    int operation)
 {

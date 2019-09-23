@@ -12,7 +12,7 @@ EVP_MD_CTX_settable_params, EVP_MD_CTX_gettable_params,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
 EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
-EVP_MD_is_a, EVP_MD_name, EVP_MD_provider,
+EVP_MD_is_a, EVP_MD_name, EVP_MD_names_do_all, EVP_MD_provider,
 EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_flags,
 EVP_MD_CTX_name,
 EVP_MD_CTX_md, EVP_MD_CTX_type, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
@@ -63,6 +63,9 @@ EVP_MD_do_all_provided
 
  const char *EVP_MD_name(const EVP_MD *md);
  int EVP_MD_is_a(const EVP_MD *md, const char *name);
+ void EVP_MD_names_do_all(const EVP_MD *md,
+                          void (*fn)(const char *name, void *data),
+                          void *data);
  const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md);
  int EVP_MD_type(const EVP_MD *md);
  int EVP_MD_pkey_type(const EVP_MD *md);
@@ -248,7 +251,13 @@ identifiable with I<name>, otherwise 0.
 EVP_MD_CTX_name()
 
 Return the name of the given message digest.  For fetched message
-digests with multiple names, only one of them is returned.
+digests with multiple names, only one of them is returned; it's
+recommended to use EVP_MD_names_do_all() instead.
+
+=item EVP_MD_names_do_all()
+
+Traverses all names for the I<md>, and calls I<fn> with each name and
+I<data>.  This is only useful with fetched B<EVP_MD>s.
 
 =item EVP_MD_provider()
 

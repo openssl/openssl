@@ -405,3 +405,11 @@ void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
                        evp_keyexch_from_dispatch, &keymgmt_data,
                        (void (*)(void *))EVP_KEYEXCH_free);
 }
+
+void EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,
+                              void (*fn)(const char *name, void *data),
+                              void *data)
+{
+    if (keyexch->prov != NULL)
+        evp_names_do_all(keyexch->prov, keyexch->name_id, fn, data);
+}

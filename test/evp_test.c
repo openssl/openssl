@@ -938,6 +938,7 @@ static const EVP_TEST_METHOD cipher_test_method = {
 
 typedef struct mac_data_st {
     /* MAC type in one form or another */
+    char *mac_name;
     EVP_MAC *mac;                /* for mac_test_run_mac */
     int type;                    /* for mac_test_run_pkey */
     /* Algorithm string for this MAC */
@@ -1021,6 +1022,7 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
 
     mdat = OPENSSL_zalloc(sizeof(*mdat));
     mdat->type = type;
+    mdat->mac_name = OPENSSL_strdup(alg);
     mdat->mac = mac;
     mdat->controls = sk_OPENSSL_STRING_new_null();
     t->data = mdat;
@@ -1038,6 +1040,7 @@ static void mac_test_cleanup(EVP_TEST *t)
     MAC_DATA *mdat = t->data;
 
     EVP_MAC_free(mdat->mac);
+    OPENSSL_free(mdat->mac_name);
     sk_OPENSSL_STRING_pop_free(mdat->controls, openssl_free);
     OPENSSL_free(mdat->alg);
     OPENSSL_free(mdat->key);
@@ -1198,10 +1201,10 @@ static int mac_test_run_mac(EVP_TEST *t)
         EVP_MAC_settable_ctx_params(expected->mac);
 
     if (expected->alg == NULL)
-        TEST_info("Trying the EVP_MAC %s test", EVP_MAC_name(expected->mac));
+        TEST_info("Trying the EVP_MAC %s test", expected->mac_name);
     else
         TEST_info("Trying the EVP_MAC %s test with %s",
-                  EVP_MAC_name(expected->mac), expected->alg);
+                  expected->mac_name, expected->alg);
 
 #ifdef OPENSSL_NO_DES
     if (expected->alg != NULL && strstr(expected->alg, "DES") != NULL) {
