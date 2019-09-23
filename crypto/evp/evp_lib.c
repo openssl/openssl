@@ -545,6 +545,11 @@ int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name)
     return evp_is_a(cipher->prov, cipher->name_id, name);
 }
 
+int EVP_CIPHER_number(const EVP_CIPHER *cipher)
+{
+    return cipher->name_id;
+}
+
 const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 {
     if (cipher->prov != NULL)
@@ -584,6 +589,11 @@ int EVP_CIPHER_mode(const EVP_CIPHER *cipher)
 int EVP_MD_is_a(const EVP_MD *md, const char *name)
 {
     return evp_is_a(md->prov, md->name_id, name);
+}
+
+int EVP_MD_number(const EVP_MD *md)
+{
+    return md->name_id;
 }
 
 const char *EVP_MD_name(const EVP_MD *md)

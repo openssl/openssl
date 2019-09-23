@@ -317,6 +317,11 @@ int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
     return evp_is_a(signature->prov, signature->name_id, name);
 }
 
+int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
+{
+    return signature->name_id;
+}
+
 void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
                                    void (*fn)(EVP_SIGNATURE *signature,
                                               void *arg),

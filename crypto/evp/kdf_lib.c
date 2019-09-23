@@ -83,6 +83,11 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
     return dst;
 }
 
+int EVP_KDF_number(const EVP_KDF *kdf)
+{
+    return kdf->name_id;
+}
+
 int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name)
 {
     return evp_is_a(kdf->prov, kdf->name_id, name);
