@@ -58,6 +58,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
          * algorithms are moved to providers.
          */
         switch (locpctx->pkey->type) {
+        case NID_dsa:
+            break;
         default:
             goto legacy;
         }
