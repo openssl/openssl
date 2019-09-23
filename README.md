@@ -38,9 +38,11 @@ This fork is currently in sync with the [OpenSSL\_1\_1\_1d tag](https://github.c
 - quantum-safe authentication in TLS 1.3
 - hybrid (quantum-safe + elliptic curve) authentication in TLS 1.3
 
-**This fork is at an experimental stage**, and has not received the same level of auditing and analysis that OpenSSL has received. See the [Limitations and Security](#limitations-and-security) section below for more information.
+For more information, see the [release notes](RELEASE.md).
 
-**We do not recommend relying on this fork in a production environment or to protect any sensitive data.**
+**THIS FORK IS AT AN EXPERIMENTAL STAGE**, and has not received the same level of auditing and analysis that OpenSSL has received. See the [Limitations and Security](#limitations-and-security) section below for more information.
+
+**WE DO NOT RECOMMEND RELYING ON THIS FORK TO PROTECT SENSITIVE DATA.**
 
 liboqs and our integration into OpenSSL is provided "as is", without warranty of any kind.  See the [LICENSE](https://github.com/open-quantum-safe/liboqs/blob/master/LICENSE.txt) for the full disclaimer.
 
