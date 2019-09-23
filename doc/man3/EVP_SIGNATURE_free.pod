@@ -3,8 +3,8 @@
 =head1 NAME
 
 EVP_SIGNATURE_fetch, EVP_SIGNATURE_free, EVP_SIGNATURE_up_ref,
-EVP_SIGNATURE_is_a, EVP_SIGNATURE_provider, EVP_SIGNATURE_do_all_provided,
-EVP_SIGNATURE_names_do_all
+EVP_SIGNATURE_number, EVP_SIGNATURE_is_a, EVP_SIGNATURE_provider,
+EVP_SIGNATURE_do_all_provided, EVP_SIGNATURE_names_do_all
 - Functions to manage EVP_SIGNATURE algorithm objects
 
 =head1 SYNOPSIS
@@ -15,6 +15,7 @@ EVP_SIGNATURE_names_do_all
                                     const char *properties);
  void EVP_SIGNATURE_free(EVP_SIGNATURE *signature);
  int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature);
+ int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature);
  int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name);
  OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature);
  void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
@@ -53,6 +54,9 @@ EVP_SIGNATURE_do_all_provided() traverses all SIGNATURE implemented by all
 activated roviders in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
+
+EVP_SIGNATURE_number() returns the internal dynamic number assigned to
+I<signature>.
 
 EVP_SIGNATURE_names_do_all() traverses all names for I<signature>, and calls
 I<fn> with each name and I<data>.

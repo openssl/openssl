@@ -158,6 +158,11 @@ int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
     return 1;
 }
 
+int EVP_MAC_number(const EVP_MAC *mac)
+{
+    return mac->name_id;
+}
+
 int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)
 {
     return evp_is_a(mac->prov, mac->name_id, name);

@@ -8,6 +8,7 @@ EVP_KEYMGMT_up_ref,
 EVP_KEYMGMT_free,
 EVP_KEYMGMT_provider,
 EVP_KEYMGMT_is_a,
+EVP_KEYMGMT_number,
 EVP_KEYMGMT_do_all_provided,
 EVP_KEYMGMT_names_do_all
 - EVP key management routines
@@ -24,6 +25,7 @@ EVP_KEYMGMT_names_do_all
  void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt);
  const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt);
  int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name);
+ int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt);
  void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
                                   void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
                                   void *arg);
@@ -58,6 +60,9 @@ implementation.
 EVP_KEYMGMT_is_a() checks if I<keymgmt> is an implementation of an
 algorithm that's identifiable with I<name>.
 
+EVP_KEYMGMT_number() returns the internal dynamic number assigned to
+the I<keymgmt>.
+
 EVP_KEYMGMT_names_do_all() traverses all names for the I<keymgmt>, and
 calls I<fn> with each name and I<data>.
 
@@ -87,6 +92,8 @@ on error.
 
 EVP_KEYMGMT_is_a() returns 1 of I<keymgmt> was identifiable,
 otherwise 0.
+
+EVP_KEYMGMT_number() returns an integer.
 
 =head1 SEE ALSO
 

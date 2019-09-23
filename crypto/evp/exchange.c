@@ -387,6 +387,11 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         return ctx->pmeth->derive(ctx, key, pkeylen);
 }
 
+int EVP_KEYEXCH_number(const EVP_KEYEXCH *keyexch)
+{
+    return keyexch->name_id;
+}
+
 int EVP_KEYEXCH_is_a(const EVP_KEYEXCH *keyexch, const char *name)
 {
     return evp_is_a(keyexch->prov, keyexch->name_id, name);

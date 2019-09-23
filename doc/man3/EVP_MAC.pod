@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free,
-EVP_MAC_is_a, EVP_MAC_names_do_all,
+EVP_MAC_is_a, EVP_MAC_number, EVP_MAC_names_do_all,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
@@ -23,6 +23,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_up_ref(EVP_MAC *mac);
  void EVP_MAC_free(EVP_MAC *mac);
  int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
+ int EVP_MAC_number(const EVP_MAC *mac);
  void EVP_MAC_names_do_all(const EVP_MAC *mac,
                            void (*fn)(const char *name, void *data),
                            void *data);
@@ -169,6 +170,9 @@ EVP_MAC_do_all_provided() traverses all MAC implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
+
+EVP_MAC_number() returns the internal dynamic number assigned to
+I<mac>.
 
 EVP_MAC_names_do_all() traverses all names for I<mac>, and calls
 I<fn> with each name and I<data>.

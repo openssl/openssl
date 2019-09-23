@@ -200,6 +200,11 @@ const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt)
     return keymgmt->prov;
 }
 
+int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->name_id;
+}
+
 int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name)
 {
     return evp_is_a(keymgmt->prov, keymgmt->name_id, name);

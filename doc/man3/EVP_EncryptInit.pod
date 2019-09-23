@@ -31,6 +31,7 @@ EVP_get_cipherbynid,
 EVP_get_cipherbyobj,
 EVP_CIPHER_is_a,
 EVP_CIPHER_name,
+EVP_CIPHER_number,
 EVP_CIPHER_names_do_all,
 EVP_CIPHER_provider,
 EVP_CIPHER_nid,
@@ -122,6 +123,7 @@ EVP_CIPHER_do_all_provided
  const EVP_CIPHER *EVP_get_cipherbyobj(const ASN1_OBJECT *a);
 
  int EVP_CIPHER_nid(const EVP_CIPHER *e);
+ int EVP_CIPHER_number(const EVP_CIPHER *e);
  int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name);
  void EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
                               void (*fn)(const char *name, void *data),
@@ -336,6 +338,9 @@ B<NID_undef>.
 
 EVP_CIPHER_is_a() returns 1 if I<cipher> is an implementation of an
 algorithm that's identifiable with I<name>, otherwise 0.
+
+EVP_CIPHER_number() returns the internal dynamic number assigned to
+the I<cipher>.  This is only useful with fetched B<EVP_CIPHER>s.
 
 EVP_CIPHER_name() and EVP_CIPHER_CTX_name() return the name of the passed
 cipher or context.  For fetched ciphers with multiple names, only one

@@ -12,7 +12,7 @@ EVP_MD_CTX_settable_params, EVP_MD_CTX_gettable_params,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
 EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
-EVP_MD_is_a, EVP_MD_name, EVP_MD_names_do_all, EVP_MD_provider,
+EVP_MD_is_a, EVP_MD_name, EVP_MD_number, EVP_MD_names_do_all, EVP_MD_provider,
 EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_flags,
 EVP_MD_CTX_name,
 EVP_MD_CTX_md, EVP_MD_CTX_type, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
@@ -62,6 +62,7 @@ EVP_MD_do_all_provided
  int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in);
 
  const char *EVP_MD_name(const EVP_MD *md);
+ int EVP_MD_number(const EVP_MD *md);
  int EVP_MD_is_a(const EVP_MD *md, const char *name);
  void EVP_MD_names_do_all(const EVP_MD *md,
                           void (*fn)(const char *name, void *data),
@@ -246,6 +247,11 @@ be initialized.
 
 Returns 1 if I<md> is an implementation of an algorithm that's
 identifiable with I<name>, otherwise 0.
+
+=item EVP_MD_number()
+
+Returns the internal dynamic number assigned to the I<md>.  This is
+only useful with fetched B<EVP_MD>s.
 
 =item EVP_MD_name(),
 EVP_MD_CTX_name()
