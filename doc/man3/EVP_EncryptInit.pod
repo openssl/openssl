@@ -61,7 +61,7 @@ EVP_CIPHER_param_to_asn1,
 EVP_CIPHER_asn1_to_param,
 EVP_CIPHER_CTX_set_padding,
 EVP_enc_null,
-EVP_CIPHER_do_all_ex
+EVP_CIPHER_do_all_provided
 - EVP cipher routines
 
 =head1 SYNOPSIS
@@ -153,9 +153,9 @@ EVP_CIPHER_do_all_ex
  int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
  int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 
- void EVP_CIPHER_do_all_ex(OPENSSL_CTX *libctx,
-                           void (*fn)(EVP_CIPHER *cipher, void *arg),
-                           void *arg);
+ void EVP_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+                                 void (*fn)(EVP_CIPHER *cipher, void *arg),
+                                 void *arg);
 
 =head1 DESCRIPTION
 
@@ -330,11 +330,12 @@ IDENTIFIER as such it ignores the cipher parameters and 40 bit RC2 and
 identifier or does not have ASN1 support this function will return
 B<NID_undef>.
 
-EVP_CIPHER_is_a() returns 1 if the given I<cipher> is an implementation of an
+EVP_CIPHER_is_a() returns 1 if I<cipher> is an implementation of an
 algorithm that's identifiable with I<name>, otherwise 0.
 
 EVP_CIPHER_name() and EVP_CIPHER_CTX_name() return the name of the passed
-cipher or context.
+cipher or context.  For fetched ciphers with multiple names, only one
+of them is returned.
 
 EVP_CIPHER_provider() returns an B<OSSL_PROVIDER> pointer to the provider
 that implements the given B<EVP_CIPHER>.
@@ -377,7 +378,7 @@ based on the cipher context. The EVP_CIPHER can provide its own random key
 generation routine to support keys of a specific form. B<Key> must point to a
 buffer at least as big as the value returned by EVP_CIPHER_CTX_key_length().
 
-EVP_CIPHER_do_all_ex() traverses all ciphers implemented by all activated
+EVP_CIPHER_do_all_provided() traverses all ciphers implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.

@@ -187,9 +187,9 @@ const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf)
     return kdf->settable_ctx_params();
 }
 
-void EVP_KDF_do_all_ex(OPENSSL_CTX *libctx,
-                       void (*fn)(EVP_KDF *kdf, void *arg),
-                       void *arg)
+void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+                             void (*fn)(EVP_KDF *kdf, void *arg),
+                             void *arg)
 {
     evp_generic_do_all(libctx, OSSL_OP_KDF,
                        (void (*)(void *, void *))fn, arg,

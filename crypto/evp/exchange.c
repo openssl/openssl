@@ -386,3 +386,22 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     M_check_autoarg(ctx, key, pkeylen, EVP_F_EVP_PKEY_DERIVE)
         return ctx->pmeth->derive(ctx, key, pkeylen);
 }
+
+int EVP_KEYEXCH_is_a(const EVP_KEYEXCH *keyexch, const char *name)
+{
+    return evp_is_a(keyexch->prov, keyexch->name_id, name);
+}
+
+void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
+                                 void (*fn)(EVP_KEYEXCH *keyexch, void *arg),
+                                 void *arg)
+{
+    struct keymgmt_data_st keymgmt_data;
+
+    keymgmt_data.ctx = libctx;
+    keymgmt_data.properties = NULL;
+    evp_generic_do_all(libctx, OSSL_OP_KEYEXCH,
+                       (void (*)(void *, void *))fn, arg,
+                       evp_keyexch_from_dispatch, &keymgmt_data,
+                       (void (*)(void *))EVP_KEYEXCH_free);
+}

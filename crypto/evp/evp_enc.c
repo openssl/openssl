@@ -1521,9 +1521,9 @@ void EVP_CIPHER_free(EVP_CIPHER *cipher)
     OPENSSL_free(cipher);
 }
 
-void EVP_CIPHER_do_all_ex(OPENSSL_CTX *libctx,
-                          void (*fn)(EVP_CIPHER *mac, void *arg),
-                          void *arg)
+void EVP_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+                                void (*fn)(EVP_CIPHER *mac, void *arg),
+                                void *arg)
 {
     evp_generic_do_all(libctx, OSSL_OP_CIPHER,
                        (void (*)(void *, void *))fn, arg,
