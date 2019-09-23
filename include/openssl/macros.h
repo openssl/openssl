@@ -143,9 +143,6 @@
  *
  * If none of the above applies, we check if the compiler is MSVC,
  * and use __FUNCTION__ if that's the case.
- *
- * If all these possibilities are exhausted, we give up and use a
- * static string.
  */
 # ifndef OPENSSL_FUNC
 #  if defined(__STDC_VERSION__)
@@ -156,7 +153,12 @@
 #   endif
 #  elif defined(_MSC_VER)
 #    define OPENSSL_FUNC __FUNCTION__
-#  else
+#  endif
+/*
+ * If all these possibilities are exhausted, we give up and use a
+ * static string.
+ */
+#  ifndef OPENSSL_FUNC
 #   define OPENSSL_FUNC "(unknown function)"
 #  endif
 # endif
