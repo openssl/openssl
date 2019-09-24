@@ -32,14 +32,14 @@ steps:
 #     script: 'ps -ef'
 - task: CmdLine@2
   inputs:
-    script: 'df'
+    script: 'df > /tmp/tmp.txt'
 # - task: CmdLine@2
 #   inputs:
 #     script: 'mount'
 - task: CmdLine@2
   inputs:
     script: |
-     env > /tmp/tmp.txt
+     env >> /tmp/tmp.txt
      echo $(asdfasdfasdf) >> /tmp/tmp.txt
   env:
     abc: $(asdfasdfasdf)
