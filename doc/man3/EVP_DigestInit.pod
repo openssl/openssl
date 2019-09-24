@@ -38,8 +38,8 @@ EVP_MD_do_all_ex
  void EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void* p2);
  int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
  int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *EVP_MD_CTX_settable_params(const EVP_MD_CTX *digest);
- const OSSL_PARAM *EVP_MD_CTX_gettable_params(const EVP_MD_CTX *digest);
+ const OSSL_PARAM *EVP_MD_CTX_settable_params(const EVP_MD *digest);
+ const OSSL_PARAM *EVP_MD_CTX_gettable_params(const EVP_MD *digest);
  void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
  void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
  int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
