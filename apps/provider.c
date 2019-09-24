@@ -117,8 +117,8 @@ static void do_digest(EVP_MD *digest, void *meta)
 {
     do_method(digest, EVP_MD_name(digest),
               EVP_MD_gettable_params(digest),
-              EVP_MD_CTX_gettable_params(digest),
-              EVP_MD_CTX_settable_params(digest),
+              EVP_MD_gettable_ctx_params(digest),
+              EVP_MD_settable_ctx_params(digest),
               meta);
 }
 
