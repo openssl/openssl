@@ -36,9 +36,9 @@ steps:
 # - task: CmdLine@2
 #   inputs:
 #     script: 'mount'
-# - task: CmdLine@2
-#   inputs:
-#     script: 'env'
+- task: CmdLine@2
+  inputs:
+    script: 'env'
     
 - script: |
     echo Add other tasks to build, test, and deploy your project.
