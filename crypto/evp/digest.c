@@ -538,8 +538,18 @@ const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest)
 
 int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
 {
+    EVP_PKEY_CTX *pctx = ctx->pctx;
+
     if (ctx->digest != NULL && ctx->digest->set_ctx_params != NULL)
         return ctx->digest->set_ctx_params(ctx->provctx, params);
+
+    if (pctx != NULL
+            && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
+                || pctx->operation == EVP_PKEY_OP_SIGNCTX)
+            && pctx->op.sig.sigprovctx != NULL
+            && pctx->op.sig.signature->set_ctx_md_params != NULL)
+        return pctx->op.sig.signature->set_ctx_md_params(pctx->op.sig.sigprovctx,
+                                                         params);
     return 0;
 }
 
@@ -552,18 +562,40 @@ const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md)
 
 const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
 {
+    EVP_PKEY_CTX *pctx;
+
     if (ctx != NULL
             && ctx->digest != NULL
             && ctx->digest->settable_ctx_params != NULL)
         return ctx->digest->settable_ctx_params();
+
+    pctx = ctx->pctx;
+    if (pctx != NULL
+            && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
+                || pctx->operation == EVP_PKEY_OP_SIGNCTX)
+            && pctx->op.sig.sigprovctx != NULL
+            && pctx->op.sig.signature->settable_ctx_md_params != NULL)
+        return pctx->op.sig.signature->settable_ctx_md_params(
+                   pctx->op.sig.sigprovctx);
 
     return NULL;
 }
 
 int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
 {
+    EVP_PKEY_CTX *pctx = ctx->pctx;
+
     if (ctx->digest != NULL && ctx->digest->get_params != NULL)
         return ctx->digest->get_ctx_params(ctx->provctx, params);
+
+    if (pctx != NULL
+            && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
+                || pctx->operation == EVP_PKEY_OP_SIGNCTX)
+            && pctx->op.sig.sigprovctx != NULL
+            && pctx->op.sig.signature->get_ctx_md_params != NULL)
+        return pctx->op.sig.signature->get_ctx_md_params(pctx->op.sig.sigprovctx,
+                                                         params);
+
     return 0;
 }
 
@@ -576,10 +608,21 @@ const OSSL_PARAM *EVP_MD_gettable_ctx_params(const EVP_MD *md)
 
 const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
 {
+    EVP_PKEY_CTX *pctx;
+
     if (ctx != NULL
             && ctx->digest != NULL
             && ctx->digest->gettable_ctx_params != NULL)
         return ctx->digest->gettable_ctx_params();
+
+    pctx = ctx->pctx;
+    if (pctx != NULL
+            && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
+                || pctx->operation == EVP_PKEY_OP_SIGNCTX)
+            && pctx->op.sig.sigprovctx != NULL
+            && pctx->op.sig.signature->gettable_ctx_md_params != NULL)
+        return pctx->op.sig.signature->gettable_ctx_md_params(
+                    pctx->op.sig.sigprovctx);
 
     return NULL;
 }
@@ -597,7 +640,10 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         return 0;
     }
 
-    if (ctx->digest->prov == NULL)
+    if (ctx->digest->prov == NULL
+        && (ctx->pctx == NULL
+            || (ctx->pctx->operation != EVP_PKEY_OP_VERIFYCTX
+                && ctx->pctx->operation != EVP_PKEY_OP_SIGNCTX)))
         goto legacy;
 
     switch (cmd) {
@@ -615,9 +661,9 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     }
 
     if (set_params)
-        ret = evp_do_md_ctx_setparams(ctx->digest, ctx->provctx, params);
+        ret = EVP_MD_CTX_set_params(ctx, params);
     else
-        ret = evp_do_md_ctx_getparams(ctx->digest, ctx->provctx, params);
+        ret = EVP_MD_CTX_get_params(ctx, params);
     return ret;
 
 
