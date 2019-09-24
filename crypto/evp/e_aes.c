@@ -176,7 +176,7 @@ static void ctr64_inc(unsigned char *counter)
 # define HWAES_xts_decrypt aes_p8_xts_decrypt
 #endif
 
-#if     !defined(OPENSSL_NO_ASM) &&                     (  \
+#if     defined(OPENSSL_CPUID_OBJ) &&                   (  \
         ((defined(__i386)       || defined(__i386__)    || \
           defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
         defined(__x86_64)       || defined(__x86_64__)  || \
