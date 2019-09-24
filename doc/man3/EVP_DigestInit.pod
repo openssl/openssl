@@ -44,9 +44,9 @@ EVP_MD_CTX_set_pkey_ctx - EVP digest routines
  int EVP_MD_block_size(const EVP_MD *md);
 
  const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
- int EVP_MD_CTX_size(const EVP_MD *ctx);
- int EVP_MD_CTX_block_size(const EVP_MD *ctx);
- int EVP_MD_CTX_type(const EVP_MD *ctx);
+ int EVP_MD_CTX_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_block_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_type(const EVP_MD_CTX *ctx);
  void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
 
  const EVP_MD *EVP_md_null(void);
