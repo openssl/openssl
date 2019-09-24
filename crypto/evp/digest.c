@@ -24,6 +24,16 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
     if (ctx == NULL)
         return 1;
 
+#ifndef FIPS_MODE
+    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
+    /*
+     * pctx should be freed by the user of EVP_MD_CTX
+     * if EVP_MD_CTX_FLAG_KEEP_PKEY_CTX is set
+     */
+    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
+        EVP_PKEY_CTX_free(ctx->pctx);
+#endif
+
     if (ctx->digest == NULL || ctx->digest->prov == NULL)
         goto legacy;
 
@@ -53,18 +63,9 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
         && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
         OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
     }
-    /*
-     * pctx should be freed by the user of EVP_MD_CTX
-     * if EVP_MD_CTX_FLAG_KEEP_PKEY_CTX is set
-     */
-#ifndef FIPS_MODE
-    /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
-    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
-        EVP_PKEY_CTX_free(ctx->pctx);
 
-# ifndef OPENSSL_NO_ENGINE
+#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(ctx->engine);
-# endif
 #endif
     OPENSSL_cleanse(ctx, sizeof(*ctx));
 
