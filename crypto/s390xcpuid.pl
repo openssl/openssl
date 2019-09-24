@@ -107,7 +107,7 @@ OPENSSL_s390x_functions:
 	la	%r1,S390X_KMAC(%r4)
 	.long	0xb91e0042		# kmac %r4,%r2
 
-	tmhh	%r3,0x0003		# check for message-security-assist-3
+	tmhh	%r3,0x0008		# check for message-security-assist-3
 	jz	.Lret
 
 	lghi	%r0,S390X_QUERY		# query pcc capability vector
