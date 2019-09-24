@@ -1503,38 +1503,6 @@ Key = 5840df6e29b02af1ab493b705bf16ea1ae8338f4dcc176a8
 Plaintext = 466f7250617369
 Ciphertext = afbeb0f07dfbf5419200f2ccb50bb24f
 
-Title = RC4 tests
-
-Cipher = RC4
-Key = 0123456789abcdef0123456789abcdef
-Plaintext = 0123456789abcdef
-Ciphertext = 75b7878099e0c596
-
-Cipher = RC4
-Key = 0123456789abcdef0123456789abcdef
-Plaintext = 0000000000000000
-Ciphertext = 7494c2e7104b0879
-
-Cipher = RC4
-Key = 00000000000000000000000000000000
-Plaintext = 0000000000000000
-Ciphertext = de188941a3375d3a
-
-Cipher = RC4
-Key = ef012345ef012345ef012345ef012345
-Plaintext = 0000000000000000000000000000000000000000
-Ciphertext = d6a141a7ec3c38dfbd615a1162e1c7ba36b67858
-
-Cipher = RC4
-Key = 0123456789abcdef0123456789abcdef
-Plaintext = 123456789ABCDEF0123456789ABCDEF0123456789ABCDEF012345678
-Ciphertext = 66a0949f8af7d6891f7f832ba833c00c892ebe30143ce28740011ecf
-
-Cipher = RC4
-Key = ef012345ef012345ef012345ef012345
-Plaintext = 00000000000000000000
-Ciphertext = d6a141a7ec3c38dfbd61
-
 Title = Camellia tests from RFC3713
 
 # For all ECB encrypts and decrypts, the transformed sequence is

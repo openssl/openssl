@@ -186,6 +186,11 @@ extern const OSSL_DISPATCH des_cfb8_functions[];
 # endif /* FIPS_MODE */
 #endif /* OPENSSL_NO_DES */
 
+#ifndef OPENSSL_NO_RC4
+extern const OSSL_DISPATCH rc440_functions[];
+extern const OSSL_DISPATCH rc4128_functions[];
+#endif /* OPENSSL_NO_RC4 */
+
 /* MACs */
 extern const OSSL_DISPATCH blake2bmac_functions[];
 extern const OSSL_DISPATCH blake2smac_functions[];

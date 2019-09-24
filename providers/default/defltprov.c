@@ -237,6 +237,10 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "SM4-OFB", "default=yes", sm4128ofb128_functions },
     { "SM4-CFB", "default=yes", sm4128cfb128_functions },
 #endif /* OPENSSL_NO_SM4 */
+#ifndef OPENSSL_NO_RC4
+    { "RC4", "default=yes", rc4128_functions },
+    { "RC4-40", "default=yes", rc440_functions },
+#endif /* OPENSSL_NO_RC4 */
     { NULL, NULL, NULL }
 };
 

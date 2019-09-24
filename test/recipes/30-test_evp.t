@@ -47,6 +47,9 @@ push @defltfiles, @sm4files unless disabled("sm4");
 my @desfiles = qw( evpciph_des.txt );
 push @defltfiles, @desfiles unless disabled("des");
 
+my @rc4files = qw( evpciph_rc4.txt );
+push @defltfiles, @rc4files unless disabled("rc4");
+
 plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles) + 1;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
