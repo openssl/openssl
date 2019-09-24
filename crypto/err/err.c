@@ -533,12 +533,18 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
         es->err_buffer[i] = 0;
     }
 
-    if (file != NULL)
+    if (file != NULL) {
         *file = es->err_file[i];
+        if (*file == NULL)
+            *file = "";
+    }
     if (line != NULL)
         *line = es->err_line[i];
-    if (func != NULL)
+    if (func != NULL) {
         *func = es->err_func[i];
+        if (*func == NULL)
+            *func = "";
+    }
     if (flags != NULL)
         *flags = es->err_data_flags[i];
     if (data == NULL) {
@@ -547,8 +553,11 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
         }
     } else {
         *data = es->err_data[i];
-         if (*data == NULL && flags != NULL)
-             *flags = 0;
+        if (*data == NULL) {
+            *data = "";
+            if (flags != NULL)
+                *flags = 0;
+        }
     }
     return ret;
 }
