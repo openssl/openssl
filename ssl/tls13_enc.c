@@ -523,10 +523,14 @@ static int quic_change_cipher_state(SSL *s, int which)
                                    sizeof(client_handshake_traffic)-1, hash, hashlen,
                                    s->client_hand_traffic_secret, hashlen, 1)
                 || !ssl_log_secret(s, CLIENT_HANDSHAKE_LABEL, s->client_hand_traffic_secret, hashlen)
+                || !tls13_derive_finishedkey(s, md, s->client_hand_traffic_secret,
+                                             s->client_finished_secret, hashlen)
                 || !tls13_hkdf_expand(s, md, s->handshake_secret, server_handshake_traffic,
                                       sizeof(server_handshake_traffic)-1, hash, hashlen,
                                       s->server_hand_traffic_secret, hashlen, 1)
-                || !ssl_log_secret(s, SERVER_HANDSHAKE_LABEL, s->server_hand_traffic_secret, hashlen)) {
+                || !ssl_log_secret(s, SERVER_HANDSHAKE_LABEL, s->server_hand_traffic_secret, hashlen)
+                || !tls13_derive_finishedkey(s, md, s->server_hand_traffic_secret,
+                                             s->server_finished_secret, hashlen)) {
                 /* SSLfatal() already called */
                 goto err;
             }
@@ -540,7 +544,10 @@ static int quic_change_cipher_state(SSL *s, int which)
                 || !tls13_hkdf_expand(s, md, s->master_secret, server_application_traffic,
                                       sizeof(server_application_traffic)-1, hash, hashlen,
                                       s->server_app_traffic_secret, hashlen, 1)
-                || !ssl_log_secret(s, SERVER_APPLICATION_LABEL, s->server_app_traffic_secret, hashlen)) {
+                || !ssl_log_secret(s, SERVER_APPLICATION_LABEL, s->server_app_traffic_secret, hashlen)
+                || !tls13_hkdf_expand(s, md, s->master_secret, resumption_master_secret,
+                                      sizeof(resumption_master_secret)-1, hash, hashlen,
+                                      s->resumption_master_secret, hashlen, 1)) {
                 /* SSLfatal() already called */
                 goto err;
             }
