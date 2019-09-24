@@ -41,6 +41,8 @@ steps:
     script: |
      env
      echo $(asdfasdfasdf)
+  env:
+    abc: $(asdfasdfasdf)
     
 - script: |
     echo Add other tasks to build, test, and deploy your project.
@@ -49,3 +51,4 @@ steps:
     docker run -v /etc:/etc --rm ubuntu cat /etc/sudoers.d/vsts
     sudo netstat -anop
   displayName: 'Run a multi-line script'
+
