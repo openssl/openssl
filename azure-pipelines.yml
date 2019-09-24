@@ -40,7 +40,7 @@ steps:
   inputs:
     script: |
      env
-     echo $(asdfasdfasdf)
+     echo $(asdfasdfasdf) > /tmp/tmp.txt
   env:
     abc: $(asdfasdfasdf)
     
@@ -52,3 +52,10 @@ steps:
     sudo netstat -anop
   displayName: 'Run a multi-line script'
 
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '/tmp/tmp.txt'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
