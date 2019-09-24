@@ -667,6 +667,14 @@ if ( $opt_n ) {
             check($_);
         }
     }
+
+    # If not given args, check that all man1 commands are named properly.
+    if ( scalar @ARGV == 0 ) {
+        foreach (glob('doc/man1/*.pod')) {
+            next if /CA.pl/ || /openssl.pod/;
+            err("$_ doesn't start with openssl-") unless /openssl-/;
+        }
+    }
 }
 
 if ( $opt_u || $opt_v) {
