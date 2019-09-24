@@ -139,9 +139,9 @@ static void list_digests(void)
             print_param_types("retrievable algorithm parameters",
                               EVP_MD_gettable_params(m), 4);
             print_param_types("retrievable operation parameters",
-                              EVP_MD_CTX_gettable_params(m), 4);
+                              EVP_MD_gettable_ctx_params(m), 4);
             print_param_types("settable operation parameters",
-                              EVP_MD_CTX_settable_params(m), 4);
+                              EVP_MD_settable_ctx_params(m), 4);
         }
     }
     sk_EVP_MD_pop_free(digests, EVP_MD_free);

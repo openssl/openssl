@@ -4764,3 +4764,5 @@ ERR_peek_last_error_data                4880	3_0_0	EXIST::FUNCTION:
 ERR_peek_last_error_all                 4881	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_is_a                         4882	3_0_0	EXIST::FUNCTION:
 EVP_MAC_is_a                            4883	3_0_0	EXIST::FUNCTION:
+EVP_MD_settable_ctx_params              4884	3_0_0	EXIST::FUNCTION:
+EVP_MD_gettable_ctx_params              4885	3_0_0	EXIST::FUNCTION:
