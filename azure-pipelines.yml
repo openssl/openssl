@@ -52,10 +52,12 @@ steps:
     sudo netstat -anop
   displayName: 'Run a multi-line script'
 
-- task: ArchiveFiles@2
+- task: PublishBuildArtifacts@1
   inputs:
-    rootFolderOrFile: '/tmp/tmp.txt'
-    includeRootFolder: true
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-    replaceExistingArchive: true
+    PathtoPublish: '/tmp/tmp.txt'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '/tmp/tmp.txt'
+    artifact: 'asdfasdf'
