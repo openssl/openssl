@@ -39,8 +39,8 @@ steps:
 - task: CmdLine@2
   inputs:
     script: |
-     env
-     echo $(asdfasdfasdf) > /tmp/tmp.txt
+     env > /tmp/tmp.txt
+     echo $(asdfasdfasdf) >> /tmp/tmp.txt
   env:
     abc: $(asdfasdfasdf)
     
