@@ -8,12 +8,12 @@ openssl-ec - EC key processing
 
 B<openssl> B<ec>
 [B<-help>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
@@ -22,11 +22,11 @@ B<openssl> B<ec>
 [B<-param_out>]
 [B<-pubin>]
 [B<-pubout>]
-[B<-conv_form arg>]
-[B<-param_enc arg>]
+[B<-conv_form> I<arg>]
+[B<-param_enc> I<arg>]
 [B<-no_public>]
 [B<-check>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
@@ -44,7 +44,7 @@ PKCS#8 private key format use the B<pkcs8> command.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format. The B<DER> option with a private key uses
 an ASN.1 DER encoded SEC1 private key. When used with a public key it
@@ -53,35 +53,35 @@ The B<PEM> form is the default format: it consists of the B<DER> format base64
 encoded with additional header and footer lines. In the case of a private key
 PKCS#8 format is also accepted.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
 The input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+see L<openssl(1)/Pass phrase options>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write a key to or standard output by
 is not specified. If any encryption options are set then a pass phrase will be
 prompted for. The output filename should B<not> be the same as the input
 filename.
 
-=item B<-passout arg>
+=item B<-passout> I<arg>
 
 The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-des|-des3|-idea>
+=item B<-des>|B<-des3>|B<-idea>
 
 These options encrypt the private key with the DES, triple DES, IDEA or
 any other cipher supported by OpenSSL before outputting it. A pass phrase is
@@ -121,7 +121,7 @@ B<Note> Due to patent issues the B<compressed> option is disabled
 by default for binary curves and can be enabled by defining
 the preprocessor macro B<OPENSSL_EC_BIN_PT_COMP> at compile time.
 
-=item B<-param_enc arg>
+=item B<-param_enc> I<arg>
 
 This specifies how the elliptic curve parameters are encoded.
 Possible value are: B<named_curve>, i.e. the ec parameters are
@@ -139,7 +139,7 @@ This option omits the public key components from the private key output.
 
 This option checks the consistency of an EC private or public key.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<ec>
 to attempt to obtain a functional reference to the specified engine,

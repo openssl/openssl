@@ -8,8 +8,8 @@ openssl-dhparam - DH parameter manipulation and generation
 
 B<openssl dhparam>
 [B<-help>]
-[B<-inform DER|PEM>]
-[B<-outform DER|PEM>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-dsaparam>]
@@ -20,9 +20,9 @@ B<openssl dhparam>
 [B<-2>]
 [B<-3>]
 [B<-5>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-engine id>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
+[B<-engine> I<id>]
 [I<numbits>]
 
 =head1 DESCRIPTION
@@ -37,14 +37,14 @@ This command is used to manipulate DH parameter files.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with the PKCS#3 DHparameter structure. The PEM form is the
 default format: it consists of the B<DER> format base64 encoded with
 additional header and footer lines.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
@@ -84,7 +84,7 @@ input file is ignored and parameters are generated instead. If not
 present but B<numbits> is present, parameters are generated with the
 default generator 2.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -92,7 +92,7 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
@@ -119,7 +119,7 @@ This option prints out the DH parameters in human readable form.
 This option converts the parameters into C code. The parameters can then
 be loaded by calling the get_dhNNNN() function.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<dhparam>
 to attempt to obtain a functional reference to the specified engine,

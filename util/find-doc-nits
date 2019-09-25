@@ -255,6 +255,20 @@ sub check {
         if $contents =~ /=over([^ ][^24])/;
     err($id, "Possible version style issue")
         if $contents =~ /OpenSSL version [019]/;
+    err($id, "Brackets on item line")
+        if $contents =~ /=item \[/;
+    if ( $contents !~ /=for comment generic/) {
+        # Some API pages have B<foo<I<TYPE>bar>.
+        err($id, "Bad flag formatting inside B<>")
+            if $contents =~ /B<-[A-Za-z_ ]+ /;
+        while ( $contents =~ /([BI])<([^>]*)>/g ) {
+            my $B = $1;
+            my $T = $2;
+            next if $T =~ /E</;  # Assume it's E<lt>
+            err($id, "Bad content inside $B<$T>")
+                if $T =~ /[<|]/;
+        }
+    }
 
     if ( $contents !~ /=for comment multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines

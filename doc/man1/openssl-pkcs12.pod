@@ -10,12 +10,12 @@ B<openssl> B<pkcs12>
 [B<-help>]
 [B<-export>]
 [B<-chain>]
-[B<-inkey file_or_id>]
-[B<-certfile filename>]
-[B<-name name>]
-[B<-caname name>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-inkey> I<file_or_id>]
+[B<-certfile> I<filename>]
+[B<-name> I<name>]
+[B<-caname> I<name>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-noout>]
 [B<-nomacver>]
 [B<-nocerts>]
@@ -23,26 +23,26 @@ B<openssl> B<pkcs12>
 [B<-cacerts>]
 [B<-nokeys>]
 [B<-info>]
-[B<-des | -des3 | -idea | -aes128 | -aes192 | -aes256 | -aria128 | -aria192 | -aria256 | -camellia128 | -camellia192 | -camellia256 | -nodes>]
+[B<-des> B<-des3> B<-idea> B<-aes128> B<-aes192> B<-aes256> B<-aria128> B<-aria192> B<-aria256> B<-camellia128> B<-camellia192> B<-camellia256> B<-nodes>]
 [B<-noiter>]
-[B<-maciter | -nomaciter | -nomac>]
+[B<-maciter> | B<-nomaciter> | B<-nomac>]
 [B<-twopass>]
 [B<-descert>]
-[B<-certpbe cipher>]
-[B<-keypbe cipher>]
-[B<-macalg digest>]
+[B<-certpbe> I<cipher>]
+[B<-keypbe> I<cipher>]
+[B<-macalg> I<digest>]
 [B<-keyex>]
 [B<-keysig>]
-[B<-password arg>]
-[B<-passin arg>]
-[B<-passout arg>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-CAfile file>]
-[B<-CApath dir>]
+[B<-password> I<arg>]
+[B<-passin> I<arg>]
+[B<-passout> I<arg>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
+[B<-CAfile> I<file>]
+[B<-CApath> I<dir>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
-[B<-CSP name>]
+[B<-CSP> I<name>]
 
 =head1 DESCRIPTION
 
@@ -64,29 +64,29 @@ file can be created by using the B<-export> option (see below).
 
 Print out a usage message.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies filename of the PKCS#12 file to be parsed. Standard input is used
 by default.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 The filename to write certificates and private keys to, standard output by
 default.  They are all written in PEM format.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
 The PKCS#12 file (i.e. input file) password source. For more information about
-the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
-L<openssl(1)>.
+the format of B<arg>
+see L<openssl(1)/Pass phrase options>.
 
-=item B<-passout arg>
+=item B<-passout> I<arg>
 
 Pass phrase source to encrypt any outputted private keys with. For more
 information about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section
 in L<openssl(1)>.
 
-=item B<-password arg>
+=item B<-password> I<arg>
 
 With -export, -password is equivalent to -passout.
 Otherwise, -password is equivalent to -passin.
@@ -167,48 +167,48 @@ PKCS#12 files unreadable. Cannot be used in combination with the options
 This option specifies that a PKCS#12 file will be created rather than
 parsed.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies filename to write the PKCS#12 file to. Standard output is used
 by default.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 The filename to read certificates and private keys from, standard input by
 default.  They must all be in PEM format. The order doesn't matter but one
 private key and its corresponding certificate should be present. If additional
 certificates are present they will also be included in the PKCS#12 file.
 
-=item B<-inkey file_or_id>
+=item B<-inkey> I<file_or_id>
 
 File to read private key from. If not present then a private key must be present
 in the input file.
 If no engine is used, the argument is taken as a file; if an engine is
 specified, the argument is given to the engine as a key identifier.
 
-=item B<-name friendlyname>
+=item B<-name> I<friendlyname>
 
 This specifies the "friendly name" for the certificate and private key. This
 name is typically displayed in list boxes by software importing the file.
 
-=item B<-certfile filename>
+=item B<-certfile> I<filename>
 
 A filename to read additional certificates from.
 
-=item B<-caname friendlyname>
+=item B<-caname> I<friendlyname>
 
 This specifies the "friendly name" for other certificates. This option may be
 used multiple times to specify names for all certificates in the order they
 appear. Netscape ignores friendly names on other certificates whereas MSIE
 displays them.
 
-=item B<-pass arg>, B<-passout arg>
+=item B<-pass> I<arg>, B<-passout> I<arg>
 
 The PKCS#12 file (i.e. output file) password source. For more information about
 the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)>.
 
-=item B<-passin password>
+=item B<-passin> I<password>
 
 Pass phrase source to decrypt any input private keys with. For more information
 about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
@@ -227,7 +227,7 @@ file unreadable by some "export grade" software. By default the private
 key is encrypted using triple DES and the certificate using 40 bit RC2
 unless RC2 is disabled in which case triple DES is used.
 
-=item B<-keypbe alg>, B<-certpbe alg>
+=item B<-keypbe> I<alg>, B<-certpbe> I<alg>
 
 These options allow the algorithm used to encrypt the private key and
 certificates to be selected. Any PKCS#5 v1.5 or PKCS#12 PBE algorithm name
@@ -236,7 +236,7 @@ can be used (see B<NOTES> section for more information). If a cipher name
 is used with PKCS#5 v2.0. For interoperability reasons it is advisable to only
 use PKCS#12 algorithms.
 
-=item B<-keyex|-keysig>
+=item B<-keyex>|B<-keysig>
 
 Specifies that the private key is to be used for key exchange or just signing.
 This option is only interpreted by MSIE and similar MS software. Normally
@@ -247,7 +247,7 @@ S/MIME signing, authenticode (ActiveX control signing)  and SSL client
 authentication, however due to a bug only MSIE 5.0 and later support
 the use of signing only keys for SSL client authentication.
 
-=item B<-macalg digest>
+=item B<-macalg> I<digest>
 
 Specify the MAC digest algorithm. If not included them SHA1 will be used.
 
@@ -278,7 +278,7 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 Don't attempt to provide the MAC integrity.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -286,16 +286,16 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-CAfile file>
+=item B<-CAfile> I<file>
 
 CA storage as a file.
 
-=item B<-CApath dir>
+=item B<-CApath> I<dir>
 
 CA storage as a directory. This directory must be a standard certificate
 directory: that is a hash of each subject name (using B<x509 -hash>) should be
@@ -309,7 +309,7 @@ Do not load the trusted CA certificates from the default file location.
 
 Do not load the trusted CA certificates from the default directory location.
 
-=item B<-CSP name>
+=item B<-CSP> I<name>
 
 Write B<name> as a Microsoft CSP name.
 
@@ -330,12 +330,12 @@ file is the one corresponding to the private key: this may not always
 be the case. Using the B<-clcerts> option will solve this problem by only
 outputting the certificate corresponding to the private key. If the CA
 certificates are required then they can be output to a separate file using
-the B<-nokeys -cacerts> options to just output CA certificates.
+the B<-nokeys> B<-cacerts> options to just output CA certificates.
 
 The B<-keypbe> and B<-certpbe> algorithms allow the precise encryption
 algorithms for private keys and certificates to be specified. Normally
 the defaults are fine but occasionally software can't handle triple DES
-encrypted private keys, then the option B<-keypbe PBE-SHA1-RC2-40> can
+encrypted private keys, then the option B<-keypbe> I<PBE-SHA1-RC2-40> can
 be used to reduce the private key encryption to 40 bit RC2. A complete
 description of all algorithms is contained in the B<pkcs8> manual page.
 

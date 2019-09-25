@@ -8,7 +8,7 @@ openssl-gendsa - generate a DSA private key from a set of parameters
 
 B<openssl> B<gendsa>
 [B<-help>]
-[B<-out filename>]
+[B<-out> I<filename>]
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
@@ -21,9 +21,9 @@ B<openssl> B<gendsa>
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-engine id>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
+[B<-engine> I<id>]
 [B<-verbose>]
 [B<paramfile>]
 
@@ -40,7 +40,7 @@ The B<gendsa> command generates a DSA private key from a DSA parameter file
 
 Print out a usage message.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Output the key to the specified file. If this argument is not specified then
 standard output is used.
@@ -51,7 +51,7 @@ These options encrypt the private key with specified
 cipher before outputting it. A pass phrase is prompted for.
 If none of these options is specified no encryption is used.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -59,12 +59,12 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<gendsa>
 to attempt to obtain a functional reference to the specified engine,

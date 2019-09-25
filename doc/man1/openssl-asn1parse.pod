@@ -8,21 +8,21 @@ openssl-asn1parse - ASN.1 parsing tool
 
 B<openssl> B<asn1parse>
 [B<-help>]
-[B<-inform PEM|DER>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-noout>]
-[B<-offset number>]
-[B<-length number>]
+[B<-offset> I<number>]
+[B<-length> I<number>]
 [B<-i>]
-[B<-oid filename>]
+[B<-oid> I<filename>]
 [B<-dump>]
-[B<-dlimit num>]
-[B<-strparse offset>]
-[B<-genstr string>]
-[B<-genconf file>]
+[B<-dlimit> I<num>]
+[B<-strparse> I<offset>]
+[B<-genstr> I<string>]
+[B<-genconf> I<file>]
 [B<-strictpem>]
-[B<-item name>]
+[B<-item> I<name>]
 
 =head1 DESCRIPTION
 
@@ -37,16 +37,16 @@ structures. It can also be used to extract data from ASN.1 formatted data.
 
 Print out a usage message.
 
-=item B<-inform> B<DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input format. B<DER> is binary format and B<PEM> (the default) is base64
+The input format. I<DER> is binary format and I<PEM> (the default) is base64
 encoded.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 The input file, default is standard input.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Output file to place the DER encoded data into. If this
 option is not present then no data will be output. This is most useful when
@@ -56,11 +56,11 @@ combined with the B<-strparse> option.
 
 Don't output the parsed version of the input file.
 
-=item B<-offset number>
+=item B<-offset> I<number>
 
 Starting offset to begin parsing, default is start of file.
 
-=item B<-length number>
+=item B<-length> I<number>
 
 Number of bytes to parse, default is until end of file.
 
@@ -68,7 +68,7 @@ Number of bytes to parse, default is until end of file.
 
 Indents the output according to the "depth" of the structures.
 
-=item B<-oid filename>
+=item B<-oid> I<filename>
 
 A file containing additional OBJECT IDENTIFIERs (OIDs). The format of this
 file is described in the NOTES section below.
@@ -77,16 +77,16 @@ file is described in the NOTES section below.
 
 Dump unknown data in hex format.
 
-=item B<-dlimit num>
+=item B<-dlimit> I<num>
 
 Like B<-dump>, but only the first B<num> bytes are output.
 
-=item B<-strparse offset>
+=item B<-strparse> I<offset>
 
 Parse the contents octets of the ASN.1 object starting at B<offset>. This
 option can be used multiple times to "drill down" into a nested structure.
 
-=item B<-genstr string>, B<-genconf file>
+=item B<-genstr> I<string>, B<-genconf> I<file>
 
 Generate encoded data based on B<string>, B<file> or both using
 L<ASN1_generate_nconf(3)> format. If B<file> only is
@@ -103,7 +103,7 @@ processed whether it has the normal PEM BEGIN and END markers or not. This
 option will ignore any data prior to the start of the BEGIN marker, or after an
 END marker in a PEM file.
 
-=item B<-item name>
+=item B<-item> I<name>
 
 Attempt to decode and print the data as B<ASN1_ITEM name>. This can be used to
 print out the fields of any supported ASN.1 structure if the type is known.
@@ -143,7 +143,7 @@ Some knowledge of the ASN.1 structure is needed to interpret the output.
 
 In this example the BIT STRING at offset 229 is the certificate public key.
 The contents octets of this will contain the public key information. This can
-be examined using the option B<-strparse 229> to yield:
+be examined using the option C<-strparse 229> to yield:
 
     0:d=0  hl=3 l= 137 cons: SEQUENCE
     3:d=1  hl=3 l= 129 prim: INTEGER           :E5D21E1F5C8D208EA7A2166C7FAF9F6BDF2059669C60876DDB70840F1A5AAFA59699FE471F379F1DD6A487E7D5409AB6A88D4A9746E24B91D8CF55DB3521015460C8EDE44EE8A4189F7A7BE77D6CD3A9AF2696F486855CF58BF0EDF2B4068058C7A947F52548DDF7E15E96B385F86422BEA9064A3EE9E1158A56E4A6F47E5897

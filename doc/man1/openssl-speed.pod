@@ -8,17 +8,17 @@ openssl-speed - test library performance
 
 B<openssl speed>
 [B<-help>]
-[B<-engine id>]
+[B<-engine> I<id>]
 [B<-elapsed>]
-[B<-evp algo>]
-[B<-hmac algo>]
-[B<-cmac algo>]
+[B<-evp> I<algo>]
+[B<-hmac> I<algo>]
+[B<-cmac> I<algo>]
 [B<-decrypt>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-primes num>]
-[B<-seconds num>]
-[B<-bytes num>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
+[B<-primes> I<num>]
+[B<-seconds> I<num>]
+[B<-bytes> I<num>]
 [B<algorithm...>]
 
 =head1 DESCRIPTION
@@ -36,7 +36,7 @@ the I<rand> algorithm name.
 
 Print out a usage message.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<speed>
 to attempt to obtain a functional reference to the specified engine,
@@ -49,18 +49,18 @@ When calculating operations- or bytes-per-second, use wall-clock time
 instead of CPU user time as divisor. It can be useful when testing speed
 of hardware engines.
 
-=item B<-evp algo>
+=item B<-evp> I<algo>
 
 Use the specified cipher or message digest algorithm via the EVP interface.
 If B<algo> is an AEAD cipher, then you can pass <-aead> to benchmark a
 TLS-like sequence. And if B<algo> is a multi-buffer capable cipher, e.g.
 aes-128-cbc-hmac-sha1, then B<-mb> will time multi-buffer operation.
 
-=item B<-hmac digest>
+=item B<-hmac> I<digest>
 
 Time the HMAC algorithm using the specified message digest.
 
-=item B<-cmac cipher>
+=item B<-cmac> I<cipher>
 
 Time the CMAC algorithm using the specified cipher e.g. B<speed -cmac aes128>.
 
@@ -68,7 +68,7 @@ Time the CMAC algorithm using the specified cipher e.g. B<speed -cmac aes128>.
 
 Time the decryption instead of encryption. Affects only the EVP testing.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -76,25 +76,25 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-primes num>
+=item B<-primes> I<num>
 
 Generate a B<num>-prime RSA key and use it to run the benchmarks. This option
 is only effective if RSA algorithm is specified to test.
 
-=item B<-seconds num>
+=item B<-seconds> I<num>
 
 Run benchmarks for B<num> seconds.
 
-=item B<-bytes num>
+=item B<-bytes> I<num>
 
 Run benchmarks on B<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
 
-=item B<[zero or more test algorithms]>
+=item B<algorithm...>
 
 If any options are given, B<speed> tests those algorithms, otherwise a
 pre-compiled grand selection is tested.

@@ -8,14 +8,14 @@ openssl-pkcs7 - PKCS#7 utility
 
 B<openssl> B<pkcs7>
 [B<-help>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-print_certs>]
 [B<-text>]
 [B<-noout>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
@@ -29,23 +29,23 @@ The B<pkcs7> command processes PKCS#7 files in DER or PEM format.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format. B<DER> format is DER encoded PKCS#7
 v1.5 structure.B<PEM> (the default) is a base64 encoded version of
 the DER form with header and footer lines.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read from or standard input if this
 option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Specifies the output filename to write to or standard output by
 default.
@@ -65,7 +65,7 @@ issuer names.
 Don't output the encoded version of the PKCS#7 structure (or certificates
 is B<-print_certs> is set).
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<pkcs7>
 to attempt to obtain a functional reference to the specified engine,

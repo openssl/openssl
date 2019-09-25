@@ -9,55 +9,55 @@ openssl-ca - sample minimal CA application
 B<openssl> B<ca>
 [B<-help>]
 [B<-verbose>]
-[B<-config filename>]
-[B<-name section>]
+[B<-config> I<filename>]
+[B<-name> I<section>]
 [B<-gencrl>]
-[B<-revoke file>]
-[B<-valid file>]
-[B<-status serial>]
+[B<-revoke> I<file>]
+[B<-valid> I<file>]
+[B<-status> I<serial>]
 [B<-updatedb>]
-[B<-crl_reason reason>]
-[B<-crl_hold instruction>]
-[B<-crl_compromise time>]
-[B<-crl_CA_compromise time>]
-[B<-crldays days>]
-[B<-crlhours hours>]
-[B<-crlexts section>]
-[B<-startdate date>]
-[B<-enddate date>]
-[B<-days arg>]
-[B<-md arg>]
-[B<-policy arg>]
-[B<-keyfile arg>]
-[B<-keyform PEM|DER>]
-[B<-key arg>]
-[B<-passin arg>]
-[B<-cert file>]
+[B<-crl_reason> I<reason>]
+[B<-crl_hold> I<instruction>]
+[B<-crl_compromise> I<time>]
+[B<-crl_CA_compromise> I<time>]
+[B<-crldays> I<days>]
+[B<-crlhours> I<hours>]
+[B<-crlexts> I<section>]
+[B<-startdate> I<date>]
+[B<-enddate> I<date>]
+[B<-days> I<arg>]
+[B<-md> I<arg>]
+[B<-policy> I<arg>]
+[B<-keyfile> I<arg>]
+[B<-keyform> B<DER>|B<PEM>]
+[B<-key> I<arg>]
+[B<-passin> I<arg>]
+[B<-cert> I<file>]
 [B<-selfsign>]
-[B<-in file>]
-[B<-out file>]
+[B<-in> I<file>]
+[B<-out> I<file>]
 [B<-notext>]
-[B<-outdir dir>]
+[B<-outdir> I<dir>]
 [B<-infiles>]
-[B<-spkac file>]
-[B<-ss_cert file>]
+[B<-spkac> I<file>]
+[B<-ss_cert> I<file>]
 [B<-preserveDN>]
 [B<-noemailDN>]
 [B<-batch>]
 [B<-msie_hack>]
-[B<-extensions section>]
-[B<-extfile section>]
-[B<-engine id>]
-[B<-subj arg>]
+[B<-extensions> I<section>]
+[B<-extfile> I<section>]
+[B<-engine> I<id>]
+[B<-subj> I<arg>]
 [B<-utf8>]
-[B<-sigopt nm:v>]
+[B<-sigopt> I<nm>:I<v>]
 [B<-create_serial>]
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-sm2-id string>]
-[B<-sm2-hex-id hex-string>]
+[B<-rand> I<file>]
+[B<-writerand> I<file>]
+[B<-sm2-id> I<string>]
+[B<-sm2-hex-id> I<hex-string>]
 
 =head1 DESCRIPTION
 
@@ -80,27 +80,27 @@ Print out a usage message.
 
 This prints extra details about the operations being performed.
 
-=item B<-config filename>
+=item B<-config> I<filename>
 
 Specifies the configuration file to use.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
 
-=item B<-name section>
+=item B<-name> I<section>
 
 Specifies the configuration file section to use (overrides
 B<default_ca> in the B<ca> section).
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 An input filename containing a single certificate request to be
 signed by the CA.
 
-=item B<-ss_cert filename>
+=item B<-ss_cert> I<filename>
 
 A single self-signed certificate to be signed by the CA.
 
-=item B<-spkac filename>
+=item B<-spkac> I<filename>
 
 A file containing a single Netscape signed public key and challenge
 and additional field values to be signed by the CA. See the B<SPKAC FORMAT>
@@ -111,13 +111,13 @@ section for information on the required input and output format.
 If present this should be the last option, all subsequent arguments
 are taken as the names of files containing certificate requests.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 The output file to output certificates to. The default is standard
 output. The certificate details will also be printed out to this
 file in PEM format (except that B<-spkac> outputs DER format).
 
-=item B<-outdir directory>
+=item B<-outdir> I<directory>
 
 The directory to output certificates to. The certificate will be
 written to a filename consisting of the serial number in hex with
@@ -127,21 +127,21 @@ written to a filename consisting of the serial number in hex with
 
 The CA certificate file.
 
-=item B<-keyfile filename>
+=item B<-keyfile> I<filename>
 
 The private key to sign requests with.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform> B<DER>|B<PEM>
 
 The format of the data in the private key file.
 The default is PEM.
 
-=item B<-sigopt nm:v>
+=item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
 
-=item B<-key password>
+=item B<-key> I<password>
 
 The password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g. Unix with
@@ -161,41 +161,41 @@ certificate appears among the entries in the certificate database
 serial number counter as all other certificates sign with the
 self-signed certificate.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
 The key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+see L<openssl(1)/Pass phrase options>.
 
 =item B<-notext>
 
 Don't output the text form of a certificate to the output file.
 
-=item B<-startdate date>
+=item B<-startdate> I<date>
 
 This allows the start date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
 YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
 both formats, seconds SS and timezone Z must be present.
 
-=item B<-enddate date>
+=item B<-enddate> I<date>
 
 This allows the expiry date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
 YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
 both formats, seconds SS and timezone Z must be present.
 
-=item B<-days arg>
+=item B<-days> I<arg>
 
 The number of days to certify the certificate for.
 
-=item B<-md alg>
+=item B<-md> I<alg>
 
 The message digest to use.
 Any digest supported by the OpenSSL B<dgst> command can be used. For signing
 algorithms that do not support a digest (i.e. Ed25519 and Ed448) any message
 digest that is set is ignored. This option also applies to CRLs.
 
-=item B<-policy arg>
+=item B<-policy> I<arg>
 
 This option defines the CA "policy" to use. This is a section in
 the configuration file which decides which fields should be mandatory
@@ -231,7 +231,7 @@ used in the configuration file to enable this behaviour.
 This sets the batch mode. In this mode no questions will be asked
 and all certificates will be certified automatically.
 
-=item B<-extensions section>
+=item B<-extensions> I<section>
 
 The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to B<x509_extensions>
@@ -241,20 +241,20 @@ is present (even if it is empty), then a V3 certificate is created. See the
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 
-=item B<-extfile file>
+=item B<-extfile> I<file>
 
 An additional configuration file to read certificate extensions from
 (using the default section unless the B<-extensions> option is also
 used).
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<ca>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
-=item B<-subj arg>
+=item B<-subj> I<arg>
 
 Supersedes subject name given in the request.
 The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
@@ -291,7 +291,7 @@ I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
 
-=item B<-rand file...>
+=item B<-rand> I<file>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -299,17 +299,17 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-sm2-id>
+=item B<-sm2-id> I<string>
 
 Specify the ID string to use when verifying an SM2 certificate. The ID string is
 required by the SM2 signature algorithm for signing and verification.
 
-=item B<-sm2-hex-id>
+=item B<-sm2-hex-id> I<hex-string>
 
 Specify a binary ID string to use when signing or verifying using an SM2
 certificate. The argument for this option is string of hexadecimal digits.
@@ -324,24 +324,24 @@ certificate. The argument for this option is string of hexadecimal digits.
 
 This option generates a CRL based on information in the index file.
 
-=item B<-crldays num>
+=item B<-crldays> I<num>
 
 The number of days before the next CRL is due. That is the days from
 now to place in the CRL nextUpdate field.
 
-=item B<-crlhours num>
+=item B<-crlhours> I<num>
 
 The number of hours before the next CRL is due.
 
-=item B<-revoke filename>
+=item B<-revoke> I<filename>
 
 A filename containing a certificate to revoke.
 
-=item B<-valid filename>
+=item B<-valid> I<filename>
 
 A filename containing a certificate to add a Valid certificate entry.
 
-=item B<-status serial>
+=item B<-status> I<serial>
 
 Displays the revocation status of the certificate with the specified
 serial number and exits.
@@ -350,7 +350,7 @@ serial number and exits.
 
 Updates the database index to purge expired certificates.
 
-=item B<-crl_reason reason>
+=item B<-crl_reason> I<reason>
 
 Revocation reason, where B<reason> is one of: B<unspecified>, B<keyCompromise>,
 B<CACompromise>, B<affiliationChanged>, B<superseded>, B<cessationOfOperation>,
@@ -360,24 +360,24 @@ insensitive. Setting any revocation reason will make the CRL v2.
 In practice B<removeFromCRL> is not particularly useful because it is only used
 in delta CRLs which are not currently implemented.
 
-=item B<-crl_hold instruction>
+=item B<-crl_hold> I<instruction>
 
 This sets the CRL revocation reason code to B<certificateHold> and the hold
 instruction to B<instruction> which must be an OID. Although any OID can be
 used only B<holdInstructionNone> (the use of which is discouraged by RFC2459)
 B<holdInstructionCallIssuer> or B<holdInstructionReject> will normally be used.
 
-=item B<-crl_compromise time>
+=item B<-crl_compromise> I<time>
 
 This sets the revocation reason to B<keyCompromise> and the compromise time to
 B<time>. B<time> should be in GeneralizedTime format that is B<YYYYMMDDHHMMSSZ>.
 
-=item B<-crl_CA_compromise time>
+=item B<-crl_CA_compromise> I<time>
 
 This is the same as B<crl_compromise> except the revocation reason is set to
 B<CACompromise>.
 
-=item B<-crlexts section>
+=item B<-crlexts> I<section>
 
 The section of the configuration file containing CRL extensions to
 include. If no CRL extension section is present then a V1 CRL is

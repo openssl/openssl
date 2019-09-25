@@ -9,8 +9,8 @@ openssl-mac - perform Message Authentication Code operations
 B<openssl mac>
 [B<-help>]
 [B<-macopt>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-binary>]
 B<mac_name>
 
@@ -29,14 +29,14 @@ file.
 
 Print a usage message.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 Input filename to calculate a MAC for, or standard input by default.
 Standard input is used if the filename is '-'.
 Files are expected to be in binary format, standard input uses hexadecimal text
 format.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Filename to output to, or standard output by default.
 
@@ -44,7 +44,7 @@ Filename to output to, or standard output by default.
 
 Output the MAC in binary form. Uses hexadecimal text format if not specified.
 
-=item B<-macopt nm:v>
+=item B<-macopt> I<nm>:I<v>
 
 Passes options to the MAC algorithm.
 A comprehensive list of controls can be found in the EVP_MAC implementation

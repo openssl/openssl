@@ -19,7 +19,7 @@ B<-h> server_url
 [B<-P> CA_path]
 [B<-r> file:file...]
 [B<-g> EGD_socket]
-[request]...
+[B<request...>
 
 =head1 DESCRIPTION
 
@@ -121,7 +121,7 @@ MS-Windows, B<,> for VMS and B<:> for all other platforms. (Optional)
 
 The name of an EGD socket to get random data from. (Optional)
 
-=item [request]...
+=item B<request...>
 
 List of files containing B<RFC 3161> DER-encoded time stamp requests. If no
 requests are specified only one request will be sent to the server and it will be

@@ -8,8 +8,8 @@ openssl-nseq - create or examine a Netscape certificate sequence
 
 B<openssl> B<nseq>
 [B<-help>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-toseq>]
 
 =head1 DESCRIPTION
@@ -27,12 +27,12 @@ sequence.
 
 Print out a usage message.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read or standard input if this
 option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Specifies the output filename or standard output by default.
 

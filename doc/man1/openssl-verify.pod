@@ -8,45 +8,45 @@ openssl-verify - Utility to verify certificates
 
 B<openssl> B<verify>
 [B<-help>]
-[B<-CAfile file>]
-[B<-CApath directory>]
+[B<-CAfile> I<file>]
+[B<-CApath> I<directory>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-allow_proxy_certs>]
-[B<-attime timestamp>]
+[B<-attime> I<timestamp>]
 [B<-check_ss_sig>]
-[B<-CRLfile file>]
+[B<-CRLfile> I<file>]
 [B<-crl_download>]
 [B<-crl_check>]
 [B<-crl_check_all>]
-[B<-engine id>]
+[B<-engine> I<id>]
 [B<-explicit_policy>]
 [B<-extended_crl>]
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
-[B<-nameopt option>]
+[B<-nameopt> I<option>]
 [B<-no_check_time>]
 [B<-partial_chain>]
-[B<-policy arg>]
+[B<-policy> I<arg>]
 [B<-policy_check>]
 [B<-policy_print>]
-[B<-purpose purpose>]
+[B<-purpose> I<purpose>]
 [B<-suiteB_128>]
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
 [B<-no_alt_chains>]
-[B<-untrusted file>]
-[B<-trusted file>]
+[B<-untrusted> I<file>]
+[B<-trusted> I<file>]
 [B<-use_deltas>]
 [B<-verbose>]
-[B<-auth_level level>]
-[B<-verify_depth num>]
-[B<-verify_email email>]
-[B<-verify_hostname hostname>]
-[B<-verify_ip ip>]
-[B<-verify_name name>]
+[B<-auth_level> I<level>]
+[B<-verify_depth> I<num>]
+[B<-verify_email> I<email>]
+[B<-verify_hostname> I<hostname>]
+[B<-verify_ip> I<ip>]
+[B<-verify_name> I<name>]
 [B<-x509_strict>]
 [B<-show_chain>]
 [B<-sm2-id string>]
@@ -66,12 +66,12 @@ The B<verify> command verifies certificate chains.
 
 Print out a usage message.
 
-=item B<-CAfile file>
+=item B<-CAfile> I<file>
 
 A B<file> of trusted certificates.
 The file should contain one or more certificates in PEM format.
 
-=item B<-CApath directory>
+=item B<-CApath> I<directory>
 
 A directory of trusted certificates. The certificates should have names
 of the form: hash.0 or have symbolic links to them of this
@@ -91,7 +91,7 @@ Do not load the trusted CA certificates from the default directory location.
 
 Allow the verification of proxy certificates.
 
-=item B<-attime timestamp>
+=item B<-attime> I<timestamp>
 
 Perform validation checks using time specified by B<timestamp> and not
 current system time. B<timestamp> is the number of seconds since
@@ -102,7 +102,7 @@ current system time. B<timestamp> is the number of seconds since
 Verify the signature on the self-signed root CA. This is disabled by default
 because it doesn't add any security.
 
-=item B<-CRLfile file>
+=item B<-CRLfile> I<file>
 
 The B<file> should contain one or more CRLs in PEM format.
 This option can be specified more than once to include CRLs from multiple
@@ -122,7 +122,7 @@ If a valid CRL cannot be found an error occurs.
 Checks the validity of B<all> certificates in the chain by attempting
 to look up valid CRLs.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine B<id> will cause L<verify(1)> to attempt to load the
 specified engine.
@@ -154,7 +154,7 @@ Set policy variable inhibit-any-policy (see RFC5280).
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
 
-=item B<-nameopt option>
+=item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
@@ -164,7 +164,7 @@ set multiple options. See the L<x509(1)> manual page for details.
 =item B<-no_check_time>
 
 This option suppresses checking the validity period of certificates and CRLs
-against the current time. If option B<-attime timestamp> is used to specify
+against the current time. If option B<-attime> is used to specify
 a verification time, the check is not suppressed.
 
 =item B<-partial_chain>
@@ -173,7 +173,7 @@ Allow verification to succeed even if a I<complete> chain cannot be built to a
 self-signed trust-anchor, provided it is possible to construct a chain to a
 trusted certificate that might not be self-signed.
 
-=item B<-policy arg>
+=item B<-policy> I<arg>
 
 Enable policy processing and add B<arg> to the user-initial-policy-set (see
 RFC5280). The policy B<arg> can be an object name an OID in numeric form.
@@ -187,7 +187,7 @@ Enables certificate policy processing.
 
 Print out diagnostics related to policy processing.
 
-=item B<-purpose purpose>
+=item B<-purpose> I<purpose>
 
 The intended use for the certificate. If this option is not specified,
 B<verify> will not consider certificate purpose during chain verification.
@@ -220,7 +220,7 @@ trust store to see if an alternative chain can be found that is trusted.
 As of OpenSSL 1.1.0, with B<-trusted_first> always on, this option has no
 effect.
 
-=item B<-untrusted file>
+=item B<-untrusted> I<file>
 
 A B<file> of additional untrusted certificates (intermediate issuer CAs) used
 to construct a certificate chain from the subject certificate to a trust-anchor.
@@ -228,7 +228,7 @@ The B<file> should contain one or more certificates in PEM format.
 This option can be specified more than once to include untrusted certificates
 from multiple B<files>.
 
-=item B<-trusted file>
+=item B<-trusted> I<file>
 
 A B<file> of trusted certificates, which must be self-signed, unless the
 B<-partial_chain> option is specified.
@@ -250,7 +250,7 @@ Enable support for delta CRLs.
 
 Print extra information about the operations being performed.
 
-=item B<-auth_level level>
+=item B<-auth_level> I<level>
 
 Set the certificate chain authentication security level to B<level>.
 The authentication security level determines the acceptable signature and
@@ -268,29 +268,29 @@ Security level 1 requires at least 80-bit-equivalent security and is broadly
 interoperable, though it will, for example, reject MD5 signatures or RSA keys
 shorter than 1024 bits.
 
-=item B<-verify_depth num>
+=item B<-verify_depth> I<num>
 
 Limit the certificate chain to B<num> intermediate CA certificates.
 A maximal depth chain can have up to B<num+2> certificates, since neither the
 end-entity certificate nor the trust-anchor certificate count against the
 B<-verify_depth> limit.
 
-=item B<-verify_email email>
+=item B<-verify_email> I<email>
 
 Verify if the B<email> matches the email address in Subject Alternative Name or
 the email in the subject Distinguished Name.
 
-=item B<-verify_hostname hostname>
+=item B<-verify_hostname> I<hostname>
 
 Verify if the B<hostname> matches DNS name in Subject Alternative Name or
 Common Name in the subject certificate.
 
-=item B<-verify_ip ip>
+=item B<-verify_ip> I<ip>
 
 Verify if the B<ip> matches the IP address in Subject Alternative Name of
 the subject certificate.
 
-=item B<-verify_name name>
+=item B<-verify_name> I<name>
 
 Use default verification policies like trust model and required certificate
 policies identified by B<name>.

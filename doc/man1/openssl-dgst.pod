@@ -7,25 +7,25 @@ openssl-dgst - perform digest operations
 =head1 SYNOPSIS
 
 B<openssl dgst>
-[B<-I<digest>>]
+[B<->I<digest>]
 [B<-help>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]
 [B<-binary>]
 [B<-r>]
-[B<-out filename>]
-[B<-sign filename>]
-[B<-keyform arg>]
-[B<-passin arg>]
-[B<-verify filename>]
-[B<-prverify filename>]
-[B<-signature filename>]
-[B<-sigopt nm:v>]
-[B<-hmac key>]
+[B<-out> I<filename>]
+[B<-sign> I<filename>]
+[B<-keyform> I<arg>]
+[B<-passin> I<arg>]
+[B<-verify> I<filename>]
+[B<-prverify> I<filename>]
+[B<-signature> I<filename>]
+[B<-sigopt> I<nm>:I<v>]
+[B<-hmac> I<key>]
 [B<-fips-fingerprint>]
-[B<-rand file...>]
-[B<-engine id>]
+[B<-rand> I<file...>]
+[B<-engine> I<id>]
 [B<-engine_impl>]
 [B<file...>]
 
@@ -52,10 +52,10 @@ command.
 
 Print out a usage message.
 
-=item B<-I<digest>>
+=item B<->I<digest>
 
 Specifies name of a supported digest to be used. To see the list of
-supported digests, use the command I<list --digest-commands>.
+supported digests, use the command C<list --digest-commands>.
 
 =item B<-c>
 
@@ -81,52 +81,52 @@ Output the digest or signature in binary form.
 Output the digest in the "coreutils" format, including newlines.
 Used by programs like B<sha1sum>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Filename to output to, or standard output by default.
 
-=item B<-sign filename>
+=item B<-sign> I<filename>
 
 Digitally sign the digest using the private key in "filename". Note this option
 does not support Ed25519 or Ed448 private keys. Use the B<pkeyutl> command
 instead for this.
 
-=item B<-keyform arg>
+=item B<-keyform> I<arg>
 
 Specifies the key format to sign digest with. The DER, PEM, P12,
 and ENGINE formats are supported.
 
-=item B<-sigopt nm:v>
+=item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
 The private key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+see L<openssl(1)/Pass phrase options>.
 
-=item B<-verify filename>
+=item B<-verify> I<filename>
 
 Verify the signature using the public key in "filename".
 The output is either "Verification OK" or "Verification Failure".
 
-=item B<-prverify filename>
+=item B<-prverify> I<filename>
 
 Verify the signature using the private key in "filename".
 
-=item B<-signature filename>
+=item B<-signature> I<filename>
 
 The actual signature to verify.
 
-=item B<-hmac key>
+=item B<-hmac> I<key>
 
 Create a hashed MAC using "key".
 
 The L<openssl-mac(1)> command should be preferred to using this command line
 option.
 
-=item B<-mac alg>
+=item B<-mac> I<alg>
 
 Create MAC (keyed Message Authentication Code). The most popular MAC
 algorithm is HMAC (hash-based MAC), but there are other MAC algorithms
@@ -137,7 +137,7 @@ via B<-macopt> parameter.
 The L<openssl-mac(1)> command should be preferred to using this command line
 option.
 
-=item B<-macopt nm:v>
+=item B<-macopt> I<nm>:I<v>
 
 Passes options to MAC algorithm, specified by B<-mac> key.
 Following options are supported by both by B<HMAC> and B<gost-mac>:
@@ -161,7 +161,7 @@ for example exactly 32 chars for gost-mac.
 The L<openssl-mac(1)> command should be preferred to using this command line
 option.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -169,7 +169,7 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
@@ -178,7 +178,7 @@ This can be used with a subsequent B<-rand> flag.
 
 Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Use engine B<id> for operations (including private key storage).
 This engine is not used as source for digest algorithms, unless it is
