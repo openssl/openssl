@@ -1077,6 +1077,7 @@ done:
 /* Test getting and setting parameters on an EVP_PKEY_CTX */
 static int test_EVP_PKEY_CTX_get_set_params(void)
 {
+    EVP_MD_CTX *mdctx = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_SIGNATURE *dsaimpl = NULL;
     const OSSL_PARAM *params;
@@ -1087,6 +1088,7 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     int ret = 0;
     const EVP_MD *md;
     size_t mdsize = SHA512_DIGEST_LENGTH;
+    char ssl3ms[48];
 
     /*
      * Setup the parameters for our DSA object. For our purposes they don't have
@@ -1169,6 +1171,35 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     if (!TEST_int_gt(EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()), 0)
             || !TEST_int_gt(EVP_PKEY_CTX_get_signature_md(ctx, &md), 0)
             || !TEST_ptr_eq(md, EVP_sha256()))
+        goto err;
+
+    /*
+     * Test getting MD parameters via an associated EVP_PKEY_CTX
+     */
+    mdctx = EVP_MD_CTX_new();
+    if (!TEST_ptr(mdctx)
+            || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", NULL,
+                                                pkey, dsaimpl)))
+        goto err;
+
+    /*
+     * We now have an EVP_MD_CTX with an EVP_PKEY_CTX inside it. We should be
+     * able to obtain the digest's settable parameters from the provider.
+     */
+    params = EVP_MD_CTX_settable_params(mdctx);
+    if (!TEST_ptr(params)
+            || !TEST_int_eq(strcmp(params[0].key, OSSL_DIGEST_PARAM_SSL3_MS), 0)
+               /* The final key should be NULL */
+            || !TEST_ptr_null(params[1].key))
+        goto err;
+
+    param = ourparams;
+    memset(ssl3ms, 0, sizeof(ssl3ms));
+    *param++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
+                                                 ssl3ms, sizeof(ssl3ms));
+    *param++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(EVP_MD_CTX_set_params(mdctx, ourparams)))
         goto err;
 
     ret = 1;
