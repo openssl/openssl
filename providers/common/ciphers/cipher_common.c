@@ -68,16 +68,8 @@ int cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(cipher_generic)
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(cipher_generic)
 
-static const OSSL_PARAM cipher_known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),
-    OSSL_PARAM_END
-};
-const OSSL_PARAM *cipher_generic_settable_ctx_params(void)
-{
-    return cipher_known_settable_ctx_params;
-}
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(cipher_generic)
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(cipher_generic)
 
 /*-
  * AEAD cipher functions for OSSL_PARAM gettables and settables

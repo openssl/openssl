@@ -269,7 +269,10 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_sm4_ofb128:
         case NID_rc4:
         case NID_rc4_40:
-        break;
+        case NID_rc5_cbc:
+        case NID_rc5_ecb:
+        case NID_rc5_cfb64:
+        case NID_rc5_ofb64:
         default:
             goto legacy;
         }
@@ -1069,6 +1072,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     int ret = EVP_CTRL_RET_UNSUPPORTED;
     int set_params = 1;
     size_t sz = arg;
+    unsigned int i;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (ctx == NULL || ctx->cipher == NULL) {
@@ -1108,6 +1112,14 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         params[0] =
             OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED,
                                               ptr, sz);
+        break;
+    case EVP_CTRL_GET_RC5_ROUNDS:
+        set_params = 0; /* Fall thru */
+    case EVP_CTRL_SET_RC5_ROUNDS:
+        if (arg < 0)
+            return 0;
+        i = (unsigned int)arg;
+        params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_ROUNDS, &i);
         break;
     case EVP_CTRL_AEAD_GET_TAG:
         set_params = 0; /* Fall thru */

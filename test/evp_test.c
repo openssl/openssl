@@ -486,6 +486,7 @@ typedef struct cipher_data_st {
     unsigned char *key;
     size_t key_len;
     unsigned char *iv;
+    unsigned int rounds;
     size_t iv_len;
     unsigned char *plaintext;
     size_t plaintext_len;
@@ -559,6 +560,13 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
 
     if (strcmp(keyword, "Key") == 0)
         return parse_bin(value, &cdat->key, &cdat->key_len);
+    if (strcmp(keyword, "Rounds") == 0) {
+        i = atoi(value);
+        if (i < 0)
+            return -1;
+        cdat->rounds = (unsigned int)i;
+        return 1;
+    }
     if (strcmp(keyword, "IV") == 0)
         return parse_bin(value, &cdat->iv, &cdat->iv_len);
     if (strcmp(keyword, "Plaintext") == 0)
@@ -680,6 +688,15 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                      expected->tag_len, tag))
                 goto err;
+        }
+    }
+
+    if (expected->rounds > 0) {
+        int  rounds = (int)expected->rounds;
+
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC5_ROUNDS, rounds, NULL)) {
+            t->err = "INVALID_ROUNDS";
+            goto err;
         }
     }
 

@@ -55,4 +55,9 @@ IF[{- !$disabled{rc4} -}]
       cipher_rc4.c cipher_rc4_hw.c
 ENDIF
 
+IF[{- !$disabled{rc5} -}]
+  SOURCE[../../../libcrypto]=\
+      cipher_rc5.c cipher_rc5_hw.c
+ENDIF
+
 INCLUDE[../../../libcrypto]=. ../../../crypto

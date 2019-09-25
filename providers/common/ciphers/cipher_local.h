@@ -9,21 +9,5 @@
 
 #include "internal/ciphers/ciphercommon.h"
 
-#define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(name)                         \
-static const OSSL_PARAM name##_known_gettable_ctx_params[] = {                 \
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),                         \
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),                          \
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),                          \
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),                              \
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
-
-#define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(name)                           \
-    OSSL_PARAM_END                                                             \
-};                                                                             \
-const OSSL_PARAM * name##_gettable_ctx_params(void)                            \
-{                                                                              \
-    return name##_known_gettable_ctx_params;                                   \
-}
-
 void padblock(unsigned char *buf, size_t *buflen, size_t blocksize);
 int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize);
