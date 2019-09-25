@@ -30,6 +30,7 @@ L<EVP_MAC(3)/PARAMETERS>.
 All these parameters can be set with EVP_MAC_CTX_set_params().
 Furthermore, the "size" parameter can be retrieved with
 EVP_MAC_CTX_get_params(), or with EVP_MAC_size().
+The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =over 4
 
@@ -37,7 +38,7 @@ EVP_MAC_CTX_get_params(), or with EVP_MAC_size().
 
 =item B<OSSL_MAC_PARAM_CUSTOM> ("custom") <octet string>
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <size_t>
+=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned integer>
 
 =item B<OSSL_MAC_PARAM_XOF>
 
