@@ -29,9 +29,7 @@ sub shlib_version_as_filename {
 sub sharedname {
     return platform::BASE::__concat(platform::BASE->sharedname($_[1]),
                                     "-",
-                                    $_[0]->shlib_version_as_filename(),
-                                    ($config{target} eq "mingw64"
-                                         ? "-x64" : ""));
+                                    $_[0]->shlib_version_as_filename());
 }
 
 # With Mingw and other DLL producers, there isn't really any "simpler"
