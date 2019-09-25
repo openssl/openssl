@@ -37,7 +37,7 @@ static int cipher_hw_aes_ocb_generic_initkey(PROV_CIPHER_CTX *vctx,
         OCB_SET_KEY_FN(HWAES_set_encrypt_key, HWAES_set_decrypt_key,
                        HWAES_encrypt, HWAES_decrypt,
                        HWAES_ocb_encrypt, HWAES_ocb_decrypt);
-    }
+    } else
 # endif
 # ifdef VPAES_CAPABLE
     if (VPAES_CAPABLE) {
