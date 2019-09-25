@@ -39,6 +39,38 @@ static void *rc2_dupctx(void *ctx)
     return ret;
 }
 
+# define RC2_40_MAGIC    0xa0
+# define RC2_64_MAGIC    0x78
+# define RC2_128_MAGIC   0x3a
+
+static int rc2_keybits_to_magic(int keybits)
+{
+    switch (keybits) {
+    case 128:
+        return RC2_128_MAGIC;
+    case 64:
+        return RC2_64_MAGIC;
+    case 40:
+        return RC2_40_MAGIC;
+    }
+    ERR_raise(ERR_LIB_PROV, PROV_R_UNSUPPORTED_KEY_SIZE);
+    return 0;
+}
+
+static int rc2_magic_to_keybits(int magic)
+{
+    switch (magic) {
+    case RC2_128_MAGIC:
+        return 128;
+    case RC2_64_MAGIC:
+        return 64;
+    case RC2_40_MAGIC:
+        return 40;
+    }
+    ERR_raise(ERR_LIB_PROV, PROV_R_UNSUPPORTED_KEY_SIZE);
+    return 0;
+}
+
 static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_RC2_CTX *ctx = (PROV_RC2_CTX *)vctx;
@@ -50,6 +82,45 @@ static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->key_bits)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALG_ID);
+    if (p != NULL) {
+        long num;
+        int i;
+        ASN1_TYPE *type;
+        unsigned char *d = p->data;
+        unsigned char **dd = d == NULL ? NULL : &d;
+
+        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if ((type = ASN1_TYPE_new()) == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+
+        /* Is this the original IV or the running IV? */
+        num = rc2_keybits_to_magic(ctx->key_bits);
+        if (!ASN1_TYPE_set_int_octetstring(type, num,
+                                           ctx->base.iv, ctx->base.ivlen)) {
+            ASN1_TYPE_free(type);
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        /*
+         * IF the caller has a buffer, we pray to the gods they got the
+         * size right.  There's no way to tell the i2d functions...
+         */
+        i = i2d_ASN1_TYPE(type, dd);
+        if (i >= 0)
+            p->return_size = (size_t)i;
+
+        ASN1_TYPE_free(type);
+        if (i < 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
     }
     return 1;
 }
@@ -68,7 +139,27 @@ static int rc2_set_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALG_ID);
+    if (p != NULL) {
+        ASN1_TYPE *type = NULL;
+        long num = 0;
+        const unsigned char *d = p->data;
+        int ret = 1;
 
+        if (p->data_type != OSSL_PARAM_OCTET_STRING
+            || (type = d2i_ASN1_TYPE(NULL, &d, p->data_size)) == NULL
+            || ((size_t)ASN1_TYPE_get_int_octetstring(type, &num,
+                                                      ctx->base.iv,
+                                                      ctx->base.ivlen)
+                != ctx->base.ivlen)
+            || (ctx->key_bits = rc2_magic_to_keybits(num)) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            ret = 0;
+        }
+        ASN1_TYPE_free(type);
+        if (ret == 0)
+            return 0;
+    }
     return 1;
 }
 

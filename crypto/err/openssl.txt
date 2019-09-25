@@ -2716,6 +2716,7 @@ PROV_R_TAG_NOT_NEEDED:120:tag not needed
 PROV_R_UNABLE_TO_LOAD_SHA1:143:unable to load sha1
 PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
 PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
+PROV_R_UNSUPPORTED_KEY_SIZE:150:unsupported key size
 PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type
 PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS:152:unsupported number of rounds
 PROV_R_VALUE_ERROR:138:value error
