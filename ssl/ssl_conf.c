@@ -94,6 +94,10 @@ struct ssl_conf_ctx_st {
     int *min_version;
     /* Pointer to SSL or SSL_CTX max_version field or NULL if none */
     int *max_version;
+    /* Default version mask for cipher_list if none provided, will be set to
+     * all versions up to TLSv1.2
+     */
+    int version_mask;
     /* Current flag table being worked on */
     const ssl_flag_tbl *tbl;
     /* Size of table */
@@ -255,9 +259,11 @@ static int cmd_CipherString(SSL_CONF_CTX *cctx, const char *value)
     int rv = 1;
 
     if (cctx->ctx)
-        rv = SSL_CTX_set_cipher_list(cctx->ctx, value);
+        rv = SSL_CTX_set_cipher_list_and_mask(cctx->ctx, value,
+                                              cctx->version_mask);
     if (cctx->ssl)
-        rv = SSL_set_cipher_list(cctx->ssl, value);
+        rv = SSL_set_cipher_list_and_mask(cctx->ssl, value,
+                                          cctx->version_mask);
     return rv > 0;
 }
 
@@ -270,6 +276,11 @@ static int cmd_Ciphersuites(SSL_CONF_CTX *cctx, const char *value)
     if (cctx->ssl)
         rv = SSL_set_ciphersuites(cctx->ssl, value);
     return rv > 0;
+}
+
+static int cmd_VersionMask(SSL_CONF_CTX *cctx, const char *value)
+{
+    return OPENSSL_version_list(value, &cctx->version_mask) > 0;
 }
 
 static int cmd_Protocol(SSL_CONF_CTX *cctx, const char *value)
@@ -635,6 +646,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 #endif
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
     SSL_CONF_CMD_STRING(Ciphersuites, "ciphersuites", 0),
+    SSL_CONF_CMD_STRING(VersionMask, "version_mask", 0),
     SSL_CONF_CMD_STRING(Protocol, NULL, 0),
     SSL_CONF_CMD_STRING(MinProtocol, "min_protocol", 0),
     SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", 0),
@@ -955,6 +967,7 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
 {
     cctx->ssl = ssl;
     cctx->ctx = NULL;
+    OPENSSL_version_list(NULL, &cctx->version_mask);
     if (ssl) {
         cctx->poptions = &ssl->options;
         cctx->min_version = &ssl->min_proto_version;
@@ -974,6 +987,7 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
 {
     cctx->ctx = ctx;
     cctx->ssl = NULL;
+    OPENSSL_version_list(NULL, &cctx->version_mask);
     if (ctx) {
         cctx->poptions = &ctx->options;
         cctx->min_version = &ctx->min_proto_version;

@@ -27,6 +27,7 @@ typedef enum OPTION_choice {
     OPT_PSK,
     OPT_SRP,
     OPT_CIPHERSUITES,
+    OPT_DEFAULT_CIPHERLIST_VERSION,
     OPT_V, OPT_UPPER_V, OPT_S
 } OPTION_CHOICE;
 
@@ -60,6 +61,8 @@ const OPTIONS ciphers_options[] = {
     {"convert", OPT_CONVERT, 's', "Convert standard name into OpenSSL name"},
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Configure the TLSv1.3 ciphersuites to use"},
+    {"version_mask", OPT_DEFAULT_CIPHERLIST_VERSION, 's',
+     "Configure default version mask for cipherlist to use"},
     {NULL}
 };
 
@@ -86,6 +89,7 @@ int ciphers_main(int argc, char **argv)
     STACK_OF(SSL_CIPHER) *sk = NULL;
     const SSL_METHOD *meth = TLS_server_method();
     int ret = 1, i, verbose = 0, Verbose = 0, use_supported = 0;
+    int default_version_mask = 0;
     int stdname = 0;
 #ifndef OPENSSL_NO_PSK
     int psk = 0;
@@ -95,6 +99,7 @@ int ciphers_main(int argc, char **argv)
 #endif
     const char *p;
     char *ciphers = NULL, *prog, *convert = NULL, *ciphersuites = NULL;
+    char *default_version_str = NULL;
     char buf[512];
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0;
@@ -159,6 +164,9 @@ int ciphers_main(int argc, char **argv)
         case OPT_CIPHERSUITES:
             ciphersuites = opt_arg();
             break;
+        case OPT_DEFAULT_CIPHERLIST_VERSION:
+            default_version_str = opt_arg();
+            break;
         }
     }
     argv = opt_rest();
@@ -192,13 +200,18 @@ int ciphers_main(int argc, char **argv)
         SSL_CTX_set_srp_client_pwd_callback(ctx, dummy_srp);
 #endif
 
+    if (default_version_str != NULL && !OPENSSL_version_list(default_version_str,
+                                                             &default_version_mask)) {
+        BIO_printf(bio_err, "Error in default version mask\n");
+    }
+
     if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites)) {
         BIO_printf(bio_err, "Error setting TLSv1.3 ciphersuites\n");
         goto err;
     }
 
     if (ciphers != NULL) {
-        if (!SSL_CTX_set_cipher_list(ctx, ciphers)) {
+        if (!SSL_CTX_set_cipher_list_and_mask(ctx, ciphers, default_version_mask)) {
             BIO_printf(bio_err, "Error in cipher list\n");
             goto err;
         }

@@ -2297,7 +2297,8 @@ __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method
                                                     STACK_OF(SSL_CIPHER) **cipher_list,
                                                     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                                                     const char *rule_str,
-                                                    CERT *c);
+                                                    CERT *c,
+                                                    int default_version_mask);
 __owur int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format);
 __owur int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
                                 STACK_OF(SSL_CIPHER) **skp,

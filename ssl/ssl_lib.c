@@ -668,7 +668,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
                                 ctx->tls13_ciphersuites,
                                 &(ctx->cipher_list),
                                 &(ctx->cipher_list_by_id),
-                                OSSL_default_cipher_list(), ctx->cert);
+                                OSSL_default_cipher_list(), ctx->cert, 0);
     if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
         SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
@@ -2674,11 +2674,18 @@ static int cipher_list_tls12_num(STACK_OF(SSL_CIPHER) *sk)
 /** specify the ciphers to be used by default by the SSL_CTX */
 int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
+    return SSL_CTX_set_cipher_list_and_mask(ctx, str, 0);
+}
+
+/** specify the ciphers and version mask to be used by default by the SSL_CTX */
+int SSL_CTX_set_cipher_list_and_mask(SSL_CTX *ctx, const char *str,
+                                     int default_version_mask)
+{
     STACK_OF(SSL_CIPHER) *sk;
 
     sk = ssl_create_cipher_list(ctx->method, ctx->tls13_ciphersuites,
                                 &ctx->cipher_list, &ctx->cipher_list_by_id, str,
-                                ctx->cert);
+                                ctx->cert, default_version_mask);
     /*
      * ssl_create_cipher_list may return an empty stack if it was unable to
      * find a cipher matching the given rule string (for example if the rule
@@ -2698,11 +2705,18 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 /** specify the ciphers to be used by the SSL */
 int SSL_set_cipher_list(SSL *s, const char *str)
 {
+    return SSL_set_cipher_list_and_mask(s, str, 0);
+}
+
+/** specify the ciphers and version mask to be used by the SSL */
+int SSL_set_cipher_list_and_mask(SSL *s, const char *str,
+                                 int default_version_mask)
+{
     STACK_OF(SSL_CIPHER) *sk;
 
     sk = ssl_create_cipher_list(s->ctx->method, s->tls13_ciphersuites,
                                 &s->cipher_list, &s->cipher_list_by_id, str,
-                                s->cert);
+                                s->cert, default_version_mask);
     /* see comment in SSL_CTX_set_cipher_list */
     if (sk == NULL)
         return 0;
@@ -3094,7 +3108,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if (!ssl_create_cipher_list(ret->method,
                                 ret->tls13_ciphersuites,
                                 &ret->cipher_list, &ret->cipher_list_by_id,
-                                OSSL_default_cipher_list(), ret->cert)
+                                OSSL_default_cipher_list(), ret->cert, 0)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
         goto err2;

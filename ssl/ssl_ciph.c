@@ -1073,7 +1073,8 @@ int OPENSSL_version_list(const char *str, int *version_mask)
 static int ssl_cipher_process_rulestr(const char *rule_str,
                                       CIPHER_ORDER **head_p,
                                       CIPHER_ORDER **tail_p,
-                                      const SSL_CIPHER **ca_list, CERT *c)
+                                      const SSL_CIPHER **ca_list, CERT *c,
+                                      int default_version_mask)
 {
     uint32_t alg_mkey, alg_auth, alg_enc, alg_mac, algo_strength;
     int min_tls;
@@ -1083,6 +1084,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
     char ch;
     int parsed_len, version_mask;
 
+    /* No default mask specified, create new allowing versions up to TLS 1.2 */
+    if (!default_version_mask)
+        OPENSSL_version_list(NULL, &default_version_mask);
     retval = 1;
     l = rule_str;
     for ( ; ; ) {
@@ -1117,7 +1121,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
         alg_mac = 0;
         min_tls = 0;
         algo_strength = 0;
-
+        version_mask = default_version_mask;
         for (;;) {
             ch = *l;
             buf = l;
@@ -1537,7 +1541,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                                              STACK_OF(SSL_CIPHER) **cipher_list,
                                              STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                                              const char *rule_str,
-                                             CERT *c)
+                                             CERT *c, int default_version_mask)
 {
     int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases, i;
     uint32_t disabled_mkey, disabled_auth, disabled_enc, disabled_mac;
@@ -1703,15 +1707,21 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     ok = 1;
     rule_p = rule_str;
     if (strncmp(rule_str, "DEFAULT", 7) == 0) {
-        ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
-                                        &head, &tail, ca_list, c);
         rule_p += 7;
+        if (*rule_p == '|') {
+            rule_p++;
+            rule_p += OPENSSL_version_list(rule_p, &default_version_mask);
+        }
+        ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
+                                        &head, &tail, ca_list, c,
+                                        default_version_mask);
         if (*rule_p == ':')
             rule_p++;
     }
 
     if (ok && (strlen(rule_p) > 0))
-        ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, c);
+        ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, c,
+                                        default_version_mask);
 
     OPENSSL_free(ca_list);      /* Not needed anymore */
 

@@ -1518,6 +1518,9 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int OPENSSL_version_list(const char *str, int *version_mask);
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
+__owur int SSL_CTX_set_cipher_list_and_mask(SSL_CTX *,
+                                            const char *str,
+                                            int default_version_mask);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
 void SSL_CTX_free(SSL_CTX *);
@@ -1564,6 +1567,9 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
 __owur BIO *SSL_get_rbio(const SSL *s);
 __owur BIO *SSL_get_wbio(const SSL *s);
 __owur int SSL_set_cipher_list(SSL *s, const char *str);
+__owur int SSL_set_cipher_list_and_mask(SSL *s,
+                                        const char *str,
+                                        int default_version_mask);
 __owur int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str);
 __owur int SSL_set_ciphersuites(SSL *s, const char *str);
 void SSL_set_read_ahead(SSL *s, int yes);

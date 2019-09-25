@@ -156,6 +156,7 @@
         OPT_S_PRIORITIZE_CHACHA, \
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
+        OPT_S_CIPHERLIST_VERSION, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S_MINPROTO, OPT_S_MAXPROTO, \
         OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
@@ -201,6 +202,8 @@
             "Elliptic curve used for ECDHE (server-side only)" }, \
         {"cipher", OPT_S_CIPHER, 's', "Specify TLSv1.2 and below cipher list to be used"}, \
         {"ciphersuites", OPT_S_CIPHERSUITES, 's', "Specify TLSv1.3 ciphersuites to be used"}, \
+        {"version_mask", OPT_S_CIPHERLIST_VERSION, 's', \
+            "Configure default version mask for cipherlist to use"}, \
         {"min_protocol", OPT_S_MINPROTO, 's', "Specify the minimum protocol version to be used"}, \
         {"max_protocol", OPT_S_MAXPROTO, 's', "Specify the maximum protocol version to be used"}, \
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
@@ -236,6 +239,7 @@
         case OPT_S_NAMEDCURVE: \
         case OPT_S_CIPHER: \
         case OPT_S_CIPHERSUITES: \
+        case OPT_S_CIPHERLIST_VERSION: \
         case OPT_S_RECORD_PADDING: \
         case OPT_S_NO_RENEGOTIATION: \
         case OPT_S_MINPROTO: \

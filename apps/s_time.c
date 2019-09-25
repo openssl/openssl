@@ -44,7 +44,9 @@ static const size_t fmt_http_get_cmd_size = sizeof(fmt_http_get_cmd) - 2;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
+    OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES,
+    OPT_DEFAULT_CIPHERLIST_VERSION,
+    OPT_CERT, OPT_NAMEOPT, OPT_KEY,
     OPT_CAPATH, OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NEW, OPT_REUSE,
     OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
     OPT_WWW
@@ -57,6 +59,8 @@ const OPTIONS s_time_options[] = {
     {"cipher", OPT_CIPHER, 's', "TLSv1.2 and below cipher list to be used"},
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Specify TLSv1.3 ciphersuites to be used"},
+    {"version_mask", OPT_DEFAULT_CIPHERLIST_VERSION, 's',
+     "Configure default version mask for cipherlist to use"},
     {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
@@ -95,6 +99,7 @@ int s_time_main(int argc, char **argv)
     const SSL_METHOD *meth = NULL;
     char *CApath = NULL, *CAfile = NULL, *cipher = NULL, *ciphersuites = NULL;
     char *www_path = NULL;
+    char *default_version_str = NULL;
     char *host = SSL_CONNECT_NAME, *certfile = NULL, *keyfile = NULL, *prog;
     double totalTime = 0.0;
     int noCApath = 0, noCAfile = 0;
@@ -102,6 +107,7 @@ int s_time_main(int argc, char **argv)
     long bytes_read = 0, finishtime = 0;
     OPTION_CHOICE o;
     int max_version = 0, ver, buf_len;
+    int default_version_mask = 0;
     size_t buf_size;
 
     meth = TLS_client_method();
@@ -161,6 +167,9 @@ int s_time_main(int argc, char **argv)
         case OPT_CIPHERSUITES:
             ciphersuites = opt_arg();
             break;
+        case OPT_DEFAULT_CIPHERLIST_VERSION:
+            default_version_str = opt_arg();
+            break;
         case OPT_BUGS:
             st_bugs = 1;
             break;
@@ -198,7 +207,12 @@ int s_time_main(int argc, char **argv)
 
     if (st_bugs)
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-    if (cipher != NULL && !SSL_CTX_set_cipher_list(ctx, cipher))
+    if (default_version_str != NULL && !OPENSSL_version_list(default_version_str,
+                                                             &default_version_mask)) {
+        goto end;
+    }
+    if (cipher != NULL &&
+        !SSL_CTX_set_cipher_list_and_mask(ctx, cipher, default_version_mask))
         goto end;
     if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites))
         goto end;
