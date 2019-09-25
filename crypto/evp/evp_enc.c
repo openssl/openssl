@@ -267,7 +267,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_sm4_ctr:
         case NID_sm4_cfb128:
         case NID_sm4_ofb128:
-            break;
+        case NID_rc4:
+        case NID_rc4_40:
+        break;
         default:
             goto legacy;
         }
