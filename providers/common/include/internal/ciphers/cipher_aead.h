@@ -10,10 +10,12 @@
 #define UNINITIALISED_SIZET ((size_t)-1)
 
 /* TODO(3.0) Figure out what flags are really needed */
-#define AEAD_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_DEFAULT_ASN1     \
-                       | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER      \
-                       | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT        \
-                       | EVP_CIPH_CUSTOM_COPY)
+#define AEAD_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER           \
+                    | EVP_CIPH_CUSTOM_IV                \
+                    | EVP_CIPH_FLAG_CUSTOM_CIPHER       \
+                    | EVP_CIPH_ALWAYS_CALL_INIT         \
+                    | EVP_CIPH_CTRL_INIT                \
+                    | EVP_CIPH_CUSTOM_COPY)
 
 #define IMPLEMENT_aead_cipher(alg, lc, UCMODE, flags, kbits, blkbits, ivbits)  \
 static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lc##_get_params;         \

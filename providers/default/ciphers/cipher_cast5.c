@@ -12,6 +12,8 @@
 #include "cipher_cast.h"
 #include "internal/provider_algs.h"
 
+#define CAST5_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
+
 static OSSL_OP_cipher_freectx_fn cast5_freectx;
 static OSSL_OP_cipher_dupctx_fn cast5_dupctx;
 
@@ -37,10 +39,10 @@ static void *cast5_dupctx(void *ctx)
 }
 
 /* cast5128ecb_functions */
-IMPLEMENT_generic_cipher(cast5, CAST, ecb, ECB, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, block)
+IMPLEMENT_generic_cipher(cast5, CAST, ecb, ECB, CAST5_FLAGS, 128, 64, 0, block)
 /* cast5128cbc_functions */
-IMPLEMENT_generic_cipher(cast5, CAST, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 64, block)
+IMPLEMENT_generic_cipher(cast5, CAST, cbc, CBC, CAST5_FLAGS, 128, 64, 64, block)
 /* cast564ofb64_functions */
-IMPLEMENT_generic_cipher(cast5, CAST, ofb64, OFB, EVP_CIPH_VARIABLE_LENGTH, 64, 8, 64, stream)
+IMPLEMENT_generic_cipher(cast5, CAST, ofb64, OFB, CAST5_FLAGS, 64, 8, 64, stream)
 /* cast564cfb64_functions */
-IMPLEMENT_generic_cipher(cast5, CAST, cfb64,  CFB, EVP_CIPH_VARIABLE_LENGTH, 64, 8, 64, stream)
+IMPLEMENT_generic_cipher(cast5, CAST, cfb64,  CFB, CAST5_FLAGS, 64, 8, 64, stream)

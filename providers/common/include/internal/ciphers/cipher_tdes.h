@@ -14,7 +14,7 @@
 #define TDES_IVLEN 8
 
 /* TODO(3.0) Figure out what flags need to be here */
-#define TDES_FLAGS (EVP_CIPH_RAND_KEY | EVP_CIPH_FLAG_DEFAULT_ASN1)
+#define TDES_FLAGS (EVP_CIPH_RAND_KEY)
 
 typedef struct prov_tdes_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */

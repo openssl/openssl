@@ -18,7 +18,7 @@
 /* TODO(3.0) Figure out what flags need to be passed */
 #define WRAP_FLAGS (EVP_CIPH_WRAP_MODE \
                    | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
-                   | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_FLAG_DEFAULT_ASN1)
+                   | EVP_CIPH_ALWAYS_CALL_INIT)
 
 typedef size_t (*aeswrap_fn)(void *key, const unsigned char *iv,
                              unsigned char *out, const unsigned char *in,

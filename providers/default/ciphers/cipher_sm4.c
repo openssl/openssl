@@ -12,9 +12,6 @@
 #include "cipher_sm4.h"
 #include "internal/provider_algs.h"
 
-/* TODO (3.0) Figure out what flags to pass */
-#define SM4_FLAGS EVP_CIPH_FLAG_DEFAULT_ASN1
-
 static OSSL_OP_cipher_freectx_fn sm4_freectx;
 static OSSL_OP_cipher_dupctx_fn sm4_dupctx;
 
@@ -40,12 +37,12 @@ static void *sm4_dupctx(void *ctx)
 }
 
 /* sm4128ecb_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, ecb, ECB, SM4_FLAGS, 128, 128, 0, block)
+IMPLEMENT_generic_cipher(sm4, SM4, ecb, ECB, 0, 128, 128, 0, block)
 /* sm4128cbc_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, cbc, CBC, SM4_FLAGS, 128, 128, 128, block)
+IMPLEMENT_generic_cipher(sm4, SM4, cbc, CBC, 0, 128, 128, 128, block)
 /* sm4128ctr_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, ctr, CTR, SM4_FLAGS, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(sm4, SM4, ctr, CTR, 0, 128, 8, 128, stream)
 /* sm4128ofb128_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, ofb128, OFB, SM4_FLAGS, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(sm4, SM4, ofb128, OFB, 0, 128, 8, 128, stream)
 /* sm4128cfb128_functions */
-IMPLEMENT_generic_cipher(sm4, SM4, cfb128,  CFB, SM4_FLAGS, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(sm4, SM4, cfb128,  CFB, 0, 128, 8, 128, stream)
