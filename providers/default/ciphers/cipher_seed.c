@@ -12,9 +12,6 @@
 #include "cipher_seed.h"
 #include "internal/provider_algs.h"
 
-/* TODO (3.0) Figure out what flags are required */
-#define SEED_FLAGS EVP_CIPH_FLAG_DEFAULT_ASN1
-
 static OSSL_OP_cipher_freectx_fn seed_freectx;
 static OSSL_OP_cipher_dupctx_fn seed_dupctx;
 
@@ -40,10 +37,10 @@ static void *seed_dupctx(void *ctx)
 }
 
 /* seed128ecb_functions */
-IMPLEMENT_generic_cipher(seed, SEED, ecb, ECB, SEED_FLAGS, 128, 128, 0, block)
+IMPLEMENT_generic_cipher(seed, SEED, ecb, ECB, 0, 128, 128, 0, block)
 /* seed128cbc_functions */
-IMPLEMENT_generic_cipher(seed, SEED, cbc, CBC, SEED_FLAGS, 128, 128, 128, block)
+IMPLEMENT_generic_cipher(seed, SEED, cbc, CBC, 0, 128, 128, 128, block)
 /* seed128ofb128_functions */
-IMPLEMENT_generic_cipher(seed, SEED, ofb128, OFB, SEED_FLAGS, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(seed, SEED, ofb128, OFB, 0, 128, 8, 128, stream)
 /* seed128cfb128_functions */
-IMPLEMENT_generic_cipher(seed, SEED, cfb128,  CFB, SEED_FLAGS, 128, 8, 128, stream)
+IMPLEMENT_generic_cipher(seed, SEED, cfb128,  CFB, 0, 128, 8, 128, stream)

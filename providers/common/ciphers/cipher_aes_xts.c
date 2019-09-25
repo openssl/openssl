@@ -12,8 +12,9 @@
 #include "internal/providercommonerr.h"
 
 /* TODO (3.0) Figure out what flags need to be set */
-#define AES_XTS_FLAGS (EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV         \
-                       | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT        \
+#define AES_XTS_FLAGS (EVP_CIPH_CUSTOM_IV          \
+                       | EVP_CIPH_ALWAYS_CALL_INIT \
+                       | EVP_CIPH_CTRL_INIT        \
                        | EVP_CIPH_CUSTOM_COPY)
 
 #define AES_XTS_IV_BITS 128

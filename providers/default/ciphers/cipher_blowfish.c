@@ -12,6 +12,8 @@
 #include "cipher_blowfish.h"
 #include "internal/provider_algs.h"
 
+#define BF_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
+
 static OSSL_OP_cipher_freectx_fn blowfish_freectx;
 static OSSL_OP_cipher_dupctx_fn blowfish_dupctx;
 
@@ -37,10 +39,10 @@ static void *blowfish_dupctx(void *ctx)
 }
 
 /* bf_ecb_functions */
-IMPLEMENT_generic_cipher(blowfish, BLOWFISH, ecb, ECB, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, block)
+IMPLEMENT_generic_cipher(blowfish, BLOWFISH, ecb, ECB, BF_FLAGS, 128, 64, 0, block)
 /* bf_cbc_functions */
-IMPLEMENT_generic_cipher(blowfish, BLOWFISH, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 64, block)
+IMPLEMENT_generic_cipher(blowfish, BLOWFISH, cbc, CBC, BF_FLAGS, 128, 64, 64, block)
 /* bf_ofb_functions */
-IMPLEMENT_generic_cipher(blowfish, BLOWFISH, ofb64, OFB, EVP_CIPH_VARIABLE_LENGTH, 64, 8, 64, stream)
+IMPLEMENT_generic_cipher(blowfish, BLOWFISH, ofb64, OFB, BF_FLAGS, 64, 8, 64, stream)
 /* bf_cfb_functions */
-IMPLEMENT_generic_cipher(blowfish, BLOWFISH, cfb64,  CFB, EVP_CIPH_VARIABLE_LENGTH, 64, 8, 64, stream)
+IMPLEMENT_generic_cipher(blowfish, BLOWFISH, cfb64,  CFB, BF_FLAGS, 64, 8, 64, stream)
