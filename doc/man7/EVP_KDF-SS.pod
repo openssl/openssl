@@ -45,7 +45,7 @@ The supported parameters are:
 
 =item B<OSSL_KDF_PARAM_MAC> ("mac") <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_MAC_SIZE> ("maclen") <size_t>
+=item B<OSSL_KDF_PARAM_MAC_SIZE> ("maclen") <unsigned integer>
 
 =item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
 

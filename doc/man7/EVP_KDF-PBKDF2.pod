@@ -28,7 +28,7 @@ The supported parameters are:
 
 =item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
 
-=item B<OSSL_KDF_PARAM_ITER> ("iter") <unsigned int>
+=item B<OSSL_KDF_PARAM_ITER> ("iter") <unsigned integer>
 
 This parameter has a default value of 2048.
 
@@ -38,7 +38,7 @@ This parameter has a default value of 2048.
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<OSSL_KDF_PARAM_PKCS5> ("pkcs5") <int>
+=item B<OSSL_KDF_PARAM_PKCS5> ("pkcs5") <integer>
 
 This parameter can be used to enable or disable SP800-132 compliance checks.
 Setting the mode to 0 enables the compliance checks.

@@ -49,15 +49,15 @@ The supported parameters are:
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<OSSL_KDF_PARAM_SCRYPT_N> ("n") <int>
+=item B<OSSL_KDF_PARAM_SCRYPT_N> ("n") <unsigned integer>
 
-=item B<OSSL_KDF_PARAM_SCRYPT_R> ("r") <int>
+=item B<OSSL_KDF_PARAM_SCRYPT_R> ("r") <unsigned integer>
 
-=item B<OSSL_KDF_PARAM_SCRYPT_P> ("p") <int>
+=item B<OSSL_KDF_PARAM_SCRYPT_P> ("p") <unsigned integer>
 
 These parameters configure the scrypt work factors N, r and p.
-N is a parameter of type uint64_t.
-Both r and p are parameters of type uint32_t.
+N is a parameter of type B<uint64_t>.
+Both r and p are parameters of type B<uint32_t>.
 
 =back
 

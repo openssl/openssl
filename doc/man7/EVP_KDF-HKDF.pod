@@ -42,7 +42,7 @@ This parameter sets the info value.
 The length of the context info buffer cannot exceed 1024 bytes;
 this should be more than enough for any normal use of HKDF.
 
-=item B<OSSL_KDF_PARAM_MODE> ("mode") <UTF8 string> or <int>
+=item B<OSSL_KDF_PARAM_MODE> ("mode") <UTF8 string> or <integer>
 
 This parameter sets the mode for the HKDF operation.
 There are three modes that are currently defined:
