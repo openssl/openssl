@@ -52,7 +52,7 @@ returned suitable for streaming I/O: no data is read from the BIO B<in>.
 
 If the B<CMS_PARTIAL> flag is set a partial B<CMS_ContentInfo> structure is
 returned to which additional recipients and attributes can be added before
-finalization.
+finalisation.
 
 The data being encrypted is included in the CMS_ContentInfo structure, unless
 B<CMS_DETACHED> is set in which case it is omitted. This is rarely used in
@@ -60,11 +60,11 @@ practice and is not supported by SMIME_write_CMS().
 
 If the flag B<CMS_STREAM> is set the returned B<CMS_ContentInfo> structure is
 B<not> complete and outputting its contents via a function that does not
-properly finalize the B<CMS_ContentInfo> structure will give unpredictable
+properly finalise the B<CMS_ContentInfo> structure will give unpredictable
 results.
 
 Several functions including SMIME_write_CMS(), i2d_CMS_bio_stream(),
-PEM_write_bio_CMS_stream() finalize the structure. Alternatively finalization
+PEM_write_bio_CMS_stream() finalise the structure. Alternatively finalisation
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_CMS().
 

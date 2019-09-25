@@ -64,7 +64,7 @@ The B<PEM> encoded form uses the same headers and footers as a certificate:
 
 A Netscape certificate sequence is a Netscape specific format that can be sent
 to browsers as an alternative to the standard PKCS#7 format when several
-certificates are sent to the browser: for example during certificate enrollment.
+certificates are sent to the browser: for example during certificate enrolment.
 It is used by Netscape certificate server for example.
 
 =head1 BUGS

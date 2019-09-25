@@ -26,7 +26,7 @@ If the B<md> parameter is B<NULL> then the default digest for the public
 key algorithm will be used.
 
 Unless the B<PKCS7_REUSE_DIGEST> flag is set the returned PKCS7 structure
-is not complete and must be finalized either by streaming (if applicable) or
+is not complete and must be finalised either by streaming (if applicable) or
 a call to PKCS7_final().
 
 
@@ -43,12 +43,12 @@ parameter.
 If B<PKCS7_REUSE_DIGEST> is set then an attempt is made to copy the content
 digest value from the PKCS7 structure: to add a signer to an existing structure.
 An error occurs if a matching digest value cannot be found to copy. The
-returned PKCS7 structure will be valid and finalized when this flag is set.
+returned PKCS7 structure will be valid and finalised when this flag is set.
 
 If B<PKCS7_PARTIAL> is set in addition to B<PKCS7_REUSE_DIGEST> then the
-B<PKCS7_SIGNER_INO> structure will not be finalized so additional attributes
+B<PKCS7_SIGNER_INO> structure will not be finalised so additional attributes
 can be added. In this case an explicit call to PKCS7_SIGNER_INFO_sign() is
-needed to finalize it.
+needed to finalise it.
 
 If B<PKCS7_NOCERTS> is set the signer's certificate will not be included in the
 PKCS7 structure, the signer's certificate must still be supplied in the
@@ -69,7 +69,7 @@ these algorithms is disabled then it will not be included.
 
 PKCS7_sign_add_signers() returns an internal pointer to the PKCS7_SIGNER_INFO
 structure just added, this can be used to set additional attributes
-before it is finalized.
+before it is finalised.
 
 =head1 RETURN VALUES
 

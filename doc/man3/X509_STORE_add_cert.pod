@@ -38,7 +38,7 @@ are located on disk, and is generally not usable.  Normally, trusted
 certificates will be added to the B<X509_STORE> to prepare it for use,
 via mechanisms such as X509_STORE_add_lookup() and X509_LOOKUP_file(), or
 PEM_read_bio_X509_AUX() and X509_STORE_add_cert().  CRLs can also be added,
-and many behaviors configured as desired.
+and many behaviours configured as desired.
 
 Once the B<X509_STORE> is suitably configured, X509_STORE_CTX_new() is
 used to instantiate a single-use B<X509_STORE_CTX> for each chain-building
@@ -62,7 +62,7 @@ is no longer needed.
 X509_STORE_set_depth(), X509_STORE_set_flags(), X509_STORE_set_purpose(),
 X509_STORE_set_trust(), and X509_STORE_set1_param() set the default values
 for the corresponding values used in certificate chain validation.  Their
-behavior is documented in the corresponding B<X509_VERIFY_PARAM> manual
+behaviour is documented in the corresponding B<X509_VERIFY_PARAM> manual
 pages, e.g., L<X509_VERIFY_PARAM_set_depth(3)>.
 
 X509_STORE_load_locations() loads trusted certificate(s) into an

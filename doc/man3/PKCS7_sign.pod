@@ -62,14 +62,14 @@ parameter. Signing is deferred until after the data has been written. In this
 way data can be signed in a single pass.
 
 If the B<PKCS7_PARTIAL> flag is set a partial B<PKCS7> structure is output to
-which additional signers and capabilities can be added before finalization.
+which additional signers and capabilities can be added before finalisation.
 
 If the flag B<PKCS7_STREAM> is set the returned B<PKCS7> structure is B<not>
 complete and outputting its contents via a function that does not properly
-finalize the B<PKCS7> structure will give unpredictable results.
+finalise the B<PKCS7> structure will give unpredictable results.
 
 Several functions including SMIME_write_PKCS7(), i2d_PKCS7_bio_stream(),
-PEM_write_bio_PKCS7_stream() finalize the structure. Alternatively finalization
+PEM_write_bio_PKCS7_stream() finalise the structure. Alternatively finalisation
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_PKCS7().
 
@@ -79,7 +79,7 @@ algorithm. This is B<SHA1> for both RSA and DSA keys.
 The B<certs>, B<signcert> and B<pkey> parameters can all be
 B<NULL> if the B<PKCS7_PARTIAL> flag is set. One or more signers can be added
 using the function PKCS7_sign_add_signer(). PKCS7_final() must also be
-called to finalize the structure if streaming is not enabled. Alternative
+called to finalise the structure if streaming is not enabled. Alternative
 signing digests can also be specified using this method.
 
 If B<signcert> and B<pkey> are NULL then a certificates only

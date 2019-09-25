@@ -83,7 +83,7 @@ The output file is a PKCS#7 signed data structure containing no signers and
 just certificates and an optional CRL.
 
 This command can be used to send certificates and CAs to Netscape as part of
-the certificate enrollment process. This involves sending the DER encoded output
+the certificate enrolment process. This involves sending the DER encoded output
 as MIME type application/x-x509-user-cert.
 
 The B<PEM> encoded form with the header and footer lines removed can be used to

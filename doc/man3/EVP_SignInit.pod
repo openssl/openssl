@@ -71,11 +71,11 @@ If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
 external circumstances (see L<RAND(7)>), the operation will fail.
 This requirement does not hold for RSA signatures.
 
-The call to EVP_SignFinal() internally finalizes a copy of the digest context.
+The call to EVP_SignFinal() internally finalises a copy of the digest context.
 This means that calls to EVP_SignUpdate() and EVP_SignFinal() can be called
 later to digest and sign additional data.
 
-Since only a copy of the digest context is ever finalized the context must
+Since only a copy of the digest context is ever finalised the context must
 be cleaned up after use by calling EVP_MD_CTX_free() or a memory leak
 will occur.
 

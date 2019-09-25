@@ -65,7 +65,7 @@ The first two represent mandatory clauses, such clauses B<must> match
 for any algorithm to even be under consideration.
 The third clause represents an optional clause.
 Matching such clauses is not a requirement, but any additional optional
-match counts in favor of the algorithm.
+match counts in favour of the algorithm.
 More details about that in the B<Lookups> section.
 A I<property query> is a sequence of comma separated property query clauses.
 The full syntax for property queries appears below, but the available syntactic

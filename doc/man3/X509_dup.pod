@@ -332,7 +332,7 @@ within it.
 B<I<TYPE>_print_ctx>() prints the object I<a> on the specified BIO I<out>.
 Each line will be prefixed with I<indent> spaces.
 The I<pctx> specifies the printing context and is for internal
-use; use NULL to get the default behavior.  If a print function is
+use; use NULL to get the default behaviour.  If a print function is
 user-defined, then pass in any I<pctx> down to any nested calls.
 
 =head1 RETURN VALUES

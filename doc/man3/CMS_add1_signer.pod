@@ -28,7 +28,7 @@ If the B<md> parameter is B<NULL> then the default digest for the public
 key algorithm will be used.
 
 Unless the B<CMS_REUSE_DIGEST> flag is set the returned CMS_ContentInfo
-structure is not complete and must be finalized either by streaming (if
+structure is not complete and must be finalised either by streaming (if
 applicable) or a call to CMS_final().
 
 The CMS_SignerInfo_sign() function will explicitly sign a CMS_SignerInfo
@@ -50,13 +50,13 @@ parameter.
 If B<CMS_REUSE_DIGEST> is set then an attempt is made to copy the content
 digest value from the CMS_ContentInfo structure: to add a signer to an existing
 structure.  An error occurs if a matching digest value cannot be found to copy.
-The returned CMS_ContentInfo structure will be valid and finalized when this
+The returned CMS_ContentInfo structure will be valid and finalised when this
 flag is set.
 
 If B<CMS_PARTIAL> is set in addition to B<CMS_REUSE_DIGEST> then the
-CMS_SignerInfo structure will not be finalized so additional attributes
+CMS_SignerInfo structure will not be finalised so additional attributes
 can be added. In this case an explicit call to CMS_SignerInfo_sign() is
-needed to finalize it.
+needed to finalise it.
 
 If B<CMS_NOCERTS> is set the signer's certificate will not be included in the
 CMS_ContentInfo structure, the signer's certificate must still be supplied in
@@ -83,7 +83,7 @@ not loaded.
 
 CMS_add1_signer() returns an internal pointer to the CMS_SignerInfo
 structure just added, this can be used to set additional attributes
-before it is finalized.
+before it is finalised.
 
 =head1 RETURN VALUES
 

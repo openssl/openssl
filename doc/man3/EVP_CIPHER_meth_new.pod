@@ -166,7 +166,7 @@ explanation or they get removed.  /RL
 =item EVP_CIPH_FLAG_CUSTOM_CIPHER
 
 This indicates that the implementation takes care of everything,
-including padding, buffering and finalization.
+including padding, buffering and finalisation.
 The EVP routines will simply give them control and do nothing more.
 
 =item EVP_CIPH_FLAG_AEAD_CIPHER
@@ -175,7 +175,7 @@ This indicates that this is an AEAD cipher implementation.
 
 =item EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 
-Allow interleaving of crypto blocks, a particular optimization only applicable
+Allow interleaving of crypto blocks, a particular optimisation only applicable
 to certain TLS ciphers.
 
 =back

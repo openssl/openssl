@@ -45,7 +45,7 @@ BIO_new_fd() returns a file descriptor BIO using B<fd> and B<close_flag>.
 
 =head1 NOTES
 
-The behaviour of BIO_read_ex() and BIO_write_ex() depends on the behavior of the
+The behaviour of BIO_read_ex() and BIO_write_ex() depends on the behaviour of the
 platforms read() and write() calls on the descriptor. If the underlying
 file descriptor is in a non blocking mode then the BIO will behave in the
 manner described in the L<BIO_read_ex(3)> and L<BIO_should_retry(3)>

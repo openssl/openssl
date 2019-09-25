@@ -52,11 +52,11 @@ suitable for streaming I/O: no data is read from the BIO B<in>.
 
 If the flag B<PKCS7_STREAM> is set the returned B<PKCS7> structure is B<not>
 complete and outputting its contents via a function that does not
-properly finalize the B<PKCS7> structure will give unpredictable
+properly finalise the B<PKCS7> structure will give unpredictable
 results.
 
 Several functions including SMIME_write_PKCS7(), i2d_PKCS7_bio_stream(),
-PEM_write_bio_PKCS7_stream() finalize the structure. Alternatively finalization
+PEM_write_bio_PKCS7_stream() finalise the structure. Alternatively finalisation
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_PKCS7().
 

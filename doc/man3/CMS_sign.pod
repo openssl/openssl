@@ -73,15 +73,15 @@ written. In this way data can be signed in a single pass.
 
 If the B<CMS_PARTIAL> flag is set a partial B<CMS_ContentInfo> structure is
 output to which additional signers and capabilities can be added before
-finalization.
+finalisation.
 
 If the flag B<CMS_STREAM> is set the returned B<CMS_ContentInfo> structure is
 B<not> complete and outputting its contents via a function that does not
-properly finalize the B<CMS_ContentInfo> structure will give unpredictable
+properly finalise the B<CMS_ContentInfo> structure will give unpredictable
 results.
 
 Several functions including SMIME_write_CMS(), i2d_CMS_bio_stream(),
-PEM_write_bio_CMS_stream() finalize the structure. Alternatively finalization
+PEM_write_bio_CMS_stream() finalise the structure. Alternatively finalisation
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_CMS().
 
@@ -96,7 +96,7 @@ suitable for many purposes. For finer control of the output format the
 B<certs>, B<signcert> and B<pkey> parameters can all be B<NULL> and the
 B<CMS_PARTIAL> flag set. Then one or more signers can be added using the
 function CMS_sign_add1_signer(), non default digests can be used and custom
-attributes added. CMS_final() must then be called to finalize the
+attributes added. CMS_final() must then be called to finalise the
 structure if streaming is not enabled.
 
 =head1 BUGS

@@ -52,11 +52,11 @@ The B<EVP> interface to digital signatures should almost always be used in
 preference to the low level interfaces. This is because the code then becomes
 transparent to the algorithm used and much more flexible.
 
-The call to EVP_VerifyFinal() internally finalizes a copy of the digest context.
+The call to EVP_VerifyFinal() internally finalises a copy of the digest context.
 This means that calls to EVP_VerifyUpdate() and EVP_VerifyFinal() can be called
 later to digest and verify additional data.
 
-Since only a copy of the digest context is ever finalized the context must
+Since only a copy of the digest context is ever finalised the context must
 be cleaned up after use by calling EVP_MD_CTX_free() or a memory leak
 will occur.
 

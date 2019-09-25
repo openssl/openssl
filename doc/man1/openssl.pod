@@ -496,7 +496,7 @@ SM4 Cipher
 =head1 OPTIONS
 
 Details of which options are available depend on the specific command.
-This section describes some common options with common behavior.
+This section describes some common options with common behaviour.
 
 =head2 Common Options
 

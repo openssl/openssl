@@ -48,7 +48,7 @@ When a certificate was set using the
 L<SSL_CTX_use_certificate(3)> family of functions,
 it will be sent to the server. The TLS standard requires that only a
 certificate is sent, if it matches the list of acceptable CAs sent by the
-server. This constraint is violated by the default behavior of the OpenSSL
+server. This constraint is violated by the default behaviour of the OpenSSL
 library. Using the callback function it is possible to implement a proper
 selection routine or to allow a user interaction to choose the certificate to
 be sent.

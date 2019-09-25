@@ -366,8 +366,9 @@ sub functionname_check {
     # with a variable part (typically marked up as B<foo_I<TYPE>_bar>
 }
 
-# This is from http://man7.org/linux/man-pages/man7/man-pages.7.html
+# Bad/good list of words from various sources.
 my %preferred_words = (
+    # http://man7.org/linux/man-pages/man7/man-pages.7.html
     'bitmask'       => 'bit mask',
     'builtin'       => 'built-in',
    #'epoch'         => 'Epoch', # handled specially, below
@@ -404,7 +405,19 @@ my %preferred_words = (
     'useable'       => 'usable',
     'userspace'     => 'user space',
     'user name'     => 'username',
-    'zeroes'        => 'zeros'
+    'zeroes'        => 'zeros',
+    # https://ac.bslw.com/community/wiki/index.php/British_to_American_Spelling
+    'behavior'      => 'behaviour',
+    'enrollment'    => 'enrolment',
+    'favor'         => 'favour',
+    'finalize'      => 'finalise',
+    'finalization'  => 'finalisation',
+    'mold'          => 'mould',
+    'optimization'  => 'optimisation',
+    'organization'  => 'organisation',
+    'organizational' => 'organisational',
+    'organized'     => 'organised',
+    'realization'   => 'realisation',
 );
 
 sub wording {
@@ -415,6 +428,10 @@ sub wording {
         # Sigh, trademark
         next if $k eq 'file system'
             and $contents =~ /Microsoft Encrypted File System/;
+        # Sigh, X.509 components
+        next if $k =~ 'organization'
+            and ( $id =~ /openssl-req/ or $id =~ /x509v3_config/ );
+
         err($id, "found '$k' should use '$preferred_words{$k}'")
             if $contents =~ /\b\Q$k\E\b/i;
     }

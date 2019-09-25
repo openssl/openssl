@@ -39,7 +39,7 @@ the content is detached B<indata> cannot be B<NULL>.  If the content is
 not detached and B<indata> is not B<NULL>, then the structure has both
 embedded and external content. To treat this as an error, use the flag
 B<PKCS7_NO_DUAL_CONTENT>.
-The default behavior allows this, for compatibility with older
+The default behaviour allows this, for compatibility with older
 versions of OpenSSL.
 
 An attempt is made to locate all the signer's certificates, first looking in

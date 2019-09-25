@@ -143,7 +143,7 @@ function is expected to return 1 on success, 0 on error.
 
 This function takes a B<OSSL_STORE_LOADER_CTX> pointer and a B<UI_METHOD>
 with associated data.
-It's expected to load the next available data, mold it into a data
+It's expected to load the next available data, convert it into a data
 structure that can be wrapped in a B<OSSL_STORE_INFO> using one of the
 L<OSSL_STORE_INFO(3)> functions.
 If no more data is available or an error occurs, this function is

@@ -213,7 +213,7 @@ contention.
      OSSL_TRACE1("var = %d\n", var);
  }
 
-Note however that premature optimization of tracing code is in general futile
+Note however that premature optimisation of tracing code is in general futile
 and it's better to keep the tracing code as simple as possible.
 Because most often the limiting factor for the application's speed is the time
 it takes to print the trace output, not to calculate it.

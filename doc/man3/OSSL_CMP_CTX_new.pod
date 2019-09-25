@@ -192,7 +192,7 @@ The following options can be set:
 
 =item B<OSSL_CMP_OPT_TOTALTIMEOUT>
 
-        Maximum total number of seconds an enrollment (including polling)
+        Maximum total number of seconds an enrolment (including polling)
         may take. Default is 0 (infinite).
 
 =item B<OSSL_CMP_OPT_VALIDITYDAYS>
@@ -259,7 +259,7 @@ The following options can be set:
 
         Do not confirm enrolled certificates, to cope with broken servers
         not supporting implicit confirmation correctly.
-B<WARNING:> This setting leads to unspecified behavior and it is meant
+B<WARNING:> This setting leads to unspecified behaviour and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 4210.
 
@@ -273,7 +273,7 @@ RFC 4210.
         unprotected or where protection verification failed. Applies to regular
         error messages as well as certificate responses (IP/CP/KUP) and
         revocation responses (RP) with rejection.
-B<WARNING:> This setting leads to unspecified behavior and it is meant
+B<WARNING:> This setting leads to unspecified behaviour and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 4210.
 
@@ -440,7 +440,7 @@ OSSL_CMP_CTX_set0_newPkey() can be used to explicitly set the given EVP_PKEY
 structure as the private or public key to be certified in the CMP context.
 The B<priv> parameter must be 0 if and only if the given key is a public key.
 
-OSSL_CMP_CTX_get0_newPkey() gives the key to use for certificate enrollment
+OSSL_CMP_CTX_get0_newPkey() gives the key to use for certificate enrolment
 dependent on fields of the CMP context structure:
 the newPkey (which may be a private or public key) if present,
 else the public key in the p10CSR if present, else the client private key.

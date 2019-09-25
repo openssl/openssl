@@ -66,11 +66,11 @@ maximum record size.
 
 =head1 NOTES
 
-The default behavior is to add no padding to the record.
+The default behaviour is to add no padding to the record.
 
-A user-supplied padding callback function will override the behavior set by
+A user-supplied padding callback function will override the behaviour set by
 SSL_set_block_padding() or SSL_CTX_set_block_padding(). Setting the user-supplied
-callback to NULL will restore the configured block padding behavior.
+callback to NULL will restore the configured block padding behaviour.
 
 These functions only apply to TLS 1.3 records being written.
 

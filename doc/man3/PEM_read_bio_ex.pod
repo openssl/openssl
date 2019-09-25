@@ -29,7 +29,7 @@ input are allocated from the secure heap.
 
 If PEM_FLAG_EAY_COMPATIBLE is set, a simple algorithm is used to remove whitespace
 and control characters from the end of each line, so as to be compatible with
-the historical behavior of PEM_read_bio().
+the historical behaviour of PEM_read_bio().
 
 If PEM_FLAG_ONLY_B64 is set, all characters are required to be valid base64
 characters (or newlines); non-base64 characters are treated as end of input.

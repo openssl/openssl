@@ -87,7 +87,7 @@ structure of B<NULL> if an error occurred.
 
 Create an B<X509_NAME> structure:
 
-"C=UK, O=Disorganized Organization, CN=Joe Bloggs"
+"C=UK, O=Disorganized Corporation, CN=Joe Bloggs"
 
  X509_NAME *nm;
 
@@ -98,7 +98,7 @@ Create an B<X509_NAME> structure:
                                  "UK", -1, -1, 0))
      /* Error */
  if (!X509_NAME_add_entry_by_txt(nm, "O", MBSTRING_ASC,
-                                 "Disorganized Organization", -1, -1, 0))
+                                 "Disorganized Corporation", -1, -1, 0))
      /* Error */
  if (!X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
                                  "Joe Bloggs", -1, -1, 0))

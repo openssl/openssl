@@ -147,7 +147,7 @@ This example safely initializes and uses a lock.
      return ret;
  }
 
-Finalization of locks is an advanced topic, not covered in this example.
+Finalisation of locks is an advanced topic, not covered in this example.
 This can only be done at process exit or when a dynamically loaded library is
 no longer in use and is unloaded.
 The simplest solution is to just "leak" the lock in applications and not

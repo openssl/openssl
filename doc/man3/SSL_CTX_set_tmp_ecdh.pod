@@ -19,10 +19,10 @@ SSL_CTX_set_tmp_ecdh, SSL_set_tmp_ecdh, SSL_CTX_set_ecdh_auto, SSL_set_ecdh_auto
 
 SSL_CTX_set_tmp_ecdh() sets ECDH parameters to be used to be B<ecdh>.
 The key is inherited by all B<ssl> objects created from B<ctx>.
-This macro is deprecated in favor of L<SSL_CTX_set1_groups(3)>.
+This macro is deprecated in favour of L<SSL_CTX_set1_groups(3)>.
 
 SSL_set_tmp_ecdh() sets the parameters only for B<ssl>.
-This macro is deprecated in favor of L<SSL_set1_groups(3)>.
+This macro is deprecated in favour of L<SSL_set1_groups(3)>.
 
 SSL_CTX_set_ecdh_auto() and SSL_set_ecdh_auto() are deprecated and
 have no effect.

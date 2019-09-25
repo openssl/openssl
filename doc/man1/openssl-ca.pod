@@ -216,7 +216,7 @@ its use is strongly discouraged.
 Normally the DN order of a certificate is the same as the order of the
 fields in the relevant policy section. When this option is set the order
 is the same as the request. This is largely for compatibility with the
-older IE enrollment control which would only accept certificates if their
+older IE enrolment control which would only accept certificates if their
 DNs match the order of the request. This is not needed for Xenroll.
 
 =item B<-noemailDN>

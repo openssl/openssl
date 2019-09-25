@@ -25,7 +25,7 @@ lifetime is specified by storing the creation time of the session and the
 timeout value valid at this time. If the actual time is later than creation
 time plus timeout, the session is not reused.
 
-Due to this realization, all sessions behave according to the timeout value
+Due to this realisation, all sessions behave according to the timeout value
 valid at the time of the session negotiation. Changes of the timeout value
 do not affect already established sessions.
 

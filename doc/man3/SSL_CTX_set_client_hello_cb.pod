@@ -81,7 +81,7 @@ versions, changing the server's cipher list in response to the client's
 cipher list, etc.
 
 It is also recommended that applications utilize a ClientHello callback and
-not use a servername callback, in order to avoid unexpected behavior that
+not use a servername callback, in order to avoid unexpected behaviour that
 occurs due to the relative order of processing between things like session
 resumption and the historical servername callback.
 
