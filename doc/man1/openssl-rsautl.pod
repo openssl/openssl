@@ -8,18 +8,18 @@ openssl-rsautl - RSA utility
 
 B<openssl> B<rsautl>
 [B<-help>]
-[B<-in file>]
-[B<-out file>]
-[B<-inkey file>]
-[B<-keyform PEM|DER|ENGINE>]
+[B<-in> I<file>]
+[B<-out> I<file>]
+[B<-inkey> I<file>]
+[B<-keyform> I<DER|PEM|ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-sign>]
 [B<-verify>]
 [B<-encrypt>]
 [B<-decrypt>]
-[B<-rand file...>]
-[B<-writerand file>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
 [B<-pkcs>]
 [B<-ssl>]
 [B<-raw>]
@@ -39,21 +39,21 @@ data using the RSA algorithm.
 
 Print out a usage message.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read data from or standard input
 if this option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-inkey file>
+=item B<-inkey> I<file>
 
 The input key file, by default it should be an RSA private key.
 
-=item B<-keyform PEM|DER|ENGINE>
+=item B<-keyform> I<DER|PEM|ENGINE>
 
 The key format PEM, DER or ENGINE.
 
@@ -82,7 +82,7 @@ Encrypt the input data using an RSA public key.
 
 Decrypt the input data using an RSA private key.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -90,7 +90,7 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.

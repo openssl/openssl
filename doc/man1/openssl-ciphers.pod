@@ -20,8 +20,8 @@ B<openssl> B<ciphers>
 [B<-psk>]
 [B<-srp>]
 [B<-stdname>]
-[B<-convert name>]
-[B<-ciphersuites val>]
+[B<-convert> I<name>]
+[B<-ciphersuites> I<val>]
 [B<cipherlist>]
 
 =head1 DESCRIPTION
@@ -83,11 +83,11 @@ OpenSSL was built.
 
 Precede each cipher suite by its standard name.
 
-=item B<-convert name>
+=item B<-convert> I<name>
 
 Convert a standard cipher B<name> to its OpenSSL name.
 
-=item B<-ciphersuites val>
+=item B<-ciphersuites> I<val>
 
 Sets the list of TLSv1.3 ciphersuites. This list will be combined with any
 TLSv1.2 and below ciphersuites that have been configured. The format for this

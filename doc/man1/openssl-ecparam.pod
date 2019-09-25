@@ -8,24 +8,24 @@ openssl-ecparam - EC parameter manipulation and generation
 
 B<openssl ecparam>
 [B<-help>]
-[B<-inform DER|PEM>]
-[B<-outform DER|PEM>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-inform> I<DER|PEM>]
+[B<-outform> I<DER|PEM>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-noout>]
 [B<-text>]
 [B<-C>]
 [B<-check>]
 [B<-check_named>]
-[B<-name arg>]
+[B<-name> I<arg>]
 [B<-list_curves>]
-[B<-conv_form arg>]
-[B<-param_enc arg>]
+[B<-conv_form> I<arg>]
+[B<-param_enc> I<arg>]
 [B<-no_seed>]
-[B<-rand file...>]
-[B<-writerand file>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
 [B<-genkey>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
@@ -39,24 +39,24 @@ This command is used to manipulate or generate EC parameter files.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> I<DER|PEM>
 
 This specifies the input format. The B<DER> option uses an ASN.1 DER encoded
 form compatible with RFC 3279 EcpkParameters. The PEM form is the default
 format: it consists of the B<DER> format base64 encoded with additional
 header and footer lines.
 
-=item B<-outform DER|PEM>
+=item B<-outform> I<DER|PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read parameters from or standard input if
 this option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename parameters to. Standard output is used
 if this option is not present. The output filename should B<not> be the same
@@ -84,7 +84,7 @@ Validate the elliptic curve parameters.
 Validate the elliptic name curve parameters by checking if the curve parameters
 match any built-in curves.
 
-=item B<-name arg>
+=item B<-name> I<arg>
 
 Use the EC parameters with the specified 'short' name. Use B<-list_curves>
 to get a list of all currently implemented EC parameters.
@@ -104,7 +104,7 @@ B<Note> Due to patent issues the B<compressed> option is disabled
 by default for binary curves and can be enabled by defining
 the preprocessor macro B<OPENSSL_EC_BIN_PT_COMP> at compile time.
 
-=item B<-param_enc arg>
+=item B<-param_enc> I<arg>
 
 This specifies how the elliptic curve parameters are encoded.
 Possible value are: B<named_curve>, i.e. the ec parameters are
@@ -123,7 +123,7 @@ is included in the ECParameters structure (see RFC 3279).
 
 This option will generate an EC private key using the specified parameters.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -131,12 +131,12 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<ecparam>
 to attempt to obtain a functional reference to the specified engine,

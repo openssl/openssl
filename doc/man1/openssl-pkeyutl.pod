@@ -8,16 +8,16 @@ openssl-pkeyutl - public key algorithm utility
 
 B<openssl> B<pkeyutl>
 [B<-help>]
-[B<-in file>]
+[B<-in> I<file>]
 [B<-rawin>]
-[B<-digest algorithm>]
-[B<-out file>]
-[B<-sigfile file>]
-[B<-inkey file>]
-[B<-keyform PEM|DER|ENGINE>]
-[B<-passin arg>]
-[B<-peerkey file>]
-[B<-peerform PEM|DER|ENGINE>]
+[B<-digest> I<algorithm>]
+[B<-out> I<file>]
+[B<-sigfile> I<file>]
+[B<-inkey> I<file>]
+[B<-keyform> I<DER|PEM|ENGINE>]
+[B<-passin> I<arg>]
+[B<-peerkey> I<file>]
+[B<-peerform> I<DER|PEM|ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-rev>]
@@ -27,15 +27,15 @@ B<openssl> B<pkeyutl>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-derive>]
-[B<-kdf algorithm>]
-[B<-kdflen length>]
-[B<-pkeyopt opt:value>]
-[B<-pkeyopt_passin opt:passarg>]
+[B<-kdf> I<algorithm>]
+[B<-kdflen> I<length>]
+[B<-pkeyopt> I<opt:value>]
+[B<-pkeyopt_passin> I<opt:passarg>]
 [B<-hexdump>]
 [B<-asn1parse>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-engine id>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
+[B<-engine> I<id>]
 [B<-engine_impl>]
 
 =head1 DESCRIPTION
@@ -51,7 +51,7 @@ using any supported algorithm.
 
 Print out a usage message.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read data from or standard input
 if this option is not specified.
@@ -63,7 +63,7 @@ message digest algorithm. The user can specify a digest algorithm by using
 the B<-digest> option. This option can only be used with B<-sign> and
 B<-verify> and must be used with the Ed25519 and Ed448 algorithms.
 
-=item B<-digest algorithm>
+=item B<-digest> I<algorithm>
 
 This specifies the digest algorithm which is used to hash the input data before
 signing or verifying it with the input key. This option could be omitted if the
@@ -73,33 +73,33 @@ used. For signature algorithms like RSA, DSA and ECDSA, SHA-256 will be the
 default digest algorithm. For SM2, it will be SM3. If this option is present,
 then the B<-rawin> option must be also specified to B<pkeyutl>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-sigfile file>
+=item B<-sigfile> I<file>
 
 Signature file, required for B<verify> operations only
 
-=item B<-inkey file>
+=item B<-inkey> I<file>
 
 The input key file, by default it should be a private key.
 
-=item B<-keyform PEM|DER|ENGINE>
+=item B<-keyform> I<DER|PEM|ENGINE>
 
 The key format PEM, DER or ENGINE. Default is PEM.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
 The input key password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-peerkey file>
+=item B<-peerkey> I<file>
 
 The peer key file, used by key derivation (agreement) operations.
 
-=item B<-peerform PEM|DER|ENGINE>
+=item B<-peerform> I<DER|PEM|ENGINE>
 
 The peer key format PEM, DER or ENGINE. Default is PEM.
 
@@ -142,7 +142,7 @@ Decrypt the input data using a private key.
 
 Derive a shared secret using the peer key.
 
-=item B<-kdf algorithm>
+=item B<-kdf> I<algorithm>
 
 Use key derivation function B<algorithm>.  The supported algorithms are
 at present B<TLS1-PRF> and B<HKDF>.
@@ -151,15 +151,15 @@ set for this to work.
 See L<EVP_PKEY_CTX_set_hkdf_md(3)> and L<EVP_PKEY_CTX_set_tls1_prf_md(3)>
 for the supported string parameters of each algorithm.
 
-=item B<-kdflen length>
+=item B<-kdflen> I<length>
 
 Set the output length for KDF.
 
-=item B<-pkeyopt opt:value>
+=item B<-pkeyopt> I<opt:value>
 
 Public key options specified as opt:value. See NOTES below for more details.
 
-=item B<-pkeyopt_passin opt:passarg>
+=item B<-pkeyopt_passin> I<opt:passarg>
 
 Allows reading a public key option B<opt> from stdin or a password source. If
 only opt is specified, the user will be prompted to enter the value on stdin.
@@ -175,7 +175,7 @@ hex dump the output data.
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verifyrecover> option when an ASN1 structure is signed.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -183,12 +183,12 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<pkeyutl>
 to attempt to obtain a functional reference to the specified engine,

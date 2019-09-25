@@ -8,33 +8,33 @@ openssl-ocsp - Online Certificate Status Protocol utility
 
 B<openssl> B<ocsp>
 [B<-help>]
-[B<-out file>]
-[B<-issuer file>]
-[B<-cert file>]
-[B<-serial n>]
-[B<-signer file>]
-[B<-signkey file>]
-[B<-sign_other file>]
+[B<-out> I<file>]
+[B<-issuer> I<file>]
+[B<-cert> I<file>]
+[B<-serial> I<n>]
+[B<-signer> I<file>]
+[B<-signkey> I<file>]
+[B<-sign_other> I<file>]
 [B<-no_certs>]
 [B<-req_text>]
 [B<-resp_text>]
 [B<-text>]
-[B<-reqout file>]
-[B<-respout file>]
-[B<-reqin file>]
-[B<-respin file>]
+[B<-reqout> I<file>]
+[B<-respout> I<file>]
+[B<-reqin> I<file>]
+[B<-respin> I<file>]
 [B<-nonce>]
 [B<-no_nonce>]
-[B<-url URL>]
-[B<-host host:port>]
-[B<-multi process-count>]
+[B<-url> I<URL>]
+[B<-host> I<host:port>]
+[B<-multi> I<process-count>]
 [B<-header>]
 [B<-path>]
-[B<-CApath dir>]
-[B<-CAfile file>]
+[B<-CApath> I<dir>]
+[B<-CAfile> I<file>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
-[B<-attime timestamp>]
+[B<-attime> I<timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
 [B<-crl_check_all>]
@@ -45,28 +45,28 @@ B<openssl> B<ocsp>
 [B<-inhibit_map>]
 [B<-no_check_time>]
 [B<-partial_chain>]
-[B<-policy arg>]
+[B<-policy> I<arg>]
 [B<-policy_check>]
 [B<-policy_print>]
-[B<-purpose purpose>]
+[B<-purpose> I<purpose>]
 [B<-suiteB_128>]
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
 [B<-no_alt_chains>]
 [B<-use_deltas>]
-[B<-auth_level num>]
-[B<-verify_depth num>]
-[B<-verify_email email>]
-[B<-verify_hostname hostname>]
-[B<-verify_ip ip>]
-[B<-verify_name name>]
+[B<-auth_level> I<num>]
+[B<-verify_depth> I<num>]
+[B<-verify_email> I<email>]
+[B<-verify_hostname> I<hostname>]
+[B<-verify_ip> I<ip>]
+[B<-verify_name> I<name>]
 [B<-x509_strict>]
-[B<-VAfile file>]
-[B<-validity_period n>]
-[B<-status_age n>]
+[B<-VAfile> I<file>]
+[B<-validity_period> I<n>]
+[B<-status_age> I<n>]
 [B<-noverify>]
-[B<-verify_other file>]
+[B<-verify_other> I<file>]
 [B<-trust_other>]
 [B<-no_intern>]
 [B<-no_signature_verify>]
@@ -74,21 +74,21 @@ B<openssl> B<ocsp>
 [B<-no_chain>]
 [B<-no_cert_checks>]
 [B<-no_explicit>]
-[B<-port num>]
+[B<-port> I<num>]
 [B<-ignore_err>]
-[B<-index file>]
-[B<-CA file>]
-[B<-rsigner file>]
-[B<-rkey file>]
-[B<-rother file>]
-[B<-rsigopt nm:v>]
+[B<-index> I<file>]
+[B<-CA> I<file>]
+[B<-rsigner> I<file>]
+[B<-rkey> I<file>]
+[B<-rother> I<file>]
+[B<-rsigopt> I<nm:v>]
 [B<-resp_no_certs>]
-[B<-nmin n>]
-[B<-ndays n>]
+[B<-nmin> I<n>]
+[B<-ndays> I<n>]
 [B<-resp_key_id>]
-[B<-nrequest n>]
-[B<-rcid I<digest>>]
-[B<-I<digest>>]
+[B<-nrequest> I<n>]
+[B<-rcid> I<digest>]
+[B<->I<digest>]
 
 =head1 DESCRIPTION
 
@@ -112,30 +112,30 @@ The options are described below, divided into those two modes.
 
 Print out a usage message.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 specify output filename, default is standard output.
 
-=item B<-issuer filename>
+=item B<-issuer> I<filename>
 
 This specifies the current issuer certificate. This option can be used
 multiple times. The certificate specified in B<filename> must be in
 PEM format. This option B<MUST> come before any B<-cert> options.
 
-=item B<-cert filename>
+=item B<-cert> I<filename>
 
 Add the certificate B<filename> to the request. The issuer certificate
 is taken from the previous B<issuer> option, or an error occurs if no
 issuer certificate is specified.
 
-=item B<-serial num>
+=item B<-serial> I<num>
 
 Same as the B<cert> option except the certificate with serial number
 B<num> is added to the request. The serial number is interpreted as a
 decimal integer unless preceded by B<0x>. Negative integers can also
 be specified by preceding the value by a B<-> sign.
 
-=item B<-signer filename>, B<-signkey filename>
+=item B<-signer> I<filename>, B<-signkey> I<filename>
 
 Sign the OCSP request using the certificate specified in the B<signer>
 option and the private key specified by the B<signkey> option. If
@@ -143,7 +143,7 @@ the B<signkey> option is not present then the private key is read
 from the same file as the certificate. If neither option is specified then
 the OCSP request is not signed.
 
-=item B<-sign_other filename>
+=item B<-sign_other> I<filename>
 
 Additional certificates to include in the signed request.
 
@@ -159,34 +159,34 @@ a nonce is automatically added specifying B<no_nonce> overrides this.
 
 Print out the text form of the OCSP request, response or both respectively.
 
-=item B<-reqout file>, B<-respout file>
+=item B<-reqout> I<file>, B<-respout> I<file>
 
 Write out the DER encoded certificate request or response to B<file>.
 
-=item B<-reqin file>, B<-respin file>
+=item B<-reqin> I<file>, B<-respin> I<file>
 
 Read OCSP request or response file from B<file>. These option are ignored
 if OCSP request or response creation is implied by other options (for example
 with B<serial>, B<cert> and B<host> options).
 
-=item B<-url responder_url>
+=item B<-url> I<responder_url>
 
 Specify the responder URL. Both HTTP and HTTPS (SSL/TLS) URLs can be specified.
 
-=item B<-host hostname:port>, B<-path pathname>
+=item B<-host> I<hostname:port>, B<-path> I<pathname>
 
 If the B<host> option is present then the OCSP request is sent to the host
 B<hostname> on port B<port>. B<path> specifies the HTTP path name to use
 or "/" by default.  This is equivalent to specifying B<-url> with scheme
 http:// and the given hostname, port, and pathname.
 
-=item B<-header name=value>
+=item B<-header> I<name=value>
 
 Adds the header B<name> with the specified B<value> to the OCSP request
 that is sent to the responder.
 This may be repeated.
 
-=item B<-timeout seconds>
+=item B<-timeout> I<seconds>
 
 Connection timeout to the OCSP responder in seconds.
 On POSIX systems, when running as an OCSP responder, this option also limits
@@ -194,7 +194,7 @@ the time that the responder is willing to wait for the client request.
 This time is measured from the time the responder accepts the connection until
 the complete request is received.
 
-=item B<-multi process-count>
+=item B<-multi> I<process-count>
 
 Run the specified number of OCSP responder child processes, with the parent
 process respawning child processes as needed.
@@ -205,7 +205,7 @@ each child is willing to wait for the client's OCSP response.
 This option is available on POSIX systems (that support the fork() and other
 required unix system-calls).
 
-=item B<-CAfile file>, B<-CApath pathname>
+=item B<-CAfile> I<file>, B<-CApath> I<pathname>
 
 File or pathname containing trusted CA certificates. These are used to verify
 the signature on the OCSP response.
@@ -229,7 +229,7 @@ B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 Set different certificate verification options.
 See L<verify(1)> manual page for details.
 
-=item B<-verify_other file>
+=item B<-verify_other> I<file>
 
 File containing additional certificates to search when attempting to locate
 the OCSP response signing certificate. Some responders omit the actual signer's
@@ -243,7 +243,7 @@ trusted and no additional checks will be performed on them. This is useful
 when the complete responder certificate chain is not available or trusting a
 root CA is not appropriate.
 
-=item B<-VAfile file>
+=item B<-VAfile> I<file>
 
 File containing explicitly trusted responder certificates. Equivalent to the
 B<-verify_other> and B<-trust_other> options.
@@ -288,7 +288,7 @@ That is do not make any checks to see if the signers certificate is authorised
 to provide the necessary status information: as a result this option should
 only be used for testing purposes.
 
-=item B<-validity_period nsec>, B<-status_age age>
+=item B<-validity_period> I<nsec>, B<-status_age> I<age>
 
 These options specify the range of times, in seconds, which will be tolerated
 in an OCSP response. Each certificate status response includes a B<notBefore>
@@ -304,13 +304,13 @@ status information is immediately available. In this case the age of the
 B<notBefore> field is checked to see it is not older than B<age> seconds old.
 By default this additional check is not performed.
 
-=item B<-rcid I<digest>>
+=item B<-rcid> I<digest>
 
 This option sets the digest algorithm to use for certificate identification
 in the OCSP response. Any digest supported by the OpenSSL B<dgst> command can
 be used. The default is the same digest algorithm used in the request.
 
-=item B<-I<digest>>
+=item B<->I<digest>
 
 This option sets digest algorithm to use for certificate identification in the
 OCSP request. Any digest supported by the OpenSSL B<dgst> command can be used.
@@ -323,7 +323,7 @@ digest used by subsequent certificate identifiers.
 
 =over 4
 
-=item B<-index indexfile>
+=item B<-index> I<indexfile>
 
 The B<indexfile> parameter is the name of a text index file in B<ca>
 format containing certificate revocation information.
@@ -337,15 +337,15 @@ or via external OCSP clients (if B<port> or B<url> is specified).
 If the B<index> option is present then the B<CA> and B<rsigner> options
 must also be present.
 
-=item B<-CA file>
+=item B<-CA> I<file>
 
 CA certificate corresponding to the revocation information in B<indexfile>.
 
-=item B<-rsigner file>
+=item B<-rsigner> I<file>
 
 The certificate to sign OCSP responses with.
 
-=item B<-rother file>
+=item B<-rother> I<file>
 
 Additional certificates to include in the OCSP response.
 
@@ -358,17 +358,17 @@ Don't include any certificates in the OCSP response.
 Identify the signer certificate using the key ID, default is to use the
 subject name.
 
-=item B<-rkey file>
+=item B<-rkey> I<file>
 
 The private key to sign OCSP responses with: if not present the file
 specified in the B<rsigner> option is used.
 
-=item B<-rsigopt nm:v>
+=item B<-rsigopt> I<nm:v>
 
 Pass options to the signature algorithm when signing OCSP responses.
 Names and values of these options are algorithm-specific.
 
-=item B<-port portnum>
+=item B<-port> I<portnum>
 
 Port to listen for OCSP requests on. The port may also be specified
 using the B<url> option.
@@ -379,11 +379,11 @@ Ignore malformed requests or responses: When acting as an OCSP client, retry if
 a malformed response is received. When acting as an OCSP responder, continue
 running instead of terminating upon receiving a malformed request.
 
-=item B<-nrequest number>
+=item B<-nrequest> I<number>
 
 The OCSP server will exit after receiving B<number> requests, default unlimited.
 
-=item B<-nmin minutes>, B<-ndays days>
+=item B<-nmin> I<minutes>, B<-ndays> I<days>
 
 Number of minutes or days when fresh revocation information is available:
 used in the B<nextUpdate> field. If neither option is present then the

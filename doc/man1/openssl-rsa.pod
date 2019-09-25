@@ -8,12 +8,12 @@ openssl-rsa - RSA key processing tool
 
 B<openssl> B<rsa>
 [B<-help>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
+[B<-inform> I<DER|PEM>]
+[B<-outform> I<DER|PEM>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
@@ -34,7 +34,7 @@ B<openssl> B<rsa>
 [B<-pubout>]
 [B<-RSAPublicKey_in>]
 [B<-RSAPublicKey_out>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
@@ -52,7 +52,7 @@ utility.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> I<DER|PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with the PKCS#1 RSAPrivateKey or SubjectPublicKeyInfo format.
@@ -60,30 +60,30 @@ The B<PEM> form is the default format: it consists of the B<DER> format base64
 encoded with additional header and footer lines. On input PKCS#8 format private
 keys are also accepted.
 
-=item B<-outform DER|PEM>
+=item B<-outform> I<DER|PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
 The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write a key to or standard output if this
 option is not specified. If any encryption options are set then a pass phrase
 will be prompted for. The output filename should B<not> be the same as the input
 filename.
 
-=item B<-passout password>
+=item B<-passout> I<password>
 
 The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
@@ -130,7 +130,7 @@ the input is a public key.
 
 Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<rsa>
 to attempt to obtain a functional reference to the specified engine,

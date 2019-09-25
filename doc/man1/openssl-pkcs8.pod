@@ -9,26 +9,26 @@ openssl-pkcs8 - PKCS#8 format private key conversion tool
 B<openssl> B<pkcs8>
 [B<-help>]
 [B<-topk8>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
-[B<-iter count>]
+[B<-inform> I<DER|PEM>]
+[B<-outform> I<DER|PEM>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
+[B<-iter> I<count>]
 [B<-noiter>]
-[B<-rand file...>]
-[B<-writerand file>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
 [B<-nocrypt>]
 [B<-traditional>]
 [B<-v2 alg>]
 [B<-v2prf alg>]
 [B<-v1 alg>]
-[B<-engine id>]
+[B<-engine> I<id>]
 [B<-scrypt>]
-[B<-scrypt_N N>]
-[B<-scrypt_r r>]
-[B<-scrypt_p p>]
+[B<-scrypt_N> I<N>]
+[B<-scrypt_r> I<r>]
+[B<-scrypt_p> I<p>]
 
 =head1 DESCRIPTION
 
@@ -50,12 +50,12 @@ Normally a PKCS#8 private key is expected on input and a private key will be
 written to the output file. With the B<-topk8> option the situation is
 reversed: it reads a private key and writes a PKCS#8 format key.
 
-=item B<-inform DER|PEM>
+=item B<-inform> I<DER|PEM>
 
 This specifies the input format: see L<KEY FORMATS> for more details. The default
 format is PEM.
 
-=item B<-outform DER|PEM>
+=item B<-outform> I<DER|PEM>
 
 This specifies the output format: see L<KEY FORMATS> for more details. The default
 format is PEM.
@@ -65,30 +65,30 @@ format is PEM.
 When this option is present and B<-topk8> is not a traditional format private
 key is written.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
 The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write a key to or standard output by
 default. If any encryption options are set then a pass phrase will be
 prompted for. The output filename should B<not> be the same as the input
 filename.
 
-=item B<-passout arg>
+=item B<-passout> I<arg>
 
 The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-iter count>
+=item B<-iter> I<count>
 
 When creating new PKCS#8 containers, use a given number of iterations on
 the password in deriving the encryption key for the PKCS#8 output.
@@ -103,7 +103,7 @@ This option does not encrypt private keys at all and should only be used
 when absolutely necessary. Certain software such as some versions of Java
 code signing software used unencrypted private keys.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -111,7 +111,7 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
@@ -139,7 +139,7 @@ This option indicates a PKCS#5 v1.5 or PKCS#12 algorithm should be used.  Some
 older implementations may not support PKCS#5 v2.0 and may require this option.
 If not specified PKCS#5 v2.0 form is used.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<pkcs8>
 to attempt to obtain a functional reference to the specified engine,
@@ -153,7 +153,7 @@ parameters: currently N=16384, r=8 and p=1 and AES in CBC mode with a 256 bit
 key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
 B<-scrypt_p> and B<-v2> options.
 
-=item B<-scrypt_N N> B<-scrypt_r r> B<-scrypt_p p>
+=item B<-scrypt_N> I<N>, B<-scrypt_r> I<r>, B<-scrypt_p> I<p>
 
 Sets the scrypt B<N>, B<r> or B<p> parameters.
 

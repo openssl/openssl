@@ -8,14 +8,14 @@ openssl-genpkey - generate a private key
 
 B<openssl> B<genpkey>
 [B<-help>]
-[B<-out filename>]
-[B<-outform PEM|DER>]
-[B<-pass arg>]
-[B<-I<cipher>>]
-[B<-engine id>]
-[B<-paramfile file>]
-[B<-algorithm alg>]
-[B<-pkeyopt opt:value>]
+[B<-out> I<filename>]
+[B<-outform> I<DER|PEM>]
+[B<-pass> I<arg>]
+[B<->I<cipher>]
+[B<-engine> I<id>]
+[B<-paramfile> I<file>]
+[B<-algorithm> I<alg>]
+[B<-pkeyopt> I<opt:value>]
 [B<-genparam>]
 [B<-text>]
 
@@ -31,26 +31,26 @@ The B<genpkey> command generates a private key.
 
 Print out a usage message.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Output the key to the specified file. If this argument is not specified then
 standard output is used.
 
-=item B<-outform DER|PEM>
+=item B<-outform> I<DER|PEM>
 
 This specifies the output format DER or PEM. The default format is PEM.
 
-=item B<-pass arg>
+=item B<-pass> I<arg>
 
 The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-I<cipher>>
+=item B<->I<cipher>
 
 This option encrypts the private key with the supplied cipher. Any algorithm
 name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<genpkey>
 to attempt to obtain a functional reference to the specified engine,
@@ -58,7 +58,7 @@ thus initialising it if needed. The engine will then be set as the default
 for all available algorithms. If used this option should precede all other
 options.
 
-=item B<-algorithm alg>
+=item B<-algorithm> I<alg>
 
 Public key algorithm to use such as RSA, DSA or DH. If used this option must
 precede any B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
@@ -77,7 +77,7 @@ will be generated. Use the B<dh_paramgen_type> option to indicate whether PKCS#3
 or X9.42 DH parameters are required. See L<DH Parameter Generation Options>
 below for more details.
 
-=item B<-pkeyopt opt:value>
+=item B<-pkeyopt> I<opt:value>
 
 Set the public key algorithm option B<opt> to B<value>. The precise set of
 options supported depends on the public key algorithm used and its
@@ -89,7 +89,7 @@ L<PARAMETER GENERATION OPTIONS> below for more details.
 Generate a set of parameters instead of a private key. If used this option must
 precede any B<-algorithm>, B<-paramfile> or B<-pkeyopt> options.
 
-=item B<-paramfile filename>
+=item B<-paramfile> I<filename>
 
 Some public key algorithms generate a private key based on a set of parameters.
 They can be supplied using this option. If this option is used the public key

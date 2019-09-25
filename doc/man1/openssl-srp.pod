@@ -13,13 +13,13 @@ B<openssl srp>
 [B<-modify>]
 [B<-delete>]
 [B<-list>]
-[B<-name section>]
-[B<-config file>]
-[B<-srpvfile file>]
-[B<-gn identifier>]
-[B<-userinfo text...>]
-[B<-passin arg>]
-[B<-passout arg>]
+[B<-name> I<section>]
+[B<-config> I<file>]
+[B<-srpvfile> I<file>]
+[B<-gn> I<identifier>]
+[B<-userinfo> I<text...>]
+[B<-passin> I<arg>]
+[B<-passout> I<arg>]
 [I<user...>]
 
 =head1 DESCRIPTION
@@ -50,11 +50,11 @@ the L<openssl(1)> command.
 
 =over 4
 
-=item [B<-help>]
+=item B<-help>
 
 Display an option summary.
 
-=item [B<-verbose>]
+=item B<-verbose>
 
 Generate verbose output while processing.
 

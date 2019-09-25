@@ -8,11 +8,11 @@ openssl-pkeyparam - public key algorithm parameter processing tool
 
 B<openssl> B<pkeyparam>
 [B<-help>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-text>]
 [B<-noout>]
-[B<-engine id>]
+[B<-engine> I<id>]
 [B<-check>]
 
 =head1 DESCRIPTION
@@ -28,12 +28,12 @@ They can be checked for correctness and their components printed out.
 
 Print out a usage message.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read parameters from or standard input if
 this option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write parameters to or standard output if
 this option is not specified.
@@ -46,7 +46,7 @@ Prints out the parameters in plain text in addition to the encoded version.
 
 Do not output the encoded version of the parameters.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<pkeyparam>
 to attempt to obtain a functional reference to the specified engine,

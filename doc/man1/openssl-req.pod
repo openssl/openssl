@@ -8,49 +8,49 @@ openssl-req - PKCS#10 certificate request and certificate generating utility
 
 B<openssl> B<req>
 [B<-help>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
+[B<-inform> I<DER|PEM>]
+[B<-outform> I<DER|PEM>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-text>]
 [B<-pubkey>]
 [B<-noout>]
 [B<-verify>]
 [B<-modulus>]
 [B<-new>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-newkey rsa:bits>]
-[B<-newkey alg:file>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
+[B<-newkey> I<rsa:bits>]
+[B<-newkey> I<alg:file>]
 [B<-nodes>]
-[B<-key filename>]
-[B<-keyform PEM|DER>]
-[B<-keyout filename>]
-[B<-keygen_engine id>]
-[B<-I<digest>>]
-[B<-config filename>]
+[B<-key> I<filename>]
+[B<-keyform> I<DER|PEM>]
+[B<-keyout> I<filename>]
+[B<-keygen_engine> I<id>]
+[B<-> I<digest>]
+[B<-config> I<filename>]
 [B<-multivalue-rdn>]
 [B<-x509>]
-[B<-days n>]
-[B<-set_serial n>]
+[B<-days> I<n>]
+[B<-set_serial> I<n>]
 [B<-newhdr>]
-[B<-addext ext>]
-[B<-extensions section>]
-[B<-reqexts section>]
+[B<-addext> I<ext>]
+[B<-extensions> I<section>]
+[B<-reqexts> I<section>]
 [B<-precert>]
 [B<-utf8>]
 [B<-nameopt>]
 [B<-reqopt>]
 [B<-subject>]
-[B<-subj arg>]
-[B<-sigopt nm:v>]
+[B<-subj> I<arg>]
+[B<-sigopt> I<nm:v>]
 [B<-batch>]
 [B<-verbose>]
-[B<-engine id>]
-[B<-sm2-id string>]
-[B<-sm2-hex-id hex-string>]
+[B<-engine> I<id>]
+[B<-sm2-id> I<string>]
+[B<-sm2-hex-id> I<hex-string>]
 
 =head1 DESCRIPTION
 
@@ -66,40 +66,40 @@ for use as root CAs for example.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> I<DER|PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with the PKCS#10. The B<PEM> form is the default format: it
 consists of the B<DER> format base64 encoded with additional header and
 footer lines.
 
-=item B<-outform DER|PEM>
+=item B<-outform> I<DER|PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read a request from or standard input
 if this option is not specified. A request is only read if the creation
 options (B<-new> and B<-newkey>) are not specified.
 
-=item B<-sigopt nm:v>
+=item B<-sigopt> I<nm:v>
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
 The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write to or standard output by
 default.
 
-=item B<-passout arg>
+=item B<-passout> I<arg>
 
 The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
@@ -140,7 +140,7 @@ in the configuration file and any requested extensions.
 If the B<-key> option is not used it will generate a new RSA private
 key using information specified in the configuration file.
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -148,20 +148,20 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-newkey arg>
+=item B<-newkey> I<arg>
 
 This option creates a new certificate request and a new private
 key. The argument takes one of several forms. B<rsa:nbits>, where
 B<nbits> is the number of bits, generates an RSA key B<nbits>
-in size. If B<nbits> is omitted, i.e. B<-newkey rsa> specified,
+in size. If B<nbits> is omitted, i.e. B<-newkey> I<rsa> specified,
 the default key size, specified in the configuration file is used.
 
-All other algorithms support the B<-newkey alg:file> form, where file may be
+All other algorithms support the B<-newkey> I<alg:file> form, where file may be
 an algorithm parameter file, created by the B<genpkey -genparam> command
 or and X.509 certificate for a key with appropriate algorithm.
 
@@ -176,27 +176,27 @@ in the file B<filename>. B<ec:filename> generates EC key (usable both with
 ECDSA or ECDH algorithms), B<gost2001:filename> generates GOST R
 34.10-2001 key (requires B<ccgost> engine configured in the configuration
 file). If just B<gost2001> is specified a parameter set should be
-specified by B<-pkeyopt paramset:X>
+specified by B<-pkeyopt> I<paramset:X>
 
 
-=item B<-pkeyopt opt:value>
+=item B<-pkeyopt> I<opt:value>
 
 Set the public key algorithm option B<opt> to B<value>. The precise set of
 options supported depends on the public key algorithm used and its
 implementation. See B<KEY GENERATION OPTIONS> in the B<genpkey> manual page
 for more details.
 
-=item B<-key filename>
+=item B<-key> I<filename>
 
 This specifies the file to read the private key from. It also
 accepts PKCS#8 format private keys for PEM format files.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform> I<DER|PEM>
 
 The format of the private key file specified in the B<-key>
 argument. PEM is the default.
 
-=item B<-keyout filename>
+=item B<-keyout> I<filename>
 
 This gives the filename to write the newly created private key to.
 If this option is not specified then the filename present in the
@@ -207,7 +207,7 @@ configuration file is used.
 If this option is specified then if a private key is created it
 will not be encrypted.
 
-=item B<-I<digest>>
+=item B<->I<digest>
 
 This specifies the message digest to sign the request.
 Any digest supported by the OpenSSL B<dgst> command can be used.
@@ -218,13 +218,13 @@ Some public key algorithms may override this choice. For instance, DSA
 signatures always use SHA1, GOST R 34.10 signatures always use
 GOST R 34.11-94 (B<-md_gost94>), Ed25519 and Ed448 never use any digest.
 
-=item B<-config filename>
+=item B<-config> I<filename>
 
 This allows an alternative configuration file to be specified.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
 
-=item B<-subj arg>
+=item B<-subj> I<arg>
 
 Sets subject name for new request or supersedes the subject name
 when processing a request.
@@ -254,18 +254,18 @@ the serial number.
 If existing request is specified with the B<-in> option, it is converted
 to the self signed certificate otherwise new request is created.
 
-=item B<-days n>
+=item B<-days> I<n>
 
 When the B<-x509> option is being used this specifies the number of
 days to certify the certificate for, otherwise it is ignored. B<n> should
 be a positive integer. The default is 30 days.
 
-=item B<-set_serial n>
+=item B<-set_serial> I<n>
 
 Serial number to use when outputting a self signed certificate. This
 may be specified as a decimal value or a hex value if preceded by B<0x>.
 
-=item B<-addext ext>
+=item B<-addext> I<ext>
 
 Add a specific extension to the certificate (if the B<-x509> option is
 present) or certificate request.  The argument must have the form of
@@ -273,9 +273,9 @@ a key=value pair as it would appear in a config file.
 
 This option can be given multiple times.
 
-=item B<-extensions section>
+=item B<-extensions> I<section>
 
-=item B<-reqexts section>
+=item B<-reqexts> I<section>
 
 These options specify alternative sections to include certificate
 extensions (if the B<-x509> option is present) or certificate
@@ -300,7 +300,7 @@ default they are interpreted as ASCII. This means that the field
 values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
 
-=item B<-nameopt option>
+=item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
@@ -328,14 +328,14 @@ Non-interactive mode.
 
 Print extra details about the operations being performed.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
 Specifying an engine (by its unique B<id> string) will cause B<req>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
-=item B<-keygen_engine id>
+=item B<-keygen_engine> I<id>
 
 Specifies an engine (by its unique B<id> string) which would be used
 for key generation operations.

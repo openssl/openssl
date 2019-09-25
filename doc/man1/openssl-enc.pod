@@ -6,37 +6,38 @@ openssl-enc - symmetric cipher routines
 
 =head1 SYNOPSIS
 
-B<openssl enc -I<cipher>>
+B<openssl>
+[B<->I<cipher>]
 [B<-help>]
 [B<-ciphers>]
-[B<-in filename>]
-[B<-out filename>]
-[B<-pass arg>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
+[B<-pass> I<arg>]
 [B<-e>]
 [B<-d>]
 [B<-a>]
 [B<-base64>]
 [B<-A>]
-[B<-k password>]
-[B<-kfile filename>]
-[B<-K key>]
-[B<-iv IV>]
-[B<-S salt>]
+[B<-k> I<password>]
+[B<-kfile> I<filename>]
+[B<-K> I<key>]
+[B<-iv> I<IV>]
+[B<-S> I<salt>]
 [B<-salt>]
 [B<-nosalt>]
 [B<-z>]
-[B<-md digest>]
-[B<-iter count>]
+[B<-md> I<digest>]
+[B<-iter> I<count>]
 [B<-pbkdf2>]
 [B<-p>]
 [B<-P>]
-[B<-bufsize number>]
+[B<-bufsize> I<number>]
 [B<-nopad>]
 [B<-debug>]
 [B<-none>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-engine id>]
+[B<-rand> I<file...>]
+[B<-writerand> I<file>]
+[B<-engine> I<id>]
 
 B<openssl> I<[cipher]> [B<...>]
 
@@ -59,15 +60,15 @@ Print out a usage message.
 
 List all supported ciphers.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 The input filename, standard input by default.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 The output filename, standard output by default.
 
-=item B<-pass arg>
+=item B<-pass> I<arg>
 
 The password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
@@ -94,23 +95,23 @@ Same as B<-a>
 
 If the B<-a> option is set then base64 process the data on one line.
 
-=item B<-k password>
+=item B<-k> I<password>
 
 The password to derive the key from. This is for compatibility with previous
 versions of OpenSSL. Superseded by the B<-pass> argument.
 
-=item B<-kfile filename>
+=item B<-kfile> I<filename>
 
 Read the password to derive the key from the first line of B<filename>.
 This is for compatibility with previous versions of OpenSSL. Superseded by
 the B<-pass> argument.
 
-=item B<-md digest>
+=item B<-md> I<digest>
 
 Use the specified digest to create the key from the passphrase.
 The default algorithm is sha-256.
 
-=item B<-iter count>
+=item B<-iter> I<count>
 
 Use a given number of iterations on the password in deriving the encryption key.
 High values increase the time required to brute-force the resulting file.
@@ -131,11 +132,11 @@ OpenSSL.
 Use salt (randomly generated or provide with B<-S> option) when
 encrypting, this is the default.
 
-=item B<-S salt>
+=item B<-S> I<salt>
 
 The actual salt to use: this must be represented as a string of hex digits.
 
-=item B<-K key>
+=item B<-K> I<key>
 
 The actual key to use: this must be represented as a string comprised only
 of hex digits. If only the key is specified, the IV must additionally specified
@@ -144,7 +145,7 @@ key given with the B<-K> option will be used and the IV generated from the
 password will be taken. It does not make much sense to specify both key
 and password.
 
-=item B<-iv IV>
+=item B<-iv> I<IV>
 
 The actual IV to use: this must be represented as a string comprised only
 of hex digits. When only the key is specified using the B<-K> option, the
@@ -160,7 +161,7 @@ Print out the key and IV used.
 Print out the key and IV used then immediately exit: don't do any encryption
 or decryption.
 
-=item B<-bufsize number>
+=item B<-bufsize> I<number>
 
 Set the buffer size for I/O.
 
@@ -182,7 +183,7 @@ or zlib-dynamic option.
 
 Use NULL cipher (no encryption or decryption of input).
 
-=item B<-rand file...>
+=item B<-rand> I<file...>
 
 A file or files containing random data used to seed the random number
 generator.
@@ -190,7 +191,7 @@ Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.

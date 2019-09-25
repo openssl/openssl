@@ -255,6 +255,14 @@ sub check {
         if $contents =~ /=over([^ ][^24])/;
     err($id, "Possible version style issue")
         if $contents =~ /OpenSSL version [019]/;
+    err($id, "PEM|DER should be DER|PEM")
+        if $contents =~ /PEM\|DER/;
+    err($id, "DER|PEM should be first, other formats after")
+        if $contents =~ /\|DER\|PEM/;
+    err($id, "Bad flag formatting inside B<>")
+        if $contents =~ /B<-[A-Za-z_ ]+ /;
+    err($id, "Brackets on item line")
+        if $contents =~ /=item \[/;
 
     if ( $contents !~ /=for comment multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines

@@ -106,7 +106,7 @@ Extra params are passed on to B<openssl x509> and B<openssl ca> commands.
 
 Generate a CRL. Executes B<openssl ca> command.
 
-=item B<-revoke certfile [reason]>
+=item B<-revoke> I<certfile [reason]>
 
 Revoke the certificate contained in the specified B<certfile>. An optional
 reason may be specified, and must be one of: B<unspecified>,

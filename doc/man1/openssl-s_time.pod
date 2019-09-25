@@ -8,27 +8,27 @@ openssl-s_time - SSL/TLS performance timing program
 
 B<openssl> B<s_time>
 [B<-help>]
-[B<-connect host:port>]
-[B<-www page>]
-[B<-cert filename>]
-[B<-key filename>]
-[B<-CApath directory>]
-[B<-cafile filename>]
+[B<-connect> I<host:port>]
+[B<-www> I<page>]
+[B<-cert> I<filename>]
+[B<-key> I<filename>]
+[B<-CApath> I<directory>]
+[B<-cafile> I<filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-reuse>]
 [B<-new>]
-[B<-verify depth>]
-[B<-nameopt option>]
-[B<-time seconds>]
+[B<-verify> I<depth>]
+[B<-nameopt> I<option>]
+[B<-time> I<seconds>]
 [B<-ssl3>]
 [B<-tls1>]
 [B<-tls1_1>]
 [B<-tls1_2>]
 [B<-tls1_3>]
 [B<-bugs>]
-[B<-cipher cipherlist>]
-[B<-ciphersuites val>]
+[B<-cipher> I<cipherlist>]
+[B<-ciphersuites> I<val>]
 
 =head1 DESCRIPTION
 
@@ -46,28 +46,28 @@ transferred (if any), and calculates the average time spent for one connection.
 
 Print out a usage message.
 
-=item B<-connect host:port>
+=item B<-connect> I<host:port>
 
 This specifies the host and optional port to connect to.
 
-=item B<-www page>
+=item B<-www> I<page>
 
 This specifies the page to GET from the server. A value of '/' gets the
 index.htm[l] page. If this parameter is not specified, then B<s_time> will only
 perform the handshake to establish SSL connections but not transfer any
 payload data.
 
-=item B<-cert certname>
+=item B<-cert> I<certname>
 
 The certificate to use, if one is requested by the server. The default is
 not to use a certificate. The file is in PEM format.
 
-=item B<-key keyfile>
+=item B<-key> I<keyfile>
 
 The private key to use. If not specified then the certificate file will
 be used. The file is in PEM format.
 
-=item B<-verify depth>
+=item B<-verify> I<depth>
 
 The verify depth to use. This specifies the maximum length of the
 server certificate chain and turns on server certificate verification.
@@ -75,20 +75,20 @@ Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
 
-=item B<-nameopt option>
+=item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
 
-=item B<-CApath directory>
+=item B<-CApath> I<directory>
 
 The directory to use for server certificate verification. This directory
 must be in "hash format", see B<verify> for more information. These are
 also used when building the client certificate chain.
 
-=item B<-CAfile file>
+=item B<-CAfile> I<file>
 
 A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
@@ -127,7 +127,7 @@ OpenSSL was built.
 There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
-=item B<-cipher cipherlist>
+=item B<-cipher> I<cipherlist>
 
 This allows the TLSv1.2 and below cipher list sent by the client to be modified.
 This list will be combined with any TLSv1.3 ciphersuites that have been
@@ -135,7 +135,7 @@ configured. Although the server determines which cipher suite is used it should
 take the first supported cipher in the list sent by the client. See
 L<ciphers(1)> for more information.
 
-=item B<-ciphersuites val>
+=item B<-ciphersuites> I<val>
 
 This allows the TLSv1.3 ciphersuites sent by the client to be modified. This
 list will be combined with any TLSv1.2 and below ciphersuites that have been
@@ -144,7 +144,7 @@ take the first supported cipher in the list sent by the client. See
 L<ciphers(1)> for more information. The format for this list is a simple
 colon (":") separated list of TLSv1.3 ciphersuite names.
 
-=item B<-time length>
+=item B<-time> I<length>
 
 Specifies how long (in seconds) B<s_time> should establish connections and
 optionally transfer payload data from a server. Server and client performance

@@ -8,13 +8,13 @@ openssl-fipsinstall - perform FIPS configuration installation
 
 B<openssl fipsinstall>
 [B<-help>]
-[B<-in configfilename>]
-[B<-out configfilename>]
-[B<-module modulefilename>]
-[B<-provider_name providername>]
-[B<-section_name sectionname>]
+[B<-in> I<configfilename>]
+[B<-out> I<configfilename>]
+[B<-module> I<modulefilename>]
+[B<-provider_name> I<providername>]
+[B<-section_name> I<sectionname>]
 [B<-verify>]
-[B<-mac_name macname>]
+[B<-mac_name> I<macname>]
 [B<-macopt>]
 
 B<openssl> I<fipsinstall> [B<...>]
@@ -45,15 +45,15 @@ verifies the modules MAC, but only needs to run the KATS once during install.
 
 Print a usage message.
 
-=item B<-module filename>
+=item B<-module> I<filename>
 
 Filename of a fips module to perform an integrity check on.
 
-=item B<-out configfilename>
+=item B<-out> I<configfilename>
 
 Filename to output the configuration data to, or standard output by default.
 
-=item B<-in configfilename>
+=item B<-in> I<configfilename>
 
 Input filename to load configuration data from. Used with the '-verify' option.
 Standard input is used if the filename is '-'.
@@ -62,21 +62,21 @@ Standard input is used if the filename is '-'.
 
 Verify that the input configuration file contains the correct information
 
-=item B<-provider_name providername>
+=item B<-provider_name> I<providername>
 
 Name of the provider inside the configuration file.
 
-=item B<-section_name sectionname>
+=item B<-section_name> I<sectionname>
 
 Name of the section inside the configuration file.
 
-=item B<-mac_name name>
+=item B<-mac_name> I<name>
 
 Specifies the name of a supported MAC algorithm which will be used.
 To see the list of supported MAC's use the command I<list -mac-algorithms>.
 The default is "HMAC".
 
-=item B<-macopt nm:v>
+=item B<-macopt> I<nm:v>
 
 Passes options to the MAC algorithm.
 A comprehensive list of controls can be found in the EVP_MAC implementation
