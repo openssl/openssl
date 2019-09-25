@@ -198,7 +198,7 @@ The length must never exceed what can be given with a B<size_t>.
 
 Memory-hard password-based KDF algorithms, such as scrypt, use an amount of
 memory that depends on the load factors provided as input.
-For those KDF implementations that support it, this uint64_t parameter sets
+For those KDF implementations that support it, this B<uint64_t> parameter sets
 an upper limit on the amount of memory that may be consumed while performing
 a key derivation.
 If this memory usage limit is exceeded because the load factors are chosen
