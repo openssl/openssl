@@ -30,6 +30,7 @@ L<EVP_MAC(3)/PARAMETERS>.
 All these parameters can be set with EVP_MAC_CTX_set_params().
 Furthermore, the "size" parameter can be retrieved with
 EVP_MAC_CTX_get_params(), or with EVP_MAC_size().
+The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =over 4
 
@@ -50,7 +51,7 @@ This is an optional value of at most 16 bytes for BLAKE2BMAC or 8 for
 BLAKE2SMAC.
 It is empty by default.
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <size_t>
+=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned integer>
 
 When set, this can be any number between between 1 and 32 for
 EVP_MAC_BLAKE2S or 64 for EVP_MAC_BLAKE2B.

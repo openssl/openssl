@@ -37,11 +37,12 @@ EVP_MAC_CTX_get_params():
 
 =over 4
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned int>
+=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned integer>
 
 =back
 
 The "size" parameter can also be retrieved with with EVP_MAC_size().
+The length of the "size" parameter should not exceed that of an B<unsigned int>.
 
 =head1 SEE ALSO
 
