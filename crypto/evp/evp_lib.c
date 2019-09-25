@@ -504,6 +504,13 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 
 int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name)
 {
+#ifndef FIPS_MODE
+    if (cipher->prov == NULL) {
+        int nid = EVP_CIPHER_nid(cipher);
+
+        return nid == OBJ_sn2nid(name) || nid == OBJ_ln2nid(name);
+    }
+#endif
     return evp_is_a(cipher->prov, cipher->name_id, name);
 }
 
