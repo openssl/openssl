@@ -17,6 +17,8 @@ OSSL_NAMEMAP *ossl_namemap_new(void);
 void ossl_namemap_free(OSSL_NAMEMAP *namemap);
 
 int ossl_namemap_add(OSSL_NAMEMAP *namemap, int number, const char *name);
+int ossl_namemap_add_n(OSSL_NAMEMAP *namemap, int number,
+                       const char *name, size_t name_len);
 
 /*
  * The number<->name relationship is 1<->many
@@ -24,6 +26,8 @@ int ossl_namemap_add(OSSL_NAMEMAP *namemap, int number, const char *name);
  * number->name mapping is an iterator.
  */
 int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name);
+int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
+                            const char *name, size_t name_len);
 const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
                                   size_t idx);
 void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,

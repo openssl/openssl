@@ -20,6 +20,8 @@
 #include "crypto/evp.h"    /* evp_local.h needs it */
 #include "evp_local.h"
 
+#define NAME_SEPARATOR ':'
+
 static void default_method_store_free(void *vstore)
 {
     ossl_method_store_free(vstore);
@@ -52,14 +54,14 @@ struct method_data_st {
 };
 
 static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
-                                const char **names)
+                                const char *names)
 {
-    const char **p;
+    const char *p, *q;
+    size_t l;
     int id = 0;
 
-    /* Check that we have a namemap aand that there is at least one name */
-    if (namemap == NULL
-        || names[0] == NULL) {
+    /* Check that we have a namemap and that there is at least one name */
+    if (namemap == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -68,10 +70,17 @@ static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
      * Check that no name is an empty string, and that all names have at
      * most one numeric identity together.
      */
-    for (p = names; *p != NULL; p++) {
-        int this_id = ossl_namemap_name2num(namemap, *p);
+    for (p = names; *p != '\0'; p = q == NULL ? p + l : q + 1) {
+        int this_id;
 
-        if ((*p)[0] == '\0') {
+        if ((q = strchr(p, NAME_SEPARATOR)) == NULL)
+            l = strlen(p);       /* offset to \0 */
+        else
+            l = q - p;           /* offset to the next separator */
+
+        this_id = ossl_namemap_name2num_n(namemap, p, l);
+
+        if (*p == '\0' || *p == NAME_SEPARATOR) {
             ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -84,9 +93,15 @@ static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
     }
 
     /* Now that we have checked, register all names */
-    for (p = names; *p != NULL; p++) {
-        int this_id = ossl_namemap_add(namemap, id, *p);
+    for (p = names; *p != '\0'; p = q == NULL ? p + l : q + 1) {
+        int this_id;
 
+        if ((q = strchr(p, NAME_SEPARATOR)) == NULL)
+            l = strlen(p);       /* offset to \0 */
+        else
+            l = q - p;           /* offset to the next separator */
+
+        this_id = ossl_namemap_add_n(namemap, id, p, l);
         if (id == 0)
             id = this_id;
         if (this_id != id) {
@@ -179,13 +194,20 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
 
 static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
                                void *method, const OSSL_PROVIDER *prov,
-                               int operation_id, const char **names,
+                               int operation_id, const char *names,
                                const char *propdef, void *data)
 {
     struct method_data_st *methdata = data;
     OSSL_NAMEMAP *namemap;
     int name_id;
     uint32_t meth_id;
+    size_t l = 0;
+
+    if (names != NULL) {
+        const char *q = strchr(names, NAME_SEPARATOR);
+
+        l = q == NULL ? strlen(names) : (size_t)(q - names);
+    }
 
     /*
      * put_method_in_store() is only called with a method that was
@@ -195,7 +217,7 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
      * identity.
      */
     if ((namemap = ossl_namemap_stored(libctx)) == NULL
-        || (name_id = ossl_namemap_name2num(namemap, names[0])) == 0
+        || (name_id = ossl_namemap_name2num_n(namemap, names, l)) == 0
         || (meth_id = method_id(operation_id, name_id)) == 0)
         return 0;
 
@@ -212,7 +234,7 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
  * The core fetching functionality passes the name of the implementation.
  * This function is responsible to getting an identity number for it.
  */
-static void *construct_method(const char **names, const OSSL_DISPATCH *fns,
+static void *construct_method(const char *names, const OSSL_DISPATCH *fns,
                               OSSL_PROVIDER *prov, void *data)
 {
     /*
