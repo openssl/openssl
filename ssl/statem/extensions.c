@@ -948,7 +948,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      * was successful.
      */
     if (s->server) {
-        /* TODO(OpenSSL1.2) revisit !sent case */
+        /* In TLSv1.3 SNI is never associated with the session */
         if (sent && ret == SSL_TLSEXT_ERR_OK && !s->hit) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
