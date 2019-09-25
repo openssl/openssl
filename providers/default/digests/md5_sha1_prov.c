@@ -49,4 +49,3 @@ IMPLEMENT_digest_functions_with_settable_ctx(
     md5_sha1, MD5_SHA1_CTX, MD5_SHA1_CBLOCK, MD5_SHA1_DIGEST_LENGTH, 0,
     md5_sha1_init, md5_sha1_update, md5_sha1_final,
     md5_sha1_settable_ctx_params, md5_sha1_set_ctx_params)
-= { "MD5-SHA1", NULL };

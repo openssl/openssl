@@ -56,23 +56,23 @@ static int legacy_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 
 static const OSSL_ALGORITHM legacy_digests[] = {
 #ifndef OPENSSL_NO_MD2
-    { md2_names, "legacy=yes", md2_functions },
+    { "MD2", "legacy=yes", md2_functions },
 #endif
 
 #ifndef OPENSSL_NO_MD4
-    { md4_names, "legacy=yes", md4_functions },
+    { "MD4", "legacy=yes", md4_functions },
 #endif
 
 #ifndef OPENSSL_NO_MDC2
-    { mdc2_names, "legacy=yes", mdc2_functions },
+    { "MDC2", "legacy=yes", mdc2_functions },
 #endif /* OPENSSL_NO_MDC2 */
 
 #ifndef OPENSSL_NO_WHIRLPOOL
-    { wp_names, "legacy=yes", wp_functions },
+    { "whirlpool", "legacy=yes", wp_functions },
 #endif /* OPENSSL_NO_WHIRLPOOL */
 
 #ifndef OPENSSL_NO_RMD160
-    { ripemd160_names, "legacy=yes", ripemd160_functions },
+    { "RIPEMD160:RIPEMD:RMD160", "legacy=yes", ripemd160_functions },
 #endif /* OPENSSL_NO_RMD160 */
 
     { NULL, NULL, NULL }

@@ -420,6 +420,5 @@ const OSSL_DISPATCH kdf_x942_kdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))x942kdf_get_ctx_params },
     { 0, NULL }
 };
-const char *kdf_x942_kdf_names[] = { "X942KDF", NULL };
 
 #endif /* OPENSSL_NO_CMS */

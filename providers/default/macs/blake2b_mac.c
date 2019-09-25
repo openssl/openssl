@@ -30,4 +30,3 @@
 
 #include "blake2_mac_impl.c"
 
-const char *blake2bmac_names[] = { "BLAKE2bMAC", NULL };

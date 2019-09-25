@@ -525,7 +525,6 @@ const OSSL_DISPATCH kmac128_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))kmac_set_ctx_params },
     { 0, NULL }
 };
-const char *kmac128_names[] = { "KMAC128", NULL };
 
 const OSSL_DISPATCH kmac256_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))kmac256_new },
@@ -542,4 +541,3 @@ const OSSL_DISPATCH kmac256_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))kmac_set_ctx_params },
     { 0, NULL }
 };
-const char *kmac256_names[] = { "KMAC256", NULL };

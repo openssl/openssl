@@ -278,8 +278,7 @@ const OSSL_DISPATCH aes##kbits##xts_functions[] = {                            \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))aes_xts_settable_ctx_params },                            \
     { 0, NULL }                                                                \
-};                                                                             \
-const char *aes##kbits##xts_names[]
+}
 
-IMPLEMENT_cipher(xts, XTS, 256, AES_XTS_FLAGS) = { "AES-256-XTS", NULL };
-IMPLEMENT_cipher(xts, XTS, 128, AES_XTS_FLAGS) = { "AES-128-XTS", NULL };
+IMPLEMENT_cipher(xts, XTS, 256, AES_XTS_FLAGS);
+IMPLEMENT_cipher(xts, XTS, 128, AES_XTS_FLAGS);

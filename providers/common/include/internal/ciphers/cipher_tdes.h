@@ -65,8 +65,7 @@ const OSSL_DISPATCH tdes_##type##_##lcmode##_functions[] = {                   \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))cipher_generic_settable_ctx_params },                     \
     { 0, NULL }                                                                \
-};                                                                             \
-const char *tdes_##type##_##lcmode##_names[]
+}
 
 void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
                   size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw);

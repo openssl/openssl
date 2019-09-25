@@ -147,24 +147,17 @@ const OSSL_DISPATCH des_##lcmode##_functions[] = {                             \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))cipher_generic_settable_ctx_params },                     \
     { 0, NULL }                                                                \
-};                                                                      \
-const char *des_##lcmode##_names[]
+}
 
 /* des_ecb_functions */
-IMPLEMENT_des_cipher(des, ecb, ECB, DES_FLAGS, 64, 64, 0, block)
-= { "DES-ECB", NULL };
+IMPLEMENT_des_cipher(des, ecb, ECB, DES_FLAGS, 64, 64, 0, block);
 /* des_cbc_functions */
-IMPLEMENT_des_cipher(des, cbc, CBC, DES_FLAGS, 64, 64, 64, block)
-= { "DES-CBC", "DES", NULL };
+IMPLEMENT_des_cipher(des, cbc, CBC, DES_FLAGS, 64, 64, 64, block);
 /* des_ofb64_functions */
-IMPLEMENT_des_cipher(des, ofb64, OFB, DES_FLAGS, 64, 8, 64, stream)
-= { "DES-OFB", NULL };
+IMPLEMENT_des_cipher(des, ofb64, OFB, DES_FLAGS, 64, 8, 64, stream);
 /* des_cfb64_functions */
-IMPLEMENT_des_cipher(des, cfb64, CFB, DES_FLAGS, 64, 8, 64, stream)
-= { "DES-CFB", NULL };
+IMPLEMENT_des_cipher(des, cfb64, CFB, DES_FLAGS, 64, 8, 64, stream);
 /* des_cfb1_functions */
-IMPLEMENT_des_cipher(des, cfb1, CFB, DES_FLAGS, 64, 8, 64, stream)
-= { "DES-CFB1", NULL };
+IMPLEMENT_des_cipher(des, cfb1, CFB, DES_FLAGS, 64, 8, 64, stream);
 /* des_cfb8_functions */
-IMPLEMENT_des_cipher(des, cfb8, CFB, DES_FLAGS, 64, 8, 64, stream)
-= { "DES-CFB8", NULL };
+IMPLEMENT_des_cipher(des, cfb8, CFB, DES_FLAGS, 64, 8, 64, stream);

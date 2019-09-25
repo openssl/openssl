@@ -41,13 +41,9 @@ static void *seed_dupctx(void *ctx)
 
 /* seed128ecb_functions */
 IMPLEMENT_generic_cipher(seed, SEED, ecb, ECB, SEED_FLAGS, 128, 128, 0, block)
-= { "SEED-ECB", NULL };
 /* seed128cbc_functions */
 IMPLEMENT_generic_cipher(seed, SEED, cbc, CBC, SEED_FLAGS, 128, 128, 128, block)
-= { "SEED-CBC", "SEED", NULL };
 /* seed128ofb128_functions */
 IMPLEMENT_generic_cipher(seed, SEED, ofb128, OFB, SEED_FLAGS, 128, 8, 128, stream)
-= { "SEED-OFB128", "SEED-OFB", NULL };
 /* seed128cfb128_functions */
 IMPLEMENT_generic_cipher(seed, SEED, cfb128,  CFB, SEED_FLAGS, 128, 8, 128, stream)
-= { "SEED-CFB128", "SEED-CFB", NULL };

@@ -236,18 +236,11 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                \
             (void (*)(void))cipher_generic_settable_ctx_params },              \
         { 0, NULL }                                                            \
-    };                                                                         \
-    const char *aes##kbits##fname##_names[]
+    }
 
-IMPLEMENT_cipher(wrap, wrap, WRAP, WRAP_FLAGS, 256, 64, AES_WRAP_NOPAD_IVLEN * 8)
-= { "id-aes256-wrap", "AES-256-WRAP", "AES256-WRAP", NULL };
-IMPLEMENT_cipher(wrap, wrap, WRAP, WRAP_FLAGS, 192, 64, AES_WRAP_NOPAD_IVLEN * 8)
-= { "id-aes192-wrap", "AES-192-WRAP", "AES192-WRAP", NULL };
-IMPLEMENT_cipher(wrap, wrap, WRAP, WRAP_FLAGS, 128, 64, AES_WRAP_NOPAD_IVLEN * 8)
-= { "id-aes128-wrap", "AES-128-WRAP", "AES128-WRAP", NULL };
-IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 256, 64, AES_WRAP_PAD_IVLEN * 8)
-= { "id-aes256-wrap-pad", "AES-256-WRAP-PAD", "AES256-WRAP-PAD", NULL };
-IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 192, 64, AES_WRAP_PAD_IVLEN * 8)
-= { "id-aes192-wrap-pad", "AES-192-WRAP-PAD", "AES192-WRAP-PAD", NULL };
-IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 128, 64, AES_WRAP_PAD_IVLEN * 8)
-= { "id-aes128-wrap-pad", "AES-128-WRAP-PAD", "AES128-WRAP-PAD", NULL };
+IMPLEMENT_cipher(wrap, wrap, WRAP, WRAP_FLAGS, 256, 64, AES_WRAP_NOPAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrap, WRAP, WRAP_FLAGS, 192, 64, AES_WRAP_NOPAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrap, WRAP, WRAP_FLAGS, 128, 64, AES_WRAP_NOPAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 256, 64, AES_WRAP_PAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 192, 64, AES_WRAP_PAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 128, 64, AES_WRAP_PAD_IVLEN * 8);

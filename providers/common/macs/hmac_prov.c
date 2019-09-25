@@ -210,4 +210,3 @@ const OSSL_DISPATCH hmac_functions[] = {
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))hmac_set_ctx_params },
     { 0, NULL }
 };
-const char *hmac_names[] = { "HMAC", NULL };

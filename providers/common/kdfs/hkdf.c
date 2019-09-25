@@ -262,7 +262,6 @@ const OSSL_DISPATCH kdf_hkdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_hkdf_get_ctx_params },
     { 0, NULL }
 };
-const char *kdf_hkdf_names[] = { "HKDF", NULL };
 
 /*
  * Refer to "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"

@@ -31,12 +31,9 @@ static void aria_gcm_freectx(void *vctx)
 }
 
 /* aria128gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 128, 8, 96)
-= { "ARIA-128-GCM", NULL };
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 128, 8, 96);
 /* aria192gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 192, 8, 96)
-= { "ARIA-192-GCM", NULL };
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 192, 8, 96);
 /* aria256gcm_functions */
-IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 256, 8, 96)
-= { "ARIA-256-GCM", NULL };
+IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 256, 8, 96);
 

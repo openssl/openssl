@@ -242,7 +242,6 @@ const OSSL_DISPATCH kdf_tls1_prf_functions[] = {
       (void(*)(void))kdf_tls1_prf_get_ctx_params },
     { 0, NULL }
 };
-const char *kdf_tls1_prf_names[] = { "TLS1-PRF", NULL };
 
 /*
  * Refer to "The TLS Protocol Version 1.0" Section 5

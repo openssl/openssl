@@ -29,5 +29,3 @@
 #define BLAKE2_FUNCTIONS blake2smac_functions
 
 #include "blake2_mac_impl.c"
-
-const char *blake2smac_names[] = { "BLAKE2sMAC", NULL };

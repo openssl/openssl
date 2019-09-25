@@ -309,75 +309,75 @@ const char *ossl_prov_util_nid_to_name(int nid)
 }
 
 static const OSSL_ALGORITHM fips_digests[] = {
-    { sha1_names, "fips=yes", sha1_functions },
-    { sha224_names, "fips=yes", sha224_functions },
-    { sha256_names, "fips=yes", sha256_functions },
-    { sha384_names, "fips=yes", sha384_functions },
-    { sha512_names, "fips=yes", sha512_functions },
-    { sha512_224_names, "fips=yes", sha512_224_functions },
-    { sha512_256_names, "fips=yes", sha512_256_functions },
-    { sha3_224_names, "fips=yes", sha3_224_functions },
-    { sha3_256_names, "fips=yes", sha3_256_functions },
-    { sha3_384_names, "fips=yes", sha3_384_functions },
-    { sha3_512_names, "fips=yes", sha3_512_functions },
+    { "SHA1", "fips=yes", sha1_functions },
+    { "SHA224", "fips=yes", sha224_functions },
+    { "SHA256", "fips=yes", sha256_functions },
+    { "SHA384", "fips=yes", sha384_functions },
+    { "SHA512", "fips=yes", sha512_functions },
+    { "SHA512-224", "fips=yes", sha512_224_functions },
+    { "SHA512-256", "fips=yes", sha512_256_functions },
+    { "SHA3-224", "fips=yes", sha3_224_functions },
+    { "SHA3-256", "fips=yes", sha3_256_functions },
+    { "SHA3-384", "fips=yes", sha3_384_functions },
+    { "SHA3-512", "fips=yes", sha3_512_functions },
     /*
      * KECCAK_KMAC128 and KECCAK_KMAC256 as hashes are mostly useful for
      * KMAC128 and KMAC256.
      */
-    { keccak_kmac_128_names, "fips=yes", keccak_kmac_128_functions },
-    { keccak_kmac_256_names, "fips=yes", keccak_kmac_256_functions },
+    { "KECCAK_KMAC128", "fips=yes", keccak_kmac_128_functions },
+    { "KECCAK_KMAC256", "fips=yes", keccak_kmac_256_functions },
 
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_ciphers[] = {
-    { aes256ecb_names, "fips=yes", aes256ecb_functions },
-    { aes192ecb_names, "fips=yes", aes192ecb_functions },
-    { aes128ecb_names, "fips=yes", aes128ecb_functions },
-    { aes256cbc_names, "fips=yes", aes256cbc_functions },
-    { aes192cbc_names, "fips=yes", aes192cbc_functions },
-    { aes128cbc_names, "fips=yes", aes128cbc_functions },
-    { aes256ctr_names, "fips=yes", aes256ctr_functions },
-    { aes192ctr_names, "fips=yes", aes192ctr_functions },
-    { aes128ctr_names, "fips=yes", aes128ctr_functions },
-    { aes256xts_names, "fips=yes", aes256xts_functions },
-    { aes128xts_names, "fips=yes", aes128xts_functions },
-    { aes256gcm_names, "fips=yes", aes256gcm_functions },
-    { aes192gcm_names, "fips=yes", aes192gcm_functions },
-    { aes128gcm_names, "fips=yes", aes128gcm_functions },
-    { aes256ccm_names, "fips=yes", aes256ccm_functions },
-    { aes192ccm_names, "fips=yes", aes192ccm_functions },
-    { aes128ccm_names, "fips=yes", aes128ccm_functions },
-    { aes256wrap_names, "fips=yes", aes256wrap_functions },
-    { aes192wrap_names, "fips=yes", aes192wrap_functions },
-    { aes128wrap_names, "fips=yes", aes128wrap_functions },
-    { aes256wrappad_names, "fips=yes", aes256wrappad_functions },
-    { aes192wrappad_names, "fips=yes", aes192wrappad_functions },
-    { aes128wrappad_names, "fips=yes", aes128wrappad_functions },
+    { "AES-256-ECB", "fips=yes", aes256ecb_functions },
+    { "AES-192-ECB", "fips=yes", aes192ecb_functions },
+    { "AES-128-ECB", "fips=yes", aes128ecb_functions },
+    { "AES-256-CBC", "fips=yes", aes256cbc_functions },
+    { "AES-192-CBC", "fips=yes", aes192cbc_functions },
+    { "AES-128-CBC", "fips=yes", aes128cbc_functions },
+    { "AES-256-CTR", "fips=yes", aes256ctr_functions },
+    { "AES-192-CTR", "fips=yes", aes192ctr_functions },
+    { "AES-128-CTR", "fips=yes", aes128ctr_functions },
+    { "AES-256-XTS", "fips=yes", aes256xts_functions },
+    { "AES-128-XTS", "fips=yes", aes128xts_functions },
+    { "id-aes256-GCM:AES-256-GCM", "fips=yes", aes256gcm_functions },
+    { "id-aes192-GCM:AES-192-GCM", "fips=yes", aes192gcm_functions },
+    { "id-aes128-GCM:AES-128-GCM", "fips=yes", aes128gcm_functions },
+    { "id-aes256-CCM:AES-256-CCM", "fips=yes", aes256ccm_functions },
+    { "id-aes192-CCM:AES-192-CCM", "fips=yes", aes192ccm_functions },
+    { "id-aes128-CCM:AES-128-CCM", "fips=yes", aes128ccm_functions },
+    { "id-aes256-wrap:AES-256-WRAP:AES256-WRAP", "fips=yes", aes256wrap_functions },
+    { "id-aes192-wrap:AES-192-WRAP:AES192-WRAP", "fips=yes", aes192wrap_functions },
+    { "id-aes128-wrap:AES-128-WRAP:AES128-WRAP", "fips=yes", aes128wrap_functions },
+    { "id-aes256-wrap-pad:AES-256-WRAP-PAD:AES256-WRAP-PAD", "fips=yes", aes256wrappad_functions },
+    { "id-aes192-wrap-pad:AES-192-WRAP-PAD:AES192-WRAP-PAD", "fips=yes", aes192wrappad_functions },
+    { "id-aes128-wrap-pad:AES-128-WRAP-PAD:AES128-WRAP-PAD", "fips=yes", aes128wrappad_functions },
 #ifndef OPENSSL_NO_DES
-    { tdes_ede3_ecb_names, "fips=yes", tdes_ede3_ecb_functions },
-    { tdes_ede3_cbc_names, "fips=yes", tdes_ede3_cbc_functions },
+    { "DES-EDE3-ECB:DES-EDE3", "fips=yes", tdes_ede3_ecb_functions },
+    { "DES-EDE3-CBC:DES3", "fips=yes", tdes_ede3_cbc_functions },
 #endif  /* OPENSSL_NO_DES */
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_macs[] = {
 #ifndef OPENSSL_NO_CMAC
-    { cmac_names, "fips=yes", cmac_functions },
+    { "CMAC", "fips=yes", cmac_functions },
 #endif
-    { gmac_names, "fips=yes", gmac_functions },
-    { hmac_names, "fips=yes", hmac_functions },
-    { kmac128_names, "fips=yes", kmac128_functions },
-    { kmac256_names, "fips=yes", kmac256_functions },
+    { "GMAC", "fips=yes", gmac_functions },
+    { "HMAC", "fips=yes", hmac_functions },
+    { "KMAC128", "fips=yes", kmac128_functions },
+    { "KMAC256", "fips=yes", kmac256_functions },
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_kdfs[] = {
-    { kdf_hkdf_names, "fips=yes", kdf_hkdf_functions },
-    { kdf_sskdf_names, "fips=yes", kdf_sskdf_functions },
-    { kdf_pbkdf2_names, "fips=yes", kdf_pbkdf2_functions },
-    { kdf_tls1_prf_names, "fips=yes", kdf_tls1_prf_functions },
-    { kdf_kbkdf_names, "fips=yes", kdf_kbkdf_functions },
+    { OSSL_KDF_NAME_HKDF, "fips=yes", kdf_hkdf_functions },
+    { OSSL_KDF_NAME_SSKDF, "fips=yes", kdf_sskdf_functions },
+    { OSSL_KDF_NAME_PBKDF2, "fips=yes", kdf_pbkdf2_functions },
+    { OSSL_KDF_NAME_TLS1_PRF, "fips=yes", kdf_tls1_prf_functions },
+    { OSSL_KDF_NAME_KBKDF, "fips=yes", kdf_kbkdf_functions },
     { NULL, NULL, NULL }
 };
 

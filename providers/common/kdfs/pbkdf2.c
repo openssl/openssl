@@ -241,7 +241,6 @@ const OSSL_DISPATCH kdf_pbkdf2_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_pbkdf2_get_ctx_params },
     { 0, NULL }
 };
-const char *kdf_pbkdf2_names[] = { "PBKDF2", NULL };
 
 /*
  * This is an implementation of PKCS#5 v2.0 password based encryption key

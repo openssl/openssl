@@ -50,47 +50,40 @@ IMPLEMENT_digest_functions_with_settable_ctx(
     sha1, SHA_CTX, SHA_CBLOCK, SHA_DIGEST_LENGTH, EVP_MD_FLAG_DIGALGID_ABSENT,
     SHA1_Init, SHA1_Update, SHA1_Final,
     sha1_settable_ctx_params, sha1_set_ctx_params)
-= { "SHA1", NULL };
 
 /* sha224_functions */
 IMPLEMENT_digest_functions(sha224, SHA256_CTX,
                            SHA256_CBLOCK, SHA224_DIGEST_LENGTH,
                            EVP_MD_FLAG_DIGALGID_ABSENT,
                            SHA224_Init, SHA224_Update, SHA224_Final)
-= { "SHA224", NULL };
 
 /* sha256_functions */
 IMPLEMENT_digest_functions(sha256, SHA256_CTX,
                            SHA256_CBLOCK, SHA256_DIGEST_LENGTH,
                            EVP_MD_FLAG_DIGALGID_ABSENT,
                            SHA256_Init, SHA256_Update, SHA256_Final)
-= { "SHA256", NULL };
 
 /* sha384_functions */
 IMPLEMENT_digest_functions(sha384, SHA512_CTX,
                            SHA512_CBLOCK, SHA384_DIGEST_LENGTH,
                            EVP_MD_FLAG_DIGALGID_ABSENT,
                            SHA384_Init, SHA384_Update, SHA384_Final)
-= { "SHA384", NULL };
 
 /* sha512_functions */
 IMPLEMENT_digest_functions(sha512, SHA512_CTX,
                            SHA512_CBLOCK, SHA512_DIGEST_LENGTH,
                            EVP_MD_FLAG_DIGALGID_ABSENT,
                            SHA512_Init, SHA512_Update, SHA512_Final)
-= { "SHA512", NULL };
 
 /* sha512_224_functions */
 IMPLEMENT_digest_functions(sha512_224, SHA512_CTX,
                            SHA512_CBLOCK, SHA224_DIGEST_LENGTH,
                            EVP_MD_FLAG_DIGALGID_ABSENT,
                            sha512_224_init, SHA512_Update, SHA512_Final)
-= { "SHA512-224", NULL };
 
 /* sha512_256_functions */
 IMPLEMENT_digest_functions(sha512_256, SHA512_CTX,
                            SHA512_CBLOCK, SHA256_DIGEST_LENGTH,
                            EVP_MD_FLAG_DIGALGID_ABSENT,
                            sha512_256_init, SHA512_Update, SHA512_Final)
-= { "SHA512-256", NULL };
 

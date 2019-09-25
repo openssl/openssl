@@ -130,8 +130,7 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))cipher_generic_settable_ctx_params },                     \
     { 0, NULL }                                                                \
-};                                                                             \
-const char *alg##kbits##lcmode##_names[]
+};
 
 PROV_CIPHER_HW_FN cipher_hw_generic_cbc;
 PROV_CIPHER_HW_FN cipher_hw_generic_ecb;

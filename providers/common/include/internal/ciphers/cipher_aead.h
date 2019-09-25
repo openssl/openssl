@@ -48,5 +48,4 @@ const OSSL_DISPATCH alg##kbits##lc##_functions[] = {                           \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))cipher_aead_settable_ctx_params },                       \
     { 0, NULL }                                                                \
-};                                                                             \
-const char *alg##kbits##lc##_names[]
+}

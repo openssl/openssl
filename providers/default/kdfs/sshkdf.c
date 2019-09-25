@@ -201,7 +201,6 @@ const OSSL_DISPATCH kdf_sshkdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_sshkdf_get_ctx_params },
     { 0, NULL }
 };
-const char *kdf_sshkdf_names[] = { "SSHKDF", NULL };
 
 static int SSHKDF(const EVP_MD *evp_md,
                   const unsigned char *key, size_t key_len,

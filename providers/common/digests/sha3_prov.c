@@ -220,14 +220,14 @@ const OSSL_DISPATCH name##_functions[] = {                                     \
 
 #define PROV_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)          \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
-    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END(name)
+    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 #define PROV_FUNC_SHAKE_DIGEST(name, bitlen, blksize, dgstsize, flags)         \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))shake_settable_ctx_params },                              \
-    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END(name)
+    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 static void keccak_freectx(void *vctx)
 {
@@ -288,18 +288,18 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                            EVP_MD_FLAG_XOF)
 
 /* sha3_224_functions */
-IMPLEMENT_SHA3_functions(224) = { "SHA3-224", NULL };
+IMPLEMENT_SHA3_functions(224)
 /* sha3_256_functions */
-IMPLEMENT_SHA3_functions(256) = { "SHA3-256", NULL };
+IMPLEMENT_SHA3_functions(256)
 /* sha3_384_functions */
-IMPLEMENT_SHA3_functions(384) = { "SHA3-384", NULL };
+IMPLEMENT_SHA3_functions(384)
 /* sha3_512_functions */
-IMPLEMENT_SHA3_functions(512) = { "SHA3-512", NULL };
+IMPLEMENT_SHA3_functions(512)
 /* shake_128_functions */
-IMPLEMENT_SHAKE_functions(128) = { "SHAKE128", NULL };
+IMPLEMENT_SHAKE_functions(128)
 /* shake_256_functions */
-IMPLEMENT_SHAKE_functions(256) = { "SHAKE256", NULL };
+IMPLEMENT_SHAKE_functions(256)
 /* keccak_kmac_128_functions */
-IMPLEMENT_KMAC_functions(128) = { "KECCAK_KMAC128", NULL };
+IMPLEMENT_KMAC_functions(128)
 /* keccak_kmac_256_functions */
-IMPLEMENT_KMAC_functions(256) = { "KECCAK_KMAC256", NULL };
+IMPLEMENT_KMAC_functions(256)

@@ -483,13 +483,9 @@ const OSSL_DISPATCH aes##kbits##mode##_functions[] = {                         \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
         (void (*)(void))cipher_ocb_settable_ctx_params },                      \
     { 0, NULL }                                                                \
-};                                                                             \
-const char *aes##kbits##mode##_names[]
+}
 
-IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 256, 128, OCB_DEFAULT_IV_LEN * 8)
-= { "AES-256-OCB", NULL };
-IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 192, 128, OCB_DEFAULT_IV_LEN * 8)
-= { "AES-192-OCB", NULL };
-IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 128, 128, OCB_DEFAULT_IV_LEN * 8)
-= { "AES-128-OCB", NULL };
+IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 256, 128, OCB_DEFAULT_IV_LEN * 8);
+IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 192, 128, OCB_DEFAULT_IV_LEN * 8);
+IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 128, 128, OCB_DEFAULT_IV_LEN * 8);
 

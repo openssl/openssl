@@ -38,13 +38,9 @@ static void *cast5_dupctx(void *ctx)
 
 /* cast5128ecb_functions */
 IMPLEMENT_generic_cipher(cast5, CAST, ecb, ECB, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, block)
-= { "CAST5-ECB", NULL };
 /* cast5128cbc_functions */
 IMPLEMENT_generic_cipher(cast5, CAST, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 64, block)
-= { "CAST5-CBC", "CAST", "CAST-CBC", NULL };
 /* cast564ofb64_functions */
 IMPLEMENT_generic_cipher(cast5, CAST, ofb64, OFB, EVP_CIPH_VARIABLE_LENGTH, 64, 8, 64, stream)
-= { "CAST5-OFB", NULL };
 /* cast564cfb64_functions */
 IMPLEMENT_generic_cipher(cast5, CAST, cfb64,  CFB, EVP_CIPH_VARIABLE_LENGTH, 64, 8, 64, stream)
-= { "CAST5-CFB", NULL };
