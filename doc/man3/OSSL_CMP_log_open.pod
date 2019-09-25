@@ -95,7 +95,7 @@ a log file or remote stream, which in turn may fail.
 Therefore the function should return 1 on success and 0 on failure.
 
 OSSL_CMP_log_open() initializes the CMP-specific logging facility to output
-everything to B<stdout>. It fails if the integrated tracing is disabled or STDIO
+everything to STDOUT. It fails if the integrated tracing is disabled or STDIO
 is not available. It may be called during application startup.
 Alternatively, L<OSSL_CMP_CTX_set_log_cb(3)> can be used for more flexibility.
 As long as neither if the two is used any logging output is ignored.
@@ -115,13 +115,12 @@ effect unless the B<enable-trace> option is used during build configuration.
 
 OSSL_CMP_print_errors_cb() outputs any entries in the OpenSSL error queue.
 It is similar to B<ERR_print_errors_cb()> but uses the CMP log callback function
-C<log_fn> for uniformity with CMP logging if given. Otherwise it uses
+C<log_fn> for uniformity with CMP logging if not B<NULL>. Otherwise it uses
 B<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
 
 =head1 RETURN VALUES
 
-OSSL_CMP_log_close() and OSSL_CMP_print_errors_cb()
-do not return anything.
+OSSL_CMP_log_close() and OSSL_CMP_print_errors_cb() do not return anything.
 
 All other functions return 1 on success, 0 on error.
 

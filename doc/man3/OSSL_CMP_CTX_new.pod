@@ -162,9 +162,7 @@ This is the context API for using CMP (Certificate Management Protocol) with
 OpenSSL.
 
 OSSL_CMP_CTX_new() allocates and initializes an OSSL_CMP_CTX structure to
-default values. If the trace API is enabled it calls OSSL_CMP_CTX_set_log_cb()
-with the NULL callback pointer.
-Transfer is set to HTTP, proof-of-possession method to POPOSigningKey, etc.
+default values, e.g., proof-of-possession method is set to POPOSigningKey.
 
 OSSL_CMP_CTX_free() deallocates an OSSL_CMP_CTX structure.
 
@@ -183,8 +181,8 @@ The following options can be set:
 
 =item B<OSSL_CMP_OPT_LOG_VERBOSITY>
 
-        The level of severity needed for actually outputting diagnostic
-        information such as errors, warnings, general info, and debugging info.
+        The level of severity needed for actually outputting log messages
+        due to errors, warnings, general info, debugging, etc.
         Default is OSSL_CMP_LOG_INFO. See also L<OSSL_CMP_log_open(3)>.
 
 =item B<OSSL_CMP_OPT_MSGTIMEOUT>
@@ -248,7 +246,7 @@ The following options can be set:
 =item B<OSSL_CMP_OPT_REVOCATION_REASON>
 
         The reason code to be included in a Revocation Request (RR);
-        values: 0..10 (RFC 5210, 5.3.1) or -1 for none (which is the default)
+        values: 0..10 (RFC 5210, 5.3.1) or -1 for none, which is the default.
 
 =item B<OSSL_CMP_OPT_IMPLICITCONFIRM>
 
@@ -295,11 +293,11 @@ RFC 4210.
 OSSL_CMP_CTX_get_option() reads the current value of the given option
 (e.g., OSSL_CMP_OPT_IMPLICITCONFIRM) from the given OSSL_CMP_CTX structure.
 
-OSSL_CMP_CTX_set_log_cb() sets in B<ctx> the log callback function C<cb>
-for error, warning, info, debug, etc. messages.
-It fails if the OpenSSL trace facility is disabled.
-When C<cb> is NULL any output will be ignored.
-Alternatively, L<OSSL_CMP_log_open(3)> may be used to direct logging to stdout.
+OSSL_CMP_CTX_set_log_cb() sets in B<ctx> the callback function C<cb>
+for handling error queue entries and logging messages.
+When C<cb> is NULL errors are printed to STDERR (if available, else ignored)
+any log messages are ignored.
+Alternatively, L<OSSL_CMP_log_open(3)> may be used to direct logging to STDOUT.
 
 OSSL_CMP_CTX_set_log_verbosity() is a macro setting the
 OSSL_CMP_OPT_LOG_VERBOSITY context option to the given level.
@@ -307,7 +305,7 @@ OSSL_CMP_OPT_LOG_VERBOSITY context option to the given level.
 OSSL_CMP_CTX_print_errors() outputs any entries in the OpenSSL error queue.
 It is similar to B<ERR_print_errors_cb()> but uses the CMP log callback function
 if set in the C<ctx> for uniformity with CMP logging if given. Otherwise it uses
-B<ERR_print_errors(3)> to print to stderr (unless OPENSSL_NO_STDIO is defined).
+B<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
 
 OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host.
 

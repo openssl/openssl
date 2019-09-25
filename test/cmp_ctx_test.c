@@ -127,14 +127,10 @@ static const char *const max_str_literal = STR509;
 static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_CTX *ctx = fixture->ctx;
-    int trace_enabled = 1;
     int base_err_msg_size, expected_size;
     int res = 1;
 
-#ifdef OPENSSL_NO_TRACE
-    trace_enabled = 0;
-#endif
-    if (!TEST_int_eq(OSSL_CMP_CTX_set_log_cb(ctx, NULL), trace_enabled))
+    if (!TEST_true(OSSL_CMP_CTX_set_log_cb(ctx, NULL)))
         res = 0;
     if (!TEST_true(ctx->log_cb == NULL))
         res = 0;

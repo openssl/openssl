@@ -114,7 +114,7 @@ static void put_error(int lib, const char *func, int reason,
 {
     ERR_new();
     ERR_set_debug(file, line, func);
-    ERR_set_error(lib, reason, NULL);
+    ERR_set_error(lib, reason, NULL /* no data here, so fmt is NULL */);
 }
 
 #define ERR_print_errors_cb_LIMIT 4096 /* size of char buf[] variable there */
@@ -197,28 +197,31 @@ void ossl_cmp_add_error_txt(const char *separator, const char *txt)
 void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn)
 {
     unsigned long err;
-    char component[128];
     char msg[ERR_print_errors_cb_LIMIT];
     const char *file = NULL, *func = NULL, *data = NULL;
     int line, flags;
 
     if (log_fn == NULL) {
 #ifndef OPENSSL_NO_STDIO
-        BIO *bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-
-        ERR_print_errors(bio_err);
-        BIO_free(bio_err);
+        ERR_print_errors_fp(stderr);
 #else
-        CMPerr(0, CMP_R_NO_STDIO);
+        /* CMPerr(0, CMP_R_NO_STDIO) makes no sense during error printing */
 #endif
         return;
     }
 
     while ((err = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
+        char component[128];
+        const char *func_ = func != NULL && *func != '\0' ? func : "<unknown>";
+
         if (!(flags & ERR_TXT_STRING))
             data = NULL;
+#ifdef OSSL_CMP_PRINT_LIBINFO
         BIO_snprintf(component, sizeof(component), "OpenSSL:%s:%s",
-                     ERR_lib_error_string(err), func != NULL ? func : "");
+                     ERR_lib_error_string(err), func_);
+#else
+        BIO_snprintf(component, sizeof(component), "%s",func_);
+#endif
         BIO_snprintf(msg, sizeof(msg), "%s%s%s", ERR_reason_error_string(err),
                      data == NULL ? "" : " : ", data == NULL ? "" : data);
         if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)

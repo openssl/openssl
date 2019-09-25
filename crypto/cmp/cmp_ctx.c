@@ -289,6 +289,7 @@ void *OSSL_CMP_CTX_get_certConf_cb_arg(const OSSL_CMP_CTX *ctx)
     return ctx->certConf_cb_arg;
 }
 
+#ifndef OPENSSL_NO_TRACE
 static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
                                     int category, int cmd, void *vdata)
 {
@@ -319,9 +320,10 @@ static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
     OPENSSL_free(file);
     return cnt;
 }
+#endif
 
 /*
- * Set a callback function for log messages.
+ * Set a callback function for error reporting and logging messages.
  * Returns 1 on success, 0 on error
  */
 int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_log_cb_t cb)
@@ -330,15 +332,19 @@ int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_log_cb_t cb)
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
+    ctx->log_cb = cb;
 
+#ifndef OPENSSL_NO_TRACE
+    /* do also in case cb == NULL, to switch off logging output: */
     if (!OSSL_trace_set_callback(OSSL_TRACE_CATEGORY_CMP,
                                  ossl_cmp_log_trace_cb, ctx))
         return 0;
-    ctx->log_cb = cb;
+#endif
+
     return 1;
 }
 
-/* Print OpenSSL and CMP errors via the log cb of the ctx or OSSL_CMP_puts */
+/* Print OpenSSL and CMP errors via the log cb of the ctx or ERR_print_errors */
 void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_print_errors_cb(ctx == NULL ? NULL : ctx->log_cb);
