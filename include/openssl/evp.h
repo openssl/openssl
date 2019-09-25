@@ -269,7 +269,7 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CIPH_CUSTOM_COPY            0x400
 /* Don't use standard iv length function */
 # define         EVP_CIPH_CUSTOM_IV_LENGTH       0x800
-/* Allow use default ASN1 get/set iv */
+/* Legacy and no longer relevant: Allow use default ASN1 get/set iv */
 # define         EVP_CIPH_FLAG_DEFAULT_ASN1      0x1000
 /* Buffer length in bits not bytes: CFB1 mode only */
 # define         EVP_CIPH_FLAG_LENGTH_BITS       0x2000
@@ -285,6 +285,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0x400000
 /* Cipher can handle pipeline operations */
 # define         EVP_CIPH_FLAG_PIPELINE          0X800000
+/* For provider implementations that handle  ASN1 get/set param themselves */
+# define         EVP_CIPH_FLAG_CUSTOM_ASN1       0x1000000
 
 /*
  * Cipher context flag to indicate we can handle wrap mode: if allowed in
