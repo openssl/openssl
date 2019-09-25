@@ -349,6 +349,59 @@ sub functionname_check {
     # with a variable part (typically marked up as B<foo_I<TYPE>_bar>
 }
 
+# This is from http://man7.org/linux/man-pages/man7/man-pages.7.html
+my %preferred_words = (
+    'bitmask'       => 'bit mask',
+    'builtin'       => 'built-in',
+   #'epoch'         => 'Epoch', # handled specially, below
+    'file name'     => 'filename',
+    'file system'   => 'filesystem',
+    'host name'     => 'hostname',
+    'i-node'        => 'inode',
+    'lower case'    => 'lowercase',
+    'lower-case'    => 'lowercase',
+    'non-zero'      => 'nonzero',
+    'path name'     => 'pathname',
+    'pseudo-terminal' => 'pseudoterminal',
+    'reserved port' => 'privileged port',
+    'system port'   => 'privileged port',
+    'realtime'      => 'real-time',
+    'real time'     => 'real-time',
+    'runtime'       => 'run time',
+    'saved group ID'=> 'saved set-group-ID',
+    'saved set-GID' => 'saved set-group-ID',
+    'saved user ID' => 'saved set-user-ID',
+    'saved set-UID' => 'saved set-user-ID',
+    'set-GID'       => 'set-group-ID',
+    'setgid'        => 'set-group-ID',
+    'set-UID'       => 'set-user-ID',
+    'setuid'        => 'set-user-ID',
+    'super user'    => 'superuser',
+    'super-user'    => 'superuser',
+    'super block'   => 'superblock',
+    'super-block'   => 'superblock',
+    'time stamp'    => 'timestamp',
+    'time zone'     => 'timezone',
+    'upper case'    => 'uppercase',
+    'upper-case'    => 'uppercase',
+    'useable'       => 'usable',
+    'userspace'     => 'user space',
+    'user name'     => 'username',
+    'zeroes'        => 'zeros'
+);
+
+sub wording {
+    my $id = shift;
+    my $contents = shift;
+
+    foreach my $k ( keys %preferred_words ) {
+        err($id, "found '$k' should use '$preferred_words{$k}'")
+            if $contents =~ /\b\Q$k\E\b/i;
+    }
+    err($id, "found 'epoch' should use 'Epoch'")
+        if $contents =~ /\bepoch\b/;
+}
+
 sub check {
     my $filename = shift;
     my $dirname = basename(dirname($filename));
@@ -379,6 +432,8 @@ sub check {
             option_check($id, $filename, $contents)
         }
     }
+
+    wording($id, $contents);
 
     err($id, "doesn't start with =pod")
         if $contents !~ /^=pod/;
