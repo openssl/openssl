@@ -18,7 +18,6 @@
  */
 typedef struct {
     char *name;
-    size_t name_len;
     int number;
 } NAMENUM_ENTRY;
 
@@ -47,19 +46,7 @@ static unsigned long namenum_hash(const NAMENUM_ENTRY *n)
 
 static int namenum_cmp(const NAMENUM_ENTRY *a, const NAMENUM_ENTRY *b)
 {
-    size_t l = a->name_len;
-    int i;
-
-    if (l > b->name_len)
-        l = b->name_len;
-
-    if ((i = strncasecmp(a->name, b->name, l)) == 0) {
-        if (a->name_len < b->name_len)
-            i = -1;
-        else if (a->name_len > b->name_len)
-            i = 1;
-    }
-    return i;
+    return strcasecmp(a->name, b->name);
 }
 
 static void namenum_free(NAMENUM_ENTRY *n)
@@ -175,8 +162,8 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (namemap == NULL)
         return 0;
 
-    namenum_tmpl.name = (char *)name;
-    namenum_tmpl.name_len = strlen(name);
+    if ((namenum_tmpl.name = OPENSSL_strndup(name, name_len)) == NULL)
+        return 0;
     namenum_tmpl.number = 0;
     CRYPTO_THREAD_read_lock(namemap->lock);
     namenum_entry =
@@ -184,6 +171,7 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (namenum_entry != NULL)
         number = namenum_entry->number;
     CRYPTO_THREAD_unlock(namemap->lock);
+    OPENSSL_free(namenum_tmpl.name);
 
     return number;
 }
@@ -245,7 +233,6 @@ int ossl_namemap_add_n(OSSL_NAMEMAP *namemap, int number,
         || (namenum->name = OPENSSL_strndup(name, name_len)) == NULL)
         goto err;
 
-    namenum->name_len = name_len;
     namenum->number = tmp_number =
         number != 0 ? number : ++namemap->max_number;
     (void)lh_NAMENUM_ENTRY_insert(namemap->namenum, namenum);

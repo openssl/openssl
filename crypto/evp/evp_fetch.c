@@ -44,7 +44,7 @@ struct method_data_st {
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     int operation_id;            /* For get_method_from_store() */
     int name_id;                 /* For get_method_from_store() */
-    const char *name;            /* For get_method_from_store() */
+    const char *names;           /* For get_method_from_store() */
     const char *propquery;       /* For get_method_from_store() */
     void *(*method_from_dispatch)(int name_id, const OSSL_DISPATCH *,
                                   OSSL_PROVIDER *, void *);
@@ -168,10 +168,13 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
      */
     if ((name_id = methdata->name_id) == 0) {
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+        const char *names = methdata->names;
+        const char *q = strchr(names, NAME_SEPARATOR);
+        size_t l = q == NULL ? strlen(names) : (size_t)(q - names);
 
         if (namemap == 0)
             return NULL;
-        name_id = ossl_namemap_name2num(namemap, methdata->name);
+        name_id = ossl_namemap_name2num_n(namemap, names, l);
     }
 
     if (name_id == 0
@@ -203,12 +206,6 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
     uint32_t meth_id;
     size_t l = 0;
 
-    if (names != NULL) {
-        const char *q = strchr(names, NAME_SEPARATOR);
-
-        l = q == NULL ? strlen(names) : (size_t)(q - names);
-    }
-
     /*
      * put_method_in_store() is only called with a method that was
      * successfully created by construct_method() below, which means
@@ -216,6 +213,12 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
      * the same numeric identity, so just use the first to get that
      * identity.
      */
+    if (names != NULL) {
+        const char *q = strchr(names, NAME_SEPARATOR);
+
+        l = q == NULL ? strlen(names) : (size_t)(q - names);
+    }
+
     if ((namemap = ossl_namemap_stored(libctx)) == NULL
         || (name_id = ossl_namemap_name2num_n(namemap, names, l)) == 0
         || (meth_id = method_id(operation_id, name_id)) == 0)
@@ -324,7 +327,7 @@ static void *inner_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.libctx = libctx;
         mcmdata.operation_id = operation_id;
         mcmdata.name_id = name_id;
-        mcmdata.name = name;
+        mcmdata.names = name;
         mcmdata.propquery = properties;
         mcmdata.method_from_dispatch = new_method;
         mcmdata.destruct_method = free_method;
