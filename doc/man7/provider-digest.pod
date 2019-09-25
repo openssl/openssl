@@ -227,9 +227,10 @@ parameters are relevant to, or are understood by all digests:
 
 =over 4
 
-=item B<OSSL_DIGEST_PARAM_XOFLEN> (size_t)
+=item B<OSSL_DIGEST_PARAM_XOFLEN> (unsigned integer)
 
 Sets the digest length for extendable output functions.
+The length of the "xoflen" parameter should not exceed that of a B<size_t>.
 
 =item B<OSSL_DIGEST_PARAM_SSL3_MS> (octet string)
 
@@ -243,7 +244,7 @@ section 5.6.8.
 The next call after setting this parameter will be OP_digest_final().
 This is only relevant for implementations of SHA1 or MD5_SHA1.
 
-=item B<OSSL_DIGEST_PARAM_PAD_TYPE> (uint)
+=item B<OSSL_DIGEST_PARAM_PAD_TYPE> (unsigned integer)
 
 Sets the pad type to be used.
 The only built-in digest that uses this is MDC2.
@@ -251,7 +252,7 @@ Normally the final MDC2 block is padded with 0s.
 If the pad type is set to 2 then the final block is padded with 0x80 followed by
 0s.
 
-=item B<OSSL_DIGEST_PARAM_MICALG> (utf8 string)
+=item B<OSSL_DIGEST_PARAM_MICALG> (UTF8 string)
 
 Gets the digest Message Integrity Check algorithm string.
 This is used when creating S/MIME multipart/signed messages, as specified in
