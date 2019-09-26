@@ -164,15 +164,17 @@ by all digests:
 
 =over 4
 
-=item B<OSSL_DIGEST_PARAM_BLOCK_SIZE> (size_t)
+=item B<OSSL_DIGEST_PARAM_BLOCK_SIZE> ("blocksize") <unsigned integer>
 
 The digest block size.
+The length of the "blocksize" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_DIGEST_PARAM_SIZE> (size_t)
+=item B<OSSL_DIGEST_PARAM_SIZE> ("size") <unsigned integer>
 
 The digest output size.
+The length of the "size" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_DIGEST_PARAM_FLAGS> (unsigned long)
+=item B<OSSL_DIGEST_PARAM_FLAGS> ("flags") <unsigned integer>
 
 Diverse flags that describe exceptional behaviour for the digest:
 
@@ -208,6 +210,9 @@ Currently unused.
 
 =back
 
+The length of the "flags" parameter should equal that of an
+B<unsigned long int>.
+
 =back
 
 =head2 Digest Context Parameters
@@ -227,12 +232,12 @@ parameters are relevant to, or are understood by all digests:
 
 =over 4
 
-=item B<OSSL_DIGEST_PARAM_XOFLEN> (unsigned integer)
+=item B<OSSL_DIGEST_PARAM_XOFLEN> ("xoflen") <unsigned integer>
 
 Sets the digest length for extendable output functions.
 The length of the "xoflen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_DIGEST_PARAM_SSL3_MS> (octet string)
+=item B<OSSL_DIGEST_PARAM_SSL3_MS> ("ssl3-ms") <octet string>
 
 This parameter is set by libssl in order to calculate a signature hash for an
 SSLv3 CertificateVerify message as per RFC6101.
@@ -244,7 +249,7 @@ section 5.6.8.
 The next call after setting this parameter will be OP_digest_final().
 This is only relevant for implementations of SHA1 or MD5_SHA1.
 
-=item B<OSSL_DIGEST_PARAM_PAD_TYPE> (unsigned integer)
+=item B<OSSL_DIGEST_PARAM_PAD_TYPE> ("pad_type") <unsigned integer>
 
 Sets the pad type to be used.
 The only built-in digest that uses this is MDC2.
@@ -252,7 +257,7 @@ Normally the final MDC2 block is padded with 0s.
 If the pad type is set to 2 then the final block is padded with 0x80 followed by
 0s.
 
-=item B<OSSL_DIGEST_PARAM_MICALG> (UTF8 string)
+=item B<OSSL_DIGEST_PARAM_MICALG> ("micalg") <UTF8 string>
 
 Gets the digest Message Integrity Check algorithm string.
 This is used when creating S/MIME multipart/signed messages, as specified in
