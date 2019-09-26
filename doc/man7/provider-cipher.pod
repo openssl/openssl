@@ -330,7 +330,8 @@ that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
 
 =item "rounds" (B<OSSL_CIPHER_PARAM_ROUNDS>) <unsigned integer>
 
-Sets or gets the number of rounds to be used for a cipher. Used by RC5.
+Sets or gets the number of rounds to be used for a cipher.
+This is used by the RC5 cipher.
 
 =back
 
