@@ -43,7 +43,7 @@ This specifies the output format DER or PEM. The default format is PEM.
 =item B<-pass> I<arg>
 
 The output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+see L<openssl(1)/Pass phrase options>.
 
 =item B<->I<cipher>
 

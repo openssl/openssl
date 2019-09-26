@@ -292,7 +292,7 @@ A file containing trusted CA certificates, only used with B<-verify>.
 
 A directory containing trusted CA certificates, only used with
 B<-verify>. This directory must be a standard certificate directory: that
-is a hash of each subject name (using B<x509 -hash>) should be linked
+is a hash of each subject name (using C<x509 -hash>) should be linked
 to each certificate.
 
 =item B<-no-CAfile>
@@ -473,7 +473,7 @@ or to modify default parameters for ECDH.
 =item B<-passin> I<arg>
 
 The private key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+see L<openssl(1)/Pass phrase options>.
 
 =item B<-rand> I<file...>
 
@@ -493,7 +493,7 @@ This can be used with a subsequent B<-rand> flag.
 One or more certificates of message recipients: used when encrypting
 a message.
 
-=item B<-to, -from, -subject>
+=item B<-to>, B<-from>, B<-subject>
 
 The relevant mail headers. These are included outside the signed
 portion of a message so they may be included manually. If signing
