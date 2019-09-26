@@ -1205,6 +1205,7 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     ret = 1;
 
  err:
+    EVP_MD_CTX_free(mdctx);
     EVP_PKEY_CTX_free(ctx);
     EVP_SIGNATURE_free(dsaimpl);
     EVP_PKEY_free(pkey);
