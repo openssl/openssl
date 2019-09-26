@@ -73,8 +73,8 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
             || !TEST_ptr(bytes = ASN1_OCTET_STRING_new())
             || !OSSL_CMP_CTX_set1_transactionID(ctx, bytes)
             || !OSSL_CMP_CTX_set1_senderNonce(ctx, bytes)
-            || !ossl_cmp_ctx_set1_recipNonce(ctx, bytes)
-        )
+        || !ossl_cmp_ctx_set1_recipNonce(ctx, bytes))
+
         goto err;
 
     if (!TEST_true(OSSL_CMP_CTX_reinit(ctx)))
