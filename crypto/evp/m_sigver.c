@@ -31,6 +31,16 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     void *provkey = NULL;
     int ret;
 
+    if (ctx->provctx != NULL) {
+        if (!ossl_assert(ctx->digest != NULL)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        if (ctx->digest->freectx != NULL)
+            ctx->digest->freectx(ctx->provctx);
+        ctx->provctx = NULL;
+    }
+
     if (ctx->pctx == NULL) {
         ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
         if (ctx->pctx == NULL)

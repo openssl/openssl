@@ -107,6 +107,16 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
 
+    if (ctx->provctx != NULL) {
+        if (!ossl_assert(ctx->digest != NULL)) {
+            EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        if (ctx->digest->freectx != NULL)
+            ctx->digest->freectx(ctx->provctx);
+        ctx->provctx = NULL;
+    }
+
     if (type != NULL)
         ctx->reqdigest = type;
 
@@ -332,7 +342,6 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
         }
     }
 
-    EVP_MD_CTX_reset(ctx);
     return ret;
 
     /* TODO(3.0): Remove legacy code below */
