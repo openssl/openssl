@@ -94,6 +94,7 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
                 if ((*level = parse_level(p_level)) >= 0) {
                     *func = OPENSSL_strndup(p_func, p_file - 1 - p_func);
                     *file = OPENSSL_strndup(p_file, p_line - 1 - p_file);
+                    /* no real problem if OPENSSL_strndup() returns NULL */
                     *line = (int)line_number;
                     msg = strchr(p_level, ':') + 1;
                     if (*msg == ' ')
@@ -181,6 +182,8 @@ void ossl_cmp_add_error_txt(const char *separator, const char *txt)
             /* split error msg at curr since error data would get too long */
             if (curr != txt) {
                 tmp = OPENSSL_strndup(txt, curr - txt);
+                if (tmp == NULL)
+                    return;
                 ERR_add_error_data(2, separator, tmp);
                 OPENSSL_free(tmp);
             }
