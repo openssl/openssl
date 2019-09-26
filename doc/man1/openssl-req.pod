@@ -347,8 +347,8 @@ string is required by the SM2 signature algorithm for signing and verification.
 
 =item B<-sm2-hex-id>
 
-Specify a binary ID string to use when verifying an SM2 certificate request.
-The argument for this option is string of hexadecimal digits.
+Specify a binary ID string to use when signing or verifying using an SM2
+certificate. The argument for this option is string of hexadecimal digits.
 
 =back
 
