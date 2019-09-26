@@ -90,7 +90,7 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
                        && ctx->validatedSrvCert == NULL
                        && ctx->transactionID == NULL
                        && ctx->senderNonce == NULL
-                   && ctx->recipNonce == NULL))
+                       && ctx->recipNonce == NULL))
         goto err;
 
     /* this does not check that all remaining fields are untouched */
