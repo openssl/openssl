@@ -34,8 +34,9 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
         EVP_PKEY_CTX_free(ctx->pctx);
 #endif
 
-    if (ctx->digest == NULL || ctx->digest->prov == NULL)
-        goto legacy;
+    EVP_MD_free(ctx->fetched_digest);
+    ctx->fetched_digest = NULL;
+    ctx->reqdigest = NULL;
 
     if (ctx->provctx != NULL) {
         if (ctx->digest->freectx != NULL)
@@ -44,13 +45,7 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
     }
 
-    if (ctx->pctx != NULL)
-        goto legacy;
-
-    return 1;
-
     /* TODO(3.0): Remove legacy code below */
- legacy:
 
     /*
      * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
@@ -67,6 +62,9 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 #if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(ctx->engine);
 #endif
+
+    /* TODO(3.0): End of legacy code */
+
     OPENSSL_cleanse(ctx, sizeof(*ctx));
 
     return 1;
@@ -83,11 +81,6 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
         return;
 
     EVP_MD_CTX_reset(ctx);
-
-    EVP_MD_free(ctx->fetched_digest);
-    ctx->fetched_digest = NULL;
-    ctx->digest = NULL;
-    ctx->reqdigest = NULL;
 
     OPENSSL_free(ctx);
     return;
