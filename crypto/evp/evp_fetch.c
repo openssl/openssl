@@ -70,7 +70,7 @@ static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
      * Check that no name is an empty string, and that all names have at
      * most one numeric identity together.
      */
-    for (p = names; *p != '\0'; p = q == NULL ? p + l : q + 1) {
+    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
         int this_id;
 
         if ((q = strchr(p, NAME_SEPARATOR)) == NULL)
@@ -93,7 +93,7 @@ static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
     }
 
     /* Now that we have checked, register all names */
-    for (p = names; *p != '\0'; p = q == NULL ? p + l : q + 1) {
+    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
         int this_id;
 
         if ((q = strchr(p, NAME_SEPARATOR)) == NULL)
@@ -104,7 +104,7 @@ static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
         this_id = ossl_namemap_add_n(namemap, id, p, l);
         if (id == 0)
             id = this_id;
-        if (this_id != id) {
+        else if (this_id != id) {
             ERR_raise_data(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR,
                            "Got id %d when expecting %d", this_id, id);
             return 0;
