@@ -359,9 +359,7 @@ OSSL_PARAM_utf8_ptr                     define
 OSSL_PARAM_BN                           define
 OSSL_PARAM_TYPE                         generic
 OSSL_PARAM_construct_TYPE               generic
-OSSL_PARAM_octet_string                 define
 OSSL_PARAM_utf8_string                  define
-OSSL_PARAM_octet_ptr                    define
 OSSL_PARAM_get_TYPE                     generic
 OSSL_PARAM_END                          define
 OSSL_PARAM_set_TYPE                     generic
