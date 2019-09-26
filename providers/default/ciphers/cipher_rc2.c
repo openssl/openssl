@@ -145,13 +145,15 @@ static int rc2_set_ctx_params(void *vctx, OSSL_PARAM params[])
         long num = 0;
         const unsigned char *d = p->data;
         int ret = 1;
+        unsigned char iv[16];
 
         if (p->data_type != OSSL_PARAM_OCTET_STRING
+            || ctx->base.ivlen > sizeof(iv)
             || (type = d2i_ASN1_TYPE(NULL, &d, p->data_size)) == NULL
-            || ((size_t)ASN1_TYPE_get_int_octetstring(type, &num,
-                                                      ctx->base.iv,
+            || ((size_t)ASN1_TYPE_get_int_octetstring(type, &num, iv,
                                                       ctx->base.ivlen)
                 != ctx->base.ivlen)
+            || !cipher_generic_initiv(&ctx->base, iv, ctx->base.ivlen)
             || (ctx->key_bits = rc2_magic_to_keybits(num)) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             ret = 0;
@@ -159,6 +161,12 @@ static int rc2_set_ctx_params(void *vctx, OSSL_PARAM params[])
         ASN1_TYPE_free(type);
         if (ret == 0)
             return 0;
+        /*
+         * This code assumes that the caller will call
+         * EVP_CipherInit_ex() with a non NULL key in order to setup a key that
+         * uses the keylen and keybits that were set here.
+         */
+        ctx->base.keylen = ctx->key_bits / 8;
     }
     return 1;
 }
