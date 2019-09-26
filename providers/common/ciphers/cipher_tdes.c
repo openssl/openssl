@@ -26,7 +26,7 @@ void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
 
 void tdes_freectx(void *vctx)
 {
-    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    PROV_TDES_CTX *ctx = (PROV_TDES_CTX *)vctx;
 
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
@@ -39,11 +39,8 @@ static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
     ctx->enc = enc;
 
     if (iv != NULL) {
-        if (ivlen != TDES_IVLEN) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+        if (!cipher_generic_initiv(ctx, iv, ivlen))
             return 0;
-        }
-        memcpy(ctx->iv, iv, TDES_IVLEN);
     }
 
     if (key != NULL) {

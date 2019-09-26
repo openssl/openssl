@@ -27,7 +27,6 @@ static void aes_gcm_freectx(void *vctx)
 {
     PROV_AES_GCM_CTX *ctx = (PROV_AES_GCM_CTX *)vctx;
 
-    gcm_deinitctx((PROV_GCM_CTX *)ctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 

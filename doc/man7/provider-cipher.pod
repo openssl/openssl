@@ -240,7 +240,11 @@ The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
 =item "iv" (B<OSSL_CIPHER_PARAM_IV>) <octet string OR octet ptr>
 
-Gets the IV for the associated cipher ctx.
+Gets the current IV for the associated cipher ctx.
+
+=item B<OSSL_CIPHER_PARAM_ORIGINAL_IV> ("oiv") <octet_string OR octet_ptr>
+
+Gets the Original IV for the associated cipher ctx.
 
 =item "num" (B<OSSL_CIPHER_PARAM_NUM>) <unsigned integer>
 

@@ -40,12 +40,13 @@ struct prov_cipher_ctx_st {
     } stream;
 
     unsigned int mode;
-    size_t keylen;        /* key size (in bytes) */
+    size_t keylen;           /* key size (in bytes) */
     size_t ivlen;
     size_t blocksize;
-    size_t bufsz;         /* Number of bytes in buf */
-    unsigned int pad : 1; /* Whether padding should be used or not */
-    unsigned int enc : 1; /* Set to 1 for encrypt, or 0 otherwise */
+    size_t bufsz;            /* Number of bytes in buf */
+    unsigned int pad : 1;    /* Whether padding should be used or not */
+    unsigned int enc : 1;    /* Set to 1 for encrypt, or 0 otherwise */
+    unsigned int iv_set : 1; /* Set when the iv is copied to the iv/oiv buffers */
 
     /*
      * num contains the number of bytes of |iv| which are valid for modes that
@@ -54,6 +55,8 @@ struct prov_cipher_ctx_st {
     unsigned int num;
     uint64_t flags;
 
+    /* The original value of the iv */
+    unsigned char oiv[GENERIC_BLOCK_SIZE];
     /* Buffer of partial blocks processed via update calls */
     unsigned char buf[GENERIC_BLOCK_SIZE];
     unsigned char iv[GENERIC_BLOCK_SIZE];
@@ -253,6 +256,9 @@ const OSSL_PARAM * name##_settable_ctx_params(void)                            \
 {                                                                              \
     return name##_known_settable_ctx_params;                                   \
 }
+
+int cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
+                          size_t ivlen);
 
 size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
                  const unsigned char **in, size_t *inlen);

@@ -81,6 +81,7 @@ static const OSSL_PARAM cipher_aead_known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ORIGINAL_IV, NULL, 0),
     OSSL_PARAM_END
 };
 const OSSL_PARAM *cipher_aead_gettable_ctx_params(void)
@@ -109,11 +110,8 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
     ctx->enc = enc ? 1 : 0;
 
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
-        if (ivlen != ctx->ivlen) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+        if (!cipher_generic_initiv(ctx, iv, ivlen))
             return 0;
-        }
-        memcpy(ctx->iv, iv, ctx->ivlen);
     }
     if (key != NULL) {
         if ((ctx->flags & EVP_CIPH_VARIABLE_LENGTH) == 0) {
@@ -337,7 +335,13 @@ int cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ORIGINAL_IV);
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_ptr(p, &ctx->oiv, ctx->ivlen)
+        && !OSSL_PARAM_set_octet_string(p, &ctx->oiv, ctx->ivlen)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
     return 1;
 }
 
@@ -376,6 +380,21 @@ int cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
         ctx->keylen = keylen;
     }
+    return 1;
+}
+
+int cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
+                          size_t ivlen)
+{
+    if (ivlen != ctx->ivlen
+        || ivlen > sizeof(ctx->iv)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+        return 0;
+    }
+    ctx->iv_set = 1;
+    ctx->ivlen = ivlen;
+    memcpy(ctx->iv, iv, ivlen);
+    memcpy(ctx->oiv, iv, ivlen);
     return 1;
 }
 

@@ -139,7 +139,6 @@ OSSL_OP_cipher_set_ctx_params_fn gcm_set_ctx_params;
 OSSL_OP_cipher_cipher_fn gcm_cipher;
 OSSL_OP_cipher_update_fn gcm_stream_update;
 OSSL_OP_cipher_final_fn gcm_stream_final;
-void gcm_deinitctx(PROV_GCM_CTX *ctx);
 void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
                  const PROV_GCM_HW *hw, size_t ivlen_min);
 

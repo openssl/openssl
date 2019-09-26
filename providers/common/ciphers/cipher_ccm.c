@@ -213,7 +213,6 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
             return 0;
         }
-
         memcpy(ctx->iv, iv, ivlen);
         ctx->iv_set = 1;
     }
@@ -420,7 +419,3 @@ void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw)
     ctx->hw = hw;
 }
 
-void ccm_finalctx(PROV_CCM_CTX *ctx)
-{
-    OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
-}
