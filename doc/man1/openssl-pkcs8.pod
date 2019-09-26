@@ -9,8 +9,8 @@ openssl-pkcs8 - PKCS#8 format private key conversion tool
 B<openssl> B<pkcs8>
 [B<-help>]
 [B<-topk8>]
-[B<-inform> I<DER|PEM>]
-[B<-outform> I<DER|PEM>]
+[B<-inform> I<DER>|I<PEM>]
+[B<-outform> I<DER>|I<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
 [B<-out> I<filename>]
@@ -50,12 +50,12 @@ Normally a PKCS#8 private key is expected on input and a private key will be
 written to the output file. With the B<-topk8> option the situation is
 reversed: it reads a private key and writes a PKCS#8 format key.
 
-=item B<-inform> I<DER|PEM>
+=item B<-inform> I<DER>|I<PEM>
 
 This specifies the input format: see L<KEY FORMATS> for more details. The default
 format is PEM.
 
-=item B<-outform> I<DER|PEM>
+=item B<-outform> I<DER>|I<PEM>
 
 This specifies the output format: see L<KEY FORMATS> for more details. The default
 format is PEM.

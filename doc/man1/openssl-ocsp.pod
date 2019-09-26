@@ -81,7 +81,7 @@ B<openssl> B<ocsp>
 [B<-rsigner> I<file>]
 [B<-rkey> I<file>]
 [B<-rother> I<file>]
-[B<-rsigopt> I<nm:v>]
+[B<-rsigopt> I<nm>:I<v>]
 [B<-resp_no_certs>]
 [B<-nmin> I<n>]
 [B<-ndays> I<n>]
@@ -363,7 +363,7 @@ subject name.
 The private key to sign OCSP responses with: if not present the file
 specified in the B<rsigner> option is used.
 
-=item B<-rsigopt> I<nm:v>
+=item B<-rsigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm when signing OCSP responses.
 Names and values of these options are algorithm-specific.

@@ -29,7 +29,7 @@ B<openssl> B<ca>
 [B<-md> I<arg>]
 [B<-policy> I<arg>]
 [B<-keyfile> I<arg>]
-[B<-keyform> I<DER|PEM>]
+[B<-keyform> I<DER>|I<PEM>]
 [B<-key> I<arg>]
 [B<-passin> I<arg>]
 [B<-cert> I<file>]
@@ -50,11 +50,11 @@ B<openssl> B<ca>
 [B<-engine> I<id>]
 [B<-subj> I<arg>]
 [B<-utf8>]
-[B<-sigopt> I<nm:v>]
+[B<-sigopt> I<nm>:I<v>]
 [B<-create_serial>]
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
-[B<-rand> I<file...>]
+[B<-rand> I<file>]
 [B<-writerand> I<file>]
 [B<-sm2-id string>]
 [B<-sm2-hex-id hex-string>]
@@ -131,12 +131,12 @@ The CA certificate file.
 
 The private key to sign requests with.
 
-=item B<-keyform> I<DER|PEM>
+=item B<-keyform> I<DER>|I<PEM>
 
 The format of the data in the private key file.
 The default is PEM.
 
-=item B<-sigopt> I<nm:v>
+=item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
@@ -291,7 +291,7 @@ I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<file>
 
 A file or files containing random data used to seed the random number
 generator.

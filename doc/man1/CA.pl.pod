@@ -21,13 +21,13 @@ B<-signCA> |
 B<-signcert> |
 B<-crl> |
 B<-newca>
-[B<-extra-cmd> extra-params]
+[B<-extra-cmd> I<extra-params>]
 
-B<CA.pl> B<-pkcs12> [B<-extra-pkcs12> extra-params] [B<certname>]
+B<CA.pl> B<-pkcs12> [B<-extra-pkcs12> I<extra-params>] [I<certname>]
 
-B<CA.pl> B<-verify> [B<-extra-verify> extra-params] B<certfile>...
+B<CA.pl> B<-verify> [B<-extra-verify> I<extra-params>] I<certfile>...
 
-B<CA.pl> B<-revoke> [B<-extra-ca> extra-params] B<certfile> [B<reason>]
+B<CA.pl> B<-revoke> [B<-extra-ca> I<extra-params>] I<certfile> [I<reason>]
 
 =head1 DESCRIPTION
 
@@ -106,7 +106,7 @@ Extra params are passed on to B<openssl x509> and B<openssl ca> commands.
 
 Generate a CRL. Executes B<openssl ca> command.
 
-=item B<-revoke> I<certfile [reason]>
+=item B<-revoke> I<certfile> I<[reason]>
 
 Revoke the certificate contained in the specified B<certfile>. An optional
 reason may be specified, and must be one of: B<unspecified>,

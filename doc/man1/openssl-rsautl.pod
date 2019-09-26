@@ -11,7 +11,7 @@ B<openssl> B<rsautl>
 [B<-in> I<file>]
 [B<-out> I<file>]
 [B<-inkey> I<file>]
-[B<-keyform> I<DER|PEM|ENGINE>]
+[B<-keyform> I<DER>|I<PEM>|I<ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-sign>]
@@ -53,7 +53,7 @@ default.
 
 The input key file, by default it should be an RSA private key.
 
-=item B<-keyform> I<DER|PEM|ENGINE>
+=item B<-keyform> I<DER>|I<PEM>|I<ENGINE>
 
 The key format PEM, DER or ENGINE.
 

@@ -60,7 +60,7 @@ cipher before outputting it. If none of these options is
 specified no encryption is used. If encryption is used a pass phrase is prompted
 for if it is not supplied via the B<-passout> argument.
 
-=item B<-F4|-3>
+=item B<-F4>|B<-3>
 
 The public exponent to use, either 65537 or 3. The default is 65537.
 

@@ -8,8 +8,8 @@ openssl-ec - EC key processing
 
 B<openssl> B<ec>
 [B<-help>]
-[B<-inform> I<DER|PEM>]
-[B<-outform> I<DER|PEM>]
+[B<-inform> I<DER>|I<PEM>]
+[B<-outform> I<DER>|I<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
 [B<-out> I<filename>]
@@ -44,7 +44,7 @@ PKCS#8 private key format use the B<pkcs8> command.
 
 Print out a usage message.
 
-=item B<-inform> I<DER|PEM>
+=item B<-inform> I<DER>|I<PEM>
 
 This specifies the input format. The B<DER> option with a private key uses
 an ASN.1 DER encoded SEC1 private key. When used with a public key it
@@ -53,7 +53,7 @@ The B<PEM> form is the default format: it consists of the B<DER> format base64
 encoded with additional header and footer lines. In the case of a private key
 PKCS#8 format is also accepted.
 
-=item B<-outform> I<DER|PEM>
+=item B<-outform> I<DER>|I<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
@@ -81,7 +81,7 @@ filename.
 The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-des|-des3|-idea>
+=item B<-des>|B<-des3>|B<-idea>
 
 These options encrypt the private key with the DES, triple DES, IDEA or
 any other cipher supported by OpenSSL before outputting it. A pass phrase is

@@ -21,14 +21,14 @@ B<openssl> B<s_server>
 [B<-nameopt> I<val>]
 [B<-naccept> I<+int>]
 [B<-serverinfo> I<val>]
-[B<-certform> I<DER|PEM>]
+[B<-certform> I<DER>|I<PEM>]
 [B<-key> I<infile>]
 [B<-keyform> I<format>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
-[B<-dcertform> I<DER|PEM>]
+[B<-dcertform> I<DER>|I<PEM>]
 [B<-dkey> I<infile>]
-[B<-dkeyform> I<DER|PEM>]
+[B<-dkeyform> I<DER>|I<PEM>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -64,7 +64,7 @@ B<openssl> B<s_server>
 [B<-verifyCApath> I<dir>]
 [B<-no_cache>]
 [B<-ext_cache>]
-[B<-CRLform> I<DER|PEM>]
+[B<-CRLform> I<DER>|I<PEM>]
 [B<-verify_return_error>]
 [B<-verify_quiet>]
 [B<-build_chain>]
@@ -151,8 +151,8 @@ B<openssl> B<s_server>
 [B<-xcert>]
 [B<-xchain>]
 [B<-xchain_build>]
-[B<-xcertform> I<DER|PEM>]
-[B<-xkeyform> I<DER|PEM>]
+[B<-xcertform> I<DER>|I<PEM>]
+[B<-xkeyform> I<DER>|I<PEM>]
 [B<-nbio>]
 [B<-psk_identity> I<val>]
 [B<-psk_hint> I<val>]
@@ -281,7 +281,7 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-certform> I<DER|PEM>
+=item B<-certform> I<DER>|I<PEM>
 
 The certificate format to use: DER or PEM. PEM is the default.
 
@@ -316,7 +316,7 @@ A file containing trusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
 
-=item B<-dcertform> I<DER|PEM>, B<-dkeyform> I<DER|PEM>, B<-dpass> I<val>
+=item B<-dcertform> I<DER>|I<PEM>, B<-dkeyform> I<DER>|I<PEM>, B<-dpass> I<val>
 
 Additional certificate and private key format and passphrase respectively.
 
@@ -333,7 +333,7 @@ Specify whether the application should build the certificate chain to be
 provided to the client for the extra certificates provided via B<-xkey> I<infile>,
 B<-xcert> I<infile>, B<-xchain> options.
 
-=item B<-xcertform> I<DER|PEM>, B<-xkeyform> I<DER|PEM>
+=item B<-xcertform> I<DER>|I<PEM>, B<-xkeyform> I<DER>|I<PEM>
 
 Extra certificate and private key format respectively.
 

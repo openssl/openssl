@@ -8,8 +8,8 @@ openssl-crl - CRL utility
 
 B<openssl> B<crl>
 [B<-help>]
-[B<-inform> I<DER|PEM>]
-[B<-informout> I<DER|PEM>]
+[B<-inform> I<DER>|I<PEM>]
+[B<-informout> I<DER>|I<PEM>]
 [B<-text>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
@@ -34,13 +34,13 @@ The B<crl> command processes CRL files in DER or PEM format.
 
 Print out a usage message.
 
-=item B<-inform> I<DER|PEM>
+=item B<-inform> I<DER>|I<PEM>
 
 This specifies the input format. B<DER> format is DER encoded CRL
 structure. B<PEM> (the default) is a base64 encoded version of
 the DER form with header and footer lines.
 
-=item B<-outform> I<DER|PEM>
+=item B<-outform> I<DER>|I<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.

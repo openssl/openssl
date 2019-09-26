@@ -263,6 +263,13 @@ sub check {
         if $contents =~ /B<-[A-Za-z_ ]+ /;
     err($id, "Brackets on item line")
         if $contents =~ /=item \[/;
+    while ( $contents =~ /([BI])<([^>]*)>/g ) {
+        my $B = $1;
+        my $T = $2;
+        next if $T =~ /E</;
+        err($id, "Bad content inside $B<$T>")
+            if $T =~ /[<|]/;
+    }
 
     if ( $contents !~ /=for comment multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines

@@ -8,7 +8,7 @@ openssl-kdf - perform Key Derivation Function operations
 
 B<openssl kdf>
 [B<-help>]
-[B<-kdfopt> I<nm:v>]
+[B<-kdfopt> I<nm>:I<v>]
 [B<-keylen> I<num>]
 [B<-out> I<filename>]
 [B<-binary>]
@@ -39,7 +39,7 @@ Filename to output to, or standard output by default.
 
 Output the derived key in binary form. Uses hexadecimal text format if not specified.
 
-=item B<-kdfopt> I<nm:v>
+=item B<-kdfopt> I<nm>:I<v>
 
 Passes options to the KDF algorithm.
 A comprehensive list of parameters can be found in the EVP_KDF_CTX

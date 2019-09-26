@@ -8,8 +8,8 @@ openssl-req - PKCS#10 certificate request and certificate generating utility
 
 B<openssl> B<req>
 [B<-help>]
-[B<-inform> I<DER|PEM>]
-[B<-outform> I<DER|PEM>]
+[B<-inform> I<DER>|I<PEM>]
+[B<-outform> I<DER>|I<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
 [B<-out> I<filename>]
@@ -26,7 +26,7 @@ B<openssl> B<req>
 [B<-newkey> I<alg:file>]
 [B<-nodes>]
 [B<-key> I<filename>]
-[B<-keyform> I<DER|PEM>]
+[B<-keyform> I<DER>|I<PEM>]
 [B<-keyout> I<filename>]
 [B<-keygen_engine> I<id>]
 [B<-> I<digest>]
@@ -45,7 +45,7 @@ B<openssl> B<req>
 [B<-reqopt>]
 [B<-subject>]
 [B<-subj> I<arg>]
-[B<-sigopt> I<nm:v>]
+[B<-sigopt> I<nm>:I<v>]
 [B<-batch>]
 [B<-verbose>]
 [B<-engine> I<id>]
@@ -66,14 +66,14 @@ for use as root CAs for example.
 
 Print out a usage message.
 
-=item B<-inform> I<DER|PEM>
+=item B<-inform> I<DER>|I<PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with the PKCS#10. The B<PEM> form is the default format: it
 consists of the B<DER> format base64 encoded with additional header and
 footer lines.
 
-=item B<-outform> I<DER|PEM>
+=item B<-outform> I<DER>|I<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
@@ -84,7 +84,7 @@ This specifies the input filename to read a request from or standard input
 if this option is not specified. A request is only read if the creation
 options (B<-new> and B<-newkey>) are not specified.
 
-=item B<-sigopt> I<nm:v>
+=item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
@@ -191,7 +191,7 @@ for more details.
 This specifies the file to read the private key from. It also
 accepts PKCS#8 format private keys for PEM format files.
 
-=item B<-keyform> I<DER|PEM>
+=item B<-keyform> I<DER>|I<PEM>
 
 The format of the private key file specified in the B<-key>
 argument. PEM is the default.

@@ -21,7 +21,7 @@ B<openssl dgst>
 [B<-verify> I<filename>]
 [B<-prverify> I<filename>]
 [B<-signature> I<filename>]
-[B<-sigopt> I<nm:v>]
+[B<-sigopt> I<nm>:I<v>]
 [B<-hmac> I<key>]
 [B<-fips-fingerprint>]
 [B<-rand> I<file...>]
@@ -52,7 +52,7 @@ command.
 
 Print out a usage message.
 
-=item B<-I<digest>>
+=item B<-> I<digest>
 
 Specifies name of a supported digest to be used. To see the list of
 supported digests, use the command I<list --digest-commands>.
@@ -96,7 +96,7 @@ instead for this.
 Specifies the key format to sign digest with. The DER, PEM, P12,
 and ENGINE formats are supported.
 
-=item B<-sigopt> I<nm:v>
+=item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
@@ -137,7 +137,7 @@ via B<-macopt> parameter.
 The L<openssl-mac(1)> command should be preferred to using this command line
 option.
 
-=item B<-macopt> I<nm:v>
+=item B<-macopt> I<nm>:I<v>
 
 Passes options to MAC algorithm, specified by B<-mac> key.
 Following options are supported by both by B<HMAC> and B<gost-mac>:

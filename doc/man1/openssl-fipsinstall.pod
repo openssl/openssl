@@ -15,7 +15,7 @@ B<openssl fipsinstall>
 [B<-section_name> I<sectionname>]
 [B<-verify>]
 [B<-mac_name> I<macname>]
-[B<-macopt>]
+[B<-macopt> I<nm>:I<v>]
 
 B<openssl> I<fipsinstall> [B<...>]
 
@@ -76,7 +76,7 @@ Specifies the name of a supported MAC algorithm which will be used.
 To see the list of supported MAC's use the command I<list -mac-algorithms>.
 The default is "HMAC".
 
-=item B<-macopt> I<nm:v>
+=item B<-macopt> I<nm>:I<v>
 
 Passes options to the MAC algorithm.
 A comprehensive list of controls can be found in the EVP_MAC implementation

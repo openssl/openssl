@@ -8,11 +8,11 @@ openssl-x509 - Certificate display and signing utility
 
 B<openssl> B<x509>
 [B<-help>]
-[B<-inform> I<DER|PEM>]
-[B<-outform> I<DER|PEM>]
-[B<-keyform> I<DER|PEM>]
-[B<-CAform> I<DER|PEM>]
-[B<-CAkeyform> I<DER|PEM>]
+[B<-inform> I<DER>|I<PEM>]
+[B<-outform> I<DER>|I<PEM>]
+[B<-keyform> I<DER>|I<PEM>]
+[B<-CAform> I<DER>|I<PEM>]
+[B<-CAkeyform> I<DER>|I<PEM>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-serial>]
@@ -62,7 +62,7 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile> I<filename>]
 [B<-extensions> I<section>]
-[B<-sigopt> I<nm:v>]
+[B<-sigopt> I<nm>:I<v>]
 [B<-rand> I<file...>]
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
@@ -88,7 +88,7 @@ various sections.
 
 Print out a usage message.
 
-=item B<-inform> I<DER|PEM>
+=item B<-inform> I<DER>|I<PEM>
 
 This specifies the input format normally the command will expect an X509
 certificate but this can change if other options such as B<-req> are
@@ -96,7 +96,7 @@ present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
 added. The default format is PEM.
 
-=item B<-outform> I<DER|PEM>
+=item B<-outform> I<DER>|I<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
@@ -364,7 +364,7 @@ and the end date to a value determined by the B<-days> option.
 It retains any certificate extensions unless the B<-clrext> option is supplied;
 this includes, for example, any existing key identifier extensions.
 
-=item B<-sigopt> I<nm:v>
+=item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
@@ -381,7 +381,7 @@ certificate is being created from another certificate (for example with
 the B<-signkey> or the B<-CA> options). Normally all extensions are
 retained.
 
-=item B<-keyform> I<DER|PEM>
+=item B<-keyform> I<DER>|I<PEM>
 
 Specifies the format (DER or PEM) of the private key file used in the
 B<-signkey> option.

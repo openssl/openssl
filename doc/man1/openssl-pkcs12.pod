@@ -236,7 +236,7 @@ can be used (see B<NOTES> section for more information). If a cipher name
 is used with PKCS#5 v2.0. For interoperability reasons it is advisable to only
 use PKCS#12 algorithms.
 
-=item B<-keyex|-keysig>
+=item B<-keyex>|B<-keysig>
 
 Specifies that the private key is to be used for key exchange or just signing.
 This option is only interpreted by MSIE and similar MS software. Normally

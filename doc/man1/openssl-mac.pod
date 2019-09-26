@@ -44,7 +44,7 @@ Filename to output to, or standard output by default.
 
 Output the MAC in binary form. Uses hexadecimal text format if not specified.
 
-=item B<-macopt> I<nm:v>
+=item B<-macopt> I<nm>:I<v>
 
 Passes options to the MAC algorithm.
 A comprehensive list of controls can be found in the EVP_MAC implementation

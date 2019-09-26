@@ -8,8 +8,8 @@ openssl-dsaparam - DSA parameter manipulation and generation
 
 B<openssl dsaparam>
 [B<-help>]
-[B<-inform> I<DER|PEM>]
-[B<-outform> I<DER|PEM>]
+[B<-inform> I<DER>|I<PEM>]
+[B<-outform> I<DER>|I<PEM>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-noout>]
@@ -34,14 +34,14 @@ This command is used to manipulate or generate DSA parameter files.
 
 Print out a usage message.
 
-=item B<-inform> I<DER|PEM>
+=item B<-inform> I<DER>|I<PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with RFC2459 (PKIX) DSS-Parms that is a SEQUENCE consisting
 of p, q and g respectively. The PEM form is the default format: it consists
 of the B<DER> format base64 encoded with additional header and footer lines.
 
-=item B<-outform> I<DER|PEM>
+=item B<-outform> I<DER>|I<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
