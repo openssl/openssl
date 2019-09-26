@@ -71,7 +71,6 @@ extern "C" {
 /* For passing the AlgorithmIdentifier parameter in DER form */
 #define OSSL_CIPHER_PARAM_ALG_ID             "alg_id_param" /* octet_string */
 
-
 /* digest parameters */
 #define OSSL_DIGEST_PARAM_XOFLEN     "xoflen"    /* size_t */
 #define OSSL_DIGEST_PARAM_SSL3_MS    "ssl3-ms"   /* octet string */

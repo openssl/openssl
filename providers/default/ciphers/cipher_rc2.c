@@ -13,6 +13,10 @@
 #include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
 
+#define RC2_40_MAGIC    0xa0
+#define RC2_64_MAGIC    0x78
+#define RC2_128_MAGIC   0x3a
+
 static OSSL_OP_cipher_freectx_fn rc2_freectx;
 static OSSL_OP_cipher_dupctx_fn rc2_dupctx;
 static OSSL_OP_cipher_gettable_ctx_params_fn rc2_gettable_ctx_params;
@@ -38,10 +42,6 @@ static void *rc2_dupctx(void *ctx)
 
     return ret;
 }
-
-# define RC2_40_MAGIC    0xa0
-# define RC2_64_MAGIC    0x78
-# define RC2_128_MAGIC   0x3a
 
 static int rc2_keybits_to_magic(int keybits)
 {
