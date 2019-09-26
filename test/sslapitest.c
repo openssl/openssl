@@ -3200,7 +3200,8 @@ static int hostname_cb(SSL *s, int *al, void *arg)
 {
     const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
 
-    if (hostname != NULL && strcmp(hostname, "goodhost") == 0)
+    if (hostname != NULL && (strcmp(hostname, "goodhost") == 0
+                             || strcmp(hostname, "altgoodhost") == 0))
         return  SSL_TLSEXT_ERR_OK;
 
     return SSL_TLSEXT_ERR_NOACK;
@@ -3298,16 +3299,16 @@ static int test_early_data_psk(int idx)
 
     case 3:
         /*
-         * Set inconsistent SNI (server detected). In this case the connection
-         * will succeed but reject early_data.
+         * Set inconsistent SNI (server side). In this case the connection
+         * will succeed and accept early_data. In TLSv1.3 on the server side SNI
+         * is associated with each handshake - not the session. Therefore it
+         * should not matter that we used a different server name last time.
          */
         SSL_SESSION_free(serverpsk);
         serverpsk = SSL_SESSION_dup(clientpsk);
         if (!TEST_ptr(serverpsk)
                 || !TEST_true(SSL_SESSION_set1_hostname(serverpsk, "badhost")))
             goto end;
-        edstatus = SSL_EARLY_DATA_REJECTED;
-        readearlyres = SSL_READ_EARLY_DATA_FINISH;
         /* Fall through */
     case 4:
         /* Set consistent SNI */
@@ -6968,6 +6969,160 @@ end:
 }
 #endif /* OPENSSL_NO_TLS1_2 */
 
+/*
+ * Test 0: Client sets servername and server acknowledges it (TLSv1.2)
+ * Test 1: Client sets servername and server does not acknowledge it (TLSv1.2)
+ * Test 2: Client sets inconsistent servername on resumption (TLSv1.2)
+ * Test 3: Client does not set servername on initial handshake (TLSv1.2)
+ * Test 4: Client does not set servername on resumption handshake (TLSv1.2)
+ * Test 5: Client sets servername and server acknowledges it (TLSv1.3)
+ * Test 6: Client sets servername and server does not acknowledge it (TLSv1.3)
+ * Test 7: Client sets inconsistent servername on resumption (TLSv1.3)
+ * Test 8: Client does not set servername on initial handshake(TLSv1.3)
+ * Test 9: Client does not set servername on resumption handshake (TLSv1.3)
+ */
+static int test_servername(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+    const char *sexpectedhost = NULL, *cexpectedhost = NULL;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (tst <= 4)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_3
+    if (tst >= 5)
+        return 1;
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       (tst <= 4) ? TLS1_2_VERSION
+                                                  : TLS1_3_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
+        goto end;
+
+    if (tst != 1 && tst != 6) {
+        if (!TEST_true(SSL_CTX_set_tlsext_servername_callback(sctx,
+                                                              hostname_cb)))
+            goto end;
+    }
+
+    if (tst != 3 && tst != 8) {
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "goodhost")))
+            goto end;
+        sexpectedhost = cexpectedhost = "goodhost";
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_str_eq(SSL_get_servername(clientssl, TLSEXT_NAMETYPE_host_name),
+                     cexpectedhost)
+            || !TEST_str_eq(SSL_get_servername(serverssl,
+                                               TLSEXT_NAMETYPE_host_name),
+                            sexpectedhost))
+        goto end;
+
+    /* Now repeat with a resumption handshake */
+
+    if (!TEST_int_eq(SSL_shutdown(clientssl), 0)
+            || !TEST_ptr_ne(sess = SSL_get1_session(clientssl), NULL)
+            || !TEST_true(SSL_SESSION_is_resumable(sess))
+            || !TEST_int_eq(SSL_shutdown(serverssl), 0))
+        goto end;
+
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    clientssl = serverssl = NULL;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+                                      NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_session(clientssl, sess)))
+        goto end;
+
+    sexpectedhost = cexpectedhost = "goodhost";
+    if (tst == 2 || tst == 7) {
+        /* Set an inconsistent hostname */
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "altgoodhost")))
+            goto end;
+        /*
+         * In TLSv1.2 we expect the hostname from the original handshake, in
+         * TLSv1.3 we expect the hostname from this handshake
+         */
+        if (tst == 7)
+            sexpectedhost = cexpectedhost = "altgoodhost";
+
+        if (!TEST_str_eq(SSL_get_servername(clientssl,
+                                            TLSEXT_NAMETYPE_host_name),
+                         "altgoodhost"))
+            goto end;
+    } else if (tst == 4 || tst == 9) {
+        /*
+         * A TLSv1.3 session does not associate a session with a servername,
+         * but a TLSv1.2 session does.
+         */
+        if (tst == 9)
+            sexpectedhost = cexpectedhost = NULL;
+
+        if (!TEST_str_eq(SSL_get_servername(clientssl,
+                                            TLSEXT_NAMETYPE_host_name),
+                         cexpectedhost))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "goodhost")))
+            goto end;
+        /*
+         * In a TLSv1.2 resumption where the hostname was not acknowledged
+         * we expect the hostname on the server to be empty. On the client we
+         * return what was requested in this case.
+         *
+         * Similarly if the client didn't set a hostname on an original TLSv1.2
+         * session but is now, the server hostname will be empty, but the client
+         * is as we set it.
+         */
+        if (tst == 1 || tst == 3)
+            sexpectedhost = NULL;
+
+        if (!TEST_str_eq(SSL_get_servername(clientssl,
+                                            TLSEXT_NAMETYPE_host_name),
+                         "goodhost"))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_session_reused(clientssl))
+            || !TEST_true(SSL_session_reused(serverssl))
+            || !TEST_str_eq(SSL_get_servername(clientssl,
+                                               TLSEXT_NAMETYPE_host_name),
+                            cexpectedhost)
+            || !TEST_str_eq(SSL_get_servername(serverssl,
+                                               TLSEXT_NAMETYPE_host_name),
+                            sexpectedhost))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
 
 int setup_tests(void)
@@ -7118,6 +7273,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_multiblock_write, OSSL_NELEM(multiblock_cipherlist_data));
 #endif
+    ADD_ALL_TESTS(test_servername, 10);
     return 1;
 }
 
