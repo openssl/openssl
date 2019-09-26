@@ -343,32 +343,23 @@ sigs:
     # qTESLA (2)
     variants:
       -
-        name: "qteslai"
-        pretty_name: "qTESLA-I"
-        oqs_meth: "OQS_SIG_alg_qTESLA_I"
+        name: "qteslapi"
+        pretty_name: "qTesla-I-p"
+        oqs_meth: "OQS_SIG_alg_qTesla_p_I"
         security: 128
-        oid: "1.3.6.1.4.1.311.89.2.2.1"
+        oid: "1.3.6.1.4.1.311.89.2.2.10"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.2"},
+                    "oid": "1.3.6.1.4.1.311.89.2.2.11"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.3"}]
+                    "oid": "1.3.6.1.4.1.311.89.2.2.12"}]
       -
-        name: "qteslaiiisize"
-        pretty_name: "qTESLA-III-size"
-        oqs_meth: "OQS_SIG_alg_qTESLA_III_size"
+        name: "qteslapiii"
+        pretty_name: "qTESLA-p-III"
+        oqs_meth: "OQS_SIG_alg_qTesla_p_III"
         security: 192
-        oid: "1.3.6.1.4.1.311.89.2.2.4"
+        oid: "1.3.6.1.4.1.311.89.2.2.20"
         mix_with: [{"name": "p384",
                     "pretty_name": "ECDSA p384",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.5"}]
-      -
-        name: "qteslaiiispeed"
-        pretty_name: "qTESLA-III-speed"
-        oqs_meth: "OQS_SIG_alg_qTESLA_III_speed"
-        security: 192
-        oid: "1.3.6.1.4.1.311.89.2.2.6"
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.7"}]
+                    "oid": "1.3.6.1.4.1.311.89.2.2.21"}]

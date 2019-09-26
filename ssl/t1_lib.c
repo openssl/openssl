@@ -847,13 +847,11 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_picnicl1fs,
     TLSEXT_SIGALG_p256_picnicl1fs,
     TLSEXT_SIGALG_rsa3072_picnicl1fs,
-    TLSEXT_SIGALG_qteslai,
-    TLSEXT_SIGALG_p256_qteslai,
-    TLSEXT_SIGALG_rsa3072_qteslai,
-    TLSEXT_SIGALG_qteslaiiisize,
-    TLSEXT_SIGALG_p384_qteslaiiisize,
-    TLSEXT_SIGALG_qteslaiiispeed,
-    TLSEXT_SIGALG_p384_qteslaiiispeed,
+    TLSEXT_SIGALG_qteslapi,
+    TLSEXT_SIGALG_p256_qteslapi,
+    TLSEXT_SIGALG_rsa3072_qteslapi,
+    TLSEXT_SIGALG_qteslapiii,
+    TLSEXT_SIGALG_p384_qteslapiii,
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_TLS12_SIGALGS_END
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
@@ -1020,26 +1018,20 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {"rsa3072_picnicl1fs", TLSEXT_SIGALG_rsa3072_picnicl1fs,
      NID_undef, -1, EVP_PKEY_RSA3072_PICNICL1FS, SSL_PKEY_RSA3072_PICNICL1FS,
      NID_undef, NID_undef},
-    {"qteslai", TLSEXT_SIGALG_qteslai,
-     NID_undef, -1, EVP_PKEY_QTESLAI, SSL_PKEY_QTESLAI,
+    {"qteslapi", TLSEXT_SIGALG_qteslapi,
+     NID_undef, -1, EVP_PKEY_QTESLAPI, SSL_PKEY_QTESLAPI,
      NID_undef, NID_undef},
-    {"p256_qteslai", TLSEXT_SIGALG_p256_qteslai,
-     NID_undef, -1, EVP_PKEY_P256_QTESLAI, SSL_PKEY_P256_QTESLAI,
+    {"p256_qteslapi", TLSEXT_SIGALG_p256_qteslapi,
+     NID_undef, -1, EVP_PKEY_P256_QTESLAPI, SSL_PKEY_P256_QTESLAPI,
      NID_undef, NID_undef},
-    {"rsa3072_qteslai", TLSEXT_SIGALG_rsa3072_qteslai,
-     NID_undef, -1, EVP_PKEY_RSA3072_QTESLAI, SSL_PKEY_RSA3072_QTESLAI,
+    {"rsa3072_qteslapi", TLSEXT_SIGALG_rsa3072_qteslapi,
+     NID_undef, -1, EVP_PKEY_RSA3072_QTESLAPI, SSL_PKEY_RSA3072_QTESLAPI,
      NID_undef, NID_undef},
-    {"qteslaiiisize", TLSEXT_SIGALG_qteslaiiisize,
-     NID_undef, -1, EVP_PKEY_QTESLAIIISIZE, SSL_PKEY_QTESLAIIISIZE,
+    {"qteslapiii", TLSEXT_SIGALG_qteslapiii,
+     NID_undef, -1, EVP_PKEY_QTESLAPIII, SSL_PKEY_QTESLAPIII,
      NID_undef, NID_undef},
-    {"p384_qteslaiiisize", TLSEXT_SIGALG_p384_qteslaiiisize,
-     NID_undef, -1, EVP_PKEY_P384_QTESLAIIISIZE, SSL_PKEY_P384_QTESLAIIISIZE,
-     NID_undef, NID_undef},
-    {"qteslaiiispeed", TLSEXT_SIGALG_qteslaiiispeed,
-     NID_undef, -1, EVP_PKEY_QTESLAIIISPEED, SSL_PKEY_QTESLAIIISPEED,
-     NID_undef, NID_undef},
-    {"p384_qteslaiiispeed", TLSEXT_SIGALG_p384_qteslaiiispeed,
-     NID_undef, -1, EVP_PKEY_P384_QTESLAIIISPEED, SSL_PKEY_P384_QTESLAIIISPEED,
+    {"p384_qteslapiii", TLSEXT_SIGALG_p384_qteslapiii,
+     NID_undef, -1, EVP_PKEY_P384_QTESLAPIII, SSL_PKEY_P384_QTESLAPIII,
      NID_undef, NID_undef},
 ///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_END
 };
@@ -2682,13 +2674,11 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNICL1FS);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_PICNICL1FS);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_PICNICL1FS);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAI);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_QTESLAI);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_QTESLAI);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISIZE);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_QTESLAIIISIZE);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISPEED);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_QTESLAIIISPEED);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAPI);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_QTESLAPI);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_QTESLAPI);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAPIII);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_QTESLAPIII);
 ///// OQS_TEMPLATE_FRAGMENT_ADD_CERT_CHAIN_CHECKS_END
 }
 

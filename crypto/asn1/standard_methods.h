@@ -72,12 +72,10 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
     &picnicl1fs_asn1_meth,
     &p256_picnicl1fs_asn1_meth,
     &rsa3072_picnicl1fs_asn1_meth,
-    &qteslai_asn1_meth,
-    &p256_qteslai_asn1_meth,
-    &rsa3072_qteslai_asn1_meth,
-    &qteslaiiisize_asn1_meth,
-    &p384_qteslaiiisize_asn1_meth,
-    &qteslaiiispeed_asn1_meth,
-    &p384_qteslaiiispeed_asn1_meth,
+    &qteslapi_asn1_meth,
+    &p256_qteslapi_asn1_meth,
+    &rsa3072_qteslapi_asn1_meth,
+    &qteslapiii_asn1_meth,
+    &p384_qteslapiii_asn1_meth,
 ///// OQS_TEMPLATE_FRAGMENT_SIG_ASN1_METHS_END
 };

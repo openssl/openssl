@@ -664,13 +664,11 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_picnicl1fs, "picnicl1fs"},
     {TLSEXT_SIGALG_p256_picnicl1fs, "p256_picnicl1fs"},
     {TLSEXT_SIGALG_rsa3072_picnicl1fs, "rsa3072_picnicl1fs"},
-    {TLSEXT_SIGALG_qteslai, "qteslai"},
-    {TLSEXT_SIGALG_p256_qteslai, "p256_qteslai"},
-    {TLSEXT_SIGALG_rsa3072_qteslai, "rsa3072_qteslai"},
-    {TLSEXT_SIGALG_qteslaiiisize, "qteslaiiisize"},
-    {TLSEXT_SIGALG_p384_qteslaiiisize, "p384_qteslaiiisize"},
-    {TLSEXT_SIGALG_qteslaiiispeed, "qteslaiiispeed"},
-    {TLSEXT_SIGALG_p384_qteslaiiispeed, "p384_qteslaiiispeed"},
+    {TLSEXT_SIGALG_qteslapi, "qteslapi"},
+    {TLSEXT_SIGALG_p256_qteslapi, "p256_qteslapi"},
+    {TLSEXT_SIGALG_rsa3072_qteslapi, "rsa3072_qteslapi"},
+    {TLSEXT_SIGALG_qteslapiii, "qteslapiii"},
+    {TLSEXT_SIGALG_p384_qteslapiii, "p384_qteslapiii"},
 ///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_END
 };
 
