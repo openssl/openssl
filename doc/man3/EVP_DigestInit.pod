@@ -226,7 +226,7 @@ few bytes.
 =item EVP_DigestInit()
 
 Behaves in the same way as EVP_DigestInit_ex() except it always uses the
-default digest implementation.
+default digest implementation and calls EVP_MD_CTX_reset().
 
 =item EVP_DigestFinal()
 
