@@ -43,10 +43,10 @@ L PROV          providers/common/include/internal/providercommon.h providers/com
 
 # additional header files to be scanned for function names
 L NONE          include/openssl/x509_vfy.h      NONE
-L NONE          crypto/ec/ec_lcl.h              NONE
-L NONE          crypto/cms/cms_lcl.h            NONE
-L NONE          crypto/ct/ct_locl.h             NONE
-L NONE          ssl/ssl_locl.h                  NONE
+L NONE          crypto/ec/ec_local.h              NONE
+L NONE          crypto/cms/cms_local.h            NONE
+L NONE          crypto/ct/ct_local.h             NONE
+L NONE          ssl/ssl_local.h                  NONE
 
 # SSL/TLS alerts
 R SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE          1010

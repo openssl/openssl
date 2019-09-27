@@ -16,7 +16,7 @@
 #include <openssl/dh.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 #if !defined(FIPS_MODE)
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)

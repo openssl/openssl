@@ -11,7 +11,7 @@
  * Generic dispatch table functions for ciphers.
  */
 
-#include "cipher_locl.h"
+#include "cipher_local.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
 

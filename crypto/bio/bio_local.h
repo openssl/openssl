@@ -28,10 +28,10 @@
  * that also includes bio.h.
  */
 # ifdef HEADER_CRYPTLIB_H
-#  error internal/cryptlib.h included before bio_lcl.h
+#  error internal/cryptlib.h included before bio_local.h
 # endif
 # ifdef HEADER_BIO_H
-#  error openssl/bio.h included before bio_lcl.h
+#  error openssl/bio.h included before bio_local.h
 # endif
 
 /*

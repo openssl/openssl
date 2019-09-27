@@ -19,7 +19,7 @@
 #include "internal/thread_once.h"
 #include "crypto/lhash.h"
 #include "crypto/sparse_array.h"
-#include "property_lcl.h"
+#include "property_local.h"
 
 /* The number of elements in the query cache before we initiate a flush */
 #define IMPL_CACHE_FLUSH_THRESHOLD  500

@@ -11,7 +11,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 #include "s390x_arch.h"
 
 /* Size of parameter blocks */

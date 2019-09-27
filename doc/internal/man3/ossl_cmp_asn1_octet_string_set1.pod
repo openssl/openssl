@@ -13,7 +13,7 @@ ossl_cmp_build_cert_chain
 
 =head1 SYNOPSIS
 
- #include "cmp_int.h"
+ #include "cmp_local.h"
 
  const char *ossl_cmp_log_parse_metadata(const char *buf,
                                          OSSL_CMP_severity *level, char **func,

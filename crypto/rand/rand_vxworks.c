@@ -13,7 +13,7 @@
 NON_EMPTY_TRANSLATION_UNIT
 #else
 # include <openssl/rand.h>
-# include "rand_lcl.h"
+# include "rand_local.h"
 # include "crypto/rand.h"
 # include "internal/cryptlib.h"
 # include <version.h>

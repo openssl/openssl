@@ -15,7 +15,7 @@
 # include "internal/cryptlib.h"
 # include <openssl/rand.h>
 # include "crypto/rand.h"
-# include "rand_lcl.h"
+# include "rand_local.h"
 # include <descrip.h>
 # include <dvidef.h>
 # include <jpidef.h>

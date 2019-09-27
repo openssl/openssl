@@ -9,7 +9,7 @@
 
 /* Dispatch functions for ccm mode */
 
-#include "cipher_locl.h"
+#include "cipher_local.h"
 #include "internal/ciphers/cipher_ccm.h"
 #include "internal/providercommonerr.h"
 

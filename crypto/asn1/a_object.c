@@ -16,7 +16,7 @@
 #include <openssl/objects.h>
 #include <openssl/bn.h>
 #include "crypto/asn1.h"
-#include "asn1_locl.h"
+#include "asn1_local.h"
 
 int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 {

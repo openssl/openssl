@@ -13,7 +13,7 @@
 #include <openssl/bio.h>
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
 
-#include "cmp_int.h"
+#include "cmp_local.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/cmp.h>

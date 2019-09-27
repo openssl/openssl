@@ -14,7 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/aes.h>
-#include "cms_lcl.h"
+#include "cms_local.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 

@@ -16,7 +16,7 @@
 # include <openssl/pem.h>
 # include <openssl/rand.h>
 
-#include "../crypto/cmp/cmp_int.h"
+#include "../crypto/cmp/cmp_local.h"
 
 # include "testutil.h"
 

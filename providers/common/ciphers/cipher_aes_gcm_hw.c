@@ -9,7 +9,7 @@
 
 /* Dispatch functions for AES GCM mode */
 
-#include "cipher_locl.h"
+#include "cipher_local.h"
 #include "internal/ciphers/cipher_gcm.h"
 
 static int generic_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,

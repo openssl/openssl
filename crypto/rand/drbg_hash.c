@@ -15,7 +15,7 @@
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
 #include "internal/providercommon.h"
-#include "rand_lcl.h"
+#include "rand_local.h"
 
 /* 440 bits from SP800-90Ar1 10.1 table 2 */
 #define HASH_PRNG_SMALL_SEEDLEN   (440/8)

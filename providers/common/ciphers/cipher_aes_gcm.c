@@ -9,7 +9,7 @@
 
 /* Dispatch functions for AES GCM mode */
 
-#include "cipher_locl.h"
+#include "cipher_local.h"
 #include "internal/ciphers/cipher_gcm.h"
 #include "internal/provider_algs.h"
 

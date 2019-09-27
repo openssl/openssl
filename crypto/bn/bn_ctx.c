@@ -9,7 +9,7 @@
 
 #include <openssl/trace.h>
 #include "internal/cryptlib.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 /*-
  * TODO list

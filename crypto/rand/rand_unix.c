@@ -15,7 +15,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
-#include "rand_lcl.h"
+#include "rand_local.h"
 #include "crypto/rand.h"
 #include <stdio.h>
 #include "internal/dso.h"

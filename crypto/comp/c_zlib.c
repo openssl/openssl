@@ -15,7 +15,7 @@
 #include <openssl/err.h>
 #include "crypto/cryptlib.h"
 #include "internal/bio.h"
-#include "comp_lcl.h"
+#include "comp_local.h"
 
 COMP_METHOD *COMP_zlib(void);
 

@@ -8,7 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 static BIGNUM *euclid(BIGNUM *a, BIGNUM *b);
 

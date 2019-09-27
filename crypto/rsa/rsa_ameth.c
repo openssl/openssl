@@ -15,7 +15,7 @@
 #include <openssl/cms.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);

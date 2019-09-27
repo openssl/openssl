@@ -9,7 +9,7 @@
  */
 
 #include <stdio.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <openssl/core_names.h>
