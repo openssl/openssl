@@ -18,14 +18,13 @@
  * individual OPENSSL_CTX. That doesn't work with the self test though because
  * it should be run once regardless of the number of OPENSSL_CTXs we have.
  */
-#undef FIPS_MODE
+#define ALLOW_RUN_ONCE_IN_FIPS
 #include <internal/thread_once.h>
-#define FIPS_MODE
 #include "selftest.h"
 
 #define FIPS_STATE_INIT     0
-#define FIPS_STATE_RUNNING  1
-#define FIPS_STATE_SELFTEST 2
+#define FIPS_STATE_SELFTEST 1
+#define FIPS_STATE_RUNNING  2
 #define FIPS_STATE_ERROR    3
 
 /* The size of a temp buffer used to read in data */
@@ -55,20 +54,16 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
 }
 
 /*
- * We should try to clean up the lock when the fips.so/fips.dll file is
- * unloaded. On platforms that we know how to detect that we will do so. On
- * other platforms we will leak the lock. This doesn't really matter though
- * because the OS should free it anyway.
+ * This is the Default Entry Point (DEP) code. Every platform must have a DEP.
+ * See FIPS 140-2 IG 9.10
+ *
+ * If we're run on a platform where we don't know how to define the DEP then
+ * the self-tests will never get triggered (FIPS_state never moves to
+ * FIPS_STATE_SELFTEST). This will be detected as an error when SELF_TEST_post()
+ * is called from OSSL_provider_init(), and so the fips module will be unusable
+ * on those platforms.
  */
-
-#if defined(__GNUC__)
-
-static __attribute__((destructor)) void cleanup(void)
-{
-    CRYPTO_THREAD_lock_free(self_test_lock);
-}
-
-#elif defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
 # ifdef __CYGWIN__
 /* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
 #  include <windows.h>
@@ -82,6 +77,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
+    case DLL_PROCESS_ATTACH:
+        FIPS_state = FIPS_STATE_SELFTEST;
+        break
     case DLL_PROCESS_DETACH:
         CRYPTO_THREAD_lock_free(self_test_lock);
         break;
@@ -90,6 +88,19 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
+#elif defined(__GNUC__)
+
+static __attribute__((constructor)) void init(void)
+{
+    FIPS_state = FIPS_STATE_SELFTEST;
+}
+
+
+static __attribute__((destructor)) void cleanup(void)
+{
+    CRYPTO_THREAD_lock_free(self_test_lock);
+}
+
 #endif
 
 /*
@@ -145,11 +156,10 @@ err:
 }
 
 /* This API is triggered either on loading of the FIPS module or on demand */
-int SELF_TEST_post(SELF_TEST_POST_PARAMS *st)
+int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 {
     int ok = 0;
     int kats_already_passed = 0;
-    int on_demand_test = (FIPS_state != FIPS_STATE_INIT);
     long checksum_len;
     BIO *bio_module = NULL, *bio_indicator = NULL;
     unsigned char *module_checksum = NULL;
@@ -163,17 +173,21 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st)
     loclstate = FIPS_state;
     CRYPTO_THREAD_unlock(self_test_lock);
 
-    if (loclstate == FIPS_STATE_RUNNING)
-        return 1;
-    if (loclstate != FIPS_STATE_INIT)
+    if (loclstate == FIPS_STATE_RUNNING) {
+        if (!on_demand_test)
+            return 1;
+    } else if (loclstate != FIPS_STATE_SELFTEST) {
         return 0;
+    }
 
     CRYPTO_THREAD_write_lock(self_test_lock);
     if (FIPS_state == FIPS_STATE_RUNNING) {
-        CRYPTO_THREAD_unlock(self_test_lock);
-        return 1;
-    }
-    if (FIPS_state != FIPS_STATE_INIT) {
+        if (!on_demand_test) {
+            CRYPTO_THREAD_unlock(self_test_lock);
+            return 1;
+        }
+        FIPS_state = FIPS_STATE_SELFTEST;
+    } else if (FIPS_state != FIPS_STATE_SELFTEST) {
         CRYPTO_THREAD_unlock(self_test_lock);
         return 0;
     }

@@ -552,7 +552,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     fgbl->prov = provider;
 
     selftest_params.libctx = PROV_LIBRARY_CONTEXT_OF(ctx);
-    if (!SELF_TEST_post(&selftest_params)) {
+    if (!SELF_TEST_post(&selftest_params, 0)) {
         OPENSSL_CTX_free(ctx);
         return 0;
     }
