@@ -79,7 +79,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
         FIPS_state = FIPS_STATE_SELFTEST;
-        break
+        break;
     case DLL_PROCESS_DETACH:
         CRYPTO_THREAD_lock_free(self_test_lock);
         break;
