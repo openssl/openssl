@@ -337,6 +337,14 @@ int OSSL_CMP_CTX_set1_transactionID(OSSL_CMP_CTX *ctx,
 int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
                                   const ASN1_OCTET_STRING *nonce);
 
+/* from cmp_status.c */
+char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf, int bufsize);
+
+/* from cmp_hdr.c */
+/* exported for testing and debugging purposes: */
+ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const OSSL_CMP_PKIHEADER *hdr);
+ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr);
+
 #   ifdef  __cplusplus
 }
 #   endif
