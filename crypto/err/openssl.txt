@@ -656,10 +656,10 @@ EC_F_NISTP256_PRE_COMP_NEW:236:nistp256_pre_comp_new
 EC_F_NISTP521_PRE_COMP_NEW:237:nistp521_pre_comp_new
 EC_F_O2I_ECPUBLICKEY:152:o2i_ECPublicKey
 EC_F_OLD_EC_PRIV_DECODE:222:old_ec_priv_decode
-EC_F_OQS_ITEM_VERIFY:297:oqs_item_verify
-EC_F_OQS_KEY_INIT:296:oqs_key_init
-EC_F_OQS_PRIV_DECODE:298:oqs_priv_decode
-EC_F_OQS_PRIV_ENCODE:299:oqs_priv_encode
+EC_F_OQS_ITEM_VERIFY:397:oqs_item_verify
+EC_F_OQS_KEY_INIT:396:oqs_key_init
+EC_F_OQS_PRIV_DECODE:398:oqs_priv_decode
+EC_F_OQS_PRIV_ENCODE:399:oqs_priv_encode
 EC_F_OQS_PUB_DECODE:300:oqs_pub_decode
 EC_F_OQS_PUB_ENCODE:301:oqs_pub_encode
 EC_F_OQS_SIZE:302:oqs_size
@@ -2186,7 +2186,7 @@ EC_R_NOT_INITIALIZED:111:not initialized
 EC_R_NO_PARAMETERS_SET:139:no parameters set
 EC_R_NO_PRIVATE_KEY:171:no private key
 EC_R_NO_PRIVATE_VALUE:154:no private value
-EC_R_NO_SUCH_OQS_ALGORITHM:165:no such oqs algorithm
+EC_R_NO_SUCH_OQS_ALGORITHM:365:no such oqs algorithm
 EC_R_OPERATION_NOT_SUPPORTED:152:operation not supported
 EC_R_PARAMETERS_MUST_BE_ABSENT:172:parameters must be absent
 EC_R_PASSED_NULL_PARAMETER:134:passed null parameter
