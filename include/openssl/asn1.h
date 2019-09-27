@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_ASN1_H
 # define OPENSSL_ASN1_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ASN1_H
+# endif
 
 # include <time.h>
 # include <openssl/e_os2.h>

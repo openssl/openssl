@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_DSA_H
 # define OPENSSL_DSA_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_DSA_H
+# endif
 
 # include <openssl/opensslconf.h>
 

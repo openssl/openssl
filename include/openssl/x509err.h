@@ -10,6 +10,12 @@
 
 #ifndef OPENSSL_X509ERR_H
 # define OPENSSL_X509ERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_X509ERR_H
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

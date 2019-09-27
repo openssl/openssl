@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_ERR_H
 # define OPENSSL_ERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ERR_H
+# endif
 
 # include <openssl/e_os2.h>
 

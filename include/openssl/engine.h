@@ -10,6 +10,12 @@
 
 #ifndef OPENSSL_ENGINE_H
 # define OPENSSL_ENGINE_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ENGINE_H
+# endif
 
 # include <openssl/opensslconf.h>
 

@@ -10,6 +10,12 @@
 
 #ifndef OPENSSL_RANDERR_H
 # define OPENSSL_RANDERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_RANDERR_H
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_CT_H
 # define OPENSSL_CT_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CT_H
+# endif
 
 # include <openssl/opensslconf.h>
 

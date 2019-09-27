@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_OCSP_H
 # define OPENSSL_OCSP_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_OCSP_H
+# endif
 
 #include <openssl/opensslconf.h>
 

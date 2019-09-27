@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_PEM_H
 # define OPENSSL_PEM_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_PEM_H
+# endif
 
 # include <openssl/e_os2.h>
 # include <openssl/bio.h>

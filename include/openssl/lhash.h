@@ -13,6 +13,12 @@
 
 #ifndef OPENSSL_LHASH_H
 # define OPENSSL_LHASH_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_LHASH_H
+# endif
 
 # include <openssl/e_os2.h>
 # include <openssl/bio.h>

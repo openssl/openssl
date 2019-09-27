@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_UI_H
 # define OPENSSL_UI_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_UI_H
+# endif
 
 # include <openssl/opensslconf.h>
 

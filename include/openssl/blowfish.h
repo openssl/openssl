@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_BLOWFISH_H
 # define OPENSSL_BLOWFISH_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_BLOWFISH_H
+# endif
 
 # include <openssl/opensslconf.h>
 

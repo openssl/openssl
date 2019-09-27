@@ -10,6 +10,12 @@
 
 #ifndef OPENSSL_STOREERR_H
 # define OPENSSL_STOREERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_OSSL_STOREERR_H
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
