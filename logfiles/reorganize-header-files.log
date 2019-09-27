@@ -1,0 +1,606 @@
++ git ls-files
++ fgrep .h
++ sort
+++ grep '^void' ./crypto/include/internal/store.h
++ declaration='void ossl_store_cleanup_int(void);'
++ sed -e 's/Copyright 2017-2018/Copyright 2016-2019/g' -e s/HEADER_STORE_INT_H/HEADER_STORE_H/g -e '/#endif/i void ossl_store_cleanup_int(void);\n' ./crypto/include/internal/store_int.h
++ git add ./crypto/include/internal/store.h
++ git rm ./crypto/include/internal/store_int.h
+rm 'crypto/include/internal/store_int.h'
++ mkdir -p include/crypto
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/asn1_int.h _int.h
++ git mv crypto/include/internal/asn1_int.h include/crypto/asn1.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/bn_int.h _int.h
++ git mv crypto/include/internal/bn_int.h include/crypto/bn.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/cryptlib_int.h _int.h
++ git mv crypto/include/internal/cryptlib_int.h include/crypto/cryptlib.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/ec_int.h _int.h
++ git mv crypto/include/internal/ec_int.h include/crypto/ec.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/err_int.h _int.h
++ git mv crypto/include/internal/err_int.h include/crypto/err.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/evp_int.h _int.h
++ git mv crypto/include/internal/evp_int.h include/crypto/evp.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/rand_int.h _int.h
++ git mv crypto/include/internal/rand_int.h include/crypto/rand.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/x509_int.h _int.h
++ git mv crypto/include/internal/x509_int.h include/crypto/x509.h
+++ ls crypto/include/internal
+++ tr '\n' '|'
+++ sed -E 's/\.h\.in/.h/g'
++ cryptoheaders='aria.h|async.h|bn_conf.h|bn_dh.h|bn_srp.h|chacha.h|ctype.h|__DECC_INCLUDE_EPILOGUE.H|__DECC_INCLUDE_PROLOGUE.H|dso_conf.h|engine.h|lhash.h|md32_common.h|objects.h|poly1305.h|sha.h|siphash.h|sm2err.h|sm2.h|sm3.h|sm4.h|store.h|foobar'
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/aria.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/async.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/bn_dh.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/bn_srp.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/chacha.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/ctype.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/engine.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/lhash.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/md32_common.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/objects.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/poly1305.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sha.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/siphash.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sm2err.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sm2.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sm3.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sm4.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/store.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/bn_conf.h.in include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/dso_conf.h.in include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/__DECC_INCLUDE_EPILOGUE.H include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/__DECC_INCLUDE_PROLOGUE.H include/crypto
++ sed -i 's|crypto/include/internal/sm2.h|include/crypto/sm2.h         |' crypto/err/openssl.ec
++ sed -i 's|crypto/include/internal|include/crypto|g' .gitignore build.info test/drbgtest.c
++ sed -i 's|include/crypto/rand_int.h|include/crypto/rand.h|g' test/drbgtest.c
++ sed -i 's|internal usage in evp_int.h|internal usage in "crypto/evp.h"|g' include/openssl/evp.h
++ cat
++ find '(' -name '*.h' -o -name '*.h.in' -o -name '*.c' -o -name '*.ec' -o -name 'README*' -o -name '*.pod' -o -name '*.conf' ')' -exec sed -E -i -f logfiles/fix-crypto-includes.sed '{}' ';'
++ rmdir crypto/include/internal
++ rmdir crypto/include
++ find '(' -name build.info -o -name openssl.ec ')' -exec sed -E -i -e '/INCLUDE\[.*\]=/s| +[./]*crypto/include +| |g ; t' -e 's|crypto/include/internal|include/crypto|g' '{}' ';'
++ git commit -a -F -
+[pr-reorganize-header-files-111 3087c0fa04] Reorganize private crypto header files
+ 247 files changed, 301 insertions(+), 309 deletions(-)
+ delete mode 100644 crypto/include/internal/store.h
+ rename {crypto/include/internal => include/crypto}/__DECC_INCLUDE_EPILOGUE.H (100%)
+ rename {crypto/include/internal => include/crypto}/__DECC_INCLUDE_PROLOGUE.H (100%)
+ rename {crypto/include/internal => include/crypto}/aria.h (100%)
+ rename crypto/include/internal/asn1_int.h => include/crypto/asn1.h (100%)
+ rename {crypto/include/internal => include/crypto}/async.h (100%)
+ rename crypto/include/internal/bn_int.h => include/crypto/bn.h (100%)
+ rename {crypto/include/internal => include/crypto}/bn_conf.h.in (100%)
+ rename {crypto/include/internal => include/crypto}/bn_dh.h (100%)
+ rename {crypto/include/internal => include/crypto}/bn_srp.h (100%)
+ rename {crypto/include/internal => include/crypto}/chacha.h (100%)
+ rename crypto/include/internal/cryptlib_int.h => include/crypto/cryptlib.h (100%)
+ rename {crypto/include/internal => include/crypto}/ctype.h (100%)
+ rename {crypto/include/internal => include/crypto}/dso_conf.h.in (100%)
+ rename crypto/include/internal/ec_int.h => include/crypto/ec.h (100%)
+ rename {crypto/include/internal => include/crypto}/engine.h (100%)
+ rename crypto/include/internal/err_int.h => include/crypto/err.h (100%)
+ rename crypto/include/internal/evp_int.h => include/crypto/evp.h (100%)
+ rename {crypto/include/internal => include/crypto}/lhash.h (100%)
+ rename {crypto/include/internal => include/crypto}/md32_common.h (100%)
+ rename {crypto/include/internal => include/crypto}/objects.h (100%)
+ rename {crypto/include/internal => include/crypto}/poly1305.h (100%)
+ rename crypto/include/internal/rand_int.h => include/crypto/rand.h (100%)
+ rename {crypto/include/internal => include/crypto}/sha.h (100%)
+ rename {crypto/include/internal => include/crypto}/siphash.h (100%)
+ rename {crypto/include/internal => include/crypto}/sm2.h (100%)
+ rename {crypto/include/internal => include/crypto}/sm2err.h (100%)
+ rename {crypto/include/internal => include/crypto}/sm3.h (100%)
+ rename {crypto/include/internal => include/crypto}/sm4.h (100%)
+ rename crypto/include/internal/store_int.h => include/crypto/store.h (83%)
+ rename crypto/include/internal/x509_int.h => include/crypto/x509.h (100%)
++ git log --oneline --decorate --oneline HEAD~..
+3087c0fa04 (HEAD -> pr-reorganize-header-files-111) Reorganize private crypto header files
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ git mv include/internal/constant_time_locl.h include/internal/constant_time.h
++ for suffix in lcl locl int
+++ find -name '*_lcl.h'
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/pkcs12/p12_lcl.h
+++ basename ./crypto/pkcs12/p12_lcl.h _lcl.h
++ git mv ./crypto/pkcs12/p12_lcl.h ./crypto/pkcs12/p12_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/hmac/hmac_lcl.h
+++ basename ./crypto/hmac/hmac_lcl.h _lcl.h
++ git mv ./crypto/hmac/hmac_lcl.h ./crypto/hmac/hmac_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/comp/comp_lcl.h
+++ basename ./crypto/comp/comp_lcl.h _lcl.h
++ git mv ./crypto/comp/comp_lcl.h ./crypto/comp/comp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/conf/conf_lcl.h
+++ basename ./crypto/conf/conf_lcl.h _lcl.h
++ git mv ./crypto/conf/conf_lcl.h ./crypto/conf/conf_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ts/ts_lcl.h
+++ basename ./crypto/ts/ts_lcl.h _lcl.h
++ git mv ./crypto/ts/ts_lcl.h ./crypto/ts/ts_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/x509/x509_lcl.h
+++ basename ./crypto/x509/x509_lcl.h _lcl.h
++ git mv ./crypto/x509/x509_lcl.h ./crypto/x509/x509_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ec/ec_lcl.h
+++ basename ./crypto/ec/ec_lcl.h _lcl.h
++ git mv ./crypto/ec/ec_lcl.h ./crypto/ec/ec_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ec/curve448/curve448_lcl.h
+++ basename ./crypto/ec/curve448/curve448_lcl.h _lcl.h
++ git mv ./crypto/ec/curve448/curve448_lcl.h ./crypto/ec/curve448/curve448_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/modes/modes_lcl.h
+++ basename ./crypto/modes/modes_lcl.h _lcl.h
++ git mv ./crypto/modes/modes_lcl.h ./crypto/modes/modes_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/bn/bn_lcl.h
+++ basename ./crypto/bn/bn_lcl.h _lcl.h
++ git mv ./crypto/bn/bn_lcl.h ./crypto/bn/bn_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ocsp/ocsp_lcl.h
+++ basename ./crypto/ocsp/ocsp_lcl.h _lcl.h
++ git mv ./crypto/ocsp/ocsp_lcl.h ./crypto/ocsp/ocsp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/objects/obj_lcl.h
+++ basename ./crypto/objects/obj_lcl.h _lcl.h
++ git mv ./crypto/objects/obj_lcl.h ./crypto/objects/obj_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rand/rand_lcl.h
+++ basename ./crypto/rand/rand_lcl.h _lcl.h
++ git mv ./crypto/rand/rand_lcl.h ./crypto/rand/rand_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/cast/cast_lcl.h
+++ basename ./crypto/cast/cast_lcl.h _lcl.h
++ git mv ./crypto/cast/cast_lcl.h ./crypto/cast/cast_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/idea/idea_lcl.h
+++ basename ./crypto/idea/idea_lcl.h _lcl.h
++ git mv ./crypto/idea/idea_lcl.h ./crypto/idea/idea_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/cms/cms_lcl.h
+++ basename ./crypto/cms/cms_lcl.h _lcl.h
++ git mv ./crypto/cms/cms_lcl.h ./crypto/cms/cms_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/lhash/lhash_lcl.h
+++ basename ./crypto/lhash/lhash_lcl.h _lcl.h
++ git mv ./crypto/lhash/lhash_lcl.h ./crypto/lhash/lhash_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/bio/bio_lcl.h
+++ basename ./crypto/bio/bio_lcl.h _lcl.h
++ git mv ./crypto/bio/bio_lcl.h ./crypto/bio/bio_local.h
++ for suffix in lcl locl int
+++ find -name '*_locl.h'
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./ssl/record/record_locl.h
+++ basename ./ssl/record/record_locl.h _locl.h
++ git mv ./ssl/record/record_locl.h ./ssl/record/record_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./ssl/ssl_locl.h
+++ basename ./ssl/ssl_locl.h _locl.h
++ git mv ./ssl/ssl_locl.h ./ssl/ssl_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./ssl/statem/statem_locl.h
+++ basename ./ssl/statem/statem_locl.h _locl.h
++ git mv ./ssl/statem/statem_locl.h ./ssl/statem/statem_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./ssl/packet_locl.h
+++ basename ./ssl/packet_locl.h _locl.h
++ git mv ./ssl/packet_locl.h ./ssl/packet_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rsa/rsa_locl.h
+++ basename ./crypto/rsa/rsa_locl.h _locl.h
++ git mv ./crypto/rsa/rsa_locl.h ./crypto/rsa/rsa_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/dso/dso_locl.h
+++ basename ./crypto/dso/dso_locl.h _locl.h
++ git mv ./crypto/dso/dso_locl.h ./crypto/dso/dso_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ct/ct_locl.h
+++ basename ./crypto/ct/ct_locl.h _locl.h
++ git mv ./crypto/ct/ct_locl.h ./crypto/ct/ct_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/whrlpool/wp_locl.h
+++ basename ./crypto/whrlpool/wp_locl.h _locl.h
++ git mv ./crypto/whrlpool/wp_locl.h ./crypto/whrlpool/wp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/dh/dh_locl.h
+++ basename ./crypto/dh/dh_locl.h _locl.h
++ git mv ./crypto/dh/dh_locl.h ./crypto/dh/dh_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/md5/md5_locl.h
+++ basename ./crypto/md5/md5_locl.h _locl.h
++ git mv ./crypto/md5/md5_locl.h ./crypto/md5/md5_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/async/async_locl.h
+++ basename ./crypto/async/async_locl.h _locl.h
++ git mv ./crypto/async/async_locl.h ./crypto/async/async_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/blake2/blake2_locl.h
+++ basename ./crypto/blake2/blake2_locl.h _locl.h
++ git mv ./crypto/blake2/blake2_locl.h ./crypto/blake2/blake2_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rc2/rc2_locl.h
+++ basename ./crypto/rc2/rc2_locl.h _locl.h
++ git mv ./crypto/rc2/rc2_locl.h ./crypto/rc2/rc2_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ui/ui_locl.h
+++ basename ./crypto/ui/ui_locl.h _locl.h
++ git mv ./crypto/ui/ui_locl.h ./crypto/ui/ui_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/camellia/cmll_locl.h
+++ basename ./crypto/camellia/cmll_locl.h _locl.h
++ git mv ./crypto/camellia/cmll_locl.h ./crypto/camellia/cmll_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/aes/aes_locl.h
+++ basename ./crypto/aes/aes_locl.h _locl.h
++ git mv ./crypto/aes/aes_locl.h ./crypto/aes/aes_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/sm3/sm3_locl.h
+++ basename ./crypto/sm3/sm3_locl.h _locl.h
++ git mv ./crypto/sm3/sm3_locl.h ./crypto/sm3/sm3_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rc4/rc4_locl.h
+++ basename ./crypto/rc4/rc4_locl.h _locl.h
++ git mv ./crypto/rc4/rc4_locl.h ./crypto/rc4/rc4_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rc5/rc5_locl.h
+++ basename ./crypto/rc5/rc5_locl.h _locl.h
++ git mv ./crypto/rc5/rc5_locl.h ./crypto/rc5/rc5_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/evp/evp_locl.h
+++ basename ./crypto/evp/evp_locl.h _locl.h
++ git mv ./crypto/evp/evp_locl.h ./crypto/evp/evp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/seed/seed_locl.h
+++ basename ./crypto/seed/seed_locl.h _locl.h
++ git mv ./crypto/seed/seed_locl.h ./crypto/seed/seed_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/md4/md4_locl.h
+++ basename ./crypto/md4/md4_locl.h _locl.h
++ git mv ./crypto/md4/md4_locl.h ./crypto/md4/md4_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/asn1/asn1_locl.h
+++ basename ./crypto/asn1/asn1_locl.h _locl.h
++ git mv ./crypto/asn1/asn1_locl.h ./crypto/asn1/asn1_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/bf/bf_locl.h
+++ basename ./crypto/bf/bf_locl.h _locl.h
++ git mv ./crypto/bf/bf_locl.h ./crypto/bf/bf_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/store/store_locl.h
+++ basename ./crypto/store/store_locl.h _locl.h
++ git mv ./crypto/store/store_locl.h ./crypto/store/store_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/sha/sha_locl.h
+++ basename ./crypto/sha/sha_locl.h _locl.h
++ git mv ./crypto/sha/sha_locl.h ./crypto/sha/sha_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/dsa/dsa_locl.h
+++ basename ./crypto/dsa/dsa_locl.h _locl.h
++ git mv ./crypto/dsa/dsa_locl.h ./crypto/dsa/dsa_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ripemd/rmd_locl.h
+++ basename ./crypto/ripemd/rmd_locl.h _locl.h
++ git mv ./crypto/ripemd/rmd_locl.h ./crypto/ripemd/rmd_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/des/des_locl.h
+++ basename ./crypto/des/des_locl.h _locl.h
++ git mv ./crypto/des/des_locl.h ./crypto/des/des_local.h
++ for suffix in lcl locl int
+++ find -name '*_int.h'
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/x509v3/pcy_int.h
+++ basename ./crypto/x509v3/pcy_int.h _int.h
++ git mv ./crypto/x509v3/pcy_int.h ./crypto/x509v3/pcy_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/engine/eng_int.h
+++ basename ./crypto/engine/eng_int.h _int.h
++ git mv ./crypto/engine/eng_int.h ./crypto/engine/eng_local.h
++ cat
++ find '(' -name '*.h' -o -name '*.h.in' -o -name '*.c' -o -name '*.ec' -o -name 'README*' -o -name '*.pod' -o -name '*.conf' ')' -exec sed -E -i -f logfiles/fix-local-includes.sed '{}' ';'
++ git commit -a -F -
+[pr-reorganize-header-files-111 2a6f25a7de] Reorganize local header files
+ 472 files changed, 472 insertions(+), 472 deletions(-)
+ rename crypto/aes/{aes_locl.h => aes_local.h} (100%)
+ rename crypto/asn1/{asn1_locl.h => asn1_local.h} (100%)
+ rename crypto/async/{async_locl.h => async_local.h} (100%)
+ rename crypto/bf/{bf_locl.h => bf_local.h} (100%)
+ rename crypto/bio/{bio_lcl.h => bio_local.h} (98%)
+ rename crypto/blake2/{blake2_locl.h => blake2_local.h} (100%)
+ rename crypto/bn/{bn_lcl.h => bn_local.h} (100%)
+ rename crypto/camellia/{cmll_locl.h => cmll_local.h} (100%)
+ rename crypto/cast/{cast_lcl.h => cast_local.h} (100%)
+ rename crypto/cms/{cms_lcl.h => cms_local.h} (100%)
+ rename crypto/comp/{comp_lcl.h => comp_local.h} (100%)
+ rename crypto/conf/{conf_lcl.h => conf_local.h} (100%)
+ rename crypto/ct/{ct_locl.h => ct_local.h} (100%)
+ rename crypto/des/{des_locl.h => des_local.h} (100%)
+ rename crypto/dh/{dh_locl.h => dh_local.h} (100%)
+ rename crypto/dsa/{dsa_locl.h => dsa_local.h} (100%)
+ rename crypto/dso/{dso_locl.h => dso_local.h} (100%)
+ rename crypto/ec/curve448/{curve448_lcl.h => curve448_local.h} (100%)
+ rename crypto/ec/{ec_lcl.h => ec_local.h} (100%)
+ rename crypto/engine/{eng_int.h => eng_local.h} (100%)
+ rename crypto/evp/{evp_locl.h => evp_local.h} (100%)
+ rename crypto/hmac/{hmac_lcl.h => hmac_local.h} (100%)
+ rename crypto/idea/{idea_lcl.h => idea_local.h} (100%)
+ rename crypto/lhash/{lhash_lcl.h => lhash_local.h} (100%)
+ rename crypto/md4/{md4_locl.h => md4_local.h} (100%)
+ rename crypto/md5/{md5_locl.h => md5_local.h} (100%)
+ rename crypto/modes/{modes_lcl.h => modes_local.h} (100%)
+ rename crypto/objects/{obj_lcl.h => obj_local.h} (100%)
+ rename crypto/ocsp/{ocsp_lcl.h => ocsp_local.h} (100%)
+ rename crypto/pkcs12/{p12_lcl.h => p12_local.h} (100%)
+ rename crypto/rand/{rand_lcl.h => rand_local.h} (100%)
+ rename crypto/rc2/{rc2_locl.h => rc2_local.h} (100%)
+ rename crypto/rc4/{rc4_locl.h => rc4_local.h} (100%)
+ rename crypto/rc5/{rc5_locl.h => rc5_local.h} (100%)
+ rename crypto/ripemd/{rmd_locl.h => rmd_local.h} (97%)
+ rename crypto/rsa/{rsa_locl.h => rsa_local.h} (100%)
+ rename crypto/seed/{seed_locl.h => seed_local.h} (100%)
+ rename crypto/sha/{sha_locl.h => sha_local.h} (100%)
+ rename crypto/sm3/{sm3_locl.h => sm3_local.h} (100%)
+ rename crypto/store/{store_locl.h => store_local.h} (100%)
+ rename crypto/ts/{ts_lcl.h => ts_local.h} (100%)
+ rename crypto/ui/{ui_locl.h => ui_local.h} (100%)
+ rename crypto/whrlpool/{wp_locl.h => wp_local.h} (100%)
+ rename crypto/x509/{x509_lcl.h => x509_local.h} (100%)
+ rename crypto/x509v3/{pcy_int.h => pcy_local.h} (100%)
+ rename include/internal/{constant_time_locl.h => constant_time.h} (100%)
+ rename ssl/{packet_locl.h => packet_local.h} (100%)
+ rename ssl/record/{record_locl.h => record_local.h} (100%)
+ rename ssl/{ssl_locl.h => ssl_local.h} (99%)
+ rename ssl/statem/{statem_locl.h => statem_local.h} (100%)
++ git log --oneline --decorate --oneline HEAD~..
+2a6f25a7de (HEAD -> pr-reorganize-header-files-111) Reorganize local header files
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ '[' OpenSSL_1_1_1-stable == master ']'
++ '[' OpenSSL_1_1_1-stable == master ']'
++ set +o xtrace
+# First Pass: collect include guard fixes into a sed script
+apps/apps.h:  HEADER_APPS_H => OSSL_APPS_H  [NEW]
+apps/s_apps.h:  [NONE]
+apps/testdsa.h:  [NONE]
+apps/testrsa.h:  [NONE]
+apps/timeouts.h:  INCLUDED_TIMEOUTS_H => OSSL_APPS_TIMEOUTS_H  [NEW]
+apps/vms_term_sock.h:  TERM_SOCK_H => OSSL_APPS_VMS_TERM_SOCK_H  [NEW]
+crypto/aes/aes_local.h:  HEADER_AES_LOCL_H => OSSL_CRYPTO_AES_LOCAL_H  [NEW]
+crypto/arm_arch.h:  __ARM_ARCH_H__ => OSSL_CRYPTO_ARM_ARCH_H  [NEW]
+crypto/asn1/asn1_item_list.h:  [NONE]
+crypto/asn1/asn1_local.h:  [NONE]
+crypto/asn1/charmap.h:  [NONE]
+crypto/asn1/standard_methods.h:  [NONE]
+crypto/asn1/tbl_standard.h:  [NONE]
+crypto/async/arch/async_null.h:  [NONE]
+crypto/async/arch/async_posix.h:  OPENSSL_ASYNC_ARCH_ASYNC_POSIX_H => OSSL_CRYPTO_ASYNC_POSIX_H  [NEW]
+crypto/async/arch/async_win.h:  [NONE]
+crypto/async/async_local.h:  [NONE]
+crypto/bf/bf_local.h:  HEADER_BF_LOCL_H => OSSL_CRYPTO_BF_LOCAL_H  [NEW]
+crypto/bf/bf_pi.h:  [NONE]
+crypto/bio/bio_local.h:  [NONE]
+crypto/blake2/blake2_impl.h:  [NONE]
+crypto/blake2/blake2_local.h:  [NONE]
+crypto/bn/bn_local.h:  HEADER_BN_LCL_H => OSSL_CRYPTO_BN_LOCAL_H  [NEW]
+crypto/bn/bn_prime.h:  [NONE]
+crypto/bn/rsaz_exp.h:  RSAZ_EXP_H => OSSL_CRYPTO_BN_RSAZ_EXP_H  [NEW]
+crypto/camellia/cmll_local.h:  HEADER_CAMELLIA_LOCL_H => OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H  [NEW]
+crypto/cast/cast_local.h:  [NONE]
+crypto/cast/cast_s.h:  [NONE]
+crypto/cms/cms_local.h:  HEADER_CMS_LCL_H => OSSL_CRYPTO_CMS_LOCAL_H  [NEW]
+crypto/comp/comp_local.h:  [NONE]
+crypto/conf/conf_def.h:  [NONE]
+crypto/conf/conf_local.h:  [NONE]
+crypto/ct/ct_local.h:  [NONE]
+crypto/des/des_local.h:  HEADER_DES_LOCL_H => OSSL_CRYPTO_DES_LOCAL_H  [NEW]
+crypto/des/spr.h:  [NONE]
+crypto/dh/dh_local.h:  [NONE]
+crypto/dsa/dsa_local.h:  [NONE]
+crypto/dso/dso_local.h:  [NONE]
+crypto/ec/curve448/arch_32/arch_intrinsics.h:  HEADER_ARCH_32_ARCH_INTRINSICS_H => OSSL_CRYPTO_EC_CURVE448_ARCH_32_INTRINSICS_H  [NEW]
+crypto/ec/curve448/arch_32/f_impl.h:  HEADER_ARCH_32_F_IMPL_H => OSSL_CRYPTO_EC_CURVE448_ARCH_32_F_IMPL_H  [NEW]
+crypto/ec/curve448/curve448_local.h:  HEADER_CURVE448_LCL_H => OSSL_CRYPTO_EC_CURVE448_LOCAL_H  [NEW]
+crypto/ec/curve448/curve448utils.h:  HEADER_CURVE448UTILS_H => OSSL_CRYPTO_EC_CURVE448UTILS_H  [NEW]
+crypto/ec/curve448/ed448.h:  HEADER_ED448_H => OSSL_CRYPTO_EC_CURVE448_ED448_H  [NEW]
+crypto/ec/curve448/field.h:  HEADER_FIELD_H => OSSL_CRYPTO_EC_CURVE448_FIELD_H  [NEW]
+crypto/ec/curve448/point_448.h:  HEADER_POINT_448_H => OSSL_CRYPTO_EC_CURVE448_POINT_448_H  [NEW]
+crypto/ec/curve448/word.h:  HEADER_WORD_H => OSSL_CRYPTO_EC_CURVE448_WORD_H  [NEW]
+crypto/ec/ec_local.h:  [NONE]
+crypto/engine/eng_local.h:  HEADER_ENGINE_INT_H => OSSL_CRYPTO_ENGINE_ENG_LOCAL_H  [NEW]
+crypto/evp/evp_local.h:  [NONE]
+crypto/hmac/hmac_local.h:  HEADER_HMAC_LCL_H => OSSL_CRYPTO_HMAC_LOCAL_H  [NEW]
+crypto/idea/idea_local.h:  [NONE]
+crypto/lhash/lhash_local.h:  [NONE]
+crypto/md4/md4_local.h:  [NONE]
+crypto/md5/md5_local.h:  [NONE]
+crypto/mips_arch.h:  __MIPS_ARCH_H__ => OSSL_CRYPTO_MIPS_ARCH_H  [NEW]
+crypto/modes/modes_local.h:  [NONE]
+crypto/objects/obj_dat.h:  [NONE]
+crypto/objects/obj_local.h:  [NONE]
+crypto/objects/obj_xref.h:  [NONE]
+crypto/ocsp/ocsp_local.h:  [NONE]
+crypto/pkcs12/p12_local.h:  [NONE]
+crypto/poly1305/poly1305_local.h:  [NONE]
+crypto/ppc_arch.h:  HEADER_PPC_ARCH_H => OSSL_CRYPTO_PPC_ARCH_H  [NEW]
+crypto/rand/rand_local.h:  HEADER_RAND_LCL_H => OSSL_CRYPTO_RAND_LOCAL_H  [NEW]
+crypto/rc2/rc2_local.h:  [NONE]
+crypto/rc4/rc4_local.h:  HEADER_RC4_LOCL_H => OSSL_CRYPTO_RC4_LOCAL_H  [NEW]
+crypto/rc5/rc5_local.h:  [NONE]
+crypto/ripemd/rmd_local.h:  [NONE]
+crypto/ripemd/rmdconst.h:  [NONE]
+crypto/rsa/rsa_local.h:  [NONE]
+crypto/s390x_arch.h:  S390X_ARCH_H => OSSL_CRYPTO_S390X_ARCH_H  [NEW]
+crypto/seed/seed_local.h:  HEADER_SEED_LOCL_H => OSSL_CRYPTO_SEED_LOCAL_H  [NEW]
+crypto/sha/sha_local.h:  [NONE]
+crypto/siphash/siphash_local.h:  [NONE]
+crypto/sm3/sm3_local.h:  [NONE]
+crypto/sparc_arch.h:  __SPARC_ARCH_H__ => OSSL_CRYPTO_SPARC_ARCH_H  [NEW]
+crypto/store/store_local.h:  [NONE]
+crypto/ts/ts_local.h:  [NONE]
+crypto/ui/ui_local.h:  HEADER_UI_LOCL_H => OSSL_CRYPTO_UI_LOCAL_H  [NEW]
+crypto/vms_rms.h:  [NONE]
+crypto/whrlpool/wp_local.h:  [NONE]
+crypto/x509/x509_local.h:  [NONE]
+crypto/x509v3/ext_dat.h:  [NONE]
+crypto/x509v3/pcy_local.h:  [NONE]
+crypto/x509v3/standard_exts.h:  [NONE]
+crypto/x509v3/v3_admis.h:  HEADER_V3_ADMISSION_H => OSSL_CRYPTO_X509V3_V3_ADMIS_H  [NEW]
+e_os.h:  HEADER_E_OS_H => OSSL_E_OS_H  [NEW]
+engines/e_afalg.h:  HEADER_AFALG_H => OSSL_ENGINES_E_AFALG_H  [NEW]
+engines/e_afalg_err.h:  HEADER_AFALGERR_H => OSSL_ENGINES_E_AFALG_ERR_H  [NEW]
+engines/e_capi_err.h:  HEADER_CAPIERR_H => OSSL_ENGINES_E_CAPI_ERR_H  [NEW]
+engines/e_dasync_err.h:  HEADER_DASYNCERR_H => OSSL_ENGINES_E_DASYNC_ERR_H  [NEW]
+engines/e_ossltest_err.h:  HEADER_OSSLTESTERR_H => OSSL_ENGINES_E_OSSLTEST_ERR_H  [NEW]
+fuzz/fuzzer.h:  [NONE]
+include/crypto/aria.h:  HEADER_ARIA_H => OSSL_CRYPTO_ARIA_H  [NEW]
+include/crypto/asn1.h:  [NONE]
+include/crypto/async.h:  [NONE]
+include/crypto/bn.h:  HEADER_BN_INT_H => OSSL_CRYPTO_BN_H  [NEW]
+include/crypto/bn_conf.h.in:  HEADER_BN_CONF_H => OSSL_CRYPTO_BN_CONF_H  [NEW]
+include/crypto/bn_dh.h:  [NONE]
+include/crypto/bn_srp.h:  [NONE]
+include/crypto/chacha.h:  HEADER_CHACHA_H => OSSL_CRYPTO_CHACHA_H  [NEW]
+include/crypto/cryptlib.h:  [NONE]
+include/crypto/ctype.h:  INTERNAL_CTYPE_H => OSSL_CRYPTO_CTYPE_H  [NEW]
+include/crypto/dso_conf.h.in:  HEADER_DSO_CONF_H => OSSL_CRYPTO_DSO_CONF_H  [NEW]
+include/crypto/ec.h:  HEADER_OSSL_EC_INTERNAL_H => OSSL_CRYPTO_EC_H  [NEW]
+include/crypto/engine.h:  [NONE]
+include/crypto/err.h:  INTERNAL_ERR_INT_H => OSSL_CRYPTO_ERR_H  [NEW]
+include/crypto/evp.h:  [NONE]
+include/crypto/lhash.h:  INTERNAL_LHASH_H => OSSL_CRYPTO_LHASH_H  [NEW]
+include/crypto/md32_common.h:  [NONE]
+include/crypto/objects.h:  [NONE]
+include/crypto/poly1305.h:  [NONE]
+include/crypto/rand.h:  HEADER_RAND_INT_H => OSSL_CRYPTO_RAND_H  [NEW]
+include/crypto/sha.h:  HEADER_INTERNAL_SHA_H => OSSL_CRYPTO_SHA_H  [NEW]
+include/crypto/siphash.h:  [NONE]
+include/crypto/sm2.h:  HEADER_SM2_H => OSSL_CRYPTO_SM2_H  [NEW]
+include/crypto/sm2err.h:  HEADER_SM2ERR_H => OSSL_CRYPTO_SM2ERR_H  [NEW]
+include/crypto/sm3.h:  HEADER_SM3_H => OSSL_CRYPTO_SM3_H  [NEW]
+include/crypto/sm4.h:  HEADER_SM4_H => OSSL_CRYPTO_SM4_H  [NEW]
+include/crypto/store.h:  HEADER_STORE_H => OSSL_CRYPTO_STORE_H  [NEW]
+include/crypto/x509.h:  [NONE]
+include/internal/bio.h:  [NONE]
+include/internal/comp.h:  [NONE]
+include/internal/conf.h:  HEADER_INTERNAL_CONF_H => OSSL_INTERNAL_CONF_H  [NEW]
+include/internal/constant_time.h:  HEADER_CONSTANT_TIME_LOCL_H => OSSL_INTERNAL_CONSTANT_TIME_H  [NEW]
+include/internal/cryptlib.h:  HEADER_CRYPTLIB_H => OSSL_INTERNAL_CRYPTLIB_H  [NEW]
+include/internal/dane.h:  HEADER_INTERNAL_DANE_H => OSSL_INTERNAL_DANE_H  [NEW]
+include/internal/dso.h:  HEADER_DSO_H => OSSL_INTERNAL_DSO_H  [NEW]
+include/internal/dsoerr.h:  HEADER_DSOERR_H => OSSL_INTERNAL_DSOERR_H  [NEW]
+include/internal/err.h:  INTERNAL_ERR_H => OSSL_INTERNAL_ERR_H  [NEW]
+include/internal/nelem.h:  HEADER_NELEM_H => OSSL_INTERNAL_NELEM_H  [NEW]
+include/internal/numbers.h:  HEADER_NUMBERS_H => OSSL_INTERNAL_NUMBERS_H  [NEW]
+include/internal/o_dir.h:  O_DIR_H => OSSL_INTERNAL_O_DIR_H  [NEW]
+include/internal/o_str.h:  HEADER_O_STR_H => OSSL_INTERNAL_O_STR_H  [NEW]
+include/internal/refcount.h:  HEADER_INTERNAL_REFCOUNT_H => OSSL_INTERNAL_REFCOUNT_H  [NEW]
+include/internal/sockets.h:  HEADER_INTERNAL_SOCKETS => OSSL_INTERNAL_SOCKETS_H  [NEW]
+include/internal/sslconf.h:  HEADER_SSLCONF_H => OSSL_INTERNAL_SSLCONF_H  [NEW]
+include/internal/thread_once.h:  [NONE]
+include/internal/tsan_assist.h:  [NONE]
+ms/uplink.h:  [NONE]
+os-dep/haiku.h:  [NONE]
+ssl/packet_local.h:  HEADER_PACKET_LOCL_H => OSSL_SSL_PACKET_LOCAL_H  [NEW]
+ssl/record/record.h:  [NONE]
+ssl/record/record_local.h:  [NONE]
+ssl/ssl_cert_table.h:  [NONE]
+ssl/ssl_local.h:  HEADER_SSL_LOCL_H => OSSL_SSL_LOCAL_H  [NEW]
+ssl/statem/statem.h:  [NONE]
+ssl/statem/statem_local.h:  [NONE]
+test/drbg_cavs_data.h:  DRBG_CAVS_DATA_H => OSSL_TEST_DRBG_CAVS_DATA_H  [NEW]
+test/drbgtest.h:  [NONE]
+test/ecdsatest.h:  ECDSATEST_CAVS_H => OSSL_TEST_ECDSATEST_H  [NEW]
+test/evp_test.h:  [NONE]
+test/handshake_helper.h:  HEADER_HANDSHAKE_HELPER_H => OSSL_TEST_HANDSHAKE_HELPER_H  [NEW]
+test/ossl_shim/async_bio.h:  HEADER_ASYNC_BIO => OSSL_TEST_SHIM_ASYNC_BIO_H  [NEW]
+test/ossl_shim/include/openssl/base.h:  OPENSSL_HEADER_BASE_H => OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H  [NEW]
+test/ossl_shim/packeted_bio.h:  HEADER_PACKETED_BIO => OSSL_TEST_SHIM_PACKETED_BIO_H  [NEW]
+test/ossl_shim/test_config.h:  HEADER_TEST_CONFIG => OSSL_TEST_SHIM_TEST_CONFIG_H  [NEW]
+test/ssl_test_ctx.h:  HEADER_SSL_TEST_CTX_H => OSSL_TEST_SSL_TEST_CTX_H  [NEW]
+test/ssltestlib.h:  HEADER_SSLTESTLIB_H => OSSL_TEST_SSLTESTLIB_H  [NEW]
+test/testutil.h:  HEADER_TESTUTIL_H => OSSL_TESTUTIL_H  [NEW]
+test/testutil/output.h:  HEADER_TU_OUTPUT_H => OSSL_TESTUTIL_OUTPUT_H  [NEW]
+test/testutil/tu_local.h:  [NONE]
+# Second Pass: apply include guard fixes
++ '[' OpenSSL_1_1_1-stable == master ']'
++ git commit -a -F -
+[pr-reorganize-header-files-111 a5ae2b48b9] Fix header file include guard names
+ 82 files changed, 190 insertions(+), 190 deletions(-)
++ git log --oneline --decorate --oneline HEAD~..
+a5ae2b48b9 (HEAD -> pr-reorganize-header-files-111) Fix header file include guard names
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ '[' OpenSSL_1_1_1-stable == master ']'
++ cat
++ chmod +x util/fix-includes
++ cat logfiles/fix-crypto-includes.sed logfiles/fix-local-includes.sed logfiles/fix-public-includes.sed
+cat: logfiles/fix-public-includes.sed: No such file or directory
++ git add util/fix-includes util/fix-includes.sed
++ git commit -a -F -
+[pr-reorganize-header-files-111 fe03d12cfd] Add util/fix-includes script
+ 2 files changed, 24 insertions(+)
+ create mode 100755 util/fix-includes
+ create mode 100644 util/fix-includes.sed
++ git log --oneline --decorate --oneline HEAD~..
+fe03d12cfd (HEAD -> pr-reorganize-header-files-111) Add util/fix-includes script
++ git ls-files
++ fgrep .h
++ sort
++ diff -u logfiles/header-files.before logfiles/header-files.after
++ true
++ rebuild yes
++ rebuild=yes
++ '[' yes == yes ']'
++ make clean
++ perl Configure linux-x86_64 --strict-warnings
++ make -j 16
+ar: creating apps/libapps.a
+ar: creating libssl.a
+ar: creating test/libtestutil.a
+ar: creating libcrypto.a
++ make clean
++ git log --oneline --decorate start-reorganize-header-files-111..
+fe03d12cfd (HEAD -> pr-reorganize-header-files-111) Add util/fix-includes script
+a5ae2b48b9 Fix header file include guard names
+2a6f25a7de Reorganize local header files
+3087c0fa04 Reorganize private crypto header files
++ echo 'Saving the logfiles to the '\''logfiles'\'' directory...'
+Saving the logfiles to the 'logfiles' directory...
++ exec
