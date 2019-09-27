@@ -1,0 +1,1099 @@
++ git ls-files
++ fgrep .h
++ sort
+++ grep '^void' ./crypto/include/internal/store.h
++ declaration='void ossl_store_cleanup_int(void);'
++ sed -e 's/Copyright 2017-2018/Copyright 2016-2019/g' -e s/HEADER_STORE_INT_H/HEADER_STORE_H/g -e '/#endif/i void ossl_store_cleanup_int(void);\n' ./crypto/include/internal/store_int.h
++ git add ./crypto/include/internal/store.h
++ git rm ./crypto/include/internal/store_int.h
+rm 'crypto/include/internal/store_int.h'
++ mkdir -p include/crypto
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/asn1_int.h _int.h
++ git mv crypto/include/internal/asn1_int.h include/crypto/asn1.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/bn_int.h _int.h
++ git mv crypto/include/internal/bn_int.h include/crypto/bn.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/cms_int.h _int.h
++ git mv crypto/include/internal/cms_int.h include/crypto/cms.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/cryptlib_int.h _int.h
++ git mv crypto/include/internal/cryptlib_int.h include/crypto/cryptlib.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/ec_int.h _int.h
++ git mv crypto/include/internal/ec_int.h include/crypto/ec.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/err_int.h _int.h
++ git mv crypto/include/internal/err_int.h include/crypto/err.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/ess_int.h _int.h
++ git mv crypto/include/internal/ess_int.h include/crypto/ess.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/evp_int.h _int.h
++ git mv crypto/include/internal/evp_int.h include/crypto/evp.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/modes_int.h _int.h
++ git mv crypto/include/internal/modes_int.h include/crypto/modes.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/rand_int.h _int.h
++ git mv crypto/include/internal/rand_int.h include/crypto/rand.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/siv_int.h _int.h
++ git mv crypto/include/internal/siv_int.h include/crypto/siv.h
++ for f in crypto/include/internal/*_int.h
+++ basename crypto/include/internal/x509_int.h _int.h
++ git mv crypto/include/internal/x509_int.h include/crypto/x509.h
+++ ls crypto/include/internal
+++ sed -E 's/\.h\.in/.h/g'
+++ tr '\n' '|'
++ cryptoheaders='aria.h|asn1_dsa.h|async.h|bn_conf.h|bn_conf.h|bn_dh.h|bn_srp.h|chacha.h|ciphermode_platform.h|ctype.h|__DECC_INCLUDE_EPILOGUE.H|__DECC_INCLUDE_PROLOGUE.H|dso_conf.h|dso_conf.h|engine.h|lhash.h|md32_common.h|objects.h|poly1305.h|sha.h|siphash.h|sm2err.h|sm2.h|sm4.h|sparse_array.h|store.h|foobar'
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/aria.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/asn1_dsa.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/async.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/bn_conf.h include/crypto
+fatal: not under version control, source=crypto/include/internal/bn_conf.h, destination=include/crypto/bn_conf.h
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/bn_dh.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/bn_srp.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/chacha.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/ciphermode_platform.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/ctype.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/dso_conf.h include/crypto
+fatal: not under version control, source=crypto/include/internal/dso_conf.h, destination=include/crypto/dso_conf.h
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/engine.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/lhash.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/md32_common.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/objects.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/poly1305.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sha.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/siphash.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sm2err.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sm2.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sm4.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/sparse_array.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/store.h include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/bn_conf.h.in include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/dso_conf.h.in include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/__DECC_INCLUDE_EPILOGUE.H include/crypto
++ for f in crypto/include/internal/{*.h,*.h.in,__DECC_*.H}
++ git mv crypto/include/internal/__DECC_INCLUDE_PROLOGUE.H include/crypto
++ sed -i 's|crypto/include/internal/sm2.h|include/crypto/sm2.h         |' crypto/err/openssl.ec
++ sed -i 's|crypto/include/internal|include/crypto|g' .gitignore build.info test/drbgtest.c
++ sed -i 's|include/crypto/rand_int.h|include/crypto/rand.h|g' test/drbgtest.c
++ sed -i 's|internal usage in evp_int.h|internal usage in "crypto/evp.h"|g' include/openssl/evp.h
++ cat
++ find '(' -name '*.h' -o -name '*.h.in' -o -name '*.c' -o -name '*.ec' -o -name 'README*' -o -name '*.pod' -o -name '*.conf' ')' -exec sed -E -i -f logfiles/fix-crypto-includes.sed '{}' ';'
++ rmdir crypto/include/internal
+rmdir: failed to remove 'crypto/include/internal': Directory not empty
++ rmdir crypto/include
+rmdir: failed to remove 'crypto/include': Directory not empty
++ find '(' -name build.info -o -name openssl.ec ')' -exec sed -E -i -e '/INCLUDE\[.*\]=/s| +[./]*crypto/include +| |g ; t' -e 's|crypto/include/internal|include/crypto|g' '{}' ';'
++ git commit -a -F -
+[pr-reorganize-header-files 3d5019b17f] Reorganize private crypto header files
+ 329 files changed, 398 insertions(+), 406 deletions(-)
+ delete mode 100644 crypto/include/internal/store.h
+ rename {crypto/include/internal => include/crypto}/__DECC_INCLUDE_EPILOGUE.H (100%)
+ rename {crypto/include/internal => include/crypto}/__DECC_INCLUDE_PROLOGUE.H (100%)
+ rename {crypto/include/internal => include/crypto}/aria.h (100%)
+ rename crypto/include/internal/asn1_int.h => include/crypto/asn1.h (100%)
+ rename {crypto/include/internal => include/crypto}/asn1_dsa.h (100%)
+ rename {crypto/include/internal => include/crypto}/async.h (100%)
+ rename crypto/include/internal/bn_int.h => include/crypto/bn.h (100%)
+ rename {crypto/include/internal => include/crypto}/bn_conf.h.in (100%)
+ rename {crypto/include/internal => include/crypto}/bn_dh.h (100%)
+ rename {crypto/include/internal => include/crypto}/bn_srp.h (100%)
+ rename {crypto/include/internal => include/crypto}/chacha.h (100%)
+ rename {crypto/include/internal => include/crypto}/ciphermode_platform.h (100%)
+ rename crypto/include/internal/cms_int.h => include/crypto/cms.h (100%)
+ rename crypto/include/internal/cryptlib_int.h => include/crypto/cryptlib.h (100%)
+ rename {crypto/include/internal => include/crypto}/ctype.h (100%)
+ rename {crypto/include/internal => include/crypto}/dso_conf.h.in (100%)
+ rename crypto/include/internal/ec_int.h => include/crypto/ec.h (100%)
+ rename {crypto/include/internal => include/crypto}/engine.h (100%)
+ rename crypto/include/internal/err_int.h => include/crypto/err.h (100%)
+ rename crypto/include/internal/ess_int.h => include/crypto/ess.h (100%)
+ rename crypto/include/internal/evp_int.h => include/crypto/evp.h (100%)
+ rename {crypto/include/internal => include/crypto}/lhash.h (100%)
+ rename {crypto/include/internal => include/crypto}/md32_common.h (100%)
+ rename crypto/include/internal/modes_int.h => include/crypto/modes.h (100%)
+ rename {crypto/include/internal => include/crypto}/objects.h (100%)
+ rename {crypto/include/internal => include/crypto}/poly1305.h (100%)
+ rename crypto/include/internal/rand_int.h => include/crypto/rand.h (100%)
+ rename {crypto/include/internal => include/crypto}/sha.h (100%)
+ rename {crypto/include/internal => include/crypto}/siphash.h (100%)
+ rename crypto/include/internal/siv_int.h => include/crypto/siv.h (100%)
+ rename {crypto/include/internal => include/crypto}/sm2.h (100%)
+ rename {crypto/include/internal => include/crypto}/sm2err.h (100%)
+ rename {crypto/include/internal => include/crypto}/sm4.h (100%)
+ rename {crypto/include/internal => include/crypto}/sparse_array.h (100%)
+ rename crypto/include/internal/store_int.h => include/crypto/store.h (83%)
+ rename crypto/include/internal/x509_int.h => include/crypto/x509.h (100%)
++ git log --oneline --decorate --oneline HEAD~..
+3d5019b17f (HEAD -> pr-reorganize-header-files) Reorganize private crypto header files
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ git mv include/internal/constant_time_locl.h include/internal/constant_time.h
++ for suffix in lcl locl int
+++ find -name '*_lcl.h'
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/pkcs12/p12_lcl.h
+++ basename ./crypto/pkcs12/p12_lcl.h _lcl.h
++ git mv ./crypto/pkcs12/p12_lcl.h ./crypto/pkcs12/p12_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/hmac/hmac_lcl.h
+++ basename ./crypto/hmac/hmac_lcl.h _lcl.h
++ git mv ./crypto/hmac/hmac_lcl.h ./crypto/hmac/hmac_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/comp/comp_lcl.h
+++ basename ./crypto/comp/comp_lcl.h _lcl.h
++ git mv ./crypto/comp/comp_lcl.h ./crypto/comp/comp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/conf/conf_lcl.h
+++ basename ./crypto/conf/conf_lcl.h _lcl.h
++ git mv ./crypto/conf/conf_lcl.h ./crypto/conf/conf_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ts/ts_lcl.h
+++ basename ./crypto/ts/ts_lcl.h _lcl.h
++ git mv ./crypto/ts/ts_lcl.h ./crypto/ts/ts_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/x509/x509_lcl.h
+++ basename ./crypto/x509/x509_lcl.h _lcl.h
++ git mv ./crypto/x509/x509_lcl.h ./crypto/x509/x509_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ec/ec_lcl.h
+++ basename ./crypto/ec/ec_lcl.h _lcl.h
++ git mv ./crypto/ec/ec_lcl.h ./crypto/ec/ec_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ec/curve448/curve448_lcl.h
+++ basename ./crypto/ec/curve448/curve448_lcl.h _lcl.h
++ git mv ./crypto/ec/curve448/curve448_lcl.h ./crypto/ec/curve448/curve448_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/bn/bn_lcl.h
+++ basename ./crypto/bn/bn_lcl.h _lcl.h
++ git mv ./crypto/bn/bn_lcl.h ./crypto/bn/bn_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ocsp/ocsp_lcl.h
+++ basename ./crypto/ocsp/ocsp_lcl.h _lcl.h
++ git mv ./crypto/ocsp/ocsp_lcl.h ./crypto/ocsp/ocsp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/objects/obj_lcl.h
+++ basename ./crypto/objects/obj_lcl.h _lcl.h
++ git mv ./crypto/objects/obj_lcl.h ./crypto/objects/obj_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rand/rand_lcl.h
+++ basename ./crypto/rand/rand_lcl.h _lcl.h
++ git mv ./crypto/rand/rand_lcl.h ./crypto/rand/rand_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/cast/cast_lcl.h
+++ basename ./crypto/cast/cast_lcl.h _lcl.h
++ git mv ./crypto/cast/cast_lcl.h ./crypto/cast/cast_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/idea/idea_lcl.h
+++ basename ./crypto/idea/idea_lcl.h _lcl.h
++ git mv ./crypto/idea/idea_lcl.h ./crypto/idea/idea_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/cms/cms_lcl.h
+++ basename ./crypto/cms/cms_lcl.h _lcl.h
++ git mv ./crypto/cms/cms_lcl.h ./crypto/cms/cms_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/lhash/lhash_lcl.h
+++ basename ./crypto/lhash/lhash_lcl.h _lcl.h
++ git mv ./crypto/lhash/lhash_lcl.h ./crypto/lhash/lhash_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/bio/bio_lcl.h
+++ basename ./crypto/bio/bio_lcl.h _lcl.h
++ git mv ./crypto/bio/bio_lcl.h ./crypto/bio/bio_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/property/property_lcl.h
+++ basename ./crypto/property/property_lcl.h _lcl.h
++ git mv ./crypto/property/property_lcl.h ./crypto/property/property_local.h
++ for suffix in lcl locl int
+++ find -name '*_locl.h'
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./ssl/record/record_locl.h
+++ basename ./ssl/record/record_locl.h _locl.h
++ git mv ./ssl/record/record_locl.h ./ssl/record/record_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./ssl/ssl_locl.h
+++ basename ./ssl/ssl_locl.h _locl.h
++ git mv ./ssl/ssl_locl.h ./ssl/ssl_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./ssl/statem/statem_locl.h
+++ basename ./ssl/statem/statem_locl.h _locl.h
++ git mv ./ssl/statem/statem_locl.h ./ssl/statem/statem_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rsa/rsa_locl.h
+++ basename ./crypto/rsa/rsa_locl.h _locl.h
++ git mv ./crypto/rsa/rsa_locl.h ./crypto/rsa/rsa_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/dso/dso_locl.h
+++ basename ./crypto/dso/dso_locl.h _locl.h
++ git mv ./crypto/dso/dso_locl.h ./crypto/dso/dso_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ct/ct_locl.h
+++ basename ./crypto/ct/ct_locl.h _locl.h
++ git mv ./crypto/ct/ct_locl.h ./crypto/ct/ct_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/whrlpool/wp_locl.h
+++ basename ./crypto/whrlpool/wp_locl.h _locl.h
++ git mv ./crypto/whrlpool/wp_locl.h ./crypto/whrlpool/wp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/err/err_locl.h
+++ basename ./crypto/err/err_locl.h _locl.h
++ git mv ./crypto/err/err_locl.h ./crypto/err/err_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/dh/dh_locl.h
+++ basename ./crypto/dh/dh_locl.h _locl.h
++ git mv ./crypto/dh/dh_locl.h ./crypto/dh/dh_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/md5/md5_locl.h
+++ basename ./crypto/md5/md5_locl.h _locl.h
++ git mv ./crypto/md5/md5_locl.h ./crypto/md5/md5_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/async/async_locl.h
+++ basename ./crypto/async/async_locl.h _locl.h
++ git mv ./crypto/async/async_locl.h ./crypto/async/async_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rc2/rc2_locl.h
+++ basename ./crypto/rc2/rc2_locl.h _locl.h
++ git mv ./crypto/rc2/rc2_locl.h ./crypto/rc2/rc2_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ui/ui_locl.h
+++ basename ./crypto/ui/ui_locl.h _locl.h
++ git mv ./crypto/ui/ui_locl.h ./crypto/ui/ui_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/camellia/cmll_locl.h
+++ basename ./crypto/camellia/cmll_locl.h _locl.h
++ git mv ./crypto/camellia/cmll_locl.h ./crypto/camellia/cmll_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/aes/aes_locl.h
+++ basename ./crypto/aes/aes_locl.h _locl.h
++ git mv ./crypto/aes/aes_locl.h ./crypto/aes/aes_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/sm3/sm3_locl.h
+++ basename ./crypto/sm3/sm3_locl.h _locl.h
++ git mv ./crypto/sm3/sm3_locl.h ./crypto/sm3/sm3_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rc4/rc4_locl.h
+++ basename ./crypto/rc4/rc4_locl.h _locl.h
++ git mv ./crypto/rc4/rc4_locl.h ./crypto/rc4/rc4_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/rc5/rc5_locl.h
+++ basename ./crypto/rc5/rc5_locl.h _locl.h
++ git mv ./crypto/rc5/rc5_locl.h ./crypto/rc5/rc5_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/evp/evp_locl.h
+++ basename ./crypto/evp/evp_locl.h _locl.h
++ git mv ./crypto/evp/evp_locl.h ./crypto/evp/evp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/seed/seed_locl.h
+++ basename ./crypto/seed/seed_locl.h _locl.h
++ git mv ./crypto/seed/seed_locl.h ./crypto/seed/seed_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/md4/md4_locl.h
+++ basename ./crypto/md4/md4_locl.h _locl.h
++ git mv ./crypto/md4/md4_locl.h ./crypto/md4/md4_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/asn1/asn1_locl.h
+++ basename ./crypto/asn1/asn1_locl.h _locl.h
++ git mv ./crypto/asn1/asn1_locl.h ./crypto/asn1/asn1_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/bf/bf_locl.h
+++ basename ./crypto/bf/bf_locl.h _locl.h
++ git mv ./crypto/bf/bf_locl.h ./crypto/bf/bf_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/store/store_locl.h
+++ basename ./crypto/store/store_locl.h _locl.h
++ git mv ./crypto/store/store_locl.h ./crypto/store/store_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/sha/sha_locl.h
+++ basename ./crypto/sha/sha_locl.h _locl.h
++ git mv ./crypto/sha/sha_locl.h ./crypto/sha/sha_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/dsa/dsa_locl.h
+++ basename ./crypto/dsa/dsa_locl.h _locl.h
++ git mv ./crypto/dsa/dsa_locl.h ./crypto/dsa/dsa_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/ripemd/rmd_locl.h
+++ basename ./crypto/ripemd/rmd_locl.h _locl.h
++ git mv ./crypto/ripemd/rmd_locl.h ./crypto/ripemd/rmd_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/des/des_locl.h
+++ basename ./crypto/des/des_locl.h _locl.h
++ git mv ./crypto/des/des_locl.h ./crypto/des/des_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./providers/common/ciphers/cipher_locl.h
+++ basename ./providers/common/ciphers/cipher_locl.h _locl.h
++ git mv ./providers/common/ciphers/cipher_locl.h ./providers/common/ciphers/cipher_local.h
++ for suffix in lcl locl int
+++ find -name '*_int.h'
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/x509/pcy_int.h
+++ basename ./crypto/x509/pcy_int.h _int.h
++ git mv ./crypto/x509/pcy_int.h ./crypto/x509/pcy_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/crmf/crmf_int.h
+++ basename ./crypto/crmf/crmf_int.h _int.h
++ git mv ./crypto/crmf/crmf_int.h ./crypto/crmf/crmf_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/cmp/cmp_int.h
+++ basename ./crypto/cmp/cmp_int.h _int.h
++ git mv ./crypto/cmp/cmp_int.h ./crypto/cmp/cmp_local.h
++ for f in $(find -name "*_$suffix.h")
+++ dirname ./crypto/engine/eng_int.h
+++ basename ./crypto/engine/eng_int.h _int.h
++ git mv ./crypto/engine/eng_int.h ./crypto/engine/eng_local.h
++ cat
++ find '(' -name '*.h' -o -name '*.h.in' -o -name '*.c' -o -name '*.ec' -o -name 'README*' -o -name '*.pod' -o -name '*.conf' ')' -exec sed -E -i -f logfiles/fix-local-includes.sed '{}' ';'
++ git commit -a -F -
+[pr-reorganize-header-files 829ded9b16] Reorganize local header files
+ 501 files changed, 498 insertions(+), 498 deletions(-)
+ rename crypto/aes/{aes_locl.h => aes_local.h} (100%)
+ rename crypto/asn1/{asn1_locl.h => asn1_local.h} (100%)
+ rename crypto/async/{async_locl.h => async_local.h} (100%)
+ rename crypto/bf/{bf_locl.h => bf_local.h} (100%)
+ rename crypto/bio/{bio_lcl.h => bio_local.h} (98%)
+ rename crypto/bn/{bn_lcl.h => bn_local.h} (100%)
+ rename crypto/camellia/{cmll_locl.h => cmll_local.h} (100%)
+ rename crypto/cast/{cast_lcl.h => cast_local.h} (100%)
+ rename crypto/cmp/{cmp_int.h => cmp_local.h} (100%)
+ rename crypto/cms/{cms_lcl.h => cms_local.h} (100%)
+ rename crypto/comp/{comp_lcl.h => comp_local.h} (100%)
+ rename crypto/conf/{conf_lcl.h => conf_local.h} (100%)
+ rename crypto/crmf/{crmf_int.h => crmf_local.h} (100%)
+ rename crypto/ct/{ct_locl.h => ct_local.h} (100%)
+ rename crypto/des/{des_locl.h => des_local.h} (100%)
+ rename crypto/dh/{dh_locl.h => dh_local.h} (100%)
+ rename crypto/dsa/{dsa_locl.h => dsa_local.h} (100%)
+ rename crypto/dso/{dso_locl.h => dso_local.h} (100%)
+ rename crypto/ec/curve448/{curve448_lcl.h => curve448_local.h} (100%)
+ rename crypto/ec/{ec_lcl.h => ec_local.h} (100%)
+ rename crypto/engine/{eng_int.h => eng_local.h} (100%)
+ rename crypto/err/{err_locl.h => err_local.h} (100%)
+ rename crypto/evp/{evp_locl.h => evp_local.h} (100%)
+ rename crypto/hmac/{hmac_lcl.h => hmac_local.h} (100%)
+ rename crypto/idea/{idea_lcl.h => idea_local.h} (100%)
+ rename crypto/lhash/{lhash_lcl.h => lhash_local.h} (100%)
+ rename crypto/md4/{md4_locl.h => md4_local.h} (100%)
+ rename crypto/md5/{md5_locl.h => md5_local.h} (100%)
+ rename crypto/objects/{obj_lcl.h => obj_local.h} (100%)
+ rename crypto/ocsp/{ocsp_lcl.h => ocsp_local.h} (100%)
+ rename crypto/pkcs12/{p12_lcl.h => p12_local.h} (100%)
+ rename crypto/property/{property_lcl.h => property_local.h} (100%)
+ rename crypto/rand/{rand_lcl.h => rand_local.h} (100%)
+ rename crypto/rc2/{rc2_locl.h => rc2_local.h} (100%)
+ rename crypto/rc4/{rc4_locl.h => rc4_local.h} (100%)
+ rename crypto/rc5/{rc5_locl.h => rc5_local.h} (100%)
+ rename crypto/ripemd/{rmd_locl.h => rmd_local.h} (97%)
+ rename crypto/rsa/{rsa_locl.h => rsa_local.h} (100%)
+ rename crypto/seed/{seed_locl.h => seed_local.h} (100%)
+ rename crypto/sha/{sha_locl.h => sha_local.h} (100%)
+ rename crypto/sm3/{sm3_locl.h => sm3_local.h} (100%)
+ rename crypto/store/{store_locl.h => store_local.h} (100%)
+ rename crypto/ts/{ts_lcl.h => ts_local.h} (100%)
+ rename crypto/ui/{ui_locl.h => ui_local.h} (100%)
+ rename crypto/whrlpool/{wp_locl.h => wp_local.h} (100%)
+ rename crypto/x509/{pcy_int.h => pcy_local.h} (100%)
+ rename crypto/x509/{x509_lcl.h => x509_local.h} (100%)
+ rename include/internal/{constant_time_locl.h => constant_time.h} (100%)
+ rename providers/common/ciphers/{cipher_locl.h => cipher_local.h} (100%)
+ rename ssl/record/{record_locl.h => record_local.h} (100%)
+ rename ssl/{ssl_locl.h => ssl_local.h} (100%)
+ rename ssl/statem/{statem_locl.h => statem_local.h} (100%)
++ git log --oneline --decorate --oneline HEAD~..
+829ded9b16 (HEAD -> pr-reorganize-header-files) Reorganize local header files
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ '[' master == master ']'
++ git mv include/openssl/ossl_typ.h include/openssl/types.h
++ cat
++ find '(' -name '*.h' -o -name '*.h.in' -o -name '*.c' -o -name '*.ec' -o -name 'README*' -o -name '*.pod' -o -name '*.conf' ')' -exec sed -E -i -f logfiles/fix-public-includes.sed '{}' ';'
++ git commit -a -F -
+[pr-reorganize-header-files 899b260039] Reorganize public header files (part 1)
+ 39 files changed, 38 insertions(+), 38 deletions(-)
+ rename include/openssl/{ossl_typ.h => types.h} (100%)
++ git log --oneline --decorate --oneline HEAD~..
+899b260039 (HEAD -> pr-reorganize-header-files) Reorganize public header files (part 1)
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ '[' master == master ']'
++ cat
++ git add include/openssl/ossl_typ.h
++ git commit -F -
+[pr-reorganize-header-files 11414cd182] Reorganize public header files (part 2)
+ 1 file changed, 16 insertions(+)
+ create mode 100644 include/openssl/ossl_typ.h
++ git log --oneline --decorate --oneline HEAD~..
+11414cd182 (HEAD -> pr-reorganize-header-files) Reorganize public header files (part 2)
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ set +o xtrace
+# First Pass: collect include guard fixes into a sed script
+apps/include/app_params.h:  [NONE]
+apps/include/apps.h:  HEADER_APPS_H => OSSL_APPS_H  [NEW]
+apps/include/apps_ui.h:  HEADER_APPS_UI_H => OSSL_APPS_UI_H  [NEW]
+apps/include/fmt.h:  HEADER_FMT_H => OSSL_APPS_FMT_H  [NEW]
+apps/include/function.h:  APPS_FUNCTION_H => OSSL_APPS_FUNCTION_H  [NEW]
+apps/include/opt.h:  HEADER_OPT_H => OSSL_APPS_OPT_H  [NEW]
+apps/include/platform.h:  HEADER_PLATFORM_H => OSSL_APPS_PLATFORM_H  [NEW]
+apps/include/s_apps.h:  [NONE]
+apps/include/vms_term_sock.h:  TERM_SOCK_H => OSSL_APPS_VMS_TERM_SOCK_H  [NEW]
+apps/progs.h:  [NONE]
+apps/testdsa.h:  [NONE]
+apps/testrsa.h:  [NONE]
+apps/timeouts.h:  INCLUDED_TIMEOUTS_H => OSSL_APPS_TIMEOUTS_H  [NEW]
+crypto/aes/aes_local.h:  HEADER_AES_LOCL_H => OSSL_CRYPTO_AES_LOCAL_H  [NEW]
+crypto/arm_arch.h:  __ARM_ARCH_H__ => OSSL_CRYPTO_ARM_ARCH_H  [NEW]
+crypto/asn1/asn1_item_list.h:  [NONE]
+crypto/asn1/asn1_local.h:  [NONE]
+crypto/asn1/charmap.h:  [NONE]
+crypto/asn1/standard_methods.h:  [NONE]
+crypto/asn1/tbl_standard.h:  [NONE]
+crypto/async/arch/async_null.h:  [NONE]
+crypto/async/arch/async_posix.h:  OPENSSL_ASYNC_ARCH_ASYNC_POSIX_H => OSSL_CRYPTO_ASYNC_POSIX_H  [NEW]
+crypto/async/arch/async_win.h:  [NONE]
+crypto/async/async_local.h:  [NONE]
+crypto/bf/bf_local.h:  HEADER_BF_LOCL_H => OSSL_CRYPTO_BF_LOCAL_H  [NEW]
+crypto/bf/bf_pi.h:  [NONE]
+crypto/bio/bio_local.h:  [NONE]
+crypto/bn/bn_local.h:  HEADER_BN_LCL_H => OSSL_CRYPTO_BN_LOCAL_H  [NEW]
+crypto/bn/bn_prime.h:  [NONE]
+crypto/bn/rsaz_exp.h:  RSAZ_EXP_H => OSSL_CRYPTO_BN_RSAZ_EXP_H  [NEW]
+crypto/camellia/cmll_local.h:  HEADER_CAMELLIA_LOCL_H => OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H  [NEW]
+crypto/cast/cast_local.h:  [NONE]
+crypto/cast/cast_s.h:  [NONE]
+crypto/cmp/cmp_local.h:  OSSL_HEADER_CMP_INT_H => OSSL_CRYPTO_CMP_LOCAL_H  [NEW]
+crypto/cms/cms_local.h:  HEADER_CMS_LCL_H => OSSL_CRYPTO_CMS_LOCAL_H  [NEW]
+crypto/comp/comp_local.h:  [NONE]
+crypto/conf/conf_def.h:  [NONE]
+crypto/conf/conf_local.h:  [NONE]
+crypto/crmf/crmf_local.h:  OSSL_HEADER_CRMF_INT_H => OSSL_CRYPTO_CRMF_LOCAL_H  [NEW]
+crypto/ct/ct_local.h:  [NONE]
+crypto/des/des_local.h:  HEADER_DES_LOCL_H => OSSL_CRYPTO_DES_LOCAL_H  [NEW]
+crypto/des/spr.h:  [NONE]
+crypto/dh/dh_local.h:  [NONE]
+crypto/dsa/dsa_local.h:  [NONE]
+crypto/dso/dso_local.h:  [NONE]
+crypto/ec/curve448/arch_32/arch_intrinsics.h:  HEADER_ARCH_32_ARCH_INTRINSICS_H => OSSL_CRYPTO_EC_CURVE448_ARCH_32_INTRINSICS_H  [NEW]
+crypto/ec/curve448/arch_32/f_impl.h:  HEADER_ARCH_32_F_IMPL_H => OSSL_CRYPTO_EC_CURVE448_ARCH_32_F_IMPL_H  [NEW]
+crypto/ec/curve448/curve448_local.h:  HEADER_CURVE448_LCL_H => OSSL_CRYPTO_EC_CURVE448_LOCAL_H  [NEW]
+crypto/ec/curve448/curve448utils.h:  HEADER_CURVE448UTILS_H => OSSL_CRYPTO_EC_CURVE448UTILS_H  [NEW]
+crypto/ec/curve448/ed448.h:  HEADER_ED448_H => OSSL_CRYPTO_EC_CURVE448_ED448_H  [NEW]
+crypto/ec/curve448/field.h:  HEADER_FIELD_H => OSSL_CRYPTO_EC_CURVE448_FIELD_H  [NEW]
+crypto/ec/curve448/point_448.h:  HEADER_POINT_448_H => OSSL_CRYPTO_EC_CURVE448_POINT_448_H  [NEW]
+crypto/ec/curve448/word.h:  HEADER_WORD_H => OSSL_CRYPTO_EC_CURVE448_WORD_H  [NEW]
+crypto/ec/ec_local.h:  [NONE]
+crypto/engine/eng_local.h:  HEADER_ENGINE_INT_H => OSSL_CRYPTO_ENGINE_ENG_LOCAL_H  [NEW]
+crypto/err/err_local.h:  [NONE]
+crypto/evp/evp_local.h:  [NONE]
+crypto/hmac/hmac_local.h:  HEADER_HMAC_LCL_H => OSSL_CRYPTO_HMAC_LOCAL_H  [NEW]
+crypto/idea/idea_local.h:  [NONE]
+crypto/lhash/lhash_local.h:  [NONE]
+crypto/md4/md4_local.h:  [NONE]
+crypto/md5/md5_local.h:  [NONE]
+crypto/mips_arch.h:  __MIPS_ARCH_H__ => OSSL_CRYPTO_MIPS_ARCH_H  [NEW]
+crypto/objects/obj_dat.h:  [NONE]
+crypto/objects/obj_local.h:  [NONE]
+crypto/objects/obj_xref.h:  [NONE]
+crypto/ocsp/ocsp_local.h:  [NONE]
+crypto/pkcs12/p12_local.h:  [NONE]
+crypto/poly1305/poly1305_local.h:  [NONE]
+crypto/ppc_arch.h:  HEADER_PPC_ARCH_H => OSSL_CRYPTO_PPC_ARCH_H  [NEW]
+crypto/property/property_local.h:  [NONE]
+crypto/provider_local.h:  [NONE]
+crypto/rand/rand_local.h:  HEADER_RAND_LCL_H => OSSL_CRYPTO_RAND_LOCAL_H  [NEW]
+crypto/rc2/rc2_local.h:  [NONE]
+crypto/rc4/rc4_local.h:  HEADER_RC4_LOCL_H => OSSL_CRYPTO_RC4_LOCAL_H  [NEW]
+crypto/rc5/rc5_local.h:  [NONE]
+crypto/ripemd/rmd_local.h:  [NONE]
+crypto/ripemd/rmdconst.h:  [NONE]
+crypto/rsa/rsa_local.h:  RSA_LOCAL_HEADER_H => OSSL_CRYPTO_RSA_LOCAL_H  [NEW]
+crypto/s390x_arch.h:  S390X_ARCH_H => OSSL_CRYPTO_S390X_ARCH_H  [NEW]
+crypto/seed/seed_local.h:  HEADER_SEED_LOCL_H => OSSL_CRYPTO_SEED_LOCAL_H  [NEW]
+crypto/sha/sha_local.h:  [NONE]
+crypto/siphash/siphash_local.h:  [NONE]
+crypto/sm3/sm3_local.h:  [NONE]
+crypto/sparc_arch.h:  __SPARC_ARCH_H__ => OSSL_CRYPTO_SPARC_ARCH_H  [NEW]
+crypto/store/store_local.h:  [NONE]
+crypto/ts/ts_local.h:  [NONE]
+crypto/ui/ui_local.h:  HEADER_UI_LOCL_H => OSSL_CRYPTO_UI_LOCAL_H  [NEW]
+crypto/vms_rms.h:  [NONE]
+crypto/whrlpool/wp_local.h:  [NONE]
+crypto/x509/ext_dat.h:  [NONE]
+crypto/x509/pcy_local.h:  [NONE]
+crypto/x509/standard_exts.h:  [NONE]
+crypto/x509/v3_admis.h:  HEADER_V3_ADMISSION_H => OSSL_CRYPTO_X509_V3_ADMIS_H  [NEW]
+crypto/x509/x509_local.h:  [NONE]
+doc/man7/openssl-core.h.pod:  [NONE]
+e_os.h:  HEADER_E_OS_H => OSSL_E_OS_H  [NEW]
+engines/e_afalg.h:  HEADER_AFALG_H => OSSL_ENGINES_E_AFALG_H  [NEW]
+engines/e_afalg_err.h:  HEADER_AFALGERR_H => OSSL_ENGINES_E_AFALG_ERR_H  [NEW]
+engines/e_capi_err.h:  HEADER_CAPIERR_H => OSSL_ENGINES_E_CAPI_ERR_H  [NEW]
+engines/e_dasync_err.h:  HEADER_DASYNCERR_H => OSSL_ENGINES_E_DASYNC_ERR_H  [NEW]
+engines/e_ossltest_err.h:  HEADER_OSSLTESTERR_H => OSSL_ENGINES_E_OSSLTEST_ERR_H  [NEW]
+fuzz/fuzzer.h:  [NONE]
+include/crypto/aria.h:  HEADER_ARIA_H => OSSL_CRYPTO_ARIA_H  [NEW]
+include/crypto/asn1.h:  [NONE]
+include/crypto/asn1_dsa.h:  HEADER_ASN1_DSA_H => OSSL_CRYPTO_ASN1_DSA_H  [NEW]
+include/crypto/async.h:  [NONE]
+include/crypto/bn.h:  HEADER_BN_INT_H => OSSL_CRYPTO_BN_H  [NEW]
+include/crypto/bn_conf.h.in:  HEADER_BN_CONF_H => OSSL_CRYPTO_BN_CONF_H  [NEW]
+include/crypto/bn_dh.h:  [NONE]
+include/crypto/bn_srp.h:  [NONE]
+include/crypto/chacha.h:  HEADER_CHACHA_H => OSSL_CRYPTO_CHACHA_H  [NEW]
+include/crypto/ciphermode_platform.h:  HEADER_INTERNAL_CIPHERMODE_PLATFORM_H => OSSL_CRYPTO_CIPHERMODE_PLATFORM_H  [NEW]
+include/crypto/cms.h:  [NONE]
+include/crypto/cryptlib.h:  [NONE]
+include/crypto/ctype.h:  INTERNAL_CTYPE_H => OSSL_CRYPTO_CTYPE_H  [NEW]
+include/crypto/dso_conf.h.in:  HEADER_DSO_CONF_H => OSSL_CRYPTO_DSO_CONF_H  [NEW]
+include/crypto/ec.h:  HEADER_OSSL_EC_INTERNAL_H => OSSL_CRYPTO_EC_H  [NEW]
+include/crypto/engine.h:  [NONE]
+include/crypto/err.h:  INTERNAL_ERR_INT_H => OSSL_CRYPTO_ERR_H  [NEW]
+include/crypto/ess.h:  [NONE]
+include/crypto/evp.h:  [NONE]
+include/crypto/lhash.h:  INTERNAL_LHASH_H => OSSL_CRYPTO_LHASH_H  [NEW]
+include/crypto/md32_common.h:  [NONE]
+include/crypto/modes.h:  [NONE]
+include/crypto/objects.h:  [NONE]
+include/crypto/poly1305.h:  [NONE]
+include/crypto/rand.h:  HEADER_RAND_INT_H => OSSL_CRYPTO_RAND_H  [NEW]
+include/crypto/sha.h:  HEADER_INTERNAL_SHA_H => OSSL_CRYPTO_SHA_H  [NEW]
+include/crypto/siphash.h:  [NONE]
+include/crypto/siv.h:  [NONE]
+include/crypto/sm2.h:  HEADER_SM2_H => OSSL_CRYPTO_SM2_H  [NEW]
+include/crypto/sm2err.h:  HEADER_SM2ERR_H => OSSL_CRYPTO_SM2ERR_H  [NEW]
+include/crypto/sm4.h:  HEADER_SM4_H => OSSL_CRYPTO_SM4_H  [NEW]
+include/crypto/sparse_array.h:  HEADER_SPARSE_ARRAY_H => OSSL_CRYPTO_SPARSE_ARRAY_H  [NEW]
+include/crypto/store.h:  HEADER_STORE_H => OSSL_CRYPTO_STORE_H  [NEW]
+include/crypto/x509.h:  [NONE]
+include/internal/bio.h:  HEADER_INTERNAL_BIO_H => OSSL_INTERNAL_BIO_H  [NEW]
+include/internal/comp.h:  [NONE]
+include/internal/conf.h:  HEADER_INTERNAL_CONF_H => OSSL_INTERNAL_CONF_H  [NEW]
+include/internal/constant_time.h:  HEADER_CONSTANT_TIME_LOCL_H => OSSL_INTERNAL_CONSTANT_TIME_H  [NEW]
+include/internal/core.h:  OSSL_INTERNAL_CORE_H  [OLD]
+include/internal/cryptlib.h:  HEADER_CRYPTLIB_H => OSSL_INTERNAL_CRYPTLIB_H  [NEW]
+include/internal/dane.h:  HEADER_INTERNAL_DANE_H => OSSL_INTERNAL_DANE_H  [NEW]
+include/internal/dso.h:  HEADER_DSO_H => OSSL_INTERNAL_DSO_H  [NEW]
+include/internal/dsoerr.h:  HEADER_DSOERR_H => OSSL_INTERNAL_DSOERR_H  [NEW]
+include/internal/err.h:  INTERNAL_ERR_H => OSSL_INTERNAL_ERR_H  [NEW]
+include/internal/ktls.h:  [NONE]
+include/internal/md5_sha1.h:  HEADER_MD5_SHA1_H => OSSL_INTERNAL_MD5_SHA1_H  [NEW]
+include/internal/namemap.h:  [NONE]
+include/internal/nelem.h:  HEADER_NELEM_H => OSSL_INTERNAL_NELEM_H  [NEW]
+include/internal/numbers.h:  HEADER_NUMBERS_H => OSSL_INTERNAL_NUMBERS_H  [NEW]
+include/internal/o_dir.h:  O_DIR_H => OSSL_INTERNAL_O_DIR_H  [NEW]
+include/internal/packet.h:  HEADER_PACKET_LOCL_H => OSSL_INTERNAL_PACKET_H  [NEW]
+include/internal/param_build.h:  [NONE]
+include/internal/property.h:  HEADER_PROPERTY_H => OSSL_INTERNAL_PROPERTY_H  [NEW]
+include/internal/propertyerr.h:  HEADER_PROPERR_H => OSSL_INTERNAL_PROPERTYERR_H  [NEW]
+include/internal/provider.h:  OSSL_INTERNAL_PROVIDER_H  [OLD]
+include/internal/refcount.h:  HEADER_INTERNAL_REFCOUNT_H => OSSL_INTERNAL_REFCOUNT_H  [NEW]
+include/internal/sha3.h:  HEADER_INTERNAL_SHA3_H => OSSL_INTERNAL_SHA3_H  [NEW]
+include/internal/sm3.h:  HEADER_SM3_H => OSSL_INTERNAL_SM3_H  [NEW]
+include/internal/sockets.h:  HEADER_INTERNAL_SOCKETS => OSSL_INTERNAL_SOCKETS_H  [NEW]
+include/internal/sslconf.h:  HEADER_SSLCONF_H => OSSL_INTERNAL_SSLCONF_H  [NEW]
+include/internal/symhacks.h:  OSSL_INTERNAL_SYMHACKS_H  [OLD]
+include/internal/thread_once.h:  [NONE]
+include/internal/tsan_assist.h:  [NONE]
+include/openssl/aes.h:  HEADER_AES_H => OPENSSL_AES_H  [NEW]
+include/openssl/asn1.h:  HEADER_ASN1_H => OPENSSL_ASN1_H  [NEW]
+include/openssl/asn1_mac.h:  [NONE]
+include/openssl/asn1err.h:  HEADER_ASN1ERR_H => OPENSSL_ASN1ERR_H  [NEW]
+include/openssl/asn1t.h:  HEADER_ASN1T_H => OPENSSL_ASN1T_H  [NEW]
+include/openssl/async.h:  HEADER_ASYNC_H => OPENSSL_ASYNC_H  [NEW]
+include/openssl/asyncerr.h:  HEADER_ASYNCERR_H => OPENSSL_ASYNCERR_H  [NEW]
+include/openssl/bio.h:  HEADER_BIO_H => OPENSSL_BIO_H  [NEW]
+include/openssl/bioerr.h:  HEADER_BIOERR_H => OPENSSL_BIOERR_H  [NEW]
+include/openssl/blowfish.h:  HEADER_BLOWFISH_H => OPENSSL_BLOWFISH_H  [NEW]
+include/openssl/bn.h:  HEADER_BN_H => OPENSSL_BN_H  [NEW]
+include/openssl/bnerr.h:  HEADER_BNERR_H => OPENSSL_BNERR_H  [NEW]
+include/openssl/buffer.h:  HEADER_BUFFER_H => OPENSSL_BUFFER_H  [NEW]
+include/openssl/buffererr.h:  HEADER_BUFERR_H => OPENSSL_BUFFERERR_H  [NEW]
+include/openssl/camellia.h:  HEADER_CAMELLIA_H => OPENSSL_CAMELLIA_H  [NEW]
+include/openssl/cast.h:  HEADER_CAST_H => OPENSSL_CAST_H  [NEW]
+include/openssl/cmac.h:  HEADER_CMAC_H => OPENSSL_CMAC_H  [NEW]
+include/openssl/cmp.h:  OSSL_HEADER_CMP_H => OPENSSL_CMP_H  [NEW]
+include/openssl/cmp_util.h:  OSSL_HEADER_CMP_UTIL_H => OPENSSL_CMP_UTIL_H  [NEW]
+include/openssl/cmperr.h:  HEADER_CMPERR_H => OPENSSL_CMPERR_H  [NEW]
+include/openssl/cms.h:  HEADER_CMS_H => OPENSSL_CMS_H  [NEW]
+include/openssl/cmserr.h:  HEADER_CMSERR_H => OPENSSL_CMSERR_H  [NEW]
+include/openssl/comp.h:  HEADER_COMP_H => OPENSSL_COMP_H  [NEW]
+include/openssl/comperr.h:  HEADER_COMPERR_H => OPENSSL_COMPERR_H  [NEW]
+include/openssl/conf.h:  HEADER_CONF_H => OPENSSL_CONF_H  [NEW]
+include/openssl/conf_api.h:  HEADER_CONF_API_H => OPENSSL_CONF_API_H  [NEW]
+include/openssl/conferr.h:  HEADER_CONFERR_H => OPENSSL_CONFERR_H  [NEW]
+include/openssl/core.h:  OSSL_CORE_H => OPENSSL_CORE_H  [NEW]
+include/openssl/core_names.h:  OSSL_CORE_NAMES_H => OPENSSL_CORE_NAMES_H  [NEW]
+include/openssl/core_numbers.h:  OSSL_CORE_NUMBERS_H => OPENSSL_CORE_NUMBERS_H  [NEW]
+include/openssl/crmf.h:  OSSL_HEADER_CRMF_H => OPENSSL_CRMF_H  [NEW]
+include/openssl/crmferr.h:  HEADER_CRMFERR_H => OPENSSL_CRMFERR_H  [NEW]
+include/openssl/crypto.h:  HEADER_CRYPTO_H => OPENSSL_CRYPTO_H  [NEW]
+include/openssl/cryptoerr.h:  HEADER_CRYPTOERR_H => OPENSSL_CRYPTOERR_H  [NEW]
+include/openssl/ct.h:  HEADER_CT_H => OPENSSL_CT_H  [NEW]
+include/openssl/cterr.h:  HEADER_CTERR_H => OPENSSL_CTERR_H  [NEW]
+include/openssl/des.h:  HEADER_DES_H => OPENSSL_DES_H  [NEW]
+include/openssl/dh.h:  HEADER_DH_H => OPENSSL_DH_H  [NEW]
+include/openssl/dherr.h:  HEADER_DHERR_H => OPENSSL_DHERR_H  [NEW]
+include/openssl/dsa.h:  HEADER_DSA_H => OPENSSL_DSA_H  [NEW]
+include/openssl/dsaerr.h:  HEADER_DSAERR_H => OPENSSL_DSAERR_H  [NEW]
+include/openssl/dtls1.h:  HEADER_DTLS1_H => OPENSSL_DTLS1_H  [NEW]
+include/openssl/e_os2.h:  HEADER_E_OS2_H => OPENSSL_E_OS2_H  [NEW]
+include/openssl/ebcdic.h:  HEADER_EBCDIC_H => OPENSSL_EBCDIC_H  [NEW]
+include/openssl/ec.h:  HEADER_EC_H => OPENSSL_EC_H  [NEW]
+include/openssl/ecdh.h:  [NONE]
+include/openssl/ecdsa.h:  [NONE]
+include/openssl/ecerr.h:  HEADER_ECERR_H => OPENSSL_ECERR_H  [NEW]
+include/openssl/engine.h:  HEADER_ENGINE_H => OPENSSL_ENGINE_H  [NEW]
+include/openssl/engineerr.h:  HEADER_ENGINEERR_H => OPENSSL_ENGINEERR_H  [NEW]
+include/openssl/err.h:  HEADER_ERR_H => OPENSSL_ERR_H  [NEW]
+include/openssl/ess.h:  HEADER_ESS_H => OPENSSL_ESS_H  [NEW]
+include/openssl/esserr.h:  HEADER_ESSERR_H => OPENSSL_ESSERR_H  [NEW]
+include/openssl/evp.h:  HEADER_ENVELOPE_H => OPENSSL_EVP_H  [NEW]
+include/openssl/evperr.h:  HEADER_EVPERR_H => OPENSSL_EVPERR_H  [NEW]
+include/openssl/fips_names.h:  OSSL_FIPS_NAMES_H => OPENSSL_FIPS_NAMES_H  [NEW]
+include/openssl/hmac.h:  HEADER_HMAC_H => OPENSSL_HMAC_H  [NEW]
+include/openssl/idea.h:  HEADER_IDEA_H => OPENSSL_IDEA_H  [NEW]
+include/openssl/kdf.h:  HEADER_KDF_H => OPENSSL_KDF_H  [NEW]
+include/openssl/lhash.h:  HEADER_LHASH_H => OPENSSL_LHASH_H  [NEW]
+include/openssl/macros.h:  OPENSSL_MACROS_H  [OLD]
+include/openssl/md2.h:  HEADER_MD2_H => OPENSSL_MD2_H  [NEW]
+include/openssl/md4.h:  HEADER_MD4_H => OPENSSL_MD4_H  [NEW]
+include/openssl/md5.h:  HEADER_MD5_H => OPENSSL_MD5_H  [NEW]
+include/openssl/mdc2.h:  HEADER_MDC2_H => OPENSSL_MDC2_H  [NEW]
+include/openssl/modes.h:  HEADER_MODES_H => OPENSSL_MODES_H  [NEW]
+include/openssl/obj_mac.h:  [NONE]
+include/openssl/objects.h:  HEADER_OBJECTS_H => OPENSSL_OBJECTS_H  [NEW]
+include/openssl/objectserr.h:  HEADER_OBJERR_H => OPENSSL_OBJECTSERR_H  [NEW]
+include/openssl/ocsp.h:  HEADER_OCSP_H => OPENSSL_OCSP_H  [NEW]
+include/openssl/ocsperr.h:  HEADER_OCSPERR_H => OPENSSL_OCSPERR_H  [NEW]
+include/openssl/opensslconf.h.in:  HEADER_OPENSSLCONF_H => OPENSSL_OPENSSLCONF_H  [NEW]
+include/openssl/opensslv.h:  HEADER_OPENSSLV_H => OPENSSL_OPENSSLV_H  [NEW]
+include/openssl/ossl_typ.h:  [NONE]
+include/openssl/params.h:  HEADER_PARAMS_H => OPENSSL_PARAMS_H  [NEW]
+include/openssl/pem.h:  HEADER_PEM_H => OPENSSL_PEM_H  [NEW]
+include/openssl/pem2.h:  HEADER_PEM2_H => OPENSSL_PEM2_H  [NEW]
+include/openssl/pemerr.h:  HEADER_PEMERR_H => OPENSSL_PEMERR_H  [NEW]
+include/openssl/pkcs12.h:  HEADER_PKCS12_H => OPENSSL_PKCS12_H  [NEW]
+include/openssl/pkcs12err.h:  HEADER_PKCS12ERR_H => OPENSSL_PKCS12ERR_H  [NEW]
+include/openssl/pkcs7.h:  HEADER_PKCS7_H => OPENSSL_PKCS7_H  [NEW]
+include/openssl/pkcs7err.h:  HEADER_PKCS7ERR_H => OPENSSL_PKCS7ERR_H  [NEW]
+include/openssl/provider.h:  OSSL_PROVIDER_H => OPENSSL_PROVIDER_H  [NEW]
+include/openssl/rand.h:  HEADER_RAND_H => OPENSSL_RAND_H  [NEW]
+include/openssl/rand_drbg.h:  HEADER_DRBG_RAND_H => OPENSSL_RAND_DRBG_H  [NEW]
+include/openssl/randerr.h:  HEADER_RANDERR_H => OPENSSL_RANDERR_H  [NEW]
+include/openssl/rc2.h:  HEADER_RC2_H => OPENSSL_RC2_H  [NEW]
+include/openssl/rc4.h:  HEADER_RC4_H => OPENSSL_RC4_H  [NEW]
+include/openssl/rc5.h:  HEADER_RC5_H => OPENSSL_RC5_H  [NEW]
+include/openssl/ripemd.h:  HEADER_RIPEMD_H => OPENSSL_RIPEMD_H  [NEW]
+include/openssl/rsa.h:  HEADER_RSA_H => OPENSSL_RSA_H  [NEW]
+include/openssl/rsaerr.h:  HEADER_RSAERR_H => OPENSSL_RSAERR_H  [NEW]
+include/openssl/safestack.h:  HEADER_SAFESTACK_H => OPENSSL_SAFESTACK_H  [NEW]
+include/openssl/seed.h:  HEADER_SEED_H => OPENSSL_SEED_H  [NEW]
+include/openssl/sha.h:  HEADER_SHA_H => OPENSSL_SHA_H  [NEW]
+include/openssl/srp.h:  HEADER_SRP_H => OPENSSL_SRP_H  [NEW]
+include/openssl/srtp.h:  HEADER_D1_SRTP_H => OPENSSL_SRTP_H  [NEW]
+include/openssl/ssl.h:  HEADER_SSL_H => OPENSSL_SSL_H  [NEW]
+include/openssl/ssl2.h:  HEADER_SSL2_H => OPENSSL_SSL2_H  [NEW]
+include/openssl/ssl3.h:  HEADER_SSL3_H => OPENSSL_SSL3_H  [NEW]
+include/openssl/sslerr.h:  HEADER_SSLERR_H => OPENSSL_SSLERR_H  [NEW]
+include/openssl/stack.h:  HEADER_STACK_H => OPENSSL_STACK_H  [NEW]
+include/openssl/store.h:  HEADER_OSSL_STORE_H => OPENSSL_STORE_H  [NEW]
+include/openssl/storeerr.h:  HEADER_OSSL_STOREERR_H => OPENSSL_STOREERR_H  [NEW]
+include/openssl/symhacks.h:  HEADER_SYMHACKS_H => OPENSSL_SYMHACKS_H  [NEW]
+include/openssl/tls1.h:  HEADER_TLS1_H => OPENSSL_TLS1_H  [NEW]
+include/openssl/trace.h:  OSSL_TRACE_H => OPENSSL_TRACE_H  [NEW]
+include/openssl/ts.h:  HEADER_TS_H => OPENSSL_TS_H  [NEW]
+include/openssl/tserr.h:  HEADER_TSERR_H => OPENSSL_TSERR_H  [NEW]
+include/openssl/txt_db.h:  HEADER_TXT_DB_H => OPENSSL_TXT_DB_H  [NEW]
+include/openssl/types.h:  HEADER_OPENSSL_TYPES_H => OPENSSL_TYPES_H  [NEW]
+include/openssl/ui.h:  HEADER_UI_H => OPENSSL_UI_H  [NEW]
+include/openssl/uierr.h:  HEADER_UIERR_H => OPENSSL_UIERR_H  [NEW]
+include/openssl/whrlpool.h:  HEADER_WHRLPOOL_H => OPENSSL_WHRLPOOL_H  [NEW]
+include/openssl/x509.h:  HEADER_X509_H => OPENSSL_X509_H  [NEW]
+include/openssl/x509_vfy.h:  HEADER_X509_VFY_H => OPENSSL_X509_VFY_H  [NEW]
+include/openssl/x509err.h:  HEADER_X509ERR_H => OPENSSL_X509ERR_H  [NEW]
+include/openssl/x509v3.h:  HEADER_X509V3_H => OPENSSL_X509V3_H  [NEW]
+include/openssl/x509v3err.h:  HEADER_X509V3ERR_H => OPENSSL_X509V3ERR_H  [NEW]
+ms/uplink.h:  [NONE]
+os-dep/haiku.h:  [NONE]
+providers/common/ciphers/cipher_aes.h:  [NONE]
+providers/common/ciphers/cipher_aes_xts.h:  [NONE]
+providers/common/ciphers/cipher_local.h:  [NONE]
+providers/common/include/internal/ciphers/cipher_aead.h:  [NONE]
+providers/common/include/internal/ciphers/cipher_ccm.h:  [NONE]
+providers/common/include/internal/ciphers/cipher_gcm.h:  [NONE]
+providers/common/include/internal/ciphers/cipher_tdes.h:  [NONE]
+providers/common/include/internal/ciphers/ciphercommon.h:  [NONE]
+providers/common/include/internal/digestcommon.h:  OSSL_DIGESTCOMMON_H => OSSL_PROVIDERS_DIGESTCOMMON_H  [NEW]
+providers/common/include/internal/provider_algs.h:  [NONE]
+providers/common/include/internal/provider_ctx.h:  [NONE]
+providers/common/include/internal/provider_util.h:  [NONE]
+providers/common/include/internal/providercommon.h:  [NONE]
+providers/common/include/internal/providercommonerr.h:  HEADER_PROVERR_H => OSSL_PROVIDERS_PROVIDERCOMMONERR_H  [NEW]
+providers/default/ciphers/cipher_aes_ocb.h:  [NONE]
+providers/default/ciphers/cipher_aria.h:  [NONE]
+providers/default/ciphers/cipher_aria_ccm.h:  [NONE]
+providers/default/ciphers/cipher_aria_gcm.h:  [NONE]
+providers/default/ciphers/cipher_blowfish.h:  [NONE]
+providers/default/ciphers/cipher_camellia.h:  [NONE]
+providers/default/ciphers/cipher_cast.h:  [NONE]
+providers/default/ciphers/cipher_des.h:  [NONE]
+providers/default/ciphers/cipher_idea.h:  [NONE]
+providers/default/ciphers/cipher_rc4.h:  [NONE]
+providers/default/ciphers/cipher_seed.h:  [NONE]
+providers/default/ciphers/cipher_sm4.h:  [NONE]
+providers/default/ciphers/cipher_tdes_default.h:  [NONE]
+providers/default/digests/blake2_impl.h:  [NONE]
+providers/default/include/internal/blake2.h:  HEADER_BLAKE2_H => OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H  [NEW]
+providers/fips/selftest.h:  [NONE]
+ssl/record/record.h:  [NONE]
+ssl/record/record_local.h:  [NONE]
+ssl/ssl_cert_table.h:  [NONE]
+ssl/ssl_local.h:  HEADER_SSL_LOCL_H => OSSL_SSL_LOCAL_H  [NEW]
+ssl/statem/statem.h:  [NONE]
+ssl/statem/statem_local.h:  [NONE]
+test/bn_rand_range.h:  [NONE]
+test/cmp_testlib.h:  HEADER_CMP_TEST_LIB_H => OSSL_TEST_CMP_TESTLIB_H  [NEW]
+test/drbg_cavs_data.h:  DRBG_CAVS_DATA_H => OSSL_TEST_DRBG_CAVS_DATA_H  [NEW]
+test/drbgtest.h:  [NONE]
+test/ecdsatest.h:  ECDSATEST_CAVS_H => OSSL_TEST_ECDSATEST_H  [NEW]
+test/evp_test.h:  [NONE]
+test/handshake_helper.h:  HEADER_HANDSHAKE_HELPER_H => OSSL_TEST_HANDSHAKE_HELPER_H  [NEW]
+test/ossl_shim/async_bio.h:  HEADER_ASYNC_BIO => OSSL_TEST_SHIM_ASYNC_BIO_H  [NEW]
+test/ossl_shim/include/openssl/base.h:  OPENSSL_HEADER_BASE_H => OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H  [NEW]
+test/ossl_shim/packeted_bio.h:  HEADER_PACKETED_BIO => OSSL_TEST_SHIM_PACKETED_BIO_H  [NEW]
+test/ossl_shim/test_config.h:  HEADER_TEST_CONFIG => OSSL_TEST_SHIM_TEST_CONFIG_H  [NEW]
+test/ossl_test_endian.h:  HEADER_INTERNAL_ENDIAN_H => OSSL_TEST_OSSL_TEST_ENDIAN_H  [NEW]
+test/ssl_test_ctx.h:  HEADER_SSL_TEST_CTX_H => OSSL_TEST_SSL_TEST_CTX_H  [NEW]
+test/ssltestlib.h:  HEADER_SSLTESTLIB_H => OSSL_TEST_SSLTESTLIB_H  [NEW]
+test/testutil.h:  HEADER_TESTUTIL_H => OSSL_TESTUTIL_H  [NEW]
+test/testutil/output.h:  HEADER_TU_OUTPUT_H => OSSL_TESTUTIL_OUTPUT_H  [NEW]
+test/testutil/tu_local.h:  [NONE]
+# Second Pass: apply include guard fixes
++ '[' master == master ']'
++ git commit -a -F -
+[pr-reorganize-header-files 221d257cdf] Fix header file include guard names
+ 215 files changed, 481 insertions(+), 481 deletions(-)
++ git log --oneline --decorate --oneline HEAD~..
+221d257cdf (HEAD -> pr-reorganize-header-files) Fix header file include guard names
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ '[' master == master ']'
++ echo '# Third Pass: add compatibility defines for public include guards'
+# Third Pass: add compatibility defines for public include guards
+++ git ls-files include/openssl
+++ fgrep .h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/aes.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/asn1.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/asn1_mac.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/asn1err.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/asn1t.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/async.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/asyncerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/bio.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/bioerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/blowfish.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/bn.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/bnerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/buffer.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/buffererr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/camellia.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cast.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cmac.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cmp.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cmp_util.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cmperr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cms.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cmserr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/comp.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/comperr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/conf.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/conf_api.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/conferr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/core.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/core_names.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/core_numbers.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/crmf.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/crmferr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/crypto.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cryptoerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ct.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/cterr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/des.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/dh.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/dherr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/dsa.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/dsaerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/dtls1.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/e_os2.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ebcdic.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ec.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ecdh.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ecdsa.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ecerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/engine.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/engineerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/err.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ess.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/esserr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/evp.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/evperr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/fips_names.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/hmac.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/idea.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/kdf.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/lhash.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/macros.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/md2.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/md4.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/md5.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/mdc2.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/modes.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/obj_mac.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/objects.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/objectserr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ocsp.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ocsperr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/opensslconf.h.in
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/opensslv.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ossl_typ.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/params.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/pem.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/pem2.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/pemerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/pkcs12.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/pkcs12err.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/pkcs7.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/pkcs7err.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/provider.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/rand.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/rand_drbg.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/randerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/rc2.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/rc4.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/rc5.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ripemd.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/rsa.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/rsaerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/safestack.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/seed.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/sha.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/srp.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/srtp.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ssl.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ssl2.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ssl3.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/sslerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/stack.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/store.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/storeerr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/symhacks.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/tls1.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/trace.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ts.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/tserr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/txt_db.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/types.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/ui.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/uierr.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/whrlpool.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/x509.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/x509_vfy.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/x509err.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/x509v3.h
++ for file in $(git ls-files include/openssl | fgrep .h)
++ sed -i -E -f logfiles/fix-include-guards-compat.sed include/openssl/x509v3err.h
++ git commit -a -F -
+[pr-reorganize-header-files 1d10d275c8] Add legacy include guards to public header files
+ 97 files changed, 582 insertions(+)
++ git log --oneline --decorate --oneline HEAD~..
+1d10d275c8 (HEAD -> pr-reorganize-header-files) Add legacy include guards to public header files
++ rebuild
++ rebuild=no
++ '[' no == yes ']'
++ cat
++ chmod +x util/fix-includes
++ cat logfiles/fix-crypto-includes.sed logfiles/fix-local-includes.sed logfiles/fix-public-includes.sed
++ git add util/fix-includes util/fix-includes.sed
++ git commit -a -F -
+[pr-reorganize-header-files a2ffe5e029] Add util/fix-includes script
+ 2 files changed, 25 insertions(+)
+ create mode 100755 util/fix-includes
+ create mode 100644 util/fix-includes.sed
++ git log --oneline --decorate --oneline HEAD~..
+a2ffe5e029 (HEAD -> pr-reorganize-header-files) Add util/fix-includes script
++ git ls-files
++ fgrep .h
++ sort
++ diff -u logfiles/header-files.before logfiles/header-files.after
++ true
++ rebuild yes
++ rebuild=yes
++ '[' yes == yes ']'
++ make clean
++ perl Configure linux-x86_64 --strict-warnings
++ make -j 16
+ar: creating apps/libapps.a
+ar: creating libssl.a
+ar: creating test/libtestutil.a
+ar: creating libcrypto.a
++ make clean
++ git log --oneline --decorate start-reorganize-header-files..
+a2ffe5e029 (HEAD -> pr-reorganize-header-files) Add util/fix-includes script
+1d10d275c8 Add legacy include guards to public header files
+221d257cdf Fix header file include guard names
+11414cd182 Reorganize public header files (part 2)
+899b260039 Reorganize public header files (part 1)
+829ded9b16 Reorganize local header files
+3d5019b17f Reorganize private crypto header files
++ echo 'Saving the logfiles to the '\''logfiles'\'' directory...'
+Saving the logfiles to the 'logfiles' directory...
++ exec

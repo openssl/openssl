@@ -1,0 +1,251 @@
+--- logfiles/header-files.before	2019-09-28 00:45:25.562499906 +0200
++++ logfiles/header-files.after	2019-09-28 00:46:00.566402966 +0200
+@@ -11,123 +11,88 @@
+ apps/testdsa.h
+ apps/testrsa.h
+ apps/timeouts.h
+-crypto/aes/aes_locl.h
++crypto/aes/aes_local.h
+ crypto/arm_arch.h
+ crypto/asn1/asn1_item_list.h
+-crypto/asn1/asn1_locl.h
++crypto/asn1/asn1_local.h
+ crypto/asn1/charmap.h
+ crypto/asn1/standard_methods.h
+ crypto/asn1/tbl_standard.h
+ crypto/async/arch/async_null.h
+ crypto/async/arch/async_posix.h
+ crypto/async/arch/async_win.h
+-crypto/async/async_locl.h
+-crypto/bf/bf_locl.h
++crypto/async/async_local.h
++crypto/bf/bf_local.h
+ crypto/bf/bf_pi.h
+-crypto/bio/bio_lcl.h
+-crypto/bn/bn_lcl.h
++crypto/bio/bio_local.h
++crypto/bn/bn_local.h
+ crypto/bn/bn_prime.h
+ crypto/bn/rsaz_exp.h
+-crypto/camellia/cmll_locl.h
+-crypto/cast/cast_lcl.h
++crypto/camellia/cmll_local.h
++crypto/cast/cast_local.h
+ crypto/cast/cast_s.h
+-crypto/cmp/cmp_int.h
+-crypto/cms/cms_lcl.h
+-crypto/comp/comp_lcl.h
++crypto/cmp/cmp_local.h
++crypto/cms/cms_local.h
++crypto/comp/comp_local.h
+ crypto/conf/conf_def.h
+-crypto/conf/conf_lcl.h
+-crypto/crmf/crmf_int.h
+-crypto/ct/ct_locl.h
+-crypto/des/des_locl.h
++crypto/conf/conf_local.h
++crypto/crmf/crmf_local.h
++crypto/ct/ct_local.h
++crypto/des/des_local.h
+ crypto/des/spr.h
+-crypto/dh/dh_locl.h
+-crypto/dsa/dsa_locl.h
+-crypto/dso/dso_locl.h
++crypto/dh/dh_local.h
++crypto/dsa/dsa_local.h
++crypto/dso/dso_local.h
+ crypto/ec/curve448/arch_32/arch_intrinsics.h
+ crypto/ec/curve448/arch_32/f_impl.h
+-crypto/ec/curve448/curve448_lcl.h
++crypto/ec/curve448/curve448_local.h
+ crypto/ec/curve448/curve448utils.h
+ crypto/ec/curve448/ed448.h
+ crypto/ec/curve448/field.h
+ crypto/ec/curve448/point_448.h
+ crypto/ec/curve448/word.h
+-crypto/ec/ec_lcl.h
+-crypto/engine/eng_int.h
+-crypto/err/err_locl.h
+-crypto/evp/evp_locl.h
+-crypto/hmac/hmac_lcl.h
+-crypto/idea/idea_lcl.h
+-crypto/include/internal/aria.h
+-crypto/include/internal/asn1_dsa.h
+-crypto/include/internal/asn1_int.h
+-crypto/include/internal/async.h
+-crypto/include/internal/bn_conf.h.in
+-crypto/include/internal/bn_dh.h
+-crypto/include/internal/bn_int.h
+-crypto/include/internal/bn_srp.h
+-crypto/include/internal/chacha.h
+-crypto/include/internal/ciphermode_platform.h
+-crypto/include/internal/cms_int.h
+-crypto/include/internal/cryptlib_int.h
+-crypto/include/internal/ctype.h
+-crypto/include/internal/dso_conf.h.in
+-crypto/include/internal/ec_int.h
+-crypto/include/internal/engine.h
+-crypto/include/internal/err_int.h
+-crypto/include/internal/ess_int.h
+-crypto/include/internal/evp_int.h
+-crypto/include/internal/lhash.h
+-crypto/include/internal/md32_common.h
+-crypto/include/internal/modes_int.h
+-crypto/include/internal/objects.h
+-crypto/include/internal/poly1305.h
+-crypto/include/internal/rand_int.h
+-crypto/include/internal/sha.h
+-crypto/include/internal/siphash.h
+-crypto/include/internal/siv_int.h
+-crypto/include/internal/sm2err.h
+-crypto/include/internal/sm2.h
+-crypto/include/internal/sm4.h
+-crypto/include/internal/sparse_array.h
+-crypto/include/internal/store.h
+-crypto/include/internal/store_int.h
+-crypto/include/internal/x509_int.h
+-crypto/lhash/lhash_lcl.h
+-crypto/md4/md4_locl.h
+-crypto/md5/md5_locl.h
++crypto/ec/ec_local.h
++crypto/engine/eng_local.h
++crypto/err/err_local.h
++crypto/evp/evp_local.h
++crypto/hmac/hmac_local.h
++crypto/idea/idea_local.h
++crypto/lhash/lhash_local.h
++crypto/md4/md4_local.h
++crypto/md5/md5_local.h
+ crypto/mips_arch.h
+ crypto/objects/obj_dat.h
+-crypto/objects/obj_lcl.h
++crypto/objects/obj_local.h
+ crypto/objects/obj_xref.h
+-crypto/ocsp/ocsp_lcl.h
+-crypto/pkcs12/p12_lcl.h
++crypto/ocsp/ocsp_local.h
++crypto/pkcs12/p12_local.h
+ crypto/poly1305/poly1305_local.h
+ crypto/ppc_arch.h
+-crypto/property/property_lcl.h
++crypto/property/property_local.h
+ crypto/provider_local.h
+-crypto/rand/rand_lcl.h
+-crypto/rc2/rc2_locl.h
+-crypto/rc4/rc4_locl.h
+-crypto/rc5/rc5_locl.h
++crypto/rand/rand_local.h
++crypto/rc2/rc2_local.h
++crypto/rc4/rc4_local.h
++crypto/rc5/rc5_local.h
+ crypto/ripemd/rmdconst.h
+-crypto/ripemd/rmd_locl.h
+-crypto/rsa/rsa_locl.h
++crypto/ripemd/rmd_local.h
++crypto/rsa/rsa_local.h
+ crypto/s390x_arch.h
+-crypto/seed/seed_locl.h
+-crypto/sha/sha_locl.h
++crypto/seed/seed_local.h
++crypto/sha/sha_local.h
+ crypto/siphash/siphash_local.h
+-crypto/sm3/sm3_locl.h
++crypto/sm3/sm3_local.h
+ crypto/sparc_arch.h
+-crypto/store/store_locl.h
+-crypto/ts/ts_lcl.h
+-crypto/ui/ui_locl.h
++crypto/store/store_local.h
++crypto/ts/ts_local.h
++crypto/ui/ui_local.h
+ crypto/vms_rms.h
+-crypto/whrlpool/wp_locl.h
++crypto/whrlpool/wp_local.h
+ crypto/x509/ext_dat.h
+-crypto/x509/pcy_int.h
++crypto/x509/pcy_local.h
+ crypto/x509/standard_exts.h
+ crypto/x509/v3_admis.h
+-crypto/x509/x509_lcl.h
++crypto/x509/x509_local.h
+ doc/man7/openssl-core.h.pod
+ engines/e_afalg_err.h
+ engines/e_afalg.h
+@@ -136,10 +101,44 @@
+ engines/e_ossltest_err.h
+ e_os.h
+ fuzz/fuzzer.h
++include/crypto/aria.h
++include/crypto/asn1_dsa.h
++include/crypto/asn1.h
++include/crypto/async.h
++include/crypto/bn_conf.h.in
++include/crypto/bn_dh.h
++include/crypto/bn.h
++include/crypto/bn_srp.h
++include/crypto/chacha.h
++include/crypto/ciphermode_platform.h
++include/crypto/cms.h
++include/crypto/cryptlib.h
++include/crypto/ctype.h
++include/crypto/dso_conf.h.in
++include/crypto/ec.h
++include/crypto/engine.h
++include/crypto/err.h
++include/crypto/ess.h
++include/crypto/evp.h
++include/crypto/lhash.h
++include/crypto/md32_common.h
++include/crypto/modes.h
++include/crypto/objects.h
++include/crypto/poly1305.h
++include/crypto/rand.h
++include/crypto/sha.h
++include/crypto/siphash.h
++include/crypto/siv.h
++include/crypto/sm2err.h
++include/crypto/sm2.h
++include/crypto/sm4.h
++include/crypto/sparse_array.h
++include/crypto/store.h
++include/crypto/x509.h
+ include/internal/bio.h
+ include/internal/comp.h
+ include/internal/conf.h
+-include/internal/constant_time_locl.h
++include/internal/constant_time.h
+ include/internal/core.h
+ include/internal/cryptlib.h
+ include/internal/dane.h
+@@ -275,6 +274,7 @@
+ include/openssl/tserr.h
+ include/openssl/ts.h
+ include/openssl/txt_db.h
++include/openssl/types.h
+ include/openssl/uierr.h
+ include/openssl/ui.h
+ include/openssl/whrlpool.h
+@@ -287,7 +287,7 @@
+ os-dep/haiku.h
+ providers/common/ciphers/cipher_aes.h
+ providers/common/ciphers/cipher_aes_xts.h
+-providers/common/ciphers/cipher_locl.h
++providers/common/ciphers/cipher_local.h
+ providers/common/include/internal/ciphers/cipher_aead.h
+ providers/common/include/internal/ciphers/cipher_ccm.h
+ providers/common/include/internal/ciphers/ciphercommon.h
+@@ -316,11 +316,11 @@
+ providers/default/include/internal/blake2.h
+ providers/fips/selftest.h
+ ssl/record/record.h
+-ssl/record/record_locl.h
++ssl/record/record_local.h
+ ssl/ssl_cert_table.h
+-ssl/ssl_locl.h
++ssl/ssl_local.h
+ ssl/statem/statem.h
+-ssl/statem/statem_locl.h
++ssl/statem/statem_local.h
+ test/bn_rand_range.h
+ test/cmp_testlib.h
+ test/drbg_cavs_data.h
