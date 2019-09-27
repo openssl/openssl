@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CHACHA_H
-#define HEADER_CHACHA_H
+#ifndef OSSL_CRYPTO_CHACHA_H
+#define OSSL_CRYPTO_CHACHA_H
 
 #include <stddef.h>
 

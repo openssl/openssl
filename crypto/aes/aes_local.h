@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_AES_LOCL_H
-# define HEADER_AES_LOCL_H
+#ifndef OSSL_CRYPTO_AES_LOCAL_H
+# define OSSL_CRYPTO_AES_LOCAL_H
 
 # include <openssl/e_os2.h>
 # include <stdio.h>
@@ -39,4 +39,4 @@ typedef unsigned char u8;
 /* This controls loop-unrolling in aes_core.c */
 # undef FULL_UNROLL
 
-#endif                          /* !HEADER_AES_LOCL_H */
+#endif                          /* !OSSL_CRYPTO_AES_LOCAL_H */

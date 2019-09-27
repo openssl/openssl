@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMS_LCL_H
-# define HEADER_CMS_LCL_H
+#ifndef OSSL_CRYPTO_CMS_LOCAL_H
+# define OSSL_CRYPTO_CMS_LOCAL_H
 
 # include <openssl/x509.h>
 

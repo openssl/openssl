@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SM4_H
-# define HEADER_SM4_H
+#ifndef OSSL_CRYPTO_SM4_H
+# define OSSL_CRYPTO_SM4_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/e_os2.h>

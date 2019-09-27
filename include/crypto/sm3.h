@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SM3_H
-# define HEADER_SM3_H
+#ifndef OSSL_CRYPTO_SM3_H
+# define OSSL_CRYPTO_SM3_H
 
 # include <openssl/opensslconf.h>
 

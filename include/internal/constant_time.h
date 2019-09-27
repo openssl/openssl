@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CONSTANT_TIME_LOCL_H
-# define HEADER_CONSTANT_TIME_LOCL_H
+#ifndef OSSL_INTERNAL_CONSTANT_TIME_H
+# define OSSL_INTERNAL_CONSTANT_TIME_H
 
 # include <stdlib.h>
 # include <string.h>
@@ -384,4 +384,4 @@ static ossl_inline void constant_time_lookup(void *out,
  */
 void err_clear_last_constant_time(int clear);
 
-#endif                          /* HEADER_CONSTANT_TIME_LOCL_H */
+#endif                          /* OSSL_INTERNAL_CONSTANT_TIME_H */
