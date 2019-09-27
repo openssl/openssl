@@ -18,8 +18,8 @@
  * throughout the rest of the source code.  Refer to issue #4154 for
  * details.
  */
-#ifndef INTERNAL_CTYPE_H
-# define INTERNAL_CTYPE_H
+#ifndef OSSL_CRYPTO_CTYPE_H
+# define OSSL_CRYPTO_CTYPE_H
 
 # define CTYPE_MASK_lower       0x1
 # define CTYPE_MASK_upper       0x2

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BN_LCL_H
-# define HEADER_BN_LCL_H
+#ifndef OSSL_CRYPTO_BN_LOCAL_H
+# define OSSL_CRYPTO_BN_LOCAL_H
 
 /*
  * The EDK2 build doesn't use bn_conf.h; it sets THIRTY_TWO_BIT or

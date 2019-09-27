@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  *
  */
-#ifndef HEADER_SEED_LOCL_H
-# define HEADER_SEED_LOCL_H
+#ifndef OSSL_CRYPTO_SEED_LOCAL_H
+# define OSSL_CRYPTO_SEED_LOCAL_H
 
 # include "openssl/e_os2.h"
 # include <openssl/seed.h>
@@ -109,4 +109,4 @@ typedef unsigned int seed_word;
         (X1) ^= (T0);                            \
         (X2) ^= (T1)
 
-#endif                          /* HEADER_SEED_LOCL_H */
+#endif                          /* OSSL_CRYPTO_SEED_LOCAL_H */
