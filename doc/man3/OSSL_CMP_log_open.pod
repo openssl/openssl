@@ -78,7 +78,7 @@ with the following type:
 
 The parameters may provide
 a component identifier (which may be a library name or function name) or NULL,
-a file path name or NULL,
+a file pathname or NULL,
 a line number or 0 indicating the source code location,
 a severity level, and
 a message string describing the nature of the event, terminated by '\n'.

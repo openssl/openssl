@@ -30,7 +30,7 @@ to free up any configuration that module may have performed.
 
 CONF_modules_unload() finishes and unloads configuration modules. If
 B<all> is set to B<0> only modules loaded from DSOs will be unloads. If
-B<all> is B<1> all modules, including builtin modules will be unloaded.
+B<all> is B<1> all modules, including built-in modules will be unloaded.
 
 =head1 RETURN VALUES
 

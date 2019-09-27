@@ -40,7 +40,7 @@ memory.
 
 BN_bn2binpad() also converts the absolute value of B<a> into big-endian form
 and stores it at B<to>. B<tolen> indicates the length of the output buffer
-B<to>. The result is padded with zeroes if necessary. If B<tolen> is less than
+B<to>. The result is padded with zeros if necessary. If B<tolen> is less than
 BN_num_bytes(B<a>) an error is returned.
 
 BN_bin2bn() converts the positive integer in big-endian form of length

@@ -463,7 +463,7 @@ The actual TYPE structure passed to B<i2d_I<TYPE>>() must be a valid
 populated B<I<TYPE>> structure -- it B<cannot> simply be fed with an
 empty structure such as that returned by TYPE_new().
 
-The encoded data is in binary form and may contain embedded zeroes.
+The encoded data is in binary form and may contain embedded zeros.
 Therefore any FILE pointers or BIOs should be opened in binary mode.
 Functions such as strlen() will B<not> return the correct length
 of the encoded structure.

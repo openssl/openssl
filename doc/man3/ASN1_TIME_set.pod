@@ -117,7 +117,7 @@ one or both (depending on the time difference) of I<*pday> and I<*psec>
 will be positive. If I<to> represents a time earlier than I<from> then
 one or both of I<*pday> and I<*psec> will be negative. If I<to> and I<from>
 represent the same time then I<*pday> and I<*psec> will both be zero.
-If both I<*pday> and I<*psec> are non-zero they will always have the same
+If both I<*pday> and I<*psec> are nonzero they will always have the same
 sign. The value of I<*psec> will always be less than the number of seconds
 in a day. If I<from> or I<to> is NULL the current time is used.
 
@@ -169,7 +169,7 @@ either format.
 =head1 BUGS
 
 ASN1_TIME_print(), ASN1_UTCTIME_print() and ASN1_GENERALIZEDTIME_print()
-do not print out the time zone: it either prints out "GMT" or nothing. But all
+do not print out the timezone: it either prints out "GMT" or nothing. But all
 certificates complying with RFC5280 et al use GMT anyway.
 
 Use the ASN1_TIME_normalize() function to normalize the time value before

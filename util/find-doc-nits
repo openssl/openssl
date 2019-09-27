@@ -395,6 +395,9 @@ sub wording {
     my $contents = shift;
 
     foreach my $k ( keys %preferred_words ) {
+        # Sigh, trademark
+        next if $k eq 'file system'
+            and $contents =~ /Microsoft Encrypted File System/;
         err($id, "found '$k' should use '$preferred_words{$k}'")
             if $contents =~ /\b\Q$k\E\b/i;
     }
