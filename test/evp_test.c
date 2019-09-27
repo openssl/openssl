@@ -1161,7 +1161,7 @@ static int mac_test_run_mac(EVP_TEST *t)
     size_t params_n = 0;
     size_t params_n_allocstart = 0;
     const OSSL_PARAM *defined_params =
-        EVP_MAC_CTX_settable_params(expected->mac);
+        EVP_MAC_settable_ctx_params(expected->mac);
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_MAC %s test", EVP_MAC_name(expected->mac));
@@ -2054,7 +2054,7 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     KDF_DATA *kdata = t->data;
     int rv;
     char *p, *name;
-    const OSSL_PARAM *defs = EVP_KDF_CTX_settable_params(EVP_KDF_CTX_kdf(kctx));
+    const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(EVP_KDF_CTX_kdf(kctx));
 
     if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;

@@ -76,9 +76,9 @@ static void list_ciphers(void)
             print_param_types("retrievable algorithm parameters",
                               EVP_CIPHER_gettable_params(c), 4);
             print_param_types("retrievable operation parameters",
-                              EVP_CIPHER_CTX_gettable_params(c), 4);
+                              EVP_CIPHER_gettable_ctx_params(c), 4);
             print_param_types("settable operation parameters",
-                              EVP_CIPHER_CTX_settable_params(c), 4);
+                              EVP_CIPHER_settable_ctx_params(c), 4);
         }
     }
     sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_free);
@@ -186,9 +186,9 @@ static void list_macs(void)
             print_param_types("retrievable algorithm parameters",
                               EVP_MAC_gettable_params(m), 4);
             print_param_types("retrievable operation parameters",
-                              EVP_MAC_CTX_gettable_params(m), 4);
+                              EVP_MAC_gettable_ctx_params(m), 4);
             print_param_types("settable operation parameters",
-                              EVP_MAC_CTX_settable_params(m), 4);
+                              EVP_MAC_settable_ctx_params(m), 4);
         }
     }
     sk_EVP_MAC_pop_free(macs, EVP_MAC_free);
@@ -236,9 +236,9 @@ static void list_kdfs(void)
             print_param_types("retrievable algorithm parameters",
                               EVP_KDF_gettable_params(m), 4);
             print_param_types("retrievable operation parameters",
-                              EVP_KDF_CTX_gettable_params(m), 4);
+                              EVP_KDF_gettable_ctx_params(m), 4);
             print_param_types("settable operation parameters",
-                              EVP_KDF_CTX_settable_params(m), 4);
+                              EVP_KDF_settable_ctx_params(m), 4);
         }
     }
     sk_EVP_KDF_pop_free(kdfs, EVP_KDF_free);

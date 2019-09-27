@@ -7,7 +7,7 @@ EVP_KDF_name,
 EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_kdf,
 EVP_KDF_reset, EVP_KDF_size, EVP_KDF_derive, EVP_KDF_CTX_dup,
 EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_ex,
-EVP_KDF_get_params, EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params,
+EVP_KDF_get_params, EVP_KDF_gettable_ctx_params, EVP_KDF_settable_ctx_params,
 EVP_KDF_gettable_params - EVP KDF routines
 
 =head1 SYNOPSIS
@@ -36,8 +36,8 @@ EVP_KDF_gettable_params - EVP KDF routines
  int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
  int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
  const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
- const OSSL_PARAM *EVP_KDF_CTX_gettable_params(const EVP_KDF *kdf);
- const OSSL_PARAM *EVP_KDF_CTX_settable_params(const EVP_KDF *kdf);
+ const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf);
+ const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf);
  const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
 
 =head1 DESCRIPTION
@@ -114,8 +114,8 @@ simply ignored.
 Also, what happens when a needed parameter isn't passed down is
 defined by the implementation.
 
-EVP_KDF_gettable_params(), EVP_KDF_CTX_gettable_params() and
-EVP_KDF_CTX_settable_params() get a constant B<OSSL_PARAM> array that
+EVP_KDF_gettable_params(), EVP_KDF_gettable_ctx_params() and
+EVP_KDF_settable_ctx_params() get a constant B<OSSL_PARAM> array that
 decribes the retrievable and settable parameters, i.e. parameters that
 can be used with EVP_KDF_get_params(), EVP_KDF_CTX_get_params()
 and EVP_KDF_CTX_set_params(), respectively.

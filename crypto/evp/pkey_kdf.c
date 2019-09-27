@@ -213,7 +213,7 @@ static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     EVP_KDF_CTX *kctx = pkctx->kctx;
     const EVP_KDF *kdf = EVP_KDF_CTX_kdf(kctx);
     BUF_MEM **collector = NULL;
-    const OSSL_PARAM *defs = EVP_KDF_CTX_settable_params(kdf);
+    const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(kdf);
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     int ok = 0;
 

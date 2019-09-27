@@ -1181,14 +1181,14 @@ const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher)
     return NULL;
 }
 
-const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(const EVP_CIPHER *cipher)
+const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher)
 {
     if (cipher != NULL && cipher->settable_ctx_params != NULL)
         return cipher->settable_ctx_params();
     return NULL;
 }
 
-const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(const EVP_CIPHER *cipher)
+const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher)
 {
     if (cipher != NULL && cipher->gettable_ctx_params != NULL)
         return cipher->gettable_ctx_params();
