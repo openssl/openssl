@@ -150,7 +150,7 @@ L<provider-kdf(7)>
 =item Key Exchange
 
 In the OpenSSL libraries, the corresponding method object is
-B<EVP_KEYEXCh>.
+B<EVP_KEYEXCH>.
 The number for this operation is B<OSSL_OP_KEYEXCH>.
 The functions the provider can offer are described in
 L<provider-keyexch(7)>

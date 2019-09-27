@@ -70,7 +70,7 @@ frees the given method.
 
 =head1 RETURN VALUES
 
-evp_generic_fetch() returns a method on success, or B<NULL> on error.
+evp_generic_fetch() returns a method on success, or NULL on error.
 
 =head1 EXAMPLES
 

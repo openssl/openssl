@@ -90,7 +90,7 @@ Remove a temporary store.
 Look up an already existing method from a store by name.
 
 The store may be given with I<store>.
-B<NULL> is a valid value and means that a sub-system default store
+NULL is a valid value and means that a sub-system default store
 must be used.
 This default store should be stored in the library context I<libctx>.
 
@@ -107,7 +107,7 @@ Places the I<method> created by the construct() function (see below)
 in a store.
 
 The store may be given with I<store>.
-B<NULL> is a valid value and means that a sub-system default store
+NULL is a valid value and means that a sub-system default store
 must be used.
 This default store should be stored in the library context I<libctx>.
 
@@ -141,7 +141,7 @@ the reference count reaches zero.
 =head1 RETURN VALUES
 
 ossl_method_construct() returns a constructed method on success, or
-B<NULL> on error.
+NULL on error.
 
 =head1 HISTORY
 

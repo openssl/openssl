@@ -51,7 +51,7 @@ A context for X942KDF can be obtained by calling:
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "X942KDF", NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
-The output length of an X942KDF is specified via the C<keylen>
+The output length of an X942KDF is specified via the I<keylen>
 parameter to the L<EVP_KDF-derive(3)> function.
 
 =head1 EXAMPLES

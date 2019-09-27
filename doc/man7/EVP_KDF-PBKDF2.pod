@@ -65,10 +65,10 @@ The value string is expected to be a decimal number 0 or 1.
 =head1 NOTES
 
 A typical application of this algorithm is to derive keying material for an
-encryption algorithm from a password in the B<pass>, a salt in B<salt>,
+encryption algorithm from a password in the "pass", a salt in "salt",
 and an iteration count.
 
-Increasing the B<iter> parameter slows down the algorithm which makes it
+Increasing the "iter" parameter slows down the algorithm which makes it
 harder for an attacker to perform a brute force attack using a large number
 of candidate passwords.
 

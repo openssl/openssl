@@ -14,7 +14,7 @@ ossl_prov_util_nid_to_name
 =head1 DESCRIPTION
 
 The ossl_prov_util_nid_to_name() returns the name of an algorithm given a NID
-in the B<nid> parameter. For the default and legacy providers it is equivalent
+in the I<nid> parameter. For the default and legacy providers it is equivalent
 to calling OBJ_nid2sn(). The FIPS provider does not have the object database
 code available to it (because that code relies on the ASN.1 code), so this
 function is a static lookup of all known FIPS algorithm NIDs.

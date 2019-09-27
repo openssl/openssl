@@ -111,65 +111,65 @@ OP_cipher_newctx() should create and return a pointer to a provider side
 structure for holding context information during a cipher operation.
 A pointer to this context will be passed back in a number of the other cipher
 operation function calls.
-The parameter B<provctx> is the provider context generated during provider
+The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(3)>).
 
 OP_cipher_freectx() is passed a pointer to the provider side cipher context in
-the B<cctx> parameter.
+the I<cctx> parameter.
 This function should free any resources associated with that context.
 
 OP_cipher_dupctx() should duplicate the provider side cipher context in the
-B<cctx> parameter and return the duplicate copy.
+I<cctx> parameter and return the duplicate copy.
 
 =head2 Encryption/Decryption Functions
 
 OP_cipher_encrypt_init() initialises a cipher operation for encryption given a
-newly created provider side cipher context in the B<cctx> parameter.
-The key to be used is given in B<key> which is B<keylen> bytes long.
-The IV to be used is given in B<iv> which is B<ivlen> bytes long.
+newly created provider side cipher context in the I<cctx> parameter.
+The key to be used is given in I<key> which is I<keylen> bytes long.
+The IV to be used is given in I<iv> which is I<ivlen> bytes long.
 
 OP_cipher_decrypt_init() is the same as OP_cipher_encrypt_init() except that it
 initialises the context for a decryption operation.
 
 OP_cipher_update() is called to supply data to be encrypted/decrypted as part of
 a previously initialised cipher operation.
-The B<cctx> parameter contains a pointer to a previously initialised provider
+The I<cctx> parameter contains a pointer to a previously initialised provider
 side context.
-OP_cipher_update() should encrypt/decrypt B<inl> bytes of data at the location
-pointed to by B<in>.
-The encrypted data should be stored in B<out> and the amount of data written to
-B<*outl> which should not exceed B<outsize> bytes.
+OP_cipher_update() should encrypt/decrypt I<inl> bytes of data at the location
+pointed to by I<in>.
+The encrypted data should be stored in I<out> and the amount of data written to
+I<*outl> which should not exceed I<outsize> bytes.
 OP_cipher_update() may be called multiple times for a single cipher operation.
 It is the responsibility of the cipher implementation to handle input lengths
 that are not multiples of the block length.
 In such cases a cipher implementation will typically cache partial blocks of
 input data until a complete block is obtained.
-B<out> may be the same location as B<in> but it should not partially overlap.
-The same expectations apply to B<outsize> as documented for
+I<out> may be the same location as I<in> but it should not partially overlap.
+The same expectations apply to I<outsize> as documented for
 L<EVP_EncryptUpdate(3)> and L<EVP_DecryptUpdate(3)>.
 
 OP_cipher_final() completes an encryption or decryption started through previous
 OP_cipher_encrypt_init() or OP_cipher_decrypt_init(), and OP_cipher_update()
 calls.
-The B<cctx> parameter contains a pointer to the provider side context.
-Any final encryption/decryption output should be written to B<out> and the
-amount of data written to B<*outl> which should not exceed B<outsize> bytes.
-The same expectations apply to B<outsize> as documented for
+The I<cctx> parameter contains a pointer to the provider side context.
+Any final encryption/decryption output should be written to I<out> and the
+amount of data written to I<*outl> which should not exceed I<outsize> bytes.
+The same expectations apply to I<outsize> as documented for
 L<EVP_EncryptFinal(3)> and L<EVP_DecryptFinal(3)>.
 
 OP_cipher_cipher() performs encryption/decryption using the provider side cipher
-context in the B<cctx> parameter that should have been previously initialised via
+context in the I<cctx> parameter that should have been previously initialised via
 a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init.
 This should call the raw underlying cipher function without any padding.
 This will be invoked in the provider as a result of the application calling
 L<EVP_Cipher(3)>.
 The application is responsible for ensuring that the input is a multiple of the
 block length.
-The data to be encrypted/decrypted will be in B<in>, and it will be B<inl> bytes
+The data to be encrypted/decrypted will be in I<in>, and it will be I<inl> bytes
 in length.
-The output from the encryption/decryption should be stored in B<out> and the
-amount of data stored should be put in B<*outl> which should be no more than
-B<outsize> bytes.
+The output from the encryption/decryption should be stored in I<out> and the
+amount of data stored should be put in I<*outl> which should be no more than
+I<outsize> bytes.
 
 =head2 Cipher Parameters
 
@@ -177,14 +177,14 @@ See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
 OP_cipher_get_params() gets details of the algorithm implementation
-and stores them in B<params>.
+and stores them in I<params>.
 
 OP_cipher_set_ctx_params() sets cipher operation parameters for the
-provider side cipher context B<cctx> to B<params>.
+provider side cipher context I<cctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
 OP_cipher_get_ctx_params() gets cipher operation details details from
-the given provider side cipher context B<cctx> and stores them in B<params>.
+the given provider side cipher context I<cctx> and stores them in I<params>.
 
 OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params(), and
 OP_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
@@ -306,7 +306,7 @@ beginning of the output buffer, do "in place" encryption of the payload and
 write that to the output buffer, and finally add the tag onto the end of the
 output buffer.
 
-Whether encrypting or decrypting the value written to B<*outl> in the
+Whether encrypting or decrypting the value written to I<*outl> in the
 OP_cipher_cipher call should be the length of the payload excluding the explicit
 IV length and the tag length.
 
