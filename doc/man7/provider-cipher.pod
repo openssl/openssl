@@ -324,13 +324,9 @@ odd parity).
 =item "alg_id_param" (B<OSSL_CIPHER_PARAM_ALG_ID>) (octet string)
 
 Used to pass the DER encoded AlgorithmIdentifier parameter to or from
-the cipher implementation.  Functions like L<EVP_CIPHER_param_to_asn1(3)>,
-L<EVP_CIPHER_asn1_to_param(3)>, L<EVP_CIPHER_get_asn1_iv(3)> and
-L<EVP_CIPHER_set_asn1_iv(3)> use this parameter for any implementation
-that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1>.  If that flag isn't
-present, these functions will assume the AlgorithmIdentifier parameter
-is an OCTET STRING containing the desired initial IV, extract that IV
-and pass it on to the implementation.
+the cipher implementation.  Functions like L<EVP_CIPHER_param_to_asn1(3)>
+and L<EVP_CIPHER_asn1_to_param(3)> use this parameter for any implementation
+that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
 
 =back
 
