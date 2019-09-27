@@ -9,8 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMP_TEST_LIB_H
-# define HEADER_CMP_TEST_LIB_H
+#ifndef OSSL_TEST_CMP_TESTLIB_H
+# define OSSL_TEST_CMP_TESTLIB_H
 
 # include <openssl/cmp.h>
 # include <openssl/pem.h>
@@ -31,4 +31,4 @@ int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2);
 int STACK_OF_X509_push1(STACK_OF(X509) *sk, X509 *cert);
 # endif
 
-#endif /* HEADER_CMP_TEST_LIB_H */
+#endif /* OSSL_TEST_CMP_TESTLIB_H */

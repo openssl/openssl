@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BN_H
-# define HEADER_BN_H
+#ifndef OPENSSL_BN_H
+# define OPENSSL_BN_H
 
 # include <openssl/e_os2.h>
 # ifndef OPENSSL_NO_STDIO

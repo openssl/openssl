@@ -9,8 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_HEADER_CMP_INT_H
-# define OSSL_HEADER_CMP_INT_H
+#ifndef OSSL_CRYPTO_CMP_LOCAL_H
+# define OSSL_CRYPTO_CMP_LOCAL_H
 
 # include "internal/cryptlib.h"
 
@@ -722,4 +722,4 @@ int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
 
 #  define OSSL_CMP_TRANSACTIONID_LENGTH 16
 
-#endif /* !defined OSSL_HEADER_CMP_INT_H */
+#endif /* !defined OSSL_CRYPTO_CMP_LOCAL_H */

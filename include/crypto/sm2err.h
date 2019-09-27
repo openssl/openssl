@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SM2ERR_H
-# define HEADER_SM2ERR_H
+#ifndef OSSL_CRYPTO_SM2ERR_H
+# define OSSL_CRYPTO_SM2ERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

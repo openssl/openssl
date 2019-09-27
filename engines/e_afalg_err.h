@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_AFALGERR_H
-# define HEADER_AFALGERR_H
+#ifndef OSSL_ENGINES_E_AFALG_ERR_H
+# define OSSL_ENGINES_E_AFALG_ERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

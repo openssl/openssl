@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PROPERTY_H
-# define HEADER_PROPERTY_H
+#ifndef OSSL_INTERNAL_PROPERTY_H
+# define OSSL_INTERNAL_PROPERTY_H
 
 #include "internal/cryptlib.h"
 

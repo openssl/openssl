@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef RSA_LOCAL_HEADER_H
-#define RSA_LOCAL_HEADER_H
+#ifndef OSSL_CRYPTO_RSA_LOCAL_H
+#define OSSL_CRYPTO_RSA_LOCAL_H
 
 #include <openssl/rsa.h>
 #include "internal/refcount.h"
@@ -167,4 +167,4 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
                                   const BIGNUM *Xq2, int nbits,
                                   const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
 
-#endif /* RSA_LOCAL_HEADER_H */
+#endif /* OSSL_CRYPTO_RSA_LOCAL_H */

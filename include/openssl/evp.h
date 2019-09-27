@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ENVELOPE_H
-# define HEADER_ENVELOPE_H
+#ifndef OPENSSL_EVP_H
+# define OPENSSL_EVP_H
 
 # include <stdarg.h>
 

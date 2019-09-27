@@ -11,8 +11,8 @@
  * CRMF (RFC 4211) implementation by M. Peylo, M. Viljanen, and D. von Oheimb.
  */
 
-#ifndef OSSL_HEADER_CRMF_H
-# define OSSL_HEADER_CRMF_H
+#ifndef OPENSSL_CRMF_H
+# define OPENSSL_CRMF_H
 
 # include <openssl/opensslconf.h>
 
@@ -136,4 +136,4 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
 }
 #  endif
 # endif /* !defined OPENSSL_NO_CRMF */
-#endif /* !defined OSSL_HEADER_CRMF_H */
+#endif /* !defined OPENSSL_CRMF_H */

@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CRYPTO_H
-# define HEADER_CRYPTO_H
+#ifndef OPENSSL_CRYPTO_H
+# define OPENSSL_CRYPTO_H
 
 # include <stdlib.h>
 # include <time.h>

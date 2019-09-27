@@ -9,8 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_HEADER_CMP_UTIL_H
-# define OSSL_HEADER_CMP_UTIL_H
+#ifndef OPENSSL_CMP_UTIL_H
+# define OPENSSL_CMP_UTIL_H
 
 # include <openssl/opensslconf.h>
 # ifndef OPENSSL_NO_CMP
@@ -76,4 +76,4 @@ void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn);
 }
 #   endif
 # endif /* !defined OPENSSL_NO_CMP */
-#endif /* !defined OSSL_HEADER_CMP_UTIL_H */
+#endif /* !defined OPENSSL_CMP_UTIL_H */

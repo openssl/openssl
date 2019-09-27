@@ -11,8 +11,8 @@
  * CRMF implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
-#ifndef OSSL_HEADER_CRMF_INT_H
-# define OSSL_HEADER_CRMF_INT_H
+#ifndef OSSL_CRYPTO_CRMF_LOCAL_H
+# define OSSL_CRYPTO_CRMF_LOCAL_H
 
 # include <openssl/crmf.h>
 # include <openssl/err.h>

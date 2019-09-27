@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef HEADER_SEED_H
-# define HEADER_SEED_H
+#ifndef OPENSSL_SEED_H
+# define OPENSSL_SEED_H
 
 # include <openssl/opensslconf.h>
 

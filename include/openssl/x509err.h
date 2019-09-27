@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_X509ERR_H
-# define HEADER_X509ERR_H
+#ifndef OPENSSL_X509ERR_H
+# define OPENSSL_X509ERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

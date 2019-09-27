@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PACKET_LOCL_H
-# define HEADER_PACKET_LOCL_H
+#ifndef OSSL_INTERNAL_PACKET_H
+# define OSSL_INTERNAL_PACKET_H
 
 # include <string.h>
 # include <openssl/bn.h>
@@ -881,4 +881,4 @@ int WPACKET_is_null_buf(WPACKET *pkt);
 /* Release resources in a WPACKET if a failure has occurred. */
 void WPACKET_cleanup(WPACKET *pkt);
 
-#endif                          /* HEADER_PACKET_LOCL_H */
+#endif                          /* OSSL_INTERNAL_PACKET_H */

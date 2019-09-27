@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_DIGESTCOMMON_H
-# define OSSL_DIGESTCOMMON_H
+#ifndef OSSL_PROVIDERS_DIGESTCOMMON_H
+# define OSSL_PROVIDERS_DIGESTCOMMON_H
 
 # include <openssl/core_numbers.h>
 # include <openssl/core_names.h>
@@ -100,4 +100,4 @@ int digest_default_get_params(OSSL_PARAM params[], size_t blksz, size_t paramsz,
 }
 # endif
 
-#endif /* OSSL_DIGESTCOMMON_H */
+#endif /* OSSL_PROVIDERS_DIGESTCOMMON_H */

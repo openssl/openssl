@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef INTERNAL_LHASH_H
-# define INTERNAL_LHASH_H
+#ifndef OSSL_CRYPTO_LHASH_H
+# define OSSL_CRYPTO_LHASH_H
 
 unsigned long openssl_lh_strcasehash(const char *);
 

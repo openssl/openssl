@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ASN1_DSA_H
-# define HEADER_ASN1_DSA_H
+#ifndef OSSL_CRYPTO_ASN1_DSA_H
+# define OSSL_CRYPTO_ASN1_DSA_H
 
 #include "internal/packet.h"
 

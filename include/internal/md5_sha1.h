@@ -8,8 +8,8 @@
  */
 
 /* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef HEADER_MD5_SHA1_H
-# define HEADER_MD5_SHA1_H
+#ifndef OSSL_INTERNAL_MD5_SHA1_H
+# define OSSL_INTERNAL_MD5_SHA1_H
 
 # include <openssl/opensslconf.h>
 
@@ -34,4 +34,4 @@ int md5_sha1_ctrl(MD5_SHA1_CTX *mctx, int cmd, int mslen, void *ms);
 
 # endif /* OPENSSL_NO_MD5 */
 
-#endif /* HEADER_MD5_SHA1_H */
+#endif /* OSSL_INTERNAL_MD5_SHA1_H */

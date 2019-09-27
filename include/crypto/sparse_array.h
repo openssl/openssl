@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SPARSE_ARRAY_H
-# define HEADER_SPARSE_ARRAY_H
+#ifndef OSSL_CRYPTO_SPARSE_ARRAY_H
+# define OSSL_CRYPTO_SPARSE_ARRAY_H
 
 # include <openssl/e_os2.h>
 

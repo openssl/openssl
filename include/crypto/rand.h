@@ -15,8 +15,8 @@
  * or in the file LICENSE in the source distribution.
  */
 
-#ifndef HEADER_RAND_INT_H
-# define HEADER_RAND_INT_H
+#ifndef OSSL_CRYPTO_RAND_H
+# define OSSL_CRYPTO_RAND_H
 
 # include <openssl/rand.h>
 

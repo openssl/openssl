@@ -6,8 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#ifndef HEADER_CURVE448_LCL_H
-# define HEADER_CURVE448_LCL_H
+#ifndef OSSL_CRYPTO_EC_CURVE448_LOCAL_H
+# define OSSL_CRYPTO_EC_CURVE448_LOCAL_H
 # include "curve448utils.h"
 
 int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
@@ -36,4 +36,4 @@ int ED448ph_verify(OPENSSL_CTX *ctx, const uint8_t hash[64],
 int ED448_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[57],
                               const uint8_t private_key[57]);
 
-#endif              /* HEADER_CURVE448_LCL_H */
+#endif              /* OSSL_CRYPTO_EC_CURVE448_LOCAL_H */
