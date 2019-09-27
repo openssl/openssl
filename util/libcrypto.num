@@ -4850,3 +4850,6 @@ EVP_KEYMGMT_number                      4966	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_number                      4967	3_0_0	EXIST::FUNCTION:
 EVP_KDF_number                          4968	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_number                    4969	3_0_0	EXIST::FUNCTION:
+OSSL_CMP_CTX_snprint_PKIStatus          4970	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_HDR_get0_transactionID         4971	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_HDR_get0_recipNonce            4972	3_0_0	EXIST::FUNCTION:CMP

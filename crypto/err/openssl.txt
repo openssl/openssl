@@ -2063,8 +2063,11 @@ BN_R_PRIVATE_KEY_TOO_LARGE:117:private key too large
 BN_R_P_IS_NOT_PRIME:112:p is not prime
 BN_R_TOO_MANY_ITERATIONS:113:too many iterations
 BN_R_TOO_MANY_TEMPORARY_VARIABLES:109:too many temporary variables
+CMP_R_ERROR_PARSING_PKISTATUS:107:error parsing pkistatus
+CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_INVALID_ARGS:100:invalid args
 CMP_R_MULTIPLE_SAN_SOURCES:102:multiple san sources
+CMP_R_MISSING_SENDER_IDENTIFICATION:111:missing sender identification
 CMP_R_NO_STDIO:194:no stdio
 CMP_R_NULL_ARGUMENT:103:null argument
 CMS_R_ADD_SIGNER_ERROR:99:add signer error

@@ -471,7 +471,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[conf_include_test]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{cmp} -}]
-    PROGRAMS{noinst}=cmp_asn_test cmp_ctx_test
+    PROGRAMS{noinst}=cmp_asn_test cmp_ctx_test cmp_status_test cmp_hdr_test
   ENDIF
 
   SOURCE[cmp_asn_test]=cmp_asn_test.c cmp_testlib.c
@@ -481,6 +481,14 @@ IF[{- !$disabled{tests} -}]
   SOURCE[cmp_ctx_test]=cmp_ctx_test.c cmp_testlib.c
   INCLUDE[cmp_ctx_test]=.. ../include ../apps/include
   DEPEND[cmp_ctx_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[cmp_hdr_test]=cmp_hdr_test.c cmp_testlib.c
+  INCLUDE[cmp_hdr_test]=.. ../include ../apps/include
+  DEPEND[cmp_hdr_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[cmp_status_test]=cmp_status_test.c cmp_testlib.c
+  INCLUDE[cmp_status_test]=.. ../include ../apps/include
+  DEPEND[cmp_status_test]=../libcrypto.a libtestutil.a
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't

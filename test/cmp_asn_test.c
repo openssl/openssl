@@ -24,21 +24,10 @@ typedef struct test_fixture {
 static CMP_ASN_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
     CMP_ASN_TEST_FIXTURE *fixture;
-    int setup_ok = 0;
 
-    /* Allocate memory owned by the fixture, exit on error */
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
-        goto err;
+        return NULL;
     fixture->test_case_name = test_case_name;
-    setup_ok = 1;
-
- err:
-    if (!setup_ok) {
-#ifndef OPENSSL_NO_STDIO
-        ERR_print_errors_fp(stderr);
-#endif
-        exit(EXIT_FAILURE);
-    }
     return fixture;
 }
 
@@ -121,6 +110,7 @@ void cleanup_tests(void)
 
 int setup_tests(void)
 {
+    RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH);
     /* ASN.1 related tests */
     ADD_TEST(test_cmp_asn1_get_int);
     ADD_TEST(test_ASN1_OCTET_STRING_set);

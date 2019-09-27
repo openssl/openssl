@@ -77,6 +77,7 @@ struct ossl_cmp_ctx_st {
     ASN1_OCTET_STRING *transactionID; /* the current transaction ID */
     ASN1_OCTET_STRING *senderNonce; /* last nonce sent */
     ASN1_OCTET_STRING *recipNonce; /* last nonce received */
+    ASN1_UTF8STRING *freeText; /* optional string to include each msg */
     STACK_OF(OSSL_CMP_ITAV) *geninfo_ITAVs;
     int implicitConfirm; /* set implicitConfirm in IR/KUR/CR messages */
     int disableConfirm; /* disable certConf in IR/KUR/CR for broken servers */
@@ -720,6 +721,35 @@ int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
 int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                  const ASN1_OCTET_STRING *nonce);
 
-#  define OSSL_CMP_TRANSACTIONID_LENGTH 16
+/* from cmp_status.c */
+OSSL_CMP_PKISI *
+ossl_cmp_statusinfo_new(int status, int fail_info, const char *text);
+int ossl_cmp_pkisi_get_pkistatus(const OSSL_CMP_PKISI *statusInfo);
+const char *ossl_cmp_PKIStatus_to_string(int status);
+OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusstring(const OSSL_CMP_PKISI *si);
+int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si);
+int ossl_cmp_pkisi_pkifailureinfo_check(const OSSL_CMP_PKISI *si, int bit_index);
+
+/* from cmp_hdr.c */
+int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
+int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
+ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
+int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
+int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
+                                const ASN1_OCTET_STRING *senderKID);
+int ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft, const char *text);
+int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
+int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
+int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,
+                                        OSSL_CMP_ITAV *itav);
+int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
+                                         STACK_OF(OSSL_CMP_ITAV) *itavs);
+int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_check_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr);
+# define OSSL_CMP_TRANSACTIONID_LENGTH 16
+# define OSSL_CMP_SENDERNONCE_LENGTH 16
+int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 
 #endif /* !defined OSSL_CRYPTO_CMP_LOCAL_H */
