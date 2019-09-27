@@ -29,7 +29,7 @@
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
 #include "crypto/store.h"
-#include "store_locl.h"
+#include "store_local.h"
 
 #ifdef _WIN32
 # define stat    _stat

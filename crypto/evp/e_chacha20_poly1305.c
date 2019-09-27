@@ -14,7 +14,7 @@
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>
-# include "evp_locl.h"
+# include "evp_local.h"
 # include "crypto/evp.h"
 # include "crypto/chacha.h"
 

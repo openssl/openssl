@@ -20,7 +20,7 @@
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include "internal/refcount.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
 

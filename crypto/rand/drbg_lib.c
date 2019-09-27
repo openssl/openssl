@@ -11,7 +11,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include "rand_lcl.h"
+#include "rand_local.h"
 #include "internal/thread_once.h"
 #include "crypto/rand.h"
 #include "crypto/cryptlib.h"

@@ -15,7 +15,7 @@
 # pragma names as_is,shortened
 #endif
 
-#include "../ssl/packet_locl.h"
+#include "../ssl/packet_local.h"
 
 #ifdef __VMS
 # pragma names restore

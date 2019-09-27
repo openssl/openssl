@@ -13,7 +13,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/hmac.h>
 #include <openssl/opensslconf.h>
-#include "hmac_lcl.h"
+#include "hmac_local.h"
 
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
                  const EVP_MD *md, ENGINE *impl)

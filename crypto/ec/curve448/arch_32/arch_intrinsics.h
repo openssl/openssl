@@ -13,7 +13,7 @@
 #ifndef HEADER_ARCH_32_ARCH_INTRINSICS_H
 # define HEADER_ARCH_32_ARCH_INTRINSICS_H
 
-#include "internal/constant_time_locl.h"
+#include "internal/constant_time.h"
 
 # define ARCH_WORD_BITS 32
 

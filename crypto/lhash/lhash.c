@@ -15,7 +15,7 @@
 #include <openssl/err.h>
 #include "crypto/ctype.h"
 #include "crypto/lhash.h"
-#include "lhash_lcl.h"
+#include "lhash_local.h"
 
 /*
  * A hashing implementation that appears to be based on the linear hashing

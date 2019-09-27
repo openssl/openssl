@@ -13,7 +13,7 @@
 #ifndef HEADER_FIELD_H
 # define HEADER_FIELD_H
 
-# include "internal/constant_time_locl.h"
+# include "internal/constant_time.h"
 # include <string.h>
 # include <assert.h>
 # include "word.h"
