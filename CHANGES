@@ -15,6 +15,11 @@
      pages for further details.
      [Matt Caswell]
 
+  *) Over two thousand fixes were made to the documentation, including:
+     adding missing command flags, better style conformance, documentation
+     of internals, etc.
+     [Rich Salz, Richard Levitte]
+
   *) s390x assembly pack: add hardware-support for P-256, P-384, P-521,
      X25519, X448, Ed25519 and Ed448.
      [Patrick Steuer]
