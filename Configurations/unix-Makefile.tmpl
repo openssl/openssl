@@ -729,7 +729,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 
 .PHONY: doc-nits
 doc-nits: build_generated
-	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -p -s )
+	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -e )
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)

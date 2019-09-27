@@ -33,23 +33,38 @@ our($opt_u);
 our($opt_v);
 our($opt_c);
 
+# Print usage message and exit.
 sub help {
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
+    -c List undocumented commands and options
     -d Detailed list of undocumented (implies -u)
     -e Detailed list of new undocumented (implies -v)
-    -s Same as -e except no output is generated if nothing is undocumented
-    -o Causes -e/-v to count symbols added since 1.1.1 as new (implies -v)
+    -h Print this help message
     -l Print bogus links
     -n Print nits in POD pages
-    -p Warn if non-public name documented (implies -n)
+    -o Causes -e/-v to count symbols added since 1.1.1 as new (implies -v)
     -u Count undocumented functions
     -v Count new undocumented functions
-    -h Print this help message
-    -c List undocumented commands and options
 EOF
     exit;
 }
+
+getopts('cdehlnouv');
+
+help() if $opt_h;
+$opt_u = 1 if $opt_d;
+$opt_v = 1 if $opt_o || $opt_e;
+die "Cannot use both -u and -v"
+    if $opt_u && $opt_v;
+die "Cannot use both -d and -e"
+    if $opt_d && $opt_e;
+
+# We only need to check c, l, n, u and v.
+# Options d, e, o imply one of the above.
+die "Need one of -[cdehlnouv] flags.\n"
+    unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
+
 
 my $temp = '/tmp/docnits.txt';
 my $OUT;
@@ -109,9 +124,11 @@ sub name_synopsis {
         if %foundfilenames;
     err($id, "$simplename (filename) missing from NAME section")
         unless $foundfilename;
-    foreach my $n ( keys %names ) {
-        err($id, "$n is not public")
-            if $opt_p and !defined $public{$n};
+    if ( $filename !~ /internal/ ) {
+        foreach my $n ( keys %names ) {
+            err($id, "$n is not public")
+                if !defined $public{$n};
+        }
     }
 
     # Find all functions in SYNOPSIS
@@ -525,7 +542,6 @@ sub parsenum {
 
     close $IN;
 
-    print "# Found ", scalar(@apis), " in $file\n" unless $opt_p;
     return sort @apis;
 }
 
@@ -538,7 +554,7 @@ sub getdocced
         my %podinfo = extract_pod_info($pod);
         foreach my $n ( @{$podinfo{names}} ) {
             $return{$n} = $pod;
-            print "# Duplicate $n in $pod and $dups{$n}\n"
+            err("# Duplicate $n in $pod and $dups{$n}")
                 if defined $dups{$n} && $dups{$n} ne $pod;
             $dups{$n} = $pod;
         }
@@ -577,8 +593,6 @@ sub checkmacros {
         @missing = loadmissing('util/missingmacro.txt');
     }
 
-    print "# Checking macros (approximate)\n"
-        if !$opt_s;
     foreach my $f ( glob('include/openssl/*.h') ) {
         # Skip some internals we don't want to document yet.
         next if $f eq 'include/openssl/asn1.h';
@@ -598,15 +612,15 @@ sub checkmacros {
             # Skip macros known to be missing
             next if $opt_v && grep( /^$macro$/, @missing);
     
-            print "$f:$macro\n"
+            err("$f:", "macro $macro undocumented")
                 if $opt_d || $opt_e;
             $count++;
             $seen{$macro} = 1;
         }
         close(IN);
     }
-    print "# Found $count macros missing\n"
-        if !$opt_s || $count > 0;
+    err("# $count macros undocumented (count is approximate)")
+        if $count > 0;
 }
 
 sub printem {
@@ -627,13 +641,13 @@ sub printem {
         # Skip functions known to be missing
         next if $opt_v && grep( /^$func$/, @missing);
 
-        print "$libname:$func\n"
+        err("$libname:", "function $func undocumented")
             if $opt_d || $opt_e;
         $count++;
         $seen{$func} = 1;
     }
-    print "# Found $count missing from $numfile\n\n"
-        if !$opt_s || $count > 0;
+    err("# $count in $numfile are not documented")
+        if $count > 0;
 }
 
 
@@ -721,6 +735,7 @@ sub checklinks {
     }
 }
 
+# Load the public symbol/macro names
 sub publicize {
     foreach my $name ( parsenum('util/libcrypto.num') ) {
         $public{$name} = 1;
@@ -728,7 +743,7 @@ sub publicize {
     foreach my $name ( parsenum('util/libssl.num') ) {
         $public{$name} = 1;
     }
-    foreach my $name ( parsenum('util/private.num') ) {
+    foreach my $name ( parsenum('util/other.syms') ) {
         $public{$name} = 1;
     }
 }
@@ -811,25 +826,6 @@ sub checkflags {
     }
 }
 
-getopts('cdesolnphuv');
-
-help() if $opt_h;
-
-$opt_n = 1 if $opt_p;
-$opt_u = 1 if $opt_d;
-$opt_e = 1 if $opt_s;
-$opt_v = 1 if $opt_o || $opt_e;
-
-die "Cannot use both -u and -v"
-    if $opt_u && $opt_v;
-die "Cannot use both -d and -e"
-    if $opt_d && $opt_e;
-
-# We only need to check c, l, n, u and v.
-# Options d, e, s, o and p imply one of the above.
-die "Need one of -[cdesolnpuv] flags.\n"
-    unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
-
 if ( $opt_c ) {
     my @commands = ();
 
@@ -876,15 +872,12 @@ if ( $opt_l ) {
 }
 
 if ( $opt_n ) {
-    publicize() if $opt_p;
+    publicize();
     foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'), glob('doc/*/*.pod.in'))) {
         check($_);
     }
-    {
-        local $opt_p = undef;
-        foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
-            check($_);
-        }
+    foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
+        check($_);
     }
 
     # If not given args, check that all man1 commands are named properly.
