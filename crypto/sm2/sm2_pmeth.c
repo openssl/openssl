@@ -11,9 +11,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
-#include "internal/sm2.h"
-#include "internal/sm2err.h"
+#include "crypto/evp.h"
+#include "crypto/sm2.h"
+#include "crypto/sm2err.h"
 
 /* EC pkey context structure */
 

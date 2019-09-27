@@ -14,7 +14,7 @@
 #include <string.h>
 #include <assert.h>
 #include <openssl/aes.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "modes_lcl.h"
 #include <openssl/rand.h>
 #include "evp_locl.h"

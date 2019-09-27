@@ -12,7 +12,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "evp_locl.h"
 
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,

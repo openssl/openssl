@@ -42,7 +42,7 @@ static void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 #endif
 
-#include "internal/md32_common.h"
+#include "crypto/md32_common.h"
 
 #define INIT_DATA_h0 0x67452301UL
 #define INIT_DATA_h1 0xefcdab89UL

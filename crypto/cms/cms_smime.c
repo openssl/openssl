@@ -14,7 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
-#include "internal/asn1_int.h"
+#include "crypto/asn1.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {

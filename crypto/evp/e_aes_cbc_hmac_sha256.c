@@ -20,7 +20,7 @@
 #include <openssl/rand.h>
 #include "modes_lcl.h"
 #include "internal/constant_time_locl.h"
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 
 typedef struct {
     AES_KEY ks;
