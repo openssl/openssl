@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMPERR_H
-# define HEADER_CMPERR_H
+#ifndef OPENSSL_CMPERR_H
+# define OPENSSL_CMPERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

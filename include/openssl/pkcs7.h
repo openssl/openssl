@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PKCS7_H
-# define HEADER_PKCS7_H
+#ifndef OPENSSL_PKCS7_H
+# define OPENSSL_PKCS7_H
 
 # include <openssl/asn1.h>
 # include <openssl/bio.h>

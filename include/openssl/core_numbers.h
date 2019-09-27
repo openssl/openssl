@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_CORE_NUMBERS_H
-# define OSSL_CORE_NUMBERS_H
+#ifndef OPENSSL_CORE_NUMBERS_H
+# define OPENSSL_CORE_NUMBERS_H
 
 # include <stdarg.h>
 # include <openssl/core.h>

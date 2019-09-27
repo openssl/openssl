@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DASYNCERR_H
-# define HEADER_DASYNCERR_H
+#ifndef OSSL_ENGINES_E_DASYNC_ERR_H
+# define OSSL_ENGINES_E_DASYNC_ERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

@@ -9,8 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SSL_LOCL_H
-# define HEADER_SSL_LOCL_H
+#ifndef OSSL_SSL_LOCAL_H
+# define OSSL_SSL_LOCAL_H
 
 # include "e_os.h"              /* struct timeval for DTLS */
 # include <stdlib.h>

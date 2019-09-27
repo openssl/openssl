@@ -14,8 +14,8 @@
  * shared fields have been moved into this file.
  */
 
-#ifndef HEADER_FMT_H
-#define HEADER_FMT_H
+#ifndef OSSL_APPS_FMT_H
+#define OSSL_APPS_FMT_H
 
 /* On some platforms, it's important to distinguish between text and binary
  * files.  On some, there might even be specific file formats for different
@@ -41,4 +41,4 @@
 
 int FMT_istext(int format);
 
-#endif /* HEADER_FMT_H_ */
+#endif /* OSSL_APPS_FMT_H_ */

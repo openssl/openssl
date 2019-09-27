@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef APPS_FUNCTION_H
-# define APPS_FUNCTION_H
+#ifndef OSSL_APPS_FUNCTION_H
+# define OSSL_APPS_FUNCTION_H
 
 # include <openssl/lhash.h>
 # include "opt.h"

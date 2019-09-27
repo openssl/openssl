@@ -9,8 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OPENSSLCONF_H
-# define HEADER_OPENSSLCONF_H
+#ifndef OPENSSL_OPENSSLCONF_H
+# define OPENSSL_OPENSSLCONF_H
 
 # ifdef  __cplusplus
 extern "C" {
@@ -70,4 +70,4 @@ extern "C" {
 #  define HEADER_FILE_H /* deprecated in version 3.0 */
 # endif
 
-#endif                          /* HEADER_OPENSSLCONF_H */
+#endif                          /* OPENSSL_OPENSSLCONF_H */

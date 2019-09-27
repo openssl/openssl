@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OSSL_STOREERR_H
-# define HEADER_OSSL_STOREERR_H
+#ifndef OPENSSL_STOREERR_H
+# define OPENSSL_STOREERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

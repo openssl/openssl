@@ -10,8 +10,8 @@
 
  /* Copyright (c) 2017 National Security Research Institute.  All rights reserved. */
 
-#ifndef HEADER_ARIA_H
-# define HEADER_ARIA_H
+#ifndef OSSL_CRYPTO_ARIA_H
+# define OSSL_CRYPTO_ARIA_H
 
 # include <openssl/opensslconf.h>
 

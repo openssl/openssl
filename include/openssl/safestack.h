@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SAFESTACK_H
-# define HEADER_SAFESTACK_H
+#ifndef OPENSSL_SAFESTACK_H
+# define OPENSSL_SAFESTACK_H
 
 # include <openssl/stack.h>
 # include <openssl/e_os2.h>

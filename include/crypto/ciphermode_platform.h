@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_INTERNAL_CIPHERMODE_PLATFORM_H
-# define HEADER_INTERNAL_CIPHERMODE_PLATFORM_H
+#ifndef OSSL_CRYPTO_CIPHERMODE_PLATFORM_H
+# define OSSL_CRYPTO_CIPHERMODE_PLATFORM_H
 
 # include "openssl/aes.h"
 
@@ -445,4 +445,4 @@ void HWAES_ocb_decrypt(const unsigned char *in, unsigned char *out,
 
 # endif /* HWAES_CAPABLE */
 
-#endif /* HEADER_INTERNAL_CIPHERMODE_PLATFORM_H */
+#endif /* OSSL_CRYPTO_CIPHERMODE_PLATFORM_H */

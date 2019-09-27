@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ASN1_H
-# define HEADER_ASN1_H
+#ifndef OPENSSL_ASN1_H
+# define OPENSSL_ASN1_H
 
 # include <time.h>
 # include <openssl/e_os2.h>

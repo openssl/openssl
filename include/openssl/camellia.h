@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CAMELLIA_H
-# define HEADER_CAMELLIA_H
+#ifndef OPENSSL_CAMELLIA_H
+# define OPENSSL_CAMELLIA_H
 
 # include <openssl/opensslconf.h>
 

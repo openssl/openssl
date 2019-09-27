@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CRMFERR_H
-# define HEADER_CRMFERR_H
+#ifndef OPENSSL_CRMFERR_H
+# define OPENSSL_CRMFERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

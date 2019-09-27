@@ -9,8 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SSL_H
-# define HEADER_SSL_H
+#ifndef OPENSSL_SSL_H
+# define OPENSSL_SSL_H
 
 # include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>
@@ -1690,7 +1690,7 @@ __owur int SSL_has_matching_session_id(const SSL *s,
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
                              long length);
 
-# ifdef HEADER_X509_H
+# ifdef OPENSSL_X509_H
 __owur X509 *SSL_get_peer_certificate(const SSL *s);
 # endif
 

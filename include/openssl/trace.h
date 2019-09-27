@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_TRACE_H
-# define OSSL_TRACE_H
+#ifndef OPENSSL_TRACE_H
+# define OPENSSL_TRACE_H
 
 # include <stdarg.h>
 

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMAC_H
-# define HEADER_CMAC_H
+#ifndef OPENSSL_CMAC_H
+# define OPENSSL_CMAC_H
 
 # ifndef OPENSSL_NO_CMAC
 

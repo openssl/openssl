@@ -9,8 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SM2_H
-# define HEADER_SM2_H
+#ifndef OSSL_CRYPTO_SM2_H
+# define OSSL_CRYPTO_SM2_H
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_SM2

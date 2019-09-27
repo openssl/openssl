@@ -7,11 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BUFFER_H
-# define HEADER_BUFFER_H
+#ifndef OPENSSL_BUFFER_H
+# define OPENSSL_BUFFER_H
 
 # include <openssl/types.h>
-# ifndef HEADER_CRYPTO_H
+# ifndef OPENSSL_CRYPTO_H
 #  include <openssl/crypto.h>
 # endif
 # include <openssl/buffererr.h>
