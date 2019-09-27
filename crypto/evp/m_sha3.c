@@ -12,7 +12,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/sha3.h"
 #include "evp_locl.h"
 

@@ -8,7 +8,7 @@
  */
 
 #include <openssl/crypto.h>
-#include "internal/dso_conf.h"
+#include "crypto/dso_conf.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 #include "e_os.h"

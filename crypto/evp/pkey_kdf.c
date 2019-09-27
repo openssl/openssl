@@ -17,7 +17,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "internal/numbers.h"
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 
 #define MAX_PARAM   20
 

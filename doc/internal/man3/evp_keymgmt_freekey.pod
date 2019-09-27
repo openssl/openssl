@@ -14,7 +14,7 @@ evp_keymgmt_importkey_types, evp_keymgmt_exportkey_types
 
 =head1 SYNOPSIS
 
- #include "internal/evp_int.h"
+ #include "crypto/evp.h"
 
  void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
                                 const OSSL_PARAM params[]);

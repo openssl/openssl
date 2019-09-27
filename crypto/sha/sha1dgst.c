@@ -17,7 +17,7 @@
 /* The implementation is in ../md32_common.h */
 
 #include "sha_locl.h"
-#include "internal/sha.h"
+#include "crypto/sha.h"
 
 int sha1_ctrl(SHA_CTX *sha1, int cmd, int mslen, void *ms)
 {

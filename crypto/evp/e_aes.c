@@ -16,11 +16,11 @@
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <openssl/cmac.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/cryptlib.h"
-#include "internal/modes_int.h"
-#include "internal/siv_int.h"
-#include "internal/ciphermode_platform.h"
+#include "crypto/modes.h"
+#include "crypto/siv.h"
+#include "crypto/ciphermode_platform.h"
 #include "evp_locl.h"
 
 typedef struct {

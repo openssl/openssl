@@ -9,8 +9,8 @@
 
 #include <openssl/sha.h>
 #include "cipher_tdes_default.h"
-#include "internal/evp_int.h"
-#include "internal/rand_int.h"
+#include "crypto/evp.h"
+#include "crypto/rand.h"
 #include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
 

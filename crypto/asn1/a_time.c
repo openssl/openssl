@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include "asn1_locl.h"

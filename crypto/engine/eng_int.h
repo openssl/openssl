@@ -13,7 +13,7 @@
 
 # include <openssl/trace.h>
 # include "internal/cryptlib.h"
-# include "internal/engine.h"
+# include "crypto/engine.h"
 # include "internal/thread_once.h"
 # include "internal/refcount.h"
 

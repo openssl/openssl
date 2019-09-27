@@ -16,8 +16,8 @@
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include "internal/cryptlib.h"
-#include "internal/modes_int.h"
-#include "internal/evp_int.h"
+#include "crypto/modes.h"
+#include "crypto/evp.h"
 #include "internal/constant_time_locl.h"
 
 typedef struct {

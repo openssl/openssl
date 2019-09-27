@@ -10,7 +10,7 @@
 #include "e_os.h"                /* strcasecmp */
 #include "internal/namemap.h"
 #include <openssl/lhash.h>
-#include "internal/lhash.h"      /* openssl_lh_strcasehash */
+#include "crypto/lhash.h"      /* openssl_lh_strcasehash */
 
 /*-
  * The namenum entry

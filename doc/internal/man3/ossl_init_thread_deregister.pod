@@ -9,7 +9,7 @@ ossl_init_thread_deregister
 
 =head1 SYNOPSIS
 
- #include "internal/cryptlib_int.h"
+ #include "crypto/cryptlib.h"
  #include <openssl/core.h>
 
  typedef void (*OSSL_thread_stop_handler_fn)(void *arg);

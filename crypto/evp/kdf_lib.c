@@ -17,8 +17,8 @@
 #include <openssl/kdf.h>
 #include <openssl/core.h>
 #include <openssl/core_names.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
 #include "evp_locl.h"

@@ -17,7 +17,7 @@
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
 # include "internal/tsan_assist.h"
-# include "internal/rand_int.h"
+# include "crypto/rand.h"
 
 # include "internal/numbers.h"
 

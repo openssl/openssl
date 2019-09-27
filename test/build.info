@@ -546,7 +546,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[property_test]=../libcrypto.a libtestutil.a
 
     SOURCE[ctype_internal_test]=ctype_internal_test.c
-    INCLUDE[ctype_internal_test]=.. ../crypto/include ../include ../apps/include
+    INCLUDE[ctype_internal_test]=.. ../include ../apps/include
     DEPEND[ctype_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sparse_array_test]=sparse_array_test.c
@@ -578,11 +578,11 @@ IF[{- !$disabled{tests} -}]
     DEPEND[rdrand_sanitytest]=../libcrypto.a libtestutil.a
 
     SOURCE[rsa_sp800_56b_test]=rsa_sp800_56b_test.c
-    INCLUDE[rsa_sp800_56b_test]=.. ../include ../crypto/include ../crypto/rsa ../apps/include
+    INCLUDE[rsa_sp800_56b_test]=.. ../include ../crypto/rsa ../apps/include
     DEPEND[rsa_sp800_56b_test]=../libcrypto.a libtestutil.a
 
     SOURCE[bn_internal_test]=bn_internal_test.c
-    INCLUDE[bn_internal_test]=.. ../include ../crypto/include ../crypto/bn ../apps/include
+    INCLUDE[bn_internal_test]=.. ../include ../crypto/bn ../apps/include
     DEPEND[bn_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[asn1_dsa_internal_test]=asn1_dsa_internal_test.c

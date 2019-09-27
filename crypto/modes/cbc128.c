@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
-#include "internal/modes_int.h"
+#include "crypto/modes.h"
 
 #if !defined(STRICT_ALIGNMENT) && !defined(PEDANTIC)
 # define STRICT_ALIGNMENT 0

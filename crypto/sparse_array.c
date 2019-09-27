@@ -10,7 +10,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
-#include "internal/sparse_array.h"
+#include "crypto/sparse_array.h"
 
 /*
  * How many bits are used to index each level in the tree structure?

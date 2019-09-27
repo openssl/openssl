@@ -9,7 +9,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/core_numbers.h>
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include "internal/providercommon.h"
 #include "internal/thread_once.h"
 

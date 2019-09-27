@@ -14,7 +14,7 @@
 
 #include <string.h>
 #include <openssl/evp.h>
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 #include "rand_lcl.h"

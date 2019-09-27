@@ -13,8 +13,8 @@
 #include <openssl/asn1.h>
 #include "dh_locl.h"
 #include <openssl/bn.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
 #include "internal/param_build.h"

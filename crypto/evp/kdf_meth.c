@@ -12,7 +12,7 @@
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
 #include <openssl/kdf.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/provider.h"
 #include "evp_locl.h"
 

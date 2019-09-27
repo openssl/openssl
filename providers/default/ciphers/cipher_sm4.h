@@ -8,7 +8,7 @@
  */
 
 #include "internal/ciphers/ciphercommon.h"
-#include "internal/sm4.h"
+#include "crypto/sm4.h"
 
 typedef struct prov_cast_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */

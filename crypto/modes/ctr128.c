@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
-#include "internal/modes_int.h"
+#include "crypto/modes.h"
 
 /*
  * NOTE: the IV/counter CTR mode is big-endian.  The code itself is

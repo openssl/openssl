@@ -14,7 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#include "internal/siphash.h"
+#include "crypto/siphash.h"
 /*
  * TODO(3.0) when siphash has moved entirely to our providers, this
  * header should be moved to the provider include directory.  For the

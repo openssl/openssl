@@ -14,7 +14,7 @@
 #include <openssl/ec.h>
 #include "ec_lcl.h"
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 
 /* EC pkey context structure */
 

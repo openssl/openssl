@@ -10,7 +10,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include "internal/modes_int.h"
+#include "crypto/modes.h"
 
 #ifndef OPENSSL_NO_OCB
 

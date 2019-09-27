@@ -14,7 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/asn1.h>        /* evp_locl.h needs it */
 #include <openssl/safestack.h>   /* evp_locl.h needs it */
-#include "internal/evp_int.h"    /* evp_locl.h needs it */
+#include "crypto/evp.h"    /* evp_locl.h needs it */
 #include "evp_locl.h"
 
 /*

@@ -17,7 +17,7 @@
 #include "internal/core.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
-#include "internal/evp_int.h"    /* evp_locl.h needs it */
+#include "crypto/evp.h"    /* evp_locl.h needs it */
 #include "evp_locl.h"
 
 static void default_method_store_free(void *vstore)

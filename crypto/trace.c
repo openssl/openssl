@@ -16,7 +16,7 @@
 #include <openssl/trace.h>
 #include "internal/bio.h"
 #include "internal/nelem.h"
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 
 #include "e_os.h"                /* strcasecmp for Windows */
 

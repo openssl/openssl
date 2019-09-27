@@ -16,7 +16,7 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/objects.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 
 /* DH pkey context structure */
 

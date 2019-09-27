@@ -11,7 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/rand.h>
-#include "internal/bn_int.h"
+#include "crypto/bn.h"
 #include "ec_lcl.h"
 
 int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,

@@ -11,7 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include "internal/refcount.h"
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/provider.h"
 #include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "evp_locl.h"

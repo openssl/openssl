@@ -9,7 +9,7 @@ IF[{- !$disabled{fips} -}]
     SOURCE[fips]=fips.ld
     GENERATE[fips.ld]=../util/providers.num
   ENDIF
-  INCLUDE[fips]=.. ../include ../crypto/include common/include
+  INCLUDE[fips]=.. ../include common/include
   DEFINE[fips]=FIPS_MODE
 ENDIF
 
@@ -25,6 +25,6 @@ IF[{- !$disabled{legacy} -}]
       GENERATE[legacy.ld]=../util/providers.num
     ENDIF
     DEPEND[legacy]=../libcrypto
-    INCLUDE[legacy]=.. ../include ../crypto/include common/include
+    INCLUDE[legacy]=.. ../include common/include
   ENDIF
 ENDIF

@@ -16,8 +16,8 @@
 #include <openssl/cms.h>
 #include <openssl/ess.h>
 #include "cms_lcl.h"
-#include "internal/ess_int.h"
-#include "internal/cms_int.h"
+#include "crypto/ess.h"
+#include "crypto/cms.h"
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 

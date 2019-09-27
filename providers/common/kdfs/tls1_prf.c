@@ -54,7 +54,7 @@
 #include <openssl/params.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"

@@ -9,7 +9,7 @@
 
 #include "cipher_locl.h"
 #include "cipher_des.h"
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
 

@@ -9,7 +9,7 @@
  */
 
 #include <openssl/err.h>
-#include "internal/bn_int.h"
+#include "crypto/bn.h"
 #include "ec_lcl.h"
 
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,

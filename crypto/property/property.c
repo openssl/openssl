@@ -13,12 +13,12 @@
 #include <stdarg.h>
 #include <openssl/crypto.h>
 #include "internal/property.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "internal/lhash.h"
-#include "internal/sparse_array.h"
+#include "crypto/lhash.h"
+#include "crypto/sparse_array.h"
 #include "property_lcl.h"
 
 /* The number of elements in the query cache before we initiate a flush */
