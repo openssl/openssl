@@ -14,7 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include "crypto/evp.h"
-#include "dsa_locl.h"
+#include "dsa_local.h"
 
 /* DSA pkey context structure */
 

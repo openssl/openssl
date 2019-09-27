@@ -13,7 +13,7 @@
 
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
-#include "ec_lcl.h"
+#include "ec_local.h"
 #include "internal/refcount.h"
 
 /*

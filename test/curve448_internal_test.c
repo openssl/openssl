@@ -16,7 +16,7 @@
 # pragma names as_is,shortened
 #endif
 
-#include "curve448_lcl.h"
+#include "curve448_local.h"
 
 #ifdef __VMS
 # pragma names restore

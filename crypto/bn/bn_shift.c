@@ -9,7 +9,7 @@
 
 #include <assert.h>
 #include "internal/cryptlib.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 int BN_lshift1(BIGNUM *r, const BIGNUM *a)
 {

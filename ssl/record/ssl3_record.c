@@ -7,10 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../ssl_locl.h"
-#include "internal/constant_time_locl.h"
+#include "../ssl_local.h"
+#include "internal/constant_time.h"
 #include <openssl/rand.h>
-#include "record_locl.h"
+#include "record_local.h"
 #include "internal/cryptlib.h"
 
 static const unsigned char ssl3_pad_1[48] = {

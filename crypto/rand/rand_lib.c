@@ -14,7 +14,7 @@
 #include "crypto/rand.h"
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
-#include "rand_lcl.h"
+#include "rand_local.h"
 #include "e_os.h"
 
 #ifndef OPENSSL_NO_ENGINE

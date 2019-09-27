@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/constant_time_locl.h"
+#include "internal/constant_time.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -19,7 +19,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
 #include "crypto/evp.h"
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 /* RSA pkey context structure */
 

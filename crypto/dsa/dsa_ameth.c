@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
-#include "dsa_locl.h"
+#include "dsa_local.h"
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include "crypto/asn1.h"

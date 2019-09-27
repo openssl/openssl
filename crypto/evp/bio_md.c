@@ -13,7 +13,7 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include "crypto/evp.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 #include "internal/bio.h"
 
 /*

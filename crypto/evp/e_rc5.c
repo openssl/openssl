@@ -15,7 +15,7 @@
 # include <openssl/evp.h>
 # include "crypto/evp.h"
 # include <openssl/objects.h>
-# include "evp_locl.h"
+# include "evp_local.h"
 # include <openssl/rc5.h>
 
 static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,

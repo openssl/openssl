@@ -10,12 +10,12 @@
 #include <stdio.h>
 #include <limits.h>
 #include <errno.h>
-#include "../ssl_locl.h"
+#include "../ssl_local.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
-#include "record_locl.h"
-#include "../packet_locl.h"
+#include "record_local.h"
+#include "../packet_local.h"
 
 #if     defined(OPENSSL_SMALL_FOOTPRINT) || \
         !(      defined(AES_ASM) &&     ( \

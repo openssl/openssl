@@ -15,9 +15,9 @@
 #include <assert.h>
 #include <openssl/aes.h>
 #include "crypto/evp.h"
-#include "modes_lcl.h"
+#include "modes_local.h"
 #include <openssl/rand.h>
-#include "evp_locl.h"
+#include "evp_local.h"
 
 typedef struct {
     union {

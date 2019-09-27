@@ -30,7 +30,7 @@
 # include <openssl/ct.h>
 # include "record/record.h"
 # include "statem/statem.h"
-# include "packet_locl.h"
+# include "packet_local.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"
 # include "internal/tsan_assist.h"

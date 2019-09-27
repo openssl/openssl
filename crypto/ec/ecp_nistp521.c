@@ -38,7 +38,7 @@ NON_EMPTY_TRANSLATION_UNIT
 
 # include <string.h>
 # include <openssl/err.h>
-# include "ec_lcl.h"
+# include "ec_local.h"
 
 # if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */

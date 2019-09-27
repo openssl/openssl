@@ -18,8 +18,8 @@
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
-#include "modes_lcl.h"
-#include "internal/constant_time_locl.h"
+#include "modes_local.h"
+#include "internal/constant_time.h"
 #include "crypto/evp.h"
 
 typedef struct {

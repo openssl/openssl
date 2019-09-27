@@ -10,7 +10,7 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 #include <openssl/ec.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 #include <openssl/objects.h>
 
 static size_t crv_len = 0;

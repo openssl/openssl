@@ -13,7 +13,7 @@
 #include <openssl/ripemd.h>
 
 /*
- * DO EXAMINE COMMENTS IN crypto/md5/md5_locl.h & crypto/md5/md5_dgst.c
+ * DO EXAMINE COMMENTS IN crypto/md5/md5_local.h & crypto/md5/md5_dgst.c
  * FOR EXPLANATIONS ON FOLLOWING "CODE."
  */
 #ifdef RMD160_ASM

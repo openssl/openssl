@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 #include "internal/nelem.h"
 
 #ifndef OPENSSL_NO_DH

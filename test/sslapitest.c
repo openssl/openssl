@@ -22,7 +22,7 @@
 #include "testutil.h"
 #include "testutil/output.h"
 #include "internal/nelem.h"
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 
 #ifndef OPENSSL_NO_TLS1_3
 

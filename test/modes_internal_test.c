@@ -14,7 +14,7 @@
 
 #include <openssl/aes.h>
 #include <openssl/modes.h>
-#include "../crypto/modes/modes_lcl.h"
+#include "../crypto/modes/modes_local.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 

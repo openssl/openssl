@@ -15,7 +15,7 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include "crypto/evp.h"
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 RSA *RSA_new(void)
 {

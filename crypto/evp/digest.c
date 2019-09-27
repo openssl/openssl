@@ -13,7 +13,7 @@
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 #include "crypto/evp.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 /* This call frees resources associated with the context */
 int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
