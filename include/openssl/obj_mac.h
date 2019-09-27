@@ -1290,12 +1290,12 @@
 #define OBJ_ms_efs              1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
 
 #define SN_ms_smartcard_login           "msSmartcardLogin"
-#define LN_ms_smartcard_login           "Microsoft Smartcardlogin"
+#define LN_ms_smartcard_login           "Microsoft Smartcard Login"
 #define NID_ms_smartcard_login          648
 #define OBJ_ms_smartcard_login          1L,3L,6L,1L,4L,1L,311L,20L,2L,2L
 
 #define SN_ms_upn               "msUPN"
-#define LN_ms_upn               "Microsoft Universal Principal Name"
+#define LN_ms_upn               "Microsoft User Principal Name"
 #define NID_ms_upn              649
 #define OBJ_ms_upn              1L,3L,6L,1L,4L,1L,311L,20L,2L,3L
 
