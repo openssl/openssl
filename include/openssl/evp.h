@@ -13,7 +13,7 @@
 # include <stdarg.h>
 
 # include <openssl/opensslconf.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/core.h>
 # include <openssl/symhacks.h>
 # include <openssl/bio.h>

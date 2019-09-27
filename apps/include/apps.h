@@ -21,7 +21,7 @@
 # endif
 
 # include <openssl/e_os2.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/bio.h>
 # include <openssl/x509.h>
 # include <openssl/conf.h>

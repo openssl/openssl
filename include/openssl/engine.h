@@ -24,7 +24,7 @@
 #  include <openssl/ui.h>
 #  include <openssl/err.h>
 # endif
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/symhacks.h>
 # include <openssl/x509.h>
 # include <openssl/engineerr.h>

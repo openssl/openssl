@@ -18,7 +18,7 @@
 # include <openssl/asn1err.h>
 # include <openssl/symhacks.h>
 
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # if !OPENSSL_API_1_1_0
 #  include <openssl/bn.h>
 # endif
