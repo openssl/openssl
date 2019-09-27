@@ -8,7 +8,7 @@ EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
 EVP_MAC_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
-EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
+EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_do_all_ex - EVP MAC routines
 
 =head1 SYNOPSIS
@@ -41,8 +41,8 @@ EVP_MAC_do_all_ex - EVP MAC routines
                    unsigned char *out, size_t *outl, size_t outsize);
 
  const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
- const OSSL_PARAM *EVP_MAC_CTX_gettable_params(const EVP_MAC *mac);
- const OSSL_PARAM *EVP_MAC_CTX_settable_params(const EVP_MAC *mac);
+ const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
+ const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
 
  void EVP_MAC_do_all_ex(OPENSSL_CTX *libctx,
                         void (*fn)(EVP_MAC *mac, void *arg),
@@ -146,8 +146,8 @@ simply ignored.
 Also, what happens when a needed parameter isn't passed down is
 defined by the implementation.
 
-EVP_MAC_gettable_params(), EVP_MAC_CTX_gettable_params() and
-EVP_MAC_CTX_settable_params() get a constant B<OSSL_PARAM> array that
+EVP_MAC_gettable_params(), EVP_MAC_gettable_ctx_params() and
+EVP_MAC_settable_ctx_params() get a constant B<OSSL_PARAM> array that
 decribes the retrievable and settable parameters, i.e. parameters that
 can be used with EVP_MAC_get_params(), EVP_MAC_CTX_get_params()
 and EVP_MAC_CTX_set_params(), respectively.

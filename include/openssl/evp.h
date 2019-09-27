@@ -723,8 +723,8 @@ int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[]);
 int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[]);
 int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[]);
 const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher);
-const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(const EVP_CIPHER *cipher);
-const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(const EVP_CIPHER *cipher);
+const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher);
+const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher);
 
 const BIO_METHOD *BIO_f_md(void);
 const BIO_METHOD *BIO_f_base64(void);
@@ -1060,8 +1060,8 @@ int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
 int EVP_MAC_final(EVP_MAC_CTX *ctx,
                   unsigned char *out, size_t *outl, size_t outsize);
 const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
-const OSSL_PARAM *EVP_MAC_CTX_gettable_params(const EVP_MAC *mac);
-const OSSL_PARAM *EVP_MAC_CTX_settable_params(const EVP_MAC *mac);
+const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
+const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
 
 void EVP_MAC_do_all_ex(OPENSSL_CTX *libctx,
                        void (*fn)(EVP_MAC *mac, void *arg),

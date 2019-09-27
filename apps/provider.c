@@ -108,8 +108,8 @@ static void do_cipher(EVP_CIPHER *cipher, void *meta)
 {
     do_method(cipher, EVP_CIPHER_name(cipher),
               EVP_CIPHER_gettable_params(cipher),
-              EVP_CIPHER_CTX_gettable_params(cipher),
-              EVP_CIPHER_CTX_settable_params(cipher),
+              EVP_CIPHER_gettable_ctx_params(cipher),
+              EVP_CIPHER_settable_ctx_params(cipher),
               meta);
 }
 
@@ -126,8 +126,8 @@ static void do_mac(EVP_MAC *mac, void *meta)
 {
     do_method(mac, EVP_MAC_name(mac),
               EVP_MAC_gettable_params(mac),
-              EVP_MAC_CTX_gettable_params(mac),
-              EVP_MAC_CTX_settable_params(mac),
+              EVP_MAC_gettable_ctx_params(mac),
+              EVP_MAC_settable_ctx_params(mac),
               meta);
 }
 
