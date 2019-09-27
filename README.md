@@ -142,7 +142,7 @@ on **macOS**, run:
 	./Configure no-shared darwin64-x86_64-cc
 	make -j
 
-The fork can also be built with shared libraries, but we have used `no-shared` in the instructions above to avoid having to get the shared libraries in the right place for the runtime linker.
+On Ubuntu and macOS, the fork can also be built as a set of shared libraries by specifying `shared` instead of `no-shared` in the above commands; We have used `no-shared` to avoid having to get the libraries in the right place for the runtime linker.
 
 #### Windows
 
