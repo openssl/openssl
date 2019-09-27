@@ -215,6 +215,7 @@ INSTALLTOP_dev={- # $prefix is used in the OPENSSLDIR perl snippet
                   $prefix_dev -}
 INSTALLTOP_dir={- my $x = File::Spec::Win32->canonpath($prefix_dir);
                   $x =~ s|\\|/|g;
+                  $x =~ s/([ \(\)])/\\$1/g;
                   $x -}
 OPENSSLDIR_dev={- #
                   # The logic here is that if no --openssldir was given,
@@ -239,6 +240,7 @@ OPENSSLDIR_dev={- #
                   $openssldir_dev -}
 OPENSSLDIR_dir={- my $x = File::Spec::Win32->canonpath($openssldir_dir);
                   $x =~ s|\\|/|g;
+                  $x =~ s/([ \(\)])/\\$1/g;
                   $x -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           File::Spec::Win32->file_name_is_absolute($libdir) ? "" : $libdir -}
@@ -253,6 +255,7 @@ ENGINESDIR_dev={- use File::Spec::Win32;
                   $enginesdir_dev -}
 ENGINESDIR_dir={- my $x = File::Spec::Win32->canonpath($enginesdir_dir);
                   $x =~ s|\\|/|g;
+                  $x =~ s/([ \(\)])/\\$1/g;
                   $x -}
 # In a Windows environment, $(DESTDIR) is harder to contatenate with other
 # directory variables, because both may contain devices.  What we do here is
