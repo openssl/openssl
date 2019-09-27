@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include "bn_lcl.h"
 #include <openssl/rand.h>
 #include <openssl/sha.h>

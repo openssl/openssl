@@ -11,8 +11,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
-#include "internal/evp_int.h"
-#include "internal/asn1_int.h"
+#include "crypto/evp.h"
+#include "crypto/asn1.h"
 
 EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
                         long length)

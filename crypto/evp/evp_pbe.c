@@ -12,7 +12,7 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "evp_locl.h"
 
 /* Password based encryption (PBE) functions */

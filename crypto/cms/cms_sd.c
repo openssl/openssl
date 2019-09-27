@@ -16,10 +16,10 @@
 #include <openssl/cms.h>
 #include <openssl/ess.h>
 #include "cms_lcl.h"
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
-#include "internal/cms_int.h"
-#include "internal/ess_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
+#include "crypto/cms.h"
+#include "crypto/ess.h"
 
 /* CMS SignedData Utilities */
 

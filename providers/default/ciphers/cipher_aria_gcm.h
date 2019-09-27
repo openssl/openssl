@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/aria.h"
+#include "crypto/aria.h"
 #include "internal/ciphers/ciphercommon.h"
 #include "internal/ciphers/cipher_gcm.h"
 

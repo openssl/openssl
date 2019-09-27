@@ -13,7 +13,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 #include "internal/nelem.h"
-#include "internal/asn1_dsa.h"
+#include "crypto/asn1_dsa.h"
 
 #ifndef FIPS_MODE
 

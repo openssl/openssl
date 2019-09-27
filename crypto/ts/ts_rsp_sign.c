@@ -15,7 +15,7 @@
 #include <openssl/pkcs7.h>
 #include <openssl/crypto.h>
 #include "ts_lcl.h"
-#include "internal/ess_int.h"
+#include "crypto/ess.h"
 
 static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *, void *);
 static int def_time_cb(struct TS_resp_ctx *, void *, long *sec, long *usec);

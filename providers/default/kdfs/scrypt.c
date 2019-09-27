@@ -14,7 +14,7 @@
 #include <openssl/kdf.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "internal/provider_algs.h"
 #include "internal/provider_ctx.h"

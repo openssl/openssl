@@ -9,8 +9,8 @@
 
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
-#include "internal/evp_int.h"
-#include "internal/asn1_int.h"
+#include "crypto/evp.h"
+#include "crypto/asn1.h"
 #include "internal/provider.h"
 #include "evp_locl.h"
 

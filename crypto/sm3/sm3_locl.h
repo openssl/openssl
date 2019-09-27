@@ -37,7 +37,7 @@
 void sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void sm3_transform(SM3_CTX *c, const unsigned char *data);
 
-#include "internal/md32_common.h"
+#include "crypto/md32_common.h"
 
 #define P0(X) (X ^ ROTATE(X, 9) ^ ROTATE(X, 17))
 #define P1(X) (X ^ ROTATE(X, 15) ^ ROTATE(X, 23))

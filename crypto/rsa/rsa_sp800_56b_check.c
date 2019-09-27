@@ -10,7 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include "internal/bn_int.h"
+#include "crypto/bn.h"
 #include "rsa_locl.h"
 
 /*

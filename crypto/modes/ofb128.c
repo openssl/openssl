@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
-#include "internal/modes_int.h"
+#include "crypto/modes.h"
 
 /*
  * The input and output encrypted as though 128bit ofb mode is being used.

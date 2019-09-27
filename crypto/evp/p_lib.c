@@ -23,8 +23,8 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include "internal/provider.h"
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);

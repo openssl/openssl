@@ -26,7 +26,7 @@ Makefile
 
 # Auto generated headers
 /crypto/buildinf.h
-/crypto/include/internal/*_conf.h
+/include/crypto/*_conf.h
 /openssl/include/opensslconf.h
 /util/domd
 

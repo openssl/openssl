@@ -8,7 +8,7 @@
  */
 
 #include <string.h>
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <assert.h>
 
 #include <openssl/err.h>

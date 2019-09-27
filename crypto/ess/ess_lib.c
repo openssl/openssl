@@ -11,7 +11,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/ess.h>
-#include "internal/ess_int.h"
+#include "crypto/ess.h"
 
 static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed);
 static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,

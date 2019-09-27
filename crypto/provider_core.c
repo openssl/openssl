@@ -12,7 +12,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"

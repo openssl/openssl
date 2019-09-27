@@ -13,7 +13,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include "internal/cryptlib.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "s390x_arch.h"
 
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)

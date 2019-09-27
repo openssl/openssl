@@ -12,7 +12,7 @@
 # include <string.h>
 # include <openssl/evp.h>
 # include <openssl/obj_mac.h>
-# include "internal/evp_int.h"
+# include "crypto/evp.h"
 # include "internal/md5_sha1.h"
 
 static int init(EVP_MD_CTX *ctx)

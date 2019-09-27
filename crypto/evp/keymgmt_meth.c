@@ -13,7 +13,7 @@
 #include <openssl/err.h>
 #include "internal/provider.h"
 #include "internal/refcount.h"
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "evp_locl.h"
 
 

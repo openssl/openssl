@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/provider.h"
 #include "evp_locl.h"
 

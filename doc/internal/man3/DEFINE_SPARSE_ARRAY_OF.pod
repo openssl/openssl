@@ -11,7 +11,7 @@ ossl_sa_TYPE_doall_arg, ossl_sa_TYPE_get, ossl_sa_TYPE_set
 
 =for comment generic
 
- #include "internal/sparse_array.h"
+ #include "crypto/sparse_array.h"
 
  typedef struct sparse_array_st OPENSSL_SA;
 
