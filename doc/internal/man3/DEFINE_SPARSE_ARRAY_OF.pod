@@ -37,38 +37,38 @@ SPARSE_ARRAY_OF() returns the name for a sparse array of the specified
 B<TYPE>.  DEFINE_STACK_OF() creates set of functions for a sparse array of
 B<TYPE>. This will mean that a pointer to type B<TYPE> is stored in each
 element of a sparse array, the type is referenced by SPARSE_ARRAY_OF(TYPE) and
-each function name begins with I<ossl_sa_TYPE_>. For example:
+each function name begins with B<ossl_sa_TYPE_>. For example:
 
  TYPE *ossl_sa_TYPE_get(SPARSE_ARRAY_OF(TYPE) *sa, ossl_uintmax_t idx);
 
-ossl_sa_TYPE_num() returns the number of elements in B<sa> or 0 if B<sa> is
-B<NULL>.
+ossl_sa_TYPE_num() returns the number of elements in I<sa> or 0 if I<sa> is
+NULL.
 
-ossl_sa_TYPE_get() returns element B<idx> in B<sa>, where B<idx> starts at
-zero. If B<idx> refers to a value that has not been set then B<NULL> is
+ossl_sa_TYPE_get() returns element I<idx> in I<sa>, where I<idx> starts at
+zero. If I<idx> refers to a value that has not been set then NULL is
 returned.
 
-ossl_sa_TYPE_set() sets element B<idx> in B<sa> to B<value>, where B<idx>
+ossl_sa_TYPE_set() sets element I<idx> in I<sa> to I<value>, where I<idx>
 starts at zero. The sparse array will be resized as required.
 
 ossl_sa_TYPE_new() allocates a new empty sparse array.
 
-ossl_sa_TYPE_free() frees up the B<sa> structure. It does B<not> free up any
-elements of B<sa>. After this call B<sa> is no longer valid.
+ossl_sa_TYPE_free() frees up the I<sa> structure. It does I<not> free up any
+elements of I<sa>. After this call I<sa> is no longer valid.
 
-ossl_sa_TYPE_free_leaves() frees up the B<sa> structure and all of its
-elements.  After this call B<sa> is no longer valid.
+ossl_sa_TYPE_free_leaves() frees up the I<sa> structure and all of its
+elements.  After this call I<sa> is no longer valid.
 
-ossl_sa_TYPE_doall() calls the function B<leaf> for each element in B<sa>
+ossl_sa_TYPE_doall() calls the function I<leaf> for each element in I<sa>
 in ascending index order. The index position, within the sparse array,
 of each item is passed as the first argument to the leaf function and a
 pointer to the associated value is is passed as the second argument.
 
-ossl_sa_TYPE_doall_arg() calls the function B<leaf> for each element in
-B<sa> in ascending index order. The index position, within the sparse
+ossl_sa_TYPE_doall_arg() calls the function I<leaf> for each element in
+I<sa> in ascending index order. The index position, within the sparse
 array, of each item is passed as the first argument to the leaf function,
 a pointer to the associated value is passed as the second argument and
-the third argument is the user supplied B<arg>.
+the third argument is the user supplied I<arg>.
 
 
 =head1 NOTES
@@ -91,16 +91,16 @@ OPENSSL_SA_num and OPENSSL_SA_set.
 =head1 RETURN VALUES
 
 ossl_sa_TYPE_num() returns the number of elements in the sparse array or B<0>
-if the passed sparse array is B<NULL>.
+if the passed sparse array is NULL.
 
-ossl_sa_TYPE_get() returns a pointer to a sparse array element or B<NULL> if
+ossl_sa_TYPE_get() returns a pointer to a sparse array element or NULL if
 the element has not be set.
 
 ossl_sa_TYPE_set() return B<1> on success and B<0> on error. In the latter
 case, the elements of the sparse array remain unchanged, although the internal
 structures might have.
 
-ossl_sa_TYPE_new() returns an empty sparse array or B<NULL> if an error
+ossl_sa_TYPE_new() returns an empty sparse array or NULL if an error
 occurs.
 
 ossl_sa_TYPE_doall, ossl_sa_TYPE_doall_arg, ossl_sa_TYPE_free() and

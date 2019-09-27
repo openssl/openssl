@@ -32,14 +32,14 @@ ossl_cmp_build_cert_chain
 
 =head1 DESCRIPTION
 
-ossl_cmp_log_parse_metadata() parses the given message buffer C<buf> populated
-by L<OSSL_CMP_log()> etc.
+ossl_cmp_log_parse_metadata() parses the given message buffer I<buf> populated
+by L<OSSL_CMP_log(3)> etc.
 according to the pattern OSSL_CMP_LOG_START#level ": %s\n", filling in
-the variable pointed to by C<level> with the severity level or -1,
-the variable pointed to by C<func> with the function name string or NULL,
-the variable pointed to by C<file> with the file name string or NULL, and
-the variable pointed to by C<line> with the line number or -1.
-Any string returned via C<*func> and C<*file> must be freeed by the caller.
+the variable pointed to by I<level> with the severity level or -1,
+the variable pointed to by I<func> with the function name string or NULL,
+the variable pointed to by I<file> with the file name string or NULL, and
+the variable pointed to by I<line> with the line number or -1.
+Any string returned via I<*func> and I<*file> must be freeed by the caller.
 
 ossl_cmp_add_error_txt() appends text to the extra data field of the last
 error message in the OpenSSL error queue, after adding the optional separator
@@ -48,18 +48,18 @@ which is not possible when using L<ERR_add_error_data(3)> in conjunction with
 L<ERR_print_errors_cb(3)>.
 
 ossl_cmp_add_error_data() is a macro calling
-B<ossl_cmp_add_error_txt()> with the separator being ":".
+ossl_cmp_add_error_txt() with the separator being ":".
 
 ossl_cmp_add_error_line() is a macro calling
-B<ossl_cmp_add_error_txt()> with the separator being "\n".
+ossl_cmp_add_error_txt() with the separator being "\n".
 
 ossl_cmp_asn1_octet_string_set1() frees any previous value of the variable
-referenced via the C<tgt> argument and assigns either a copy of
-the ASN1_OCTET_STRING given as the C<src> argument or C<NULL>.
+referenced via the I<tgt> argument and assigns either a copy of
+the ASN1_OCTET_STRING given as the I<src> argument or NULL.
 It returns 1 on success, 0 on error.
 
 ossl_cmp_asn1_octet_string_set1_bytes() frees any previous value of the variable
-referenced via the C<tgt> argument and assigns either a copy of the given byte
+referenced via the I<tgt> argument and assigns either a copy of the given byte
 string (with the given length) or NULL. It returns 1 on success, 0 on error.
 
 ossl_cmp_build_cert_chain() builds up the certificate chain of cert as high up

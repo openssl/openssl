@@ -25,7 +25,7 @@ The message to sign or verify must be passed using the one-shot
 EVP_DigestSign() and EVP_DigestVerify() functions.
 
 When calling EVP_DigestSignInit() or EVP_DigestVerifyInit(), the
-digest B<type> parameter B<MUST> be set to B<NULL>.
+digest I<type> parameter B<MUST> be set to NULL.
 
 Applications wishing to sign certificates (or other structures such as
 CRLs or certificate requests) using Ed25519 or Ed448 can either use X509_sign()

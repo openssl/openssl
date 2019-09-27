@@ -69,7 +69,7 @@ A context for scrypt can be obtained by calling:
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an scrypt key derivation is specified via the
-B<keylen> parameter to the L<EVP_KDF-derive(3)> function.
+"keylen" parameter to the L<EVP_KDF-derive(3)> function.
 
 =head1 EXAMPLES
 

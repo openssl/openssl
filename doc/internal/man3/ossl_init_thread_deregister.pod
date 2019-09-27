@@ -33,17 +33,17 @@ stopping the stop handler is called (while on that thread) and the code can
 clean up the value stored in the thread local variable.
 
 A new stop handler is registerd using the function ossl_init_thread_start().
-The B<index> parameter should be a unique value that can be used to identify a
+The I<index> parameter should be a unique value that can be used to identify a
 set of common stop handlers and is passed in a later call to
 ossl_init_thread_deregister. If no later call to ossl_init_thread_deregister is
-made then NULL can be passed for this parameter. The B<arg> parameter is passed
+made then NULL can be passed for this parameter. The I<arg> parameter is passed
 back as an argument to the stop handler when it is later invoked. Finally the
-B<handfn> is a function pointer to the stop handler itself.
+I<handfn> is a function pointer to the stop handler itself.
 
 In the event that previously registered stop handlers need to be deregistered
 then this can be done using the function ossl_init_thread_deregister().
 This will deregister all stop handlers (no matter which thread they were
-registered for) which the same B<index> value.
+registered for) which the same I<index> value.
 
 =head1 RETURN VALUES
 

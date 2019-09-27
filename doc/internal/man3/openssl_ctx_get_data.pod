@@ -24,8 +24,8 @@ openssl_ctx_get_data, openssl_ctx_run_once, openssl_ctx_onfree
 
 =head1 DESCRIPTION
 
-Internally, the OpenSSL library context C<OPENSSL_CTX> is implemented
-as a C<CRYPTO_EX_DATA>, which allows data from diverse parts of the
+Internally, the OpenSSL library context B<OPENSSL_CTX> is implemented
+as a B<CRYPTO_EX_DATA>, which allows data from diverse parts of the
 library to be added and removed dynamically.
 Each such data item must have a corresponding CRYPTO_EX_DATA index
 associated with it. Unlike normal CRYPTO_EX_DATA objects we use static indexes
@@ -34,8 +34,8 @@ indexes internally to the implementation.
 See the example further down to see how that's done.
 
 openssl_ctx_get_data() is used to retrieve a pointer to the data in
-the library context C<ctx> associated with the given C<index>. An
-OPENSSL_CTX_METHOD must be defined and given in the C<meth> parameter. The index
+the library context I<ctx> associated with the given I<index>. An
+OPENSSL_CTX_METHOD must be defined and given in the I<meth> parameter. The index
 for it should be defined in cryptlib.h. The functions through the method are
 used to create or free items that are stored at that index whenever a library
 context is created or freed, meaning that the code that use a data item of that
@@ -44,18 +44,18 @@ index doesn't have to worry about that, just use the data available.
 Deallocation of an index happens automatically when the library
 context is freed.
 
-openssl_ctx_run_once is used to run some initialisation routine C<run_once_fn>
-exactly once per library context C<ctx> object. Each initialisation routine
+openssl_ctx_run_once is used to run some initialisation routine I<run_once_fn>
+exactly once per library context I<ctx> object. Each initialisation routine
 should be allocate a unique run once index in cryptlib.h.
 
 Any resources allocated via a run once initialisation routine can be cleaned up
-using openssl_ctx_onfree. This associates an "on free" routine C<onfreefn> with
-the library context C<ctx>. When C<ctx> is freed all associated "on free"
+using openssl_ctx_onfree. This associates an "on free" routine I<onfreefn> with
+the library context I<ctx>. When I<ctx> is freed all associated "on free"
 routines are called.
 
 =head1 RETURN VALUES
 
-openssl_ctx_get_data() returns a pointer on success, or C<NULL> on
+openssl_ctx_get_data() returns a pointer on success, or NULL on
 failure.
 
 =head1 EXAMPLES

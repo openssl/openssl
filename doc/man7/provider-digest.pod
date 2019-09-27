@@ -99,43 +99,43 @@ OP_digest_newctx() should create and return a pointer to a provider side
 structure for holding context information during a digest operation.
 A pointer to this context will be passed back in a number of the other digest
 operation function calls.
-The parameter B<provctx> is the provider context generated during provider
+The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(3)>).
 
 OP_digest_freectx() is passed a pointer to the provider side digest context in
-the B<dctx> parameter.
+the I<dctx> parameter.
 This function should free any resources associated with that context.
 
 OP_digest_dupctx() should duplicate the provider side digest context in the
-B<dctx> parameter and return the duplicate copy.
+I<dctx> parameter and return the duplicate copy.
 
 =head2 Digest Generation Functions
 
 OP_digest_init() initialises a digest operation given a newly created
-provider side digest context in the B<dctx> parameter.
+provider side digest context in the I<dctx> parameter.
 
 OP_digest_update() is called to supply data to be digested as part of a
 previously initialised digest operation.
-The B<dctx> parameter contains a pointer to a previously initialised provider
+The I<dctx> parameter contains a pointer to a previously initialised provider
 side context.
-OP_digest_update() should digest B<inl> bytes of data at the location pointed to
-by B<in>.
+OP_digest_update() should digest I<inl> bytes of data at the location pointed to
+by I<in>.
 OP_digest_update() may be called multiple times for a single digest operation.
 
 OP_digest_final() generates a digest started through previous OP_digest_init()
 and OP_digest_update() calls.
-The B<dctx> parameter contains a pointer to the provider side context.
-The digest should be written to B<*out> and the length of the digest to
-B<*outl>.
-The digest should not exceed B<outsz> bytes.
+The I<dctx> parameter contains a pointer to the provider side context.
+The digest should be written to I<*out> and the length of the digest to
+I<*outl>.
+The digest should not exceed I<outsz> bytes.
 
 OP_digest_digest() is a "oneshot" digest function.
 No provider side digest context is used.
 Instead the provider context that was created during provider initialisation is
-passed in the B<provctx> parameter (see L<provider(3)>).
-B<inl> bytes at B<in> should be digested and the result should be stored at
-B<out>. The length of the digest should be stored in B<*outl> which should not
-exceed B<outsz> bytes.
+passed in the I<provctx> parameter (see L<provider(3)>).
+I<inl> bytes at I<in> should be digested and the result should be stored at
+I<out>. The length of the digest should be stored in I<*outl> which should not
+exceed I<outsz> bytes.
 
 =head2 Digest Parameters
 
@@ -143,14 +143,14 @@ See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
 OP_digest_get_params() gets details of the algorithm implementation
-and stores them in B<params>.
+and stores them in I<params>.
 
 OP_digest_set_ctx_params() sets digest operation parameters for the
-provider side digest context B<dctx> to B<params>.
+provider side digest context I<dctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
 OP_digest_get_ctx_params() gets digest operation details details from
-the given provider side digest context B<dctx> and stores them in B<params>.
+the given provider side digest context I<dctx> and stores them in I<params>.
 
 OP_digest_gettable_params(), OP_digest_gettable_ctx_params(), and
 OP_digest_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
@@ -218,13 +218,13 @@ B<unsigned long int>.
 =head2 Digest Context Parameters
 
 OP_digest_set_ctx_params() sets digest parameters associated with the
-given provider side digest context B<dctx> to B<params>.
+given provider side digest context I<dctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
 OP_digest_get_ctx_params() gets details of currently set parameters
-values associated with the give provider side digest context B<dctx>
-and stores them in B<params>.
+values associated with the give provider side digest context I<dctx>
+and stores them in I<params>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
 Parameters currently recognised by built-in digests are as follows. Not all

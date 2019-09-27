@@ -22,18 +22,18 @@ ossl_cmp_X509_STORE_get1_certs
 
 =head1 DESCRIPTION
 
-ossl_cmp_sk_X509_add1_cert() appends or prepends (depending on the B<prepend>
+ossl_cmp_sk_X509_add1_cert() appends or prepends (depending on the I<prepend>
 argument) a certificate to the given list,
 optionally only if it is not already contained.
 On success the reference count of the certificate is increased.
 
-ossl_cmp_sk_X509_add1_certs() appends or prepends (depending on the B<prepend>
+ossl_cmp_sk_X509_add1_certs() appends or prepends (depending on the I<prepend>
 argument) a list of certificates to the given list,
 optionally only if not self-signed and optionally only if not already contained.
 The reference counts of those certificates appended successfully are increased.
 
 ossl_cmp_X509_STORE_add1_certs() adds all or only self-signed certificates from
-the given stack to given store. The C<certs> parameter may be NULL.
+the given stack to given store. The I<certs> parameter may be NULL.
 
 ossl_cmp_X509_STORE_get1_certs() retrieves a copy of all certificates in the
 given store.
