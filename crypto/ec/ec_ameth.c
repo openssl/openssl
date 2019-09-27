@@ -16,7 +16,7 @@
 #include <openssl/asn1t.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 #ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);

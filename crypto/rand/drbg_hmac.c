@@ -14,7 +14,7 @@
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
 #include "internal/providercommon.h"
-#include "rand_lcl.h"
+#include "rand_local.h"
 
 /*
  * Called twice by SP800-90Ar1 10.1.2.2 HMAC_DRBG_Update_Process.

@@ -29,7 +29,7 @@
  */
 #include <stdio.h>
 #include <openssl/bn.h>
-#include "bn_lcl.h"
+#include "bn_local.h"
 #include "crypto/bn.h"
 
 /*

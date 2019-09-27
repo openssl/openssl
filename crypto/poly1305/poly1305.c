@@ -89,7 +89,7 @@ static void
 poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit);
 
 /*
- * Type-agnostic "rip-off" from constant_time_locl.h
+ * Type-agnostic "rip-off" from constant_time.h
  */
 # define CONSTANT_TIME_CARRY(a,b) ( \
          (a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(a) * 8 - 1) \

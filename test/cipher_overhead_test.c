@@ -9,7 +9,7 @@
 
 #include "internal/nelem.h"
 #include "testutil.h"
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 
 static int cipher_overhead(void)
 {

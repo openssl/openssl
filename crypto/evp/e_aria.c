@@ -17,7 +17,7 @@
 # include "crypto/aria.h"
 # include "crypto/evp.h"
 # include "crypto/modes.h"
-# include "evp_locl.h"
+# include "evp_local.h"
 
 /* ARIA subkey Structure */
 typedef struct {

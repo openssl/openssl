@@ -37,7 +37,7 @@
  */
 
 #include "internal/cryptlib.h"
-#include "wp_locl.h"
+#include "wp_local.h"
 #include <string.h>
 
 typedef unsigned char u8;

@@ -14,7 +14,7 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "crypto/evp.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 /* MAC PKEY context structure */
 

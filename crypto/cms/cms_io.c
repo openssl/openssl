@@ -12,7 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/cms.h>
-#include "cms_lcl.h"
+#include "cms_local.h"
 
 /* unfortunately cannot constify BIO_new_NDEF() due to this and PKCS7_stream() */
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)

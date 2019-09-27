@@ -12,7 +12,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#include "pcy_int.h"
+#include "pcy_local.h"
 
 static void expected_print(BIO *channel,
                            X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,

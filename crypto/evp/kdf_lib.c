@@ -21,7 +21,7 @@
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
 {

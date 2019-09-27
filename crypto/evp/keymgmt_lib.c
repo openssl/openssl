@@ -12,7 +12,7 @@
 #include "crypto/evp.h"
 #include "crypto/asn1.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static OSSL_PARAM *paramdefs_to_params(const OSSL_PARAM *paramdefs)
 {

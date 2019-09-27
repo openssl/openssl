@@ -9,8 +9,8 @@
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
-#include "../ssl/ssl_locl.h"
-#include "../ssl/record/record_locl.h"
+#include "../ssl/ssl_local.h"
+#include "../ssl/record/record_local.h"
 #include "internal/nelem.h"
 #include "testutil.h"
 

@@ -19,7 +19,7 @@
 #include <openssl/core_names.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 {

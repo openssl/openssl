@@ -12,7 +12,7 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/property.h"
-#include "../crypto/property/property_lcl.h"
+#include "../crypto/property/property_local.h"
 
 static int add_property_names(const char *n, ...)
 {

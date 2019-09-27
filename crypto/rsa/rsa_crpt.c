@@ -12,7 +12,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
 #include <openssl/rand.h>
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 int RSA_bits(const RSA *r)
 {

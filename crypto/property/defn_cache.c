@@ -13,7 +13,7 @@
 #include <openssl/lhash.h>
 #include "internal/propertyerr.h"
 #include "internal/property.h"
-#include "property_lcl.h"
+#include "property_local.h"
 
 /*
  * Implement a property definition cache.

@@ -21,7 +21,7 @@
 #include "crypto/modes.h"
 #include "crypto/siv.h"
 #include "crypto/ciphermode_platform.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 typedef struct {
     union {

@@ -25,7 +25,7 @@
 #include "testutil/output.h"
 #include "internal/nelem.h"
 #include "internal/ktls.h"
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 
 #ifndef OPENSSL_NO_TLS1_3
 

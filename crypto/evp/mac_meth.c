@@ -4,7 +4,7 @@
 #include <openssl/core_numbers.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int evp_mac_up_ref(void *vmac)
 {

@@ -11,7 +11,7 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include "crypto/rand.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>

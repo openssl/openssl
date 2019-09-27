@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include "dh_locl.h"
+#include "dh_local.h"
 #include "crypto/bn.h"
 
 static int generate_key(DH *dh);

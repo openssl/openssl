@@ -28,8 +28,8 @@
 
 #include <openssl/asn1t.h>
 
-#include "crmf_int.h"
-#include "internal/constant_time_locl.h"
+#include "crmf_local.h"
+#include "internal/constant_time.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>

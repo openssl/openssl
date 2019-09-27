@@ -15,7 +15,7 @@
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
-#include "err_locl.h"
+#include "err_local.h"
 
 void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
                          void *u)

@@ -9,7 +9,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,
                           const EC_POINT *point,

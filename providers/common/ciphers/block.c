@@ -8,7 +8,7 @@
  */
 
 #include <assert.h>
-#include "cipher_locl.h"
+#include "cipher_local.h"
 #include "internal/providercommonerr.h"
 
 /*

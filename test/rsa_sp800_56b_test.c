@@ -26,7 +26,7 @@ int setup_tests(void)
     return 1;
 }
 #else
-# include "rsa_locl.h"
+# include "rsa_local.h"
 # include <openssl/rsa.h>
 
 /* taken from RSA2 cavs data */

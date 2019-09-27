@@ -15,7 +15,7 @@
 # include <openssl/evp.h>
 # include <openssl/objects.h>
 # include "crypto/evp.h"
-# include "evp_locl.h"
+# include "evp_local.h"
 # include "crypto/chacha.h"
 
 typedef struct {

@@ -17,7 +17,7 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 
-#include "crmf_int.h"
+#include "crmf_local.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/asn1t.h>

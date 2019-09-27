@@ -13,7 +13,7 @@
 
 #include <openssl/asn1t.h>
 
-#include "crmf_int.h"
+#include "crmf_local.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>

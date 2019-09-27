@@ -11,7 +11,7 @@
 
 #include <openssl/asn1t.h>
 
-#include "cmp_int.h"
+#include "cmp_local.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/cmp.h>

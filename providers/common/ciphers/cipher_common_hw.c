@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cipher_locl.h"
+#include "cipher_local.h"
 
 /*-
  * The generic cipher functions for cipher modes cbc, ecb, ofb, cfb and ctr.

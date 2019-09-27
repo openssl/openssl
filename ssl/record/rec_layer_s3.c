@@ -10,11 +10,11 @@
 #include <stdio.h>
 #include <limits.h>
 #include <errno.h>
-#include "../ssl_locl.h"
+#include "../ssl_local.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
-#include "record_locl.h"
+#include "record_local.h"
 #include "internal/packet.h"
 
 #if     defined(OPENSSL_SMALL_FOOTPRINT) || \

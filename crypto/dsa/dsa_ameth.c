@@ -17,7 +17,7 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "internal/param_build.h"
-#include "dsa_locl.h"
+#include "dsa_local.h"
 
 static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {

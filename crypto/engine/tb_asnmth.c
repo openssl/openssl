@@ -8,7 +8,7 @@
  */
 
 #include "e_os.h"
-#include "eng_int.h"
+#include "eng_local.h"
 #include <openssl/evp.h>
 #include "crypto/asn1.h"
 
