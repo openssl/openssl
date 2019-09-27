@@ -10,7 +10,7 @@
 #include <string.h>
 #include <openssl/provider.h>
 #include <openssl/params.h>
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include <openssl/core_names.h>
 #include "internal/nelem.h"
 #include "testutil.h"

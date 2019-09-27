@@ -12,7 +12,7 @@
 # define HEADER_X509_H
 
 # include <openssl/e_os2.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/symhacks.h>
 # include <openssl/buffer.h>
 # include <openssl/evp.h>

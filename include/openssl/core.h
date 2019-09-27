@@ -11,7 +11,7 @@
 # define OSSL_CORE_H
 
 # include <stddef.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 
 # ifdef __cplusplus
 extern "C" {

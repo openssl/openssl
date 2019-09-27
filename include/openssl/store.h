@@ -11,7 +11,7 @@
 # define HEADER_OSSL_STORE_H
 
 # include <stdarg.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/pem.h>
 # include <openssl/storeerr.h>
 

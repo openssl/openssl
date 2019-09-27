@@ -11,7 +11,7 @@
 
 #include <sys/types.h>
 #include <openssl/e_os2.h>
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include <stdarg.h>
 
 /*
