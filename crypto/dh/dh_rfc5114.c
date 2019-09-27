@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include "dh_locl.h"
 #include <openssl/bn.h>
-#include "internal/bn_dh.h"
+#include "crypto/bn_dh.h"
 
 /*
  * Macro to make a DH structure from BIGNUM data. NB: although just copying

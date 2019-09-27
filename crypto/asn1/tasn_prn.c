@@ -15,7 +15,7 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
-#include "internal/asn1_int.h"
+#include "crypto/asn1.h"
 #include "asn1_locl.h"
 
 /*

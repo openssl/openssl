@@ -10,7 +10,7 @@
 
 #include <openssl/err.h>
 
-#include "internal/bn_int.h"
+#include "crypto/bn.h"
 #include "ec_lcl.h"
 
 #ifndef OPENSSL_NO_EC2M
