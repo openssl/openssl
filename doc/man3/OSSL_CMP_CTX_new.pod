@@ -315,7 +315,7 @@ in the given OSSL_CMP_CTX structure.
 OSSL_CMP_CTX_set_serverPort() sets the port of the CMP server to connect to.
 Port defaults to OSSL_CMP_DEFAULT_PORT = 80 if not set explicitly.
 
-OSSL_CMP_CTX_set1_proxyName() sets the host name of the HTTP proxy to be used
+OSSL_CMP_CTX_set1_proxyName() sets the hostname of the HTTP proxy to be used
 for connecting to the CA server.
 
 OSSL_CMP_CTX_set_proxyPort() sets the port of the HTTP proxy.

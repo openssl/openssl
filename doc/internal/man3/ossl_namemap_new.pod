@@ -43,7 +43,7 @@ ossl_namemap_add() adds a new name to the namemap if it's not already
 present.
 If the given I<number> is zero, a new number will be allocated to
 identify this I<name>.
-If the given I<number> is non-zero, the I<name> is added to the set of
+If the given I<number> is nonzero, the I<name> is added to the set of
 names already associated with that number.
 
 ossl_namemap_name2num() finds the number corresponding to the given

@@ -184,7 +184,7 @@ ossl_provider_new().
 ossl_provider_dso() returns a reference to the module, for providers
 that come in the form of loadable modules.
 
-ossl_provider_module_name() returns the file name of the module, for
+ossl_provider_module_name() returns the filename of the module, for
 providers that come in the form of loadable modules.
 
 ossl_provider_module_path() returns the full path of the module file,

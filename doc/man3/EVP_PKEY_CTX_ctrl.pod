@@ -166,7 +166,7 @@ The parameters currently supported by the default provider are:
 =item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <unsigned integer>
 
 Sets the DH padding mode.
-If B<OSSL_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeroes
+If B<OSSL_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeros
 up to the size of the DH prime B<p>.
 If B<OSSL_EXCHANGE_PARAM_PAD> is zero (the default) then no padding is
 performed.
@@ -345,7 +345,7 @@ parameter generation. Use 0 for PKCS#3 DH and 1 for X9.42 DH.
 The default is 0.
 
 The EVP_PKEY_CTX_set_dh_pad() function sets the DH padding mode.
-If B<pad> is 1 the shared secret is padded with zeroes up to the size of the DH
+If B<pad> is 1 the shared secret is padded with zeros up to the size of the DH
 prime B<p>.
 If B<pad> is zero (the default) then no padding is performed.
 

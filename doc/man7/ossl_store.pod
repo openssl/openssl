@@ -15,7 +15,7 @@ ossl_store - Store retrieval functions
 =head2 General
 
 A STORE is a layer of functionality to retrieve a number of supported
-objects from a repository of any kind, addressable as a file name or
+objects from a repository of any kind, addressable as a filename or
 as a URI.
 
 The functionality supports the pattern "open a channel to the

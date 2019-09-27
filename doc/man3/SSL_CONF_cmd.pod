@@ -549,7 +549,7 @@ The value is a string without any specific structure.
 
 =item B<SSL_CONF_TYPE_FILE>
 
-The value is a file name.
+The value is a filename.
 
 =item B<SSL_CONF_TYPE_DIR>
 

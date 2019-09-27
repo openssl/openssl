@@ -54,7 +54,7 @@ Outputs the DSO extension OpenSSL uses.
 =item B<-dirnamesep>
 
 Outputs the separator character between a directory specification and
-a file name.
+a filename.
 Note that on some operating systems, this is not the same as the
 separator between directory elements.
 

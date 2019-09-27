@@ -84,7 +84,7 @@ the initialization function.
 I<operation_id> is an operation identity (see L</Operations> below).
 
 I<no_store> is a flag back to the OpenSSL libraries which, when
-non-zero, signifies that the OpenSSL libraries will not store a
+nonzero, signifies that the OpenSSL libraries will not store a
 reference to the returned data in their internal store of
 implementations.
 

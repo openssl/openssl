@@ -69,7 +69,7 @@ EVP_shake256().
 
 HMAC_CTX_new() creates a new HMAC_CTX in heap memory.
 
-HMAC_CTX_reset() zeroes an existing B<HMAC_CTX> and associated
+HMAC_CTX_reset() clears an existing B<HMAC_CTX> and associated
 resources, making it suitable for new computations as if it was newly
 created with HMAC_CTX_new().
 

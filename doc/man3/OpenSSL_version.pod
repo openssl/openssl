@@ -168,7 +168,7 @@ The configured dynamically loadable module extension.
 
 =item OPENSSL_INFO_DIR_FILENAME_SEPARATOR
 
-The separator between a directory specification and a file name.
+The separator between a directory specification and a filename.
 Note that on some operating systems, this is not the same as the
 separator between directory elements.
 

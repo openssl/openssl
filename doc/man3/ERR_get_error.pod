@@ -68,9 +68,9 @@ and L<ERR_error_string(3)> for human-readable error messages.
 ERR_get_error_line(), ERR_peek_error_line() and
 ERR_peek_last_error_line() are the same as ERR_get_error(),
 ERR_peek_error() and ERR_peek_last_error(), but on success they
-additionally store the file name and line number where
+additionally store the filename and line number where
 the error occurred in *B<file> and *B<line>, as far as they are not B<NULL>.
-An unset file name is indicated as B<"">, i.e., an empty string.
+An unset filename is indicated as B<"">, i.e., an empty string.
 An unset line number is indicated as B<0>.
 
 A pointer returned this way by these functions and the ones below

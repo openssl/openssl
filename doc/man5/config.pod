@@ -263,7 +263,7 @@ The command B<identity> is used to give the provider name. For example:
  identity = myfoo
 
 The parameter B<module> loads and adds a provider module from the
-given module path.  That path may be a simple file name, a relative
+given module path.  That path may be a simple filename, a relative
 path or an absolute path.
 
 The parameter B<activate> determines whether to activate the

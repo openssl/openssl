@@ -52,7 +52,7 @@ an unsigned long hash value for its key field.  The hash value is
 normally truncated to a power of 2, so make sure that your hash
 function returns well mixed low order bits.  The I<compare> callback
 takes two arguments (pointers to two hash table entries), and returns
-0 if their keys are equal, non-zero otherwise.
+0 if their keys are equal, nonzero otherwise.
 
 If your hash table
 will contain items of some particular type and the I<hash> and

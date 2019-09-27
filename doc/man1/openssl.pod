@@ -32,7 +32,7 @@ It can be used for
  o  Encryption and Decryption with Ciphers
  o  SSL/TLS Client and Server Tests
  o  Handling of S/MIME signed or encrypted mail
- o  Time Stamp requests, generation and verification
+ o  Timestamp requests, generation and verification
 
 =head1 COMMAND SUMMARY
 
