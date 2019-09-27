@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_MDC2_H
 # define OPENSSL_MDC2_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_MDC2_H
+# endif
 
 # include <openssl/opensslconf.h>
 

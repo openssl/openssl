@@ -10,6 +10,12 @@
 
 #ifndef OPENSSL_PEMERR_H
 # define OPENSSL_PEMERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_PEMERR_H
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

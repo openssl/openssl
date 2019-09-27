@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_EVP_H
 # define OPENSSL_EVP_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ENVELOPE_H
+# endif
 
 # include <stdarg.h>
 

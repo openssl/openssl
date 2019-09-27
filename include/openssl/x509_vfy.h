@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_X509_VFY_H
 # define OPENSSL_X509_VFY_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_X509_VFY_H
+# endif
 
 /*
  * Protect against recursion, x509.h and x509_vfy.h each include the other.

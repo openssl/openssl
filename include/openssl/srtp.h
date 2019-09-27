@@ -15,6 +15,12 @@
 
 #ifndef OPENSSL_SRTP_H
 # define OPENSSL_SRTP_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_D1_SRTP_H
+# endif
 
 # include <openssl/ssl.h>
 

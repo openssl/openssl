@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_STORE_H
 # define OPENSSL_STORE_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_OSSL_STORE_H
+# endif
 
 # include <stdarg.h>
 # include <openssl/types.h>

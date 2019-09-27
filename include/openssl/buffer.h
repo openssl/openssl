@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_BUFFER_H
 # define OPENSSL_BUFFER_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_BUFFER_H
+# endif
 
 # include <openssl/types.h>
 # ifndef OPENSSL_CRYPTO_H

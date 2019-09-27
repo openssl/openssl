@@ -9,6 +9,12 @@
 
 #ifndef OPENSSL_RSA_H
 # define OPENSSL_RSA_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_RSA_H
+# endif
 
 # include <openssl/opensslconf.h>
 

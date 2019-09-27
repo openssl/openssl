@@ -11,6 +11,12 @@
 
 #ifndef OPENSSL_ASYNC_H
 # define OPENSSL_ASYNC_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ASYNC_H
+# endif
 
 #if defined(_WIN32)
 # if defined(BASETYPES) || defined(_WINDEF_H)

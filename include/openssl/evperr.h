@@ -10,6 +10,12 @@
 
 #ifndef OPENSSL_EVPERR_H
 # define OPENSSL_EVPERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_EVPERR_H
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
