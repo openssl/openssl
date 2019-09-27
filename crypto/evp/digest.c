@@ -550,20 +550,10 @@ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md)
+const OSSL_PARAM *EVP_MD_CTX_settable_params(const EVP_MD *digest)
 {
-    if (md != NULL && md->settable_ctx_params != NULL)
-        return md->settable_ctx_params();
-    return NULL;
-}
-
-const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
-{
-    if (ctx != NULL
-            && ctx->digest != NULL
-            && ctx->digest->settable_ctx_params != NULL)
-        return ctx->digest->settable_ctx_params();
-
+    if (digest != NULL && digest->settable_ctx_params != NULL)
+        return digest->settable_ctx_params();
     return NULL;
 }
 
@@ -574,20 +564,10 @@ int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
     return 0;
 }
 
-const OSSL_PARAM *EVP_MD_gettable_ctx_params(const EVP_MD *md)
+const OSSL_PARAM *EVP_MD_CTX_gettable_params(const EVP_MD *digest)
 {
-    if (md != NULL && md->gettable_ctx_params != NULL)
-        return md->gettable_ctx_params();
-    return NULL;
-}
-
-const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
-{
-    if (ctx != NULL
-            && ctx->digest != NULL
-            && ctx->digest->gettable_ctx_params != NULL)
-        return ctx->digest->gettable_ctx_params();
-
+    if (digest != NULL && digest->gettable_ctx_params != NULL)
+        return digest->gettable_ctx_params();
     return NULL;
 }
 
