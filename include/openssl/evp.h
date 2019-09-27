@@ -270,7 +270,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 /* Don't use standard iv length function */
 # define         EVP_CIPH_CUSTOM_IV_LENGTH       0x800
 /* Legacy and no longer relevant: Allow use default ASN1 get/set iv */
-# define         EVP_CIPH_FLAG_DEFAULT_ASN1      0x1000
+# define         EVP_CIPH_FLAG_DEFAULT_ASN1      0
+/* Free:                                         0x1000 */
 /* Buffer length in bits not bytes: CFB1 mode only */
 # define         EVP_CIPH_FLAG_LENGTH_BITS       0x2000
 /* Note if suitable for use in FIPS mode */

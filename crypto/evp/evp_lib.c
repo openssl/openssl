@@ -26,7 +26,7 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
     /*
      * For legacy implementations, we detect custom AlgorithmIdentifier
-     * parameter handling by checking if there the function pointer
+     * parameter handling by checking if the function pointer
      * cipher->set_asn1_parameters is set.  We know that this pointer
      * is NULL for provided implementations.
      *
