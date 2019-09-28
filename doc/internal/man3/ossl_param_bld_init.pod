@@ -70,7 +70,15 @@ by I<data> of at least I<data_n> bytes in size.
 If required, secure memory for private BIGNUMs should be pointed to by
 I<secure> of at least I<secure_n> bytes in size.
 
-ossl_param_bld_push_TYPE() are a series of functions which will create
+=begin comment
+
+POD is pretty good at recognising function names and making them appropriately
+bold...  however, when part of the function name is variable, we have to help
+the processor along
+
+=end comment
+
+B<ossl_param_bld_push_I<TYPE>>() are a series of functions which will create
 OSSL_PARAM objects of the specified size and correct type for the I<val>
 argument.
 I<val> is stored by value and an expression or auto variable can be used.
