@@ -49,8 +49,8 @@ BIO_free() on it other than the discarded return value.
 
 Normally the I<type> argument is supplied by a function which returns a
 pointer to a BIO_METHOD. There is a naming convention for such functions:
-a source/sink BIO is normally called BIO_s_*() and a filter BIO
-BIO_f_*();
+a source/sink BIO is normally called B<BIO_s_I<*>>() and a filter BIO
+B<BIO_f_I<*>>();
 
 =head1 EXAMPLES
 
