@@ -42,10 +42,11 @@ the processor along
 =end comment
 
 SPARSE_ARRAY_OF() returns the name for a sparse array of the specified
-I<TYPE>.  DEFINE_STACK_OF() creates set of functions for a sparse array of
-I<TYPE>. This will mean that a pointer to type I<TYPE> is stored in each
-element of a sparse array, the type is referenced by B<SPARSE_ARRAY_OF>(I<TYPE>)
-and each function name begins with B<ossl_sa_I<TYPE>_>. For example:
+B<I<TYPE>>.  DEFINE_STACK_OF() creates set of functions for a sparse
+array of B<I<TYPE>>. This will mean that a pointer to type B<I<TYPE>>
+is stored in each element of a sparse array, the type is referenced by
+B<SPARSE_ARRAY_OF>(B<I<TYPE>>) and each function name begins with
+B<ossl_sa_I<TYPE>_>. For example:
 
  TYPE *ossl_sa_TYPE_get(SPARSE_ARRAY_OF(TYPE) *sa, ossl_uintmax_t idx);
 
