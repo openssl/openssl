@@ -160,9 +160,9 @@ For more details about the meaning of arguments see the
 B<PEM FUNCTION ARGUMENTS> section.
 
 Each operation has four functions associated with it. For
-brevity the term "B<TYPE> functions" will be used below to collectively
-refer to the PEM_read_bio_TYPE(), PEM_read_TYPE(),
-PEM_write_bio_TYPE(), and PEM_write_TYPE() functions.
+brevity the term "B<I<TYPE>> functions" will be used below to collectively
+refer to the B<PEM_read_bio_I<TYPE>>(), B<PEM_read_I<TYPE>>(),
+B<PEM_write_bio_I<TYPE>>(), and B<PEM_write_I<TYPE>>() functions.
 
 The B<PrivateKey> functions read or write a private key in PEM format using an
 EVP_PKEY structure. The write routines use PKCS#8 private key format and are
@@ -175,16 +175,16 @@ be used for compatibility with legacy programs.
 
 PEM_write_bio_PKCS8PrivateKey() and PEM_write_PKCS8PrivateKey() write a private
 key in an EVP_PKEY structure in PKCS#8 EncryptedPrivateKeyInfo format using
-PKCS#5 v2.0 password based encryption algorithms. The B<cipher> argument
+PKCS#5 v2.0 password based encryption algorithms. The I<cipher> argument
 specifies the encryption algorithm to use: unlike some other PEM routines the
 encryption is applied at the PKCS#8 level and not in the PEM headers. If
-B<cipher> is NULL then no encryption is used and a PKCS#8 PrivateKeyInfo
+I<cipher> is NULL then no encryption is used and a PKCS#8 PrivateKeyInfo
 structure is used instead.
 
 PEM_write_bio_PKCS8PrivateKey_nid() and PEM_write_PKCS8PrivateKey_nid()
 also write out a private key as a PKCS#8 EncryptedPrivateKeyInfo however
 it uses PKCS#5 v1.5 or PKCS#12 encryption algorithms instead. The algorithm
-to use is specified in the B<nid> parameter and should be the NID of the
+to use is specified in the I<nid> parameter and should be the NID of the
 corresponding OBJECT IDENTIFIER (see NOTES section).
 
 The B<PUBKEY> functions process a public key using an EVP_PKEY
@@ -247,36 +247,36 @@ structure.
 
 The PEM functions have many common arguments.
 
-The B<bp> BIO parameter (if present) specifies the BIO to read from
+The I<bp> BIO parameter (if present) specifies the BIO to read from
 or write to.
 
-The B<fp> FILE parameter (if present) specifies the FILE pointer to
+The I<fp> FILE parameter (if present) specifies the FILE pointer to
 read from or write to.
 
-The PEM read functions all take an argument B<TYPE **x> and return
-a B<TYPE *> pointer. Where B<TYPE> is whatever structure the function
-uses. If B<x> is NULL then the parameter is ignored. If B<x> is not
-NULL but B<*x> is NULL then the structure returned will be written
-to B<*x>. If neither B<x> nor B<*x> is NULL then an attempt is made
-to reuse the structure at B<*x> (but see BUGS and EXAMPLES sections).
-Irrespective of the value of B<x> a pointer to the structure is always
+The PEM read functions all take an argument I<B<TYPE> **x> and return
+a I<B<TYPE> *> pointer. Where I<B<TYPE>> is whatever structure the function
+uses. If I<x> is NULL then the parameter is ignored. If I<x> is not
+NULL but I<*x> is NULL then the structure returned will be written
+to I<*x>. If neither I<x> nor I<*x> is NULL then an attempt is made
+to reuse the structure at I<*x> (but see BUGS and EXAMPLES sections).
+Irrespective of the value of I<x> a pointer to the structure is always
 returned (or NULL if an error occurred).
 
-The PEM functions which write private keys take an B<enc> parameter
+The PEM functions which write private keys take an I<enc> parameter
 which specifies the encryption algorithm to use, encryption is done
 at the PEM level. If this parameter is set to NULL then the private
 key is written in unencrypted form.
 
-The B<cb> argument is the callback to use when querying for the pass
+The I<cb> argument is the callback to use when querying for the pass
 phrase used for encrypted PEM structures (normally only private keys).
 
-For the PEM write routines if the B<kstr> parameter is not NULL then
-B<klen> bytes at B<kstr> are used as the passphrase and B<cb> is
+For the PEM write routines if the I<kstr> parameter is not NULL then
+I<klen> bytes at I<kstr> are used as the passphrase and I<cb> is
 ignored.
 
-If the B<cb> parameters is set to NULL and the B<u> parameter is not
-NULL then the B<u> parameter is interpreted as a null terminated string
-to use as the passphrase. If both B<cb> and B<u> are NULL then the
+If the I<cb> parameters is set to NULL and the I<u> parameter is not
+NULL then the I<u> parameter is interpreted as a null terminated string
+to use as the passphrase. If both I<cb> and I<u> are NULL then the
 default callback routine is used which will typically prompt for the
 passphrase on the current terminal with echoing turned off.
 
@@ -286,15 +286,15 @@ routine has the following form:
 
  int cb(char *buf, int size, int rwflag, void *u);
 
-B<buf> is the buffer to write the passphrase to. B<size> is the maximum
-length of the passphrase (i.e. the size of buf). B<rwflag> is a flag
+I<buf> is the buffer to write the passphrase to. I<size> is the maximum
+length of the passphrase (i.e. the size of buf). I<rwflag> is a flag
 which is set to 0 when reading and 1 when writing. A typical routine
 will ask the user to verify the passphrase (for example by prompting
-for it twice) if B<rwflag> is 1. The B<u> parameter has the same
-value as the B<u> parameter passed to the PEM routine. It allows
+for it twice) if I<rwflag> is 1. The I<u> parameter has the same
+value as the I<u> parameter passed to the PEM routine. It allows
 arbitrary data to be passed to the callback by the application
 (for example a window handle in a GUI application). The callback
-B<must> return the number of characters in the passphrase or -1 if
+I<must> return the number of characters in the passphrase or -1 if
 an error occurred.
 
 =head1 NOTES
@@ -316,7 +316,7 @@ this:
 
  PEM_read_bio_X509(bp, &x, 0, NULL);
 
-this is a bug because an attempt will be made to reuse the data at B<x>
+this is a bug because an attempt will be made to reuse the data at I<x>
 which is an uninitialised pointer.
 
 These functions make no assumption regarding the pass phrase received from the
@@ -344,15 +344,15 @@ cipher encoded as a set of hexadecimal digits. After those two lines is
 the base64-encoded encrypted data.
 
 The encryption key is derived using EVP_BytesToKey(). The cipher's
-initialization vector is passed to EVP_BytesToKey() as the B<salt>
+initialization vector is passed to EVP_BytesToKey() as the I<salt>
 parameter. Internally, B<PKCS5_SALT_LEN> bytes of the salt are used
 (regardless of the size of the initialization vector). The user's
-password is passed to EVP_BytesToKey() using the B<data> and B<datal>
+password is passed to EVP_BytesToKey() using the I<data> and I<datal>
 parameters. Finally, the library uses an iteration count of 1 for
 EVP_BytesToKey().
 
-The B<key> derived by EVP_BytesToKey() along with the original initialization
-vector is then used to decrypt the encrypted data. The B<iv> produced by
+The I<key> derived by EVP_BytesToKey() along with the original initialization
+vector is then used to decrypt the encrypted data. The I<iv> produced by
 EVP_BytesToKey() is not utilized or needed, and NULL should be passed to
 the function.
 
@@ -380,7 +380,7 @@ an existing structure. Therefore the following:
 
  PEM_read_bio_X509(bp, &x, 0, NULL);
 
-where B<x> already contains a valid certificate, may not work, whereas:
+where I<x> already contains a valid certificate, may not work, whereas:
 
  X509_free(x);
  x = PEM_read_bio_X509(bp, NULL, 0, NULL);

@@ -48,7 +48,7 @@ ossl_param_bld_push_octet_ptr
 =head1 DESCRIPTION
 
 A collection of utility functions that simplify the creation of OSSL_PARAM
-arrays.  The B<TYPE> names are as per L<OSSL_PARAM_int(3)>.
+arrays.  The B<I<TYPE>> names are as per L<OSSL_PARAM_int(3)>.
 
 ossl_param_bld_init() initialises the OSSL_PARAM_BLD structure so that values
 can be added.
