@@ -22,32 +22,32 @@ SSL_get_changed_async_fds
 =head1 DESCRIPTION
 
 SSL_waiting_for_async() determines whether an SSL connection is currently
-waiting for asynchronous operations to complete (see the SSL_MODE_ASYNC mode in
-L<SSL_CTX_set_mode(3)>).
+waiting for asynchronous operations to complete (see the B<SSL_MODE_ASYNC> mode
+in L<SSL_CTX_set_mode(3)>).
 
 SSL_get_all_async_fds() returns a list of file descriptor which can be used in a
 call to select() or poll() to determine whether the current asynchronous
 operation has completed or not. A completed operation will result in data
 appearing as "read ready" on the file descriptor (no actual data should be read
-from the file descriptor). This function should only be called if the SSL object
-is currently waiting for asynchronous work to complete (i.e.
-SSL_ERROR_WANT_ASYNC has been received - see L<SSL_get_error(3)>). Typically the
-list will only contain one file descriptor. However if multiple asynchronous
+from the file descriptor). This function should only be called if the B<SSL>
+object is currently waiting for asynchronous work to complete (i.e.
+B<SSL_ERROR_WANT_ASYNC> has been received - see L<SSL_get_error(3)>). Typically
+the list will only contain one file descriptor. However if multiple asynchronous
 capable engines are in use then more than one is possible. The number of file
-descriptors returned is stored in B<*numfds> and the file descriptors themselves
-are in B<*fds>. The B<fds> parameter may be NULL in which case no file
-descriptors are returned but B<*numfds> is still populated. It is the callers
-responsibility to ensure sufficient memory is allocated at B<*fds> so typically
-this function is called twice (once with a NULL B<fds> parameter and once
+descriptors returned is stored in I<*numfds> and the file descriptors themselves
+are in I<*fds>. The I<fds> parameter may be NULL in which case no file
+descriptors are returned but I<*numfds> is still populated. It is the callers
+responsibility to ensure sufficient memory is allocated at I<*fds> so typically
+this function is called twice (once with a NULL I<fds> parameter and once
 without).
 
 SSL_get_changed_async_fds() returns a list of the asynchronous file descriptors
 that have been added and a list that have been deleted since the last
-SSL_ERROR_WANT_ASYNC was received (or since the SSL object was created if no
-SSL_ERROR_WANT_ASYNC has been received). Similar to SSL_get_all_async_fds() it
-is the callers responsibility to ensure that B<*addfd> and B<*delfd> have
+B<SSL_ERROR_WANT_ASYNC> was received (or since the B<SSL> object was created if
+no B<SSL_ERROR_WANT_ASYNC> has been received). Similar to SSL_get_all_async_fds()
+it is the callers responsibility to ensure that I<*addfd> and I<*delfd> have
 sufficient memory allocated, although they may be NULL. The number of added fds
-and the number of deleted fds are stored in B<*numaddfds> and B<*numdelfds>
+and the number of deleted fds are stored in I<*numaddfds> and I<*numdelfds>
 respectively.
 
 =head1 RETURN VALUES
