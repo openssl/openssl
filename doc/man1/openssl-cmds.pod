@@ -55,7 +55,7 @@ x509
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
 B<openssl> I<cmd> B<-help> | [I<-option> | I<-option> I<arg>] ... [I<arg>] ...
 

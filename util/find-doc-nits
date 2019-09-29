@@ -444,7 +444,7 @@ sub check {
         check_section_location($id, $contents, "EXAMPLES", "SEE ALSO");
     }
 
-    unless ( $contents =~ /=for comment generic/ ) {
+    unless ( $contents =~ /=for openssl generic/ ) {
         if ( $filename =~ m|man3/| ) {
             name_synopsis($id, $filename, $contents);
             functionname_check($id, $filename, $contents);
@@ -482,7 +482,7 @@ sub check {
     err($id, "Possible version style issue")
         if $contents =~ /OpenSSL version [019]/;
 
-    if ( $contents !~ /=for comment multiple includes/ ) {
+    if ( $contents !~ /=for openssl multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines
         # (non-consecutive lines are okay; see man3/MD5.pod).
         if ( $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms ) {

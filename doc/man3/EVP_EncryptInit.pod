@@ -65,7 +65,7 @@ EVP_CIPHER_do_all_ex
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/evp.h>
 

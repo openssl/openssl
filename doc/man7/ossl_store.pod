@@ -6,7 +6,7 @@ ossl_store - Store retrieval functions
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
 #include <openssl/store.h>
 

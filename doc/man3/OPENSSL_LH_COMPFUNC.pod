@@ -12,7 +12,7 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/lhash.h>
 

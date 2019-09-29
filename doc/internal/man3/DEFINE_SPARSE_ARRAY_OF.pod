@@ -9,7 +9,7 @@ ossl_sa_TYPE_doall_arg, ossl_sa_TYPE_get, ossl_sa_TYPE_set
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include "crypto/sparse_array.h"
 

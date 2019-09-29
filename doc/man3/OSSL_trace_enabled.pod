@@ -12,7 +12,7 @@ OSSL_TRACE_ENABLED
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/trace.h>
 
