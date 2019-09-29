@@ -266,7 +266,11 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 #    elif defined(__i386__)
 #     define __NR_getrandom    355
 #    elif defined(__x86_64__)
-#     define __NR_getrandom    318
+#     if defined(__ILP32__)
+#      define __NR_getrandom   (__X32_SYSCALL_BIT + 318)
+#     else
+#      define __NR_getrandom   318
+#     endif
 #    elif defined(__xtensa__)
 #     define __NR_getrandom    338
 #    elif defined(__s390__) || defined(__s390x__)
@@ -292,7 +296,7 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 #    elif defined(__alpha__)
 #     define __NR_getrandom    511
 #    elif defined(__sh__)
-#     if defined(__ILP32__)
+#     if defined(__SH5__)
 #      define __NR_getrandom   373
 #     else
 #      define __NR_getrandom   384
@@ -305,7 +309,9 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 #     define __NR_getrandom    352
 #    elif defined(__cris__)
 #     define __NR_getrandom    356
-#    else /* generic, includes __aarch64__ */
+#    elif defined(__aarch64__)
+#     define __NR_getrandom    278
+#    else /* generic */
 #     define __NR_getrandom    278
 #    endif
 #   endif
