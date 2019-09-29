@@ -94,7 +94,7 @@ Run benchmarks for B<num> seconds.
 
 Run benchmarks on B<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
 
-=item B<[zero or more test algorithms]>
+=item B<algorithm...>
 
 If any options are given, B<speed> tests those algorithms, otherwise a
 pre-compiled grand selection is tested.

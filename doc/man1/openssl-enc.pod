@@ -39,7 +39,7 @@ B<openssl>
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
 
-B<openssl> I<[cipher]> [B<...>]
+B<openssl> I<cipher> [B<...>]
 
 =head1 DESCRIPTION
 

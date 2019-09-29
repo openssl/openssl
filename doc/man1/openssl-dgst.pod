@@ -52,10 +52,10 @@ command.
 
 Print out a usage message.
 
-=item B<-> I<digest>
+=item B<->I<digest>
 
 Specifies name of a supported digest to be used. To see the list of
-supported digests, use the command I<list --digest-commands>.
+supported digests, use the command C<list --digest-commands>.
 
 =item B<-c>
 

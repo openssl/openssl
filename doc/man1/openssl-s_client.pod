@@ -137,7 +137,7 @@ B<openssl> B<s_client>
 [B<-keylogfile> I<file>]
 [B<-early_data> I<file>]
 [B<-enable_pha>]
-[B<target>]
+[I<host>:I<post>]
 
 =head1 DESCRIPTION
 
@@ -158,7 +158,7 @@ manual page.
 
 Print out a usage message.
 
-=item B<-connect> I<host:port>
+=item B<-connect> I<host>:I<port>
 
 This specifies the host and optional port to connect to. It is possible to
 select the host and port using the optional target positional argument instead.
@@ -733,12 +733,12 @@ data and when the server accepts the early data.
 For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
 happen whether or not a certificate has been provided via B<-cert>.
 
-=item B<[target]>
+=item I<host>:I<port>
 
 Rather than providing B<-connect>, the target hostname and optional port may
 be provided as a single positional argument after all options. If neither this
-nor B<-connect> are provided, falls back to attempting to connect to localhost
-on port 4433.
+nor B<-connect> are provided, falls back to attempting to connect to
+I<localhost> on port I<4433>.
 
 =back
 

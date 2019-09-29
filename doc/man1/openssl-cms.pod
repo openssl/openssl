@@ -94,7 +94,7 @@ B<openssl> B<cms>
 [B<-secretkeyid> I<id>]
 [B<-econtent_type> I<type>]
 [B<-inkey> I<file>]
-[B<-keyopt> I<name:parameter>]
+[B<-keyopt> I<name>:I<parameter>]
 [B<-passin> I<arg>]
 [B<-rand> I<file...>]
 [B<-writerand> I<file>]
@@ -102,7 +102,7 @@ B<openssl> B<cms>
 [B<-to> I<addr>]
 [B<-from> I<addr>]
 [B<-subject> I<subj>]
-[cert.pem]...
+[I<cert.pem ...>]
 
 =head1 DESCRIPTION
 
@@ -463,7 +463,7 @@ private key must be included in the certificate file specified with
 the B<-recip> or B<-signer> file. When signing this option can be used
 multiple times to specify successive keys.
 
-=item B<-keyopt> I<name:opt>
+=item B<-keyopt> I<name>:I<parameter>
 
 For signing and encryption this option can be used multiple times to
 set customised parameters for the preceding key or certificate. It can
@@ -488,7 +488,7 @@ all others.
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<cert.pem...>
+=item I<cert.pem...>
 
 One or more certificates of message recipients: used when encrypting
 a message.
