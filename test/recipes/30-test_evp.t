@@ -21,12 +21,15 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $no_legacy = disabled('legacy') || ($ENV{NO_LEGACY} // 0);
+
 # Default config depends on if the legacy module is built or not
-my $defaultcnf = disabled('legacy') ? 'default.cnf' : 'default-and-legacy.cnf';
+my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
 
 my @configs = ( $defaultcnf );
 # Only add the FIPS config if the FIPS module has been built
-push @configs, 'fips.cnf' unless disabled('fips');
+push @configs, 'fips.cnf' unless $no_fips;
 
 my @files = qw( evpciph.txt evpdigest.txt );
 my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
@@ -50,17 +53,24 @@ push @defltfiles, @desfiles unless disabled("des");
 my @rc4files = qw( evpciph_rc4.txt );
 push @defltfiles, @rc4files unless disabled("rc4");
 
-plan tests => (scalar(@configs) * scalar(@files)) + scalar(@defltfiles) + 1;
+plan tests =>
+    ($no_fips ? 0 : 1)          # FIPS install test
+    + (scalar(@configs) * scalar(@files))
+    + scalar(@defltfiles);
 
-my $infile = bldtop_file('providers', platform->dso('fips'));
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
+unless $no_fips {
+    my $infile = bldtop_file('providers', platform->dso('fips'));
+    $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+    $ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 
-ok(run(app(['openssl', 'fipsinstall', '-out', bldtop_file('providers', 'fipsinstall.conf'),
-            '-module', $infile,
-            '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-            '-section_name', 'fips_sect'])), "fipinstall");
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsinstall.conf'),
+                '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_sect'])),
+       "fipinstall");
+}
 
 foreach (@configs) {
     $ENV{OPENSSL_CONF} = srctop_file("test", $_);
