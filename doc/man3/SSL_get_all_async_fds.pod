@@ -9,7 +9,7 @@ SSL_get_changed_async_fds
 
 =head1 SYNOPSIS
 
-=for comment multiple includes
+=for openssl multiple includes
 
  #include <openssl/async.h>
  #include <openssl/ssl.h>

@@ -11,7 +11,7 @@ BIO_ssl_shutdown - SSL BIO
 
 =head1 SYNOPSIS
 
-=for comment multiple includes
+=for openssl multiple includes
 
  #include <openssl/bio.h>
  #include <openssl/ssl.h>

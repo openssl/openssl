@@ -6,7 +6,7 @@ provider - OpenSSL operation implementation providers
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
 #include <openssl/provider.h>
 
@@ -123,8 +123,6 @@ The number for this operation is B<OSSL_OP_CIPHER>.
 The functions the provider can offer are described in
 L<provider-cipher(7)>
 
-=begin comment NOT AVAILABLE YET
-
 =item Message Authentication Code (MAC)
 
 In the OpenSSL libraries, the corresponding method object is
@@ -133,10 +131,6 @@ The number for this operation is B<OSSL_OP_MAC>.
 The functions the provider can offer are described in
 L<provider-mac(7)>
 
-=end comment
-
-=begin comment NOT AVAILABLE YET
-
 =item Key Derivation Function (KDF)
 
 In the OpenSSL libraries, the corresponding method object is
@@ -144,8 +138,6 @@ B<EVP_KDF>.
 The number for this operation is B<OSSL_OP_KDF>.
 The functions the provider can offer are described in
 L<provider-kdf(7)>
-
-=end comment
 
 =item Key Exchange
 

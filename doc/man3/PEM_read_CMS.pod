@@ -40,7 +40,7 @@ PEM_write_bio_SSL_SESSION
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/pem.h>
 

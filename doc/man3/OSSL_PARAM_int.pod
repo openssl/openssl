@@ -32,7 +32,7 @@ OSSL_PARAM_set_octet_ptr
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/params.h>
 

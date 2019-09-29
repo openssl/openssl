@@ -15,7 +15,7 @@ ossl_param_bld_push_octet_ptr
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include "internal/params_build.h"
 

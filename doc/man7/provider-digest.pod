@@ -6,7 +6,7 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
 
 =head1 SYNOPSIS
 
-=for comment multiple includes
+=for openssl multiple includes
 
  #include <openssl/core_numbers.h>
  #include <openssl/core_names.h>

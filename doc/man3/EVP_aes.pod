@@ -51,7 +51,7 @@ EVP_aes_256_xts
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/evp.h>
 

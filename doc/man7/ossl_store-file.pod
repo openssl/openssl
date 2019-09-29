@@ -14,7 +14,7 @@ ossl_store-file - The store 'file' scheme loader
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
 #include <openssl/store.h>
 

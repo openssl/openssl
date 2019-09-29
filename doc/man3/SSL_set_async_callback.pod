@@ -12,7 +12,7 @@ SSL_async_callback_fn
 
 =head1 SYNOPSIS
 
-=for comment multiple includes
+=for openssl multiple includes
 
  #include <openssl/ssl.h>
 

@@ -17,7 +17,7 @@ RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/x509.h>
 
