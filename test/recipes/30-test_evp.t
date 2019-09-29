@@ -58,7 +58,7 @@ plan tests =>
     + (scalar(@configs) * scalar(@files))
     + scalar(@defltfiles);
 
-unless $no_fips {
+unless ($no_fips) {
     my $infile = bldtop_file('providers', platform->dso('fips'));
     $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
     $ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
