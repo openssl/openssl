@@ -3106,8 +3106,8 @@ int speed_main(int argc, char **argv)
 
             if ((ed_pctx = EVP_PKEY_CTX_new_id(test_ed_curves[testnum].nid, NULL))
                     == NULL
-                || !EVP_PKEY_keygen_init(ed_pctx)
-                || !EVP_PKEY_keygen(ed_pctx, &ed_pkey)) {
+                || EVP_PKEY_keygen_init(ed_pctx) <= 0
+                || EVP_PKEY_keygen(ed_pctx, &ed_pkey) <= 0) {
                 st = 0;
                 EVP_PKEY_CTX_free(ed_pctx);
                 break;
