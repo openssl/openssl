@@ -32,7 +32,7 @@ ASN1_OCTET_STRING_new() calls ASN1_STRING_type(V_ASN1_OCTET_STRING).
 =head1 RETURN VALUES
 
 ASN1_STRING_new() and ASN1_STRING_type_new() return a valid
-ASN1_STRING structure or NULL if an error occurred.
+B<ASN1_STRING> structure or NULL if an error occurred.
 
 ASN1_STRING_free() does not return a value.
 
