@@ -41,6 +41,9 @@ done by calling:
 And normally there is no need to pass a B<pctx> parameter to EVP_DigestSignInit()
 or EVP_DigestVerifyInit() in such a scenario.
 
+SM2 can be tested within L<speed(1)> application since version 3.0.0. At current
+stage, the only valid algorithm name is B<sm2>.
+
 =head1 EXAMPLES
 
 This example demonstrates the calling sequence for using an B<EVP_PKEY> to verify
