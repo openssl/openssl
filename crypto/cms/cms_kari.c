@@ -162,7 +162,7 @@ int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk)
     if (!pk)
         return 1;
     pctx = EVP_PKEY_CTX_new(pk, NULL);
-    if (!pctx || !EVP_PKEY_derive_init(pctx))
+    if (!pctx || EVP_PKEY_derive_init(pctx) <= 0)
         goto err;
     kari->pctx = pctx;
     return 1;
