@@ -98,7 +98,6 @@ B<openssl> B<cms>
 [B<-passin> I<arg>]
 [B<-rand> I<file...>]
 [B<-writerand> I<file>]
-[B<cert.pem...>]
 [B<-to> I<addr>]
 [B<-from> I<addr>]
 [B<-subject> I<subj>]

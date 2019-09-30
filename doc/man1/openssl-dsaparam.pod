@@ -20,7 +20,7 @@ B<openssl dsaparam>
 [B<-genkey>]
 [B<-engine> I<id>]
 [B<-verbose>]
-[B<numbits>]
+[I<numbits>]
 
 =head1 DESCRIPTION
 
