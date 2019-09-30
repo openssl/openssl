@@ -11,11 +11,11 @@ openssl-c_rehash - Create symbolic links to files named by the hash values
 
 B<openssl>
 B<rehash>
-B<-h>
-B<-help>
-B<-old>
-B<-n>
-B<-v>
+[B<-h>]
+[B<-help>]
+[B<-old>]
+[B<-n>]
+[B<-v>]
 [I<directory>...]
 
 B<c_rehash>

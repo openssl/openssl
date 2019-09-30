@@ -137,7 +137,7 @@ B<openssl> B<s_client>
 [B<-keylogfile> I<file>]
 [B<-early_data> I<file>]
 [B<-enable_pha>]
-[I<host>:I<post>]
+[I<host>:I<port>]
 
 =head1 DESCRIPTION
 

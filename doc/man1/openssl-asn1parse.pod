@@ -37,9 +37,9 @@ structures. It can also be used to extract data from ASN.1 formatted data.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|I<PEM>
+=item B<-inform> I<DER>|I<PEM>
 
-The input format. B<DER> is binary format and B<PEM> (the default) is base64
+The input format. I<DER> is binary format and I<PEM> (the default) is base64
 encoded.
 
 =item B<-in> I<filename>
