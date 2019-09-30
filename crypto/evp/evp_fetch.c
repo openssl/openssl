@@ -81,13 +81,15 @@ static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
         this_id = ossl_namemap_name2num_n(namemap, p, l);
 
         if (*p == '\0' || *p == NAME_SEPARATOR) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_BAD_ALGORITHM_NAME);
             return 0;
         }
         if (id == 0)
             id = this_id;
         else if (this_id != 0 && this_id != id) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_CONFLICTING_ALGORITHM_NAME,
+                           "\"%.*s\" has an existing different identity %d (from \"%s\")",
+                           l, p, this_id, names);
             return 0;
         }
     }
