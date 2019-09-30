@@ -631,7 +631,7 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
     int hostlen;
 
     /* Check for foo:// and skip past it */
-    if (p == NULL || (p[1] != '/') || (p[2] != '/'))
+    if (p == NULL || p[1] != '/' || p[2] != '/')
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
     hostptr = p + 3;
 
