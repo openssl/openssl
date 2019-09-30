@@ -56,7 +56,7 @@ ossl_namemap_name2num() finds the number corresponding to the given
 I<name>.
 
 ossl_namemap_add_n() and ossl_namemap_name2num_n() do the same thing
-as ossl_namemap_add() and ossl_namemap_name2num(), but take an string
+as ossl_namemap_add() and ossl_namemap_name2num(), but take a string
 length I<name_len> as well, allowing the caller to use a fragment of
 a string as a name.
 
