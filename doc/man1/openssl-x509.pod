@@ -8,11 +8,11 @@ openssl-x509 - Certificate display and signing utility
 
 B<openssl> B<x509>
 [B<-help>]
-[B<-inform> I<DER>|I<PEM>]
-[B<-outform> I<DER>|I<PEM>]
-[B<-keyform> I<DER>|I<PEM>]
-[B<-CAform> I<DER>|I<PEM>]
-[B<-CAkeyform> I<DER>|I<PEM>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-keyform> B<DER>|B<PEM>]
+[B<-CAform> B<DER>|B<PEM>]
+[B<-CAkeyform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-serial>]
@@ -88,7 +88,7 @@ various sections.
 
 Print out a usage message.
 
-=item B<-inform> I<DER>|I<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format normally the command will expect an X509
 certificate but this can change if other options such as B<-req> are
@@ -96,7 +96,7 @@ present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
 added. The default format is PEM.
 
-=item B<-outform> I<DER>|I<PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
@@ -381,7 +381,7 @@ certificate is being created from another certificate (for example with
 the B<-signkey> or the B<-CA> options). Normally all extensions are
 retained.
 
-=item B<-keyform> I<DER>|I<PEM>
+=item B<-keyform> B<DER>|B<PEM>
 
 Specifies the format (DER or PEM) of the private key file used in the
 B<-signkey> option.

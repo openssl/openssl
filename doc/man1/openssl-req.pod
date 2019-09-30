@@ -8,8 +8,8 @@ openssl-req - PKCS#10 certificate request and certificate generating utility
 
 B<openssl> B<req>
 [B<-help>]
-[B<-inform> I<DER>|I<PEM>]
-[B<-outform> I<DER>|I<PEM>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
 [B<-out> I<filename>]
@@ -26,7 +26,7 @@ B<openssl> B<req>
 [B<-newkey> I<alg:file>]
 [B<-nodes>]
 [B<-key> I<filename>]
-[B<-keyform> I<DER>|I<PEM>]
+[B<-keyform> B<DER>|B<PEM>]
 [B<-keyout> I<filename>]
 [B<-keygen_engine> I<id>]
 [B<-> I<digest>]
@@ -66,14 +66,14 @@ for use as root CAs for example.
 
 Print out a usage message.
 
-=item B<-inform> I<DER>|I<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with the PKCS#10. The B<PEM> form is the default format: it
 consists of the B<DER> format base64 encoded with additional header and
 footer lines.
 
-=item B<-outform> I<DER>|I<PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
@@ -191,7 +191,7 @@ for more details.
 This specifies the file to read the private key from. It also
 accepts PKCS#8 format private keys for PEM format files.
 
-=item B<-keyform> I<DER>|I<PEM>
+=item B<-keyform> B<DER>|B<PEM>
 
 The format of the private key file specified in the B<-key>
 argument. PEM is the default.

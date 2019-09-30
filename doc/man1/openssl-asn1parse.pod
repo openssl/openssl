@@ -8,7 +8,7 @@ openssl-asn1parse - ASN.1 parsing tool
 
 B<openssl> B<asn1parse>
 [B<-help>]
-[B<-inform> I<DER>|I<PEM>]
+[B<-inform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-noout>]
@@ -37,7 +37,7 @@ structures. It can also be used to extract data from ASN.1 formatted data.
 
 Print out a usage message.
 
-=item B<-inform> I<DER>|I<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 The input format. I<DER> is binary format and I<PEM> (the default) is base64
 encoded.

@@ -8,8 +8,8 @@ openssl-sess_id - SSL/TLS session handling utility
 
 B<openssl> B<sess_id>
 [B<-help>]
-[B<-inform> I<DER>|I<PEM>]
-[B<-outform> I<DER>|I<PEM>|I<MSS>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>|B<MSS>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-text>]
@@ -32,14 +32,14 @@ not need to use it.
 
 Print out a usage message.
 
-=item B<-inform> I<DER>|I<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 format containing session details. The precise format can vary from one version
 to the next.  The B<PEM> form is the default format: it consists of the B<DER>
 format base64 encoded with additional header and footer lines.
 
-=item B<-outform> I<DER>|I<PEM>|I<NSS>
+=item B<-outform> B<DER>|B<PEM>|B<NSS>
 
 This specifies the output format. The B<PEM> and B<DER> options have the same meaning
 and default as the B<-inform> option. The B<NSS> option outputs the session id and

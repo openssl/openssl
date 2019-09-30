@@ -9,7 +9,7 @@ openssl-genpkey - generate a private key
 B<openssl> B<genpkey>
 [B<-help>]
 [B<-out> I<filename>]
-[B<-outform> I<DER>|I<PEM>]
+[B<-outform> B<DER>|B<PEM>]
 [B<-pass> I<arg>]
 [B<->I<cipher>]
 [B<-engine> I<id>]
@@ -36,7 +36,7 @@ Print out a usage message.
 Output the key to the specified file. If this argument is not specified then
 standard output is used.
 
-=item B<-outform> I<DER>|I<PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format DER or PEM. The default format is PEM.
 

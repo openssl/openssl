@@ -29,7 +29,7 @@ B<openssl> B<ca>
 [B<-md> I<arg>]
 [B<-policy> I<arg>]
 [B<-keyfile> I<arg>]
-[B<-keyform> I<DER>|I<PEM>]
+[B<-keyform> B<DER>|B<PEM>]
 [B<-key> I<arg>]
 [B<-passin> I<arg>]
 [B<-cert> I<file>]
@@ -131,7 +131,7 @@ The CA certificate file.
 
 The private key to sign requests with.
 
-=item B<-keyform> I<DER>|I<PEM>
+=item B<-keyform> B<DER>|B<PEM>
 
 The format of the data in the private key file.
 The default is PEM.

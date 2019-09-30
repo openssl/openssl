@@ -21,17 +21,17 @@ B<openssl> B<s_client>
 [B<-verify> I<depth>]
 [B<-verify_return_error>]
 [B<-cert> I<filename>]
-[B<-certform> I<DER>|I<PEM>]
+[B<-certform> B<DER>|B<PEM>]
 [B<-key> I<filename>]
-[B<-keyform> I<DER>|I<PEM>]
+[B<-keyform> B<DER>|B<PEM>]
 [B<-cert_chain> I<filename>]
 [B<-build_chain>]
 [B<-xkey>]
 [B<-xcert>]
 [B<-xchain>]
 [B<-xchain_build>]
-[B<-xcertform> I<DER>|I<PEM>]
-[B<-xkeyform> I<DER>|I<PEM>]
+[B<-xcertform> B<DER>|B<PEM>]
+[B<-xkeyform> B<DER>|B<PEM>]
 [B<-pass> I<arg>]
 [B<-CApath> I<directory>]
 [B<-CAfile> I<filename>]
@@ -267,7 +267,7 @@ Specify whether the application should build the certificate chain to be
 provided to the server for the extra certificates provided via B<-xkey> I<infile>,
 B<-xcert> I<infile>, B<-xchain> options.
 
-=item B<-xcertform> I<DER>|I<PEM>, B<-xkeyform> I<DER>|I<PEM>
+=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
 
 Extra certificate and private key format respectively.
 

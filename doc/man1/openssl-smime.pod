@@ -52,11 +52,11 @@ B<openssl> B<smime>
 [B<-certfile> I<file>]
 [B<-signer> I<file>]
 [B<-recip> I< file>]
-[B<-inform> I<DER>|I<PEM>|I<SMIME>]
+[B<-inform> B<DER>|B<PEM>|B<SMIME>]
 [B<-passin> I<arg>]
 [B<-inkey> I<file_or_id>]
 [B<-out> I<file>]
-[B<-outform> I<DER>|I<PEM>|I<SMIME>]
+[B<-outform> B<DER>|B<PEM>|B<SMIME>]
 [B<-content> I<file>]
 [B<-to> I<addr>]
 [B<-from> I<ad>]
@@ -124,7 +124,7 @@ Resign a message: take an existing message and one or more new signers.
 The input message to be encrypted or signed or the MIME message to
 be decrypted or verified.
 
-=item B<-inform> I<DER>|I<PEM>|I<SMIME>
+=item B<-inform> B<DER>|B<PEM>|B<SMIME>
 
 This specifies the input format for the PKCS#7 structure. The default
 is B<SMIME> which reads an S/MIME format message. B<PEM> and B<DER>
@@ -138,7 +138,7 @@ B<-encrypt> or B<-sign>) this option has no effect.
 The message text that has been decrypted or verified or the output MIME
 format message that has been signed or verified.
 
-=item B<-outform> I<DER>|I<PEM>|I<SMIME>
+=item B<-outform> B<DER>|B<PEM>|B<SMIME>
 
 This specifies the output format for the PKCS#7 structure. The default
 is B<SMIME> which write an S/MIME format message. B<PEM> and B<DER>
