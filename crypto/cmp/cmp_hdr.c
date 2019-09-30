@@ -11,7 +11,7 @@
 
 /* CMP functions for PKIHeader handling */
 
-#include "cmp_int.h"
+#include "cmp_local.h"
 
 #include <openssl/rand.h>
 
