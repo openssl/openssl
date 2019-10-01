@@ -151,13 +151,13 @@ B<openssl> B<s_client>
 
 =head1 DESCRIPTION
 
-The B<s_client> command implements a generic SSL/TLS client which connects
-to a remote host using SSL/TLS. It is a I<very> useful diagnostic tool for
-SSL servers.
+This command implements a generic SSL/TLS client which
+connects to a remote host using SSL/TLS. It is a I<very> useful diagnostic
+tool for SSL servers.
 
 =head1 OPTIONS
 
-In addition to the options below the B<s_client> utility also supports the
+In addition to the options below, this command also supports the
 common and client only options documented
 in the "Supported Command Line Commands" section of the L<SSL_CONF_cmd(3)>
 manual page.
@@ -499,7 +499,7 @@ Note that this will only work if TLSv1.3 is negotiated.
 =item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
 These options require or disable the use of the specified SSL or TLS protocols.
-By default B<s_client> will negotiate the highest mutually supported protocol
+By default, this command will negotiate the highest mutually supported protocol
 version.
 When a specific TLS version is required, only that version will be offered to
 and accepted from the server.
@@ -508,8 +508,8 @@ OpenSSL was built.
 
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
-These options make B<s_client> use DTLS protocols instead of TLS.
-With B<-dtls>, B<s_client> will negotiate any supported DTLS protocol version,
+These options make this command use DTLS protocols instead of TLS.
+With B<-dtls>, it will negotiate any supported DTLS protocol version,
 whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
 respectively.
 
@@ -607,16 +607,16 @@ ultimately selected by the server. For a list of all curves, use:
 This allows the TLSv1.2 and below cipher list sent by the client to be modified.
 This list will be combined with any TLSv1.3 ciphersuites that have been
 configured. Although the server determines which ciphersuite is used it should
-take the first supported cipher in the list sent by the client. See the
-B<ciphers> command for more information.
+take the first supported cipher in the list sent by the client. See
+L<openssl-ciphers(1)> for more information.
 
 =item B<-ciphersuites> I<val>
 
 This allows the TLSv1.3 ciphersuites sent by the client to be modified. This
 list will be combined with any TLSv1.2 and below ciphersuites that have been
 configured. Although the server determines which cipher suite is used it should
-take the first supported cipher in the list sent by the client. See the
-B<ciphers> command for more information. The format for this list is a simple
+take the first supported cipher in the list sent by the client. See
+L<openssl-ciphers(1)> for more information. The format for this list is a simple
 colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-starttls> I<protocol>
@@ -668,7 +668,7 @@ connection from this session.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<s_client>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -783,7 +783,7 @@ Send a key update message to the server and request one back (TLSv1.3 only)
 
 =head1 NOTES
 
-B<s_client> can be used to debug SSL servers. To connect to an SSL HTTP
+This command can be used to debug SSL servers. To connect to an SSL HTTP
 server the command:
 
  openssl s_client -connect servername:443
@@ -801,7 +801,7 @@ A frequent problem when attempting to get client certificates working
 is that a web client complains it has no certificates or gives an empty
 list to choose from. This is normally because the server is not sending
 the clients certificate authority in its "acceptable CA list" when it
-requests a certificate. By using B<s_client> the CA list can be viewed
+requests a certificate. By using this command, the CA list can be viewed
 and checked. However some servers only request client authentication
 after a specific URL is requested. To obtain the list in this case it
 is necessary to use the B<-prexit> option and send an HTTP request
@@ -816,7 +816,7 @@ If there are problems verifying a server certificate then the
 B<-showcerts> option can be used to show all the certificates sent by the
 server.
 
-The B<s_client> utility is a test tool and is designed to continue the
+This command is a test tool and is designed to continue the
 handshake after any certificate verification errors. As a result it will
 accept any certificate chain (trusted or not) sent by the peer. None test
 applications should B<not> do this as it makes them vulnerable to a MITM
@@ -829,8 +829,8 @@ connections to come from some particular address and or port.
 =head1 BUGS
 
 Because this program has a lot of options and also because some of the
-techniques used are rather old, the C source of B<s_client> is rather hard to
-read and not a model of how things should be done.
+techniques used are rather old, the C source for this command is rather
+hard to read and not a model of how things should be done.
 A typical SSL client program would be much simpler.
 
 The B<-prexit> option is a bit of a hack. We should really report

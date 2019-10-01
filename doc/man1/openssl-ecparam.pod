@@ -93,8 +93,7 @@ to get a list of all currently implemented EC parameters.
 
 =item B<-list_curves>
 
-If this options is specified B<ecparam> will print out a list of all
-currently implemented EC parameters names and exit.
+Print out a list of all currently implemented EC parameters names and exit.
 
 =item B<-conv_form> I<arg>
 
@@ -154,7 +153,7 @@ PEM format EC parameters use the header and footer lines:
  -----END EC PARAMETERS-----
 
 OpenSSL is currently not able to generate new groups and therefore
-B<ecparam> can only create EC parameters from known (named) curves.
+B<openssl ecparam> can only create EC parameters from known (named) curves.
 
 =head1 EXAMPLES
 

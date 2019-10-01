@@ -48,7 +48,7 @@ B<openssl> B<pkcs12>
 
 =head1 DESCRIPTION
 
-The B<pkcs12> command allows PKCS#12 files (sometimes referred to as
+This command allows PKCS#12 files (sometimes referred to as
 PFX files) to be created and parsed. PKCS#12 files are used by several
 programs including Netscape, MSIE and MS Outlook.
 
@@ -234,7 +234,7 @@ unless RC2 is disabled in which case triple DES is used.
 These options allow the algorithm used to encrypt the private key and
 certificates to be selected. Any PKCS#5 v1.5 or PKCS#12 PBE algorithm name
 can be used (see B<NOTES> section for more information). If a cipher name
-(as output by the B<list-cipher-algorithms> command is specified then it
+(as output by C<openssl list -cipher-algorithms>) is specified then it
 is used with PKCS#5 v2.0. For interoperability reasons it is advisable to only
 use PKCS#12 algorithms.
 
@@ -299,8 +299,8 @@ CA storage as a file.
 =item B<-CApath> I<dir>
 
 CA storage as a directory. This directory must be a standard certificate
-directory: that is a hash of each subject name (using B<x509 -hash>) should be
-linked to each certificate.
+directory: that is a hash of each subject name (using C<openssl x509 -hash>)
+should be linked to each certificate.
 
 =item B<-no-CAfile>
 
@@ -338,7 +338,7 @@ algorithms for private keys and certificates to be specified. Normally
 the defaults are fine but occasionally software can't handle triple DES
 encrypted private keys, then the option B<-keypbe> I<PBE-SHA1-RC2-40> can
 be used to reduce the private key encryption to 40 bit RC2. A complete
-description of all algorithms is contained in the B<pkcs8> manual page.
+description of all algorithms is contained in L<openssl-pkcs8(1)>.
 
 Prior 1.1 release passwords containing non-ASCII characters were encoded
 in non-compliant manner, which limited interoperability, in first hand
@@ -348,7 +348,7 @@ this reason even legacy encodings is attempted when reading the
 data. If you use PKCS#12 files in production application you are advised
 to convert the data, because implemented heuristic approach is not
 MT-safe, its sole goal is to facilitate the data upgrade with this
-utility.
+command.
 
 =head1 EXAMPLES
 

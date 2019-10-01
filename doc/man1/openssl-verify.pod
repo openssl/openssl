@@ -58,7 +58,7 @@ B<openssl> B<verify>
 
 =head1 DESCRIPTION
 
-The B<verify> command verifies certificate chains.
+This command verifies certificate chains.
 
 =head1 OPTIONS
 
@@ -76,10 +76,10 @@ The file should contain one or more certificates in PEM format.
 =item B<-CApath> I<directory>
 
 A directory of trusted certificates. The certificates should have names
-of the form: F<I<hash>.0> or have symbolic links to them of this
-form (I<hash> is the hashed certificate subject name: see the B<-hash> option
-of the B<x509> utility). Under Unix the B<c_rehash> script will automatically
-create symbolic links to a directory of certificates.
+of the form: F<I<hash>.0> or have symbolic links to them of this form
+(I<hash> is the hashed certificate subject name: see the L<openssl-x509(1)>
+B<-hash> option). Under Unix, L<openssl-rehash(1)> will automatically create
+symbolic links to a directory of certificates.
 
 =item B<-no-CAfile>
 
@@ -126,7 +126,7 @@ to look up valid CRLs.
 
 =item B<-engine> I<id>
 
-Specifying an engine I<id> will cause L<verify(1)> to attempt to load the
+Specifying an engine I<id> will cause this command to attempt to load the
 specified engine.
 The engine will then be set as the default for all its supported algorithms.
 If you want to load certificates or CRLs that require engine support via any of
@@ -192,7 +192,8 @@ Print out diagnostics related to policy processing.
 =item B<-purpose> I<purpose>
 
 The intended use for the certificate. If this option is not specified,
-B<verify> will not consider certificate purpose during chain verification.
+this command will not consider certificate purpose during chain
+verification.
 Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
 B<smimesign>, B<smimeencrypt>. See the B<VERIFY OPERATION> section for more
 information.
@@ -298,8 +299,7 @@ Use default verification policies like trust model and required certificate
 policies identified by I<name>.
 The trust model determines which auxiliary trust or reject OIDs are applicable
 to verifying the given certificate chain.
-See the B<-addtrust> and B<-addreject> options of the L<x509(1)> command-line
-utility.
+See the B<-addtrust> and B<-addreject> options for L<openssl-x509(1)>.
 Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
 B<ssl_client>, B<ssl_server>.
 These mimics the combinations of purpose and trust settings used in SSL, CMS
@@ -337,22 +337,22 @@ with a B<->.
 
 =item I<certificate> ...
 
-One or more certificates to verify. If no certificates are given, B<verify>
-will attempt to read a certificate from standard input. Certificates must be
-in PEM format.
+One or more certificates to verify. If no certificates are given,
+this command will attempt to read a certificate from standard input.
+Certificates must be in PEM format.
 
 =back
 
 =head1 VERIFY OPERATION
 
-The B<verify> program uses the same functions as the internal SSL and S/MIME
-verification, therefore this description applies to these verify operations
-too.
+This command uses the same functions as the internal SSL
+and S/MIME verification, therefore this description applies to these verify
+operations too.
 
 There is one crucial difference between the verify operations performed
-by the B<verify> program: wherever possible an attempt is made to continue
-after an error whereas normally the verify operation would halt on the
-first error. This allows all the problems with a certificate chain to be
+by this command: wherever possible an attempt is made to
+continue after an error whereas normally the verify operation would halt on
+the first error. This allows all the problems with a certificate chain to be
 determined.
 
 The verify operation consists of a number of separate steps.

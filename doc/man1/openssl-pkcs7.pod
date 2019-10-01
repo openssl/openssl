@@ -21,7 +21,7 @@ B<openssl> B<pkcs7>
 
 =head1 DESCRIPTION
 
-The B<pkcs7> command processes PKCS#7 files in DER or PEM format.
+This command processes PKCS#7 files in DER or PEM format.
 
 =head1 OPTIONS
 
@@ -69,7 +69,7 @@ is B<-print_certs> is set).
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<pkcs7>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

@@ -17,7 +17,7 @@ B<openssl> B<crl2pkcs7>
 
 =head1 DESCRIPTION
 
-The B<crl2pkcs7> command takes an optional CRL and one or more
+This command takes an optional CRL and one or more
 certificates and converts them into a PKCS#7 degenerate "certificates
 only" structure.
 
@@ -82,7 +82,7 @@ different certificates:
 The output file is a PKCS#7 signed data structure containing no signers and
 just certificates and an optional CRL.
 
-This utility can be used to send certificates and CAs to Netscape as part of
+This command can be used to send certificates and CAs to Netscape as part of
 the certificate enrollment process. This involves sending the DER encoded output
 as MIME type application/x-x509-user-cert.
 

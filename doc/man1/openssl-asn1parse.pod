@@ -26,8 +26,8 @@ B<openssl> B<asn1parse>
 
 =head1 DESCRIPTION
 
-The B<asn1parse> command is a diagnostic utility that can parse ASN.1
-structures. It can also be used to extract data from ASN.1 formatted data.
+This command is a diagnostic utility that can parse ASN.1 structures.
+It can also be used to extract data from ASN.1 formatted data.
 
 =head1 OPTIONS
 
@@ -157,7 +157,7 @@ allows additional OIDs to be included. Each line consists of three columns,
 the first column is the OID in numerical format and should be followed by white
 space. The second column is the "short name" which is a single word followed
 by white space. The final column is the rest of the line and is the
-"long name". B<asn1parse> displays the long name. Example:
+"long name". Example:
 
 C<1.2.3.4       shortName       A long name>
 

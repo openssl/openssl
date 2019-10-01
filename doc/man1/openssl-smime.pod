@@ -74,8 +74,8 @@ I<cert.pem> ...
 
 =head1 DESCRIPTION
 
-The B<smime> command handles S/MIME mail. It can encrypt, decrypt, sign and
-verify S/MIME messages.
+This command handles S/MIME mail. It can encrypt, decrypt, sign
+and verify S/MIME messages.
 
 =head1 OPTIONS
 
@@ -187,7 +187,7 @@ A file containing trusted CA certificates, only used with B<-verify>.
 
 A directory containing trusted CA certificates, only used with
 B<-verify>. This directory must be a standard certificate directory: that
-is a hash of each subject name (using B<x509 -hash>) should be linked
+is a hash of each subject name (using C<openssl x509 -hash>) should be linked
 to each certificate.
 
 =item B<-no-CAfile>
@@ -208,7 +208,7 @@ default digest algorithm for the signing key will be used (usually SHA1).
 The encryption algorithm to use. For example DES  (56 bits) - B<-des>,
 triple DES (168 bits) - B<-des3>,
 EVP_get_cipherbyname() function) can also be used preceded by a dash, for
-example B<-aes-128-cbc>. See L<B<enc>|enc(1)> for list of ciphers
+example B<-aes-128-cbc>. See L<openssl-enc(1)> for list of ciphers
 supported by your version of OpenSSL.
 
 If not specified triple DES is used. Only used with B<-encrypt>.

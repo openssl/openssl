@@ -28,7 +28,7 @@ B<openssl passwd>
 
 =head1 DESCRIPTION
 
-The B<passwd> command computes the hash of a password typed at
+This command computes the hash of a password typed at
 run-time or the hash of each password in a list.  The password list is
 taken from the named file for option B<-in>, from stdin for
 option B<-stdin>, or from the command line, or from the terminal otherwise.

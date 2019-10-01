@@ -32,11 +32,11 @@ B<openssl> B<ec>
 
 =head1 DESCRIPTION
 
-The B<ec> command processes EC keys. They can be converted between various
-forms and their components printed out. B<Note> OpenSSL uses the
+The L<openssl-ec(1)> command processes EC keys. They can be converted between
+various forms and their components printed out. B<Note> OpenSSL uses the
 private key format specified in 'SEC 1: Elliptic Curve Cryptography'
 (http://www.secg.org/). To convert an OpenSSL EC private key into the
-PKCS#8 private key format use the B<pkcs8> command.
+PKCS#8 private key format use the L<openssl-pkcs8(1)> command.
 
 =head1 OPTIONS
 
@@ -89,7 +89,7 @@ These options encrypt the private key with the DES, triple DES, IDEA or
 any other cipher supported by OpenSSL before outputting it. A pass phrase is
 prompted for.
 If none of these options is specified the key is written in plain text. This
-means that using the B<ec> utility to read in an encrypted key with no
+means that using this command to read in an encrypted key with no
 encryption option can be used to remove the pass phrase from a key, or by
 setting the encryption options it can be use to add or change the pass phrase.
 These options can only be used with PEM format output files.
@@ -143,7 +143,7 @@ This option checks the consistency of an EC private or public key.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<ec>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

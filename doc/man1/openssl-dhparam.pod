@@ -131,10 +131,10 @@ for all available algorithms.
 
 =head1 WARNINGS
 
-The program B<dhparam> combines the functionality of the programs B<dh> and
-B<gendh> in previous versions of OpenSSL. The B<dh> and B<gendh>
-programs are retained for now but may have different purposes in future
-versions of OpenSSL.
+This command combines the functionality of the L<openssl-dh(1)> and the
+L<openssl-gendh(1)> commands in previous OpenSSL versions.
+The L<openssl-dh(1)> and L<openssl-gendh(1)> commands are retained for now but
+may have different purposes in future versions of OpenSSL.
 
 =head1 NOTES
 

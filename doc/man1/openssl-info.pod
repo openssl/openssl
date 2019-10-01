@@ -76,7 +76,7 @@ Outputs the OpenSSL CPU settings info.
 
 =head1 HISTORY
 
-The B<openssl info> command was added in OpenSSL 3.0.
+This command was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

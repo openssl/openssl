@@ -201,11 +201,11 @@ This can be used with a subsequent B<-rand> flag.
 
 =head1 NOTES
 
-The program can be called either as B<openssl cipher> or
-B<openssl enc -I<cipher>>. The first form doesn't work with
+The program can be called either as C<openssl I<cipher>> or
+C<openssl enc -I<cipher>>. The first form doesn't work with
 engine-provided ciphers, because this form is processed before the
 configuration file is read and any ENGINEs loaded.
-Use the B<list> command to get a list of supported ciphers.
+Use the L<openssl-list(1)> command to get a list of supported ciphers.
 
 Engines which provide entirely new encryption algorithms (such as the ccgost
 engine which provides gost89 algorithm) should be configured in the
@@ -250,27 +250,26 @@ Blowfish and RC5 algorithms use a 128 bit key.
 
 Note that some of these ciphers can be disabled at compile time
 and some are available only if an appropriate engine is configured
-in the configuration file. The output of the B<enc> command run with
-the B<-I<ciphers>> option (that is B<openssl enc -I<ciphers>>) produces a
-list of ciphers, supported by your version of OpenSSL, including
+in the configuration file. The output when invoking this command
+with the B<-ciphers> option (that is C<openssl enc -ciphers>) is
+a list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
-The B<enc> program does not support authenticated encryption modes
+This command does not support authenticated encryption modes
 like CCM and GCM, and will not support such modes in the future.
-The B<enc> interface by necessity must begin streaming output (e.g.,
-to standard output when B<-out> is not used) before the authentication
-tag could be validated, leading to the usage of B<enc> in pipelines
-that begin processing untrusted data and are not capable of rolling
-back upon authentication failure.  The AEAD modes currently in common
-use also suffer from catastrophic failure of confidentiality and/or
-integrity upon reuse of key/iv/nonce, and since B<enc> places the
+This is due to having to begin streaming output (e.g., to standard output
+when B<-out> is not used) before the authentication tag could be validated.
+When this command is used in a pipeline, the receiveing end will not be
+able to roll back upon authentication failure.  The AEAD modes currently in
+common use also suffer from catastrophic failure of confidentiality and/or
+integrity upon reuse of key/iv/nonce, and since B<openssl enc> places the
 entire burden of key/iv/nonce management upon the user, the risk of
 exposing AEAD modes is too great to allow.  These key/iv/nonce
-management issues also affect other modes currently exposed in B<enc>,
+management issues also affect other modes currently exposed in this command,
 but the failure modes are less extreme in these cases, and the
 functionality cannot be removed with a stable release branch.
 For bulk encryption of data, whether using authenticated encryption
-modes or other modes, L<cms(1)> is recommended, as it provides a
+modes or other modes, L<openssl-cms(1)> is recommended, as it provides a
 standard data format and performs the needed key/iv/nonce management.
 
 
@@ -412,7 +411,7 @@ Base64 decode a file then decrypt it using a password supplied in a file:
 
 The B<-A> option when used with large files doesn't work properly.
 
-The B<enc> program only supports a fixed number of algorithms with
+The B<openssl enc> command only supports a fixed number of algorithms with
 certain parameters. So if, for example, you want to use RC2 with a
 76 bit key or RC4 with an 84 bit key you can't use this program.
 

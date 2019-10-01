@@ -23,16 +23,16 @@ I<flags...>
 
 =head1 DESCRIPTION
 
-On some platforms, the OpenSSL B<rehash> command is available as
-an external script called B<c_rehash>.  They are functionally equivalent,
-except for minor differences noted below.
+On some platforms, this command isn't available, and the external
+script B<c_rehash> has to be used instead.  They are functionally
+equivalent, except for minor differences noted below.
 
-B<rehash> scans directories and calculates a hash value of each
-C<.pem>, C<.crt>, C<.cer>, or C<.crl>
+B<openssl rehash> scans directories and calculates a hash value of
+each C<.pem>, C<.crt>, C<.cer>, or C<.crl>
 file in the specified directory list and creates symbolic links
 for each file, where the name of the link is the hash value.
 (If the platform does not support symbolic links, a copy is made.)
-This utility is useful as many programs that use OpenSSL require
+This command is useful as many programs that use OpenSSL require
 directories to be set up like this in order to find certificates.
 
 If any directories are named on the command line, then those are
@@ -47,9 +47,9 @@ permissions on that directory, otherwise an error will be generated.
 
 The links created are of the form I<HHHHHHHH.D>, where each I<H>
 is a hexadecimal character and I<D> is a single decimal digit.
-When processing a directory, B<rehash> will first remove all links
-that have a name in that syntax, even if they are being used for some
-other purpose.
+When a directory is processed, all links in it that have a name
+in that syntax are first removed, even if they are being used for
+some other purpose.
 To skip the removal step, use the B<-n> flag.
 Hashes for CRL's look similar except the letter B<r> appears after
 the period, like this: I<HHHHHHHH.>B<r>I<D>.
@@ -107,7 +107,7 @@ releases.
 =item B<-v>
 
 Print messages about old links removed and new links created.
-By default, B<rehash> only lists each directory as it is processed.
+By default, this command only lists each directory as it is processed.
 
 =back
 

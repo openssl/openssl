@@ -23,15 +23,14 @@ B<-h> server_url
 
 =head1 DESCRIPTION
 
-The B<tsget> command can be used for sending a timestamp request, as
-specified in B<RFC 3161>, to a timestamp server over HTTP or HTTPS and storing
-the timestamp response in a file. This tool cannot be used for creating the
-requests and verifying responses, you can use the OpenSSL B<ts(1)> command to
-do that. B<tsget> can send several requests to the server without closing
-the TCP connection if more than one requests are specified on the command
-line.
+This command can be used for sending a timestamp request, as specified
+in B<RFC 3161>, to a timestamp server over HTTP or HTTPS and storing the
+timestamp response in a file. It cannot be used for creating the requests
+and verifying responses, you have to use L<openssl-ts(1)> to do that. This
+command can send several requests to the server without closing the TCP
+connection if more than one requests are specified on the command line.
 
-The tool sends the following HTTP request for each timestamp request:
+This command sends the following HTTP request for each timestamp request:
 
         POST url HTTP/1.1
         User-Agent: OpenTSA tsget.pl/<version>
@@ -43,7 +42,7 @@ The tool sends the following HTTP request for each timestamp request:
 
         ...binary request specified by the user...
 
-B<tsget> expects a response of type application/timestamp-reply, which is
+It expects a response of type application/timestamp-reply, which is
 written to a file without any interpretation.
 
 =head1 OPTIONS
@@ -88,8 +87,8 @@ be specified. (Optional)
 =item B<-p> key_password
 
 (HTTPS) Specifies the passphrase for the private key specified by the B<-k>
-argument. If this option is omitted and the key is passphrase protected B<tsget>
-will ask for it. (Optional)
+argument. If this option is omitted and the key is passphrase protected,
+it will be prompted for. (Optional)
 
 =item B<-c> client_cert.pem
 
@@ -107,9 +106,8 @@ Either option B<-C> or option B<-P> must be given in case of HTTPS. (Optional)
 =item B<-P> CA_path
 
 (HTTPS) The path containing the trusted CA certificates to verify the peer's
-certificate. The directory must be prepared with the B<c_rehash>
-OpenSSL utility. Either option B<-C> or option B<-P> must be given in case of
-HTTPS. (Optional)
+certificate. The directory must be prepared with L<openssl-rehash(1)>. Either
+option B<-C> or option B<-P> must be given in case of HTTPS. (Optional)
 
 =item B<-rand> file:file...
 

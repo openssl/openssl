@@ -72,8 +72,8 @@ B<openssl> B<x509>
 
 =head1 DESCRIPTION
 
-The B<x509> command is a multi purpose certificate utility. It can be
-used to display certificate information, convert certificates to
+This command is a multi purpose certificate utility. It can
+be used to display certificate information, convert certificates to
 various forms, sign certificate requests like a "mini CA" or edit
 certificate trust settings.
 
@@ -118,7 +118,7 @@ default.
 The digest to use.
 This affects any signing or display option that uses a message
 digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
-Any digest supported by the OpenSSL B<dgst> command can be used.
+Any digest supported by the L<openssl-dgst(1)> command can be used.
 If not specified then SHA1 is used with B<-fingerprint> or
 the default digest for the signing algorithm is used, typically SHA256.
 
@@ -136,7 +136,7 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<x509>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -289,8 +289,8 @@ Trust settings currently are only used with a root CA. They allow a finer
 control over the purposes the root CA can be used for. For example a CA
 may be trusted for SSL client but not SSL server use.
 
-See the description of the B<verify> utility for more information on the
-meaning of trust settings.
+See the description in L<openssl-verify(1)> for more information
+on the meaning of trust settings.
 
 Future versions of OpenSSL will recognize trust settings on any
 certificate: not just root CAs.
@@ -300,7 +300,7 @@ certificate: not just root CAs.
 
 =item B<-trustout>
 
-This causes B<x509> to output a B<trusted> certificate. An ordinary
+Output a B<trusted> certificate rather than an ordinary. An ordinary
 or trusted certificate can be input but by default an ordinary
 certificate is output and any trust settings are discarded. With the
 B<-trustout> option a trusted certificate is output. A trusted
@@ -348,7 +348,7 @@ EXTENSIONS> section.
 
 =head2 Signing Options
 
-The B<x509> utility can be used to sign certificates and requests: it
+This command can be used to sign certificates and requests: it
 can thus behave like a "mini CA".
 
 =over 4
@@ -414,8 +414,8 @@ The serial number can be decimal or hex (if preceded by B<0x>).
 =item B<-CA> I<filename>
 
 Specifies the CA certificate to be used for signing. When this option is
-present B<x509> behaves like a "mini CA". The input file is signed by this
-CA using this option: that is its issuer name is set to the subject name
+present, this command behaves like a "mini CA". The input file is signed by
+this CA using this option: that is its issuer name is set to the subject name
 of the CA and it is digitally signed using the CAs private key.
 
 This option is normally combined with the B<-req> option. Without the
@@ -717,7 +717,7 @@ Hex dump unsupported extensions.
 
 =item B<ca_default>
 
-The value used by the B<ca> utility, equivalent to B<no_issuer>, B<no_pubkey>,
+The value used by L<openssl-ca(1)>, equivalent to B<no_issuer>, B<no_pubkey>,
 B<no_header>, and B<no_version>.
 
 =back
@@ -952,9 +952,9 @@ L<x509v3_config(5)>
 
 The hash algorithm used in the B<-subject_hash> and B<-issuer_hash> options
 before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding
-of the distinguished name. In OpenSSL 1.0.0 and later it is based on a
-canonical version of the DN using SHA1. This means that any directories using
-the old form must have their links rebuilt using B<c_rehash> or similar.
+of the distinguished name. In OpenSSL 1.0.0 and later it is based on a canonical
+version of the DN using SHA1. This means that any directories using the old
+form must have their links rebuilt using L<openssl-rehash(1)> or similar.
 
 =head1 COPYRIGHT
 

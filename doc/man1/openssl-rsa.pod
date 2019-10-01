@@ -40,11 +40,11 @@ B<openssl> B<rsa>
 
 =head1 DESCRIPTION
 
-The B<rsa> command processes RSA keys. They can be converted between various
-forms and their components printed out. B<Note> this command uses the
+This command processes RSA keys. They can be converted between
+various forms and their components printed out. B<Note> this command uses the
 traditional SSLeay compatible format for private key encryption: newer
-applications should use the more secure PKCS#8 format using the B<pkcs8>
-utility.
+applications should use the more secure PKCS#8 format using the
+L<openssl-pkcs8(1)> command.
 
 =head1 OPTIONS
 
@@ -95,9 +95,9 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 These options encrypt the private key with the specified
 cipher before outputting it. A pass phrase is prompted for.
 If none of these options is specified the key is written in plain text. This
-means that using the B<rsa> utility to read in an encrypted key with no
-encryption option can be used to remove the pass phrase from a key, or by
-setting the encryption options it can be use to add or change the pass phrase.
+means that this command can be used to remove the pass phrase from a key
+by not giving any encryption option is given, or to add or change the pass
+phrase by setting them.
 These options can only be used with PEM format output files.
 
 =item B<-text>
@@ -134,7 +134,7 @@ Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<rsa>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

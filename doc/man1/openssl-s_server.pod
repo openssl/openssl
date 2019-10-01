@@ -197,13 +197,13 @@ B<openssl> B<s_server>
 
 =head1 DESCRIPTION
 
-The B<s_server> command implements a generic SSL/TLS server which listens
-for connections on a given port using SSL/TLS.
+This command implements a generic SSL/TLS server which
+listens for connections on a given port using SSL/TLS.
 
 =head1 OPTIONS
 
-In addition to the options below the B<s_server> utility also supports the
-common and server only options documented
+In addition to the options below, this command also supports
+the common and server only options documented
 in the "Supported Command Line Commands" section of the L<SSL_CONF_cmd(3)>
 manual page.
 
@@ -542,8 +542,8 @@ further information).
 =item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
 These options require or disable the use of the specified SSL or TLS protocols.
-By default B<s_server> will negotiate the highest mutually supported protocol
-version.
+By default, this command will negotiate the highest mutually supported
+protocol version.
 When a specific TLS version is required, only that version will be accepted
 from the client.
 Note that not all protocols and flags may be available, depending on how
@@ -609,7 +609,7 @@ modified. This list is combined with any TLSv1.3 ciphersuites that have been
 configured. When the client sends a list of supported ciphers the first client
 cipher also included in the server list is used. Because the client specifies
 the preference order, the order of the server cipherlist is irrelevant. See
-the B<ciphers> command for more information.
+L<openssl-ciphers(1)> for more information.
 
 =item B<-ciphersuites> I<val>
 
@@ -618,16 +618,16 @@ This list is combined with any TLSv1.2 and below ciphersuites that have been
 configured. When the client sends a list of supported ciphers the first client
 cipher also included in the server list is used. Because the client specifies
 the preference order, the order of the server cipherlist is irrelevant. See
-the B<ciphers> command for more information. The format for this list is a
-simple colon (":") separated list of TLSv1.3 ciphersuite names.
+L<openssl-ciphers(1)> command for more information. The format for this list is
+a simple colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-dhparam> I<infile>
 
 The DH parameter file to use. The ephemeral DH cipher suites generate keys
 using a set of DH parameters. If not specified then an attempt is made to
 load the parameters from the server certificate file.
-If this fails then a static set of parameters hard coded into the B<s_server>
-program will be used.
+If this fails then a static set of parameters hard coded into this command
+will be used.
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
@@ -675,19 +675,20 @@ Note that this will only work if TLSv1.3 is negotiated.
 =item B<-listen>
 
 This option can only be used in conjunction with one of the DTLS options above.
-With this option B<s_server> will listen on a UDP port for incoming connections.
+With this option, this command will listen on a UDP port for incoming
+connections.
 Any ClientHellos that arrive will be checked to see if they have a cookie in
 them or not.
 Any without a cookie will be responded to with a HelloVerifyRequest.
-If a ClientHello with a cookie is received then B<s_server> will connect to
-that peer and complete the handshake.
+If a ClientHello with a cookie is received then this command will
+connect to that peer and complete the handshake.
 
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
-These options make B<s_server> use DTLS protocols instead of TLS.
-With B<-dtls>, B<s_server> will negotiate any supported DTLS protocol version,
-whilst B<-dtls1> and B<-dtls1_2> will only support DTLSv1.0 and DTLSv1.2
-respectively.
+These options make this command use DTLS protocols instead of TLS.
+With B<-dtls>, it will negotiate any supported DTLS protocol
+version, whilst B<-dtls1> and B<-dtls1_2> will only support DTLSv1.0 and
+DTLSv1.2 respectively.
 
 =item B<-sctp>
 
@@ -721,10 +722,10 @@ The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
 =item B<-engine> I<val>
 
-Specifying an engine (by its unique id string in I<val>) will cause B<s_server>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+Specifying an engine (by its unique id string in I<val>) will cause
+this command to attempt to obtain a functional reference to the
+specified engine, thus initialising it if needed. The engine will then be
+set as the default for all available algorithms.
 
 =item B<-keylogfile> I<outfile>
 
@@ -813,8 +814,8 @@ Send a certificate request to the client (TLSv1.3 only)
 
 =head1 NOTES
 
-B<s_server> can be used to debug SSL clients. To accept connections from
-a web browser the command:
+This command can be used to debug SSL clients. To accept connections
+from a web browser the command:
 
  openssl s_server -accept 443 -www
 
@@ -824,20 +825,20 @@ Although specifying an empty list of CAs when requesting a client certificate
 is strictly speaking a protocol violation, some SSL clients interpret this to
 mean any CA is acceptable. This is useful for debugging purposes.
 
-The session parameters can printed out using the B<sess_id> program.
+The session parameters can printed out using the L<openssl-sess_id(1)> command.
 
 =head1 BUGS
 
 Because this program has a lot of options and also because some of the
-techniques used are rather old, the C source of B<s_server> is rather hard to
-read and not a model of how things should be done.
+techniques used are rather old, the C source for this command is rather
+hard to read and not a model of how things should be done.
 A typical SSL server program would be much simpler.
 
 The output of common ciphers is wrong: it just gives the list of ciphers that
 OpenSSL recognizes and the client supports.
 
-There should be a way for the B<s_server> program to print out details of any
-unknown cipher suites a client says it supports.
+There should be a way for this command to print out details
+of any unknown cipher suites a client says it supports.
 
 =head1 SEE ALSO
 

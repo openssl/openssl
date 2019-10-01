@@ -19,7 +19,7 @@ B<openssl fipsinstall>
 
 =head1 DESCRIPTION
 
-This utility is used to generate a FIPS module configuration file.
+This command is used to generate a FIPS module configuration file.
 The generated configuration file consists of:
 
 =over 4
@@ -71,8 +71,8 @@ Name of the section inside the configuration file.
 =item B<-mac_name> I<name>
 
 Specifies the name of a supported MAC algorithm which will be used.
-To see the list of supported MAC's use the command I<list -mac-algorithms>.
-The default is "HMAC".
+To see the list of supported MAC's use the command
+C<openssl list -mac-algorithms>.  The default is B<HMAC>.
 
 =item B<-macopt> I<nm>:I<v>
 
@@ -101,7 +101,8 @@ A key must be specified for every MAC algorithm.
 Used by HMAC as an alphanumeric string (use if the key contains printable
 characters only).
 The string length must conform to any restrictions of the MAC algorithm.
-To see the list of supported digests, use the command I<list -digest-commands>.
+To see the list of supported digests, use the command
+C<openssl list -digest-commands>.
 
 =back
 
@@ -126,7 +127,7 @@ Verify that the configuration file 'fips.conf' contains the correct info:
 
 The MAC mechanisms that are available will depend on the options
 used when building OpenSSL.
-The B<list -mac-algorithms> command can be used to list them.
+The command C<openssl list -mac-algorithms> command can be used to list them.
 
 =head1 SEE ALSO
 

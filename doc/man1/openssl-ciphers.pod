@@ -28,9 +28,9 @@ B<openssl> B<ciphers>
 
 =head1 DESCRIPTION
 
-The B<ciphers> command converts textual OpenSSL cipher lists into ordered
-SSL cipher preference lists. It can be used as a test tool to determine
-the appropriate cipherlist.
+This command converts textual OpenSSL cipher lists into
+ordered SSL cipher preference lists. It can be used as a test tool to
+determine the appropriate cipherlist.
 
 =head1 OPTIONS
 
@@ -761,7 +761,7 @@ L<ssl(7)>
 
 =head1 HISTORY
 
-The B<-V> option for the B<ciphers> command was added in OpenSSL 1.0.0.
+The B<-V> option was added in OpenSSL 1.0.0.
 
 The B<-stdname> is only available if OpenSSL is built with tracing enabled
 (B<enable-ssl-trace> argument to Configure) before OpenSSL 1.1.1.

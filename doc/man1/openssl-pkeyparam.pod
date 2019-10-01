@@ -19,7 +19,7 @@ B<openssl> B<pkeyparam>
 
 =head1 DESCRIPTION
 
-The B<pkeyparam> command processes public key algorithm parameters.
+This command processes public key algorithm parameters.
 They can be checked for correctness and their components printed out.
 
 =head1 OPTIONS
@@ -50,7 +50,7 @@ Do not output the encoded version of the parameters.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<pkeyparam>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

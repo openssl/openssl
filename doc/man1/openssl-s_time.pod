@@ -34,11 +34,12 @@ B<openssl> B<s_time>
 
 =head1 DESCRIPTION
 
-The B<s_time> command implements a generic SSL/TLS client which connects to a
-remote host using SSL/TLS. It can request a page from the server and includes
-the time to transfer the payload data in its timing measurements. It measures
-the number of connections within a given timeframe, the amount of data
-transferred (if any), and calculates the average time spent for one connection.
+This command implements a generic SSL/TLS client which
+connects to a remote host using SSL/TLS. It can request a page from the server
+and includes the time to transfer the payload data in its timing measurements.
+It measures the number of connections within a given timeframe, the amount of
+data transferred (if any), and calculates the average time spent for one
+connection.
 
 =head1 OPTIONS
 
@@ -55,9 +56,9 @@ This specifies the host and optional port to connect to.
 =item B<-www> I<page>
 
 This specifies the page to GET from the server. A value of '/' gets the
-index.htm[l] page. If this parameter is not specified, then B<s_time> will only
-perform the handshake to establish SSL connections but not transfer any
-payload data.
+index.htm[l] page. If this parameter is not specified, then this command
+will only perform the handshake to establish SSL connections but not transfer
+any payload data.
 
 =item B<-cert> I<certname>
 
@@ -87,8 +88,8 @@ set multiple options. See the L<x509(1)> manual page for details.
 =item B<-CApath> I<directory>
 
 The directory to use for server certificate verification. This directory
-must be in "hash format", see B<verify> for more information. These are
-also used when building the client certificate chain.
+must be in "hash format", see L<openssl-verify(1)> for more information.
+These are also used when building the client certificate chain.
 
 =item B<-CAfile> I<file>
 
@@ -118,8 +119,8 @@ specified, they are both on by default and executed in sequence.
 =item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>
 
 These options enable specific SSL or TLS protocol versions for the handshake
-initiated by B<s_time>.
-By default B<s_time> negotiates the highest mutually supported protocol
+initiated by this command.
+By default, it negotiates the highest mutually supported protocol
 version.
 Note that not all protocols and flags may be available, depending on how
 OpenSSL was built.
@@ -148,21 +149,22 @@ colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-time> I<length>
 
-Specifies how long (in seconds) B<s_time> should establish connections and
-optionally transfer payload data from a server. Server and client performance
-and the link speed determine how many connections B<s_time> can establish.
+Specifies how long (in seconds) this command should establish connections
+and optionally transfer payload data from a server. Server and client
+performance and the link speed determine how many connections it
+can establish.
 
 =back
 
 =head1 NOTES
 
-B<s_time> can be used to measure the performance of an SSL connection.
+This command can be used to measure the performance of an SSL connection.
 To connect to an SSL HTTP server and get the default page the command
 
  openssl s_time -connect servername:443 -www / -CApath yourdir -CAfile yourfile.pem -cipher commoncipher [-ssl3]
 
 would typically be used (https uses port 443). I<commoncipher> is a cipher to
-which both client and server can agree, see the L<ciphers(1)> command
+which both client and server can agree, see the L<openssl-ciphers(1)> command
 for details.
 
 If the handshake fails then there are several possible causes, if it is

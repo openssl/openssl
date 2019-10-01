@@ -14,7 +14,7 @@ B<openssl> B<nseq>
 
 =head1 DESCRIPTION
 
-The B<nseq> command takes a file containing a Netscape certificate
+This command takes a file containing a Netscape certificate
 sequence and prints out the certificates contained in it or takes a
 file of certificates and converts it into a Netscape certificate
 sequence.
