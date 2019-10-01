@@ -186,7 +186,7 @@ Output the public part of a private key in B<RSAPublicKey> format:
 
 =head1 BUGS
 
-There should be an option that automatically handles .key files,
+There should be an option that automatically handles F<.key> files,
 without having to manually edit them.
 
 =head1 SEE ALSO

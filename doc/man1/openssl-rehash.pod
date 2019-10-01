@@ -28,7 +28,7 @@ script B<c_rehash> has to be used instead.  They are functionally
 equivalent, except for minor differences noted below.
 
 B<openssl rehash> scans directories and calculates a hash value of
-each C<.pem>, C<.crt>, C<.cer>, or C<.crl>
+each F<.pem>, F<.crt>, F<.cer>, or F<.crl>
 file in the specified directory list and creates symbolic links
 for each file, where the name of the link is the hash value.
 (If the platform does not support symbolic links, a copy is made.)
@@ -40,7 +40,7 @@ processed in turn. If not, then the B<SSL_CERT_DIR> environment variable
 is consulted; this should be a colon-separated list of directories,
 like the Unix B<PATH> variable.
 If that is not set then the default directory (installation-specific
-but often B</usr/local/ssl/certs>) is processed.
+but often F</usr/local/ssl/certs>) is processed.
 
 In order for a directory to be processed, the user must have write
 permissions on that directory, otherwise an error will be generated.
