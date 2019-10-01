@@ -1,5 +1,4 @@
-# A list of libcrypto functions that are known to be missing documentation as
-# used by the find-doc-nits -v option. The list is as of commit 355b419698.
+# Missing functions in libcrypto, as of Tue Oct  1 16:13:38 EDT 2019
 ACCESS_DESCRIPTION_it
 ADMISSIONS_it
 ADMISSION_SYNTAX_it
@@ -318,17 +317,6 @@ CRYPTO_ocb128_tag
 CRYPTO_ofb128_encrypt
 CRYPTO_secure_actual_size
 CRYPTO_secure_allocated
-CRYPTO_siv128_aad
-CRYPTO_siv128_cleanup
-CRYPTO_siv128_copy_ctx
-CRYPTO_siv128_decrypt
-CRYPTO_siv128_encrypt
-CRYPTO_siv128_finish
-CRYPTO_siv128_get_tag
-CRYPTO_siv128_init
-CRYPTO_siv128_new
-CRYPTO_siv128_set_tag
-CRYPTO_siv128_speed
 CRYPTO_xts128_encrypt
 Camellia_cbc_encrypt
 Camellia_cfb128_encrypt
@@ -473,8 +461,6 @@ ERR_load_X509_strings
 ERR_load_strings_const
 ERR_set_error_data
 ERR_unload_strings
-ESS_SIGNING_CERT_V2_new_init
-ESS_SIGNING_CERT_new_init
 EVP_CIPHER_CTX_buf_noconst
 EVP_CIPHER_CTX_clear_flags
 EVP_CIPHER_CTX_copy
@@ -493,8 +479,6 @@ EVP_CIPHER_get_asn1_iv
 EVP_CIPHER_impl_ctx_size
 EVP_CIPHER_set_asn1_iv
 EVP_Cipher
-EVP_MAC_do_all
-EVP_MAC_do_all_sorted
 EVP_MD_do_all
 EVP_MD_do_all_sorted
 EVP_PBE_CipherInit
@@ -747,36 +731,6 @@ OPENSSL_strnlen
 OPENSSL_uni2asc
 OPENSSL_uni2utf8
 OPENSSL_utf82uni
-OSSL_PARAM_construct_double
-OSSL_PARAM_construct_int
-OSSL_PARAM_construct_int32
-OSSL_PARAM_construct_int64
-OSSL_PARAM_construct_long
-OSSL_PARAM_construct_size_t
-OSSL_PARAM_construct_uint
-OSSL_PARAM_construct_uint32
-OSSL_PARAM_construct_uint64
-OSSL_PARAM_construct_ulong
-OSSL_PARAM_get_double
-OSSL_PARAM_get_int
-OSSL_PARAM_get_int32
-OSSL_PARAM_get_int64
-OSSL_PARAM_get_long
-OSSL_PARAM_get_size_t
-OSSL_PARAM_get_uint
-OSSL_PARAM_get_uint32
-OSSL_PARAM_get_uint64
-OSSL_PARAM_get_ulong
-OSSL_PARAM_set_double
-OSSL_PARAM_set_int
-OSSL_PARAM_set_int32
-OSSL_PARAM_set_int64
-OSSL_PARAM_set_long
-OSSL_PARAM_set_size_t
-OSSL_PARAM_set_uint
-OSSL_PARAM_set_uint32
-OSSL_PARAM_set_uint64
-OSSL_PARAM_set_ulong
 OSSL_STORE_do_all_loaders
 OSSL_STORE_vctrl
 OTHERNAME_cmp
@@ -1212,14 +1166,12 @@ X509_CRL_INFO_it
 X509_CRL_METHOD_free
 X509_CRL_METHOD_new
 X509_CRL_check_suiteb
-X509_CRL_cmp
 X509_CRL_diff
 X509_CRL_get_lastUpdate
 X509_CRL_get_meth_data
 X509_CRL_get_nextUpdate
 X509_CRL_http_nbio
 X509_CRL_it
-X509_CRL_match
 X509_CRL_print
 X509_CRL_print_ex
 X509_CRL_print_fp
@@ -1241,7 +1193,6 @@ X509_LOOKUP_new
 X509_LOOKUP_shutdown
 X509_NAME_ENTRY_it
 X509_NAME_ENTRY_set
-X509_NAME_cmp
 X509_NAME_hash
 X509_NAME_hash_old
 X509_NAME_it
@@ -1347,7 +1298,6 @@ X509_chain_check_suiteb
 X509_check_akid
 X509_check_purpose
 X509_check_trust
-X509_cmp
 X509_email_free
 X509_find_by_issuer_and_serial
 X509_find_by_subject
@@ -1366,9 +1316,7 @@ X509_get_pubkey_parameters
 X509_get_signature_type
 X509_gmtime_adj
 X509_http_nbio
-X509_issuer_and_serial_cmp
 X509_issuer_and_serial_hash
-X509_issuer_name_cmp
 X509_issuer_name_hash
 X509_issuer_name_hash_old
 X509_it
@@ -1393,7 +1341,6 @@ X509_print_fp
 X509_reject_clear
 X509_signature_dump
 X509_signature_print
-X509_subject_name_cmp
 X509_subject_name_hash
 X509_subject_name_hash_old
 X509_supported_extension
