@@ -47,13 +47,13 @@ Prints a usage message.
 =item B<-newcert>
 
 Creates a new self signed certificate. The private key is written to the file
-"newkey.pem" and the request written to the file "newreq.pem".
+F<newkey.pem> and the request written to the file F<newreq.pem>.
 This argument invokes L<openssl-req(1)> command.
 
 =item B<-newreq>
 
 Creates a new certificate request. The private key is written to the file
-"newkey.pem" and the request written to the file "newreq.pem".
+F<newkey.pem> and the request written to the file F<newreq.pem>.
 Executes L<openssl-req(1)> command below the hood.
 
 =item B<-newreq-nodes>
@@ -67,15 +67,15 @@ Creates a new CA hierarchy for use with the B<ca> program (or the B<-signcert>
 and B<-xsign> options). The user is prompted to enter the filename of the CA
 certificates (which should also contain the private key) or by hitting ENTER
 details of the CA will be prompted for. The relevant files and directories
-are created in a directory called "demoCA" in the current directory.
+are created in a directory called F<demoCA> in the current directory.
 L<openssl-req(1)> and L<openssl-ca(1)> commands are get invoked.
 
 =item B<-pkcs12>
 
 Create a PKCS#12 file containing the user certificate, private key and CA
 certificate. It expects the user certificate and private key to be in the
-file "newcert.pem" and the CA certificate to be in the file demoCA/cacert.pem,
-it creates a file "newcert.p12". This command can thus be called after the
+file F<newcert.pem> and the CA certificate to be in the file F<demoCA/cacert.pem>,
+it creates a file F<newcert.p12>. This command can thus be called after the
 B<-sign> option. The PKCS#12 file can be imported directly into a browser.
 If there is an additional argument on the command line it will be used as the
 "friendly name" for the certificate (which is typically displayed in the browser
@@ -85,8 +85,8 @@ Delegates work to L<openssl-pkcs12(1)> command.
 =item B<-sign>, B<-signcert>, B<-xsign>
 
 Calls the L<openssl-ca(1)> command to sign a certificate request. It expects the
-request to be in the file "newreq.pem". The new certificate is written to the
-file "newcert.pem" except in the case of the B<-xsign> option when it is
+request to be in the file F<newreq.pem>. The new certificate is written to the
+file F<newcert.pem> except in the case of the B<-xsign> option when it is
 written to standard output. Leverages L<openssl-ca(1)> command.
 
 =item B<-signCA>
@@ -99,7 +99,7 @@ a root CA.  Extra params are passed on to L<openssl-ca(1)> command.
 =item B<-signcert>
 
 This option is the same as B<-sign> except it expects a self signed certificate
-to be present in the file "newreq.pem".
+to be present in the file F<newreq.pem>.
 Extra params are passed on to L<openssl-x509(1)> and L<openssl-ca(1)> commands.
 
 =item B<-crl>
@@ -116,9 +116,9 @@ Leverages L<openssl-ca(1)> command.
 
 =item B<-verify>
 
-Verifies certificates against the CA certificate for "demoCA". If no
+Verifies certificates against the CA certificate for F<demoCA>. If no
 certificates are specified on the command line it tries to verify the file
-"newcert.pem".  Invokes L<openssl-verify(1)> command.
+F<newcert.pem>.  Invokes L<openssl-verify(1)> command.
 
 =item B<-extra-req> | B<-extra-ca> | B<-extra-pkcs12> | B<-extra-x509> | B<-extra-verify> I<extra-params>
 
@@ -164,7 +164,7 @@ Create the CA directories and files:
 
  CA.pl -newca
 
-enter cacert.pem when prompted for the CA filename.
+enter a filename (for example F<cacert.pem>) when prompted for the CA filename.
 
 Create a DSA certificate request and private key (a different set of parameters
 can optionally be created first):

@@ -257,7 +257,7 @@ anonymous cipher suite or PSK) this option has no effect.
 The certificate to use, most servers cipher suites require the use of a
 certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
-(DSA) key. If not specified then the filename "server.pem" will be used.
+(DSA) key. If not specified then the filename F<server.pem> will be used.
 
 =item B<-cert_chain>
 
@@ -422,7 +422,7 @@ web browser. Cannot be used in conjunction with B<-early_data>.
 
 Emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
-requested the file ./page.html will be loaded. Cannot be used in conjunction
+requested the file F<./page.html> will be loaded. Cannot be used in conjunction
 with B<-early_data>.
 
 =item B<-tlsextdebug>
@@ -433,7 +433,7 @@ Print a hex dump of any TLS extensions received from the server.
 
 Emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
-requested the file ./page.html will be loaded. The files loaded are
+requested the file F<./page.html> will be loaded. The files loaded are
 assumed to contain a complete and correct HTTP response (lines that
 are part of the HTTP response line and headers must end with CRLF). Cannot be
 used in conjunction with B<-early_data>.

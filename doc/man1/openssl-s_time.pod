@@ -56,7 +56,7 @@ This specifies the host and optional port to connect to.
 =item B<-www> I<page>
 
 This specifies the page to GET from the server. A value of '/' gets the
-index.htm[l] page. If this parameter is not specified, then this command
+F<index.html> page. If this parameter is not specified, then this command
 will only perform the handshake to establish SSL connections but not transfer
 any payload data.
 

@@ -416,7 +416,8 @@ then 1 for the CA that signed the certificate and so on. Finally a text version
 of the error number is presented.
 
 A partial list of the error codes and messages is shown below, this also
-includes the name of the error code as defined in the header file x509_vfy.h
+includes the name of the error code as defined in the header file
+F<< <openssl/x509_vfy.h> >>.
 Some of the error codes are defined but never returned: these are described
 as "unused".
 

@@ -526,11 +526,11 @@ public key certificate identifier. Default is sha256. (Optional)
 
 All the examples below presume that B<OPENSSL_CONF> is set to a proper
 configuration file, e.g. the example configuration file
-openssl/apps/openssl.cnf will do.
+F<openssl/apps/openssl.cnf> will do.
 
 =head2 Timestamp Request
 
-To create a timestamp request for design1.txt with SHA-256 digest,
+To create a timestamp request for F<design1.txt> with SHA-256 digest,
 without nonce and policy, and without requirement for a certificate
 in the response:
 
@@ -548,7 +548,7 @@ To print the content of the previous request in human readable format:
   openssl ts -query -in design1.tsq -text
 
 To create a timestamp request which includes the SHA-512 digest
-of design2.txt, requests the signer certificate and nonce, and
+of F<design2.txt>, requests the signer certificate and nonce, and
 specifies a policy id (assuming the tsa_policy1 name is defined in the
 OID section of the config file):
 
@@ -565,9 +565,9 @@ user certificate section of the config file to generate a proper certificate;
    extendedKeyUsage = critical,timeStamping
 
 See L<req(1)>, L<ca(1)>, and L<x509(1)> for instructions. The examples
-below assume that cacert.pem contains the certificate of the CA,
-tsacert.pem is the signing certificate issued by cacert.pem and
-tsakey.pem is the private key of the TSA.
+below assume that F<cacert.pem> contains the certificate of the CA,
+F<tsacert.pem> is the signing certificate issued by F<cacert.pem> and
+F<tsakey.pem> is the private key of the TSA.
 
 To create a timestamp response for a request:
 

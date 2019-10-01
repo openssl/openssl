@@ -123,7 +123,7 @@ file in PEM format (except that B<-spkac> outputs DER format).
 
 The directory to output certificates to. The certificate will be
 written to a filename consisting of the serial number in hex with
-".pem" appended.
+F<.pem> appended.
 
 =item B<-cert>
 
@@ -600,12 +600,12 @@ usually involves creating a CA certificate and private key with
 L<openssl-req(1)>, a serial number file and an empty index file and
 placing them in the relevant directories.
 
-To use the sample configuration file below the directories demoCA,
-demoCA/private and demoCA/newcerts would be created. The CA
-certificate would be copied to demoCA/cacert.pem and its private
-key to demoCA/private/cakey.pem. A file demoCA/serial would be
+To use the sample configuration file below the directories F<demoCA>,
+F<demoCA/private> and F<demoCA/newcerts> would be created. The CA
+certificate would be copied to F<demoCA/cacert.pem> and its private
+key to F<demoCA/private/cakey.pem>. A file F<demoCA/serial> would be
 created containing for example "01" and the empty index file
-demoCA/index.txt.
+F<demoCA/index.txt>.
 
 
 Sign a certificate request:

@@ -110,14 +110,14 @@ C<openssl list -digest-commands>.
 
 =head1 EXAMPLES
 
-Calculate the mac of a FIPS module 'fips.so' and run a FIPS self test
-for the module, and save the fips.conf configuration file:
+Calculate the mac of a FIPS module F<fips.so> and run a FIPS self test
+for the module, and save the F<fips.conf> configuration file:
 
  openssl fipsinstall -module ./fips.so -out fips.conf -provider_name fips \
          -section_name fipsinstall -mac_name HMAC -macopt digest:SHA256 \
          -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213
 
-Verify that the configuration file 'fips.conf' contains the correct info:
+Verify that the configuration file F<fips.conf> contains the correct info:
 
  openssl fipsinstall -module ./fips.so -in fips.conf  -provider_name fips \
           -section_name fips_install -mac_name HMAC -macopt digest:SHA256 \
