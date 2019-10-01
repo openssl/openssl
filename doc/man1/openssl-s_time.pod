@@ -163,7 +163,7 @@ To connect to an SSL HTTP server and get the default page the command
 
  openssl s_time -connect servername:443 -www / -CApath yourdir -CAfile yourfile.pem -cipher commoncipher [-ssl3]
 
-would typically be used (https uses port 443). 'commoncipher' is a cipher to
+would typically be used (https uses port 443). C<commoncipher> is a cipher to
 which both client and server can agree, see the L<openssl-ciphers(1)> command
 for details.
 

@@ -134,8 +134,8 @@ issuer certificate is specified.
 
 Same as the B<-cert> option except the certificate with serial number
 B<num> is added to the request. The serial number is interpreted as a
-decimal integer unless preceded by B<0x>. Negative integers can also
-be specified by preceding the value by a B<-> sign.
+decimal integer unless preceded by C<0x>. Negative integers can also
+be specified by preceding the value by a C<-> sign.
 
 =item B<-signer> I<filename>, B<-signkey> I<filename>
 

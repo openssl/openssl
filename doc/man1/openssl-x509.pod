@@ -409,7 +409,7 @@ the B<-signkey> or B<-CA> options. If used in conjunction with the B<-CA>
 option the serial number file (as specified by the B<-CAserial> or
 B<-CAcreateserial> options) is not used.
 
-The serial number can be decimal or hex (if preceded by B<0x>).
+The serial number can be decimal or hex (if preceded by C<0x>).
 
 =item B<-CA> I<filename>
 
@@ -484,10 +484,10 @@ The format of the key file can be specified using the B<-keyform> option.
 =item B<-subj> I<arg>
 
 When a certificate is created set its subject name to the given value.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
 Keyword characters may be escaped by \ (backslash), and whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
-in the certificate. Giving a single I</> will lead to an empty sequence of RDNs
+in the certificate. Giving a single C</> will lead to an empty sequence of RDNs
 (a NULL subject DN).
 
 Unless the B<-CA> option is given the issuer is set to the same value.

@@ -81,7 +81,7 @@ returned.
 =item B<-subject> I<arg>
 
 Search for an object having the subject name I<arg>.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
 Keyword characters may be escaped by \ (backslash), and whitespace is retained.
 Empty values are permitted but are ignored for the search.  That is,
 a search with an empty value will have the same effect as not specifying
@@ -93,10 +93,10 @@ the type at all.
 
 Search for an object having the given issuer name and serial number.
 These two options I<must> be used together.
-The issuer arg must be formatted as I</type0=value0/type1=value1/type2=...>,
+The issuer arg must be formatted as C</type0=value0/type1=value1/type2=...>,
 characters may be escaped by \ (backslash), no spaces are skipped.
 The serial arg may be specified as a decimal value or a hex value if preceded
-by B<0x>.
+by C<0x>.
 
 =item B<-alias> I<arg>
 
