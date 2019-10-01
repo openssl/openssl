@@ -51,15 +51,22 @@ static int deflt_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 }
 
 static const OSSL_ALGORITHM deflt_digests[] = {
-    { "SHA1", "default=yes", sha1_functions },
+    /*
+     * NIST names followed by our (historical) names
+     * Ref: FIPS PUB 180-4, Secure Hash Standard (SHS)
+     */
+    { "SHA-1:SHA1", "default=yes", sha1_functions },
+    { "SHA-224:SHA224", "default=yes", sha224_functions },
+    { "SHA-256:SHA256", "default=yes", sha256_functions },
+    { "SHA-384:SHA384", "default=yes", sha384_functions },
+    { "SHA-512:SHA512", "default=yes", sha512_functions },
+    { "SHA-512/224:SHA512-224", "default=yes", sha512_224_functions },
+    { "SHA-512/256:SHA512-256", "default=yes", sha512_256_functions },
 
-    { "SHA224", "default=yes", sha224_functions },
-    { "SHA256", "default=yes", sha256_functions },
-    { "SHA384", "default=yes", sha384_functions },
-    { "SHA512", "default=yes", sha512_functions },
-    { "SHA512-224", "default=yes", sha512_224_functions },
-    { "SHA512-256", "default=yes", sha512_256_functions },
-
+    /*
+     * NIST SHA3 names align with ours
+     * Ref: FIPS PUB 202, SHA-3 Standard
+     */
     { "SHA3-224", "default=yes", sha3_224_functions },
     { "SHA3-256", "default=yes", sha3_256_functions },
     { "SHA3-384", "default=yes", sha3_384_functions },
@@ -72,12 +79,22 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { "KECCAK_KMAC128", "default=yes", keccak_kmac_128_functions },
     { "KECCAK_KMAC256", "default=yes", keccak_kmac_256_functions },
 
+    /*
+     * NIST SHAKE names align with ours
+     * Ref: FIPS PUB 202, SHA-3 Standard
+     */
     { "SHAKE128", "default=yes", shake_128_functions },
     { "SHAKE256", "default=yes", shake_256_functions },
 
 #ifndef OPENSSL_NO_BLAKE2
-    { "BLAKE2s256", "default=yes", blake2s256_functions },
-    { "BLAKE2b512", "default=yes", blake2b512_functions },
+    /*
+     * https://blake2.net/ doesn't specify size variants,
+     * but mentions that Bouncy Castle uses the names
+     * BLAKE2b-160, BLAKE2b-256, BLAKE2b-384, and BLAKE2b-512
+     * So we follow that pattern and add our (historical) names
+     */
+    { "BLAKE2b-256:BLAKE2s256", "default=yes", blake2s256_functions },
+    { "BLAKE2s-512:BLAKE2b512", "default=yes", blake2b512_functions },
 #endif /* OPENSSL_NO_BLAKE2 */
 
 #ifndef OPENSSL_NO_SM3
@@ -93,6 +110,11 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 };
 
 static const OSSL_ALGORITHM deflt_ciphers[] = {
+    /*
+     * Standard naming: {name}-{keybits}-{mode}
+     * Additionally, we have some names from ASN.1 modules,
+     * and some historical ones.
+     */
     { "AES-256-ECB", "default=yes", aes256ecb_functions },
     { "AES-192-ECB", "default=yes", aes192ecb_functions },
     { "AES-128-ECB", "default=yes", aes128ecb_functions },
@@ -121,18 +143,24 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-192-OCB", "default=yes", aes192ocb_functions },
     { "AES-128-OCB", "default=yes", aes128ocb_functions },
 #endif /* OPENSSL_NO_OCB */
-    { "id-aes256-GCM:AES-256-GCM", "fips=yes", aes256gcm_functions },
-    { "id-aes192-GCM:AES-192-GCM", "fips=yes", aes192gcm_functions },
-    { "id-aes128-GCM:AES-128-GCM", "fips=yes", aes128gcm_functions },
-    { "id-aes256-CCM:AES-256-CCM", "fips=yes", aes256ccm_functions },
-    { "id-aes192-CCM:AES-192-CCM", "fips=yes", aes192ccm_functions },
-    { "id-aes128-CCM:AES-128-CCM", "fips=yes", aes128ccm_functions },
-    { "id-aes256-wrap:AES-256-WRAP:AES256-WRAP", "fips=yes", aes256wrap_functions },
-    { "id-aes192-wrap:AES-192-WRAP:AES192-WRAP", "fips=yes", aes192wrap_functions },
-    { "id-aes128-wrap:AES-128-WRAP:AES128-WRAP", "fips=yes", aes128wrap_functions },
-    { "id-aes256-wrap-pad:AES-256-WRAP-PAD:AES256-WRAP-PAD", "fips=yes", aes256wrappad_functions },
-    { "id-aes192-wrap-pad:AES-192-WRAP-PAD:AES192-WRAP-PAD", "fips=yes", aes192wrappad_functions },
-    { "id-aes128-wrap-pad:AES-128-WRAP-PAD:AES128-WRAP-PAD", "fips=yes", aes128wrappad_functions },
+    { "AES-256-GCM:id-aes256-GCM", "fips=yes", aes256gcm_functions },
+    { "AES-192-GCM:id-aes192-GCM", "fips=yes", aes192gcm_functions },
+    { "AES-128-GCM:id-aes128-GCM", "fips=yes", aes128gcm_functions },
+    { "AES-256-CCM:id-aes256-CCM", "fips=yes", aes256ccm_functions },
+    { "AES-192-CCM:id-aes192-CCM", "fips=yes", aes192ccm_functions },
+    { "AES-128-CCM:id-aes128-CCM", "fips=yes", aes128ccm_functions },
+    { "AES-256-WRAP:id-aes256-wrap:AES256-WRAP", "fips=yes",
+      aes256wrap_functions },
+    { "AES-192-WRAP:id-aes192-wrap:AES192-WRAP", "fips=yes",
+      aes192wrap_functions },
+    { "AES-128-WRAP:id-aes128-wrap:AES128-WRAP", "fips=yes",
+      aes128wrap_functions },
+    { "AES-256-WRAP-PAD:id-aes256-wrap-pad:AES256-WRAP-PAD", "fips=yes",
+      aes256wrappad_functions },
+    { "AES-192-WRAP-PAD:id-aes192-wrap-pad:AES192-WRAP-PAD", "fips=yes",
+      aes192wrappad_functions },
+    { "AES-128-WRAP-PAD:id-aes128-wrap-pad:AES128-WRAP-PAD", "fips=yes",
+      aes128wrappad_functions },
 #ifndef OPENSSL_NO_ARIA
     { "ARIA-256-GCM", "default=yes", aria256gcm_functions },
     { "ARIA-192-GCM", "default=yes", aria192gcm_functions },
@@ -214,8 +242,8 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
 #ifndef OPENSSL_NO_IDEA
     { "IDEA-ECB", "default=yes", idea128ecb_functions },
     { "IDEA-CBC:IDEA", "default=yes", idea128cbc_functions },
-    { "IDEA-OFB64:IDEA-OFB", "default=yes", idea128ofb64_functions },
-    { "IDEA-CFB64:IDEA-CFB", "default=yes", idea128cfb64_functions },
+    { "IDEA-OFB:IDEA-OFB64", "default=yes", idea128ofb64_functions },
+    { "IDEA-CFB:IDEA-CFB64", "default=yes", idea128cfb64_functions },
 #endif /* OPENSSL_NO_IDEA */
 #ifndef OPENSSL_NO_CAST
     { "CAST5-ECB", "default=yes", cast5128ecb_functions },
@@ -226,15 +254,15 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
 #ifndef OPENSSL_NO_SEED
     { "SEED-ECB", "default=yes", seed128ecb_functions },
     { "SEED-CBC:SEED", "default=yes", seed128cbc_functions },
-    { "SEED-OFB128:SEED-OFB", "default=yes", seed128ofb128_functions },
-    { "SEED-CFB128:SEED-CFB", "default=yes", seed128cfb128_functions },
+    { "SEED-OFB:SEED-OFB128", "default=yes", seed128ofb128_functions },
+    { "SEED-CFB:SEED-CFB128", "default=yes", seed128cfb128_functions },
 #endif /* OPENSSL_NO_SEED */
 #ifndef OPENSSL_NO_SM4
     { "SM4-ECB", "default=yes", sm4128ecb_functions },
     { "SM4-CBC:SM4", "default=yes", sm4128cbc_functions },
     { "SM4-CTR", "default=yes", sm4128ctr_functions },
-    { "SM4-OFB128:SM4-OFB", "default=yes", sm4128ofb128_functions },
-    { "SM4-CFB128:SM4-CFB", "default=yes", sm4128cfb128_functions },
+    { "SM4-OFB:SM4-OFB128", "default=yes", sm4128ofb128_functions },
+    { "SM4-CFB:SM4-CFB128", "default=yes", sm4128cfb128_functions },
 #endif /* OPENSSL_NO_SM4 */
 #ifndef OPENSSL_NO_RC4
     { "RC4", "default=yes", rc4128_functions },
@@ -245,8 +273,8 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
 
 static const OSSL_ALGORITHM deflt_macs[] = {
 #ifndef OPENSSL_NO_BLAKE2
-    { "BLAKE2BMAC", "default=yes", blake2bmac_functions },
-    { "BLAKE2SMAC", "default=yes", blake2smac_functions },
+    { "BLAKE2bMAC", "default=yes", blake2bmac_functions },
+    { "BLAKE2sMAC", "default=yes", blake2smac_functions },
 #endif
 #ifndef OPENSSL_NO_CMAC
     { "CMAC", "default=yes", cmac_functions },
@@ -283,14 +311,14 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
 
 static const OSSL_ALGORITHM deflt_keyexch[] = {
 #ifndef OPENSSL_NO_DH
-    { "dhKeyAgreement:DH", "default=yes", dh_keyexch_functions },
+    { "DH:dhKeyAgreement", "default=yes", dh_keyexch_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_DSA
-    { "dsaEncryption:DSA", "default=yes", dsa_signature_functions },
+    { "DSA:dsaEncryption", "default=yes", dsa_signature_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -298,7 +326,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
-    { "dhKeyAgreement", "default=yes", dh_keymgmt_functions },
+    { "DH", "default=yes", dh_keymgmt_functions },
 #endif
 #ifndef OPENSSL_NO_DSA
     { "DSA", "default=yes", dsa_keymgmt_functions },
