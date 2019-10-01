@@ -46,7 +46,7 @@ SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { platform->isobj($_) ? platform->dep($_) : () }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
-                  keys %{$unified_info{sources}}); -}
+                  sort keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}}) -}
 GENERATED={- # common0.tmpl provides @generated

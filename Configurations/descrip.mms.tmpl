@@ -73,7 +73,7 @@
   # This is a horrible hack, but is needed because recursive inclusion of files
   # in different directories does not work well with HP C.
   my $sd = sourcedir("crypto", "async", "arch");
-  foreach (grep /\[\.crypto\.async\.arch\].*\.o$/, keys %{$unified_info{sources}}) {
+  foreach (grep /\[\.crypto\.async\.arch\].*\.o$/, sort keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
       $unified_info{before}->{$obj}
           = qq(arch_include = F\$PARSE("$sd","A.;",,,"SYNTAX_ONLY") - "A.;"
@@ -84,7 +84,7 @@
   my $sd1 = sourcedir("ssl","record");
   my $sd2 = sourcedir("ssl","statem");
   my @ssl_locl_users = grep(/^\[\.(?:ssl\.(?:record|statem)|test)\].*\.o$/,
-                            keys %{$unified_info{sources}});
+                            sort keys %{$unified_info{sources}});
   foreach (@ssl_locl_users) {
       my $obj = platform->obj($_);
       $unified_info{before}->{$obj}
@@ -130,7 +130,7 @@ SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- our @deps = map { platform->isobj($_) ? platform->dep($_) : $_ }
                     grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
-                    keys %{$unified_info{sources}};
+                    sort keys %{$unified_info{sources}};
         join(", ", map { "-\n\t".$_ } @deps); -}
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}

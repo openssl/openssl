@@ -940,12 +940,12 @@ if (defined($config{api}) && !exists $apitable->{$config{api}}) {
         die "***** Unsupported api compatibility level: $config{api}\n",
 }
 
-if (keys %deprecated_options)
+if (sort keys %deprecated_options)
         {
         warn "***** Deprecated options: ",
                 join(", ", keys %deprecated_options), "\n";
         }
-if (keys %unsupported_options)
+if (sort keys %unsupported_options)
         {
         die "***** Unsupported options: ",
                 join(", ", keys %unsupported_options), "\n";
@@ -984,7 +984,7 @@ _____
 # environment for values.
 my $anyuseradd =
     grep { defined $_ && (ref $_ ne 'ARRAY' || @$_) } values %useradd;
-foreach (keys %user) {
+foreach (sort keys %user) {
     my $value = $cmdvars{$_};
     $value //= env($_) unless $anyuseradd;
     $value //=
@@ -1028,7 +1028,7 @@ sub disable {
                 }
             }
         }
-        @tocheckfor = (keys %new_tocheckfor);
+        @tocheckfor = (sort keys %new_tocheckfor);
     }
 }
 disable();                     # First cascade run
@@ -1107,7 +1107,7 @@ if ($d) {
 $config{target} = $target;
 my %target = resolve_config($target);
 
-foreach (keys %target_attr_translate) {
+foreach (sort keys %target_attr_translate) {
     $target{$target_attr_translate{$_}} = $target{$_}
         if $target{$_};
     delete $target{$_};
@@ -1153,7 +1153,7 @@ $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
 
 # Fill %config with values from %user, and in case those are undefined or
 # empty, use values from %target (acting as a default).
-foreach (keys %user) {
+foreach (sort keys %user) {
     my $ref_type = ref $user{$_};
 
     # Temporary function.  Takes an intended ref type (empty string or "ARRAY")
@@ -1187,7 +1187,7 @@ foreach (keys %user) {
 
 # Finish up %config by appending things the user gave us on the command line
 # apart from "make variables"
-foreach (keys %useradd) {
+foreach (sort keys %useradd) {
     # The must all be lists, so we assert that here
     die "internal error: \$useradd{$_} isn't an ARRAY\n"
         unless ref $useradd{$_} eq 'ARRAY';
@@ -1957,10 +1957,10 @@ This is usually a fault in a build.info file.
 EOF
         }
 
-        foreach (keys %attributes) {
+        foreach (sort keys %attributes) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
-            foreach (keys %{$attributes{$dest} // {}}) {
+            foreach (sort keys %{$attributes{$dest} // {}}) {
                 $unified_info{attributes}->{$ddest}->{$_} =
                     $attributes{$dest}->{$_};
             }
@@ -1971,7 +1971,7 @@ EOF
                           libraries => [ @libraries ],
                           modules   => [ @modules   ],
                           scripts   => [ @scripts   ] );
-            foreach my $k (keys %infos) {
+            foreach my $k (sort keys %infos) {
                 foreach (@{$infos{$k}}) {
                     my $item = cleanfile($buildd, $_, $blddir);
                     $unified_info{$k}->{$item} = 1;
@@ -1990,7 +1990,7 @@ EOF
             join(" ", @doubles), "\n"
             if @doubles;
 
-        foreach (keys %sources) {
+        foreach (sort keys %sources) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
             foreach (@{$sources{$dest}}) {
@@ -2022,7 +2022,7 @@ EOF
             }
         }
 
-        foreach (keys %shared_sources) {
+        foreach (sort keys %shared_sources) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
             foreach (@{$shared_sources{$dest}}) {
@@ -2060,7 +2060,7 @@ EOF
             }
         }
 
-        foreach (keys %generate) {
+        foreach (sort keys %generate) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
             die "more than one generator for $dest: "
@@ -2071,7 +2071,7 @@ EOF
             $unified_info{generate}->{$ddest} = [ @generator ];
         }
 
-        foreach (keys %depends) {
+        foreach (sort keys %depends) {
             my $dest = $_;
             my $ddest = $dest eq "" ? "" : cleanfile($sourced, $_, $blddir);
 
@@ -2106,7 +2106,7 @@ EOF
             }
         }
 
-        foreach (keys %includes) {
+        foreach (sort keys %includes) {
             my $dest = $_;
             my $ddest = cleanfile($sourced, $_, $blddir);
 
@@ -2125,7 +2125,7 @@ EOF
             }
         }
 
-        foreach my $dest (keys %defines) {
+        foreach my $dest (sort keys %defines) {
             my $ddest;
 
             if ($dest ne "") {
@@ -2170,7 +2170,7 @@ EOF
     # them being unique.
     {
         my $err = 0;
-        foreach my $prod (keys %{$unified_info{libraries}}) {
+        foreach my $prod (sort keys %{$unified_info{libraries}}) {
             my @prod_sources =
                 map { keys %{$unified_info{sources}->{$_}} }
                 keys %{$unified_info{sources}->{$prod}};
@@ -2182,7 +2182,7 @@ EOF
                 $srccnt{basename $src}++;
             }
 
-            foreach my $src (keys %srccnt) {
+            foreach my $src (sort keys %srccnt) {
                 if ((my $cnt = $srccnt{$src}) > 1) {
                     print STDERR "$src appears $cnt times for the product $prod\n";
                     $err++
@@ -2196,9 +2196,9 @@ EOF
 
     # If we depend on a header file or a perl module, add an inclusion of
     # its directory to allow smoothe inclusion
-    foreach my $dest (keys %{$unified_info{depends}}) {
+    foreach my $dest (sort keys %{$unified_info{depends}}) {
         next if $dest eq "";
-        foreach my $d (keys %{$unified_info{depends}->{$dest}}) {
+        foreach my $d (sort keys %{$unified_info{depends}->{$dest}}) {
             next unless $d =~ /\.(h|pm)$/;
             my $i = dirname($d);
             my $spot =
@@ -2253,21 +2253,21 @@ EOF
                 scripts   => { script => { src => [ 'sources' ],
                                            dst => 'sources' } }
                } -> {$prodtype};
-            foreach my $kind (keys %$intent) {
+            foreach my $kind (sort keys %$intent) {
                 next if ($intent->{$kind}->{dst} eq 'shared_sources'
                              && $disabled{shared});
 
                 my @src = @{$intent->{$kind}->{src}};
                 my $dst = $intent->{$kind}->{dst};
                 my $prodselect = $intent->{$kind}->{prodselect} // sub { @_ };
-                foreach my $prod ($prodselect->(keys %{$unified_info{$prodtype}})) {
+                foreach my $prod ($prodselect->(sort keys %{$unified_info{$prodtype}})) {
                     # %prod_sources has all applicable objects as keys, and
                     # their corresponding sources as values
                     my %prod_sources =
                         map { $_ => [ keys %{$unified_copy{sources}->{$_}} ] }
                         map { keys %{$unified_copy{$_}->{$prod}} }
                         @src;
-                    foreach (keys %prod_sources) {
+                    foreach (sort keys %prod_sources) {
                         # Only affect object files and resource files,
                         # the others simply get a new value
                         # (+1 instead of -1)
@@ -2283,7 +2283,7 @@ EOF
                                 $unified_info{sources}->{$newobj}->{$src} = 1;
                             }
                             # Adjust dependencies
-                            foreach my $deps (keys %{$unified_info{depends}->{$_}}) {
+                            foreach my $deps (sort keys %{$unified_info{depends}->{$_}}) {
                                 $unified_info{depends}->{$_}->{$deps} = -1;
                                 $unified_info{depends}->{$newobj}->{$deps} = 1;
                             }
@@ -2361,7 +2361,7 @@ EOF
                      "dso" => [ @{$unified_info{modules}} ],
                      "bin" => [ @{$unified_info{programs}} ],
                      "script" => [ @{$unified_info{scripts}} ] );
-    foreach my $type (keys %loopinfo) {
+    foreach my $type (sort keys %loopinfo) {
         foreach my $product (@{$loopinfo{$type}}) {
             my %dirs = ();
             my $pd = dirname($product);
@@ -2382,7 +2382,7 @@ EOF
                 push @{$unified_info{dirinfo}->{$d}->{deps}}, $_
                     if $d ne $pd;
             }
-            foreach (keys %dirs) {
+            foreach (sort keys %dirs) {
                 push @{$unified_info{dirinfo}->{$_}->{products}->{$type}},
                     $product;
             }
@@ -2667,7 +2667,7 @@ EOF
 
 
     # For each target, check that it's configured with a hash table.
-    foreach (keys %targets) {
+    foreach (sort keys %targets) {
         if (ref($targets{$_}) ne "HASH") {
             if (ref($targets{$_}) eq "") {
                 warn "Deprecated target configuration for $_, ignoring...\n";
@@ -2719,7 +2719,7 @@ sub resolve_config {
             # the config that had it.
             delete $inherited_config{template};
 
-            foreach (keys %inherited_config) {
+            foreach (sort keys %inherited_config) {
                 if (!$combined_inheritance{$_}) {
                     $combined_inheritance{$_} = [];
                 }
@@ -2746,7 +2746,7 @@ sub resolve_config {
     my $default_combiner = add();
 
     my %all_keys =
-        map { $_ => 1 } (keys %combined_inheritance,
+        map { $_ => 1 } (sort keys %combined_inheritance,
                          keys %{$table{$target}});
 
     sub process_values {
@@ -3115,7 +3115,7 @@ sub collect_information {
         if ($collectors{"BEFORE"}) {
             $collectors{"BEFORE"}->($_);
         }
-        foreach my $re (keys %collectors) {
+        foreach my $re (sort keys %collectors) {
             if ($re !~ /^OTHERWISE|BEFORE|AFTER$/ && /$re/) {
                 $collectors{$re}->($lineiterator);
                 $found = 1;
