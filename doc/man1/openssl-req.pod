@@ -20,7 +20,7 @@ B<openssl> B<req>
 [B<-verify>]
 [B<-modulus>]
 [B<-new>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-newkey> I<rsa:bits>]
 [B<-newkey> I<alg:file>]
@@ -142,10 +142,9 @@ in the configuration file and any requested extensions.
 If the B<-key> option is not used it will generate a new RSA private
 key using information specified in the configuration file.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

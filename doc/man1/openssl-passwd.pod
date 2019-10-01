@@ -20,7 +20,7 @@ B<openssl passwd>
 [B<-noverify>]
 [B<-quiet>]
 [B<-table>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 {I<password>}
 
@@ -92,10 +92,9 @@ Don't output warnings when passwords given at the command line are truncated.
 In the output list, prepend the cleartext password and a TAB character
 to each password hash.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

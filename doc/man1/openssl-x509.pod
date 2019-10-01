@@ -63,7 +63,7 @@ B<openssl> B<x509>
 [B<-extfile> I<filename>]
 [B<-extensions> I<section>]
 [B<-sigopt> I<nm>:I<v>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
 [B<-preserve_dates>]
@@ -122,10 +122,9 @@ Any digest supported by the OpenSSL B<dgst> command can be used.
 If not specified then SHA1 is used with B<-fingerprint> or
 the default digest for the signing algorithm is used, typically SHA256.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

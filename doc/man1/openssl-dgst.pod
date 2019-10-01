@@ -24,7 +24,7 @@ B<openssl dgst>
 [B<-sigopt> I<nm>:I<v>]
 [B<-hmac> I<key>]
 [B<-fips-fingerprint>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-engine> I<id>]
 [B<-engine_impl>]
 [I<file> ...]
@@ -161,10 +161,9 @@ for example exactly 32 chars for gost-mac.
 The L<openssl-mac(1)> command should be preferred to using this command line
 option.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

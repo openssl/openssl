@@ -65,7 +65,7 @@ B<openssl> B<smime>
 [B<-indef>]
 [B<-noindef>]
 [B<-stream>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-md> I<digest>]
 I<cert.pem> ...
@@ -298,10 +298,9 @@ specified, the argument is given to the engine as a key identifier.
 The private key password source. For more information about the format of B<arg>
 see L<openssl(1)/Pass phrase options>.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

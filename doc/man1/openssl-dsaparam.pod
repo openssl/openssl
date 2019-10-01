@@ -15,7 +15,7 @@ B<openssl dsaparam>
 [B<-noout>]
 [B<-text>]
 [B<-C>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-genkey>]
 [B<-engine> I<id>]
@@ -76,10 +76,9 @@ be loaded by calling the get_dsaXXX() function.
 This option will generate a DSA either using the specified or generated
 parameters.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

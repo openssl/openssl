@@ -9,7 +9,7 @@ openssl-rand - generate pseudo-random bytes
 B<openssl rand>
 [B<-help>]
 [B<-out> I<file>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-base64>]
 [B<-hex>]
@@ -38,10 +38,9 @@ Print out a usage message.
 
 Write to I<file> instead of standard output.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

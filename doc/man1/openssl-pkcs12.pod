@@ -36,7 +36,7 @@ B<openssl> B<pkcs12>
 [B<-password> I<arg>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-CAfile> I<file>]
 [B<-CApath> I<dir>]
@@ -280,10 +280,9 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 Don't attempt to provide the MAC integrity.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

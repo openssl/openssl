@@ -24,7 +24,7 @@ B<openssl> B<genrsa>
 [B<-idea>]
 [B<-f4>]
 [B<-3>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
 [B<-primes> I<num>]
@@ -66,10 +66,9 @@ for if it is not supplied via the B<-passout> argument.
 
 The public exponent to use, either 65537 or 3. The default is 65537.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

@@ -549,7 +549,7 @@ Read the password from standard input.
 
 =over 4
 
-=item B<OPENSSL_TRACE=>I<name,...>
+=item B<OPENSSL_TRACE=>I<name>[,...]
 
 Enable tracing output of OpenSSL library, by name.
 This output will only make sense if you know OpenSSL internals well.
