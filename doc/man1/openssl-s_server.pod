@@ -275,7 +275,7 @@ provided to the client.
 Option which determines how the subject or issuer names are displayed. The
 I<val> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<x509(1)> manual page for details.
+set multiple options. See the L<openssl-x509(1)> manual page for details.
 
 =item B<-naccept> I<+int>
 
@@ -380,13 +380,14 @@ a certificate is requested.
 =item B<-CApath> I<dir>
 
 The directory to use for client certificate verification. This directory
-must be in "hash format", see L<verify(1)> for more information. These are
-also used when building the server certificate chain.
+must be in "hash format", see L<openssl-verify(1)> for more information.
+These are also used when building the server certificate chain.
 
 =item B<-chainCApath> I<dir>
 
 The directory to use for building the chain provided to the client. This
-directory must be in "hash format", see L<verify(1)> for more information.
+directory must be in "hash format", see L<openssl-verify(1)> for more
+information.
 
 =item B<-chainCAfile> I<file>
 
@@ -637,7 +638,7 @@ B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
 B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set different peer certificate verification options.
-See the L<verify(1)> manual page for details.
+See the L<openssl-verify(1)> manual page for details.
 
 =item B<-crl_check>, B<-crl_check_all>
 

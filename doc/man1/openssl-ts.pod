@@ -361,7 +361,7 @@ of a timestamp response (TimeStampResp). (Optional)
 =item B<-CApath> I<trusted_cert_path>
 
 The name of the directory containing the trusted CA certificates of the
-client. See the similar option of L<verify(1)> for additional
+client. See the similar option of L<openssl-verify(1)> for additional
 details. Either this option or B<-CAfile> must be specified. (Optional)
 
 
@@ -369,7 +369,7 @@ details. Either this option or B<-CAfile> must be specified. (Optional)
 
 The name of the file containing a set of trusted self-signed CA
 certificates in PEM format. See the similar option of
-L<verify(1)> for additional details. Either this option
+L<openssl-verify(1)> for additional details. Either this option
 or B<-CApath> must be specified.
 (Optional)
 
@@ -417,15 +417,15 @@ section can be overridden with the B<-section> command line switch. (Optional)
 
 =item B<oid_file>
 
-See L<ca(1)> for description. (Optional)
+See L<openssl-ca(1)> for description. (Optional)
 
 =item B<oid_section>
 
-See L<ca(1)> for description. (Optional)
+See L<openssl-ca(1)> for description. (Optional)
 
 =item B<RANDFILE>
 
-See L<ca(1)> for description. (Optional)
+See L<openssl-ca(1)> for description. (Optional)
 
 =item B<serial>
 
@@ -564,10 +564,10 @@ user certificate section of the config file to generate a proper certificate;
 
    extendedKeyUsage = critical,timeStamping
 
-See L<req(1)>, L<ca(1)>, and L<x509(1)> for instructions. The examples
-below assume that F<cacert.pem> contains the certificate of the CA,
-F<tsacert.pem> is the signing certificate issued by F<cacert.pem> and
-F<tsakey.pem> is the private key of the TSA.
+See L<openssl-req(1)>, L<openssl-ca(1)>, and L<openssl-x509(1)> for
+instructions. The examples below assume that F<cacert.pem> contains the
+certificate of the CA, F<tsacert.pem> is the signing certificate issued
+by F<cacert.pem> and F<tsakey.pem> is the private key of the TSA.
 
 To create a timestamp response for a request:
 

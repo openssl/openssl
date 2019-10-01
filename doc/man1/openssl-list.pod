@@ -52,7 +52,7 @@ Display a list of standard commands.
 =item B<-digest-commands>
 
 Display a list of message digest commands, which are typically used
-as input to the L<dgst(1)> or L<speed(1)> commands.
+as input to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 
 =item B<-digest-algorithms>
 
@@ -76,7 +76,7 @@ Display a list of message authentication code algorithms.
 =item B<-cipher-commands>
 
 Display a list of cipher commands, which are typically used as input
-to the L<dgst(1)> or L<speed(1)> commands.
+to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 
 =item B<-cipher-algorithms>
 

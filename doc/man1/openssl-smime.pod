@@ -326,7 +326,7 @@ B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
 B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various options of certificate chain verification. See
-L<verify(1)> manual page for details.
+L<openssl-verify(1)> manual page for details.
 
 =item I<cert.pem> ...
 
