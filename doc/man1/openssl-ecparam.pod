@@ -96,7 +96,7 @@ to get a list of all currently implemented EC parameters.
 If this options is specified B<ecparam> will print out a list of all
 currently implemented EC parameters names and exit.
 
-=item B<-conv_form>
+=item B<-conv_form> I<arg>
 
 This specifies how the points on the elliptic curve are converted
 into octet strings. Possible values are: B<compressed>, B<uncompressed> (the
@@ -139,7 +139,7 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<ecparam>
+Specifying an engine (by its unique I<id> string) will cause B<ecparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

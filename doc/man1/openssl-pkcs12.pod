@@ -79,13 +79,13 @@ default.  They are all written in PEM format.
 =item B<-passin> I<arg>
 
 The PKCS#12 file (i.e. input file) password source. For more information about
-the format of B<arg>
+the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-passout> I<arg>
 
 Pass phrase source to encrypt any outputted private keys with. For more
-information about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section
+information about the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section
 in L<openssl(1)>.
 
 =item B<-password> I<arg>
@@ -207,13 +207,13 @@ displays them.
 =item B<-pass> I<arg>, B<-passout> I<arg>
 
 The PKCS#12 file (i.e. output file) password source. For more information about
-the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
+the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)>.
 
 =item B<-passin> I<password>
 
 Pass phrase source to decrypt any input private keys with. For more information
-about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
+about the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)>.
 
 =item B<-chain>
@@ -312,7 +312,7 @@ Do not load the trusted CA certificates from the default directory location.
 
 =item B<-CSP> I<name>
 
-Write B<name> as a Microsoft CSP name.
+Write I<name> as a Microsoft CSP name.
 
 =back
 

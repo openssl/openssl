@@ -49,7 +49,7 @@ this option prevents output of the PEM data.
 
 =item B<-passin> I<arg>
 
-the key password source. For more information about the format of B<arg>
+the key password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-text>
@@ -59,7 +59,7 @@ B<openssl x509>, B<openssl pkey>, etc.
 
 =item B<-engine> I<id>
 
-specifying an engine (by its unique B<id> string) will cause B<storeutl>
+specifying an engine (by its unique I<id> string) will cause B<storeutl>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
@@ -80,7 +80,7 @@ returned.
 
 =item B<-subject> I<arg>
 
-Search for an object having the subject name B<arg>.
+Search for an object having the subject name I<arg>.
 The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
 Keyword characters may be escaped by \ (backslash), and whitespace is retained.
 Empty values are permitted but are ignored for the search.  That is,

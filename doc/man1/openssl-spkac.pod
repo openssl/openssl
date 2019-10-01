@@ -49,7 +49,7 @@ default.
 
 =item B<-key> I<keyfile>
 
-Create an SPKAC file using the private key in B<keyfile>. The
+Create an SPKAC file using the private key in I<keyfile>. The
 B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
 present.
 
@@ -58,9 +58,9 @@ present.
 Whether the key format is PEM, DER, or an engine-backed key.
 The default is PEM.
 
-=item B<-passin> I<password>
+=item B<-passin> I<arg>
 
-The input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-challenge> I<string>
@@ -94,7 +94,7 @@ Verifies the digital signature on the supplied SPKAC.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<spkac>
+Specifying an engine (by its unique I<id> string) will cause B<spkac>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

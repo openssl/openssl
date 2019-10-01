@@ -52,7 +52,7 @@ B<openssl> B<verify>
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
 [B<-->]
-[certificates]
+[I<certificate> ...]
 
 =for comment ifdef engine sm2-id sm2-hex-id
 
@@ -70,14 +70,14 @@ Print out a usage message.
 
 =item B<-CAfile> I<file>
 
-A B<file> of trusted certificates.
+A I<file> of trusted certificates.
 The file should contain one or more certificates in PEM format.
 
 =item B<-CApath> I<directory>
 
 A directory of trusted certificates. The certificates should have names
-of the form: hash.0 or have symbolic links to them of this
-form ("hash" is the hashed certificate subject name: see the B<-hash> option
+of the form: F<I<hash>.0> or have symbolic links to them of this
+form (I<hash> is the hashed certificate subject name: see the B<-hash> option
 of the B<x509> utility). Under Unix the B<c_rehash> script will automatically
 create symbolic links to a directory of certificates.
 
@@ -95,8 +95,8 @@ Allow the verification of proxy certificates.
 
 =item B<-attime> I<timestamp>
 
-Perform validation checks using time specified by B<timestamp> and not
-current system time. B<timestamp> is the number of seconds since
+Perform validation checks using time specified by I<timestamp> and not
+current system time. I<timestamp> is the number of seconds since
 01.01.1970 (UNIX time).
 
 =item B<-check_ss_sig>
@@ -106,9 +106,9 @@ because it doesn't add any security.
 
 =item B<-CRLfile> I<file>
 
-The B<file> should contain one or more CRLs in PEM format.
+The I<file> should contain one or more CRLs in PEM format.
 This option can be specified more than once to include CRLs from multiple
-B<files>.
+I<file>s.
 
 =item B<-crl_download>
 
@@ -126,7 +126,7 @@ to look up valid CRLs.
 
 =item B<-engine> I<id>
 
-Specifying an engine B<id> will cause L<verify(1)> to attempt to load the
+Specifying an engine I<id> will cause L<verify(1)> to attempt to load the
 specified engine.
 The engine will then be set as the default for all its supported algorithms.
 If you want to load certificates or CRLs that require engine support via any of
@@ -159,7 +159,7 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 =item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
-B<option> argument can be a single option or multiple options separated by
+I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
 
@@ -177,8 +177,8 @@ trusted certificate that might not be self-signed.
 
 =item B<-policy> I<arg>
 
-Enable policy processing and add B<arg> to the user-initial-policy-set (see
-RFC5280). The policy B<arg> can be an object name an OID in numeric form.
+Enable policy processing and add I<arg> to the user-initial-policy-set (see
+RFC5280). The policy I<arg> can be an object name an OID in numeric form.
 This argument can appear more than once.
 
 =item B<-policy_check>
@@ -224,22 +224,22 @@ effect.
 
 =item B<-untrusted> I<file>
 
-A B<file> of additional untrusted certificates (intermediate issuer CAs) used
+A I<file> of additional untrusted certificates (intermediate issuer CAs) used
 to construct a certificate chain from the subject certificate to a trust-anchor.
-The B<file> should contain one or more certificates in PEM format.
+The I<file> should contain one or more certificates in PEM format.
 This option can be specified more than once to include untrusted certificates
-from multiple B<files>.
+from multiple I<file>s.
 
 =item B<-trusted> I<file>
 
-A B<file> of trusted certificates, which must be self-signed, unless the
+A I<file> of trusted certificates, which must be self-signed, unless the
 B<-partial_chain> option is specified.
-The B<file> contains one or more certificates in PEM format.
+The I<file> contains one or more certificates in PEM format.
 With this option, no additional (e.g., default) certificate lists are
 consulted.
-That is, the only trust-anchors are those listed in B<file>.
+That is, the only trust-anchors are those listed in I<file>.
 This option can be specified more than once to include trusted certificates
-from multiple B<files>.
+from multiple I<file>s.
 This option implies the B<-no-CAfile> and B<-no-CApath> options.
 This option cannot be used in combination with either of the B<-CAfile> or
 B<-CApath> options.
@@ -254,11 +254,11 @@ Print extra information about the operations being performed.
 
 =item B<-auth_level> I<level>
 
-Set the certificate chain authentication security level to B<level>.
+Set the certificate chain authentication security level to I<level>.
 The authentication security level determines the acceptable signature and
 public key strength when verifying certificate chains.
 For a certificate chain to validate, the public keys of all the certificates
-must meet the specified security B<level>.
+must meet the specified security I<level>.
 The signature algorithm security level is enforced for all the certificates in
 the chain except for the chain's I<trust anchor>, which is either directly
 trusted or validated by means other than its signature.
@@ -272,30 +272,30 @@ shorter than 1024 bits.
 
 =item B<-verify_depth> I<num>
 
-Limit the certificate chain to B<num> intermediate CA certificates.
-A maximal depth chain can have up to B<num+2> certificates, since neither the
+Limit the certificate chain to I<num> intermediate CA certificates.
+A maximal depth chain can have up to I<num>+2 certificates, since neither the
 end-entity certificate nor the trust-anchor certificate count against the
 B<-verify_depth> limit.
 
 =item B<-verify_email> I<email>
 
-Verify if the B<email> matches the email address in Subject Alternative Name or
+Verify if I<email> matches the email address in Subject Alternative Name or
 the email in the subject Distinguished Name.
 
 =item B<-verify_hostname> I<hostname>
 
-Verify if the B<hostname> matches DNS name in Subject Alternative Name or
+Verify if I<hostname> matches DNS name in Subject Alternative Name or
 Common Name in the subject certificate.
 
 =item B<-verify_ip> I<ip>
 
-Verify if the B<ip> matches the IP address in Subject Alternative Name of
+Verify if I<ip> matches the IP address in Subject Alternative Name of
 the subject certificate.
 
 =item B<-verify_name> I<name>
 
 Use default verification policies like trust model and required certificate
-policies identified by B<name>.
+policies identified by I<name>.
 The trust model determines which auxiliary trust or reject OIDs are applicable
 to verifying the given certificate chain.
 See the B<-addtrust> and B<-addreject> options of the L<x509(1)> command-line
@@ -335,7 +335,7 @@ Indicates the last option. All arguments following this are assumed to be
 certificate files. This is useful if the first certificate filename begins
 with a B<->.
 
-=item B<certificates>
+=item I<certificate> ...
 
 One or more certificates to verify. If no certificates are given, B<verify>
 will attempt to read a certificate from standard input. Certificates must be

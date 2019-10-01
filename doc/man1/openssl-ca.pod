@@ -251,7 +251,7 @@ used).
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<ca>
+Specifying an engine (by its unique I<id> string) will cause B<ca>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -259,7 +259,7 @@ for all available algorithms.
 =item B<-subj> I<arg>
 
 Supersedes subject name given in the request.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
 Keyword characters may be escaped by \ (backslash), and whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
 in the resulting certificate.
@@ -291,7 +291,7 @@ support for multivalued RDNs. Example:
 
 I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
+If B<-multi-rdn> is not used then the UID value is I<123456+CN=John Doe>.
 
 =item B<-rand> I<files>
 
@@ -353,9 +353,9 @@ Updates the database index to purge expired certificates.
 
 =item B<-crl_reason> I<reason>
 
-Revocation reason, where B<reason> is one of: B<unspecified>, B<keyCompromise>,
+Revocation reason, where I<reason> is one of: B<unspecified>, B<keyCompromise>,
 B<CACompromise>, B<affiliationChanged>, B<superseded>, B<cessationOfOperation>,
-B<certificateHold> or B<removeFromCRL>. The matching of B<reason> is case
+B<certificateHold> or B<removeFromCRL>. The matching of I<reason> is case
 insensitive. Setting any revocation reason will make the CRL v2.
 
 In practice B<removeFromCRL> is not particularly useful because it is only used
@@ -364,14 +364,14 @@ in delta CRLs which are not currently implemented.
 =item B<-crl_hold> I<instruction>
 
 This sets the CRL revocation reason code to B<certificateHold> and the hold
-instruction to B<instruction> which must be an OID. Although any OID can be
+instruction to I<instruction> which must be an OID. Although any OID can be
 used only B<holdInstructionNone> (the use of which is discouraged by RFC2459)
 B<holdInstructionCallIssuer> or B<holdInstructionReject> will normally be used.
 
 =item B<-crl_compromise> I<time>
 
 This sets the revocation reason to B<keyCompromise> and the compromise time to
-B<time>. B<time> should be in GeneralizedTime format that is B<YYYYMMDDHHMMSSZ>.
+I<time>. I<time> should be in GeneralizedTime format that is I<YYYYMMDDHHMMSSZ>.
 
 =item B<-crl_CA_compromise> I<time>
 

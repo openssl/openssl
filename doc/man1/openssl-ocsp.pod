@@ -26,7 +26,7 @@ B<openssl> B<ocsp>
 [B<-nonce>]
 [B<-no_nonce>]
 [B<-url> I<URL>]
-[B<-host> I<host:port>]
+[B<-host> I<host>:I<port>]
 [B<-multi> I<process-count>]
 [B<-header>]
 [B<-path>]
@@ -121,27 +121,27 @@ specify output filename, default is standard output.
 =item B<-issuer> I<filename>
 
 This specifies the current issuer certificate. This option can be used
-multiple times. The certificate specified in B<filename> must be in
+multiple times. The certificate specified in I<filename> must be in
 PEM format. This option B<MUST> come before any B<-cert> options.
 
 =item B<-cert> I<filename>
 
-Add the certificate B<filename> to the request. The issuer certificate
-is taken from the previous B<issuer> option, or an error occurs if no
+Add the certificate I<filename> to the request. The issuer certificate
+is taken from the previous B<-issuer> option, or an error occurs if no
 issuer certificate is specified.
 
 =item B<-serial> I<num>
 
-Same as the B<cert> option except the certificate with serial number
+Same as the B<-cert> option except the certificate with serial number
 B<num> is added to the request. The serial number is interpreted as a
 decimal integer unless preceded by B<0x>. Negative integers can also
 be specified by preceding the value by a B<-> sign.
 
 =item B<-signer> I<filename>, B<-signkey> I<filename>
 
-Sign the OCSP request using the certificate specified in the B<signer>
-option and the private key specified by the B<signkey> option. If
-the B<signkey> option is not present then the private key is read
+Sign the OCSP request using the certificate specified in the B<-signer>
+option and the private key specified by the B<-signkey> option. If
+the B<-signkey> option is not present then the private key is read
 from the same file as the certificate. If neither option is specified then
 the OCSP request is not signed.
 
@@ -152,10 +152,10 @@ Additional certificates to include in the signed request.
 =item B<-nonce>, B<-no_nonce>
 
 Add an OCSP nonce extension to a request or disable OCSP nonce addition.
-Normally if an OCSP request is input using the B<reqin> option no
-nonce is added: using the B<nonce> option will force addition of a nonce.
-If an OCSP request is being created (using B<cert> and B<serial> options)
-a nonce is automatically added specifying B<no_nonce> overrides this.
+Normally if an OCSP request is input using the B<-reqin> option no
+nonce is added: using the B<-nonce> option will force addition of a nonce.
+If an OCSP request is being created (using B<-cert> and B<-serial> options)
+a nonce is automatically added specifying B<-no_nonce> overrides this.
 
 =item B<-req_text>, B<-resp_text>, B<-text>
 
@@ -163,28 +163,28 @@ Print out the text form of the OCSP request, response or both respectively.
 
 =item B<-reqout> I<file>, B<-respout> I<file>
 
-Write out the DER encoded certificate request or response to B<file>.
+Write out the DER encoded certificate request or response to I<file>.
 
 =item B<-reqin> I<file>, B<-respin> I<file>
 
-Read OCSP request or response file from B<file>. These option are ignored
+Read OCSP request or response file from I<file>. These option are ignored
 if OCSP request or response creation is implied by other options (for example
-with B<serial>, B<cert> and B<host> options).
+with B<-serial>, B<-cert> and B<-host> options).
 
 =item B<-url> I<responder_url>
 
 Specify the responder URL. Both HTTP and HTTPS (SSL/TLS) URLs can be specified.
 
-=item B<-host> I<hostname:port>, B<-path> I<pathname>
+=item B<-host> I<hostname>:I<port>, B<-path> I<pathname>
 
-If the B<host> option is present then the OCSP request is sent to the host
-B<hostname> on port B<port>. B<path> specifies the HTTP pathname to use
-or "/" by default.  This is equivalent to specifying B<-url> with scheme
+If the B<-host> option is present then the OCSP request is sent to the host
+I<hostname> on port I<port>. The B<-path> option specifies the HTTP path name
+to use or "/" by default.  This is equivalent to specifying B<-url> with scheme
 http:// and the given hostname, port, and pathname.
 
-=item B<-header> I<name=value>
+=item B<-header> I<name>=I<value>
 
-Adds the header B<name> with the specified B<value> to the OCSP request
+Adds the header I<name> with the specified I<value> to the OCSP request
 that is sent to the responder.
 This may be repeated.
 
@@ -303,7 +303,7 @@ seconds, the default value is 5 minutes.
 
 If the B<notAfter> time is omitted from a response then this means that new
 status information is immediately available. In this case the age of the
-B<notBefore> field is checked to see it is not older than B<age> seconds old.
+B<notBefore> field is checked to see it is not older than I<age> seconds old.
 By default this additional check is not performed.
 
 =item B<-rcid> I<digest>
@@ -327,21 +327,22 @@ digest used by subsequent certificate identifiers.
 
 =item B<-index> I<indexfile>
 
-The B<indexfile> parameter is the name of a text index file in B<ca>
+The I<indexfile> parameter is the name of a text index file in B<ca>
 format containing certificate revocation information.
 
-If the B<index> option is specified the B<ocsp> utility is in responder
+If the B<-index> option is specified the B<ocsp> utility is in responder
 mode, otherwise it is in client mode. The request(s) the responder
-processes can be either specified on the command line (using B<issuer>
-and B<serial> options), supplied in a file (using the B<reqin> option)
-or via external OCSP clients (if B<port> or B<url> is specified).
+processes can be either specified on the command line (using B<-issuer>
+and B<-serial> options), supplied in a file (using the B<-reqin> option)
+or via external OCSP clients (if B<-port> or B<-url> is specified).
 
-If the B<index> option is present then the B<CA> and B<rsigner> options
+If the B<-index> option is present then the B<-CA> and B<-rsigner> options
 must also be present.
 
 =item B<-CA> I<file>
 
-CA certificate corresponding to the revocation information in B<indexfile>.
+CA certificate corresponding to the revocation information in the index
+file given with B<-index>.
 
 =item B<-rsigner> I<file>
 
@@ -363,7 +364,7 @@ subject name.
 =item B<-rkey> I<file>
 
 The private key to sign OCSP responses with: if not present the file
-specified in the B<rsigner> option is used.
+specified in the B<-rsigner> option is used.
 
 =item B<-rsigopt> I<nm>:I<v>
 
@@ -383,7 +384,7 @@ running instead of terminating upon receiving a malformed request.
 
 =item B<-nrequest> I<number>
 
-The OCSP server will exit after receiving B<number> requests, default unlimited.
+The OCSP server will exit after receiving I<number> requests, default unlimited.
 
 =item B<-nmin> I<minutes>, B<-ndays> I<days>
 
@@ -403,8 +404,8 @@ the OCSP request checked using the responder certificate's public key.
 
 Then a normal certificate verify is performed on the OCSP responder certificate
 building up a certificate chain in the process. The locations of the trusted
-certificates used to build the chain can be specified by the B<CAfile>
-and B<CApath> options or they will be looked for in the standard OpenSSL
+certificates used to build the chain can be specified by the B<-CAfile>
+and B<-CApath> options or they will be looked for in the standard OpenSSL
 certificates directory.
 
 If the initial verify fails then the OCSP verify process halts with an
@@ -452,7 +453,7 @@ format of revocation is also inefficient for large quantities of revocation
 data.
 
 It is possible to run the B<ocsp> application in responder mode via a CGI
-script using the B<reqin> and B<respout> options.
+script using the B<-reqin> and B<-respout> options.
 
 =head1 EXAMPLES
 

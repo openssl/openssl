@@ -75,7 +75,7 @@ prompted for.
 
 =item B<-passin> I<arg>
 
-The input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-out> I<filename>
@@ -87,7 +87,7 @@ filename.
 
 =item B<-passout> I<arg>
 
-The output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of I<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-iter> I<count>
@@ -121,7 +121,7 @@ This can be used with a subsequent B<-rand> flag.
 
 This option sets the PKCS#5 v2.0 algorithm.
 
-The B<alg> argument is the encryption algorithm to use, valid values include
+The I<alg> argument is the encryption algorithm to use, valid values include
 B<aes128>, B<aes256> and B<des3>. If this option isn't specified then B<aes256>
 is used.
 
@@ -142,7 +142,7 @@ If not specified PKCS#5 v2.0 form is used.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<pkcs8>
+Specifying an engine (by its unique I<id> string) will cause B<pkcs8>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -156,7 +156,7 @@ B<-scrypt_p> and B<-v2> options.
 
 =item B<-scrypt_N> I<N>, B<-scrypt_r> I<r>, B<-scrypt_p> I<p>
 
-Sets the scrypt B<N>, B<r> or B<p> parameters.
+Sets the scrypt I<N>, I<r> or I<p> parameters.
 
 =back
 

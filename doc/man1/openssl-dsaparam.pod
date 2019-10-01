@@ -49,7 +49,7 @@ as the B<-inform> option.
 =item B<-in> I<filename>
 
 This specifies the input filename to read parameters from or standard input if
-this option is not specified. If the B<numbits> parameter is included then
+this option is not specified. If the I<numbits> parameter is included then
 this option will be ignored.
 
 =item B<-out> I<filename>
@@ -90,7 +90,7 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<dsaparam>
+Specifying an engine (by its unique I<id> string) will cause B<dsaparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -99,10 +99,10 @@ for all available algorithms.
 
 Print extra details about the operations being performed.
 
-=item B<numbits>
+=item I<numbits>
 
 This option specifies that a parameter set should be generated of size
-B<numbits>. It must be the last option. If this option is included then
+I<numbits>. It must be the last option. If this option is included then
 the input file (if any) is ignored.
 
 =back

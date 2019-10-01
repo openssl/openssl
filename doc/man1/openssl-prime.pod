@@ -41,16 +41,16 @@ Generate a prime number.
 
 =item B<-bits> I<num>
 
-Generate a prime with B<num> bits.
+Generate a prime with I<num> bits.
 
 =item B<-safe>
 
 When used with B<-generate>, generates a "safe" prime. If the number
-generated is B<n>, then check that B<(n-1)/2> is also prime.
+generated is I<n>, then check that C<(I<n>-1)/2> is also prime.
 
 =item B<-checks> I<num>
 
-Perform the checks B<num> times to see that the generated number
+Perform the checks I<num> times to see that the generated number
 is prime.  The default is 20.
 
 =back

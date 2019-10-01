@@ -15,7 +15,7 @@ B<openssl> B<genpkey>
 [B<-engine> I<id>]
 [B<-paramfile> I<file>]
 [B<-algorithm> I<alg>]
-[B<-pkeyopt> I<opt:value>]
+[B<-pkeyopt> I<opt>:I<value>]
 [B<-genparam>]
 [B<-text>]
 
@@ -44,7 +44,7 @@ This specifies the output format DER or PEM. The default format is PEM.
 
 =item B<-pass> I<arg>
 
-The output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-I<cipher>>
@@ -54,7 +54,7 @@ name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<genpkey>
+Specifying an engine (by its unique I<id> string) will cause B<genpkey>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms. If used this option should precede all other
@@ -79,9 +79,9 @@ will be generated. Use the B<dh_paramgen_type> option to indicate whether PKCS#3
 or X9.42 DH parameters are required. See L<DH Parameter Generation Options>
 below for more details.
 
-=item B<-pkeyopt> I<opt:value>
+=item B<-pkeyopt> I<opt>:I<value>
 
-Set the public key algorithm option B<opt> to B<value>. The precise set of
+Set the public key algorithm option I<opt> to I<value>. The precise set of
 options supported depends on the public key algorithm used and its
 implementation. See L<KEY GENERATION OPTIONS> and
 L<PARAMETER GENERATION OPTIONS> below for more details.
@@ -138,22 +138,23 @@ Note: by default an B<RSA-PSS> key has no parameter restrictions.
 
 =over 4
 
-=item B<rsa_keygen_bits:numbits>, B<rsa_keygen_primes:numprimes>,  B<rsa_keygen_pubexp:value>
+=item B<rsa_keygen_bits>:I<numbits>, B<rsa_keygen_primes>:I<numprimes>,
+B<rsa_keygen_pubexp>:I<value>
 
 These options have the same meaning as the B<RSA> algorithm.
 
-=item B<rsa_pss_keygen_md:digest>
+=item B<rsa_pss_keygen_md>:I<digest>
 
-If set the key is restricted and can only use B<digest> for signing.
+If set the key is restricted and can only use I<digest> for signing.
 
-=item B<rsa_pss_keygen_mgf1_md:digest>
+=item B<rsa_pss_keygen_mgf1_md>:I<digest>
 
-If set the key is restricted and can only use B<digest> as it's MGF1
+If set the key is restricted and can only use I<digest> as it's MGF1
 parameter.
 
-=item B<rsa_pss_keygen_saltlen:len>
+=item B<rsa_pss_keygen_saltlen>:I<len>
 
-If set the key is restricted and B<len> specifies the minimum salt length.
+If set the key is restricted and I<len> specifies the minimum salt length.
 
 =back
 
@@ -163,14 +164,14 @@ The EC key generation options can also be used for parameter generation.
 
 =over 4
 
-=item B<ec_paramgen_curve:curve>
+=item B<ec_paramgen_curve>:I<curve>
 
 The EC curve to use. OpenSSL supports NIST curve names such as "P-256".
 
-=item B<ec_param_enc:encoding>
+=item B<ec_param_enc>:I<encoding>
 
-The encoding to use for parameters. The "encoding" parameter must be either
-"named_curve" or "explicit". The default value is "named_curve".
+The encoding to use for parameters. The I<encoding> parameter must be either
+B<named_curve> or B<explicit>. The default value is B<named_curve>.
 
 =back
 
@@ -184,16 +185,16 @@ below.
 
 =over 4
 
-=item B<dsa_paramgen_bits:numbits>
+=item B<dsa_paramgen_bits>:I<numbits>
 
 The number of bits in the generated prime. If not specified 2048 is used.
 
-=item B<dsa_paramgen_q_bits:numbits>
+=item B<dsa_paramgen_q_bits>:I<numbits>
 
 The number of bits in the q parameter. Must be one of 160, 224 or 256. If not
 specified 224 is used.
 
-=item B<dsa_paramgen_md:digest>
+=item B<dsa_paramgen_md>:I<digest>
 
 The digest to use during parameter generation. Must be one of B<sha1>, B<sha224>
 or B<sha256>. If set, then the number of bits in B<q> will match the output size
@@ -208,30 +209,30 @@ or B<sha256> if it is 256.
 
 =over 4
 
-=item B<dh_paramgen_prime_len:numbits>
+=item B<dh_paramgen_prime_len>:I<numbits>
 
-The number of bits in the prime parameter B<p>. The default is 2048.
+The number of bits in the prime parameter I<p>. The default is 2048.
 
-=item B<dh_paramgen_subprime_len:numbits>
+=item B<dh_paramgen_subprime_len>:I<numbits>
 
-The number of bits in the sub prime parameter B<q>. The default is 256 if the
+The number of bits in the sub prime parameter I<q>. The default is 256 if the
 prime is at least 2048 bits long or 160 otherwise. Only relevant if used in
 conjunction with the B<dh_paramgen_type> option to generate X9.42 DH parameters.
 
-=item B<dh_paramgen_generator:value>
+=item B<dh_paramgen_generator>:I<value>
 
-The value to use for the generator B<g>. The default is 2.
+The value to use for the generator I<g>. The default is 2.
 
-=item B<dh_paramgen_type:value>
+=item B<dh_paramgen_type>:I<value>
 
 The type of DH parameters to generate. Use 0 for PKCS#3 DH and 1 for X9.42 DH.
 The default is 0.
 
-=item B<dh_rfc5114:num>
+=item B<dh_rfc5114>:I<num>
 
 If this option is set, then the appropriate RFC5114 parameters are used
-instead of generating new parameters. The value B<num> can take the
-values 1, 2 or 3 corresponding to RFC5114 DH parameters consisting of
+instead of generating new parameters. The value I<num> can be one of
+1, 2 or 3 corresponding to RFC5114 DH parameters consisting of
 1024 bit group with 160 bit subgroup, 2048 bit group with 224 bit subgroup
 and 2048 bit group with 256 bit subgroup as mentioned in RFC5114 sections
 2.1, 2.2 and 2.3 respectively. If present this overrides all other DH parameter

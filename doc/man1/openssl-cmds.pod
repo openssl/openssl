@@ -57,13 +57,13 @@ x509
 
 =for comment generic
 
-B<openssl> B<cmd> [B<-help>] [B<...>]
+B<openssl> I<cmd> B<-help> | [I<-option> | I<-option> I<arg>] ... [I<arg>] ...
 
 =head1 DESCRIPTION
 
-Every B<cmd> listed above is a (sub-)command of the L<openssl(1)> application.
-It has its own detailed manual page at B<openssl-cmd(1)>. For example, to view
-the manual page for the B<openssl dgst> command, type B<man openssl-dgst>.
+Every I<cmd> listed above is a (sub-)command of the L<openssl(1)> application.
+It has its own detailed manual page at B<openssl-I<cmd>>(1). For example, to
+view the manual page for the B<openssl dgst> command, type C<man openssl-dgst>.
 
 =head1 OPTIONS
 
@@ -132,8 +132,8 @@ L<openssl-x509(1)>,
 
 =head1 HISTORY
 
-Initially, the manual page entry for the B<openssl cmd> command used
-to be available at B<cmd(1)>. Later, the alias B<openssl-cmd(1)> was
+Initially, the manual page entry for the C<openssl I<cmd>> command used
+to be available at I<cmd>(1). Later, the alias B<openssl-I<cmd>>(1) was
 introduced, which made it easier to group the openssl commands using
 the L<apropos(1)> command or the shell's tab completion.
 

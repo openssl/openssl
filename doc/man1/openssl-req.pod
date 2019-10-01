@@ -22,8 +22,7 @@ B<openssl> B<req>
 [B<-new>]
 [B<-rand> I<files>]
 [B<-writerand> I<file>]
-[B<-newkey> I<rsa:bits>]
-[B<-newkey> I<alg:file>]
+[B<-newkey> I<arg>]
 [B<-nodes>]
 [B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>]
@@ -103,7 +102,7 @@ default.
 
 =item B<-passout> I<arg>
 
-The output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of I<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-text>
@@ -157,32 +156,33 @@ This can be used with a subsequent B<-rand> flag.
 =item B<-newkey> I<arg>
 
 This option creates a new certificate request and a new private
-key. The argument takes one of several forms. B<rsa:nbits>, where
-B<nbits> is the number of bits, generates an RSA key B<nbits>
-in size. If B<nbits> is omitted, i.e. B<-newkey> I<rsa> specified,
+key. The argument takes one of several forms.
+
+B<rsa:>I<nbits>, where
+I<nbits> is the number of bits, generates an RSA key I<nbits>
+in size. If I<nbits> is omitted, i.e. B<-newkey> I<rsa> specified,
 the default key size, specified in the configuration file is used.
 
-All other algorithms support the B<-newkey> I<alg:file> form, where file may be
-an algorithm parameter file, created by the B<genpkey -genparam> command
-or and X.509 certificate for a key with appropriate algorithm.
+All other algorithms support the B<-newkey> I<alg>:I<file> form, where file
+may be an algorithm parameter file, created with B<genpkey -genparam>
+or an X.509 certificate for a key with appropriate algorithm.
 
-B<param:file> generates a key using the parameter file or certificate B<file>,
-the algorithm is determined by the parameters. B<algname:file> use algorithm
-B<algname> and parameter file B<file>: the two algorithms must match or an
-error occurs. B<algname> just uses algorithm B<algname>, and parameters,
-if necessary should be specified via B<-pkeyopt> parameter.
+B<param:>I<file> generates a key using the parameter file or certificate
+I<file>, the algorithm is determined by the parameters. I<algname>:I<file>
+use algorithm I<algname> and parameter file I<file>: the two algorithms must
+match or an error occurs. I<algname> just uses algorithm I<algname>, and
+parameters, if necessary should be specified via B<-pkeyopt> parameter.
 
-B<dsa:filename> generates a DSA key using the parameters
-in the file B<filename>. B<ec:filename> generates EC key (usable both with
-ECDSA or ECDH algorithms), B<gost2001:filename> generates GOST R
-34.10-2001 key (requires B<ccgost> engine configured in the configuration
+B<dsa:>I<filename> generates a DSA key using the parameters
+in the file I<filename>. B<ec:>I<filename> generates EC key (usable both with
+ECDSA or ECDH algorithms), B<gost2001:>I<filename> generates GOST R
+34.10-2001 key (requires B<gost> engine configured in the configuration
 file). If just B<gost2001> is specified a parameter set should be
 specified by B<-pkeyopt> I<paramset:X>
 
+=item B<-pkeyopt> I<opt>:I<value>
 
-=item B<-pkeyopt> I<opt:value>
-
-Set the public key algorithm option B<opt> to B<value>. The precise set of
+Set the public key algorithm option I<opt> to I<value>. The precise set of
 options supported depends on the public key algorithm used and its
 implementation. See B<KEY GENERATION OPTIONS> in the B<genpkey> manual page
 for more details.
@@ -249,7 +249,7 @@ This option outputs a self signed certificate instead of a certificate
 request. This is typically used to generate a test certificate or
 a self signed root CA. The extensions added to the certificate
 (if any) are specified in the configuration file. Unless specified
-using the B<set_serial> option, a large random number will be used for
+using the B<-set_serial> option, a large random number will be used for
 the serial number.
 
 If existing request is specified with the B<-in> option, it is converted
@@ -258,7 +258,7 @@ to the self signed certificate otherwise new request is created.
 =item B<-days> I<n>
 
 When the B<-x509> option is being used this specifies the number of
-days to certify the certificate for, otherwise it is ignored. B<n> should
+days to certify the certificate for, otherwise it is ignored. I<n> should
 be a positive integer. The default is 30 days.
 
 =item B<-set_serial> I<n>
@@ -304,13 +304,13 @@ configuration file, must be valid UTF8 strings.
 =item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
-B<option> argument can be a single option or multiple options separated by
+I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
 
-=item B<-reqopt>
+=item B<-reqopt> I<option>
 
-Customise the output format used with B<-text>. The B<option> argument can be
+Customise the output format used with B<-text>. The I<option> argument can be
 a single option or multiple options separated by commas.
 
 See discussion of the  B<-certopt> parameter in the L<x509(1)>
@@ -331,14 +331,14 @@ Print extra details about the operations being performed.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<req>
+Specifying an engine (by its unique I<id> string) will cause B<req>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =item B<-keygen_engine> I<id>
 
-Specifies an engine (by its unique B<id> string) which would be used
+Specifies an engine (by its unique I<id> string) which would be used
 for key generation operations.
 
 =item B<-sm2-id>

@@ -283,7 +283,7 @@ Extra certificate and private key format respectively.
 
 =item B<-pass> I<arg>
 
-the private key password source. For more information about the format of B<arg>
+the private key password source. For more information about the format of I<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-verify> I<depth>
@@ -302,7 +302,7 @@ abort the handshake with a fatal error.
 =item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
-B<option> argument can be a single option or multiple options separated by
+I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
 
@@ -360,7 +360,7 @@ at a positive depth or else "matched EE certificate" at depth 0.
 =item B<-dane_tlsa_rrdata> I<rrdata>
 
 Use one or more times to specify the RRDATA fields of the DANE TLSA
-RRset associated with the target service.  The B<rrdata> value is
+RRset associated with the target service.  The I<rrdata> value is
 specied in "presentation form", that is four whitespace separated
 fields that specify the usage, selector, matching type and associated
 data, with the last of these encoded in hexadecimal.  Optional
@@ -481,19 +481,19 @@ Can be used to override the implicit B<-ign_eof> after B<-quiet>.
 
 =item B<-psk_identity> I<identity>
 
-Use the PSK identity B<identity> when using a PSK cipher suite.
+Use the PSK identity I<identity> when using a PSK cipher suite.
 The default value is "Client_identity" (without the quotes).
 
 =item B<-psk> I<key>
 
-Use the PSK key B<key> when using a PSK cipher suite. The key is
+Use the PSK key I<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 This option must be provided in order to use a PSK cipher.
 
 =item B<-psk_session> I<file>
 
-Use the pem encoded SSL_SESSION data stored in B<file> as the basis of a PSK.
+Use the pem encoded SSL_SESSION data stored in I<file> as the basis of a PSK.
 Note that this will only work if TLSv1.3 is negotiated.
 
 =item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
@@ -622,7 +622,7 @@ colon (":") separated list of TLSv1.3 ciphersuite names.
 =item B<-starttls> I<protocol>
 
 Send the protocol-specific message(s) to switch to TLS for communication.
-B<protocol> is a keyword for the intended protocol.  Currently, the only
+I<protocol> is a keyword for the intended protocol.  Currently, the only
 supported keywords are "smtp", "pop3", "imap", "ftp", "xmpp", "xmpp-server",
 "irc", "postgres", "mysql", "lmtp", "nntp", "sieve" and "ldap".
 
@@ -659,16 +659,16 @@ Disable RFC4507bis session ticket support.
 
 =item B<-sess_out> I<filename>
 
-Output SSL session to B<filename>.
+Output SSL session to I<filename>.
 
-=item B<-sess_in> I<sess.pem>
+=item B<-sess_in> I<filename>
 
-Load SSL session from B<filename>. The client will attempt to resume a
+Load SSL session from I<filename>. The client will attempt to resume a
 connection from this session.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<s_client>
+Specifying an engine (by its unique I<id> string) will cause B<s_client>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -702,7 +702,7 @@ response (if any) is printed out.
 These flags enable the Enable the Application-Layer Protocol Negotiation
 or Next Protocol Negotiation (NPN) extension, respectively. ALPN is the
 IETF standard and replaces NPN.
-The B<protocols> list is a comma-separated list of protocol names that
+The I<protocols> list is a comma-separated list of protocol names that
 the client should advertise support for. The list should contain the most
 desirable protocols first.  Protocol names are printable ASCII strings,
 for example "http/1.1" or "spdy/3".

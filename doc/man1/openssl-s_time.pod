@@ -8,7 +8,7 @@ openssl-s_time - SSL/TLS performance timing program
 
 B<openssl> B<s_time>
 [B<-help>]
-[B<-connect> I<host:port>]
+[B<-connect> I<host>:I<port>]
 [B<-www> I<page>]
 [B<-cert> I<filename>]
 [B<-key> I<filename>]
@@ -48,7 +48,7 @@ transferred (if any), and calculates the average time spent for one connection.
 
 Print out a usage message.
 
-=item B<-connect> I<host:port>
+=item B<-connect> I<host>:I<port>
 
 This specifies the host and optional port to connect to.
 
@@ -80,7 +80,7 @@ will never fail due to a server certificate verify failure.
 =item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
-B<option> argument can be a single option or multiple options separated by
+I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
 

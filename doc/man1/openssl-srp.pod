@@ -32,7 +32,7 @@ At most one of the B<-add>, B<-modify>, B<-delete>, and B<-list> options
 can be specified.
 These options take zero or more usernames as parameters and perform the
 appropriate operation on the SRP file.
-For B<-list>, if no B<user> is given then all users are displayed.
+For B<-list>, if no I<user> is given then all users are displayed.
 
 The configuration file to use, and the section within the file, can be
 specified with the B<-config> and B<-name> flags, respectively.
@@ -42,7 +42,7 @@ just specify the file to operate on.
 The B<-userinfo> option specifies additional information to add when
 adding or modifying a user.
 
-The B<-gn> flag specifies the B<g> and B<N> values, using one of
+The B<-gn> flag specifies the I<g> and I<N> values, using one of
 the strengths defined in IETF RFC 5054.
 
 The B<-passin> and B<-passout> arguments are parsed as described in

@@ -385,7 +385,7 @@ the signers certificates. The certificates should be in PEM format.
 
 =item B<-certsout> I<file>
 
-Any certificates contained in the message are written to B<file>.
+Any certificates contained in the message are written to I<file>.
 
 =item B<-signer> I<file>
 
@@ -446,14 +446,14 @@ content encryption key using an AES key in the B<KEKRecipientInfo> type.
 
 The key identifier for the supplied symmetric key for B<KEKRecipientInfo> type.
 This option B<must> be present if the B<-secretkey> option is used with
-B<-encrypt>. With B<-decrypt> operations the B<id> is used to locate the
+B<-encrypt>. With B<-decrypt> operations the I<id> is used to locate the
 relevant key if it is not supplied then an attempt is used to decrypt any
 B<KEKRecipientInfo> structures.
 
 =item B<-econtent_type> I<type>
 
-Set the encapsulated content type to B<type> if not supplied the B<Data> type
-is used. The B<type> argument can be any valid OID name in either text or
+Set the encapsulated content type to I<type> if not supplied the B<Data> type
+is used. The I<type> argument can be any valid OID name in either text or
 numerical format.
 
 =item B<-inkey> I<file>
@@ -766,7 +766,7 @@ No revocation checking is done on the signer's certificate.
 The use of multiple B<-signer> options and the B<-resign> command were first
 added in OpenSSL 1.0.0.
 
-The B<keyopt> option was added in OpenSSL 1.0.2.
+The B<-keyopt> option was added in OpenSSL 1.0.2.
 
 Support for RSA-OAEP and RSA-PSS was added in OpenSSL 1.0.2.
 

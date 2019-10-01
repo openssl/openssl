@@ -6,7 +6,7 @@ openssl-errstr - lookup error codes
 
 =head1 SYNOPSIS
 
-B<openssl errstr error_code>
+B<openssl errstr> I<error_code>
 
 =head1 DESCRIPTION
 

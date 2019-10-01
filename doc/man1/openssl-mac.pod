@@ -12,7 +12,7 @@ B<openssl mac>
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-binary>]
-B<mac_name>
+I<mac_name>
 
 =head1 DESCRIPTION
 
@@ -51,55 +51,55 @@ Common parameter names used by EVP_MAC_CTX_get_params() are:
 
 =over 4
 
-=item B<key:string>
+=item B<key:>I<string>
 
 Specifies the MAC key as an alphanumeric string (use if the key contains
 printable characters only).
 The string length must conform to any restrictions of the MAC algorithm.
 A key must be specified for every MAC algorithm.
 
-=item B<hexkey:string>
+=item B<hexkey:>I<string>
 
 Specifies the MAC key in hexadecimal form (two hex digits per byte).
 The key length must conform to any restrictions of the MAC algorithm.
 A key must be specified for every MAC algorithm.
 
-=item B<digest:string>
+=item B<digest:>I<string>
 
 Used by HMAC as an alphanumeric string (use if the key contains printable
 characters only).
 The string length must conform to any restrictions of the MAC algorithm.
 To see the list of supported digests, use the command I<list -digest-commands>.
 
-=item B<cipher:string>
+=item B<cipher:>I<string>
 
 Used by CMAC and GMAC to specify the cipher algorithm.
 For CMAC it must be one of AES-128-CBC, AES-192-CBC, AES-256-CBC or
 DES-EDE3-CBC.
 For GMAC it should be a GCM mode cipher e.g. AES-128-GCM.
 
-=item B<iv:string>
+=item B<iv:>I<string>
 
 Used by GMAC to specify an IV as an alphanumeric string (use if the IV contains
 printable characters only).
 
-=item B<hexiv:string>
+=item B<hexiv:>I<string>
 
 Used by GMAC to specify an IV in hexadecimal form (two hex digits per byte).
 
-=item B<outlen:int>
+=item B<outlen:>I<int>
 
 Used by KMAC128 or KMAC256 to specify an output length.
 The default sizes are 32 or 64 bytes respectively.
 
-=item B<custom:string>
+=item B<custom:>I<string>
 
 Used by KMAC128 or KMAC256 to specify a customization string.
 The default is the empty string "".
 
 =back
 
-=item B<mac_name>
+=item I<mac_name>
 
 Specifies the name of a supported MAC algorithm which will be used.
 To see the list of supported MAC's use the command I<list -mac-algorithms>.

@@ -136,7 +136,7 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<x509>
+Specifying an engine (by its unique I<id> string) will cause B<x509>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -170,7 +170,7 @@ See the L<x509v3_config(5)> manual page for the extension names.
 
 =item B<-certopt> I<option>
 
-Customise the output format used with B<-text>. The B<option> argument
+Customise the output format used with B<-text>. The I<option> argument
 can be a single option or multiple options separated by commas. The
 B<-certopt> switch may be also be used more than once to set multiple
 options. See the B<TEXT OPTIONS> section for more information.
@@ -231,7 +231,7 @@ Outputs the issuer name.
 =item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
-B<option> argument can be a single option or multiple options separated by
+I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the B<NAME OPTIONS> section for more information.
 
@@ -257,7 +257,7 @@ Prints out the start and expiry dates of a certificate.
 
 =item B<-checkend> I<arg>
 
-Checks if the certificate expires within the next B<arg> seconds and exits
+Checks if the certificate expires within the next I<arg> seconds and exits
 nonzero if yes it will expire or zero if not.
 
 =item B<-fingerprint>
@@ -372,7 +372,7 @@ Names and values of these options are algorithm-specific.
 
 =item B<-passin> I<arg>
 
-The key password source. For more information about the format of B<arg>
+The key password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-clrext>
@@ -470,7 +470,7 @@ Instead, the B<-subj> and <-force_pubkey> options need to be given.
 
 =item B<-force_pubkey> I<filename>
 
-When a certificate is created set its public key to the key in B<filename>
+When a certificate is created set its public key to the key in I<filename>
 instead of the key contained in the input or given with the B<-signkey> option.
 
 This option is useful for creating self-issued certificates that are not
@@ -499,8 +499,8 @@ or certificate request.
 
 =head2 Name Options
 
-The B<nameopt> command line switch determines how the subject and issuer
-names are displayed. If no B<nameopt> switch is present the default "oneline"
+The B<-nameopt> command line switch determines how the subject and issuer
+names are displayed. If no B<-nameopt> switch is present the default "oneline"
 format is used which is compatible with previous versions of OpenSSL.
 Each option is described in detail below, all options can be preceded by
 a B<-> to turn the option off. Only the first four will normally be used.
