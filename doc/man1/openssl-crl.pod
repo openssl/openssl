@@ -64,7 +64,7 @@ Print out the CRL in text form.
 =item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. See
-the description of B<-nameopt> in L<x509(1)>.
+the description of B<-nameopt> in L<openssl-x509(1)>.
 
 =item B<-noout>
 

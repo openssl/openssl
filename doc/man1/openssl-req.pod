@@ -306,14 +306,14 @@ configuration file, must be valid UTF8 strings.
 Option which determines how the subject or issuer names are displayed. The
 I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<x509(1)> manual page for details.
+set multiple options. See the L<openssl-x509(1)> manual page for details.
 
 =item B<-reqopt> I<option>
 
 Customise the output format used with B<-text>. The I<option> argument can be
 a single option or multiple options separated by commas.
 
-See discussion of the  B<-certopt> parameter in the L<x509(1)>
+See discussion of the  B<-certopt> parameter in the L<openssl-x509(1)>
 command.
 
 =item B<-newhdr>

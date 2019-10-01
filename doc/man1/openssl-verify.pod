@@ -161,7 +161,7 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 Option which determines how the subject or issuer names are displayed. The
 I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<x509(1)> manual page for details.
+set multiple options. See the L<openssl-x509(1)> manual page for details.
 
 =item B<-no_check_time>
 
@@ -709,7 +709,7 @@ IP address mismatch.
 
 DANE TLSA authentication is enabled, but no TLSA records matched the
 certificate chain.
-This error is only possible in L<s_client(1)>.
+This error is only possible in L<openssl-s_client(1)>.
 
 =item B<X509_V_ERR_EE_KEY_TOO_SMALL>
 

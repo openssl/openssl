@@ -76,7 +76,7 @@ option) are DH, DSA and EC.
 Note that the algorithm name X9.42 DH may be used as a synonym for the DH
 algorithm. These are identical and do not indicate the type of parameters that
 will be generated. Use the B<dh_paramgen_type> option to indicate whether PKCS#3
-or X9.42 DH parameters are required. See L<DH Parameter Generation Options>
+or X9.42 DH parameters are required. See L</DH Parameter Generation Options>
 below for more details.
 
 =item B<-pkeyopt> I<opt>:I<value>

@@ -304,13 +304,13 @@ abort the handshake with a fatal error.
 Option which determines how the subject or issuer names are displayed. The
 I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<x509(1)> manual page for details.
+set multiple options. See the L<openssl-x509(1)> manual page for details.
 
 =item B<-CApath> I<directory>
 
 The directory to use for server certificate verification. This directory
-must be in "hash format", see L<verify(1)> for more information. These are
-also used when building the client certificate chain.
+must be in "hash format", see L<openssl-verify(1)> for more information.
+These are also used when building the client certificate chain.
 
 =item B<-CAfile> I<file>
 
@@ -320,7 +320,8 @@ and to use when attempting to build the client certificate chain.
 =item B<-chainCApath> I<directory>
 
 The directory to use for building the chain provided to the server. This
-directory must be in "hash format", see L<verify(1)> for more information.
+directory must be in "hash format", see L<openssl-verify(1)> for more
+information.
 
 =item B<-chainCAfile> I<file>
 
@@ -406,7 +407,7 @@ B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
 B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
-L<verify(1)> manual page for details.
+L<openssl-verify(1)> manual page for details.
 
 =item B<-reconnect>
 
