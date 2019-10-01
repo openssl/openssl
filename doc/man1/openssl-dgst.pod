@@ -6,7 +6,7 @@ openssl-dgst - perform digest operations
 
 =head1 SYNOPSIS
 
-B<openssl dgst>
+B<openssl> B<dgst>|I<digest>
 [B<-I<digest>>]
 [B<-help>]
 [B<-c>]
@@ -28,8 +28,6 @@ B<openssl dgst>
 [B<-engine> I<id>]
 [B<-engine_impl>]
 [I<file> ...]
-
-B<openssl> I<digest> [B<...>]
 
 =head1 DESCRIPTION
 

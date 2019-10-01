@@ -5,7 +5,8 @@ Original text by James Westby, contributed under the OpenSSL license.
 
 =head1 NAME
 
-openssl-c_rehash - Create symbolic links to files named by the hash values
+openssl-rehash, c_rehash - Create symbolic links to files named by the hash
+values
 
 =head1 SYNOPSIS
 
@@ -19,7 +20,12 @@ B<rehash>
 [I<directory>] ...
 
 B<c_rehash>
-I<flags...>
+[B<-h>]
+[B<-help>]
+[B<-old>]
+[B<-n>]
+[B<-v>]
+[I<directory>] ...
 
 =head1 DESCRIPTION
 

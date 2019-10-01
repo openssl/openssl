@@ -665,7 +665,7 @@ The following messages are frequently asked about:
         Using configuration from /some/path/openssl.cnf
         Unable to load config info
 
-This is followed some time later by...
+This is followed some time later by:
 
         unable to find 'distinguished_name' in config
         problems making Certificate Request

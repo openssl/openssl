@@ -333,7 +333,7 @@ certificate. The argument for this option is string of hexadecimal digits.
 
 Indicates the last option. All arguments following this are assumed to be
 certificate files. This is useful if the first certificate filename begins
-with a B<->.
+with a B<-->.
 
 =item I<certificate> ...
 

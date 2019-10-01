@@ -11,7 +11,15 @@ I<command>
 [ I<command_opts> ... ]
 [ I<command_args> ... ]
 
-B<openssl> B<list> [ B<-standard-commands> | B<-digest-commands> | B<-cipher-commands> | B<-cipher-algorithms> | B<-digest-algorithms> | B<-mac-algorithms> | B<-public-key-algorithms>]
+B<openssl>
+B<list>
+B<-standard-commands> |
+B<-digest-commands> |
+B<-cipher-commands> |
+B<-cipher-algorithms> |
+B<-digest-algorithms> |
+B<-mac-algorithms> |
+B<-public-key-algorithms>
 
 B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
 
@@ -36,8 +44,8 @@ It can be used for
 
 =head1 COMMAND SUMMARY
 
-The B<openssl> program provides a rich variety of commands (I<command> in the
-SYNOPSIS above), each of which often has a wealth of options and arguments
+The B<openssl> program provides a rich variety of sub-commands (I<command> in
+the SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
 Detailed documentation and use cases for most standard subcommands are available
@@ -77,7 +85,7 @@ availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
 B<list>, or B<no->I<XXX> itself.)
 
-=head2 Standard Commands
+=head2 Standard Sub-commands
 
 =over 4
 
