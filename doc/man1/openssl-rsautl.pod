@@ -18,7 +18,7 @@ B<openssl> B<rsautl>
 [B<-verify>]
 [B<-encrypt>]
 [B<-decrypt>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-pkcs>]
 [B<-ssl>]
@@ -84,10 +84,9 @@ Encrypt the input data using an RSA public key.
 
 Decrypt the input data using an RSA private key.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

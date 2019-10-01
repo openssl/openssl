@@ -21,7 +21,7 @@ B<openssl> B<gendsa>
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
 [B<-verbose>]
@@ -53,10 +53,9 @@ These options encrypt the private key with specified
 cipher before outputting it. A pass phrase is prompted for.
 If none of these options is specified no encryption is used.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

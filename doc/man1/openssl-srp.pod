@@ -17,7 +17,7 @@ B<openssl srp>
 [B<-config> I<file>]
 [B<-srpvfile> I<file>]
 [B<-gn> I<identifier>]
-[B<-userinfo> I<text...>]
+[B<-userinfo> I<text>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
 [I<user> ...]

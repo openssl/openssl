@@ -33,7 +33,7 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt_passin> I<opt:passarg>]
 [B<-hexdump>]
 [B<-asn1parse>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
 [B<-engine_impl>]
@@ -177,10 +177,9 @@ hex dump the output data.
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verifyrecover> option when an ASN1 structure is signed.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

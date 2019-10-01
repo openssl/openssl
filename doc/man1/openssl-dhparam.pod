@@ -20,7 +20,7 @@ B<openssl dhparam>
 [B<-2>]
 [B<-3>]
 [B<-5>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
 [I<numbits>]
@@ -86,10 +86,9 @@ input file is ignored and parameters are generated instead. If not
 present but B<numbits> is present, parameters are generated with the
 default generator 2.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.

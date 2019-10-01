@@ -17,7 +17,7 @@ B<openssl> B<pkcs8>
 [B<-passout> I<arg>]
 [B<-iter> I<count>]
 [B<-noiter>]
-[B<-rand> I<file...>]
+[B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-nocrypt>]
 [B<-traditional>]
@@ -105,10 +105,9 @@ This option does not encrypt private keys at all and should only be used
 when absolutely necessary. Certain software such as some versions of Java
 code signing software used unencrypted private keys.
 
-=item B<-rand> I<file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
