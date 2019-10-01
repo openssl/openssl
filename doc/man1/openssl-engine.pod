@@ -87,7 +87,7 @@ To list all the commands available to a dynamic engine:
       LOAD: Load up the ENGINE specified by other settings
            (input flags): NO_INPUT
 
-To list the capabilities of the I<rsax> engine:
+To list the capabilities of the B<rsax> engine:
 
  $ openssl engine -c
  (rsax) RSAX engine support
