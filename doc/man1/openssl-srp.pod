@@ -20,7 +20,7 @@ B<openssl srp>
 [B<-userinfo> I<text...>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
-[I<user...>]
+[I<user> ...]
 
 =for comment ifdef engine
 

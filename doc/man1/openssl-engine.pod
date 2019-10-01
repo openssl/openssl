@@ -7,7 +7,6 @@ openssl-engine - load and query engines
 =head1 SYNOPSIS
 
 B<openssl engine>
-[ I<engine...> ]
 [B<-v>]
 [B<-vv>]
 [B<-vvv>]
@@ -18,7 +17,7 @@ B<openssl engine>
 [B<-tt>]
 [B<-pre> I<command>]
 [B<-post> I<command>]
-[ I<engine...> ]
+[I<engine> ...]
 
 =head1 DESCRIPTION
 

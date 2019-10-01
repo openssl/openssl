@@ -68,7 +68,7 @@ B<openssl> B<smime>
 [B<-rand> I<file...>]
 [B<-writerand> I<file>]
 [B<-md> I<digest>]
-[cert.pem]...
+I<cert.pem> ...
 
 =for comment ifdef engine
 
@@ -311,11 +311,6 @@ all others.
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<cert.pem...>
-
-One or more certificates of message recipients: used when encrypting
-a message.
-
 =item B<-to>, B<-from>, B<-subject>
 
 The relevant mail headers. These are included outside the signed
@@ -333,6 +328,11 @@ B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various options of certificate chain verification. See
 L<verify(1)> manual page for details.
+
+=item I<cert.pem> ...
+
+One or more certificates of message recipients, used when encrypting
+a message.
 
 =back
 

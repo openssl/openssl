@@ -16,7 +16,7 @@ B<rehash>
 [B<-old>]
 [B<-n>]
 [B<-v>]
-[I<directory>...]
+[I<directory>] ...
 
 B<c_rehash>
 I<flags...>
