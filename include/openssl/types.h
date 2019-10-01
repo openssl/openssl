@@ -116,6 +116,8 @@ typedef struct evp_keyexch_st EVP_KEYEXCH;
 
 typedef struct evp_signature_st EVP_SIGNATURE;
 
+typedef struct evp_asym_cipher_st EVP_ASYM_CIPHER;
+
 typedef struct evp_Encode_Ctx_st EVP_ENCODE_CTX;
 
 typedef struct hmac_ctx_st HMAC_CTX;

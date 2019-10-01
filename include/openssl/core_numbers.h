@@ -157,8 +157,9 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 # define OSSL_OP_KEYMGMT                            10
 # define OSSL_OP_KEYEXCH                            11
 # define OSSL_OP_SIGNATURE                          12
+# define OSSL_OP_ASYM_CIPHER                        13
 /* Highest known operation number */
-# define OSSL_OP__HIGHEST                           12
+# define OSSL_OP__HIGHEST                           13
 
 /* Digests */
 
@@ -483,6 +484,45 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_set_ctx_md_params,
                     (void *ctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_signature_settable_ctx_md_params,
                     (void *ctx))
+
+
+/* Asymmetric Ciphers */
+
+# define OSSL_FUNC_ASYM_CIPHER_NEWCTX                  1
+# define OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT            2
+# define OSSL_FUNC_ASYM_CIPHER_ENCRYPT                 3
+# define OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT            4
+# define OSSL_FUNC_ASYM_CIPHER_DECRYPT                 5
+# define OSSL_FUNC_ASYM_CIPHER_FREECTX                 6
+# define OSSL_FUNC_ASYM_CIPHER_DUPCTX                  7
+# define OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS          8
+# define OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS     9
+# define OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS         10
+# define OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS    11
+
+OSSL_CORE_MAKE_FUNC(void *, OP_asym_cipher_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_encrypt_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_encrypt, (void *ctx, unsigned char *out,
+                                                  size_t *outlen,
+                                                  size_t outsize,
+                                                  const unsigned char *in,
+                                                  size_t inlen))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_decrypt_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_decrypt, (void *ctx, unsigned char *out,
+                                                  size_t *outlen,
+                                                  size_t outsize,
+                                                  const unsigned char *in,
+                                                  size_t inlen))
+OSSL_CORE_MAKE_FUNC(void, OP_asym_cipher_freectx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_asym_cipher_dupctx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_get_ctx_params,
+                    (void *ctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_asym_cipher_gettable_ctx_params,
+                    (void))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_set_ctx_params,
+                    (void *ctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_asym_cipher_settable_ctx_params,
+                    (void))
 
 # ifdef __cplusplus
 }

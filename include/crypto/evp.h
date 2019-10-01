@@ -42,6 +42,11 @@ struct evp_pkey_ctx_st {
             EVP_SIGNATURE *signature;
             void *sigprovctx;
         } sig;
+
+        struct {
+            EVP_ASYM_CIPHER *cipher;
+            void *ciphprovctx;
+        } ciph;
     } op;
 
     /* Legacy fields below */
@@ -571,6 +576,10 @@ struct evp_pkey_st {
 
 #define EVP_PKEY_CTX_IS_DERIVE_OP(ctx) \
     ((ctx)->operation == EVP_PKEY_OP_DERIVE)
+
+#define EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_ENCRYPT \
+     || (ctx)->operation == EVP_PKEY_OP_DECRYPT)
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);

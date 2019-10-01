@@ -67,6 +67,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_ITERATION_COUNT                   123
 # define PROV_R_INVALID_IVLEN                             116
 # define PROV_R_INVALID_IV_LENGTH                         109
+# define PROV_R_INVALID_KEY                               158
 # define PROV_R_INVALID_KEYLEN                            117
 # define PROV_R_INVALID_KEY_LEN                           124
 # define PROV_R_INVALID_KEY_LENGTH                        105
