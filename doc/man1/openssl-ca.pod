@@ -260,7 +260,8 @@ for all available algorithms.
 
 Supersedes subject name given in the request.
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Keyword characters may be escaped by C<\> (backslash), and whitespace is
+retained.
 Empty values are permitted, but the corresponding type will not be included
 in the resulting certificate.
 
@@ -289,9 +290,9 @@ This overrides any option or configuration to use a serial number file.
 This option causes the -subj argument to be interpreted with full
 support for multivalued RDNs. Example:
 
-I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
+C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-If B<-multi-rdn> is not used then the UID value is I<123456+CN=John Doe>.
+If B<-multi-rdn> is not used then the UID value is C<123456+CN=John Doe>.
 
 =item B<-rand> I<files>
 

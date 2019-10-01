@@ -128,7 +128,7 @@ The number of primes in the generated key. If not specified 2 is used.
 =item B<rsa_keygen_pubexp:value>
 
 The RSA public exponent value. This can be a large decimal or
-hexadecimal value if preceded by B<0x>. Default value is 65537.
+hexadecimal value if preceded by C<0x>. Default value is 65537.
 
 =back
 
