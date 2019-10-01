@@ -147,7 +147,6 @@ static int get_classical_nid(int hybrid_id)
     case NID_p384_dilithium4:
     case NID_p384_qteslapiii:
       return NID_secp384r1;
-
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_END
     default:
       return 0;

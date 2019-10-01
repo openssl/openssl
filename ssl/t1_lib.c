@@ -172,13 +172,8 @@ static const TLS_GROUP_INFO nid_list[] = {
     {EVP_PKEY_X448, 224, TLS_CURVE_CUSTOM}, /* X448 (30) */
 };
 
-/* FIXMEOQS: the design of oqs_nid_list and oqs_hybrid_nid_list, below, is
-             very fragile; a missing value will offset the alg selection.
-             TODO: revise when integrating round2 schemes. */
-
-    /* OQS groups. The values are arbitraty, since the TLS spec does not specify values
-       for non finite field and elliptic curve "groups". Security level is classical.
-     */
+/* OQS groups. The values are arbitraty, since the TLS spec does not specify values for non finite field and elliptic curve "groups". Security level is classical.
+ */
 static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_KEM_DEFAULT, 128, TLS_CURVE_CUSTOM}, /* OQS KEM default (0x01FF) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_START
@@ -361,12 +356,21 @@ static const uint16_t suiteb_curves[] = {
 
 const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 {
+    size_t i;
     /* check if it is an OQS group */
     if (IS_OQS_KEM_CURVEID(group_id)) {
-      return &oqs_nid_list[group_id - 0x01FF /* first oqs value */];
+        for (i = 0; i < OSSL_NELEM(oqs_nid_list); i++) {
+            if (oqs_nid_list[i].nid == group_id) {
+                return &oqs_nid_list[i];
+            }
+        }
     }
     if (IS_OQS_KEM_HYBRID_CURVEID(group_id)) {
-      return &oqs_hybrid_nid_list[group_id - 0x02FF /* first oqs hybrid value */ ];
+        for (i = 0; i < OSSL_NELEM(oqs_nid_list); i++) {
+            if (oqs_hybrid_nid_list[i].nid == group_id) {
+                return &oqs_hybrid_nid_list[i];
+            }
+        }
     }
 
     /* ECC curves from RFC 4492 and RFC 7027 */
