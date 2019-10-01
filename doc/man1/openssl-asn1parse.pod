@@ -105,8 +105,9 @@ END marker in a PEM file.
 
 =item B<-item> I<name>
 
-Attempt to decode and print the data as B<ASN1_ITEM> I<name>. This can be used
-to print out the fields of any supported ASN.1 structure if the type is known.
+Attempt to decode and print the data as an B<ASN1_ITEM> I<name>. This can be
+used to print out the fields of any supported ASN.1 structure if the type is
+known.
 
 =back
 
@@ -160,6 +161,9 @@ by white space. The final column is the rest of the line and is the
 "long name". Example:
 
 C<1.2.3.4       shortName       A long name>
+
+For any OID with an associated short and long name, this command will display
+the long name.
 
 =head1 EXAMPLES
 
