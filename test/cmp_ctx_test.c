@@ -29,8 +29,9 @@ static OSSL_CMP_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
     OSSL_CMP_CTX_TEST_FIXTURE *fixture;
 
-    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture)))
-            || !TEST_ptr(fixture->ctx = OSSL_CMP_CTX_new())) {
+    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
+        return NULL;
+    if (!TEST_ptr(fixture->ctx = OSSL_CMP_CTX_new())) {
         tear_down(fixture);
         return NULL;
     }

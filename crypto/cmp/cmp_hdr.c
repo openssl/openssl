@@ -127,9 +127,9 @@ int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr)
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if (hdr->messageTime == NULL)
-        if ((hdr->messageTime = ASN1_GENERALIZEDTIME_new()) == NULL)
-            return 0;
+    if (hdr->messageTime == NULL
+            && (hdr->messageTime = ASN1_GENERALIZEDTIME_new()) == NULL)
+        return 0;
     return ASN1_GENERALIZEDTIME_set(hdr->messageTime, time(NULL)) != NULL;
 }
 
@@ -167,33 +167,28 @@ int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
 }
 
 /*
- * CMP_PKIFREETEXT_push_str() pushes the given text string (unless it is NULL)
- * to the given PKIFREETEXT ft or to a newly allocated freeText if ft is NULL.
- * It returns the new/updated freeText. On error it frees ft and returns NULL.
+ * CMP_PKIFREETEXT_push_str() pushes the given text string to the given
+ * PKIFREETEXT ft. It returns 1 on success, 0 on error.
  */
-OSSL_CMP_PKIFREETEXT *ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft,
-                                                    const char *text)
+int ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft, const char *text)
 {
     ASN1_UTF8STRING *utf8string = NULL;
 
-    if (text == NULL) {
+    if (ft == NULL || text == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return ft;
+        return 0;
     }
-    if (ft == NULL && (ft = sk_ASN1_UTF8STRING_new_null()) == NULL)
-        goto err;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
-        goto err;
+        return 0;
     if (!ASN1_STRING_set(utf8string, text, (int)strlen(text)))
         goto err;
     if (!sk_ASN1_UTF8STRING_push(ft, utf8string))
         goto err;
-    return ft;
+    return 1;
 
  err:
-    sk_ASN1_UTF8STRING_pop_free(ft, ASN1_UTF8STRING_free);
     ASN1_UTF8STRING_free(utf8string);
-    return NULL;
+    return 0;
 }
 
 int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
@@ -202,9 +197,9 @@ int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if (hdr->freeText == NULL)
-        if ((hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL)
-            return 0;
+    if (hdr->freeText == NULL
+            && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL)
+        return 0;
 
     return sk_ASN1_UTF8STRING_push(hdr->freeText, text);
 }
@@ -215,10 +210,12 @@ int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
+    if (hdr->freeText == NULL
+            && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL) {
+        return 0;
+    }
 
-    hdr->freeText = ossl_cmp_pkifreetext_push_str(hdr->freeText,
-                                                  (char *)text->data);
-    return hdr->freeText != NULL;
+    return ossl_cmp_pkifreetext_push_str(hdr->freeText, (char *)text->data);
 }
 
 int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,
@@ -243,6 +240,9 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
     }
     for (i = 0; i < sk_OSSL_CMP_ITAV_num(itavs); i++) {
         itav = OSSL_CMP_ITAV_dup(sk_OSSL_CMP_ITAV_value(itavs, i));
+        if (itav == NULL) {
+            return 0;
+        }
         if (!ossl_cmp_hdr_generalInfo_push0_item(hdr, itav)) {
             OSSL_CMP_ITAV_free(itav);
             return 0;
@@ -346,9 +346,10 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
     if (!ossl_cmp_hdr_update_messageTime(hdr))
         return 0;
 
-    if (ctx->recipNonce != NULL)
-        if (!ossl_cmp_asn1_octet_string_set1(&hdr->recipNonce, ctx->recipNonce))
-            return 0;
+    if (ctx->recipNonce != NULL
+            && !ossl_cmp_asn1_octet_string_set1(&hdr->recipNonce,
+                                                ctx->recipNonce))
+        return 0;
 
     /*
      * set ctx->transactionID in CMP header

@@ -22,21 +22,10 @@ typedef struct test_fixture {
 static CMP_STATUS_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
     CMP_STATUS_TEST_FIXTURE *fixture;
-    int setup_ok = 0;
 
-    /* Allocate memory owned by the fixture, exit on error */
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
-        goto err;
+        return NULL;
     fixture->test_case_name = test_case_name;
-    setup_ok = 1;
-
- err:
-    if (!setup_ok) {
-#ifndef OPENSSL_NO_STDIO
-        ERR_print_errors_fp(stderr);
-#endif
-        exit(EXIT_FAILURE);
-    }
     return fixture;
 }
 
@@ -76,7 +65,7 @@ static int execute_PKISI_test(CMP_STATUS_TEST_FIXTURE *fixture)
                      ossl_cmp_pkisi_get_pkifailureinfo(si)))
         goto end;
     for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++)
-        if (!TEST_int_eq(fixture->pkifailure >> i & 1,
+        if (!TEST_int_eq((fixture->pkifailure >> i) & 1,
                          ossl_cmp_pkisi_pkifailureinfo_check(si, i)))
             goto end;
 

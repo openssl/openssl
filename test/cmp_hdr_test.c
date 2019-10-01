@@ -21,31 +21,6 @@ typedef struct test_fixture {
 
 } CMP_HDR_TEST_FIXTURE;
 
-static CMP_HDR_TEST_FIXTURE *set_up(const char *const test_case_name)
-{
-    CMP_HDR_TEST_FIXTURE *fixture;
-    int setup_ok = 0;
-
-    /* Allocate memory owned by the fixture, exit on error */
-    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
-        goto err;
-    fixture->test_case_name = test_case_name;
-    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new()))
-        goto err;
-    if (!TEST_ptr(fixture->hdr = OSSL_CMP_PKIHEADER_new()))
-        goto err;
-    setup_ok = 1;
-
- err:
-    if (!setup_ok) {
-#ifndef OPENSSL_NO_STDIO
-        ERR_print_errors_fp(stderr);
-#endif
-        exit(EXIT_FAILURE);
-    }
-    return fixture;
-}
-
 static void tear_down(CMP_HDR_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_PKIHEADER_free(fixture->hdr);
@@ -53,6 +28,23 @@ static void tear_down(CMP_HDR_TEST_FIXTURE *fixture)
     OPENSSL_free(fixture);
 }
 
+static CMP_HDR_TEST_FIXTURE *set_up(const char *const test_case_name)
+{
+    CMP_HDR_TEST_FIXTURE *fixture;
+
+    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
+        return NULL;
+    fixture->test_case_name = test_case_name;
+    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new()))
+        goto err;
+    if (!TEST_ptr(fixture->hdr = OSSL_CMP_PKIHEADER_new()))
+        goto err;
+    return fixture;
+
+ err:
+    tear_down(fixture);
+    return NULL;
+}
 
 static int execute_HDR_set_get_pvno_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
@@ -166,25 +158,22 @@ static int test_HDR_set1_recipient(void)
 
 static int execute_HDR_update_messageTime_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
-    struct tm tm;
-    time_t t1, t2, now;
-    double diffSecs;
+    struct tm hdrtm;
+    time_t hdrtime, before, after, now;
 
-    if (!TEST_int_eq(ossl_cmp_hdr_update_messageTime(fixture->hdr), 1)) {
-        return 0;
-    };
-    if (!TEST_int_eq(ASN1_TIME_to_tm(fixture->hdr->messageTime, &tm), 1)) {
-        return 0;
-    };
-    t1 = mktime(&tm);
     now = time(NULL);
-    t2 = mktime(gmtime(&now));
-    diffSecs = difftime(t1, t2);
-    if (!TEST_true(diffSecs > -2.0 && diffSecs < +2.0)) {
+    before = mktime(gmtime(&now));
+    if (!TEST_true(ossl_cmp_hdr_update_messageTime(fixture->hdr)))
         return 0;
-    }
+    if (!TEST_true(ASN1_TIME_to_tm(fixture->hdr->messageTime, &hdrtm)))
+        return 0;
 
-    return 1;
+    hdrtime = mktime(&hdrtm);
+    if (!TEST_true(before <= hdrtime))
+        return 0;
+    now = time(NULL);
+    after = mktime(gmtime(&now));
+    return TEST_true(hdrtime <= after);
 }
 
 static int test_HDR_update_messageTime(void)
@@ -446,6 +435,7 @@ void cleanup_tests(void)
 
 int setup_tests(void)
 {
+    RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH);
     /* Message header tests */
     ADD_TEST(test_HDR_set_get_pvno);
     ADD_TEST(test_HDR_get0_senderNonce);

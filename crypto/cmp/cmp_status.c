@@ -185,54 +185,71 @@ int ossl_cmp_pkisi_pkifailureinfo_check(OSSL_CMP_PKISI *si, int bit_index)
  * place human-readable error string created from PKIStatusInfo in given buffer
  * returns pointer to the same buffer containing the string, or NULL on error
  */
-char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf, int bufsize)
+char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
+                                     size_t bufsize)
 {
     int status, failure, fail_info;
     const char *status_string, *failure_string;
     OSSL_CMP_PKIFREETEXT *status_strings;
     ASN1_UTF8STRING *text;
     int i;
-    int n = 0;
+    int printed_chars;
+    int failinfo_found = 0;
+    int n_status_strings;
+    char* buf_start = buf;
+    #define ADVANCE_BUFFER \
+    if (printed_chars < 0 || (size_t)printed_chars >= bufsize) \
+        return NULL; \
+    buf += printed_chars; \
+    bufsize -= printed_chars;
 
-    if (ctx == NULL || buf == NULL || bufsize <= 0
+    if (ctx == NULL
+            || buf == NULL
             || (status = OSSL_CMP_CTX_get_status(ctx)) < 0
             || (status_string = ossl_cmp_PKIStatus_to_string(status)) == NULL)
         return NULL;
-    BIO_snprintf(buf, bufsize, "%s", status_string);
+    printed_chars = BIO_snprintf(buf, bufsize, "%s", status_string);
+    ADVANCE_BUFFER;
 
     /* failInfo is optional and may be empty */
     if ((fail_info = OSSL_CMP_CTX_get_failInfoCode(ctx)) > 0) {
-        BIO_snprintf(buf + strlen(buf), bufsize - strlen(buf),
-                     "; PKIFailureInfo: ");
+        printed_chars = BIO_snprintf(buf, bufsize, "; PKIFailureInfo: ");
+        ADVANCE_BUFFER;
         for (failure = 0; failure <= OSSL_CMP_PKIFAILUREINFO_MAX; failure++) {
             if ((fail_info & (1 << failure)) != 0) {
                 failure_string = CMP_PKIFAILUREINFO_to_string(failure);
                 if (failure_string != NULL) {
-                    BIO_snprintf(buf + strlen(buf), bufsize - strlen(buf),
-                                 "%s%s", n > 0 ? ", " : "", failure_string);
-                    n += (int)strlen(failure_string);
+                    printed_chars = BIO_snprintf(buf, bufsize, "%s%s",
+                                                 failure > 0 ? ", " : "",
+                                                 failure_string);
+                    ADVANCE_BUFFER;
+                    failinfo_found = 1;
                 }
             }
         }
     }
-    if (n == 0 && status != OSSL_CMP_PKISTATUS_accepted
-            && status != OSSL_CMP_PKISTATUS_grantedWithMods)
-        BIO_snprintf(buf + strlen(buf), bufsize - strlen(buf),
-                     "; <no failure info>");
+    if (!failinfo_found && status != OSSL_CMP_PKISTATUS_accepted
+            && status != OSSL_CMP_PKISTATUS_grantedWithMods) {
+        printed_chars = BIO_snprintf(buf, bufsize, "; <no failure info>");
+        ADVANCE_BUFFER;
+    }
 
     /* statusString sequence is optional and may be empty */
     status_strings = OSSL_CMP_CTX_get0_statusString(ctx);
-    n = sk_ASN1_UTF8STRING_num(status_strings);
-    if (n > 0) {
-        BIO_snprintf(buf + strlen(buf), bufsize - strlen(buf),
-                     "; StatusString%s: ", n > 1 ? "s" : "");
-        for (i = 0; i < n; i++) {
+    n_status_strings = sk_ASN1_UTF8STRING_num(status_strings);
+    if (n_status_strings > 0) {
+        printed_chars = BIO_snprintf(buf, bufsize, "; StatusString%s: ",
+                                     n_status_strings > 1 ? "s" : "");
+        ADVANCE_BUFFER;
+        for (i = 0; i < n_status_strings; i++) {
             text = sk_ASN1_UTF8STRING_value(status_strings, i);
-            BIO_snprintf(buf + strlen(buf), bufsize - strlen(buf), "\"%s\"%s",
-                         ASN1_STRING_get0_data(text), i < n - 1 ? ", " : "");
+            printed_chars = BIO_snprintf(buf, bufsize, "\"%s\"%s",
+                                         ASN1_STRING_get0_data(text),
+                                         i < n_status_strings - 1 ? ", " : "");
+            ADVANCE_BUFFER;
         }
     }
-    return buf;
+    return buf_start;
 }
 
 /*

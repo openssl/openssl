@@ -739,8 +739,7 @@ int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
 int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
                                 const ASN1_OCTET_STRING *senderKID);
-OSSL_CMP_PKIFREETEXT *ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft,
-                                                    const char *text);
+int ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft, const char *text);
 int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
 int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
 int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,
@@ -749,8 +748,8 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
                                          STACK_OF(OSSL_CMP_ITAV) *itavs);
 int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_hdr_check_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
-#  define OSSL_CMP_TRANSACTIONID_LENGTH 16
-#  define OSSL_CMP_SENDERNONCE_LENGTH 16
+# define OSSL_CMP_TRANSACTIONID_LENGTH 16
+# define OSSL_CMP_SENDERNONCE_LENGTH 16
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 
 #endif /* !defined OSSL_CRYPTO_CMP_LOCAL_H */
