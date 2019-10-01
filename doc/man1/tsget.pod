@@ -7,19 +7,19 @@ tsget - Time Stamping HTTP/HTTPS client
 =head1 SYNOPSIS
 
 B<tsget>
-B<-h> server_url
-[B<-e> extension]
-[B<-o> output]
+B<-h> I<server_url>
+[B<-e> I<extension>]
+[B<-o> I<output>]
 [B<-v>]
 [B<-d>]
-[B<-k> private_key.pem]
-[B<-p> key_password]
-[B<-c> client_cert.pem]
-[B<-C> CA_certs.pem]
-[B<-P> CA_path]
-[B<-r> file:file...]
-[B<-g> EGD_socket]
-[B<request...>
+[B<-k> I<private_key.pem>]
+[B<-p> I<key_password>]
+[B<-c> I<client_cert.pem>]
+[B<-C> I<CA_certs.pem>]
+[B<-P> I<CA_path>]
+[B<-r> I<files>]
+[B<-g> I<EGD_socket>]
+[I<request> ...]
 
 =head1 DESCRIPTION
 
@@ -49,17 +49,17 @@ written to a file without any interpretation.
 
 =over 4
 
-=item B<-h> server_url
+=item B<-h> I<server_url>
 
 The URL of the HTTP/HTTPS server listening for timestamp requests.
 
-=item B<-e> extension
+=item B<-e> I<extension>
 
 If the B<-o> option is not given this argument specifies the extension of the
 output files. The base name of the output file will be the same as those of
-the input files. Default extension is '.tsr'. (Optional)
+the input files. Default extension is F<.tsr>. (Optional)
 
-=item B<-o> output
+=item B<-o> I<output>
 
 This option can be specified only when just one request is sent to the
 server. The timestamp response will be written to the given output file. '-'
@@ -74,56 +74,59 @@ error. (Optional)
 
 =item B<-d>
 
-Switches on verbose mode for the underlying B<curl> library. You can see
-detailed debug messages for the connection. (Optional)
+=for comment perlpodstyle(1) says to refer to modules without section
 
-=item B<-k> private_key.pem
+Switches on verbose mode for the underlying perl module L<WWW::Curl::Easy>.
+You can see detailed debug messages for the connection. (Optional)
+
+=item B<-k> I<private_key.pem>
 
 (HTTPS) In case of certificate-based client authentication over HTTPS
-<private_key.pem> must contain the private key of the user. The private key
+I<private_key.pem> must contain the private key of the user. The private key
 file can optionally be protected by a passphrase. The B<-c> option must also
 be specified. (Optional)
 
-=item B<-p> key_password
+=item B<-p> I<key_password>
 
 (HTTPS) Specifies the passphrase for the private key specified by the B<-k>
 argument. If this option is omitted and the key is passphrase protected,
 it will be prompted for. (Optional)
 
-=item B<-c> client_cert.pem
+=item B<-c> I<client_cert.pem>
 
 (HTTPS) In case of certificate-based client authentication over HTTPS
-<client_cert.pem> must contain the X.509 certificate of the user.  The B<-k>
+I<client_cert.pem> must contain the X.509 certificate of the user.  The B<-k>
 option must also be specified. If this option is not specified no
 certificate-based client authentication will take place. (Optional)
 
-=item B<-C> CA_certs.pem
+=item B<-C> I<CA_certs.pem>
 
 (HTTPS) The trusted CA certificate store. The certificate chain of the peer's
 certificate must include one of the CA certificates specified in this file.
 Either option B<-C> or option B<-P> must be given in case of HTTPS. (Optional)
 
-=item B<-P> CA_path
+=item B<-P> I<CA_path>
 
 (HTTPS) The path containing the trusted CA certificates to verify the peer's
 certificate. The directory must be prepared with L<openssl-rehash(1)>. Either
 option B<-C> or option B<-P> must be given in case of HTTPS. (Optional)
 
-=item B<-rand> file:file...
+=item B<-r> I<files>
 
 The files containing random data for seeding the random number
 generator. Multiple files can be specified, the separator is B<;> for
 MS-Windows, B<,> for VMS and B<:> for all other platforms. (Optional)
 
-=item B<-g> EGD_socket
+=item B<-g> I<EGD_socket>
 
 The name of an EGD socket to get random data from. (Optional)
 
-=item B<request...>
+=item I<request> ...
 
 List of files containing B<RFC 3161> DER-encoded timestamp requests. If no
-requests are specified only one request will be sent to the server and it will be
-read from the standard input. (Optional)
+requests are specified only one request will be sent to the server and it will
+be read from the standard input.
+(Optional)
 
 =back
 
@@ -182,12 +185,12 @@ example:
 
 =head1 SEE ALSO
 
-=for comment foreign manuals: curl(1)
+=for comment foreign manuals: WWW::Curl::Easy
 
 L<openssl(1)>,
 L<openssl-ts(1)>,
-L<openssl-curl(1)>,
-B<RFC 3161>
+L<WWW::Curl::Easy>,
+L<RFC 3161|https://www.rfc-editor.org/rfc/rfc3161.html>
 
 =head1 COPYRIGHT
 
