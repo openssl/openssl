@@ -143,6 +143,25 @@ struct evp_signature_st {
     OSSL_OP_signature_settable_ctx_md_params_fn *settable_ctx_md_params;
 } /* EVP_SIGNATURE */;
 
+struct evp_asym_cipher_st {
+    int name_id;
+    OSSL_PROVIDER *prov;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+
+    OSSL_OP_asym_cipher_newctx_fn *newctx;
+    OSSL_OP_asym_cipher_encrypt_init_fn *encrypt_init;
+    OSSL_OP_asym_cipher_encrypt_fn *encrypt;
+    OSSL_OP_asym_cipher_decrypt_init_fn *decrypt_init;
+    OSSL_OP_asym_cipher_decrypt_fn *decrypt;
+    OSSL_OP_asym_cipher_freectx_fn *freectx;
+    OSSL_OP_asym_cipher_dupctx_fn *dupctx;
+    OSSL_OP_asym_cipher_get_ctx_params_fn *get_ctx_params;
+    OSSL_OP_asym_cipher_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_OP_asym_cipher_set_ctx_params_fn *set_ctx_params;
+    OSSL_OP_asym_cipher_settable_ctx_params_fn *settable_ctx_params;
+} /* EVP_ASYM_CIPHER */;
+
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
                              const EVP_CIPHER *c, const EVP_MD *md,

@@ -4862,3 +4862,11 @@ EVP_PKEY_key_fromdata_init              ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_fromdata                       ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_param_fromdata_settable        ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_key_fromdata_settable          ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_free                    ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_up_ref                  ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_provider                ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_fetch                   ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_is_a                    ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_number                  ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_do_all_provided         ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_names_do_all            ?	3_0_0	EXIST::FUNCTION:

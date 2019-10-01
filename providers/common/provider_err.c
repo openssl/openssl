@@ -42,6 +42,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "invalid iteration count"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_IVLEN), "invalid ivlen"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_IV_LENGTH), "invalid iv length"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_KEY), "invalid key"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_KEYLEN), "invalid keylen"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_KEY_LEN), "invalid key len"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_KEY_LENGTH),

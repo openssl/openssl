@@ -1531,6 +1531,21 @@ void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
                                 void (*fn)(const char *name, void *data),
                                 void *data);
 
+void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher);
+int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher);
+OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher);
+EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                                       const char *properties);
+int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name);
+int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher);
+void EVP_ASYM_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+                                     void (*fn)(EVP_ASYM_CIPHER *cipher,
+                                                void *arg),
+                                     void *arg);
+void EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,
+                                  void (*fn)(const char *name, void *data),
+                                  void *data);
+
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
                   unsigned char *sig, size_t *siglen,

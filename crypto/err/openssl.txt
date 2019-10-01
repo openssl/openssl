@@ -2692,6 +2692,7 @@ PROV_R_INVALID_DIGEST:122:invalid digest
 PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IVLEN:116:invalid ivlen
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
+PROV_R_INVALID_KEY:158:invalid key
 PROV_R_INVALID_KEYLEN:117:invalid keylen
 PROV_R_INVALID_KEY_LEN:124:invalid key len
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
