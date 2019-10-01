@@ -42,8 +42,8 @@ B<openssl> B<pkeyutl>
 
 =head1 DESCRIPTION
 
-The B<pkeyutl> command can be used to perform low level public key operations
-using any supported algorithm.
+This command can be used to perform low level public key
+operations using any supported algorithm.
 
 =head1 OPTIONS
 
@@ -73,7 +73,7 @@ signature algorithm does not require one (for instance, EdDSA). If this option
 is omitted but the signature algorithm requires one, a default value will be
 used. For signature algorithms like RSA, DSA and ECDSA, SHA-256 will be the
 default digest algorithm. For SM2, it will be SM3. If this option is present,
-then the B<-rawin> option must be also specified to B<pkeyutl>.
+then the B<-rawin> option must be also specified.
 
 =item B<-out> I<filename>
 
@@ -191,7 +191,7 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<pkeyutl>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -213,10 +213,10 @@ which specifies the digest in use for sign, verify and verifyrecover operations.
 The value I<alg> should represent a digest name as used in the
 EVP_get_digestbyname() function for example B<sha1>. This value is not used to
 hash the input data. It is used (by some algorithms) for sanity-checking the
-lengths of data passed in to the B<pkeyutl> and for creating the structures that
-make up the signature (e.g. B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
+lengths of data passed in and for creating the structures that make up the
+signature (e.g. B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
 
-This utility does not hash the input data (except where -rawin is used) but
+This command does not hash the input data (except where -rawin is used) but
 rather it will use the data directly as input to the signature algorithm.
 Depending on the key type, signature type, and mode of padding, the maximum
 acceptable lengths of input data differ. The signed data can't be longer than

@@ -69,7 +69,7 @@ A key must be specified for every MAC algorithm.
 Used by HMAC as an alphanumeric string (use if the key contains printable
 characters only).
 The string length must conform to any restrictions of the MAC algorithm.
-To see the list of supported digests, use the command I<list -digest-commands>.
+To see the list of supported digests, use C<openssl list -digest-commands>.
 
 =item B<cipher:>I<string>
 
@@ -102,7 +102,8 @@ The default is the empty string "".
 =item I<mac_name>
 
 Specifies the name of a supported MAC algorithm which will be used.
-To see the list of supported MAC's use the command I<list -mac-algorithms>.
+To see the list of supported MAC's use the command C<opensssl list
+-mac-algorithms>.
 
 =back
 
@@ -136,7 +137,7 @@ To create a hex-encoded GMAC-AES-128-GCM with a IV from a file: \
 
 The MAC mechanisms that are available will depend on the options
 used when building OpenSSL.
-The B<list -mac-algorithms> command can be used to list them.
+Use C<openssl list -mac-algorithms> to list them.
 
 =head1 SEE ALSO
 

@@ -26,8 +26,7 @@ B<openssl srp>
 
 =head1 DESCRIPTION
 
-The B<srp> command is used to maintain an SRP (secure remote password)
-file.
+This command is used to maintain an SRP (secure remote password) file.
 At most one of the B<-add>, B<-modify>, B<-delete>, and B<-list> options
 can be specified.
 These options take zero or more usernames as parameters and perform the

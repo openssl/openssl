@@ -97,7 +97,7 @@ B<openssl> B<ocsp>
 The Online Certificate Status Protocol (OCSP) enables applications to
 determine the (revocation) state of an identified certificate (RFC 2560).
 
-The B<ocsp> command performs many common OCSP tasks. It can be used
+This command performs many common OCSP tasks. It can be used
 to print out requests and responses, create requests and send queries
 to an OCSP responder and behave like a mini OCSP server itself.
 
@@ -309,7 +309,7 @@ By default this additional check is not performed.
 =item B<-rcid> I<digest>
 
 This option sets the digest algorithm to use for certificate identification
-in the OCSP response. Any digest supported by the OpenSSL B<dgst> command can
+in the OCSP response. Any digest supported by the L<openssl-dgst(1)> command can
 be used. The default is the same digest algorithm used in the request.
 
 =item B<-I<digest>>
@@ -330,8 +330,8 @@ digest used by subsequent certificate identifiers.
 The I<indexfile> parameter is the name of a text index file in B<ca>
 format containing certificate revocation information.
 
-If the B<-index> option is specified the B<ocsp> utility is in responder
-mode, otherwise it is in client mode. The request(s) the responder
+If the B<-index> option is specified then this command switches to
+responder mode, otherwise it is in client mode. The request(s) the responder
 processes can be either specified on the command line (using B<-issuer>
 and B<-serial> options), supplied in a file (using the B<-reqin> option)
 or via external OCSP clients (if B<-port> or B<-url> is specified).
@@ -452,7 +452,7 @@ new requests until it has processed the current one. The text index file
 format of revocation is also inefficient for large quantities of revocation
 data.
 
-It is possible to run the B<ocsp> application in responder mode via a CGI
+It is possible to run this command in responder mode via a CGI
 script using the B<-reqin> and B<-respout> options.
 
 =head1 EXAMPLES

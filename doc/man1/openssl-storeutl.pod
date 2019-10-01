@@ -27,8 +27,8 @@ I<uri> ...
 
 =head1 DESCRIPTION
 
-The B<storeutl> command can be used to display the contents (after decryption
-as the case may be) fetched from the given URIs.
+This command can be used to display the contents (after
+decryption as the case may be) fetched from the given URIs.
 
 =head1 OPTIONS
 
@@ -55,11 +55,11 @@ see L<openssl(1)/Pass phrase options>.
 =item B<-text>
 
 Prints out the objects in text form, similarly to the B<-text> output from
-B<openssl x509>, B<openssl pkey>, etc.
+L<openssl-x509(1)>, L<openssl-pkey(1)>, etc.
 
 =item B<-engine> I<id>
 
-specifying an engine (by its unique I<id> string) will cause B<storeutl>
+specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
@@ -118,7 +118,7 @@ L<openssl(1)>
 
 =head1 HISTORY
 
-The B<openssl> B<storeutl> app was added in OpenSSL 1.1.1.
+This command was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

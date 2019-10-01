@@ -63,7 +63,7 @@ B<openssl> B<ca>
 
 =head1 DESCRIPTION
 
-The B<ca> command is a minimal CA application. It can be used
+This command is a minimal CA application. It can be used
 to sign certificate requests in a variety of forms and generate
 CRLs it also maintains a text database of issued certificates
 and their status.
@@ -193,7 +193,7 @@ The number of days to certify the certificate for.
 =item B<-md> I<alg>
 
 The message digest to use.
-Any digest supported by the OpenSSL B<dgst> command can be used. For signing
+Any digest supported by the L<openssl-dgst(1)> command can be used. For signing
 algorithms that do not support a digest (i.e. Ed25519 and Ed448) any message
 digest that is set is ignored. This option also applies to CRLs.
 
@@ -206,8 +206,8 @@ for more information.
 
 =item B<-msie_hack>
 
-This is a deprecated option to make B<ca> work with very old versions of
-the IE certificate enrollment control "certenr3". It used UniversalStrings
+This is a deprecated option to make this command work with very old versions
+of the IE certificate enrollment control "certenr3". It used UniversalStrings
 for almost everything. Since the old control has various security bugs
 its use is strongly discouraged.
 
@@ -393,7 +393,7 @@ extension section format.
 
 =head1 CONFIGURATION FILE OPTIONS
 
-The section of the configuration file containing options for B<ca>
+The section of the configuration file containing options for this command
 is found as follows: If the B<-name> command line option is used,
 then it names the section to be used. Otherwise the section to
 be used must be named in the B<default_ca> option of the B<ca> section
@@ -581,7 +581,7 @@ this can be regarded more of a quirk than intended behaviour.
 The input to the B<-spkac> command line option is a Netscape
 signed public key and challenge. This will usually come from
 the B<KEYGEN> tag in an HTML form to create a new private key.
-It is however possible to create SPKACs using the B<spkac> utility.
+It is however possible to create SPKACs using L<openssl-spkac(1)>.
 
 The file should contain the variable SPKAC set to the value of
 the SPKAC and also the required DN components as name value pairs.
@@ -594,11 +594,11 @@ flag is used.
 
 =head1 EXAMPLES
 
-Note: these examples assume that the B<ca> directory structure is
-already set up and the relevant files already exist. This usually
-involves creating a CA certificate and private key with B<req>, a
-serial number file and an empty index file and placing them in
-the relevant directories.
+Note: these examples assume that the directory structure this command
+assumes is already set up and the relevant files already exist. This
+usually involves creating a CA certificate and private key with
+L<openssl-req(1)>, a serial number file and an empty index file and
+placing them in the relevant directories.
 
 To use the sample configuration file below the directories demoCA,
 demoCA/private and demoCA/newcerts would be created. The CA
@@ -640,7 +640,7 @@ A sample SPKAC file (the SPKAC line has been truncated for clarity):
  0.OU=OpenSSL Group
  1.OU=Another Group
 
-A sample configuration file with the relevant sections for B<ca>:
+A sample configuration file with the relevant sections for this command:
 
  [ ca ]
  default_ca      = CA_default            # The default ca section
@@ -711,7 +711,7 @@ The use of an in-memory text database can cause problems when large
 numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
 
-The B<ca> command really needs rewriting or the required functionality
+This command really needs rewriting or the required functionality
 exposed at either a command or interface level so a more friendly utility
 (perl script or GUI) can handle things properly. The script
 B<CA.pl> helps a little but not very much.
@@ -728,15 +728,15 @@ create an empty file.
 
 =head1 WARNINGS
 
-The B<ca> command is quirky and at times downright unfriendly.
+This command is quirky and at times downright unfriendly.
 
-The B<ca> utility was originally meant as an example of how to do things
-in a CA. It was not supposed to be used as a full blown CA itself:
+This command was originally meant as an example of how to do
+things in a CA. It was not supposed to be used as a full blown CA itself:
 nevertheless some people are using it for this purpose.
 
-The B<ca> command is effectively a single user command: no locking is
-done on the various files and attempts to run more than one B<ca> command
-on the same database can have unpredictable results.
+This command command is effectively a single user command: no locking
+is done on the various files and attempts to run more than one B<openssl ca>
+command on the same database can have unpredictable results.
 
 The B<copy_extensions> option should be used with caution. If care is
 not taken then it can be a security risk. For example if a certificate

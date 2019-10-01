@@ -26,8 +26,8 @@ B<openssl speed>
 =head1 DESCRIPTION
 
 This command is used to test the performance of cryptographic algorithms.
-To see the list of supported algorithms, use the I<list --digest-commands>
-or I<list --cipher-commands> command. The global CSPRNG is denoted by
+To see the list of supported algorithms, use C<openssl list -digest-commands>
+or C<openssl list -cipher-commands> command. The global CSPRNG is denoted by
 the B<rand> algorithm name.
 
 =head1 OPTIONS
@@ -40,7 +40,7 @@ Print out a usage message.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<speed>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -64,7 +64,8 @@ Time the HMAC algorithm using the specified message digest.
 
 =item B<-cmac> I<cipher>
 
-Time the CMAC algorithm using the specified cipher e.g. B<speed -cmac aes128>.
+Time the CMAC algorithm using the specified cipher e.g.
+C<openssl speed -cmac aes128>.
 
 =item B<-decrypt>
 
@@ -97,7 +98,7 @@ Run benchmarks on I<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
 
 =item I<algorithm> ...
 
-If any options are given, B<speed> tests those algorithms, otherwise a
+If any I<algorithm> is given, then those algorithms are tested, otherwise a
 pre-compiled grand selection is tested.
 
 =back

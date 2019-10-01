@@ -80,7 +80,7 @@ The OpenSSL CPU settings info.
 
 =head1 NOTES
 
-The output of B<openssl version -a> would typically be used when sending
+The output of C<openssl version -a> would typically be used when sending
 in a bug report.
 
 =head1 COPYRIGHT

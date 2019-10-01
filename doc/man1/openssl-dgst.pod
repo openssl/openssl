@@ -33,16 +33,15 @@ B<openssl> I<digest> [B<...>]
 
 =head1 DESCRIPTION
 
-The digest functions output the message digest of a supplied file or files
-in hexadecimal.  The digest functions also generate and verify digital
+This command output the message digest of a supplied file or files
+in hexadecimal, and also generates and verifies digital
 signatures using message digests.
 
-The generic name, B<dgst>, may be used with an option specifying the
+The generic name, B<openssl dgst>, may be used with an option specifying the
 algorithm to be used.
 The default digest is B<sha256>.
-A supported I<digest> name may also be used as the command name.
-To see the list of supported algorithms, use the I<list --digest-commands>
-command.
+A supported I<digest> name may also be used as the sub-command name.
+To see the list of supported algorithms, use C<openssl list -digest-commands>
 
 =head1 OPTIONS
 
@@ -79,7 +78,7 @@ Output the digest or signature in binary form.
 =item B<-r>
 
 Output the digest in the "coreutils" format, including newlines.
-Used by programs like B<sha1sum>.
+Used by programs like L<sha1sum(1)>.
 
 =item B<-out> I<filename>
 
@@ -88,8 +87,8 @@ Filename to output to, or standard output by default.
 =item B<-sign> I<filename>
 
 Digitally sign the digest using the private key in "filename". Note this option
-does not support Ed25519 or Ed448 private keys. Use the B<pkeyutl> command
-instead for this.
+does not support Ed25519 or Ed448 private keys. Use the L<openssl-pkeyutl(1)>
+command instead for this.
 
 =item B<-keyform> I<arg>
 
@@ -215,13 +214,13 @@ To verify a signature:
 
 The digest mechanisms that are available will depend on the options
 used when building OpenSSL.
-The B<list digest-commands> command can be used to list them.
+The C<openssl list -digest-commands> command can be used to list them.
 
 New or agile applications should use probably use SHA-256. Other digests,
 particularly SHA-1 and MD5, are still widely used for interoperating
 with existing formats and protocols.
 
-When signing a file, B<dgst> will automatically determine the algorithm
+When signing a file, this command will automatically determine the algorithm
 (RSA, ECC, etc) to use for signing based on the private key's ASN.1 info.
 When verifying signatures, it only handles the RSA, DSA, or ECDSA signature
 itself, not the related data to identify the signer and algorithm used in

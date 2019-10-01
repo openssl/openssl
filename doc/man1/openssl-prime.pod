@@ -17,7 +17,7 @@ B<openssl prime>
 
 =head1 DESCRIPTION
 
-The B<prime> command checks if the specified numbers are prime.
+This command checks if the specified numbers are prime.
 
 If no numbers are given on the command line, the B<-generate> flag should
 be used to generate primes according to the requirements specified by the

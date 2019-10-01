@@ -86,8 +86,8 @@ I<verify options:>
 
 =head1 DESCRIPTION
 
-The B<ts> command is a basic Time Stamping Authority (TSA) client and server
-application as specified in RFC 3161 (Time-Stamp Protocol, TSP). A
+This command is a basic Time Stamping Authority (TSA) client and
+server application as specified in RFC 3161 (Time-Stamp Protocol, TSP). A
 TSA can be part of a PKI deployment and its role is to provide long
 term proof of the existence of a certain datum before a particular
 time. Here is a brief description of the protocol:
@@ -116,7 +116,7 @@ value that it had sent to the TSA.
 
 There is one DER encoded protocol data unit defined for transporting a time
 stamp request to the TSA and one for sending the timestamp response
-back to the client. The B<ts> command has three main functions:
+back to the client. This command has three main functions:
 creating a timestamp request based on a data file,
 creating a timestamp response based on a request, verifying if a
 response corresponds to a particular request or a data file.
@@ -169,7 +169,7 @@ in use. (Optional)
 =item B<-I<digest>>
 
 The message digest to apply to the data file.
-Any digest supported by the OpenSSL B<dgst> command can be used.
+Any digest supported by the L<openssl-dgst(1)> command can be used.
 The default is SHA-256. (Optional)
 
 =item B<-tspolicy> I<object_id>
@@ -314,7 +314,7 @@ instead of DER. (Optional)
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<ts>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms. Default is built-in. (Optional)
@@ -391,7 +391,7 @@ B<-policy_print>, B<-purpose>, B<-suiteB_128>, B<-suiteB_128_only>,
 B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>, B<-auth_level>,
 B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
 B<-verify_name>, and B<-x509_strict> can be used to control timestamp
-verification.  See L<verify(1)>.
+verification.  See L<openssl-verify(1)>.
 
 =back
 

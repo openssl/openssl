@@ -30,7 +30,7 @@ B<openssl> B<rsautl>
 
 =head1 DESCRIPTION
 
-The B<rsautl> command can be used to sign, verify, encrypt and decrypt
+This command can be used to sign, verify, encrypt and decrypt
 data using the RSA algorithm.
 
 =head1 OPTIONS
@@ -116,7 +116,7 @@ B<-verify> option.
 
 =head1 NOTES
 
-B<rsautl> because it uses the RSA algorithm directly can only be
+Since this command uses the RSA algorithm directly, it can only be
 used to sign or verify small pieces of data.
 
 =head1 EXAMPLES
@@ -147,8 +147,9 @@ encrypt and decrypt the block would have been of type 2 (the second byte)
 and random padding data visible instead of the 0xff bytes.
 
 It is possible to analyse the signature of certificates using this
-utility in conjunction with B<asn1parse>. Consider the self signed
-example in certs/pca-cert.pem . Running B<asn1parse> as follows yields:
+utility in conjunction with L<openssl-asn1parse(1)>. Consider the self signed
+example in certs/pca-cert.pem . Running L<openssl-asn1parse(1)> as follows
+yields:
 
  openssl asn1parse -in pca-cert.pem
 

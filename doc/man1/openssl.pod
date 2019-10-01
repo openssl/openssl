@@ -55,7 +55,7 @@ was built.
 The list options B<-standard-commands>, B<-digest-commands>,
 and B<-cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,
-respectively, that are available in the present B<openssl> utility.
+respectively, that are available.
 
 The list parameters B<-cipher-algorithms>, B<-digest-algorithms>,
 and B<-mac-algorithms> list all cipher, message digest, and message

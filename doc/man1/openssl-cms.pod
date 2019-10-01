@@ -107,8 +107,8 @@ B<openssl> B<cms>
 
 =head1 DESCRIPTION
 
-The B<cms> command handles S/MIME v3.1 mail. It can encrypt, decrypt, sign and
-verify, compress and uncompress S/MIME messages.
+This command handles S/MIME v3.1 mail. It can encrypt, decrypt,
+sign and verify, compress and uncompress S/MIME messages.
 
 =head1 OPTIONS
 
@@ -629,10 +629,10 @@ the signers certificates.
 
 =head1 COMPATIBILITY WITH PKCS#7 FORMAT
 
-The B<smime> utility can only process the older B<PKCS#7> format. The B<cms>
-utility supports Cryptographic Message Syntax format. Use of some features
-will result in messages which cannot be processed by applications which only
-support the older format. These are detailed below.
+L<openssl-smime(1)> can only process the older B<PKCS#7> format.
+B<openssl cms> supports Cryptographic Message Syntax format.
+Use of some features will result in messages which cannot be processed by
+applications which only support the older format. These are detailed below.
 
 The use of the B<-keyid> option with B<-sign> or B<-encrypt>.
 
@@ -647,7 +647,7 @@ The use of PSS with B<-sign>.
 The use of OAEP or non-RSA keys with B<-encrypt>.
 
 Additionally the B<-EncryptedData_create> and B<-data_create> type cannot
-be processed by the older B<smime> command.
+be processed by the older L<openssl-smime(1)> command.
 
 =head1 EXAMPLES
 

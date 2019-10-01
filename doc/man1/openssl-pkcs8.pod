@@ -34,7 +34,7 @@ B<openssl> B<pkcs8>
 
 =head1 DESCRIPTION
 
-The B<pkcs8> command processes private keys in PKCS#8 format. It can handle
+This command processes private keys in PKCS#8 format. It can handle
 both unencrypted PKCS#8 PrivateKeyInfo format and EncryptedPrivateKeyInfo
 format with a variety of PKCS#5 (v1.5 and v2.0) and PKCS#12 algorithms.
 
@@ -142,7 +142,7 @@ If not specified PKCS#5 v2.0 form is used.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<pkcs8>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -162,7 +162,7 @@ Sets the scrypt I<N>, I<r> or I<p> parameters.
 
 =head1 KEY FORMATS
 
-Various different formats are used by the pkcs8 utility. These are detailed
+Various different formats are used by this command. These are detailed
 below.
 
 If a key is being converted from PKCS#8 form (i.e. the B<-topk8> option is

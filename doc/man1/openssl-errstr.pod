@@ -11,9 +11,9 @@ B<openssl errstr> I<error_code>
 =head1 DESCRIPTION
 
 Sometimes an application will not load error message and only
-numerical forms will be available. The B<errstr> utility can be used to
-display the meaning of the hex code. The hex code is the hex digits after the
-second colon.
+numerical forms will be available. This command can be
+used to display the meaning of the hex code. The hex code is the hex digits
+after the second colon.
 
 =head1 OPTIONS
 

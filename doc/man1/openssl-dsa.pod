@@ -37,7 +37,7 @@ B<openssl> B<dsa>
 
 =head1 DESCRIPTION
 
-The B<dsa> command processes DSA keys. They can be converted between various
+This command processes DSA keys. They can be converted between various
 forms and their components printed out. B<Note> This command uses the
 traditional SSLeay compatible format for private key encryption: newer
 applications should use the more secure PKCS#8 format using the B<pkcs8>
@@ -95,9 +95,9 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 These options encrypt the private key with the specified
 cipher before outputting it. A pass phrase is prompted for.
 If none of these options is specified the key is written in plain text. This
-means that using the B<dsa> utility to read in an encrypted key with no
-encryption option can be used to remove the pass phrase from a key, or by
-setting the encryption options it can be use to add or change the pass phrase.
+means that this command can be used to remove the pass phrase from a key
+by not giving any encryption option is given, or to add or change the pass
+phrase by setting them.
 These options can only be used with PEM format output files.
 
 =item B<-text>
@@ -125,7 +125,7 @@ a public key.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique I<id> string) will cause B<dsa>
+Specifying an engine (by its unique I<id> string) will cause L<openssl-dsa(1)>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

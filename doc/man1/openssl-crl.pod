@@ -26,7 +26,7 @@ B<openssl> B<crl>
 
 =head1 DESCRIPTION
 
-The B<crl> command processes CRL files in DER or PEM format.
+This command processes CRL files in DER or PEM format.
 
 =head1 OPTIONS
 
@@ -101,8 +101,8 @@ I<file>.
 
 Verify the signature on a CRL by looking up the issuing certificate in
 I<dir>. This directory must be a standard certificate directory: that
-is a hash of each subject name (using B<x509 -hash>) should be linked
-to each certificate.
+is a hash of each subject name (using the L<openssl-x509(1)> B<-hash> option)
+should be linked to each certificate.
 
 =back
 

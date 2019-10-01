@@ -18,10 +18,10 @@ B<openssl> B<sess_id>
 
 =head1 DESCRIPTION
 
-The B<sess_id> process the encoded version of the SSL session structure
-and optionally prints out SSL session details (for example the SSL session
-master key) in human readable format. Since this is a diagnostic tool that
-needs some knowledge of the SSL protocol to use properly, most users will
+This command command processes the encoded version of the SSL session
+structure and optionally prints out SSL session details (for example the SSL
+session master key) in human readable format. Since this is a diagnostic tool
+that needs some knowledge of the SSL protocol to use properly, most users will
 not need to use it.
 
 =head1 OPTIONS
