@@ -1,4 +1,4 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2018-11-rc3
+OQS-OpenSSL_1\_1\_1-stable snapshot 2019-09-rc1
 ===============================================
 
 About
@@ -14,25 +14,24 @@ This branch of our fork of OpenSSL aims to provide integration of post-quantum a
 
 This branch of our fork of OpenSSL can be used with the following versions of liboqs:
 
-- **liboqs master branch** 0.1.0
+- **liboqs master branch** 0.2.0
 
 Release notes
 =============
 
-This snapshot of the OQS fork of OpenSSL 1.1.1 (`OQS-OpenSSL_1_1_1-stable`) was released on November 13, 2018.  Its release page on Github is https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2018-11.
+This snapshot of the OQS fork of OpenSSL 1.1.1d (`OQS-OpenSSL_1_1_1-stable`) was released on TODO.  Its release page on Github is https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2019-09.
 
 What's New
 ----------
 
-This is the first snapshot release of OQS-OpenSSL_1\_1\_1-stable.
+This is the second snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on the upstream OpenSSL 1.1.1d release.
 
-It is based on the upstream OpenSSL 1.1.1 release.
+This release adds hybrid (post-quantum + elliptic curve) authentication in TLS 1.3.
 
-It provides:
+This release adds/updates post-quantum KEMs for TLS 1.3 key exchange and signature algorithms for TLS 1.3 authentication based on NIST Round 2 submissions.  See the README.md file for the list of algorithms.
 
-- post-quantum key exchange in TLS 1.3
-- hybrid (post-quantum + elliptic curve) key exchange in TLS 1.3
-- post-quantum authentication in TLS 1.3
+Previous releases of liboqs differentiated between "master branch" and "nist-branch", with nist-branch supporting more algorithms.  liboqs nist-branch is no longer be developed or released, and this release of OQS-OpenSSL_1\_1\_1-stable only builds against liboqs master branch.
+
 
 Future work
 -----------
