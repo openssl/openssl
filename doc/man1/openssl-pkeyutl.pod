@@ -166,7 +166,7 @@ Public key options specified as opt:value. See NOTES below for more details.
 Allows reading a public key option I<opt> from stdin or a password source.
 If only I<opt> is specified, the user will be prompted to enter a password on
 stdin.  Alternatively, I<passarg> can be specified which can be any value
-supported by B<PASS PHRASE ARGUMENTS> in L<openssl(1)>.
+supported by L<openssl(1)/Pass phrase options>.
 
 =item B<-hexdump>
 

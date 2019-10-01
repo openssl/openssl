@@ -152,7 +152,7 @@ Cannot be used with the B<-days> option.
 =head2 Display Options
 
 Note: the B<-alias> and B<-purpose> options are also display options
-but are described in the B<TRUST SETTINGS> section.
+but are described in the L</Trust Settings> section.
 
 =over 4
 
@@ -173,7 +173,7 @@ See the L<x509v3_config(5)> manual page for the extension names.
 Customise the output format used with B<-text>. The I<option> argument
 can be a single option or multiple options separated by commas. The
 B<-certopt> switch may be also be used more than once to set multiple
-options. See the B<TEXT OPTIONS> section for more information.
+options. See the L</Text Options> section for more information.
 
 =item B<-noout>
 
@@ -233,7 +233,7 @@ Outputs the issuer name.
 Option which determines how the subject or issuer names are displayed. The
 I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the B<NAME OPTIONS> section for more information.
+set multiple options. See the L</Name Options> section for more information.
 
 =item B<-email>
 
@@ -341,8 +341,8 @@ option.
 =item B<-purpose>
 
 This option performs tests on the certificate extensions and outputs
-the results. For a more complete description see the B<CERTIFICATE
-EXTENSIONS> section.
+the results. For a more complete description see the
+L</CERTIFICATE EXTENSIONS> section.
 
 =back
 

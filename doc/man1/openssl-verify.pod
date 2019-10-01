@@ -195,7 +195,7 @@ The intended use for the certificate. If this option is not specified,
 this command will not consider certificate purpose during chain
 verification.
 Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
-B<smimesign>, B<smimeencrypt>. See the B<VERIFY OPERATION> section for more
+B<smimesign>, B<smimeencrypt>. See the L</VERIFY OPERATION> section for more
 information.
 
 =item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
@@ -383,19 +383,19 @@ list.
 The second operation is to check every untrusted certificate's extensions for
 consistency with the supplied purpose. If the B<-purpose> option is not included
 then no checks are done. The supplied or "leaf" certificate must have extensions
-compatible with the supplied purpose and all other certificates must also be valid
-CA certificates. The precise extensions required are described in more detail in
-the B<CERTIFICATE EXTENSIONS> section of the B<x509> utility.
+compatible with the supplied purpose and all other certificates must also be
+valid CA certificates. The precise extensions required are described in more
+detail in L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
 
 The third operation is to check the trust settings on the root CA. The root CA
 should be trusted for the supplied purpose.
 For compatibility with previous versions of OpenSSL, a certificate with no
 trust settings is considered to be valid for all purposes.
 
-The final operation is to check the validity of the certificate chain. The validity
-period is checked against the current system time and the notBefore and notAfter
-dates in the certificate. The certificate signatures are also checked at this
-point.
+The final operation is to check the validity of the certificate chain. The
+validity period is checked against the current system time and the notBefore
+and notAfter dates in the certificate. The certificate signatures are also
+checked at this point.
 
 If all operations complete successfully then certificate is considered valid. If
 any operation fails then the certificate is not valid.

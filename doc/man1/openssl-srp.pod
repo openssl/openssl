@@ -45,7 +45,7 @@ The B<-gn> flag specifies the I<g> and I<N> values, using one of
 the strengths defined in IETF RFC 5054.
 
 The B<-passin> and B<-passout> arguments are parsed as described in
-the L<openssl(1)> command.
+the L<openssl(1)/Pass phrase options> command.
 
 =head1 OPTIONS
 

@@ -102,8 +102,8 @@ default.
 
 =item B<-passout> I<arg>
 
-The output file password source. For more information about the format of I<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The output file password source. For more information about the format of B<arg>
+see L<openssl(1)/Pass phrase options>.
 
 =item B<-text>
 
@@ -184,8 +184,8 @@ specified by B<-pkeyopt> I<paramset:X>
 
 Set the public key algorithm option I<opt> to I<value>. The precise set of
 options supported depends on the public key algorithm used and its
-implementation. See B<KEY GENERATION OPTIONS> in the B<genpkey> manual page
-for more details.
+implementation.
+See L<openssl-genpkey(1)/KEY GENERATION OPTIONS> for more details.
 
 =item B<-key> I<filename>
 
