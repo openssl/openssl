@@ -497,7 +497,8 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 =head2 GOST cipher suites from draft-chudov-cryptopro-cptls, extending TLS v1.0
 
 Note: these ciphers require an engine which including GOST cryptographic
-algorithms, such as the B<ccgost> engine, included in the OpenSSL distribution.
+algorithms, such as the B<gost> engine, which isn't part of the OpenSSL
+distribution.
 
  TLS_GOSTR341094_WITH_28147_CNT_IMIT GOST94-GOST89-GOST89
  TLS_GOSTR341001_WITH_28147_CNT_IMIT GOST2001-GOST89-GOST89

@@ -130,7 +130,7 @@ option.
 Create MAC (keyed Message Authentication Code). The most popular MAC
 algorithm is HMAC (hash-based MAC), but there are other MAC algorithms
 which are not based on hash, for instance B<gost-mac> algorithm,
-supported by B<ccgost> engine. MAC keys and other options should be set
+supported by the B<gost> engine. MAC keys and other options should be set
 via B<-macopt> parameter.
 
 The L<openssl-mac(1)> command should be preferred to using this command line
