@@ -39,7 +39,7 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The input format. I<DER> is binary format and I<PEM> (the default) is base64
+The input format. B<DER> is binary format and B<PEM> (the default) is base64
 encoded.
 
 =item B<-in> I<filename>
@@ -88,12 +88,12 @@ option can be used multiple times to "drill down" into a nested structure.
 
 =item B<-genstr> I<string>, B<-genconf> I<file>
 
-Generate encoded data based on B<string>, B<file> or both using
-L<ASN1_generate_nconf(3)> format. If B<file> only is
+Generate encoded data based on I<string>, I<file> or both using
+L<ASN1_generate_nconf(3)> format. If I<file> only is
 present then the string is obtained from the default section using the name
 B<asn1>. The encoded data is passed through the ASN1 parser and printed out as
 though it came from a file, the contents can thus be examined and written to a
-file using the B<out> option.
+file using the B<-out> option.
 
 =item B<-strictpem>
 
@@ -105,8 +105,8 @@ END marker in a PEM file.
 
 =item B<-item> I<name>
 
-Attempt to decode and print the data as B<ASN1_ITEM name>. This can be used to
-print out the fields of any supported ASN.1 structure if the type is known.
+Attempt to decode and print the data as B<ASN1_ITEM> I<name>. This can be used
+to print out the fields of any supported ASN.1 structure if the type is known.
 
 =back
 

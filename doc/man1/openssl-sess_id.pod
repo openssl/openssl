@@ -9,7 +9,7 @@ openssl-sess_id - SSL/TLS session handling utility
 B<openssl> B<sess_id>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
-[B<-outform> B<DER>|B<PEM>|B<MSS>]
+[B<-outform> B<DER>|B<PEM>|B<NSS>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-text>]
@@ -41,9 +41,9 @@ format base64 encoded with additional header and footer lines.
 
 =item B<-outform> B<DER>|B<PEM>|B<NSS>
 
-This specifies the output format. The B<PEM> and B<DER> options have the same meaning
-and default as the B<-inform> option. The B<NSS> option outputs the session id and
-the master key in NSS keylog format.
+This specifies the output format. The B<PEM> and B<DER> options have the same
+meaning and default as the B<-inform> option. The B<NSS> option outputs the
+session id and the master key in NSS keylog format.
 
 =item B<-in> I<filename>
 

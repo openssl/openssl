@@ -15,14 +15,14 @@ B<openssl engine>
 [B<-c>]
 [B<-t>]
 [B<-tt>]
-[B<-pre> I<command>]
-[B<-post> I<command>]
+[B<-pre> I<command>] ...
+[B<-post> I<command>] ...
 [I<engine> ...]
 
 =head1 DESCRIPTION
 
 The B<engine> command is used to query the status and capabilities
-of the specified B<engine>'s.
+of the specified I<engine>'s.
 Engines may be specified before and after all other command-line flags.
 Only those specified are queried.
 
@@ -56,9 +56,12 @@ Displays an error trace for any unavailable engine.
 Command-line configuration of engines.
 The B<-pre> command is given to the engine before it is loaded and
 the B<-post> command is given after the engine is loaded.
-The I<command> is of the form I<cmd:val> where I<cmd> is the command,
+The I<command> is of the form I<cmd>:I<val> where I<cmd> is the command,
 and I<val> is the value for the command.
 See the example below.
+
+These two options are cumulative, so they may be given more than once in the
+same command.
 
 =back
 

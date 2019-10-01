@@ -75,7 +75,7 @@ prompted for.
 
 =item B<-passin> I<arg>
 
-The input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-out> I<filename>
@@ -85,9 +85,9 @@ option is not specified. If any encryption options are set then a pass phrase
 will be prompted for. The output filename should B<not> be the same as the input
 filename.
 
-=item B<-passout> I<password>
+=item B<-passout> I<arg>
 
-The output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of I<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
@@ -134,7 +134,7 @@ Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<rsa>
+Specifying an engine (by its unique I<id> string) will cause B<rsa>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

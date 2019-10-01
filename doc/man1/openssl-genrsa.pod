@@ -22,8 +22,7 @@ B<openssl> B<genrsa>
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
-[B<-f4>]
-[B<-3>]
+[B<-f4>|B<-3>]
 [B<-rand> I<files>]
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
@@ -80,16 +79,16 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<genrsa>
+Specifying an engine (by its unique I<id> string) will cause B<genrsa>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =item B<-primes> I<num>
 
-Specify the number of primes to use while generating the RSA key. The B<num>
+Specify the number of primes to use while generating the RSA key. The I<num>
 parameter must be a positive integer that is greater than 1 and less than 16.
-If B<num> is greater than 2, then the generated key is called a 'multi-prime'
+If I<num> is greater than 2, then the generated key is called a 'multi-prime'
 RSA key, which is defined in RFC 8017.
 
 =item B<-verbose>

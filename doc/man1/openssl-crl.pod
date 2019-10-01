@@ -95,12 +95,12 @@ Output the nextUpdate field.
 =item B<-CAfile> I<file>
 
 Verify the signature on a CRL by looking up the issuing certificate in
-B<file>.
+I<file>.
 
 =item B<-CApath> I<dir>
 
 Verify the signature on a CRL by looking up the issuing certificate in
-B<dir>. This directory must be a standard certificate directory: that
+I<dir>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
 

@@ -68,7 +68,7 @@ prompted for.
 
 =item B<-passin> I<arg>
 
-The input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-out> I<filename>
@@ -80,7 +80,7 @@ filename.
 
 =item B<-passout> I<arg>
 
-The output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of I<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-des>|B<-des3>|B<-idea>
@@ -113,7 +113,7 @@ By default a private key is output. With this option a public
 key will be output instead. This option is automatically set if the input is
 a public key.
 
-=item B<-conv_form>
+=item B<-conv_form> I<arg>
 
 This specifies how the points on the elliptic curve are converted
 into octet strings. Possible values are: B<compressed> (the default
@@ -143,7 +143,7 @@ This option checks the consistency of an EC private or public key.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<ec>
+Specifying an engine (by its unique I<id> string) will cause B<ec>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

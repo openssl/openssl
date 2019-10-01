@@ -8,10 +8,10 @@ openssl - OpenSSL command line tool
 
 B<openssl>
 I<command>
-[ I<command_opts> ]
-[ I<command_args> ]
+[ I<command_opts> ... ]
+[ I<command_args> ... ]
 
-B<openssl> B<list> [ B<standard-commands> | B<digest-commands> | B<cipher-commands> | B<cipher-algorithms> | B<digest-algorithms> | B<mac-algorithms> | B<public-key-algorithms>]
+B<openssl> B<list> [ B<-standard-commands> | B<-digest-commands> | B<-cipher-commands> | B<-cipher-algorithms> | B<-digest-algorithms> | B<-mac-algorithms> | B<-public-key-algorithms>]
 
 B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
 
@@ -52,18 +52,18 @@ B<openssl.cnf> in the default certificate storage area, whose value
 depends on the configuration flags specified when the OpenSSL
 was built.
 
-The list parameters B<standard-commands>, B<digest-commands>,
-and B<cipher-commands> output a list (one entry per line) of the names
+The list options B<-standard-commands>, B<-digest-commands>,
+and B<-cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,
 respectively, that are available in the present B<openssl> utility.
 
-The list parameters B<cipher-algorithms>, B<digest-algorithms>,
-and B<mac-algorithms> list all cipher, message digest, and message
+The list parameters B<-cipher-algorithms>, B<-digest-algorithms>,
+and B<-mac-algorithms> list all cipher, message digest, and message
 authentication code names, one entry per line. Aliases are listed as:
 
  from => to
 
-The list parameter B<public-key-algorithms> lists all supported public
+The list parameter B<-public-key-algorithms> lists all supported public
 key algorithms.
 
 The command B<no->I<XXX> tests whether a command of the
@@ -514,29 +514,29 @@ L<passphrase-encoding(7)>.
 
 =over 4
 
-=item B<pass:password>
+=item B<pass:>I<password>
 
-The actual password is B<password>. Since the password is visible
+The actual password is I<password>. Since the password is visible
 to utilities (like 'ps' under Unix) this form should only be used
 where security is not important.
 
-=item B<env:var>
+=item B<env:>I<var>
 
-Obtain the password from the environment variable B<var>. Since
+Obtain the password from the environment variable I<var>. Since
 the environment of other processes is visible on certain platforms
 (e.g. ps under certain Unix OSes) this option should be used with caution.
 
-=item B<file:pathname>
+=item B<file:>I<pathname>
 
-The first line of B<pathname> is the password. If the same B<pathname>
+The first line of I<pathname> is the password. If the same I<pathname>
 argument is supplied to B<-passin> and B<-passout> arguments then the first
 line will be used for the input password and the next line for the output
-password. B<pathname> need not refer to a regular file: it could for example
+password. I<pathname> need not refer to a regular file: it could for example
 refer to a device or named pipe.
 
-=item B<fd:number>
+=item B<fd:>I<number>
 
-Read the password from the file descriptor B<number>. This can be used to
+Read the password from the file descriptor I<number>. This can be used to
 send the data via a pipe for example.
 
 =item B<stdin>
@@ -671,7 +671,7 @@ L<x509v3_config(5)>
 
 =head1 HISTORY
 
-The B<list->I<XXX>B<-algorithms> pseudo-commands were added in OpenSSL 1.0.0;
+The B<list> -I<XXX>B<-algorithms> options were added in OpenSSL 1.0.0;
 For notes on the availability of other commands, see their individual
 manual pages.
 

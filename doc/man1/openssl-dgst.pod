@@ -39,7 +39,7 @@ signatures using message digests.
 
 The generic name, B<dgst>, may be used with an option specifying the
 algorithm to be used.
-The default digest is I<sha256>.
+The default digest is B<sha256>.
 A supported I<digest> name may also be used as the command name.
 To see the list of supported algorithms, use the I<list --digest-commands>
 command.
@@ -60,7 +60,7 @@ supported digests, use the command C<list --digest-commands>.
 =item B<-c>
 
 Print out the digest in two digit groups separated by colons, only relevant if
-B<hex> format output is used.
+the B<-hex> option is given as well.
 
 =item B<-d>
 
@@ -103,7 +103,7 @@ Names and values of these options are algorithm-specific.
 
 =item B<-passin> I<arg>
 
-The private key password source. For more information about the format of B<arg>
+The private key password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-verify> I<filename>
@@ -144,13 +144,13 @@ Following options are supported by both by B<HMAC> and B<gost-mac>:
 
 =over 4
 
-=item B<key:string>
+=item B<key>:I<string>
 
 Specifies MAC key as alphanumeric string (use if key contain printable
 characters only). String length must conform to any restrictions of
 the MAC algorithm for example exactly 32 chars for gost-mac.
 
-=item B<hexkey:string>
+=item B<hexkey>:I<string>
 
 Specifies MAC key in hexadecimal form (two hex digits per byte).
 Key length must conform to any restrictions of the MAC algorithm
@@ -179,7 +179,7 @@ Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
 
 =item B<-engine> I<id>
 
-Use engine B<id> for operations (including private key storage).
+Use engine I<id> for operations (including private key storage).
 This engine is not used as source for digest algorithms, unless it is
 also specified in the configuration file or B<-engine_impl> is also
 specified.
@@ -187,7 +187,7 @@ specified.
 =item B<-engine_impl>
 
 When used with the B<-engine> option, it specifies to also use
-engine B<id> for digest operations.
+engine I<id> for digest operations.
 
 =item I<file> ...
 

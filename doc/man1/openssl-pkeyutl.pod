@@ -29,8 +29,8 @@ B<openssl> B<pkeyutl>
 [B<-derive>]
 [B<-kdf> I<algorithm>]
 [B<-kdflen> I<length>]
-[B<-pkeyopt> I<opt:value>]
-[B<-pkeyopt_passin> I<opt:passarg>]
+[B<-pkeyopt> I<opt>:I<value>]
+[B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
 [B<-asn1parse>]
 [B<-rand> I<files>]
@@ -82,7 +82,7 @@ default.
 
 =item B<-sigfile> I<file>
 
-Signature file, required for B<verify> operations only
+Signature file, required for B<-verify> operations only
 
 =item B<-inkey> I<file>
 
@@ -94,7 +94,7 @@ The key format PEM, DER or ENGINE. Default is PEM.
 
 =item B<-passin> I<arg>
 
-The input key password source. For more information about the format of B<arg>
+The input key password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-peerkey> I<file>
@@ -103,7 +103,7 @@ The peer key file, used by key derivation (agreement) operations.
 
 =item B<-peerform> B<DER>|B<PEM>|B<ENGINE>
 
-The peer key format PEM, DER or ENGINE. Default is PEM.
+The peer key format B<PEM>, B<DER> or B<ENGINE>. Default is B<PEM>.
 
 =item B<-pubin>
 
@@ -146,7 +146,7 @@ Derive a shared secret using the peer key.
 
 =item B<-kdf> I<algorithm>
 
-Use key derivation function B<algorithm>.  The supported algorithms are
+Use key derivation function I<algorithm>.  The supported algorithms are
 at present B<TLS1-PRF> and B<HKDF>.
 Note: additional parameters and the KDF output length will normally have to be
 set for this to work.
@@ -157,16 +157,16 @@ for the supported string parameters of each algorithm.
 
 Set the output length for KDF.
 
-=item B<-pkeyopt> I<opt:value>
+=item B<-pkeyopt> I<opt>:I<value>
 
 Public key options specified as opt:value. See NOTES below for more details.
 
-=item B<-pkeyopt_passin> I<opt:passarg>
+=item B<-pkeyopt_passin> I<opt>[:I<passarg>]
 
-Allows reading a public key option B<opt> from stdin or a password source. If
-only opt is specified, the user will be prompted to enter the value on stdin.
-Alternatively, passarg can be specified which can be any value supported by
-B<PASS PHRASE ARGUMENTS> in L<openssl(1)>.
+Allows reading a public key option I<opt> from stdin or a password source.
+If only I<opt> is specified, the user will be prompted to enter a password on
+stdin.  Alternatively, I<passarg> can be specified which can be any value
+supported by B<PASS PHRASE ARGUMENTS> in L<openssl(1)>.
 
 =item B<-hexdump>
 
@@ -191,7 +191,7 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<pkeyutl>
+Specifying an engine (by its unique I<id> string) will cause B<pkeyutl>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -199,7 +199,7 @@ for all available algorithms.
 =item B<-engine_impl>
 
 When used with the B<-engine> option, it specifies to also use
-engine B<id> for crypto operations.
+engine I<id> for crypto operations.
 
 =back
 
@@ -208,9 +208,9 @@ engine B<id> for crypto operations.
 The operations and options supported vary according to the key algorithm
 and its implementation. The OpenSSL operations and options are indicated below.
 
-Unless otherwise mentioned all algorithms support the B<digest:alg> option
+Unless otherwise mentioned all algorithms support the B<digest:>I<alg> option
 which specifies the digest in use for sign, verify and verifyrecover operations.
-The value B<alg> should represent a digest name as used in the
+The value I<alg> should represent a digest name as used in the
 EVP_get_digestbyname() function for example B<sha1>. This value is not used to
 hash the input data. It is used (by some algorithms) for sanity-checking the
 lengths of data passed in to the B<pkeyutl> and for creating the structures that
@@ -237,9 +237,9 @@ B<pkeyopt> values are supported:
 
 =over 4
 
-=item B<rsa_padding_mode:mode>
+=item B<rsa_padding_mode:>I<mode>
 
-This sets the RSA padding mode. Acceptable values for B<mode> are B<pkcs1> for
+This sets the RSA padding mode. Acceptable values for I<mode> are B<pkcs1> for
 PKCS#1 padding, B<sslv23> for SSLv23 padding, B<none> for no padding, B<oaep>
 for B<OAEP> mode, B<x931> for X9.31 mode and B<pss> for PSS.
 
@@ -257,15 +257,15 @@ verify and verifyrecover are can be performed in this mode.
 For B<pss> mode only sign and verify are supported and the digest type must be
 specified.
 
-=item B<rsa_pss_saltlen:len>
+=item B<rsa_pss_saltlen:>I<len>
 
 For B<pss> mode only this option specifies the salt length. Three special
-values are supported: "digest" sets the salt length to the digest length,
-"max" sets the salt length to the maximum permissible value. When verifying
-"auto" causes the salt length to be automatically determined based on the
+values are supported: B<digest> sets the salt length to the digest length,
+B<max> sets the salt length to the maximum permissible value. When verifying
+B<auto> causes the salt length to be automatically determined based on the
 B<PSS> block structure.
 
-=item B<rsa_mgf1_md:digest>
+=item B<rsa_mgf1_md:>I<digest>
 
 For PSS and OAEP padding sets the MGF1 digest. If the MGF1 digest is not
 explicitly set in PSS mode then the signing digest is used.
@@ -276,11 +276,12 @@ explicitly set in PSS mode then the signing digest is used.
 
 The RSA-PSS algorithm is a restricted version of the RSA algorithm which only
 supports the sign and verify operations with PSS padding. The following
-additional B<pkeyopt> values are supported:
+additional B<-pkeyopt> values are supported:
 
 =over 4
 
-=item B<rsa_padding_mode:mode>, B<rsa_pss_saltlen:len>, B<rsa_mgf1_md:digest>
+=item B<rsa_padding_mode:>I<mode>, B<rsa_pss_saltlen:>I<len>,
+B<rsa_mgf1_md:>I<digest>
 
 These have the same meaning as the B<RSA> algorithm with some additional
 restrictions. The padding mode can only be set to B<pss> which is the
@@ -319,8 +320,8 @@ no additional options.
 
 These algorithms only support signing and verifying. OpenSSL only implements the
 "pure" variants of these algorithms so raw data can be passed directly to them
-without hashing them first. The option "-rawin" must be used with these
-algorithms with no "-digest" specified. Additionally OpenSSL only supports
+without hashing them first. The option B<-rawin> must be used with these
+algorithms with no B<-digest> specified. Additionally OpenSSL only supports
 "oneshot" operation with these algorithms. This means that the entire file to
 be signed/verified must be read into memory before processing it. Signing or
 Verifying very large files should be avoided. Additionally the size of the file
@@ -331,17 +332,17 @@ must be known for this to work. If the size of the file cannot be determined
 
 The SM2 algorithm supports sign, verify, encrypt and decrypt operations. For
 the sign and verify operations, SM2 requires an ID string to be passed in. The
-following B<pkeyopt> value is supported:
+following B<-pkeyopt> value is supported:
 
 =over 4
 
-=item B<sm2_id:string>
+=item B<sm2_id:>I<string>
 
 This sets the ID string used in SM2 sign or verify operations. While verifying
 an SM2 signature, the ID string must be the same one used when signing the data.
 Otherwise the verification will fail.
 
-=item B<sm2_hex_id:hex_string>
+=item B<sm2_hex_id:>I<hex_string>
 
 This sets the ID string used in SM2 sign or verify operations. While verifying
 an SM2 signature, the ID string must be the same one used when signing the data.

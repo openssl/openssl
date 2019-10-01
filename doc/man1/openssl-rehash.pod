@@ -45,17 +45,17 @@ but often B</usr/local/ssl/certs>) is processed.
 In order for a directory to be processed, the user must have write
 permissions on that directory, otherwise an error will be generated.
 
-The links created are of the form C<HHHHHHHH.D>, where each B<H>
-is a hexadecimal character and B<D> is a single decimal digit.
+The links created are of the form I<HHHHHHHH.D>, where each I<H>
+is a hexadecimal character and I<D> is a single decimal digit.
 When processing a directory, B<rehash> will first remove all links
 that have a name in that syntax, even if they are being used for some
 other purpose.
 To skip the removal step, use the B<-n> flag.
 Hashes for CRL's look similar except the letter B<r> appears after
-the period, like this: C<HHHHHHHH.rD>.
+the period, like this: I<HHHHHHHH.>B<r>I<D>.
 
 Multiple objects may have the same hash; they will be indicated by
-incrementing the B<D> value. Duplicates are found by comparing the
+incrementing the I<D> value. Duplicates are found by comparing the
 full SHA-1 fingerprint. A warning will be displayed if a duplicate
 is found.
 
@@ -75,7 +75,7 @@ a certificate or CRL:
   $OPENSSL x509 -hash -fingerprint -noout -in FILENAME
   $OPENSSL crl -hash -fingerprint -noout -in FILENAME
 
-where B<FILENAME> is the filename. It must output the hash of the
+where I<FILENAME> is the filename. It must output the hash of the
 file on the first line, and the fingerprint on the second,
 optionally prefixed with some text and an equals sign.
 

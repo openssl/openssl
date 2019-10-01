@@ -83,20 +83,20 @@ Common control strings used for fipsinstall are:
 
 =over 4
 
-=item B<key:string>
+=item B<key>:I<string>
 
 Specifies the MAC key as an alphanumeric string (use if the key contains
 printable characters only).
 The string length must conform to any restrictions of the MAC algorithm.
 A key must be specified for every MAC algorithm.
 
-=item B<hexkey:string>
+=item B<hexkey>:I<string>
 
 Specifies the MAC key in hexadecimal form (two hex digits per byte).
 The key length must conform to any restrictions of the MAC algorithm.
 A key must be specified for every MAC algorithm.
 
-=item B<digest:string>
+=item B<digest>:I<string>
 
 Used by HMAC as an alphanumeric string (use if the key contains printable
 characters only).

@@ -120,7 +120,7 @@ Verifies certificates against the CA certificate for "demoCA". If no
 certificates are specified on the command line it tries to verify the file
 "newcert.pem".  Invokes B<openssl verify> command.
 
-=item B<-extra-req> | B<-extra-ca> | B<-extra-pkcs12> | B<-extra-x509> | B<-extra-verify> <extra-params>
+=item B<-extra-req> | B<-extra-ca> | B<-extra-pkcs12> | B<-extra-x509> | B<-extra-verify> I<extra-params>
 
 The purpose of these parameters is to allow optional parameters to be supplied
 to B<openssl> that this command executes. The B<-extra-cmd> are specific to the

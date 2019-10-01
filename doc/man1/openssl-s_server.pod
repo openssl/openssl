@@ -274,7 +274,7 @@ provided to the client.
 =item B<-nameopt> I<val>
 
 Option which determines how the subject or issuer names are displayed. The
-B<val> argument can be a single option or multiple options separated by
+I<val> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
 
@@ -441,7 +441,7 @@ used in conjunction with B<-early_data>.
 
 =item B<-id_prefix> I<val>
 
-Generate SSL/TLS session IDs prefixed by B<val>. This is mostly useful
+Generate SSL/TLS session IDs prefixed by I<val>. This is mostly useful
 for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
 IDs (eg. with a certain prefix).
@@ -475,7 +475,7 @@ a verbose printout of the OCSP response.
 
 =item B<-status_timeout> I<int>
 
-Sets the timeout for OCSP response to B<int> seconds.
+Sets the timeout for OCSP response to I<int> seconds.
 
 =item B<-status_url> I<val>
 
@@ -652,24 +652,24 @@ Turns on non blocking I/O.
 
 =item B<-psk_identity> I<val>
 
-Expect the client to send PSK identity B<val> when using a PSK
+Expect the client to send PSK identity I<val> when using a PSK
 cipher suite, and warn if they do not.  By default, the expected PSK
 identity is the string "Client_identity".
 
 =item B<-psk_hint> I<val>
 
-Use the PSK identity hint B<val> when using a PSK cipher suite.
+Use the PSK identity hint I<val> when using a PSK cipher suite.
 
 =item B<-psk> I<val>
 
-Use the PSK key B<val> when using a PSK cipher suite. The key is
+Use the PSK key I<val> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 This option must be provided in order to use a PSK cipher.
 
 =item B<-psk_session> I<file>
 
-Use the pem encoded SSL_SESSION data stored in B<file> as the basis of a PSK.
+Use the pem encoded SSL_SESSION data stored in I<file> as the basis of a PSK.
 Note that this will only work if TLSv1.3 is negotiated.
 
 =item B<-listen>
@@ -713,7 +713,7 @@ disabling the ephemeral DH cipher suites.
 These flags enable the Enable the Application-Layer Protocol Negotiation
 or Next Protocol Negotiation (NPN) extension, respectively. ALPN is the
 IETF standard and replaces NPN.
-The B<val> list is a comma-separated list of supported protocol
+The I<val> list is a comma-separated list of supported protocol
 names.  The list should contain the most desirable protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
@@ -721,7 +721,7 @@ The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
 =item B<-engine> I<val>
 
-Specifying an engine (by its unique id string in B<val>) will cause B<s_server>
+Specifying an engine (by its unique id string in I<val>) will cause B<s_server>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

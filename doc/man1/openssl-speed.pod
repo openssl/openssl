@@ -28,7 +28,7 @@ B<openssl speed>
 This command is used to test the performance of cryptographic algorithms.
 To see the list of supported algorithms, use the I<list --digest-commands>
 or I<list --cipher-commands> command. The global CSPRNG is denoted by
-the I<rand> algorithm name.
+the B<rand> algorithm name.
 
 =head1 OPTIONS
 
@@ -40,7 +40,7 @@ Print out a usage message.
 
 =item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<speed>
+Specifying an engine (by its unique I<id> string) will cause B<speed>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -54,8 +54,8 @@ of hardware engines.
 =item B<-evp> I<algo>
 
 Use the specified cipher or message digest algorithm via the EVP interface.
-If B<algo> is an AEAD cipher, then you can pass <-aead> to benchmark a
-TLS-like sequence. And if B<algo> is a multi-buffer capable cipher, e.g.
+If I<algo> is an AEAD cipher, then you can pass B<-aead> to benchmark a
+TLS-like sequence. And if I<algo> is a multi-buffer capable cipher, e.g.
 aes-128-cbc-hmac-sha1, then B<-mb> will time multi-buffer operation.
 
 =item B<-hmac> I<digest>
@@ -84,16 +84,16 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<-primes> I<num>
 
-Generate a B<num>-prime RSA key and use it to run the benchmarks. This option
+Generate a I<num>-prime RSA key and use it to run the benchmarks. This option
 is only effective if RSA algorithm is specified to test.
 
 =item B<-seconds> I<num>
 
-Run benchmarks for B<num> seconds.
+Run benchmarks for I<num> seconds.
 
 =item B<-bytes> I<num>
 
-Run benchmarks on B<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
+Run benchmarks on I<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
 
 =item I<algorithm> ...
 
