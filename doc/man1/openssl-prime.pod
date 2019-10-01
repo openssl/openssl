@@ -13,7 +13,7 @@ B<openssl prime>
 [B<-bits> I<num>]
 [B<-safe>]
 [B<-checks> I<num>]
-[I<number...>]
+[I<number> ...]
 
 =head1 DESCRIPTION
 

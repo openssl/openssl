@@ -11,7 +11,7 @@ B<openssl provider>
 [B<-v>]
 [B<-vv>]
 [B<-vvv>]
-[ I<provider...> ]
+[I<provider> ...]
 
 =head1 DESCRIPTION
 

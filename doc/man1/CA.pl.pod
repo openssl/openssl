@@ -25,7 +25,7 @@ B<-newca>
 
 B<CA.pl> B<-pkcs12> [B<-extra-pkcs12> I<extra-params>] [I<certname>]
 
-B<CA.pl> B<-verify> [B<-extra-verify> I<extra-params>] I<certfile>...
+B<CA.pl> B<-verify> [B<-extra-verify> I<extra-params>] I<certfile> ...
 
 B<CA.pl> B<-revoke> [B<-extra-ca> I<extra-params>] I<certfile> [I<reason>]
 

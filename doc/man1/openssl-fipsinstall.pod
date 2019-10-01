@@ -17,8 +17,6 @@ B<openssl fipsinstall>
 [B<-mac_name> I<macname>]
 [B<-macopt> I<nm>:I<v>]
 
-B<openssl> I<fipsinstall> [B<...>]
-
 =head1 DESCRIPTION
 
 This utility is used to generate a FIPS module configuration file.

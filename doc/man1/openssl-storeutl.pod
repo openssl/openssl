@@ -23,7 +23,7 @@ B<openssl> B<storeutl>
 [B<-alias> I<arg>]
 [B<-fingerprint> I<arg>]
 [B<-I<digest>>]
-B<uri> ...
+I<uri> ...
 
 =head1 DESCRIPTION
 

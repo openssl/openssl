@@ -19,7 +19,7 @@ B<openssl speed>
 [B<-primes> I<num>]
 [B<-seconds> I<num>]
 [B<-bytes> I<num>]
-[B<algorithm...>]
+[I<algorithm> ...]
 
 =for comment ifdef cmac multi async_jobs engine
 
@@ -96,7 +96,7 @@ Run benchmarks for B<num> seconds.
 
 Run benchmarks on B<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
 
-=item B<algorithm...>
+=item I<algorithm> ...
 
 If any options are given, B<speed> tests those algorithms, otherwise a
 pre-compiled grand selection is tested.

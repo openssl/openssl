@@ -27,7 +27,7 @@ B<openssl dgst>
 [B<-rand> I<file...>]
 [B<-engine> I<id>]
 [B<-engine_impl>]
-[B<file...>]
+[I<file> ...]
 
 B<openssl> I<digest> [B<...>]
 
@@ -190,7 +190,7 @@ specified.
 When used with the B<-engine> option, it specifies to also use
 engine B<id> for digest operations.
 
-=item B<file...>
+=item I<file> ...
 
 File or files to digest. If no files are specified then standard input is
 used.

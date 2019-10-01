@@ -101,7 +101,7 @@ B<openssl> B<cms>
 [B<-to> I<addr>]
 [B<-from> I<addr>]
 [B<-subject> I<subj>]
-[I<cert.pem ...>]
+[I<cert.pem> ...]
 
 =for comment ifdef des-wrap engine
 
@@ -489,7 +489,7 @@ all others.
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item I<cert.pem...>
+=item I<cert.pem> ...
 
 One or more certificates of message recipients: used when encrypting
 a message.

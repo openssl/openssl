@@ -14,8 +14,6 @@ B<openssl mac>
 [B<-binary>]
 B<mac_name>
 
-B<openssl> I<mac> [B<...>] B<mac_name>
-
 =head1 DESCRIPTION
 
 The message authentication code functions output the MAC of a supplied input
