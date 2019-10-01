@@ -204,8 +204,7 @@ listens for connections on a given port using SSL/TLS.
 
 In addition to the options below, this command also supports
 the common and server only options documented
-in the "Supported Command Line Commands" section of the L<SSL_CONF_cmd(3)>
-manual page.
+L<SSL_CONF_cmd(3)/Supported Command Line Commands>
 
 =over 4
 

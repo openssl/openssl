@@ -85,8 +85,8 @@ see L<openssl(1)/Pass phrase options>.
 =item B<-passout> I<arg>
 
 Pass phrase source to encrypt any outputted private keys with. For more
-information about the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section
-in L<openssl(1)>.
+information about the format of I<arg>
+see L<openssl(1)/Pass phrase options>.
 
 =item B<-password> I<arg>
 
@@ -207,14 +207,12 @@ displays them.
 =item B<-pass> I<arg>, B<-passout> I<arg>
 
 The PKCS#12 file (i.e. output file) password source. For more information about
-the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section in
-L<openssl(1)>.
+the format of I<arg> see L<openssl(1)/Pass phrase options>.
 
 =item B<-passin> I<password>
 
 Pass phrase source to decrypt any input private keys with. For more information
-about the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section in
-L<openssl(1)>.
+about the format of I<arg> see L<openssl(1)/Pass phrase options>.
 
 =item B<-chain>
 
@@ -233,7 +231,7 @@ unless RC2 is disabled in which case triple DES is used.
 
 These options allow the algorithm used to encrypt the private key and
 certificates to be selected. Any PKCS#5 v1.5 or PKCS#12 PBE algorithm name
-can be used (see B<NOTES> section for more information). If a cipher name
+can be used (see L</NOTES> section for more information). If a cipher name
 (as output by C<openssl list -cipher-algorithms>) is specified then it
 is used with PKCS#5 v2.0. For interoperability reasons it is advisable to only
 use PKCS#12 algorithms.

@@ -83,8 +83,8 @@ below for more details.
 
 Set the public key algorithm option I<opt> to I<value>. The precise set of
 options supported depends on the public key algorithm used and its
-implementation. See L<KEY GENERATION OPTIONS> and
-L<PARAMETER GENERATION OPTIONS> below for more details.
+implementation. See L</KEY GENERATION OPTIONS> and
+L</PARAMETER GENERATION OPTIONS> below for more details.
 
 =item B<-genparam>
 
@@ -243,7 +243,7 @@ options.
 =head2 EC Parameter Generation Options
 
 The EC parameter generation options are the same as for key generation. See
-L<EC Key Generation Options> above.
+L</EC Key Generation Options> above.
 
 =head1 NOTES
 
