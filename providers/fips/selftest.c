@@ -141,9 +141,10 @@ end:
     OPENSSL_free(module_checksum);
     OPENSSL_free(indicator_checksum);
 
-    (*st->bio_free_cb)(bio_indicator);
-    (*st->bio_free_cb)(bio_module);
-
+    if (st != NULL) {
+        (*st->bio_free_cb)(bio_indicator);
+        (*st->bio_free_cb)(bio_module);
+    }
     FIPS_state = ok ? FIPS_STATE_RUNNING : FIPS_STATE_ERROR;
 
     return ok;
