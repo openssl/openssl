@@ -371,17 +371,14 @@ sub check {
         check_section_location($id, $contents, "EXAMPLES", "SEE ALSO");
     }
 
-    name_synopsis($id, $filename, $contents)
-        unless $contents =~ /=for comment generic/
-            or $filename =~ m@man[157]/@;
-
-    option_check($id, $filename, $contents)
-        unless $contents =~ /=for comment generic/
-            or $filename =~ m@man[357]/@;
-
-    functionname_check($id, $filename, $contents)
-        unless $contents =~ /=for comment generic/
-            or $filename =~ m@man[157]/@;
+    unless ( $contents =~ /=for comment generic/ ) {
+        if ( $filename =~ m|man3/| ) {
+            name_synopsis($id, $filename, $contents);
+            functionname_check($id, $filename, $contents);
+        } elsif ( $filename =~ m|man1/| ) {
+            option_check($id, $filename, $contents)
+        }
+    }
 
     err($id, "doesn't start with =pod")
         if $contents !~ /^=pod/;
