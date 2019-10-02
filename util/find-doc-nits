@@ -18,6 +18,8 @@ use Getopt::Std;
 use lib catdir(dirname($0), "perl");
 use OpenSSL::Util::Pod;
 
+my $debug = 0;                  # Set to 1 for debug output
+
 # Options.
 our($opt_d);
 our($opt_e);
@@ -203,6 +205,153 @@ sub check_head_style {
     }
 }
 
+# Because we have options and symbols with extra markup, we need
+# to take that into account, so we need a regexp that extracts
+# markup chunks, including recursive markup.
+# please read up on /(?R)/ in perlre(1)
+# (note: order is important, (?R) needs to come before .)
+# (note: non-greedy is important, or something like 'B<foo> and B<bar>'
+# will be captured as one item)
+my $markup_re =
+    qr/(                        # Capture group
+           [BIL]<               # The start of what we recurse on
+           (?:(?-1)|.)*?        # recurse the whole regexp (refering to
+                                # the last opened capture group, i.e. the
+                                # start of this regexp), or pick next
+                                # character.  Do NOT be greedy!
+           >                    # The end of what we recurse on
+       )/x;                     # (the x allows this sort of split up regexp)
+
+# Options must start with a dash, followed by a letter, possibly
+# followed by letters, digits, dashes and underscores, and the last
+# character must be a letter or a digit.
+# We do also accept the single -? or -n, where n is a digit
+my $option_re =
+    qr/(?:
+            \?                  # Single question mark
+            |
+            \d                  # Single digit
+            |
+            [[:alpha:]](?:[-_[:alnum:]]*?[[:alnum:]])?
+       )/x;
+
+# Checks of command option (man1) formatting.  The man1 checks are
+# restricted to the SYNOPSIS and OPTIONS sections, the rest is too
+# free form, we simply cannot be too strict there.
+
+sub is_option_normalise {
+    my ($id, $filename, $option) = @_;
+
+    # $unwrapped is the option with the outer B<> markup removed
+    my $unwrapped = $option;
+    $unwrapped =~ s/^B<//;
+    $unwrapped =~ s/>$//;
+    # $unmarked is the option with *all* markup removed
+    (my $unmarked = $option) =~ s/[BIL]<|>//msg;
+
+    # If we found an option, check it, collect it
+    if ($unwrapped =~ /^\s*-/) {
+        if ($unmarked =~ /^-${option_re}$/) {
+            return $unwrapped;
+        } else {
+            return "";          # Malformed option
+        }
+    }
+    return undef;               # Something else
+}
+
+sub option_check {
+    my ($id, $filename, $contents) = @_;
+    my $synopsis = ($contents =~ /=head1\s+SYNOPSIS(.*?)=head1/s, $1);
+
+    # Some pages have more than one OPTIONS section, let's make sure
+    # to get them all
+    my $options = '';
+    while($contents =~ /=head1\s+[A-Z ]*?OPTIONS$(.*?)(?==head1)/msg) {
+        $options .= $1;
+    }
+
+    my %synopsis_opts = ();
+    my %options_opts = ();
+
+
+    # Look for options with no or incorrect markup
+    while ($synopsis =~
+           /(?<![-<[:alnum:]])-(?:$markup_re|.)*(?![->[:alnum:]])/msg) {
+        err($id, "Malformed option [1] in SYNOPSIS: $&");
+    }
+
+    while ($synopsis =~ /$markup_re/msg) {
+        my $found = $&;
+        print STDERR "$id:DEBUG[option_check] SYNOPSIS: found $found\n"
+            if $debug;
+        my $option_uw = is_option_normalise($id, $filename, $found);
+        if ($option_uw) {
+            $synopsis_opts{$option_uw} = 1 if defined $option_uw;
+        } elsif (defined $option_uw) {
+            err($id, "Malformed option [2] in SYNOPSIS: $found");
+        }
+    }
+
+    # In OPTIONS, we look for =item paragraphs.
+    # (?=^\s*$) detects an empty line.
+    while ($options =~ /=item\s+(.*?)(?=^\s*$)/msg) {
+        my $item = $&;
+
+        while ($item =~ /(\[\s*)?($markup_re)/msg) {
+            my $found = $2;
+            print STDERR "$id:DEBUG[option_check] OPTIONS: found $&\n"
+                if $debug;
+            err($id, "Unexpected bracket in OPTIONS =item: $item")
+                if ($1 // '') ne '' && $found =~ /^B<\s*-/;
+
+            my $option_uw = is_option_normalise($id, $filename, $found);
+            if ($option_uw) {
+                $options_opts{$option_uw} = 1 if defined $option_uw;
+            } elsif (defined $option_uw) {
+                err($id, "Malformed option in OPTIONS: $found");
+            }
+        }
+    }
+
+    foreach (sort keys %synopsis_opts) {
+        err($id, "Option $_ from SYNOPSIS not present in OPTIONS")
+            unless defined $options_opts{$_};
+    }
+
+    foreach (sort keys %options_opts) {
+        err($id, "Option $_ from OPTIONS not present in SYNOPSIS")
+            unless defined $synopsis_opts{$_};
+    }
+}
+
+# Normal symbol form
+my $symbol_re = qr/[[:alpha:]_][_[:alnum:]]*?/;
+
+# Checks of function name (man3) formatting.  The man3 checks are
+# easier than the man1 checks, we only check the names followed by (),
+# and only the names that have POD markup.
+
+sub functionname_check {
+    my ($id, $filename, $contents) = @_;
+
+    while ($contents =~ /($markup_re)\(\)/msg) {
+        print STDERR "$id:DEBUG[functionname_check] SYNOPSIS: found $&\n"
+            if $debug;
+
+        my $symbol = $1;
+        (my $unmarked = $symbol) =~ s/[BIL]<|>//msg;
+
+        err($id, "Malformed symbol: $symbol")
+            unless $symbol =~ /^B<.*>$/ && $unmarked =~ /^${symbol_re}$/
+    }
+
+    # We can't do the kind of collecting coolness that option_check(),
+    # because there are too many things that can't be found in name
+    # repositories like the NAME sections, such as symbol names with
+    # a variable part (typically marked up as B<foo_I<TYPE>_bar>
+}
+
 sub check {
     my $filename = shift;
     my $dirname = basename(dirname($filename));
@@ -226,6 +375,14 @@ sub check {
     }
 
     name_synopsis($id, $filename, $contents)
+        unless $contents =~ /=for comment generic/
+            or $filename =~ m@man[157]/@;
+
+    option_check($id, $filename, $contents)
+        unless $contents =~ /=for comment generic/
+            or $filename =~ m@man[357]/@;
+
+    functionname_check($id, $filename, $contents)
         unless $contents =~ /=for comment generic/
             or $filename =~ m@man[157]/@;
 
@@ -255,20 +412,6 @@ sub check {
         if $contents =~ /=over([^ ][^24])/;
     err($id, "Possible version style issue")
         if $contents =~ /OpenSSL version [019]/;
-    err($id, "Brackets on item line")
-        if $contents =~ /=item \[/;
-    if ( $contents !~ /=for comment generic/) {
-        # Some API pages have B<foo<I<TYPE>bar>.
-        err($id, "Bad flag formatting inside B<>")
-            if $contents =~ /B<-[A-Za-z_ ]+ /;
-        while ( $contents =~ /([BI])<([^>]*)>/g ) {
-            my $B = $1;
-            my $T = $2;
-            next if $T =~ /E</;  # Assume it's E<lt>
-            err($id, "Bad content inside $B<$T>")
-                if $T =~ /[<|]/;
-        }
-    }
 
     if ( $contents !~ /=for comment multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines
