@@ -285,6 +285,9 @@ sub option_check {
         $options .= $1;
     }
 
+    my %synopsis_opts = ();
+    my %options_opts = ();
+
     # Look for options with no or incorrect markup
     while ( $synopsis =~
             /(?<![-<[:alnum:]])-(?:$markup_re|.)*(?![->[:alnum:]])/msg ) {
@@ -296,8 +299,11 @@ sub option_check {
         print STDERR "$id:DEBUG[option_check] SYNOPSIS: found $found\n"
             if $debug;
         my $option_uw = normalise_option($id, $filename, $found);
-        err($id, "Malformed option [2] in SYNOPSIS: $found")
-            if defined $option_uw && $option_uw eq '';
+        if ( $option_uw ) {
+            $synopsis_opts{$option_uw} = 1 if defined $option_uw;
+        } elsif ( defined $option_uw ) {
+            err($id, "Malformed option [2] in SYNOPSIS: $found");
+        }
     }
 
     # In OPTIONS, we look for =item paragraphs.
@@ -313,9 +319,22 @@ sub option_check {
                 if ($1 // '') ne '' && $found =~ /^B<\s*-/;
 
             my $option_uw = normalise_option($id, $filename, $found);
-            err($id, "Malformed option in OPTIONS: $found")
-                if defined $option_uw && $option_uw eq '';
+            if ( $option_uw ) {
+                $options_opts{$option_uw} = 1 if defined $option_uw;
+            } elsif ( defined $option_uw ) {
+                err($id, "Malformed option in OPTIONS: $found");
+            }
         }
+    }
+
+    foreach (sort keys %synopsis_opts) {
+        err($id, "Option $_ from SYNOPSIS not present in OPTIONS")
+            unless defined $options_opts{$_};
+    }
+
+    foreach (sort keys %options_opts) {
+        err($id, "Option $_ from OPTIONS not present in SYNOPSIS")
+            unless defined $synopsis_opts{$_};
     }
 }
 
