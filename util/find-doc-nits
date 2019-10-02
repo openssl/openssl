@@ -235,45 +235,51 @@ my $option_re =
             [[:alpha:]](?:[-_[:alnum:]]*?[[:alnum:]])?
        )/x;
 
-# Checks of command option (man1) formatting.  The man1 checks are
-# restricted to the SYNOPSIS and OPTIONS sections, the rest is too
-# free form, we simply cannot be too strict there.
-
-sub is_option_normalise {
-    my ($id, $filename, $option) = @_;
+# Helper function to check if a given $thing is properly marked up
+# option.  It returns one of these values:
+#
+# undef         if it's not an option
+# ""            if it's a malformed option
+# $unwrapped    the option with the outermost B<> wrapping removed.
+sub normalise_option {
+    my $id = shift;
+    my $filename = shift;
+    my $thing = shift;
 
     # $unwrapped is the option with the outer B<> markup removed
-    my $unwrapped = $option;
-    $unwrapped =~ s/^B<//;
-    $unwrapped =~ s/>$//;
+    my $unwrapped = ($thing =~ /^B<(.*?)>$/, $1);
     # $unmarked is the option with *all* markup removed
-    (my $unmarked = $option) =~ s/[BIL]<|>//msg;
+    (my $unmarked = $thing) =~ s/[BIL]<|>//msg;
 
     # If we found an option, check it, collect it
     if ($unwrapped =~ /^\s*-/) {
-        if ($unmarked =~ /^-${option_re}$/) {
-            return $unwrapped;
-        } else {
-            return "";          # Malformed option
-        }
+        return $unwrapped       # return option with outer B<> removed
+            if $unmarked =~ /^-${option_re}$/;
+        return "";              # Malformed option
     }
     return undef;               # Something else
 }
 
+# Checks of command option (man1) formatting.  The man1 checks are
+# restricted to the SYNOPSIS and OPTIONS sections, the rest is too
+# free form, we simply cannot be too strict there.
+
 sub option_check {
-    my ($id, $filename, $contents) = @_;
+    my $id = shift;
+    my $filename = shift;
+    my $contents = shift;
+
     my $synopsis = ($contents =~ /=head1\s+SYNOPSIS(.*?)=head1/s, $1);
 
     # Some pages have more than one OPTIONS section, let's make sure
     # to get them all
     my $options = '';
-    while($contents =~ /=head1\s+[A-Z ]*?OPTIONS$(.*?)(?==head1)/msg) {
+    while ($contents =~ /=head1\s+[A-Z ]*?OPTIONS$(.*?)(?==head1)/msg) {
         $options .= $1;
     }
 
     my %synopsis_opts = ();
     my %options_opts = ();
-
 
     # Look for options with no or incorrect markup
     while ($synopsis =~
@@ -285,7 +291,7 @@ sub option_check {
         my $found = $&;
         print STDERR "$id:DEBUG[option_check] SYNOPSIS: found $found\n"
             if $debug;
-        my $option_uw = is_option_normalise($id, $filename, $found);
+        my $option_uw = normalise_option($id, $filename, $found);
         if ($option_uw) {
             $synopsis_opts{$option_uw} = 1 if defined $option_uw;
         } elsif (defined $option_uw) {
@@ -305,7 +311,7 @@ sub option_check {
             err($id, "Unexpected bracket in OPTIONS =item: $item")
                 if ($1 // '') ne '' && $found =~ /^B<\s*-/;
 
-            my $option_uw = is_option_normalise($id, $filename, $found);
+            my $option_uw = normalise_option($id, $filename, $found);
             if ($option_uw) {
                 $options_opts{$option_uw} = 1 if defined $option_uw;
             } elsif (defined $option_uw) {
@@ -333,23 +339,26 @@ my $symbol_re = qr/[[:alpha:]_][_[:alnum:]]*?/;
 # and only the names that have POD markup.
 
 sub functionname_check {
-    my ($id, $filename, $contents) = @_;
+    my $id = shift;
+    my $filename = shift;
+    my $contents = shift;
 
     while ($contents =~ /($markup_re)\(\)/msg) {
         print STDERR "$id:DEBUG[functionname_check] SYNOPSIS: found $&\n"
             if $debug;
 
         my $symbol = $1;
-        (my $unmarked = $symbol) =~ s/[BIL]<|>//msg;
+        my $unmarked = $symbol;
+        $unmarked =~ s/[BIL]<|>//msg;
 
         err($id, "Malformed symbol: $symbol")
             unless $symbol =~ /^B<.*>$/ && $unmarked =~ /^${symbol_re}$/
     }
 
-    # We can't do the kind of collecting coolness that option_check(),
-    # because there are too many things that can't be found in name
-    # repositories like the NAME sections, such as symbol names with
-    # a variable part (typically marked up as B<foo_I<TYPE>_bar>
+    # We can't do the kind of collecting coolness that option_check()
+    # does, because there are too many things that can't be found in
+    # name repositories like the NAME sections, such as symbol names
+    # with a variable part (typically marked up as B<foo_I<TYPE>_bar>
 }
 
 sub check {
