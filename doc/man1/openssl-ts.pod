@@ -13,7 +13,7 @@ B<-query>
 [B<-config> I<configfile>]
 [B<-data> I<file_to_hash>]
 [B<-digest> I<digest_bytes>]
-[B<->I<digest>]
+[B<-I<digest>>]
 [B<-tspolicy> I<object_id>]
 [B<-no_nonce>]
 [B<-cert>]
@@ -29,7 +29,7 @@ B<-reply>
 [B<-passin> I<password_src>]
 [B<-signer> I<tsa_cert.pem>]
 [B<-inkey> I<file_or_id>]
-[B<->I<digest>]
+[B<-I<digest>>]
 [B<-chain> I<certs_file.pem>]
 [B<-tspolicy> I<object_id>]
 [B<-in> I<response.tsr>]
@@ -167,7 +167,7 @@ per byte, the bytes optionally separated by colons (e.g. 1A:F6:01:... or
 1AF601...). The number of bytes must match the message digest algorithm
 in use. (Optional)
 
-=item B<->I<digest>
+=item B<-I<digest>>
 
 The message digest to apply to the data file.
 Any digest supported by the OpenSSL B<dgst> command can be used.
@@ -260,7 +260,7 @@ B<signer_key> config file option. (Optional)
 If no engine is used, the argument is taken as a file; if an engine is
 specified, the argument is given to the engine as a key identifier.
 
-=item B<->I<digest>
+=item B<-I<digest>>
 
 Signing digest to use. Overrides the B<signer_digest> config file
 option. (Mandatory unless specified in the config file)
@@ -461,7 +461,7 @@ command line option. (Optional)
 =item B<signer_digest>
 
 Signing digest to use. The same as the
-B<->I<digest> command line option. (Mandatory unless specified on the command
+B<-I<digest>> command line option. (Mandatory unless specified on the command
 line)
 
 =item B<default_policy>

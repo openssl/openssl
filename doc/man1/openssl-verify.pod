@@ -49,9 +49,9 @@ B<openssl> B<verify>
 [B<-verify_name> I<name>]
 [B<-x509_strict>]
 [B<-show_chain>]
-[B<-sm2-id string>]
-[B<-sm2-hex-id hex-string>]
-[B<->]
+[B<-sm2-id> I<string>]
+[B<-sm2-hex-id> I<hex-string>]
+[B<-->]
 [certificates]
 
 =for comment ifdef engine sm2-id sm2-hex-id
@@ -329,7 +329,7 @@ required by the SM2 signature algorithm for signing and verification.
 Specify a binary ID string to use when signing or verifying using an SM2
 certificate. The argument for this option is string of hexadecimal digits.
 
-=item B<->
+=item B<-->
 
 Indicates the last option. All arguments following this are assumed to be
 certificate files. This is useful if the first certificate filename begins

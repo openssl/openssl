@@ -16,7 +16,7 @@ B<openssl> B<smime>
 [B<-pk7out>]
 [B<-binary>]
 [B<-crlfeol>]
-[B<->I<cipher>]
+[B<-I<cipher>>]
 [B<-in> I<file>]
 [B<-CAfile> I<file>]
 [B<-CApath> I<dir>]
@@ -203,7 +203,7 @@ Do not load the trusted CA certificates from the default directory location.
 Digest algorithm to use when signing or resigning. If not present then the
 default digest algorithm for the signing key will be used (usually SHA1).
 
-=item B<->I<cipher>
+=item B<-I<cipher>>
 
 The encryption algorithm to use. For example DES  (56 bits) - B<-des>,
 triple DES (168 bits) - B<-des3>,
@@ -316,7 +316,7 @@ This can be used with a subsequent B<-rand> flag.
 One or more certificates of message recipients: used when encrypting
 a message.
 
-=item B<-to, -from, -subject>
+=item B<-to>, B<-from>, B<-subject>
 
 The relevant mail headers. These are included outside the signed
 portion of a message so they may be included manually. If signing

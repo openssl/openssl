@@ -97,7 +97,7 @@ all others.
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-pkcs, -oaep, -ssl, -raw>
+=item B<-pkcs>, B<-oaep>, B<-ssl>, B<-raw>
 
 The padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
 special padding used in SSL v2 backwards compatible handshakes,
