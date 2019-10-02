@@ -50,23 +50,43 @@ static int deflt_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     return 1;
 }
 
+/*
+ * For the algorithm names, we use the following formula for our primary
+ * names:
+ *
+ *     ALGNAME[VERSION?][-SUBNAME[VERSION?]?][-SIZE?][-MODE?]
+ *
+ *     VERSION is only present if there are multiple versions of
+ *     an alg (MD2, MD4, MD5).  It may be omitted if there is only
+ *     one version (if a subsequent version is released in the future,
+ *     we can always change the canonical name, and add the old name
+ *     as an alias).
+ *
+ *     SUBNAME may be present where we are combining multiple
+ *     algorithms together, e.g. MD5-SHA1.
+ *
+ *     SIZE is only present if multiple versions of an algorithm exist
+ *     with different sizes (e.g. AES-128-CBC, AES-256-CBC)
+ *
+ *     MODE is only present where applicable.
+ *
+ * We add diverse other names where applicable, such as the names that
+ * NIST uses, or that are used for ASN.1 OBJECT IDENTIFIERs, or names
+ * we have used historically.
+ */
 static const OSSL_ALGORITHM deflt_digests[] = {
-    /*
-     * NIST names followed by our (historical) names
-     * Ref: FIPS PUB 180-4, Secure Hash Standard (SHS)
-     */
-    { "SHA-1:SHA1", "default=yes", sha1_functions },
-    { "SHA-224:SHA224", "default=yes", sha224_functions },
-    { "SHA-256:SHA256", "default=yes", sha256_functions },
-    { "SHA-384:SHA384", "default=yes", sha384_functions },
-    { "SHA-512:SHA512", "default=yes", sha512_functions },
-    { "SHA-512/224:SHA512-224", "default=yes", sha512_224_functions },
-    { "SHA-512/256:SHA512-256", "default=yes", sha512_256_functions },
+    /* Our primary name:NIST name[:our older names] */
+    { "SHA1:SHA-1", "default=yes", sha1_functions },
+    { "SHA2-224:SHA-224:SHA224", "default=yes", sha224_functions },
+    { "SHA2-256:SHA-256:SHA256", "default=yes", sha256_functions },
+    { "SHA2-384:SHA-384:SHA384", "default=yes", sha384_functions },
+    { "SHA2-512:SHA-512:SHA512", "default=yes", sha512_functions },
+    { "SHA2-512/224:SHA-512/224:SHA512-224", "default=yes",
+      sha512_224_functions },
+    { "SHA2-512/256:SHA-512/256:SHA512-256", "default=yes",
+      sha512_256_functions },
 
-    /*
-     * NIST SHA3 names align with ours
-     * Ref: FIPS PUB 202, SHA-3 Standard
-     */
+    /* We agree with NIST here, so one name only */
     { "SHA3-224", "default=yes", sha3_224_functions },
     { "SHA3-256", "default=yes", sha3_256_functions },
     { "SHA3-384", "default=yes", sha3_384_functions },
@@ -79,19 +99,17 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { "KECCAK_KMAC128", "default=yes", keccak_kmac_128_functions },
     { "KECCAK_KMAC256", "default=yes", keccak_kmac_256_functions },
 
-    /*
-     * NIST SHAKE names align with ours
-     * Ref: FIPS PUB 202, SHA-3 Standard
-     */
-    { "SHAKE128", "default=yes", shake_128_functions },
-    { "SHAKE256", "default=yes", shake_256_functions },
+    /* Our primary name:NIST name */
+    { "SHAKE-128:SHAKE128", "default=yes", shake_128_functions },
+    { "SHAKE-256:SHAKE256", "default=yes", shake_256_functions },
 
 #ifndef OPENSSL_NO_BLAKE2
     /*
      * https://blake2.net/ doesn't specify size variants,
      * but mentions that Bouncy Castle uses the names
      * BLAKE2b-160, BLAKE2b-256, BLAKE2b-384, and BLAKE2b-512
-     * So we follow that pattern and add our (historical) names
+     * If we assume that "2b" and "2s" are versions, that pattern
+     * fits with ours.  We also add our historical names.
      */
     { "BLAKE2b-256:BLAKE2s256", "default=yes", blake2s256_functions },
     { "BLAKE2s-512:BLAKE2b512", "default=yes", blake2b512_functions },
@@ -110,11 +128,6 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 };
 
 static const OSSL_ALGORITHM deflt_ciphers[] = {
-    /*
-     * Standard naming: {name}-{keybits}-{mode}
-     * Additionally, we have some names from ASN.1 modules,
-     * and some historical ones.
-     */
     { "AES-256-ECB", "default=yes", aes256ecb_functions },
     { "AES-192-ECB", "default=yes", aes192ecb_functions },
     { "AES-128-ECB", "default=yes", aes128ecb_functions },
@@ -143,23 +156,23 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-192-OCB", "default=yes", aes192ocb_functions },
     { "AES-128-OCB", "default=yes", aes128ocb_functions },
 #endif /* OPENSSL_NO_OCB */
-    { "AES-256-GCM:id-aes256-GCM", "fips=yes", aes256gcm_functions },
-    { "AES-192-GCM:id-aes192-GCM", "fips=yes", aes192gcm_functions },
-    { "AES-128-GCM:id-aes128-GCM", "fips=yes", aes128gcm_functions },
-    { "AES-256-CCM:id-aes256-CCM", "fips=yes", aes256ccm_functions },
-    { "AES-192-CCM:id-aes192-CCM", "fips=yes", aes192ccm_functions },
-    { "AES-128-CCM:id-aes128-CCM", "fips=yes", aes128ccm_functions },
-    { "AES-256-WRAP:id-aes256-wrap:AES256-WRAP", "fips=yes",
+    { "AES-256-GCM:id-aes256-GCM", "default=yes", aes256gcm_functions },
+    { "AES-192-GCM:id-aes192-GCM", "default=yes", aes192gcm_functions },
+    { "AES-128-GCM:id-aes128-GCM", "default=yes", aes128gcm_functions },
+    { "AES-256-CCM:id-aes256-CCM", "default=yes", aes256ccm_functions },
+    { "AES-192-CCM:id-aes192-CCM", "default=yes", aes192ccm_functions },
+    { "AES-128-CCM:id-aes128-CCM", "default=yes", aes128ccm_functions },
+    { "AES-256-WRAP:id-aes256-wrap:AES256-WRAP", "default=yes",
       aes256wrap_functions },
-    { "AES-192-WRAP:id-aes192-wrap:AES192-WRAP", "fips=yes",
+    { "AES-192-WRAP:id-aes192-wrap:AES192-WRAP", "default=yes",
       aes192wrap_functions },
-    { "AES-128-WRAP:id-aes128-wrap:AES128-WRAP", "fips=yes",
+    { "AES-128-WRAP:id-aes128-wrap:AES128-WRAP", "default=yes",
       aes128wrap_functions },
-    { "AES-256-WRAP-PAD:id-aes256-wrap-pad:AES256-WRAP-PAD", "fips=yes",
+    { "AES-256-WRAP-PAD:id-aes256-wrap-pad:AES256-WRAP-PAD", "default=yes",
       aes256wrappad_functions },
-    { "AES-192-WRAP-PAD:id-aes192-wrap-pad:AES192-WRAP-PAD", "fips=yes",
+    { "AES-192-WRAP-PAD:id-aes192-wrap-pad:AES192-WRAP-PAD", "default=yes",
       aes192wrappad_functions },
-    { "AES-128-WRAP-PAD:id-aes128-wrap-pad:AES128-WRAP-PAD", "fips=yes",
+    { "AES-128-WRAP-PAD:id-aes128-wrap-pad:AES128-WRAP-PAD", "default=yes",
       aes128wrappad_functions },
 #ifndef OPENSSL_NO_ARIA
     { "ARIA-256-GCM", "default=yes", aria256gcm_functions },
@@ -214,8 +227,8 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "CAMELLIA-128-CTR", "default=yes", camellia128ctr_functions },
 #endif /* OPENSSL_NO_CAMELLIA */
 #ifndef OPENSSL_NO_DES
-    { "DES-EDE3-ECB:DES-EDE3", "fips=yes", tdes_ede3_ecb_functions },
-    { "DES-EDE3-CBC:DES3", "fips=yes", tdes_ede3_cbc_functions },
+    { "DES-EDE3-ECB:DES-EDE3", "default=yes", tdes_ede3_ecb_functions },
+    { "DES-EDE3-CBC:DES3", "default=yes", tdes_ede3_cbc_functions },
     { "DES-EDE3-OFB", "default=yes", tdes_ede3_ofb_functions },
     { "DES-EDE3-CFB", "default=yes", tdes_ede3_cfb_functions },
     { "DES-EDE3-CFB8", "default=yes", tdes_ede3_cfb8_functions },

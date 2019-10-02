@@ -307,23 +307,43 @@ const char *ossl_prov_util_nid_to_name(int nid)
     return NULL;
 }
 
+/*
+ * For the algorithm names, we use the following formula for our primary
+ * names:
+ *
+ *     ALGNAME[VERSION?][-SUBNAME[VERSION?]?][-SIZE?][-MODE?]
+ *
+ *     VERSION is only present if there are multiple versions of
+ *     an alg (MD2, MD4, MD5).  It may be omitted if there is only
+ *     one version (if a subsequent version is released in the future,
+ *     we can always change the canonical name, and add the old name
+ *     as an alias).
+ *
+ *     SUBNAME may be present where we are combining multiple
+ *     algorithms together, e.g. MD5-SHA1.
+ *
+ *     SIZE is only present if multiple versions of an algorithm exist
+ *     with different sizes (e.g. AES-128-CBC, AES-256-CBC)
+ *
+ *     MODE is only present where applicable.
+ *
+ * We add diverse other names where applicable, such as the names that
+ * NIST uses, or that are used for ASN.1 OBJECT IDENTIFIERs, or names
+ * we have used historically.
+ */
 static const OSSL_ALGORITHM fips_digests[] = {
-    /*
-     * NIST names followed by our (historical) names
-     * Ref: FIPS PUB 180-4, Secure Hash Standard (SHS)
-     */
-    { "SHA-1:SHA1", "fips=yes", sha1_functions },
-    { "SHA-224:SHA224", "fips=yes", sha224_functions },
-    { "SHA-256:SHA256", "fips=yes", sha256_functions },
-    { "SHA-384:SHA384", "fips=yes", sha384_functions },
-    { "SHA-512:SHA512", "fips=yes", sha512_functions },
-    { "SHA-512/224:SHA512-224", "fips=yes", sha512_224_functions },
-    { "SHA-512/256:SHA512-256", "fips=yes", sha512_256_functions },
+    /* Our primary name:NiST name[:our older names] */
+    { "SHA1:SHA-1", "fips=yes", sha1_functions },
+    { "SHA2-224:SHA-224:SHA224", "fips=yes", sha224_functions },
+    { "SHA2-256:SHA-256:SHA256", "fips=yes", sha256_functions },
+    { "SHA2-384:SHA-384:SHA384", "fips=yes", sha384_functions },
+    { "SHA2-512:SHA-512:SHA512", "fips=yes", sha512_functions },
+    { "SHA2-512/224:SHA-512/224:SHA512-224", "fips=yes",
+      sha512_224_functions },
+    { "SHA2-512/256:SHA-512/256:SHA512-256", "fips=yes",
+      sha512_256_functions },
 
-    /*
-     * NIST SHA3 names align with ours
-     * Ref: FIPS PUB 202, SHA-3 Standard
-     */
+    /* We agree with NIST here, so one name only */
     { "SHA3-224", "fips=yes", sha3_224_functions },
     { "SHA3-256", "fips=yes", sha3_256_functions },
     { "SHA3-384", "fips=yes", sha3_384_functions },
@@ -339,11 +359,7 @@ static const OSSL_ALGORITHM fips_digests[] = {
 };
 
 static const OSSL_ALGORITHM fips_ciphers[] = {
-    /*
-     * Standard naming: {name}-{keybits}-{mode}
-     * Additionally, we have some names from ASN.1 modules,
-     * and some historical ones.
-     */
+    /* Our primary name[:ASN.1 OID name][:our older names] */
     { "AES-256-ECB", "fips=yes", aes256ecb_functions },
     { "AES-192-ECB", "fips=yes", aes192ecb_functions },
     { "AES-128-ECB", "fips=yes", aes128ecb_functions },
