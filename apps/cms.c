@@ -122,7 +122,7 @@ const OPTIONS cms_options[] = {
     {"EncryptedData_encrypt", OPT_ED_ENCRYPT, '-',
         "Create CMS \"EncryptedData\" object using symmetric key"},
     {"debug_decrypt", OPT_DEBUG_DECRYPT, '-',
-        "Ignore errors when decryption recipients (see documentation)"},
+        "Ignore errors when decrypting recipients (see documentation)"},
     {"text", OPT_TEXT, '-', "Include or delete text MIME headers"},
     {"asciicrlf", OPT_ASCIICRLF, '-',
         "Perform CRLF canonicalisation when signing"},
