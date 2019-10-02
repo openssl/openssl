@@ -884,7 +884,7 @@ if ( $opt_n ) {
     # If not given args, check that all man1 commands are named properly.
     if ( scalar @ARGV == 0 ) {
         foreach (glob('doc/man1/*.pod')) {
-            next if /CA.pl/ || /openssl.pod/;
+            next if /CA.pl/ || /openssl\.pod/ || /tsget\.pod/;
             err("$_ doesn't start with openssl-") unless /openssl-/;
         }
     }
