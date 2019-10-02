@@ -809,6 +809,7 @@ sub checkflags {
     }
     if ( scalar @undocced > 0 ) {
         foreach ( @undocced ) {
+            next if /-/; # Skip the -- end-of-flags marker
             err("$doc: undocumented option -$_");
         }
     }
