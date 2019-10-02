@@ -257,7 +257,7 @@ sub normalise_option {
 
 
     # If we found an option, check it, collect it
-    if ($unwrapped =~ /^\s*-/) {
+    if ( $unwrapped =~ /^\s*-/ ) {
         return $unwrapped       # return option with outer B<> removed
             if $unmarked =~ /^-${option_re}$/;
         return "";              # Malformed option
@@ -279,7 +279,7 @@ sub option_check {
     # Some pages have more than one OPTIONS section, let's make sure
     # to get them all
     my $options = '';
-    while ($contents =~ /=head1\s+[A-Z ]*?OPTIONS$(.*?)(?==head1)/msg) {
+    while ( $contents =~ /=head1\s+[A-Z ]*?OPTIONS$(.*?)(?==head1)/msg ) {
         $options .= $1;
     }
 
@@ -287,29 +287,29 @@ sub option_check {
     my %options_opts = ();
 
     # Look for options with no or incorrect markup
-    while ($synopsis =~
-           /(?<![-<[:alnum:]])-(?:$markup_re|.)*(?![->[:alnum:]])/msg) {
+    while ( $synopsis =~
+            /(?<![-<[:alnum:]])-(?:$markup_re|.)*(?![->[:alnum:]])/msg ) {
         err($id, "Malformed option [1] in SYNOPSIS: $&");
     }
 
-    while ($synopsis =~ /$markup_re/msg) {
+    while ( $synopsis =~ /$markup_re/msg ) {
         my $found = $&;
         print STDERR "$id:DEBUG[option_check] SYNOPSIS: found $found\n"
             if $debug;
         my $option_uw = normalise_option($id, $filename, $found);
-        if ($option_uw) {
+        if ( $option_uw ) {
             $synopsis_opts{$option_uw} = 1 if defined $option_uw;
-        } elsif (defined $option_uw) {
+        } elsif ( defined $option_uw ) {
             err($id, "Malformed option [2] in SYNOPSIS: $found");
         }
     }
 
     # In OPTIONS, we look for =item paragraphs.
     # (?=^\s*$) detects an empty line.
-    while ($options =~ /=item\s+(.*?)(?=^\s*$)/msg) {
+    while ( $options =~ /=item\s+(.*?)(?=^\s*$)/msg ) {
         my $item = $&;
 
-        while ($item =~ /(\[\s*)?($markup_re)/msg) {
+        while ( $item =~ /(\[\s*)?($markup_re)/msg ) {
             my $found = $2;
             print STDERR "$id:DEBUG[option_check] OPTIONS: found $&\n"
                 if $debug;
@@ -317,9 +317,9 @@ sub option_check {
                 if ($1 // '') ne '' && $found =~ /^B<\s*-/;
 
             my $option_uw = normalise_option($id, $filename, $found);
-            if ($option_uw) {
+            if ( $option_uw ) {
                 $options_opts{$option_uw} = 1 if defined $option_uw;
-            } elsif (defined $option_uw) {
+            } elsif ( defined $option_uw ) {
                 err($id, "Malformed option in OPTIONS: $found");
             }
         }
@@ -348,7 +348,7 @@ sub functionname_check {
     my $filename = shift;
     my $contents = shift;
 
-    while ($contents =~ /($markup_re)\(\)/msg) {
+    while ( $contents =~ /($markup_re)\(\)/msg ) {
         print STDERR "$id:DEBUG[functionname_check] SYNOPSIS: found $&\n"
             if $debug;
 
