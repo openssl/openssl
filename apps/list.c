@@ -337,6 +337,8 @@ static void list_options_for_command(const char *command)
             continue;
         BIO_printf(bio_out, "%s %c\n", o->name, o->valtype);
     }
+    /* Always output the -- marker since it is sometimes documented. */
+    BIO_printf(bio_out, "- -\n");
 }
 
 static void list_type(FUNC_TYPE ft, int one)
