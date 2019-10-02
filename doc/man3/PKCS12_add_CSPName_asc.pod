@@ -14,7 +14,7 @@ PKCS12_add_CSPName_asc - Add a Microsoft CSP Name attribute to a PKCS#12 safeBag
 
 PKCS12_add_CSPName_asc() adds an ASCII string representation of the Microsoft CSP Name attribute to a PKCS#12 safeBag.
 
-B<bag> is the B<PKCS12_SAFEBAG> to add the attribute to.
+I<bag> is the B<PKCS12_SAFEBAG> to add the attribute to.
 
 =head1 RETURN VALUES
 

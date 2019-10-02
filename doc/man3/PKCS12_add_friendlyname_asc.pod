@@ -23,7 +23,7 @@ PKCS12_add_friendlyname_asc() adds an ASCII string representation of the PKCS#9 
 PKCS12_add_friendlyname_utf8() adds a UTF-8 string representation of the PKCS#9 friendlyName attribute to a PKCS#12 safeBag.
 PKCS12_add_friendlyname_uni() adds a Unicode string representation of the PKCS#9 friendlyName attribute to a PKCS#12 safeBag.
 
-B<bag> is the B<PKCS12_SAFEBAG> to add the attribute to.
+I<bag> is the B<PKCS12_SAFEBAG> to add the attribute to.
 
 =head1 RETURN VALUES
 
