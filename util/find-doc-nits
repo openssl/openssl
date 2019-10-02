@@ -246,10 +246,15 @@ sub normalise_option {
     my $filename = shift;
     my $thing = shift;
 
+    my $unwrapped = $thing;
+    my $unmarked = $thing;
+
     # $unwrapped is the option with the outer B<> markup removed
-    my $unwrapped = ($thing =~ /^B<(.*?)>$/, $1);
+    $unwrapped =~ s/^B<//;
+    $unwrapped =~ s/>$//;
     # $unmarked is the option with *all* markup removed
-    (my $unmarked = $thing) =~ s/[BIL]<|>//msg;
+    $unmarked =~ s/[BIL]<|>//msg;
+
 
     # If we found an option, check it, collect it
     if ($unwrapped =~ /^\s*-/) {
