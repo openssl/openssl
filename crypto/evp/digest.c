@@ -564,13 +564,14 @@ const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md)
 
 const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
 {
-    EVP_PKEY_CTX *pctx = ctx->pctx;
+    EVP_PKEY_CTX *pctx;
 
     if (ctx != NULL
             && ctx->digest != NULL
             && ctx->digest->settable_ctx_params != NULL)
         return ctx->digest->settable_ctx_params();
 
+    pctx = ctx->pctx;
     if (pctx != NULL
             && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
                 || pctx->operation == EVP_PKEY_OP_SIGNCTX)
@@ -609,13 +610,14 @@ const OSSL_PARAM *EVP_MD_gettable_ctx_params(const EVP_MD *md)
 
 const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
 {
-    EVP_PKEY_CTX *pctx = ctx->pctx;
+    EVP_PKEY_CTX *pctx;
 
     if (ctx != NULL
             && ctx->digest != NULL
             && ctx->digest->gettable_ctx_params != NULL)
         return ctx->digest->gettable_ctx_params();
 
+    pctx = ctx->pctx;
     if (pctx != NULL
             && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
                 || pctx->operation == EVP_PKEY_OP_SIGNCTX)
