@@ -7,7 +7,7 @@ openssl-enc - symmetric cipher routines
 =head1 SYNOPSIS
 
 B<openssl>
-[B<->I<cipher>]
+[B<-I<cipher>>]
 [B<-help>]
 [B<-ciphers>]
 [B<-in> I<filename>]

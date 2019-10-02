@@ -88,7 +88,7 @@ B<openssl> B<ocsp>
 [B<-resp_key_id>]
 [B<-nrequest> I<n>]
 [B<-rcid> I<digest>]
-[B<->I<digest>]
+[B<-I<digest>>]
 
 =for comment ifdef multi
 
@@ -312,7 +312,7 @@ This option sets the digest algorithm to use for certificate identification
 in the OCSP response. Any digest supported by the OpenSSL B<dgst> command can
 be used. The default is the same digest algorithm used in the request.
 
-=item B<->I<digest>
+=item B<-I<digest>>
 
 This option sets digest algorithm to use for certificate identification in the
 OCSP request. Any digest supported by the OpenSSL B<dgst> command can be used.

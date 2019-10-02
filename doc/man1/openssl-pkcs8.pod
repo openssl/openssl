@@ -21,9 +21,9 @@ B<openssl> B<pkcs8>
 [B<-writerand> I<file>]
 [B<-nocrypt>]
 [B<-traditional>]
-[B<-v2 alg>]
-[B<-v2prf alg>]
-[B<-v1 alg>]
+[B<-v2> I<alg>]
+[B<-v2prf> I<alg>]
+[B<-v1> I<alg>]
 [B<-engine> I<id>]
 [B<-scrypt>]
 [B<-scrypt_N> I<N>]
@@ -118,7 +118,7 @@ all others.
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-v2 alg>
+=item B<-v2> I<alg>
 
 This option sets the PKCS#5 v2.0 algorithm.
 
@@ -126,7 +126,7 @@ The B<alg> argument is the encryption algorithm to use, valid values include
 B<aes128>, B<aes256> and B<des3>. If this option isn't specified then B<aes256>
 is used.
 
-=item B<-v2prf alg>
+=item B<-v2prf> I<alg>
 
 This option sets the PRF algorithm to use with PKCS#5 v2.0. A typical value
 value would be B<hmacWithSHA256>. If this option isn't set then the default
@@ -135,7 +135,7 @@ for the cipher is used or B<hmacWithSHA256> if there is no default.
 Some implementations may not support custom PRF algorithms and may require
 the B<hmacWithSHA1> option to work.
 
-=item B<-v1 alg>
+=item B<-v1> I<alg>
 
 This option indicates a PKCS#5 v1.5 or PKCS#12 algorithm should be used.  Some
 older implementations may not support PKCS#5 v2.0 and may require this option.

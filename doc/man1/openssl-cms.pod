@@ -70,7 +70,7 @@ B<openssl> B<cms>
 [B<-verify_name> I<name>]
 [B<-x509_strict>]
 [B<-md> I<digest>]
-[B<->I<cipher>]
+[B<-I<cipher>>]
 [B<-nointern>]
 [B<-noverify>]
 [B<-nocerts>]
@@ -309,7 +309,7 @@ Do not load the trusted CA certificates from the default directory location
 Digest algorithm to use when signing or resigning. If not present then the
 default digest algorithm for the signing key will be used (usually SHA1).
 
-=item B<->I<cipher>
+=item B<-I<cipher>>
 
 The encryption algorithm to use. For example triple DES (168 bits) - B<-des3>
 or 256 bit AES - B<-aes256>. Any standard algorithm name (as used by the
