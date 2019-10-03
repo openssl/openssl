@@ -616,6 +616,8 @@ static double eddsa_results[EdDSA_NUM][2];    /* 2 ops: sign then verify */
 static OPT_PAIR sm2_choices[] = {
     {"sm2p256", R_EC_SM2P256}
 };
+#  define SM2_ID        "TLSv1.3+GM+Cipher+Suite"
+#  define SM2_ID_LEN    sizeof("TLSv1.3+GM+Cipher+Suite") - 1
 #  define SM2_NUM       OSSL_NELEM(sm2_choices)
 
 static double sm2_results[SM2_NUM][2];    /* 2 ops: sign then verify */
@@ -3522,8 +3524,7 @@ int speed_main(int argc, char **argv)
              * No need to allow user to set an explicit ID here, just use
              * the one defined in the 'draft-yang-tls-tl13-sm-suites' I-D.
              */
-            if (EVP_PKEY_CTX_set1_id(sm2_pctx, "TLSv1.3+GM+Cipher+Suite",
-                        sizeof("TLSv1.3+GM+Cipher+Suite") - 1) != 1) {
+            if (EVP_PKEY_CTX_set1_id(sm2_pctx, SM2_ID, SM2_ID_LEN) != 1) {
                 st = 0;
                 EVP_PKEY_CTX_free(sm2_pctx);
                 EVP_PKEY_CTX_free(sm2_vfy_pctx);
@@ -3531,8 +3532,7 @@ int speed_main(int argc, char **argv)
                 break;
             }
 
-            if (EVP_PKEY_CTX_set1_id(sm2_vfy_pctx, "TLSv1.3+GM+Cipher+Suite",
-                        sizeof("TLSv1.3+GM+Cipher+Suite") - 1) != 1) {
+            if (EVP_PKEY_CTX_set1_id(sm2_vfy_pctx, SM2_ID, SM2_ID_LEN) != 1) {
                 st = 0;
                 EVP_PKEY_CTX_free(sm2_pctx);
                 EVP_PKEY_CTX_free(sm2_vfy_pctx);
@@ -3839,8 +3839,8 @@ int speed_main(int argc, char **argv)
                 EVP_PKEY_CTX_free(pctx);
             EVP_MD_CTX_free(loopargs[i].sm2_ctx[k]);
             /* free verification ctx */
-            if (loopargs[i].sm2_vfy_ctx[k] == NULL
-                    || (pctx = EVP_MD_CTX_pkey_ctx(loopargs[i].sm2_vfy_ctx[k])) != NULL)
+            if (loopargs[i].sm2_vfy_ctx[k] != NULL
+                    && (pctx = EVP_MD_CTX_pkey_ctx(loopargs[i].sm2_vfy_ctx[k])) != NULL)
                 EVP_PKEY_CTX_free(pctx);
             EVP_MD_CTX_free(loopargs[i].sm2_vfy_ctx[k]);
             /* free pkey */
