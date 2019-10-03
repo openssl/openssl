@@ -278,6 +278,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_rc2_64_cbc:
         case NID_rc2_cfb64:
         case NID_rc2_ofb64:
+        case NID_chacha20:
+        case NID_chacha20_poly1305:
             break;
         default:
             goto legacy;
@@ -1119,6 +1121,11 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     case EVP_CTRL_AEAD_SET_TAG:
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
                                                       ptr, sz);
+        break;
+    case EVP_CTRL_AEAD_SET_MAC_KEY:
+        params[0] =
+            OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_MAC_KEY,
+                                              ptr, sz);
         break;
     case EVP_CTRL_AEAD_TLS1_AAD:
         /* This one does a set and a get - since it returns a padding size */

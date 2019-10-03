@@ -315,6 +315,10 @@ IV length and the tag length.
 Sets the IV length to be used for an AEAD cipher for the associated cipher ctx.
 The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
+=item "mackey" (B<OSSL_CIPHER_PARAM_AEAD_MAC_KEY>) <octet string>
+
+Sets the MAC key used by composite AEAD ciphers such as AES-CBC-HMAC-SHA256.
+
 =item "randkey" (B<OSSL_CIPHER_PARAM_RANDOM_KEY>) <octet string>
 
 Gets a implementation specific randomly generated key for the associated
