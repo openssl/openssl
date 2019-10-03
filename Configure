@@ -1922,10 +1922,17 @@ if ($builder eq "unified") {
             => sub { push @{$defines{$expand_variables->($+{INDEX})}},
                          tokenize($expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s* DEPEND ${index_re} = ${value_re} $/x
-            => sub { push @{$depends{$expand_variables->($+{INDEX})}},
-                         tokenize($expand_variables->($+{VALUE}))
-                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s* DEPEND ${index_re} ${attribs_re} = ${value_re} $/x
+            => sub {
+                if (!@skip || $skip[$#skip] > 0) {
+                    my $i = $expand_variables->($+{INDEX});
+                    my @d = tokenize($expand_variables->($+{VALUE}));
+                    push @{$depends{$i}}, @d;
+                    $handle_attributes->($+{ATTRIBS},
+                                         \$attributes{depends}->{$i},
+                                         @d);
+                }
+            },
             qr/^\s* GENERATE ${index_re} = ${value_re} $/x
             => sub { push @{$generate{$expand_variables->($+{INDEX})}},
                          $+{VALUE}
@@ -2096,6 +2103,11 @@ EOF
                 my $e = $1 // "";
                 $d = $`.$e;
                 $unified_info{depends}->{$ddest}->{$d} = 1;
+
+                # Fix up associated attributes
+                $unified_info{attributes}->{depends}->{$ddest}->{$d} =
+                    $attributes{depends}->{$dest}->{$_}
+                    if defined $attributes{depends}->{$dest}->{$_};
             }
         }
 
