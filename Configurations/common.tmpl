@@ -2,37 +2,99 @@
 
  use File::Basename;
 
+ my $debug_resolvedepends = $ENV{BUILDFILE_DEBUG_DEPENDS};
+ my $debug_rules = $ENV{BUILDFILE_DEBUG_RULES};
+
  # A cache of objects for which a recipe has already been generated
  my %cache;
 
- # resolvedepends and reducedepends work in tandem to make sure
- # there are no duplicate dependencies and that they are in the
- # right order.  This is especially used to sort the list of
- # libraries that a build depends on.
+ # collectdepends, expanddepends and reducedepends work together to make
+ # sure there are no duplicate or weak dependencies and that they are in
+ # the right order.  This is used to sort the list of libraries  that a
+ # build depends on.
  sub extensionlesslib {
      my @result = map { $_ =~ /(\.a)?$/; $` } @_;
      return @result if wantarray;
      return $result[0];
  }
- sub resolvedepends {
+
+ # collectdepends dives into the tree of dependencies and returns
+ # a list of all the non-weak ones.
+ sub collectdepends {
+     return () unless @_;
+
      my $thing = shift;
      my $extensionlessthing = extensionlesslib($thing);
      my @listsofar = @_;    # to check if we're looping
      my @list = @{$unified_info{depends}->{$thing} //
                       $unified_info{depends}->{$extensionlessthing}};
      my @newlist = ();
-     if (scalar @list) {
-         foreach my $item (@list) {
-             my $extensionlessitem = extensionlesslib($item);
-             # It's time to break off when the dependency list starts looping
-             next if grep { extensionlesslib($_) eq $extensionlessitem } @listsofar;
-             push @newlist, $item, resolvedepends($item, @listsofar, $item);
-         }
+
+     print STDERR "DEBUG[collectdepends] $thing > ", join(' ', @listsofar), "\n"
+         if $debug_resolvedepends;
+     foreach my $item (@list) {
+         my $extensionlessitem = extensionlesslib($item);
+         # It's time to break off when the dependency list starts looping
+         next if grep { extensionlesslib($_) eq $extensionlessitem } @listsofar;
+         # Don't add anything here if the dependency is weak
+         next if defined $unified_info{attributes}->{depends}->{$thing}->{$item}->{'weak'};
+         my @resolved = collectdepends($item, @listsofar, $item);
+         push @newlist, $item, @resolved;
      }
+     print STDERR "DEBUG[collectdepends] $thing < ", join(' ', @newlist), "\n"
+         if $debug_resolvedepends;
      @newlist;
  }
+
+ # expanddepends goes through a list of stuff, checks if they have any
+ # dependencies, and adds them at the end of the current position if
+ # they aren't already present later on.
+ sub expanddepends {
+     my @after = ( @_ );
+     print STDERR "DEBUG[expanddepends]> ", join(' ', @after), "\n"
+         if $debug_resolvedepends;
+     my @before = ();
+     while (@after) {
+         my $item = shift @after;
+         print STDERR "DEBUG[expanddepends]\\  ", join(' ', @before), "\n"
+             if $debug_resolvedepends;
+         print STDERR "DEBUG[expanddepends] - ", $item, "\n"
+             if $debug_resolvedepends;
+         my @middle = (
+             $item,
+             map {
+                 my $x = $_;
+                 my $extlessx = extensionlesslib($x);
+                 if (grep { $extlessx eq extensionlesslib($_) } @before
+                     and
+                     !grep { $extlessx eq extensionlesslib($_) } @after) {
+                     print STDERR "DEBUG[expanddepends] + ", $x, "\n"
+                         if $debug_resolvedepends;
+                     ( $x )
+                 } else {
+                     print STDERR "DEBUG[expanddepends] ! ", $x, "\n"
+                         if $debug_resolvedepends;
+                     ()
+                 }
+             } @{$unified_info{depends}->{$item} // []}
+         );
+         print STDERR "DEBUG[expanddepends] = ", join(' ', @middle), "\n"
+             if $debug_resolvedepends;
+         print STDERR "DEBUG[expanddepends]/  ", join(' ', @after), "\n"
+             if $debug_resolvedepends;
+         push @before, @middle;
+     }
+     print STDERR "DEBUG[expanddepends]< ", join(' ', @before), "\n"
+         if $debug_resolvedepends;
+     @before;
+ }
+
+ # reducedepends looks through a list, and checks if each item is
+ # repeated later on.  If it is, the earlier copy is dropped.
  sub reducedepends {
      my @list = @_;
+     print STDERR "DEBUG[reducedepends]> ", join(' ', @list), "\n"
+         if $debug_resolvedepends;
      my @newlist = ();
      my %replace = ();
      while (@list) {
@@ -49,7 +111,25 @@
              push @newlist, $item;
          }
      }
-     map { $replace{$_} // $_; } @newlist;
+     @newlist = map { $replace{$_} // $_; } @newlist;
+     print STDERR "DEBUG[reducedepends]< ", join(' ', @newlist), "\n"
+         if $debug_resolvedepends;
+     @newlist;
+ }
+
+ # Do it all
+ # This takes multiple inputs and combine them into a single list of
+ # interdependent things.  The returned value will include all the input.
+ # Callers are responsible for taking away the things they are building.
+ sub resolvedepends {
+     print STDERR "DEBUG[resolvedepends] START (", join(', ', @_), ")\n"
+         if $debug_resolvedepends;
+     my @all =
+         reducedepends(expanddepends(map { ( $_, collectdepends($_) ) } @_));
+     print STDERR "DEBUG[resolvedepends] END (", join(', ', @_), ") : ",
+         join(',', map { "\n    $_" } @all), "\n"
+         if $debug_resolvedepends;
+     @all;
  }
 
  # dogenerate is responsible for producing all the recipes that build
@@ -120,7 +200,7 @@
          $OUT .= $obj2shlib->(lib => $lib,
                               attrs => $unified_info{attributes}->{libraries}->{$lib},
                               objs => $unified_info{shared_sources}->{$lib},
-                              deps => [ reducedepends(resolvedepends($lib)) ]);
+                              deps => [ grep { $_ ne $lib } resolvedepends($lib) ]);
          foreach ((@{$unified_info{shared_sources}->{$lib}},
                    @{$unified_info{sources}->{$lib}})) {
              # If this is somehow a compiled object, take care of it that way
@@ -152,7 +232,8 @@
      $OUT .= obj2dso(module => $module,
                      attrs => $unified_info{attributes}->{modules}->{$module},
                      objs => $unified_info{sources}->{$module},
-                     deps => [ resolvedepends($module) ]);
+                     deps => [ grep { $_ ne $module }
+                               resolvedepends($module) ]);
      foreach (@{$unified_info{sources}->{$module}}) {
          # If this is somehow a compiled object, take care of it that way
          # Otherwise, it might simply be generated
@@ -171,11 +252,10 @@
  sub dobin {
      my $bin = shift;
      return "" if $cache{$bin};
-     my $deps = [ reducedepends(resolvedepends($bin)) ];
      $OUT .= obj2bin(bin => $bin,
                      attrs => $unified_info{attributes}->{programs}->{$bin},
                      objs => [ @{$unified_info{sources}->{$bin}} ],
-                     deps => $deps);
+                     deps => [ grep { $_ ne $bin } resolvedepends($bin) ]);
      foreach (@{$unified_info{sources}->{$bin}}) {
          doobj($_, $bin, intent => "bin",
                attrs => $unified_info{attributes}->{$bin});
