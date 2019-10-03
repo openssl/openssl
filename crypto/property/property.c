@@ -53,8 +53,6 @@ struct ossl_method_store_st {
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
     OSSL_PROPERTY_LIST *global_properties;
     int need_flush;
-    unsigned int nbits;
-    unsigned char rand_bits[(IMPL_CACHE_FLUSH_THRESHOLD + 7) / 8];
     CRYPTO_RWLOCK *lock;
 };
 
