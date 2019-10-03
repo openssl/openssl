@@ -1,3 +1,2 @@
-LIBS=../../../libcrypto
-SOURCE[../../../libcrypto]=scrypt.c sshkdf.c x942kdf.c
-INCLUDE[../../../libcrypto]=. ../../../crypto
+$GOAL=../../libimplementations.a
+SOURCE[$GOAL]=scrypt.c sshkdf.c x942kdf.c

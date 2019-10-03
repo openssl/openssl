@@ -1,13 +1,5 @@
-$COMMON=tls1_prf.c hkdf.c kbkdf.c pbkdf2.c sskdf.c
+$GOAL=../../libimplementations.a
 
-LIBS=../../../libcrypto
-SOURCE[../../../libcrypto]=$COMMON
-INCLUDE[../../../libcrypto]=. ../../../crypto
-
-IF[{- !$disabled{fips} -}]
-  MODULES=../../fips
-  SOURCE[../../fips]=$COMMON
-  INCLUDE[../../fips]=. ../../../crypto
-ENDIF
-
-        
+SOURCE[$GOAL]=tls1_prf.c hkdf.c kbkdf.c pbkdf2.c sskdf.c
+SOURCE[../../libfips.a]=pbkdf2_fips.c
+SOURCE[../../libnonfips.a]=pbkdf2_fips.c

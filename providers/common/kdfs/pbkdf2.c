@@ -21,21 +21,13 @@
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"
 #include "internal/provider_util.h"
+#include "pbkdf2.h"
 
 /* Constants specified in SP800-132 */
 #define KDF_PBKDF2_MIN_KEY_LEN_BITS  112
 #define KDF_PBKDF2_MAX_KEY_LEN_DIGEST_RATIO 0xFFFFFFFF
 #define KDF_PBKDF2_MIN_ITERATIONS 1000
 #define KDF_PBKDF2_MIN_SALT_LEN   (128 / 8)
-/*
- * For backwards compatibility reasons,
- * Extra checks are done by default in fips mode only.
- */
-#ifdef FIPS_MODE
-# define KDF_PBKDF2_DEFAULT_CHECKS 1
-#else
-# define KDF_PBKDF2_DEFAULT_CHECKS 0
-#endif /* FIPS_MODE */
 
 static OSSL_OP_kdf_newctx_fn kdf_pbkdf2_new;
 static OSSL_OP_kdf_freectx_fn kdf_pbkdf2_free;
@@ -111,7 +103,7 @@ static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
         /* This is an error, but there is no way to indicate such directly */
         ossl_prov_digest_reset(&ctx->digest);
     ctx->iter = PKCS5_DEFAULT_ITER;
-    ctx->lower_bound_checks = KDF_PBKDF2_DEFAULT_CHECKS;
+    ctx->lower_bound_checks = kdf_pbkdf2_default_checks;
 }
 
 static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,

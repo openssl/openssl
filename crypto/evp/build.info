@@ -18,7 +18,7 @@ SOURCE[../../libcrypto]=$COMMON\
         e_chacha20_poly1305.c \
         pkey_mac.c exchange.c \
         legacy_sha.c legacy_md5_sha1.c
-SOURCE[../../providers/fips]=$COMMON
+SOURCE[../../providers/libfips.a]=$COMMON
 
 INCLUDE[e_aes.o]=.. ../modes
 INCLUDE[e_aes_cbc_hmac_sha1.o]=../modes
