@@ -1376,6 +1376,7 @@ unless ($disabled{asm}) {
     }
     if ($target{aes_asm_src}) {
         push @{$config{lib_defines}}, "AES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
+        push @{$config{lib_defines}}, "AESNI_ASM" if ($target{aes_asm_src} =~ m/\baesni-/);;
         # aes-ctr.fake is not a real file, only indication that assembler
         # module implements AES_ctr32_encrypt...
         push @{$config{lib_defines}}, "AES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
