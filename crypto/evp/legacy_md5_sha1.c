@@ -17,6 +17,14 @@
 static const EVP_MD md5_sha1_md = {
     NID_md5_sha1,
     NID_md5_sha1,
+    MD5_SHA1_DIGEST_LENGTH,
+    0,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    MD5_SHA1_CBLOCK,
 };
 
 const EVP_MD *EVP_md5_sha1(void)
