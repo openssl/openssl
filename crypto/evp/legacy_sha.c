@@ -15,6 +15,14 @@
 static const EVP_MD sha1_md = {
     NID_sha1,
     NID_sha1WithRSAEncryption,
+    SHA_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    SHA_CBLOCK,
 };
 
 const EVP_MD *EVP_sha1(void)
@@ -25,6 +33,14 @@ const EVP_MD *EVP_sha1(void)
 static const EVP_MD sha224_md = {
     NID_sha224,
     NID_sha224WithRSAEncryption,
+    SHA224_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    SHA256_CBLOCK,
 };
 
 const EVP_MD *EVP_sha224(void)
@@ -35,6 +51,16 @@ const EVP_MD *EVP_sha224(void)
 static const EVP_MD sha256_md = {
     NID_sha256,
     NID_sha256WithRSAEncryption,
+    NID_sha256,
+    NID_sha256WithRSAEncryption,
+    SHA256_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    SHA256_CBLOCK,
 };
 
 const EVP_MD *EVP_sha256(void)
@@ -45,6 +71,14 @@ const EVP_MD *EVP_sha256(void)
 static const EVP_MD sha512_224_md = {
     NID_sha512_224,
     NID_sha512_224WithRSAEncryption,
+    SHA224_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    init512_224,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    SHA512_CBLOCK,
 };
 
 const EVP_MD *EVP_sha512_224(void)
@@ -55,6 +89,14 @@ const EVP_MD *EVP_sha512_224(void)
 static const EVP_MD sha512_256_md = {
     NID_sha512_256,
     NID_sha512_256WithRSAEncryption,
+    SHA256_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    init512_256,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    SHA512_CBLOCK,
 };
 
 const EVP_MD *EVP_sha512_256(void)
@@ -65,6 +107,14 @@ const EVP_MD *EVP_sha512_256(void)
 static const EVP_MD sha384_md = {
     NID_sha384,
     NID_sha384WithRSAEncryption,
+    SHA384_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    SHA512_CBLOCK,
 };
 
 const EVP_MD *EVP_sha384(void)
@@ -75,6 +125,14 @@ const EVP_MD *EVP_sha384(void)
 static const EVP_MD sha512_md = {
     NID_sha512,
     NID_sha512WithRSAEncryption,
+    SHA512_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    SHA512_CBLOCK,
 };
 
 const EVP_MD *EVP_sha512(void)
@@ -88,6 +146,14 @@ const EVP_MD *EVP_sha512(void)
         static const EVP_MD sha3_##bitlen##_md = {      \
             NID_sha3_##bitlen,                          \
             NID_RSA_SHA3_##bitlen,                      \
+            bitlen / 8,                                 \
+            EVP_MD_FLAG_DIGALGID_ABSENT,                \
+            NULL,                                       \
+            NULL,                                       \
+            NULL,                                       \
+            NULL,                                       \
+            NULL,                                       \
+            (KECCAK1600_WIDTH - bitlen * 2) / 8,        \
         };                                              \
         return &sha3_##bitlen##_md;                     \
     }
@@ -97,6 +163,14 @@ const EVP_MD *EVP_sha512(void)
         static const EVP_MD shake##bitlen##_md = {      \
             NID_shake##bitlen,                          \
             0,                                          \
+            bitlen / 8,                                 \
+            EVP_MD_FLAG_XOF,                            \
+            NULL,                                       \
+            NULL,                                       \
+            NULL,                                       \
+            NULL,                                       \
+            NULL,                                       \
+            (KECCAK1600_WIDTH - bitlen * 2) / 8,        \
         };                                              \
         return &shake##bitlen##_md;                     \
     }
