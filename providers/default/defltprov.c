@@ -111,8 +111,8 @@ static const OSSL_ALGORITHM deflt_digests[] = {
      * If we assume that "2b" and "2s" are versions, that pattern
      * fits with ours.  We also add our historical names.
      */
-    { "BLAKE2b-256:BLAKE2s256", "default=yes", blake2s256_functions },
-    { "BLAKE2s-512:BLAKE2b512", "default=yes", blake2b512_functions },
+    { "BLAKE2s-256:BLAKE2s256", "default=yes", blake2s256_functions },
+    { "BLAKE2b-512:BLAKE2b512", "default=yes", blake2b512_functions },
 #endif /* OPENSSL_NO_BLAKE2 */
 
 #ifndef OPENSSL_NO_SM3
