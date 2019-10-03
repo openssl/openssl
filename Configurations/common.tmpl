@@ -118,7 +118,7 @@
      unless ($disabled{shared} || $lib =~ /\.a$/) {
          my $obj2shlib = defined &obj2shlib ? \&obj2shlib : \&libobj2shlib;
          $OUT .= $obj2shlib->(lib => $lib,
-                              attrs => $unified_info{attributes}->{$lib},
+                              attrs => $unified_info{attributes}->{libraries}->{$lib},
                               objs => $unified_info{shared_sources}->{$lib},
                               deps => [ reducedepends(resolvedepends($lib)) ]);
          foreach ((@{$unified_info{shared_sources}->{$lib}},
@@ -127,18 +127,18 @@
              # Otherwise, it might simply be generated
              if (defined $unified_info{sources}->{$_}) {
                  doobj($_, $lib, intent => "shlib",
-                       attrs => $unified_info{attributes}->{$lib});
+                       attrs => $unified_info{attributes}->{libraries}->{$lib});
              } else {
                  dogenerate($_, undef, undef, intent => "lib");
              }
          }
      }
      $OUT .= obj2lib(lib => $lib,
-                     attrs => $unified_info{attributes}->{$lib},
+                     attrs => $unified_info{attributes}->{libraries}->{$lib},
                      objs => [ @{$unified_info{sources}->{$lib}} ]);
      foreach (@{$unified_info{sources}->{$lib}}) {
          doobj($_, $lib, intent => "lib",
-               attrs => $unified_info{attributes}->{$lib});
+               attrs => $unified_info{attributes}->{libraries}->{$lib});
      }
      $cache{$lib} = 1;
  }
@@ -147,23 +147,23 @@
  # obj2dso, and also makes sure all object files for the library
  # are built.
  sub domodule {
-     my $lib = shift;
-     return "" if $cache{$lib};
-     $OUT .= obj2dso(lib => $lib,
-                     attrs => $unified_info{attributes}->{$lib},
-                     objs => $unified_info{sources}->{$lib},
-                     deps => [ resolvedepends($lib) ]);
-     foreach (@{$unified_info{sources}->{$lib}}) {
+     my $module = shift;
+     return "" if $cache{$module};
+     $OUT .= obj2dso(module => $module,
+                     attrs => $unified_info{attributes}->{modules}->{$module},
+                     objs => $unified_info{sources}->{$module},
+                     deps => [ resolvedepends($module) ]);
+     foreach (@{$unified_info{sources}->{$module}}) {
          # If this is somehow a compiled object, take care of it that way
          # Otherwise, it might simply be generated
          if (defined $unified_info{sources}->{$_}) {
-             doobj($_, $lib, intent => "dso",
-                   attrs => $unified_info{attributes}->{$lib});
+             doobj($_, $module, intent => "dso",
+                   attrs => $unified_info{attributes}->{modules}->{$module});
          } else {
-             dogenerate($_, undef, $lib, intent => "dso");
+             dogenerate($_, undef, $module, intent => "dso");
          }
      }
-     $cache{$lib} = 1;
+     $cache{$module} = 1;
  }
 
  # dobin is responsible for building programs.  It will call obj2bin,
@@ -173,7 +173,7 @@
      return "" if $cache{$bin};
      my $deps = [ reducedepends(resolvedepends($bin)) ];
      $OUT .= obj2bin(bin => $bin,
-                     attrs => $unified_info{attributes}->{$bin},
+                     attrs => $unified_info{attributes}->{programs}->{$bin},
                      objs => [ @{$unified_info{sources}->{$bin}} ],
                      deps => $deps);
      foreach (@{$unified_info{sources}->{$bin}}) {

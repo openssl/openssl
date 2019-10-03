@@ -1724,7 +1724,6 @@ if ($builder eq "unified") {
         my @modules = ();
         my @scripts = ();
 
-        my %attributes = ();
         my %sources = ();
         my %shared_sources = ();
         my %includes = ();
@@ -1737,7 +1736,7 @@ if ($builder eq "unified") {
         # contains a dollar sign, it had better be escaped, or it will be
         # taken for a variable name prefix.
         my %variables = ();
-        my $variable_re = qr/\$([[:alpha:]][[:alnum:]_]*)/;
+        my $variable_re = qr/\$(?P<VARIABLE>[[:alpha:]][[:alnum:]_]*)/;
         my $expand_variables = sub {
             my $value = '';
             my $value_rest = shift;
@@ -1748,7 +1747,7 @@ if ($builder eq "unified") {
             }
             while ($value_rest =~ /(?<!\\)${variable_re}/) {
                 $value .= $`;
-                $value .= $variables{$1};
+                $value .= $variables{$+{VARIABLE}};
                 $value_rest = $';
             }
             if ($ENV{CONFIGURE_DEBUG_VARIABLE_EXPAND}) {
@@ -1756,6 +1755,35 @@ if ($builder eq "unified") {
                     "DEBUG[\$expand_variables] ... '$value$value_rest'\n";
             }
             return $value . $value_rest;
+        };
+
+        # Support for attributes in build.info files
+        my %attributes = ();
+        my $handle_attributes = sub {
+            my $attr_str = shift;
+            my $ref = shift;
+            my @goals = @_;
+
+            return unless defined $attr_str;
+
+            my @a = tokenize($attr_str, qr|\s*,\s*|);
+            foreach my $a (@a) {
+                my $ac = 1;
+                my $ak = $a;
+                my $av = 1;
+                if ($a =~ m|^(!)?(.*?)\s* = \s*(.*?)$|) {
+                    $ac = ! $1;
+                    $ak = $1;
+                    $av = $2;
+                }
+                foreach my $g (@goals) {
+                    if ($ac) {
+                        $$ref->{$g}->{$ak} = $av;
+                    } else {
+                        delete $$ref->{$g}->{$ak};
+                    }
+                }
+            }
         };
 
         # We want to detect configdata.pm in the source tree, so we
@@ -1787,153 +1815,122 @@ if ($builder eq "unified") {
         # 1 last was positive (don't skip lines until next ELSE, ELSIF or ENDIF)
         # 2 positive ELSE (following ELSIF should fail)
         my @skip = ();
+
+        # A few useful generic regexps
+        my $index_re = qr/\[\s*(?P<INDEX>(?:\\.|.)*?)\s*\]/;
+        my $cond_re = qr/\[\s*(?P<COND>(?:\\.|.)*?)\s*\]/;
+        my $attribs_re = qr/(?:\{\s*(?P<ATTRIBS>(?:\\.|.)*?)\s*\})?/;
+        my $value_re = qr/\s*(?P<VALUE>.*?)\s*/;
         collect_information(
             collect_from_array([ @text ],
                                qr/\\$/ => sub { my $l1 = shift; my $l2 = shift;
                                                 $l1 =~ s/\\$//; $l1.$l2 }),
             # Info we're looking for
-            qr/^\s*IF\[((?:\\.|[^\\\]])*)\]\s*$/
+            qr/^\s* IF ${cond_re} \s*$/x
             => sub {
                 if (! @skip || $skip[$#skip] > 0) {
-                    push @skip, !! $expand_variables->($1);
+                    push @skip, !! $expand_variables->($+{COND});
                 } else {
                     push @skip, -1;
                 }
             },
-            qr/^\s*ELSIF\[((?:\\.|[^\\\]])*)\]\s*$/
+            qr/^\s* ELSIF ${cond_re} \s*$/x
             => sub { die "ELSIF out of scope" if ! @skip;
                      die "ELSIF following ELSE" if abs($skip[$#skip]) == 2;
                      $skip[$#skip] = -1 if $skip[$#skip] != 0;
-                     $skip[$#skip] = !! $expand_variables->($1)
+                     $skip[$#skip] = !! $expand_variables->($+{COND})
                          if $skip[$#skip] == 0; },
-            qr/^\s*ELSE\s*$/
+            qr/^\s* ELSE \s*$/x
             => sub { die "ELSE out of scope" if ! @skip;
                      $skip[$#skip] = -2 if $skip[$#skip] != 0;
                      $skip[$#skip] = 2 if $skip[$#skip] == 0; },
-            qr/^\s*ENDIF\s*$/
+            qr/^\s* ENDIF \s*$/x
             => sub { die "ENDIF out of scope" if ! @skip;
                      pop @skip; },
-            qr/^\s*${variable_re}\s*=\s*(.*?)\s*$/
+            qr/^\s* ${variable_re} \s* = ${value_re} $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my $n = $1;
-                    my $v = $2;
-                    $variables{$n} = $expand_variables->($v);
+                    $variables{$+{VARIABLE}} = $expand_variables->($+{VALUE});
                 }
             },
-            qr/^\s*SUBDIRS\s*=\s*(.*)\s*$/
+            qr/^\s* SUBDIRS \s* = ${value_re} $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    foreach (tokenize($expand_variables->($1))) {
+                    foreach (tokenize($expand_variables->($+{VALUE}))) {
                         push @build_dirs, [ @curd, splitdir($_, 1) ];
                     }
                 }
             },
-            qr/^\s*PROGRAMS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
+            qr/^\s* PROGRAMS ${attribs_re} \s* =  ${value_re} $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my @a = tokenize($1, qr|\s*,\s*|);
-                    my @p = tokenize($expand_variables->($2));
+                    my @p = tokenize($expand_variables->($+{VALUE}));
                     push @programs, @p;
-                    foreach my $a (@a) {
-                        my $ak = $a;
-                        my $av = 1;
-                        if ($a =~ m|^(.*?)\s*=\s*(.*?)$|) {
-                            $ak = $1;
-                            $av = $2;
-                        }
-                        foreach my $p (@p) {
-                            $attributes{$p}->{$ak} = $av;
-                        }
-                    }
+                    $handle_attributes->($+{ATTRIBS},
+                                         \$attributes{programs},
+                                         @p);
                 }
             },
-            qr/^\s*LIBS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
+            qr/^\s* LIBS ${attribs_re} \s* =  ${value_re} $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my @a = tokenize($1, qr|\s*,\s*|);
-                    my @l = tokenize($expand_variables->($2));
+                    my @l = tokenize($expand_variables->($+{VALUE}));
                     push @libraries, @l;
-                    foreach my $a (@a) {
-                        my $ak = $a;
-                        my $av = 1;
-                        if ($a =~ m|^(.*?)\s*=\s*(.*?)$|) {
-                            $ak = $1;
-                            $av = $2;
-                        }
-                        foreach my $l (@l) {
-                            $attributes{$l}->{$ak} = $av;
-                        }
-                    }
+                    $handle_attributes->($+{ATTRIBS},
+                                         \$attributes{libraries},
+                                         @l);
                 }
             },
-            qr/^\s*MODULES(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
+            qr/^\s* MODULES ${attribs_re} \s* =  ${value_re} $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my @a = tokenize($1, qr|\s*,\s*|);
-                    my @m = tokenize($expand_variables->($2));
+                    my @m = tokenize($expand_variables->($+{VALUE}));
                     push @modules, @m;
-                    foreach my $a (@a) {
-                        my $ak = $a;
-                        my $av = 1;
-                        if ($a =~ m|^(.*?)\s*=\s*(.*?)$|) {
-                            $ak = $1;
-                            $av = $2;
-                        }
-                        foreach my $m (@m) {
-                            $attributes{$m}->{$ak} = $av;
-                        }
-                    }
+                    $handle_attributes->($+{ATTRIBS},
+                                         \$attributes{modules},
+                                         @m);
                 }
             },
-            qr/^\s*SCRIPTS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
+            qr/^\s* SCRIPTS ${attribs_re} \s* =  ${value_re} $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my @a = tokenize($1, qr|\s*,\s*|);
-                    my @s = tokenize($expand_variables->($2));
+                    my @s = tokenize($expand_variables->($+{VALUE}));
                     push @scripts, @s;
-                    foreach my $a (@a) {
-                        my $ak = $a;
-                        my $av = 1;
-                        if ($a =~ m|^(.*?)\s*=\s*(.*?)$|) {
-                            $ak = $1;
-                            $av = $2;
-                        }
-                        foreach my $s (@s) {
-                            $attributes{$s}->{$ak} = $av;
-                        }
-                    }
+                    $handle_attributes->($+{ATTRIBS},
+                                         \$attributes{scripts},
+                                         @s);
                 }
             },
 
-            qr/^\s*ORDINALS\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/,
-            => sub { push @{$ordinals{$expand_variables->($1)}},
-                         tokenize($expand_variables->($2))
+            qr/^\s* ORDINALS ${index_re} = ${value_re} $/x
+            => sub { push @{$ordinals{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$sources{$expand_variables->($1)}},
-                         tokenize($expand_variables->($2))
+            qr/^\s* SOURCE ${index_re} = ${value_re} $/x
+            => sub { push @{$sources{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*SHARED_SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$shared_sources{$expand_variables->($1)}},
-                         tokenize($expand_variables->($2))
+            qr/^\s* SHARED_SOURCE ${index_re} = ${value_re} $/x
+            => sub { push @{$shared_sources{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$includes{$expand_variables->($1)}},
-                         tokenize($expand_variables->($2))
+            qr/^\s* INCLUDE ${index_re} = ${value_re} $/x
+            => sub { push @{$includes{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*DEFINE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$defines{$expand_variables->($1)}},
-                         tokenize($expand_variables->($2))
+            qr/^\s* DEFINE ${index_re} = ${value_re} $/x
+            => sub { push @{$defines{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*DEPEND\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$depends{$expand_variables->($1)}},
-                         tokenize($expand_variables->($2))
+            qr/^\s* DEPEND ${index_re} = ${value_re} $/x
+            => sub { push @{$depends{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*GENERATE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$generate{$expand_variables->($1)}}, $2
+            qr/^\s* GENERATE ${index_re} = ${value_re} $/x
+            => sub { push @{$generate{$expand_variables->($+{INDEX})}},
+                         $+{VALUE}
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*(?:#.*)?$/ => sub { },
+            qr/^\s* (?:\#.*)? $/x => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
             "BEFORE" => sub {
                 if ($buildinfo_debug) {
@@ -1949,21 +1946,12 @@ if ($builder eq "unified") {
             );
         die "runaway IF?" if (@skip);
 
-        if (grep { defined $attributes{$_}->{engine} } keys %attributes
+        if (grep { defined $attributes{modules}->{$_}->{engine} } keys %attributes
                 and !$config{dynamic_engines}) {
             die <<"EOF"
 ENGINES can only be used if configured with 'dynamic-engine'.
 This is usually a fault in a build.info file.
 EOF
-        }
-
-        foreach (keys %attributes) {
-            my $dest = $_;
-            my $ddest = cleanfile($buildd, $_, $blddir);
-            foreach (keys %{$attributes{$dest} // {}}) {
-                $unified_info{attributes}->{$ddest}->{$_} =
-                    $attributes{$dest}->{$_};
-            }
         }
 
         {
@@ -1975,6 +1963,11 @@ EOF
                 foreach (@{$infos{$k}}) {
                     my $item = cleanfile($buildd, $_, $blddir);
                     $unified_info{$k}->{$item} = 1;
+
+                    # Fix up associated attributes
+                    $unified_info{attributes}->{$k}->{$item} =
+                        $attributes{$k}->{$_}
+                        if defined $attributes{$k}->{$_};
                 }
             }
         }
