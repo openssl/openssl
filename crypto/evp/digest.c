@@ -140,15 +140,14 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 #endif
 
     /*
-     * If there are engines involved or if we're being used as part of
-     * EVP_DigestSignInit then we should use legacy handling for now.
+     * If there are engines involved or EVP_MD_CTX_FLAG_NO_INIT is set then we
+     * should use legacy handling for now.
      */
     if (ctx->engine != NULL
             || impl != NULL
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
             || tmpimpl != NULL
 #endif
-            || ctx->pctx != NULL
             || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0) {
         if (ctx->digest == ctx->fetched_digest)
             ctx->digest = NULL;
