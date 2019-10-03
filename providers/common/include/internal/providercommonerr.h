@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_PROVIDERS_PROVIDERCOMMONERR_H
-# define OSSL_PROVIDERS_PROVIDERCOMMONERR_H
+#ifndef OPENSSL_PROVERR_H
+# define OPENSSL_PROVERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -96,6 +96,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_UNABLE_TO_LOAD_SHA256                     147
 # define PROV_R_UNSUPPORTED_CEK_ALG                       145
 # define PROV_R_UNSUPPORTED_MAC_TYPE                      137
+# define PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS              152
 # define PROV_R_VALUE_ERROR                               138
 # define PROV_R_WRONG_FINAL_BLOCK_LENGTH                  107
 # define PROV_R_WRONG_OUTPUT_BUFFER_SIZE                  139
