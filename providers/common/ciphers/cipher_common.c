@@ -384,7 +384,6 @@ int cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
         return 0;
     }
     ctx->iv_set = 1;
-    ctx->ivlen = ivlen;
     memcpy(ctx->iv, iv, ivlen);
     memcpy(ctx->oiv, iv, ivlen);
     return 1;
