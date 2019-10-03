@@ -321,12 +321,17 @@ Gets a implementation specific randomly generated key for the associated
 cipher ctx. This is currently only supported by 3DES (which sets the key to
 odd parity).
 
-=item "alg_id_param" (B<OSSL_CIPHER_PARAM_ALG_ID>) (octet string)
+=item "alg_id_param" (B<OSSL_CIPHER_PARAM_ALG_ID>) <octet string>
 
 Used to pass the DER encoded AlgorithmIdentifier parameter to or from
 the cipher implementation.  Functions like L<EVP_CIPHER_param_to_asn1(3)>
 and L<EVP_CIPHER_asn1_to_param(3)> use this parameter for any implementation
 that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
+
+=item "rounds" (B<OSSL_CIPHER_PARAM_ROUNDS>) <unsigned integer>
+
+Sets or gets the number of rounds to be used for a cipher.
+This is used by the RC5 cipher.
 
 =back
 

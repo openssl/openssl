@@ -59,6 +59,7 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_IVLEN     "ivlen"      /* size_t */
 #define OSSL_CIPHER_PARAM_IV        "iv"         /* octet_string OR octet_ptr */
 #define OSSL_CIPHER_PARAM_NUM       "num"        /* uint */
+#define OSSL_CIPHER_PARAM_ROUNDS    "rounds"     /* uint */
 #define OSSL_CIPHER_PARAM_AEAD_TAG           "tag"        /* octet_string */
 #define OSSL_CIPHER_PARAM_AEAD_TLS1_AAD      "tlsaad"     /* octet_string */
 #define OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD  "tlsaadpad"  /* size_t */
