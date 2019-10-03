@@ -1,9 +1,8 @@
-LIBS=../../../libcrypto
+$GOAL=../../libimplementations.a
+
 IF[{- !$disabled{dh} -}]
-  SOURCE[../../../libcrypto]=\
-          dh_kmgmt.c
+  SOURCE[$GOAL]=dh_kmgmt.c
 ENDIF
 IF[{- !$disabled{dsa} -}]
-  SOURCE[../../../libcrypto]=\
-          dsa_kmgmt.c
+  SOURCE[$GOAL]=dsa_kmgmt.c
 ENDIF

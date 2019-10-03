@@ -1,7 +1,5 @@
-LIBS=../../../libcrypto
+$GOAL=../../libimplementations.a
+
 IF[{- !$disabled{dh} -}]
-  SOURCE[../../../libcrypto]=\
-          dh_exch.c
+  SOURCE[$GOAL]=dh_exch.c
 ENDIF
-
-

@@ -4,4 +4,4 @@ $COMMON=rand_lib.c rand_crng_test.c rand_win.c rand_unix.c  rand_vms.c \
         drbg_lib.c drbg_ctr.c rand_vxworks.c drbg_hash.c drbg_hmac.c
 
 SOURCE[../../libcrypto]=$COMMON randfile.c rand_err.c rand_egd.c
-SOURCE[../../providers/fips]=$COMMON
+SOURCE[../../providers/libfips.a]=$COMMON

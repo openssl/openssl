@@ -20,12 +20,6 @@
 #define AES_XTS_IV_BITS 128
 #define AES_XTS_BLOCK_BITS 8
 
-#ifdef FIPS_MODE
-static const int allow_insecure_decrypt = 0;
-#else
-static const int allow_insecure_decrypt = 1;
-#endif /* FIPS_MODE */
-
 /* forward declarations */
 static OSSL_OP_cipher_encrypt_init_fn aes_xts_einit;
 static OSSL_OP_cipher_decrypt_init_fn aes_xts_dinit;

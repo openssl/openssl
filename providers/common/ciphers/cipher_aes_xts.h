@@ -10,6 +10,12 @@
 #include <openssl/aes.h>
 #include "internal/ciphers/ciphercommon.h"
 
+/*
+ * Available in cipher_fips.c, and compiled with different values depending
+ * on we're in the FIPS module or not.
+ */
+extern const int allow_insecure_decrypt;
+
 PROV_CIPHER_FUNC(void, xts_stream,
                  (const unsigned char *in, unsigned char *out, size_t len,
                   const AES_KEY *key1, const AES_KEY *key2,

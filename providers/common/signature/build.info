@@ -1,7 +1,7 @@
-LIBS=../../../libcrypto
+$GOAL=../../libimplementations.a
+
 IF[{- !$disabled{dsa} -}]
-  SOURCE[../../../libcrypto]=\
-          dsa.c
+  SOURCE[$GOAL]=dsa.c
 ENDIF
 
 
