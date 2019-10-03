@@ -9,8 +9,9 @@
 
 #include <openssl/opensslconf.h>
 
-# include <openssl/obj_mac.h>
-# include "crypto/evp.h"
+#include <openssl/obj_mac.h>
+#include <openssl/sha.h>
+#include "crypto/evp.h"
 
 static const EVP_MD sha1_md = {
     NID_sha1,
