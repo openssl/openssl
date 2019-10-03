@@ -12,7 +12,8 @@ PKCS12_get_friendlyname - Retrieve the friendlyname attribute from a PKCS#12 saf
 
 =head1 DESCRIPTION
 
-PKCS12_get_friendlyname() retrieves a UTF-8 string representation of the PKCS#9 friendlyName attribute for a PKCS#12 safeBag item.
+PKCS12_get_friendlyname() retrieves a UTF-8 string representation of the PKCS#9
+friendlyName attribute for a PKCS#12 safeBag item.
 
 I<bag> is the B<PKCS12_SAFEBAG> to retrieve the attribute from.
 

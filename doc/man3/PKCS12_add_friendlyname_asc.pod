@@ -2,26 +2,33 @@
 
 =head1 NAME
 
-PKCS12_add_friendlyname_asc, PKCS12_add_friendlyname_utf8, PKCS12_add_friendlyname_uni - Functions to add the friendlyname attribute to a PKCS#12 safeBag
+PKCS12_add_friendlyname_asc, PKCS12_add_friendlyname_utf8,
+PKCS12_add_friendlyname_uni - Functions to add the friendlyname attribute to a
+PKCS#12 safeBag
 
 =head1 SYNOPSIS
 
  #include <openssl/pkcs12.h>
 
  int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
-                                int namelen);
+                                 int namelen);
 
  int PKCS12_add_friendlyname_utf8(PKCS12_SAFEBAG *bag, const char *name,
-                                int namelen);
+                                 int namelen);
 
  int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag,
-                                const unsigned char *name, int namelen);
+                                 const unsigned char *name, int namelen);
 
 =head1 DESCRIPTION
 
-PKCS12_add_friendlyname_asc() adds an ASCII string representation of the PKCS#9 friendlyName attribute to a PKCS#12 safeBag.
-PKCS12_add_friendlyname_utf8() adds a UTF-8 string representation of the PKCS#9 friendlyName attribute to a PKCS#12 safeBag.
-PKCS12_add_friendlyname_uni() adds a Unicode string representation of the PKCS#9 friendlyName attribute to a PKCS#12 safeBag.
+PKCS12_add_friendlyname_asc() adds an ASCII string representation of the PKCS#9
+friendlyName attribute to a PKCS#12 safeBag.
+
+PKCS12_add_friendlyname_utf8() adds a UTF-8 string representation of the PKCS#9
+friendlyName attribute to a PKCS#12 safeBag.
+
+PKCS12_add_friendlyname_uni() adds a Unicode string representation of the PKCS#9
+friendlyName attribute to a PKCS#12 safeBag.
 
 I<bag> is the B<PKCS12_SAFEBAG> to add the attribute to.
 

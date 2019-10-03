@@ -9,11 +9,12 @@ PKCS12_add_localkeyid - Add the localKeyId attribute to a PKCS#12 safeBag
  #include <openssl/pkcs12.h>
 
  int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, const char *name,
-                                int namelen);
+                           int namelen);
 
 =head1 DESCRIPTION
 
-PKCS12_add_localkeyid() adds an octet string representation of the PKCS#9 localKeyId attribute to a PKCS#12 safeBag.
+PKCS12_add_localkeyid() adds an octet string representation of the PKCS#9
+localKeyId attribute to a PKCS#12 safeBag.
 
 I<bag> is the B<PKCS12_SAFEBAG> to add the attribute to.
 
