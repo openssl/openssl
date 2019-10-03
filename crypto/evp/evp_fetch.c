@@ -172,7 +172,7 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
         const char *names = methdata->names;
         const char *q = strchr(names, NAME_SEPARATOR);
-        size_t l = q == NULL ? strlen(names) : (size_t)(q - names);
+        size_t l = (q == NULL ? strlen(names) : (size_t)(q - names));
 
         if (namemap == 0)
             return NULL;
@@ -218,7 +218,7 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
     if (names != NULL) {
         const char *q = strchr(names, NAME_SEPARATOR);
 
-        l = q == NULL ? strlen(names) : (size_t)(q - names);
+        l = (q == NULL ? strlen(names) : (size_t)(q - names));
     }
 
     if ((namemap = ossl_namemap_stored(libctx)) == NULL
