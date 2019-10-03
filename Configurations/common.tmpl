@@ -171,14 +171,30 @@
      my $bin = shift;
      my %opts = @_;
      if (@{$unified_info{sources}->{$obj}}) {
-         $OUT .= src2obj(obj => $obj,
-                         product => $bin,
-                         srcs => $unified_info{sources}->{$obj},
-                         deps => $unified_info{depends}->{$obj},
-                         incs => [ @{$unified_info{includes}->{$obj}},
-                                   @{$unified_info{includes}->{$bin}} ],
-                         defs => [ @{$unified_info{defines}->{$obj}},
-                                   @{$unified_info{defines}->{$bin}} ],
+         my @srcs = @{$unified_info{sources}->{$obj}};
+         my @deps = @{$unified_info{depends}->{$obj}};
+         my @incs = ( @{$unified_info{includes}->{$obj}},
+                      @{$unified_info{includes}->{$bin}} );
+         my @defs = ( @{$unified_info{defines}->{$obj}},
+                      @{$unified_info{defines}->{$bin}} );
+         print STDERR "DEBUG[doobj] \@srcs for $obj ($bin) : ",
+             join(",", map { "\n    $_" } @srcs), "\n"
+             if $debug_rules;
+         print STDERR "DEBUG[doobj] \@deps for $obj ($bin) : ",
+             join(",", map { "\n    $_" } @deps), "\n"
+             if $debug_rules;
+         print STDERR "DEBUG[doobj] \@incs for $obj ($bin) : ",
+             join(",", map { "\n    $_" } @incs), "\n"
+             if $debug_rules;
+         print STDERR "DEBUG[doobj] \@defs for $obj ($bin) : ",
+             join(",", map { "\n    $_" } @defs), "\n"
+             if $debug_rules;
+         print STDERR "DEBUG[doobj] \%opts for $obj ($bin) : ", ,
+             join(",", map { "\n    $_ = $opts{$_}" } sort keys %opts), "\n"
+             if $debug_rules;
+         $OUT .= src2obj(obj => $obj, product => $bin,
+                         srcs => [ @srcs ], deps => [ @deps ],
+                         incs => [ @incs ], defs => [ @defs ],
                          %opts);
          foreach ((@{$unified_info{sources}->{$obj}},
                    @{$unified_info{depends}->{$obj}})) {
@@ -188,37 +204,152 @@
      $cache{$obj} = 1;
  }
 
+ # Helper functions to grab all applicable intermediary files.
+ # This is particularly useful when a library is given as source
+ # rather than a dependency.  In that case, we consider it to be a
+ # container with object file references, or possibly references
+ # to further libraries to pilfer in the same way.
+ sub getsrclibs {
+     my $section = shift;
+
+     # For all input, see if it sources static libraries.  If it does,
+     # return them together with the result of a recursive call.
+     map { ( $_, getsrclibs($section, $_) ) }
+     grep { $_ =~ m|\.a$| }
+     map { @{$unified_info{$section}->{$_} // []} }
+     @_;
+ }
+
+ sub getlibobjs {
+     my $section = shift;
+
+     # For all input, see if it's an intermediary file (library or object).
+     # If it is, collect the result of a recursive call, or if that returns
+     # an empty list, the element itself.  Return the result.
+     map {
+         my @x = getlibobjs($section, @{$unified_info{$section}->{$_}});
+         @x ? @x : ( $_ );
+     }
+     grep { defined $unified_info{$section}->{$_} }
+     @_;
+ }
+
  # dolib is responsible for building libraries.  It will call
- # obj2shlib is shared libraries are produced, and obj2lib in all
+ # obj2shlib if shared libraries are produced, and obj2lib in all
  # cases.  It also makes sure all object files for the library are
  # built.
  sub dolib {
      my $lib = shift;
      return "" if $cache{$lib};
+
+     my %attrs = %{$unified_info{attributes}->{libraries}->{$lib}};
+
+     my @deps = ( resolvedepends(getsrclibs('sources', $lib)) );
+
+     # We support two types of objs, those who are specific to this library
+     # (they end up in @objs) and those that we get indirectly, via other
+     # libraries (they end up in @foreign_objs).  We get the latter any time
+     # someone has done something like this in build.info:
+     #     SOURCE[libfoo.a]=libbar.a
+     # The indirect object files must be kept in a separate array so they
+     # don't get rebuilt unnecessarily (and with incorrect auxiliary
+     # information).
+     #
+     # Object files can't be collected commonly for shared and static
+     # libraries, because we contain their respective object files in
+     # {shared_sources} and {sources}, and because the implications are
+     # slightly different for each library form.
+     #
+     # We grab all these "foreign" object files recursively with getlibobjs().
+
      unless ($disabled{shared} || $lib =~ /\.a$/) {
          my $obj2shlib = defined &obj2shlib ? \&obj2shlib : \&libobj2shlib;
+         # If this library sources other static libraries and those
+         # libraries are marked {noinst}, there's no need to include
+         # all of their object files.  Instead, we treat those static
+         # libraries as dependents alongside any other library this
+         # one depends on, and let symbol resolution do its job.
+         my @sourced_libs = ();
+         my @objs = ();
+         my @foreign_objs = ();
+         my @deps = ();
+         foreach (@{$unified_info{shared_sources}->{$lib}}) {
+             if ($_ !~ m|\.a$|) {
+                 push @objs, $_;
+             } elsif ($unified_info{attributes}->{libraries}->{$_}->{noinst}) {
+                 push @deps, $_;
+             } else {
+                 push @deps, getsrclibs('sources', $_);
+                 push @foreign_objs, getlibobjs('sources', $_);
+             }
+         }
+         @deps = ( grep { $_ ne $lib } resolvedepends($lib, @deps) );
+         print STDERR "DEBUG[dolib:shlib] \%attrs for $lib : ", ,
+             join(",", map { "\n    $_ = $attrs{$_}" } sort keys %attrs), "\n"
+             if %attrs && $debug_rules;
+         print STDERR "DEBUG[dolib:shlib] \@deps for $lib : ",
+             join(",", map { "\n    $_" } @deps), "\n"
+             if @deps && $debug_rules;
+         print STDERR "DEBUG[dolib:shlib] \@objs for $lib : ",
+             join(",", map { "\n    $_" } @objs), "\n"
+             if @objs && $debug_rules;
+         print STDERR "DEBUG[dolib:shlib] \@foreign_objs for $lib : ",
+             join(",", map { "\n    $_" } @foreign_objs), "\n"
+             if @foreign_objs && $debug_rules;
          $OUT .= $obj2shlib->(lib => $lib,
-                              attrs => $unified_info{attributes}->{libraries}->{$lib},
-                              objs => $unified_info{shared_sources}->{$lib},
-                              deps => [ grep { $_ ne $lib } resolvedepends($lib) ]);
-         foreach ((@{$unified_info{shared_sources}->{$lib}},
-                   @{$unified_info{sources}->{$lib}})) {
+                              attrs => { %attrs },
+                              objs => [ @objs, @foreign_objs ],
+                              deps => [ @deps ]);
+         foreach (@objs) {
              # If this is somehow a compiled object, take care of it that way
              # Otherwise, it might simply be generated
              if (defined $unified_info{sources}->{$_}) {
-                 doobj($_, $lib, intent => "shlib",
-                       attrs => $unified_info{attributes}->{libraries}->{$lib});
+                 if($_ =~ /\.a$/) {
+                     dolib($_);
+                 } else {
+                     doobj($_, $lib, intent => "shlib", attrs => { %attrs });
+                 }
              } else {
                  dogenerate($_, undef, undef, intent => "lib");
              }
          }
      }
-     $OUT .= obj2lib(lib => $lib,
-                     attrs => $unified_info{attributes}->{libraries}->{$lib},
-                     objs => [ @{$unified_info{sources}->{$lib}} ]);
-     foreach (@{$unified_info{sources}->{$lib}}) {
-         doobj($_, $lib, intent => "lib",
-               attrs => $unified_info{attributes}->{libraries}->{$lib});
+     {
+         # When putting static libraries together, we cannot rely on any
+         # symbol resolution, so for all static libraries used as source for
+         # this one, as well as other libraries they depend on, we simply
+         # grab all their object files unconditionally,
+         # Symbol resolution will happen when any program, module or shared
+         # library is linked with this one.
+         my @objs = ();
+         my @sourcedeps = ();
+         my @foreign_objs = ();
+         foreach (@{$unified_info{sources}->{$lib}}) {
+             if ($_ !~ m|\.a$|) {
+                 push @objs, $_;
+             } else {
+                 push @sourcedeps, $_;
+             }
+         }
+         @sourcedeps = ( grep { $_ ne $lib } resolvedepends(@sourcedeps) );
+         print STDERR "DEBUG[dolib:lib] : \@sourcedeps for $_ : ",
+             join(",", map { "\n    $_" } @sourcedeps), "\n"
+             if @sourcedeps && $debug_rules;
+         @foreign_objs = getlibobjs('sources', @sourcedeps);
+         print STDERR "DEBUG[dolib:lib] \%attrs for $lib : ", ,
+             join(",", map { "\n    $_ = $attrs{$_}" } sort keys %attrs), "\n"
+             if %attrs && $debug_rules;
+         print STDERR "DEBUG[dolib:lib] \@objs for $lib : ",
+             join(",", map { "\n    $_" } @objs), "\n"
+             if @objs && $debug_rules;
+         print STDERR "DEBUG[dolib:lib] \@foreign_objs for $lib : ",
+             join(",", map { "\n    $_" } @foreign_objs), "\n"
+             if @foreign_objs && $debug_rules;
+         $OUT .= obj2lib(lib => $lib, attrs => { %attrs },
+                         objs => [ @objs, @foreign_objs ]);
+         foreach (@objs) {
+             doobj($_, $lib, intent => "lib", attrs => { %attrs });
+         }
      }
      $cache{$lib} = 1;
  }
@@ -229,17 +360,28 @@
  sub domodule {
      my $module = shift;
      return "" if $cache{$module};
+     my %attrs = %{$unified_info{attributes}->{modules}->{$module}};
+     my @objs = @{$unified_info{sources}->{$module}};
+     my @deps = ( grep { $_ ne $module }
+                  resolvedepends($module) );
+     print STDERR "DEBUG[domodule] \%attrs for $module :",
+         join(",", map { "\n    $_ = $attrs{$_}" } sort keys %attrs), "\n"
+         if $debug_rules;
+     print STDERR "DEBUG[domodule] \@objs for $module : ",
+         join(",", map { "\n    $_" } @objs), "\n"
+         if $debug_rules;
+     print STDERR "DEBUG[domodule] \@deps for $module : ",
+         join(",", map { "\n    $_" } @deps), "\n"
+         if $debug_rules;
      $OUT .= obj2dso(module => $module,
-                     attrs => $unified_info{attributes}->{modules}->{$module},
-                     objs => $unified_info{sources}->{$module},
-                     deps => [ grep { $_ ne $module }
-                               resolvedepends($module) ]);
+                     attrs => { %attrs },
+                     objs => [ @objs ],
+                     deps => [ @deps ]);
      foreach (@{$unified_info{sources}->{$module}}) {
          # If this is somehow a compiled object, take care of it that way
          # Otherwise, it might simply be generated
          if (defined $unified_info{sources}->{$_}) {
-             doobj($_, $module, intent => "dso",
-                   attrs => $unified_info{attributes}->{modules}->{$module});
+             doobj($_, $module, intent => "dso", attrs => { %attrs });
          } else {
              dogenerate($_, undef, $module, intent => "dso");
          }
@@ -252,13 +394,24 @@
  sub dobin {
      my $bin = shift;
      return "" if $cache{$bin};
+     my %attrs = %{$unified_info{attributes}->{programs}->{$bin}};
+     my @objs = @{$unified_info{sources}->{$bin}};
+     my @deps = ( grep { $_ ne $bin } resolvedepends($bin) );
+     print STDERR "DEBUG[dobin] \%attrs for $bin : ",
+         join(",", map { "\n    $_ = $attrs{$_}" } sort keys %attrs), "\n"
+         if %attrs && $debug_rules;
+     print STDERR "DEBUG[dobin] \@objs for $bin : ",
+         join(",", map { "\n    $_" } @objs), "\n"
+         if @objs && $debug_rules;
+     print STDERR "DEBUG[dobin] \@deps for $bin : ",
+         join(",", map { "\n    $_" } @deps), "\n"
+         if @deps && $debug_rules;
      $OUT .= obj2bin(bin => $bin,
-                     attrs => $unified_info{attributes}->{programs}->{$bin},
-                     objs => [ @{$unified_info{sources}->{$bin}} ],
-                     deps => [ grep { $_ ne $bin } resolvedepends($bin) ]);
-     foreach (@{$unified_info{sources}->{$bin}}) {
-         doobj($_, $bin, intent => "bin",
-               attrs => $unified_info{attributes}->{$bin});
+                     attrs => { %attrs },
+                     objs => [ @objs ],
+                     deps => [ @deps ]);
+     foreach (@objs) {
+         doobj($_, $bin, intent => "bin", attrs => { %attrs });
      }
      $cache{$bin} = 1;
  }
