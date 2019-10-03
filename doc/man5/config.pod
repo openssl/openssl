@@ -154,7 +154,7 @@ B<engine_id> below) and further sections containing configuration information
 specific to each ENGINE.
 
 Each ENGINE specific section is used to set default algorithms, load
-dynamic, perform initialization and send ctrls. The actual operation performed
+dynamic, perform initialisation and send ctrls. The actual operation performed
 depends on the I<command> name which is the name of the name value pair. The
 currently supported commands are listed below.
 
@@ -190,10 +190,10 @@ by B<LIST_ADD> with value 2 and B<LOAD> to the dynamic ENGINE. If this is
 not the required behaviour then alternative ctrls can be sent directly
 to the dynamic ENGINE using ctrl commands.
 
-The command B<init> determines whether to initialize the ENGINE. If the value
-is B<0> the ENGINE will not be initialized, if B<1> and attempt it made to
-initialized the ENGINE immediately. If the B<init> command is not present
-then an attempt will be made to initialize the ENGINE after all commands in
+The command B<init> determines whether to initialise the ENGINE. If the value
+is B<0> the ENGINE will not be initialised, if B<1> and attempt it made to
+initialised the ENGINE immediately. If the B<init> command is not present
+then an attempt will be made to initialise the ENGINE after all commands in
 its section have been processed.
 
 The command B<default_algorithms> sets the default algorithms an ENGINE will

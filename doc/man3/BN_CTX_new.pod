@@ -24,12 +24,12 @@ library functions. Since dynamic memory allocation to create B<BIGNUM>s
 is rather expensive when used in conjunction with repeated subroutine
 calls, the B<BN_CTX> structure is used.
 
-BN_CTX_new_ex() allocates and initializes a B<BN_CTX> structure for the given
+BN_CTX_new_ex() allocates and initialises a B<BN_CTX> structure for the given
 library context B<ctx>. The <ctx> value may be NULL in which case the default
 library context will be used. BN_CTX_new() is the same as BN_CTX_new_ex() except
 that the default library context is always used.
 
-BN_CTX_secure_new_ex() allocates and initializes a B<BN_CTX> structure
+BN_CTX_secure_new_ex() allocates and initialises a B<BN_CTX> structure
 but uses the secure heap (see L<CRYPTO_secure_malloc(3)>) to hold the
 B<BIGNUM>s for the given library context B<ctx>. The <ctx> value may be NULL in
 which case the default library context will be used. BN_CTX_secure_new() is the

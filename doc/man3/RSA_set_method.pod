@@ -65,14 +65,14 @@ RSA_set_method().
 RSA_flags() returns the B<flags> that are set for B<rsa>'s current
 RSA_METHOD. See the BUGS section.
 
-RSA_new_method() allocates and initializes an RSA structure so that
+RSA_new_method() allocates and initialises an RSA structure so that
 B<engine> will be used for the RSA operations. If B<engine> is NULL, the
 default ENGINE for RSA operations is used, and if no default ENGINE is set,
 the RSA_METHOD controlled by RSA_set_default_method() is used.
 
 RSA_flags() returns the B<flags> that are set for B<rsa>'s current method.
 
-RSA_new_method() allocates and initializes an B<RSA> structure so that
+RSA_new_method() allocates and initialises an B<RSA> structure so that
 B<method> will be used for the RSA operations. If B<method> is B<NULL>,
 the default method is used.
 

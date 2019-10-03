@@ -41,7 +41,7 @@ X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
 The B<X509_PUBKEY> structure represents the ASN.1 B<SubjectPublicKeyInfo>
 structure defined in RFC5280 and used in certificates and certificate requests.
 
-X509_PUBKEY_new() allocates and initializes an B<X509_PUBKEY> structure.
+X509_PUBKEY_new() allocates and initialises an B<X509_PUBKEY> structure.
 
 X509_PUBKEY_free() frees up B<X509_PUBKEY> structure B<a>. If B<a> is NULL
 nothing is done.

@@ -143,7 +143,7 @@ These methods are deprecated.
 
 =back
 
-SSL_CTX_new() initializes the list of ciphers, the session cache setting, the
+SSL_CTX_new() initialises the list of ciphers, the session cache setting, the
 callbacks, the keys and certificates and the options to their default values.
 
 TLS_method(), TLS_server_method(), TLS_client_method(), DTLS_method(),

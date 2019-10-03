@@ -24,7 +24,7 @@ RAND_DRBG_get0_private
 
 =head1 DESCRIPTION
 
-The default RAND API implementation (RAND_OpenSSL()) utilizes three
+The default RAND API implementation (RAND_OpenSSL()) utilises three
 shared DRBG instances which are accessed via the RAND API:
 
 The I<public> and I<private> DRBG are thread-local instances, which are used
@@ -62,9 +62,9 @@ apply only to the current thread.
 For that reason it is recommended not to change the settings of these
 three instances directly.
 Instead, an application should change the default settings for new DRBG instances
-at initialization time, before creating additional threads.
+at initialisation time, before creating additional threads.
 
-During initialization, it is possible to change the reseed interval
+During initialisation, it is possible to change the reseed interval
 and reseed time interval.
 It is also possible to exchange the reseeding callbacks entirely.
 

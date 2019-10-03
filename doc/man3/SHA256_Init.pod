@@ -58,7 +58,7 @@ is placed in a static array. Note: setting B<md> to NULL is B<not thread safe>.
 The following functions may be used if the message is not completely
 stored in memory:
 
-SHA1_Init() initializes a B<SHA_CTX> structure.
+SHA1_Init() initialises a B<SHA_CTX> structure.
 
 SHA1_Update() can be called repeatedly with chunks of the message to
 be hashed (B<len> bytes at B<data>).

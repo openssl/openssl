@@ -37,18 +37,18 @@ The following multi-threading function are provided:
 
 =item *
 
-CRYPTO_THREAD_run_once() can be used to perform one-time initialization.
+CRYPTO_THREAD_run_once() can be used to perform one-time initialisation.
 The B<once> argument must be a pointer to a static object of type
-B<CRYPTO_ONCE> that was statically initialized to the value
+B<CRYPTO_ONCE> that was statically initialised to the value
 B<CRYPTO_ONCE_STATIC_INIT>.
 The B<init> argument is a pointer to a function that performs the desired
-exactly once initialization.
+exactly once initialisation.
 In particular, this can be used to allocate locks in a thread-safe manner,
 which can then be used with the locking functions below.
 
 =item *
 
-CRYPTO_THREAD_lock_new() allocates, initializes and returns a new read/write
+CRYPTO_THREAD_lock_new() allocates, initialises and returns a new read/write
 lock.
 
 =item *
@@ -108,7 +108,7 @@ You can find out if OpenSSL was configured with thread support:
      /* no thread support */
  #endif
 
-This example safely initializes and uses a lock.
+This example safely initialises and uses a lock.
 
  #ifdef _WIN32
  # include <windows.h>

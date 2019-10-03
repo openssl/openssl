@@ -94,7 +94,7 @@ The callback function may itself do non-trivial tasks like writing to
 a log file or remote stream, which in turn may fail.
 Therefore the function should return 1 on success and 0 on failure.
 
-OSSL_CMP_log_open() initializes the CMP-specific logging facility to output
+OSSL_CMP_log_open() initialises the CMP-specific logging facility to output
 everything to STDOUT. It fails if the integrated tracing is disabled or STDIO
 is not available. It may be called during application startup.
 Alternatively, L<OSSL_CMP_CTX_set_log_cb(3)> can be used for more flexibility.

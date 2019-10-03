@@ -33,7 +33,7 @@ Otherwise the type of the returned structure can be determined
 using PKCS7_type_is_enveloped(), etc.
 
 To support future functionality if B<bcont> is not B<NULL>
-B<*bcont> should be initialized to B<NULL>. For example:
+B<*bcont> should be initialised to B<NULL>. For example:
 
  BIO *cont = NULL;
  PKCS7 *p7;

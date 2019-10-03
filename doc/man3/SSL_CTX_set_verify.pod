@@ -55,7 +55,7 @@ Post-Handshake Authentication extension to be added to the ClientHello such that
 post-handshake authentication can be requested by the server. If B<val> is 0
 then the extension is not sent, otherwise it is. By default the extension is not
 sent. A certificate callback will need to be set via
-SSL_CTX_set_client_cert_cb() if no certificate is provided at initialization.
+SSL_CTX_set_client_cert_cb() if no certificate is provided at initialisation.
 
 SSL_verify_client_post_handshake() causes a CertificateRequest message to be
 sent by a server on the given B<ssl> connection. The SSL_VERIFY_PEER flag must
@@ -217,14 +217,14 @@ to determine the failure reason.
 
 =head1 EXAMPLES
 
-The following code sequence realizes an example B<verify_callback> function
+The following code sequence realises an example B<verify_callback> function
 that will always continue the TLS/SSL handshake regardless of verification
-failure, if wished. The callback realizes a verification depth limit with
+failure, if wished. The callback realises a verification depth limit with
 more informational output.
 
 All verification errors are printed; information about the certificate chain
 is printed on request.
-The example is realized for a server that does allow but not require client
+The example is realised for a server that does allow but not require client
 certificates.
 
 The example makes use of the ex_data technique to store application data

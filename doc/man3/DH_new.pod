@@ -14,7 +14,7 @@ DH_new, DH_free - allocate and free DH objects
 
 =head1 DESCRIPTION
 
-DH_new() allocates and initializes a B<DH> structure.
+DH_new() allocates and initialises a B<DH> structure.
 
 DH_free() frees the B<DH> structure and its components. The values are
 erased before the memory is returned to the system.

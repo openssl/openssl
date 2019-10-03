@@ -80,7 +80,7 @@ itself.
 The following functions may be used if the message is not completely
 stored in memory:
 
-HMAC_Init_ex() initializes or reuses a B<HMAC_CTX> structure to use the hash
+HMAC_Init_ex() initialises or reuses a B<HMAC_CTX> structure to use the hash
 function B<evp_md> and key B<key>. If both are NULL, or if B<key> is NULL
 and B<evp_md> is the same as the previous call, then the
 existing key is
@@ -91,7 +91,7 @@ If HMAC_Init_ex() is called with B<key> NULL and B<evp_md> is not the
 same as the previous digest used by B<ctx> then an error is returned
 because reuse of an existing key with a different digest is not supported.
 
-HMAC_Init() initializes a B<HMAC_CTX> structure to use the hash
+HMAC_Init() initialises a B<HMAC_CTX> structure to use the hash
 function B<evp_md> and the key B<key> which is B<key_len> bytes
 long.
 

@@ -12,12 +12,12 @@ OPENSSL_s390xcap - the IBM z processor capabilities vector
 
 libcrypto supports z/Architecture instruction set extensions. These
 extensions are denoted by individual bits in the capabilities vector.
-When libcrypto is initialized, the bits returned by the STFLE instruction
+When libcrypto is initialised, the bits returned by the STFLE instruction
 and by the QUERY functions are stored in the vector.
 
 To change the set of instructions available to an application, you can
 set the OPENSSL_s390xcap environment variable before you start the
-application. After initialization, the capability vector is ANDed bitwise
+application. After initialisation, the capability vector is ANDed bitwise
 with a mask which is derived from the environment variable.
 
 The environment variable is a semicolon-separated list of tokens which is

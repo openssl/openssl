@@ -37,7 +37,7 @@ plus some occasional newlines (see below). If the input data length is not a
 multiple of 3 then the output data will be padded at the end using the "="
 character.
 
-EVP_ENCODE_CTX_new() allocates, initializes and returns a context to be used for
+EVP_ENCODE_CTX_new() allocates, initialises and returns a context to be used for
 the encode/decode functions.
 
 EVP_ENCODE_CTX_free() cleans up an encode/decode context B<ctx> and frees up the
@@ -77,7 +77,7 @@ sufficiently large to accommodate the output data which will never be more than
 65 bytes plus an additional NUL terminator (i.e. 66 bytes in total).
 
 EVP_ENCODE_CTX_copy() can be used to copy a context B<sctx> to a context
-B<dctx>. B<dctx> must be initialized before calling this function.
+B<dctx>. B<dctx> must be initialised before calling this function.
 
 EVP_ENCODE_CTX_num() will return the number of as yet unprocessed bytes still to
 be encoded or decoded that are pending in the B<ctx> object.

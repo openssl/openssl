@@ -152,7 +152,7 @@ Check if an object is B<commonName>
  if (OBJ_obj2nid(obj) == NID_commonName)
      /* Do something */
 
-Create a new NID and initialize an object from it:
+Create a new NID and initialise an object from it:
 
  int new_nid = OBJ_create("1.2.3.4", "NewOID", "New Object Identifier");
  ASN1_OBJECT *obj = OBJ_nid2obj(new_nid);

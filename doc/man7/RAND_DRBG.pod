@@ -25,7 +25,7 @@ configuration parameters.
 =head2 Disclaimer
 
 Unless you have very specific requirements for your random generator,
-it is in general not necessary to utilize the RAND_DRBG API directly.
+it is in general not necessary to utilise the RAND_DRBG API directly.
 The usual way to obtain random bytes is to use L<RAND_bytes(3)> or
 L<RAND_priv_bytes(3)>, see also L<RAND(7)>.
 

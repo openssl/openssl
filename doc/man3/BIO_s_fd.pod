@@ -63,7 +63,7 @@ BIO_s_fd() returns the file descriptor BIO method.
 BIO_set_fd() always returns 1.
 
 BIO_get_fd() returns the file descriptor or -1 if the BIO has not
-been initialized.
+been initialised.
 
 BIO_new_fd() returns the newly allocated BIO or NULL is an error
 occurred.

@@ -34,7 +34,7 @@ ossl_provider_get_params, ossl_provider_query_operation
  int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                  const char *value);
 
- /* Load and initialize the Provider */
+ /* Load and initialise the Provider */
  int ossl_provider_activate(OSSL_PROVIDER *prov);
  /* Check if provider is available */
  int ossl_provider_available(OSSL_PROVIDER *prov);
@@ -153,12 +153,12 @@ is:
 
 =item *
 
-If an initialization function was given with ossl_provider_new(), that
+If an initialisation function was given with ossl_provider_new(), that
 function will get called.
 
 =item *
 
-If no initialization function was given with ossl_provider_new(), a
+If no initialisation function was given with ossl_provider_new(), a
 loadable module with the I<name> that was given to ossl_provider_new()
 will be located and loaded, then the symbol B<OSSL_provider_init> will
 be located in that module, and called.

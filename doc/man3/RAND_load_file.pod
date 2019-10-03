@@ -29,7 +29,7 @@ responsible for any side effects, e.g. non-anticipated blocking or
 capture of controlling terminal.
 
 RAND_write_file() writes a number of random bytes (currently 128) to
-file B<filename> which can be used to initialize the PRNG by calling
+file B<filename> which can be used to initialise the PRNG by calling
 RAND_load_file() in a later session.
 
 RAND_file_name() generates a default path for the random seed

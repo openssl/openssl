@@ -43,7 +43,7 @@ initialised with L<EVP_CIPHER_CTX_reset(3)> and L<HMAC_CTX_reset(3)> respectivel
 For new sessions tickets, when the client doesn't present a session ticket, or
 an attempted retrieval of the ticket failed, or a renew option was indicated,
 the callback function will be called with I<enc> equal to 1. The OpenSSL
-library expects that the function will set an arbitrary I<name>, initialize
+library expects that the function will set an arbitrary I<name>, initialise
 I<iv>, and set the cipher context I<ctx> and the hash context I<hctx>.
 
 The I<name> is 16 characters long and is used as a key identifier.
@@ -51,7 +51,7 @@ The I<name> is 16 characters long and is used as a key identifier.
 The I<iv> length is the length of the IV of the corresponding cipher. The
 maximum IV length is B<EVP_MAX_IV_LENGTH> bytes defined in B<evp.h>.
 
-The initialization vector I<iv> should be a random value. The cipher context
+The initialisation vector I<iv> should be a random value. The cipher context
 I<ctx> should use the initialisation vector I<iv>. The cipher context can be
 set using L<EVP_EncryptInit_ex(3)>. The hmac context can be set using
 L<HMAC_Init_ex(3)>.
@@ -61,7 +61,7 @@ with I<enc> set to 0 indicating that the I<cb> function should retrieve a set
 of parameters. In this case I<name> and I<iv> have already been parsed out of
 the session ticket. The OpenSSL library expects that the I<name> will be used
 to retrieve a cryptographic parameters and that the cryptographic context
-I<ctx> will be set with the retrieved parameters and the initialization vector
+I<ctx> will be set with the retrieved parameters and the initialisation vector
 I<iv>. using a function like L<EVP_DecryptInit_ex(3)>. The I<hctx> needs to be
 set using L<HMAC_Init_ex(3)>.
 

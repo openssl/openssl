@@ -14,7 +14,7 @@ OpenSSL supports a range of x86[_64] instruction set extensions. These
 extensions are denoted by individual bits in capability vector returned
 by processor in EDX:ECX register pair after executing CPUID instruction
 with EAX=1 input value (see Intel Application Note #241618). This vector
-is copied to memory upon toolkit initialization and used to choose
+is copied to memory upon toolkit initialisation and used to choose
 between different code paths to provide optimal performance across wide
 range of processors. For the moment of this writing following bits are
 significant:

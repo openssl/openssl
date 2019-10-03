@@ -234,7 +234,7 @@ algorithm present by the B<EVP_PKEY_CTX> object.
  int (*copy) (EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src);
  void (*cleanup) (EVP_PKEY_CTX *ctx);
 
-The init() method is called to initialize algorithm-specific data when a new
+The init() method is called to initialise algorithm-specific data when a new
 B<EVP_PKEY_CTX> is created. As opposed to init(), the cleanup() method is called
 when an B<EVP_PKEY_CTX> is freed. The copy() method is called when an B<EVP_PKEY_CTX>
 is being duplicated. Refer to L<EVP_PKEY_CTX_new(3)>, L<EVP_PKEY_CTX_new_id(3)>,

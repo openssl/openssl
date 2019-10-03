@@ -69,7 +69,7 @@ The API described here is used by OpenSSL to manipulate exdata for specific
 structures.  Since the application data can be anything at all it is passed
 and retrieved as a B<void *> type.
 
-The B<CRYPTO_EX_DATA> type is opaque.  To initialize the exdata part of
+The B<CRYPTO_EX_DATA> type is opaque.  To initialise the exdata part of
 a structure, call CRYPTO_new_ex_data(). This is only necessary for
 B<CRYPTO_EX_INDEX_APP> objects.
 
@@ -117,7 +117,7 @@ When a structure is initially allocated (such as RSA_new()) then the
 new_func() is called for every defined index. There is no requirement
 that the entire parent, or containing, structure has been set up.
 The new_func() is typically used only to allocate memory to store the
-exdata, and perhaps an "initialized" flag within that memory.
+exdata, and perhaps an "initialised" flag within that memory.
 The exdata value may be allocated later on with CRYPTO_alloc_ex_data(),
 or may be set by calling CRYPTO_set_ex_data().
 

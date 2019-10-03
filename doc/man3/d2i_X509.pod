@@ -606,7 +606,7 @@ Another trap to avoid is misuse of the I<a> argument to B<d2i_I<TYPE>>():
      /* error */
 
 This will probably crash somewhere in d2i_X509(). The reason for this
-is that the variable I<x> is uninitialized and an attempt will be made to
+is that the variable I<x> is uninitialised and an attempt will be made to
 interpret its (invalid) value as an B<X509> structure, typically causing
 a segmentation violation. If I<x> is set to NULL first then this will not
 happen.
@@ -623,7 +623,7 @@ some did not free I<*a> on error and did not set I<*a> to NULL.
 As a result of the above issues the "reuse" behaviour is strongly discouraged.
 
 B<i2d_I<TYPE>>() will not return an error in many versions of OpenSSL,
-if mandatory fields are not initialized due to a programming error
+if mandatory fields are not initialised due to a programming error
 then the encoded structure may contain invalid data or omit the
 fields entirely and will not be parsed by B<d2i_I<TYPE>>(). This may be
 fixed in future so code should not assume that B<i2d_I<TYPE>>() will

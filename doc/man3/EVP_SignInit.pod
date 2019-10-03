@@ -40,7 +40,7 @@ The number of bytes of data written (i.e. the length of the signature)
 will be written to the integer at B<s>, at most EVP_PKEY_size(pkey) bytes
 will be written.
 
-EVP_SignInit() initializes a signing context B<ctx> to use the default
+EVP_SignInit() initialises a signing context B<ctx> to use the default
 implementation of digest B<type>.
 
 EVP_PKEY_size() returns the maximum size of a signature in bytes. The actual

@@ -38,7 +38,7 @@ the write function operation. The behaviour of the write functions depends on th
 underlying BIO.
 
 For the transparent negotiation to succeed, the B<ssl> must have been
-initialized to client or server mode. This is being done by calling
+initialised to client or server mode. This is being done by calling
 L<SSL_set_connect_state(3)> or SSL_set_accept_state()
 before the first call to a write function.
 

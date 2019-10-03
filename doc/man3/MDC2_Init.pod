@@ -30,7 +30,7 @@ is placed in a static array.
 The following functions may be used if the message is not completely
 stored in memory:
 
-MDC2_Init() initializes a B<MDC2_CTX> structure.
+MDC2_Init() initialises a B<MDC2_CTX> structure.
 
 MDC2_Update() can be called repeatedly with chunks of the message to
 be hashed (B<len> bytes at B<data>).

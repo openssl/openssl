@@ -20,7 +20,7 @@ must be used to protect the RSA operation from that attack.
 
 RSA_blinding_on() turns blinding on for key B<rsa> and generates a
 random blinding factor. B<ctx> is B<NULL> or a pre-allocated and
-initialized B<BN_CTX>.
+initialised B<BN_CTX>.
 
 RSA_blinding_off() turns blinding off and frees the memory used for
 the blinding factor.

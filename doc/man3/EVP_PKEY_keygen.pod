@@ -35,7 +35,7 @@ EVP_PKEY_param_check
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_keygen_init() function initializes a public key algorithm
+The EVP_PKEY_keygen_init() function initialises a public key algorithm
 context using key B<pkey> for a key generation operation.
 
 The EVP_PKEY_keygen() function performs a key generation operation, the

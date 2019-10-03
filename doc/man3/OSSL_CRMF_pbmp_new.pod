@@ -30,7 +30,7 @@ The iteration count must be at least 100, as stipulated by RFC 4211, and is
 limited to at most 100000 to avoid DoS through manipulated or otherwise
 malformed input.
 
-OSSL_CRMF_pbmp_new() initializes and returns a new PBMParameter
+OSSL_CRMF_pbmp_new() initialises and returns a new PBMParameter
 structure with a new random salt of given length B<saltlen>, OWF (one-way
 function) NID B<owfnid>, iteration count B<itercnt>, and MAC NID B<macnid>.
 
@@ -46,7 +46,7 @@ RFC 4210 recommends that the salt SHOULD be at least 8 bytes (64 bits) long.
 
 OSSL_CRMF_pbm_new() returns 1 on success, 0 on error.
 
-OSSL_CRMF_pbmp_new() returns a new and initialized OSSL_CRMF_PBMPARAMETER
+OSSL_CRMF_pbmp_new() returns a new and initialised OSSL_CRMF_PBMPARAMETER
 structure, or NULL on error.
 
 =head1 EXAMPLES

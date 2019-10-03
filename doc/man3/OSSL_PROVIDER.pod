@@ -41,12 +41,12 @@ L<OPENSSL_CTX(3)> for further details.
 
 OSSL_PROVIDER_add_builtin() is used to add a built in provider to
 B<OSSL_PROVIDER> store in the given library context, by associating a
-provider name with a provider initialization function.
+provider name with a provider initialisation function.
 This name can then be used with OSSL_PROVIDER_load().
 
-OSSL_PROVIDER_load() loads and initializes a provider.
-This may simply initialize a provider that was previously added with
-OSSL_PROVIDER_add_builtin() and run its given initialization function,
+OSSL_PROVIDER_load() loads and initialises a provider.
+This may simply initialise a provider that was previously added with
+OSSL_PROVIDER_add_builtin() and run its given initialisation function,
 or load a provider module with the given name and run its provider
 entry point, C<OSSL_provider_init>.
 

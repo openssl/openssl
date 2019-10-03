@@ -68,7 +68,7 @@ descriptors by default, which allows such sources to operate in a
 chroot(2) jail without the associated device nodes being available. When
 the B<keep> argument is zero, this call disables the retention of file
 descriptors. Conversely, a nonzero argument enables the retention of
-file descriptors. This function is usually called during initialization
+file descriptors. This function is usually called during initialisation
 and it takes effect immediately.
 
 RAND_event() and RAND_screen() are equivalent to RAND_poll() and exist

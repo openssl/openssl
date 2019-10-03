@@ -15,7 +15,7 @@ EVP_PKEY_encrypt_init, EVP_PKEY_encrypt - encrypt using a public key algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_encrypt_init() function initializes a public key algorithm
+The EVP_PKEY_encrypt_init() function initialises a public key algorithm
 context using key B<pkey> for an encryption operation.
 
 The EVP_PKEY_encrypt() function performs a public key encryption operation

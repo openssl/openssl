@@ -32,7 +32,7 @@ automatically when L<BN_mod_exp(3)> is called with suitable input,
 but they may be useful when several operations are to be performed
 using the same modulus.
 
-BN_MONT_CTX_new() allocates and initializes a B<BN_MONT_CTX> structure.
+BN_MONT_CTX_new() allocates and initialises a B<BN_MONT_CTX> structure.
 
 BN_MONT_CTX_set() sets up the I<mont> structure from the modulus I<m>
 by precomputing its inverse and a value R.

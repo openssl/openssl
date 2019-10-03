@@ -110,7 +110,7 @@ Since the HKDF output length is variable, passing a B<NULL> buffer as a means
 to obtain the requisite length is not meaningful with HKDF in any mode that
 performs an expand operation. Instead, the caller must allocate a buffer of the
 desired length, and pass that buffer to L<EVP_PKEY_derive(3)> along with (a
-pointer initialized to) the desired length. Passing a B<NULL> buffer to obtain
+pointer initialised to) the desired length. Passing a B<NULL> buffer to obtain
 the length is allowed when using EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY.
 
 Optimised versions of HKDF can be implemented in an ENGINE.

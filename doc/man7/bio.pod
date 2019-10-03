@@ -38,8 +38,8 @@ BIO).
 
 
 Some BIOs (such as memory BIOs) can be used immediately after calling
-BIO_new(). Others (such as file BIOs) need some additional initialization,
-and frequently a utility function exists to create and initialize such BIOs.
+BIO_new(). Others (such as file BIOs) need some additional initialisation,
+and frequently a utility function exists to create and initialise such BIOs.
 
 If BIO_free() is called on a BIO chain it will only free one BIO resulting
 in a memory leak.

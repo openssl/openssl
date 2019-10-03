@@ -60,10 +60,10 @@ failure.
 
 =head1 EXAMPLES
 
-=head2 Initialization
+=head2 Initialisation
 
 For a type C<FOO> that should end up in the OpenSSL library context, a
-small bit of initialization is needed, i.e. to associate a constructor
+small bit of initialisation is needed, i.e. to associate a constructor
 and a destructor to an index.
 
  typedef struct foo_st {

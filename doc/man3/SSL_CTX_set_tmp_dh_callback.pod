@@ -98,7 +98,7 @@ Command-line parameter generation:
 
  $ openssl dhparam -out dh_param_2048.pem 2048
 
-Code for setting up parameters during server initialization:
+Code for setting up parameters during server initialisation:
 
  SSL_CTX ctx = SSL_CTX_new();
 

@@ -16,7 +16,7 @@ ASN1_OBJECT_new, ASN1_OBJECT_free - object allocation functions
 The B<ASN1_OBJECT> allocation routines, allocate and free an
 B<ASN1_OBJECT> structure, which represents an ASN1 OBJECT IDENTIFIER.
 
-ASN1_OBJECT_new() allocates and initializes an B<ASN1_OBJECT> structure.
+ASN1_OBJECT_new() allocates and initialises an B<ASN1_OBJECT> structure.
 
 ASN1_OBJECT_free() frees up the B<ASN1_OBJECT> structure I<a>.
 If I<a> is NULL, nothing is done.

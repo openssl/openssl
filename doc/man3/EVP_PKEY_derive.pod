@@ -16,7 +16,7 @@ EVP_PKEY_derive - derive public key algorithm shared secret
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_derive_init_ex() function initializes a public key algorithm
+The EVP_PKEY_derive_init_ex() function initialises a public key algorithm
 context for shared secret derivation using the key exchange algorithm
 B<exchange>.
 The key exchange algorithm B<exchange> should be fetched using a call to

@@ -74,7 +74,7 @@ This function is deprecated, see B<NOTES> below.
 
 PEM_do_header() can then be used to decrypt the data if the header
 indicates encryption.
-The B<cinfo> argument is a pointer to the structure initialized by the previous
+The B<cinfo> argument is a pointer to the structure initialised by the previous
 call to PEM_get_EVP_CIPHER_INFO().
 The B<data> and B<len> arguments are those returned by the previous call to
 PEM_read() or PEM_read_bio().

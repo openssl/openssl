@@ -33,7 +33,7 @@ same B<ctx> to include additional data.
 EVP_VerifyFinal() verifies the data in B<ctx> using the public key B<pkey>
 and against the B<siglen> bytes at B<sigbuf>.
 
-EVP_VerifyInit() initializes verification context B<ctx> to use the default
+EVP_VerifyInit() initialises verification context B<ctx> to use the default
 implementation of digest B<type>.
 
 =head1 RETURN VALUES

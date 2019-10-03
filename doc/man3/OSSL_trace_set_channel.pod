@@ -119,7 +119,7 @@ trace hook is set.
 
 =item C<OSSL_TRACE_CATEGORY_INIT>
 
-Traces OpenSSL library initialization and cleanup.
+Traces OpenSSL library initialisation and cleanup.
 
 This needs special care, as OpenSSL will do automatic cleanup after
 exit from C<main()>, and any tracing output done during this cleanup

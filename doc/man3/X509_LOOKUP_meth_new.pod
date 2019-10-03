@@ -125,12 +125,12 @@ that is used to free any method data that was allocated and set from within
 new_item function.
 
 X509_LOOKUP_meth_get_init() and X509_LOOKUP_meth_set_init() get and set the
-function that is used to initialize the method data that was set with
+function that is used to initialise the method data that was set with
 X509_LOOKUP_set_method_data() as part of the new_item routine.
 
 X509_LOOKUP_meth_get_shutdown() and X509_LOOKUP_meth_set_shutdown() get and set
 the function that is used to shut down the method data whose state was
-previously initialized in the init function.
+previously initialised in the init function.
 
 X509_LOOKUP_meth_get_ctrl() and X509_LOOKUP_meth_set_ctrl() get and set a
 function to be used to handle arbitrary control commands issued by

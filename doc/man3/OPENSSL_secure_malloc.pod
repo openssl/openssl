@@ -55,7 +55,7 @@ allocate from the heap. Both C<size> and C<minsize> must be a power
 of two.
 
 CRYPTO_secure_malloc_initialized() indicates whether or not the secure
-heap as been initialized and is available.
+heap as been initialised and is available.
 
 CRYPTO_secure_malloc_done() releases the heap and makes the memory unavailable
 to the process if all secure memory has been freed.

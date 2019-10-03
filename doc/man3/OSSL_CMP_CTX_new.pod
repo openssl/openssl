@@ -161,7 +161,7 @@ OSSL_CMP_CTX_set1_senderNonce
 This is the context API for using CMP (Certificate Management Protocol) with
 OpenSSL.
 
-OSSL_CMP_CTX_new() allocates and initializes an OSSL_CMP_CTX structure to
+OSSL_CMP_CTX_new() allocates and initialises an OSSL_CMP_CTX structure to
 default values, e.g., proof-of-possession method is set to POPOSigningKey.
 
 OSSL_CMP_CTX_free() deallocates an OSSL_CMP_CTX structure.
@@ -453,7 +453,7 @@ will be set in the CertTemplate, i.e., the X509 name of the CA server.
 OSSL_CMP_CTX_set1_subjectName() sets the subject DN that will be used in
 the CertTemplate structure when requesting a new cert. For Key Update Requests
 (KUR), it defaults to the subject DN of the reference certificate,
-see B<OSSL_CMP_CTX_set1_oldCert()>. This default is used for Initialization
+see B<OSSL_CMP_CTX_set1_oldCert()>. This default is used for Initialisation
 Requests (IR) and Certification Requests (CR) only if no SANs are set.
 
 If clCert is not set (e.g. in case of IR with MSG_MAC_ALG), the subject DN
@@ -585,7 +585,7 @@ All other functions return 1 on success, 0 on error.
 
 =head1 EXAMPLES
 
-The following code does an Initialization Request:
+The following code does an Initialisation Request:
 
         cmp_ctx = OSSL_CMP_CTX_new();
         OSSL_CMP_CTX_set1_serverName(cmp_ctx, opt_serverName);
@@ -596,7 +596,7 @@ The following code does an Initialization Request:
 
         initialClCert = OSSL_CMP_exec_IR_ses(cmp_ctx);
 
-The following code does an Initialization Request using an
+The following code does an Initialisation Request using an
 external identity certificate (RFC 4210, Appendix E.7):
 
         cmp_ctx = OSSL_CMP_CTX_new();

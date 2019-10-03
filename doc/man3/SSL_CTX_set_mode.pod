@@ -111,7 +111,7 @@ Disable the use of the kernel TLS egress data-path.
 By default kernel TLS is enabled if it is supported by the negotiated ciphersuites
 and extensions and OpenSSL has been compiled with support for it.
 The kernel TLS data-path implements the record layer,
-and the crypto algorithm. The kernel will utilize the best hardware
+and the crypto algorithm. The kernel will utilise the best hardware
 available for crypto. Using the kernel data-path should reduce the memory
 footprint of OpenSSL because no buffering is required. Also, the throughput
 should improve because data copy is avoided when user data is encrypted into

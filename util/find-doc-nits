@@ -408,16 +408,23 @@ my %preferred_words = (
     'zeroes'        => 'zeros',
     # https://ac.bslw.com/community/wiki/index.php/British_to_American_Spelling
     'behavior'      => 'behaviour',
+    'center'        => 'centre',
     'enrollment'    => 'enrolment',
     'favor'         => 'favour',
-    'finalize'      => 'finalise',
     'finalization'  => 'finalisation',
+    'finalize'      => 'finalise',
+    'initialization' => 'initialisation',
+    'initialize'    => 'initialise',
     'mold'          => 'mould',
     'optimization'  => 'optimisation',
     'organization'  => 'organisation',
     'organizational' => 'organisational',
     'organized'     => 'organised',
     'realization'   => 'realisation',
+    'realize'       => 'realise',
+    'realized'      => 'realised',
+    'utilize'       => 'utilise',
+    'utilized'      => 'utilised',
 );
 
 sub wording {

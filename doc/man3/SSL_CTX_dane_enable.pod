@@ -33,7 +33,7 @@ TLS client
 These functions implement support for DANE TLSA (RFC6698 and RFC7671)
 peer authentication.
 
-SSL_CTX_dane_enable() must be called first to initialize the shared state
+SSL_CTX_dane_enable() must be called first to initialise the shared state
 required for DANE support.
 Individual connections associated with the context can then enable
 per-connection DANE support as appropriate.

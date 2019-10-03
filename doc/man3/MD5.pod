@@ -46,7 +46,7 @@ array.
 The following functions may be used if the message is not completely
 stored in memory:
 
-MD2_Init() initializes a B<MD2_CTX> structure.
+MD2_Init() initialises a B<MD2_CTX> structure.
 
 MD2_Update() can be called repeatedly with chunks of the message to
 be hashed (B<len> bytes at B<data>).

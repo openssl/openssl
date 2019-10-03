@@ -18,9 +18,9 @@ and network packet timings, can be reasonable sources of seeding material.
 
 OpenSSL comes with a default implementation of the RAND API which is based on
 the deterministic random bit generator (DRBG) model as described in
-[NIST SP 800-90A Rev. 1]. The default random generator will initialize
+[NIST SP 800-90A Rev. 1]. The default random generator will initialise
 automatically on first use and will be fully functional without having
-to be initialized ('seeded') explicitly.
+to be initialised ('seeded') explicitly.
 It seeds and reseeds itself automatically using trusted random sources
 provided by the operating system.
 

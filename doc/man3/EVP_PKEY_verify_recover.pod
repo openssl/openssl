@@ -18,7 +18,7 @@ EVP_PKEY_verify_recover - recover signature using a public key algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_verify_recover_init_ex() function initializes a public key
+The EVP_PKEY_verify_recover_init_ex() function initialises a public key
 algorithm context for performing signature signed data recovery using the
 signature algorithm B<signature>.
 The signature algorithm B<signature> should be fetched using a call to

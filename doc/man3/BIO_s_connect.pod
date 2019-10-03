@@ -74,7 +74,7 @@ a BIO_ADDR(3ssl).
 BIO_set_conn_ip_family() sets the IP family.
 
 BIO_get_conn_hostname() returns the hostname of the connect BIO or
-NULL if the BIO is initialized but no hostname is set.
+NULL if the BIO is initialised but no hostname is set.
 This return value is an internal pointer which should not be modified.
 
 BIO_get_conn_port() returns the port as a string.
@@ -140,7 +140,7 @@ BIO_set_nbio(), and BIO_do_connect() are macros.
 BIO_s_connect() returns the connect BIO method.
 
 BIO_get_fd() returns the socket or -1 if the BIO has not
-been initialized.
+been initialised.
 
 BIO_set_conn_address(), BIO_set_conn_port(), and BIO_set_conn_ip_family()
 always return 1.

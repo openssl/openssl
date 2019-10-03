@@ -214,7 +214,7 @@ compatibility.
 =head1 NOTES
 
 All the callbacks from a B<X509_STORE> are inherited by the
-corresponding B<X509_STORE_CTX> structure when it is initialized.
+corresponding B<X509_STORE_CTX> structure when it is initialised.
 See L<X509_STORE_CTX_set_verify_cb(3)> for further details.
 
 =head1 BUGS

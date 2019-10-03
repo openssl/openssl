@@ -640,7 +640,7 @@ This option is an alias of the B<-name> option for "xmpp" and "xmpp-server".
 
 This option is used to specify hostname information for various protocols
 used with B<-starttls> option. Currently only "xmpp", "xmpp-server",
-"smtp" and "lmtp" can utilize this B<-name> option.
+"smtp" and "lmtp" can utilise this B<-name> option.
 
 If this option is used with "-starttls xmpp" or "-starttls xmpp-server",
 if specifies the host for the "to" attribute of the stream element. If this

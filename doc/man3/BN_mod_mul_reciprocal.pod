@@ -29,7 +29,7 @@ repeatedly with the same modulus. It computes B<r>=(B<a>*B<b>)%B<m>
 using B<recp>=1/B<m>, which is set as described below.  B<ctx> is a
 previously allocated B<BN_CTX> used for temporary variables.
 
-BN_RECP_CTX_new() allocates and initializes a B<BN_RECP> structure.
+BN_RECP_CTX_new() allocates and initialises a B<BN_RECP> structure.
 
 BN_RECP_CTX_free() frees the components of the B<BN_RECP>, and, if it
 was created by BN_RECP_CTX_new(), also the structure itself.

@@ -31,16 +31,16 @@ certain types of objects.
 
 I<NOTE: This section is mostly interesting for provider authors.>
 
-A I<provider> offers an initialization function, as a set of base
+A I<provider> offers an initialisation function, as a set of base
 functions in the form of an B<OSSL_DISPATCH> array, and by extension,
 a set of B<OSSL_ALGORITHM>s (see L<openssl-core.h(7)>).
 It may be a dynamically loadable module, or may be built-in, in
 OpenSSL libraries or in the application.
-If it's a dynamically loadable module, the initialization function
+If it's a dynamically loadable module, the initialisation function
 must be named C<OSSL_provider_init> and must be exported.
-If it's built-in, the initialization function may have any name.
+If it's built-in, the initialisation function may have any name.
 
-The initialization function must have the following signature:
+The initialisation function must have the following signature:
 
  int NAME(const OSSL_PROVIDER *provider,
           const OSSL_DISPATCH *in, const OSSL_DISPATCH **out,
@@ -79,7 +79,7 @@ and has the following signature:
                                                 const int *no_store);
 
 I<provctx> is the provider specific context that was passed back by
-the initialization function.
+the initialisation function.
 
 I<operation_id> is an operation identity (see L</Operations> below).
 

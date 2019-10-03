@@ -67,8 +67,8 @@ provider-base
 
 All "functions" mentioned here are passed as function pointers between
 F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays, in the call
-of the provider initialization function.  See L<provider(7)/Provider>
-for a description of the initialization function.
+of the provider initialisation function.  See L<provider(7)/Provider>
+for a description of the initialisation function.
 
 All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the

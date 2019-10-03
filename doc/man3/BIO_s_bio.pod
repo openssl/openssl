@@ -65,7 +65,7 @@ half of the pair will return any pending data or EOF when all pending data has
 been read.
 
 BIO_set_write_buf_size() sets the write buffer size of BIO B<b> to B<size>.
-If the size is not initialized a default value is used. This is currently
+If the size is not initialised a default value is used. This is currently
 17K, sufficient for a maximum size TLS record.
 
 BIO_get_write_buf_size() returns the size of the write buffer.

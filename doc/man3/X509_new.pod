@@ -19,7 +19,7 @@ X509_new, X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
 The X509 ASN1 allocation routines, allocate and free an
 X509 structure, which represents an X509 certificate.
 
-X509_new() allocates and initializes a X509 structure with reference count
+X509_new() allocates and initialises a X509 structure with reference count
 B<1>.
 
 X509_free() decrements the reference count of B<X509> structure B<a> and

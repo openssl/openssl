@@ -52,7 +52,7 @@ attempting to change the DSA_METHOD for the key can have unexpected
 results. See L<DSA_meth_new> for information on constructing custom DSA_METHOD
 objects;
 
-DSA_new_method() allocates and initializes a DSA structure so that B<engine>
+DSA_new_method() allocates and initialises a DSA structure so that B<engine>
 will be used for the DSA operations. If B<engine> is NULL, the default engine
 for DSA operations is used, and if no default ENGINE is set, the DSA_METHOD
 controlled by DSA_set_default_method() is used.

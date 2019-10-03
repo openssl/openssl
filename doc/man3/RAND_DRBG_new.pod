@@ -11,7 +11,7 @@ RAND_DRBG_set_defaults,
 RAND_DRBG_instantiate,
 RAND_DRBG_uninstantiate,
 RAND_DRBG_free
-- initialize and cleanup a RAND_DRBG instance
+- initialise and cleanup a RAND_DRBG instance
 
 =head1 SYNOPSIS
 
@@ -58,7 +58,7 @@ be NULL in which case the default OPENSSL_CTX is used. RAND_DRBG_new() and
 RAND_DRBG_secure_new() are the same as RAND_DRBG_new_ex() and
 RAND_DRBG_secure_new_ex() except that the default OPENSSL_CTX is always used.
 
-RAND_DRBG_set() initializes the B<drbg> with the given B<type> and B<flags>.
+RAND_DRBG_set() initialises the B<drbg> with the given B<type> and B<flags>.
 
 RAND_DRBG_set_defaults() sets the default B<type> and B<flags> for new DRBG
 instances.

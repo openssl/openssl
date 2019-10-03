@@ -66,7 +66,7 @@ identifier value instead. An error occurs if the signing certificate does not
 have a subject key identifier extension.
 
 If the flags B<CMS_STREAM> is set then the returned B<CMS_ContentInfo>
-structure is just initialized ready to perform the signing operation. The
+structure is just initialised ready to perform the signing operation. The
 signing is however B<not> performed and the data to be signed is not read from
 the B<data> parameter. Signing is deferred until after the data has been
 written. In this way data can be signed in a single pass.

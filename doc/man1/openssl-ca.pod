@@ -207,7 +207,7 @@ for more information.
 =item B<-msie_hack>
 
 This is a deprecated option to make this command work with very old versions
-of the IE certificate enrollment control "certenr3". It used UniversalStrings
+of the IE certificate enrolment control "certenr3". It used UniversalStrings
 for almost everything. Since the old control has various security bugs
 its use is strongly discouraged.
 

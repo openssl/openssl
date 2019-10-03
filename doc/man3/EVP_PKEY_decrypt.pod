@@ -15,7 +15,7 @@ EVP_PKEY_decrypt_init, EVP_PKEY_decrypt - decrypt using a public key algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_decrypt_init() function initializes a public key algorithm
+The EVP_PKEY_decrypt_init() function initialises a public key algorithm
 context using key B<pkey> for a decryption operation.
 
 The EVP_PKEY_decrypt() function performs a public key decryption operation

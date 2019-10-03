@@ -17,7 +17,7 @@ EVP_PKEY_verify_init_ex, EVP_PKEY_verify_init, EVP_PKEY_verify
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_verify_init_ex() function initializes a public key algorithm
+The EVP_PKEY_verify_init_ex() function initialises a public key algorithm
 context for performing signature verification using the signature algorithm
 B<signature>.
 The signature algorithm B<signature> should be fetched using a call to

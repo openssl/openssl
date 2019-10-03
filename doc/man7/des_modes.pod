@@ -166,11 +166,11 @@ only one bit to be in error in the deciphered plaintext.
 
 OFB mode is not self-synchronizing.  If the two operation of
 encipherment and decipherment get out of synchronism, the system needs
-to be re-initialized.
+to be re-initialised.
 
 =item *
 
-Each re-initialization should use a value of the start variable
+Each re-initialisation should use a value of the start variable
 different from the start variable values used before with the same
 key.  The reason for this is that an identical bit stream would be
 produced each time from the same parameters.  This would be

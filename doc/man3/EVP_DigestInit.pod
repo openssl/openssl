@@ -208,14 +208,14 @@ parameter is not NULL then the number of bytes of data written (i.e. the
 length of the digest) will be written to the integer at B<s>, at most
 B<EVP_MAX_MD_SIZE> bytes will be written.  After calling EVP_DigestFinal_ex()
 no additional calls to EVP_DigestUpdate() can be made, but
-EVP_DigestInit_ex() can be called to initialize a new digest operation.
+EVP_DigestInit_ex() can be called to initialise a new digest operation.
 
 =item EVP_DigestFinalXOF()
 
 Interfaces to extendable-output functions, XOFs, such as SHAKE128 and SHAKE256.
 It retrieves the digest value from B<ctx> and places it in B<len>-sized <B>md.
 After calling this function no additional calls to EVP_DigestUpdate() can be
-made, but EVP_DigestInit_ex() can be called to initialize a new operation.
+made, but EVP_DigestInit_ex() can be called to initialise a new operation.
 
 =item EVP_MD_CTX_copy_ex()
 
@@ -236,7 +236,7 @@ automatically cleaned up.
 =item EVP_MD_CTX_copy()
 
 Similar to EVP_MD_CTX_copy_ex() except the destination B<out> does not have to
-be initialized.
+be initialised.
 
 =item EVP_MD_name(),
 EVP_MD_CTX_name()
@@ -286,7 +286,7 @@ should not be used after the EVP_MD_CTX is freed.
 
 Sets the update function for B<ctx> to B<update>.
 This is the function that is called by EVP_DigestUpdate. If not set, the
-update function from the B<EVP_MD> type specified at initialization is used.
+update function from the B<EVP_MD> type specified at initialisation is used.
 
 =item EVP_MD_CTX_update_fn()
 

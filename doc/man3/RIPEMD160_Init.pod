@@ -29,7 +29,7 @@ is placed in a static array.
 The following functions may be used if the message is not completely
 stored in memory:
 
-RIPEMD160_Init() initializes a B<RIPEMD160_CTX> structure.
+RIPEMD160_Init() initialises a B<RIPEMD160_CTX> structure.
 
 RIPEMD160_Update() can be called repeatedly with chunks of the message to
 be hashed (B<len> bytes at B<data>).

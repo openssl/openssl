@@ -31,7 +31,7 @@ Otherwise the type of the returned structure can be determined
 using CMS_get0_type().
 
 To support future functionality if B<bcont> is not NULL B<*bcont> should be
-initialized to NULL. For example:
+initialised to NULL. For example:
 
  BIO *cont = NULL;
  CMS_ContentInfo *cms;

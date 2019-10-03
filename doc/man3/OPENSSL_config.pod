@@ -39,7 +39,7 @@ control over their configuration functionality should use the configuration
 functions such as CONF_modules_load() directly. This function is deprecated
 and its use should be avoided.
 Applications should instead call CONF_modules_load() during
-initialization (that is before starting any threads).
+initialisation (that is before starting any threads).
 
 There are several reasons why calling the OpenSSL configuration routines is
 advisable. For example, to load dynamic ENGINEs from shared libraries (DSOs).

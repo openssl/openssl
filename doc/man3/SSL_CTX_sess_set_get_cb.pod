@@ -50,7 +50,7 @@ set, the NULL pointer is returned.
 =head1 NOTES
 
 In order to allow external session caching, synchronization with the internal
-session cache is realized via callback functions. Inside these callback
+session cache is realised via callback functions. Inside these callback
 functions, session can be saved to disk or put into a database using the
 L<d2i_SSL_SESSION(3)> interface.
 

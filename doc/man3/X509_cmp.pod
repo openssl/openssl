@@ -56,12 +56,12 @@ X509_subject_name_cmp() and X509_CRL_cmp() may return B<-2> to indicate an error
 
 =head1 NOTES
 
-These functions in fact utilize the underlying B<memcmp> of the C library to do
+These functions in fact utilise the underlying B<memcmp> of the C library to do
 the comparison job. Data to be compared varies from DER encoding data, hash
 value or B<ASN1_STRING>. The sign of the comparison can be used to order the
 objects but it does not have a special meaning in some cases.
 
-X509_NAME_cmp() and wrappers utilize the value B<-2> to indicate errors in some
+X509_NAME_cmp() and wrappers utilise the value B<-2> to indicate errors in some
 circumstances, which could cause confusion for the applications.
 
 =head1 SEE ALSO

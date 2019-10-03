@@ -349,21 +349,21 @@ The private key (or other data) takes the following form:
 The line beginning with I<Proc-Type> contains the version and the
 protection on the encapsulated data. The line beginning I<DEK-Info>
 contains two comma separated values: the encryption algorithm name as
-used by EVP_get_cipherbyname() and an initialization vector used by the
+used by EVP_get_cipherbyname() and an initialisation vector used by the
 cipher encoded as a set of hexadecimal digits. After those two lines is
 the base64-encoded encrypted data.
 
 The encryption key is derived using EVP_BytesToKey(). The cipher's
-initialization vector is passed to EVP_BytesToKey() as the I<salt>
+initialisation vector is passed to EVP_BytesToKey() as the I<salt>
 parameter. Internally, B<PKCS5_SALT_LEN> bytes of the salt are used
-(regardless of the size of the initialization vector). The user's
+(regardless of the size of the initialisation vector). The user's
 password is passed to EVP_BytesToKey() using the I<data> and I<datal>
 parameters. Finally, the library uses an iteration count of 1 for
 EVP_BytesToKey().
 
-The I<key> derived by EVP_BytesToKey() along with the original initialization
+The I<key> derived by EVP_BytesToKey() along with the original initialisation
 vector is then used to decrypt the encrypted data. The I<iv> produced by
-EVP_BytesToKey() is not utilized or needed, and NULL should be passed to
+EVP_BytesToKey() is not utilised or needed, and NULL should be passed to
 the function.
 
 The pseudo code to derive the key would look similar to:
@@ -381,7 +381,7 @@ The pseudo code to derive the key would look similar to:
  if (rc != nkey)
      /* Error */
 
- /* On success, use key and iv to initialize the cipher */
+ /* On success, use key and iv to initialise the cipher */
 
 =head1 BUGS
 

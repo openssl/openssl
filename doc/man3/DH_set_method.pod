@@ -49,7 +49,7 @@ implementations (eg. from an ENGINE module that supports embedded
 hardware-protected keys), and in such cases attempting to change the DH_METHOD
 for the key can have unexpected results.
 
-DH_new_method() allocates and initializes a DH structure so that B<engine> will
+DH_new_method() allocates and initialises a DH structure so that B<engine> will
 be used for the DH operations. If B<engine> is NULL, the default ENGINE for DH
 operations is used, and if no default ENGINE is set, the DH_METHOD controlled by
 DH_set_default_method() is used.

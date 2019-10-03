@@ -53,7 +53,7 @@ the nonce when reseeding the given B<drbg>.
 The callback functions are implemented and provided by the caller.
 Their parameter lists need to match the function prototypes above.
 
-Setting the callbacks is allowed only if the DRBG has not been initialized yet.
+Setting the callbacks is allowed only if the DRBG has not been initialised yet.
 Otherwise, the operation will fail.
 To change the settings for one of the three shared DRBGs it is necessary to call
 RAND_DRBG_uninstantiate() first.
@@ -108,7 +108,7 @@ entropy from a live entropy source (section 5.5.2 of [NIST SP 800-90C]).
 It is up to the user to ensure that a live entropy source is configured
 and is being used.
 
-The derivation function is disabled during initialization by calling the
+The derivation function is disabled during initialisation by calling the
 RAND_DRBG_set() function with the RAND_DRBG_FLAG_CTR_NO_DF flag.
 For more information on the derivation function and when it can be omitted,
 see [NIST SP 800-90A Rev. 1]. Roughly speaking it can be omitted if the random
@@ -118,7 +118,7 @@ Even if a nonce is required, the B<get_nonce>() and B<cleanup_nonce>()
 callbacks can be omitted by setting them to NULL.
 In this case the DRBG will automatically request an extra amount of entropy
 (using the B<get_entropy>() and B<cleanup_entropy>() callbacks) which it will
-utilize for the nonce, following the recommendations of [NIST SP 800-90A Rev. 1],
+utilise for the nonce, following the recommendations of [NIST SP 800-90A Rev. 1],
 section 8.6.7.
 
 =head1 SEE ALSO

@@ -157,7 +157,7 @@ DES_ncbc_encrypt() encrypts/decrypts using the I<cipher-block-chaining>
 routine cipher-block-chain encrypts the cleartext data pointed to by
 the I<input> argument into the ciphertext pointed to by the I<output>
 argument, using the key schedule provided by the I<schedule> argument,
-and initialization vector provided by the I<ivec> argument.  If the
+and initialisation vector provided by the I<ivec> argument.  If the
 I<length> argument is not an integral multiple of eight bytes, the
 last block is copied to a temporary area and zero filled.  The output
 is always an integral multiple of eight bytes.
