@@ -16,6 +16,15 @@
 
 static const EVP_MD blake2b_md = {
     NID_blake2b512,
+    0,
+    BLAKE2B_DIGEST_LENGTH,
+    0,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    BLAKE2B_BLOCKBYTES,
 };
 
 const EVP_MD *EVP_blake2b512(void)
@@ -25,6 +34,15 @@ const EVP_MD *EVP_blake2b512(void)
 
 static const EVP_MD blake2s_md = {
     NID_blake2s256,
+    0,
+    BLAKE2S_DIGEST_LENGTH,
+    0,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    BLAKE2S_BLOCKBYTES,
 };
 
 const EVP_MD *EVP_blake2s256(void)
