@@ -10,7 +10,8 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/obj_mac.h>
-#include <openssl/sha.h>
+#include <openssl/sha.h>         /* diverse SHA macros */
+#include "internal/sha3.h"       /* KECCAK1600_WIDTH */
 #include "crypto/evp.h"
 
 static const EVP_MD sha1_md = {
@@ -52,8 +53,6 @@ const EVP_MD *EVP_sha224(void)
 static const EVP_MD sha256_md = {
     NID_sha256,
     NID_sha256WithRSAEncryption,
-    NID_sha256,
-    NID_sha256WithRSAEncryption,
     SHA256_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     NULL,
@@ -74,7 +73,7 @@ static const EVP_MD sha512_224_md = {
     NID_sha512_224WithRSAEncryption,
     SHA224_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
-    init512_224,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -92,7 +91,7 @@ static const EVP_MD sha512_256_md = {
     NID_sha512_256WithRSAEncryption,
     SHA256_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
-    init512_256,
+    NULL,
     NULL,
     NULL,
     NULL,
