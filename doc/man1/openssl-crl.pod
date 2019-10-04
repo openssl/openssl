@@ -21,6 +21,8 @@ B<openssl> B<crl>
 [B<-nextupdate>]
 [B<-CAfile> I<file>]
 [B<-CApath> I<dir>]
+[B<-no-CAfile>]
+[B<-no-CApath>]
 
 =for comment ifdef hash_old
 
@@ -92,17 +94,9 @@ Output the lastUpdate field.
 
 Output the nextUpdate field.
 
-=item B<-CAfile> I<file>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-Verify the signature on a CRL by looking up the issuing certificate in
-I<file>.
-
-=item B<-CApath> I<dir>
-
-Verify the signature on a CRL by looking up the issuing certificate in
-I<dir>. This directory must be a standard certificate directory: that
-is a hash of each subject name (using the L<openssl-x509(1)> B<-hash> option)
-should be linked to each certificate.
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =back
 

@@ -370,18 +370,9 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 
 Prints the SSL session states.
 
-=item B<-CAfile> I<infile>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-A file containing trusted certificates to use during client authentication
-and to use when attempting to build the server certificate chain. The list
-is also used in the list of acceptable client CAs passed to the client when
-a certificate is requested.
-
-=item B<-CApath> I<dir>
-
-The directory to use for client certificate verification. This directory
-must be in "hash format", see L<openssl-verify(1)> for more information.
-These are also used when building the server certificate chain.
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-chainCApath> I<dir>
 
@@ -393,14 +384,6 @@ information.
 
 A file containing trusted certificates to use when attempting to build the
 server certificate chain.
-
-=item B<-no-CAfile>
-
-Do not load the trusted CA certificates from the default file location.
-
-=item B<-no-CApath>
-
-Do not load the trusted CA certificates from the default directory location.
 
 =item B<-nocert>
 
@@ -446,17 +429,9 @@ for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
 IDs (eg. with a certain prefix).
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-verify_return_error>
 

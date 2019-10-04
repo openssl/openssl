@@ -306,16 +306,9 @@ I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<openssl-x509(1)> manual page for details.
 
-=item B<-CApath> I<directory>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-The directory to use for server certificate verification. This directory
-must be in "hash format", see L<openssl-verify(1)> for more information.
-These are also used when building the client certificate chain.
-
-=item B<-CAfile> I<file>
-
-A file containing trusted certificates to use during server authentication
-and to use when attempting to build the client certificate chain.
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-chainCApath> I<directory>
 
@@ -327,14 +320,6 @@ information.
 
 A file containing trusted certificates to use when attempting to build the
 client certificate chain.
-
-=item B<-no-CAfile>
-
-Do not load the trusted CA certificates from the default file location
-
-=item B<-no-CApath>
-
-Do not load the trusted CA certificates from the default directory location
 
 =item B<-requestCAfile> I<file>
 
@@ -674,17 +659,9 @@ to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-serverinfo> I<types>
 

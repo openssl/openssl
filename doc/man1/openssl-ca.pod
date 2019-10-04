@@ -294,17 +294,9 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 If B<-multi-rdn> is not used then the UID value is C<123456+CN=John Doe>.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-sm2-id> I<string>
 

@@ -68,26 +68,9 @@ This command verifies certificate chains.
 
 Print out a usage message.
 
-=item B<-CAfile> I<file>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-A I<file> of trusted certificates.
-The file should contain one or more certificates in PEM format.
-
-=item B<-CApath> I<directory>
-
-A directory of trusted certificates. The certificates should have names
-of the form: F<I<hash>.0> or have symbolic links to them of this form
-(I<hash> is the hashed certificate subject name: see the L<openssl-x509(1)>
-B<-hash> option). Under Unix, L<openssl-rehash(1)> will automatically create
-symbolic links to a directory of certificates.
-
-=item B<-no-CAfile>
-
-Do not load the trusted CA certificates from the default file location.
-
-=item B<-no-CApath>
-
-Do not load the trusted CA certificates from the default directory location.
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-allow_proxy_certs>
 
