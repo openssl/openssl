@@ -241,7 +241,12 @@ use alternative names or names that OpenSSL has used historically.
 =head1 OPENSSL PROVIDERS
 
 OpenSSL comes with a set of providers.
-All the algorithm names mentioned can be used as an algorithm
+
+The algorithms available in each of these providers may vary due to build time
+configuration options. The L<openssl-list(1)> command can be used to list the
+currently available algorithms.
+
+The algorithms names shown from L<openssl-list(1)> can be used as an algorithm
 identifier to the appropriate fetching function.
 
 =head2 Default provider
@@ -250,63 +255,6 @@ The default provider is built in as part of the F<libcrypto> library.
 Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "default=yes"
 can be used as a search criterion for these implementations.
-
-It currently offers the following named algorithms:
-
-=over 4
-
-=item Digests
-
-SHA1, SHA2-224, SHA2-256, SHA2-384, SHA2-512, SHA2-512/224, SHA2-512/256,
-SHA3-224, SHA3-256, SHA3-384, SHA3-512, KECCAK-KMAC-128, KECCAK-KMAC-256,
-SHAKE-128, SHAKE-256, BLAKE2B-512, BLAKE2S-256, KMAC-128, SM3, KMAC-256, MD5,
-MD5-SHA1
-
-=item Symmetric ciphers
-
-AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC, AES-128-CBC,
-AES-256-OFB, AES-192-OFB, AES-128-OFB, AES-256-CFB, AES-192-CFB, AES-128-CFB,
-AES-256-CFB1, AES-192-CFB1, AES-128-CFB1, AES-256-CFB8, AES-192-CFB8,
-AES-128-CFB8, AES-256-CTR, AES-192-CTR, AES-128-CTR, AES-256-XTS, AES-128-XTS,
-AES-256-OCB, AES-192-OCB, AES-128-OCB,  AES-256-GCM, AES-192-GCM, AES-128-GCM,
-AES-256-CCM, AES-192-CCM, AES-128-CCM, AES-256-WRAP, AES-192-WRAP, AES-128-WRAP,
-AES-256-WRAP-PAD, AES-192-WRAP-PAD, AES-128-WRAP-PAD, ARIA-256-GCM,
-ARIA-192-GCM, ARIA-128-GCM, ARIA-256-CCM, ARIA-192-CCM, ARIA-128-CCM,
-ARIA-256-ECB, ARIA-192-ECB, ARIA-128-ECB, ARIA-256-CBC, ARIA-192-CBC,
-ARIA-128-CBC, ARIA-256-OFB, ARIA-192-OFB, ARIA-128-OFB, ARIA-256-CFB,
-ARIA-192-CFB, ARIA-128-CFB, ARIA-256-CFB1, ARIA-192-CFB1, ARIA-128-CFB1,
-ARIA-256-CFB8, ARIA-192-CFB8, ARIA-128-CFB8, ARIA-256-CTR, ARIA-192-CTR,
-ARIA-128-CTR, CAMELLIA-256-ECB, CAMELLIA-192-ECB, CAMELLIA-128-ECB,
-CAMELLIA-256-CBC, CAMELLIA-192-CBC, CAMELLIA-128-CBC, CAMELLIA-256-OFB,
-CAMELLIA-192-OFB, CAMELLIA-128-OFB, CAMELLIA-256-CFB, CAMELLIA-192-CFB,
-CAMELLIA-128-CFB, CAMELLIA-256-CFB1, CAMELLIA-192-CFB1, CAMELLIA-128-CFB1,
-CAMELLIA-256-CFB8, CAMELLIA-192-CFB8, CAMELLIA-128-CFB8, CAMELLIA-256-CTR,
-CAMELLIA-192-CTR, CAMELLIA-128-CTR, DES-EDE3-ECB, DES-EDE3-CBC, DES-EDE3-OFB,
-DES-EDE3-CFB, DES-EDE3-CFB8, DES-EDE3-CFB1, DES-EDE-ECB, DES-EDE-CBC,
-DES-EDE-OFB, DES-EDE-CFB, DES-EDE-CFB8, DES-EDE-CFB1, DESX-CBC, DES3-WRAP,
-DES-ECB, DES-CBC, DES-OFB, DES-CFB, DES-CFB1, DES-CFB8, BF-ECB, BF-CBC, BF-OFB,
-BF-CFB, IDEA-ECB, IDEA-CBC, IDEA-OFB, IDEA-CFB, CAST5-ECB, CAST5-CBC, CAST5-OFB,
-CAST5-CFB, SEED-ECB, SEED-CBC, SEED-OFB, SEED-CFB, SM4-ECB, SM4-CBC, SM4-CTR,
-SM4-OFB, SM4-CFB, RC4, RC4-40, RC5-ECB, RC5-CBC, RC5-OFB, RC5-CFB,
-
-=item MACs
-
-BLAKE2BMAC, BLAKE2SMAC, CMAC, GMAC, HMAC, KMAC-128, KMAC-256, SIPHASH, POLY1305
-
-=item KDFs
-
-HKDF, SSKDF, PBKDF2, SSHKDF, X963KDF, TLS1-PRF, KBKDF, X942KDF, SCRYPT
-
-=item Key Exchange
-
-DH
-
-=item Signature
-
-DSA
-
-
-=back
 
 =head2 FIPS provider
 
@@ -317,33 +265,6 @@ Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "fips=yes" can
 be used as a search criterion for these implementations.
 
-It currently offers the following FIPS approved named algorithms:
-
-=over 4
-
-=item Digests
-
-SHA1, SHA2-224, SHA2-256, SHA2-384, SHA2-512, SHA2-512/224, SHA2-512/256,
-SHA3-224, SHA3-256, SHA3-384, SHA3-512, KECCAK-KMAC-128, KECCAK-KMAC-256
-
-=item Symmetric ciphers
-
-AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC, AES-128-CBC,
-AES-256-CTR, AES-192-CTR, AES-128-CTR, AES-256-XTS, AES-128-XTS, AES-256-GCM,
-AES-192-GCM, AES-128-GCM, AES-256-CCM, AES-192-CCM, AES-128-CCM, AES-256-WRAP,
-AES-192-WRAP, AES-128-WRAP, AES-256-WRAP-PAD, AES-192-WRAP-PAD,
-AES-128-WRAP-PAD, DES-EDE3-ECB, DES-EDE3-CBC
-
-=item MACs
-
-CMAC, GMAC, HMAC, KMAC-128, KMAC-256
-
-=item KDFs
-
-HKDF, SSKDF, PBKDF2, TLS1-PRF, KBKDF
-
-=back
-
 =head2 Legacy provider
 
 The legacy provider is a dynamically loadable module, and must therefore
@@ -352,16 +273,6 @@ be loaded explicitly, either in code or through OpenSSL configuration
 Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "legacy=yes" can be
 used as a search criterion for these implementations.
-
-It currently offers the following named algorithms:
-
-=over 4
-
-=item Digest algorithms:
-
-MD2, MD4, MDC2, WHIRPOOL, RIPEMD-160.
-
-=back
 
 =head1 EXAMPLES
 
