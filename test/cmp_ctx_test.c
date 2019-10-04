@@ -109,7 +109,7 @@ static int test_CTX_reinit(void)
     return result;
 }
 
-#ifndef OPENSSL_NO_ERR
+#if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
 
 static int msg_total_size = 0;
 static int msg_total_size_log_cb(const char *func, const char *file, int line,
@@ -790,7 +790,7 @@ int setup_tests(void)
      * with OSSL_CMP_severity OSSL_CMP_LOG_ERR/WARNING/DEBUG/INFO:
      */
     ADD_TEST(test_cmp_ctx_log_cb);
-#ifndef OPENSSL_NO_ERR
+#if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
     /* also tests OSSL_CMP_CTX_set_log_cb(), OSSL_CMP_print_errors_cb(),
        ossl_cmp_add_error_txt(), and the macros
        ossl_cmp_add_error_data and ossl_cmp_add_error_line:
