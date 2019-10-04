@@ -7,18 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/idea.h>
-#include "internal/ciphers/ciphercommon.h"
+#include <openssl/rc4.h>
+#include "prov/ciphercommon.h"
 
-typedef struct prov_idea_ctx_st {
+typedef struct prov_rc4_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
     union {
         OSSL_UNION_ALIGN;
-        IDEA_KEY_SCHEDULE ks;
+        RC4_KEY ks;
     } ks;
-} PROV_IDEA_CTX;
+} PROV_RC4_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_cbc(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_ecb(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_ofb64(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_cfb64(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_rc4(size_t keybits);

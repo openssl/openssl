@@ -9,8 +9,8 @@
 
 /* Dispatch functions for AES CCM mode */
 
-#include "cipher_local.h"
-#include "internal/ciphers/cipher_ccm.h"
+#include "prov/ciphercommon.h"
+#include "prov/cipher_ccm.h"
 #include "internal/provider_algs.h"
 
 static void *aes_ccm_newctx(void *provctx, size_t keybits)

@@ -7,18 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/seed.h>
-#include "internal/ciphers/ciphercommon.h"
+#include <openssl/cast.h>
+#include "prov/ciphercommon.h"
 
-typedef struct prov_seed_ctx_st {
+typedef struct prov_cast_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
     union {
         OSSL_UNION_ALIGN;
-        SEED_KEY_SCHEDULE ks;
+        CAST_KEY ks;
     } ks;
-} PROV_SEED_CTX;
+} PROV_CAST_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_cbc(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_ecb(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_ofb128(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_cfb128(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_cast5_cbc(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_cast5_ecb(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_cast5_ofb64(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_cast5_cfb64(size_t keybits);

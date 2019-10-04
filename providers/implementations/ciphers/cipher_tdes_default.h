@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/ciphers/ciphercommon.h"
-#include "internal/ciphers/cipher_tdes.h"
+#include "prov/ciphercommon.h"
+#include "cipher_tdes.h"
 
 const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede3_ofb(void);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede3_cfb(void);

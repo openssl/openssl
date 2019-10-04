@@ -7,15 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/rc4.h>
-#include "internal/ciphers/ciphercommon.h"
+#include "crypto/aria.h"
+#include "prov/ciphercommon.h"
+#include "prov/cipher_ccm.h"
 
-typedef struct prov_rc4_ctx_st {
-    PROV_CIPHER_CTX base;      /* Must be first */
+typedef struct prov_aria_ccm_ctx_st {
+    PROV_CCM_CTX base; /* Must be first */
     union {
         OSSL_UNION_ALIGN;
-        RC4_KEY ks;
-    } ks;
-} PROV_RC4_CTX;
+        ARIA_KEY ks;
+    } ks;                       /* ARIA key schedule to use */
+} PROV_ARIA_CCM_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc4(size_t keybits);
+const PROV_CCM_HW *PROV_ARIA_HW_ccm(size_t keylen);

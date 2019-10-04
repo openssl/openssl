@@ -9,8 +9,8 @@
 
 /* Dispatch functions for gcm mode */
 
-#include "cipher_local.h"
-#include "internal/ciphers/cipher_gcm.h"
+#include "prov/ciphercommon.h"
+#include "prov/cipher_gcm.h"
 #include "internal/providercommonerr.h"
 #include "crypto/rand.h"
 #include "internal/provider_ctx.h"

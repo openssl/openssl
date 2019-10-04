@@ -7,18 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/blowfish.h>
-#include "internal/ciphers/ciphercommon.h"
+#include <openssl/seed.h>
+#include "prov/ciphercommon.h"
 
-typedef struct prov_blowfish_ctx_st {
+typedef struct prov_seed_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
     union {
         OSSL_UNION_ALIGN;
-        BF_KEY ks;
+        SEED_KEY_SCHEDULE ks;
     } ks;
-} PROV_BLOWFISH_CTX;
+} PROV_SEED_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_blowfish_cbc(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_blowfish_ecb(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_blowfish_ofb64(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_blowfish_cfb64(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_cbc(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_ecb(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_ofb128(size_t keybits);
+const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_cfb128(size_t keybits);
