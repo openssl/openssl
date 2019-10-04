@@ -73,6 +73,9 @@ static int deflt_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
  * We add diverse other names where applicable, such as the names that
  * NIST uses, or that are used for ASN.1 OBJECT IDENTIFIERs, or names
  * we have used historically.
+ *
+ * Algorithm names are case insenstive, but we use all caps in our "canoncial"
+ * names for consistency.
  */
 static const OSSL_ALGORITHM deflt_digests[] = {
     /* Our primary name:NIST name[:our older names] */
@@ -93,11 +96,11 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { "SHA3-512", "default=yes", sha3_512_functions },
 
     /*
-     * KECCAK_KMAC128 and KECCAK_KMAC256 as hashes are mostly useful for
-     * the KMAC128 and KMAC256.
+     * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
+     * the KMAC-128 and KMAC-256.
      */
-    { "KECCAK_KMAC128", "default=yes", keccak_kmac_128_functions },
-    { "KECCAK_KMAC256", "default=yes", keccak_kmac_256_functions },
+    { "KECCAK-KMAC-128:KECCAK-KMAC128", "default=yes", keccak_kmac_128_functions },
+    { "KECCAK-KMAC-256:KECCAK-KMAC256", "default=yes", keccak_kmac_256_functions },
 
     /* Our primary name:NIST name */
     { "SHAKE-128:SHAKE128", "default=yes", shake_128_functions },
@@ -111,8 +114,8 @@ static const OSSL_ALGORITHM deflt_digests[] = {
      * If we assume that "2b" and "2s" are versions, that pattern
      * fits with ours.  We also add our historical names.
      */
-    { "BLAKE2s-256:BLAKE2s256", "default=yes", blake2s256_functions },
-    { "BLAKE2b-512:BLAKE2b512", "default=yes", blake2b512_functions },
+    { "BLAKE2S-256:BLAKE2s256", "default=yes", blake2s256_functions },
+    { "BLAKE2B-512:BLAKE2b512", "default=yes", blake2b512_functions },
 #endif /* OPENSSL_NO_BLAKE2 */
 
 #ifndef OPENSSL_NO_SM3
@@ -314,21 +317,21 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
 
 static const OSSL_ALGORITHM deflt_macs[] = {
 #ifndef OPENSSL_NO_BLAKE2
-    { "BLAKE2bMAC", "default=yes", blake2bmac_functions },
-    { "BLAKE2sMAC", "default=yes", blake2smac_functions },
+    { "BLAKE2BMAC", "default=yes", blake2bmac_functions },
+    { "BLAKE2SMAC", "default=yes", blake2smac_functions },
 #endif
 #ifndef OPENSSL_NO_CMAC
     { "CMAC", "default=yes", cmac_functions },
 #endif
     { "GMAC", "default=yes", gmac_functions },
     { "HMAC", "default=yes", hmac_functions },
-    { "KMAC128", "default=yes", kmac128_functions },
-    { "KMAC256", "default=yes", kmac256_functions },
+    { "KMAC-128:KMAC128", "default=yes", kmac128_functions },
+    { "KMAC-256:KMAC256", "default=yes", kmac256_functions },
 #ifndef OPENSSL_NO_SIPHASH
-    { "SipHash", "default=yes", siphash_functions },
+    { "SIPHASH", "default=yes", siphash_functions },
 #endif
 #ifndef OPENSSL_NO_POLY1305
-    { "Poly1305", "default=yes", poly1305_functions },
+    { "POLY1305", "default=yes", poly1305_functions },
 #endif
     { NULL, NULL, NULL }
 };

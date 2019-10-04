@@ -349,11 +349,11 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { "SHA3-384", "fips=yes", sha3_384_functions },
     { "SHA3-512", "fips=yes", sha3_512_functions },
     /*
-     * KECCAK_KMAC128 and KECCAK_KMAC256 as hashes are mostly useful for
+     * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * KMAC128 and KMAC256.
      */
-    { "KECCAK_KMAC128", "fips=yes", keccak_kmac_128_functions },
-    { "KECCAK_KMAC256", "fips=yes", keccak_kmac_256_functions },
+    { "KECCAK-KMAC-128:KECCAK-KMAC128", "fips=yes", keccak_kmac_128_functions },
+    { "KECCAK-KMAC-256:KECCAK-KMAC256", "fips=yes", keccak_kmac_256_functions },
 
     { NULL, NULL, NULL }
 };
@@ -402,8 +402,8 @@ static const OSSL_ALGORITHM fips_macs[] = {
 #endif
     { "GMAC", "fips=yes", gmac_functions },
     { "HMAC", "fips=yes", hmac_functions },
-    { "KMAC128", "fips=yes", kmac128_functions },
-    { "KMAC256", "fips=yes", kmac256_functions },
+    { "KMAC-128:KMAC128", "fips=yes", kmac128_functions },
+    { "KMAC-256:KMAC256", "fips=yes", kmac256_functions },
     { NULL, NULL, NULL }
 };
 
