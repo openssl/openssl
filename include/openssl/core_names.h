@@ -85,8 +85,8 @@ extern "C" {
 
 /* Known DIGEST names (not a complete list) */
 #define OSSL_DIGEST_NAME_MD5 "MD5"
-#define OSSL_DIGEST_NAME_KECCAK_KMAC128 "KECCAK_KMAC128"
-#define OSSL_DIGEST_NAME_KECCAK_KMAC256 "KECCAK_KMAC256"
+#define OSSL_DIGEST_NAME_KECCAK_KMAC128 "KECCAK-KMAC-128"
+#define OSSL_DIGEST_NAME_KECCAK_KMAC256 "KECCAK-KMAC-256"
 
 /* MAC parameters */
 #define OSSL_MAC_PARAM_KEY          "key"        /* octet string */
@@ -141,7 +141,7 @@ extern "C" {
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF          "HKDF"
 #define OSSL_KDF_NAME_PBKDF2        "PBKDF2"
-#define OSSL_KDF_NAME_SCRYPT        "id-scrypt"
+#define OSSL_KDF_NAME_SCRYPT        "SCRYPT"
 #define OSSL_KDF_NAME_SSHKDF        "SSHKDF"
 #define OSSL_KDF_NAME_SSKDF         "SSKDF"
 #define OSSL_KDF_NAME_TLS1_PRF      "TLS1-PRF"
