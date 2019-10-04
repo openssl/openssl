@@ -285,24 +285,9 @@ structure is being checked.
 For the B<-cmsout> operation print out all fields of the CMS structure. This
 is mainly useful for testing purposes.
 
-=item B<-CAfile> I<file>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-A file containing trusted CA certificates, only used with B<-verify>.
-
-=item B<-CApath> I<dir>
-
-A directory containing trusted CA certificates, only used with
-B<-verify>. This directory must be a standard certificate directory: that
-is a hash of each subject name (using C<x509 -hash>) should be linked
-to each certificate.
-
-=item B<-no-CAfile>
-
-Do not load the trusted CA certificates from the default file location
-
-=item B<-no-CApath>
-
-Do not load the trusted CA certificates from the default directory location
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-md> I<digest>
 
@@ -476,17 +461,9 @@ or to modify default parameters for ECDH.
 The private key password source. For more information about the format of B<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item I<cert.pem> ...
 

@@ -137,17 +137,9 @@ in the configuration file and any requested extensions.
 If the B<-key> option is not used it will generate a new RSA private
 key using information specified in the configuration file.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-newkey> I<arg>
 

@@ -263,35 +263,13 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 Don't attempt to provide the MAC integrity.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
+See L<openssl(1)/Random State Options> for more information.
 
-=item B<-writerand> I<file>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
-
-=item B<-CAfile> I<file>
-
-CA storage as a file.
-
-=item B<-CApath> I<dir>
-
-CA storage as a directory. This directory must be a standard certificate
-directory: that is a hash of each subject name (using C<openssl x509 -hash>)
-should be linked to each certificate.
-
-=item B<-no-CAfile>
-
-Do not load the trusted CA certificates from the default file location.
-
-=item B<-no-CApath>
-
-Do not load the trusted CA certificates from the default directory location.
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-CSP> I<name>
 

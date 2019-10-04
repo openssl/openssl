@@ -134,17 +134,9 @@ request with the following options:
 
 =over 4
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-config> I<configfile>
 
@@ -358,20 +350,9 @@ This flag can be used together with the B<-in> option and indicates
 that the input is a DER encoded timestamp token (ContentInfo) instead
 of a timestamp response (TimeStampResp). (Optional)
 
-=item B<-CApath> I<trusted_cert_path>
+=item B<-CAfile> I<file>, B<-CApath> I<dir>
 
-The name of the directory containing the trusted CA certificates of the
-client. See the similar option of L<openssl-verify(1)> for additional
-details. Either this option or B<-CAfile> must be specified. (Optional)
-
-
-=item B<-CAfile> I<trusted_certs.pem>
-
-The name of the file containing a set of trusted self-signed CA
-certificates in PEM format. See the similar option of
-L<openssl-verify(1)> for additional details. Either this option
-or B<-CApath> must be specified.
-(Optional)
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-untrusted> I<cert_file.pem>
 
