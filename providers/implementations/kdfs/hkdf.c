@@ -19,7 +19,7 @@
 #include "crypto/evp.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "internal/provider_util.h"
 #include "e_os.h"
 

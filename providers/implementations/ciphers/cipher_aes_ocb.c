@@ -10,7 +10,7 @@
 #include "cipher_aes_ocb.h"
 #include "internal/providercommonerr.h"
 #include "prov/cipher_aead.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 #define AES_OCB_FLAGS AEAD_FLAGS
 

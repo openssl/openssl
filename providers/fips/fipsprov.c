@@ -26,7 +26,7 @@
 #include "internal/cryptlib.h"
 #include "internal/property.h"
 #include "crypto/evp.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommon.h"
 #include "selftest.h"

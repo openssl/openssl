@@ -8,7 +8,7 @@
  */
 
 #include "cipher_tdes_default.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* tdes_ede3_ofb_functions */
 IMPLEMENT_tdes_cipher(ede3, EDE3,  ofb, OFB, TDES_FLAGS, 64*3,  8, 64, stream);

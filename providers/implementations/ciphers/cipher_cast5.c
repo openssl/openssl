@@ -10,7 +10,7 @@
 /* Dispatch functions for cast cipher modes ecb, cbc, ofb, cfb */
 
 #include "cipher_cast.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 #define CAST5_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
 

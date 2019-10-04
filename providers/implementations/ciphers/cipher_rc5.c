@@ -10,7 +10,7 @@
 /* Dispatch functions for RC5 cipher modes ecb, cbc, ofb, cfb */
 
 #include "cipher_rc5.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "internal/providercommonerr.h"
 
 static OSSL_OP_cipher_freectx_fn rc5_freectx;

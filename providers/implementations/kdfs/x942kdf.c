@@ -27,7 +27,7 @@
 # include "crypto/evp.h"
 # include "internal/provider_ctx.h"
 # include "internal/providercommonerr.h"
-# include "internal/provider_algs.h"
+# include "prov/implementations.h"
 # include "internal/provider_util.h"
 
 # define X942KDF_MAX_INLEN (1 << 30)

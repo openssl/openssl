@@ -22,7 +22,7 @@
 #include "../../../crypto/poly1305/poly1305_local.h"
 
 #include "internal/providercommonerr.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly

@@ -15,7 +15,7 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "prov/digestcommon.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "crypto/sha.h"
 
 static OSSL_OP_digest_set_ctx_params_fn sha1_set_ctx_params;

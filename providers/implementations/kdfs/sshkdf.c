@@ -18,7 +18,7 @@
 #include "crypto/evp.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 # include "internal/provider_util.h"
 
 /* See RFC 4253, Section 7.2 */

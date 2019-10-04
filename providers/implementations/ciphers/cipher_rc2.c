@@ -10,7 +10,7 @@
 /* Dispatch functions for RC2 cipher modes ecb, cbc, ofb, cfb */
 
 #include "cipher_rc2.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "internal/providercommonerr.h"
 
 #define RC2_40_MAGIC    0xa0

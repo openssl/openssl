@@ -10,7 +10,7 @@
 #include <openssl/crypto.h>
 #include <openssl/md5.h>
 #include "prov/digestcommon.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* md5_functions */
 IMPLEMENT_digest_functions(md5, MD5_CTX,

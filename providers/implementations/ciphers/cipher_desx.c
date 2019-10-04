@@ -8,7 +8,7 @@
  */
 
 #include "cipher_tdes_default.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* desx_cbc_functions */
 IMPLEMENT_tdes_cipher(desx, DESX, cbc, CBC, TDES_FLAGS, 64*3, 64, 64, block);

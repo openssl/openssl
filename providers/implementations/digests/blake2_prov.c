@@ -10,7 +10,7 @@
 #include <openssl/crypto.h>
 #include "prov/blake2.h"
 #include "prov/digestcommon.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 OSSL_OP_digest_init_fn blake2s256_init;
 OSSL_OP_digest_init_fn blake2b512_init;

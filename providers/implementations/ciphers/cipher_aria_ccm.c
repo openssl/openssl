@@ -10,7 +10,7 @@
 /* Dispatch functions for ARIA CCM mode */
 
 #include "cipher_aria_ccm.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 static OSSL_OP_cipher_freectx_fn aria_ccm_freectx;
 

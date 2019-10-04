@@ -11,7 +11,7 @@
 
 #include "prov/ciphercommon.h"
 #include "prov/cipher_gcm.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 static void *aes_gcm_newctx(void *provctx, size_t keybits)
 {
