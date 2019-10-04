@@ -12,7 +12,7 @@
 # include <stddef.h>
 # include <openssl/obj_mac.h>
 # include "crypto/evp.h"
-# include "internal/blake2.h"
+# include "prov/blake2.h"
 
 static int init(EVP_MD_CTX *ctx)
 {

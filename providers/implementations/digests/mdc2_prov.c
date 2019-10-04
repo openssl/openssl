@@ -12,7 +12,7 @@
 #include <openssl/mdc2.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
-#include "internal/digestcommon.h"
+#include "prov/digestcommon.h"
 #include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
 

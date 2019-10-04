@@ -1,4 +1,3 @@
-SUBDIRS=digests
 IF[{- $disabled{module} -}]
   $GOAL=../../libcrypto
 ELSE

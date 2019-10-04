@@ -11,7 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 
-#include "internal/blake2.h"
+#include "prov/blake2.h"
 #include "internal/cryptlib.h"
 #include "internal/providercommonerr.h"
 #include "internal/provider_algs.h"

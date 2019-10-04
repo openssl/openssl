@@ -1,1 +1,1 @@
-SUBDIRS=macs kdfs exchange keymgmt signature
+SUBDIRS=digests macs kdfs exchange keymgmt signature

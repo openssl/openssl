@@ -8,11 +8,11 @@
  */
 
 #include <openssl/crypto.h>
-#include "internal/sm3.h"
-#include "internal/digestcommon.h"
+#include <openssl/ripemd.h>
+#include "prov/digestcommon.h"
 #include "internal/provider_algs.h"
 
-/* sm3_functions */
-IMPLEMENT_digest_functions(sm3, SM3_CTX,
-                           SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
-                           sm3_init, sm3_update, sm3_final)
+/* ripemd160_functions */
+IMPLEMENT_digest_functions(ripemd160, RIPEMD160_CTX,
+                           RIPEMD160_CBLOCK, RIPEMD160_DIGEST_LENGTH, 0,
+                           RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final)

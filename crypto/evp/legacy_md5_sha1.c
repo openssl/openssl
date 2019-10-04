@@ -9,7 +9,7 @@
 
 #include <openssl/opensslconf.h>
 
-#include "internal/md5_sha1.h"   /* diverse MD5_SHA1 macros */
+#include "prov/md5_sha1.h"   /* diverse MD5_SHA1 macros */
 
 #ifndef OPENSSL_NO_MD5
 

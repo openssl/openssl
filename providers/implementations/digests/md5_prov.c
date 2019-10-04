@@ -8,11 +8,11 @@
  */
 
 #include <openssl/crypto.h>
-#include <openssl/md2.h>
-#include "internal/digestcommon.h"
+#include <openssl/md5.h>
+#include "prov/digestcommon.h"
 #include "internal/provider_algs.h"
 
-/* md2_functions */
-IMPLEMENT_digest_functions(md2, MD2_CTX,
-                           MD2_BLOCK, MD2_DIGEST_LENGTH, 0,
-                           MD2_Init, MD2_Update, MD2_Final)
+/* md5_functions */
+IMPLEMENT_digest_functions(md5, MD5_CTX,
+                           MD5_CBLOCK, MD5_DIGEST_LENGTH, 0,
+                           MD5_Init, MD5_Update, MD5_Final)

@@ -1,4 +1,4 @@
-SUBDIRS=digests ciphers
+SUBDIRS=ciphers
 $GOAL=../../libcrypto
 SOURCE[$GOAL]=defltprov.c
 INCLUDE[$GOAL]=include

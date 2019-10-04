@@ -8,11 +8,11 @@
  */
 
 #include <openssl/crypto.h>
-#include <openssl/whrlpool.h>
-#include "internal/digestcommon.h"
+#include "internal/sm3.h"
+#include "prov/digestcommon.h"
 #include "internal/provider_algs.h"
 
-/* wp_functions */
-IMPLEMENT_digest_functions(wp, WHIRLPOOL_CTX,
-                           WHIRLPOOL_BBLOCK / 8, WHIRLPOOL_DIGEST_LENGTH, 0,
-                           WHIRLPOOL_Init, WHIRLPOOL_Update, WHIRLPOOL_Final)
+/* sm3_functions */
+IMPLEMENT_digest_functions(sm3, SM3_CTX,
+                           SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
+                           sm3_init, sm3_update, sm3_final)
