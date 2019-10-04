@@ -82,6 +82,6 @@ const OSSL_DISPATCH alg##kbits##_functions[] = {                               \
 };
 
 /* rc440_functions */
-IMPLEMENT_cipher(rc4, RC4, EVP_CIPH_VARIABLE_LENGTH, 40, 64, 0, stream)
+IMPLEMENT_cipher(rc4, RC4, EVP_CIPH_VARIABLE_LENGTH, 40, 8, 0, stream)
 /* rc4128_functions */
-IMPLEMENT_cipher(rc4, RC4, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, stream)
+IMPLEMENT_cipher(rc4, RC4, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 0, stream)
