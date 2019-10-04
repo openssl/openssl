@@ -456,7 +456,7 @@ EVP_CIPHER_CTX_rand_key() returns 1 for success.
 
 All algorithms have a fixed key length unless otherwise stated.
 
-Refer to L<SEE ALSO> for the full list of ciphers available through the EVP
+Refer to L</SEE ALSO> for the full list of ciphers available through the EVP
 interface.
 
 =over 4

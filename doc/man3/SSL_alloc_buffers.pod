@@ -53,7 +53,7 @@ SSL_alloc_buffers().
 
 L<SSL_free(3)>, L<SSL_clear(3)>,
 L<SSL_new(3)>, L<SSL_CTX_set_mode(3)>,
-L<CRYPTO_set_mem_functions>
+L<CRYPTO_set_mem_functions(3)>
 
 =head1 COPYRIGHT
 

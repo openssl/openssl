@@ -47,7 +47,7 @@ BIO_get_shutdown() returns the stat of the BIO's shutdown (i.e. BIO_CLOSE) flag.
 
 =head1 SEE ALSO
 
-L<bio>, L<BIO_meth_new>
+L<bio(7)>, L<BIO_meth_new(3)>
 
 =head1 HISTORY
 
