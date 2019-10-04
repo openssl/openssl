@@ -51,7 +51,7 @@ There are three modes that are currently defined:
 
 =item B<EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND> "EXTRACT_AND_EXPAND"
 
-This is the default mode.  Calling L<EVP_KDF-derive(3)> on an EVP_KDF_CTX set
+This is the default mode.  Calling L<EVP_KDF_derive(3)> on an EVP_KDF_CTX set
 up for HKDF will perform an extract followed by an expand operation in one go.
 The derived key returned will be the result after the expand operation. The
 intermediate fixed-length pseudorandom key K is not returned.
@@ -61,7 +61,7 @@ derived otherwise an error will occur.
 
 =item B<EVP_KDF_HKDF_MODE_EXTRACT_ONLY> "EXTRACT_ONLY"
 
-In this mode calling L<EVP_KDF-derive(3)> will just perform the extract
+In this mode calling L<EVP_KDF_derive(3)> will just perform the extract
 operation. The value returned will be the intermediate fixed-length pseudorandom
 key K.  The I<keylen> parameter must match the size of K, which can be looked
 up by calling EVP_KDF_size() after setting the mode and digest.
@@ -71,7 +71,7 @@ an error will occur.
 
 =item B<EVP_KDF_HKDF_MODE_EXPAND_ONLY> "EXPAND_ONLY"
 
-In this mode calling L<EVP_KDF-derive(3)> will just perform the expand
+In this mode calling L<EVP_KDF_derive(3)> will just perform the expand
 operation. The input key should be set to the intermediate fixed-length
 pseudorandom key K returned from a previous extract operation.
 
@@ -90,7 +90,7 @@ A context for HKDF can be obtained by calling:
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an HKDF expand operation is specified via the I<keylen>
-parameter to the L<EVP_KDF-derive(3)> function.  When using
+parameter to the L<EVP_KDF_derive(3)> function.  When using
 EVP_KDF_HKDF_MODE_EXTRACT_ONLY the I<keylen> parameter must equal the size of
 the intermediate fixed-length pseudorandom key otherwise an error will occur.
 For that mode, the fixed output size can be looked up by calling EVP_KDF_size()

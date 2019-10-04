@@ -90,11 +90,11 @@ A context for SSHKDF can be obtained by calling:
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of the SSHKDF derivation is specified via the I<keylen>
-parameter to the L<EVP_KDF-derive(3)> function.
+parameter to the L<EVP_KDF_derive(3)> function.
 Since the SSHKDF output length is variable, calling L<EVP_KDF-size()>
 to obtain the requisite length is not meaningful. The caller must
 allocate a buffer of the desired length, and pass that buffer to the
-L<EVP_KDF-derive(3)> function along with the desired length.
+L<EVP_KDF_derive(3)> function along with the desired length.
 
 =head1 EXAMPLES
 
