@@ -1,7 +1,0 @@
-$GOAL=../../libimplementations.a
-
-IF[{- !$disabled{dsa} -}]
-  SOURCE[$GOAL]=dsa.c
-ENDIF
-
-

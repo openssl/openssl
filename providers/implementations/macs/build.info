@@ -1,0 +1,15 @@
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
+
+$GMAC_GOAL=../../libimplementations.a
+$HMAC_GOAL=../../libimplementations.a
+$KMAC_GOAL=../../libimplementations.a
+$CMAC_GOAL=../../libimplementations.a
+
+SOURCE[$GMAC_GOAL]=gmac_prov.c
+SOURCE[$HMAC_GOAL]=hmac_prov.c
+SOURCE[$KMAC_GOAL]=kmac_prov.c
+
+IF[{- !$disabled{cmac} -}]
+  SOURCE[$CMAC_GOAL]=cmac_prov.c
+ENDIF

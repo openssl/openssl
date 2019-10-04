@@ -1,5 +1,0 @@
-$GOAL=../../libimplementations.a
-
-SOURCE[$GOAL]=tls1_prf.c hkdf.c kbkdf.c pbkdf2.c sskdf.c
-SOURCE[../../libfips.a]=pbkdf2_fips.c
-SOURCE[../../libnonfips.a]=pbkdf2_fips.c

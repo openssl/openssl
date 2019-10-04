@@ -28,7 +28,7 @@
 #                       FIPS_MODE undefined.  The default and legacy
 #                       providers use this.
 
-SUBDIRS=common default
+SUBDIRS=common default implementations
 
 INCLUDE[../libcrypto]=common/include
 
