@@ -3321,8 +3321,8 @@ void ssl3_free(SSL *s)
     sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
     OPENSSL_free(s->s3.tmp.ciphers_raw);
     OPENSSL_clear_free(s->s3.tmp.pms, s->s3.tmp.pmslen);
-    OPENSSL_free(s->s3.tmp.peer_sigalgs);
-    OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
+    tls12_free_sigalgs(&s->s3.tmp.peer_sigalgs);
+    tls12_free_sigalgs(&s->s3.tmp.peer_cert_sigalgs);
     ssl3_free_digest_list(s);
     OPENSSL_free(s->s3.alpn_selected);
     OPENSSL_free(s->s3.alpn_proposed);
@@ -3340,8 +3340,8 @@ int ssl3_clear(SSL *s)
     sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
     OPENSSL_free(s->s3.tmp.ciphers_raw);
     OPENSSL_clear_free(s->s3.tmp.pms, s->s3.tmp.pmslen);
-    OPENSSL_free(s->s3.tmp.peer_sigalgs);
-    OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
+    tls12_free_sigalgs(&s->s3.tmp.peer_sigalgs);
+    tls12_free_sigalgs(&s->s3.tmp.peer_cert_sigalgs);
 
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3.tmp.pkey);

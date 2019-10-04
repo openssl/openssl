@@ -1133,18 +1133,14 @@ static int final_alpn(SSL *s, unsigned int context, int sent)
 static int init_sig_algs(SSL *s, unsigned int context)
 {
     /* Clear any signature algorithms extension received */
-    OPENSSL_free(s->s3.tmp.peer_sigalgs);
-    s->s3.tmp.peer_sigalgs = NULL;
-
+    tls12_free_sigalgs(&s->s3.tmp.peer_sigalgs);
     return 1;
 }
 
 static int init_sig_algs_cert(SSL *s, unsigned int context)
 {
     /* Clear any signature algorithms extension received */
-    OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
-    s->s3.tmp.peer_cert_sigalgs = NULL;
-
+    tls12_free_sigalgs(&s->s3.tmp.peer_cert_sigalgs);
     return 1;
 }
 

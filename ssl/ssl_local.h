@@ -1077,6 +1077,13 @@ struct ssl_ctx_st {
 
 typedef struct cert_pkey_st CERT_PKEY;
 
+typedef struct sigalgs_st {
+    uint16_t *salgs;        /* Sigalg value list */
+    uint8_t *salgs_idx;     /* Sigalg idx list */
+    size_t len;             /* Length of above two list */
+    uint32_t salgs_flag;    /* Sigalg idx flag */
+}SIGALGS;
+
 struct ssl_st {
     /*
      * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
@@ -1224,11 +1231,8 @@ struct ssl_st {
              * request for client.
              * Keep track of the algorithms for TLS and X.509 usage separately.
              */
-            uint16_t *peer_sigalgs;
-            uint16_t *peer_cert_sigalgs;
-            /* Size of above arrays */
-            size_t peer_sigalgslen;
-            size_t peer_cert_sigalgslen;
+            SIGALGS peer_sigalgs;
+            SIGALGS peer_cert_sigalgs;
             /* Sigalg peer actually uses */
             const struct sigalg_lookup_st *peer_sigalg;
             /*
@@ -1918,9 +1922,7 @@ typedef struct cert_st {
      * the client hello as the supported signature algorithms extension. For
      * servers it represents the signature algorithms we are willing to use.
      */
-    uint16_t *conf_sigalgs;
-    /* Size of above array */
-    size_t conf_sigalgslen;
+    SIGALGS conf_sigalgs;
     /*
      * Client authentication signature algorithms, if not set then uses
      * conf_sigalgs. On servers these will be the signature algorithms sent
@@ -1928,9 +1930,7 @@ typedef struct cert_st {
      * represents the signature algorithms we are willing to use for client
      * authentication.
      */
-    uint16_t *client_sigalgs;
-    /* Size of above array */
-    size_t client_sigalgslen;
+    SIGALGS client_sigalgs;
     /*
      * Certificate setup callback: if set is called whenever a certificate
      * may be required (client or server). the callback can then examine any
@@ -2564,8 +2564,6 @@ __owur int tls_use_ticket(SSL *s);
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);
 
 __owur int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
-__owur int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
-                                int client);
 __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen,
                             int client);
 int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
@@ -2592,11 +2590,19 @@ __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                               const uint16_t *psig, size_t psiglen);
 __owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen);
+__owur int tls1_load_default_sigalgs();
+void tls12_update_sigalgs(SIGALGS *psalgs, uint16_t *salgs,
+                                uint8_t *salgs_idx, size_t salgs_len,
+                                uint32_t salgs_flag);
+void tls12_free_sigalgs(SIGALGS *psalgs);
+int tls12_dup_sigalgs(SIGALGS *dst, SIGALGS *src);
 __owur int tls1_save_sigalgs(SSL *s, PACKET *pkt, int cert);
 __owur int tls1_process_sigalgs(SSL *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
 __owur int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd);
-__owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
+__owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs,
+                                 const uint8_t **psigs_idx,
+                                 uint32_t *psigs_flag);
 #  ifndef OPENSSL_NO_EC
 __owur int tls_check_sigalg_curve(const SSL *s, int curve);
 #  endif

@@ -308,7 +308,7 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt,
     if (!SSL_CLIENT_USE_SIGALGS(s))
         return EXT_RETURN_NOT_SENT;
 
-    salglen = tls12_get_psigalgs(s, 1, &salg);
+    salglen = tls12_get_psigalgs(s, 1, &salg, NULL, NULL);
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signature_algorithms)
                /* Sub-packet for sig-algs extension */
             || !WPACKET_start_sub_packet_u16(pkt)

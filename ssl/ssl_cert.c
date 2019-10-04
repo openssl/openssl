@@ -134,27 +134,11 @@ CERT *ssl_cert_dup(CERT *cert)
     }
 
     /* Configured sigalgs copied across */
-    if (cert->conf_sigalgs) {
-        ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen
-                                           * sizeof(*cert->conf_sigalgs));
-        if (ret->conf_sigalgs == NULL)
-            goto err;
-        memcpy(ret->conf_sigalgs, cert->conf_sigalgs,
-               cert->conf_sigalgslen * sizeof(*cert->conf_sigalgs));
-        ret->conf_sigalgslen = cert->conf_sigalgslen;
-    } else
-        ret->conf_sigalgs = NULL;
+    if (tls12_dup_sigalgs(&ret->conf_sigalgs, &cert->conf_sigalgs) != 1)
+        goto err;
+    if (tls12_dup_sigalgs(&ret->client_sigalgs, &cert->client_sigalgs) != 1)
+        goto err;
 
-    if (cert->client_sigalgs) {
-        ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen
-                                             * sizeof(*cert->client_sigalgs));
-        if (ret->client_sigalgs == NULL)
-            goto err;
-        memcpy(ret->client_sigalgs, cert->client_sigalgs,
-               cert->client_sigalgslen * sizeof(*cert->client_sigalgs));
-        ret->client_sigalgslen = cert->client_sigalgslen;
-    } else
-        ret->client_sigalgs = NULL;
     /* Copy any custom client certificate types */
     if (cert->ctype) {
         ret->ctype = OPENSSL_memdup(cert->ctype, cert->ctype_len);
@@ -237,8 +221,8 @@ void ssl_cert_free(CERT *c)
 #endif
 
     ssl_cert_clear_certs(c);
-    OPENSSL_free(c->conf_sigalgs);
-    OPENSSL_free(c->client_sigalgs);
+    tls12_free_sigalgs(&c->conf_sigalgs);
+    tls12_free_sigalgs(&c->client_sigalgs);
     OPENSSL_free(c->ctype);
     X509_STORE_free(c->verify_store);
     X509_STORE_free(c->chain_store);
