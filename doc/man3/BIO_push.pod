@@ -71,7 +71,7 @@ be written to B<md1> as before.
 
 =head1 SEE ALSO
 
-L<bio>
+L<bio(7)>
 
 =head1 HISTORY
 

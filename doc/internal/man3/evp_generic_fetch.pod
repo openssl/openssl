@@ -252,7 +252,7 @@ And finally, the library functions:
 
 =head1 SEE ALSO
 
-L<ossl_method_construct>
+L<ossl_method_construct(3)>
 
 =head1 HISTORY
 

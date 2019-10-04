@@ -50,7 +50,7 @@ use is defined by the extension code itself: check out the certificate
 policies extension for an example.
 
 If an extension type is unsupported then the I<arbitrary> extension syntax
-must be used, see the L<ARBITRARY EXTENSIONS|/"ARBITRARY EXTENSIONS"> section for more details.
+must be used, see the L</ARBITRARY EXTENSIONS> section for more details.
 
 =head1 STANDARD EXTENSIONS
 

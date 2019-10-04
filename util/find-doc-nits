@@ -447,6 +447,24 @@ sub check {
         check_section_location($id, $contents, "EXAMPLES", "SEE ALSO");
     }
 
+    # Make sure every link has a section.
+    while ( $contents =~ /$markup_re/msg ) {
+        my $target = $1;
+        next unless $target =~ /^L</;           # Skip if not L<...>, or
+        next if $target =~ /::/;                #   links to a Perl module, or
+        next if $target =~ m@L</@;              #   links within the page, or
+        next if $target =~ /^L<https?:/;        #   is a URL link, or
+        next if $target =~ m@\([1357]\)>$@;     #   it has a section, or
+        next if $target =~ m@\([1357]\)/.*>$@;  #   it has a section/anchor
+        err($id, "Section missing in $target")
+    }
+    # Check for proper in-man-3 API links.
+    while ( $contents =~ /L<([^>]*)\(3\)(?:\/.*)?>/g ) {
+        my $target = $1;
+        err($id, "Bad L<$target>")
+            unless $target =~ /^[_[:alpha:]][_[:alnum:]]*$/
+    }
+
     unless ( $contents =~ /=for openssl generic/ ) {
         if ( $filename =~ m|man3/| ) {
             name_synopsis($id, $filename, $contents);

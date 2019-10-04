@@ -24,7 +24,7 @@ B<-h> I<server_url>
 =head1 DESCRIPTION
 
 This command can be used for sending a timestamp request, as specified
-in B<RFC 3161>, to a timestamp server over HTTP or HTTPS and storing the
+in RFC 3161, to a timestamp server over HTTP or HTTPS and storing the
 timestamp response in a file. It cannot be used for creating the requests
 and verifying responses, you have to use L<openssl-ts(1)> to do that. This
 command can send several requests to the server without closing the TCP
@@ -121,7 +121,7 @@ The name of an EGD socket to get random data from. (Optional)
 
 =item I<request> ...
 
-List of files containing B<RFC 3161> DER-encoded timestamp requests. If no
+List of files containing RFC 3161 DER-encoded timestamp requests. If no
 requests are specified only one request will be sent to the server and it will
 be read from the standard input.
 (Optional)
@@ -188,7 +188,7 @@ example:
 L<openssl(1)>,
 L<openssl-ts(1)>,
 L<WWW::Curl::Easy>,
-L<RFC 3161|https://www.rfc-editor.org/rfc/rfc3161.html>
+L<https://www.rfc-editor.org/rfc/rfc3161.html>
 
 =head1 COPYRIGHT
 

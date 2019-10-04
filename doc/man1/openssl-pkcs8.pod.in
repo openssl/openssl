@@ -77,7 +77,6 @@ file in a format specified by B<-inform>. The output file will be encrypted
 PKCS#8 format using the specified encryption parameters unless B<-nocrypt>
 is included.
 
-
 =item B<-traditional>
 
 When this option is present and B<-topk8> is not a traditional format private
