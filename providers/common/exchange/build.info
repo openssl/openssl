@@ -1,5 +1,0 @@
-$GOAL=../../libimplementations.a
-
-IF[{- !$disabled{dh} -}]
-  SOURCE[$GOAL]=dh_exch.c
-ENDIF
