@@ -49,7 +49,7 @@ A context for X963KDF can be obtained by calling:
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an X963KDF is specified via the I<keylen>
-parameter to the L<EVP_KDF-derive(3)> function.
+parameter to the L<EVP_KDF_derive(3)> function.
 
 =head1 EXAMPLES
 
