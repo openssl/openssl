@@ -15,7 +15,7 @@ used with EVP_MAC_fetch():
 
 =over 4
 
-=item "Siphash", "default=yes"
+=item "SIPHASH", "default=yes"
 
 =back
 

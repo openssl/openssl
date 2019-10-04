@@ -34,7 +34,7 @@ may be used by scrypt defaults to 1025 MiB.
 
 =head2 Identity
 
-"ID-SCRYPT" is the name for this implementation; it
+"SCRYPT" is the name for this implementation; it
 can be used with the EVP_KDF_fetch() function.
 
 =head2 Supported parameters
@@ -65,7 +65,7 @@ Both r and p are parameters of type B<uint32_t>.
 
 A context for scrypt can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "ID-SCRYPT", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an scrypt key derivation is specified via the
@@ -81,7 +81,7 @@ This example derives a 64-byte long test vector using scrypt with the password
  unsigned char out[64];
  OSSL_PARAM params[6], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "ID-SCRYPT", NULL);
+ kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
