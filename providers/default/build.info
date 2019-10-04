@@ -1,4 +1,4 @@
-SUBDIRS=digests kdfs macs ciphers
+SUBDIRS=digests ciphers
 $GOAL=../../libcrypto
 SOURCE[$GOAL]=defltprov.c
 INCLUDE[$GOAL]=include
