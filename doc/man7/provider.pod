@@ -216,11 +216,38 @@ In this case an algorithm implementation is implicitly fetched using
 default search criteria and an algorithm name that is consistent with
 the type of EVP_PKEY being used.
 
+=head3 Algorithm naming
+
+Algorithm names are case insensitive. Any particular algorithm can have multiple
+aliases associated with it. The canonical OpenSSL naming scheme follows this
+format:
+
+ALGNAME[VERSION?][-SUBNAME[VERSION?]?][-SIZE?][-MODE?]
+
+VERSION is only present if there are multiple versions of an algorithm (e.g.
+MD2, MD4, MD5).  It may be omitted if there is only one version.
+
+SUBNAME may be present where multiple algorithms are combined together,
+e.g. MD5-SHA1.
+
+SIZE is only present if multiple versions of an algorithm exist with different
+sizes (e.g. AES-128-CBC, AES-256-CBC)
+
+MODE is only present where applicable.
+
+Other aliases may exist for example where standards bodies or common practice
+use alternative names or names that OpenSSL has used historically.
+
 =head1 OPENSSL PROVIDERS
 
 OpenSSL comes with a set of providers.
-All the algorithm names mentioned can be used as an algorithm
-identifier to the appropriate fetching function.
+
+The algorithms available in each of these providers may vary due to build time
+configuration options. The L<openssl-list(1)> command can be used to list the
+currently available algorithms.
+
+The names of the algorithms shown from L<openssl-list(1)> can be used as an
+algorithm identifier to the appropriate fetching function.
 
 =head2 Default provider
 
@@ -228,30 +255,6 @@ The default provider is built in as part of the F<libcrypto> library.
 Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "default=yes"
 can be used as a search criterion for these implementations.
-
-It currently offers the following named algorithms:
-
-=over 4
-
-=item Digests
-
-SHA1, SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256,
-SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE128, SHAKE256, SM3,
-BLAKE2b512, BLAKE2s256, KMAC128, KMAC256, MD5, MD5-SHA1
-
-=item Symmetric ciphers
-
-AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC,
-AES-128-CBC, AES-256-OFB, AES-192-OFB, AES-128-OFB, AES-256-CFB,
-AES-192-CFB, AES-128-CFB, AES-256-CFB1, AES-192-CFB1, AES-128-CFB1,
-AES-256-CFB8, AES-192-CFB8, AES-128-CFB8, AES-256-CTR, AES-192-CTR,
-AES-128-CTR, id-aes256-GCM, id-aes192-GCM, id-aes128-GCM
-
-=item Key Exchange
-
-dhKeyAgreement
-
-=back
 
 =head2 FIPS provider
 
@@ -262,22 +265,6 @@ Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "fips=yes" can
 be used as a search criterion for these implementations.
 
-It currently offers the following FIPS approved named algorithms:
-
-=over 4
-
-=item Digests
-
-SHA1, SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256,
-SHA3-224, SHA3-256, SHA3-384, SHA3-512, KMAC128, KMAC256
-
-=item Symmetric ciphers
-
-AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC,
-AES-128-CBC, AES-256-CTR, AES-192-CTR, AES-128-CTR
-
-=back
-
 =head2 Legacy provider
 
 The legacy provider is a dynamically loadable module, and must therefore
@@ -287,23 +274,13 @@ Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "legacy=yes" can be
 used as a search criterion for these implementations.
 
-It currently offers the following named algorithms:
-
-=over 4
-
-=item Digest algorithms:
-
-RIPEMD160, MD2, MD4, MDC2, whirlpool.
-
-=back
-
 =head1 EXAMPLES
 
 =head2 Fetching
 
-Fetch any available implementation of SHA256 in the default context:
+Fetch any available implementation of SHA2-256 in the default context:
 
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", NULL);
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
  ...
  EVP_MD_meth_free(md);
 
@@ -313,34 +290,34 @@ Fetch any available implementation of AES-128-CBC in the default context:
  ...
  EVP_CIPHER_meth_free(cipher);
 
-Fetch an implementation of SHA256 from the default provider in the default
+Fetch an implementation of SHA2-256 from the default provider in the default
 context:
 
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", "default=yes");
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "default=yes");
  ...
  EVP_MD_meth_free(md);
 
-Fetch an implementation of SHA256 that is not from the default provider in the
+Fetch an implementation of SHA2-256 that is not from the default provider in the
 default context:
 
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", "default=no");
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "default=no");
  ...
  EVP_MD_meth_free(md);
 
-Fetch an implementation of SHA256 from the default provider in the specified
+Fetch an implementation of SHA2-256 from the default provider in the specified
 context:
 
- EVP_MD *md = EVP_MD_fetch(ctx, "SHA256", "default=yes");
+ EVP_MD *md = EVP_MD_fetch(ctx, "SHA2-256", "default=yes");
  ...
  EVP_MD_meth_free(md);
 
 Load the legacy provider into the default context and then fetch an
-implementation of whirlpool from it:
+implementation of WHIRLPOOL from it:
 
  /* This only needs to be done once - usually at application start up */
  OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
 
- EVP_MD *md = EVP_MD_fetch(NULL, "whirlpool", "legacy=yes");
+ EVP_MD *md = EVP_MD_fetch(NULL, "WHIRLPOOL", "legacy=yes");
  ...
  EVP_MD_meth_free(md);
 
@@ -355,7 +332,7 @@ other providers:
  OSSL_PROVIDER *default = OSSL_PROVIDER_load(NULL, "default");
 
  EVP_MD *md_whirlpool = EVP_MD_fetch(NULL, "whirlpool", NULL);
- EVP_MD *md_sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
+ EVP_MD *md_sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL);
  ...
  EVP_MD_meth_free(md_whirlpool);
  EVP_MD_meth_free(md_sha256);

@@ -80,7 +80,7 @@ Label "label", and Context "context".
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                         "SHA256", 0);
+                                         "SHA2-256", 0);
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
                                          "HMAC", 0);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
