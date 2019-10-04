@@ -3497,10 +3497,9 @@ int speed_main(int argc, char **argv)
             /* free previous one and alloc a new one */
             EVP_PKEY_CTX_free(pctx);
 
-#ifndef FIPS_MODE
             loopargs[i].sigsize = sm2_sigsize
                 = ECDSA_size(EVP_PKEY_get0_EC_KEY(sm2_pkey));
-#endif
+
             if (!EVP_PKEY_set_alias_type(sm2_pkey, EVP_PKEY_SM2)) {
                 st = 0;
                 EVP_PKEY_free(sm2_pkey);
