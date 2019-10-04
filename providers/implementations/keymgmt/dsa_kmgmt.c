@@ -12,7 +12,7 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/params.h>
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 static OSSL_OP_keymgmt_importkey_fn dsa_importkey;
 

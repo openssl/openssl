@@ -10,7 +10,7 @@
 /* Dispatch functions for Blowfish cipher modes ecb, cbc, ofb, cfb */
 
 #include "cipher_blowfish.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 #define BF_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
 

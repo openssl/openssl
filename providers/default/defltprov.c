@@ -14,7 +14,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* Functions provided by the core */
 static OSSL_core_gettable_params_fn *c_gettable_params = NULL;

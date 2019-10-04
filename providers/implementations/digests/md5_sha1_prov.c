@@ -14,7 +14,7 @@
 #include <openssl/core_names.h>
 #include "prov/md5_sha1.h"
 #include "prov/digestcommon.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 static OSSL_OP_digest_set_ctx_params_fn md5_sha1_set_ctx_params;
 static OSSL_OP_digest_settable_ctx_params_fn md5_sha1_settable_ctx_params;

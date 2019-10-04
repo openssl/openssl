@@ -12,7 +12,7 @@
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
 #include <openssl/params.h>
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 static OSSL_OP_keyexch_newctx_fn dh_newctx;
 static OSSL_OP_keyexch_init_fn dh_init;

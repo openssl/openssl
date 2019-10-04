@@ -14,7 +14,7 @@
 #include "prov/blake2.h"
 #include "internal/cryptlib.h"
 #include "internal/providercommonerr.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly

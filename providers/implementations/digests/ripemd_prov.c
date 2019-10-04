@@ -10,7 +10,7 @@
 #include <openssl/crypto.h>
 #include <openssl/ripemd.h>
 #include "prov/digestcommon.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* ripemd160_functions */
 IMPLEMENT_digest_functions(ripemd160, RIPEMD160_CTX,

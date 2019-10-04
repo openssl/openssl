@@ -10,7 +10,7 @@
 /* Dispatch functions for RC4 ciphers */
 
 #include "cipher_rc4.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* TODO (3.0) Figure out what flags are required */
 #define RC4_FLAGS EVP_CIPH_FLAG_DEFAULT_ASN1

@@ -10,7 +10,7 @@
 #include <openssl/crypto.h>
 #include "internal/sm3.h"
 #include "prov/digestcommon.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* sm3_functions */
 IMPLEMENT_digest_functions(sm3, SM3_CTX,

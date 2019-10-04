@@ -11,7 +11,7 @@
 #include "cipher_tdes_default.h"
 #include "crypto/evp.h"
 #include "crypto/rand.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "internal/providercommonerr.h"
 
 /* TODO (3.0) Figure out what flags are requred */

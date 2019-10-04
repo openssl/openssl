@@ -10,7 +10,7 @@
 /* Dispatch functions for Seed cipher modes ecb, cbc, ofb, cfb */
 
 #include "cipher_seed.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 static OSSL_OP_cipher_freectx_fn seed_freectx;
 static OSSL_OP_cipher_dupctx_fn seed_dupctx;

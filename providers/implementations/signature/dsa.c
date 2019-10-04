@@ -13,7 +13,7 @@
 #include <openssl/dsa.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "internal/provider_ctx.h"
 
 static OSSL_OP_signature_newctx_fn dsa_newctx;

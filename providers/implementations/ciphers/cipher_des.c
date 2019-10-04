@@ -10,7 +10,7 @@
 #include "prov/ciphercommon.h"
 #include "cipher_des.h"
 #include "crypto/rand.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "internal/providercommonerr.h"
 
 /* TODO(3.0) Figure out what flags need to be here */

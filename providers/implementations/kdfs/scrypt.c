@@ -16,10 +16,10 @@
 #include <openssl/core_names.h>
 #include "crypto/evp.h"
 #include "internal/numbers.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 #include "internal/provider_ctx.h"
 #include "internal/providercommonerr.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 

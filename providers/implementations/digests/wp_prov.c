@@ -10,7 +10,7 @@
 #include <openssl/crypto.h>
 #include <openssl/whrlpool.h>
 #include "prov/digestcommon.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* wp_functions */
 IMPLEMENT_digest_functions(wp, WHIRLPOOL_CTX,

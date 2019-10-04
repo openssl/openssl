@@ -10,7 +10,7 @@
 #include <openssl/crypto.h>
 #include <openssl/md2.h>
 #include "prov/digestcommon.h"
-#include "internal/provider_algs.h"
+#include "prov/implementations.h"
 
 /* md2_functions */
 IMPLEMENT_digest_functions(md2, MD2_CTX,
