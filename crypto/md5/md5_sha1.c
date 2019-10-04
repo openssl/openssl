@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include <string.h>
-#include "internal/md5_sha1.h"
+#include "prov/md5_sha1.h"
 #include <openssl/evp.h>
 
 int md5_sha1_init(MD5_SHA1_CTX *mctx)

@@ -9,7 +9,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/md4.h>
-#include "internal/digestcommon.h"
+#include "prov/digestcommon.h"
 #include "internal/provider_algs.h"
 
 /* md4_functions */

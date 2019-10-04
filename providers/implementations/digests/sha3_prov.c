@@ -14,7 +14,7 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include "internal/sha3.h"
-#include "internal/digestcommon.h"
+#include "prov/digestcommon.h"
 #include "internal/provider_algs.h"
 #include "internal/providercommonerr.h"
 

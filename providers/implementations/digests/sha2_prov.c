@@ -14,7 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
-#include "internal/digestcommon.h"
+#include "prov/digestcommon.h"
 #include "internal/provider_algs.h"
 #include "crypto/sha.h"
 

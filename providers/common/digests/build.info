@@ -1,7 +1,2 @@
 # This source is common for all digests in all our providers.
 SOURCE[../../libcommon.a]=digest_common.c
-
-# These are our implementations
-$GOAL=../../libimplementations.a
-
-SOURCE[$GOAL]=sha2_prov.c sha3_prov.c
