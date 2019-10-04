@@ -594,7 +594,7 @@ int ssl3_get_record(SSL *s)
             RECORD_LAYER_reset_read_sequence(&s->rlayer);
             return 1;
         }
-        SSLfatal(s, SSL_AD_DECRYPTION_FAILED, SSL_F_SSL3_GET_RECORD,
+        SSLfatal(s, SSL_AD_BAD_RECORD_MAC, SSL_F_SSL3_GET_RECORD,
                  SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         return -1;
     }
