@@ -22,7 +22,7 @@
  */
 #include "../../../crypto/siphash/siphash_local.h"
 
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 /*

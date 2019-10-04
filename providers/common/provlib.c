@@ -8,7 +8,7 @@
  */
 
 #include <openssl/objects.h>
-#include "internal/providercommon.h"
+#include "prov/providercommon.h"
 
 /*
  * The FIPS provider has its own version of this in fipsprov.c because it does

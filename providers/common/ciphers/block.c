@@ -9,7 +9,7 @@
 
 #include <assert.h>
 #include "cipher_local.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 /*
  * Fills a single block of buffered data from the input, and returns the amount

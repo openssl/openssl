@@ -9,7 +9,7 @@
 
 #include "cipher_aes_xts.h"
 #include "prov/implementations.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 /* TODO (3.0) Figure out what flags need to be set */
 #define AES_XTS_FLAGS (EVP_CIPH_CUSTOM_IV          \

@@ -14,7 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "internal/providercommon.h"
+#include "prov/providercommon.h"
 #include "rand_local.h"
 
 /* 440 bits from SP800-90Ar1 10.1 table 2 */

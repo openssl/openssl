@@ -11,7 +11,7 @@
 
 #include "prov/ciphercommon.h"
 #include "prov/cipher_ccm.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,

@@ -27,8 +27,8 @@
 #include "internal/property.h"
 #include "crypto/evp.h"
 #include "prov/implementations.h"
-#include "internal/provider_ctx.h"
-#include "internal/providercommon.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "selftest.h"
 
 extern OSSL_core_thread_start_fn *c_thread_start;

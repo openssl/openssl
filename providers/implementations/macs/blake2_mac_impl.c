@@ -13,7 +13,7 @@
 
 #include "prov/blake2.h"
 #include "internal/cryptlib.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 /*

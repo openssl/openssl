@@ -9,7 +9,7 @@
  */
 
 #include <openssl/err.h>
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 #ifndef OPENSSL_NO_ERR
 

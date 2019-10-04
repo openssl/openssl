@@ -16,7 +16,7 @@
 #include "internal/sha3.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 /*
  * Forward declaration of any unique methods implemented here. This is not strictly
