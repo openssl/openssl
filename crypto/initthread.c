@@ -10,7 +10,7 @@
 #include <openssl/crypto.h>
 #include <openssl/core_numbers.h>
 #include "crypto/cryptlib.h"
-#include "internal/providercommon.h"
+#include "prov/providercommon.h"
 #include "internal/thread_once.h"
 
 #ifdef FIPS_MODE

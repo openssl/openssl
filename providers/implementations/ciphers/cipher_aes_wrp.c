@@ -8,7 +8,7 @@
  */
 
 #include "cipher_aes.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 /* AES wrap with padding has IV length of 4, without padding 8 */

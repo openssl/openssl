@@ -8,7 +8,7 @@
  */
 
 #include "cipher_aes_ocb.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 #include "prov/cipher_aead.h"
 #include "prov/implementations.h"
 

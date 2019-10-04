@@ -13,7 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "internal/providercommon.h"
+#include "prov/providercommon.h"
 #include "rand_local.h"
 
 /*

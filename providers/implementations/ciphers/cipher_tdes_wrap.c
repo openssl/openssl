@@ -12,7 +12,7 @@
 #include "crypto/evp.h"
 #include "crypto/rand.h"
 #include "prov/implementations.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 /* TODO (3.0) Figure out what flags are requred */
 #define TDES_WRAP_FLAGS (EVP_CIPH_WRAP_MODE             \

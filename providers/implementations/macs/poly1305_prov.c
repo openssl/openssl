@@ -21,7 +21,7 @@
  */
 #include "../../../crypto/poly1305/poly1305_local.h"
 
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 /*

@@ -11,7 +11,7 @@
 
 #include "cipher_rc5.h"
 #include "prov/implementations.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 static OSSL_OP_cipher_freectx_fn rc5_freectx;
 static OSSL_OP_cipher_dupctx_fn rc5_dupctx;

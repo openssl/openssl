@@ -41,7 +41,7 @@
 #include <openssl/storeerr.h>
 #include <openssl/esserr.h>
 #include "internal/propertyerr.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 int err_load_crypto_strings_int(void)
 {

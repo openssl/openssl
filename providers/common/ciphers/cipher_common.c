@@ -12,8 +12,8 @@
  */
 
 #include "cipher_local.h"
-#include "internal/provider_ctx.h"
-#include "internal/providercommonerr.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommonerr.h"
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables

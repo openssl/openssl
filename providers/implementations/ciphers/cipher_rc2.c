@@ -11,7 +11,7 @@
 
 #include "cipher_rc2.h"
 #include "prov/implementations.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 #define RC2_40_MAGIC    0xa0
 #define RC2_64_MAGIC    0x78

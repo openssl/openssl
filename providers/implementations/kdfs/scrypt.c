@@ -17,8 +17,8 @@
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "prov/implementations.h"
-#include "internal/provider_ctx.h"
-#include "internal/providercommonerr.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 #ifndef OPENSSL_NO_SCRYPT

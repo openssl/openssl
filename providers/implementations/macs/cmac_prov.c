@@ -15,8 +15,8 @@
 #include <openssl/cmac.h>
 
 #include "prov/implementations.h"
-#include "internal/provider_ctx.h"
-#include "internal/provider_util.h"
+#include "prov/provider_ctx.h"
+#include "prov/provider_util.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly

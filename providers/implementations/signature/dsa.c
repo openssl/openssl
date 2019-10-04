@@ -14,7 +14,7 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include "prov/implementations.h"
-#include "internal/provider_ctx.h"
+#include "prov/provider_ctx.h"
 
 static OSSL_OP_signature_newctx_fn dsa_newctx;
 static OSSL_OP_signature_sign_init_fn dsa_signature_init;

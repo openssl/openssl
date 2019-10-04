@@ -7,7 +7,7 @@ ossl_prov_util_nid_to_name
 
 =head1 SYNOPSIS
 
- #include "internal/providercommon.h"
+ #include "prov/providercommon.h"
 
  const char *ossl_prov_util_nid_to_name(int nid);
 

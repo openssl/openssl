@@ -16,10 +16,10 @@
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
-#include "internal/provider_ctx.h"
-#include "internal/providercommonerr.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
-# include "internal/provider_util.h"
+# include "prov/provider_util.h"
 
 /* See RFC 4253, Section 7.2 */
 static OSSL_OP_kdf_newctx_fn kdf_sshkdf_new;

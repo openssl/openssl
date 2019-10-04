@@ -9,7 +9,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
-#include "internal/provider_util.h"
+#include "prov/provider_util.h"
 
 void ossl_prov_cipher_reset(PROV_CIPHER *pc)
 {
