@@ -1,2 +1,0 @@
-$GOAL=../../libimplementations.a
-SOURCE[$GOAL]=scrypt.c sshkdf.c x942kdf.c
