@@ -13,6 +13,7 @@
 
 # include <openssl/obj_mac.h>
 # include "crypto/evp.h"
+#include "internal/blake2.h"   /* diverse BLAKE2 macros */
 
 static const EVP_MD blake2b_md = {
     NID_blake2b512,
