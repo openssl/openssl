@@ -444,6 +444,21 @@ sub check {
         check_section_location($id, $contents, "EXAMPLES", "SEE ALSO");
     }
 
+    # Check for proper in-man-3 API links.
+    while ( $contents =~ /L<([^>]*)>/g ) {
+        my $target = $1;
+        next if $target =~ /^https?:/;
+        next if $target =~ m@^/@;
+        next if $target =~ m@\([1357]\)@;
+        next if $target =~ m@\([1357]\)/[^>]*>@;
+        err($id, "Section missing in L<$target>")
+    }
+    while ( $contents =~ /L<([^>]*)\(3\)(?:\/.*)?>/g ) {
+        my $target = $1;
+        err($id, "Bad L<$target>")
+            unless $target =~ /^[_[:alpha:]][_[:alnum:]]*$/
+    }
+
     unless ( $contents =~ /=for comment generic/ ) {
         if ( $filename =~ m|man3/| ) {
             name_synopsis($id, $filename, $contents);

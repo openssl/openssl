@@ -16,7 +16,7 @@ Prints Signed Certificate Timestamps in a human-readable way
 
 =head1 DESCRIPTION
 
-SCT_print() prints a single Signed Certificate Timestamp (SCT) to a L<bio> in
+SCT_print() prints a single Signed Certificate Timestamp (SCT) to a B<BIO> in
 a human-readable format. SCT_LIST_print() prints an entire list of SCTs in a
 similar way. A separator can be specified to delimit each SCT in the output.
 
@@ -36,6 +36,7 @@ the validation status of an B<SCT> object.
 
 =head1 SEE ALSO
 
+L<bio(7)>,
 L<ct(7)>,
 L<bio(7)>,
 L<CTLOG_STORE_new(3)>,

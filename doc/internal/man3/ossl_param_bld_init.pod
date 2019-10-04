@@ -178,7 +178,7 @@ public key.
 
 =head1 SEE ALSO
 
-L<OSSL_PARAM_int>, L<OSSL_PARAM>
+L<OSSL_PARAM_int(3)>, L<OSSL_PARAM(3)>
 
 =head1 HISTORY
 
