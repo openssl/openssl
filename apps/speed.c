@@ -612,9 +612,9 @@ static OPT_PAIR eddsa_choices[] = {
 static double eddsa_results[EdDSA_NUM][2];    /* 2 ops: sign then verify */
 
 # ifndef OPENSSL_NO_SM2
-#  define R_EC_SM2P256        0
+#  define R_EC_CURVESM2        0
 static OPT_PAIR sm2_choices[] = {
-    {"sm2p256", R_EC_SM2P256}
+    {"curveSM2", R_EC_CURVESM2}
 };
 #  define SM2_ID        "TLSv1.3+GM+Cipher+Suite"
 #  define SM2_ID_LEN    sizeof("TLSv1.3+GM+Cipher+Suite") - 1
