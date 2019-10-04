@@ -28,7 +28,7 @@
 #                       FIPS_MODE undefined.  The default and legacy
 #                       providers use this.
 
-SUBDIRS=common default implementations
+SUBDIRS=common implementations
 
 INCLUDE[../libcrypto]=common/include
 
@@ -82,6 +82,7 @@ LIBS{noinst}=$LIBNONFIPS $LIBIMPLEMENTATIONS
 # with DEPEND.
 $DEFAULTGOAL=../libcrypto
 SOURCE[$DEFAULTGOAL]=$LIBIMPLEMENTATIONS $LIBNONFIPS
+SOURCE[$DEFAULTGOAL]=defltprov.c
 # Some legacy implementations depend on provider header files
 INCLUDE[../libcrypto]=implementations/include
 
@@ -117,7 +118,6 @@ ENDIF
 #
 IF[{- !$disabled{legacy} -}]
   # The legacy implementation library
-  SUBDIRS=legacy
   LIBS{noinst}=$LIBLEGACY
   DEPEND[$LIBLEGACY]=$LIBCOMMON $LIBNONFIPS
 
@@ -147,6 +147,6 @@ IF[{- !$disabled{legacy} -}]
 
   # Common things that are valid no matter what form the Legacy provider
   # takes.
-  INCLUDE[$LEGACYGOAL]=../include common/include
+  SOURCE[$LEGACYGOAL]=legacyprov.c
+  INCLUDE[$LEGACYGOAL]=../include implementations/include
 ENDIF
-

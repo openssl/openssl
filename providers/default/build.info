@@ -1,2 +1,0 @@
-$GOAL=../../libcrypto
-SOURCE[$GOAL]=defltprov.c
