@@ -8,7 +8,7 @@
  */
 
 #include "crypto/aria.h"
-#include "internal/ciphers/ciphercommon.h"
+#include "prov/ciphercommon.h"
 
 typedef struct prov_aria_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */

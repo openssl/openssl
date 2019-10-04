@@ -9,8 +9,8 @@
 
 /* AES CCM mode */
 
-#include "cipher_local.h"
-#include "internal/ciphers/cipher_ccm.h"
+#include "prov/ciphercommon.h"
+#include "prov/cipher_ccm.h"
 
 #define AES_HW_CCM_SET_KEY_FN(fn_set_enc_key, fn_blk, fn_ccm_enc, fn_ccm_dec)  \
     fn_set_enc_key(key, keylen * 8, &actx->ccm.ks.ks);                         \

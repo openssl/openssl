@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cipher_local.h"
+#include "prov/ciphercommon.h"
 #include "cipher_des.h"
 #include "crypto/rand.h"
 #include "internal/provider_algs.h"

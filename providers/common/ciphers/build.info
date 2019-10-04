@@ -1,26 +1,5 @@
-# This source is common building blockss for all ciphers in all our providers.
+# This source is common building blocks for all ciphers in all our providers.
 SOURCE[../../libcommon.a]=\
         cipher_common.c cipher_common_hw.c block.c \
         cipher_gcm.c cipher_gcm_hw.c \
         cipher_ccm.c cipher_ccm_hw.c
-
-# These are our implementations
-$GOAL=../../libimplementations.a
-
-IF[{- !$disabled{des} -}]
-  $COMMON_DES=cipher_tdes.c cipher_tdes_hw.c
-ENDIF
-
-SOURCE[$GOAL]=\
-        cipher_aes.c cipher_aes_hw.c \
-        cipher_aes_xts.c cipher_aes_xts_hw.c \
-        cipher_aes_gcm.c cipher_aes_gcm_hw.c \
-        cipher_aes_ccm.c cipher_aes_ccm_hw.c \
-        cipher_aes_wrp.c \
-        $COMMON_DES
-# Because some default ciphers need it
-INCLUDE[$GOAL]=.
-
-# Finally, we have a few things that aren't FIPS agnostic
-SOURCE[../../libfips.a]=cipher_fips.c
-SOURCE[../../libnonfips.a]=cipher_fips.c

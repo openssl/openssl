@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/ciphers/ciphercommon.h"
+#include "prov/ciphercommon.h"
 #include "cipher_des.h"
 
 static int cipher_hw_des_initkey(PROV_CIPHER_CTX *ctx,

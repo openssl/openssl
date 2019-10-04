@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/ciphers/ciphercommon.h"
+#include "prov/ciphercommon.h"
 
 void padblock(unsigned char *buf, size_t *buflen, size_t blocksize);
 int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize);

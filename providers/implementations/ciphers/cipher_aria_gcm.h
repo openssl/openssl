@@ -8,8 +8,8 @@
  */
 
 #include "crypto/aria.h"
-#include "internal/ciphers/ciphercommon.h"
-#include "internal/ciphers/cipher_gcm.h"
+#include "prov/ciphercommon.h"
+#include "prov/cipher_gcm.h"
 
 typedef struct prov_aria_gcm_ctx_st {
     PROV_GCM_CTX base;              /* must be first entry in struct */

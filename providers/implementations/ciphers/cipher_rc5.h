@@ -8,7 +8,7 @@
  */
 
 #include <openssl/rc5.h>
-#include "internal/ciphers/ciphercommon.h"
+#include "prov/ciphercommon.h"
 
 typedef struct prov_blowfish_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */

@@ -8,7 +8,7 @@
  */
 
 #include <openssl/aes.h>
-#include "internal/ciphers/ciphercommon.h"
+#include "prov/ciphercommon.h"
 
 /*
  * Available in cipher_fips.c, and compiled with different values depending

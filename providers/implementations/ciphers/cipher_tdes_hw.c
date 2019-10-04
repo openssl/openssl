@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cipher_local.h"
-#include "internal/ciphers/cipher_tdes.h"
+#include "prov/ciphercommon.h"
+#include "cipher_tdes.h"
 
 #define ks1 tks.ks[0]
 #define ks2 tks.ks[1]

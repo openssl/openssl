@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/ciphers/ciphercommon.h"
+#include "prov/ciphercommon.h"
 #include "crypto/sm4.h"
 
 typedef struct prov_cast_ctx_st {
