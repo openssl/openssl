@@ -159,7 +159,7 @@ L<EVP_EncryptFinal(3)> and L<EVP_DecryptFinal(3)>.
 
 OP_cipher_cipher() performs encryption/decryption using the provider side cipher
 context in the I<cctx> parameter that should have been previously initialised via
-a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init.
+a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init().
 This should call the raw underlying cipher function without any padding.
 This will be invoked in the provider as a result of the application calling
 L<EVP_Cipher(3)>.

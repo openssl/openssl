@@ -872,7 +872,7 @@ if ( $opt_c ) {
 }
 
 if ( $opt_l ) {
-    foreach ( @ARGV ? @ARGV : glob('doc/*/*.pod doc/internal/*/*.pod') ) {
+    foreach ( glob('doc/*/*.pod doc/internal/*/*.pod') ) {
         collectnames($_);
     }
     checklinks();
