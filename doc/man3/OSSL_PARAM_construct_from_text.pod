@@ -155,7 +155,7 @@ Can be written like this instead:
 
 =head1 SEE ALSO
 
-L<OSSL_PARAM(3)>, L<OSSL_PARAM_TYPE(3)>
+L<OSSL_PARAM(3)>, L<OSSL_PARAM_int(3)>
 
 =head1 COPYRIGHT
 
