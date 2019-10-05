@@ -694,14 +694,13 @@ sub collectnames {
         map { s/^\s+//g; s/\s+$//g; $_ } # Trim prefix and suffix blanks
         split(/,/, $tmp);
     unless ( grep { $simplename eq $_ } @names ) {
-        err($id, "missing $simplename");
+        err($id, "$simplename not in NAME section");
         push @names, $simplename;
     }
     foreach my $name (@names) {
         next if $name eq "";
-        if ( $name =~ /\s/ ) {
-            err($id, "'$name' contains white space")
-        }
+        err($id, "'$name' contains white space")
+            if $name =~ /\s/;
         my $name_sec = "$name($section)";
         if ( !exists $name_map{$name_sec} ) {
             $name_map{$name_sec} = $filename;

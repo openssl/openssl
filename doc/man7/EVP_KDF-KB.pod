@@ -136,9 +136,7 @@ NIST SP800-108, IETF RFC 6803, IETF RFC 8009.
 =head1 SEE ALSO
 
 L<EVP_KDF(3)>,
-L<EVP_KDF_CTX_new_id(3)>,
 L<EVP_KDF_CTX_free(3)>,
-L<EVP_KDF_ctrl(3)>,
 L<EVP_KDF_size(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>

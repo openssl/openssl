@@ -53,6 +53,8 @@ version,
 x509
 - OpenSSL application commands
 
+=for comment foreign manuals: apropos(1)
+
 =head1 SYNOPSIS
 
 =for openssl generic
