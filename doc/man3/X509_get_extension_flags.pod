@@ -172,10 +172,6 @@ is absent or an error occurred during parsing.
 X509_get_proxy_pathlen() returns the path length value if the given
 certificate is a proxy one and has a path length set, and -1 otherwise.
 
-=head1 SEE ALSO
-
-L<X509_check_purpose(3)>
-
 =head1 HISTORY
 
 X509_get_pathlen(), X509_set_proxy_flag(), X509_set_proxy_pathlen() and

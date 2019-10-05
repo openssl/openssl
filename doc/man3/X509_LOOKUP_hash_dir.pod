@@ -82,7 +82,7 @@ the directory.
 The directory should contain one certificate or CRL per file in PEM format,
 with a filename of the form I<hash>.I<N> for a certificate, or
 I<hash>.B<r>I<N> for a CRL.
-The I<hash> is the value returned by the L<X509_NAME_hash(3)> function applied
+The I<hash> is the value returned by the X509_NAME_hash() function applied
 to the subject name for certificates or issuer name for CRLs.
 The hash can also be obtained via the B<-hash> option of the L<x509(1)> or
 L<crl(1)> commands.
@@ -123,7 +123,6 @@ the number of loaded objects or 0 on error.
 
 L<PEM_read_PrivateKey(3)>,
 L<X509_STORE_load_locations(3)>,
-L<X509_store_add_lookup(3)>,
 L<SSL_CTX_load_verify_locations(3)>,
 L<X509_LOOKUP_meth_new(3)>,
 

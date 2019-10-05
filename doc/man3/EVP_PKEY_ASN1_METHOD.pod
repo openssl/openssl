@@ -185,7 +185,7 @@ It's called by L<EVP_PKEY_print_public(3)>.
 The priv_decode() and priv_encode() methods are called to decode /
 encode B<PKCS8_PRIV_KEY_INFO> form private key to / from B<pk>.
 They MUST return 0 on error, 1 on success.
-They're called by L<EVP_PKCS82PKEY(3)> and L<EVP_PKEY2PKCS8(3)>.
+They're called by EVP_PKCS82PKEY() and EVP_PKEY2PKCS8().
 
 The priv_print() method is called to print a private key in humanly
 readable text to B<out>, indented B<indent> spaces.
@@ -200,7 +200,7 @@ The pkey_size() method returns the key size in bytes.
 It's called by L<EVP_PKEY_size(3)>.
 
 The pkey_bits() method returns the key size in bits.
-It's called by L<EVP_PKEY_bits(3)>.
+It's called by EVP_PKEY_bits().
 
  int (*param_decode) (EVP_PKEY *pkey,
                       const unsigned char **pder, int derlen);
@@ -214,7 +214,7 @@ It's called by L<EVP_PKEY_bits(3)>.
 The param_decode() and param_encode() methods are called to decode /
 encode DER formatted parameters to / from B<pk>.
 They MUST return 0 on error, 1 on success.
-They're called by L<PEM_read_bio_Parameters(3)> and the B<file:>
+They're called by PEM_read_bio_Parameters() and the B<file:>
 L<OSSL_STORE_LOADER(3)>.
 
 The param_missing() method returns 0 if a key parameter is missing,
@@ -245,22 +245,22 @@ B<sigalg> contains the exact signature algorithm.
 If the signature in B<sig> doesn't correspond to what this method
 expects, X509_signature_dump() must be used as a last resort.
 It MUST return 0 on error, 1 on success.
-It's called by L<X509_signature_print(3)>.
+It's called by X509_signature_print().
 
  void (*pkey_free) (EVP_PKEY *pkey);
 
 The pkey_free() method helps freeing the internals of B<pkey>.
-It's called by L<EVP_PKEY_free(3)>, L<EVP_PKEY_set_type(3)>,
-L<EVP_PKEY_set_type_str(3)>, and L<EVP_PKEY_assign(3)>.
+It's called by L<EVP_PKEY_free(3)>, EVP_PKEY_set_type(),
+EVP_PKEY_set_type_str(), and EVP_PKEY_assign().
 
  int (*pkey_ctrl) (EVP_PKEY *pkey, int op, long arg1, void *arg2);
 
 The pkey_ctrl() method adds extra algorithm specific control.
 It's called by L<EVP_PKEY_get_default_digest_nid(3)>,
 L<EVP_PKEY_supports_digest_nid(3)>,
-L<EVP_PKEY_set1_tls_encodedpoint(3)>,
-L<EVP_PKEY_get1_tls_encodedpoint(3)>, L<PKCS7_SIGNER_INFO_set(3)>,
-L<PKCS7_RECIP_INFO_set(3)>, ...
+EVP_PKEY_set1_tls_encodedpoint(),
+EVP_PKEY_get1_tls_encodedpoint(), PKCS7_SIGNER_INFO_set(),
+PKCS7_RECIP_INFO_set(), ...
 
  int (*old_priv_decode) (EVP_PKEY *pkey,
                          const unsigned char **pder, int derlen);
@@ -329,8 +329,8 @@ expected to continue with the default signature production.
 
 =back
 
-item_verify() and item_sign() are called by L<ASN1_item_verify(3)> and
-L<ASN1_item_sign(3)>, and by extension, L<X509_verify(3)>,
+item_verify() and item_sign() are called by ASN1_item_verify() and
+ASN1_item_sign(), and by extension, L<X509_verify(3)>,
 L<X509_REQ_verify(3)>, L<X509_sign(3)>, L<X509_REQ_sign(3)>, ...
 
  int (*siginf_set) (X509_SIG_INFO *siginf, const X509_ALGOR *alg,
@@ -339,7 +339,7 @@ L<X509_REQ_verify(3)>, L<X509_sign(3)>, L<X509_REQ_sign(3)>, ...
 The siginf_set() method is used to set custom B<X509_SIG_INFO>
 parameters.
 It MUST return 0 on error, or 1 on success.
-It's called as part of L<X509_check_purpose(3)>, L<X509_check_ca(3)>
+It's called as part of X509_check_purpose(), L<X509_check_ca(3)>
 and L<X509_check_issued(3)>.
 
  int (*pkey_check) (const EVP_PKEY *pk);

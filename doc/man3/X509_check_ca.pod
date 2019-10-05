@@ -30,8 +30,7 @@ used to sign other certificates.
 =head1 SEE ALSO
 
 L<X509_verify_cert(3)>,
-L<X509_check_issued(3)>,
-L<X509_check_purpose(3)>
+L<X509_check_issued(3)>
 
 =head1 COPYRIGHT
 
