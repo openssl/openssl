@@ -864,8 +864,7 @@ if ( $opt_c ) {
 }
 
 if ( $opt_l ) {
-    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'), glob('doc/*/*.pod.in'),
-                              glob('doc/internal/*/*.pod'))) {
+    foreach ( glob('doc/*/*.pod doc/internal/*/*.pod') ) {
         collectnames($_);
     }
     checklinks();
@@ -873,10 +872,7 @@ if ( $opt_l ) {
 
 if ( $opt_n ) {
     publicize();
-    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'), glob('doc/*/*.pod.in'))) {
-        check($_);
-    }
-    foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
+    foreach (@ARGV ? @ARGV : glob('doc/*/*.pod doc/internal/*/*.pod') ) {
         check($_);
     }
 
