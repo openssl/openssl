@@ -573,6 +573,7 @@ int BN_is_prime_ex2(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb)
      * to 128 rounds giving a false positive rate of 2^-256.
      */
     int checks = 64;
+
     if (BN_num_bits(p) > 2048)
         checks = 128;
 

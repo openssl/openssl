@@ -50,8 +50,7 @@ generated is I<n>, then check that C<(I<n>-1)/2> is also prime.
 
 =item B<-checks> I<num>
 
-Perform the checks I<num> times to see that the generated number
-is prime.  The default is 20.
+This parameter is ignored.
 
 =back
 

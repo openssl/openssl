@@ -666,6 +666,6 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 }
 
 int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
-                            int do_trial_division, BN_GENCB *cb);
+                    int do_trial_division, BN_GENCB *cb);
 
 #endif
