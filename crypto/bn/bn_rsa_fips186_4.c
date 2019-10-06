@@ -68,44 +68,6 @@ static int bn_rsa_fips186_4_aux_prime_max_sum_size_for_prob_primes(int nbits)
 }
 
 /*
- * FIPS 186-4 Table C.3 for error probability of 2^-100
- * Minimum number of Miller Rabin Rounds for p1, p2, q1 & q2.
- *
- * Params:
- *     aux_prime_bits The auxiliary prime size in bits.
- * Returns:
- *     The minimum number of Miller Rabin Rounds for an auxiliary prime, or
- *     0 if aux_prime_bits is invalid.
- */
-static int bn_rsa_fips186_4_aux_prime_MR_min_checks(int aux_prime_bits)
-{
-    if (aux_prime_bits > 170)
-        return 27;
-    if (aux_prime_bits > 140)
-        return 32;
-    return 0; /* Error case */
-}
-
-/*
- * FIPS 186-4 Table C.3 for error probability of 2^-100
- * Minimum number of Miller Rabin Rounds for p, q.
- *
- * Params:
- *     nbits The key size in bits.
- * Returns:
- *     The minimum number of Miller Rabin Rounds required,
- *     or 0 if nbits is invalid.
- */
-int bn_rsa_fips186_4_prime_MR_min_checks(int nbits)
-{
-    if (nbits >= 3072) /* > 170 */
-        return 3;
-    if (nbits == 2048) /* > 140 */
-        return 4;
-    return 0; /* Error case */
-}
-
-/*
  * Find the first odd integer that is a probable prime.
  *
  * See section FIPS 186-4 B.3.6 (Steps 4.2/5.2).
@@ -123,9 +85,8 @@ static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
 {
     int ret = 0;
     int i = 0;
-    int checks = bn_rsa_fips186_4_aux_prime_MR_min_checks(BN_num_bits(Xp1));
 
-    if (checks == 0 || BN_copy(p1, Xp1) == NULL)
+    if (BN_copy(p1, Xp1) == NULL)
         return 0;
 
     /* Find the first odd number >= Xp1 that is probably prime */
@@ -133,7 +94,7 @@ static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
         i++;
         BN_GENCB_call(cb, 0, i);
         /* MR test with trial division */
-        if (BN_is_prime_fasttest_ex(p1, checks, ctx, 1, cb))
+        if (BN_check_prime(p1, ctx, cb))
             break;
         /* Get next odd number */
         if (!BN_add_word(p1, 2))
@@ -259,11 +220,8 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     int ret = 0;
     int i, imax;
     int bits = nlen >> 1;
-    int checks = bn_rsa_fips186_4_prime_MR_min_checks(nlen);
     BIGNUM *tmp, *R, *r1r2x2, *y1, *r1x2;
 
-    if (checks == 0)
-        return 0;
     BN_CTX_start(ctx);
 
     R = BN_CTX_get(ctx);
@@ -331,8 +289,7 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                     || !BN_sub_word(y1, 1)
                     || !BN_gcd(tmp, y1, e, ctx))
                 goto err;
-            if (BN_is_one(tmp)
-                    && BN_is_prime_fasttest_ex(Y, checks, ctx, 1, cb))
+            if (BN_is_one(tmp) && BN_check_prime(Y, ctx, cb))
                 goto end;
             /* (Step 8-10) */
             if (++i >= imax || !BN_add(Y, Y, r1r2x2))
