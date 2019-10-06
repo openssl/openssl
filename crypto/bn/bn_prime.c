@@ -65,6 +65,23 @@ const BIGNUM *bn_get0_small_factors(void)
     return &_bignum_small_prime_factors;
 }
 
+/*
+ * Calculate the number of trial divisions that gives the best speed in
+ * combination with Miller-Rabin prime test, based on the sized of the prime.
+ */
+static int calc_trial_divisions(int bits)
+{
+    if (bits <= 512)
+        return 64;
+    else if (bits <= 1024)
+        return 128;
+    else if (bits <= 2048)
+        return 384;
+    else if (bits <= 4096)
+        return 1024;
+    return NUMPRIMES;
+}
+
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 {
     /* No callback means continue */
@@ -226,7 +243,9 @@ int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx,
 
     /* first look for small factors */
     if (do_trial_division) {
-        for (i = 1; i < NUMPRIMES; i++) {
+        int trial_divisions = calc_trial_divisions(BN_num_bits(w));
+
+        for (i = 1; i < trial_divisions; i++) {
             BN_ULONG mod = BN_mod_word(w, primes[i]);
             if (mod == (BN_ULONG)-1)
                 return -1;
@@ -398,12 +417,22 @@ err:
     return ret;
 }
 
+/*
+ * Generate a random number of |bits| bits that is probably prime by sieving.
+ * If |safe| != 0, it generates a safe prime.
+ * |mods| is a preallocated array that gets reused when called again.
+ *
+ * The probably prime is saved in |rnd|.
+ *
+ * Returns 1 on success and 0 on error.
+ */
 static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
                           BN_CTX *ctx)
 {
     int i;
     BN_ULONG delta;
-    BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
+    int trial_divisions = calc_trial_divisions(bits);
+    BN_ULONG maxdelta = BN_MASK2 - primes[trial_divisions - 1];
 
  again:
     /* TODO: Not all primes are private */
@@ -412,7 +441,7 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     if (safe && !BN_set_bit(rnd, 1))
         return 0;
     /* we now have a random number 'rnd' to test. */
-    for (i = 1; i < NUMPRIMES; i++) {
+    for (i = 1; i < trial_divisions; i++) {
         BN_ULONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
         if (mod == (BN_ULONG)-1)
             return 0;
@@ -420,7 +449,7 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     }
     delta = 0;
  loop:
-    for (i = 1; i < NUMPRIMES; i++) {
+    for (i = 1; i < trial_divisions; i++) {
         /*
          * check that rnd is a prime and also that
          * gcd(rnd-1,primes) == 1 (except for 2)
@@ -447,6 +476,14 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     return 1;
 }
 
+/*
+ * Generate a random number |rnd| of |bits| bits that is probably prime
+ * and satisfies |rnd| % |add| == |rem| by sieving.
+ * If |safe| != 0, it generates a safe prime.
+ * |mods| is a preallocated array that gets reused when called again.
+ *
+ * Returns 1 on success and 0 on error.
+ */
 static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
                              const BIGNUM *add, const BIGNUM *rem,
                              BN_CTX *ctx)
@@ -454,7 +491,8 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     int i, ret = 0;
     BIGNUM *t1;
     BN_ULONG delta;
-    BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
+    int trial_divisions = calc_trial_divisions(bits);
+    BN_ULONG maxdelta = BN_MASK2 - primes[trial_divisions - 1];
 
     BN_CTX_start(ctx);
     if ((t1 = BN_CTX_get(ctx)) == NULL)
@@ -488,7 +526,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     }
 
     /* we now have a random number 'rnd' to test. */
-    for (i = 1; i < NUMPRIMES; i++) {
+    for (i = 1; i < trial_divisions; i++) {
         BN_ULONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
         if (mod == (BN_ULONG)-1)
             goto err;
@@ -496,7 +534,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     }
     delta = 0;
  loop:
-    for (i = 1; i < NUMPRIMES; i++) {
+    for (i = 1; i < trial_divisions; i++) {
         /* check that rnd is a prime */
         if (bits <= 31 && delta <= 0x7fffffff
                 && square(primes[i]) > BN_get_word(rnd) + delta)
