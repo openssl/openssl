@@ -353,15 +353,16 @@ DEPRECATEDIN_0_9_8(int
                                         BN_CTX *ctx, void *cb_arg,
                                         int do_trial_division))
 
+DEPRECATEDIN_3(int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb))
+DEPRECATEDIN_3(int BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
+                            int do_trial_division, BN_GENCB *cb))
 /* Newer versions */
 int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
                          const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb,
                          BN_CTX *ctx);
 int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
                          const BIGNUM *rem, BN_GENCB *cb);
-int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);
-int BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
-                            int do_trial_division, BN_GENCB *cb);
+int BN_is_prime_ex2(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb);
 
 int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx);
 

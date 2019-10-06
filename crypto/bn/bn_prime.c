@@ -151,7 +151,7 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
         goto err;
 
     if (!safe) {
-        i = BN_is_prime_fasttest_ex(ret, checks, ctx, 0, cb);
+        i = bn_is_prime_int(ret, checks, ctx, 0, cb);
         if (i == -1)
             goto err;
         if (i == 0)
@@ -165,13 +165,13 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
             goto err;
 
         for (i = 0; i < checks; i++) {
-            j = BN_is_prime_fasttest_ex(ret, 1, ctx, 0, cb);
+            j = bn_is_prime_int(ret, 1, ctx, 0, cb);
             if (j == -1)
                 goto err;
             if (j == 0)
                 goto loop;
 
-            j = BN_is_prime_fasttest_ex(t, 1, ctx, 0, cb);
+            j = bn_is_prime_int(t, 1, ctx, 0, cb);
             if (j == -1)
                 goto err;
             if (j == 0)
@@ -211,11 +211,17 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
                    BN_GENCB *cb)
 {
-    return BN_is_prime_fasttest_ex(a, checks, ctx_passed, 0, cb);
+    return bn_is_prime_int(a, checks, ctx_passed, 0, cb);
+}
+
+int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx,
+                            int do_trial_division, BN_GENCB *cb)
+{
+    return bn_is_prime_int(w, checks, ctx, do_trial_division, cb);
 }
 
 /* See FIPS 186-4 C.3.1 Miller Rabin Probabilistic Primality Test. */
-int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx,
+int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
                             int do_trial_division, BN_GENCB *cb)
 {
     int i, status, ret = -1;
@@ -556,4 +562,19 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     BN_CTX_end(ctx);
     bn_check_top(rnd);
     return ret;
+}
+
+int BN_is_prime_ex2(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb)
+{
+    /*
+     * By default use 64 rounds of Miller-Rabin, which should give a false
+     * positive rate of 2^-128. If the size of the prime is larger than 2048
+     * the user probably wants a higher security level than 128, so switch
+     * to 128 rounds giving a false positive rate of 2^-256.
+     */
+    int checks = 64;
+    if (BN_num_bits(p) > 2048)
+        checks = 128;
+
+    return bn_is_prime_int(p, checks, ctx, 1, cb);
 }

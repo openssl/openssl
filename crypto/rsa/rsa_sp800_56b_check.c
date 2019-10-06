@@ -119,16 +119,15 @@ err:
  * Check the prime factor (for either p or q)
  * i.e: p is prime AND GCD(p - 1, e) = 1
  *
- * See SP800-5bBr1 6.4.1.2.3 Step 5 (a to d) & (e to h).
+ * See SP800-56Br1 6.4.1.2.3 Step 5 (a to d) & (e to h).
  */
 int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
 {
-    int checks = bn_rsa_fips186_4_prime_MR_min_checks(nbits);
     int ret = 0;
     BIGNUM *p1 = NULL, *gcd = NULL;
 
     /* (Steps 5 a-b) prime test */
-    if (BN_is_prime_fasttest_ex(p, checks, ctx, 1, NULL) != 1
+    if (BN_is_prime_ex2(p, ctx, NULL) != 1
             /* (Step 5c) (√2)(2^(nbits/2 - 1) <= p <= 2^(nbits/2 - 1) */
             || rsa_check_prime_factor_range(p, nbits, ctx) != 1)
         return 0;

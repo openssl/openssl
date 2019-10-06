@@ -272,8 +272,6 @@ typedef struct srp_arg_st {
     int strength;               /* minimal size for N */
 } SRP_ARG;
 
-# define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
-
 static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
 {
     BN_CTX *bn_ctx = BN_CTX_new();
@@ -281,10 +279,10 @@ static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
     BIGNUM *r = BN_new();
     int ret =
         g != NULL && N != NULL && bn_ctx != NULL && BN_is_odd(N) &&
-        BN_is_prime_ex(N, SRP_NUMBER_ITERATIONS_FOR_PRIME, bn_ctx, NULL) == 1 &&
+        BN_is_prime_ex2(N, bn_ctx, NULL) == 1 &&
         p != NULL && BN_rshift1(p, N) &&
         /* p = (N-1)/2 */
-        BN_is_prime_ex(p, SRP_NUMBER_ITERATIONS_FOR_PRIME, bn_ctx, NULL) == 1 &&
+        BN_is_prime_ex2(p, bn_ctx, NULL) == 1 &&
         r != NULL &&
         /* verify g^((N-1)/2) == -1 (mod N) */
         BN_mod_exp(r, g, p, N, bn_ctx) &&

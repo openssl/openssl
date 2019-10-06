@@ -15,7 +15,7 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS
+    OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE
 } OPTION_CHOICE;
 
 const OPTIONS prime_options[] = {
@@ -28,14 +28,13 @@ const OPTIONS prime_options[] = {
     {"bits", OPT_BITS, 'p', "Size of number in bits"},
     {"safe", OPT_SAFE, '-',
      "When used with -generate, generate a safe prime"},
-    {"checks", OPT_CHECKS, 'p', "Number of checks"},
     {NULL}
 };
 
 int prime_main(int argc, char **argv)
 {
     BIGNUM *bn = NULL;
-    int hex = 0, checks = 20, generate = 0, bits = 0, safe = 0, ret = 1;
+    int hex = 0, generate = 0, bits = 0, safe = 0, ret = 1;
     char *prog;
     OPTION_CHOICE o;
 
@@ -62,9 +61,6 @@ opthelp:
             break;
         case OPT_SAFE:
             safe = 1;
-            break;
-        case OPT_CHECKS:
-            checks = atoi(opt_arg());
             break;
         }
     }
@@ -121,7 +117,7 @@ opthelp:
             BN_print(bio_out, bn);
             BIO_printf(bio_out, " (%s) %s prime\n",
                        argv[0],
-                       BN_is_prime_ex(bn, checks, NULL, NULL)
+                       BN_is_prime_ex2(bn, NULL, NULL)
                            ? "is" : "is not");
         }
     }

@@ -149,7 +149,7 @@ ASN1_get_object                         151	3_0_0	EXIST::FUNCTION:
 i2d_IPAddressFamily                     152	3_0_0	EXIST::FUNCTION:RFC3779
 ENGINE_get_ctrl_function                153	3_0_0	EXIST::FUNCTION:ENGINE
 X509_REVOKED_get_ext_count              154	3_0_0	EXIST::FUNCTION:
-BN_is_prime_fasttest_ex                 155	3_0_0	EXIST::FUNCTION:
+BN_is_prime_fasttest_ex                 155	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 ERR_load_PKCS12_strings                 156	3_0_0	EXIST::FUNCTION:
 EVP_sha384                              157	3_0_0	EXIST::FUNCTION:
 i2d_DHparams                            158	3_0_0	EXIST::FUNCTION:DH
@@ -3531,7 +3531,7 @@ CMS_add1_recipient_cert                 3608	3_0_0	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_kekri_get0_id         3609	3_0_0	EXIST::FUNCTION:CMS
 BN_mod_word                             3610	3_0_0	EXIST::FUNCTION:
 ASN1_PCTX_new                           3611	3_0_0	EXIST::FUNCTION:
-BN_is_prime_ex                          3612	3_0_0	EXIST::FUNCTION:
+BN_is_prime_ex                          3612	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 PKCS5_v2_PBE_keyivgen                   3613	3_0_0	EXIST::FUNCTION:
 CRYPTO_ctr128_encrypt                   3614	3_0_0	EXIST::FUNCTION:
 CMS_unsigned_add1_attr_by_OBJ           3615	3_0_0	EXIST::FUNCTION:CMS
@@ -4826,3 +4826,4 @@ EVP_DigestSignInit_ex                   4942	3_0_0	EXIST::FUNCTION:
 EVP_DigestSignUpdate                    4943	3_0_0	EXIST::FUNCTION:
 EVP_DigestVerifyInit_ex                 4944	3_0_0	EXIST::FUNCTION:
 EVP_DigestVerifyUpdate                  4945	3_0_0	EXIST::FUNCTION:
+BN_is_prime_ex2                         4946	3_0_0	EXIST::FUNCTION:

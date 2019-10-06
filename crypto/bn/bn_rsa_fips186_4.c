@@ -133,7 +133,7 @@ static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
         i++;
         BN_GENCB_call(cb, 0, i);
         /* MR test with trial division */
-        if (BN_is_prime_fasttest_ex(p1, checks, ctx, 1, cb))
+        if (bn_is_prime_int(p1, checks, ctx, 1, cb))
             break;
         /* Get next odd number */
         if (!BN_add_word(p1, 2))
@@ -332,7 +332,7 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                     || !BN_gcd(tmp, y1, e, ctx))
                 goto err;
             if (BN_is_one(tmp)
-                    && BN_is_prime_fasttest_ex(Y, checks, ctx, 1, cb))
+                    && bn_is_prime_int(Y, checks, ctx, 1, cb))
                 goto end;
             /* (Step 8-10) */
             if (++i >= imax || !BN_add(Y, Y, r1r2x2))

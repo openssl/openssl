@@ -287,7 +287,7 @@ static int prime_field_tests(void)
 
         || !TEST_true(BN_hex2bn(&p,                         "FFFFFFFF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFF"))
-        || !TEST_int_eq(1, BN_is_prime_ex(p, BN_prime_checks, ctx, NULL))
+        || !TEST_int_eq(1, BN_is_prime_ex2(p, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a,                         "FFFFFFFF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFC"))
         || !TEST_true(BN_hex2bn(&b,                         "1C97BEFC"
@@ -327,7 +327,7 @@ static int prime_field_tests(void)
 
         || !TEST_true(BN_hex2bn(&p,                 "FFFFFFFFFFFFFFFF"
                                     "FFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFF"))
-        || !TEST_int_eq(1, BN_is_prime_ex(p, BN_prime_checks, ctx, NULL))
+        || !TEST_int_eq(1, BN_is_prime_ex2(p, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a,                 "FFFFFFFFFFFFFFFF"
                                     "FFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFC"))
         || !TEST_true(BN_hex2bn(&b,                 "64210519E59C80E7"
@@ -366,7 +366,7 @@ static int prime_field_tests(void)
 
         || !TEST_true(BN_hex2bn(&p,         "FFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFFFFFF000000000000000000000001"))
-        || !TEST_int_eq(1, BN_is_prime_ex(p, BN_prime_checks, ctx, NULL))
+        || !TEST_int_eq(1, BN_is_prime_ex2(p, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a,         "FFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFE"))
         || !TEST_true(BN_hex2bn(&b,         "B4050A850C04B3ABF5413256"
@@ -405,7 +405,7 @@ static int prime_field_tests(void)
 
         || !TEST_true(BN_hex2bn(&p, "FFFFFFFF000000010000000000000000"
                                     "00000000FFFFFFFFFFFFFFFFFFFFFFFF"))
-        || !TEST_int_eq(1, BN_is_prime_ex(p, BN_prime_checks, ctx, NULL))
+        || !TEST_int_eq(1, BN_is_prime_ex2(p, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a, "FFFFFFFF000000010000000000000000"
                                     "00000000FFFFFFFFFFFFFFFFFFFFFFFC"))
         || !TEST_true(BN_hex2bn(&b, "5AC635D8AA3A93E7B3EBBD55769886BC"
@@ -446,7 +446,7 @@ static int prime_field_tests(void)
         || !TEST_true(BN_hex2bn(&p, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE"
                                     "FFFFFFFF0000000000000000FFFFFFFF"))
-        || !TEST_int_eq(1, BN_is_prime_ex(p, BN_prime_checks, ctx, NULL))
+        || !TEST_int_eq(1, BN_is_prime_ex2(p, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE"
                                     "FFFFFFFF0000000000000000FFFFFFFC"))
@@ -493,7 +493,7 @@ static int prime_field_tests(void)
                                     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"))
-        || !TEST_int_eq(1, BN_is_prime_ex(p, BN_prime_checks, ctx, NULL))
+        || !TEST_int_eq(1, BN_is_prime_ex2(p, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a,                              "1FF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
@@ -1328,7 +1328,7 @@ static int nistp_single_test(int idx)
 
         || !TEST_ptr(NISTP = EC_GROUP_new(test->meth()))
         || !TEST_true(BN_hex2bn(&p, test->p))
-        || !TEST_int_eq(1, BN_is_prime_ex(p, BN_prime_checks, ctx, NULL))
+        || !TEST_int_eq(1, BN_is_prime_ex2(p, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a, test->a))
         || !TEST_true(BN_hex2bn(&b, test->b))
         || !TEST_true(EC_GROUP_set_curve(NISTP, p, a, b, ctx))
