@@ -42,7 +42,7 @@
 #   endif
 /*
  * Some operating systems do not permit select(2) on their random devices,
- * defining this to zero will force the used of read(2) to extract one byte
+ * defining this to zero will force the use of read(2) to extract one byte
  * from /dev/random.
  */
 #   ifndef DEVRANDM_WAIT_USE_SELECT
