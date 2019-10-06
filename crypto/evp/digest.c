@@ -665,7 +665,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         ret = EVP_MD_CTX_set_params(ctx, params);
     else
         ret = EVP_MD_CTX_get_params(ctx, params);
-    return ret;
+    goto conclude;
 
 
 /* TODO(3.0): Remove legacy code below */
@@ -676,6 +676,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     }
 
     ret = ctx->digest->md_ctrl(ctx, cmd, p1, p2);
+ conclude:
     if (ret <= 0)
         return 0;
     return ret;

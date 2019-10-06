@@ -1148,7 +1148,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ret = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
     else
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
-    return ret;
+    goto conclude;
 
 /* TODO(3.0): Remove legacy code below */
 legacy:
@@ -1158,6 +1158,8 @@ legacy:
     }
 
     ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
+
+ conclude:
     if (ret == EVP_CTRL_RET_UNSUPPORTED) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL,
                EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
