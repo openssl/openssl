@@ -68,7 +68,7 @@ static int bn_rsa_fips186_4_aux_prime_max_sum_size_for_prob_primes(int nbits)
 }
 
 /*
- * FIPS 186-4 Table C.3 for error probability of 2^-100
+ * FIPS 186-4 Table C.2
  * Minimum number of Miller Rabin Rounds for p1, p2, q1 & q2.
  *
  * Params:
@@ -80,14 +80,14 @@ static int bn_rsa_fips186_4_aux_prime_max_sum_size_for_prob_primes(int nbits)
 static int bn_rsa_fips186_4_aux_prime_MR_min_checks(int aux_prime_bits)
 {
     if (aux_prime_bits > 170)
-        return 27;
+        return 41;
     if (aux_prime_bits > 140)
-        return 32;
+        return 38;
     return 0; /* Error case */
 }
 
 /*
- * FIPS 186-4 Table C.3 for error probability of 2^-100
+ * FIPS 186-4 Table C.2
  * Minimum number of Miller Rabin Rounds for p, q.
  *
  * Params:
@@ -99,9 +99,9 @@ static int bn_rsa_fips186_4_aux_prime_MR_min_checks(int aux_prime_bits)
 int bn_rsa_fips186_4_prime_MR_min_checks(int nbits)
 {
     if (nbits >= 3072) /* > 170 */
-        return 3;
-    if (nbits == 2048) /* > 140 */
         return 4;
+    if (nbits == 2048) /* > 140 */
+        return 5;
     return 0; /* Error case */
 }
 
