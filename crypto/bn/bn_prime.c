@@ -208,6 +208,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 }
 #endif
 
+if !OPENSSL_API_1_1_0
 int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
                    BN_GENCB *cb)
 {
@@ -219,6 +220,7 @@ int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx,
 {
     return bn_is_prime_int(w, checks, ctx, do_trial_division, cb);
 }
+#endif
 
 /* See FIPS 186-4 C.3.1 Miller Rabin Probabilistic Primality Test. */
 int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
