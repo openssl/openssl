@@ -9,7 +9,7 @@ openssl-crl - CRL utility
 B<openssl> B<crl>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
-[B<-informout> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
 [B<-text>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
