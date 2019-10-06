@@ -56,7 +56,7 @@ means the EVP_PKEY_CTX is created inside EVP_DigestVerifyInit_ex() and it will
 be freed automatically when the EVP_MD_CTX is freed).
 
 No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit_ex() if the passed
-B<ctx> is not NULL. See also
+B<ctx> has already been assigned one via L<EVP_MD_CTX_set_pkey_ctx(3)>. See also
 L<SM2(7)>.
 
 Not all digests can be used for all key types. The following combinations apply.
