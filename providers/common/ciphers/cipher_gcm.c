@@ -38,11 +38,6 @@ void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
     ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
 }
 
-void gcm_deinitctx(PROV_GCM_CTX *ctx)
-{
-    OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
-}
-
 static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
                     const unsigned char *iv, size_t ivlen, int enc)
 {
@@ -56,7 +51,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
             return 0;
         }
         ctx->ivlen = ivlen;
-        memcpy(ctx->iv, iv, ctx->ivlen);
+        memcpy(ctx->iv, iv, ivlen);
         ctx->iv_state = IV_STATE_BUFFERED;
     }
 

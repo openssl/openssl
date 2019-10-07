@@ -194,11 +194,13 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     int i = 0;
     unsigned int j;
+    unsigned char *oiv = NULL;
 
     if (type != NULL) {
+        oiv = (unsigned char *)EVP_CIPHER_CTX_original_iv(c);
         j = EVP_CIPHER_CTX_iv_length(c);
         OPENSSL_assert(j <= sizeof(c->iv));
-        i = ASN1_TYPE_set_octetstring(type, c->oiv, j);
+        i = ASN1_TYPE_set_octetstring(type, oiv, j);
     }
     return i;
 }
@@ -403,7 +405,16 @@ int EVP_CIPHER_CTX_tag_length(const EVP_CIPHER_CTX *ctx)
 
 const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx)
 {
-    return ctx->oiv;
+    int ok;
+    const unsigned char *v = ctx->oiv;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    params[0] =
+        OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_IV,
+                                       (void **)&v, sizeof(ctx->oiv));
+    ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
+
+    return ok != 0 ? v : NULL;
 }
 
 /*

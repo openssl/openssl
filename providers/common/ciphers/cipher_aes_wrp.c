@@ -36,7 +36,6 @@ typedef struct prov_aes_wrap_ctx_st {
         OSSL_UNION_ALIGN;
         AES_KEY ks;
     } ks;
-    unsigned int iv_set : 1;
     aeswrap_fn wrapfn;
 
 } PROV_AES_WRAP_CTX;
@@ -59,9 +58,7 @@ static void *aes_wrap_newctx(size_t kbits, size_t blkbits,
 static void aes_wrap_freectx(void *vctx)
 {
     PROV_AES_WRAP_CTX *wctx = (PROV_AES_WRAP_CTX *)vctx;
-    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
-    OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
     OPENSSL_clear_free(wctx,  sizeof(*wctx));
 }
 
@@ -80,9 +77,8 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
         wctx->wrapfn = enc ? CRYPTO_128_wrap : CRYPTO_128_unwrap;
 
     if (iv != NULL) {
-        ctx->ivlen = ivlen;
-        memcpy(ctx->iv, iv, ivlen);
-        wctx->iv_set = 1;
+        if (!cipher_generic_initiv(ctx, iv, ivlen))
+            return 0;
     }
     if (key != NULL) {
         if (keylen != ctx->keylen) {
@@ -150,7 +146,7 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
         }
     }
 
-    rv = wctx->wrapfn(&wctx->ks.ks, wctx->iv_set ? ctx->iv : NULL, out, in,
+    rv = wctx->wrapfn(&wctx->ks.ks, ctx->iv_set ? ctx->iv : NULL, out, in,
                       inlen, ctx->block);
     return rv ? (int)rv : -1;
 }

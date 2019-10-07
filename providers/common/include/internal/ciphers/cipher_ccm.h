@@ -121,7 +121,6 @@ OSSL_OP_cipher_update_fn ccm_stream_update;
 OSSL_OP_cipher_final_fn ccm_stream_final;
 OSSL_OP_cipher_cipher_fn ccm_cipher;
 void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw);
-void ccm_finalctx(PROV_CCM_CTX *ctx);
 
 int ccm_generic_setiv(PROV_CCM_CTX *ctx, const unsigned char *nonce,
                       size_t nlen, size_t mlen);

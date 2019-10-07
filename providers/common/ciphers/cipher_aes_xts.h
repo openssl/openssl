@@ -23,7 +23,6 @@ typedef struct prov_aes_xts_ctx_st {
     } ks1, ks2;                /* AES key schedules to use */
     XTS128_CONTEXT xts;
     OSSL_xts_stream_fn stream;
-    unsigned int iv_set : 1;   /* Set if an iv is set */
 } PROV_AES_XTS_CTX;
 
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_xts(size_t keybits);

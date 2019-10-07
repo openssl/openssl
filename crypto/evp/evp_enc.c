@@ -341,19 +341,6 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             return 0;
     }
 
-    switch (EVP_CIPHER_mode(ctx->cipher)) {
-    case EVP_CIPH_CFB_MODE:
-    case EVP_CIPH_OFB_MODE:
-    case EVP_CIPH_CBC_MODE:
-        /* For these modes we remember the original IV for later use */
-        if (!ossl_assert(EVP_CIPHER_CTX_iv_length(ctx) <= (int)sizeof(ctx->oiv))) {
-            EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
-            return 0;
-        }
-        if (iv != NULL)
-            memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
-    }
-
     if (enc) {
         if (ctx->cipher->einit == NULL) {
             EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);

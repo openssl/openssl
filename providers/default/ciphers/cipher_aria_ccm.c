@@ -27,7 +27,6 @@ static void aria_ccm_freectx(void *vctx)
 {
     PROV_ARIA_CCM_CTX *ctx = (PROV_ARIA_CCM_CTX *)vctx;
 
-    ccm_finalctx((PROV_CCM_CTX *)ctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
