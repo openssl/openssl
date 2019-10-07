@@ -16,6 +16,8 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
+#ifndef FIPS_MODE
+
 static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
 {
     EVPerr(EVP_F_UPDATE, EVP_R_ONLY_ONESHOT_SUPPORTED);
@@ -220,6 +222,7 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 {
     return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, NULL, 1);
 }
+#endif /* FIPS_MDOE */
 
 int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
 {
@@ -255,7 +258,7 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
     return EVP_DigestUpdate(ctx, data, dsize);
 }
 
-
+#ifndef FIPS_MODE
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                         size_t *siglen)
 {
@@ -397,3 +400,4 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
         return -1;
     return EVP_DigestVerifyFinal(ctx, sigret, siglen);
 }
+#endif /* FIPS_MODE */
