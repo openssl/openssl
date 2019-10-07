@@ -219,7 +219,7 @@ a DSA structure. The public key is encoded using a
 SubjectPublicKeyInfo structure and an error occurs if the public
 key is not DSA.
 
-The B<Parameters> functions read or write a key parameters in PEM format using
+The B<Parameters> functions read or write key parameters in PEM format using
 an EVP_PKEY structure.  The encoding depends on the type of key; for DSA key
 parameters, it will be a Dss-Parms structure as defined in RFC2459, and for DH
 key parameters, it will be a PKCS#3 DHparameter structure.  I<These functions
