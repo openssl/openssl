@@ -208,7 +208,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 }
 #endif
 
-if !OPENSSL_API_1_1_0
+#if !OPENSSL_API_1_1_0
 int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
                    BN_GENCB *cb)
 {
