@@ -361,7 +361,7 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
      * reduce the probability of having the transactionID in use at the server.
      */
     if (ctx->transactionID == NULL
-            && !set1_aostr_else_random(&ctx->transactionID,NULL,
+            && !set1_aostr_else_random(&ctx->transactionID, NULL,
                                        OSSL_CMP_TRANSACTIONID_LENGTH))
         return 0;
     if (!ossl_cmp_asn1_octet_string_set1(&hdr->transactionID,
