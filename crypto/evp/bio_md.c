@@ -9,11 +9,8 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
-#include "crypto/evp.h"
-#include "evp_local.h"
 #include "internal/bio.h"
 
 /*
@@ -148,7 +145,7 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
     switch (cmd) {
     case BIO_CTRL_RESET:
         if (BIO_get_init(b))
-            ret = EVP_DigestInit_ex(ctx, ctx->digest, NULL);
+            ret = EVP_DigestInit_ex(ctx, EVP_MD_CTX_md(ctx), NULL);
         else
             ret = 0;
         if (ret > 0)
@@ -157,7 +154,7 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_C_GET_MD:
         if (BIO_get_init(b)) {
             ppmd = ptr;
-            *ppmd = ctx->digest;
+            *ppmd = EVP_MD_CTX_md(ctx);
         } else
             ret = 0;
         break;
@@ -223,7 +220,7 @@ static int md_gets(BIO *bp, char *buf, int size)
 
     ctx = BIO_get_data(bp);
 
-    if (size < ctx->digest->md_size)
+    if (size < EVP_MD_CTX_size(ctx))
         return 0;
 
     if (EVP_DigestFinal_ex(ctx, (unsigned char *)buf, &ret) <= 0)
