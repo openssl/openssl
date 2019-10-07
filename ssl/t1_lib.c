@@ -1879,7 +1879,7 @@ static int tls1_set_shared_sigalgs(SSL *s)
 {
     const uint16_t *pref, *allow, *conf;
     size_t preflen, allowlen, conflen;
-    size_t nmatch;
+    size_t nmatch = 0;
     const SIGALG_LOOKUP **salgs = NULL;
     CERT *c = s->cert;
     unsigned int is_suiteb = tls1_suiteb(s);
@@ -1907,15 +1907,20 @@ static int tls1_set_shared_sigalgs(SSL *s)
         pref = s->s3.tmp.peer_sigalgs.salgs;
         preflen = s->s3.tmp.peer_sigalgs.len;
     }
-    nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
-    if (nmatch) {
+    if (preflen != 0 && allowlen != 0)
+        nmatch = preflen < allowlen ? preflen : allowlen;
+    else if (preflen != 0 || allowlen != 0)
+        nmatch = preflen + allowlen;
+    if (nmatch != 0) {
         if ((salgs = OPENSSL_malloc(nmatch * sizeof(*salgs))) == NULL) {
             SSLerr(SSL_F_TLS1_SET_SHARED_SIGALGS, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen, allow, allowlen);
-    } else {
-        salgs = NULL;
+        if ((nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen,
+                                           allow, allowlen)) == 0) {
+            OPENSSL_free(salgs);
+            salgs = NULL;
+        }
     }
     s->shared_sigalgs = salgs;
     s->shared_sigalgslen = nmatch;
