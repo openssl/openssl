@@ -474,7 +474,7 @@ or to modify default parameters for ECDH.
 =item B<-passin> I<arg>
 
 The private key password source. For more information about the format of B<arg>
-see L<openssl(1)/Pass phrase options>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-rand> I<files>
 

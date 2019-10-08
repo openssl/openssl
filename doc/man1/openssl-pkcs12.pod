@@ -76,14 +76,6 @@ by default.
 The filename to write certificates and private keys to, standard output by
 default.  They are all written in PEM format.
 
-=item B<-passin> I<arg>, B<-passout> I<arg>
-
-The password source for the input, and for encrypting any private keys that
-are output.
-For more information about the format of B<arg>
-see L<openssl(1)/Pass phrase options>.
-
->>>>>>> fixup! Refactor -passin/-passout
 =item B<-password> I<arg>
 
 With B<-export>, B<-password> is equivalent to B<-passout>,
@@ -199,6 +191,13 @@ This specifies the "friendly name" for other certificates. This option may be
 used multiple times to specify names for all certificates in the order they
 appear. Netscape ignores friendly names on other certificates whereas MSIE
 displays them.
+
+=item B<-passin> I<arg>, B<-passout> I<arg>
+
+The password source for the input, and for encrypting any private keys that
+are output.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-chain>
 

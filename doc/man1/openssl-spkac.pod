@@ -61,7 +61,7 @@ The default is PEM.
 =item B<-passin> I<arg>
 
 The input file password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-challenge> I<string>
 

@@ -200,7 +200,7 @@ the network. Use with caution.
 
 The proxy password source, used with the B<-proxy_user> flag.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass phrase options>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-unix> I<path>
 

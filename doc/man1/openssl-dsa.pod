@@ -84,7 +84,7 @@ filename.
 
 The password source for the input and output file.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass phrase options>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 
