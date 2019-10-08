@@ -86,7 +86,7 @@ see L<openssl(1)/Pass phrase options>.
 >>>>>>> fixup! Refactor -passin/-passout
 =item B<-password> I<arg>
 
-With B<-export>, B<-password> is equivalent to B<-passout>;
+With B<-export>, B<-password> is equivalent to B<-passout>,
 otherwise it is equivalent to B<-passin>.
 
 =item B<-noout>
