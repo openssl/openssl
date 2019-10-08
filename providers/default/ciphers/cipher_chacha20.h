@@ -12,7 +12,7 @@
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;  /* this ensures even sizeof(EVP_CHACHA_KEY)%8==0 */
+        OSSL_UNION_ALIGN;
         unsigned int d[CHACHA_KEY_SIZE / 4];
     } key;
     unsigned int  counter[CHACHA_CTR_SIZE / 4];
