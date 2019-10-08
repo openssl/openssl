@@ -14,6 +14,7 @@ SOURCE[../../libcrypto]=$COMMON\
         c_allc.c c_alld.c bio_ok.c \
         evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c pbe_scrypt.c \
         e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
+        e_maccipher_sha256.c e_maccipher_sha384.c \
         e_chacha20_poly1305.c \
         legacy_sha.c ctrl_params_translate.c \
         cmeth_lib.c

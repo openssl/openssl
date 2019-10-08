@@ -2874,6 +2874,14 @@
 #define NID_zlib_compression            125
 #define OBJ_zlib_compression            OBJ_id_smime_alg,8L
 
+#define SN_maccipher_sha256             "MACCIPHER-SHA256"
+#define LN_maccipher_sha256             "maccipher-sha256"
+#define NID_maccipher_sha256            1261
+
+#define SN_maccipher_sha384             "MACCIPHER-SHA384"
+#define LN_maccipher_sha384             "maccipher-sha384"
+#define NID_maccipher_sha384            1262
+
 #define OBJ_csor                2L,16L,840L,1L,101L,3L
 
 #define OBJ_nistAlgorithms              OBJ_csor,4L

@@ -55,6 +55,10 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
     {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
     {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
+    {SSL_MACCIPHER_SHA256, NID_maccipher_sha256},
+    /* SSL_ENC_MACCIPHERSHA256_IDX  24 */
+    {SSL_MACCIPHER_SHA384, NID_maccipher_sha384},
+    /* SSL_ENC_MACCIPHERSHA256_IDX  25 */
 };
 
 #define SSL_COMP_NULL_IDX       0
@@ -280,6 +284,10 @@ static const SSL_CIPHER cipher_aliases[] = {
      SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
     {0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, NULL, 0,
      SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
+
+    {0, SSL_TXT_MACCIPHER_SHA256, 0 ,0,0,SSL_MACCIPHER_SHA256, 0,0,0,0},
+    {0, SSL_TXT_MACCIPHER_SHA384, 0 ,0,0,SSL_MACCIPHER_SHA384, 0,0,0,0},
+    {0, SSL_TXT_MACCIPHER, 0 ,0,0,SSL_MACCIPHER_SHA256 | SSL_MACCIPHER_SHA384, 0,0,0,0},
 
 };
 

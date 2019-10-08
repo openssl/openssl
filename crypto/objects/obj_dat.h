@@ -1130,7 +1130,7 @@ static const unsigned char so[8186] = {
     0x2B,0x06,0x01,0x05,0x05,0x07,0x05,0x01,0x0C,  /* [ 8176] OBJ_id_regCtrl_rsaKeyLen */
 };
 
-#define NUM_NID 1261
+#define NUM_NID 1263
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2393,9 +2393,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-regCtrl-altCertTemplate", "id-regCtrl-altCertTemplate", NID_id_regCtrl_altCertTemplate, 9, &so[8158]},
     {"id-regCtrl-algId", "id-regCtrl-algId", NID_id_regCtrl_algId, 9, &so[8167]},
     {"id-regCtrl-rsaKeyLen", "id-regCtrl-rsaKeyLen", NID_id_regCtrl_rsaKeyLen, 9, &so[8176]},
+    {"MACCIPHER-SHA256", "maccipher-sha256", NID_maccipher_sha256},
+    {"MACCIPHER-SHA384", "maccipher-sha384", NID_maccipher_sha384},
 };
 
-#define NUM_SN 1252
+#define NUM_SN 1254
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2581,6 +2583,8 @@ static const unsigned int sn_objs[NUM_SN] = {
     1044,    /* "KxSRP" */
       15,    /* "L" */
      856,    /* "LocalKeySet" */
+    1261,    /* "MACCIPHER-SHA256" */
+    1262,    /* "MACCIPHER-SHA384" */
        3,    /* "MD2" */
      257,    /* "MD4" */
        4,    /* "MD5" */
@@ -3651,7 +3655,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1252
+#define NUM_LN 1254
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4510,6 +4514,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      157,    /* "localKeyID" */
       15,    /* "localityName" */
      480,    /* "mXRecord" */
+    1261,    /* "maccipher-sha256" */
+    1262,    /* "maccipher-sha384" */
     1190,    /* "magma-cbc" */
     1191,    /* "magma-cfb" */
     1188,    /* "magma-ctr" */

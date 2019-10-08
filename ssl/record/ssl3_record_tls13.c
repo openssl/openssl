@@ -102,8 +102,12 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     } else if (alg_enc & SSL_CHACHA20) {
         taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;
     } else {
+#if 1
+        taglen = 16;
+#else
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+#endif
     }
 
     if (!sending) {
@@ -117,6 +121,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     }
 
     /* Set up IV */
+    ivlen = 16;
     if (ivlen < SEQ_NUM_SIZE) {
         /* Should not happen */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -159,10 +164,21 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         return 0;
     }
 
+    /*Check if it is a MAC cipher. We need to increase the record length.*/
+
+    if (sending) {
+        int hmac_size = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY, taglen, rec->data + rec->length);
+        if (hmac_size > 0){
+            rec->length += hmac_size; //Add the hash resulted from hmac.
+        }
+    }
+
+
     /*
      * For CCM we must explicitly set the total plaintext length before we add
      * any AAD.
      */
+
     if (((alg_enc & SSL_AESCCM) != 0
                  && EVP_CipherUpdate(ctx, NULL, &lenu, NULL,
                                      (unsigned int)rec->length) <= 0)
@@ -174,6 +190,14 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             || (size_t)(lenu + lenf) != rec->length) {
         return 0;
     }
+
+    if (!sending) {
+        int hmac_size = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY, taglen, rec->data + rec->length);
+        if (hmac_size > 0){
+            rec->length -= hmac_size; //Remove the hash resulted from hmac.
+        }
+    }
+
     if (sending) {
         /* Add the tag */
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,

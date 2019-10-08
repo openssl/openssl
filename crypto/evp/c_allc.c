@@ -265,4 +265,11 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_chacha20_poly1305());
 # endif
 #endif
+
+#ifndef OPENSSL_NO_MACCIPHERS
+    EVP_add_cipher(EVP_maccipher_sha256());
+    EVP_add_cipher_alias(SN_maccipher_sha256, "MACCIPHER-SHA256");
+    EVP_add_cipher(EVP_maccipher_sha384());
+    EVP_add_cipher_alias(SN_maccipher_sha384, "MACCIPHER-SHA384");
+#endif
 }

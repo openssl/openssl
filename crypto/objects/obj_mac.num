@@ -1258,3 +1258,5 @@ id_it_crls		1257
 id_regCtrl_altCertTemplate		1258
 id_regCtrl_algId		1259
 id_regCtrl_rsaKeyLen		1260
+maccipher_sha256		1261
+maccipher_sha384		1262

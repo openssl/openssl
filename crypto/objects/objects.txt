@@ -939,6 +939,11 @@ mime-mhs-headings 2	: id-hex-multipart-message : id-hex-multipart-message
 !Cname zlib-compression
 id-smime-alg 8		: ZLIB			: zlib compression
 
+# MACCIPHERS
+
+	: MACCIPHER-SHA256 : maccipher-sha256
+	: MACCIPHER-SHA384 : maccipher-sha384
+
 # AES aka Rijndael
 
 !Alias csor 2 16 840 1 101 3
