@@ -240,7 +240,8 @@ static int test_log_cb(const char *func, const char *file, int line,
 {
     test_log_cb_res =
 # ifndef PEDANTIC
-        strcmp(func, "execute_cmp_ctx_log_cb_test") == 0 &&
+        (strcmp(func, "execute_cmp_ctx_log_cb_test") == 0
+         || strcmp(func, "(unknown function)") == 0) &&
 # endif
         (strcmp(file, OPENSSL_FILE) == 0 || strcmp(file, "(no file)") == 0)
         && (line == test_log_line || line == 0)
