@@ -1895,6 +1895,7 @@ if ($builder eq "unified") {
         my @libraries = ();
         my @modules = ();
         my @scripts = ();
+        my @manifests = ();
 
         my %sources = ();
         my %shared_sources = ();
@@ -2130,6 +2131,11 @@ if ($builder eq "unified") {
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
+            qr/^\s* MANIFESTS ${attribs_re} \s* =  ${value_re} $/x
+            => sub {  $push_to->(\@manifests, undef,
+                                \$attributes{manifests}, $+{ATTRIBS},
+                                tokenize($expand_variables->($+{VALUE})))
+                          if !@skip || $skip[$#skip] > 0; },
             qr/^\s* SOURCE ${index_re} = ${value_re} $/x
             => sub { $push_to->(\%sources, $expand_variables->($+{INDEX}),
                                 undef, undef,
@@ -2187,7 +2193,8 @@ EOF
             my %infos = ( programs  => [ @programs  ],
                           libraries => [ @libraries ],
                           modules   => [ @modules   ],
-                          scripts   => [ @scripts   ] );
+                          scripts   => [ @scripts   ],
+                          manifests => [ @manifests   ] );
             foreach my $k (keys %infos) {
                 foreach (@{$infos{$k}}) {
                     my $item = cleanfile($buildd, $_, $blddir);
@@ -2546,7 +2553,7 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "modules", "scripts")) {
+    foreach (("programs", "libraries", "modules", "scripts", "manifests")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
