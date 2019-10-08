@@ -1,0 +1,40 @@
+# -*- mode: perl -*-
+
+(
+ 'SHA2-224:SHA-224:SHA224' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha224_functions',
+ },
+ 'SHA2-256:SHA-256:SHA256' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha256_functions',
+ },
+ 'SHA2-384:SHA-384:SHA384' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha384_functions',
+ },
+ 'SHA2-512:SHA-512:SHA512' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha512_functions',
+ },
+ 'SHA2-512/224:SHA-512/224:SHA512-224' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha512_224_functions',
+ },
+ 'SHA2-512/256:SHA-512/256:SHA512-256' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha512_256_functions',
+ },
+);

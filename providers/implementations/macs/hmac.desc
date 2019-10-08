@@ -1,0 +1,10 @@
+# -*- mode: perl -*-
+
+(
+ 'HMAC' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'mac',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_hmac_functions',
+ },
+);

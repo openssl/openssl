@@ -1,0 +1,10 @@
+# -*- mode: perl -*-
+
+(
+ 'X942KDF-ASN1:X942KDF' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'kdf',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_kdf_x942_kdf_functions',
+ },
+);

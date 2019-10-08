@@ -1,0 +1,16 @@
+# -*- mode: perl -*-
+
+(
+ 'DES-EDE3-ECB:DES-EDE3' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'cipher',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'aes128wrappad_functions',
+ },
+ 'DES-EDE3-CBC:DES3' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'cipher',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'aes128wrappad_functions',
+ },
+);

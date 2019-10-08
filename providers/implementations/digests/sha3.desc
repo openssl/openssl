@@ -1,0 +1,42 @@
+# -*- mode: perl -*-
+
+(
+ # We agree with NIST here, so one name only
+ 'SHA3-224' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha3_224_functions',
+ },
+ 'SHA3-256' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha3_256_functions',
+ },
+ 'SHA3-384' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha3_384_functions',
+ },
+ 'SHA3-512' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha3_512_functions',
+ },
+
+ 'SHAKE-128:SHAKE128' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_shake_128_functions',
+ },
+ 'SHAKE-256:SHAKE256' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_shake_256_functions',
+ },
+);

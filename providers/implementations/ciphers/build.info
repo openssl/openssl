@@ -34,6 +34,7 @@ SOURCE[$COMMON_GOAL]=\
 
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c
+  MANIFESTS=des.desc
 ENDIF
 
 SOURCE[$NULL_GOAL]=\
@@ -52,6 +53,7 @@ SOURCE[$AES_GOAL]=\
 # When the AES-xxx-XTS moves to legacy, cipher_aes_xts_fips.c can be removed.
 SOURCE[../../libfips.a]=cipher_aes_xts_fips.c cipher_aes_cts_fips.c
 SOURCE[../../libnonfips.a]=cipher_aes_xts_fips.c cipher_aes_cts_fips.c
+MANIFESTS=aes.desc
 
 IF[{- !$disabled{siv} -}]
   SOURCE[$SIV_GOAL]=\

@@ -1,0 +1,10 @@
+# -*- mode: perl -*-
+
+(
+ 'X963KDF:X942KDF-CONCAT' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'kdf',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_kdf_x963_kdf_functions',
+ },
+);

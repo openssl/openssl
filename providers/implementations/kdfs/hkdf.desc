@@ -1,0 +1,10 @@
+# -*- mode: perl -*-
+
+(
+ 'HKDF' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'kdf',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_kdf_hkdf_functions',
+ },
+);

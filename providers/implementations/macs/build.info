@@ -12,21 +12,26 @@ $POLY1305_GOAL=../../libimplementations.a
 SOURCE[$GMAC_GOAL]=gmac_prov.c
 SOURCE[$HMAC_GOAL]=hmac_prov.c
 SOURCE[$KMAC_GOAL]=kmac_prov.c
+MANIFESTS=gmac.desc hmac.desc kmac.desc
 
 IF[{- !$disabled{cmac} -}]
   SOURCE[$CMAC_GOAL]=cmac_prov.c
+  MANIFESTS=cmac.desc
 ENDIF
 
 $GOAL=../../libimplementations.a
 
 IF[{- !$disabled{blake2} -}]
   SOURCE[$BLAKE2_GOAL]=blake2b_mac.c blake2s_mac.c
+  MANIFESTS=blake2.desc
 ENDIF
 
 IF[{- !$disabled{siphash} -}]
   SOURCE[$SIPHASH_GOAL]=siphash_prov.c
+  MANIFESTS=siphash.desc
 ENDIF
 
 IF[{- !$disabled{poly1305} -}]
   SOURCE[$POLY1305_GOAL]=poly1305_prov.c
+  MANIFESTS=poly1305.desc
 ENDIF

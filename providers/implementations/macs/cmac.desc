@@ -1,0 +1,10 @@
+# -*- mode: perl -*-
+
+(
+ 'CMAC' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'mac',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_cmac_functions',
+ },
+);

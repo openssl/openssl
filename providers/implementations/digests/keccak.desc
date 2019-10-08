@@ -1,0 +1,18 @@
+# -*- mode: perl -*-
+
+(
+ # KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
+ # KMAC128 and KMAC256.
+ 'KECCAK-KMAC-128:KECCAK-KMAC128' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_keccak_kmac_128_functions',
+ },
+ 'KECCAK-KMAC-256:KECCAK-KMAC256' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_keccak_kmac_256_functions',
+ },
+);

@@ -1,0 +1,16 @@
+# -*- mode: perl -*-
+
+(
+ 'KMAC128' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'mac',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_kmac128_functions',
+ },
+ 'KMAC256' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'mac',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_kmac256_functions',
+ },
+);

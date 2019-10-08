@@ -1,0 +1,10 @@
+# -*- mode: perl -*-
+
+(
+ 'SSHKDF' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'kdf',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_kdf_sshkdf_functions',
+ },
+);

@@ -21,6 +21,7 @@ SOURCE[$COMMON_GOAL]=digestcommon.c
 
 SOURCE[$SHA2_GOAL]=sha2_prov.c
 SOURCE[$SHA3_GOAL]=sha3_prov.c
+MANIFESTS=sha1.desc sha2.desc sha3.desc keccak.desc
 
 IF[{- !$disabled{blake2} -}]
   SOURCE[$BLAKE2_GOAL]=blake2_prov.c blake2b_prov.c blake2s_prov.c

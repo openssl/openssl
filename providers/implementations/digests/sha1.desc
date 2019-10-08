@@ -1,0 +1,10 @@
+# -*- mode: perl -*-
+
+(
+ 'SHA1:SHA-1:SSL3.SHA1' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'digest',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_sha1_functions',
+ },
+);

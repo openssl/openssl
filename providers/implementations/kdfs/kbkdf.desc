@@ -1,0 +1,11 @@
+# -*- mode: perl -*-
+
+(
+ 'KBKDF' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'kdf',
+     default_in => [ 'default' ],
+     ok_in => [ 'fips' ],
+     dispatch => 'ossl_kdf_kbkdf_functions',
+ },
+);

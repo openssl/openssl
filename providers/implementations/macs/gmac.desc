@@ -1,0 +1,10 @@
+# -*- mode: perl -*-
+
+(
+ 'GMAC' => {
+     type => 'OSSL_ALGORITHM',
+     op => 'mac',
+     default_in => [ 'default', 'fips' ],
+     dispatch => 'ossl_gmac_functions',
+ },
+);
