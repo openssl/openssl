@@ -183,6 +183,10 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
       aes192wrappad_functions },
     { "AES-128-WRAP-PAD:id-aes128-wrap-pad:AES128-WRAP-PAD", "default=yes",
       aes128wrappad_functions },
+    { "AES-128-CBC-HMAC-SHA1", "default=yes", aes128cbc_hmac_sha1_functions },
+    { "AES-256-CBC-HMAC-SHA1", "default=yes", aes256cbc_hmac_sha1_functions },
+    { "AES-128-CBC-HMAC-SHA256", "default=yes", aes128cbc_hmac_sha256_functions },
+    { "AES-256-CBC-HMAC-SHA256", "default=yes", aes256cbc_hmac_sha256_functions },
 #ifndef OPENSSL_NO_ARIA
     { "ARIA-256-GCM", "default=yes", aria256gcm_functions },
     { "ARIA-192-GCM", "default=yes", aria192gcm_functions },

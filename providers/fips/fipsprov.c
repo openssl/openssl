@@ -389,6 +389,10 @@ static const OSSL_ALGORITHM fips_ciphers[] = {
       aes192wrappad_functions },
     { "AES-128-WRAP-PAD:id-aes128-wrap-pad:AES128-WRAP-PAD", "fips=yes",
       aes128wrappad_functions },
+    { "AES-128-CBC-HMAC-SHA1", "fips=yes", aes128cbc_hmac_sha1_functions },
+    { "AES-256-CBC-HMAC-SHA1", "fips=yes", aes256cbc_hmac_sha1_functions },
+    { "AES-128-CBC-HMAC-SHA256", "fips=yes", aes128cbc_hmac_sha256_functions },
+    { "AES-256-CBC-HMAC-SHA256", "fips=yes", aes256cbc_hmac_sha256_functions },
 #ifndef OPENSSL_NO_DES
     { "DES-EDE3-ECB:DES-EDE3", "fips=yes", tdes_ede3_ecb_functions },
     { "DES-EDE3-CBC:DES3", "fips=yes", tdes_ede3_cbc_functions },

@@ -349,6 +349,49 @@ by AES SIV ciphers which disallow multiple operations by default.
 Setting "speed" to 1 allows another encrypt or decrypt operation to be
 performed. This is used for performance testing.
 
+=item "tls1multi_enc" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC>) <octet string>
+
+Triggers a multiblock tls1 encrypt operation for a tls1 aware cipher that supports
+sending 4 or 8 records in one go.
+The cipher performs both the MAC and encrypt stages and constructs the record
+headers itself.
+"tls1multi_enc" supplies the output buffer for the encrypt operation,
+"tls1multi_encin" & "tls1multi_interleave" must also be set in order to supply
+values to the encrypt operation.
+
+=item "tls1multi_enclen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN>) <unsigned integer>
+
+Get the total length of the record returned from the "tls1multi_enc" operation.
+
+=item "tls1multi_interleave" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>) <unsigned integer>
+
+Sets or gets the number of records being sent in one go for a tls1 multiblock
+cipher operation (either 4 or 8 records).
+
+=item "tls1multi_encin" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN>) <octet string>
+
+Supplies the data to encrypt for a tls1 multiblock cipher operation.
+
+=item "tls1multi_maxbufsz" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE>) <unsigned integer>
+
+Gets the maximum record length for a tls1 multiblock cipher operation.
+The length of the "tls1multi_maxbufsz" parameter should not exceed that of a B<size_t>.
+
+=item "tls1multi_aad" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>) <octet string>
+
+Sets the authenticated additional data used by a tls1 multiblock cipher operation.
+The supplied data consists of 13 bytes of record data containing:
+Bytes 0-7: The sequence number of the first record
+Byte 8: The record type
+Byte 9-10: The protocol version
+Byte 11-12: Input length (Always 0)
+
+"tls1multi_interleave" must also be set for this operation.
+
+=item "tls1multi_aadpacklen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN>) <unsigned integer>
+
+Gets the result of running the "tls1multi_aad" operation.
+
 =back
 
 =head1 RETURN VALUES
