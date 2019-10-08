@@ -89,13 +89,13 @@ the directory separator.
 Comments are any line that start with a hash sign (C<#>).  The hash
 sign may be preceded by any number of horizontal spaces.
 
-=head3 File names
+=head3 Filenames
 
 F<build.info> files are platform agnostic.  This means that there is
 some information in them that is representative rather than specific.
 
 This is particularly visible with end product names, they work more
-like a tag than as the actual file name that's going to be produced.
+like a tag than as the actual filename that's going to be produced.
 This is because different platforms have different decorations on
 different types of files.
 
@@ -104,7 +104,7 @@ would look like this:
 
     PROGRAM=foo
 
-However, the program file name may end up being just C<foo> (typical
+However, the program filename may end up being just C<foo> (typical
 for Unix), or C<foo.exe> (typical for Windows), or even C<BLAH$FOO.EXE>
 (possible on VMS, depending on policy).
 
@@ -298,21 +298,48 @@ in scope within the whole F<build.info> file.
 
 =head1 REFERENCE
 
-=head2 B<IF[>0|1B<]>, B<ELSIF[>0|1B<]>, B<ELSE>, B<ENDIF>
+=head2 Conditionals
 
-If the B<IF> or B<ELSIF> condition is true (represented as C<1> here),
-everything between this B<IF> / B<ELSIF> and the next corresponding
-B<ELSIF>, B<ELSE> or B<ENDIF> apply and the rest is skipped until the
-corresponding B<ENDIF>, otherwise the following corresponding B<ELSIF>
-or B<ELSE> portion applies.
+=over 4
 
-=head2 B<SUBDIRS=> I<dir> ...
+=item B<IF[>0|1B<]>
+
+If the condition is true (represented as C<1> here), everything
+between this B<IF> and the next corresponding B<ELSIF> or B<ELSE>
+applies, and the rest until the corresponding B<ENDIF> is skipped
+over.
+
+If the condition is false (represented as C<0> here), everything
+from this B<IF> is skipped over until the next corresponding B<ELSIF>
+or B<ELSE>, at which point processing continues.
+
+=item B<ELSE>
+
+If F<build.info> statements have been skipped over to this point since
+the corresponding B<IF> or B<ELSIF>, F<build.info> processing start
+again following this line.
+
+=item B<ELSIF[>0|1B<]>
+
+This is B<ELSE> and B<IF> combined.
+
+=item B<ENDIF>
+
+Marks the end of a conditional.
+
+=back
+
+=head2 Plain statements
+
+=over 4
+
+=item B<SUBDIRS=> I<dir> ...
 
 This instructs the F<build.info> reader to also read the F<build.info>
 file in every specified directory.  All directories should be given
 relative to the location of the current F<build.info> file.
 
-=head2 B<PROGRAMS=> I<name> ...
+=item B<PROGRAMS=> I<name> ...
 
 Collects names of programs that should be built.
 
@@ -325,7 +352,7 @@ programs given in such a statement.  For example:
 With those two lines, the program C<foo> will not have the attribute
 C<noinst>, while the program C<bar> will.
 
-=head2 B<LIBS=> I<name> ...
+=item B<LIBS=> I<name> ...
 
 Collects names of libraries that should be built.
 
@@ -347,7 +374,7 @@ libraries given in such a statement.  For example:
 With those two lines, the library C<libfoo> will not have the
 attribute C<noinst>, while the library C<libbar> will.
 
-=head2 B<MODULES=> I<name>
+=item B<MODULES=> I<name>
 
 Collects names of dynamically loadable modules that should be built.
 
@@ -360,7 +387,7 @@ modules given in such a statement.  For example:
 With those two lines, the module C<foo> will not have the attribute
 C<noinst>, while the module C<bar> will.
 
-=head2 B<SCRIPTS=> I<name>
+=item B<SCRIPTS=> I<name>
 
 Collects names of scripts that should be built, or that just exist.
 That is how they differ from programs, as programs are always expected
@@ -375,7 +402,13 @@ scripts given in such a statement.  For example:
 With those two lines, the script C<foo> will not have the attribute
 C<noinst>, while the script C<bar> will.
 
-=head2 B<DEPEND[>I<item>B<]> B<=> I<file> ...
+=back
+
+=head2 Indexed statements
+
+=over 4
+
+=item B<DEPEND[>I<item>B<]> B<=> I<file> ...
 
 Collects dependencies, where I<item> depends on the given I<file>s.
 
@@ -386,7 +419,7 @@ rather than some specific I<item>.
 The I<item> may be any program, library, module, script, or any
 filename used as a value anywhere.
 
-=head2 B<GENERATE[>I<item>B<]> B<=> I<generator> I<generator-arg> ...
+=item B<GENERATE[>I<item>B<]> B<=> I<generator> I<generator-arg> ...
 
 This specifies that the I<item> is generated using the I<generator>
 with the I<generator-arg>s as arguments, plus the name of the output
@@ -403,7 +436,7 @@ which will be used as input for L<OpenSSL::Template> to generate
 I<item> (in other words, we use the exact same style of
 L</Perl nuggets> mechanism that is used to read F<build.info> files).
 
-=head2 B<SOURCE[>I<item>B<]> B<=> I<file> ...
+=item B<SOURCE[>I<item>B<]> B<=> I<file> ...
 
 Collects filenames that will be used as source files for I<item>.
 
@@ -411,7 +444,7 @@ The I<item> must be a singular item, and may be any program, library,
 module or script given with B<PROGRAMS>, B<LIBS>, B<MODULES> and
 B<SCRIPTS>.
 
-=head2 B<SHARED_SOURCE[>I<item>B<]> B<=> I<file> ...
+=item B<SHARED_SOURCE[>I<item>B<]> B<=> I<file> ...
 
 Collects filenames that will be used as source files for I<item>.
 
@@ -420,7 +453,7 @@ given with B<LIBS> or B<MODULES>.  For libraries, the given filenames
 are only used for their shared form, so if the item is a library name
 ending with C<.a>, the filenames will be ignored.
 
-=head2 B<DEFINE[>I<item>B<]> B<=> I<name>[B<=>I<value>] ...
+=item B<DEFINE[>I<item>B<]> B<=> I<name>[B<=>I<value>] ...
 
 Collects I<name> / I<value> pairs (or just I<name> with no defined
 value if no I<value> is given) associated with I<item>.
@@ -429,11 +462,39 @@ The build file generators will decide what to do with them.  For
 example, these pairs should become C macro definitions whenever a
 C<.c> file is built into an object file.
 
-=head2 B<INCLUDE[>I<item>B<]> B<=> I<dir> ...
+=item B<INCLUDE[>I<item>B<]> B<=> I<dir> ...
 
 Collects inclusion directories that will be used when building the
 I<item> components (object files and whatever else).  This is used at
 the discretion of the build file generators.
+
+=back
+
+=head2 Known attributes
+
+Note: this will never be a complete list of attributes.
+
+=over 4
+
+=item B<noinst>
+
+This is used to specify that the end products this is set for should
+not be installed, that they are only internal.  This is applicable on
+internal static libraries, or on test programs.
+
+=item B<misc>
+
+This is used with B<SCRIPTS>, to specify that some scripts should be
+installed in the "misc" directory rather than the normal program
+directory.
+
+=item B<engine>
+
+This is used with B<MODULES>, to specify what modules are engines and
+should be installed in the engines directory instead of the modules
+directory.
+
+=back
 
 =head1 GLOSSARY
 
