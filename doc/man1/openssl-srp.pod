@@ -48,7 +48,7 @@ Display an option summary.
 
 Generate verbose output while processing.
 
-=item B<srpvfile> I<file>
+=item B<-srpvfile> I<file>
 
 If the config file is not specified,
 C<-srpvfile> can be used to specify the file to operate on.

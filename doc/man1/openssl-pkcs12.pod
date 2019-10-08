@@ -78,14 +78,16 @@ default.  They are all written in PEM format.
 
 =item B<-passin> I<arg>, B<-passout> I<arg>
 
-The password source for the input and output file.
+The password source for the input, and for encrypting any private keys that
+are output.
 For more information about the format of B<arg>
 see L<openssl(1)/Pass phrase options>.
 
+>>>>>>> fixup! Refactor -passin/-passout
 =item B<-password> I<arg>
 
-With C<-export>, C<-password> is equivalent to C<-passout>;
-it is equivalent to C<-passin>.
+With B<-export>, B<-password> is equivalent to B<-passout>;
+otherwise it is equivalent to B<-passin>.
 
 =item B<-noout>
 
@@ -150,7 +152,7 @@ Don't attempt to verify the integrity MAC before reading the file.
 Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
 PKCS#12 files unreadable. Cannot be used in combination with the options
-C<-password>, C<-passin> if importing, or C<-passout> if exporting.
+B<-password>, B<-passin> if importing, or B<-passout> if exporting.
 
 =back
 
