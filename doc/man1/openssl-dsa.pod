@@ -73,11 +73,6 @@ This specifies the input filename to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
-=item B<-passin> I<arg>
-
-The input file password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
-
 =item B<-out> I<filename>
 
 This specifies the output filename to write a key to or standard output by
@@ -85,10 +80,11 @@ is not specified. If any encryption options are set then a pass phrase will be
 prompted for. The output filename should B<not> be the same as the input
 filename.
 
-=item B<-passout> I<arg>
+=item B<-passin> I<arg>, B<-passout> I<arg>
 
-The output file password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
+The password source for the input and output file.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 

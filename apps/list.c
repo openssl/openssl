@@ -331,11 +331,14 @@ static void list_options_for_command(const char *command)
         return;
 
     for ( ; o->name != NULL; o++) {
+        char c = o->valtype;
+
         if (o->name == OPT_HELP_STR
                 || o->name == OPT_MORE_STR
                 || o->name[0] == '\0')
             continue;
         BIO_printf(bio_out, "%s %c\n", o->name, o->valtype);
+        BIO_printf(bio_out, "%s %c\n", o->name, c == '\0' ? '-' : c);
     }
     /* Always output the -- marker since it is sometimes documented. */
     BIO_printf(bio_out, "- -\n");

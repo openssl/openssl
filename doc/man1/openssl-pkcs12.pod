@@ -76,22 +76,10 @@ by default.
 The filename to write certificates and private keys to, standard output by
 default.  They are all written in PEM format.
 
-=item B<-passin> I<arg>
-
-The PKCS#12 file (i.e. input file) password source. For more information about
-the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
-
-=item B<-passout> I<arg>
-
-Pass phrase source to encrypt any outputted private keys with. For more
-information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
-
 =item B<-password> I<arg>
 
-With -export, -password is equivalent to -passout.
-Otherwise, -password is equivalent to -passin.
+With B<-export>, B<-password> is equivalent to B<-passout>,
+otherwise it is equivalent to B<-passin>.
 
 =item B<-noout>
 
@@ -156,7 +144,7 @@ Don't attempt to verify the integrity MAC before reading the file.
 Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
 PKCS#12 files unreadable. Cannot be used in combination with the options
--password, -passin (if importing) or -passout (if exporting).
+B<-password>, B<-passin> if importing, or B<-passout> if exporting.
 
 =back
 
@@ -204,15 +192,12 @@ used multiple times to specify names for all certificates in the order they
 appear. Netscape ignores friendly names on other certificates whereas MSIE
 displays them.
 
-=item B<-pass> I<arg>, B<-passout> I<arg>
+=item B<-passin> I<arg>, B<-passout> I<arg>
 
-The PKCS#12 file (i.e. output file) password source. For more information about
-the format of I<arg> see L<openssl(1)/Pass phrase options>.
-
-=item B<-passin> I<password>
-
-Pass phrase source to decrypt any input private keys with. For more information
-about the format of I<arg> see L<openssl(1)/Pass phrase options>.
+The password source for the input, and for encrypting any private keys that
+are output.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-chain>
 

@@ -90,20 +90,16 @@ options (B<-new> and B<-newkey>) are not specified.
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
 
-=item B<-passin> I<arg>
+=item B<-passin> I<arg>, B<-passout> I<arg>
 
-The input file password source. For more information about the format of B<arg>
-see L<openssl(1)/Pass phrase options>.
+The password source for the input and output file.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-out> I<filename>
 
 This specifies the output filename to write to or standard output by
 default.
-
-=item B<-passout> I<arg>
-
-The output file password source. For more information about the format of B<arg>
-see L<openssl(1)/Pass phrase options>.
 
 =item B<-text>
 

@@ -73,7 +73,7 @@ The output filename, standard output by default.
 =item B<-pass> I<arg>
 
 The password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-e>
 

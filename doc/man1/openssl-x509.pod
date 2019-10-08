@@ -373,7 +373,7 @@ Names and values of these options are algorithm-specific.
 =item B<-passin> I<arg>
 
 The key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-clrext>
 
