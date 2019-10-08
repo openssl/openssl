@@ -230,17 +230,22 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
 int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr)
 {
     OSSL_CMP_ITAV *itav = NULL;
+    ASN1_TYPE *asn1null = NULL;
 
     if (!ossl_assert(hdr != NULL))
         return 0;
+    asn1null = (ASN1_TYPE *)ASN1_NULL_new();
+    if (asn1null == NULL)
+        return 0;
     if ((itav = OSSL_CMP_ITAV_create(OBJ_nid2obj(NID_id_it_implicitConfirm),
-                                     (ASN1_TYPE *)ASN1_NULL_new())) == NULL)
+                                     asn1null)) == NULL)
         goto err;
     if (!ossl_cmp_hdr_generalInfo_push0_item(hdr, itav))
         goto err;
     return 1;
 
  err:
+    ASN1_TYPE_free(asn1null);
     OSSL_CMP_ITAV_free(itav);
     return 0;
 }
@@ -355,7 +360,8 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     /* store senderNonce - for cmp with recipNonce in next outgoing msg */
-    OSSL_CMP_CTX_set1_senderNonce(ctx, hdr->senderNonce);
+    if (!OSSL_CMP_CTX_set1_senderNonce(ctx, hdr->senderNonce))
+        return 0;
 
     /*-
      * freeText                [7] PKIFreeText OPTIONAL,
