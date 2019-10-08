@@ -30,6 +30,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS pkcs8_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},

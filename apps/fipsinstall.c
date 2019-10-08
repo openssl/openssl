@@ -34,12 +34,6 @@ typedef enum OPTION_choice {
 const OPTIONS fipsinstall_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#if 0
-    /* Gross ugly long line that belongs in the manpage. */
-    {OPT_MORE_STR, 0, 0, "e.g: openssl fipsinstall -provider_name fips"
-     "-section_name fipsinstall -out fips.conf -module ./fips.so"
-     "-mac_name HMAC -macopt digest:SHA256 -macopt hexkey:00"},
-#endif
     {"verify", OPT_VERIFY, '-', "Verification mode, i.e verify a config file "
      "instead of generating one"},
     {"module", OPT_MODULE, '<', "File name of the provider module"},
