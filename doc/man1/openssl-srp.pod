@@ -35,17 +35,6 @@ For B<-list>, if no I<user> is given then all users are displayed.
 
 The configuration file to use, and the section within the file, can be
 specified with the B<-config> and B<-name> flags, respectively.
-If the config file is not specified, the B<-srpvfile> can be used to
-just specify the file to operate on.
-
-The B<-userinfo> option specifies additional information to add when
-adding or modifying a user.
-
-The B<-gn> flag specifies the I<g> and I<N> values, using one of
-the strengths defined in IETF RFC 5054.
-
-The B<-passin> and B<-passout> arguments are parsed as described in
-the L<openssl(1)/Pass phrase options> command.
 
 =head1 OPTIONS
 
@@ -58,6 +47,27 @@ Display an option summary.
 =item B<-verbose>
 
 Generate verbose output while processing.
+
+=item B<srpvfile> I<file>
+
+If the config file is not specified,
+C<-srpvfile> can be used to specify the file to operate on.
+
+=item B<-gn>
+
+Specifies the B<g> and B<N> values, using one of
+the strengths defined in IETF RFC 5054.
+
+=item B<-userinfo>
+
+specifies additional information to add when
+adding or modifying a user.
+
+=item B<-passin> I<arg>, B<-passout> I<arg>
+
+The password source for the input and output file.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass phrase options>.
 
 =back
 
