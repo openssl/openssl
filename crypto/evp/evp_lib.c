@@ -305,8 +305,10 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             return
                 ctx->cipher->ccipher(ctx->provctx, out, &outl,
                                      inl + (blocksize == 1 ? 0 : blocksize),
-                                     in, (size_t)inl);
-        return 0;
+                                     in, (size_t)inl)
+                ? (int)outl
+                : -1;
+        return -1;
     }
 
     return ctx->cipher->do_cipher(ctx, out, in, inl);
