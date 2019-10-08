@@ -63,8 +63,8 @@ This is about build file generation.
 This document is all about the second item, "What to build?", and most
 of all, how to specify that information.
 
-I<for some terms used in this document, please see the glossary at the
-end.>
+For some terms used in this document, please see the L</GLOSSARY> at
+the end.
 
 =head2 F<build.info> files
 
