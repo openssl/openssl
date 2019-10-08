@@ -1,7 +1,7 @@
 # -*- mode: perl -*-
 
-(
- # Our primary name[:ASN.1 OID name][:our older names]
+# Our primary name[:ASN.1 OID name][:our older names]
+my %descs = (
  'AES-256-ECB' => {
      type => 'OSSL_ALGORITHM',
      op => 'cipher',
@@ -295,3 +295,6 @@
      check => 'ossl_cipher_capable_aes_cbc_hmac_sha256'
  },
 );
+
+# Set up a group alias too
+( %descs, 'AES' => [ map { [ split /:/,$_ ]->[0] } sort keys %descs ] );
