@@ -310,11 +310,6 @@ all others.
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<cert.pem...>
-
-One or more certificates of message recipients: used when encrypting
-a message.
-
 =item B<-to>, B<-from>, B<-subject>
 
 The relevant mail headers. These are included outside the signed
@@ -335,7 +330,7 @@ L<openssl-verify(1)> manual page for details.
 
 =item I<cert.pem> ...
 
-One or more certificates of message recipients: used when encrypting
+One or more certificates of message recipients, used when encrypting
 a message.
 
 =back
