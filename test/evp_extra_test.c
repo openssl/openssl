@@ -502,7 +502,7 @@ static int test_EVP_DigestSignInit(int tst)
     EVP_PKEY *pkey = NULL;
     unsigned char *sig = NULL;
     size_t sig_len = 0;
-    EVP_MD_CTX *md_ctx, *md_ctx_verify = NULL;
+    EVP_MD_CTX *md_ctx = NULL, *md_ctx_verify = NULL;
     BIO *mdbio = NULL, *membio = NULL;
     size_t written;
 
