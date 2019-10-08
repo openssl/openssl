@@ -901,6 +901,12 @@ while (@argvcopy)
                 }
         elsif (m|^[-+/]|)
                 {
+                if (/^--select-(.+?)-algorithms=/)
+                        {
+                        #die "Not a known provider: $1\n"
+                        #    unless grep { $_ eq $1 } @known_providers;
+                        $config{algorithms}->{$1} = [ split /,/, $' ];
+                        }
                 if (/^--prefix=(.*)$/)
                         {
                         $config{prefix}=$1;

@@ -6,8 +6,113 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+{-
+        ;
+    use Data::Dumper;
 
+    my %ok = ();
+    foreach (@{$unified_info{manifests}}) {
+        my %values;
+        if ($_ =~ m|=>|) {
+            # Use the value directly
+            %values = eval "( $_ )";
+        } else {
+            # The value is a file name, execute it.
+            %values = do $_;
+        }
+        die "Invalid manifest '$_': ",
+            join(' ', grep { defined $_ } ($@, $!))
+            unless %values;
+        %ok = ( %ok, %values );
+    }
+
+    sub getnames {
+        my @collect = ();
+        foreach my $name (@_) {
+            my $found;
+            my $actualname;
+            foreach (keys %ok) {
+                next unless grep { uc $_ eq uc $name } split(/:/, $_);
+                $found = $ok{$_};
+                $actualname = $_;
+                last;
+            }
+            next unless defined $found;
+
+            if (ref($found) eq 'HASH') {
+                push @collect, $actualname;
+            } elsif (ref($found) eq 'ARRAY') {
+                push @collect, getnames(@{$found});
+            } else {
+                push @collect, getnames($found);
+            }
+        }
+        return @collect;
+    }
+
+    my %defaults = ( %ok );
+    foreach (keys %ok) {
+        next if ref($ok{$_}) ne 'HASH';        # Aliases
+        delete $ok{$_}
+            unless grep { $_ eq 'fips' }
+                   ( @{$ok{$_}->{default_in} // []},
+                     @{$ok{$_}->{ok_in} // []} );
+        delete $defaults{$_}
+            unless grep { $_ eq 'fips' }
+                   ( @{$defaults{$_}->{default_in} // []} );
+    }
+
+    print STDERR "\%ok :", Dumper(\%ok);
+
+    # Look through the configuration speficication
+    my %sets = ();       # plain names
+    foreach (@{$config{algorithms}->{fips}}) {
+        print STDERR "Processing configured algorithm $_\n";
+        m|^([\+\-])?(.*)$|;
+        my @names = getnames($2);
+
+        if ($1 eq '-') {
+            delete $defaults{$_} foreach @names;
+            delete $sets{$_} foreach @names;
+            print STDERR "Deleted $_ from \%defaults and \%sets\n"
+                foreach @names;
+        } else {
+            unless (defined $1) {
+                # We got a plain name, means we do not rely on any default
+                %defaults = ();
+                print STDERR "Emptied \%defaults\n";
+            }
+            # This is done both for plain names and +names
+            $sets{$_} = 1 foreach getnames($2);
+            print STDERR "Added $_ do \%sets\n"
+                foreach @names;
+        }
+    }
+    %sets = ( %defaults, %sets );
+
+    my %manifests = ( map { $_ => $ok{$_} }
+                      grep { ref($sets{$_}) eq 'HASH' } # Skip group aliases
+                      keys %sets );
+
+    print STDERR "\%manifests :", Dumper(\%manifests);
+
+    # Perl routines
+    sub getdescs {
+        my $op = shift;
+
+        map { { %{$manifests{$_}},
+                __names_str => $_,
+                __names => [ split(/:/, $_) ] } }
+        grep { $manifests{$_}->{op} eq $op }
+        sort keys %manifests;
+    }
+    ""; # Avoid weird stuff
+-}
 #include <openssl/core_dispatch.h>
+#include <string.h>
+#include <stdio.h>
+#include <openssl/core.h>
+#include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/fips_names.h>
@@ -211,9 +316,9 @@ static int fips_self_test(void *provctx)
 static const OSSL_ALGORITHM fips_digests[] = {
 {-
         ;
-    foreach (grep { $manifests{$_}->{op} eq 'digest' } sort keys %manifests) {
+    foreach (getdescs('digest')) {
         $OUT .= <<"_____"
-    { "$_", FIPS_DEFAULT_PROPERTIES, $manifests{$_}->{dispatch} },
+    { "$_->{__names_str}", FIPS_DEFAULT_PROPERTIES, $_->{dispatch} },
 _____
     }
 -}
@@ -222,16 +327,16 @@ _____
 
 static const OSSL_ALGORITHM fips_ciphers[] = {
 {-
-        ;
-    foreach (grep { $manifests{$_}->{op} eq 'cipher' } sort keys %manifests) {
-        if ($manifests{$_}->{check}) {
+    foreach (getdescs 'cipher') {
+        if ($_->{check}) {
             $OUT .= <<"_____"
-    ALGC("$_", $manifests{$_}->{dispatch}, $manifests{$_}->{check}),
+    ALGC("$_->{__names_str}", $_->{dispatch}, $_->{check}),
 _____
         } else {
             $OUT .= <<"_____"
-    ALG("$_", $manifests{$_}->{dispatch}),
+    ALG("$_->{__names_str}", $_->{dispatch}),
 _____
+        }
     }
 -}
     { { NULL, NULL, NULL }, NULL }
@@ -241,9 +346,9 @@ static OSSL_ALGORITHM exported_fips_ciphers[OSSL_NELEM(fips_ciphers)];
 static const OSSL_ALGORITHM fips_macs[] = {
 {-
         ;
-    foreach (grep { $manifests{$_}->{op} eq 'mac' } sort keys %manifests) {
+    foreach (getdescs 'mac') {
         $OUT .= <<"_____"
-    { "$_", FIPS_DEFAULT_PROPERTIES, $manifests{$_}->{dispatch} },
+    { "$_->{__names_str}", FIPS_DEFAULT_PROPERTIES, $_->{dispatch} },
 _____
     }
 -}
@@ -253,9 +358,9 @@ _____
 static const OSSL_ALGORITHM fips_kdfs[] = {
 {-
         ;
-    foreach (grep { $manifests{$_}->{op} eq 'kdf' } sort keys %manifests) {
+    foreach (getdescs 'kdf') {
         $OUT .= <<"_____"
-    { "$_", FIPS_DEFAULT_PROPERTIES, $manifests{$_}->{dispatch} },
+    { "$_->{__names_str}", FIPS_DEFAULT_PROPERTIES, $_->{dispatch} },
 _____
     }
 -}
