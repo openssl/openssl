@@ -333,6 +333,11 @@ that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
 Sets or gets the number of rounds to be used for a cipher.
 This is used by the RC5 cipher.
 
+=item "keybits" (B<OSSL_CIPHER_PARAM_RC2_KEYBITS>) <unsigned integer>
+
+Gets or sets the effective keybits used for a RC2 cipher.
+The length of the "keybits" parameter should not exceed that of a B<size_t>.
+
 =back
 
 =head1 RETURN VALUES

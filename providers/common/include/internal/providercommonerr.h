@@ -95,6 +95,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_UNABLE_TO_LOAD_SHA1                       143
 # define PROV_R_UNABLE_TO_LOAD_SHA256                     147
 # define PROV_R_UNSUPPORTED_CEK_ALG                       145
+# define PROV_R_UNSUPPORTED_KEY_SIZE                      153
 # define PROV_R_UNSUPPORTED_MAC_TYPE                      137
 # define PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS              152
 # define PROV_R_VALUE_ERROR                               138

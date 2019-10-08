@@ -78,6 +78,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "unable to load sha256"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNSUPPORTED_CEK_ALG),
     "unsupported cek alg"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNSUPPORTED_KEY_SIZE),
+    "unsupported key size"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNSUPPORTED_MAC_TYPE),
     "unsupported mac type"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS),

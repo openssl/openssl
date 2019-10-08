@@ -67,6 +67,7 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_AEAD_IVLEN         OSSL_CIPHER_PARAM_IVLEN
 #define OSSL_CIPHER_PARAM_AEAD_TAGLEN        "taglen"     /* size_t */
 #define OSSL_CIPHER_PARAM_RANDOM_KEY         "randkey"    /* octet_string */
+#define OSSL_CIPHER_PARAM_RC2_KEYBITS        "keybits"    /* size_t */
 /* For passing the AlgorithmIdentifier parameter in DER form */
 #define OSSL_CIPHER_PARAM_ALG_ID             "alg_id_param" /* octet_string */
 

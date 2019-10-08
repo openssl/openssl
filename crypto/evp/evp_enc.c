@@ -273,6 +273,11 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_rc5_ecb:
         case NID_rc5_cfb64:
         case NID_rc5_ofb64:
+        case NID_rc2_cbc:
+        case NID_rc2_40_cbc:
+        case NID_rc2_64_cbc:
+        case NID_rc2_cfb64:
+        case NID_rc2_ofb64:
             break;
         default:
             goto legacy;
@@ -1129,6 +1134,13 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         if (ret <= 0)
             return 0;
         return sz;
+#ifndef OPENSSL_NO_RC2
+    case EVP_CTRL_GET_RC2_KEY_BITS:
+        set_params = 0; /* Fall thru */
+    case EVP_CTRL_SET_RC2_KEY_BITS:
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, &sz);
+        break;
+#endif /* OPENSSL_NO_RC2 */
     }
 
     if (set_params)

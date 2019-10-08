@@ -287,6 +287,14 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "RC5-OFB", "default=yes", rc5128ofb64_functions },
     { "RC5-CFB", "default=yes", rc5128cfb64_functions },
 #endif /* OPENSSL_NO_RC5 */
+#ifndef OPENSSL_NO_RC2
+    { "RC2-ECB", "default=yes", rc2128ecb_functions },
+    { "RC2-CBC", "default=yes", rc2128cbc_functions },
+    { "RC2-40-CBC", "default=yes", rc240cbc_functions },
+    { "RC2-64-CBC", "default=yes", rc264cbc_functions },
+    { "RC2-CFB", "default=yes", rc2128cfb128_functions },
+    { "RC2-OFB", "default=yes", rc2128ofb128_functions },
+#endif /* OPENSSL_NO_RC2 */
     { NULL, NULL, NULL }
 };
 

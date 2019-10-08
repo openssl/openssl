@@ -91,25 +91,8 @@ void cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
                             size_t ivbits, unsigned int mode, uint64_t flags,
                             const PROV_CIPHER_HW *hw, void *provctx);
 
-#define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,     \
-                                 blkbits, ivbits, typ)                         \
-static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;     \
-static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
-{                                                                              \
-    return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
-                                     kbits, blkbits, ivbits);                  \
-}                                                                              \
-static OSSL_OP_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;             \
-static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
-{                                                                              \
-     PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \
-     if (ctx != NULL) {                                                        \
-         cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
-                                EVP_CIPH_##UCMODE##_MODE, flags,               \
-                                PROV_CIPHER_HW_##alg##_##lcmode(kbits), NULL); \
-     }                                                                         \
-     return ctx;                                                               \
-}                                                                              \
+#define IMPLEMENT_generic_cipher_func(alg, UCALG, lcmode, UCMODE, flags, kbits,\
+                                      blkbits, ivbits, typ)                    \
 const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
@@ -134,6 +117,28 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
      (void (*)(void))cipher_generic_settable_ctx_params },                     \
     { 0, NULL }                                                                \
 };
+
+#define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,     \
+                                 blkbits, ivbits, typ)                         \
+static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;     \
+static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
+{                                                                              \
+    return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
+                                     kbits, blkbits, ivbits);                  \
+}                                                                              \
+static OSSL_OP_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;             \
+static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
+{                                                                              \
+     PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \
+     if (ctx != NULL) {                                                        \
+         cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
+                                EVP_CIPH_##UCMODE##_MODE, flags,               \
+                                PROV_CIPHER_HW_##alg##_##lcmode(kbits), NULL); \
+     }                                                                         \
+     return ctx;                                                               \
+}                                                                              \
+IMPLEMENT_generic_cipher_func(alg, UCALG, lcmode, UCMODE, flags, kbits,        \
+                              blkbits, ivbits, typ)
 
 PROV_CIPHER_HW_FN cipher_hw_generic_cbc;
 PROV_CIPHER_HW_FN cipher_hw_generic_ecb;
