@@ -345,7 +345,7 @@ static int chacha20_poly1305_tls_cipher(void *vctx, unsigned char *out,
     } is_endian = { 1 };
 
     if (len != plen + POLY1305_BLOCK_SIZE)
-        return 0;
+        return -1;
 
     buf = storage + ((0 - (size_t)storage) & 15);   /* align */
     ctr = buf + CHACHA_BLK_SIZE;
@@ -471,7 +471,7 @@ static int chacha20_poly1305_tls_cipher(void *vctx, unsigned char *out,
         if (CRYPTO_memcmp(tohash, in, POLY1305_BLOCK_SIZE)) {
             memset(out - (len - POLY1305_BLOCK_SIZE), 0,
                    len - POLY1305_BLOCK_SIZE);
-            return 0;
+            return -1;
         }
     }
 
