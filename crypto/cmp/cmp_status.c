@@ -30,10 +30,8 @@
 
 int ossl_cmp_pkisi_get_pkistatus(OSSL_CMP_PKISI *si)
 {
-    if (si == NULL || si->status == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(si != NULL && si->status != NULL))
         return -1;
-    }
     return ossl_cmp_asn1_get_int(si->status);
 }
 
@@ -67,10 +65,8 @@ const char *ossl_cmp_PKIStatus_to_string(int status)
  */
 OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusstring(const OSSL_CMP_PKISI *si)
 {
-    if (si == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(si != NULL))
         return NULL;
-    }
     return si->statusString;
 }
 
@@ -83,10 +79,8 @@ int ossl_cmp_pkisi_get_pkifailureinfo(OSSL_CMP_PKISI *si)
     int i;
     int res = 0;
 
-    if (si == NULL || si->failInfo == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(si != NULL && si->failInfo != NULL))
         return -1;
-    }
     for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++)
         if (ASN1_BIT_STRING_get_bit(si->failInfo, i))
             res |= 1 << i;
@@ -168,11 +162,8 @@ static const char *CMP_PKIFAILUREINFO_to_string(int number)
  */
 int ossl_cmp_pkisi_pkifailureinfo_check(OSSL_CMP_PKISI *si, int bit_index)
 {
-    if (si == NULL || si->failInfo == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+    if (!ossl_assert(si != NULL && si->failInfo != NULL))
         return -1;
-    }
-
     if (bit_index < 0 || bit_index > OSSL_CMP_PKIFAILUREINFO_MAX) {
         CMPerr(0, CMP_R_INVALID_ARGS);
         return -1;
