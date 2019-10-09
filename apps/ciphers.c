@@ -34,7 +34,7 @@ const OPTIONS ciphers_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
 
-    OPT_SECTION("Output"),
+    OPT_SECTION("Cipher specification"),
     {"v", OPT_V, '-', "Verbose listing of the SSL/TLS ciphers"},
     {"V", OPT_UPPER_V, '-', "Even more verbose"},
     {"s", OPT_S, '-', "Only supported ciphers"},

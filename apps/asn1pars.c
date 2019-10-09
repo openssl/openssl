@@ -35,6 +35,7 @@ const OPTIONS asn1parse_options[] = {
     {"inform", OPT_INFORM, 'F', "input format - one of DER PEM"},
     {"in", OPT_IN, '<', "input file"},
     {"out", OPT_OUT, '>', "output file (output format is always DER)"},
+    {"noout", OPT_NOOUT, 0, "do not produce any output"},
     {"offset", OPT_OFFSET, 'p', "offset into file"},
     {"length", OPT_LENGTH, 'p', "length of section in file"},
     {"strparse", OPT_STRPARSE, 'p',
@@ -49,7 +50,6 @@ const OPTIONS asn1parse_options[] = {
 
     OPT_SECTION("Formatting"),
     {"i", OPT_INDENT, 0, "indents the output"},
-    {"noout", OPT_NOOUT, 0, "do not produce any output"},
     {"dump", OPT_DUMP, 0, "unknown data in hex form"},
     {"dlimit", OPT_DLIMIT, 'p',
      "dump the first arg bytes of unknown data in hex form"},
