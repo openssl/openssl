@@ -44,7 +44,7 @@ It can be used for
 
 =head1 COMMAND SUMMARY
 
-The B<openssl> program provides a rich variety of sub-commands (I<command> in
+The B<openssl> program provides a rich variety of commands (I<command> in
 the SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
@@ -53,12 +53,12 @@ Detailed documentation and use cases for most standard subcommands are available
 
 Many commands use an external configuration file for some or all of their
 arguments and have a B<-config> option to specify that file.
+The default name of the file is F<openssl.cnf> in the default certificate
+storage area, which can be determined from the L<openssl-version(1)>
+command.
 The environment variable B<OPENSSL_CONF> can be used to specify
-the location of the file.
-If the environment variable is not specified, then the file is named
-F<openssl.cnf> in the default certificate storage area, whose value
-depends on the configuration flags specified when the OpenSSL
-was built.
+a different location of the file.
+See L<openssl-env(7)>.
 
 The list options B<-standard-commands>, B<-digest-commands>,
 and B<-cipher-commands> output a list (one entry per line) of the names
@@ -85,7 +85,7 @@ availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
 B<list>, or B<no->I<XXX> itself.)
 
-=head2 Standard Sub-commands
+=head2 Standard Commands
 
 =over 4
 
@@ -147,7 +147,7 @@ EC parameter manipulation and generation.
 
 =item B<enc>
 
-Encoding with Ciphers.
+Encryption, decryption, and encoding.
 
 =item B<engine>
 
@@ -392,7 +392,7 @@ SM3 Digest
 
 =back
 
-=head2 Encoding and Cipher Commands
+=head2 Encryption, Decryption, and Encoding Commands
 
 The following aliases provide convenient access to the most used encodings
 and ciphers.
@@ -784,6 +784,20 @@ See L<openssl(1)/Format Options> for details.
 =back
 
 =head1 ENVIRONMENT
+
+The OpenSSL library can be take some configuration parameters from the
+environment.  Some of these variables are listed below.  For information
+about specific commands, see L<openssl-engine(1)>, L<openssl-provider(1)>,
+L<openssl-rehash(1)>, and L<tsget(1)>.
+
+For information about the use of environment variables in configuration,
+see L<config(5)/ENVIRONMENT>.
+
+For information about querying or specifying CPU architecture flags, see
+L<OPENSSL_ia32cap(3)>, and L<OPENSSL_s390xcap(3)>.
+
+For information about all environment variables used by the OpenSSL libraries,
+see L<openssl-env(7)>.
 
 =over 4
 

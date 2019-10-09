@@ -137,8 +137,8 @@ The current OpenSSL cpu settings.
 This is the current setting of the cpu capability flags. It is usually
 automatically configured but may be set via an environment variable.
 The value has the same syntax as the environment variable.
-For x86 the string looks like C<CPUINFO: OPENSSL_ia32cap=0x123:0x456>.
-Or C<CPUINFO: N/A> if not available, such as when configured with B<no-asm>.
+For x86 the string looks like C<CPUINFO: OPENSSL_ia32cap=0x123:0x456>
+or C<CPUINFO: N/A> if not available, e.g. no-asm build.
 
 =back
 
