@@ -235,8 +235,8 @@ the following keywords:
 =back
 
 This works like any condition system with similar syntax, and the
-condition value in B<IF> and B<ELSIF> can really literal value that
-perl can interpret as true or false.
+condition value in B<IF> and B<ELSIF> can really be any literal value
+that perl can interpret as true or false.
 
 Conditional statements are nesting.
 
@@ -259,7 +259,7 @@ indexed statement item.  This should be used with some care, as
 I<variables are expanded into their values before the value they are
 part of is tokenized>.
 
-I<variable assignment values are not tokenized.>
+I<Variable assignment values are not tokenized.>
 
 =head2 Scope
 
@@ -274,7 +274,7 @@ Whenever a F<build.info> file is read, it is passed through the Perl
 template processor L<OpenSSL::Template>, which is a small extension of
 L<Text::Template>.
 
-Perl nuggest are anything between C<{-> and C<-}>, and whatever the
+Perl nuggets are anything between C<{-> and C<-}>, and whatever the
 result from such a nugget is, that value will replace the nugget in
 text form.  This is useful to get dynamically generated F<build.info>
 statements, and is most often seen used together with the B<IF> and
@@ -316,7 +316,7 @@ or B<ELSE>, at which point processing continues.
 =item B<ELSE>
 
 If F<build.info> statements have been skipped over to this point since
-the corresponding B<IF> or B<ELSIF>, F<build.info> processing start
+the corresponding B<IF> or B<ELSIF>, F<build.info> processing starts
 again following this line.
 
 =item B<ELSIF[>0|1B<]>
