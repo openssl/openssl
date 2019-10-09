@@ -28,10 +28,10 @@ available via B<CAfile> and B<CApath> are trusted.
 SSL_CTX_set_default_verify_paths() specifies that the default locations from
 which CA certificates are loaded should be used. There is one default directory
 and one default file. The default CA certificates directory is called "certs" in
-the default OpenSSL directory. Alternatively the SSL_CERT_DIR environment
+the default OpenSSL directory. Alternatively the B<SSL_CERT_DIR> environment
 variable can be defined to override this location. The default CA certificates
 file is called "cert.pem" in the default OpenSSL directory. Alternatively the
-SSL_CERT_FILE environment variable can be defined to override this location.
+B<SSL_CERT_FILE> environment variable can be defined to override this location.
 
 SSL_CTX_set_default_verify_dir() is similar to
 SSL_CTX_set_default_verify_paths() except that just the default directory is

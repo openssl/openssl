@@ -44,7 +44,7 @@ It can be used for
 
 =head1 COMMAND SUMMARY
 
-The B<openssl> program provides a rich variety of sub-commands (I<command> in
+The B<openssl> program provides a rich variety of commands (I<command> in
 the SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
@@ -85,7 +85,7 @@ availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
 B<list>, or B<no->I<XXX> itself.)
 
-=head2 Standard Sub-commands
+=head2 Standard Commands
 
 =over 4
 
@@ -147,7 +147,7 @@ EC parameter manipulation and generation.
 
 =item B<enc>
 
-Encoding with Ciphers.
+Encryption, decryption, and encoding.
 
 =item B<engine>
 
@@ -392,7 +392,7 @@ SM3 Digest
 
 =back
 
-=head2 Encoding and Cipher Commands
+=head2 Encryption, Decryptions, and Encoding Commands
 
 The following aliases provide convenient access to the most used encodings
 and ciphers.
@@ -555,6 +555,17 @@ Read the password from standard input.
 =back
 
 =head1 ENVIRONMENT
+
+The OpenSSL library can be take some configuration parameters from the
+environment.  Some of these variables are listed below.  For information
+about specific commands, see L<openssl-engine(1)>, L<openssl-provider(1)>,
+L<openssl-rehash(1)>, and L<tsget(1)>.
+
+For information about the use of environment variables in configuration,
+see L<config(5)/ENVIRONMENT>.
+
+For information about querying or specifying CPU architecture flags, see
+L<OPENSSL_ia32cap(3)>, and L<OPENSSL_s390xcap(3)>.
 
 =over 4
 
