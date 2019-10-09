@@ -113,6 +113,7 @@ extern "C" {
 #define OSSL_KDF_PARAM_SALT         "salt"      /* octet string */
 #define OSSL_KDF_PARAM_PASSWORD     "pass"      /* octet string */
 #define OSSL_KDF_PARAM_DIGEST       OSSL_ALG_PARAM_DIGEST     /* utf8 string */
+#define OSSL_KDF_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER     /* utf8 string */
 #define OSSL_KDF_PARAM_MAC          OSSL_ALG_PARAM_MAC        /* utf8 string */
 #define OSSL_KDF_PARAM_MAC_SIZE     "maclen"    /* size_t */
 #define OSSL_KDF_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES /* utf8 string */

@@ -2694,6 +2694,7 @@ PROV_R_INVALID_MAC:151:invalid mac
 PROV_R_INVALID_MODE:125:invalid mode
 PROV_R_INVALID_MODE_INT:126:invalid mode int
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
+PROV_R_INVALID_SEED_LENGTH:154:invalid seed length
 PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAGLEN:118:invalid taglen
 PROV_R_MISSING_CEK_ALG:144:missing cek alg

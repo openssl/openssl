@@ -49,6 +49,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MODE_INT), "invalid mode int"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_SALT_LENGTH),
     "invalid salt length"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_SEED_LENGTH),
+    "invalid seed length"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_TAG), "invalid tag"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_TAGLEN), "invalid taglen"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CEK_ALG), "missing cek alg"},
