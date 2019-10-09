@@ -250,7 +250,7 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
  * and TS_RESP_CTX_add_failure_info() in ../ts/ts_rsp_sign.c
  */
 OSSL_CMP_PKISI *ossl_cmp_statusinfo_new(int status, int fail_info,
-                                       const char *text)
+                                        const char *text)
 {
     OSSL_CMP_PKISI *si = NULL;
     ASN1_UTF8STRING *utf8_text = NULL;

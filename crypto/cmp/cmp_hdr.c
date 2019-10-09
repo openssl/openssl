@@ -126,7 +126,7 @@ static int set1_aostr_else_random(ASN1_OCTET_STRING **tgt,
     int res = 0;
 
     if (src == NULL) { /* generate a random value if src == NULL */
-        if ((bytes = (unsigned char *)OPENSSL_malloc(len)) == NULL)
+        if ((bytes = OPENSSL_malloc(len)) == NULL)
             goto err;
         if (RAND_bytes(bytes, len) <= 0) {
             CMPerr(0, CMP_R_FAILURE_OBTAINING_RANDOM);
