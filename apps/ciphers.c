@@ -34,9 +34,13 @@ const OPTIONS ciphers_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
 
-    OPT_SECTION("Cipher specification"),
+    OPT_SECTION("Output"),
     {"v", OPT_V, '-', "Verbose listing of the SSL/TLS ciphers"},
     {"V", OPT_UPPER_V, '-', "Even more verbose"},
+    {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
+    {"convert", OPT_CONVERT, 's', "Convert standard name into OpenSSL name"},
+
+    OPT_SECTION("Cipher specification"),
     {"s", OPT_S, '-', "Only supported ciphers"},
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Ciphers defined for SSL3"},
@@ -53,14 +57,12 @@ const OPTIONS ciphers_options[] = {
 #ifndef OPENSSL_NO_TLS1_3
     {"tls1_3", OPT_TLS1_3, '-', "Ciphers defined for TLS1.3"},
 #endif
-    {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
 #ifndef OPENSSL_NO_PSK
     {"psk", OPT_PSK, '-', "Include ciphersuites requiring PSK"},
 #endif
 #ifndef OPENSSL_NO_SRP
     {"srp", OPT_SRP, '-', "Include ciphersuites requiring SRP"},
 #endif
-    {"convert", OPT_CONVERT, 's', "Convert standard name into OpenSSL name"},
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Configure the TLSv1.3 ciphersuites to use"},
     {NULL}
