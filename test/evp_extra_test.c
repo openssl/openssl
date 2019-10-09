@@ -503,6 +503,7 @@ static int test_EVP_DigestSignInit(int tst)
     unsigned char *sig = NULL;
     size_t sig_len = 0;
     EVP_MD_CTX *md_ctx = NULL, *md_ctx_verify = NULL;
+    EVP_MD_CTX *a_md_ctx = NULL, *a_md_ctx_verify = NULL;
     BIO *mdbio = NULL, *membio = NULL;
     size_t written;
 
@@ -515,8 +516,8 @@ static int test_EVP_DigestSignInit(int tst)
         if (!TEST_int_gt(BIO_get_md_ctx(mdbio, &md_ctx), 0))
             goto out;
     } else {
-        if (!TEST_ptr(md_ctx = EVP_MD_CTX_new())
-                || !TEST_ptr(md_ctx_verify = EVP_MD_CTX_new()))
+        if (!TEST_ptr(a_md_ctx = md_ctx = EVP_MD_CTX_new())
+                || !TEST_ptr(a_md_ctx_verify = md_ctx_verify = EVP_MD_CTX_new()))
             goto out;
     }
 
@@ -576,10 +577,9 @@ static int test_EVP_DigestSignInit(int tst)
     if (tst >= 2) {
         BIO_free(membio);
         BIO_free(mdbio);
-    } else {
-        EVP_MD_CTX_free(md_ctx);
-        EVP_MD_CTX_free(md_ctx_verify);
     }
+    EVP_MD_CTX_free(a_md_ctx);
+    EVP_MD_CTX_free(a_md_ctx_verify);
     EVP_PKEY_free(pkey);
     OPENSSL_free(sig);
 
