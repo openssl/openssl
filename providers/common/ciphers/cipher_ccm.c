@@ -278,11 +278,11 @@ int ccm_cipher(void *vctx,
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-        return -1;
+        return 0;
     }
 
     if (ccm_cipher_internal(ctx, out, outl, in, inl) <= 0)
-        return -1;
+        return 0;
 
     *outl = inl;
     return 1;

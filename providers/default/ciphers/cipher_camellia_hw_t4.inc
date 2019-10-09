@@ -27,6 +27,7 @@ static int cipher_hw_camellia_t4_initkey(PROV_CIPHER_CTX *dat,
 
     if (dat->enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE)) {
         dat->block = (block128_f) cmll_t4_encrypt;
+        ret = 1;
         switch (bits) {
         case 128:
             if (mode == EVP_CIPH_CBC_MODE)
@@ -46,11 +47,12 @@ static int cipher_hw_camellia_t4_initkey(PROV_CIPHER_CTX *dat,
                 dat->stream.cbc = NULL;
             break;
         default:
-            ret = -1;
+            ret = 0;
             break;
         }
     } else {
         dat->block = (block128_f) cmll_t4_decrypt;
+        ret = 1;
         switch (bits) {
         case 128:
             dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
@@ -62,15 +64,14 @@ static int cipher_hw_camellia_t4_initkey(PROV_CIPHER_CTX *dat,
                 (cbc128_f) cmll256_t4_cbc_decrypt : NULL;
             break;
         default:
-            ret = -1;
+            ret = 0;
             break;
         }
     }
-    if (ret < 0) {
+    if (!ret)
         ERR_raise(ERR_LIB_PROV, EVP_R_CAMELLIA_KEY_SETUP_FAILED);
-        return 0;
-    }
-    return 1;
+
+    return ret;
 }
 
 #define PROV_CIPHER_HW_declare(mode)                                           \

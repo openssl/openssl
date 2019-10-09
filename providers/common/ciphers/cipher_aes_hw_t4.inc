@@ -15,7 +15,7 @@
 static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
                                     const unsigned char *key, size_t keylen)
 {
-    int ret, bits;
+    int ret = 0, bits;
     PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
     AES_KEY *ks = &adat->ks.ks;
 
@@ -24,7 +24,7 @@ static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
     bits = keylen * 8;
     if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE)
         && !dat->enc) {
-        ret = 0;
+        ret = 1;
         aes_t4_set_decrypt_key(key, bits, ks);
         dat->block = (block128_f)aes_t4_decrypt;
         switch (bits) {
@@ -41,10 +41,10 @@ static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
                 (cbc128_f)aes256_t4_cbc_decrypt : NULL;
             break;
         default:
-            ret = -1;
+            ret = 0;
         }
     } else {
-        ret = 0;
+        ret = 1;
         aes_t4_set_encrypt_key(key, bits, ks);
         dat->block = (block128_f)aes_t4_encrypt;
         switch (bits) {
@@ -73,16 +73,14 @@ static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
                 dat->stream.cbc = NULL;
             break;
         default:
-            ret = -1;
+            ret = 0;
         }
     }
 
-    if (ret < 0) {
+    if (!ret)
         ERR_raise(ERR_LIB_PROV, PROV_R_AES_KEY_SETUP_FAILED);
-        return 0;
-    }
 
-    return 1;
+    return ret;
 }
 
 #define PROV_CIPHER_HW_declare(mode)                                           \

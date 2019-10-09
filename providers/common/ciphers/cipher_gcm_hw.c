@@ -61,7 +61,7 @@ int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
                 size_t res = (16 - ctx->gcm.mres) % 16;
 
                 if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, res))
-                    return -1;
+                    return 0;
 
                 bulk = aesni_gcm_decrypt(in + res, out + res, len - res,
                                          ctx->gcm.key,
