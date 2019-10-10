@@ -25,6 +25,7 @@ EVP_DecryptInit,
 EVP_DecryptFinal,
 EVP_CipherInit,
 EVP_CipherFinal,
+EVP_Cipher,
 EVP_get_cipherbyname,
 EVP_get_cipherbynid,
 EVP_get_cipherbyobj,
@@ -106,6 +107,9 @@ EVP_CIPHER_do_all_ex
  int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                     const unsigned char *key, const unsigned char *iv, int enc);
  int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
+
+ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                const unsigned char *in, unsigned int inl);
 
  int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
@@ -251,6 +255,16 @@ EVP_CipherFinal_ex(). In previous releases they also cleaned up
 the B<ctx>, but this is no longer done and EVP_CIPHER_CTX_clean()
 must be called to free any context resources.
 
+EVP_Cipher() encrypts or decrypts a maximum I<inl> amount of bytes from I<in>
+and leaving the result in I<out>.
+If the cipher has the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> set, then all I<inl>
+are guaranteed to be consumed, otherwise it's undefined if more than a multiple
+of EVP_CIPHER_block_size() bytes are consumed (in other words, a remainder of
+C<inl % EVP_CIPHER_block_size()> may remain unconsumed).  The safest is to
+ensure that I<inl> always is a multiple of EVP_CIPHER_block_size().
+No buffering is guaranteed with this function.  If you want guaranteed
+buffering, consider using the Update and Final functions instead.
+
 EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 return an EVP_CIPHER structure when passed a cipher name, a NID or an
 ASN1_OBJECT structure.
@@ -387,6 +401,11 @@ EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
 
 EVP_CipherInit_ex() and EVP_CipherUpdate() return 1 for success and 0 for failure.
 EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
+
+EVP_Cipher() returns the amount of encrypted / decrypted bytes, or -1
+on failure, if the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is set for the
+cipher.  EVP_Cipher() returns 1 on success or 0 on failure, if the flag
+B<EVP_CIPH_FLAG_CUSTOM_CIPHER> is not set for the cipher.
 
 EVP_CIPHER_CTX_reset() returns 1 for success and 0 for failure.
 

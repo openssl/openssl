@@ -298,15 +298,31 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                const unsigned char *in, unsigned int inl)
 {
     if (ctx->cipher->prov != NULL) {
-        size_t outl = 0;         /* ignored */
-        int blocksize = EVP_CIPHER_CTX_block_size(ctx);
+        /*
+         * If the provided implementation has a ccipher function, we use it,
+         * and translate its return value like this: 0 => -1, 1 => outlen
+         *
+         * Otherwise, we call the cupdate function if in != NULL, or cfinal
+         * if in == NULL.  Regardless of which, we return what we got.
+         */
+        int ret = -1;
+        size_t outl = 0;
+        size_t blocksize = EVP_CIPHER_CTX_block_size(ctx);
 
         if (ctx->cipher->ccipher != NULL)
-            return
-                ctx->cipher->ccipher(ctx->provctx, out, &outl,
-                                     inl + (blocksize == 1 ? 0 : blocksize),
-                                     in, (size_t)inl);
-        return 0;
+            ret =  ctx->cipher->ccipher(ctx->provctx, out, &outl,
+                                        inl + (blocksize == 1 ? 0 : blocksize),
+                                        in, (size_t)inl)
+                ? (int)outl : -1;
+        else if (in != NULL)
+            ret = ctx->cipher->cupdate(ctx->provctx, out, &outl,
+                                       inl + (blocksize == 1 ? 0 : blocksize),
+                                       in, (size_t)inl);
+        else
+            ret = ctx->cipher->cfinal(ctx->provctx, out, &outl,
+                                      blocksize == 1 ? 0 : blocksize);
+
+        return ret;
     }
 
     return ctx->cipher->do_cipher(ctx, out, in, inl);
@@ -330,6 +346,10 @@ unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 
     params[0] = OSSL_PARAM_construct_ulong(OSSL_CIPHER_PARAM_FLAGS, &v);
     ok = evp_do_ciph_getparams(cipher, params);
+
+    /* Provided implementations may have a custom cipher_cipher */
+    if (cipher->prov != NULL && cipher->ccipher != NULL)
+        v |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
 
     return ok != 0 ? v : 0;
 }
