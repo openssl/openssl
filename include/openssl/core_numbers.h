@@ -12,6 +12,7 @@
 
 # include <stdarg.h>
 # include <openssl/core.h>
+# include <openssl/crypto.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -157,6 +158,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 # define OSSL_OP_CIPHER                              2   /* Symmetric Ciphers */
 # define OSSL_OP_MAC                                 3
 # define OSSL_OP_KDF                                 4
+# define OSSL_OP_RAND                                5
 # define OSSL_OP_KEYMGMT                            10
 # define OSSL_OP_KEYEXCH                            11
 # define OSSL_OP_SIGNATURE                          12
@@ -317,6 +319,46 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_get_ctx_params,
                     (void *kctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
                     (void *kctx, const OSSL_PARAM params[]))
+
+/* RAND */
+
+# define OSSL_FUNC_RAND_NEWCTX                        1
+# define OSSL_FUNC_RAND_FREECTX                       2
+# define OSSL_FUNC_RAND_INSTANTIATE                   3
+# define OSSL_FUNC_RAND_UNINSTANTIATE                 4
+# define OSSL_FUNC_RAND_GENERATE                      5
+# define OSSL_FUNC_RAND_GET_NONCE                     6
+# define OSSL_FUNC_RAND_RESEED                        7
+# define OSSL_FUNC_RAND_GETTABLE_PARAMS               8
+# define OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS           9
+# define OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS          10
+# define OSSL_FUNC_RAND_GET_PARAMS                   11
+# define OSSL_FUNC_RAND_GET_CTX_PARAMS               12
+# define OSSL_FUNC_RAND_SET_CTX_PARAMS               13
+
+OSSL_CORE_MAKE_FUNC(void *, OP_rand_newctx, (void *provctx, int secure, int df))
+OSSL_CORE_MAKE_FUNC(void, OP_rand_freectx, (void *vctx))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_instantiate,
+                    (void *vdrbg, const unsigned char *ent, size_t ent_len,
+                     const unsigned char *nonce, size_t nonce_len,
+                     const unsigned char *pstr, size_t pstr_len))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_uninstantiate, (void *vdrbg))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_generate,
+                    (void *vctx, unsigned char *out, size_t outlen,
+                     const unsigned char *addin, size_t addin_len))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_get_nonce,
+                    (void *vctx, unsigned char *out, size_t outlen))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_reseed,
+                    (void *vctx, const unsigned char *ent, size_t ent_len,
+                     const unsigned char *addin, size_t addin_len))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_gettable_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_gettable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_settable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_get_params, (OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_get_ctx_params,
+                    (void *vctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_set_ctx_params,
+                    (void *vctx, const OSSL_PARAM params[]))
 
 /*-
  * Key management

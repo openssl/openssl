@@ -150,6 +150,37 @@ extern "C" {
 #define OSSL_KDF_NAME_KBKDF         "KBKDF"
 #define OSSL_KDF_NAME_KRB5KDF       "KRB5KDF"
 
+/* RAND parameters */
+#define OSSL_RAND_PARAM_STATUS      "status"                  /* int */
+#define OSSL_RAND_PARAM_STRENGTH    "strength"                /* unsigned int */
+#define OSSL_RAND_PARAM_SEED        "seed"                    /* octet string */
+#define OSSL_RAND_PARAM_NONCE       "nonce"                   /* octet string */
+#define OSSL_RAND_PARAM_PERSONALISE "personalise"             /* octet string */
+#define OSSL_RAND_PARAM_CIPHER      OSSL_ALG_PARAM_CIPHER     /* utf8 string */
+#define OSSL_RAND_PARAM_DIGEST      OSSL_ALG_PARAM_DIGEST     /* utf8 string */
+#define OSSL_RAND_PARAM_MAC         OSSL_ALG_PARAM_MAC        /* utf8 string */
+#define OSSL_RAND_PARAM_PROPERTIES  OSSL_ALG_PARAM_PROPERTIES /* utf8 string */
+#define OSSL_RAND_PARAM_RESEED_REQUESTS "reseed-requests"     /* unsigned int */
+#define OSSL_RAND_PARAM_RESEED_CTR  "reseed-counter"          /* unsigned int */
+#define OSSL_RAND_PARAM_RESEED_TIME_INTERVAL "reseed-time"    /* uint64 */
+#define OSSL_RAND_PARAM_MAX_REQUEST "max-request"             /* size_t */
+#define OSSL_RAND_PARAM_MIN_ENTROPYLEN "min-entropy-len"      /* size_t */
+#define OSSL_RAND_PARAM_MAX_ENTROPYLEN "max-entropy-len"      /* size_t */
+#define OSSL_RAND_PARAM_MIN_NONCELEN "min-nonce-len"          /* size_t */
+#define OSSL_RAND_PARAM_MAX_NONCELEN "max-nonce-len"          /* size_t */
+#define OSSL_RAND_PARAM_MAX_PERSLEN "max-personalisation-len" /* size_t */
+#define OSSL_RAND_PARAM_MAX_ADINLEN "max-additional-data-len" /* size_t */
+#define OSSL_RAND_PARAM_SEEDLEN     "seedlen"                 /* size_t */
+#define OSSL_RAND_PARAM_DERIV_FUNC  "derivation-function"     /* int (bool) */
+#define OSSL_RAND_PARAM_CRNG_TEST   "crng-test"               /* int (bool) */
+
+/* Known RAND names */
+#define OSSL_RAND_NAME_SEED         "seed"
+#define OSSL_RAND_NAME_CTR_DRBG     "ctr-drbg"
+#define OSSL_RAND_NAME_DIGEST_DRBG  "digest-drbg"
+#define OSSL_RAND_NAME_HMAC_DRBG    "hmac-drbg"
+#define OSSL_RAND_NAME_TEST         "test-rand"
+
 /* PKEY parameters */
 /* Diffie-Hellman/DSA Parameters */
 #define OSSL_PKEY_PARAM_FFC_P        "p"
