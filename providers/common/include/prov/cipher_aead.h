@@ -12,7 +12,6 @@
 /* TODO(3.0) Figure out what flags are really needed */
 #define AEAD_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER           \
                     | EVP_CIPH_CUSTOM_IV                \
-                    | EVP_CIPH_FLAG_CUSTOM_CIPHER       \
                     | EVP_CIPH_ALWAYS_CALL_INIT         \
                     | EVP_CIPH_CTRL_INIT                \
                     | EVP_CIPH_CUSTOM_COPY)
