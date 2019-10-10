@@ -10,6 +10,10 @@
 /* EVP_MD_CTX related stuff */
 
 #include <openssl/core_numbers.h>
+#include <openssl/rand_drbg.h>
+#include "internal/tsan_assist.h"
+#include "internal/refcount.h"
+#include "crypto/evp_rand.h"
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
 
@@ -64,6 +68,70 @@ struct evp_kdf_ctx_st {
     EVP_KDF *meth;              /* Method structure */
     void *data;                 /* Algorithm-specific data */
 } /* EVP_KDF_CTX */ ;
+
+struct evp_rand_ctx_st {
+    EVP_RAND *meth;             /* Method structure */
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+    EVP_RAND_CTX *parent;
+    void *data;                 /* Algorithm-specific data */
+
+    /* Cached algorithm parameters */
+    int strength;
+    size_t max_request;
+    size_t min_entropylen, max_entropylen;
+    size_t min_noncelen, max_noncelen;
+    size_t max_perslen, max_adinlen;
+    size_t seedlen;
+
+    /*
+     * Counts the number of generate requests since the last reseed
+     * (Starts at 1). This value is the reseed_counter as defined in
+     * NIST SP 800-90Ar1
+     */
+    unsigned int reseed_gen_counter;
+    /*
+     * Maximum number of generate requests until a reseed is required.
+     * This value is ignored if it is zero.
+     */
+    unsigned int reseed_interval;
+    /* Stores the time when the last reseeding occurred */
+    time_t reseed_time;
+    /*
+     * Specifies the maximum time interval (in seconds) between reseeds.
+     * This value is ignored if it is zero.
+     */
+    unsigned int reseed_time_interval;
+    /*
+     * Stores the return value of openssl_get_fork_id() as of when we last
+     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_id !=
+     * openssl_get_fork_id().  Used to provide fork-safety and reseed this
+     * DRBG in the child process.
+     */
+    int fork_id;
+    /*
+     * Counts the number of reseeds since instantiation.
+     * This value is ignored if it is zero.
+     *
+     * This counter is used only for seed propagation from the <master> DRBG
+     * to its two children, the <public> and <private> DRBG. This feature is
+     * very special and its sole purpose is to ensure that any randomness which
+     * is added by RAND_add() or RAND_seed() will have an immediate effect on
+     * the output of RAND_bytes() resp. RAND_priv_bytes().
+     */
+    TSAN_QUALIFIER unsigned int reseed_prop_counter;
+    unsigned int reseed_next_counter;
+
+    DRBG_STATUS state;
+
+#if 0
+    /* Callback functions.  See comments in rand_lib.c */
+    RAND_DRBG_get_entropy_fn get_entropy;
+    RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
+    RAND_DRBG_get_nonce_fn get_nonce;
+    RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
+#endif
+} /* EVP_RAND_CTX */ ;
 
 struct evp_keymgmt_st {
     int id;                      /* libcrypto internal */
