@@ -1,0 +1,6 @@
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
+
+$TEST_GOAL=../../libimplementations.a
+
+SOURCE[$TEST_GOAL]=test_rand.c
