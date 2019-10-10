@@ -1,0 +1,89 @@
+=pod
+
+=head1 NAME
+
+EVP_RAND-TEST_RAND - The test EVP_RAND implementation
+
+=head1 DESCRIPTION
+
+A test random number generator which should never be used when trying to
+generate proper random values.
+It accepts seed material and regurgitates this verbatim instead of generating
+anything.
+
+=head2 Identity
+
+"TEST-RAND" is the name for this implementation; it
+can be used with the EVP_RAND_fetch() function.
+
+=head2 Supported parameters
+
+The supported parameters are:
+
+=over 4
+
+=item "strength" (B<OSSL_RAND_PARAM_STRENGTH>) <unsigned integer>
+
+Get the security strength of the test random number generator.
+This parameter cannot be set.
+
+=item "seed" (B<OSSL_RAND_PARAM_SEED>) <UTF8 string>
+
+Set the string that the test random number generator will return on an
+L<EVP_RAND_get_bytes(3)> call.
+
+=back
+
+=head1 NOTES
+
+A context for TEST_RAND can be obtained by calling:
+
+ EVP_RAND *rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL);
+ EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand);
+
+The security strength of a test random number generator is always zero.
+
+=head1 EXAMPLES
+
+This example sets the test RNG seed and reads it back:
+
+ EVP_RAND *rand;
+ EVP_RAND_CTX *rctx;
+ unsigned char out[11];
+ OSSL_PARAM params[2], *p = params;
+
+ rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL);
+ rctx = EVP_RAND_CTX_new(rand);
+ EVP_RAND_free(rand);
+
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_RAND_PARAM_SEED,
+                                         "hello there", (size_t)11);
+ *p = OSSL_PARAM_construct_end();
+ if (EVP_RAND_CTX_set_params(rctx, params) <= 0) {
+     error("EVP_RAND_CTX_set_params");
+ }
+ if (EVP_RAND_get_bytes(rctx, out, sizeof(out)) <= 0) {
+     error("EVP_RAND_get_bytes");
+ }
+
+ EVP_RAND_CTX_free(rctx);
+
+=head1 SEE ALSO
+
+L<EVP_RAND(3)>,
+L<EVP_RAND_CTX_new(3)>,
+L<EVP_RAND_CTX_free(3)>,
+L<EVP_RAND_CTX_set_params(3)>,
+L<EVP_RAND_get_bytes(3)>,
+L<EVP_RAND(3)/PARAMETERS>
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
