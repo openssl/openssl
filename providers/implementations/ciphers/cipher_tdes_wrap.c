@@ -131,7 +131,7 @@ static int tdes_wrap_cipher(void *vctx,
     *outl = 0;
     if (outsize < inl) {
         PROVerr(0, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-        return -1;
+        return 0;
     }
 
     ret = tdes_wrap_cipher_internal(ctx, out, in, inl);
