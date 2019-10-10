@@ -260,8 +260,8 @@ int ossl_cmp_hdr_check_implicitConfirm(OSSL_CMP_PKIHEADER *hdr)
     int i;
     OSSL_CMP_ITAV *itav = NULL;
 
-	if (!ossl_assert(hdr != NULL))
-	    return 0;
+    if (!ossl_assert(hdr != NULL))
+        return 0;
 
     itavCount = sk_OSSL_CMP_ITAV_num(hdr->generalInfo);
     for (i = 0; i < itavCount; i++) {
