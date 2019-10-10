@@ -247,6 +247,12 @@ extern const OSSL_DISPATCH kdf_x942_kdf_functions[];
 #endif
 extern const OSSL_DISPATCH kdf_krb5kdf_functions[];
 
+/* Random number generators and seed sources */
+extern const OSSL_DISPATCH test_rand_functions[];
+extern const OSSL_DISPATCH seed_rand_functions[];
+extern const OSSL_DISPATCH drbg_ctr_functions[];
+extern const OSSL_DISPATCH drbg_hash_functions[];
+extern const OSSL_DISPATCH drbg_hmac_functions[];
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
