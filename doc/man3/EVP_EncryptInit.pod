@@ -109,7 +109,7 @@ EVP_CIPHER_do_all_ex
  int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                const unsigned char *in, unsigned int inl)
+                const unsigned char *in, unsigned int inl);
 
  int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
@@ -255,11 +255,12 @@ EVP_CipherFinal_ex(). In previous releases they also cleaned up
 the B<ctx>, but this is no longer done and EVP_CIPHER_CTX_clean()
 must be called to free any context resources.
 
-EVP_Cipher() encrypts or decrypts as many EVP_CIPHER_block_size() block from
-I<in> that I<inl> allows and places the result in I<out>.  It returns the
-number of encrypted or decrypted bytes.  This function does not buffer anything
-like EVP_CipherUpdate does, and therefore gives a very direct access to the
-central block cipher of the cipher implementation.
+EVP_Cipher() encrypts or decrypts as many EVP_CIPHER_block_size() blocks
+from I<in> that I<inl> allows and places the result in I<out>.  The rest
+of I<in>, if there is any (C<inl % EVP_CIPHER_block_size(cipher) != 0>),
+will remain unused.  This function gives direct access to the low level
+cipher implementation.  If buffering is required EVP_CipherUpdate() should
+be used instead.
 
 EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 return an EVP_CIPHER structure when passed a cipher name, a NID or an
@@ -397,6 +398,9 @@ EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
 
 EVP_CipherInit_ex() and EVP_CipherUpdate() return 1 for success and 0 for failure.
 EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
+
+EVP_Cipher() returns the amount of encrypted / decrypted bytes, or -1 on
+failure.
 
 EVP_CIPHER_CTX_reset() returns 1 for success and 0 for failure.
 
