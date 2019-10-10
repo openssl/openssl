@@ -116,7 +116,7 @@ encoded using UTF-8.
 This is default on most modern Unixes, but may involve an effort on other
 platforms.
 Specifically for Windows, setting the environment variable
-C<OPENSSL_WIN32_UTF8> will have anything entered on [Windows] console prompt
+B<OPENSSL_WIN32_UTF8> will have anything entered on [Windows] console prompt
 converted to UTF-8 (command line and separately prompted pass phrases alike).
 
 =head2 Opening existing objects

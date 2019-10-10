@@ -69,10 +69,10 @@ executed on SSE2 capable CPU, but under control of OS that does not
 enable XMM registers. Historically address of the capability vector copy
 was exposed to application through OPENSSL_ia32cap_loc(), but not
 anymore. Now the only way to affect the capability detection is to set
-OPENSSL_ia32cap environment variable prior target application start. To
-give a specific example, on Intel P4 processor 'env
-OPENSSL_ia32cap=0x16980010 apps/openssl', or better yet 'env
-OPENSSL_ia32cap=~0x1000000 apps/openssl' would achieve the desired
+B<OPENSSL_ia32cap> environment variable prior target application start. To
+give a specific example, on Intel P4 processor
+C<env OPENSSL_ia32cap=0x16980010 apps/openssl>, or better yet
+C<env OPENSSL_ia32cap=~0x1000000 apps/openssl> would achieve the desired
 effect. Alternatively you can reconfigure the toolkit with no-sse2
 option and recompile.
 
@@ -117,7 +117,7 @@ a.k.a. AVX512IFMA extension;
 =back
 
 To control this extended capability word use ':' as delimiter when
-setting up OPENSSL_ia32cap environment variable. For example assigning
+setting up B<OPENSSL_ia32cap> environment variable. For example assigning
 ':~0x20' would disable AVX2 code paths, and ':0' - all post-AVX
 extensions.
 

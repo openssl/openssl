@@ -136,8 +136,8 @@ The current OpenSSL cpu settings.
 This is the current setting of the cpu capability flags. It is usually
 automatically configured but may be set via an environment variable.
 The value has the same syntax as the environment variable.
-For x86 the string looks like "CPUINFO: OPENSSL_ia32cap=0x123:0x456".
-Or "CPUINFO: N/A" if not available, e.g. no-asm build.
+For x86 the string looks like C<CPUINFO: OPENSSL_ia32cap=0x123:0x456>
+or C<CPUINFO: N/A> if not available, e.g. no-asm build.
 
 =back
 
@@ -177,8 +177,8 @@ separator between directory elements.
 The OpenSSL list separator.
 This is typically used in strings that are lists of items, such as the
 value of the environment variable C<$PATH> on Unix (where the
-separator is ":") or C<%PATH%> on Windows (where the separator is
-";").
+separator is B<:>) or C<%PATH%> on Windows (where the separator is
+B<;>).
 
 =item OPENSSL_INFO_CPU_SETTINGS
 
@@ -186,7 +186,7 @@ The current OpenSSL cpu settings.
 This is the current setting of the cpu capability flags. It is usually
 automatically configured but may be set via an environment variable.
 The value has the same syntax as the environment variable.
-For x86 the string looks like "OPENSSL_ia32cap=0x123:0x456".
+For x86 the string looks like C<OPENSSL_ia32cap=0x123:0x456>.
 
 =back
 

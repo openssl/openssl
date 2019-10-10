@@ -25,8 +25,8 @@ logs). The list can be loaded from one or more files and then searched by LogID
 CTLOG_STORE_new() creates an empty list of CT logs. This is then populated
 by CTLOG_STORE_load_default_file() or CTLOG_STORE_load_file().
 CTLOG_STORE_load_default_file() loads from the default file, which is named
-"ct_log_list.cnf" in OPENSSLDIR (see the output of L<version>). This can be
-overridden using an environment variable named "CTLOG_FILE".
+B<ct_log_list.cnf> in OPENSSLDIR (see the output of L<version>). This can be
+overridden using an environment variable named B<CTLOG_FILE>.
 CTLOG_STORE_load_file() loads from a caller-specified file path instead.
 Both of these functions append any loaded CT logs to the CTLOG_STORE.
 
