@@ -35,7 +35,10 @@ int ossl_cmp_pkisi_get_pkistatus(OSSL_CMP_PKISI *si)
     return ossl_cmp_asn1_get_int(si->status);
 }
 
-
+/*
+ * return the declared identifier and a short explanation for the PKIStatus
+ * value as specified in RFC4210, Appendix F.
+ */
 const char *ossl_cmp_PKIStatus_to_string(int status)
 {
     switch (status) {
