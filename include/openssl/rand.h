@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,11 +20,48 @@
 # include <openssl/types.h>
 # include <openssl/e_os2.h>
 # include <openssl/randerr.h>
+# include <openssl/core.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
+EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, int secure, int df,
+                               EVP_RAND_CTX *parent);
+void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx);
+const EVP_RAND *EVP_RAND_CTX_rand(EVP_RAND_CTX *ctx);
+int EVP_RAND_CTX_enable_locking(EVP_RAND_CTX *ctx);
+int EVP_RAND_CTX_reseed(EVP_RAND_CTX *ctx, const void *addin, size_t addin_len,
+                        int prediction_resistance);
+unsigned int EVP_RAND_CTX_strength(EVP_RAND_CTX *ctx);
+int EVP_RAND_CTX_generate(EVP_RAND_CTX *ctx, void *out, size_t outlen,
+                          const void *addin, size_t addin_len,
+                          int prediction_resistance);
+int EVP_RAND_CTX_instantiate(EVP_RAND_CTX *ctx,
+                             const unsigned char *pers, size_t perslen);
+int EVP_RAND_CTX_uninstantiate(EVP_RAND_CTX *ctx);
+int EVP_RAND_CTX_seed(EVP_RAND_CTX *ctx,
+                      const unsigned char *ent, size_t ent_len,
+                      double randomness);
+
+int EVP_RAND_get_params(EVP_RAND *rand, OSSL_PARAM params[]);
+int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[]);
+int EVP_RAND_CTX_set_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[]);
+
+EVP_RAND *EVP_RAND_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+                       const char *properties);
+const char *EVP_RAND_name(const EVP_RAND *rand);
+const OSSL_PROVIDER *EVP_RAND_provider(const EVP_RAND *rand);
+int EVP_RAND_up_ref(EVP_RAND *rand);
+void EVP_RAND_free(EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand);
+void EVP_RAND_do_all_ex(OPENSSL_CTX *libctx,
+                       void (*fn)(EVP_RAND *rand, void *arg),
+                       void *arg);
+
+/* Legacy functions from here */
 struct rand_meth_st {
     int (*seed) (const void *buf, int num);
     int (*bytes) (unsigned char *buf, int num);

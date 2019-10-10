@@ -112,6 +112,9 @@ typedef struct evp_keymgmt_st EVP_KEYMGMT;
 typedef struct evp_kdf_st EVP_KDF;
 typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
 
+typedef struct evp_rand_st EVP_RAND;
+typedef struct evp_rand_ctx_st EVP_RAND_CTX;
+
 typedef struct evp_keyexch_st EVP_KEYEXCH;
 
 typedef struct evp_signature_st EVP_SIGNATURE;
@@ -203,6 +206,7 @@ typedef struct ossl_dispatch_st OSSL_DISPATCH;
 typedef struct ossl_item_st OSSL_ITEM;
 typedef struct ossl_algorithm_st OSSL_ALGORITHM;
 typedef struct ossl_param_st OSSL_PARAM;
+typedef struct ossl_rand_seed_st OSSL_RAND_SEED; 
 
 typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
 
