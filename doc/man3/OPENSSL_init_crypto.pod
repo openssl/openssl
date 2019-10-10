@@ -271,7 +271,8 @@ OPENSSL_INIT_set_config_appname() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
-L<OPENSSL_init_ssl(3)>
+L<OPENSSL_init_ssl(3)>,
+L<openssl-environment(7)>
 
 =head1 HISTORY
 

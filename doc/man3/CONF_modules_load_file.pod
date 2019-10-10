@@ -17,9 +17,11 @@ CONF_modules_load_file, CONF_modules_load - OpenSSL configuration functions
 
 The function CONF_modules_load_file() configures OpenSSL using file
 B<filename> and application name B<appname>. If B<filename> is NULL
-the standard OpenSSL configuration file is used. If B<appname> is
-NULL the standard OpenSSL application name B<openssl_conf> is used.
-The behaviour can be customized using B<flags>.
+then the filename from the environment variable B<OPENSSL_CONF> is
+used, or the standard OpenSSL configuration file is used if the
+environment variable us unavailable. If B<appname> is NULL the
+standard OpenSSL application name B<openssl_conf> is used. The
+behaviour can be customized using B<flags>.
 
 CONF_modules_load() is identical to CONF_modules_load_file() except it
 reads configuration information from B<cnf>.
@@ -130,7 +132,7 @@ Load and parse configuration file manually, custom error handling:
 
 =head1 SEE ALSO
 
-L<config(5)>, L<OPENSSL_config(3)>
+L<config(5)>, L<OPENSSL_config(3)>, L<openssl-environment(7)>
 
 =head1 COPYRIGHT
 
