@@ -285,6 +285,9 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
 #ifndef OPENSSL_NO_RC4
     { "RC4", "default=yes", rc4128_functions },
     { "RC4-40", "default=yes", rc440_functions },
+# ifndef OPENSSL_NO_MD5
+    { "RC4-HMAC-MD5", "default=yes", rc4_hmac_md5_functions },
+# endif /* OPENSSL_NO_MD5 */
 #endif /* OPENSSL_NO_RC4 */
 #ifndef OPENSSL_NO_RC5
     { "RC5-ECB", "default=yes", rc5128ecb_functions },

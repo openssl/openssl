@@ -97,6 +97,10 @@ ENDIF
 IF[{- !$disabled{rc4} -}]
   SOURCE[$RC4_GOAL]=\
       cipher_rc4.c cipher_rc4_hw.c
+ IF[{- !$disabled{md5} -}]
+   SOURCE[$RC4_GOAL]=\
+       cipher_rc4_hmac_md5.c cipher_rc4_hmac_md5_hw.c
+ ENDIF
 ENDIF
 
 IF[{- !$disabled{rc5} -}]

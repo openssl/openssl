@@ -202,6 +202,9 @@ extern const OSSL_DISPATCH des_cfb8_functions[];
 #ifndef OPENSSL_NO_RC4
 extern const OSSL_DISPATCH rc440_functions[];
 extern const OSSL_DISPATCH rc4128_functions[];
+# ifndef OPENSSL_NO_MD5
+extern const OSSL_DISPATCH rc4_hmac_md5_functions[];
+# endif /* OPENSSL_NO_MD5 */
 #endif /* OPENSSL_NO_RC4 */
 #ifndef OPENSSL_NO_CHACHA
 extern const OSSL_DISPATCH chacha20_functions[];
