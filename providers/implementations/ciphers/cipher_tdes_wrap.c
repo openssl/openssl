@@ -15,9 +15,7 @@
 #include "prov/providercommonerr.h"
 
 /* TODO (3.0) Figure out what flags are requred */
-#define TDES_WRAP_FLAGS (EVP_CIPH_WRAP_MODE             \
-                         | EVP_CIPH_CUSTOM_IV           \
-                         | EVP_CIPH_FLAG_CUSTOM_CIPHER)
+#define TDES_WRAP_FLAGS (EVP_CIPH_WRAP_MODE | EVP_CIPH_CUSTOM_IV)
 
 
 static OSSL_OP_cipher_update_fn tdes_wrap_update;
