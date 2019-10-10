@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/provider.h>
 #include <openssl/safestack.h>
+#include <openssl/rand.h>
 #include <openssl/kdf.h>
 #include "apps.h"
 #include "app_params.h"
@@ -273,6 +274,56 @@ static void list_kdfs(void)
         }
     }
     sk_EVP_KDF_pop_free(kdfs, EVP_KDF_free);
+}
+
+/*
+ * RANDs
+ */
+DEFINE_STACK_OF(EVP_RAND)
+static int rand_cmp(const EVP_RAND * const *a, const EVP_RAND * const *b)
+{
+    int ret = strcasecmp(EVP_RAND_name(*a), EVP_RAND_name(*b));
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_RAND_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_RAND_provider(*b)));
+
+    return ret;
+}
+
+static void collect_rands(EVP_RAND *rand, void *stack)
+{
+    STACK_OF(EVP_RAND) *rand_stack = stack;
+
+    sk_EVP_RAND_push(rand_stack, rand);
+    EVP_RAND_up_ref(rand);
+}
+
+static void list_rands(void)
+{
+    STACK_OF(EVP_RAND) *rands = sk_EVP_RAND_new(rand_cmp);
+    int i;
+
+    BIO_printf(bio_out, "Provided RNGs and seed sources:\n");
+    EVP_RAND_do_all_ex(NULL, collect_rands, rands);
+    sk_EVP_RAND_sort(rands);
+    for (i = 0; i < sk_EVP_RAND_num(rands); i++) {
+        const EVP_RAND *m = sk_EVP_RAND_value(rands, i);
+
+        BIO_printf(bio_out, "  %s", EVP_RAND_name(m));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_RAND_provider(m)));
+
+        if (verbose) {
+            print_param_types("retrievable algorithm parameters",
+                              EVP_RAND_gettable_params(m), 4);
+            print_param_types("retrievable operation parameters",
+                              EVP_RAND_gettable_ctx_params(m), 4);
+            print_param_types("settable operation parameters",
+                              EVP_RAND_settable_ctx_params(m), 4);
+        }
+    }
+    sk_EVP_RAND_pop_free(rands, EVP_RAND_free);
 }
 
 static void list_missing_help(void)
@@ -615,7 +666,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
-    OPT_KDF_ALGORITHMS, OPT_MISSING_HELP, OPT_OBJECTS
+    OPT_KDF_ALGORITHMS, OPT_RAND_ALGORITHMS, OPT_MISSING_HELP, OPT_OBJECTS
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -633,6 +684,8 @@ const OPTIONS list_options[] = {
      "List of message digest algorithms"},
     {"kdf-algorithms", OPT_KDF_ALGORITHMS, '-',
      "List of key derivation and pseudo random function algorithms"},
+    {"rand-algorithms", OPT_RAND_ALGORITHMS, '-',
+     "List of random number generator algorithms and seed sources"},
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
      "List of message authentication code algorithms"},
     {"cipher-commands", OPT_CIPHER_COMMANDS, '-', "List of cipher commands"},
@@ -662,6 +715,7 @@ int list_main(int argc, char **argv)
     int one = 0, done = 0;
     struct {
         unsigned int commands:1;
+        unsigned int rand_algorithms:1;
         unsigned int digest_commands:1;
         unsigned int digest_algorithms:1;
         unsigned int kdf_algorithms:1;
@@ -704,6 +758,9 @@ opthelp:
             break;
         case OPT_KDF_ALGORITHMS:
             todo.kdf_algorithms = 1;
+            break;
+        case OPT_RAND_ALGORITHMS:
+            todo.rand_algorithms = 1;
             break;
         case OPT_MAC_ALGORITHMS:
             todo.mac_algorithms = 1;
@@ -748,6 +805,8 @@ opthelp:
 
     if (todo.commands)
         list_type(FT_general, one);
+    if (todo.rand_algorithms)
+        list_rands();
     if (todo.digest_commands)
         list_type(FT_md, one);
     if (todo.digest_algorithms)
