@@ -416,6 +416,15 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_rands[] = {
+    { "SEED", "fips=yes", NULL },
+    { "CTR-DRBG", "fips=yes", NULL },
+    { "DIGEST-DRBG", "fips=yes", NULL },
+    { "HMAC-DRBG", "fips=yes", NULL },
+    { "TEST-RAND", "fips=yes", test_rand_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
                                          int operation_id,
                                          int *no_cache)
@@ -430,6 +439,8 @@ static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
         return fips_macs;
     case OSSL_OP_KDF:
         return fips_kdfs;
+    case OSSL_OP_RAND:
+        return fips_rands;
     }
     return NULL;
 }

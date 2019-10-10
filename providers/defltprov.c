@@ -355,6 +355,15 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_rands[] = {
+    { "CTR-DRBG", "default=yes", drbg_ctr_functions },
+    { "DIGEST-DRBG", "default=yes", drbg_hash_functions },
+    { "HMAC-DRBG", "default=yes", drbg_hmac_functions },
+    { "TEST-RAND", "default=yes", test_rand_functions },
+    { "SEED", "default=yes", seed_rand_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM deflt_keyexch[] = {
 #ifndef OPENSSL_NO_DH
     { "DH:dhKeyAgreement", "default=yes", dh_keyexch_functions },
@@ -435,6 +444,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
         return deflt_macs;
     case OSSL_OP_KDF:
         return deflt_kdfs;
+    case OSSL_OP_RAND:
+        return deflt_rands;
     case OSSL_OP_KEYMGMT:
         return deflt_keymgmt;
     case OSSL_OP_KEYEXCH:
