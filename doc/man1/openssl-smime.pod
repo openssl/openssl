@@ -53,10 +53,11 @@ B<openssl> B<smime>
 [B<-signer> I<file>]
 [B<-recip> I< file>]
 [B<-inform> B<DER>|B<PEM>|B<SMIME>]
+[B<-outform> B<DER>|B<PEM>|B<SMIME>]
+[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-inkey> I<file_or_id>]
 [B<-out> I<file>]
-[B<-outform> B<DER>|B<PEM>|B<SMIME>]
 [B<-content> I<file>]
 [B<-to> I<addr>]
 [B<-from> I<ad>]
@@ -126,28 +127,20 @@ Resign a message: take an existing message and one or more new signers.
 The input message to be encrypted or signed or the MIME message to
 be decrypted or verified.
 
-=item B<-inform> B<DER>|B<PEM>|B<SMIME>
-
-This specifies the input format for the PKCS#7 structure. The default
-is B<SMIME> which reads an S/MIME format message. B<PEM> and B<DER>
-format change this to expect PEM and DER format PKCS#7 structures
-instead. This currently only affects the input format of the PKCS#7
-structure, if no PKCS#7 structure is being input (for example with
-B<-encrypt> or B<-sign>) this option has no effect.
-
 =item B<-out> I<filename>
 
 The message text that has been decrypted or verified or the output MIME
 format message that has been signed or verified.
 
-=item B<-outform> B<DER>|B<PEM>|B<SMIME>
+=item B<-inform> B<DER>|B<PEM>|B<SMIME>, B<-outform> B<DER>|B<PEM>|B<SMIME>
 
-This specifies the output format for the PKCS#7 structure. The default
-is B<SMIME> which write an S/MIME format message. B<PEM> and B<DER>
-format change this to write PEM and DER format PKCS#7 structures
-instead. This currently only affects the output format of the PKCS#7
-structure, if no PKCS#7 structure is being output (for example with
-B<-verify> or B<-decrypt>) this option has no effect.
+The intput and output formats.; the default is B<SMIME>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-keyform> B<DER>|B<PEM>
+
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-stream>, B<-indef>, B<-noindef>
 

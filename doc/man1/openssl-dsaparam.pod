@@ -26,6 +26,9 @@ B<openssl dsaparam>
 
 This command is used to manipulate or generate DSA parameter files.
 
+DSA parameter generation can be a slow process and as a result the same set of
+DSA parameters is often used to generate several distinct keys.
+
 =head1 OPTIONS
 
 =over 4
@@ -34,17 +37,12 @@ This command is used to manipulate or generate DSA parameter files.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-This specifies the input format. The B<DER> option uses an ASN1 DER encoded
-form compatible with RFC2459 (PKIX) DSS-Parms that is a SEQUENCE consisting
-of p, q and g respectively. The PEM form is the default format: it consists
-of the B<DER> format base64 encoded with additional header and footer lines.
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
-=item B<-outform> B<DER>|B<PEM>
-
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+Parameters are a sequence of B<ASN.1 INTEGER>s: B<p>, B<q>, and B<g>.
 
 =item B<-in> I<filename>
 
@@ -98,16 +96,6 @@ I<numbits>. It must be the last option. If this option is included then
 the input file (if any) is ignored.
 
 =back
-
-=head1 NOTES
-
-PEM format DSA parameters use the header and footer lines:
-
- -----BEGIN DSA PARAMETERS-----
- -----END DSA PARAMETERS-----
-
-DSA parameter generation is a slow process and as a result the same set of
-DSA parameters is often used to generate several distinct keys.
 
 =head1 SEE ALSO
 

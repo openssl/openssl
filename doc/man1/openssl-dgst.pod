@@ -17,7 +17,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-r>]
 [B<-out> I<filename>]
 [B<-sign> I<filename>]
-[B<-keyform> I<arg>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-verify> I<filename>]
 [B<-prverify> I<filename>]
@@ -94,10 +94,10 @@ Digitally sign the digest using the private key in "filename". Note this option
 does not support Ed25519 or Ed448 private keys. Use the L<openssl-pkeyutl(1)>
 command instead for this.
 
-=item B<-keyform> I<arg>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-Specifies the key format to sign digest with. The DER, PEM, P12,
-and ENGINE formats are supported.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>
 

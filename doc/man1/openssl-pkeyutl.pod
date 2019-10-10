@@ -90,7 +90,8 @@ The input key file, by default it should be a private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
-The key format PEM, DER or ENGINE. Default is PEM.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-passin> I<arg>
 
@@ -103,7 +104,8 @@ The peer key file, used by key derivation (agreement) operations.
 
 =item B<-peerform> B<DER>|B<PEM>|B<ENGINE>
 
-The peer key format B<PEM>, B<DER> or B<ENGINE>. Default is B<PEM>.
+The peer key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-pubin>
 

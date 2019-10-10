@@ -22,6 +22,7 @@ B<openssl> B<s_client>
 [B<-verify_return_error>]
 [B<-cert> I<filename>]
 [B<-certform> B<DER>|B<PEM>]
+[B<-CRLform> B<DER>|B<PEM>]
 [B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>]
 [B<-cert_chain> I<filename>]
@@ -244,6 +245,11 @@ not to use a certificate.
 
 The certificate format to use: DER or PEM. PEM is the default.
 
+=item B<-CRLform> B<DER>|B<PEM>
+
+The CRL format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
 =item B<-key> I<keyfile>
 
 The private key to use. If not specified then the certificate file will
@@ -251,7 +257,8 @@ be used.
 
 =item B<-keyform> I<format>
 
-The private format to use: DER or PEM. PEM is the default.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-cert_chain>
 
@@ -280,6 +287,7 @@ B<-xcert> I<infile>, B<-xchain> options.
 =item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
 
 Extra certificate and private key format respectively.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<arg>
 

@@ -23,7 +23,7 @@ B<openssl> B<s_server>
 [B<-serverinfo> I<val>]
 [B<-certform> B<DER>|B<PEM>]
 [B<-key> I<infile>]
-[B<-keyform> I<format>]
+[B<-keyform> B<DER>|B<PEM>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
 [B<-dcertform> B<DER>|B<PEM>]
@@ -64,7 +64,6 @@ B<openssl> B<s_server>
 [B<-verifyCApath> I<dir>]
 [B<-no_cache>]
 [B<-ext_cache>]
-[B<-CRLform> B<DER>|B<PEM>]
 [B<-verify_return_error>]
 [B<-verify_quiet>]
 [B<-build_chain>]
@@ -151,6 +150,7 @@ B<openssl> B<s_server>
 [B<-xcert>]
 [B<-xchain>]
 [B<-xchain_build>]
+[B<-CRLform> B<DER>|B<PEM>]
 [B<-xcertform> B<DER>|B<PEM>]
 [B<-xkeyform> B<DER>|B<PEM>]
 [B<-nbio>]
@@ -290,18 +290,20 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-certform> B<DER>|B<PEM>
+=item B<-certform> B<DER>|B<PEM>, B<-CRLForm> B<DER>|B<PEM>
 
-The certificate format to use: DER or PEM. PEM is the default.
+The certificate and CRL format; the default is PEM.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-key> I<infile>
 
 The private key to use. If not specified then the certificate file will
 be used.
 
-=item B<-keyform> I<format>
+=item B<-keyform> B<DER>|B<PEM>]
 
-The private format to use: DER or PEM. PEM is the default.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<val>
 
@@ -327,7 +329,9 @@ is in use.
 
 =item B<-dcertform> B<DER>|B<PEM>, B<-dkeyform> B<DER>|B<PEM>, B<-dpass> I<val>
 
-Additional certificate and private key format and passphrase respectively.
+The format of the certificate, private key, and passphrase for the
+additional cert; the default format is B<PEM>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-xkey> I<infile>, B<-xcert> I<infile>, B<-xchain>
 
@@ -344,7 +348,9 @@ B<-xcert> I<infile>, B<-xchain> options.
 
 =item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
 
-Extra certificate and private key format respectively.
+The format for the extra certificate and private key, respectively;
+the default format is B<PEM>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-nbio_test>
 
