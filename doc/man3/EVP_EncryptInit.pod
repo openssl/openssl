@@ -255,15 +255,14 @@ EVP_CipherFinal_ex(). In previous releases they also cleaned up
 the B<ctx>, but this is no longer done and EVP_CIPHER_CTX_clean()
 must be called to free any context resources.
 
-EVP_Cipher() encrypts or decrypts a maximum I<inl> amount of bytes from I<in>
-and leaving the result in I<out>.
-If the cipher has the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> set, then all I<inl>
-are guaranteed to be consumed, otherwise it's undefined if more than a multiple
-of EVP_CIPHER_block_size() bytes are consumed (in other words, a remainder of
-C<inl % EVP_CIPHER_block_size()> may remain unconsumed).  The safest is to
-ensure that I<inl> always is a multiple of EVP_CIPHER_block_size().
-No buffering is guaranteed with this function.  If you want guaranteed
-buffering, consider using the Update and Final functions instead.
+EVP_Cipher() encrypts or decrypts a maximum I<inl> amount of bytes from
+I<in> and leaving the result in I<out>.
+If the cipher doesn't have the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> set,
+then I<inl> must be a multiple of EVP_CIPHER_block_size().  If it isn't,
+the result is undefined.  If the cipher has that flag set, then I<inl>
+can be any size.
+This function is historic and shouldn't be used in an application, please
+consider using Update and Final functions instead.
 
 EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 return an EVP_CIPHER structure when passed a cipher name, a NID or an
