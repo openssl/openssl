@@ -35,20 +35,9 @@ information on what parameters each of them can handle.
 
 =back
 
-=head1 ENVIRONMENT
-
-=over 4
-
-=item B<OPENSSL_MODULES>
-
-The path to the modules directory, where one can expect provider
-modules to be located.
-
-=back
-
 =head1 SEE ALSO
 
-L<config(5)>
+L<config(5)>, L<openssl-environment(7)>
 
 =head1 COPYRIGHT
 
