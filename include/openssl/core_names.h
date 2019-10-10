@@ -81,6 +81,7 @@ extern "C" {
 #define OSSL_DIGEST_PARAM_FLAGS      "flags"     /* ulong */
 
 /* Known DIGEST names (not a complete list) */
+#define OSSL_DIGEST_NAME_MD5 "MD5"
 #define OSSL_DIGEST_NAME_KECCAK_KMAC128 "KECCAK_KMAC128"
 #define OSSL_DIGEST_NAME_KECCAK_KMAC256 "KECCAK_KMAC256"
 
