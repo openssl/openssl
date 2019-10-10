@@ -574,10 +574,8 @@ static int test_EVP_DigestSignInit(int tst)
     ret = 1;
 
  out:
-    if (tst >= 2) {
-        BIO_free(membio);
-        BIO_free(mdbio);
-    }
+    BIO_free(membio);
+    BIO_free(mdbio);
     EVP_MD_CTX_free(a_md_ctx);
     EVP_MD_CTX_free(a_md_ctx_verify);
     EVP_PKEY_free(pkey);
