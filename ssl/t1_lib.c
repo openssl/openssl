@@ -1851,24 +1851,17 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
 
 /* Given preference and allowed sigalgs set shared sigalgs */
 static size_t tls12_shared_sigalgs(SSL *s, const SIGALG_LOOKUP **shsig,
-                                   const uint16_t *pref, size_t preflen,
-                                   const uint16_t *allow, size_t allowlen)
+                                   const uint8_t *pref_idx, size_t preflen,
+                                   uint32_t allow_flag)
 {
-    const uint16_t *ptmp, *atmp;
-    size_t i, j, nmatch = 0;
-    for (i = 0, ptmp = pref; i < preflen; i++, ptmp++) {
-        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*ptmp, NULL);
+    size_t i, nmatch = 0;
+    for (i = 0; i < preflen; i++) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg_by_idx(pref_idx[i]);
 
-        /* Skip disabled hashes or signature algorithms */
-        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SHARED, lu))
-            continue;
-        for (j = 0, atmp = allow; j < allowlen; j++, atmp++) {
-            if (*ptmp == *atmp) {
-                nmatch++;
-                if (shsig)
-                    *shsig++ = lu;
-                break;
-            }
+        if (lu != NULL && (allow_flag & (1 << pref_idx[i])) != 0
+                && tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SHARED, lu) == 1) {
+            nmatch++;
+            *shsig++ = lu;
         }
     }
     return nmatch;
@@ -1877,7 +1870,8 @@ static size_t tls12_shared_sigalgs(SSL *s, const SIGALG_LOOKUP **shsig,
 /* Set shared signature algorithms for SSL structures */
 static int tls1_set_shared_sigalgs(SSL *s)
 {
-    const uint16_t *pref, *allow, *conf;
+    const uint8_t *pref_idx, *conf_idx;
+    uint32_t allow_flag, conf_flag;
     size_t preflen, allowlen, conflen;
     size_t nmatch = 0;
     const SIGALG_LOOKUP **salgs = NULL;
@@ -1889,22 +1883,24 @@ static int tls1_set_shared_sigalgs(SSL *s)
     s->shared_sigalgslen = 0;
     /* If client use client signature algorithms if not NULL */
     if (!s->server && c->client_sigalgs.salgs && !is_suiteb) {
-        conf = c->client_sigalgs.salgs;
+        conf_idx = c->client_sigalgs.salgs_idx;
         conflen = c->client_sigalgs.len;
+        conf_flag = c->client_sigalgs.salgs_flag;
     } else if (c->conf_sigalgs.salgs && !is_suiteb) {
-        conf = c->conf_sigalgs.salgs;
+        conf_idx = c->conf_sigalgs.salgs_idx;
         conflen = c->conf_sigalgs.len;
+        conf_flag = c->conf_sigalgs.salgs_flag;
     } else
-        conflen = tls12_get_psigalgs(s, 0, &conf, NULL, NULL);
+        conflen = tls12_get_psigalgs(s, 0, NULL, &conf_idx, &conf_flag);
     if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE || is_suiteb) {
-        pref = conf;
+        pref_idx = conf_idx;
         preflen = conflen;
-        allow = s->s3.tmp.peer_sigalgs.salgs;
+        allow_flag = s->s3.tmp.peer_sigalgs.salgs_flag;
         allowlen = s->s3.tmp.peer_sigalgs.len;
     } else {
-        allow = conf;
+        allow_flag = conf_flag;
         allowlen = conflen;
-        pref = s->s3.tmp.peer_sigalgs.salgs;
+        pref_idx = s->s3.tmp.peer_sigalgs.salgs_idx;
         preflen = s->s3.tmp.peer_sigalgs.len;
     }
     if (preflen != 0 && allowlen != 0)
@@ -1916,8 +1912,8 @@ static int tls1_set_shared_sigalgs(SSL *s)
             SSLerr(SSL_F_TLS1_SET_SHARED_SIGALGS, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        if ((nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen,
-                                           allow, allowlen)) == 0) {
+        if ((nmatch = tls12_shared_sigalgs(s, salgs, pref_idx, preflen,
+                                           allow_flag)) == 0) {
             OPENSSL_free(salgs);
             salgs = NULL;
         }
