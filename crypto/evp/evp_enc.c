@@ -283,6 +283,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_rc2_ofb64:
         case NID_chacha20:
         case NID_chacha20_poly1305:
+        case NID_rc4_hmac_md5:
             break;
         default:
             goto legacy;
