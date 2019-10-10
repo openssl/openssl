@@ -54,18 +54,16 @@ L<openssl-pkcs8(1)> command.
 
 Print out a usage message.
 
+
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
 =item B<-inform> B<DER>|B<PEM>
 
-This specifies the input format. The B<DER> option uses an ASN1 DER encoded
-form compatible with the PKCS#1 RSAPrivateKey or SubjectPublicKeyInfo format.
-The B<PEM> form is the default format: it consists of the B<DER> format base64
-encoded with additional header and footer lines. On input PKCS#8 format private
-keys are also accepted.
-
-=item B<-outform> B<DER>|B<PEM>
-
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+The data is a PKCS#1 B<RSAPrivateKey> or B<SubjectPublicKey> object.
+On input, PKCS#8 format private keys are also accepted.
 
 =item B<-in> I<filename>
 
@@ -136,23 +134,6 @@ thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =back
-
-=head1 NOTES
-
-The PEM private key format uses the header and footer lines:
-
- -----BEGIN RSA PRIVATE KEY-----
- -----END RSA PRIVATE KEY-----
-
-The PEM public key format uses the header and footer lines:
-
- -----BEGIN PUBLIC KEY-----
- -----END PUBLIC KEY-----
-
-The PEM B<RSAPublicKey> format uses the header and footer lines:
-
- -----BEGIN RSA PUBLIC KEY-----
- -----END RSA PUBLIC KEY-----
 
 =head1 EXAMPLES
 

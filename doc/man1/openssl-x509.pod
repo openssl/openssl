@@ -90,18 +90,13 @@ various sections.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-This specifies the input format normally the command will expect an X509
-certificate but this can change if other options such as B<-req> are
-present. The DER format is the DER encoding of the certificate and PEM
-is the base64 encoding of the DER encoding with header and footer lines
-added. The default format is PEM.
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
-=item B<-outform> B<DER>|B<PEM>
-
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+The input is normally an X.509 certificate, but this can change if other
+options such as B<-req> are used.
 
 =item B<-in> I<filename>
 
@@ -376,8 +371,13 @@ retained.
 
 =item B<-keyform> B<DER>|B<PEM>
 
-Specifies the format (DER or PEM) of the private key file used in the
-B<-signkey> option.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-CAform> B<DER>|B<PEM>, B<-CAkeyform> B<DER>|B<PEM>
+
+The format for the CA certificate and key; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-days> I<arg>
 
@@ -781,21 +781,6 @@ Set a certificate to be trusted for SSL client use and change set its alias to
         -setalias "Steve's Class 1 CA" -out trust.pem
 
 =head1 NOTES
-
-The PEM format uses the header and footer lines:
-
- -----BEGIN CERTIFICATE-----
- -----END CERTIFICATE-----
-
-it will also handle files containing:
-
- -----BEGIN X509 CERTIFICATE-----
- -----END X509 CERTIFICATE-----
-
-Trusted certificates have the lines
-
- -----BEGIN TRUSTED CERTIFICATE-----
- -----END TRUSTED CERTIFICATE-----
 
 The conversion to UTF8 format used with the name options assumes that
 T61Strings use the ISO8859-1 character set. This is wrong but Netscape

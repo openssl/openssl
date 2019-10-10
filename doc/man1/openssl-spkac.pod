@@ -55,8 +55,8 @@ present.
 
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
-Whether the key format is PEM, DER, or an engine-backed key.
-The default is PEM.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-passin> I<arg>
 

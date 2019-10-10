@@ -25,10 +25,11 @@ B<openssl> B<cms>
 [B<-sign_receipt>]
 [B<-verify_receipt> I<receipt>]
 [B<-in> I<filename>]
-[B<-inform> B<DER>|B<PEM>|B<SMIME>]
-[B<-rctform> B<DER>|B<PEM>|B<SMIME>]
 [B<-out> I<filename>]
+[B<-inform> B<DER>|B<PEM>|B<SMIME>]
 [B<-outform> B<DER>|B<PEM>|B<SMIME>]
+[B<-rctform> B<DER>|B<PEM>|B<SMIME>]
+[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-stream>]
 [B<-indef>]
 [B<-noindef>]
@@ -216,33 +217,33 @@ to the B<-verify> operation.
 The input message to be encrypted or signed or the message to be decrypted
 or verified.
 
-=item B<-inform> B<DER>|B<PEM>|B<SMIME>
-
-This specifies the input format for the CMS structure. The default
-is B<SMIME> which reads an S/MIME format message. B<PEM> and B<DER>
-format change this to expect PEM and DER format CMS structures
-instead. This currently only affects the input format of the CMS
-structure, if no CMS structure is being input (for example with
-B<-encrypt> or B<-sign>) this option has no effect.
-
-=item B<-rctform> B<DER>|B<PEM>|B<SMIME>
-
-Specify the format for a signed receipt for use with the B<-receipt_verify>
-operation.
-
 =item B<-out> I<filename>
 
 The message text that has been decrypted or verified or the output MIME
 format message that has been signed or verified.
 
+=item B<-inform> B<DER>|B<PEM>|B<SMIME>
+
+The input format of the CMS structure (if one is being read);
+the default is B<SMIME>.
+See L<openssl(1)/Format Options> for details.
+
 =item B<-outform> B<DER>|B<PEM>|B<SMIME>
 
-This specifies the output format for the CMS structure. The default
-is B<SMIME> which writes an S/MIME format message. B<PEM> and B<DER>
-format change this to write PEM and DER format CMS structures
-instead. This currently only affects the output format of the CMS
-structure, if no CMS structure is being output (for example with
-B<-verify> or B<-decrypt>) this option has no effect.
+The output format of the CMS structure (if one is being written);
+the default is B<SMIME>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+
+The format of the private key file; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-rctform> B<DER>|B<PEM>|B<SMIME>
+
+The signed receipt format for use with the B<-receipt_verify>; the default
+is B<SMIME>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-stream>, B<-indef>, B<-noindef>
 

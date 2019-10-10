@@ -52,15 +52,27 @@ Normally a PKCS#8 private key is expected on input and a private key will be
 written to the output file. With the B<-topk8> option the situation is
 reversed: it reads a private key and writes a PKCS#8 format key.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-This specifies the input format: see L<KEY FORMATS> for more details. The default
-format is PEM.
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
-=item B<-outform> B<DER>|B<PEM>
+If a key is being converted from PKCS#8 form (i.e. the B<-topk8> option is
+not used) then the input file must be in PKCS#8 format. An encrypted
+key is expected unless B<-nocrypt> is included.
 
-This specifies the output format: see L<KEY FORMATS> for more details. The default
-format is PEM.
+If B<-topk8> is not used and B<PEM> mode is set the output file will be an
+unencrypted private key in PKCS#8 format. If the B<-traditional> option is
+used then a traditional format private key is written instead.
+
+If B<-topk8> is not used and B<DER> mode is set the output file will be an
+unencrypted private key in traditional DER format.
+
+If B<-topk8> is used then any supported private key can be used for the input
+file in a format specified by B<-inform>. The output file will be encrypted
+PKCS#8 format using the specified encryption parameters unless B<-nocrypt>
+is included.
+
 
 =item B<-traditional>
 
@@ -148,27 +160,6 @@ Sets the scrypt I<N>, I<r> or I<p> parameters.
 
 =back
 
-=head1 KEY FORMATS
-
-Various different formats are used by this command. These are detailed
-below.
-
-If a key is being converted from PKCS#8 form (i.e. the B<-topk8> option is
-not used) then the input file must be in PKCS#8 format. An encrypted
-key is expected unless B<-nocrypt> is included.
-
-If B<-topk8> is not used and B<PEM> mode is set the output file will be an
-unencrypted private key in PKCS#8 format. If the B<-traditional> option is
-used then a traditional format private key is written instead.
-
-If B<-topk8> is not used and B<DER> mode is set the output file will be an
-unencrypted private key in traditional DER format.
-
-If B<-topk8> is used then any supported private key can be used for the input
-file in a format specified by B<-inform>. The output file will be encrypted
-PKCS#8 format using the specified encryption parameters unless B<-nocrypt>
-is included.
-
 =head1 NOTES
 
 By default, when converting a key to PKCS#8 format, PKCS#5 v2.0 using 256 bit
@@ -177,17 +168,6 @@ AES with HMAC and SHA256 is used.
 Some older implementations do not support PKCS#5 v2.0 format and require
 the older PKCS#5 v1.5 form instead, possibly also requiring insecure weak
 encryption algorithms such as 56 bit DES.
-
-The encrypted form of a PEM encode PKCS#8 files uses the following
-headers and footers:
-
- -----BEGIN ENCRYPTED PRIVATE KEY-----
- -----END ENCRYPTED PRIVATE KEY-----
-
-The unencrypted form uses:
-
- -----BEGIN PRIVATE KEY-----
- -----END PRIVATE KEY-----
 
 Private keys encrypted using PKCS#5 v2.0 algorithms and high iteration
 counts are more secure that those encrypted using the traditional

@@ -135,8 +135,8 @@ The private key to sign requests with.
 
 =item B<-keyform> B<DER>|B<PEM>
 
-The format of the data in the private key file.
-The default is PEM.
+The format of the private key file; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>
 

@@ -57,7 +57,8 @@ The input key file, by default it should be an RSA private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
-The key format PEM, DER or ENGINE.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-pubin>
 

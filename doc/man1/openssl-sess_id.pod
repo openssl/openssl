@@ -24,6 +24,9 @@ the SSL session master key) in human readable format. Since this is a
 diagnostic tool that needs some knowledge of the SSL protocol to use
 properly, most users will not need to use it.
 
+The precise format of the data can vary across OpenSSL versions and
+is not documented.
+
 =head1 OPTIONS
 
 =over 4
@@ -32,18 +35,13 @@ properly, most users will not need to use it.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>|B<NSS>
 
-This specifies the input format. The B<DER> option uses an ASN1 DER encoded
-format containing session details. The precise format can vary from one version
-to the next.  The B<PEM> form is the default format: it consists of the B<DER>
-format base64 encoded with additional header and footer lines.
+The input and output formats; the default is PEM.
+See L<openssl(1)/Format Options> for details.
 
-=item B<-outform> B<DER>|B<PEM>|B<NSS>
-
-This specifies the output format. The B<PEM> and B<DER> options have the same
-meaning and default as the B<-inform> option. The B<NSS> option outputs the
-session id and the master key in NSS keylog format.
+For B<NSS> output, the session ID and master key are reported in NSS "keylog"
+format.
 
 =item B<-in> I<filename>
 
@@ -133,11 +131,6 @@ This is the return code when an SSL client certificate is verified.
 =back
 
 =head1 NOTES
-
-The PEM encoded session format uses the header and footer lines:
-
- -----BEGIN SSL SESSION PARAMETERS-----
- -----END SSL SESSION PARAMETERS-----
 
 Since the SSL session output contains the master key it is
 possible to read the contents of an encrypted session using this

@@ -50,22 +50,16 @@ applications should use the more secure PKCS#8 format using the B<pkcs8>
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-This specifies the input format. The B<DER> option with a private key uses
-an ASN1 DER encoded form of an ASN.1 SEQUENCE consisting of the values of
-version (currently zero), p, q, g, the public and private key components
-respectively as ASN.1 INTEGERs. When used with a public key it uses a
-SubjectPublicKeyInfo structure: it is an error if the key is not DSA.
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
-The B<PEM> form is the default format: it consists of the B<DER> format base64
-encoded with additional header and footer lines. In the case of a private key
-PKCS#8 format is also accepted.
+Private keys are a sequence of B<ASN.1 INTEGERS>: the version (zero), B<p>,
+B<q>, B<g>, and the public and and private key components.  Public keys
+are a B<SubjectPublicKeyInfo> structure with the B<DSA> type.
 
-=item B<-outform> B<DER>|B<PEM>
-
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+The B<PEM> format also accepts PKCS#8 data.
 
 =item B<-in> I<filename>
 
@@ -127,18 +121,6 @@ thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =back
-
-=head1 NOTES
-
-The PEM private key format uses the header and footer lines:
-
- -----BEGIN DSA PRIVATE KEY-----
- -----END DSA PRIVATE KEY-----
-
-The PEM public key format uses the header and footer lines:
-
- -----BEGIN PUBLIC KEY-----
- -----END PUBLIC KEY-----
 
 =head1 EXAMPLES
 

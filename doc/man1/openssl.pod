@@ -516,6 +516,109 @@ parameters start with a minus sign:
 
 =back
 
+=head2 Format Options
+
+Several OpenSSL commands can take input or generate output in a variety
+of formats. The list of acceptable formats, and the default, is
+described in each command documentation.  The list of formats is
+described below. Both uppercase and lowercase are accepted.
+
+=over 4
+
+=item B<DER>
+
+A binary format, encoded or parsed according to Distinguished Encoding Rules
+(DER) of the ASN.1 data language.
+
+=item B<ENGINE>
+
+Used to specify that the cryptographic material is in an OpenSSL B<engine>.
+An engine must be configured or specified using the B<-engine> option.
+In addition, the B<-input> flag can be used to name a specific object in
+the engine.
+A password, such as the B<-passin> flag often must be specified as well.
+
+=item B<P12>
+
+A DER-encoded file containing a PKCS#12 object.
+It might be necessary to provide a decryption password to retrieve
+the private key.
+
+=item B<PEM>
+
+A text format defined in IETF RFC 1421 and IETF RFC 7468. Briefly, this is
+a block of base-64 encoding (defined in IETF RFC 4648), with specific
+lines used to mark the start and end:
+
+ Text before the BEGIN line is ignored.
+ ----- BEGIN object-type -----
+ OT43gQKBgQC/2OHZoko6iRlNOAQ/tMVFNq7fL81GivoQ9F1U0Qr+DH3ZfaH8eIkX
+ xT0ToMPJUzWAn8pZv0snA0um6SIgvkCuxO84OkANCVbttzXImIsL7pFzfcwV/ERK
+ UM6j0ZuSMFOCr/lGPAoOQU0fskidGEHi1/kW+suSr28TqsyYZpwBDQ==
+ ----- END object-type -----
+ Text after the END line is also ignored
+
+The I<object-type> must match the type of object that is expected.
+For example a C<BEGIN X509 CERTIFICATE> will not match if the command
+is trying to read a private key. The types supported include:
+
+ ANY PRIVATE KEY
+ CERTIFICATE
+ CERTIFICATE REQUEST
+ CMS
+ DH PARAMETERS
+ DSA PARAMETERS
+ DSA PUBLIC KEY
+ EC PARAMETERS
+ EC PRIVATE KEY
+ ECDSA PUBLIC KEY
+ ENCRYPTED PRIVATE KEY
+ PARAMETERS
+ PKCS #7 SIGNED DATA
+ PKCS7
+ PRIVATE KEY
+ PUBLIC KEY
+ RSA PRIVATE KEY
+ SSL SESSION PARAMETERS
+ TRUSTED CERTIFICATE
+ X509 CRL
+ X9.42 DH PARAMETERS
+
+The following legacy I<object-type>'s are also supported for compatibility
+with earlier releases:
+
+ DSA PRIVATE KEY
+ NEW CERTIFICATE REQUEST
+ RSA PUBLIC KEY
+ X509 CERTIFICATE
+
+=item B<SMIME>
+
+An S/MIME object as described in IETF RFC 8551.
+Earlier versions were known as CMS and are compatible.
+Note that the parsing is simple and might fail to parse some legal data.
+
+=back
+
+The options to specify the format are as follows. Refer to the individual
+manpage to see which options are accepted.
+
+=over 4
+
+=item B<-inform> I<format>, B<-outform> I<format>
+
+The format of the input or output streams.
+
+=item B<-keyform> I<format>
+
+Format of a private key input source.
+
+=item B<-CRLform> I<fornat>
+
+Format of a CRL input source.
+
+=back
+
 =head2 Pass Phrase Options
 
 Several commands accept password arguments, typically using B<-passin>
