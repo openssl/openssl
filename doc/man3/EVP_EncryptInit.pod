@@ -262,7 +262,7 @@ then I<inl> must be a multiple of EVP_CIPHER_block_size().  If it isn't,
 the result is undefined.  If the cipher has that flag set, then I<inl>
 can be any size.
 This function is historic and shouldn't be used in an application, please
-consider using Update and Final functions instead.
+consider using EVP_CipherUpdate(), and EVP_CipherFinal_ex instead.
 
 EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 return an EVP_CIPHER structure when passed a cipher name, a NID or an
