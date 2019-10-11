@@ -744,9 +744,14 @@ typedef struct ssl_ctx_ext_secure_st {
     unsigned char tick_aes_key[TLSEXT_TICK_KEY_LENGTH];
 } SSL_CTX_EXT_SECURE;
 
+struct ssl_cipher_list_flags_st {
+    STACK_OF(SSL_CIPHER) *cipher_list;
+    uint8_t *flags;
+};
+
 struct ssl_ctx_st {
     const SSL_METHOD *method;
-    STACK_OF(SSL_CIPHER) *cipher_list;
+    SSL_CIPHER_FLAGS *cipher_list_flags;
     /* same as above but sorted for lookup */
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
     /* TLSv1.3 specific ciphersuites */
@@ -1321,7 +1326,7 @@ struct ssl_st {
     SSL_DANE dane;
     /* crypto */
     STACK_OF(SSL_CIPHER) *peer_ciphers;
-    STACK_OF(SSL_CIPHER) *cipher_list;
+    SSL_CIPHER_FLAGS *cipher_list_flags;
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
     /* TLSv1.3 specific ciphersuites */
     STACK_OF(SSL_CIPHER) *tls13_ciphersuites;
@@ -2294,11 +2299,14 @@ __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                                  const SSL_CIPHER *const *bp);
 __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                                                     STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
-                                                    STACK_OF(SSL_CIPHER) **cipher_list,
+                                                    SSL_CIPHER_FLAGS **cipher_list_flags,
                                                     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                                                     const char *rule_str,
                                                     CERT *c,
                                                     int default_version_mask);
+__owur SSL_CIPHER_FLAGS *ssl_cipher_list_flags_new(STACK_OF(SSL_CIPHER) *cipher_list);
+__owur SSL_CIPHER_FLAGS *ssl_cipher_list_flags_dup(SSL_CIPHER_FLAGS *cipher_list_flags);
+void ssl_cipher_list_flags_free(SSL_CIPHER_FLAGS *cipher_list_flags);
 __owur int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format);
 __owur int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
                                 STACK_OF(SSL_CIPHER) **skp,
@@ -2390,7 +2398,7 @@ __owur unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt,
                                             CERT_PKEY *cpk);
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
                                             STACK_OF(SSL_CIPHER) *clnt,
-                                            STACK_OF(SSL_CIPHER) *srvr);
+                                            SSL_CIPHER_FLAGS *srvr);
 __owur int ssl3_digest_cached_records(SSL *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
@@ -2407,6 +2415,7 @@ __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 __owur int ssl3_do_change_cipher_spec(SSL *ssl);
 __owur long ssl3_default_timeout(void);
 
+__owur SSL_CIPHER_FLAGS *SSL_get_ciphers_flags(const SSL *s);
 __owur int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype);
 __owur int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype);
 __owur int tls_setup_handshake(SSL *s);
