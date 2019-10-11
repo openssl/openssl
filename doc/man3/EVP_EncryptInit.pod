@@ -256,7 +256,7 @@ the B<ctx>, but this is no longer done and EVP_CIPHER_CTX_clean()
 must be called to free any context resources.
 
 EVP_Cipher() encrypts or decrypts a maximum I<inl> amount of bytes from
-I<in> and leaving the result in I<out>.
+I<in> and leaves the result in I<out>.
 If the cipher doesn't have the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> set,
 then I<inl> must be a multiple of EVP_CIPHER_block_size().  If it isn't,
 the result is undefined.  If the cipher has that flag set, then I<inl>
