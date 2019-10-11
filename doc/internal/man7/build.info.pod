@@ -166,8 +166,11 @@ variations on how they are treated.
 
 =over 4
 
-=item B<I<KEYWORD>{> I<attrib> | I<attrib>B<=>I<attrib-value>  [,...]B<}>
+=item B<I<KEYWORD>{> I<attrib> | I<attrib>B<=>I<attrib-value> [,...]B<}>
 B<=> I<value> ...
+
+=item B<I<KEYWORD>[>I<item>B<]{> I<attrib> | I<attrib>B<=>I<attrib-value>
+[,...]B<}> B<=> I<value> ...
 
 =back
 
@@ -419,6 +422,17 @@ rather than some specific I<item>.
 The I<item> may be any program, library, module, script, or any
 filename used as a value anywhere.
 
+B<DEPEND> statements may have attributes, which apply to each
+individual dependency in such a statement.  For example:
+
+    DEPEND[libfoo.a]=libmandatory.a
+    DEPEND[libfoo.a]{weak}=libbar.a libcookie.a
+
+With those statements, the dependency between C<libfoo.a> and
+C<libmandatory.a> is strong, while the dependency between C<libfoo.a>
+and C<libbar.a> and C<libcookie.a> is weak.  See the description of
+B<weak> in L</Known attributes> for more information.
+
 =item B<GENERATE[>I<item>B<]> B<=> I<generator> I<generator-arg> ...
 
 This specifies that the I<item> is generated using the I<generator>
@@ -443,6 +457,10 @@ Collects filenames that will be used as source files for I<item>.
 The I<item> must be a singular item, and may be any program, library,
 module or script given with B<PROGRAMS>, B<LIBS>, B<MODULES> and
 B<SCRIPTS>.
+
+Static libraries may be sources.  In that case, its object files are
+used directly when building I<item> instead of relying on library
+dependency and symbol resolution (through B<DEPEND> statements).
 
 =item B<SHARED_SOURCE[>I<item>B<]> B<=> I<file> ...
 
@@ -493,6 +511,36 @@ directory.
 This is used with B<MODULES>, to specify what modules are engines and
 should be installed in the engines directory instead of the modules
 directory.
+
+=item B<weak>
+
+This is used with B<DEPEND> where libraries are involved, to specify
+that the dependency between two libraries is weak and is only there to
+infer order.
+
+Without this attribute, a dependency between two libraries, expressed
+like this, means that if C<libfoo.a> appears in a linking command
+line, so will C<libmandatory.a>:
+
+    DEPEND[libfoo.a]=libmandatory.a
+
+With this attribute, a dependency between two libraries, expressed
+like this, means that if I<both> C<libfoo.a> and C<libmandatory.a>
+appear in a linking command line (because of recursive dependencies
+through other libraries), they will be ordered in such a way that this
+dependency is maintained:
+
+    DEPEND[libfoo.a]{weak}=libfoo.a libcookie.a 
+
+This is useful in complex dependecy trees where two libraries can be
+used as alternatives for each other.  In this example, C<lib1.a> and
+C<lib2.a> have alternative implementations of the same thing, and
+C<libmandatory.a> has unresolved references to that same thing, and is
+therefore depending on either of them, but not both at the same time:
+
+    DEPEND[program1]=libmandatory.a lib1.a
+    DEPEND[program2]=libmandatory.a lib2.a
+    DEPEND[libmandatory]{weak}=lib1.a lib2.a
 
 =back
 
