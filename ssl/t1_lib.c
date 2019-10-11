@@ -2098,8 +2098,7 @@ int tls1_process_sigalgs(SSL *s)
     if (!tls1_set_shared_sigalgs(s))
         return 0;
 
-    for (i = 0; i < SSL_PKEY_NUM; i++)
-        pvalid[i] = 0;
+    memset(s->s3.tmp.valid_flags, 0, sizeof(s->s3.tmp.valid_flags));
 
     for (i = 0; i < s->shared_sigalgslen; i++) {
         const SIGALG_LOOKUP *sigptr = s->shared_sigalgs[i];
