@@ -219,6 +219,7 @@ typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
 typedef struct ssl_method_st SSL_METHOD;
 typedef struct ssl_version_st SSL_VERSION;
 typedef struct ssl_cipher_st SSL_CIPHER;
+typedef struct ssl_cipher_list_flags_st SSL_CIPHER_FLAGS;
 typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;

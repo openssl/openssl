@@ -575,6 +575,63 @@ static void clear_ciphers(SSL *s)
     ssl_clear_hash_ctx(&s->write_hash);
 }
 
+SSL_CIPHER_FLAGS *ssl_cipher_list_flags_new(STACK_OF(SSL_CIPHER) *cipher_list)
+{
+    SSL_CIPHER_FLAGS *ret;
+    size_t cnt;
+
+    ret = OPENSSL_malloc(sizeof(SSL_CIPHER_FLAGS));
+    if (!ret)
+        return NULL;
+
+    if (cipher_list == NULL) {
+        ret->cipher_list = NULL;
+        ret->flags = NULL;
+        return ret;
+    }
+
+    cnt = sk_SSL_CIPHER_num(cipher_list) * sizeof(uint8_t);
+    ret->cipher_list = sk_SSL_CIPHER_dup(cipher_list);
+    ret->flags = OPENSSL_malloc(cnt);
+
+    if (!ret->cipher_list || !ret->flags) {
+        ssl_cipher_list_flags_free(ret);
+        return NULL;
+    }
+    memset(ret->flags, 0, cnt);
+    return ret;
+}
+
+SSL_CIPHER_FLAGS *ssl_cipher_list_flags_dup(SSL_CIPHER_FLAGS *cipher_list_flags)
+{
+    SSL_CIPHER_FLAGS *ret;
+    size_t cnt;
+
+    ret = OPENSSL_malloc(sizeof(SSL_CIPHER_FLAGS));
+    if (!ret)
+        return NULL;
+
+    cnt = sk_SSL_CIPHER_num(cipher_list_flags->cipher_list) * sizeof(uint8_t);
+    ret->cipher_list = sk_SSL_CIPHER_dup(cipher_list_flags->cipher_list);
+    ret->flags = OPENSSL_malloc(cnt);
+
+    if (!ret->cipher_list || !ret->flags) {
+        ssl_cipher_list_flags_free(ret);
+        return NULL;
+    }
+    memcpy(ret->flags, cipher_list_flags->flags, cnt);
+    return ret;
+}
+
+void ssl_cipher_list_flags_free(SSL_CIPHER_FLAGS *cipher_list_flags)
+{
+    if (cipher_list_flags != NULL) {
+        sk_SSL_CIPHER_free(cipher_list_flags->cipher_list);
+        OPENSSL_free(cipher_list_flags->flags);
+        OPENSSL_free(cipher_list_flags);
+    }
+}
+
 int SSL_clear(SSL *s)
 {
     if (s->method == NULL) {
@@ -666,7 +723,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
     }
     sk = ssl_create_cipher_list(ctx->method,
                                 ctx->tls13_ciphersuites,
-                                &(ctx->cipher_list),
+                                &(ctx->cipher_list_flags),
                                 &(ctx->cipher_list_by_id),
                                 OSSL_default_cipher_list(), ctx->cert, 0);
     if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
@@ -1171,7 +1228,7 @@ void SSL_free(SSL *s)
     BUF_MEM_free(s->init_buf);
 
     /* add extra stuff */
-    sk_SSL_CIPHER_free(s->cipher_list);
+    ssl_cipher_list_flags_free(s->cipher_list_flags);
     sk_SSL_CIPHER_free(s->cipher_list_by_id);
     sk_SSL_CIPHER_free(s->tls13_ciphersuites);
     sk_SSL_CIPHER_free(s->peer_ciphers);
@@ -2569,10 +2626,12 @@ int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
 STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s)
 {
     if (s != NULL) {
-        if (s->cipher_list != NULL) {
-            return s->cipher_list;
-        } else if ((s->ctx != NULL) && (s->ctx->cipher_list != NULL)) {
-            return s->ctx->cipher_list;
+        if ((s->cipher_list_flags != NULL)
+            && (s->cipher_list_flags->cipher_list != NULL)) {
+            return s->cipher_list_flags->cipher_list;
+        } else if ((s->ctx != NULL) && (s->ctx->cipher_list_flags != NULL)
+            && (s->ctx->cipher_list_flags->cipher_list != NULL)) {
+            return s->ctx->cipher_list_flags->cipher_list;
         }
     }
     return NULL;
@@ -2646,8 +2705,8 @@ const char *SSL_get_cipher_list(const SSL *s, int n)
  * preference */
 STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx)
 {
-    if (ctx != NULL)
-        return ctx->cipher_list;
+    if (ctx != NULL && ctx->cipher_list_flags != NULL)
+        return ctx->cipher_list_flags->cipher_list;
     return NULL;
 }
 
@@ -2684,7 +2743,8 @@ int SSL_CTX_set_cipher_list_and_mask(SSL_CTX *ctx, const char *str,
     STACK_OF(SSL_CIPHER) *sk;
 
     sk = ssl_create_cipher_list(ctx->method, ctx->tls13_ciphersuites,
-                                &ctx->cipher_list, &ctx->cipher_list_by_id, str,
+                                &ctx->cipher_list_flags,
+                                &ctx->cipher_list_by_id, str,
                                 ctx->cert, default_version_mask);
     /*
      * ssl_create_cipher_list may return an empty stack if it was unable to
@@ -2715,8 +2775,8 @@ int SSL_set_cipher_list_and_mask(SSL *s, const char *str,
     STACK_OF(SSL_CIPHER) *sk;
 
     sk = ssl_create_cipher_list(s->ctx->method, s->tls13_ciphersuites,
-                                &s->cipher_list, &s->cipher_list_by_id, str,
-                                s->cert, default_version_mask);
+                                &s->cipher_list_flags, &s->cipher_list_by_id,
+                                str, s->cert, default_version_mask);
     /* see comment in SSL_CTX_set_cipher_list */
     if (sk == NULL)
         return 0;
@@ -3107,9 +3167,10 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
     if (!ssl_create_cipher_list(ret->method,
                                 ret->tls13_ciphersuites,
-                                &ret->cipher_list, &ret->cipher_list_by_id,
+                                &ret->cipher_list_flags,
+                                &ret->cipher_list_by_id,
                                 OSSL_default_cipher_list(), ret->cert, 0)
-        || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
+        || sk_SSL_CIPHER_num(ret->cipher_list_flags->cipher_list) <= 0) {
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
         goto err2;
     }
@@ -3285,7 +3346,7 @@ void SSL_CTX_free(SSL_CTX *a)
 #ifndef OPENSSL_NO_CT
     CTLOG_STORE_free(a->ctlog_store);
 #endif
-    sk_SSL_CIPHER_free(a->cipher_list);
+    ssl_cipher_list_flags_free(a->cipher_list_flags);
     sk_SSL_CIPHER_free(a->cipher_list_by_id);
     sk_SSL_CIPHER_free(a->tls13_ciphersuites);
     ssl_cert_free(a->cert);
@@ -3960,8 +4021,9 @@ SSL *SSL_dup(SSL *s)
     X509_VERIFY_PARAM_inherit(ret->param, s->param);
 
     /* dup the cipher_list and cipher_list_by_id stacks */
-    if (s->cipher_list != NULL) {
-        if ((ret->cipher_list = sk_SSL_CIPHER_dup(s->cipher_list)) == NULL)
+    if (s->cipher_list_flags != NULL) {
+        ret->cipher_list_flags = ssl_cipher_list_flags_dup(s->cipher_list_flags);
+        if (ret->cipher_list_flags == NULL)
             goto err;
     }
     if (s->cipher_list_by_id != NULL)

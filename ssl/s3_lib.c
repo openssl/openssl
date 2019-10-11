@@ -3258,6 +3258,17 @@ long ssl3_default_timeout(void)
     return (60 * 60 * 2);
 }
 
+SSL_CIPHER_FLAGS *SSL_get_ciphers_flags(const SSL *s)
+{
+    if (s != NULL) {
+        if (s->cipher_list_flags != NULL)
+            return s->cipher_list_flags;
+        else if ((s->ctx != NULL) && (s->ctx->cipher_list_flags != NULL))
+            return s->ctx->cipher_list_flags;
+    }
+    return NULL;
+}
+
 int ssl3_num_ciphers(void)
 {
     return SSL3_NUM_CIPHERS;
@@ -4120,8 +4131,9 @@ int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
  * Returns the selected cipher or NULL when no common ciphers.
  */
 const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
-                                     STACK_OF(SSL_CIPHER) *srvr)
+                                     SSL_CIPHER_FLAGS *srvr_flags)
 {
+    STACK_OF(SSL_CIPHER) *srvr;
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok, prefer_sha256 = 0;
@@ -4130,6 +4142,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #ifndef OPENSSL_NO_CHACHA
     STACK_OF(SSL_CIPHER) *prio_chacha = NULL;
 #endif
+    if (srvr_flags == NULL)
+        return 0;
+    srvr = srvr_flags->cipher_list;
 
     /* Let's see which ciphers we can support */
 
