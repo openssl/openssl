@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include "internal/thread_once.h"
 
 int do_ex_data_init(OPENSSL_CTX *ctx)

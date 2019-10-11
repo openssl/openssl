@@ -12,9 +12,9 @@
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
 #include <openssl/kdf.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int evp_kdf_up_ref(void *vkdf)
 {
@@ -173,14 +173,14 @@ const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf)
     return kdf->gettable_params();
 }
 
-const OSSL_PARAM *EVP_KDF_CTX_gettable_params(const EVP_KDF *kdf)
+const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf)
 {
     if (kdf->gettable_ctx_params == NULL)
         return NULL;
     return kdf->gettable_ctx_params();
 }
 
-const OSSL_PARAM *EVP_KDF_CTX_settable_params(const EVP_KDF *kdf)
+const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf)
 {
     if (kdf->settable_ctx_params == NULL)
         return NULL;

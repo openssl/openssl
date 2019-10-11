@@ -11,7 +11,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/ess.h>
 #include <openssl/x509v3.h>
-#include "internal/ess_int.h"
+#include "crypto/ess.h"
 
 /* ASN1 stuff for ESS Structure */
 

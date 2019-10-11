@@ -18,8 +18,8 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 #ifndef NO_ASN1_OLD
 
@@ -116,7 +116,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
         goto err;
     }
     if (mdnid == NID_undef) {
-        if (!pkey->ameth || !pkey->ameth->item_verify) {
+        if (pkey->ameth == NULL || pkey->ameth->item_verify == NULL) {
             ASN1err(ASN1_F_ASN1_ITEM_VERIFY,
                     ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
             goto err;

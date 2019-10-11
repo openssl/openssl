@@ -15,7 +15,7 @@
 #include <openssl/ssl.h>
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 #include "../ssl/ssl_cert_table.h"
 
 #define test_cert_table(nid, amask, idx) \

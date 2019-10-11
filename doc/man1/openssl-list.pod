@@ -52,15 +52,15 @@ Display a list of standard commands.
 =item B<-digest-commands>
 
 Display a list of message digest commands, which are typically used
-as input to the L<dgst(1)> or L<speed(1)> commands.
+as input to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 
 =item B<-digest-algorithms>
 
 Display a list of message digest algorithms.
-If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
-official algorithm name, B<bar>.
-If a line is of the form C<foo @ bar>, then B<foo> is provided by the provider
-B<bar>.
+If a line is of the form C<foo =E<gt> bar> then C<foo> is an alias for the
+official algorithm name, C<bar>.
+If a line is of the form C<foo @ bar>, then C<foo> is provided by the provider
+C<bar>.
 
 In verbose mode, the algorithms provided by a provider will get additional
 information on what parameters each implementation supports.
@@ -76,15 +76,15 @@ Display a list of message authentication code algorithms.
 =item B<-cipher-commands>
 
 Display a list of cipher commands, which are typically used as input
-to the L<dgst(1)> or L<speed(1)> commands.
+to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 
 =item B<-cipher-algorithms>
 
 Display a list of cipher algorithms.
-If a line is of the form C<foo =E<gt> bar> then B<foo> is an alias for the
+If a line is of the form C<foo =E<gt> bar> then C<foo> is an alias for the
 official algorithm name, B<bar>.
-If a line is of the form C<foo @ bar>, then B<foo> is provided by the provider
-B<bar>.
+If a line is of the form C<foo @ bar>, then C<foo> is provided by the provider
+C<bar>.
 
 In verbose mode, the algorithms provided by a provider will get additional
 information on what parameters each implementation supports.

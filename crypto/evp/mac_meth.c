@@ -2,9 +2,9 @@
 #include <openssl/err.h>
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int evp_mac_up_ref(void *vmac)
 {
@@ -190,14 +190,14 @@ const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac)
     return mac->gettable_params();
 }
 
-const OSSL_PARAM *EVP_MAC_CTX_gettable_params(const EVP_MAC *mac)
+const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac)
 {
     if (mac->gettable_ctx_params == NULL)
         return NULL;
     return mac->gettable_ctx_params();
 }
 
-const OSSL_PARAM *EVP_MAC_CTX_settable_params(const EVP_MAC *mac)
+const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac)
 {
     if (mac->settable_ctx_params == NULL)
         return NULL;

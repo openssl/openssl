@@ -12,11 +12,11 @@
 #include "e_os.h"
 #include "internal/cryptlib.h"
 #include <stdio.h>
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/x509v3.h>
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
 #include <openssl/bn.h>
 #include "ext_dat.h"
 
@@ -380,14 +380,14 @@ static char *strip_spaces(char *name)
     p = name;
     while (*p && ossl_isspace(*p))
         p++;
-    if (!*p)
+    if (*p == '\0')
         return NULL;
     q = p + strlen(p) - 1;
     while ((q != p) && ossl_isspace(*q))
         q--;
     if (p != q)
         q[1] = 0;
-    if (!*p)
+    if (*p == '\0')
         return NULL;
     return p;
 }
@@ -989,11 +989,12 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
     unsigned char ipout[32];
     char *iptmp = NULL, *p;
     int iplen1, iplen2;
+
     p = strchr(ipasc, '/');
-    if (!p)
+    if (p == NULL)
         return NULL;
     iptmp = OPENSSL_strdup(ipasc);
-    if (!iptmp)
+    if (iptmp == NULL)
         return NULL;
     p = iptmp + (p - ipasc);
     *p++ = 0;

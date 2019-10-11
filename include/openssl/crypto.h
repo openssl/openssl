@@ -8,8 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CRYPTO_H
-# define HEADER_CRYPTO_H
+#ifndef OPENSSL_CRYPTO_H
+# define OPENSSL_CRYPTO_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CRYPTO_H
+# endif
 
 # include <stdlib.h>
 # include <time.h>
@@ -22,7 +28,7 @@
 
 # include <openssl/safestack.h>
 # include <openssl/opensslv.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/opensslconf.h>
 # include <openssl/cryptoerr.h>
 

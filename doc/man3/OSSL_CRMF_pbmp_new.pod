@@ -66,6 +66,10 @@ structure, or NULL on error.
 
 RFC 4211 section 4.4
 
+=head1 HISTORY
+
+The OpenSSL CRMF support was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.

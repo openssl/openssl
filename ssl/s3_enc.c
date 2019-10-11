@@ -9,7 +9,7 @@
  */
 
 #include <stdio.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <openssl/core_names.h>
@@ -17,6 +17,7 @@
 
 static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 {
+    EVP_MD *md5;
     EVP_MD_CTX *m5;
     EVP_MD_CTX *s1;
     unsigned char buf[16], smd[SHA_DIGEST_LENGTH];
@@ -28,14 +29,14 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     c = os_toascii[c];          /* 'A' in ASCII */
 #endif
     k = 0;
+    md5 = EVP_MD_fetch(NULL, OSSL_DIGEST_NAME_MD5, "-fips");
     m5 = EVP_MD_CTX_new();
     s1 = EVP_MD_CTX_new();
-    if (m5 == NULL || s1 == NULL) {
+    if (md5 == NULL || m5 == NULL || s1 == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GENERATE_KEY_BLOCK,
                  ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    EVP_MD_CTX_set_flags(m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     for (i = 0; (int)i < num; i += MD5_DIGEST_LENGTH) {
         k++;
         if (k > sizeof(buf)) {
@@ -55,7 +56,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
             || !EVP_DigestUpdate(s1, s->s3.server_random, SSL3_RANDOM_SIZE)
             || !EVP_DigestUpdate(s1, s->s3.client_random, SSL3_RANDOM_SIZE)
             || !EVP_DigestFinal_ex(s1, smd, NULL)
-            || !EVP_DigestInit_ex(m5, EVP_md5(), NULL)
+            || !EVP_DigestInit_ex(m5, md5, NULL)
             || !EVP_DigestUpdate(m5, s->session->master_key,
                                  s->session->master_key_length)
             || !EVP_DigestUpdate(m5, smd, SHA_DIGEST_LENGTH)) {
@@ -85,6 +86,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
  err:
     EVP_MD_CTX_free(m5);
     EVP_MD_CTX_free(s1);
+    EVP_MD_free(md5);
     return ret;
 }
 

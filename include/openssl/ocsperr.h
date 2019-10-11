@@ -8,8 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OCSPERR_H
-# define HEADER_OCSPERR_H
+#ifndef OPENSSL_OCSPERR_H
+# define OPENSSL_OCSPERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_OCSPERR_H
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

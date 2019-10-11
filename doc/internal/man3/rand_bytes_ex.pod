@@ -7,7 +7,7 @@ rand_bytes_ex, rand_priv_bytes_ex
 
 =head1 SYNOPSIS
 
- #include "internal/rand_int.h"
+ #include "crypto/rand.h"
 
  int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
  int rand_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
@@ -16,9 +16,9 @@ rand_bytes_ex, rand_priv_bytes_ex
 
 rand_bytes_ex() and rand_priv_bytes_ex() are the equivalent of RAND_bytes() and
 RAND_priv_bytes() in the public API except that they both take an additional
-B<ctx> parameter.
+I<ctx> parameter.
 The DRBG used for the operation is the public or private DRBG associated with
-the specified B<ctx>. The parameter can be NULL, in which case
+the specified I<ctx>. The parameter can be NULL, in which case
 the default library ctx is used.
 If the default RAND_METHOD has been changed then for compatibility reasons the
 RAND_METHOD will be used in preference and the DRBG of the library context

@@ -59,44 +59,44 @@ GENERATED={- # common0.tmpl provides @generated
 
 INSTALL_LIBS={-
         join(" ", map { platform->staticlib($_) // () }
-                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
                   @{$unified_info{libraries}})
 -}
 INSTALL_SHLIBS={-
         join(" ", map { platform->sharedlib($_) // () }
-                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
                   @{$unified_info{libraries}})
 -}
 INSTALL_SHLIB_INFO={-
         join(" ", map { my $x = platform->sharedlib($_);
                         my $y = platform->sharedlib_simple($_);
                         $x ? "\"$x;$y\"" : () }
-                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
                   @{$unified_info{libraries}})
 -}
 INSTALL_ENGINES={-
         join(" ", map { platform->dso($_) }
-                  grep { !$unified_info{attributes}->{$_}->{noinst}
-                         && $unified_info{attributes}->{$_}->{engine} }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                         && $unified_info{attributes}->{modules}->{$_}->{engine} }
                   @{$unified_info{modules}})
 -}
 INSTALL_PROGRAMS={-
         join(" ", map { platform->bin($_) }
-                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
                   @{$unified_info{programs}})
 -}
 BIN_SCRIPTS={-
-        join(" ", map { my $x = $unified_info{attributes}->{$_}->{linkname};
+        join(" ", map { my $x = $unified_info{attributes}->{scripts}->{$_}->{linkname};
                         $x ? "$_:$x" : $_ }
-                  grep { !$unified_info{attributes}->{$_}->{noinst}
-                         && !$unified_info{attributes}->{$_}->{misc} }
+                  grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+                         && !$unified_info{attributes}->{scripts}->{$_}->{misc} }
                   @{$unified_info{scripts}})
 -}
 MISC_SCRIPTS={-
-        join(" ", map { my $x = $unified_info{attributes}->{$_}->{linkname};
+        join(" ", map { my $x = $unified_info{attributes}->{scripts}->{$_}->{linkname};
                         $x ? "$_:$x" : $_ }
-                  grep { !$unified_info{attributes}->{$_}->{noinst}
-                         && $unified_info{attributes}->{$_}->{misc} }
+                  grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+                         && $unified_info{attributes}->{scripts}->{$_}->{misc} }
                   @{$unified_info{scripts}})
 -}
 
@@ -734,7 +734,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 
 .PHONY: doc-nits
 doc-nits: build_generated
-	( cd "$(SRCDIR)"; $(PERL) util/find-doc-nits -n -p -s )
+	( cd "$(SRCDIR)"; $(PERL) util/find-doc-nits -n -e )
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
@@ -1020,7 +1020,7 @@ EOF
   # last in the line.  We may therefore need to put back a line ending.
   sub src2obj {
       my %args = @_;
-      my $obj = platform->obj($args{obj});
+      my $obj = platform->convertext($args{obj});
       my $dep = platform->dep($args{obj});
       my @srcs = @{$args{srcs}};
       my $srcs = join(" ", map { quotify_arg($_) } @srcs);
@@ -1101,15 +1101,22 @@ EOF
   sub obj2shlib {
       my %args = @_;
       my @linkdirs = ();
-      foreach (@{args{deps}}) {
-          my $d = dirname($_);
-          push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+      my @linklibs = ();
+      foreach (@{$args{deps}}) {
+          if (platform->isstaticlib($_)) {
+              push @linklibs, platform->convertext($_);
+          } else {
+              my $d = "-L" . dirname($_);
+              my $l = basename($_);
+              $l =~ s/^lib//;
+              $l = "-l" . $l;
+              push @linklibs, $l;
+              push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+          }
       }
-      my $linkflags = join("", map { "-L$_ " } @linkdirs);
-      my $linklibs = join("", map { my $f = basename($_);
-                                    (my $l = $f) =~ s/^lib//;
-                                    " -l$l" } @{$args{deps}});
-      my @objs = map { platform->obj($_) }
+      my $linkflags = join("", map { $_." " } @linkdirs);
+      my $linklibs = join("", map { $_." " } @linklibs);
+      my @objs = map { platform->convertext($_) }
                  grep { !platform->isdef($_) }
                  @{$args{objs}};
       my @defs = map { platform->def($_) }
@@ -1162,17 +1169,25 @@ EOF
   }
   sub obj2dso {
       my %args = @_;
-      my $dso = platform->dso($args{lib});
+      my $dso = platform->dso($args{module});
       my @linkdirs = ();
-      foreach (@{args{deps}}) {
-          my $d = dirname($_);
-          push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+      my @linklibs = ();
+      foreach (@{$args{deps}}) {
+          next unless defined $_;
+          if (platform->isstaticlib($_)) {
+              push @linklibs, platform->convertext($_);
+          } else {
+              my $d = "-L" . dirname($_);
+              my $l = basename($_);
+              $l =~ s/^lib//;
+              $l = "-l" . $l;
+              push @linklibs, $l;
+              push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+          }
       }
-      my $linkflags = join("", map { "-L$_ " } @linkdirs);
-      my $linklibs = join("", map { my $f = basename($_);
-                                    (my $l = $f) =~ s/^lib//;
-                                    " -l$l" } @{$args{deps}});
-      my @objs = map { platform->obj($_) }
+      my $linkflags = join("", map { $_." " } @linkdirs);
+      my $linklibs = join("", map { $_." " } @linklibs);
+      my @objs = map { platform->convertext($_) }
                  grep { !platform->isdef($_) }
                  @{$args{objs}};
       my @defs = map { platform->def($_) }
@@ -1186,7 +1201,7 @@ EOF
 $dso: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 	        -o $dso$shared_def $objs \\
-	        $linklibs \$(DSO_EX_LIBS)
+	        $linklibs\$(DSO_EX_LIBS)
 EOF
   }
   sub obj2lib {
@@ -1206,20 +1221,22 @@ EOF
       my $objs = join(" ", map { platform->obj($_) } @{$args{objs}});
       my $deps = join(" ", compute_lib_depends(@{$args{deps}}));
       my @linkdirs = ();
-      foreach (@{args{deps}}) {
-          next if $_ =~ /\.a$/;
-          my $d = dirname($_);
-          push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+      my @linklibs = ();
+      foreach (@{$args{deps}}) {
+          next unless defined $_;
+          if (platform->isstaticlib($_)) {
+              push @linklibs, platform->convertext($_);
+          } else {
+              my $d = "-L" . dirname($_);
+              my $l = basename($_);
+              $l =~ s/^lib//;
+              $l = "-l" . $l;
+              push @linklibs, $l;
+              push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+          }
       }
-      my $linkflags = join("", map { "-L$_ " } @linkdirs);
-      my $linklibs = join("", map { if ($_ =~ m/\.a$/) {
-                                        " ".platform->staticlib($_);
-                                    } else {
-                                        my $f = basename($_);
-                                        (my $l = $f) =~ s/^lib//;
-                                        " -l$l"
-                                    }
-                                  } @{$args{deps}});
+      my $linkflags = join("", map { $_." " } @linkdirs);
+      my $linklibs = join("", map { $_." " } @linklibs);
       my $cmd = '$(CC)';
       my $cmdflags = '$(BIN_CFLAGS)';
       if (grep /_cc\.o$/, @{$args{objs}}) {
@@ -1230,8 +1247,8 @@ EOF
 $bin: $objs $deps
 	rm -f $bin
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
-	        -o $bin $objs \\
-	        $linklibs \$(BIN_EX_LIBS)
+		-o $bin $objs \\
+		$linklibs\$(BIN_EX_LIBS)
 EOF
   }
   sub in2script {

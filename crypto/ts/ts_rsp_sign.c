@@ -14,8 +14,8 @@
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
 #include <openssl/crypto.h>
-#include "ts_lcl.h"
-#include "internal/ess_int.h"
+#include "ts_local.h"
+#include "crypto/ess.h"
 
 static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *, void *);
 static int def_time_cb(struct TS_resp_ctx *, void *, long *sec, long *usec);
@@ -505,7 +505,7 @@ static ASN1_OBJECT *ts_RESP_get_policy(TS_RESP_CTX *ctx)
         if (!OBJ_cmp(requested, current))
             policy = current;
     }
-    if (!policy) {
+    if (policy == NULL) {
         TSerr(TS_F_TS_RESP_GET_POLICY, TS_R_UNACCEPTABLE_POLICY);
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Requested policy is not " "supported.");

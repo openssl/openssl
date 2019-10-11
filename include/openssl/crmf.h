@@ -11,8 +11,8 @@
  * CRMF (RFC 4211) implementation by M. Peylo, M. Viljanen, and D. von Oheimb.
  */
 
-#ifndef OSSL_HEADER_CRMF_H
-# define OSSL_HEADER_CRMF_H
+#ifndef OPENSSL_CRMF_H
+# define OPENSSL_CRMF_H
 
 # include <openssl/opensslconf.h>
 
@@ -23,7 +23,7 @@
 #  include <openssl/x509v3.h> /* for GENERAL_NAME etc. */
 
 /* explicit #includes not strictly needed since implied by the above: */
-#  include <openssl/ossl_typ.h>
+#  include <openssl/types.h>
 #  include <openssl/x509.h>
 
 #  ifdef  __cplusplus
@@ -39,30 +39,30 @@ extern "C" {
 #  define OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT       0
 #  define OSSL_CRMF_SUBSEQUENTMESSAGE_CHALLENGERESP  1
 
-typedef struct OSSL_crmf_encryptedvalue_st OSSL_CRMF_ENCRYPTEDVALUE;
+typedef struct ossl_crmf_encryptedvalue_st OSSL_CRMF_ENCRYPTEDVALUE;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDVALUE)
-typedef struct OSSL_crmf_msg_st OSSL_CRMF_MSG;
+typedef struct ossl_crmf_msg_st OSSL_CRMF_MSG;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
 DEFINE_STACK_OF(OSSL_CRMF_MSG)
-typedef struct OSSL_crmf_attributetypeandvalue_st OSSL_CRMF_ATTRIBUTETYPEANDVALUE;
-typedef struct OSSL_crmf_pbmparameter_st OSSL_CRMF_PBMPARAMETER;
+typedef struct ossl_crmf_attributetypeandvalue_st OSSL_CRMF_ATTRIBUTETYPEANDVALUE;
+typedef struct ossl_crmf_pbmparameter_st OSSL_CRMF_PBMPARAMETER;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PBMPARAMETER)
-typedef struct OSSL_crmf_poposigningkey_st OSSL_CRMF_POPOSIGNINGKEY;
-typedef struct OSSL_crmf_certrequest_st OSSL_CRMF_CERTREQUEST;
-typedef struct OSSL_crmf_certid_st OSSL_CRMF_CERTID;
+typedef struct ossl_crmf_poposigningkey_st OSSL_CRMF_POPOSIGNINGKEY;
+typedef struct ossl_crmf_certrequest_st OSSL_CRMF_CERTREQUEST;
+typedef struct ossl_crmf_certid_st OSSL_CRMF_CERTID;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_CERTID)
 DEFINE_STACK_OF(OSSL_CRMF_CERTID)
 
-typedef struct OSSL_crmf_pkipublicationinfo_st OSSL_CRMF_PKIPUBLICATIONINFO;
+typedef struct ossl_crmf_pkipublicationinfo_st OSSL_CRMF_PKIPUBLICATIONINFO;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_PKIPUBLICATIONINFO)
-typedef struct OSSL_crmf_singlepubinfo_st OSSL_CRMF_SINGLEPUBINFO;
+typedef struct ossl_crmf_singlepubinfo_st OSSL_CRMF_SINGLEPUBINFO;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_SINGLEPUBINFO)
-typedef struct OSSL_crmf_certtemplate_st OSSL_CRMF_CERTTEMPLATE;
+typedef struct ossl_crmf_certtemplate_st OSSL_CRMF_CERTTEMPLATE;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_CERTTEMPLATE)
 typedef STACK_OF(OSSL_CRMF_MSG) OSSL_CRMF_MSGS;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSGS)
 
-typedef struct OSSL_crmf_optionalvalidity_st OSSL_CRMF_OPTIONALVALIDITY;
+typedef struct ossl_crmf_optionalvalidity_st OSSL_CRMF_OPTIONALVALIDITY;
 
 /* crmf_pbm.c */
 OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
@@ -109,7 +109,7 @@ int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid);
 int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm);
 int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm, X509_EXTENSIONS *exts);
 
-int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, const X509_EXTENSION *ext);
+int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, X509_EXTENSION *ext);
 #  define OSSL_CRMF_POPO_NONE      -1
 #  define OSSL_CRMF_POPO_RAVERIFIED 0
 #  define OSSL_CRMF_POPO_SIGNATURE  1
@@ -122,6 +122,8 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
 OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm);
 ASN1_INTEGER *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(OSSL_CRMF_CERTTEMPLATE *t);
 X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl);
+X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid);
+ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid);
 int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                 EVP_PKEY *pubkey,
                                 const X509_NAME *subject,
@@ -134,4 +136,4 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
 }
 #  endif
 # endif /* !defined OPENSSL_NO_CRMF */
-#endif /* !defined OSSL_HEADER_CRMF_H */
+#endif /* !defined OPENSSL_CRMF_H */

@@ -8,15 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/bio.h"
-#include "asn1_locl.h"
+#include "asn1_local.h"
 
 /*
  * Generalised MIME like utilities for streaming ASN1. Although many have a
@@ -399,7 +399,7 @@ ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
     if (strcmp(hdr->value, "multipart/signed") == 0) {
         /* Split into two parts */
         prm = mime_param_find(hdr, "boundary");
-        if (!prm || !prm->param_value) {
+        if (prm == NULL || prm->param_value == NULL) {
             sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
             ASN1err(ASN1_F_SMIME_READ_ASN1, ASN1_R_NO_MULTIPART_BOUNDARY);
             return NULL;

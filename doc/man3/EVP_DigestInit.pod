@@ -7,6 +7,7 @@ EVP_MD_get_params, EVP_MD_gettable_params,
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy,
 EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl,
 EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
+EVP_MD_settable_ctx_params, EVP_MD_gettable_ctx_params,
 EVP_MD_CTX_settable_params, EVP_MD_CTX_gettable_params,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
@@ -38,8 +39,10 @@ EVP_MD_do_all_ex
  void EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void* p2);
  int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
  int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *EVP_MD_CTX_settable_params(const EVP_MD *digest);
- const OSSL_PARAM *EVP_MD_CTX_gettable_params(const EVP_MD *digest);
+ const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md);
+ const OSSL_PARAM *EVP_MD_gettable_ctx_params(const EVP_MD *md);
+ const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx);
+ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
  void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
  int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
@@ -68,9 +71,9 @@ EVP_MD_do_all_ex
 
  const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
  const char *EVP_MD_CTX_name(const EVP_MD_CTX *ctx);
- int EVP_MD_CTX_size(const EVP_MD *ctx);
- int EVP_MD_CTX_block_size(const EVP_MD *ctx);
- int EVP_MD_CTX_type(const EVP_MD *ctx);
+ int EVP_MD_CTX_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_block_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_type(const EVP_MD_CTX *ctx);
  void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
  int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                               const void *data, size_t count);
@@ -158,12 +161,17 @@ See L</PARAMETERS> below for more information.
 Sets the list of B<params> into a MD context B<ctx>.
 See L</PARAMETERS> below for more information.
 
-=item EVP_MD_gettable_params(), EVP_MD_CTX_gettable_params(),
+=item EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
+EVP_MD_settable_ctx_params(), EVP_MD_CTX_gettable_params(),
 EVP_MD_CTX_settable_params()
 
 Get a B<OSSL_PARAM> array that describes the retrievable and settable
-parameters, i.e. parameters that can be used with EVP_MD_get_params(),
-EVP_MD_CTX_get_params() and EVP_MD_CTX_set_params(), respectively.
+parameters. EVP_MD_gettable_params() returns parameters that can be used with
+EVP_MD_get_params(). EVP_MD_gettable_ctx_params() and
+EVP_MD_CTX_gettable_params() return parameters that can be used with
+EVP_MD_CTX_get_params(). EVP_MD_settable_ctx_params() and
+EVP_MD_CTX_settable_params() return parameters that can be used with
+EVP_MD_CTX_set_params().
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
@@ -218,7 +226,7 @@ few bytes.
 =item EVP_DigestInit()
 
 Behaves in the same way as EVP_DigestInit_ex() except it always uses the
-default digest implementation.
+default digest implementation and calls EVP_MD_CTX_reset().
 
 =item EVP_DigestFinal()
 
@@ -339,13 +347,13 @@ EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
 
 =over 4
 
-=item OSSL_PARAM_DIGEST_KEY_XOFLEN <unsigned integer>
+=item "xoflen" (B<OSSL_PARAM_DIGEST_KEY_XOFLEN>) <unsigned integer>
 
 Sets the digest length for extendable output functions.
 It is used by the SHAKE algorithm and should not exceed what can be given
 using a B<size_t>.
 
-=item OSSL_PARAM_DIGEST_KEY_PAD_TYPE <integer>
+=item "pad_type" (B<OSSL_PARAM_DIGEST_KEY_PAD_TYPE>) <integer>
 
 Sets the pad type.
 It is used by the MDC2 algorithm.
@@ -356,7 +364,7 @@ EVP_MD_CTX_get_params() can be used with the following OSSL_PARAM keys:
 
 =over 4
 
-=item OSSL_PARAM_DIGEST_KEY_MICALG <UTF8 string>.
+=item "micalg" (B<OSSL_PARAM_DIGEST_KEY_MICALG>) <UTF8 string>.
 
 Gets the digest Message Integrity Check algorithm string. This is used when
 creating S/MIME multipart/signed messages, as specified in RFC 3851.

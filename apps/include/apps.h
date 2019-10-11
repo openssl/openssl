@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_APPS_H
-# define HEADER_APPS_H
+#ifndef OSSL_APPS_H
+# define OSSL_APPS_H
 
 # include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
@@ -21,7 +21,7 @@
 # endif
 
 # include <openssl/e_os2.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/bio.h>
 # include <openssl/x509.h>
 # include <openssl/conf.h>

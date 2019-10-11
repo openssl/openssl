@@ -14,7 +14,7 @@ NON_EMPTY_TRANSLATION_UNIT
 #else
 
 #include <openssl/aes.h>
-#include "aes_locl.h"
+#include "aes_local.h"
 
 #define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
 typedef struct {

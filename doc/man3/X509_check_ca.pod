@@ -24,7 +24,7 @@ B<keyUsage> extension with bit B<keyCertSign> set, but without
 B<basicConstraints>, and 5 if it has outdated Netscape Certificate Type
 extension telling that it is CA certificate.
 
-Actually, any non-zero value means that this certificate could have been
+Actually, any nonzero value means that this certificate could have been
 used to sign other certificates.
 
 =head1 SEE ALSO

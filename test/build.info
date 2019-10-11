@@ -302,6 +302,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ssl_test_ctx.o]=../include
   INCLUDE[handshake_helper.o]=.. ../include
   INCLUDE[ssltestlib.o]=.. ../include
+  INCLUDE[cmp_testlib.o]=.. ../include ../apps/include
 
   SOURCE[x509aux]=x509aux.c
   INCLUDE[x509aux]=../include ../apps/include
@@ -468,6 +469,18 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[conf_include_test]=../include ../apps/include
   DEPEND[conf_include_test]=../libcrypto libtestutil.a
 
+  IF[{- !$disabled{cmp} -}]
+    PROGRAMS{noinst}=cmp_asn_test cmp_ctx_test
+  ENDIF
+
+  SOURCE[cmp_asn_test]=cmp_asn_test.c cmp_testlib.c
+  INCLUDE[cmp_asn_test]=.. ../include ../apps/include
+  DEPEND[cmp_asn_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[cmp_ctx_test]=cmp_ctx_test.c cmp_testlib.c
+  INCLUDE[cmp_ctx_test]=.. ../include ../apps/include
+  DEPEND[cmp_ctx_test]=../libcrypto.a libtestutil.a
+
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't
   # available through the shared library (at least on Linux, Solaris, Windows
@@ -533,7 +546,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[property_test]=../libcrypto.a libtestutil.a
 
     SOURCE[ctype_internal_test]=ctype_internal_test.c
-    INCLUDE[ctype_internal_test]=.. ../crypto/include ../include ../apps/include
+    INCLUDE[ctype_internal_test]=.. ../include ../apps/include
     DEPEND[ctype_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sparse_array_test]=sparse_array_test.c
@@ -565,11 +578,11 @@ IF[{- !$disabled{tests} -}]
     DEPEND[rdrand_sanitytest]=../libcrypto.a libtestutil.a
 
     SOURCE[rsa_sp800_56b_test]=rsa_sp800_56b_test.c
-    INCLUDE[rsa_sp800_56b_test]=.. ../include ../crypto/include ../crypto/rsa ../apps/include
+    INCLUDE[rsa_sp800_56b_test]=.. ../include ../crypto/rsa ../apps/include
     DEPEND[rsa_sp800_56b_test]=../libcrypto.a libtestutil.a
 
     SOURCE[bn_internal_test]=bn_internal_test.c
-    INCLUDE[bn_internal_test]=.. ../include ../crypto/include ../crypto/bn ../apps/include
+    INCLUDE[bn_internal_test]=.. ../include ../crypto/bn ../apps/include
     DEPEND[bn_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[asn1_dsa_internal_test]=asn1_dsa_internal_test.c

@@ -9,11 +9,11 @@
 
 /* Dispatch functions for gcm mode */
 
-#include "cipher_locl.h"
-#include "internal/ciphers/cipher_gcm.h"
-#include "internal/providercommonerr.h"
-#include "internal/rand_int.h"
-#include "internal/provider_ctx.h"
+#include "prov/ciphercommon.h"
+#include "prov/cipher_gcm.h"
+#include "prov/providercommonerr.h"
+#include "crypto/rand.h"
+#include "prov/provider_ctx.h"
 
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
 static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
@@ -38,11 +38,6 @@ void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
     ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
 }
 
-void gcm_deinitctx(PROV_GCM_CTX *ctx)
-{
-    OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
-}
-
 static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
                     const unsigned char *iv, size_t ivlen, int enc)
 {
@@ -56,7 +51,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
             return 0;
         }
         ctx->ivlen = ivlen;
-        memcpy(ctx->iv, iv, ctx->ivlen);
+        memcpy(ctx->iv, iv, ivlen);
         ctx->iv_state = IV_STATE_BUFFERED;
     }
 
@@ -268,11 +263,11 @@ int gcm_cipher(void *vctx,
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-        return -1;
+        return 0;
     }
 
     if (gcm_cipher_internal(ctx, out, outl, in, inl) <= 0)
-        return -1;
+        return 0;
 
     *outl = inl;
     return 1;

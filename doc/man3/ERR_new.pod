@@ -25,7 +25,7 @@ ERR_new() allocates a new slot in the thread's error queue.
 
 ERR_set_debug() sets the debug information related to the current
 error in the thread's error queue.
-The values that can be given are the file name I<file>, line in the
+The values that can be given are the filename I<file>, line in the
 file I<line> and the name of the function I<func> where the error
 occured.
 The names must be constant, this function will only save away the

@@ -8,7 +8,7 @@ evp_keymgmt_clear_pkey_cache
 
 =head1 SYNOPSIS
 
- #include "internal/evp_int.h"
+ #include "crypto/evp.h"
 
  void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
  void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);

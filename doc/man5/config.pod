@@ -13,9 +13,9 @@ files for the B<x509> utility. OpenSSL applications can also use the
 CONF library for their own purposes.
 
 A configuration file is divided into a number of sections. Each section
-starts with a line B<[ section_name ]> and ends when a new section is
+starts with a line C<[section_name]> and ends when a new section is
 started or end of file is reached. A section name can consist of
-alphanumeric characters and underscores.
+alphanumeric characters and underscores. The brackets are required.
 
 The first section of a configuration file is special and is referred
 to as the B<default> section. This section is usually unnamed and spans from the
@@ -263,7 +263,7 @@ The command B<identity> is used to give the provider name. For example:
  identity = myfoo
 
 The parameter B<module> loads and adds a provider module from the
-given module path.  That path may be a simple file name, a relative
+given module path.  That path may be a simple filename, a relative
 path or an absolute path.
 
 The parameter B<activate> determines whether to activate the
@@ -506,6 +506,17 @@ you can't use any quote escaping on the same line.
 Files are loaded in a single pass. This means that an variable expansion
 will only work if the variables referenced are defined earlier in the
 file.
+
+=head1 HISTORY
+
+An undocumented API, NCONF_WIN32(), used a slightly different set
+of parsing rules there were intended to be tailored to
+the Microsoft Windows platform.
+Specifically, the backslash character was not an escape character and
+could be used in pathnames, only the double-quote character was recognized,
+and comments began with a semi-colon.
+This function was deprecated in OpenSSL 3.0; applications with
+configuration files using that syntax will have to be modified.
 
 =head1 SEE ALSO
 

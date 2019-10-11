@@ -9,30 +9,32 @@ openssl-pkcs8 - PKCS#8 format private key conversion tool
 B<openssl> B<pkcs8>
 [B<-help>]
 [B<-topk8>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
-[B<-iter count>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
+[B<-iter> I<count>]
 [B<-noiter>]
-[B<-rand file...>]
-[B<-writerand file>]
+[B<-rand> I<files>]
+[B<-writerand> I<file>]
 [B<-nocrypt>]
 [B<-traditional>]
-[B<-v2 alg>]
-[B<-v2prf alg>]
-[B<-v1 alg>]
-[B<-engine id>]
+[B<-v2> I<alg>]
+[B<-v2prf> I<alg>]
+[B<-v1> I<alg>]
+[B<-engine> I<id>]
 [B<-scrypt>]
-[B<-scrypt_N N>]
-[B<-scrypt_r r>]
-[B<-scrypt_p p>]
+[B<-scrypt_N> I<N>]
+[B<-scrypt_r> I<r>]
+[B<-scrypt_p> I<p>]
+
+=for comment ifdef engine scrypt scrypt_N scrypt_r scrypt_p
 
 =head1 DESCRIPTION
 
-The B<pkcs8> command processes private keys in PKCS#8 format. It can handle
+This command processes private keys in PKCS#8 format. It can handle
 both unencrypted PKCS#8 PrivateKeyInfo format and EncryptedPrivateKeyInfo
 format with a variety of PKCS#5 (v1.5 and v2.0) and PKCS#12 algorithms.
 
@@ -50,12 +52,12 @@ Normally a PKCS#8 private key is expected on input and a private key will be
 written to the output file. With the B<-topk8> option the situation is
 reversed: it reads a private key and writes a PKCS#8 format key.
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format: see L<KEY FORMATS> for more details. The default
 format is PEM.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format: see L<KEY FORMATS> for more details. The default
 format is PEM.
@@ -65,30 +67,26 @@ format is PEM.
 When this option is present and B<-topk8> is not a traditional format private
 key is written.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>, B<-passout> I<arg>
 
-The input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The password source for the input and output file.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write a key to or standard output by
 default. If any encryption options are set then a pass phrase will be
 prompted for. The output filename should B<not> be the same as the input
 filename.
 
-=item B<-passout arg>
-
-The output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
-
-=item B<-iter count>
+=item B<-iter> I<count>
 
 When creating new PKCS#8 containers, use a given number of iterations on
 the password in deriving the encryption key for the PKCS#8 output.
@@ -103,28 +101,27 @@ This option does not encrypt private keys at all and should only be used
 when absolutely necessary. Certain software such as some versions of Java
 code signing software used unencrypted private keys.
 
-=item B<-rand file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-v2 alg>
+=item B<-v2> I<alg>
 
 This option sets the PKCS#5 v2.0 algorithm.
 
-The B<alg> argument is the encryption algorithm to use, valid values include
+The I<alg> argument is the encryption algorithm to use, valid values include
 B<aes128>, B<aes256> and B<des3>. If this option isn't specified then B<aes256>
 is used.
 
-=item B<-v2prf alg>
+=item B<-v2prf> I<alg>
 
 This option sets the PRF algorithm to use with PKCS#5 v2.0. A typical value
 value would be B<hmacWithSHA256>. If this option isn't set then the default
@@ -133,15 +130,15 @@ for the cipher is used or B<hmacWithSHA256> if there is no default.
 Some implementations may not support custom PRF algorithms and may require
 the B<hmacWithSHA1> option to work.
 
-=item B<-v1 alg>
+=item B<-v1> I<alg>
 
 This option indicates a PKCS#5 v1.5 or PKCS#12 algorithm should be used.  Some
 older implementations may not support PKCS#5 v2.0 and may require this option.
 If not specified PKCS#5 v2.0 form is used.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<pkcs8>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -153,15 +150,15 @@ parameters: currently N=16384, r=8 and p=1 and AES in CBC mode with a 256 bit
 key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
 B<-scrypt_p> and B<-v2> options.
 
-=item B<-scrypt_N N> B<-scrypt_r r> B<-scrypt_p p>
+=item B<-scrypt_N> I<N>, B<-scrypt_r> I<r>, B<-scrypt_p> I<p>
 
-Sets the scrypt B<N>, B<r> or B<p> parameters.
+Sets the scrypt I<N>, I<r> or I<p> parameters.
 
 =back
 
 =head1 KEY FORMATS
 
-Various different formats are used by the pkcs8 utility. These are detailed
+Various different formats are used by this command. These are detailed
 below.
 
 If a key is being converted from PKCS#8 form (i.e. the B<-topk8> option is

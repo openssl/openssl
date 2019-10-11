@@ -8,7 +8,7 @@
  */
 
 #include <stddef.h>
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include <openssl/evp.h>
 #include <openssl/core.h>
 #include "internal/cryptlib.h"
@@ -17,8 +17,10 @@
 #include "internal/core.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
-#include "internal/evp_int.h"    /* evp_locl.h needs it */
-#include "evp_locl.h"
+#include "crypto/evp.h"    /* evp_local.h needs it */
+#include "evp_local.h"
+
+#define NAME_SEPARATOR ':'
 
 static void default_method_store_free(void *vstore)
 {
@@ -42,7 +44,7 @@ struct method_data_st {
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     int operation_id;            /* For get_method_from_store() */
     int name_id;                 /* For get_method_from_store() */
-    const char *name;            /* For get_method_from_store() */
+    const char *names;           /* For get_method_from_store() */
     const char *propquery;       /* For get_method_from_store() */
     void *(*method_from_dispatch)(int name_id, const OSSL_DISPATCH *,
                                   OSSL_PROVIDER *, void *);
@@ -50,6 +52,69 @@ struct method_data_st {
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
+
+static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
+                                const char *names)
+{
+    const char *p, *q;
+    size_t l;
+    int id = 0;
+
+    /* Check that we have a namemap and that there is at least one name */
+    if (namemap == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /*
+     * Check that no name is an empty string, and that all names have at
+     * most one numeric identity together.
+     */
+    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
+        int this_id;
+
+        if ((q = strchr(p, NAME_SEPARATOR)) == NULL)
+            l = strlen(p);       /* offset to \0 */
+        else
+            l = q - p;           /* offset to the next separator */
+
+        this_id = ossl_namemap_name2num_n(namemap, p, l);
+
+        if (*p == '\0' || *p == NAME_SEPARATOR) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_BAD_ALGORITHM_NAME);
+            return 0;
+        }
+        if (id == 0)
+            id = this_id;
+        else if (this_id != 0 && this_id != id) {
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_CONFLICTING_ALGORITHM_NAME,
+                           "\"%.*s\" has an existing different identity %d (from \"%s\")",
+                           l, p, this_id, names);
+            return 0;
+        }
+    }
+
+    /* Now that we have checked, register all names */
+    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
+        int this_id;
+
+        if ((q = strchr(p, NAME_SEPARATOR)) == NULL)
+            l = strlen(p);       /* offset to \0 */
+        else
+            l = q - p;           /* offset to the next separator */
+
+        this_id = ossl_namemap_add_n(namemap, id, p, l);
+        if (id == 0)
+            id = this_id;
+        else if (this_id != id) {
+            ERR_raise_data(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR,
+                           "Got id %d when expecting %d", this_id, id);
+            return 0;
+        }
+    }
+
+    return id;
+}
 
 /*
  * Generic routines to fetch / create EVP methods with ossl_method_construct()
@@ -105,10 +170,13 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
      */
     if ((name_id = methdata->name_id) == 0) {
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+        const char *names = methdata->names;
+        const char *q = strchr(names, NAME_SEPARATOR);
+        size_t l = (q == NULL ? strlen(names) : (size_t)(q - names));
 
         if (namemap == 0)
             return NULL;
-        name_id = ossl_namemap_name2num(namemap, methdata->name);
+        name_id = ossl_namemap_name2num_n(namemap, names, l);
     }
 
     if (name_id == 0
@@ -131,21 +199,30 @@ static void *get_method_from_store(OPENSSL_CTX *libctx, void *store,
 
 static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
                                void *method, const OSSL_PROVIDER *prov,
-                               int operation_id, const char *name,
+                               int operation_id, const char *names,
                                const char *propdef, void *data)
 {
     struct method_data_st *methdata = data;
     OSSL_NAMEMAP *namemap;
     int name_id;
     uint32_t meth_id;
+    size_t l = 0;
 
     /*
      * put_method_in_store() is only called with a method that was
      * successfully created by construct_method() below, which means
-     * the name should already be stored in the namemap, so just use it.
+     * that all the names should already be stored in the namemap with
+     * the same numeric identity, so just use the first to get that
+     * identity.
      */
+    if (names != NULL) {
+        const char *q = strchr(names, NAME_SEPARATOR);
+
+        l = (q == NULL ? strlen(names) : (size_t)(q - names));
+    }
+
     if ((namemap = ossl_namemap_stored(libctx)) == NULL
-        || (name_id = ossl_namemap_name2num(namemap, name)) == 0
+        || (name_id = ossl_namemap_name2num_n(namemap, names, l)) == 0
         || (meth_id = method_id(operation_id, name_id)) == 0)
         return 0;
 
@@ -162,7 +239,7 @@ static int put_method_in_store(OPENSSL_CTX *libctx, void *store,
  * The core fetching functionality passes the name of the implementation.
  * This function is responsible to getting an identity number for it.
  */
-static void *construct_method(const char *name, const OSSL_DISPATCH *fns,
+static void *construct_method(const char *names, const OSSL_DISPATCH *fns,
                               OSSL_PROVIDER *prov, void *data)
 {
     /*
@@ -170,17 +247,14 @@ static void *construct_method(const char *name, const OSSL_DISPATCH *fns,
      * NULL, so it's safe to say that of all the spots to create a new
      * namemap entry, this is it.  Should the name already exist there, we
      * know that ossl_namemap_add() will return its corresponding number.
-     *
-     * TODO(3.0): If this function gets an array of names instead of just
-     * one, we need to check through all the names to see if at least one
-     * of them has an associated number, and use that.  If several names
-     * have associated numbers that differ from each other, it's an error.
      */
     struct method_data_st *methdata = data;
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    int name_id = ossl_namemap_add(namemap, 0, name);
+    int name_id = add_names_to_namemap(namemap, names);
 
+    if (name_id == 0)
+        return NULL;
     return methdata->method_from_dispatch(name_id, fns, prov,
                                           methdata->method_data);
 }
@@ -255,7 +329,7 @@ static void *inner_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.libctx = libctx;
         mcmdata.operation_id = operation_id;
         mcmdata.name_id = name_id;
-        mcmdata.name = name;
+        mcmdata.names = name;
         mcmdata.propquery = properties;
         mcmdata.method_from_dispatch = new_method;
         mcmdata.destruct_method = free_method;
@@ -346,7 +420,7 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
     struct do_all_data_st *data = vdata;
     OPENSSL_CTX *libctx = ossl_provider_library_context(provider);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    int name_id = ossl_namemap_add(namemap, 0, algo->algorithm_name);
+    int name_id = add_names_to_namemap(namemap, algo->algorithm_names);
     void *method = NULL;
 
     if (name_id != 0)

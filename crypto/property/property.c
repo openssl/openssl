@@ -13,13 +13,13 @@
 #include <stdarg.h>
 #include <openssl/crypto.h>
 #include "internal/property.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "internal/lhash.h"
-#include "internal/sparse_array.h"
-#include "property_lcl.h"
+#include "crypto/lhash.h"
+#include "crypto/sparse_array.h"
+#include "property_local.h"
 
 /* The number of elements in the query cache before we initiate a flush */
 #define IMPL_CACHE_FLUSH_THRESHOLD  500
@@ -53,8 +53,6 @@ struct ossl_method_store_st {
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
     OSSL_PROPERTY_LIST *global_properties;
     int need_flush;
-    unsigned int nbits;
-    unsigned char rand_bits[(IMPL_CACHE_FLUSH_THRESHOLD + 7) / 8];
     CRYPTO_RWLOCK *lock;
 };
 

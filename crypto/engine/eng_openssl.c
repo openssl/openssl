@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include "internal/engine.h"
+#include "crypto/engine.h"
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -625,7 +625,8 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
         EVP_PKEY_HMAC,
         0
     };
-    if (!pmeth) {
+
+    if (pmeth == NULL) {
         *nids = ossl_pkey_nids;
         return 1;
     }

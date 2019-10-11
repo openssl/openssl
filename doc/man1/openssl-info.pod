@@ -8,14 +8,14 @@ openssl-info - print OpenSSL built-in information
 
 B<openssl info>
 [B<-help>]
-[B<-configdir> | B<-c>]
-[B<-enginesdir> | B<-e>]
-[B<-modulesdir> | B<-m>]
+[B<-configdir>]
+[B<-enginesdir>]
+[B<-modulesdir> ]
 [B<-dsoext>]
-[B<-dirfilesep>]
-[B<-listsep]>
-[B<-seeds]>
-[B<-cpusettings]>
+[B<-dirnamesep>]
+[B<-listsep>]
+[B<-seeds>]
+[B<-cpusettings>]
 
 =head1 DESCRIPTION
 
@@ -34,15 +34,15 @@ command.
 
 Print out a usage message.
 
-=item B<-configdir>, B<-c>
+=item B<-configdir>
 
 Outputs the default directory for OpenSSL configuration files.
 
-=item B<-enginesdir>, B<-e>
+=item B<-enginesdir>
 
 Outputs the default directory for OpenSSL engine modules.
 
-=item B<-modulesdir>, B<-m>
+=item B<-modulesdir>
 
 Outputs the default directory for OpenSSL dynamically loadable modules
 other than engine modules.
@@ -54,7 +54,7 @@ Outputs the DSO extension OpenSSL uses.
 =item B<-dirnamesep>
 
 Outputs the separator character between a directory specification and
-a file name.
+a filename.
 Note that on some operating systems, this is not the same as the
 separator between directory elements.
 
@@ -76,7 +76,7 @@ Outputs the OpenSSL CPU settings info.
 
 =head1 HISTORY
 
-The B<openssl info> command was added in OpenSSL 3.0.
+This command was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

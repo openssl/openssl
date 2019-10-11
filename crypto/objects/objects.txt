@@ -431,9 +431,9 @@ rsadsi 3 8		: RC5-CBC		: rc5-cbc
 !Cname ms-efs
 1 3 6 1 4 1 311 10 3 4	: msEFS			: Microsoft Encrypted File System
 !Cname ms-smartcard-login
-1 3 6 1 4 1 311 20 2 2	: msSmartcardLogin	: Microsoft Smartcardlogin
+1 3 6 1 4 1 311 20 2 2	: msSmartcardLogin	: Microsoft Smartcard Login
 !Cname ms-upn
-1 3 6 1 4 1 311 20 2 3	: msUPN			: Microsoft Universal Principal Name
+1 3 6 1 4 1 311 20 2 3	: msUPN			: Microsoft User Principal Name
 
 1 3 6 1 4 1 188 7 1 1 2	: IDEA-CBC		: idea-cbc
 			: IDEA-ECB		: idea-ecb
@@ -609,6 +609,9 @@ id-cmc 24		: id-cmc-confirmCertAcceptance
 # other names
 id-on 1			: id-on-personalData
 id-on 3			: id-on-permanentIdentifier : Permanent Identifier
+id-on 5			: id-on-xmppAddr : XmppAddr
+id-on 7			: id-on-dnsSRV : SRVName
+id-on 9			: id-on-SmtpUTF8Mailbox : Smtp UTF8 Mailbox
 
 # personal data attributes
 id-pda 1		: id-pda-dateOfBirth

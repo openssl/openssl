@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 
@@ -22,7 +22,6 @@ void openssl_add_all_digests_int(void)
 #ifndef OPENSSL_NO_MD5
     EVP_add_digest(EVP_md5());
     EVP_add_digest_alias(SN_md5, "ssl3-md5");
-    EVP_add_digest(EVP_md5_sha1());
 #endif
     EVP_add_digest(EVP_sha1());
     EVP_add_digest_alias(SN_sha1, "ssl3-sha1");

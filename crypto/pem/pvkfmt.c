@@ -617,6 +617,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
 {
     const unsigned char *p = *in;
     unsigned int pvk_magic, is_encrypted;
+
     if (skip_magic) {
         if (length < 20) {
             PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
@@ -645,7 +646,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
     if (*pkeylen > PVK_MAX_KEYLEN || *psaltlen > PVK_MAX_SALTLEN)
         return 0;
 
-    if (is_encrypted && !*psaltlen) {
+    if (is_encrypted && *psaltlen == 0) {
         PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_INCONSISTENT_HEADER);
         return 0;
     }

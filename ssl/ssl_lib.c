@@ -10,7 +10,7 @@
  */
 
 #include <stdio.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "e_os.h"
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
@@ -2857,7 +2857,7 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
                                     unsigned *len)
 {
     *data = s->ext.npn;
-    if (!*data) {
+    if (*data == NULL) {
         *len = 0;
     } else {
         *len = (unsigned int)s->ext.npn_len;

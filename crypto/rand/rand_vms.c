@@ -14,8 +14,8 @@
 # include <unistd.h>
 # include "internal/cryptlib.h"
 # include <openssl/rand.h>
-# include "internal/rand_int.h"
-# include "rand_lcl.h"
+# include "crypto/rand.h"
+# include "rand_local.h"
 # include <descrip.h>
 # include <dvidef.h>
 # include <jpidef.h>

@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_STACK_H
-# define HEADER_STACK_H
+#ifndef OPENSSL_STACK_H
+# define OPENSSL_STACK_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_STACK_H
+# endif
 
 #ifdef  __cplusplus
 extern "C" {

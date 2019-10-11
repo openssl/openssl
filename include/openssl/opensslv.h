@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OPENSSLV_H
-# define HEADER_OPENSSLV_H
+#ifndef OPENSSL_OPENSSLV_H
+# define OPENSSL_OPENSSLV_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_OPENSSLV_H
+# endif
 
 # ifdef  __cplusplus
 extern "C" {
@@ -136,4 +142,4 @@ const char *OPENSSL_version_build_metadata(void);
 # ifdef  __cplusplus
 }
 # endif
-#endif                          /* HEADER_OPENSSLV_H */
+#endif                          /* OPENSSL_OPENSSLV_H */

@@ -134,7 +134,7 @@ DES_ecb_encrypt() is the basic DES encryption routine that encrypts or
 decrypts a single 8-byte I<DES_cblock> in I<electronic code book>
 (ECB) mode.  It always transforms the input data, pointed to by
 I<input>, into the output data, pointed to by the I<output> argument.
-If the I<encrypt> argument is non-zero (DES_ENCRYPT), the I<input>
+If the I<encrypt> argument is nonzero (DES_ENCRYPT), the I<input>
 (cleartext) is encrypted in to the I<output> (ciphertext) using the
 key_schedule specified by the I<schedule> argument, previously set via
 I<DES_set_key>. If I<encrypt> is zero (DES_DECRYPT), the I<input> (now
@@ -153,7 +153,7 @@ The macro DES_ecb2_encrypt() is provided to perform two-key Triple-DES
 encryption by using I<ks1> for the final encryption.
 
 DES_ncbc_encrypt() encrypts/decrypts using the I<cipher-block-chaining>
-(CBC) mode of DES.  If the I<encrypt> argument is non-zero, the
+(CBC) mode of DES.  If the I<encrypt> argument is nonzero, the
 routine cipher-block-chain encrypts the cleartext data pointed to by
 the I<input> argument into the ciphertext pointed to by the I<output>
 argument, using the key schedule provided by the I<schedule> argument,

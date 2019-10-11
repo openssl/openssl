@@ -26,22 +26,22 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<OSSL_KDF_PARAM_SSHKDF_XCGHASH> ("xcghash") <octet string>
+=item "xcghash" (B<OSSL_KDF_PARAM_SSHKDF_XCGHASH>) <octet string>
 
-=item B<OSSL_KDF_PARAM_SSHKDF_SESSION_ID> ("session_id") <octet string>
+=item "session_id" (B<OSSL_KDF_PARAM_SSHKDF_SESSION_ID>) <octet string>
 
 These parameters set the respective values for the KDF.
 If a value is already set, the contents are replaced.
 
-=item B<OSSL_KDF_PARAM_SSHKDF_TYPE> ("type") <int>
+=item "type" (B<OSSL_KDF_PARAM_SSHKDF_TYPE>) <integer>
 
 This parameter sets the type for the SSHHKDF operation.
 There are six supported types:
@@ -89,12 +89,12 @@ A context for SSHKDF can be obtained by calling:
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SSHKDF", NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
-The output length of the SSHKDF derivation is specified via the C<keylen>
-parameter to the L<EVP_KDF-derive(3)> function.
+The output length of the SSHKDF derivation is specified via the I<keylen>
+parameter to the L<EVP_KDF_derive(3)> function.
 Since the SSHKDF output length is variable, calling L<EVP_KDF-size()>
 to obtain the requisite length is not meaningful. The caller must
 allocate a buffer of the desired length, and pass that buffer to the
-L<EVP_KDF-derive(3)> function along with the desired length.
+L<EVP_KDF_derive(3)> function along with the desired length.
 
 =head1 EXAMPLES
 

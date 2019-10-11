@@ -8,7 +8,7 @@ EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
 EVP_MAC_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
-EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
+EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_do_all_ex - EVP MAC routines
 
 =head1 SYNOPSIS
@@ -41,8 +41,8 @@ EVP_MAC_do_all_ex - EVP MAC routines
                    unsigned char *out, size_t *outl, size_t outsize);
 
  const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
- const OSSL_PARAM *EVP_MAC_CTX_gettable_params(const EVP_MAC *mac);
- const OSSL_PARAM *EVP_MAC_CTX_settable_params(const EVP_MAC *mac);
+ const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
+ const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
 
  void EVP_MAC_do_all_ex(OPENSSL_CTX *libctx,
                         void (*fn)(EVP_MAC *mac, void *arg),
@@ -146,8 +146,8 @@ simply ignored.
 Also, what happens when a needed parameter isn't passed down is
 defined by the implementation.
 
-EVP_MAC_gettable_params(), EVP_MAC_CTX_gettable_params() and
-EVP_MAC_CTX_settable_params() get a constant B<OSSL_PARAM> array that
+EVP_MAC_gettable_params(), EVP_MAC_gettable_ctx_params() and
+EVP_MAC_settable_ctx_params() get a constant B<OSSL_PARAM> array that
 decribes the retrievable and settable parameters, i.e. parameters that
 can be used with EVP_MAC_get_params(), EVP_MAC_CTX_get_params()
 and EVP_MAC_CTX_set_params(), respectively.
@@ -183,59 +183,55 @@ The standard parameter names are:
 
 =over 4
 
-=item B<OSSL_MAC_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
 Its value is the MAC key as an array of bytes.
 
 For MACs that use an underlying computation algorithm, the algorithm
 must be set first, see parameter names "algorithm" below.
 
-=item B<OSSL_MAC_PARAM_IV> ("iv") <octet string>
+=item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
 
 Some MAC implementations require an IV, this parameter sets the IV.
 
-=item B<OSSL_MAC_PARAM_CUSTOM> ("custom") <octet string>
+=item "custom" (B<OSSL_MAC_PARAM_CUSTOM>) <octet string>
 
 Some MAC implementations (KMAC, BLAKE2) accept a Customization String,
 this parameter sets the Customization String. The default value is the
 empty string.
 
-=item B<OSSL_MAC_PARAM_SALT> ("salt") <octet string>
+=item "salt" (B<OSSL_MAC_PARAM_SALT>) <octet string>
 
 This option is used by BLAKE2 MAC.
 
-=item B<OSSL_MAC_PARAM_XOF> ("xof") <integer>
+=item "xof" (B<OSSL_MAC_PARAM_XOF>) <integer>
 
 It's a simple flag, the value 0 or 1 are expected.
 
 This option is used by KMAC.
 
-=item B<OSSL_MAC_PARAM_FLAGS> ("flags") <integer>
+=item "flags" (B<OSSL_MAC_PARAM_FLAGS>) <integer>
 
 These will set the MAC flags to the given numbers.
 Some MACs do not support this option.
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <UTF8 string>
+=item "properties" (B<OSSL_MAC_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "digest" (B<OSSL_MAC_PARAM_DIGEST>) <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_DIGEST> ("digest") <UTF8 string>
-
-=item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <UTF8 string>
+=item "cipher" (B<OSSL_MAC_PARAM_CIPHER>) <UTF8 string>
 
 For MAC implementations that use an underlying computation cipher or
-digest, these parameters set what the algorithm should be, and the
-engine that implements the algorithm or the properties to fetch it
-by if needed.
+digest, these parameters set what the algorithm should be.
 
-The value is always the name of the intended engine, algorithm,
+The value is always the name of the intended algorithm,
 or the properties.
 
 Note that not all algorithms may support all digests.
 HMAC does not support variable output length digests such as SHAKE128
 or SHAKE256.
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned integer>
+=item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
 For MAC implementations that support it, set the output size that
 EVP_MAC_final() should produce.

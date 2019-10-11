@@ -14,9 +14,9 @@
 #include <openssl/err.h>
 #include "internal/propertyerr.h"
 #include "internal/property.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "internal/nelem.h"
-#include "property_lcl.h"
+#include "property_local.h"
 #include "e_os.h"
 
 typedef enum {

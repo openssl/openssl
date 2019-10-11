@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/constant_time_locl.h"
+#include "internal/constant_time.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -18,8 +18,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
-#include "internal/evp_int.h"
-#include "rsa_locl.h"
+#include "crypto/evp.h"
+#include "rsa_local.h"
 
 /* RSA pkey context structure */
 
@@ -755,7 +755,7 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     return ret;
 }
 
-const EVP_PKEY_METHOD rsa_pkey_meth = {
+static const EVP_PKEY_METHOD rsa_pkey_meth = {
     EVP_PKEY_RSA,
     EVP_PKEY_FLAG_AUTOARGLEN,
     pkey_rsa_init,
@@ -789,6 +789,11 @@ const EVP_PKEY_METHOD rsa_pkey_meth = {
     pkey_rsa_ctrl,
     pkey_rsa_ctrl_str
 };
+
+const EVP_PKEY_METHOD *rsa_pkey_method(void)
+{
+    return &rsa_pkey_meth;
+}
 
 /*
  * Called for PSS sign or verify initialisation: checks PSS parameter
@@ -837,7 +842,7 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
-const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
+static const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
     EVP_PKEY_RSA_PSS,
     EVP_PKEY_FLAG_AUTOARGLEN,
     pkey_rsa_init,
@@ -860,3 +865,8 @@ const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
     pkey_rsa_ctrl,
     pkey_rsa_ctrl_str
 };
+
+const EVP_PKEY_METHOD *rsa_pss_pkey_method(void)
+{
+    return &rsa_pss_pkey_meth;
+}

@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMS_H
-# define HEADER_CMS_H
+#ifndef OPENSSL_CMS_H
+# define OPENSSL_CMS_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CMS_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -84,7 +90,7 @@ ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
 int CMS_is_detached(CMS_ContentInfo *cms);
 int CMS_set_detached(CMS_ContentInfo *cms, int detached);
 
-# ifdef HEADER_PEM_H
+# ifdef OPENSSL_PEM_H
 DECLARE_PEM_rw_const(CMS, CMS_ContentInfo)
 # endif
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms);

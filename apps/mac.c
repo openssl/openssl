@@ -105,7 +105,7 @@ opthelp:
     if (opts != NULL) {
         int ok = 1;
         OSSL_PARAM *params =
-            app_params_new_from_opts(opts, EVP_MAC_CTX_settable_params(mac));
+            app_params_new_from_opts(opts, EVP_MAC_settable_ctx_params(mac));
 
         if (params == NULL)
             goto err;

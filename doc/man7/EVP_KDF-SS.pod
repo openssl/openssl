@@ -39,23 +39,23 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_MAC> ("mac") <UTF8 string>
+=item "mac" (B<OSSL_KDF_PARAM_MAC>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_MAC_SIZE> ("maclen") <size_t>
+=item "maclen" (B<OSSL_KDF_PARAM_MAC_SIZE>) <unsigned integer>
 
-=item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
+=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<EVP_KDF_CTRL_SET_KEY> ("key") <octet string>
+=item "key" (B<EVP_KDF_CTRL_SET_KEY>) <octet string>
 
 This parameter set the shared secret that is used for key derivation.
 
-=item B<OSSL_KDF_PARAM_INFO> ("info") <octet string>
+=item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
 This parameter sets an optional value for fixedinfo, also known as otherinfo.
 
@@ -68,8 +68,8 @@ A context for SSKDF can be obtained by calling:
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SSKDF", NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
-The output length of an SSKDF is specified via the C<keylen>
-parameter to the L<EVP_KDF-derive(3)> function.
+The output length of an SSKDF is specified via the I<keylen>
+parameter to the L<EVP_KDF_derive(3)> function.
 
 =head1 EXAMPLES
 

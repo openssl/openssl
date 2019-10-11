@@ -13,8 +13,8 @@
 #include <openssl/err.h>
 #include "internal/provider.h"
 #include "internal/refcount.h"
-#include "internal/evp_int.h"
-#include "evp_locl.h"
+#include "crypto/evp.h"
+#include "evp_local.h"
 
 
 static void *keymgmt_new(void)

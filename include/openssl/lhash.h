@@ -11,8 +11,14 @@
  * Header for dynamic hash table routines Author - Eric Young
  */
 
-#ifndef HEADER_LHASH_H
-# define HEADER_LHASH_H
+#ifndef OPENSSL_LHASH_H
+# define OPENSSL_LHASH_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_LHASH_H
+# endif
 
 # include <openssl/e_os2.h>
 # include <openssl/bio.h>

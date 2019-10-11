@@ -11,10 +11,10 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
-#include "rand_lcl.h"
+#include "rand_local.h"
 #include "e_os.h"
 
 #ifndef FIPS_MODE

@@ -11,9 +11,9 @@
  * Generic dispatch table functions for ciphers.
  */
 
-#include "cipher_locl.h"
-#include "internal/provider_ctx.h"
-#include "internal/providercommonerr.h"
+#include "cipher_local.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommonerr.h"
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables
@@ -68,16 +68,8 @@ int cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(cipher_generic)
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(cipher_generic)
 
-static const OSSL_PARAM cipher_known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),
-    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),
-    OSSL_PARAM_END
-};
-const OSSL_PARAM *cipher_generic_settable_ctx_params(void)
-{
-    return cipher_known_settable_ctx_params;
-}
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(cipher_generic)
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(cipher_generic)
 
 /*-
  * AEAD cipher functions for OSSL_PARAM gettables and settables
@@ -117,11 +109,8 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
     ctx->enc = enc ? 1 : 0;
 
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
-        if (ivlen != ctx->ivlen) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+        if (!cipher_generic_initiv(ctx, iv, ivlen))
             return 0;
-        }
-        memcpy(ctx->iv, iv, ctx->ivlen);
     }
     if (key != NULL) {
         if ((ctx->flags & EVP_CIPH_VARIABLE_LENGTH) == 0) {
@@ -330,8 +319,8 @@ int cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL
-        && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)
-        && !OSSL_PARAM_set_octet_string(p, &ctx->iv, ctx->ivlen)) {
+        && !OSSL_PARAM_set_octet_ptr(p, &ctx->oiv, ctx->ivlen)
+        && !OSSL_PARAM_set_octet_string(p, &ctx->oiv, ctx->ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -345,7 +334,6 @@ int cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-
     return 1;
 }
 
@@ -384,6 +372,20 @@ int cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
         ctx->keylen = keylen;
     }
+    return 1;
+}
+
+int cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
+                          size_t ivlen)
+{
+    if (ivlen != ctx->ivlen
+        || ivlen > sizeof(ctx->iv)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+        return 0;
+    }
+    ctx->iv_set = 1;
+    memcpy(ctx->iv, iv, ivlen);
+    memcpy(ctx->oiv, iv, ivlen);
     return 1;
 }
 

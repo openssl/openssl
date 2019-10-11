@@ -1,0 +1,8 @@
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
+
+$DH_GOAL=../../libimplementations.a
+
+IF[{- !$disabled{dh} -}]
+  SOURCE[$DH_GOAL]=dh_exch.c
+ENDIF

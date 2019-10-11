@@ -8,8 +8,8 @@
  */
 
 #include <openssl/ocsp.h>
-#include "../ssl_locl.h"
-#include "statem_locl.h"
+#include "../ssl_local.h"
+#include "statem_local.h"
 #include "internal/cryptlib.h"
 
 #define COOKIE_STATE_FORMAT_VERSION     0

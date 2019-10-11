@@ -204,7 +204,7 @@ int crl_main(int argc, char **argv)
         }
         pkey = X509_get_pubkey(X509_OBJECT_get0_X509(xobj));
         X509_OBJECT_free(xobj);
-        if (!pkey) {
+        if (pkey == NULL) {
             BIO_printf(bio_err, "Error getting CRL issuer public key\n");
             goto end;
         }
@@ -228,7 +228,7 @@ int crl_main(int argc, char **argv)
         if (!newcrl)
             goto end;
         pkey = load_key(keyfile, keyformat, 0, NULL, NULL, "CRL signing key");
-        if (!pkey) {
+        if (pkey == NULL) {
             X509_CRL_free(newcrl);
             goto end;
         }

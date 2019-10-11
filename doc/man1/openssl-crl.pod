@@ -8,23 +8,25 @@ openssl-crl - CRL utility
 
 B<openssl> B<crl>
 [B<-help>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
 [B<-text>]
-[B<-in filename>]
-[B<-out filename>]
-[B<-nameopt option>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
+[B<-nameopt> I<option>]
 [B<-noout>]
 [B<-hash>]
 [B<-issuer>]
 [B<-lastupdate>]
 [B<-nextupdate>]
-[B<-CAfile file>]
-[B<-CApath dir>]
+[B<-CAfile> I<file>]
+[B<-CApath> I<dir>]
+
+=for comment ifdef hash_old
 
 =head1 DESCRIPTION
 
-The B<crl> command processes CRL files in DER or PEM format.
+This command processes CRL files in DER or PEM format.
 
 =head1 OPTIONS
 
@@ -34,23 +36,23 @@ The B<crl> command processes CRL files in DER or PEM format.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format. B<DER> format is DER encoded CRL
 structure. B<PEM> (the default) is a base64 encoded version of
 the DER form with header and footer lines.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read from or standard input if this
 option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Specifies the output filename to write to or standard output by
 default.
@@ -59,10 +61,10 @@ default.
 
 Print out the CRL in text form.
 
-=item B<-nameopt option>
+=item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. See
-the description of B<-nameopt> in L<x509(1)>.
+the description of B<-nameopt> in L<openssl-x509(1)>.
 
 =item B<-noout>
 
@@ -90,17 +92,17 @@ Output the lastUpdate field.
 
 Output the nextUpdate field.
 
-=item B<-CAfile file>
+=item B<-CAfile> I<file>
 
 Verify the signature on a CRL by looking up the issuing certificate in
-B<file>.
+I<file>.
 
-=item B<-CApath dir>
+=item B<-CApath> I<dir>
 
 Verify the signature on a CRL by looking up the issuing certificate in
-B<dir>. This directory must be a standard certificate directory: that
-is a hash of each subject name (using B<x509 -hash>) should be linked
-to each certificate.
+I<dir>. This directory must be a standard certificate directory: that
+is a hash of each subject name (using the L<openssl-x509(1)> B<-hash> option)
+should be linked to each certificate.
 
 =back
 

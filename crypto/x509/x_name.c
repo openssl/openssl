@@ -8,13 +8,13 @@
  */
 
 #include <stdio.h>
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
-#include "internal/asn1_int.h"
-#include "x509_lcl.h"
+#include "crypto/x509.h"
+#include "crypto/asn1.h"
+#include "x509_local.h"
 
 /*
  * Maximum length of X509_NAME: much larger than anything we should
@@ -114,7 +114,7 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     X509_NAME *a;
 
-    if (!pval || !*pval)
+    if (pval == NULL || *pval == NULL)
         return;
     a = (X509_NAME *)*pval;
 
@@ -503,9 +503,9 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
     l = 80 - 2 - obase;
 
     b = X509_NAME_oneline(name, NULL, 0);
-    if (!b)
+    if (b == NULL)
         return 0;
-    if (!*b) {
+    if (*b == '\0') {
         OPENSSL_free(b);
         return 1;
     }

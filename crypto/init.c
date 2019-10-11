@@ -8,25 +8,26 @@
  */
 
 #include "e_os.h"
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include <openssl/err.h>
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include "internal/bio.h"
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/conf.h"
-#include "internal/async.h"
-#include "internal/engine.h"
+#include "crypto/async.h"
+#include "crypto/engine.h"
 #include "internal/comp.h"
 #include "internal/err.h"
-#include "internal/err_int.h"
-#include "internal/objects.h"
+#include "crypto/err.h"
+#include "crypto/objects.h"
 #include <stdlib.h>
 #include <assert.h>
 #include "internal/thread_once.h"
-#include "internal/dso_conf.h"
+#include "crypto/dso_conf.h"
 #include "internal/dso.h"
-#include "internal/store.h"
+#include "crypto/store.h"
+#include <openssl/cmp_util.h> /* for OSSL_CMP_log_close() */
 #include <openssl/trace.h>
 
 static int stopped = 0;
@@ -430,6 +431,11 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: CRYPTO_secure_malloc_done()\n");
     CRYPTO_secure_malloc_done();
+
+#ifndef OPENSSL_NO_CMP
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: OSSL_CMP_log_close()\n");
+    OSSL_CMP_log_close();
+#endif
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();

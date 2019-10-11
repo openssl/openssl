@@ -17,9 +17,9 @@
 #include <openssl/engine.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 {
@@ -267,6 +267,17 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_sm4_ctr:
         case NID_sm4_cfb128:
         case NID_sm4_ofb128:
+        case NID_rc4:
+        case NID_rc4_40:
+        case NID_rc5_cbc:
+        case NID_rc5_ecb:
+        case NID_rc5_cfb64:
+        case NID_rc5_ofb64:
+        case NID_rc2_cbc:
+        case NID_rc2_40_cbc:
+        case NID_rc2_64_cbc:
+        case NID_rc2_cfb64:
+        case NID_rc2_ofb64:
             break;
         default:
             goto legacy;
@@ -333,19 +344,6 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
          */
         if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
             return 0;
-    }
-
-    switch (EVP_CIPHER_mode(ctx->cipher)) {
-    case EVP_CIPH_CFB_MODE:
-    case EVP_CIPH_OFB_MODE:
-    case EVP_CIPH_CBC_MODE:
-        /* For these modes we remember the original IV for later use */
-        if (!ossl_assert(EVP_CIPHER_CTX_iv_length(ctx) <= (int)sizeof(ctx->oiv))) {
-            EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
-            return 0;
-        }
-        if (iv != NULL)
-            memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
     }
 
     if (enc) {
@@ -1067,6 +1065,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     int ret = EVP_CTRL_RET_UNSUPPORTED;
     int set_params = 1;
     size_t sz = arg;
+    unsigned int i;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (ctx == NULL || ctx->cipher == NULL) {
@@ -1107,6 +1106,14 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
             OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED,
                                               ptr, sz);
         break;
+    case EVP_CTRL_GET_RC5_ROUNDS:
+        set_params = 0; /* Fall thru */
+    case EVP_CTRL_SET_RC5_ROUNDS:
+        if (arg < 0)
+            return 0;
+        i = (unsigned int)arg;
+        params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_ROUNDS, &i);
+        break;
     case EVP_CTRL_AEAD_GET_TAG:
         set_params = 0; /* Fall thru */
     case EVP_CTRL_AEAD_SET_TAG:
@@ -1127,13 +1134,20 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         if (ret <= 0)
             return 0;
         return sz;
+#ifndef OPENSSL_NO_RC2
+    case EVP_CTRL_GET_RC2_KEY_BITS:
+        set_params = 0; /* Fall thru */
+    case EVP_CTRL_SET_RC2_KEY_BITS:
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, &sz);
+        break;
+#endif /* OPENSSL_NO_RC2 */
     }
 
     if (set_params)
         ret = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
     else
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
-    return ret;
+    goto conclude;
 
 /* TODO(3.0): Remove legacy code below */
 legacy:
@@ -1143,6 +1157,8 @@ legacy:
     }
 
     ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
+
+ conclude:
     if (ret == EVP_CTRL_RET_UNSUPPORTED) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL,
                EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
@@ -1179,14 +1195,14 @@ const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher)
     return NULL;
 }
 
-const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(const EVP_CIPHER *cipher)
+const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher)
 {
     if (cipher != NULL && cipher->settable_ctx_params != NULL)
         return cipher->settable_ctx_params();
     return NULL;
 }
 
-const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(const EVP_CIPHER *cipher)
+const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher)
 {
     if (cipher != NULL && cipher->gettable_ctx_params != NULL)
         return cipher->gettable_ctx_params();

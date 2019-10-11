@@ -10,8 +10,8 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include "internal/bn_int.h"
-#include "rsa_locl.h"
+#include "crypto/bn.h"
+#include "rsa_local.h"
 
 #define RSA_FIPS1864_MIN_KEYGEN_KEYSIZE 2048
 #define RSA_FIPS1864_MIN_KEYGEN_STRENGTH 112

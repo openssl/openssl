@@ -465,7 +465,7 @@ int pkcs12_main(int argc, char **argv)
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
                             key_pbe, cert_pbe, iter, -1, keytype);
 
-        if (!p12) {
+        if (p12 == NULL) {
             ERR_print_errors(bio_err);
             goto export_end;
         }

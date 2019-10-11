@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DES_H
-# define HEADER_DES_H
+#ifndef OPENSSL_DES_H
+# define OPENSSL_DES_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_DES_H
+# endif
 
 # include <openssl/opensslconf.h>
 

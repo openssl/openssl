@@ -507,8 +507,9 @@ static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
         md_value_len = EVP_MD_size(md);
     } else {
         long digest_len;
+
         *md_value = OPENSSL_hexstr2buf(digest, &digest_len);
-        if (!*md_value || md_value_len != digest_len) {
+        if (*md_value == NULL || md_value_len != digest_len) {
             OPENSSL_free(*md_value);
             *md_value = NULL;
             BIO_printf(bio_err, "bad digest, %d bytes "

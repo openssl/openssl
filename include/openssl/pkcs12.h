@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PKCS12_H
-# define HEADER_PKCS12_H
+#ifndef OPENSSL_PKCS12_H
+# define OPENSSL_PKCS12_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_PKCS12_H
+# endif
 
 # include <openssl/bio.h>
 # include <openssl/x509.h>

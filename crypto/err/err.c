@@ -13,19 +13,19 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include "internal/err.h"
-#include "internal/err_int.h"
+#include "crypto/err.h"
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
 #include "internal/thread_once.h"
-#include "internal/ctype.h"
-#include "internal/constant_time_locl.h"
+#include "crypto/ctype.h"
+#include "internal/constant_time.h"
 #include "e_os.h"
-#include "err_locl.h"
+#include "err_local.h"
 
 /* Forward declaration in case it's not published because of configuration */
 ERR_STATE *ERR_get_state(void);
@@ -533,35 +533,30 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
         es->err_buffer[i] = 0;
     }
 
-    if (file != NULL && line != NULL) {
-        if (es->err_file[i] == NULL) {
-            *file = "NA";
-            *line = 0;
-        } else {
-            *file = es->err_file[i];
-            *line = es->err_line[i];
-        }
+    if (file != NULL) {
+        *file = es->err_file[i];
+        if (*file == NULL)
+            *file = "";
     }
-
+    if (line != NULL)
+        *line = es->err_line[i];
     if (func != NULL) {
         *func = es->err_func[i];
         if (*func == NULL)
-            *func = "N/A";
+            *func = "";
     }
-
+    if (flags != NULL)
+        *flags = es->err_data_flags[i];
     if (data == NULL) {
         if (g == EV_POP) {
             err_clear_data(es, i, 0);
         }
     } else {
-        if (es->err_data[i] == NULL) {
+        *data = es->err_data[i];
+        if (*data == NULL) {
             *data = "";
             if (flags != NULL)
                 *flags = 0;
-        } else {
-            *data = es->err_data[i];
-            if (flags != NULL)
-                *flags = es->err_data_flags[i];
         }
     }
     return ret;
@@ -646,7 +641,7 @@ const char *ERR_reason_error_string(unsigned long e)
     r = ERR_GET_REASON(e);
     d.error = ERR_PACK(l, 0, r);
     p = int_err_get_item(&d);
-    if (!p) {
+    if (p == NULL) {
         d.error = ERR_PACK(0, 0, r);
         p = int_err_get_item(&d);
     }

@@ -163,23 +163,24 @@ The parameters currently supported by the default provider are:
 
 =over 4
 
-=item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <uint>
+=item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <unsigned integer>
 
 Sets the DH padding mode.
-If B<OSSL_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeroes
+If B<OSSL_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeros
 up to the size of the DH prime B<p>.
 If B<OSSL_EXCHANGE_PARAM_PAD> is zero (the default) then no padding is
 performed.
 
-=item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <utf8 string>
+=item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 Gets and sets the name of the digest algorithm used for the input to the
 signature functions.
 
-=item "digest-size" (B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE>) <size_t>
+=item "digest-size" (B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE>) <unsigned integer>
 
 Gets and sets the output size of the digest algorithm used for the input to the
 signature functions.
+The length of the "digest-size" parameter should not exceed that of a B<size_t>.
 The internal algorithm that supports this parameter is DSA.
 
 =back
@@ -344,7 +345,7 @@ parameter generation. Use 0 for PKCS#3 DH and 1 for X9.42 DH.
 The default is 0.
 
 The EVP_PKEY_CTX_set_dh_pad() function sets the DH padding mode.
-If B<pad> is 1 the shared secret is padded with zeroes up to the size of the DH
+If B<pad> is 1 the shared secret is padded with zeros up to the size of the DH
 prime B<p>.
 If B<pad> is zero (the default) then no padding is performed.
 

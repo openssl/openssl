@@ -8,27 +8,27 @@ openssl-storeutl - STORE utility
 
 B<openssl> B<storeutl>
 [B<-help>]
-[B<-out file>]
+[B<-out> I<file>]
 [B<-noout>]
-[B<-passin arg>]
-[B<-text arg>]
-[B<-engine id>]
+[B<-passin> I<arg>]
+[B<-text> I<arg>]
+[B<-engine> I<id>]
 [B<-r>]
 [B<-certs>]
 [B<-keys>]
 [B<-crls>]
-[B<-subject arg>]
-[B<-issuer arg>]
-[B<-serial arg>]
-[B<-alias arg>]
-[B<-fingerprint arg>]
+[B<-subject> I<arg>]
+[B<-issuer> I<arg>]
+[B<-serial> I<arg>]
+[B<-alias> I<arg>]
+[B<-fingerprint> I<arg>]
 [B<-I<digest>>]
-B<uri> ...
+I<uri> ...
 
 =head1 DESCRIPTION
 
-The B<storeutl> command can be used to display the contents (after decryption
-as the case may be) fetched from the given URIs.
+This command can be used to display the contents (after
+decryption as the case may be) fetched from the given URIs.
 
 =head1 OPTIONS
 
@@ -38,7 +38,7 @@ as the case may be) fetched from the given URIs.
 
 Print out a usage message.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 specifies the output filename to write to or standard output by
 default.
@@ -47,19 +47,19 @@ default.
 
 this option prevents output of the PEM data.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
-the key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+the key password source. For more information about the format of I<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-text>
 
 Prints out the objects in text form, similarly to the B<-text> output from
-B<openssl x509>, B<openssl pkey>, etc.
+L<openssl-x509(1)>, L<openssl-pkey(1)>, etc.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-specifying an engine (by its unique B<id> string) will cause B<storeutl>
+specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
@@ -78,31 +78,31 @@ Only select the certificates, keys or CRLs from the given URI.
 However, if this URI would return a set of names (URIs), those are always
 returned.
 
-=item B<-subject arg>
+=item B<-subject> I<arg>
 
-Search for an object having the subject name B<arg>.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+Search for an object having the subject name I<arg>.
+The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
 Keyword characters may be escaped by \ (backslash), and whitespace is retained.
 Empty values are permitted but are ignored for the search.  That is,
 a search with an empty value will have the same effect as not specifying
 the type at all.
 
-=item B<-issuer arg>
+=item B<-issuer> I<arg>
 
-=item B<-serial arg>
+=item B<-serial> I<arg>
 
 Search for an object having the given issuer name and serial number.
 These two options I<must> be used together.
-The issuer arg must be formatted as I</type0=value0/type1=value1/type2=...>,
+The issuer arg must be formatted as C</type0=value0/type1=value1/type2=...>,
 characters may be escaped by \ (backslash), no spaces are skipped.
 The serial arg may be specified as a decimal value or a hex value if preceded
-by B<0x>.
+by C<0x>.
 
-=item B<-alias arg>
+=item B<-alias> I<arg>
 
 Search for an object having the given alias.
 
-=item B<-fingerprint arg>
+=item B<-fingerprint> I<arg>
 
 Search for an object having the given fingerprint.
 
@@ -118,7 +118,7 @@ L<openssl(1)>
 
 =head1 HISTORY
 
-The B<openssl> B<storeutl> app was added in OpenSSL 1.1.1.
+This command was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

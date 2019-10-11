@@ -44,7 +44,7 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
             break;
 
         ok = 1;                  /* As long as we've found *something* */
-        while (map->algorithm_name != NULL) {
+        while (map->algorithm_names != NULL) {
             const OSSL_ALGORITHM *thismap = map++;
 
             data->fn(provider, thismap, no_store, data->data);

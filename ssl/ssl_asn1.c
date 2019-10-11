@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 
@@ -250,7 +250,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     if (as == NULL)
         goto err;
 
-    if (!a || !*a) {
+    if (a == NULL || *a == NULL) {
         ret = SSL_SESSION_new();
         if (ret == NULL)
             goto err;

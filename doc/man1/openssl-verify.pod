@@ -8,55 +8,57 @@ openssl-verify - Utility to verify certificates
 
 B<openssl> B<verify>
 [B<-help>]
-[B<-CAfile file>]
-[B<-CApath directory>]
+[B<-CAfile> I<file>]
+[B<-CApath> I<directory>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-allow_proxy_certs>]
-[B<-attime timestamp>]
+[B<-attime> I<timestamp>]
 [B<-check_ss_sig>]
-[B<-CRLfile file>]
+[B<-CRLfile> I<file>]
 [B<-crl_download>]
 [B<-crl_check>]
 [B<-crl_check_all>]
-[B<-engine id>]
+[B<-engine> I<id>]
 [B<-explicit_policy>]
 [B<-extended_crl>]
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
-[B<-nameopt option>]
+[B<-nameopt> I<option>]
 [B<-no_check_time>]
 [B<-partial_chain>]
-[B<-policy arg>]
+[B<-policy> I<arg>]
 [B<-policy_check>]
 [B<-policy_print>]
-[B<-purpose purpose>]
+[B<-purpose> I<purpose>]
 [B<-suiteB_128>]
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
 [B<-no_alt_chains>]
-[B<-untrusted file>]
-[B<-trusted file>]
+[B<-untrusted> I<file>]
+[B<-trusted> I<file>]
 [B<-use_deltas>]
 [B<-verbose>]
-[B<-auth_level level>]
-[B<-verify_depth num>]
-[B<-verify_email email>]
-[B<-verify_hostname hostname>]
-[B<-verify_ip ip>]
-[B<-verify_name name>]
+[B<-auth_level> I<level>]
+[B<-verify_depth> I<num>]
+[B<-verify_email> I<email>]
+[B<-verify_hostname> I<hostname>]
+[B<-verify_ip> I<ip>]
+[B<-verify_name> I<name>]
 [B<-x509_strict>]
 [B<-show_chain>]
-[B<-sm2-id string>]
-[B<-sm2-hex-id hex-string>]
-[B<->]
-[certificates]
+[B<-sm2-id> I<string>]
+[B<-sm2-hex-id> I<hex-string>]
+[B<-->]
+[I<certificate> ...]
+
+=for comment ifdef engine sm2-id sm2-hex-id
 
 =head1 DESCRIPTION
 
-The B<verify> command verifies certificate chains.
+This command verifies certificate chains.
 
 =head1 OPTIONS
 
@@ -66,18 +68,18 @@ The B<verify> command verifies certificate chains.
 
 Print out a usage message.
 
-=item B<-CAfile file>
+=item B<-CAfile> I<file>
 
-A B<file> of trusted certificates.
+A I<file> of trusted certificates.
 The file should contain one or more certificates in PEM format.
 
-=item B<-CApath directory>
+=item B<-CApath> I<directory>
 
 A directory of trusted certificates. The certificates should have names
-of the form: hash.0 or have symbolic links to them of this
-form ("hash" is the hashed certificate subject name: see the B<-hash> option
-of the B<x509> utility). Under Unix the B<c_rehash> script will automatically
-create symbolic links to a directory of certificates.
+of the form: F<I<hash>.0> or have symbolic links to them of this form
+(I<hash> is the hashed certificate subject name: see the L<openssl-x509(1)>
+B<-hash> option). Under Unix, L<openssl-rehash(1)> will automatically create
+symbolic links to a directory of certificates.
 
 =item B<-no-CAfile>
 
@@ -91,10 +93,10 @@ Do not load the trusted CA certificates from the default directory location.
 
 Allow the verification of proxy certificates.
 
-=item B<-attime timestamp>
+=item B<-attime> I<timestamp>
 
-Perform validation checks using time specified by B<timestamp> and not
-current system time. B<timestamp> is the number of seconds since
+Perform validation checks using time specified by I<timestamp> and not
+current system time. I<timestamp> is the number of seconds since
 01.01.1970 (UNIX time).
 
 =item B<-check_ss_sig>
@@ -102,11 +104,11 @@ current system time. B<timestamp> is the number of seconds since
 Verify the signature on the self-signed root CA. This is disabled by default
 because it doesn't add any security.
 
-=item B<-CRLfile file>
+=item B<-CRLfile> I<file>
 
-The B<file> should contain one or more CRLs in PEM format.
+The I<file> should contain one or more CRLs in PEM format.
 This option can be specified more than once to include CRLs from multiple
-B<files>.
+I<file>s.
 
 =item B<-crl_download>
 
@@ -122,9 +124,9 @@ If a valid CRL cannot be found an error occurs.
 Checks the validity of B<all> certificates in the chain by attempting
 to look up valid CRLs.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-Specifying an engine B<id> will cause L<verify(1)> to attempt to load the
+Specifying an engine I<id> will cause this command to attempt to load the
 specified engine.
 The engine will then be set as the default for all its supported algorithms.
 If you want to load certificates or CRLs that require engine support via any of
@@ -154,17 +156,17 @@ Set policy variable inhibit-any-policy (see RFC5280).
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
 
-=item B<-nameopt option>
+=item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
-B<option> argument can be a single option or multiple options separated by
+I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<x509(1)> manual page for details.
+set multiple options. See the L<openssl-x509(1)> manual page for details.
 
 =item B<-no_check_time>
 
 This option suppresses checking the validity period of certificates and CRLs
-against the current time. If option B<-attime timestamp> is used to specify
+against the current time. If option B<-attime> is used to specify
 a verification time, the check is not suppressed.
 
 =item B<-partial_chain>
@@ -173,10 +175,10 @@ Allow verification to succeed even if a I<complete> chain cannot be built to a
 self-signed trust-anchor, provided it is possible to construct a chain to a
 trusted certificate that might not be self-signed.
 
-=item B<-policy arg>
+=item B<-policy> I<arg>
 
-Enable policy processing and add B<arg> to the user-initial-policy-set (see
-RFC5280). The policy B<arg> can be an object name an OID in numeric form.
+Enable policy processing and add I<arg> to the user-initial-policy-set (see
+RFC5280). The policy I<arg> can be an object name an OID in numeric form.
 This argument can appear more than once.
 
 =item B<-policy_check>
@@ -187,12 +189,13 @@ Enables certificate policy processing.
 
 Print out diagnostics related to policy processing.
 
-=item B<-purpose purpose>
+=item B<-purpose> I<purpose>
 
 The intended use for the certificate. If this option is not specified,
-B<verify> will not consider certificate purpose during chain verification.
+this command will not consider certificate purpose during chain
+verification.
 Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
-B<smimesign>, B<smimeencrypt>. See the B<VERIFY OPERATION> section for more
+B<smimesign>, B<smimeencrypt>. See the L</VERIFY OPERATION> section for more
 information.
 
 =item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
@@ -220,24 +223,24 @@ trust store to see if an alternative chain can be found that is trusted.
 As of OpenSSL 1.1.0, with B<-trusted_first> always on, this option has no
 effect.
 
-=item B<-untrusted file>
+=item B<-untrusted> I<file>
 
-A B<file> of additional untrusted certificates (intermediate issuer CAs) used
+A I<file> of additional untrusted certificates (intermediate issuer CAs) used
 to construct a certificate chain from the subject certificate to a trust-anchor.
-The B<file> should contain one or more certificates in PEM format.
+The I<file> should contain one or more certificates in PEM format.
 This option can be specified more than once to include untrusted certificates
-from multiple B<files>.
+from multiple I<file>s.
 
-=item B<-trusted file>
+=item B<-trusted> I<file>
 
-A B<file> of trusted certificates, which must be self-signed, unless the
+A I<file> of trusted certificates, which must be self-signed, unless the
 B<-partial_chain> option is specified.
-The B<file> contains one or more certificates in PEM format.
+The I<file> contains one or more certificates in PEM format.
 With this option, no additional (e.g., default) certificate lists are
 consulted.
-That is, the only trust-anchors are those listed in B<file>.
+That is, the only trust-anchors are those listed in I<file>.
 This option can be specified more than once to include trusted certificates
-from multiple B<files>.
+from multiple I<file>s.
 This option implies the B<-no-CAfile> and B<-no-CApath> options.
 This option cannot be used in combination with either of the B<-CAfile> or
 B<-CApath> options.
@@ -250,13 +253,13 @@ Enable support for delta CRLs.
 
 Print extra information about the operations being performed.
 
-=item B<-auth_level level>
+=item B<-auth_level> I<level>
 
-Set the certificate chain authentication security level to B<level>.
+Set the certificate chain authentication security level to I<level>.
 The authentication security level determines the acceptable signature and
 public key strength when verifying certificate chains.
 For a certificate chain to validate, the public keys of all the certificates
-must meet the specified security B<level>.
+must meet the specified security I<level>.
 The signature algorithm security level is enforced for all the certificates in
 the chain except for the chain's I<trust anchor>, which is either directly
 trusted or validated by means other than its signature.
@@ -268,36 +271,35 @@ Security level 1 requires at least 80-bit-equivalent security and is broadly
 interoperable, though it will, for example, reject MD5 signatures or RSA keys
 shorter than 1024 bits.
 
-=item B<-verify_depth num>
+=item B<-verify_depth> I<num>
 
-Limit the certificate chain to B<num> intermediate CA certificates.
-A maximal depth chain can have up to B<num+2> certificates, since neither the
+Limit the certificate chain to I<num> intermediate CA certificates.
+A maximal depth chain can have up to I<num>+2 certificates, since neither the
 end-entity certificate nor the trust-anchor certificate count against the
 B<-verify_depth> limit.
 
-=item B<-verify_email email>
+=item B<-verify_email> I<email>
 
-Verify if the B<email> matches the email address in Subject Alternative Name or
+Verify if I<email> matches the email address in Subject Alternative Name or
 the email in the subject Distinguished Name.
 
-=item B<-verify_hostname hostname>
+=item B<-verify_hostname> I<hostname>
 
-Verify if the B<hostname> matches DNS name in Subject Alternative Name or
+Verify if I<hostname> matches DNS name in Subject Alternative Name or
 Common Name in the subject certificate.
 
-=item B<-verify_ip ip>
+=item B<-verify_ip> I<ip>
 
-Verify if the B<ip> matches the IP address in Subject Alternative Name of
+Verify if I<ip> matches the IP address in Subject Alternative Name of
 the subject certificate.
 
-=item B<-verify_name name>
+=item B<-verify_name> I<name>
 
 Use default verification policies like trust model and required certificate
-policies identified by B<name>.
+policies identified by I<name>.
 The trust model determines which auxiliary trust or reject OIDs are applicable
 to verifying the given certificate chain.
-See the B<-addtrust> and B<-addreject> options of the L<x509(1)> command-line
-utility.
+See the B<-addtrust> and B<-addreject> options for L<openssl-x509(1)>.
 Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
 B<ssl_client>, B<ssl_server>.
 These mimics the combinations of purpose and trust settings used in SSL, CMS
@@ -327,30 +329,30 @@ required by the SM2 signature algorithm for signing and verification.
 Specify a binary ID string to use when signing or verifying using an SM2
 certificate. The argument for this option is string of hexadecimal digits.
 
-=item B<->
+=item B<-->
 
 Indicates the last option. All arguments following this are assumed to be
 certificate files. This is useful if the first certificate filename begins
-with a B<->.
+with a B<-->.
 
-=item B<certificates>
+=item I<certificate> ...
 
-One or more certificates to verify. If no certificates are given, B<verify>
-will attempt to read a certificate from standard input. Certificates must be
-in PEM format.
+One or more certificates to verify. If no certificates are given,
+this command will attempt to read a certificate from standard input.
+Certificates must be in PEM format.
 
 =back
 
 =head1 VERIFY OPERATION
 
-The B<verify> program uses the same functions as the internal SSL and S/MIME
-verification, therefore this description applies to these verify operations
-too.
+This command uses the same functions as the internal SSL
+and S/MIME verification, therefore this description applies to these verify
+operations too.
 
 There is one crucial difference between the verify operations performed
-by the B<verify> program: wherever possible an attempt is made to continue
-after an error whereas normally the verify operation would halt on the
-first error. This allows all the problems with a certificate chain to be
+by this command: wherever possible an attempt is made to
+continue after an error whereas normally the verify operation would halt on
+the first error. This allows all the problems with a certificate chain to be
 determined.
 
 The verify operation consists of a number of separate steps.
@@ -381,19 +383,19 @@ list.
 The second operation is to check every untrusted certificate's extensions for
 consistency with the supplied purpose. If the B<-purpose> option is not included
 then no checks are done. The supplied or "leaf" certificate must have extensions
-compatible with the supplied purpose and all other certificates must also be valid
-CA certificates. The precise extensions required are described in more detail in
-the B<CERTIFICATE EXTENSIONS> section of the B<x509> utility.
+compatible with the supplied purpose and all other certificates must also be
+valid CA certificates. The precise extensions required are described in more
+detail in L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
 
 The third operation is to check the trust settings on the root CA. The root CA
 should be trusted for the supplied purpose.
 For compatibility with previous versions of OpenSSL, a certificate with no
 trust settings is considered to be valid for all purposes.
 
-The final operation is to check the validity of the certificate chain. The validity
-period is checked against the current system time and the notBefore and notAfter
-dates in the certificate. The certificate signatures are also checked at this
-point.
+The final operation is to check the validity of the certificate chain. The
+validity period is checked against the current system time and the notBefore
+and notAfter dates in the certificate. The certificate signatures are also
+checked at this point.
 
 If all operations complete successfully then certificate is considered valid. If
 any operation fails then the certificate is not valid.
@@ -414,7 +416,8 @@ then 1 for the CA that signed the certificate and so on. Finally a text version
 of the error number is presented.
 
 A partial list of the error codes and messages is shown below, this also
-includes the name of the error code as defined in the header file x509_vfy.h
+includes the name of the error code as defined in the header file
+F<< <openssl/x509_vfy.h> >>.
 Some of the error codes are defined but never returned: these are described
 as "unused".
 
@@ -706,7 +709,7 @@ IP address mismatch.
 
 DANE TLSA authentication is enabled, but no TLSA records matched the
 certificate chain.
-This error is only possible in L<s_client(1)>.
+This error is only possible in L<openssl-s_client(1)>.
 
 =item B<X509_V_ERR_EE_KEY_TOO_SMALL>
 

@@ -14,9 +14,9 @@
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include <openssl/asn1t.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
-#include "ec_lcl.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
+#include "ec_local.h"
 
 #ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
@@ -196,7 +196,7 @@ static int eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 
     eckey = eckey_type2param(ptype, pval);
 
-    if (!eckey)
+    if (eckey == NULL)
         goto ecliberr;
 
     /* We have parameters now set private key */
@@ -650,7 +650,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
         const EC_GROUP *grp;
         EVP_PKEY *pk;
         pk = EVP_PKEY_CTX_get0_pkey(pctx);
-        if (!pk)
+        if (pk == NULL)
             goto err;
         grp = EC_KEY_get0_group(pk->pkey.ec);
         ecpeer = EC_KEY_new();
@@ -666,7 +666,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     /* We have parameters now set public key */
     plen = ASN1_STRING_length(pubkey);
     p = ASN1_STRING_get0_data(pubkey);
-    if (!p || !plen)
+    if (p == NULL || plen == 0)
         goto err;
     if (!o2i_ECPublicKey(&ecpeer, &p, plen))
         goto err;

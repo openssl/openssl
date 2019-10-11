@@ -12,9 +12,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/provider.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 {
@@ -52,7 +52,8 @@ static void *evp_signature_from_dispatch(int name_id,
                                     keymgmt_data->properties);
     EVP_SIGNATURE *signature = NULL;
     int ctxfncnt = 0, signfncnt = 0, verifyfncnt = 0, verifyrecfncnt = 0;
-    int gparamfncnt = 0, sparamfncnt = 0;
+    int digsignfncnt = 0, digverifyfncnt = 0;
+    int gparamfncnt = 0, sparamfncnt = 0, gmdparamfncnt = 0, smdparamfncnt = 0;
 
     if (keymgmt == NULL || EVP_KEYMGMT_provider(keymgmt) != prov) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEYMGMT_AVAILABLE);
@@ -114,6 +115,48 @@ static void *evp_signature_from_dispatch(int name_id,
                 = OSSL_get_OP_signature_verify_recover(fns);
             verifyrecfncnt++;
             break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT:
+            if (signature->digest_sign_init != NULL)
+                break;
+            signature->digest_sign_init
+                = OSSL_get_OP_signature_digest_sign_init(fns);
+            digsignfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE:
+            if (signature->digest_sign_update != NULL)
+                break;
+            signature->digest_sign_update
+                = OSSL_get_OP_signature_digest_sign_update(fns);
+            digsignfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL:
+            if (signature->digest_sign_final != NULL)
+                break;
+            signature->digest_sign_final
+                = OSSL_get_OP_signature_digest_sign_final(fns);
+            digsignfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT:
+            if (signature->digest_verify_init != NULL)
+                break;
+            signature->digest_verify_init
+                = OSSL_get_OP_signature_digest_verify_init(fns);
+            digverifyfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE:
+            if (signature->digest_verify_update != NULL)
+                break;
+            signature->digest_verify_update
+                = OSSL_get_OP_signature_digest_verify_update(fns);
+            digverifyfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL:
+            if (signature->digest_verify_final != NULL)
+                break;
+            signature->digest_verify_final
+                = OSSL_get_OP_signature_digest_verify_final(fns);
+            digverifyfncnt++;
+            break;
         case OSSL_FUNC_SIGNATURE_FREECTX:
             if (signature->freectx != NULL)
                 break;
@@ -153,21 +196,65 @@ static void *evp_signature_from_dispatch(int name_id,
                 = OSSL_get_OP_signature_settable_ctx_params(fns);
             sparamfncnt++;
             break;
+        case OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS:
+            if (signature->get_ctx_md_params != NULL)
+                break;
+            signature->get_ctx_md_params
+                = OSSL_get_OP_signature_get_ctx_md_params(fns);
+            gmdparamfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS:
+            if (signature->gettable_ctx_md_params != NULL)
+                break;
+            signature->gettable_ctx_md_params
+                = OSSL_get_OP_signature_gettable_ctx_md_params(fns);
+            gmdparamfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS:
+            if (signature->set_ctx_md_params != NULL)
+                break;
+            signature->set_ctx_md_params
+                = OSSL_get_OP_signature_set_ctx_md_params(fns);
+            smdparamfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS:
+            if (signature->settable_ctx_md_params != NULL)
+                break;
+            signature->settable_ctx_md_params
+                = OSSL_get_OP_signature_settable_ctx_md_params(fns);
+            smdparamfncnt++;
+            break;
         }
     }
     if (ctxfncnt != 2
-        || (signfncnt != 2 && verifyfncnt != 2 && verifyrecfncnt != 2)
+        || (signfncnt == 0
+            && verifyfncnt == 0
+            && verifyrecfncnt == 0
+            && digsignfncnt == 0
+            && digverifyfncnt == 0)
+        || (signfncnt != 0 && signfncnt != 2)
+        || (verifyfncnt != 0 && verifyfncnt != 2)
+        || (verifyrecfncnt != 0 && verifyrecfncnt != 2)
+        || (digsignfncnt != 0 && digsignfncnt != 3)
+        || (digverifyfncnt != 0 && digverifyfncnt != 3)
         || (gparamfncnt != 0 && gparamfncnt != 2)
-        || (sparamfncnt != 0 && sparamfncnt != 2)) {
+        || (sparamfncnt != 0 && sparamfncnt != 2)
+        || (gmdparamfncnt != 0 && gmdparamfncnt != 2)
+        || (smdparamfncnt != 0 && smdparamfncnt != 2)) {
         /*
          * In order to be a consistent set of functions we must have at least
-         * a set of context functions (newctx and freectx) as well as a pair of
-         * "signature" functions: (sign_init, sign) or (verify_init verify) or
-         * (verify_recover_init, verify_recover). set_ctx_params and
-         * settable_ctx_params are optional, but if one of them is present then
-         * the other one must also be present. The same applies to
-         * get_ctx_params and gettable_ctx_params. The dupctx function is
-         * optional.
+         * a set of context functions (newctx and freectx) as well as a set of
+         * "signature" functions:
+         *  (sign_init, sign) or
+         *  (verify_init verify) or
+         *  (verify_recover_init, verify_recover) or
+         *  (digest_sign_init, digest_sign_update, digest_sign_final) or
+         *  (digest_verify_init, digest_verify_update, digest_verify_final).
+         *
+         * set_ctx_params and settable_ctx_params are optional, but if one of
+         * them is present then the other one must also be present. The same
+         * applies to get_ctx_params and gettable_ctx_params. The same rules
+         * apply to the "md_params" functions. The dupctx function is optional.
          */
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;

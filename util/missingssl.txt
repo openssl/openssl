@@ -1,5 +1,4 @@
-# A list of libssl functions that are known to be missing documentation as
-# used by the find-doc-nits -v option. The list is as of commit 355b419698.
+# Missing functions in libssl, as of Tue Oct  1 16:13:38 EDT 2019
 ERR_load_SSL_strings
 SRP_Calc_A_param
 SSL_COMP_get_name
@@ -13,8 +12,6 @@ SSL_CTX_get0_privatekey
 SSL_CTX_get_ssl_method
 SSL_CTX_set0_ctlog_store
 SSL_CTX_set_client_cert_engine
-SSL_CTX_set_cookie_generate_cb
-SSL_CTX_set_cookie_verify_cb
 SSL_CTX_set_not_resumable_session_callback
 SSL_CTX_set_purpose
 SSL_CTX_set_trust

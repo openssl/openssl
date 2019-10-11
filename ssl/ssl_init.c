@@ -13,7 +13,7 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/trace.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "internal/thread_once.h"
 
 static int stopped;

@@ -21,18 +21,18 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
 The shared secret used for key derivation.
 This parameter sets the secret.
 
-=item B<OSSL_KDF_PARAM_INFO> ("info") <octet string>
+=item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
 This parameter specifies an optional value for shared info.
 
@@ -48,8 +48,8 @@ A context for X963KDF can be obtained by calling:
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "X963KDF", NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
-The output length of an X963KDF is specified via the C<keylen>
-parameter to the L<EVP_KDF-derive(3)> function.
+The output length of an X963KDF is specified via the I<keylen>
+parameter to the L<EVP_KDF_derive(3)> function.
 
 =head1 EXAMPLES
 

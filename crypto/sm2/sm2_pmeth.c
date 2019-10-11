@@ -11,9 +11,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
-#include "internal/sm2.h"
-#include "internal/sm2err.h"
+#include "crypto/evp.h"
+#include "crypto/sm2.h"
+#include "crypto/sm2err.h"
 
 /* EC pkey context structure */
 
@@ -309,7 +309,7 @@ static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     return EVP_DigestUpdate(mctx, z, (size_t)mdlen);
 }
 
-const EVP_PKEY_METHOD sm2_pkey_meth = {
+static const EVP_PKEY_METHOD sm2_pkey_meth = {
     EVP_PKEY_SM2,
     0,
     pkey_sm2_init,
@@ -349,3 +349,8 @@ const EVP_PKEY_METHOD sm2_pkey_meth = {
 
     pkey_sm2_digest_custom
 };
+
+const EVP_PKEY_METHOD *sm2_pkey_method(void)
+{
+    return &sm2_pkey_meth;
+}

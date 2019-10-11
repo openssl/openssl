@@ -14,9 +14,9 @@
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 /* X509_VERIFY_PARAM functions */
 
@@ -332,9 +332,9 @@ void X509_VERIFY_PARAM_set_time(X509_VERIFY_PARAM *param, time_t t)
 int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
                                   ASN1_OBJECT *policy)
 {
-    if (!param->policies) {
+    if (param->policies == NULL) {
         param->policies = sk_ASN1_OBJECT_new_null();
-        if (!param->policies)
+        if (param->policies == NULL)
             return 0;
     }
     if (!sk_ASN1_OBJECT_push(param->policies, policy))
@@ -348,17 +348,17 @@ int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
     int i;
     ASN1_OBJECT *oid, *doid;
 
-    if (!param)
+    if (param == NULL)
         return 0;
     sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
 
-    if (!policies) {
+    if (policies == NULL) {
         param->policies = NULL;
         return 1;
     }
 
     param->policies = sk_ASN1_OBJECT_new_null();
-    if (!param->policies)
+    if (param->policies == NULL)
         return 0;
 
     for (i = 0; i < sk_ASN1_OBJECT_num(policies); i++) {

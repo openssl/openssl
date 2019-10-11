@@ -9,19 +9,21 @@ openssl-rand - generate pseudo-random bytes
 B<openssl rand>
 [B<-help>]
 [B<-out> I<file>]
-[B<-rand file...>]
-[B<-writerand file>]
+[B<-rand> I<files>]
+[B<-writerand> I<file>]
 [B<-base64>]
 [B<-hex>]
 I<num>
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
-The B<rand> command outputs I<num> pseudo-random bytes after seeding
+This command outputs I<num> pseudo-random bytes after seeding
 the random number generator once.  As in other B<openssl> command
-line tools, PRNG seeding uses the file I<$HOME/>B<.rnd> or B<.rnd>
+line tools, PRNG seeding uses the file F<$HOME/.rnd> or F<.rnd>
 in addition to the files given in the B<-rand> option.  A new
-I<$HOME>/B<.rnd> or B<.rnd> file will be written back if enough
+F<$HOME/.rnd> or F<.rnd> file will be written back if enough
 seeding was obtained from these sources.
 
 =head1 OPTIONS
@@ -32,19 +34,18 @@ seeding was obtained from these sources.
 
 Print out a usage message.
 
-=item B<-out file>
+=item B<-out> I<file>
 
 Write to I<file> instead of standard output.
 
-=item B<-rand file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.

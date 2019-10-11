@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_TRACE_H
-# define OSSL_TRACE_H
+#ifndef OPENSSL_TRACE_H
+# define OPENSSL_TRACE_H
 
 # include <stdarg.h>
 
@@ -49,7 +49,8 @@ extern "C" {
 # define OSSL_TRACE_CATEGORY_PKCS12_DECRYPT     10
 # define OSSL_TRACE_CATEGORY_X509V3_POLICY      11
 # define OSSL_TRACE_CATEGORY_BN_CTX             12
-# define OSSL_TRACE_CATEGORY_NUM                13
+# define OSSL_TRACE_CATEGORY_CMP                13
+# define OSSL_TRACE_CATEGORY_NUM                14
 
 /* Returns the trace category number for the given |name| */
 int OSSL_trace_get_category_num(const char *name);

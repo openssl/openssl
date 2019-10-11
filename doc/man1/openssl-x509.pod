@@ -8,13 +8,13 @@ openssl-x509 - Certificate display and signing utility
 
 B<openssl> B<x509>
 [B<-help>]
-[B<-inform DER|PEM>]
-[B<-outform DER|PEM>]
-[B<-keyform DER|PEM>]
-[B<-CAform DER|PEM>]
-[B<-CAkeyform DER|PEM>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-keyform> B<DER>|B<PEM>]
+[B<-CAform> B<DER>|B<PEM>]
+[B<-CAkeyform> B<DER>|B<PEM>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-serial>]
 [B<-hash>]
 [B<-subject_hash>]
@@ -22,14 +22,14 @@ B<openssl> B<x509>
 [B<-ocspid>]
 [B<-subject>]
 [B<-issuer>]
-[B<-nameopt option>]
+[B<-nameopt> I<option>]
 [B<-email>]
 [B<-ocsp_uri>]
 [B<-startdate>]
 [B<-enddate>]
 [B<-purpose>]
 [B<-dates>]
-[B<-checkend num>]
+[B<-checkend> I<num>]
 [B<-modulus>]
 [B<-pubkey>]
 [B<-fingerprint>]
@@ -38,40 +38,42 @@ B<openssl> B<x509>
 [B<-trustout>]
 [B<-clrtrust>]
 [B<-clrreject>]
-[B<-addtrust arg>]
-[B<-addreject arg>]
-[B<-setalias arg>]
-[B<-days arg>]
-[B<-set_serial n>]
-[B<-signkey filename>]
-[B<-passin arg>]
+[B<-addtrust> I<arg>]
+[B<-addreject> I<arg>]
+[B<-setalias> I<arg>]
+[B<-days> I<arg>]
+[B<-set_serial> I<n>]
+[B<-signkey> I<filename>]
+[B<-passin> I<arg>]
 [B<-x509toreq>]
 [B<-req>]
-[B<-CA filename>]
-[B<-CAkey filename>]
+[B<-CA> I<filename>]
+[B<-CAkey> I<filename>]
 [B<-CAcreateserial>]
-[B<-CAserial filename>]
+[B<-CAserial> I<filename>]
 [B<-new>]
-[B<-force_pubkey filename>]
-[B<-subj arg>]
+[B<-force_pubkey> I<filename>]
+[B<-subj> I<arg>]
 [B<-text>]
-[B<-ext extensions>]
-[B<-certopt option>]
+[B<-ext> I<extensions>]
+[B<-certopt> I<option>]
 [B<-C>]
 [B<-I<digest>>]
 [B<-clrext>]
-[B<-extfile filename>]
-[B<-extensions section>]
-[B<-sigopt nm:v>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-engine id>]
+[B<-extfile> I<filename>]
+[B<-extensions> I<section>]
+[B<-sigopt> I<nm>:I<v>]
+[B<-rand> I<files>]
+[B<-writerand> I<file>]
+[B<-engine> I<id>]
 [B<-preserve_dates>]
+
+=for comment ifdef engine subject_hash_old issuer_hash_old
 
 =head1 DESCRIPTION
 
-The B<x509> command is a multi purpose certificate utility. It can be
-used to display certificate information, convert certificates to
+This command is a multi purpose certificate utility. It can
+be used to display certificate information, convert certificates to
 various forms, sign certificate requests like a "mini CA" or edit
 certificate trust settings.
 
@@ -88,7 +90,7 @@ various sections.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format normally the command will expect an X509
 certificate but this can change if other options such as B<-req> are
@@ -96,17 +98,17 @@ present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
 added. The default format is PEM.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read a certificate from or standard input
 if this option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write to or standard output by
 default.
@@ -116,26 +118,25 @@ default.
 The digest to use.
 This affects any signing or display option that uses a message
 digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
-Any digest supported by the OpenSSL B<dgst> command can be used.
+Any digest supported by the L<openssl-dgst(1)> command can be used.
 If not specified then SHA1 is used with B<-fingerprint> or
 the default digest for the signing algorithm is used, typically SHA256.
 
-=item B<-rand file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<x509>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -151,7 +152,7 @@ Cannot be used with the B<-days> option.
 =head2 Display Options
 
 Note: the B<-alias> and B<-purpose> options are also display options
-but are described in the B<TRUST SETTINGS> section.
+but are described in the L</Trust Settings> section.
 
 =over 4
 
@@ -161,18 +162,18 @@ Prints out the certificate in text form. Full details are output including the
 public key, signature algorithms, issuer and subject names, serial number
 any extensions present and any trust settings.
 
-=item B<-ext extensions>
+=item B<-ext> I<extensions>
 
 Prints out the certificate extensions in text form. Extensions are specified
 with a comma separated string, e.g., "subjectAltName,subjectKeyIdentifier".
 See the L<x509v3_config(5)> manual page for the extension names.
 
-=item B<-certopt option>
+=item B<-certopt> I<option>
 
-Customise the output format used with B<-text>. The B<option> argument
+Customise the output format used with B<-text>. The I<option> argument
 can be a single option or multiple options separated by commas. The
 B<-certopt> switch may be also be used more than once to set multiple
-options. See the B<TEXT OPTIONS> section for more information.
+options. See the L</Text Options> section for more information.
 
 =item B<-noout>
 
@@ -227,12 +228,12 @@ Outputs the subject name.
 
 Outputs the issuer name.
 
-=item B<-nameopt option>
+=item B<-nameopt> I<option>
 
 Option which determines how the subject or issuer names are displayed. The
-B<option> argument can be a single option or multiple options separated by
+I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the B<NAME OPTIONS> section for more information.
+set multiple options. See the L</Name Options> section for more information.
 
 =item B<-email>
 
@@ -254,10 +255,10 @@ Prints out the expiry date of the certificate, that is the notAfter date.
 
 Prints out the start and expiry dates of a certificate.
 
-=item B<-checkend arg>
+=item B<-checkend> I<arg>
 
-Checks if the certificate expires within the next B<arg> seconds and exits
-non-zero if yes it will expire or zero if not.
+Checks if the certificate expires within the next I<arg> seconds and exits
+nonzero if yes it will expire or zero if not.
 
 =item B<-fingerprint>
 
@@ -288,8 +289,8 @@ Trust settings currently are only used with a root CA. They allow a finer
 control over the purposes the root CA can be used for. For example a CA
 may be trusted for SSL client but not SSL server use.
 
-See the description of the B<verify> utility for more information on the
-meaning of trust settings.
+See the description in L<openssl-verify(1)> for more information
+on the meaning of trust settings.
 
 Future versions of OpenSSL will recognize trust settings on any
 certificate: not just root CAs.
@@ -299,13 +300,13 @@ certificate: not just root CAs.
 
 =item B<-trustout>
 
-This causes B<x509> to output a B<trusted> certificate. An ordinary
+Output a B<trusted> certificate rather than an ordinary. An ordinary
 or trusted certificate can be input but by default an ordinary
 certificate is output and any trust settings are discarded. With the
 B<-trustout> option a trusted certificate is output. A trusted
 certificate is automatically output if any trust settings are modified.
 
-=item B<-setalias arg>
+=item B<-setalias> I<arg>
 
 Sets the alias of the certificate. This will allow the certificate
 to be referred to using a nickname for example "Steve's Certificate".
@@ -322,7 +323,7 @@ Clears all the permitted or trusted uses of the certificate.
 
 Clears all the prohibited or rejected uses of the certificate.
 
-=item B<-addtrust arg>
+=item B<-addtrust> I<arg>
 
 Adds a trusted certificate use.
 Any object name can be used here but currently only B<clientAuth> (SSL client
@@ -332,7 +333,7 @@ As of OpenSSL 1.1.0, the last of these blocks all purposes when rejected or
 enables all purposes when trusted.
 Other OpenSSL applications may define additional uses.
 
-=item B<-addreject arg>
+=item B<-addreject> I<arg>
 
 Adds a prohibited use. It accepts the same values as the B<-addtrust>
 option.
@@ -340,19 +341,19 @@ option.
 =item B<-purpose>
 
 This option performs tests on the certificate extensions and outputs
-the results. For a more complete description see the B<CERTIFICATE
-EXTENSIONS> section.
+the results. For a more complete description see the
+L</CERTIFICATE EXTENSIONS> section.
 
 =back
 
 =head2 Signing Options
 
-The B<x509> utility can be used to sign certificates and requests: it
+This command can be used to sign certificates and requests: it
 can thus behave like a "mini CA".
 
 =over 4
 
-=item B<-signkey filename>
+=item B<-signkey> I<filename>
 
 This option causes the input file to be self signed using the supplied
 private key.
@@ -364,15 +365,15 @@ and the end date to a value determined by the B<-days> option.
 It retains any certificate extensions unless the B<-clrext> option is supplied;
 this includes, for example, any existing key identifier extensions.
 
-=item B<-sigopt nm:v>
+=item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
-The key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The key password source. For more information about the format of I<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-clrext>
 
@@ -381,12 +382,12 @@ certificate is being created from another certificate (for example with
 the B<-signkey> or the B<-CA> options). Normally all extensions are
 retained.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform> B<DER>|B<PEM>
 
 Specifies the format (DER or PEM) of the private key file used in the
 B<-signkey> option.
 
-=item B<-days arg>
+=item B<-days> I<arg>
 
 Specifies the number of days to make a certificate valid for. The default
 is 30 days. Cannot be used with the B<-preserve_dates> option.
@@ -401,32 +402,32 @@ is used to pass the required private key.
 By default a certificate is expected on input. With this option a
 certificate request is expected instead.
 
-=item B<-set_serial n>
+=item B<-set_serial> I<n>
 
 Specifies the serial number to use. This option can be used with either
 the B<-signkey> or B<-CA> options. If used in conjunction with the B<-CA>
 option the serial number file (as specified by the B<-CAserial> or
 B<-CAcreateserial> options) is not used.
 
-The serial number can be decimal or hex (if preceded by B<0x>).
+The serial number can be decimal or hex (if preceded by C<0x>).
 
-=item B<-CA filename>
+=item B<-CA> I<filename>
 
 Specifies the CA certificate to be used for signing. When this option is
-present B<x509> behaves like a "mini CA". The input file is signed by this
-CA using this option: that is its issuer name is set to the subject name
+present, this command behaves like a "mini CA". The input file is signed by
+this CA using this option: that is its issuer name is set to the subject name
 of the CA and it is digitally signed using the CAs private key.
 
 This option is normally combined with the B<-req> option. Without the
 B<-req> option the input is a certificate which must be self signed.
 
-=item B<-CAkey filename>
+=item B<-CAkey> I<filename>
 
 Sets the CA private key to sign a certificate with. If this option is
 not specified then it is assumed that the CA private key is present in
 the CA certificate file.
 
-=item B<-CAserial filename>
+=item B<-CAserial> I<filename>
 
 Sets the CA serial number file to use.
 
@@ -436,8 +437,9 @@ an even number of hex digits with the serial number to use. After each
 use the serial number is incremented and written out to the file again.
 
 The default filename consists of the CA certificate file base name with
-".srl" appended. For example if the CA certificate file is called
-"mycacert.pem" it expects to find a serial number file called "mycacert.srl".
+F<.srl> appended. For example if the CA certificate file is called
+F<mycacert.pem> it expects to find a serial number file called
+F<mycacert.srl>.
 
 =item B<-CAcreateserial>
 
@@ -447,12 +449,12 @@ have the 1 as its serial number. If the B<-CA> option is specified
 and the serial number file does not exist a random number is generated;
 this is the recommended practice.
 
-=item B<-extfile filename>
+=item B<-extfile> I<filename>
 
 File containing certificate extensions to use. If not specified then
 no extensions are added to the certificate.
 
-=item B<-extensions section>
+=item B<-extensions> I<section>
 
 The section to add certificate extensions from. If this option is not
 specified then the extensions should either be contained in the unnamed
@@ -467,9 +469,9 @@ Generate a certificate from scratch, not using an input certificate
 or certificate request. So the B<-in> option must not be used in this case.
 Instead, the B<-subj> and <-force_pubkey> options need to be given.
 
-=item B<-force_pubkey filename>
+=item B<-force_pubkey> I<filename>
 
-When a certificate is created set its public key to the key in B<filename>
+When a certificate is created set its public key to the key in I<filename>
 instead of the key contained in the input or given with the B<-signkey> option.
 
 This option is useful for creating self-issued certificates that are not
@@ -479,13 +481,13 @@ generate a certificate containing any desired public key.
 
 The format of the key file can be specified using the B<-keyform> option.
 
-=item B<-subj arg>
+=item B<-subj> I<arg>
 
 When a certificate is created set its subject name to the given value.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
 Keyword characters may be escaped by \ (backslash), and whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
-in the certificate. Giving a single I</> will lead to an empty sequence of RDNs
+in the certificate. Giving a single C</> will lead to an empty sequence of RDNs
 (a NULL subject DN).
 
 Unless the B<-CA> option is given the issuer is set to the same value.
@@ -498,8 +500,8 @@ or certificate request.
 
 =head2 Name Options
 
-The B<nameopt> command line switch determines how the subject and issuer
-names are displayed. If no B<nameopt> switch is present the default "oneline"
+The B<-nameopt> command line switch determines how the subject and issuer
+names are displayed. If no B<-nameopt> switch is present the default "oneline"
 format is used which is compatible with previous versions of OpenSSL.
 Each option is described in detail below, all options can be preceded by
 a B<-> to turn the option off. Only the first four will normally be used.
@@ -716,7 +718,7 @@ Hex dump unsupported extensions.
 
 =item B<ca_default>
 
-The value used by the B<ca> utility, equivalent to B<no_issuer>, B<no_pubkey>,
+The value used by L<openssl-ca(1)>, equivalent to B<no_issuer>, B<no_pubkey>,
 B<no_header>, and B<no_version>.
 
 =back
@@ -951,9 +953,9 @@ L<x509v3_config(5)>
 
 The hash algorithm used in the B<-subject_hash> and B<-issuer_hash> options
 before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding
-of the distinguished name. In OpenSSL 1.0.0 and later it is based on a
-canonical version of the DN using SHA1. This means that any directories using
-the old form must have their links rebuilt using B<c_rehash> or similar.
+of the distinguished name. In OpenSSL 1.0.0 and later it is based on a canonical
+version of the DN using SHA1. This means that any directories using the old
+form must have their links rebuilt using L<openssl-rehash(1)> or similar.
 
 =head1 COPYRIGHT
 

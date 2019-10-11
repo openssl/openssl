@@ -14,10 +14,10 @@
 # include <openssl/modes.h>
 # include <openssl/rand.h>
 # include <openssl/rand_drbg.h>
-# include "internal/aria.h"
-# include "internal/evp_int.h"
-# include "internal/modes_int.h"
-# include "evp_locl.h"
+# include "crypto/aria.h"
+# include "crypto/evp.h"
+# include "crypto/modes.h"
+# include "evp_local.h"
 
 /* ARIA subkey Structure */
 typedef struct {

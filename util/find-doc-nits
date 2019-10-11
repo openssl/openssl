@@ -18,6 +18,8 @@ use Getopt::Std;
 use lib catdir(dirname($0), "perl");
 use OpenSSL::Util::Pod;
 
+my $debug = 0;                  # Set to 1 for debug output
+
 # Options.
 our($opt_d);
 our($opt_e);
@@ -31,23 +33,38 @@ our($opt_u);
 our($opt_v);
 our($opt_c);
 
+# Print usage message and exit.
 sub help {
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
+    -c List undocumented commands and options
     -d Detailed list of undocumented (implies -u)
     -e Detailed list of new undocumented (implies -v)
-    -s Same as -e except no output is generated if nothing is undocumented
-    -o Causes -e/-v to count symbols added since 1.1.1 as new (implies -v)
+    -h Print this help message
     -l Print bogus links
     -n Print nits in POD pages
-    -p Warn if non-public name documented (implies -n)
+    -o Causes -e/-v to count symbols added since 1.1.1 as new (implies -v)
     -u Count undocumented functions
     -v Count new undocumented functions
-    -h Print this help message
-    -c List undocumented commands and options
 EOF
     exit;
 }
+
+getopts('cdehlnouv');
+
+help() if $opt_h;
+$opt_u = 1 if $opt_d;
+$opt_v = 1 if $opt_o || $opt_e;
+die "Cannot use both -u and -v"
+    if $opt_u && $opt_v;
+die "Cannot use both -d and -e"
+    if $opt_d && $opt_e;
+
+# We only need to check c, l, n, u and v.
+# Options d, e, o imply one of the above.
+die "Need one of -[cdehlnouv] flags.\n"
+    unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
+
 
 my $temp = '/tmp/docnits.txt';
 my $OUT;
@@ -107,9 +124,11 @@ sub name_synopsis {
         if %foundfilenames;
     err($id, "$simplename (filename) missing from NAME section")
         unless $foundfilename;
-    foreach my $n ( keys %names ) {
-        err($id, "$n is not public")
-            if $opt_p and !defined $public{$n};
+    if ( $filename !~ /internal/ ) {
+        foreach my $n ( keys %names ) {
+            err($id, "$n is not public")
+                if !defined $public{$n};
+        }
     }
 
     # Find all functions in SYNOPSIS
@@ -203,6 +222,206 @@ sub check_head_style {
     }
 }
 
+# Because we have options and symbols with extra markup, we need
+# to take that into account, so we need a regexp that extracts
+# markup chunks, including recursive markup.
+# please read up on /(?R)/ in perlre(1)
+# (note: order is important, (?R) needs to come before .)
+# (note: non-greedy is important, or something like 'B<foo> and B<bar>'
+# will be captured as one item)
+my $markup_re =
+    qr/(                        # Capture group
+           [BIL]<               # The start of what we recurse on
+           (?:(?-1)|.)*?        # recurse the whole regexp (refering to
+                                # the last opened capture group, i.e. the
+                                # start of this regexp), or pick next
+                                # character.  Do NOT be greedy!
+           >                    # The end of what we recurse on
+       )/x;                     # (the x allows this sort of split up regexp)
+
+# Options must start with a dash, followed by a letter, possibly
+# followed by letters, digits, dashes and underscores, and the last
+# character must be a letter or a digit.
+# We do also accept the single -? or -n, where n is a digit
+my $option_re =
+    qr/(?:
+            \?                  # Single question mark
+            |
+            \d                  # Single digit
+            |
+            -                   # Single dash (--)
+            |
+            [[:alpha:]](?:[-_[:alnum:]]*?[[:alnum:]])?
+       )/x;
+
+# Helper function to check if a given $thing is properly marked up
+# option.  It returns one of these values:
+#
+# undef         if it's not an option
+# ""            if it's a malformed option
+# $unwrapped    the option with the outermost B<> wrapping removed.
+sub normalise_option {
+    my $id = shift;
+    my $filename = shift;
+    my $thing = shift;
+
+    my $unwrapped = $thing;
+    my $unmarked = $thing;
+
+    # $unwrapped is the option with the outer B<> markup removed
+    $unwrapped =~ s/^B<//;
+    $unwrapped =~ s/>$//;
+    # $unmarked is the option with *all* markup removed
+    $unmarked =~ s/[BIL]<|>//msg;
+
+
+    # If we found an option, check it, collect it
+    if ( $unwrapped =~ /^\s*-/ ) {
+        return $unwrapped       # return option with outer B<> removed
+            if $unmarked =~ /^-${option_re}$/;
+        return "";              # Malformed option
+    }
+    return undef;               # Something else
+}
+
+# Checks of command option (man1) formatting.  The man1 checks are
+# restricted to the SYNOPSIS and OPTIONS sections, the rest is too
+# free form, we simply cannot be too strict there.
+
+sub option_check {
+    my $id = shift;
+    my $filename = shift;
+    my $contents = shift;
+
+    my $synopsis = ($contents =~ /=head1\s+SYNOPSIS(.*?)=head1/s, $1);
+
+    # Some pages have more than one OPTIONS section, let's make sure
+    # to get them all
+    my $options = '';
+    while ( $contents =~ /=head1\s+[A-Z ]*?OPTIONS$(.*?)(?==head1)/msg ) {
+        $options .= $1;
+    }
+
+    # Look for options with no or incorrect markup
+    while ( $synopsis =~
+            /(?<![-<[:alnum:]])-(?:$markup_re|.)*(?![->[:alnum:]])/msg ) {
+        err($id, "Malformed option [1] in SYNOPSIS: $&");
+    }
+
+    while ( $synopsis =~ /$markup_re/msg ) {
+        my $found = $&;
+        print STDERR "$id:DEBUG[option_check] SYNOPSIS: found $found\n"
+            if $debug;
+        my $option_uw = normalise_option($id, $filename, $found);
+        err($id, "Malformed option [2] in SYNOPSIS: $found")
+            if defined $option_uw && $option_uw eq '';
+    }
+
+    # In OPTIONS, we look for =item paragraphs.
+    # (?=^\s*$) detects an empty line.
+    while ( $options =~ /=item\s+(.*?)(?=^\s*$)/msg ) {
+        my $item = $&;
+
+        while ( $item =~ /(\[\s*)?($markup_re)/msg ) {
+            my $found = $2;
+            print STDERR "$id:DEBUG[option_check] OPTIONS: found $&\n"
+                if $debug;
+            err($id, "Unexpected bracket in OPTIONS =item: $item")
+                if ($1 // '') ne '' && $found =~ /^B<\s*-/;
+
+            my $option_uw = normalise_option($id, $filename, $found);
+            err($id, "Malformed option in OPTIONS: $found")
+                if defined $option_uw && $option_uw eq '';
+        }
+    }
+}
+
+# Normal symbol form
+my $symbol_re = qr/[[:alpha:]_][_[:alnum:]]*?/;
+
+# Checks of function name (man3) formatting.  The man3 checks are
+# easier than the man1 checks, we only check the names followed by (),
+# and only the names that have POD markup.
+
+sub functionname_check {
+    my $id = shift;
+    my $filename = shift;
+    my $contents = shift;
+
+    while ( $contents =~ /($markup_re)\(\)/msg ) {
+        print STDERR "$id:DEBUG[functionname_check] SYNOPSIS: found $&\n"
+            if $debug;
+
+        my $symbol = $1;
+        my $unmarked = $symbol;
+        $unmarked =~ s/[BIL]<|>//msg;
+
+        err($id, "Malformed symbol: $symbol")
+            unless $symbol =~ /^B<.*>$/ && $unmarked =~ /^${symbol_re}$/
+    }
+
+    # We can't do the kind of collecting coolness that option_check()
+    # does, because there are too many things that can't be found in
+    # name repositories like the NAME sections, such as symbol names
+    # with a variable part (typically marked up as B<foo_I<TYPE>_bar>
+}
+
+# This is from http://man7.org/linux/man-pages/man7/man-pages.7.html
+my %preferred_words = (
+    'bitmask'       => 'bit mask',
+    'builtin'       => 'built-in',
+   #'epoch'         => 'Epoch', # handled specially, below
+    'file name'     => 'filename',
+    'file system'   => 'filesystem',
+    'host name'     => 'hostname',
+    'i-node'        => 'inode',
+    'lower case'    => 'lowercase',
+    'lower-case'    => 'lowercase',
+    'non-zero'      => 'nonzero',
+    'path name'     => 'pathname',
+    'pseudo-terminal' => 'pseudoterminal',
+    'reserved port' => 'privileged port',
+    'system port'   => 'privileged port',
+    'realtime'      => 'real-time',
+    'real time'     => 'real-time',
+    'runtime'       => 'run time',
+    'saved group ID'=> 'saved set-group-ID',
+    'saved set-GID' => 'saved set-group-ID',
+    'saved user ID' => 'saved set-user-ID',
+    'saved set-UID' => 'saved set-user-ID',
+    'set-GID'       => 'set-group-ID',
+    'setgid'        => 'set-group-ID',
+    'set-UID'       => 'set-user-ID',
+    'setuid'        => 'set-user-ID',
+    'super user'    => 'superuser',
+    'super-user'    => 'superuser',
+    'super block'   => 'superblock',
+    'super-block'   => 'superblock',
+    'time stamp'    => 'timestamp',
+    'time zone'     => 'timezone',
+    'upper case'    => 'uppercase',
+    'upper-case'    => 'uppercase',
+    'useable'       => 'usable',
+    'userspace'     => 'user space',
+    'user name'     => 'username',
+    'zeroes'        => 'zeros'
+);
+
+sub wording {
+    my $id = shift;
+    my $contents = shift;
+
+    foreach my $k ( keys %preferred_words ) {
+        # Sigh, trademark
+        next if $k eq 'file system'
+            and $contents =~ /Microsoft Encrypted File System/;
+        err($id, "found '$k' should use '$preferred_words{$k}'")
+            if $contents =~ /\b\Q$k\E\b/i;
+    }
+    err($id, "found 'epoch' should use 'Epoch'")
+        if $contents =~ /\bepoch\b/;
+}
+
 sub check {
     my $filename = shift;
     my $dirname = basename(dirname($filename));
@@ -225,9 +444,16 @@ sub check {
         check_section_location($id, $contents, "EXAMPLES", "SEE ALSO");
     }
 
-    name_synopsis($id, $filename, $contents)
-        unless $contents =~ /=for comment generic/
-            or $filename =~ m@man[157]/@;
+    unless ( $contents =~ /=for openssl generic/ ) {
+        if ( $filename =~ m|man3/| ) {
+            name_synopsis($id, $filename, $contents);
+            functionname_check($id, $filename, $contents);
+        } elsif ( $filename =~ m|man1/| ) {
+            option_check($id, $filename, $contents)
+        }
+    }
+
+    wording($id, $contents);
 
     err($id, "doesn't start with =pod")
         if $contents !~ /^=pod/;
@@ -256,7 +482,7 @@ sub check {
     err($id, "Possible version style issue")
         if $contents =~ /OpenSSL version [019]/;
 
-    if ( $contents !~ /=for comment multiple includes/ ) {
+    if ( $contents !~ /=for openssl multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines
         # (non-consecutive lines are okay; see man3/MD5.pod).
         if ( $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms ) {
@@ -316,7 +542,6 @@ sub parsenum {
 
     close $IN;
 
-    print "# Found ", scalar(@apis), " in $file\n" unless $opt_p;
     return sort @apis;
 }
 
@@ -329,7 +554,7 @@ sub getdocced
         my %podinfo = extract_pod_info($pod);
         foreach my $n ( @{$podinfo{names}} ) {
             $return{$n} = $pod;
-            print "# Duplicate $n in $pod and $dups{$n}\n"
+            err("# Duplicate $n in $pod and $dups{$n}")
                 if defined $dups{$n} && $dups{$n} ne $pod;
             $dups{$n} = $pod;
         }
@@ -368,8 +593,6 @@ sub checkmacros {
         @missing = loadmissing('util/missingmacro.txt');
     }
 
-    print "# Checking macros (approximate)\n"
-        if !$opt_s;
     foreach my $f ( glob('include/openssl/*.h') ) {
         # Skip some internals we don't want to document yet.
         next if $f eq 'include/openssl/asn1.h';
@@ -389,15 +612,15 @@ sub checkmacros {
             # Skip macros known to be missing
             next if $opt_v && grep( /^$macro$/, @missing);
     
-            print "$f:$macro\n"
+            err("$f:", "macro $macro undocumented")
                 if $opt_d || $opt_e;
             $count++;
             $seen{$macro} = 1;
         }
         close(IN);
     }
-    print "# Found $count macros missing\n"
-        if !$opt_s || $count > 0;
+    err("# $count macros undocumented (count is approximate)")
+        if $count > 0;
 }
 
 sub printem {
@@ -418,13 +641,13 @@ sub printem {
         # Skip functions known to be missing
         next if $opt_v && grep( /^$func$/, @missing);
 
-        print "$libname:$func\n"
+        err("$libname:", "function $func undocumented")
             if $opt_d || $opt_e;
         $count++;
         $seen{$func} = 1;
     }
-    print "# Found $count missing from $numfile\n\n"
-        if !$opt_s || $count > 0;
+    err("# $count in $numfile are not documented")
+        if $count > 0;
 }
 
 
@@ -512,6 +735,7 @@ sub checklinks {
     }
 }
 
+# Load the public symbol/macro names
 sub publicize {
     foreach my $name ( parsenum('util/libcrypto.num') ) {
         $public{$name} = 1;
@@ -519,11 +743,12 @@ sub publicize {
     foreach my $name ( parsenum('util/libssl.num') ) {
         $public{$name} = 1;
     }
-    foreach my $name ( parsenum('util/private.num') ) {
+    foreach my $name ( parsenum('util/other.syms') ) {
         $public{$name} = 1;
     }
 }
 
+# Cipher/digests to skip if not documented
 my %skips = (
     'aes128' => 1,
     'aes192' => 1,
@@ -537,8 +762,8 @@ my %skips = (
     'des' => 1,
     'des3' => 1,
     'idea' => 1,
-    '[cipher]' => 1,
-    '[digest]' => 1,
+    'cipher' => 1,
+    'digest' => 1,
 );
 
 sub checkflags {
@@ -546,6 +771,7 @@ sub checkflags {
     my $doc = shift;
     my %cmdopts;
     my %docopts;
+    my %localskips;
 
     # Get the list of options in the command.
     open CFH, "./apps/openssl list --options $cmd|"
@@ -563,7 +789,15 @@ sub checkflags {
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
+        if ( /=for comment ifdef (.*)/ ) {
+            foreach my $f ( split / /, $1 ) {
+                $localskips{$f} = 1;
+            }
+            next;
+        }
         next unless /\[B<-([^ >]+)/;
+        my $opt = $1;
+        $opt = $1 if $opt =~ /I<(.*)/;
         $docopts{$1} = 1;
     }
     close CFH;
@@ -575,7 +809,8 @@ sub checkflags {
     }
     if ( scalar @undocced > 0 ) {
         foreach ( @undocced ) {
-            err("doc/man1/$cmd.pod: Missing -$_");
+            next if /-/; # Skip the -- end-of-flags marker
+            err("$doc: undocumented option -$_");
         }
     }
 
@@ -586,30 +821,11 @@ sub checkflags {
     }
     if ( scalar @unimpl > 0 ) {
         foreach ( @unimpl ) {
-            next if defined $skips{$_};
-            err("doc/man1/$cmd.pod: Not implemented -$_");
+            next if defined $skips{$_} || defined $localskips{$_};
+            err("$cmd documented but not implemented -$_");
         }
     }
 }
-
-getopts('cdesolnphuv');
-
-help() if $opt_h;
-
-$opt_n = 1 if $opt_p;
-$opt_u = 1 if $opt_d;
-$opt_e = 1 if $opt_s;
-$opt_v = 1 if $opt_o || $opt_e;
-
-die "Cannot use both -u and -v"
-    if $opt_u && $opt_v;
-die "Cannot use both -d and -e"
-    if $opt_d && $opt_e;
-
-# We only need to check c, l, n, u and v.
-# Options d, e, s, o and p imply one of the above.
-die "Need one of -[cdesolnpuv] flags.\n"
-    unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
 
 if ( $opt_c ) {
     my @commands = ();
@@ -657,14 +873,19 @@ if ( $opt_l ) {
 }
 
 if ( $opt_n ) {
-    publicize() if $opt_p;
+    publicize();
     foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'), glob('doc/*/*.pod.in'))) {
         check($_);
     }
-    {
-        local $opt_p = undef;
-        foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
-            check($_);
+    foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
+        check($_);
+    }
+
+    # If not given args, check that all man1 commands are named properly.
+    if ( scalar @ARGV == 0 ) {
+        foreach (glob('doc/man1/*.pod')) {
+            next if /CA.pl/ || /openssl\.pod/ || /tsget\.pod/;
+            err("$_ doesn't start with openssl-") unless /openssl-/;
         }
     }
 }

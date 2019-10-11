@@ -1,6 +1,0 @@
-SUBDIRS=digests macs ciphers
-SUBDIRS=digests kdfs macs ciphers
-LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        defltprov.c
-INCLUDE[../../libcrypto]=include

@@ -105,8 +105,8 @@ EC_GROUP_set_curve function. An appropriate default implementation method will b
 
 Whilst the library can be used to create any curve using the functions described above, there are also a number of
 predefined curves that are available. In order to obtain a list of all of the predefined curves, call the function
-EC_get_builtin_curves. The parameter B<r> should be an array of EC_builtin_curve structures of size B<nitems>. The function
-will populate the B<r> array with information about the builtin curves. If B<nitems> is less than the total number of
+EC_get_builtin_curves(). The parameter B<r> should be an array of EC_builtin_curve structures of size B<nitems>. The function
+will populate the B<r> array with information about the built-in curves. If B<nitems> is less than the total number of
 curves available, then the first B<nitems> curves will be returned. Otherwise the total number of curves will be
 provided. The return value is the total number of curves available (whether that number has been populated in B<r> or
 not). Passing a NULL B<r>, or setting B<nitems> to 0 will do nothing other than return the total number of curves available.
@@ -119,7 +119,7 @@ The EC_builtin_curve structure is defined as follows:
 
 Each EC_builtin_curve item has a unique integer id (B<nid>), and a human readable comment string describing the curve.
 
-In order to construct a builtin curve use the function EC_GROUP_new_by_curve_name_ex and provide the B<nid> of the curve to
+In order to construct a built-in curve use the function EC_GROUP_new_by_curve_name_ex and provide the B<nid> of the curve to
 be constructed and the associated library context to be used in B<ctx> (see L<OPENSSL_CTX(3)>).
 The B<ctx> value may be NULL in which case the default library context is used.
 
@@ -136,7 +136,7 @@ If B<group> is NULL nothing is done.
 
 All EC_GROUP_new* functions return a pointer to the newly constructed group, or NULL on error.
 
-EC_get_builtin_curves returns the number of builtin curves that are available.
+EC_get_builtin_curves returns the number of built-in curves that are available.
 
 EC_GROUP_set_curve_GFp, EC_GROUP_get_curve_GFp, EC_GROUP_set_curve_GF2m, EC_GROUP_get_curve_GF2m return 1 on success or 0 on error.
 

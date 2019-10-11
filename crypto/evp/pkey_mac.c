@@ -13,8 +13,8 @@
 #include <openssl/engine.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
-#include "internal/evp_int.h"
-#include "evp_locl.h"
+#include "crypto/evp.h"
+#include "evp_local.h"
 
 /* MAC PKEY context structure */
 
@@ -278,8 +278,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 char *engineid = (char *)ENGINE_get_id(ctx->engine);
 
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
-                                                     engineid, 0);
+                    OSSL_PARAM_construct_utf8_string("engine", engineid, 0);
 #endif
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
@@ -400,11 +399,9 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 char *engineid = ctx->engine == NULL
                     ? NULL : (char *)ENGINE_get_id(ctx->engine);
 
-                if (engineid != NULL) {
+                if (engineid != NULL)
                     params[params_n++] =
-                        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_ENGINE,
-                                                         engineid, 0);
-                }
+                        OSSL_PARAM_construct_utf8_string("engine", engineid, 0);
 #endif
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
@@ -455,7 +452,7 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
         type = OSSL_MAC_PARAM_SIZE;
 
     if (!OSSL_PARAM_allocate_from_text(&params[0],
-                                       EVP_MAC_CTX_settable_params(mac),
+                                       EVP_MAC_settable_ctx_params(mac),
                                        type, value, strlen(value) + 1))
         return 0;
     params[1] = OSSL_PARAM_construct_end();
@@ -464,7 +461,7 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
     return ok;
 }
 
-const EVP_PKEY_METHOD cmac_pkey_meth = {
+static const EVP_PKEY_METHOD cmac_pkey_meth = {
     EVP_PKEY_CMAC,
     EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     pkey_mac_init,
@@ -497,7 +494,12 @@ const EVP_PKEY_METHOD cmac_pkey_meth = {
     pkey_mac_ctrl_str
 };
 
-const EVP_PKEY_METHOD hmac_pkey_meth = {
+const EVP_PKEY_METHOD *cmac_pkey_method(void)
+{
+    return &cmac_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD hmac_pkey_meth = {
     EVP_PKEY_HMAC,
     0,
     pkey_mac_init,
@@ -530,7 +532,12 @@ const EVP_PKEY_METHOD hmac_pkey_meth = {
     pkey_mac_ctrl_str
 };
 
-const EVP_PKEY_METHOD siphash_pkey_meth = {
+const EVP_PKEY_METHOD *hmac_pkey_method(void)
+{
+    return &hmac_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD siphash_pkey_meth = {
     EVP_PKEY_SIPHASH,
     EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     pkey_mac_init,
@@ -563,7 +570,12 @@ const EVP_PKEY_METHOD siphash_pkey_meth = {
     pkey_mac_ctrl_str
 };
 
-const EVP_PKEY_METHOD poly1305_pkey_meth = {
+const EVP_PKEY_METHOD *siphash_pkey_method(void)
+{
+    return &siphash_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD poly1305_pkey_meth = {
     EVP_PKEY_POLY1305,
     EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     pkey_mac_init,
@@ -595,3 +607,8 @@ const EVP_PKEY_METHOD poly1305_pkey_meth = {
     pkey_mac_ctrl,
     pkey_mac_ctrl_str
 };
+
+const EVP_PKEY_METHOD *poly1305_pkey_method(void)
+{
+    return &poly1305_pkey_meth;
+}

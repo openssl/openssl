@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_UI_H
-# define HEADER_UI_H
+#ifndef OPENSSL_UI_H
+# define OPENSSL_UI_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_UI_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -17,7 +23,7 @@
 # endif
 # include <openssl/safestack.h>
 # include <openssl/pem.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/uierr.h>
 
 /* For compatibility reasons, the macro OPENSSL_NO_UI is currently retained */

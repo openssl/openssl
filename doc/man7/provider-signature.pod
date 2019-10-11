@@ -6,7 +6,7 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
 
 =head1 SYNOPSIS
 
-=for comment multiple includes
+=for openssl multiple includes
 
  #include <openssl/core_numbers.h>
  #include <openssl/core_names.h>
@@ -111,70 +111,70 @@ OP_signature_newctx() should create and return a pointer to a provider side
 structure for holding context information during a signature operation.
 A pointer to this context will be passed back in a number of the other signature
 operation function calls.
-The parameter B<provctx> is the provider context generated during provider
+The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(3)>).
 
 OP_signature_freectx() is passed a pointer to the provider side signature
-context in the B<ctx> parameter.
+context in the I<ctx> parameter.
 This function should free any resources associated with that context.
 
 OP_signature_dupctx() should duplicate the provider side signature context in
-the B<ctx> parameter and return the duplicate copy.
+the I<ctx> parameter and return the duplicate copy.
 
 =head2 Signing Functions
 
 OP_signature_sign_init() initialises a context for signing given a provider side
-signature context in the B<ctx> parameter, and a pointer to a provider key object
-in the B<provkey> parameter.
+signature context in the I<ctx> parameter, and a pointer to a provider key object
+in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OP_signature_sign() performs the actual signing itself.
-A previously initialised signature context is passed in the B<ctx>
+A previously initialised signature context is passed in the I<ctx>
 parameter.
-The data to be signed is pointed to be the B<tbs> parameter which is B<tbslen>
+The data to be signed is pointed to be the I<tbs> parameter which is I<tbslen>
 bytes long.
-Unless B<sig> is NULL, the signature should be written to the location pointed
-to by the B<sig> parameter and it should not exceed B<sigsize> bytes in length.
-The length of the signature should be written to B<*siglen>.
-If B<sig> is NULL then the maximum length of the signature should be written to
-B<*siglen>.
+Unless I<sig> is NULL, the signature should be written to the location pointed
+to by the I<sig> parameter and it should not exceed I<sigsize> bytes in length.
+The length of the signature should be written to I<*siglen>.
+If I<sig> is NULL then the maximum length of the signature should be written to
+I<*siglen>.
 
 =head2 Verify Functions
 
 OP_signature_verify_init() initialises a context for verifying a signature given
-a provider side signature context in the B<ctx> parameter, and a pointer to a
-provider key object in the B<provkey> parameter.
+a provider side signature context in the I<ctx> parameter, and a pointer to a
+provider key object in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OP_signature_verify() performs the actual verification itself.
-A previously initialised signature context is passed in the B<ctx> parameter.
-The data that the signature covers is pointed to be the B<tbs> parameter which
-is B<tbslen> bytes long.
-The signature is pointed to by the B<sig> parameter which is B<siglen> bytes
+A previously initialised signature context is passed in the I<ctx> parameter.
+The data that the signature covers is pointed to be the I<tbs> parameter which
+is I<tbslen> bytes long.
+The signature is pointed to by the I<sig> parameter which is I<siglen> bytes
 long.
 
 =head2 Verify Recover Functions
 
 OP_signature_verify_recover_init() initialises a context for recovering the
-signed data given a provider side signature context in the B<ctx> parameter, and
-a pointer to a provider key object in the B<provkey> parameter.
+signed data given a provider side signature context in the I<ctx> parameter, and
+a pointer to a provider key object in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OP_signature_verify_recover() performs the actual verify recover itself.
-A previously initialised signature context is passed in the B<ctx> parameter.
-The signature is pointed to by the B<sig> parameter which is B<siglen> bytes
+A previously initialised signature context is passed in the I<ctx> parameter.
+The signature is pointed to by the I<sig> parameter which is I<siglen> bytes
 long.
-Unless B<rout> is NULL, the recovered data should be written to the location
-pointed to by B<rout> which should not exceed B<routsize> bytes in length.
-The length of the recovered data should be written to B<*routlen>.
-If B<rout> is B<NULL> then the maximum size of the output buffer is written to
-the B<routlen> parameter.
+Unless I<rout> is NULL, the recovered data should be written to the location
+pointed to by I<rout> which should not exceed I<routsize> bytes in length.
+The length of the recovered data should be written to I<*routlen>.
+If I<rout> is NULL then the maximum size of the output buffer is written to
+the I<routlen> parameter.
 
 =head2 Signature Parameters
 
@@ -182,9 +182,9 @@ See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 the OP_signature_get_ctx_params() and OP_signature_set_ctx_params() functions.
 
 OP_signature_get_ctx_params() gets signature parameters associated with the
-given provider side signature context B<ctx> and stored them in B<params>.
+given provider side signature context I<ctx> and stored them in I<params>.
 OP_signature_set_ctx_params() sets the signature parameters associated with the
-given provider side signature context B<ctx> to B<params>.
+given provider side signature context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
 Parameters currently recognised by built-in signature algorithms are as
@@ -194,15 +194,17 @@ algorithms:
 
 =over 4
 
-=item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <utf8 string>
+=item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 Get or sets the name of the digest algorithm used for the input to the signature
 functions.
 
-=item "digest-size" (B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE>) <size_t>
+=item "digest-size" (B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE>) <unsigned integer>
 
 Gets or sets the output size of the digest algorithm used for the input to the
 signature functions.
+The length of the "digest-size" parameter should not exceed that of a B<size_t>.
+
 
 =back
 

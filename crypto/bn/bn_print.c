@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <openssl/bio.h>
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 static const char Hex[] = "0123456789ABCDEF";
 

@@ -12,7 +12,7 @@
 
 #include <string.h>
 #include <openssl/err.h>
-#include "err_locl.h"
+#include "err_local.h"
 
 void ERR_new(void)
 {

@@ -8,27 +8,29 @@ openssl-rsautl - RSA utility
 
 B<openssl> B<rsautl>
 [B<-help>]
-[B<-in file>]
-[B<-out file>]
-[B<-inkey file>]
-[B<-keyform PEM|DER|ENGINE>]
+[B<-in> I<file>]
+[B<-out> I<file>]
+[B<-inkey> I<file>]
+[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-sign>]
 [B<-verify>]
 [B<-encrypt>]
 [B<-decrypt>]
-[B<-rand file...>]
-[B<-writerand file>]
+[B<-rand> I<files>]
+[B<-writerand> I<file>]
 [B<-pkcs>]
 [B<-ssl>]
 [B<-raw>]
 [B<-hexdump>]
 [B<-asn1parse>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
-The B<rsautl> command can be used to sign, verify, encrypt and decrypt
+This command can be used to sign, verify, encrypt and decrypt
 data using the RSA algorithm.
 
 =head1 OPTIONS
@@ -39,21 +41,21 @@ data using the RSA algorithm.
 
 Print out a usage message.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read data from or standard input
 if this option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-inkey file>
+=item B<-inkey> I<file>
 
 The input key file, by default it should be an RSA private key.
 
-=item B<-keyform PEM|DER|ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
 The key format PEM, DER or ENGINE.
 
@@ -82,20 +84,19 @@ Encrypt the input data using an RSA public key.
 
 Decrypt the input data using an RSA private key.
 
-=item B<-rand file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-pkcs, -oaep, -ssl, -raw>
+=item B<-pkcs>, B<-oaep>, B<-ssl>, B<-raw>
 
 The padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
 special padding used in SSL v2 backwards compatible handshakes,
@@ -115,7 +116,7 @@ B<-verify> option.
 
 =head1 NOTES
 
-B<rsautl> because it uses the RSA algorithm directly can only be
+Since this command uses the RSA algorithm directly, it can only be
 used to sign or verify small pieces of data.
 
 =head1 EXAMPLES
@@ -146,8 +147,9 @@ encrypt and decrypt the block would have been of type 2 (the second byte)
 and random padding data visible instead of the 0xff bytes.
 
 It is possible to analyse the signature of certificates using this
-utility in conjunction with B<asn1parse>. Consider the self signed
-example in certs/pca-cert.pem . Running B<asn1parse> as follows yields:
+utility in conjunction with L<openssl-asn1parse(1)>. Consider the self signed
+example in F<certs/pca-cert.pem>. Running L<openssl-asn1parse(1)> as follows
+yields:
 
  openssl asn1parse -in pca-cert.pem
 

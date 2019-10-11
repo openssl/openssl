@@ -8,8 +8,8 @@ openssl-genrsa - generate an RSA private key
 
 B<openssl> B<genrsa>
 [B<-help>]
-[B<-out filename>]
-[B<-passout arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
@@ -22,18 +22,19 @@ B<openssl> B<genrsa>
 [B<-des>]
 [B<-des3>]
 [B<-idea>]
-[B<-f4>]
-[B<-3>]
-[B<-rand file...>]
-[B<-writerand file>]
-[B<-engine id>]
-[B<-primes num>]
+[B<-f4>|B<-3>]
+[B<-rand> I<files>]
+[B<-writerand> I<file>]
+[B<-engine> I<id>]
+[B<-primes> I<num>]
 [B<-verbose>]
 [B<numbits>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
-The B<genrsa> command generates an RSA private key.
+This command generates an RSA private key.
 
 =head1 OPTIONS
 
@@ -43,15 +44,15 @@ The B<genrsa> command generates an RSA private key.
 
 Print out a usage message.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 Output the key to the specified file. If this argument is not specified then
 standard output is used.
 
-=item B<-passout arg>
+=item B<-passout> I<arg>
 
 The output file password source. For more information about the format
-of B<arg> see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 
@@ -60,35 +61,34 @@ cipher before outputting it. If none of these options is
 specified no encryption is used. If encryption is used a pass phrase is prompted
 for if it is not supplied via the B<-passout> argument.
 
-=item B<-F4|-3>
+=item B<-F4>|B<-3>
 
 The public exponent to use, either 65537 or 3. The default is 65537.
 
-=item B<-rand file...>
+=item B<-rand> I<files>
 
-A file or files containing random data used to seed the random number
-generator.
+The files containing random data used to seed the random number generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
-=item [B<-writerand file>]
+=item B<-writerand> I<file>
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<genrsa>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
-=item B<-primes num>
+=item B<-primes> I<num>
 
-Specify the number of primes to use while generating the RSA key. The B<num>
+Specify the number of primes to use while generating the RSA key. The I<num>
 parameter must be a positive integer that is greater than 1 and less than 16.
-If B<num> is greater than 2, then the generated key is called a 'multi-prime'
+If I<num> is greater than 2, then the generated key is called a 'multi-prime'
 RSA key, which is defined in RFC 8017.
 
 =item B<-verbose>

@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
-#include "p12_lcl.h"
+#include "p12_local.h"
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
                           PKCS12_SAFEBAG *bag);
@@ -54,7 +54,7 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
     if (!mac_iter)
         mac_iter = 1;
 
-    if (!pkey && !cert && !ca) {
+    if (pkey == NULL && cert == NULL && ca == NULL) {
         PKCS12err(PKCS12_F_PKCS12_CREATE, PKCS12_R_INVALID_NULL_ARGUMENT);
         return NULL;
     }
@@ -110,7 +110,7 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
 
     p12 = PKCS12_add_safes(safes, 0);
 
-    if (!p12)
+    if (p12 == NULL)
         goto err;
 
     sk_PKCS7_pop_free(safes, PKCS7_free);
@@ -208,13 +208,12 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
     PKCS7 *p7 = NULL;
     int free_safes = 0;
 
-    if (!*psafes) {
+    if (*psafes == NULL) {
         *psafes = sk_PKCS7_new_null();
-        if (!*psafes)
+        if (*psafes == NULL)
             return 0;
         free_safes = 1;
-    } else
-        free_safes = 0;
+    }
 
     if (nid_safe == 0)
 #ifdef OPENSSL_NO_RC2
@@ -227,7 +226,7 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
         p7 = PKCS12_pack_p7data(bags);
     else
         p7 = PKCS12_pack_p7encdata(nid_safe, pass, -1, NULL, 0, iter, bags);
-    if (!p7)
+    if (p7 == NULL)
         goto err;
 
     if (!sk_PKCS7_push(*psafes, p7))
@@ -248,16 +247,16 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
                           PKCS12_SAFEBAG *bag)
 {
-    int free_bags;
-    if (!pbags)
+    int free_bags = 0;
+
+    if (pbags == NULL)
         return 1;
-    if (!*pbags) {
+    if (*pbags == NULL) {
         *pbags = sk_PKCS12_SAFEBAG_new_null();
-        if (!*pbags)
+        if (*pbags == NULL)
             return 0;
         free_bags = 1;
-    } else
-        free_bags = 0;
+    }
 
     if (!sk_PKCS12_SAFEBAG_push(*pbags, bag)) {
         if (free_bags) {
@@ -274,11 +273,11 @@ static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
 PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int nid_p7)
 {
     PKCS12 *p12;
+
     if (nid_p7 <= 0)
         nid_p7 = NID_pkcs7_data;
     p12 = PKCS12_init(nid_p7);
-
-    if (!p12)
+    if (p12 == NULL)
         return NULL;
 
     if (!PKCS12_pack_authsafes(p12, safes)) {

@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_MD5_H
-# define HEADER_MD5_H
+#ifndef OPENSSL_MD5_H
+# define OPENSSL_MD5_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_MD5_H
+# endif
 
 # include <openssl/opensslconf.h>
 

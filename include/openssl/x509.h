@@ -8,11 +8,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_X509_H
-# define HEADER_X509_H
+#ifndef OPENSSL_X509_H
+# define OPENSSL_X509_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_X509_H
+# endif
 
 # include <openssl/e_os2.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/symhacks.h>
 # include <openssl/buffer.h>
 # include <openssl/evp.h>

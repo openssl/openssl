@@ -28,15 +28,13 @@ The following parameter can be set with EVP_MAC_CTX_set_params():
 
 =over 4
 
-=item B<OSSL_MAC_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
-=item B<OSSL_MAC_PARAM_IV> ("iv") <octet string>
+=item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8 string>
+=item "cipher" (B<OSSL_MAC_PARAM_CIPHER>) <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_CIPHER> ("cipher") <utf8 string>
-
-=item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <utf8 string>
+=item "properties" (B<OSSL_MAC_PARAM_PROPERTIES>) <UTF8 string>
 
 =back
 
@@ -45,11 +43,12 @@ EVP_MAC_CTX_get_params():
 
 =over 4
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned int>
+=item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
 =back
 
 The "size" parameter can also be retrieved with EVP_MAC_size().
+The length of the "size" parameter is equal to that of an B<unsigned int>.
 
 =head1 SEE ALSO
 

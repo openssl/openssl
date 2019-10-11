@@ -43,21 +43,21 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PASSWORD> ("pass") <octet string>
+=item "pass" (B<OSSL_KDF_PARAM_PASSWORD>) <octet string>
 
-=item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
+=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<OSSL_KDF_PARAM_SCRYPT_N> ("n") <int>
+=item "n" (B<OSSL_KDF_PARAM_SCRYPT_N>) <unsigned integer>
 
-=item B<OSSL_KDF_PARAM_SCRYPT_R> ("r") <int>
+=item "r" (B<OSSL_KDF_PARAM_SCRYPT_R>) <unsigned integer>
 
-=item B<OSSL_KDF_PARAM_SCRYPT_P> ("p") <int>
+=item "p" (B<OSSL_KDF_PARAM_SCRYPT_P>) <unsigned integer>
 
 These parameters configure the scrypt work factors N, r and p.
-N is a parameter of type uint64_t.
-Both r and p are parameters of type uint32_t.
+N is a parameter of type B<uint64_t>.
+Both r and p are parameters of type B<uint32_t>.
 
 =back
 
@@ -69,7 +69,7 @@ A context for scrypt can be obtained by calling:
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an scrypt key derivation is specified via the
-B<keylen> parameter to the L<EVP_KDF-derive(3)> function.
+"keylen" parameter to the L<EVP_KDF_derive(3)> function.
 
 =head1 EXAMPLES
 

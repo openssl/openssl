@@ -239,7 +239,7 @@ pulls the necessary entropy from its source automatically.
 However, both calls are permitted, and do reseed the RNG.
 
 RAND_add() can be used to add both kinds of random input, depending on the
-value of the B<randomness> argument:
+value of the I<randomness> argument:
 
 =over 4
 
@@ -267,7 +267,7 @@ from the trusted entropy sources.
 NOTE: Manual reseeding is *not allowed* in FIPS mode, because
 [NIST SP-800-90Ar1] mandates that entropy *shall not* be provided by
 the consuming application for instantiation (Section 9.1) or
-reseeding (Section 9.2). For that reason, the B<randomness>
+reseeding (Section 9.2). For that reason, the I<randomness>
 argument is ignored and the random bytes provided by the L<RAND_add(3)> and
 L<RAND_seed(3)> calls are treated as additional data.
 

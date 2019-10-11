@@ -8,7 +8,7 @@ evp_generic_fetch, evp_generic_fetch_by_number
 =head1 SYNOPSIS
 
  /* Only for EVP source */
- #include "evp_locl.h"
+ #include "evp_local.h"
 
  void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                          const char *name, const char *properties,
@@ -39,7 +39,7 @@ I<new_method>, I<up_ref_method>, and I<free_method>.
 
 evp_generic_fetch_by_number() does the same thing as evp_generic_fetch(), 
 but takes a I<name_id> instead of a number.
-I<name_id> must always be non-zero; as a matter of fact, it being zero
+I<name_id> must always be nonzero; as a matter of fact, it being zero
 is considered a programming error.
 This is meant to be used when one method needs to fetch an associated
 other method, and is typically called from inside the given function
@@ -70,7 +70,7 @@ frees the given method.
 
 =head1 RETURN VALUES
 
-evp_generic_fetch() returns a method on success, or B<NULL> on error.
+evp_generic_fetch() returns a method on success, or NULL on error.
 
 =head1 EXAMPLES
 

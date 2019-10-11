@@ -14,10 +14,10 @@
 
 #include <string.h>
 #include <openssl/evp.h>
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
-#include "rand_lcl.h"
+#include "rand_local.h"
 
 typedef struct crng_test_global_st {
     unsigned char crngt_prev[EVP_MAX_MD_SIZE];

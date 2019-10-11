@@ -9,8 +9,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TLS1_H
-# define HEADER_TLS1_H
+#ifndef OPENSSL_TLS1_H
+# define OPENSSL_TLS1_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_TLS1_H
+# endif
 
 # include <openssl/buffer.h>
 # include <openssl/x509.h>

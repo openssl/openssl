@@ -87,6 +87,11 @@ setting parameters) or shall (when requesting parameters) be stored,
 and I<data_size> is its size in bytes.
 The organization of the data depends on the parameter type and flag.
 
+When I<requesting parameters>, it's acceptable for I<data> to be NULL.
+This can be used by the I<requestor> to figure out dynamically exactly
+how much buffer space is needed to store the parameter data.
+In this case, I<data_size> is ignored.
+
 When the B<OSSL_PARAM> is used as a parameter descriptor, I<data>
 should be ignored.
 If I<data_size> is zero, it means that an arbitrary data size is

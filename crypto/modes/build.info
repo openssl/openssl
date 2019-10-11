@@ -54,8 +54,8 @@ SOURCE[../../libcrypto]=$COMMON \
         cts128.c ocb128.c siv128.c
 
 DEFINE[../../libcrypto]=$MODESDEF
-SOURCE[../../providers/fips]=$COMMON
-DEFINE[../../providers/fips]=$MODESDEF
+SOURCE[../../providers/libfips.a]=$COMMON
+DEFINE[../../providers/libfips.a]=$MODESDEF
 
 INCLUDE[gcm128.o]=..
 

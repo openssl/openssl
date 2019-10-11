@@ -32,6 +32,10 @@ env:
 
 matrix:
     include:
+        - os: linux
+          arch: arm64
+          compiler: gcc
+          env: CONFIG_OPTS="--strict-warnings"
         - os: linux-ppc64le
           sudo: false
           compiler: clang

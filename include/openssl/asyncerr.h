@@ -8,8 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ASYNCERR_H
-# define HEADER_ASYNCERR_H
+#ifndef OPENSSL_ASYNCERR_H
+# define OPENSSL_ASYNCERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ASYNCERR_H
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

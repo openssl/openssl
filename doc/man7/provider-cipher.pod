@@ -6,7 +6,7 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
 
 =head1 SYNOPSIS
 
-=for comment multiple includes
+=for openssl multiple includes
 
  #include <openssl/core_numbers.h>
  #include <openssl/core_names.h>
@@ -111,65 +111,65 @@ OP_cipher_newctx() should create and return a pointer to a provider side
 structure for holding context information during a cipher operation.
 A pointer to this context will be passed back in a number of the other cipher
 operation function calls.
-The parameter B<provctx> is the provider context generated during provider
+The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(3)>).
 
 OP_cipher_freectx() is passed a pointer to the provider side cipher context in
-the B<cctx> parameter.
+the I<cctx> parameter.
 This function should free any resources associated with that context.
 
 OP_cipher_dupctx() should duplicate the provider side cipher context in the
-B<cctx> parameter and return the duplicate copy.
+I<cctx> parameter and return the duplicate copy.
 
 =head2 Encryption/Decryption Functions
 
 OP_cipher_encrypt_init() initialises a cipher operation for encryption given a
-newly created provider side cipher context in the B<cctx> parameter.
-The key to be used is given in B<key> which is B<keylen> bytes long.
-The IV to be used is given in B<iv> which is B<ivlen> bytes long.
+newly created provider side cipher context in the I<cctx> parameter.
+The key to be used is given in I<key> which is I<keylen> bytes long.
+The IV to be used is given in I<iv> which is I<ivlen> bytes long.
 
 OP_cipher_decrypt_init() is the same as OP_cipher_encrypt_init() except that it
 initialises the context for a decryption operation.
 
 OP_cipher_update() is called to supply data to be encrypted/decrypted as part of
 a previously initialised cipher operation.
-The B<cctx> parameter contains a pointer to a previously initialised provider
+The I<cctx> parameter contains a pointer to a previously initialised provider
 side context.
-OP_cipher_update() should encrypt/decrypt B<inl> bytes of data at the location
-pointed to by B<in>.
-The encrypted data should be stored in B<out> and the amount of data written to
-B<*outl> which should not exceed B<outsize> bytes.
+OP_cipher_update() should encrypt/decrypt I<inl> bytes of data at the location
+pointed to by I<in>.
+The encrypted data should be stored in I<out> and the amount of data written to
+I<*outl> which should not exceed I<outsize> bytes.
 OP_cipher_update() may be called multiple times for a single cipher operation.
 It is the responsibility of the cipher implementation to handle input lengths
 that are not multiples of the block length.
 In such cases a cipher implementation will typically cache partial blocks of
 input data until a complete block is obtained.
-B<out> may be the same location as B<in> but it should not partially overlap.
-The same expectations apply to B<outsize> as documented for
+I<out> may be the same location as I<in> but it should not partially overlap.
+The same expectations apply to I<outsize> as documented for
 L<EVP_EncryptUpdate(3)> and L<EVP_DecryptUpdate(3)>.
 
 OP_cipher_final() completes an encryption or decryption started through previous
 OP_cipher_encrypt_init() or OP_cipher_decrypt_init(), and OP_cipher_update()
 calls.
-The B<cctx> parameter contains a pointer to the provider side context.
-Any final encryption/decryption output should be written to B<out> and the
-amount of data written to B<*outl> which should not exceed B<outsize> bytes.
-The same expectations apply to B<outsize> as documented for
+The I<cctx> parameter contains a pointer to the provider side context.
+Any final encryption/decryption output should be written to I<out> and the
+amount of data written to I<*outl> which should not exceed I<outsize> bytes.
+The same expectations apply to I<outsize> as documented for
 L<EVP_EncryptFinal(3)> and L<EVP_DecryptFinal(3)>.
 
 OP_cipher_cipher() performs encryption/decryption using the provider side cipher
-context in the B<cctx> parameter that should have been previously initialised via
+context in the I<cctx> parameter that should have been previously initialised via
 a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init.
 This should call the raw underlying cipher function without any padding.
 This will be invoked in the provider as a result of the application calling
 L<EVP_Cipher(3)>.
 The application is responsible for ensuring that the input is a multiple of the
 block length.
-The data to be encrypted/decrypted will be in B<in>, and it will be B<inl> bytes
+The data to be encrypted/decrypted will be in I<in>, and it will be I<inl> bytes
 in length.
-The output from the encryption/decryption should be stored in B<out> and the
-amount of data stored should be put in B<*outl> which should be no more than
-B<outsize> bytes.
+The output from the encryption/decryption should be stored in I<out> and the
+amount of data stored should be put in I<*outl> which should be no more than
+I<outsize> bytes.
 
 =head2 Cipher Parameters
 
@@ -177,14 +177,14 @@ See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
 OP_cipher_get_params() gets details of the algorithm implementation
-and stores them in B<params>.
+and stores them in I<params>.
 
 OP_cipher_set_ctx_params() sets cipher operation parameters for the
-provider side cipher context B<cctx> to B<params>.
+provider side cipher context I<cctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
 OP_cipher_get_ctx_params() gets cipher operation details details from
-the given provider side cipher context B<cctx> and stores them in B<params>.
+the given provider side cipher context I<cctx> and stores them in I<params>.
 
 OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params(), and
 OP_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
@@ -197,18 +197,18 @@ parameters are relevant to, or are understood by all ciphers:
 
 =over 4
 
-=item B<OSSL_CIPHER_PARAM_PADDING> (uint)
+=item "padding" (B<OSSL_CIPHER_PARAM_PADDING>) <unsigned integer>
 
 Sets the padding mode for the associated cipher ctx.
 Setting a value of 1 will turn padding on.
 Setting a value of 0 will turn padding off.
 
-=item B<OSSL_CIPHER_PARAM_MODE> (uint)
+=item "mode" (B<OSSL_CIPHER_PARAM_MODE>) <unsigned integer>
 
 Gets the mode for the associated cipher algorithm.
 See L<EVP_CIPHER_mode(3)> for a list of valid modes.
 
-=item B<OSSL_CIPHER_PARAM_BLOCK_SIZE> (size_t)
+=item "blocksize" (B<OSSL_CIPHER_PARAM_BLOCK_SIZE>) <unsigned integer>
 
 Gets the block size for the associated cipher algorithm.
 The block size should be 1 for stream ciphers.
@@ -216,44 +216,50 @@ Note that the block size for a cipher may be different to the block size for
 the underlying encryption/decryption primitive.
 For example AES in CTR mode has a block size of 1 (because it operates like a
 stream cipher), even though AES has a block size of 16.
+The length of the "blocksize" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_FLAGS> (ulong)
+=item "flags" (B<OSSL_CIPHER_PARAM_FLAGS>) <unsigned integer>
 
 Gets any flags for the associated cipher algorithm.
 See L<EVP_CIPHER_meth_set_flags(3)> for a list of currently defined cipher
 flags.
+The length of the "flags" parameter should equal that of an
+B<unsigned long int>.
 
-=item B<OSSL_CIPHER_PARAM_KEYLEN> (size_t)
+=item "keylen" (B<OSSL_CIPHER_PARAM_KEYLEN>) <unsigned integer>
 
 Gets the key length for the associated cipher algorithm.
 This can also be used to get or set the key length for the associated cipher
 ctx.
+The length of the "keylen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_IVLEN> (size_t)
+=item "ivlen" (B<OSSL_CIPHER_PARAM_IVLEN>) <unsigned integer>
 
 Gets the IV length for the associated cipher algorithm.
+The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_IV> (octet_string OR octet_ptr)
+=item "iv" (B<OSSL_CIPHER_PARAM_IV>) <octet string OR octet ptr>
 
 Gets the IV for the associated cipher ctx.
 
-=item B<OSSL_CIPHER_PARAM_NUM> (uint)
+=item "num" (B<OSSL_CIPHER_PARAM_NUM>) <unsigned integer>
 
 Gets or sets the cipher specific "num" parameter for the associated cipher ctx.
 Built-in ciphers typically use this to track how much of the current underlying
 block has been "used" already.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TAG> (octet_string)
+=item "tag" (B<OSSL_CIPHER_PARAM_AEAD_TAG>) <octet string>
 
 Gets or sets the AEAD tag for the associated cipher ctx.
 See L<EVP_EncryptInit(3)/AEAD Interface>.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TAGLEN> (size_t)
+=item "taglen" (B<OSSL_CIPHER_PARAM_AEAD_TAGLEN>) <unsigned integer>
 
 Gets the tag length to be used for an AEAD cipher for the associated cipher ctx.
 It returns a default value if it has not been set.
+The length of the "taglen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD> (octet_string)
+=item "tlsaad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD>) <octet string>
 
 =for comment TODO(3.0): Consider changing this interface so that all ciphers
 use the standard AEAD interface - rather than having this special purpose
@@ -263,12 +269,13 @@ Sets TLSv1.2 AAD information for the associated cipher ctx.
 TLSv1.2 AAD information is always 13 bytes in length and is as defined for the
 "additional_data" field described in section 6.2.3.3 of RFC5246.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD> (size_t)
+=item "tlsaadpad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD>) <unsigned integer>
 
 Gets the length of the tag that will be added to a TLS record for the AEAD
 tag for the associated cipher ctx.
+The length of the "tlsaadpad" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED> (octet_string)
+=item "tlsivfixed" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED>) <octet string>
 
 =for comment TODO(3.0): This interface needs completely redesigning!
 
@@ -299,19 +306,37 @@ beginning of the output buffer, do "in place" encryption of the payload and
 write that to the output buffer, and finally add the tag onto the end of the
 output buffer.
 
-Whether encrypting or decrypting the value written to B<*outl> in the
+Whether encrypting or decrypting the value written to I<*outl> in the
 OP_cipher_cipher call should be the length of the payload excluding the explicit
 IV length and the tag length.
 
-=item B<OSSL_CIPHER_PARAM_AEAD_IVLEN> (size_t)
+=item "ivlen" (B<OSSL_CIPHER_PARAM_AEAD_IVLEN>) <unsigned integer>
 
 Sets the IV length to be used for an AEAD cipher for the associated cipher ctx.
+The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
-=item B<OSSL_CIPHER_PARAM_RANDOM_KEY> (octet_string)
+=item "randkey" (B<OSSL_CIPHER_PARAM_RANDOM_KEY>) <octet string>
 
 Gets a implementation specific randomly generated key for the associated
 cipher ctx. This is currently only supported by 3DES (which sets the key to
 odd parity).
+
+=item "alg_id_param" (B<OSSL_CIPHER_PARAM_ALG_ID>) <octet string>
+
+Used to pass the DER encoded AlgorithmIdentifier parameter to or from
+the cipher implementation.  Functions like L<EVP_CIPHER_param_to_asn1(3)>
+and L<EVP_CIPHER_asn1_to_param(3)> use this parameter for any implementation
+that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
+
+=item "rounds" (B<OSSL_CIPHER_PARAM_ROUNDS>) <unsigned integer>
+
+Sets or gets the number of rounds to be used for a cipher.
+This is used by the RC5 cipher.
+
+=item "keybits" (B<OSSL_CIPHER_PARAM_RC2_KEYBITS>) <unsigned integer>
+
+Gets or sets the effective keybits used for a RC2 cipher.
+The length of the "keybits" parameter should not exceed that of a B<size_t>.
 
 =back
 

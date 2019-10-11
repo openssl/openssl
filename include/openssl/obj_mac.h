@@ -1300,12 +1300,12 @@
 #define OBJ_ms_efs              1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
 
 #define SN_ms_smartcard_login           "msSmartcardLogin"
-#define LN_ms_smartcard_login           "Microsoft Smartcardlogin"
+#define LN_ms_smartcard_login           "Microsoft Smartcard Login"
 #define NID_ms_smartcard_login          648
 #define OBJ_ms_smartcard_login          1L,3L,6L,1L,4L,1L,311L,20L,2L,2L
 
 #define SN_ms_upn               "msUPN"
-#define LN_ms_upn               "Microsoft Universal Principal Name"
+#define LN_ms_upn               "Microsoft User Principal Name"
 #define NID_ms_upn              649
 #define OBJ_ms_upn              1L,3L,6L,1L,4L,1L,311L,20L,2L,3L
 
@@ -1855,6 +1855,21 @@
 #define LN_id_on_permanentIdentifier            "Permanent Identifier"
 #define NID_id_on_permanentIdentifier           858
 #define OBJ_id_on_permanentIdentifier           OBJ_id_on,3L
+
+#define SN_XmppAddr             "id-on-xmppAddr"
+#define LN_XmppAddr             "XmppAddr"
+#define NID_XmppAddr            1209
+#define OBJ_XmppAddr            OBJ_id_on,5L
+
+#define SN_SRVName              "id-on-dnsSRV"
+#define LN_SRVName              "SRVName"
+#define NID_SRVName             1210
+#define OBJ_SRVName             OBJ_id_on,7L
+
+#define SN_id_on_SmtpUTF8Mailbox                "id-on-SmtpUTF8Mailbox"
+#define LN_id_on_SmtpUTF8Mailbox                "Smtp UTF8 Mailbox"
+#define NID_id_on_SmtpUTF8Mailbox               1208
+#define OBJ_id_on_SmtpUTF8Mailbox               OBJ_id_on,9L
 
 #define SN_id_pda_dateOfBirth           "id-pda-dateOfBirth"
 #define NID_id_pda_dateOfBirth          348

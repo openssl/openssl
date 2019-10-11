@@ -19,7 +19,7 @@ SSL server verification parameters
 These functions configure server hostname checks in the SSL client.
 
 SSL_set1_host() sets the expected DNS hostname to B<name> clearing
-any previously specified host name or names.  If B<name> is NULL,
+any previously specified hostname.  If B<name> is NULL,
 or the empty string the list of hostnames is cleared, and name
 checks are not performed on the peer certificate.  When a non-empty
 B<name> is specified, certificate verification automatically checks

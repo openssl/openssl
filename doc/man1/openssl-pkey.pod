@@ -8,12 +8,12 @@ openssl-pkey - public or private key processing tool
 
 B<openssl> B<pkey>
 [B<-help>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-traditional>]
 [B<-I<cipher>>]
 [B<-text>]
@@ -21,14 +21,16 @@ B<openssl> B<pkey>
 [B<-noout>]
 [B<-pubin>]
 [B<-pubout>]
-[B<-engine id>]
+[B<-engine> I<id>]
 [B<-check>]
 [B<-pubcheck>]
 
+=for comment ifdef engine
+
 =head1 DESCRIPTION
 
-The B<pkey> command processes public or private keys. They can be converted
-between various forms and their components printed out.
+This command processes public or private keys. They can be
+converted between various forms and their components printed out.
 
 =head1 OPTIONS
 
@@ -38,37 +40,33 @@ between various forms and their components printed out.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format DER or PEM. The default format is PEM.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<DER>|B<PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>, B<-passout> I<arg>
 
-The input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The password source for the input and output file.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write a key to or standard output if this
 option is not specified. If any encryption options are set then a pass phrase
 will be prompted for. The output filename should B<not> be the same as the input
 filename.
-
-=item B<-passout password>
-
-The output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-traditional>
 
@@ -105,9 +103,9 @@ By default a private key is output: with this option a public
 key will be output instead. This option is automatically set if
 the input is a public key.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-Specifying an engine (by its unique B<id> string) will cause B<pkey>
+Specifying an engine (by its unique I<id> string) will cause this command
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

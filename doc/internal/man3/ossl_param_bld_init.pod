@@ -15,7 +15,7 @@ ossl_param_bld_push_octet_ptr
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include "internal/params_build.h"
 
@@ -48,14 +48,14 @@ ossl_param_bld_push_octet_ptr
 =head1 DESCRIPTION
 
 A collection of utility functions that simplify the creation of OSSL_PARAM
-arrays.  The B<TYPE> names are as per L<OSSL_PARAM_int(3)>.
+arrays.  The B<I<TYPE>> names are as per L<OSSL_PARAM_int(3)>.
 
 ossl_param_bld_init() initialises the OSSL_PARAM_BLD structure so that values
 can be added.
 Any existing values are cleared.
 
 ossl_param_bld_to_param() converts a built up OSSL_PARAM_BLD structure
-B<bld> into an allocated OSSL_PARAM array.
+I<bld> into an allocated OSSL_PARAM array.
 The OSSL_PARAM array and all associated storage must be freed by calling
 ossl_param_bld_free() with the functions return value.
 
@@ -64,44 +64,52 @@ ossl_param_bld_to_param().
 
 ossl_param_bld_to_param_ex() behaves like ossl_param_bld_to_param(), except that
 no additional memory is allocated.
-An OSSL_PARAM array of at least B<param_n> elements is passed in as B<params>.
+An OSSL_PARAM array of at least I<param_n> elements is passed in as I<params>.
 The auxiliary storage for the parameters is a block of memory pointed to
-by B<data> of at least B<data_n> bytes in size.
+by I<data> of at least I<data_n> bytes in size.
 If required, secure memory for private BIGNUMs should be pointed to by
-B<secure> of at least B<secure_n> bytes in size.
+I<secure> of at least I<secure_n> bytes in size.
 
-ossl_param_bld_push_TYPE() are a series of functions which will create
-OSSL_PARAM objects of the specified size and correct type for the B<val>
+=begin comment
+
+POD is pretty good at recognising function names and making them appropriately
+bold...  however, when part of the function name is variable, we have to help
+the processor along
+
+=end comment
+
+B<ossl_param_bld_push_I<TYPE>>() are a series of functions which will create
+OSSL_PARAM objects of the specified size and correct type for the I<val>
 argument.
-B<val> is stored by value and an expression or auto variable can be used.
+I<val> is stored by value and an expression or auto variable can be used.
 
 ossl_param_bld_push_BN() is a function that will create an OSSL_PARAM object
-that holds the specified BIGNUM B<bn>.
-If B<bn> is marked as being securely allocated, it's OSSL_PARAM representation
+that holds the specified BIGNUM I<bn>.
+If I<bn> is marked as being securely allocated, it's OSSL_PARAM representation
 will also be securely allocated.
-The B<bn> argument is stored by reference and the underlying BIGNUM object
+The I<bn> argument is stored by reference and the underlying BIGNUM object
 must exist until after ossl_param_bld_to_param() has been called.
 
 ossl_param_bld_push_utf8_string() is a function that will create an OSSL_PARAM
-object that references the UTF8 string specified by B<buf>.
-If the length of the string, B<bsize>, is zero then it will be calculated.
-The string that B<buf> points to is stored by reference and must remain in
+object that references the UTF8 string specified by I<buf>.
+If the length of the string, I<bsize>, is zero then it will be calculated.
+The string that I<buf> points to is stored by reference and must remain in
 scope until after ossl_param_bld_to_param() has been called.
 
 ossl_param_bld_push_octet_string() is a function that will create an OSSL_PARAM
-object that references the octet string specified by B<buf> and <bsize>.
-The memory that B<buf> points to is stored by reference and must remain in
+object that references the octet string specified by I<buf> and <bsize>.
+The memory that I<buf> points to is stored by reference and must remain in
 scope until after ossl_param_bld_to_param() has been called.
 
 ossl_param_bld_push_utf8_ptr() is a function that will create an OSSL_PARAM
-object that references the UTF8 string specified by B<buf>.
-If the length of the string, B<bsize>, is zero then it will be calculated.
-The string B<buf> points to is stored by reference and must remain in
+object that references the UTF8 string specified by I<buf>.
+If the length of the string, I<bsize>, is zero then it will be calculated.
+The string I<buf> points to is stored by reference and must remain in
 scope until the OSSL_PARAM array is freed.
 
 ossl_param_bld_push_octet_ptr() is a function that will create an OSSL_PARAM
-object that references the octet string specified by B<buf>.
-The memory B<buf> points to is stored by reference and must remain in
+object that references the octet string specified by I<buf>.
+The memory I<buf> points to is stored by reference and must remain in
 scope until the OSSL_PARAM array is freed.
 
 =head1 RETURN VALUES

@@ -14,7 +14,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
 #include "ext_dat.h"
 
 static void *v2i_crld(const X509V3_EXT_METHOD *method,
@@ -168,7 +168,7 @@ static int set_reasons(ASN1_BIT_STRING **preas, char *value)
                 break;
             }
         }
-        if (!pbn->lname)
+        if (pbn->lname == NULL)
             goto err;
     }
     ret = 1;
@@ -222,7 +222,7 @@ static DIST_POINT *crldp_from_section(X509V3_CTX *ctx,
                 goto err;
         } else if (strcmp(cnf->name, "CRLissuer") == 0) {
             point->CRLissuer = gnames_from_sectname(ctx, cnf->value);
-            if (!point->CRLissuer)
+            if (point->CRLissuer == NULL)
                 goto err;
         }
     }
@@ -258,7 +258,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
                 goto err;
             point = crldp_from_section(ctx, dpsect);
             X509V3_section_free(ctx, dpsect);
-            if (!point)
+            if (point == NULL)
                 goto err;
             sk_DIST_POINT_push(crld, point); /* no failure as it was reserved */
         } else {

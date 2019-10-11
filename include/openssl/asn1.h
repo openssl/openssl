@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ASN1_H
-# define HEADER_ASN1_H
+#ifndef OPENSSL_ASN1_H
+# define OPENSSL_ASN1_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ASN1_H
+# endif
 
 # include <time.h>
 # include <openssl/e_os2.h>
@@ -18,7 +24,7 @@
 # include <openssl/asn1err.h>
 # include <openssl/symhacks.h>
 
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # if !OPENSSL_API_1_1_0
 #  include <openssl/bn.h>
 # endif

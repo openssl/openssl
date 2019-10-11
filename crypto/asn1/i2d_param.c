@@ -12,8 +12,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/asn1.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 int i2d_KeyParams(const EVP_PKEY *a, unsigned char **pp)
 {

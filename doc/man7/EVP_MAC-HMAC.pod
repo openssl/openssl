@@ -28,30 +28,29 @@ The following parameter can be set with EVP_MAC_CTX_set_params():
 
 =over 4
 
-=item B<OSSL_MAC_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
-=item B<OSSL_MAC_PARAM_FLAGS> ("flags") <octet string>
+=item "flags" (B<OSSL_MAC_PARAM_FLAGS>) <octet string>
 
-=item B<OSSL_MAC_PARAM_ENGINE> ("engine") <utf8 string>
+=item "digest" (B<OSSL_MAC_PARAM_DIGEST>) <UTF8 string>
 
-=item B<OSSL_MAC_PARAM_DIGEST> ("digest") <utf8 string>
-
-=item B<OSSL_MAC_PARAM_PROPERTIES> ("properties") <utf8 string>
+=item "properties" (B<OSSL_MAC_PARAM_PROPERTIES>) <UTF8 string>
 
 =back
 
 The "flags" parameter is passed directly to HMAC_CTX_set_flags().
 
-The following parameters can be retrieved with
+The following parameter can be retrieved with
 EVP_MAC_CTX_get_params():
 
 =over 4
 
-=item B<OSSL_MAC_PARAM_SIZE> ("size") <unsigned int>
+=item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
 =back
 
 The "size" parameter can also be retrieved with EVP_MAC_size().
+The length of the "size" parameter is equal to that of an B<unsigned int>.
 
 =head1 SEE ALSO
 

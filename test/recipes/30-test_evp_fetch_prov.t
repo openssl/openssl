@@ -20,60 +20,105 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
-my @types = ( "digest", "cipher" );
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 2 + 16 * scalar(@types);
+my @types = ( "digest", "cipher" );
 
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
 $ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 
-my $infile = bldtop_file('providers', platform->dso('fips'));
-ok(run(app(['openssl', 'fipsinstall', '-out', bldtop_file('providers', 'fipsinstall.conf'),
-            '-module', $infile,
-            '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-            '-section_name', 'fips_sect'])), "fipinstall");
+my @setups = ();
+my @testdata = (
+    { config    => srctop_file("test", "default.cnf"),
+      providers => [ 'default' ],
+      tests  => [ { providers => [] },
+                  { },
+                  { args      => [ '-property', 'default=yes' ],
+                    message   => 'using property "default=yes"' },
+                  { args      => [ '-property', 'fips=no' ],
+                    message   => 'using property "fips=no"' },
+                  { args      => [ '-property', 'default=no', '-fetchfail' ],
+                    message   =>
+                        'using property "default=no" is expected to fail' },
+                  { args      => [ '-property', 'fips=yes', '-fetchfail' ],
+                    message   =>
+                        'using property "fips=yes" is expected to fail' } ] }
+);
 
-# Do implicit fetch using the default context
+unless ($no_fips) {
+    push @setups, {
+        cmd     => app(['openssl', 'fipsinstall',
+                        '-out', bldtop_file('providers', 'fipsinstall.conf'),
+                        '-module', bldtop_file('providers', platform->dso('fips')),
+                        '-provider_name', 'fips', '-mac_name', 'HMAC',
+                        '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                        '-section_name', 'fips_sect']),
+        message => "fipinstall"
+    };
+    push @testdata, (
+        { config    => srctop_file("test", "fips.cnf"),
+          providers => [ 'fips' ],
+          tests     => [
+              { args    => [ '-property', '' ] },
+              { args    => [ '-property', 'fips=yes' ],
+                message => 'using property "fips=yes"' },
+              { args    => [ '-property', 'default=no' ],
+                message => 'using property "default = no"' },
+              { args      => [ '-property', 'default=yes', '-fetchfail' ],
+                message   =>
+                    'using property "default=yes" is expected to fail' },
+              { args      => [ '-property', 'fips=no', '-fetchfail' ],
+                message   =>
+                    'using property "fips=no" is expected to fail' } ] },
+        { config    => srctop_file("test", "default-and-fips.cnf"),
+          providers => [ 'default', 'fips' ],
+          tests     => [
+              { args    => [ '-property', '' ] },
+              { args      => [ '-property', 'default=no' ],
+                message   => 'using property "default=no"' },
+              { args      => [ '-property', 'default=yes' ],
+                message   => 'using property "default=yes"' },
+              { args      => [ '-property', 'fips=no' ],
+                message   => 'using property "fips=no"' },
+              { args      => [ '-property', 'fips=yes' ],
+                message   => 'using property "fips=yes"' } ] }
+    );
+}
+
+my $testcount = 0;
+foreach (@testdata) {
+    $testcount += scalar @{$_->{tests}};
+}
+
+plan tests => 1 + scalar @setups + $testcount * scalar(@types);
+
 ok(run(test(["evp_fetch_prov_test", "-defaultctx"])),
-    "running evp_fetch_prov_test using implicit fetch using the default libctx");
+   "running evp_fetch_prov_test using the default libctx");
 
-foreach my $alg(@types) {
-   $ENV{OPENSSL_CONF} = srctop_file("test", "default.cnf");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg"])),
-       "running evp_fetch_prov_test using implicit fetch using a created libctx");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "default"])),
-       "running evp_fetch_prov_test with implicit fetch using default provider loaded");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=yes", "default"])),
-       "running evp_fetch_prov_test with $alg fetch 'default=yes' using default provider loaded");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=no", "default"])),
-       "running evp_fetch_prov_test with $alg fetch 'fips=no' using default provider loaded");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=no", "-fetchfail", "default"])),
-       "running evp_fetch_prov_test with $alg fetch 'default=no' using default provider loaded should fail");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=yes", "-fetchfail", "default"])),
-       "running evp_fetch_prov_test with $alg fetch 'fips=yes' using default provider loaded should fail");
+foreach my $setup (@setups) {
+    ok(run($setup->{cmd}), $setup->{message});
+}
 
-   $ENV{OPENSSL_CONF} = srctop_file("test", "fips.cnf");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch '' using loaded fips provider");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=yes", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'fips=yes' using loaded fips provider");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=no", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'default=no' using loaded fips provider");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=yes", "-fetchfail", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'default=yes' using loaded fips provider should fail");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=no", "-fetchfail", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'fips=no' using loaded fips provider should fail");
+foreach my $alg (@types) {
+    foreach my $testcase (@testdata) {
+        $ENV{OPENSSL_CONF} = $testcase->{config};
+        foreach my $test (@{$testcase->{tests}}) {
+            my @testproviders =
+                @{ $test->{providers} // $testcase->{providers} };
+            my $testprovstr = @testproviders
+                ? ' and loaded providers ' . join(' & ',
+                                                  map { "'$_'" } @testproviders)
+                : '';
+            my @testargs = @{ $test->{args} // [] };
+            my $testmsg =
+                defined $test->{message} ? ' '.$test->{message} : '';
 
-   $ENV{OPENSSL_CONF} = srctop_file("test", "default-and-fips.cnf");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "", "default", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch '' using loaded default & fips provider");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=no", "default", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'default=no' using loaded default & fips provider");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "default=yes", "default", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'default=yes' using loaded default & fips provider");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=no", "default", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'fips=no' using loaded default & fips provider");
-   ok(run(test(["evp_fetch_prov_test", "-type", "$alg", "-property", "fips=yes", "default", "fips"])),
-       "running evp_fetch_prov_test with $alg fetch 'fips=yes' using loaded default & fips provider");
+            my $message =
+                "running evp_fetch_prov_test with $alg$testprovstr$testmsg";
+
+            ok(run(test(["evp_fetch_prov_test", "-type", "$alg",
+                         @testargs, @testproviders])),
+               $message);
+        }
+    }
 }

@@ -8,8 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_EVPERR_H
-# define HEADER_EVPERR_H
+#ifndef OPENSSL_EVPERR_H
+# define OPENSSL_EVPERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_EVPERR_H
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -161,6 +167,7 @@ int ERR_load_EVP_strings(void);
  */
 # define EVP_R_AES_KEY_SETUP_FAILED                       143
 # define EVP_R_ARIA_KEY_SETUP_FAILED                      176
+# define EVP_R_BAD_ALGORITHM_NAME                         200
 # define EVP_R_BAD_DECRYPT                                100
 # define EVP_R_BAD_KEY_LENGTH                             195
 # define EVP_R_BUFFER_TOO_SMALL                           155
@@ -170,6 +177,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_CIPHER_NOT_GCM_MODE                        184
 # define EVP_R_CIPHER_PARAMETER_ERROR                     122
 # define EVP_R_COMMAND_NOT_SUPPORTED                      147
+# define EVP_R_CONFLICTING_ALGORITHM_NAME                 201
 # define EVP_R_COPY_ERROR                                 173
 # define EVP_R_CTRL_NOT_IMPLEMENTED                       132
 # define EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED             133

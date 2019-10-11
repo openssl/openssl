@@ -13,7 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
 
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 /* functions for EC_GROUP objects */
 
@@ -710,7 +710,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
 
 void EC_POINT_free(EC_POINT *point)
 {
-    if (!point)
+    if (point == NULL)
         return;
 
     if (point->meth->point_finish != 0)
@@ -720,7 +720,7 @@ void EC_POINT_free(EC_POINT *point)
 
 void EC_POINT_clear_free(EC_POINT *point)
 {
-    if (!point)
+    if (point == NULL)
         return;
 
     if (point->meth->point_clear_finish != 0)

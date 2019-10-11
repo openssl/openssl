@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_WHRLPOOL_H
-# define HEADER_WHRLPOOL_H
+#ifndef OPENSSL_WHRLPOOL_H
+# define OPENSSL_WHRLPOOL_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_WHRLPOOL_H
+# endif
 
 #include <openssl/opensslconf.h>
 

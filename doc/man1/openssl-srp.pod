@@ -13,50 +13,61 @@ B<openssl srp>
 [B<-modify>]
 [B<-delete>]
 [B<-list>]
-[B<-name section>]
-[B<-config file>]
-[B<-srpvfile file>]
-[B<-gn identifier>]
-[B<-userinfo text...>]
-[B<-passin arg>]
-[B<-passout arg>]
-[I<user...>]
+[B<-name> I<section>]
+[B<-config> I<file>]
+[B<-srpvfile> I<file>]
+[B<-gn> I<identifier>]
+[B<-userinfo> I<text>]
+[B<-passin> I<arg>]
+[B<-passout> I<arg>]
+[I<user> ...]
+
+=for comment ifdef engine
 
 =head1 DESCRIPTION
 
-The B<srp> command is used to maintain an SRP (secure remote password)
-file.
+This command is used to maintain an SRP (secure remote password) file.
 At most one of the B<-add>, B<-modify>, B<-delete>, and B<-list> options
 can be specified.
 These options take zero or more usernames as parameters and perform the
 appropriate operation on the SRP file.
-For B<-list>, if no B<user> is given then all users are displayed.
+For B<-list>, if no I<user> is given then all users are displayed.
 
 The configuration file to use, and the section within the file, can be
 specified with the B<-config> and B<-name> flags, respectively.
-If the config file is not specified, the B<-srpvfile> can be used to
-just specify the file to operate on.
-
-The B<-userinfo> option specifies additional information to add when
-adding or modifying a user.
-
-The B<-gn> flag specifies the B<g> and B<N> values, using one of
-the strengths defined in IETF RFC 5054.
-
-The B<-passin> and B<-passout> arguments are parsed as described in
-the L<openssl(1)> command.
 
 =head1 OPTIONS
 
 =over 4
 
-=item [B<-help>]
+=item B<-help>
 
 Display an option summary.
 
-=item [B<-verbose>]
+=item B<-verbose>
 
 Generate verbose output while processing.
+
+=item B<-srpvfile> I<file>
+
+If the config file is not specified,
+B<-srpvfile> can be used to specify the file to operate on.
+
+=item B<-gn>
+
+Specifies the B<g> and B<N> values, using one of
+the strengths defined in IETF RFC 5054.
+
+=item B<-userinfo>
+
+specifies additional information to add when
+adding or modifying a user.
+
+=item B<-passin> I<arg>, B<-passout> I<arg>
+
+The password source for the input and output file.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
 
 =back
 

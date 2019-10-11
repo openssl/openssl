@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ERR_H
-# define HEADER_ERR_H
+#ifndef OPENSSL_ERR_H
+# define OPENSSL_ERR_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ERR_H
+# endif
 
 # include <openssl/e_os2.h>
 
@@ -17,7 +23,7 @@
 #  include <stdlib.h>
 # endif
 
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/bio.h>
 # include <openssl/lhash.h>
 

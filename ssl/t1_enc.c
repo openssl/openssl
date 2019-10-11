@@ -9,8 +9,8 @@
  */
 
 #include <stdio.h>
-#include "ssl_locl.h"
-#include "record/record_locl.h"
+#include "ssl_local.h"
+#include "record/record_local.h"
 #include "internal/ktls.h"
 #include "internal/cryptlib.h"
 #include <openssl/comp.h>

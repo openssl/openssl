@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef S390X_ARCH_H
-# define S390X_ARCH_H
+#ifndef OSSL_CRYPTO_S390X_ARCH_H
+# define OSSL_CRYPTO_S390X_ARCH_H
 
 # ifndef __ASSEMBLER__
 
@@ -29,6 +29,9 @@ void s390x_kma(const unsigned char *aad, size_t alen, const unsigned char *in,
 int s390x_pcc(unsigned int fc, void *param);
 int s390x_kdsa(unsigned int fc, void *param, const unsigned char *in,
                size_t len);
+
+void s390x_flip_endian32(unsigned char dst[32], const unsigned char src[32]);
+void s390x_flip_endian64(unsigned char dst[64], const unsigned char src[64]);
 
 /*
  * The field elements of OPENSSL_s390xcap_P are the 64-bit words returned by
@@ -123,6 +126,10 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_SCALAR_MULTIPLY_P256     64
 # define S390X_SCALAR_MULTIPLY_P384     65
 # define S390X_SCALAR_MULTIPLY_P521     66
+# define S390X_SCALAR_MULTIPLY_ED25519  72
+# define S390X_SCALAR_MULTIPLY_ED448    73
+# define S390X_SCALAR_MULTIPLY_X25519   80
+# define S390X_SCALAR_MULTIPLY_X448     81
 
 /* kdsa */
 # define S390X_ECDSA_VERIFY_P256        1
@@ -131,6 +138,10 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_ECDSA_SIGN_P256          9
 # define S390X_ECDSA_SIGN_P384          10
 # define S390X_ECDSA_SIGN_P521          11
+# define S390X_EDDSA_VERIFY_ED25519     32
+# define S390X_EDDSA_VERIFY_ED448       36
+# define S390X_EDDSA_SIGN_ED25519       40
+# define S390X_EDDSA_SIGN_ED448         44
 
 /* Register 0 Flags */
 # define S390X_DECRYPT          0x80

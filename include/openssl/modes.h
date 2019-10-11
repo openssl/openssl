@@ -7,11 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_MODES_H
-# define HEADER_MODES_H
+#ifndef OPENSSL_MODES_H
+# define OPENSSL_MODES_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_MODES_H
+# endif
 
 # include <stddef.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 
 # ifdef  __cplusplus
 extern "C" {

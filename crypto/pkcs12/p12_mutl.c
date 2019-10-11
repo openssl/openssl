@@ -13,7 +13,7 @@
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 #include <openssl/pkcs12.h>
-#include "p12_lcl.h"
+#include "p12_local.h"
 
 int PKCS12_mac_present(const PKCS12 *p12)
 {
@@ -95,7 +95,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 
     salt = p12->mac->salt->data;
     saltlen = p12->mac->salt->length;
-    if (!p12->mac->iter)
+    if (p12->mac->iter == NULL)
         iter = 1;
     else
         iter = ASN1_INTEGER_get(p12->mac->iter);

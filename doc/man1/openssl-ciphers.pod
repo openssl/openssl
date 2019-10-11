@@ -20,15 +20,17 @@ B<openssl> B<ciphers>
 [B<-psk>]
 [B<-srp>]
 [B<-stdname>]
-[B<-convert name>]
-[B<-ciphersuites val>]
-[B<cipherlist>]
+[B<-convert> I<name>]
+[B<-ciphersuites> I<val>]
+[I<cipherlist>]
+
+=for comment ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 psk srp
 
 =head1 DESCRIPTION
 
-The B<ciphers> command converts textual OpenSSL cipher lists into ordered
-SSL cipher preference lists. It can be used as a test tool to determine
-the appropriate cipherlist.
+This command converts textual OpenSSL cipher lists into
+ordered SSL cipher preference lists. It can be used as a test tool to
+determine the appropriate cipherlist.
 
 =head1 OPTIONS
 
@@ -83,11 +85,11 @@ OpenSSL was built.
 
 Precede each cipher suite by its standard name.
 
-=item B<-convert name>
+=item B<-convert> I<name>
 
-Convert a standard cipher B<name> to its OpenSSL name.
+Convert a standard cipher I<name> to its OpenSSL name.
 
-=item B<-ciphersuites val>
+=item B<-ciphersuites> I<val>
 
 Sets the list of TLSv1.3 ciphersuites. This list will be combined with any
 TLSv1.2 and below ciphersuites that have been configured. The format for this
@@ -145,8 +147,8 @@ will not moved to the end of the list.
 The cipher string B<@STRENGTH> can be used at any point to sort the current
 cipher list in order of encryption algorithm key length.
 
-The cipher string B<@SECLEVEL=n> can be used at any point to set the security
-level to B<n>, which should be a number between zero and five, inclusive.
+The cipher string B<@SECLEVEL>=I<n> can be used at any point to set the security
+level to I<n>, which should be a number between zero and five, inclusive.
 See L<SSL_CTX_set_security_level> for a description of what each level means.
 
 The cipher list can be prefixed with the B<DEFAULT> keyword, which enables
@@ -495,7 +497,8 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 =head2 GOST cipher suites from draft-chudov-cryptopro-cptls, extending TLS v1.0
 
 Note: these ciphers require an engine which including GOST cryptographic
-algorithms, such as the B<ccgost> engine, included in the OpenSSL distribution.
+algorithms, such as the B<gost> engine, which isn't part of the OpenSSL
+distribution.
 
  TLS_GOSTR341094_WITH_28147_CNT_IMIT GOST94-GOST89-GOST89
  TLS_GOSTR341001_WITH_28147_CNT_IMIT GOST2001-GOST89-GOST89
@@ -759,7 +762,7 @@ L<ssl(7)>
 
 =head1 HISTORY
 
-The B<-V> option for the B<ciphers> command was added in OpenSSL 1.0.0.
+The B<-V> option was added in OpenSSL 1.0.0.
 
 The B<-stdname> is only available if OpenSSL is built with tracing enabled
 (B<enable-ssl-trace> argument to Configure) before OpenSSL 1.1.1.

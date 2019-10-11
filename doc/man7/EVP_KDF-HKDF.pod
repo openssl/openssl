@@ -26,23 +26,23 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
-=item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
+=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item B<OSSL_KDF_PARAM_INFO> ("info") <octet string>
+=item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
 This parameter sets the info value.
 The length of the context info buffer cannot exceed 1024 bytes;
 this should be more than enough for any normal use of HKDF.
 
-=item B<OSSL_KDF_PARAM_MODE> ("mode") <UTF8 string> or <int>
+=item "mode" (B<OSSL_KDF_PARAM_MODE>) <UTF8 string> or <integer>
 
 This parameter sets the mode for the HKDF operation.
 There are three modes that are currently defined:
@@ -51,7 +51,7 @@ There are three modes that are currently defined:
 
 =item B<EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND> "EXTRACT_AND_EXPAND"
 
-This is the default mode.  Calling L<EVP_KDF-derive(3)> on an EVP_KDF_CTX set
+This is the default mode.  Calling L<EVP_KDF_derive(3)> on an EVP_KDF_CTX set
 up for HKDF will perform an extract followed by an expand operation in one go.
 The derived key returned will be the result after the expand operation. The
 intermediate fixed-length pseudorandom key K is not returned.
@@ -61,9 +61,9 @@ derived otherwise an error will occur.
 
 =item B<EVP_KDF_HKDF_MODE_EXTRACT_ONLY> "EXTRACT_ONLY"
 
-In this mode calling L<EVP_KDF-derive(3)> will just perform the extract
+In this mode calling L<EVP_KDF_derive(3)> will just perform the extract
 operation. The value returned will be the intermediate fixed-length pseudorandom
-key K.  The C<keylen> parameter must match the size of K, which can be looked
+key K.  The I<keylen> parameter must match the size of K, which can be looked
 up by calling EVP_KDF_size() after setting the mode and digest.
 
 The digest, key and salt values must be set before a key is derived otherwise
@@ -71,7 +71,7 @@ an error will occur.
 
 =item B<EVP_KDF_HKDF_MODE_EXPAND_ONLY> "EXPAND_ONLY"
 
-In this mode calling L<EVP_KDF-derive(3)> will just perform the expand
+In this mode calling L<EVP_KDF_derive(3)> will just perform the expand
 operation. The input key should be set to the intermediate fixed-length
 pseudorandom key K returned from a previous extract operation.
 
@@ -89,12 +89,12 @@ A context for HKDF can be obtained by calling:
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
-The output length of an HKDF expand operation is specified via the C<keylen>
-parameter to the L<EVP_KDF-derive(3)> function.  When using
-EVP_KDF_HKDF_MODE_EXTRACT_ONLY the C<keylen> parameter must equal the size of
+The output length of an HKDF expand operation is specified via the I<keylen>
+parameter to the L<EVP_KDF_derive(3)> function.  When using
+EVP_KDF_HKDF_MODE_EXTRACT_ONLY the I<keylen> parameter must equal the size of
 the intermediate fixed-length pseudorandom key otherwise an error will occur.
 For that mode, the fixed output size can be looked up by calling EVP_KDF_size()
-after setting the mode and digest on the C<EVP_KDF_CTX>.
+after setting the mode and digest on the B<EVP_KDF_CTX>.
 
 =head1 EXAMPLES
 

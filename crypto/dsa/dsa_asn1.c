@@ -9,11 +9,11 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include "dsa_locl.h"
+#include "dsa_local.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
-#include "internal/asn1_dsa.h"
+#include "crypto/asn1_dsa.h"
 
 DSA_SIG *DSA_SIG_new(void)
 {

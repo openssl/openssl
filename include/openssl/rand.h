@@ -7,11 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_RAND_H
-# define HEADER_RAND_H
+#ifndef OPENSSL_RAND_H
+# define OPENSSL_RAND_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_RAND_H
+# endif
 
 # include <stdlib.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/e_os2.h>
 # include <openssl/randerr.h>
 

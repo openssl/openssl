@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
-#include "internal/modes_int.h"
+#include "crypto/modes.h"
 
 /*
  * First you setup M and L parameters and pass the key schedule. This is

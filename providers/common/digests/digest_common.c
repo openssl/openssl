@@ -8,8 +8,8 @@
  */
 
 #include "openssl/err.h"
-#include "internal/digestcommon.h"
-#include "internal/providercommonerr.h"
+#include "prov/digestcommon.h"
+#include "prov/providercommonerr.h"
 
 int digest_default_get_params(OSSL_PARAM params[], size_t blksz, size_t paramsz,
                               unsigned long flags)

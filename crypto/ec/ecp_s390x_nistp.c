@@ -11,7 +11,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 #include "s390x_arch.h"
 
 /* Size of parameter blocks */
@@ -110,7 +110,7 @@ ret:
     /* Otherwise use default. */
     if (rc == -1)
         rc = ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
-    OPENSSL_cleanse(param, sizeof(param));
+    OPENSSL_cleanse(param + S390X_OFF_SCALAR(len), len);
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return rc;
@@ -203,7 +203,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
 
     ok = 1;
 ret:
-    OPENSSL_cleanse(param, sizeof(param));
+    OPENSSL_cleanse(param + S390X_OFF_K(len), 2 * len);
     if (ok != 1) {
         ECDSA_SIG_free(sig);
         sig = NULL;

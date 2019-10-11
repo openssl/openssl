@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CAPIERR_H
-# define HEADER_CAPIERR_H
+#ifndef OSSL_ENGINES_E_CAPI_ERR_H
+# define OSSL_ENGINES_E_CAPI_ERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

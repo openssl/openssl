@@ -11,8 +11,8 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
-#include "internal/lhash.h"
-#include "property_lcl.h"
+#include "crypto/lhash.h"
+#include "property_local.h"
 
 /*
  * Property strings are a consolidation of all strings seen by the property

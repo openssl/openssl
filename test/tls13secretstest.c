@@ -10,7 +10,7 @@
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 #include "testutil.h"
 
 #define IVLEN   12

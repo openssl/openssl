@@ -36,7 +36,7 @@ EVP_aria_256_gcm,
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/evp.h>
 

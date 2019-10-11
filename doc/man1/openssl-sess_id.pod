@@ -8,21 +8,21 @@ openssl-sess_id - SSL/TLS session handling utility
 
 B<openssl> B<sess_id>
 [B<-help>]
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER|NSS>]
-[B<-in filename>]
-[B<-out filename>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>|B<NSS>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
 [B<-text>]
 [B<-noout>]
-[B<-context ID>]
+[B<-context> I<ID>]
 
 =head1 DESCRIPTION
 
-The B<sess_id> process the encoded version of the SSL session structure
-and optionally prints out SSL session details (for example the SSL session
-master key) in human readable format. Since this is a diagnostic tool that
-needs some knowledge of the SSL protocol to use properly, most users will
-not need to use it.
+This command processes the encoded version of the SSL session
+structure and optionally prints out SSL session details (for example
+the SSL session master key) in human readable format. Since this is a
+diagnostic tool that needs some knowledge of the SSL protocol to use
+properly, most users will not need to use it.
 
 =head1 OPTIONS
 
@@ -32,25 +32,25 @@ not need to use it.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 format containing session details. The precise format can vary from one version
 to the next.  The B<PEM> form is the default format: it consists of the B<DER>
 format base64 encoded with additional header and footer lines.
 
-=item B<-outform DER|PEM|NSS>
+=item B<-outform> B<DER>|B<PEM>|B<NSS>
 
-This specifies the output format. The B<PEM> and B<DER> options have the same meaning
-and default as the B<-inform> option. The B<NSS> option outputs the session id and
-the master key in NSS keylog format.
+This specifies the output format. The B<PEM> and B<DER> options have the same
+meaning and default as the B<-inform> option. The B<NSS> option outputs the
+session id and the master key in NSS keylog format.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read session information from or standard
 input by default.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
 This specifies the output filename to write session information to or standard
 output if this option is not specified.
@@ -69,7 +69,7 @@ if the B<-text> option is also present then it will be printed out in text form.
 
 This option prevents output of the encoded version of the session.
 
-=item B<-context ID>
+=item B<-context> I<ID>
 
 This option can set the session id so the output session information uses the
 supplied ID. The ID can be any string of characters. This option won't normally

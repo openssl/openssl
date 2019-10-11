@@ -13,7 +13,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include "internal/cryptlib.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "s390x_arch.h"
 
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
@@ -578,7 +578,8 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
                        S390X_CAPBIT(S390X_VX)
                        | S390X_CAPBIT(S390X_VXD)
                        | S390X_CAPBIT(S390X_VXE)
-                       | S390X_CAPBIT(S390X_MSA8),
+                       | S390X_CAPBIT(S390X_MSA8)
+                       | S390X_CAPBIT(S390X_MSA9),
                        0ULL},
         /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
                        | S390X_CAPBIT(S390X_SHA_1)
@@ -642,18 +643,25 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
                        | S390X_CAPBIT(S390X_AES_192)
                        | S390X_CAPBIT(S390X_AES_256),
                        0ULL},
-        /*.pcc    = */{S390X_CAPBIT(S390X_QUERY)
-                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P256)
+        /*.pcc    = */{S390X_CAPBIT(S390X_QUERY),
+                       S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P256)
                        | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P384)
-                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P521),
-                       0ULL},
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P521)
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED25519)
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED448)
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X25519)
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)},
         /*.kdsa   = */{S390X_CAPBIT(S390X_QUERY)
                        | S390X_CAPBIT(S390X_ECDSA_VERIFY_P256)
                        | S390X_CAPBIT(S390X_ECDSA_VERIFY_P384)
                        | S390X_CAPBIT(S390X_ECDSA_VERIFY_P521)
                        | S390X_CAPBIT(S390X_ECDSA_SIGN_P256)
                        | S390X_CAPBIT(S390X_ECDSA_SIGN_P384)
-                       | S390X_CAPBIT(S390X_ECDSA_SIGN_P521),
+                       | S390X_CAPBIT(S390X_ECDSA_SIGN_P521)
+                       | S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519)
+                       | S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448)
+                       | S390X_CAPBIT(S390X_EDDSA_SIGN_ED25519)
+                       | S390X_CAPBIT(S390X_EDDSA_SIGN_ED448),
                        0ULL},
     };
 

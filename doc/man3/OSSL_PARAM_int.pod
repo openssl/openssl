@@ -32,7 +32,7 @@ OSSL_PARAM_set_octet_ptr
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/params.h>
 
@@ -198,6 +198,8 @@ Type coercion takes place as discussed in the NOTES section.
 
 OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the parameter
 B<p>.
+If the parameter's I<data> field is NULL, then only its I<return_size> field
+will be assigned the size the parameter's I<data> buffer should have.
 Type coercion takes place as discussed in the NOTES section.
 
 OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter pointed to by B<p>.
@@ -205,6 +207,8 @@ The BIGNUM referenced by B<val> is updated and is allocated if B<*val> is
 B<NULL>.
 
 OSSL_PARAM_set_BN() stores the BIGNUM B<val> into the parameter B<p>.
+If the parameter's I<data> field is NULL, then only its I<return_size> field
+will be assigned the size the parameter's I<data> buffer should have.
 
 OSSL_PARAM_get_utf8_string() retrieves a UTF8 string from the parameter
 pointed to by B<p>.
@@ -215,6 +219,8 @@ If memory is allocated by this function, it must be freed by the caller.
 
 OSSL_PARAM_set_utf8_string() sets a UTF8 string from the parameter pointed to
 by B<p> to the value referenced by B<val>.
+If the parameter's I<data> field is NULL, then only its I<return_size> field
+will be assigned the size the parameter's I<data> buffer should have.
 
 OSSL_PARAM_get_octet_string() retrieves an OCTET string from the parameter
 pointed to by B<p>.
@@ -225,6 +231,8 @@ If memory is allocated by this function, it must be freed by the caller.
 
 OSSL_PARAM_set_octet_string() sets an OCTET string from the parameter
 pointed to by B<p> to the value referenced by B<val>.
+If the parameter's I<data> field is NULL, then only its I<return_size> field
+will be assigned the size the parameter's I<data> buffer should have.
 
 OSSL_PARAM_get_utf8_ptr() retrieves the UTF8 string pointer from the parameter
 referenced by B<p> and stores it in B<*val>.
@@ -260,9 +268,9 @@ representable by the target type or parameter.
 Apart from that, the functions must be used appropriately for the
 expected type of the parameter.
 
-For OSSL_PARAM_get_utf8_ptr() and OSSL_PARAM_get_octet_ptr(), B<bsize>
-is not relevant if the purpose is to send the B<OSSL_PARAM> array to a
-I<responder>, i.e. to get parameter data back.
+For OSSL_PARAM_construct_utf8_ptr() and OSSL_PARAM_consstruct_octet_ptr(),
+B<bsize> is not relevant if the purpose is to send the B<OSSL_PARAM> array
+to a I<responder>, i.e. to get parameter data back.
 In that case, B<bsize> can safely be given zero.
 See L<OSSL_PARAM(3)/DESCRIPTION> for further information on the
 possible purposes.

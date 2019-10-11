@@ -7,14 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef  HEADER_CONF_H
-# define HEADER_CONF_H
+#ifndef  OPENSSL_CONF_H
+# define OPENSSL_CONF_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CONF_H
+# endif
 
 # include <openssl/bio.h>
 # include <openssl/lhash.h>
 # include <openssl/safestack.h>
 # include <openssl/e_os2.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/conferr.h>
 
 #ifdef  __cplusplus
@@ -108,7 +114,7 @@ struct conf_st {
 
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
-CONF_METHOD *NCONF_WIN32(void);
+DEPRECATEDIN_3(CONF_METHOD *NCONF_WIN32(void))
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 

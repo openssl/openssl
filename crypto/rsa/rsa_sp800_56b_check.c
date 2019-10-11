@@ -10,8 +10,8 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include "internal/bn_int.h"
-#include "rsa_locl.h"
+#include "crypto/bn.h"
+#include "rsa_local.h"
 
 /*
  * Part of the RSA keypair test.

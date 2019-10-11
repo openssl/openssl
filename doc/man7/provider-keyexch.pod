@@ -6,7 +6,7 @@ provider-keyexch - The keyexch library E<lt>-E<gt> provider functions
 
 =head1 SYNOPSIS
 
-=for comment multiple includes
+=for openssl multiple includes
 
  #include <openssl/core_numbers.h>
  #include <openssl/core_names.h>
@@ -87,27 +87,27 @@ OP_keyexch_newctx() should create and return a pointer to a provider side
 structure for holding context information during a key exchange operation.
 A pointer to this context will be passed back in a number of the other key
 exchange operation function calls.
-The paramater B<provctx> is the provider context generated during provider
+The paramater I<provctx> is the provider context generated during provider
 initialisation (see L<provider(3)>).
 
 OP_keyexch_freectx() is passed a pointer to the provider side key exchange
-context in the B<ctx> parameter.
+context in the I<ctx> parameter.
 This function should free any resources associated with that context.
 
 OP_keyexch_dupctx() should duplicate the provider side key exchange context in
-the B<ctx> parameter and return the duplicate copy.
+the I<ctx> parameter and return the duplicate copy.
 
 =head2 Shared Secret Derivation Functions
 
 OP_keyexch_init() initialises a key exchange operation given a provider side key
-exchange context in the B<ctx> paramter, and a pointer to a provider key object
-in the B<provkey> parameter. The key object should have been previously
+exchange context in the I<ctx> paramter, and a pointer to a provider key object
+in the I<provkey> parameter. The key object should have been previously
 generated, loaded or imported into the provider using the key management
 (OSSL_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
 
 OP_keyexch_set_peer() is called to supply the peer's public key (in the
-B<provkey> parameter) to be used when deriving the shared secret.
-It is also passed a previously initialised key exchange context in the B<ctx>
+I<provkey> parameter) to be used when deriving the shared secret.
+It is also passed a previously initialised key exchange context in the I<ctx>
 parameter.
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
@@ -115,13 +115,13 @@ provider-keymgmt(7)>.
 
 OP_keyexch_derive() performs the actual key exchange itself by deriving a shared
 secret.
-A previously initialised key exchange context is passed in the B<ctx>
+A previously initialised key exchange context is passed in the I<ctx>
 parameter.
-The derived secret should be written to the location B<secret> which should not
-exceed B<outlen> bytes.
-The length of the shared secret should be written to B<*secretlen>.
-If B<secret> is NULL then the maximum length of the shared secret should be
-written to B<*secretlen>.
+The derived secret should be written to the location I<secret> which should not
+exceed I<outlen> bytes.
+The length of the shared secret should be written to I<*secretlen>.
+If I<secret> is NULL then the maximum length of the shared secret should be
+written to I<*secretlen>.
 
 =head2 Key Exchange Parameters
 
@@ -129,7 +129,7 @@ See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 the OP_keyexch_set_params() function.
 
 OP_keyexch_set_ctx_params() sets key exchange parameters associated with the
-given provider side key exchange context B<ctx> to B<params>.
+given provider side key exchange context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
 Parameters currently recognised by built-in key exchange algorithms are as
@@ -139,7 +139,7 @@ algorithms:
 
 =over 4
 
-=item B<OSSL_EXCHANGE_PARAM_PAD> (uint)
+=item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <unsigned integer>
 
 Sets the padding mode for the associated key exchange ctx.
 Setting a value of 1 will turn padding on.

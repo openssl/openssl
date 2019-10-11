@@ -29,8 +29,8 @@
  */
 #include <stdio.h>
 #include <openssl/bn.h>
-#include "bn_lcl.h"
-#include "internal/bn_int.h"
+#include "bn_local.h"
+#include "crypto/bn.h"
 
 /*
  * FIPS 186-4 Table B.1. "Min length of auxiliary primes p1, p2, q1, q2".

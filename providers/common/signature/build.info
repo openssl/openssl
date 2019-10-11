@@ -1,7 +1,0 @@
-LIBS=../../../libcrypto
-IF[{- !$disabled{dsa} -}]
-  SOURCE[../../../libcrypto]=\
-          dsa.c
-ENDIF
-
-

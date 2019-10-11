@@ -8,8 +8,8 @@
  */
 
 #include <openssl/err.h>
-#include "internal/ctype.h"
-#include "bn_lcl.h"
+#include "crypto/ctype.h"
+#include "bn_local.h"
 
 static const char Hex[] = "0123456789ABCDEF";
 

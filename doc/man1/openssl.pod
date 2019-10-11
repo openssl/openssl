@@ -8,10 +8,18 @@ openssl - OpenSSL command line tool
 
 B<openssl>
 I<command>
-[ I<command_opts> ]
-[ I<command_args> ]
+[ I<command_opts> ... ]
+[ I<command_args> ... ]
 
-B<openssl> B<list> [ B<standard-commands> | B<digest-commands> | B<cipher-commands> | B<cipher-algorithms> | B<digest-algorithms> | B<mac-algorithms> | B<public-key-algorithms>]
+B<openssl>
+B<list>
+B<-standard-commands> |
+B<-digest-commands> |
+B<-cipher-commands> |
+B<-cipher-algorithms> |
+B<-digest-algorithms> |
+B<-mac-algorithms> |
+B<-public-key-algorithms>
 
 B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
 
@@ -32,12 +40,12 @@ It can be used for
  o  Encryption and Decryption with Ciphers
  o  SSL/TLS Client and Server Tests
  o  Handling of S/MIME signed or encrypted mail
- o  Time Stamp requests, generation and verification
+ o  Timestamp requests, generation and verification
 
 =head1 COMMAND SUMMARY
 
-The B<openssl> program provides a rich variety of commands (I<command> in the
-SYNOPSIS above), each of which often has a wealth of options and arguments
+The B<openssl> program provides a rich variety of sub-commands (I<command> in
+the SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
 Detailed documentation and use cases for most standard subcommands are available
@@ -48,22 +56,22 @@ arguments and have a B<-config> option to specify that file.
 The environment variable B<OPENSSL_CONF> can be used to specify
 the location of the file.
 If the environment variable is not specified, then the file is named
-B<openssl.cnf> in the default certificate storage area, whose value
+F<openssl.cnf> in the default certificate storage area, whose value
 depends on the configuration flags specified when the OpenSSL
 was built.
 
-The list parameters B<standard-commands>, B<digest-commands>,
-and B<cipher-commands> output a list (one entry per line) of the names
+The list options B<-standard-commands>, B<-digest-commands>,
+and B<-cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,
-respectively, that are available in the present B<openssl> utility.
+respectively, that are available.
 
-The list parameters B<cipher-algorithms>, B<digest-algorithms>,
-and B<mac-algorithms> list all cipher, message digest, and message
+The list parameters B<-cipher-algorithms>, B<-digest-algorithms>,
+and B<-mac-algorithms> list all cipher, message digest, and message
 authentication code names, one entry per line. Aliases are listed as:
 
  from => to
 
-The list parameter B<public-key-algorithms> lists all supported public
+The list parameter B<-public-key-algorithms> lists all supported public
 key algorithms.
 
 The command B<no->I<XXX> tests whether a command of the
@@ -77,7 +85,7 @@ availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
 B<list>, or B<no->I<XXX> itself.)
 
-=head2 Standard Commands
+=head2 Standard Sub-commands
 
 =over 4
 
@@ -108,17 +116,17 @@ CRL to PKCS#7 Conversion.
 =item B<dgst>
 
 Message Digest calculation. MAC calculations are superseded by
-L<mac(1)>.
+L<openssl-mac(1)>.
 
 =item B<dh>
 
 Diffie-Hellman Parameter Management.
-Obsoleted by L<dhparam(1)>.
+Obsoleted by L<openssl-dhparam(1)>.
 
 =item B<dhparam>
 
 Generation and Management of Diffie-Hellman Parameters. Superseded by
-L<genpkey(1)> and L<pkeyparam(1)>.
+L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)>.
 
 =item B<dsa>
 
@@ -127,7 +135,7 @@ DSA Data Management.
 =item B<dsaparam>
 
 DSA Parameter Generation and Management. Superseded by
-L<genpkey(1)> and L<pkeyparam(1)>.
+L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)>.
 
 =item B<ec>
 
@@ -152,12 +160,12 @@ Error Number to Error String Conversion.
 =item B<gendh>
 
 Generation of Diffie-Hellman Parameters.
-Obsoleted by L<dhparam(1)>.
+Obsoleted by L<openssl-dhparam(1)>.
 
 =item B<gendsa>
 
 Generation of DSA Private Key from Parameters. Superseded by
-L<genpkey(1)> and L<pkey(1)>.
+L<openssl-genpkey(1)> and L<openssl-pkey(1)>.
 
 =item B<genpkey>
 
@@ -165,7 +173,7 @@ Generation of Private Key or Parameters.
 
 =item B<genrsa>
 
-Generation of RSA Private Key. Superseded by L<genpkey(1)>.
+Generation of RSA Private Key. Superseded by L<openssl-genpkey(1)>.
 
 =item B<info>
 
@@ -238,7 +246,7 @@ RSA key management.
 =item B<rsautl>
 
 RSA utility for signing, verification, encryption, and decryption. Superseded
-by  L<pkeyutl(1)>.
+by  L<openssl-pkeyutl(1)>.
 
 =item B<s_client>
 
@@ -390,7 +398,8 @@ The following aliases provide convenient access to the most used encodings
 and ciphers.
 
 Depending on how OpenSSL was configured and built, not all ciphers listed
-here may be present. See L<enc(1)> for more information and command usage.
+here may be present. See L<openssl-enc(1)> for more information and command
+usage.
 
 =over 4
 
@@ -514,29 +523,29 @@ L<passphrase-encoding(7)>.
 
 =over 4
 
-=item B<pass:password>
+=item B<pass:>I<password>
 
-The actual password is B<password>. Since the password is visible
+The actual password is I<password>. Since the password is visible
 to utilities (like 'ps' under Unix) this form should only be used
 where security is not important.
 
-=item B<env:var>
+=item B<env:>I<var>
 
-Obtain the password from the environment variable B<var>. Since
+Obtain the password from the environment variable I<var>. Since
 the environment of other processes is visible on certain platforms
 (e.g. ps under certain Unix OSes) this option should be used with caution.
 
-=item B<file:pathname>
+=item B<file:>I<pathname>
 
-The first line of B<pathname> is the password. If the same B<pathname>
+The first line of I<pathname> is the password. If the same I<pathname>
 argument is supplied to B<-passin> and B<-passout> arguments then the first
 line will be used for the input password and the next line for the output
-password. B<pathname> need not refer to a regular file: it could for example
+password. I<pathname> need not refer to a regular file: it could for example
 refer to a device or named pipe.
 
-=item B<fd:number>
+=item B<fd:>I<number>
 
-Read the password from the file descriptor B<number>. This can be used to
+Read the password from the file descriptor I<number>. This can be used to
 send the data via a pipe for example.
 
 =item B<stdin>
@@ -549,7 +558,7 @@ Read the password from standard input.
 
 =over 4
 
-=item B<OPENSSL_TRACE=>I<name,...>
+=item B<OPENSSL_TRACE=>I<name>[,...]
 
 Enable tracing output of OpenSSL library, by name.
 This output will only make sense if you know OpenSSL internals well.
@@ -671,7 +680,7 @@ L<x509v3_config(5)>
 
 =head1 HISTORY
 
-The B<list->I<XXX>B<-algorithms> pseudo-commands were added in OpenSSL 1.0.0;
+The B<list> -I<XXX>B<-algorithms> options were added in OpenSSL 1.0.0;
 For notes on the availability of other commands, see their individual
 manual pages.
 

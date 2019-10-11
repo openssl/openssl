@@ -8,15 +8,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BN_H
-# define HEADER_BN_H
+#ifndef OPENSSL_BN_H
+# define OPENSSL_BN_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_BN_H
+# endif
 
 # include <openssl/e_os2.h>
 # ifndef OPENSSL_NO_STDIO
 #  include <stdio.h>
 # endif
 # include <openssl/opensslconf.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/crypto.h>
 # include <openssl/bnerr.h>
 

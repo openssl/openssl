@@ -15,11 +15,11 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/ess.h>
-#include "cms_lcl.h"
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
-#include "internal/cms_int.h"
-#include "internal/ess_int.h"
+#include "cms_local.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
+#include "crypto/cms.h"
+#include "crypto/ess.h"
 
 /* CMS SignedData Utilities */
 
@@ -227,7 +227,7 @@ static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
 {
     EVP_PKEY *pkey = si->pkey;
     int i;
-    if (!pkey->ameth || !pkey->ameth->pkey_ctrl)
+    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
     if (i == -2) {

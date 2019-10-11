@@ -96,7 +96,7 @@ opthelp:
     if (opts != NULL) {
         int ok = 1;
         OSSL_PARAM *params =
-            app_params_new_from_opts(opts, EVP_KDF_CTX_settable_params(kdf));
+            app_params_new_from_opts(opts, EVP_KDF_settable_ctx_params(kdf));
 
         if (params == NULL)
             goto err;
