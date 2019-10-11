@@ -27,7 +27,7 @@ B<openssl> B<gendsa>
 [B<-verbose>]
 [I<paramfile>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

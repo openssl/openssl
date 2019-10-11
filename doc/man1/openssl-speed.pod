@@ -21,7 +21,7 @@ B<openssl speed>
 [B<-bytes> I<num>]
 [I<algorithm> ...]
 
-=for comment ifdef cmac multi async_jobs engine
+=for openssl ifdef cmac multi async_jobs engine
 
 =head1 DESCRIPTION
 

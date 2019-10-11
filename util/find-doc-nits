@@ -789,7 +789,7 @@ sub checkflags {
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
-        if ( /=for comment ifdef (.*)/ ) {
+        if ( /=for openssl ifdef (.*)/ ) {
             foreach my $f ( split / /, $1 ) {
                 $localskips{$f} = 1;
             }

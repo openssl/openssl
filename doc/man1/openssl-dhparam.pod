@@ -25,7 +25,7 @@ B<openssl dhparam>
 [B<-engine> I<id>]
 [I<numbits>]
 
-=for comment ifdef dsaparam engine
+=for openssl ifdef dsaparam engine
 
 =head1 DESCRIPTION
 

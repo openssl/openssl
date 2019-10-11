@@ -30,7 +30,7 @@ B<openssl> B<s_time>
 [B<-cipher> I<cipherlist>]
 [B<-ciphersuites> I<val>]
 
-=for comment ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
+=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
 
 =head1 DESCRIPTION
 

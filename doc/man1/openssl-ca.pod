@@ -59,7 +59,7 @@ B<openssl> B<ca>
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
 
-=for comment ifdef engine sm2-id sm2-hex-id
+=for openssl ifdef engine sm2-id sm2-hex-id
 
 =head1 DESCRIPTION
 

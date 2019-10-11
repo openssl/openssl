@@ -185,15 +185,15 @@ B<openssl> B<s_server>
 [B<-no_anti_replay>]
 [B<-http_server_binmode>]
 
-=for comment ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
+=for openssl ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
 
-=for comment ifdef status status_verbose status_timeout status_url status_file
+=for openssl ifdef status status_verbose status_timeout status_url status_file
 
-=for comment ifdef psk_hint srpvfile srpuserseed sctp sctp_label_bug
+=for openssl ifdef psk_hint srpvfile srpuserseed sctp sctp_label_bug
 
-=for comment ifdef sctp sctp_label_bug trace mtu timeout listen
+=for openssl ifdef sctp sctp_label_bug trace mtu timeout listen
 
-=for comment ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
+=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
 
 =head1 DESCRIPTION
 

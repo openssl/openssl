@@ -27,7 +27,7 @@ B<openssl ecparam>
 [B<-genkey>]
 [B<-engine> I<id>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

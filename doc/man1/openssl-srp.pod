@@ -22,7 +22,7 @@ B<openssl srp>
 [B<-passout> I<arg>]
 [I<user> ...]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

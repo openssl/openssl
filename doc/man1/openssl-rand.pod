@@ -15,7 +15,7 @@ B<openssl rand>
 [B<-hex>]
 I<num>
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
