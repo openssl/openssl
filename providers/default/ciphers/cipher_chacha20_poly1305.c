@@ -469,8 +469,9 @@ static int chacha20_poly1305_tls_cipher(void *vctx, unsigned char *out,
         memcpy(out, ctx->tag, POLY1305_BLOCK_SIZE);
     } else {
         if (CRYPTO_memcmp(tohash, in, POLY1305_BLOCK_SIZE)) {
-            memset(out - (len - POLY1305_BLOCK_SIZE), 0,
-                   len - POLY1305_BLOCK_SIZE);
+            if (len > POLY1305_BLOCK_SIZE)
+                memset(out - (len - POLY1305_BLOCK_SIZE), 0,
+                       len - POLY1305_BLOCK_SIZE);
             return -1;
         }
     }
@@ -612,7 +613,6 @@ err:
     *outl = olen;
     return rv;
 }
-
 
 static int chacha20_poly1305_update(void *vctx,
                            unsigned char *out, size_t *outl, size_t outsize,
