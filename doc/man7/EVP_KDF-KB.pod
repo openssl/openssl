@@ -21,17 +21,17 @@ The supported parameters are:
 
 =over 4
 
-=item B<OSSL_KDF_PARAM_PROPERTIES> ("properties") <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("digest") <UTF8 string>
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_DIGEST> ("mac") <UTF8 string>
+=item "mac" (B<OSSL_KDF_PARAM_MAC>) <UTF8 string>
 
-=item B<OSSL_KDF_PARAM_KEY> ("key") <octet string>
+=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
-=item B<OSSL_KDF_PARAM_SALT> ("salt") <octet string>
+=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
-=item B<OSSL_KDF_PARAM_INFO> ("info") <octet string>
+=item "info (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
 =back
 
