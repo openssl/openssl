@@ -19,7 +19,7 @@ B<openssl> B<genpkey>
 [B<-genparam>]
 [B<-text>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

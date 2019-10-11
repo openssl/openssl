@@ -54,7 +54,7 @@ B<openssl> B<verify>
 [B<-->]
 [I<certificate> ...]
 
-=for comment ifdef engine sm2-id sm2-hex-id
+=for openssl ifdef engine sm2-id sm2-hex-id
 
 =head1 DESCRIPTION
 

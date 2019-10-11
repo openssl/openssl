@@ -22,7 +22,7 @@ B<openssl> B<crl>
 [B<-CAfile> I<file>]
 [B<-CApath> I<dir>]
 
-=for comment ifdef hash_old
+=for openssl ifdef hash_old
 
 =head1 DESCRIPTION
 

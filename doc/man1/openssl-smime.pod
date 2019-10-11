@@ -70,7 +70,7 @@ B<openssl> B<smime>
 [B<-md> I<digest>]
 I<cert.pem> ...
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

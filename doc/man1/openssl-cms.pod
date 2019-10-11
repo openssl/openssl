@@ -103,7 +103,7 @@ B<openssl> B<cms>
 [B<-subject> I<subj>]
 [I<cert.pem> ...]
 
-=for comment ifdef des-wrap engine
+=for openssl ifdef des-wrap engine
 
 =head1 DESCRIPTION
 

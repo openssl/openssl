@@ -36,7 +36,7 @@ B<openssl> B<rsa>
 [B<-RSAPublicKey_out>]
 [B<-engine> I<id>]
 
-=for comment ifdef pvk-strong pvk-weak pvk-none engine
+=for openssl ifdef pvk-strong pvk-weak pvk-none engine
 
 =head1 DESCRIPTION
 

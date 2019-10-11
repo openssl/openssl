@@ -39,7 +39,7 @@ B<openssl> B<enc>|I<cipher>
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
 
-=for comment ifdef z engine
+=for openssl ifdef z engine
 
 B<openssl> I<cipher> [B<...>]
 

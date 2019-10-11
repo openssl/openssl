@@ -38,7 +38,7 @@ B<openssl> B<pkeyutl>
 [B<-engine> I<id>]
 [B<-engine_impl>]
 
-=for comment ifdef engine engine_impl
+=for openssl ifdef engine engine_impl
 
 =head1 DESCRIPTION
 

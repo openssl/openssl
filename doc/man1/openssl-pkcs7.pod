@@ -17,7 +17,7 @@ B<openssl> B<pkcs7>
 [B<-noout>]
 [B<-engine> I<id>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

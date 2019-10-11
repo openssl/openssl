@@ -25,7 +25,7 @@ B<openssl> B<pkey>
 [B<-check>]
 [B<-pubcheck>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
