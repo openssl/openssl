@@ -1116,19 +1116,19 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs,
  */
 int tls_check_sigalg_curve(const SSL *s, int curve)
 {
-   const uint16_t *sigs;
+   const uint8_t *sigs_idx;
    size_t siglen, i;
 
     if (s->cert->conf_sigalgs.salgs) {
-        sigs = s->cert->conf_sigalgs.salgs;
+        sigs_idx = s->cert->conf_sigalgs.salgs_idx;
         siglen = s->cert->conf_sigalgs.len;
     } else {
-        sigs = tls12_sigalgs;
+        sigs_idx = tls12_sigalgs_idx;
         siglen = OSSL_NELEM(tls12_sigalgs);
     }
 
     for (i = 0; i < siglen; i++) {
-        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(sigs[i], NULL);
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg_by_idx(sigs_idx[i]);
 
         if (lu == NULL)
             continue;
@@ -1794,16 +1794,16 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
 
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
 {
-    const uint16_t *sigalgs;
+    const uint8_t *sigalgs_idx;
     size_t i, sigalgslen;
     uint32_t disabled_mask = SSL_aRSA | SSL_aDSS | SSL_aECDSA;
     /*
      * Go through all signature algorithms seeing if we support any
      * in disabled_mask.
      */
-    sigalgslen = tls12_get_psigalgs(s, 1, &sigalgs, NULL, NULL);
-    for (i = 0; i < sigalgslen; i++, sigalgs++) {
-        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*sigalgs, NULL);
+    sigalgslen = tls12_get_psigalgs(s, 1, NULL, &sigalgs_idx, NULL);
+    for (i = 0; i < sigalgslen; i++, sigalgs_idx++) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg_by_idx(*sigalgs_idx);
         const SSL_CERT_LOOKUP *clu;
 
         if (lu == NULL)
@@ -1822,17 +1822,17 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
 }
 
 int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
-                       const uint16_t *psig, size_t psiglen)
+                       const uint8_t *psig_idx, size_t psiglen)
 {
     size_t i;
     int rv = 0;
 
-    for (i = 0; i < psiglen; i++, psig++) {
-        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*psig, NULL);
+    for (i = 0; i < psiglen; i++, psig_idx++) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg_by_idx(*psig_idx);
 
         if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
             continue;
-        if (!WPACKET_put_bytes_u16(pkt, *psig))
+        if (!WPACKET_put_bytes_u16(pkt, lu->sigalg))
             return 0;
         /*
          * If TLS 1.3 must have at least one valid TLS 1.3 message
@@ -2119,6 +2119,7 @@ int SSL_get_sigalgs(SSL *s, int idx,
                     unsigned char *rsig, unsigned char *rhash)
 {
     uint16_t *psig = s->s3.tmp.peer_sigalgs.salgs;
+    uint8_t *psig_idx = s->s3.tmp.peer_sigalgs.salgs_idx;
     size_t numsigalgs = s->s3.tmp.peer_sigalgs.len;
     if (psig == NULL || numsigalgs > INT_MAX)
         return 0;
@@ -2132,7 +2133,7 @@ int SSL_get_sigalgs(SSL *s, int idx,
             *rhash = (unsigned char)((*psig >> 8) & 0xff);
         if (rsig != NULL)
             *rsig = (unsigned char)(*psig & 0xff);
-        lu = tls1_lookup_sigalg(*psig, NULL);
+        lu = tls1_lookup_sigalg_by_idx(psig_idx[idx]);
         if (psign != NULL)
             *psign = lu != NULL ? lu->sig : NID_undef;
         if (phash != NULL)
@@ -2389,7 +2390,8 @@ static int tls1_check_sig_alg(SSL *s, X509 *x, int default_nid)
     }
     for (i = 0; i < sigalgslen; i++) {
         sigalg = use_pc_sigalgs
-                 ? tls1_lookup_sigalg(s->s3.tmp.peer_cert_sigalgs.salgs[i], NULL)
+                 ? tls1_lookup_sigalg_by_idx(
+                         s->s3.tmp.peer_cert_sigalgs.salgs_idx[i])
                  : s->shared_sigalgs[i];
         if (sig_nid == sigalg->sigandhash)
             return 1;
@@ -2875,7 +2877,8 @@ static int check_cert_usable(SSL *s, const SIGALG_LOOKUP *sig, X509 *x,
         if (!X509_get_signature_info(x, &mdnid, &pknid, NULL, NULL))
             return 0;
         for (i = 0; i < s->s3.tmp.peer_cert_sigalgs.len; i++) {
-            lu = tls1_lookup_sigalg(s->s3.tmp.peer_cert_sigalgs.salgs[i], NULL);
+            lu = tls1_lookup_sigalg_by_idx(
+                    s->s3.tmp.peer_cert_sigalgs.salgs_idx[i]);
             if (lu == NULL)
                 continue;
 

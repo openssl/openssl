@@ -2887,12 +2887,12 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
     }
 
     if (SSL_USE_SIGALGS(s)) {
-        const uint16_t *psigs;
-        size_t nl = tls12_get_psigalgs(s, 1, &psigs, NULL, NULL);
+        const uint8_t *psigs_idx;
+        size_t nl = tls12_get_psigalgs(s, 1, NULL, &psigs_idx, NULL);
 
         if (!WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_set_flags(pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
-                || !tls12_copy_sigalgs(s, pkt, psigs, nl)
+                || !tls12_copy_sigalgs(s, pkt, psigs_idx, nl)
                 || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,

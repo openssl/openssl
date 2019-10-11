@@ -2588,7 +2588,7 @@ __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
-                              const uint16_t *psig, size_t psiglen);
+                              const uint8_t *psig_idx, size_t psiglen);
 __owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen);
 __owur int tls1_load_default_sigalgs();
 void tls12_update_sigalgs(SIGALGS *psalgs, uint16_t *salgs,
