@@ -42,10 +42,10 @@ L<openssl_user_macros(7)>:
                            BIGNUM *rem, void (*callback)(int, int, void *),
                            void *cb_arg);
 
- int BN_is_prime(const BIGNUM *p, int checks,
+ int BN_is_prime(const BIGNUM *p, int nchecks,
                  void (*callback)(int, int, void *), BN_CTX *ctx, void *cb_arg);
 
- int BN_is_prime_fasttest(const BIGNUM *p, int checks,
+ int BN_is_prime_fasttest(const BIGNUM *p, int nchecks,
                           void (*callback)(int, int, void *), BN_CTX *ctx,
                           void *cb_arg, int do_trial_division);
 
@@ -61,7 +61,9 @@ Deprecated since OpenSSL 3.0:
 BN_generate_prime_ex2() generates a pseudo-random prime number of
 at least bit length B<bits> using the BN_CTX provided in B<ctx>. The value of
 B<ctx> must not be NULL.
-The returned number is probably prime with a negligible error.
+The returned number is probably prime with the false positive rate
+as documented for BN_is_prime_fasttest_ex() called with B<nchecks> set to
+B<BN_prime_checks> below.
 If B<add> is B<NULL> the returned prime number will have exact bit
 length B<bits> with the top most two bits set.
 
