@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-srp - maintain SRP password file
@@ -20,8 +25,7 @@ B<openssl srp>
 [B<-userinfo> I<text>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 [I<user> ...]
 
 =for openssl ifdef engine
@@ -71,9 +75,7 @@ The password source for the input and output file.
 For more information about the format of B<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =back
 

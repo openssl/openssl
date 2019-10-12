@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-req - PKCS#10 certificate request and certificate generating utility
@@ -20,8 +25,6 @@ B<openssl> B<req>
 [B<-verify>]
 [B<-modulus>]
 [B<-new>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-newkey> I<arg>]
 [B<-nodes>]
 [B<-key> I<filename>]
@@ -50,6 +53,7 @@ B<openssl> B<req>
 [B<-engine> I<id>]
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine keygen_engine sm2-id sm2-hex-id
 
@@ -131,10 +135,6 @@ in the configuration file and any requested extensions.
 
 If the B<-key> option is not used it will generate a new RSA private
 key using information specified in the configuration file.
-
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
 
 =item B<-newkey> I<arg>
 
@@ -333,6 +333,8 @@ string is required by the SM2 signature algorithm for signing and verification.
 
 Specify a binary ID string to use when verifying an SM2 certificate request. The
 argument for this option is string of hexadecimal digits.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

@@ -177,12 +177,12 @@ script:
           echo -e '\052\052 FAILED -- UPDATED FILES NOT COMMITED';
           travis_terminate 1;
       fi
-    - if test -n "$CHECKDOCS" && ! $make doc-nits; then
-          echo -e '\052\052 FAILED -- MAKE DOC-NITS';
-          travis_terminate 1;
-      fi
     - if test -n "$GENERATE" && ! $make build_all_generated; then
           echo -e '\052\052 FAILED -- MAKE BUILD_ALL_GENERATED';
+          travis_terminate 1;
+      fi
+    - if test -n "$CHECKDOCS" && ! $make doc-nits; then
+          echo -e '\052\052 FAILED -- MAKE DOC-NITS';
           travis_terminate 1;
       fi
     - if ! $make2; then

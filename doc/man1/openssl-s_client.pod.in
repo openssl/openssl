@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-s_client - SSL/TLS client program
@@ -27,19 +32,9 @@ B<openssl> B<s_client>
 [B<-keyform> B<DER>|B<PEM>]
 [B<-cert_chain> I<filename>]
 [B<-build_chain>]
-[B<-xkey>]
-[B<-xcert>]
-[B<-xchain>]
-[B<-xchain_build>]
-[B<-xcertform> B<DER>|B<PEM>]
-[B<-xkeyform> B<DER>|B<PEM>]
 [B<-pass> I<arg>]
-[B<-CApath> I<directory>]
-[B<-CAfile> I<filename>]
 [B<-chainCApath> I<directory>]
 [B<-chainCAfile> I<filename>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-requestCAfile> I<filename>]
 [B<-dane_tlsa_domain> I<domain>]
 [B<-dane_tlsa_rrdata> I<rrdata>]
@@ -126,8 +121,6 @@ B<openssl> B<s_client>
 [B<-no_ticket>]
 [B<-sess_out> I<filename>]
 [B<-sess_in> I<filename>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-serverinfo> I<types>]
 [B<-status>]
 [B<-alpn> I<protocols>]
@@ -138,6 +131,9 @@ B<openssl> B<s_client>
 [B<-keylogfile> I<file>]
 [B<-early_data> I<file>]
 [B<-enable_pha>]
+{- $OpenSSL::safe::opt_x_synopsis -}
+{- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
 [I<host>:I<port>]
 
 =for openssl ifdef engine ssl_client_engine ct noct ctlogfile
@@ -176,7 +172,7 @@ select the host and port using the optional target positional argument instead.
 If neither this nor the target positional argument are specified then an attempt
 is made to connect to the local host on port 4433.
 
-=item B<-bind> I<host:port>]
+=item B<-bind> I<host:port>
 
 This specifies the host address and or port to bind as the source for the
 connection.  For Unix-domain sockets the port is ignored and the host is
@@ -218,14 +214,14 @@ Use IPv6 only.
 =item B<-servername> I<name>
 
 Set the TLS SNI (Server Name Indication) extension in the ClientHello message to
-the given value. 
-If B<-servername> is not provided, the TLS SNI extension will be populated with 
-the name given to B<-connect> if it follows a DNS name format. If B<-connect> is 
+the given value.
+If B<-servername> is not provided, the TLS SNI extension will be populated with
+the name given to B<-connect> if it follows a DNS name format. If B<-connect> is
 not provided either, the SNI is set to "localhost".
 This is the default since OpenSSL 1.1.1.
 
-Even though SNI should normally be a DNS name and not an IP address, if 
-B<-servername> is provided then that name will be sent, regardless of whether 
+Even though SNI should normally be a DNS name and not an IP address, if
+B<-servername> is provided then that name will be sent, regardless of whether
 it is a DNS name or not.
 
 This option cannot be used in conjunction with B<-noservername>.
@@ -271,24 +267,6 @@ B<-cert> option.
 Specify whether the application should build the certificate chain to be
 provided to the server.
 
-=item B<-xkey> I<infile>, B<-xcert> I<infile>, B<-xchain>
-
-Specify an extra certificate, private key and certificate chain. These behave
-in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
-specified, the callback returning the first valid chain will be in use by the
-client.
-
-=item B<-xchain_build>
-
-Specify whether the application should build the certificate chain to be
-provided to the server for the extra certificates provided via B<-xkey> I<infile>,
-B<-xcert> I<infile>, B<-xchain> options.
-
-=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
-
-Extra certificate and private key format respectively.
-See L<openssl(1)/Format Options> for details.
-
 =item B<-pass> I<arg>
 
 the private key password source. For more information about the format of I<arg>
@@ -313,10 +291,6 @@ Option which determines how the subject or issuer names are displayed. The
 I<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<openssl-x509(1)> manual page for details.
-
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-chainCApath> I<directory>
 
@@ -667,10 +641,6 @@ to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-serverinfo> I<types>
 
 A list of comma-separated TLS Extension Types (numbers between 0 and
@@ -734,6 +704,12 @@ Rather than providing B<-connect>, the target hostname and optional port may
 be provided as a single positional argument after all options. If neither this
 nor B<-connect> are provided, falls back to attempting to connect to
 I<localhost> on port I<4433>.
+
+{- $OpenSSL::safe::opt_x_item -}
+
+{- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

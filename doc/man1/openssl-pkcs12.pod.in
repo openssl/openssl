@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-pkcs12 - PKCS#12 file utility
@@ -36,13 +41,9 @@ B<openssl> B<pkcs12>
 [B<-password> I<arg>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
-[B<-CAfile> I<file>]
-[B<-CApath> I<dir>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-CSP> I<name>]
+{- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine
 
@@ -263,17 +264,13 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 Don't attempt to provide the MAC integrity.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
-
 =item B<-CSP> I<name>
 
 Write I<name> as a Microsoft CSP name.
+
+{- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

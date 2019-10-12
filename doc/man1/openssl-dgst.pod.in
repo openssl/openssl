@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-dgst - perform digest operations
@@ -25,10 +30,9 @@ B<openssl> B<dgst>|I<digest>
 [B<-sigopt> I<nm>:I<v>]
 [B<-hmac> I<key>]
 [B<-fips-fingerprint>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-engine> I<id>]
 [B<-engine_impl>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 [I<file> ...]
 
 =head1 DESCRIPTION
@@ -164,10 +168,6 @@ for example exactly 32 chars for gost-mac.
 The L<openssl-mac(1)> command should be preferred to using this command line
 option.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-fips-fingerprint>
 
 Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
@@ -183,6 +183,8 @@ specified.
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for digest operations.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =item I<file> ...
 

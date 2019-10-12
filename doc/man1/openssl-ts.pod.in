@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-ts - Time Stamping Authority tool (client/server)
@@ -8,8 +13,6 @@ openssl-ts - Time Stamping Authority tool (client/server)
 
 B<openssl> B<ts>
 B<-query>
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-config> I<configfile>]
 [B<-data> I<file_to_hash>]
 [B<-digest> I<digest_bytes>]
@@ -20,6 +23,7 @@ B<-query>
 [B<-in> I<request.tsq>]
 [B<-out> I<request.tsq>]
 [B<-text>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 B<openssl> B<ts>
 B<-reply>
@@ -134,10 +138,6 @@ request with the following options:
 
 =over 4
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-config> I<configfile>
 
 The configuration file to use.
@@ -199,6 +199,8 @@ is stdout. (Optional)
 
 If this option is specified the output is human-readable text format
 instead of DER. (Optional)
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

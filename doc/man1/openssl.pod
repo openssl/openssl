@@ -613,7 +613,7 @@ The format of the input or output streams.
 
 Format of a private key input source.
 
-=item B<-CRLform> I<fornat>
+=item B<-CRLform> I<format>
 
 Format of a CRL input source.
 
@@ -729,6 +729,40 @@ with different filenames.
 
 Writes the seed data to the specified I<file> upon exit.
 This file can be used in a subsequent command invocation.
+
+=back
+
+=head2 Extended Verification Options
+
+Sometimes there may be more than one certificate chain leading to an
+end-entity certificate.
+This usually happens when a root or intermediate CA signs a certificate
+for another a CA in other organization.
+Another reason is when a CA might have intermediates that use two different
+signature formats, such as a SHA-1 and a SHA-256 digest.
+
+The following options can be used to provide data that will allow the
+OpenSSL command to generate an alternative chain.
+
+=over 4
+
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to the server for the extra certificates via the B<-xkey>,
+B<-xcert>, and B<-xchain> options.
+
+=item B<-xkey> I<infile>, B<-xcert> I<infile>, B<-xchain>
+
+Specify an extra certificate, private key and certificate chain. These behave
+in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
+specified, the callback returning the first valid chain will be in use by the
+client.
+
+=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
+
+The input format for the extra certifcate and key, respectively.
+See L<openssl(1)/Format Options> for details.
 
 =back
 
