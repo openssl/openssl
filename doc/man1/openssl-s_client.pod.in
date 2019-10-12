@@ -704,6 +704,12 @@ I<localhost> on port I<4433>.
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_x_item -}
+
+{- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_r_item -}
+
 =back
 
 =head1 CONNECTED COMMANDS
