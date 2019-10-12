@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-rsautl - RSA utility
@@ -18,13 +23,12 @@ B<openssl> B<rsautl>
 [B<-verify>]
 [B<-encrypt>]
 [B<-decrypt>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-pkcs>]
 [B<-ssl>]
 [B<-raw>]
 [B<-hexdump>]
 [B<-asn1parse>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine
 
@@ -85,10 +89,6 @@ Encrypt the input data using an RSA public key.
 
 Decrypt the input data using an RSA private key.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-pkcs>, B<-oaep>, B<-ssl>, B<-raw>
 
 The padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
@@ -104,6 +104,8 @@ Hex dump the output data.
 
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verify> option.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

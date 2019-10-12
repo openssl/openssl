@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-s_time - SSL/TLS performance timing program
@@ -12,10 +17,6 @@ B<openssl> B<s_time>
 [B<-www> I<page>]
 [B<-cert> I<filename>]
 [B<-key> I<filename>]
-[B<-CApath> I<directory>]
-[B<-cafile> I<filename>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-reuse>]
 [B<-new>]
 [B<-verify> I<depth>]
@@ -29,6 +30,7 @@ B<openssl> B<s_time>
 [B<-bugs>]
 [B<-cipher> I<cipherlist>]
 [B<-ciphersuites> I<val>]
+{- $OpenSSL::safe::opt_trust_synopsis -}
 
 =for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
 
@@ -91,10 +93,6 @@ The directory to use for server certificate verification. This directory
 must be in "hash format", see L<openssl-verify(1)> for more information.
 These are also used when building the client certificate chain.
 
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
-
 =item B<-new>
 
 Performs the timing test using a new session ID for each connection.
@@ -144,6 +142,8 @@ Specifies how long (in seconds) this command should establish connections
 and optionally transfer payload data from a server. Server and client
 performance and the link speed determine how many connections it
 can establish.
+
+{- $OpenSSL::safe::opt_trust_item -}
 
 =back
 

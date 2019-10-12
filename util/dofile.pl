@@ -20,30 +20,28 @@ use OpenSSL::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
 use Getopt::Std;
 use OpenSSL::Template;
 
-# We actually expect to get the following hash tables from configdata:
-#
-#    %config
-#    %target
-#    %withargs
-#    %unified_info
-#
-# We just do a minimal test to see that we got what we expected.
-# $config{target} must exist as an absolute minimum.
+# We expect to get a lot of information from configdata, so check that
+# it was part of our commandline.
 die "You must run this script with -Mconfigdata\n"
     if !exists($config{target});
 
 # Check options ######################################################
 
-my %opts = ();
-
 # -o ORIGINATOR
 #		declares ORIGINATOR as the originating script.
-getopt('o', \%opts);
+# -i .ext       Like Perl's edit-in-place -i flag
+my %opts = ();
+getopt('oi', \%opts);
 
-my @autowarntext = ("WARNING: do not edit!",
-                    "Generated"
-                    . (defined($opts{o}) ? " by ".$opts{o} : "")
-                    . (scalar(@ARGV) > 0 ? " from ".join(", ",@ARGV) : ""));
+my @autowarntext = (
+    "WARNING: do not edit!",
+    "Generated"
+        . (defined($opts{o}) ? " by $opts{o}" : "")
+        . (scalar(@ARGV) > 0 ? " from " .join(", ", @ARGV) : "")
+);
+
+die "Must have input files"
+   if defined($opts{i}) and scalar(@ARGV) == 0;
 
 # Template setup #####################################################
 
@@ -51,6 +49,15 @@ my @template_settings =
     @ARGV
     ? map { { TYPE => 'FILE', SOURCE => $_, FILENAME => $_ } } @ARGV
     : ( { TYPE => 'FILEHANDLE', SOURCE => \*STDIN, FILENAME => '<stdin>' } );
+
+# Error callback; print message, set status, return "stop processing"
+my $failed = 0;
+sub errorcallback {
+    my %args = @_;
+    print STDERR $args{error};
+    $failed++;
+    return undef;
+}
 
 # Engage! ############################################################
 
@@ -65,17 +72,35 @@ _____
 
 foreach (@template_settings) {
     my $template = OpenSSL::Template->new(%$_);
-    $template->fill_in(%$_,
-                       OUTPUT => \*STDOUT,
+    die "Couldn't create template: $Text::Template::ERROR"
+        if !defined($template);
+
+    my $result = $template->fill_in(%$_,
                        HASH => { config => \%config,
                                  target => \%target,
                                  disabled => \%disabled,
                                  withargs => \%withargs,
                                  unified_info => \%unified_info,
                                  autowarntext => \@autowarntext },
+                       BROKEN => \&errorcallback,
                        PREPEND => $prepend,
                        # To ensure that global variables and functions
                        # defined in one template stick around for the
                        # next, making them combinable
                        PACKAGE => 'OpenSSL::safe');
+    exit 1 if $failed;
+
+    if (defined($opts{i})) {
+        my $in = $_->{FILENAME};
+        my $out = $in;
+        $out =~ s/$opts{i}$//;
+        die "Cannot replace file in-place $in"
+            if $in eq $out;
+        open OFH, ">$out"
+            or die "Can't open $out, $!";
+        print OFH $result;
+        close OFH;
+    } else {
+        print $result;
+    }
 }
