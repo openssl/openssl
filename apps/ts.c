@@ -921,7 +921,7 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
 
     /* Loading untrusted certificates. */
     if (untrusted
-        && TS_VERIFY_CTS_set_certs(ctx, TS_CONF_load_certs(untrusted)) == NULL)
+        && TS_VERIFY_CTX_set_certs(ctx, TS_CONF_load_certs(untrusted)) == NULL)
         goto err;
     ret = 1;
 

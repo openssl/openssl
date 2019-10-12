@@ -916,7 +916,7 @@ TS_TST_INFO_ext_free                    938	3_0_0	EXIST::FUNCTION:TS
 i2d_X509_CRL_fp                         939	3_0_0	EXIST::FUNCTION:STDIO
 PKCS7_get0_signers                      940	3_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_ex_data              941	3_0_0	EXIST::FUNCTION:
-TS_VERIFY_CTS_set_certs                 942	3_0_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_set_certs                 942	3_0_0	EXIST::FUNCTION:TS
 BN_MONT_CTX_copy                        943	3_0_0	EXIST::FUNCTION:
 OPENSSL_INIT_new                        945	3_0_0	EXIST::FUNCTION:
 TS_ACCURACY_dup                         946	3_0_0	EXIST::FUNCTION:TS

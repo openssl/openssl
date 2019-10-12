@@ -214,3 +214,4 @@ X509V3_set_ctx_test
 X509V3_set_ctx_nodb
 EXT_BITSTRING
 EXT_IA5STRING
+TS_VERIFY_CTS_set_certs
