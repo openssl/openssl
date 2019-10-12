@@ -16,17 +16,6 @@ The X509_verify_cert() function attempts to discover and validate a
 certificate chain based on parameters in B<ctx>. A complete description of
 the process is contained in the L<openssl-verify(1)> manual page.
 
-=head1 RETURN VALUES
-
-If a complete chain can be built and validated this function returns 1,
-otherwise it return zero, in exceptional circumstances it can also
-return a negative code.
-
-If the function fails additional error information can be obtained by
-examining B<ctx> using, for example X509_STORE_CTX_get_error().
-
-=head1 NOTES
-
 Applications rarely call this function directly but it is used by
 OpenSSL internally for certificate validation, in both the S/MIME and
 SSL/TLS code.
@@ -39,10 +28,20 @@ a retry operation is requested during internal lookups (which never happens
 with standard lookup methods).
 Applications must check for <= 0 return value on error.
 
+=head1 RETURN VALUES
+
+If a complete chain can be built and validated this function returns 1,
+otherwise it return zero, in exceptional circumstances it can also
+return a negative code.
+
+If the function fails additional error information can be obtained by
+examining B<ctx> using, for example X509_STORE_CTX_get_error().
+
 =head1 BUGS
 
-This function uses the header B<x509.h> as opposed to most chain verification
-functions which use B<x509_vfy.h>.
+This function uses the header F<< <x509.h> >>
+as opposed to most chain verification
+functions which use F<< <x509_vfy.h> >>.
 
 =head1 SEE ALSO
 
