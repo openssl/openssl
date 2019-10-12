@@ -33,6 +33,7 @@ B<-reply>
 [B<-chain> I<certs_file.pem>]
 [B<-tspolicy> I<object_id>]
 [B<-in> I<response.tsr>]
+[B<-untrusted> I<file>]
 [B<-token_in>]
 [B<-out> I<response.tsr>]
 [B<-token_out>]
@@ -48,40 +49,8 @@ B<-verify>
 [B<-token_in>]
 [B<-CApath> I<trusted_cert_path>]
 [B<-CAfile> I<trusted_certs.pem>]
-[B<-CAstore> I<trusted_certs_uri>]
-[B<-untrusted> I<cert_file.pem>]
-[I<verify options>]
-
-I<verify options:>
-[B<-attime> I<timestamp>]
-[B<-check_ss_sig>]
-[B<-crl_check>]
-[B<-crl_check_all>]
-[B<-explicit_policy>]
-[B<-extended_crl>]
-[B<-ignore_critical>]
-[B<-inhibit_any>]
-[B<-inhibit_map>]
-[B<-issuer_checks>]
-[B<-no_alt_chains>]
-[B<-no_check_time>]
-[B<-partial_chain>]
-[B<-policy> I<arg>]
-[B<-policy_check>]
-[B<-policy_print>]
-[B<-purpose> I<purpose>]
-[B<-suiteB_128>]
-[B<-suiteB_128_only>]
-[B<-suiteB_192>]
-[B<-trusted_first>]
-[B<-use_deltas>]
-[B<-auth_level> I<num>]
-[B<-verify_depth> I<num>]
-[B<-verify_email> I<email>]
-[B<-verify_hostname> I<hostname>]
-[B<-verify_ip> I<ip>]
-[B<-verify_name> I<name>]
-[B<-x509_strict>]
+[B<-verbose>]
+{- $OpenSSL::safe::opt_v_synopsis -}
 
 =for openssl ifdef engine
 
@@ -358,17 +327,9 @@ certificate. This file must contain the TSA signing certificate and
 all intermediate CA certificates unless the response includes them.
 (Optional)
 
-=item I<verify options>
+{- $OpenSSL::safe::opt_v_item -}
 
-The options B<-attime>, B<-check_ss_sig>, B<-crl_check>,
-B<-crl_check_all>, B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>,
-B<-inhibit_any>, B<-inhibit_map>, B<-issuer_checks>, B<-no_alt_chains>,
-B<-no_check_time>, B<-partial_chain>, B<-policy>, B<-policy_check>,
-B<-policy_print>, B<-purpose>, B<-suiteB_128>, B<-suiteB_128_only>,
-B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>, B<-auth_level>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, and B<-x509_strict> can be used to control timestamp
-verification.  See L<openssl-verify(1)>.
+Any verification errors cause the command to exit.
 
 =back
 

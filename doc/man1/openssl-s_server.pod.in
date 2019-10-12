@@ -107,36 +107,6 @@ B<openssl> B<s_server>
 [B<-dhparam> I<infile>]
 [B<-record_padding> I<val>]
 [B<-debug_broken_protocol>]
-[B<-policy> I<val>]
-[B<-purpose> I<val>]
-[B<-verify_name> I<val>]
-[B<-verify_depth> I<int>]
-[B<-auth_level> I<int>]
-[B<-attime> I<intmax>]
-[B<-verify_hostname> I<val>]
-[B<-verify_email> I<val>]
-[B<-verify_ip>]
-[B<-ignore_critical>]
-[B<-issuer_checks>]
-[B<-crl_check>]
-[B<-crl_check_all>]
-[B<-policy_check>]
-[B<-explicit_policy>]
-[B<-inhibit_any>]
-[B<-inhibit_map>]
-[B<-x509_strict>]
-[B<-extended_crl>]
-[B<-use_deltas>]
-[B<-policy_print>]
-[B<-check_ss_sig>]
-[B<-trusted_first>]
-[B<-suiteB_128_only>]
-[B<-suiteB_128>]
-[B<-suiteB_192>]
-[B<-partial_chain>]
-[B<-no_alt_chains>]
-[B<-no_check_time>]
-[B<-allow_proxy_certs>]
 [B<-nbio>]
 [B<-psk_identity> I<val>]
 [B<-psk_hint> I<val>]
@@ -159,8 +129,10 @@ B<openssl> B<s_server>
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-http_server_binmode>]
+[B<-verbose>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
+{- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -565,23 +537,6 @@ load the parameters from the server certificate file.
 If this fails then a static set of parameters hard coded into this command
 will be used.
 
-=item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-no_alt_chains>, B<-no_check_time>, B<-partial_chain>, B<-policy>,
-B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
-B<-verify_ip>, B<-verify_name>, B<-x509_strict>
-
-Set different peer certificate verification options.
-See the L<openssl-verify(1)> manual page for details.
-
-=item B<-crl_check>, B<-crl_check_all>
-
-Check the peer certificate has not been revoked by its CA.
-The CRL(s) are appended to the certificate file. With the B<-crl_check_all>
-option all CRLs of all CAs in the chain are checked.
-
 =item B<-nbio>
 
 Turns on non blocking I/O.
@@ -691,6 +646,12 @@ by the client in binary mode.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_v_item -}
+
+If the server requests a client certificate, than
+verification errors are displayed, for debugging, but the command will
+proceed unless the B<-verify_return_error> option is used.
 
 =back
 

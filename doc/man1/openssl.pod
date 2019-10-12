@@ -781,6 +781,257 @@ client.
 The input format for the extra certificate and key, respectively.
 See L<openssl(1)/Format Options> for details.
 
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to the server for the extra certificates via the B<-xkey>,
+B<-xcert>, and B<-xchain> options.
+
+=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
+
+The input format for the extra certifcate and key, respectively.
+See L<openssl(1)/Format Options> for details.
+
+=back
+
+=head2 Verification Options
+
+Many OpenSSL commands verify certificates. The details of how each
+command handles errors is documented on the specific command page.
+
+Verification is a complicated process, consisting of a number of separate
+steps that are detailed in the following paragraphs.
+
+First, a certificate chain is built up starting from the supplied certificate
+and ending in a root CA.  It is an error if the whole chain cannot be
+built up.  The chain is built up by looking up the issuers certificate
+of the current certificate.  If a certificate is found which is its own
+issuer it is assumed to be the root CA.
+
+The process of looking up the issuer's certificate itself involves a number
+of steps.  After all certificates whose subject name matches the issuer
+name of the current certificate are subject to further tests.  The relevant
+authority key identifier components of the current certificate (if present)
+must match the subject key identifier (if present) and issuer and serial
+number of the candidate issuer, in addition the keyUsage extension of the
+candidate issuer (if present) must permit certificate signing.
+
+The lookup first looks in the list of untrusted certificates and if no match
+is found the remaining lookups are from the trusted certificates. The root CA
+is always looked up in the trusted certificate list: if the certificate to
+verify is a root certificate then an exact match must be found in the trusted
+list.
+
+The second step is to check every untrusted certificate's extensions
+for consistency with the supplied purpose. If the B<-purpose> option is
+not included then no checks are done. The supplied or "leaf" certificate
+must have extensions compatible with the supplied purpose and all other
+certificates must also be valid CA certificates. The precise extensions
+required are described in more detail in
+L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
+
+The third step is to check the trust settings on the root CA. The root
+CA should be trusted for the supplied purpose.  For compatibility with
+previous versions of OpenSSL, a certificate with no trust settings is
+considered to be valid for all purposes.
+
+The fourth, and final, step is to check the validity of the certificate
+chain. The validity period is checked against the current system time
+and the C<notBefore> and C<notAfter> dates in the certificate. The certificate
+signatures are also checked at this point.
+
+If all operations complete successfully then certificate is considered
+valid. If any operation fails then the certificate is not valid.
+
+The details of the processing steps can be fine-tuned with the
+following flags.
+
+=over 4
+
+=item B<-verbose>
+
+Print extra information about the operations being performed.
+
+=item B<-attime> I<timestamp>
+
+Perform validation checks using time specified by I<timestamp> and not
+current system time. I<timestamp> is the number of seconds since
+January 1, 1970 (i.e., the Unix Epoch).
+
+=item B<-no_check_time>
+
+This option suppresses checking the validity period of certificates and CRLs
+against the current time. If option B<-attime> is used to specify
+a verification time, the check is not suppressed.
+
+=item B<-x509_strict>
+
+This disables non-compliant workarounds for broken certificates.
+
+=item B<-ignore_critical>
+
+Normally if an unhandled critical extension is present which is not
+supported by OpenSSL the certificate is rejected (as required by RFC5280).
+If this option is set critical extensions are ignored.
+
+=item B<-issuer_checks>
+
+Ignored.
+
+=item B<-crl_check>
+
+Checks end entity certificate validity by attempting to look up a valid CRL.
+If a valid CRL cannot be found an error occurs.
+
+=item B<-crl_check_all>
+
+Checks the validity of B<all> certificates in the chain by attempting
+to look up valid CRLs.
+
+=item B<-use_deltas>
+
+Enable support for delta CRLs.
+
+=item B<-extended_crl>
+
+Enable extended CRL features such as indirect CRLs and alternate CRL
+signing keys.
+
+=item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
+
+Enable the Suite B mode operation at 128 bit Level of Security, 128 bit or
+192 bit, or only 192 bit Level of Security respectively.
+See RFC6460 for details. In particular the supported signature algorithms are
+reduced to support only ECDSA and SHA256 or SHA384 and only the elliptic curves
+P-256 and P-384.
+
+=item B<-auth_level> I<level>
+
+Set the certificate chain authentication security level to I<level>.
+The authentication security level determines the acceptable signature and
+public key strength when verifying certificate chains.  For a certificate
+chain to validate, the public keys of all the certificates must meet the
+specified security I<level>.  The signature algorithm security level is
+enforced for all the certificates in the chain except for the chain's
+I<trust anchor>, which is either directly trusted or validated by means
+other than its signature.  See L<SSL_CTX_set_security_level(3)> for the
+definitions of the available levels.  The default security level is -1,
+or "not set".  At security level 0 or lower all algorithms are acceptable.
+Security level 1 requires at least 80-bit-equivalent security and is broadly
+interoperable, though it will, for example, reject MD5 signatures or RSA
+keys shorter than 1024 bits.
+
+=item B<-partial_chain>
+
+Allow verification to succeed even if a I<complete> chain cannot be built to a
+self-signed trust-anchor, provided it is possible to construct a chain to a
+trusted certificate that might not be self-signed.
+
+=item B<-check_ss_sig>
+
+Verify the signature on the self-signed root CA. This is disabled by default
+because it doesn't add any security.
+
+=item B<-allow_proxy_certs>
+
+Allow the verification of proxy certificates.
+
+=item B<-trusted_first>
+
+As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
+
+=item B<-no_alt_chains>
+
+As of OpenSSL 1.1.0, since B<-trusted_first> always on, this option has no
+effect.
+
+=item B<-trusted> I<file>
+
+Parse I<file> as a set of one or more certificates in PEM format.
+All certificates must be self-signed, unless the
+B<-partial_chain> option is specified.
+This option implies the B<-no-CAfile> and B<-no-CApath> options and it
+cannot be used with either the B<-CAfile> or B<-CApath> options, so
+only certificates in the file are trust anchors.
+This option may be used multiple times.
+
+=item B<-untrusted> I<file>
+
+Parse I<file> as a set of one or more certificates in PEM format.
+All certificates are untrusted certificates that may be used to
+construct a certificate chain from the subject certificate to a trust anchor.
+This option may be used multiple times.
+
+=item B<-policy> I<arg>
+
+Enable policy processing and add I<arg> to the user-initial-policy-set (see
+RFC5280). The policy I<arg> can be an object name an OID in numeric form.
+This argument can appear more than once.
+
+=item B<-explicit_policy>
+
+Set policy variable require-explicit-policy (see RFC5280).
+
+=item B<-policy_check>
+
+Enables certificate policy processing.
+
+=item B<-policy_print>
+
+Print out diagnostics related to policy processing.
+
+=item B<-inhibit_any>
+
+Set policy variable inhibit-any-policy (see RFC5280).
+
+=item B<-inhibit_map>
+
+Set policy variable inhibit-policy-mapping (see RFC5280).
+
+=item B<-purpose> I<purpose>
+
+The intended use for the certificate. If this option is not specified, this
+command will not consider certificate purpose during chain verification.
+Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
+B<smimesign>, B<smimeencrypt>.
+
+=item B<-verify_depth> I<num>
+
+Limit the certificate chain to I<num> intermediate CA certificates.
+A maximal depth chain can have up to I<num>+2 certificates, since neither the
+end-entity certificate nor the trust-anchor certificate count against the
+B<-verify_depth> limit.
+
+=item B<-verify_email> I<email>
+
+Verify if I<email> matches the email address in Subject Alternative Name or
+the email in the subject Distinguished Name.
+
+=item B<-verify_hostname> I<hostname>
+
+Verify if I<hostname> matches DNS name in Subject Alternative Name or
+Common Name in the subject certificate.
+
+=item B<-verify_ip> I<ip>
+
+Verify if I<ip> matches the IP address in Subject Alternative Name of
+the subject certificate.
+
+=item B<-verify_name> I<name>
+
+Use default verification policies like trust model and required certificate
+policies identified by I<name>.
+The trust model determines which auxiliary trust or reject OIDs are applicable
+to verifying the given certificate chain.
+See the B<-addtrust> and B<-addreject> options for L<openssl-x509(1)>.
+Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
+B<ssl_client>, B<ssl_server>.
+These mimics the combinations of purpose and trust settings used in SSL, CMS
+and S/MIME.
+As of OpenSSL 1.1.0, the trust model is inferred from the purpose when not
+specified, so the B<-verify_name> options are functionally equivalent to the
+corresponding B<-purpose> settings.
+
 =back
 
 =head2 Name Format Options
@@ -1121,6 +1372,9 @@ L<x509v3_config(5)>
 The B<list> -I<XXX>B<-algorithms> options were added in OpenSSL 1.0.0;
 For notes on the availability of other commands, see their individual
 manual pages.
+
+The B<-issuer_checks> option is deprecated as of OpenSSL 1.1.0 and
+is silently ignored.
 
 =head1 COPYRIGHT
 
