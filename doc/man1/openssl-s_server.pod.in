@@ -41,6 +41,7 @@ B<openssl> B<s_server>
 [B<-no_resume_ephemeral>]
 [B<-www>]
 [B<-WWW>]
+[B<-http_server_binmode>]
 [B<-servername>]
 [B<-servername_fatal>]
 [B<-cert2> I<infile>]
@@ -88,7 +89,6 @@ B<openssl> B<s_server>
 [B<-no_comp>]
 [B<-comp>]
 [B<-no_ticket>]
-[B<-num_tickets>]
 [B<-serverpref>]
 [B<-legacy_renegotiation>]
 [B<-no_renegotiation>]
@@ -125,16 +125,17 @@ B<openssl> B<s_server>
 [B<-use_srtp> I<val>]
 [B<-alpn> I<val>]
 [B<-keylogfile> I<outfile>]
-[B<-max_early_data> I<int>]
 [B<-recv_max_early_data> I<int>]
+[B<-max_early_data> I<int>]
 [B<-early_data>]
 [B<-stateless>]
 [B<-anti_replay>]
 [B<-no_anti_replay>]
-[B<-http_server_binmode>]
+[B<-num_tickets>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -370,6 +371,11 @@ C<text/plain>.
 In addition, the special URL C</stats> will return status
 information like the B<-www> option.
 Neither of these options can be used in conjunction with B<-early_data>.
+
+=item B<-http_server_binmode>
+
+When acting as web-server (using option B<-WWW> or B<-HTTP>) open files requested
+by the client in binary mode.
 
 =item B<-id_prefix> I<val>
 
@@ -641,14 +647,11 @@ has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
 
-=item B<-http_server_binmode>
-
-When acting as web-server (using option B<-WWW> or B<-HTTP>) open files requested
-by the client in binary mode.
-
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_version_item -}
+
+{- $OpenSSL::safe::opt_s_item -}
 
 {- $OpenSSL::safe::opt_x_item -}
 
