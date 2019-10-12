@@ -1,3 +1,11 @@
+# Variables for common options.
+
+$OpenSSL::safe::do_not_edit =
+"=begin comment\n"
+. join("  \n", @autowarntext)
+. "\n=end";
+
+
 $OpenSSL::safe::opt_v_synopsis =
 "[B<-attime> I<timestamp>]\n"
 . "[B<-check_ss_sig>]\n"

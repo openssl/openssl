@@ -38,15 +38,18 @@ my %opts = ();
 
 # -o ORIGINATOR
 #		declares ORIGINATOR as the originating script.
-# -s FILE       Eval file
+# -s FILE       Eval file (for variables, usually)
 getopt('os', \%opts);
 
-my @autowarntext = ("WARNING: do not edit!",
-                    "Generated"
-                    . (defined($opts{o}) ? " by ".$opts{o} : "")
-                    . (scalar(@ARGV) > 0 ? " from ".join(", ",@ARGV) : ""));
+my @autowarntext = (
+    "WARNING: do not edit!",
+    "Generated"
+        . (defined($opts{o}) ? " by $opts{o}" : "")
+        . (defined($opts{s}) ? " with " . $opts{s} : "")
+        . (scalar(@ARGV) > 0 ? " from " .join(", ", @ARGV) : "")
+);
 
-if ( defined($opts{s}) ) {
+if (defined($opts{s})) {
     local $/ = undef;
     open VARS, $opts{s} or die "Couldn't open $opts{s}, $!";
     my $contents = <VARS>;
@@ -75,7 +78,9 @@ _____
 
 foreach (@template_settings) {
     my $template = OpenSSL::Template->new(%$_);
-    $template->fill_in(%$_,
+    die "Couldn't create template: $Text::Template::ERROR"
+        if !defined($template);
+    my $result = $template->fill_in(%$_,
                        OUTPUT => \*STDOUT,
                        HASH => { config => \%config,
                                  target => \%target,
@@ -88,4 +93,10 @@ foreach (@template_settings) {
                        # defined in one template stick around for the
                        # next, making them combinable
                        PACKAGE => 'OpenSSL::safe');
+    if ($result) {
+        print $result;
+    } else {
+        die "Couldn't fill in template: $Text::Template::ERROR";
+        exit(1);
+    }
 }

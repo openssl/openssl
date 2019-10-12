@@ -290,7 +290,7 @@ portion of a message so they may be included manually. If signing
 then many S/MIME mail clients check the signers certificate's email
 address matches that specified in the From: address.
 
-(- $OpenSSL::safe::opt_v_item -}
+{- $OpenSSL::safe::opt_v_item -}
 
 =item I<cert.pem> ...
 
