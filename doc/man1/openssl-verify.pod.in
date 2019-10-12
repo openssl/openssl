@@ -16,7 +16,6 @@ B<openssl> B<verify>
 [B<-crl_download>]
 [B<-crl_check>]
 [B<-crl_check_all>]
-[B<-engine> I<id>]
 [B<-explicit_policy>]
 [B<-extended_crl>]
 [B<-ignore_critical>]
@@ -49,6 +48,7 @@ B<openssl> B<verify>
 [B<-sm2-hex-id> I<hex-string>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 [B<-->]
 [I<certificate> ...]
 
@@ -100,15 +100,6 @@ If a valid CRL cannot be found an error occurs.
 
 Checks the validity of B<all> certificates in the chain by attempting
 to look up valid CRLs.
-
-=item B<-engine> I<id>
-
-Specifying an engine I<id> will cause this command to attempt to load the
-specified engine.
-The engine will then be set as the default for all its supported algorithms.
-If you want to load certificates or CRLs that require engine support via any of
-the B<-trusted>, B<-untrusted> or B<-CRLfile> options, the B<-engine> option
-must be specified before those options.
 
 =item B<-explicit_policy>
 
@@ -302,6 +293,11 @@ certificate. The argument for this option is string of hexadecimal digits.
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
+To load certificates or CRLs that require engine support, specify the
+B<-engine> option before any of the
+B<-trusted>, B<-untrusted> or B<-CRLfile> options.
 
 =item B<-->
 

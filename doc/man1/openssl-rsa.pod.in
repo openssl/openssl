@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-rsa - RSA key processing tool
@@ -34,7 +39,7 @@ B<openssl> B<rsa>
 [B<-pubout>]
 [B<-RSAPublicKey_in>]
 [B<-RSAPublicKey_out>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef pvk-strong pvk-weak pvk-none engine
 
@@ -126,12 +131,7 @@ the input is a public key.
 
 Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

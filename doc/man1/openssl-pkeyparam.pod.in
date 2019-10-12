@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-pkeyparam - public key algorithm parameter processing tool
@@ -12,8 +17,8 @@ B<openssl> B<pkeyparam>
 [B<-out> I<filename>]
 [B<-text>]
 [B<-noout>]
-[B<-engine> I<id>]
 [B<-check>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef engine
 
@@ -48,16 +53,11 @@ Prints out the parameters in plain text in addition to the encoded version.
 
 Do not output the encoded version of the parameters.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
 =item B<-check>
 
 This option checks the correctness of parameters.
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

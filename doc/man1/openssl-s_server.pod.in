@@ -166,7 +166,6 @@ B<openssl> B<s_server>
 [B<-nextprotoneg> I<val>]
 [B<-use_srtp> I<val>]
 [B<-alpn> I<val>]
-[B<-engine> I<val>]
 [B<-keylogfile> I<outfile>]
 [B<-max_early_data> I<int>]
 [B<-early_data>]
@@ -177,6 +176,7 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
 
@@ -676,13 +676,6 @@ Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
-=item B<-engine> I<val>
-
-Specifying an engine (by its unique id string in I<val>) will cause
-this command to attempt to obtain a functional reference to the
-specified engine, thus initialising it if needed. The engine will then be
-set as the default for all available algorithms.
-
 =item B<-keylogfile> I<outfile>
 
 Appends TLS secrets to the specified keylog file such that external programs
@@ -721,6 +714,8 @@ by the client in binary mode.
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

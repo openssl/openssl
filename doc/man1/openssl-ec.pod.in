@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-ec - EC key processing
@@ -26,7 +31,7 @@ B<openssl> B<ec>
 [B<-param_enc> I<arg>]
 [B<-no_public>]
 [B<-check>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef engine
 
@@ -131,12 +136,7 @@ This option omits the public key components from the private key output.
 
 This option checks the consistency of an EC private or public key.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

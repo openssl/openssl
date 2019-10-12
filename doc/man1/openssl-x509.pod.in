@@ -63,10 +63,10 @@ B<openssl> B<x509>
 [B<-extfile> I<filename>]
 [B<-extensions> I<section>]
 [B<-sigopt> I<nm>:I<v>]
-[B<-engine> I<id>]
 [B<-preserve_dates>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef engine subject_hash_old issuer_hash_old
 
@@ -117,13 +117,6 @@ Any digest supported by the L<openssl-dgst(1)> command can be used.
 If not specified then SHA1 is used with B<-fingerprint> or
 the default digest for the signing algorithm is used, typically SHA256.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
 =item B<-preserve_dates>
 
 When signing a certificate, preserve the "notBefore" and "notAfter" dates
@@ -131,6 +124,8 @@ instead of adjusting them to current time and duration.
 Cannot be used with the B<-days> option.
 
 {- $OpenSSL::safe::opt_r_synopsis -}
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

@@ -34,7 +34,7 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
 [B<-asn1parse>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 [B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 
@@ -179,12 +179,7 @@ hex dump the output data.
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verifyrecover> option when an ASN1 structure is signed.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+{- $OpenSSL::safe::opt_engine_item -}
 
 =item B<-engine_impl>
 

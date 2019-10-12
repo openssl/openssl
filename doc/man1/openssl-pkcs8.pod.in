@@ -23,12 +23,12 @@ B<openssl> B<pkcs8>
 [B<-v2> I<alg>]
 [B<-v2prf> I<alg>]
 [B<-v1> I<alg>]
-[B<-engine> I<id>]
 [B<-scrypt>]
 [B<-scrypt_N> I<N>]
 [B<-scrypt_r> I<r>]
 [B<-scrypt_p> I<p>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef engine scrypt scrypt_N scrypt_r scrypt_p
 
@@ -135,13 +135,6 @@ This option indicates a PKCS#5 v1.5 or PKCS#12 algorithm should be used.  Some
 older implementations may not support PKCS#5 v2.0 and may require this option.
 If not specified PKCS#5 v2.0 form is used.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
 =item B<-scrypt>
 
 Uses the B<scrypt> algorithm for private key encryption using default
@@ -154,6 +147,8 @@ B<-scrypt_p> and B<-v2> options.
 Sets the scrypt I<N>, I<r> or I<p> parameters.
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

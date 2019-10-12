@@ -85,6 +85,14 @@ $OpenSSL::safe::opt_r_item = ""
 . "\n"
 . "See L<openssl(1)/Random State Options> for details.";
 
+# Engine option
+$OpenSSL::safe::opt_engine_synopsis = ""
+. "[B<-engine> I<id>]";
+$OpenSSL::safe::opt_engine_item = ""
+. "=item B<-engine> I<id>\n"
+. "\n"
+. "See L<openssl(1)/Engine Options>.";
+
 # Trusted certs options
 $OpenSSL::safe::opt_trust_synopsis = ""
 . "[B<-CAfile> I<file>]\n"

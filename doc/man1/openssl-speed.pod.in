@@ -9,7 +9,6 @@ openssl-speed - test library performance
 
 B<openssl speed>
 [B<-help>]
-[B<-engine> I<id>]
 [B<-elapsed>]
 [B<-evp> I<algo>]
 [B<-hmac> I<algo>]
@@ -19,6 +18,7 @@ B<openssl speed>
 [B<-seconds> I<num>]
 [B<-bytes> I<num>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 [I<algorithm> ...]
 
 =for openssl ifdef cmac multi async_jobs engine
@@ -37,13 +37,6 @@ the B<rand> algorithm name.
 =item B<-help>
 
 Print out a usage message.
-
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
 
 =item B<-elapsed>
 
@@ -85,6 +78,8 @@ Run benchmarks for I<num> seconds.
 Run benchmarks on I<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =item I<algorithm> ...
 

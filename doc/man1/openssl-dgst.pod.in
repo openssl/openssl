@@ -27,7 +27,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-hmac> I<key>]
 [B<-fips-fingerprint>]
 [B<-engine> I<id>]
-[B<-engine_impl>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 [I<file> ...]
 
@@ -168,19 +168,16 @@ option.
 
 Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
 
-=item B<-engine> I<id>
-
-Use engine I<id> for operations (including private key storage).
-This engine is not used as source for digest algorithms, unless it is
-also specified in the configuration file or B<-engine_impl> is also
-specified.
-
 =item B<-engine_impl>
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for digest operations.
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
+The engine is not used for digests unless the B<-engine_impl> option is
+used or it is configured to do so, see L<config(5)/Engine Configuration Module>.
 
 =item I<file> ...
 
