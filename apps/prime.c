@@ -122,7 +122,7 @@ opthelp:
             BN_print(bio_out, bn);
             BIO_printf(bio_out, " (%s) %s prime\n",
                        argv[0],
-                       BN_is_prime_ex2(bn, NULL, NULL)
+                       BN_check_prime(bn, NULL, NULL)
                            ? "is" : "is not");
         }
     }

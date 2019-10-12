@@ -566,7 +566,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     return ret;
 }
 
-int BN_is_prime_ex2(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb)
+int BN_check_prime(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb)
 {
     /*
      * By default use 64 rounds of Miller-Rabin, which should give a false

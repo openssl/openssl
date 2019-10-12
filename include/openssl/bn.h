@@ -362,7 +362,7 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
                          BN_CTX *ctx);
 int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
                          const BIGNUM *rem, BN_GENCB *cb);
-int BN_is_prime_ex2(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb);
+int BN_check_prime(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb);
 
 int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx);
 

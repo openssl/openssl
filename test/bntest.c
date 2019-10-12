@@ -2312,7 +2312,7 @@ static int test_is_prime(int i)
 
     for (trial = 0; trial <= 1; ++trial) {
         if (!TEST_true(BN_set_word(r, primes[i]))
-                || !TEST_int_eq(BN_is_prime_ex2(r, ctx, NULL),
+                || !TEST_int_eq(BN_check_prime(r, ctx, NULL),
                                 1))
             goto err;
     }
@@ -2336,7 +2336,7 @@ static int test_not_prime(int i)
 
     for (trial = 0; trial <= 1; ++trial) {
         if (!TEST_true(BN_set_word(r, not_primes[i]))
-                || !TEST_false(BN_is_prime_ex2(r, ctx, NULL)))
+                || !TEST_false(BN_check_prime(r, ctx, NULL)))
             goto err;
     }
 

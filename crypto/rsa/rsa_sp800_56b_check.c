@@ -127,7 +127,7 @@ int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
     BIGNUM *p1 = NULL, *gcd = NULL;
 
     /* (Steps 5 a-b) prime test */
-    if (BN_is_prime_ex2(p, ctx, NULL) != 1
+    if (BN_check_prime(p, ctx, NULL) != 1
             /* (Step 5c) (√2)(2^(nbits/2 - 1) <= p <= 2^(nbits/2 - 1) */
             || rsa_check_prime_factor_range(p, nbits, ctx) != 1)
         return 0;

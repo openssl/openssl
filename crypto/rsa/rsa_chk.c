@@ -73,13 +73,13 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
     }
 
     /* p prime? */
-    if (BN_is_prime_ex2(key->p, NULL, cb) != 1) {
+    if (BN_check_prime(key->p, NULL, cb) != 1) {
         ret = 0;
         RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_P_NOT_PRIME);
     }
 
     /* q prime? */
-    if (BN_is_prime_ex2(key->q, NULL, cb) != 1) {
+    if (BN_check_prime(key->q, NULL, cb) != 1) {
         ret = 0;
         RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_Q_NOT_PRIME);
     }
@@ -87,7 +87,7 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
     /* r_i prime? */
     for (idx = 0; idx < ex_primes; idx++) {
         pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
-        if (BN_is_prime_ex2(pinfo->r, NULL, cb) != 1) {
+        if (BN_check_prime(pinfo->r, NULL, cb) != 1) {
             ret = 0;
             RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_MP_R_NOT_PRIME);
         }

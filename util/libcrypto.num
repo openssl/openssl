@@ -4826,4 +4826,4 @@ EVP_DigestSignInit_ex                   4942	3_0_0	EXIST::FUNCTION:
 EVP_DigestSignUpdate                    4943	3_0_0	EXIST::FUNCTION:
 EVP_DigestVerifyInit_ex                 4944	3_0_0	EXIST::FUNCTION:
 EVP_DigestVerifyUpdate                  4945	3_0_0	EXIST::FUNCTION:
-BN_is_prime_ex2                         4946	3_0_0	EXIST::FUNCTION:
+BN_check_prime                          4946	3_0_0	EXIST::FUNCTION:
