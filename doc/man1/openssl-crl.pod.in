@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-crl - CRL utility
@@ -20,10 +25,7 @@ B<openssl> B<crl>
 [B<-issuer>]
 [B<-lastupdate>]
 [B<-nextupdate>]
-[B<-CAfile> I<file>]
-[B<-CApath> I<dir>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
+{- $OpenSSL::safe::opt_trust_synopsis -}
 
 =for openssl ifdef hash_old
 
@@ -94,9 +96,7 @@ Output the lastUpdate field.
 
 Output the nextUpdate field.
 
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
+{- $OpenSSL::safe::opt_trust_item -}
 
 =back
 

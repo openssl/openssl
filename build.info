@@ -1,6 +1,6 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
-SUBDIRS=crypto ssl apps test util tools fuzz engines providers
+SUBDIRS=crypto ssl apps test util tools fuzz engines providers doc/man1
 
 LIBS=libcrypto libssl
 INCLUDE[libcrypto]=. include
@@ -12,6 +12,7 @@ DEPEND[libssl]=libcrypto
 DEPEND[]=include/openssl/opensslconf.h include/openssl/opensslv.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
          doc/man7/openssl_user_macros.pod
+
 GENERATE[include/openssl/opensslconf.h]=include/openssl/opensslconf.h.in
 GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in

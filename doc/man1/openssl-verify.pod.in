@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-verify - Utility to verify certificates
@@ -8,10 +13,6 @@ openssl-verify - Utility to verify certificates
 
 B<openssl> B<verify>
 [B<-help>]
-[B<-CAfile> I<file>]
-[B<-CApath> I<directory>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-allow_proxy_certs>]
 [B<-attime> I<timestamp>]
 [B<-check_ss_sig>]
@@ -51,6 +52,7 @@ B<openssl> B<verify>
 [B<-show_chain>]
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
+{- $OpenSSL::safe::opt_trust_synopsis -}
 [B<-->]
 [I<certificate> ...]
 
@@ -67,10 +69,6 @@ This command verifies certificate chains.
 =item B<-help>
 
 Print out a usage message.
-
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-allow_proxy_certs>
 
@@ -317,6 +315,8 @@ certificate. The argument for this option is string of hexadecimal digits.
 Indicates the last option. All arguments following this are assumed to be
 certificate files. This is useful if the first certificate filename begins
 with a B<-->.
+
+{- $OpenSSL::safe::opt_trust_item -}
 
 =item I<certificate> ...
 

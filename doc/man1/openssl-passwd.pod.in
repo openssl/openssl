@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-passwd - compute password hashes
@@ -20,8 +25,7 @@ B<openssl passwd>
 [B<-noverify>]
 [B<-quiet>]
 [B<-table>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 {I<password>}
 
 =for openssl ifdef crypt
@@ -93,9 +97,7 @@ Don't output warnings when passwords given at the command line are truncated.
 In the output list, prepend the cleartext password and a TAB character
 to each password hash.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

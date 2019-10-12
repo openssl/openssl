@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-dhparam - DH parameter manipulation and generation
@@ -20,9 +25,8 @@ B<openssl dhparam>
 [B<-2>]
 [B<-3>]
 [B<-5>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-engine> I<id>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 [I<numbits>]
 
 =for openssl ifdef dsaparam engine
@@ -80,10 +84,6 @@ input file is ignored and parameters are generated instead. If not
 present but I<numbits> is present, parameters are generated with the
 default generator 2.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item I<numbits>
 
 This option specifies that a parameter set should be generated of size
@@ -112,6 +112,8 @@ Specifying an engine (by its unique I<id> string) will cause B<dhparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

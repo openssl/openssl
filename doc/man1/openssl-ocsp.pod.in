@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-ocsp - Online Certificate Status Protocol utility
@@ -30,10 +35,6 @@ B<openssl> B<ocsp>
 [B<-multi> I<process-count>]
 [B<-header>]
 [B<-path>]
-[B<-CApath> I<dir>]
-[B<-CAfile> I<file>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-attime> I<timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -89,6 +90,7 @@ B<openssl> B<ocsp>
 [B<-nrequest> I<n>]
 [B<-rcid> I<digest>]
 [B<-I<digest>>]
+{- $OpenSSL::safe::opt_trust_synopsis -}
 
 =for openssl ifdef multi
 
@@ -207,10 +209,6 @@ each child is willing to wait for the client's OCSP response.
 This option is available on POSIX systems (that support the fork() and other
 required unix system-calls).
 
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
-
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
 B<-inhibit_map>, B<-no_alt_chains>, B<-no_check_time>, B<-partial_chain>, B<-policy>,
@@ -309,6 +307,8 @@ This option sets digest algorithm to use for certificate identification in the
 OCSP request. Any digest supported by the OpenSSL B<dgst> command can be used.
 The default is SHA-1. This option may be used multiple times to specify the
 digest used by subsequent certificate identifiers.
+
+{- $OpenSSL::safe::opt_trust_item -}
 
 =back
 

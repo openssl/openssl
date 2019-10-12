@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-pkcs8 - PKCS#8 format private key conversion tool
@@ -17,8 +22,6 @@ B<openssl> B<pkcs8>
 [B<-passout> I<arg>]
 [B<-iter> I<count>]
 [B<-noiter>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-nocrypt>]
 [B<-traditional>]
 [B<-v2> I<alg>]
@@ -29,6 +32,7 @@ B<openssl> B<pkcs8>
 [B<-scrypt_N> I<N>]
 [B<-scrypt_r> I<r>]
 [B<-scrypt_p> I<p>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine scrypt scrypt_N scrypt_r scrypt_p
 
@@ -113,10 +117,6 @@ This option does not encrypt private keys at all and should only be used
 when absolutely necessary. Certain software such as some versions of Java
 code signing software used unencrypted private keys.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-v2> I<alg>
 
 This option sets the PKCS#5 v2.0 algorithm.
@@ -157,6 +157,8 @@ B<-scrypt_p> and B<-v2> options.
 =item B<-scrypt_N> I<N>, B<-scrypt_r> I<r>, B<-scrypt_p> I<p>
 
 Sets the scrypt I<N>, I<r> or I<p> parameters.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

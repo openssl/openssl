@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-dsaparam - DSA parameter manipulation and generation
@@ -15,11 +20,10 @@ B<openssl dsaparam>
 [B<-noout>]
 [B<-text>]
 [B<-C>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-genkey>]
 [B<-engine> I<id>]
 [B<-verbose>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 [I<numbits>]
 
 =head1 DESCRIPTION
@@ -75,10 +79,6 @@ be loaded by calling the get_dsaXXX() function.
 This option will generate a DSA either using the specified or generated
 parameters.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-engine> I<id>
 
 Specifying an engine (by its unique I<id> string) will cause this command
@@ -89,6 +89,8 @@ for all available algorithms.
 =item B<-verbose>
 
 Print extra details about the operations being performed.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =item I<numbits>
 
