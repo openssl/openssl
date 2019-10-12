@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-ca - sample minimal CA application
@@ -54,10 +59,9 @@ B<openssl> B<ca>
 [B<-create_serial>]
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
+{- $OpenSSL::safe::opt_r_synopsys -}
 
 =for openssl ifdef engine sm2-id sm2-hex-id
 
@@ -294,10 +298,6 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 If B<-multi-rdn> is not used then the UID value is C<123456+CN=John Doe>.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-sm2-id> I<string>
 
 Specify the ID string to use when verifying an SM2 certificate. The ID string is
@@ -307,6 +307,8 @@ required by the SM2 signature algorithm for signing and verification.
 
 Specify a binary ID string to use when signing or verifying using an SM2
 certificate. The argument for this option is string of hexadecimal digits.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

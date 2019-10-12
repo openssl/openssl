@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-s_server - SSL/TLS server program
@@ -36,10 +41,6 @@ B<openssl> B<s_server>
 [B<-msg>]
 [B<-msgfile> I<outfile>]
 [B<-state>]
-[B<-CAfile> I<infile>]
-[B<-CApath> I<dir>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-nocert>]
 [B<-quiet>]
 [B<-no_resume_ephemeral>]
@@ -52,8 +53,6 @@ B<openssl> B<s_server>
 [B<-tlsextdebug>]
 [B<-HTTP>]
 [B<-id_prefix> I<val>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-keymatexport> I<val>]
 [B<-keymatexportlen> I<+int>]
 [B<-CRL> I<infile>]
@@ -147,12 +146,6 @@ B<openssl> B<s_server>
 [B<-no_alt_chains>]
 [B<-no_check_time>]
 [B<-allow_proxy_certs>]
-[B<-xkey>]
-[B<-xcert>]
-[B<-xchain>]
-[B<-xchain_build>]
-[B<-xcertform> B<DER>|B<PEM>]
-[B<-xkeyform> B<DER>|B<PEM>]
 [B<-nbio>]
 [B<-psk_identity> I<val>]
 [B<-psk_hint> I<val>]
@@ -184,6 +177,9 @@ B<openssl> B<s_server>
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-http_server_binmode>]
+{- $OpenSSL::safe::opt_x_synopsis -}
+{- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
 
@@ -329,23 +325,6 @@ is in use.
 
 Additional certificate and private key format and passphrase respectively.
 
-=item B<-xkey> I<infile>, B<-xcert> I<infile>, B<-xchain>
-
-Specify an extra certificate, private key and certificate chain. These behave
-in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
-specified, the callback returning the first valid chain will be in use by
-the server.
-
-=item B<-xchain_build>
-
-Specify whether the application should build the certificate chain to be
-provided to the client for the extra certificates provided via B<-xkey> I<infile>,
-B<-xcert> I<infile>, B<-xchain> options.
-
-=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
-
-Extra certificate and private key format respectively.
-
 =item B<-nbio_test>
 
 Tests non blocking I/O.
@@ -369,10 +348,6 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 =item B<-state>
 
 Prints the SSL session states.
-
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-chainCApath> I<dir>
 
@@ -428,10 +403,6 @@ Generate SSL/TLS session IDs prefixed by I<val>. This is mostly useful
 for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
 IDs (eg. with a certain prefix).
-
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
 
 =item B<-verify_return_error>
 
@@ -732,6 +703,12 @@ data that was sent will be rejected.
 
 When acting as web-server (using option B<-WWW> or B<-HTTP>) open files requested
 by the client in binary mode.
+
+{- $OpenSSL::safe::opt_x_item -}
+
+{- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

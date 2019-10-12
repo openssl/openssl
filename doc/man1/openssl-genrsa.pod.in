@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-genrsa - generate an RSA private key
@@ -23,11 +28,10 @@ B<openssl> B<genrsa>
 [B<-des3>]
 [B<-idea>]
 [B<-f4>|B<-3>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-engine> I<id>]
 [B<-primes> I<num>]
 [B<-verbose>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 [B<numbits>]
 
 =for openssl ifdef engine
@@ -65,10 +69,6 @@ for if it is not supplied via the B<-passout> argument.
 
 The public exponent to use, either 65537 or 3. The default is 65537.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-engine> I<id>
 
 Specifying an engine (by its unique I<id> string) will cause this command
@@ -86,6 +86,8 @@ RSA key, which is defined in RFC 8017.
 =item B<-verbose>
 
 Print extra details about the operations being performed.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =item B<numbits>
 

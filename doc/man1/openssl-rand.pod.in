@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-rand - generate pseudo-random bytes
@@ -9,10 +14,9 @@ openssl-rand - generate pseudo-random bytes
 B<openssl rand>
 [B<-help>]
 [B<-out> I<file>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-base64>]
 [B<-hex>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 I<num>
 
 =for openssl ifdef engine
@@ -34,10 +38,6 @@ Print out a usage message.
 
 Write to I<file> instead of standard output.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-base64>
 
 Perform base64 encoding on the output.
@@ -45,6 +45,8 @@ Perform base64 encoding on the output.
 =item B<-hex>
 
 Show the output as a hex string.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

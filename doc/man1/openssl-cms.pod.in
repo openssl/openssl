@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-cms - CMS utility
@@ -37,10 +42,6 @@ B<openssl> B<cms>
 [B<-text>]
 [B<-noout>]
 [B<-print>]
-[B<-CAfile> I<file>]
-[B<-CApath> I<dir>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-attime> I<timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -96,11 +97,11 @@ B<openssl> B<cms>
 [B<-inkey> I<file>]
 [B<-keyopt> I<name>:I<parameter>]
 [B<-passin> I<arg>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-to> I<addr>]
 [B<-from> I<addr>]
 [B<-subject> I<subj>]
+{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_trust_synopsis -}
 [I<cert.pem> ...]
 
 =for openssl ifdef des-wrap engine
@@ -285,10 +286,6 @@ structure is being checked.
 For the B<-cmsout> operation print out all fields of the CMS structure. This
 is mainly useful for testing purposes.
 
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
-
 =item B<-md> I<digest>
 
 Digest algorithm to use when signing or resigning. If not present then the
@@ -461,15 +458,6 @@ or to modify default parameters for ECDH.
 The private key password source. For more information about the format of B<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
-=item I<cert.pem> ...
-
-One or more certificates of message recipients: used when encrypting
-a message.
-
 =item B<-to>, B<-from>, B<-subject>
 
 The relevant mail headers. These are included outside the signed
@@ -487,6 +475,15 @@ B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
 L<openssl-verify(1)> manual page for details.
+
+{- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_r_item -}
+
+=item I<cert.pem> ...
+
+One or more certificates of message recipients: used when encrypting
+a message.
 
 =back
 

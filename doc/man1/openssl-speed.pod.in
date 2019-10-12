@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-speed - test library performance
@@ -14,11 +19,10 @@ B<openssl speed>
 [B<-hmac> I<algo>]
 [B<-cmac> I<algo>]
 [B<-decrypt>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-primes> I<num>]
 [B<-seconds> I<num>]
 [B<-bytes> I<num>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 [I<algorithm> ...]
 
 =for openssl ifdef cmac multi async_jobs engine
@@ -71,10 +75,6 @@ C<openssl speed -cmac aes128>.
 
 Time the decryption instead of encryption. Affects only the EVP testing.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-primes> I<num>
 
 Generate a I<num>-prime RSA key and use it to run the benchmarks. This option
@@ -87,6 +87,8 @@ Run benchmarks for I<num> seconds.
 =item B<-bytes> I<num>
 
 Run benchmarks on I<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =item I<algorithm> ...
 

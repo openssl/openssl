@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-smime - S/MIME utility
@@ -18,10 +23,6 @@ B<openssl> B<smime>
 [B<-crlfeol>]
 [B<-I<cipher>>]
 [B<-in> I<file>]
-[B<-CAfile> I<file>]
-[B<-CApath> I<dir>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-attime> I<timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -65,9 +66,9 @@ B<openssl> B<smime>
 [B<-indef>]
 [B<-noindef>]
 [B<-stream>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-md> I<digest>]
+{- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
 I<cert.pem> ...
 
 =for openssl ifdef engine
@@ -179,10 +180,6 @@ message if encrypting or signing. If decrypting or verifying it strips
 off text headers: if the decrypted or verified message is not of MIME
 type text/plain then an error occurs.
 
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
-
 =item B<-md> I<digest>
 
 Digest algorithm to use when signing or resigning. If not present then the
@@ -283,10 +280,6 @@ specified, the argument is given to the engine as a key identifier.
 The private key password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-to>, B<-from>, B<-subject>
 
 The relevant mail headers. These are included outside the signed
@@ -304,6 +297,10 @@ B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various options of certificate chain verification. See
 L<openssl-verify(1)> manual page for details.
+
+{- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =item I<cert.pem> ...
 

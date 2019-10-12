@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-pkeyutl - public key algorithm utility
@@ -33,10 +38,9 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
 [B<-asn1parse>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-engine> I<id>]
 [B<-engine_impl>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine engine_impl
 
@@ -177,10 +181,6 @@ hex dump the output data.
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verifyrecover> option when an ASN1 structure is signed.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-engine> I<id>
 
 Specifying an engine (by its unique I<id> string) will cause this command
@@ -192,6 +192,8 @@ for all available algorithms.
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for crypto operations.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

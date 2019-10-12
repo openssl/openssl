@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-ecparam - EC parameter manipulation and generation
@@ -22,10 +27,9 @@ B<openssl ecparam>
 [B<-conv_form> I<arg>]
 [B<-param_enc> I<arg>]
 [B<-no_seed>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-genkey>]
 [B<-engine> I<id>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine
 
@@ -124,16 +128,14 @@ is included in the ECParameters structure (see RFC 3279).
 
 This option will generate an EC private key using the specified parameters.
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
-
 =item B<-engine> I<id>
 
 Specifying an engine (by its unique I<id> string) will cause B<ecparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 

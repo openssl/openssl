@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-enc - symmetric cipher routines
@@ -36,9 +41,8 @@ B<openssl> B<enc>|I<cipher>
 [B<-nopad>]
 [B<-debug>]
 [B<-none>]
-[B<-rand> I<files>]
-[B<-writerand> I<file>]
 [B<-engine> I<id>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef z engine
 
@@ -190,9 +194,7 @@ or zlib-dynamic option.
 
 Use NULL cipher (no encryption or decryption of input).
 
-=item B<-rand> I<files>, B<-writerand> I<file>
-
-See L<openssl(1)/Random State Options> for more information.
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 
