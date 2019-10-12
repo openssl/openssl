@@ -890,7 +890,7 @@ while (@argvcopy)
                         {
                         push @{$useradd{LDLIBS}}, $_, shift(@argvcopy);
                         }
-                elsif (m|^[-/]L(.*)$| or /^-Wl,/)
+                elsif (/^-L(.*)$/ or /^-Wl,/)
                         {
                         push @{$useradd{LDFLAGS}}, $_;
                         }
