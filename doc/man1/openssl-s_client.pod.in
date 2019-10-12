@@ -79,19 +79,6 @@ B<openssl> B<s_client>
 [B<-psk> I<key>]
 [B<-psk_session> I<file>]
 [B<-quiet>]
-[B<-ssl3>]
-[B<-tls1>]
-[B<-tls1_1>]
-[B<-tls1_2>]
-[B<-tls1_3>]
-[B<-no_ssl3>]
-[B<-no_tls1>]
-[B<-no_tls1_1>]
-[B<-no_tls1_2>]
-[B<-no_tls1_3>]
-[B<-dtls>]
-[B<-dtls1>]
-[B<-dtls1_2>]
 [B<-sctp>]
 [B<-sctp_label_bug>]
 [B<-fallback_scsv>]
@@ -127,6 +114,7 @@ B<openssl> B<s_client>
 [B<-early_data> I<file>]
 [B<-enable_pha>]
 {- $OpenSSL::safe::opt_name_synopsis -}
+{- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -458,23 +446,6 @@ This option must be provided in order to use a PSK cipher.
 Use the pem encoded SSL_SESSION data stored in I<file> as the basis of a PSK.
 Note that this will only work if TLSv1.3 is negotiated.
 
-=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
-
-These options require or disable the use of the specified SSL or TLS protocols.
-By default, this command will negotiate the highest mutually supported protocol
-version.
-When a specific TLS version is required, only that version will be offered to
-and accepted from the server.
-Note that not all protocols and flags may be available, depending on how
-OpenSSL was built.
-
-=item B<-dtls>, B<-dtls1>, B<-dtls1_2>
-
-These options make this command use DTLS protocols instead of TLS.
-With B<-dtls>, it will negotiate any supported DTLS protocol version,
-whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
-respectively.
-
 =item B<-sctp>
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
@@ -685,12 +656,7 @@ data and when the server accepts the early data.
 For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
 happen whether or not a certificate has been provided via B<-cert>.
 
-=item I<host>:I<port>
-
-Rather than providing B<-connect>, the target hostname and optional port may
-be provided as a single positional argument after all options. If neither this
-nor B<-connect> are provided, falls back to attempting to connect to
-I<localhost> on port I<4433>.
+{- $OpenSSL::safe::opt_version_item -}
 
 {- $OpenSSL::safe::opt_name_item -}
 
@@ -701,6 +667,13 @@ I<localhost> on port I<4433>.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+=item I<host>:I<port>
+
+Rather than providing B<-connect>, the target hostname and optional port may
+be provided as a single positional argument after all options. If neither this
+nor B<-connect> are provided, falls back to attempting to connect to
+I<localhost> on port I<4433>.
 
 =back
 

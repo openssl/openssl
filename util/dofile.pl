@@ -40,6 +40,14 @@ my @autowarntext = (
         . (scalar(@ARGV) > 0 ? " from " .join(", ", @ARGV) : "")
 );
 
+if (defined($opts{s})) {
+    local $/ = undef;
+    open VARS, $opts{s} or die "Couldn't open $opts{s}, $!";
+    my $contents = <VARS>;
+    close VARS;
+    eval $contents;
+    die $@ if $@;
+}
 die "Must have input files"
    if defined($opts{i}) and scalar(@ARGV) == 0;
 

@@ -17,11 +17,7 @@ B<openssl> B<s_time>
 [B<-new>]
 [B<-verify> I<depth>]
 [B<-time> I<seconds>]
-[B<-ssl3>]
-[B<-tls1>]
-[B<-tls1_1>]
-[B<-tls1_2>]
-[B<-tls1_3>]
+{- $OpenSSL::safe::opt_versiontls_synopsis -}
 [B<-bugs>]
 [B<-cipher> I<cipherlist>]
 [B<-ciphersuites> I<val>]
@@ -94,15 +90,6 @@ Performs the timing test using the same session ID; this can be used as a test
 that session caching is working. If neither B<-new> nor B<-reuse> are
 specified, they are both on by default and executed in sequence.
 
-=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>
-
-These options enable specific SSL or TLS protocol versions for the handshake
-initiated by this command.
-By default, it negotiates the highest mutually supported protocol
-version.
-Note that not all protocols and flags may be available, depending on how
-OpenSSL was built.
-
 =item B<-bugs>
 
 There are several known bugs in SSL and TLS implementations. Adding this
@@ -135,6 +122,8 @@ can establish.
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_versiontls_item -}
 
 =back
 

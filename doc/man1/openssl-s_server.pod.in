@@ -83,11 +83,6 @@ B<openssl> B<s_server>
 [B<-split_send_frag> I<+int>]
 [B<-max_pipelines> I<+int>]
 [B<-read_buf> I<+int>]
-[B<-no_ssl3>]
-[B<-no_tls1>]
-[B<-no_tls1_1>]
-[B<-no_tls1_2>]
-[B<-no_tls1_3>]
 [B<-bugs>]
 [B<-no_comp>]
 [B<-comp>]
@@ -149,17 +144,9 @@ B<openssl> B<s_server>
 [B<-psk_session> I<file>]
 [B<-srpvfile> I<infile>]
 [B<-srpuserseed> I<val>]
-[B<-ssl3>]
-[B<-tls1>]
-[B<-tls1_1>]
-[B<-tls1_2>]
-[B<-tls1_3>]
-[B<-dtls>]
 [B<-timeout>]
 [B<-mtu> I<+int>]
 [B<-listen>]
-[B<-dtls1>]
-[B<-dtls1_2>]
 [B<-sctp>]
 [B<-sctp_label_bug>]
 [B<-no_dhe>]
@@ -173,6 +160,7 @@ B<openssl> B<s_server>
 [B<-no_anti_replay>]
 [B<-http_server_binmode>]
 {- $OpenSSL::safe::opt_name_synopsis -}
+{- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -391,21 +379,17 @@ web browser. Cannot be used in conjunction with B<-early_data>.
 
 Emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
-requested the file F<./page.html> will be loaded. Cannot be used in conjunction
+requested the file F<./page.html> will be loaded.
+The files loaded are
+assumed to contain a complete and correct HTTP response (lines that
+are part of the HTTP response line and headers must end with CRLF). Cannot be
+used in conjunction with B<-early_data>.
+Cannot be used in conjunction
 with B<-early_data>.
 
 =item B<-tlsextdebug>
 
 Print a hex dump of any TLS extensions received from the server.
-
-=item B<-HTTP>
-
-Emulates a simple web server. Pages will be resolved relative to the
-current directory, for example if the URL https://myhost/page.html is
-requested the file F<./page.html> will be loaded. The files loaded are
-assumed to contain a complete and correct HTTP response (lines that
-are part of the HTTP response line and headers must end with CRLF). Cannot be
-used in conjunction with B<-early_data>.
 
 =item B<-id_prefix> I<val>
 
@@ -494,16 +478,6 @@ The default read buffer size to be used for connections. This will only have an
 effect if the buffer size is larger than the size that would otherwise be used
 and pipelining is in use (see L<SSL_CTX_set_default_read_buffer_len(3)> for
 further information).
-
-=item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
-
-These options require or disable the use of the specified SSL or TLS protocols.
-By default, this command will negotiate the highest mutually supported
-protocol version.
-When a specific TLS version is required, only that version will be accepted
-from the client.
-Note that not all protocols and flags may be available, depending on how
-OpenSSL was built.
 
 =item B<-bugs>
 
@@ -639,13 +613,6 @@ Any without a cookie will be responded to with a HelloVerifyRequest.
 If a ClientHello with a cookie is received then this command will
 connect to that peer and complete the handshake.
 
-=item B<-dtls>, B<-dtls1>, B<-dtls1_2>
-
-These options make this command use DTLS protocols instead of TLS.
-With B<-dtls>, it will negotiate any supported DTLS protocol
-version, whilst B<-dtls1> and B<-dtls1_2> will only support DTLSv1.0 and
-DTLSv1.2 respectively.
-
 =item B<-sctp>
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
@@ -708,6 +675,8 @@ When acting as web-server (using option B<-WWW> or B<-HTTP>) open files requeste
 by the client in binary mode.
 
 {- $OpenSSL::safe::opt_name_item -}
+
+{- $OpenSSL::safe::opt_version_item -}
 
 {- $OpenSSL::safe::opt_x_item -}
 
