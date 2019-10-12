@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-storeutl - STORE utility
@@ -12,7 +17,6 @@ B<openssl> B<storeutl>
 [B<-noout>]
 [B<-passin> I<arg>]
 [B<-text> I<arg>]
-[B<-engine> I<id>]
 [B<-r>]
 [B<-certs>]
 [B<-keys>]
@@ -23,6 +27,7 @@ B<openssl> B<storeutl>
 [B<-alias> I<arg>]
 [B<-fingerprint> I<arg>]
 [B<-I<digest>>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 I<uri> ...
 
 =head1 DESCRIPTION
@@ -56,13 +61,6 @@ see L<openssl(1)/Pass Phrase Options>.
 
 Prints out the objects in text form, similarly to the B<-text> output from
 L<openssl-x509(1)>, L<openssl-pkey(1)>, etc.
-
-=item B<-engine> I<id>
-
-specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
 
 =item B<-r>
 
@@ -109,6 +107,8 @@ Search for an object having the given fingerprint.
 =item B<-I<digest>>
 
 The digest that was used to compute the fingerprint given with B<-fingerprint>.
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

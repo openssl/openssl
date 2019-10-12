@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-pkey - public or private key processing tool
@@ -21,9 +26,9 @@ B<openssl> B<pkey>
 [B<-noout>]
 [B<-pubin>]
 [B<-pubout>]
-[B<-engine> I<id>]
 [B<-check>]
 [B<-pubcheck>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef engine
 
@@ -99,13 +104,6 @@ By default a private key is output: with this option a public
 key will be output instead. This option is automatically set if
 the input is a public key.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
 =item B<-check>
 
 This option checks the consistency of a key pair for both public and private
@@ -115,6 +113,8 @@ components.
 
 This option checks the correctness of either a public key or the public component
 of a key pair.
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

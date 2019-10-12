@@ -112,7 +112,6 @@ B<openssl> B<s_client>
 [B<-starttls> I<protocol>]
 [B<-xmpphost> I<hostname>]
 [B<-name> I<hostname>]
-[B<-engine> I<id>]
 [B<-tlsextdebug>]
 [B<-no_ticket>]
 [B<-sess_out> I<filename>]
@@ -131,6 +130,7 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 [I<host>:I<port>]
 
 =for openssl ifdef engine ssl_client_engine ct noct ctlogfile
@@ -628,13 +628,6 @@ Output SSL session to I<filename>.
 Load SSL session from I<filename>. The client will attempt to resume a
 connection from this session.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
 =item B<-serverinfo> I<types>
 
 A list of comma-separated TLS Extension Types (numbers between 0 and
@@ -706,6 +699,8 @@ I<localhost> on port I<4433>.
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

@@ -37,7 +37,7 @@ B<openssl> B<enc>|I<cipher>
 [B<-nopad>]
 [B<-debug>]
 [B<-none>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef z engine
@@ -192,6 +192,8 @@ Use NULL cipher (no encryption or decryption of input).
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_engine_item -}
+
 =back
 
 =head1 NOTES
@@ -204,8 +206,8 @@ Use the L<openssl-list(1)> command to get a list of supported ciphers.
 
 Engines which provide entirely new encryption algorithms (such as the ccgost
 engine which provides gost89 algorithm) should be configured in the
-configuration file. Engines specified on the command line using -engine
-options can only be used for hardware-assisted implementations of
+configuration file. Engines specified on the command line using B<-engine>
+option can only be used for hardware-assisted implementations of
 ciphers which are supported by the OpenSSL core or another engine specified
 in the configuration file.
 

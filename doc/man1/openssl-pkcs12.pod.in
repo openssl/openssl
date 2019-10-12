@@ -41,6 +41,7 @@ B<openssl> B<pkcs12>
 [B<-CSP> I<name>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef engine
 
@@ -270,6 +271,8 @@ Write I<name> as a Microsoft CSP name.
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

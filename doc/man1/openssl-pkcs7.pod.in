@@ -1,5 +1,10 @@
 =pod
 
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
 =head1 NAME
 
 openssl-pkcs7 - PKCS#7 utility
@@ -15,7 +20,7 @@ B<openssl> B<pkcs7>
 [B<-print_certs>]
 [B<-text>]
 [B<-noout>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 
 =for openssl ifdef engine
 
@@ -67,12 +72,7 @@ issuer names.
 Don't output the encoded version of the PKCS#7 structure (or certificates
 is B<-print_certs> is set).
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 

@@ -21,7 +21,7 @@ B<openssl dhparam>
 [B<-2>]
 [B<-3>]
 [B<-5>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 [I<numbits>]
 
@@ -102,12 +102,7 @@ This option prints out the DH parameters in human readable form.
 This option converts the parameters into C code. The parameters can then
 be loaded by calling the get_dhNNNN() function.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause B<dhparam>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

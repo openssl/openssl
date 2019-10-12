@@ -933,6 +933,19 @@ name.
 
 =back
 
+=head2 Engine Options
+
+=over 4
+
+=item B<-engine> I<id>
+
+Use the engine identified by I<id> and use all the methods it
+implements (algorithms, key storage, etc.), unless specified otherwise in
+the command-specific documentation or it is configured to do so, as described
+in L<config(5)/Engine Configuration Module>.
+
+=back
+
 =head1 ENVIRONMENT
 
 The OpenSSL library can be take some configuration parameters from the
