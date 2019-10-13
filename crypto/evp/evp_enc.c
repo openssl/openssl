@@ -1092,7 +1092,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
     case EVP_CTRL_INIT: /* TODO(3.0) Purely legacy, no provider counterpart */
     default:
-        return EVP_CTRL_RET_UNSUPPORTED;
+        goto end;
     case EVP_CTRL_GET_IV:
         set_params = 0;
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
@@ -1134,12 +1134,12 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
                                               ptr, sz);
         ret = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
         if (ret <= 0)
-            return ret;
+            goto end;
         params[0] =
             OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, &sz);
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
         if (ret <= 0)
-            return 0;
+            goto end;
         return sz;
 #ifndef OPENSSL_NO_RC2
     case EVP_CTRL_GET_RC2_KEY_BITS:
@@ -1154,7 +1154,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ret = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
     else
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
-    goto conclude;
+    goto end;
 
 /* TODO(3.0): Remove legacy code below */
 legacy:
@@ -1165,7 +1165,7 @@ legacy:
 
     ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
 
- conclude:
+ end:
     if (ret == EVP_CTRL_RET_UNSUPPORTED) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL,
                EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
