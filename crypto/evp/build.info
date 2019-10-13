@@ -7,8 +7,7 @@ SOURCE[../../libcrypto]=$COMMON\
         e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c\
         e_rc4.c e_aes.c names.c e_seed.c e_aria.c e_sm4.c \
         e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
-        m_null.c m_md2.c m_md4.c m_md5.c m_wp.c \
-        m_mdc2.c m_ripemd.c \
+        m_null.c m_wp.c m_ripemd.c \
         p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c \
         bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
         c_allc.c c_alld.c bio_ok.c \
@@ -19,6 +18,20 @@ SOURCE[../../libcrypto]=$COMMON\
         e_chacha20_poly1305.c \
         pkey_mac.c exchange.c \
         legacy_sha.c legacy_md5_sha1.c
+
+IF[{- !$disabled{md2} -}]
+  SOURCE[../../libcrypto]=legacy_md2.c
+ENDIF
+IF[{- !$disabled{md4} -}]
+  SOURCE[../../libcrypto]=legacy_md4.c
+ENDIF
+IF[{- !$disabled{md5} -}]
+  SOURCE[../../libcrypto]=legacy_md5.c
+ENDIF
+IF[{- !$disabled{mdc2} -}]
+  SOURCE[../../libcrypto]=legacy_mdc2.c
+ENDIF
+
 SOURCE[../../providers/libfips.a]=$COMMON
 
 INCLUDE[e_aes.o]=.. ../modes
