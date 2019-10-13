@@ -558,10 +558,14 @@ EOF
               my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                    "util", "dofile.pl")),
                                    rel2abs($config{builddir}));
+              my @modules = ( 'configdata.pm',
+                              grep { $_ =~ m|\.pm$| } @{$args{deps}} );
+              my %moduleincs = map { '"-I'.dirname($_).'"' => 1 } @modules;
+              @modules = map { "-M".basename($_, '.pm') } @modules;
+              my $modules = join(' ', '', sort keys %moduleincs, @modules);
               return <<"EOF";
 $target: "$args{generator}->[0]" $deps
-	"\$(PERL)" "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
-	    "-o$target{build_file}" $generator > \$@
+	"\$(PERL)"$modules "$dofile" "-o$target{build_file}" $generator > \$@
 EOF
 	  } else {
               return <<"EOF";
