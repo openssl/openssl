@@ -1945,6 +1945,8 @@ __owur size_t DTLS_get_data_mtu(const SSL *s);
 
 __owur STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx);
+__owur int SSL_CTX_count_ciphers_by_version(const SSL_CTX *ctx, int version);
+__owur int SSL_count_ciphers_by_version(const SSL *ssl, int version);
 __owur STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 

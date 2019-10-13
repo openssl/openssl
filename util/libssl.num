@@ -509,3 +509,5 @@ OSSL_default_ciphersuites               509	3_0_0	EXIST::FUNCTION:
 OPENSSL_version_list                    510	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_cipher_list_and_mask        511	3_0_0	EXIST::FUNCTION:
 SSL_set_cipher_list_and_mask            512	3_0_0	EXIST::FUNCTION:
+SSL_CTX_count_ciphers_by_version        513	3_0_0	EXIST::FUNCTION:
+SSL_count_ciphers_by_version            514	3_0_0	EXIST::FUNCTION:

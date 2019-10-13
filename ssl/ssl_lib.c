@@ -2710,6 +2710,45 @@ STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx)
     return NULL;
 }
 
+/* 
+ * return number of ciphers matching "version", which were entered using
+ * cipher_list interface.
+ */
+int count_ciphers_by_version(const SSL_CIPHER_FLAGS *cipher_list_flags, int version)
+{
+    int num, i;
+    int ret = 0;
+    STACK_OF(SSL_CIPHER) *sk;
+    uint8_t *flags;
+    if (cipher_list_flags) {
+        sk = cipher_list_flags->cipher_list;
+        flags = cipher_list_flags->flags;
+        num = sk_SSL_CIPHER_num(sk);
+        for (i = 0; i < num; ++i) {
+            if (sk_SSL_CIPHER_value(sk, i)->min_tls == version
+                && !(flags[i] & CIPHER_FLAG_FROM_CIPHERRSUITE))
+                ret++;
+        }
+    }
+    return ret;
+}
+
+int SSL_CTX_count_ciphers_by_version(const SSL_CTX *ctx, int version)
+{
+    if (ctx)
+        return count_ciphers_by_version(ctx->cipher_list_flags, version);
+    else
+        return 0;
+}
+
+int SSL_count_ciphers_by_version(const SSL *ssl, int version)
+{
+    if (ssl)
+        return count_ciphers_by_version(ssl->cipher_list_flags, version);
+    else
+        return 0;
+}
+
 /*
  * Distinguish between ciphers controlled by set_ciphersuite() and
  * set_cipher_list() when counting.
