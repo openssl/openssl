@@ -744,6 +744,9 @@ typedef struct ssl_ctx_ext_secure_st {
     unsigned char tick_aes_key[TLSEXT_TICK_KEY_LENGTH];
 } SSL_CTX_EXT_SECURE;
 
+/* Added from ciphersuite interface. */
+#define CIPHER_FLAG_FROM_CIPHERRSUITE   1
+
 struct ssl_cipher_list_flags_st {
     STACK_OF(SSL_CIPHER) *cipher_list;
     uint8_t *flags;

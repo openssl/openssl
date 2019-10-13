@@ -514,3 +514,5 @@ SSL_CTX_load_verify_store               ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_version_list                    ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_cipher_list_and_mask        ?	3_0_0	EXIST::FUNCTION:
 SSL_set_cipher_list_and_mask            ?	3_0_0	EXIST::FUNCTION:
+SSL_CTX_count_ciphers_by_version        ?	3_0_0	EXIST::FUNCTION:
+SSL_count_ciphers_by_version            ?	3_0_0	EXIST::FUNCTION:

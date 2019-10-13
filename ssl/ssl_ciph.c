@@ -193,6 +193,7 @@ typedef struct cipher_order_st {
     const SSL_CIPHER *cipher;
     int active;
     int dead;
+    uint8_t flags;
     struct cipher_order_st *next, *prev;
 } CIPHER_ORDER;
 
@@ -904,6 +905,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
             if (!curr->active) {
                 ll_append_tail(&head, curr, &tail);
                 curr->active = 1;
+                curr->flags = 0;
             }
         }
         /* Move the added cipher to this location */
@@ -1803,7 +1805,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
             OPENSSL_free(tmp_flags);
             return NULL;
         }
-        tmp_flags[i] = 0;
+        tmp_flags[i] = CIPHER_FLAG_FROM_CIPHERRSUITE;
     }
 
     OSSL_TRACE_BEGIN(TLS_CIPHER) {
@@ -1824,7 +1826,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
             }
             if (trc_out != NULL)
                 BIO_printf(trc_out, "<%s>\n", curr->cipher->name);
-            tmp_flags[i++] = 0;
+            tmp_flags[i++] = curr->flags;
         }
     }
     OPENSSL_free(co_list);      /* Not needed any longer */
