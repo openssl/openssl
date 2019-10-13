@@ -236,7 +236,7 @@ L<RAND(7)>
 The BN_GENCB_new(), BN_GENCB_free(),
 and BN_GENCB_get_arg() functions were added in OpenSSL 1.1.0.
 
-BN_is_prime_ex2 was added in OpenSSL 3.0.
+BN_check_prime() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

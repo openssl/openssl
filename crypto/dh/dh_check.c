@@ -12,8 +12,6 @@
 #include <openssl/bn.h>
 #include "dh_local.h"
 
-# define DH_NUMBER_ITERATIONS_FOR_PRIME 64
-
 /*-
  * Check that p and g are suitable enough
  *
