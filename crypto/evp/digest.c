@@ -676,7 +676,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
                                                      p2, p1 ? p1 : 9999);
         break;
     default:
-        return EVP_CTRL_RET_UNSUPPORTED;
+        goto conclude;
     }
 
     if (set_params)
