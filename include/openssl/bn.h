@@ -109,8 +109,9 @@ void BN_GENCB_set(BN_GENCB *gencb, int (*callback) (int, int, BN_GENCB *),
 
 void *BN_GENCB_get_arg(BN_GENCB *cb);
 
-# define BN_prime_checks 0      /* default: select number of iterations based
-                                 * on the size of the number */
+# if !OPENSSL_API_3
+#  define BN_prime_checks 0      /* default: select number of iterations based
+                                  * on the size of the number */
 
 /*
  * BN_prime_checks_for_size() returns the number of Miller-Rabin iterations
@@ -175,14 +176,15 @@ void *BN_GENCB_get_arg(BN_GENCB *cb);
  *  (b) >=    6 |     >=    12 |         34 |         64 bit
  */
 
-# define BN_prime_checks_for_size(b) ((b) >= 3747 ?  3 : \
-                                (b) >=  1345 ?  4 : \
-                                (b) >=  476 ?  5 : \
-                                (b) >=  400 ?  6 : \
-                                (b) >=  347 ?  7 : \
-                                (b) >=  308 ?  8 : \
-                                (b) >=  55  ? 27 : \
-                                /* b >= 6 */ 34)
+#  define BN_prime_checks_for_size(b) ((b) >= 3747 ?  3 : \
+                                      (b) >=  1345 ?  4 : \
+                                      (b) >=  476 ?  5 : \
+                                      (b) >=  400 ?  6 : \
+                                      (b) >=  347 ?  7 : \
+                                      (b) >=  308 ?  8 : \
+                                      (b) >=  55  ? 27 : \
+                                      /* b >= 6 */ 34)
+# endif
 
 # define BN_num_bytes(a) ((BN_num_bits(a)+7)/8)
 

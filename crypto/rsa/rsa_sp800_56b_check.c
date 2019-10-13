@@ -234,7 +234,7 @@ int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
  */
 int rsa_sp800_56b_check_public(const RSA *rsa)
 {
-    int ret = 0, nbits, iterations, status;
+    int ret = 0, nbits, status;
     BN_CTX *ctx = NULL;
     BIGNUM *gcd = NULL;
 
@@ -267,7 +267,6 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
     if (ctx == NULL || gcd == NULL)
         goto err;
 
-    iterations = bn_rsa_fips186_4_prime_MR_min_checks(nbits);
     /* (Steps d-f):
      * The modulus is composite, but not a power of a prime.
      * The modulus has no factors smaller than 752.
@@ -277,7 +276,7 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
         goto err;
     }
 
-    ret = bn_miller_rabin_is_prime(rsa->n, iterations, ctx, NULL, 1, &status);
+    ret = bn_miller_rabin_is_prime(rsa->n, 0, ctx, NULL, 1, &status);
     if (ret != 1 || status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME) {
         RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_MODULUS);
         ret = 0;
