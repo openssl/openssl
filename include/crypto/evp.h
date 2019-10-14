@@ -534,13 +534,15 @@ struct evp_pkey_st {
     /*
      * To support transparent export/import between providers that
      * support the methods for it, and still not having to do the
-     * export/import every time a key is used, we maintain a cache
-     * of imported key, indexed by provider address.
-     * pkeys[0] is *always* the "original" key.
+     * export/import every time a key or domain params are used, we
+     * maintain a cache of imported key / domain params, indexed by
+     * provider address.  pkeys[0] is *always* the "original" data.
      */
     struct {
         EVP_KEYMGMT *keymgmt;
-        void *provkey;
+        void *provdata;
+        /* 0 = provdata is a key, 1 = provdata is domain params */
+        int domainparams;
     } pkeys[10];
     /*
      * If there is a legacy key assigned to this structure, we keep
@@ -565,7 +567,8 @@ void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 
 /* KEYMGMT helper functions */
-void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
+void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
+                                     int domainparams);
 void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
 
 /* KEYMGMT provider interface functions */
