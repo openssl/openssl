@@ -71,6 +71,9 @@ static int execute_HDR_get0_senderNonce_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     X509_NAME *sender = X509_NAME_new();
 
+    if (!TEST_ptr(sender))
+        return 0;
+
     X509_NAME_add_entry_by_txt(sender, "CN",
           MBSTRING_ASC, (unsigned char*)"A common sender name", -1, -1, 0);
     if (!TEST_int_eq(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx, sender),
@@ -102,6 +105,9 @@ static int execute_HDR_set1_sender_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     X509_NAME *x509name = X509_NAME_new();
 
+    if (!TEST_ptr(x509name))
+        return 0;
+
     X509_NAME_add_entry_by_txt(x509name, "CN",
           MBSTRING_ASC, (unsigned char*)"A common sender name", -1, -1, 0);
     if (!TEST_int_eq(ossl_cmp_hdr_set1_sender(fixture->hdr, x509name), 1)) {
@@ -130,6 +136,9 @@ static int test_HDR_set1_sender(void)
 static int execute_HDR_set1_recipient_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     X509_NAME *x509name = X509_NAME_new();
+
+    if (!TEST_ptr(x509name))
+        return 0;
 
     X509_NAME_add_entry_by_txt(x509name, "CN",
           MBSTRING_ASC, (unsigned char*)"A common recipient name", -1, -1, 0);
@@ -187,6 +196,9 @@ static int test_HDR_update_messageTime(void)
 static int execute_HDR_set1_senderKID_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     ASN1_OCTET_STRING* senderKID = ASN1_OCTET_STRING_new();
+
+    if (!TEST_ptr(senderKID))
+        return 0;
 
     ASN1_OCTET_STRING_set(senderKID, rand_data, sizeof(rand_data));
     if (!TEST_int_eq(ossl_cmp_hdr_set1_senderKID(fixture->hdr, senderKID), 1)) {
@@ -272,6 +284,9 @@ execute_HDR_generalInfo_push0_item_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();
 
+    if (!TEST_ptr(itav))
+        return 0;
+
     if (!TEST_int_eq(
             ossl_cmp_hdr_generalInfo_push0_item(fixture->hdr, itav), 1)) {
         return 0;
@@ -300,6 +315,12 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     STACK_OF(OSSL_CMP_ITAV) *itavs = NULL;
     ASN1_INTEGER *asn1int=ASN1_INTEGER_new();
     ASN1_TYPE *val = ASN1_TYPE_new();
+
+    if (!TEST_ptr(asn1int))
+        return 0;
+
+    if (!TEST_ptr(val))
+        return 0;
 
     ASN1_INTEGER_set(asn1int, 88);
     ASN1_TYPE_set(val, V_ASN1_INTEGER, asn1int);
