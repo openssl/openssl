@@ -1135,10 +1135,22 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
             return 0;
         params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &sz);
         break;
-    case EVP_CTRL_GCM_SET_IV_FIXED:
-        params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED,
-                                              ptr, sz);
+    case EVP_CTRL_AEAD_SET_IV_FIXED:
+        params[0] = OSSL_PARAM_construct_octet_string(
+                        OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED, ptr, sz);
+        break;
+    case EVP_CTRL_GCM_IV_GEN:
+        set_params = 0;
+        if (arg < 0)
+            sz = 0; /* special case that uses the iv length */
+        params[0] = OSSL_PARAM_construct_octet_string(
+                        OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, ptr, sz);
+        break;
+    case EVP_CTRL_GCM_SET_IV_INV:
+        if (arg < 0)
+            return 0;
+        params[0] = OSSL_PARAM_construct_octet_string(
+                        OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, ptr, sz);
         break;
     case EVP_CTRL_GET_RC5_ROUNDS:
         set_params = 0; /* Fall thru */

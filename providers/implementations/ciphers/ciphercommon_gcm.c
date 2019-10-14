@@ -77,6 +77,54 @@ int gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return gcm_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
+/* increment counter (64-bit int) by 1 */
+static void ctr64_inc(unsigned char *counter)
+{
+    int n = 8;
+    unsigned char c;
+
+    do {
+        --n;
+        c = counter[n];
+        ++c;
+        counter[n] = c;
+        if (c > 0)
+            return;
+    } while (n > 0);
+}
+
+static int getivgen(PROV_GCM_CTX *ctx, unsigned char *out, size_t olen)
+{
+    if (!ctx->iv_gen
+        || !ctx->key_set
+        || !ctx->hw->setiv(ctx, ctx->iv, ctx->ivlen))
+        return 0;
+    if (olen == 0 || olen > ctx->ivlen)
+        olen = ctx->ivlen;
+    memcpy(out, ctx->iv + ctx->ivlen - olen, olen);
+    /*
+     * Invocation field will be at least 8 bytes in size and so no need
+     * to check wrap around or increment more than last 8 bytes.
+     */
+    ctr64_inc(ctx->iv + ctx->ivlen - 8);
+    ctx->iv_state = IV_STATE_COPIED;
+    return 1;
+}
+
+static int setivinv(PROV_GCM_CTX *ctx, unsigned char *in, size_t inl)
+{
+    if (!ctx->iv_gen
+        || !ctx->key_set
+        || ctx->enc)
+        return 0;
+
+    memcpy(ctx->iv + ctx->ivlen - inl, in, inl);
+    if (!ctx->hw->setiv(ctx, ctx->iv, ctx->ivlen))
+        return 0;
+    ctx->iv_state = IV_STATE_COPIED;
+    return 1;
+}
+
 int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
@@ -138,7 +186,13 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
-
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN);
+    if (p != NULL) {
+        if (p->data == NULL
+            || p->data_type != OSSL_PARAM_OCTET_STRING
+            || !getivgen(ctx, p->data, p->data_size))
+            return 0;
+    }
     return 1;
 }
 
@@ -201,6 +255,14 @@ int gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV);
+    if (p != NULL) {
+        if (p->data == NULL
+            || p->data_type != OSSL_PARAM_OCTET_STRING
+            || !setivinv(ctx, p->data, p->data_size))
+            return 0;
+    }
+
 
     return 1;
 }
@@ -397,22 +459,6 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     return 1;
 }
 
-/* increment counter (64-bit int) by 1 */
-static void ctr64_inc(unsigned char *counter)
-{
-    int n = 8;
-    unsigned char c;
-
-    do {
-        --n;
-        c = counter[n];
-        ++c;
-        counter[n] = c;
-        if (c > 0)
-            return;
-    } while (n > 0);
-}
-
 /*
  * Handle TLS GCM packet format. This consists of the last portion of the IV
  * followed by the payload and finally the tag. On encrypt generate IV,
@@ -445,29 +491,17 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
         goto err;
     }
 
-    if (ctx->iv_gen == 0)
-        goto err;
     /*
      * Set IV from start of buffer or generate IV and write to start of
      * buffer.
      */
     if (ctx->enc) {
-        if (!ctx->hw->setiv(ctx, ctx->iv, ctx->ivlen))
+        if (!getivgen(ctx, out, arg))
             goto err;
-        if (arg > ctx->ivlen)
-            arg = ctx->ivlen;
-        memcpy(out, ctx->iv + ctx->ivlen - arg, arg);
-        /*
-         * Invocation field will be at least 8 bytes in size and so no need
-         * to check wrap around or increment more than last 8 bytes.
-         */
-        ctr64_inc(ctx->iv + ctx->ivlen - 8);
     } else {
-        memcpy(ctx->iv + ctx->ivlen - arg, out, arg);
-        if (!ctx->hw->setiv(ctx, ctx->iv, ctx->ivlen))
+        if (!setivinv(ctx, out, arg))
             goto err;
     }
-    ctx->iv_state = IV_STATE_COPIED;
 
     /* Fix buffer and length to point to payload */
     in += EVP_GCM_TLS_EXPLICIT_IV_LEN;
@@ -493,3 +527,4 @@ err:
     *padlen = plen;
     return rv;
 }
+

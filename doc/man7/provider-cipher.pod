@@ -349,6 +349,18 @@ by AES SIV ciphers which disallow multiple operations by default.
 Setting "speed" to 1 allows another encrypt or decrypt operation to be
 performed. This is used for performance testing.
 
+=item "tlsivgen" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN>) <octet string>
+
+Gets the invocation field generated for encryption.
+Can only be called after "tlsivfixed" is set.
+This is only used for GCM mode.
+
+=item "tlsivinv" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV>) <octet string>
+
+Sets the invocation field used for decryption.
+Can only be called after "tlsivfixed" is set.
+This is only used for GCM mode.
+
 =item "tls1multi_enc" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC>) <octet string>
 
 Triggers a multiblock tls1 encrypt operation for a tls1 aware cipher that supports
