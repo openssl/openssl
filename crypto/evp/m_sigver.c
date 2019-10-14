@@ -94,7 +94,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ERR_raise(ERR_LIB_EVP,  EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    provkey = evp_keymgmt_export_to_provider(locpctx->pkey, signature->keymgmt);
+    provkey =
+        evp_keymgmt_export_to_provider(locpctx->pkey, signature->keymgmt, 0);
     if (provkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;

@@ -224,7 +224,8 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
 
     ctx->op.kex.exchange = exchange;
     if (ctx->pkey != NULL) {
-        provkey = evp_keymgmt_export_to_provider(ctx->pkey, exchange->keymgmt);
+        provkey =
+            evp_keymgmt_export_to_provider(ctx->pkey, exchange->keymgmt, 0);
         if (provkey == NULL) {
             EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT_EX, EVP_R_INITIALIZATION_ERROR);
             goto err;
@@ -283,8 +284,8 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return -2;
     }
 
-    provkey = evp_keymgmt_export_to_provider(peer,
-                                             ctx->op.kex.exchange->keymgmt);
+    provkey =
+        evp_keymgmt_export_to_provider(peer, ctx->op.kex.exchange->keymgmt, 0);
     if (provkey == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, ERR_R_INTERNAL_ERROR);
         return 0;

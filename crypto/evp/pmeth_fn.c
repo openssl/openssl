@@ -393,7 +393,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
 
     ctx->op.sig.signature = signature;
     if (ctx->pkey != NULL) {
-        provkey = evp_keymgmt_export_to_provider(ctx->pkey, signature->keymgmt);
+        provkey =
+            evp_keymgmt_export_to_provider(ctx->pkey, signature->keymgmt, 0);
         if (provkey == NULL) {
             EVPerr(0, EVP_R_INITIALIZATION_ERROR);
             goto err;
