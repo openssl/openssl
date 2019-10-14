@@ -28,7 +28,7 @@
 
 /* CMP functions related to PKIStatus */
 
-int ossl_cmp_pkisi_get_pkistatus(OSSL_CMP_PKISI *si)
+int ossl_cmp_pkisi_get_pkistatus(const OSSL_CMP_PKISI *si)
 {
     if (!ossl_assert(si != NULL && si->status != NULL))
         return -1;
@@ -77,7 +77,7 @@ OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusstring(const OSSL_CMP_PKISI *si)
  * returns the FailureInfo bits of the given PKIStatusInfo
  * returns -1 on error
  */
-int ossl_cmp_pkisi_get_pkifailureinfo(OSSL_CMP_PKISI *si)
+int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si)
 {
     int i;
     int res = 0;
@@ -163,7 +163,7 @@ static const char *CMP_PKIFAILUREINFO_to_string(int number)
  * checks PKIFailureInfo bits in a given PKIStatusInfo
  * returns 1 if a given bit is set, 0 if not, -1 on error
  */
-int ossl_cmp_pkisi_pkifailureinfo_check(OSSL_CMP_PKISI *si, int bit_index)
+int ossl_cmp_pkisi_pkifailureinfo_check(const OSSL_CMP_PKISI *si, int bit_index)
 {
     if (!ossl_assert(si != NULL && si->failInfo != NULL))
         return -1;

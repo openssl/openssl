@@ -208,7 +208,7 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
                                          STACK_OF(OSSL_CMP_ITAV) *itavs)
 {
     int i;
-    OSSL_CMP_ITAV *itav = NULL;
+    OSSL_CMP_ITAV *itav;
 
     if (hdr == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);/* TODO Akretsch: convert to assertion */
@@ -255,7 +255,7 @@ int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr)
  * checks if implicitConfirm in the generalInfo field of the header is set
  * returns 1 if it is set, 0 if not
  */
-int ossl_cmp_hdr_check_implicitConfirm(OSSL_CMP_PKIHEADER *hdr)
+int ossl_cmp_hdr_check_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
 {
     int itavCount;
     int i;

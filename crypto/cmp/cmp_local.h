@@ -724,11 +724,11 @@ int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
 /* from cmp_status.c */
 OSSL_CMP_PKISI *
 ossl_cmp_statusinfo_new(int status, int fail_info, const char *text);
-int ossl_cmp_pkisi_get_pkistatus(OSSL_CMP_PKISI *statusInfo);
+int ossl_cmp_pkisi_get_pkistatus(const OSSL_CMP_PKISI *statusInfo);
 const char *ossl_cmp_PKIStatus_to_string(int status);
 OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusstring(const OSSL_CMP_PKISI *si);
-int ossl_cmp_pkisi_get_pkifailureinfo(OSSL_CMP_PKISI *si);
-int ossl_cmp_pkisi_pkifailureinfo_check(OSSL_CMP_PKISI *si, int bit_index);
+int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si);
+int ossl_cmp_pkisi_pkifailureinfo_check(const OSSL_CMP_PKISI *si, int bit_index);
 
 /* from cmp_hdr.c */
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
@@ -747,7 +747,7 @@ int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,
 int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
                                          STACK_OF(OSSL_CMP_ITAV) *itavs);
 int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
-int ossl_cmp_hdr_check_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_check_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr);
 # define OSSL_CMP_TRANSACTIONID_LENGTH 16
 # define OSSL_CMP_SENDERNONCE_LENGTH 16
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
