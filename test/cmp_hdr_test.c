@@ -313,7 +313,7 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     char buf[20];
     OSSL_CMP_ITAV *itav;
     STACK_OF(OSSL_CMP_ITAV) *itavs = NULL;
-    ASN1_INTEGER *asn1int=ASN1_INTEGER_new();
+    ASN1_INTEGER *asn1int = ASN1_INTEGER_new();
     ASN1_TYPE *val = ASN1_TYPE_new();
 
     if (!TEST_ptr(asn1int))
