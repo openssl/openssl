@@ -1,0 +1,193 @@
+=pod
+
+=head1 NAME
+
+provider-rand - The random number generator library E<lt>-E<gt> provider
+functions
+
+=head1 SYNOPSIS
+
+=for openssl multiple includes
+
+ #include <openssl/core_numbers.h>
+ #include <openssl/core_names.h>
+
+ /*
+  * None of these are actual functions, but are displayed like this for
+  * the function signatures for functions that are offered as function
+  * pointers in OSSL_DISPATCH arrays.
+  */
+
+ /* Context management */
+ void *OP_rand_newctx(void *provctx);
+ void OP_rand_freectx(void *rctx);
+
+ /* Encryption/decryption */
+ int OP_rand_reseed(void *rctx);
+ int OP_rand_get_bytes(void *rctx, unsigned char *out, size_t *outlen);
+
+ /* RAND parameter descriptors */
+ const OSSL_PARAM *OP_rand_get_params(void);
+ const OSSL_PARAM *OP_rand_get_ctx_params(void);
+ const OSSL_PARAM *OP_rand_set_ctx_params(void);
+
+ /* RAND parameters */
+ int OP_rand_get_params(OSSL_PARAM params[]);
+ int OP_rand_get_ctx_params(void *rctx, OSSL_PARAM params[]);
+ int OP_rand_set_ctx_params(void *rctx, const OSSL_PARAM params[]);
+
+=head1 DESCRIPTION
+
+This documentation is primarily aimed at provider authors. See L<provider(7)>
+for further information.
+
+The RAND operation enables providers to implement random number generation
+algorithms and random seed sources and make
+them available to applications.
+
+All "functions" mentioned here are passed as function pointers between
+F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
+B<OSSL_ALGORITHM> arrays that are returned by the provider's
+provider_query_operation() function
+(see L<provider-base(7)/Provider Functions>).
+
+All these "functions" have a corresponding function type definition
+named B<OSSL_{name}_fn>, and a helper function to retrieve the
+function pointer from an B<OSSL_DISPATCH> element named
+B<OSSL_get_{name}>.
+For example, the "function" OP_rand_newctx() has these:
+
+ typedef void *(OSSL_OP_rand_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_OP_rand_newctx_fn
+     OSSL_get_OP_rand_newctx(const OSSL_DISPATCH *opf);
+
+B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
+macros in L<openssl-core_numbers.h(7)>, as follows:
+
+ OP_rand_newctx               OSSL_FUNC_RAND_NEWCTX
+ OP_rand_freectx              OSSL_FUNC_RAND_FREECTX
+
+ OP_rand_get_bytes            OSSL_FUNC_RAND_GET_BYTES
+ OP_rand_reseed               OSSL_FUNC_RAND_RESEED
+
+ OP_rand_get_params           OSSL_FUNC_RAND_GET_PARAMS
+ OP_rand_get_ctx_params       OSSL_FUNC_RAND_GET_CTX_PARAMS
+ OP_rand_set_ctx_params       OSSL_FUNC_RAND_SET_CTX_PARAMS
+
+ OP_rand_gettable_params      OSSL_FUNC_RAND_GETTABLE_PARAMS
+ OP_rand_gettable_ctx_params  OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS
+ OP_rand_settable_ctx_params  OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS
+
+A random number generation algorithm implementation may not implement all of
+these functions.
+In order to be a consistent set of functions, at least the following functions
+must be implemented: OP_rand_newctx(), OP_rand_freectx(), OP_rand_get_bytes().
+All other functions are optional.
+
+=head2 Context Management Functions
+
+OP_rand_newctx() should create and return a pointer to a provider side
+structure for holding context information for a random number generator.
+A pointer to this context will be passed back in a number of the other
+random number generator operation function calls.
+The paramater I<provctx> is the provider context generated during provider
+initialisation (see L<provider(3)>).
+
+OP_rand_freectx() is passed a pointer to the provider side random number
+generator context in the I<rctx> parameter.
+If it receives NULL as I<rctx> value, it should not do anything other than
+return.
+This function should free any resources associated with that context.
+
+=head2 Encryption/Decryption Functions
+
+OP_rand_get_bytes() retrieves random bytes from the random number generator.
+
+OP_rand_reseed() requests that the random number generator reseed from its
+parent sources.  This could do nothing for some sources.
+
+=head2 Rand Parameters
+
+See L<OSSL_PARAM(3)> for further details on the parameters structure used by
+these functions.
+
+OP_rand_get_params() gets details of parameter values associated with the
+provider algorithm and stores them in I<params>.
+
+OP_rand_set_ctx_params() sets rand parameters associated with the given
+provider side rand context I<rctx> to I<params>.
+Any parameter settings are additional to any that were previously set.
+
+OP_rand_get_ctx_params() gets details of currently set parameter values
+associated with the given provider side rand context I<rctx> and stores them
+in I<params>.
+
+OP_rand_gettable_params(), OP_rand_gettable_ctx_params(), and
+OP_rand_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
+as descriptors of the parameters that OP_rand_get_params(),
+OP_rand_get_ctx_params(), and OP_rand_set_ctx_params() can handle,
+respectively.
+
+Parameters currently recognised by built-in random number generators are as
+follows.
+Not all parameters are relevant to, or are understood by all RNGs:
+
+=over 4
+
+=item "strength" (B<OSSL_RAND_PARAM_STRENGTH>) <unsigned integer>
+
+Sets or retrieves the bit strength of the random number generator.
+It is generally unwise to request reduced strength from a random number
+generator.
+
+=item "ospersonalisesl" (B<OSSL_RAND_PARAM_PERSONALISE>) <octet string>
+
+Sets the personalisation string for the random number generator.
+This is used to distinguish between different hosts and is not counted
+as randomness.
+
+=item "cipher" (B<OSSL_RAND_PARAM_CIPHER>) <UTF8 string>
+
+Sets the underlying cipher for a DRBG.
+
+=item "digest" (B<OSSL_RAND_PARAM_DIGEST>) <UTF8 string>
+
+Sets the underlying digest for a DRBG.
+
+=item "properties" (B<OSSL_RAND_PARAM_PROPERTIES>) <UTF8 string>
+
+Sets the properties to be queried when trying to fetch the underlying algorithm.
+This must be given together with the algorithm naming parameter to be
+considered valid.
+
+=back
+
+=head1 RETURN VALUES
+
+OP_rand_newctx() returns the newly created provider side rand context, or
+NULL on failure.
+
+OP_rand_gettable_params(), OP_rand_gettable_ctx_params() and
+OP_rand_settable_ctx_params() return a constant B<OSSL_PARAM>
+array, or NULL if none is offered.
+
+All other functions return 1 for success or 0 on error.
+
+=head1 SEE ALSO
+
+L<provider(7)>
+
+=head1 HISTORY
+
+The provider RAND interface was introduced in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
