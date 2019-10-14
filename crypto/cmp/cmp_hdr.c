@@ -209,12 +209,9 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
 {
     int i;
     OSSL_CMP_ITAV *itav;
-
-    if (hdr == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);/* TODO Akretsch: convert to assertion */
-
+    if (!ossl_assert(hdr != NULL))
         return 0;
-    }
+
     for (i = 0; i < sk_OSSL_CMP_ITAV_num(itavs); i++) {
         itav = OSSL_CMP_ITAV_dup(sk_OSSL_CMP_ITAV_value(itavs, i));
         if (itav == NULL) {
