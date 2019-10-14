@@ -533,7 +533,8 @@ static size_t dsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
     return pkey->pkey.dsa->dirty_cnt;
 }
 
-static void *dsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
+static void *dsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
+                                int *is_domainparams)
 {
     DSA *dsa = pk->pkey.dsa;
     OSSL_PARAM_BLD tmpl;
@@ -541,7 +542,7 @@ static void *dsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     const BIGNUM *q = DSA_get0_q(dsa), *pub_key = DSA_get0_pub_key(dsa);
     const BIGNUM *priv_key = DSA_get0_priv_key(dsa);
     OSSL_PARAM *params;
-    void *provkey = NULL;
+    void *provdata = NULL;
 
     if (p == NULL || q == NULL || g == NULL)
         return NULL;
@@ -552,12 +553,9 @@ static void *dsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
         return NULL;
 
-    /*
-     * This may be used to pass domain parameters only without any key data -
-     * so "pub_key" is optional. We can never have a "priv_key" without a
-     * corresponding "pub_key" though.
-     */
-    if (pub_key != NULL) {
+    *is_domainparams = (pub_key == NULL && priv_key == NULL);
+    if (!*is_domainparams) {
+        /* A key must at least have a public part. */
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PUB_KEY,
                                     pub_key))
             return NULL;
@@ -572,10 +570,12 @@ static void *dsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     params = ossl_param_bld_to_param(&tmpl);
 
     /* We export, the provider imports */
-    provkey = evp_keymgmt_importkey(keymgmt, params);
+    provdata = *is_domainparams
+        ? evp_keymgmt_importdomparams(keymgmt, params)
+        : evp_keymgmt_importkey(keymgmt, params);
 
     ossl_param_bld_free(params);
-    return provkey;
+    return provdata;
 }
 
 /* NB these are sorted in pkey_id order, lowest first */
