@@ -955,11 +955,21 @@ int SSL_set_trust(SSL *s, int trust)
 
 int SSL_set1_host(SSL *s, const char *hostname)
 {
+    /* If a hostname is provided and parses as an IP address,
+     * treat it as such. */
+    if (hostname && X509_VERIFY_PARAM_set1_ip_asc(s->param, hostname) == 1)
+        return 1;
+
     return X509_VERIFY_PARAM_set1_host(s->param, hostname, 0);
 }
 
 int SSL_add1_host(SSL *s, const char *hostname)
 {
+    /* If a hostname is provided and parses as an IP address,
+     * treat it as such. */
+    if (hostname && X509_VERIFY_PARAM_set1_ip_asc(s->param, hostname) == 1)
+        return 1;
+
     return X509_VERIFY_PARAM_add1_host(s->param, hostname, 0);
 }
 
