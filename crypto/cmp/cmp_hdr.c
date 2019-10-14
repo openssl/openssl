@@ -211,7 +211,8 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
     OSSL_CMP_ITAV *itav = NULL;
 
     if (hdr == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        CMPerr(0, CMP_R_NULL_ARGUMENT);/* TODO Akretsch: convert to assertion */
+
         return 0;
     }
     for (i = 0; i < sk_OSSL_CMP_ITAV_num(itavs); i++) {
