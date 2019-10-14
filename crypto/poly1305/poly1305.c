@@ -12,7 +12,6 @@
 #include <openssl/crypto.h>
 
 #include "crypto/poly1305.h"
-#include "poly1305_local.h"
 
 size_t Poly1305_ctx_size(void)
 {

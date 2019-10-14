@@ -8,9 +8,10 @@
  */
 
 #include "include/crypto/chacha.h"
-#include "internal/ciphers/ciphercommon.h"
+#include "prov/ciphercommon.h"
 
 typedef struct {
+    PROV_CIPHER_CTX base;     /* must be first */
     union {
         OSSL_UNION_ALIGN;
         unsigned int d[CHACHA_KEY_SIZE / 4];
@@ -20,7 +21,14 @@ typedef struct {
     unsigned int  partial_len;
 } PROV_CHACHA20_CTX;
 
-int CHACHA20_init_key(void *vctx, const unsigned char user_key[CHACHA_KEY_SIZE],
-                      const unsigned char iv[CHACHA_CTR_SIZE], int enc);
-int CHACHA20_cipher(void *vctx, unsigned char *out, const unsigned char *inp,
-                    size_t len);
+typedef struct prov_cipher_hw_chacha20_st {
+    PROV_CIPHER_HW base; /* must be first */
+    int (*initiv)(PROV_CIPHER_CTX *ctx);
+
+} PROV_CIPHER_HW_CHACHA20;
+
+const PROV_CIPHER_HW *PROV_CIPHER_HW_chacha20(size_t keybits);
+
+OSSL_OP_cipher_encrypt_init_fn chacha20_einit;
+OSSL_OP_cipher_decrypt_init_fn chacha20_dinit;
+void chacha20_initctx(PROV_CHACHA20_CTX *ctx);

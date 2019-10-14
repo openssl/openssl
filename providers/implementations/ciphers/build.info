@@ -19,6 +19,8 @@ $SM4_GOAL=../../libimplementations.a
 $RC4_GOAL=../../libimplementations.a
 $RC5_GOAL=../../libimplementations.a
 $RC2_GOAL=../../libimplementations.a
+$CHACHA_GOAL=../../libimplementations.a
+$CHACHAPOLY_GOAL=../../libimplementations.a
 
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_hw.c
@@ -100,3 +102,13 @@ IF[{- !$disabled{rc2} -}]
   SOURCE[$RC2_GOAL]=\
       cipher_rc2.c cipher_rc2_hw.c
 ENDIF
+
+IF[{- !$disabled{chacha} -}]
+  SOURCE[$CHACHA_GOAL]=\
+      cipher_chacha20.c cipher_chacha20_hw.c
+ IF[{- !$disabled{poly1305} -}]
+  SOURCE[$CHACHAPOLY_GOAL]=\
+      cipher_chacha20_poly1305.c cipher_chacha20_poly1305_hw.c
+ ENDIF
+ENDIF
+
