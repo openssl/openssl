@@ -89,7 +89,6 @@ typedef struct bn_gencb_st BN_GENCB;
 
 typedef struct buf_mem_st BUF_MEM;
 
-typedef const BIGNUM BIGNUM_const;
 STACK_OF(BIGNUM);
 STACK_OF(BIGNUM_const);
 
