@@ -9,6 +9,13 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added functionality to create an EVP_PKEY from user data.  This
+     is effectively the same as creating a RSA, DH or DSA object and
+     then assign them to an EVP_PKEY, but directly using algorithm
+     agnostic EVP functions.  A benefit is that this should be future
+     proof for public key algorithms to come.
+     [Richard Levitte]
+
   *) Added the X509_LOOKUP_METHOD called X509_LOOKUP_store, to allow
      access to certificate and CRL stores via URIs and OSSL_STORE
      loaders.
