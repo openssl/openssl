@@ -327,6 +327,7 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
         r->d = d;
         BN_set_flags(r->d, BN_FLG_CONSTTIME);
     }
+    r->dirty_cnt++;
 
     return 1;
 }
@@ -350,6 +351,7 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
         r->q = q;
         BN_set_flags(r->q, BN_FLG_CONSTTIME);
     }
+    r->dirty_cnt++;
 
     return 1;
 }
@@ -379,6 +381,7 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
         r->iqmp = iqmp;
         BN_set_flags(r->iqmp, BN_FLG_CONSTTIME);
     }
+    r->dirty_cnt++;
 
     return 1;
 }
@@ -443,6 +446,7 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
     }
 
     r->version = RSA_ASN1_VERSION_MULTI;
+    r->dirty_cnt++;
 
     return 1;
  err:
@@ -691,6 +695,7 @@ int RSA_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
     }
 
     r->version = RSA_ASN1_VERSION_MULTI;
+    r->dirty_cnt++;
 
     return 1;
  err:

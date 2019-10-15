@@ -66,6 +66,8 @@ struct rsa_st {
     BN_BLINDING *blinding;
     BN_BLINDING *mt_blinding;
     CRYPTO_RWLOCK *lock;
+
+    int dirty_cnt;
 };
 
 struct rsa_meth_st {
