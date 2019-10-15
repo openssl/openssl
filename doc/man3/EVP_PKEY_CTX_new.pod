@@ -25,7 +25,9 @@ using the algorithm specified by B<id> and ENGINE B<e>.
 
 The EVP_PKEY_CTX_new_provided() function allocates a public key
 algorithm context using the algorithm specified by I<name> and the
-property query I<propquery>.
+property query I<propquery>.  The strings aren't duplicated, so they
+must remain unchanged for the lifetime of the returned B<EVP_PKEY_CTX>
+or of any of its duplicates.
 
 EVP_PKEY_CTX_new_id() and The EVP_PKEY_CTX_new_provided() are normally
 used when no B<EVP_PKEY> structure is associated with the operations,
