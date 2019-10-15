@@ -4857,3 +4857,8 @@ X509_LOOKUP_store                       ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_file                    ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_path                    ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_store                   ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_param_fromdata_init            ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_key_fromdata_init              ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_fromdata                       ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_param_fromdata_settable        ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_key_fromdata_settable          ?	3_0_0	EXIST::FUNCTION:

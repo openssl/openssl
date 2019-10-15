@@ -9,6 +9,13 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added functionality to create an EVP_PKEY from user data.  This
+     is effectively the same as creating a RSA, DH or DSA object and
+     then assigning them to an EVP_PKEY, but directly using algorithm
+     agnostic EVP functions.  A benefit is that this should be future
+     proof for public key algorithms to come.
+     [Richard Levitte]
+
   *) Change the interpretation of the '--api' configuration option to
      mean that this is a desired API compatibility level with no
      further meaning.  The previous interpretation, that this would
