@@ -19,7 +19,7 @@ static OSSL_OP_keymgmt_importkey_fn rsa_importkey;
 static OSSL_OP_keymgmt_exportkey_fn rsa_exportkey;
 
 DEFINE_STACK_OF(BIGNUM)
-DEFINE_STACK_OF(BIGNUM_const)
+DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
 static int collect_numbers(STACK_OF(BIGNUM) *numbers,
                            const OSSL_PARAM params[], const char *key)

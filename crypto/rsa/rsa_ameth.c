@@ -13,6 +13,8 @@
 #include <openssl/x509.h>
 #include <openssl/bn.h>
 #include <openssl/cms.h>
+#include <openssl/core_names.h>
+#include "internal/param_build.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "rsa_local.h"
@@ -1050,21 +1052,23 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
     return pkey->pkey.rsa->dirty_cnt;
 }
 
+DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
+
 static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 {
     RSA *rsa = pk->pkey.rsa;
     OSSL_PARAM_BLD tmpl;
     const BIGNUM *n = RSA_get0_n(rsa), *e = RSA_get0_e(rsa);
     const BIGNUM *d = RSA_get0_d(rsa);
-    STACK_OF(BIGNUM) *primes = NULL, *exps = NULL, *coeffs = NULL;
+    STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
     int numprimes = 0, numexps = 0, numcoeffs = 0;
     OSSL_PARAM *params;
     void *provkey = NULL;
 
     /* Get all the primes and CRT params */
-    if ((primes = sk_BIGNUM_new_null()) == NULL
-        || (exps = sk_BIGNUM_new_null()) == NULL
-        || (coeffs = sk_BIGNUM_new_null()) == NULL)
+    if ((primes = sk_BIGNUM_const_new_null()) == NULL
+        || (exps = sk_BIGNUM_const_new_null()) == NULL
+        || (coeffs = sk_BIGNUM_const_new_null()) == NULL)
         goto err;
 
     if (!RSA_get0_all_params(rsa, primes, exps, coeffs))
@@ -1076,9 +1080,9 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 
     if (d != NULL) {
         /* It's a private key, so we should have everything else too */
-        numprimes = sk_BIGNUM_num(primes);
-        numexps = sk_BIGNUM_num(exps);
-        numcoeffs = sk_BIGNUM_num(coeffs);
+        numprimes = sk_BIGNUM_const_num(primes);
+        numexps = sk_BIGNUM_const_num(exps);
+        numcoeffs = sk_BIGNUM_const_num(coeffs);
 
         if (numprimes < 2 || numexps < 2 || numcoeffs < 1)
             goto err;
@@ -1103,12 +1107,12 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
             goto err;
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_PARAMS_NUM,
-                                    numprimes))
+        if (!ossl_param_bld_push_size_t(&tmpl, OSSL_PKEY_PARAM_RSA_PARAMS_NUM,
+                                        (size_t)numprimes))
             goto err;
 
         for (i = 0; i < numprimes; i++) {
-            BIGNUM *num = sk_BIGNUM_value(primes, i);
+            const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
 
             if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
                                         num))
@@ -1116,7 +1120,7 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         }
 
         for (i = 0; i < numexps; i++) {
-            BIGNUM *num = sk_BIGNUM_value(exps, i);
+            const BIGNUM *num = sk_BIGNUM_const_value(exps, i);
 
             if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
                                         num))
@@ -1124,7 +1128,7 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         }
 
         for (i = 0; i < numcoeffs; i++) {
-            BIGNUM *num = sk_BIGNUM_value(coeffs, i);
+            const BIGNUM *num = sk_BIGNUM_const_value(coeffs, i);
 
             if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
                                         num))
@@ -1138,9 +1142,9 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     provkey = evp_keymgmt_importkey(keymgmt, params);
 
  err:
-    sk_BIGNUM_free(primes);
-    sk_BIGNUM_free(exps);
-    sk_BIGNUM_free(coeffs);
+    sk_BIGNUM_const_free(primes);
+    sk_BIGNUM_const_free(exps);
+    sk_BIGNUM_const_free(coeffs);
     ossl_param_bld_free(params);
     return provkey;
 }
