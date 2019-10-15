@@ -324,6 +324,8 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         EVP_PKEY_up_ref(pctx->pkey);
     rctx->pkey = pctx->pkey;
     rctx->operation = pctx->operation;
+    rctx->algorithm = pctx->algorithm;
+    rctx->propquery = pctx->propquery;
 
     if (EVP_PKEY_CTX_IS_DERIVE_OP(pctx)) {
         if (pctx->op.kex.exchange != NULL) {
