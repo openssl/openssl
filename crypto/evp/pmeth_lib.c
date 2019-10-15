@@ -111,7 +111,9 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
     return (**ret)();
 }
 
-static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
+static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e,
+                                 const char *name, const char *propquery,
+                                 int id)
 {
     EVP_PKEY_CTX *ret;
     const EVP_PKEY_METHOD *pmeth = NULL;
@@ -130,6 +132,8 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
             return 0;
         id = pkey->type;
     }
+    name = OBJ_nid2sn(id);
+    propquery = NULL;
 #ifndef OPENSSL_NO_ENGINE
     if (e == NULL && pkey != NULL)
         e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
@@ -171,6 +175,8 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
         EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    ret->algorithm = name;
+    ret->propquery = propquery;
     ret->engine = e;
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;
@@ -277,12 +283,18 @@ void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
 {
-    return int_ctx_new(pkey, e, -1);
+    return int_ctx_new(pkey, e, NULL, NULL, -1);
 }
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
 {
-    return int_ctx_new(NULL, e, id);
+    return int_ctx_new(NULL, e, NULL, NULL, id);
+}
+
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_provided(const char *name,
+                                        const char *propquery)
+{
+    return int_ctx_new(NULL, NULL, name, propquery, -1);
 }
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
