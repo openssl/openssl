@@ -24,7 +24,7 @@ B<openssl> B<ciphers>
 [B<-ciphersuites> I<val>]
 [I<cipherlist>]
 
-=for comment ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 psk srp
+=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 psk srp
 
 =head1 DESCRIPTION
 

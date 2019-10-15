@@ -30,7 +30,7 @@ B<openssl> B<genrsa>
 [B<-verbose>]
 [B<numbits>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

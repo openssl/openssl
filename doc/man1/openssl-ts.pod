@@ -82,7 +82,7 @@ I<verify options:>
 [B<-verify_name> I<name>]
 [B<-x509_strict>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

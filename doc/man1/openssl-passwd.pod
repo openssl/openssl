@@ -24,7 +24,7 @@ B<openssl passwd>
 [B<-writerand> I<file>]
 {I<password>}
 
-=for comment ifdef crypt
+=for openssl ifdef crypt
 
 =head1 DESCRIPTION
 

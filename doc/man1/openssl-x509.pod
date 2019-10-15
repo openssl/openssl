@@ -68,7 +68,7 @@ B<openssl> B<x509>
 [B<-engine> I<id>]
 [B<-preserve_dates>]
 
-=for comment ifdef engine subject_hash_old issuer_hash_old
+=for openssl ifdef engine subject_hash_old issuer_hash_old
 
 =head1 DESCRIPTION
 

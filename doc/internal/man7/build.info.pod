@@ -441,7 +441,9 @@ file as last argument.
 
 For I<generator>s where this is applicable, any B<INCLUDE> statement
 for the same I<item> will be given to the I<generator> as its
-inclusion directories.
+inclusion directories.  Likewise, any B<DEPEND> statement for the same
+I<item> will be given to the I<generator> as an extra file or module
+to load, where this is applicable.
 
 The build file generators must be able to recognise the I<generator>.
 Currently, they at least recognise files ending in C<.pl>, and will

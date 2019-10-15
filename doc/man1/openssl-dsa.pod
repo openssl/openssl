@@ -33,7 +33,7 @@ B<openssl> B<dsa>
 [B<-pubout>]
 [B<-engine> I<id>]
 
-=for comment ifdef pvk-string pvk-weak pvk-none engine
+=for openssl ifdef pvk-string pvk-weak pvk-none engine
 
 =head1 DESCRIPTION
 

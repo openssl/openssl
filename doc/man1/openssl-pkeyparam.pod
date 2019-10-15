@@ -15,7 +15,7 @@ B<openssl> B<pkeyparam>
 [B<-engine> I<id>]
 [B<-check>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

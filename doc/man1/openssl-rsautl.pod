@@ -26,7 +26,7 @@ B<openssl> B<rsautl>
 [B<-hexdump>]
 [B<-asn1parse>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 

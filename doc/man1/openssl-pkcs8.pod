@@ -30,7 +30,7 @@ B<openssl> B<pkcs8>
 [B<-scrypt_r> I<r>]
 [B<-scrypt_p> I<p>]
 
-=for comment ifdef engine scrypt scrypt_N scrypt_r scrypt_p
+=for openssl ifdef engine scrypt scrypt_N scrypt_r scrypt_p
 
 =head1 DESCRIPTION
 
