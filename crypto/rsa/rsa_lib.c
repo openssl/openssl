@@ -613,3 +613,115 @@ int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
         return -1;
      return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, p1, p2);
 }
+
+DEFINE_STACK_OF(BIGNUM)
+
+int RSA_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
+                        const STACK_OF(BIGNUM) *exps,
+                        const STACK_OF(BIGNUM) *coeffs)
+{
+    STACK_OF(RSA_PRIME_INFO) *prime_infos, *old = NULL;
+    RSA_PRIME_INFO *pinfo;
+    int i;
+    int pnum;
+
+    if (primes == NULL || exps == NULL || coeffs == NULL)
+        return 0;
+
+    pnum = sk_BIGNUM_num(primes);
+    if (pnum < 2
+        || pnum != sk_BIGNUM_num(exps)
+        || pnum != sk_BIGNUM_num(coeffs) + 1)
+        return 0;
+
+    prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
+    if (prime_infos == NULL)
+        return 0;
+
+    if (r->prime_infos != NULL)
+        old = r->prime_infos;
+
+    if (!RSA_set0_factors(r, sk_BIGNUM_value(primes, 0),
+                          sk_BIGNUM_value(primes, 1))
+        || !RSA_set0_crt_params(r, sk_BIGNUM_value(exps, 0),
+                                sk_BIGNUM_value(exps, 1),
+                                sk_BIGNUM_value(coeffs, 0)))
+        return 0;
+
+    for (i = 2; i < pnum; i++) {
+        BIGNUM *prime = sk_BIGNUM_value(primes, i);
+        BIGNUM *exp = sk_BIGNUM_value(exps, i);
+        BIGNUM *coeff = sk_BIGNUM_value(coeffs, i - 1);
+
+        pinfo = rsa_multip_info_new();
+        if (pinfo == NULL)
+            goto err;
+        if (prime != NULL && exp != NULL && coeff != NULL) {
+            BN_clear_free(pinfo->r);
+            BN_clear_free(pinfo->d);
+            BN_clear_free(pinfo->t);
+            pinfo->r = prime;
+            pinfo->d = exp;
+            pinfo->t = coeff;
+            BN_set_flags(pinfo->r, BN_FLG_CONSTTIME);
+            BN_set_flags(pinfo->d, BN_FLG_CONSTTIME);
+            BN_set_flags(pinfo->t, BN_FLG_CONSTTIME);
+        } else {
+            rsa_multip_info_free(pinfo);
+            goto err;
+        }
+        (void)sk_RSA_PRIME_INFO_push(prime_infos, pinfo);
+    }
+
+    r->prime_infos = prime_infos;
+
+    if (!rsa_multip_calc_product(r)) {
+        r->prime_infos = old;
+        goto err;
+    }
+
+    if (old != NULL) {
+        /*
+         * This is hard to deal with, since the old infos could
+         * also be set by this function and r, d, t should not
+         * be freed in that case. So currently, stay consistent
+         * with other *set0* functions: just free it...
+         */
+        sk_RSA_PRIME_INFO_pop_free(old, rsa_multip_info_free);
+    }
+
+    r->version = RSA_ASN1_VERSION_MULTI;
+
+    return 1;
+ err:
+    /* r, d, t should not be freed */
+    sk_RSA_PRIME_INFO_pop_free(prime_infos, rsa_multip_info_free_ex);
+    return 0;
+}
+
+DEFINE_STACK_OF(BIGNUM_const)
+
+int RSA_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
+                        STACK_OF(BIGNUM_const) *exps,
+                        STACK_OF(BIGNUM_const) *coeffs)
+{
+    RSA_PRIME_INFO *pinfo;
+    int i, pnum;
+
+    if (r == NULL || (pnum = RSA_get_multi_prime_extra_count(r)) == 0)
+        return 0;
+
+    sk_BIGNUM_const_push(primes, RSA_get0_p(r));
+    sk_BIGNUM_const_push(primes, RSA_get0_q(r));
+    sk_BIGNUM_const_push(exps, RSA_get0_dmp1(r));
+    sk_BIGNUM_const_push(exps, RSA_get0_dmq1(r));
+    sk_BIGNUM_const_push(coeffs, RSA_get0_iqmp(r));
+    for (i = 0; i < pnum; i++) {
+        pinfo = sk_RSA_PRIME_INFO_value(r->prime_infos, i);
+        sk_BIGNUM_const_push(primes, pinfo->r);
+        sk_BIGNUM_const_push(exps, pinfo->d);
+        sk_BIGNUM_const_push(coeffs, pinfo->t);
+    }
+
+    return 1;
+}

@@ -9,6 +9,13 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added RSA functionality to set and get all the primes, exponents and
+     coefficients of an RSA key in one go.  p, q, dP, dQ, and qInv are
+     the first of them, with the "extra" of everything in the multi-prime
+     RSA case.  These functions handle everything via stacks of BIGNUMs
+     for dynamic processing.
+     [Richard Levitte]
+
   *) Added functionality to create an EVP_PKEY context based on data
      for methods from providers.  This takes an algorithm name and a
      property query string and simply stores them, with the intent
