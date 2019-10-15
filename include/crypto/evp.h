@@ -22,8 +22,8 @@ struct evp_pkey_ctx_st {
     int operation;
 
     /* Algorithm name and properties associated with this context */
-    char *algorithm;
-    char *propquery;
+    const char *algorithm;
+    const char *propquery;
 
     union {
         struct {
