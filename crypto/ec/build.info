@@ -56,9 +56,13 @@ $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         $ECASM
 SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ec_err.c \
                         ecdh_kdf.c eck_prn.c
-DEFINE[../../libcrypto]=$ECDEF
 SOURCE[../../providers/libfips.a]=$COMMON
+
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
+DEFINE[../../libcrypto]=$ECDEF
 DEFINE[../../providers/libfips.a]=$ECDEF
+DEFINE[../../providers/libimplementations.a]=$ECDEF
 
 GENERATE[ecp_nistz256-x86.s]=asm/ecp_nistz256-x86.pl
 
