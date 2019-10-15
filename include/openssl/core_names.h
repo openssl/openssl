@@ -159,6 +159,28 @@ extern "C" {
 #define OSSL_PKEY_PARAM_DSA_PUB_KEY  "pub"
 #define OSSL_PKEY_PARAM_DSA_PRIV_KEY "priv"
 
+/* RSA Keys */
+/*
+ * n, e, d are the usual public and private key components
+ *
+ * rsa-num is the number of factors, including p and q
+ * rsa-factor is used for each factor: p, q, r_i (i = 3, ...)
+ * rsa-exponent is used for each exponent: dP, dQ, d_i (i = 3, ...)
+ * rsa-coefficient is used for each coefficient: qInv, t_i (i = 3, ...)
+ *
+ * The number of rsa-factor items must be equal to the number of rsa-exponent
+ * items, and the number of rsa-coefficients must be one less.
+ * (the base i for the coefficients is 2, not 1, at least as implied by
+ * RFC 8017)
+ */
+#define OSSL_PKEY_PARAM_RSA_N           "n"
+#define OSSL_PKEY_PARAM_RSA_E           "e"
+#define OSSL_PKEY_PARAM_RSA_D           "d"
+#define OSSL_PKEY_PARAM_RSA_PARAMS_NUM  "rsa-num"
+#define OSSL_PKEY_PARAM_RSA_FACTOR      "rsa-factor"
+#define OSSL_PKEY_PARAM_RSA_EXPONENT    "rsa-exponent"
+#define OSSL_PKEY_PARAM_RSA_COEFFICIENT "rsa-coefficient"
+
 /* Key Exchange parameters */
 
 #define OSSL_EXCHANGE_PARAM_PAD      "pad" /* uint */
