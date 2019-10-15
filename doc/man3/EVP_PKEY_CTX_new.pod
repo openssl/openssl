@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free - public key algorithm context functions
+EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_new_provided,
+EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
+- public key algorithm context functions
 
 =head1 SYNOPSIS
 
