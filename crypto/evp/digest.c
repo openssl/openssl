@@ -675,6 +675,10 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
                                                      p2, p1 ? p1 : 9999);
         break;
+    case EVP_CTRL_SSL3_MASTER_SECRET:
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
+                                                      p2, p1);
+        break;
     default:
         return EVP_CTRL_RET_UNSUPPORTED;
     }
