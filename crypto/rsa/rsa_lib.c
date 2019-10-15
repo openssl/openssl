@@ -704,7 +704,7 @@ int RSA_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
     return 0;
 }
 
-DEFINE_STACK_OF(BIGNUM_const)
+DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
 int RSA_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
                         STACK_OF(BIGNUM_const) *exps,
