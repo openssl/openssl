@@ -13,8 +13,11 @@
 #include <openssl/x509.h>
 #include <openssl/bn.h>
 #include <openssl/cms.h>
+#include <openssl/core_names.h>
+#include "internal/param_build.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/rsa.h"
 #include "rsa_local.h"
 
 #ifndef OPENSSL_NO_CMS
@@ -1045,6 +1048,114 @@ static int rsa_pkey_check(const EVP_PKEY *pkey)
     return RSA_check_key_ex(pkey->pkey.rsa, NULL);
 }
 
+static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
+{
+    return pkey->pkey.rsa->dirty_cnt;
+}
+
+DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
+
+static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
+                                int want_domainparams)
+{
+    RSA *rsa = pk->pkey.rsa;
+    OSSL_PARAM_BLD tmpl;
+    const BIGNUM *n = RSA_get0_n(rsa), *e = RSA_get0_e(rsa);
+    const BIGNUM *d = RSA_get0_d(rsa);
+    STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
+    int numprimes = 0, numexps = 0, numcoeffs = 0;
+    OSSL_PARAM *params = NULL;
+    void *provkey = NULL;
+
+    /*
+     * There are no domain parameters for RSA keys, or rather, they are
+     * included in the key data itself.
+     */
+    if (want_domainparams)
+        goto err;
+
+    /* Get all the primes and CRT params */
+    if ((primes = sk_BIGNUM_const_new_null()) == NULL
+        || (exps = sk_BIGNUM_const_new_null()) == NULL
+        || (coeffs = sk_BIGNUM_const_new_null()) == NULL)
+        goto err;
+
+    if (!rsa_get0_all_params(rsa, primes, exps, coeffs))
+        goto err;
+
+    /* Public parameters must always be present */
+    if (n == NULL || e == NULL)
+        goto err;
+
+    if (d != NULL) {
+        /* It's a private key, so we should have everything else too */
+        numprimes = sk_BIGNUM_const_num(primes);
+        numexps = sk_BIGNUM_const_num(exps);
+        numcoeffs = sk_BIGNUM_const_num(coeffs);
+
+        if (numprimes < 2 || numexps < 2 || numcoeffs < 1)
+            goto err;
+
+        /*
+         * assert that an OSSL_PARAM_BLD has enough space.
+         * (the current 10 places doesn't have space for multi-primes)
+         */
+        if (!ossl_assert(/* n, e */ 2 + /* d */ 1 + /* numprimes */ 1
+                         + numprimes + numexps + numcoeffs
+                         <= OSSL_PARAM_BLD_MAX))
+            goto err;
+    }
+
+    ossl_param_bld_init(&tmpl);
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n)
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, e))
+        goto err;
+
+    if (d != NULL) {
+        int i;
+
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
+            goto err;
+
+        for (i = 0; i < numprimes; i++) {
+            const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
+
+            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
+                                        num))
+                goto err;
+        }
+
+        for (i = 0; i < numexps; i++) {
+            const BIGNUM *num = sk_BIGNUM_const_value(exps, i);
+
+            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
+                                        num))
+                goto err;
+        }
+
+        for (i = 0; i < numcoeffs; i++) {
+            const BIGNUM *num = sk_BIGNUM_const_value(coeffs, i);
+
+            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
+                                        num))
+                goto err;
+        }
+    }
+
+    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        goto err;
+
+    /* We export, the provider imports */
+    provkey = evp_keymgmt_importkey(keymgmt, params);
+
+ err:
+    sk_BIGNUM_const_free(primes);
+    sk_BIGNUM_const_free(exps);
+    sk_BIGNUM_const_free(coeffs);
+    ossl_param_bld_free(params);
+    return provkey;
+}
+
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
     {
      EVP_PKEY_RSA,
@@ -1077,7 +1188,13 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      rsa_item_verify,
      rsa_item_sign,
      rsa_sig_info_set,
-     rsa_pkey_check
+     rsa_pkey_check,
+
+     0, 0,
+     0, 0, 0, 0,
+
+     rsa_pkey_dirty_cnt,
+     rsa_pkey_export_to
     },
 
     {
@@ -1116,5 +1233,11 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
      rsa_item_verify,
      rsa_item_sign,
      0,
-     rsa_pkey_check
+     rsa_pkey_check,
+
+     0, 0,
+     0, 0, 0, 0,
+
+     rsa_pkey_dirty_cnt,
+     rsa_pkey_export_to
 };
