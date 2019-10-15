@@ -1087,8 +1087,16 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
                                               ptr, sz);
         break;
 
+    case EVP_CTRL_INIT:
+        /*
+         * TODO(3.0) EVP_CTRL_INIT is purely legacy, no provider counterpart
+         * As a matter of fact, this should be dead code, but some caller
+         * might still do a direct control call with this command, so...
+         * Legacy methods return 1 except for exceptional circumstances, so
+         * we do the same here to not be disruptive.
+         */
+        return 1;
     case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
-    case EVP_CTRL_INIT: /* TODO(3.0) Purely legacy, no provider counterpart */
     default:
         goto end;
     case EVP_CTRL_GET_IV:
