@@ -38,7 +38,6 @@ static int params_to_domparams(DSA *dsa, const OSSL_PARAM params[])
 
     if (!DSA_set0_pqg(dsa, p, q, g))
         goto err;
-    p = q = g = NULL;
 
     return 1;
 
@@ -102,7 +101,6 @@ static int params_to_key(DSA *dsa, const OSSL_PARAM params[])
 
     if (pub_key != NULL && !DSA_set0_key(dsa, pub_key, priv_key))
         goto err;
-    priv_key = pub_key = NULL;
 
     return 1;
 
