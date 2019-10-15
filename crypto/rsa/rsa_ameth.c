@@ -1076,7 +1076,7 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 
     /* Public parameters must always be present */
     if (n == NULL || e == NULL)
-        return NULL;
+        goto err;
 
     if (d != NULL) {
         /* It's a private key, so we should have everything else too */
@@ -1136,7 +1136,8 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         }
     }
 
-    params = ossl_param_bld_to_param(&tmpl);
+    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        goto err;
 
     /* We export, the provider imports */
     provkey = evp_keymgmt_importkey(keymgmt, params);
