@@ -175,7 +175,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[rsa_mp_test]=rsa_mp_test.c
   INCLUDE[rsa_mp_test]=../include ../apps/include
-  DEPEND[rsa_mp_test]=../libcrypto libtestutil.a
+  DEPEND[rsa_mp_test]=../libcrypto.a libtestutil.a
 
   SOURCE[fatalerrtest]=fatalerrtest.c ssltestlib.c
   INCLUDE[fatalerrtest]=../include ../apps/include
