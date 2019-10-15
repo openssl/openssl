@@ -1441,6 +1441,8 @@ const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt);
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_provided(const char *name,
+                                        const char *propquery);
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
 

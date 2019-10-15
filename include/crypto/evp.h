@@ -21,6 +21,10 @@ struct evp_pkey_ctx_st {
     /* Actual operation */
     int operation;
 
+    /* Algorithm name and properties associated with this context */
+    const char *algorithm;
+    const char *propquery;
+
     union {
         struct {
             EVP_KEYEXCH *exchange;

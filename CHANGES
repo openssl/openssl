@@ -9,6 +9,14 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added functionality to create an EVP_PKEY context based on data
+     for methods from providers.  This takes an algorithm name and a
+     property query string and simply stores them, with the intent
+     that any operation that uses this context will use those strings
+     to fetch the needed methods implicitly, thereby making the port
+     of application written for pre-3.0 OpenSSL easier.
+     [Richard Levitte]
+
   *) The undocumented function NCONF_WIN32() has been deprecated; for
      conversion details see the HISTORY section of doc/man5/config.pod
      [Rich Salz]
