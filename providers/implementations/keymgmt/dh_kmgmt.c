@@ -36,7 +36,6 @@ static int params_to_domparams(DH *dh, const OSSL_PARAM params[])
 
     if (!DH_set0_pqg(dh, p, NULL, g))
         goto err;
-    p = g = NULL;
 
     return 1;
 
@@ -97,7 +96,6 @@ static int params_to_key(DH *dh, const OSSL_PARAM params[])
 
     if (!DH_set0_key(dh, pub_key, priv_key))
         goto err;
-    priv_key = pub_key = NULL;
 
     return 1;
 
