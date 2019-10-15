@@ -1542,17 +1542,18 @@ int speed_main(int argc, char **argv)
     CAMELLIA_KEY camellia_ks[3];
 #endif
 #ifndef OPENSSL_NO_RSA
-    static const unsigned int rsa_bits[RSA_NUM] = {
-        512, 1024, 2048, 3072, 4096, 7680, 15360
-    };
-    static const unsigned char *rsa_data[RSA_NUM] = {
-        test512, test1024, test2048, test3072, test4096, test7680, test15360
-    };
-    static const int rsa_data_length[RSA_NUM] = {
-        sizeof(test512), sizeof(test1024),
-        sizeof(test2048), sizeof(test3072),
-        sizeof(test4096), sizeof(test7680),
-        sizeof(test15360)
+    static const struct {
+        const unsigned char *data;
+        unsigned int length;
+        unsigned int bits;
+    } rsa_keys[] = {
+        {   test512,   sizeof(test512),   512 },
+        {  test1024,  sizeof(test1024),  1024 },
+        {  test2048,  sizeof(test2048),  2048 },
+        {  test3072,  sizeof(test3072),  3072 },
+        {  test4096,  sizeof(test4096),  4092 },
+        {  test7680,  sizeof(test7680),  7680 },
+        { test15360, sizeof(test15360), 15360 }
     };
     uint8_t rsa_doit[RSA_NUM] = { 0 };
     int primes = RSA_DEFAULT_PRIME_NUM;
@@ -1562,16 +1563,18 @@ int speed_main(int argc, char **argv)
     uint8_t dsa_doit[DSA_NUM] = { 0 };
 #endif
 #ifndef OPENSSL_NO_EC
+    typedef struct ec_curve_st {
+        const char *name;
+        unsigned int nid;
+        unsigned int bits;
+        size_t sigsize; /* only used for EdDSA curves */
+    } EC_CURVE;
     /*
      * We only test over the following curves as they are representative, To
      * add tests over more curves, simply add the curve NID and curve name to
      * the following arrays and increase the |ecdh_choices| list accordingly.
      */
-    static const struct {
-        const char *name;
-        unsigned int nid;
-        unsigned int bits;
-    } test_curves[] = {
+    static const EC_CURVE ec_curves[EC_NUM] = {
         /* Prime Curves */
         {"secp160r1", NID_secp160r1, 160},
         {"nistp192", NID_X9_62_prime192v1, 192},
@@ -1602,22 +1605,13 @@ int speed_main(int argc, char **argv)
         {"X25519", NID_X25519, 253},
         {"X448", NID_X448, 448}
     };
-    static const struct {
-        const char *name;
-        unsigned int nid;
-        unsigned int bits;
-        size_t sigsize;
-    } test_ed_curves[] = {
+    static const EC_CURVE ed_curves[EdDSA_NUM] = {
         /* EdDSA */
         {"Ed25519", NID_ED25519, 253, 64},
         {"Ed448", NID_ED448, 456, 114}
     };
 # ifndef OPENSSL_NO_SM2
-    static const struct {
-        const char *name;
-        unsigned int nid;
-        unsigned int bits;
-    } test_sm2_curves[] = {
+    static const EC_CURVE sm2_curves[SM2_NUM] = {
         /* SM2 */
         {"CurveSM2", NID_sm2, 256}
     };
@@ -1626,10 +1620,10 @@ int speed_main(int argc, char **argv)
     uint8_t ecdsa_doit[ECDSA_NUM] = { 0 };
     uint8_t ecdh_doit[EC_NUM] = { 0 };
     uint8_t eddsa_doit[EdDSA_NUM] = { 0 };
-    OPENSSL_assert(OSSL_NELEM(test_curves) >= EC_NUM);
-    OPENSSL_assert(OSSL_NELEM(test_ed_curves) >= EdDSA_NUM);
+    OPENSSL_assert(OSSL_NELEM(ec_curves) >= EC_NUM);
+    OPENSSL_assert(OSSL_NELEM(ed_curves) >= EdDSA_NUM);
 # ifndef OPENSSL_NO_SM2
-    OPENSSL_assert(OSSL_NELEM(test_sm2_curves) >= SM2_NUM);
+    OPENSSL_assert(OSSL_NELEM(sm2_curves) >= SM2_NUM);
 # endif
 #endif                          /* ndef OPENSSL_NO_EC */
 
@@ -1971,11 +1965,10 @@ int speed_main(int argc, char **argv)
             break;
         }
         for (k = 0; k < RSA_NUM; k++) {
-            const unsigned char *p;
+            const unsigned char *p = rsa_keys[k].data;
 
-            p = rsa_data[k];
             loopargs[i].rsa_key[k] =
-                d2i_RSAPrivateKey(NULL, &p, rsa_data_length[k]);
+                d2i_RSAPrivateKey(NULL, &p, rsa_keys[k].length);
             if (loopargs[i].rsa_key[k] == NULL) {
                 BIO_printf(bio_err,
                            "internal error loading RSA key number %d\n", k);
@@ -2908,7 +2901,7 @@ int speed_main(int argc, char **argv)
                 }
 
                 if (!RSA_generate_multi_prime_key(loopargs[i].rsa_key[testnum],
-                                                  rsa_bits[testnum],
+                                                  rsa_keys[testnum].bits,
                                                   primes, bn, NULL)) {
                     BN_free(bn);
                     goto end;
@@ -2927,7 +2920,7 @@ int speed_main(int argc, char **argv)
             rsa_count = 1;
         } else {
             pkey_print_message("private", "rsa",
-                               rsa_c[testnum][0], rsa_bits[testnum],
+                               rsa_c[testnum][0], rsa_keys[testnum].bits,
                                seconds.rsa);
             /* RSA_blinding_on(rsa_key[testnum],NULL); */
             Time_F(START);
@@ -2936,7 +2929,7 @@ int speed_main(int argc, char **argv)
             BIO_printf(bio_err,
                        mr ? "+R1:%ld:%d:%.2f\n"
                        : "%ld %u bits private RSA's in %.2fs\n",
-                       count, rsa_bits[testnum], d);
+                       count, rsa_keys[testnum].bits, d);
             rsa_results[testnum][0] = (double)count / d;
             rsa_count = count;
         }
@@ -2954,7 +2947,7 @@ int speed_main(int argc, char **argv)
             rsa_doit[testnum] = 0;
         } else {
             pkey_print_message("public", "rsa",
-                               rsa_c[testnum][1], rsa_bits[testnum],
+                               rsa_c[testnum][1], rsa_keys[testnum].bits,
                                seconds.rsa);
             Time_F(START);
             count = run_benchmark(async_jobs, RSA_verify_loop, loopargs);
@@ -2962,7 +2955,7 @@ int speed_main(int argc, char **argv)
             BIO_printf(bio_err,
                        mr ? "+R2:%ld:%d:%.2f\n"
                        : "%ld %u bits public RSA's in %.2fs\n",
-                       count, rsa_bits[testnum], d);
+                       count, rsa_keys[testnum].bits, d);
             rsa_results[testnum][1] = (double)count / d;
         }
 
@@ -3051,7 +3044,7 @@ int speed_main(int argc, char **argv)
             continue;           /* Ignore Curve */
         for (i = 0; i < loopargs_len; i++) {
             loopargs[i].ecdsa[testnum] =
-                EC_KEY_new_by_curve_name(test_curves[testnum].nid);
+                EC_KEY_new_by_curve_name(ec_curves[testnum].nid);
             if (loopargs[i].ecdsa[testnum] == NULL) {
                 st = 0;
                 break;
@@ -3080,7 +3073,7 @@ int speed_main(int argc, char **argv)
             } else {
                 pkey_print_message("sign", "ecdsa",
                                    ecdsa_c[testnum][0],
-                                   test_curves[testnum].bits, seconds.ecdsa);
+                                   ec_curves[testnum].bits, seconds.ecdsa);
                 Time_F(START);
                 count = run_benchmark(async_jobs, ECDSA_sign_loop, loopargs);
                 d = Time_F(STOP);
@@ -3088,7 +3081,7 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err,
                            mr ? "+R5:%ld:%u:%.2f\n" :
                            "%ld %u bits ECDSA signs in %.2fs \n",
-                           count, test_curves[testnum].bits, d);
+                           count, ec_curves[testnum].bits, d);
                 ecdsa_results[testnum][0] = (double)count / d;
                 rsa_count = count;
             }
@@ -3109,14 +3102,14 @@ int speed_main(int argc, char **argv)
             } else {
                 pkey_print_message("verify", "ecdsa",
                                    ecdsa_c[testnum][1],
-                                   test_curves[testnum].bits, seconds.ecdsa);
+                                   ec_curves[testnum].bits, seconds.ecdsa);
                 Time_F(START);
                 count = run_benchmark(async_jobs, ECDSA_verify_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
                            mr ? "+R6:%ld:%u:%.2f\n"
                            : "%ld %u bits ECDSA verify in %.2fs\n",
-                           count, test_curves[testnum].bits, d);
+                           count, ec_curves[testnum].bits, d);
                 ecdsa_results[testnum][1] = (double)count / d;
             }
 
@@ -3155,7 +3148,7 @@ int speed_main(int argc, char **argv)
              * If this fails we try creating a EVP_PKEY_EC generic param ctx,
              * then we set the curve by NID before deriving the actual keygen
              * ctx for that specific curve. */
-            kctx = EVP_PKEY_CTX_new_id(test_curves[testnum].nid, NULL); /* keygen ctx from NID */
+            kctx = EVP_PKEY_CTX_new_id(ec_curves[testnum].nid, NULL); /* keygen ctx from NID */
             if (!kctx) {
                 EVP_PKEY_CTX *pctx = NULL;
                 EVP_PKEY *params = NULL;
@@ -3178,13 +3171,13 @@ int speed_main(int argc, char **argv)
                     break;
                 }
 
-                if (            /* Create the context for parameter generation */
-                       !(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) ||
+                /* Create the context for parameter generation */
+                if (!(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) ||
                        /* Initialise the parameter generation */
                        !EVP_PKEY_paramgen_init(pctx) ||
                        /* Set the curve by NID */
                        !EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
-                                                               test_curves
+                                                               ec_curves
                                                                [testnum].nid) ||
                        /* Create the parameter object params */
                        !EVP_PKEY_paramgen(pctx, &params)) {
@@ -3267,7 +3260,7 @@ int speed_main(int argc, char **argv)
         if (ecdh_checks != 0) {
             pkey_print_message("", "ecdh",
                                ecdh_c[testnum][0],
-                               test_curves[testnum].bits, seconds.ecdh);
+                               ec_curves[testnum].bits, seconds.ecdh);
             Time_F(START);
             count =
                 run_benchmark(async_jobs, ECDH_EVP_derive_key_loop, loopargs);
@@ -3275,7 +3268,7 @@ int speed_main(int argc, char **argv)
             BIO_printf(bio_err,
                        mr ? "+R7:%ld:%d:%.2f\n" :
                        "%ld %u-bits ECDH ops in %.2fs\n", count,
-                       test_curves[testnum].bits, d);
+                       ec_curves[testnum].bits, d);
             ecdh_results[testnum][0] = (double)count / d;
             rsa_count = count;
         }
@@ -3300,7 +3293,7 @@ int speed_main(int argc, char **argv)
                 break;
             }
 
-            if ((ed_pctx = EVP_PKEY_CTX_new_id(test_ed_curves[testnum].nid, NULL))
+            if ((ed_pctx = EVP_PKEY_CTX_new_id(ed_curves[testnum].nid, NULL))
                     == NULL
                 || EVP_PKEY_keygen_init(ed_pctx) <= 0
                 || EVP_PKEY_keygen(ed_pctx, &ed_pkey) <= 0) {
@@ -3325,7 +3318,7 @@ int speed_main(int argc, char **argv)
         } else {
             for (i = 0; i < loopargs_len; i++) {
                 /* Perform EdDSA signature test */
-                loopargs[i].sigsize = test_ed_curves[testnum].sigsize;
+                loopargs[i].sigsize = ed_curves[testnum].sigsize;
                 st = EVP_DigestSign(loopargs[i].eddsa_ctx[testnum],
                                     loopargs[i].buf2, &loopargs[i].sigsize,
                                     loopargs[i].buf, 20);
@@ -3338,9 +3331,9 @@ int speed_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 rsa_count = 1;
             } else {
-                pkey_print_message("sign", test_ed_curves[testnum].name,
+                pkey_print_message("sign", ed_curves[testnum].name,
                                    eddsa_c[testnum][0],
-                                   test_ed_curves[testnum].bits, seconds.eddsa);
+                                   ed_curves[testnum].bits, seconds.eddsa);
                 Time_F(START);
                 count = run_benchmark(async_jobs, EdDSA_sign_loop, loopargs);
                 d = Time_F(STOP);
@@ -3348,8 +3341,8 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err,
                            mr ? "+R8:%ld:%u:%s:%.2f\n" :
                            "%ld %u bits %s signs in %.2fs \n",
-                           count, test_ed_curves[testnum].bits,
-                           test_ed_curves[testnum].name, d);
+                           count, ed_curves[testnum].bits,
+                           ed_curves[testnum].name, d);
                 eddsa_results[testnum][0] = (double)count / d;
                 rsa_count = count;
             }
@@ -3368,17 +3361,17 @@ int speed_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 eddsa_doit[testnum] = 0;
             } else {
-                pkey_print_message("verify", test_ed_curves[testnum].name,
+                pkey_print_message("verify", ed_curves[testnum].name,
                                    eddsa_c[testnum][1],
-                                   test_ed_curves[testnum].bits, seconds.eddsa);
+                                   ed_curves[testnum].bits, seconds.eddsa);
                 Time_F(START);
                 count = run_benchmark(async_jobs, EdDSA_verify_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
                            mr ? "+R9:%ld:%u:%s:%.2f\n"
                            : "%ld %u bits %s verify in %.2fs\n",
-                           count, test_ed_curves[testnum].bits,
-                           test_ed_curves[testnum].name, d);
+                           count, ed_curves[testnum].bits,
+                           ed_curves[testnum].name, d);
                 eddsa_results[testnum][1] = (double)count / d;
             }
 
@@ -3413,7 +3406,7 @@ int speed_main(int argc, char **argv)
             st = !((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) == NULL
                 || EVP_PKEY_keygen_init(pctx) <= 0
                 || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
-                    test_sm2_curves[testnum].nid) <= 0
+                    sm2_curves[testnum].nid) <= 0
                 || EVP_PKEY_keygen(pctx, &sm2_pkey) <= 0);
             EVP_PKEY_CTX_free(pctx);
             if (st == 0)
@@ -3473,9 +3466,9 @@ int speed_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 rsa_count = 1;
             } else {
-                pkey_print_message("sign", test_sm2_curves[testnum].name,
+                pkey_print_message("sign", sm2_curves[testnum].name,
                                    sm2_c[testnum][0],
-                                   test_sm2_curves[testnum].bits, seconds.sm2);
+                                   sm2_curves[testnum].bits, seconds.sm2);
                 Time_F(START);
                 count = run_benchmark(async_jobs, SM2_sign_loop, loopargs);
                 d = Time_F(STOP);
@@ -3483,8 +3476,8 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err,
                            mr ? "+R8:%ld:%u:%s:%.2f\n" :
                            "%ld %u bits %s signs in %.2fs \n",
-                           count, test_sm2_curves[testnum].bits,
-                           test_sm2_curves[testnum].name, d);
+                           count, sm2_curves[testnum].bits,
+                           sm2_curves[testnum].name, d);
                 sm2_results[testnum][0] = (double)count / d;
                 rsa_count = count;
             }
@@ -3503,17 +3496,17 @@ int speed_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 sm2_doit[testnum] = 0;
             } else {
-                pkey_print_message("verify", test_sm2_curves[testnum].name,
+                pkey_print_message("verify", sm2_curves[testnum].name,
                                    sm2_c[testnum][1],
-                                   test_sm2_curves[testnum].bits, seconds.sm2);
+                                   sm2_curves[testnum].bits, seconds.sm2);
                 Time_F(START);
                 count = run_benchmark(async_jobs, SM2_verify_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
                            mr ? "+R9:%ld:%u:%s:%.2f\n"
                            : "%ld %u bits %s verify in %.2fs\n",
-                           count, test_sm2_curves[testnum].bits,
-                           test_sm2_curves[testnum].name, d);
+                           count, sm2_curves[testnum].bits,
+                           sm2_curves[testnum].name, d);
                 sm2_results[testnum][1] = (double)count / d;
             }
 
@@ -3594,10 +3587,10 @@ int speed_main(int argc, char **argv)
         }
         if (mr)
             printf("+F2:%u:%u:%f:%f\n",
-                   k, rsa_bits[k], rsa_results[k][0], rsa_results[k][1]);
+                   k, rsa_keys[k].bits, rsa_results[k][0], rsa_results[k][1]);
         else
             printf("rsa %4u bits %8.6fs %8.6fs %8.1f %8.1f\n",
-                   rsa_bits[k], 1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1],
+                   rsa_keys[k].bits, 1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1],
                    rsa_results[k][0], rsa_results[k][1]);
     }
 #endif
@@ -3631,11 +3624,11 @@ int speed_main(int argc, char **argv)
 
         if (mr)
             printf("+F4:%u:%u:%f:%f\n",
-                   k, test_curves[k].bits,
+                   k, ec_curves[k].bits,
                    ecdsa_results[k][0], ecdsa_results[k][1]);
         else
             printf("%4u bits ecdsa (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
-                   test_curves[k].bits, test_curves[k].name,
+                   ec_curves[k].bits, ec_curves[k].name,
                    1.0 / ecdsa_results[k][0], 1.0 / ecdsa_results[k][1],
                    ecdsa_results[k][0], ecdsa_results[k][1]);
     }
@@ -3650,12 +3643,12 @@ int speed_main(int argc, char **argv)
         }
         if (mr)
             printf("+F5:%u:%u:%f:%f\n",
-                   k, test_curves[k].bits,
+                   k, ec_curves[k].bits,
                    ecdh_results[k][0], 1.0 / ecdh_results[k][0]);
 
         else
             printf("%4u bits ecdh (%s) %8.4fs %8.1f\n",
-                   test_curves[k].bits, test_curves[k].name,
+                   ec_curves[k].bits, ec_curves[k].name,
                    1.0 / ecdh_results[k][0], ecdh_results[k][0]);
     }
 
@@ -3670,11 +3663,11 @@ int speed_main(int argc, char **argv)
 
         if (mr)
             printf("+F6:%u:%u:%s:%f:%f\n",
-                   k, test_ed_curves[k].bits, test_ed_curves[k].name,
+                   k, ed_curves[k].bits, ed_curves[k].name,
                    eddsa_results[k][0], eddsa_results[k][1]);
         else
             printf("%4u bits EdDSA (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
-                   test_ed_curves[k].bits, test_ed_curves[k].name,
+                   ed_curves[k].bits, ed_curves[k].name,
                    1.0 / eddsa_results[k][0], 1.0 / eddsa_results[k][1],
                    eddsa_results[k][0], eddsa_results[k][1]);
     }
@@ -3691,11 +3684,11 @@ int speed_main(int argc, char **argv)
 
         if (mr)
             printf("+F6:%u:%u:%s:%f:%f\n",
-                   k, test_sm2_curves[k].bits, test_sm2_curves[k].name,
+                   k, sm2_curves[k].bits, sm2_curves[k].name,
                    sm2_results[k][0], sm2_results[k][1]);
         else
             printf("%4u bits SM2 (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
-                   test_sm2_curves[k].bits, test_sm2_curves[k].name,
+                   sm2_curves[k].bits, sm2_curves[k].name,
                    1.0 / sm2_results[k][0], 1.0 / sm2_results[k][1],
                    sm2_results[k][0], sm2_results[k][1]);
     }
