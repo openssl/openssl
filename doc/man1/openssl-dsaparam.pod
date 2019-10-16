@@ -43,6 +43,7 @@ The input and formats; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 Parameters are a sequence of B<ASN.1 INTEGER>s: B<p>, B<q>, and B<g>.
+This is compatible with RFC 2459 B<DSS-Parms> structure.
 
 =item B<-in> I<filename>
 

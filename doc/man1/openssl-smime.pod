@@ -132,9 +132,16 @@ be decrypted or verified.
 The message text that has been decrypted or verified or the output MIME
 format message that has been signed or verified.
 
-=item B<-inform> B<DER>|B<PEM>|B<SMIME>, B<-outform> B<DER>|B<PEM>|B<SMIME>
+=item B<-inform> B<DER>|B<PEM>|B<SMIME>
 
-The intput and output formats.; the default is B<SMIME>.
+The input format of the PKCS#7 (S/MIME) structure (if one is being read);
+the default is B<SMIME>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-outform> B<DER>|B<PEM>|B<SMIME>
+
+The output format of the PKCS#7 (S/MIME) structure (if one is being written);
+the default is B<SMIME>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-keyform> B<DER>|B<PEM>

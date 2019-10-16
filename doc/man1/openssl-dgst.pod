@@ -96,7 +96,7 @@ command instead for this.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
+The format of the key to sign with; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>

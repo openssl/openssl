@@ -224,17 +224,19 @@ format message that has been signed or verified.
 
 =item B<-inform> B<DER>|B<PEM>|B<SMIME>
 
-The input format; the default is B<SMIME>.
+The input format of the CMS structure (if one is being read);
+the default is B<SMIME>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-outform> B<DER>|B<PEM>|B<SMIME>
 
-The output format; the default is B<SMIME>.
+The output format of the CMS structure (if one is being written);
+the default is B<SMIME>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
-The key format; the default is B<PEM>.
+The format of the private key file; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-rctform> B<DER>|B<PEM>|B<SMIME>

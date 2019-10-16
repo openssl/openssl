@@ -29,9 +29,14 @@ only" structure.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and output formats; the default is B<PEM>.
+The input format of the CRL; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The output format of the PKCS#7 object; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-in> I<filename>

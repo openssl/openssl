@@ -521,7 +521,7 @@ parameters start with a minus sign:
 Several OpenSSL commands can take input or generate output in a variety
 of formats. The list of acceptable formats, and the default, is
 described in each command documentation.  The list of formats is
-described below. Upper and lower-case are accepted.
+described below. Both uppercase and lowercase are accepted.
 
 =over 4
 

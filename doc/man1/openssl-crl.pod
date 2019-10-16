@@ -41,12 +41,12 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-The input and output formats; the default is B<PEM>.
+The input and output formats of the CRL; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
-The key format; the default is B<PEM>.
+The format of the private key file; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-in> I<filename>
