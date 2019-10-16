@@ -37,6 +37,28 @@ static OSSL_PARAM *paramdefs_to_params(const OSSL_PARAM *paramdefs)
     return params;
 }
 
+static OSSL_PARAM *reduce_params(OSSL_PARAM *params)
+{
+    OSSL_PARAM *curr, *next;
+    size_t cnt;
+
+    for (cnt = 0, curr = next = params; next->key != NULL; next++) {
+        if (next->return_size == 0)
+            continue;
+        if (curr != next)
+            *curr = *next;
+        curr++;
+        cnt++;
+    }
+    *curr = *next;               /* Terminating record */
+    cnt++;
+
+    curr = OPENSSL_realloc(params, cnt * sizeof(*params));
+    if (curr == NULL)
+        return params;
+    return curr;
+}
+
 typedef union align_block_un {
     OSSL_UNION_ALIGN;
 } ALIGN_BLOCK;
@@ -157,10 +179,11 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                 exportfn(pk->pkeys[j].provdata, params);
 
                 /*
-                 * Allocate space and assign 'data' to point into the
-                 * data block.
-                 * If something goes wrong, go to the next cached key.
+                 * Reduce the params by removing any entry that got return
+                 * size zero, then allocate space and assign 'data' to point
+                 * into the data block
                  */
+                params = reduce_params(params);
                 if ((data = allocate_params_space(params)) == NULL)
                     goto cont;
 
