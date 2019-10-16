@@ -246,6 +246,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define X509_V_FLAG_NO_ALT_CHAINS               0x100000
 /* Do not check certificate/CRL validity against current time */
 # define X509_V_FLAG_NO_CHECK_TIME               0x200000
+/* Do not require an identity for certificate subject matching */
+# define X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK      0x400000
 
 # define X509_VP_FLAG_DEFAULT                    0x1
 # define X509_VP_FLAG_OVERWRITE                  0x2
