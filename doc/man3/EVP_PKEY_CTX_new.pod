@@ -31,9 +31,9 @@ property query I<propquery>.  The strings aren't duplicated, so they
 must remain unchanged for the lifetime of the returned B<EVP_PKEY_CTX>
 or of any of its duplicates.
 
-EVP_PKEY_CTX_new_id() and The EVP_PKEY_CTX_new_provided() are normally
+EVP_PKEY_CTX_new_id() and EVP_PKEY_CTX_new_provided() are normally
 used when no B<EVP_PKEY> structure is associated with the operations,
-for example during parameter generation of key generation for some
+for example during parameter generation or key generation for some
 algorithms.
 
 EVP_PKEY_CTX_dup() duplicates the context I<ctx>.
