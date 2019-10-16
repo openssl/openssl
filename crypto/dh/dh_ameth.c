@@ -549,7 +549,7 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                               int *is_domainparams)
+                               int want_domainparams)
 {
     DH *dh = pk->pkey.dh;
     OSSL_PARAM_BLD tmpl;
@@ -571,8 +571,7 @@ static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
             return NULL;
     }
 
-    *is_domainparams = (pub_key == NULL && priv_key == NULL);
-    if (!*is_domainparams) {
+    if (!want_domainparams) {
         /* A key must at least have a public part. */
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY,
                                     pub_key))
@@ -588,7 +587,7 @@ static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
     params = ossl_param_bld_to_param(&tmpl);
 
     /* We export, the provider imports */
-    provdata = *is_domainparams
+    provdata = want_domainparams
         ? evp_keymgmt_importdomparams(keymgmt, params)
         : evp_keymgmt_importkey(keymgmt, params);
 
