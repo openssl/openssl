@@ -71,7 +71,7 @@ struct evp_pkey_asn1_method_st {
     /* Exports to providers */
     size_t (*dirty_cnt) (const EVP_PKEY *pk);
     void *(*export_to) (const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                        int *is_domainparams);
+                        int want_domainparams);
 } /* EVP_PKEY_ASN1_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)

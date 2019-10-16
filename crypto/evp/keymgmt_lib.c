@@ -68,7 +68,6 @@ static void *allocate_params_space(OSSL_PARAM *params)
 void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                      int want_domainparams)
 {
-    int is_domainparams = -1;    /* Unknown so far */
     void *provdata = NULL;
     size_t i, j;
 
@@ -108,7 +107,7 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
             return NULL;
 
         /* Otherwise, simply use it.  The export_to will tell us what it is */
-        provdata = pk->ameth->export_to(pk, keymgmt, &is_domainparams);
+        provdata = pk->ameth->export_to(pk, keymgmt, want_domainparams);
 
         /* Synchronize the dirty count, but only if we exported successfully */
         if (provdata != NULL)
@@ -178,7 +177,6 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                  * into the new provider and hope to get a key back.
                  */
                 provdata = importfn(provctx, params);
-                is_domainparams = want_domainparams;
 
              cont:
                 OPENSSL_free(params);
@@ -201,21 +199,10 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         EVP_KEYMGMT_up_ref(keymgmt);
         pk->pkeys[i].keymgmt = keymgmt;
         pk->pkeys[i].provdata = provdata;
-        pk->pkeys[i].domainparams = is_domainparams;
+        pk->pkeys[i].domainparams = want_domainparams;
     }
 
-    /*
-     * If we got something the caller didn't want, don't return it.
-     * This condition will only happen when what we did originated
-     * from a libcrypto / legacy key.  In that case, we know for a
-     * fact that a full key contains domain parameters, while the
-     * other way around isn't as certain.
-     */
-    if (want_domainparams || want_domainparams == is_domainparams)
-        return provdata;
-
-    /* The caller isn't getting what it wants */
-    return NULL;
+    return provdata;
 }
 
 void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
