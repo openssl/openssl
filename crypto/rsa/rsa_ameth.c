@@ -1062,7 +1062,7 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     const BIGNUM *d = RSA_get0_d(rsa);
     STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
     int numprimes = 0, numexps = 0, numcoeffs = 0;
-    OSSL_PARAM *params;
+    OSSL_PARAM *params = NULL;
     void *provkey = NULL;
 
     /* Get all the primes and CRT params */
