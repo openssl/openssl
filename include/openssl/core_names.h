@@ -176,7 +176,6 @@ extern "C" {
 #define OSSL_PKEY_PARAM_RSA_N           "n"
 #define OSSL_PKEY_PARAM_RSA_E           "e"
 #define OSSL_PKEY_PARAM_RSA_D           "d"
-#define OSSL_PKEY_PARAM_RSA_PARAMS_NUM  "rsa-num"
 #define OSSL_PKEY_PARAM_RSA_FACTOR      "rsa-factor"
 #define OSSL_PKEY_PARAM_RSA_EXPONENT    "rsa-exponent"
 #define OSSL_PKEY_PARAM_RSA_COEFFICIENT "rsa-coefficient"

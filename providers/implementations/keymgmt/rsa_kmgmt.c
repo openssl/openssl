@@ -45,6 +45,7 @@ static int params_to_key(RSA *rsa, const OSSL_PARAM params[])
     const OSSL_PARAM *param_n, *param_e,  *param_d;
     BIGNUM *n = NULL, *e = NULL, *d = NULL;
     STACK_OF(BIGNUM) *factors = NULL, *exps = NULL, *coeffs = NULL;
+    int is_private = 0;
 
     if (rsa == NULL)
         return 0;
@@ -58,20 +59,26 @@ static int params_to_key(RSA *rsa, const OSSL_PARAM params[])
         || (param_d != NULL && !OSSL_PARAM_get_BN(param_d, &d)))
         goto err;
 
+    is_private = (d != NULL);
+
     if (!RSA_set0_key(rsa, n, e, d))
         goto err;
     n = e = d = NULL;
 
-    if (!collect_numbers(factors = sk_BIGNUM_new_null(), params,
-                         OSSL_PKEY_PARAM_RSA_FACTOR)
-        || !collect_numbers(exps = sk_BIGNUM_new_null(), params,
-                            OSSL_PKEY_PARAM_RSA_EXPONENT)
-        || !collect_numbers(coeffs = sk_BIGNUM_new_null(), params,
-                            OSSL_PKEY_PARAM_RSA_COEFFICIENT))
-        goto err;
+    if (is_private) {
+        if (!collect_numbers(factors = sk_BIGNUM_new_null(), params,
+                             OSSL_PKEY_PARAM_RSA_FACTOR)
+            || !collect_numbers(exps = sk_BIGNUM_new_null(), params,
+                                OSSL_PKEY_PARAM_RSA_EXPONENT)
+            || !collect_numbers(coeffs = sk_BIGNUM_new_null(), params,
+                                OSSL_PKEY_PARAM_RSA_COEFFICIENT))
+            goto err;
 
-    if (!RSA_set0_all_params(rsa, factors, exps, coeffs))
-        goto err;
+        /* It's ok if this private key just has n, e and d */
+        if (sk_BIGNUM_num(factors) != 0
+            && !RSA_set0_all_params(rsa, factors, exps, coeffs))
+            goto err;
+    }
 
     sk_BIGNUM_free(factors);
     sk_BIGNUM_free(exps);
@@ -106,7 +113,11 @@ static int export_numbers(OSSL_PARAM params[], const char *key,
             return 0;
     }
 
-    return i;
+    /*
+     * If we didn't export the amount of numbers we have, the caller didn't
+     * specify enough OSSL_PARAM entries named |key|.
+     */
+    return i == nnum;
 }
 
 static int key_to_params(RSA *rsa, OSSL_PARAM params[])
@@ -134,9 +145,6 @@ static int key_to_params(RSA *rsa, OSSL_PARAM params[])
         && !OSSL_PARAM_set_BN(p, rsa_d))
         goto err;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_PARAMS_NUM)) != NULL
-        && !OSSL_PARAM_set_uint(p, sk_BIGNUM_const_num(factors)))
-        goto err;
     if (!export_numbers(params, OSSL_PKEY_PARAM_RSA_FACTOR, factors)
         || !export_numbers(params, OSSL_PKEY_PARAM_RSA_EXPONENT, exps)
         || !export_numbers(params, OSSL_PKEY_PARAM_RSA_COEFFICIENT, coeffs))
@@ -166,12 +174,75 @@ static int rsa_exportkey(void *key, OSSL_PARAM params[])
 {
     RSA *rsa = key;
 
-    return rsa != NULL && !key_to_params(rsa, params);
+    return rsa != NULL && key_to_params(rsa, params);
+}
+
+/*
+ * This provider can export everything in an RSA key, so we use the exact
+ * same type description for export as for import.  Other providers might
+ * choose to import full keys, but only export the public parts, and will
+ * therefore have the importkey_types and importkey_types functions return
+ * different arrays.
+ */
+const OSSL_PARAM rsa_key_types[] = {
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_N, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_D, NULL, 0),
+    /* We tolerate up to 10 factors... */
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
+    /* ..., up to 10 CRT exponents... */
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
+    /* ..., and up to 9 CRT coefficients */
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+};
+/*
+ * We lied about the amount of factors, exponents and coefficients, the
+ * export and import functions can really deal with an infinite amount
+ * of these numbers.  However, RSA keys with too many primes are futile,
+ * so we at least pretend to have some limits.
+ */
+
+static const OSSL_PARAM *rsa_exportkey_types(void)
+{
+    return rsa_key_types;
+}
+
+static const OSSL_PARAM *rsa_importkey_types(void)
+{
+    return rsa_key_types;
 }
 
 const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))rsa_importkey },
+    { OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES, (void (*)(void))rsa_importkey_types },
     { OSSL_FUNC_KEYMGMT_EXPORTKEY, (void (*)(void))rsa_exportkey },
+    { OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES, (void (*)(void))rsa_exportkey_types },
     { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))RSA_free },
     { 0, NULL }
 };

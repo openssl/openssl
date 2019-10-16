@@ -1107,9 +1107,6 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
             goto err;
-        if (!ossl_param_bld_push_size_t(&tmpl, OSSL_PKEY_PARAM_RSA_PARAMS_NUM,
-                                        (size_t)numprimes))
-            goto err;
 
         for (i = 0; i < numprimes; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
