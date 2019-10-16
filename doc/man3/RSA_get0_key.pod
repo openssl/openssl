@@ -119,11 +119,13 @@ this RSA object, or NULL if no such ENGINE has been set.
 
 RSA_set0_all_params() sets all primes, CRT exponents and CRT coefficients
 in the B<RSA> object I<r> to the contents of the stacks of BIGNUMs I<primes>,
-I<exps> and I<coeffs>.
+I<exps> and I<coeffs>.  The B<RSA> object takes ownership of the BIGNUMs,
+but not of the stacks.
 
 RSA_get0_all_params() gets all primes, CRT exponents and CRT coefficients
 in the B<RSA> object I<r> and pushes them on the stacks of constant BIGNUMs
-I<primes>, I<exps> and I<coeffs>.
+I<primes>, I<exps> and I<coeffs>.  The B<RSA> object takes ownership of the
+BIGNUMs, but not of the stacks.
 
 RSA_get_version() returns the version of an RSA object B<r>.
 
