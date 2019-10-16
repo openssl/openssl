@@ -56,7 +56,8 @@ IF[{- !$disabled{tests} -}]
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
           sysdefaulttest errtest gosttest \
-          context_internal_test aesgcmtest params_test evp_pkey_dparams_test
+          context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
+          keymgmt_internal_test
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include ../apps/include
@@ -588,6 +589,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[asn1_dsa_internal_test]=asn1_dsa_internal_test.c
     INCLUDE[asn1_dsa_internal_test]=.. ../include ../apps/include ../crypto/include
     DEPEND[asn1_dsa_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[keymgmt_internal_test]=keymgmt_internal_test.c
+    INCLUDE[keymgmt_internal_test]=.. ../include ../apps/include
+    DEPEND[keymgmt_internal_test]=../libcrypto.a libtestutil.a
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]
