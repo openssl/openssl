@@ -295,6 +295,12 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "RC2-CFB", "default=yes", rc2128cfb128_functions },
     { "RC2-OFB", "default=yes", rc2128ofb128_functions },
 #endif /* OPENSSL_NO_RC2 */
+#ifndef OPENSSL_NO_CHACHA
+    { "ChaCha20", "default=yes", chacha20_functions },
+# ifndef OPENSSL_NO_POLY1305
+    { "ChaCha20-Poly1305", "default=yes", chacha20_poly1305_functions },
+# endif /* OPENSSL_NO_POLY1305 */
+#endif /* OPENSSL_NO_CHACHA */
     { NULL, NULL, NULL }
 };
 

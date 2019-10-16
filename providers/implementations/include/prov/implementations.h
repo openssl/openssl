@@ -203,6 +203,13 @@ extern const OSSL_DISPATCH des_cfb8_functions[];
 extern const OSSL_DISPATCH rc440_functions[];
 extern const OSSL_DISPATCH rc4128_functions[];
 #endif /* OPENSSL_NO_RC4 */
+#ifndef OPENSSL_NO_CHACHA
+extern const OSSL_DISPATCH chacha20_functions[];
+# ifndef OPENSSL_NO_POLY1305
+extern const OSSL_DISPATCH chacha20_poly1305_functions[];
+# endif /* OPENSSL_NO_POLY1305 */
+#endif /* OPENSSL_NO_CHACHA */
+
 
 /* MACs */
 extern const OSSL_DISPATCH blake2bmac_functions[];
