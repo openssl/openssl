@@ -255,37 +255,38 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 $config{perlargv} = [ @argvcopy ];
 
 # Collect version numbers
-$config{major} = "unknown";
-$config{minor} = "unknown";
-$config{patch} = "unknown";
-$config{prerelease} = "";
-$config{build_metadata} = "";
-$config{shlib_version} = "unknown";
+my %version = ();
 
 collect_information(
-    collect_from_file(catfile($srcdir,'include/openssl/opensslv.h')),
-    qr/#\s+define\s+OPENSSL_VERSION_MAJOR\s+(\d+)/ =>
-        sub { $config{major} = $1; },
-    qr/#\s+define\s+OPENSSL_VERSION_MINOR\s+(\d+)/ =>
-        sub { $config{minor} = $1; },
-    qr/#\s+define\s+OPENSSL_VERSION_PATCH\s+(\d+)/ =>
-        sub { $config{patch} = $1; },
-    qr/#\s+define\s+OPENSSL_VERSION_PRE_RELEASE\s+"((?:\\.|[^"])*)"/ =>
-        sub { $config{prerelease} = $1; },
-    qr/#\s+define\s+OPENSSL_VERSION_BUILD_METADATA\s+"((?:\\.|[^"])*)"/ =>
-        sub { $config{build_metadata} = $1; },
-    qr/#\s+define\s+OPENSSL_SHLIB_VERSION\s+([\d\.]+)/ =>
-        sub { $config{shlib_version} = $1; },
+    collect_from_file(catfile($srcdir,'VERSION')),
+    qr/\s*(\w+)\s*=\s*(.*?)\s*$/ =>
+        sub {
+            # Only define it if there is a value at all
+            $version{uc $1} = $2 if $2 ne '';
+        },
+    "OTHERWISE" =>
+        sub { die "Something wrong with this line:\n$_\nin $srcdir/VERSION" },
     );
-die "erroneous version information in opensslv.h: ",
-    "$config{major}.$config{minor}.$config{patch}, $config{shlib_version}\n"
-    if ($config{major} eq "unknown"
-            || $config{minor} eq "unknown"
-            || $config{patch} eq "unknown"
-            || $config{shlib_version} eq "unknown");
+
+$config{major} = $version{MAJOR} // 'unknown';
+$config{minor} = $version{MINOR} // 'unknown';
+$config{patch} = $version{PATCH} // 'unknown';
+$config{prerelease} =
+    defined $version{PRE_RELEASE_TAG} ? "-$version{PRE_RELEASE_TAG}" : '';
+$config{build_metadata} =
+    defined $version{BUILD_METADATA} ? "+$version{BUILD_METADATA}" : '';
+$config{shlib_version} = $version{SHLIB_VERSION} // 'unknown';
+$config{release_date} = $version{RELEASE_DATE} // 'xx XXX xxxx';
 
 $config{version} = "$config{major}.$config{minor}.$config{patch}";
 $config{full_version} = "$config{version}$config{prerelease}$config{build_metadata}";
+
+die "erroneous version information in VERSION: ",
+    "$config{version}, $config{shlib_version}\n"
+    unless (defined $version{MAJOR}
+            && defined $version{MINOR}
+            && defined $version{PATCH}
+            && defined $version{SHLIB_VERSION});
 
 # Collect target configurations
 
