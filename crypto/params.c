@@ -776,6 +776,9 @@ static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
     if (used_len != NULL)
         *used_len = sz;
 
+    if (sz == 0)
+        return 1;
+
     if (*val == NULL) {
         char *const q = OPENSSL_malloc(sz);
 
