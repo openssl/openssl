@@ -33,6 +33,7 @@ static void tear_down(FIXTURE *fixture)
         OSSL_PROVIDER_unload(fixture->prov2);
         OPENSSL_CTX_free(fixture->ctx1);
         OPENSSL_CTX_free(fixture->ctx2);
+        OPENSSL_free(fixture);
     }
 }
 
