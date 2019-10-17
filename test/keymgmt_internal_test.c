@@ -151,8 +151,8 @@ static int test_pass_rsa(FIXTURE *fixture)
         || !TEST_ptr_ne(km1, km2))
         goto err;
 
-    if (!TEST_ptr(evp_keymgmt_export_to_provider(pk, km1))
-        || !TEST_ptr(provdata = evp_keymgmt_export_to_provider(pk, km2)))
+    if (!TEST_ptr(evp_keymgmt_export_to_provider(pk, km1, 0))
+        || !TEST_ptr(provdata = evp_keymgmt_export_to_provider(pk, km2, 0)))
         goto err;
 
     if (!TEST_true(evp_keymgmt_exportkey(km2, provdata, params)))
