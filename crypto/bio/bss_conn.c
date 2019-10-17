@@ -411,7 +411,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                     OPENSSL_free(hold_service);
             } else if (num == 1) {
                 OPENSSL_free(data->param_service);
-                data->param_service = BUF_strdup(ptr);
+                data->param_service = OPENSSL_strdup(ptr);
             } else if (num == 2) {
                 const BIO_ADDR *addr = (const BIO_ADDR *)ptr;
                 if (ret) {

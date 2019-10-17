@@ -1010,7 +1010,7 @@ int s_server_main(int argc, char *argv[])
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int state = 0, crl_format = FORMAT_PEM, crl_download = 0;
     char *host = NULL;
-    char *port = BUF_strdup(PORT);
+    char *port = OPENSSL_strdup(PORT);
     unsigned char *context = NULL;
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
@@ -1159,7 +1159,7 @@ int s_server_main(int argc, char *argv[])
 #ifdef AF_UNIX
         case OPT_UNIX:
             socket_family = AF_UNIX;
-            OPENSSL_free(host); host = BUF_strdup(opt_arg());
+            OPENSSL_free(host); host = OPENSSL_strdup(opt_arg());
             OPENSSL_free(port); port = NULL;
             break;
         case OPT_UNLINK:

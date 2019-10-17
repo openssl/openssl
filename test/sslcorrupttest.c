@@ -41,7 +41,7 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
     char *copy;
 
     if (docorrupt) {
-        if (!TEST_ptr(copy = BUF_memdup(in, inl)))
+        if (!TEST_ptr(copy = OPENSSL_memdup(in, inl)))
             return 0;
         /* corrupt last bit of application data */
         copy[inl-1] ^= 1;
