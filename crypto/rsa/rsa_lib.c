@@ -656,12 +656,12 @@ int RSA_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
             BIGNUM *prime = sk_BIGNUM_value(primes, i);
             BIGNUM *exp = sk_BIGNUM_value(exps, i);
             BIGNUM *coeff = sk_BIGNUM_value(coeffs, i - 1);
-            /* Using rsa_multip_info_new() is wasteful, so allocate directly */
             RSA_PRIME_INFO *pinfo = NULL;
 
             if (!ossl_assert(prime != NULL && exp != NULL && coeff != NULL))
                 goto err;
 
+            /* Using rsa_multip_info_new() is wasteful, so allocate directly */
             if ((pinfo = OPENSSL_zalloc(sizeof(*pinfo))) == NULL) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
                 goto err;
