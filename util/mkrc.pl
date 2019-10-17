@@ -11,8 +11,8 @@ use warnings;
 use lib ".";
 use configdata;
 
-my $cversion = "$config{major},$config{minor},$config{patch}";
-my $version = "$config{major}.$config{minor}.$config{patch}$config{prerelease}$config{build_metadata}";
+my $cversion = "$config{version}";
+my $version = "$config{full_version}";
 
 my $filename = $ARGV[0];
 my $description = "OpenSSL library";
