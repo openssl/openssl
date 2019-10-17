@@ -9,9 +9,11 @@ DEPEND[libssl]=libcrypto
 
 # Empty DEPEND "indices" means the dependencies are expected to be built
 # unconditionally before anything else.
-DEPEND[]=include/openssl/opensslconf.h include/crypto/bn_conf.h \
-         include/crypto/dso_conf.h doc/man7/openssl_user_macros.pod
+DEPEND[]=include/openssl/opensslconf.h include/openssl/opensslv.h \
+         include/crypto/bn_conf.h include/crypto/dso_conf.h \
+         doc/man7/openssl_user_macros.pod
 GENERATE[include/openssl/opensslconf.h]=include/openssl/opensslconf.h.in
+GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 GENERATE[doc/man7/openssl_user_macros.pod]=doc/man7/openssl_user_macros.pod.in
