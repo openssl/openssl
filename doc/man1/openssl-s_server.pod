@@ -327,10 +327,15 @@ A file containing trusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
 
-=item B<-dcertform> B<DER>|B<PEM>, B<-dkeyform> B<DER>|B<PEM>, B<-dpass> I<val>
+=item B<-dcertform> B<DER>|B<PEM>, B<-dkeyform> B<DER>|B<PEM>
 
-The format of the certificate, private key, and passphrase for the
-additional cert; the default format is B<PEM>.
+The format of the certificate and private key; the default is B<PEM>
+see L<openssl(1)/Format Options>.
+
+=item B<-dpass> I<val>
+
+The passphrase for the additional private key.
+For more information about the format of B<val>
 see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-xkey> I<infile>, B<-xcert> I<infile>, B<-xchain>

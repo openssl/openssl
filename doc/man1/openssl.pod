@@ -527,16 +527,16 @@ described below. Both uppercase and lowercase are accepted.
 
 =item B<DER>
 
-A binary format, encoded parsed to the ASN.1 Distinguished Encoding Rules
+A binary format, encoded or parsed according to Distinguished Encoding Rules
 (DER) of the ASN.1 data language.
 
 =item B<ENGINE>
 
 Used to specify that the cryptographic material is in an OpenSSL B<engine>.
-An engine must be configured or specified using the B<-engine> option,
-and the "filename," such as might be specified with the B<-input> option,
-names the object within the engine. A password, such as the B<-passin> flag
-often must be specified as well.
+An engine must be configured or specified using the B<-engine> option.
+In addition, the B<-input> flag can be used to name a specific object in
+the engine.
+A password, such as the B<-passin> flag often must be specified as well.
 
 =item B<P12>
 
@@ -558,7 +558,7 @@ lines used to mark the start and end:
  ----- END object-type -----
  Text after the END line is also ignored
 
-The B<object-type> must match the type of object that is expected.
+The I<object-type> must match the type of object that is expected.
 For example a C<BEGIN X509 CERTIFICATE> will not match if the command
 is trying to read a private key. The types supported include:
 
@@ -584,7 +584,7 @@ is trying to read a private key. The types supported include:
  X509 CRL
  X9.42 DH PARAMETERS
 
-The following legacy B<object-type>'s are also supported for compatibility
+The following legacy I<object-type>'s are also supported for compatibility
 with earlier releases:
 
  DSA PRIVATE KEY

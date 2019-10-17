@@ -376,7 +376,7 @@ See L<openssl(1)/Format Options> for details.
 
 =item B<-CAform> B<DER>|B<PEM>, B<-CAkeyform> B<DER>|B<PEM>
 
-The format for the CA certificate and key; the defaul is B<PEM>.
+The format for the CA certificate and key; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-days> I<arg>
