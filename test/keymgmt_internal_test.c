@@ -98,17 +98,17 @@ static int test_pass_rsa(FIXTURE *fixture)
     };
     static unsigned long keydata[OSSL_NELEM(expected)] = { 0, };
     OSSL_PARAM params[] = {
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_N, &keydata[N]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_E, &keydata[E]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_D, &keydata[D]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_FACTOR, &keydata[P]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_FACTOR, &keydata[Q]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_FACTOR, &keydata[F3]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_EXPONENT, &keydata[DP]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_EXPONENT, &keydata[DQ]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_EXPONENT, &keydata[E3]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_COEFFICIENT, &keydata[QINV]),
-        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_COEFFICIENT, &keydata[C3]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_N, &keydata[N]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_E, &keydata[E]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_D, &keydata[D]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_FACTOR, &keydata[P]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_FACTOR, &keydata[Q]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_FACTOR, &keydata[F3]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_EXPONENT, &keydata[DP]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_EXPONENT, &keydata[DQ]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_EXPONENT, &keydata[E3]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_COEFFICIENT, &keydata[QINV]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_COEFFICIENT, &keydata[C3]),
         OSSL_PARAM_END
     };
 
