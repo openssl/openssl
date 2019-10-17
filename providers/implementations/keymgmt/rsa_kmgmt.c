@@ -184,7 +184,7 @@ static int rsa_exportkey(void *key, OSSL_PARAM params[])
  * therefore have the importkey_types and importkey_types functions return
  * different arrays.
  */
-const OSSL_PARAM rsa_key_types[] = {
+static const OSSL_PARAM rsa_key_types[] = {
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_N, NULL, 0),
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0),
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_D, NULL, 0),
