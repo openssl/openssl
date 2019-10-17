@@ -36,54 +36,23 @@ extern "C" {
 # define OPENSSL_VERSION_PATCH  {- $config{patch} -}
 
 /*
- * Additional version information, defined only when used.
+ * Additional version information
  *
  * These are also part of the new version scheme, but aren't part
  * of the version number itself.
  */
 
 /* Could be: #define OPENSSL_VERSION_PRE_RELEASE "-alpha.1" */
-{- $config{prerelease}
-    ? << "_____"
-# define OPENSSL_VERSION_PRE_RELEASE "$config{prerelease}"
-_____
-    : << "_____"
-# undef OPENSSL_VERSION_PRE_RELEASE
-_____
--}
+# define OPENSSL_VERSION_PRE_RELEASE "{- $config{prerelease} -}"
 /* Could be: #define OPENSSL_VERSION_BUILD_METADATA "+fips" */
 /* Could be: #define OPENSSL_VERSION_BUILD_METADATA "+vendor.1" */
-{- $build_metadata
-    ? << "_____"
 # define OPENSSL_VERSION_BUILD_METADATA "{- $config{build_metadata} -}"
-_____
-    : << "_____"
-# undef OPENSSL_VERSION_BUILD_METADATA
-_____
--}
 
 /*
- * Note: OPENSSL_VERSION_BUILD_METADATA will never be defined by
- * the OpenSSL Project, it's entirely reserved for others vendors
+ * Note: The OpenSSL Project will never define OPENSSL_VERSION_BUILD_METADATA
+ * to be anything but the empty string.  Its use is entirely reserved for
+ * others vendors
  */
-
-/*
- * Absolute string versions of OPENSSL_VERSION_PRE_RELEASE and
- * OPENSSL_VERSION_BUILD_METADATA.  As opposed to those, which
- * may be undefined, these are guaranteed to have strings as
- * values.
- */
-
-# ifdef OPENSSL_VERSION_PRE_RELEASE
-#  define OPENSSL_VERSION_PRE_RELEASE_STR OPENSSL_VERSION_PRE_RELEASE
-# else
-#  define OPENSSL_VERSION_PRE_RELEASE_STR ""
-# endif
-# ifdef OPENSSL_VERSION_BUILD_METADATA
-#  define OPENSSL_VERSION_BUILD_METADATA_STR OPENSSL_VERSION_BUILD_METADATA
-# else
-#  define OPENSSL_VERSION_BUILD_METADATA_STR ""
-# endif
 
 /*
  * Shared library version
@@ -95,7 +64,7 @@ _____
 # define OPENSSL_SHLIB_VERSION {- $config{shlib_version} -}
 
 /*
- * SECTION 2: USEFUL MACROS AND FUNCTIONS
+ * SECTION 2: USEFUL MACROS
  */
 
 /* For checking general API compatibility when preprocessing */
@@ -118,11 +87,13 @@ _____
  * These strings are defined separately to allow them to be parsable.
  */
 # define OPENSSL_RELEASE_DATE "{- $config{release_date} -}"
-# define OPENSSL_VERSION_TEXT "OpenSSL {- "$config{full_version} $config{release_date}" -}"
 
 /*
  * SECTION 4: BACKWARD COMPATIBILITY
  */
+
+# define OPENSSL_VERSION_TEXT "OpenSSL {- "$config{full_version} $config{release_date}" -}"
+
 /* Synthesize OPENSSL_VERSION_NUMBER with the layout 0xMNN00PPSL */
 # ifdef OPENSSL_VERSION_PRE_RELEASE
 #  define _OPENSSL_VERSION_PRE_RELEASE 0x0

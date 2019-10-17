@@ -4,7 +4,6 @@
 
 OPENSSL_VERSION_MAJOR, OPENSSL_VERSION_MINOR, OPENSSL_VERSION_PATCH,
 OPENSSL_VERSION_PRE_RELEASE, OPENSSL_VERSION_BUILD_METADATA,
-OPENSSL_VERSION_PRE_RELEASE_STR, OPENSSL_VERSION_BUILD_METADATA_STR,
 OPENSSL_VERSION_TEXT,
 OPENSSL_version_major, OPENSSL_version_minor, OPENSSL_version_patch,
 OPENSSL_version_pre_release, OPENSSL_version_build_metadata, OpenSSL_version,
@@ -20,10 +19,8 @@ OPENSSL_VERSION_NUMBER, OpenSSL_version_num, OPENSSL_info
  #define OPENSSL_VERSION_PATCH  z
 
  /* The definitions here are typical release values */
- #undef OPENSSL_VERSION_PRE_RELEASE
- #undef OPENSSL_VERSION_BUILD_METADATA
- #define OPENSSL_VERSION_PRE_RELEASE_STR ""
- #define OPENSSL_VERSION_BUILD_METADATA_STR ""
+ #define OPENSSL_VERSION_PRE_RELEASE ""
+ #define OPENSSL_VERSION_BUILD_METADATA ""
 
  #define OPENSSL_VERSION_TEXT "OpenSSL x.y.z xx XXX xxxx"
 
@@ -55,15 +52,14 @@ The three macros B<OPENSSL_VERSION_MAJOR>, B<OPENSSL_VERSION_MINOR> and
 B<OPENSSL_VERSION_PATCH> represent the three parts of a version
 identifier, B<I<MAJOR>.I<MINOR>.I<PATCH>>.
 
-The macro B<OPENSSL_VERSION_PRE_RELEASE> is an added bit of text that,
-when defined, indicates that this is a pre-release version, such as
-C<"-dev"> for an ongoing development snapshot or C<"-alpha3"> for an
-alpha release.
+The macro B<OPENSSL_VERSION_PRE_RELEASE> is an added bit of text that
+indicates that this is a pre-release version, such as C<"-dev"> for an
+ongoing development snapshot or C<"-alpha3"> for an alpha release.
 The value must be a string.
 
 The macro B<OPENSSL_VERSION_BUILD_METADATA> is extra information, reserved
-for other parties, such as C<"+fips">, or C<"+vendor.1">.
-The OpenSSL project will not touch this macro.
+for other parties, such as C<"+fips">, or C<"+vendor.1">).
+The OpenSSL project will not touch this macro (will leave it an empty string).
 The value must be a string.
 
 B<OPENSSL_VERSION_STR> is a convenience macro to get the short version
