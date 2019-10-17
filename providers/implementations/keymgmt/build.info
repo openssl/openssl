@@ -11,6 +11,4 @@ ENDIF
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa_kmgmt.c
 ENDIF
-IF[{- !$disabled{rsa} -}]
-  SOURCE[$DSA_GOAL]=rsa_kmgmt.c
-ENDIF
+SOURCE[$RSA_GOAL]=rsa_kmgmt.c
