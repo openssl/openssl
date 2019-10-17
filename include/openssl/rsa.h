@@ -203,9 +203,6 @@ extern "C" {
 # define RSA_set_app_data(s,arg)         RSA_set_ex_data(s,0,arg)
 # define RSA_get_app_data(s)             RSA_get_ex_data(s,0)
 
-/* Pre-declare for those who need it */
-STACK_OF(BIGNUM);
-
 RSA *RSA_new(void);
 RSA *RSA_new_method(ENGINE *engine);
 int RSA_bits(const RSA *rsa);
