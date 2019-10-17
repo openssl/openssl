@@ -73,6 +73,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_MODE                              125
 # define PROV_R_INVALID_MODE_INT                          126
 # define PROV_R_INVALID_SALT_LENGTH                       112
+# define PROV_R_INVALID_SEED_LENGTH                       154
 # define PROV_R_INVALID_TAG                               110
 # define PROV_R_INVALID_TAGLEN                            118
 # define PROV_R_MISSING_CEK_ALG                           144

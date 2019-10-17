@@ -214,7 +214,7 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  (char *)mdname, 0);
     if (ciphername != NULL)
-        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                                  (char *)ciphername, 0);
     if (properties != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
