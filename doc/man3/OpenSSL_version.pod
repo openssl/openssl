@@ -27,13 +27,13 @@ OPENSSL_VERSION_NUMBER, OpenSSL_version_num, OPENSSL_info
 
  #define OPENSSL_VERSION_TEXT "OpenSSL x.y.z xx XXX xxxx"
 
+ #include <openssl/crypto.h>
+
  unsigned int OPENSSL_version_major(void);
  unsigned int OPENSSL_version_minor(void);
  unsigned int OPENSSL_version_patch(void);
  const char *OPENSSL_version_pre_release(void);
  const char *OPENSSL_version_build_metadata(void);
-
- #include <openssl/crypto.h>
 
  const char *OpenSSL_version(int t);
 
