@@ -38,7 +38,8 @@ IF[{- !$disabled{tests} -}]
           destest mdc2test \
           dhtest enginetest casttest \
           bftest ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
-          evp_test evp_extra_test evp_fetch_prov_test igetest v3nametest v3ext \
+          evp_fromdata_test evp_test evp_extra_test evp_fetch_prov_test \
+          igetest v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
           constant_time_test verify_extra_test clienthellotest \
@@ -203,6 +204,10 @@ IF[{- !$disabled{tests} -}]
   IF[{- $disabled{fips} || !$target{dso_scheme} -}]
     DEFINE[evp_extra_test]=NO_FIPS_MODULE
   ENDIF
+
+  SOURCE[evp_fromdata_test]=evp_fromdata_test.c
+  INCLUDE[evp_fromdata_test]=../include ../apps/include
+  DEPEND[evp_fromdata_test]=../libcrypto libtestutil.a
 
   SOURCE[igetest]=igetest.c
   INCLUDE[igetest]=../include ../apps/include
