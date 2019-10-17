@@ -19,7 +19,9 @@
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 # if __GLIBC_PREREQ(2, 16)
 #  include <sys/auxv.h>
-#  define OSSL_IMPLEMENT_GETAUXVAL
+#  if defined(HWCAP_S390_STFLE) && defined(HWCAP_S390_VX)
+#   define OSSL_IMPLEMENT_GETAUXVAL
+#  endif
 # endif
 #endif
 
@@ -82,9 +84,7 @@ void OPENSSL_cpuid_setup(void)
     /* set a bit that will not be tested later */
     OPENSSL_s390xcap_P.stfle[0] |= S390X_CAPBIT(0);
 
-#if defined(OSSL_IMPLEMENT_GETAUXVAL) \
-    && defined(HWCAP_S390_STFLE) \
-    && defined(HWCAP_S390_VX)
+#if defined(OSSL_IMPLEMENT_GETAUXVAL)
     {
         const unsigned long hwcap = getauxval(AT_HWCAP);
 
