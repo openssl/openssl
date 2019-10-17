@@ -525,7 +525,7 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
  * inputs to an odd value. Then it proceeds to calculate the GCD.
  * Before returning the resulting GCD, we take care of adding
  * back the powers of two removed at the beginning.
- * Note: we assume the bit length of both inputs is public information,
+ * Note 1: we assume the bit length of both inputs is public information,
  * since access to top potentially leaks this information.
  */
 int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
@@ -534,7 +534,9 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     BN_ULONG mask = 0;
     int i, j, top, rlen, glen, m, bit = 1, delta = 1, cond = 0, shifts = 0, ret = 0;
 
-    /* handle corner cases immediately */
+    /* Note 2: zero input corner cases are not constant-time since they are
+     * handled immediately. An attacker can run an attack under this
+     * assumption without the need of side-channel information. */
     if (BN_is_zero(in_b)) {
         ret = BN_copy(r, in_a) != NULL;
         r->neg = 0;
