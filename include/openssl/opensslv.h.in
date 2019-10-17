@@ -103,17 +103,6 @@ _____
     ((OPENSSL_VERSION_MAJOR << 16) + OPENSSL_VERSION_MINOR >= ((maj) << 16) + (min))
 
 /*
- * These return the values of OPENSSL_VERSION_MAJOR, OPENSSL_VERSION_MINOR,
- * OPENSSL_VERSION_PATCH, OPENSSL_VERSION_PRE_RELEASE and
- * OPENSSL_VERSION_BUILD_METADATA, respectively.
- */
-unsigned int OPENSSL_version_major(void);
-unsigned int OPENSSL_version_minor(void);
-unsigned int OPENSSL_version_patch(void);
-const char *OPENSSL_version_pre_release(void);
-const char *OPENSSL_version_build_metadata(void);
-
-/*
  * Macros to get the version in easily digested string form, both the short
  * "MAJOR.MINOR.PATCH" variant (where MAJOR, MINOR and PATCH are replaced
  * with the values from the corresponding OPENSSL_VERSION_ macros) and the
