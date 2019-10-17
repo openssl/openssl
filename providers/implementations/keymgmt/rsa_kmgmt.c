@@ -14,6 +14,7 @@
 #include <openssl/params.h>
 #include <openssl/types.h>
 #include "prov/implementations.h"
+#include "crypto/rsa.h"
 
 static OSSL_OP_keymgmt_importkey_fn rsa_importkey;
 static OSSL_OP_keymgmt_exportkey_fn rsa_exportkey;
@@ -76,7 +77,7 @@ static int params_to_key(RSA *rsa, const OSSL_PARAM params[])
 
         /* It's ok if this private key just has n, e and d */
         if (sk_BIGNUM_num(factors) != 0
-            && !RSA_set0_all_params(rsa, factors, exps, coeffs))
+            && !rsa_set0_all_params(rsa, factors, exps, coeffs))
             goto err;
     }
 
@@ -133,7 +134,7 @@ static int key_to_params(RSA *rsa, OSSL_PARAM params[])
         goto err;
 
     RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
-    RSA_get0_all_params(rsa, factors, exps, coeffs);
+    rsa_get0_all_params(rsa, factors, exps, coeffs);
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_N)) != NULL
         && !OSSL_PARAM_set_BN(p, rsa_n))

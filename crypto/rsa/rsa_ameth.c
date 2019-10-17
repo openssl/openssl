@@ -17,6 +17,7 @@
 #include "internal/param_build.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/rsa.h"
 #include "rsa_local.h"
 
 #ifndef OPENSSL_NO_CMS
@@ -1054,7 +1055,8 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
-static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
+static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
+                                int want_domainparams)
 {
     RSA *rsa = pk->pkey.rsa;
     OSSL_PARAM_BLD tmpl;
@@ -1065,13 +1067,20 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     OSSL_PARAM *params = NULL;
     void *provkey = NULL;
 
+    /*
+     * There are no domain parameters for RSA keys, or rather, they are
+     * included in the key data itself.
+     */
+    if (want_domainparams)
+        goto err;
+
     /* Get all the primes and CRT params */
     if ((primes = sk_BIGNUM_const_new_null()) == NULL
         || (exps = sk_BIGNUM_const_new_null()) == NULL
         || (coeffs = sk_BIGNUM_const_new_null()) == NULL)
         goto err;
 
-    if (!RSA_get0_all_params(rsa, primes, exps, coeffs))
+    if (!rsa_get0_all_params(rsa, primes, exps, coeffs))
         goto err;
 
     /* Public parameters must always be present */
