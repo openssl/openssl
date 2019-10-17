@@ -9,8 +9,7 @@ RSA_get0_dmp1, RSA_get0_dmq1, RSA_get0_iqmp,
 RSA_clear_flags,
 RSA_test_flags, RSA_set_flags, RSA_get0_engine, RSA_get_multi_prime_extra_count,
 RSA_get0_multi_prime_factors, RSA_get0_multi_prime_crt_params,
-RSA_set0_multi_prime_params, RSA_get_version,
-RSA_set0_all_params, RSA_get0_all_params
+RSA_set0_multi_prime_params, RSA_get_version
 - Routines for getting and setting data in an RSA object
 
 =head1 SYNOPSIS
@@ -44,12 +43,6 @@ RSA_set0_all_params, RSA_get0_all_params
                                      const BIGNUM *coeffs[]);
  int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
                                 BIGNUM *coeffs[], int pnum);
- int RSA_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
-                         STACK_OF(BIGNUM_const) *exps,
-                         STACK_OF(BIGNUM_const) *coeffs);
- int RSA_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
-                         const STACK_OF(BIGNUM) *exps,
-                         const STACK_OF(BIGNUM) *coeffs);
  int RSA_get_version(RSA *r);
 
 =head1 DESCRIPTION
@@ -117,16 +110,6 @@ RSA object.
 RSA_get0_engine() returns a handle to the ENGINE that has been set for
 this RSA object, or NULL if no such ENGINE has been set.
 
-RSA_set0_all_params() sets all primes, CRT exponents and CRT coefficients
-in the B<RSA> object I<r> to the contents of the stacks of BIGNUMs I<primes>,
-I<exps> and I<coeffs>.  The B<RSA> object takes ownership of the BIGNUMs,
-but not of the stacks.
-
-RSA_get0_all_params() gets all primes, CRT exponents and CRT coefficients
-in the B<RSA> object I<r> and pushes them on the stacks of constant BIGNUMs
-I<primes>, I<exps> and I<coeffs>.  The B<RSA> object retains ownership of the
-BIGNUMs, but not of the stacks.
-
 RSA_get_version() returns the version of an RSA object B<r>.
 
 =head1 NOTES
@@ -143,30 +126,6 @@ calling RSA_get0_multi_prime_factors() and RSA_get0_multi_prime_params().
 
 RSA_set0_multi_prime_params() always clears the original multi-prime
 triplets in RSA object B<r> and assign the new set of triplets into it.
-
-For RSA_set0_all_params() and RSA_get0_all_params():
-
-=over 4
-
-=item *
-
-the I<primes> stack contains I<p>, I<q>, and then the rest of the primes
-if the B<RSA> object is a multi-prime RSA key.
-
-=item *
-
-the I<exps> stack contains I<dP>, I<dQ>, and then the rest of the exponents
-if the B<RSA> object is a multi-prime RSA key.
-
-=item *
-
-the I<coeffs> stack contains I<qInv>, and then the rest of the coefficients
-if the B<RSA> object is a multi-prime RSA key.
-
-=back
-
-The number of primes must always be equal to the number of exponents, and
-the number of coefficients must be one less than the number of primes.
 
 =head1 RETURN VALUES
 

@@ -214,9 +214,6 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
 int RSA_set0_crt_params(RSA *r,BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
 int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
                                 BIGNUM *coeffs[], int pnum);
-int RSA_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
-                        const STACK_OF(BIGNUM) *exps,
-                        const STACK_OF(BIGNUM) *coeffs);
 void RSA_get0_key(const RSA *r,
                   const BIGNUM **n, const BIGNUM **e, const BIGNUM **d);
 void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q);
@@ -227,9 +224,6 @@ void RSA_get0_crt_params(const RSA *r,
                          const BIGNUM **iqmp);
 int RSA_get0_multi_prime_crt_params(const RSA *r, const BIGNUM *exps[],
                                     const BIGNUM *coeffs[]);
-int RSA_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
-                        STACK_OF(BIGNUM_const) *exps,
-                        STACK_OF(BIGNUM_const) *coeffs);
 const BIGNUM *RSA_get0_n(const RSA *d);
 const BIGNUM *RSA_get0_e(const RSA *d);
 const BIGNUM *RSA_get0_d(const RSA *d);

@@ -4850,5 +4850,3 @@ EVP_KEYMGMT_number                      4966	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_number                      4967	3_0_0	EXIST::FUNCTION:
 EVP_KDF_number                          4968	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_number                    4969	3_0_0	EXIST::FUNCTION:
-RSA_set0_all_params                     4970	3_0_0	EXIST::FUNCTION:RSA
-RSA_get0_all_params                     4971	3_0_0	EXIST::FUNCTION:RSA
