@@ -14,6 +14,9 @@ use configdata;
 my $cversion = "$config{version}";
 my $version = "$config{full_version}";
 
+# RC syntax for versions uses commas as separators, rather than period
+$cversion =~ s|\.|,|g;
+
 my $filename = $ARGV[0];
 my $description = "OpenSSL library";
 my $vft = "VFT_DLL";
