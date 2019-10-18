@@ -98,14 +98,14 @@ void cleanup_tests(void)
 int setup_tests(void)
 {
     /*-
-      this tests all of:
-      ossl_cmp_statusinfo_new()
-      ossl_cmp_pkisi_get_pkistatus()
-      ossl_cmp_PKIStatus_to_string()
-      ossl_cmp_pkisi_get0_statusstring()
-      ossl_cmp_pkisi_get_pkifailureinfo()
-      ossl_cmp_pkisi_pkifailureinfo_check()
-    */
+     * this tests all of:
+     * ossl_cmp_statusinfo_new()
+     * ossl_cmp_pkisi_get_pkistatus()
+     * ossl_cmp_PKIStatus_to_string()
+     * ossl_cmp_pkisi_get0_statusstring()
+     * ossl_cmp_pkisi_get_pkifailureinfo()
+     * ossl_cmp_pkisi_pkifailureinfo_check()
+     */
     ADD_TEST(test_PKISI);
     return 1;
 }
