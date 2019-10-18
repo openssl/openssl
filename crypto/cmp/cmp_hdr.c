@@ -209,6 +209,7 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
 {
     int i;
     OSSL_CMP_ITAV *itav;
+
     if (!ossl_assert(hdr != NULL))
         return 0;
 
