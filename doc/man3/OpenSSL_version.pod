@@ -57,8 +57,8 @@ number, B<MAJOR.MINOR.PATCH>.
 
 The macro B<OPENSSL_VERSION_PRE_RELEASE> is an added bit of text that,
 when defined, indicates that this is a pre-release version, such as
-C<"-dev"> for an ongoing development snapshot, C<"-alpha3"> for an
-alpha release, etc...
+C<"-dev"> for an ongoing development snapshot or C<"-alpha3"> for an
+alpha release.
 The value must be a string.
 
 The macro B<OPENSSL_VERSION_BUILD_METADATA> is extra information, reserved
@@ -102,33 +102,33 @@ The value of B<OPENSSL_FULL_VERSION_STR>
 =item OPENSSL_CFLAGS
 
 The compiler flags set for the compilation process in the form
-"compiler: ..."  if available, or "compiler: information not available"
+C<compiler: ...>  if available, or C<compiler: information not available>
 otherwise.
 
 =item OPENSSL_BUILT_ON
 
 The date of the build process in the form C<built on: ...> if available
 or C<built on: date not available> otherwise.
-The date would not be available in a  reproducible build, for example.
+The date would not be available in a reproducible build, for example.
 
 =item OPENSSL_PLATFORM
 
 The "Configure" target of the library build in the form C<platform: ...>
-if available, or "platform: information not available" otherwise.
+if available, or C<platform: information not available> otherwise.
 
 =item OPENSSL_DIR
 
-The "OPENSSLDIR" setting of the library build in the form C<OPENSSLDIR: "...">
-if available, or "OPENSSLDIR: N/A" otherwise.
+The B<OPENSSLDIR> setting of the library build in the form C<OPENSSLDIR: "...">
+if available, or C<OPENSSLDIR: N/A> otherwise.
 
 =item OPENSSL_ENGINES_DIR
 
-The "ENGINESDIR" setting of the library build in the form C<ENGINESDIR: "...">
-if available, or "ENGINESDIR: N/A" otherwise.
+The B<ENGINESDIR> setting of the library build in the form C<ENGINESDIR: "...">
+if available, or C<ENGINESDIR: N/A> otherwise.
 
 =item OPENSSL_MODULES_DIR
 
-The "MODULESDIR" setting of the library build in the form C<MODULESDIR: "...">
+The B<MODULESDIR> setting of the library build in the form C<MODULESDIR: "...">
 if available, or C<MODULESDIR: N/A> otherwise.
 
 =item OPENSSL_CPU_INFO
