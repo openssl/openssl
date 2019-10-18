@@ -62,7 +62,7 @@ The following items in %config from F<configdata.pm> are affected:
 
 =item $config{major}, $config{minor}, $config{patch}, $config{shlib_version}
 
-These items get theird values from B<MAJOR>, B<MINOR>, B<PATCH>, and
+These items get their values from B<MAJOR>, B<MINOR>, B<PATCH>, and
 B<SHLIB_VERSION>, respectively.
 
 =item $config{prerelease}
@@ -89,9 +89,47 @@ the string will be C<3.0.0>.
 =item $config{full_version}
 
 The fully loaded version number, a string composed from $config{version},
-$config{prerelease} and $config{build_metadata}.  For C<MAJOR=3>, C<MINOR=0>,
-C<PATCH=0>, B<PRE_RELEASE_TAG=dev>, B<BUILD_METADATA=>, the string will be
+$config{prerelease} and $config{build_metadata}.  See   See L</EXAMPLE> for
+a few examples.
+
+=back
+
+=head1 EXAMPLE
+
+=over 4
+
+=item 1.
+
+ MAJOR=3
+ MINOR=0
+ PATCH=0
+ PRE_RELEASE_TAG=dev
+ BUILD_METADATA=
+
+The fully loaded version number ($config{full_version}) will be
 C<3.0.0-dev>.
+
+=item 2.
+
+ MAJOR=3
+ MINOR=0
+ PATCH=0
+ PRE_RELEASE_TAG=
+ BUILD_METADATA=something
+
+The fully loaded version number ($config{full_version}) will be
+C<3.0.0+something>.
+
+=item 3.
+
+ MAJOR=3
+ MINOR=0
+ PATCH=0
+ PRE_RELEASE_TAG=alpha3
+ BUILD_METADATA=something
+
+The fully loaded version number ($config{full_version}) will be
+C<3.0.0-alpha3+something>.
 
 =back
 
