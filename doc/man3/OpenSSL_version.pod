@@ -52,8 +52,8 @@ Deprecated:
 =head2 Macros
 
 The three macros B<OPENSSL_VERSION_MAJOR>, B<OPENSSL_VERSION_MINOR> and
-B<OPENSSL_VERSION_PATCH> represent the three parts of a 3 numbered version
-number, MAJOR.MINOR.PATCH.
+B<OPENSSL_VERSION_PATCH> represent the three parts of a version
+number, B<MAJOR.MINOR.PATCH>.
 
 The macro B<OPENSSL_VERSION_PRE_RELEASE> is an added bit of text that,
 when defined, indicates that this is a pre-release version, such as
@@ -61,13 +61,13 @@ C<"-dev"> for an ongoing development snapshot, C<"-alpha3"> for an
 alpha release, etc...
 The value must be a string.
 
-The macro B<OPENSSL_VERSION_BUILD_METADATA> is extra metadata, reserved
-for other parties (examples: C<"+fips">, C<"+vendor.1">).
+The macro B<OPENSSL_VERSION_BUILD_METADATA> is extra information, reserved
+for other parties, such as C<"+fips">, or C<"+vendor.1">.
 The OpenSSL project will not touch this macro.
 The value must be a string.
 
 B<OPENSSL_VERSION_STR> is a convenience macro to get the short version
-number string, "MAJOR.MINOR.PATCH".
+number string, C<MAJOR.MINOR.PATCH>.
 
 B<OPENSSL_FULL_VERSION_STR> is a convenience macro to get the longer
 version number string, which combines B<OPENSSL_VERSION_STR>,
@@ -102,33 +102,34 @@ The value of B<OPENSSL_FULL_VERSION_STR>
 =item OPENSSL_CFLAGS
 
 The compiler flags set for the compilation process in the form
-"compiler: ..."  if available or "compiler: information not available"
+"compiler: ..."  if available, or "compiler: information not available"
 otherwise.
 
 =item OPENSSL_BUILT_ON
 
-The date of the build process in the form "built on: ..." if available
-or "built on: date not available" otherwise.
+The date of the build process in the form C<built on: ...> if available
+or C<built on: date not available> otherwise.
+The date would not be available in a  reproducible build, for example.
 
 =item OPENSSL_PLATFORM
 
-The "Configure" target of the library build in the form "platform: ..."
-if available or "platform: information not available" otherwise.
+The "Configure" target of the library build in the form C<platform: ...>
+if available, or "platform: information not available" otherwise.
 
 =item OPENSSL_DIR
 
-The "OPENSSLDIR" setting of the library build in the form "OPENSSLDIR: "...""
-if available or "OPENSSLDIR: N/A" otherwise.
+The "OPENSSLDIR" setting of the library build in the form C<OPENSSLDIR: "...">
+if available, or "OPENSSLDIR: N/A" otherwise.
 
 =item OPENSSL_ENGINES_DIR
 
-The "ENGINESDIR" setting of the library build in the form "ENGINESDIR: "...""
-if available or "ENGINESDIR: N/A" otherwise.
+The "ENGINESDIR" setting of the library build in the form C<ENGINESDIR: "...">
+if available, or "ENGINESDIR: N/A" otherwise.
 
 =item OPENSSL_MODULES_DIR
 
-The "MODULESDIR" setting of the library build in the form "MODULESDIR: "...""
-if available or "MODULESDIR: N/A" otherwise.
+The "MODULESDIR" setting of the library build in the form C<MODULESDIR: "...">
+if available, or C<MODULESDIR: N/A> otherwise.
 
 =item OPENSSL_CPU_INFO
 
@@ -136,12 +137,12 @@ The current OpenSSL cpu settings.
 This is the current setting of the cpu capability flags. It is usually
 automatically configured but may be set via an environment variable.
 The value has the same syntax as the environment variable.
-For x86 the string looks like "CPUINFO: OPENSSL_ia32cap=0x123:0x456".
-Or "CPUINFO: N/A" if not available, e.g. no-asm build.
+For x86 the string looks like C<CPUINFO: OPENSSL_ia32cap=0x123:0x456>.
+Or C<CPUINFO: N/A> if not available, such as when configured with B<no-asm>.
 
 =back
 
-For an unknown B<t>, the text "not available" is returned.
+For an unknown B<t>, the text C<not available> is returned.
 
 OPENSSL_info() also returns different strings depending on B<t>:
 
@@ -177,8 +178,8 @@ separator between directory elements.
 The OpenSSL list separator.
 This is typically used in strings that are lists of items, such as the
 value of the environment variable C<$PATH> on Unix (where the
-separator is ":") or C<%PATH%> on Windows (where the separator is
-";").
+separator is C<:>) or C<%PATH%> on Windows (where the separator is
+C<;>).
 
 =item OPENSSL_INFO_CPU_SETTINGS
 
@@ -186,7 +187,7 @@ The current OpenSSL cpu settings.
 This is the current setting of the cpu capability flags. It is usually
 automatically configured but may be set via an environment variable.
 The value has the same syntax as the environment variable.
-For x86 the string looks like "OPENSSL_ia32cap=0x123:0x456".
+For x86 the string looks like C<OPENSSL_ia32cap=0x123:0x456>.
 
 =back
 
