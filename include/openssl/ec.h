@@ -131,7 +131,7 @@ void EC_GROUP_free(EC_GROUP *group);
 /** Clears and frees a EC_GROUP object
  *  \param  group  EC_GROUP object to be cleared and freed.
  */
-void EC_GROUP_clear_free(EC_GROUP *group);
+DEPRECATEDIN_3(void EC_GROUP_clear_free(EC_GROUP *group))
 
 /** Copies EC_GROUP objects. Note: both EC_GROUPs must use the same EC_METHOD.
  *  \param  dst  destination EC_GROUP object

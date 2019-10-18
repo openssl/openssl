@@ -2577,7 +2577,7 @@ PKCS7_ENVELOPE_it                       2632	3_0_0	EXIST::FUNCTION:
 ASIdentifierChoice_it                   2633	3_0_0	EXIST::FUNCTION:RFC3779
 CMS_RecipientEncryptedKey_cert_cmp      2634	3_0_0	EXIST::FUNCTION:CMS
 EVP_PKEY_CTX_get_app_data               2635	3_0_0	EXIST::FUNCTION:
-EC_GROUP_clear_free                     2636	3_0_0	EXIST::FUNCTION:EC
+EC_GROUP_clear_free                     2636	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3,EC
 BN_get_rfc2409_prime_1024               2637	3_0_0	EXIST::FUNCTION:
 CRYPTO_set_mem_functions                2638	3_0_0	EXIST::FUNCTION:
 i2d_ASN1_VISIBLESTRING                  2639	3_0_0	EXIST::FUNCTION:
