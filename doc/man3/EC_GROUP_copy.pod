@@ -134,10 +134,10 @@ for the curve respectively.
 ANSI X9.62 (ECDSA standard) defines a method of generating the curve parameter b from a random number. This provides advantages
 in that a parameter obtained in this way is highly unlikely to be susceptible to special purpose attacks, or have any trapdoors in it.
 If the seed is present for a curve then the b parameter was generated in a verifiable fashion using that seed. The OpenSSL EC library
-does not use this seed value but does enable you to inspect it using EC_GROUP_get0_seed. This returns a pointer to a memory block
-containing the seed that was used. The length of the memory block can be obtained using EC_GROUP_get_seed_len. A number of the
+does not use this seed value but does enable you to inspect it using EC_GROUP_get0_seed(). This returns a pointer to a memory block
+containing the seed that was used. The length of the memory block can be obtained using EC_GROUP_get_seed_len(). A number of the
 built-in curves within the library provide seed values that can be obtained. It is also possible to set a custom seed using
-EC_GROUP_set_seed and passing a pointer to a memory block, along with the length of the seed. Again, the EC library will not use
+EC_GROUP_set_seed() and passing a pointer to a memory block, along with the length of the seed. Again, the EC library will not use
 this seed value, although it will be preserved in any ASN1 based communications.
 
 EC_GROUP_get_degree() gets the degree of the field. For Fp fields this will be the number of bits in p.  For F2^m fields this will be
@@ -180,14 +180,14 @@ B<k2> and B<k3> respectively.
 
 =head1 RETURN VALUES
 
-The following functions return 1 on success or 0 on error: EC_GROUP_copy, EC_GROUP_set_generator, EC_GROUP_check,
-EC_GROUP_check_discriminant, EC_GROUP_get_trinomial_basis and EC_GROUP_get_pentanomial_basis.
+The following functions return 1 on success or 0 on error: EC_GROUP_copy(), EC_GROUP_set_generator(), EC_GROUP_check(),
+EC_GROUP_check_discriminant(), EC_GROUP_get_trinomial_basis() and EC_GROUP_get_pentanomial_basis().
 
-EC_GROUP_dup returns a pointer to the duplicated curve, or NULL on error.
+EC_GROUP_dup() returns a pointer to the duplicated curve, or NULL on error.
 
-EC_GROUP_method_of returns the EC_METHOD implementation in use for the given curve or NULL on error.
+EC_GROUP_method_of() returns the EC_METHOD implementation in use for the given curve or NULL on error.
 
-EC_GROUP_get0_generator returns the generator for the given curve or NULL on error.
+EC_GROUP_get0_generator() returns the generator for the given curve or NULL on error.
 
 EC_GROUP_get_order() returns 0 if the order is not set (or set to zero) for
 B<group> or if copying into B<order> fails, 1 otherwise.
@@ -210,15 +210,15 @@ EC_GROUP_get0_cofactor() returns an internal pointer to the group cofactor.
 EC_GROUP_get0_field() returns an internal pointer to the group field. For curves over GF(p), this is the modulus; for curves
 over GF(2^m), this is the irreducible polynomial defining the field.
 
-EC_GROUP_get0_seed returns a pointer to the seed that was used to generate the parameter b, or NULL if the seed is not
-specified. EC_GROUP_get_seed_len returns the length of the seed or 0 if the seed is not specified.
+EC_GROUP_get0_seed() returns a pointer to the seed that was used to generate the parameter b, or NULL if the seed is not
+specified. EC_GROUP_get_seed_len() returns the length of the seed or 0 if the seed is not specified.
 
-EC_GROUP_set_seed returns the length of the seed that has been set. If the supplied seed is NULL, or the supplied seed length is
+EC_GROUP_set_seed() returns the length of the seed that has been set. If the supplied seed is NULL, or the supplied seed length is
 0, the return value will be 1. On error 0 is returned.
 
-EC_GROUP_cmp returns 0 if the curves are equal, 1 if they are not equal, or -1 on error.
+EC_GROUP_cmp() returns 0 if the curves are equal, 1 if they are not equal, or -1 on error.
 
-EC_GROUP_get_basis_type returns the values NID_X9_62_tpBasis or NID_X9_62_ppBasis (as defined in <openssl/obj_mac.h>) for a
+EC_GROUP_get_basis_type() returns the values NID_X9_62_tpBasis or NID_X9_62_ppBasis (as defined in <openssl/obj_mac.h>) for a
 trinomial or pentanomial respectively. Alternatively in the event of an error a 0 is returned.
 
 =head1 SEE ALSO
