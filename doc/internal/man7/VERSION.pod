@@ -89,12 +89,12 @@ the string will be C<3.0.0>.
 =item $config{full_version}
 
 The fully loaded version number, a string composed from $config{version},
-$config{prerelease} and $config{build_metadata}.  See   See L</EXAMPLE> for
+$config{prerelease} and $config{build_metadata}.  See   See L</EXAMPLES> for
 a few examples.
 
 =back
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 =over 4
 
