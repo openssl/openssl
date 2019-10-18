@@ -65,7 +65,7 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
 
 static int set1_general_name(GENERAL_NAME **tgt, const X509_NAME *src)
 {
-    GENERAL_NAME *gen = NULL;
+    GENERAL_NAME *gen;
 
     if (!ossl_assert(tgt != NULL))
         return 0;
@@ -156,7 +156,7 @@ int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
  */
 int ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft, const char *text)
 {
-    ASN1_UTF8STRING *utf8string = NULL;
+    ASN1_UTF8STRING *utf8string;
 
     if (!ossl_assert(ft != NULL && text != NULL))
         return 0;
@@ -228,8 +228,8 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
 
 int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr)
 {
-    OSSL_CMP_ITAV *itav = NULL;
-    ASN1_TYPE *asn1null = NULL;
+    OSSL_CMP_ITAV *itav;
+    ASN1_TYPE *asn1null;
 
     if (!ossl_assert(hdr != NULL))
         return 0;
@@ -257,7 +257,7 @@ int ossl_cmp_hdr_check_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
 {
     int itavCount;
     int i;
-    OSSL_CMP_ITAV *itav = NULL;
+    OSSL_CMP_ITAV *itav;
 
     if (!ossl_assert(hdr != NULL))
         return 0;

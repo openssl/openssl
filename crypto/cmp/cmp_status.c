@@ -260,7 +260,7 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
 OSSL_CMP_PKISI *ossl_cmp_statusinfo_new(int status, int fail_info,
                                         const char *text)
 {
-    OSSL_CMP_PKISI *si = NULL;
+    OSSL_CMP_PKISI *si;
     ASN1_UTF8STRING *utf8_text = NULL;
     int failure;
 
