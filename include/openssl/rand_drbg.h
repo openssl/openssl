@@ -123,7 +123,7 @@ RAND_DRBG *RAND_DRBG_get0_private(void);
  * EXDATA
  */
 # define RAND_DRBG_get_ex_new_index(l, p, newf, dupf, freef) \
-    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DRBG, l, p, newf, dupf, freef)
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_RAND_DRBG, l, p, newf, dupf, freef)
 int RAND_DRBG_set_ex_data(RAND_DRBG *drbg, int idx, void *arg);
 void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx);
 
