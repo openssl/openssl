@@ -200,7 +200,7 @@ int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
 int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,
                                         OSSL_CMP_ITAV *itav)
 {
-    if (!ossl_assert(hdr != NULL))
+    if (!ossl_assert(hdr != NULL && itav != NULL))
         return 0;
     return OSSL_CMP_ITAV_push0_stack_item(&hdr->generalInfo, itav);
 }
@@ -265,7 +265,8 @@ int ossl_cmp_hdr_check_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
     itavCount = sk_OSSL_CMP_ITAV_num(hdr->generalInfo);
     for (i = 0; i < itavCount; i++) {
         itav = sk_OSSL_CMP_ITAV_value(hdr->generalInfo, i);
-        if (OBJ_obj2nid(itav->infoType) == NID_id_it_implicitConfirm)
+        if (itav != NULL
+                && OBJ_obj2nid(itav->infoType) == NID_id_it_implicitConfirm)
             return 1;
     }
 
