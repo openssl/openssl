@@ -3214,6 +3214,12 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 if (e[0] == ' ')
                     break;
 
+                if (e[0] == ':') {
+                    /* Windows drive. We treat this the same way as ".." */
+                    dot = -1;
+                    break;
+                }
+
                 switch (dot) {
                 case 1:
                     dot = (e[0] == '.') ? 2 : 0;
@@ -3222,11 +3228,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                     dot = (e[0] == '.') ? 3 : 0;
                     break;
                 case 3:
-                    dot = (e[0] == '/') ? -1 : 0;
+                    dot = (e[0] == '/' || e[0] == '\\') ? -1 : 0;
                     break;
                 }
                 if (dot == 0)
-                    dot = (e[0] == '/') ? 1 : 0;
+                    dot = (e[0] == '/' || e[0] == '\\') ? 1 : 0;
             }
             dot = (dot == 3) || (dot == -1); /* filename contains ".."
                                               * component */
@@ -3240,11 +3246,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
             if (dot) {
                 BIO_puts(io, text);
-                BIO_printf(io, "'%s' contains '..' reference\r\n", p);
+                BIO_printf(io, "'%s' contains '..' or ':'\r\n", p);
                 break;
             }
 
-            if (*p == '/') {
+            if (*p == '/' || *p == '\\') {
                 BIO_puts(io, text);
                 BIO_printf(io, "'%s' is an invalid path\r\n", p);
                 break;
