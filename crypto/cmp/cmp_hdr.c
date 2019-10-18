@@ -151,8 +151,8 @@ int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
 }
 
 /*
- * CMP_PKIFREETEXT_push_str() pushes the given text string to the given
- * PKIFREETEXT ft. It returns 1 on success, 0 on error.
+ * pushes the given text string to the given PKIFREETEXT ft.
+ * returns 1 on success, 0 on error.
  */
 int ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft, const char *text)
 {
