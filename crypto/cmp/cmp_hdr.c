@@ -63,6 +63,7 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
     return hdr->recipNonce;
 }
 
+/* assign to *tgt a copy of src (which may be NULL to indicate an empty DN) */
 static int set1_general_name(GENERAL_NAME **tgt, const X509_NAME *src)
 {
     GENERAL_NAME *gen;
@@ -73,7 +74,7 @@ static int set1_general_name(GENERAL_NAME **tgt, const X509_NAME *src)
         goto err;
     gen->type = GEN_DIRNAME;
 
-    if (src == NULL) { /* NULL DN */
+    if (src == NULL) { /* NULL-DN */
         if ((gen->d.directoryName = X509_NAME_new()) == NULL)
             goto err;
     } else if (!X509_NAME_set(&gen->d.directoryName, src)) {
@@ -119,6 +120,7 @@ int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr)
     return ASN1_GENERALIZEDTIME_set(hdr->messageTime, time(NULL)) != NULL;
 }
 
+/* assign to *tgt a copy of src (or if NULL a random byte array of given len) */
 static int set1_aostr_else_random(ASN1_OCTET_STRING **tgt,
                                   const ASN1_OCTET_STRING *src, size_t len)
 {
@@ -150,10 +152,7 @@ int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
     return ossl_cmp_asn1_octet_string_set1(&hdr->senderKID, senderKID);
 }
 
-/*
- * pushes the given text string to the given PKIFREETEXT ft.
- * returns 1 on success, 0 on error.
- */
+/* push the given text string to the given PKIFREETEXT ft */
 int ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft, const char *text)
 {
     ASN1_UTF8STRING *utf8string;
@@ -249,10 +248,7 @@ int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr)
     return 0;
 }
 
-/*
- * checks if implicitConfirm in the generalInfo field of the header is set
- * returns 1 if it is set, 0 if not
- */
+/* return 1 if implicitConfirm in the generalInfo field of the header is set */
 int ossl_cmp_hdr_check_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
 {
     int itavCount;
@@ -273,6 +269,7 @@ int ossl_cmp_hdr_check_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
     return 0;
 }
 
+/* fill in all fields of the hdr according to the info given in ctx */
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 {
     X509_NAME *sender;
