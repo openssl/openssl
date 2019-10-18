@@ -194,11 +194,11 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
     int printed_chars;
     int failinfo_found = 0;
     int n_status_strings;
-    char* buf_start = buf;
+    char* write_ptr = buf;
     #define ADVANCE_BUFFER \
     if (printed_chars < 0 || (size_t)printed_chars >= bufsize) \
         return NULL; \
-    buf += printed_chars; \
+    write_ptr += printed_chars; \
     bufsize -= printed_chars;
 
     if (ctx == NULL
@@ -206,18 +206,18 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
             || (status = OSSL_CMP_CTX_get_status(ctx)) < 0
             || (status_string = ossl_cmp_PKIStatus_to_string(status)) == NULL)
         return NULL;
-    printed_chars = BIO_snprintf(buf, bufsize, "%s", status_string);
+    printed_chars = BIO_snprintf(write_ptr, bufsize, "%s", status_string);
     ADVANCE_BUFFER;
 
     /* failInfo is optional and may be empty */
     if ((fail_info = OSSL_CMP_CTX_get_failInfoCode(ctx)) > 0) {
-        printed_chars = BIO_snprintf(buf, bufsize, "; PKIFailureInfo: ");
+        printed_chars = BIO_snprintf(write_ptr, bufsize, "; PKIFailureInfo: ");
         ADVANCE_BUFFER;
         for (failure = 0; failure <= OSSL_CMP_PKIFAILUREINFO_MAX; failure++) {
             if ((fail_info & (1 << failure)) != 0) {
                 failure_string = CMP_PKIFAILUREINFO_to_string(failure);
                 if (failure_string != NULL) {
-                    printed_chars = BIO_snprintf(buf, bufsize, "%s%s",
+                    printed_chars = BIO_snprintf(write_ptr, bufsize, "%s%s",
                                                  failure > 0 ? ", " : "",
                                                  failure_string);
                     ADVANCE_BUFFER;
@@ -228,7 +228,7 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
     }
     if (!failinfo_found && status != OSSL_CMP_PKISTATUS_accepted
             && status != OSSL_CMP_PKISTATUS_grantedWithMods) {
-        printed_chars = BIO_snprintf(buf, bufsize, "; <no failure info>");
+        printed_chars = BIO_snprintf(write_ptr, bufsize, "; <no failure info>");
         ADVANCE_BUFFER;
     }
 
@@ -236,18 +236,19 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
     status_strings = OSSL_CMP_CTX_get0_statusString(ctx);
     n_status_strings = sk_ASN1_UTF8STRING_num(status_strings);
     if (n_status_strings > 0) {
-        printed_chars = BIO_snprintf(buf, bufsize, "; StatusString%s: ",
+        printed_chars = BIO_snprintf(write_ptr, bufsize, "; StatusString%s: ",
                                      n_status_strings > 1 ? "s" : "");
         ADVANCE_BUFFER;
         for (i = 0; i < n_status_strings; i++) {
             text = sk_ASN1_UTF8STRING_value(status_strings, i);
-            printed_chars = BIO_snprintf(buf, bufsize, "\"%s\"%s",
+            printed_chars = BIO_snprintf(write_ptr, bufsize, "\"%s\"%s",
                                          ASN1_STRING_get0_data(text),
                                          i < n_status_strings - 1 ? ", " : "");
             ADVANCE_BUFFER;
         }
     }
-    return buf_start;
+    #undef ADVANCE_BUFFER
+    return buf;
 }
 
 /*
