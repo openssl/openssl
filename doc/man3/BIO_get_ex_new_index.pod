@@ -3,16 +3,27 @@
 =head1 NAME
 
 BIO_get_ex_new_index, BIO_set_ex_data, BIO_get_ex_data,
-ENGINE_get_ex_new_index, ENGINE_set_ex_data, ENGINE_get_ex_data,
-UI_get_ex_new_index, UI_set_ex_data, UI_get_ex_data,
-X509_get_ex_new_index, X509_set_ex_data, X509_get_ex_data,
-X509_STORE_get_ex_new_index, X509_STORE_set_ex_data, X509_STORE_get_ex_data,
-X509_STORE_CTX_get_ex_new_index, X509_STORE_CTX_set_ex_data, X509_STORE_CTX_get_ex_data,
+BIO_set_app_data, BIO_get_app_data,
 DH_get_ex_new_index, DH_set_ex_data, DH_get_ex_data,
 DSA_get_ex_new_index, DSA_set_ex_data, DSA_get_ex_data,
 ECDH_get_ex_new_index, ECDH_set_ex_data, ECDH_get_ex_data,
 EC_KEY_get_ex_new_index, EC_KEY_set_ex_data, EC_KEY_get_ex_data,
-RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data
+ENGINE_get_ex_new_index, ENGINE_set_ex_data, ENGINE_get_ex_data,
+RAND_DRBG_set_ex_data, RAND_DRBG_get_ex_data, RAND_DRBG_get_ex_new_index,
+RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data,
+RSA_set_app_data, RSA_get_app_data,
+SSL_get_ex_new_index, SSL_set_ex_data, SSL_get_ex_data,
+SSL_set_app_data, SSL_get_app_data,
+SSL_CTX_get_ex_new_index, SSL_CTX_set_ex_data, SSL_CTX_get_ex_data,
+SSL_CTX_set_app_data, SSL_CTX_get_app_data,
+SSL_SESSION_get_ex_new_index, SSL_SESSION_set_ex_data, SSL_SESSION_get_ex_data,
+SSL_SESSION_set_app_data, SSL_SESSION_get_app_data,
+UI_get_ex_new_index, UI_set_ex_data, UI_get_ex_data,
+UI_set_app_data, UI_get_app_data,
+X509_STORE_CTX_get_ex_new_index, X509_STORE_CTX_set_ex_data, X509_STORE_CTX_get_ex_data,
+X509_STORE_CTX_set_app_data, X509_STORE_CTX_get_app_data,
+X509_STORE_get_ex_new_index, X509_STORE_set_ex_data, X509_STORE_get_ex_data,
+X509_get_ex_new_index, X509_set_ex_data, X509_get_ex_data
 - application-specific data
 
 =head1 SYNOPSIS
@@ -29,6 +40,9 @@ RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data
  int TYPE_set_ex_data(TYPE *d, int idx, void *arg);
 
  void *TYPE_get_ex_data(TYPE *d, int idx);
+
+ #define TYPE_set_app_data(TYPE *d, void *arg)
+ #define TYPE_get_app_data(TYPE *d)
 
 =head1 DESCRIPTION
 
@@ -47,6 +61,16 @@ an offset into the opaque exdata part of the TYPE object.
 
 TYPE_get_ex_data() is a function that calls CRYPTO_get_ex_data() with
 an offset into the opaque exdata part of the TYPE object.
+
+For compatibility with previous releases, the exdata index of zero is
+reserved for "application data." There are two convenience functions for
+this.
+TYPE_set_app_data() is a macro that invokes TYPE_set_ex_data() with
+B<idx> set to zero.
+TYPE_get_app_data() is a macro that invokes TYPE_get_ex_data() with
+B<idx> set to zero.
+Note that these functions are not defined for the B<RAND_DRBG> type because
+there are no backward compatibility concerns.
 
 =head1 RETURN VALUES
 

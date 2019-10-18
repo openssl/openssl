@@ -113,7 +113,8 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_BIO             12
 # define CRYPTO_EX_INDEX_APP             13
 # define CRYPTO_EX_INDEX_UI_METHOD       14
-# define CRYPTO_EX_INDEX_DRBG            15
+# define CRYPTO_EX_INDEX_RAND_DRBG       15
+# define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
 # define CRYPTO_EX_INDEX_OPENSSL_CTX     16
 # define CRYPTO_EX_INDEX__COUNT          17
 
