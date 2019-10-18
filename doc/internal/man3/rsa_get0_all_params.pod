@@ -54,6 +54,11 @@ if the B<RSA> object is a multi-prime RSA key.
 The number of primes must always be equal to the number of exponents, and
 the number of coefficients must be one less than the number of primes.
 
+=head1 RETURN VALUES
+
+rsa_get0_all_params() and rsa_set0_all_params() return 1 on success, or
+0 on failure.
+
 =head1 SEE ALSO
 
 L<RSA_set0_multi_prime_params(3)>
