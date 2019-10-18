@@ -67,7 +67,7 @@ If an algorithm is provided by liboqs but is not listed below, it can still be u
 The following quantum-safe algorithms from liboqs are supported (assuming they have been enabled in liboqs):
 
 - `oqs_kem_default` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
-- **BIKE**: `bike1l1`, `bike1l3`, `bike1l5`, `bike2l1`, `bike2l3`, `bike2l5`, `bike3l1`, `bike3l3`, `bike3l5` (not currently on Windows)
+- **BIKE**: `bike1l1cpa`, `bike1l3cpa`, `bike1l1fo`, `bike1l3fo`
 - **FrodoKEM**: `frodo640aes`, `frodo640shake`, `frodo976aes`, `frodo976shake`, `frodo1344aes`, `frodo1344shake`
 - **Kyber**: `kyber512`, `kyber1024`
 - **NewHope**: `newhope512cca`, `newhope1024cca`
