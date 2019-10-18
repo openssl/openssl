@@ -177,6 +177,7 @@ int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
 {
     if (!ossl_assert(hdr != NULL && text != NULL))
         return 0;
+
     if (hdr->freeText == NULL
             && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL)
         return 0;
@@ -188,10 +189,10 @@ int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text)
 {
     if (!ossl_assert(hdr != NULL && text != NULL))
         return 0;
+
     if (hdr->freeText == NULL
-            && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL) {
+            && (hdr->freeText = sk_ASN1_UTF8STRING_new_null()) == NULL)
         return 0;
-    }
 
     return ossl_cmp_pkifreetext_push_str(hdr->freeText, (char *)text->data);
 }
@@ -214,9 +215,9 @@ int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
 
     for (i = 0; i < sk_OSSL_CMP_ITAV_num(itavs); i++) {
         itav = OSSL_CMP_ITAV_dup(sk_OSSL_CMP_ITAV_value(itavs, i));
-        if (itav == NULL) {
+        if (itav == NULL)
             return 0;
-        }
+
         if (!ossl_cmp_hdr_generalInfo_push0_item(hdr, itav)) {
             OSSL_CMP_ITAV_free(itav);
             return 0;

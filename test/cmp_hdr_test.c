@@ -54,8 +54,8 @@ static int execute_HDR_set_get_pvno_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
     };
     if (!TEST_int_eq(ossl_cmp_hdr_get_pvno(fixture->hdr), pvno)) {
-         return 0;
-     };
+        return 0;
+    };
     return 1;
 }
 
@@ -113,14 +113,13 @@ static int execute_HDR_set1_sender_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_int_eq(ossl_cmp_hdr_set1_sender(fixture->hdr, x509name), 1)) {
         return 0;
     };
-    if (!TEST_int_eq(fixture->hdr->sender->type, GEN_DIRNAME)) {
+    if (!TEST_int_eq(fixture->hdr->sender->type, GEN_DIRNAME))
         return 0;
-    }
+
     if (!TEST_int_eq(
-            X509_NAME_cmp(fixture->hdr->sender->d.directoryName, x509name),
-                          0)) {
+            X509_NAME_cmp(fixture->hdr->sender->d.directoryName, x509name), 0))
         return 0;
-    }
+
     X509_NAME_free(x509name);
     return 1;
 }
@@ -142,17 +141,16 @@ static int execute_HDR_set1_recipient_test(CMP_HDR_TEST_FIXTURE *fixture)
 
     X509_NAME_add_entry_by_txt(x509name, "CN",
           MBSTRING_ASC, (unsigned char*)"A common recipient name", -1, -1, 0);
-    if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1)) {
+    if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1))
         return 0;
-    };
-    if (!TEST_int_eq(fixture->hdr->recipient->type, GEN_DIRNAME)) {
+
+    if (!TEST_int_eq(fixture->hdr->recipient->type, GEN_DIRNAME))
         return 0;
-    }
+
     if (!TEST_int_eq(
-            X509_NAME_cmp(fixture->hdr->recipient->d.directoryName, x509name),
-                          0)) {
+            X509_NAME_cmp(fixture->hdr->recipient->d.directoryName, x509name),0))
         return 0;
-    }
+
     X509_NAME_free(x509name);
     return 1;
 }
@@ -205,9 +203,9 @@ static int execute_HDR_set1_senderKID_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
     };
     if (!TEST_int_eq(
-            ASN1_OCTET_STRING_cmp(fixture->hdr->senderKID, senderKID), 0)) {
+            ASN1_OCTET_STRING_cmp(fixture->hdr->senderKID, senderKID), 0))
         return 0;
-    }
+
     ASN1_OCTET_STRING_free(senderKID);
     return 1;
 }
@@ -224,20 +222,20 @@ static int execute_HDR_push0_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     ASN1_UTF8STRING* text = ASN1_UTF8STRING_new();
 
-    if (!TEST_ptr(text)) {
+    if (!TEST_ptr(text))
         return 0;
-    }
-    if (!ASN1_STRING_set(text, "A free text", -1)) {
+
+    if (!ASN1_STRING_set(text, "A free text", -1))
         return 0;
-    }
+
     if (!TEST_int_eq(
             ossl_cmp_hdr_push0_freeText(fixture->hdr, text), 1)) {
         return 0;
     };
     if (!TEST_true(text == sk_ASN1_UTF8STRING_value(
-            fixture->hdr->freeText, 0))) {
+            fixture->hdr->freeText, 0)))
         return 0;
-    }
+
     return 1;
 }
 
@@ -253,20 +251,20 @@ static int execute_HDR_push1_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     ASN1_UTF8STRING* text = ASN1_UTF8STRING_new();
 
-    if (!TEST_ptr(text)) {
+    if (!TEST_ptr(text))
         return 0;
-    }
-    if (!ASN1_STRING_set(text, "A free text", -1)) {
+
+    if (!ASN1_STRING_set(text, "A free text", -1))
         return 0;
-    }
+
     if (!TEST_int_eq(
             ossl_cmp_hdr_push1_freeText(fixture->hdr, text), 1)) {
         return 0;
     };
     if (!TEST_int_eq(ASN1_STRING_cmp(
-            sk_ASN1_UTF8STRING_value(fixture->hdr->freeText, 0), text), 0)) {
+            sk_ASN1_UTF8STRING_value(fixture->hdr->freeText, 0), text), 0))
         return 0;
-    }
+
     ASN1_UTF8STRING_free(text);
     return 1;
 }
@@ -292,9 +290,9 @@ execute_HDR_generalInfo_push0_item_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
     };
     if (!TEST_true(itav == sk_OSSL_CMP_ITAV_value(
-            fixture->hdr->generalInfo, 0))) {
+            fixture->hdr->generalInfo, 0)))
         return 0;
-    }
+
     return 1;
 }
 
@@ -333,14 +331,14 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     };
     OBJ_obj2txt(buf, sizeof(buf), OSSL_CMP_ITAV_get0_type(
             sk_OSSL_CMP_ITAV_value(fixture->hdr->generalInfo, 0)), 0);
-    if (!TEST_int_eq(memcmp(oid, buf, sizeof(oid)), 0)) {
+    if (!TEST_int_eq(memcmp(oid, buf, sizeof(oid)), 0))
         return 0;
-    }
+
     if (!TEST_int_eq(ASN1_TYPE_cmp(itav->infoValue.other,
                                    OSSL_CMP_ITAV_get0_value(
-            sk_OSSL_CMP_ITAV_value(fixture->hdr->generalInfo, 0))), 0)) {
+            sk_OSSL_CMP_ITAV_value(fixture->hdr->generalInfo, 0))), 0))
         return 0;
-    }
+
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
     return 1;
 }
@@ -392,7 +390,7 @@ static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
         ctx_nonce = fixture->cmp_ctx->recipNonce;
         if (ctx_nonce != NULL
                  && (!TEST_ptr(header_nonce)
-                         || !TEST_int_eq(0, ASN1_OCTET_STRING_cmp(header_nonce,
+                 || !TEST_int_eq(0, ASN1_OCTET_STRING_cmp(header_nonce,
                                                                   ctx_nonce))))
             goto err;
     }
