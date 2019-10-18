@@ -65,8 +65,8 @@ static int test_HDR_set_get_pvno(void)
     return result;
 }
 
-#define X509_NAME_ADD(n, rd, s) X509_NAME_add_entry_by_txt(n, rd,            \
-                                MBSTRING_ASC, (unsigned char *)s, -1, -1, 0)
+#define X509_NAME_ADD(n, rd, s) X509_NAME_add_entry_by_txt((n), (rd),          \
+                                MBSTRING_ASC, (unsigned char *)(s), -1, -1, 0)
 
 static int execute_HDR_get0_senderNonce_test(CMP_HDR_TEST_FIXTURE *fixture)
 {

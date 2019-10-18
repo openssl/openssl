@@ -162,7 +162,7 @@ int ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft, const char *text)
         return 0;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
         return 0;
-    if (!ASN1_STRING_set(utf8string, text, (int)strlen(text)))
+    if (!ASN1_STRING_set(utf8string, text, -1))
         goto err;
     if (!sk_ASN1_UTF8STRING_push(ft, utf8string))
         goto err;
