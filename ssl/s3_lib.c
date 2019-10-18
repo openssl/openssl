@@ -4129,6 +4129,64 @@ int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
     return 1;
 }
 
+int ssl3_check_cipher(SSL *s, const SSL_CIPHER *c, unsigned long *alg_mask)
+{
+    unsigned long alg_k = 0, alg_a = 0, mask_k = 0, mask_a = 0;
+    int ok = 1;
+
+    /* Skip ciphers not supported by the protocol version */
+    if (!SSL_IS_DTLS(s) &&
+        ((s->version < c->min_tls) || (s->version > c->max_tls)))
+        return 0;
+    if (SSL_IS_DTLS(s) &&
+        (DTLS_VERSION_LT(s->version, c->min_dtls) ||
+         DTLS_VERSION_GT(s->version, c->max_dtls)))
+        return 0;
+
+    /*
+     * Since TLS 1.3 ciphersuites can be used with any auth or
+     * key exchange scheme skip tests.
+     */
+    if (!SSL_IS_TLS13(s)) {
+        mask_k = s->s3.tmp.mask_k;
+        mask_a = s->s3.tmp.mask_a;
+#ifndef OPENSSL_NO_SRP
+        if (s->srp_ctx.srp_Mask & SSL_kSRP) {
+            mask_k |= SSL_kSRP;
+            mask_a |= SSL_aSRP;
+        }
+#endif
+
+        alg_k = c->algorithm_mkey;
+        alg_a = c->algorithm_auth;
+
+#ifndef OPENSSL_NO_PSK
+        /* with PSK there must be server callback set */
+        if ((alg_k & SSL_PSK) && s->psk_server_callback == NULL)
+            return 0;
+#endif                          /* OPENSSL_NO_PSK */
+
+        ok = (alg_k & mask_k) && (alg_a & mask_a);
+        OSSL_TRACE7(TLS_CIPHER,
+                    "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
+                    ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
+
+#ifndef OPENSSL_NO_EC
+        /*
+         * if we are considering an ECC cipher suite that uses an ephemeral
+         * EC key check it
+         */
+        if (alg_k & SSL_kECDHE)
+            ok = ok && tls1_check_ec_tmp_key(s, c->id);
+#endif                          /* OPENSSL_NO_EC */
+
+    }
+#if !defined(OPENSSL_NO_EC)
+    *alg_mask = (alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA);
+#endif
+    return ok;
+}
+
 /*
  * ssl3_choose_cipher - choose a cipher from those offered by the client
  * @s: SSL connection
@@ -4143,8 +4201,8 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr;
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
-    int i, ii, ok, prefer_sha256 = 0;
-    unsigned long alg_k = 0, alg_a = 0, mask_k = 0, mask_a = 0;
+    int i, ii, prefer_sha256 = 0;
+    unsigned long alg_mask;
     const EVP_MD *mdsha256 = EVP_sha256();
 #ifndef OPENSSL_NO_CHACHA
     STACK_OF(SSL_CIPHER) *prio_chacha = NULL;
@@ -4255,56 +4313,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 
     for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
         c = sk_SSL_CIPHER_value(prio, i);
-
-        /* Skip ciphers not supported by the protocol version */
-        if (!SSL_IS_DTLS(s) &&
-            ((s->version < c->min_tls) || (s->version > c->max_tls)))
-            continue;
-        if (SSL_IS_DTLS(s) &&
-            (DTLS_VERSION_LT(s->version, c->min_dtls) ||
-             DTLS_VERSION_GT(s->version, c->max_dtls)))
+        if (!ssl3_check_cipher(s, c, &alg_mask))
             continue;
 
-        /*
-         * Since TLS 1.3 ciphersuites can be used with any auth or
-         * key exchange scheme skip tests.
-         */
-        if (!SSL_IS_TLS13(s)) {
-            mask_k = s->s3.tmp.mask_k;
-            mask_a = s->s3.tmp.mask_a;
-#ifndef OPENSSL_NO_SRP
-            if (s->srp_ctx.srp_Mask & SSL_kSRP) {
-                mask_k |= SSL_kSRP;
-                mask_a |= SSL_aSRP;
-            }
-#endif
-
-            alg_k = c->algorithm_mkey;
-            alg_a = c->algorithm_auth;
-
-#ifndef OPENSSL_NO_PSK
-            /* with PSK there must be server callback set */
-            if ((alg_k & SSL_PSK) && s->psk_server_callback == NULL)
-                continue;
-#endif                          /* OPENSSL_NO_PSK */
-
-            ok = (alg_k & mask_k) && (alg_a & mask_a);
-            OSSL_TRACE7(TLS_CIPHER,
-                        "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
-                        ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
-
-#ifndef OPENSSL_NO_EC
-            /*
-             * if we are considering an ECC cipher suite that uses an ephemeral
-             * EC key check it
-             */
-            if (alg_k & SSL_kECDHE)
-                ok = ok && tls1_check_ec_tmp_key(s, c->id);
-#endif                          /* OPENSSL_NO_EC */
-
-            if (!ok)
-                continue;
-        }
         ii = sk_SSL_CIPHER_find(allow, c);
         if (ii >= 0) {
             /* Check security callback permits this cipher */
@@ -4312,25 +4323,22 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                               c->strength_bits, 0, (void *)c))
                 continue;
 #if !defined(OPENSSL_NO_EC)
-            if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)
-                && s->s3.is_probably_safari) {
+            if (alg_mask && s->s3.is_probably_safari) {
                 if (!ret)
-                    ret = sk_SSL_CIPHER_value(allow, ii);
+                    ret = c;
                 continue;
             }
 #endif
             if (prefer_sha256) {
-                const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
-
-                if (ssl_md(tmp->algorithm2) == mdsha256) {
-                    ret = tmp;
+                if (ssl_md(c->algorithm2) == mdsha256) {
+                    ret = c;
                     break;
                 }
                 if (ret == NULL)
-                    ret = tmp;
+                    ret = c;
                 continue;
             }
-            ret = sk_SSL_CIPHER_value(allow, ii);
+            ret = c;
             break;
         }
     }
