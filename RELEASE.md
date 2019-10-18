@@ -1,4 +1,4 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2019-10
+OQS-OpenSSL_1\_1\_1-stable snapshot 2019-11-dev
 ===========================================
 
 About
@@ -19,19 +19,22 @@ This branch of our fork of OpenSSL can be used with the following versions of li
 Release notes
 =============
 
-This snapshot of the OQS fork of OpenSSL 1.1.1d (`OQS-OpenSSL_1_1_1-stable`) was released on October 8, 2019.  Its release page on Github is https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2019-10.
+This snapshot of the OQS fork of OpenSSL 1.1.1d (`OQS-OpenSSL_1_1_1-stable`) was released on TODO.  Its release page on Github is https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2019-11.
 
 What's New
 ----------
 
-This is the second snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on the upstream OpenSSL 1.1.1d release.
+This is the third snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on the upstream OpenSSL 1.1.1d release.
 
-This release adds hybrid (post-quantum + elliptic curve) authentication in TLS 1.3.
+Update to use NIST Round 2 submissions added to liboqs 0.2.1.
 
-This release adds/updates post-quantum KEMs for TLS 1.3 key exchange and signature algorithms for TLS 1.3 authentication based on NIST Round 2 submissions.  See the README.md file for the list of algorithms.
+### Key encapsulation mechanisms
 
-Previous releases of liboqs differentiated between "master branch" and "nist-branch", with nist-branch supporting more algorithms.  liboqs nist-branch is no longer be developed or released, and this release of OQS-OpenSSL_1\_1\_1-stable only builds against liboqs master branch.
+- Update BIKE to Round 2 submission; removes `BIKE2-*`, `BIKE3-*`, `BIKE1-L5`, renames `BIKE1-L1` and `BIKE1-L3` to `BIKE1-L1-CPA` and `BIKE1-L3-CPA`, and adds `BIKE1-L1-FO` and `BIKE-L3-FO`
 
+### Digital signature schemes
+
+- TBA
 
 Future work
 -----------
