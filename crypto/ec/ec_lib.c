@@ -116,6 +116,7 @@ void EC_GROUP_free(EC_GROUP *group)
     OPENSSL_free(group);
 }
 
+#if !OPENSSL_API_3
 void EC_GROUP_clear_free(EC_GROUP *group)
 {
     if (!group)
@@ -134,6 +135,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
     OPENSSL_clear_free(group->seed, group->seed_len);
     OPENSSL_clear_free(group, sizeof(*group));
 }
+#endif
 
 int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 {

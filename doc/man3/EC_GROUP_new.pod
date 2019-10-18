@@ -32,7 +32,6 @@ objects
  EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
  EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
  void EC_GROUP_free(EC_GROUP *group);
- void EC_GROUP_clear_free(EC_GROUP *group);
 
  EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
                                   const BIGNUM *b, BN_CTX *ctx);
@@ -58,6 +57,12 @@ objects
  ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group, ECPKPARAMETERS *params)
 
  size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ void EC_GROUP_clear_free(EC_GROUP *group);
 
 =head1 DESCRIPTION
 
@@ -129,7 +134,10 @@ that the default library context is always used.
 EC_GROUP_free frees the memory associated with the EC_GROUP.
 If B<group> is NULL nothing is done.
 
-EC_GROUP_clear_free destroys any sensitive data held within the EC_GROUP and then frees its memory.
+EC_GROUP_clear_free is deprecated: it was meant to destroy any sensitive data
+held within the EC_GROUP and then free its memory, but since all the data stored
+in the EC_GROUP is public anyway, this function is unnecessary.
+Its use can be safely replaced with EC_GROUP_free.
 If B<group> is NULL nothing is done.
 
 =head1 RETURN VALUES
@@ -149,7 +157,17 @@ L<OPENSSL_CTX(3)>
 
 =head1 HISTORY
 
+=over 2
+
+=item *
+
 EC_GROUP_new_ex and EC_GROUP_new_by_curve_name_ex were added in OpenSSL 3.0.
+
+=item *
+
+EC_GROUP_clear_free() was deprecated in OpenSSL 3.0; use EC_GROUP_free() instead.
+
+=back
 
 =head1 COPYRIGHT
 
