@@ -195,7 +195,8 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
     int failinfo_found = 0;
     int n_status_strings;
     char* write_ptr = buf;
-    #define ADVANCE_BUFFER \
+
+#define ADVANCE_BUFFER                                         \
     if (printed_chars < 0 || (size_t)printed_chars >= bufsize) \
         return NULL; \
     write_ptr += printed_chars; \
@@ -247,7 +248,7 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
             ADVANCE_BUFFER;
         }
     }
-    #undef ADVANCE_BUFFER
+#undef ADVANCE_BUFFER
     return buf;
 }
 
@@ -260,11 +261,11 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
 OSSL_CMP_PKISI *ossl_cmp_statusinfo_new(int status, int fail_info,
                                         const char *text)
 {
-    OSSL_CMP_PKISI *si;
+    OSSL_CMP_PKISI *si = OSSL_CMP_PKISI_new();
     ASN1_UTF8STRING *utf8_text = NULL;
     int failure;
 
-    if ((si = OSSL_CMP_PKISI_new()) == NULL)
+    if (si == NULL)
         goto err;
     if (!ASN1_INTEGER_set(si->status, status))
         goto err;

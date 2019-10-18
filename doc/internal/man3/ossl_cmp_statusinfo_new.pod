@@ -58,7 +58,7 @@ ossl_pkisi_snprint
 ossl_cmp_statusinfo_new() creates a new PKIStatusInfo structure and fills it
 with the given values. It sets the status field to B<status>.
 If B<text> is not NULL, it is copied to statusString.
-B<fail_info> is is interpeted as bit pattern for the failInfo field.
+B<fail_info> is is interpreted as bit pattern for the failInfo field.
 Returns a pointer to the structure on success, or NULL on error.
 
 ossl_cmp_pkisi_pkistatus_get() returns the PKIStatus of B<si>, or -1 on error.
