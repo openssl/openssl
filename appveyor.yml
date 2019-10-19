@@ -1,3 +1,6 @@
+image:
+  - Visual Studio 2017
+
 platform:
     - x64
     - x86
@@ -5,7 +8,7 @@ platform:
 environment:
     fast_finish: true
     matrix:
-        - VSVER: 14
+        - VSVER: 15
 
 configuration:
     - shared
@@ -13,6 +16,12 @@ configuration:
     - minimal
 
 before_build:
+    - ps: >-
+        Install-Module VSSetup -Scope CurrentUser
+    - ps: >-
+        Get-VSSetupInstance -All
+    - ps: >-
+        gci env:* | sort-object name
     - ps: >-
         If ($env:Platform -Match "x86") {
             $env:VCVARS_PLATFORM="x86"
@@ -29,8 +38,7 @@ before_build:
         } Else {
             $env:SHARED="no-shared no-makedepend"
         }
-    - ps: $env:VSCOMNTOOLS=(Get-Content ("env:VS" + "$env:VSVER" + "0COMNTOOLS"))
-    - call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" %VCVARS_PLATFORM%
+    - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_PLATFORM%
     - mkdir _build
     - cd _build
     - perl ..\Configure %TARGET% %SHARED%
