@@ -3393,105 +3393,73 @@ int speed_main(int argc, char **argv)
     for (testnum = 0; testnum < SM2_NUM; testnum++) {
         int st = 1;
         EVP_PKEY *sm2_pkey = NULL;
-        EVP_PKEY_CTX *pctx = NULL;
-        EVP_PKEY_CTX *sm2_pctx = NULL;
-        EVP_PKEY_CTX *sm2_vfy_pctx = NULL;
-        size_t sm2_sigsize = 0;
 
         if (!sm2_doit[testnum])
             continue;           /* Ignore Curve */
         /* Init signing and verification */
         for (i = 0; i < loopargs_len; i++) {
+            EVP_PKEY_CTX *sm2_pctx = NULL;
+            EVP_PKEY_CTX *sm2_vfy_pctx = NULL;
+            EVP_PKEY_CTX *pctx = NULL;
+            st = 0;
+
             loopargs[i].sm2_ctx[testnum] = EVP_MD_CTX_new();
-            if (loopargs[i].sm2_ctx[testnum] == NULL) {
-                st = 0;
-                break;
-            }
             loopargs[i].sm2_vfy_ctx[testnum] = EVP_MD_CTX_new();
-            if (loopargs[i].sm2_vfy_ctx[testnum] == NULL) {
-                st = 0;
+            if (loopargs[i].sm2_ctx[testnum] == NULL
+                    || loopargs[i].sm2_vfy_ctx[testnum] == NULL)
                 break;
-            }
 
             /* SM2 keys are generated as normal EC keys with a special curve */
-            if ((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) == NULL
+            st = !((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) == NULL
                 || EVP_PKEY_keygen_init(pctx) <= 0
                 || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
                     test_sm2_curves[testnum].nid) <= 0
-                || EVP_PKEY_keygen(pctx, &sm2_pkey) <= 0) {
-                st = 0;
-                EVP_PKEY_CTX_free(pctx);
-                break;
-            }
-            /* free previous one and alloc a new one */
+                || EVP_PKEY_keygen(pctx, &sm2_pkey) <= 0);
             EVP_PKEY_CTX_free(pctx);
-
-            loopargs[i].sigsize = sm2_sigsize
-                = ECDSA_size(EVP_PKEY_get0_EC_KEY(sm2_pkey));
-
-            if (!EVP_PKEY_set_alias_type(sm2_pkey, EVP_PKEY_SM2)) {
-                st = 0;
-                EVP_PKEY_free(sm2_pkey);
+            if (st == 0)
                 break;
-            }
+
+            st = 0; /* set back to zero */
+            /* attach it sooner to rely on main final cleanup */
+            loopargs[i].sm2_pkey[testnum] = sm2_pkey;
+            loopargs[i].sigsize = ECDSA_size(EVP_PKEY_get0_EC_KEY(sm2_pkey));
+            if (!EVP_PKEY_set_alias_type(sm2_pkey, EVP_PKEY_SM2))
+                break;
 
             sm2_pctx = EVP_PKEY_CTX_new(sm2_pkey, NULL);
-            if (sm2_pctx == NULL) {
-                st = 0;
-                EVP_PKEY_free(sm2_pkey);
-                break;
-            }
             sm2_vfy_pctx = EVP_PKEY_CTX_new(sm2_pkey, NULL);
-            if (sm2_vfy_pctx == NULL) {
-                st = 0;
-                EVP_PKEY_CTX_free(sm2_pctx);
-                EVP_PKEY_free(sm2_pkey);
+            if (sm2_pctx == NULL || sm2_vfy_pctx == NULL) {
+                EVP_PKEY_CTX_free(sm2_vfy_pctx);
                 break;
             }
+            /* attach them directly to respective ctx */
+            EVP_MD_CTX_set_pkey_ctx(loopargs[i].sm2_ctx[testnum], sm2_pctx);
+            EVP_MD_CTX_set_pkey_ctx(loopargs[i].sm2_vfy_ctx[testnum], sm2_vfy_pctx);
+
             /*
              * No need to allow user to set an explicit ID here, just use
              * the one defined in the 'draft-yang-tls-tl13-sm-suites' I-D.
              */
-            if (EVP_PKEY_CTX_set1_id(sm2_pctx, SM2_ID, SM2_ID_LEN) != 1) {
-                st = 0;
-                EVP_PKEY_CTX_free(sm2_pctx);
-                EVP_PKEY_CTX_free(sm2_vfy_pctx);
-                EVP_PKEY_free(sm2_pkey);
+            if (EVP_PKEY_CTX_set1_id(sm2_pctx, SM2_ID, SM2_ID_LEN) != 1
+                || EVP_PKEY_CTX_set1_id(sm2_vfy_pctx, SM2_ID, SM2_ID_LEN) != 1)
                 break;
-            }
-
-            if (EVP_PKEY_CTX_set1_id(sm2_vfy_pctx, SM2_ID, SM2_ID_LEN) != 1) {
-                st = 0;
-                EVP_PKEY_CTX_free(sm2_pctx);
-                EVP_PKEY_CTX_free(sm2_vfy_pctx);
-                EVP_PKEY_free(sm2_pkey);
-                break;
-            }
-
-            EVP_MD_CTX_set_pkey_ctx(loopargs[i].sm2_ctx[testnum], sm2_pctx);
-            EVP_MD_CTX_set_pkey_ctx(loopargs[i].sm2_vfy_ctx[testnum], sm2_vfy_pctx);
 
             if (!EVP_DigestSignInit(loopargs[i].sm2_ctx[testnum], NULL,
-                                    EVP_sm3(), NULL, sm2_pkey)) {
-                st = 0;
-                EVP_PKEY_free(sm2_pkey);
+                                    EVP_sm3(), NULL, sm2_pkey))
                 break;
-            }
             if (!EVP_DigestVerifyInit(loopargs[i].sm2_vfy_ctx[testnum], NULL,
-                                      EVP_sm3(), NULL, sm2_pkey)) {
-                st = 0;
-                EVP_PKEY_free(sm2_pkey);
+                                      EVP_sm3(), NULL, sm2_pkey))
                 break;
-            }
-            loopargs[i].sm2_pkey[testnum] = sm2_pkey;
+            st = 1;         /* mark loop as succeeded */
         }
         if (st == 0) {
-            BIO_printf(bio_err, "SM2 failure.\n");
+            BIO_printf(bio_err, "SM2 init failure.\n");
             ERR_print_errors(bio_err);
             rsa_count = 1;
         } else {
             for (i = 0; i < loopargs_len; i++) {
-                sm2_sigsize = loopargs[i].sigsize;
+                size_t sm2_sigsize = loopargs[i].sigsize;
+
                 /* Perform SM2 signature test */
                 st = EVP_DigestSign(loopargs[i].sm2_ctx[testnum],
                                     loopargs[i].buf2, &sm2_sigsize,
