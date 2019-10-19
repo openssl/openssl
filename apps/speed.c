@@ -2396,6 +2396,8 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, EVP_Digest_MDC2_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_MDC2, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
 #endif
@@ -2409,6 +2411,8 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, EVP_Digest_MD4_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_MD4, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
 #endif
@@ -2503,6 +2507,8 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, EVP_Digest_RMD160_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_RMD160, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
 #endif
@@ -3920,8 +3926,10 @@ static void pkey_print_message(const char *str, const char *str2, long num,
 static void print_result(int alg, int run_no, int count, double time_used)
 {
     if (count == -1) {
-        BIO_puts(bio_err, "EVP error!\n");
-        exit(1);
+        BIO_printf(bio_err, "%s error!\n", names[alg]);
+        ERR_print_errors(bio_err);
+        /* exit(1);  disable exit until default provider enabled */
+        return;
     }
     BIO_printf(bio_err,
                mr ? "+R:%d:%s:%f\n"
