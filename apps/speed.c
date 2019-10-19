@@ -905,7 +905,6 @@ static int RAND_bytes_loop(void *args)
     return count;
 }
 
-static long save_count = 0;
 static int decrypt = 0;
 static int EVP_Update_loop(void *args)
 {
@@ -913,11 +912,9 @@ static int EVP_Update_loop(void *args)
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count, rc;
-#ifndef SIGALRM
-    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
-#endif
+
     if (decrypt) {
-        for (count = 0; COND(nb_iter); count++) {
+        for (count = 0; COND(c[D_EVP][testnum]); count++) {
             rc = EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
                 /* reset iv in case of counter overflow */
@@ -925,7 +922,7 @@ static int EVP_Update_loop(void *args)
             }
         }
     } else {
-        for (count = 0; COND(nb_iter); count++) {
+        for (count = 0; COND(c[D_EVP][testnum]); count++) {
             rc = EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
                 /* reset iv in case of counter overflow */
@@ -952,11 +949,9 @@ static int EVP_Update_loop_ccm(void *args)
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count;
     unsigned char tag[12];
-#ifndef SIGALRM
-    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
-#endif
+
     if (decrypt) {
-        for (count = 0; COND(nb_iter); count++) {
+        for (count = 0; COND(c[D_EVP][testnum]); count++) {
             EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag), tag);
             /* reset iv */
             EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
@@ -964,7 +959,7 @@ static int EVP_Update_loop_ccm(void *args)
             EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
         }
     } else {
-        for (count = 0; COND(nb_iter); count++) {
+        for (count = 0; COND(c[D_EVP][testnum]); count++) {
             /* restore iv length field */
             EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
             /* counter is reset on every update */
@@ -991,11 +986,9 @@ static int EVP_Update_loop_aead(void *args)
     int outl, count;
     unsigned char aad[13] = { 0xcc };
     unsigned char faketag[16] = { 0xcc };
-#ifndef SIGALRM
-    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
-#endif
+
     if (decrypt) {
-        for (count = 0; COND(nb_iter); count++) {
+        for (count = 0; COND(c[D_EVP][testnum]); count++) {
             EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
             EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                 sizeof(faketag), faketag);
@@ -1004,7 +997,7 @@ static int EVP_Update_loop_aead(void *args)
             EVP_DecryptFinal_ex(ctx, buf + outl, &outl);
         }
     } else {
-        for (count = 0; COND(nb_iter); count++) {
+        for (count = 0; COND(c[D_EVP][testnum]); count++) {
             EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv);
             EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
             EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
@@ -1021,11 +1014,8 @@ static int EVP_Digest_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char md[EVP_MAX_MD_SIZE];
     int count;
-#ifndef SIGALRM
-    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
-#endif
 
-    for (count = 0; COND(nb_iter); count++) {
+    for (count = 0; COND(c[D_EVP][testnum]); count++) {
         if (!EVP_Digest(buf, lengths[testnum], md, NULL, evp_md, NULL))
             return -1;
     }
@@ -1040,11 +1030,8 @@ static int EVP_HMAC_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char no_key[32];
     int count;
-#ifndef SIGALRM
-    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
-#endif
 
-    for (count = 0; COND(nb_iter); count++) {
+    for (count = 0; COND(c[D_EVP_HMAC][testnum]); count++) {
         if (HMAC(evp_hmac_md, no_key, sizeof(no_key), buf, lengths[testnum],
                  NULL, NULL) == NULL)
             return -1;
@@ -1065,11 +1052,8 @@ static int EVP_CMAC_loop(void *args)
     unsigned char mac[16];
     size_t len = sizeof(mac);
     int count;
-#ifndef SIGALRM
-    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
-#endif
 
-    for (count = 0; COND(nb_iter); count++) {
+    for (count = 0; COND(c[D_EVP_CMAC][testnum]); count++) {
         if (!CMAC_Init(cmac_ctx, key, sizeof(key), evp_cmac_cipher, NULL)
                 || !CMAC_Update(cmac_ctx, buf, lengths[testnum])
                 || !CMAC_Final(cmac_ctx, mac, &len))
@@ -2081,7 +2065,6 @@ int speed_main(int argc, char **argv)
                             (DES_cblock *)loopargs[0].buf, &sch, DES_ENCRYPT);
         d = Time_F(STOP);
     } while (d < 3);
-    save_count = count;
     c[D_MD2][0] = count / 10;
     c[D_MDC2][0] = count / 10;
     c[D_MD4][0] = count;
@@ -2104,6 +2087,7 @@ int speed_main(int argc, char **argv)
     c[D_CBC_128_CML][0] = count;
     c[D_CBC_192_CML][0] = count;
     c[D_CBC_256_CML][0] = count;
+    c[D_EVP][0] = count;
     c[D_SHA256][0] = count;
     c[D_SHA512][0] = count;
     c[D_WHIRLPOOL][0] = count;
@@ -2112,12 +2096,12 @@ int speed_main(int argc, char **argv)
     c[D_IGE_256_AES][0] = count;
     c[D_GHASH][0] = count;
     c[D_RAND][0] = count;
+    c[D_EVP_HMAC][0] = count;
+    c[D_EVP_CMAC][0] = count;
 
     for (i = 1; i < size_num; i++) {
-        long l0, l1;
-
-        l0 = (long)lengths[0];
-        l1 = (long)lengths[i];
+        long l0 = (long)lengths[0];
+        long l1 = (long)lengths[i];
 
         c[D_MD2][i] = c[D_MD2][0] * 4 * l0 / l1;
         c[D_MDC2][i] = c[D_MDC2][0] * 4 * l0 / l1;
@@ -2126,11 +2110,14 @@ int speed_main(int argc, char **argv)
         c[D_HMAC][i] = c[D_HMAC][0] * 4 * l0 / l1;
         c[D_SHA1][i] = c[D_SHA1][0] * 4 * l0 / l1;
         c[D_RMD160][i] = c[D_RMD160][0] * 4 * l0 / l1;
+        c[D_EVP][i] = = c[D_EVP][0] * 4 * l0 / l1;
         c[D_SHA256][i] = c[D_SHA256][0] * 4 * l0 / l1;
         c[D_SHA512][i] = c[D_SHA512][0] * 4 * l0 / l1;
         c[D_WHIRLPOOL][i] = c[D_WHIRLPOOL][0] * 4 * l0 / l1;
         c[D_GHASH][i] = c[D_GHASH][0] * 4 * l0 / l1;
         c[D_RAND][i] = c[D_RAND][0] * 4 * l0 / l1;
+        c[D_EVP_HMAC][i] = = c[D_EVP_HMAC][0] * 4 * l0 / l1;
+        c[D_EVP_CMAC][i] = = c[D_EVP_CMAC][0] * 4 * l0 / l1;
 
         l0 = (long)lengths[i - 1];
 
@@ -2387,9 +2374,8 @@ int speed_main(int argc, char **argv)
             d = Time_F(STOP);
             print_result(D_HMAC, testnum, count, d);
         }
-        for (i = 0; i < loopargs_len; i++) {
+        for (i = 0; i < loopargs_len; i++)
             HMAC_CTX_free(loopargs[i].hctx);
-        }
     }
 #endif
     if (doit[D_SHA1]) {
@@ -2774,7 +2760,7 @@ int speed_main(int argc, char **argv)
 
     if (doit[D_EVP]) {
         if (evp_cipher != NULL) {
-            int (*loopfunc)(void *args) = EVP_Update_loop;
+            int (*loopfunc) (void *) = EVP_Update_loop;
 
             if (multiblock && (EVP_CIPHER_flags(evp_cipher) &
                                EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
@@ -2797,7 +2783,7 @@ int speed_main(int argc, char **argv)
             }
 
             for (testnum = 0; testnum < size_num; testnum++) {
-                print_message(names[D_EVP], save_count, lengths[testnum],
+                print_message(names[D_EVP], c[D_EVP][testnum], lengths[testnum],
                               seconds.sym);
 
                 for (k = 0; k < loopargs_len; k++) {
@@ -2843,7 +2829,7 @@ int speed_main(int argc, char **argv)
             names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
 
             for (testnum = 0; testnum < size_num; testnum++) {
-                print_message(names[D_EVP], save_count, lengths[testnum],
+                print_message(names[D_EVP], c[D_EVP][testnum], lengths[testnum],
                               seconds.sym);
                 Time_F(START);
                 count = run_benchmark(async_jobs, EVP_Digest_loop, loopargs);
@@ -2853,52 +2839,49 @@ int speed_main(int argc, char **argv)
         }
     }
 
-    if (doit[D_EVP_HMAC]) {
-        if (evp_hmac_md != NULL) {
-            const char *md_name = OBJ_nid2ln(EVP_MD_type(evp_hmac_md));
-            evp_hmac_name = app_malloc(sizeof("HMAC()") + strlen(md_name),
-                                       "HMAC name");
-            sprintf(evp_hmac_name, "HMAC(%s)", md_name);
-            names[D_EVP_HMAC] = evp_hmac_name;
+    if (doit[D_EVP_HMAC] && evp_hmac_md != NULL) {
+        const char *md_name = OBJ_nid2ln(EVP_MD_type(evp_hmac_md));
+        evp_hmac_name = app_malloc(sizeof("HMAC()") + strlen(md_name),
+                                   "HMAC name");
+        sprintf(evp_hmac_name, "HMAC(%s)", md_name);
+        names[D_EVP_HMAC] = evp_hmac_name;
 
-            for (testnum = 0; testnum < size_num; testnum++) {
-                print_message(names[D_EVP_HMAC], save_count, lengths[testnum],
-                              seconds.sym);
-                Time_F(START);
-                count = run_benchmark(async_jobs, EVP_HMAC_loop, loopargs);
-                d = Time_F(STOP);
-                print_result(D_EVP_HMAC, testnum, count, d);
-            }
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_EVP_HMAC], c[D_EVP_HMAC][testnum], lengths[testnum],
+                          seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, EVP_HMAC_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_EVP_HMAC, testnum, count, d);
         }
     }
 
 #ifndef OPENSSL_NO_CMAC
-    if (doit[D_EVP_CMAC]) {
-        if (evp_cmac_cipher != NULL) {
-            const char *cipher_name = OBJ_nid2ln(EVP_CIPHER_type(evp_cmac_cipher));
-            evp_cmac_name = app_malloc(sizeof("CMAC()") + strlen(cipher_name),
-                                       "CMAC name");
-            sprintf(evp_cmac_name, "CMAC(%s)", cipher_name);
-            names[D_EVP_CMAC] = evp_cmac_name;
+    if (doit[D_EVP_CMAC] && evp_cmac_cipher != NULL) {
+        const char *cipher_name = OBJ_nid2ln(EVP_CIPHER_type(evp_cmac_cipher));
 
-            for (i = 0; i < loopargs_len; i++) {
-                loopargs[i].cmac_ctx = CMAC_CTX_new();
-                if (loopargs[i].cmac_ctx == NULL) {
-                    BIO_printf(bio_err, "CMAC malloc failure, exiting...");
-                    exit(1);
-                }
+        evp_cmac_name = app_malloc(sizeof("CMAC()") + strlen(cipher_name),
+                                   "CMAC name");
+        sprintf(evp_cmac_name, "CMAC(%s)", cipher_name);
+        names[D_EVP_CMAC] = evp_cmac_name;
+
+        for (i = 0; i < loopargs_len; i++) {
+            loopargs[i].cmac_ctx = CMAC_CTX_new();
+            if (loopargs[i].cmac_ctx == NULL) {
+                BIO_printf(bio_err, "CMAC malloc failure, exiting...");
+                exit(1);
             }
-            for (testnum = 0; testnum < size_num; testnum++) {
-                print_message(names[D_EVP_CMAC], save_count, lengths[testnum],
-                              seconds.sym);
-                Time_F(START);
-                count = run_benchmark(async_jobs, EVP_CMAC_loop, loopargs);
-                d = Time_F(STOP);
-                print_result(D_EVP_CMAC, testnum, count, d);
-            }
-            for (i = 0; i < loopargs_len; i++)
-                CMAC_CTX_free(loopargs[i].cmac_ctx);
         }
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_EVP_CMAC], c[D_EVP_CMAC][testnum], lengths[testnum],
+                          seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, EVP_CMAC_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_EVP_CMAC, testnum, count, d);
+        }
+        for (i = 0; i < loopargs_len; i++)
+            CMAC_CTX_free(loopargs[i].cmac_ctx);
     }
 #endif
 
