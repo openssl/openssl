@@ -2,7 +2,7 @@
 /.dir-locals.el
 
 # Top level excludes
-/Makefile.orig
+/Makefile
 /MINFO
 /TABLE
 /*.pc
@@ -13,11 +13,6 @@
 /tmp.*
 /configdata.pm
 
-# *all* Makefiles
-Makefile
-# ... except in demos
-!/demos/*/Makefile
-
 # Links under apps
 /apps/CA.pl
 /apps/tsget
@@ -27,8 +22,8 @@ Makefile
 # Auto generated headers
 /crypto/buildinf.h
 /include/crypto/*_conf.h
-/openssl/include/opensslconf.h
-/util/domd
+/include/openssl/opensslconf.h
+/include/openssl/opensslv.h
 
 # error code files
 /crypto/err/openssl.txt.old
@@ -80,7 +75,6 @@ Makefile
 
 # Misc auto generated files
 /doc/man7/openssl_user_macros.pod
-/include/openssl/opensslconf.h
 /tools/c_rehash
 /tools/c_rehash.pl
 /util/shlib_wrap.sh
