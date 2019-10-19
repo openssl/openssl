@@ -139,69 +139,6 @@ static volatile int run = 0;
 static int mr = 0;
 static int usertime = 1;
 
-#ifndef OPENSSL_NO_MD2
-static int EVP_Digest_MD2_loop(void *args);
-#endif
-
-#ifndef OPENSSL_NO_MDC2
-static int EVP_Digest_MDC2_loop(void *args);
-#endif
-#ifndef OPENSSL_NO_MD4
-static int EVP_Digest_MD4_loop(void *args);
-#endif
-#ifndef OPENSSL_NO_MD5
-static int MD5_loop(void *args);
-static int HMAC_loop(void *args);
-#endif
-static int SHA1_loop(void *args);
-static int SHA256_loop(void *args);
-static int SHA512_loop(void *args);
-#ifndef OPENSSL_NO_WHIRLPOOL
-static int WHIRLPOOL_loop(void *args);
-#endif
-#ifndef OPENSSL_NO_RMD160
-static int EVP_Digest_RMD160_loop(void *args);
-#endif
-#ifndef OPENSSL_NO_RC4
-static int RC4_loop(void *args);
-#endif
-#ifndef OPENSSL_NO_DES
-static int DES_ncbc_encrypt_loop(void *args);
-static int DES_ede3_cbc_encrypt_loop(void *args);
-#endif
-static int AES_cbc_128_encrypt_loop(void *args);
-static int AES_cbc_192_encrypt_loop(void *args);
-static int AES_cbc_256_encrypt_loop(void *args);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static int AES_ige_128_encrypt_loop(void *args);
-static int AES_ige_192_encrypt_loop(void *args);
-static int AES_ige_256_encrypt_loop(void *args);
-#endif
-static int CRYPTO_gcm128_aad_loop(void *args);
-static int RAND_bytes_loop(void *args);
-static int EVP_Update_loop(void *args);
-static int EVP_Update_loop_ccm(void *args);
-static int EVP_Update_loop_aead(void *args);
-static int EVP_Digest_loop(void *args);
-#ifndef OPENSSL_NO_RSA
-static int RSA_sign_loop(void *args);
-static int RSA_verify_loop(void *args);
-#endif
-#ifndef OPENSSL_NO_DSA
-static int DSA_sign_loop(void *args);
-static int DSA_verify_loop(void *args);
-#endif
-#ifndef OPENSSL_NO_EC
-static int ECDSA_sign_loop(void *args);
-static int ECDSA_verify_loop(void *args);
-static int EdDSA_sign_loop(void *args);
-static int EdDSA_verify_loop(void *args);
-# ifndef OPENSSL_NO_SM2
-static int SM2_sign_loop(void *args);
-static int SM2_verify_loop(void *args);
-# endif
-#endif
-
 static double Time_F(int s);
 static void print_message(const char *s, long num, int length, int tm);
 static void pkey_print_message(const char *str, const char *str2,
