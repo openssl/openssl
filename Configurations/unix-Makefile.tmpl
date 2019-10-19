@@ -57,7 +57,9 @@
      '';
 -}
 PLATFORM={- $config{target} -}
-OPTIONS={- $config{options} -}
+OPTIONS={- join(" \\\n" . ' ' x 8,
+                fill_lines(" ", $COLUMNS - 8,
+                           split(' ', $config{options}))) -}
 CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
