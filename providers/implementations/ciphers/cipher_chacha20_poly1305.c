@@ -66,7 +66,7 @@ static void chacha20_poly1305_freectx(void *vctx)
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
 
     if (ctx != NULL)
-        OPENSSL_clear_free(ctx, sizeof(ctx));
+        OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 static int chacha20_poly1305_get_params(OSSL_PARAM params[])

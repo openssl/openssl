@@ -55,7 +55,7 @@ static void chacha20_freectx(void *vctx)
     PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)vctx;
 
     if (ctx != NULL) {
-        OPENSSL_clear_free(ctx, sizeof(ctx));
+        OPENSSL_clear_free(ctx, sizeof(*ctx));
     }
 }
 
