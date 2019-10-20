@@ -37,7 +37,7 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_FAILURE_OBTAINING_RANDOM                   110
 #  define CMP_R_INVALID_ARGS                               100
 #  define CMP_R_MULTIPLE_SAN_SOURCES                       102
-#  define CMP_R_NO_SENDER_NO_REFERENCE                     111
+#  define CMP_R_MISSING_SENDER_IDENTIFICATION              111
 #  define CMP_R_NO_STDIO                                   194
 #  define CMP_R_NULL_ARGUMENT                              103
 

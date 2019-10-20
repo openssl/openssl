@@ -283,14 +283,17 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
     if (!ossl_cmp_hdr_set_pvno(hdr, OSSL_CMP_PVNO))
         return 0;
 
-    /*
-     * if neither client cert nor subject name given, sender name is not known
-     * to the client and in that case set to NULL-DN
-     */
     sender = ctx->clCert != NULL ?
         X509_get_subject_name(ctx->clCert) : ctx->subjectName;
+    /*
+     * The sender name is copied from the subject of the client cert, if any,
+     * or else from the the subject name provided for certification requests.
+     * As required by RFC 4210 section 5.1.1., if the sender name is not known
+     * to the client it set to NULL-DN. In this case for identification at least
+     * the senderKID must be set, which we take from any referenceValue given.
+     */
     if (sender == NULL && ctx->referenceValue == NULL) {
-        CMPerr(0, CMP_R_NO_SENDER_NO_REFERENCE);
+        CMPerr(0, CMP_R_MISSING_SENDER_IDENTIFICATION);
         return 0;
     }
     if (!ossl_cmp_hdr_set1_sender(hdr, sender))

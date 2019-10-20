@@ -11,8 +11,8 @@ ossl_cmp_hdr_update_messagetime,
 ossl_cmp_hdr_set1_senderKID,
 ossl_cmp_hdr_push0_freeText,
 ossl_cmp_hdr_push1_freeText,
-ossl_cmp_hdr_ggeneralinfo_item_push0,
-ossl_cmp_hdr_ggeneralinfo_items_push1,
+ossl_cmp_hdr_generalinfo_item_push0,
+ossl_cmp_hdr_generalinfo_items_push1,
 ossl_cmp_hdr_set_implicitConfirm,
 ossl_cmp_hdr_check_implicitConfirm,
 ossl_cmp_hdr_init
@@ -30,10 +30,10 @@ ossl_cmp_hdr_init
   int ossl_cmp_hdr_update_messagetime(OSSL_CMP_PKIHEADER *hdr);
   int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
                              const ASN1_OCTET_STRING *senderKID);
-  int ossl_cmp_hdr_ggeneralinfo_item_push0(OSSL_CMP_PKIHEADER *hdr,
-                                     OSSL_CMP_ITAV *itav);
-  int ossl_cmp_hdr_ggeneralinfo_items_push1(OSSL_CMP_PKIHEADER *hdr,
-                                      STACK_OF(OSSL_CMP_ITAV) *itavs);
+  int ossl_cmp_hdr_generalinfo_item_push0(OSSL_CMP_PKIHEADER *hdr,
+                                    OSSL_CMP_ITAV *itav);
+  int ossl_cmp_hdr_generalinfo_items_push1(OSSL_CMP_PKIHEADER *hdr,
+                                     STACK_OF(OSSL_CMP_ITAV) *itavs);
   int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
   int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
   int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
@@ -71,10 +71,10 @@ hdr->freeText and consumes the given pointer.
 ossl_cmp_hdr_push1_freeText() pushes an ASN1_UTF8STRING to
 hdr->freeText and does not consume the pointer.
 
-ossl_cmp_hdr_ggeneralinfo_item_push0() adds the given InfoTypeAndValue
+ossl_cmp_hdr_generalinfo_item_push0() adds the given InfoTypeAndValue
 item to the hdr->generalInfo stack. Consumes the B<itav> pointer.
 
-ossl_cmp_hdr_ggeneralinfo_items_push1() adds a copy of the B<itavs> stack to
+ossl_cmp_hdr_generalinfo_items_push1() adds a copy of the B<itavs> stack to
 the generalInfo field of PKIheader of the B<hdr>. Does not consume the B<itavs>
 pointer.
 
@@ -87,6 +87,11 @@ set int generalInfo field of the given PKIMessage header, 0 if not.
 ossl_cmp_hdr_init() initializes a PKIHeader structure based on the
 values in the given OSSL_CMP_CTX structure.
 This starts a new transaction in case ctx->transactionID is NULL.
+The sender name is copied from the subject of the client cert, if any,
+or else from the the subject name provided for certification requests.
+As required by RFC 4210 section 5.1.1., if the sender name is not known
+to the client it set to the NULL-DN. In this case for identification at least
+the senderKID must be set, which we take from any referenceValue provided.
 
 =head1 NOTES
 
