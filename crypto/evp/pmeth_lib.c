@@ -634,7 +634,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
     }
 
     if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx) && ctx->op.kex.exchprovctx != NULL)
-            || (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
+            || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
                 && ctx->op.sig.sigprovctx != NULL))
         return legacy_ctrl_to_param(ctx, keytype, optype, cmd, p1, p2);
 
