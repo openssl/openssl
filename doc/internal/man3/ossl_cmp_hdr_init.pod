@@ -24,18 +24,22 @@ ossl_cmp_hdr_init
 
   int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
   int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
-  ASN1_OCTET_STRING *ossl_cmp_hdr_get0_sendernonce(const OSSL_CMP_PKIHEADER *hdr);
+  ASN1_OCTET_STRING
+     *ossl_cmp_hdr_get0_sendernonce(const OSSL_CMP_PKIHEADER *hdr);
+
   int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
   int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
   int ossl_cmp_hdr_update_messagetime(OSSL_CMP_PKIHEADER *hdr);
   int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
-                             const ASN1_OCTET_STRING *senderKID);
+                                  const ASN1_OCTET_STRING *senderKID);
   int ossl_cmp_hdr_generalinfo_item_push0(OSSL_CMP_PKIHEADER *hdr,
-                                    OSSL_CMP_ITAV *itav);
+                                          OSSL_CMP_ITAV *itav);
   int ossl_cmp_hdr_generalinfo_items_push1(OSSL_CMP_PKIHEADER *hdr,
-                                     STACK_OF(OSSL_CMP_ITAV) *itavs);
-  int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
-  int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
+                                           STACK_OF(OSSL_CMP_ITAV) *itavs);
+  int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr,
+                                  ASN1_UTF8STRING *text);
+  int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr,
+                                  ASN1_UTF8STRING *text);
   int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
   int ossl_cmp_hdr_check_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
   int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
@@ -88,7 +92,7 @@ ossl_cmp_hdr_init() initializes a PKIHeader structure based on the
 values in the given OSSL_CMP_CTX structure.
 This starts a new transaction in case ctx->transactionID is NULL.
 The sender name is copied from the subject of the client cert, if any,
-or else from the the subject name provided for certification requests.
+or else from the subject name provided for certification requests.
 As required by RFC 4210 section 5.1.1., if the sender name is not known
 to the client it set to the NULL-DN. In this case for identification at least
 the senderKID must be set, which we take from any referenceValue provided.
