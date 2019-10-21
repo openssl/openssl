@@ -52,7 +52,7 @@ matrix:
           env: CONFIG_OPTS="--strict-warnings" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated"
         - os: linux
           addons:
               apt:
