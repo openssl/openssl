@@ -593,7 +593,9 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 
     for (i = 0; i < m; i++) {
         /* conditionally flip signs if delta is positive and g is odd */
-        cond = (-delta >> (8 * sizeof(delta) - 1)) & g->d[0] & 1;
+        cond = (-delta >> (8 * sizeof(delta) - 1)) & g->d[0] & 1
+            /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
+            & (~((g->top - 1) >> (sizeof(g->top) * 8 - 1)));
         delta = (-cond & -delta) | ((cond - 1) & delta);
         r->neg ^= cond;
         /* swap */
@@ -603,7 +605,10 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
         delta++;
         if (!BN_add(temp, g, r))
             goto err;
-        BN_consttime_swap(g->d[0] & 1, g, temp, top);
+        BN_consttime_swap(g->d[0] & 1 /* g is odd */
+                /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
+                & (~((g->top - 1) >> (sizeof(g->top) * 8 - 1))),
+                g, temp, top);
         if (!BN_rshift1(g, g))
             goto err;
     }
