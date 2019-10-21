@@ -155,7 +155,7 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
-    *ret = InterlockedExchangeAdd(val, amount) + amount;
+    *ret = (int)InterlockedExchangeAdd((long volatile*)val, (long)amount) + amount;
     return 1;
 }
 
