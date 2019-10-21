@@ -2067,7 +2067,7 @@ CMP_R_ERROR_PARSING_PKISTATUS:107:error parsing pkistatus
 CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_INVALID_ARGS:100:invalid args
 CMP_R_MULTIPLE_SAN_SOURCES:102:multiple san sources
-CMP_R_NO_SENDER_NO_REFERENCE:111:no sender no reference
+CMP_R_MISSING_SENDER_IDENTIFICATION:111:missing sender identification
 CMP_R_NO_STDIO:194:no stdio
 CMP_R_NULL_ARGUMENT:103:null argument
 CMS_R_ADD_SIGNER_ERROR:99:add signer error
