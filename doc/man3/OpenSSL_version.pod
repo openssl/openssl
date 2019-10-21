@@ -53,7 +53,7 @@ Deprecated:
 
 The three macros B<OPENSSL_VERSION_MAJOR>, B<OPENSSL_VERSION_MINOR> and
 B<OPENSSL_VERSION_PATCH> represent the three parts of a version
-number, B<MAJOR.MINOR.PATCH>.
+identifier, B<MAJOR.MINOR.PATCH>.
 
 The macro B<OPENSSL_VERSION_PRE_RELEASE> is an added bit of text that,
 when defined, indicates that this is a pre-release version, such as
@@ -67,10 +67,10 @@ The OpenSSL project will not touch this macro.
 The value must be a string.
 
 B<OPENSSL_VERSION_STR> is a convenience macro to get the short version
-number string, C<MAJOR.MINOR.PATCH>.
+identifier string, C<"I<MAJOR>.I<MINOR>.I<PATCH>">.
 
 B<OPENSSL_FULL_VERSION_STR> is a convenience macro to get the longer
-version number string, which combines B<OPENSSL_VERSION_STR>,
+version identifier string, which combines B<OPENSSL_VERSION_STR>,
 B<OPENSSL_VERSION_PRE_RELEASE> and B<OPENSSL_VERSION_BUILD_METADATA>.
 
 B<OPENSSL_VERSION_TEXT> is a convenience macro to get a full descriptive
