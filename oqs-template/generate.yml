@@ -36,59 +36,29 @@ kems:
     oqs_alg: "OQS_KEM_alg_frodokem_1344_shake"
     bit_security: 256
   -
-    name_group: "bike1l1"
+    name_group: "bike1l1cpa"
     nid: "0x0206"
     nid_hybrid_p256: "0x0306"
-    oqs_alg: "OQS_KEM_alg_bike1_l1"
+    oqs_alg: "OQS_KEM_alg_bike1_l1_cpa"
     bit_security: 128
   -
-    name_group: "bike1l3"
+    name_group: "bike1l3cpa"
     nid: "0x0207"
     nid_hybrid_p256: "0x0307"
-    oqs_alg: "OQS_KEM_alg_bike1_l3"
+    oqs_alg: "OQS_KEM_alg_bike1_l3_cpa"
     bit_security: 192
   -
-    name_group: "bike1l5"
-    nid: "0x0208"
-    nid_hybrid_p256: "0x0308"
-    oqs_alg: "OQS_KEM_alg_bike1_l5"
-    bit_security: 256
-  -
-    name_group: "bike2l1"
-    nid: "0x0209"
-    nid_hybrid_p256: "0x0309"
-    oqs_alg: "OQS_KEM_alg_bike2_l1"
+    name_group: "bike1l1fo"
+    nid: "0x0223"
+    nid_hybrid_p256: "0x0323"
+    oqs_alg: "OQS_KEM_alg_bike1_l1_fo"
     bit_security: 128
   -
-    name_group: "bike2l3"
-    nid: "0x020A"
-    nid_hybrid_p256: "0x030A"
-    oqs_alg: "OQS_KEM_alg_bike2_l3"
+    name_group: "bike1l3fo"
+    nid: "0x0224"
+    nid_hybrid_p256: "0x0324"
+    oqs_alg: "OQS_KEM_alg_bike1_l3_fo"
     bit_security: 192
-  -
-    name_group: "bike2l5"
-    nid: "0x020B"
-    nid_hybrid_p256: "0x030B"
-    oqs_alg: "OQS_KEM_alg_bike2_l5"
-    bit_security: 256
-  -
-    name_group: "bike3l1"
-    nid: "0x020C"
-    nid_hybrid_p256: "0x030C"
-    oqs_alg: "OQS_KEM_alg_bike3_l1"
-    bit_security: 128
-  -
-    name_group: "bike3l3"
-    nid: "0x020D"
-    nid_hybrid_p256: "0x030D"
-    oqs_alg: "OQS_KEM_alg_bike3_l3"
-    bit_security: 192
-  -
-    name_group: "bike3l5"
-    nid: "0x020E"
-    nid_hybrid_p256: "0x030E"
-    oqs_alg: "OQS_KEM_alg_bike3_l5"
-    bit_security: 256
   -
     name_group: "kyber512"
     nid: "0x020F"
@@ -209,8 +179,8 @@ kems:
     nid_hybrid_p256: "0x0322"
     oqs_alg: "OQS_KEM_alg_sike_p751"
     bit_security: 256
-kem_nid_end: "0x0222"
-kem_nid_hybrid_end: "0x0322"
+kem_nid_end: "0x0224"
+kem_nid_hybrid_end: "0x0324"
 unused_kems:
   -
     name_group: "ledacryptkemlt12"

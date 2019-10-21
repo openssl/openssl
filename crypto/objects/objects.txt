@@ -1689,9 +1689,9 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
 1 3 6 1 4 1 311 89 2 1 1 : picnicl1fs : picnicl1fs
 1 3 6 1 4 1 311 89 2 1 2 : p256_picnicl1fs : p256_picnicl1fs
 1 3 6 1 4 1 311 89 2 1 3 : rsa3072_picnicl1fs : rsa3072_picnicl1fs
-1 3 6 1 4 1 311 89 2 2 1 : qteslapi : qteslapi
-1 3 6 1 4 1 311 89 2 2 2 : p256_qteslapi : p256_qteslapi
-1 3 6 1 4 1 311 89 2 2 3 : rsa3072_qteslapi : rsa3072_qteslapi
-1 3 6 1 4 1 311 89 2 2 4 : qteslapiii : qteslapiii
-1 3 6 1 4 1 311 89 2 2 5 : p384_qteslapiii : p384_qteslapiii
+1 3 6 1 4 1 311 89 2 2 10 : qteslapi : qteslapi
+1 3 6 1 4 1 311 89 2 2 11 : p256_qteslapi : p256_qteslapi
+1 3 6 1 4 1 311 89 2 2 12 : rsa3072_qteslapi : rsa3072_qteslapi
+1 3 6 1 4 1 311 89 2 2 20 : qteslapiii : qteslapiii
+1 3 6 1 4 1 311 89 2 2 21 : p384_qteslapiii : p384_qteslapiii
 ##### OQS_TEMPLATE_FRAGMENT_ASSIGN_OIDS_END

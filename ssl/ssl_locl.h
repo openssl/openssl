@@ -475,15 +475,10 @@
 #define NID_OQS_frodo976shake 0x0203
 #define NID_OQS_frodo1344aes 0x0204
 #define NID_OQS_frodo1344shake 0x0205
-#define NID_OQS_bike1l1 0x0206
-#define NID_OQS_bike1l3 0x0207
-#define NID_OQS_bike1l5 0x0208
-#define NID_OQS_bike2l1 0x0209
-#define NID_OQS_bike2l3 0x020A
-#define NID_OQS_bike2l5 0x020B
-#define NID_OQS_bike3l1 0x020C
-#define NID_OQS_bike3l3 0x020D
-#define NID_OQS_bike3l5 0x020E
+#define NID_OQS_bike1l1cpa 0x0206
+#define NID_OQS_bike1l3cpa 0x0207
+#define NID_OQS_bike1l1fo 0x0223
+#define NID_OQS_bike1l3fo 0x0224
 #define NID_OQS_kyber512 0x020F
 #define NID_OQS_kyber768 0x0210
 #define NID_OQS_kyber1024 0x0211
@@ -504,7 +499,7 @@
 #define NID_OQS_sikep503 0x0220
 #define NID_OQS_sikep610 0x0221
 #define NID_OQS_sikep751 0x0222
-#define NID_OQS_END 0x0222
+#define NID_OQS_END 0x0224
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_NIDS_END
 
 #define NID_HYBRID_START           0x02FF
@@ -516,15 +511,10 @@
 #define NID_OQS_p256_frodo976shake 0x0303
 #define NID_OQS_p256_frodo1344aes 0x0304
 #define NID_OQS_p256_frodo1344shake 0x0305
-#define NID_OQS_p256_bike1l1 0x0306
-#define NID_OQS_p256_bike1l3 0x0307
-#define NID_OQS_p256_bike1l5 0x0308
-#define NID_OQS_p256_bike2l1 0x0309
-#define NID_OQS_p256_bike2l3 0x030A
-#define NID_OQS_p256_bike2l5 0x030B
-#define NID_OQS_p256_bike3l1 0x030C
-#define NID_OQS_p256_bike3l3 0x030D
-#define NID_OQS_p256_bike3l5 0x030E
+#define NID_OQS_p256_bike1l1cpa 0x0306
+#define NID_OQS_p256_bike1l3cpa 0x0307
+#define NID_OQS_p256_bike1l1fo 0x0323
+#define NID_OQS_p256_bike1l3fo 0x0324
 #define NID_OQS_p256_kyber512 0x030F
 #define NID_OQS_p256_kyber768 0x0310
 #define NID_OQS_p256_kyber1024 0x0311
@@ -545,7 +535,7 @@
 #define NID_OQS_p256_sikep503 0x0320
 #define NID_OQS_p256_sikep610 0x0321
 #define NID_OQS_p256_sikep751 0x0322
-#define NID_HYBRID_END 0x0322
+#define NID_HYBRID_END 0x0324
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_HYBRID_NIDS_END
 
 /* OQS TODO: add L3 algs with p384 curve */
@@ -565,15 +555,10 @@
   (nid == NID_OQS_frodo976shake ? 0x0203 : \
   (nid == NID_OQS_frodo1344aes ? 0x0204 : \
   (nid == NID_OQS_frodo1344shake ? 0x0205 : \
-  (nid == NID_OQS_bike1l1 ? 0x0206 : \
-  (nid == NID_OQS_bike1l3 ? 0x0207 : \
-  (nid == NID_OQS_bike1l5 ? 0x0208 : \
-  (nid == NID_OQS_bike2l1 ? 0x0209 : \
-  (nid == NID_OQS_bike2l3 ? 0x020A : \
-  (nid == NID_OQS_bike2l5 ? 0x020B : \
-  (nid == NID_OQS_bike3l1 ? 0x020C : \
-  (nid == NID_OQS_bike3l3 ? 0x020D : \
-  (nid == NID_OQS_bike3l5 ? 0x020E : \
+  (nid == NID_OQS_bike1l1cpa ? 0x0206 : \
+  (nid == NID_OQS_bike1l3cpa ? 0x0207 : \
+  (nid == NID_OQS_bike1l1fo ? 0x0223 : \
+  (nid == NID_OQS_bike1l3fo ? 0x0224 : \
   (nid == NID_OQS_kyber512 ? 0x020F : \
   (nid == NID_OQS_kyber768 ? 0x0210 : \
   (nid == NID_OQS_kyber1024 ? 0x0211 : \
@@ -595,7 +580,7 @@
   (nid == NID_OQS_sikep610 ? 0x0221 : \
   (nid == NID_OQS_sikep751 ? 0x0222 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))
+  )))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_END
 
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_START
@@ -607,15 +592,10 @@
   (nid == NID_OQS_p256_frodo976shake ? 0x0303 : \
   (nid == NID_OQS_p256_frodo1344aes ? 0x0304 : \
   (nid == NID_OQS_p256_frodo1344shake ? 0x0305 : \
-  (nid == NID_OQS_p256_bike1l1 ? 0x0306 : \
-  (nid == NID_OQS_p256_bike1l3 ? 0x0307 : \
-  (nid == NID_OQS_p256_bike1l5 ? 0x0308 : \
-  (nid == NID_OQS_p256_bike2l1 ? 0x0309 : \
-  (nid == NID_OQS_p256_bike2l3 ? 0x030A : \
-  (nid == NID_OQS_p256_bike2l5 ? 0x030B : \
-  (nid == NID_OQS_p256_bike3l1 ? 0x030C : \
-  (nid == NID_OQS_p256_bike3l3 ? 0x030D : \
-  (nid == NID_OQS_p256_bike3l5 ? 0x030E : \
+  (nid == NID_OQS_p256_bike1l1cpa ? 0x0306 : \
+  (nid == NID_OQS_p256_bike1l3cpa ? 0x0307 : \
+  (nid == NID_OQS_p256_bike1l1fo ? 0x0323 : \
+  (nid == NID_OQS_p256_bike1l3fo ? 0x0324 : \
   (nid == NID_OQS_p256_kyber512 ? 0x030F : \
   (nid == NID_OQS_p256_kyber768 ? 0x0310 : \
   (nid == NID_OQS_p256_kyber1024 ? 0x0311 : \
@@ -637,7 +617,7 @@
   (nid == NID_OQS_p256_sikep610 ? 0x0321 : \
   (nid == NID_OQS_p256_sikep751 ? 0x0322 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))
+  )))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_END
 
   /* Returns the OQS KEM NID for a curve ID */
@@ -650,15 +630,10 @@
   (curveID == 0x0203 || curveID == 0x0303 ? NID_OQS_frodo976shake : \
   (curveID == 0x0204 || curveID == 0x0304 ? NID_OQS_frodo1344aes : \
   (curveID == 0x0205 || curveID == 0x0305 ? NID_OQS_frodo1344shake : \
-  (curveID == 0x0206 || curveID == 0x0306 ? NID_OQS_bike1l1 : \
-  (curveID == 0x0207 || curveID == 0x0307 ? NID_OQS_bike1l3 : \
-  (curveID == 0x0208 || curveID == 0x0308 ? NID_OQS_bike1l5 : \
-  (curveID == 0x0209 || curveID == 0x0309 ? NID_OQS_bike2l1 : \
-  (curveID == 0x020A || curveID == 0x030A ? NID_OQS_bike2l3 : \
-  (curveID == 0x020B || curveID == 0x030B ? NID_OQS_bike2l5 : \
-  (curveID == 0x020C || curveID == 0x030C ? NID_OQS_bike3l1 : \
-  (curveID == 0x020D || curveID == 0x030D ? NID_OQS_bike3l3 : \
-  (curveID == 0x020E || curveID == 0x030E ? NID_OQS_bike3l5 : \
+  (curveID == 0x0206 || curveID == 0x0306 ? NID_OQS_bike1l1cpa : \
+  (curveID == 0x0207 || curveID == 0x0307 ? NID_OQS_bike1l3cpa : \
+  (curveID == 0x0223 || curveID == 0x0323 ? NID_OQS_bike1l1fo : \
+  (curveID == 0x0224 || curveID == 0x0324 ? NID_OQS_bike1l3fo : \
   (curveID == 0x020F || curveID == 0x030F ? NID_OQS_kyber512 : \
   (curveID == 0x0210 || curveID == 0x0310 ? NID_OQS_kyber768 : \
   (curveID == 0x0211 || curveID == 0x0311 ? NID_OQS_kyber1024 : \
@@ -680,7 +655,7 @@
   (curveID == 0x0221 || curveID == 0x0321 ? NID_OQS_sikep610 : \
   (curveID == 0x0222 || curveID == 0x0322 ? NID_OQS_sikep751 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))
+  )))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_NID_END
 
 /* Returns true if the curve ID is for an OQS KEM */
@@ -699,15 +674,10 @@
   (nid == NID_OQS_frodo976shake ? OQS_KEM_alg_frodokem_976_shake : \
   (nid == NID_OQS_frodo1344aes ? OQS_KEM_alg_frodokem_1344_aes : \
   (nid == NID_OQS_frodo1344shake ? OQS_KEM_alg_frodokem_1344_shake : \
-  (nid == NID_OQS_bike1l1 ? OQS_KEM_alg_bike1_l1 : \
-  (nid == NID_OQS_bike1l3 ? OQS_KEM_alg_bike1_l3 : \
-  (nid == NID_OQS_bike1l5 ? OQS_KEM_alg_bike1_l5 : \
-  (nid == NID_OQS_bike2l1 ? OQS_KEM_alg_bike2_l1 : \
-  (nid == NID_OQS_bike2l3 ? OQS_KEM_alg_bike2_l3 : \
-  (nid == NID_OQS_bike2l5 ? OQS_KEM_alg_bike2_l5 : \
-  (nid == NID_OQS_bike3l1 ? OQS_KEM_alg_bike3_l1 : \
-  (nid == NID_OQS_bike3l3 ? OQS_KEM_alg_bike3_l3 : \
-  (nid == NID_OQS_bike3l5 ? OQS_KEM_alg_bike3_l5 : \
+  (nid == NID_OQS_bike1l1cpa ? OQS_KEM_alg_bike1_l1_cpa : \
+  (nid == NID_OQS_bike1l3cpa ? OQS_KEM_alg_bike1_l3_cpa : \
+  (nid == NID_OQS_bike1l1fo ? OQS_KEM_alg_bike1_l1_fo : \
+  (nid == NID_OQS_bike1l3fo ? OQS_KEM_alg_bike1_l3_fo : \
   (nid == NID_OQS_kyber512 ? OQS_KEM_alg_kyber_512 : \
   (nid == NID_OQS_kyber768 ? OQS_KEM_alg_kyber_768 : \
   (nid == NID_OQS_kyber1024 ? OQS_KEM_alg_kyber_1024 : \
@@ -729,7 +699,7 @@
   (nid == NID_OQS_sikep610 ? OQS_KEM_alg_sike_p610 : \
   (nid == NID_OQS_sikep751 ? OQS_KEM_alg_sike_p751 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))
+  )))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_END
 
 /* Returns the classical nid for an hybrid alg (FIXMEOQS: only secp256r1 (23) is supported for now) */
