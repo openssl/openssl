@@ -83,7 +83,7 @@ OPENSSL_version_major(), OPENSSL_version_minor(), OPENSSL_version_patch(),
 OPENSSL_version_pre_release(), and OPENSSL_version_build_metadata() return
 the values of the macros above for the build of the library, respectively.
 
-OpenSSL_version() returns different strings depending on B<t>:
+OpenSSL_version() returns different strings depending on I<t>:
 
 =over 4
 
@@ -142,9 +142,9 @@ Or C<CPUINFO: N/A> if not available, such as when configured with B<no-asm>.
 
 =back
 
-For an unknown B<t>, the text C<not available> is returned.
+For an unknown I<t>, the text C<not available> is returned.
 
-OPENSSL_info() also returns different strings depending on B<t>:
+OPENSSL_info() also returns different strings depending on I<t>:
 
 =over 4
 
@@ -191,7 +191,7 @@ For x86 the string looks like C<OPENSSL_ia32cap=0x123:0x456>.
 
 =back
 
-For an unknown B<t>, NULL is returned.
+For an unknown I<t>, NULL is returned.
 
 =head1 BACKWARD COMPATIBILITY
 
