@@ -533,7 +533,7 @@ CertRepMessage or Revocation Response or error message, or NULL if unset.
 OSSL_CMP_CTX_get_failInfoCode() returns the error code from the failInfo field
 of the last received CertRepMessage or Revocation Response or error message.
 This is a bit field and the flags for it are specified in the header file
-C<cmp.h>.
+F<< <openssl/cmp.h> >>.
 The flags start with OSSL_CMP_CTX_FAILINFO, for example:
 OSSL_CMP_CTX_FAILINFO_badAlg. Returns -1 if the failInfoCode field is unset.
 

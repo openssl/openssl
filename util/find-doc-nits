@@ -450,12 +450,12 @@ sub check {
     # Make sure every link has a section.
     while ( $contents =~ /$markup_re/msg ) {
         my $target = $1;
-        next unless $target =~ /L</;            # Skip if not L<...>
-        next if $target =~ /::/;                # Perl module
-        next if $target =~ m@L</@;              # Links within the page
-        next if $target =~ /^L<https?:/;        # URL link
-        next if $target =~ m@\([1357]\)>$@;     # Has a section
-        next if $target =~ m@\([1357]\)/[^>].*>$@; # Has a section/anchor
+        next unless $target =~ /^L</;           # Skip if not L<...>, or
+        next if $target =~ /::/;                #   links to a Perl module, or
+        next if $target =~ m@L</@;              #   links within the page, or
+        next if $target =~ /^L<https?:/;        #   is a URL link, or
+        next if $target =~ m@\([1357]\)>$@;     #   it has a section, or
+        next if $target =~ m@\([1357]\)/.*>$@;  #   it has a section/anchor
         err($id, "Section missing in $target")
     }
     # Check for proper in-man-3 API links.
