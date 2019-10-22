@@ -2234,10 +2234,10 @@ krb5_error_code kssl_build_principal_2(
     return 0;
 
  err:
-    if (new_p && new_p[0].data)
-        free(new_p[0].data);
-    if (new_p && new_p[1].data)
-        free(new_p[1].data);
+    if (p_data && p_data[0].data)
+        free(p_data[0].data);
+    if (p_data && p_data[1].data)
+        free(p_data[1].data);
     if (new_p)
         free(new_p);
     if (new_r)
