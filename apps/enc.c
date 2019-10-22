@@ -55,9 +55,6 @@ const OPTIONS enc_options[] = {
 #if !OPENSSL_API_3
     {"ciphers", OPT_LIST, '-', "Alias for -list"},
 #endif
-    {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"pass", OPT_PASS, 's', "Passphrase source"},
     {"e", OPT_E, '-', "Encrypt"},
     {"d", OPT_D, '-', "Decrypt"},
     {"p", OPT_P, '-', "Print the iv/key"},

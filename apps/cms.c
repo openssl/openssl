@@ -152,10 +152,6 @@ const OPTIONS cms_options[] = {
     {"nointern", OPT_NOINTERN, '-',
         "Don't search certificates in message for signer"},
     {"noverify", OPT_NOVERIFY, '-', "Don't verify signers certificate"},
-    {"content", OPT_CONTENT, '<',
-     "Supply or override content for detached signature"},
-    {"print", OPT_PRINT, '-',
-        "For the -cmsout operation print out all fields of the CMS structure"},
 
     OPT_SECTION("Formatting"),
     {"text", OPT_TEXT, '-', "Include or delete text MIME headers"},
