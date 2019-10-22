@@ -71,7 +71,7 @@ y^2 + xy = x^3 + ax^2 + b (where b != 0)
 Operations in a binary field are performed relative to an B<irreducible polynomial>. All such curves with OpenSSL
 use a trinomial or a pentanomial for this parameter.
 
-A new curve can be constructed by calling EC_GROUP_new, using the implementation provided by B<meth> (see
+A new curve can be constructed by calling EC_GROUP_new(), using the implementation provided by B<meth> (see
 L<EC_GFp_simple_method(3)>). It is then necessary to call EC_GROUP_set_curve() to set the curve parameters.
 EC_GROUP_new_from_ecparameters() will create a group from the
 specified B<params> and
@@ -90,12 +90,12 @@ backwards compatibility only and should not be used.
 EC_GROUP_get_curve_GFp() and EC_GROUP_get_curve_GF2m() are synonyms for EC_GROUP_get_curve(). They are defined for
 backwards compatibility only and should not be used.
 
-The functions EC_GROUP_new_curve_GFp and EC_GROUP_new_curve_GF2m are shortcuts for calling EC_GROUP_new and then the
-EC_GROUP_set_curve function. An appropriate default implementation method will be used.
+The functions EC_GROUP_new_curve_GFp() and EC_GROUP_new_curve_GF2m() are shortcuts for calling EC_GROUP_new() and then the
+EC_GROUP_set_curve() function. An appropriate default implementation method will be used.
 
 Whilst the library can be used to create any curve using the functions described above, there are also a number of
 predefined curves that are available. In order to obtain a list of all of the predefined curves, call the function
-EC_get_builtin_curves. The parameter B<r> should be an array of EC_builtin_curve structures of size B<nitems>. The function
+EC_get_builtin_curves(). The parameter B<r> should be an array of EC_builtin_curve structures of size B<nitems>. The function
 will populate the B<r> array with information about the builtin curves. If B<nitems> is less than the total number of
 curves available, then the first B<nitems> curves will be returned. Otherwise the total number of curves will be
 provided. The return value is the total number of curves available (whether that number has been populated in B<r> or
@@ -109,22 +109,22 @@ The EC_builtin_curve structure is defined as follows:
 
 Each EC_builtin_curve item has a unique integer id (B<nid>), and a human readable comment string describing the curve.
 
-In order to construct a builtin curve use the function EC_GROUP_new_by_curve_name and provide the B<nid> of the curve to
+In order to construct a builtin curve use the function EC_GROUP_new_by_curve_name() and provide the B<nid> of the curve to
 be constructed.
 
-EC_GROUP_free frees the memory associated with the EC_GROUP.
+EC_GROUP_free() frees the memory associated with the EC_GROUP.
 If B<group> is NULL nothing is done.
 
-EC_GROUP_clear_free destroys any sensitive data held within the EC_GROUP and then frees its memory.
+EC_GROUP_clear_free() destroys any sensitive data held within the EC_GROUP and then frees its memory.
 If B<group> is NULL nothing is done.
 
 =head1 RETURN VALUES
 
 All EC_GROUP_new* functions return a pointer to the newly constructed group, or NULL on error.
 
-EC_get_builtin_curves returns the number of builtin curves that are available.
+EC_get_builtin_curves() returns the number of builtin curves that are available.
 
-EC_GROUP_set_curve_GFp, EC_GROUP_get_curve_GFp, EC_GROUP_set_curve_GF2m, EC_GROUP_get_curve_GF2m return 1 on success or 0 on error.
+EC_GROUP_set_curve_GFp(), EC_GROUP_get_curve_GFp(), EC_GROUP_set_curve_GF2m(), EC_GROUP_get_curve_GF2m() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
@@ -134,7 +134,7 @@ L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
