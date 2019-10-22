@@ -14,13 +14,13 @@ kex_algs_master_111 = [
 ##### OQS_TEMPLATE_FRAGMENT_KEX_ALGS_MASTER_END
     ]
 sig_algs_master_111 = [
-    'rsa',
+    'rsa:3072',
     'ecdsa',
 ##### OQS_TEMPLATE_FRAGMENT_SIG_ALGS_MASTER_START
     # post-quantum signatures
     'oqsdefault','dilithium2','dilithium3','dilithium4','picnicl1fs','qteslapi','qteslapiii',
     # post-quantum + classical signatures
-    'p256-oqsdefault','rsa3072-oqsdefault','p256-dilithium2','rsa3072-dilithium2','p384-dilithium4','p256-picnicl1fs','rsa3072-picnicl1fs','p256-qteslapi','rsa3072-qteslapi','p384-qteslapiii',
+    'p256_oqsdefault','rsa3072_oqsdefault','p256_dilithium2','rsa3072_dilithium2','p384_dilithium4','p256_picnicl1fs','rsa3072_picnicl1fs','p256_qteslapi','rsa3072_qteslapi','p384_qteslapiii',
 ##### OQS_TEMPLATE_FRAGMENT_SIG_ALGS_MASTER_END
     ]
 
@@ -72,12 +72,10 @@ def gen_keys(sig_alg):
         )
     else:
         # generate CA key and cert
-        if sig_alg == 'rsa': sig_alg_sized = "rsa:3072"
-        else: sig_alg_sized = "rsa"
         helpers.run_subprocess(
             [
                 'apps/openssl', 'req', '-x509', '-new',
-                '-newkey', sig_alg_sized,
+                '-newkey', sig_alg,
                 '-keyout', '{}_CA.key'.format(sig_alg),
                 '-out', '{}_CA.crt'.format(sig_alg),
                 '-nodes',
@@ -91,7 +89,7 @@ def gen_keys(sig_alg):
         helpers.run_subprocess(
             [
                 'apps/openssl', 'req', '-new',
-                '-newkey', sig_alg_sized,
+                '-newkey', sig_alg,
                 '-keyout', '{}_srv.key'.format(sig_alg),
                 '-out', '{}_srv.csr'.format(sig_alg),
                 '-nodes',
