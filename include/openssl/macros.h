@@ -12,6 +12,10 @@
 #ifndef OPENSSL_MACROS_H
 # define OPENSSL_MACROS_H
 
+/* Helper macros for CPP string composition */
+# define OPENSSL_MSTR_HELPER(x) #x
+# define OPENSSL_MSTR(x) OPENSSL_MSTR_HELPER(x)
+
 /*
  * Sometimes OPENSSSL_NO_xxx ends up with an empty file and some compilers
  * don't like that.  This will hopefully silence them.
