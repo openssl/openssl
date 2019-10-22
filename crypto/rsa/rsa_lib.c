@@ -19,6 +19,47 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
+int EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(EVP_PKEY_CTX *ctx, int len)
+{
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL);
+}
+
+int EVP_PKEY_CTX_get_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int *plen)
+{
+    return RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY),
+                             EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN, 0, plen);
+}
+
+int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
+{
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md));
+}
+
+int EVP_PKEY_CTX_set_rsa_pss_keygen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md){
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_MD, 0, (void *)(md));
+}
+
+int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int mbits)
+{
+    return RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_RSA_KEYGEN_BITS, mbits, NULL);
+}
+
+int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp)
+{
+    return RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp);
+}
+
+int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes)
+{
+    return RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES, primes, NULL);
+}
+
 RSA *RSA_new(void)
 {
     return RSA_new_method(NULL);
