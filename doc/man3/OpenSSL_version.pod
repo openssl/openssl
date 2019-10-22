@@ -53,7 +53,7 @@ Deprecated:
 
 The three macros B<OPENSSL_VERSION_MAJOR>, B<OPENSSL_VERSION_MINOR> and
 B<OPENSSL_VERSION_PATCH> represent the three parts of a version
-identifier, B<MAJOR.MINOR.PATCH>.
+identifier, B<I<MAJOR>.I<MINOR>.I<PATCH>>.
 
 The macro B<OPENSSL_VERSION_PRE_RELEASE> is an added bit of text that,
 when defined, indicates that this is a pre-release version, such as
