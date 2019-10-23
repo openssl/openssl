@@ -269,11 +269,11 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
      * We only have the first 256 bit of 1/sqrt(2)
      */
     if (Xin == NULL) {
-        if (bits < BN_num_bytes(&bn_inv_sqrt_2)*8)
+        if (bits < BN_num_bits(&bn_inv_sqrt_2))
             goto err;
         if (BN_copy(base, &bn_inv_sqrt_2) == NULL
             || !BN_add(base, base, BN_value_one())
-            || !BN_lshift(base, base, bits - BN_num_bytes(&bn_inv_sqrt_2)*8)
+            || !BN_lshift(base, base, bits - BN_num_bits(&bn_inv_sqrt_2))
             || !BN_one(range)
             || !BN_lshift(range, range, bits)
             || !BN_sub(range, range, base))
