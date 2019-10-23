@@ -30,14 +30,14 @@ my $ciphersstatus = undef;
 my @ciphers =
     grep(! /wrap|^$|^[^-]/,
          (map { split /\s+/ }
-          run(app([$cmd, "enc", "-ciphers"]),
+          run(app([$cmd, "enc", "-list"]),
               capture => 1, statusvar => \$ciphersstatus)));
 
 plan tests => 2 + scalar @ciphers;
 
 SKIP: {
     skip "Problems getting ciphers...", 1 + scalar(@ciphers)
-        unless ok($ciphersstatus, "Running 'openssl enc -ciphers'");
+        unless ok($ciphersstatus, "Running 'openssl enc -list'");
     unless (ok(copy($testsrc, $plaintext), "Copying $testsrc to $plaintext")) {
         diag($!);
         skip "Not initialized, skipping...", scalar(@ciphers);
