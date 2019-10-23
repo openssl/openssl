@@ -4207,9 +4207,12 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #ifndef OPENSSL_NO_CHACHA
     STACK_OF(SSL_CIPHER) *prio_chacha = NULL;
 #endif
+    uint8_t *flags;
+    int found = 0;
     if (srvr_flags == NULL)
         return 0;
     srvr = srvr_flags->cipher_list;
+    flags = srvr_flags->flags;
 
     /* Let's see which ciphers we can support */
 
@@ -4247,6 +4250,8 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
            and there are ChaCha20 ciphers in the server list, then
            temporarily prioritize all ChaCha20 ciphers in the servers list. */
         if (s->options & SSL_OP_PRIORITIZE_CHACHA && sk_SSL_CIPHER_num(clnt) > 0) {
+            /* ChaCha20 will be prioritized, ignore cipher flags */
+            flags = NULL;
             c = sk_SSL_CIPHER_value(clnt, 0);
             if (c->algorithm_enc == SSL_CHACHA20POLY1305) {
                 /* ChaCha20 is client preferred, check server... */
@@ -4285,7 +4290,10 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     } else {
         prio = clnt;
         allow = srvr;
+        /* Client cipher list will be prioritized, ignore server cipher flags */
+        flags = NULL;
     }
+
 
     if (SSL_IS_TLS13(s)) {
 #ifndef OPENSSL_NO_PSK
@@ -4311,37 +4319,51 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         ssl_set_masks(s);
     }
 
-    for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
-        c = sk_SSL_CIPHER_value(prio, i);
-        if (!ssl3_check_cipher(s, c, &alg_mask))
-            continue;
-
-        ii = sk_SSL_CIPHER_find(allow, c);
-        if (ii >= 0) {
-            /* Check security callback permits this cipher */
-            if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
-                              c->strength_bits, 0, (void *)c))
-                continue;
-#if !defined(OPENSSL_NO_EC)
-            if (alg_mask && s->s3.is_probably_safari) {
-                if (!ret)
-                    ret = c;
-                continue;
-            }
-#endif
-            if (prefer_sha256) {
-                if (ssl_md(c->algorithm2) == mdsha256) {
-                    ret = c;
-                    break;
-                }
-                if (ret == NULL)
-                    ret = c;
-                continue;
-            }
+    if (flags != NULL) {
+        c = sk_SSL_CIPHER_value(allow, 0);
+        ii = sk_SSL_CIPHER_find(prio, c);
+        if (ii >= 0 && flags[ii] & CIPHER_FLAG_PREFER
+            && ssl3_check_cipher(s, c, &alg_mask)) {
+            found = 1;
             ret = c;
-            break;
         }
     }
+
+    if (!found)
+        for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
+            c = sk_SSL_CIPHER_value(prio, i);
+            if (!ssl3_check_cipher(s, c, &alg_mask))
+                continue;
+
+
+            ii = sk_SSL_CIPHER_find(allow, c);
+            if (ii >= 0) {
+                /* Check security callback permits this cipher */
+                if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
+                                  c->strength_bits, 0, (void *)c))
+                    continue;
+#if !defined(OPENSSL_NO_EC)
+                if (alg_mask && s->s3.is_probably_safari) {
+                    if (!ret)
+                        ret = c;
+                    continue;
+                }
+#endif
+                if (prefer_sha256) {
+
+                    if (ssl_md(c->algorithm2) == mdsha256) {
+                        ret = c;
+                        break;
+                    }
+                    if (ret == NULL)
+                        ret = c;
+                    continue;
+                }
+                ret = c;
+                break;
+            }
+    }
+
 #ifndef OPENSSL_NO_CHACHA
     sk_SSL_CIPHER_free(prio_chacha);
 #endif

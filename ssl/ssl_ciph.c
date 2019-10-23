@@ -188,6 +188,7 @@ static size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
  * Bump the ciphers to the top of the list.
  */
 #define CIPHER_BUMP     6
+#define CIPHER_PREFER   7
 
 typedef struct cipher_order_st {
     const SSL_CIPHER *cipher;
@@ -934,6 +935,9 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
         } else if (rule == CIPHER_BUMP) {
             if (curr->active)
                 ll_append_head(&head, curr, &tail);
+        } else if (rule == CIPHER_PREFER) {
+            if (curr->active)
+                curr->flags |= CIPHER_FLAG_PREFER;
         } else if (rule == CIPHER_KILL) {
             /* reverse == 0 */
             if (head == curr)
@@ -1115,6 +1119,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             l++;
         } else if (ch == '^') {
             rule = CIPHER_BUMP;
+            l++;
+        } else if (ch == '*') {
+            rule = CIPHER_PREFER;
             l++;
         } else {
             rule = CIPHER_ADD;

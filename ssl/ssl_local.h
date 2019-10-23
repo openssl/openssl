@@ -746,6 +746,8 @@ typedef struct ssl_ctx_ext_secure_st {
 
 /* Added from ciphersuite interface. */
 #define CIPHER_FLAG_FROM_CIPHERRSUITE   1
+/* Prioritize cipher on server when client does. */
+#define CIPHER_FLAG_PREFER              2
 
 struct ssl_cipher_list_flags_st {
     STACK_OF(SSL_CIPHER) *cipher_list;
