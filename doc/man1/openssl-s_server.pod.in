@@ -10,6 +10,11 @@
 openssl-s_server - SSL/TLS server program
 
 =head1 SYNOPSIS
+{- OpenSSL::safe::form('cert', 'certificate', 'pem', 'DER');
+OpenSSL::safe::form('key', 'private key', 'DER', 'PEM');
+OpenSSL::safe::form('dcert', 'additional certificate', 'pem', 'der');
+OpenSSL::safe::form('dkey', 'additional private key', 'PEM', 'DER');
+OpenSSL::safe::form('CRL', 'certificate revocation list', 'PEM', 'DER'); -}
 
 B<openssl> B<s_server>
 [B<-help>]
@@ -26,14 +31,10 @@ B<openssl> B<s_server>
 [B<-nameopt> I<val>]
 [B<-naccept> I<+int>]
 [B<-serverinfo> I<val>]
-[B<-certform> B<DER>|B<PEM>]
 [B<-key> I<infile>]
-[B<-keyform> B<DER>|B<PEM>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
-[B<-dcertform> B<DER>|B<PEM>]
 [B<-dkey> I<infile>]
-[B<-dkeyform> B<DER>|B<PEM>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -179,6 +180,7 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::form_synopsis -}
 
 =for openssl ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
 
@@ -285,20 +287,10 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-certform> B<DER>|B<PEM>, B<-CRLForm> B<DER>|B<PEM>
-
-The certificate and CRL format; the default is PEM.
-See L<openssl(1)/Format Options> for details.
-
 =item B<-key> I<infile>
 
 The private key to use. If not specified then the certificate file will
 be used.
-
-=item B<-keyform> B<DER>|B<PEM>
-
-The key format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<val>
 
@@ -322,11 +314,6 @@ by using an appropriate certificate.
 A file containing trusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
-
-=item B<-dcertform> B<DER>|B<PEM>, B<-dkeyform> B<DER>|B<PEM>
-
-The format of the certificate and private key; the default is B<PEM>
-see L<openssl(1)/Format Options>.
 
 =item B<-dpass> I<val>
 
@@ -718,6 +705,8 @@ by the client in binary mode.
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::form_items -}
 
 =back
 

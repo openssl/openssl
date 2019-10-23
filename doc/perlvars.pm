@@ -127,3 +127,33 @@ $OpenSSL::safe::opt_s_item = ""
 . "B<-record_padding> I<padding>, B<-debug_broken_protocol>, B<-no_middlebox>\n"
 . "\n"
 . "See L<SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS> for details.";
+
+
+package OpenSSL::safe;
+$form_synopsis = "";
+$form_items = "";
+
+#    &form(OPTNAME, DESCRIPTION, LIST, OF, FORMATS);
+# For example
+#    &form('key', 'private key', 'PEM', 'DER', 'ENGINE')
+# The first format is the default
+sub form {
+    my $name = shift;
+    my $what = shift;
+    my $deflt = uc(@_[0]);
+    my $formats = join('|', map { my $U = uc($_); "B<$U>" } sort @_);
+
+    $form_synopsis .= "\n"
+        if $form_synopsis ne "";
+    $form_synopsis .= "[B<-${name}form> $formats]";
+    $form_items .= <<EOF;
+
+=item B<-${name}form> $formats
+
+The format of the $what; the default is B<$deflt>.
+See L<openssl(1)/Format Options> for details.
+EOF
+    "";
+
+}
+1;
