@@ -31,6 +31,27 @@
 #include <openssl/bn.h>
 #include "bn_local.h"
 #include "crypto/bn.h"
+#include "internal/nelem.h"
+
+#if BN_BITS2 == 64
+# define BN_DEF(lo, hi) (BN_ULONG)hi<<32|lo
+#else
+# define BN_DEF(lo, hi) lo, hi
+#endif
+
+/* 1 / sqrt(2) * 2^256, rounded up */
+static const BN_ULONG inv_sqrt_2_val[] = {
+    BN_DEF(0x83339916UL, 0xED17AC85UL), BN_DEF(0x893BA84CUL, 0x1D6F60BAUL),
+    BN_DEF(0x754ABE9FUL, 0x597D89B3UL), BN_DEF(0xF9DE6484UL, 0xB504F333UL)
+};
+
+const BIGNUM bn_inv_sqrt_2 = {
+    (BN_ULONG *)inv_sqrt_2_val,
+    OSSL_NELEM(inv_sqrt_2_val),
+    OSSL_NELEM(inv_sqrt_2_val),
+    0,
+    BN_FLG_STATIC_DATA
+};
 
 /*
  * FIPS 186-4 Table B.1. "Min length of auxiliary primes p1, p2, q1, q2".
@@ -221,9 +242,12 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     int i, imax;
     int bits = nlen >> 1;
     BIGNUM *tmp, *R, *r1r2x2, *y1, *r1x2;
+    BIGNUM *base, *range;
 
     BN_CTX_start(ctx);
 
+    base = BN_CTX_get(ctx);
+    range = BN_CTX_get(ctx);
     R = BN_CTX_get(ctx);
     tmp = BN_CTX_get(ctx);
     r1r2x2 = BN_CTX_get(ctx);
@@ -234,6 +258,24 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
 
     if (Xin != NULL && BN_copy(X, Xin) == NULL)
         goto err;
+
+    /*
+     * We need to generate a random number X in the range
+     * 1/sqrt(2) * 2^(nlen/2) <= X < 2^(nlen/2).
+     * We can rewrite that as:
+     * base = 1/sqrt(2) * 2^(nlen/2)
+     * range = ((2^(nlen/2))) - (1/sqrt(2) * 2^(nlen/2))
+     * X = base + random(range)
+     * We only have the first 256 bit of 1/sqrt(2)
+     */
+    if (Xin == NULL) {
+        if (bits < BN_num_bits(&bn_inv_sqrt_2))
+            goto err;
+        if (!BN_lshift(base, &bn_inv_sqrt_2, bits - BN_num_bits(&bn_inv_sqrt_2))
+            || !BN_lshift(range, BN_value_one(), bits)
+            || !BN_sub(range, range, base))
+            goto err;
+    }
 
     if (!(BN_lshift1(r1x2, r1)
             /* (Step 1) GCD(2r1, r2) = 1 */
@@ -257,16 +299,9 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
         if (Xin == NULL) {
             /*
              * (Step 3) Choose Random X such that
-             *    sqrt(2) * 2^(nlen/2-1) < Random X < (2^(nlen/2)) - 1.
-             *
-             * For the lower bound:
-             *   sqrt(2) * 2^(nlen/2 - 1) == sqrt(2)/2 * 2^(nlen/2)
-             *   where sqrt(2)/2 = 0.70710678.. = 0.B504FC33F9DE...
-             *   so largest number will have B5... as the top byte
-             *   Setting the top 2 bits gives 0xC0.
+             *    sqrt(2) * 2^(nlen/2-1) <= Random X <= (2^(nlen/2)) - 1.
              */
-            if (!BN_priv_rand_ex(X, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY,
-                                 ctx))
+            if (!BN_priv_rand_range_ex(X, range, ctx) || !BN_add(X, X, base))
                 goto end;
         }
         /* (Step 4) Y = X + ((R - X) mod 2r1r2) */
