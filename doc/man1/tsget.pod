@@ -183,7 +183,7 @@ example:
 
 =head1 SEE ALSO
 
-=for openssl foreign manuals: WWW::Curl::Easy
+=for openssl foreign manual WWW::Curl::Easy
 
 L<openssl(1)>,
 L<openssl-ts(1)>,

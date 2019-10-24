@@ -15,7 +15,7 @@ accredited testing laboratory.
 
 One of the requirements for the FIPS module is self testing. An optional callback
 mechanism is available to return information to the user using
-L<OSSL_SELF_TEST_set_callback(7)>.
+L<OSSL_SELF_TEST_set_callback(3)>.
 
 The OPENSSL FIPS module uses the following mechanism to provide information
 about the self tests as they run.
@@ -240,7 +240,7 @@ A simple self test callback is shown below for illustrative purposes.
 
 L<openssl-fipsinstall(1)>,
 L<fips_config(5)>,
-L<OSSL_SELF_TEST_set_callback(7)>,
+L<OSSL_SELF_TEST_set_callback(3)>,
 L<OSSL_PARAM(3)>,
 L<openssl-core.h(7)>
 

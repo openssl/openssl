@@ -37,7 +37,7 @@ See L<openssl-engine(1)>.
 =item B<OPENSSL_MALLOC_FD>, B<OPENSSL_MALLOC_FAILURES>
 
 If built with debugging, this allows memory allocation to fail.
-See L<OPENSSSL_malloc(3)>.
+See L<OPENSSL_malloc(3)>.
 
 =item B<OPENSSL_MODULES>
 

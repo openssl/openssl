@@ -81,6 +81,8 @@ Output the digest or signature in binary form.
 
 =item B<-r>
 
+=for openssl foreign manual sha1sum(1)
+
 Output the digest in the "coreutils" format, including newlines.
 Used by programs like L<sha1sum(1)>.
 

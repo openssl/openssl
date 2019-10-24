@@ -29,7 +29,7 @@ EVP_PKEY_CTX_set_scrypt_maxmem_bytes
 
 These functions are used to set up the necessary data to use the
 scrypt KDF.
-For more information on scrypt, see L<EVP_KDF_SCRYPT(7)>.
+For more information on scrypt, see L<EVP_KDF-SCRYPT(7)>.
 
 EVP_PKEY_CTX_set1_scrypt_salt() sets the B<saltlen> bytes long salt
 value.

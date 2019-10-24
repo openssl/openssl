@@ -105,7 +105,6 @@ L<EVP_PKEY_derive(3)>
 
 =head1 HISTORY
 
-EVP_PKEY_sign_init_ex() was added in OpenSSL 3.0.
 These functions were added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
