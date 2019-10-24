@@ -38,8 +38,8 @@ This documentation is primarily aimed at provider authors. See L<provider(7)>
 for further information.
 
 The key exchange (OSSL_OP_KEYEXCH) operation enables providers to implement key
-exchange algorithms and make them available to applications via the API
-functions L<EVP_PKEY_derive_init_ex(3)>, and L<EVP_PKEY_derive(3)> (as well as
+exchange algorithms and make them available to applications via 
+L<EVP_PKEY_derive(3)> and
 other related functions).
 
 All "functions" mentioned here are passed as function pointers between

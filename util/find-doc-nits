@@ -597,7 +597,7 @@ sub loadmissing($)
     my @missing;
 
     open FH, $missingfile
-        || die "Can't open $missingfile";
+        or die "Can't open $missingfile";
     while ( <FH> ) {
         chomp;
         next if /^#/;
@@ -631,7 +631,8 @@ sub checkmacros {
         next if $f eq 'include/openssl/asn1.h';
         next if $f eq 'include/openssl/asn1t.h';
         next if $f eq 'include/openssl/err.h';
-        open(IN, $f) || die "Can't open $f, $!";
+        open(IN, $f)
+            or die "Can't open $f, $!";
         while ( <IN> ) {
             next unless /^#\s*define\s*(\S+)\(/;
             my $macro = "$1(3)"; # We know they're all in section 3
@@ -666,7 +667,7 @@ sub printem {
     my $count = 0;
     my %seen;
 
-    my @missing = loadmissing($missingfile) if ( $opt_v );
+    my @missing = loadmissing($missingfile) if $opt_v;
 
     foreach my $func ( parsenum($numfile) ) {
         $func .= '(3)';         # We know they're all in section 3
@@ -700,7 +701,7 @@ sub collectnames {
         err($id, "$simplename not in NAME section");
         push @{$podinfo{names}}, $simplename;
     }
-    foreach my $name (@{$podinfo{names}}) {
+    foreach my $name ( @{$podinfo{names}} ) {
         next if $name eq "";
         err($id, "'$name' contains white space")
             if $name =~ /\s/;
@@ -716,11 +717,10 @@ sub collectnames {
         }
     }
 
-    my @foreign_names =
-        map { map { s/\s+//g; $_ } split(/,/, $_) }
-        $podinfo{contents} =~ /=for\s+openssl\s+foreign\s+manuals:\s*(.*)\n\n/;
-    foreach ( @foreign_names ) {
-        $name_map{$_} = undef; # It still exists!
+    if ( $podinfo{contents} =~ /=for openssl foreign manual (.*)\n/ ) {
+        foreach my $f ( split / /, $1 ) {
+            $name_map{$f} = undef; # It still exists!
+        }
     }
 
     my @links =
@@ -738,8 +738,8 @@ sub collectnames {
 
 # Look for L<> ("link") references that point to files that do not exist.
 sub checklinks {
-    foreach my $filename (sort keys %link_map) {
-        foreach my $link (@{$link_map{$filename}}) {
+    foreach my $filename ( sort keys %link_map ) {
+        foreach my $link ( @{$link_map{$filename}} ) {
             err("${filename}:1:", "reference to non-existing $link")
                 unless exists $name_map{$link};
         }
@@ -788,7 +788,7 @@ sub checkflags {
 
     # Get the list of options in the command.
     open CFH, "./apps/openssl list --options $cmd|"
-        || die "Can list options for $cmd, $!";
+        or die "Can list options for $cmd, $!";
     while ( <CFH> ) {
         chop;
         s/ .$//;
@@ -798,7 +798,7 @@ sub checkflags {
 
     # Get the list of flags from the synopsis
     open CFH, "<$doc"
-        || die "Can't open $doc, $!";
+        or die "Can't open $doc, $!";
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
@@ -842,7 +842,7 @@ if ( $opt_c ) {
 
     # Get list of commands.
     open FH, "./apps/openssl list -1 -commands|"
-        || die "Can't list commands, $!";
+        or die "Can't list commands, $!";
     while ( <FH> ) {
         chop;
         push @commands, $_;
@@ -863,7 +863,7 @@ if ( $opt_c ) {
 
     # See what help is missing.
     open FH, "./apps/openssl list --missing-help |"
-        || die "Can't list missing help, $!";
+        or die "Can't list missing help, $!";
     while ( <FH> ) {
         chop;
         my ($cmd, $flag) = split;
@@ -882,6 +882,9 @@ if ( $opt_l || $opt_u || $opt_v ) {
 }
 
 if ( $opt_l ) {
+    foreach my $func ( loadmissing("util/missingcrypto.txt") ) {
+        $name_map{$func} = undef;
+    }
     checklinks();
 }
 
@@ -893,7 +896,7 @@ if ( $opt_n ) {
 
     # If not given args, check that all man1 commands are named properly.
     if ( scalar @ARGV == 0 ) {
-        foreach (glob('doc/man1/*.pod')) {
+        foreach ( glob('doc/man1/*.pod') ) {
             next if /CA.pl/ || /openssl\.pod/ || /tsget\.pod/;
             err("$_ doesn't start with openssl-") unless /openssl-/;
         }

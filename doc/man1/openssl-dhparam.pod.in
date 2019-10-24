@@ -108,19 +108,15 @@ be loaded by calling the get_dhNNNN() function.
 
 =back
 
-=head1 WARNINGS
-
-This command combines the functionality of the L<openssl-dh(1)> and the
-L<openssl-gendh(1)> commands in previous OpenSSL versions.
-The L<openssl-dh(1)> and L<openssl-gendh(1)> commands are retained for now but
-may have different purposes in future versions of OpenSSL.
-
 =head1 NOTES
+
+This command replaces the B<dh> and B<gendh> commands of previous
+releases.
 
 OpenSSL currently only supports the older PKCS#3 DH, not the newer X9.42
 DH.
 
-This program manipulates DH parameters not keys.
+This command manipulates DH parameters not keys.
 
 =head1 BUGS
 

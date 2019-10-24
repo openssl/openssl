@@ -217,8 +217,7 @@ When they are used with functions like L<EVP_DigestInit_ex(3)> or
 L<EVP_CipherInit_ex(3)>, the actual implementation to be used is
 fetched implicitly using default search criteria.
 
-Implicit fetching can also occur with functions such as
-L<EVP_PKEY_derive_init_ex(3)> where a NULL algorithm parameter is
+Implicit fetching can also occur when a NULL algorithm parameter is
 supplied.
 In this case an algorithm implementation is implicitly fetched using
 default search criteria and an algorithm name that is consistent with
@@ -349,7 +348,6 @@ other providers:
 =head1 SEE ALSO
 
 L<EVP_DigestInit_ex(3)>, L<EVP_EncryptInit_ex(3)>,
-L<EVP_PKEY_derive_init_ex(3)>, 
 L<OPENSSL_CTX(3)>,
 L<EVP_set_default_properties(3)>,
 L<EVP_MD_fetch(3)>,

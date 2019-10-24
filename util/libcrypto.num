@@ -4426,7 +4426,6 @@ EVP_MD_CTX_set_pkey_ctx                 4531	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_set_digest_custom         4532	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_digest_custom         4533	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_new                         ?	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_new_id                      ?	3_0_0	NOEXIST::FUNCTION:
 EVP_MAC_CTX_free                        ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_dup                         ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_mac                         ?	3_0_0	EXIST::FUNCTION:
@@ -4658,7 +4657,6 @@ BN_priv_rand_ex                         ?	3_0_0	EXIST::FUNCTION:
 BN_rand_range_ex                        ?	3_0_0	EXIST::FUNCTION:
 BN_priv_rand_range_ex                   ?	3_0_0	EXIST::FUNCTION:
 BN_generate_prime_ex2                   ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_derive_init_ex                 ?	3_0_0	NOEXIST::FUNCTION:
 EVP_KEYEXCH_free                        ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_up_ref                      ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_fetch                       ?	3_0_0	EXIST::FUNCTION:
@@ -4669,7 +4667,6 @@ EVP_KEYMGMT_up_ref                      ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_free                        ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_provider                    ?	3_0_0	EXIST::FUNCTION:
 X509_PUBKEY_dup                         ?	3_0_0	EXIST::FUNCTION:
-ERR_put_func_error                      ?	3_0_0	NOEXIST::FUNCTION:
 EVP_MD_name                             ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_name                         ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_provider                         ?	3_0_0	EXIST::FUNCTION:
@@ -4710,7 +4707,6 @@ EVP_MAC_CTX_get_params                  ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_gettable_ctx_params             ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_free                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_up_ref                          ?	3_0_0	EXIST::FUNCTION:
-EVP_MAC_name                            ?	3_0_0	NOEXIST::FUNCTION:
 EVP_MAC_get_params                      ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_gettable_params                 ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_provider                        ?	3_0_0	EXIST::FUNCTION:
@@ -4721,7 +4717,6 @@ EVP_KDF_up_ref                          ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_free                            ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_fetch                           ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_dup                         ?	3_0_0	EXIST::FUNCTION:
-EVP_KDF_name                            ?	3_0_0	NOEXIST::FUNCTION:
 EVP_KDF_provider                        ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_get_params                      ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get_params                  ?	3_0_0	EXIST::FUNCTION:
@@ -4734,10 +4729,7 @@ EVP_SIGNATURE_free                      ?	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_up_ref                    ?	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_provider                  ?	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_fetch                     ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_sign_init_ex                   ?	3_0_0	NOEXIST::FUNCTION:
 EVP_PKEY_CTX_set_signature_md           ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_verify_init_ex                 ?	3_0_0	NOEXIST::FUNCTION:
-EVP_PKEY_verify_recover_init_ex         ?	3_0_0	NOEXIST::FUNCTION:
 EVP_PKEY_CTX_get_signature_md           ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get_params                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_gettable_params            ?	3_0_0	EXIST::FUNCTION:

@@ -33,7 +33,7 @@ written to I<keylen>.
 
 =head1 NOTES
 
-After the call to EVP_PKEY_derive_init() or EVP_PKEY_derive_init_ex() algorithm
+After the call to EVP_PKEY_derive_init(), algorithm
 specific control operations can be performed to set any appropriate parameters
 for the operation.
 
@@ -42,7 +42,7 @@ context if several operations are performed using the same parameters.
 
 =head1 RETURN VALUES
 
-EVP_PKEY_derive_init_ex(), EVP_PKEY_derive_init() and EVP_PKEY_derive() return 1
+EVP_PKEY_derive_init() and EVP_PKEY_derive() return 1
 for success and 0 or a negative value for failure.
 In particular a return value of -2 indicates the operation is not supported by
 the public key algorithm.
@@ -95,8 +95,7 @@ L<EVP_KEYEXCH_fetch(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.0. The EVP_PKEY_derive_init_ex()
-function was added in OpenSSL 3.0.
+These functions were added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 

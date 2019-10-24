@@ -608,7 +608,7 @@ You could also look at the 'test' directory for more examples.
 
 =head1 BUGS
 
-=for openssl foreign manuals: procmail(1), perl(1)
+=for openssl foreign manual procmail(1) perl(1)
 
 =over 2
 
@@ -653,7 +653,7 @@ retained mainly for compatibility reasons.
 =head1 SEE ALSO
 
 L<openssl(1)>,
-L<openssl-tsget(1)>,
+L<tsget(1)>,
 L<openssl-req(1)>,
 L<openssl-x509(1)>,
 L<openssl-ca(1)>,
