@@ -36,7 +36,6 @@ the validation status of an B<SCT> object.
 
 =head1 SEE ALSO
 
-L<bio(7)>,
 L<ct(7)>,
 L<bio(7)>,
 L<CTLOG_STORE_new(3)>,
