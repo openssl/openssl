@@ -39,9 +39,9 @@
 # define BN_DEF(lo, hi) lo, hi
 #endif
 
-/* The first 256 bit of 1 / sqrt(2), truncated. */
+/* 1 / sqrt(2) * 2^256, rounded up */
 static const BN_ULONG inv_sqrt_2_val[] = {
-    BN_DEF(0x83339915UL, 0xED17AC85UL), BN_DEF(0x893BA84CUL, 0x1D6F60BAUL),
+    BN_DEF(0x83339916UL, 0xED17AC85UL), BN_DEF(0x893BA84CUL, 0x1D6F60BAUL),
     BN_DEF(0x754ABE9FUL, 0x597D89B3UL), BN_DEF(0xF9DE6484UL, 0xB504F333UL)
 };
 
@@ -271,11 +271,8 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     if (Xin == NULL) {
         if (bits < BN_num_bits(&bn_inv_sqrt_2))
             goto err;
-        if (BN_copy(base, &bn_inv_sqrt_2) == NULL
-            || !BN_add(base, base, BN_value_one())
-            || !BN_lshift(base, base, bits - BN_num_bits(&bn_inv_sqrt_2))
-            || !BN_one(range)
-            || !BN_lshift(range, range, bits)
+        if (!BN_lshift(base, &bn_inv_sqrt_2, bits - BN_num_bits(&bn_inv_sqrt_2))
+            || !BN_lshift(range, BN_value_one(), bits)
             || !BN_sub(range, range, base))
             goto err;
     }
