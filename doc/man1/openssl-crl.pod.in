@@ -19,12 +19,12 @@ B<openssl> B<crl>
 [B<-text>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
-[B<-nameopt> I<option>]
 [B<-noout>]
 [B<-hash>]
 [B<-issuer>]
 [B<-lastupdate>]
 [B<-nextupdate>]
+{- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 
 =for openssl ifdef hash_old
@@ -65,11 +65,6 @@ default.
 
 Print out the CRL in text form.
 
-=item B<-nameopt> I<option>
-
-Option which determines how the subject or issuer names are displayed. See
-the description of B<-nameopt> in L<openssl-x509(1)>.
-
 =item B<-noout>
 
 Don't output the encoded version of the CRL.
@@ -95,6 +90,8 @@ Output the lastUpdate field.
 =item B<-nextupdate>
 
 Output the nextUpdate field.
+
+{- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_trust_item -}
 

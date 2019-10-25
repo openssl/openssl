@@ -62,7 +62,6 @@ B<openssl> B<s_client>
 [B<-no_alt_chains>]
 [B<-use_deltas>]
 [B<-auth_level> I<num>]
-[B<-nameopt> I<option>]
 [B<-verify_depth> I<num>]
 [B<-verify_email> I<email>]
 [B<-verify_hostname> I<hostname>]
@@ -132,6 +131,7 @@ B<openssl> B<s_client>
 [B<-keylogfile> I<file>]
 [B<-early_data> I<file>]
 [B<-enable_pha>]
+{- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -285,13 +285,6 @@ will never fail due to a server certificate verify failure.
 
 Return verification errors instead of continuing. This will typically
 abort the handshake with a fatal error.
-
-=item B<-nameopt> I<option>
-
-Option which determines how the subject or issuer names are displayed. The
-I<option> argument can be a single option or multiple options separated by
-commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<openssl-x509(1)> manual page for details.
 
 =item B<-chainCApath> I<directory>
 
@@ -709,6 +702,8 @@ Rather than providing B<-connect>, the target hostname and optional port may
 be provided as a single positional argument after all options. If neither this
 nor B<-connect> are provided, falls back to attempting to connect to
 I<localhost> on port I<4433>.
+
+{- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_x_item -}
 

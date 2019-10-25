@@ -27,7 +27,6 @@ B<openssl> B<x509>
 [B<-ocspid>]
 [B<-subject>]
 [B<-issuer>]
-[B<-nameopt> I<option>]
 [B<-email>]
 [B<-ocsp_uri>]
 [B<-startdate>]
@@ -70,6 +69,7 @@ B<openssl> B<x509>
 [B<-sigopt> I<nm>:I<v>]
 [B<-engine> I<id>]
 [B<-preserve_dates>]
+{- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine subject_hash_old issuer_hash_old
@@ -217,12 +217,7 @@ Outputs the subject name.
 
 Outputs the issuer name.
 
-=item B<-nameopt> I<option>
-
-Option which determines how the subject or issuer names are displayed. The
-I<option> argument can be a single option or multiple options separated by
-commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L</Name Options> section for more information.
+{- $OpenSSL::safe::opt_name_item -}
 
 =item B<-email>
 
@@ -489,150 +484,6 @@ Unless the B<-CA> option is given the issuer is set to the same value.
 This option can be used in conjunction with the B<-force_pubkey> option
 to create a certificate even without providing an input certificate
 or certificate request.
-
-=back
-
-=head2 Name Options
-
-The B<-nameopt> command line switch determines how the subject and issuer
-names are displayed. If no B<-nameopt> switch is present the default "oneline"
-format is used which is compatible with previous versions of OpenSSL.
-Each option is described in detail below, all options can be preceded by
-a B<-> to turn the option off. Only the first four will normally be used.
-
-=over 4
-
-=item B<compat>
-
-Use the old format.
-
-=item B<RFC2253>
-
-Displays names compatible with RFC2253 equivalent to B<esc_2253>, B<esc_ctrl>,
-B<esc_msb>, B<utf8>, B<dump_nostr>, B<dump_unknown>, B<dump_der>,
-B<sep_comma_plus>, B<dn_rev> and B<sname>.
-
-=item B<oneline>
-
-A oneline format which is more readable than RFC2253. It is equivalent to
-specifying the  B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>, B<dump_nostr>,
-B<dump_der>, B<use_quote>, B<sep_comma_plus_space>, B<space_eq> and B<sname>
-options.  This is the I<default> of no name options are given explicitly.
-
-=item B<multiline>
-
-A multiline format. It is equivalent B<esc_ctrl>, B<esc_msb>, B<sep_multiline>,
-B<space_eq>, B<lname> and B<align>.
-
-=item B<esc_2253>
-
-Escape the "special" characters required by RFC2253 in a field. That is
-B<,+"E<lt>E<gt>;>. Additionally B<#> is escaped at the beginning of a string
-and a space character at the beginning or end of a string.
-
-=item B<esc_2254>
-
-Escape the "special" characters required by RFC2254 in a field. That is
-the B<NUL> character as well as and B<()*>.
-
-=item B<esc_ctrl>
-
-Escape control characters. That is those with ASCII values less than
-0x20 (space) and the delete (0x7f) character. They are escaped using the
-RFC2253 \XX notation (where XX are two hex digits representing the
-character value).
-
-=item B<esc_msb>
-
-Escape characters with the MSB set, that is with ASCII values larger than
-127.
-
-=item B<use_quote>
-
-Escapes some characters by surrounding the whole string with B<"> characters,
-without the option all escaping is done with the B<\> character.
-
-=item B<utf8>
-
-Convert all strings to UTF8 format first. This is required by RFC2253. If
-you are lucky enough to have a UTF8 compatible terminal then the use
-of this option (and B<not> setting B<esc_msb>) may result in the correct
-display of multibyte (international) characters. Is this option is not
-present then multibyte characters larger than 0xff will be represented
-using the format \UXXXX for 16 bits and \WXXXXXXXX for 32 bits.
-Also if this option is off any UTF8Strings will be converted to their
-character form first.
-
-=item B<ignore_type>
-
-This option does not attempt to interpret multibyte characters in any
-way. That is their content octets are merely dumped as though one octet
-represents each character. This is useful for diagnostic purposes but
-will result in rather odd looking output.
-
-=item B<show_type>
-
-Show the type of the ASN1 character string. The type precedes the
-field contents. For example "BMPSTRING: Hello World".
-
-=item B<dump_der>
-
-When this option is set any fields that need to be hexdumped will
-be dumped using the DER encoding of the field. Otherwise just the
-content octets will be displayed. Both options use the RFC2253
-B<#XXXX...> format.
-
-=item B<dump_nostr>
-
-Dump non character string types (for example OCTET STRING) if this
-option is not set then non character string types will be displayed
-as though each content octet represents a single character.
-
-=item B<dump_all>
-
-Dump all fields. This option when used with B<dump_der> allows the
-DER encoding of the structure to be unambiguously determined.
-
-=item B<dump_unknown>
-
-Dump any field whose OID is not recognised by OpenSSL.
-
-=item B<sep_comma_plus>, B<sep_comma_plus_space>, B<sep_semi_plus_space>,
-B<sep_multiline>
-
-These options determine the field separators. The first character is
-between Relative Distinguished Names (RDNs) and the second is between
-multiple Attribute Value Assertions (AVAs, multiple AVAs are
-very rare and their use is discouraged). The options ending in
-"space" additionally place a space after the separator to make it
-more readable. The B<sep_multiline> uses a linefeed character for
-the RDN separator and a spaced B<+> for the AVA separator. It also
-indents the fields by four characters. If no field separator is specified
-then B<sep_comma_plus_space> is used by default.
-
-=item B<dn_rev>
-
-Reverse the fields of the DN. This is required by RFC2253. As a side
-effect this also reverses the order of multiple AVAs but this is
-permissible.
-
-=item B<nofname>, B<sname>, B<lname>, B<oid>
-
-These options alter how the field name is displayed. B<nofname> does
-not display the field at all. B<sname> uses the "short name" form
-(CN for commonName for example). B<lname> uses the long form.
-B<oid> represents the OID in numerical form and is useful for
-diagnostic purpose.
-
-=item B<align>
-
-Align field values for a more readable output. Only usable with
-B<sep_multiline>.
-
-=item B<space_eq>
-
-Places spaces round the B<=> character which follows the field
-name.
 
 =back
 

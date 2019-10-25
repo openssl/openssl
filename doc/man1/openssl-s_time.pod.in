@@ -20,7 +20,6 @@ B<openssl> B<s_time>
 [B<-reuse>]
 [B<-new>]
 [B<-verify> I<depth>]
-[B<-nameopt> I<option>]
 [B<-time> I<seconds>]
 [B<-ssl3>]
 [B<-tls1>]
@@ -30,6 +29,7 @@ B<openssl> B<s_time>
 [B<-bugs>]
 [B<-cipher> I<cipherlist>]
 [B<-ciphersuites> I<val>]
+{- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 
 =for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
@@ -80,12 +80,11 @@ Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
 
-=item B<-nameopt> I<option>
+=item B<-CApath> I<directory>
 
-Option which determines how the subject or issuer names are displayed. The
-I<option> argument can be a single option or multiple options separated by
-commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<openssl-x509(1)> manual page for details.
+The directory to use for server certificate verification. This directory
+must be in "hash format", see L<openssl-verify(1)> for more information.
+These are also used when building the client certificate chain.
 
 =item B<-new>
 
@@ -136,6 +135,8 @@ Specifies how long (in seconds) this command should establish connections
 and optionally transfer payload data from a server. Server and client
 performance and the link speed determine how many connections it
 can establish.
+
+{- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_trust_item -}
 

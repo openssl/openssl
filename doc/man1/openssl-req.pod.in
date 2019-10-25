@@ -43,7 +43,6 @@ B<openssl> B<req>
 [B<-reqexts> I<section>]
 [B<-precert>]
 [B<-utf8>]
-[B<-nameopt>]
 [B<-reqopt>]
 [B<-subject>]
 [B<-subj> I<arg>]
@@ -53,6 +52,7 @@ B<openssl> B<req>
 [B<-engine> I<id>]
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
+{- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine keygen_engine sm2-id sm2-hex-id
@@ -284,13 +284,6 @@ default they are interpreted as ASCII. This means that the field
 values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
 
-=item B<-nameopt> I<option>
-
-Option which determines how the subject or issuer names are displayed. The
-I<option> argument can be a single option or multiple options separated by
-commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<openssl-x509(1)> manual page for details.
-
 =item B<-reqopt> I<option>
 
 Customise the output format used with B<-text>. The I<option> argument can be
@@ -333,6 +326,8 @@ string is required by the SM2 signature algorithm for signing and verification.
 
 Specify a binary ID string to use when verifying an SM2 certificate request. The
 argument for this option is string of hexadecimal digits.
+
+{- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

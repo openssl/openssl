@@ -23,7 +23,6 @@ B<openssl> B<s_server>
 [B<-verify> I<int>]
 [B<-Verify> I<int>]
 [B<-cert> I<infile>]
-[B<-nameopt> I<val>]
 [B<-naccept> I<+int>]
 [B<-serverinfo> I<val>]
 [B<-certform> B<DER>|B<PEM>]
@@ -178,6 +177,7 @@ B<openssl> B<s_server>
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-http_server_binmode>]
+{- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -266,13 +266,6 @@ B<-cert> option.
 
 Specify whether the application should build the certificate chain to be
 provided to the client.
-
-=item B<-nameopt> I<val>
-
-Option which determines how the subject or issuer names are displayed. The
-I<val> argument can be a single option or multiple options separated by
-commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<openssl-x509(1)> manual page for details.
 
 =item B<-naccept> I<+int>
 
@@ -724,6 +717,8 @@ data that was sent will be rejected.
 
 When acting as web-server (using option B<-WWW> or B<-HTTP>) open files requested
 by the client in binary mode.
+
+{- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_x_item -}
 

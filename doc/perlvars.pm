@@ -67,6 +67,14 @@ $OpenSSL::safe::opt_x_item = ""
 . "Set extended certificate verification options.\n"
 . "See L<openssl(1)/Extended Verification Options> for details.";
 
+# Name output options
+$OpenSSL::safe::opt_name_synopsis = ""
+. "[B<-nameopt> I<option>]";
+$OpenSSL::safe::opt_name_item = ""
+. "=item B<-nameopt> I<option>\n"
+. "\n"
+. "This specifies how the subject or issuer names are displayed.\n"
+. "See L<openssl(1)/Name Format Options> for details.";
 
 # Random State Options
 $OpenSSL::safe::opt_r_synopsis = ""

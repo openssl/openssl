@@ -26,7 +26,6 @@ B<openssl> B<verify>
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
-[B<-nameopt> I<option>]
 [B<-no_check_time>]
 [B<-partial_chain>]
 [B<-policy> I<arg>]
@@ -52,6 +51,7 @@ B<openssl> B<verify>
 [B<-show_chain>]
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
+{- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 [B<-->]
 [I<certificate> ...]
@@ -136,13 +136,6 @@ Set policy variable inhibit-any-policy (see RFC5280).
 =item B<-inhibit_map>
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
-
-=item B<-nameopt> I<option>
-
-Option which determines how the subject or issuer names are displayed. The
-I<option> argument can be a single option or multiple options separated by
-commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<openssl-x509(1)> manual page for details.
 
 =item B<-no_check_time>
 
@@ -310,13 +303,15 @@ required by the SM2 signature algorithm for signing and verification.
 Specify a binary ID string to use when signing or verifying using an SM2
 certificate. The argument for this option is string of hexadecimal digits.
 
+{- $OpenSSL::safe::opt_name_item -}
+
+{- $OpenSSL::safe::opt_trust_item -}
+
 =item B<-->
 
 Indicates the last option. All arguments following this are assumed to be
 certificate files. This is useful if the first certificate filename begins
 with a B<-->.
-
-{- $OpenSSL::safe::opt_trust_item -}
 
 =item I<certificate> ...
 
