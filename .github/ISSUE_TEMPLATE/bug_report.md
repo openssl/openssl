@@ -1,6 +1,6 @@
 ---
 name: Bug report
-labels: bug
+labels: 'issue: bug report'
 about: Report a defect in the software
 
 ---
