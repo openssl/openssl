@@ -460,8 +460,8 @@ libclean:
 clean: libclean
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
-	-$(RM) `find . -name '*{- platform->depext() -}' \! -name '.*' -print`
-	-$(RM) `find . -name '*{- platform->objext() -}' \! -name '.*' -print`
+	-$(RM) `find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -print`
+	-$(RM) `find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -print`
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
