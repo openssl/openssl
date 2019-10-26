@@ -55,4 +55,10 @@ void ossl_algorithm_do_all(OPENSSL_CTX *libctx, int operation_id,
                                       int no_store, void *data),
                            void *data);
 
+/* Typedef in openssl/core.h */
+struct ossl_callback_st {
+    int (*callback)(const OSSL_PARAM params[], void *arg);
+    void *arg;
+};
+
 #endif

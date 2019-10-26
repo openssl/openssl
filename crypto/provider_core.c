@@ -13,6 +13,7 @@
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "crypto/cryptlib.h"
+#include "internal/core.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
@@ -772,6 +773,7 @@ static OSSL_core_new_error_fn core_new_error;
 static OSSL_core_set_error_debug_fn core_set_error_debug;
 static OSSL_core_vset_error_fn core_vset_error;
 #endif
+static OSSL_core_generic_callback_fn core_generic_callback;
 
 static const OSSL_PARAM *core_gettable_params(const OSSL_PROVIDER *prov)
 {
@@ -856,6 +858,11 @@ static void core_vset_error(const OSSL_PROVIDER *prov,
 }
 #endif
 
+static int core_generic_callback(OSSL_CALLBACK *cb, const OSSL_PARAM params[])
+{
+    return cb->callback(params, cb->arg);
+}
+
 /*
  * Functions provided by the core.  Blank line separates "families" of related
  * functions.
@@ -889,6 +896,8 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CRYPTO_SECURE_ALLOCATED,
         (void (*)(void))CRYPTO_secure_allocated },
     { OSSL_FUNC_OPENSSL_CLEANSE, (void (*)(void))OPENSSL_cleanse },
+
+    { OSSL_FUNC_CORE_GENERIC_CALLBACK, (void (*)(void))core_generic_callback },
 
     { 0, NULL }
 };

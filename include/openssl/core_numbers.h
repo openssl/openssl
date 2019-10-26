@@ -132,6 +132,11 @@ OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (BIO *bio, void *data, size_t data_len,
                                        size_t *bytes_read))
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (BIO *bio))
 
+/* Callbacks for providers */
+#define OSSL_FUNC_CORE_GENERIC_CALLBACK       100
+OSSL_CORE_MAKE_FUNC(int, core_generic_callback,
+                    (OSSL_CALLBACK *cb, const OSSL_PARAM []))
+
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
 OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void *provctx))

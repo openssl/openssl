@@ -187,6 +187,18 @@ extern OSSL_provider_init_fn OSSL_provider_init;
 #  pragma names restore
 # endif
 
+/*-
+ * Generic callback
+ * ----------------
+ *
+ * The application may want to initiate an operation that takes a callback
+ * function, to be called by the provider.  This opaque type helps transfer
+ * the necessary data to the provider functions, and should simply be passed
+ * back to the upcall identified with OSSL_FUNC_CORE_GENERIC_CALLBACK.
+ */
+
+typedef struct ossl_callback_st OSSL_CALLBACK;
+
 # ifdef __cplusplus
 }
 # endif
