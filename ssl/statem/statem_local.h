@@ -29,6 +29,15 @@
 /* Max should actually be 36 but we are generous */
 #define FINISHED_MAX_LENGTH             64
 
+/*
+ * Maximum size (excluding the Handshake header) of a CertificateVerify
+ * message, calculated as follows:
+ *
+ * 2 + # signature scheme
+ * 65535 # signature
+ */
+#define CERT_VERIFY_MAX_LENGTH   65537
+
 /* Dummy message type */
 #define SSL3_MT_DUMMY   -1
 
