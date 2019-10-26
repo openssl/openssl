@@ -81,6 +81,14 @@ struct evp_keymgmt_st {
     OSSL_OP_keymgmt_set_params_fn *set_params;
     OSSL_OP_keymgmt_settable_params_fn *settable_params;
 
+    /* Generation, a complex constructor */
+    OSSL_OP_keymgmt_gen_init_fn *gen_init;
+    OSSL_OP_keymgmt_gen_set_template_fn *gen_set_template;
+    OSSL_OP_keymgmt_gen_set_params_fn *gen_set_params;
+    OSSL_OP_keymgmt_gen_settable_params_fn *gen_settable_params;
+    OSSL_OP_keymgmt_gen_fn *gen;
+    OSSL_OP_keymgmt_gen_cleanup_fn *gen_cleanup;
+
     /* Key object checking */
     OSSL_OP_keymgmt_query_operation_name_fn *query_operation_name;
     OSSL_OP_keymgmt_has_fn *has;

@@ -38,7 +38,8 @@ static void *keymgmt_from_dispatch(int name_id,
                                    OSSL_PROVIDER *prov)
 {
     EVP_KEYMGMT *keymgmt = NULL;
-    int setparamfncnt = 0, getparamfncnt = 0, importfncnt = 0, exportfncnt = 0;
+    int setparamfncnt = 0, getparamfncnt = 0, setgenparamfncnt = 0;
+    int importfncnt = 0, exportfncnt = 0;
 
     if ((keymgmt = keymgmt_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
@@ -51,6 +52,37 @@ static void *keymgmt_from_dispatch(int name_id,
         case OSSL_FUNC_KEYMGMT_NEW:
             if (keymgmt->new == NULL)
                 keymgmt->new = OSSL_get_OP_keymgmt_new(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_GEN_INIT:
+            if (keymgmt->gen_init == NULL)
+                keymgmt->gen_init = OSSL_get_OP_keymgmt_gen_init(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE:
+            if (keymgmt->gen_set_template == NULL)
+                keymgmt->gen_set_template =
+                    OSSL_get_OP_keymgmt_gen_set_template(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS:
+            if (keymgmt->gen_set_params == NULL) {
+                setgenparamfncnt++;
+                keymgmt->gen_set_params =
+                    OSSL_get_OP_keymgmt_gen_set_params(fns);
+            }
+            break;
+        case OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS:
+            if (keymgmt->gen_settable_params == NULL) {
+                setgenparamfncnt++;
+                keymgmt->gen_settable_params =
+                    OSSL_get_OP_keymgmt_gen_settable_params(fns);
+            }
+            break;
+        case OSSL_FUNC_KEYMGMT_GEN:
+            if (keymgmt->gen == NULL)
+                keymgmt->gen = OSSL_get_OP_keymgmt_gen(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_GEN_CLEANUP:
+            if (keymgmt->gen_cleanup == NULL)
+                keymgmt->gen_cleanup = OSSL_get_OP_keymgmt_gen_cleanup(fns);
             break;
         case OSSL_FUNC_KEYMGMT_FREE:
             if (keymgmt->free == NULL)
@@ -134,12 +166,16 @@ static void *keymgmt_from_dispatch(int name_id,
      * export if you can't import or export.
      */
     if (keymgmt->free == NULL
-        || keymgmt->new == NULL
+        || (keymgmt->new == NULL && keymgmt->gen == NULL)
         || keymgmt->has == NULL
         || (getparamfncnt != 0 && getparamfncnt != 2)
         || (setparamfncnt != 0 && setparamfncnt != 2)
+        || (setgenparamfncnt != 0 && setgenparamfncnt != 2)
         || (importfncnt != 0 && importfncnt != 2)
-        || (exportfncnt != 0 && exportfncnt != 2)) {
+        || (exportfncnt != 0 && exportfncnt != 2)
+        || (keymgmt->gen != NULL
+            && (keymgmt->gen_init == NULL
+                || keymgmt->gen_cleanup == NULL))) {
         EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
@@ -247,6 +283,54 @@ void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keydata)
 {
     /* This is mandatory, no need to check for its presence */
     keymgmt->free(keydata);
+}
+
+void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection)
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    if (keymgmt->gen_init == NULL)
+        return NULL;
+    return keymgmt->gen_init(provctx, selection);
+}
+
+int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
+                                 void *template)
+{
+    if (keymgmt->gen_set_template == NULL)
+        return 0;
+    return keymgmt->gen_set_template(genctx, template);
+}
+
+int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
+                               const OSSL_PARAM params[])
+{
+    if (keymgmt->gen_set_params == NULL)
+        return 0;
+    return keymgmt->gen_set_params(genctx, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_gen_settable_params(const EVP_KEYMGMT *keymgmt)
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    if (keymgmt->gen_settable_params == NULL)
+        return NULL;
+    return keymgmt->gen_settable_params(provctx);
+}
+
+void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
+                      OSSL_CALLBACK *cb, void *cbarg)
+{
+    if (keymgmt->gen == NULL)
+        return NULL;
+    return keymgmt->gen(genctx, cb, cbarg);
+}
+
+void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx)
+{
+    if (keymgmt->gen != NULL)
+        keymgmt->gen_cleanup(genctx);
 }
 
 int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt, void *keydata,

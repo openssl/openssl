@@ -380,10 +380,31 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
 # define OSSL_KEYMGMT_SELECT_ALL                \
     ( OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
 
-/* Basic key object creation, destruction */
+/* Basic key object creation */
 # define OSSL_FUNC_KEYMGMT_NEW                         1
-# define OSSL_FUNC_KEYMGMT_FREE                        9
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_new, (void *provctx))
+
+/* Generation, a more complex constructor */
+# define OSSL_FUNC_KEYMGMT_GEN_INIT                    3
+# define OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE            4
+# define OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS              5
+# define OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS         6
+# define OSSL_FUNC_KEYMGMT_GEN                         7
+# define OSSL_FUNC_KEYMGMT_GEN_CLEANUP                 8
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gen_init,
+                    (void *provctx, int selection))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_gen_set_template,
+                    (void *genctx, void *templ))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_gen_set_params,
+                    (void *genctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
+                    OP_keymgmt_gen_settable_params, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gen,
+                    (void *genctx, OSSL_CALLBACK *cb, void *cbarg))
+OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_gen_cleanup, (void *genctx))
+
+/* Basic key object destruction */
+# define OSSL_FUNC_KEYMGMT_FREE                        9
 OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_free, (void *keydata))
 
 /* Key object information, with discovery */

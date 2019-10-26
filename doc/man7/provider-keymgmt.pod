@@ -18,6 +18,13 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void *OP_keymgmt_new(void *provctx);
  void OP_keymgmt_free(void *keydata);
 
+ void *OP_keymgmt_gen_init(void *provctx, int selection);
+ int OP_keymgmt_gen_set_template(void *genctx, void *template);
+ int OP_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_keymgmt_gen_settable_params(void *provctx);
+ void *OP_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
+ void OP_keymgmt_gen_cleanup(void *genctx);
+
  /* Key object information */
  int OP_keymgmt_get_params(void *keydata, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_keymgmt_gettable_params(void);
@@ -79,6 +86,13 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
 
  OP_keymgmt_new                  OSSL_FUNC_KEYMGMT_NEW
  OP_keymgmt_free                 OSSL_FUNC_KEYMGMT_FREE
+
+ OP_keymgmt_gen_init             OSSL_FUNC_KEYMGMT_GEN_INIT
+ OP_keymgmt_gen_set_template     OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE
+ OP_keymgmt_gen_set_params       OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS
+ OP_keymgmt_gen_settable_params  OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS
+ OP_keymgmt_gen                  OSSL_FUNC_KEYMGMT_GEN
+ OP_keymgmt_gen_cleanup          OSSL_FUNC_KEYMGMT_GEN_CLEANUP
 
  OP_keymgmt_get_params           OSSL_FUNC_KEYMGMT_GET_PARAMS
  OP_keymgmt_gettable_params      OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS
@@ -193,12 +207,41 @@ key object, but that is not mandatory.
 
 OP_keymgmt_free() should free the passed I<keydata>.
 
-The constructor and destructor are mandatory, a KEYMGMT implementation
-without them will not be accepted.
+OP_keymgmt_gen_init(), OP_keymgmt_gen_set_template(),
+OP_keymgmt_gen_set_params(), OP_keymgmt_gen_settable_params(),
+OP_keymgmt_gen() and OP_keymgmt_gen_cleanup() work together as a more
+elaborate context based key object constructor.
 
-=for comment when new constructors appear, it's sufficient if only one
-of them is present.  The remark above will have to change to reflect
-that.
+OP_keymgmt_gen_init() should create the key object generation context
+and initialize it with I<selections>, which will determine what kind
+of contents the key object to be generated should get.
+
+OP_keymgmt_gen_set_template() should add I<template> to the context
+I<genctx>.  The I<template> is assumed to be a key object constructed
+with the same KEYMGMT, and from which content that the implementation
+chooses can be used as a template for the key object to be generated.
+Typically, the generation of a DSA or DH key would get the domain
+parameters from this I<template>.
+
+OP_keymgmt_gen_set_params() should set additional parameters from
+I<params> in the key object generation context I<genctx>.
+
+OP_keymgmt_gen_settable_params() should return a constant array of
+descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_gen_set_params() 
+can handle.
+
+OP_keymgmt_gen() should perform the key object generation itself, and
+return the result.  The callback I<cb> should be called at regular
+intervals with indications on how the key object generation
+progresses.
+
+OP_keymgmt_gen_cleanup() should clean up and free the key object
+generation context I<genctx>
+
+At least one of OP_keymgmt_new() and OP_keymgmt_gen() are mandatory,
+as well as OP_keymgmt_free().  Additionally, if OP_keymgmt_gen() is
+present, OP_keymgmt_gen_init() and OP_keymgmt_gen_cleanup() must be
+present as well.
 
 =head2 Key Object Information Functions
 
