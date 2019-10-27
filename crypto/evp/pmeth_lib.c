@@ -951,6 +951,12 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL;
     else if (strcmp(name, "rsa_pss_saltlen") == 0)
         name = OSSL_SIGNATURE_PARAM_PSS_SALTLEN;
+    else if (strcmp(name, "rsa_keygen_bits") == 0)
+        name = OSSL_PKEY_PARAM_RSA_BITS;
+    else if (strcmp(name, "rsa_keygen_pubexp") == 0)
+        name = OSSL_PKEY_PARAM_RSA_E;
+    else if (strcmp(name, "rsa_keygen_primes") == 0)
+        name = OSSL_PKEY_PARAM_RSA_PRIMES;
 # ifndef OPENSSL_NO_DH
     else if (strcmp(name, "dh_pad") == 0)
         name = OSSL_EXCHANGE_PARAM_PAD;

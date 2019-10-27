@@ -4981,3 +4981,6 @@ OSSL_CMP_SRV_CTX_set_accept_unprotected ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_accept_raverified  ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_grant_implicit_confirm ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_PKEY_gen                            ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_rsa_keygen_bits        ?	3_0_0	EXIST::FUNCTION:RSA
+EVP_PKEY_CTX_set_rsa_keygen_pubexp      ?	3_0_0	EXIST::FUNCTION:RSA
+EVP_PKEY_CTX_set_rsa_keygen_primes      ?	3_0_0	EXIST::FUNCTION:RSA

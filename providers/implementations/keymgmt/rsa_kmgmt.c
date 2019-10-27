@@ -28,6 +28,11 @@
 #include "crypto/rsa.h"
 
 static OSSL_OP_keymgmt_new_fn rsa_newdata;
+static OSSL_OP_keymgmt_gen_init_fn rsa_gen_init;
+static OSSL_OP_keymgmt_gen_set_params_fn rsa_gen_set_params;
+static OSSL_OP_keymgmt_gen_settable_params_fn rsa_gen_settable_params;
+static OSSL_OP_keymgmt_gen_fn rsa_gen;
+static OSSL_OP_keymgmt_gen_cleanup_fn rsa_gen_cleanup;
 static OSSL_OP_keymgmt_free_fn rsa_freedata;
 static OSSL_OP_keymgmt_get_params_fn rsa_get_params;
 static OSSL_OP_keymgmt_gettable_params_fn rsa_gettable_params;
@@ -409,8 +414,127 @@ static int rsa_validate(void *keydata, int selection)
     return ok;
 }
 
+struct rsa_gen_ctx {
+    OPENSSL_CTX *libctx;
+
+    size_t nbits;
+    BIGNUM *pub_exp;
+    size_t primes;
+
+    /* For generation callback */
+    OSSL_CALLBACK *cb;
+    void *cbarg;
+};
+
+static int rsa_gencb(int p, int n, BN_GENCB *cb)
+{
+    struct rsa_gen_ctx *gctx = BN_GENCB_get_arg(cb);
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
+
+    params[0] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_POTENTIAL, &p);
+    params[1] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_ITERATION, &n);
+
+    return gctx->cb(params, gctx->cbarg);
+}
+
+static void *rsa_gen_init(void *provctx, int selection)
+{
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    struct rsa_gen_ctx *gctx = NULL;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return NULL;
+
+    if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
+        gctx->libctx = libctx;
+        if ((gctx->pub_exp = BN_new()) == NULL
+            || !BN_set_word(gctx->pub_exp, RSA_F4)) {
+            BN_free(gctx->pub_exp);
+            gctx = NULL;
+        } else {
+            gctx->nbits = 2048;
+            gctx->primes = RSA_DEFAULT_PRIME_NUM;
+        }
+    }
+    return gctx;
+}
+
+static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
+{
+    struct rsa_gen_ctx *gctx = genctx;
+    const OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_BITS)) != NULL
+        && !OSSL_PARAM_get_size_t(p, &gctx->nbits))
+        return 0;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_PRIMES)) != NULL
+        && !OSSL_PARAM_get_size_t(p, &gctx->primes))
+        return 0;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_E)) != NULL
+        && !OSSL_PARAM_get_BN(p, &gctx->pub_exp))
+        return 0;
+    return 1;
+}
+
+static const OSSL_PARAM *rsa_gen_settable_params(void *provctx)
+{
+    static OSSL_PARAM settable[] = {
+        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_BITS, NULL),
+        OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_PRIMES, NULL),
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0),
+        OSSL_PARAM_END
+    };
+
+    return settable;
+}
+
+static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+{
+    struct rsa_gen_ctx *gctx = genctx;
+    RSA *rsa = NULL;
+    BN_GENCB *gencb = NULL;
+
+    if (gctx == NULL
+        || (rsa = rsa_new_with_ctx(gctx->libctx)) == NULL)
+        return NULL;
+
+    gctx->cb = osslcb;
+    gctx->cbarg = cbarg;
+    gencb = BN_GENCB_new();
+    if (gencb != NULL)
+        BN_GENCB_set(gencb, rsa_gencb, genctx);
+
+    if (!RSA_generate_multi_prime_key(rsa, (int)gctx->nbits, (int)gctx->primes,
+                                      gctx->pub_exp, gencb)) {
+        RSA_free(rsa);
+        rsa = NULL;
+    }
+
+    BN_GENCB_free(gencb);
+
+    return rsa;
+}
+
+static void rsa_gen_cleanup(void *genctx)
+{
+    struct rsa_gen_ctx *gctx = genctx;
+
+    if (gctx == NULL)
+        return;
+
+    BN_clear_free(gctx->pub_exp);
+    OPENSSL_free(gctx);
+}
+
 const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))rsa_newdata },
+    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))rsa_gen_init },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS,
+      (void (*)(void))rsa_gen_set_params },
+    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
+      (void (*)(void))rsa_gen_settable_params },
+    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))rsa_gen },
+    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))rsa_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))rsa_freedata },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))rsa_get_params },
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))rsa_gettable_params },

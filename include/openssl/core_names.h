@@ -221,7 +221,7 @@ extern "C" {
 #define OSSL_PKEY_PARAM_RSA_EXPONENT    "rsa-exponent"
 #define OSSL_PKEY_PARAM_RSA_COEFFICIENT "rsa-coefficient"
 /* Key generation parameters */
-#define OSSL_PKEY_PARAM_RSA_BITS        "bits"
+#define OSSL_PKEY_PARAM_RSA_BITS        OSSL_PKEY_PARAM_BITS
 #define OSSL_PKEY_PARAM_RSA_PRIMES      "primes"
 
 /* Key Exchange parameters */

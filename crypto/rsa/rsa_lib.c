@@ -20,6 +20,7 @@
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/param_build.h"
 #include "crypto/bn.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
@@ -1265,5 +1266,95 @@ int EVP_PKEY_CTX_get_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int *saltlen)
 
     return 1;
 
+}
+
+int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int bits)
+{
+    OSSL_PARAM params[2], *p = params;
+    size_t bits2 = bits;
+
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA return error */
+    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id != EVP_PKEY_RSA)
+        return -1;
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN,
+                                 EVP_PKEY_CTRL_RSA_KEYGEN_BITS, bits, NULL);
+
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS, &bits2);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!EVP_PKEY_CTX_set_params(ctx, params))
+        return 0;
+
+    return 1;
+}
+
+int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp)
+{
+    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM *params;
+    int ret;
+
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA return error */
+    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id != EVP_PKEY_RSA)
+        return -1;
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN,
+                                 EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp);
+
+    ossl_param_bld_init(&tmpl);
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, pubexp)
+        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        return 0;
+
+    ret = EVP_PKEY_CTX_set_params(ctx, params);
+    ossl_param_bld_free(params);
+    return ret;
+}
+
+int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes)
+{
+    OSSL_PARAM params[2], *p = params;
+    size_t primes2 = primes;
+
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA return error */
+    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id != EVP_PKEY_RSA)
+        return -1;
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN,
+                                 EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES, primes,
+                                 NULL);
+
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_PRIMES, &primes2);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!EVP_PKEY_CTX_set_params(ctx, params))
+        return 0;
+
+    return 1;
 }
 #endif
