@@ -350,3 +350,23 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
 
     return 1;
 }
+
+void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                           void *genctx, OSSL_CALLBACK *cb, void *cbarg)
+{
+    void *keydata = evp_keymgmt_gen(keymgmt, genctx, cb, cbarg);
+
+    if (keydata != NULL) {
+        if (!EVP_KEYMGMT_up_ref(keymgmt)) {
+            evp_keymgmt_freedata(keymgmt, keydata);
+            return NULL;
+        }
+
+        evp_keymgmt_util_clear_operation_cache(target);
+        target->keymgmt = keymgmt;
+        target->keydata = keydata;
+        evp_keymgmt_util_cache_keyinfo(target);
+    }
+
+    return keydata;
+}

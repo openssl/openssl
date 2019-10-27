@@ -220,6 +220,9 @@ extern "C" {
 #define OSSL_PKEY_PARAM_RSA_FACTOR      "rsa-factor"
 #define OSSL_PKEY_PARAM_RSA_EXPONENT    "rsa-exponent"
 #define OSSL_PKEY_PARAM_RSA_COEFFICIENT "rsa-coefficient"
+/* Key generation parameters */
+#define OSSL_PKEY_PARAM_RSA_BITS        "bits"
+#define OSSL_PKEY_PARAM_RSA_PRIMES      "primes"
 
 /* Key Exchange parameters */
 
@@ -278,6 +281,10 @@ extern "C" {
 
 /* Passphrase callback parameters */
 #define OSSL_PASSPHRASE_PARAM_INFO              "info"
+
+/* Keygen callback parameters, from provider to libcrypto */
+#define OSSL_GEN_PARAM_POTENTIAL            "potential" /* integer */
+#define OSSL_GEN_PARAM_ITERATION            "iteration" /* integer */
 
 # ifdef __cplusplus
 }

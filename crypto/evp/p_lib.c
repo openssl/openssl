@@ -1012,7 +1012,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 }
 
 #ifndef FIPS_MODE
-static void evp_pkey_free_legacy(EVP_PKEY *x)
+void evp_pkey_free_legacy(EVP_PKEY *x)
 {
     if (x->ameth != NULL) {
         if (x->ameth->pkey_free != NULL)

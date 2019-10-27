@@ -35,6 +35,10 @@ struct evp_pkey_ctx_st {
 
     union {
         struct {
+            void *genctx;
+        } keymgmt;
+
+        struct {
             EVP_KEYEXCH *exchange;
             void *exchprovctx;
         } kex;
@@ -50,6 +54,14 @@ struct evp_pkey_ctx_st {
         } ciph;
     } op;
 
+    /* Application specific data, usually used by the callback */
+    void *app_data;
+    /* Keygen callback */
+    EVP_PKEY_gen_cb *pkey_gencb;
+    /* implementation specific keygen data */
+    int *keygen_info;
+    int keygen_info_count;
+
     /* Legacy fields below */
 
     /* Method associated with this operation */
@@ -62,13 +74,6 @@ struct evp_pkey_ctx_st {
     EVP_PKEY *peerkey;
     /* Algorithm specific data */
     void *data;
-    /* Application specific data */
-    void *app_data;
-    /* Keygen callback */
-    EVP_PKEY_gen_cb *pkey_gencb;
-    /* implementation specific keygen data */
-    int *keygen_info;
-    int keygen_info_count;
 } /* EVP_PKEY_CTX */ ;
 
 #define EVP_PKEY_FLAG_DYNAMIC   1
@@ -596,6 +601,10 @@ struct evp_pkey_st {
     ((ctx)->operation == EVP_PKEY_OP_ENCRYPT \
      || (ctx)->operation == EVP_PKEY_OP_DECRYPT)
 
+#define EVP_PKEY_CTX_IS_GEN_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_PARAMGEN \
+     || (ctx)->operation == EVP_PKEY_OP_KEYGEN)
+
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
@@ -606,6 +615,9 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
 void *evp_pkey_upgrade_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
                                    EVP_KEYMGMT **keymgmt,
                                    const char *propquery);
+#ifndef FIPS_MODE
+void evp_pkey_free_legacy(EVP_PKEY *x);
+#endif
 
 /*
  * KEYMGMT utility functions
@@ -622,6 +634,8 @@ void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 int evp_keymgmt_util_has(EVP_PKEY *pk, int selection);
 int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection);
 int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection);
+void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                           void *genctx, OSSL_CALLBACK *cb, void *cbarg);
 
 
 /*

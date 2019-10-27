@@ -9,7 +9,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <openssl/core.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+#include "internal/core.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "crypto/bn.h"
@@ -17,102 +20,225 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#ifndef FIPS_MODE
-int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
+static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 {
-    int ret;
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->paramgen) {
-        EVPerr(EVP_F_EVP_PKEY_PARAMGEN_INIT,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+    int ret = 0;
+
+    if (ctx == NULL)
+        goto not_supported;
+
+    evp_pkey_ctx_free_old_ops(ctx);
+    ctx->operation = operation;
+
+    if (ctx->engine != NULL || ctx->keytype == NULL)
+        goto legacy;
+
+    if (ctx->keymgmt == NULL) {
+        ctx->keymgmt =
+            EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, ctx->propquery);
+        if (ctx->keymgmt == NULL
+            || ctx->keymgmt->gen_init == NULL) {
+            EVP_KEYMGMT_free(ctx->keymgmt);
+            ctx->keymgmt = NULL;
+            goto legacy;
+        }
     }
-    ctx->operation = EVP_PKEY_OP_PARAMGEN;
-    if (!ctx->pmeth->paramgen_init)
-        return 1;
-    ret = ctx->pmeth->paramgen_init(ctx);
+    if (ctx->keymgmt->gen_init == NULL)
+        goto not_supported;
+
+    switch (operation) {
+    case EVP_PKEY_OP_PARAMGEN:
+        ctx->op.keymgmt.genctx =
+            evp_keymgmt_gen_init(ctx->keymgmt,
+                                 OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+        break;
+    case EVP_PKEY_OP_KEYGEN:
+        ctx->op.keymgmt.genctx =
+            evp_keymgmt_gen_init(ctx->keymgmt, OSSL_KEYMGMT_SELECT_KEYPAIR);
+        break;
+    }
+
+    if (ctx->op.keymgmt.genctx == NULL)
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+    else
+        ret = 1;
+    goto end;
+
+ legacy:
+#ifdef FIPS_MODE
+    goto not_supported;
+#else
+    if (ctx->pmeth == NULL
+        || (operation == EVP_PKEY_OP_PARAMGEN
+            && ctx->pmeth->paramgen == NULL)
+        || (operation == EVP_PKEY_OP_KEYGEN
+            && ctx->pmeth->keygen == NULL))
+        goto not_supported;
+
+    ret = 1;
+    switch (operation) {
+    case EVP_PKEY_OP_PARAMGEN:
+        if (ctx->pmeth->paramgen_init != NULL)
+            ret = ctx->pmeth->paramgen_init(ctx);
+        break;
+    case EVP_PKEY_OP_KEYGEN:
+        if (ctx->pmeth->keygen_init != NULL)
+            ret = ctx->pmeth->keygen_init(ctx);
+        break;
+    }
+#endif
+
+ end:
     if (ret <= 0)
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return ret;
+
+ not_supported:
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    ret = -2;
+    goto end;
 }
 
-int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
+int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
 {
-    int ret;
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->paramgen) {
-        EVPerr(EVP_F_EVP_PKEY_PARAMGEN,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-
-    if (ctx->operation != EVP_PKEY_OP_PARAMGEN) {
-        EVPerr(EVP_F_EVP_PKEY_PARAMGEN, EVP_R_OPERATON_NOT_INITIALIZED);
-        return -1;
-    }
-
-    if (ppkey == NULL)
-        return -1;
-
-    if (*ppkey == NULL)
-        *ppkey = EVP_PKEY_new();
-
-    if (*ppkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_PARAMGEN, ERR_R_MALLOC_FAILURE);
-        return -1;
-    }
-
-    ret = ctx->pmeth->paramgen(ctx, *ppkey);
-    if (ret <= 0) {
-        EVP_PKEY_free(*ppkey);
-        *ppkey = NULL;
-    }
-    return ret;
+    return gen_init(ctx, EVP_PKEY_OP_PARAMGEN);
 }
 
 int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx)
 {
-    int ret;
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->keygen) {
-        EVPerr(EVP_F_EVP_PKEY_KEYGEN_INIT,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    ctx->operation = EVP_PKEY_OP_KEYGEN;
-    if (!ctx->pmeth->keygen_init)
-        return 1;
-    ret = ctx->pmeth->keygen_init(ctx);
-    if (ret <= 0)
-        ctx->operation = EVP_PKEY_OP_UNDEFINED;
-    return ret;
+    return gen_init(ctx, EVP_PKEY_OP_KEYGEN);
 }
 
-int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
+static int ossl_callback_to_pkey_gencb(const OSSL_PARAM params[], void *arg)
 {
-    int ret;
+    EVP_PKEY_CTX *ctx = arg;
+    const OSSL_PARAM *param = NULL;
+    int p = -1, n = -1;
 
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->keygen) {
-        EVPerr(EVP_F_EVP_PKEY_KEYGEN,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    if (ctx->operation != EVP_PKEY_OP_KEYGEN) {
-        EVPerr(EVP_F_EVP_PKEY_KEYGEN, EVP_R_OPERATON_NOT_INITIALIZED);
-        return -1;
-    }
+    if (ctx->pkey_gencb == NULL)
+        return 1;                /* No callback?  That's fine */
+
+    if ((param = OSSL_PARAM_locate_const(params, OSSL_GEN_PARAM_POTENTIAL))
+        == NULL
+        || !OSSL_PARAM_get_int(param, &p))
+        return 0;
+    if ((param = OSSL_PARAM_locate_const(params, OSSL_GEN_PARAM_ITERATION))
+        == NULL
+        || !OSSL_PARAM_get_int(param, &n))
+        return 0;
+
+    ctx->keygen_info[0] = p;
+    ctx->keygen_info[1] = n;
+
+    return ctx->pkey_gencb(ctx);
+}
+
+int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
+{
+    int ret = 0;
+    OSSL_CALLBACK cb;
+    EVP_PKEY *allocated_pkey = NULL;
 
     if (ppkey == NULL)
         return -1;
 
-    if (*ppkey == NULL)
-        *ppkey = EVP_PKEY_new();
-    if (*ppkey == NULL)
-        return -1;
+    if (ctx == NULL)
+        goto not_supported;
 
-    ret = ctx->pmeth->keygen(ctx, *ppkey);
+    if ((ctx->operation & EVP_PKEY_OP_TYPE_GEN) == 0)
+        goto not_initialized;
+
+    if (*ppkey == NULL)
+        *ppkey = allocated_pkey = EVP_PKEY_new();
+
+    if (*ppkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+
+    if (ctx->keymgmt == NULL)
+        goto legacy;
+
+    ret = 1;
+    if (ctx->pkey != NULL) {
+        EVP_KEYMGMT *tmp_keymgmt = ctx->keymgmt;
+        void *keydata =
+            evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                        &tmp_keymgmt, ctx->propquery);
+
+        if (keydata == NULL)
+            goto not_supported;
+        ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
+                                           ctx->op.keymgmt.genctx, keydata);
+    }
+
+    /*
+     * the returned value from evp_keymgmt_util_gen() is cached in *ppkey,
+     * so we so not need to save it, just check it.
+     */
+    ret = ret
+        && (evp_keymgmt_util_gen(*ppkey, ctx->keymgmt, ctx->op.keymgmt.genctx,
+                                 ossl_callback_to_pkey_gencb, ctx)
+            != NULL);
+
+#ifndef FIPS_MODE
+    /* In case |*ppkey| was originally a legacy key */
+    if (ret)
+        evp_pkey_free_legacy(*ppkey);
+#endif
+
+    goto end;
+
+ legacy:
+#ifdef FIPS_MODE
+    goto not_supported;
+#else
+    switch (ctx->operation) {
+    case EVP_PKEY_OP_PARAMGEN:
+        ret = ctx->pmeth->paramgen(ctx, *ppkey);
+        break;
+    case EVP_PKEY_OP_KEYGEN:
+        ret = ctx->pmeth->keygen(ctx, *ppkey);
+        break;
+    default:
+        goto not_supported;
+    }
+#endif
+
+ end:
     if (ret <= 0) {
-        EVP_PKEY_free(*ppkey);
-        *ppkey = NULL;
+        if (allocated_pkey != NULL)
+            *ppkey = NULL;
+        EVP_PKEY_free(allocated_pkey);
     }
     return ret;
+
+ not_supported:
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    ret = -2;
+    goto end;
+ not_initialized:
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+    ret = -1;
+    goto end;
+}
+
+int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
+{
+    if (ctx->operation != EVP_PKEY_OP_PARAMGEN) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+        return -1;
+    }
+    return EVP_PKEY_gen(ctx, ppkey);
+}
+
+int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
+{
+    if (ctx->operation != EVP_PKEY_OP_KEYGEN) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+        return -1;
+    }
+    return EVP_PKEY_gen(ctx, ppkey);
 }
 
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb)
@@ -151,6 +277,8 @@ int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)
         return 0;
     return ctx->keygen_info[idx];
 }
+
+#ifndef FIPS_MODE
 
 EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
                                const unsigned char *key, int keylen)
