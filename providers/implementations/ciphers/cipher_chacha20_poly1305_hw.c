@@ -142,7 +142,7 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
         ctx->len.text = plen;
 
         if (plen) {
-            if (ctx->enc)
+            if (bctx->enc)
                 ctr = xor128_encrypt_n_pad(out, in, ctr, plen);
             else
                 ctr = xor128_decrypt_n_pad(out, in, ctr, plen);
