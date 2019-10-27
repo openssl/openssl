@@ -148,5 +148,5 @@ IF[{- !$disabled{legacy} -}]
   # Common things that are valid no matter what form the Legacy provider
   # takes.
   SOURCE[$LEGACYGOAL]=legacyprov.c
-  INCLUDE[$LEGACYGOAL]=../include implementations/include
+  INCLUDE[$LEGACYGOAL]=../include common/include implementations/include
 ENDIF

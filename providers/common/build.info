@@ -1,6 +1,6 @@
 SUBDIRS=digests ciphers
 
-SOURCE[../libcommon.a]=provider_err.c
+SOURCE[../libcommon.a]=provider_err.c callback_prov.c
 $FIPSCOMMON=provider_util.c
 SOURCE[../libnonfips.a]=$FIPSCOMMON nid_to_name.c
 SOURCE[../libfips.a]=$FIPSCOMMON

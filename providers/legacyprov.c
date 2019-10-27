@@ -14,6 +14,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "prov/implementations.h"
+#include "prov/callback.h"
 
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
@@ -105,6 +106,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
 {
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
 
+    if (!ossl_prov_callback_from_dispatch(in))
+        return 0;
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:

@@ -29,6 +29,7 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "prov/callback.h"
 #include "selftest.h"
 
 extern OSSL_core_thread_start_fn *c_thread_start;
@@ -462,6 +463,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     FIPS_GLOBAL *fgbl;
     OPENSSL_CTX *ctx;
 
+    if (!ossl_prov_callback_from_dispatch(in))
+        return 0;
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
