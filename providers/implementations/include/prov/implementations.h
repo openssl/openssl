@@ -258,3 +258,6 @@ extern const OSSL_DISPATCH dh_keyexch_functions[];
 
 /* Signature */
 extern const OSSL_DISPATCH dsa_signature_functions[];
+
+/* Asym Cipher */
+extern const OSSL_DISPATCH rsa_asym_cipher_functions[];
