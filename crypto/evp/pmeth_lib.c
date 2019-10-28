@@ -15,6 +15,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
+#include <openssl/rsa.h>
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
@@ -701,6 +702,33 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return EVP_PKEY_CTX_set_signature_md(ctx, p2);
     case EVP_PKEY_CTRL_GET_MD:
         return EVP_PKEY_CTX_get_signature_md(ctx, p2);
+    case EVP_PKEY_CTRL_RSA_PADDING:
+        return EVP_PKEY_CTX_set_rsa_padding(ctx, p1);
+    case EVP_PKEY_CTRL_GET_RSA_PADDING:
+        return EVP_PKEY_CTX_get_rsa_padding(ctx, p2);
+    case EVP_PKEY_CTRL_RSA_OAEP_MD:
+        return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
+    case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
+        return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
+    case EVP_PKEY_CTRL_RSA_MGF1_MD:
+        return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
+    case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
+        return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
+    case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
+        return EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, p2, p1);
+    case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
+        return EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, (unsigned char **)p2);
+    case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
+    case EVP_PKEY_CTRL_PKCS7_DECRYPT:
+#ifndef OPENSSL_NO_CMS
+    case EVP_PKEY_CTRL_CMS_DECRYPT:
+    case EVP_PKEY_CTRL_CMS_ENCRYPT:
+#endif
+        if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+            return 1;
+        ERR_raise(ERR_LIB_EVP,
+                  EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
     }
     return 0;
 }
@@ -783,6 +811,52 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         EVP_MD_meth_free(md);
         return ret;
     }
+
+    if (strcmp(name, "rsa_padding_mode") == 0) {
+        int pm;
+
+        if (strcmp(value, "pkcs1") == 0) {
+            pm = RSA_PKCS1_PADDING;
+        } else if (strcmp(value, "sslv23") == 0) {
+            pm = RSA_SSLV23_PADDING;
+        } else if (strcmp(value, "none") == 0) {
+            pm = RSA_NO_PADDING;
+        } else if (strcmp(value, "oeap") == 0) {
+            pm = RSA_PKCS1_OAEP_PADDING;
+        } else if (strcmp(value, "oaep") == 0) {
+            pm = RSA_PKCS1_OAEP_PADDING;
+        } else if (strcmp(value, "x931") == 0) {
+            pm = RSA_X931_PADDING;
+        } else if (strcmp(value, "pss") == 0) {
+            pm = RSA_PKCS1_PSS_PADDING;
+        } else {
+            ERR_raise(ERR_LIB_RSA, RSA_R_UNKNOWN_PADDING_TYPE);
+            return -2;
+        }
+        return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
+    }
+
+    if (strcmp(name, "rsa_mgf1_md") == 0)
+        return EVP_PKEY_CTX_set_rsa_mgf1_md_name(ctx, value, NULL);
+
+    if (strcmp(name, "rsa_oaep_md") == 0)
+        return EVP_PKEY_CTX_set_rsa_oaep_md_name(ctx, value, NULL);
+
+    if (strcmp(name, "rsa_oaep_label") == 0) {
+        unsigned char *lab;
+        long lablen;
+        int ret;
+
+        lab = OPENSSL_hexstr2buf(value, &lablen);
+        if (lab == NULL)
+            return 0;
+        ret = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, lab, lablen);
+        if (ret <= 0)
+            OPENSSL_free(lab);
+        return ret;
+    }
+
+
 
     return 0;
 }

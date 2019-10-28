@@ -365,6 +365,10 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_asym_cipher[] = {
+    { "RSA:rsaEncryption", "default=yes", rsa_asym_cipher_functions },
+    { NULL, NULL, NULL }
+};
 
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
@@ -397,6 +401,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
         return deflt_keyexch;
     case OSSL_OP_SIGNATURE:
         return deflt_signature;
+    case OSSL_OP_ASYM_CIPHER:
+        return deflt_asym_cipher;
     }
     return NULL;
 }
