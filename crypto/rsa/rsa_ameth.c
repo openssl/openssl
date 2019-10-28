@@ -1096,10 +1096,7 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         if (numprimes < 2 || numexps < 2 || numcoeffs < 1)
             goto err;
 
-        /*
-         * assert that an OSSL_PARAM_BLD has enough space.
-         * (the current 10 places doesn't have space for multi-primes)
-         */
+        /* assert that an OSSL_PARAM_BLD has enough space. */
         if (!ossl_assert(/* n, e */ 2 + /* d */ 1 + /* numprimes */ 1
                          + numprimes + numexps + numcoeffs
                          <= OSSL_PARAM_BLD_MAX))
