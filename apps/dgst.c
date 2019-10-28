@@ -502,7 +502,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           const char *sig_name, const char *md_name,
           const char *file)
 {
-    size_t len;
+    size_t len = BUFSIZE;
     int i, backslash = 0, ret = 1;
     unsigned char *sigbuf = NULL;
 
@@ -542,8 +542,6 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
             len = pkey_len;
             sigbuf = app_malloc(len, "Signature buffer");
             buf = sigbuf;
-        } else {
-            len = BUFSIZE;
         }
         if (!EVP_DigestSignFinal(ctx, buf, &len)) {
             BIO_printf(bio_err, "Error Signing Data\n");
