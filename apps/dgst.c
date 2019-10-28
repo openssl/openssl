@@ -591,7 +591,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 
     ret = 0;
  end:
-    if (sigbuf) {
+    if (NULL != sigbuf) {
         OPENSSL_clear_free(sigbuf, len);
     }
     return ret;
