@@ -56,13 +56,14 @@ const char *ossl_cmp_PKIStatus_to_string(int status)
         return "PKIStatus: revocation notification - a revocation of the cert has occurred";
     case OSSL_CMP_PKISTATUS_keyUpdateWarning:
         return "PKIStatus: key update warning - update already done for the cert";
-    default: {
-        char buf[40];
-        BIO_snprintf(buf, sizeof(buf), "PKIStatus: invalid=%d", status);
-        CMPerr(0, CMP_R_ERROR_PARSING_PKISTATUS);
-        ossl_cmp_add_error_data(buf);
-        return NULL;
-    }
+    default: 
+        {
+            char buf[40];
+            BIO_snprintf(buf, sizeof(buf), "PKIStatus: invalid=%d", status);
+            CMPerr(0, CMP_R_ERROR_PARSING_PKISTATUS);
+            ossl_cmp_add_error_data(buf);
+            return NULL;
+        }
     }
 }
 
