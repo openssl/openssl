@@ -25,7 +25,7 @@ For questions related to build issues:
 For other questions:
 
     Please describe your problem as concise as possible while giving
-    us enough information to understand your problem. An example code
+    us enough information to understand your problem. Example code
     or example commands are highly appreciated if they help us to
     better understand what you are trying to achieve.
 
@@ -33,8 +33,9 @@ For other questions:
     using and whether it is system provided or you built it yourself.
     In the latter case, please also send us your build configuration.
     With OpenSSL before 1.1.1, the configuration output comes from the
-    configuration command.  With OpenSSL 1.1.1 and on, it's the output
-    of `perl configdata.pm --dump`
+    configuration command.  With OpenSSL 1.1.1 and on, you can obtain
+    the information by running the command `perl configdata.pm --dump`
+    in the root directory of the source tree.
 
 Please remember to put ``` lines before and after any commands plus
 output and code, like this:
