@@ -16,7 +16,7 @@ before_build:
     - ps: >-
         If ($env:Platform -Match "x86") {
             $env:VCVARS_PLATFORM="x86"
-            $env:TARGET="VC-WIN32 no-asm"
+            $env:TARGET="VC-WIN32 no-asm --strict-warnings"
         } Else {
             $env:VCVARS_PLATFORM="amd64"
             $env:TARGET="VC-WIN64A-masm"

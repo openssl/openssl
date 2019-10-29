@@ -160,6 +160,10 @@ my @clang_devteam_warn = qw(
     -Wmissing-variable-declarations
 );
 
+my @cl_devteam_warn = qw(
+    /WX
+);
+
 # This adds backtrace information to the memory leak info.  Is only used
 # when crypto-mdebug-backtrace is enabled.
 my $memleak_devteam_backtrace = "-rdynamic";
@@ -1523,11 +1527,20 @@ if ($strict_warnings)
         my $wopt;
         my $gccver = $predefined_C{__GNUC__} // -1;
 
-        warn "WARNING --strict-warnings requires gcc[>=4] or gcc-alike"
-            unless $gccver >= 4;
-        push @strict_warnings_collection, @gcc_devteam_warn;
-        push @strict_warnings_collection, @clang_devteam_warn
-            if (defined($predefined_C{__clang__}));
+        if ($gccver >= 4)
+                {
+                push @strict_warnings_collection, @gcc_devteam_warn;
+                push @strict_warnings_collection, @clang_devteam_warn
+                    if (defined($predefined_C{__clang__}));
+                }
+        elsif ($config{target} =~ /^VC-/)
+                {
+                push @strict_warnings_collection, @cl_devteam_warn;
+                }
+        else
+                {
+                warn "WARNING --strict-warnings requires gcc[>=4] or gcc-alike, or MSVC"
+                }
         }
 
 if (grep { $_ eq '-static' } @{$config{LDFLAGS}}) {
