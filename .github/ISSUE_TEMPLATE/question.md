@@ -24,7 +24,7 @@ For questions related to build issues:
 
 For other questions:
 
-    Please describe your problem as concise as possible while giving
+    Please describe your problem as concisely as possible while giving
     us enough information to understand your problem. Example code
     or example commands are highly appreciated if they help us to
     better understand what you are trying to achieve.
