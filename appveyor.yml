@@ -18,7 +18,7 @@ before_build:
             $env:TARGET="VC-WIN32 no-asm"
         } Else {
             $env:VCVARS_PLATFORM="amd64"
-            $env:TARGET="VC-WIN64A-masm"
+            $env:TARGET="VC-WIN64A-masm --strict-warnings"
         }
     - ps: >-
         If ($env:Configuration -Match "shared") {
