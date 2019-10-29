@@ -3909,6 +3909,7 @@ static int do_multi(int multi, int size_num)
                 p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
                 sstrsep(&p, sep);
+                sstrsep(&p, sep);
 
                 d = atof(sstrsep(&p, sep));
                 eddsa_results[k][0] += d;
