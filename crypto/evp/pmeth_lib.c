@@ -201,10 +201,14 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         if (ctx->op.kex.exchprovctx != NULL && ctx->op.kex.exchange != NULL)
             ctx->op.kex.exchange->freectx(ctx->op.kex.exchprovctx);
         EVP_KEYEXCH_free(ctx->op.kex.exchange);
+        ctx->op.kex.exchprovctx = NULL;
+        ctx->op.kex.exchange = NULL;
     } else if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
         if (ctx->op.sig.sigprovctx != NULL && ctx->op.sig.signature != NULL)
             ctx->op.sig.signature->freectx(ctx->op.sig.sigprovctx);
         EVP_SIGNATURE_free(ctx->op.sig.signature);
+        ctx->op.sig.sigprovctx = NULL;
+        ctx->op.sig.signature = NULL;
     }
 }
 
