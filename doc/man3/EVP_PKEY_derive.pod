@@ -2,43 +2,34 @@
 
 =head1 NAME
 
-EVP_PKEY_derive_init, EVP_PKEY_derive_init_ex, EVP_PKEY_derive_set_peer,
-EVP_PKEY_derive - derive public key algorithm shared secret
+EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_derive
+- derive public key algorithm shared secret
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange);
  int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
  int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_derive_init_ex() function initializes a public key algorithm
-context for shared secret derivation using the key exchange algorithm
-B<exchange>.
-The key exchange algorithm B<exchange> should be fetched using a call to
-L<EVP_KEYEXCH_fetch(3)>.
-The EVP_PKEY object associated with B<ctx> must be compatible with that
-algorithm.
-B<exchange> may be NULL in which case the EVP_KEYEXCH algorithm is fetched
-implicitly based on the type of EVP_PKEY associated with B<ctx>.
-See L<provider(7)/Implicit fetch> for more information about implict fetches.
+EVP_PKEY_derive_init() initializes a public key algorithm context I<ctx> for
+shared secret derivation using the algorithm given when the context was created
+using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
+fetch a B<EVP_KEYEXCH> method implicitly, see L<provider(7)/Implicit fetch> for
+more information about implict fetches.
 
-The EVP_PKEY_derive_init() function is the same as EVP_PKEY_derive_init_ex()
-except that the EVP_KEYEXCH algorithm is always implicitly fetched.
-
-The EVP_PKEY_derive_set_peer() function sets the peer key: this will normally
+EVP_PKEY_derive_set_peer() sets the peer key: this will normally
 be a public key.
 
-The EVP_PKEY_derive() derives a shared secret using B<ctx>.
-If B<key> is B<NULL> then the maximum size of the output buffer is written to
-the B<keylen> parameter. If B<key> is not B<NULL> then before the call the
-B<keylen> parameter should contain the length of the B<key> buffer, if the call
-is successful the shared secret is written to B<key> and the amount of data
-written to B<keylen>.
+EVP_PKEY_derive() derives a shared secret using I<ctx>.
+If I<key> is NULL then the maximum size of the output buffer is written to the
+I<keylen> parameter. If I<key> is not NULL then before the call the I<keylen>
+parameter should contain the length of the I<key> buffer, if the call is
+successful the shared secret is written to I<key> and the amount of data
+written to I<keylen>.
 
 =head1 NOTES
 
