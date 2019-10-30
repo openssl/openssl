@@ -86,19 +86,31 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
     case GEN_OTHERNAME:
         switch (OBJ_obj2nid(gen->d.otherName->type_id)) {
         case NID_id_on_SmtpUTF8Mailbox:
-            if (!X509V3_add_value_uchar("othername: SmtpUTF8Mailbox:", gen->d.otherName->value->value.utf8string->data, &ret))
+            if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
+                    || !X509V3_add_value_uchar("othername: SmtpUTF8Mailbox:",
+                            gen->d.otherName->value->value.utf8string->data,
+                            &ret))
                 return NULL;
             break;
         case NID_XmppAddr:
-            if (!X509V3_add_value_uchar("othername: XmppAddr:", gen->d.otherName->value->value.utf8string->data, &ret))
+            if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
+                    || !X509V3_add_value_uchar("othername: XmppAddr:",
+                            gen->d.otherName->value->value.utf8string->data,
+                            &ret))
                 return NULL;
             break;
         case NID_SRVName:
-            if (!X509V3_add_value_uchar("othername: SRVName:", gen->d.otherName->value->value.ia5string->data, &ret))
+            if (gen->d.otherName->value->type != V_ASN1_IA5STRING
+                    || !X509V3_add_value_uchar("othername: SRVName:",
+                            gen->d.otherName->value->value.ia5string->data,
+                            &ret))
                 return NULL;
             break;
         case NID_ms_upn:
-            if (!X509V3_add_value_uchar("othername: UPN:", gen->d.otherName->value->value.utf8string->data, &ret))
+            if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
+                    || !X509V3_add_value_uchar("othername: UPN:",
+                            gen->d.otherName->value->value.utf8string->data,
+                            &ret))
                 return NULL;
             break;
         default:
@@ -174,21 +186,36 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
 {
     unsigned char *p;
-    int i;
+    int i, nid;
+
     switch (gen->type) {
     case GEN_OTHERNAME:
-        switch (OBJ_obj2nid(gen->d.otherName->type_id)) {
+        nid = OBJ_obj2nid(gen->d.otherName->type_id);
+        /* Validate the types are as we expect before we use them */
+        if ((nid == NID_SRVName
+             && gen->d.otherName->value->type != V_ASN1_IA5STRING)
+                || (nid != NID_SRVName
+                    && gen->d.otherName->value->type != V_ASN1_UTF8STRING)) {
+            BIO_printf(out, "othername:<unsupported>");
+            break;
+        }
+
+        switch (nid) {
         case NID_id_on_SmtpUTF8Mailbox:
-            BIO_printf(out, "othername:SmtpUTF8Mailbox:%s", gen->d.otherName->value->value.utf8string->data);
+            BIO_printf(out, "othername:SmtpUTF8Mailbox:%s",
+                       gen->d.otherName->value->value.utf8string->data);
             break;
         case NID_XmppAddr:
-            BIO_printf(out, "othername:XmppAddr:%s", gen->d.otherName->value->value.utf8string->data);
+            BIO_printf(out, "othername:XmppAddr:%s",
+                       gen->d.otherName->value->value.utf8string->data);
             break;
         case NID_SRVName:
-            BIO_printf(out, "othername:SRVName:%s", gen->d.otherName->value->value.ia5string->data);
+            BIO_printf(out, "othername:SRVName:%s",
+                       gen->d.otherName->value->value.ia5string->data);
             break;
         case NID_ms_upn:
-            BIO_printf(out, "othername:UPN:%s", gen->d.otherName->value->value.utf8string->data);
+            BIO_printf(out, "othername:UPN:%s",
+                       gen->d.otherName->value->value.utf8string->data);
             break;
         default:
             BIO_printf(out, "othername:<unsupported>");
