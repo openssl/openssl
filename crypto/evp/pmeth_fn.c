@@ -338,7 +338,6 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     int ret = 0;
     void *provkey = NULL;
     EVP_SIGNATURE *signature = NULL;
-    EVP_KEYMGMT *keymgmt = NULL;
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -360,24 +359,24 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     if (signature != NULL && ctx->keymgmt == NULL) {
         int name_id = EVP_SIGNATURE_number(signature);
 
-        keymgmt = evp_keymgmt_fetch_by_number(NULL, name_id, ctx->propquery);
+        ctx->keymgmt =
+            evp_keymgmt_fetch_by_number(NULL, name_id, ctx->propquery);
     }
 
-    if (keymgmt == NULL
+    if (ctx->keymgmt == NULL
         || signature == NULL
-        || (EVP_KEYMGMT_provider(keymgmt)
+        || (EVP_KEYMGMT_provider(ctx->keymgmt)
             != EVP_SIGNATURE_provider(signature))) {
         /*
          * We don't have the full support we need with provided methods,
-         * let's go see if legacy does
+         * let's go see if legacy does.  Also, we don't need to free
+         * ctx->keymgmt here, as it's not necessarily tied to this
+         * operation.  It will be freed by EVP_PKEY_CTX_free().
          */
-        EVP_KEYMGMT_free(keymgmt);
         EVP_SIGNATURE_free(signature);
         goto legacy;
     }
 
-    if (keymgmt != NULL)
-        ctx->keymgmt = keymgmt;
     ctx->op.sig.signature = signature;
 
     if (ctx->pkey != NULL) {

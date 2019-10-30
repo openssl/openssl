@@ -31,7 +31,6 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 {
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
-    EVP_KEYMGMT *keymgmt = NULL;
     void *provkey = NULL;
     int ret;
 
@@ -68,25 +67,24 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (signature != NULL && locpctx->keymgmt == NULL) {
         int name_id = EVP_SIGNATURE_number(signature);
 
-        keymgmt =
+        locpctx->keymgmt =
             evp_keymgmt_fetch_by_number(NULL, name_id, locpctx->propquery);
     }
 
-    if (keymgmt == NULL
+    if (locpctx->keymgmt == NULL
         || signature == NULL
-        || (EVP_KEYMGMT_provider(keymgmt)
+        || (EVP_KEYMGMT_provider(locpctx->keymgmt)
             != EVP_SIGNATURE_provider(signature))) {
         /*
          * We don't have the full support we need with provided methods,
-         * let's go see if legacy does
+         * let's go see if legacy does.  Also, we don't need to free
+         * ctx->keymgmt here, as it's not necessarily tied to this
+         * operation.  It will be freed by EVP_PKEY_CTX_free().
          */
-        EVP_KEYMGMT_free(keymgmt);
         EVP_SIGNATURE_free(signature);
         goto legacy;
     }
 
-    if (keymgmt != NULL)
-        locpctx->keymgmt = keymgmt;
     locpctx->op.sig.signature = signature;
 
     locpctx->operation = ver ? EVP_PKEY_OP_VERIFYCTX
