@@ -27,9 +27,11 @@ static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
                           const char *props, ENGINE *e, EVP_PKEY *pkey,
-                          EVP_SIGNATURE *signature, int ver)
+                          int ver)
 {
     EVP_PKEY_CTX *locpctx = NULL;
+    EVP_SIGNATURE *signature = NULL;
+    EVP_KEYMGMT *keymgmt = NULL;
     void *provkey = NULL;
     int ret;
 
@@ -61,32 +63,34 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (e != NULL || locpctx->engine != NULL)
         goto legacy;
 
-    if (signature != NULL) {
-        if (!EVP_SIGNATURE_up_ref(signature))
-            goto err;
-    } else {
-        /*
-         * TODO(3.0): Check for legacy handling. Remove this once all all
-         * algorithms are moved to providers.
-         */
-        switch (locpctx->pkey->type) {
-        case NID_dsa:
-            break;
-        default:
-            goto legacy;
-        }
-        signature
-            = EVP_SIGNATURE_fetch(NULL, OBJ_nid2sn(locpctx->pkey->type), NULL);
+    signature =
+        EVP_SIGNATURE_fetch(NULL, locpctx->algorithm, locpctx->propquery);
+    if (signature != NULL && locpctx->keymgmt == NULL) {
+        int name_id = EVP_SIGNATURE_number(signature);
 
-        if (signature == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-            goto err;
-        }
+        keymgmt =
+            evp_keymgmt_fetch_by_number(NULL, name_id, locpctx->propquery);
     }
+
+    if (keymgmt == NULL
+        || signature == NULL
+        || (EVP_KEYMGMT_provider(keymgmt)
+            != EVP_SIGNATURE_provider(signature))) {
+        /*
+         * We don't have the full support we need with provided methods,
+         * let's go see if legacy does
+         */
+        EVP_KEYMGMT_free(keymgmt);
+        EVP_SIGNATURE_free(signature);
+        goto legacy;
+    }
+
+    if (keymgmt != NULL)
+        locpctx->keymgmt = keymgmt;
+    locpctx->op.sig.signature = signature;
+
     locpctx->operation = ver ? EVP_PKEY_OP_VERIFYCTX
                              : EVP_PKEY_OP_SIGNCTX;
-
-    locpctx->op.sig.signature = signature;
 
     locpctx->op.sig.sigprovctx
         = signature->newctx(ossl_provider_ctx(signature->prov));
@@ -95,7 +99,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         goto err;
     }
     provkey =
-        evp_keymgmt_export_to_provider(locpctx->pkey, signature->keymgmt, 0);
+        evp_keymgmt_export_to_provider(locpctx->pkey, locpctx->keymgmt, 0);
     if (provkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
@@ -197,31 +201,28 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 }
 
 int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                          const char *mdname, const char *props, EVP_PKEY *pkey,
-                          EVP_SIGNATURE *signature)
+                          const char *mdname, const char *props, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, signature,
-                          0);
+    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, 0);
 }
 
 int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, NULL, 0);
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, 0);
 }
 
 int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                             const char *mdname, const char *props,
-                            EVP_PKEY *pkey, EVP_SIGNATURE *signature)
+                            EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, signature,
-                          1);
+    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, 1);
 }
 
 int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, NULL, 1);
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, 1);
 }
 #endif /* FIPS_MDOE */
 
