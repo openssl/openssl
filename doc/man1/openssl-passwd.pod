@@ -24,7 +24,7 @@ B<openssl passwd>
 [B<-writerand> I<file>]
 {I<password>}
 
-=for comment ifdef crypt
+=for openssl ifdef crypt
 
 =head1 DESCRIPTION
 
@@ -93,17 +93,9 @@ Don't output warnings when passwords given at the command line are truncated.
 In the output list, prepend the cleartext password and a TAB character
 to each password hash.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =back
 

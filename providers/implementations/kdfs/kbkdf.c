@@ -10,13 +10,13 @@
 
 /*
  * This implements https://csrc.nist.gov/publications/detail/sp/800-108/final
- * section 5.1 ("counter mode") in HMAC only.  That document does not name the
- * KDFs it defines; the name is derived from
+ * section 5.1 ("counter mode") and section 5.2 ("feedback mode") in both HMAC
+ * and CMAC.  That document does not name the KDFs it defines; the name is
+ * derived from
  * https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/Key-Derivation
  *
- * Note that sections 5.2 ("feedback mode") and 5.3 ("double-pipeline mode")
- * are not implemented, though it would be possible to do so in the future.
- * CMAC mode is also not implemented; some plumbing would be required.
+ * Note that section 5.3 ("double-pipeline mode") is not implemented, though
+ * it would be possible to do so in the future.
  *
  * These versions all assume the counter is used.  It would be relatively
  * straightforward to expose a configuration handle should the need arise.
@@ -46,9 +46,15 @@
 
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 
+typedef enum {
+    COUNTER = 0,
+    FEEDBACK
+} kbkdf_mode;
+
 /* Our context structure. */
 typedef struct {
     void *provctx;
+    kbkdf_mode mode;
     EVP_MAC_CTX *ctx_init;
 
     /* Names are lowercased versions of those found in SP800-108. */
@@ -58,6 +64,8 @@ typedef struct {
     size_t label_len;
     unsigned char *context;
     size_t context_len;
+    unsigned char *iv;
+    size_t iv_len;
 } KBKDF;
 
 /* Definitions needed for typechecking. */
@@ -117,27 +125,36 @@ static void kbkdf_reset(void *vctx)
     OPENSSL_clear_free(ctx->context, ctx->context_len);
     OPENSSL_clear_free(ctx->label, ctx->label_len);
     OPENSSL_clear_free(ctx->ki, ctx->ki_len);
+    OPENSSL_clear_free(ctx->iv, ctx->iv_len);
     memset(ctx, 0, sizeof(*ctx));
 }
 
-/* SP800-108 section 5.1. */
-static int kbkdf_derive_counter(EVP_MAC_CTX *ctx_init,
-                                unsigned char *label, size_t label_len,
-                                unsigned char *context, size_t context_len,
-                                unsigned char *k_i, size_t h, uint32_t l,
-                                unsigned char *ko, size_t ko_len)
+/* SP800-108 section 5.1 or section 5.2 depending on mode. */
+static int derive(EVP_MAC_CTX *ctx_init, kbkdf_mode mode, unsigned char *iv,
+                  size_t iv_len, unsigned char *label, size_t label_len,
+                  unsigned char *context, size_t context_len,
+                  unsigned char *k_i, size_t h, uint32_t l, unsigned char *ko,
+                  size_t ko_len)
 {
     int ret = 0;
     EVP_MAC_CTX *ctx = NULL;
-    size_t written = 0, to_write;
+    size_t written = 0, to_write, k_i_len = iv_len;
     const unsigned char zero = 0;
     uint32_t counter, i;
+
+    /* Setup K(0) for feedback mode. */
+    if (iv_len > 0)
+        memcpy(k_i, iv, iv_len);
 
     for (counter = 1; written < ko_len; counter++) {
         i = be32(counter);
 
         ctx = EVP_MAC_CTX_dup(ctx_init);
         if (ctx == NULL)
+            goto done;
+
+        /* Perform feedback, if appropriate. */
+        if (mode == FEEDBACK && !EVP_MAC_update(ctx, k_i, k_i_len))
             goto done;
 
         if (!EVP_MAC_update(ctx, (unsigned char *)&i, 4)
@@ -152,6 +169,7 @@ static int kbkdf_derive_counter(EVP_MAC_CTX *ctx_init,
         memcpy(ko + written, k_i, MIN(to_write, h));
         written += h;
 
+        k_i_len = h;
         EVP_MAC_CTX_free(ctx);
         ctx = NULL;
     }
@@ -170,14 +188,15 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
     uint32_t l = be32(keylen * 8);
     size_t h = 0;
 
-    /* Label and Context are permitted to be empty. Check everything else. */
+    /* label, context, and iv are permitted to be empty.  Check everything
+     * else. */
     if (ctx->ctx_init == NULL) {
         if (ctx->ki_len == 0 || ctx->ki == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
             return 0;
         }
-        /* Could either be missing MAC or missing message digest -
-         * arbitrarily, I pick this one. */
+        /* Could either be missing MAC or missing message digest or missing
+         * cipher - arbitrarily, I pick this one. */
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MAC);
         return 0;
     }
@@ -185,14 +204,18 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
     h = EVP_MAC_size(ctx->ctx_init);
     if (h == 0)
         goto done;
+    if (ctx->iv_len != 0 && ctx->iv_len != h) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
+        goto done;
+    }
 
     k_i = OPENSSL_zalloc(h);
     if (k_i == NULL)
         goto done;
 
-    ret = kbkdf_derive_counter(
-        ctx->ctx_init, ctx->label, ctx->label_len, ctx->context,
-        ctx->context_len, k_i, h, l, key, keylen);
+    ret = derive(ctx->ctx_init, ctx->mode, ctx->iv, ctx->iv_len, ctx->label,
+                 ctx->label_len, ctx->context, ctx->context_len, k_i, h, l,
+                 key, keylen);
 done:
     if (ret != 1)
         OPENSSL_cleanse(key, keylen);
@@ -222,9 +245,22 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                                            NULL, NULL, libctx))
         return 0;
     else if (ctx->ctx_init != NULL
-        && !EVP_MAC_is_a(EVP_MAC_CTX_mac(ctx->ctx_init),
-                         OSSL_MAC_NAME_HMAC)) {
+             && !EVP_MAC_is_a(EVP_MAC_CTX_mac(ctx->ctx_init),
+                              OSSL_MAC_NAME_HMAC)
+             && !EVP_MAC_is_a(EVP_MAC_CTX_mac(ctx->ctx_init),
+                              OSSL_MAC_NAME_CMAC)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MAC);
+        return 0;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE);
+    if (p != NULL && strncasecmp("counter", p->data, p->data_size) == 0) {
+        ctx->mode = COUNTER;
+    } else if (p != NULL
+               && strncasecmp("feedback", p->data, p->data_size) == 0) {
+        ctx->mode = FEEDBACK;
+    } else if (p != NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
         return 0;
     }
 
@@ -238,6 +274,10 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_INFO);
     if (p != NULL && !kbkdf_set_buffer(&ctx->context, &ctx->context_len, p))
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SEED);
+    if (p != NULL && !kbkdf_set_buffer(&ctx->iv, &ctx->iv_len, p))
         return 0;
 
     /* Set up digest context, if we can. */
@@ -260,8 +300,11 @@ static const OSSL_PARAM *kbkdf_settable_ctx_params(void)
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SEED, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_CIPHER, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MAC, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),
 
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_END,

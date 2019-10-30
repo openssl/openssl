@@ -90,7 +90,7 @@ B<openssl> B<ocsp>
 [B<-rcid> I<digest>]
 [B<-I<digest>>]
 
-=for comment ifdef multi
+=for openssl ifdef multi
 
 =head1 DESCRIPTION
 
@@ -207,18 +207,9 @@ each child is willing to wait for the client's OCSP response.
 This option is available on POSIX systems (that support the fork() and other
 required unix system-calls).
 
-=item B<-CAfile> I<file>, B<-CApath> I<pathname>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-File or pathname containing trusted CA certificates. These are used to verify
-the signature on the OCSP response.
-
-=item B<-no-CAfile>
-
-Do not load the trusted CA certificates from the default file location
-
-=item B<-no-CApath>
-
-Do not load the trusted CA certificates from the default directory location
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,

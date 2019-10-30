@@ -24,6 +24,8 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
 static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
                              const BIGNUM *add, const BIGNUM *rem,
                              BN_CTX *ctx);
+static int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
+                           int do_trial_division, BN_GENCB *cb);
 
 #define square(x) ((BN_ULONG)(x) * (BN_ULONG)(x))
 
@@ -65,6 +67,37 @@ const BIGNUM *bn_get0_small_factors(void)
     return &_bignum_small_prime_factors;
 }
 
+/*
+ * Calculate the number of trial divisions that gives the best speed in
+ * combination with Miller-Rabin prime test, based on the sized of the prime.
+ */
+static int calc_trial_divisions(int bits)
+{
+    if (bits <= 512)
+        return 64;
+    else if (bits <= 1024)
+        return 128;
+    else if (bits <= 2048)
+        return 384;
+    else if (bits <= 4096)
+        return 1024;
+    return NUMPRIMES;
+}
+
+/*
+ * Use a minimum of 64 rounds of Miller-Rabin, which should give a false
+ * positive rate of 2^-128. If the size of the prime is larger than 2048
+ * the user probably wants a higher security level than 128, so switch
+ * to 128 rounds giving a false positive rate of 2^-256.
+ * Returns the number of rounds.
+ */
+static int bn_mr_min_checks(int bits)
+{
+    if (bits > 2048)
+        return 128;
+    return 64;
+}
+
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 {
     /* No callback means continue */
@@ -95,7 +128,7 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
     int found = 0;
     int i, j, c1 = 0;
     prime_t *mods = NULL;
-    int checks = BN_prime_checks_for_size(bits);
+    int checks = bn_mr_min_checks(bits);
 
     if (bits < 2) {
         /* There are no prime numbers this small. */
@@ -134,7 +167,7 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
         goto err;
 
     if (!safe) {
-        i = BN_is_prime_fasttest_ex(ret, checks, ctx, 0, cb);
+        i = bn_is_prime_int(ret, checks, ctx, 0, cb);
         if (i == -1)
             goto err;
         if (i == 0)
@@ -148,13 +181,13 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
             goto err;
 
         for (i = 0; i < checks; i++) {
-            j = BN_is_prime_fasttest_ex(ret, 1, ctx, 0, cb);
+            j = bn_is_prime_int(ret, 1, ctx, 0, cb);
             if (j == -1)
                 goto err;
             if (j == 0)
                 goto loop;
 
-            j = BN_is_prime_fasttest_ex(t, 1, ctx, 0, cb);
+            j = bn_is_prime_int(t, 1, ctx, 0, cb);
             if (j == -1)
                 goto err;
             if (j == 0)
@@ -191,15 +224,45 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 }
 #endif
 
+#if !OPENSSL_API_3
 int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
                    BN_GENCB *cb)
 {
-    return BN_is_prime_fasttest_ex(a, checks, ctx_passed, 0, cb);
+    return bn_check_prime_int(a, checks, ctx_passed, 0, cb);
 }
 
-/* See FIPS 186-4 C.3.1 Miller Rabin Probabilistic Primality Test. */
 int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx,
                             int do_trial_division, BN_GENCB *cb)
+{
+    return bn_check_prime_int(w, checks, ctx, do_trial_division, cb);
+}
+#endif
+
+/* Wrapper around bn_is_prime_int that sets the minimum number of checks */
+int bn_check_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
+                       int do_trial_division, BN_GENCB *cb)
+{
+    int min_checks = bn_mr_min_checks(BN_num_bits(w));
+
+    if (checks < min_checks)
+        checks = min_checks;
+
+    return bn_is_prime_int(w, checks, ctx, do_trial_division, cb);
+}
+
+int BN_check_prime(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb)
+{
+    return bn_check_prime_int(p, 0, ctx, 1, cb);
+}
+
+/*
+ * Tests that |w| is probably prime
+ * See FIPS 186-4 C.3.1 Miller Rabin Probabilistic Primality Test.
+ *
+ * Returns 0 when composite, 1 when probable prime, -1 on error.
+ */
+static int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
+                           int do_trial_division, BN_GENCB *cb)
 {
     int i, status, ret = -1;
 #ifndef FIPS_MODE
@@ -226,7 +289,9 @@ int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx,
 
     /* first look for small factors */
     if (do_trial_division) {
-        for (i = 1; i < NUMPRIMES; i++) {
+        int trial_divisions = calc_trial_divisions(BN_num_bits(w));
+
+        for (i = 1; i < trial_divisions; i++) {
             BN_ULONG mod = BN_mod_word(w, primes[i]);
             if (mod == (BN_ULONG)-1)
                 return -1;
@@ -313,8 +378,8 @@ int bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
     if (mont == NULL || !BN_MONT_CTX_set(mont, w, ctx))
         goto err;
 
-    if (iterations == BN_prime_checks)
-        iterations = BN_prime_checks_for_size(BN_num_bits(w));
+    if (iterations == 0)
+        iterations = bn_mr_min_checks(BN_num_bits(w));
 
     /* (Step 4) */
     for (i = 0; i < iterations; ++i) {
@@ -398,12 +463,22 @@ err:
     return ret;
 }
 
+/*
+ * Generate a random number of |bits| bits that is probably prime by sieving.
+ * If |safe| != 0, it generates a safe prime.
+ * |mods| is a preallocated array that gets reused when called again.
+ *
+ * The probably prime is saved in |rnd|.
+ *
+ * Returns 1 on success and 0 on error.
+ */
 static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
                           BN_CTX *ctx)
 {
     int i;
     BN_ULONG delta;
-    BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
+    int trial_divisions = calc_trial_divisions(bits);
+    BN_ULONG maxdelta = BN_MASK2 - primes[trial_divisions - 1];
 
  again:
     /* TODO: Not all primes are private */
@@ -412,7 +487,7 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     if (safe && !BN_set_bit(rnd, 1))
         return 0;
     /* we now have a random number 'rnd' to test. */
-    for (i = 1; i < NUMPRIMES; i++) {
+    for (i = 1; i < trial_divisions; i++) {
         BN_ULONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
         if (mod == (BN_ULONG)-1)
             return 0;
@@ -420,7 +495,7 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     }
     delta = 0;
  loop:
-    for (i = 1; i < NUMPRIMES; i++) {
+    for (i = 1; i < trial_divisions; i++) {
         /*
          * check that rnd is a prime and also that
          * gcd(rnd-1,primes) == 1 (except for 2)
@@ -447,6 +522,14 @@ static int probable_prime(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     return 1;
 }
 
+/*
+ * Generate a random number |rnd| of |bits| bits that is probably prime
+ * and satisfies |rnd| % |add| == |rem| by sieving.
+ * If |safe| != 0, it generates a safe prime.
+ * |mods| is a preallocated array that gets reused when called again.
+ *
+ * Returns 1 on success and 0 on error.
+ */
 static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
                              const BIGNUM *add, const BIGNUM *rem,
                              BN_CTX *ctx)
@@ -454,7 +537,8 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     int i, ret = 0;
     BIGNUM *t1;
     BN_ULONG delta;
-    BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
+    int trial_divisions = calc_trial_divisions(bits);
+    BN_ULONG maxdelta = BN_MASK2 - primes[trial_divisions - 1];
 
     BN_CTX_start(ctx);
     if ((t1 = BN_CTX_get(ctx)) == NULL)
@@ -488,7 +572,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     }
 
     /* we now have a random number 'rnd' to test. */
-    for (i = 1; i < NUMPRIMES; i++) {
+    for (i = 1; i < trial_divisions; i++) {
         BN_ULONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
         if (mod == (BN_ULONG)-1)
             goto err;
@@ -496,7 +580,7 @@ static int probable_prime_dh(BIGNUM *rnd, int bits, int safe, prime_t *mods,
     }
     delta = 0;
  loop:
-    for (i = 1; i < NUMPRIMES; i++) {
+    for (i = 1; i < trial_divisions; i++) {
         /* check that rnd is a prime */
         if (bits <= 31 && delta <= 0x7fffffff
                 && square(primes[i]) > BN_get_word(rnd) + delta)

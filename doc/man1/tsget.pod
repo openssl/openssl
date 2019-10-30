@@ -113,9 +113,7 @@ option B<-C> or option B<-P> must be given in case of HTTPS. (Optional)
 
 =item B<-r> I<files>
 
-The files containing random data for seeding the random number
-generator. Multiple files can be specified, the separator is B<;> for
-MS-Windows, B<,> for VMS and B<:> for all other platforms. (Optional)
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-g> I<EGD_socket>
 

@@ -21,6 +21,10 @@ struct evp_pkey_ctx_st {
     /* Actual operation */
     int operation;
 
+    /* Algorithm name and properties associated with this context */
+    const char *algorithm;
+    const char *propquery;
+
     union {
         struct {
             EVP_KEYEXCH *exchange;
@@ -168,15 +172,6 @@ struct evp_kdf_st {
     OSSL_OP_kdf_get_ctx_params_fn *get_ctx_params;
     OSSL_OP_kdf_set_ctx_params_fn *set_ctx_params;
 };
-
-extern const EVP_KDF pbkdf2_kdf_meth;
-extern const EVP_KDF scrypt_kdf_meth;
-extern const EVP_KDF tls1_prf_kdf_meth;
-extern const EVP_KDF hkdf_kdf_meth;
-extern const EVP_KDF sshkdf_kdf_meth;
-extern const EVP_KDF ss_kdf_meth;
-extern const EVP_KDF x963_kdf_meth;
-extern const EVP_KDF x942_kdf_meth;
 
 struct evp_md_st {
     /* nid */
@@ -543,13 +538,15 @@ struct evp_pkey_st {
     /*
      * To support transparent export/import between providers that
      * support the methods for it, and still not having to do the
-     * export/import every time a key is used, we maintain a cache
-     * of imported key, indexed by provider address.
-     * pkeys[0] is *always* the "original" key.
+     * export/import every time a key or domain params are used, we
+     * maintain a cache of imported key / domain params, indexed by
+     * provider address.  pkeys[0] is *always* the "original" data.
      */
     struct {
         EVP_KEYMGMT *keymgmt;
-        void *provkey;
+        void *provdata;
+        /* 0 = provdata is a key, 1 = provdata is domain params */
+        int domainparams;
     } pkeys[10];
     /*
      * If there is a legacy key assigned to this structure, we keep
@@ -574,7 +571,8 @@ void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 
 /* KEYMGMT helper functions */
-void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
+void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
+                                     int domainparams);
 void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
 
 /* KEYMGMT provider interface functions */

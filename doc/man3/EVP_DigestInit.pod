@@ -12,7 +12,7 @@ EVP_MD_CTX_settable_params, EVP_MD_CTX_gettable_params,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
 EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
-EVP_MD_name, EVP_MD_provider,
+EVP_MD_is_a, EVP_MD_name, EVP_MD_number, EVP_MD_names_do_all, EVP_MD_provider,
 EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_flags,
 EVP_MD_CTX_name,
 EVP_MD_CTX_md, EVP_MD_CTX_type, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
@@ -20,7 +20,7 @@ EVP_MD_CTX_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
 EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
-EVP_MD_do_all_ex
+EVP_MD_do_all_provided
 - EVP digest routines
 
 =head1 SYNOPSIS
@@ -62,6 +62,11 @@ EVP_MD_do_all_ex
  int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in);
 
  const char *EVP_MD_name(const EVP_MD *md);
+ int EVP_MD_number(const EVP_MD *md);
+ int EVP_MD_is_a(const EVP_MD *md, const char *name);
+ void EVP_MD_names_do_all(const EVP_MD *md,
+                          void (*fn)(const char *name, void *data),
+                          void *data);
  const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md);
  int EVP_MD_type(const EVP_MD *md);
  int EVP_MD_pkey_type(const EVP_MD *md);
@@ -90,9 +95,9 @@ EVP_MD_do_all_ex
  EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
  void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 
- void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
-                       void (*fn)(EVP_MD *mac, void *arg),
-                       void *arg);
+ void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
+                             void (*fn)(EVP_MD *mac, void *arg),
+                             void *arg);
 
 =head1 DESCRIPTION
 
@@ -238,10 +243,27 @@ automatically cleaned up.
 Similar to EVP_MD_CTX_copy_ex() except the destination B<out> does not have to
 be initialized.
 
+=item EVP_MD_is_a()
+
+Returns 1 if I<md> is an implementation of an algorithm that's
+identifiable with I<name>, otherwise 0.
+
+=item EVP_MD_number()
+
+Returns the internal dynamic number assigned to the I<md>.  This is
+only useful with fetched B<EVP_MD>s.
+
 =item EVP_MD_name(),
 EVP_MD_CTX_name()
 
-Return the name of the given message digest.
+Return the name of the given message digest.  For fetched message
+digests with multiple names, only one of them is returned; it's
+recommended to use EVP_MD_names_do_all() instead.
+
+=item EVP_MD_names_do_all()
+
+Traverses all names for the I<md>, and calls I<fn> with each name and
+I<data>.  This is only useful with fetched B<EVP_MD>s.
 
 =item EVP_MD_provider()
 
@@ -330,7 +352,7 @@ by the caller. A NULL B<pctx> pointer is also allowed to clear the B<EVP_PKEY_CT
 assigned to B<ctx>. In such case, freeing the cleared B<EVP_PKEY_CTX> or not
 depends on how the B<EVP_PKEY_CTX> is created.
 
-=item EVP_MD_do_all_ex()
+=item EVP_MD_do_all_provided()
 
 Traverses all messages digests implemented by all activated providers
 in the given library context I<libctx>, and for each of the implementations,

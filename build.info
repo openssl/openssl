@@ -9,15 +9,13 @@ DEPEND[libssl]=libcrypto
 
 # Empty DEPEND "indices" means the dependencies are expected to be built
 # unconditionally before anything else.
-DEPEND[]=include/openssl/opensslconf.h include/crypto/bn_conf.h \
-         include/crypto/dso_conf.h doc/man7/openssl_user_macros.pod
-DEPEND[include/openssl/opensslconf.h]=configdata.pm
+DEPEND[]=include/openssl/opensslconf.h include/openssl/opensslv.h \
+         include/crypto/bn_conf.h include/crypto/dso_conf.h \
+         doc/man7/openssl_user_macros.pod
 GENERATE[include/openssl/opensslconf.h]=include/openssl/opensslconf.h.in
-DEPEND[include/crypto/bn_conf.h]=configdata.pm
+GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
-DEPEND[include/crypto/dso_conf.h]=configdata.pm
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
-DEPEND[doc/man7/openssl_user_macros.pod]=configdata.pm
 GENERATE[doc/man7/openssl_user_macros.pod]=doc/man7/openssl_user_macros.pod.in
 
 IF[{- defined $target{shared_defflag} -}]

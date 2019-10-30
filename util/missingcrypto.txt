@@ -1080,7 +1080,7 @@ TS_TST_INFO_set_serial
 TS_TST_INFO_set_time
 TS_TST_INFO_set_tsa
 TS_TST_INFO_set_version
-TS_VERIFY_CTS_set_certs
+TS_VERIFY_CTX_set_certs
 TS_VERIFY_CTX_add_flags
 TS_VERIFY_CTX_cleanup
 TS_VERIFY_CTX_free

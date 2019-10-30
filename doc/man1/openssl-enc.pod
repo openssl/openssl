@@ -9,6 +9,7 @@ openssl-enc - symmetric cipher routines
 B<openssl> B<enc>|I<cipher>
 [B<-I<cipher>>]
 [B<-help>]
+[B<-list>]
 [B<-ciphers>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
@@ -39,7 +40,7 @@ B<openssl> B<enc>|I<cipher>
 [B<-writerand> I<file>]
 [B<-engine> I<id>]
 
-=for comment ifdef z engine
+=for openssl ifdef z engine
 
 B<openssl> I<cipher> [B<...>]
 
@@ -58,9 +59,13 @@ either by itself or in addition to the encryption or decryption.
 
 Print out a usage message.
 
-=item B<-ciphers>
+=item B<-list>
 
 List all supported ciphers.
+
+=item B<-ciphers>
+
+Alias of -list to display all supported ciphers.
 
 =item B<-in> I<filename>
 
@@ -185,17 +190,9 @@ or zlib-dynamic option.
 
 Use NULL cipher (no encryption or decryption of input).
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =back
 
@@ -418,6 +415,10 @@ certain parameters. So if, for example, you want to use RC2 with a
 =head1 HISTORY
 
 The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
+
+The B<-list> option was added in OpenSSL 1.1.1e.
+
+The B<-ciphers> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

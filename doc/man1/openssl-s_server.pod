@@ -23,7 +23,7 @@ B<openssl> B<s_server>
 [B<-serverinfo> I<val>]
 [B<-certform> B<DER>|B<PEM>]
 [B<-key> I<infile>]
-[B<-keyform> I<format>]
+[B<-keyform> B<DER>|B<PEM>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
 [B<-dcertform> B<DER>|B<PEM>]
@@ -64,7 +64,6 @@ B<openssl> B<s_server>
 [B<-verifyCApath> I<dir>]
 [B<-no_cache>]
 [B<-ext_cache>]
-[B<-CRLform> B<DER>|B<PEM>]
 [B<-verify_return_error>]
 [B<-verify_quiet>]
 [B<-build_chain>]
@@ -151,6 +150,7 @@ B<openssl> B<s_server>
 [B<-xcert>]
 [B<-xchain>]
 [B<-xchain_build>]
+[B<-CRLform> B<DER>|B<PEM>]
 [B<-xcertform> B<DER>|B<PEM>]
 [B<-xkeyform> B<DER>|B<PEM>]
 [B<-nbio>]
@@ -185,15 +185,15 @@ B<openssl> B<s_server>
 [B<-no_anti_replay>]
 [B<-http_server_binmode>]
 
-=for comment ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
+=for openssl ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
 
-=for comment ifdef status status_verbose status_timeout status_url status_file
+=for openssl ifdef status status_verbose status_timeout status_url status_file
 
-=for comment ifdef psk_hint srpvfile srpuserseed sctp sctp_label_bug
+=for openssl ifdef psk_hint srpvfile srpuserseed sctp sctp_label_bug
 
-=for comment ifdef sctp sctp_label_bug trace mtu timeout listen
+=for openssl ifdef sctp sctp_label_bug trace mtu timeout listen
 
-=for comment ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
+=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
 
 =head1 DESCRIPTION
 
@@ -290,22 +290,25 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-certform> B<DER>|B<PEM>
+=item B<-certform> B<DER>|B<PEM>, B<-CRLForm> B<DER>|B<PEM>
 
-The certificate format to use: DER or PEM. PEM is the default.
+The certificate and CRL format; the default is PEM.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-key> I<infile>
 
 The private key to use. If not specified then the certificate file will
 be used.
 
-=item B<-keyform> I<format>
+=item B<-keyform> B<DER>|B<PEM>]
 
-The private format to use: DER or PEM. PEM is the default.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<val>
 
-The private key password source. For more information about the format of B<val>
+The private key password source.
+For more information about the format of I<val>,
 see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-dcert> I<infile>, B<-dkey> I<infile>
@@ -325,9 +328,16 @@ A file containing trusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
 
-=item B<-dcertform> B<DER>|B<PEM>, B<-dkeyform> B<DER>|B<PEM>, B<-dpass> I<val>
+=item B<-dcertform> B<DER>|B<PEM>, B<-dkeyform> B<DER>|B<PEM>
 
-Additional certificate and private key format and passphrase respectively.
+The format of the certificate and private key; the default is B<PEM>
+see L<openssl(1)/Format Options>.
+
+=item B<-dpass> I<val>
+
+The passphrase for the additional private key.
+For more information about the format of I<val>,
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-xkey> I<infile>, B<-xcert> I<infile>, B<-xchain>
 
@@ -344,7 +354,9 @@ B<-xcert> I<infile>, B<-xchain> options.
 
 =item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
 
-Extra certificate and private key format respectively.
+The format for the extra certificate and private key, respectively;
+the default format is B<PEM>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-nbio_test>
 
@@ -370,18 +382,9 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 
 Prints the SSL session states.
 
-=item B<-CAfile> I<infile>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-A file containing trusted certificates to use during client authentication
-and to use when attempting to build the server certificate chain. The list
-is also used in the list of acceptable client CAs passed to the client when
-a certificate is requested.
-
-=item B<-CApath> I<dir>
-
-The directory to use for client certificate verification. This directory
-must be in "hash format", see L<openssl-verify(1)> for more information.
-These are also used when building the server certificate chain.
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-chainCApath> I<dir>
 
@@ -393,14 +396,6 @@ information.
 
 A file containing trusted certificates to use when attempting to build the
 server certificate chain.
-
-=item B<-no-CAfile>
-
-Do not load the trusted CA certificates from the default file location.
-
-=item B<-no-CApath>
-
-Do not load the trusted CA certificates from the default directory location.
 
 =item B<-nocert>
 
@@ -446,17 +441,9 @@ for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
 IDs (eg. with a certain prefix).
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-verify_return_error>
 

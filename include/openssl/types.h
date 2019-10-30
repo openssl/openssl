@@ -17,6 +17,7 @@ extern "C" {
 #endif
 
 # include <openssl/e_os2.h>
+# include <openssl/safestack.h>
 
 typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
 
@@ -87,6 +88,9 @@ typedef struct bn_recp_ctx_st BN_RECP_CTX;
 typedef struct bn_gencb_st BN_GENCB;
 
 typedef struct buf_mem_st BUF_MEM;
+
+STACK_OF(BIGNUM);
+STACK_OF(BIGNUM_const);
 
 typedef struct err_state_st ERR_STATE;
 

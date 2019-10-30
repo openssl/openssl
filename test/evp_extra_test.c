@@ -1201,7 +1201,7 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     const OSSL_PARAM *params;
     OSSL_PARAM ourparams[2], *param = ourparams;
     DSA *dsa = NULL;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub = NULL, *priv = NULL;
     EVP_PKEY *pkey = NULL;
     int ret = 0;
     const EVP_MD *md;
@@ -1209,21 +1209,24 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     char ssl3ms[48];
 
     /*
-     * Setup the parameters for our DSA object. For our purposes they don't have
-     * to actually be *valid* parameters. We just need to set something. We
-     * don't even need a pub_key/priv_key.
+     * Setup the parameters for our DSA object. For our purposes they don't
+     * have to actually be *valid* parameters. We just need to set something.
      */
     dsa = DSA_new();
     p = BN_new();
     q = BN_new();
     g = BN_new();
+    pub = BN_new();
+    priv = BN_new();
     if (!TEST_ptr(dsa)
             || !TEST_ptr(p)
             || !TEST_ptr(q)
             || !TEST_ptr(g)
-            || !DSA_set0_pqg(dsa, p, q, g))
+            || !TEST_ptr(pub)
+            || !DSA_set0_pqg(dsa, p, q, g)
+        || !DSA_set0_key(dsa, pub, priv))
         goto err;
-    p = q = g = NULL;
+    p = q = g = pub = priv = NULL;
 
     pkey = EVP_PKEY_new();
     if (!TEST_ptr(pkey)
@@ -1331,6 +1334,8 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     BN_free(p);
     BN_free(q);
     BN_free(g);
+    BN_free(pub);
+    BN_free(priv);
 
     return ret;
 }

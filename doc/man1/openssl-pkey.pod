@@ -25,7 +25,7 @@ B<openssl> B<pkey>
 [B<-check>]
 [B<-pubcheck>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -40,14 +40,10 @@ converted between various forms and their components printed out.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-This specifies the input format DER or PEM. The default format is PEM.
-
-=item B<-outform> B<DER>|B<PEM>
-
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-in> I<filename>
 

@@ -14,12 +14,6 @@
 #include <openssl/err.h>
 
 #include "crypto/poly1305.h"
-/*
- * TODO(3.0) when poly1305 has moved entirely to our providers, this
- * header should be moved to the provider include directory.  For the
- * moment, crypto/poly1305/poly1305_ameth.c has us stuck.
- */
-#include "../../../crypto/poly1305/poly1305_local.h"
 
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"

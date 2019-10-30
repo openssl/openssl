@@ -38,7 +38,7 @@ B<openssl> B<pkeyutl>
 [B<-engine> I<id>]
 [B<-engine_impl>]
 
-=for comment ifdef engine engine_impl
+=for openssl ifdef engine engine_impl
 
 =head1 DESCRIPTION
 
@@ -90,7 +90,8 @@ The input key file, by default it should be a private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
-The key format PEM, DER or ENGINE. Default is PEM.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-passin> I<arg>
 
@@ -103,7 +104,8 @@ The peer key file, used by key derivation (agreement) operations.
 
 =item B<-peerform> B<DER>|B<PEM>|B<ENGINE>
 
-The peer key format B<PEM>, B<DER> or B<ENGINE>. Default is B<PEM>.
+The peer key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-pubin>
 
@@ -177,17 +179,9 @@ hex dump the output data.
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verifyrecover> option when an ASN1 structure is signed.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-engine> I<id>
 

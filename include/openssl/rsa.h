@@ -27,6 +27,8 @@
 #  include <openssl/bn.h>
 # endif
 # include <openssl/rsaerr.h>
+# include <openssl/safestack.h>
+
 # ifdef  __cplusplus
 extern "C" {
 # endif

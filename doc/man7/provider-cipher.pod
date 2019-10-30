@@ -159,7 +159,7 @@ L<EVP_EncryptFinal(3)> and L<EVP_DecryptFinal(3)>.
 
 OP_cipher_cipher() performs encryption/decryption using the provider side cipher
 context in the I<cctx> parameter that should have been previously initialised via
-a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init.
+a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init().
 This should call the raw underlying cipher function without any padding.
 This will be invoked in the provider as a result of the application calling
 L<EVP_Cipher(3)>.
@@ -314,6 +314,10 @@ IV length and the tag length.
 
 Sets the IV length to be used for an AEAD cipher for the associated cipher ctx.
 The length of the "ivlen" parameter should not exceed that of a B<size_t>.
+
+=item "mackey" (B<OSSL_CIPHER_PARAM_AEAD_MAC_KEY>) <octet string>
+
+Sets the MAC key used by composite AEAD ciphers such as AES-CBC-HMAC-SHA256.
 
 =item "randkey" (B<OSSL_CIPHER_PARAM_RANDOM_KEY>) <octet string>
 

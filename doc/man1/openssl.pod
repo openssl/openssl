@@ -505,6 +505,117 @@ This section describes some common options with common behavior.
 =item B<-help>
 
 Provides a terse summary of all options.
+If an option takes an argument, the "type" of argument is also given.
+
+=item B<-->
+
+This terminates the list of options. It is mostly useful if any filename
+parameters start with a minus sign:
+
+ openssl verify [flags...] -- -cert1.pem...
+
+=back
+
+=head2 Format Options
+
+Several OpenSSL commands can take input or generate output in a variety
+of formats. The list of acceptable formats, and the default, is
+described in each command documentation.  The list of formats is
+described below. Both uppercase and lowercase are accepted.
+
+=over 4
+
+=item B<DER>
+
+A binary format, encoded or parsed according to Distinguished Encoding Rules
+(DER) of the ASN.1 data language.
+
+=item B<ENGINE>
+
+Used to specify that the cryptographic material is in an OpenSSL B<engine>.
+An engine must be configured or specified using the B<-engine> option.
+In addition, the B<-input> flag can be used to name a specific object in
+the engine.
+A password, such as the B<-passin> flag often must be specified as well.
+
+=item B<P12>
+
+A DER-encoded file containing a PKCS#12 object.
+It might be necessary to provide a decryption password to retrieve
+the private key.
+
+=item B<PEM>
+
+A text format defined in IETF RFC 1421 and IETF RFC 7468. Briefly, this is
+a block of base-64 encoding (defined in IETF RFC 4648), with specific
+lines used to mark the start and end:
+
+ Text before the BEGIN line is ignored.
+ ----- BEGIN object-type -----
+ OT43gQKBgQC/2OHZoko6iRlNOAQ/tMVFNq7fL81GivoQ9F1U0Qr+DH3ZfaH8eIkX
+ xT0ToMPJUzWAn8pZv0snA0um6SIgvkCuxO84OkANCVbttzXImIsL7pFzfcwV/ERK
+ UM6j0ZuSMFOCr/lGPAoOQU0fskidGEHi1/kW+suSr28TqsyYZpwBDQ==
+ ----- END object-type -----
+ Text after the END line is also ignored
+
+The I<object-type> must match the type of object that is expected.
+For example a C<BEGIN X509 CERTIFICATE> will not match if the command
+is trying to read a private key. The types supported include:
+
+ ANY PRIVATE KEY
+ CERTIFICATE
+ CERTIFICATE REQUEST
+ CMS
+ DH PARAMETERS
+ DSA PARAMETERS
+ DSA PUBLIC KEY
+ EC PARAMETERS
+ EC PRIVATE KEY
+ ECDSA PUBLIC KEY
+ ENCRYPTED PRIVATE KEY
+ PARAMETERS
+ PKCS #7 SIGNED DATA
+ PKCS7
+ PRIVATE KEY
+ PUBLIC KEY
+ RSA PRIVATE KEY
+ SSL SESSION PARAMETERS
+ TRUSTED CERTIFICATE
+ X509 CRL
+ X9.42 DH PARAMETERS
+
+The following legacy I<object-type>'s are also supported for compatibility
+with earlier releases:
+
+ DSA PRIVATE KEY
+ NEW CERTIFICATE REQUEST
+ RSA PUBLIC KEY
+ X509 CERTIFICATE
+
+=item B<SMIME>
+
+An S/MIME object as described in IETF RFC 8551.
+Earlier versions were known as CMS and are compatible.
+Note that the parsing is simple and might fail to parse some legal data.
+
+=back
+
+The options to specify the format are as follows. Refer to the individual
+manpage to see which options are accepted.
+
+=over 4
+
+=item B<-inform> I<format>, B<-outform> I<format>
+
+The format of the input or output streams.
+
+=item B<-keyform> I<format>
+
+Format of a private key input source.
+
+=item B<-CRLform> I<fornat>
+
+Format of a CRL input source.
 
 =back
 
@@ -551,6 +662,73 @@ send the data via a pipe for example.
 =item B<stdin>
 
 Read the password from standard input.
+
+=back
+
+=head2 Trusted Certificate Options
+
+Part of validating a certificate includes verifying that the chain of CA's
+can be traced up to an existing trusted root.  The following options specify
+how to list the trusted roots, also known as trust anchors.  A collection
+of trusted roots is called a I<trust store>.
+
+Note that OpenSSL does not provide a default set of trust anchors.  Many
+Linux distributions include a system default and configure OpenSSL to point
+to that.  Mozilla maintains an influential trust store that can be found at
+L<https://www.mozilla.org/en-US/about/governance/policies/security-group/certs/>.
+
+=over 4
+
+=item B<-CAfile> I<file>
+
+Load the specified file which contains one or more PEM-format certificates
+of CA's that are trusted.
+
+=item B<-no-CAfile>
+
+Do not load the default file of trusted certificates.
+
+=item B<-CApath> I<dir>
+
+Use the specified directory as a list of trust certificates. That is,
+files should be named with the hash of the X.509 SubjectName of each
+certificate. This is so that the library can extract the IssuerName,
+hash it, and directly lookup the file to get the issuer certificate.
+See L<openssl-rehash(1)> for information on creating this type of directory.
+
+=item B<-no-CApath>
+
+Do not use the default directory of trusted certificates.
+
+=back
+
+=head2 Random State Options
+
+Prior to OpenSSL 3.0, it was common for applications to store information
+about the state of the random-number generator in a file that was loaded
+at startup and rewritten upon exit. On modern operating systems, this is
+generally no longer necessary as OpenSSL will seed itself from the
+appropriate CPU flags, device files, and so on. These flags are still
+supported for special platforms or circumstances that might require them.
+
+It is generally an error to use the same seed file more than once and
+every use of B<-rand> should be paired with B<-writerand>.
+
+=over 4
+
+=item B<-rand> I<files>
+
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is C<;> for MS-Windows, C<,> for OpenVMS, and C<:> for
+all others. Another way to specify multiple files is to repeat this flag
+with different filenames.
+
+=item B<-writerand> I<file>
+
+Writes the seed data to the specified I<file> upon exit.
+This file can be used in a subsequent command invocation.
 
 =back
 

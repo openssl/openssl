@@ -2,7 +2,7 @@
 # there for further explanations.
 SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 conf \
         txt_db pkcs7 pkcs12 ui store property \
-        md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 blake2 \
+        md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
         err comp ocsp cms ts srp cmac ct async ess crmf cmp
@@ -77,10 +77,14 @@ SOURCE[../libcrypto]=$UTIL_COMMON \
         cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
         o_fopen.c getenv.c o_init.c o_fips.c init.c trace.c provider.c \
         $UPLINKSRC
-DEFINE[../libcrypto]=$UTIL_DEFINE $UPLINKDEF
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
-DEFINE[../providers/libfips.a]=$UTIL_DEFINE
 
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
+DEFINE[../libcrypto]=$UTIL_DEFINE $UPLINKDEF
+DEFINE[../providers/libfips.a]=$UTIL_DEFINE
+DEFINE[../providers/fips]=$UTIL_DEFINE
+DEFINE[../providers/libimplementations.a]=$UTIL_DEFINE
 
 DEPEND[info.o]=buildinf.h
 DEPEND[cversion.o]=buildinf.h

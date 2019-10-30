@@ -27,11 +27,14 @@ B<openssl ecparam>
 [B<-genkey>]
 [B<-engine> I<id>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
 This command is used to manipulate or generate EC parameter files.
+
+OpenSSL is currently not able to generate new groups and therefore
+this command can only create EC parameters from known (named) curves.
 
 =head1 OPTIONS
 
@@ -41,17 +44,12 @@ This command is used to manipulate or generate EC parameter files.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-This specifies the input format. The B<DER> option uses an ASN.1 DER encoded
-form compatible with RFC 3279 EcpkParameters. The PEM form is the default
-format: it consists of the B<DER> format base64 encoded with additional
-header and footer lines.
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
-=item B<-outform> B<DER>|B<PEM>
-
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+Parameters are encoded as B<EcpkParameters> as specified in IETF RFC 3279.
 
 =item B<-in> I<filename>
 
@@ -124,17 +122,9 @@ is included in the ECParameters structure (see RFC 3279).
 
 This option will generate an EC private key using the specified parameters.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-engine> I<id>
 
@@ -144,16 +134,6 @@ thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =back
-
-=head1 NOTES
-
-PEM format EC parameters use the header and footer lines:
-
- -----BEGIN EC PARAMETERS-----
- -----END EC PARAMETERS-----
-
-OpenSSL is currently not able to generate new groups and therefore
-B<openssl ecparam> can only create EC parameters from known (named) curves.
 
 =head1 EXAMPLES
 

@@ -187,7 +187,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             }
             pol->policyid = pobj;
 
-        } else if (!name_cmp(cnf->name, "CPS")) {
+        } else if (!v3_name_cmp(cnf->name, "CPS")) {
             if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
             if ((qual = POLICYQUALINFO_new()) == NULL)
@@ -203,7 +203,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             if (!ASN1_STRING_set(qual->d.cpsuri, cnf->value,
                                  strlen(cnf->value)))
                 goto merr;
-        } else if (!name_cmp(cnf->name, "userNotice")) {
+        } else if (!v3_name_cmp(cnf->name, "userNotice")) {
             STACK_OF(CONF_VALUE) *unot;
             if (*cnf->value != '@') {
                 X509V3err(X509V3_F_POLICY_SECTION,

@@ -1195,9 +1195,9 @@ void SSL_free(SSL *s)
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(s->ext.ecpointformats);
     OPENSSL_free(s->ext.peer_ecpointformats);
+#endif                          /* OPENSSL_NO_EC */
     OPENSSL_free(s->ext.supportedgroups);
     OPENSSL_free(s->ext.peer_supportedgroups);
-#endif                          /* OPENSSL_NO_EC */
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 #ifndef OPENSSL_NO_OCSP
     sk_OCSP_RESPID_pop_free(s->ext.ocsp.ids, OCSP_RESPID_free);
@@ -3291,8 +3291,8 @@ void SSL_CTX_free(SSL_CTX *a)
 
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(a->ext.ecpointformats);
-    OPENSSL_free(a->ext.supportedgroups);
 #endif
+    OPENSSL_free(a->ext.supportedgroups);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_free(a->ext.secure);
 

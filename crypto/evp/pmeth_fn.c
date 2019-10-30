@@ -312,6 +312,40 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_SIGNATURE_free);
 }
 
+int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
+{
+    return evp_is_a(signature->prov, signature->name_id, name);
+}
+
+int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
+{
+    return signature->name_id;
+}
+
+void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
+                                   void (*fn)(EVP_SIGNATURE *signature,
+                                              void *arg),
+                                   void *arg)
+{
+    struct keymgmt_data_st keymgmt_data;
+
+    keymgmt_data.ctx = libctx;
+    keymgmt_data.properties = NULL;
+    evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
+                       (void (*)(void *, void *))fn, arg,
+                       evp_signature_from_dispatch, &keymgmt_data,
+                       (void (*)(void *))EVP_SIGNATURE_free);
+}
+
+
+void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
+                                void (*fn)(const char *name, void *data),
+                                void *data)
+{
+    if (signature->prov != NULL)
+        evp_names_do_all(signature->prov, signature->name_id, fn, data);
+}
+
 static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
                                    int operation)
 {
@@ -359,7 +393,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
 
     ctx->op.sig.signature = signature;
     if (ctx->pkey != NULL) {
-        provkey = evp_keymgmt_export_to_provider(ctx->pkey, signature->keymgmt);
+        provkey =
+            evp_keymgmt_export_to_provider(ctx->pkey, signature->keymgmt, 0);
         if (provkey == NULL) {
             EVPerr(0, EVP_R_INITIALIZATION_ERROR);
             goto err;

@@ -30,7 +30,7 @@ static int bn_x931_derive_pi(BIGNUM *pi, const BIGNUM *Xpi, BN_CTX *ctx,
         i++;
         BN_GENCB_call(cb, 0, i);
         /* NB 27 MR is specified in X9.31 */
-        is_prime = BN_is_prime_fasttest_ex(pi, 27, ctx, 1, cb);
+        is_prime = BN_check_prime(pi, ctx, cb);
         if (is_prime < 0)
             return 0;
         if (is_prime)
@@ -131,7 +131,7 @@ int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
              * offering similar or better guarantees 50 MR is considerably
              * better.
              */
-            int r = BN_is_prime_fasttest_ex(p, 50, ctx, 1, cb);
+            int r = BN_check_prime(p, ctx, cb);
             if (r < 0)
                 goto err;
             if (r)

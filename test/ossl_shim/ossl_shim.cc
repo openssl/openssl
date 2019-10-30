@@ -288,8 +288,8 @@ static unsigned PskClientCallback(SSL *ssl, const char *hint,
     return 0;
   }
 
-  BUF_strlcpy(out_identity, config->psk_identity.c_str(),
-              max_identity_len);
+  OPENSSL_strlcpy(out_identity, config->psk_identity.c_str(),
+                  max_identity_len);
   memcpy(out_psk, config->psk.data(), config->psk.size());
   return config->psk.size();
 }

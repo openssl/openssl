@@ -11,12 +11,13 @@ B<openssl> B<dgst>|I<digest>
 [B<-help>]
 [B<-c>]
 [B<-d>]
+[B<-list>]
 [B<-hex>]
 [B<-binary>]
 [B<-r>]
 [B<-out> I<filename>]
 [B<-sign> I<filename>]
-[B<-keyform> I<arg>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-verify> I<filename>]
 [B<-prverify> I<filename>]
@@ -25,6 +26,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-hmac> I<key>]
 [B<-fips-fingerprint>]
 [B<-rand> I<files>]
+[B<-writerand> I<file>]
 [B<-engine> I<id>]
 [B<-engine_impl>]
 [I<file> ...]
@@ -63,6 +65,10 @@ the B<-hex> option is given as well.
 
 Print out BIO debugging information.
 
+=item B<-list>
+
+Prints out a list of supported message digests.
+
 =item B<-hex>
 
 Digest is to be output as a hex dump. This is the default case for a "normal"
@@ -88,10 +94,10 @@ Digitally sign the digest using the private key in "filename". Note this option
 does not support Ed25519 or Ed448 private keys. Use the L<openssl-pkeyutl(1)>
 command instead for this.
 
-=item B<-keyform> I<arg>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-Specifies the key format to sign digest with. The DER, PEM, P12,
-and ENGINE formats are supported.
+The format of the key to sign with; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>
 
@@ -158,17 +164,9 @@ for example exactly 32 chars for gost-mac.
 The L<openssl-mac(1)> command should be preferred to using this command line
 option.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-fips-fingerprint>
 

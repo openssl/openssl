@@ -545,6 +545,11 @@ int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name)
     return evp_is_a(cipher->prov, cipher->name_id, name);
 }
 
+int EVP_CIPHER_number(const EVP_CIPHER *cipher)
+{
+    return cipher->name_id;
+}
+
 const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 {
     if (cipher->prov != NULL)
@@ -554,6 +559,14 @@ const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 #else
     return NULL;
 #endif
+}
+
+void EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
+                             void (*fn)(const char *name, void *data),
+                             void *data)
+{
+    if (cipher->prov != NULL)
+        evp_names_do_all(cipher->prov, cipher->name_id, fn, data);
 }
 
 const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher)
@@ -573,6 +586,16 @@ int EVP_CIPHER_mode(const EVP_CIPHER *cipher)
     return ok != 0 ? (int)v : 0;
 }
 
+int EVP_MD_is_a(const EVP_MD *md, const char *name)
+{
+    return evp_is_a(md->prov, md->name_id, name);
+}
+
+int EVP_MD_number(const EVP_MD *md)
+{
+    return md->name_id;
+}
+
 const char *EVP_MD_name(const EVP_MD *md)
 {
     if (md->prov != NULL)
@@ -582,6 +605,14 @@ const char *EVP_MD_name(const EVP_MD *md)
 #else
     return NULL;
 #endif
+}
+
+void EVP_MD_names_do_all(const EVP_MD *md,
+                         void (*fn)(const char *name, void *data),
+                         void *data)
+{
+    if (md->prov != NULL)
+        evp_names_do_all(md->prov, md->name_id, fn, data);
 }
 
 const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md)

@@ -20,9 +20,11 @@ B<openssl srp>
 [B<-userinfo> I<text>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
+[B<-rand> I<files>]
+[B<-writerand> I<file>]
 [I<user> ...]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -68,6 +70,10 @@ adding or modifying a user.
 The password source for the input and output file.
 For more information about the format of B<arg>
 see L<openssl(1)/Pass Phrase Options>.
+
+=item B<-rand> I<files>, B<-writerand> I<file>
+
+See L<openssl(1)/Random State Options> for more information.
 
 =back
 

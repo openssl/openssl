@@ -297,6 +297,131 @@ static int test_kdf_x963(void)
     return ret;
 }
 
+/*
+ * KBKDF test vectors from RFC 6803 (Camellia Encryption for Kerberos 5)
+ * section 10.
+ */
+static int test_kdf_kbkdf_6803_128(void)
+{
+    int ret = 0, i, p;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[7];
+    static unsigned char input_key[] = {
+        0x57, 0xD0, 0x29, 0x72, 0x98, 0xFF, 0xD9, 0xD3,
+        0x5D, 0xE5, 0xA4, 0x7F, 0xB4, 0xBD, 0xE2, 0x4B,
+    };
+    static unsigned char constants[][5] = {
+        { 0x00, 0x00, 0x00, 0x02, 0x99 },
+        { 0x00, 0x00, 0x00, 0x02, 0xaa },
+        { 0x00, 0x00, 0x00, 0x02, 0x55 },
+    };
+    static unsigned char outputs[][16] = {
+        {0xD1, 0x55, 0x77, 0x5A, 0x20, 0x9D, 0x05, 0xF0,
+         0x2B, 0x38, 0xD4, 0x2A, 0x38, 0x9E, 0x5A, 0x56},
+        {0x64, 0xDF, 0x83, 0xF8, 0x5A, 0x53, 0x2F, 0x17,
+         0x57, 0x7D, 0x8C, 0x37, 0x03, 0x57, 0x96, 0xAB},
+        {0x3E, 0x4F, 0xBD, 0xF3, 0x0F, 0xB8, 0x25, 0x9C,
+         0x42, 0x5C, 0xB6, 0xC9, 0x6F, 0x1F, 0x46, 0x35}
+    };
+    static unsigned char iv[16] = { 0 };
+    unsigned char result[16] = { 0 };
+
+    for (i = 0; i < 3; i++) {
+        p = 0;
+        params[p++] = OSSL_PARAM_construct_utf8_string(
+            OSSL_KDF_PARAM_CIPHER, "CAMELLIA-128-CBC", 0);
+        params[p++] = OSSL_PARAM_construct_utf8_string(
+            OSSL_KDF_PARAM_MAC, "CMAC", 0);
+        params[p++] = OSSL_PARAM_construct_utf8_string(
+            OSSL_KDF_PARAM_MODE, "FEEDBACK", 0);
+        params[p++] = OSSL_PARAM_construct_octet_string(
+            OSSL_KDF_PARAM_KEY, input_key, sizeof(input_key));
+        params[p++] = OSSL_PARAM_construct_octet_string(
+            OSSL_KDF_PARAM_SALT, constants[i], sizeof(constants[i]));
+        params[p++] = OSSL_PARAM_construct_octet_string(
+            OSSL_KDF_PARAM_SEED, iv, sizeof(iv));
+        params[p] = OSSL_PARAM_construct_end();
+
+        kctx = get_kdfbyname("KBKDF");
+        ret = TEST_ptr(kctx)
+            && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+            && TEST_int_gt(EVP_KDF_derive(kctx, result, sizeof(result)), 0)
+            && TEST_mem_eq(result, sizeof(result), outputs[i],
+                           sizeof(outputs[i]));
+        EVP_KDF_CTX_free(kctx);
+        if (ret != 1)
+            return ret;
+    }
+
+    return ret;
+}
+
+static int test_kdf_kbkdf_6803_256(void)
+{
+    int ret = 0, i, p;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[7];
+    static unsigned char input_key[] = {
+        0xB9, 0xD6, 0x82, 0x8B, 0x20, 0x56, 0xB7, 0xBE,
+        0x65, 0x6D, 0x88, 0xA1, 0x23, 0xB1, 0xFA, 0xC6,
+        0x82, 0x14, 0xAC, 0x2B, 0x72, 0x7E, 0xCF, 0x5F,
+        0x69, 0xAF, 0xE0, 0xC4, 0xDF, 0x2A, 0x6D, 0x2C,
+    };
+    static unsigned char constants[][5] = {
+        { 0x00, 0x00, 0x00, 0x02, 0x99 },
+        { 0x00, 0x00, 0x00, 0x02, 0xaa },
+        { 0x00, 0x00, 0x00, 0x02, 0x55 },
+    };
+    static unsigned char outputs[][32] = {
+        {0xE4, 0x67, 0xF9, 0xA9, 0x55, 0x2B, 0xC7, 0xD3,
+         0x15, 0x5A, 0x62, 0x20, 0xAF, 0x9C, 0x19, 0x22,
+         0x0E, 0xEE, 0xD4, 0xFF, 0x78, 0xB0, 0xD1, 0xE6,
+         0xA1, 0x54, 0x49, 0x91, 0x46, 0x1A, 0x9E, 0x50,
+        },
+        {0x41, 0x2A, 0xEF, 0xC3, 0x62, 0xA7, 0x28, 0x5F,
+         0xC3, 0x96, 0x6C, 0x6A, 0x51, 0x81, 0xE7, 0x60,
+         0x5A, 0xE6, 0x75, 0x23, 0x5B, 0x6D, 0x54, 0x9F,
+         0xBF, 0xC9, 0xAB, 0x66, 0x30, 0xA4, 0xC6, 0x04,
+        },
+        {0xFA, 0x62, 0x4F, 0xA0, 0xE5, 0x23, 0x99, 0x3F,
+         0xA3, 0x88, 0xAE, 0xFD, 0xC6, 0x7E, 0x67, 0xEB,
+         0xCD, 0x8C, 0x08, 0xE8, 0xA0, 0x24, 0x6B, 0x1D,
+         0x73, 0xB0, 0xD1, 0xDD, 0x9F, 0xC5, 0x82, 0xB0,
+        },
+    };
+    static unsigned char iv[16] = { 0 };
+    unsigned char result[32] = { 0 };
+
+    for (i = 0; i < 3; i++) {
+        p = 0;
+        params[p++] = OSSL_PARAM_construct_utf8_string(
+            OSSL_KDF_PARAM_CIPHER, "CAMELLIA-256-CBC", 0);
+        params[p++] = OSSL_PARAM_construct_utf8_string(
+            OSSL_KDF_PARAM_MAC, "CMAC", 0);
+        params[p++] = OSSL_PARAM_construct_utf8_string(
+            OSSL_KDF_PARAM_MODE, "FEEDBACK", 0);
+        params[p++] = OSSL_PARAM_construct_octet_string(
+            OSSL_KDF_PARAM_KEY, input_key, sizeof(input_key));
+        params[p++] = OSSL_PARAM_construct_octet_string(
+            OSSL_KDF_PARAM_SALT, constants[i], sizeof(constants[i]));
+        params[p++] = OSSL_PARAM_construct_octet_string(
+            OSSL_KDF_PARAM_SEED, iv, sizeof(iv));
+        params[p] = OSSL_PARAM_construct_end();
+
+        kctx = get_kdfbyname("KBKDF");
+        ret = TEST_ptr(kctx)
+            && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+            && TEST_int_gt(EVP_KDF_derive(kctx, result, sizeof(result)), 0)
+            && TEST_mem_eq(result, sizeof(result), outputs[i],
+                           sizeof(outputs[i]));
+        EVP_KDF_CTX_free(kctx);
+        if (ret != 1)
+            return ret;
+    }
+
+    return ret;
+}
+
 /* Two test vectors from RFC 8009 (AES Encryption with HMAC-SHA2 for Kerberos
  * 5) appendix A. */
 static int test_kdf_kbkdf_8009_prf1(void)
@@ -607,8 +732,47 @@ static int test_kdf_x942_asn1(void)
 }
 #endif /* OPENSSL_NO_CMS */
 
+static int test_kdf_krb5kdf(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[4], *p = params;
+    unsigned char out[16];
+    static unsigned char key[] = {
+        0x42, 0x26, 0x3C, 0x6E, 0x89, 0xF4, 0xFC, 0x28,
+        0xB8, 0xDF, 0x68, 0xEE, 0x09, 0x79, 0x9F, 0x15
+    };
+    static unsigned char constant[] = {
+        0x00, 0x00, 0x00, 0x02, 0x99
+    };
+    static const unsigned char expected[sizeof(out)] = {
+        0x34, 0x28, 0x0A, 0x38, 0x2B, 0xC9, 0x27, 0x69,
+        0xB2, 0xDA, 0x2F, 0x9E, 0xF0, 0x66, 0x85, 0x4B
+    };
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+                                            (char *)"AES-128-CBC",
+                                            sizeof("AES-128-CBC"));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key,
+                                             sizeof(key));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_CONSTANT,
+                                             constant, sizeof(constant));
+    *p = OSSL_PARAM_construct_end();
+
+    ret =
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_KRB5KDF))
+        && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
+        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
+    ADD_TEST(test_kdf_kbkdf_6803_128);
+    ADD_TEST(test_kdf_kbkdf_6803_256);
     ADD_TEST(test_kdf_kbkdf_8009_prf1);
     ADD_TEST(test_kdf_kbkdf_8009_prf2);
     ADD_TEST(test_kdf_get_kdf);
@@ -626,5 +790,6 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_CMS
     ADD_TEST(test_kdf_x942_asn1);
 #endif
+    ADD_TEST(test_kdf_krb5kdf);
     return 1;
 }

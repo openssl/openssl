@@ -252,7 +252,7 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
     for (i = 0; i < num; i++) {
         CONF_VALUE *cnf = sk_CONF_VALUE_value(nval, i);
 
-        if (!name_cmp(cnf->name, "issuer")
+        if (!v3_name_cmp(cnf->name, "issuer")
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
             if (!copy_issuer(ctx, gens))
                 goto err;
@@ -331,11 +331,11 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!name_cmp(cnf->name, "email")
+        if (!v3_name_cmp(cnf->name, "email")
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
             if (!copy_email(ctx, gens, 0))
                 goto err;
-        } else if (!name_cmp(cnf->name, "email")
+        } else if (!v3_name_cmp(cnf->name, "email")
                    && cnf->value && strcmp(cnf->value, "move") == 0) {
             if (!copy_email(ctx, gens, 1))
                 goto err;
@@ -551,19 +551,19 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
         return NULL;
     }
 
-    if (!name_cmp(name, "email"))
+    if (!v3_name_cmp(name, "email"))
         type = GEN_EMAIL;
-    else if (!name_cmp(name, "URI"))
+    else if (!v3_name_cmp(name, "URI"))
         type = GEN_URI;
-    else if (!name_cmp(name, "DNS"))
+    else if (!v3_name_cmp(name, "DNS"))
         type = GEN_DNS;
-    else if (!name_cmp(name, "RID"))
+    else if (!v3_name_cmp(name, "RID"))
         type = GEN_RID;
-    else if (!name_cmp(name, "IP"))
+    else if (!v3_name_cmp(name, "IP"))
         type = GEN_IPADD;
-    else if (!name_cmp(name, "dirName"))
+    else if (!v3_name_cmp(name, "dirName"))
         type = GEN_DIRNAME;
-    else if (!name_cmp(name, "otherName"))
+    else if (!v3_name_cmp(name, "otherName"))
         type = GEN_OTHERNAME;
     else {
         X509V3err(X509V3_F_V2I_GENERAL_NAME_EX, X509V3_R_UNSUPPORTED_OPTION);

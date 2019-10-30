@@ -17,11 +17,15 @@ B<openssl> B<pkcs7>
 [B<-noout>]
 [B<-engine> I<id>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
-This command processes PKCS#7 files in DER or PEM format.
+This command processes PKCS#7 files.  Note that it only understands PKCS#7
+v 1.5 as specified in IETF RFC 2315.  It cannot currently parse CMS as
+described in IETF RFC 2630.
+
+There is no option to print out all the fields of a PKCS#7 file.
 
 =head1 OPTIONS
 
@@ -31,16 +35,12 @@ This command processes PKCS#7 files in DER or PEM format.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-This specifies the input format. B<DER> format is DER encoded PKCS#7
-v1.5 structure.B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines.
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
-=item B<-outform> B<DER>|B<PEM>
-
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+The data is a PKCS#7 Version 1.5 structure.
 
 =item B<-in> I<filename>
 
@@ -85,25 +85,6 @@ Convert a PKCS#7 file from PEM to DER:
 Output all certificates in a file:
 
  openssl pkcs7 -in file.pem -print_certs -out certs.pem
-
-=head1 NOTES
-
-The PEM PKCS#7 format uses the header and footer lines:
-
- -----BEGIN PKCS7-----
- -----END PKCS7-----
-
-For compatibility with some CAs it will also accept:
-
- -----BEGIN CERTIFICATE-----
- -----END CERTIFICATE-----
-
-=head1 RESTRICTIONS
-
-There is no option to print out all the fields of a PKCS#7 file.
-
-This PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC2315 they
-cannot currently parse, for example, the new CMS as described in RFC2630.
 
 =head1 SEE ALSO
 

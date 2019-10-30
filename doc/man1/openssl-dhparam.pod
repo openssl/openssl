@@ -25,7 +25,7 @@ B<openssl dhparam>
 [B<-engine> I<id>]
 [I<numbits>]
 
-=for comment ifdef dsaparam engine
+=for openssl ifdef dsaparam engine
 
 =head1 DESCRIPTION
 
@@ -39,17 +39,11 @@ This command is used to manipulate DH parameter files.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-This specifies the input format. The B<DER> option uses an ASN1 DER encoded
-form compatible with the PKCS#3 DHparameter structure. The PEM form is the
-default format: it consists of the B<DER> format base64 encoded with
-additional header and footer lines.
-
-=item B<-outform> B<DER>|B<PEM>
-
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+The input format and output format; the default is B<PEM>.
+The object is compatible with the PKCS#3 B<DHparameter> structure.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-in> I<filename>
 
@@ -86,17 +80,9 @@ input file is ignored and parameters are generated instead. If not
 present but I<numbits> is present, parameters are generated with the
 default generator 2.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item I<numbits>
 
@@ -137,11 +123,6 @@ The L<openssl-dh(1)> and L<openssl-gendh(1)> commands are retained for now but
 may have different purposes in future versions of OpenSSL.
 
 =head1 NOTES
-
-PEM format DH parameters use the header and footer lines:
-
- -----BEGIN DH PARAMETERS-----
- -----END DH PARAMETERS-----
 
 OpenSSL currently only supports the older PKCS#3 DH, not the newer X9.42
 DH.

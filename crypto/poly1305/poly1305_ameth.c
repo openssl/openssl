@@ -12,7 +12,6 @@
 #include <openssl/evp.h>
 #include "crypto/asn1.h"
 #include "crypto/poly1305.h"
-#include "poly1305_local.h"
 #include "crypto/evp.h"
 
 /*

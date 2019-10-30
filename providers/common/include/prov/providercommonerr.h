@@ -60,6 +60,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_FAILED_TO_SET_PARAMETER                   104
 # define PROV_R_INAVLID_UKM_LENGTH                        146
 # define PROV_R_INVALID_AAD                               108
+# define PROV_R_INVALID_CONSTANT_LENGTH                   157
 # define PROV_R_INVALID_CUSTOM_LENGTH                     111
 # define PROV_R_INVALID_DATA                              115
 # define PROV_R_INVALID_DIGEST                            122
@@ -73,9 +74,12 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_MODE                              125
 # define PROV_R_INVALID_MODE_INT                          126
 # define PROV_R_INVALID_SALT_LENGTH                       112
+# define PROV_R_INVALID_SEED_LENGTH                       154
 # define PROV_R_INVALID_TAG                               110
 # define PROV_R_INVALID_TAGLEN                            118
 # define PROV_R_MISSING_CEK_ALG                           144
+# define PROV_R_MISSING_CIPHER                            155
+# define PROV_R_MISSING_CONSTANT                          156
 # define PROV_R_MISSING_KEY                               128
 # define PROV_R_MISSING_MAC                               150
 # define PROV_R_MISSING_MESSAGE_DIGEST                    129

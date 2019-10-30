@@ -44,7 +44,7 @@ for further information.
 
 The MAC operation enables providers to implement mac algorithms and make
 them available to applications via the API functions L<EVP_MAC_init(3)>,
-L<EVP_MACM_update(3)> and L<EVP_MAC_final(3)>.
+L<EVP_MAC_update(3)> and L<EVP_MAC_final(3)>.
 
 All "functions" mentioned here are passed as function pointers between
 F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via

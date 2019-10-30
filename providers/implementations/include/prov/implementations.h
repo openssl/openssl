@@ -203,6 +203,13 @@ extern const OSSL_DISPATCH des_cfb8_functions[];
 extern const OSSL_DISPATCH rc440_functions[];
 extern const OSSL_DISPATCH rc4128_functions[];
 #endif /* OPENSSL_NO_RC4 */
+#ifndef OPENSSL_NO_CHACHA
+extern const OSSL_DISPATCH chacha20_functions[];
+# ifndef OPENSSL_NO_POLY1305
+extern const OSSL_DISPATCH chacha20_poly1305_functions[];
+# endif /* OPENSSL_NO_POLY1305 */
+#endif /* OPENSSL_NO_CHACHA */
+
 
 /* MACs */
 extern const OSSL_DISPATCH blake2bmac_functions[];
@@ -229,11 +236,13 @@ extern const OSSL_DISPATCH kdf_kbkdf_functions[];
 #ifndef OPENSSL_NO_CMS
 extern const OSSL_DISPATCH kdf_x942_kdf_functions[];
 #endif
+extern const OSSL_DISPATCH kdf_krb5kdf_functions[];
 
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
 extern const OSSL_DISPATCH dsa_keymgmt_functions[];
+extern const OSSL_DISPATCH rsa_keymgmt_functions[];
 
 /* Key Exchange */
 extern const OSSL_DISPATCH dh_keyexch_functions[];

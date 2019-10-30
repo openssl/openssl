@@ -9,8 +9,6 @@ BIO_get_retry_flags
 BIO_CB_return
 BIO_cb_pre
 BIO_cb_post
-BIO_set_app_data
-BIO_get_app_data
 BIO_set_conn_mode
 BIO_dup_state
 BIO_buffer_get_num_lines
@@ -138,8 +136,6 @@ PKCS7_type_is_digest
 PKCS7_set_detached
 PKCS7_get_detached
 PKCS7_is_detached
-RSA_set_app_data
-RSA_get_app_data
 STACK_OF
 SKM_DEFINE_STACK_OF
 U64
@@ -150,12 +146,6 @@ SSL_CTX_set_cert_flags
 SSL_set_cert_flags
 SSL_CTX_clear_cert_flags
 SSL_clear_cert_flags
-SSL_set_app_data
-SSL_get_app_data
-SSL_SESSION_set_app_data
-SSL_SESSION_get_app_data
-SSL_CTX_get_app_data
-SSL_CTX_set_app_data
 SSLeay_add_ssl_algorithms
 DTLSv1_get_timeout
 DTLSv1_handle_timeout
@@ -200,13 +190,9 @@ OSSL_TRACE5
 OSSL_TRACE6
 OSSL_TRACE7
 OSSL_TRACE8
-UI_set_app_data
-UI_get_app_data
 X509_extract_key
 X509_REQ_extract_key
 X509_name_cmp
-X509_STORE_CTX_set_app_data
-X509_STORE_CTX_get_app_data
 X509_LOOKUP_load_file
 X509_LOOKUP_add_dir
 X509V3_conf_err
@@ -214,3 +200,4 @@ X509V3_set_ctx_test
 X509V3_set_ctx_nodb
 EXT_BITSTRING
 EXT_IA5STRING
+TS_VERIFY_CTS_set_certs

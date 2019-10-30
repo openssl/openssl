@@ -411,6 +411,7 @@ struct do_all_data_st {
     void *user_arg;
     void *(*new_method)(const int name_id, const OSSL_DISPATCH *fns,
                         OSSL_PROVIDER *prov, void *method_data);
+    void *method_data;
     void (*free_method)(void *);
 };
 
@@ -425,7 +426,7 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
 
     if (name_id != 0)
         method = data->new_method(name_id, algo->implementation, provider,
-                                  NULL);
+                                  data->method_data);
 
     if (method != NULL) {
         data->user_fn(method, data->user_arg);
@@ -446,10 +447,11 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
     struct do_all_data_st data;
 
     data.new_method = new_method;
+    data.method_data = method_data;
     data.free_method = free_method;
     data.user_fn = user_fn;
     data.user_arg = user_arg;
-    ossl_algorithm_do_all(libctx, operation_id, method_data, do_one, &data);
+    ossl_algorithm_do_all(libctx, operation_id, NULL, do_one, &data);
 }
 
 const char *evp_first_name(OSSL_PROVIDER *prov, int name_id)
@@ -468,9 +470,9 @@ int evp_is_a(OSSL_PROVIDER *prov, int number, const char *name)
     return ossl_namemap_name2num(namemap, name) == number;
 }
 
-void evp_doall_names(OSSL_PROVIDER *prov, int number,
-                     void (*fn)(const char *name, void *data),
-                     void *data)
+void evp_names_do_all(OSSL_PROVIDER *prov, int number,
+                      void (*fn)(const char *name, void *data),
+                      void *data)
 {
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);

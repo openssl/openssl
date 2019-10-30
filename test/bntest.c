@@ -1634,6 +1634,30 @@ static int file_modsqrt(STANZA *s)
     return st;
 }
 
+static int file_gcd(STANZA *s)
+{
+    BIGNUM *a = NULL, *b = NULL, *gcd = NULL, *ret = NULL;
+    int st = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+            || !TEST_ptr(b = getBN(s, "B"))
+            || !TEST_ptr(gcd = getBN(s, "GCD"))
+            || !TEST_ptr(ret = BN_new()))
+        goto err;
+
+    if (!TEST_true(BN_gcd(ret, a, b, ctx))
+            || !equalBN("gcd(A,B)", gcd, ret))
+        goto err;
+
+    st = 1;
+ err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(gcd);
+    BN_free(ret);
+    return st;
+}
+
 static int test_bn2padded(void)
 {
 #if HAVE_BN_PADDED
@@ -2312,7 +2336,7 @@ static int test_is_prime(int i)
 
     for (trial = 0; trial <= 1; ++trial) {
         if (!TEST_true(BN_set_word(r, primes[i]))
-                || !TEST_int_eq(BN_is_prime_fasttest_ex(r, 1, ctx, trial, NULL),
+                || !TEST_int_eq(BN_check_prime(r, ctx, NULL),
                                 1))
             goto err;
     }
@@ -2336,7 +2360,7 @@ static int test_not_prime(int i)
 
     for (trial = 0; trial <= 1; ++trial) {
         if (!TEST_true(BN_set_word(r, not_primes[i]))
-                || !TEST_false(BN_is_prime_fasttest_ex(r, 1, ctx, trial, NULL)))
+                || !TEST_false(BN_check_prime(r, ctx, NULL)))
             goto err;
     }
 
@@ -2432,6 +2456,34 @@ static int test_ctx_consttime_flag(void)
     return st;
 }
 
+static int test_gcd_prime(void)
+{
+    BIGNUM *a = NULL, *b = NULL, *gcd = NULL;
+    int i, st = 0;
+
+    if (!TEST_ptr(a = BN_new())
+            || !TEST_ptr(b = BN_new())
+            || !TEST_ptr(gcd = BN_new()))
+        goto err;
+
+    if (!TEST_true(BN_generate_prime_ex(a, 1024, 0, NULL, NULL, NULL)))
+            goto err;
+    for (i = 0; i < NUM0; i++) {
+        if (!TEST_true(BN_generate_prime_ex(b, 1024, 0,
+                                            NULL, NULL, NULL))
+                || !TEST_true(BN_gcd(gcd, a, b, ctx))
+                || !TEST_true(BN_is_one(gcd)))
+            goto err;
+    }
+
+    st = 1;
+ err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(gcd);
+    return st;
+}
+
 static int file_test_run(STANZA *s)
 {
     static const FILETEST filetests[] = {
@@ -2446,6 +2498,7 @@ static int file_test_run(STANZA *s)
         {"ModExp", file_modexp},
         {"Exp", file_exp},
         {"ModSqrt", file_modsqrt},
+        {"GCD", file_gcd},
     };
     int numtests = OSSL_NELEM(filetests);
     const FILETEST *tp = filetests;
@@ -2567,6 +2620,7 @@ int setup_tests(void)
 #endif
         ADD_ALL_TESTS(test_is_prime, (int)OSSL_NELEM(primes));
         ADD_ALL_TESTS(test_not_prime, (int)OSSL_NELEM(not_primes));
+        ADD_TEST(test_gcd_prime);
         if (stochastic)
             ADD_TEST(test_rand_range);
     } else {

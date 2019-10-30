@@ -52,10 +52,14 @@ $COMMON=cbc128.c ctr128.c cfb128.c ofb128.c gcm128.c ccm128.c xts128.c \
         wrap128.c $MODESASM
 SOURCE[../../libcrypto]=$COMMON \
         cts128.c ocb128.c siv128.c
-
-DEFINE[../../libcrypto]=$MODESDEF
 SOURCE[../../providers/libfips.a]=$COMMON
+
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
+DEFINE[../../libcrypto]=$MODESDEF
 DEFINE[../../providers/libfips.a]=$MODESDEF
+DEFINE[../../providers/libimplementations.a]=$MODESDEF
+
 
 INCLUDE[gcm128.o]=..
 

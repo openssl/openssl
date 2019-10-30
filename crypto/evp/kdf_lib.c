@@ -83,9 +83,14 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
     return dst;
 }
 
-const char *EVP_KDF_name(const EVP_KDF *kdf)
+int EVP_KDF_number(const EVP_KDF *kdf)
 {
-    return evp_first_name(kdf->prov, kdf->name_id);
+    return kdf->name_id;
+}
+
+int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name)
+{
+    return evp_is_a(kdf->prov, kdf->name_id, name);
 }
 
 const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf)
@@ -158,4 +163,12 @@ int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[])
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->data, params);
     return 1;
+}
+
+void EVP_KDF_names_do_all(const EVP_KDF *kdf,
+                          void (*fn)(const char *name, void *data),
+                          void *data)
+{
+    if (kdf->prov != NULL)
+        evp_names_do_all(kdf->prov, kdf->name_id, fn, data);
 }

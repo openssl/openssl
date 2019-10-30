@@ -200,3 +200,30 @@ const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt)
     return keymgmt->prov;
 }
 
+int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->name_id;
+}
+
+int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name)
+{
+    return evp_is_a(keymgmt->prov, keymgmt->name_id, name);
+}
+
+void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
+                                 void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
+                                 void *arg)
+{
+    evp_generic_do_all(libctx, OSSL_OP_KEYMGMT,
+                       (void (*)(void *, void *))fn, arg,
+                       keymgmt_from_dispatch, NULL,
+                       (void (*)(void *))EVP_KEYMGMT_free);
+}
+
+void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
+                              void (*fn)(const char *name, void *data),
+                              void *data)
+{
+    if (keymgmt->prov != NULL)
+        evp_names_do_all(keymgmt->prov, keymgmt->name_id, fn, data);
+}

@@ -1,4 +1,6 @@
 /*
+ * {- join("\n * ", @autowarntext) -}
+ *
  * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -29,9 +31,9 @@ extern "C" {
  *
  * These macros express version number MAJOR.MINOR.PATCH exactly
  */
-# define OPENSSL_VERSION_MAJOR  3
-# define OPENSSL_VERSION_MINOR  0
-# define OPENSSL_VERSION_PATCH  0
+# define OPENSSL_VERSION_MAJOR  {- $config{major} -}
+# define OPENSSL_VERSION_MINOR  {- $config{minor} -}
+# define OPENSSL_VERSION_PATCH  {- $config{patch} -}
 
 /*
  * Additional version information, defined only when used.
@@ -41,10 +43,24 @@ extern "C" {
  */
 
 /* Could be: #define OPENSSL_VERSION_PRE_RELEASE "-alpha.1" */
-# define OPENSSL_VERSION_PRE_RELEASE "-dev"
+{- $config{prerelease}
+    ? << "_____"
+# define OPENSSL_VERSION_PRE_RELEASE "$config{prerelease}"
+_____
+    : << "_____"
+# undef OPENSSL_VERSION_PRE_RELEASE
+_____
+-}
 /* Could be: #define OPENSSL_VERSION_BUILD_METADATA "+fips" */
 /* Could be: #define OPENSSL_VERSION_BUILD_METADATA "+vendor.1" */
+{- $build_metadata
+    ? << "_____"
+# define OPENSSL_VERSION_BUILD_METADATA "{- $config{build_metadata} -}"
+_____
+    : << "_____"
 # undef OPENSSL_VERSION_BUILD_METADATA
+_____
+-}
 
 /*
  * Note: OPENSSL_VERSION_BUILD_METADATA will never be defined by
@@ -76,7 +92,7 @@ extern "C" {
  * be related to the API version expressed with the macros above.
  * This is defined in free form.
  */
-# define OPENSSL_SHLIB_VERSION 3
+# define OPENSSL_SHLIB_VERSION {- $config{shlib_version} -}
 
 /*
  * SECTION 2: USEFUL MACROS AND FUNCTIONS
@@ -86,21 +102,6 @@ extern "C" {
 # define OPENSSL_VERSION_PREREQ(maj,min)                                \
     ((OPENSSL_VERSION_MAJOR << 16) + OPENSSL_VERSION_MINOR >= ((maj) << 16) + (min))
 
-/* Helper macros for CPP string composition */
-#   define OPENSSL_MSTR_HELPER(x) #x
-#   define OPENSSL_MSTR(x) OPENSSL_MSTR_HELPER(x)
-
-/*
- * These return the values of OPENSSL_VERSION_MAJOR, OPENSSL_VERSION_MINOR,
- * OPENSSL_VERSION_PATCH, OPENSSL_VERSION_PRE_RELEASE and
- * OPENSSL_VERSION_BUILD_METADATA, respectively.
- */
-unsigned int OPENSSL_version_major(void);
-unsigned int OPENSSL_version_minor(void);
-unsigned int OPENSSL_version_patch(void);
-const char *OPENSSL_version_pre_release(void);
-const char *OPENSSL_version_build_metadata(void);
-
 /*
  * Macros to get the version in easily digested string form, both the short
  * "MAJOR.MINOR.PATCH" variant (where MAJOR, MINOR and PATCH are replaced
@@ -108,21 +109,16 @@ const char *OPENSSL_version_build_metadata(void);
  * longer variant with OPENSSL_VERSION_PRE_RELEASE_STR and
  * OPENSSL_VERSION_BUILD_METADATA_STR appended.
  */
-# define OPENSSL_VERSION_STR                    \
-    OPENSSL_MSTR(OPENSSL_VERSION_MAJOR) "."     \
-    OPENSSL_MSTR(OPENSSL_VERSION_MINOR) "."     \
-    OPENSSL_MSTR(OPENSSL_VERSION_PATCH)
-# define OPENSSL_FULL_VERSION_STR               \
-    OPENSSL_VERSION_STR                         \
-    OPENSSL_VERSION_PRE_RELEASE_STR             \
-    OPENSSL_VERSION_BUILD_METADATA_STR
+# define OPENSSL_VERSION_STR "{- $config{version} -}"
+# define OPENSSL_FULL_VERSION_STR "{- $config{full_version} -}"
 
 /*
  * SECTION 3: ADDITIONAL METADATA
+ *
+ * These strings are defined separately to allow them to be parsable.
  */
-# define OPENSSL_RELEASE_DATE "xx XXX xxxx"
-# define OPENSSL_VERSION_TEXT                                           \
-    "OpenSSL " OPENSSL_FULL_VERSION_STR " " OPENSSL_RELEASE_DATE
+# define OPENSSL_RELEASE_DATE "{- $config{release_date} -}"
+# define OPENSSL_VERSION_TEXT "OpenSSL {- "$config{full_version} $config{release_date}" -}"
 
 /*
  * SECTION 4: BACKWARD COMPATIBILITY

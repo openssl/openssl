@@ -675,8 +675,12 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
                                                      p2, p1 ? p1 : 9999);
         break;
+    case EVP_CTRL_SSL3_MASTER_SECRET:
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
+                                                      p2, p1);
+        break;
     default:
-        return EVP_CTRL_RET_UNSUPPORTED;
+        goto conclude;
     }
 
     if (set_params)
@@ -756,7 +760,7 @@ static void *evp_md_from_dispatch(int name_id,
 #ifndef FIPS_MODE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     md->type = NID_undef;
-    evp_doall_names(prov, name_id, set_legacy_nid, &md->type);
+    evp_names_do_all(prov, name_id, set_legacy_nid, &md->type);
     if (md->type == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         EVP_MD_free(md);
@@ -898,9 +902,9 @@ void EVP_MD_free(EVP_MD *md)
     OPENSSL_free(md);
 }
 
-void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
-                          void (*fn)(EVP_MD *mac, void *arg),
-                          void *arg)
+void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
+                            void (*fn)(EVP_MD *mac, void *arg),
+                            void *arg)
 {
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
                        (void (*)(void *, void *))fn, arg,

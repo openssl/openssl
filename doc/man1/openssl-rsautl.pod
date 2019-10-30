@@ -26,7 +26,7 @@ B<openssl> B<rsautl>
 [B<-hexdump>]
 [B<-asn1parse>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -57,7 +57,8 @@ The input key file, by default it should be an RSA private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
-The key format PEM, DER or ENGINE.
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-pubin>
 
@@ -84,17 +85,9 @@ Encrypt the input data using an RSA public key.
 
 Decrypt the input data using an RSA private key.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-pkcs>, B<-oaep>, B<-ssl>, B<-raw>
 

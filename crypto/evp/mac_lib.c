@@ -157,3 +157,21 @@ int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
         return ctx->meth->set_ctx_params(ctx->data, params);
     return 1;
 }
+
+int EVP_MAC_number(const EVP_MAC *mac)
+{
+    return mac->name_id;
+}
+
+int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)
+{
+    return evp_is_a(mac->prov, mac->name_id, name);
+}
+
+void EVP_MAC_names_do_all(const EVP_MAC *mac,
+                          void (*fn)(const char *name, void *data),
+                          void *data)
+{
+    if (mac->prov != NULL)
+        evp_names_do_all(mac->prov, mac->name_id, fn, data);
+}

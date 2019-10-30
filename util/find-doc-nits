@@ -10,6 +10,7 @@
 require 5.10.0;
 use warnings;
 use strict;
+
 use Pod::Checker;
 use File::Find;
 use File::Basename;
@@ -18,7 +19,8 @@ use Getopt::Std;
 use lib catdir(dirname($0), "perl");
 use OpenSSL::Util::Pod;
 
-my $debug = 0;                  # Set to 1 for debug output
+# Set to 1 for debug output
+my $debug = 0;
 
 # Options.
 our($opt_d);
@@ -71,12 +73,14 @@ my $OUT;
 my %public;
 my $status = 0;
 
-my %mandatory_sections =
-    ( '*'    => [ 'NAME', 'DESCRIPTION', 'COPYRIGHT' ],
-      1      => [ 'SYNOPSIS', 'OPTIONS' ],
-      3      => [ 'SYNOPSIS', 'RETURN VALUES' ],
-      5      => [ ],
-      7      => [ ] );
+my %mandatory_sections = (
+    '*' => [ 'NAME', 'DESCRIPTION', 'COPYRIGHT' ],
+    1   => [ 'SYNOPSIS', 'OPTIONS' ],
+    3   => [ 'SYNOPSIS', 'RETURN VALUES' ],
+    5   => [ ],
+    7   => [ ]
+);
+
 
 # Print error message, set $status.
 sub err {
@@ -116,10 +120,9 @@ sub name_synopsis {
         $names{$n} = 1;
         $foundfilename++ if $n eq $simplename;
         $foundfilenames{$n} = 1
-            if ((-f "$dirname/$n.pod.in" || -f "$dirname/$n.pod")
-                && $n ne $simplename);
+            if -f "$dirname/$n.pod" && $n ne $simplename;
     }
-    err($id, "the following exist as other .pod or .pod.in files:",
+    err($id, "the following exist as other .pod files:",
          sort keys %foundfilenames)
         if %foundfilenames;
     err($id, "$simplename (filename) missing from NAME section")
@@ -256,10 +259,9 @@ my $option_re =
 
 # Helper function to check if a given $thing is properly marked up
 # option.  It returns one of these values:
-#
-# undef         if it's not an option
-# ""            if it's a malformed option
-# $unwrapped    the option with the outermost B<> wrapping removed.
+#     undef         if it's not an option
+#     ""            if it's a malformed option
+#     $unwrapped    the option with the outermost B<> wrapping removed.
 sub normalise_option {
     my $id = shift;
     my $filename = shift;
@@ -342,7 +344,6 @@ my $symbol_re = qr/[[:alpha:]_][_[:alnum:]]*?/;
 # Checks of function name (man3) formatting.  The man3 checks are
 # easier than the man1 checks, we only check the names followed by (),
 # and only the names that have POD markup.
-
 sub functionname_check {
     my $id = shift;
     my $filename = shift;
@@ -407,6 +408,7 @@ my %preferred_words = (
     'zeroes'        => 'zeros'
 );
 
+# Search manpage for words that have a different preferred use.
 sub wording {
     my $id = shift;
     my $contents = shift;
@@ -422,6 +424,7 @@ sub wording {
         if $contents =~ /\bepoch\b/;
 }
 
+# Perform all sorts of nit/error checks on a manpage
 sub check {
     my $filename = shift;
     my $dirname = basename(dirname($filename));
@@ -515,15 +518,13 @@ sub check {
     my $section = 3;
     $section = $1 if $dirname =~ /man([1-9])/;
 
-    foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
-        # Skip "return values" if not -s
+    foreach ( (@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}}) ) {
         err($id, "missing $_ head1 section")
             if $contents !~ /^=head1\s+${_}\s*$/m;
     }
 }
 
-my %dups;
-
+# Parse libcrypto.num, etc., and return sorted list of what's there.
 sub parsenum {
     my $file = shift;
     my @apis;
@@ -545,12 +546,15 @@ sub parsenum {
     return sort @apis;
 }
 
+# Parse all the manpages, getting return map of what they document
+# (by looking at their NAME sections).
 sub getdocced
 {
     my $dir = shift;
     my %return;
+    my %dups;
 
-    foreach my $pod ( glob("$dir/*.pod"), glob("$dir/*.pod.in") ) {
+    foreach my $pod ( glob("$dir/*.pod") ) {
         my %podinfo = extract_pod_info($pod);
         foreach my $n ( @{$podinfo{names}} ) {
             $return{$n} = $pod;
@@ -563,8 +567,14 @@ sub getdocced
     return %return;
 }
 
+# Map of documented functions; function => manpage
 my %docced;
+# Map of links in each POD file; filename => [ "foo(1)", "bar(3)", ... ]
+my %link_map = ();
+# Map of names in each POD file; "name(s)" => filename
+my %name_map = ();
 
+# Load file of symbol names that we know aren't documented.
 sub loadmissing($)
 {
     my $missingfile = shift;
@@ -582,14 +592,16 @@ sub loadmissing($)
     return @missing;
 }
 
+# Check for undocumented macros; ignore those in the "missing" file
+# and do simple check for #define in our header files.
 sub checkmacros {
     my $count = 0;
     my %seen;
     my @missing;
 
-    if ($opt_o) {
+    if ( $opt_o ) {
         @missing = loadmissing('util/missingmacro111.txt');
-    } elsif ($opt_v) {
+    } elsif ( $opt_v ) {
         @missing = loadmissing('util/missingmacro.txt');
     }
 
@@ -623,6 +635,8 @@ sub checkmacros {
         if $count > 0;
 }
 
+# Find out what is undocumented (filtering out the known missing ones)
+# and display them.
 sub printem {
     my $libname = shift;
     my $numfile = shift;
@@ -630,7 +644,7 @@ sub printem {
     my $count = 0;
     my %seen;
 
-    my @missing = loadmissing($missingfile) if ($opt_v);
+    my @missing = loadmissing($missingfile) if ( $opt_v );
 
     foreach my $func ( parsenum($numfile) ) {
         next if $docced{$func} || defined $seen{$func};
@@ -650,19 +664,12 @@ sub printem {
         if $count > 0;
 }
 
-
-# Collection of links in each POD file.
-# filename => [ "foo(1)", "bar(3)", ... ]
-my %link_collection = ();
-# Collection of names in each POD file.
-# "name(s)" => filename
-my %name_collection = ();
-
+# Collect all the names in a manpage.
 sub collectnames {
     my $filename = shift;
     $filename =~ m|man(\d)/|;
     my $section = $1;
-    my $simplename = basename(basename($filename, ".in"), ".pod");
+    my $simplename = basename($filename, ".pod");
     my $id = "${filename}:1:";
 
     my $contents = '';
@@ -675,7 +682,7 @@ sub collectnames {
 
     $contents =~ /=head1 NAME([^=]*)=head1 /ms;
     my $tmp = $1;
-    unless (defined $tmp) {
+    unless ( defined $tmp ) {
         err($id, "weird name section");
         return;
     }
@@ -686,32 +693,32 @@ sub collectnames {
         map { s|/|-|g; $_ }              # Treat slash as dash
         map { s/^\s+//g; s/\s+$//g; $_ } # Trim prefix and suffix blanks
         split(/,/, $tmp);
-    unless (grep { $simplename eq $_ } @names) {
+    unless ( grep { $simplename eq $_ } @names ) {
         err($id, "missing $simplename");
         push @names, $simplename;
     }
     foreach my $name (@names) {
         next if $name eq "";
-        if ($name =~ /\s/) {
+        if ( $name =~ /\s/ ) {
             err($id, "'$name' contains white space")
         }
         my $name_sec = "$name($section)";
-        if (! exists $name_collection{$name_sec}) {
-            $name_collection{$name_sec} = $filename;
-        } elsif ($filename eq $name_collection{$name_sec}) {
+        if ( !exists $name_map{$name_sec} ) {
+            $name_map{$name_sec} = $filename;
+        } elsif ( $filename eq $name_map{$name_sec} ) {
             err($id, "$name_sec repeated in NAME section of",
-                 $name_collection{$name_sec});
+                 $name_map{$name_sec});
         } else {
             err($id, "$name_sec also in NAME section of",
-                 $name_collection{$name_sec});
+                 $name_map{$name_sec});
         }
     }
 
     my @foreign_names =
         map { map { s/\s+//g; $_ } split(/,/, $_) }
         $contents =~ /=for\s+comment\s+foreign\s+manuals:\s*(.*)\n\n/;
-    foreach (@foreign_names) {
-        $name_collection{$_} = undef; # It still exists!
+    foreach ( @foreign_names ) {
+        $name_map{$_} = undef; # It still exists!
     }
 
     my @links = $contents =~ /L<
@@ -723,14 +730,15 @@ sub collectnames {
                               # a one digit section number
                               ([^\/>\(]+\(\d\))
                              /gx;
-    $link_collection{$filename} = [ @links ];
+    $link_map{$filename} = [ @links ];
 }
 
+# Look for L<> ("link") references that point to files that do not exist.
 sub checklinks {
-    foreach my $filename (sort keys %link_collection) {
-        foreach my $link (@{$link_collection{$filename}}) {
+    foreach my $filename (sort keys %link_map) {
+        foreach my $link (@{$link_map{$filename}}) {
             err("${filename}:1:", "reference to non-existing $link")
-                unless exists $name_collection{$link};
+                unless exists $name_map{$link};
         }
     }
 }
@@ -748,7 +756,8 @@ sub publicize {
     }
 }
 
-# Cipher/digests to skip if not documented
+# Cipher/digests to skip if they show up as "not implemented"
+# because they are, via the "-*" construct.
 my %skips = (
     'aes128' => 1,
     'aes192' => 1,
@@ -766,6 +775,7 @@ my %skips = (
     'digest' => 1,
 );
 
+# Check the flags of a command and see if everything is in the manpage
 sub checkflags {
     my $cmd = shift;
     my $doc = shift;
@@ -789,7 +799,7 @@ sub checkflags {
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
-        if ( /=for comment ifdef (.*)/ ) {
+        if ( /=for openssl ifdef (.*)/ ) {
             foreach my $f ( split / /, $1 ) {
                 $localskips{$f} = 1;
             }
@@ -803,29 +813,26 @@ sub checkflags {
     close CFH;
 
     # See what's in the command not the manpage.
-    my @undocced = ();
-    foreach my $k ( keys %cmdopts ) {
-        push @undocced, $k unless $docopts{$k};
-    }
-    if ( scalar @undocced > 0 ) {
-        foreach ( @undocced ) {
-            next if /-/; # Skip the -- end-of-flags marker
-            err("$doc: undocumented option -$_");
-        }
+    my @undocced = sort grep { !defined $docopts{$_} } keys %cmdopts;
+    foreach ( @undocced ) {
+        next if /-/; # Skip the -- end-of-flags marker
+        err("$doc: undocumented option -$_");
     }
 
     # See what's in the command not the manpage.
-    my @unimpl = ();
-    foreach my $k ( keys %docopts ) {
-        push @unimpl, $k unless $cmdopts{$k};
-    }
-    if ( scalar @unimpl > 0 ) {
-        foreach ( @unimpl ) {
-            next if defined $skips{$_} || defined $localskips{$_};
-            err("$cmd documented but not implemented -$_");
-        }
+    my @unimpl = sort grep { !defined $cmdopts{$_} } keys %docopts;
+    foreach ( @unimpl ) {
+        next if defined $skips{$_} || defined $localskips{$_};
+        err("$cmd documented but not implemented -$_");
     }
 }
+
+##
+##  MAIN()
+##  Do the work requested by the various getopt flags.
+##  The flags are parsed in alphabetical order, just because we have
+##  to have *some way* of listing them.
+##
 
 if ( $opt_c ) {
     my @commands = ();
@@ -865,8 +872,7 @@ if ( $opt_c ) {
 }
 
 if ( $opt_l ) {
-    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'), glob('doc/*/*.pod.in'),
-                              glob('doc/internal/*/*.pod'))) {
+    foreach ( glob('doc/*/*.pod doc/internal/*/*.pod') ) {
         collectnames($_);
     }
     checklinks();
@@ -874,10 +880,7 @@ if ( $opt_l ) {
 
 if ( $opt_n ) {
     publicize();
-    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'), glob('doc/*/*.pod.in'))) {
-        check($_);
-    }
-    foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
+    foreach ( @ARGV ? @ARGV : glob('doc/*/*.pod doc/internal/*/*.pod') ) {
         check($_);
     }
 
@@ -895,7 +898,7 @@ if ( $opt_u || $opt_v) {
     foreach ( keys %temp ) {
         $docced{$_} = $temp{$_};
     }
-    if ($opt_o) {
+    if ( $opt_o ) {
         printem('crypto', 'util/libcrypto.num', 'util/missingcrypto111.txt');
         printem('ssl', 'util/libssl.num', 'util/missingssl111.txt');
     } else {

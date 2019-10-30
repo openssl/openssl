@@ -18,7 +18,11 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 SOURCE[../../libcrypto]=wp_dgst.c $WPASM
+
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$WPDEF
+DEFINE[../../providers/libimplementations.a]=$WPDEF
 
 GENERATE[wp-mmx.s]=asm/wp-mmx.pl
 DEPEND[wp-mmx.s]=../perlasm/x86asm.pl

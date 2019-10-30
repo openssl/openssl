@@ -25,10 +25,11 @@ B<openssl> B<cms>
 [B<-sign_receipt>]
 [B<-verify_receipt> I<receipt>]
 [B<-in> I<filename>]
-[B<-inform> B<DER>|B<PEM>|B<SMIME>]
-[B<-rctform> B<DER>|B<PEM>|B<SMIME>]
 [B<-out> I<filename>]
+[B<-inform> B<DER>|B<PEM>|B<SMIME>]
 [B<-outform> B<DER>|B<PEM>|B<SMIME>]
+[B<-rctform> B<DER>|B<PEM>|B<SMIME>]
+[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-stream>]
 [B<-indef>]
 [B<-noindef>]
@@ -103,7 +104,7 @@ B<openssl> B<cms>
 [B<-subject> I<subj>]
 [I<cert.pem> ...]
 
-=for comment ifdef des-wrap engine
+=for openssl ifdef des-wrap engine
 
 =head1 DESCRIPTION
 
@@ -216,33 +217,33 @@ to the B<-verify> operation.
 The input message to be encrypted or signed or the message to be decrypted
 or verified.
 
-=item B<-inform> B<DER>|B<PEM>|B<SMIME>
-
-This specifies the input format for the CMS structure. The default
-is B<SMIME> which reads an S/MIME format message. B<PEM> and B<DER>
-format change this to expect PEM and DER format CMS structures
-instead. This currently only affects the input format of the CMS
-structure, if no CMS structure is being input (for example with
-B<-encrypt> or B<-sign>) this option has no effect.
-
-=item B<-rctform> B<DER>|B<PEM>|B<SMIME>
-
-Specify the format for a signed receipt for use with the B<-receipt_verify>
-operation.
-
 =item B<-out> I<filename>
 
 The message text that has been decrypted or verified or the output MIME
 format message that has been signed or verified.
 
+=item B<-inform> B<DER>|B<PEM>|B<SMIME>
+
+The input format of the CMS structure (if one is being read);
+the default is B<SMIME>.
+See L<openssl(1)/Format Options> for details.
+
 =item B<-outform> B<DER>|B<PEM>|B<SMIME>
 
-This specifies the output format for the CMS structure. The default
-is B<SMIME> which writes an S/MIME format message. B<PEM> and B<DER>
-format change this to write PEM and DER format CMS structures
-instead. This currently only affects the output format of the CMS
-structure, if no CMS structure is being output (for example with
-B<-verify> or B<-decrypt>) this option has no effect.
+The output format of the CMS structure (if one is being written);
+the default is B<SMIME>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+
+The format of the private key file; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-rctform> B<DER>|B<PEM>|B<SMIME>
+
+The signed receipt format for use with the B<-receipt_verify>; the default
+is B<SMIME>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-stream>, B<-indef>, B<-noindef>
 
@@ -285,24 +286,9 @@ structure is being checked.
 For the B<-cmsout> operation print out all fields of the CMS structure. This
 is mainly useful for testing purposes.
 
-=item B<-CAfile> I<file>
+=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
 
-A file containing trusted CA certificates, only used with B<-verify>.
-
-=item B<-CApath> I<dir>
-
-A directory containing trusted CA certificates, only used with
-B<-verify>. This directory must be a standard certificate directory: that
-is a hash of each subject name (using C<x509 -hash>) should be linked
-to each certificate.
-
-=item B<-no-CAfile>
-
-Do not load the trusted CA certificates from the default file location
-
-=item B<-no-CApath>
-
-Do not load the trusted CA certificates from the default directory location
+See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-md> I<digest>
 
@@ -476,17 +462,9 @@ or to modify default parameters for ECDH.
 The private key password source. For more information about the format of B<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item I<cert.pem> ...
 

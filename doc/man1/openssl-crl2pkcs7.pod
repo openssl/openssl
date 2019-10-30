@@ -31,15 +31,13 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>
 
-This specifies the CRL input format. B<DER> format is DER encoded CRL
-structure.B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines. The default format is PEM.
+The input format of the CRL; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-outform> B<DER>|B<PEM>
 
-This specifies the PKCS#7 structure output format. B<DER> format is DER
-encoded PKCS#7 structure.B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines. The default format is PEM.
+The output format of the PKCS#7 object; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-in> I<filename>
 

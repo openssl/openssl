@@ -27,7 +27,7 @@ B<openssl> B<gendsa>
 [B<-verbose>]
 [I<paramfile>]
 
-=for comment ifdef engine
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -53,17 +53,9 @@ These options encrypt the private key with specified
 cipher before outputting it. A pass phrase is prompted for.
 If none of these options is specified no encryption is used.
 
-=item B<-rand> I<files>
+=item B<-rand> I<files>, B<-writerand> I<file>
 
-The files containing random data used to seed the random number generator.
-Multiple files can be specified separated by an OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
-
-=item B<-writerand> I<file>
-
-Writes random data to the specified I<file> upon exit.
-This can be used with a subsequent B<-rand> flag.
+See L<openssl(1)/Random State Options> for more information.
 
 =item B<-engine> I<id>
 

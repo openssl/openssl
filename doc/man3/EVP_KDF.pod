@@ -2,11 +2,12 @@
 
 =head1 NAME
 
-EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_provider, EVP_KDF_up_ref,
-EVP_KDF_name,
-EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_kdf,
-EVP_KDF_reset, EVP_KDF_size, EVP_KDF_derive, EVP_KDF_CTX_dup,
-EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_ex,
+EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
+EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
+EVP_KDF_reset, EVP_KDF_derive,
+EVP_KDF_size, EVP_KDF_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
+EVP_KDF_number, EVP_KDF_names_do_all,
+EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_provided,
 EVP_KDF_get_params, EVP_KDF_gettable_ctx_params, EVP_KDF_settable_ctx_params,
 EVP_KDF_gettable_params - EVP KDF routines
 
@@ -24,14 +25,19 @@ EVP_KDF_gettable_params - EVP KDF routines
  void EVP_KDF_reset(EVP_KDF_CTX *ctx);
  size_t EVP_KDF_size(EVP_KDF_CTX *ctx);
  int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
- const char *EVP_KDF_name(const EVP_KDF *kdf);
  int EVP_KDF_up_ref(EVP_KDF *kdf);
  void EVP_KDF_free(EVP_KDF *kdf);
  EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                         const char *properties);
- void EVP_KDF_do_all_ex(OPENSSL_CTX *libctx,
-                        void (*fn)(EVP_KDF *kdf, void *arg),
-                        void *arg);
+ int EVP_KDF_number(const EVP_KDF *kdf);
+ int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
+ const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
+ void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+                              void (*fn)(EVP_KDF *kdf, void *arg),
+                              void *arg);
+ void EVP_KDF_names_do_all(const EVP_KDF *kdf,
+                           void (*fn)(const char *name, void *data),
+                           void *data);
  int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
  int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
  int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
@@ -75,7 +81,7 @@ NULL is a valid parameter, for which this function is a no-op.
 
 EVP_KDF_CTX_new() creates a new context for the KDF implementation I<kdf>.
 
-EVP_KDF_CTX_free() frees up the context C<ctx>.  If I<ctx> is NULL, nothing
+EVP_KDF_CTX_free() frees up the context I<ctx>.  If I<ctx> is NULL, nothing
 is done.
 
 EVP_KDF_CTX_kdf() returns the B<EVP_KDF> associated with the context
@@ -86,9 +92,9 @@ I<ctx>.
 EVP_KDF_reset() resets the context to the default state as if the context
 had just been created.
 
-EVP_KDF_derive() derives C<keylen> bytes of key material and places it in the
+EVP_KDF_derive() derives I<keylen> bytes of key material and places it in the
 I<key> buffer.  If the algorithm produces a fixed amount of output then an
-error will occur unless the C<keylen> parameter is equal to that output size,
+error will occur unless the I<keylen> parameter is equal to that output size,
 as returned by EVP_KDF_size().
 
 EVP_KDF_get_params() retrieves details about the implementation
@@ -128,15 +134,22 @@ of output and B<SIZE_MAX> otherwise.  If an error occurs then 0 is returned.
 For some algorithms an error may result if input parameters necessary to
 calculate a fixed output size have not yet been supplied.
 
-EVP_KDF_name() returns the name of the given KDF implementation.
+EVP_KDF_is_a() returns 1 if I<kdf> is an implementation of an
+algorithm that's identifiable with I<name>, otherwise 0.
 
 EVP_KDF_provider() returns the provider that holds the implementation
 of the given I<kdf>.
 
-EVP_KDF_do_all_ex() traverses all KDF implemented by all activated
+EVP_KDF_do_all_provided() traverses all KDF implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
+
+EVP_KDF_number() returns the internal dynamic number assigned to
+I<kdf>.
+
+EVP_KDF_names_do_all() traverses all names for I<kdf>, and calls
+I<fn> with each name and I<data>.
 
 =head1 PARAMETERS
 
@@ -170,8 +183,10 @@ The default value, if any, is implementation dependent.
 
 =item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
-For KDF implementations that use an underlying computation MAC or
-digest, these parameters set what the algorithm should be.
+=item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
+
+For KDF implementations that use an underlying computation MAC, digest or
+cipher, these parameters set what the algorithm should be.
 
 The value is always the name of the intended algorithm,
 or the properties.
@@ -211,23 +226,20 @@ The memory size must never exceed what can be given with a B<size_t>.
 
 =head1 RETURN VALUES
 
-EVP_MAC_fetch() returns a pointer to a newly fetched B<EVP_KDF>, or
+EVP_KDF_fetch() returns a pointer to a newly fetched B<EVP_KDF>, or
 NULL if allocation failed.
-
-EVP_KDF_name() returns the name for the given I<kdf>, if it has been
-added to the object database.
 
 EVP_KDF_provider() returns a pointer to the provider for the KDF, or
 NULL on error.
 
-EVP_MAC_up_ref() returns 1 on success, 0 on error.
+EVP_KDF_up_ref() returns 1 on success, 0 on error.
 
 EVP_KDF_CTX_new() returns either the newly allocated
-C<EVP_KDF_CTX> structure or C<NULL> if an error occurred.
+B<EVP_KDF_CTX> structure or NULL if an error occurred.
 
 EVP_KDF_CTX_free() and EVP_KDF_reset() do not return a value.
 
-EVP_KDF_size() returns the output size.  C<SIZE_MAX> is returned to indicate
+EVP_KDF_size() returns the output size.  B<SIZE_MAX> is returned to indicate
 that the algorithm produces a variable amount of output; 0 to indicate failure.
 
 The remaining functions return 1 for success and 0 or a negative value for
