@@ -552,9 +552,11 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
  * return codes:
  * 0 not a CA
  * 1 is a CA
- * 2 basicConstraints absent so "maybe" a CA
+ * 2 Only possible in older versions of openSSL when basicConstraints are absent
+ *   new versions will not return this value. May be a CA
  * 3 basicConstraints absent but self signed V1.
  * 4 basicConstraints absent but keyUsage present and keyCertSign asserted.
+ * 5 Netscape specific CA Flags present
  */
 
 static int check_ca(const X509 *x)
