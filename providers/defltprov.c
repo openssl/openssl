@@ -326,21 +326,21 @@ static const OSSL_ALGORITHM deflt_macs[] = {
 };
 
 static const OSSL_ALGORITHM deflt_kdfs[] = {
-    { OSSL_KDF_NAME_HKDF, "default=yes", kdf_hkdf_functions },
-    { OSSL_KDF_NAME_SSKDF, "default=yes", kdf_sskdf_functions },
-    { OSSL_KDF_NAME_PBKDF2, "default=yes", kdf_pbkdf2_functions },
-    { OSSL_KDF_NAME_SSHKDF, "default=yes", kdf_sshkdf_functions },
-    { OSSL_KDF_NAME_X963KDF, "default=yes", kdf_x963_kdf_functions },
-    { OSSL_KDF_NAME_TLS1_PRF, "default=yes", kdf_tls1_prf_functions },
-    { OSSL_KDF_NAME_KBKDF, "default=yes", kdf_kbkdf_functions },
+    { "HKDF", "default=yes", kdf_hkdf_functions },
+    { "SSKDF", "default=yes", kdf_sskdf_functions },
+    { "PBKDF2", "default=yes", kdf_pbkdf2_functions },
+    { "SSHKDF", "default=yes", kdf_sshkdf_functions },
+    { "X963KDF", "default=yes", kdf_x963_kdf_functions },
+    { "TLS1-PRF", "default=yes", kdf_tls1_prf_functions },
+    { "KBKDF", "default=yes", kdf_kbkdf_functions },
 #ifndef OPENSSL_NO_CMS
-    { OSSL_KDF_NAME_X942KDF, "default=yes", kdf_x942_kdf_functions },
+    { "X942KDF", "default=yes", kdf_x942_kdf_functions },
 #endif
 #ifndef OPENSSL_NO_SCRYPT
     { "SCRYPT:id-scrypt", "default=yes", kdf_scrypt_functions },
 #endif
-    { OSSL_KDF_NAME_KRB5KDF, "default=yes", kdf_krb5kdf_functions },
-   { NULL, NULL, NULL }
+    { "KRB5KDF", "default=yes", kdf_krb5kdf_functions },
+    { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_keyexch[] = {
