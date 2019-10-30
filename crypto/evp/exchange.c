@@ -175,7 +175,6 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     int ret;
     void *provkey = NULL;
     EVP_KEYEXCH *exchange = NULL;
-    EVP_KEYMGMT *keymgmt = NULL;
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -197,25 +196,25 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     if (exchange != NULL && ctx->keymgmt == NULL) {
         int name_id = EVP_KEYEXCH_number(exchange);
 
-        keymgmt = evp_keymgmt_fetch_by_number(NULL, name_id, ctx->propquery);
+        ctx->keymgmt =
+            evp_keymgmt_fetch_by_number(NULL, name_id, ctx->propquery);
     }
 
-    if (keymgmt == NULL
+    if (ctx->keymgmt == NULL
         || exchange == NULL
-        || (EVP_KEYMGMT_provider(keymgmt)
+        || (EVP_KEYMGMT_provider(ctx->keymgmt)
             != EVP_KEYEXCH_provider(exchange))) {
         /*
          * We don't have the full support we need with provided methods,
-         * let's go see if legacy does
+         * let's go see if legacy does.  Also, we don't need to free
+         * ctx->keymgmt here, as it's not necessarily tied to this
+         * operation.  It will be freed by EVP_PKEY_CTX_free().
          */
-        EVP_KEYMGMT_free(keymgmt);
         EVP_KEYEXCH_free(exchange);
         goto legacy;
     }
 
 
-    if (keymgmt != NULL)
-        ctx->keymgmt = keymgmt;
     ctx->op.kex.exchange = exchange;
 
     if (ctx->pkey != NULL) {
