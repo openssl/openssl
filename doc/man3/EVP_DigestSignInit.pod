@@ -11,7 +11,7 @@ EVP_DigestSignFinal, EVP_DigestSign - EVP signing functions
 
  int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                            const char *mdname, const char *props,
-                           EVP_PKEY *pkey, EVP_SIGNATURE *signature);
+                           EVP_PKEY *pkey);
  int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                         const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
@@ -26,41 +26,38 @@ EVP_DigestSignFinal, EVP_DigestSign - EVP signing functions
 The EVP signature routines are a high level interface to digital signatures.
 Input data is digested first before the signing takes place.
 
-EVP_DigestSignInit_ex() sets up signing context B<ctx> to use a digest with the
-name B<mdname> and private key B<pkey>. The signature algorithm B<signature>
-will be used for the actual signing which must be compatible with the private
-key. The name of the digest to be used is passed to the provider of the
-signature algorithm in use. How that provider interprets the digest name is
-provider specific. The provider may implement that digest directly itself or it
-may (optionally) choose to fetch it (which could result in a digest from a
-different provider being selected). If the provider supports fetching the digest
-then it may use the B<props> argument for the properties to be used during the
-fetch.
+EVP_DigestSignInit_ex() sets up signing context I<ctx> to use a digest with the
+name I<mdname> and private key I<pkey>. The name of the digest to be used is
+passed to the provider of the signature algorithm in use. How that provider
+interprets the digest name is provider specific. The provider may implement
+that digest directly itself or it may (optionally) choose to fetch it (which
+could result in a digest from a different provider being selected). If the
+provider supports fetching the digest then it may use the I<props> argument for
+the properties to be used during the fetch.
 
-The B<signature> parameter may be NULL in which case a suitable signature
-algorithm implementation will be implicitly fetched based on the type of key in
-use. See L<provider(7)> for further information about providers and fetching
-algorithms.
+The I<pkey> algorithm is used to fetch a B<EVP_SIGNATURE> method implicitly, to
+be used for the actual signing. See L<provider(7)/Implicit fetch> for
+more information about implict fetches.
 
 The OpenSSL default and legacy providers support fetching digests and can fetch
 those digests from any available provider. The OpenSSL fips provider also
 supports fetching digests but will only fetch digests that are themselves
 implemented inside the fips provider.
 
-B<ctx> must be created with EVP_MD_CTX_new() before calling this function. If
-B<pctx> is not NULL, the EVP_PKEY_CTX of the signing operation will be written
-to B<*pctx>: this can be used to set alternative signing options. Note that any
-existing value in B<*pctx> is overwritten. The EVP_PKEY_CTX value returned must
-not be freed directly by the application if B<ctx> is not assigned an
+I<ctx> must be created with EVP_MD_CTX_new() before calling this function. If
+I<pctx> is not NULL, the EVP_PKEY_CTX of the signing operation will be written
+to I<*pctx>: this can be used to set alternative signing options. Note that any
+existing value in I<*pctx> is overwritten. The EVP_PKEY_CTX value returned must
+not be freed directly by the application if I<ctx> is not assigned an
 EVP_PKEY_CTX value before being passed to EVP_DigestSignInit_ex() (which means
 the EVP_PKEY_CTX is created inside EVP_DigestSignInit_ex() and it will be freed
 automatically when the EVP_MD_CTX is freed).
 
-The digest B<mdname> may be NULL if the signing algorithm supports it. The
-B<props> argument can always be NULL.
+The digest I<mdname> may be NULL if the signing algorithm supports it. The
+I<props> argument can always be NULL.
 
 No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit_ex() if the passed
-B<ctx> has already been assigned one via L<EVP_MD_CTX_set_ctx(3)>. See also
+I<ctx> has already been assigned one via L<EVP_MD_CTX_set_ctx(3)>. See also
 L<SM2(7)>.
 
 Only EVP_PKEY types that support signing can be used with these functions. This
@@ -82,7 +79,7 @@ Supports SHA1, SHA224, SHA256, SHA384, SHA512 and SM3
 
 =item RSA with no padding
 
-Supports no digests (the digest B<type> must be NULL)
+Supports no digests (the digest I<type> must be NULL)
 
 =item RSA with X931 padding
 
@@ -95,7 +92,7 @@ SHA3-224, SHA3-256, SHA3-384, SHA3-512
 
 =item Ed25519 and Ed448
 
-Support no digests (the digest B<type> must be NULL)
+Support no digests (the digest I<type> must be NULL)
 
 =item HMAC
 
@@ -110,23 +107,23 @@ Will ignore any digest provided.
 If RSA-PSS is used and restrictions apply then the digest must match.
 
 EVP_DigestSignInit() works in the same way as EVP_DigestSignInit_ex() except
-that the B<mdname> parameter will be inferred from the supplied digest B<type>,
-and B<props> will be NULL. Where supplied the ENGINE B<e> will be used for the
-signing and digest algorithm implementations. B<e> may be NULL.
+that the I<mdname> parameter will be inferred from the supplied digest I<type>,
+and I<props> will be NULL. Where supplied the ENGINE I<e> will be used for the
+signing and digest algorithm implementations. I<e> may be NULL.
 
-EVP_DigestSignUpdate() hashes B<cnt> bytes of data at B<d> into the
-signature context B<ctx>. This function can be called several times on the
-same B<ctx> to include additional data.
+EVP_DigestSignUpdate() hashes I<cnt> bytes of data at I<d> into the
+signature context I<ctx>. This function can be called several times on the
+same I<ctx> to include additional data.
 
-EVP_DigestSignFinal() signs the data in B<ctx> and places the signature in B<sig>.
-If B<sig> is B<NULL> then the maximum size of the output buffer is written to
-the B<siglen> parameter. If B<sig> is not B<NULL> then before the call the
-B<siglen> parameter should contain the length of the B<sig> buffer. If the
-call is successful the signature is written to B<sig> and the amount of data
-written to B<siglen>.
+EVP_DigestSignFinal() signs the data in I<ctx> and places the signature in I<sig>.
+If I<sig> is NULL then the maximum size of the output buffer is written to
+the I<siglen> parameter. If I<sig> is not NULL then before the call the
+I<siglen> parameter should contain the length of the I<sig> buffer. If the
+call is successful the signature is written to I<sig> and the amount of data
+written to I<siglen>.
 
-EVP_DigestSign() signs B<tbslen> bytes of data at B<tbs> and places the
-signature in B<sig> and its length in B<siglen> in a similar way to
+EVP_DigestSign() signs I<tbslen> bytes of data at I<tbs> and places the
+signature in I<sig> and its length in I<siglen> in a similar way to
 EVP_DigestSignFinal().
 
 =head1 RETURN VALUES

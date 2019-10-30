@@ -44,24 +44,38 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ctx->provctx = NULL;
     }
 
-    if (ctx->pctx == NULL) {
+    if (ctx->pctx == NULL)
         ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
-        if (ctx->pctx == NULL)
-            return 0;
-    } else if (pkey != NULL) {
-        if (!EVP_PKEY_up_ref(pkey))
-            return 0;
-        EVP_PKEY_free(ctx->pctx->pkey);
-        ctx->pctx->pkey = pkey;
-    }
+    if (ctx->pctx == NULL)
+        return 0;
+
     locpctx = ctx->pctx;
     evp_pkey_ctx_free_old_ops(locpctx);
-    if (locpctx->pkey == NULL)
+
+    if (locpctx->algorithm == NULL)
         goto legacy;
 
-    if (e != NULL || locpctx->engine != NULL)
-        goto legacy;
+    if (mdname == NULL) {
+        if (type != NULL) {
+            mdname = EVP_MD_name(type);
+        } else if (pkey != NULL) {
+            /*
+             * TODO(v3.0) work out a better way for EVP_PKEYs with no legacy
+             * component.
+             */
+            if (pkey->pkey.ptr != NULL) {
+                int def_nid;
+                if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) > 0)
+                    mdname = OBJ_nid2sn(def_nid);
+            }
+        }
+    }
 
+    /*
+     * Because we cleared out old ops, we shouldn't need to worry about
+     * checking if signature is already there.  Keymgmt is a different
+     * matter, as it isn't tied to a specific EVP_PKEY op.
+     */
     signature =
         EVP_SIGNATURE_fetch(NULL, locpctx->algorithm, locpctx->propquery);
     if (signature != NULL && locpctx->keymgmt == NULL) {
