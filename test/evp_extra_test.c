@@ -1237,10 +1237,8 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
 
     /* Initialise a sign operation */
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
-    dsaimpl = EVP_SIGNATURE_fetch(NULL, "DSA", NULL);
     if (!TEST_ptr(ctx)
-            || !TEST_ptr(dsaimpl)
-            || !TEST_int_gt(EVP_PKEY_sign_init_ex(ctx, dsaimpl), 0))
+            || !TEST_int_gt(EVP_PKEY_sign_init(ctx), 0))
         goto err;
 
     /*
@@ -1299,8 +1297,7 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
      */
     mdctx = EVP_MD_CTX_new();
     if (!TEST_ptr(mdctx)
-            || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", NULL,
-                                                pkey, dsaimpl)))
+        || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", NULL, pkey)))
         goto err;
 
     /*
