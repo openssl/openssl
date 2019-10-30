@@ -18,12 +18,14 @@ static OSSL_PARAM *paramdefs_to_params(const OSSL_PARAM *paramdefs)
 {
     size_t cnt;
     const OSSL_PARAM *p;
-    OSSL_PARAM *params, *q;
+    OSSL_PARAM *params = NULL, *q;
 
     for (cnt = 1, p = paramdefs; p->key != NULL; p++, cnt++)
         continue;
 
     params = OPENSSL_zalloc(cnt * sizeof(*params));
+    if (params == NULL)
+        return NULL;
 
     for (p = paramdefs, q = params; ; p++, q++) {
         *q = *p;
@@ -78,6 +80,8 @@ static void *allocate_params_space(OSSL_PARAM *params)
         return NULL;
 
     data = OPENSSL_zalloc(space);
+    if (data == NULL)
+        return NULL;
 
     for (space = 0, p = params; p->key != NULL; p++) {
         p->data = data + space;
