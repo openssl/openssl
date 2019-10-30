@@ -1296,7 +1296,6 @@ X509_aux_print
 X509_certificate_type
 X509_chain_check_suiteb
 X509_check_akid
-X509_check_purpose
 X509_check_trust
 X509_email_free
 X509_find_by_issuer_and_serial
