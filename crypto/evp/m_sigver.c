@@ -27,9 +27,10 @@ static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
                           const char *props, ENGINE *e, EVP_PKEY *pkey,
-                          EVP_SIGNATURE *signature, int ver)
+                          int ver)
 {
     EVP_PKEY_CTX *locpctx = NULL;
+    EVP_SIGNATURE *signature = NULL;
     void *provkey = NULL;
     int ret;
 
@@ -43,50 +44,68 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ctx->provctx = NULL;
     }
 
-    if (ctx->pctx == NULL) {
+    if (ctx->pctx == NULL)
         ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
-        if (ctx->pctx == NULL)
-            return 0;
-    } else if (pkey != NULL) {
-        if (!EVP_PKEY_up_ref(pkey))
-            return 0;
-        EVP_PKEY_free(ctx->pctx->pkey);
-        ctx->pctx->pkey = pkey;
-    }
+    if (ctx->pctx == NULL)
+        return 0;
+
     locpctx = ctx->pctx;
     evp_pkey_ctx_free_old_ops(locpctx);
-    if (locpctx->pkey == NULL)
+
+    if (locpctx->algorithm == NULL)
         goto legacy;
 
-    if (e != NULL || locpctx->engine != NULL)
-        goto legacy;
-
-    if (signature != NULL) {
-        if (!EVP_SIGNATURE_up_ref(signature))
-            goto err;
-    } else {
-        /*
-         * TODO(3.0): Check for legacy handling. Remove this once all all
-         * algorithms are moved to providers.
-         */
-        switch (locpctx->pkey->type) {
-        case NID_dsa:
-            break;
-        default:
-            goto legacy;
-        }
-        signature
-            = EVP_SIGNATURE_fetch(NULL, OBJ_nid2sn(locpctx->pkey->type), NULL);
-
-        if (signature == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-            goto err;
+    if (mdname == NULL) {
+        if (type != NULL) {
+            mdname = EVP_MD_name(type);
+        } else if (pkey != NULL) {
+            /*
+             * TODO(v3.0) work out a better way for EVP_PKEYs with no legacy
+             * component.
+             */
+            if (pkey->pkey.ptr != NULL) {
+                int def_nid;
+                if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) > 0)
+                    mdname = OBJ_nid2sn(def_nid);
+            }
         }
     }
-    locpctx->operation = ver ? EVP_PKEY_OP_VERIFYCTX
-                             : EVP_PKEY_OP_SIGNCTX;
+
+    /*
+     * Because we cleared out old ops, we shouldn't need to worry about
+     * checking if signature is already there.  Keymgmt is a different
+     * matter, as it isn't tied to a specific EVP_PKEY op.
+     */
+    signature = EVP_SIGNATURE_fetch(locpctx->libctx, locpctx->algorithm,
+                                    locpctx->propquery);
+    if (signature != NULL && locpctx->keymgmt == NULL) {
+        int name_id = EVP_SIGNATURE_number(signature);
+
+        locpctx->keymgmt =
+            evp_keymgmt_fetch_by_number(locpctx->libctx, name_id,
+                                        locpctx->propquery);
+    }
+
+    if (locpctx->keymgmt == NULL
+        || signature == NULL
+        || (EVP_KEYMGMT_provider(locpctx->keymgmt)
+            != EVP_SIGNATURE_provider(signature))) {
+        /*
+         * We don't have the full support we need with provided methods,
+         * let's go see if legacy does.  Also, we don't need to free
+         * ctx->keymgmt here, as it's not necessarily tied to this
+         * operation.  It will be freed by EVP_PKEY_CTX_free().
+         */
+        EVP_SIGNATURE_free(signature);
+        goto legacy;
+    }
+
+    /* No more legacy from here down to legacy: */
 
     locpctx->op.sig.signature = signature;
+
+    locpctx->operation = ver ? EVP_PKEY_OP_VERIFYCTX
+                             : EVP_PKEY_OP_SIGNCTX;
 
     locpctx->op.sig.sigprovctx
         = signature->newctx(ossl_provider_ctx(signature->prov));
@@ -95,14 +114,13 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         goto err;
     }
     provkey =
-        evp_keymgmt_export_to_provider(locpctx->pkey, signature->keymgmt, 0);
+        evp_keymgmt_export_to_provider(locpctx->pkey, locpctx->keymgmt, 0);
     if (provkey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
 
-    if (mdname == NULL) {
-        mdname = EVP_MD_name(type);
+    if (type != NULL) {
         ctx->reqdigest = type;
     } else {
         /*
@@ -111,11 +129,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
          * man pages), i.e. the ref count is not updated so the EVP_MD should
          * not be used beyound the lifetime of the EVP_MD_CTX.
          */
-        ctx->reqdigest
-            = ctx->fetched_digest
-            = EVP_MD_fetch(
-                ossl_provider_library_context(EVP_SIGNATURE_provider(signature)),
-                mdname, props);
+        ctx->reqdigest = ctx->fetched_digest =
+            EVP_MD_fetch(locpctx->libctx, mdname, props);
     }
 
     if (ver) {
@@ -123,15 +138,15 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
-        ret = signature->digest_verify_init(locpctx->op.sig.sigprovctx, mdname,
-                                            props, provkey);
+        ret = signature->digest_verify_init(locpctx->op.sig.sigprovctx,
+                                            mdname, props, provkey);
     } else {
         if (signature->digest_sign_init == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
-        ret = signature->digest_sign_init(locpctx->op.sig.sigprovctx, mdname,
-                                          props, provkey);
+        ret = signature->digest_sign_init(locpctx->op.sig.sigprovctx,
+                                          mdname, props, provkey);
     }
 
     return ret ? 1 : 0;
@@ -197,31 +212,28 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 }
 
 int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                          const char *mdname, const char *props, EVP_PKEY *pkey,
-                          EVP_SIGNATURE *signature)
+                          const char *mdname, const char *props, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, signature,
-                          0);
+    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, 0);
 }
 
 int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, NULL, 0);
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, 0);
 }
 
 int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                             const char *mdname, const char *props,
-                            EVP_PKEY *pkey, EVP_SIGNATURE *signature)
+                            EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, signature,
-                          1);
+    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, 1);
 }
 
 int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, NULL, 1);
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, 1);
 }
 #endif /* FIPS_MDOE */
 

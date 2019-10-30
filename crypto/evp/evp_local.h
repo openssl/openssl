@@ -118,8 +118,6 @@ struct evp_signature_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    EVP_KEYMGMT *keymgmt;
-
     OSSL_OP_signature_newctx_fn *newctx;
     OSSL_OP_signature_sign_init_fn *sign_init;
     OSSL_OP_signature_sign_fn *sign;

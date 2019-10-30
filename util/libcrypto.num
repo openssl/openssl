@@ -4742,10 +4742,10 @@ EVP_SIGNATURE_free                      4858	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_up_ref                    4859	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_provider                  4860	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_fetch                     4861	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_sign_init_ex                   4862	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_sign_init_ex                   4862	3_0_0	NOEXIST::FUNCTION:
 EVP_PKEY_CTX_set_signature_md           4863	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_verify_init_ex                 4864	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_verify_recover_init_ex         4865	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_verify_init_ex                 4864	3_0_0	NOEXIST::FUNCTION:
+EVP_PKEY_verify_recover_init_ex         4865	3_0_0	NOEXIST::FUNCTION:
 EVP_PKEY_CTX_get_signature_md           4866	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get_params                 4867	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_gettable_params            4868	3_0_0	EXIST::FUNCTION:

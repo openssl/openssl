@@ -35,30 +35,12 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 static void *evp_signature_from_dispatch(int name_id,
                                          const OSSL_DISPATCH *fns,
                                          OSSL_PROVIDER *prov,
-                                         void *vkeymgmt_data)
+                                         void *unused)
 {
-    /*
-     * Signature functions cannot work without a key, and key management
-     * from the same provider to manage its keys.  We therefore fetch
-     * a key management method using the same algorithm and properties
-     * and pass that down to evp_generic_fetch to be passed on to our
-     * evp_signature_from_dispatch, which will attach the key management
-     * method to the newly created key exchange method as long as the
-     * provider matches.
-     */
-    struct keymgmt_data_st *keymgmt_data = vkeymgmt_data;
-    EVP_KEYMGMT *keymgmt =
-        evp_keymgmt_fetch_by_number(keymgmt_data->ctx, name_id,
-                                    keymgmt_data->properties);
     EVP_SIGNATURE *signature = NULL;
     int ctxfncnt = 0, signfncnt = 0, verifyfncnt = 0, verifyrecfncnt = 0;
     int digsignfncnt = 0, digverifyfncnt = 0;
     int gparamfncnt = 0, sparamfncnt = 0, gmdparamfncnt = 0, smdparamfncnt = 0;
-
-    if (keymgmt == NULL || EVP_KEYMGMT_provider(keymgmt) != prov) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEYMGMT_AVAILABLE);
-        goto err;
-    }
 
     if ((signature = evp_signature_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -66,8 +48,6 @@ static void *evp_signature_from_dispatch(int name_id,
     }
 
     signature->name_id = name_id;
-    signature->keymgmt = keymgmt;
-    keymgmt = NULL;              /* avoid double free on failure below */
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -263,7 +243,6 @@ static void *evp_signature_from_dispatch(int name_id,
     return signature;
  err:
     EVP_SIGNATURE_free(signature);
-    EVP_KEYMGMT_free(keymgmt);
     return NULL;
 }
 
@@ -275,7 +254,6 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
         CRYPTO_DOWN_REF(&signature->refcnt, &i, signature->lock);
         if (i > 0)
             return;
-        EVP_KEYMGMT_free(signature->keymgmt);
         ossl_provider_free(signature->prov);
         CRYPTO_THREAD_lock_free(signature->lock);
         OPENSSL_free(signature);
@@ -298,16 +276,8 @@ OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature)
 EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                    const char *properties)
 {
-    struct keymgmt_data_st keymgmt_data;
-
-    /*
-     * A signature operation cannot work without a key, so we need key
-     * management from the same provider to manage its keys.
-     */
-    keymgmt_data.ctx = ctx;
-    keymgmt_data.properties = properties;
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
-                             evp_signature_from_dispatch, &keymgmt_data,
+                             evp_signature_from_dispatch, NULL,
                              (int (*)(void *))EVP_SIGNATURE_up_ref,
                              (void (*)(void *))EVP_SIGNATURE_free);
 }
@@ -327,13 +297,9 @@ void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
                                               void *arg),
                                    void *arg)
 {
-    struct keymgmt_data_st keymgmt_data;
-
-    keymgmt_data.ctx = libctx;
-    keymgmt_data.properties = NULL;
     evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
                        (void (*)(void *, void *))fn, arg,
-                       evp_signature_from_dispatch, &keymgmt_data,
+                       evp_signature_from_dispatch, NULL,
                        (void (*)(void *))EVP_SIGNATURE_free);
 }
 
@@ -346,11 +312,11 @@ void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
         evp_names_do_all(signature->prov, signature->name_id, fn, data);
 }
 
-static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
-                                   int operation)
+static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
 {
     int ret = 0;
     void *provkey = NULL;
+    EVP_SIGNATURE *signature = NULL;
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -360,41 +326,42 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
-    if (ctx->engine != NULL)
+    if (ctx->algorithm == NULL)
         goto legacy;
 
-    if (signature != NULL) {
-        if (!EVP_SIGNATURE_up_ref(signature))
-            goto err;
-    } else {
-        int nid = ctx->pkey != NULL ? ctx->pkey->type : ctx->pmeth->pkey_id;
+    /*
+     * Because we cleared out old ops, we shouldn't need to worry about
+     * checking if signature is already there.  Keymgmt is a different
+     * matter, as it isn't tied to a specific EVP_PKEY op.
+     */
+    signature = EVP_SIGNATURE_fetch(ctx->libctx, ctx->algorithm,
+                                    ctx->propquery);
+    if (signature != NULL && ctx->keymgmt == NULL) {
+        int name_id = EVP_SIGNATURE_number(signature);
 
+        ctx->keymgmt = evp_keymgmt_fetch_by_number(ctx->libctx, name_id,
+                                                   ctx->propquery);
+    }
+
+    if (ctx->keymgmt == NULL
+        || signature == NULL
+        || (EVP_KEYMGMT_provider(ctx->keymgmt)
+            != EVP_SIGNATURE_provider(signature))) {
         /*
-         * TODO(3.0): Check for legacy handling. Remove this once all all
-         * algorithms are moved to providers.
+         * We don't have the full support we need with provided methods,
+         * let's go see if legacy does.  Also, we don't need to free
+         * ctx->keymgmt here, as it's not necessarily tied to this
+         * operation.  It will be freed by EVP_PKEY_CTX_free().
          */
-        if (ctx->pkey != NULL) {
-            switch (ctx->pkey->type) {
-            case NID_dsa:
-                break;
-            default:
-                goto legacy;
-            }
-            signature = EVP_SIGNATURE_fetch(NULL, OBJ_nid2sn(nid), NULL);
-        } else {
-            goto legacy;
-        }
-
-        if (signature == NULL) {
-            EVPerr(0, EVP_R_INITIALIZATION_ERROR);
-            goto err;
-        }
+        EVP_SIGNATURE_free(signature);
+        goto legacy;
     }
 
     ctx->op.sig.signature = signature;
+
     if (ctx->pkey != NULL) {
         provkey =
-            evp_keymgmt_export_to_provider(ctx->pkey, signature->keymgmt, 0);
+            evp_keymgmt_export_to_provider(ctx->pkey, ctx->keymgmt, 0);
         if (provkey == NULL) {
             EVPerr(0, EVP_R_INITIALIZATION_ERROR);
             goto err;
@@ -483,14 +450,9 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
     return ret;
 }
 
-int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
-{
-    return evp_pkey_signature_init(ctx, signature, EVP_PKEY_OP_SIGN);
-}
-
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 {
-    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_SIGN);
+    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_SIGN);
 }
 
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
@@ -527,14 +489,9 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
         return ctx->pmeth->sign(ctx, sig, siglen, tbs, tbslen);
 }
 
-int EVP_PKEY_verify_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
-{
-    return evp_pkey_signature_init(ctx, signature, EVP_PKEY_OP_VERIFY);
-}
-
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
 {
-    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_VERIFY);
+    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_VERIFY);
 }
 
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
@@ -569,14 +526,9 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
     return ctx->pmeth->verify(ctx, sig, siglen, tbs, tbslen);
 }
 
-int EVP_PKEY_verify_recover_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature)
-{
-    return evp_pkey_signature_init(ctx, signature, EVP_PKEY_OP_VERIFYRECOVER);
-}
-
 int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
 {
-    return evp_pkey_signature_init(ctx, NULL, EVP_PKEY_OP_VERIFYRECOVER);
+    return evp_pkey_signature_init(ctx, EVP_PKEY_OP_VERIFYRECOVER);
 }
 
 int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
