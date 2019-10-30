@@ -16,7 +16,6 @@ OSSL_CMP_CTX_set_serverPort,
 OSSL_CMP_CTX_set1_proxyName,
 OSSL_CMP_CTX_set_proxyPort,
 OSSL_CMP_DEFAULT_PORT,
-OSSL_cmp_http_cb_t,
 OSSL_CMP_CTX_set_http_cb,
 OSSL_CMP_CTX_set_http_cb_arg,
 OSSL_CMP_CTX_get_http_cb_arg,
@@ -84,14 +83,11 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set1_proxyName(OSSL_CMP_CTX *ctx, const char *name);
  int OSSL_CMP_CTX_set_proxyPort(OSSL_CMP_CTX *ctx, int port);
  #define OSSL_CMP_DEFAULT_PORT 80
- typedef BIO *(*OSSL_cmp_http_cb_t)(OSSL_CMP_CTX *ctx, BIO *hbio,
-                                    unsigned long detail);
- int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_http_cb_t cb);
+ int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, HTTP_bio_cb_t cb);
  int OSSL_CMP_CTX_set_http_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_http_cb_arg(const OSSL_CMP_CTX *ctx);
- typedef int (*OSSL_cmp_transfer_cb_t)(OSSL_CMP_CTX *ctx,
-                                       const OSSL_CMP_MSG *req,
-                                       OSSL_CMP_MSG **res);
+ typedef OSSL_CMP_MSG *(*OSSL_cmp_transfer_cb_t)(OSSL_CMP_CTX *ctx,
+                                                 const OSSL_CMP_MSG *req);
  int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx,
                                   OSSL_cmp_transfer_cb_t cb);
  int OSSL_CMP_CTX_set_transfer_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
@@ -324,22 +320,22 @@ for connecting to the CA server.
 OSSL_CMP_CTX_set_proxyPort() sets the port of the HTTP proxy.
 Port defaults to OSSL_CMP_DEFAULT_PORT = 80 if not set explicitly.
 
-OSSL_CMP_CTX_set_http_cb() sets the optional http connect/disconnect callback
+OSSL_CMP_CTX_set_http_cb() sets the optional BIO connect/disconnect callback
 function, which has the prototype
 
- typedef BIO *(*OSSL_cmp_http_cb_t)(OSSL_CMP_CTX *ctx, BIO *hbio,
-                                    unsigned long detail);
+ typedef BIO *(*HTTP_bio_cb_t) (BIO *bio, void *ctx, int connect, int detail);
 
-It may modify the HTTP BIO given in the B<hbio> argument
-used by OSSL_CMP_MSG_http_perform().
-On connect the B<detail> argument is 1.
-On disconnect it is 0 if no error occurred or else the last error code.
-For instance, on connect a TLS BIO may be prepended to implement HTTPS,
-and on disconnect some error diagnostics and/or cleanup may be done.
-The callback function should return NULL to indicate failure.
-It may make use of a custom defined argument stored in the ctx
-by means of OSSL_CMP_CTX_set_http_cb_arg(),
-which may be retrieved again through OSSL_CMP_CTX_get_http_cb_arg().
+The callback may modify the BIO B<bio> provided by OSSL_CMP_MSG_http_perform(),
+whereby it may make use of a custom defined argument B<ctx>
+stored in the OSSL_CMP_CTX by means of OSSL_CMP_CTX_set_http_cb_arg().
+During connection establishment, just after calling BIO_connect_retry(),
+the function is invoked with the B<connect> argument being 1 and the B<detail>
+argument being 1 if HTTPS is requested, i.e., SSL/TLS should be enabled. On
+disconnect B<connect> is 0 and B<detail> is 1 in case no error occurred, else 0.
+For instance, on connect the function may prepend a TLS BIO to implement HTTPS;
+after disconnect it may do some diagnostic output and/or specific cleanup.
+The function should return NULL to indicate failure.
+After disconnect the modified BIO will be deallocated using BIO_free_all().
 
 OSSL_CMP_CTX_set_http_cb_arg() sets an argument, respectively a pointer to
 a structure containing arguments,
@@ -354,18 +350,17 @@ OSSL_CMP_CTX_set_http_cb_arg() or NULL if unset.
 OSSL_CMP_CTX_set_transfer_cb() sets the message transfer callback function,
 which has the type
 
- typedef int (*OSSL_cmp_transfer_cb_t)(const OSSL_CMP_CTX *ctx,
-                                       const OSSL_CMP_MSG *req,
-                                       OSSL_CMP_MSG **res);
+ typedef OSSL_CMP_MSG *(*OSSL_cmp_transfer_cb_t) (OSSL_CMP_CTX *ctx,
+                                                  const OSSL_CMP_MSG *req);
+
 Returns 1 on success, 0 on error.
 
 Default is NULL, which implies the use of L<OSSL_CMP_MSG_http_perform(3)>.
-The callback should send the CMP request it obtains via the B<req> parameter
-and on success place the response in the B<*res> output parameter.
+The callback should send the CMP request message it obtains via the B<req>
+parameter and on success return the response.
 The transfer callback may make use of a custom defined argument stored in
 the ctx by means of OSSL_CMP_CTX_set_transfer_cb_arg(), which may be retrieved
 again through OSSL_CMP_CTX_get_transfer_cb_arg().
-On success the cb must return 0, else a CMP error reason code defined in cmp.h.
 
 
 OSSL_CMP_CTX_set_transfer_cb_arg() sets an argument, respectively a pointer to a

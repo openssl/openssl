@@ -113,6 +113,7 @@ struct err_state_st {
 # define ERR_LIB_PROV            57
 # define ERR_LIB_CMP             58
 # define ERR_LIB_OSSL_SERIALIZER 59
+# define ERR_LIB_HTTP            60
 
 # define ERR_LIB_USER            128
 
@@ -140,6 +141,7 @@ struct err_state_st {
 #  define EVPerr(f, r) ERR_raise_data(ERR_LIB_EVP, (r), NULL)
 #  define FIPSerr(f, r) ERR_raise_data(ERR_LIB_FIPS, (r), NULL)
 #  define HMACerr(f, r) ERR_raise_data(ERR_LIB_HMAC, (r), NULL)
+#  define HTTPerr(f, r) ERR_raise_data(ERR_LIB_HTTP, (r), NULL)
 #  define KDFerr(f, r) ERR_raise_data(ERR_LIB_KDF, (r), NULL)
 #  define OBJerr(f, r) ERR_raise_data(ERR_LIB_OBJ, (r), NULL)
 #  define OCSPerr(f, r) ERR_raise_data(ERR_LIB_OCSP, (r), NULL)

@@ -940,11 +940,9 @@ OCSP_F_OCSP_CHECK_IDS:107:ocsp_check_ids
 OCSP_F_OCSP_CHECK_ISSUER:108:ocsp_check_issuer
 OCSP_F_OCSP_CHECK_VALIDITY:115:OCSP_check_validity
 OCSP_F_OCSP_MATCH_ISSUERID:109:ocsp_match_issuerid
-OCSP_F_OCSP_PARSE_URL:114:OCSP_parse_url
 OCSP_F_OCSP_REQUEST_SIGN:110:OCSP_request_sign
 OCSP_F_OCSP_REQUEST_VERIFY:116:OCSP_request_verify
 OCSP_F_OCSP_RESPONSE_GET1_BASIC:111:OCSP_response_get1_basic
-OCSP_F_PARSE_HTTP_LINE1:118:parse_http_line1
 OSSL_STORE_F_FILE_CTRL:129:file_ctrl
 OSSL_STORE_F_FILE_FIND:138:file_find
 OSSL_STORE_F_FILE_GET_PASS:118:file_get_pass
@@ -2100,6 +2098,7 @@ CMP_R_MULTIPLE_SAN_SOURCES:102:multiple san sources
 CMP_R_NO_STDIO:194:no stdio
 CMP_R_NULL_ARGUMENT:103:null argument
 CMP_R_PKISTATUSINFO_NOT_FOUND:132:pkistatusinfo not found
+CMP_R_POTENTIALLY_INVALID_CERTIFICATE:139:potentially invalid certificate
 CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
 CMP_R_UNKNOWN_ALGORITHM_ID:134:unknown algorithm id
 CMP_R_UNKNOWN_CERT_TYPE:135:unknown cert type
@@ -2527,6 +2526,28 @@ EVP_R_WRAP_MODE_NOT_ALLOWED:170:wrap mode not allowed
 EVP_R_WRONG_FINAL_BLOCK_LENGTH:109:wrong final block length
 EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE:191:xts data unit is too large
 EVP_R_XTS_DUPLICATED_KEYS:192:xts duplicated keys
+HTTP_R_ASN1_LEN_EXCEEDS_MAX_RESP_LEN:108:asn1 len exceeds max resp len
+HTTP_R_CONNECT_FAILURE:100:connect failure
+HTTP_R_ERROR_PARSING_ASN1_LENGTH:109:error parsing asn1 length
+HTTP_R_ERROR_PARSING_CONTENT_LENGTH:119:error parsing content length
+HTTP_R_ERROR_PARSING_URL:101:error parsing url
+HTTP_R_ERROR_RECEIVING:103:error receiving
+HTTP_R_ERROR_SENDING:102:error sending
+HTTP_R_INCONSISTENT_CONTENT_LENGTH:120:inconsistent content length
+HTTP_R_MAX_RESP_LEN_EXCEEDED:117:max resp len exceeded
+HTTP_R_MISSING_ASN1_ENCODING:110:missing asn1 encoding
+HTTP_R_MISSING_CONTENT_TYPE:121:missing content type
+HTTP_R_MISSING_REDIRECT_LOCATION:111:missing redirect location
+HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:112:redirection from https to http
+HTTP_R_REDIRECTION_NOT_ENABLED:116:redirection not enabled
+HTTP_R_RESPONSE_LINE_TOO_LONG:113:response line too long
+HTTP_R_SERVER_RESPONSE_PARSE_ERROR:104:server response parse error
+HTTP_R_SERVER_SENT_ERROR:105:server sent error
+HTTP_R_SERVER_SENT_WRONG_HTTP_VERSION:106:server sent wrong http version
+HTTP_R_STATUS_CODE_UNSUPPORTED:114:status code unsupported
+HTTP_R_TLS_NOT_ENABLED:107:tls not enabled
+HTTP_R_TOO_MANY_REDIRECTIONS:115:too many redirections
+HTTP_R_UNEXPECTED_CONTENT_TYPE:118:unexpected content type
 KDF_R_BAD_ENCODING:122:bad encoding
 KDF_R_BAD_LENGTH:123:bad length
 KDF_R_BOTH_MODE_AND_MODE_INT:127:both mode and mode int
@@ -2561,7 +2582,6 @@ OCSP_R_CERTIFICATE_VERIFY_ERROR:101:certificate verify error
 OCSP_R_DIGEST_ERR:102:digest err
 OCSP_R_ERROR_IN_NEXTUPDATE_FIELD:122:error in nextupdate field
 OCSP_R_ERROR_IN_THISUPDATE_FIELD:123:error in thisupdate field
-OCSP_R_ERROR_PARSING_URL:121:error parsing url
 OCSP_R_MISSING_OCSPSIGNING_USAGE:103:missing ocspsigning usage
 OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE:124:nextupdate before thisupdate
 OCSP_R_NOT_BASIC_RESPONSE:104:not basic response
@@ -2575,8 +2595,6 @@ OCSP_R_REQUEST_NOT_SIGNED:128:request not signed
 OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA:111:\
 	response contains no revocation data
 OCSP_R_ROOT_CA_NOT_TRUSTED:112:root ca not trusted
-OCSP_R_SERVER_RESPONSE_ERROR:114:server response error
-OCSP_R_SERVER_RESPONSE_PARSE_ERROR:115:server response parse error
 OCSP_R_SIGNATURE_FAILURE:117:signature failure
 OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND:118:signer certificate not found
 OCSP_R_STATUS_EXPIRED:125:status expired

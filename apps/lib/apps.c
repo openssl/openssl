@@ -441,62 +441,14 @@ static int load_pkcs12(BIO *in, const char *desc,
     return ret;
 }
 
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
-static int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
-{
-    char *host = NULL, *port = NULL, *path = NULL;
-    BIO *bio = NULL;
-    OCSP_REQ_CTX *rctx = NULL;
-    int use_ssl, rv = 0;
-    if (!OCSP_parse_url(url, &host, &port, &path, &use_ssl))
-        goto err;
-    if (use_ssl) {
-        BIO_puts(bio_err, "https not supported\n");
-        goto err;
-    }
-    bio = BIO_new_connect(host);
-    if (!bio || !BIO_set_conn_port(bio, port))
-        goto err;
-    rctx = OCSP_REQ_CTX_new(bio, 1024);
-    if (rctx == NULL)
-        goto err;
-    if (!OCSP_REQ_CTX_http(rctx, "GET", path))
-        goto err;
-    if (!OCSP_REQ_CTX_add1_header(rctx, "Host", host))
-        goto err;
-    if (pcert) {
-        do {
-            rv = X509_http_nbio(rctx, pcert);
-        } while (rv == -1);
-    } else {
-        do {
-            rv = X509_CRL_http_nbio(rctx, pcrl);
-        } while (rv == -1);
-    }
-
- err:
-    OPENSSL_free(host);
-    OPENSSL_free(path);
-    OPENSSL_free(port);
-    BIO_free_all(bio);
-    OCSP_REQ_CTX_free(rctx);
-    if (rv != 1) {
-        BIO_printf(bio_err, "Error loading %s from %s\n",
-                   pcert ? "certificate" : "CRL", url);
-        ERR_print_errors(bio_err);
-    }
-    return rv;
-}
-#endif
-
 X509 *load_cert(const char *file, int format, const char *cert_descrip)
 {
     X509 *x = NULL;
     BIO *cert;
 
     if (format == FORMAT_HTTP) {
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
-        load_cert_crl_http(file, &x, NULL);
+#if !defined(OPENSSL_NO_SOCK)
+        x = X509_load_http(file, NULL, NULL, 0 /* timeout */);
 #endif
         return x;
     }
@@ -537,8 +489,8 @@ X509_CRL *load_crl(const char *infile, int format)
     BIO *in = NULL;
 
     if (format == FORMAT_HTTP) {
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
-        load_cert_crl_http(infile, NULL, &x);
+#if !defined(OPENSSL_NO_SOCK)
+        x = X509_CRL_load_http(infile, NULL, NULL, 0 /* timeout */);
 #endif
         return x;
     }
@@ -1980,6 +1932,137 @@ void store_setup_crl_download(X509_STORE *st)
 {
     X509_STORE_set_lookup_crls_cb(st, crls_http_cb);
 }
+
+#ifndef OPENSSL_NO_SOCK
+static const char *tls_error_hint(void)
+{
+    unsigned long err = ERR_peek_error();
+
+    if (ERR_GET_LIB(err) != ERR_LIB_SSL)
+        err = ERR_peek_last_error();
+    if (ERR_GET_LIB(err) != ERR_LIB_SSL)
+        return NULL;
+
+    switch (ERR_GET_REASON(err)) {
+    case SSL_R_WRONG_VERSION_NUMBER:
+        return "The server does not support (a suitable version of) TLS";
+    case SSL_R_UNKNOWN_PROTOCOL:
+        return "The server does not support HTTPS";
+    case SSL_R_CERTIFICATE_VERIFY_FAILED:
+        return "Cannot authenticate server via its TLS certificate, likely due to mismatch with our trusted TLS certs or missing revocation status";
+    case SSL_AD_REASON_OFFSET + TLS1_AD_UNKNOWN_CA:
+        return "Server did not accept our TLS certificate, likely due to mismatch with server's trust anchor or missing revocation status";
+    case SSL_AD_REASON_OFFSET + SSL3_AD_HANDSHAKE_FAILURE:
+        return "TLS handshake failure. Possibly the server requires our TLS certificate but did not receive it";
+    default: /* no error or no hint available for error */
+        return NULL;
+    }
+}
+
+/* HTTP callback function that supports TLS connection also via HTTPS proxy */
+BIO *app_http_tls_cb(BIO *hbio, void *arg, int connect, int detail)
+{
+    APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
+    SSL_CTX *ssl_ctx = info->ssl_ctx;
+    SSL *ssl;
+    BIO *sbio = NULL;
+
+    if (connect && detail) { /* connecting with TLS */
+        if ((info->use_proxy
+             && !OSSL_HTTP_proxy_connect(hbio, info->server, info->port,
+                                         NULL, NULL, /* no proxy credentials */
+                                         info->timeout, bio_err, opt_getprog()))
+                || (sbio = BIO_new(BIO_f_ssl())) == NULL) {
+            return NULL;
+        }
+        if (ssl_ctx == NULL || (ssl = SSL_new(ssl_ctx)) == NULL) {
+            BIO_free(sbio);
+            return NULL;
+        }
+
+        SSL_set_tlsext_host_name(ssl, info->server);
+
+        SSL_set_connect_state(ssl);
+        BIO_set_ssl(sbio, ssl, BIO_CLOSE);
+
+        hbio = BIO_push(sbio, hbio);
+    } else if (!connect && !detail) { /* disconnecting after error */
+        const char *hint = tls_error_hint();
+        if (hint != NULL)
+            ERR_add_error_data(1, hint);
+        /*
+         * If we pop sbio and BIO_free() it this may lead to libssl double free.
+         * Rely on BIO_free_all() done by OSSL_HTTP_transfer() in http_client.c
+         */
+    }
+    return hbio;
+}
+
+ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
+                              const char *proxy_port, SSL_CTX *ssl_ctx,
+                              const STACK_OF(CONF_VALUE) *headers,
+                              long timeout, const char *expected_content_type,
+                              const ASN1_ITEM *it)
+{
+    APP_HTTP_TLS_INFO info;
+    char *server;
+    char *port;
+    int use_ssl;
+    ASN1_VALUE *resp = NULL;
+
+    if (url == NULL || it == NULL) {
+        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (!OSSL_HTTP_parse_url(url, &server, &port, NULL /* ppath */, &use_ssl))
+        return NULL;
+    if (use_ssl && ssl_ctx == NULL) {
+        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_add_error_data(1, "missing SSL_CTX");
+        goto end;
+    }
+
+    info.server = server;
+    info.port = port;
+    info.use_proxy = proxy != NULL;
+    info.timeout = timeout;
+    info.ssl_ctx = ssl_ctx;
+    resp = OSSL_HTTP_get_asn1(url, proxy, proxy_port,
+                              NULL, NULL, app_http_tls_cb, &info,
+                              headers, 0 /* maxline */, 0 /* max_resp_len */,
+                              timeout, expected_content_type, it);
+ end:
+    OPENSSL_free(server);
+    OPENSSL_free(port);
+    return resp;
+
+}
+
+ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
+                               const char *path, const char *proxy,
+                               const char *proxy_port, SSL_CTX *ssl_ctx,
+                               const STACK_OF(CONF_VALUE) *headers,
+                               const char *content_type,
+                               ASN1_VALUE *req, const ASN1_ITEM *req_it,
+                               long timeout, const ASN1_ITEM *rsp_it)
+{
+    APP_HTTP_TLS_INFO info;
+
+    info.server = host;
+    info.port = port;
+    info.use_proxy = proxy != NULL;
+    info.timeout = timeout;
+    info.ssl_ctx = ssl_ctx;
+    return OSSL_HTTP_post_asn1(host, port, path, ssl_ctx != NULL,
+                               proxy, proxy_port,
+                               NULL, NULL, app_http_tls_cb, &info,
+                               headers, content_type, req, req_it,
+                               0 /* maxline */,
+                               0 /* max_resp_len */, timeout, NULL, rsp_it);
+}
+
+#endif
 
 /*
  * Platform-specific sections

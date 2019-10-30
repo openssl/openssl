@@ -20,7 +20,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
-#include <openssl/ocsp.h>
+#include <openssl/http.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
@@ -123,11 +123,21 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
                               &x->sig_alg, &x->signature, &x->cert_info, ctx);
 }
 
-#ifndef OPENSSL_NO_OCSP
-int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
+#if !defined(OPENSSL_NO_SOCK)
+static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
+                                   int timeout, const ASN1_ITEM *it)
 {
-    return OCSP_REQ_CTX_nbio_d2i(rctx,
-                                 (ASN1_VALUE **)pcert, ASN1_ITEM_rptr(X509));
+    return OSSL_HTTP_get_asn1(url, NULL, NULL /* no proxy and port */, bio,
+                              rbio, NULL /* no callback for SSL/TLS */, NULL,
+                              NULL /* headers */, 1024 /* maxline */,
+                              0 /* max_resp_len */, timeout,
+                              NULL /* expected_content_type */, it);
+}
+
+X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
+{
+    return (X509 *)simple_get_asn1(url, bio, rbio, timeout,
+                                   ASN1_ITEM_rptr(X509));
 }
 #endif
 
@@ -159,12 +169,11 @@ int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
                               &x->crl, ctx);
 }
 
-#ifndef OPENSSL_NO_OCSP
-int X509_CRL_http_nbio(OCSP_REQ_CTX *rctx, X509_CRL **pcrl)
+#if !defined(OPENSSL_NO_SOCK)
+X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 {
-    return OCSP_REQ_CTX_nbio_d2i(rctx,
-                                 (ASN1_VALUE **)pcrl,
-                                 ASN1_ITEM_rptr(X509_CRL));
+    return (X509_CRL *)simple_get_asn1(url, bio, rbio, timeout,
+                                       ASN1_ITEM_rptr(X509_CRL));
 }
 #endif
 

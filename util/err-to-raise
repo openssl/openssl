@@ -42,6 +42,7 @@ s/ENGINEerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_ENGINE, $1)/;
 s/ESSerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_ESS, $1)/;
 s/EVPerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_EVP, $1)/;
 s/FIPSerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_FIPS, $1)/;
+s/HTTPerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_HTTP, $1)/;
 s/KDFerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_KDF, $1)/;
 s/OBJerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_OBJ, $1)/;
 s/OCSPerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_OCSP, $1)/;

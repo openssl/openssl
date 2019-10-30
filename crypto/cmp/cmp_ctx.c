@@ -819,7 +819,7 @@ int OSSL_CMP_CTX_set_proxyPort(OSSL_CMP_CTX *ctx, int port)
  * sets the http connect/disconnect callback function to be used for HTTP(S)
  * returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_http_cb_t cb)
+int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_HTTP_bio_cb_t cb)
 {
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);

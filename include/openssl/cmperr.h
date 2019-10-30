@@ -63,6 +63,7 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_NO_STDIO                                   194
 #  define CMP_R_NULL_ARGUMENT                              103
 #  define CMP_R_PKISTATUSINFO_NOT_FOUND                    132
+#  define CMP_R_POTENTIALLY_INVALID_CERTIFICATE            139
 #  define CMP_R_UNEXPECTED_PKIBODY                         133
 #  define CMP_R_UNKNOWN_ALGORITHM_ID                       134
 #  define CMP_R_UNKNOWN_CERT_TYPE                          135

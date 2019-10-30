@@ -328,6 +328,14 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ocspapitest]=../include ../apps/include
   DEPEND[ocspapitest]=../libcrypto libtestutil.a
 
+  IF[{- !$disabled{sock} -}]
+    PROGRAMS{noinst}=http_test
+  ENDIF
+
+  SOURCE[http_test]=http_test.c
+  INCLUDE[http_test]=../include ../apps/include
+  DEPEND[http_test]=../libcrypto libtestutil.a
+
   SOURCE[dtlstest]=dtlstest.c ssltestlib.c
   INCLUDE[dtlstest]=../include ../apps/include
   DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a

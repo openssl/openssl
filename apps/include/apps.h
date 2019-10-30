@@ -28,12 +28,14 @@
 # include <openssl/txt_db.h>
 # include <openssl/engine.h>
 # include <openssl/ocsp.h>
+# include <openssl/http.h>
 # include <signal.h>
 # include "apps_ui.h"
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
 
+/* also in include/internal/sockets.h */
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
 # else
@@ -214,6 +216,30 @@ void print_cert_checks(BIO *bio, X509 *x,
                        const char *checkemail, const char *checkip);
 
 void store_setup_crl_download(X509_STORE *st);
+
+typedef struct app_http_tls_info_st {
+    const char *server;
+    const char *port;
+    int use_proxy;
+    long timeout;
+    SSL_CTX *ssl_ctx;
+} APP_HTTP_TLS_INFO;
+BIO *app_http_tls_cb(BIO *hbio, /* APP_HTTP_TLS_INFO */ void *arg,
+                     int connect, int detail);
+# ifndef OPENSSL_NO_SOCK
+ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
+                              const char *proxy_port, SSL_CTX *ssl_ctx,
+                              const STACK_OF(CONF_VALUE) *headers,
+                              long timeout, const char *expected_content_type,
+                              const ASN1_ITEM *it);
+ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
+                               const char *path, const char *proxy,
+                               const char *proxy_port, SSL_CTX *ctx,
+                               const STACK_OF(CONF_VALUE) *headers,
+                               const char *content_type,
+                               ASN1_VALUE *req, const ASN1_ITEM *req_it,
+                               long timeout, const ASN1_ITEM *rsp_it);
+# endif
 
 # define EXT_COPY_NONE   0
 # define EXT_COPY_ADD    1

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -162,20 +162,32 @@ DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
                                int maxline);
-int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
+#  ifndef OPENSSL_NO_SOCK
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
-OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline);
+#  endif
+/* The following functions are used only internally */
+int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
+OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *wbio, BIO *rbio,
+                               int method_GET, int maxline,
+                               unsigned long max_resp_len, int timeout,
+                               const char *expected_content_type,
+                               int expect_asn1);
 void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
 void OCSP_set_max_response_length(OCSP_REQ_CTX *rctx, unsigned long len);
-int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it,
-                     ASN1_VALUE *val);
-int OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx, ASN1_VALUE **pval,
-                          const ASN1_ITEM *it);
+int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const char *content_type,
+                     const ASN1_ITEM *it, ASN1_VALUE *req);
+#  ifndef OPENSSL_NO_SOCK
+ASN1_VALUE *OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it);
+#  endif
 BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx);
-int OCSP_REQ_CTX_http(OCSP_REQ_CTX *rctx, const char *op, const char *path);
-int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req);
+int OCSP_REQ_CTX_http(OCSP_REQ_CTX *rctx,
+                      const char *server, const char *port, const char *path);
 int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
                              const char *name, const char *value);
+/* End of functions used only internally */
+
+/* TODO: remove this (documented but) meanwhile obsolete function? */
+int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req);
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
                              const X509 *issuer);
@@ -237,8 +249,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
                         X509_STORE *store, unsigned long flags);
 
-int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
-                   int *pssl);
+#  define OCSP_parse_url OSSL_HTTP_parse_url /* for backward compatibility */
 
 int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
@@ -359,5 +370,5 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 #  ifdef  __cplusplus
 }
 #  endif
-# endif
+# endif /* !defined OPENSSL_NO_OCSP */
 #endif

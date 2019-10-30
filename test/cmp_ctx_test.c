@@ -301,15 +301,15 @@ static int test_cmp_ctx_log_cb(void)
     return result;
 }
 
-static BIO *test_http_cb(OSSL_CMP_CTX *ctx, BIO *hbio, unsigned long detail)
+static BIO *test_http_cb(BIO *bio, void *arg, int use_ssl, int detail)
 {
     return NULL;
 }
 
-static int test_transfer_cb(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
-                            OSSL_CMP_MSG **res)
+static OSSL_CMP_MSG *test_transfer_cb(OSSL_CMP_CTX *ctx,
+                                      const OSSL_CMP_MSG *req)
 {
-    return 0;
+    return NULL;
 }
 
 static int test_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
@@ -537,6 +537,7 @@ static X509_STORE *X509_STORE_new_1(void)
                              STACK_OF(TYPE)*, NULL, IS_0, \
                              sk_##TYPE##_new_null(), sk_##TYPE##_free)
 
+typedef OSSL_HTTP_bio_cb_t OSSL_cmp_http_cb_t;
 #define DEFINE_SET_CB_TEST(FIELD) \
     static OSSL_cmp_##FIELD##_t OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
     { \

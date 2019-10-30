@@ -67,6 +67,8 @@ static const ERR_STRING_DATA CMP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_NULL_ARGUMENT), "null argument"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_PKISTATUSINFO_NOT_FOUND),
     "pkistatusinfo not found"},
+    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_POTENTIALLY_INVALID_CERTIFICATE),
+    "potentially invalid certificate"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNEXPECTED_PKIBODY), "unexpected pkibody"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNKNOWN_ALGORITHM_ID),
     "unknown algorithm id"},

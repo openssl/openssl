@@ -37,6 +37,8 @@ GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OPENSSL_CTX                             datatype
 NAMING_AUTHORITY                        datatype
+OCSP_parse_url                          define
+OSSL_HTTP_bio_cb_t                      datatype
 OSSL_PARAM                              datatype
 OSSL_PROVIDER                           datatype
 OSSL_SERIALIZER                         datatype
@@ -369,7 +371,6 @@ OSSL_CMP_log4                           define
 OSSL_CMP_severity                       datatype
 OSSL_CMP_warn                           define
 OSSL_cmp_certConf_cb_t                  datatype
-OSSL_cmp_http_cb_t                      datatype
 OSSL_cmp_log_cb_t                       datatype
 OSSL_cmp_transfer_cb_t                  datatype
 OSSL_PARAM_TYPE                         define
@@ -548,6 +549,8 @@ SSLv23_client_method                    define
 SSLv23_method                           define
 SSLv23_server_method                    define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
+X509_CRL_http_nbio                      define
+X509_http_nbio                          define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
 EVP_PKEY_CTX_set1_id                    define
