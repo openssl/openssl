@@ -29,6 +29,9 @@ struct evp_pkey_ctx_st {
     const char *algorithm;
     const char *propquery;
 
+    /* cached key manager */
+    EVP_KEYMGMT *keymgmt;
+
     union {
         struct {
             EVP_KEYEXCH *exchange;

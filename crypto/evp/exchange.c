@@ -46,17 +46,8 @@ static void *evp_keyexch_from_dispatch(int name_id,
      * method to the newly created key exchange method as long as the
      * provider matches.
      */
-    struct keymgmt_data_st *keymgmt_data = vkeymgmt_data;
-    EVP_KEYMGMT *keymgmt =
-        evp_keymgmt_fetch_by_number(keymgmt_data->ctx, name_id,
-                                    keymgmt_data->properties);
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0, paramfncnt = 0;
-
-    if (keymgmt == NULL || EVP_KEYMGMT_provider(keymgmt) != prov) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEYMGMT_AVAILABLE);
-        goto err;
-    }
 
     if ((exchange = evp_keyexch_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -64,8 +55,6 @@ static void *evp_keyexch_from_dispatch(int name_id,
     }
 
     exchange->name_id = name_id;
-    exchange->keymgmt = keymgmt;
-    keymgmt = NULL;              /* avoid double free on failure below */
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -135,7 +124,6 @@ static void *evp_keyexch_from_dispatch(int name_id,
 
  err:
     EVP_KEYEXCH_free(exchange);
-    EVP_KEYMGMT_free(keymgmt);
     return NULL;
 }
 
@@ -147,7 +135,6 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
         CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock);
         if (i > 0)
             return;
-        EVP_KEYMGMT_free(exchange->keymgmt);
         ossl_provider_free(exchange->prov);
         CRYPTO_THREAD_lock_free(exchange->lock);
         OPENSSL_free(exchange);
@@ -183,58 +170,65 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
     return keyexch;
 }
 
-int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
+int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 {
     int ret;
     void *provkey = NULL;
+    EVP_KEYEXCH *exchange = NULL;
+    EVP_KEYMGMT *keymgmt = NULL;
+
+    if (ctx == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
 
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_DERIVE;
 
-    if (ctx->engine != NULL)
+    if (ctx->engine != NULL || ctx->algorithm == NULL)
         goto legacy;
 
-    if (exchange != NULL) {
-        if (!EVP_KEYEXCH_up_ref(exchange))
-            goto err;
-    } else {
-        int nid = ctx->pkey != NULL ? ctx->pkey->type : ctx->pmeth->pkey_id;
+    /*
+     * Because we cleared out old ops, we shouldn't need to worry about
+     * checking if exchange is already there.  Keymgmt is a different
+     * matter, as it isn't tied to a specific EVP_PKEY op.
+     */
+    exchange = EVP_KEYEXCH_fetch(NULL, ctx->algorithm, ctx->propquery);
+    if (exchange != NULL && ctx->keymgmt == NULL) {
+        int name_id = EVP_KEYEXCH_number(exchange);
 
-        /*
-         * TODO(3.0): Check for legacy handling. Remove this once all all
-         * algorithms are moved to providers.
-         */
-        if (ctx->pkey != NULL) {
-            switch (ctx->pkey->type) {
-            case EVP_PKEY_DH:
-                break;
-            default:
-                goto legacy;
-            }
-            exchange = EVP_KEYEXCH_fetch(NULL, OBJ_nid2sn(nid), NULL);
-        } else {
-            goto legacy;
-        }
-
-        if (exchange == NULL) {
-            EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT_EX, EVP_R_INITIALIZATION_ERROR);
-            goto err;
-        }
+        keymgmt = evp_keymgmt_fetch_by_number(NULL, name_id, ctx->propquery);
     }
 
+    if (keymgmt == NULL
+        || exchange == NULL
+        || (EVP_KEYMGMT_provider(keymgmt)
+            != EVP_KEYEXCH_provider(exchange))) {
+        /*
+         * We don't have the full support we need with provided methods,
+         * let's go see if legacy does
+         */
+        EVP_KEYMGMT_free(keymgmt);
+        EVP_KEYEXCH_free(exchange);
+        goto legacy;
+    }
+
+
+    if (keymgmt != NULL)
+        ctx->keymgmt = keymgmt;
     ctx->op.kex.exchange = exchange;
+
     if (ctx->pkey != NULL) {
-        provkey =
-            evp_keymgmt_export_to_provider(ctx->pkey, exchange->keymgmt, 0);
+        provkey = evp_keymgmt_export_to_provider(ctx->pkey, ctx->keymgmt, 0);
         if (provkey == NULL) {
-            EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT_EX, EVP_R_INITIALIZATION_ERROR);
+            EVPerr(0, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
     }
     ctx->op.kex.exchprovctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
     if (ctx->op.kex.exchprovctx == NULL) {
         /* The provider key can stay in the cache */
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT_EX, EVP_R_INITIALIZATION_ERROR);
+        EVPerr(0, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
     ret = exchange->init(ctx->op.kex.exchprovctx, provkey);
@@ -246,8 +240,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
 
  legacy:
     if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT_EX,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -257,11 +250,6 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, EVP_KEYEXCH *exchange)
     if (ret <= 0)
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return ret;
-}
-
-int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
-{
-    return EVP_PKEY_derive_init_ex(ctx, NULL);
 }
 
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
@@ -284,8 +272,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return -2;
     }
 
-    provkey =
-        evp_keymgmt_export_to_provider(peer, ctx->op.kex.exchange->keymgmt, 0);
+    provkey = evp_keymgmt_export_to_provider(peer, ctx->keymgmt, 0);
     if (provkey == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, ERR_R_INTERNAL_ERROR);
         return 0;
