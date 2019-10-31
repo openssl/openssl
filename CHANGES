@@ -154,6 +154,10 @@
      pages for further details.
      [Matt Caswell]
 
+  *) Most common options (such as -rand/-writerand, TLS version control, etc)
+     were refactored and point to newly-enhanced descriptions in openssl.pod
+     [Rich Salz]
+
   *) Over two thousand fixes were made to the documentation, including:
      adding missing command flags, better style conformance, documentation
      of internals, etc.
