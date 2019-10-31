@@ -784,7 +784,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 }
 
 /**
- * Add a file of certs to a stack.
+ * Add a container of certs to a stack.
  * \param stack the stack to add to.
  * \param file the file to add from. All certs in this file that are not
  * already in the stack will be added.
