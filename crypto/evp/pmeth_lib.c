@@ -700,7 +700,7 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         if (md == NULL)
             return 0;
         ret = EVP_PKEY_CTX_set_signature_md(ctx, md);
-        EVP_MD_meth_free(md);
+        EVP_MD_free(md);
         return ret;
     }
 

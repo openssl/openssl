@@ -131,7 +131,7 @@ static int test_EVP_MD_fetch(void)
         if (!TEST_true(EVP_MD_up_ref(md)))
             goto err;
         /* Ref count should now be 2. Release first one here */
-        EVP_MD_meth_free(md);
+        EVP_MD_free(md);
     } else {
         if (!TEST_ptr_null(md))
             goto err;
@@ -139,7 +139,7 @@ static int test_EVP_MD_fetch(void)
     ret = 1;
 
 err:
-    EVP_MD_meth_free(md);
+    EVP_MD_free(md);
     OSSL_PROVIDER_unload(prov[0]);
     OSSL_PROVIDER_unload(prov[1]);
     /* Not normally needed, but we would like to test that
@@ -203,7 +203,7 @@ static int test_EVP_CIPHER_fetch(void)
             if (!TEST_true(EVP_CIPHER_up_ref(cipher)))
                 goto err;
             /* Ref count should now be 2. Release first one here */
-            EVP_CIPHER_meth_free(cipher);
+            EVP_CIPHER_free(cipher);
         }
     } else {
         if (!TEST_ptr_null(cipher))
@@ -211,7 +211,7 @@ static int test_EVP_CIPHER_fetch(void)
     }
     ret = 1;
 err:
-    EVP_CIPHER_meth_free(cipher);
+    EVP_CIPHER_free(cipher);
     OSSL_PROVIDER_unload(prov[0]);
     OSSL_PROVIDER_unload(prov[1]);
     OPENSSL_CTX_free(ctx);
