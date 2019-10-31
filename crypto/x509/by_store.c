@@ -23,9 +23,27 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
 
     if ((ctx = OSSL_STORE_open(uri, NULL, NULL, NULL, NULL)) == NULL)
         return 0;
-    if (criterion != NULL
-        && !OSSL_STORE_find(ctx, criterion))
-        return 0;
+
+    /*
+     * We try to set the criterion, but don't care if it was valid or not.
+     * For a OSSL_STORE, it merely serves as an optimization, the expectation
+     * being that if the criterion couldn't be used, we will get *everything*
+     * from the container that the URI represents rather than the subset that
+     * the criterion indicates, so the biggest harm is that we cache more
+     * objects certs and CRLs than we may expect, but that's ok.
+     *
+     * Specifically for OpenSSL's own file: scheme, the only workable
+     * criterion is the BY_NAME one, which it can only apply on directories,
+     * but it's possible that the URI is a single file rather than a directory,
+     * and in that case, the BY_NAME criterion is pointless.
+     *
+     * We could very simply not apply any criterion at all here, and just let
+     * the code that selects certs and CRLs from the cached objects do its job,
+     * but it's a nice optimization when it can be applied (such as on an
+     * actual directory with a thousand CA certs).
+     */
+    if (criterion != NULL)
+        OSSL_STORE_find(ctx, criterion);
 
     for (;;) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
