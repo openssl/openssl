@@ -35,17 +35,8 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 static void *evp_signature_from_dispatch(int name_id,
                                          const OSSL_DISPATCH *fns,
                                          OSSL_PROVIDER *prov,
-                                         void *vkeymgmt_data)
+                                         void *unused)
 {
-    /*
-     * Signature functions cannot work without a key, and key management
-     * from the same provider to manage its keys.  We therefore fetch
-     * a key management method using the same algorithm and properties
-     * and pass that down to evp_generic_fetch to be passed on to our
-     * evp_signature_from_dispatch, which will attach the key management
-     * method to the newly created key exchange method as long as the
-     * provider matches.
-     */
     EVP_SIGNATURE *signature = NULL;
     int ctxfncnt = 0, signfncnt = 0, verifyfncnt = 0, verifyrecfncnt = 0;
     int digsignfncnt = 0, digverifyfncnt = 0;
@@ -285,16 +276,8 @@ OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature)
 EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                    const char *properties)
 {
-    struct keymgmt_data_st keymgmt_data;
-
-    /*
-     * A signature operation cannot work without a key, so we need key
-     * management from the same provider to manage its keys.
-     */
-    keymgmt_data.ctx = ctx;
-    keymgmt_data.properties = properties;
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
-                             evp_signature_from_dispatch, &keymgmt_data,
+                             evp_signature_from_dispatch, NULL,
                              (int (*)(void *))EVP_SIGNATURE_up_ref,
                              (void (*)(void *))EVP_SIGNATURE_free);
 }
@@ -314,13 +297,9 @@ void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
                                               void *arg),
                                    void *arg)
 {
-    struct keymgmt_data_st keymgmt_data;
-
-    keymgmt_data.ctx = libctx;
-    keymgmt_data.properties = NULL;
     evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
                        (void (*)(void *, void *))fn, arg,
-                       evp_signature_from_dispatch, &keymgmt_data,
+                       evp_signature_from_dispatch, NULL,
                        (void (*)(void *))EVP_SIGNATURE_free);
 }
 
