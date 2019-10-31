@@ -157,12 +157,12 @@ int tls1_change_cipher_state(SSL *s, int which)
     struct tls_enable crypto_info;
 # else
     struct tls_crypto_info_all crypto_info;
+# endif
     unsigned char *rec_seq;
     void *rl_sequence;
-#  ifndef OPENSSL_NO_KTLS_RX
+# ifndef OPENSSL_NO_KTLS_RX
     int count_unprocessed;
     int bit;
-#  endif
 # endif
     BIO *bio;
 #endif
@@ -481,15 +481,19 @@ int tls1_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
-# ifndef __FreeBSD__
     if (which & SSL3_CC_WRITE)
         rl_sequence = RECORD_LAYER_get_write_sequence(&s->rlayer);
     else
         rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
 
+# ifdef __FreeBSD__
+    memcpy(crypto_info.rec_seq, rl_sequence, sizeof(crypto_info.req_seq));
+    req_seq = crypto_info.req_seq;
+# else
     if (!ktls_configure_crypto(c, s->version, dd, rl_sequence, &crypto_info,
                                &rec_seq, iv, key))
         goto skip_ktls;
+# endif
 
     if (which & SSL3_CC_READ) {
 #  ifndef OPENSSL_NO_KTLS_RX
@@ -510,7 +514,6 @@ int tls1_change_cipher_state(SSL *s, int which)
         goto skip_ktls;
 #  endif
     }
-# endif /* !__FreeBSD__ */
 
     /* ktls works with user provided buffers directly */
     if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {
