@@ -51,7 +51,7 @@ extern "C" {
 /*
  * Note: The OpenSSL Project will never define OPENSSL_VERSION_BUILD_METADATA
  * to be anything but the empty string.  Its use is entirely reserved for
- * others vendors
+ * others
  */
 
 /*
