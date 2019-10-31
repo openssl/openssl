@@ -1530,6 +1530,11 @@ int main(int argc, char *argv[])
     }
 
     {
+        X509_VERIFY_PARAM *param = SSL_CTX_get0_param(c_ctx);
+        X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK);
+    }
+
+    {
         int session_id_context = 0;
         if (!SSL_CTX_set_session_id_context(s_ctx, (void *)&session_id_context,
                                             sizeof(session_id_context)) ||

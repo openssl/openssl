@@ -482,6 +482,14 @@ static int test_handshake(int idx)
         && !SSL_CTX_config(resume_client_ctx, "resume-client"))
         goto err;
 
+    {
+        X509_VERIFY_PARAM *param = SSL_CTX_get0_param(client_ctx);
+        X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK);
+    }
+    if (resume_client_ctx != NULL) {
+        X509_VERIFY_PARAM *param = SSL_CTX_get0_param(resume_client_ctx);
+        X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK);
+    }
     result = do_handshake(server_ctx, server2_ctx, client_ctx,
                           resume_server_ctx, resume_client_ctx, test_ctx);
 

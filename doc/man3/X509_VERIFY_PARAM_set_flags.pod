@@ -307,6 +307,17 @@ The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity period
 of certificates and CRLs against the current time. If X509_VERIFY_PARAM_set_time()
 is used to specify a verification time, the check is not suppressed.
 
+The B<X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK> flag allows verification of a
+certificate for the B<X509_PURPOSE_SSL_SERVER> purpose to succeed even if
+the application has not provided a DNS hostname, IP or email address to
+be checked against the Subject of the certificate. Since OpenSSL 3.0.0,
+validation of SSL server certificates will fail unless either a matching
+identity has been provided or this flag is set.
+This flag has no effect if an identity has been set; it only affects the
+default behaviour when no identity has been provided for checking the
+subject of the peer certificate.
+
+
 =head1 INHERITANCE FLAGS
 
 These flags specify how parameters are "inherited" from one structure to

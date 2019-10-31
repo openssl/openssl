@@ -729,6 +729,7 @@ static int check_id(X509_STORE_CTX *ctx)
 {
     X509_VERIFY_PARAM *vpm = ctx->param;
     X509 *x = ctx->cert;
+
     if (vpm->hosts && check_hosts(x, vpm) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
             return 0;
@@ -741,7 +742,17 @@ static int check_id(X509_STORE_CTX *ctx)
         if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
             return 0;
     }
-    return 1;
+
+    /*
+     * When verifying SSL server certificates, require that an
+     * identity be set for validating the certificate subject unless
+     * the X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK flags is set instead.
+     */
+    if (vpm->purpose != X509_PURPOSE_SSL_SERVER
+        || (vpm->flags & X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK))
+        return 1;
+
+    return (vpm->hosts || vpm->email || vpm->ip);
 }
 
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)

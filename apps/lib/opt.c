@@ -608,6 +608,9 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_ALLOW_PROXY_CERTS:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_ALLOW_PROXY_CERTS);
         break;
+    case OPT_V_ALLOW_NO_SUBJECT_CHECK:
+        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK);
+        break;
     }
     return 1;
 

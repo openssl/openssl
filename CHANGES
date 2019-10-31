@@ -9,6 +9,13 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Validation of SSL server certificates will no longer succeed by
+     default when no identity has been set with SSL_set1_host() (or
+     similar methods). Applications which manually verify the subject
+     of the server certificate can restore the original behaviour by
+     setting X509_V_FLAG_ALLOW_NO_SUBJECT_CHECK.
+     [David Woodhouse]
+
   *) Added functionality to create an EVP_PKEY context based on data
      for methods from providers.  This takes an algorithm name and a
      property query string and simply stores them, with the intent
