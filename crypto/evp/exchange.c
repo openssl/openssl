@@ -34,8 +34,7 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 
 static void *evp_keyexch_from_dispatch(int name_id,
                                        const OSSL_DISPATCH *fns,
-                                       OSSL_PROVIDER *prov,
-                                       void *unused)
+                                       OSSL_PROVIDER *prov)
 {
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0, paramfncnt = 0;
@@ -148,14 +147,10 @@ OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
 EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    EVP_KEYEXCH *keyexch = NULL;
-
-    keyexch = evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
-                                evp_keyexch_from_dispatch, NULL,
-                                (int (*)(void *))EVP_KEYEXCH_up_ref,
-                                (void (*)(void *))EVP_KEYEXCH_free);
-
-    return keyexch;
+    return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
+                             evp_keyexch_from_dispatch,
+                             (int (*)(void *))EVP_KEYEXCH_up_ref,
+                             (void (*)(void *))EVP_KEYEXCH_free);
 }
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
@@ -378,7 +373,7 @@ void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_KEYEXCH,
                        (void (*)(void *, void *))fn, arg,
-                       evp_keyexch_from_dispatch, NULL,
+                       evp_keyexch_from_dispatch,
                        (void (*)(void *))EVP_KEYEXCH_free);
 }
 
