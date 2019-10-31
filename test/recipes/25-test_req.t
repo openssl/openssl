@@ -68,10 +68,8 @@ subtest "generating certificate requests with DSA" => sub {
     plan tests => 2;
 
     SKIP: {
-        skip "This test is failing and disabled", 2
-            if 1;
-#       skip "DSA is not supported by this OpenSSL build", 2
-#           if disabled("dsa");
+        skip "DSA is not supported by this OpenSSL build", 2
+            if disabled("dsa");
 
         ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
             "-new", "-out", "testreq.pem", "-utf8",
