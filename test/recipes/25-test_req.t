@@ -53,15 +53,17 @@ subtest "generating certificate requests with RSA" => sub {
         skip "RSA is not supported by this OpenSSL build", 2
             if disabled("rsa");
 
-        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-            "-new", "-out", "testreq.pem", "-utf8",
-            "-key", srctop_file("test", "testrsa.pem")])),
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-key", srctop_file("test", "testrsa.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-            "-verify", "-in", "testreq.pem", "-noout"])),
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq.pem", "-noout"])),
            "Verifying signature on request");
-        }
+    }
 };
 
 subtest "generating certificate requests with DSA" => sub {
@@ -71,15 +73,17 @@ subtest "generating certificate requests with DSA" => sub {
         skip "DSA is not supported by this OpenSSL build", 2
             if disabled("dsa");
 
-        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-            "-new", "-out", "testreq.pem", "-utf8",
-            "-key", srctop_file("test", "testdsa.pem")])),
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-key", srctop_file("test", "testdsa.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-            "-verify", "-in", "testreq.pem", "-noout"])),
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq.pem", "-noout"])),
            "Verifying signature on request");
-        }
+    }
 };
 
 subtest "generating certificate requests with ECDSA" => sub {
@@ -89,35 +93,37 @@ subtest "generating certificate requests with ECDSA" => sub {
         skip "ECDSA is not supported by this OpenSSL build", 2
             if disabled("ec");
 
-        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-            "-new", "-out", "testreq.pem", "-utf8",
-            "-key", srctop_file("test", "testec-p256.pem")])),
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-key", srctop_file("test", "testec-p256.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-            "-verify", "-in", "testreq.pem", "-noout"])),
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq.pem", "-noout"])),
            "Verifying signature on request");
-        }
+    }
 };
 
 subtest "generating certificate requests" => sub {
     plan tests => 2;
 
     ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-		@req_new, "-out", "testreq.pem"])),
+                @req_new, "-out", "testreq.pem"])),
        "Generating request");
 
     ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-		"-verify", "-in", "testreq.pem", "-noout"])),
+                "-verify", "-in", "testreq.pem", "-noout"])),
        "Verifying signature on request");
 };
 
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
 
 run_conversion('req conversions',
-	       "testreq.pem");
+               "testreq.pem");
 run_conversion('req conversions -- testreq2',
-	       srctop_file("test", "testreq2.pem"));
+               srctop_file("test", "testreq2.pem"));
 
 unlink "testkey.pem", "testreq.pem";
 
@@ -126,20 +132,20 @@ sub run_conversion {
     my $reqfile = shift;
 
     subtest $title => sub {
-	run(app(["openssl", @openssl_args,
-		 "-in", $reqfile, "-inform", "p",
-		 "-noout", "-text"],
-		stderr => "req-check.err", stdout => undef));
-	open DATA, "req-check.err";
+    run(app(["openssl", @openssl_args,
+             "-in", $reqfile, "-inform", "p",
+             "-noout", "-text"],
+            stderr => "req-check.err", stdout => undef));
+    open DATA, "req-check.err";
       SKIP: {
-	  plan skip_all => "skipping req conversion test for $reqfile"
-	      if grep /Unknown Public Key/, map { s/\R//; } <DATA>;
+      plan skip_all => "skipping req conversion test for $reqfile"
+          if grep /Unknown Public Key/, map { s/\R//; } <DATA>;
 
-	  tconversion("req", $reqfile, @openssl_args);
-	}
-	close DATA;
-	unlink "req-check.err";
+      tconversion("req", $reqfile, @openssl_args);
+    }
+    close DATA;
+    unlink "req-check.err";
 
-	done_testing();
+    done_testing();
     };
 }
