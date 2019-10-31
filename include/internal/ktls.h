@@ -31,8 +31,11 @@
 #   include <netinet/in.h>
 #   include <netinet/tcp.h>
 #   include <crypto/cryptodev.h>
+#   include "openssl/ssl3.h"
 
-#   define OPENSSL_NO_KTLS_RX
+#   ifndef TCP_RXTLS_ENABLE
+#    define OPENSSL_NO_KTLS_RX
+#   endif
 #   define OPENSSL_KTLS_AES_GCM_128
 #   define OPENSSL_KTLS_AES_GCM_256
 
@@ -56,8 +59,12 @@ static ossl_inline int ktls_enable(int fd)
 /*
  * The TCP_TXTLS_ENABLE socket option marks the outgoing socket buffer
  * as using TLS.  If successful, then data sent using this socket will
- * be encrypted and encapsulated in TLS records using the tls_en.
+ * be encrypted and encapsulated in TLS records using the tls_en
  * provided here.
+ *
+ * The TCP_RXTLS_ENABLE socket option marks the incoming socket buffer
+ * as using TLS.  If successful, then data received for this socket will
+ * be authenticated and decrypted using the tls_en provided here.
  */
 static ossl_inline int ktls_start(int fd,
                                   void *tls_en,
@@ -66,8 +73,11 @@ static ossl_inline int ktls_start(int fd,
     if (is_tx)
         return setsockopt(fd, IPPROTO_TCP, TCP_TXTLS_ENABLE,
                           tls_en, len) ? 0 : 1;
-    else
-        return 0;
+#   ifndef OPENSSL_NO_KTLS_RX
+    return setsockopt(fd, IPPROTO_TCP, TCP_RXTLS_ENABLE, tls_en, len) ? 0 : 1;
+#   else
+    return 0;
+#   endif
 }
 
 /*
@@ -103,10 +113,78 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     return sendmsg(fd, &msg, 0);
 }
 
+#   ifdef OPENSSL_NO_KTLS_RX
+
 static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 {
     return -1;
 }
+
+#   else /* !defined(OPENSSL_NO_KTLS_RX) */
+
+/*
+ * Receive a TLS record using the tls_en provided in ktls_start.  The
+ * kernel strips any explicit IV and authentication tag, but provides
+ * the TLS record header via a control message.  If there is an error
+ * with the TLS record such as an invalid header, invalid padding, or
+ * authentication failure recvmsg() will fail with an error.
+ */
+static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+{
+    struct msghdr msg = { 0 };
+    int cmsg_len = sizeof(struct tls_get_record);
+    struct tls_get_record *tgr;
+    struct cmsghdr *cmsg;
+    char buf[CMSG_SPACE(cmsg_len)];
+    struct iovec msg_iov;   /* Vector of data to send/receive into */
+    int ret;
+    unsigned char *p = data;
+    const size_t prepend_length = SSL3_RT_HEADER_LENGTH;
+
+    if (length <= prepend_length) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    msg.msg_control = buf;
+    msg.msg_controllen = sizeof(buf);
+
+    msg_iov.iov_base = p + prepend_length;
+    msg_iov.iov_len = length - prepend_length;
+    msg.msg_iov = &msg_iov;
+    msg.msg_iovlen = 1;
+
+    ret = recvmsg(fd, &msg, 0);
+    if (ret <= 0)
+        return ret;
+
+    if ((msg.msg_flags & (MSG_EOR | MSG_CTRUNC)) != MSG_EOR) {
+        errno = EMSGSIZE;
+        return -1;
+    }
+
+    if (msg.msg_controllen == 0) {
+        errno = EBADMSG;
+        return -1;
+    }
+
+    cmsg = CMSG_FIRSTHDR(&msg);
+    if (cmsg->cmsg_level != IPPROTO_TCP || cmsg->cmsg_type != TLS_GET_RECORD
+        || cmsg->cmsg_len != CMSG_LEN(cmsg_len)) {
+        errno = EBADMSG;
+        return -1;
+    }
+
+    tgr = (struct tls_get_record *)CMSG_DATA(cmsg);
+    p[0] = tgr->tls_type;
+    p[1] = tgr->tls_vmajor;
+    p[2] = tgr->tls_vminor;
+    *(uint16_t *)(p + 3) = htons(ret);
+
+    return ret + prepend_length;
+}
+
+#   endif /* OPENSSL_NO_KTLS_RX */
 
 /*
  * KTLS enables the sendfile system call to send data from a file over
@@ -215,8 +293,14 @@ static ossl_inline int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c,
     crypto_info->iv = iv;
     crypto_info->tls_vmajor = (s->version >> 8) & 0x000000ff;
     crypto_info->tls_vminor = (s->version & 0x000000ff);
+#    ifdef TCP_RXTLS_ENABLE
+    memcpy(crypto_info->rec_seq, rl_sequence, sizeof(crypto_info->rec_seq));
+    if (rec_seq != NULL)
+        *rec_seq = crypto_info->rec_seq;
+#    else
     if (rec_seq != NULL)
         *rec_seq = NULL;
+#    endif
     return 1;
 };
 #   endif                        /* OSSL_SSL_LOCAL_H */
