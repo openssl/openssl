@@ -132,20 +132,20 @@ sub run_conversion {
     my $reqfile = shift;
 
     subtest $title => sub {
-    run(app(["openssl", @openssl_args,
-             "-in", $reqfile, "-inform", "p",
-             "-noout", "-text"],
-            stderr => "req-check.err", stdout => undef));
-    open DATA, "req-check.err";
-      SKIP: {
-      plan skip_all => "skipping req conversion test for $reqfile"
-          if grep /Unknown Public Key/, map { s/\R//; } <DATA>;
+        run(app(["openssl", @openssl_args,
+                 "-in", $reqfile, "-inform", "p",
+                 "-noout", "-text"],
+                stderr => "req-check.err", stdout => undef));
+        open DATA, "req-check.err";
+        SKIP: {
+            plan skip_all => "skipping req conversion test for $reqfile"
+                if grep /Unknown Public Key/, map { s/\R//; } <DATA>;
 
-      tconversion("req", $reqfile, @openssl_args);
-    }
-    close DATA;
-    unlink "req-check.err";
+            tconversion("req", $reqfile, @openssl_args);
+        }
+        close DATA;
+        unlink "req-check.err";
 
-    done_testing();
+        done_testing();
     };
 }
