@@ -1360,8 +1360,7 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 
 static void *evp_cipher_from_dispatch(const int name_id,
                                       const OSSL_DISPATCH *fns,
-                                      OSSL_PROVIDER *prov,
-                                      void *unused)
+                                      OSSL_PROVIDER *prov)
 {
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
@@ -1501,7 +1500,7 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_CIPHER *cipher =
         evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
-                          evp_cipher_from_dispatch, NULL, evp_cipher_up_ref,
+                          evp_cipher_from_dispatch, evp_cipher_up_ref,
                           evp_cipher_free);
 
     return cipher;
@@ -1536,5 +1535,5 @@ void EVP_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_CIPHER,
                        (void (*)(void *, void *))fn, arg,
-                       evp_cipher_from_dispatch, NULL, evp_cipher_free);
+                       evp_cipher_from_dispatch, evp_cipher_free);
 }

@@ -47,8 +47,7 @@ struct evp_method_data_st {
     const char *names;           /* For get_evp_method_from_store() */
     const char *propquery;       /* For get_evp_method_from_store() */
     void *(*method_from_dispatch)(int name_id, const OSSL_DISPATCH *,
-                                  OSSL_PROVIDER *, void *);
-    void *method_data;
+                                  OSSL_PROVIDER *);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
@@ -254,8 +253,7 @@ static void *construct_evp_method(const char *names, const OSSL_DISPATCH *fns,
 
     if (name_id == 0)
         return NULL;
-    return methdata->method_from_dispatch(name_id, fns, prov,
-                                          methdata->method_data);
+    return methdata->method_from_dispatch(name_id, fns, prov);
 }
 
 static void destruct_evp_method(void *method, void *data)
@@ -271,9 +269,7 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         const char *properties,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov,
-                                            void *method_data),
-                        void *method_data,
+                                            OSSL_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
@@ -335,7 +331,6 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.destruct_method = free_method;
         mcmdata.refcnt_up_method = up_ref_method;
         mcmdata.destruct_method = free_method;
-        mcmdata.method_data = method_data;
         if ((method = ossl_method_construct(libctx, operation_id,
                                             0 /* !force_cache */,
                                             &mcm, &mcmdata)) != NULL) {
@@ -361,16 +356,13 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         const char *name, const char *properties,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov,
-                                            void *method_data),
-                        void *method_data,
+                                            OSSL_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
     return inner_evp_generic_fetch(libctx,
                                    operation_id, 0, name, properties,
-                                   new_method, method_data,
-                                   up_ref_method, free_method);
+                                   new_method, up_ref_method, free_method);
 }
 
 /*
@@ -384,16 +376,13 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
                                   int name_id, const char *properties,
                                   void *(*new_method)(int name_id,
                                                       const OSSL_DISPATCH *fns,
-                                                      OSSL_PROVIDER *prov,
-                                                      void *method_data),
-                                  void *method_data,
+                                                      OSSL_PROVIDER *prov),
                                   int (*up_ref_method)(void *),
                                   void (*free_method)(void *))
 {
     return inner_evp_generic_fetch(libctx,
                                    operation_id, name_id, NULL, properties,
-                                   new_method, method_data,
-                                   up_ref_method, free_method);
+                                   new_method, up_ref_method, free_method);
 }
 
 int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
@@ -410,8 +399,7 @@ struct do_all_data_st {
     void (*user_fn)(void *method, void *arg);
     void *user_arg;
     void *(*new_method)(const int name_id, const OSSL_DISPATCH *fns,
-                        OSSL_PROVIDER *prov, void *method_data);
-    void *method_data;
+                        OSSL_PROVIDER *prov);
     void (*free_method)(void *);
 };
 
@@ -425,8 +413,7 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
     void *method = NULL;
 
     if (name_id != 0)
-        method = data->new_method(name_id, algo->implementation, provider,
-                                  data->method_data);
+        method = data->new_method(name_id, algo->implementation, provider);
 
     if (method != NULL) {
         data->user_fn(method, data->user_arg);
@@ -439,15 +426,12 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
                         void *user_arg,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov,
-                                            void *method_data),
-                        void *method_data,
+                                            OSSL_PROVIDER *prov),
                         void (*free_method)(void *))
 {
     struct do_all_data_st data;
 
     data.new_method = new_method;
-    data.method_data = method_data;
     data.free_method = free_method;
     data.user_fn = user_fn;
     data.user_arg = user_arg;
