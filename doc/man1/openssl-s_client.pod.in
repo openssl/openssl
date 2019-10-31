@@ -812,7 +812,8 @@ L<openssl-ciphers(1)>,
 L<SSL_CONF_cmd(3)>,
 L<SSL_CTX_set_max_send_fragment(3)>,
 L<SSL_CTX_set_split_send_fragment(3)>,
-L<SSL_CTX_set_max_pipelines(3)>
+L<SSL_CTX_set_max_pipelines(3)>,
+L<ossl_store-file(7)>
 
 =head1 HISTORY
 

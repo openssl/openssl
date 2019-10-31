@@ -187,7 +187,8 @@ fails.
 L<openssl(1)>,
 L<openssl-s_client(1)>,
 L<openssl-s_server(1)>,
-L<openssl-ciphers(1)>
+L<openssl-ciphers(1)>,
+L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 

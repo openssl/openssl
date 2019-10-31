@@ -736,6 +736,10 @@ the list of permitted ciphers in a database and only use those.
 
 No revocation checking is done on the signer's certificate.
 
+=head1 SEE ALSO
+
+L<ossl_store-file(7)>
+
 =head1 HISTORY
 
 The use of multiple B<-signer> options and the B<-resign> command were first

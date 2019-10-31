@@ -757,7 +757,8 @@ B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
 =head1 SEE ALSO
 
 L<openssl(1)>,
-L<openssl-x509(1)>
+L<openssl-x509(1)>,
+L<ossl_store-file(7)>
 
 =head1 HISTORY
 

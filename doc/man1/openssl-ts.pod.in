@@ -652,7 +652,8 @@ L<openssl-req(1)>,
 L<openssl-x509(1)>,
 L<openssl-ca(1)>,
 L<openssl-genrsa(1)>,
-L<config(5)>
+L<config(5)>,
+L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 

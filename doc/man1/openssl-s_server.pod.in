@@ -379,6 +379,7 @@ them.
 With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
 B<-chainCApath>, depending on if the URI indicates a directory or a
 single file.
+See L<ossl_store-file(7)> for more information on the C<file:> scheme.
 
 =item B<-nocert>
 
@@ -821,7 +822,8 @@ L<openssl-ciphers(1)>,
 L<SSL_CONF_cmd(3)>,
 L<SSL_CTX_set_max_send_fragment(3)>,
 L<SSL_CTX_set_split_send_fragment(3)>,
-L<SSL_CTX_set_max_pipelines(3)>
+L<SSL_CTX_set_max_pipelines(3)>,
+L<ossl_store-file(7)>
 
 =head1 HISTORY
 

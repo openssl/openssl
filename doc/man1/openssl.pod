@@ -707,6 +707,8 @@ indicate a single certificate, as well as a collection of them.
 With URIs in the C<file:> scheme, this acts as B<-CAfile> or
 B<-CApath>, depending on if the URI indicates a single file or
 directory.
+See L<ossl_store-file(7)> for more information on the C<file:> scheme.
+
 These certificates are also used when building the server certificate
 chain (for example with L<openssl-s_server(1)>) or client certificate
 chain (for example with L<openssl-s_time(1)>).

@@ -479,6 +479,10 @@ No revocation checking is done on the signer's certificate.
 The current code can only handle S/MIME v2 messages, the more complex S/MIME v3
 structures may cause parsing errors.
 
+=head1 SEE ALSO
+
+L<ossl_store-file(7)>
+
 =head1 HISTORY
 
 The use of multiple B<-signer> options and the B<-resign> command were first
