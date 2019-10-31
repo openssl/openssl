@@ -82,7 +82,7 @@ subtest "generating certificate requests with DSA" => sub {
         }
 };
 
-subtest "generating certificate requests with DSA" => sub {
+subtest "generating certificate requests with ECDSA" => sub {
     plan tests => 2;
 
     SKIP: {
