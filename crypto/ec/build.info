@@ -73,6 +73,9 @@ GENERATE[ecp_nistz256-avx2.s]=asm/ecp_nistz256-avx2.pl
 GENERATE[ecp_nistz256-sparcv9.S]=asm/ecp_nistz256-sparcv9.pl
 INCLUDE[ecp_nistz256-sparcv9.o]=..
 
+INCLUDE[ecp_s390x_nistp.o]=..
+INCLUDE[ecx_meth.o]=..
+
 GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl
 INCLUDE[ecp_nistz256-armv4.o]=..
 GENERATE[ecp_nistz256-armv8.S]=asm/ecp_nistz256-armv8.pl
