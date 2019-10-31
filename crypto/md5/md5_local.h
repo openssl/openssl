@@ -62,7 +62,7 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 #define R0(a,b,c,d,k,s,t) { \
         a+=((k)+(t)+F((b),(c),(d))); \
         a=ROTATE(a,s); \
-        a+=b; };\
+        a+=b; };
 
 #define R1(a,b,c,d,k,s,t) { \
         a+=((k)+(t)+G((b),(c),(d))); \
