@@ -35,17 +35,8 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 static void *evp_keyexch_from_dispatch(int name_id,
                                        const OSSL_DISPATCH *fns,
                                        OSSL_PROVIDER *prov,
-                                       void *vkeymgmt_data)
+                                       void *unused)
 {
-    /*
-     * Key exchange cannot work without a key, and key management
-     * from the same provider to manage its keys.  We therefore fetch
-     * a key management method using the same algorithm and properties
-     * and pass that down to evp_generic_fetch to be passed on to our
-     * evp_keyexch_from_dispatch, which will attach the key management
-     * method to the newly created key exchange method as long as the
-     * provider matches.
-     */
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0, paramfncnt = 0;
 
@@ -158,12 +149,9 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
     EVP_KEYEXCH *keyexch = NULL;
-    struct keymgmt_data_st keymgmt_data;
 
-    keymgmt_data.ctx = ctx;
-    keymgmt_data.properties = properties;
     keyexch = evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
-                                evp_keyexch_from_dispatch, &keymgmt_data,
+                                evp_keyexch_from_dispatch, NULL,
                                 (int (*)(void *))EVP_KEYEXCH_up_ref,
                                 (void (*)(void *))EVP_KEYEXCH_free);
 
@@ -388,13 +376,9 @@ void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
                                  void (*fn)(EVP_KEYEXCH *keyexch, void *arg),
                                  void *arg)
 {
-    struct keymgmt_data_st keymgmt_data;
-
-    keymgmt_data.ctx = libctx;
-    keymgmt_data.properties = NULL;
     evp_generic_do_all(libctx, OSSL_OP_KEYEXCH,
                        (void (*)(void *, void *))fn, arg,
-                       evp_keyexch_from_dispatch, &keymgmt_data,
+                       evp_keyexch_from_dispatch, NULL,
                        (void (*)(void *))EVP_KEYEXCH_free);
 }
 
