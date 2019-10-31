@@ -1968,7 +1968,7 @@ int s_server_main(int argc, char *argv[])
             SSL_CTX_set_mode(ctx2, SSL_MODE_ASYNC);
 
         if (!ctx_set_verify_locations(ctx2, CAfile, noCAfile, CApath,
-                                      noCApath, NULL, 0)) {
+                                      noCApath, CAstore, noCAstore)) {
             ERR_print_errors(bio_err);
             goto end;
         }

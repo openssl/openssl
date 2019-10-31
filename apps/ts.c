@@ -950,7 +950,6 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
 {
     X509_STORE *cert_ctx = NULL;
     X509_LOOKUP *lookup = NULL;
-    int i;
 
     cert_ctx = X509_STORE_new();
     X509_STORE_set_verify_cb(cert_ctx, verify_cb);
@@ -960,8 +959,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
             BIO_printf(bio_err, "memory allocation failure\n");
             goto err;
         }
-        i = X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM);
-        if (!i) {
+        if (!X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM)) {
             BIO_printf(bio_err, "Error loading directory %s\n", CApath);
             goto err;
         }
@@ -973,8 +971,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
             BIO_printf(bio_err, "memory allocation failure\n");
             goto err;
         }
-        i = X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM);
-        if (!i) {
+        if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM)) {
             BIO_printf(bio_err, "Error loading file %s\n", CAfile);
             goto err;
         }
@@ -986,8 +983,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
             BIO_printf(bio_err, "memory allocation failure\n");
             goto err;
         }
-        i = X509_LOOKUP_load_store(lookup, CAstore);
-        if (!i) {
+        if (!X509_LOOKUP_load_store(lookup, CAstore)) {
             BIO_printf(bio_err, "Error loading store URI %s\n", CAstore);
             goto err;
         }
