@@ -23,8 +23,9 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
 
     if ((ctx = OSSL_STORE_open(uri, NULL, NULL, NULL, NULL)) == NULL)
         return 0;
-    if (criterion != NULL)
-        OSSL_STORE_find(ctx, criterion);
+    if (criterion != NULL
+        && !OSSL_STORE_find(ctx, criterion))
+        return 0;
 
     for (;;) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
@@ -41,7 +42,7 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
              * This is an entry in the "directory" represented by the current
              * uri.  if |depth| allows, dive into it.
              */
-            if (depth == 0)
+            if (depth > 0)
                 ok = cache_objects(lctx, OSSL_STORE_INFO_get0_NAME(info),
                                    criterion, depth - 1);
         } else {
