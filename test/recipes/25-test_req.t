@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 9;
+plan tests => 12;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -45,6 +45,62 @@ ok(!run(app([@addext_args, "-addext", $val, "-addext", $val])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val2])));
 ok(!run(app([@addext_args, "-addext", $val, "-addext", $val3])));
 ok(!run(app([@addext_args, "-addext", $val2, "-addext", $val3])));
+
+subtest "generating certificate requests with RSA" => sub {
+    plan tests => 2;
+
+    SKIP: {
+        skip "RSA is not supported by this OpenSSL build", 2
+            if disabled("rsa");
+
+        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+            "-new", "-out", "testreq.pem", "-utf8",
+            "-key", srctop_file("test", "testrsa.pem")])),
+           "Generating request");
+
+        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+            "-verify", "-in", "testreq.pem", "-noout"])),
+           "Verifying signature on request");
+        }
+};
+
+subtest "generating certificate requests with DSA" => sub {
+    plan tests => 2;
+
+    SKIP: {
+        skip "This test is failing and disabled", 2
+            if 1;
+#       skip "DSA is not supported by this OpenSSL build", 2
+#           if disabled("dsa");
+
+        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+            "-new", "-out", "testreq.pem", "-utf8",
+            "-key", srctop_file("test", "testdsa.pem")])),
+           "Generating request");
+
+        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+            "-verify", "-in", "testreq.pem", "-noout"])),
+           "Verifying signature on request");
+        }
+};
+
+subtest "generating certificate requests with DSA" => sub {
+    plan tests => 2;
+
+    SKIP: {
+        skip "ECDSA is not supported by this OpenSSL build", 2
+            if disabled("ec");
+
+        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+            "-new", "-out", "testreq.pem", "-utf8",
+            "-key", srctop_file("test", "testec-p256.pem")])),
+           "Generating request");
+
+        ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+            "-verify", "-in", "testreq.pem", "-noout"])),
+           "Verifying signature on request");
+        }
+};
 
 subtest "generating certificate requests" => sub {
     plan tests => 2;
