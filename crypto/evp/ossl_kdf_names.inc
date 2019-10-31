@@ -12,35 +12,35 @@
 #include <openssl/obj_mac.h>
 
 /* Stuff from c_allkdf.c */
-static const char * const id_pbkdf2_names[] =
-    { LN_id_pbkdf2, NULL };
+static const char id_pbkdf2_names[] =
+    LN_id_pbkdf2;
 
 
-static const char * const id_scrypt_names[] =
-    { SN_id_scrypt, LN_id_scrypt, NULL };
+static const char id_scrypt_names[] =
+    SN_id_scrypt ":" LN_id_scrypt;
 
 
-static const char * const tls1_prf_names[] =
-    { SN_tls1_prf, LN_tls1_prf, NULL };
+static const char tls1_prf_names[] =
+    SN_tls1_prf ":" LN_tls1_prf;
 
 
-static const char * const hkdf_names[] =
-    { SN_hkdf, LN_hkdf, NULL };
+static const char hkdf_names[] =
+    SN_hkdf ":" LN_hkdf;
 
 
-static const char * const sshkdf_names[] =
-    { SN_sshkdf, LN_sshkdf, NULL };
+static const char sshkdf_names[] =
+    SN_sshkdf ":" LN_sshkdf;
 
 
-static const char * const sskdf_names[] =
-    { SN_sskdf, LN_sskdf, NULL };
+static const char sskdf_names[] =
+    SN_sskdf ":" LN_sskdf;
 
 
-static const char * const x963kdf_names[] =
-    { SN_x963kdf, LN_x963kdf, NULL };
+static const char x963kdf_names[] =
+    SN_x963kdf ":" LN_x963kdf;
 
 
-static const char * const * const all_kdf_names[] = {
+static const char * const all_kdf_names[] = {
     id_pbkdf2_names,
     id_scrypt_names,
     tls1_prf_names,

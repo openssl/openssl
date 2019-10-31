@@ -12,73 +12,73 @@
 #include <openssl/obj_mac.h>
 
 /* Stuff from c_alld.c */
-static const char * const md5_names[] =
-    { SN_md5, LN_md5, "ssl-md5", NULL };
-static const char * const md5_sha1_names[] =
-    { SN_md5_sha1, LN_md5_sha1, NULL };
+static const char md5_names[] =
+    SN_md5 ":" LN_md5 ":ssl-md5";
+static const char md5_sha1_names[] =
+    SN_md5_sha1 ":" LN_md5_sha1;
 
 
-static const char * const sha1_names[] =
-    { SN_sha1, LN_sha1, "ssl3-sha1", NULL };
+static const char sha1_names[] =
+    SN_sha1 ":" LN_sha1 ":ssl3-sha1";
 
 
-static const char * const sha1WithRSAEncryption_names[] =
-    { SN_sha1WithRSAEncryption, SN_sha1WithRSA, NULL };
+static const char sha1WithRSAEncryption_names[] =
+    SN_sha1WithRSAEncryption ":" SN_sha1WithRSA;
 
 
-static const char * const mdc2_names[] =
-    { SN_mdc2, LN_mdc2, NULL };
+static const char mdc2_names[] =
+    SN_mdc2 ":" LN_mdc2;
 
 
-static const char * const ripemd160_names[] =
-    { SN_ripemd160, LN_ripemd160, "ripemd", "rmd160", NULL };
+static const char ripemd160_names[] =
+    SN_ripemd160 ":" LN_ripemd160 ":ripemd:rmd160";
 
 
-static const char * const sha224_names[] =
-    { SN_sha224, LN_sha224, NULL };
-static const char * const sha256_names[] =
-    { SN_sha256, LN_sha256, NULL };
-static const char * const sha384_names[] =
-    { SN_sha384, LN_sha384, NULL };
-static const char * const sha512_names[] =
-    { SN_sha512, LN_sha512, NULL };
-static const char * const sha512_224_names[] =
-    { SN_sha512_224, LN_sha512_224, NULL };
-static const char * const sha512_256_names[] =
-    { SN_sha512_256, LN_sha512_256, NULL };
+static const char sha224_names[] =
+    SN_sha224 ":" LN_sha224;
+static const char sha256_names[] =
+    SN_sha256 ":" LN_sha256;
+static const char sha384_names[] =
+    SN_sha384 ":" LN_sha384;
+static const char sha512_names[] =
+    SN_sha512 ":" LN_sha512;
+static const char sha512_224_names[] =
+    SN_sha512_224 ":" LN_sha512_224;
+static const char sha512_256_names[] =
+    SN_sha512_256 ":" LN_sha512_256;
 
 
-static const char * const whirlpool_names[] =
-    { SN_whirlpool, NULL };
+static const char whirlpool_names[] =
+    SN_whirlpool;
 
 
-static const char * const sm3_names[] =
-    { SN_sm3, LN_sm3, NULL };
+static const char sm3_names[] =
+    SN_sm3 ":" LN_sm3;
 
 
-static const char * const blake2b512_names[] =
-    { SN_blake2b512, LN_blake2b512, NULL };
-static const char * const blake2s256_names[] =
-    { SN_blake2s256, LN_blake2s256, NULL };
+static const char blake2b512_names[] =
+    SN_blake2b512 ":" LN_blake2b512;
+static const char blake2s256_names[] =
+    SN_blake2s256 ":" LN_blake2s256;
 
 
-static const char * const sha3_224_names[] =
-    { SN_sha3_224, LN_sha3_224, NULL };
-static const char * const sha3_256_names[] =
-    { SN_sha3_256, LN_sha3_256, NULL };
-static const char * const sha3_384_names[] =
-    { SN_sha3_384, LN_sha3_384, NULL };
-static const char * const sha3_512_names[] =
-    { SN_sha3_512, LN_sha3_512, NULL };
+static const char sha3_224_names[] =
+    SN_sha3_224 ":" LN_sha3_224;
+static const char sha3_256_names[] =
+    SN_sha3_256 ":" LN_sha3_256;
+static const char sha3_384_names[] =
+    SN_sha3_384 ":" LN_sha3_384;
+static const char sha3_512_names[] =
+    SN_sha3_512 ":" LN_sha3_512;
 
 
-static const char * const shake128_names[] =
-    { SN_shake128, LN_shake128, NULL };
-static const char * const shake256_names[] =
-    { SN_shake256, LN_shake256, NULL };
+static const char shake128_names[] =
+    SN_shake128 ":" LN_shake128;
+static const char shake256_names[] =
+    SN_shake256 ":" LN_shake256;
 
 
-static const char * const * const all_digest_names[] = {
+static const char * const all_digest_names[] = {
     md5_names,
     md5_sha1_names,
     sha1_names,

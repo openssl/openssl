@@ -125,14 +125,14 @@ static OSSL_NAMEMAP *get_prepopulated_namemap(OPENSSL_CTX *libctx)
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
     if (namemap != NULL && ossl_namemap_empty(namemap)) {
-        static const char * const * const * const all_names[] = {
+        static const char * const * const all_names[] = {
             all_cipher_names, all_digest_names, all_mac_names, all_kdf_names,
             NULL
         };
-        const char * const * const * const *iterate_all;
+        const char * const * const *iterate_all;
 
         for (iterate_all = all_names; *iterate_all != NULL; iterate_all++) {
-            const char * const *const *iterate_class;
+            const char * const *iterate_class;
 
             for (iterate_class = *iterate_all; *iterate_class != NULL;
                  iterate_class++)

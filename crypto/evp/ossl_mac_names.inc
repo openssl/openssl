@@ -12,36 +12,36 @@
 #include <openssl/obj_mac.h>
 
 /* Stuff from c_allm.c */
-static const char * const blake2bmac_names[] =
-    { SN_blake2bmac, LN_blake2bmac, NULL };
-static const char * const blake2smac_names[] =
-    { SN_blake2smac, LN_blake2smac, NULL };
+static const char blake2bmac_names[] =
+    SN_blake2bmac ":" LN_blake2bmac;
+static const char blake2smac_names[] =
+    SN_blake2smac ":" LN_blake2smac;
 
-static const char * const cmac_names[] =
-    { SN_cmac, LN_cmac, NULL };
+static const char cmac_names[] =
+    SN_cmac ":" LN_cmac;
 
-static const char * const gmac_names[] =
-    { SN_gmac, LN_gmac, NULL };
+static const char gmac_names[] =
+    SN_gmac ":" LN_gmac;
 
-static const char * const hmac_names[] =
-    { SN_hmac, LN_hmac, NULL };
+static const char hmac_names[] =
+    SN_hmac ":" LN_hmac;
 
-static const char * const kmac128_names[] =
-    { SN_kmac128, LN_kmac128, NULL };
-static const char * const kmac256_names[] =
-    { SN_kmac256, LN_kmac256, NULL };
+static const char kmac128_names[] =
+    SN_kmac128 ":" LN_kmac128;
+static const char kmac256_names[] =
+    SN_kmac256 ":" LN_kmac256;
 
-static const char * const siphash_names[] =
-    { SN_siphash, LN_siphash, NULL };
+static const char siphash_names[] =
+    SN_siphash ":" LN_siphash;
 
-static const char * const poly1305_names[] =
-    { SN_poly1305, LN_poly1305, NULL };
+static const char poly1305_names[] =
+    SN_poly1305 ":" LN_poly1305;
 
-static const char * const pbkdf2_names[] =
-    { /* SN_id_pbkdf2, */ LN_id_pbkdf2, NULL };
+static const char pbkdf2_names[] =
+    /* SN_id_pbkdf2 ":" */ LN_id_pbkdf2;
 
 
-static const char * const * const all_mac_names[] = {
+static const char * const all_mac_names[] = {
     blake2bmac_names,
     blake2smac_names,
     cmac_names,

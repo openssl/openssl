@@ -12,381 +12,379 @@
 #include <openssl/obj_mac.h>
 
 /* Stuff from c_allc.c */
-static const char * const des_cfb_names[] =
-    { SN_des_cfb64, LN_des_cfb64, NULL };
-static const char * const des_cfb1_names[] =
-    { SN_des_cfb1, LN_des_cfb1, NULL };
-static const char * const des_cfb8_names[] =
-    { SN_des_cfb8, LN_des_cfb8, NULL };
-static const char * const des_ede_cfb_names[] =
-    { SN_des_ede_cfb64, LN_des_ede_cfb64, NULL };
-static const char * const des_ede3_cfb_names[] =
-    { SN_des_ede3_cfb64, LN_des_ede3_cfb64, NULL };
-static const char * const des_ede3_cfb1_names[] =
-    { SN_des_ede3_cfb1, LN_des_ede3_cfb1, NULL };
-static const char * const des_ede3_cfb8_names[] =
-    { SN_des_ede3_cfb8, LN_des_ede3_cfb8, NULL };
+static const char des_cfb_names[] =
+    SN_des_cfb64 ":" LN_des_cfb64;
+static const char des_cfb1_names[] =
+    SN_des_cfb1 ":" LN_des_cfb1;
+static const char des_cfb8_names[] =
+    SN_des_cfb8 ":" LN_des_cfb8;
+static const char des_ede_cfb_names[] =
+    SN_des_ede_cfb64 ":" LN_des_ede_cfb64;
+static const char des_ede3_cfb_names[] =
+    SN_des_ede3_cfb64 ":" LN_des_ede3_cfb64;
+static const char des_ede3_cfb1_names[] =
+    SN_des_ede3_cfb1 ":" LN_des_ede3_cfb1;
+static const char des_ede3_cfb8_names[] =
+    SN_des_ede3_cfb8 ":" LN_des_ede3_cfb8;
 
-static const char * const des_ofb_names[] =
-    { SN_des_ofb64, LN_des_ofb64, NULL };
-static const char * const des_ede_ofb_names[] =
-    { SN_des_ede_ofb64, LN_des_ede_ofb64, NULL };
-static const char * const des_ede3_ofb_names[] =
-    { SN_des_ede3_ofb64, LN_des_ede3_ofb64, NULL };
+static const char des_ofb_names[] =
+    SN_des_ofb64 ":" LN_des_ofb64;
+static const char des_ede_ofb_names[] =
+    SN_des_ede_ofb64 ":" LN_des_ede_ofb64;
+static const char des_ede3_ofb_names[] =
+    SN_des_ede3_ofb64 ":" LN_des_ede3_ofb64;
 
-static const char * const desx_cbc_names[] =
-    { SN_desx_cbc, LN_desx_cbc, "DESX", NULL };
+static const char desx_cbc_names[] =
+    SN_desx_cbc ":" LN_desx_cbc ":DESX";
 
-static const char * const des_cbc_names[] =
-    { SN_des_cbc, LN_des_cbc, "DES", NULL };
-static const char * const des_ede_cbc_names[] =
-    { SN_des_ede_cbc, LN_des_ede_cbc, NULL };
-static const char * const des_ede3_cbc_names[] =
-    { SN_des_ede3_cbc, LN_des_ede3_cbc, "DES3", NULL };
+static const char des_cbc_names[] =
+    SN_des_cbc ":" LN_des_cbc ":DES";
+static const char des_ede_cbc_names[] =
+    SN_des_ede_cbc ":" LN_des_ede_cbc;
+static const char des_ede3_cbc_names[] =
+    SN_des_ede3_cbc ":" LN_des_ede3_cbc ":DES3";
 
-static const char * const des_ecb_names[] =
-    { SN_des_ecb, LN_des_ecb, NULL };
-static const char * const des_ede_names[] =
-    { SN_des_ede_ecb, LN_des_ede_ecb, "DES-EDE-ECB", NULL };
-static const char * const des_ede3_names[] =
-    { SN_des_ede3_ecb, LN_des_ede3_ecb, "DES-EDE3-ECB",
-      NULL };
+static const char des_ecb_names[] =
+    SN_des_ecb ":" LN_des_ecb;
+static const char des_ede_names[] =
+    SN_des_ede_ecb ":" LN_des_ede_ecb ":DES-EDE-ECB";
+static const char des_ede3_names[] =
+    SN_des_ede3_ecb ":" LN_des_ede3_ecb ":DES-EDE3-ECB";
 
-static const char * const des_ede3_wrap_names[] =
-    { SN_id_smime_alg_CMS3DESwrap, "des3-wrap", NULL };
-
-
-static const char * const rc4_names[] =
-    { SN_rc4, LN_rc4, NULL };
-static const char * const rc4_40_names[] =
-    { SN_rc4_40, LN_rc4_40, NULL };
-static const char * const rc4_hmac_md5_names[] =
-    { SN_rc4_hmac_md5, LN_rc4_hmac_md5, NULL };
+static const char des_ede3_wrap_names[] =
+    SN_id_smime_alg_CMS3DESwrap ":des3-wrap";
 
 
-static const char * const idea_ecb_names[] =
-    { SN_idea_ecb, LN_idea_ecb, NULL };
-static const char * const idea_cfb_names[] =
-    { SN_idea_cfb64, LN_idea_cfb64, NULL };
-static const char * const idea_ofb_names[] =
-    { SN_idea_ofb64, LN_idea_ofb64, NULL };
-static const char * const idea_cbc_names[] =
-    { SN_idea_cbc, LN_idea_cbc, "IDEA", NULL };
+static const char rc4_names[] =
+    SN_rc4 ":" LN_rc4;
+static const char rc4_40_names[] =
+    SN_rc4_40 ":" LN_rc4_40;
+static const char rc4_hmac_md5_names[] =
+    SN_rc4_hmac_md5 ":" LN_rc4_hmac_md5;
 
 
-static const char * const seed_ecb_names[] =
-    { SN_seed_ecb, LN_seed_ecb, NULL };
-static const char * const seed_cfb_names[] =
-    { SN_seed_cfb128, LN_seed_cfb128, NULL };
-static const char * const seed_ofb_names[] =
-    { SN_seed_ofb128, LN_seed_ofb128, NULL };
-static const char * const seed_cbc_names[] =
-    { SN_seed_cbc, LN_seed_cbc, "SEED", NULL };
+static const char idea_ecb_names[] =
+    SN_idea_ecb ":" LN_idea_ecb;
+static const char idea_cfb_names[] =
+    SN_idea_cfb64 ":" LN_idea_cfb64;
+static const char idea_ofb_names[] =
+    SN_idea_ofb64 ":" LN_idea_ofb64;
+static const char idea_cbc_names[] =
+    SN_idea_cbc ":" LN_idea_cbc ":IDEA";
 
 
-static const char * const sm4_ecb_names[] =
-    { SN_sm4_ecb, LN_sm4_ecb, NULL };
-static const char * const sm4_cbc_names[] =
-    { SN_sm4_cbc, LN_sm4_cbc, "SM4", NULL };
-static const char * const sm4_cfb_names[] =
-    { SN_sm4_cfb128, LN_sm4_cfb128, NULL };
+static const char seed_ecb_names[] =
+    SN_seed_ecb ":" LN_seed_ecb;
+static const char seed_cfb_names[] =
+    SN_seed_cfb128 ":" LN_seed_cfb128;
+static const char seed_ofb_names[] =
+    SN_seed_ofb128 ":" LN_seed_ofb128;
+static const char seed_cbc_names[] =
+    SN_seed_cbc ":" LN_seed_cbc ":SEED";
+
+
+static const char sm4_ecb_names[] =
+    SN_sm4_ecb ":" LN_sm4_ecb;
+static const char sm4_cbc_names[] =
+    SN_sm4_cbc ":" LN_sm4_cbc ":SM4";
+static const char sm4_cfb_names[] =
+    SN_sm4_cfb128 ":" LN_sm4_cfb128;
 #if 0                /* Curiously, these aren't present in c_allc.c */
-static const char * const sm4_cfb1_names[] =
-    { SN_sm4_cfb1, LN_sm4_cfb1, NULL };
-static const char * const sm4_cfb8_names[] =
-    { SN_sm4_cfb8, LN_sm4_cfb8, NULL };
+static const char sm4_cfb1_names[] =
+    SN_sm4_cfb1 ":" LN_sm4_cfb1;
+static const char sm4_cfb8_names[] =
+    SN_sm4_cfb8 ":" LN_sm4_cfb8;
 #endif
-static const char * const sm4_ofb_names[] =
-    { SN_sm4_ofb128, LN_sm4_ofb128, NULL };
-static const char * const sm4_ctr_names[] =
-    { SN_sm4_ctr, LN_sm4_ctr, NULL };
+static const char sm4_ofb_names[] =
+    SN_sm4_ofb128 ":" LN_sm4_ofb128;
+static const char sm4_ctr_names[] =
+    SN_sm4_ctr ":" LN_sm4_ctr;
 
 
-static const char * const rc2_ecb_names[] =
-    { SN_rc2_ecb, LN_rc2_ecb, NULL };
-static const char * const rc2_cfb_names[] =
-    { SN_rc2_cfb64, LN_rc2_cfb64, NULL };
-static const char * const rc2_ofb_names[] =
-    { SN_rc2_ofb64, LN_rc2_ofb64, NULL };
-static const char * const rc2_cbc_names[] =
-    { SN_rc2_cbc, LN_rc2_cbc, "RC2", "rc2-128", NULL };
-static const char * const rc2_64_cbc_names[] =
-    { SN_rc2_64_cbc, LN_rc2_64_cbc, "rc2-64", NULL };
-static const char * const rc2_40_cbc_names[] =
-    { SN_rc2_40_cbc, LN_rc2_40_cbc, "rc2-40", NULL };
+static const char rc2_ecb_names[] =
+    SN_rc2_ecb ":" LN_rc2_ecb;
+static const char rc2_cfb_names[] =
+    SN_rc2_cfb64 ":" LN_rc2_cfb64;
+static const char rc2_ofb_names[] =
+    SN_rc2_ofb64 ":" LN_rc2_ofb64;
+static const char rc2_cbc_names[] =
+    SN_rc2_cbc ":" LN_rc2_cbc ":RC2:rc2-128";
+static const char rc2_64_cbc_names[] =
+    SN_rc2_64_cbc ":" LN_rc2_64_cbc ":rc2-64";
+static const char rc2_40_cbc_names[] =
+    SN_rc2_40_cbc ":" LN_rc2_40_cbc ":rc2-40";
 
 
-static const char * const bf_ecb_names[] =
-    { SN_bf_ecb, LN_bf_ecb, NULL };
-static const char * const bf_cfb_names[] =
-    { SN_bf_cfb64, LN_bf_cfb64, NULL };
-static const char * const bf_ofb_names[] =
-    { SN_bf_ofb64, LN_bf_ofb64, NULL };
-static const char * const bf_cbc_names[] =
-    { SN_bf_cbc, LN_bf_cbc, "BF", "blowfish", NULL };
+static const char bf_ecb_names[] =
+    SN_bf_ecb ":" LN_bf_ecb;
+static const char bf_cfb_names[] =
+    SN_bf_cfb64 ":" LN_bf_cfb64;
+static const char bf_ofb_names[] =
+    SN_bf_ofb64 ":" LN_bf_ofb64;
+static const char bf_cbc_names[] =
+    SN_bf_cbc ":" LN_bf_cbc ":BF:blowfish";
 
 
-static const char * const cast5_ecb_names[] =
-    { SN_cast5_ecb, LN_cast5_ecb, NULL };
-static const char * const cast5_cfb_names[] =
-    { SN_cast5_cfb64, LN_cast5_cfb64, NULL };
-static const char * const cast5_ofb_names[] =
-    { SN_cast5_ofb64, LN_cast5_ofb64, NULL };
-static const char * const cast5_cbc_names[] =
-    { SN_cast5_cbc, LN_cast5_cbc, "CAST", "CAST-CBC",
-      NULL };
+static const char cast5_ecb_names[] =
+    SN_cast5_ecb ":" LN_cast5_ecb;
+static const char cast5_cfb_names[] =
+    SN_cast5_cfb64 ":" LN_cast5_cfb64;
+static const char cast5_ofb_names[] =
+    SN_cast5_ofb64 ":" LN_cast5_ofb64;
+static const char cast5_cbc_names[] =
+    SN_cast5_cbc ":" LN_cast5_cbc ":CAST:CAST-CBC";
 
 
-static const char * const rc5_32_12_16_ecb_names[] =
-    { SN_rc5_ecb, LN_rc5_ecb, NULL };
-static const char * const rc5_32_12_16_cfb_names[] =
-    { SN_rc5_cfb64, LN_rc5_cfb64, NULL };
-static const char * const rc5_32_12_16_ofb_names[] =
-    { SN_rc5_ofb64, LN_rc5_ofb64, NULL };
-static const char * const rc5_32_12_16_cbc_names[] =
-    { SN_rc5_cbc, LN_rc5_cbc, "RC5", NULL };
+static const char rc5_32_12_16_ecb_names[] =
+    SN_rc5_ecb ":" LN_rc5_ecb;
+static const char rc5_32_12_16_cfb_names[] =
+    SN_rc5_cfb64 ":" LN_rc5_cfb64;
+static const char rc5_32_12_16_ofb_names[] =
+    SN_rc5_ofb64 ":" LN_rc5_ofb64;
+static const char rc5_32_12_16_cbc_names[] =
+    SN_rc5_cbc ":" LN_rc5_cbc ":RC5";
 
 
-static const char * const aes_128_ecb_names[] =
-    { SN_aes_128_ecb, LN_aes_128_ecb, NULL };
-static const char * const aes_128_cbc_names[] =
-    { SN_aes_128_cbc, LN_aes_128_cbc, "AES128", NULL };
-static const char * const aes_128_cfb_names[] =
-    { SN_aes_128_cfb128, LN_aes_128_cfb128, NULL };
-static const char * const aes_128_cfb1_names[] =
-    { SN_aes_128_cfb1, LN_aes_128_cfb1, NULL };
-static const char * const aes_128_cfb8_names[] =
-    { SN_aes_128_cfb8, LN_aes_128_cfb8, NULL };
-static const char * const aes_128_ofb_names[] =
-    { SN_aes_128_ofb128, LN_aes_128_ofb128, NULL };
-static const char * const aes_128_ctr_names[] =
-    { SN_aes_128_ctr, LN_aes_128_ctr, NULL };
-static const char * const aes_128_gcm_names[] =
-    { SN_aes_128_gcm, LN_aes_128_gcm, NULL };
-static const char * const aes_128_ocb_names[] =
-    { SN_aes_128_ocb, LN_aes_128_ocb, NULL };
-static const char * const aes_128_xts_names[] =
-    { SN_aes_128_xts, LN_aes_128_xts, NULL };
-static const char * const aes_128_ccm_names[] =
-    { SN_aes_128_ccm, LN_aes_128_ccm, NULL };
-static const char * const id_aes128_wrap_names[] =
-    { SN_id_aes128_wrap, "aes128-wrap", NULL };
-static const char * const id_aes128_wrap_pad_names[] =
-    { SN_id_aes128_wrap_pad, NULL };
+static const char aes_128_ecb_names[] =
+    SN_aes_128_ecb ":" LN_aes_128_ecb;
+static const char aes_128_cbc_names[] =
+    SN_aes_128_cbc ":" LN_aes_128_cbc ":AES128";
+static const char aes_128_cfb_names[] =
+    SN_aes_128_cfb128 ":" LN_aes_128_cfb128;
+static const char aes_128_cfb1_names[] =
+    SN_aes_128_cfb1 ":" LN_aes_128_cfb1;
+static const char aes_128_cfb8_names[] =
+    SN_aes_128_cfb8 ":" LN_aes_128_cfb8;
+static const char aes_128_ofb_names[] =
+    SN_aes_128_ofb128 ":" LN_aes_128_ofb128;
+static const char aes_128_ctr_names[] =
+    SN_aes_128_ctr ":" LN_aes_128_ctr;
+static const char aes_128_gcm_names[] =
+    SN_aes_128_gcm ":" LN_aes_128_gcm;
+static const char aes_128_ocb_names[] =
+    SN_aes_128_ocb ":" LN_aes_128_ocb;
+static const char aes_128_xts_names[] =
+    SN_aes_128_xts ":" LN_aes_128_xts;
+static const char aes_128_ccm_names[] =
+    SN_aes_128_ccm ":" LN_aes_128_ccm;
+static const char id_aes128_wrap_names[] =
+    SN_id_aes128_wrap ":aes128-wrap";
+static const char id_aes128_wrap_pad_names[] =
+    SN_id_aes128_wrap_pad;
 
-static const char * const aes_192_ecb_names[] =
-    { SN_aes_192_ecb, LN_aes_192_ecb, NULL };
-static const char * const aes_192_cbc_names[] =
-    { SN_aes_192_cbc, LN_aes_192_cbc, "AES192", NULL };
-static const char * const aes_192_cfb_names[] =
-    { SN_aes_192_cfb128, LN_aes_192_cfb128, NULL };
-static const char * const aes_192_cfb1_names[] =
-    { SN_aes_192_cfb1, LN_aes_192_cfb1, NULL };
-static const char * const aes_192_cfb8_names[] =
-    { SN_aes_192_cfb8, LN_aes_192_cfb8, NULL };
-static const char * const aes_192_ofb_names[] =
-    { SN_aes_192_ofb128, LN_aes_192_ofb128, NULL };
-static const char * const aes_192_ctr_names[] =
-    { SN_aes_192_ctr, LN_aes_192_ctr, NULL };
-static const char * const aes_192_gcm_names[] =
-    { SN_aes_192_gcm, LN_aes_192_gcm, NULL };
-static const char * const aes_192_ocb_names[] =
-    { SN_aes_192_ocb, LN_aes_192_ocb, NULL };
-static const char * const aes_192_ccm_names[] =
-    { SN_aes_192_ccm, LN_aes_192_ccm, NULL };
-static const char * const id_aes192_wrap_names[] =
-    { SN_id_aes192_wrap, "aes192-wrap", NULL };
-static const char * const id_aes192_wrap_pad_names[] =
-    { SN_id_aes192_wrap_pad, NULL };
+static const char aes_192_ecb_names[] =
+    SN_aes_192_ecb ":" LN_aes_192_ecb;
+static const char aes_192_cbc_names[] =
+    SN_aes_192_cbc ":" LN_aes_192_cbc ":AES192";
+static const char aes_192_cfb_names[] =
+    SN_aes_192_cfb128 ":" LN_aes_192_cfb128;
+static const char aes_192_cfb1_names[] =
+    SN_aes_192_cfb1 ":" LN_aes_192_cfb1;
+static const char aes_192_cfb8_names[] =
+    SN_aes_192_cfb8 ":" LN_aes_192_cfb8;
+static const char aes_192_ofb_names[] =
+    SN_aes_192_ofb128 ":" LN_aes_192_ofb128;
+static const char aes_192_ctr_names[] =
+    SN_aes_192_ctr ":" LN_aes_192_ctr;
+static const char aes_192_gcm_names[] =
+    SN_aes_192_gcm ":" LN_aes_192_gcm;
+static const char aes_192_ocb_names[] =
+    SN_aes_192_ocb ":" LN_aes_192_ocb;
+static const char aes_192_ccm_names[] =
+    SN_aes_192_ccm ":" LN_aes_192_ccm;
+static const char id_aes192_wrap_names[] =
+    SN_id_aes192_wrap ":aes192-wrap";
+static const char id_aes192_wrap_pad_names[] =
+    SN_id_aes192_wrap_pad;
 
-static const char * const aes_256_ecb_names[] =
-    { SN_aes_256_ecb, LN_aes_256_ecb, NULL };
-static const char * const aes_256_cbc_names[] =
-    { SN_aes_256_cbc, LN_aes_256_cbc, "AES256", NULL };
-static const char * const aes_256_cfb_names[] =
-    { SN_aes_256_cfb128, LN_aes_256_cfb128, NULL };
-static const char * const aes_256_cfb1_names[] =
-    { SN_aes_256_cfb1, LN_aes_256_cfb1, NULL };
-static const char * const aes_256_cfb8_names[] =
-    { SN_aes_256_cfb8, LN_aes_256_cfb8, NULL };
-static const char * const aes_256_ofb_names[] =
-    { SN_aes_256_ofb128, LN_aes_256_ofb128, NULL };
-static const char * const aes_256_ctr_names[] =
-    { SN_aes_256_ctr, LN_aes_256_ctr, NULL };
-static const char * const aes_256_gcm_names[] =
-    { SN_aes_256_gcm, LN_aes_256_gcm, NULL };
-static const char * const aes_256_ocb_names[] =
-    { SN_aes_256_ocb, LN_aes_256_ocb, NULL };
-static const char * const aes_256_xts_names[] =
-    { SN_aes_256_xts, LN_aes_256_xts, NULL };
-static const char * const aes_256_ccm_names[] =
-    { SN_aes_256_ccm, LN_aes_256_ccm, NULL };
-static const char * const id_aes256_wrap_names[] =
-    { SN_id_aes256_wrap, "aes256-wrap", NULL };
-static const char * const id_aes256_wrap_pad_names[] =
-    { SN_id_aes256_wrap_pad, NULL };
+static const char aes_256_ecb_names[] =
+    SN_aes_256_ecb ":" LN_aes_256_ecb;
+static const char aes_256_cbc_names[] =
+    SN_aes_256_cbc ":" LN_aes_256_cbc ":AES256";
+static const char aes_256_cfb_names[] =
+    SN_aes_256_cfb128 ":" LN_aes_256_cfb128;
+static const char aes_256_cfb1_names[] =
+    SN_aes_256_cfb1 ":" LN_aes_256_cfb1;
+static const char aes_256_cfb8_names[] =
+    SN_aes_256_cfb8 ":" LN_aes_256_cfb8;
+static const char aes_256_ofb_names[] =
+    SN_aes_256_ofb128 ":" LN_aes_256_ofb128;
+static const char aes_256_ctr_names[] =
+    SN_aes_256_ctr ":" LN_aes_256_ctr;
+static const char aes_256_gcm_names[] =
+    SN_aes_256_gcm ":" LN_aes_256_gcm;
+static const char aes_256_ocb_names[] =
+    SN_aes_256_ocb ":" LN_aes_256_ocb;
+static const char aes_256_xts_names[] =
+    SN_aes_256_xts ":" LN_aes_256_xts;
+static const char aes_256_ccm_names[] =
+    SN_aes_256_ccm ":" LN_aes_256_ccm;
+static const char id_aes256_wrap_names[] =
+    SN_id_aes256_wrap ":aes256-wrap";
+static const char id_aes256_wrap_pad_names[] =
+    SN_id_aes256_wrap_pad;
 
-static const char * const aes_128_cbc_hmac_sha1_names[] =
-    { SN_aes_128_cbc_hmac_sha1, LN_aes_128_cbc_hmac_sha1, NULL };
+static const char aes_128_cbc_hmac_sha1_names[] =
+    SN_aes_128_cbc_hmac_sha1 ":" LN_aes_128_cbc_hmac_sha1;
 #if 0                  /* Curiously, this isn't present in c_allc.c */
-static const char * const aes_192_cbc_hmac_sha1_names[] =
-    { SN_aes_192_cbc_hmac_sha1, LN_aes_192_cbc_hmac_sha1, NULL };
+static const char aes_192_cbc_hmac_sha1_names[] =
+    SN_aes_192_cbc_hmac_sha1 ":" LN_aes_192_cbc_hmac_sha1;
 #endif
-static const char * const aes_256_cbc_hmac_sha1_names[] =
-    { SN_aes_256_cbc_hmac_sha1, LN_aes_256_cbc_hmac_sha1, NULL };
-static const char * const aes_128_cbc_hmac_sha256_names[] =
-    { SN_aes_128_cbc_hmac_sha256, LN_aes_128_cbc_hmac_sha256, NULL };
+static const char aes_256_cbc_hmac_sha1_names[] =
+    SN_aes_256_cbc_hmac_sha1 ":" LN_aes_256_cbc_hmac_sha1;
+static const char aes_128_cbc_hmac_sha256_names[] =
+    SN_aes_128_cbc_hmac_sha256 ":" LN_aes_128_cbc_hmac_sha256;
 #if 0                  /* Curiously, this isn't present in c_allc.c */
-static const char * const aes_192_cbc_hmac_sha256_names[] =
-    { SN_aes_192_cbc_hmac_sha256, LN_aes_192_cbc_hmac_sha256, NULL };
+static const char aes_192_cbc_hmac_sha256_names[] =
+    SN_aes_192_cbc_hmac_sha256 ":" LN_aes_192_cbc_hmac_sha256;
 #endif
-static const char * const aes_256_cbc_hmac_sha256_names[] =
-    { SN_aes_256_cbc_hmac_sha256, LN_aes_256_cbc_hmac_sha256, NULL };
+static const char aes_256_cbc_hmac_sha256_names[] =
+    SN_aes_256_cbc_hmac_sha256 ":" LN_aes_256_cbc_hmac_sha256;
 
-static const char * const aes_128_siv_names[] =
-    { SN_aes_128_siv, LN_aes_128_siv, NULL };
-static const char * const aes_192_siv_names[] =
-    { SN_aes_192_siv, LN_aes_192_siv, NULL };
-static const char * const aes_256_siv_names[] =
-    { SN_aes_256_siv, LN_aes_256_siv, NULL };
-
-
-static const char * const aria_128_ecb_names[] =
-    { SN_aria_128_ecb, LN_aria_128_ecb, NULL };
-static const char * const aria_128_cbc_names[] =
-    { SN_aria_128_cbc, LN_aria_128_cbc, "ARIA128", NULL };
-static const char * const aria_128_cfb_names[] =
-    { SN_aria_128_cfb128, LN_aria_128_cfb128, NULL };
-static const char * const aria_128_cfb1_names[] =
-    { SN_aria_128_cfb1, LN_aria_128_cfb1, NULL };
-static const char * const aria_128_cfb8_names[] =
-    { SN_aria_128_cfb8, LN_aria_128_cfb8, NULL };
-static const char * const aria_128_ctr_names[] =
-    { SN_aria_128_ctr, LN_aria_128_ctr, NULL };
-static const char * const aria_128_ofb_names[] =
-    { SN_aria_128_ofb128, LN_aria_128_ofb128, NULL };
-static const char * const aria_128_gcm_names[] =
-    { SN_aria_128_gcm, LN_aria_128_gcm, NULL };
-static const char * const aria_128_ccm_names[] =
-    { SN_aria_128_ccm, LN_aria_128_ccm, NULL };
-
-static const char * const aria_192_ecb_names[] =
-    { SN_aria_192_ecb, LN_aria_192_ecb, NULL };
-static const char * const aria_192_cbc_names[] =
-    { SN_aria_192_cbc, LN_aria_192_cbc, "ARIA192", NULL };
-static const char * const aria_192_cfb_names[] =
-    { SN_aria_192_cfb128, LN_aria_192_cfb128, NULL };
-static const char * const aria_192_cfb1_names[] =
-    { SN_aria_192_cfb1, LN_aria_192_cfb1, NULL };
-static const char * const aria_192_cfb8_names[] =
-    { SN_aria_192_cfb8, LN_aria_192_cfb8, NULL };
-static const char * const aria_192_ctr_names[] =
-    { SN_aria_192_ctr, LN_aria_192_ctr, NULL };
-static const char * const aria_192_ofb_names[] =
-    { SN_aria_192_ofb128, LN_aria_192_ofb128, NULL };
-static const char * const aria_192_gcm_names[] =
-    { SN_aria_192_gcm, LN_aria_192_gcm, NULL };
-static const char * const aria_192_ccm_names[] =
-    { SN_aria_192_ccm, LN_aria_192_ccm, NULL };
-
-static const char * const aria_256_ecb_names[] =
-    { SN_aria_256_ecb, LN_aria_256_ecb, NULL };
-static const char * const aria_256_cbc_names[] =
-    { SN_aria_256_cbc, LN_aria_256_cbc, "ARIA256", NULL };
-static const char * const aria_256_cfb_names[] =
-    { SN_aria_256_cfb128, LN_aria_256_cfb128, NULL };
-static const char * const aria_256_cfb1_names[] =
-    { SN_aria_256_cfb1, LN_aria_256_cfb1, NULL };
-static const char * const aria_256_cfb8_names[] =
-    { SN_aria_256_cfb8, LN_aria_256_cfb8, NULL };
-static const char * const aria_256_ctr_names[] =
-    { SN_aria_256_ctr, LN_aria_256_ctr, NULL };
-static const char * const aria_256_ofb_names[] =
-    { SN_aria_256_ofb128, LN_aria_256_ofb128, NULL };
-static const char * const aria_256_gcm_names[] =
-    { SN_aria_256_gcm, LN_aria_256_gcm, NULL };
-static const char * const aria_256_ccm_names[] =
-    { SN_aria_256_ccm, LN_aria_256_ccm, NULL };
+static const char aes_128_siv_names[] =
+    SN_aes_128_siv ":" LN_aes_128_siv;
+static const char aes_192_siv_names[] =
+    SN_aes_192_siv ":" LN_aes_192_siv;
+static const char aes_256_siv_names[] =
+    SN_aes_256_siv ":" LN_aes_256_siv;
 
 
-static const char * const camellia_128_ecb_names[] =
-    { SN_camellia_128_ecb, LN_camellia_128_ecb, NULL };
-static const char * const camellia_128_cbc_names[] =
-    { SN_camellia_128_cbc, LN_camellia_128_cbc, "CAMELLIA128", NULL };
-static const char * const camellia_128_cfb_names[] =
-    { SN_camellia_128_cfb128, LN_camellia_128_cfb128, NULL };
-static const char * const camellia_128_cfb1_names[] =
-    { SN_camellia_128_cfb1, LN_camellia_128_cfb1, NULL };
-static const char * const camellia_128_cfb8_names[] =
-    { SN_camellia_128_cfb8, LN_camellia_128_cfb8, NULL };
-static const char * const camellia_128_ofb_names[] =
-    { SN_camellia_128_ofb128, LN_camellia_128_ofb128, NULL };
+static const char aria_128_ecb_names[] =
+    SN_aria_128_ecb ":" LN_aria_128_ecb;
+static const char aria_128_cbc_names[] =
+    SN_aria_128_cbc ":" LN_aria_128_cbc ":ARIA128";
+static const char aria_128_cfb_names[] =
+    SN_aria_128_cfb128 ":" LN_aria_128_cfb128;
+static const char aria_128_cfb1_names[] =
+    SN_aria_128_cfb1 ":" LN_aria_128_cfb1;
+static const char aria_128_cfb8_names[] =
+    SN_aria_128_cfb8 ":" LN_aria_128_cfb8;
+static const char aria_128_ctr_names[] =
+    SN_aria_128_ctr ":" LN_aria_128_ctr;
+static const char aria_128_ofb_names[] =
+    SN_aria_128_ofb128 ":" LN_aria_128_ofb128;
+static const char aria_128_gcm_names[] =
+    SN_aria_128_gcm ":" LN_aria_128_gcm;
+static const char aria_128_ccm_names[] =
+    SN_aria_128_ccm ":" LN_aria_128_ccm;
+
+static const char aria_192_ecb_names[] =
+    SN_aria_192_ecb ":" LN_aria_192_ecb;
+static const char aria_192_cbc_names[] =
+    SN_aria_192_cbc ":" LN_aria_192_cbc ":ARIA192";
+static const char aria_192_cfb_names[] =
+    SN_aria_192_cfb128 ":" LN_aria_192_cfb128;
+static const char aria_192_cfb1_names[] =
+    SN_aria_192_cfb1 ":" LN_aria_192_cfb1;
+static const char aria_192_cfb8_names[] =
+    SN_aria_192_cfb8 ":" LN_aria_192_cfb8;
+static const char aria_192_ctr_names[] =
+    SN_aria_192_ctr ":" LN_aria_192_ctr;
+static const char aria_192_ofb_names[] =
+    SN_aria_192_ofb128 ":" LN_aria_192_ofb128;
+static const char aria_192_gcm_names[] =
+    SN_aria_192_gcm ":" LN_aria_192_gcm;
+static const char aria_192_ccm_names[] =
+    SN_aria_192_ccm ":" LN_aria_192_ccm;
+
+static const char aria_256_ecb_names[] =
+    SN_aria_256_ecb ":" LN_aria_256_ecb;
+static const char aria_256_cbc_names[] =
+    SN_aria_256_cbc ":" LN_aria_256_cbc ":ARIA256";
+static const char aria_256_cfb_names[] =
+    SN_aria_256_cfb128 ":" LN_aria_256_cfb128;
+static const char aria_256_cfb1_names[] =
+    SN_aria_256_cfb1 ":" LN_aria_256_cfb1;
+static const char aria_256_cfb8_names[] =
+    SN_aria_256_cfb8 ":" LN_aria_256_cfb8;
+static const char aria_256_ctr_names[] =
+    SN_aria_256_ctr ":" LN_aria_256_ctr;
+static const char aria_256_ofb_names[] =
+    SN_aria_256_ofb128 ":" LN_aria_256_ofb128;
+static const char aria_256_gcm_names[] =
+    SN_aria_256_gcm ":" LN_aria_256_gcm;
+static const char aria_256_ccm_names[] =
+    SN_aria_256_ccm ":" LN_aria_256_ccm;
+
+
+static const char camellia_128_ecb_names[] =
+    SN_camellia_128_ecb ":" LN_camellia_128_ecb;
+static const char camellia_128_cbc_names[] =
+    SN_camellia_128_cbc ":" LN_camellia_128_cbc ":CAMELLIA128";
+static const char camellia_128_cfb_names[] =
+    SN_camellia_128_cfb128 ":" LN_camellia_128_cfb128;
+static const char camellia_128_cfb1_names[] =
+    SN_camellia_128_cfb1 ":" LN_camellia_128_cfb1;
+static const char camellia_128_cfb8_names[] =
+    SN_camellia_128_cfb8 ":" LN_camellia_128_cfb8;
+static const char camellia_128_ofb_names[] =
+    SN_camellia_128_ofb128 ":" LN_camellia_128_ofb128;
 #if 0                /* Curiously, these aren't present in c_allc.c */
-static const char * const camellia_128_gcm_names[] =
-    { SN_camellia_128_gcm, LN_camellia_128_gcm, NULL };
-static const char * const camellia_128_ccm_names[] =
-    { SN_camellia_128_ccm, LN_camellia_128_ccm, NULL };
-static const char * const camellia_128_cmac_names[] =
-    { SN_camellia_128_cmac, LN_camellia_128_cmac, NULL };
+static const char camellia_128_gcm_names[] =
+    SN_camellia_128_gcm ":" LN_camellia_128_gcm;
+static const char camellia_128_ccm_names[] =
+    SN_camellia_128_ccm ":" LN_camellia_128_ccm;
+static const char camellia_128_cmac_names[] =
+    SN_camellia_128_cmac ":" LN_camellia_128_cmac;
 #endif
 
-static const char * const camellia_192_ecb_names[] =
-    { SN_camellia_192_ecb, LN_camellia_192_ecb, NULL };
-static const char * const camellia_192_cbc_names[] =
-    { SN_camellia_192_cbc, LN_camellia_192_cbc, "CAMELLIA192", NULL };
-static const char * const camellia_192_cfb_names[] =
-    { SN_camellia_192_cfb128, LN_camellia_192_cfb128, NULL };
-static const char * const camellia_192_cfb1_names[] =
-    { SN_camellia_192_cfb1, LN_camellia_192_cfb1, NULL };
-static const char * const camellia_192_cfb8_names[] =
-    { SN_camellia_192_cfb8, LN_camellia_192_cfb8, NULL };
-static const char * const camellia_192_ofb_names[] =
-    { SN_camellia_192_ofb128, LN_camellia_192_ofb128, NULL };
+static const char camellia_192_ecb_names[] =
+    SN_camellia_192_ecb ":" LN_camellia_192_ecb;
+static const char camellia_192_cbc_names[] =
+    SN_camellia_192_cbc ":" LN_camellia_192_cbc ":CAMELLIA192";
+static const char camellia_192_cfb_names[] =
+    SN_camellia_192_cfb128 ":" LN_camellia_192_cfb128;
+static const char camellia_192_cfb1_names[] =
+    SN_camellia_192_cfb1 ":" LN_camellia_192_cfb1;
+static const char camellia_192_cfb8_names[] =
+    SN_camellia_192_cfb8 ":" LN_camellia_192_cfb8;
+static const char camellia_192_ofb_names[] =
+    SN_camellia_192_ofb128 ":" LN_camellia_192_ofb128;
 #if 0                /* Curiously, these aren't present in c_allc.c */
-static const char * const camellia_192_gcm_names[] =
-    { SN_camellia_192_gcm, LN_camellia_192_gcm, NULL };
-static const char * const camellia_192_ccm_names[] =
-    { SN_camellia_192_ccm, LN_camellia_192_ccm, NULL };
-static const char * const camellia_192_cmac_names[] =
-    { SN_camellia_192_cmac, LN_camellia_192_cmac, NULL };
+static const char camellia_192_gcm_names[] =
+    SN_camellia_192_gcm ":" LN_camellia_192_gcm;
+static const char camellia_192_ccm_names[] =
+    SN_camellia_192_ccm ":" LN_camellia_192_ccm;
+static const char camellia_192_cmac_names[] =
+    SN_camellia_192_cmac ":" LN_camellia_192_cmac;
 #endif
 
-static const char * const camellia_256_ecb_names[] =
-    { SN_camellia_256_ecb, LN_camellia_256_ecb, NULL };
-static const char * const camellia_256_cbc_names[] =
-    { SN_camellia_256_cbc, LN_camellia_256_cbc, "CAMELLIA256", NULL };
-static const char * const camellia_256_cfb_names[] =
-    { SN_camellia_256_cfb128, LN_camellia_256_cfb128, NULL };
-static const char * const camellia_256_cfb1_names[] =
-    { SN_camellia_256_cfb1, LN_camellia_256_cfb1, NULL };
-static const char * const camellia_256_cfb8_names[] =
-    { SN_camellia_256_cfb8, LN_camellia_256_cfb8, NULL };
-static const char * const camellia_256_ofb_names[] =
-    { SN_camellia_256_ofb128, LN_camellia_256_ofb128, NULL };
+static const char camellia_256_ecb_names[] =
+    SN_camellia_256_ecb ":" LN_camellia_256_ecb;
+static const char camellia_256_cbc_names[] =
+    SN_camellia_256_cbc ":" LN_camellia_256_cbc ":CAMELLIA256";
+static const char camellia_256_cfb_names[] =
+    SN_camellia_256_cfb128 ":" LN_camellia_256_cfb128;
+static const char camellia_256_cfb1_names[] =
+    SN_camellia_256_cfb1 ":" LN_camellia_256_cfb1;
+static const char camellia_256_cfb8_names[] =
+    SN_camellia_256_cfb8 ":" LN_camellia_256_cfb8;
+static const char camellia_256_ofb_names[] =
+    SN_camellia_256_ofb128 ":" LN_camellia_256_ofb128;
 #if 0                /* Curiously, these aren't present in c_allc.c */
-static const char * const camellia_256_gcm_names[] =
-    { SN_camellia_256_gcm, LN_camellia_256_gcm, NULL };
-static const char * const camellia_256_ccm_names[] =
-    { SN_camellia_256_ccm, LN_camellia_256_ccm, NULL };
-static const char * const camellia_256_cmac_names[] =
-    { SN_camellia_256_cmac, LN_camellia_256_cmac, NULL };
+static const char camellia_256_gcm_names[] =
+    SN_camellia_256_gcm ":" LN_camellia_256_gcm;
+static const char camellia_256_ccm_names[] =
+    SN_camellia_256_ccm ":" LN_camellia_256_ccm;
+static const char camellia_256_cmac_names[] =
+    SN_camellia_256_cmac ":" LN_camellia_256_cmac;
 #endif
 
-static const char * const camellia_128_ctr_names[] =
-    { SN_camellia_128_ctr, LN_camellia_128_ctr, NULL };
-static const char * const camellia_192_ctr_names[] =
-    { SN_camellia_192_ctr, LN_camellia_192_ctr, NULL };
-static const char * const camellia_256_ctr_names[] =
-    { SN_camellia_256_ctr, LN_camellia_256_ctr, NULL };
+static const char camellia_128_ctr_names[] =
+    SN_camellia_128_ctr ":" LN_camellia_128_ctr;
+static const char camellia_192_ctr_names[] =
+    SN_camellia_192_ctr ":" LN_camellia_192_ctr;
+static const char camellia_256_ctr_names[] =
+    SN_camellia_256_ctr ":" LN_camellia_256_ctr;
 
 
-static const char * const chacha20_names[] =
-    { SN_chacha20, LN_chacha20, NULL };
-static const char * const chacha20_poly1305_names[] =
-    { SN_chacha20_poly1305, LN_chacha20_poly1305, NULL };
+static const char chacha20_names[] =
+    SN_chacha20 ":" LN_chacha20;
+static const char chacha20_poly1305_names[] =
+    SN_chacha20_poly1305 ":" LN_chacha20_poly1305;
 
 
-static const char * const * const all_cipher_names[] = {
+static const char * const all_cipher_names[] = {
     des_cfb_names,
     des_cfb1_names,
     des_cfb8_names,
