@@ -976,6 +976,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
  err:
     OPENSSL_free(penc);
     X509_ALGOR_free(wrap_alg);
+    OPENSSL_free(dukm);
     return rv;
 }
 
