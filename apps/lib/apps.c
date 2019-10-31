@@ -1088,7 +1088,7 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)
             goto end;
-        if (CAfile) {
+        if (CAfile != NULL) {
             if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM)) {
                 BIO_printf(bio_err, "Error loading file %s\n", CAfile);
                 goto end;
@@ -1102,7 +1102,7 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
         if (lookup == NULL)
             goto end;
-        if (CApath) {
+        if (CApath != NULL) {
             if (!X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM)) {
                 BIO_printf(bio_err, "Error loading directory %s\n", CApath);
                 goto end;
@@ -1117,7 +1117,7 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
         if (lookup == NULL)
             goto end;
         if (!X509_LOOKUP_add_store(lookup, CAstore)) {
-            if (CAstore)
+            if (CAstore != NULL)
                 BIO_printf(bio_err, "Error loading store URI %s\n", CAstore);
             goto end;
         }
