@@ -132,8 +132,24 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e,
             return 0;
         id = pkey->type;
     }
-    name = OBJ_nid2sn(id);
+
+    /*
+     * Here, we extract what information we can for the purpose of
+     * supporting usage with implementations from providers, to make
+     * for a smooth transition from legacy stuff to provider based stuff.
+     *
+     * If an engine is given, this is entirely legacy, and we should not
+     * pretend anything else, so we only set the name when no engine is
+     * given.  If both are already given, someone made a mistake, and
+     * since that can only happen internally, it's safe to make an
+     * assertion.
+     */
+    if (!ossl_assert(e == NULL || name == NULL))
+        return NULL;
+    if (e == NULL)
+        name = OBJ_nid2sn(id);
     propquery = NULL;
+
 #ifndef OPENSSL_NO_ENGINE
     if (e == NULL && pkey != NULL)
         e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
