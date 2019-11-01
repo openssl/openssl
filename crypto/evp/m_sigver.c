@@ -129,11 +129,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
          * man pages), i.e. the ref count is not updated so the EVP_MD should
          * not be used beyound the lifetime of the EVP_MD_CTX.
          */
-        OSSL_PROVIDER *sigprov = EVP_SIGNATURE_provider(signature);
-
         ctx->reqdigest = ctx->fetched_digest =
-            EVP_MD_fetch(ossl_provider_library_context(sigprov),
-                         mdname, props);
+            EVP_MD_fetch(locpctx->libctx, mdname, props);
     }
 
     if (ver) {
