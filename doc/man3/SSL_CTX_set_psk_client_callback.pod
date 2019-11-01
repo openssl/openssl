@@ -156,6 +156,7 @@ failure. In the event of failure the connection setup fails.
 
 =head1 SEE ALSO
 
+L<ssl(7)>,
 L<SSL_CTX_set_psk_find_session_callback(3)>,
 L<SSL_set_psk_find_session_callback(3)>
 

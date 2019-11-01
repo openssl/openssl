@@ -71,6 +71,10 @@ On success, the functions return 1.
 On failure, the functions return 0.  Check out the error stack to find out
 the reason.
 
+=head1 SEE ALSO
+
+L<ssl(7)>
+
 =head1 COPYRIGHT
 
 Copyright 2013-2017 The OpenSSL Project Authors. All Rights Reserved.
