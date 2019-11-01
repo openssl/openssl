@@ -57,7 +57,7 @@ SSL_CTX_set_default_verify_file() is similar to
 SSL_CTX_set_default_verify_paths() except that just the default file is
 used.
 
-SSL_CTX_set_default_verify_sstore() is similar to
+SSL_CTX_set_default_verify_store() is similar to
 SSL_CTX_set_default_verify_paths() except that just the default store is
 used.
 
