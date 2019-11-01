@@ -17,6 +17,7 @@
 #include <openssl/core_names.h>
 #include "internal/nelem.h"
 #include "crypto/evp.h"          /* For the internal API */
+#include "ossl_test_endian.h"
 #include "testutil.h"
 
 typedef struct {
@@ -69,7 +70,8 @@ static int test_pass_rsa(FIXTURE *fixture)
 #define QINV    9
 #define C3      10               /* Extra coefficient */
 
-    size_t i;
+    DECLARE_IS_ENDIAN;
+    size_t i, len, off;
     int ret = 0;
     RSA *rsa = NULL;
     BIGNUM *bn1 = NULL, *bn2 = NULL, *bn3 = NULL;
@@ -164,12 +166,8 @@ static int test_pass_rsa(FIXTURE *fixture)
      */
 
     for (i = 0; i < OSSL_NELEM(expected); i++) {
-        const union {
-            int buff;
-            char little;
-        } endian = {1};
-        size_t len = params[i].return_size;
-        size_t off = endian.little ? 0 : sizeof(expected[0]) - len;
+        len = params[i].return_size;
+        off = IS_BIG_ENDIAN ? sizeof(expected[0]) - len : 0;
 
         ret += !! TEST_mem_eq((unsigned char *)&expected[i] + off, len,
                               &keydata[i], len);
