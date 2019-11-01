@@ -180,6 +180,8 @@ int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
             ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
             return 0;
         }
+    }
+    if (nextblocks > 0) {
         if (!ctx->hw->cipher(ctx, out, in, nextblocks)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
