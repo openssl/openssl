@@ -206,7 +206,8 @@ int verify_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-    if (trusted != NULL && (CAfile || CApath || CAstore)) {
+    if (trusted != NULL
+        && (CAfile != NULL || CApath != NULL || CAstore != NULL)) {
         BIO_printf(bio_err,
                    "%s: Cannot use -trusted with -CAfile, -CApath or -CAstore\n",
                    prog);
