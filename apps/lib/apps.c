@@ -140,9 +140,14 @@ int ctx_set_verify_locations(SSL_CTX *ctx,
 
         return 1;
     }
-    return SSL_CTX_load_verify_file(ctx, CAfile)
-        || SSL_CTX_load_verify_dir(ctx, CApath)
-        || SSL_CTX_load_verify_store(ctx, CAstore);
+
+    if (CAfile != NULL && !SSL_CTX_load_verify_file(ctx, CAfile))
+        return 0;
+    if (CApath != NULL && !SSL_CTX_load_verify_dir(ctx, CApath))
+        return 0;
+    if (CAstore != NULL && !SSL_CTX_load_verify_store(ctx, CAstore))
+        return 0;
+    return 1;
 }
 
 #ifndef OPENSSL_NO_CT
