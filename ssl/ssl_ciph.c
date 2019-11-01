@@ -186,7 +186,6 @@ static size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
 #define CIPHER_SPECIAL  5
 /*
  * Bump the ciphers to the top of the list.
- * This rule isn't currently supported by the public cipherstring API.
  */
 #define CIPHER_BUMP     6
 
@@ -1105,6 +1104,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             l++;
         } else if (ch == '@') {
             rule = CIPHER_SPECIAL;
+            l++;
+        } else if (ch == '^') {
+            rule = CIPHER_BUMP;
             l++;
         } else {
             rule = CIPHER_ADD;
