@@ -1269,26 +1269,30 @@ int ssl_load_stores(SSL_CTX *ctx,
 {
     X509_STORE *vfy = NULL, *ch = NULL;
     int rv = 0;
-    if (vfyCApath != NULL || vfyCAfile != NULL) {
+    if (vfyCApath != NULL || vfyCAfile != NULL || vfyCAstore != NULL) {
         vfy = X509_STORE_new();
         if (vfy == NULL)
             goto err;
-        if (!(X509_STORE_load_file(vfy, vfyCAfile)
-              || X509_STORE_load_path(vfy, vfyCApath)
-              || X509_STORE_load_store(vfy, vfyCAstore)))
+        if (vfyCAfile != NULL && !X509_STORE_load_file(vfy, vfyCAfile))
+            goto err;
+        if (vfyCApath != NULL && !X509_STORE_load_path(vfy, vfyCApath))
+            goto err;
+        if (vfyCAstore != NULL && !X509_STORE_load_store(vfy, vfyCAstore))
             goto err;
         add_crls_store(vfy, crls);
         SSL_CTX_set1_verify_cert_store(ctx, vfy);
         if (crl_download)
             store_setup_crl_download(vfy);
     }
-    if (chCApath != NULL || chCAfile != NULL) {
+    if (chCApath != NULL || chCAfile != NULL || chCAstore != NULL) {
         ch = X509_STORE_new();
         if (ch == NULL)
             goto err;
-        if (!(X509_STORE_load_file(ch, chCAfile)
-              || X509_STORE_load_path(ch, chCApath)
-              || X509_STORE_load_store(ch, chCAstore)))
+        if (chCAfile != NULL && !X509_STORE_load_file(ch, chCAfile))
+            goto err;
+        if (chCApath != NULL && !X509_STORE_load_path(ch, chCApath))
+            goto err;
+        if (chCAstore != NULL && !X509_STORE_load_store(ch, chCAstore))
             goto err;
         SSL_CTX_set1_chain_cert_store(ctx, ch);
     }
