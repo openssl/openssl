@@ -21,7 +21,11 @@ struct evp_pkey_ctx_st {
     /* Actual operation */
     int operation;
 
-    /* Algorithm name and properties associated with this context */
+    /*
+     * Library context, Algorithm name and properties associated
+     * with this context
+     */
+    OPENSSL_CTX *libctx;
     const char *algorithm;
     const char *propquery;
 

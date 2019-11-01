@@ -12,7 +12,8 @@ EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
 
  EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
  EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
- EVP_PKEY_CTX *EVP_PKEY_CTX_new_provided(const char *name,
+ EVP_PKEY_CTX *EVP_PKEY_CTX_new_provided(OPENSSL_CTX *libctx,
+                                         const char *name,
                                          const char *propquery);
  EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
  void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
@@ -25,11 +26,11 @@ the algorithm specified in I<pkey> and ENGINE I<e>.
 The EVP_PKEY_CTX_new_id() function allocates public key algorithm context
 using the algorithm specified by I<id> and ENGINE I<e>.
 
-The EVP_PKEY_CTX_new_provided() function allocates a public key
-algorithm context using the algorithm specified by I<name> and the
-property query I<propquery>.  The strings aren't duplicated, so they
-must remain unchanged for the lifetime of the returned B<EVP_PKEY_CTX>
-or of any of its duplicates.
+The EVP_PKEY_CTX_new_provided() function allocates a public key algorithm
+context using the library context I<libctx> (see L<OPENSSL_CTX(3)>), the
+algorithm specified by I<name> and the property query I<propquery>.  None
+of the arguments are duplicated, so they  must remain unchanged for the
+lifetime of the returned B<EVP_PKEY_CTX> or of any of its duplicates.
 
 EVP_PKEY_CTX_new_id() and EVP_PKEY_CTX_new_provided() are normally
 used when no B<EVP_PKEY> structure is associated with the operations,
