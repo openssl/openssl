@@ -163,8 +163,17 @@ static int test_pass_rsa(FIXTURE *fixture)
      * from the key.
      */
 
-    for (i = 0; i < OSSL_NELEM(expected); i++)
-        ret += !! TEST_int_eq(expected[i], keydata[i]);
+    for (i = 0; i < OSSL_NELEM(expected); i++) {
+        const union {
+            int buff;
+            char little;
+        } endian = {1};
+        size_t len = params[i].return_size;
+        size_t off = endian.little ? 0 : sizeof(expected[0]) - len;
+
+        ret += !! TEST_mem_eq((unsigned char *)&expected[i] + off, len,
+                              &keydata[i], len);
+    }
 
     ret = (ret == OSSL_NELEM(expected));
 
