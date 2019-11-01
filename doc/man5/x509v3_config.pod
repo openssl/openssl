@@ -529,7 +529,7 @@ will only recognize the last value. This can be worked around by using the form:
 
 =head1 SEE ALSO
 
-L<req(1)>, L<ca(1)>, L<x509(1)>,
+L<openssl-req(1)>, L<openssl-ca(1)>, L<openssl-x509(1)>,
 L<ASN1_generate_nconf(3)>
 
 =head1 COPYRIGHT

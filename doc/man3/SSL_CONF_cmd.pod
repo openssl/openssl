@@ -113,7 +113,7 @@ associated with B<cctx>.
 Sets the available ciphersuites for TLSv1.3 to value. This is a simple colon
 (":") separated list of TLSv1.3 ciphersuite names in order of preference. This
 list will be combined any configured TLSv1.2 and below ciphersuites.
-See L<ciphers(1)> for more information.
+See L<openssl-ciphers(1)> for more information.
 
 
 =item B<-cert>
@@ -264,7 +264,7 @@ structure is associated with B<cctx>.
 Sets the available ciphersuites for TLSv1.3 to B<value>. This is a simple colon
 (":") separated list of TLSv1.3 ciphersuite names in order of preference. This
 list will be combined any configured TLSv1.2 and below ciphersuites.
-See L<ciphers(1)> for more information.
+See L<openssl-ciphers(1)> for more information.
 
 =item B<Certificate>
 

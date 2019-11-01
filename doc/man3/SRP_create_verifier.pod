@@ -90,7 +90,7 @@ omitted for clarity):
 
 =head1 SEE ALSO
 
-L<srp(1)>,
+L<openssl-srp(1)>,
 L<SRP_VBASE_new(3)>,
 L<SRP_user_pwd_new(3)>
 

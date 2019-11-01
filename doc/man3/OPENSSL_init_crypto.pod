@@ -197,7 +197,7 @@ Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error
 will be added to the error stack. Note that because initialisation has failed
 OpenSSL error strings will not be available, only an error code. This code can
 be put through the openssl errstr command line application to produce a human
-readable error (see L<errstr(1)>).
+readable error (see L<openssl-errstr(1)>).
 
 The OPENSSL_atexit() function enables the registration of a
 function to be called during OPENSSL_cleanup(). Stop handlers are
