@@ -591,7 +591,7 @@ digest name passed on the command line.
 =head1 SEE ALSO
 
 L<EVP_MD_meth_new(3)>,
-L<dgst(1)>,
+L<openssl-dgst(1)>,
 L<evp(7)>,
 L<OSSL_PROVIDER(3)>,
 L<OSSL_PARAM(3)>

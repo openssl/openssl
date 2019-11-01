@@ -458,6 +458,15 @@ sub check {
         next if $target =~ m@\([1357]\)/.*>$@;  #   it has a section/anchor
         err($id, "Section missing in $target")
     }
+    # Check for proper links to commands.
+    while ( $contents =~ /L<([^>]*)\(1\)(?:\/.*)?>/g ) {
+        my $target = $1;
+        next if $target =~ /openssl-?/;
+        next if -f "doc/man1/$target.pod";
+        # TODO: Filter out "foreign manual" links.
+        next if $target =~ /ps|apropos|sha1sum|procmail|perl/;
+        err($id, "Bad command link L<$target(1)>");
+    }
     # Check for proper in-man-3 API links.
     while ( $contents =~ /L<([^>]*)\(3\)(?:\/.*)?>/g ) {
         my $target = $1;

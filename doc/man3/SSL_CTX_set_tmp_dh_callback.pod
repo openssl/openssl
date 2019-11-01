@@ -59,14 +59,14 @@ DH parameters can be reused, as the actual key is newly generated during
 the negotiation. The risk in reusing DH parameters is that an attacker
 may specialize on a very often used DH group. Applications should therefore
 generate their own DH parameters during the installation process using the
-openssl L<dhparam(1)> application. This application
+openssl L<openssl-dhparam(1)> application. This application
 guarantees that "strong" primes are used.
 
 Files dh2048.pem, and dh4096.pem in the 'apps' directory of the current
 version of the OpenSSL distribution contain the 'SKIP' DH parameters,
 which use safe primes and were generated verifiably pseudo-randomly.
 These files can be converted into C code using the B<-C> option of the
-L<dhparam(1)> application. Generation of custom DH
+L<openssl-dhparam(1)> application. Generation of custom DH
 parameters during installation should still be preferred to stop an
 attacker from specializing on a commonly used group. File dh1024.pem
 contains old parameters that must not be used by applications.
@@ -121,7 +121,7 @@ Code for setting up parameters during server initialization:
 
 L<ssl(7)>, L<SSL_CTX_set_cipher_list(3)>,
 L<SSL_CTX_set_options(3)>,
-L<ciphers(1)>, L<dhparam(1)>
+L<openssl-ciphers(1)>, L<openssl-dhparam(1)>
 
 =head1 COPYRIGHT
 

@@ -49,7 +49,7 @@ the SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
 Detailed documentation and use cases for most standard subcommands are available
-(e.g., L<x509(1)> or L<openssl-x509(1)>).
+(e.g., L<openssl-x509(1)>).
 
 Many commands use an external configuration file for some or all of their
 arguments and have a B<-config> option to specify that file.

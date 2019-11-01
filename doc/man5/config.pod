@@ -520,7 +520,7 @@ configuration files using that syntax will have to be modified.
 
 =head1 SEE ALSO
 
-L<x509(1)>, L<req(1)>, L<ca(1)>, L<fips_config(5)>
+L<openssl-x509(1)>, L<openssl-req(1)>, L<openssl-ca(1)>, L<fips_config(5)>
 
 =head1 COPYRIGHT
 

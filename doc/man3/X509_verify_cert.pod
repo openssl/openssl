@@ -14,7 +14,7 @@ X509_verify_cert - discover and verify X509 certificate chain
 
 The X509_verify_cert() function attempts to discover and validate a
 certificate chain based on parameters in B<ctx>. A complete description of
-the process is contained in the L<verify(1)> manual page.
+the process is contained in the L<openssl-verify(1)> manual page.
 
 =head1 RETURN VALUES
 

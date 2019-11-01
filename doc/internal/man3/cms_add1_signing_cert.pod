@@ -27,7 +27,7 @@ which updates Section 5.4 of RFC 2634.
 
 This attribute is mandatory to make a CMS compliant with CAdES-BES
 (European Standard ETSI EN 319 122-1 V1.1.1).
-For a fuller description see L<cms(1)>).
+For a fuller description see L<openssl-cms(1)>).
 
 =head1 RETURN VALUES
 

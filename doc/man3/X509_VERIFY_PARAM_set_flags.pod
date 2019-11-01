@@ -277,7 +277,7 @@ before searching the provided untrusted certificates.
 Local issuer certificates are often more likely to satisfy local security
 requirements and lead to a locally trusted root.
 This is especially important when some certificates in the trust store have
-explicit trust settings (see "TRUST SETTINGS" in L<x509(1)>).
+explicit trust settings (see "TRUST SETTINGS" in L<openssl-x509(1)>).
 As of OpenSSL 1.1.0 this option is on by default.
 
 The B<X509_V_FLAG_NO_ALT_CHAINS> flag suppresses checking for alternative
@@ -364,7 +364,7 @@ L<X509_verify_cert(3)>,
 L<X509_check_host(3)>,
 L<X509_check_email(3)>,
 L<X509_check_ip(3)>,
-L<x509(1)>
+L<openssl-x509(1)>
 
 =head1 HISTORY
 

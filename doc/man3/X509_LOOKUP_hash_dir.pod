@@ -85,8 +85,8 @@ with a filename of the form I<hash>.I<N> for a certificate, or
 I<hash>.B<r>I<N> for a CRL.
 The I<hash> is the value returned by the L<X509_NAME_hash(3)> function applied
 to the subject name for certificates or issuer name for CRLs.
-The hash can also be obtained via the B<-hash> option of the L<x509(1)> or
-L<crl(1)> commands.
+The hash can also be obtained via the B<-hash> option of the
+L<openssl-x509(1)> or L<openssl-crl(1)> commands.
 
 The .I<N> or .B<r>I<N> suffix is a sequence number that starts at zero, and is
 incremented consecutively for each certificate or CRL with the same I<hash>
@@ -109,8 +109,8 @@ Note that the hash algorithm used for subject name hashing changed in OpenSSL
 1.0.0, and all certificate stores have to be rehashed when moving from OpenSSL
 0.9.8 to 1.0.0.
 
-OpenSSL includes a L<rehash(1)> utility which creates symlinks with correct
-hashed names for all files with .pem suffix in a given directory.
+OpenSSL includes a L<openssl-rehash(1)> utility which creates symlinks with
+correct hashed names for all files with .pem suffix in a given directory.
 
 =head2 OSSL_STORE Method
 
