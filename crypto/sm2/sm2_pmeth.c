@@ -32,12 +32,17 @@ typedef struct {
 static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
 {
     SM2_PKEY_CTX *smctx;
+    const char *id = SM2_DEFAULT_USERID;
+    size_t id_len = strlen(id);
 
     if ((smctx = OPENSSL_zalloc(sizeof(*smctx))) == NULL) {
         SM2err(SM2_F_PKEY_SM2_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
+    smctx->id = (uint8_t*)OPENSSL_strndup(id, id_len);
+    smctx->id_len = id_len;
+    smctx->id_set = 1;
     ctx->data = smctx;
     return 1;
 }
@@ -62,6 +67,9 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
         return 0;
     sctx = src->data;
     dctx = dst->data;
+    /* SM2_PKEY_CTX has a default id */
+    OPENSSL_free(dctx->id);
+    dctx->id = NULL;
     if (sctx->gen_group != NULL) {
         dctx->gen_group = EC_GROUP_dup(sctx->gen_group);
         if (dctx->gen_group == NULL) {
