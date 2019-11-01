@@ -9,8 +9,8 @@
 
 #include <openssl/store.h>
 #include "internal/cryptlib.h"
-#include "internal/x509_int.h"
-#include "x509_lcl.h"
+#include "crypto/x509.h"
+#include "x509_local.h"
 
 /* Generic object loader, given expected type and criterion */
 static int cache_objects(X509_LOOKUP *lctx, const char *uri,
