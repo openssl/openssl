@@ -100,10 +100,12 @@ accepted, otherwise it specifies the maximum size allowed.
 =item I<return_size>
 
 When an array of B<OSSL_PARAM> is used to request data, the
-I<responder> must set this field to indicate the actual size of the
-parameter data.
-In case the I<data_size> is too small for the data, the I<responder>
-must still set this field to indicate the minimum data size required.
+I<responder> must set this field to indicate size of the parameter
+data, including padding as the case may be.
+In case the I<data_size> is an unsuitable size for the data, the
+I<responder> must still set this field to indicate the minimum data
+size required.
+(further notes on this in L</NOTES> below).
 
 When the B<OSSL_PARAM> is used as a parameter descriptor,
 I<return_size> should be ignored.
@@ -238,8 +240,18 @@ B<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
 
 If a I<responder> finds that some data sizes are too small for the
 requested data, it must set I<return_size> for each such
-B<OSSL_PARAM> item to the required size, and eventually return an
-error.
+B<OSSL_PARAM> item to the minimum required size, and eventually return
+an error.
+
+=item *
+
+For the integer type parameters (B<OSSL_PARAM_UNSIGNED_INTEGER> and
+B<OSSL_PARAM_INTEGER>), a I<responder> may choose to return an error
+if the I<data_size> isn't a suitable size (even if I<data_size> is
+bigger than needed).  If the I<responder> finds the size suitable, it
+must fill all I<data_size> bytes and ensure correct padding for the
+native endianness, and set I<return_size> to the same value as
+I<data_size>.
 
 =back
 
