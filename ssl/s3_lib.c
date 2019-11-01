@@ -3271,15 +3271,22 @@ SSL_CIPHER_FLAGS *SSL_get_ciphers_flags(const SSL *s)
 
 int ssl3_num_ciphers(void)
 {
-    return SSL3_NUM_CIPHERS;
+    return SSL3_NUM_CIPHERS + TLS13_NUM_CIPHERS;
 }
 
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 {
-    if (u < SSL3_NUM_CIPHERS)
+    if (u < SSL3_NUM_CIPHERS) {
         return &(ssl3_ciphers[SSL3_NUM_CIPHERS - 1 - u]);
-    else
-        return NULL;
+    } else {
+        /* Join table ssl3_ciphers with tls13_ciphers. */
+        u -= SSL3_NUM_CIPHERS;
+        if (u < TLS13_NUM_CIPHERS)
+            return &(tls13_ciphers[TLS13_NUM_CIPHERS - 1 - u]);
+        else
+            return NULL;
+    }
+
 }
 
 int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype)
