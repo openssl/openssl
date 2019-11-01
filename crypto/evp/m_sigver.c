@@ -76,13 +76,14 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      * checking if signature is already there.  Keymgmt is a different
      * matter, as it isn't tied to a specific EVP_PKEY op.
      */
-    signature =
-        EVP_SIGNATURE_fetch(NULL, locpctx->algorithm, locpctx->propquery);
+    signature = EVP_SIGNATURE_fetch(locpctx->libctx, locpctx->algorithm,
+                                    locpctx->propquery);
     if (signature != NULL && locpctx->keymgmt == NULL) {
         int name_id = EVP_SIGNATURE_number(signature);
 
         locpctx->keymgmt =
-            evp_keymgmt_fetch_by_number(NULL, name_id, locpctx->propquery);
+            evp_keymgmt_fetch_by_number(locpctx->libctx, name_id,
+                                        locpctx->propquery);
     }
 
     if (locpctx->keymgmt == NULL

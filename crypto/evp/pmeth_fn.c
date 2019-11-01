@@ -334,12 +334,13 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
      * checking if signature is already there.  Keymgmt is a different
      * matter, as it isn't tied to a specific EVP_PKEY op.
      */
-    signature = EVP_SIGNATURE_fetch(NULL, ctx->algorithm, ctx->propquery);
+    signature = EVP_SIGNATURE_fetch(ctx->libctx, ctx->algorithm,
+                                    ctx->propquery);
     if (signature != NULL && ctx->keymgmt == NULL) {
         int name_id = EVP_SIGNATURE_number(signature);
 
-        ctx->keymgmt =
-            evp_keymgmt_fetch_by_number(NULL, name_id, ctx->propquery);
+        ctx->keymgmt = evp_keymgmt_fetch_by_number(ctx->libctx, name_id,
+                                                   ctx->propquery);
     }
 
     if (ctx->keymgmt == NULL
