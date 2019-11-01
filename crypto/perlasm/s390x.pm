@@ -130,7 +130,7 @@ sub AUTOLOAD {
 	confess(err("PARSE")) if (grep(!defined($_),@_));
 	my $token;
 	for ($AUTOLOAD) {
-		$token=".$1" if (/^.*::([A-Z_]+)$/);	# uppercase: directive
+		$token=lc(".$1") if (/^.*::([A-Z_]+)$/);# uppercase: directive
 		$token="\t$1" if (/^.*::([a-z]+)$/);	# lowercase: mnemonic
 		confess(err("PARSE")) if (!defined($token));
 	}

@@ -504,14 +504,14 @@ $code.=<<___;
 .type	s390x_flip_endian32,\@function
 .align	16
 s390x_flip_endian32:
-	lrvg	%r0,0(%r0,$src)
-	lrvg	%r1,8(%r0,$src)
-	lrvg	%r4,16(%r0,$src)
-	lrvg	%r5,24(%r0,$src)
-	stg	%r0,24(%r0,$dst)
-	stg	%r1,16(%r0,$dst)
-	stg	%r4,8(%r0,$dst)
-	stg	%r5,0(%r0,$dst)
+	lrvg	%r0,0($src)
+	lrvg	%r1,8($src)
+	lrvg	%r4,16($src)
+	lrvg	%r5,24($src)
+	stg	%r0,24($dst)
+	stg	%r1,16($dst)
+	stg	%r4,8($dst)
+	stg	%r5,0($dst)
 	br	$ra
 .size	s390x_flip_endian32,.-s390x_flip_endian32
 ___
@@ -528,22 +528,22 @@ $code.=<<___;
 s390x_flip_endian64:
 	stmg	%r6,%r9,6*$SIZE_T($sp)
 
-	lrvg	%r0,0(%r0,$src)
-	lrvg	%r1,8(%r0,$src)
-	lrvg	%r4,16(%r0,$src)
-	lrvg	%r5,24(%r0,$src)
-	lrvg	%r6,32(%r0,$src)
-	lrvg	%r7,40(%r0,$src)
-	lrvg	%r8,48(%r0,$src)
-	lrvg	%r9,56(%r0,$src)
-	stg	%r0,56(%r0,$dst)
-	stg	%r1,48(%r0,$dst)
-	stg	%r4,40(%r0,$dst)
-	stg	%r5,32(%r0,$dst)
-	stg	%r6,24(%r0,$dst)
-	stg	%r7,16(%r0,$dst)
-	stg	%r8,8(%r0,$dst)
-	stg	%r9,0(%r0,$dst)
+	lrvg	%r0,0($src)
+	lrvg	%r1,8($src)
+	lrvg	%r4,16($src)
+	lrvg	%r5,24($src)
+	lrvg	%r6,32($src)
+	lrvg	%r7,40($src)
+	lrvg	%r8,48($src)
+	lrvg	%r9,56($src)
+	stg	%r0,56($dst)
+	stg	%r1,48($dst)
+	stg	%r4,40($dst)
+	stg	%r5,32($dst)
+	stg	%r6,24($dst)
+	stg	%r7,16($dst)
+	stg	%r8,8($dst)
+	stg	%r9,0($dst)
 
 	lmg	%r6,%r9,6*$SIZE_T($sp)
 	br	$ra
