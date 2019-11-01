@@ -4181,10 +4181,13 @@ int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_hash_dir());
     if (lookup == NULL)
         return 0;
+
+    /* We ignore errors, in case the directory doesn't exist */
+    ERR_set_mark();
+
     X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
 
-    /* Clear any errors if the default directory does not exist */
-    ERR_clear_error();
+    ERR_pop_to_mark();
 
     return 1;
 }
@@ -4197,10 +4200,12 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
     if (lookup == NULL)
         return 0;
 
+    /* We ignore errors, in case the directory doesn't exist */
+    ERR_set_mark();
+
     X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
 
-    /* Clear any errors if the default file does not exist */
-    ERR_clear_error();
+    ERR_pop_to_mark();
 
     return 1;
 }
@@ -4213,10 +4218,12 @@ int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
     if (lookup == NULL)
         return 0;
 
+    /* We ignore errors, in case the directory doesn't exist */
+    ERR_set_mark();
+
     X509_LOOKUP_add_store(lookup, NULL);
 
-    /* Clear any errors if the default file does not exist */
-    ERR_clear_error();
+    ERR_pop_to_mark();
 
     return 1;
 }
