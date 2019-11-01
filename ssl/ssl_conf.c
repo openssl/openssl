@@ -258,12 +258,18 @@ static int cmd_CipherString(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
 
-    if (cctx->ctx)
+    if (cctx->ctx) {
         rv = SSL_CTX_set_cipher_list_and_mask(cctx->ctx, value,
                                               cctx->version_mask);
-    if (cctx->ssl)
+        if (SSL_CTX_count_ciphers_by_version(cctx->ctx, TLS1_3_VERSION) > 0)
+            SSL_CTX_set_ciphersuites(cctx->ctx, "");
+    }
+    if (cctx->ssl) {
         rv = SSL_set_cipher_list_and_mask(cctx->ssl, value,
                                           cctx->version_mask);
+        if (SSL_count_ciphers_by_version(cctx->ssl, TLS1_3_VERSION) > 0)
+            SSL_set_ciphersuites(cctx->ssl, "");
+    }
     return rv > 0;
 }
 
@@ -280,6 +286,10 @@ static int cmd_Ciphersuites(SSL_CONF_CTX *cctx, const char *value)
 
 static int cmd_VersionMask(SSL_CONF_CTX *cctx, const char *value)
 {
+    if (cctx->ctx)
+        SSL_CTX_set_ciphersuites(cctx->ctx, "");
+    if (cctx->ssl)
+        SSL_set_ciphersuites(cctx->ssl, "");
     return OPENSSL_version_list(value, &cctx->version_mask) > 0;
 }
 

@@ -211,6 +211,14 @@ int s_time_main(int argc, char **argv)
                                                              &default_version_mask)) {
         goto end;
     }
+    /*
+     * If default_version_str is specified, or there were set at least one
+     * TLS 1.3 cipher using cipher_list, set TLS 1.3 ciphersuites to empty
+     * list.
+     */
+    if (default_version_str != NULL ||
+        SSL_CTX_count_ciphers_by_version(ctx, TLS1_3_VERSION) > 0)
+        ciphersuites = "";
     if (cipher != NULL &&
         !SSL_CTX_set_cipher_list_and_mask(ctx, cipher, default_version_mask))
         goto end;

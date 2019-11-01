@@ -219,6 +219,10 @@ static const SSL_VERSION ssl_version_table[] = {
         1,
         SSL_TXT_TLSV1_2,
         TLS1_2_VERSION,
+    }, {
+        0,
+        SSL_TXT_TLSV1_3,
+        TLS1_3_VERSION,
     },
 };
 
@@ -317,12 +321,14 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_SHA256, NULL, 0, 0, 0, 0, SSL_SHA256},
     {0, SSL_TXT_SHA384, NULL, 0, 0, 0, 0, SSL_SHA384},
     {0, SSL_TXT_GOST12, NULL, 0, 0, 0, 0, SSL_GOST12_256},
+    {0, SSL_TXT_AEAD, NULL, 0, 0, 0, 0, SSL_AEAD},
 
     /* protocol version aliases */
     {0, SSL_TXT_SSLV3, NULL, 0, 0, 0, 0, 0, SSL3_VERSION},
     {0, SSL_TXT_TLSV1, NULL, 0, 0, 0, 0, 0, TLS1_VERSION},
     {0, "TLSv1.0", NULL, 0, 0, 0, 0, 0, TLS1_VERSION},
     {0, SSL_TXT_TLSV1_2, NULL, 0, 0, 0, 0, 0, TLS1_2_VERSION},
+    {0, SSL_TXT_TLSV1_3, NULL, 0, 0, 0, 0, 0, TLS1_3_VERSION},
 
     /* strength classes */
     {0, SSL_TXT_LOW, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_LOW},
@@ -1134,10 +1140,11 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             while (((ch >= 'A') && (ch <= 'Z')) ||
                    ((ch >= '0') && (ch <= '9')) ||
                    ((ch >= 'a') && (ch <= 'z')) ||
-                   (ch == '-') || (ch == '.') || (ch == '='))
+                   (ch == '-') || (ch == '_') ||
+                   (ch == '.') || (ch == '='))
 #else
-            while (isalnum((unsigned char)ch) || (ch == '-') || (ch == '.')
-                   || (ch == '='))
+            while (isalnum((unsigned char)ch) || (ch == '-') ||
+                   (ch == '_') || (ch == '.') || (ch == '='))
 #endif
             {
                 ch = *(++l);
@@ -1511,12 +1518,13 @@ static int update_cipher_list(SSL_CIPHER_FLAGS **cipher_list_flags,
     num_of_tls13_ciphersuites = sk_SSL_CIPHER_num(tls13_ciphersuites);
 
     /*
-     * Delete any existing TLSv1.3 ciphersuites. These are always first in the
-     * list.
+     * Delete any existing TLSv1.3 ciphersuites, which were entered using
+     * ciphersiute interface. These are always first in the list.
      */
     while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0
            && sk_SSL_CIPHER_value(tmp_cipher_list, 0)->min_tls
-              == TLS1_3_VERSION) {
+              == TLS1_3_VERSION
+           && flags[0] & CIPHER_FLAG_FROM_CIPHERRSUITE) {
         sk_SSL_CIPHER_delete(tmp_cipher_list, 0);
         flags++;
         num_of_ciphers--;
@@ -1707,7 +1715,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
     /*
      * Irrespective of strength, enforce the following order:
-     * (EC)DHE + AEAD > (EC)DHE > rest of AEAD > rest.
+     * TLSv1.3 > (EC)DHE + AEAD > (EC)DHE > rest of AEAD > rest.
      * Within each group, ciphers remain sorted by strength and previous
      * preference, i.e.,
      * 1) ECDHE > DHE
@@ -1724,6 +1732,8 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                           CIPHER_BUMP, -1, &head, &tail);
     ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, SSL_AEAD, 0, 0, 0,
                           CIPHER_BUMP, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, TLS1_3_VERSION, 0, 0, CIPHER_BUMP,
+                          -1, &head, &tail);
 
     /* Now disable everything (maintaining the ordering!) */
     ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);

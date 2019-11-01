@@ -205,17 +205,27 @@ int ciphers_main(int argc, char **argv)
         BIO_printf(bio_err, "Error in default version mask\n");
     }
 
-    if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites)) {
-        BIO_printf(bio_err, "Error setting TLSv1.3 ciphersuites\n");
-        goto err;
-    }
-
     if (ciphers != NULL) {
         if (!SSL_CTX_set_cipher_list_and_mask(ctx, ciphers, default_version_mask)) {
             BIO_printf(bio_err, "Error in cipher list\n");
             goto err;
         }
     }
+
+    /*
+     * If default_version_str is specified, or there were set at least one
+     * TLS 1.3 cipher using cipher_list, set TLS 1.3 ciphersuites to empty
+     * list.
+     */
+    if (default_version_str != NULL ||
+        SSL_CTX_count_ciphers_by_version(ctx, TLS1_3_VERSION) > 0)
+        ciphersuites = "";
+
+    if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites)) {
+        BIO_printf(bio_err, "Error setting TLSv1.3 ciphersuites\n");
+        goto err;
+    }
+
     ssl = SSL_new(ctx);
     if (ssl == NULL)
         goto err;

@@ -92,6 +92,7 @@ extern "C" {
 # define SSL_TXT_aGOST94         "aGOST94"
 # define SSL_TXT_aGOST01         "aGOST01"
 # define SSL_TXT_aGOST12         "aGOST12"
+# define SSL_TXT_AEAD            "AEAD"
 # define SSL_TXT_aGOST           "aGOST"
 # define SSL_TXT_aSRP            "aSRP"
 
@@ -145,6 +146,7 @@ extern "C" {
 # define SSL_TXT_TLSV1           "TLSv1"
 # define SSL_TXT_TLSV1_1         "TLSv1.1"
 # define SSL_TXT_TLSV1_2         "TLSv1.2"
+# define SSL_TXT_TLSV1_3         "TLSv1.3"
 
 # define SSL_TXT_ALL             "ALL"
 
