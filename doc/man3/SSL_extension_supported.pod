@@ -275,6 +275,10 @@ failure).
 SSL_extension_supported() returns 1 if the extension B<ext_type> is handled
 internally by OpenSSL and 0 otherwise.
 
+=head1 SEE ALSO
+
+L<ssl(7)>
+
 =head1 HISTORY
 
 The SSL_CTX_add_custom_ext() function was added in OpenSSL 1.1.1.

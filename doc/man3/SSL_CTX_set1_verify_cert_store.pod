@@ -72,6 +72,7 @@ All these functions return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
+L<ssl(7)>,
 L<SSL_CTX_add_extra_chain_cert(3)>
 L<SSL_CTX_set0_chain(3)>
 L<SSL_CTX_set1_chain(3)>

@@ -71,6 +71,10 @@ SSL_export_keying_material() returns 0 or -1 on failure or 1 on success.
 
 SSL_export_keying_material_early() returns 0 on failure or 1 on success.
 
+=head1 SEE ALSO
+
+L<ssl(7)>
+
 =head1 HISTORY
 
 The SSL_export_keying_material_early() function was added in OpenSSL 1.1.1.
