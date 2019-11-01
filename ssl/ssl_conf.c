@@ -460,6 +460,7 @@ static int do_store(SSL_CONF_CTX *cctx,
 {
     CERT *cert;
     X509_STORE **st;
+
     if (cctx->ctx)
         cert = cctx->ctx->cert;
     else if (cctx->ssl)
@@ -472,9 +473,14 @@ static int do_store(SSL_CONF_CTX *cctx,
         if (*st == NULL)
             return 0;
     }
-    return X509_STORE_load_file(*st, CAfile)
-        || X509_STORE_load_path(*st, CApath)
-        || X509_STORE_load_store(*st, CAstore);
+
+    if (CAfile != NULL && !X509_STORE_load_file(*st, CAfile))
+        return 0;
+    if (CApath != NULL && !X509_STORE_load_path(*st, CApath))
+        return 0;
+    if (CAstore != NULL && !X509_STORE_load_store(*st, CAstore))
+        return 0;
+    return 1;
 }
 
 static int cmd_ChainCAPath(SSL_CONF_CTX *cctx, const char *value)

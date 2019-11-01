@@ -47,12 +47,13 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
 
     for (;;) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
-        int infotype = info == NULL ? 0 : OSSL_STORE_INFO_get_type(info);
+        int infotype;
 
         /* NULL means error or "end of file".  Either way, we break. */
         if (info == NULL)
             break;
 
+        infotype = OSSL_STORE_INFO_get_type(info);
         ok = 0;
 
         if (infotype == OSSL_STORE_INFO_NAME) {

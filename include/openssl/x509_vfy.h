@@ -95,8 +95,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 # define X509_L_FILE_LOAD        1
 # define X509_L_ADD_DIR          2
-# define X509_L_ADD_STORE          3
-# define X509_L_LOAD_STORE         4
+# define X509_L_ADD_STORE        3
+# define X509_L_LOAD_STORE       4
 
 # define X509_LOOKUP_load_file(x,name,type) \
                 X509_LOOKUP_ctrl((x),X509_L_FILE_LOAD,(name),(long)(type),NULL)
