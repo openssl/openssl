@@ -180,12 +180,12 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
      * checking if exchange is already there.  Keymgmt is a different
      * matter, as it isn't tied to a specific EVP_PKEY op.
      */
-    exchange = EVP_KEYEXCH_fetch(NULL, ctx->algorithm, ctx->propquery);
+    exchange = EVP_KEYEXCH_fetch(ctx->libctx, ctx->algorithm, ctx->propquery);
     if (exchange != NULL && ctx->keymgmt == NULL) {
         int name_id = EVP_KEYEXCH_number(exchange);
 
         ctx->keymgmt =
-            evp_keymgmt_fetch_by_number(NULL, name_id, ctx->propquery);
+            evp_keymgmt_fetch_by_number(ctx->libctx, name_id, ctx->propquery);
     }
 
     if (ctx->keymgmt == NULL
