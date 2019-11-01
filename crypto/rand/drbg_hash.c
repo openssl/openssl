@@ -309,33 +309,10 @@ int drbg_hash_init(RAND_DRBG *drbg)
     RAND_DRBG_HASH *hash = &drbg->data.hash;
 
     /*
-     * Confirm digest is allowed. Outside FIPS_MODE we allow all non-legacy
-     * digests. Inside FIPS_MODE we only allow approved digests. Also no XOF
-     * digests (such as SHAKE).
+     * Confirm digest is allowed. We allow all digests that are not XOF
+     * (such as SHAKE).  In FIPS mode, the fetch will fail for non-approved
+     * digests.
      */
-    switch (drbg->type) {
-    default:
-        return 0;
-
-    case NID_sha1:
-    case NID_sha224:
-    case NID_sha256:
-    case NID_sha384:
-    case NID_sha512:
-    case NID_sha512_224:
-    case NID_sha512_256:
-    case NID_sha3_224:
-    case NID_sha3_256:
-    case NID_sha3_384:
-    case NID_sha3_512:
-#ifndef FIPS_MODE
-    case NID_blake2b512:
-    case NID_blake2s256:
-    case NID_sm3:
-#endif
-        break;
-    }
-
     md = EVP_MD_fetch(drbg->libctx, ossl_prov_util_nid_to_name(drbg->type), "");
     if (md == NULL)
         return 0;
