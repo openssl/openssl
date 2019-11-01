@@ -640,8 +640,11 @@ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val)
     p->return_size = bytes;
     if (p->data == NULL)
         return 1;
-    return p->data_size >= bytes
-        && BN_bn2nativepad(val, p->data, bytes) >= 0;
+    if (p->data_size >= bytes) {
+        p->return_size = p->data_size;
+        return BN_bn2nativepad(val, p->data, p->data_size) >= 0;
+    }
+    return 0;
 }
 
 OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
