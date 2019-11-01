@@ -78,7 +78,12 @@ int X509_STORE_load_store(X509_STORE *ctx, const char *uri)
 int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
                               const char *path)
 {
-    return X509_STORE_load_file(ctx, file)
-        || X509_STORE_load_path(ctx, path);
+    if (file == NULL && path == NULL)
+        return 0;
+    if (file != NULL && !X509_STORE_load_file(ctx, file))
+        return 0;
+    if (path != NULL && !X509_STORE_load_path(ctx, path))
+        return 0;
+    return 1;
 }
 #endif

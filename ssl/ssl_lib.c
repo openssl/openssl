@@ -4240,8 +4240,13 @@ int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore)
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                   const char *CApath)
 {
-    return SSL_CTX_load_verify_file(ctx, CAfile)
-        || SSL_CTX_load_verify_dir(ctx, CApath);
+    if (CAfile == NULL && CApath == NULL)
+        return 0;
+    if (CAfile != NULL && !SSL_CTX_load_verify_file(ctx, CAfile))
+        return 0;
+    if (CApath != NULL && !SSL_CTX_load_verify_dir(ctx, CApath))
+        return 0;
+    return 1;
 }
 #endif
 
