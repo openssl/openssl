@@ -304,7 +304,7 @@ information.
 A file containing trusted certificates to use when attempting to build the
 client certificate chain.
 
-=item B<-chainCAstore uri>
+=item B<-chainCAstore> I<uri>
 
 The URI to use when attempting to build the client certificate chain.
 
