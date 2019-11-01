@@ -47,7 +47,9 @@ See L<openssl-provider(1)>.
 =item B<OPENSSL_WIN32_UTF8>
 
 If set, then L<UI_OpenSSL(3)> returns UTF-8 encoded strings, rather than
-ones encoded in the current locale.
+ones encoded in the current locale, and
+the L<openssl(1)> program also transcodes the command-line parameters
+from wide characters to UTF-8.
 
 =item B<RANDFILE>
 
