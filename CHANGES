@@ -9,8 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
-  *) Added the X509_LOOKUP_METHOD X509_LOOKUP_store, to allow access to
-     certificate and CRL stores via URIs and OSSL_STORE loaders.
+  *) Added the X509_LOOKUP_METHOD called X509_LOOKUP_store, to allow
+     access to certificate and CRL stores via URIs and OSSL_STORE
+     loaders.
 
      This adds the following functions:
 
