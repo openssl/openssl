@@ -99,6 +99,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         goto legacy;
     }
 
+    /* No more legacy from here down to legacy: */
+
     locpctx->op.sig.signature = signature;
 
     locpctx->operation = ver ? EVP_PKEY_OP_VERIFYCTX
@@ -117,8 +119,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         goto err;
     }
 
-    if (mdname == NULL) {
-        mdname = EVP_MD_name(type);
+    if (type != NULL) {
         ctx->reqdigest = type;
     } else {
         /*
@@ -127,11 +128,11 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
          * man pages), i.e. the ref count is not updated so the EVP_MD should
          * not be used beyound the lifetime of the EVP_MD_CTX.
          */
-        ctx->reqdigest
-            = ctx->fetched_digest
-            = EVP_MD_fetch(
-                ossl_provider_library_context(EVP_SIGNATURE_provider(signature)),
-                mdname, props);
+        OSSL_PROVIDER *sigprov = EVP_SIGNATURE_provider(signature);
+
+        ctx->reqdigest = ctx->fetched_digest =
+            EVP_MD_fetch(ossl_provider_library_context(sigprov),
+                         mdname, props);
     }
 
     if (ver) {
@@ -139,15 +140,15 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
-        ret = signature->digest_verify_init(locpctx->op.sig.sigprovctx, mdname,
-                                            props, provkey);
+        ret = signature->digest_verify_init(locpctx->op.sig.sigprovctx,
+                                            mdname, props, provkey);
     } else {
         if (signature->digest_sign_init == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
-        ret = signature->digest_sign_init(locpctx->op.sig.sigprovctx, mdname,
-                                          props, provkey);
+        ret = signature->digest_sign_init(locpctx->op.sig.sigprovctx,
+                                          mdname, props, provkey);
     }
 
     return ret ? 1 : 0;
