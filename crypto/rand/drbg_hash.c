@@ -317,6 +317,8 @@ int drbg_hash_init(RAND_DRBG *drbg)
     if (md == NULL)
         return 0;
 
+    if ((EVP_MD_flags(md) & EVP_MD_FLAG_XOF) != 0)
+        return 0;
 
     drbg->meth = &drbg_hash_meth;
 
