@@ -854,6 +854,7 @@ static const EVP_PKEY_METHOD ed448_pkey_meth = {
 
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
+# include "internal/constant_time.h"
 
 static void s390x_x25519_mod_p(unsigned char u[32])
 {
@@ -867,16 +868,16 @@ static void s390x_x25519_mod_p(unsigned char u[32])
     u_red[31] = (unsigned char)c;
     c >>= 8;
 
-    for (i = 30; c > 0 && i >= 0; i--) {
+    for (i = 30; i >= 0; i--) {
         c += (unsigned int)u_red[i];
         u_red[i] = (unsigned char)c;
         c >>= 8;
     }
 
-    if (u_red[0] & 0x80) {
-        u_red[0] &= 0x7f;
-        memcpy(u, u_red, sizeof(u_red));
-    }
+    c = (u_red[0] & 0x80) >> 7;
+    u_red[0] &= 0x7f;
+    constant_time_cond_swap_buff(0 - (unsigned char)c,
+                                 u, u_red, sizeof(u_red));
 }
 
 static void s390x_x448_mod_p(unsigned char u[56])
@@ -901,14 +902,14 @@ static void s390x_x448_mod_p(unsigned char u[56])
     u_red[27] = (unsigned char)c;
     c >>= 8;
 
-    for (i = 26; c > 0 && i >= 0; i--) {
+    for (i = 26; i >= 0; i--) {
         c += (unsigned int)u_red[i];
         u_red[i] = (unsigned char)c;
         c >>= 8;
     }
 
-    if (c)
-        memcpy(u, u_red, sizeof(u_red));
+    constant_time_cond_swap_buff(0 - (unsigned char)c,
+                                 u, u_red, sizeof(u_red));
 }
 
 static int s390x_x25519_mul(unsigned char u_dst[32],
