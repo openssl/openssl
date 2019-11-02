@@ -814,6 +814,8 @@ PublicKeyRaw=Bob-448-PUBLIC-Raw:X448:3eb7a829b0cd20f5bcfc0b599b6feccf6da4627107b
 
 PrivPubKeyPair = Bob-448-Raw:Bob-448-PUBLIC-Raw
 
+PublicKeyRaw=Bob-448-PUBLIC-Raw-NonCanonical:X448:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
 Derive=Alice-448
 PeerKey=Bob-448-PUBLIC
 SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2464c335543936521c24403085d59a449a5037514a879d
@@ -829,6 +831,11 @@ SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2
 Derive=Bob-448-Raw
 PeerKey=Alice-448-PUBLIC-Raw
 SharedSecret=07fff4181ac6cc95ec1c16a94a0f74d12da232ce40a77552281d282bb60c0b56fd2464c335543936521c24403085d59a449a5037514a879d
+
+# Self-generated non-canonical
+Derive=Alice-448-Raw
+PeerKey=Bob-448-PUBLIC-Raw-NonCanonical
+SharedSecret=66e2e682b1f8e68c809f1bb3e406bd826921d9c1a5bfbfcbab7ae72feecee63660eabd54934f3382061d17607f581a90bdac917a064959fb
 
 # Illegal sign/verify operations with X448 key
 
