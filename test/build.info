@@ -690,7 +690,7 @@ IF[{- !$disabled{tests} -}]
 ENDIF
 
   SOURCE[ssl_ctx_test]=ssl_ctx_test.c
-  INCLUDE[ssl_ctx_test]=../include
+  INCLUDE[ssl_ctx_test]=../include ../apps/include
   DEPEND[ssl_ctx_test]=../libcrypto ../libssl libtestutil.a
 
 {-
