@@ -907,10 +907,8 @@ static void s390x_x448_mod_p(unsigned char u[56])
         c >>= 8;
     }
 
-    if (u_red[0] & 0x80) {
-        u_red[0] &= 0x7f;
+    if (c)
         memcpy(u, u_red, sizeof(u_red));
-    }
 }
 
 static int s390x_x25519_mul(unsigned char u_dst[32],
@@ -966,7 +964,7 @@ static int s390x_x448_mul(unsigned char u_dst[56],
     memcpy(param.x448.d_src, d_src, 56);
 
     s390x_flip_endian64(param.x448.u_src, param.x448.u_src);
-    s390x_x448_mod_p(param.x448.u_src);
+    s390x_x448_mod_p(param.x448.u_src + 8);
 
     s390x_flip_endian64(param.x448.d_src, param.x448.d_src);
     param.x448.d_src[63] &= 252;
