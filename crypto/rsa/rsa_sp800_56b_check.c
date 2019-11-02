@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#include <internal/bn_val.h>
 #include "crypto/bn.h"
 #include "rsa_local.h"
 
@@ -75,35 +76,33 @@ int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
  * See SP800-5bBr1 6.4.1.2.1 Part 5 (c) & (g) - used for both p and q.
  *
  * (√2)(2^(nbits/2 - 1) = (√2/2)(2^(nbits/2))
- * √2/2 = 0.707106781186547524400 = 0.B504F333F9DE6484597D8
- * 0.B504F334 gives an approximation to 11 decimal places.
- * The range is then from
- *   0xB504F334_0000.......................000 to
- *   0xFFFFFFFF_FFFF.......................FFF
  */
 int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *tmp, *low;
+    BIGNUM *low;
+    int shift;
 
     nbits >>= 1;
+    shift = nbits - BN_num_bits(&bn_inv_sqrt_2);
 
     /* Upper bound check */
     if (BN_num_bits(p) != nbits)
         return 0;
 
     BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
     low = BN_CTX_get(ctx);
-
-    /* set low = (√2)(2^(nbits/2 - 1) */
-    if (low == NULL || !BN_set_word(tmp, 0xB504F334))
+    if (low == NULL)
         goto err;
 
-    if (nbits >= 32) {
-        if (!BN_lshift(low, tmp, nbits - 32))
+    /* set low = (√2)(2^(nbits/2 - 1) */
+    if (!BN_copy(low, &bn_inv_sqrt_2))
+        goto err;
+
+    if (shift >= 0) {
+        if (!BN_lshift(low, low, shift))
             goto err;
-    } else if (!BN_rshift(low, tmp, 32 - nbits)) {
+    } else if (!BN_rshift(low, low, -shift)) {
         goto err;
     }
     if (BN_cmp(p, low) < 0)

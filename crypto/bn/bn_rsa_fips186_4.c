@@ -45,7 +45,7 @@ static const BN_ULONG inv_sqrt_2_val[] = {
     BN_DEF(0x754ABE9FUL, 0x597D89B3UL), BN_DEF(0xF9DE6484UL, 0xB504F333UL)
 };
 
-static const BIGNUM bn_inv_sqrt_2 = {
+const BIGNUM bn_inv_sqrt_2 = {
     (BN_ULONG *)inv_sqrt_2_val,
     OSSL_NELEM(inv_sqrt_2_val),
     OSSL_NELEM(inv_sqrt_2_val),
