@@ -100,10 +100,10 @@ int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
         goto err;
 
     if (shift >= 0) {
-        if (!BN_lshift(low, low, shift))
+        if (!BN_sub(low, low, BN_value_one()) || !BN_lshift(low, low, shift))
             goto err;
     } else {
-        if (!BN_rshift(low, low, -shift) || !BN_add(low, low, BN_value_one()))
+        if (!BN_rshift(low, low, -shift))
             goto err;
     }
     if (BN_cmp(p, low) < 0)
