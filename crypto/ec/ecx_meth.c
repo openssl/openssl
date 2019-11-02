@@ -855,6 +855,25 @@ static const EVP_PKEY_METHOD ed448_pkey_meth = {
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
 
+/*
+ * constant-time conditional swap of the len-byte buffers a and b,
+ * depending on cond in {0,1}.
+ */
+static inline void s390x_cswap(unsigned char *a, unsigned char *b, size_t len,
+                               unsigned int cond)
+{
+    size_t i;
+    unsigned char tmp;
+    unsigned char mask = 0 - (unsigned char)cond;
+
+    for (i = 0; i < len; i++) {
+        tmp = a[i] ^ b[i];
+        tmp &= mask;
+        a[i] ^= tmp;
+        b[i] ^= tmp;
+    }
+}
+
 static void s390x_x25519_mod_p(unsigned char u[32])
 {
     unsigned char u_red[32];
@@ -867,16 +886,15 @@ static void s390x_x25519_mod_p(unsigned char u[32])
     u_red[31] = (unsigned char)c;
     c >>= 8;
 
-    for (i = 30; c > 0 && i >= 0; i--) {
+    for (i = 30; i >= 0; i--) {
         c += (unsigned int)u_red[i];
         u_red[i] = (unsigned char)c;
         c >>= 8;
     }
 
-    if (u_red[0] & 0x80) {
-        u_red[0] &= 0x7f;
-        memcpy(u, u_red, sizeof(u_red));
-    }
+    c = (u_red[0] & 0x80) >> 7;
+    u_red[0] &= 0x7f;
+    s390x_cswap(u, u_red, sizeof(u_red), c);
 }
 
 static void s390x_x448_mod_p(unsigned char u[56])
@@ -901,14 +919,13 @@ static void s390x_x448_mod_p(unsigned char u[56])
     u_red[27] = (unsigned char)c;
     c >>= 8;
 
-    for (i = 26; c > 0 && i >= 0; i--) {
+    for (i = 26; i >= 0; i--) {
         c += (unsigned int)u_red[i];
         u_red[i] = (unsigned char)c;
         c >>= 8;
     }
 
-    if (c)
-        memcpy(u, u_red, sizeof(u_red));
+    s390x_cswap(u, u_red, sizeof(u_red), c);
 }
 
 static int s390x_x25519_mul(unsigned char u_dst[32],
