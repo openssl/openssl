@@ -1009,7 +1009,6 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
     int ret = 0, n = 0, i, optval;
     socklen_t optlen;
     bio_dgram_sctp_data *data = (bio_dgram_sctp_data *) b->ptr;
-    union sctp_notification *snp;
     struct msghdr msg;
     struct iovec iov;
     struct cmsghdr *cmsg;
@@ -1075,8 +1074,10 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             }
 
             if (msg.msg_flags & MSG_NOTIFICATION) {
-                snp = (union sctp_notification *)out;
-                if (snp->sn_header.sn_type == SCTP_SENDER_DRY_EVENT) {
+                union sctp_notification snp;
+
+                memcpy(&snp, out, sizeof(snp));
+                if (snp.sn_header.sn_type == SCTP_SENDER_DRY_EVENT) {
 #  ifdef SCTP_EVENT
                     struct sctp_event event;
 #  else
@@ -1116,17 +1117,19 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 #  endif
                 }
 #  ifdef SCTP_AUTHENTICATION_EVENT
-                if (snp->sn_header.sn_type == SCTP_AUTHENTICATION_EVENT)
-                    dgram_sctp_handle_auth_free_key_event(b, snp);
+                if (snp.sn_header.sn_type == SCTP_AUTHENTICATION_EVENT)
+                    dgram_sctp_handle_auth_free_key_event(b, &snp);
 #  endif
 
                 if (data->handle_notifications != NULL)
                     data->handle_notifications(b, data->notification_context,
                                                (void *)out);
 
+                OPENSSL_cleanse(&snp, sizeof(snp));
                 memset(out, 0, outl);
-            } else
+            } else {
                 ret += n;
+            }
         }
         while ((msg.msg_flags & MSG_NOTIFICATION) && (msg.msg_flags & MSG_EOR)
                && (ret < outl));
