@@ -257,7 +257,7 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_CipherString(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
-
+    SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CIPHERSTRING);
     if (cctx->ctx) {
         rv = SSL_CTX_set_cipher_list_and_mask(cctx->ctx, value,
                                               cctx->version_mask);
@@ -286,6 +286,10 @@ static int cmd_Ciphersuites(SSL_CONF_CTX *cctx, const char *value)
 
 static int cmd_VersionMask(SSL_CONF_CTX *cctx, const char *value)
 {
+    if (cctx->flags & SSL_CONF_FLAG_CIPHERSTRING)
+        /* Cipherlist has been already set, so this parameter has no effect. */
+        return 0;
+
     if (cctx->ctx)
         SSL_CTX_set_ciphersuites(cctx->ctx, "");
     if (cctx->ssl)
