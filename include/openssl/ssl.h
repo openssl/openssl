@@ -590,6 +590,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define SSL_CONF_FLAG_SHOW_ERRORS       0x10
 # define SSL_CONF_FLAG_CERTIFICATE       0x20
 # define SSL_CONF_FLAG_REQUIRE_PRIVATE   0x40
+# define SSL_CONF_FLAG_CIPHERSTRING      0x80
 /* Configuration value types */
 # define SSL_CONF_TYPE_UNKNOWN           0x0
 # define SSL_CONF_TYPE_STRING            0x1

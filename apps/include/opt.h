@@ -203,7 +203,8 @@
         {"cipher", OPT_S_CIPHER, 's', "Specify TLSv1.2 and below cipher list to be used"}, \
         {"ciphersuites", OPT_S_CIPHERSUITES, 's', "Specify TLSv1.3 ciphersuites to be used"}, \
         {"version_mask", OPT_S_CIPHERLIST_VERSION, 's', \
-            "Configure default version mask for cipherlist to use"}, \
+            "Configure default version mask for cipherlist to use," \
+            " must be set before cipherlist"}, \
         {"min_protocol", OPT_S_MINPROTO, 's', "Specify the minimum protocol version to be used"}, \
         {"max_protocol", OPT_S_MAXPROTO, 's', "Specify the maximum protocol version to be used"}, \
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
