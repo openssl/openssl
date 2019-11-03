@@ -31,7 +31,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
-#include "selftest.h"
+#include "self_test.h"
 
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, "fips=yes", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
@@ -715,6 +715,12 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_BIO_FREE:
             selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
             break;
+        case OSSL_FUNC_SELF_TEST_CB: {
+            OSSL_self_test_cb_fn *fn = OSSL_get_self_test_cb(in);
+
+            selftest_params.event_cb = (fn != NULL) ? fn() : NULL;
+            break;
+        }
         default:
             /* Just ignore anything we don't understand */
             break;

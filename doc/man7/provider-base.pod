@@ -115,6 +115,7 @@ provider):
  BIO_vprintf                    OSSL_FUNC_BIO_VPRINTF
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
  OPENSSL_hexstr2buf             OSSL_FUNC_OPENSSL_HEXSTR2BUF
+ OSSL_SELF_TEST_set_callback    OSSL_FUNC_SELF_TEST_CB
 
 For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
 F<libcrypto>):
@@ -188,6 +189,8 @@ BIO_vprintf(), OPENSSL_cleanse(), and OPENSSL_hexstr2buf()
 correspond exactly to the public functions with the same name.
 As a matter of fact, the pointers in the B<OSSL_DISPATCH> array are
 direct pointers to those public functions.
+OSSL_SELF_TEST_set_callback() is used to set an optional callback that can be
+passed into a provider. This may be ignored by a provider.
 
 =head2 Provider functions
 

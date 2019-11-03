@@ -18,6 +18,9 @@
 #include "internal/provider.h"
 #include "internal/refcount.h"
 #include "provider_local.h"
+#ifndef FIPS_MODE
+# include <openssl/self_test.h>
+#endif
 
 static OSSL_PROVIDER *provider_new(const char *name,
                                    OSSL_provider_init_fn *init_function);
@@ -874,8 +877,8 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))BIO_read_ex },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))BIO_free },
     { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))BIO_vprintf },
+    { OSSL_FUNC_SELF_TEST_CB, (void (*)(void))OSSL_SELF_TEST_get_callback },
 #endif
-
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },
     { OSSL_FUNC_CRYPTO_ZALLOC, (void (*)(void))CRYPTO_zalloc },
     { OSSL_FUNC_CRYPTO_FREE, (void (*)(void))CRYPTO_free },

@@ -24,7 +24,7 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 6;
+plan tests => 9;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
@@ -71,3 +71,24 @@ ok(!run(app(['openssl', 'fipsinstall', '-in', 'fips.conf', '-module', $infile,
              '-macopt', 'digest:SHA512', '-macopt', 'hexkey:00',
              '-section_name', 'fips_install', '-verify'])),
    "fipsinstall verify fail incorrect digest");
+
+# corrupt the module hmac
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-section_name', 'fips_install', '-corrupt_desc', 'HMAC'])),
+   "fipsinstall fails when the module integrity is corrupted");
+
+# corrupt the first digest
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-section_name', 'fips_install', '-corrupt_desc', 'SHA1'])),
+   "fipsinstall fails when the digest result is corrupted");
+
+# corrupt another digest
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-section_name', 'fips_install', '-corrupt_desc', 'SHA3'])),
+   "fipsinstall fails when the digest result is corrupted");

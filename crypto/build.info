@@ -62,7 +62,7 @@ ENDIF
 $CORE_COMMON=provider_core.c provider_predefined.c \
         core_fetch.c core_algorithm.c core_namemap.c
 
-SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c
+SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c self_test_core.c
 SOURCE[../providers/libfips.a]=$CORE_COMMON
 
 # Central utilities
