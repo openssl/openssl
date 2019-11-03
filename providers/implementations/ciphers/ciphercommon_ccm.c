@@ -307,7 +307,7 @@ static int ccm_tls_cipher(PROV_CCM_CTX *ctx,
     size_t olen = 0;
 
     /* Encrypt/decrypt must be performed in place */
-    if (out != in || len < (EVP_CCM_TLS_EXPLICIT_IV_LEN + (size_t)ctx->m))
+    if (in == NULL || out != in || len < EVP_CCM_TLS_EXPLICIT_IV_LEN + ctx->m)
         goto err;
 
     /* If encrypting set explicit IV from sequence number (start of AAD) */
