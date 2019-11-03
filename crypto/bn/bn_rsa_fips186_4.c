@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <openssl/bn.h>
 #include "bn_local.h"
-#include "crypto/bn_val.h"
 #include "crypto/bn.h"
 #include "internal/nelem.h"
 
