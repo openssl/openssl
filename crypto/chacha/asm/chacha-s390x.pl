@@ -40,7 +40,7 @@
 use strict;
 use FindBin qw($Bin);
 use lib "$Bin/../..";
-use perlasm::s390x qw(:DEFAULT :VX :LD AUTOLOAD LABEL INCLUDE);
+use perlasm::s390x qw(:DEFAULT :VX :EI AUTOLOAD LABEL INCLUDE);
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
