@@ -662,6 +662,11 @@ sub validate {
                     && @{$self->{contents}->[$i] // []})) {
             $self->{stats}->{new}++;
         }
+        if ($i <= $self->{maxassigned}) {
+            $self->{stats}->{assigned}++;
+        } else {
+            $self->{stats}->{unassigned}++;
+        }
         next if ($i > $self->{loaded_maxnum});
 
         my @loaded_strings =
