@@ -215,6 +215,7 @@ CK_BYTE *pin_from_file(const char *filename)
     BIO *in = NULL;
     int i;
     static char buf[255];
+    char *c;
 
     in = BIO_new_file(filename, "r");
     if (in == NULL) {
@@ -226,8 +227,7 @@ CK_BYTE *pin_from_file(const char *filename)
     in = NULL;
     if (i <= 0)
         goto err;
-    char *c = (strchr(buf, '\n'));
-    if (c != NULL) {
+    if ((c = strchr(buf, '\n')) != NULL) {
         *c = 0;     /* truncate at newline */
     }
     return (CK_BYTE *) buf;
