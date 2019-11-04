@@ -593,11 +593,7 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
     if (!EVP_PKEY_CTX_get_params(ctx, sig_md_params))
         return 0;
 
-    /*
-     * TODO(3.0): We need to pass the library context here - but at the time
-     * of writing we don't seem to store that in the EVP_PKEY_CTX.
-     */
-    tmp = evp_get_digestbyname_ex(NULL, name);
+    tmp = evp_get_digestbyname_ex(ctx->libctx, name);
     if (tmp == NULL)
         return 0;
 
