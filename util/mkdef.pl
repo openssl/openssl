@@ -323,7 +323,10 @@ sub writer_VMS {
 
     my $last_num = 0;
     foreach (@_) {
-        while (++$last_num < $_->number()) {
+        my $this_num = $_->number();
+        $this_num = $last_num + 1 if $this_num =~ m|^\?|;
+
+        while (++$last_num < $this_num) {
             push @slot_collection, $collector->(); # Just occupy a slot
         }
         my $type = {
@@ -406,12 +409,20 @@ int main()
 {
 _____
 
+    my $last_num = 0;
     for (@_) {
+        my $this_num = $_->number();
+        $this_num = $last_num + 1 if $this_num =~ m|^\?|;
+
         if ($_->type() eq 'VARIABLE') {
-            print "\textern int ", $_->name(), '; /* type unknown */ /* ', $_->number(), ' ', $_->version(), " */\n";
+            print "\textern int ", $_->name(), '; /* type unknown */ /* ',
+                  $this_num, ' ', $_->version(), " */\n";
         } else {
-            print "\textern int ", $_->name(), '(); /* type unknown */ /* ', $_->number(), ' ', $_->version(), " */\n";
+            print "\textern int ", $_->name(), '(); /* type unknown */ /* ',
+                  $this_num, ' ', $_->version(), " */\n";
         }
+
+        $last_num = $this_num;
     }
     print <<'_____';
 }
