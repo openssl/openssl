@@ -11,16 +11,9 @@
 
 #include "cmp_testlib.h"
 
-static const char *server_f;
 static const char *ir_protected_f;
 static const char *ir_unprotected_f;
 static const char *ip_PBM_f;
-static const char *server_key_f;
-static const char *server_cert_f;
-static const char *endentity1_f;
-static const char *endentity2_f;
-static const char *root_f;
-static const char *intermediate_f;
 
 typedef struct test_fixture {
     const char *test_case_name;
@@ -456,6 +449,14 @@ void cleanup_tests(void)
 
 int setup_tests(void)
 {
+    char *server_f;
+    char *server_key_f;
+    char *server_cert_f;
+    char *endentity1_f;
+    char *endentity2_f;
+    char *root_f;
+    char *intermediate_f;
+
     RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH);
     if (!TEST_ptr(server_f = test_get_argument(0))
             || !TEST_ptr(ir_protected_f = test_get_argument(1))

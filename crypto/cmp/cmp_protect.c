@@ -60,36 +60,41 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
     prot_part.body = msg->body;
 
     l = i2d_CMP_PROTECTEDPART(&prot_part, &prot_part_der);
-    if (l < 0 || prot_part_der == NULL)
-        goto err;
+    if (l < 0 || prot_part_der == NULL) {
+        CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+        goto end;
+    }
     prot_part_der_len = (size_t) l;
 
     if (msg->header->protectionAlg == NULL) {
         CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
-        goto err;
+        goto end;
     }
     X509_ALGOR_get0(&algorOID, &pptype, &ppval, msg->header->protectionAlg);
 
     if (secret != NULL && pkey == NULL) {
         if (NID_id_PasswordBasedMAC == OBJ_obj2nid(algorOID)) {
-            if (ppval == NULL)
-                goto err;
-
+            if (ppval == NULL) {
+                CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+                goto end;
+            }
             pbm_str = (ASN1_STRING *)ppval;
             pbm_str_uc = pbm_str->data;
             pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, pbm_str->length);
             if (pbm == NULL) {
                 CMPerr(0, CMP_R_WRONG_ALGORITHM_OID);
-                goto err;
+                goto end;
             }
 
-            if (!(OSSL_CRMF_pbm_new(pbm, prot_part_der, prot_part_der_len,
-                                    secret->data, secret->length,
-                                    &protection, &sig_len)))
-                goto err;
+            if (!OSSL_CRMF_pbm_new(pbm, prot_part_der, prot_part_der_len,
+                                   secret->data, secret->length,
+                                   &protection, &sig_len)) {
+                CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+                goto end;
+            }
         } else {
             CMPerr(0, CMP_R_WRONG_ALGORITHM_OID);
-            goto err;
+            goto end;
         }
     } else if (secret == NULL && pkey != NULL) {
         /* TODO combine this with large parts of CRMF_poposigningkey_init() */
@@ -106,23 +111,25 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
                                         prot_part_der_len) <= 0
                 || EVP_DigestSignFinal(evp_ctx, NULL, &sig_len) <= 0
                 || (protection = OPENSSL_malloc(sig_len)) == NULL
-                || EVP_DigestSignFinal(evp_ctx, protection, &sig_len) <= 0)
-            goto err;
+                || EVP_DigestSignFinal(evp_ctx, protection, &sig_len) <= 0) {
+            CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+            goto end;
+        }
     } else {
         CMPerr(0, CMP_R_INVALID_ARGS);
         goto end;
     }
 
     if ((prot = ASN1_BIT_STRING_new()) == NULL)
-        goto err;
+        goto end;
     /* OpenSSL defaults all bit strings to be encoded as ASN.1 NamedBitList */
     prot->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
     prot->flags |= ASN1_STRING_FLAG_BITS_LEFT;
-    ASN1_BIT_STRING_set(prot, protection, sig_len);
+    if (!ASN1_BIT_STRING_set(prot, protection, sig_len)) {
+        ASN1_BIT_STRING_free(prot);
+        prot = NULL;
+    }
 
- err:
-    if (prot == NULL)
-        CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
  end:
     OSSL_CRMF_PBMPARAMETER_free(pbm);
     EVP_MD_CTX_free(evp_ctx);
@@ -263,15 +270,21 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             }
 
             if (msg->header->protectionAlg == NULL)
-                msg->header->protectionAlg = X509_ALGOR_new();
+                if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
+                    goto err;
 
             if (!OBJ_find_sigid_by_algs(&algNID, ctx->digest,
                                         EVP_PKEY_id(ctx->pkey))) {
                 CMPerr(0, CMP_R_UNSUPPORTED_KEY_TYPE);
                 goto err;
             }
-            alg = OBJ_nid2obj(algNID);
-            X509_ALGOR_set0(msg->header->protectionAlg, alg, V_ASN1_UNDEF, NULL);
+            if ((alg = OBJ_nid2obj(algNID)) == NULL)
+                goto err;
+            if (!X509_ALGOR_set0(msg->header->protectionAlg,
+                                 alg, V_ASN1_UNDEF, NULL)) {
+                ASN1_OBJECT_free(alg);
+                goto err;
+            }
 
             /*
              * set senderKID to keyIdentifier of the used certificate according
