@@ -49,7 +49,7 @@ See L<openssl-provider(1)>.
 If set, then L<UI_OpenSSL(3)> returns UTF-8 encoded strings, rather than
 ones encoded in the current code page, and
 the L<openssl(1)> program also transcodes the command-line parameters
-from wide characters to UTF-8.
+from the current code page to UTF-8.
 This environment variable is only checked on Microsoft Windows platforms.
 
 =item B<RANDFILE>
