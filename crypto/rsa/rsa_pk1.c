@@ -15,7 +15,6 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
-#include <crypto/x509.h>
 
 int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
                                  const unsigned char *from, int flen)
@@ -254,51 +253,4 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     err_clear_last_constant_time(1 & good);
 
     return constant_time_select_int(good, mlen, -1);
-}
-
-/*
- * RSA_encode_pkcs1 encodes a DigestInfo prefix of hash |type| and digest |m|, as
- * described in EMSA-PKCS1-v1_5-ENCODE, RFC 3447 section 9.2 step 2. This
- * encodes the DigestInfo (T and tLen) but does not add the padding.
- *
- * On success, it returns one and sets |*out| to a newly allocated buffer
- * containing the result and |*out_len| to its length. The caller must free
- * |*out| with |OPENSSL_free|. Otherwise, it returns zero.
- */
-int RSA_encode_pkcs1(unsigned char **out, int *out_len, int type,
-                     const unsigned char *m, unsigned int m_len)
-{
-    X509_SIG sig;
-    X509_ALGOR algor;
-    ASN1_TYPE parameter;
-    ASN1_OCTET_STRING digest;
-    uint8_t *der = NULL;
-    int len;
-
-    sig.algor = &algor;
-    sig.algor->algorithm = OBJ_nid2obj(type);
-    if (sig.algor->algorithm == NULL) {
-        RSAerr(RSA_F_RSA_ENCODE_PKCS1, RSA_R_UNKNOWN_ALGORITHM_TYPE);
-        return 0;
-    }
-    if (OBJ_length(sig.algor->algorithm) == 0) {
-        RSAerr(RSA_F_RSA_ENCODE_PKCS1,
-               RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
-        return 0;
-    }
-    parameter.type = V_ASN1_NULL;
-    parameter.value.ptr = NULL;
-    sig.algor->parameter = &parameter;
-
-    sig.digest = &digest;
-    sig.digest->data = (unsigned char *)m;
-    sig.digest->length = m_len;
-
-    len = i2d_X509_SIG(&sig, &der);
-    if (len < 0)
-        return 0;
-
-    *out = der;
-    *out_len = len;
-    return 1;
 }

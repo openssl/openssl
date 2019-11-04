@@ -4857,4 +4857,3 @@ X509_LOOKUP_store                       4973	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_file                    4974	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_path                    4975	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_store                   4976	3_0_0	EXIST::FUNCTION:
-RSA_encode_pkcs1                        4977	3_0_0	EXIST::FUNCTION:RSA

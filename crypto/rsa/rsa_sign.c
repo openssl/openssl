@@ -19,6 +19,53 @@
 /* Size of an SSL signature: MD5+SHA1 */
 #define SSL_SIG_LENGTH  36
 
+/*
+ * encode_pkcs1 encodes a DigestInfo prefix of hash |type| and digest |m|, as
+ * described in EMSA-PKCS1-v1_5-ENCODE, RFC 3447 section 9.2 step 2. This
+ * encodes the DigestInfo (T and tLen) but does not add the padding.
+ *
+ * On success, it returns one and sets |*out| to a newly allocated buffer
+ * containing the result and |*out_len| to its length. The caller must free
+ * |*out| with |OPENSSL_free|. Otherwise, it returns zero.
+ */
+static int encode_pkcs1(unsigned char **out, int *out_len, int type,
+                        const unsigned char *m, unsigned int m_len)
+{
+    X509_SIG sig;
+    X509_ALGOR algor;
+    ASN1_TYPE parameter;
+    ASN1_OCTET_STRING digest;
+    uint8_t *der = NULL;
+    int len;
+
+    sig.algor = &algor;
+    sig.algor->algorithm = OBJ_nid2obj(type);
+    if (sig.algor->algorithm == NULL) {
+        RSAerr(RSA_F_ENCODE_PKCS1, RSA_R_UNKNOWN_ALGORITHM_TYPE);
+        return 0;
+    }
+    if (OBJ_length(sig.algor->algorithm) == 0) {
+        RSAerr(RSA_F_ENCODE_PKCS1,
+               RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
+        return 0;
+    }
+    parameter.type = V_ASN1_NULL;
+    parameter.value.ptr = NULL;
+    sig.algor->parameter = &parameter;
+
+    sig.digest = &digest;
+    sig.digest->data = (unsigned char *)m;
+    sig.digest->length = m_len;
+
+    len = i2d_X509_SIG(&sig, &der);
+    if (len < 0)
+        return 0;
+
+    *out = der;
+    *out_len = len;
+    return 1;
+}
+
 int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
              unsigned char *sigret, unsigned int *siglen, RSA *rsa)
 {
@@ -44,7 +91,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
         encoded_len = SSL_SIG_LENGTH;
         encoded = m;
     } else {
-        if (!RSA_encode_pkcs1(&tmps, &encoded_len, type, m, m_len))
+        if (!encode_pkcs1(&tmps, &encoded_len, type, m, m_len))
             goto err;
         encoded = tmps;
     }
@@ -165,7 +212,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
         }
 
         /* Construct the encoded digest and ensure it matches. */
-        if (!RSA_encode_pkcs1(&encoded, &encoded_len, type, m, m_len))
+        if (!encode_pkcs1(&encoded, &encoded_len, type, m, m_len))
             goto err;
 
         if (encoded_len != decrypt_len

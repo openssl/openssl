@@ -15,8 +15,8 @@
 #  include <openssl/symhacks.h>
 # endif
 
-# define PKCS11err(f, r) ERR_PKCS11_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
-
+# define ERR_LIB_PKCS11 58
+# define PKCS11err(f, r) ERR_raise_data(ERR_LIB_PKCS11, (r), NULL)
 
 /*
  * PKCS11 function codes.

@@ -361,8 +361,6 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                     const unsigned char *from, int flen,
                                     const unsigned char *param, int plen,
                                     const EVP_MD *md, const EVP_MD *mgf1md);
-int RSA_encode_pkcs1(unsigned char **out, int *out_len, int type,
-                     const unsigned char *m, unsigned int m_len);
 int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                       const unsigned char *from, int flen,
                                       int num, const unsigned char *param,
